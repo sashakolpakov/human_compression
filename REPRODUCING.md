@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the twelve saved Lean reports
+checks local documentation links, and checks the thirteen saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -139,6 +139,23 @@ catalogue dependencies and exact class/truncation conventions. Optional
 archive comparison requires the separately obtained Cambridge supplement;
 the original archive was never an enumeration input.
 
+The same pipeline's next configuration covers M22 and M23 with local
+two-transitivity imposed:
+
+```sh
+python3 research/case_study/phase7_sporadic_run.py M22
+python3 research/case_study/phase7_sporadic_finish.py M22
+python3 research/case_study/phase7_sporadic_build_certificate.py M22
+```
+
+Replace M22 with M23. Follow the
+[fresh-copy instructions](research/case_study/phase7_sporadic_theory.md)
+before running these commands, since a fresh run refuses an existing
+progress record. The saved searches took approximately 325 and 404 seconds.
+All 360 anchors terminate, and a separate recognition pass checks all 105
+witnesses. Optional source-archive comparison is performed after enumeration;
+its input is neither distributed nor required to reproduce the census.
+
 The explicit missing Suzuki lattice has a standard-library-only checker:
 
 ```sh
@@ -153,10 +170,61 @@ and prime-component extraction. Classical subgroup maximality and the
 written interpretation remain explicit inputs. The separate
 `RankThreeFactorization.lean` certifies the abstract coset argument.
 
+The all-rank Suzuki extension adds exact polynomial checks of the exceptional
+endomorphism in the same matrix coordinates, a twenty-element binary seed,
+and finite arithmetic checks of the uniform torus formula:
+
+```sh
+python3 research/case_study/phase7_suzuki_seed_check.py
+python3 research/case_study/phase7_suzuki_binary_audit.py
+python3 research/case_study/phase7_suzuki_families_check.py
+```
+
+Use a disposable copy. The all-rank proof uses classical Lang–Steinberg
+descent and Suzuki subgroup facts; a small seed computation is not presented
+as an enumeration of these infinite families. `CosetCoordinates.lean` checks
+the abstract attachment lemma under its explicit coordinate hypothesis.
+The independently implemented binary audit searches all 65,536 binary
+matrices. The family checker tests complete cyclic coordinate maps in three
+examples where a selected prime also divides the base torus order, covering
+the split and both nonsplit branches.
+
+The metacyclic TPP arithmetic and the separate order-512 group census are
+reproduced from a disposable copy as follows:
+
+```sh
+cd research/case_study
+python3 phase7_cyclic_tpp_arithmetic.py
+gap -q phase7_cyclic_tpp_search.g
+```
+
+The arithmetic checker uses only the standard library and checks 3,898
+faithful cyclic actions and 1,020,498 generator contexts. The GAP run uses
+SmallGroups 1.5.4; the library supplies all 2,043 rank-two groups of order512.
+Its exhaustion argument retains the frozen smaller-order result. The
+metacyclic theorem itself is a written all-parameter proof with independent
+internal review, not an inference from either finite computation.
+
+The modular endpoint reductions for PSL₄ use exact symbolic identities:
+
+```sh
+python3 research/case_study/phase7_psl4_check.py --output /tmp/psl4-endpoint-check.json
+python3 research/case_study/phase7_psl4_zero_product_check.py --output /tmp/psl4-zero-product-check.json
+```
+
+This requires SymPy; the recorded run used version 1.14.0. Its 30 checks
+verify the displayed algebraic identities. The written proof supplies the
+module classification and coverage in odd characteristic, including
+characteristic three. The second script verifies 54 identities for the
+remaining zero-product cases, completing the written rank-five exclusion.
+An independent Smith-form check confirms that the centralizer ranks used
+there do not drop in odd characteristic. Rank six is not excluded by these
+arguments. The output option preserves the saved reports.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all twelve certificates and their unformalized boundaries. With Git
+describes all thirteen certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -180,10 +248,11 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The twelve certificates cover intersection transport, field and matrix
+The thirteen certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
-and exact Boolean-shadow witnesses of at most two vertices.
+exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
+theorems from factorization or arbitrary-family coordinate coverage.
 They formalize the stated components, not the complete geometric
 instantiations, all source-group classifications, or every written theorem.
 The saved successful runs report no `sorryAx` dependency.

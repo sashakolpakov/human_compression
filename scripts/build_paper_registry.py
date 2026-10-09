@@ -70,9 +70,9 @@ UPDATES = {
         "This existence theorem does not classify every group of the given order. Lean covers abstract kernel transport only."),
     "L034": (
         "component_rederived", "Theorem 3.2; specified cases of Conjecture 3.3",
-        "Grid/dihedral construction identifies the presentation; cyclic triple-product inequalities give lower-bound classes.",
+        "Grid/dihedral construction identifies the presentation; cyclic triple-product inequalities give lower-bound classes, now including all metacyclic derived subgroups, and a finite bound through hypertope order2^12.",
         "Hypertope correspondence with geometric hypotheses explicitly verified; Bounded group catalogue for the separate finite certificate",
-        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md",
+        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md;phase7_cyclic_tpp.md;phase7_cyclic_tpp_certificate.json;phase7_cyclic_tpp_independent_audit.md",
         "Full Conjecture 3.3 remains unresolved. The source's alternate dihedral-by-dihedral quotient display is not separately verified."),
     "L035": (
         "principal_results_rederived", "Theorems 1.2 and 1.3",
@@ -88,10 +88,10 @@ UPDATES = {
         "External review and priority verification. The character argument and full geometric consequence are not formalized; other published principal results are not all rederived."),
     "L048": (
         "partial_progress", "Odd-characteristic PSL4 maximum rank; exact conjecture read in L120, Conjecture 2",
-        "Projective involution commutator forms, Pauli supports and tensor-form obstructions give upper bound six.",
+        "Projective involution commutator forms and Pauli supports give upper bound six. Multiplicative Jordan decomposition, square-zero endpoint algebras and simultaneous splitting give a complete rank-five exclusion.",
         "Elementary-abelian projective representation dimension bound; Written finite-field/projective identifications",
-        "phase3_psl4_rank7.md;phase3_psl4.md;formal/StringIntersection.lean;psl4_search_results.md",
-        "Ranks five and six remain. L048 full text was unavailable; progress through the survey does not imply it was read. External review and priority remain."),
+        "phase3_psl4_rank7.md;phase3_psl4.md;phase7_psl4.md;phase7_psl4_zero_product.md;phase7_psl4_audit.json;phase7_psl4_zero_product_audit.json;formal/StringIntersection.lean;psl4_search_results.md",
+        "Rank six remains, so maximum rank four is not proved. L048 full text was unavailable; progress through the survey does not imply it was read. External review and priority remain."),
     "L050": (
         "component_rederived", "Orthogonality, LCD and complement-dual assertions",
         "Adjacency identities and complementary projections over F3.",
@@ -134,6 +134,18 @@ UPDATES = {
         "Source Proposition 5.2 translation/spread reduction; Two-sided local primitivity in the one-dimensional affine semilinear case",
         "phase4_old_problem_audit.md;phase4_spread_descent_audit.md;phase4_spread_descent_check.json",
         "External review and priority verification. This identifies the spaces in the narrow source case, not every possible acting subgroup, all flag-transitive spread spaces, or the other principal classification cases."),
+    "L098": (
+        "component_rederived", "The firm/FT/RC/RWPRI/(IP)2/(2T)1 M23 census stated in the primary abstract and later primary tables",
+        "The common panel engine exhausts all 204 Borel anchors and gives 4,13,21,10 classes in ranks two through five, then none; all 48 witnesses pass independent recognition and the archived higher-rank list matches exactly.",
+        "Complete M23 subgroup catalogue from GAP TomLib; GAP exact group algorithms; Explicit Aut(G)/type equivalence convention",
+        "phase7_sporadic_theory.md;phase7_sporadic_source_audit.md;phase7_sporadic_M23_2T_certificate.json",
+        "Original article body and supplement conventions remain unavailable; no claim to reproduce every construction or diagram. Catalogue completeness is retained; no whole-paper or novelty claim."),
+    "L101": (
+        "component_rederived", "The firm/FT/RC/RWPRI/(IP)2/(2T)1 M22 census stated in the primary abstract and later primary tables",
+        "The common panel engine exhausts all 156 Borel anchors and gives 7,25,16,9 classes in ranks two through five, then none; all 57 witnesses pass independent recognition and the archived higher-rank list matches exactly.",
+        "Complete M22 subgroup catalogue from GAP TomLib; GAP exact group algorithms; Explicit Aut(G)/type equivalence convention",
+        "phase7_sporadic_theory.md;phase7_sporadic_source_audit.md;phase7_sporadic_M22_2T_certificate.json",
+        "Original two-page article body and supplement conventions remain unavailable; no claim to reproduce every construction or diagram. Catalogue completeness is retained; no whole-paper or novelty claim."),
     "L104": (
         "principal_results_rederived", "Complete principal census: 8 rank-two, 19 rank-three, 3 rank-four geometries, and no higher ranks",
         "Arbitrary-Borel panel augmentation exhausts all ranks; normalizer permutation actions and full automorphism/type fusion recover the census without source geometry lists.",
@@ -165,11 +177,11 @@ UPDATES = {
         "phase5_dihedral_classification.md;phase5_dihedral_check.json;phase5_dihedral_audit.md;phase5_dihedral_intake.json",
         "L109 full text remains unavailable; its complete all-rank principal classification is available in the primary L110 restatement, but every original statement has not been compared. No new-conjecture or whole-paper claim."),
     "L110": (
-        "partial_progress", "Rank-three shape decisions; an explicit rank-four realization of Construction 6 parabolic types with a different lower lattice",
-        "Trace and relative-subfield arguments decide the printed rank-three shapes; one binary matrix algebra supplies simultaneous torus factors and a degree-105 rank-four RWPRI lattice.",
-        "Standard Suzuki subgroup conjugacy and centralizers; Torus normalizers and element-order structure; Exact source parameter restrictions",
-        "phase6_suzuki_realization.md;phase6_suzuki_torus_check.json;phase5_suzuki_higher.md;phase5_suzuki_independent_audit.md",
-        "A corrected exhaustive classification, other higher-rank constructions, relative positions and rank-four flag transitivity remain. The example matches Construction 6's parabolic types, so it is not a counterexample to that bare type list. Priority and external review remain."),
+        "partial_progress", "Rank-three shape decisions; rank-four geometry with Construction 6 parabolic types; all admissible parameterized existence assertions of Constructions 8 and 9",
+        "One binary torus gives compatible field intersections and elementary prime choices; Lang descent proves subfield-coset Helly, and independent coset coordinates attach the torus normalizer. Exact maximality and residue calculations give thick FT/RC/RWPRI geometries in every rank.",
+        "Lang–Steinberg surjectivity; Standard exceptional Suzuki endomorphism; Cyclic nonsplit tori and classical normalizer/subfield maximality; Exact source parameter restrictions",
+        "phase7_suzuki_descent.md;phase7_suzuki_torus_families.md;phase7_suzuki_intake.json;formal/CosetCoordinates.lean;formal/CosetCoordinates.scope.md;phase6_suzuki_realization.md;phase5_suzuki_higher.md",
+        "A corrected exhaustive classification, other higher-rank constructions and relative embedding classes remain. The two entire parameterized existence assertions are recovered, including overlapping-prime cases, with FT and RC for their canonical realizations; no classification of all embeddings. Priority and external review remain."),
     "L114": (
         "proposed_new_result", "Theorem 5.5 exhaustiveness: explicit omitted geometry in Sz(2^15); decisions for every printed shape in Theorems 5.3 and 5.5",
         "A common binary F16 algebra gives commuting order-13/order-41 matrices, with exact intersections 52,164,20 and 4. Classical maximality proves RWPRI; factorization proves flag transitivity. The earlier per-shape decisions remain separate.",

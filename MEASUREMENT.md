@@ -109,6 +109,17 @@ as a named conjecture. The improved
 with unresolved cases. These distinctions prevent a novelty score from
 swallowing the outstanding mathematics.
 
+The subsequent [complete rank-five exclusion](research/case_study/phase7_psl4_zero_product.md)
+is a further uniform result for odd-characteristic PSL₄. Rank six remains
+unresolved, so it is still partial progress on the maximum-rank conjecture
+and receives no new-resolution marker.
+
+The [metacyclic extension](research/case_study/phase7_cyclic_tpp.md) proves a
+uniform cyclic-subgroup inequality and another full structural class of that
+order conjecture. Its separate finite certificate increases the verified
+hypertope range to order \(2^{12}\). Neither result settles the unrestricted
+conjecture, so neither receives the new-resolution marker.
+
 The proposed 1999 realization decisions retain classical Suzuki structure.
 A subsequent [exact counterexample](research/case_study/phase6_suzuki_realization.md)
 shows that the printed candidate list is not exhaustive; the former assumption

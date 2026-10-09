@@ -47,6 +47,21 @@ compilation. It proves the abstract coset common-point implication used for
 flag transitivity of the Suzuki example. Its theorem prints only `propext`;
 the exact matrix and maximal-subgroup inputs remain outside Lean.
 
+The thirteenth certificate, CosetCoordinates, generalizes the attachment
+implication to an arbitrary family of cosets, assuming surjectivity onto
+their coset coordinates. The fresh compile also rebuilt its prerequisite
+without overwriting that prerequisite's historical report. The all-rank
+Suzuki descent and torus instantiation remain written mathematics.
+
+The next common-engine runs exhaust M22 and M23 using 360 terminal anchors
+and independently recognize 105 witnesses. Archived source lists are used
+only for a separate post-hoc comparison. The metacyclic cyclic-TPP theorem
+has an independent internal proof audit and arithmetic rerun; its separate
+order-512 SmallGroups census extends the hypertope bound through order 2^12.
+Their certificates record precise scopes and retained catalogue inputs.
+The [phase-seven review record](phase7_review.md) distinguishes fresh
+executions, full written-proof reviews and artifact-integrity checks.
+
 [Measurement](../MEASUREMENT.md) defines future quantitative accounting and
 the separate status of new resolutions. No corpus ratio or infinity marker
 is assigned by this publication snapshot.

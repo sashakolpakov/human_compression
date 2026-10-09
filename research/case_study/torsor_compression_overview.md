@@ -137,8 +137,12 @@ The finite quotient catalogue remains an explicit input.
 
 The [rank-seven tensor proof](phase3_psl4_rank7.md), independently reviewed
 in [its audit](phase3_psl4_rank7_audit.md), now reduces the odd-q PSL4 upper
-bound to six. It does not settle ranks five or six or establish publication
-priority. Its Pauli-support argument remains a written proof.
+bound to six. The later [endpoint reductions](phase7_psl4.md) and
+[zero-product classification](phase7_psl4_zero_product.md) exclude rank five
+by common-form and invariant-subspace arguments, with independent internal
+review and exact symbolic checks. Rank six and publication priority remain
+unresolved. The Pauli-support and module-classification arguments remain
+written proofs.
 
 ## Later extensions and a withdrawn completeness assumption
 
@@ -173,9 +177,28 @@ and supersedes this overview's earlier coverage totals. The
 separate from proposed new results; no numerical ratio or infinity marker
 has been assigned.
 
+The [next Suzuki extension](phase7_suzuki_descent.md) closes the rank-four
+geometry gap and gives an unconditional family in every rank. Compatible
+field cosets satisfy Helly by Lang–Steinberg descent; independent cyclic
+coordinates attach the additional torus-normalizer type. One binary torus
+aligns the finite subfields, and an elementary valuation argument supplies
+all needed distinct prime factors. Classical descent and Suzuki structure
+remain inputs; the result does not claim an exhaustive classification.
+
+The same [panel engine now covers M22 and M23](phase7_sporadic_theory.md),
+with 360 exhausted stabilizer anchors and 105 independently recognized
+witnesses. Both primary summary tables and the archived higher-rank lists
+match exactly. These are stated census components; unavailable article
+bodies prevent a whole-paper claim.
+
+The [metacyclic cyclic-TPP theorem](phase7_cyclic_tpp.md) supplies a new
+uniform structural class for the hypertope order bound, for all primes and
+all orders. Its separate order-512 certificate extends the finite hypertope
+range through order2^12. The unrestricted conjecture remains unresolved.
+
 ## Evidence and limits
 
-Twelve [Lean modules](formal/README.md) compile with the pinned toolchain and
+Thirteen [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -190,7 +213,7 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker additionally covers the three later modules and their
+public snapshot checker additionally covers the four later modules and their
 successful reports. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 
