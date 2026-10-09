@@ -8,6 +8,10 @@ automorphisms are exactly permutations of the primitive idempotents. The
 which geometric constraints it solves. These are internally reviewed proof
 drafts and exact computations, not externally reviewed publications.
 
+The [detailed introduction](../../INTRODUCTION.md) explains the ideas with
+worked examples. The [living paper map](../../PAPER_MAP.md) records all 145
+indexed works, including the 1996–2006 intake; this note focuses on reductions.
+
 ## The common calculus
 
 After choosing a torsor point, write
@@ -41,6 +45,9 @@ an entire paper.
 
 | Source and target | Replacement argument | Scope and remaining input |
 |---|---|---|
+| L102 (2003), Section 5.1.2 and the remaining spread case | Prime-degree arithmetic, irreducible semilinear descent and an explicit scalar-affine converse | Proposed exact existence and uniqueness of the spaces in the one-dimensional RWPRI case; source translation/spread reduction retained, external review and priority unverified |
+| L096 (2004), geometric shadow-IP decision problem | Flag-constrained covering inequalities, orbit normalization and a rank-two four-cycle argument | Exact criterion and independent finite checks; original Magma implementation and sporadic tables not reproduced by this criterion |
+| L104 (2002), thin geometries in every rank; nonthin source representatives | Maximal-residue augmentation, normalizer transport and automorphism/type fusion | Thin census exhaustive conditional on TomLib; nonthin witnesses checked, their completeness still retained |
 | L066, *On pairs of commuting involutions in Sym(n) and Alt(n)*, all four principal results | Five orbit multiplicities for C2²-actions, two rational generating functions, one degree-six orbit certificate | All principal counts and both S6/A6 polyhedron conclusions recovered; standard automorphism theorems remain inputs |
 | L032, *On regular polytopes of 2-power order*, Theorem 1.2 | Explicit square-grid seed plus independent dihedral factors | Whole principal all-rank existence theorem; no classification of every group |
 | L030, *An infinite family of locally X graphs based on incidence geometries*, principal construction and parameters | The single tensor relation K_r tensor KG(N,k), replacement distances and a spectral automorphism argument | Construction, residues, diagram and full graph automorphism group recovered; two source displays corrected |

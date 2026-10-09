@@ -2,6 +2,18 @@
 
 Research date: 9 October 2026. We have proposed proofs of the two 2017 PSL(2,q) conjectures, the 2005 Hermitian-unital conjecture, the Suzuki graph pentagon-count conjecture, and the missing range in a recent existence theorem for chiral polyhedra, together with exact computations and Lean certificates for key proof components. These results have received internal agent reviews, not external peer review. Priority and novelty remain provisional.
 
+## The older-paper extension
+
+The [2003 spread-space proof](phase4_old_problem_audit.md) gives a proposed
+exact existence and uniqueness theorem for the source's one-dimensional
+RWPRI case, using prime-degree arithmetic and cyclic semilinear descent.
+Two independent internal reviews passed; external priority remains unverified.
+The [2004 shadow-IP reduction](phase4_shadow_ip.md) supplies a flag-constrained
+covering criterion, with exact small-structure checks. It is distinct from
+C-group subgroup intersection. The [2002 J2 track](phase4_old_classification.md)
+recovers the thin classification in every rank and verifies the nonthin source
+representatives; nonthin completeness remains a separate retained input.
+
 ## Torsors and permutation matrices: stronger compression
 
 The [torsor matrix theory](torsor_matrix_theory.md) represents subgroups as invariant partitions of a common regular group torsor. Subgroup intersections become Hadamard products, subgroup generation becomes Boolean matrix closure, and ordinary matrix products count subgroup factorizations. A typed Helly condition detects exactly which coset flags have a common torsor point. The [Lean certificate](formal/TorsorPartitions.lean) proves subgroup/partition reconstruction and the zero-one intersection identity.

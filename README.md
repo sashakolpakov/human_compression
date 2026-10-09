@@ -36,7 +36,10 @@ we retain the distinguished basis, or equivalently the multiplication of the
 split algebra of functions on the torsor. For fixed cyclic-extension data,
 the classification equations themselves become linear over a finite ring.
 
-Start with the [torsor theory](research/case_study/torsor_matrix_theory.md),
+Start with the [detailed introduction](INTRODUCTION.md), which develops the
+ideas through worked examples, and the [paper map](PAPER_MAP.md), which
+records the exact scope of each reduction and the older literature intake.
+Then see the [torsor theory](research/case_study/torsor_matrix_theory.md),
 the [fixed-size extension theorem](research/case_study/phase3_bounded_families.md),
 and the [theorem-by-theorem scope table](research/case_study/torsor_compression_overview.md).
 
@@ -54,6 +57,9 @@ not received external peer review, and publication priority remains unverified.
 | Commuting involutions | All four principal results of one counting paper rederived, followed by an all-rank extension | [Reduction](research/case_study/commuting_pairs_compression.md); orbit formulas and exact exceptional-case checks |
 | Odd-characteristic PSL₄ rank | Uniform upper bound six; additional rank-five exclusions. The conjectural maximum four remains open here | [Tensor obstruction](research/case_study/phase3_psl4_rank7.md); [earlier reductions](research/case_study/phase3_psl4.md); written proofs and local formal lemma |
 | Hypertope order bound | Several uniform classes proved; exhaustive auxiliary certificate establishes the conjecture through group order \(2^{11}\) | [Uniform argument](research/case_study/phase3_order_bound.md); [finite certificate](research/case_study/phase3_cyclic_tpp_exploration.md) |
+| A 2003 spread-space question | Proposed proof that locally primitive spreads in the one-dimensional affine semilinear setting are Desarguesian | [Semilinear descent](research/case_study/phase4_old_problem_audit.md); exact subspace and stabilizer checks |
+| A 2004 geometric intersection algorithm | Exact flag-constrained covering criterion for shadow-IP and its residue variants; rank-two characterization rederived | [Proof and scope](research/case_study/phase4_shadow_ip.md); exhaustive small-structure comparisons |
+| A 2002 sporadic-group classification | Thin RWPRI \(J_2\) geometries satisfying the source incidence axioms independently enumerated in every rank; nonthin representatives checked separately | [Arbitrary-rank reduction](research/case_study/phase4_old_classification.md); exact subgroup and automorphism-orbit checks, conditional on the retained subgroup catalogue |
 
 Further notes cover affine lattice families, Hermitian-unital connectivity,
 normalizer-orbit classifications, incidence constructions and a corrected

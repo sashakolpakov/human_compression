@@ -52,7 +52,22 @@ integer arithmetic within an explicit overflow guard; NumPy's floating-point
 linear algebra is not used. These finite checks corroborate the corresponding
 written arguments; they do not alone prove statements for all parameters.
 
-Both suites copy their inputs to temporary directories and preserve the
+The older-paper checks also use only the standard library:
+
+```sh
+python3 scripts/smoke_check.py --older --keep-work-dir
+```
+
+This suite checks the semilinear descent example exhaustively over the stated
+binary fields, including all 11,811 four-dimensional subspaces containing 1
+in `F256`. It compares direct geometric shadow witnesses with the covering
+criterion on 682 rank-two structures, all 4,096 structures with three types
+of size two, 48 larger examples and 404 induced residues. These are finite
+checks of the new 2003/2004 reductions, not a reproduction of the sporadic
+classification tables. No end-to-end Lean proof of semilinear descent is
+included.
+
+All suites copy their inputs to temporary directories and preserve the
 snapshot's reports. `--keep-work-dir` retains fresh reports and logs; a failed
 run retains them automatically. Each check has a default 600-second timeout,
 adjustable with `--timeout SECONDS`. Do not run certificate scripts with
@@ -124,7 +139,21 @@ GRAPE or TomLib; their source headers and accompanying reports specify the
 inputs used. The `research/leemans` compatibility symlink preserves historical
 relative paths in these scripts.
 
+For the 2002 classification track, see the exact commands and source-archive
+link in [the J2 note](research/case_study/phase4_old_classification.md). Its
+fresh pipeline verifies source representatives, independently enumerates thin
+geometries through exhaustion, fuses automorphism/type classes, identifies the
+source group explicitly, and checks the generated thin witnesses. Run it in a
+disposable copy: it writes intermediate data and reports. The complete subgroup
+catalogue is a retained input; nonthin completeness is not reproved here.
+
 ## External sources and review boundaries
+
+The recovered 2004 publisher archive contains historical maximal-parabolic
+data. Its checksum and member hashes are in the source metadata; the archive
+is not distributed or executed. Dataset rank labels alone do not establish
+that its contents reproduce an earlier classification. The old-paper notes
+record any verified differences in scope.
 
 Third-party PDFs, extracted or OCR full texts, publisher-page renderings,
 dependency caches, and external GAP library distributions are not bundled.

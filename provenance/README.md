@@ -11,6 +11,20 @@ records the files actually distributed here. Publication edits replace local
 source-file links with citations, remove private machine paths, make runners
 portable, and update navigation and scope statements.
 
+Generated GAP logs and numerical witnesses retain the bytes bound by their
+certificates, including trailing spaces emitted by GAP. `.gitattributes`
+exempts that generated output from the trailing-space style check.
+
+The later 2003/2004 intake adds an introduction, a uniform paper registry,
+semilinear descent and geometric shadow-IP notes, and two new exact Python
+checks. The older classification track adds a fresh GAP thin-geometry census,
+source-witness verification, automorphism fusion and explicit group identification.
+These additions are not present in the initial `original_files.json`;
+their reviewed bytes are included in the current snapshot manifest. The
+new [reproduction record](older_intake_reproduction.json) identifies fresh
+runs separately from the original quick/full-suite record. The older source archive is represented by metadata
+only, including the hashes of its members.
+
 Historical reports retain their original mathematical-source hashes and run
 results. Where a script's executable path was made portable, its historical
 report describes the original run; it is not relabeled as a fresh execution.
