@@ -1,0 +1,141 @@
+# Reproducing the checks
+
+Run these commands from the repository root. Python 3.10 or newer is required
+for the public runners. A successful hash check, a fresh computation, and a
+Lean compilation establish different things; the commands below keep those
+claims separate.
+
+## Snapshot integrity and saved results
+
+```sh
+python3 scripts/verify_snapshot.py
+python3 research/case_study/formal/verify_lean.py --check-saved
+```
+
+The snapshot check compares distributed files with the publication manifest,
+checks local documentation links, and checks the nine historical Lean reports
+against their source files. The second command checks only those saved Lean
+records. Neither command executes Lean or reruns the mathematical computations.
+Do not use `--write-manifest` to repair a failed check: that option records a
+new publication snapshot rather than verifying the distributed one.
+
+The [provenance note](provenance/README.md) distinguishes original working-file
+hashes from the public snapshot. Portability and citation edits can change an
+exported file's hash. Historical reports describe their original runs; they
+are not relabeled as fresh executions of an edited script.
+
+## Fresh Python computations
+
+```sh
+python3 scripts/smoke_check.py --quick
+```
+
+This standard-library suite freshly checks all 900 pairs of subgroups of
+`S4` in the torsor matrix example, the symbolic Suzuki word identities, and
+all eleven exceptional finite-field witnesses. The Suzuki calculation checks
+polynomial identities; the other two checks concern the finite inputs stated
+in their reports. These are not interchangeable scopes.
+
+For the larger suite, use Python 3.11 or newer and install NumPy in a virtual
+environment (the pinned NumPy release requires Python >=3.11):
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install numpy==2.4.4
+.venv/bin/python scripts/smoke_check.py --full --keep-work-dir
+```
+
+The larger suite adds sixteen cyclic-extension congruence systems, 144 small
+independent solver checks, and graph counts for `q = 3, 5, 7` using three
+constructions and an independent path counter. The modular solver uses exact
+integer arithmetic within an explicit overflow guard; NumPy's floating-point
+linear algebra is not used. These finite checks corroborate the corresponding
+written arguments; they do not alone prove statements for all parameters.
+
+Both suites copy their inputs to temporary directories and preserve the
+snapshot's reports. `--keep-work-dir` retains fresh reports and logs; a failed
+run retains them automatically. Each check has a default 600-second timeout,
+adjustable with `--timeout SECONDS`. Do not run certificate scripts with
+Python's `-O` option: their mathematical assertions must execute.
+
+Additional scripts beside the notes can be run individually. Several legacy
+scripts write JSON or log files beside themselves, so use a disposable copy
+when running them directly. Timing fields and environment metadata can differ
+between successful runs; compare the mathematical assertions and input hashes,
+not just the output-file checksum.
+
+## Fresh Lean compilation
+
+The [formal setup and scope document](research/case_study/formal/README.md)
+describes all nine certificates and their unformalized boundaries. With Git
+and Lean's `elan` toolchain manager installed:
+
+```sh
+cd research/case_study/formal
+lake exe cache get
+python3 verify_lean.py --check-env
+python3 verify_lean.py --all
+```
+
+The supplied toolchain pins Lean 4.32.2; the Lake manifest pins mathlib commit
+`905b95818eb32af7874a58b427f50c1711a5e96c` and all transitive dependencies.
+The cache command needs network access. The runner can instead use an existing
+built dependency checkout through `--packages PATH` and a compiler through
+`--lean PATH`; equivalent environment variables are documented in the formal
+README. No original developer's filesystem paths are required.
+
+The runner checks dependency Git revisions and tracked-file cleanliness, then
+compiles the selected certificates in dependency order. Fresh reports and
+compiled modules go to `formal/.verification/`; historical `.check.json`
+files are preserved. The compiled dependency cache and the Lean toolchain are
+trusted inputs. Revision checking does not independently authenticate cached
+binaries or reproduce a clean build of the toolchain.
+
+The nine certificates cover intersection transport, field and matrix
+obstructions, connectivity and chamber orbits, torsor partitions, coordinate
+kernels, the Suzuki matrix word, and a local string-intersection obstruction.
+They formalize the stated components, not the complete geometric
+instantiations, all source-group classifications, or every written theorem.
+The saved successful runs report no `sorryAx` dependency.
+
+## GAP computations and retained catalogues
+
+GAP runs use exact finite group computations. For example, in a disposable
+repository copy, from its root:
+
+```sh
+gap -q research/case_study/phase3_256_census.g
+gap -q research/case_study/phase3_suzuki_probe.g
+```
+
+The first reruns the exhaustive order-256 marked-group census used by the
+[eight-family classification](research/case_study/phase3_classification.md).
+Its recorded environment is GAP 4.15.1 with SmallGroups 1.5.4; its successful
+output has 1,651 eligible groups, 1,641 active groups, and 92 anchored valid
+triples in four patterns. Exhaustiveness depends on the completeness of the
+SmallGroups catalogue and the reduction proved in the note. It does not
+rederive that external catalogue.
+
+The second constructs the Suzuki graph at `q = 8` and checks its 520 vertices,
+valency 8, and edge-cycle counts `0, 0, 7` in lengths 3, 4, 5. This is a finite
+geometric check separate from the universal symbolic identities and the Lean
+word certificate. Other GAP scripts may require additional packages such as
+GRAPE or TomLib; their source headers and accompanying reports specify the
+inputs used. The `research/leemans` compatibility symlink preserves historical
+relative paths in these scripts.
+
+## External sources and review boundaries
+
+Third-party PDFs, extracted or OCR full texts, publisher-page renderings,
+dependency caches, and external GAP library distributions are not bundled.
+[Source-asset metadata](research/case_study/sources/source_assets.json) and the
+notes retain primary-source links and available checksums. The checks above
+use the included mathematical code and witness data; literature retrieval
+scripts require separately obtained sources and are not an offline
+reproduction of the entire literature search. A source checksum identifies
+bytes, not their redistribution rights or the truth of a mathematical claim.
+
+Written proofs, computations, internal agent reviews, and formal certificates
+are labeled separately throughout the notes. Internal reviews are not external
+peer review. Reproduction verifies the stated checks and their assumptions;
+it does not establish research priority or resolve unaddressed conjectures.
