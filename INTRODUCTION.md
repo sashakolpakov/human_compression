@@ -591,7 +591,114 @@ odd-characteristic claim for the same graph. The
 correcting that construction from disproving an existential conjecture about
 other graphs. Exact identification of the graph is as important as the count.
 
-## 10. The remaining work, and how a living reduction should record it
+## 10. Older classifications through the same action data
+
+The older literature supplies useful tests of whether the language does real
+work. Several reductions now reach beyond an encoding and actually recover
+classification or characterization statements.
+
+**Tree cuts.** Start with a tree $T$ on $N$ points, and attach to each edge
+the transposition of its endpoints. For an edge subset $I$, these generators
+give exactly
+
+$$K_I=\prod_{C\text{ a component of }(V(T),I)}\operatorname{Sym}(C).$$
+
+The unique-path property gives $K_I\cap K_J=K_{I\cap J}$. Rooting the tree
+makes its edge cuts a nested-or-disjoint family of subsets. Coset vertices
+are subsets of the prescribed sizes, and incidence means that their pairwise
+intersection sizes agree with those of the original cuts. Any pairwise
+incident family has the same nested structure and atom sizes; bijections
+between its atoms assemble into one permutation. This proves the coset Helly
+property and flag transitivity directly.
+
+Residues come from deleting edges. A leaf cut gives a maximal point stabilizer;
+a balanced cut gives the intermediate unordered two-block stabilizer. These
+two observations produce all four principal primitivity and local-property
+tests of a 1998 paper. The stronger geometric shadow intersection property
+has an equally concrete test. A branching vertex contains a claw residue
+that fails it. For a path, the geometry is the proper Boolean lattice, and
+every nonempty shadow on $k$-subsets is
+
+$$\{Y: |Y|=k,\ L\subseteq Y\subseteq V\},$$
+
+where $L$ is the union of lower-rank constraints and $V$ the intersection of
+upper-rank constraints. The boundary subsets give a witness flag of at most
+two vertices, with singleton and empty-boundary cases handled explicitly.
+The [Boolean shadow certificate](research/case_study/formal/BooleanShadow.scope.md)
+now proves this exact bounded-size witness theorem in Lean for arbitrary
+finite query families at every proper rank.
+This recovers the advertised 2005 path characterization. The known tree model
+and the foundational classification identifying all inductively minimal
+pairs remain credited inputs; these are rederivations of published results.
+See the [tree proof and exact scope](research/case_study/phase5_tree_cuts.md).
+
+**Dihedral arithmetic.** In a subgroup-closed class with a simple rank-two
+rigidity property, residual weak primitivity forces every parabolic lattice
+edge to be maximal. Cyclic and dihedral groups satisfy that rigidity by
+elementary subgroup arithmetic. Consequently every dihedral example is built
+from prime-index reflection subgroups, with either one rotation subgroup or
+one doubled prime. Chinese remainders solve their simultaneous coset equations
+and prove flag transitivity. Their geometries are joins of prime-sized sets
+and at most one polygon.
+
+For $D_{2n}$ with $n>2$ and $m$ distinct prime divisors, the resulting number
+of rank-$r$ group–geometry pairs, modulo group automorphisms and type
+permutations, is
+
+$$\binom mr+\binom m{r-1}+m\binom{m-1}{r-2}.$$
+
+The Klein four group is an explicit exception. This recovers the complete
+published all-rank theorem, available in a later primary restatement. The
+original 2000 full text is unavailable, so a comparison with every printed
+statement is still outstanding. The [dihedral note](research/case_study/phase5_dihedral_classification.md)
+states the action and source conventions carefully.
+
+**Finite panel actions.** For a fixed chamber stabilizer $B\le G$, let the
+normalizer $N_G(B)$ act on the finite set of admissible panel overgroups of
+$B$. This is another concrete permutation representation. A geometry is
+reconstructed by joining selected panels, checking their exact intersections
+and the typed Helly condition, and testing local axioms. RWPRI guarantees a
+maximal parabolic in every residue, which gives a complete augmentation rule.
+This is a proof of completeness for the enumeration, with a finite subgroup
+catalogue as an explicit input.
+
+Applied to $J_2$, the method exhausts all 146 chamber-stabilizer anchors and
+recovers the 2002 principal census: eight rank-two, nineteen rank-three and
+three rank-four geometries, with no higher ranks. All thirty representatives
+pass a separate parabolic verifier. The source geometry lists are not search
+inputs. GAP's subgroup catalogue and exact algorithms remain trusted; the
+enumeration is not formalized end to end in Lean. See the
+[complete reduction and certificate](research/case_study/phase5_j2_theory.md).
+
+**Subfield positions.** The same torsor viewpoint emphasizes relative position:
+knowing the isomorphism types of several subgroups does not establish that
+they can meet as prescribed. In a Suzuki group, a maximal split dihedral
+subgroup determines its overlying subfield group uniquely. Two such dihedral
+subgroups in one torus normalizer, sharing a reflection, force the corresponding
+subfield groups into their standard simultaneous position. Their intersection
+is then the group over the intersection field. A second rigidity argument
+uses the center of the unique Sylow 2-subgroup containing an involution.
+Together these exclude four candidate intersection patterns from 1999.
+
+There is a complementary constructive argument. The matrices $wz(x)$ have
+distinct nonzero traces $x^\theta$, giving a transversal of the nonidentity
+odd-order conjugacy classes. Selecting their orders and adjusting torus
+parameters supplies all prescribed prime-case patterns, including repeated
+prime parameters. The higher-field patterns follow from the same field
+intersections, except that one printed lattice fails RWPRI: its central
+additive modules have proper invariant subspaces between the purported
+maximal intersections. The subgroups do have the printed intersections, so
+this is a failure of the extra axiom, not of bare embedding.
+
+Together the two notes give proposed uniform decisions for every displayed
+parameter shape. Exact coordinate checks include the intermediate subgroups
+over $\mathbf F_{2^{45}}$. The
+[complete decision table](research/case_study/phase5_suzuki_higher.md#e-exact-scope-of-the-proposed-resolution)
+retains the published candidate completeness and standard Suzuki structure.
+Full flag transitivity, classification of relative embeddings and publication
+priority remain separate questions.
+
+## 11. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -628,9 +735,10 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [nine Lean certificates](research/case_study/formal/README.md) cover
+The [ten Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
-connectivity propagation, field and matrix obstructions, and the Suzuki word.
+connectivity propagation, field and matrix obstructions, the Suzuki word,
+and exact Boolean-shadow witnesses.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.
@@ -640,3 +748,10 @@ is the place to track which targets have complete principal-result reductions,
 which have partial reductions, and which remain outside the core. Extending
 the project should change those entries through new derivations and review,
 with the precise mathematical claims preserved at each step.
+
+The next quantitative step is to measure the source and replacement arguments
+for the same theorem set, charging shared machinery once and declaring the
+background on both sides. [Measurement](MEASUREMENT.md) specifies this accounting
+and a separate novelty assessment for verified solutions of open problems.
+Its optional infinity marker denotes a new resolution; an absent known proof
+does not supply a literal numerical compression ratio.

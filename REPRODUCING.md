@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the nine historical Lean reports
+checks local documentation links, and checks the ten saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -79,10 +79,38 @@ when running them directly. Timing fields and environment metadata can differ
 between successful runs; compare the mathematical assertions and input hashes,
 not just the output-file checksum.
 
+The next older-paper intake adds an independent dihedral subgroup/coset
+checker and a tree-cut checker. Run these in a disposable copy because their
+JSON reports are written beside the scripts:
+
+```sh
+python3 research/case_study/phase5_dihedral_check.py
+python3 -m venv .venv
+.venv/bin/python -m pip install networkx==3.6.1
+.venv/bin/python research/case_study/phase5_tree_check.py
+```
+
+Use Python 3.11 or newer for the pinned NetworkX environment. The dihedral
+checker uses only Python's standard library and constructs all
+subgroups from multiplication for its 18 stated groups. NetworkX supplies
+nonisomorphic trees to the second checker; group closure, flag enumeration,
+permutation orbits and shadow witnesses are checked separately. The saved
+tree run checks 24 trees, 262 generated subgroups, 28,324 flag comparisons
+and 1,519,962 Boolean shadow queries. These finite audits accompany the
+written all-parameter arguments.
+
+The complete arbitrary-Borel J2 census is reproduced with GAP and TomLib,
+without downloading the original geometry archive. Its
+[runner instructions](research/case_study/phase5_j2_theory.md#6-reproduction-and-artifacts)
+cover enumeration, automorphism fusion, independent witness recognition and
+certificate building. All 146 terminal checkpoints are included. Use a
+disposable copy for this pipeline too; the original run used GAP 4.15.1 and
+TomLib 1.2.11, and its search took about 124 seconds in that environment.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all nine certificates and their unformalized boundaries. With Git
+describes all ten certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -106,9 +134,10 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The nine certificates cover intersection transport, field and matrix
+The ten certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
-kernels, the Suzuki matrix word, and a local string-intersection obstruction.
+kernels, the Suzuki matrix word, a local string-intersection obstruction,
+and exact Boolean-shadow witnesses of at most two vertices.
 They formalize the stated components, not the complete geometric
 instantiations, all source-group classifications, or every written theorem.
 The saved successful runs report no `sorryAx` dependency.
@@ -145,7 +174,9 @@ fresh pipeline verifies source representatives, independently enumerates thin
 geometries through exhaustion, fuses automorphism/type classes, identifies the
 source group explicitly, and checks the generated thin witnesses. Run it in a
 disposable copy: it writes intermediate data and reports. The complete subgroup
-catalogue is a retained input; nonthin completeness is not reproved here.
+catalogue is a retained input; this older pipeline does not reprove nonthin
+completeness. The arbitrary-Borel phase-five pipeline above now supplies
+that exhaustion independently of the source geometry lists.
 
 ## External sources and review boundaries
 

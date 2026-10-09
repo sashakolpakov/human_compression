@@ -25,6 +25,21 @@ new [reproduction record](older_intake_reproduction.json) identifies fresh
 runs separately from the original quick/full-suite record. The older source archive is represented by metadata
 only, including the hashes of its members.
 
+The 1998–2005 network intake adds the complete arbitrary-Borel J2 census,
+the uniform dihedral and tree-cut derivations, and the Suzuki realization
+audit. Their own records bind the actual executed checker bytes and the
+written-proof review scope. The 146 J2 terminal checkpoints are newly
+computed output, not copied source geometry lists. The new Boolean-shadow
+Lean module has its own successful compiler report; the previous nine
+modules and their historical reports remain unchanged.
+The [public Boolean-shadow compilation](boolean_shadow_public_compile.json)
+is an additional fresh run through the portable runner, including compiler
+version and pinned dependency-revision checks.
+
+[Measurement](../MEASUREMENT.md) defines future quantitative accounting and
+the separate status of new resolutions. No corpus ratio or infinity marker
+is assigned by this publication snapshot.
+
 Historical reports retain their original mathematical-source hashes and run
 results. Where a script's executable path was made portable, its historical
 report describes the original run; it is not relabeled as a fresh execution.

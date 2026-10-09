@@ -4,7 +4,7 @@ This living map distinguishes source access from mathematical progress.
 It includes books, proceedings papers and errata as well as journal articles.
 The historical inventory is preserved; later assessments apply only to their named targets.
 
-**145 mathematical works** are indexed: 128 catalogue entries and 17 followups. **42 entries date from 1996–2006.**
+**148 mathematical works** are indexed: 128 catalogue entries and 17 followups and 3 network additions. **45 entries date from 1996–2006.**
 This is not complete proof reading or an exhaustive bibliography of every collaborator,
 student or postdoc. Coauthorship alone does not establish those relationships.
 
@@ -14,7 +14,7 @@ student or postdoc. Coauthorship alone does not establish those relationships.
 
 | Stage | Meaning |
 |---|---|
-| Retrieved | A matched full text was obtained in the historical audit; it is not redistributed. |
+| Retrieved | A matched primary full text was accessed; it is not redistributed. |
 | Read | Exact scope: abstract, full-text search only, selected sections, or complete short text. |
 | Encoded | A specified target has an explicit representation/test; vocabulary alone does not qualify. |
 | Rederived | A named theorem, component or finite subfamily has a replacement argument with retained inputs. |
@@ -27,16 +27,17 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 
 | Access category | Works |
 |---|---:|
-| abstract read | 46 |
+| abstract read | 47 |
 | full short text read | 4 |
-| full text search only | 22 |
+| full text read | 1 |
+| full text search only | 21 |
 | metadata and access only | 9 |
-| selected sections read | 64 |
+| selected sections read | 66 |
 
-90 works have a retrieved full text; 24 have a specified encoding or conditional/component reduction; 16 have a rederived component, finite subfamily or principal target.
+92 works have a retrieved full text; 31 have a specified encoding or conditional/component reduction; 21 have a rederived component, finite subfamily or principal target.
 These overlapping totals must not be read as counts of fully reduced papers.
 
-The conservative **principal-result set has 5 works: L008, L030, L032, L035, L066**.
+The conservative **principal-result set has 7 works: L008, L030, L032, L035, L066, L104, N001**.
 Proposed conjecture proofs are separate and do not increase that count.
 
 ## Exact reductions and proposed consequences
@@ -59,15 +60,22 @@ Proposed conjecture proofs are separate and do not increase that count.
 | L052 | [Highly symmetric hypertopes](https://ria.ua.pt/bitstream/10773/16681/1/2016DFW.pdf) | Problems 9.3 and 9.4 under the standard parabolic coset construction | [proposed new result](research/case_study/coset_geometry_obstructions.md). External review and priority verification. Other questions and principal constructions are not all rederived. |
 | L063 | [The rank two geometries of the PSL(2,q) groups : part II](https://amc-journal.eu/index.php/amc/article/download/181/241) | Complete A4-A4 family in Table 5; relevant Table 2 comparison | [component rederived](research/case_study/classification_compression.md). Other subgroup rows and completeness remain. Composite-degree extensions are not RWPRI. The ordered/unordered discrepancy is version-specific. |
 | L066 | [On pairs of commuting involutions in Sym(n) and Alt(n)](https://math.uni.lu/kiefer/Publications/Involutions.pdf) | All four principal counting and degree-six polyhedron results | [principal results rederived](research/case_study/commuting_pairs_compression.md). External review; no priority claim for classical orbit, Burnside or Möbius ingredients. |
+| L089 | [On inductively minimal geometries that satisfy the intersection property](https://leemans.dimitri.web.ulb.be/abstracts/imgip.html) | Advertised characterization of inductively minimal geometries with geometric intersection property | [component rederived](research/case_study/phase5_tree_cuts.md). Full 2005 text unavailable; target is the primary abstract and exact earlier restatement. Foundational classification retained, no new-resolution claim. |
 | L092 | [A generalization of a construction due to Van Nypelseer](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.46/no.2/b46h2lee.pdf) | Conjecture 1, Section 4.6, p. 569 | [proposed new result](research/case_study/hermitian_unital_proof.md). External review and priority verification. Other constructions and applications in the paper are not all rederived; Lean checks abstract connectivity only. |
 | L096 | [An algorithmic analysis of the intersection property](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/2108DB59271CED59B950340F28252A28/S1461157000001133a.pdf/div-class-title-an-algorithmic-analysis-of-the-intersection-property-div.pdf) | Sections 2-3 shadow-IP decision problem and known rank-two characterization | [generic encoding](research/case_study/phase4_shadow_ip.md). The original Magma implementation and sporadic classification tables are not rerun. No performance claim or whole-paper reproduction is made. |
 | L102 | [RWPRI and (2T)_1 flag-transitive linear spaces](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.44/no.1/b44h1bue.pdf) | Section 5.1.2 uniqueness question; existence and uniqueness of spaces in Theorem 6.1(1) | [proposed new result](research/case_study/phase4_old_problem_audit.md). External review and priority verification. This identifies the spaces in the narrow source case, not every possible acting subgroup, all flag-transitive spread spaces, or the other principal classification cases. |
-| L104 | [The residually weakly primitive geometries of J_2](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v21n1p77/585) | Section 3 rank-two census; complete thin all-rank classification; validity of the 19 rank-three and one thick rank-four objects | [finite subfamily reproduced](research/case_study/classification_compression.md). Full nonthin exhaustion is not rederived. The source's rank-three and thick rank-four lists have verified witnesses and fusion, not an independent completeness proof. |
+| L104 | [The residually weakly primitive geometries of J_2](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v21n1p77/585) | Complete principal census: 8 rank-two, 19 rank-three, 3 rank-four geometries, and no higher ranks | [principal results rederived](research/case_study/phase5_j2_theory.md). The subgroup catalogue and every secondary supplement annotation are not rederived. No end-to-end Lean formalization; external review remains. |
+| L109 | [The residually weakly primitive geometries of the Dihedral Groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/d2n.html) | Complete all-rank three-family classification and counts quoted in L110 Theorem 4; rank-two theorem quoted in L114 Theorem 5.1 | [component rederived](research/case_study/phase5_dihedral_classification.md). L109 full text remains unavailable; its complete all-rank principal classification is available in the primary L110 restatement, but every original statement has not been compared. No new-conjecture or whole-paper claim. |
+| L110 | [The residually weakly primitive pre-geometries of the Suzuki simple groups](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v20n1p1/995) | Rank-three shapes R1–R13: exact bare-embedding and RWPRI decisions | [partial progress](research/case_study/phase5_suzuki_higher.md). Higher-rank constructions, all relative positions and flag transitivity remain. External priority and review unverified; subgroup realization alone is not geometric classification. |
+| L114 | [The rank 3 geometries of the simple Suzuki groups Sz(q)](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v19n1p43/837) | Theorems 5.3 and 5.5: every displayed parameter shape; final p.61 realization question | [proposed new result](research/case_study/phase5_suzuki_higher.md). Full flag transitivity, all relative positions and geometric isomorphism classification remain. Publication priority is unverified and external review outstanding; this is a proposed resolution of the displayed-lattice realization question. |
 | L115 | [The Rank 2 Geometries of the Simple Suzuki Groups Sz(q)](https://emis.de/ft/11479) | Corollary 8.1: 29 rank-two geometries of Sz(8) | [finite subfamily reproduced](research/case_study/classification_compression.md). All-q Theorem 7.1 is not rederived. A finite corollary does not give whole-paper coverage. |
+| N001 | [Some properties of inductively minimal geometries](https://doi.org/10.36045/bbms/1103409005) | Four parts of Theorem 1: RWPRI/(2T)1/(IP)2, even-rank PRI, QPRI/middle criterion, and RPRI/complete-diagram criterion | [principal results rederived](research/case_study/phase5_tree_cuts.md). Foundational classification remains an input; no end-to-end Lean proof or numerical compression ratio. External review remains. |
+| N002 | [On the number of inductively minimal geometries](https://doi.org/10.1016/S0304-3975(00)00228-0) | Tree correspondence announced in the primary abstract | [component rederived](research/case_study/phase5_tree_cuts.md). Source full text unavailable; no full-paper comparison or novel resolution of its historical direct-construction question. |
+| N003 | [Independent generating sets and geometries for symmetric groups](https://maths.qmul.ac.uk/~pjc/preprints/igsgsn.pdf) | Tree-transposition branch of Corollary 2.3 and Theorem 3.2 | [component rederived](research/case_study/phase5_tree_cuts.md). Parity-twisted branch, full maximal-independent-generator classification and other general group results are not rederived. |
 
 ## The 1996–2006 track
 
-Five older entries now have explicit active reductions or proof targets:
+The older entries now include these explicit reductions and proof targets:
 
 - **L102 (2003):** the one-dimensional affine RWPRI spread-space question has a
   proposed existence-and-uniqueness solution by cyclic semilinear descent and
@@ -76,11 +84,20 @@ Five older entries now have explicit active reductions or proof targets:
   flag-transitive spread spaces are not classified; external review and priority remain.
 - **L092 (2005):** the Hermitian-unital conjecture has a proposed uniform proof via
   an SU(2,q) torsor. This does not rederive every construction in the source paper.
-- **L104 (2002):** all eight rank-two J2 objects are reproduced. An independent
-  all-rank thin search recovers exactly the two thin rank-four geometries.
-  The 19 rank-three and one thick rank-four source objects have verified witnesses
-  and automorphism/type fusion; nonthin exhaustiveness is not rederived.
-  Complete GAP subgroup data and the stated source witnesses are retained.
+- **L104 (2002):** independent arbitrary-Borel augmentation recovers the full
+  principal 8/19/3 census and excludes higher ranks, with every branch exhausted.
+  The source geometry list is not an input; complete GAP subgroup data remain.
+- **L109 (2000):** cyclic/dihedral rank-two rigidity and CRT give an all-rank
+  arithmetic classification. Its full all-rank theorem is matched through L110; the original
+  full text is unavailable, so a whole-paper comparison remains open.
+- **N001–N003 and L089 (1998–2005):** one tree-cut derivation gives the four
+  1998 property tests, the tree correspondence, the known transposition-tree
+  geometry branch, and the advertised 2005 path/shadow-IP characterization.
+  The foundational 1997 classification is retained; source access differs by work.
+- **L114/L110 (1999–2001):** trace/torus constructions realize the prime-case
+  patterns and decides every printed composite-field pattern. Four have impossible
+  intersections; a fifth exists as an embedded lattice but fails RWPRI. Full flag
+  transitivity and embedding classification remain; priority is unverified.
 - **L115 (1998):** the 29-object Sz(8) corollary is reproduced, while the all-q
   theorem remains. Witness validity and catalogue-dependent completeness are separate.
 - **L096 (2004):** geometric shadow-IP has a Boolean witness criterion. It is
@@ -90,7 +107,7 @@ Five older entries now have explicit active reductions or proof targets:
 The source-level limitations below are retained verbatim in the JSON. L102's
 historical intake says current status was unverified; the later proof entry is a
 proposed result, not a silent rewrite of that historical search. L114's realization
-gap remains unassessed mathematically. L084 is a distinct erratum that still needs
+question now has the proposed complete displayed-lattice decisions above. L084 is a distinct erratum that still needs
 its own full text. Abstract summaries identify topics, not proved theorem reductions.
 
 | Year / ID | Work and primary link | Access / progress | Recorded source scope and remaining work |
@@ -103,20 +120,23 @@ its own full text. Abstract summaries identify topics, not proved theorem reduct
 | 1998 / L116 | [Thin geometries for the Suzuki simple group Sz(8)](https://www.math.auckland.ac.nz/~dleemans/abstracts/sz8thin.html) | abstract read; unassessed | Author abstract states 183 thin residually connected Sz(8) geometries, all rank three, with computed truncations. |
 | 1998 / L124 | [On Flag-Transitive Incidence Geometries of Rank 6 for the Mathieu Group M(12)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m12.html) | abstract read; unassessed | Author abstract excludes M12 RWPRI/IP2 geometries of rank at least six. |
 | 1998 / L125 | [The Residually Weakly Primitive Geometries of the Janko Group J(1)](https://www.math.auckland.ac.nz/~dleemans/abstracts/j1.html) | abstract read; unassessed | Author abstract classifies J1 RWPRI/IP2 geometries; later L105 reports a missing geometry, so original list needs that correction. |
+| 1998 / N001 | [Some properties of inductively minimal geometries](https://doi.org/10.36045/bbms/1103409005) | selected sections read; principal results rederived | Primary author-uploaded text: definitions, foundational Lemma 1, four-part Theorem 1 and proof components read. Publisher PDF returned an HTML challenge; no PDF identity asserted. Remaining: Foundational classification remains an input; no end-to-end Lean proof or numerical compression ratio. External review remains. |
 | 1999 / L002 | [An Atlas of Residually Weakly Primitive Geometries for Small Groups](https://leemans.dimitri.web.ulb.be/abstracts/atlas.html) | abstract read; unassessed | Author abstract and errata read; book full text not located. |
 | 1999 / L112 | [On a geometry of Ivanov and Shpectorov for the O'Nan sporadic simple group](https://www.math.auckland.ac.nz/~dleemans/abstracts/on.html) | abstract read; unassessed | Author abstract bounds O’Nan RWPRI/IP2 ranks with M11 or J1 parabolics. |
 | 1999 / L113 | [An Atlas of regular thin geometries for small groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/atlasthin.html) | abstract read; unassessed | Author abstract describes a computed atlas of regular thin geometries; thin need not mean string. |
-| 1999 / L114 | [The rank 3 geometries of the simple Suzuki groups Sz(q)](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v19n1p43/837) | selected sections read; unassessed | OCR of all21pages searched; introduction, Theorem6.1 and final paragraph p61 read. Theorems5.3–5.5 list possible rank-three RWPRI sublattices. Final paragraph explicitly leaves realization of all candidates unproved (Sz8 realized). No current-resolution claim. Remaining: Check later primary realizations and complete the geometric realization problem; current external resolution status remains unverified. |
+| 1999 / L114 | [The rank 3 geometries of the simple Suzuki groups Sz(q)](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v19n1p43/837) | selected sections read; proposed new result | OCR of all21pages searched; introduction, Theorem6.1 and final paragraph p61 read. Theorems5.3–5.5 list possible rank-three RWPRI sublattices. Final paragraph explicitly leaves realization of all candidates unproved (Sz8 realized). No current-resolution claim. Later reading: Theorems 5.3–5.5 and their case analyses read; printed pp.58–60 visually checked; Lemma3.11 and final p.61 realization qualification checked. Remaining: Full flag transitivity, all relative positions and geometric isomorphism classification remain. Publication priority is unverified and external review outstanding; this is a proposed resolution of the displayed-lattice realization question. |
 | 2000 / L006 | [Incidence Geometry](https://leemans.dimitri.web.ulb.be/abstracts/incgeom.html) | abstract read; unassessed | Author abstract read; historical2000 Magma handbook chapter not obtained. Current software documentation is not the same version. |
-| 2000 / L109 | [The residually weakly primitive geometries of the Dihedral Groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/d2n.html) | abstract read; unassessed | Author abstract states classification of RWPRI geometries of dihedral groups. |
-| 2000 / L110 | [The residually weakly primitive pre-geometries of the Suzuki simple groups](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v20n1p1/995) | full text search only; unassessed | PDF identity checked against title. Entire extracted text searched for conjectures, problems, questions, unknown cases and future work; no claim to have read every proof. |
+| 2000 / L109 | [The residually weakly primitive geometries of the Dihedral Groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/d2n.html) | abstract read; component rederived | Author abstract states classification of RWPRI geometries of dihedral groups. Remaining: L109 full text remains unavailable; its complete all-rank principal classification is available in the primary L110 restatement, but every original statement has not been compared. No new-conjecture or whole-paper claim. |
+| 2000 / L110 | [The residually weakly primitive pre-geometries of the Suzuki simple groups](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v20n1p1/995) | selected sections read; partial progress | PDF identity checked against title. Entire extracted text searched for conjectures, problems, questions, unknown cases and future work; no claim to have read every proof. Later reading: Rank-three R1–R13, higher-rank construction context and p.11 flag-transitivity uncertainty checked; exact hypotheses compared with L114. Remaining: Higher-rank constructions, all relative positions and flag transitivity remain. External priority and review unverified; subgroup realization alone is not geometric classification. |
 | 2000 / L111 | [New geometries for finite groups and polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/ngeo.html) | abstract read; unassessed | Author abstract describes two general construction methods under diagram hypotheses. |
 | 2001 / L106 | [On a rank five geometry of Meixner for the Mathieu group M(12)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m12b.html) | abstract read; unassessed | Author abstract constructs Meixner’s M12 rank-five geometry and establishes RWPRI/IP2. |
 | 2001 / L107 | [Some rank five geometries related to the Mathieu group M(23)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m23rk5.html) | abstract read; unassessed | Author abstract constructs six rank-five M23 geometries. |
 | 2001 / L108 | [On the Petrials of thin regular rank three geometries](https://www.math.auckland.ac.nz/~dleemans/abstracts/petrie.html) | abstract read; unassessed | Author abstract proves that a thin regular rank-three geometry with thin regular Petrial has a linear diagram. |
+| 2001 / N002 | [On the number of inductively minimal geometries](https://doi.org/10.1016/S0304-3975(00)00228-0) | abstract read; component rederived | Primary abstract and later Cameron–Cara tree-model restatement read. Full-text download unavailable in this intake; no complete source-statement comparison. Remaining: Source full text unavailable; no full-paper comparison or novel resolution of its historical direct-construction question. |
 | 2002 / L103 | [The RWPRI geometries of Sym(5) x 2](https://www.math.auckland.ac.nz/~dleemans/abstracts/s5x2.html) | abstract read; unassessed | Author abstract describes the RWPRI geometries of Sym(5) x 2 and direct-sum/extension constructions. |
-| 2002 / L104 | [The residually weakly primitive geometries of J_2](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v21n1p77/585) | full short text read; finite subfamily reproduced | PDF identity checked against title. Entire extracted text searched for conjectures, problems, questions, unknown cases and future work; no claim to have read every proof. Later reading: All five pages read by rank_stability; confirmed in the root's registry review on 2026-10-09. Section 3 counts compared in the classification reduction. Remaining: Full nonthin exhaustion is not rederived. The source's rank-three and thick rank-four lists have verified witnesses and fusion, not an independent completeness proof. |
+| 2002 / L104 | [The residually weakly primitive geometries of J_2](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v21n1p77/585) | full short text read; principal results rederived | PDF identity checked against title. Entire extracted text searched for conjectures, problems, questions, unknown cases and future work; no claim to have read every proof. Later reading: All five pages read by rank_stability; confirmed in the root's registry review on 2026-10-09. Section 3 counts compared in the classification reduction. Remaining: The subgroup catalogue and every secondary supplement annotation are not rederived. No end-to-end Lean formalization; external review remains. |
 | 2002 / L105 | [Constructing coset geometries with Magma : An application to the sporadic groups M(12) and J(1)](https://www.math.auckland.ac.nz/~dleemans/abstracts/algo.html) | abstract read; unassessed | Author abstract describes a Magma algorithm, a missed J1 geometry correcting L125, and M12 rank-five examples. |
+| 2002 / N003 | [Independent generating sets and geometries for symmetric groups](https://maths.qmul.ac.uk/~pjc/preprints/igsgsn.pdf) | full text read; component rederived | All twelve pages of the author manuscript read. Tree branch is rederived; maximal independent generator classification, parity-twisted branch and Whiston/CFSG dependencies are retained. Later reading: All twelve pages of the author manuscript read; publication identity checked against the author catalogue and publisher. Remaining: Parity-twisted branch, full maximal-independent-generator classification and other general group results are not rederived. |
 | 2003 / L005 | [Residually weakly primitive geometries of small sporadic and almost simple groups : a synthesis](https://leemans.dimitri.web.ulb.be/abstracts/synthese.html) | metadata and access only; unassessed | Exact-title author catalogue/OpenAlex and primary publisher or institutional locations searched; no accessible primary full text obtained. No inference that the work contains no open problems. |
 | 2003 / L099 | [On a rank four geometry for the Hall-Janko sporadic group](https://www.sciencedirect.com/science/article/pii/S0097316502000225) | abstract read; unassessed | Publisher abstract constructs a rank-four Hall–Janko geometry from the degree63 graph on100points; no full-text audit. |
 | 2003 / L100 | [Geometries for the group PSL(3,4)](https://www.math.auckland.ac.nz/~dleemans/abstracts/psl34.html) | abstract read; unassessed | Author abstract describes RWPRI/IP2 classification and constructions for PSL(3,4). |
@@ -130,7 +150,7 @@ its own full text. Abstract summaries identify topics, not proved theorem reduct
 | 2004 / L098 | [The residually weakly primitive geometries of M_23](https://www.math.auckland.ac.nz/~dleemans/abstracts/m23.html) | abstract read; unassessed | Correct author abstract is M23 classification. Earlier catalogue_L098.pdf is a wrong J2 paper and must not count. |
 | 2005 / L087 | [Two rank six geometries for the Higman-Sims sporadic group](https://www.sciencedirect.com/science/article/pii/S0012365X05000221) | abstract read; unassessed | Publisher abstract constructs two rank-six Higman–Sims geometries, each with five M22 rank-five residues. |
 | 2005 / L088 | [On the thin regular geometries of rank four for the Janko group J(1)](https://msp.org/iig/2005/1-1/iig-v1-n1-p08-s.pdf) | full text search only; unassessed | PDF identity checked against title. Entire extracted text searched for conjectures, problems, questions, unknown cases and future work; no claim to have read every proof. |
-| 2005 / L089 | [On inductively minimal geometries that satisfy the intersection property](https://leemans.dimitri.web.ulb.be/abstracts/imgip.html) | metadata and access only; unassessed | Author abstract link returned404. ULB deposited Elsevier_23581.pdf returned login HTML, not article PDF; metadata and access attempts only. |
+| 2005 / L089 | [On inductively minimal geometries that satisfy the intersection property](https://leemans.dimitri.web.ulb.be/abstracts/imgip.html) | metadata and access only; component rederived | Author abstract link returned404. ULB deposited Elsevier_23581.pdf returned login HTML, not article PDF; metadata and access attempts only. Remaining: Full 2005 text unavailable; target is the primary abstract and exact earlier restatement. Foundational classification retained, no new-resolution claim. |
 | 2005 / L090 | [A family of geometries related to the Suzuki tower](https://www.math.auckland.ac.nz/~dleemans/abstracts/suz.html) | abstract read; unassessed | Author abstract describes a five-geometry chain related to the Suzuki tower. |
 | 2005 / L091 | [The residually weakly primitive geometries of HS](https://ajc.maths.uq.edu.au/pdf/33/ajc_v33_p231.pdf) | selected sections read; unassessed | OCR of all six pages searched, introductory and section-four problem contexts read. Mentions partially answering an older open problem via Hoffman–Singleton graph extensions; section-four natural question is answered in the paper. No new standalone unresolved conjecture identified. |
 | 2005 / L092 | [A generalization of a construction due to Van Nypelseer](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.46/no.2/b46h2lee.pdf) | selected sections read; proposed new result | Entire extracted text searched; constructions 1–3, Lemmas 1–3 and section4.6 read. Conjecture1 on p569: Γ(U_H(q)) is firm, residually connected and flag-transitive for all q>2. Source checks q≤16. Historical conjecture; present external resolution status not established. A new proof attempt is recorded separately. Later reading: Construction and conjecture were previously read in primary full text; existing full project proof re-read for this intake. Remaining: External review and priority verification. Other constructions and applications in the paper are not all rederived; Lean checks abstract connectivity only. |
@@ -238,7 +258,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | L086 | 2006 | [An atlas of abstract regular polytopes for small groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/atlaspoly.html) | abstract read | unassessed |
 | L087 | 2005 | [Two rank six geometries for the Higman-Sims sporadic group](https://www.sciencedirect.com/science/article/pii/S0012365X05000221) | abstract read | unassessed |
 | L088 | 2005 | [On the thin regular geometries of rank four for the Janko group J(1)](https://msp.org/iig/2005/1-1/iig-v1-n1-p08-s.pdf) | full text search only | unassessed |
-| L089 | 2005 | [On inductively minimal geometries that satisfy the intersection property](https://leemans.dimitri.web.ulb.be/abstracts/imgip.html) | metadata and access only | unassessed |
+| L089 | 2005 | [On inductively minimal geometries that satisfy the intersection property](https://leemans.dimitri.web.ulb.be/abstracts/imgip.html) | metadata and access only | component rederived |
 | L090 | 2005 | [A family of geometries related to the Suzuki tower](https://www.math.auckland.ac.nz/~dleemans/abstracts/suz.html) | abstract read | unassessed |
 | L091 | 2005 | [The residually weakly primitive geometries of HS](https://ajc.maths.uq.edu.au/pdf/33/ajc_v33_p231.pdf) | selected sections read | unassessed |
 | L092 | 2005 | [A generalization of a construction due to Van Nypelseer](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.46/no.2/b46h2lee.pdf) | selected sections read | proposed new result |
@@ -253,17 +273,17 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | L101 | 2003 | [The residually weakly primitive geometries of M_22](https://www.math.auckland.ac.nz/~dleemans/abstracts/m22.html) | abstract read | unassessed |
 | L102 | 2003 | [RWPRI and (2T)_1 flag-transitive linear spaces](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.44/no.1/b44h1bue.pdf) | selected sections read | proposed new result |
 | L103 | 2002 | [The RWPRI geometries of Sym(5) x 2](https://www.math.auckland.ac.nz/~dleemans/abstracts/s5x2.html) | abstract read | unassessed |
-| L104 | 2002 | [The residually weakly primitive geometries of J_2](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v21n1p77/585) | full short text read | finite subfamily reproduced |
+| L104 | 2002 | [The residually weakly primitive geometries of J_2](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v21n1p77/585) | full short text read | principal results rederived |
 | L105 | 2002 | [Constructing coset geometries with Magma : An application to the sporadic groups M(12) and J(1)](https://www.math.auckland.ac.nz/~dleemans/abstracts/algo.html) | abstract read | unassessed |
 | L106 | 2001 | [On a rank five geometry of Meixner for the Mathieu group M(12)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m12b.html) | abstract read | unassessed |
 | L107 | 2001 | [Some rank five geometries related to the Mathieu group M(23)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m23rk5.html) | abstract read | unassessed |
 | L108 | 2001 | [On the Petrials of thin regular rank three geometries](https://www.math.auckland.ac.nz/~dleemans/abstracts/petrie.html) | abstract read | unassessed |
-| L109 | 2000 | [The residually weakly primitive geometries of the Dihedral Groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/d2n.html) | abstract read | unassessed |
-| L110 | 2000 | [The residually weakly primitive pre-geometries of the Suzuki simple groups](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v20n1p1/995) | full text search only | unassessed |
+| L109 | 2000 | [The residually weakly primitive geometries of the Dihedral Groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/d2n.html) | abstract read | component rederived |
+| L110 | 2000 | [The residually weakly primitive pre-geometries of the Suzuki simple groups](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v20n1p1/995) | selected sections read | partial progress |
 | L111 | 2000 | [New geometries for finite groups and polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/ngeo.html) | abstract read | unassessed |
 | L112 | 1999 | [On a geometry of Ivanov and Shpectorov for the O'Nan sporadic simple group](https://www.math.auckland.ac.nz/~dleemans/abstracts/on.html) | abstract read | unassessed |
 | L113 | 1999 | [An Atlas of regular thin geometries for small groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/atlasthin.html) | abstract read | unassessed |
-| L114 | 1999 | [The rank 3 geometries of the simple Suzuki groups Sz(q)](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v19n1p43/837) | selected sections read | unassessed |
+| L114 | 1999 | [The rank 3 geometries of the simple Suzuki groups Sz(q)](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v19n1p43/837) | selected sections read | proposed new result |
 | L115 | 1998 | [The Rank 2 Geometries of the Simple Suzuki Groups Sz(q)](https://emis.de/ft/11479) | selected sections read | finite subfamily reproduced |
 | L116 | 1998 | [Thin geometries for the Suzuki simple group Sz(8)](https://www.math.auckland.ac.nz/~dleemans/abstracts/sz8thin.html) | abstract read | unassessed |
 | L117 | 1997 | [Two Nearly Isomorphic Groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/twoiso.html) | abstract read | unassessed |
@@ -295,6 +315,9 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | F015 | 2023 | [Infinite Families of Hypertopes from Centrally Symmetric Polytopes](https://www.combinatorics.org/ojs/index.php/eljc/article/download/v30i2p20/pdf/) | selected sections read | unassessed |
 | F016 | 2025 | [Symmetric polytopes whose automorphism groups are 2-groups](https://arxiv.org/pdf/2512.15511) | selected sections read | unassessed |
 | F017 | 2018 | [LCD codes from adjacency matrices of graphs](https://www.math.clemson.edu/~keyj/Key/LCD_KeyRod.pdf) | selected sections read | unassessed |
+| N001 | 1998 | [Some properties of inductively minimal geometries](https://doi.org/10.36045/bbms/1103409005) | selected sections read | principal results rederived |
+| N002 | 2001 | [On the number of inductively minimal geometries](https://doi.org/10.1016/S0304-3975(00)00228-0) | abstract read | component rederived |
+| N003 | 2002 | [Independent generating sets and geometries for symmetric groups](https://maths.qmul.ac.uk/~pjc/preprints/igsgsn.pdf) | full text read | component rederived |
 
 ## Updating the map
 

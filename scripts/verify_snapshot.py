@@ -41,7 +41,7 @@ def lean_reports():
         assert "sorryAx" not in report.get("stdout", ""), source.name
         assert not re.search(r"\b(sorry|admit)\b", source.read_text()), source.name
         result.append(source.name)
-    assert len(result) == 9, result
+    assert len(result) == 10, result
     return result
 
 
@@ -76,7 +76,7 @@ def main():
             rows.append({"file": rel, "sha256": digest(path), "bytes": path.stat().st_size})
     if args.write_manifest:
         MANIFEST.write_text(json.dumps({
-            "date": "2026-10-09",
+            "date": "2026-10-10",
             "scope": "Public file integrity and saved Lean report/source agreement; not a new execution of all mathematical proofs or checks.",
             "lean_reports": checked,
             "external_sources": "Source full texts and GAP library inputs are intentionally excluded; see research/case_study/sources/source_assets.json.",
