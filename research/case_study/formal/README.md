@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are thirteen certificates. To compile them on another machine, install Git,
+There are fourteen certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the thirteen modules, but does not produce the runner's JSON reports.
+way to compile the fourteen modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,7 +95,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all thirteen source hashes match the historical successful reports
+This checks that all fourteen source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. The saved runs print only the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
@@ -196,3 +196,10 @@ coordinates, all cosets meeting its coset have a common point there. The
 converse is proved as well. Neither normality nor finiteness is assumed.
 The [scope note](CosetCoordinates.scope.md) separates this formal attachment
 lemma from the written Chinese-remainder and Suzuki descent instantiations.
+
+[IntertwinerSeparation.lean](IntertwinerSeparation.lean) proves additive
+commutator transport across an intertwiner. If the left pair commutes and
+the right additive commutator has a right inverse, the intertwiner is zero.
+Both theorems are axiom-free as reported by Lean. The
+[scope note](IntertwinerSeparation.scope.md) separates this ring lemma from
+the written endpoint normal forms and their complete case coverage.

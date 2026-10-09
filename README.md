@@ -47,6 +47,8 @@ and the [theorem-by-theorem scope table](research/case_study/torsor_compression_
 
 These are internally reviewed research drafts. Proposed new resolutions have
 not received external peer review, and publication priority remains unverified.
+The proposed PSL₄ resolution has a separate
+[dated literature audit](research/case_study/phase8_psl4_status_audit.md).
 
 | Result | What is established here | Evidence |
 |---|---|---|
@@ -55,7 +57,7 @@ not received external peer review, and publication priority remains unverified.
 | Suzuki graph pentagons | Proposed uniform proof of exactly \(q-1\) pentagons per edge | [Proof](research/case_study/suzuki_cycle_proof.md); Lean checks the complete matrix-membership equivalence; independent coset graph |
 | Remaining PSL₂ chiral construction | Proposed proofs of the two field/intersection conjectures and their classification consequence | [Proof chain](research/case_study/psl2_chiral_corollary.md); exact finite-field witnesses; partial Lean certificates |
 | Commuting involutions | All four principal results of one counting paper rederived, followed by an all-rank extension | [Reduction](research/case_study/commuting_pairs_compression.md); orbit formulas and exact exceptional-case checks |
-| Odd-characteristic PSL₄ rank | Uniform upper bound six and a complete rank-five exclusion. Rank six remains unresolved, so the conjectural maximum four is not yet proved | [Rank-five proof](research/case_study/phase7_psl4_zero_product.md); [upper bound](research/case_study/phase3_psl4_rank7.md); independent internal reviews, exact symbolic checks and a local formal lemma |
+| Odd-characteristic PSL₄ rank | Complete proposed proof of maximum rank four for every odd q; a broader theorem forces a bilinear form for irreducible four-dimensional projective string actions of rank at least five | [Rank-six proof and dependency map](research/case_study/phase8_psl4_rank6.md); independent internal reviews, exact symbolic checks and two partial Lean components. Published rank-four existence is retained; priority remains unverified |
 | Hypertope order bound | Uniform classes now include metacyclic derived subgroups; exhaustive auxiliary certificate verifies the conjecture through group order \(2^{12}\) | [Metacyclic theorem and finite extension](research/case_study/phase7_cyclic_tpp.md); independent proof review and exact checks. The full conjecture remains unresolved |
 | A 2003 spread-space question | Proposed proof that locally primitive spreads in the one-dimensional affine semilinear setting are Desarguesian | [Semilinear descent](research/case_study/phase4_old_problem_audit.md); exact subspace and stabilizer checks |
 | A 2004 geometric intersection algorithm | Exact flag-constrained covering criterion for shadow-IP and its residue variants; rank-two characterization rederived | [Proof and scope](research/case_study/phase4_shadow_ip.md); exhaustive small-structure comparisons |
@@ -67,6 +69,7 @@ not received external peer review, and publication priority remains unverified.
 | All truncations of the tree family | Weighted contraction gives exact RWPRI, local two-transitivity, rank-two and full intersection criteria | [Weighted-tree theorem](research/case_study/phase6_weighted_tree.md); exact finite audits and Lean witnesses within retained ranks. The original 2003 full-paper comparison remains |
 | A missing geometry in a 1999 classification | Exact matrices in Sz(2¹⁵) give a firm, residually connected, flag-transitive RWPRI geometry absent from the asserted exhaustive list | [Counterexample and rank-four extension](research/case_study/phase6_suzuki_realization.md); exact intersections and internal independent review; Lean proves the abstract Helly implication. Corrected completeness and publication priority remain |
 | Suzuki geometries in every rank | Field descent and cyclic coordinates give an unconditional all-rank family, recover the full parameterized existence assertions of two older constructions, and complete the earlier rank-four geometry proof | [All-rank derivation](research/case_study/phase7_suzuki_descent.md); [full two-family argument](research/case_study/phase7_suzuki_torus_families.md); exact checks and [Lean attachment lemma](research/case_study/formal/CosetCoordinates.scope.md). Classical descent and subgroup structure remain explicit inputs |
+| Two further older construction families | A sharp pure-subfield rank criterion recovers Construction 11 and its omitted repeated-prime boundary; an exact scalar-subspace overgroup lattice rules out RWPRI for every intended Construction 10 intersection pattern | [Uniform proof and literal source scope](research/case_study/phase8_suzuki_subfields.md); independent mathematical/source review and exact matrix checks. Arbitrary other intersections and a full replacement classification remain |
 | The printed Suzuki realization questions | Uniform decisions for every displayed parameter shape | [Per-shape decision table](research/case_study/phase5_suzuki_higher.md#e-exact-scope-of-the-proposed-resolution). Its former assumption that the source list was exhaustive is superseded by the counterexample above |
 
 Further notes cover affine lattice families, Hermitian-unital connectivity,
@@ -117,7 +120,7 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirteen Lean modules certify specified components, with no `sorry` in the checked
+Fourteen Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.

@@ -593,9 +593,30 @@ $(1,2)$ and $(2,2)$. Common images, kernels and weight spaces either force
 reducibility or produce an alternating form preserved by all five
 generators. The proof treats odd characteristic uniformly, including three;
 exact symbolic checks corroborate the displayed matrix identities. This
-excludes rank five. Rank six is still a separate case: a rank-five
-parabolic inside a rank-six geometry need not generate the whole group.
-Thus the conjectural maximum four remains unresolved here.
+excludes rank five. A rank-five parabolic inside a rank-six geometry need
+not generate the whole group, so rank six requires its own argument.
+
+The [rank-six extension](research/case_study/phase8_psl4_rank6.md) supplies
+that argument. There are now two middle generators, each centralizing an
+entire endpoint pair. In a reducible endpoint module, an adjacent pair
+commutes on one summand but has an invertible additive commutator on the
+other. A matrix block intertwining those actions must therefore vanish:
+
+$$AC=CX,\quad BC=CY
+\quad\Longrightarrow\quad (AB-BA)C=C(XY-YX).$$
+
+If $AB=BA$ and $XY-YX$ is invertible, then $C=0$. Lean certifies this
+abstract implication. The endpoint normal forms supply its hypotheses;
+the other cases force a tensor form or a common image or kernel. This
+completes the proposed maximum-rank-four proof, retaining the published
+rank-four existence construction.
+
+The structural conclusion is broader: a finite irreducible projective
+string action in dimension four, in odd characteristic, with noncommuting
+adjacent generators and rank at least five preserves a nondegenerate
+symmetric or alternating bilinear form up to scalar. This theorem is
+proved by the same case analysis; its full normal-form coverage remains
+written mathematics, independently reviewed internally.
 
 **Vandermonde cycle counts.** A coordinate change puts the classical Wenger
 graph $W_2(q)$ into the incidence equations
@@ -904,6 +925,24 @@ quotients still have distinct prime indices, so ordinary CRT supplies the
 coset coordinates. Other relative embeddings and a corrected exhaustive
 classification remain.
 
+The same descent argument [settles the canonical pure-subfield family](research/case_study/phase8_suzuki_subfields.md).
+For distinct selected relative primes $a_1,\ldots,a_k$, put
+$e=n/\prod a_i$. The geometry is always thick, residually connected and
+flag transitive; it is RWPRI exactly when $e>1$. Thus its sharp rank bound
+is $\min(\omega(n),\Omega(n)-1)$, where the two functions count distinct
+prime factors and factors with multiplicity. This recovers Construction 11
+and includes a repeated-prime boundary omitted by its printed bound.
+
+A second application turns a maximality question into a vector-space
+calculation. Inside the mixed parabolic $Q=Z_qU_tH_t$, every relevant
+intersection subgroup $H$ surjects onto $Q/Z_q$. Its overgroups are exactly
+$Z_VH$, where $V$ ranges over the $\mathbb F_t$-subspaces containing
+$H\cap Z_q$. Maximality is therefore equivalent to codimension one.
+The prescribed intersections in Construction 10 always have larger
+codimension, so none can satisfy the required RWPRI residue condition.
+This obstruction applies to every embedding with those intersection types,
+although the bare intersection pattern itself is realizable.
+
 ## 12. A cyclic extension can obstruct a counterexample
 
 The cyclic-extension idea is useful for lower bounds as well as constructions.
@@ -982,12 +1021,13 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirteen Lean certificates](research/case_study/formal/README.md) cover
+The [fourteen Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
-and the rank-three factorization and arbitrary-family coordinate-attachment
-implications for coset Helly.
+the rank-three factorization and arbitrary-family coordinate-attachment
+implications for coset Helly, and separation of matrix intertwiners by an
+invertible additive commutator.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.

@@ -87,11 +87,11 @@ UPDATES = {
         "psl2_square_proof.md;psl2_chiral_corollary.md;psl2_square_witnesses_independent.json;formal/FieldIntersection.lean;formal/TransvectionIntersection.lean",
         "External review and priority verification. The character argument and full geometric consequence are not formalized; other published principal results are not all rederived."),
     "L048": (
-        "partial_progress", "Odd-characteristic PSL4 maximum rank; exact conjecture read in L120, Conjecture 2",
-        "Projective involution commutator forms and Pauli supports give upper bound six. Multiplicative Jordan decomposition, square-zero endpoint algebras and simultaneous splitting give a complete rank-five exclusion.",
-        "Elementary-abelian projective representation dimension bound; Written finite-field/projective identifications",
-        "phase3_psl4_rank7.md;phase3_psl4.md;phase7_psl4.md;phase7_psl4_zero_product.md;phase7_psl4_audit.json;phase7_psl4_zero_product_audit.json;formal/StringIntersection.lean;psl4_search_results.md",
-        "Rank six remains, so maximum rank four is not proved. L048 full text was unavailable; progress through the survey does not imply it was read. External review and priority remain."),
+        "proposed_new_result", "Odd-characteristic PSL4 maximum rank four; exact conjecture read in L120, Conjecture 2, Section 5.7",
+        "Projective commutator forms, Pauli supports, endpoint Jordan algebras and a three-endpoint intertwiner obstruction exclude every rank above four. The same proof gives a bilinear-form alternative for finite irreducible connected projective string actions in dimension four.",
+        "Published Brooksbank-Leemans rank-four existence; Elementary-abelian projective representation dimension bound; Written finite-field/projective identifications",
+        "phase8_psl4_rank6.md;phase3_psl4_rank7.md;phase3_psl4.md;phase7_psl4.md;phase7_psl4_zero_product.md;phase7_psl4_zero_product_audit.json;formal/StringIntersection.lean;formal/IntertwinerSeparation.lean;formal/IntertwinerSeparation.scope.md",
+        "Complete written argument with internal independent review and exact symbolic checks; publication priority and external review remain. The original L048 rank-four construction is retained, not rederived; this is no whole-paper reduction. Lean formalizes specified components only."),
     "L050": (
         "component_rederived", "Orthogonality, LCD and complement-dual assertions",
         "Adjacency identities and complementary projections over F3.",
@@ -177,11 +177,11 @@ UPDATES = {
         "phase5_dihedral_classification.md;phase5_dihedral_check.json;phase5_dihedral_audit.md;phase5_dihedral_intake.json",
         "L109 full text remains unavailable; its complete all-rank principal classification is available in the primary L110 restatement, but every original statement has not been compared. No new-conjecture or whole-paper claim."),
     "L110": (
-        "partial_progress", "Rank-three shape decisions; rank-four geometry with Construction 6 parabolic types; all admissible parameterized existence assertions of Constructions 8 and 9",
-        "One binary torus gives compatible field intersections and elementary prime choices; Lang descent proves subfield-coset Helly, and independent coset coordinates attach the torus normalizer. Exact maximality and residue calculations give thick FT/RC/RWPRI geometries in every rank.",
-        "Lang–Steinberg surjectivity; Standard exceptional Suzuki endomorphism; Cyclic nonsplit tori and classical normalizer/subfield maximality; Exact source parameter restrictions",
-        "phase7_suzuki_descent.md;phase7_suzuki_torus_families.md;phase7_suzuki_intake.json;formal/CosetCoordinates.lean;formal/CosetCoordinates.scope.md;phase6_suzuki_realization.md;phase5_suzuki_higher.md",
-        "A corrected exhaustive classification, other higher-rank constructions and relative embedding classes remain. The two entire parameterized existence assertions are recovered, including overlapping-prime cases, with FT and RC for their canonical realizations; no classification of all embeddings. Priority and external review remain."),
+        "partial_progress", "Rank-three shape decisions; rank-four Construction 6 types; all parameterized existence assertions of Constructions 8,9,11; uniform nonmaximality for intended Construction 10; literal Theorem 5 omitted pure-subfield boundary",
+        "Compatible binary tori, Lang descent and independent coset coordinates give all-rank geometries. Pure subfields are RWPRI exactly when the bottom exponent exceeds one. Mixed-parabolic overgroups form a scalar-subspace lattice, uniformly obstructing Construction 10's prescribed intersections.",
+        "Lang–Steinberg surjectivity; Standard exceptional Suzuki endomorphism; Classical torus/subfield maximality and involution centralizers; Schur–Zassenhaus complement conjugacy; Exact source parameter restrictions",
+        "phase8_suzuki_subfields.md;phase8_suzuki_subfields_intake.json;phase7_suzuki_descent.md;phase7_suzuki_torus_families.md;phase7_suzuki_intake.json;formal/CosetCoordinates.lean;formal/CosetCoordinates.scope.md;phase6_suzuki_realization.md;phase5_suzuki_higher.md",
+        "A corrected exhaustive classification, other higher-rank constructions and arbitrary relative embedding classes remain. Construction 10 bare intersections exist but fail RWPRI; its geometry/FT is not asserted. Original whole-paper reduction, publication priority and external review remain."),
     "L114": (
         "proposed_new_result", "Theorem 5.5 exhaustiveness: explicit omitted geometry in Sz(2^15); decisions for every printed shape in Theorems 5.3 and 5.5",
         "A common binary F16 algebra gives commuting order-13/order-41 matrices, with exact intersections 52,164,20 and 4. Classical maximality proves RWPRI; factorization proves flag transitivity. The earlier per-shape decisions remain separate.",

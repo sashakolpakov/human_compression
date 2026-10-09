@@ -62,6 +62,14 @@ Their certificates record precise scopes and retained catalogue inputs.
 The [phase-seven review record](phase7_review.md) distinguishes fresh
 executions, full written-proof reviews and artifact-integrity checks.
 
+The fourteenth certificate, IntertwinerSeparation, proves a general ring
+criterion forcing an intertwiner to vanish. Its two theorems report no
+axioms. Matrix normal forms and their exhaustive coverage remain separate
+written inputs; this is not an end-to-end maximum-rank formalization.
+The [phase-eight review record](phase8_review.md) records the complete
+proposed rank proof, its broader form alternative and the two additional
+older construction analyses.
+
 [Measurement](../MEASUREMENT.md) defines future quantitative accounting and
 the separate status of new resolutions. No corpus ratio or infinity marker
 is assigned by this publication snapshot.

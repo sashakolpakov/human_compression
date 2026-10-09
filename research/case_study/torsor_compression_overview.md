@@ -50,7 +50,7 @@ an entire paper.
 | L104 (2002), full principal census in every rank | Arbitrary-Borel maximal-residue augmentation, normalizer panel actions and automorphism/type fusion | Complete 8/19/3 census and higher-rank exclusion independently reproduced, conditional on TomLib; original geometry lists are not inputs |
 | L109 (2000), dihedral classification | Rank-two rigidity, prime-index subgroup arithmetic and CRT Helly | Complete published all-rank theorem and counts matched through L110 Theorem4; original full-paper comparison still unavailable |
 | N001–N003 and L089 (1998–2005), symmetric-group tree geometries | Forest component groups, laminar subset flags, balanced cuts and Boolean shadow witnesses | Four 1998 principal property tests and specified tree/path results rederived; foundational 1997 classification retained and source-access limits explicit |
-| L114/L110 (1999–2001), Suzuki subgroup realizations | Normalizer uniqueness, field intersections, trace transversal and invariant-subspace obstruction | Proposed decisions for every printed parameter shape: four impossible intersections; one further embedded pattern fails RWPRI; all others realized. Candidate completeness retained; full geometric classification and external priority unresolved |
+| L114/L110 (1999–2001), Suzuki subgroup realizations | Normalizer uniqueness, field intersections, trace transversal and invariant-subspace obstruction | Proposed decisions for every printed parameter shape: four impossible intersections; one further embedded pattern fails RWPRI; all others realized. Candidate completeness was subsequently disproved and withdrawn; a full replacement classification and external priority remain unresolved |
 | L066, *On pairs of commuting involutions in Sym(n) and Alt(n)*, all four principal results | Five orbit multiplicities for C2²-actions, two rational generating functions, one degree-six orbit certificate | All principal counts and both S6/A6 polyhedron conclusions recovered; standard automorphism theorems remain inputs |
 | L032, *On regular polytopes of 2-power order*, Theorem 1.2 | Explicit square-grid seed plus independent dihedral factors | Whole principal all-rank existence theorem; no classification of every group |
 | L030, *An infinite family of locally X graphs based on incidence geometries*, principal construction and parameters | The single tensor relation K_r tensor KG(N,k), replacement distances and a spectral automorphism argument | Construction, residues, diagram and full graph automorphism group recovered; two source displays corrected |
@@ -140,9 +140,13 @@ in [its audit](phase3_psl4_rank7_audit.md), now reduces the odd-q PSL4 upper
 bound to six. The later [endpoint reductions](phase7_psl4.md) and
 [zero-product classification](phase7_psl4_zero_product.md) exclude rank five
 by common-form and invariant-subspace arguments, with independent internal
-review and exact symbolic checks. Rank six and publication priority remain
-unresolved. The Pauli-support and module-classification arguments remain
-written proofs.
+review and exact symbolic checks. The subsequent [rank-six proof](phase8_psl4_rank6.md)
+completes the proposed maximum-rank-four argument, retaining published
+rank-four existence, while publication priority remains unverified. It also
+proves a bilinear-form alternative for finite irreducible projective string
+actions in dimension four and odd characteristic. The new Lean
+intertwiner-separation lemma checks one algebraic implication; the
+Pauli-support and module-classification arguments remain written proofs.
 
 ## Later extensions and a withdrawn completeness assumption
 
@@ -185,6 +189,13 @@ aligns the finite subfields, and an elementary valuation argument supplies
 all needed distinct prime factors. Classical descent and Suzuki structure
 remain inputs; the result does not claim an exhaustive classification.
 
+The [pure-subfield and mixed-center extension](phase8_suzuki_subfields.md)
+recovers every canonical Construction 11 parameter and identifies its sharp
+rank bound, including the omitted repeated-prime boundary. For Construction
+10, the relevant overgroups form a lattice of scalar subspaces. Its
+prescribed intersections have codimension greater than one, so every such
+embedding fails RWPRI, although the bare intersection lattice exists.
+
 The same [panel engine now covers M22 and M23](phase7_sporadic_theory.md),
 with 360 exhausted stabilizer anchors and 105 independently recognized
 witnesses. Both primary summary tables and the archived higher-rank lists
@@ -198,7 +209,7 @@ range through order2^12. The unrestricted conjecture remains unresolved.
 
 ## Evidence and limits
 
-Thirteen [Lean modules](formal/README.md) compile with the pinned toolchain and
+Fourteen [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -213,7 +224,7 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker additionally covers the four later modules and their
+public snapshot checker additionally covers the five later modules and their
 successful reports. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 

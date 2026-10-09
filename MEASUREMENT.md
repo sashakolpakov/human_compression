@@ -100,19 +100,25 @@ The main proposed-resolution targets to assess are:
 | L092, Conjecture 1 | Hermitian-unital residue connectivity | [Proof](research/case_study/hermitian_unital_proof.md); finite checks and abstract connectivity formalization |
 | L102, §5.1.2 and Theorem 6.1(1) | Desarguesian uniqueness and existence in the specified one-dimensional semilinear case | [Proof and source audit](research/case_study/phase4_old_problem_audit.md); written all-parameter proof and exact small-instance checks |
 | L114, final p.61 realization question | Decisions for every displayed parameter shape, distinguishing bare subgroup intersections from RWPRI realization | [Complete decision table](research/case_study/phase5_suzuki_higher.md#e-exact-scope-of-the-proposed-resolution); written uniform proofs, two internal reviews and exact coordinate checks |
+| L120, Conjecture 2 in §5.7 | Maximum string C-group rank four for PSL₄(q), every odd q | [Complete dependency map and rank-six proof](research/case_study/phase8_psl4_rank6.md); independent internal reviews, exact symbolic checks, and partial Lean lemmas; rank-four existence retained |
 
 The [central cyclic lift](research/case_study/central_lift_proof.md) also supplies
 a proposed omitted existence range. Its source does not have the same status
-as a named conjecture. The improved
-[PSL₄ rank bound](research/case_study/phase3_psl4_rank7.md) and partial
-[hypertope order bound](research/case_study/phase3_order_bound.md) are progress
-with unresolved cases. These distinctions prevent a novelty score from
-swallowing the outstanding mathematics.
+as a named conjecture. The partial
+[hypertope order bound](research/case_study/phase3_order_bound.md) still has
+unresolved cases. These distinctions prevent a novelty score from swallowing
+the outstanding mathematics.
 
-The subsequent [complete rank-five exclusion](research/case_study/phase7_psl4_zero_product.md)
-is a further uniform result for odd-characteristic PSL₄. Rank six remains
-unresolved, so it is still partial progress on the maximum-rank conjecture
-and receives no new-resolution marker.
+The PSL₄ proof now excludes rank six as well as rank five, completing its
+mathematical argument against every rank above four. Its status is therefore
+a proposed complete resolution, superseding the earlier partial-progress
+entry. Current publication priority remains unverified; its Lean modules
+certify specified implications, not the complete proof. No infinity marker
+is assigned merely from internal agreement or a negative literature search.
+The [separate PSL₄ status audit](research/case_study/phase8_psl4_status_audit.md)
+records fifteen primary-source records, reading limits and forty-one
+representative searches, including the orthogonal-group formulation.
+It located no explicit later resolution and does not certify current priority.
 
 The [metacyclic extension](research/case_study/phase7_cyclic_tpp.md) proves a
 uniform cyclic-subgroup inequality and another full structural class of that

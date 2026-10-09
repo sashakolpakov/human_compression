@@ -12,4 +12,5 @@ lean_lib MathCompressionCertificates where
   roots := #[`LiftCertificate, `FieldIntersection, `TransvectionIntersection,
     `ResidueConnectivity, `ChamberOrbit, `TorsorPartitions,
     `CoordinateKernels, `SuzukiPentagons, `StringIntersection, `BooleanShadow,
-    `ConsecutiveShadow, `RankThreeFactorization, `CosetCoordinates]
+    `ConsecutiveShadow, `RankThreeFactorization, `CosetCoordinates,
+    `IntertwinerSeparation]

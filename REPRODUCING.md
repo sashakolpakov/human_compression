@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirteen saved Lean reports
+checks local documentation links, and checks the fourteen saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -221,10 +221,35 @@ An independent Smith-form check confirms that the centralizer ranks used
 there do not drop in odd characteristic. Rank six is not excluded by these
 arguments. The output option preserves the saved reports.
 
+The separate rank-six continuation and its broader bilinear-form theorem use:
+
+```sh
+python3 research/case_study/phase8_psl4_rank6_check.py --output /tmp/psl4-rank6-check.json
+```
+
+This checks 33 exact identities and all 12 three-endpoint distinguishing
+pairs in the displayed normal forms. The complete proposed maximum-rank
+proof combines these written reductions with the preceding rank-five and
+higher-rank exclusions and the published rank-four existence theorem.
+`IntertwinerSeparation.lean` formalizes the abstract commutator obstruction;
+the full representation classification is not formalized.
+
+For the pure-subfield and mixed-center Suzuki extension, run in a disposable
+copy, since the checker writes adjacent output:
+
+```sh
+python3 research/case_study/phase8_suzuki_subfields_check.py
+```
+
+The standard-library checker verifies 49,152 matrix identities and nine
+proper intermediate groups in one explicit mixed-parabolic example. The
+uniform maximality obstruction and the sharp all-rank subfield criterion
+are written proofs, with independent mathematical and primary-source review.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirteen certificates and their unformalized boundaries. With Git
+describes all fourteen certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -248,11 +273,13 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The thirteen certificates cover intersection transport, field and matrix
+The fourteen certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
 theorems from factorization or arbitrary-family coordinate coverage.
+The latest module also checks an abstract additive-commutator obstruction
+to an intertwiner, with no axioms reported for its two theorems.
 They formalize the stated components, not the complete geometric
 instantiations, all source-group classifications, or every written theorem.
 The saved successful runs report no `sorryAx` dependency.

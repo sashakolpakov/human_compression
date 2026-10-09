@@ -21,6 +21,7 @@ CERTIFICATES = (
     "ResidueConnectivity", "ChamberOrbit", "TorsorPartitions",
     "CoordinateKernels", "SuzukiPentagons", "StringIntersection",
     "BooleanShadow", "ConsecutiveShadow", "RankThreeFactorization", "CosetCoordinates",
+    "IntertwinerSeparation",
 )
 
 
