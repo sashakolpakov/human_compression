@@ -140,9 +140,42 @@ in [its audit](phase3_psl4_rank7_audit.md), now reduces the odd-q PSL4 upper
 bound to six. It does not settle ranks five or six or establish publication
 priority. Its Pauli-support argument remains a written proof.
 
+## Later extensions and a withdrawn completeness assumption
+
+The [weighted-tree theorem](phase6_weighted_tree.md) extends the known
+transposition-tree model to every truncation: omitted edges are contracted
+and component sizes become weights. One derivation gives all residues and
+exact primitivity, local two-transitivity, rank-two intersection and full
+shadow-intersection tests. A new formal theorem ensures the bounded Boolean
+shadow witnesses remain in a retained consecutive rank interval. The original
+2003 full-paper comparison is still unavailable.
+
+The [general panel enumeration](phase6_sporadic_theory.md) allows arbitrary
+primitive panels and checks every necessary double coset. One implementation
+exhausts J1, M11 and M12, with 127 independently recognized representatives.
+Subgroup catalogue completeness remains a dependency, and source-specific
+axioms and equivalence conventions are recorded separately. This does not
+turn the unrelated M11 maximal-subgroup classification into a reduced paper.
+
+The [explicit Suzuki example](phase6_suzuki_realization.md) changes an earlier
+assumption: the printed L114/L110 rank-three candidate list is not exhaustive.
+Matrices in Sz(2^15) give a firm, residually connected, flag-transitive RWPRI
+geometry with subgroup intersections absent from that list. The immutable
+phase-five notes still decide their specified printed shapes, but their
+retained completeness assumption is superseded. A corrected exhaustive
+classification and publication priority remain unresolved. The new formal
+factorization theorem proves the common-coset-point implication; exact
+matrix membership and classical subgroup maximality are separate inputs.
+
+The [living paper map](../../PAPER_MAP.md) includes the later source intake
+and supersedes this overview's earlier coverage totals. The
+[measurement rules](../../MEASUREMENT.md) keep finite proof-length ratios
+separate from proposed new results; no numerical ratio or infinity marker
+has been assigned.
+
 ## Evidence and limits
 
-Nine [Lean modules](formal/README.md) compile with the pinned toolchain and
+Twelve [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -156,8 +189,9 @@ IP alone does not imply the coset Helly condition.
 
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
-records the reviewed artifacts and checks that all nine Lean reports match
-their current source hashes. Finite examples support uniform proofs; they are
+records the earlier artifacts and their nine historical Lean reports. The
+public snapshot checker additionally covers the three later modules and their
+successful reports. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 
 For the public distribution, run `python3 scripts/verify_snapshot.py` from

@@ -1,4 +1,4 @@
-"""Compile the ten Lean certificates with pinned dependencies.
+"""Compile the twelve Lean certificates with pinned dependencies.
 
 Historical *.check.json files are never overwritten. Fresh compilation outputs
 and reports go to .verification/ by default. --check-saved checks recorded hashes,
@@ -20,7 +20,7 @@ CERTIFICATES = (
     "LiftCertificate", "FieldIntersection", "TransvectionIntersection",
     "ResidueConnectivity", "ChamberOrbit", "TorsorPartitions",
     "CoordinateKernels", "SuzukiPentagons", "StringIntersection",
-    "BooleanShadow",
+    "BooleanShadow", "ConsecutiveShadow", "RankThreeFactorization",
 )
 
 
@@ -129,7 +129,7 @@ def compile_one(name, lean, version, checked, output, env, timeout):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("file", nargs="?", help="certificate filename; default LiftCertificate.lean")
-    parser.add_argument("--all", action="store_true", help="compile all ten certificates in dependency order")
+    parser.add_argument("--all", action="store_true", help="compile all twelve certificates in dependency order")
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--check-saved", action="store_true", help="check historical hashes and recorded exits; no compilation")
     modes.add_argument("--check-env", action="store_true", help="check compiler version and dependency revisions; no compilation")

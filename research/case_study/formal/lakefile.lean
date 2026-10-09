@@ -11,4 +11,5 @@ require mathlib from git
 lean_lib MathCompressionCertificates where
   roots := #[`LiftCertificate, `FieldIntersection, `TransvectionIntersection,
     `ResidueConnectivity, `ChamberOrbit, `TorsorPartitions,
-    `CoordinateKernels, `SuzukiPentagons, `StringIntersection, `BooleanShadow]
+    `CoordinateKernels, `SuzukiPentagons, `StringIntersection, `BooleanShadow,
+    `ConsecutiveShadow, `RankThreeFactorization]

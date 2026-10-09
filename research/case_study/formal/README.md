@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are ten certificates. To compile them on another machine, install Git,
+There are twelve certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the ten modules, but does not produce the runner's JSON reports.
+way to compile the twelve modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,7 +95,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all ten source hashes match the historical successful reports
+This checks that all twelve source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. The saved runs print only the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
@@ -110,7 +110,9 @@ Saved reports: [lift](LiftCertificate.check.json),
 [coordinate kernel transport](CoordinateKernels.check.json),
 [Suzuki pentagon word](SuzukiPentagons.check.json),
 [local string intersection obstruction](StringIntersection.check.json),
-[Boolean shadow witnesses](BooleanShadow.check.json).
+[Boolean shadow witnesses](BooleanShadow.check.json),
+[consecutive-rank witnesses](ConsecutiveShadow.check.json),
+[rank-three factorization](RankThreeFactorization.check.json).
 
 [ResidueConnectivity.lean](ResidueConnectivity.lean) proves that a transitive
 group action connects a relation whenever a generating set moves each point
@@ -170,3 +172,19 @@ whole query family and having exactly the same shadow. The
 [scope note](BooleanShadow.scope.md) distinguishes this universal theorem
 from the written tree identification, claw obstruction and residue-join
 arguments used in the 2005 geometric characterization.
+
+[ConsecutiveShadow.lean](ConsecutiveShadow.lean) proves that a witness of at
+most two vertices still exists when only a consecutive interval of proper
+Boolean ranks is retained. Every witness belongs to those retained ranks;
+the theorem applies to arbitrary finite query families in the interval.
+It imports BooleanShadow, which the runner compiles first. The
+[scope note](ConsecutiveShadow.scope.md) separates this formal theorem from
+the weighted-tree realization, branching obstruction and residue arguments.
+
+[RankThreeFactorization.lean](RankThreeFactorization.lean) proves a group
+Helly theorem: if one parabolic is the product of its intersections with
+the other two, then any cosets of those two meeting its coset have a common
+point there. It has no finiteness assumption. This provides the formal
+common-point implication for the separate Suzuki example; the matrices,
+factorization hypothesis and primitivity remain external to this certificate.
+See its [scope note](RankThreeFactorization.scope.md).

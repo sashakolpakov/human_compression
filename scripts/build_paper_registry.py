@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 STUDY = ROOT / "research/case_study"
 INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "workspace_proof_audits.json", "phase4_old_problem_intake.json",
-          "older_literature_updates.json", "phase5_network_intake.json")
+          "older_literature_updates.json", "phase5_network_intake.json",
+          "phase6_network_intake.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -139,6 +140,24 @@ UPDATES = {
         "Complete J2 subgroup-class data from GAP TomLib; GAP exact finite-group algorithms; Written arbitrary-rank recognition and completeness theorem",
         "phase5_j2_theory.md;phase5_j2_certificate.json;phase5_j2_progress.json;phase5_j2_root_review.md",
         "The subgroup catalogue and every secondary supplement annotation are not rederived. No end-to-end Lean formalization; external review remains."),
+    "L105": (
+        "component_rederived", "M12 broader RWPRI/(IP)2 census and rank-five conclusion stated in the abstract",
+        "The common primitive-panel engine exhausts all Borel anchors: 13,21,20,1 classes in ranks two through five, then none; all 55 representatives independently recognized.",
+        "Complete M12 subgroup catalogue from GAP TomLib; GAP exact group algorithms; Explicit Aut(G)/type equivalence convention",
+        "phase6_sporadic_theory.md;phase6_sporadic_source_audit.md;phase6_sporadic_M12_certificate.json;phase6_sporadic_M12_archive_compare.json",
+        "Original full text unavailable; its corrected J1 entry has not been identified. M12's old summary-table discrepancy and archive omission are version-specific observations, not a claim of correcting the unread article."),
+    "L124": (
+        "component_rederived", "No RWPRI/(IP)2 M12 geometry of rank at least six, as stated in the primary abstract",
+        "Complete primitive-panel augmentation terminates at empty levels for every Borel and derives the rank-five maximum.",
+        "Complete M12 subgroup catalogue from GAP TomLib; GAP exact algorithms; Uniform written recognition and exhaustion theorem",
+        "phase6_sporadic_theory.md;phase6_sporadic_source_audit.md;phase6_sporadic_M12_certificate.json",
+        "Chapter body unavailable; individual constructions and the original sixteen-page proof have not been compared. Catalogue completeness is retained, not rederived."),
+    "L125": (
+        "component_rederived", "The firm/FT/RC/RWPRI/(IP)2 J1 classification problem stated in the primary abstract",
+        "The same primitive-panel engine gives 22,8,2 classes in ranks two,three,four and none higher, exhausting all 40 Borel anchors and independently recognizing every witness.",
+        "Complete J1 subgroup catalogue from GAP TomLib; GAP exact algorithms; Explicit Aut(G)/type equivalence convention",
+        "phase6_sporadic_theory.md;phase6_sporadic_source_audit.md;phase6_sporadic_J1_certificate.json",
+        "The original chapter and its exact entry-by-entry equivalence convention remain unavailable. L105's correction is recorded but its exact old missing entry is not identified. No whole-paper or novelty claim."),
     "L109": (
         "component_rederived", "Complete all-rank three-family classification and counts quoted in L110 Theorem 4; rank-two theorem quoted in L114 Theorem 5.1",
         "Rank-two rigidity upgrades RWPRI to every parabolic edge being maximal; dihedral subgroup arithmetic gives three patterns, CRT Helly and an all-rank counting formula.",
@@ -146,17 +165,17 @@ UPDATES = {
         "phase5_dihedral_classification.md;phase5_dihedral_check.json;phase5_dihedral_audit.md;phase5_dihedral_intake.json",
         "L109 full text remains unavailable; its complete all-rank principal classification is available in the primary L110 restatement, but every original statement has not been compared. No new-conjecture or whole-paper claim."),
     "L110": (
-        "partial_progress", "Rank-three shapes R1–R13: exact bare-embedding and RWPRI decisions",
-        "A trace transversal gives explicit prime-order involution pairs; split-dihedral uniqueness and involution-center rigidity constrain simultaneous subfield positions.",
+        "partial_progress", "Rank-three shape decisions; an explicit rank-four realization of Construction 6 parabolic types with a different lower lattice",
+        "Trace and relative-subfield arguments decide the printed rank-three shapes; one binary matrix algebra supplies simultaneous torus factors and a degree-105 rank-four RWPRI lattice.",
         "Standard Suzuki subgroup conjugacy and centralizers; Torus normalizers and element-order structure; Exact source parameter restrictions",
-        "phase5_suzuki_higher.md;phase5_suzuki_realization.md;phase5_suzuki_higher_intake.json;phase5_suzuki_independent_audit.md",
-        "Higher-rank constructions, all relative positions and flag transitivity remain. External priority and review unverified; subgroup realization alone is not geometric classification."),
+        "phase6_suzuki_realization.md;phase6_suzuki_torus_check.json;phase5_suzuki_higher.md;phase5_suzuki_independent_audit.md",
+        "A corrected exhaustive classification, other higher-rank constructions, relative positions and rank-four flag transitivity remain. The example matches Construction 6's parabolic types, so it is not a counterexample to that bare type list. Priority and external review remain."),
     "L114": (
-        "proposed_new_result", "Theorems 5.3 and 5.5: every displayed parameter shape; final p.61 realization question",
-        "All prime-case shapes exist. Composite shapes1,2,3,5 have impossible intersections;4,6,7,8,10 admit RWPRI realizations;9 admits the printed intersections but cannot satisfy RWPRI.",
-        "Published candidate-list completeness and Theorem5.4 nonexistence; Standard Suzuki subgroup conjugacy, centralizers, torus structure and prime-degree subfield maximality",
-        "phase5_suzuki_higher.md;phase5_suzuki_realization.md;phase5_suzuki_higher_intake.json;phase5_suzuki_independent_audit.md;phase5_suzuki_check.json;phase5_suzuki_higher_check.json",
-        "Full flag transitivity, all relative positions and geometric isomorphism classification remain. Publication priority is unverified and external review outstanding; this is a proposed resolution of the displayed-lattice realization question."),
+        "proposed_new_result", "Theorem 5.5 exhaustiveness: explicit omitted geometry in Sz(2^15); decisions for every printed shape in Theorems 5.3 and 5.5",
+        "A common binary F16 algebra gives commuting order-13/order-41 matrices, with exact intersections 52,164,20 and 4. Classical maximality proves RWPRI; factorization proves flag transitivity. The earlier per-shape decisions remain separate.",
+        "Standard Suzuki matrix/Bruhat model; Torus-normalizer and prime-degree subfield maximality; Candidate-list completeness is withdrawn, not retained",
+        "phase6_suzuki_realization.md;phase6_suzuki_torus_check.json;formal/RankThreeFactorization.lean;formal/RankThreeFactorization.scope.md;phase5_suzuki_higher.md;phase5_suzuki_independent_audit.md",
+        "A corrected exhaustive list, relative embedding classes and publication priority remain unresolved. The exact counterexample is internally reviewed and computationally checked; Lean covers its abstract Helly implication, not the matrix instantiation. Historical phase-five completeness assumptions are superseded."),
     "L089": (
         "component_rederived", "Advertised characterization of inductively minimal geometries with geometric intersection property",
         "Tree-cut geometry has shadow-IP in every residue exactly for paths: a claw residue obstructs it and Boolean intervals provide at-most-two-vertex witnesses.",
@@ -181,6 +200,12 @@ UPDATES = {
         "No retained classification needed for the constructed tree branch; Whole-paper generator classification and Whiston/CFSG arguments remain outside this reduction",
         "phase5_tree_cuts.md;phase5_tree_check.json;phase5_tree_audit.md",
         "Parity-twisted branch, full maximal-independent-generator classification and other general group results are not rederived."),
+    "N004": (
+        "component_rederived", "Advertised RWPRI/(IP)2 truncation target, via a complete weighted-tree model",
+        "Contract omitted edges and retain component sizes as weights; forest and laminar incidence formulas give exact primitivity, local two-transitivity, rank-two and full-shadow criteria.",
+        "Foundational classification identifying inductively minimal pairs with the known tree model; Exact published theorem-by-theorem comparison remains unavailable",
+        "phase6_weighted_tree.md;phase6_weighted_tree_check.json;phase6_weighted_tree_independent_audit.md;formal/ConsecutiveShadow.lean;formal/ConsecutiveShadow.scope.md",
+        "The all-parameter model theorem is proved and internally reviewed; original full text remains unavailable. No whole-paper equivalence, abstract isomorphism classification or novelty claim."),
     "L115": (
         "finite_subfamily_reproduced", "Corollary 8.1: 29 rank-two geometries of Sz(8)",
         "Normalizer-orbit classification with type reversal; 75 inner classes fuse to 29.",
@@ -190,6 +215,7 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "L091": ("selected_sections_read", "Pages 231–233 visually read, including Table 1 and local-two-transitivity/truncation conventions; no HS census reproduction.", "phase6_sporadic_source_audit.md"),
     "L110": ("selected_sections_read", "Rank-three R1–R13, higher-rank construction context and p.11 flag-transitivity uncertainty checked; exact hypotheses compared with L114.", "phase5_suzuki_intake.json"),
     "L114": ("selected_sections_read", "Theorems 5.3–5.5 and their case analyses read; printed pp.58–60 visually checked; Lemma3.11 and final p.61 realization qualification checked.", "phase5_suzuki_intake.json"),
     "N003": ("full_text_read", "All twelve pages of the author manuscript read; publication identity checked against the author catalogue and publisher.", "phase5_network_intake.json"),
@@ -260,7 +286,7 @@ def record(row, baseline, overlay, later_readings, older_access):
             "notes": row.get("status_note"), "public_fulltext_distributed": False,
         },
         "exact_target": [], "method": [], "retained_inputs": [],
-        "evidence": [evidence("phase5_network_intake.json" if identifier.startswith("N") else "literature_inventory.json", identifier + " intake only")],
+        "evidence": [evidence(row.get("intake_file", "phase5_network_intake.json") if identifier.startswith("N") else "literature_inventory.json", identifier + " intake only")],
         "status": "unassessed",
         "remaining_work": ["Identify and read exact theorem targets; assess a replacement derivation and record retained inputs."],
         "encoded": False, "rederived": False, "full_principal_results": False,
@@ -320,7 +346,40 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["remaining_work"] = ["Check later primary realizations and complete the geometric realization problem; current external resolution status remains unverified."]
     if identifier == "L084":
         r["remaining_work"] = ["Obtain the actual 2006 erratum, Math. Z. 253, 433-434; the original paper is not this source."]
+    if identifier == "N005":
+        r["status"] = "related_only"
+        r["exact_target"] = [{"reference": "Section 1.1; Proposition 2.2; selected construction definitions and theorem statements",
+                              "scope": "Existing general theory for compatible amalgamation, HNN extension and twisting, including the standard typed-Helly equivalences.",
+                              "relation_to_source": "prior_art_not_a_replacement_proof"}]
+        r["retained_inputs"] = row["retained_inputs"]
+        r["remaining_work"] = ["Read and compare complete construction proofs before asserting a replacement theorem. No compression or novelty credit from shared vocabulary."]
     return r
+
+
+def phase6_network_rows():
+    """Normalize the later intake without rewriting its recorded schema."""
+    result = []
+    for source in load("phase6_network_intake.json")["rows"]:
+        available = "fulltext_url" in source
+        urls = [source["primary_url"]]
+        if available:
+            urls.append(source["fulltext_url"])
+        if "journal_doi" in source:
+            urls.append("https://doi.org/" + source["journal_doi"])
+        result.append({
+            "id": source["id"], "title": source["title"],
+            "publication_year_from_catalogue": source["year"],
+            "citation": ", ".join(source["authors"]) + ". " + source.get("venue", source.get("journal_metadata", "arXiv:" + source.get("arxiv", ""))),
+            "category": "Network publication", "mathematical": True,
+            "fulltext_available": available,
+            "reading_scope": "selected_sections_read" if available else "primary_abstract_read_fulltext_unavailable",
+            "retrieval_status": "primary_text_accessed" if available else "primary_abstract_or_metadata",
+            "status_note": source["coverage_status"] + " " + source.get("source_access", "Reading: " + "; ".join(source.get("reading_scope", []))) + " " + source.get("metadata_caution", ""),
+            "assets": [{"url": u} for u in urls], "source_urls": [],
+            "intake_file": "phase6_network_intake.json",
+            "retained_inputs": source["retained_inputs"],
+        })
+    return result
 
 
 def escaped(text):
@@ -396,6 +455,10 @@ def render(registry):
         "- **L104 (2002):** independent arbitrary-Borel augmentation recovers the full",
         "  principal 8/19/3 census and excludes higher ranks, with every branch exhausted.",
         "  The source geometry list is not an input; complete GAP subgroup data remain.",
+        "- **L125/L105/L124 (1998–2002):** the generalized engine admits every primitive",
+        "  panel, giving complete explicit J1/M11/M12 censuses under Aut(G)/type equivalence.",
+        "  It recovers the stated M12 rank bound. Original chapter/article bodies remain",
+        "  unavailable; M11's separate census is not the maximal-subgroup problem L119.",
         "- **L109 (2000):** cyclic/dihedral rank-two rigidity and CRT give an all-rank",
         "  arithmetic classification. Its full all-rank theorem is matched through L110; the original",
         "  full text is unavailable, so a whole-paper comparison remains open.",
@@ -403,10 +466,17 @@ def render(registry):
         "  1998 property tests, the tree correspondence, the known transposition-tree",
         "  geometry branch, and the advertised 2005 path/shadow-IP characterization.",
         "  The foundational 1997 classification is retained; source access differs by work.",
+        "- **N004 (2003):** contraction with vertex weights incorporates every tree-family",
+        "  truncation. Exact local and full-shadow criteria are proved, with a new Lean",
+        "  witness theorem for retained consecutive ranks. The source full text remains",
+        "  unavailable, so this is a model-level/advertised-target reduction only.",
         "- **L114/L110 (1999–2001):** trace/torus constructions realize the prime-case",
         "  patterns and decides every printed composite-field pattern. Four have impossible",
-        "  intersections; a fifth exists as an embedded lattice but fails RWPRI. Full flag",
-        "  transitivity and embedding classification remain; priority is unverified.",
+        "  intersections; a fifth exists as an embedded lattice but fails RWPRI. A further",
+        "  exact matrix example in Sz(2^15) is firm, residually connected, flag-transitive",
+        "  and RWPRI, but absent from the asserted exhaustive list. Completeness of that",
+        "  list is withdrawn. A rank-four extension matches Construction 6 parabolic",
+        "  types; its flag transitivity and a corrected general classification remain.",
         "- **L115 (1998):** the 29-object Sz(8) corollary is reproduced, while the all-q",
         "  theorem remains. Witness validity and catalogue-dependent completeness are separate.",
         "- **L096 (2004):** geometric shadow-IP has a Boolean witness criterion. It is",
@@ -467,6 +537,8 @@ def main():
             for r in inventory["entries"] if r["mathematical"]]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in load("phase5_network_intake.json")["entries"]]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase6_network_rows()]
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]

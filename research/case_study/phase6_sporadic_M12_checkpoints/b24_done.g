@@ -1,0 +1,1 @@
+borelResult:=rec(id:=24,order:=8,levels:=[ 3, 4, 0 ],geometries:=[  ]);

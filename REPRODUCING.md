@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the ten saved Lean reports
+checks local documentation links, and checks the twelve saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -99,6 +99,19 @@ tree run checks 24 trees, 262 generated subgroups, 28,324 flag comparisons
 and 1,519,962 Boolean shadow queries. These finite audits accompany the
 written all-parameter arguments.
 
+The weighted-tree extension uses that same NetworkX environment:
+
+```sh
+.venv/bin/python research/case_study/phase6_weighted_tree_check.py
+```
+
+Its saved run independently checks 89 weighted models against permutation
+flag orbits, 741 residual primitivity tests, 84 rank-two models, 35 weighted
+claw obstructions, 2,354,462 consecutive-rank shadow queries and 942 tree
+contractions. Primitivity is checked by constructing invariant equivalence
+relations from permutation generators, independently of the written weight
+criterion. Run in a disposable copy to preserve the saved report.
+
 The complete arbitrary-Borel J2 census is reproduced with GAP and TomLib,
 without downloading the original geometry archive. Its
 [runner instructions](research/case_study/phase5_j2_theory.md#6-reproduction-and-artifacts)
@@ -107,10 +120,43 @@ certificate building. All 146 terminal checkpoints are included. Use a
 disposable copy for this pipeline too; the original run used GAP 4.15.1 and
 TomLib 1.2.11, and its search took about 124 seconds in that environment.
 
+The generalized engine reproduces the broader J1, M11 and M12 censuses:
+
+```sh
+python3 research/case_study/phase6_sporadic_run.py J1
+python3 research/case_study/phase6_sporadic_finish.py J1
+python3 research/case_study/phase6_sporadic_build_certificate.py J1
+```
+
+Replace J1 with M11 or M12. In a disposable copy, remove the copied run
+outputs first to start a fresh search; `--resume` verifies existing script
+and terminal-checkpoint hashes and searches only unfinished anchors. Keep
+the distributed originals for comparison. Search times in the recorded
+environment were approximately 224, 12 and 159 seconds respectively, with
+fusion/verification recorded separately. The
+[common theorem](research/case_study/phase6_sporadic_theory.md) documents
+catalogue dependencies and exact class/truncation conventions. Optional
+archive comparison requires the separately obtained Cambridge supplement;
+the original archive was never an enumeration input.
+
+The explicit missing Suzuki lattice has a standard-library-only checker:
+
+```sh
+python3 research/case_study/phase6_suzuki_torus_check.py
+```
+
+Run in a disposable copy; it imports the two recorded phase-five arithmetic
+modules and writes its own report. The rank-three certificate checks all
+2,132 elements of its smaller parabolic, rather than enumerating the huge
+ambient Suzuki group. Rank-four intersections use exact field arithmetic
+and prime-component extraction. Classical subgroup maximality and the
+written interpretation remain explicit inputs. The separate
+`RankThreeFactorization.lean` certifies the abstract coset argument.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all ten certificates and their unformalized boundaries. With Git
+describes all twelve certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -134,7 +180,7 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The ten certificates cover intersection transport, field and matrix
+The twelve certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 and exact Boolean-shadow witnesses of at most two vertices.

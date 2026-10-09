@@ -83,6 +83,13 @@ is assigned in this snapshot.** Several proposed resolutions have written
 arguments and substantial checks, but their external priority remains
 unverified and their formal certificates cover specified components.
 
+The [dated status audit](research/case_study/phase6_status_audit.md) searches
+later primary literature for four of the strongest proposed resolutions.
+It finds a positive 2022 open-status checkpoint for the missing PSL₂ family
+and no explicit later settlement of those exact targets in the bounded
+search. It does not establish current priority; no infinity marker is
+assigned from a negative literature search alone.
+
 The main proposed-resolution targets to assess are:
 
 | Source target | Current mathematical claim | Verification and scope record |
@@ -102,10 +109,13 @@ as a named conjecture. The improved
 with unresolved cases. These distinctions prevent a novelty score from
 swallowing the outstanding mathematics.
 
-The proposed 1999 realization decisions retain the source's candidate-list
-completeness and classical Suzuki structure. They do not classify every
-relative embedding, flag transitivity or geometric isomorphism. Later-literature
-priority remains unverified, so no infinity marker is assigned.
+The proposed 1999 realization decisions retain classical Suzuki structure.
+A subsequent [exact counterexample](research/case_study/phase6_suzuki_realization.md)
+shows that the printed candidate list is not exhaustive; the former assumption
+of its completeness is withdrawn. Its explicit rank-three geometry is firm,
+residually connected, flag-transitive and RWPRI. This deserves a separate
+prominent result entry, but a corrected exhaustive classification and
+publication priority remain unresolved. No infinity marker is assigned.
 
 The [paper registry](research/case_study/paper_registry.json) records exact
 targets, retained inputs and coverage. A future quantitative report must

@@ -36,6 +36,17 @@ The [public Boolean-shadow compilation](boolean_shadow_public_compile.json)
 is an additional fresh run through the portable runner, including compiler
 version and pinned dependency-revision checks.
 
+The weighted-tree extension adds an eleventh certificate, ConsecutiveShadow.
+Its saved report records a fresh compilation through the portable runner,
+which also freshly compiled its BooleanShadow prerequisite. The previous
+ten historical reports remain unchanged. The weighted-tree finite checker
+has a separate report binding its source bytes and the explicit finite scope.
+
+The twelfth certificate, RankThreeFactorization, records another fresh
+compilation. It proves the abstract coset common-point implication used for
+flag transitivity of the Suzuki example. Its theorem prints only `propext`;
+the exact matrix and maximal-subgroup inputs remain outside Lean.
+
 [Measurement](../MEASUREMENT.md) defines future quantitative accounting and
 the separate status of new resolutions. No corpus ratio or infinity marker
 is assigned by this publication snapshot.

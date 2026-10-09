@@ -21,6 +21,15 @@ A common notation alone does not shorten a proof. A successful compression
 must supply the missing generation, intersection, incidence or completeness
 argument, and identify the external results it still uses.
 
+There is also recent general theory within the literature itself. Piedade
+and Tranchida's [2025–2026 work](https://arxiv.org/html/2505.24662v1)
+develops compatible amalgamations, HNN extensions,
+semidirect products and twisting for coset geometries. Its Proposition 2.2
+collects the flag-transitivity/Helly equivalences used in this subject.
+Those established constructions are part of the comparison baseline. Our
+specific reductions and certificates must be assessed against them;
+introducing a common language is not itself a new unification theorem.
+
 This introduction develops the machinery through examples. The linked notes
 contain full hypotheses, source attribution, proofs and certificates. Proposed
 new consequences are research drafts with internal checks; they have not yet
@@ -670,6 +679,22 @@ inputs. GAP's subgroup catalogue and exact algorithms remain trusted; the
 enumeration is not formalized end to end in Lean. See the
 [complete reduction and certificate](research/case_study/phase5_j2_theory.md).
 
+The next step removes local two-transitivity as an assumption. The older
+J₁ problem allows every primitive panel action. A single nontrivial orbit
+test is then insufficient: the rank-two check must consider every relevant
+double coset. With that change the same engine exhausts J₁, M₁₁ and M₁₂,
+giving respectively 32, 40 and 55 geometries of rank at least two under
+group automorphisms and type permutations. All 226 Borel anchors terminate
+and every representative passes independent parabolic recognition.
+
+This also recovers the 1998 statement excluding M₁₂ rank at least six.
+The [source comparison](research/case_study/phase6_sporadic_source_audit.md)
+keeps the old papers' different hypotheses explicit. In particular M₁₁'s
+classification based on all maximal element stabilizers is a different
+problem. A later M₁₂ numerical table and an inspected supplementary archive
+show discrepancies under the documented conventions; these are recorded
+without claiming a correction to an unread original article.
+
 **Subfield positions.** The same torsor viewpoint emphasizes relative position:
 knowing the isomorphism types of several subgroups does not establish that
 they can meet as prescribed. In a Suzuki group, a maximal split dihedral
@@ -694,9 +719,87 @@ Together the two notes give proposed uniform decisions for every displayed
 parameter shape. Exact coordinate checks include the intermediate subgroups
 over $\mathbf F_{2^{45}}$. The
 [complete decision table](research/case_study/phase5_suzuki_higher.md#e-exact-scope-of-the-proposed-resolution)
-retains the published candidate completeness and standard Suzuki structure.
-Full flag transitivity, classification of relative embeddings and publication
-priority remain separate questions.
+retains standard Suzuki structure and decides the printed cases individually.
+The earlier assumption that the source's candidate list was exhaustive has
+now been withdrawn: the following exact example lies outside it.
+
+Choose a binary matrix $M$ with $M^4+M+I=0$ and an order-four binary matrix
+$r$ with $r^{-1}Mr=M^2$. The commutative algebra $\mathbf F_2[M]$ is
+$\mathbf F_{16}$. Appropriate powers of $M+\lambda I$ over two subfields
+give commuting matrices $a,b$ of orders $13,41$ in $\operatorname{Sz}(2^{15})$.
+Their common normalizing element $r$ gives $K=\langle a,b,r\rangle=C_{533}:C_4$.
+With the standard subfield groups $S=\operatorname{Sz}(8)$ and
+$T=\operatorname{Sz}(32)$, exact arithmetic gives
+
+$$|S\cap K|=52,\quad |T\cap K|=164,\quad
+|S\cap T|=20,\quad |S\cap T\cap K|=4.$$
+
+These intersections satisfy every RWPRI maximality step, using classical
+subfield and torus-normalizer maximality. The applicable printed case
+requires the two Suzuki groups to meet in order eight, so it misses this
+example. This is a concrete counterexample to the stated exhaustiveness;
+it does not depend on assuming that list complete.
+
+There is an especially short geometric certificate:
+$K=(K\cap S)(K\cap T)$, since the product has size $52\cdot164/4=2132=|K|$.
+For arbitrary subgroups, such a factorization makes every three typed cosets
+in a flag share a point. The new
+[Lean theorem](research/case_study/formal/RankThreeFactorization.lean)
+proves that implication. Thus this example is flag-transitive as well as
+firm, residually connected and RWPRI. Its matrices and maximality inputs
+remain outside the formal certificate.
+
+The same binary algebra supplies a rank-four subgroup lattice over
+$\mathbf F_{2^{105}}$. The
+[proof and exact witnesses](research/case_study/phase6_suzuki_realization.md)
+separate the rank-three counterexample from this higher construction, whose
+flag transitivity remains unproved. A corrected exhaustive classification,
+relative embedding classes and publication priority remain separate work.
+
+**Truncation by weighted contraction.** The tree model extends when types
+are removed. Contract every omitted edge and give each resulting vertex
+the number of original vertices merged into it. The retained edge cuts,
+and hence their symmetric-group parabolics, remain exactly the same.
+Conversely every positive weighted tree arises in this way, by expanding
+each vertex into a tree of the prescribed size.
+
+The weights encode the chamber stabilizer, a product of symmetric groups.
+Residues are weighted subtrees. An edge joining weights $a,b$ has
+$\binom{a+b}{a}$ panel elements. Three elementary tests now work in all ranks:
+
+| Property | Exact weighted-tree condition |
+|---|---|
+| RWPRI | Adjacent weights are unequal, or both equal one |
+| Local two-transitivity | Every edge has an endpoint of weight one |
+| Rank-two intersection | Every nonleaf vertex has weight one |
+| Full geometric intersection, rank at least two | The tree is a path and all internal weights equal one |
+
+For the third row, an adjacent pair of edges with weights $a,b,c$ gives
+disjointness between $a$- and $c$-subsets of an $(a+b+c)$-set. Two $c$-subsets
+differing in one point have $\binom{a+b-1}{a}$ common neighbors. This is at
+most one exactly when the middle weight is one. In rank at least two this
+condition also forces RWPRI and local two-transitivity; rank one has its
+own explicit exceptions.
+
+For full intersection, a weighted branch gives the same kind of obstruction
+as the thin claw. A path with internal weights one gives consecutive ranks
+of a Boolean lattice. The union/intersection witness still has at most two
+vertices, and its ranks remain among those retained. The new
+[Lean theorem](research/case_study/formal/ConsecutiveShadow.lean) certifies
+that last assertion for every finite universe and arbitrary query family.
+
+For example, a path with weights $2,1,1,3$ is the inclusion geometry on
+subset sizes $2,3,4$ of a seven-point set. Its panels have sizes $3,2,4$.
+A path with weights $1,2,1$ has locally two-transitive panels but fails
+rank-two intersection. These examples distinguish the tests rather than
+assuming that one automatically implies all the others.
+
+The [weighted-tree derivation](research/case_study/phase6_weighted_tree.md)
+therefore includes every truncation of this family and the advertised
+target of the 2003 truncation paper. That original full text remains
+unavailable, so an exact whole-paper comparison is still outstanding.
+The retained foundational identification of inductively minimal pairs is
+the same one used in the unweighted derivation.
 
 ## 11. The remaining work, and how a living reduction should record it
 
@@ -735,10 +838,11 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [ten Lean certificates](research/case_study/formal/README.md) cover
+The [twelve Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
-and exact Boolean-shadow witnesses.
+exact Boolean-shadow witnesses including consecutive-rank truncations,
+and the rank-three factorization/Helly implication.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.
