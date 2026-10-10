@@ -1,8 +1,8 @@
 # Historical reader: Independent assessment of manuscript-level mathematical compression
 
 This reader belongs to the earlier compilation programme.
-[Open its archived text](archive/INDEPENDENT_ASSESSMENT.md) for the exact dated contract,
-reviews and any historical measurement.
+[Open its archived text](archive/INDEPENDENT_ASSESSMENT.md) for the statements, reviews
+and measurements from that edition.
 
 Use the [current topic programme](MANUSCRIPT_PROGRAM.md),
 [complexity rules](COMPLEXITY.md) or [archive index](archive/README.md).
