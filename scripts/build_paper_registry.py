@@ -27,6 +27,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase41_chiral_cover_intake.json", "phase43_chiral_cover_root_audit.json",
           "phase40_compress_operations_intake.json", "phase44_operations_recent_audit.json",
           "phase45_operations_root_audit.json",
+          "phase67_cover_family_root_audit.json", "phase71_ten_measurement_root_audit.json",
+          "phase63_ten_source_measurement_recent_audit_report.json",
           "manuscript_replacements.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
@@ -36,8 +38,8 @@ UPDATES = {
         "principal_results_rederived", "All proved conclusions of the eight-page July25 2023 author manuscript; source conjectures excluded",
         "The shared kernel transport theorem, proved local mirror compatibility and regular-end induction recover the chirality criterion and corollaries. An affine square-torus argument handles the torus family; exact bare-presentation GAP computations and a prime-kernel argument recover the two distinct minimal regular covers.",
         "Standard string C+ and marked-cover correspondence; Chiral depth-two regular-section theorem; Square-tessellation quotient identification; Specified older atomic-family existence and prime chirality theorem; GAP exact algorithms for the finite example",
-        "phase41_chiral_cover_manuscript.md;phase41_chiral_cover_ledger.md;phase41_chiral_cover_intake.json;phase41_chiral_cover_manifest.json;phase43_chiral_cover_root_audit.md;phase43_chiral_cover_root_audit.json;phase43_chiral_cover_verify.py;phase43_chiral_cover_safe_root_replay.json",
-        "Author-version conditional contract; full publisher PDF unacquired. Now included in the independently reviewed Compress_10 assembly with its exact reference erratum. The older atomic classification is retained, not compressed. General multiplicity and complete five-family conjectures remain unproved by that assembly; current priority/open status and external review remain. No ten-source length factor and no new formal component."),
+        "phase41_chiral_cover_manuscript.md;phase41_chiral_cover_ledger.md;phase41_chiral_cover_intake.json;phase41_chiral_cover_manifest.json;phase43_chiral_cover_root_audit.md;phase43_chiral_cover_root_audit.json;phase43_chiral_cover_verify.py;phase43_chiral_cover_safe_root_replay.json;phase67_cover_family_root_audit.md;phase59_cover_family_recent_audit.md;formal/CoverCharacterSeparation.scope.md",
+        "Author-version conditional contract; full publisher PDF unacquired. Now included in the independently reviewed Compress_10 assembly with its exact reference erratum. The older atomic classification is retained, not compressed. General multiplicity and complete five-family conjectures remain unproved by that assembly; current priority/open status and external review remain. A separate reviewed first-family theorem now constructs two minimal covers for all specified odd-prime parameters; the other four families remain. Its Lean module covers only character separation. Compress_10 has a conditional length lower bound 51739/30957, with N001 credited zero."),
     "L003": (
         "partial_progress", "Section9 rotational presentation with ((3,0),(2,0),(1,1),(s,0)); algebraic consequence near Problem9.2",
         "An exact216-state integer-voltage action proves the displayed group infinite for every positive6|s. Complete finite Schreier data describe its image as a rank-six free abelian extension of an order216 quotient. Lean proves Infinite of the literal s6 PresentedGroup; exact finite quotients216m6 of the image follow in the written proof.",
@@ -335,7 +337,7 @@ UPDATES = {
 }
 
 READING_UPDATES = {
-    "N016": ("full_text_read", "Complete eight-page author manuscript, all statements, proofs and exact presentations read through primary web text by author agent and independently by root. No local PDF-byte, visual-page or complete publisher-version verification.", "phase43_chiral_cover_root_audit.md"),
+    "N016": ("full_text_read", "Complete eight-page author text previously read by author and root; subsequently the exact July25 2023 author PDF was acquired, read completely and all eight pages visually inspected by the independent measurement reviewer. Publisher full PDF remains unacquired.", "phase63_ten_source_measurement_recent_audit_report.md"),
     "L003": ("selected_sections_read", "Primary internal pages17–19: complete rotational presentation, Table8, surrounding finite-family prose and Problem9.2; later2021 first-family theorem and corrections compared. No current-resolution claim.", "phase32_L003_source_intake.json"),
     "L111": ("selected_sections_read", "Primary indexed definitions, graph convention, both theorem input formulations, complete verbal Theorem4.1 and Construction5.1, and relevant section5 proofs. Arbitrary-rank flag quantifiers independently checked. Complete body/PDF and application tables remain unavailable.", "phase32_L111_scope.json"),
     "F015": ("selected_sections_read", "Sections2.2–2.4 and orthoplex Section3.2 including Proposition13; not all family proofs.", "phase26_access.json"),
@@ -1035,8 +1037,8 @@ def phase41_network_rows():
         "category": "Network publication / chiral regular covers", "mathematical": True,
         "fulltext_available": True,
         "reading_scope": "complete_eight_page_author_text_statements_proofs_presentations_and_references",
-        "retrieval_status": "primary_author_PDF_web_text_read_publisher_full_PDF_unacquired",
-        "status_note": "Exact author-version contract; standard geometry and specified older classification retained. Root full proof review and exact GAP replay pass. No conjecture or length claim.",
+        "retrieval_status": "exact_primary_author_PDF_acquired_and_independently_read_publisher_full_PDF_unacquired",
+        "status_note": "Exact author-version contract; standard geometry and specified older classification retained. Compress_10 has a reviewed conditional length lower bound. Separate odd-prime family multiplicity proof admitted; general/five-family conjectures and historical priority remain unresolved.",
         "assets": [{"url": source["author_url"]}, {"url": "https://doi.org/"+source["doi"]}],
         "source_urls": [], "intake_file": "phase41_chiral_cover_intake.json",
     }]

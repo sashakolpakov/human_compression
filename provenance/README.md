@@ -7,8 +7,16 @@ has a separate independent semantic/integrity audit and [original-file record](p
 The [complete C measurement](../COMPRESS_C.md) is recorded honestly as 2.386%
 expansion, with its [bound measurement and authored PDF](phase71_originals.json).
 The current registry has seventeen principal-result candidates, ten sources
-in reviewed assemblies and forty scoped Lean components. These are different
+in reviewed assemblies and forty-one scoped Lean components. These are different
 coverage measures, not a corpus compression ratio.
+
+The separately reviewed [odd-prime cover family](../COVER_FAMILY.md) has its
+own [original-file bindings](phase72_originals.json), complete written
+reviews and fresh public GAP replay. The [41st Lean component](phase73_originals.json)
+formalizes only the character-separation implication. The [ten-source
+measurement bindings](phase74_originals.json) include the authored PDF and
+independent count/visual audit: a conditional lower bound of 1.671318×,
+crediting N001 zero. These additions clear no historical-priority marker.
 
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite

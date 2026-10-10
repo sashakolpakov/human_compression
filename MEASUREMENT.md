@@ -102,10 +102,17 @@ The [continuous ten-source replacement](COMPRESS_10.md) now passes complete
 independent integration review with its exact required reference erratum.
 Its denominator must include all 24 sections, every source adapter, the
 complete internal lattice bridge, all four embedded programs and that
-correction. No ten-source numerical factor is admitted yet. The separate
+correction. The [independent measurement audit](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
+and [root admission](research/case_study/phase71_ten_measurement_root_audit.md)
+now establish **at least 51,739 / 30,957 = 1.671318×** under the frozen NFC
+PDF-token convention. N001 is credited zero; the numerator measures nine
+source bodies. The exact ten-source factor remains unknown. The
+nonwhitespace-character lower bound is **198,889 / 155,487 = 1.279136×**.
+The full [49-page authored PDF](research/case_study/phase57_ten_source_measurement_replacement.pdf)
+is distributed. The separate
 [annotation reader](ATTRIBUTION.md) adds attribution and verification metadata;
 its bytes are reported separately and no ratio for the annotated edition is
-implied by a future measurement of the proof manuscript. Annotation text
+implied by this measurement of the proof manuscript. Annotation text
 that adds a necessary argument must enter the proof denominator. None of the
 current annotations adds a mathematical premise or proof step.
 

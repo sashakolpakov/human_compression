@@ -86,3 +86,9 @@ The written support and complement theorems are conditional all-parameter
 proofs. GAP certifies the finite example; Lean certifies the underlying
 algebraic criterion. This package adds no source manuscript to the compression
 intake and makes no priority or general-conjecture claim.
+
+The [odd-prime family theorem](COVER_FAMILY.md) now realizes the two-axis
+case uniformly for the specified tight chiral family: every odd prime p,
+α≥2 and nonzero k modulo p. Its proof constructs the required covers,
+kernel actions and local injections. It retains the earlier source family
+construction and does not prove the general existence hypotheses above.

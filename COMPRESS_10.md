@@ -3,8 +3,9 @@
 **The declared principal results of the ten manuscripts below now follow as
 explicit corollaries of one continuous manuscript, relative to its stated
 background and corrected source contracts.** The intake spans 1998–2026.
-The complete internal integration review passes. A ten-source length factor
-is being measured; none is claimed yet.
+The complete internal integration review passes. The independently reviewed
+length result is **at least 51,739 / 30,957 = 1.671318×**, conditional on the
+declared retained background and PDF-token convention. N001 is credited zero.
 
 Read [*Marked kernels, coordinates and geometric recognition*](research/case_study/phase45_ten_source_manuscript.md)
 with its [required reference correction](research/case_study/phase45_ten_source_errata.md).
@@ -81,15 +82,22 @@ The independent reviewer read every section and program. The root checked
 the new interfaces, all final adapters, exact input continuity and prior
 component evidence. Exact unchanged computational replays are reused; the
 integration review does not claim a new run of those expensive censuses.
-The forty Lean components each have a separate scope; this entire manuscript
+The forty-one Lean components each have a separate scope; this entire manuscript
 is not formally verified end to end.
 
 Any ten-source denominator must include all 24 sections, all four programs,
 every adapter and the required correction. The complete Markdown file has
 201,730 bytes; raw Markdown units are not the comparable PDF-token metric.
-The approved **3.93×** four-source factor and **at least 2.21×** seven-source
-factor apply to the exact older manuscripts only. The forthcoming measurement
-will state what it charges for verification and attribution metadata.
+The [independent measurement review](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
+and [root admission](research/case_study/phase71_ten_measurement_root_audit.md)
+admit **at least 1.671318×** for the [complete 49-page rendered replacement](research/case_study/phase57_ten_source_measurement_replacement.pdf).
+Nine measured source bodies total 51,739 NFC whitespace tokens; the full
+replacement and erratum have 30,957. The exact ten-source factor awaits a
+faithful N001 measurement. The nonwhitespace-character lower bound is 1.279136×.
+Required code is counted in full. The attribution reader is a separate,
+unmeasured representation; retained library proofs and audit infrastructure
+remain outside this declared experiment. The [metadata correction](research/case_study/phase63_ten_source_measurement_recent_audit_metadata_erratum.md)
+repairs an author-name typo in the frozen measurement report only.
 
 This assembly leaves the general and full five-family minimal-cover
 conjectures unproved. Later cover-family work is a separate theorem and audit.

@@ -40,6 +40,7 @@ CERTIFICATES = (
     "TriangleWreathInvolutory",
     "TriangleReflection",
     "QuotientIntersectionCriterion",
+    "CoverCharacterSeparation",
 )
 
 

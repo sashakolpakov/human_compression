@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the forty saved Lean reports
+checks local documentation links, and checks the forty-one saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -59,6 +59,35 @@ protocol builder also expects private source-extraction files. The report gives
 the exact render/count commands and exclusion intervals; no standalone public
 remeasurement without those primary inputs is implied. The approved outcome
 is 2.386% expansion, with the entire required lattice bridge charged.
+
+The [ten-source measurement](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
+has a separate 49-page authored PDF and independent recount program. Its
+full replay likewise requires the exact primary PDFs, prior bound protocols,
+pypdf 6.13.0 and the recorded rendering tools and fonts. The approved
+lower bound is 51,739/30,957, with N001 credited zero and the full required
+reference erratum included. It does not measure the annotated reader.
+
+## Odd-prime cover-family diagnostics and formal separation
+
+```sh
+python3 research/case_study/phase67_cover_family_verify.py \
+  --gap /path/to/gap --output-dir /tmp/human-compression-cover-family-new
+python3 research/case_study/formal/verify_lean.py CoverCharacterSeparation.lean \
+  --packages /path/to/pinned/packages --lean /path/to/lean \
+  --output-dir /tmp/human-compression-cover-character-new
+```
+
+The first command uses stock GAP 4.15.1 and the distributed program, theorem
+and independent review. It rebuilds eight finite examples from exact
+presentations and preserves raw logs. An existing output directory is rejected.
+The public replay completed in about 71 seconds. The all-parameter theorem
+is a separately reviewed written proof; these are finite diagnostics.
+
+The second compiles three algebraic declarations using pinned Lean 4.32.2
+and mathlib. It verifies the inversion-versus-fixed kernel obstruction to a
+marked isomorphism, including the odd-prime-order specialization. Family
+existence, kernel actions and geometry remain written inputs; see the
+[exact scope](research/case_study/formal/CoverCharacterSeparation.scope.md).
 
 ## Fresh Python computations
 
@@ -642,7 +671,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all forty certificates and their unformalized boundaries. With Git
+describes all forty-one certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1659,7 +1688,7 @@ transport modules before this certificate. The formal theorem includes both
 typed-Helly directions. The subsequent marked comparison module below adds
 full subgroup IP; the matrix/geometric adapter remains a written proof.
 The Lake root list also includes all
-40 modules; no frozen historical reports are overwritten by the scratch run.
+41 modules; no frozen historical reports are overwritten by the scratch run.
 
 
 ## Full-body measurement of Compress_A

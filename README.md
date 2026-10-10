@@ -32,15 +32,16 @@ remain inside the replacement. The source-to-corollary map exposes their cost.
 The [attribution annotations](ATTRIBUTION.md) distinguish borrowed results,
 repository contributions, shared derivations and the exact scope of Lean.
 
-The ten-source length measurement is in progress. Earlier, separately
-reviewed measurements are available:
+The [independently reviewed ten-source measurement](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
+gives a conservative **1.67×** length factor. The 1998 source is credited
+zero because its faithful PDF body remains unavailable.
 
 | Exact replacement | Conditional length result |
 |---|---|
 | [Compress_B](COMPRESS_B.md), four sources | **32,476 / 8,267 = 3.93×** |
 | [Compress_Unified](COMPRESS_UNIFIED.md), seven sources | **At least 40,358 / 18,241 = 2.21×**, crediting the unmeasurable 1998 source zero |
 | [Compress_C plus lattice bridge](COMPRESS_C.md), two sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
-| [Compress_10](COMPRESS_10.md), ten sources | Measurement pending; earlier factors do not transfer |
+| [Compress_10](COMPRESS_10.md), ten sources | **At least 51,739 / 30,957 = 1.671318×**, crediting the 1998 source zero |
 
 These use normalized PDF-extracted whitespace tokens and include the complete
 required proof and code. Retained background proofs remain imported. The
@@ -98,7 +99,10 @@ subspaces. A central kernel gives the explicit count `p^(e(d-e))`; a
 multiplicity-free kernel gives a defect-support hypergraph. Complete written
 review and a standalone GAP replay establish the stated theorems and one
 finite cover interval. The existence hypotheses for arbitrary polytopes remain
-unproved.
+unproved. The [odd-prime family theorem](COVER_FAMILY.md) now constructs two
+distinct minimal covers for every member of one specified infinite family,
+with a complete written review and eight exact finite checks. A separate
+Lean certificate verifies the algebraic character-separation step.
 
 ## Results in this snapshot
 

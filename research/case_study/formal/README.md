@@ -59,7 +59,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are forty certificates. To compile them on another machine, install Git,
+There are forty-one certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -76,7 +76,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the forty modules, but does not produce the runner's JSON reports.
+way to compile the forty-one modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -107,7 +107,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all forty source hashes match the historical successful reports
+This checks that all forty-one source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. Thirty-nine saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
@@ -467,3 +467,15 @@ included. No finiteness, centrality or surjectivity is assumed. The complete
 [scope](QuotientIntersectionCriterion.scope.md), [root review](../phase53_cover_kernel_root_audit.md)
 and [fresh public build](QuotientIntersectionCriterion.check.json) bind all four
 declarations. Geometry and cover-classification consequences remain separate.
+
+## Separating marked covers by kernel characters
+
+[CoverCharacterSeparation.lean](CoverCharacterSeparation.lean) proves that
+inversion on a non-self-inverse kernel element is incompatible with a
+marked isomorphism to a cover whose corresponding generator fixes the kernel.
+The odd-prime-order specialization is included. The [scope](CoverCharacterSeparation.scope.md)
+and [fresh build](CoverCharacterSeparation.check.json) make the boundary explicit:
+family construction, kernel orders, action tables and geometry remain written inputs.
+The [independent semantic review](../phase69_cover_family_interfaces_recent_audit.md)
+and [root build admission](../phase68_cover_character_root_audit.md) record
+the exact family interface and two fresh successful compiler runs.

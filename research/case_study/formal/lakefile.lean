@@ -49,4 +49,5 @@ lean_lib MathCompressionCertificates where
     `TriangleWreathQuotient,
     `TriangleWreathInvolutory,
     `TriangleReflection,
-    `QuotientIntersectionCriterion]
+    `QuotientIntersectionCriterion,
+    `CoverCharacterSeparation]

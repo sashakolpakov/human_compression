@@ -36,19 +36,23 @@ those imports from repository derivations and identify formal scope.
 | B | 4 sources | **32,476 / 8,267 = 3.928390×** |
 | Unified | The same 7 | **At least 40,358 / 18,241 = 2.212488×**, with N001 credited zero |
 | C plus its lattice bridge | 2 further sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
-| Compress_10 plus reference erratum | All 10 | Full measurement in progress; no admitted factor |
+| Compress_10 plus reference erratum | All 10 | **At least 51,739 / 30,957 = 1.671318×**, with N001 credited zero |
 
 The approved factors use a frozen NFC PDF-extracted token convention and
 count complete required proof/code. They remain conditional on retained
 background. Character sensitivities are **3.346514×** for B and at least
 **1.864525×** for Unified. The seven-source integration is 706 raw Markdown
-tokens longer than A+B together. None of these values is a ten-source ratio.
+tokens longer than A+B together. The [ten-source measurement review](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
+checks the complete replacement and required erratum, all four full programs
+and the internal lattice proof. Its factor is a lower bound: an exact
+ten-source ratio awaits N001. Its nonwhitespace-character lower bound is
+1.279136×. The attributed reader is a separate, unmeasured representation.
 The [C measurement review](research/case_study/phase60_compress_C_measurement_recent_audit_report.md)
 finds the complete replacement 200 tokens longer than the source sum; all
 reported sensitivity factors are below one. A faithful length measurement
 of N001 is still absent in the admitted record.
 
-Forty scoped Lean components are distributed. They include the exact
+Forty-one scoped Lean components are distributed. They include the exact
 quotient-intersection criterion
 `f(A) ∩ f(B) = f(A ∩ B) iff N ∩ AB = (N ∩ A)(N ∩ B)` for kernel N,
 and the triangle infinitude certificates for the exact two universal
@@ -58,10 +62,15 @@ ten-source manuscript. The [cover-kernel theory](COVER_KERNELS.md) supplies
 conditional invariant-subspace classifications and a completely checked
 finite interval; its general existence hypotheses remain work.
 
-The immediate work is to finish and independently review the ten-source
-length measurement, admit the separately reviewed all-parameter odd-prime
-cover-family theorem with a standalone checker, and investigate the remaining
-two-primary families. The general and complete five-family multiplicity
+The [odd-prime cover-family theorem](COVER_FAMILY.md) is now admitted with
+its complete independent written review, fresh standalone GAP replay and a
+scoped Lean character-separation certificate. It gives two distinct minimal
+covers throughout the specified first family and a complete two-cover
+interval beneath their shared cover. It does not classify all covers.
+
+The immediate work is independent review of the eleventh-source Petrial
+integration and the new two-primary cover obstructions, followed by further
+construction attempts and priority comparison. The general and complete five-family multiplicity
 conjectures remain unproved here. Proof review and computational diagnostics
 are distinct from establishing that a result was previously open; no
 historical-priority or newly solved open-conjecture marker is cleared.

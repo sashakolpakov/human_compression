@@ -4,7 +4,8 @@ The current map is **ten named manuscripts → [Compress_10](COMPRESS_10.md)
 plus its exact reference erratum**. Its [intake table](COMPRESS_10.md#exact-intake)
 lists every author, title, edition and principal-result contract. The complete
 independent integration review passes with retained inputs and corrections
-explicit. A ten-source length factor is still being measured.
+explicit. The reviewed ten-source length lower bound is **1.671318×** under
+the declared retained-background and PDF-token convention, crediting N001 zero.
 
 | Named intake IDs | Replacement | Review and measurement |
 |---|---|---|
@@ -12,13 +13,15 @@ explicit. A ten-source length factor is still being measured.
 | L032, L035, F013, F016 | [Compress_B](COMPRESS_B.md): quotients, deletion maps and cyclic cores | 11 main theorems / 17 detailed clauses; **3.928390×** under the reviewed PDF-token convention |
 | All seven above | [Compress_Unified](COMPRESS_UNIFIED.md): common kernels and primitive coordinates | 34 adapters; conservative lower bound **2.212488×**, with N001 credited zero |
 | L088, N013 | [Compress_C plus lattice bridge](COMPRESS_C.md): endpoint operations and generalized cubes | All 18 principal rows; complete finite census and lattice proof; **0.976695×, or 2.386% expansion** |
-| All nine above, plus N016 | [Compress_10 plus reference erratum](COMPRESS_10.md): marked kernels, coordinates and geometric recognition | One continuous manuscript, all 24 sections and four programs reviewed; no numerical factor yet |
+| All nine above, plus N016 | [Compress_10 plus reference erratum](COMPRESS_10.md): marked kernels, coordinates and geometric recognition | All 24 sections and four programs reviewed; **at least 51,739 / 30,957 = 1.671318×**, N001 credited zero |
 
 These five assemblies overlap. Their union contains **ten distinct sources**,
 spanning 1998–2026. N016 is Cunningham's *Chiral polytopes whose smallest regular
 cover is a polytope*, under the 25 July 2023 author-version contract. Its proved
 conclusions now belong to the continuous replacement; its multiplicity
-conjectures remain separate unproved targets.
+conjectures remain separate targets. The later [odd-prime family theorem](COVER_FAMILY.md)
+settles the stated multiplicity assertion for its specified first family;
+it does not settle the full five-family or general conjecture.
 
 The arrow means that the declared principal results follow as explicit
 corollaries under the recorded scope. It does not assert logical equivalence
