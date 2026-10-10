@@ -29,9 +29,9 @@ families of application papers are complete.
   derivation of the main constructive theorems with explicit local corrections.
 - [Graph incidences](GRAPH_INCIDENCE.md): Livingstone constructions and
   a repaired incidence condition; part of the source paper has been recovered.
-- [Design residues](DESIGN_RESIDUES.md): independently reviewed corrections
-  with the extent of the Lean proofs stated; part of the source paper has
-  been recovered.
+- [Design residues](DESIGN_RESIDUES.md): the corrected rank-three results,
+  higher-rank Steiner classification and rank-six Mathieu construction;
+  borrowed classifications and missing named-residue identifications are explicit.
 - [Large cyclic subgroups](LARGE_CYCLIC_SUBGROUPS.md): high-exponent
   classification application with the source's wider catalogue excluded.
 

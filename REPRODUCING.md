@@ -1,5 +1,23 @@
 # Reproducing the checks
 
+The [corrected design-construction results](DESIGN_RESIDUES.md) have a
+public replay of the Witt models, derived planes, Hermitian residues,
+path-count correction and three Lean files:
+
+```sh
+python3 -B -O research/case_study/phase208_public_check.py --output-dir /tmp/NEW-Steiner --packages PACKAGES --lean LEAN --gap GAP
+```
+
+The pinned versions are Lean 4.32.2, GAP 4.15.1, DESIGN 1.8.2 and GRAPE
+4.9.3, with the recorded mathlib checkout. No private primary PDFs are
+required. The unchanged author programs and independent coordinate check
+are run afresh; fifteen new and seven retained Lean declarations compile,
+and seven mathematical negative controls are rejected. The
+[admission](research/case_study/phase208_root_admission.md) separates these
+checks from the written uniform proofs and borrowed classifications.
+The earlier deleted-line/subline replay below remains a required check
+for those retained results.
+
 The [finite normal-pair application](FINITE_INCIDENCE_REPRESENTATIONS.md)
 has a public replay that requires no primary PDF or unrelated L059 data:
 

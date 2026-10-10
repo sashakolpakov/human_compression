@@ -1,5 +1,15 @@
 # Lean certificates and their scope
 
+[WittDerivedPlanes.lean](WittDerivedPlanes.lean) proves three explicit
+finite incidence isomorphisms to coordinate PG(2,4), with nine printed
+declarations. Its [scope](WittDerivedPlanes.scope.md) leaves the original
+Witt-to-derived-table bridge in GAP and Python.
+[CyclicBiplaneDelta.lean](CyclicBiplaneDelta.lean) proves the six reported
+properties of a literal counterexample to an unrestricted connectivity
+claim; its [scope](CyclicBiplaneDelta.scope.md) gives the actual incidence
+definitions. Both have fresh compiler reports using standard axioms.
+Neither formalizes the uniform Steiner classification.
+
 [SimultaneousMatching.lean](SimultaneousMatching.lean) proves the general
 common-image/coherent-family equivalence and a literal finite coset
 obstruction. Its [scope](SimultaneousMatching.scope.md) distinguishes the

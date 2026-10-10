@@ -2,8 +2,11 @@
 
 Question solving has its own record, separate from compression of known
 published results. The current catalogue contains **eleven entries: eight
-recorded answers under their stated hypotheses, and three qualified
-results**. This is an inventory of existing proofs and evidence, not a
+recorded complete answers under their stated hypotheses, one answer to an
+explicit interpretation of an ambiguously worded question, and two results
+for specified families whose broader conjectures remain open**. Completeness
+here concerns question coverage; Lean coverage and historical priority are
+separate matters. This is an inventory of existing proofs and evidence, not a
 new mathematical review of every entry. Historical priority has not been
 verified for any of them.
 

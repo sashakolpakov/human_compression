@@ -43,9 +43,9 @@ survey does not imply that its original source has been read.
 | metadata and access only | 9 |
 | selected sections read | 64 |
 
-**102** works have a retrieved full text; **57** have an explicit representation or a specified conditional or partial derivation; **42** have a recovered result, finite subfamily or stated main result.
+**102** works have a retrieved full text; **57** have an explicit representation or a specified conditional or partial derivation; **43** have a recovered result, finite subfamily or stated main result.
 
-The set with **stated main results recovered contains 19 works: L008, L030, L032, L034, L035, L066, L074, L088, L104, L108, F010, F013, F016, N001, N003, N008, N009, N013, N016**.
+The set with **stated main results recovered contains 20 works: L008, L030, L032, L034, L035, L066, L074, L088, L092, L104, L108, F010, F013, F016, N001, N003, N008, N009, N013, N016**.
 The exact targets and qualifications govern membership in this set. Proposed
 conjecture proofs do not add to it. The [question catalogue](CONJECTURE_RESULTS.md)
 keeps answers to questions separate from recovery of published results.
@@ -58,7 +58,7 @@ files preserve the exact statements, earlier results used, evidence and remainin
 | Sources | Results and qualifications | Record |
 |---|---|---|
 | L073 and L104 | L073: 81 rank-two and 431 rank-three classes, witnesses and geometric shadows; refined correspondence with the printed table remains incomplete. L104: the fixed 8/19/3 census in ranks 2/3/4 and exclusion of higher ranks; further diagrams, full geometric automorphism and correlation groups, and the doubling assertion remain outside the recovered results. | [Reviewed census addition](research/case_study/phase181_registry_overlay.json) |
-| L092 | Complete primary text read; Theorem 6 and Lemma 5 corrected. The uniform proofs and source identification are written; Lean verifies the literal disconnected residue over F4. The Hermitian-unital question remains a separate recorded result. No additional count of recovered main results or answered conjectures. | [Reading and corrections](research/case_study/phase185_L092_overlay.json); [proof reader](DESIGN_RESIDUES.md) |
+| L092 | Corrected rank-three applications, complete higher-rank Steiner classification and rank-six M24 construction. The two quoted classifications remain external inputs; partial linearity in Theorem 1 and missing Pasini named-residue maps remain explicit. Lean verifies specified finite incidences and counterexamples. The existing Hermitian-unital answer is counted separately, once. | [Earlier corrections](research/case_study/phase185_L092_overlay.json); [main-result admission](research/case_study/phase208_L092_overlay.json); [proof reader](DESIGN_RESIDUES.md) |
 | L068 | Complete primary text read; construction P recovered as printed and Q recovered after an explicit repair. This adds a partial derivation, with the necessary group and graph inputs stated. | [Construction review](research/case_study/phase189_L068_overlay.json); [proof reader](GRAPH_INCIDENCE.md) |
 | F010 | The main constructive theorems are recovered in a complete written argument, with local corrections. Lean verifies the stated hexagon component, not the universal constructions. | [Reviewed addition](research/case_study/phase193_F010_overlay.json); [proof reader](FINITE_INCIDENCE_REPRESENTATIONS.md) |
 
@@ -165,7 +165,7 @@ remaining-work record in the frozen JSON or the reviewed additions above.
 | L089 | 2005 | [On inductively minimal geometries that satisfy the intersection property](https://leemans.dimitri.web.ulb.be/abstracts/imgip.html) | metadata and access only | part of the results recovered |
 | L090 | 2005 | [A family of geometries related to the Suzuki tower](https://www.math.auckland.ac.nz/~dleemans/abstracts/suz.html) | abstract read | not assessed |
 | L091 | 2005 | [The residually weakly primitive geometries of HS](https://ajc.maths.uq.edu.au/pdf/33/ajc_v33_p231.pdf) | selected sections read | not assessed |
-| L092 | 2005 | [A generalization of a construction due to Van Nypelseer](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.46/no.2/b46h2lee.pdf) | full text read | [proposed answer or new result](research/case_study/phase185_L092_overlay.json) |
+| L092 | 2005 | [A generalization of a construction due to Van Nypelseer](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.46/no.2/b46h2lee.pdf) | full text read | [stated main results recovered](research/case_study/phase208_L092_overlay.json) |
 | L093 | 2004 | [Constructions of rank five geometries for the Mathieu group M_22](https://www.math.auckland.ac.nz/~dleemans/abstracts/m22rk5.html) | abstract read | not assessed |
 | L094 | 2004 | [The residually weakly primitive geometries of PSL(3,q) with q < 8](https://link.springer.com/article/10.1007/s00010-003-2695-5) | abstract read | not assessed |
 | L095 | 2004 | [Quotients of a universal locally projective polytope of type {5,3,5}](https://arxiv.org/pdf/math/0307075v1) | full text search only | not assessed |

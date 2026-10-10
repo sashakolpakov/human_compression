@@ -150,9 +150,11 @@ that has not been measured should be reported as such.
 ## Conjectures and questions: recorded solutions
 
 Solutions to questions posed in the source literature are a separate
-part of the programme. The repository currently records **eight answers
-within the stated hypotheses**, in addition to the three qualified results
-below. They belong in the account of what the project has achieved, alongside
+part of the programme. The repository currently records **eight complete
+answers to the stated questions, under their specified hypotheses**. Three
+further entries cover a particular interpretation or specified families;
+their limits are listed separately below. These results belong in the account
+of what the project has achieved, alongside
 the recovered published theorems. They do not increase a source-length
 compression ratio: there was no earlier proof to put in its numerator.
 
@@ -167,7 +169,7 @@ compression ratio: there was no earlier proof to put in its numerator.
 | L052, Problem 9.3 | The requested thin, residually connected but non-flag-transitive example cannot occur for the standard parabolic coset construction. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; Lean verifies propagation of a chamber orbit. |
 | L052, Problem 9.4 | A rank-three standard parabolic coset system is residually connected, excluding the requested simultaneous failure. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; the complete geometric theorem remains written. |
 
-### Qualified answers and conjectures still open in general
+### One answer to an ambiguous question and two advances on broader conjectures
 
 | Source question | Result obtained | Remaining scope |
 |---|---|---|

@@ -18,6 +18,7 @@ OVERLAYS = (
     "phase185_L092_overlay.json",
     "phase189_L068_overlay.json",
     "phase193_F010_overlay.json",
+    "phase208_L092_overlay.json",
 )
 
 
@@ -154,7 +155,7 @@ def render(registry):
         "files preserve the exact statements, earlier results used, evidence and remaining work.", "",
         "| Sources | Results and qualifications | Record |", "|---|---|---|",
         "| L073 and L104 | L073: 81 rank-two and 431 rank-three classes, witnesses and geometric shadows; refined correspondence with the printed table remains incomplete. L104: the fixed 8/19/3 census in ranks 2/3/4 and exclusion of higher ranks; further diagrams, full geometric automorphism and correlation groups, and the doubling assertion remain outside the recovered results. | [Reviewed census addition](research/case_study/phase181_registry_overlay.json) |",
-        "| L092 | Complete primary text read; Theorem 6 and Lemma 5 corrected. The uniform proofs and source identification are written; Lean verifies the literal disconnected residue over F4. The Hermitian-unital question remains a separate recorded result. No additional count of recovered main results or answered conjectures. | [Reading and corrections](research/case_study/phase185_L092_overlay.json); [proof reader](DESIGN_RESIDUES.md) |",
+        "| L092 | Corrected rank-three applications, complete higher-rank Steiner classification and rank-six M24 construction. The two quoted classifications remain external inputs; partial linearity in Theorem 1 and missing Pasini named-residue maps remain explicit. Lean verifies specified finite incidences and counterexamples. The existing Hermitian-unital answer is counted separately, once. | [Earlier corrections](research/case_study/phase185_L092_overlay.json); [main-result admission](research/case_study/phase208_L092_overlay.json); [proof reader](DESIGN_RESIDUES.md) |",
         "| L068 | Complete primary text read; construction P recovered as printed and Q recovered after an explicit repair. This adds a partial derivation, with the necessary group and graph inputs stated. | [Construction review](research/case_study/phase189_L068_overlay.json); [proof reader](GRAPH_INCIDENCE.md) |",
         "| F010 | The main constructive theorems are recovered in a complete written argument, with local corrections. Lean verifies the stated hexagon component, not the universal constructions. | [Reviewed addition](research/case_study/phase193_F010_overlay.json); [proof reader](FINITE_INCIDENCE_REPRESENTATIONS.md) |", "",
         "Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain",
@@ -197,7 +198,7 @@ def main():
     target = ROOT / "PAPER_MAP.md"
     if args.check:
         require(target.read_text() == text, "PAPER_MAP.md differs from the recorded registry view")
-        print("Paper map matches the frozen registry and all four reviewed additions.")
+        print(f"Paper map matches the frozen registry and all {len(OVERLAYS)} reviewed additions.")
     else:
         target.write_text(text)
         print("Wrote PAPER_MAP.md; frozen registry and reviewed additions unchanged.")

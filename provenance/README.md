@@ -1,5 +1,12 @@
 # Provenance and verification scope
 
+The [design-construction admission](phase114_review.md) adds L092's
+corrected main results, with two substantial borrowed classifications
+and missing named-residue maps stated explicitly. A fresh public replay
+checks unchanged finite programs, independent incidences and two new
+Lean files. It raises the effective registry to twenty main-result records
+and forty-three records with recovered results; conjecture counts do not change.
+
 The [parallel-gluing admission](phase113_review.md) adds a corrected partial
 source contract and an explicit application of U.Helly, with two fresh
 finite reconstructions and a scoped Lean certificate. Frozen U and A–D
@@ -14,11 +21,11 @@ The [complexity-figure review](phase111_review.md) records the exact
 admitted inputs and visual check behind the current graph. No new source
 measurement or mathematical result is inferred from plotting those points.
 
-The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
-with reviewed six-source U+A, four-source Module B, and three-source
-Modules C and D. There are
-seventy-three scoped Lean components. Source coverage, complete modular
-replacement and measured compression are distinct claims.
+The current product is [topic umbrellas and application papers](../MANUSCRIPT_PROGRAM.md).
+The earlier six-source A, four-source B and three-source C and D
+manuscripts supply reviewed material to rework. There are seventy-five
+scoped Lean files. Source coverage, completed application papers and
+measured compression are distinct claims.
 
 The [Livingstone-graph admission](phase110_review.md) recovers one literal
 principal construction and one explicitly repaired construction, with
