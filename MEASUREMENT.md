@@ -203,3 +203,21 @@ problems still open. The [2026 correction](research/case_study/phase12_path_cocy
 disproves specified auxiliary assertions, without refuting the paper's
 separate main existence claim. None changes the existing numerical ratio
 or qualifies here for a verified-new-resolution infinity marker.
+
+Phase thirteen extends the [unitary construction](research/case_study/phase13_unitary_sieve.md)
+to every odd q≡1 mod 4, with an independently checked certificate for
+all 406 fields left by the uniform sieve. The [cyclic TPP extension](research/case_study/phase13_cyclic_tpp.md)
+proves the smallest-factor-eight bound and all 2-groups through order 1024.
+A [canonical quotient](research/case_study/phase13_common_quotient_class_three.md)
+repairs the common-quotient existence argument through nilpotency class
+three, uniformly in rank. These gains do not settle the unrestricted
+unitary or hypertope questions, and a correction to a proof is not by
+itself an open-problem resolution. They have no matched-length measurement.
+The numerical ratio and nine-work principal-result count remain unchanged;
+no infinity marker is assigned in this phase.
+The [unitary status audit](research/case_study/phase13_unitary_priority_audit.md)
+records thirty primary-literature searches and the exact rank-three
+published baseline. It located no matching earlier uniform theorem or
+named unitary conjecture, and does not certify novelty. The named survey
+conjecture concerns the linear group and must not be attributed to the
+unitary companion result.

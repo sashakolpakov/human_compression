@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the sixteen saved Lean reports
+checks local documentation links, and checks the seventeen saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -424,6 +424,58 @@ raw GAP log differs only in the initial blank line's CRLF/LF encoding.
 [The phase-twelve review](provenance/phase12_review.md) binds the exact
 review and execution scopes. All seventeen earlier Lean reports are
 preserved; this phase does not add a Lean module.
+
+## Phase-thirteen field and structural certificates
+
+The independent unitary checker requires only Python's standard library.
+It reads the included polynomial-coordinate witnesses and writes a new report
+at the specified output path, preserving the saved report:
+
+```sh
+python3 research/case_study/phase13_unitary_independent_check.py --output phase13_unitary_fresh.json
+python3 research/case_study/phase13_cyclic_tpp_check.py > phase13_cyclic_tpp_fresh.json
+python3 research/case_study/phase13_cyclic_tpp_top_action_check.py > phase13_top_action_fresh.json
+gap -q research/case_study/phase13_common_quotient_check.g > phase13_common_quotient_fresh.log
+```
+
+The first command independently reconstructs all 4,795 eligible fields
+below 98,660 and the exact 406-field exception list. It verifies every
+field polynomial's irreducibility, all coordinate and order conditions,
+and the actual special-unitary matrix and its projective order. The
+large-field curve and character-sum estimates remain written arguments;
+the checker does not replace the retained generation or intersection
+proofs. The q=5 witness correctly has a nonidentity scalar at its
+projective order.
+
+The second checks the one- and two-dimensional action lemma, its
+three-dimensional boundary, and the retained order-256 input hashes.
+It does not rerun the historical SmallGroups census. The new bound
+through order 1024 follows from the structural theorem. The separate
+top-action check exhausts 100 two-group image pairs and 38 third-coset
+cases in GL₃(F₂), finding the single surviving marked action. This
+necessary condition does not exclude a counterexample.
+
+The GAP/NQ command checks 70 collection formulas at ranks two through
+six, and all 1,344 subset intersections in the complete stated
+rank-three quotient diagnostic. Root's fresh transcript matches the
+saved log after newline normalization; only its initial CR/LF differs.
+The all-rank support proof is independent of this finite diagnostic.
+
+To rerun the author unitary checks, use a disposable copy of the repository:
+
+```sh
+python3 research/case_study/phase13_unitary_elliptic_check.py
+python3 research/case_study/phase13_unitary_sieve_check.py
+gap -q -T research/case_study/phase13_unitary_witnesses.g
+```
+
+The first requires SymPy; the second uses the standard library. These
+scripts preserve their original report-writing behavior, so a disposable
+copy avoids replacing historical reports. The GAP script prints the
+coordinate witnesses and per-field checks to standard output; the included
+JSON is the recorded coordinate package checked by the independent runner. The [phase-thirteen review](provenance/phase13_review.md)
+separates author checks, fresh independent arithmetic, written reviews,
+and retained mathematical inputs. No new Lean module is added.
 
 ## Fresh Lean compilation
 

@@ -113,3 +113,13 @@ External PDFs, extracted texts and GAP library inputs are identified by source
 metadata and checksums. Their absence from the public snapshot is intentional.
 A checksum identifies bytes; it is not a proof that the mathematical claim is
 correct or that an external catalogue is complete.
+
+The [phase-thirteen review](phase13_review.md) extends the unitary
+construction to every odd field size congruent to one modulo four,
+strengthens the cyclic TPP bounds, and supplies a canonical common
+quotient through nilpotency class three. Its [original-file manifest](phase13_original_files.json)
+binds byte-identical original proofs, checks and review records.
+All 406 unitary witnesses have a fresh independent polynomial-arithmetic
+verification. The existing seventeen Lean reports and earlier original
+proof packages remain unchanged. No new matched-length ratio or verified
+new-resolution infinity marker is assigned.
