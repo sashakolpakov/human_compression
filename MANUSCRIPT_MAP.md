@@ -1,11 +1,12 @@
 # Named manuscripts to reviewed replacements
 
-The current map is **ten named manuscripts → [Compress_10](COMPRESS_10.md)
-plus its exact reference erratum**. Its [intake table](COMPRESS_10.md#exact-intake)
+The current map is **eleven named manuscripts → [Compress_11](COMPRESS_11.md)**.
+Its [intake table](COMPRESS_11.md#exact-intake)
 lists every author, title, edition and principal-result contract. The complete
 independent integration review passes with retained inputs and corrections
 explicit. The reviewed ten-source length lower bound is **1.671318×** under
 the declared retained-background and PDF-token convention, crediting N001 zero.
+The eleven-source edition has no approved factor yet.
 
 | Named intake IDs | Replacement | Review and measurement |
 |---|---|---|
@@ -14,8 +15,9 @@ the declared retained-background and PDF-token convention, crediting N001 zero.
 | All seven above | [Compress_Unified](COMPRESS_UNIFIED.md): common kernels and primitive coordinates | 34 adapters; conservative lower bound **2.212488×**, with N001 credited zero |
 | L088, N013 | [Compress_C plus lattice bridge](COMPRESS_C.md): endpoint operations and generalized cubes | All 18 principal rows; complete finite census and lattice proof; **0.976695×, or 2.386% expansion** |
 | All nine above, plus N016 | [Compress_10 plus reference erratum](COMPRESS_10.md): marked kernels, coordinates and geometric recognition | All 24 sections and four programs reviewed; **at least 51,739 / 30,957 = 1.671318×**, N001 credited zero |
+| All ten above, plus L108 | [Compress_11](COMPRESS_11.md): shared retained-object kernels and Petrial recovery | New proofs and applications independently reviewed, with exact predecessor continuity; 25 sections and five full programs; measurement pending |
 
-These five assemblies overlap. Their union contains **ten distinct sources**,
+These six assemblies overlap. Their union contains **eleven distinct sources**,
 spanning 1998–2026. N016 is Cunningham's *Chiral polytopes whose smallest regular
 cover is a polytope*, under the 25 July 2023 author-version contract. Its proved
 conclusions now belong to the continuous replacement; its multiplicity

@@ -1,0 +1,15 @@
+# Independent audit of the eleven-source public wrapper
+
+10 October 2026. **PASS; no required correction.** Reviewed the complete `phase75_eleven_source_verify.py`, SHA-256 `3042fca2289085c469a41e210e06b6beda68620ace46cbf9ba94ec7cdf2c6a56`. Private and public bytes agree. This is a wrapper audit; the mathematical review remains the frozen phase70 audit.
+
+The wrapper binds the phase65 author manifest and phase70 independent-review manifest, their distributed files, and the exact predecessor manuscript, adapter map and erratum. It checks all 87 actual manuscript proof spans; independently compares the 79 predecessor spans, obtaining 73 unchanged and six containing only the approved citation correction; checks 19 unchanged complete sections, the 25-section inventory and unique equation tags; and compares all five complete embedded programs with their exact distributed source bytes and assembly hashes. Its 29 input bindings are rechecked after execution.
+
+It reads no private primary-source captures, and explicitly reports that primary-source spans and mathematical proof text are not checked by this runner. The input manifests bind the prior written reviews. Historical scripts that reference private files are hashed, not executed. All substantial mathematical and retained-background qualifications therefore remain those of phase70, rather than being inferred from these structural checks.
+
+The optional Petrial replay extracts the exact embedded Python program, imposes a timeout, checks return status, stderr, program preservation and the exact independently reviewed output digest. The wrapper uses explicit `require` checks and sets `PYTHONOPTIMIZE=0` for the child, so optimized execution of the outer interpreter does not disable either layer's checks. Failures produce a nonzero result; preexisting output paths, including dangling symlinks, are refused before execution.
+
+My fresh run used the public distribution under an optimized outer interpreter. It passed in 0.095229 seconds of child runtime, reproduced the exact seven-case controls (188 old chambers, four thin Petrials, two nonfaithful induced actions), and left all input hashes unchanged. Reusing its output directory was rejected without changing any of its five files.
+
+Three adverse tests modified only isolated byte-copies: the assembled manuscript, the phase70 written review, and an earlier GAP program. Each was rejected at its expected hash or embedded-program check, before output creation. A restored isolated tree containing only the 29 bound public inputs and the wrapper passed structural verification with no private source directory present. No old GAP program was rerun, and no public or frozen input was edited.
+
+The accompanying checker/report records the exact wrapper, 29 input hashes, output hashes, no-clobber result and adverse tests. The four-file export allowlist is in this audit's manifest. This review adds no proof result, source count, measurement factor or historical-priority claim.

@@ -29,6 +29,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase45_operations_root_audit.json",
           "phase67_cover_family_root_audit.json", "phase71_ten_measurement_root_audit.json",
           "phase63_ten_source_measurement_recent_audit_report.json",
+          "phase70_petrial_integration_recent_audit.json",
+          "phase76_eleven_source_root_audit.json",
           "manuscript_replacements.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
@@ -174,10 +176,10 @@ UPDATES = {
         "The source geometry census is no longer retained. Printed Gamma3/Gamma4 figure labels are corrected against their defining markings. The completeness statement concerns thin regular residually connected geometries, not non-Helly C-group markings. Catalogue completeness and exact GAP algorithms remain trusted. No length factor, conjecture solution, novelty or end-to-end Lean claim."),
     "L108": (
         "principal_results_rederived", "Theorem1, Lemma3.1 definition adapter, Lemma3.2(i),(iii),(iv), with the unconditional part(ii) explicitly corrected",
-        "Retain the kernel of the action on vertices and edges. Thin connected residues force one commuting pair; the resulting marking proves thin-case regularity, faithfulness, automorphism equality and biduality, also for infinite groups.",
+        "Shared retained-object K(c) and gallery O0 identify the exact core_G(<a>) kernel and full faithful image. Actual coset/endpoint applications use the same theorem. Thin connected residues force one commuting pair; the complete Petrial branch proves thin-case regularity, faithfulness, automorphism equality and biduality, also for infinite groups.",
         "Elementary group actions, dihedral normal forms and incidence connectivity; Conventional map/Petrie-walk definition",
-        "phase25_L108_reduction.md;phase25_L108_intake.json;phase25_L108_check.json;phase25_L108_manifest.json;phase25_L108_rank_audit.md;phase25_L108_rank_audit.json",
-        "The principal obstruction follows from thinness of the Petrial alone. Literal unconditional automorphism inclusion and the nonthin length/order assertion have explicit counterexamples and are not counted as proved. External atlas classifications and examples are not reproduced. No matched ratio, full Lean proof or correction-priority claim; external review remains."),
+        "phase25_L108_reduction.md;phase25_L108_intake.json;phase25_L108_check.json;phase25_L108_manifest.json;phase25_L108_rank_audit.md;phase25_L108_rank_audit.json;phase70_petrial_integration_recent_audit.md;phase76_eleven_source_root_audit.md",
+        "Now included in the independently reviewed continuous Compress_11 assembly, with unchanged prior contracts and all five full programs. The principal obstruction follows from thinness of the Petrial alone. Literal unconditional automorphism inclusion and the nonthin length/order assertion have explicit counterexamples and are not counted as proved. External atlas classifications and examples are not reproduced. No matched ratio, full Lean proof or correction-priority claim; external review remains."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",

@@ -26,6 +26,26 @@ are not relabeled as fresh executions of an edited script.
 
 ## Continuous ten-source replacement
 
+The successor [eleven-source edition](COMPRESS_11.md) has a standalone runner:
+
+```sh
+python3 research/case_study/phase75_eleven_source_verify.py \
+  --output-dir /tmp/human-compression-eleven-new --run-petrial
+```
+
+Python's standard library is sufficient. The runner validates all 87 proof
+spans, the 73 unchanged and six citation-corrected predecessor spans, 19
+unchanged sections and all five complete programs. The optional flag runs
+seven exact Petrial controls with assertions enabled. It preserves the
+executed program, raw logs and results in the new directory. Private source
+captures are not required; mathematical and primary-source review remain
+the separate [independent audit](research/case_study/phase70_petrial_integration_recent_audit.md).
+The [wrapper review](research/case_study/phase77_eleven_wrapper_recent_audit.md)
+checks an isolated public-input tree, no-clobber and altered-input rejection.
+The unchanged earlier GAP programs are not rerun by this command.
+
+The following command reproduces the preceding ten-source edition:
+
 ```sh
 python3 research/case_study/phase45_ten_source_verify.py --output-dir /tmp/human-compression-ten-structure
 ```

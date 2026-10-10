@@ -4095,3 +4095,41 @@ to the corpus or conversion of zero marginal reuse cost into novelty.
 assessment for verified solutions of open problems. Its optional infinity
 marker denotes a new resolution; an absent known proof does not supply a
 literal numerical compression ratio.
+
+## Retaining objects determines the action kernel
+
+A geometric operation may discard some information even when it starts from
+a faithful group action. The [eleven-source manuscript](COMPRESS_11.md)
+isolates an exact way to detect this. Let a group G act on retained objects X
+and constructed objects Y. Suppose the new objects are uniquely encoded by
+old elements or actual subsets, and an equivariant forgetting map from some
+of Y reaches every object of X. Then an element fixes Y pointwise exactly
+when it fixes X pointwise. Thus
+
+\[
+\ker(G\curvearrowright Y)=\ker(G\curvearrowright X)
+ =\bigcap_j\operatorname{core}_G(H_j),
+\]
+
+where the H_j stabilize representatives of the retained orbits. This follows
+in two directions: forgetting detects movement of old objects, while an
+injective encoding prevents new objects from moving after all old objects
+are fixed. Labels matter. Two independently labelled copies of the same
+subset would require a different argument.
+
+For typed cosets this is the core of the chamber stabilizer. In the endpoint
+construction, retained vertices and higher objects determine the new
+double-cover components; graph simplicity recovers the omitted old edges.
+For a Petrial, vertices and edges are retained and each new face is its
+actual pair of subsets. The kernel is the core of the face-changing
+involution subgroup. It can be nontrivial: the complete tripartite geometry
+with two objects of each type has group C₂³, but its Petrial has only one
+face and faithful group C₂².
+
+Thinness supplies an additional mechanism. A residually connected thin
+geometry has a free action on chambers. If the induced group is transitive,
+it is the full automorphism group; a panel has two chambers. Therefore an
+order-two panel preimage forces the action kernel to vanish. The Petrial
+proof uses this after establishing transitivity, then checks that the second
+operation recovers distinct original faces. The kernel argument is shared;
+the connectivity and face-recovery arguments remain necessary and explicit.

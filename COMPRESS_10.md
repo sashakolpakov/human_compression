@@ -1,5 +1,9 @@
 # Ten named manuscripts → one continuous replacement
 
+The later [eleven-source edition](COMPRESS_11.md) adds the corrected Petrial
+contract. This page and its 1.671318× lower bound concern the exact ten-source
+edition; the measurement does not transfer to its successor.
+
 **The declared principal results of the ten manuscripts below now follow as
 explicit corollaries of one continuous manuscript, relative to its stated
 background and corrected source contracts.** The intake spans 1998–2026.

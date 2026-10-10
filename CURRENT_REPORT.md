@@ -1,34 +1,38 @@
-# Current judgment: ten manuscripts, one reviewed replacement
+# Current judgment: eleven manuscripts, one reviewed replacement
 
-**Ten named principal-result contracts now follow from one continuous
+**Eleven named principal-result contracts now follow from one continuous
 replacement, with the stated background and source corrections.**
-[Compress_10](COMPRESS_10.md) gives the exact authors, titles, editions and
-source-to-corollary map. The [independent integration review](research/case_study/phase52_ten_source_recent_audit.md)
-read all 24 sections, all source adapters and all four programs. The
-[root admission](research/case_study/phase56_ten_source_root_audit.md)
-includes the required reference correction and verifies continuity with the
-previously reviewed components. This is internal mathematical review.
+[Compress_11](COMPRESS_11.md) gives the exact authors, titles, editions and
+source-to-corollary map. The [independent extension review](research/case_study/phase70_petrial_integration_recent_audit.md)
+reads all new proofs and applications and inherits the complete earlier
+integration review for unchanged branches. The
+[root admission](research/case_study/phase76_eleven_source_root_audit.md)
+checks the new shared theory, source contract and public replay. This is
+internal mathematical review.
 
 The intake is
 
 ```text
-N001 + N003 + N008 + L032 + L035 + F013 + F016 + L088 + N013 + N016
-    → Compress_10 + exact reference erratum.
+N001 + N003 + N008 + L032 + L035 + F013 + F016 + L088 + N013 + N016 + L108
+    → Compress_11.
 ```
 
-It spans 1998–2026. The earlier A, B, Unified and C replacements cover
-overlapping parts of these ten sources. There are five reviewed assemblies
-in the registry, covering ten distinct source manuscripts. The 79 rows of the
-new contract map include qualifications and unproved conjectures; they are
-not 79 proved theorems or a claim about every assertion in the originals.
+It spans 1998–2026. The six reviewed assemblies overlap and cover eleven
+distinct source manuscripts. The 87 contract rows include qualifications,
+corrected assertions and unproved conjectures; they are not 87 proved
+theorems or a claim about every assertion in the originals. The new version
+incorporates the earlier reference correction and all five complete programs.
 
 The common theory uses exact image/kernel transport, relative generation,
 Frattini coordinates, a shared square-lattice model and endpoint/support
 operations. It retains necessary symmetric-tree and cyclic-model branches,
 geometric construction arguments, exhaustive finite code and local mirror
 induction. Older classifications, catalogues and correspondence theorems are
-explicit imports. The [attribution annotations](ATTRIBUTION.md) separate
-those imports from repository derivations and identify formal scope.
+explicit imports. A new exact action-kernel theorem is used for typed cosets,
+endpoint constructions and Petrials, with a shared gallery lemma. The
+[new attribution ledger](research/case_study/phase65_petrial_integration_attribution.json)
+records its source ideas, corrections and repository arguments. The
+[margin reader](ATTRIBUTION.md) remains specific to the ten-source edition.
 
 | Replacement | Intake | Approved length result |
 |---|---:|---|
@@ -37,6 +41,7 @@ those imports from repository derivations and identify formal scope.
 | Unified | The same 7 | **At least 40,358 / 18,241 = 2.212488×**, with N001 credited zero |
 | C plus its lattice bridge | 2 further sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | Compress_10 plus reference erratum | All 10 | **At least 51,739 / 30,957 = 1.671318×**, with N001 credited zero |
+| Compress_11 | All 11 | No approved length factor yet |
 
 The approved factors use a frozen NFC PDF-extracted token convention and
 count complete required proof/code. They remain conditional on retained
@@ -51,6 +56,9 @@ The [C measurement review](research/case_study/phase60_compress_C_measurement_re
 finds the complete replacement 200 tokens longer than the source sum; all
 reported sensitivity factors are below one. A faithful length measurement
 of N001 is still absent in the admitted record.
+The eleven-source file adds 28,061 raw bytes, including its complete new
+10,533-byte Python program. A comparable eleven-source measurement is still
+needed; none of the older factors transfers.
 
 Forty-one scoped Lean components are distributed. They include the exact
 quotient-intersection criterion
@@ -58,7 +66,7 @@ quotient-intersection criterion
 and the triangle infinitude certificates for the exact two universal
 presentations at every natural parameter at least six. Each certificate has
 its own hypotheses and trust record. They do not formalize the entire
-ten-source manuscript. The [cover-kernel theory](COVER_KERNELS.md) supplies
+assembled manuscript. The [cover-kernel theory](COVER_KERNELS.md) supplies
 conditional invariant-subspace classifications and a completely checked
 finite interval; its general existence hypotheses remain work.
 
@@ -68,20 +76,21 @@ scoped Lean character-separation certificate. It gives two distinct minimal
 covers throughout the specified first family and a complete two-cover
 interval beneath their shared cover. It does not classify all covers.
 
-The immediate work is independent review of the eleventh-source Petrial
-integration and the new two-primary cover obstructions, followed by further
-construction attempts and priority comparison. The general and complete five-family multiplicity
+The immediate work is the next source integration, eleven-source attribution
+annotations and measurement, and independent review of the two-primary cover
+obstructions. Further cover constructions and priority comparison continue.
+The general and complete five-family multiplicity
 conjectures remain unproved here. Proof review and computational diagnostics
 are distinct from establishing that a result was previously open; no
 historical-priority or newly solved open-conjecture marker is cleared.
 
 The wider registry contains 161 indexed works and 17 principal-result
-candidates. Those counts exceed the ten sources in the assembled replacement
+candidates. Those counts exceed the eleven sources in the assembled replacement
 and do not measure complete corpus compression. The public repository is
 [Human Compression](https://github.com/sashakolpakov/human_compression).
 
 The [preceding independent state report](research/case_study/phase47_independent_state.md)
 remains frozen at commit `1cecc59`, where it assessed nine assembly sources,
 a separate tenth adapter and 39 Lean components. Its author wrote none of
-the replacements. The present page records the later ten-source admission
+the replacements. The present page records the later eleven-source admission
 and other changes separately; it does not retroactively update that review.

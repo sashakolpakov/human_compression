@@ -16,21 +16,22 @@ their open problems. Success means reproducing exact theorem statements with
 fewer independent arguments, exposing the inputs that remain, and obtaining
 new consequences. The evidence is the mathematics and its checks.
 
-[**Compress_10**](COMPRESS_10.md) now derives the declared principal results
-of **ten named manuscripts spanning 1998–2026** from one continuous
-replacement. The [exact intake](COMPRESS_10.md#exact-intake) credits every
-source author and states the result contract. An independent agent read
-all 24 sections, all adapters and all four complete finite programs; the
-[integration review](research/case_study/phase52_ten_source_recent_audit.md)
-passes with one required reference correction. Retained background and
-source corrections remain explicit.
+[**Compress_11**](COMPRESS_11.md) now derives the declared principal results
+of **eleven named manuscripts spanning 1998–2026** from one continuous
+replacement. The [exact intake](COMPRESS_11.md#exact-intake) credits every
+source author and states the result contract. The
+[independent extension review](research/case_study/phase70_petrial_integration_recent_audit.md)
+checks all new proofs and applications and verifies continuity with the
+earlier complete ten-source review. Retained background and source
+corrections remain explicit.
 
 The shared arguments concern exact kernels, relative generation, primitive
 coordinates, square lattices and endpoint operations on marked groups.
 Substantial forest, cyclic-classification, geometric and census branches
 remain inside the replacement. The source-to-corollary map exposes their cost.
-The [attribution annotations](ATTRIBUTION.md) distinguish borrowed results,
-repository contributions, shared derivations and the exact scope of Lean.
+The [new attribution ledger](research/case_study/phase65_petrial_integration_attribution.json)
+distinguishes source results, shared arguments and corrected assertions.
+The [ten-source margin reader](ATTRIBUTION.md) remains a separate frozen edition.
 
 The [independently reviewed ten-source measurement](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
 gives a conservative **1.67×** length factor. The 1998 source is credited
@@ -42,9 +43,11 @@ zero because its faithful PDF body remains unavailable.
 | [Compress_Unified](COMPRESS_UNIFIED.md), seven sources | **At least 40,358 / 18,241 = 2.21×**, crediting the unmeasurable 1998 source zero |
 | [Compress_C plus lattice bridge](COMPRESS_C.md), two sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | [Compress_10](COMPRESS_10.md), ten sources | **At least 51,739 / 30,957 = 1.671318×**, crediting the 1998 source zero |
+| [Compress_11](COMPRESS_11.md), eleven sources | Complete principal-result contract reviewed; length measurement pending |
 
 These use normalized PDF-extracted whitespace tokens and include the complete
 required proof and code. Retained background proofs remain imported. The
+ten-source factor does not transfer to the new eleven-source manuscript. The
 seven-source integration adds 706 raw Markdown tokens over its two
 predecessors together. A common framework can improve organization while
 adding exposition; every measured outcome is reported under its exact scope.
@@ -105,6 +108,13 @@ with a complete written review and eight exact finite checks. A separate
 Lean certificate verifies the algebraic character-separation step.
 
 ## Results in this snapshot
+
+The [eleventh-source extension](COMPRESS_11.md) proves the 2001 Petrial
+paper's principal result through a shared retained-object action theorem.
+The same kernel formula now applies to cosets, endpoint constructions and
+Petrials. The full proof handles infinite groups and residues, and explicitly
+corrects the source's unconditional embedding assertion. All new argument
+and finite-control costs remain inside the 25-section replacement.
 
 An [eight-dimensional integer tensor construction](research/case_study/phase35_L003_tensor_model.md),
 with its [geometric completion](research/case_study/phase35_L003_tensor_geometry.md),

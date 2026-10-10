@@ -116,6 +116,15 @@ implied by this measurement of the proof manuscript. Annotation text
 that adds a necessary argument must enter the proof denominator. None of the
 current annotations adds a mathematical premise or proof step.
 
+The later [eleven-source replacement](COMPRESS_11.md) is now admitted under
+its corrected principal-result contract. It adds the 2001 Petrial paper,
+the exact retained-object kernel interface and all necessary branch proofs.
+The whole new Python appendix is included: 10,533 bytes, within a raw total
+increase of 28,061 bytes over the ten-source manuscript. No eleven-source
+factor has been measured or approved. A future denominator must count the
+whole 25-section manuscript and all five programs. The ten-source factor
+cannot be applied to this larger replacement without remeasurement.
+
 ## A finite compression ratio
 
 Fix a set of exact theorem statements $S$, a common background $B$, and a
