@@ -544,3 +544,12 @@ affine maps in six coordinates, with an exact marked comparison and a
 standalone certificate. This measures a representation-size reduction;
 source and replacement proof spans have not been matched. Neither measured
 proof ratio, paper coverage nor the unassigned infinity marker changes.
+
+
+Phase forty-two proves a free quotient of an index-648 subgroup in the
+unfilled rotational presentation and constructs its actual universal
+regular geometry. This also proves the compact affine image is a proper
+quotient. These are new structural consequences in the stated scope,
+with priority unverified; they do not close every finite parameter case.
+The two matched ratios, existing-paper coverage and infinity marker stay
+unchanged.

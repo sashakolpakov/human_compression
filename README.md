@@ -64,6 +64,13 @@ they are infinite whenever six divides the parameter. Uniform existence
 for parameters coprime to six, further universal orders and priority remain
 unresolved. The compact affine image is not identified with a universal group.
 
+The [unfilled universal group](research/case_study/phase35_L003_unfilled_geometry.md),
+before the final parameter relation is imposed, is also an actual regular
+hypertope group. A [free-word certificate](research/case_study/phase34_L003_unfilled_structure.md)
+gives a subgroup of index 1,296 mapping onto a rank-two free group. This
+proves that its virtually abelian affine quotient is proper; it does not
+settle the remaining finite parameter cases.
+
 For the 2000 incidence construction, the notes recover the complete
 [neighbourhood theorem](research/case_study/phase32_L111_arbitrary_rank.md),
 including arbitrary rank, and the merging/splitting construction. They also

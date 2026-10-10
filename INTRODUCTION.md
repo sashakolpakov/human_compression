@@ -3653,7 +3653,46 @@ This is a concrete reduction in representation size. It is not yet a
 matched proof-length measurement, a splitting theorem, or a faithful
 affine model of the universal presentation.
 
-## 60. The remaining work, and how a living reduction should record it
+## 60. The universal group has a free quotient inside it
+
+The compact affine model makes the even family transparent, but an exact
+[free-word certificate](research/case_study/phase34_L003_unfilled_structure.md)
+shows that a richer group lies behind the presentation. Omit the final
+parameter relation $T^s=1$, retaining the nine fixed rotational words.
+Call the resulting group $P_{\mathrm{omit}}$.
+
+Replace integer edge voltages by freely reduced words in two letters.
+Three permutations of 648 states, decorated by words of length at most
+four, give an action on the product of those states with $F_2$. All nine
+relators vanish at every state: 5,832 literal free cancellations. The
+base action is transitive, and two explicit closed words at one state
+have voltages equal to the two free generators. Thus the stabilizer has
+index 648 and maps onto $F_2$.
+
+The chosen preimages also give a section, so this proves both a free
+quotient of a finite-index subgroup and an embedded free subgroup. In
+particular, $P_{\mathrm{omit}}$ is large and not virtually solvable.
+These conclusions depend only on the exported words and their direct
+verification, not on the subgroup rewriting used to discover them.
+
+A [separate geometric argument](research/case_study/phase35_L003_unfilled_geometry.md)
+proves that the full four-involution universal group is an actual regular
+hypertope group. It maps onto the compact finite base; the same three
+fixed parabolics inject, so one-exceptional quotient transport applies.
+Its remaining local group is exactly the Euclidean triangle reflection
+group $[6,3]$: two independent lattice translations rule out a translation
+kernel, and a normal kernel disjoint from that lattice must centralize it
+and therefore be trivial.
+
+Reflection invariance of the three fixed torus lattices identifies the
+full group as $P_{\mathrm{omit}}\rtimes C_2$. It has a subgroup of index
+1,296 mapping onto $F_2$, and its affine quotient is proper. This identifies
+the precise limit of the six-coordinate model while still obtaining the
+unfilled universal geometry. Prescribing an arbitrary finite parameter
+requires an additional quotient argument preserving the local groups and
+the geometry; largeness alone does not supply that argument.
+
+## 61. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

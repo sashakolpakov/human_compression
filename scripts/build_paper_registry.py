@@ -487,6 +487,10 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["exact_target"].append({"reference":"Standalone compact model of the even-parameter family", "scope":"Four integral affine maps in dimension6, translation kernel2Z6 and linear quotient1296; reduction modulo2m has order1296m6 and gives the same marked regular groups as the original voltage construction.", "relation_to_source":"compact_verified_quotient_family"})
         r["method"].append("Small integral matrices, complete Schreier translation certificate, faithful reduction modulo2 and a rational affine intertwiner. The standalone construction needs no old voltage data.")
         r["evidence"] += [evidence(n,"Compact affine model and exact comparison") for n in ("phase35_L003_affine_model.md","phase35_L003_affine_manifest.json","phase35_L003_affine_root_audit.md","phase35_L003_affine_check.json","phase35_L003_affine_compare.json","formal/CompactAffineData.scope.md")]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Universal geometry before imposing the parameter relator", "scope":"Actual regular rank4 U_infinity=P_omit semidirect C2; fixed local orders36,48,108 and one exact Euclidean[6,3] local group. Its index1296 subgroup surjects ontoF2, so it is not virtually solvable and its compact affine quotient is proper.", "relation_to_source":"unfilled_structural_consequence"})
+        r["method"].append("Nonabelian free-word voltages with two explicit onto-F2 witnesses; three protected universal parabolics; Euclidean lattice injectivity and its centralizer.")
+        r["evidence"] += [evidence(n,"Free quotient and unfilled universal geometry") for n in ("phase34_L003_unfilled_structure.md","phase34_L003_unfilled_manifest.json","phase35_L003_unfilled_geometry.md","phase35_L003_unfilled_geometry_manifest.json","phase35_unfilled_rank_audit.md","phase35_L003_unfilled_root_audit.md")]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

@@ -1547,3 +1547,19 @@ parabolics and all 5,287 base coset flags. The second proves the literal
 generator intertwiner with the older voltage model. Each requires a fresh
 output path. Lean checks the homogeneous integer matrix identities and
 specified translation words; it does not repeat the finite geometry census.
+
+
+## Free quotient of the unfilled presentation
+
+```sh
+python3 research/case_study/phase34_L003_free_voltage_check.py \
+  --output scratch/L003-free-words-fresh.json
+```
+
+Python's standard library checks all 5,832 free-word relator/state equalities,
+the transitive 648-state action and every listed surjectivity witness. The
+output must be new. The universal geometry and Euclidean local-group
+identification are separate written consequences of the compact family.
+The retained GAP finder and log record discovery only and are unnecessary
+for verification. Run that finder only from a fresh scratch directory:
+it writes its data filename in the current directory.
