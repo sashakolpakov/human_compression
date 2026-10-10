@@ -44,7 +44,7 @@ intelligence, historical effort, or minimum possible proof complexity.
 Their use of earlier theorems also belongs in the dependency accounting.
 Bibliographic repetition alone is not a theorem-reduction result.
 
-At each meaningful revision retain the task contract and record:
+At each meaningful revision retain the exact task and target results and record:
 
 - The full topic umbrella and the complete matched application costs.
 - Gross new proof, interface, application and certificate material.
@@ -70,5 +70,5 @@ property. Shared text or a dependency graph alone is not a pushout theorem.
 
 An independent [earlier method and intake audit](research/case_study/phase121_gkm_proof_library_note.md)
 records the earlier GKM readings and the pre-reorganization state. It is
-historical; its mixed compilation is reusable proof material, not the present
-topic-family deliverable or its comparator.
+historical; its mixed compilation supplies reusable proofs. It is neither one
+of the new topic papers nor one of the historical papers being compared.

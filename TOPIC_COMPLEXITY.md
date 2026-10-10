@@ -4,7 +4,7 @@ A module is a mathematical topic, not a single replacement manuscript.
 For topic A, the historical papers are LA₁, …, LAₖ. Our corresponding
 application papers are A₁, …, Aₖ, and U_A contains their shared theory.
 Each correspondence names the results recovered, the exact source edition
-and all retained inputs. A short section becomes an application paper only
+and all earlier results used. A short section becomes an application paper only
 after its definitions, hypotheses, exceptional cases and proofs are complete.
 
 U_A need not be a section of the present umbrella manuscript. It may combine
@@ -48,11 +48,11 @@ changes; do not carry an old denominator into the new comparison.
 
 For chronological reuse, record the proved library K available before an
 application. A library item has a fixed statement, hypotheses, complete
-proof, definitions, retained inputs and version. The dependency graph must
+proof, definitions, earlier results used and version. The dependency graph must
 contain the material needed to use it, not just theorem names.
 
 Let Dᵢ be the transitive dependency closure of the new application, including
-its own proof, new interfaces and required computational proof artifacts.
+its own proof, new interfaces and programs required by the proof.
 Under an additive, fixed representation, define
 
 $$
@@ -63,7 +63,7 @@ $$
 Here the set difference is between identified proof components, not between
 words in manuscripts. A theorem is reused only when its actual hypotheses
 have been discharged. Those checks, any change of notation or coordinates
-requiring an argument, and every new adapter are charged. Merely similar
+requiring an argument, and every new argument needed to apply a theorem are charged. Merely similar
 proofs are not one component. Mutually dependent definitions and lemmas are
 grouped into an acyclic unit.
 
@@ -97,8 +97,8 @@ prospective transfer separately.
 
 ## 3. The graphs to produce
 
-For every topic, use the same fixed order of matched source/application
-contracts and publish:
+For every topic, fix the order of the corresponding historical and application
+papers, specify the results being compared, and publish:
 
 1. **Per-paper costs:** the historical heights c(LAᵢ), one separately visible
    acquisition bar c(U_A), and the application heights c(Aᵢ). Do not add U_A
@@ -120,8 +120,9 @@ edge counts and graph depth describe structure; none substitutes for proof
 length or measures the worth of the authors. The source graph must receive
 the same recognition of genuine earlier reuse as ours.
 
-A [first dependency pilot](DEPENDENCY_PILOT.md) traces one existing principal
-contract. It is a scoped proof-use graph, not a measured topic decomposition.
+A [first dependency pilot](DEPENDENCY_PILOT.md) traces the proof of one main
+result. It shows dependencies for that particular result; the full topic has
+not yet been divided into complete papers and measured.
 
 ## 4. Measurement and current status
 
@@ -139,16 +140,15 @@ counts need not add, so no conditional PDF denominator is obtained by
 subtracting two extracted totals. A short nominal PDF is not a saving if its
 necessary proof sits in an uncharged file.
 
-Main-result recovery, correction of a false statement, resolution of a question
-and an auxiliary partial deduction have distinct statuses. The graph does not
-upgrade any of them. A partial source contract cannot silently earn the full
-paper's length as a matched-result numerator. Whole-body burden measurements
-under narrower contracts must carry that qualification.
+Recovering earlier results, correcting a false statement and answering an open
+question are different achievements. The graph does not change which has
+been proved. When only some results are recovered, any comparison using the
+full source length must say so; it is not a replacement of the whole paper.
 
 The current A–D documents are reviewed assemblies from which to build these
 topic families. Their frozen measurements remain valid at their recorded
 scope, but do not yet supply c(U_A), c(A₁), … or the requested topic curves.
 Dividing those documents into arbitrary text slices would not establish such
 a decomposition. The next step is to identify shared complete arguments,
-write the source-matched applications, audit both dependency graphs and then
+write the corresponding applications, audit both dependency graphs and then
 measure their actual lengths.

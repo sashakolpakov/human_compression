@@ -57,5 +57,6 @@ To redraw the pilot with Python and matplotlib:
 python3 scripts/build_dependency_pilot.py --output-dir /tmp/NEW-dependency-pilot
 ```
 
-The script checks both graphs for cycles and verifies the bound replacement
-files. It does not execute the historical computations or prove the edges.
+The script checks both graphs for cycles and verifies the checksums of the
+specified replacement files. It does not execute the historical computations
+or prove the edges.
