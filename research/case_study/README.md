@@ -46,7 +46,7 @@ all-rank cubic; the [common generation theorem](phase23_generation_core.md)
 unifies specified linear and unitary parabolic-generation steps. There are
 27 [formal modules](formal/README.md). One checks finite transfer
 arithmetic using native evaluation, with four compiler-evaluation axioms
-disclosed separately from the other 29 reports. The affine-data module checks the counterexample's
+disclosed separately from the other 30 reports. The affine-data module checks the counterexample's
 literal binary data by kernel evaluation. The preceding module proves
 the common-coset monodromy obstruction for the
 [general graph-cover theorem](phase28_voltage_shadow_theory.md). That theorem
@@ -299,3 +299,12 @@ regular universal object itself is infinite and has the exact source rotation
 presentation. The [formal quotient criterion](formal/ParabolicQuotientTransport.scope.md)
 checks the reusable subgroup and flag-completion transport. Source parameters
 do not vary with the quotient modulus, and priority remains unverified.
+
+
+The [2000 merging/splitting adapter](phase32_L111_section6_theory.md) now
+recovers the positive arbitrary-rank construction and identifies two exact
+boundaries in the accessed source: disconnected symmetry and local versus
+global graph bipartiteness. Its statement ledger records the corrections
+separately. The [one-exceptional quotient theorem](phase33_one_exceptional_transport.md)
+and Lean module allow one maximal local group to grow under an otherwise
+injective quotient. Particular varying-parameter applications remain separate.

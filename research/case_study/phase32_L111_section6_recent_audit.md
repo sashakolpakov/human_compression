@@ -1,0 +1,17 @@
+# Independent review of the L111 section-six adapter
+
+Date: 2026-10-10. Internal agent review, not external peer review or a priority determination.
+
+**PASS.** I read the full frozen phase32_L111_section6_theory.md, its full checker and the retained helper implementing flags, residues, connectivity and incidence isomorphisms. I found no mathematical gap in the stated scope.
+
+The merging construction's chamber description and four residue models cover all flags, including infinite flags under the stated chamber-extension axiom. I checked both directions of strong connectivity through actual two-type truncation paths. In particular, the reverse direction uses shared neighbors in the connected lower graph and connected truncations inside vertex residues; it does not assume finite-rank gallery connectivity. The chosen-bipartition inverse, diagram class descriptions and disjoint-pair assertions follow from the explicit object formulas.
+
+The forward symmetry argument needs neither an involutory type interchange nor normalization of the original acting subgroup. For the converse, connectedness gives an index-two color-preserving kernel, but does not establish that the extension splits. The disconnected example has full faithful type-preserving group orders 128 before merging and 512 afterward. I checked the component automorphism upper bounds, so its order obstruction does not depend on interpreting colon notation as a split extension.
+
+I checked the odd square-torus family for every odd \(m\ge5\): all faces are induced squares, all rank-two residues are connected cycles or digons, every panel has two completions, and the translation/signed-coordinate action is chamber-regular. The weak geometric shadow witnesses for an edge–face pair cover zero, one and two common vertices. The odd row cycle prevents a global bipartition. The cohomological explanation correctly distinguishes an edge cocycle vanishing around every face boundary from an actual vertex coboundary.
+
+I independently reopened the primary author-indexed Corollary 6.1 statement and its proof, through the [author-uploaded ResearchGate text](https://www.researchgate.net/publication/29655004_New_geometries_for_finite_groups_and_polytopes). It explicitly allows the weak \((I_{01})\) alternative and states local even-cycle, residual-connectivity and finite-rank conditions. Its proof tries to deduce the global graph's bipartiteness from local bipartite residues sharing edges. The torus example meets the inspected hypotheses and refutes that local-to-global deduction. I also reopened nearby indexed endpoint-condition passages. I did not independently recover the complete Theorem 6.1(iii) paragraph in this review, so the disconnected example's source-claim alignment retains the author's and root's primary-text reading; its mathematics is independently checked here.
+
+The unchanged checker was freshly executed into a separate report and produced bytes identical to the saved author report. This is a fresh execution of the author implementation, not an independently implemented geometric census. It covers the complete finite example flags/residues, weak shadow tests and the displayed automorphism bounds. The uniform family and infinite-rank assertions remain written proofs.
+
+No complete primary PDF access, entire-paper review, later-version determination, or novelty claim is made. The earlier Theorem 4.1 package and all authored files remain unchanged.

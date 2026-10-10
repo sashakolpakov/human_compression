@@ -47,7 +47,12 @@ and the [theorem-by-theorem scope table](research/case_study/torsor_compression_
 
 ## Results in this snapshot
 
-The latest additions recover the complete [2000 neighbourhood construction
+The latest additions recover the merging/splitting construction from 2000,
+give [two counterexamples to assertions in its accessed version](research/case_study/phase32_L111_section6_theory.md),
+and formally verify [quotient transport allowing one growing local group](research/case_study/formal/OneExceptionalParabolic.scope.md).
+Correction priority and later versions remain unverified.
+
+The preceding additions recover the complete [2000 neighbourhood construction
 theorem](research/case_study/phase32_L111_arbitrary_rank.md), including infinite
 rank, and give an [infinite matrix image](research/case_study/phase32_L003_infinite_presentation.md)
 of a 2018 presentation for every parameter divisible by six. Lean verifies
@@ -220,10 +225,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirty Lean modules certify specified components, with no `sorry` in the checked
+Thirty-one Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 29 reports have no native-evaluation axioms.
+axioms; the other 30 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

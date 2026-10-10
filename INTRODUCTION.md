@@ -3363,7 +3363,89 @@ modules certify infinitude and the general transport steps, not the full
 source-to-geometry derivation. The varying-parameter Problem9.2 and current
 priority remain unverified, so no new-resolution infinity marker is assigned.
 
-## 53. The remaining work, and how a living reduction should record it
+## 53. Merging types and the global parity obstruction
+
+The [section-six adapter for the 2000 paper](research/case_study/phase32_L111_section6_theory.md)
+puts a second construction into the same framework. Start with two selected
+types. Their incidence graph is bipartite because its two colors are part
+of the original type data. Merge their objects into a single vertex type,
+turn each incident pair into an edge object, and retain all higher objects.
+A higher object meets an edge exactly when it meets both endpoints.
+
+Every original chamber gives two new chambers, one for each endpoint.
+Residues at vertices are original residues. An edge-only residue is the
+join of its endpoints with the old pair residue. Higher-only residues
+commute with the construction. These identities prove the construction,
+its diagram, connectivity in both directions, and iteration on disjoint
+type pairs. Direct paths in two-type truncations handle arbitrary rank.
+Splitting the vertex type by a specified global bipartition is the inverse.
+
+That last qualification is substantive. On the square torus with vertices
+$(\mathbb Z/m\mathbb Z)^2$ for odd $m\ge5$, every face graph is a square.
+The incidence geometry is thin, residually connected and regular, and
+satisfies the weak shadow condition explicitly allowed by the source.
+Nevertheless, a row is an odd cycle. The whole vertex graph has no
+bipartition, so this geometry cannot be obtained by merging two types.
+It is a counterexample to the local-to-global implication in the accessed
+Corollary 6.1. The inverse theorem with global bipartiteness remains valid.
+
+The obstruction has a short cohomological expression. Assign one in
+$\mathbb F_2$ to every edge. Each square boundary has sum zero, so this is
+a cellular cocycle. A global two-coloring would make it a coboundary.
+Its sum around the odd row is one, which rules that out. Equivalently,
+the parity double cover has no section preserving graph edges. This is
+the same torsor obstruction that governs the cover constructions.
+
+There is a separate symmetry boundary. Two disjoint complete three-type
+geometries with two objects per type have full type-preserving group order
+128. After merging, the full group has order 512 and is chamber-transitive.
+It cannot be an index-two extension of a faithful original group: that
+would require order 256. This refutes the unrestricted symmetry converse
+in the accessed Theorem 6.1(iii). A connected lower graph restores the
+color homomorphism onto $C_2$ with chamber-transitive original kernel;
+splitting this extension is an additional question.
+
+The [statement ledger](research/case_study/phase32_L111_section6_ledger.json)
+separates the positive reductions from both counterexamples. Three internal
+reviews and fresh exact checks support the stated scope. At $m=5$, the
+checker enumerates 601 flags, 101 connected residues, 300 thin panels and
+1,250 weak-shadow pairs, with a chamber-regular group of order 200.
+These finite certificates supplement the uniform written arguments.
+Primary indexed statements were read, but the complete PDF, later
+corrections and correction priority remain unverified. A counterexample
+to a published assertion does not receive an open-problem infinity marker.
+
+## 54. One local group may grow under quotient transport
+
+The [one-exceptional-parabolic theorem](research/case_study/phase33_one_exceptional_transport.md)
+strengthens the earlier quotient criterion. A marked quotient can fail to
+be injective on one maximal parabolic while still lifting the full subgroup
+intersection property and typed coset Helly. All other maximal parabolics
+must remain injective, and the exact image family must satisfy both
+properties downstairs.
+
+Why does one exception suffice? A proper generator subset lies in an
+injective maximal parabolic unless it is exactly the exceptional maximal
+subset. Given two different proper subsets, at least one therefore has
+injectivity available. Downstairs intersection gives a lift in their
+prescribed common subgroup; injectivity identifies that lift with the
+original element. Equal subsets and full subsets are immediate.
+
+For Helly, a family with at least two types has a nonexceptional member.
+Use it as an anchor for lifting a common image point. Each pairwise
+intersection with the anchor supplies a representative; exact image meets
+and injectivity on the anchor identify its difference from the lift with
+an element of the required subgroup. Thus the lift lies in every coset.
+Empty and singleton families have an immediate common point.
+
+[Lean checks both arguments](research/case_study/formal/OneExceptionalParabolic.scope.md)
+for arbitrary groups, arbitrary type sets and arbitrary selected families.
+No finiteness or central kernel is assumed. The theorem permits a growing
+local residue in an application, but such an application still needs its
+exact marked quotient, local presentations and source-parameter match.
+The formal module alone makes no claim about a particular toroidal family.
+
+## 55. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3400,7 +3482,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-one Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

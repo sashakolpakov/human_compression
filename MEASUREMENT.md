@@ -506,3 +506,11 @@ quotients preserving its residues. Its quotient criterion is formally
 verified. The source parameter remains fixed; the broader Problem9.2 and
 priority remain unresolved here. This addition changes no existing-result
 coverage count, matched ratio or infinity marker.
+
+
+Phase thirty-seven adds further statement-level reductions within the 2000
+construction paper and two counterexamples to assertions in the accessed
+version. It also formally proves quotient transport allowing one exceptional
+maximal parabolic. These additions change neither existing paper counts nor
+the two measured ratios. Published-statement counterexamples are tracked
+separately from previously open problems; no infinity marker is assigned.

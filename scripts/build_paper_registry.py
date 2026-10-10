@@ -21,7 +21,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json",
           "phase26_access.json", "phase30_source_intake.json", "phase31_cover_prior_art.json", "phase32_L003_source_intake.json",
           "phase32_L111_intake.json", "phase32_L111_scope.json",
-          "phase32_L003_geometry_intake.json", "phase32_L003_universal_intake.json")
+          "phase32_L003_geometry_intake.json", "phase32_L003_universal_intake.json",
+          "phase32_L111_section6_intake.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -37,7 +38,7 @@ UPDATES = {
         "Exact chamber and residue maps recover construction, rank-two classes, residual and strong connectivity in both directions, designated action and disjoint-pair iteration. Full parity monodromy explains the positive finite-rank cover adapter; direct path and truncation proofs extend the complete statement to arbitrary rank.",
         "Elementary graph path parity; Source graph convention and geometry axioms, including extension of arbitrary flags to chambers",
         "phase32_L111_theory.md;phase32_L111_arbitrary_rank.md;phase32_L111_scope.json;phase32_L111_manifest.json;phase32_L111_rank_audit.md;phase32_L111_root_audit.md;phase32_L111_arbitrary_root_audit.md;phase32_L111_check.json",
-        "Only one complete numbered construction theorem. Complete primary body/PDF, hypothesis-conversion corollary, section6 and application tables are outside this package. No principal-paper credit, matched ratio or novelty claim."),
+        "Complete primary body/PDF, remaining auxiliary statements and application tables remain outside the audited scope. Section6 is handled by a separate statement ledger with two counterexamples to indexed assertions. No principal-paper credit, matched ratio or novelty claim."),
     "L007": (
         "proposed_new_result", "Section 7 omitted even-exponent non-tight existence range, 6 <= m <= p+1",
         "Central cyclic fiber-product lift preserves intersections and forbids a reversing automorphism.",
@@ -528,6 +529,14 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes")
         r["access_coverage"].update(retrieval_status="selected_primary_indexed_passages_read_complete_body_unavailable",
             notes="Complete single Theorem4.1 and literal construction now source-matched and independently rederived, including arbitrary rank. No complete-body, application-table or principal-paper credit.")
+    if identifier == "L111":
+        r["exact_target"].append({"reference":"Section6 merging/splitting constructions and exact limits", "scope":"Arbitrary-rank Theorem6.1 construction/(i)/(ii)/forward(iii) and Theorem6.2 rederived. Unrestricted6.1(iii) converse and Cor6.1 fail on explicit geometries under the accessed hypotheses.", "relation_to_source":"reduction_with_separate_counterexamples"})
+        r["method"].append("Exact chamber/residue models, subdivision paths, a specified global bipartition and parity cohomology; explicit full automorphism orders128/512 and odd square tori.")
+        r["evidence"] += [evidence(n,"Section6 source-bound reduction and counterexamples") for n in ("phase32_L111_section6_theory.md","phase32_L111_section6_ledger.json","phase32_L111_section6_manifest.json","phase32_L111_section6_root_audit.md","phase32_L111_section6_rank_audit.md","phase32_L111_section6_recent_audit.md","phase32_L111_section6_check.json")]
+        r["numbered_statement_ledger"] = load("phase32_L111_section6_ledger.json")["statement_level_targets"]
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase32_L111_section6_intake.json", "reading_depth":"Complete verbal Theorems6.1/6.2, constructions, Cor6.1/proof and selected source definitions read in primary indexed passages; diagram images and complete PDF unavailable."})
+        r["access_coverage"]["notes"] = "Theorem4.1 and positive section6 statements source-matched; two separate indexed-statement counterexamples. No complete-body, application-table or principal-paper credit."
+        r["remaining_work"] = ["Remaining auxiliary statements/application tables, complete PDF, later corrections and correction priority are unverified. No literal whole-paper validity, matched ratio or infinity marker."]
     if identifier == "N005":
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase31_cover_prior_art.json", "reading_depth":"Proposition2.2, Definitions4.1/4.5/4.6 and Theorem4.12/Corollary4.13 with displayed proofs; primary rendered preprint only, not final journal body. No new reduction credit."})
     if identifier == "L108":

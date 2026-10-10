@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty saved Lean reports
+checks local documentation links, and checks the thirty-one saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty certificates and their unformalized boundaries. With Git
+describes all thirty-one certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1451,3 +1451,22 @@ nonautomatic typed-Helly counts. A fresh report path is required. The
 all-even-modulus and universal-group conclusions are separate written
 proofs. The Lean module checks the abstract quotient criterion, with its
 explicit hypotheses; it does not execute the geometric census.
+
+
+## Merging, parity and one exceptional parabolic
+
+```sh
+python3 research/case_study/phase32_L111_section6_check.py \
+  --output scratch/L111-section6-fresh.json
+python3 research/case_study/formal/verify_lean.py OneExceptionalParabolic.lean \
+  --packages /path/to/pinned/.lake/packages \
+  --lean /path/to/lean-4.32.2 \
+  --output-dir scratch/one-exceptional-fresh
+```
+
+The standard-library checker validates the merging/splitting maps, the exact
+128/512 symmetry groups, and all flag, residue, weak-shadow and group claims
+for the odd square torus at modulus five. The all-odd-modulus argument and
+arbitrary-rank construction are written proofs. Lean independently checks
+the generic one-exceptional-parabolic transport theorem and imports the
+previous transport module. It does not certify either geometric example.
