@@ -1712,3 +1712,18 @@ groups, 92 anchored triples, all four relation counts and every group/row hit.
 The recorded run uses GAP 4.15.1 and SmallGroups 1.5.4. It retains the catalogue
 and exact group arithmetic; it does not prove the infinite-parameter lifting
 argument or the imported geometric assembly results.
+
+
+## Primitive saturation and parabolic-kernel diagnostics
+
+```sh
+gap -q research/case_study/phase38_primitive_saturation_check.g
+```
+
+The finite diagnostic builds eight compatible-square groups from their
+presentations and checks 136 parabolic kernels/orders and 292 induced-residue
+indices. It also checks the general Frattini restriction and unique maximal
+overgroups on five further p-groups. This uses exact GAP arithmetic and
+the SmallGroups catalogue for those five examples. The all-parameter
+[theorem and review](research/case_study/phase38_primitive_saturation_root_audit.md)
+are separate written evidence; no higher lower-central restriction is claimed.

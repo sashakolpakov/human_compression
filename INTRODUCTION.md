@@ -3930,7 +3930,37 @@ assemblies from the wider set of principal-result candidates. Seven named
 sources now feed two replacements; a single shorter replacement for all
 seven still requires a proved common theory and a new integration review.
 
-## 68. The remaining work, and how a living reduction should record it
+## 68. A theorem connecting the Frattini and forest-quotient branches
+
+For an irredundantly marked finite p-group P, its generator images are a
+basis of P/Phi(P). Every marked parabolic therefore satisfies
+Phi(P_I)=P_I intersect Phi(P). Each omission subgroup has exactly one
+maximal overgroup: its product with Phi(P). The resulting primitive
+coarsening is the coordinate geometry, with p points of each type.
+
+The [primitive-saturation theorem](research/case_study/phase38_primitive_saturation.md)
+makes this connection precise, including all fibers. For a two-group whose
+involutory marking has IP and a forest diagram, the canonical class-two
+quotient restricts exactly to every parabolic. Applying the forest theorem
+to the induced subgroup proves gamma3(G_I)=G_I intersect gamma3(G), using
+matching finite indices. The omission index is then 2^(1+degree) times the
+corresponding gamma3 index. In particular an omission action is primitive
+exactly at an isolated diagram vertex.
+
+For the compatible-square construction, the gamma3 kernel in a parabolic
+is precisely the product of local kernels whose entire three-marker bags
+are present. This gives all parabolic orders and face/residue indices from
+the local parameters. The root reviewed the complete proof and independently
+replayed 136 parabolic and 292 residue-index diagnostics, plus five generic
+p-group examples. Finite diagnostics do not replace the written theorem.
+
+This supplies a common theorem for A's Frattini branch and B. It does not
+provide deletion maps for symmetric tree transpositions, whose odd braid
+relations rule them out. Their forest/laminar and classification arguments
+remain proof cost in any future combined manuscript. No new source coverage
+or seven-paper compression factor is assigned by this bridge alone.
+
+## 69. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

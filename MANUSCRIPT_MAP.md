@@ -26,8 +26,17 @@ charged once. Background and certificate costs remain explicit. A proved
 main-result replacement can still yield modest or no length savings.
 See [MEASUREMENT.md](MEASUREMENT.md) for the accounting rules.
 
-Current work seeks an actual reusable theorem connecting the two bundles,
-extends the named intake to further independently checked replacements,
+A [proved bridge between the two replacements](research/case_study/phase38_primitive_saturation.md)
+now identifies the unique primitive coarsening of each omission action in an
+irredundantly marked finite p-group. For the forest two-groups it factors
+through the canonical class-two quotient, with exact parabolic kernels and
+coset fibers. This yields all face and induced-residue indices of the
+prescribed-square family by one formula. The [root review and fresh diagnostics](research/case_study/phase38_primitive_saturation_root_audit.md)
+pass the stated theorem. This connects A's Frattini branch to B; A's symmetric
+classification remains separate, and the two full manuscripts are not yet
+one shorter replacement.
+
+Current work extends the named intake to further independently checked replacements,
 and closes the source/rendering boundaries needed for measurement.
 New conjecture solutions have separate statement, proof and priority audits.
 The earlier [independent assessment](CURRENT_ASSESSMENT.md) stays frozen at

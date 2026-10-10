@@ -31,6 +31,16 @@ finite census. The [named manuscript map](MANUSCRIPT_MAP.md) records the
 seven distinct source manuscripts across these two replacements. Their
 integration into one shorter theory and their length measurements remain work.
 
+A [proved bridge between the two replacements](research/case_study/phase38_primitive_saturation.md)
+now identifies the unique primitive coarsening of each omission action in an
+irredundantly marked finite p-group. For the forest two-groups it factors
+through the canonical class-two quotient, with exact parabolic kernels and
+coset fibers. This yields all face and induced-residue indices of the
+prescribed-square family by one formula. The [root review and fresh diagnostics](research/case_study/phase38_primitive_saturation_root_audit.md)
+pass the stated theorem. This connects A's Frattini branch to B; A's symmetric
+classification remains separate, and the two full manuscripts are not yet
+one shorter replacement.
+
 The [current independent assessment](CURRENT_ASSESSMENT.md) gives the exact
 intake-to-replacement map and the earlier two-paper baseline. The new
 [integration review](research/case_study/phase37_compress_forest_recent_audit.md)
