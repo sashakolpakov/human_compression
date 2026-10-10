@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty-one saved Lean reports
+checks local documentation links, and checks the thirty-two saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty-one certificates and their unformalized boundaries. With Git
+describes all thirty-two certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1490,3 +1490,21 @@ representatives. Both require a new output path. The all-even theorem
 uses these finite data, the separately Lean-checked one-exceptional
 transport theorem, and retained toroidal presentation/order bounds.
 Universal-even existence and infinitude for6|s are written corollaries.
+
+
+## Exact even-family orders and integral reduction
+
+```sh
+python3 research/case_study/phase34_L003_even_order_check.py \
+  --output scratch/L003-even-order-fresh.json
+python3 research/case_study/formal/verify_lean.py SplitLatticeReduction.lean \
+  --packages /path/to/pinned/.lake/packages \
+  --lean /path/to/lean-4.32.2 \
+  --output-dir scratch/split-lattice-fresh
+```
+
+The first checks every Schreier translation against six integral basis
+vectors, their unit minor and literal words. Its written uniform argument
+gives kernel mL and order1296m^6 at every modulus. Lean certifies the
+abstract additive-left-inverse reduction and the literal matrix inverse;
+it does not run the full Schreier enumeration.

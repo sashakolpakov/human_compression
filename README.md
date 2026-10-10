@@ -54,8 +54,9 @@ One integral voltage certificate and the Lean-checked quotient theorem prove
 the uniform result. An independent implementation verifies all 5,287 flags
 of the finite base. A [separate corollary](research/case_study/phase33_L003_universal_even.md)
 establishes the universal regular object for every even parameter and proves
-it infinite whenever six divides the parameter. Uniform odd-parameter
-existence and priority remain unresolved.
+it infinite whenever six divides the parameter. The [exact order supplement](research/case_study/phase34_L003_even_order.md)
+proves that the constructed finite group has order $1296(s/2)^6$.
+Uniform odd-parameter existence and priority remain unresolved.
 
 The preceding additions recover the merging/splitting construction from 2000,
 give [two counterexamples to assertions in its accessed version](research/case_study/phase32_L111_section6_theory.md),
@@ -236,10 +237,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirty-one Lean modules certify specified components, with no `sorry` in the checked
+Thirty-two Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 30 reports have no native-evaluation axioms.
+axioms; the other 31 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

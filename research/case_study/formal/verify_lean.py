@@ -31,6 +31,7 @@ CERTIFICATES = (
     "Phase32VoltageTheory", "Phase32L003Infinitude",
     "ParabolicQuotientTransport",
     "OneExceptionalParabolic",
+    "SplitLatticeReduction",
 )
 
 

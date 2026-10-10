@@ -475,6 +475,9 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["evidence"] += [evidence(n,"All-even finite and universal regular hypertopes") for n in ("phase33_L003_even_family.md","phase33_L003_even_manifest.json","phase33_L003_even_rank_audit.md","phase33_L003_even_root_audit.md","phase33_L003_even_base_root_check.json","phase33_L003_universal_even.md","phase33_L003_universal_even_root_audit.md","phase33_source_status.md")]
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase33_L003_even_intake.json", "reading_depth":"Exact source presentation, ordered residue adapters, Table8 and Problem9.2 rechecked for the genuinely varying even parameter."})
         r["remaining_work"] = ["Uniform odd-parameter existence, universal orders at other parameters, current priority and end-to-end formalization remain unverified. N015 main-theorem overlap remains undetermined because its complete body was not obtained. Infinitely many exact finite parameters are proved; no complete all-integer claim or infinity marker."]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Exact order of the specified even-parameter quotients", "scope":"Full integral image has a saturated rank6 translation kernel and quotient order1296. Literal reduction has kernel mL, so |G_m|=1296m^6 for all m>=1. No splitting or universal-order assertion.", "relation_to_source":"specified_quotient_order_consequence"})
+        r["evidence"] += [evidence(n,"Exact even-family quotient order") for n in ("phase34_L003_even_order.md","phase34_L003_even_order_manifest.json","phase34_L003_even_order_root_audit.md","formal/SplitLatticeReduction.scope.md")]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

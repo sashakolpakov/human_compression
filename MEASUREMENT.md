@@ -524,3 +524,9 @@ the source problem, separately from compression of published proofs.
 Uniform odd-parameter existence and priority remain undetermined; unread
 2024 main theorems are a material comparison gap. No corpus ratio or
 infinity marker is inferred, and the two matched-proof ratios are unchanged.
+
+
+Phase thirty-nine determines |G_m|=1296m^6 for the specified even-parameter
+quotients and formally checks the generic integral-reduction step. A group
+order is not a proof-compression ratio. The two matched-proof ratios and
+the unassigned infinity marker are unchanged.

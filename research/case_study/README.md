@@ -46,7 +46,7 @@ all-rank cubic; the [common generation theorem](phase23_generation_core.md)
 unifies specified linear and unitary parabolic-generation steps. There are
 27 [formal modules](formal/README.md). One checks finite transfer
 arithmetic using native evaluation, with four compiler-evaluation axioms
-disclosed separately from the other 30 reports. The affine-data module checks the counterexample's
+disclosed separately from the other 31 reports. The affine-data module checks the counterexample's
 literal binary data by kernel evaluation. The preceding module proves
 the common-coset monodromy obstruction for the
 [general graph-cover theorem](phase28_voltage_shadow_theory.md). That theorem
@@ -318,3 +318,9 @@ The [universal-even corollary](phase33_L003_universal_even.md) proves
 marked regular universality and infinitude when6|s. The source-status audit
 keeps finite existence, universal finiteness, all-integer scope and priority
 separate. No general full-group order formula is asserted by this package.
+
+
+The later [exact-order supplement](phase34_L003_even_order.md) proves
+|G_m|=1296m^6 for the specified even-parameter family. A saturated rank-six
+Schreier lattice establishes the actual coordinate-reduction kernel mL.
+It adds no splitting or universal-group order claim.

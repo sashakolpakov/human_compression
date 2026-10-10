@@ -3529,7 +3529,39 @@ also records a material priority gap: the complete main theorems of the
 Abelian-cover methods are established prior work; their exact overlap with
 this source-parameter family has not yet been determined.
 
-## 57. The remaining work, and how a living reduction should record it
+## 57. Exact orders from a saturated translation lattice
+
+The [order supplement](research/case_study/phase34_L003_even_order.md)
+determines the full order of the constructed even-parameter quotient:
+
+$$|G_m|=1296m^6,\qquad s=2m.$$
+
+For each element of the fixed permutation quotient, choose a generator-word
+lift. The 5,184 associated Schreier words are pure translations and generate
+the whole kernel by telescoping. Six specified words form an integral basis:
+their values at six coordinates have determinant one, and all remaining
+Schreier vectors are verified as integral combinations on all 1,296
+coordinates. The check comprises 6,718,464 coordinate equalities.
+
+The unit minor does more than establish rational rank. It proves that a
+kernel vector whose coordinates are divisible by $m$ has basis coefficients
+divisible by $m$. Consequently literal coordinate reduction has kernel
+exactly $mL$, with $L\cong\mathbb Z^6$. Thus
+
+$$1\longrightarrow (\mathbb Z/m\mathbb Z)^6
+  \longrightarrow G_m\longrightarrow G_1\longrightarrow1.$$
+
+No splitting is inferred. The formula counts the chambers of the specified
+finite hypertope; the corresponding universal object can be infinite.
+
+[SplitLatticeReduction.lean](research/case_study/formal/SplitLatticeReduction.scope.md)
+formalizes the reusable step: an additive map with an additive left inverse
+preserves and reflects divisibility by every modulus. It also kernel-checks
+the two-sided inverse of the literal six-coordinate matrix. The full basis
+enumeration and its connection to the group remain separately checked
+computation and written mathematics.
+
+## 58. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3566,7 +3598,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-one Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-two Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
