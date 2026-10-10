@@ -53,10 +53,11 @@ pass the stated theorem. Its primitive-saturation core is now inside the
 seven-source replacement. The symmetric classification remains a distinct branch;
 integration has not yet shortened the two predecessors' combined body.
 
-The [current independent report](CURRENT_REPORT.md) gives the seven-source-to-one
-judgment, the four-paper factor, the new seven-source lower bound, integration
-costs and next steps.
-Its author wrote none of the manuscripts and read the entire new integration.
+The [current independent report](CURRENT_REPORT.md) gives the exact named intake:
+seven sources to Unified, two more to C plus its required bridge, and a separate
+tenth adapter. It includes both measured factors, integration costs and next
+steps. Its author wrote none of the replacements and reviewed the entire
+seven-source integration and C extension.
 The [preceding independent assessment](CURRENT_STATE.md), whose author separately
 reproduced the four-paper counts, the [two-paper assessment](CURRENT_ASSESSMENT.md)
 and [candidate assessment](INDEPENDENT_ASSESSMENT.md) remain unchanged.
@@ -75,8 +76,8 @@ handles six Janko-group constructions and generalized-cube halving. A complete
 residue-extension census proves the six-class classification and excludes all
 higher ranks; explicit face maps and lattices prove the toroidal models.
 There are now **nine distinct sources in reviewed assemblies**, split seven
-and two. C has no measured factor, and the continuous ten-source draft remains
-under author review.
+and two. C has no measured factor. The continuous ten-source candidate is now
+author-frozen for independent integration review; it is not yet admitted.
 
 ## The method
 

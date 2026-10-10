@@ -1,12 +1,13 @@
 # Current judgment: seven-source core and two-source extension
 
-The [independent state report](research/case_study/phase41_independent_state.md)
-and its [bound evidence](research/case_study/phase41_independent_state.json)
-assess commit `158326b` and the exact private research artifacts available then.
-Its author wrote none of the replacement manuscripts and separately read and
-reviewed the entire seven-source integration. The root read this report and
-preserved it unchanged. Subsequently, commit `fb42376` exported the reviewed
-manuscript, source ledger and mathematical audit into this repository.
+The [independent state report](research/case_study/phase47_independent_state.md)
+and its [bound evidence](research/case_study/phase47_independent_state.json)
+assess commit `1cecc59`, including the seven-source measurement, reviewed
+two-source extension and separate tenth adapter. Its author wrote none of the
+replacement manuscripts. The report binds all 2,719 snapshot entries and 50
+specific evidence files; the root checked those Git-bound identities again
+at export. The [preceding report](research/case_study/phase41_independent_state.md)
+remains unchanged. This page records subsequent progress separately.
 
 **Current judgment: the declared, corrected main results of seven named
 manuscripts now follow as relatively straightforward final corollaries of one
@@ -54,9 +55,9 @@ six faithful source main bodies. The nonwhitespace-character lower bound is
 **1.864525×**. All 27 rendered pages match the measurement reviewer's full
 visual inspection; an independent root recount reproduces all counts. A faithful
 measurement of the 1998 manuscript is still needed for an exact seven-source
-factor. The frozen state report predates this additive result.
+factor. The current independent report includes this measurement.
 
-Since the frozen report, the prepared repository has reached **39 scoped Lean
+At the frozen report, the prepared repository has **39 scoped Lean
 components**. The [full triangle infinitude certificate](research/case_study/phase42_triangle_spectral_audit.md)
 has now passed independent complete source/interface review and a fresh pinned
 replay, followed by a fresh public build. Lean proves infinitude of the exact
@@ -78,8 +79,9 @@ now has a [complete root proof review and fresh exact replay](research/case_stud
 It recovers the proved source conclusions under its author-version contract,
 including the two distinct minimal covers; standard geometry and older atomic
 classification remain imported. The general multiplicity conjecture remains
-unproved here. A continuous ten-source draft is being checked by its author;
-it is not frozen or independently reviewed. N016 remains a separate adapter
+unproved here. Since the report was frozen, the author has frozen a continuous
+ten-source candidate, including all four complete GAP programs, for independent
+integration review. It is not yet admitted. N016 remains a separate adapter
 outside the nine sources in reviewed assemblies. The expanded integration
 and every new length claim require separate review.
 
