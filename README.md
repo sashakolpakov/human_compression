@@ -54,6 +54,12 @@ the coarse complexity plot are isolated in the [historical archive](archive/READ
 Their measurements apply to those earlier versions. The costs of the new
 topic papers remain to be measured.
 
+The [equal-label polygon application](EQUAL_LABEL_POLYGONS.md) recovers
+Li–Zhang’s complete stated rank-three results from the earlier polygon
+construction and an exact presentation proof. With that reviewed addition,
+21 of the 161 indexed works have their specified main results recovered.
+This count is distinct from the number of completed new topic papers.
+
 ## Proof and attribution
 
 Each application must derive the historical main results it promises to recover,

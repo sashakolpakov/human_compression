@@ -1,5 +1,11 @@
 # Provenance and verification scope
 
+The [equal-label application admission](phase120_review.md) recovers the
+complete stated positive rank-three results of F014 through the earlier
+polygon construction and an exact presentation proof. It raises principal
+coverage to21 and adds one scoped Lean file; conjecture counts and matched
+compression rates are unchanged.
+
 The [Topic A admission](phase119_review.md) publishes a complete umbrella
 and first source-specific application, with independent review and fresh
 public provenance replay. It also publishes the bounded minimal-cover

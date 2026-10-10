@@ -1,5 +1,11 @@
 # Lean certificates and their scope
 
+[BinaryDihedralDisplacements.lean](BinaryDihedralDisplacements.lean) proves
+five general displacement statements, including the finite-period adapter
+for the exact equal-label presentation. Its [scope](BinaryDihedralDisplacements.scope.md)
+separates this algebraic core from the written universal group and polytope
+proof. Fresh author, independent and public builds use standard axioms only.
+
 [CosetUpperCertificate.lean](CosetUpperCertificate.lean) proves the
 soundness of coset deductions and derives bounds on actual presented-group
 indices. [CosetUpperExamples.lean](CosetUpperExamples.lean) checks the

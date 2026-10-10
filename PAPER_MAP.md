@@ -38,14 +38,14 @@ survey does not imply that its original source has been read.
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 18 |
+| full text read | 19 |
 | full text search only | 17 |
 | metadata and access only | 9 |
-| selected sections read | 64 |
+| selected sections read | 63 |
 
-**102** works have a retrieved full text; **57** have an explicit representation or a specified conditional or partial derivation; **43** have a recovered result, finite subfamily or stated main result.
+**102** works have a retrieved full text; **57** have an explicit representation or a specified conditional or partial derivation; **44** have a recovered result, finite subfamily or stated main result.
 
-The set with **stated main results recovered contains 20 works: L008, L030, L032, L034, L035, L066, L074, L088, L092, L104, L108, F010, F013, F016, N001, N003, N008, N009, N013, N016**.
+The set with **stated main results recovered contains 21 works: L008, L030, L032, L034, L035, L066, L074, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
 The exact targets and qualifications govern membership in this set. Proposed
 conjecture proofs do not add to it. The [question catalogue](CONJECTURE_RESULTS.md)
 keeps answers to questions separate from recovery of published results.
@@ -61,6 +61,7 @@ files preserve the exact statements, earlier results used, evidence and remainin
 | L092 | Corrected rank-three applications, complete higher-rank Steiner classification and rank-six M24 construction. The two quoted classifications remain external inputs; partial linearity in Theorem 1 and missing Pasini named-residue maps remain explicit. Lean verifies specified finite incidences and counterexamples. The existing Hermitian-unital answer is counted separately, once. | [Earlier corrections](research/case_study/phase185_L092_overlay.json); [main-result admission](research/case_study/phase208_L092_overlay.json); [proof reader](DESIGN_RESIDUES.md) |
 | L068 | Complete primary text read; construction P recovered as printed and Q recovered after an explicit repair. This adds a partial derivation, with the necessary group and graph inputs stated. | [Construction review](research/case_study/phase189_L068_overlay.json); [proof reader](GRAPH_INCIDENCE.md) |
 | F010 | The main constructive theorems are recovered in a complete written argument, with local corrections. Lean verifies the stated hexagon component, not the universal constructions. | [Reviewed addition](research/case_study/phase193_F010_overlay.json); [proof reader](FINITE_INCIDENCE_REPRESENTATIONS.md) |
+| F014 | All stated positive rank-three main results in arXiv v1: exact construction, matrices, universal presentation and both corollaries. Montero–Ivić Weiss supply the earlier polygon construction; the printed inverse-action convention is corrected. The higher-rank counterexample is a separate result. | [Reviewed addition](research/case_study/phase233_F014_overlay.json); [complete application](EQUAL_LABEL_POLYGONS.md) |
 
 Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain
 explicitly rejected; those entries have only abstract-level access. L125's
@@ -215,7 +216,7 @@ remaining-work record in the frozen JSON or the reviewed additions above.
 | F011 | 2024 | [Explicit constructions of Diophantine tuples over finite fields](https://link.springer.com/content/pdf/10.1007/s11139-024-00888-5.pdf) | selected sections read | not assessed |
 | F012 | 2025 | [Exhaustive generation of edge-girth-regular graphs](https://arxiv.org/pdf/2401.08271) | selected sections read | not assessed |
 | F013 | 2026 | [String C-groups of 2-power order project onto a common string C-group](https://arxiv.org/pdf/2605.20691) | full text read | stated main results recovered |
-| F014 | 2025 | [Regular 3-polytopes of type {n,n}](https://arxiv.org/pdf/2505.09505) | selected sections read | partial progress |
+| F014 | 2025 | [Regular 3-polytopes of type {n,n}](https://arxiv.org/pdf/2505.09505) | full text read | [stated main results recovered](research/case_study/phase233_F014_overlay.json) |
 | F015 | 2023 | [Infinite Families of Hypertopes from Centrally Symmetric Polytopes](https://www.combinatorics.org/ojs/index.php/eljc/article/download/v30i2p20/pdf/) | selected sections read | part of the results recovered |
 | F016 | 2025 | [Symmetric polytopes whose automorphism groups are 2-groups](https://arxiv.org/abs/2512.15511v1) | full text read | stated main results recovered |
 | F017 | 2018 | [LCD codes from adjacency matrices of graphs](https://www.math.clemson.edu/~keyj/Key/LCD_KeyRod.pdf) | selected sections read | not assessed |

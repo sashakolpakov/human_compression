@@ -1,5 +1,16 @@
 # Reproducing the checks
 
+The [equal-label polygon application](EQUAL_LABEL_POLYGONS.md) has an independent
+public replay of its five Lean declarations and finite permutation models:
+
+```sh
+python3 -B -O research/case_study/phase232_check.py --out /tmp/NEW-polygons --lean LEAN --packages PACKAGES --gap GAP
+```
+
+It checks the frozen proof/review bytes, the exact finite-period algebra,
+eight independent GAP models, the n=2 endpoint and two controls. The full
+unbounded group and polytope theorem is a separately reviewed written proof.
+
 The [complete Topic A papers](TOPIC_A.md) have a public binding and provenance replay:
 
 ```sh
