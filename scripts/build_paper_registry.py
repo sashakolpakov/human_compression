@@ -483,6 +483,10 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["method"].append("Scaled unit translation minor modulo2m, exact base order13824 and three injective parabolics; one-exceptional transport. Independent exhaustive base census checks56225 flags.")
         r["evidence"] += [evidence(n,"Multiples-of-three and combined universal scope") for n in ("phase34_L003_triple_family.md","phase34_L003_triple_manifest.json","phase34_L003_triple_root_audit.md","phase34_L003_triple_base_root_check.json","phase34_L003_combined_universal.md")]
         r["remaining_work"] = ["Uniform existence at parameters coprime to6, further universal orders, current priority and end-to-end formalization remain unverified. N015 full main-theorem comparison is still unavailable. No all-integer claim or infinity marker."]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Standalone compact model of the even-parameter family", "scope":"Four integral affine maps in dimension6, translation kernel2Z6 and linear quotient1296; reduction modulo2m has order1296m6 and gives the same marked regular groups as the original voltage construction.", "relation_to_source":"compact_verified_quotient_family"})
+        r["method"].append("Small integral matrices, complete Schreier translation certificate, faithful reduction modulo2 and a rational affine intertwiner. The standalone construction needs no old voltage data.")
+        r["evidence"] += [evidence(n,"Compact affine model and exact comparison") for n in ("phase35_L003_affine_model.md","phase35_L003_affine_manifest.json","phase35_L003_affine_root_audit.md","phase35_L003_affine_check.json","phase35_L003_affine_compare.json","formal/CompactAffineData.scope.md")]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

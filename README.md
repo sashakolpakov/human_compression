@@ -47,39 +47,28 @@ and the [theorem-by-theorem scope table](research/case_study/torsor_compression_
 
 ## Results in this snapshot
 
-Two constructions now give finite regular hypertopes for every source
-parameter $s\ge2$ divisible by two or three. The [multiples-of-three family](research/case_study/phase34_L003_triple_family.md)
-uses the same quotient theorem and has an independent exhaustive check
-of all 56,225 base flags. The [combined universal corollary](research/case_study/phase34_L003_combined_universal.md)
-establishes the marked regular universal objects at those parameters.
-Uniform existence for parameters coprime to six and priority remain unresolved.
+Two constructions give finite regular hypertopes for every source parameter
+$s\ge2$ divisible by two or three, with exact ordered toroidal residues
+$((3,0),(2,0),(1,1),(s,0))$. The [compact even family](research/case_study/phase35_L003_affine_model.md)
+uses just four affine maps on six integer coordinates. Reducing modulo
+$2m$ gives parameter $s=2m$ and group order $1296m^6$. Its standalone
+certificate checks all 5,287 flags of the finite base; an exact intertwiner
+identifies it with the earlier voltage construction. [Lean checks](research/case_study/formal/CompactAffineData.scope.md)
+the literal matrix relations and translation words.
 
-The earlier [varying-parameter construction](research/case_study/phase33_L003_even_family.md)
-gives a finite regular hypertope for every even source parameter $s\ge2$,
-with exact ordered toroidal residues $((3,0),(2,0),(1,1),(s,0))$.
-One integral voltage certificate and the Lean-checked quotient theorem prove
-the uniform result. An independent implementation verifies all 5,287 flags
-of the finite base. A [separate corollary](research/case_study/phase33_L003_universal_even.md)
-establishes the universal regular object for every even parameter and proves
-it infinite whenever six divides the parameter. The [exact order supplement](research/case_study/phase34_L003_even_order.md)
-proves that the constructed finite group has order $1296(s/2)^6$.
-Parameters coprime to six and priority remain unresolved after the second family above.
+The [multiples-of-three family](research/case_study/phase34_L003_triple_family.md)
+uses the same quotient theorem, with an independent exhaustive check of
+all 56,225 base flags. The [combined universal corollary](research/case_study/phase34_L003_combined_universal.md)
+establishes the marked regular universal objects throughout this union;
+they are infinite whenever six divides the parameter. Uniform existence
+for parameters coprime to six, further universal orders and priority remain
+unresolved. The compact affine image is not identified with a universal group.
 
-The preceding additions recover the merging/splitting construction from 2000,
-give [two counterexamples to assertions in its accessed version](research/case_study/phase32_L111_section6_theory.md),
-and formally verify [quotient transport allowing one growing local group](research/case_study/formal/OneExceptionalParabolic.scope.md).
+For the 2000 incidence construction, the notes recover the complete
+[neighbourhood theorem](research/case_study/phase32_L111_arbitrary_rank.md),
+including arbitrary rank, and the merging/splitting construction. They also
+give [two counterexamples to assertions in its accessed version](research/case_study/phase32_L111_section6_theory.md).
 Correction priority and later versions remain unverified.
-
-The preceding additions recover the complete [2000 neighbourhood construction
-theorem](research/case_study/phase32_L111_arbitrary_rank.md), including infinite
-rank, and give an [infinite matrix image](research/case_study/phase32_L003_infinite_presentation.md)
-of a 2018 presentation for every parameter divisible by six. Lean verifies
-infinitude of the exact presented group at six. A [geometric supplement](research/case_study/phase32_L003_fixed_parameter_hypertopes.md)
-now constructs infinitely many finite regular hypertopes at that fixed
-parameter; a [separate corollary](research/case_study/phase32_L003_universal_hypertope.md)
-identifies its universal regular object and proves it infinite. The
-all-integer existence question and current priority remain unverified;
-the even-parameter construction above supplies infinitely many exact parameters.
 
 These are internally reviewed research drafts. Proposed new resolutions have
 not received external peer review, and publication priority remains unverified.
@@ -244,10 +233,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirty-two Lean modules certify specified components, with no `sorry` in the checked
+Thirty-three Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 31 reports have no native-evaluation axioms.
+axioms; the other 32 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

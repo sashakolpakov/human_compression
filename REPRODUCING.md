@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty-two saved Lean reports
+checks local documentation links, and checks the thirty-three saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty-two certificates and their unformalized boundaries. With Git
+describes all thirty-three certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1525,3 +1525,25 @@ counts; the second independently constructs Cayley components and checks
 all56225 flags, including13824 singleton-intersection chambers. Both
 require a new output path. The all-m argument uses twice-integral local
 translations, exact toroidal order bounds and the existing quotient theorem.
+
+
+## Compact affine model and literal Lean matrices
+
+```sh
+python3 research/case_study/phase35_L003_affine_check.py \
+  --output scratch/L003-affine-fresh.json
+python3 research/case_study/phase35_L003_affine_compare.py \
+  --data research/case_study/phase33_L003_even_voltage.json \
+  --output scratch/L003-affine-comparison-fresh.json
+python3 research/case_study/formal/verify_lean.py CompactAffineData.lean \
+  --packages /path/to/pinned/.lake/packages \
+  --lean /path/to/lean-4.32.2 \
+  --output-dir scratch/compact-affine-lean-fresh
+```
+
+The standalone standard-library check requires no input data. It closes the
+six-dimensional linear group, checks all Schreier translations, three fixed
+parabolics and all 5,287 base coset flags. The second proves the literal
+generator intertwiner with the older voltage model. Each requires a fresh
+output path. Lean checks the homogeneous integer matrix identities and
+specified translation words; it does not repeat the finite geometry census.

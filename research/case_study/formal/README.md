@@ -4,7 +4,7 @@ These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).
 
-The latest pair is [Phase32VoltageTheory.lean](Phase32VoltageTheory.lean)
+The presented-group pair is [Phase32VoltageTheory.lean](Phase32VoltageTheory.lean)
 and [Phase32L003Infinitude.lean](Phase32L003Infinitude.lean). The first proves
 that exact integer-voltage relators and a nonzero loop imply infinitude of
 an actual PresentedGroup. The second instantiates that theorem with216
@@ -59,7 +59,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are thirty-two certificates. To compile them on another machine, install Git,
+There are thirty-three certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -76,7 +76,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the thirty-two modules, but does not produce the runner's JSON reports.
+way to compile the thirty-three modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -107,7 +107,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all thirty-two source hashes match the historical successful reports
+This checks that all thirty-three source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. Twenty-six saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
@@ -385,3 +385,11 @@ inverse, and checks the literal six-coordinate matrix inverse. Its
 [scope](SplitLatticeReduction.scope.md) excludes the full Schreier census
 and geometric adapter. The finite inverse is kernel-checked, with no
 native-evaluation axiom.
+
+
+[CompactAffineData.lean](CompactAffineData.lean) checks four literal
+homogeneous integer matrices, the nine fixed source relators and the local
+and basis translation words. All four theorem blocks use kernel evaluation
+and only standard axioms. Its [scope](CompactAffineData.scope.md) leaves
+finite closure, lattice spanning, source identification and geometry to the
+separate exact certificates and written proof.

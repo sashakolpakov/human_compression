@@ -537,3 +537,10 @@ by three. Combined with the even family, it covers parameters divisible by
 two or three; the uniform cases coprime to six and current priority remain
 undetermined. Parameter coverage is not a proof-compression ratio. No
 existing-paper count or infinity marker changes.
+
+
+Phase forty-one replaces the even-family 1,296-coordinate action by four
+affine maps in six coordinates, with an exact marked comparison and a
+standalone certificate. This measures a representation-size reduction;
+source and replacement proof spans have not been matched. Neither measured
+proof ratio, paper coverage nor the unassigned infinity marker changes.

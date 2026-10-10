@@ -32,6 +32,7 @@ CERTIFICATES = (
     "ParabolicQuotientTransport",
     "OneExceptionalParabolic",
     "SplitLatticeReduction",
+    "CompactAffineData",
 )
 
 

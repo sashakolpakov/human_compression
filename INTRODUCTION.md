@@ -3604,7 +3604,56 @@ that remaining family. Current priority is still unverified, particularly
 the overlap with the inaccessible 2024 main theorems. No infinity marker
 or proof-compression ratio follows from this increased parameter coverage.
 
-## 59. The remaining work, and how a living reduction should record it
+## 59. Six coordinates replace a large voltage representation
+
+The [compact construction](research/case_study/phase35_L003_affine_model.md)
+turns the even family into four explicit affine maps on $\mathbb Z^6$.
+Their matrices have entries $0,1,-1$, and only one map has a nonzero
+translation. This separates the essential six-dimensional translation
+lattice from the 1,296 coordinates used to discover it.
+
+Let $\Gamma$ be the integer affine group and $Q$ its linear image. A complete
+closure of the four small matrices gives $|Q|=1296$; all those matrices remain
+distinct modulo two. A Schreier transversal gives 5,184 translation words.
+Every translation is even in every coordinate, and six literal words are
+$2e_1,\ldots,2e_6$. Telescoping any word with trivial linear part therefore
+proves the exact sequence
+
+$$1\longrightarrow2\mathbb Z^6\longrightarrow\Gamma
+\longrightarrow Q\longrightarrow1.$$
+
+Now reduce the affine maps modulo $2m$. If an element disappears, its linear
+part disappears modulo two and so was already the identity. Its translation
+must then belong to $2m\mathbb Z^6$. This identifies the complete reduction
+kernel for every $m$, including composite values, and yields
+
+$$|H_m|=1296m^6.$$
+
+The parameter word has square $-2e_1$ and a conjugate with translation
+$-2e_2$. These independent translations give the growing toroidal residue;
+the three other maximal parabolics inject into the finite base. The same
+one-exceptional quotient theorem from section 54 lifts intersection and
+coset Helly to every modulus, giving actual regular hypertopes.
+
+The old and new groups are identified by a separate exact calculation.
+If $B$ is the six-column old translation basis, there is a rational vector
+$\theta$ such that $E(a)=\theta+Ba/2$ intertwines all four generators.
+The comparison checks 31,104 linear and 5,184 affine coordinate identities.
+Faithfulness of the induced finite linear action and of the translation
+action makes this a marked isomorphism, not merely a map between examples.
+
+The [standalone checker](research/case_study/phase35_L003_affine_check.py)
+needs only the small matrices. The [comparison checker](research/case_study/phase35_L003_affine_compare.py)
+alone needs the old voltage data. A [Lean certificate](research/case_study/formal/CompactAffineData.scope.md)
+checks homogeneous $7\times7$ matrices, all nine fixed source words and
+the exact translation words. Finite closure, the entire translation span
+and the geometry remain separately checked mathematical arguments.
+
+This is a concrete reduction in representation size. It is not yet a
+matched proof-length measurement, a splitting theorem, or a faithful
+affine model of the universal presentation.
+
+## 60. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3641,7 +3690,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-two Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-three Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
