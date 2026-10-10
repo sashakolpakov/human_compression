@@ -1795,3 +1795,30 @@ records its separate full source/interface reading and pinned replay; the root
 also freshly rebuilt the three public modules. All twelve central axiom reports
 use only `propext`, `Classical.choice` and `Quot.sound`. Universal hypertope
 geometry and historical priority remain separate from this formal theorem.
+
+
+## Conservative seven-source manuscript bound
+
+```sh
+python3 research/case_study/phase43_unified_lower_bound_measure.py \
+  --input-root /path/to/verified-inputs \
+  --output-dir /tmp/compress-unified-measurement-new --rasterize
+python3 research/case_study/phase43_unified_lower_bound_root_recount.py \
+  --input-root /path/to/verified-inputs \
+  --render-dir /tmp/compress-unified-measurement-new \
+  --output /tmp/compress-unified-recount-new.json
+```
+
+The bound input root needs the public protocol/helper/manuscript artifacts
+and the six privately acquired primary PDFs and exact extractions listed
+in the protocol. Use pypdf 6.13.0, Pandoc 3.10, the recorded XeLaTeX 2026
+and Ghostscript toolchain. The first command freshly extracts and renders;
+the second independently selects the source bodies and recounts all ten
+metrics without importing the first command's counting helpers. Both refuse
+to overwrite their outputs. Raster hashes bind a separate full visual review;
+the commands do not perform visual judgment or reprove the mathematics.
+
+The frozen runner's report retains its original pending-review label. The
+[subsequent root audit](research/case_study/phase43_unified_lower_bound_root_audit.md)
+admits only a conditional lower bound, with N001 credited zero. Neither
+command estimates N001's length or supplies an exact seven-source factor.

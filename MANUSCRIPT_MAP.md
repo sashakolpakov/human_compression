@@ -4,8 +4,10 @@ The current result is one reviewed seven-source replacement, with two reviewed
 predecessors, covering the declared main-result contracts of seven distinct
 manuscripts. Each contains its common theory, proofs and source corollaries.
 These are conditional internal reviews with the source qualifications and
-retained background visible. No corpus-wide or seven-paper length factor
-has been measured. The integrated manuscript is 706 raw tokens longer than
+retained background visible. The seven-source replacement has a reviewed
+conditional lower bound of **2.212488×**, counting the unavailable 1998 source
+as zero. Its exact factor and any corpus-wide factor remain unknown.
+The integrated manuscript is 706 raw tokens longer than
 its two predecessors together; integration has not yet added a length saving.
 
 | Exact intake | Replacement | Review and measurement state |
@@ -21,6 +23,13 @@ retained inputs and a qualification on incomplete per-adapter dependency lists.
 These overlapping replacements still cover seven distinct sources. The wider [paper registry](PAPER_MAP.md)
 contains 160 indexed works and 16 principal-result candidates; neither count
 is a count of assembled or compressed whole manuscripts.
+
+The [seven-source measurement review](research/case_study/phase43_unified_lower_bound_root_audit.md)
+admits **40,358 / 18,241 = 2.212488×** as a lower bound under the NFC PDF-token
+convention. Six full source main bodies contribute the numerator; the complete
+seven-source proof manuscript and census appendix form the denominator. N001
+contributes zero pending a faithful measurement. The nonwhitespace-character
+lower bound is **1.864525×**; retained background remains explicit.
 
 For each bundle, the measurement is the sum of its complete
 source main-body lengths divided by the complete replacement plus any

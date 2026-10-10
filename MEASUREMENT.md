@@ -68,9 +68,20 @@ nonwhitespace-character sensitivity is **122,382/36,570 = 3.346514×**.
 The factor is conditional on the named retained background; certificate
 and executable bytes are recorded separately. A fresh root rendering and
 extraction replay matches all counts and exact source boundaries. The
-[named map](MANUSCRIPT_MAP.md) records seven sources across two replacements;
-adding those source lengths does not create a seven-paper factor without
-a specified combined denominator and coverage/dependency accounting.
+[named map](MANUSCRIPT_MAP.md) now records those two predecessors and the
+subsequent reviewed seven-source integration, with seven distinct sources.
+
+The [seven-source measurement audit](research/case_study/phase43_unified_lower_bound_root_audit.md)
+admits a **conservative lower bound of 40,358/18,241 = 2.212488×** under the
+same NFC PDF-token convention. Six faithful source main bodies contribute
+the numerator; N001 is credited zero because its faithful measurement is
+unavailable. The denominator is the full integrated replacement, including
+all 34 adapters and the complete proof/census appendix. Nonwhitespace characters
+give **153,896/82,539 = 1.864525×**. Both bounds remain conditional on retained
+background; the exact seven-source factor is unknown. This does not overturn
+the separate finding that integration adds 706 raw Markdown tokens over A+B.
+Source main bodies include introductions and open-question discussion outside
+the target contract, so this is not a minimum theorem-proof-length ratio.
 
 ## A finite compression ratio
 

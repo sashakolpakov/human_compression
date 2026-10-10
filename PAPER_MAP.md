@@ -14,7 +14,9 @@ The [named manuscript map](MANUSCRIPT_MAP.md) records a reviewed seven-source
 integration and its two reviewed predecessors, covering seven distinct manuscripts. Their
 declared main-result contracts and retained inputs remain explicit;
 Compress_B has a reviewed conditional full-body factor of 3.928390x
-under its frozen PDF-token convention; A and the combined set remain unmeasured.
+under its frozen PDF-token convention. The complete seven-source replacement has
+a reviewed conservative lower bound of 2.212488x with N001 credited zero;
+its exact factor and A's factor remain unmeasured.
 
 ## Read the stages separately
 

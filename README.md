@@ -36,7 +36,12 @@ replacement, including its census appendix. Nonwhitespace characters give
 measurement remains work. The subsequent [seven-source integration](COMPRESS_UNIFIED.md)
 has now passed independent internal mathematical review: all 34 scoped main-result
 adapters follow from one continuous manuscript. It adds 706 raw tokens compared
-with A and B together, so no additional length saving or seven-paper factor is claimed.
+with A and B together. Against the original sources, its
+[reviewed conservative lower bound is 2.21×](research/case_study/phase43_unified_lower_bound_root_audit.md):
+40,358 tokens from six source main bodies divided by 18,241 in the complete
+replacement, with the unavailable 1998 source credited zero. Nonwhitespace
+characters give at least 1.86×. The exact seven-source factor remains unknown;
+integration itself has not shortened A+B.
 
 A [proved bridge between the two replacements](research/case_study/phase38_primitive_saturation.md)
 now identifies the unique primitive coarsening of each omission action in an
@@ -49,7 +54,8 @@ seven-source replacement. The symmetric classification remains a distinct branch
 integration has not yet shortened the two predecessors' combined body.
 
 The [current independent report](CURRENT_REPORT.md) gives the seven-source-to-one
-judgment, the measured four-paper factor, integration costs and next steps.
+judgment, the four-paper factor, the new seven-source lower bound, integration
+costs and next steps.
 Its author wrote none of the manuscripts and read the entire new integration.
 The [preceding independent assessment](CURRENT_STATE.md), whose author separately
 reproduced the four-paper counts, the [two-paper assessment](CURRENT_ASSESSMENT.md)

@@ -29,7 +29,7 @@ inventory remain authoritative; the index does not claim exhaustive closures.
 |---|---:|---|
 | A | 3 | No comparable factor yet |
 | B | 4 | **32,476 / 8,267 = 3.928390×**, under the reviewed PDF-token convention |
-| Unified | The same 7 | No comparable seven-source factor yet |
+| Unified | The same 7 | **At least 40,358 / 18,241 = 2.212488×**, with N001 credited zero |
 
 B's complete denominator includes proof prose, adapters and the census appendix.
 The nonwhitespace-character sensitivity is **3.346514×**. These are conditional
@@ -37,8 +37,13 @@ comparisons with explicit retained background, not estimates of optimal proof le
 The unified draft is **706 raw Markdown tokens longer** than A+B together
 (15,519 versus 14,813). Its mathematical integration is established within the
 review scope; an additional length gain from integration is not established.
-A faithful source for the 1998 manuscript and common rendering/counting are
-still needed for the seven-source ratio.
+The subsequent [independent measurement and root replay](research/case_study/phase43_unified_lower_bound_root_audit.md)
+now establish the lower bound shown above, using the complete replacement and
+six faithful source main bodies. The nonwhitespace-character lower bound is
+**1.864525×**. All 27 rendered pages match the measurement reviewer's full
+visual inspection; an independent root recount reproduces all counts. A faithful
+measurement of the 1998 manuscript is still needed for an exact seven-source
+factor. The frozen state report predates this additive result.
 
 Since the frozen report, the prepared repository has reached **39 scoped Lean
 components**. The [full triangle infinitude certificate](research/case_study/phase42_triangle_spectral_audit.md)
@@ -50,16 +55,16 @@ universal geometry retains a separate written argument. A new solution, if
 novelty is established, will be reported as new mathematics rather than assigned
 an infinite value in the finite manuscript-length quotient.
 
-The next work is to measure the seven-source replacement faithfully, improve
-its actual length, and close the next bundle's main-result obligations. The
-operations researcher is checking whether the six Janko-group constructions
-can be upgraded to an exhaustive classification certificate; until then that
-source receives only partial credit. Another researcher is testing the shared
-kernel theorem against the regular-cover literature. The independent reviewer
-is now testing a conservative length bound: count the missing 1998 source as
-zero and divide the six faithful source bodies by the complete seven-source
-replacement. No bound is yet admitted. None of this active work adds
-to the current seven-source total before its exact contract is reviewed.
+The next work is to shorten the integrated exposition and close the next
+bundle's source contracts. The operations manuscript now has a fresh exhaustive
+Janko-group certificate: 100,016 rank-four extensions yield six classes and
+21,352 rank-five extensions yield none. Its independent replay passes; review
+is resolving exactly which toroidal lattice identifications remain imported.
+Another researcher has adapted the shared kernel theorem to chiral regular
+covers and is investigating a normal-subgroup formulation of the unresolved
+multiplicity question. A possible ten-source integration is being planned.
+These candidates do not yet add to the seven sources in reviewed assemblies;
+their proofs and integration must receive separate review.
 
 The broader registry contains 160 works and sixteen principal-result candidate
 entries. Those counts measure literature and component intake, not completed

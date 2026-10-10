@@ -48,12 +48,21 @@ identifiers across all 34 adapters. It also records the reviewer's identified
 inherited inputs. The global inventory and internal proofs remain authoritative;
 an exhaustive dependency-closure certificate is still future work.
 
-**There is no approved seven-source length factor yet.** The full raw Markdown
+**The reviewed conservative length bound is at least 2.212488×.** The
+[measurement and root audit](research/case_study/phase43_unified_lower_bound_root_audit.md)
+count 40,358 NFC PDF-extracted tokens in the six faithfully measurable source
+main bodies and 18,241 in the complete rendered replacement. N001 receives
+zero numerator credit; its actual length remains unknown. This is a lower
+bound, not an exact seven-source factor. Nonwhitespace characters give a
+lower bound of 1.864525×. The full proof and census appendix are included;
+external background proof bodies remain imported.
+
+The full raw Markdown
 bodies measure 8,078 tokens for A and 6,735 for B, versus 15,519 for the integrated
 manuscript: integration adds 706 tokens (about 4.8%). These are authoring counts,
 not the common PDF convention used for B. They establish no net saving over
-the two predecessors. A faithful N001 source remains necessary for a comparable
-seven-source measurement. The [accounting](research/case_study/phase39_compress_unified_accounting.md)
+the two predecessors. A faithful N001 measurement remains necessary for an
+exact seven-source factor. The [accounting](research/case_study/phase39_compress_unified_accounting.md)
 charges the new common theorem and explicit adapters.
 
 The independently measured **3.93×** factor belongs to the earlier four-source
