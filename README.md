@@ -38,6 +38,12 @@ written proofs and a Lean certificate for the literal disconnected
 four-element-field residue. This partial source work adds no whole-paper
 coverage or measured compression credit.
 
+The [Livingstone-graph application](GRAPH_INCIDENCE.md) now recovers one
+principal construction literally and repairs the other with an explicit
+incidence condition. A complete independent source review, fresh finite
+checks and a scoped Lean reconstruction theorem accompany this partial
+source contract.
+
 **Complete reviewed manuscripts are available:** U has 30 statements with
 proofs in 16 pages; A has 24 pages and derives the declared principal
 results of six related sources from 2018–2026. U develops marked subgroup
@@ -83,7 +89,7 @@ new project's product or benchmark. Historical records remain available
 in [the research directory](research/case_study) and earlier commits.
 
 The intake contains **161 indexed works**, with **102 complete texts
-retrieved**, **40 named result/component rederivations**, and **18 records
+retrieved**, **41 named result/component rederivations**, and **18 records
 covering all identified principal results**. These categories overlap.
 They do not count completed modular manuscripts or a complete bibliography
 of every collaborator. The existing working compilations now account for

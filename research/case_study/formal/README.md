@@ -1,5 +1,11 @@
 # Lean certificates and their scope
 
+[EquivariantIncidence.lean](EquivariantIncidence.lean) proves reconstruction
+of an invariant relation from its complete base neighbourhood and the
+finite-cardinality criterion. The [scope](EquivariantIncidence.scope.md)
+separates these three generic declarations from the written coset bridge
+and finite Livingstone-graph application. All three use standard axioms.
+
 [DeletedLineFourResidue.lean](DeletedLineFourResidue.lean) verifies the literal
 four-element-field residue as three disjoint hexagons and proves its
 disconnection. The [source bridge](../phase182_deleted_line_lean_bridge.md)

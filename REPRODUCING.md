@@ -1,5 +1,24 @@
 # Reproducing the checks
 
+The [Livingstone-graph application](GRAPH_INCIDENCE.md) has three portable
+commands. Each output directory must be new; no private source PDF is needed.
+
+```sh
+python3 -B -O research/case_study/phase179_run.py --output-dir /tmp/NEW-Livingstone --packages PACKAGES --lean LEAN --gap GAP
+python3 -B -O research/case_study/phase179_controls.py --output-dir /tmp/NEW-Livingstone-controls --gap GAP
+python3 -B -O research/case_study/phase184_semantic_run.py --output-dir /tmp/NEW-Livingstone-review --gap GAP
+```
+
+The first reruns the retained C marking certificate, reconstructs the
+graph objects and all twelve incidence relations, and compiles the generic
+Lean reconstruction theorem with pinned packages. The other commands
+exercise three author-designed and two reviewer-designed changes. The
+independent source-predicate check retains the author's graph construction;
+its stronger source reading is documented separately. The
+[root admission](provenance/phase110_review.md) states the exact scope and
+trust boundary. The literal Q failure remains an expected result even
+when the repaired construction passes.
+
 The [design-residue corrections](DESIGN_RESIDUES.md) have one public replay
 for both finite constructions, the independent subline check and the
 literal F4 Lean certificate:

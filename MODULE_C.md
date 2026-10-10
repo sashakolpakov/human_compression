@@ -1,5 +1,11 @@
 # Module C: Halving and Petrial operations on regular geometries
 
+The separately reviewed [Graph incidences and stabilizer orbits](GRAPH_INCIDENCE.md)
+attachment connects C's two J1 polytope markings to the literal graph
+objects of L068. One source construction agrees exactly; the other needs
+an explicit incidence repair. Its additional costs and partial coverage
+are recorded separately from this three-source edition.
+
 Read the complete [18-page manuscript](research/case_study/phase150_module_C_render/application.pdf)
 or its [Markdown source](research/case_study/phase150_module_C_manuscript.md).
 The [independent review](research/case_study/phase162_module_C_review.md)

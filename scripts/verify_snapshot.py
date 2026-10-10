@@ -16,6 +16,8 @@ STUDY = ROOT / "research/case_study"
 # Exact project-authored renderings only. Primary publication PDFs and source
 # raster/text captures remain excluded from the distributed snapshot.
 OWN_RENDERED_PDFS = {
+    "research/case_study/phase179_livingstone.pdf":
+        "e5ff46b8b96e00402470eff20b5ba6815bb647d577a58de0ec08f0726316b836",
     "research/case_study/phase164_enumeration.pdf":
         "fa29377f2139bfbf7bb338227c9efd6b33e8e2f4f3c03365d0853bbd79d8bbf2",
     "research/case_study/phase150_module_C_render/application.pdf":
@@ -96,7 +98,7 @@ def lean_reports():
         )] if source.stem == "Phase23TransferAnnihilator" else [])
         assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
         result.append(source.name)
-    assert len(result) == 70, result
+    assert len(result) == 71, result
     return result
 
 
@@ -151,7 +153,7 @@ def main():
     manifest = json.loads(MANIFEST.read_text())
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
-    print("Trust scope: 69 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
+    print("Trust scope: 70 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
     print("External publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")

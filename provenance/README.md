@@ -3,8 +3,15 @@
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with reviewed six-source U+A, four-source Module B, and three-source
 Modules C and D. There are
-seventy scoped Lean components. Source coverage, complete modular
+seventy-one scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
+
+The [Livingstone-graph admission](phase110_review.md) recovers one literal
+principal construction and one explicitly repaired construction, with
+fresh public finite checks and a generic Lean incidence theorem. The
+full primary-paper review supports one additional source-component
+rederivation, bringing that count to 41 without increasing principal-source
+coverage or any measured compression factor.
 
 The [design-residue admission](phase109_review.md) adds two reviewed
 uniform source corrections and a Lean certificate for the literal

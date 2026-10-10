@@ -41,18 +41,22 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 16 |
-| full text search only | 18 |
+| full text read | 17 |
+| full text search only | 17 |
 | metadata and access only | 9 |
 | selected sections read | 65 |
 
-102 works have a retrieved full text; 55 have a specified encoding or conditional/component reduction; 40 have a rederived component, finite subfamily or principal target.
+102 works have a retrieved full text; 56 have a specified encoding or conditional/component reduction; 41 have a rederived component, finite subfamily or principal target.
 These current totals apply the [dated L073/L104 assessment](research/case_study/phase181_registry_overlay.json)
 to the preserved registry baseline. L073 adds a qualified component;
 L104 retains its fixed census contract with explicit printed-body omissions.
 The [L092 reading and correction addendum](research/case_study/phase185_L092_overlay.json)
 records a full primary-text reading and two reviewed corrections, with no
 increase in known-result replacement or principal-source totals.
+The [L068 source-reconstruction addendum](research/case_study/phase189_L068_overlay.json)
+adds full-paper reading and one component rederivation. Its literal second
+construction is recovered; its first construction is explicitly repaired,
+so complete principal-source coverage does not increase.
 These overlapping totals must not be read as counts of fully reduced papers.
 
 The conservative **principal-result set has 18 works: L008, L030, L032, L034, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013, N016**.
@@ -79,6 +83,7 @@ Proposed conjecture proofs are separate and do not increase that count.
 | L052 | [Highly symmetric hypertopes](https://ria.ua.pt/bitstream/10773/16681/1/2016DFW.pdf) | Problems 9.3 and 9.4 under the standard parabolic coset construction | [proposed new result](research/case_study/coset_geometry_obstructions.md). External review and priority verification. Other questions and principal constructions are not all rederived. |
 | L063 | [The rank two geometries of the PSL(2,q) groups : part II](https://amc-journal.eu/index.php/amc/article/download/181/241) | Complete A4-A4 family in Table 5; relevant Table 2 comparison | [component rederived](research/case_study/classification_compression.md). Other subgroup rows and completeness remain. Composite-degree extensions are not RWPRI. The ordered/unordered discrepancy is version-specific. |
 | L066 | [On pairs of commuting involutions in Sym(n) and Alt(n)](https://math.uni.lu/kiefer/Publications/Involutions.pdf) | All four principal counting and degree-six polyhedron results | [principal results rederived](research/case_study/commuting_pairs_compression.md). External review and publisher-edition collation remain. No priority claim for classical orbit, Burnside or parity ingredients. The original phase110 ledger alone fails admission; phase116 is required. Compress_13 is unmeasured. The older matched-proof factor covers only Theorems1.1/1.2 outside degree six and does not transfer to this complete contract. |
+| L068 | [Regular 4-polytopes from the Livingstone graph of Janko's first group](https://doi.org/10.1007/s10801-011-0300-x) | Graph-object construction, source incidence predicates, Theorems 4.1 and 5.1 and their stabilizer lattices | [Graph incidences and stabilizer orbits](GRAPH_INCIDENCE.md) recovers P literally and an explicitly repaired Q. The printed Q relation has ten pair-flags with no type-1 extension. Full independent primary reading, exact finite checks and a generic Lean reconstruction theorem; no complete principal-source, new conjecture, matched-ratio or full-application Lean credit. |
 | L073 | [Rank three residually connected geometries for M22, revisited](https://www.combinatorics.org/ojs/index.php/eljc/article/view/v17i1n4) | 81 rank-two and 431 rank-three classes, explicit witnesses and geometric shadows | [Qualified Module D component](MODULE_D.md), independently reviewed with fresh exact census and witness checks. Complete subgroup data and classical Steiner/Mathieu identification retained. Refined source-table labels and exact row correspondence remain open; no principal-source credit or complete Lean theorem. |
 | L074 | [On the number of abstract regular polytopes whose automorphism group is a Suzuki simple group Sz(q)](https://math.uni.lu/kiefer/Publications/szpoly3%20r%C3%A9vis%C3%A9.pdf) | Theorem 1; Theorem 2 | [principal results rederived](research/case_study/phase10_suzuki_marked_fields.md). Both principal counts are recovered for every stated odd field exponent. Classical Suzuki structure remains an input. No whole-paper proof-length ratio, end-to-end formalization or novelty claim; external review remains. |
 | L085 | [Almost simple groups of Suzuki type acting on polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/szpoly.html) | Full principal rank/existence theorem as restated in L074, Theorem 3 | [component rederived](research/case_study/phase10_suzuki_marked_fields.md). The exact principal theorem is read in the primary L074 restatement. The original L085 full body remains unavailable, so its auxiliary statements and original proof are not compared and no whole-paper reduction is claimed. External review remains. |
@@ -317,7 +322,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | L065 | 2013 | [A new algorithm to find apartments in coset geometries](https://leemans.dimitri.web.ulb.be/abstracts/apart2.html) | abstract read | unassessed |
 | L066 | 2013 | [On pairs of commuting involutions in Sym(n) and Alt(n)](https://math.uni.lu/kiefer/Publications/Involutions.pdf) | full text read | principal results rederived |
 | L067 | 2012 | [Polytopes of high rank for the alternating groups](https://dipot.ulb.ac.be/dspace/handle/2013/133342) | metadata and access only | unassessed |
-| L068 | 2012 | [Regular 4-polytopes from the Livingstone graph of Janko's first group](https://link.springer.com/content/pdf/10.1007/s10801-011-0300-x.pdf) | full text search only | unassessed |
+| L068 | 2012 | [Regular 4-polytopes from the Livingstone graph of Janko's first group](https://link.springer.com/content/pdf/10.1007/s10801-011-0300-x.pdf) | full text read | component rederived; first principal construction corrected explicitly |
 | L069 | 2012 | [All alternating groups A n with n ≥ 12 have polytopes of rank ⌊ (n-1)/2 ⌋](https://epubs.siam.org/doi/10.1137/110838467) | abstract read | unassessed |
 | L070 | 2012 | [Two atlases of abstract chiral polytopes for small groups](https://amc-journal.eu/index.php/amc/article/download/204/192) | full text search only | unassessed |
 | L071 | 2012 | [Algorithms for classifying regular polytopes with a fixed automorphism group](https://cdm.ucalgary.ca/article/download/62152/46746) | selected sections read | unassessed |

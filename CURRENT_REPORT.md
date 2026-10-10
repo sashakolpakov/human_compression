@@ -1,5 +1,13 @@
 # Current work and verified source material
 
+The [Livingstone-graph attachment](GRAPH_INCIDENCE.md) adds a reviewed
+source-to-coset reconstruction for L068. Its second polytope is recovered
+literally; the first requires an explicit incidence repair, with an exact
+nonextendible flag retained as evidence. Fresh public GAP checks, five
+altered-condition controls and three generic Lean declarations passed.
+This raises component coverage to 41 and scoped Lean components to 71;
+principal-source counts and measured compression ratios do not increase.
+
 The latest [design-residue attachment](DESIGN_RESIDUES.md) corrects two
 assertions in the 2005 source L092. Its iterated affine deleted-line
 construction satisfies firmness, residual connectivity and flag transitivity
@@ -51,7 +59,7 @@ bank; L073 adds one component rederivation, not a principal contract.
 |---|---:|
 | Indexed mathematical works | 161 |
 | Complete texts retrieved | 102 |
-| At least one named result/component rederived | 40 |
+| At least one named result/component rederived | 41 |
 | All identified principal results rederived | 18 |
 | Distinct principal contracts in reviewed modules A–D | 16 |
 | Distinct sources represented in the existing working compilations | 13 |
@@ -62,7 +70,9 @@ coverage is not every assertion in a paper. The inventory is bounded and
 is not an exhaustive bibliography of all collaborators. These current
 totals include the [dated L073/L104 overlay](research/case_study/phase181_registry_overlay.json)
 on the preserved registry baseline: L073 gains component coverage and
-L104 explicitly records its remaining printed-body omissions.
+L104 explicitly records its remaining printed-body omissions. The later
+[L068 overlay](research/case_study/phase189_L068_overlay.json) adds one
+component rederivation with the corrected construction kept explicit.
 
 A separate [cyclic-index attachment](LARGE_CYCLIC_SUBGROUPS.md) now derives
 Loyola's high-exponent classification from Module A's common quotient,
