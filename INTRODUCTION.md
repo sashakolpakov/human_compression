@@ -1223,6 +1223,27 @@ $\Phi(H)$ is powerful for **every** subgroup $H\le P$. The hereditary
 condition is needed for induction; merely assuming that $\Phi(P)$ is
 powerful has not been justified by this proof.
 
+A [marked commutator lemma](research/case_study/phase12_class_three.md)
+extends the inequality through nilpotency class three. Quotient K by
+K⁴. Its square subgroup is now central elementary abelian. In Frattini
+dimension at most two, the alternating commutator form forces K to be
+abelian. In dimension three, the binary action lemma supplies a central
+marked coordinate, and the collected commutator identities give the
+same conclusion. Thus the original K is powerful, and the previous
+contradiction applies. An exact group of order 4096 has nonpowerful
+Frattini subgroup but is still covered by this class-three theorem.
+
+For the unrestricted problem, [successive power layers](research/case_study/phase12_power_layers.md)
+give a bounded quotient. An elementary induction shows that a normal
+subgroup N with N≤G² and [N,G]≤N² is powerful. The small binary action
+equations force both Φ(P) and Φ²(P) to need exactly three generators
+in a smallest counterexample. The next layer P⁸ is powerful and has
+index 256, and P/P⁴ is a specific group of order 32. Every deeper
+power layer has genuine ordered cyclic coordinates. The proof of this
+last restriction retains the earlier small-factor theorem and its
+isobicyclic classification input. A fixed vector need not be one of
+the marked coordinates, so these restrictions do not finish the proof.
+
 For the hypertope order conjecture these results add the entire
 abelian-Frattini and hereditary-powerful-Frattini classes of derived
 2-groups, at every order. The unrestricted 2-group problem remains.
@@ -1268,7 +1289,112 @@ shows why generation alone cannot replace the stabilizer argument.
 Existence of a suitable parameter for every $q\equiv1\pmod4$, and a
 construction for the other odd congruence class, remain unresolved here.
 
-## 16. The remaining work, and how a living reduction should record it
+## 16. Tree cuts plus parity recover a complete 2002 classification
+
+The [2002 reduction](research/case_study/phase12_N003_reduction.md) uses
+the same forest partitions as the earlier tree geometry arguments. It
+adds a single sign map to reach the second generator family and every
+maximum-rank geometry in the stated range.
+
+For a tree T and a set F of edges, its edge transpositions generate
+
+$$K_F=\prod_{C\text{ a component of }(T,F)}\operatorname{Sym}(C),
+\qquad K_F\cap K_D=K_{F\cap D}.$$
+
+The unique tree path proves the intersection formula. The key converse
+is that omission-subgroup orbits determine these cuts. After the retained
+Whiston trichotomy and a permutation-module argument, all but possibly
+one omission subgroup are intransitive. An edge crossing each such
+orbit partition reconstructs a tree. Intersecting the other cut
+stabilizers puts each generator in a group on at most three points,
+or a product of two transpositions. Parity then identifies exactly two
+families: ordinary edge transpositions, or one distinguished transposition
+s together with products sτ_e, allowing inverses.
+
+For the second family, every generated subgroup is either K_F or its
+even part, with the distinguished edge retained in F. This is an
+index-two kernel calculation, so the same forest formula proves all
+subgroup intersections. Contract the distinguished edge to a vertex
+of weight two. Its geometry is the resulting weighted-tree geometry
+joined with a two-point parity type. Every cut stabilizer intersection
+contains s, which lets a common representative take either parity.
+The laminar subset proof of flag transitivity therefore works again.
+
+Short quotient, counting, overgroup and panel arguments recover all
+eight numbered results, for finite groups in the general bounds and
+n≥7 in the symmetric-group classification. Whiston's maximum-family
+bound and exact omission trichotomy remain substantial inputs; this
+does not remove their CFSG dependence. The foundational 1997 geometry
+classification is unnecessary for this particular reduction. Coverage
+of the complete principal targets is established without claiming a
+new proof-length ratio.
+
+## 17. A character sum turns finite unitary examples into a family
+
+The missing parameter in §15 can now be supplied for every q=9^e.
+Choose a nonzero trace-zero δ in F_(q²), put λ=δx with x∈F_q*, and use
+the Cayley transform μ=(λ−1)/(λ+1). Then λ² lies in the split torus
+F_q*, while μ lies in the norm-one torus of order q+1. Seek λ²
+primitive and μ² of order (q+1)/2.
+
+The [parameter proof](research/case_study/phase12_unitary_parameters.md)
+counts these simultaneous conditions by character orthogonality. A
+mixed character lives on a projective line with four ramification
+points; the retained curve-cohomology bound gives an error at most
+2√q for each term. With m the odd part of q−1, n=(q+1)/2,
+θ(d)=φ(d)/d and W(d)=2^ω(d), the count is at least
+
+$$\theta(m)\theta(n)
+ \bigl(q+1-2\sqrt q\,(W(m)-1)(W(n)-1)\bigr).$$
+
+The q+1 term includes an exact boundary correction. An elementary
+divisor bound makes this positive for every e≥8; exact arithmetic
+handles e=1,…,7. Thus the existence argument covers infinitely many
+fields, independently of the finite sample checks.
+
+In characteristic three the Cayley identity gives
+(λ−λ⁻¹)(μ−μ⁻¹)=2. These two quantities supply the quadratic factors
+of the template's characteristic polynomial. Its four eigenvalues
+give order q²−1; their different half-power signs show that passing
+to the projective group does not shorten it. A proper-square-subfield
+order bound proves the remaining field-generation hypothesis. The
+preceding generation, intersection and rank proofs now give maximum
+rank four and type {4,q²−1,6} for PSU₄(9^e), every e≥1. The character
+bound and group arguments are written proofs, with their retained
+inputs listed; they are not fully formalized in Lean.
+
+## 18. Small binary coordinates can expose a failed kernel formula
+
+Let V=F₂^d and Z=F₂^(d−1), with one Z-coordinate for each edge of a
+path. The bilinear cocycle
+
+$$\beta(v,w)=\sum_{i=1}^{d-1}v_iw_{i-1}c_i,
+\qquad(v,z)(w,t)=(v+w,z+t+\beta(v,w))$$
+
+defines a group of order 2^(2d−1). Its vertex generators are
+involutions; adjacent commutators are independent central edge
+coordinates. A subgroup generated by vertices I consists exactly of
+the vertex coordinates in I and edge coordinates internal to I.
+Intersections therefore become support intersections. This proves
+the full string C-group condition uniformly in d.
+
+The [path calculation](research/case_study/phase12_path_cocycle.md)
+tests a 2026 preprint's specified kernel C, the intersection of
+Frattini subgroups obtained by squaring one adjacent rotation at a
+time. Here C is generated by the interior edge coordinates and has
+order 2^(d−3), whereas the source formula predicts one. The squared
+middle rotation is already a commutator of its neighboring rotations;
+it is not an independent generator. Thus the stated auxiliary claims
+fail for every d≥4. This does not refute the separate main existence
+of a common quotient: this family maps to that quotient by the identity.
+
+The same coordinates work on any simple graph, with one central
+coordinate per edge. They prove the marked subgroup intersection
+property; further geometric properties still require their own
+hypotheses. This is a reusable calculation with a precisely limited
+source consequence, not an open-conjecture resolution.
+
+## 19. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

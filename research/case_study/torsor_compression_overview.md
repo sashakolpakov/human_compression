@@ -50,6 +50,7 @@ an entire paper.
 | L104 (2002), full principal census in every rank | Arbitrary-Borel maximal-residue augmentation, normalizer panel actions and automorphism/type fusion | Complete 8/19/3 census and higher-rank exclusion independently reproduced, conditional on TomLib; original geometry lists are not inputs |
 | L109 (2000), dihedral classification | Rank-two rigidity, prime-index subgroup arithmetic and CRT Helly | Complete published all-rank theorem and counts matched through L110 Theorem4; original full-paper comparison still unavailable |
 | N001–N003 and L089 (1998–2005), symmetric-group tree geometries | Forest component groups, laminar subset flags, balanced cuts and Boolean shadow witnesses | Four 1998 principal property tests and specified tree/path results rederived; foundational 1997 classification retained and source-access limits explicit |
+| N003 (2002), all eight numbered results in finite-group/n≥7 scope | Tree-cut reconstruction and the parity kernel, with module, counting, overgroup and panel adapters | Both complete generator/geometry classifications and all numbered corollaries rederived; Whiston W1/W2 and CFSG dependence retained, small-n unnumbered exceptions excluded; no new measured ratio |
 | L114/L110 (1999–2001), Suzuki subgroup realizations | Normalizer uniqueness, field intersections, trace transversal and invariant-subspace obstruction | Proposed decisions for every printed parameter shape: four impossible intersections; one further embedded pattern fails RWPRI; all others realized. Candidate completeness was subsequently disproved and withdrawn; a full replacement classification and external priority remain unresolved |
 | L066, *On pairs of commuting involutions in Sym(n) and Alt(n)*, all four principal results | Five orbit multiplicities for C2²-actions, two rational generating functions, one degree-six orbit certificate | All principal counts and both S6/A6 polyhedron conclusions recovered; standard automorphism theorems remain inputs |
 | L032, *On regular polytopes of 2-power order*, Theorem 1.2 | Explicit square-grid seed plus independent dihedral factors | Whole principal all-rank existence theorem; no classification of every group |
@@ -81,11 +82,26 @@ uses a four-case binary action lemma to handle the hereditary powerful-Frattini
 earlier metacyclic family within that framework. The unrestricted 2-group
 inequality remains. These are theorem gains without a new measured ratio.
 
+The [class-three theorem](phase12_class_three.md) now covers every
+nilpotent group whose Sylow 2-subgroup has class at most three. The
+[power-layer restriction](phase12_power_layers.md) forces any smallest
+remaining 2-group counterexample to have a specified order-32 quotient
+and powerful eighth powers of index 256. Its deeper ordered coordinates
+are proved, while the final nonexistence argument remains unresolved.
+
 The [unitary template](phase11_unitary_template.md) and its
 [two-form intersection proof](phase11_unitary_intersection.md) give a conditional
 family for q≡1 mod4 and exact rank-four examples at q=5,9,13. Suitable
-parameter existence for every field remains unresolved. The source survey
+parameter existence is now proved for every q=9^e by the
+[torus-character argument](phase12_unitary_parameters.md). Other odd
+field sizes remain unresolved. The source survey
 receives partial-progress coverage, not a full-survey reduction.
+
+The [path cocycle](phase12_path_cocycle.md) gives a reusable support proof
+of marked subgroup intersections and an all-rank counterexample to the
+specified auxiliary kernel assertions in F013. Its main common-quotient
+existence theorem is not refuted; this correction receives neither a
+whole-paper reduction credit nor an infinity marker.
 
 The [all-rank action formula](elementary_action_theorem.md) counts independent
 commuting r-tuples modulo point conjugacy and generator reordering. Subspace

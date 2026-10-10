@@ -69,11 +69,11 @@ UPDATES = {
         "compression_phase2.md;formal/CoordinateKernels.lean",
         "This existence theorem does not classify every group of the given order. Lean covers abstract kernel transport only."),
     "L034": (
-        "component_rederived", "Theorem 3.2; Conjecture 3.3 for hereditary powerful-Frattini derived groups, including abelian-Frattini and metacyclic groups; pair-order-at-most-eight and earlier finite classes",
-        "Grid/dihedral construction identifies the presentation. A marked isobicyclic normal form excludes the extremal cyclic-core case, proving the cyclic-TPP inequality whenever one factor has order at most four and the hypertope bound whenever one pair order is at most eight. The new Frattini action obstruction proves the hereditary powerful-Frattini class and subsumes metacyclic 2-groups. A separate short theorem covers all odd-order nilpotent cyclic TPP triples; it does not settle the source 2-group conjecture.",
+        "component_rederived", "Theorem 3.2; Conjecture 3.3 for derived groups of class at most three or with hereditary powerful Frattini subgroups; pair-order-at-most-eight and earlier finite classes",
+        "Grid/dihedral construction identifies the presentation. A marked isobicyclic normal form gives the small-factor bound. Frattini actions prove the hereditary powerful-Frattini class; a new marked commutator lemma proves cyclic TPP for every nilpotent group whose Sylow 2-subgroup has class at most three, with no class restriction on odd Sylow subgroups. The geometry-to-TPP adapter applies when the derived 2-group has that class bound. The unrestricted conjecture remains.",
         "Hypertope-to-cyclic-TPP reduction with the geometric hypotheses retained; Published classification of marked isobicyclic 2-groups, including its factor-swapping marking; Bounded group catalogue only for the separate finite-order certificate; Lubotzky-Mann powerful-group power-layer and arbitrary-generating-list factorization theorems for the new hereditary class",
-        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md;phase7_cyclic_tpp.md;phase7_cyclic_tpp_certificate.json;phase10_cyclic_tpp.md;phase10_cyclic_tpp_certificate.json;phase10_cyclic_tpp_independent_audit.md;phase10_cyclic_tpp_independent_audit.json;phase11_abelian_frattini.md;phase11_abelian_frattini_certificate.json;phase11_nilpotent_frattini.md;phase11_nilpotent_frattini_intake.json;phase11_powerful_frattini.md;phase11_powerful_frattini_certificate.json;phase11_metacyclic_adapter.md;phase11_odd_nilpotent.md;formal/BinaryFrattiniActions.lean;formal/BinaryFrattiniActions.scope.md",
-        "Unrestricted Conjecture 3.3 and cyclic TPP remain unresolved; a minimum remaining hypertope counterexample has all three pair orders at least sixteen, and a minimum cyclic-TPP counterexample has nonpowerful Frattini subgroup. The hereditary condition cannot simply be dropped. The marked isobicyclic classification is retained, not rederived. The source's alternate dihedral-by-dihedral quotient display is not separately verified; external review and priority remain."),
+        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md;phase7_cyclic_tpp.md;phase7_cyclic_tpp_certificate.json;phase10_cyclic_tpp.md;phase10_cyclic_tpp_certificate.json;phase10_cyclic_tpp_independent_audit.md;phase10_cyclic_tpp_independent_audit.json;phase11_abelian_frattini.md;phase11_abelian_frattini_certificate.json;phase11_nilpotent_frattini.md;phase11_nilpotent_frattini_intake.json;phase11_powerful_frattini.md;phase11_powerful_frattini_certificate.json;phase11_metacyclic_adapter.md;phase11_odd_nilpotent.md;formal/BinaryFrattiniActions.lean;formal/BinaryFrattiniActions.scope.md;phase12_class_three.md;phase12_class_three_root_audit.md;phase12_class_three_root_audit.json;phase12_power_layers.md;phase12_power_layers_root_audit.md;phase12_power_layers_certificate.json",
+        "Unrestricted Conjecture 3.3 and cyclic TPP remain unresolved; a minimum remaining hypertope counterexample has all three pair orders at least sixteen, and a minimum cyclic-TPP counterexample has nonpowerful Frattini subgroup, a specified order-32 quotient and powerful P^8 of index256. The hereditary condition cannot simply be dropped. The marked isobicyclic classification is retained, not rederived. The source's alternate dihedral-by-dihedral quotient display is not separately verified; external review and priority remain."),
     "L035": (
         "principal_results_rederived", "Theorems 1.2 and 1.3",
         "Grid existence construction, bounded cyclic-core quotient and eight binary extension models prove completeness.",
@@ -130,10 +130,10 @@ UPDATES = {
         "The exact principal theorem is read in the primary L074 restatement. The original L085 full body remains unavailable, so its auxiliary statements and original proof are not compared and no whole-paper reduction is claimed. External review remains."),
     "L120": (
         "partial_progress", "Conjecture 2, section 5.7: proposed odd-PSL4 maximum four; Problem 7: odd linear intermediate groups have rank at most four",
-        "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). A uniform matrix template generates SU4(q) for q=1 mod4 and has projective IP whenever the middle order is q^2-1 or q^2+1, using two auxiliary forms and a regular-torus bound. Exact checks certify maximum rank four for q=5,9,13, with a failed-IP control at q=9.",
-        "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; PGL2 maximal-subgroup classification, rank-one unitary identification and perfection; Standard projective unitary order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms",
-        "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json",
-        "Problem 7 remains incomplete: field and graph extensions and general index-two existence are unresolved here. PSU4(q) now has maximum rank four at q=5,9,13. The uniform template leaves existence of the required middle-order parameter unproved, and q=3 mod4 is not covered by that construction. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted as a second solution; priority and external review remain."),
+        "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). A uniform matrix template generates SU4(q) for q=1 mod4 and has projective IP whenever the middle order is q^2-1 or q^2+1, using two auxiliary forms and a regular-torus bound. A split/nonsplit torus character bound proves the required parameter for every q=9^e, giving maximum rank four; exact q=5,13 examples and a failed-IP control at q=9 remain.",
+        "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; PGL2 maximal-subgroup classification, rank-one unitary identification and perfection; Standard projective unitary order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms; Katz Euler/trace/weight and Lang character-sheaf machinery for the infinite q=9^e parameter family",
+        "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json;phase12_unitary_parameters.md;phase12_unitary_root_audit.md;phase12_unitary_root_audit.json",
+        "Problem 7 remains incomplete: field and graph extensions and general index-two existence are unresolved here. PSU4(q) has maximum rank four for every q=9^e, e>=1, and at q=5,13. The new torus-character argument proves parameter existence for this infinite family; the remaining odd field sizes are unresolved. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted as a second solution; priority and external review remain."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",
@@ -225,11 +225,17 @@ UPDATES = {
         "phase5_tree_cuts.md;phase5_tree_check.json;phase5_tree_audit.md",
         "Source full text unavailable; no full-paper comparison or novel resolution of its historical direct-construction question."),
     "N003": (
-        "component_rederived", "Tree-transposition branch of Corollary 2.3 and Theorem 3.2",
-        "Forest partition intersections and laminar subset incidence give subgroup intersection, flag transitivity, residue structure and RWPRI.",
-        "No retained classification needed for the constructed tree branch; Whole-paper generator classification and Whiston/CFSG arguments remain outside this reduction",
-        "phase5_tree_cuts.md;phase5_tree_check.json;phase5_tree_audit.md",
-        "Parity-twisted branch, full maximal-independent-generator classification and other general group results are not rederived."),
+        "principal_results_rederived", "All eight numbered results: finite-group Theorems 1.1 and 3.1; n>=7 Theorem 2.1, Corollaries 2.2-2.4, Theorem 3.2 and Corollary 3.3",
+        "Forest cut intersections reconstruct both maximal generator families. The sign kernel gives all subgroup meets; weighted laminar cuts with a parity type give both geometries. Module, counting, overgroup and panel adapters recover the remaining numbered results.",
+        "Whiston maximum independent-family bound and equality-generation assertion W1; Exact Whiston omission-subgroup trichotomy W2, retaining CFSG dependence; Cayley labelled-tree count; Standard G1-G3 coset-geometry criterion",
+        "phase12_N003_reduction.md;phase12_N003_source_scope.json;phase12_N003_check.json;phase12_N003_root_audit.md;phase12_N003_root_audit.json;phase12_N003_root_check.json;phase5_tree_cuts.md;phase6_weighted_tree.md",
+        "The retained Whiston inputs are not rederived, and the proof is not CFSG-free. Unnumbered small-degree exceptional computations and open questions are excluded. General bounds are assessed for finite groups. No matched-length ratio or complete Lean formalization; external review remains."),
+    "F013": (
+        "proposed_new_result", "arXiv:2605.20691v1, Theorem 4.2(c),(d),(e), with C defined by equations (7)-(9)",
+        "A path cocycle constructs the source's own class-two minimal group at every rank. Coordinate support proves all intersections, while the rotation Frattini subgroups give C of order 2^(d-3) for d>=4, contradicting the stated value one, quotient order and equality C=gamma3.",
+        "Finite 2-group identity Phi(H)=H^2; Elementary class-two square collection",
+        "phase12_path_cocycle.md;phase12_path_cocycle_check.json;phase12_hou_schulte_independent_audit.md;phase12_hou_schulte_independent_audit.json;phase12_hou_schulte_root.log",
+        "This is a correction to specified auxiliary claims, not a whole-paper reduction or disproof of Theorems 1.1-1.2 asserting existence of a common quotient. A replacement universal proof/kernel remains separate. Exact version scope, external review and priority remain; no infinity marker."),
     "N004": (
         "component_rederived", "Advertised RWPRI/(IP)2 truncation target, via a complete weighted-tree model",
         "Contract omitted edges and retain component sizes as weights; forest and laminar incidence formulas give exact primitivity, local two-transitivity, rank-two and full-shadow criteria.",
@@ -245,12 +251,13 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "F013": ("full_text_read", "Complete eleven-page cached primary manuscript read by root; definitions (7)-(9) and Theorem 4.2 compared independently on PDF pages 5-8 and in versioned v1 HTML. Header dates differ; the exact checked claims are recorded in the proof.", "phase12_path_cocycle.md"),
     "L074": ("full_text_read", "All twelve pages of the primary author manuscript read, dated 27 September 2011; journal publication is 2010. Both principal counting theorems, their full proofs, the subgroup table and the L085 restatement are checked.", "phase10_suzuki_marked_fields.md"),
     "L085": ("abstract_read", "Original author abstract read; original full body remains unavailable. The complete principal rank/existence theorem is read through its primary restatement in L074, Theorem 3, manuscript p.5; this does not mean the original L085 sections were read.", "phase10_suzuki_marked_fields.md"),
     "L091": ("selected_sections_read", "Pages 231–233 visually read, including Table 1 and local-two-transitivity/truncation conventions; no HS census reproduction.", "phase6_sporadic_source_audit.md"),
     "L110": ("selected_sections_read", "Rank-three R1–R13, higher-rank construction context and p.11 flag-transitivity uncertainty checked; exact hypotheses compared with L114.", "phase5_suzuki_intake.json"),
     "L114": ("selected_sections_read", "Theorems 5.3–5.5 and their case analyses read; printed pp.58–60 visually checked; Lemma3.11 and final p.61 realization qualification checked.", "phase5_suzuki_intake.json"),
-    "N003": ("full_text_read", "All twelve pages of the author manuscript read; publication identity checked against the author catalogue and publisher.", "phase5_network_intake.json"),
+    "N003": ("full_text_read", "All twelve pages read independently by root and the proof author; all eight numbered statements and complete proofs matched to the new forest/parity reduction. Exact source spans and retained Whiston inputs are recorded.", "phase12_N003_source_scope.json"),
     "L028": ("selected_sections_read", "Theorem 4.3 and the two generator parameterizations checked in the exact component audit.", "compression_audit.md"),
     "L029": ("selected_sections_read", "Theorem 1.1, chirality definitions and proof use of the designated action checked.", "incidence_compression.md"),
     "L030": ("selected_sections_read", "Principal construction, theorem/corollaries and the source displays corrected in the reduction checked.", "incidence_compression.md"),
@@ -380,7 +387,18 @@ def record(row, baseline, overlay, later_readings, older_access):
             {"reference": "Conjecture 3.3 when at least one distinguished pair product has order at most eight; earlier specified classes",
              "scope": "Uniform small-factor cyclic-TPP proof using the retained marked isobicyclic classification, with the geometry-to-TPP reduction explicit. No unrestricted resolution.",
              "relation_to_source": "proposed_consequence"},
+            {"reference": "Conjecture 3.3 for derived 2-group of nilpotency class at most three",
+             "scope": "The new marked Frattini commutator lemma proves cyclic TPP through class three; the retained geometry-to-TPP reduction supplies this source subcase. No ambient-order cutoff and no unrestricted resolution.",
+             "relation_to_source": "proposed_consequence"},
         ]
+    if identifier == "N003":
+        r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
+        r["access_coverage"]["notes"] = "The complete primary manuscript has been read and all eight numbered targets rederived in the finite-group/n>=7 scope. Whiston W1/W2 remain retained inputs; the earlier tree-only assessment is superseded by phase12_N003_source_scope.json."
+    if identifier == "F013":
+        r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
+        r["access_coverage"]["notes"] = "Complete cached manuscript read. The phase-twelve path family contradicts the specified auxiliary C conclusions in v1 Theorem4.2(c-e), with exact scope in the evidence. Main common-quotient existence is not refuted or reproved here."
+        r["exact_target"][0]["relation_to_source"] = "counterexample_to_specified_assertions"
+        r["primary_urls"].append("https://arxiv.org/html/2605.20691v1")
     if identifier == "L074":
         r["exact_target"] = [
             {"reference": "Theorem 1", "scope": "Exact isomorphism-class count of unordered pairs of distinct commuting involutions for every stated odd field exponent.",
@@ -394,9 +412,9 @@ def record(row, baseline, overlay, later_readings, older_access):
     if identifier == "L120":
         r["exact_target"][0]["scope"] = "Dimension-four bilinear-form obstructions give the stated odd linear and unitary intermediate-group upper bounds, with the phase-eight PSL4 argument retained. Field and graph extensions are not covered."
         r["exact_target"].append({
-            "reference": "Companion unitary application: conditional template and maximum rank four for PSU4(5), PSU4(9), PSU4(13)",
-            "scope": "Explicit matrices give uniform generation for q=1 mod4 and full intersection property conditional on middle projective order q^2-1 or q^2+1. Natural-action certificates at q=5,9,13 check all 256 intersections each. Maximality uses the separate phase-nine upper bound; this is not a separate named survey conjecture, and all-field parameter existence remains unresolved.",
-            "relation_to_source": "proposed_finite_companion_application",
+            "reference": "Companion unitary application: maximum rank four for PSU4(9^e), every e>=1, and PSU4(5), PSU4(13)",
+            "scope": "Split/nonsplit torus characters give the required middle-order parameter for every q=9^e; its large order forces the full square field. Frozen matrix generation and intersection theorems apply. Maximality retains the separate rank obstruction. This is not a separate named survey conjecture, and remaining odd field sizes are unresolved.",
+            "relation_to_source": "proposed_uniform_companion_application",
         })
     if identifier == "L114" and identifier not in UPDATES:
         r["exact_target"] = [{"reference": "Theorems 5.3-5.5 and final paragraph p. 61",
@@ -500,8 +518,8 @@ def render(registry):
         ref = "; ".join(t["reference"] for t in r["exact_target"])
         proof = next(e["file"] for e in r["evidence"] if e["file"].endswith(".md"))
         companion = {
-            "L034": ("Uniform Frattini-class proof", "phase11_powerful_frattini.md"),
-            "L120": ("Conditional unitary construction", "phase11_unitary_intersection.md"),
+            "L034": ("Class-three extension", "phase12_class_three.md"),
+            "L120": ("Infinite unitary family", "phase12_unitary_parameters.md"),
         }.get(r["id"])
         extra_link = (f" [{companion[0]}](research/case_study/{companion[1]})."
                       if companion else "")
@@ -535,6 +553,11 @@ def render(registry):
         "  1998 property tests, the tree correspondence, the known transposition-tree",
         "  geometry branch, and the advertised 2005 path/shadow-IP characterization.",
         "  The foundational 1997 classification is retained; source access differs by work.",
+        "- **N003 (2002), complete principal targets:** tree cuts and a sign kernel now",
+        "  recover all eight numbered results, with general bounds assessed for finite",
+        "  groups and the full generator/geometry classifications for n>=7. Whiston's",
+        "  maximum-family theorem and omission trichotomy remain explicit inputs;",
+        "  the 1997 geometry classification is unnecessary for this separate reduction.",
         "- **N004 (2003):** contraction with vertex weights incorporates every tree-family",
         "  truncation. Exact local and full-shadow criteria are proved, with a new Lean",
         "  witness theorem for retained consecutive ranks. The source full text remains",

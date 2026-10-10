@@ -372,6 +372,59 @@ failed ordered intersection checks. No external group-generator database
 or simple-group recognition is used. Compare mathematical fields in the
 saved reports; timestamps and runtimes vary.
 
+## Phase-twelve uniform proofs and focused checks
+
+The following commands run the new original diagnostics. As with the
+earlier commands, use a disposable repository copy to preserve the
+distributed reports. Python checks use the standard library except the
+unitary arithmetic script, which also uses SymPy. The two presentation
+checks and the class-three collection check need GAP with NQ.
+
+```sh
+python3 research/case_study/phase12_path_cocycle_check.py
+gap -q research/case_study/phase12_hou_schulte_independent.g
+gap -q research/case_study/phase12_class_three_check.g
+python3 research/case_study/phase12_power_layers_check.py
+gap -q research/case_study/phase12_rank32_check.g
+python3 research/case_study/phase12_N003_check.py --output phase12_N003_fresh.json
+python3 research/case_study/phase12_unitary_parameters_check.py
+gap -q research/case_study/phase12_unitary_parameters_check.g
+```
+
+The path checker exhausts ranks 2–6: 299,584 cocycle comparisons and
+5,456 standard subgroup intersections. The independently constructed
+rank-four NQ witness gives order 128 and Frattini orders 4,8,4, exposing
+the exact 2026 kernel discrepancy. The adjoining written proof establishes
+the all-rank family and states which source claims it contradicts.
+
+The class-three script checks the collection identities in the free
+torsion-free nilpotent group, plus the order-4096 boundary example. The
+power-layer scripts check the small linear action lemma, the order-32
+presentation and an explicit failed shortcut. Their uniform group
+conclusions rely on the separately reviewed proofs and retained inputs.
+
+The 2002 checker constructs actual permutation closures and cosets. It
+checks 716 markings, 11,124 subset groups, 182,672 intersections and
+369,093 typed partial flags. It also verifies the three counting formulas
+for n=3,…,6 and 44,696 permutation-module triples. This is a diagnostic
+for the forest/parity proof, not verification of Whiston's inputs or an
+exhaustion of the all-n classification.
+
+The unitary arithmetic check proves the seven small-exponent inequalities
+and the uniform divisor-bound constant by exact integers, alongside the
+symbolic identities. GAP tests every one of 7,376 nonzero parameters in
+four sample fields, obtaining counts 8,64,456,4800, and directly checks
+a chosen middle matrix's order and square field in each. The character
+bound proving existence for all q=9^e remains a written argument with
+precise retained cohomological inputs.
+
+Fresh root outputs are separate files. Deterministic reports match their
+frozen counterparts; the unitary arithmetic timestamp differs, and its
+raw GAP log differs only in the initial blank line's CRLF/LF encoding.
+[The phase-twelve review](provenance/phase12_review.md) binds the exact
+review and execution scopes. All seventeen earlier Lean reports are
+preserved; this phase does not add a Lean module.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)

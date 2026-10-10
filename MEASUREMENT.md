@@ -192,3 +192,14 @@ proves a conditional family and certifies additional finite examples, while
 the all-field parameter problem remains. These are substantive theorem
 coverage gains, with unverified publication priority. The measured ratio
 stays **127/38≈3.34**, and no infinity marker is assigned.
+
+Phase twelve adds a [complete 2002 principal-result reduction](research/case_study/phase12_N003_reduction.md),
+raising that coverage ledger to nine works. All eight numbered targets
+have exact source-span metadata, but their fully charged matched-length
+comparison is not yet measured. The new [class-three bound](research/case_study/phase12_class_three.md)
+and [PSU₄(9^e) family](research/case_study/phase12_unitary_parameters.md)
+are uniform mathematical gains, with priority unverified and the broader
+problems still open. The [2026 correction](research/case_study/phase12_path_cocycle.md)
+disproves specified auxiliary assertions, without refuting the paper's
+separate main existence claim. None changes the existing numerical ratio
+or qualifies here for a verified-new-resolution infinity marker.
