@@ -12,6 +12,11 @@ answers the unrestricted minimal-cover question. This surface construction
 retains the stronger conclusion of infinitely many finite covers for its
 four families.
 
+The same surface method now gives [infinitely many finite minimal covers
+of every odd square-torus pyramid](SQUARE_TORUS_COVERS.md). That application
+uses a different fixed quotient and an all-parameter affine argument. Its
+case n=3 is included in the uniform theorem, not counted as another family.
+
 ## The uniform construction
 
 The earlier family proof supplies a common marked quotient D of order 256.

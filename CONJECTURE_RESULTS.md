@@ -20,7 +20,7 @@ verified for any of them.
 | L052, Problem 9.3 | The requested counterexample cannot occur for the standard parabolic coset construction. | The standard construction is part of the scope; Lean verifies orbit propagation. |
 | L052, Problem 9.4 | A rank-three standard parabolic coset system is residually connected, precluding the requested simultaneous failure. | Dedicated written review; the complete result is not formalized. |
 | L003, Problem 9.2 | Finite examples exist for every specified parameter s≥2; the exact universal groups are infinite for every s≥6. | [Source wording and both answers](TOROIDAL_QUESTION.md). Finite-existence is affirmative; universal finiteness is false. Lean proves infinitude of the exact presentations, with geometric identification remaining written. Full universal-group structure and priority remain unverified. |
-| Cunningham–Pellicer, Problem 5; N016, §4 | Every abstract polytope of finite rank has a minimal regular polytopal cover; it is unique exactly when its distinguished monodromy group is a string C-group. | [Complete general proof and independent review](MINIMAL_REGULAR_COVERS.md). Covers may be infinite. Five new and six retained Lean declarations verify algebraic steps; the geometry and full theorem remain written. The [surface theorem](INFINITE_MINIMAL_COVERS.md) proves infinitely many finite covers in four families. |
+| Cunningham–Pellicer, Problem 5; N016, §4 | Every abstract polytope of finite rank has a minimal regular polytopal cover; it is unique exactly when its distinguished monodromy group is a string C-group. | [Complete general proof and independent review](MINIMAL_REGULAR_COVERS.md). Covers may be infinite. Five new and six retained Lean declarations verify algebraic steps; the geometry and full theorem remain written. The [surface theorem](INFINITE_MINIMAL_COVERS.md) proves infinitely many finite covers in four families; the [square-torus application](SQUARE_TORUS_COVERS.md) adds every odd square-torus pyramid. The general finite version remains unresolved. |
 | F014, Conjecture 3.7, arXiv v1 | **False at label 11 in every rank d≥5.** The universal rank-five presentation and a signed intersection witness exclude every quotient retaining exact adjacent order. | [Full proof and independent review](LABEL_ELEVEN_OBSTRUCTION.md). Nine general Lean declarations and [kernel-checked coset bounds through rank three](COSET_CERTIFICATES.md), alongside the separate larger certificates; no complete Lean proof. Published 2026 wording and historical priority are unverified. |
 
 The [detailed catalogue](research/case_study/phase124_question_results.md)
@@ -28,8 +28,10 @@ and [structured ledger](research/case_study/phase124_question_results.json)
 give exact parameter ranges, original authors and source statements,
 earlier published results used, proof files, review records, computational
 evidence and the missing Lean arguments. The
-[five-family cover page](COVER_FIVE_FAMILIES.md) describes the latest
-reviewed family result in more detail.
+[five-family cover page](COVER_FIVE_FAMILIES.md),
+[surface construction](INFINITE_MINIMAL_COVERS.md) and
+[square-torus application](SQUARE_TORUS_COVERS.md) distinguish the finite
+family results and their successive extensions.
 
 The original ten-entry catalogue remains frozen. The
 [F014 admission](research/case_study/phase131_equal_label_admission.json)

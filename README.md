@@ -98,7 +98,11 @@ found no earlier complete resolution; historical priority remains unverified.
 
 The [surface construction](INFINITE_MINIMAL_COVERS.md) gives the stronger
 conclusion of infinitely many **finite** minimal regular covers throughout
-four specified families, by an argument valid for every odd prime.
+four specified families, by an argument valid for every odd prime. A
+[new uniform application](SQUARE_TORUS_COVERS.md) proves infinitely many
+finite minimal covers for every odd square-torus pyramid, with controlled
+prime-power kernels for every permitted prime. The arbitrary-polytope
+finite version remains unresolved.
 
 The study of costs as proofs are developed and reused draws on
 [GKM](https://github.com/sashakolpakov/gkm). The proposed sawtooth pattern
