@@ -176,7 +176,7 @@ compression ratio: there was no earlier proof to put in its numerator.
 | Source question | Result obtained | Remaining scope |
 |---|---|---|
 | L003, Problem 9.2 | Finite examples exist throughout the specified toroidal family; the exact universal groups are infinite for every s≥6. | Answers the finite-existence interpretation. Lean proves infinitude of the exact presentations; their geometric interpretation remains written. See the [detailed catalogue](CONJECTURE_RESULTS.md). |
-| N016 / F005, minimal-cover questions | Each of the five specified chiral-facet families has at least two distinct minimal regular polytopal covers. | The arbitrary-polytope conjecture remains unresolved. See the [five-family theorem and its certificates](COVER_FIVE_FAMILIES.md). |
+| Cunningham–Pellicer, Problem 5; N016, §4 | Infinitely many finite minimal regular polytopal covers in four specified two-primary families, and at least two in the fifth family. | The arbitrary-polytope conjecture remains unresolved. See the [surface construction and review](INFINITE_MINIMAL_COVERS.md) and [complete five-family table](COVER_FIVE_FAMILIES.md). Six general kernel lemmas are formalized; the topology remains written. |
 
 The [question-results catalogue](CONJECTURE_RESULTS.md) gives the full
 parameter ranges, original attribution, borrowed results, review records

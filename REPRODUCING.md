@@ -1,5 +1,16 @@
 # Reproducing the checks
 
+The [surface construction for minimal covers](INFINITE_MINIMAL_COVERS.md)
+has a combined author and independent replay:
+
+```sh
+python3 -B -O research/case_study/phase218_check.py --out /tmp/NEW-surface-covers --gap GAP --lean LEAN --packages PACKAGES
+```
+
+It checks the frozen inputs, runs both finite implementations and six
+general Lean declarations, and exercises six rejection controls. The
+surface and homology arguments remain separately reviewed written proofs.
+
 The [label-eleven counterexample](LABEL_ELEVEN_OBSTRUCTION.md) has a
 combined public replay:
 

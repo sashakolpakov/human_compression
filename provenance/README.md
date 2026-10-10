@@ -1,5 +1,11 @@
 # Provenance and verification scope
 
+The [surface-cover admission](phase116_review.md) strengthens four
+family results to infinitely many finite minimal regular polytopal
+covers. It adds one scoped Lean file with six declarations. The
+general conjecture, historical priority and compression measurements
+remain separate questions.
+
 The [label-eleven admission](phase115_review.md) resolves the exact F014
 preprint conjecture negatively, with the universal presentation identified,
 a signed intersection witness, and every quotient retaining the required
@@ -30,7 +36,7 @@ measurement or mathematical result is inferred from plotting those points.
 
 The current product is [topic umbrellas and application papers](../MANUSCRIPT_PROGRAM.md).
 The earlier six-source A, four-source B and three-source C and D
-manuscripts supply reviewed material to rework. There are seventy-six
+manuscripts supply reviewed material to rework. There are seventy-seven
 scoped Lean files. Source coverage, completed application papers and
 measured compression are distinct claims.
 

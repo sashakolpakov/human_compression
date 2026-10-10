@@ -72,6 +72,11 @@ complete negative answer to Li–Zhang’s preprint Conjecture 3.7: every
 rank d≥5 is excluded at that label. The full proof, independent review,
 finite certificates and precise Lean coverage are included.
 
+The [surface construction for minimal covers](INFINITE_MINIMAL_COVERS.md)
+proves infinitely many finite minimal regular covers throughout four
+specified families. It replaces two selected primes by an argument for
+every odd prime. The arbitrary-polytope conjecture remains unresolved.
+
 The study of costs as proofs are developed and reused draws on
 [GKM](https://github.com/sashakolpakov/gkm). The proposed sawtooth pattern
 must appear in measured proof costs and valid dependencies. Node counts,

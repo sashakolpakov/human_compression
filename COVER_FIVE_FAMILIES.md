@@ -1,8 +1,11 @@
-# Two minimal covers throughout the five specified families
+# Minimal covers throughout the five specified families
 
 The reviewed proofs establish the multiplicity assertion for all five
 families in the checked author version of Cunningham's cover proposal.
 Each member has at least two distinct minimal regular polytopal covers.
+The new [surface construction](INFINITE_MINIMAL_COVERS.md) proves
+**infinitely many** in the four two-primary families, for every source
+parameter and both independent signs.
 **Historical priority and current openness remain unverified.** The
 general conjecture for arbitrary polytopes is unresolved here.
 
@@ -15,7 +18,7 @@ the earlier [odd-prime theorem](COVER_FAMILY.md), and the
 | Source family | Type | Complete parameter range | Distinct minimal covering degrees over the smallest regular maniplex |
 |---|---|---|---|
 | Gamma1 | {2m,m^alpha,2m} | m odd prime, alpha >= 2, equal end parameter 1 <= k < m | m and m, distinguished by kernel actions |
-| Gamma2 | {8,2^beta,8} | beta >= 5; both independent signs | 3^d and 5^e, with 1 <= d,e <= 34 |
+| Gamma2 | {8,2^beta,8} | beta >= 5; both independent signs | For every odd prime ell, a degree ell^e with 1 <= e <= 34; infinitely many minimal covers |
 | Gamma3 | {2^(beta-1),2^beta,2^(beta-1)} | Same | Same |
 | Gamma4 | {8,2^beta,2^(beta-1)} | Same | Same |
 | Dual Gamma4 | {2^(beta-1),2^beta,8} | Same; duality exchanges signs | Same |
@@ -26,7 +29,7 @@ parameters. They are not all eleven atomic families or all tight chiral
 polytopes. The checked editions and uncollated publisher versions remain
 explicit in the [source report](research/case_study/phase113_five_family_priority_report.md).
 
-## One finite construction serving unbounded parameters
+## Earlier construction over two fields
 
 Every two-primary source group maps onto the same marked group D of
 order 256. The quotient preserves the offending intersection outside
@@ -61,6 +64,10 @@ chirality and intersection property remain inputs. Standard mix,
 covering and geometric recognition theorems remain credited. The
 repository supplies the particular common quotient, affine witnesses,
 complete intersection certificates and uniform transport argument.
+The [new proof](INFINITE_MINIMAL_COVERS.md) replaces the two selected
+fields by a surface argument valid for every odd prime, retaining the
+common quotient and its maps. It includes six general Lean theorems;
+the surface argument and complete family result remain written proofs.
 The bounded later-literature comparison leaves material unread sources.
 This result therefore receives no newly solved open-conjecture marker.
 
@@ -76,7 +83,7 @@ python3 -B -O research/case_study/phase112_cover_families_review_controls.py \
   --output-dir /tmp/human-compression-five-controls
 ```
 
-These commands require Python and public files only. This admission
-adds no manuscript to the compression assembly, no length factor and
-no Lean module. Earlier scoped Lean facts about cover degrees and
-finite maximality do not formalize this construction or its geometry.
+These commands reproduce the earlier two-field construction using
+Python and public files only. The new surface proof has its
+[own replay](INFINITE_MINIMAL_COVERS.md#reproduction). Neither result
+adds a manuscript to the compression assembly or a length factor.

@@ -1,5 +1,11 @@
 # Lean certificates and their scope
 
+[CoverKernelChains.lean](CoverKernelChains.lean) proves six general
+facts about admissible kernels at arbitrary index, their maximal
+overgroups, and coprime powers. Its
+[scope](CoverKernelChains.scope.md) distinguishes these algebraic
+statements from the surface proof and complete family application.
+
 [SimpleQuotientObstruction.lean](SimpleQuotientObstruction.lean) proves
 nine general group-theoretic steps used in the label-eleven counterexample.
 They show why a quotient retaining a nontrivial adjacent product must
