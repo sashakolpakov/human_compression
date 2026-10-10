@@ -41,12 +41,12 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 17 |
+| full text read | 18 |
 | full text search only | 17 |
 | metadata and access only | 9 |
-| selected sections read | 65 |
+| selected sections read | 64 |
 
-102 works have a retrieved full text; 56 have a specified encoding or conditional/component reduction; 41 have a rederived component, finite subfamily or principal target.
+102 works have a retrieved full text; 57 have a specified encoding or conditional/component reduction; 42 have a rederived component, finite subfamily or principal target.
 These current totals apply the [dated L073/L104 assessment](research/case_study/phase181_registry_overlay.json)
 to the preserved registry baseline. L073 adds a qualified component;
 L104 retains its fixed census contract with explicit printed-body omissions.
@@ -57,9 +57,13 @@ The [L068 source-reconstruction addendum](research/case_study/phase189_L068_over
 adds full-paper reading and one component rederivation. Its literal second
 construction is recovered; its first construction is explicitly repaired,
 so complete principal-source coverage does not increase.
+The [F010 principal-theorem addendum](research/case_study/phase193_F010_overlay.json)
+adds one complete written principal contract from the independent followup
+literature. The original authors retain credit for the theorem and constructions;
+local example corrections and the incomplete universal Lean scope are explicit.
 These overlapping totals must not be read as counts of fully reduced papers.
 
-The conservative **principal-result set has 18 works: L008, L030, L032, L034, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013, N016**.
+The conservative **principal-result set has 19 works: L008, L030, L032, L034, L035, L066, L074, L088, L104, L108, F010, F013, F016, N001, N003, N008, N009, N013, N016**.
 Proposed conjecture proofs are separate and do not increase that count.
 
 ## Exact reductions and proposed consequences
@@ -105,6 +109,7 @@ Proposed conjecture proofs are separate and do not increase that count.
 | L120 | [String C-group representations of almost simple groups: a survey](https://arxiv.org/pdf/1910.08843) | Conjecture 2, section 5.7: proposed odd-PSL4 maximum four; Problem 7: odd linear intermediate groups have rank at most four; Problem 7, diagonal linear interval PSL4(q)<=G<=PGL4(q), every odd q; Companion unitary application: maximum rank four and rank set {3,4} for PSU4(q), every odd q>=5; Companion diagonal unitary extension theorem, every odd q>=3; Companion dimension-four rank-three form alternative and direct-fold obstructions; Companion rank-three diagonal unitary extension theorem in two congruence families; Companion exact rank set {3,4} for every odd diagonal unitary index-two extension; Companion exact rank set {3,4} for every odd linear diagonal index-two extension | [partial progress](research/case_study/phase9_linear_unitary.md). [Every odd q>=5](research/case_study/phase15_unitary_sieve.md). Problem 7 concerns linear socles and remains incomplete for field and graph extensions. The odd linear diagonal interval has maximum rank four at socle index one or two; index four forbids involution generation. A separate companion theorem now gives maximum rank four for the diagonal index-two unitary extension at every odd q>=3. Rank-three existence is now supplied for the diagonal unitary index-two extension at every odd q>=3, with a separate finite q3 base. The new linear template supplies rank three for the proper index-two group at q=1 mod4 and also independently constructs the already published q=3 mod4 range. With the retained q3 case and earlier rank-four/upper-bound results, every odd linear diagonal index-two extension has rank set {3,4}. A possible 2026 thesis and further source overlap remain priority leads. The two curve/sieve constructions give the simple PSU4(q) rank set {3,4} for odd q>=5, retaining published rank-three existence; PSU4(3) itself has no representation by retained published input. All generation, intersection and character arguments retain their stated inputs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted twice; publication priority and external review remain. |
 | L124 | [On Flag-Transitive Incidence Geometries of Rank 6 for the Mathieu Group M(12)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m12.html) | No RWPRI/(IP)2 M12 geometry of rank at least six, as stated in the primary abstract | [component rederived](research/case_study/phase6_sporadic_theory.md). Chapter body unavailable; individual constructions and the original sixteen-page proof have not been compared. Catalogue completeness is retained, not rederived. |
 | L125 | [The Residually Weakly Primitive Geometries of the Janko Group J(1)](https://www.math.auckland.ac.nz/~dleemans/abstracts/j1.html) | The firm/FT/RC/RWPRI/(IP)2 J1 classification problem stated in the primary abstract | [component rederived](research/case_study/phase6_sporadic_theory.md). The original chapter and its exact entry-by-entry equivalence convention remain unavailable. L105's correction is recorded but its exact old missing entry is not identified. No whole-paper or novelty claim. |
+| F010 | [Every finite group is represented by a finite incidence geometry](https://arxiv.org/abs/2511.02410v2) | Theorems3.1,4.1,4.2,A and the recursive symmetric-group family | [Recognizable extensions and finite incidence representations](FINITE_INCIDENCE_REPRESENTATIONS.md) gives the complete written principal-theorem deduction. Normal H in G, arbitrary finite rank; three local degree/example qualifications. The original 2025 theorem and constructions are attributed to Díaz Ramos–Molinier–Viruel. Fresh bounded GAP/GRAPE checks and a local Lean reflection certificate; no new conjecture, matched ratio or full universal Lean claim. |
 | F013 | [String C-groups of 2-power order project onto a common string C-group](https://arxiv.org/pdf/2605.20691) | arXiv:2605.20691v1, Theorems 1.1 and 1.2, every finite nondegenerate string C-group of 2-power order and rank d>=2; arXiv:2605.20691v1, Theorem 4.2(c),(d),(e), with C defined by equations (7)-(9) | [principal results rederived](research/case_study/phase15_graded_support.md). [All-class theorem and source adapter](research/case_study/phase15_graded_support_scope.md). Both identified principal results are recovered without a class cutoff; the false auxiliary kernel assertions are not repaired. This is a replacement proof of an already stated theorem, not resolution of a conjecture left open by that source. Forest-extension priority and external review remain unverified. No matched-length ratio, end-to-end Lean proof or infinity marker. |
 | F014 | [Regular 3-polytopes of type {n,n}](https://arxiv.org/pdf/2505.09505) | Conjecture 3.7: all-rank labels4,8 and n,2n,4n,8n for the specified odd families; universal strengthening only at3,4 | [Partial progress and exact scope](EQUAL_LABEL_POLYTOPES.md). The label-eight finite rewriting lemma is verified in Lean; its all-rank transfer remains written. Labels11,13,16 are outside the current all-rank range. Full conjecture, universal groups at other labels, complete Lean proof and historical priority remain unresolved here. No principal-source or compression credit is added. |
 | F015 | [Infinite Families of Hypertopes from Centrally Symmetric Polytopes](https://www.combinatorics.org/ojs/index.php/eljc/article/download/v30i2p20/pdf/) | Complete selected Propositions11 and13, including presentations, orders, geometry and toroidal assertion; p,s>=2 and n>=3,s>=2 respectively | [component rederived](research/case_study/phase30_source_adapters.md). Complete selected propositions only. Other source families and principal targets remain unrederived; no whole-paper or principal-result credit. Uniform arguments are written, with finite presentation diagnostics; no matched ratio or novelty claim. |
@@ -392,7 +397,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | F007 | 2026 | [Faithfulness in maniplexes](https://dirros.openscience.si/Dokument.php?id=49623&lang=eng) | selected sections read | unassessed |
 | F008 | 2026 | [On solutions to the Mondrian Puzzle](https://tenenb.perso.math.cnrs.fr/PPP/Mondrian.pdf) | selected sections read | unassessed |
 | F009 | 2026 | [On the order-diameter ratio of girth-diameter cages](https://arxiv.org/pdf/2511.21144) | selected sections read | unassessed |
-| F010 | 2025 | [Every finite group is represented by a finite incidence geometry](https://arxiv.org/pdf/2511.02410) | selected sections read | unassessed |
+| F010 | 2025 | [Every finite group is represented by a finite incidence geometry](https://arxiv.org/pdf/2511.02410v2) | full text read | principal theorem contract rederived; three local source qualifications |
 | F011 | 2024 | [Explicit constructions of Diophantine tuples over finite fields](https://link.springer.com/content/pdf/10.1007/s11139-024-00888-5.pdf) | selected sections read | unassessed |
 | F012 | 2025 | [Exhaustive generation of edge-girth-regular graphs](https://arxiv.org/pdf/2401.08271) | selected sections read | unassessed |
 | F013 | 2026 | [String C-groups of 2-power order project onto a common string C-group](https://arxiv.org/pdf/2605.20691) | full text read | principal results rederived |

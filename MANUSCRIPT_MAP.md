@@ -17,6 +17,15 @@ not a sixteenfold length saving. The [complete U+A measurement](MEASUREMENT_A.md
 is admitted under its stated encoding conventions; B, C and D remain unmeasured.
 Full Lean formalization remains incomplete.
 
+The separately reviewed [Recognizable extensions and finite incidence representations](FINITE_INCIDENCE_REPRESENTATIONS.md)
+application recovers F010's principal constructive theorems, with its
+local example qualifications explicit. It adds one source-level principal
+contract but has not been integrated into the fixed A–D editions. The
+[Livingstone-graph attachment](GRAPH_INCIDENCE.md) and
+[design-residue attachment](DESIGN_RESIDUES.md) remain qualified partial
+source work. Their costs and scopes do not silently enlarge the contracts
+or alter the measurements of an earlier module edition.
+
 The separate [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)
 track studies open questions. Its reviewed family results and formal scopes
 are kept separate from known-result compression. Titles for future modules

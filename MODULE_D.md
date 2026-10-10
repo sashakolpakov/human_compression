@@ -1,5 +1,10 @@
 # Module D: Marked actions, field orbits and geometry enumeration
 
+The separately reviewed [Recognizable extensions and finite incidence representations](FINITE_INCIDENCE_REPRESENTATIONS.md)
+application develops the related restriction-and-extension argument for
+F010. Its complete principal-theorem contract, three local corrections
+and additional costs are separate from this frozen three-source edition.
+
 Read the complete [18-page manuscript](research/case_study/phase164_enumeration.pdf)
 or its [Markdown source](research/case_study/phase164_enumeration_manuscript.md).
 The [independent review](research/case_study/phase173_D_independent_review.md)

@@ -4,6 +4,14 @@ The [complexity graph](COMPLEXITY.md) plots the three comparable corrected
 U+A checkpoints and all five admitted length metrics. It shows one
 fixed-coverage decrease; a repeating sawtooth remains unestablished.
 
+The [finite normal-pair application](FINITE_INCIDENCE_REPRESENTATIONS.md)
+adds the complete written principal-theorem contract of the independent
+followup F010. The theorem and explicit constructions remain attributed
+to Díaz Ramos–Molinier–Viruel. Component coverage rises to 42, principal
+source contracts to 19 and scoped Lean components to 72. The fixed A–D
+editions retain sixteen principal contracts. No new conjecture result or
+matched compression factor is assigned to this addition.
+
 The [Livingstone-graph attachment](GRAPH_INCIDENCE.md) adds a reviewed
 source-to-coset reconstruction for L068. Its second polytope is recovered
 literally; the first requires an explicit incidence repair, with an exact
@@ -63,8 +71,8 @@ bank; L073 adds one component rederivation, not a principal contract.
 |---|---:|
 | Indexed mathematical works | 161 |
 | Complete texts retrieved | 102 |
-| At least one named result/component rederived | 41 |
-| All identified principal results rederived | 18 |
+| At least one named result/component rederived | 42 |
+| All identified principal results rederived | 19 |
 | Distinct principal contracts in reviewed modules A–D | 16 |
 | Distinct sources represented in the existing working compilations | 13 |
 | Additional source comparisons outside the fixed registry | 1 |
@@ -77,6 +85,9 @@ on the preserved registry baseline: L073 gains component coverage and
 L104 explicitly records its remaining printed-body omissions. The later
 [L068 overlay](research/case_study/phase189_L068_overlay.json) adds one
 component rederivation with the corrected construction kept explicit.
+The [F010 overlay](research/case_study/phase193_F010_overlay.json) then
+adds one principal-source contract from the independent followup literature,
+with its three local source qualifications preserved.
 
 A separate [cyclic-index attachment](LARGE_CYCLIC_SUBGROUPS.md) now derives
 Loyola's high-exponent classification from Module A's common quotient,

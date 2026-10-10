@@ -1,5 +1,10 @@
 # Provenance and verification scope
 
+The [finite normal-pair admission](phase112_review.md) adds one complete
+written principal-theorem contract, with the original independent authors
+and three local source qualifications explicit. Its public replay uses
+unchanged mathematical checks and a new adapter requiring no primary PDF.
+
 The [complexity-figure review](phase111_review.md) records the exact
 admitted inputs and visual check behind the current graph. No new source
 measurement or mathematical result is inferred from plotting those points.
@@ -7,7 +12,7 @@ measurement or mathematical result is inferred from plotting those points.
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with reviewed six-source U+A, four-source Module B, and three-source
 Modules C and D. There are
-seventy-one scoped Lean components. Source coverage, complete modular
+seventy-two scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
 The [Livingstone-graph admission](phase110_review.md) recovers one literal

@@ -1,5 +1,21 @@
 # Reproducing the checks
 
+The [finite normal-pair application](FINITE_INCIDENCE_REPRESENTATIONS.md)
+has a public replay that requires no primary PDF or unrelated L059 data:
+
+```sh
+python3 -B -O research/case_study/phase193_public_check.py --output-dir /tmp/NEW-finite-pairs --packages PACKAGES --lean LEAN --gap GAP
+```
+
+It reuses the exact independently reviewed gadget program, checks the
+two hexagon groups, compiles the scoped Lean reflection certificate with
+pinned dependencies, and rejects four mathematical changes. Bounded
+coverage is 25 small coloured graphs, seven normal-pair encodings, four
+pair completions and the symmetric family for n=2,3,4,5. The universal
+theorems rest on the separately reviewed written proof. The frozen
+phase188 driver records its original full private-checkpoint verification;
+the public adapter checks the selected F010 files and the same payloads.
+
 The [Livingstone-graph application](GRAPH_INCIDENCE.md) has three portable
 commands. Each output directory must be new; no private source PDF is needed.
 

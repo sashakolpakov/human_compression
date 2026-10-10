@@ -45,6 +45,13 @@ incidence condition. A complete independent source review, fresh finite
 checks and a scoped Lean reconstruction theorem accompany this partial
 source contract.
 
+The separately reviewed [finite incidence representation manuscript](FINITE_INCIDENCE_REPRESENTATIONS.md)
+recovers the four main constructive theorems of the independent 2025
+followup F010 and its recursive symmetric-group family. Its explicit
+restriction-and-extension argument pays for recognition and rigidity.
+The original theorem and constructions remain attributed; three local
+source corrections and the incomplete universal Lean scope are explicit.
+
 **Complete reviewed manuscripts are available:** U has 30 statements with
 proofs in 16 pages; A has 24 pages and derives the declared principal
 results of six related sources from 2018–2026. U develops marked subgroup
@@ -90,7 +97,7 @@ new project's product or benchmark. Historical records remain available
 in [the research directory](research/case_study) and earlier commits.
 
 The intake contains **161 indexed works**, with **102 complete texts
-retrieved**, **41 named result/component rederivations**, and **18 records
+retrieved**, **42 named result/component rederivations**, and **19 records
 covering all identified principal results**. These categories overlap.
 They do not count completed modular manuscripts or a complete bibliography
 of every collaborator. The existing working compilations now account for

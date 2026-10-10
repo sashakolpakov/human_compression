@@ -1,5 +1,11 @@
 # Lean certificates and their scope
 
+[CompletedHexagonCounterexample.lean](CompletedHexagonCounterexample.lean)
+proves an explicit adjacency- and colour-preserving reflection of order
+two in F010's completed example. The [scope](CompletedHexagonCounterexample.scope.md)
+distinguishes this local certificate from the exact full-group computation
+and the universal representation theorem. Its four reports use standard axioms.
+
 [EquivariantIncidence.lean](EquivariantIncidence.lean) proves reconstruction
 of an invariant relation from its complete base neighbourhood and the
 finite-cardinality criterion. The [scope](EquivariantIncidence.scope.md)
