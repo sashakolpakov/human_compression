@@ -28,7 +28,9 @@ complete principal classifications, with independent review and fresh
 finite and Lean checks. Principal-source coverage is **23 of 161**; the
 topic umbrella and both application papers are now complete, at 7 + 3 + 2
 pages, with independent review. The shared finite proof is charged once
-within this topic; no matched ratio has yet been measured.
+within this topic; no matched ratio has yet been measured. Six additional
+[Lean matrix declarations](provenance/phase123_review.md) now verify its
+actual normal-form centralizers; full field descent remains written.
 
 ## Further application material
 

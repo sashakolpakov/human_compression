@@ -97,6 +97,16 @@ only Lean's standard axioms. The matrix calculation, classical inputs,
 finite group computations and complete classification remain outside
 that formal proof. GAP's exact algorithms are part of the trust boundary.
 
+A later [matrix formalization](research/case_study/formal/ProjectiveDihedralMatrices.lean)
+adds six verified declarations for the actual semisimple and unipotent
+normal forms and their trace-zero representative. Its
+[independent review](research/case_study/phase241_review.md) and
+[fresh public execution](provenance/phase123_review.md) are separate from
+the frozen topic manuscripts. General conjugacy, the PGL interface and
+field descent still require their written arguments; the full
+classification is not yet formalized.
+
+
 Use a new output directory:
 
 ```sh
