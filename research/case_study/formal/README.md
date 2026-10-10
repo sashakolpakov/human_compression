@@ -1,5 +1,13 @@
 # Lean certificates and their scope
 
+[SimpleQuotientObstruction.lean](SimpleQuotientObstruction.lean) proves
+nine general group-theoretic steps used in the label-eleven counterexample.
+They show why a quotient retaining a nontrivial adjacent product must
+preserve the simple-factor distinction in an intersection witness. Its
+[scope](SimpleQuotientObstruction.scope.md) leaves the concrete large
+group computations and universal-presentation identification outside Lean.
+The fresh compiler reports use standard axioms only.
+
 [WittDerivedPlanes.lean](WittDerivedPlanes.lean) proves three explicit
 finite incidence isomorphisms to coordinate PG(2,4), with nine printed
 declarations. Its [scope](WittDerivedPlanes.scope.md) leaves the original

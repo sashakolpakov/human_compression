@@ -150,9 +150,10 @@ that has not been measured should be reported as such.
 ## Conjectures and questions: recorded solutions
 
 Solutions to questions posed in the source literature are a separate
-part of the programme. The repository currently records **eight complete
-answers to the stated questions, under their specified hypotheses**. Three
-further entries cover a particular interpretation or specified families;
+part of the programme. The repository currently records **nine complete
+answers to the stated questions, under their specified hypotheses**, including
+the negative answer to F014 in its cited preprint version. Two further
+entries cover a particular interpretation or specified families;
 their limits are listed separately below. These results belong in the account
 of what the project has achieved, alongside
 the recovered published theorems. They do not increase a source-length
@@ -168,18 +169,19 @@ compression ratio: there was no earlier proof to put in its numerator.
 | L007, §7 | Non-tight chiral polyhedra exist throughout the omitted even-exponent range. | [Construction](research/case_study/central_lift_proof.md) and dedicated review; Lean verifies conditional transfer, with the actual group construction and order calculation remaining written. |
 | L052, Problem 9.3 | The requested thin, residually connected but non-flag-transitive example cannot occur for the standard parabolic coset construction. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; Lean verifies propagation of a chamber orbit. |
 | L052, Problem 9.4 | A rank-three standard parabolic coset system is residually connected, excluding the requested simultaneous failure. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; the complete geometric theorem remains written. |
+| F014, Conjecture 3.7, arXiv v1 | **False:** no regular d-polytope satisfying all the stated relations at label 11 exists for any d≥5. Every quotient retaining the adjacent order is excluded. | [Complete proof and certificates](LABEL_ELEVEN_OBSTRUCTION.md), independently reviewed. Nine general Lean declarations support the quotient argument; finite group computations and the full theorem remain outside Lean. The 2026 journal formulation and priority are unverified. |
 
-### One answer to an ambiguous question and two advances on broader conjectures
+### An ambiguous question and an advance on a broader conjecture
 
 | Source question | Result obtained | Remaining scope |
 |---|---|---|
 | L003, Problem 9.2 | Finite examples exist throughout the specified toroidal family; the exact universal groups are infinite for every s≥6. | Answers the finite-existence interpretation. Lean proves infinitude of the exact presentations; their geometric interpretation remains written. See the [detailed catalogue](CONJECTURE_RESULTS.md). |
 | N016 / F005, minimal-cover questions | Each of the five specified chiral-facet families has at least two distinct minimal regular polytopal covers. | The arbitrary-polytope conjecture remains unresolved. See the [five-family theorem and its certificates](COVER_FIVE_FAMILIES.md). |
-| F014, Conjecture 3.7 | All-rank existence results hold for the stated label families, including labels 4 and 8. | The all-label conjecture remains unresolved. Lean verifies the specified rewriting components, table bounds and termination; confluence and the resulting group theorem remain written. See [exact parameters and proofs](EQUAL_LABEL_POLYTOPES.md). |
 
 The [question-results catalogue](CONJECTURE_RESULTS.md) gives the full
 parameter ranges, original attribution, borrowed results, review records
 and precise Lean coverage. Historical priority has not been established
 for these answers. A recorded solution, a complete formal proof and a
 verified first solution to a still-open problem are distinct claims.
-These tables expose the existing results; they add no new solution credit.
+F014 moves from a partial result to a complete negative answer for the
+bound source version. The total remains eleven distinct question entries.

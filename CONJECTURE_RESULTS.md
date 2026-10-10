@@ -1,10 +1,10 @@
 # Answers to source questions
 
 Question solving has its own record, separate from compression of known
-published results. The current catalogue contains **eleven entries: eight
+published results. The current catalogue contains **eleven entries: nine
 recorded complete answers under their stated hypotheses, one answer to an
-explicit interpretation of an ambiguously worded question, and two results
-for specified families whose broader conjectures remain open**. Completeness
+explicit interpretation of an ambiguously worded question, and one result
+for specified families whose broader conjecture remains open**. Completeness
 here concerns question coverage; Lean coverage and historical priority are
 separate matters. This is an inventory of existing proofs and evidence, not a
 new mathematical review of every entry. Historical priority has not been
@@ -22,7 +22,7 @@ verified for any of them.
 | L052, Problem 9.4 | A rank-three standard parabolic coset system is residually connected, precluding the requested simultaneous failure. | Dedicated written review; the complete result is not formalized. |
 | L003, Problem 9.2 | Finite examples exist for the specified toroidal family; the exact universal groups are infinite for all s≥6. | Answers a stated finite-existence interpretation, not every reading of the problem. Lean proves infinitude of the three exact presentations, with the geometric identification remaining written. |
 | N016 / F005, minimal-cover questions | Each of the five specified chiral-facet families has at least two distinct minimal regular polytopal covers. | The general arbitrary-polytope conjecture remains unresolved. Complete written and computational arguments are accompanied by Lean proofs of specified supporting results. |
-| F014, Conjecture 3.7 | In every rank, finite examples satisfy all specified relations at labels 4, 8 and n, 2n, 4n, 8n for n=3 or the stated powers-of-two ±1 families. | [Exact hypotheses and proofs](EQUAL_LABEL_POLYTOPES.md). The all-label conjecture remains unresolved. Universal presentations are identified only at labels 3 and 4. Lean verifies the finite rewriting lemma, bounds on the rewrite table in every rank, and termination. Confluence and the resulting group theorem remain written. |
+| F014, Conjecture 3.7, arXiv v1 | **False at label 11 in every rank d≥5.** The universal rank-five presentation and a signed intersection witness exclude every quotient retaining exact adjacent order. | [Full proof and independent review](LABEL_ELEVEN_OBSTRUCTION.md). Nine general Lean declarations, separate exact group and coset certificates; no complete Lean proof. Published 2026 wording and historical priority are unverified. |
 
 The [detailed catalogue](research/case_study/phase124_question_results.md)
 and [structured ledger](research/case_study/phase124_question_results.json)
@@ -35,9 +35,11 @@ reviewed family result in more detail.
 The original ten-entry catalogue remains frozen. The
 [F014 admission](research/case_study/phase131_equal_label_admission.json)
 and [independent review](research/case_study/phase131_equal_label_root_review.md)
-add the eleventh entry, a partial answer whose earlier theorem dependencies
-are stated explicitly. A broader reconciliation of older recorded claims
-is in progress.
+added the eleventh entry as a partial answer. The
+[new negative answer](LABEL_ELEVEN_OBSTRUCTION.md) supersedes its unresolved
+status for the exact preprint conjecture; the frozen earlier positive
+results retain their scope. A broader reconciliation of older recorded
+claims is in progress.
 
 The [label-eight extension](research/case_study/phase168_label_eight_review.md)
 expands that same F014 entry, with a separate Lean certificate for its
@@ -45,8 +47,9 @@ finite rewrite lemma. Later Lean proofs establish
 [bounds on the table in every rank](research/case_study/phase174_label_eight_scope.md)
 and [termination in every rank](research/case_study/phase172_termination_scope.md).
 They do not establish confluence or formalize the resulting group theorem.
-These developments extend the same entry; they do not create another
-entry in the conjecture count or establish historical priority.
+These developments and the later counterexample concern the same entry;
+they do not create another entry in the conjecture count or establish
+historical priority.
 
 No complete geometric answer in this table is formalized in full.
 Infinitude of the exact presented groups in the toroidal entry is a

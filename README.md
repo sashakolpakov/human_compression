@@ -67,6 +67,11 @@ including exact statements, the extent of each proof, checks of later
 literature and uncertainty about priority. These results are assessed
 separately from compression of previously proved results.
 
+The [label-eleven obstruction](LABEL_ELEVEN_OBSTRUCTION.md) gives a
+complete negative answer to Li–Zhang’s preprint Conjecture 3.7: every
+rank d≥5 is excluded at that label. The full proof, independent review,
+finite certificates and precise Lean coverage are included.
+
 The study of costs as proofs are developed and reused draws on
 [GKM](https://github.com/sashakolpakov/gkm). The proposed sawtooth pattern
 must appear in measured proof costs and valid dependencies. Node counts,

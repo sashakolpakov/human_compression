@@ -1,5 +1,12 @@
 # Provenance and verification scope
 
+The [label-eleven admission](phase115_review.md) resolves the exact F014
+preprint conjecture negatively, with the universal presentation identified,
+a signed intersection witness, and every quotient retaining the required
+order excluded. It adds one scoped Lean file and no source-compression
+credit. Historical priority and the journal-edition wording remain open
+attribution questions.
+
 The [design-construction admission](phase114_review.md) adds L092's
 corrected main results, with two substantial borrowed classifications
 and missing named-residue maps stated explicitly. A fresh public replay
@@ -23,7 +30,7 @@ measurement or mathematical result is inferred from plotting those points.
 
 The current product is [topic umbrellas and application papers](../MANUSCRIPT_PROGRAM.md).
 The earlier six-source A, four-source B and three-source C and D
-manuscripts supply reviewed material to rework. There are seventy-five
+manuscripts supply reviewed material to rework. There are seventy-six
 scoped Lean files. Source coverage, completed application papers and
 measured compression are distinct claims.
 

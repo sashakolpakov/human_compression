@@ -4,7 +4,9 @@ This question-solving track proves specified cases of Li–Zhang,
 *Regular 3-polytopes of type {n,n}*,
 [Conjecture 3.7](https://arxiv.org/html/2505.09505v1).
 It is separate from the modules recovering known published results.
-The full conjecture remains unresolved.
+The full conjecture in the cited preprint has now been
+[disproved at label eleven in every rank d≥5](LABEL_ELEVEN_OBSTRUCTION.md).
+The positive families on this page remain valid.
 
 For **every rank d ≥ 3**, the reviewed written proofs give finite regular
 polytopes satisfying all the source's additional power relations at
@@ -16,13 +18,15 @@ $$
 $$
 
 This includes 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 17, 18, 20,
-24, 40, 56 and 72, among other labels. Labels 11, 13 and 16 remain
-outside this all-rank range.
+24, 40, 56 and 72, among other labels. Labels 13 and 16 remain outside
+this proved all-rank range. Label 11 is now excluded in ranks d≥5 by
+the separate counterexample.
 
 The source asks for a quotient with the required relations and exact
-type. The stronger assertion about the entire universal presentation
-is proved here only for labels **3 and 4**, giving S_(d+1) and
-UT_(d+1)(F₂). At label four its order is 2^(d(d+1)/2).
+type. The earlier universal-presentation results identify labels **3 and 4**
+with S_(d+1) and UT_(d+1)(F₂). At label four the order is
+2^(d(d+1)/2). The new negative result separately identifies the universal
+rank-five, label-eleven presentation with C₂×Sp₄(32).
 
 ## Proofs and retained inputs
 
@@ -125,7 +129,7 @@ python3 -B -O research/case_study/phase131_equal_label_verify.py --output /tmp/N
 This checks the frozen inputs and reruns all three bounded computations.
 It does not certify the general written proofs or establish priority.
 No completed source replacement or compression ratio is assigned to
-this partial conjecture result.
+these positive cases or the separate negative answer.
 
 For the new construction, the [separate export record](research/case_study/phase168_label_eight_export.json)
 preserves the frozen proof, its delimiter-only reader and fresh review

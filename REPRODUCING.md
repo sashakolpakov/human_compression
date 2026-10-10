@@ -1,5 +1,20 @@
 # Reproducing the checks
 
+The [label-eleven counterexample](LABEL_ELEVEN_OBSTRUCTION.md) has a
+combined public replay:
+
+```sh
+python3 -B -O research/case_study/phase217_public_check.py --out /tmp/NEW-label-eleven --gap GAP --lean LEAN --packages PACKAGES
+```
+
+This checks the unchanged published upper certificates, signed matrix
+witness and nine general Lean declarations. The upper calculation uses
+Python and C++17; the matrix calculation uses GAP 4.15.1; formal proofs
+use Lean 4.32.2 and the pinned mathlib packages. The output path must be
+new. The large finite-group computations and the complete geometric
+counterexample are not Lean-certified. Historical priority and the
+conjecture's wording in the journal edition remain unverified.
+
 The [corrected design-construction results](DESIGN_RESIDUES.md) have a
 public replay of the Witt models, derived planes, Hermitian residues,
 path-count correction and three Lean files:
