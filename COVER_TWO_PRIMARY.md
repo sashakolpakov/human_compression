@@ -1,10 +1,12 @@
 # Two-primary covers and an integral obstruction
 
 For one specified infinite family, the facet and cofacet construction routes
-produce **the same minimal double cover**. A further theorem now excludes covers
-with **any finite odd-order kernel and injective maps on both ends**. These results
-restrict the search for further minimal covers; global uniqueness remains
-unproved.
+produce **the same minimal double cover**. The subsequent
+[universal-completion classification](COVER_COMPLETION.md) proves that there
+are exactly two covers with injective end maps, of degrees four and two,
+throughout the family. Only the double cover is minimal. This page records
+the earlier constructions, finite census and odd-kernel obstruction used
+along the way. Global uniqueness remains unproved.
 
 The input is Cunningham–Pellicer, [*Tight chiral polytopes*, author
 version](https://arxiv.org/pdf/2009.04566v1), Table 2 row Γ2 and Theorem 4.8:
@@ -143,7 +145,8 @@ no Lean component or measured length factor. The stronger nonabelian package
 adds the one scoped certificate described above. None adds a manuscript to
 Compress_11.
 
-Noninjective ends, mixed kernels, new even-kernel
-covers, the other source families and unrestricted multiplicity remain
-outside these conclusions. The [odd-prime theorem](COVER_FAMILY.md) and
+The later [completion theorem](COVER_COMPLETION.md) closes the entire
+injective-end class, with arbitrary kernels, for this specified family.
+Noninjective ends, the other source families and unrestricted multiplicity
+remain outside these conclusions. The [odd-prime theorem](COVER_FAMILY.md) and
 [general cover-kernel criteria](COVER_KERNELS.md) retain their separate scopes.

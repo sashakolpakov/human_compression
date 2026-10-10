@@ -115,15 +115,19 @@ distinct minimal covers for every member of one specified infinite family,
 with a complete written review and eight exact finite checks. A separate
 Lean certificate verifies the algebraic character-separation step.
 
-The [two-primary cover analysis](COVER_TWO_PRIMARY.md) now has a complete
-written review and public replay. It proves that two natural construction
-routes yield the same minimal double cover throughout a specified family.
-A general universal-complement criterion and a 35-cell noncommutative
-identity now exclude every finite odd-order covering kernel when both end
-maps are injective. [Lean checks the exact word obstruction](research/case_study/formal/OddKernelWord.scope.md);
-the complete geometric argument has a separate written review. Global
-uniqueness remains unproved. The odd-prime [attribution audit](research/case_study/phase72_cover_family_priority_report.md)
-also identifies published criteria that already supply its polytopality steps.
+The [universal-completion theorem](COVER_COMPLETION.md) now turns that local
+cover problem into one kernel and its admissible normal subgroups. For the
+specified Γ2 family, an exact calculation gives `U ≅ F15 * (C2×C2)` and
+classifies **exactly two covers with unchanged end groups**, of degrees four
+and two. Only the double cover is minimal. Complete written reviews and
+two independently implemented computational checks pass. The earlier
+[two-primary analysis](COVER_TWO_PRIMARY.md) and
+[scoped Lean obstruction](research/case_study/formal/OddKernelWord.scope.md)
+remain separate certificates; the full classification is not formalized.
+Global uniqueness remains unproved. The
+[expanded attribution audit](research/case_study/phase100_cover_priority_completion_report.md)
+credits classical universal amalgamation and retains material gaps in
+historical-priority verification.
 
 ## Results in this snapshot
 

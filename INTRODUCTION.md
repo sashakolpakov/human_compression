@@ -4289,3 +4289,54 @@ and all retained-background interfaces. The twelve-source length factor
 has not yet been measured. The [independent mathematical review](research/case_study/phase87_n009_integration_recent_audit.md)
 and [fresh public replay](research/case_study/phase95_twelve_public_admission.md)
 state exactly what has been checked; the new branch is not formalized in Lean.
+
+## One completion for all covers with prescribed local groups
+
+The cover constructions now fit a common object. For a finite marked group
+G with rank-three string C-group ends A and B, let C be the marked middle
+subgroup and form `W=(A *_C B)/<<[r0,r3]>>`. This includes the complete local
+relations and the remaining string commutation. Every cover whose end maps
+are injective is a quotient of W over G. Universal regular amalgamation
+is classical; the [attribution comparison](research/case_study/phase100_cover_priority_completion_report.md)
+records the older sources and the limits of the reading.
+
+The repository's complement presentation U makes this object computable.
+Its generators are the cosets Cg, viewed as edges joining Bg to Ag. Its
+relations are the translated commuting squares. Contracting a spanning
+tree leaves the fundamental group of this square complex, which is
+exactly `K=ker(W→G)`. Keeping the tree coordinates gives
+
+```text
+U ≅ F_(|G:A|+|G:B|−1) * K.
+```
+
+An element `i∈A∩B` has two lifts, one in each local factor. Their difference
+`e_i=i_B⁻¹i_A` is the obstruction to a correct end intersection. A polytopal
+quotient must preserve every such defect for `i∉C`. Thus a finite cover
+with kernel in a subgroup/product-closed class exists exactly when these
+defects survive suitable finite quotients of U. Products combine the
+separating maps; a normal core makes the quotient compatible with the
+whole group. This extends the earlier odd-kernel method to arbitrary
+finite kernel classes, with no splitting or coprimality assumption.
+
+For the specified Γ2 family, the action on cosets is the same 128-point
+action at every parameter. Exact reversible presentation moves give
+`U≅F15*(C2×C2)`, with defect X in the Klein-four factor. The fifteen free
+generators are verified to be actual tree edges. Hence K is Klein four,
+not merely a quotient of a group with that abelianization. An affine
+construction identifies the action: the outer marks send X to XY and
+fix Y, while the middle marks fix both. Its unique invariant line is Y.
+Consequently W and W/⟨Y⟩ are the only polytopal marked covers with those
+unchanged ends. Their degrees are four and two, and only the latter is
+minimal. Universality also proves that every cover in this class is finite.
+
+This is a concrete instance of the torsor proposal: finite permutation
+actions encode local incidence, exact word relations recover the missing
+kernel, and invariant subgroups classify the permitted quotients. The
+noncommutative normal form is essential; treating permutation matrices as
+linear operators alone would lose these group-word and intersection
+conditions. The [complete proof and review route](COVER_COMPLETION.md)
+separates the classical machinery, repository calculations, computational
+certificate and remaining historical-priority questions. The full
+classification has no new Lean formalization. Any different minimal cover
+must enlarge at least one end; that is the next proof-search branch.

@@ -69,6 +69,15 @@ recovery check. Its [21-file record](phase82_originals.json) includes the
 checker, and three root records. Every proof byte is preserved. No new
 mathematics, Lean component, length factor or priority marker follows.
 
+The [universal-completion classification](../COVER_COMPLETION.md) now has
+separate general and family reviews, fresh public author and independent
+replays, and an expanded attribution comparison. Its
+[35-file record](phase83_originals.json) binds 29 frozen exports and six root
+records. It proves the exact two-object class of Γ2 covers with unchanged
+ends, with only the double cover minimal. Universal amalgamation retains
+older attribution. No source count, measurement, Lean count or priority
+marker changes.
+
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite
 surface-cover family](phase34_review.md), and the [infinite presentation

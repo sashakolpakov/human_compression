@@ -184,6 +184,35 @@ The independent review supplies separate implementations of the complete
 geometric recognition remain necessary; read the manuscript with its
 [required correction](research/case_study/phase83_nonabelian_cover_erratum.md).
 
+## Universal completion and the exact two-cover classification
+
+The [completion theorem](COVER_COMPLETION.md) has three public checks using
+only Python's standard library. Choose new output paths for every command:
+
+```sh
+python3 -O research/case_study/phase92_complement_normal_form.py \
+  --expected-certificate research/case_study/phase92_complement_normal_form_certificate.json \
+  --output-dir /tmp/human-compression-completion-new
+python3 -O research/case_study/phase96_universal_complement_review_check.py \
+  --output /tmp/human-compression-bridge-new.json
+python3 -O research/case_study/phase97_complement_normal_form_review_check.py \
+  --output /tmp/human-compression-completion-independent-new.json
+python3 -O research/case_study/phase92_complement_normal_form_controls.py \
+  --successful-replay-dir /tmp/human-compression-completion-new \
+  --output-dir /tmp/human-compression-completion-controls-new
+```
+
+The first regenerates the exact free-product isomorphism, marked action,
+tree and binary affine certificate. The second independently checks graph
+and square conventions on two finite models. The third independently
+checks the normal form and explicitly enumerates the whole 4,096-element
+affine group, its ends and unique invariant kernel line. The controls reject
+seven altered inputs and refuse three occupied output paths. The
+[root replay](research/case_study/phase101_completion_root_admission.md) passed
+all four commands from these public files. Uniform parameter transport and
+the complete cover classification require the separately reviewed written
+proofs. This adds no full-theorem Lean claim and needs no primary PDF.
+
 ## Odd-prime cover-family diagnostics and formal separation
 
 ```sh

@@ -114,10 +114,23 @@ odd-prime proof steps. Exact normal-closure, degree, character and interval
 calculations remain the additional repository derivation; historical priority
 is unverified, with two material unread literature comparisons recorded.
 
-The immediate work is a complete twelve-source length measurement and
-further cover theory. A square-complex
-construction relating local groups to universal completions is under review.
-Priority comparison continues.
+The stronger [universal-completion theorem](COVER_COMPLETION.md) is now
+admitted with separate general and family reviews and fresh public replays.
+It identifies `U ≅ F_t * ker(W→G)` for the completion with prescribed local
+groups, and gives an exact finite-kernel-class separation criterion. For
+Γ2 the literal spanning tree and bidirectional presentation calculation
+give `U ≅ F15 * (C2×C2)`. The completion kernel and its action yield exactly
+two covers with unchanged ends, of degrees four and two, for every specified
+parameter and sign pair. Only the double cover is minimal. A separate
+checker enumerates the full 4,096-element affine model. The complete
+classification uses the written uniform transport and universal property;
+no additional Lean component or measured factor follows.
+
+The [latest attribution comparison](research/case_study/phase100_cover_priority_completion_report.md)
+explicitly credits established universal-amalgamation machinery and
+records which original proofs remain unread. The immediate work is a
+complete twelve-source length measurement and covers with enlarged ends.
+The latter are necessary for any second minimal cover in the Γ2 family.
 The general and complete five-family multiplicity
 conjectures remain unproved here. Proof review and computational diagnostics
 are distinct from establishing that a result was previously open; no
