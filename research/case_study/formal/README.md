@@ -59,7 +59,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are thirty-three certificates. To compile them on another machine, install Git,
+There are thirty-four certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -76,7 +76,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the thirty-three modules, but does not produce the runner's JSON reports.
+way to compile the thirty-four modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -107,7 +107,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all thirty-three source hashes match the historical successful reports
+This checks that all thirty-four source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. Twenty-six saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
@@ -393,3 +393,10 @@ and basis translation words. All four theorem blocks use kernel evaluation
 and only standard axioms. Its [scope](CompactAffineData.scope.md) leaves
 finite closure, lattice spanning, source identification and geometry to the
 separate exact certificates and written proof.
+
+
+[FibonacciModulus.lean](FibonacciModulus.lean) proves the Fibonacci matrix
+power formula over every semiring, and the exact first scalar power modulo
+F_s for every s>=3. The [scope](FibonacciModulus.scope.md) leaves the tensor
+bridge, invertibility, local groups and geometry to the separate arguments.
+No finite sample is used to prove the uniform arithmetic statements.

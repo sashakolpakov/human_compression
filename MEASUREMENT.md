@@ -560,3 +560,11 @@ extension C_m^6 semidirect Q, with one fixed integral action of the order-1296
 group Q. This short structural consequence has not been matched against
 source proof spans. It changes no existing-paper count, measured ratio or
 infinity marker.
+
+
+Phase forty-four supplies an eight-dimensional tensor quotient with every
+exact parameter s>=3 and every required local group for s>=4. The Fibonacci
+scalar-power argument is formally verified for every parameter. Global
+intersection and coset Helly remain pending, so no complete open-problem
+resolution or infinity marker is assigned. Existing-paper counts and both
+matched ratios remain unchanged.

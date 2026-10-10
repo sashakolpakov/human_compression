@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty-three saved Lean reports
+checks local documentation links, and checks the thirty-four saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty-three certificates and their unformalized boundaries. With Git
+describes all thirty-four certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1575,3 +1575,21 @@ python3 research/case_study/phase35_L003_affine_split_check.py \
 This checks the 24 integer coordinates of the change of origin and scale.
 The short written splitting proof retains the earlier full translation
 kernel calculation. The exact abstract group Q is preserved at every modulus.
+
+
+## Tensor parameters and uniform Fibonacci arithmetic
+
+```sh
+python3 research/case_study/phase35_L003_tensor_model_check.py \
+  --output scratch/L003-tensor-fresh.json
+python3 research/case_study/formal/verify_lean.py FibonacciModulus.lean \
+  --packages /path/to/pinned/.lake/packages \
+  --lean /path/to/lean-4.32.2 \
+  --output-dir scratch/fibonacci-lean-fresh
+```
+
+The Python checker needs only the standard library and its literal matrices.
+It verifies all fixed integer relations, local closures, reductions and 23
+sample parameters. The all-parameter argument is written; Lean independently
+checks its uniform Fibonacci matrix arithmetic. Neither command proves the
+pending global intersection/incidence assertions.

@@ -66,6 +66,13 @@ they are infinite whenever six divides the parameter. Uniform existence
 for parameters coprime to six, further universal orders and priority remain
 unresolved. The compact affine image is not identified with a universal group.
 
+A separate [eight-dimensional tensor model](research/case_study/phase35_L003_tensor_model.md)
+now gives every exact parameter s>=3 and every required local group for
+s>=4, by reducing modulo Fibonacci numbers. Its uniform arithmetic has
+a [Lean certificate](research/case_study/formal/FibonacciModulus.scope.md).
+The global intersection and coset flag conditions remain pending, so this
+addition is not yet an all-parameter hypertope theorem.
+
 The [unfilled universal group](research/case_study/phase35_L003_unfilled_geometry.md),
 before the final parameter relation is imposed, is also an actual regular
 hypertope group. A [free-word certificate](research/case_study/phase34_L003_unfilled_structure.md)
@@ -242,10 +249,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirty-three Lean modules certify specified components, with no `sorry` in the checked
+Thirty-four Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 32 reports have no native-evaluation axioms.
+axioms; the other 33 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

@@ -494,6 +494,11 @@ def record(row, baseline, overlay, later_readings, older_access):
     if identifier == "L003":
         r["exact_target"].append({"reference":"Uniform splitting of the compact affine family", "scope":"A common origin modulo2 gives Gamma=Z6 semidirect Q and every G_m=C_m6 semidirect Q, with Q the fixed integral order1296 group, not its potentially smaller modm matrix image.", "relation_to_source":"specified_quotient_structure_consequence"})
         r["evidence"] += [evidence(n,"Exact affine splitting") for n in ("phase35_L003_affine_split.md","phase35_L003_affine_split_manifest.json","phase35_L003_affine_split_root_audit.md")]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Every exact tensor parameter and every prescribed local group", "scope":"Explicit8D integer marking reduced modulo FibonacciF_s: exact T order s for every s>=3 and full local orders36,12s²,48,108 for every s>=4. Global IP/Helly is not supplied by this package.", "relation_to_source":"all_parameter_local_algebraic_progress"})
+        r["method"].append("Three tensor factors and a permutation action; composite-ring tensor scalar cancellation; Fibonacci first-scalar-power theorem; finite local entry bounds and a toroidal order sandwich.")
+        r["evidence"] += [evidence(n,"Tensor model and Fibonacci certificate") for n in ("phase35_L003_tensor_model.md","phase35_L003_tensor_manifest.json","phase35_L003_tensor_rank_audit.md","phase35_L003_tensor_root_audit.md","formal/FibonacciModulus.scope.md")]
+        r["remaining_work"] = ["Uniform global IP/Helly for the tensor family, hence finite regular existence at parameters coprime to6, remains pending. Further universal orders, current priority and end-to-end formalization are unverified. N015 full main-theorem comparison remains unavailable. No complete all-integer hypertope claim or infinity marker."]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

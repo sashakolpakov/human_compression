@@ -3718,7 +3718,47 @@ although the lattice has one point. This distinction prevents an incorrect
 collapse when converting a group extension into a finite affine action.
 The original action modulo $2m$ supplies the faithful marked model.
 
-## 62. The remaining work, and how a living reduction should record it
+## 62. Fibonacci moduli give every exact tensor parameter
+
+The [eight-dimensional construction](research/case_study/phase35_L003_tensor_model.md)
+uses a tensor product of three two-dimensional lattices. Three small
+integer matrices, factor permutations and one reflection satisfy all
+nine fixed source relations. The parameter word becomes
+
+$$T=N^{-1}\otimes I\otimes N,
+\qquad N=\begin{pmatrix}0&1\\1&1\end{pmatrix}.$$
+
+Reduce modulo the Fibonacci number $F_s$, for $s\ge3$. The formula
+
+$$N^k=\begin{pmatrix}F_{k-1}&F_k\\F_k&F_{k+1}\end{pmatrix}$$
+
+makes $N^s$ scalar, while no positive smaller power is scalar: its
+off-diagonal entry lies strictly between zero and $F_s$. The scalars in
+the first and third tensor factors cancel, so $T$ has exact order $s$.
+The [Lean component](research/case_study/formal/FibonacciModulus.scope.md)
+proves these uniform Fibonacci matrix statements, including composite moduli.
+
+The tensor step requires a ring argument. If an invertible pure tensor
+is the identity, conjugation on each full matrix-factor algebra shows
+that each factor is a scalar unit. A nontrivial factor permutation is
+also detected by these algebras. This avoids field-only cancellation.
+
+For every $s\ge4$, all four prescribed local groups are exact. Three
+fixed integer groups have orders 36, 48 and 108. Their entries are bounded
+by two, so reduction modulo at least five is injective; modulus three
+is checked separately. The fourth contains $C_s^2\rtimes S_3$. An extra
+generator lies outside because its first factor is nonsymmetric, whereas
+scalar powers of $N$ are symmetric. Its order is therefore at least
+$12s^2$, attaining the toroidal presentation's upper bound.
+
+This removes the parameter and local-group obstacles, including for
+parameters coprime to six. It does not yet supply global subgroup
+intersection or typed coset Helly. Those are the remaining conditions
+for the tensor quotient to be a regular hypertope. The modulus-two
+case has a genuine collapsed local group and is excluded from that
+local theorem; the earlier parameter-three construction remains available.
+
+## 63. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3755,7 +3795,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-three Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-four Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

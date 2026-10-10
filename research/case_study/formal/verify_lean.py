@@ -33,6 +33,7 @@ CERTIFICATES = (
     "OneExceptionalParabolic",
     "SplitLatticeReduction",
     "CompactAffineData",
+    "FibonacciModulus",
 )
 
 
