@@ -38,6 +38,7 @@ CERTIFICATES = (
     "ParabolicMarkedComparison",
     "TriangleWreathQuotient",
     "TriangleWreathInvolutory",
+    "TriangleReflection",
 )
 
 

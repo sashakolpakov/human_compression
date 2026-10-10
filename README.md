@@ -113,9 +113,11 @@ The [two triangle-wreath certificates](research/case_study/phase40_triangle_quot
 now formally construct the exact rotational and four-involution presentation
 maps and explicit subgroup surjections onto the triangle group, uniformly
 in the parameter. All ten and fourteen defining words are kernel checked.
-Their infinitude transfers explicitly assume triangle-group infinitude;
-the real-matrix proof of that hypothesis remains written mathematics.
-Both fresh public builds use only the standard recorded axioms.
+The [new reflection certificate](research/case_study/formal/TriangleReflection.scope.md)
+now proves triangle-group infinitude and closes both transfers: Lean proves
+the exact rotational and four-involution groups infinite for every natural
+parameter at least six, with no infinitude hypothesis. The [independent audit](research/case_study/phase42_triangle_spectral_audit.md)
+and fresh public rebuild pass using only the standard recorded axioms.
 
 The [compact even family](research/case_study/phase35_L003_affine_model.md)
 also gives a smaller six-coordinate construction for $s=2m$, with group
@@ -318,10 +320,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirty-eight Lean modules certify specified components, with no `sorry` in the checked
+Thirty-nine Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 37 reports have no native-evaluation axioms.
+axioms; the other 38 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

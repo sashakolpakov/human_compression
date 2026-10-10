@@ -59,7 +59,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are thirty-eight certificates. To compile them on another machine, install Git,
+There are thirty-nine certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -76,7 +76,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the thirty-eight modules, but does not produce the runner's JSON reports.
+way to compile the thirty-nine modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -107,9 +107,9 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all thirty-eight source hashes match the historical successful reports
+This checks that all thirty-nine source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. Thirty-seven saved runs use only a subset of the standard axioms
+Lean or verify a proof anew. Thirty-eight saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
 prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
 for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below
@@ -430,11 +430,29 @@ adds the explicit reversing involution, all fourteen full-group relations
 and a direct subgroup surjection for that presentation; [its scope](TriangleWreathInvolutory.scope.md)
 does not assume the separate split-extension identification.
 
-Both conclusions require triangle-group infinitude as an explicit hypothesis.
-Its real-matrix proof remains written mathematics. The [root review](../phase40_triangle_quotients_root_audit.md)
-records fresh public builds and all eight standard-axiom audits.
+Both transfer lemmas require triangle-group infinitude as an explicit hypothesis.
+The reflection module below proves that hypothesis uniformly. The earlier
+[root review](../phase40_triangle_quotients_root_audit.md) records fresh public
+builds and all eight standard-axiom audits for the transfer lemmas.
 
 The general runner now builds absent imported mathlib objects in its output
 overlay, without changing installed package sources or object files. Existing
 compiled dependencies remain trusted inputs. Missing-object builds are
 recorded separately in `dependency_builds.json`.
+
+## Full infinitude for every parameter at least six
+
+[TriangleReflection.lean](TriangleReflection.lean) constructs the explicit real
+reflection representation of the exact triangle presentation. A surjective
+coordinate change proves the finite-order parameter relation. Expanding orbits
+for parameters greater than six and an explicit unipotent orbit at six prove
+the triangle group infinite. The two frozen subgroup-surjection modules then
+give infinitude of the exact ten-relator and fourteen-relator source groups.
+
+The final three infinitude statements assume only a natural parameter at least
+six. Their [scope](TriangleReflection.scope.md), [independent full review and replay](../phase42_triangle_spectral_audit.md)
+and [root source review and fresh public build](../phase42_triangle_spectral_root_audit.json)
+record the exact interfaces. All twelve central declarations across the three
+modules use only the standard three axioms. The geometric universal-object
+identification, finite small-parameter baseline and historical priority remain
+outside this formal claim.

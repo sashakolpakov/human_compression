@@ -3993,9 +3993,12 @@ The [two triangle-wreath certificates](research/case_study/phase40_triangle_quot
 now formally construct the exact rotational and four-involution presentation
 maps and explicit subgroup surjections onto the triangle group, uniformly
 in the parameter. All ten and fourteen defining words are kernel checked.
-Their infinitude transfers explicitly assume triangle-group infinitude;
-the real-matrix proof of that hypothesis remains written mathematics.
-Both fresh public builds use only the standard recorded axioms.
+The [reflection certificate](research/case_study/formal/TriangleReflection.scope.md)
+now proves the remaining triangle-group infinitude hypothesis. Its explicit
+coordinate change proves the parameter relation, and expanding or unipotent
+orbits prove infinitude for every natural parameter at least six. Both exact
+source presentations inherit that proved infinitude. The [independent audit](research/case_study/phase42_triangle_spectral_audit.md)
+and fresh public rebuild pass with only the standard recorded axioms.
 
 This settles the infinite side of the parameter range without classifying
 the whole universal group. The small finite cases remain the source's
@@ -4040,7 +4043,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-eight Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-nine Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
