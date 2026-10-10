@@ -17,7 +17,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "older_literature_updates.json", "phase5_network_intake.json",
           "phase6_network_intake.json", "phase16_frattini_geometry_intake.json",
           "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json",
-          "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json")
+          "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json",
+          "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -136,6 +137,18 @@ UPDATES = {
         "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; PGL2 maximal-subgroup classification, rank-one unitary identification and perfection; Standard projective unitary order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms; Katz Euler/trace/weight and Lang character-sheaf machinery; Hasse-Weil for the smooth genus-one curves; The stated symplectic torus list and recursive string C-group IP criterion; Exact primitive sieves and all 406 first-family and 1699 second-family exceptional parameter records",
         "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json;phase12_unitary_parameters.md;phase12_unitary_root_audit.md;phase12_unitary_root_audit.json;phase13_unitary_elliptic.md;phase13_unitary_sieve.md;phase13_unitary_manifest.json;phase13_unitary_independent_check.json;phase13_unitary_sieve_independent_audit.md;phase13_unitary_priority_audit.md;phase13_root_review.md;phase14_unitary_q7.md;phase14_unitary_q7_check.json;phase14_unitary_q7_root_check.json;phase14_unitary_q7_manifest.json;phase15_unitary_sieve.md;phase15_unitary_generation.md;phase15_unitary_intersection.md;phase15_unitary_parameter_reduction.md;phase15_unitary_curve.md;phase15_unitary_manifest.json;phase15_unitary_independent_audit.md;phase15_unitary_sieve_independent_check.json;phase15_unitary_witnesses_independent_check.json;phase15_unitary_q11.md;phase15_unitary_q11_root_check.json",
         "Problem 7 concerns linear socles and remains incomplete for field and graph extensions. The odd linear diagonal interval has maximum rank four at socle index one or two; index four forbids involution generation. A separate companion theorem now gives maximum rank four for the diagonal index-two unitary extension at every odd q>=3. Rank-three existence is now supplied for the diagonal unitary index-two extension at every odd q>=3, with a separate finite q3 base. The new linear template supplies rank three for the proper index-two group at q=1 mod4 and also independently constructs the already published q=3 mod4 range. With the retained q3 case and earlier rank-four/upper-bound results, every odd linear diagonal index-two extension has rank set {3,4}. A possible 2026 thesis and further source overlap remain priority leads. The two curve/sieve constructions give the simple PSU4(q) rank set {3,4} for odd q>=5, retaining published rank-three existence; PSU4(3) itself has no representation by retained published input. All generation, intersection and character arguments retain their stated inputs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted twice; publication priority and external review remain."),
+    "L088": (
+        "principal_results_rederived", "Six principal construction Theorems 3.2, 4.2, 5.2, 5.4, 6.2, 7.2 and their generation lemmas",
+        "One odd-endpoint overlap criterion and a central involution twist generate all six source-defined markings from one explicit seed. Typed coset Helly, panel and residue recognition are proved separately; a presentation order sandwich identifies the seed.",
+        "GAP exact group and completed Todd-Coxeter algorithms; TomLib named J1 group only; Spherical Coxeter [3,5] order120; Introductory exhaustive six-only/no-higher-rank classification retained, not rederived",
+        "phase24_L088_theory.md;phase24_L088_sources.json;phase24_L088_certificate.json;phase24_L088_manifest.json;phase25_L088_rank_audit.md;phase25_L088_rank_audit.json;formal/EndpointDoublingIntersections.lean;formal/EndpointDoublingIntersections.scope.md",
+        "All six principal new constructions and generation lemmas are recovered. The introductory exhaustive classification is quoted background, and Section8 does not become an exhaustive new search. Printed Gamma3/Gamma4 figure labels are transposed relative to their defining sections. Lean proves the mixed-intersection bridge only; geometric Helly and J1 computations remain separate. No matched ratio, novelty or source-correction priority claim."),
+    "L108": (
+        "principal_results_rederived", "Theorem1, Lemma3.1 definition adapter, Lemma3.2(i),(iii),(iv), with the unconditional part(ii) explicitly corrected",
+        "Retain the kernel of the action on vertices and edges. Thin connected residues force one commuting pair; the resulting marking proves thin-case regularity, faithfulness, automorphism equality and biduality, also for infinite groups.",
+        "Elementary group actions, dihedral normal forms and incidence connectivity; Conventional map/Petrie-walk definition",
+        "phase25_L108_reduction.md;phase25_L108_intake.json;phase25_L108_check.json;phase25_L108_manifest.json;phase25_L108_rank_audit.md;phase25_L108_rank_audit.json",
+        "The principal obstruction follows from thinness of the Petrial alone. Literal unconditional automorphism inclusion and the nonthin length/order assertion have explicit counterexamples and are not counted as proved. External atlas classifications and examples are not reproduced. No matched ratio, full Lean proof or correction-priority claim; external review remains."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",
@@ -289,6 +302,8 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "L088": ("full_text_read", "All ten primary pages and six construction proofs read; figures on pages9–10 independently visually checked. The exhaustive introductory classification is retained background.", "phase24_L088_sources.json"),
+    "L108": ("full_text_read", "All seven printed pages19–25, definitions, statements, proofs and references read from the complete primary authored rendering. Publisher PDF unavailable.", "phase25_L108_intake.json"),
     "N009": ("full_text_read", "All22 primary pages read cumulatively across source-bound audits; the final independent review matches all27 numbered items and allsix tables. Root and the independent reviewer visually inspected printedp10. This reading record does not claim literal validity of every printed assertion.", "phase24_N009_coverage.md"),
     "F013": ("full_text_read", "Complete eleven-page cached primary manuscript read by root; definitions (7)-(9) and Theorem 4.2 compared independently on PDF pages 5-8 and in versioned v1 HTML. Header dates differ; the exact checked claims are recorded in the proof.", "phase12_path_cocycle.md"),
     "F016": ("full_text_read", "All nineteen pages of arXiv:2512.15511v1 read by root, including references and all six principal statements/proofs. The independent reviewer read the full targeted sections 4-7. The title-page date is 18 December 2025 and the arXiv stamp is 17 December 2025.", "phase16_fiber_products.md"),
@@ -435,6 +450,22 @@ def record(row, baseline, overlay, later_readings, older_access):
              "scope": "Every three cyclic subgroups with TPP have order product at most the ambient group order. No order or nilpotency-class cutoff. Cyclicity and nilpotence remain essential scope restrictions.",
              "relation_to_source": "proposed_uniform_companion_application"},
         ]
+    if identifier == "L108":
+        r["historical_catalogue_title"] = r["title"]
+        r["title"] = "On the Petrials of thin rank 3 geometries"
+        r["citation"] = "D. Bonheure, F. Buekenhout and D. Leemans. Journal of Geometry 71 (2001), 19–25. DOI 10.1007/s00022-001-8548-2."
+        r["primary_urls"] += ["https://link.springer.com/article/10.1007/s00022-001-8548-2", "https://www.academia.edu/82511046/On_the_Petrials_of_thin_rank_3_geometries"]
+        r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes")
+        r["access_coverage"].update(retrieved_full_text=True, original_pdf_available=False,
+            source_representation="complete_rendered_primary_authored_text",
+            retrieval_status="complete_rendered_primary_text_accessed_original_pdf_unavailable",
+            notes="Complete article read and source-bound structural reduction independently reviewed. Unconditional auxiliary claims are corrected explicitly; no literal whole-document validity claim.")
+        r["numbered_statement_ledger"] = load("phase25_L108_intake.json")["numbered_statements"]
+    if identifier == "L103":
+        r["access_coverage"]["additional_readings"].append({"source": "research/case_study/phase25_older_access.json", "reading_depth": "Bounded renewed access attempt; body unavailable, abstract only. Primary publisher confirms year2002; 2003 is a review-date ambiguity."})
+    if identifier == "L088":
+        r["primary_urls"].append("https://msp.org/iig/2005/1-1/iig-v1-n1-p08-s.pdf")
+        r["access_coverage"]["notes"] = "Complete primary PDF read. Six principal construction theorems rederived and independently checked. Exhaustive global classification remains retained. Figure-label transposition is explicit."
     if identifier == "N003":
         r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
         r["access_coverage"]["notes"] = "The complete primary manuscript has been read and all eight numbered targets rederived in the finite-group/n>=7 scope. Whiston W1/W2 remain retained inputs; the earlier tree-only assessment is superseded. Phase15 independently audits a compact complete proof and its matched 4/3 description-length ratio."

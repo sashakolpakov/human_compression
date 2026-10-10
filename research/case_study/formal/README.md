@@ -292,3 +292,15 @@ generated evaluation axioms. This has a stronger compiler trust requirement
 than the preceding certificates. The [fresh public compilation](../../../provenance/phase24_transfer_public_compile.json)
 rechecks the unchanged source and pinned dependencies. The general binomial
 argument and the group-to-graph completeness theorem remain outside Lean.
+
+
+## Endpoint changes and fixed overlaps
+
+[EndpointDoublingIntersections.lean](EndpointDoublingIntersections.lean) proves
+that if an automorphism fixes the overlap of a subgroup and its image
+pointwise, that overlap determines every mixed intersection of their
+subgroups. It also identifies the expected common marked subgroup from
+its two restrictions. The [scope](EndpointDoublingIntersections.scope.md)
+excludes the remaining C-group cases, odd-order generation, typed Helly
+and the finite Janko-group recognition. Fresh compilation prints only
+`propext` and `Quot.sound`; no native-evaluation axiom is used.

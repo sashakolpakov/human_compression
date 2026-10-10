@@ -167,13 +167,18 @@ No corpus ratio or infinity marker is assigned in this snapshot.** Several propo
 arguments and substantial checks, but their external priority remains
 unverified and their formal certificates cover specified components.
 
-The principal-result ledger now covers 13 works, including the complete
-nondegenerate order-1024 classification and its constructive mechanisms.
+The principal-result ledger now covers 15 works, including the complete
+nondegenerate order-1024 classification and its constructive mechanisms,
+the six principal construction theorems from 2005, and the 2001 Petrial
+obstruction with its valid conditional structural conclusions.
 That increase measures verified coverage. Its 27-item statement ledger,
 retained background and literal-source repairs do not supply a new
 proof-length ratio; those costs must be measured before another ratio is
 reported. The new native Lean arithmetic module is also a verification
-component, not evidence of publication priority.
+component, not evidence of publication priority. The two older-paper additions
+retain their explicit completeness and literal-source qualifications. Their
+shared ideas and certificates increase coverage; neither has a matched
+source/replacement proof-length measurement yet.
 
 The [complete measurement record](research/case_study/phase9_L066_measurement.md)
 compares the exact formulas in L066, Theorems 1.1 and 1.2, in degrees

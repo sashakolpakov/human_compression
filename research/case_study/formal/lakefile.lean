@@ -15,4 +15,4 @@ lean_lib MathCompressionCertificates where
     `ConsecutiveShadow, `RankThreeFactorization, `CosetCoordinates,
     `IntertwinerSeparation, `TransvectionForms, `InvolutionCentralizers, `BinaryFrattiniActions, `MarkedSquareDescent,
     `GradedSupport, `BooleanRetractions, `PrincipalKernelIntersections, `NestedKernelIntersections,
-    `Phase23TransferAnnihilator]
+    `Phase23TransferAnnihilator, `EndpointDoublingIntersections]

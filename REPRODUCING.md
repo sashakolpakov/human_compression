@@ -1197,3 +1197,31 @@ verified repairs and the quoted inputs that remain. The independent audit's
 optional `--primary-sources` mode needs the excluded hash-matching snapshots.
 A successful finite replay does not independently rerun the earlier censuses
 or prove the quoted infinite decomposition.
+
+
+## The six 2005 constructions and the 2001 Petrial obstruction
+
+```sh
+python3 research/case_study/phase24_L088_run.py --gap gap --output-dir scratch/L088-fresh
+python3 research/case_study/phase25_L108_check.py --output scratch/L108-fresh.json
+python3 research/case_study/formal/verify_lean.py EndpointDoublingIntersections.lean --output-dir scratch/endpoint-lean
+```
+
+The L088 runner requires a new empty output directory, GAP and TomLib. It
+copies its four inputs into a temporary directory and leaves historical
+reports unchanged. Expected output is six verified markings, 1,536 full
+subgroup meets, 168 typed Helly equalities, 66 residue-generation tests,
+and the raw source presentation's completed index of 1,463. The group
+order sandwich retains the correctness of that completed Todd–Coxeter
+calculation; checking a transitive coset table alone is insufficient for
+an upper bound. The independent integer checker tests the explicit
+permutations and table actions. The exhaustive six-only classification
+is outside this replay.
+
+The L108 checker needs only Python's standard library. It constructs all
+the incidences and chamber flips of seven examples (188 original chambers),
+deduplicates Petrie faces as actual vertex-edge sets, and checks both
+nonfaithful actions and all four thin-case bidualities. Its finite scope
+is separate from the written proof for arbitrary groups. Use a new output
+filename to preserve earlier results. The Lean command verifies only the
+fixed-overlap mixed-subgroup lemma, under the pinned dependencies above.

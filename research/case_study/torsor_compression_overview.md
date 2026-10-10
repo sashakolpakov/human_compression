@@ -45,6 +45,8 @@ an entire paper.
 
 | Source and target | Replacement argument | Scope and remaining input |
 |---|---|---|
+| L088 (2005), all six principal construction theorems | Endpoint conjugation, central twist and typed-coset recognition | [Complete construction reduction](phase24_L088_theory.md); 1,536 subgroup meets, 168 Helly and 66 residue checks. Source presentation checked; exhaustive six-only classification retained. Figure-label transposition explicit; Lean certifies the mixed meet only |
+| L108 (2001), principal Petrial obstruction and valid conditional conclusions | Retained-object action kernel, thin residue cycles and recovered panel marking | [Uniform proof](phase25_L108_reduction.md) also permits infinite groups and derives biduality and thin-case automorphism equality. Seven exact finite diagnostics; unconditional group inclusion is corrected, not counted as proved |
 | N009 (2018), complete principal nondegenerate order-1024 classification | Universal marked-kernel ladder, central lifts, exact facet isomorphisms and complete raw presentations | [All 27 numbered items and six tables mapped](phase24_N009_coverage.md); unique rank-two class and 125/105/8 classes in ranks three/four/five; higher ranks excluded. Quoted background, three Table 4 repairs and the order-eight boundary remain explicit. No matched length ratio |
 | L102 (2003), Section 5.1.2 and the remaining spread case | Prime-degree arithmetic, irreducible semilinear descent and an explicit scalar-affine converse | Proposed exact existence and uniqueness of the spaces in the one-dimensional RWPRI case; source translation/spread reduction retained, external review and priority unverified |
 | L096 (2004), geometric shadow-IP decision problem | Flag-constrained covering inequalities, orbit normalization and a rank-two four-cycle argument | Exact criterion and independent finite checks; original Magma implementation and sporadic tables not reproduced by this criterion |
@@ -274,7 +276,7 @@ this reduction yet.
 
 ## Evidence and limits
 
-Twenty-three [Lean modules](formal/README.md) compile with the pinned toolchain and
+Twenty-four [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -289,9 +291,10 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker covers all 23 current modules and their successful
-reports. The newest transfer module uses native evaluation with four explicit
-compiler-evaluation axioms; its scope differs from the earlier 22 modules. Finite examples support uniform proofs; they are
+public snapshot checker covers all 24 current modules and their successful
+reports. The transfer module uses native evaluation with four explicit
+compiler-evaluation axioms. The other 23 modules, including the new
+endpoint mixed-intersection lemma, have no native-evaluation axioms. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 
 For the public distribution, run `python3 scripts/verify_snapshot.py` from
@@ -317,7 +320,9 @@ recovers the principal geometric quotient and classification results
 through a maximal-chain argument and vector-space coordinates. Its finite
 relative-generator scope and the infinite geometric proof are distinguished.
 Those additions brought the scoped ledger to twelve. The completed N009
-ledger now brings it to thirteen; neither step changes the two measured
+ledger brought it to thirteen. The two 2001/2005 reductions now bring it to
+fifteen, with their exact construction and auxiliary-claim boundaries;
+none of these steps changes the two measured
 description-length ratios.
 
 The [central join](phase16_central_join.md) supplies automatic attachment

@@ -62,6 +62,8 @@ The proposed PSL₄ resolution has a separate
 | Complete principal classification from 2018 | The nondegenerate order-1,024 census has 1, 125, 105 and 8 classes in ranks two through five; an index bound excludes higher ranks. Central-quotient, presentation-lift and affine-center adapters recover the constructive mechanisms | [Rank-three census](research/case_study/phase22_N009_rank3.md), [kernel proof](research/case_study/phase21_kernel_ladder.md), [central adapters](research/case_study/phase21_central_quotient.md), [presentation proof](research/case_study/phase21_N009_presentations.md) and [lemma adapters](research/case_study/phase22_N009_lemma_adapters.md). Fresh rank-three verification checks all 401 candidates and 25,664 full meets. The [Table 6 adapter](research/case_study/phase22_N009_table_labels.md) now also matches all 107 rows through 428 exact marked facet isomorphisms and verifies all 106 finite universal orders. The infinite decomposition is retained. The [complete statement ledger](research/case_study/phase24_N009_coverage.md) now accounts for all 27 numbered items and six tables. Fresh checks add 34 raw presentations and 3,328 meets. Three printed presentation discrepancies and an order-eight boundary are explicit; this is principal-result coverage with retained inputs, not literal whole-document validity |
 | Six principal construction theorems from 2025 | Boolean deletion maps and fiber products recover the full finite regular family and presentation, the alternating family, and—with an amalgam torsion lemma—all three infinite extension results | [Complete scoped reduction](research/case_study/phase16_fiber_products.md); 3,008 finite subgroup meets, independent review and two Lean components. The specified geometric correspondences remain explicit inputs |
 | Frattini geometry, 2005 | A maximal-chain argument, coset-kernel transport and a coordinate basis recover all principal new geometric results and the finite relative-generator theorem | [Reduction](research/case_study/phase16_frattini_geometry_reduction.md); independent source/proof review and 774,039 finite families checked. The unrestricted infinite relative-generator converse is explicitly excluded |
+| Six constructions from one marking, 2005 | Endpoint conjugation and a central involution twist recover all six principal Janko-group construction theorems | [Uniform reduction](research/case_study/phase24_L088_theory.md); fresh verification of 1,536 subgroup meets, 168 typed Helly equalities and 66 residue-generation tests. The source presentation is checked by a completed coset enumeration. The exhaustive six-only classification is retained background; a printed figure-label transposition is recorded. Lean checks the mixed-intersection step |
+| Petrial obstruction and biduality, 2001 | A retained-object action with explicit kernel proves the principal obstruction from thinness alone, then recovers thin-case faithfulness, automorphism equality and biduality | [Proof and exact source ledger](research/case_study/phase25_L108_reduction.md); independent review and seven finite geometric checks. The unconditional automorphism inclusion is corrected by an explicit counterexample, not counted as proved. No finiteness assumption is needed in the written proof |
 | Eight high-type families of regular rank-three polytopes | Both principal existence and classification theorems of the source paper rederived | [Proof](research/case_study/phase3_classification.md); eight model checks; exhaustive order-256 seed census |
 | Suzuki graph pentagons | Proposed uniform proof of exactly \(q-1\) pentagons per edge | [Proof](research/case_study/suzuki_cycle_proof.md); Lean checks the complete matrix-membership equivalence; independent coset graph |
 | Remaining PSL₂ chiral construction | Proposed proofs of the two field/intersection conjectures and their classification consequence | [Proof chain](research/case_study/psl2_chiral_corollary.md); exact finite-field witnesses; partial Lean certificates |
@@ -102,7 +104,7 @@ Wenger graph cycle count. Exact retained assumptions are listed in the notes.
 The common census theorem now supports six finite-group censuses with 262
 independently recognized representatives under their recorded axioms. This
 measures verified coverage; it is not a numerical proof-compression ratio.
-The [principal-result ledger](PAPER_MAP.md) now contains thirteen works, with
+The [principal-result ledger](PAPER_MAP.md) now contains fifteen works, with
 the exact statement scopes and retained inputs recorded for each.
 
 ## What “compression” means
@@ -153,9 +155,11 @@ still need priority verification.
 The starting bibliography was seeded from Dimitri Leemans's publication
 catalogue and expanded through coauthored papers and relevant followups.
 It currently indexes 128 mathematical catalogue entries, 17 followups and
-ten additional papers across the collaborator network;
-73 catalogue full texts were searched or read in part, 46 have abstract-level
-coverage and nine have metadata/access records only. That is neither complete
+12 additional works across the collaborator network, for 157 in total.
+The living registry records 99 accessible complete texts or primary renderings;
+reading depth ranges from targeted searches to complete proof reading.
+Across the full inventory, 49 entries have abstract-level reading and nine
+have metadata/access records only. That is neither complete
 proof reading nor an exhaustive inventory of every collaborator's work.
 Student and postdoctoral relationships require independent documentation;
 coauthorship alone is not evidence of either.
@@ -171,8 +175,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Nineteen Lean modules certify specified components, with no `sorry` in the checked
+Twenty-four Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
+One transfer-arithmetic module uses four explicitly recorded native-evaluation
+axioms; the other 23 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

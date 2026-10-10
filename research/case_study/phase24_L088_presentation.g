@@ -1,0 +1,16 @@
+SizeScreen([100000,24]);;
+F24:=FreeGroup("a","b","c","d");;
+r24:=GeneratorsOfGroup(F24);;
+a24:=r24[1];;b24:=r24[2];;c24:=r24[3];;d24:=r24[4];;
+rels24:=Concatenation(List(r24,x->x^2),[(a24*b24)^5,(a24*c24)^2,(a24*d24)^2,(b24*c24)^3,(b24*d24)^2,(c24*d24)^5,(a24*b24*c24)^5,((d24*c24*b24)^5*a24)^3]);;
+Q24:=F24/rels24;;
+q24:=GeneratorsOfGroup(Q24);;
+H24:=Subgroup(Q24,q24{[2,3,4]});;
+table24:=CosetTable(Q24,H24);;
+Print("PRESENTATION_COSET_INDEX ",Length(table24[1]),"\n");
+image24:=Group(List([1,3,5,7],i->PermList(table24[i])));;
+Print("PRESENTATION_IMAGE_ORDER ",Size(image24),"\n");
+if Length(table24[1])<>1463 or Size(image24)<>175560 then Error("presentation certificate");fi;
+PrintTo("phase24_L088_coset_table.json",table24,"\n");;
+Print("PRESENTATION_PASS\n");
+QUIT;

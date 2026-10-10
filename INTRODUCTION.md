@@ -2618,7 +2618,73 @@ using native evaluation. Four generated evaluation axioms make its compiler
 trust explicit. The formal statement stops at the arithmetic identities;
 the graph's completeness and the binomial argument remain written proofs.
 
-## 40. The remaining work, and how a living reduction should record it
+## 40. Change the marking, then check the geometry
+
+One group may support several different geometries because the distinguished
+generators, and the subgroups they specify, matter. The
+[2005 construction reduction](research/case_study/phase24_L088_theory.md)
+starts with one marking of the first Janko group and obtains six geometries
+through two operations. One replaces an endpoint by a conjugate of its
+neighbor. The other multiplies a generator by a central involution in a
+specified parabolic subgroup.
+
+For the endpoint operation, write the original generators as
+$(a,b,r_2,\ldots)$ with $a$ commuting with all the $r_i$, and replace $a$
+by $aba$. If $ab$ has odd order, $a$ can be recovered from $aba$ and $b$,
+so the full group remains the same. Every intersection involving both
+changed endpoints then reduces to the original intersection property.
+The only new mixed case is controlled by
+
+$$P\cap aPa=R,\qquad P=\langle b,r_2,\ldots\rangle,
+\quad R=\langle r_2,\ldots\rangle.$$
+
+Both groups in any mixed intersection lie inside those two parabolics.
+Their intersection is therefore forced into $R$, which conjugation by $a$
+fixes pointwise. This is the exact reusable step checked by the new
+[Lean certificate](research/case_study/formal/EndpointDoublingIntersections.scope.md).
+The central twist uses a different short identity: if $w$ is central of
+order two and $bc$ has odd order $m$, then $((wb)c)^m=w$. This recovers
+the original generators while changing selected adjacent product orders.
+
+Subgroup intersections alone still do not guarantee the required geometry.
+The reduction proves and checks a separate typed-coset Helly condition:
+pairwise incident cosets of distinct types must have a common element.
+Together with the actual subgroup intersections and residue generation,
+this gives flag transitivity, thinness and residual connectivity. The six
+constructions now use one recognition argument and explicit finite data.
+Their exhaustive classification among all possible geometries remains a
+quoted source input; constructing all six named examples does not prove
+that no seventh example exists.
+
+## 41. Keep the kernel when changing geometric objects
+
+The [2001 Petrial reduction](research/case_study/phase25_L108_reduction.md)
+shows a complementary issue. Replacing faces by the vertex-edge sets of
+Petrie walks retains vertices and edges, but can identify different walks.
+The original symmetry group consequently acts on the new geometry through
+a homomorphism that may have a kernel. It is not enough to say the
+construction is equivariant and infer that the group embeds.
+
+At an original chamber, let $a$ exchange faces, $b$ exchange edges and $c$
+exchange vertices. Any lost symmetry must fix every retained vertex and
+edge, so the kernel is contained in $\langle a\rangle$. The Petrie shift
+is $cab$. If $b$ moves the base Petrie face, thinness forces a four-cycle
+to exhaust a connected vertex residue, implying $ab=ba$. If $b$ fixes
+that face, $ca$ acts on the two completions of its edge panel; retaining
+the kernel explicitly proves $ca=ac$. Either way the original diagram
+is linear.
+
+Once this obstruction is proved, the same action argument gives
+faithfulness and regularity when the Petrial is thin. The changed marking
+then identifies the second Petrial with the original geometry. This
+recovers the principal theorem and valid conditional statements without
+the source's unconditional embedding assertion. The complete tripartite
+geometry $K_{2,2,2}$ explains the boundary: its Petrial has one face, and
+the group shrinks from $C_2^3$ to $C_2^2$. Exact small checks exercise
+both branches of the proof and this lost-symmetry case. The proof itself
+also allows infinite groups.
+
+## 42. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -2655,7 +2721,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-three Lean certificates](research/case_study/formal/README.md) cover
+The [twenty-four Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -2667,6 +2733,7 @@ four-case binary Frattini-action lemma, abstract marked-square descent,
 the split-kernel image and finite product steps in graded support lifting,
 Boolean-image intersections and four-marker centralization, and the
 principal-kernel and nested-kernel criteria for full subgroup intersections.
+The new endpoint module proves the fixed-overlap mixed-intersection step.
 The additional transfer module checks exact finite arithmetic with native
 evaluation and its explicitly reported compiler trust.
 They do not formalize every geometric instantiation or classification used

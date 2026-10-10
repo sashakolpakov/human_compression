@@ -25,6 +25,7 @@ CERTIFICATES = (
     "InvolutionCentralizers", "BinaryFrattiniActions", "MarkedSquareDescent",
     "GradedSupport", "BooleanRetractions", "PrincipalKernelIntersections",
     "NestedKernelIntersections", "Phase23TransferAnnihilator",
+    "EndpointDoublingIntersections",
 )
 
 
