@@ -4,7 +4,9 @@ The project is being reorganized into **umbrella theory U and focused
 application manuscripts A, B, C, …**, each intended to recover a coherent
 bundle of source results in about 20–25 pages. U and the first application
 volume are in preparation; no modular compression factor is yet measured.
-The [programme](MANUSCRIPT_PROGRAM.md) specifies their mathematical scope.
+The [programme](MANUSCRIPT_PROGRAM.md) specifies their mathematical scope:
+**U: Marked groups, kernels and intersections** and **A: Construction and
+classification of two-group polytopes**.
 
 | Intake layer | Count |
 |---|---:|
@@ -46,6 +48,11 @@ A new census will account for the questions and conjectures in all 161
 entries, including explicit access/reading gaps, exact source statements
 and later literature. Solving related questions through shared arguments
 continues alongside the module work.
+The [question-results catalogue](CONJECTURE_RESULTS.md) now collects ten
+existing entries: eight recorded answers under their exact stated scope
+and two qualified family or interpretation results. This is an inventory
+of existing claims and evidence, not ten newly audited solutions or a
+count of conjectures confirmed still open before our work.
 
 Forty-three existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate

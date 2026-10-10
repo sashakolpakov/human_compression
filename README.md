@@ -21,7 +21,12 @@ and [method and measurement rules](PROOF_LIBRARY.md).
 
 ## Current work
 
-**U and Module A are being written and independently checked.** U develops
+The active manuscripts have descriptive mathematical titles:
+
+- **Umbrella theory U: Marked groups, kernels and intersections.**
+- **Module A: Construction and classification of two-group polytopes.**
+
+**Both are being written and independently checked.** U develops
 exact kernels, marked subgroup intersections, compatible extensions and
 finite actions. Module A starts with five related papers on groups and
 polytopes of two-power order, spanning 2018–2026. Its source-specific
@@ -43,7 +48,10 @@ thirteen distinct principal-result contracts.
 
 A parallel track inventories every explicit conjecture, open question and
 unresolved case in the intake, checks later work, and attacks related
-questions through shared theory. The separately reviewed
+questions through shared theory. The
+[question-results catalogue](CONJECTURE_RESULTS.md) keeps recorded answers,
+qualified cases and formalization gaps separate from compression credit.
+The separately reviewed
 [five-family cover result](COVER_FIVE_FAMILIES.md) establishes the stated
 multiplicity assertion in the checked source proposal. Historical priority
 and current openness remain unverified; the general conjecture is unresolved.

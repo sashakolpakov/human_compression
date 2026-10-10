@@ -12,7 +12,7 @@ which proves all application hypotheses and all source-specific arguments.
 The papers do not repeat U's proofs. Source coverage is earned by actual
 deductions, not thematic similarity or a shared encoding.
 
-## U: current scope
+## Umbrella theory U: Marked groups, kernels and intersections
 
 The draft develops exact image/kernel transport, marked parabolic
 comparison, compatible extensions with kernels supported on selected
@@ -23,7 +23,7 @@ Attribution distinguishes re-proved classical results, retained background
 and repository arguments. Neither a new universal theory nor historical
 priority is presumed from common notation.
 
-## Module A: two-power groups and symmetric polytopes
+## Module A: Construction and classification of two-group polytopes
 
 The initial coherent source bundle is:
 
@@ -46,6 +46,9 @@ further proved source reductions.
 Later modules will group other related papers around the actual reusable
 machinery they need. Their intake will be frozen before a compression
 claim. The earlier mixed compilation does not dictate these groupings.
+Each module will have a descriptive mathematical title; its letter is
+only an identifier. Titles for B and later modules will be assigned when
+their source bundles and common arguments are established.
 
 ## Open questions and formal proofs
 
@@ -54,6 +57,8 @@ indexed works. It distinguishes access gaps, exact historical statements,
 later resolutions, repository proofs, partial cases and current-status
 uncertainty. Related questions will be attacked together, and a new
 consequence may enter an application manuscript with precise attribution.
+The existing [question-results catalogue](CONJECTURE_RESULTS.md) collects
+recorded answers separately from the compression modules.
 
 Lean statements must correspond to the theorems actually proved in U and
 the modules. Existing certificates are mapped to those statements; missing

@@ -311,3 +311,9 @@ now organize work as U plus coherent modules. Older compilations and
 measurements remain source records, without being transferred to the new
 products. The corrected living registry distinguishes the current thirteen
 compiled source contracts from completed modular manuscripts.
+
+The [phase-90 record](phase90_review.md) gives the active manuscripts
+descriptive mathematical names and publishes a separate catalogue of
+ten existing question-answer entries. Its public binding record checks
+all 56 retained evidence files and distinguishes five documented public
+variants. This adds no new proof or formalization claim.
