@@ -23,7 +23,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase32_L111_intake.json", "phase32_L111_scope.json",
           "phase32_L003_geometry_intake.json", "phase32_L003_universal_intake.json",
           "phase32_L111_section6_intake.json", "phase33_L003_even_intake.json",
-          "phase33_L003_universal_even_intake.json", "phase33_source_status.json")
+          "phase33_L003_universal_even_intake.json", "phase33_source_status.json",
+          "manuscript_replacements.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -1029,6 +1030,10 @@ def render(registry):
         "[Registry](research/case_study/paper_registry.json) · [Introduction](INTRODUCTION.md) · "
         "[Reduction scope](research/case_study/torsor_compression_overview.md) · "
         "[Historical inventory](research/case_study/literature_inventory.json)", "",
+        "The [named manuscript map](MANUSCRIPT_MAP.md) records two reviewed",
+        "assembled replacements with seven distinct source manuscripts. Their",
+        "declared main-result contracts and retained inputs remain explicit;",
+        "no three-paper, four-paper or combined manuscript factor is measured.", "",
         "## Read the stages separately", "",
         "| Stage | Meaning |", "|---|---|",
         "| Retrieved | A matched primary full text was accessed; it is not redistributed. |",
@@ -1204,6 +1209,19 @@ def main():
              for r in phase26_network_rows()]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase31_network_rows()]
+    replacements = load("manuscript_replacements.json")["replacements"]
+    by_id = {r["id"]: r for r in rows}
+    for r in rows:
+        r["assembled_replacements"] = []
+    for replacement in replacements:
+        for path, expected in replacement["artifact_sha256"].items():
+            assert sha256((STUDY / path).read_bytes()).hexdigest() == expected, path
+        for identifier in replacement["intake"]:
+            row = by_id[identifier]
+            assert row["full_principal_results"], identifier
+            row["assembled_replacements"].append(replacement["id"])
+            for key in ("manuscript", "ledger", "review", "root_review"):
+                row["evidence"].append(evidence(replacement[key], replacement["scope"]))
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]
@@ -1218,6 +1236,8 @@ def main():
         "reading_categories": dict(Counter(r["access_coverage"]["reading_category"] for r in rows)),
         **{key: sum(r[key] for r in rows) for key in ("encoded", "rederived", "full_principal_results")},
         "statuses": dict(Counter(r["status"] for r in rows)),
+        "reviewed_assembled_replacements": len(replacements),
+        "manuscripts_in_reviewed_assemblies": sum(bool(r["assembled_replacements"]) for r in rows),
     }
     registry = {
         "schema_version": 1, "as_of": "2026-10-10",
@@ -1236,9 +1256,10 @@ def main():
             "proposed_new_result": "Internally checked draft consequence; no established priority or external peer review.",
             "primary_urls": "Recorded primary/author/repository links, including abstract and metadata pages; access notes retain identity cautions.",
             "evidence": "Written arguments and saved records have their own scopes; this builder does not execute them.",
+            "assembled_replacements": "Named internally reviewed manuscripts deriving the declared main-result contract; conditional retained inputs, explicit corrections and exclusions remain. Membership is not a length ratio or whole-document equivalence.",
             "empty_lists": "For an unassessed record, an empty target/method/input list means not yet assessed, not that the paper has no theorem or needs no input.",
         },
-        "counts": counts, "entries": rows,
+        "counts": counts, "assembled_replacements": replacements, "entries": rows,
     }
     (STUDY/"paper_registry.json").write_text(json.dumps(registry, indent=2, ensure_ascii=False)+"\n")
     (ROOT/"PAPER_MAP.md").write_text(render(registry))

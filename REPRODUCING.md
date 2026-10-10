@@ -1693,3 +1693,22 @@ the explicit `--allow-toolchain-drift` option and is reported as such.
 PDFs and extracted replacement text remain in scratch; source bodies are
 never written. The [root replay review](research/case_study/phase37_rendered_measurement_root_audit.md)
 states the exact validation and the remaining source-representation limit.
+
+
+## Four-paper replacement and its charged finite census
+
+The [Compress_B review](COMPRESS_B.md) separates the written all-parameter
+arguments from the bounded exact calculation. With GAP and SmallGroups:
+
+```sh
+python3 research/case_study/phase37_compress_twogroups_recent_check.py \
+  --gap /path/to/gap --output scratch/compress-B-census.json \
+  --log scratch/compress-B-census.log
+```
+
+Both output paths must be new. The wrapper checks the unchanged source hash,
+runs in a temporary directory, and asserts 1,651 eligible groups, 1,641 active
+groups, 92 anchored triples, all four relation counts and every group/row hit.
+The recorded run uses GAP 4.15.1 and SmallGroups 1.5.4. It retains the catalogue
+and exact group arithmetic; it does not prove the infinite-parameter lifting
+argument or the imported geometric assembly results.

@@ -10,6 +10,11 @@ student or postdoc. Coauthorship alone does not establish those relationships.
 
 [Registry](research/case_study/paper_registry.json) · [Introduction](INTRODUCTION.md) · [Reduction scope](research/case_study/torsor_compression_overview.md) · [Historical inventory](research/case_study/literature_inventory.json)
 
+The [named manuscript map](MANUSCRIPT_MAP.md) records two reviewed
+assembled replacements with seven distinct source manuscripts. Their
+declared main-result contracts and retained inputs remain explicit;
+no three-paper, four-paper or combined manuscript factor is measured.
+
 ## Read the stages separately
 
 | Stage | Meaning |

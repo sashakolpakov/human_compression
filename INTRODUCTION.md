@@ -3896,7 +3896,41 @@ families to actual generated markings. All four modules in its import chain
 passed a fresh run with pinned dependencies and standard axioms. The tensor
 source adapter remains a written proof.
 
-## 67. The remaining work, and how a living reduction should record it
+## 67. Four papers through deletion maps and cyclic cores
+
+[Compress_B](COMPRESS_B.md) contains the complete declared main-result proofs
+for four two-group papers. Its common kernel lemma separates intersections
+in the quotient from intersections inside the kernel. Deletion endomorphisms
+then prove IP and split off normal-closure kernels. Compatible fiber products
+preserve those maps, giving a reusable construction with exact orders.
+
+One square-lattice seed supplies both the all-rank existence results and
+the prescribed-square-section constructions. Graded support and descending
+factorization through the lower-central series show that every finite
+nondegenerate string two-group has the same canonical class-two quotient.
+No intermediate quotient is assumed to have IP to prove that statement.
+
+The high-type rank-three classification requires extra work: a cyclic-core
+bound reduces it to three small quotients; an exhaustive order 256 census
+supplies four relation patterns; an all-parameter lifting argument excludes
+two patterns and yields all eight presentations. These costs are included.
+The independent reviewer reran the census and checked the entire lifting
+and bare-presentation proofs. The group's known order is never assumed when
+proving the upper bound for an unidentified presentation.
+
+The same deletion maps prove IP of the bare universal local presentation,
+and four-marker centralization plus matching order bounds identify its
+required finite quotient. Earlier alternating assembly and free-extension
+geometry remain explicit retained inputs. Corrections to source auxiliary
+claims are labelled, and all rank/parameter restrictions remain. No length
+ratio or complete Lean formalization follows from the written review.
+
+The [manuscript map](MANUSCRIPT_MAP.md) separates these two completed
+assemblies from the wider set of principal-result candidates. Seven named
+sources now feed two replacements; a single shorter replacement for all
+seven still requires a proved common theory and a new integration review.
+
+## 68. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

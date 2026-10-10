@@ -59,6 +59,13 @@ contract; they cannot be removed by a word-count calculation. The earlier
 [independent assessment](INDEPENDENT_ASSESSMENT.md) supplies the wider intake
 map and the remaining assembly work for other bundles.
 
+The [second assembled replacement](COMPRESS_B.md) now has a complete
+internal review of its four-paper main-result contract and an independent
+finite census replay. It has no whole-body length measurement yet. The
+[named map](MANUSCRIPT_MAP.md) records seven sources across two replacements;
+adding those source lengths does not create a seven-paper factor without
+a specified combined denominator and coverage/dependency accounting.
+
 ## A finite compression ratio
 
 Fix a set of exact theorem statements $S$, a common background $B$, and a

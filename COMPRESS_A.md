@@ -67,6 +67,5 @@ It still measures the earlier two-paper version only.
 
 The [independent corpus assessment](CURRENT_ASSESSMENT.md) is frozen at the
 earlier two-paper baseline. This page and the newly bound integration review
-record subsequent progress without rewriting that assessment. The next
-parallel manuscript targets four papers on two-groups; its assembled proof,
-source contract and census need their own review before coverage is admitted.
+record subsequent progress without rewriting that assessment. The separate [Compress_B](COMPRESS_B.md) now has its own complete
+assembled review and finite census replay for four two-group papers.

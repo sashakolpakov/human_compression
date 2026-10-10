@@ -23,6 +23,14 @@ explicitly scoped main-result contract. Retained background remains visible.
 No three-paper length ratio has been measured. The earlier two-paper
 measurement remains a separate representation-sensitive experiment.
 
+A second reviewed manuscript, [Compress_B](COMPRESS_B.md), derives the
+declared main theorems of four papers from 2019–2026 using deletion maps,
+one square-lattice seed, graded support and bounded cyclic extensions. Its
+complete eight-family classification includes an independently replayed
+finite census. The [named manuscript map](MANUSCRIPT_MAP.md) records the
+seven distinct source manuscripts across these two replacements. Their
+integration into one shorter theory and their length measurements remain work.
+
 The [current independent assessment](CURRENT_ASSESSMENT.md) gives the exact
 intake-to-replacement map and the earlier two-paper baseline. The new
 [integration review](research/case_study/phase37_compress_forest_recent_audit.md)
