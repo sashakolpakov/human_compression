@@ -855,6 +855,61 @@ five theorem axiom lists. The exact parabolic kernel profile remains
 a formal hypothesis. All twenty-one older source/report pairs remain
 unchanged; there are now twenty-two partial certificates.
 
+## Finite boundary states and all odd unitary extensions
+
+The fixed-class theorem has two bounded transition diagnostics:
+
+```sh
+mkdir -p scratch/phase20
+gap -q -T research/case_study/phase20_finite_state_check.g > scratch/phase20/class_three.log
+gap -q -T research/case_study/phase20_finite_state_class4_check.g > scratch/phase20/class_four.log
+```
+
+The first builds the complete rank-three class-three alphabet from all
+16 kernel subgroups of the universal group. Its 13 states and 89 transitions
+construct all 89 corresponding rank-four groups. It checks orders, class,
+factor embeddings, actual IP and the deletion-kernel update. Weighted
+counts through rank ten agree with the earlier two-state formula. It
+also checks the unique class-two boundary state.
+
+The second repeats the class-three pool construction, adds the 16
+noncentral excess-two rank-four windows, and filters to excess at most
+two. Its 58 states and 258 transitions yield 258 checked rank-five
+constructions. This run performs 9,808 parabolic closures and 288,000
+meets cumulatively, including the repeated pool work. The walk coefficients
+through rank twelve agree with the earlier exact excess-zero/one/two
+formulas. Completeness of this restricted alphabet retains the previous
+classifications. No genuine extra compatibility rejection or noncentral
+diagonal is exhibited; the general cases rely on the written proof.
+The [root record](research/case_study/phase20_finite_state_root_audit.json)
+binds a fresh run of the second script. Its cumulative count should not
+be added to the repeated pool's count as if they were disjoint tests.
+
+The new unitary template covers every odd q>=3. The general proof applies
+at q>=5, and the q=3 base is verified separately:
+
+```sh
+python3 research/case_study/phase20_unitary_q3_independent_check.py --output scratch/phase20/q3_independent.json
+python3 research/case_study/phase20_unitary_q3_root_check.py --output scratch/phase20/q3_root.json
+gap -q -T research/case_study/phase20_unitary_rank3_check.g > scratch/phase20/unitary_groups.log
+```
+
+Both Python implementations need SymPy and construct their own field
+arithmetic and plane permutations from the literal matrices. They retain
+SymPy's Schreier-Sims group-order algorithm. Each finds order 6,531,840
+on 112 planes and verifies all 64 marked meets. They are independent
+implementations of the same finite base, not extra parameter cases.
+The GAP script checks six fields, including q=3, with 384 total meets.
+
+For the symbolic identities, copy
+`research/case_study/phase20_unitary_rank3_symbolic.py` into the scratch
+directory and run that copy with SymPy installed. It writes its report
+beside itself and verifies 31 identities, including the q=3 polynomial
+coordinates. Root freshly ran this symbolic check and the root q=3
+implementation; the author six-field GAP run is retained as a saved record.
+No new Lean module is claimed in this phase. The 22 existing formal
+certificates keep their previous source and report bytes and partial scopes.
+
 ## GAP computations and retained catalogues
 
 GAP runs use exact finite group computations. For example, in a disposable

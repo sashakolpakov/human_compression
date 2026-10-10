@@ -16,7 +16,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "workspace_proof_audits.json", "phase4_old_problem_intake.json",
           "older_literature_updates.json", "phase5_network_intake.json",
           "phase6_network_intake.json", "phase16_frattini_geometry_intake.json",
-          "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json")
+          "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json",
+          "phase20_linear_rank3_intake.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -134,7 +135,7 @@ UPDATES = {
         "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). A uniform matrix template generates SU4(q) for q=1 mod4 and has projective IP whenever the middle order is q^2-1 or q^2+1, using two auxiliary forms and a regular-torus bound. An elliptic primitive-character sieve and 406 independently checked field witnesses prove parameter existence for every odd q=1 mod4; characteristic three uses the rational curve from phase twelve. A second sphere template, twisted norm curve and primitive sieve cover q=3 mod4, q>=7, with 1699 independently checked exceptional parameter records and full q7/q11 finite group certificates. Together these prove maximum rank four for every odd q>=5. The failed-IP control remains.",
         "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; PGL2 maximal-subgroup classification, rank-one unitary identification and perfection; Standard projective unitary order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms; Katz Euler/trace/weight and Lang character-sheaf machinery; Hasse-Weil for the smooth genus-one curves; The stated symplectic torus list and recursive string C-group IP criterion; Exact primitive sieves and all 406 first-family and 1699 second-family exceptional parameter records",
         "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json;phase12_unitary_parameters.md;phase12_unitary_root_audit.md;phase12_unitary_root_audit.json;phase13_unitary_elliptic.md;phase13_unitary_sieve.md;phase13_unitary_manifest.json;phase13_unitary_independent_check.json;phase13_unitary_sieve_independent_audit.md;phase13_unitary_priority_audit.md;phase13_root_review.md;phase14_unitary_q7.md;phase14_unitary_q7_check.json;phase14_unitary_q7_root_check.json;phase14_unitary_q7_manifest.json;phase15_unitary_sieve.md;phase15_unitary_generation.md;phase15_unitary_intersection.md;phase15_unitary_parameter_reduction.md;phase15_unitary_curve.md;phase15_unitary_manifest.json;phase15_unitary_independent_audit.md;phase15_unitary_sieve_independent_check.json;phase15_unitary_witnesses_independent_check.json;phase15_unitary_q11.md;phase15_unitary_q11_root_check.json",
-        "Problem 7 concerns linear socles and remains incomplete for field and graph extensions. The odd linear diagonal interval has maximum rank four at socle index one or two; index four forbids involution generation. A separate companion theorem now gives maximum rank four for the diagonal index-two unitary extension at every odd q>=3. Rank-three existence is now supplied for q>=5 with q=1 mod4 or q=3 mod8; q=3 and the q=7 mod8 extensions remain unresolved here. The two curve/sieve constructions give the simple PSU4(q) rank set {3,4} for odd q>=5, retaining published rank-three existence; PSU4(3) itself has no representation by retained published input. All generation, intersection and character arguments retain their stated inputs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted twice; publication priority and external review remain."),
+        "Problem 7 concerns linear socles and remains incomplete for field and graph extensions. The odd linear diagonal interval has maximum rank four at socle index one or two; index four forbids involution generation. A separate companion theorem now gives maximum rank four for the diagonal index-two unitary extension at every odd q>=3. Rank-three existence is now supplied for the diagonal unitary index-two extension at every odd q>=3, with a separate finite q3 base. For linear groups, published N011 supplies rank three for PGL4(q) at q=3 mod4; the proper index-two group at q=1 mod4 remains unresolved here. The two curve/sieve constructions give the simple PSU4(q) rank set {3,4} for odd q>=5, retaining published rank-three existence; PSU4(3) itself has no representation by retained published input. All generation, intersection and character arguments retain their stated inputs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted twice; publication priority and external review remain."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",
@@ -255,6 +256,12 @@ UPDATES = {
         "Reviewed canonical class-two quotient theorem; Exact central-join construction; Elementary D16 and UT4(F2) seeds; Class-three commutator collection",
         "phase17_k1_classification.md;phase17_k1_source_intake.json;phase17_k1_root_audit.md;phase17_k1_root_audit.json;phase17_k1_independent_audit.json;phase17_k1_check.json;formal/PrincipalKernelIntersections.lean;formal/PrincipalKernelIntersections.scope.md",
         "Only the rank-five counts and type multiplicities are matched; individual source presentations and all rank-three/rank-four source results remain outside this reduction. No full-paper credit, matched proof-length ratio, or novelty claim. The general all-rank formula is a companion theorem; Lean checks the quotient/kernel IP transport step only."),
+    "N011": (
+        "source_theorem_retained", "Theorem 2, printed p.248: exact PGL_n(q) commuting-pair involution-generation criterion",
+        "Retain the published theorem. In dimension four and odd characteristic it gives PGL4(q) rank-three existence exactly for q=3 mod4, using the source's rank-three adapter.",
+        "Markovskaya–Nuzhin Theorem 2 and its source proof; Same-marking rank-three intersection principle",
+        "phase20_linear_rank3_intake.md;phase20_linear_rank3_intake.json;phase20_unitary_rank3_status.md",
+        "Selected statement and preliminary passages read; no complete proof audit or rederivation credit. The proper index-two subgroup for q=1 mod4 is not included in this theorem and remains unresolved in this investigation. No compression or infinity-marker credit."),
     "N010": (
         "partial_progress", "Problem 30, printed p.19: restricted regular two-group components",
         "Canonical bounded cores classify ordered nondegenerate regular two-group markings at fixed excess. A global marked-kernel basis gives every class-at-most-three marking in every rank, with a two-state transfer formula and Fibonacci total. Separated first-excess cores give the unrestricted leading coefficient 5^k/k! and a lower-degree higher-class contribution.",
@@ -571,6 +578,32 @@ def record(row, baseline, overlay, later_readings, older_access):
                      "phase19_k2_independent_audit.json", "phase19_k2_root_audit.json",
                      "formal/NestedKernelIntersections.lean", "formal/NestedKernelIntersections.scope.md"):
             r["evidence"].append(evidence(name, "All-rank excess-two classification; restricted regular two-group component"))
+    if identifier == "L120":
+        r["exact_target"].append({
+            "reference": "Companion exact rank set {3,4} for every odd diagonal unitary index-two extension",
+            "scope": "For every odd q>=3, the unique index-two extension U2(q) over PSU4(q) has rank three. The uniform proof covers q>=5 via a scalar-normalized anti-isometry, full rank-one projection, radical and opposite-root generation; q3 has exact polynomial-coordinate and plane-action certificates. Earlier upper bounds and rank-four constructions give rank set {3,4}. This does not give a representation for the simple PSU4(3), nor solve the whole current Kourovka21.101 almost-simple classification. Priority remains unverified.",
+            "relation_to_source": "proposed_uniform_companion_application",
+        })
+        for name in ("phase20_unitary_rank3.md", "phase20_unitary_rank3_manifest.json",
+                     "phase20_unitary_rank3_independent_audit.json", "phase20_unitary_rank3_root_audit.json",
+                     "phase20_unitary_rank3_status.md", "phase20_linear_rank3_intake.md"):
+            r["evidence"].append(evidence(name, "All odd unitary diagonal extensions and updated published linear baseline"))
+    if identifier in {"F016", "N010"}:
+        r["exact_target"].append({
+            "reference": "Companion finite-state classification at every fixed nilpotency class",
+            "scope": "For fixed c>=2, ordered nondegenerate finite two-group string C-groups of class at most c correspond exactly to accepted walks in an effectively finite graph of c-windows and boundary deletion kernels. Compatible semidirect/diagonal gluing, coset Helly and exact deletion update prove construction, actual IP and uniqueness. The rank/excess generating function is rational. At excess k>=1, class<=k+2 and windows of order<=2^(3k+3) suffice. No efficient general library enumeration, unmarked/chiral classification or full Problem30 resolution is claimed.",
+            "relation_to_source": "proposed_uniform_companion_application",
+        })
+        for name in ("phase20_finite_state.md", "phase20_finite_state_manifest.json",
+                     "phase20_finite_state_independent_audit.json", "phase20_finite_state_root_audit.json",
+                     "phase20_finite_state_status.md"):
+            r["evidence"].append(evidence(name, "Fixed-class finite transition theorem and smaller fixed-excess local alphabet"))
+    if identifier == "N011":
+        r["encoded"] = False
+        r["rederived"] = False
+        r["full_principal_results"] = False
+        r["proposed_new_result"] = False
+        r["exact_target"][0]["relation_to_source"] = "source_theorem_retained"
     if identifier == "N009":
         r["proposed_new_result"] = True
         r["exact_target"].append({
@@ -673,6 +706,23 @@ def phase18_network_rows():
     }]
 
 
+def phase20_network_rows():
+    """Retain a newly read published baseline, without reduction credit."""
+    source = load("phase20_linear_rank3_intake.json")
+    publication = source["publication"]
+    return [{
+        "id": "N011", "title": source["title"],
+        "publication_year_from_catalogue": publication["year"],
+        "citation": ", ".join(source["authors"]) + ". " + publication["journal"] + " 31(4) (2025), 247–259.",
+        "category": "Network publication", "mathematical": True,
+        "fulltext_available": True, "reading_scope": "selected_sections_read",
+        "retrieval_status": "primary_pdf_retrieved_selected_sections_read",
+        "status_note": source["reading_scope"] + " Published input only, no rederivation credit.",
+        "assets": [{"url": u} for u in source["primary_urls"]],
+        "source_urls": [], "intake_file": "phase20_linear_rank3_intake.json",
+    }]
+
+
 def escaped(text):
     return str(text).replace("|", "\\|").replace("\n", " ")
 
@@ -736,7 +786,7 @@ def render(registry):
             "L120": ("Every odd q>=5", "phase15_unitary_sieve.md"),
             "F013": ("All-class theorem and source adapter", "phase15_graded_support_scope.md"),
             "F016": ("Fixed-excess companion theorem", "phase16_fixed_excess.md"),
-            "N010": ("Class-three and excess-two classifications", "phase19_k2_classification.md"),
+            "N010": ("Fixed-class transition theory and exact low-excess counts", "phase20_finite_state.md"),
         }.get(r["id"])
         extra_link = (f" [{companion[0]}](research/case_study/{companion[1]})."
                       if companion else "")
@@ -869,6 +919,8 @@ def main():
              for r in phase17_network_rows()]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase18_network_rows()]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase20_network_rows()]
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]

@@ -110,6 +110,22 @@ the whole classification. Neither this new formula nor the
 has a matched source-proof length or established publication priority.
 They do not change the two measured ratios or receive an infinity marker.
 
+The [fixed-class transition theorem](research/case_study/phase20_finite_state.md)
+gives another exact representation: a finite state graph classifies all
+ordered markings at each fixed nilpotency class. Its weighted generating
+function counts by rank and excess. At fixed excess k the local windows
+have rank k+2 and order at most 2^(3k+3). This bounds the objects in the
+library; it is not a proof-length ratio or an efficiency claim. It is
+distinct from the earlier bound on the whole canonical support core.
+
+The [all-odd unitary extension theorem](research/case_study/phase20_unitary_rank3.md)
+has an internally reviewed proof with a separately computed q=3 base.
+A current broad almost-simple classification question is recorded, but
+neither complete resolution of that question nor prior openness of this
+exact family has been established. The newly retrieved 2025 linear theorem
+is retained published input. Both measured ratios and the unassigned
+infinity marker remain unchanged.
+
 ## The infinity marker
 
 A verified solution to a previously open problem deserves a separate,
