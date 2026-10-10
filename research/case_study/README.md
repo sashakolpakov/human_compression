@@ -13,12 +13,15 @@ and two finite implementations agree. The revised journal text is unverified,
 a later [actual regular counterexample](phase30_affine_map.md) disproves the
 preprint's regular-preservation consequence too. Its 983,040-chamber geometry
 has 122,880 disconnected transformed rank-two residues. The literal Theorem
-B/4.4 coset-isomorphism assertion is not refuted. The later
+B/4.4 coset-isomorphism assertion is not refuted.
+The [surface-cover theorem](phase31_affine_covers.md) extends this to infinitely
+many regular examples at fixed rank and diagram; the separately reviewed
+integer-degree corollary and prior-art limits are linked in its evidence. The later
 [nested-shadow adapters](phase30_source_adapters.md) recover the 2020 source's
 principal application sections and F015 Propositions 11 and 13, with their
 complete presentations. Retained inputs and source qualifications are explicit.
 
-The [living paper map](../../PAPER_MAP.md) indexes 159 works and records
+The [living paper map](../../PAPER_MAP.md) indexes 160 works and records
 16 principal-result reductions. These now include the six 2005 Janko-group
 [construction theorems](phase24_L088_theory.md) and the 2001
 [Petrial obstruction and conditional structural results](phase25_L108_reduction.md),

@@ -4,7 +4,7 @@ This living map distinguishes source access from mathematical progress.
 It includes books, proceedings papers and errata as well as journal articles.
 The historical inventory is preserved; later assessments apply only to their named targets.
 
-**159 mathematical works** are indexed: 128 catalogue entries and 17 followups and 14 network additions. **48 entries date from 1996–2006.**
+**160 mathematical works** are indexed: 128 catalogue entries and 17 followups and 15 network additions. **48 entries date from 1996–2006.**
 This is not complete proof reading or an exhaustive bibliography of every collaborator,
 student or postdoc. Coauthorship alone does not establish those relationships.
 
@@ -27,7 +27,7 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 
 | Access category | Works |
 |---|---:|
-| abstract read | 49 |
+| abstract read | 50 |
 | full short text read | 4 |
 | full text read | 10 |
 | full text search only | 19 |
@@ -182,7 +182,7 @@ its own full text. Abstract summaries identify topics, not proved theorem reduct
 | 2000 / L006 | [Incidence Geometry](https://leemans.dimitri.web.ulb.be/abstracts/incgeom.html) | abstract read; unassessed | Author abstract read; historical2000 Magma handbook chapter not obtained. Current software documentation is not the same version. |
 | 2000 / L109 | [The residually weakly primitive geometries of the Dihedral Groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/d2n.html) | abstract read; component rederived | Author abstract states classification of RWPRI geometries of dihedral groups. Remaining: L109 full text remains unavailable; its complete all-rank principal classification is available in the primary L110 restatement, but every original statement has not been compared. No new-conjecture or whole-paper claim. |
 | 2000 / L110 | [The residually weakly primitive pre-geometries of the Suzuki simple groups](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v20n1p1/995) | selected sections read; partial progress | PDF identity checked against title. Entire extracted text searched for conjectures, problems, questions, unknown cases and future work; no claim to have read every proof. Later reading: Rank-three R1–R13, higher-rank construction context and p.11 flag-transitivity uncertainty checked; exact hypotheses compared with L114. Remaining: A corrected exhaustive classification, other higher-rank constructions and arbitrary relative embedding classes remain. Construction 10 bare intersections exist but fail RWPRI; its geometry/FT is not asserted. Original whole-paper reduction, publication priority and external review remain. |
-| 2000 / L111 | [New geometries for finite groups and polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/ngeo.html) | abstract read; unassessed | Author abstract describes two general construction methods under diagram hypotheses. Later reading: Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately. |
+| 2000 / L111 | [New geometries for finite groups and polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/ngeo.html) | abstract read; unassessed | Author abstract describes two general construction methods under diagram hypotheses. Later reading: Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately. Later reading: Selected author-indexed Theorem4.1/B1/B2 excerpts and construction leads; complete body and diagrams still unavailable. No theorem or fulltext credit. |
 | 2001 / L106 | [On a rank five geometry of Meixner for the Mathieu group M(12)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m12b.html) | abstract read; unassessed | Author abstract constructs Meixner’s M12 rank-five geometry and establishes RWPRI/IP2. |
 | 2001 / L107 | [Some rank five geometries related to the Mathieu group M(23)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m23rk5.html) | abstract read; unassessed | Author abstract constructs six rank-five M23 geometries. |
 | 2001 / L108 | [On the Petrials of thin rank 3 geometries](https://www.math.auckland.ac.nz/~dleemans/abstracts/petrie.html) | full text read; principal results rederived | Complete article read and source-bound structural reduction independently reviewed. Unconditional auxiliary claims are corrected explicitly; no literal whole-document validity claim. Later reading: All seven printed pages19–25, definitions, statements, proofs and references read from the complete primary authored rendering. Publisher PDF unavailable. Remaining: The principal obstruction follows from thinness of the Petrial alone. Literal unconditional automorphism inclusion and the nonthin length/order assertion have explicit counterexamples and are not counted as proved. External atlas classifications and examples are not reproduced. No matched ratio, full Lean proof or correction-priority claim; external review remains. |
@@ -386,6 +386,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | N012 | 2025 | [Linear groups over finite fields and over the ring of integers as automorphism groups of regular polytopes of rank 3](https://sfu.ru/ru/science/dissertations/2b9582cf-c095-4bb6-9b28-c46d7421416e) | selected sections read | related only |
 | N013 | 2020 | [Locally Spherical Hypertopes from Generalised Cubes](https://arxiv.org/abs/2001.11082v1) | full text read | principal results rederived |
 | N014 | 2024 | [Constructing new geometries: a generalized approach to halving for hypertopes](https://arxiv.org/abs/2405.19050v1) | selected sections read | proposed new result |
+| N015 | 2024 | [Abelian covers of regular hypertopes](https://www.sciencedirect.com/science/article/abs/pii/S0021869324001534) | abstract read | unassessed |
 
 ## Updating the map
 

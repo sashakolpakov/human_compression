@@ -479,3 +479,12 @@ The independent computations and kernel-decide data certificate check stated
 components; they do not give a matched proof-length ratio. A false theorem
 consequence is not itself a documented open conjecture. No infinity marker,
 new principal-work credit or correction-priority claim is assigned.
+
+
+Phase thirty-four replaces the isolated regular example with a proved
+infinite family at one rank and diagram. Its integer-degree corollary uses
+every n≥2 coprime to6. This is additional mathematical scope, not an extra
+principal-paper reduction or a measured source/replacement length. The
+relevant abelian-cover and coset-twisting prior art is recorded with exact
+access limits. Both finite ratios remain unchanged and no infinity marker
+is assigned.

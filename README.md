@@ -115,7 +115,13 @@ is explicit: the revised journal body remains unverified. The later
 [affine-code construction](research/case_study/phase30_affine_map.md) gives a
 regular rank-four counterexample too: 983,040 chambers and 122,880 disconnected
 transformed rank-two residues. The literal Theorem B/4.4 coset-isomorphism
-assertion is not refuted; its surrounding hypertope-preservation claim fails. The later [nested-shadow adapters](research/case_study/phase30_source_adapters.md) recover the 2020 source's principal application sections and two complete presentation families in F015.
+assertion is not refuted; its surrounding hypertope-preservation claim fails.
+The [surface-cover argument](research/case_study/phase31_affine_covers.md) now
+gives infinitely many regular examples at the same rank and diagram. A
+separate [corollary](research/case_study/phase31_affine_covers_root_audit.md)
+covers every integer n≥2 coprime to six; their group orders are
+120n⁸·2^(m_n), with m_n≥6n⁸+2. Standard topology and the certified finite
+seed remain explicit inputs. No huge cover enumeration or novelty is claimed. The later [nested-shadow adapters](research/case_study/phase30_source_adapters.md) recover the 2020 source's principal application sections and two complete presentation families in F015.
 
 The [general cover theorem](research/case_study/phase28_voltage_shadow_theory.md)
 extends this from parity to arbitrary deck-group torsors. It separates two
@@ -184,10 +190,10 @@ still need priority verification.
 The starting bibliography was seeded from Dimitri Leemans's publication
 catalogue and expanded through coauthored papers and relevant followups.
 It currently indexes 128 mathematical catalogue entries, 17 followups and
-14 additional works across the collaborator network, for 159 in total.
+15 additional works across the collaborator network, for 160 in total.
 The living registry records 101 accessible complete texts or primary renderings;
 reading depth ranges from targeted searches to complete proof reading.
-Across the full inventory, 49 entries have abstract-level reading and nine
+Across the full inventory, 50 entries have abstract-level reading and nine
 have metadata/access records only. That is neither complete
 proof reading nor an exhaustive inventory of every collaborator's work.
 Student and postdoctoral relationships require independent documentation;

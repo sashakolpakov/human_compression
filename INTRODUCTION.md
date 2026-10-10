@@ -3102,7 +3102,73 @@ coset isomorphism is not refuted. The revised journal body remains unread,
 and no absence of prior correction is claimed. This is a theorem
 counterexample; it receives no open-conjecture-resolution infinity marker.
 
-## 48. The remaining work, and how a living reduction should record it
+## 48. One finite seed gives infinitely many regular counterexamples
+
+The [surface-cover theorem](research/case_study/phase31_affine_covers.md)
+turns the finite example into an infinite family at the same rank and diagram.
+The seed map is a cellulation of an orientable genus-four surface: its
+pentagonal faces and circular links make it a closed surface, its
+flag-adjacency sign gives an orientation, and 12−30+12=−6 gives the genus.
+
+Take a connected regular surface cover of degree t along which all seed
+symmetries lift. Its map has 12t vertices, 30t edges and 12t faces. Form the
+same quotient of binary edge coordinates by all star and face rows. Projection
+to the original code quotient maps each lifted five-column block onto a
+four-dimensional base block. The five-term relation bounds its dimension
+above by four as well, so this local map is an isomorphism. Both the unique
+odd dependence and the exact two-column intersections survive automatically.
+
+Only one issue remains: could different lifted edges have equal columns?
+The base quotient already separates different edge fibers. Suppose a
+collision occurs within one fiber of a p-group deck cover, p≥5. Its column
+stabilizer has order at least p, leaving at most t/p distinct columns in
+that fiber. The full lifted symmetry group is edge-transitive and normalizes
+the deck group, so every fiber has the same bound. The columns span the
+quotient, giving dimension at most 30t/p≤6t.
+
+But the sum of all vertex rows is zero, and so is the sum of all face rows.
+Their separate row-rank bounds give quotient dimension at least
+30t−(12t−1)−(12t−1)=6t+2. The contradiction excludes every collision.
+The local isomorphisms then recover exact block membership too. Every
+hypothesis of the affine construction survives the cover.
+
+Characteristic homology covers supply the required covers and lift every
+seed symmetry, including reflections. For each prime p≥5, the subgroup
+[Π,Π]Π^p of the genus-four surface group has quotient (C_p)^8, giving
+t=p^8. Standard covering classification and lifting are retained inputs;
+the column argument above supplies the particular code-preservation result.
+Neither the lifted symmetry extension nor its geometry is inferred from
+a sampled large cover.
+
+The separately reviewed [integer-degree corollary](research/case_study/phase31_affine_covers_root_audit.md)
+allows every n≥2 coprime to six. Its deck group is (C_n)^8, and its smallest
+nontrivial element order is at least five, which gives the same contradiction.
+The resulting regular hypertope has
+
+$$|G_n|=120n^8 2^{m_n},\qquad m_n\ge6n^8+2.$$
+
+Its rank is four and its connected star diagram has labels 4,5,5. Halving
+disconnects 15n^8·2^(m_n) rank-two residues. Distinct n give distinct odd
+parts 15n^8 of the group order, so the examples are pairwise nonisomorphic.
+The exact dimensions m_n are not computed. A fixed prime and its powers
+already give an infinite subfamily.
+
+Two independent reviews and a root review cover the complete written proof.
+The fresh finite diagnostic verifies only the retained seed: 12 pentagonal
+faces, 54 circular links, 180 panels, integral boundary cancellation,
+14,400 sign-character products and selected homology ranks. It does not
+construct the huge covers or formalize the all-parameter theorem in Lean.
+
+The [prior-art intake](research/case_study/phase31_cover_prior_art.md) records
+Zhang's 2024 abelian-cover paper and the already indexed coset-twisting
+work. The former's exact construction theorems remain inaccessible;
+the latter has explicit admissibility and regular-input hypotheses. The
+thirty dependent quotient columns cannot directly serve as its rank-thirty
+C-group input. This rules out that direct identification, not every possible
+adapter. No novelty conclusion follows from the access gap. The inspected
+halving preprint and unread revised journal version remain distinguished.
+
+## 49. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

@@ -1,5 +1,12 @@
 # Provenance and verification scope
 
+The current additions are the [nested-shadow source reductions](phase32_review.md),
+the [regular affine counterexample and partial Lean certificate](phase33_review.md),
+and the [infinite surface-cover family](phase34_review.md). The living ledger
+has sixteen principal-result works and27 scoped Lean modules. These are
+coverage and verification counts, not a corpus compression ratio. Fresh
+execution reports are separate from every frozen original.
+
 The [phase-25 review](phase25_review.md) completes the N009 principal-result
 ledger, with all 27 numbered items and six tables mapped, explicit retained
 inputs, and separately verified literal-source discrepancies. It raises

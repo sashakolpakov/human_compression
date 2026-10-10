@@ -387,3 +387,15 @@ kernel-decide Lean data certificate support that proof. This refutes the
 inspected preprint's regular-preservation consequence, while leaving its
 literal TheoremB/4.4 coset-isomorphism assertion separate. The revised journal
 body and correction priority remain unverified. No new paper count or ∞.
+
+
+The [cover-stability proof](phase31_affine_covers.md) transports the finite
+seed's exact binary conditions through regular surface covers. Local span
+isomorphisms and an orbit-versus-dimension contradiction give an infinite
+family at the same connected rank-four diagram. The [integer-degree corollary](phase31_affine_covers_root_audit.md)
+allows all n≥2 coprime to6, with order120n^8·2^(m_n) and m_n≥6n^8+2.
+The exact m_n and huge covers are not computed. [Prior-art intake](phase31_cover_prior_art.md)
+adds a preview-only abelian-cover source and updates the existing twisting
+source, without further reduction or novelty credit. [Older-source leads](phase31_older_source_targets.md)
+identify the explicit connectivity hypothesis in the 2000 construction;
+its full body and complete theorem-family reduction remain unavailable.

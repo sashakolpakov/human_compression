@@ -19,7 +19,7 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json",
           "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json",
           "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json",
-          "phase26_access.json", "phase30_source_intake.json")
+          "phase26_access.json", "phase30_source_intake.json", "phase31_cover_prior_art.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -492,11 +492,17 @@ def record(row, baseline, overlay, later_readings, older_access):
             r["remaining_work"] = ["No literal whole-document truth, matched ratio, novelty or end-to-end formalization claim. The reference[9] comparison is unverified; the auxiliary semiregular identification and Pellicer construction are retained. Remark4.1 is rank-qualified in the source ledger."]
         else:
             r["method"].append("An explicit regular {5,5} seed with group A5 times C2 and an invariant binary code gives an actual affine hypertope. Odd individual shadows meet in squares. Changed local parabolics have orders160,160 and intersection8 instead of4.")
+            r["method"].append("Characteristic surface covers and an orbit-versus-dimension bound give infinitely many regular examples at the same rank and diagram; the separate corollary covers every integer n>=2 coprime to6.")
             r["evidence"] += [evidence(n, ref) for n in ("phase30_affine_map.md", "phase30_affine_map_manifest.json", "phase30_affine_root_audit.md", "phase30_affine_map_second_audit.md", "phase30_regular_halving_root_check.json", "phase30_affine_formal_manifest.json", "formal/Phase30AffineData.scope.md")]
+            r["evidence"] += [evidence(n, ref) for n in ("phase31_affine_covers.md", "phase31_affine_covers_manifest.json", "phase31_affine_covers_root_audit.md", "phase31_seed_surface_check.json", "phase31_cover_prior_art.md")]
             r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase30_affine_root_audit.json", "reading_depth":"Exact introduction TheoremsA/B, standing assumptions, Theorem3.18 and section4 through Theorem4.4/degeneracy discussion rechecked against the regular-input counterexample; arXivv1 only."})
             r["remaining_work"] = ["Section5 applications and full principal-paper reduction remain incomplete. Literal TheoremB/4.4 coset isomorphism is not disproved. Revised journal body, correction priority, matched ratio and end-to-end formalization remain unverified. This is a theorem counterexample, not a documented open-conjecture resolution; no infinity marker."]
     if identifier in {"L081", "L111"}:
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase26_access.json", "reading_depth":"Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately."})
+    if identifier == "L111":
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase31_older_source_targets.md", "reading_depth":"Selected author-indexed Theorem4.1/B1/B2 excerpts and construction leads; complete body and diagrams still unavailable. No theorem or fulltext credit."})
+    if identifier == "N005":
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase31_cover_prior_art.json", "reading_depth":"Proposition2.2, Definitions4.1/4.5/4.6 and Theorem4.12/Corollary4.13 with displayed proofs; primary rendered preprint only, not final journal body. No new reduction credit."})
     if identifier == "L108":
         r["historical_catalogue_title"] = r["title"]
         r["title"] = "On the Petrials of thin rank 3 geometries"
@@ -903,6 +909,22 @@ def escaped(text):
     return str(text).replace("|", "\\|").replace("\n", " ")
 
 
+def phase31_network_rows():
+    """Relevant cover prior art, preview reading only; no result credit."""
+    source = load("phase31_cover_prior_art.json")["rows"][0]
+    return [{
+        "id": "N015", "title": source["title"],
+        "publication_year_from_catalogue": source["year"],
+        "citation": ", ".join(source["authors"]) + ". Journal of Algebra650 (2024),123–144. DOI " + source["doi"],
+        "category": "Network publication / covering prior art", "mathematical": True,
+        "fulltext_available": False, "reading_scope": "abstract_and_selected_publisher_preview_passages",
+        "retrieval_status": "primary_publisher_preview_only",
+        "status_note": "Abstract, introduction and section snippets read. Exact Theorems4.1/4.4 and complete covering hypotheses unavailable; overlap with the new framework undetermined. No reduction or novelty credit.",
+        "assets": [{"url":u} for u in source["primary_urls"]], "source_urls": [],
+        "intake_file": "phase31_cover_prior_art.json",
+    }]
+
+
 def linked_title(r):
     title = escaped(r["title"])
     return f"[{title}]({r['primary_urls'][0]})" if r["primary_urls"] else title
@@ -1101,6 +1123,8 @@ def main():
              for r in phase22_network_rows()]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase26_network_rows()]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase31_network_rows()]
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]
