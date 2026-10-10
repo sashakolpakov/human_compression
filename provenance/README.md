@@ -1,5 +1,11 @@
 # Provenance and verification scope
 
+The [coset-certificate admission](phase118_review.md) adds a proved Lean
+inference kernel and concrete bounds through rank three, including all
+3,072 transitions in the rank-three certificate. Complete semantic review,
+a fresh public Lean build and independent deduction replay support three
+new scoped files. It adds no conjecture or source-compression credit.
+
 The [general minimal-cover admission](phase117_review.md) answers the
 unrestricted source question in every finite rank, with arbitrary flag
 sets and possibly infinite covers. The complete written proof and
@@ -48,7 +54,7 @@ measurement or mathematical result is inferred from plotting those points.
 
 The current product is [topic umbrellas and application papers](../MANUSCRIPT_PROGRAM.md).
 The earlier six-source A, four-source B and three-source C and D
-manuscripts supply reviewed material to rework. There are seventy-eight
+manuscripts supply reviewed material to rework. There are eighty-one
 scoped Lean files. Source coverage, completed application papers and
 measured compression are distinct claims.
 

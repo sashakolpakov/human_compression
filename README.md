@@ -70,7 +70,9 @@ separately from compression of previously proved results.
 The [label-eleven obstruction](LABEL_ELEVEN_OBSTRUCTION.md) gives a
 complete negative answer to Li–Zhang’s preprint Conjecture 3.7: every
 rank d≥5 is excluded at that label. The full proof, independent review,
-finite certificates and precise Lean coverage are included.
+finite certificates and precise Lean coverage are included. The
+[new coset certificates](COSET_CERTIFICATES.md) add kernel-checked bounds
+through rank three; the larger computations remain outside Lean.
 The [edition audit](research/case_study/phase220_F014_edition_review.md)
 records the remaining limits on journal-version and priority claims.
 

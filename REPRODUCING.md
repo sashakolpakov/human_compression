@@ -1,5 +1,19 @@
 # Reproducing the checks
 
+The [formal coset certificates](COSET_CERTIFICATES.md) have a dedicated
+Lean replay and a separate independent deduction replay:
+
+```sh
+python3 -B -O research/case_study/phase219_check.py --out /tmp/NEW-coset-proof --lean LEAN --packages PACKAGES
+python3 -B -O research/case_study/phase226_deduction_audit.py --out /tmp/NEW-coset-deduction-review.json
+```
+
+The Lean replay regenerates the concrete sources, compiles the full
+rank-three certificate, and checks 25 selected axiom reports. The
+independent Python replay checks all 3,072 deduction records without
+importing the author checker. Ranks four and five and the complete
+F014 refutation remain outside the Lean claim.
+
 The [general minimal-cover proof](MINIMAL_REGULAR_COVERS.md) has a scoped
 formal replay:
 

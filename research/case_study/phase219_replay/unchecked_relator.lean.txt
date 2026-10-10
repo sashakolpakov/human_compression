@@ -1,0 +1,409 @@
+import Mathlib.GroupTheory.PresentedGroup
+import Mathlib.GroupTheory.Index
+import Mathlib.Tactic
+
+/-! Sound coset deductions. A supplied finite action is never an upper-bound premise.
+Names denote actual right cosets and need not denote distinct cosets. -/
+namespace HumanCompression.CosetUpperCertificate
+
+variable {G A V : Type*} [Group G]
+
+abbrev RightCosets (H : Subgroup G) := Quotient (QuotientGroup.rightRel H)
+
+def coset (H : Subgroup G) (g : G) : RightCosets H := Quotient.mk _ g
+
+def move (H : Subgroup G) (x : RightCosets H) (g : G) : RightCosets H :=
+  Quotient.map (fun a => a * g) (by
+    intro a b hab
+    apply QuotientGroup.rightRel_apply.mpr
+    have h := QuotientGroup.rightRel_apply.mp hab
+    simpa only [mul_inv_rev, mul_assoc, mul_inv_cancel_left] using h) x
+
+@[simp] theorem move_coset (H : Subgroup G) (a g : G) :
+    move H (coset H a) g = coset H (a * g) := rfl
+
+@[simp] theorem move_one (H : Subgroup G) (x : RightCosets H) : move H x 1 = x := by
+  induction x using Quotient.inductionOn with
+  | _ a => change coset H (a * 1) = coset H a; rw [mul_one]
+
+theorem move_mul (H : Subgroup G) (x : RightCosets H) (a b : G) :
+    move H (move H x a) b = move H x (a * b) := by
+  induction x using Quotient.inductionOn with
+  | _ g => change coset H ((g * a) * b) = coset H (g * (a * b)); rw [mul_assoc]
+
+theorem root_loop (H : Subgroup G) {g : G} (hg : g ∈ H) :
+    move H (coset H 1) g = coset H 1 := by
+  simp only [move_coset, one_mul]
+  apply Quotient.sound
+  apply QuotientGroup.rightRel_apply.mpr
+  simpa using H.inv_mem hg
+
+def evaluate (gen : A → G) (w : List A) : G := (w.map gen).prod
+
+@[simp] theorem evaluate_nil (gen : A → G) : evaluate gen [] = 1 := rfl
+@[simp] theorem evaluate_singleton (gen : A → G) (s : A) : evaluate gen [s] = gen s := by
+  simp [evaluate]
+@[simp] theorem evaluate_append (gen : A → G) (p q : List A) :
+    evaluate gen (p ++ q) = evaluate gen p * evaluate gen q := by simp [evaluate]
+
+theorem generator_inv (gen : A → G) (hsq : ∀ s, gen s * gen s = 1) (s : A) :
+    (gen s)⁻¹ = gen s := by
+  calc (gen s)⁻¹ = (gen s)⁻¹ * (gen s * gen s) := by rw [hsq, mul_one]
+       _ = gen s := by group
+
+theorem evaluate_reverse (gen : A → G) (hsq : ∀ s, gen s * gen s = 1) (w : List A) :
+    evaluate gen w.reverse = (evaluate gen w)⁻¹ := by
+  induction w with
+  | nil => simp
+  | cons s w ih =>
+    rw [List.reverse_cons, evaluate_append, evaluate_singleton, ih]
+    change (evaluate gen w)⁻¹ * gen s = (gen s * evaluate gen w)⁻¹
+    rw [mul_inv_rev, generator_inv gen hsq]
+
+/-- Syntactic deductions; no constructor imports an oracle transition.
+Tree edges are checked against literal representative words. -/
+inductive Derives (rels : Set (List A)) (subgens : Set A)
+    (root : V) (representatives : V → List A) : V → List A → V → Prop
+  | refl (u) : Derives rels subgens root representatives u [] u
+  | rootLoop (s) (hs : s ∈ subgens) :
+      Derives rels subgens root representatives root [s] root
+  | tree (u s v) (h : representatives v = representatives u ++ [s]) :
+      Derives rels subgens root representatives u [s] v
+  | append {u v z p q}
+      (hp : Derives rels subgens root representatives u p v)
+      (hq : Derives rels subgens root representatives v q z) :
+      Derives rels subgens root representatives u (p ++ q) z
+  | reverse {u v p} (hp : Derives rels subgens root representatives u p v) :
+      Derives rels subgens root representatives v p.reverse u
+  | gap {u a b p q s} (hrel : p ++ [s] ++ q ∈ rels)
+      (hp : Derives rels subgens root representatives u p a)
+      (hq : Derives rels subgens root representatives u q.reverse b) :
+      Derives rels subgens root representatives a [s] b
+
+/-- Every accepted inference proves equality of actual cosets. -/
+theorem derives_sound (gen : A → G) (H : Subgroup G)
+    (rels : Set (List A)) (subgens : Set A) (root : V) (reps : V → List A)
+    (hsq : ∀ s, gen s * gen s = 1)
+    (hr : ∀ w ∈ rels, evaluate gen w = 1)
+    (hsub : ∀ s ∈ subgens, gen s ∈ H) (hroot : reps root = [])
+    {u v : V} {w : List A} (h : Derives rels subgens root reps u w v) :
+    move H (coset H (evaluate gen (reps u))) (evaluate gen w) =
+      coset H (evaluate gen (reps v)) := by
+  induction h with
+  | refl u => simp
+  | rootLoop s hs => simpa [hroot] using root_loop H (hsub s hs)
+  | tree u s v hv => simp [hv]
+  | append hp hq ihp ihq => rw [evaluate_append, ← move_mul, ihp, ihq]
+  | reverse hp ih => rw [evaluate_reverse gen hsq, ← ih, move_mul]; simp
+  | @gap u a b p q s hrel hp hq ihp ihq =>
+    have he : (evaluate gen p * gen s) * evaluate gen q = 1 := by
+      simpa only [evaluate_append, evaluate_singleton] using hr _ hrel
+    have he' : evaluate gen p * gen s = (evaluate gen q)⁻¹ := by
+      calc evaluate gen p * gen s = ((evaluate gen p * gen s) * evaluate gen q) *
+          (evaluate gen q)⁻¹ := by group
+           _ = (evaluate gen q)⁻¹ := by rw [he, one_mul]
+    rw [evaluate_singleton, ← ihp, move_mul, he', ← evaluate_reverse gen hsq, ihq]
+
+/-- Completeness of deductions, as opposed to completeness of a proposed action. -/
+def Complete (rels : Set (List A)) (subgens : Set A) (root : V) (reps : V → List A) : Prop :=
+  ∀ u s, ∃ v, Derives rels subgens root reps u [s] v
+
+theorem complete_words (rels : Set (List A)) (subgens : Set A) (root : V) (reps : V → List A)
+    (hcomplete : Complete rels subgens root reps) (u : V) (w : List A) :
+    ∃ v, Derives rels subgens root reps u w v := by
+  induction w generalizing u with
+  | nil => exact ⟨u, .refl u⟩
+  | cons s w ih =>
+    obtain ⟨v, hv⟩ := hcomplete u s
+    obtain ⟨z, hz⟩ := ih v
+    exact ⟨z, by simpa using Derives.append hv hz⟩
+
+/-- Involutory group generators generate by unsigned finite words. -/
+theorem words_surjective (gen : A → G) (hsq : ∀ s, gen s * gen s = 1)
+    (hgen : Subgroup.closure (Set.range gen) = ⊤) : Function.Surjective (evaluate gen) := by
+  let P : Subgroup G :=
+    { carrier := {g | ∃ w, evaluate gen w = g}
+      one_mem' := ⟨[], rfl⟩
+      mul_mem' := by
+        rintro x y ⟨p, rfl⟩ ⟨q, rfl⟩
+        exact ⟨p ++ q, evaluate_append gen p q⟩
+      inv_mem' := by
+        rintro x ⟨w, rfl⟩
+        exact ⟨w.reverse, evaluate_reverse gen hsq w⟩ }
+  have hle : Subgroup.closure (Set.range gen) ≤ P := by
+    apply (Subgroup.closure_le P).mpr
+    rintro x ⟨s, rfl⟩
+    exact ⟨[s], evaluate_singleton gen s⟩
+  rw [hgen] at hle
+  intro g
+  exact hle (show g ∈ (⊤ : Subgroup G) from trivial)
+
+/-- A complete proved transition system covers actual cosets. -/
+theorem complete_cosets_surjective (gen : A → G) (H : Subgroup G)
+    (rels : Set (List A)) (subgens : Set A) (root : V) (reps : V → List A)
+    (hsq : ∀ s, gen s * gen s = 1)
+    (hr : ∀ w ∈ rels, evaluate gen w = 1)
+    (hsub : ∀ s ∈ subgens, gen s ∈ H) (hroot : reps root = [])
+    (hgen : Subgroup.closure (Set.range gen) = ⊤)
+    (hcomplete : Complete rels subgens root reps) :
+    Function.Surjective (fun v => coset H (evaluate gen (reps v))) := by
+  intro x
+  induction x using Quotient.inductionOn with
+  | _ g =>
+    obtain ⟨w, hw⟩ := words_surjective gen hsq hgen g
+    obtain ⟨v, hv⟩ := complete_words rels subgens root reps hcomplete root w
+    refine ⟨v, ?_⟩
+    have h := derives_sound gen H rels subgens root reps hsq hr hsub hroot hv
+    change coset H (evaluate gen (reps v)) = coset H g
+    simpa [hroot, hw] using h.symm
+
+/-- The requested upper bound. Finiteness follows from the proof, not an assumed action. -/
+theorem complete_index_bound [Finite V] (gen : A → G) (H : Subgroup G)
+    (rels : Set (List A)) (subgens : Set A) (root : V) (reps : V → List A)
+    (hsq : ∀ s, gen s * gen s = 1)
+    (hr : ∀ w ∈ rels, evaluate gen w = 1)
+    (hsub : ∀ s ∈ subgens, gen s ∈ H) (hroot : reps root = [])
+    (hgen : Subgroup.closure (Set.range gen) = ⊤)
+    (hcomplete : Complete rels subgens root reps) :
+    Finite (G ⧸ H) ∧ H.index ≤ Nat.card V := by
+  have hs := complete_cosets_surjective gen H rels subgens root reps hsq hr hsub hroot hgen hcomplete
+  let e := QuotientGroup.quotientRightRelEquivQuotientLeftRel H
+  have hsurj : Function.Surjective (fun v => e (coset H (evaluate gen (reps v)))) :=
+    e.surjective.comp hs
+  exact ⟨Finite.of_surjective _ hsurj, by
+    rw [Subgroup.index_eq_card]
+    exact Nat.card_le_card_of_surjective _ hsurj⟩
+
+
+/-- Involutory presentation attached to exactly the supplied unsigned relators. -/
+def presentationRelations (rels : Set (List A)) : Set (FreeGroup A) :=
+  Set.range (fun s => FreeGroup.of s * FreeGroup.of s) ∪ evaluate FreeGroup.of '' rels
+
+abbrev Universal (rels : Set (List A)) := PresentedGroup (presentationRelations rels)
+
+def marker (rels : Set (List A)) (s : A) : Universal rels := PresentedGroup.of s
+
+theorem evaluate_map {K : Type*} [Group K] (f : G →* K) (gen : A → G) (w : List A) :
+    f (evaluate gen w) = evaluate (fun s => f (gen s)) w := by
+  induction w with
+  | nil => simp
+  | cons s w ih =>
+    change f (gen s * evaluate gen w) = f (gen s) * evaluate (fun t => f (gen t)) w
+    rw [map_mul, ih]
+
+theorem marker_square (rels : Set (List A)) (s : A) : marker rels s * marker rels s = 1 := by
+  have h : FreeGroup.of s * FreeGroup.of s ∈ presentationRelations rels := Or.inl ⟨s, rfl⟩
+  have hm := PresentedGroup.one_of_mem h
+  simpa only [map_mul, marker, PresentedGroup.of] using hm
+
+theorem marker_relator (rels : Set (List A)) {w : List A} (hw : w ∈ rels) :
+    evaluate (marker rels) w = 1 := by
+  have h : evaluate FreeGroup.of w ∈ presentationRelations rels := Or.inr ⟨w, hw, rfl⟩
+  have hm := PresentedGroup.one_of_mem h
+  rw [evaluate_map] at hm
+  exact hm
+
+def facet (rels : Set (List A)) (subgens : Set A) : Subgroup (Universal rels) :=
+  Subgroup.closure (marker rels '' subgens)
+
+theorem universal_index_bound [Finite V] (rels : Set (List A)) (subgens : Set A)
+    (root : V) (reps : V → List A) (hroot : reps root = [])
+    (hcomplete : Complete rels subgens root reps) :
+    Finite (Universal rels ⧸ facet rels subgens) ∧ (facet rels subgens).index ≤ Nat.card V := by
+  apply complete_index_bound (marker rels) (facet rels subgens) rels subgens root reps
+      (marker_square rels) (fun w hw => marker_relator rels hw)
+  · intro s hs
+    exact Subgroup.subset_closure ⟨s, hs, rfl⟩
+  · exact hroot
+  · exact PresentedGroup.closure_range_of _
+  · exact hcomplete
+
+structure Edge (A V : Type*) where
+  source : V
+  letter : A
+  target : V
+  deriving DecidableEq
+
+/-- A trace step checks data, never a semantic equality of cosets. -/
+inductive Instruction (A V : Type*) where
+  | rootLoop (s : A)
+  | tree (u : V) (s : A) (v : V)
+  | reverse (e : Edge A V)
+  | gap (u : V) (forwardPath : List (Edge A V)) (s : A) (backwardSuffix : List (Edge A V))
+  deriving DecidableEq
+
+def listSet {T : Type*} (xs : List T) : Set T := {x | x ∈ xs}
+
+variable [DecidableEq A] [DecidableEq V]
+
+def walk (known : List (Edge A V)) (u : V) : List (Edge A V) → Option V
+  | [] => some u
+  | e :: es => if e ∈ known ∧ e.source = u then walk known e.target es else none
+
+def Sound (rels : Set (List A)) (subgens : Set A) (root : V) (reps : V → List A)
+    (known : List (Edge A V)) : Prop :=
+  ∀ e ∈ known, Derives rels subgens root reps e.source [e.letter] e.target
+
+theorem walk_sound (rels : Set (List A)) (subgens : Set A) (root : V) (reps : V → List A)
+    (known : List (Edge A V)) (hsound : Sound rels subgens root reps known)
+    (u : V) (es : List (Edge A V)) {v : V} (hw : walk known u es = some v) :
+    Derives rels subgens root reps u (es.map Edge.letter) v := by
+  induction es generalizing u with
+  | nil => simp [walk] at hw; subst v; exact .refl u
+  | cons e es ih =>
+    simp only [walk] at hw
+    split at hw
+    next h =>
+      obtain ⟨he, hu⟩ := h
+      have hfirst := hsound e he
+      rw [hu] at hfirst
+      have hrest := ih e.target hw
+      simpa using Derives.append hfirst hrest
+    next h => simp at hw
+
+def step (rels : List (List A)) (subgens : List A) (root : V) (reps : V → List A)
+    (known : List (Edge A V)) : Instruction A V → Option (Edge A V)
+  | .rootLoop s => if s ∈ subgens then some ⟨root, s, root⟩ else none
+  | .tree u s v => if reps v = reps u ++ [s] then some ⟨u, s, v⟩ else none
+  | .reverse e => if e ∈ known then some ⟨e.target, e.letter, e.source⟩ else none
+  | .gap u p s q =>
+    if True then
+      match walk known u p, walk known u q with
+      | some a, some b => some ⟨a, s, b⟩
+      | _, _ => none
+    else none
+
+theorem step_sound (rels : List (List A)) (subgens : List A) (root : V) (reps : V → List A)
+    (known : List (Edge A V)) (hsound : Sound (listSet rels) (listSet subgens) root reps known)
+    (instruction : Instruction A V) {edge : Edge A V}
+    (hstep : step rels subgens root reps known instruction = some edge) :
+    Derives (listSet rels) (listSet subgens) root reps edge.source [edge.letter] edge.target := by
+  cases instruction with
+  | rootLoop s =>
+    simp only [step] at hstep
+    split at hstep
+    next h => simp only [Option.some.injEq] at hstep; subst edge; exact .rootLoop s h
+    next h => simp at hstep
+  | tree u s v =>
+    simp only [step] at hstep
+    split at hstep
+    next h => simp only [Option.some.injEq] at hstep; subst edge; exact .tree u s v h
+    next h => simp at hstep
+  | reverse e =>
+    simp only [step] at hstep
+    split at hstep
+    next h =>
+      simp only [Option.some.injEq] at hstep; subst edge
+      simpa using Derives.reverse (hsound e h)
+    next h => simp at hstep
+  | gap u p s q =>
+    simp only [step] at hstep
+    split at hstep
+    next hrel =>
+      cases hp : walk known u p with
+      | none => simp [hp] at hstep
+      | some a =>
+        cases hq : walk known u q with
+        | none => simp [hp, hq] at hstep
+        | some b =>
+          simp only [hp, hq, Option.some.injEq] at hstep
+          subst edge
+          have dp := walk_sound (listSet rels) (listSet subgens) root reps known hsound u p hp
+          have dq := walk_sound (listSet rels) (listSet subgens) root reps known hsound u q hq
+          exact Derives.gap hrel dp (by simpa using dq)
+    next h => simp at hstep
+
+def replay (rels : List (List A)) (subgens : List A) (root : V) (reps : V → List A) :
+    List (Edge A V) → List (Instruction A V) → Option (List (Edge A V))
+  | known, [] => some known
+  | known, instruction :: rest =>
+    match step rels subgens root reps known instruction with
+    | none => none
+    | some edge => replay rels subgens root reps (edge :: known) rest
+
+theorem replay_sound (rels : List (List A)) (subgens : List A) (root : V) (reps : V → List A)
+    (known : List (Edge A V)) (hsound : Sound (listSet rels) (listSet subgens) root reps known)
+    (instructions : List (Instruction A V)) {result : List (Edge A V)}
+    (hr : replay rels subgens root reps known instructions = some result) :
+    Sound (listSet rels) (listSet subgens) root reps result := by
+  induction instructions generalizing known with
+  | nil => simp [replay] at hr; subst result; exact hsound
+  | cons instruction rest ih =>
+    simp only [replay] at hr
+    cases he : step rels subgens root reps known instruction with
+    | none => simp [he] at hr
+    | some edge =>
+      simp only [he] at hr
+      apply ih (edge :: known) ?_ hr
+      intro e hm
+      simp only [List.mem_cons] at hm
+      rcases hm with rfl | hm
+      · exact step_sound rels subgens root reps known hsound instruction he
+      · exact hsound e hm
+
+def TableComplete (known : List (Edge A V)) : Prop :=
+  ∀ u s, ∃ e ∈ known, e.source = u ∧ e.letter = s
+
+instance [Fintype V] [Fintype A] (known : List (Edge A V)) : Decidable (TableComplete known) :=
+  inferInstanceAs (Decidable (∀ u s, ∃ e ∈ known, e.source = u ∧ e.letter = s))
+
+def accept [Fintype V] [Fintype A] (rels : List (List A)) (subgens : List A)
+    (root : V) (reps : V → List A) (instructions : List (Instruction A V)) : Bool :=
+  match replay rels subgens root reps [] instructions with
+  | none => false
+  | some known => decide (TableComplete known)
+
+theorem accept_complete [Fintype V] [Fintype A]
+    (rels : List (List A)) (subgens : List A) (root : V) (reps : V → List A)
+    (instructions : List (Instruction A V))
+    (ha : accept rels subgens root reps instructions = true) :
+    Complete (listSet rels) (listSet subgens) root reps := by
+  unfold accept at ha
+  cases hr : replay rels subgens root reps [] instructions with
+  | none => simp [hr] at ha
+  | some known =>
+    have hs : Sound (listSet rels) (listSet subgens) root reps known :=
+      replay_sound rels subgens root reps [] (by simp [Sound]) instructions hr
+    simp only [hr, decide_eq_true_eq] at ha
+    intro u s
+    obtain ⟨e, he, hu, hg⟩ := ha u s
+    refine ⟨e.target, ?_⟩
+    simpa only [hu, hg] using hs e he
+
+/-- Boolean proof-trace acceptance bounds the index in the actual presented group. -/
+theorem accepted_universal_index_bound [Fintype V] [Fintype A]
+    (rels : List (List A)) (subgens : List A) (root : V) (reps : V → List A)
+    (instructions : List (Instruction A V)) (hroot : reps root = [])
+    (ha : accept rels subgens root reps instructions = true) :
+    Finite (Universal (listSet rels) ⧸ facet (listSet rels) (listSet subgens)) ∧
+      (facet (listSet rels) (listSet subgens)).index ≤ Nat.card V :=
+  universal_index_bound (listSet rels) (listSet subgens) root reps hroot
+    (accept_complete rels subgens root reps instructions ha)
+
+
+/-- A finite facet and a certified index bound bound the actual group order. -/
+theorem order_bound_from_index (H : Subgroup G) [Finite H] (N : ℕ)
+    (hfinite : Finite (G ⧸ H)) (hindex : H.index ≤ N) :
+    Finite G ∧ Nat.card G ≤ Nat.card H * N := by
+  letI : Finite (G ⧸ H) := hfinite
+  letI : H.FiniteIndex := Subgroup.finiteIndex_of_finite_quotient
+  constructor
+  · exact (Subgroup.finite_iff_finite_and_finiteIndex H).mpr ⟨inferInstance, inferInstance⟩
+  · rw [← H.card_mul_index]
+    exact Nat.mul_le_mul_left _ hindex
+
+#print axioms derives_sound
+#print axioms words_surjective
+#print axioms complete_cosets_surjective
+#print axioms complete_index_bound
+#print axioms marker_square
+#print axioms marker_relator
+#print axioms universal_index_bound
+#print axioms walk_sound
+#print axioms step_sound
+#print axioms replay_sound
+#print axioms accept_complete
+#print axioms accepted_universal_index_bound
+#print axioms order_bound_from_index
+
+end HumanCompression.CosetUpperCertificate

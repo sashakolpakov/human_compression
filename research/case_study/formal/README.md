@@ -1,5 +1,14 @@
 # Lean certificates and their scope
 
+[CosetUpperCertificate.lean](CosetUpperCertificate.lean) proves the
+soundness of coset deductions and derives bounds on actual presented-group
+indices. [CosetUpperExamples.lean](CosetUpperExamples.lean) checks the
+dihedral bound 22 and four rejection examples.
+[LabelElevenRankThree.lean](LabelElevenRankThree.lean) supplies all 3,072
+edge proofs for the exact rank-three facet index bound 1,024. The
+[independent review](../phase226_coset_review.md) states the remaining
+unformalized interfaces and higher-rank computations.
+
 [CoverKernelGeneration.lean](CoverKernelGeneration.lean) proves five
 algebraic steps used in the general minimal-cover theorem, including
 disjoint-coordinate splitting and the join argument from consecutive
