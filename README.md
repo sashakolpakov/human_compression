@@ -362,12 +362,18 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Forty-two Lean modules certify specified components, with no `sorry` in the checked
+Forty-three Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 41 reports have no native-evaluation axioms.
+axioms; the other 42 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
+
+The latest [scoped certificate](research/case_study/formal/OddCoverSeparation.scope.md)
+proves that odd covering degree passes to quotients over the same base and
+prevents a factorization onto a double cover. Its finite maximality theorem
+takes the admissibility predicate explicitly. Construction and geometric
+recognition of a particular cover remain separate obligations.
 
 ## Sources, attribution and contributions
 

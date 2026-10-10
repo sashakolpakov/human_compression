@@ -81,7 +81,7 @@ measurements of N001 and L108; the nonwhitespace-character lower bound is
 1.125855×. A required bibliographic correction changes no measured span.
 The annotated reader remains unmeasured.
 
-Forty-two scoped Lean components are distributed. They include the exact
+Forty-three scoped Lean components are distributed. They include the exact
 quotient-intersection criterion
 `f(A) ∩ f(B) = f(A ∩ B) iff N ∩ AB = (N ∩ A)(N ∩ B)` for kernel N,
 and the triangle infinitude certificates for the exact two universal
@@ -90,6 +90,14 @@ its own hypotheses and trust record. They do not formalize the entire
 assembled manuscript. The [cover-kernel theory](COVER_KERNELS.md) supplies
 conditional invariant-subspace classifications and a completely checked
 finite interval; its general existence hypotheses remain work.
+
+The new [odd-cover separation certificate](research/case_study/formal/OddCoverSeparation.scope.md)
+proves kernel-cardinality divisibility under a surjective map over a common
+base, inheritance of odd degree, and exclusion of even-degree factors.
+It also proves existence of a maximal admissible normal kernel in a finite
+group for an explicitly supplied predicate. Its independent review and
+fresh public compile pass. It does not construct a polytopal cover or
+formalize its intersection property or the cover/quotient correspondence.
 
 The [odd-prime cover-family theorem](COVER_FAMILY.md) is now admitted with
 its complete independent written review, fresh standalone GAP replay and a

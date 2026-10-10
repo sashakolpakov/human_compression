@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the forty-two saved Lean reports
+checks local documentation links, and checks the forty-three saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -212,6 +212,24 @@ seven altered inputs and refuse three occupied output paths. The
 all four commands from these public files. Uniform parameter transport and
 the complete cover classification require the separately reviewed written
 proofs. This adds no full-theorem Lean claim and needs no primary PDF.
+
+## Odd-degree quotient separation in Lean
+
+The [scoped separation certificate](research/case_study/formal/OddCoverSeparation.scope.md)
+has a public independent replay with pinned compilation and interface controls:
+
+```sh
+python3 -O research/case_study/phase107_odd_cover_formal_review_check.py \
+  --packages /path/to/pinned/packages --lean /path/to/lean-4.32.2 \
+  --output-dir /tmp/human-compression-odd-cover-separation-new
+```
+
+It copies only the exact author wrapper, Lean source and dependency manifest
+to an isolated directory, compiles all six statements, compares complete
+axiom logs, rejects three occupied outputs and two altered inputs, and
+rechecks every original binding. It requires no family construction or
+primary publication. The general kernel and finite-maximality conclusions
+do not formalize a polytope predicate or prove a specific cover exists.
 
 ## Odd-prime cover-family diagnostics and formal separation
 
@@ -817,7 +835,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all forty-two certificates and their unformalized boundaries. With Git
+describes all forty-three certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh

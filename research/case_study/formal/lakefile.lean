@@ -51,4 +51,5 @@ lean_lib MathCompressionCertificates where
     `TriangleReflection,
     `QuotientIntersectionCriterion,
     `CoverCharacterSeparation,
-    `OddKernelWord]
+    `OddKernelWord,
+    `OddCoverSeparation]

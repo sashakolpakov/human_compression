@@ -12,7 +12,7 @@ audit and [original-file record](phase70_originals.json).
 The [complete C measurement](../COMPRESS_C.md) is recorded honestly as 2.386%
 expansion, with its [bound measurement and authored PDF](phase71_originals.json).
 The current registry has seventeen principal-result candidates, twelve sources
-in reviewed assemblies and forty-two scoped Lean components. These are different
+in reviewed assemblies and forty-three scoped Lean components. These are different
 coverage measures, not a corpus compression ratio.
 
 The separately reviewed [odd-prime cover family](../COVER_FAMILY.md) has its
@@ -77,6 +77,13 @@ records. It proves the exact two-object class of Γ2 covers with unchanged
 ends, with only the double cover minimal. Universal amalgamation retains
 older attribution. No source count, measurement, Lean count or priority
 marker changes.
+
+The [43rd scoped Lean component](../research/case_study/formal/OddCoverSeparation.scope.md)
+has an independent semantic/interface review and fresh public compilation.
+Its [17-file record](phase84_originals.json) preserves the six general
+kernel-divisibility, odd-degree and finite-maximality statements and their
+evidence. The explicit admissibility predicate is supplied by an application;
+the certificate does not construct a polytope or settle a source conjecture.
 
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite

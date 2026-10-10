@@ -42,6 +42,7 @@ CERTIFICATES = (
     "QuotientIntersectionCriterion",
     "CoverCharacterSeparation",
     "OddKernelWord",
+    "OddCoverSeparation",
 )
 
 
