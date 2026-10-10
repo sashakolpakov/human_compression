@@ -1,5 +1,9 @@
 # Lean certificates and their scope
 
+[HomologyCoverAvoidance.lean](HomologyCoverAvoidance.lean) proves five
+affine-avoidance, counting and parity steps of the finite rank-four cover
+argument. The [scope](HomologyCoverAvoidance.scope.md) leaves topology written.
+
 [DeterminantFibers.lean](DeterminantFibers.lean) proves four actual matrix
 transport and subgroup-orbit statements. Its [scope](DeterminantFibers.scope.md)
 keeps the full triangle-geometry classification written.

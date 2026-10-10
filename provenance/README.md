@@ -1,5 +1,9 @@
 # Provenance and verification scope
 
+The [rank-four cover admission](phase135_review.md) accepts the complete
+uniform finite theorem and preserves the exact earlier general-cover
+reader while updating its current status. No question is counted twice.
+
 The [triangle-geometry admission](phase134_review.md) adds the complete
 corrected L009 principal contract, with both manuscripts and an independent
 full-source review. The separate question result is not counted again.

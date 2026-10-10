@@ -410,7 +410,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the ninety-four saved Lean reports
+checks local documentation links, and checks the ninety-five saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -2698,3 +2698,15 @@ independent programs in temporary isolation. It checks all 44 source
 dispositions, 13 proof spans, four Lean proofs and the exact finite models.
 Private source files are not required. See [the complete papers and their
 scope](TRIANGLE_GEOMETRIES.md).
+
+## Uniform finite covers in rank four
+
+```sh
+python3 -B -O research/case_study/phase274_check.py --out /tmp/NEW-rank-four-covers --lean LEAN --packages PACKAGES
+```
+
+This checks both frozen packets, executes six independent cellular models
+and five symbolic-voltage models, compiles five actual Lean statements and
+rejects six altered assumptions or inputs. The [complete written theorem
+and its review](FINITE_RANK_FOUR_COVERS.md) establish the quantified result.
+The public execution does not require the five bound primary PDFs.

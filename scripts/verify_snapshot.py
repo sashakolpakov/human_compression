@@ -16,6 +16,8 @@ STUDY = ROOT / "research/case_study"
 # Exact project-authored renderings only. Primary publication PDFs and source
 # raster/text captures remain excluded from the distributed snapshot.
 OWN_RENDERED_PDFS = {
+    "research/case_study/phase256_two_stage_rank_four.pdf":
+        "22823f481a275a8906788baa0764c74b5bcb03a46728c37ddab2b0347c6ead46",
     "research/case_study/phase265_triangle_application.pdf":
         "f8e19811eeac82d51709e40e662db66d12f6e04e8d5eb48fd90118bb9c84de63",
     "research/case_study/phase265_flag_relations.pdf":
@@ -80,6 +82,8 @@ OWN_RENDERED_PDFS = {
 # ATTRIBUTION.md, whose links keep their original base. It is not the reader's
 # navigation page; ATTRIBUTION_11.md links to the live root legend instead.
 FROZEN_LINK_BASES = {
+    "research/case_study/phase274_general_cover_reader.md":
+        ("72d029afb685bfed227087782a792c80bae0232020a0e6629026c6e11bb03475", ROOT),
     "research/case_study/phase79_eleven_attribution_legend.md":
         ("27a576a7d958ee620a4afe736a28f49a0043e19df17a4b70d29aaf418610ae85", ROOT),
     "research/case_study/phase221_infinite_minimal_covers_reader.md":
@@ -94,6 +98,7 @@ def digest(path):
 def frozen_question_exports():
     """Preserve admitted proof packages when refreshing the public snapshot."""
     manifests = {
+        "phase274_export.json": "b90de88c206291d95406a0d614c1eb4fd8a7568a9de791cda203dc017c6a02a6",
         "phase272_export.json": "4ea59fa37770546b2ca42892c651fceadf3e4c3487278178b66ac1a523e21a95",
         "phase275_export.json": "424e086716452bf776c5ad7e56061b90a9023c62dda92f3ca4d2562d564bf73b",
         "phase270_export.json": "31a643201a8e4b85adcea74064391d74d23a74430f605e08d6c471883b4bfb17",
@@ -118,6 +123,8 @@ def frozen_question_exports():
     # Current readers may be updated; their original publication bytes stay
     # bound at these explicit archive paths. No proof bytes are rewritten.
     archived = {
+        ("phase223_export.json", "MINIMAL_REGULAR_COVERS.md"):
+            "research/case_study/phase274_general_cover_reader.md",
         ("phase221_export.json", "INFINITE_MINIMAL_COVERS.md"):
             "research/case_study/phase221_infinite_minimal_covers_reader.md",
     }
@@ -176,7 +183,7 @@ def lean_reports():
         )] if source.stem == "Phase23TransferAnnihilator" else [])
         assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
         result.append(source.name)
-    assert len(result) == 94, result
+    assert len(result) == 95, result
     return result
 
 
@@ -233,7 +240,7 @@ def main():
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
     print(f"PASS: {frozen} frozen question-proof publication artifacts retain their admitted bytes.")
-    print("Trust scope: 93 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
+    print("Trust scope: 94 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
     print("External publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")

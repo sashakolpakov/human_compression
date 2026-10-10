@@ -60,7 +60,9 @@ theorems remain outside Lean. See the
 [formal scope](research/case_study/formal/LocallyFaithfulIntersection.scope.md)
 and [publication record](provenance/phase130_review.md).
 
-The **general finite minimal-cover multiplicity question remains open**.
+The [uniform rank-four theorem](FINITE_RANK_FOUR_COVERS.md) now proves
+infinitely many finite minimal covers for every finite rank-four polytope
+with non-C monodromy. The finite higher-rank question remains open here.
 The Tomotope obstruction shows that restricting attention to covers
 preserving both ends cannot provide a uniform odd-prime construction.
 The separate [surface method](INFINITE_MINIMAL_COVERS.md) enlarges the ends.

@@ -61,8 +61,11 @@ separate obligations.
 The [locally faithful cover paper](LOCALLY_FAITHFUL_COVERS.md) adds a general
 abelian criterion and an exact restricted Tomotope classification, with
 independent review, integer certificates and three scoped Lean proofs. It
-adds no principal source or complete question answer; the general finite
-multiplicity problem is still under investigation.
+adds no principal source or complete question answer. The subsequent
+[rank-four theorem](FINITE_RANK_FOUR_COVERS.md) proves infinitely many finite
+minimal covers for every finite rank-four polytope with non-C monodromy.
+Its full written proof is independently reviewed and has five supporting
+Lean declarations. The finite higher-rank problem remains under investigation.
 
 The [primitive-square proof](PRIMITIVE_SQUARES.md) has passed a detailed
 independent arithmetic audit, covering every field configuration and the

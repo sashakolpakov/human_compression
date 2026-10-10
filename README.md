@@ -93,6 +93,12 @@ papers of five and eight pages. Their retained classifications, geometric
 proofs and required programs remain explicit. Four new Lean declarations
 verify the determinant and orbit interface; no topic ratio is claimed.
 
+The [finite rank-four cover theorem](FINITE_RANK_FOUR_COVERS.md) now proves
+infinitely many finite minimal regular covers for every finite rank-four
+polytope with non-C monodromy. It has a complete seven-page proof,
+independent review and five scoped Lean declarations. This strengthens
+the existing question entry; the finite higher-rank question remains open.
+
 ## Proof and attribution
 
 Each application must derive the historical main results it promises to recover,
