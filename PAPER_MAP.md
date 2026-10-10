@@ -29,15 +29,15 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 9 |
+| full text read | 10 |
 | full text search only | 19 |
 | metadata and access only | 9 |
-| selected sections read | 69 |
+| selected sections read | 68 |
 
-101 works have a retrieved full text; 50 have a specified encoding or conditional/component reduction; 36 have a rederived component, finite subfamily or principal target.
+101 works have a retrieved full text; 50 have a specified encoding or conditional/component reduction; 37 have a rederived component, finite subfamily or principal target.
 These overlapping totals must not be read as counts of fully reduced papers.
 
-The conservative **principal-result set has 15 works: L008, L030, L032, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009**.
+The conservative **principal-result set has 16 works: L008, L030, L032, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013**.
 Proposed conjecture proofs are separate and do not increase that count.
 
 ## Exact reductions and proposed consequences
@@ -80,7 +80,7 @@ Proposed conjecture proofs are separate and do not increase that count.
 | L124 | [On Flag-Transitive Incidence Geometries of Rank 6 for the Mathieu Group M(12)](https://www.math.auckland.ac.nz/~dleemans/abstracts/m12.html) | No RWPRI/(IP)2 M12 geometry of rank at least six, as stated in the primary abstract | [component rederived](research/case_study/phase6_sporadic_theory.md). Chapter body unavailable; individual constructions and the original sixteen-page proof have not been compared. Catalogue completeness is retained, not rederived. |
 | L125 | [The Residually Weakly Primitive Geometries of the Janko Group J(1)](https://www.math.auckland.ac.nz/~dleemans/abstracts/j1.html) | The firm/FT/RC/RWPRI/(IP)2 J1 classification problem stated in the primary abstract | [component rederived](research/case_study/phase6_sporadic_theory.md). The original chapter and its exact entry-by-entry equivalence convention remain unavailable. L105's correction is recorded but its exact old missing entry is not identified. No whole-paper or novelty claim. |
 | F013 | [String C-groups of 2-power order project onto a common string C-group](https://arxiv.org/pdf/2605.20691) | arXiv:2605.20691v1, Theorems 1.1 and 1.2, every finite nondegenerate string C-group of 2-power order and rank d>=2; arXiv:2605.20691v1, Theorem 4.2(c),(d),(e), with C defined by equations (7)-(9) | [principal results rederived](research/case_study/phase15_graded_support.md). [All-class theorem and source adapter](research/case_study/phase15_graded_support_scope.md). Both identified principal results are recovered without a class cutoff; the false auxiliary kernel assertions are not repaired. This is a replacement proof of an already stated theorem, not resolution of a conjecture left open by that source. Forest-extension priority and external review remain unverified. No matched-length ratio, end-to-end Lean proof or infinity marker. |
-| F015 | [Infinite Families of Hypertopes from Centrally Symmetric Polytopes](https://www.combinatorics.org/ojs/index.php/eljc/article/download/v30i2p20/pdf/) | Matching-diagram semidirect-product order; orthoplex order factor in Proposition13 for n>=3 and finite s>=2 | [conditional component](research/case_study/phase26_halving_source_adapter.md). Order component only, conditional on the constructed group model. Other families, explicit presentations, local residues and geometric existence are not rederived. No full-paper or principal-result credit; no matched ratio or novelty claim. |
+| F015 | [Infinite Families of Hypertopes from Centrally Symmetric Polytopes](https://www.combinatorics.org/ojs/index.php/eljc/article/download/v30i2p20/pdf/) | Complete selected Propositions11 and13, including presentations, orders, geometry and toroidal assertion; p,s>=2 and n>=3,s>=2 respectively | [component rederived](research/case_study/phase30_source_adapters.md). Complete selected propositions only. Other source families and principal targets remain unrederived; no whole-paper or principal-result credit. Uniform arguments are written, with finite presentation diagnostics; no matched ratio or novelty claim. |
 | F016 | [Symmetric polytopes whose automorphism groups are 2-groups](https://arxiv.org/abs/2512.15511v1) | Theorem 5.1(a-d); Theorem 5.3; Theorem 6.1(a-b); Theorems 7.1, 7.2 and 7.3; Lemma 4.1; Companion fixed-excess theorem for all finite nondegenerate two-group string C-groups; Companion complete excess-two ordered-marking classification; Companion finite-state classification at every fixed nilpotency class; Companion exact third-excess ordered-marking count in every rank | [principal results rederived](research/case_study/phase16_fiber_products.md). [Fixed-excess companion theorem](research/case_study/phase16_fixed_excess.md). All six identified principal theorems are recovered with the stated geometric inputs. Quoted earlier constructions, the full geometric bridges and every informal remark are not rederived. Lean proves Boolean range intersections and the four-marker implication only. The fixed-excess core theorem is a companion application, not additional paper credit. No matched-length ratio or priority claim; external review remains. |
 | N001 | [Some properties of inductively minimal geometries](https://doi.org/10.36045/bbms/1103409005) | Four parts of Theorem 1: RWPRI/(2T)1/(IP)2, even-rank PRI, QPRI/middle criterion, and RPRI/complete-diagram criterion | [principal results rederived](research/case_study/phase5_tree_cuts.md). Foundational classification remains an input. The complete indexed primary text is now read, including the formerly missing proof sections; the original PDF remains unavailable. No end-to-end Lean proof or numerical compression ratio. External review remains. |
 | N002 | [On the number of inductively minimal geometries](https://doi.org/10.1016/S0304-3975(00)00228-0) | Tree correspondence announced in the primary abstract | [component rederived](research/case_study/phase5_tree_cuts.md). Source full text unavailable; no full-paper comparison or novel resolution of its historical direct-construction question. |
@@ -369,7 +369,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | F012 | 2025 | [Exhaustive generation of edge-girth-regular graphs](https://arxiv.org/pdf/2401.08271) | selected sections read | unassessed |
 | F013 | 2026 | [String C-groups of 2-power order project onto a common string C-group](https://arxiv.org/pdf/2605.20691) | full text read | principal results rederived |
 | F014 | 2025 | [Regular 3-polytopes of type {n,n}](https://arxiv.org/pdf/2505.09505) | selected sections read | unassessed |
-| F015 | 2023 | [Infinite Families of Hypertopes from Centrally Symmetric Polytopes](https://www.combinatorics.org/ojs/index.php/eljc/article/download/v30i2p20/pdf/) | selected sections read | conditional component |
+| F015 | 2023 | [Infinite Families of Hypertopes from Centrally Symmetric Polytopes](https://www.combinatorics.org/ojs/index.php/eljc/article/download/v30i2p20/pdf/) | selected sections read | component rederived |
 | F016 | 2025 | [Symmetric polytopes whose automorphism groups are 2-groups](https://arxiv.org/abs/2512.15511v1) | full text read | principal results rederived |
 | F017 | 2018 | [LCD codes from adjacency matrices of graphs](https://www.math.clemson.edu/~keyj/Key/LCD_KeyRod.pdf) | selected sections read | unassessed |
 | N001 | 1998 | [Some properties of inductively minimal geometries](https://doi.org/10.36045/bbms/1103409005) | full text read | principal results rederived |
@@ -384,7 +384,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | N010 | 2006 | [Problems on polytopes, their groups, and realizations](https://link.springer.com/article/10.1007/s10998-006-0035-y) | selected sections read | partial progress |
 | N011 | 2025 | [On generation of the groups GL_n(q) and PGL_n(q) by three involutions, two of which commute](https://journal.imm.uran.ru/2025-v.31-4-fon-03) | selected sections read | source theorem retained |
 | N012 | 2025 | [Linear groups over finite fields and over the ring of integers as automorphism groups of regular polytopes of rank 3](https://sfu.ru/ru/science/dissertations/2b9582cf-c095-4bb6-9b28-c46d7421416e) | selected sections read | related only |
-| N013 | 2020 | [Locally Spherical Hypertopes from Generalised Cubes](https://arxiv.org/abs/2001.11082v1) | selected sections read | component rederived |
+| N013 | 2020 | [Locally Spherical Hypertopes from Generalised Cubes](https://arxiv.org/abs/2001.11082v1) | full text read | principal results rederived |
 | N014 | 2024 | [Constructing new geometries: a generalized approach to halving for hypertopes](https://arxiv.org/abs/2405.19050v1) | selected sections read | proposed new result |
 
 ## Updating the map

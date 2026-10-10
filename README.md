@@ -112,7 +112,7 @@ the inspected 2024 preprint. Both finite implementations verify the example;
 the all-parameter theorem has an independently reviewed written proof.
 The [source-version boundary](research/case_study/phase27_halving_version_status.md)
 is explicit: the revised journal theorem and the regular-hypertope
-specialization have not been refuted. Application sections remain separate.
+specialization have not been refuted. The later [nested-shadow adapters](research/case_study/phase30_source_adapters.md) recover the 2020 source's principal application sections and two complete presentation families in F015.
 
 The [general cover theorem](research/case_study/phase28_voltage_shadow_theory.md)
 extends this from parity to arbitrary deck-group torsors. It separates two
@@ -130,7 +130,7 @@ and the separate liftability assumption are retained explicitly.
 The common census theorem now supports six finite-group censuses with 262
 independently recognized representatives under their recorded axioms. This
 measures verified coverage; it is not a numerical proof-compression ratio.
-The [principal-result ledger](PAPER_MAP.md) now contains fifteen works, with
+The [principal-result ledger](PAPER_MAP.md) now contains sixteen works, with
 the exact statement scopes and retained inputs recorded for each.
 
 ## What “compression” means

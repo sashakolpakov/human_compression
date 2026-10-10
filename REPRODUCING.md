@@ -1336,3 +1336,19 @@ Expected totals are 192 exact subgroup meets, with 145 and 39 flags and
 stabilizer formulas and the object/coset correspondence are checked. These
 rank-three examples do not test higher flags with multiple objects; the
 arbitrary-rank equivalence is the separate written proof.
+
+
+## Nested-shadow applications and complete presentations
+
+```sh
+python3 research/case_study/phase30_source_geometry_check.py --output scratch/source-geometry-fresh.json
+gap -q research/case_study/phase30_source_presentations_check.g > scratch/source-presentations-fresh.log
+```
+
+Use a new Python output filename. The standard-library coordinate checker
+verifies 10,580 flags, 3,060 residues, 4,896 thin panels and 132 nested higher
+component pairs. GAP checks six raw presentations, of orders 64,144,384,1296,
+1536,5184, including every indicated involution/product order and all 768
+subgroup meets. It prints `PHASE30_SOURCE_PRESENTATIONS_PASS`; inspect the
+log for errors as well as the process exit. Neither script modifies historical
+reports. These are finite diagnostics of separate uniform written arguments.

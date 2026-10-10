@@ -19,7 +19,7 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json",
           "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json",
           "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json",
-          "phase26_access.json")
+          "phase26_access.json", "phase30_source_intake.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -289,11 +289,11 @@ UPDATES = {
         "phase18_schulte_weiss_intake.md;phase18_schulte_weiss_intake.json;phase18_class_three.md;phase18_class_three_manifest.json;phase18_class_three_root_audit.json;phase18_class_three_independent_audit.json;phase18_class_three_status.md;phase18_leading_coefficient.md;phase18_leading_coefficient_rank_audit.json",
         "The original unmarked group characterization, chiral cases and orders 2^k p remain outside these conclusions. Exact unrestricted excess-three counts are now supplied by a complete finite graph and integer-vector certificate; higher excess coefficients remain uncomputed. This is progress on a restricted component, not a solution of Problem 30 or a rederivation of the survey. Publication priority, complete formalization and a matched proof-length ratio remain unestablished."),
     "F015": (
-        "conditional_component", "Matching-diagram semidirect-product order; orthoplex order factor in Proposition13 for n>=3 and finite s>=2",
-        "The matching diagram gives m independent dihedral coordinates. Multiplying their orders and applying endpoint parity gives (2s)^m times the seed order and its halved value; for the orthoplex this is (4s)^n n!/2.",
-        "Published diagram-group/semidirect-product construction; Published halving and geometric realization theorems; Index-two endpoint parity in the specified families",
-        "phase26_halving_source_adapter.md;phase26_access.json;phase26_halving_source_rank_audit.md;phase26_halving_source_rank_audit.json",
-        "Order component only, conditional on the constructed group model. Other families, explicit presentations, local residues and geometric existence are not rederived. No full-paper or principal-result credit; no matched ratio or novelty claim."),
+        "component_rederived", "Complete selected Propositions11 and13, including presentations, orders, geometry and toroidal assertion; p,s>=2 and n>=3,s>=2 respectively",
+        "Nested shadows give geometric halving, the even-coordinate subgroup gives its order, and a uniform Reidemeister–Schreier calculation proves the complete fork presentations. The translation lattice lies in the parity kernel.",
+        "Original matching/Danzer constructions, lattice Lemma7, Corollaries9/12 and original presentation Proposition10; Standard Coxeter classification and toroidal lattice labels",
+        "phase30_source_adapters.md;phase30_source_intake.json;phase30_source_manifest.json;phase30_source_rank_audit.md;phase30_source_geometry_check.json;phase30_source_presentations_check.json",
+        "Complete selected propositions only. Other source families and principal targets remain unrederived; no whole-paper or principal-result credit. Uniform arguments are written, with finite presentation diagnostics; no matched ratio or novelty claim."),
     "N004": (
         "component_rederived", "Advertised RWPRI/(IP)2 truncation target, via a complete weighted-tree model",
         "Contract omitted edges and retain component sizes as weights; forest and laminar incidence formulas give exact primitivity, local two-transitivity, rank-two and full-shadow criteria.",
@@ -460,12 +460,12 @@ def record(row, baseline, overlay, later_readings, older_access):
         ]
     if identifier in {"N013", "N014"}:
         lattice = identifier == "N013"
-        r.update(status="component_rederived" if lattice else "proposed_new_result",
-                 encoded=True, rederived=lattice, full_principal_results=False,
+        r.update(status="principal_results_rederived" if lattice else "proposed_new_result",
+                 encoded=True, rederived=lattice, full_principal_results=lattice,
                  proposed_new_result=not lattice)
-        ref = ("Section3, Theorem3.1, Proposition3.2 and Corollary3.3, arXiv2001.11082v1"
+        ref = ("Complete principal construction and section4 applications; Theorem3.1, Proposition3.2, Corollary3.3 and Lemma2.4, arXiv2001.11082v1"
                if lattice else "Construction3.6; residual-connectivity claims of Proposition3.13, Theorem3.18 and introductory TheoremA, arXiv2405.19050v1")
-        scope = ("Complete geometric halving construction for lattice polytopes: C-group, actual flag-transitive coset geometry, regularity, full type-preserving automorphism group and diagram. Higher flag shadows are nested, so parity compatibility is automatic. Section4 generalized-cube groups, orders and applications are not rederived."
+        scope = ("Complete geometric halving construction plus generalized-cube even-coordinate groups, orders, polygon counts, self-duality, genus, actual spherical residues and stated finite hyperbolic examples. All eight numbered items and the principal unnumbered applications are accounted for relative to retained background. Remark4.1 needs a rank qualification; literal whole-document truth is not asserted."
                  if lattice else "Exact parity-compatible repair of the broad partitioned construction, with geometry before the parity assumption and residual connectivity iff PC. A firm all-parameter counterexample family disproves the broad residual-connectivity claim in the inspected preprint. This is not a counterexample to the regular-hypertope specialization; the revised journal body remains unverified.")
         r["exact_target"] = [{"reference": ref, "scope": scope,
                               "relation_to_source": "specified_existing_component" if lattice else "version_bound_counterexample_and_conditional_repair"}]
@@ -483,6 +483,13 @@ def record(row, baseline, overlay, later_readings, older_access):
             "source":"research/case_study/phase27_parity_sources.json",
             "reading_depth":"Sections1–3 and exact geometric construction proofs read; section4 applications not audited." if lattice else "Full sections3–4 construction and halving arguments read; section5 applications excluded. Exact arXiv version audited; revised journal body unavailable."})
         r["remaining_work"] = ["Application sections and all principal paper targets remain incomplete. No whole-paper reduction, matched proof-length ratio, publication priority or infinity marker. Complete geometric argument is written, not formalized end to end."]
+        if lattice:
+            r["method"].append("Nested-shadow cover recognition, even-coordinate semidirect products, direct spherical-residue identification and a coordinate genus count.")
+            r["retained_inputs"] += ["Danzer's original generalized-cube construction; standard finite/affine/hyperbolic Coxeter classifications and toroidal labels; quoted Tits/coset background and Pellicer extension."]
+            r["evidence"] += [evidence(n, ref) for n in ("phase30_source_adapters.md", "phase30_source_intake.json", "phase30_source_manifest.json", "phase30_source_rank_audit.md", "phase30_source_geometry_check.json")]
+            r["access_coverage"]["reading_category"] = "full_text_read"
+            r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase30_source_intake.json", "reading_depth":"Sections1–4 read across the source audits, with all numbered items and principal unnumbered applications explicitly mapped."})
+            r["remaining_work"] = ["No literal whole-document truth, matched ratio, novelty or end-to-end formalization claim. The reference[9] comparison is unverified; the auxiliary semiregular identification and Pellicer construction are retained. Remark4.1 is rank-qualified in the source ledger."]
     if identifier in {"L081", "L111"}:
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase26_access.json", "reading_depth":"Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately."})
     if identifier == "L108":

@@ -10,11 +10,13 @@ geometric construction in Montero–Weiss section 3. The same proof isolates
 a firm counterexample family to the broader assertion in the inspected
 Piedade–Tranchida preprint. An [independent review](phase27_parity_shadow_rank_audit.md)
 and two finite implementations agree. The revised journal text is unverified,
-the regular-hypertope specialization remains separate, and neither entire
-paper is counted as reduced.
+the regular-hypertope specialization remains separate, and the literal coset-isomorphism claim has a separate scope. The later
+[nested-shadow adapters](phase30_source_adapters.md) recover the 2020 source's
+principal application sections and F015 Propositions 11 and 13, with their
+complete presentations. Retained inputs and source qualifications are explicit.
 
 The [living paper map](../../PAPER_MAP.md) indexes 159 works and records
-15 principal-result reductions. These now include the six 2005 Janko-group
+16 principal-result reductions. These now include the six 2005 Janko-group
 [construction theorems](phase24_L088_theory.md) and the 2001
 [Petrial obstruction and conditional structural results](phase25_L108_reduction.md),
 with the retained classification and corrected auxiliary claims explicit.

@@ -462,3 +462,12 @@ spans have not been matched, so no new finite ratio is assigned. A defect
 in a stated theorem is also different from resolving a documented open
 conjecture; this finding receives no infinity marker, and correction
 priority remains unverified.
+
+
+Phase thirty-two completes the 2020 source's principal construction/application
+scope through nested shadows and an even-coordinate torsor, and recovers two
+complete selected presentation families from the 2023 source. The principal
+ledger rises to **sixteen works**. Shared theory, retained constructions and
+classification inputs still need matched span accounting before a new ratio
+can be stated. The two measured ratios remain **127/38** and **4/3**; no
+infinity marker is assigned.
