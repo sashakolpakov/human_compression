@@ -34,6 +34,7 @@ CERTIFICATES = (
     "SplitLatticeReduction",
     "CompactAffineData",
     "FibonacciModulus",
+    "ParabolicProductComparison",
 )
 
 
@@ -50,10 +51,13 @@ def selection(args, parser):
     if any(name not in CERTIFICATES for name in names):
         parser.error("unknown certificate; choose one of: " + ", ".join(CERTIFICATES))
     pending = set(names)
-    for name in list(names):
+    to_visit = list(names)
+    while to_visit:
+        name = to_visit.pop()
         for module in re.findall(r"^import (\w+)\s*$", (ROOT / (name + ".lean")).read_text(), re.M):
-            if module in CERTIFICATES:
+            if module in CERTIFICATES and module not in pending:
                 pending.add(module)
+                to_visit.append(module)
     return [name for name in CERTIFICATES if name in pending]
 
 

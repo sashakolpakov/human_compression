@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty-four saved Lean reports
+checks local documentation links, and checks the thirty-five saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty-four certificates and their unformalized boundaries. With Git
+describes all thirty-five certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1608,3 +1608,18 @@ all 1,928 bounded products and 52 membership witnesses, and verifies every
 proper-subgroup meet and typed-Helly count at moduli three and five. The
 all-modulus transfer and source geometry adapter are written proofs. The
 output must be new; the checker does not enumerate either full ambient group.
+
+
+## General parabolic-product comparison
+
+```sh
+python3 research/case_study/formal/verify_lean.py ParabolicProductComparison.lean \
+  --packages /path/to/pinned/packages --lean /path/to/lean \
+  --output-dir scratch/parabolic-product-fresh
+```
+
+The runner computes transitive local imports and compiles the two earlier
+transport modules before this certificate. The formal theorem includes both
+typed-Helly directions; marked subgroup IP and the matrix/geometric adapter
+retain their separate written proofs. The Lake root list also includes all
+35 modules; no frozen historical reports are overwritten by the scratch run.

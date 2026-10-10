@@ -3857,7 +3857,31 @@ to finite groups; the symmetric-group classification retains degree at least
 seven. This is a reviewed replacement for the declared main-result contract.
 Whether it is shorter, and by how much, is a separate measurement question.
 
-## 66. The remaining work, and how a living reduction should record it
+## 66. A general theorem behind the bounded computations
+
+Let B be the union of all but one maximal marked parabolic and W=BB.
+The [comparison theorem](research/case_study/phase36_parabolic_comparison.md)
+assumes that a quotient is injective on W and that membership in the image
+of the exceptional parabolic reflects exactly on W. Under these two
+hypotheses, full marked subgroup IP and typed coset Helly each hold upstairs
+if and only if they hold downstairs. Neither condition is inferred from
+the other. The ambient groups and exceptional parabolic may be infinite.
+
+The proof identifies the work a finite certificate must perform: protected
+membership, two-parabolic products and common-point witnesses for normalized
+flags. With finitely many finite protected parabolics, W is finite. Exact
+membership against the whole exceptional image remains a separate problem;
+the theorem does not replace it with a truncated search.
+
+The new [Lean certificate](research/case_study/formal/ParabolicProductComparison.scope.md)
+proves the entire typed-Helly equivalence and its membership/product/image-meet
+ingredients. Choosing representatives at one protected anchor avoids finite
+induction, so that formal statement covers arbitrary type sets and does not
+need a globally surjective homomorphism. Full marked IP and the tensor source
+adapter remain written proofs. All three local modules were freshly compiled
+with pinned dependencies; only standard axioms occur.
+
+## 67. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3894,7 +3918,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-four Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-five Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
