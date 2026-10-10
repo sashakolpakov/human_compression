@@ -1673,3 +1673,23 @@ The output path must be new. The check binds 23 source/replacement spans,
 ten N008 numbered anchors and the source files; it does not verify the proof
 or measure length. The author assembler/binder are preserved as construction
 provenance and write generated files; run them only on an isolated copy.
+
+
+## Rendered two-paper body sensitivity
+
+Use Python with pypdf 6.13.0, Pandoc 3.10 and the XeLaTeX release recorded in
+the [protocol](research/case_study/phase37_rendered_measurement_protocol.json):
+
+```sh
+python3 research/case_study/phase37_rendered_measurement.py \
+  --input-root /path/to/complete/private/intake \
+  --output-dir /tmp/compress-A-render-NEW
+```
+
+The output directory must not exist. The tool binds the source files and
+body spans, renders only the earlier authored replacement, and compares
+AST/extraction hashes and all NFC/NFKC metrics. Renderer drift requires
+the explicit `--allow-toolchain-drift` option and is reported as such.
+PDFs and extracted replacement text remain in scratch; source bodies are
+never written. The [root replay review](research/case_study/phase37_rendered_measurement_root_audit.md)
+states the exact validation and the remaining source-representation limit.

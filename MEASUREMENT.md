@@ -48,7 +48,11 @@ reports source/replacement ratios of 1.362642 by whitespace tokens, 1.168299
 by alphanumeric units and 0.941720 by nonwhitespace characters. These are
 descriptive sensitivities to mathematical text representation, not one
 approved factor. Exact source spans and all necessary manuscript material
-are bound; common mathematical rendering remains to be established.
+are bound. A later [rendered-replacement replay](research/case_study/phase37_rendered_measurement.md)
+gives descriptive ratios 1.210121, 1.243398 and 1.059536 in those respective
+units, with independently reproduced AST/extraction hashes and counts. The
+1998 source still lacks a faithful PDF transcription, so the remaining
+representation asymmetry prevents approval of a final factor.
 The finite-group qualifications,
 excluded unnumbered material and source-rendering limitations accompany the
 contract; they cannot be removed by a word-count calculation. The earlier

@@ -56,6 +56,15 @@ figures are descriptive sensitivities, with no approved single factor.
 They do not measure the new three-paper manuscript. The older matched-proof
 figures 4/3 and 127/38 likewise do not measure whole manuscript bundles.
 
+A subsequent [rendering-sensitivity experiment](research/case_study/phase37_rendered_measurement.md)
+typesets that same earlier replacement before extracting and counting its
+text. The unchanged source totals divided by the rendered replacement give
+1.210121 for whitespace tokens, 1.243398 for alphanumeric units and 1.059536
+for nonwhitespace characters. A separate root replay matches every count
+and extraction hash. N001's damaged browser transcription remains, so this
+improves the representation comparison without establishing a final factor.
+It still measures the earlier two-paper version only.
+
 The [independent corpus assessment](CURRENT_ASSESSMENT.md) is frozen at the
 earlier two-paper baseline. This page and the newly bound integration review
 record subsequent progress without rewriting that assessment. The next
