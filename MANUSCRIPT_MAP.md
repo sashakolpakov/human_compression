@@ -4,9 +4,10 @@ The current map is **twelve named manuscripts → [Compress_12](COMPRESS_12.md)*
 Its [intake table](COMPRESS_12.md#exact-intake)
 lists every author, title, edition and principal-result contract. The complete
 independent integration review passes with retained inputs and corrections
-explicit. The reviewed eleven-source length lower bound is **1.484833×** under
+explicit. The reviewed twelve-source length lower bound is **1.347128×** under
 the declared retained-background and PDF-token convention, crediting N001 and
-L108 zero. The new twelve-source edition has no approved factor yet.
+L108 zero. Its exact factor is unknown. Character and collapsed-byte lower
+bounds below one do not establish compression in those metrics.
 
 | Named intake IDs | Replacement | Review and measurement |
 |---|---|---|
@@ -16,7 +17,7 @@ L108 zero. The new twelve-source edition has no approved factor yet.
 | L088, N013 | [Compress_C plus lattice bridge](COMPRESS_C.md): endpoint operations and generalized cubes | All 18 principal rows; complete finite census and lattice proof; **0.976695×, or 2.386% expansion** |
 | All nine above, plus N016 | [Compress_10 plus reference erratum](COMPRESS_10.md): marked kernels, coordinates and geometric recognition | All 24 sections and four programs reviewed; **at least 51,739 / 30,957 = 1.671318×**, N001 credited zero |
 | All ten above, plus L108 | [Compress_11](COMPRESS_11.md): shared retained-object kernels and Petrial recovery | 25 sections and five full programs; **at least 51,739 / 34,845 = 1.484833×**, N001 and L108 credited zero |
-| All eleven above, plus N009 | [Compress_12](COMPRESS_12.md): shared universal finite-kernel classification | One theorem and program replace the order-256 catalogue seed and classify order-1024 markings; 26 sections and eight full code/data blocks; measurement pending |
+| All eleven above, plus N009 | [Compress_12](COMPRESS_12.md): shared universal finite-kernel classification | One theorem and program replace the order-256 catalogue seed and classify order-1024 markings; 26 sections and eight full code/data blocks; **at least 59,636 / 44,269 = 1.347128×**, N001 and L108 credited zero |
 
 These seven assemblies overlap. Their union contains **twelve distinct sources**,
 spanning 1998–2026. N016 is Cunningham's *Chiral polytopes whose smallest regular

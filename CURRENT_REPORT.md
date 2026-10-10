@@ -47,7 +47,9 @@ exceptional infinite decomposition remain substantial prior results.
 The fresh public replay passed in 88.6 seconds: 539,264 census intersections,
 214 complete presentations, 43,840 further intersections and 428 exact end
 isomorphisms. The replacement has 26 sections, 317,916 bytes and eight full
-program/data blocks totaling 79,874 bytes. Its length factor is unmeasured.
+program/data blocks totaling 79,874 bytes. Its independently reviewed
+PDF-token length lower bound is **59,636 / 44,269 = 1.347128×**, crediting
+N001 and L108 zero. The exact twelve-source factor remains unknown.
 
 | Replacement | Intake | Approved length result |
 |---|---:|---|
@@ -57,7 +59,7 @@ program/data blocks totaling 79,874 bytes. Its length factor is unmeasured.
 | C plus its lattice bridge | 2 further sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | Compress_10 plus reference erratum | All 10 | **At least 51,739 / 30,957 = 1.671318×**, with N001 credited zero |
 | Compress_11 | All 11 | **At least 51,739 / 34,845 = 1.484833×**, with N001 and L108 credited zero |
-| Compress_12 | All 12 | No approved length factor yet |
+| Compress_12 | All 12 | **At least 59,636 / 44,269 = 1.347128×**, with N001 and L108 credited zero |
 
 The approved factors use a frozen NFC PDF-extracted token convention and
 count complete required proof/code. They remain conditional on retained
@@ -80,6 +82,17 @@ include all 25 sections and five programs. Its exact factor awaits faithful
 measurements of N001 and L108; the nonwhitespace-character lower bound is
 1.125855×. A required bibliographic correction changes no measured span.
 The annotated reader remains unmeasured.
+
+The [twelve-source measurement review](research/case_study/phase103_twelve_measurement_review_audit.md)
+checks all 83 rendered pages and all 22 new N009 source pages. A
+[fresh root recount](research/case_study/phase106_twelve_measurement_root_admission.md)
+reproduces all ten source extractions and the full denominator. Its
+nonwhitespace-character lower bound is **0.918395×** and collapsed NFC UTF-8
+byte lower bound is **0.978924×**. These do not establish compression in those
+metrics; with two unmeasured sources, they also do not establish expansion
+of the complete comparison. Positive compression evidence is specific to
+the declared token and alphanumeric-run conventions. Retained background
+and the unmeasured annotation edition remain explicit.
 
 Forty-three scoped Lean components are distributed. They include the exact
 quotient-intersection criterion
@@ -136,8 +149,8 @@ no additional Lean component or measured factor follows.
 
 The [latest attribution comparison](research/case_study/phase100_cover_priority_completion_report.md)
 explicitly credits established universal-amalgamation machinery and
-records which original proofs remain unread. The immediate work is a
-complete twelve-source length measurement and covers with enlarged ends.
+records which original proofs remain unread. The immediate work is covers
+with enlarged ends and a complete thirteenth-source intake.
 The latter are necessary for any second minimal cover in the Γ2 family.
 The general and complete five-family multiplicity
 conjectures remain unproved here. Proof review and computational diagnostics

@@ -60,7 +60,8 @@ fresh root replay of that counter. Its [32-file record](phase80_originals.json)
 includes the required metadata-only correction and root admission. The
 conditional lower bound is **51,739/34,845 = 1.484833×**, crediting N001 and
 L108 zero. Primary PDFs and the 57 bound rasters remain separately acquired
-inputs; the annotated edition and subsequent manuscripts are unmeasured.
+inputs; its annotated edition remains unmeasured, and no factor transfers
+to a subsequent manuscript.
 
 The [twelve-source annotation edition](../ATTRIBUTION_12.md) has 41
 independently reviewed notes and a fresh public regeneration/independent
@@ -84,6 +85,16 @@ Its [17-file record](phase84_originals.json) preserves the six general
 kernel-divisibility, odd-degree and finite-maximality statements and their
 evidence. The explicit admissibility predicate is supplied by an application;
 the certificate does not construct a polytope or settle a source conjecture.
+
+The [twelve-source measurement](../COMPRESS_12.md) now has a complete
+independent count/render/visual review and a fresh root recount. Its
+[159-file record](phase85_originals.json) preserves 155 frozen author/review
+exports and four root records, including the authored PDF and its 83 exact
+page rasters. Primary publications and their rasters remain excluded.
+The conditional PDF-token lower bound is **59,636/44,269 = 1.347128×**,
+crediting N001 and L108 zero. The character and collapsed-byte lower bounds
+are below one, so compression in those metrics is not established. The
+exact twelve-source factor and annotated-edition factor remain unknown.
 
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite

@@ -150,6 +150,26 @@ counting checks. The approved bound is 51,739/34,845, with N001 and L108
 credited zero. It measures all five programs and the complete unannotated
 proof; the accompanying metadata erratum changes no count.
 
+The [twelve-source measurement](research/case_study/phase103_twelve_measurement_review_audit.md)
+has a portable independent check that needs only the public tree and pypdf:
+
+```sh
+python3 -O research/case_study/phase103_twelve_measurement_review_count.py \
+  --replacement-only --output /tmp/human-compression-twelve-count-new.json
+```
+
+It validates all frozen export/dependency bindings and recounts the exact
+83-page authored PDF, checking all 26 sections, eight full programs, all
+14 rendered code blocks and unchanged math/table nodes. Omit
+`--replacement-only` only after acquiring the ten primary PDFs at the exact
+protocol paths; that mode independently re-extracts the numerator and
+reproduces all sensitivities. Full rendering is separately available via
+`phase98_twelve_measurement.py --output-dir NEW --rasterize` with its declared
+toolchain and primary inputs. Existing outputs are refused. The
+[root admission](research/case_study/phase106_twelve_measurement_root_admission.md)
+records fresh public-only and full-primary counter runs; it does not claim
+a third complete visual/render review.
+
 ## Two-primary covers and exact integer obstruction
 
 ```sh

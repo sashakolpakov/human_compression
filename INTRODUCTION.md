@@ -4285,8 +4285,12 @@ data are printed in the manuscript.
 
 This is a shared argument with two verified applications. Its actual cost
 includes the kernel theorem, census, source-specific presentation recognition
-and all retained-background interfaces. The twelve-source length factor
-has not yet been measured. The [independent mathematical review](research/case_study/phase87_n009_integration_recent_audit.md)
+and all retained-background interfaces. The
+[independent length measurement](research/case_study/phase103_twelve_measurement_review_audit.md)
+gives a PDF-token lower bound of 1.347128×, with two source PDFs credited
+zero. Its character and collapsed-byte lower bounds are below one;
+there is no representation-independent compression claim. The
+[independent mathematical review](research/case_study/phase87_n009_integration_recent_audit.md)
 and [fresh public replay](research/case_study/phase95_twelve_public_admission.md)
 state exactly what has been checked; the new branch is not formalized in Lean.
 

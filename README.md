@@ -39,10 +39,13 @@ twelve-source manuscript uses one universal finite-kernel classification
 for both its order-256 seed and order-1024 census, removing the SmallGroups
 catalogue completeness input. The annotated edition is separately unmeasured.
 
-The [independently reviewed eleven-source measurement](research/case_study/phase88_eleven_measurement_review_report.md)
-gives a conservative **1.485×** length factor, including all proofs and five
-full programs. The 1998 and 2001 sources are credited zero because their
-faithful PDF bodies have not been acquired. The exact factor is unknown.
+The [independently reviewed twelve-source measurement](research/case_study/phase103_twelve_measurement_review_audit.md)
+gives a conservative **1.347×** PDF-token length factor, including the full
+manuscript and all eight code/data blocks. The 1998 and 2001 sources are
+credited zero because their faithful PDF bodies have not been acquired.
+The exact factor is unknown. This result is metric-specific: the character
+and collapsed-byte lower bounds are below one, so they establish no
+compression in those metrics.
 
 | Exact replacement | Conditional length result |
 |---|---|
@@ -51,7 +54,7 @@ faithful PDF bodies have not been acquired. The exact factor is unknown.
 | [Compress_C plus lattice bridge](COMPRESS_C.md), two sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | [Compress_10](COMPRESS_10.md), ten sources | **At least 51,739 / 30,957 = 1.671318×**, crediting the 1998 source zero |
 | [Compress_11](COMPRESS_11.md), eleven sources | **At least 51,739 / 34,845 = 1.484833×**, crediting N001 and L108 zero |
-| [Compress_12](COMPRESS_12.md), twelve sources | Complete principal-result contract reviewed; no measured length factor |
+| [Compress_12](COMPRESS_12.md), twelve sources | **At least 59,636 / 44,269 = 1.347128×**, crediting N001 and L108 zero |
 
 These use normalized PDF-extracted whitespace tokens and include the complete
 required proof and code. Retained background proofs remain imported. The

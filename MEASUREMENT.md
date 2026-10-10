@@ -140,8 +140,21 @@ classification through a shared finite-kernel theorem. It removes the
 SmallGroups seed dependency but retains the quoted geometric, square and
 infinite-group interfaces. The complete proof has 317,916 raw bytes and
 eight full program/data blocks totaling 79,874 bytes, all included in the
-file. No comparable rendered measurement is approved yet. Any denominator
-must count the whole new manuscript; no older factor transfers.
+file. Its [independent measurement review](research/case_study/phase103_twelve_measurement_review_audit.md)
+and [fresh root recount](research/case_study/phase106_twelve_measurement_root_admission.md)
+establish **at least 59,636 / 44,269 = 1.347128×** in NFC PDF-extracted tokens.
+Both N001 and L108 receive zero credit; the exact twelve-source factor is
+unknown. All 83 pages of the
+[authored PDF](research/case_study/phase98_twelve_measurement_render/replacement.pdf)
+were independently inspected, along with all 22 newly measured N009 pages.
+The source selection and all eight complete programs are charged in full.
+
+This result is metric-specific. The NFC nonwhitespace-character lower bound
+is **233,120 / 253,834 = 0.918395×**, and collapsed NFC UTF-8 byte lower bound
+is **309,055 / 315,709 = 0.978924×**. Neither establishes compression in its
+metric; the missing source lengths also prevent concluding expansion of
+the full comparison. The alphanumeric-run lower bound is **1.213698×**.
+No older factor transfers, and the attribution reader remains unmeasured.
 
 ## A finite compression ratio
 

@@ -22,6 +22,8 @@ OWN_RENDERED_PDFS = {
         "5a21613dd5310db8daac0700cea5994e50fb0a8c404c6896f832735d15c3119b",
     "research/case_study/phase84_eleven_measurement_replacement.pdf":
         "9af1d1dda508d061d12993d93f2b63d630a08bf3fdc95c01b9594302f698239b",
+    "research/case_study/phase98_twelve_measurement_render/replacement.pdf":
+        "a9736e98b5eaa49386a0a7c40afb337872e033cb3826db1ae4a49d090b52662c",
 }
 
 # This immutable rendering input is a byte-for-byte snapshot of the root
@@ -35,6 +37,21 @@ FROZEN_LINK_BASES = {
 
 def digest(path):
     return sha256(path.read_bytes()).hexdigest()
+
+
+def own_rendered_pages():
+    """Admit exactly the independently reviewed authored replacement rasters.
+
+    The fixed manifest hash authenticates the 83 individual raster hashes.
+    Primary-publication page images and other PNG paths remain excluded.
+    """
+    manifest = STUDY / "phase98_twelve_measurement_manifest.json"
+    assert digest(manifest) == "7477a91be128f4c0fb953e4a7f4b9d422bd70a371367de1fcee2db0cd59b229d"
+    bound = json.loads(manifest.read_text())["files"]
+    names = {f"phase98_twelve_measurement_render/page-{n:02d}.png" for n in range(1, 84)}
+    assert {p for p in bound if p.endswith(".png")} == names
+    assert all((STUDY / name).is_file() for name in names)
+    return {"research/case_study/" + name: bound[name]["sha256"] for name in names}
 
 
 def files():
@@ -94,6 +111,7 @@ def main():
     args = parser.parse_args()
     checked = lean_reports()
     check_links()
+    rendered_pages = own_rendered_pages()
     rows = []
     for path, rel in files():
         if path.is_symlink():
@@ -102,6 +120,8 @@ def main():
         else:
             if path.suffix == ".pdf":
                 assert rel in OWN_RENDERED_PDFS and digest(path) == OWN_RENDERED_PDFS[rel], rel
+            elif path.suffix == ".png":
+                assert rel in rendered_pages and digest(path) == rendered_pages[rel], rel
             else:
                 assert path.suffix not in {".png", ".html", ".pid"}, rel
             rows.append({"file": rel, "sha256": digest(path), "bytes": path.stat().st_size})

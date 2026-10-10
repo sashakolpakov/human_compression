@@ -6,7 +6,11 @@ its disclosed background and corrected source contracts. The
 [independent integration review](research/case_study/phase87_n009_integration_recent_audit.md)
 passes. The [root admission](research/case_study/phase95_twelve_public_admission.md)
 records proof review and a fresh computation from the public inputs.
-There is **no measured twelve-source length factor**.
+The [independently reviewed measurement](research/case_study/phase103_twelve_measurement_review_audit.md)
+gives a conservative PDF-token lower bound of **59,636 / 44,269 = 1.347128×**,
+crediting N001 and L108 zero. The exact factor remains unknown.
+This is metric-specific: the character and collapsed-byte lower bounds are
+below one and do not establish compression in those metrics.
 
 Read the [complete manuscript](research/case_study/phase78_n009_integration_manuscript.md)
 and [exact contract ledger](research/case_study/phase78_n009_integration_ledger.json).
@@ -112,9 +116,16 @@ priority or unique editorial-intent claim accompanies those corrections.
 
 The manuscript has 26 numbered sections and **317,916 raw bytes**, an
 increase of 88,125 bytes over Compress_11. Its eight full program/data blocks
-total **79,874 bytes** and are included in that total. A future comparable
-measurement must charge all of them. The eleven-source lower bound of
-1.484833× does not transfer to this larger manuscript. The separately reviewed
+total **79,874 bytes** and are included in that total. The
+[complete 83-page measured PDF](research/case_study/phase98_twelve_measurement_render/replacement.pdf)
+charges all of them, all 26 sections and the references. The
+[root recount](research/case_study/phase106_twelve_measurement_root_admission.md)
+reproduces the independent result from the exact ten acquired source PDFs.
+The nonwhitespace-character lower bound is **0.918395×** and the collapsed
+NFC UTF-8 byte lower bound is **0.978924×**. Because two source lengths are
+missing, these establish neither compression nor expansion for the full
+twelve-source comparison in those metrics. The eleven-source factor does
+not transfer to this larger manuscript. The separately reviewed
 attribution reader adds 43,507 presentation bytes and remains unmeasured.
 
 The independent reviewer read all changed proofs, new programs, source
