@@ -1,9 +1,9 @@
 # Historical compilation archive
 
 These pages document the previous organisation of the project. They are
-retained for proof reuse, provenance and audit. Their “current” wording,
-assembly counts and measured rates refer to their dated artifacts;
-they do not describe the active topic-paper architecture.
+preserved so that proofs, earlier decisions and measurements remain
+accessible. Their “current” wording, counts and measured rates refer to
+those earlier versions. The active programme organizes papers by topic.
 
 Return to the [current programme](../MANUSCRIPT_PROGRAM.md),
 [work index](../CURRENT_REPORT.md) or [topic complexity protocol](../TOPIC_COMPLEXITY.md).
@@ -19,9 +19,9 @@ at their recorded paths. Old top-level reader URLs remain navigable.
 | [Ten-source](COMPRESS_10.md), [eleven-source](COMPRESS_11.md), [twelve-source](COMPRESS_12.md), [thirteen-source](COMPRESS_13.md) | Successive combined compilations, with their own corrections and scopes |
 | [Earlier introduction](INTRODUCTION.md) | Extended explanation of those derivations |
 
-## Reviewed monolithic editions and their measurements
+## Reviewed combined manuscripts and their measurements
 
-The A–D proofs remain useful and reviewed under their original contracts.
+The A–D proofs remain useful within the limits stated in their reviews.
 Their organisation is being reworked into topic families; they are not
 already the final application papers A₁, A₂, ….
 
@@ -35,7 +35,8 @@ already the final application papers A₁, A₂, ….
   [coarse historical complexity plot](COMPLEXITY.md).
 
 The phase190 plot is a coarse comparison of older complete packages.
-It is not a granular dependency-cost graph for the new topic structure.
+It does not measure the individual proofs and application papers in the
+new topic programme.
 
 ## Reports, navigation and annotation history
 
@@ -47,6 +48,7 @@ It is not a granular dependency-cost graph for the new topic structure.
   [eleven-source annotations](ATTRIBUTION_11.md) and
   [twelve-source annotations](ATTRIBUTION_12.md).
 
-The [navigation manifest](navigation_manifest.json) binds original reader
-hashes and their archived copies. Relocation changes relative links and
-adds a historical banner; it does not edit any frozen mathematical proof.
+The [navigation manifest](navigation_manifest.json) records the hashes
+of the original pages and their archived copies. Relocation changes
+relative links and adds a historical banner; it does not edit any frozen
+mathematical proof.

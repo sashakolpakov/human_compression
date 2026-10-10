@@ -2,16 +2,17 @@
 
 Start with the [current topic programme](MANUSCRIPT_PROGRAM.md).
 A topic comprises its own umbrella U_A and several complete application
-papers Aᵢ matched to historical manuscript contracts LAᵢ.
+papers Aᵢ, each deriving the stated main results of a named historical
+manuscript LAᵢ.
 
 | Current navigation | Purpose |
 |---|---|
 | [Current work index](CURRENT_REPORT.md) | Reviewed proof material and subsequent applications |
 | [Existing umbrella manuscript](UMBRELLA.md) | Shared theorem source for the topic umbrellas |
-| [A](MODULE_A.md), [B](MODULE_B.md), [C](MODULE_C.md), [D](MODULE_D.md) | Reviewed monolithic drafts awaiting topic-family restructuring |
-| [Source registry](PAPER_MAP.md) | Named intake and source coverage qualifications |
+| [A](MODULE_A.md), [B](MODULE_B.md), [C](MODULE_C.md), [D](MODULE_D.md) | Previously reviewed combined manuscripts to be reorganized into several papers per topic |
+| [Source registry](PAPER_MAP.md) | Papers studied, results recovered and remaining gaps |
 | [Topic complexity](TOPIC_COMPLEXITY.md) | Full independent umbrella charges and complete application costs |
-| [Dependency pilot](DEPENDENCY_PILOT.md) | A specific source/replacement proof comparison |
+| [Dependency pilot](DEPENDENCY_PILOT.md) | Comparison of one source proof with its replacement |
 | [Question results](CONJECTURE_RESULTS.md) | Separate conjecture and unresolved-case work |
 | [Historical archive](archive/README.md) | Previous compilations, measurements and reports |
 

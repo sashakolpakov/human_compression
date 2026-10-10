@@ -6,10 +6,10 @@ one completed global umbrella or pays for it only once across topics.
 
 Read the [manuscript PDF](research/case_study/phase138_render_U/application.pdf),
 [complete Markdown proof](research/case_study/phase138_umbrella_v3.md),
-[statement contracts](research/case_study/phase138_umbrella_v3_contracts.json)
-and [integration/attribution scope](research/case_study/phase138_scope.md).
+[exact theorem statements](research/case_study/phase138_umbrella_v3_contracts.json)
+and [attribution and proof limits](research/case_study/phase138_scope.md).
 The [publication review](provenance/phase99_review.md) and
-[formal certificate scopes](research/case_study/formal/README.md) record
+[Lean statements and limitations](research/case_study/formal/README.md) record
 what was checked and what remains outside Lean.
 
 Its proved material includes marked intersections and kernel profiles,
