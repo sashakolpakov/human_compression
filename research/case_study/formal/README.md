@@ -1,5 +1,9 @@
 # Lean certificates and their scope
 
+[DeterminantFibers.lean](DeterminantFibers.lean) proves four actual matrix
+transport and subgroup-orbit statements. Its [scope](DeterminantFibers.scope.md)
+keeps the full triangle-geometry classification written.
+
 [HermitianPlaneTransport.lean](HermitianPlaneTransport.lean) proves thirteen
 uniform statements about actual Hermitian Gram equations, unique transport
 and isotropic root moves. Its [scope](HermitianPlaneTransport.scope.md)

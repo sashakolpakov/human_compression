@@ -65,7 +65,7 @@ construction and an exact presentation proof. The
 [common projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) recovers two more
 principal classifications. Its [third application](PROJECTIVE_LINE_MANIPLEXES.md)
 recovers the full specified PSL₂ maniplex contract, including the required
-source corrections. In total, **26 of the 161 indexed works** have
+source corrections. In total, **27 of the 161 indexed works** have
 their specified main results recovered. The
 [odd-kernel application](ODD_KERNEL_POLYHEDRA.md) adds L014’s three main
 theorems through characters and a cyclotomic module, with an explicit
@@ -86,6 +86,12 @@ an infinite family, independent checks and four axiom-free Lean path proofs.
 The [Hermitian-unital result](HERMITIAN_UNITALS.md) now includes its complete
 independent review and thirteen Lean declarations for explicit unitary
 transport, a reusable part of the connectivity proof.
+
+The [triangle-geometry theory and application](TRIANGLE_GEOMETRIES.md)
+now recover the complete corrected principal L009 classification in two
+papers of five and eight pages. Their retained classifications, geometric
+proofs and required programs remain explicit. Four new Lean declarations
+verify the determinant and orbit interface; no topic ratio is claimed.
 
 ## Proof and attribution
 

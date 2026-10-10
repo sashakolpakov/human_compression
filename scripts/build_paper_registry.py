@@ -26,6 +26,7 @@ OVERLAYS = (
     "phase262_L021_question_overlay.json",
     "phase264_L021_principal_overlay.json",
     "phase270_L009_question_overlay.json",
+    "phase272_L009_principal_overlay.json",
 )
 
 
@@ -125,7 +126,7 @@ def render(registry):
         "every collaborator, student or postdoc. Coauthorship alone does not establish those relationships.", "",
         "The [current programme](MANUSCRIPT_PROGRAM.md) organizes the new papers by topic,",
         "with a full umbrella for each topic and complete applications to historical papers.",
-        "Its A–F tables name the results already available for reworking. The counts below",
+        "Its A–G tables name the results already available for reworking. The counts below",
         "describe the source records; they do not count completed new application papers",
         "or measure compression.", "",
         "The [frozen registry](research/case_study/paper_registry.json) contains the detailed",
@@ -170,6 +171,7 @@ def render(registry):
         "| L014 | Complete normal-Sylow structure, abelian/tight classification and all-parameter nonabelian construction, with the exact presentation and corrected v1 marking. The tightness converse retains Cunningham–Pellicer. | [Reviewed addition](research/case_study/phase249_L014_overlay.json); [complete application](ODD_KERNEL_POLYHEDRA.md) |",
         "| L012 | Complete declared mixed-prime type restriction, odd-factor presentation, exact existence range and all six affine families. Corrected period sign; Burnside, Lucchini, the order-384 catalogue and earlier umbrella/cubic proofs remain inputs. General classification, full Table 1 and ancillary seed uniqueness are excluded. | [Reviewed addition](research/case_study/phase259_L012_overlay.json); [complete application and affine theory](MIXED_PRIME_POLYHEDRA.md) |",
         "| L021 | Complete corrected principal PSL rank/end-group restrictions, two-proper-end classification, torus extension theorem and both source families. Natural-subfield qualifications, omitted S₄ ends and self-duality corrections are explicit. The four-family PGL question is counted separately, once; no full marking census or full Lean theorem is claimed. | [Principal admission](research/case_study/phase264_L021_principal_overlay.json); [PSL proof and review](PROJECTIVE_LINE_MANIPLEXES.md); [separate question admission](research/case_study/phase262_L021_question_overlay.json); [PGL answer](PGL_MANIPLEX_FAMILIES.md) |", "",
+        "| L009 | Corrected complete action classification and full geometric classification, with reconstruction, correlations, residues, all principal diagrams and Table 1. BDL and classical group classifications and the complete norm-shell proof remain inputs; auxiliary examples and final questions are excluded. | [Principal admission](research/case_study/phase272_L009_principal_overlay.json); [common theory and application](TRIANGLE_GEOMETRIES.md) |", "",
         "Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain",
         "explicitly rejected; those entries have only abstract-level access. L125's",
         "original J1 list must be read with the later correction reported by L105.", "",

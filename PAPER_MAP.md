@@ -8,7 +8,7 @@ every collaborator, student or postdoc. Coauthorship alone does not establish th
 
 The [current programme](MANUSCRIPT_PROGRAM.md) organizes the new papers by topic,
 with a full umbrella for each topic and complete applications to historical papers.
-Its A–F tables name the results already available for reworking. The counts below
+Its A–G tables name the results already available for reworking. The counts below
 describe the source records; they do not count completed new application papers
 or measure compression.
 
@@ -38,14 +38,14 @@ survey does not imply that its original source has been read.
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 24 |
+| full text read | 25 |
 | full text search only | 15 |
 | metadata and access only | 9 |
-| selected sections read | 60 |
+| selected sections read | 59 |
 
 **102** works have a retrieved full text; **61** have an explicit representation or a specified conditional or partial derivation; **48** have a recovered result, finite subfamily or stated main result.
 
-The set with **stated main results recovered contains 26 works: L008, L012, L014, L021, L030, L032, L034, L035, L066, L074, L079, L083, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
+The set with **stated main results recovered contains 27 works: L008, L009, L012, L014, L021, L030, L032, L034, L035, L066, L074, L079, L083, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
 The exact targets and qualifications govern membership in this set. Proposed
 conjecture proofs do not add to it. The [question catalogue](CONJECTURE_RESULTS.md)
 keeps answers to questions separate from recovery of published results.
@@ -67,6 +67,8 @@ files preserve the exact statements, earlier results used, evidence and remainin
 | L012 | Complete declared mixed-prime type restriction, odd-factor presentation, exact existence range and all six affine families. Corrected period sign; Burnside, Lucchini, the order-384 catalogue and earlier umbrella/cubic proofs remain inputs. General classification, full Table 1 and ancillary seed uniqueness are excluded. | [Reviewed addition](research/case_study/phase259_L012_overlay.json); [complete application and affine theory](MIXED_PRIME_POLYHEDRA.md) |
 | L021 | Complete corrected principal PSL rank/end-group restrictions, two-proper-end classification, torus extension theorem and both source families. Natural-subfield qualifications, omitted S₄ ends and self-duality corrections are explicit. The four-family PGL question is counted separately, once; no full marking census or full Lean theorem is claimed. | [Principal admission](research/case_study/phase264_L021_principal_overlay.json); [PSL proof and review](PROJECTIVE_LINE_MANIPLEXES.md); [separate question admission](research/case_study/phase262_L021_question_overlay.json); [PGL answer](PGL_MANIPLEX_FAMILIES.md) |
 
+| L009 | Corrected complete action classification and full geometric classification, with reconstruction, correlations, residues, all principal diagrams and Table 1. BDL and classical group classifications and the complete norm-shell proof remain inputs; auxiliary examples and final questions are excluded. | [Principal admission](research/case_study/phase272_L009_principal_overlay.json); [common theory and application](TRIANGLE_GEOMETRIES.md) |
+
 Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain
 explicitly rejected; those entries have only abstract-level access. L125's
 original J1 list must be read with the later correction reported by L105.
@@ -87,7 +89,7 @@ remaining-work record in the frozen JSON or the reviewed additions above.
 | L006 | 2000 | [Incidence Geometry](https://leemans.dimitri.web.ulb.be/abstracts/incgeom.html) | abstract read | not assessed |
 | L007 | unconfirmed | [Chiral polytopes of order 2p m](https://amc-journal.eu/index.php/amc/article/download/3716/2232) | selected sections read | proposed answer or new result |
 | L008 | 2026 | [Testing chirality on hypertopes](https://arxiv.org/pdf/2511.14562) | selected sections read | stated main results recovered |
-| L009 | 2026 | [Geometries with trialities arising from linear spaces](https://arxiv.org/pdf/2504.06025) | selected sections read | [part of the results recovered](research/case_study/phase270_L009_question_overlay.json) |
+| L009 | 2026 | [Geometries with trialities arising from linear spaces](https://arxiv.org/pdf/2504.06025) | full text read | [stated main results recovered](research/case_study/phase272_L009_principal_overlay.json) |
 | L010 | 2026 | [Two gluing methods for string C-group representations of the symmetric groups](https://arxiv.org/pdf/2504.17535) | selected sections read | related work only |
 | L011 | 2026 | [On simple groups that admit a string C-group representation](https://dipot.ulb.ac.be/dspace/bitstream/2013/397490/3/simpleGroups6.pdf) | selected sections read | related work only |
 | L012 | 2025 | [Regular 3-polytopes of order 2 n p](https://arxiv.org/pdf/2001.02945) | full text read | [stated main results recovered](research/case_study/phase259_L012_overlay.json) |

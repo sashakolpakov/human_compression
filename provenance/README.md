@@ -1,5 +1,9 @@
 # Provenance and verification scope
 
+The [triangle-geometry admission](phase134_review.md) adds the complete
+corrected L009 principal contract, with both manuscripts and an independent
+full-source review. The separate question result is not counted again.
+
 The [Hermitian-unital admission](phase133_review.md) publishes the complete
 independent review and root semantic review of thirteen additional Lean
 transport proofs. It upgrades the existing question without counting it again.

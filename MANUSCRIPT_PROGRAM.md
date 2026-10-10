@@ -39,6 +39,7 @@ specified PSL₂ maniplex contract with source corrections.
 | D: Marked actions, field orbits and geometry enumeration | [Marked actions and enumeration](MODULE_D.md) | Extract shared theorems about actions and extensions; keep complete field and classification arguments, including correspondence with historical tables, in the application papers |
 | E: Projective centralizers, polytopes and maniplexes | [Complete U_E and three applications](PROJECTIVE_LINE_POLYTOPES.md) | Extend the frozen two-application measurement to the new third intake; the 7 + 3 + 2 + 9-page papers are independently reviewed |
 | F: Odd kernels and cyclotomic polyhedra | [Complete L014 application](ODD_KERNEL_POLYHEDRA.md) | Develop further applications and extract the full topic umbrella from the character and cyclotomic arguments; the first eight-page paper is independently reviewed |
+| G: Flag relations and incidence reconstruction | [Complete common theory and L009 application](TRIANGLE_GEOMETRIES.md) | Five-page common paper and eight-page application are independently reviewed; develop further applications and measure all retained costs |
 
 The [existing U manuscript](UMBRELLA.md) is a source of reusable proofs.
 A topic may retain an overlapping part of the same mathematics as another
@@ -162,6 +163,18 @@ are independently reviewed. Their required Topic A umbrella, existing cubic
 proof and programs remain chargeable; this is not a fourteen-page total
 dependency claim. A larger topic of complete applications and its matched
 measurement remain to be developed.
+
+### G. Flag relations and incidence reconstruction
+
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| L009 | Delaby, Leemans and Tranchida, *Geometries with trialities arising from linear spaces*, final journal, Algebraic Combinatorics 9(2) (2026), 379–402 | Complete corrected Theorem 1.1 action classification and complete Theorem 1.2 geometric classification; full reconstruction, correlations, residues, principal diagrams and corrected Table 1 | Semilinear containment and circle/affine/correlation assertions are corrected. BDL2003 and classical group classifications and the complete Hermitian proof remain inputs. Auxiliary examples, external hypermap identifier and final questions are excluded. |
+
+The [five-page common theory and eight-page application](TRIANGLE_GEOMETRIES.md)
+are complete and independently reviewed. Four Lean statements verify actual
+matrix transport and subgroup-orbit arguments. All required proofs and
+programs must be charged; no ratio follows from these page counts alone.
+The separately admitted point-cloning answer remains in the question table.
 
 ## What each paper must supply
 

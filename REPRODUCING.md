@@ -410,7 +410,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the ninety-three saved Lean reports
+checks local documentation links, and checks the ninety-four saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -2686,3 +2686,15 @@ The adapter replays thirteen new and one retained Lean declaration, literal
 unitals and chamber actions at four field orders, 18,612 transport pairs
 and four rejection controls. Private primary files and old compiled objects
 are not required. See [the complete result and scope](HERMITIAN_UNITALS.md).
+
+## Triangle-geometry principal contract
+
+```sh
+python3 -B -O research/case_study/phase272_check.py --out /tmp/NEW-triangle-review --gap GAP --lean LEAN --packages PACKAGES
+```
+
+The adapter checks frozen bindings and replays the unchanged author and
+independent programs in temporary isolation. It checks all 44 source
+dispositions, 13 proof spans, four Lean proofs and the exact finite models.
+Private source files are not required. See [the complete papers and their
+scope](TRIANGLE_GEOMETRIES.md).

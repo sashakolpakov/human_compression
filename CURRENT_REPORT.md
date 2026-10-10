@@ -28,7 +28,7 @@ complete principal classifications, with independent review and fresh
 finite and Lean checks. The [third application](PROJECTIVE_LINE_MANIPLEXES.md)
 recovers the complete specified PSL₂ maniplex contract, with its source
 corrections and a new string-generator interface. Principal-source coverage
-is **26 of 161**; the topic umbrella and three application papers are complete,
+is **27 of 161**; the topic umbrella and three application papers are complete,
 at 7 + 3 + 2 + 9 pages, with independent review. The shared finite proof is charged once
 within this topic. The [matched measurement](TOPIC_E_MEASUREMENT.md) gives
 conditional local factors of 1.62× and 2.38×, but a total written factor of
@@ -78,6 +78,12 @@ The [Hermitian-unital proof](HERMITIAN_UNITALS.md) now has its complete
 independent review and a separate semantic audit of thirteen Lean
 transport declarations. It strengthens the existing question entry and
 exposes the complete dependency used by the triangle-geometry paper.
+
+The [triangle-geometry theory and application](TRIANGLE_GEOMETRIES.md)
+now recover the complete corrected principal L009 classification in two
+papers of five and eight pages. Their retained classifications, geometric
+proofs and required programs remain explicit. Four new Lean declarations
+verify the determinant and orbit interface; no topic ratio is claimed.
 
 ## Further application material
 
