@@ -1,9 +1,0 @@
-# Root technical review of the common generation theorem
-
-10 October 2026. The full [generation note](phase23_generation_core.md) and its executable checker passed root technical review. Root contributed to the q=3 unitary boundary argument, so this is a co-development/technical review; the [survey-agent review](phase23_generation_core_independent_audit.md) supplies the separate independent review.
-
-Checked points include finite-dimensional tensor cochains for arbitrary groups, additive rather than assumed field-linear irreducibility, the exact four Frobenius weights and parameter inequalities, both symmetric-cube exceptional twists, and equivariant skew-Hermitian projection. The explicit cubic dual construction has exactly the displayed off-block cocycle. Its q=3 projection meets the radical trivially while retaining a Jordan-three element, so the boundary counterexample addresses the intermediate criterion precisely.
-
-The unchanged checker passed afresh: 22 check groups, all 5,184 characteristic-two cocycle equations, all 720 explicit F9 complement matrices, all 2,880 generator products, and 2,880 integer parameter cases. The [fresh report](phase23_generation_core_root_run.json) agrees with the author's report except execution time. The initial scratch execution reached the report stage but lacked the proof file needed for hashing; after copying that frozen input, the complete run succeeded. No authored report was overwritten.
-
-Theorem C covers arbitrary fields and block sizes at least two, subject to full diagonal-product projection. The unitary consequence covers every odd q>=5, with a genuine q=3 counterexample. The module/complement steps are unified; rank-one projection, ambient root extraction, determinant class and marked intersections remain separate application work. No new full-paper reduction, existence theorem, Lean certificate, publication priority or external review is claimed.

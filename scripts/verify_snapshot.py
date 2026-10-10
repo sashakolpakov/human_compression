@@ -1,255 +1,180 @@
-"""Check public snapshot integrity and the precise saved Lean-certificate scope.
+#!/usr/bin/env python3
+"""Check tracked publication and pinned archive separately; ignore local Markdown.
 
-This does not rerun the mathematical computations. Use smoke_check.py for that.
-The manifest binds distributed bytes; historical report hashes remain historical.
+Historical proof replay requires the intake checkout. This is an integrity
+check, not a rerun of the mathematical proofs or their computations.
 """
 import argparse
 from hashlib import sha256
+import importlib.util
 import json
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "provenance/snapshot_manifest.json"
-STUDY = ROOT / "research/case_study"
+MANIFEST = ROOT/'provenance/publication_manifest.json'
 
-# Exact project-authored renderings only. Primary publication PDFs and source
-# raster/text captures remain excluded from the distributed snapshot.
-OWN_RENDERED_PDFS = {
-    "research/case_study/phase277_interval_covers.pdf":
-        "d328b22ec67e90c89099b20d36d2c068e98f7a07bd5ddf7a683831469d849322",
-    "research/case_study/phase277_coprime_obstruction.pdf":
-        "bc95826b191429d14bee008125187da03e2d200c6d63201526145e1dd5fc9c7c",
-    "research/case_study/phase256_two_stage_rank_four.pdf":
-        "22823f481a275a8906788baa0764c74b5bcb03a46728c37ddab2b0347c6ead46",
-    "research/case_study/phase265_triangle_application.pdf":
-        "f8e19811eeac82d51709e40e662db66d12f6e04e8d5eb48fd90118bb9c84de63",
-    "research/case_study/phase265_flag_relations.pdf":
-        "a27496ba0417d8fd6294b8798b4625b5d902d02a911f4c7ad31625115ef9e422",
-    "research/case_study/phase268_point_cloning.pdf":
-        "bea25c468166e7743010a39c875c611e1bb6a31d6461c1870fc1f50b83882e48",
-    "research/case_study/phase246_locally_faithful_covers.pdf":
-        "c680e40ec35e49c9cbdc14ff951b2492aaa26bc0638066b66a55c8122ab162ec",
-    "research/case_study/phase258_projective_maniplexes.pdf":
-        "b9d3d0ef1a2e02faa992fab70e4dd7bed5638230e576cdd52f8cc78b8b9a746a",
-    "research/case_study/phase257_four_families.pdf":
-        "0409ad2048072752a9ce0f7cb70cd0229cc229fade475080e92d9e32dac25965",
-    "research/case_study/phase250_affine_lattice_umbrella.pdf":
-        "e44c7c97b7c0f61830ddd15299be0a3beff063358f18210222cb077aa82b103b",
-    "research/case_study/phase250_mixed_prime_application.pdf":
-        "b91fafc778f8cf5a189007d5fb45284d84a8cb1f6d37d212cbe9aa864b8d1e1a",
-    "research/case_study/phase251_code_appendix.pdf":
-        "8d160981cf9d96fb2c0ca849d8d0179161bcdfa0e18992da98e71b81f3036ad5",
-    "research/case_study/phase236_odd_kernel_manuscript.pdf":
-        "aafaf06208e37deadb354be5c24907a0d51a972672587cdaec7a32228d6de580",
-    "research/case_study/phase238_topic_E_umbrella.pdf":
-        "26f89586c13c75b278ad5cc701e8e71ed71b2dacc9cd4b121606c92a970471b4",
-    "research/case_study/phase238_L083_application.pdf":
-        "65a448586998eef8314bd215b51d9be90aa6da04dcec3019d64696df9f5aa2a6",
-    "research/case_study/phase238_L079_application.pdf":
-        "b4ae8804c17be65ffdf056ebfc900c498f880393e892a2c28b2a8915726acc0d",
-    "research/case_study/phase230_rank_one_classification.pdf":
-        "fc8364d6e4a04f522fc634f12fd106121e79bd21d1219deb0d2a67c8508eaa7a",
-    "research/case_study/phase232_application.pdf":
-        "5f5d32b0c1699e0253939c48042e14e072ad1684f02a7aee2a55068081520df5",
-    "research/case_study/phase228_umbrella.pdf":
-        "a847695734b9e9bb88f3b0a6b977197c480fa8b667998751268898e3eb500166",
-    "research/case_study/phase228_application.pdf":
-        "3bd794ddfc116ab28d83d8d99c43160db4311e28dd2c574678658bc49bcf590b",
-    "research/case_study/phase179_livingstone.pdf":
-        "e5ff46b8b96e00402470eff20b5ba6815bb647d577a58de0ec08f0726316b836",
-    "research/case_study/phase164_enumeration.pdf":
-        "fa29377f2139bfbf7bb338227c9efd6b33e8e2f4f3c03365d0853bbd79d8bbf2",
-    "research/case_study/phase150_module_C_render/application.pdf":
-        "9ab28c9313517f94f927b8b1e99c1a43f9702bdb505045d9d59e1108072c7202",
-    "research/case_study/phase144_render/replacement.pdf":
-        "5708e7b1c0507547645ecacfb9d19c917dd37d3288a4dd939520a4b3e47cbb81",
-    "research/case_study/phase138_render_A_v2/application.pdf":
-        "10ddd1c09774e6c3cea960025b9bb1081111b85b49684d22e7491ea13d81272b",
-    "research/case_study/phase138_render_U/application.pdf":
-        "c541bcb2d5f4662f2771b00b22dbf699fbce10b4c7a6181c843294373e5dc2cd",
-    "research/case_study/phase132_module_B_render/application.pdf":
-        "d1f285d15fa3f1aeca04d9bf86c52ab79eef557f1c88d32b44598de41caa5bbd",
-    "research/case_study/phase117_two_group_application_render/application.pdf":
-        "4183f4dfecf7bc01d87af73dde3607e68ca76844d97d8d729a98e2cdd5c71491",
-    "research/case_study/phase51_compress_C_measurement_replacement.pdf":
-        "e7b7a19ea3dc979ef12e57885bd0ba8d8e87c087ef4d09979167a6e2870b59f8",
-    "research/case_study/phase57_ten_source_measurement_replacement.pdf":
-        "5a21613dd5310db8daac0700cea5994e50fb0a8c404c6896f832735d15c3119b",
-    "research/case_study/phase84_eleven_measurement_replacement.pdf":
-        "9af1d1dda508d061d12993d93f2b63d630a08bf3fdc95c01b9594302f698239b",
-    "research/case_study/phase98_twelve_measurement_render/replacement.pdf":
-        "a9736e98b5eaa49386a0a7c40afb337872e033cb3826db1ae4a49d090b52662c",
-}
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
 
-# This immutable rendering input is a byte-for-byte snapshot of the root
-# ATTRIBUTION.md, whose links keep their original base. It is not the reader's
-# navigation page; ATTRIBUTION_11.md links to the live root legend instead.
-FROZEN_LINK_BASES = {
-    "research/case_study/phase274_general_cover_reader.md":
-        ("72d029afb685bfed227087782a792c80bae0232020a0e6629026c6e11bb03475", ROOT),
-    "research/case_study/phase79_eleven_attribution_legend.md":
-        ("27a576a7d958ee620a4afe736a28f49a0043e19df17a4b70d29aaf418610ae85", ROOT),
-    "research/case_study/phase221_infinite_minimal_covers_reader.md":
-        ("a46769cc33cccf3100e0a017f1d79ea155e3010a4eb144987a3bbe48a823c575", ROOT),
-}
+def digest(data):
+    return sha256(data).hexdigest()
 
+def load(path):
+    return json.loads((ROOT/path).read_text())
 
-def digest(path):
-    return sha256(path.read_bytes()).hexdigest()
-
-
-def frozen_question_exports():
-    """Preserve admitted proof packages when refreshing the public snapshot."""
-    manifests = {
-        "phase280_export.json": "20dbbd6ae33fe77b0e45741be284b4b9e878ab150a204cfb13b01f485f85cb39",
-        "phase274_export.json": "b90de88c206291d95406a0d614c1eb4fd8a7568a9de791cda203dc017c6a02a6",
-        "phase272_export.json": "4ea59fa37770546b2ca42892c651fceadf3e4c3487278178b66ac1a523e21a95",
-        "phase275_export.json": "424e086716452bf776c5ad7e56061b90a9023c62dda92f3ca4d2562d564bf73b",
-        "phase270_export.json": "31a643201a8e4b85adcea74064391d74d23a74430f605e08d6c471883b4bfb17",
-        "phase269_export.json": "957b996134bad5df0dfe8146a345d8f4d0f0c99629424c1318e8a7a6a08bd4aa",
-        "phase260_export.json": "2b1f0ed5cd074950b9d0a20dfa69004b0de6c2a04dd646962ed2c3d7f291cb19",
-        "phase264_export.json": "ead4da8042604b23cf367013c69d968ecf040b53539c78e3fee8ea31c2e74b07",
-        "phase262_export.json": "45e64ab258da84fb87faf1cfb7245ee1adeae6e6bde9d426bda95d3cf3c9c951",
-        "phase259_export.json": "1f99f26828e6d1f25cca7b7270e4395849daa86ad752d45c09e5c75f21d4541a",
-        "phase253_export.json": "34ea2524bc18a08bbf676495a32facae5b433359fee4d773b4a557c4a7b12c07",
-        "phase249_export.json": "6c6866615a17f9d2e2bd70f67d98bba462e1c704212a993082a867e57f8b1bbc",
-        "phase247_export.json": "cc75729ebfa9457b610cf4596f913f2ea36edb2fd13697c9274b016bc6141f58",
-        "phase244_export.json": "0c127e2b1ef4cdce3d150565e224c06a13af17a2fa26f8a59e23eb67421f4e43",
-        "phase243_export.json": "a6eac730f11e8f8a7b81e67d826f1e9adfba08807436c27ae4111972252dd9cb",
-        "phase235_export.json": "18882d876f74b42ee6c6a91c192b46a82d25ca90c659cf5f447f2eba81b21ed8",
-        "phase217_export.json": "af256c4766c31865608b5c333cef200533b3f8280351e59295cbf3db292aaeb8",
-        "phase221_export.json": "7325a1698d540caf372ac8b4e0bf0f392e706c26ef59279dde7f027d6e797ab7",
-        "phase223_export.json": "89f51c64ef3f86c0b1f566223ce0afb8e92e366f11dc52f963e454b887ef65a7",
-        "phase225_export.json": "2da3e1b6d6fea721b051bf4f575c615de80ff7c3a1b65465d23f844860c9e061",
-        "phase231_export.json": "73b010822235ac33101c4cd30e29a159b1a6870affb5bf72aab986828cc9a298",
-        "phase233_export.json": "8a402eae507217bd178210c89a71090ad5e7833f8cc974aea2f4b182b2f607cb",
-    }
-    # Current readers may be updated; their original publication bytes stay
-    # bound at these explicit archive paths. No proof bytes are rewritten.
-    archived = {
-        ("phase223_export.json", "MINIMAL_REGULAR_COVERS.md"):
-            "research/case_study/phase274_general_cover_reader.md",
-        ("phase221_export.json", "INFINITE_MINIMAL_COVERS.md"):
-            "research/case_study/phase221_infinite_minimal_covers_reader.md",
-    }
-    checked = 0
-    for name, expected in manifests.items():
-        manifest = STUDY / name
-        assert digest(manifest) == expected, (name, "changed admission manifest")
-        for rel, record in json.loads(manifest.read_text())["files"].items():
-            path = ROOT / archived.get((name, rel), rel)
-            assert path.stat().st_size == record["bytes"] and digest(path) == record["sha256"], (
-                rel, "changed frozen admission artifact; publish follow-up work separately")
-            checked += 1
-    return checked
-
-
-def own_rendered_pages():
-    """Admit exactly the independently reviewed authored replacement rasters.
-
-    The fixed manifest hash authenticates the 83 individual raster hashes.
-    Primary-publication page images and other PNG paths remain excluded.
-    """
-    manifest = STUDY / "phase98_twelve_measurement_manifest.json"
-    assert digest(manifest) == "7477a91be128f4c0fb953e4a7f4b9d422bd70a371367de1fcee2db0cd59b229d"
-    bound = json.loads(manifest.read_text())["files"]
-    names = {f"phase98_twelve_measurement_render/page-{n:02d}.png" for n in range(1, 84)}
-    assert {p for p in bound if p.endswith(".png")} == names
-    assert all((STUDY / name).is_file() for name in names)
-    return {"research/case_study/" + name: bound[name]["sha256"] for name in names}
-
-
-def files():
-    for path in sorted(ROOT.rglob("*")):
-        rel = path.relative_to(ROOT)
-        if any(p in {".git", ".lake", ".verification", ".venv", "__pycache__", "scratch"} for p in rel.parts):
-            continue
-        if path == MANIFEST or path.suffix in {".pyc", ".olean", ".ilean"}:
-            continue
-        if path.is_file() or path.is_symlink():
-            yield path, str(rel)
-
-
-def lean_reports():
-    result = []
-    for source in sorted((STUDY / "formal").glob("*.lean")):
-        if source.name == "lakefile.lean":
-            continue
-        report_path = source.with_suffix(".check.json")
-        report = json.loads(report_path.read_text())
-        assert report["exit_code"] == 0, source.name
-        assert report["sha256"] == digest(source), (source.name, "stale source hash")
-        assert "sorryAx" not in report.get("stdout", ""), source.name
-        assert not re.search(r"\b(sorry|admit)\b", source.read_text()), source.name
-        native = re.findall(r"\b\w+\._native\.native_decide\.ax_\d+_\d+", report.get("stdout", ""))
-        expected_native = ([f"{name}._native.native_decide.ax_1_1" for name in (
-            "third_difference", "terminal_basis_fixed", "fourth_difference", "newton_coefficients"
-        )] if source.stem == "Phase23TransferAnnihilator" else [])
-        assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
-        result.append(source.name)
-    assert len(result) == 96, result
+def archive_blobs(commit, paths):
+    need(re.fullmatch(r'[0-9a-f]{40}',commit) is not None,'Use the full archive commit.')
+    for path in paths:
+        need(not Path(path).is_absolute() and '..' not in Path(path).parts and '\n' not in path,
+             'Invalid archive path: '+path)
+    requests = ''.join(commit+':'+p+'\n' for p in paths).encode()
+    proc = subprocess.run(['git','cat-file','--batch'],cwd=ROOT,input=requests,
+                          capture_output=True,check=True)
+    data, offset, result = proc.stdout, 0, {}
+    for path in paths:
+        end = data.find(b'\n',offset)
+        need(end >= offset,'Incomplete Git response.')
+        fields = data[offset:end].split()
+        need(len(fields)==3 and fields[1]==b'blob',
+             'Archive object missing: '+path+'. Use a full clone or fetch the intake tag.')
+        size = int(fields[2]); start = end+1
+        result[path] = data[start:start+size]
+        need(len(result[path])==size and data[start+size:start+size+1]==b'\n','Invalid Git response.')
+        offset = start+size+1
+    need(offset==len(data),'Unexpected Git output.')
     return result
 
-
-def check_links():
-    missing = []
-    for path, rel in files():
-        if path.suffix != ".md":
+def check_archive():
+    intake = load('audit/intake.json'); archive = load('audit/archive_markdown.json')
+    need(archive['commit']==intake['baseline_commit'],'Archive commit mismatch.')
+    raw = (ROOT/'provenance/snapshot_manifest.json').read_bytes()
+    need(digest(raw)==intake['baseline_snapshot_sha256'],'Historical snapshot manifest changed.')
+    baseline = json.loads(raw)
+    notes = {r['path']:r for r in archive['files']}
+    need(len(notes)==len(archive['files'])==992,'Incomplete Markdown archive.')
+    revised = intake['historical_files_changed_in_transition']
+    blobs = archive_blobs(archive['commit'],sorted(set(notes)|set(revised)))
+    count = 0
+    for row in baseline['files']:
+        name = row['file']; path = ROOT/name
+        if 'symlink' in row:
+            need(path.is_symlink() and str(path.readlink())==row['symlink'],'Changed link: '+name)
             continue
-        link_base = path.parent
-        if rel in FROZEN_LINK_BASES:
-            expected_hash, link_base = FROZEN_LINK_BASES[rel]
-            assert digest(path) == expected_hash, (rel, "changed frozen link context")
-        for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
-            if target.startswith(("http:", "https:", "mailto:", "#")):
-                continue
-            target = target.split("#", 1)[0].strip("<>")
-            if target and not (link_base / target).exists():
-                missing.append((str(path.relative_to(ROOT)), target))
-    assert not missing, missing
+        if name in notes or name in revised:
+            data = blobs[name]
+            if name in notes:
+                need(notes[name]['bytes']==row['bytes'] and notes[name]['sha256']==row['sha256'],
+                     'Archived note differs from snapshot: '+name)
+                count += 1
+        else:
+            need(path.is_file() and not path.is_symlink(),'Missing historical artifact: '+name)
+            data = path.read_bytes()
+        need(len(data)==row['bytes'] and digest(data)==row['sha256'],'Changed historical bytes: '+name)
+    need(count==len(notes),'Unmatched archived notes.')
+    return len(baseline['files']), count
 
+def check_lean():
+    formal = ROOT/'research/case_study/formal'; names = []
+    for source in sorted(formal.glob('*.lean')):
+        if source.name=='lakefile.lean':
+            continue
+        report = json.loads(source.with_suffix('.check.json').read_text())
+        need(report['exit_code']==0 and report['sha256']==digest(source.read_bytes()),
+             'Stale Lean report: '+source.name)
+        need('sorryAx' not in report.get('stdout','') and
+             re.search(r'\b(sorry|admit)\b',source.read_text()) is None,'Placeholder: '+source.name)
+        native = re.findall(r'\b\w+\._native\.native_decide\.ax_\d+_\d+',report.get('stdout',''))
+        expected = ([f'{s}._native.native_decide.ax_1_1' for s in
+                    ('third_difference','terminal_basis_fixed','fourth_difference','newton_coefficients')]
+                    if source.stem=='Phase23TransferAnnihilator' else [])
+        need(native==expected,'Changed Lean trust boundary: '+source.name)
+        names.append(source.stem)
+    need(len(names)==96,'Changed canonical Lean inventory without audit.')
+    roots = re.findall(r'`([A-Za-z0-9_]+)',(formal/'lakefile.lean').read_text())
+    need(set(roots)==set(names) and len(roots)==len(names),'Default build omits or duplicates modules.')
+    return names
+
+def check_catalogue():
+    papers = load('papers/catalogue.json')['papers']
+    need(len({r['id'] for r in papers})==len(papers),'Duplicate paper IDs.')
+    intake = load('audit/intake.json')
+    archived_notes = {r['path']:r for r in load('audit/archive_markdown.json')['files']}
+    baseline = {r['file']:r for r in load('provenance/snapshot_manifest.json')['files']}
+    migration_rows = load('audit/tex_migration.json')['papers']
+    migration = {r['id']:r for r in migration_rows}
+    need(len(migration)==len(migration_rows) and set(migration)=={r['id'] for r in papers},
+         'Migration report does not cover exactly the canonical papers.')
+    for row in papers:
+        for key, suffix in [('tex','.tex'),('pdf','.pdf')]:
+            name = row[key]
+            need(name.startswith('papers/') and '..' not in Path(name).parts and name.endswith(suffix)
+                 and (ROOT/name).is_file(),'Missing canonical artifact: '+name)
+        old = row['archived_source']; note = archived_notes.get(old['path'])
+        need(old['commit']==intake['baseline_commit'] and note is not None and
+             old['sha256']==note['sha256'] and old['bytes']==note['bytes'],
+             'Unbound archived proof source: '+row['id'])
+        old_pdf = row['archived_pdf']; config = row['conversion']
+        need(old_pdf['sha256']==baseline[old_pdf['path']]['sha256'] and
+             config['config_sha256']==baseline[config['config']]['sha256'],
+             'Unbound archived PDF or rendering configuration: '+row['id'])
+        saved = migration[row['id']]
+        need(saved['tex']==row['tex'] and saved['tex_sha256']==digest((ROOT/row['tex']).read_bytes())
+             and saved['new_pdf_sha256']==digest((ROOT/row['pdf']).read_bytes())
+             and saved['archived_pdf_sha256']==old_pdf['sha256'],
+             'Stale TeX migration evidence: '+row['id'])
+        need(saved['identical_extracted_text'] is True and
+             saved['old_text_sha256']==saved['new_text_sha256'] and
+             saved['old_pages']==saved['new_pages'] and saved['new_pages']>0,
+             'Migration does not preserve recorded PDF text/pages: '+row['id'])
+    spec = importlib.util.spec_from_file_location('registry',ROOT/'scripts/build_paper_registry.py')
+    mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+    view = mod.registry_view(); saved = load('audit/source_registry.json'); intake = load('audit/intake.json')
+    need(view['current_counts']==saved['counts']==intake['counts_at_cutoff'],'Intake counts drifted.')
+    need(view['entries']==saved['entries'],'Intake entries drifted.')
+    need({r['id'] for r in view['entries'] if r['full_principal_results']}==
+         set(intake['admitted_principal_contracts']),'Principal contract list drifted.')
+    return len(papers)
+
+def publication_rows():
+    names = subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')[:-1]
+    need(not any(p.lower().endswith('.md') for p in names),'Markdown must stay local and untracked.')
+    rows = []
+    for name in sorted(names):
+        path = ROOT/name
+        if path==MANIFEST:
+            continue
+        if path.is_symlink():
+            need(path.resolve().is_relative_to(ROOT),'External symbolic link: '+name)
+            rows.append({'file':name,'symlink':str(path.readlink())})
+        else:
+            need(path.is_file(),'Missing tracked file: '+name)
+            data = path.read_bytes(); rows.append({'file':name,'bytes':len(data),'sha256':digest(data)})
+    return rows
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write-manifest", action="store_true",
-                        help="Record reviewed publication bytes; does not certify new mathematics.")
-    args = parser.parse_args()
-    frozen = frozen_question_exports()
-    checked = lean_reports()
-    check_links()
-    rendered_pages = own_rendered_pages()
-    rows = []
-    for path, rel in files():
-        if path.is_symlink():
-            assert path.resolve().is_relative_to(ROOT), rel
-            rows.append({"file": rel, "symlink": str(path.readlink())})
-        else:
-            if path.suffix == ".pdf":
-                assert rel in OWN_RENDERED_PDFS and digest(path) == OWN_RENDERED_PDFS[rel], rel
-            elif path.suffix == ".png":
-                assert rel in rendered_pages and digest(path) == rendered_pages[rel], rel
-            else:
-                assert path.suffix not in {".png", ".html", ".pid"}, rel
-            rows.append({"file": rel, "sha256": digest(path), "bytes": path.stat().st_size})
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
+    args = ap.parse_args()
+    if args.write_manifest:
+        changed = subprocess.check_output(['git','diff','--name-only','-z'],cwd=ROOT).decode().split('\0')
+        changed = [p for p in changed if p and p!='provenance/publication_manifest.json']
+        need(not changed,'Stage all publication edits before recording their bytes: '+repr(changed))
+    historical, markdown = check_archive(); lean = check_lean(); papers = check_catalogue()
+    rows = publication_rows()
     if args.write_manifest:
         MANIFEST.write_text(json.dumps({
-            "date": "2026-10-10",
-            "scope": "Public file integrity and saved Lean report/source agreement; not a new execution of all mathematical proofs or checks.",
-            "lean_reports": checked,
-            "external_sources": "Source full texts and GAP library inputs are intentionally excluded; see research/case_study/sources/source_assets.json.",
-            "files": rows,
-        }, indent=2) + "\n")
-        print("Recorded public snapshot manifest.")
-    manifest = json.loads(MANIFEST.read_text())
-    assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
-    print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
-    print(f"PASS: {frozen} frozen question-proof publication artifacts retain their admitted bytes.")
-    print("Trust scope: 95 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
-    print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
-    print("External publications are referenced, not bundled.")
-    print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")
+            'scope':'Tracked file integrity, archive preservation and saved Lean agreement. No new proof or measurement.',
+            'baseline_commit':load('audit/intake.json')['baseline_commit'],
+            'canonical_lean_modules':lean,'files':rows},indent=2)+'\n')
+    need(load('provenance/publication_manifest.json')['files']==rows,'Publication differs from manifest.')
+    print(f'PASS: {len(rows)} tracked artifacts; zero tracked Markdown.')
+    print(f'PASS: {historical} historical bindings; {markdown} notes checked in Git, not local files.')
+    print(f'PASS: {len(lean)} saved Lean reports and default build entries; {papers} TeX/PDF papers.')
+    print('Trust: 95 reports without native axioms; one legacy report has four recorded native axioms.')
+    print('Historical computations require the pinned intake checkout.')
 
-
-if __name__ == "__main__":
+if __name__=='__main__':
     main()
