@@ -101,11 +101,13 @@ The label-eight group has order 2^(5d−7) and class exactly four. Its
 finite critical-pair and source-word lemma is verified in Lean, including
 the finite alphabet throughout every rewrite. A further Lean component
 proves all-rank triangularity and alphabet closure for the actual rule
-table. The all-rank transfer and
+table. Two more components prove termination through a general order on
+words and its actual label-eight application, including existence of
+sufficient collector fuel. All-rank support transfer, confluence and the
 group proof remain written. The full conjecture, historical priority and complete Lean proof
 remain unresolved. It adds no known-source compression credit.
 
-Sixty-seven existing Lean components retain their individual statements,
+Sixty-nine existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.

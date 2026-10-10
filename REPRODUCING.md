@@ -1,5 +1,19 @@
 # Reproducing the checks
 
+The general triangular rewrite theorem and its all-rank label-eight
+termination application have a fresh four-file Lean replay:
+
+```sh
+python3 -B research/case_study/formal/verify_lean.py LabelEightTermination.lean --packages PACKAGES --lean LEAN --timeout 180 --output-dir /tmp/NEW-label-eight-termination
+```
+
+The [review](provenance/phase107_review.md) checks eleven new and eight
+retained printed axiom reports. The missing pinned Mathlib Shortlex module
+is built in a private overlay; installed dependencies are left unchanged.
+The source-pinned author wrapper and negative controls are also distributed
+in the phase172 package. Termination includes sufficient-fuel existence,
+with no numerical bound or confluence claim.
+
 The [cyclic-index classification deduction](LARGE_CYCLIC_SUBGROUPS.md)
 has a public three-file finite replay, independent of private sources:
 

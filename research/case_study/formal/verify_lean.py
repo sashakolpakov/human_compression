@@ -67,6 +67,8 @@ CERTIFICATES = (
     "LabelEightFiniteCertificate",
     "LabelEightAlphabet",
     "LabelEightTriangular",
+    "TriangularWordTermination",
+    "LabelEightTermination",
 )
 
 

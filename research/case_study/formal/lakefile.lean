@@ -76,4 +76,6 @@ lean_lib MathCompressionCertificates where
     `LabelEightCriticalPairs,
     `LabelEightFiniteCertificate,
     `LabelEightAlphabet,
-    `LabelEightTriangular]
+    `LabelEightTriangular,
+    `TriangularWordTermination,
+    `LabelEightTermination]

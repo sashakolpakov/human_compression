@@ -422,3 +422,11 @@ The independent abstract-group catalogue remains outside this partial
 source contract. Exact presentations, product actions, source correction
 and fresh finite replays are public; complete-source counts and measured
 ratios remain unchanged.
+
+The [phase-107 record](phase107_review.md) admits the general triangular
+rewrite termination theorem and its actual all-rank label-eight application,
+including sufficient-fuel existence for the collector. Complete independent
+proof reading and a fresh four-file public build support eleven new
+printed declarations. The scoped Lean total is 69; confluence and the full
+group construction remain separate formal obligations. Source counts,
+conjecture entries and measured ratios are unchanged.

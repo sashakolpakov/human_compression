@@ -84,16 +84,23 @@ rank-three source words reduce to the empty word. Every intermediate word
 stays in the stated finite alphabet. The [formal review and fresh public
 build](research/case_study/phase171_label_eight_formal_review.md) cover the
 actual contextual rewrite relation. The 63 row proofs use ordinary kernel
-evaluation, with no native-evaluation axioms. Uniform termination, support
-transfer, confluence and the resulting all-rank group theorem remain
-written proofs.
+evaluation, with no native-evaluation axioms. Support transfer, confluence
+and the resulting all-rank group theorem remain written proofs.
 
 The [uniform table certificate](research/case_study/phase174_label_eight_scope.md)
 now proves that every square and swap correction lies strictly later in
 the generator order, and that every rewrite preserves the allowed
 alphabet, for all ranks. Its five declarations were independently read
-and freshly compiled with standard axioms. Termination and the remaining
-group theorem are separate formal obligations.
+and freshly compiled with standard axioms.
+
+The [termination certificate](research/case_study/phase172_termination_scope.md)
+now proves a general well-founded order for triangular word rewriting
+and applies it to the actual label-eight table for every rank d ≥ 3.
+Every word in the allowed alphabet is accessible, and the implemented
+collector has sufficient fuel for termination. The [independent reading
+and fresh public build](provenance/phase107_review.md) cover all eleven
+new printed declarations using standard axioms. This proves neither a
+numerical fuel bound nor confluence, unique normal forms, group order or IP.
 
 Finite checks include all parabolics of fifteen explicit groups or mixes,
 42 quadratic markings, 2,310 quadratic power words and 8,448 translation

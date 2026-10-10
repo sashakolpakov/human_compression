@@ -92,8 +92,9 @@ The [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)
 track now has reviewed all-rank constructions for specified infinite
 families of labels, including the new class-four construction at label
 eight and its 8n parity mixes. Lean verifies the complete finite rewrite
-lemma underlying label eight and the all-rank triangularity and alphabet
-closure of its actual rule table; the uniform group proof remains written.
+lemma underlying label eight, the all-rank triangularity and alphabet
+closure of its actual rule table, and termination of its collector.
+The uniform confluence and group proof remain written.
 The general conjecture remains unresolved.
 The separately reviewed
 [five-family cover result](COVER_FIVE_FAMILIES.md) establishes the stated
@@ -131,7 +132,7 @@ Lean verification must match our actual written statements, including
 assumptions and retained inputs. A certified helper does not certify an
 entire application. Formal gaps and axioms remain visible.
 
-Sixty-seven existing scoped Lean components and exact computational
+Sixty-nine existing scoped Lean components and exact computational
 certificates supply reusable verified material. They do not constitute
 an end-to-end formalization of U, Module A or all conjecture claims.
 The [parity-mix construction](PARITY_MIX.md) now has a reviewed Lean proof

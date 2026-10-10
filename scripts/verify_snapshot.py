@@ -94,7 +94,7 @@ def lean_reports():
         )] if source.stem == "Phase23TransferAnnihilator" else [])
         assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
         result.append(source.name)
-    assert len(result) == 67, result
+    assert len(result) == 69, result
     return result
 
 
@@ -149,7 +149,7 @@ def main():
     manifest = json.loads(MANIFEST.read_text())
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
-    print("Trust scope: 66 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
+    print("Trust scope: 68 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
     print("External publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")

@@ -4,13 +4,23 @@ These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).
 
+[TriangularWordTermination.lean](TriangularWordTermination.lean) proves
+well-foundedness of a recursive order on blocks of words, its compatibility
+with contexts, and termination of triangular square/swap rewriting.
+[LabelEightTermination.lean](LabelEightTermination.lean) applies that
+theorem to the actual all-rank table and proves existence of sufficient
+fuel for the implemented collector. The [scope](../phase172_termination_scope.md)
+and [root review with fresh public build](../../../provenance/phase107_review.md)
+cover eleven new printed declarations. Confluence, support transfer and
+the full group construction remain separate formal obligations.
+
 [LabelEightTriangular.lean](LabelEightTriangular.lean) proves all-rank
 strict triangularity of the actual square and correction table, and
 alphabet-range preservation for steps and finite rewrite chains. The
 [scope and fresh build](../phase174_label_eight_scope.md) and
 [independent reading review](../phase174_label_eight_independent_review.md)
-cover all five declarations. This supplies local hypotheses for a
-separate termination proof; it does not assume or establish confluence.
+cover all five declarations. This supplies local hypotheses for the
+termination proof above; it does not assume or establish confluence.
 
 [LabelEightAlphabet.lean](LabelEightAlphabet.lean) completes a three-module
 proof of the finite rewrite lemma behind the uniform label-eight construction.
@@ -19,7 +29,7 @@ rewrite paths; all eight local source words reduce to empty. Every
 intermediate word remains in the finite alphabet. The [readable scope](../phase171_label_eight_scope_reader.md)
 and [independent review/fresh build](../phase171_label_eight_formal_review.md)
 state the exact proof and trust boundary. The kernel evaluates all cases
-using ordinary `decide`. The remaining all-rank termination, locality,
+using ordinary `decide`. The remaining all-rank locality,
 confluence and group construction are written proofs, not consequences
 claimed formalized by these three files.
 
