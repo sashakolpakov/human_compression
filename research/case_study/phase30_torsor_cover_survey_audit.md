@@ -1,0 +1,13 @@
+# Independent written audit: lift extension and shadow monodromy
+
+10 October 2026. Reviewer: survey_audit. Verdict: **PASS**, within the explicit hypotheses. This is a complete independent written-proof review of phase30_torsor_cover_theory.md §§1–10. I did not rerun its executable diagnostics or reread external primary papers for this review. The reviewed proof builds on my earlier phase28 cover theorem; that dependency is disclosed, while the phase30 lift-extension development is authored by another agent.
+
+The pair definition `(g,f)` correctly retains the kernel of the base action on its graph. Chamber regularity of the lifted pregeometry does not silently imply flag extension: every chamber is one base chamber plus one vertex lift, whereas nonextendible higher flags remain possible. Unique lifts of the base adjacent involutions are involutions; connectedness of the cover and base vertex-residue galleries gives generation before either H or M.
+
+I checked the exact local subgroup argument. For a subflag of the fixed lifted chamber, the generated complementary subgroup L_F preserves the particular common-shadow component through the base vertex. It maps onto the full base flag stabilizer by path lifting and deck adjustment. Its deck intersection is H_F, while the full lifted flag stabilizer has deck intersection equal to the meet of the singleton monodromy groups. Thus K_F=H L_F and the stated index is a bijection of coset sets, without any normality assumption on L_F or H_F. The formula is correctly restricted to extendible subflags.
+
+All subset intersections follow from the full stabilizer formulas when M holds. Conversely full marked IP forces those formulas and therefore M for all base higher flags by transitivity. No quotient-IP or geometric flag-completion hypothesis is inserted into this argument. Incident pairs always extend, which makes the standard coset pregeometry identification exact; general typed Helly is separately equivalent to H and geometry.
+
+For bipartite compression over a nonbipartite base, the deck color character is surjective. The color-preserving extension therefore maps onto G with kernel A+, and its chamber action is regular. The displayed three-step endpoint move has the stated geometric effect. Under H/M the compressed chamber graph supplies generation; full type-preserving automorphisms are controlled by the thin chamber-stabilizer argument.
+
+The examples in §10 are appropriately limited to rank three. They test the graph-action-kernel boundary and consistency of the formulas, but not a higher flag of size two or a nonzero monodromy defect. No novelty, source-wide result, full graph-cover classification, or complete Lean certification is implied.

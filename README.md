@@ -121,6 +121,12 @@ monodromy with the subgroup intersection. Two written reviews, exact
 nonabelian-cover diagnostics and a [Lean common-fiber certificate](research/case_study/formal/Phase29CosetMonodromy.scope.md)
 support its stated scope. Classical covering foundations are credited.
 
+The [lift-extension theorem](research/case_study/phase30_torsor_cover_theory.md)
+identifies that cover construction with the original marked chamber torsor.
+Its monodromy index is exactly the defect in subgroup intersection, while
+the two coset Helly tests are equivalent. The base graph-action kernel
+and the separate liftability assumption are retained explicitly.
+
 The common census theorem now supports six finite-group censuses with 262
 independently recognized representatives under their recorded axioms. This
 measures verified coverage; it is not a numerical proof-compression ratio.

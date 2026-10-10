@@ -1320,3 +1320,19 @@ lemmas about nonempty common fibers, equivalence classes and the subgroup
 equality criterion. It does not formalize graph lifting or the complete
 geometric theorem. All five printed axiom lists contain standard axioms
 only, with no native evaluation.
+
+## The exact lift-extension identification
+
+```sh
+python3 research/case_study/phase30_torsor_cover_check.py --output scratch/torsor-cover-fresh.json
+```
+
+Python standard library only; use a new output filename. This checks the
+tetrahedral parity cover and the identity cover of the triangular dihedron.
+The latter has a graph-action kernel of order two and a faithful incidence
+action, testing why both the base and cover automorphism must be retained.
+Expected totals are 192 exact subgroup meets, with 145 and 39 flags and
+48 and 12 chambers in the two graph-incidence examples. All base-subflag
+stabilizer formulas and the object/coset correspondence are checked. These
+rank-three examples do not test higher flags with multiple objects; the
+arbitrary-rank equivalence is the separate written proof.

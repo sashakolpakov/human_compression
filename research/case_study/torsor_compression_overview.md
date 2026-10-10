@@ -285,6 +285,16 @@ this reduction yet.
 
 ## Evidence and limits
 
+The [lift-extension identification](phase30_torsor_cover_theory.md) proves
+that these cover components give the same maximal-parabolic partitions of
+a chamber torsor. For subflags of a fixed chamber, the difference between
+the actual flag stabilizer and its generated complementary subgroup is
+exactly the monodromy index. Full IP and monodromy equality are equivalent;
+the deck and parabolic Helly tests are also equivalent. A graph-action
+kernel must be retained in the lift extension. This is a written theorem
+under explicit liftability and regular-base hypotheses, with two finite
+diagnostics, without an additional whole-paper count.
+
 The [graph-cover theorem](phase28_voltage_shadow_theory.md) extends the
 parity calculation to arbitrary deck-group torsors. Component fibers are
 cosets; typed coset Helly is exactly the geometry condition. A nonempty
