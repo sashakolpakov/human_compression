@@ -25,6 +25,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase32_L111_section6_intake.json", "phase33_L003_even_intake.json",
           "phase33_L003_universal_even_intake.json", "phase33_source_status.json",
           "phase41_chiral_cover_intake.json", "phase43_chiral_cover_root_audit.json",
+          "phase40_compress_operations_intake.json", "phase44_operations_recent_audit.json",
+          "phase45_operations_root_audit.json",
           "manuscript_replacements.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
@@ -163,11 +165,11 @@ UPDATES = {
         "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json;phase12_unitary_parameters.md;phase12_unitary_root_audit.md;phase12_unitary_root_audit.json;phase13_unitary_elliptic.md;phase13_unitary_sieve.md;phase13_unitary_manifest.json;phase13_unitary_independent_check.json;phase13_unitary_sieve_independent_audit.md;phase13_unitary_priority_audit.md;phase13_root_review.md;phase14_unitary_q7.md;phase14_unitary_q7_check.json;phase14_unitary_q7_root_check.json;phase14_unitary_q7_manifest.json;phase15_unitary_sieve.md;phase15_unitary_generation.md;phase15_unitary_intersection.md;phase15_unitary_parameter_reduction.md;phase15_unitary_curve.md;phase15_unitary_manifest.json;phase15_unitary_independent_audit.md;phase15_unitary_sieve_independent_check.json;phase15_unitary_witnesses_independent_check.json;phase15_unitary_q11.md;phase15_unitary_q11_root_check.json",
         "Problem 7 concerns linear socles and remains incomplete for field and graph extensions. The odd linear diagonal interval has maximum rank four at socle index one or two; index four forbids involution generation. A separate companion theorem now gives maximum rank four for the diagonal index-two unitary extension at every odd q>=3. Rank-three existence is now supplied for the diagonal unitary index-two extension at every odd q>=3, with a separate finite q3 base. The new linear template supplies rank three for the proper index-two group at q=1 mod4 and also independently constructs the already published q=3 mod4 range. With the retained q3 case and earlier rank-four/upper-bound results, every odd linear diagonal index-two extension has rank set {3,4}. A possible 2026 thesis and further source overlap remain priority leads. The two curve/sieve constructions give the simple PSU4(q) rank set {3,4} for odd q>=5, retaining published rank-three existence; PSU4(3) itself has no representation by retained published input. All generation, intersection and character arguments retain their stated inputs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted twice; publication priority and external review remain."),
     "L088": (
-        "principal_results_rederived", "Six principal construction Theorems 3.2, 4.2, 5.2, 5.4, 6.2, 7.2 and their generation lemmas",
-        "One odd-endpoint overlap criterion and a central involution twist generate all six source-defined markings from one explicit seed. Typed coset Helly, panel and residue recognition are proved separately; a presentation order sandwich identifies the seed.",
-        "GAP exact group and completed Todd-Coxeter algorithms; TomLib named J1 group only; Spherical Coxeter [3,5] order120; Introductory exhaustive six-only/no-higher-rank classification retained, not rederived",
-        "phase24_L088_theory.md;phase24_L088_sources.json;phase24_L088_certificate.json;phase24_L088_manifest.json;phase25_L088_rank_audit.md;phase25_L088_rank_audit.json;formal/EndpointDoublingIntersections.lean;formal/EndpointDoublingIntersections.scope.md",
-        "All six principal new constructions and generation lemmas are recovered. The introductory exhaustive classification is quoted background, and Section8 does not become an exhaustive new search. Printed Gamma3/Gamma4 figure labels are transposed relative to their defining sections. Lean proves the mixed-intersection bridge only; geometric Helly and J1 computations remain separate. No matched ratio, novelty or source-correction priority claim."),
+        "principal_results_rederived", "All six principal construction theorems and generation lemmas; exhaustive six-class rank-four classification and absence in all higher ranks",
+        "One endpoint/support theorem and central involution twist give the constructions; IP and typed Helly establish actual geometry. A proved residue-extension algorithm exhausts100016 rank-four and21352 rank-five extensions, including proper-subgroup rank-five targets, giving six classes and no higher-rank residues.",
+        "Complete TomLib J1 subgroup catalogue and permutation model; GAP exact group, orbit, conjugacy and completed Todd-Coxeter algorithms; Classical spherical Coxeter models including [3,5] order120",
+        "phase40_compress_operations_manuscript.md;phase40_compress_operations_ledger.json;phase40_compress_operations_intake.json;phase44_operations_recent_audit.md;phase44_operations_recent_audit.json;phase44_operations_recent_audit_replay.json;phase45_operations_root_audit.json;formal/EndpointDoublingIntersections.scope.md",
+        "The source geometry census is no longer retained. Printed Gamma3/Gamma4 figure labels are corrected against their defining markings. The completeness statement concerns thin regular residually connected geometries, not non-Helly C-group markings. Catalogue completeness and exact GAP algorithms remain trusted. No length factor, conjecture solution, novelty or end-to-end Lean claim."),
     "L108": (
         "principal_results_rederived", "Theorem1, Lemma3.1 definition adapter, Lemma3.2(i),(iii),(iv), with the unconditional part(ii) explicitly corrected",
         "Retain the kernel of the action on vertices and edges. Thin connected residues force one commuting pair; the resulting marking proves thin-case regularity, faithfulness, automorphism equality and biduality, also for infinite groups.",
@@ -337,7 +339,7 @@ READING_UPDATES = {
     "L003": ("selected_sections_read", "Primary internal pages17–19: complete rotational presentation, Table8, surrounding finite-family prose and Problem9.2; later2021 first-family theorem and corrections compared. No current-resolution claim.", "phase32_L003_source_intake.json"),
     "L111": ("selected_sections_read", "Primary indexed definitions, graph convention, both theorem input formulations, complete verbal Theorem4.1 and Construction5.1, and relevant section5 proofs. Arbitrary-rank flag quantifiers independently checked. Complete body/PDF and application tables remain unavailable.", "phase32_L111_scope.json"),
     "F015": ("selected_sections_read", "Sections2.2–2.4 and orthoplex Section3.2 including Proposition13; not all family proofs.", "phase26_access.json"),
-    "L088": ("full_text_read", "All ten primary pages and six construction proofs read; figures on pages9–10 independently visually checked. The exhaustive introductory classification is retained background.", "phase24_L088_sources.json"),
+    "L088": ("full_text_read", "Complete primary text read by the independent C reviewer, with original pages3–7 and9–10 visually checked. All construction and exhaustive classification targets reviewed; source geometry census is no longer retained.", "phase44_operations_recent_audit.md"),
     "L108": ("full_text_read", "All seven printed pages19–25, definitions, statements, proofs and references read from the complete primary authored rendering. Publisher PDF unavailable.", "phase25_L108_intake.json"),
     "N009": ("full_text_read", "All22 primary pages read cumulatively across source-bound audits; the final independent review matches all27 numbered items and allsix tables. Root and the independent reviewer visually inspected printedp10. This reading record does not claim literal validity of every printed assertion.", "phase24_N009_coverage.md"),
     "F013": ("full_text_read", "Complete eleven-page cached primary manuscript read by root; definitions (7)-(9) and Theorem 4.2 compared independently on PDF pages 5-8 and in versioned v1 HTML. Header dates differ; the exact checked claims are recorded in the proof.", "phase12_path_cocycle.md"),
@@ -606,7 +608,7 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["access_coverage"]["additional_readings"].append({"source": "research/case_study/phase25_older_access.json", "reading_depth": "Bounded renewed access attempt; body unavailable, abstract only. Primary publisher confirms year2002; 2003 is a review-date ambiguity."})
     if identifier == "L088":
         r["primary_urls"].append("https://msp.org/iig/2005/1-1/iig-v1-n1-p08-s.pdf")
-        r["access_coverage"]["notes"] = "Complete primary PDF read. Six principal construction theorems rederived and independently checked. Exhaustive global classification remains retained. Figure-label transposition is explicit."
+        r["access_coverage"]["notes"] = "Complete primary PDF text and specified original diagram pages reviewed. Six constructions plus exhaustive rank classification rederived in C; the subgroup catalogue remains retained but the geometry census is no longer a premise. Figure-label transposition explicit."
     if identifier == "N003":
         r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
         r["access_coverage"]["notes"] = "The complete primary manuscript has been read and all eight numbered targets rederived in the finite-group/n>=7 scope. Whiston W1/W2 remain retained inputs; the earlier tree-only assessment is superseded. Phase15 independently audits a compact complete proof and its matched 4/3 description-length ratio."
@@ -862,6 +864,16 @@ def record(row, baseline, overlay, later_readings, older_access):
                               "relation_to_source": "prior_art_not_a_replacement_proof"}]
         r["retained_inputs"] = row["retained_inputs"]
         r["remaining_work"] = ["Read and compare complete construction proofs before asserting a replacement theorem. No compression or novelty credit from shared vocabulary."]
+    if identifier == "N013":
+        r["exact_target"] = [{"reference": "Declared principal construction and section4 applications, arXiv2001.11082v1; corrected Remark4.1 and explicit auxiliary exclusions",
+                              "scope": "C plus required lattice bridge derives halving geometry, exact parity-module groups/orders, polygon counts/duality/genus, locally spherical cases and actual toroidal face-poset/marking/lattice identifications. All18 combined principal ledger rows pass independent review.",
+                              "relation_to_source": "reviewed_declared_main_result_contract_with_required_addendum"}]
+        r["method"] = ["Endpoint overlap and least support; graph double-cover geometry; even-coordinate module; explicit Gray-code face-poset map, marked affine reflections and quotient lattice."]
+        r["retained_inputs"] = ["Danzer generalized-cube theorem and full original automorphism group; classical finite/affine/compact-hyperbolic Coxeter lists/models and convex orders; orientation/Euler facts; Pellicer extension in qualified auxiliary remark. Target toroidal labels are proved by the required addendum, not retained."]
+        r["evidence"] += [evidence(n, "C plus full lattice bridge; precise two-source contract") for n in ("phase40_compress_operations_intake.json", "phase40_compress_operations_ledger.json", "phase44_operations_recent_audit.json", "phase45_ten_source_toroid_bridge.md", "phase45_operations_root_audit.json")]
+        r["access_coverage"]["reading_category"] = "full_text_read"
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase44_operations_recent_audit.md", "reading_depth":"Independent complete11-page primary text reading; original pages5–10 visually checked, including all application formulas and diagrams."})
+        r["remaining_work"] = ["The reference[9] comparison and auxiliary semiregular identification remain unproved; Remark4.1 is rank-qualified. No length factor, novelty, conjecture solution or end-to-end formalization. C alone retains a target-identification gap; the entire bound lattice bridge is required and charged."]
     return r
 
 
@@ -1056,7 +1068,8 @@ def render(registry):
         "[Reduction scope](research/case_study/torsor_compression_overview.md) · "
         "[Historical inventory](research/case_study/literature_inventory.json)", "",
         "The [named manuscript map](MANUSCRIPT_MAP.md) records a reviewed seven-source",
-        "integration and its two reviewed predecessors, covering seven distinct manuscripts. Their",
+        "integration and its two reviewed predecessors, plus the two-source C with its required",
+        "lattice addendum: nine distinct manuscripts across reviewed assemblies. Their",
         "declared main-result contracts and retained inputs remain explicit;",
         "Compress_B has a reviewed conditional full-body factor of 3.928390x",
         "under its frozen PDF-token convention. The complete seven-source replacement has",
@@ -1252,6 +1265,9 @@ def main():
             row["assembled_replacements"].append(replacement["id"])
             for key in ("manuscript", "ledger", "review", "root_review"):
                 row["evidence"].append(evidence(replacement[key], replacement["scope"]))
+            for addendum in replacement.get("required_addenda", []):
+                assert addendum in replacement["artifact_sha256"], addendum
+                row["evidence"].append(evidence(addendum, "Required complete proof addendum; included in replacement scope and any future length denominator."))
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]

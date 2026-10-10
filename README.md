@@ -69,6 +69,15 @@ local geometry and an exact finite certificate, with older geometric and
 classification inputs explicit. It is a candidate for the next integrated
 manuscript; its conjectures remain unresolved here and no length factor is claimed.
 
+[Compress_C plus its required lattice bridge](COMPRESS_C.md) now adds two
+reviewed source contracts from 2005 and 2020. The same endpoint/support theorem
+handles six Janko-group constructions and generalized-cube halving. A complete
+residue-extension census proves the six-class classification and excludes all
+higher ranks; explicit face maps and lattices prove the toroidal models.
+There are now **nine distinct sources in reviewed assemblies**, split seven
+and two. C has no measured factor, and the continuous ten-source draft remains
+under author review.
+
 ## The method
 
 The initial case study concerns finite groups, highly symmetric polytopes,

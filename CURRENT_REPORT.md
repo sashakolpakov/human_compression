@@ -1,4 +1,4 @@
-# Independent judgment: seven manuscripts → one replacement
+# Current judgment: seven-source core and two-source extension
 
 The [independent state report](research/case_study/phase41_independent_state.md)
 and its [bound evidence](research/case_study/phase41_independent_state.json)
@@ -25,11 +25,22 @@ now labels the abbreviated per-adapter lists as selected inputs and gives them
 consistent identifiers. The complete internal proofs and global retained
 inventory remain authoritative; the index does not claim exhaustive closures.
 
+A further [independent review](research/case_study/phase44_operations_recent_audit.md)
+now admits **two other sources → [Compress_C plus its required lattice bridge](COMPRESS_C.md)**:
+*On the thin regular geometries of rank four for the Janko group J1* (2005)
+and *Locally Spherical Hypertopes from Generalised Cubes* (2020 author version).
+The shared endpoint/support theorem, graph-cover geometry and parity module
+give their declared main results. Complete finite code proves the exhaustive
+J1 classification; the addendum proves the precise toroidal identifications.
+This brings reviewed assembly coverage to **nine distinct sources**, split
+seven and two. A single nine- or ten-source replacement is not yet reviewed.
+
 | Replacement | Named sources | Approved length result |
 |---|---:|---|
 | A | 3 | No comparable factor yet |
 | B | 4 | **32,476 / 8,267 = 3.928390×**, under the reviewed PDF-token convention |
 | Unified | The same 7 | **At least 40,358 / 18,241 = 2.212488×**, with N001 credited zero |
+| C plus required lattice bridge | 2 additional | No factor yet; full body, both code appendices and addendum must be counted |
 
 B's complete denominator includes proof prose, adapters and the census appendix.
 The nonwhitespace-character sensitivity is **3.346514×**. These are conditional
@@ -55,19 +66,22 @@ universal geometry retains a separate written argument. A new solution, if
 novelty is established, will be reported as new mathematics rather than assigned
 an infinite value in the finite manuscript-length quotient.
 
-The next work is to shorten the integrated exposition and close the next
-bundle's source contracts. The operations manuscript now has a fresh exhaustive
+The next work is to shorten the integrated exposition and review the expanded
+continuous manuscript. The operations manuscript now has a fresh exhaustive
 Janko-group certificate: 100,016 rank-four extensions yield six classes and
-21,352 rank-five extensions yield none. Its independent replay passes; review
-is resolving exactly which toroidal lattice identifications remain imported.
+21,352 rank-five extensions yield none. Its independent replay and complete
+proof review pass. The required direct lattice proof removes the previously
+retained target identifications; Danzer, Coxeter and subgroup-catalogue inputs
+remain explicit.
 The [chiral-cover adapter](research/case_study/phase41_chiral_cover_manuscript.md)
 now has a [complete root proof review and fresh exact replay](research/case_study/phase43_chiral_cover_root_audit.md).
 It recovers the proved source conclusions under its author-version contract,
 including the two distinct minimal covers; standard geometry and older atomic
 classification remain imported. The general multiplicity conjecture remains
-unproved here. A possible ten-source integration is being planned. These
-standalone candidates do not yet add to the seven sources in reviewed assemblies;
-the expanded integration must receive separate review.
+unproved here. A continuous ten-source draft is being checked by its author;
+it is not frozen or independently reviewed. N016 remains a separate adapter
+outside the nine sources in reviewed assemblies. The expanded integration
+and every new length claim require separate review.
 
 The broader registry contains 161 works and seventeen principal-result candidate
 entries. Those counts measure literature and component intake, not completed

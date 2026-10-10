@@ -1,8 +1,10 @@
 # Named manuscripts to reviewed replacements
 
 The current result is one reviewed seven-source replacement, with two reviewed
-predecessors, covering the declared main-result contracts of seven distinct
-manuscripts. Each contains its common theory, proofs and source corollaries.
+predecessors, and a further two-source replacement with its required lattice
+addendum. Together they cover the declared main-result contracts of **nine
+distinct manuscripts**. Each contains its theory, proofs and source corollaries;
+the complete addendum is part of the two-source replacement.
 These are conditional internal reviews with the source qualifications and
 retained background visible. The seven-source replacement has a reviewed
 conditional lower bound of **2.212488×**, counting the unavailable 1998 source
@@ -14,13 +16,15 @@ its two predecessors together; integration has not yet added a length saving.
 |---|---|---|
 | *Some properties of inductively minimal geometries* (1998); *Independent generating sets and geometries for symmetric groups* (2002); *Using the Frattini Subgroup and Independent Generating Sets to Study RWPRI Geometries* (2005) | [Compress_A](COMPRESS_A.md): forest cuts, relative generators and Frattini kernels | Complete integration review of 23 scoped/corrected source adapters. Three-paper body measurement pending. Earlier two-paper rendering experiment is separate. |
 | *On regular polytopes of 2-power order* (2020); *2-groups behaving as automorphism groups of regular 3-polytopes* (2019); *String C-groups of 2-power order project onto a common string C-group* (2026); *Symmetric polytopes whose automorphism groups are 2-groups* (2025 preprint) | [Compress_B](COMPRESS_B.md): quotients, deletion maps and cyclic cores | Complete assembled review of 11 numbered main theorems / 17 clause rows, with an independent finite census replay. Conditional whole-body factor **3.928390×** in NFC PDF-extracted whitespace tokens; **3.346514×** by nonwhitespace characters. Full proof appendix included; retained background and certificate costs explicit. |
+| *On the thin regular geometries of rank four for the Janko group J1* (2005); *Locally Spherical Hypertopes from Generalised Cubes* (2020 author version) | [Compress_C plus required lattice bridge](COMPRESS_C.md): endpoint operations, graph covers and parity modules | All 18 principal rows reviewed, including exhaustive six-class/no-higher-rank result and actual toroidal models. Full code and complete lattice addendum required. No measured factor. |
 
 The predecessor maps are **three named manuscripts → Compress_A**, and
 **four other named manuscripts → Compress_B**. The subsequent complete
 map is **all seven named manuscripts → [Compress_Unified](COMPRESS_UNIFIED.md)**.
 Its independent review passes all 34 scoped/corrected adapters, with explicit
 retained inputs and a qualification on incomplete per-adapter dependency lists.
-These overlapping replacements still cover seven distinct sources. The wider [paper registry](PAPER_MAP.md)
+These three overlapping replacements cover seven distinct sources; C adds two
+others, for nine across reviewed assemblies. The wider [paper registry](PAPER_MAP.md)
 contains 161 indexed works and 17 principal-result candidates; neither count
 is a count of assembled or compressed whole manuscripts.
 

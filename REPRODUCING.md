@@ -1838,3 +1838,25 @@ source PDF, finite catalogue or RAMP is needed. GAP's exact algorithms are
 trusted; this is not a Lean certificate. The [root proof review](research/case_study/phase43_chiral_cover_root_audit.md)
 supplies the mathematical interfaces and minimality argument. The author's
 old in-place Python runner and primary fulltexts are intentionally not exported.
+
+## Two-source operations census
+
+```sh
+python3 research/case_study/phase40_compress_operations_verify.py \
+  --gap /path/to/gap --output-dir /tmp/compress-c-new
+```
+
+The recorded run uses GAP 4.15.1 and TomLib 1.2.11, with the J1 data hash
+bound in the reports. The output directory must be new. The runner first
+checks that both full programs match the manuscript's code blocks, then runs
+the construction and exhaustive classification, saving logs and class data.
+The independent census took about 279 seconds; it reads a complete subgroup
+catalogue, not a geometry catalogue. Its rank-five stage includes proper
+subgroups and supports the written all-higher-rank exclusion.
+
+The [independent mathematical review](research/case_study/phase44_operations_recent_audit.md)
+also checks the general endpoint/geometry proofs and the complete required
+lattice addendum. Running finite code does not prove those all-parameter
+theorems or supply a C compression ratio. No source PDF is needed to rerun
+the finite programs, but the bound primary sources are required for an
+independent literature and statement audit.

@@ -83,6 +83,13 @@ the separate finding that integration adds 706 raw Markdown tokens over A+B.
 Source main bodies include introductions and open-question discussion outside
 the target contract, so this is not a minimum theorem-proof-length ratio.
 
+The further [two-source replacement](COMPRESS_C.md) is admitted only as the
+complete C manuscript **plus its required lattice addendum**. Its whole
+denominator must include both embedded GAP programs and that entire addendum;
+the executable copies are charged once, and runtime/output costs are reported
+separately. The declared main-result contract passes independent review,
+but no C factor or combined nine-source factor has yet been measured.
+
 ## A finite compression ratio
 
 Fix a set of exact theorem statements $S$, a common background $B$, and a
