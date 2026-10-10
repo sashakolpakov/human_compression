@@ -78,7 +78,10 @@ written proofs. The [independent interface review](research/case_study/phase69_c
 checks both the public wrapper and the exact formal statement.
 
 This establishes the multiplicity assertion for the specified first family.
-The other four families and the general conjecture remain unresolved here.
+The [surface construction](INFINITE_MINIMAL_COVERS.md) now gives infinitely
+many finite covers in the four two-primary families. The
+[general theorem](MINIMAL_REGULAR_COVERS.md) answers the unrestricted
+minimal-cover question in every finite rank.
 The [expanded literature check](research/case_study/phase72_cover_family_priority_report.md)
 retains material unread comparisons with a 2014 mix paper and relevant
 chapters of the 2025 book *Abstract Chiral Polytopes*. It does not establish

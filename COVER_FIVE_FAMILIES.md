@@ -6,8 +6,10 @@ Each member has at least two distinct minimal regular polytopal covers.
 The new [surface construction](INFINITE_MINIMAL_COVERS.md) proves
 **infinitely many** in the four two-primary families, for every source
 parameter and both independent signs.
-**Historical priority and current openness remain unverified.** The
-general conjecture for arbitrary polytopes is unresolved here.
+The [general theorem](MINIMAL_REGULAR_COVERS.md) now settles the
+unrestricted minimal-cover question for arbitrary finite-rank polytopes.
+The family constructions retain their additional finite-cover conclusions.
+Historical priority remains unverified.
 
 The [root admission](research/case_study/phase119_five_family_root_admission.md)
 combines the [uniform construction](research/case_study/phase109_cover_families_generalization_theorem.md),

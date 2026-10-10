@@ -1,5 +1,12 @@
 # Lean certificates and their scope
 
+[CoverKernelGeneration.lean](CoverKernelGeneration.lean) proves five
+algebraic steps used in the general minimal-cover theorem, including
+disjoint-coordinate splitting and the join argument from consecutive
+powers. Its [scope](CoverKernelGeneration.scope.md) makes normal generation
+and power supply explicit hypotheses. The geometry establishing those
+hypotheses and the full polytope theorem remain written proofs.
+
 [CoverKernelChains.lean](CoverKernelChains.lean) proves six general
 facts about admissible kernels at arbitrary index, their maximal
 overgroups, and coprime powers. Its

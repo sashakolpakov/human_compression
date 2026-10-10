@@ -1,5 +1,19 @@
 # Reproducing the checks
 
+The [general minimal-cover proof](MINIMAL_REGULAR_COVERS.md) has a scoped
+formal replay:
+
+```sh
+python3 -B -O research/case_study/phase222_check.py --out /tmp/NEW-general-covers --lean LEAN --packages PACKAGES
+```
+
+It checks the frozen author bindings, compiles five new and six retained
+algebraic declarations, rejects three altered hypotheses, and reconstructs
+four independent countermodels to false weakenings. The geometric argument and complete theorem
+are established by the separately reviewed written proof. Primary PDFs
+are unnecessary for this formal replay; `--verify-primary` additionally
+checks their recorded bytes when they have been acquired separately.
+
 The [surface construction for minimal covers](INFINITE_MINIMAL_COVERS.md)
 has a combined author and independent replay:
 

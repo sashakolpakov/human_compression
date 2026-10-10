@@ -1,5 +1,11 @@
 # Provenance and verification scope
 
+The [general minimal-cover admission](phase117_review.md) answers the
+unrestricted source question in every finite rank, with arbitrary flag
+sets and possibly infinite covers. The complete written proof and
+independent review accompany five new scoped Lean declarations. The
+stronger finite-cover question and historical priority remain separate.
+
 The [F014 edition audit](../research/case_study/phase220_F014_edition_review.md)
 records the inspected preprint, journal preview and bounded literature
 search. It leaves the complete journal conjecture and priority unresolved.
@@ -42,7 +48,7 @@ measurement or mathematical result is inferred from plotting those points.
 
 The current product is [topic umbrellas and application papers](../MANUSCRIPT_PROGRAM.md).
 The earlier six-source A, four-source B and three-source C and D
-manuscripts supply reviewed material to rework. There are seventy-seven
+manuscripts supply reviewed material to rework. There are seventy-eight
 scoped Lean files. Source coverage, completed application papers and
 measured compression are distinct claims.
 

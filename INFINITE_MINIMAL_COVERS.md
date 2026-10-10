@@ -7,7 +7,10 @@ for every source parameter and every independent choice of signs.
 
 The complete [manuscript](research/case_study/phase211_surface_covers.md)
 and [independent review](research/case_study/phase218_surface_cover_review.md)
-give the proof. The conjecture for arbitrary polytopes remains unresolved.
+give the proof. The [general theorem](MINIMAL_REGULAR_COVERS.md) now
+answers the unrestricted minimal-cover question. This surface construction
+retains the stronger conclusion of infinitely many finite covers for its
+four families.
 
 ## The uniform construction
 

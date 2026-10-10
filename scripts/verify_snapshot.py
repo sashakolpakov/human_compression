@@ -48,6 +48,8 @@ OWN_RENDERED_PDFS = {
 FROZEN_LINK_BASES = {
     "research/case_study/phase79_eleven_attribution_legend.md":
         ("27a576a7d958ee620a4afe736a28f49a0043e19df17a4b70d29aaf418610ae85", ROOT),
+    "research/case_study/phase221_infinite_minimal_covers_reader.md":
+        ("a46769cc33cccf3100e0a017f1d79ea155e3010a4eb144987a3bbe48a823c575", ROOT),
 }
 
 
@@ -60,13 +62,20 @@ def frozen_question_exports():
     manifests = {
         "phase217_export.json": "af256c4766c31865608b5c333cef200533b3f8280351e59295cbf3db292aaeb8",
         "phase221_export.json": "7325a1698d540caf372ac8b4e0bf0f392e706c26ef59279dde7f027d6e797ab7",
+        "phase223_export.json": "89f51c64ef3f86c0b1f566223ce0afb8e92e366f11dc52f963e454b887ef65a7",
+    }
+    # Current readers may be updated; their original publication bytes stay
+    # bound at these explicit archive paths. No proof bytes are rewritten.
+    archived = {
+        ("phase221_export.json", "INFINITE_MINIMAL_COVERS.md"):
+            "research/case_study/phase221_infinite_minimal_covers_reader.md",
     }
     checked = 0
     for name, expected in manifests.items():
         manifest = STUDY / name
         assert digest(manifest) == expected, (name, "changed admission manifest")
         for rel, record in json.loads(manifest.read_text())["files"].items():
-            path = ROOT / rel
+            path = ROOT / archived.get((name, rel), rel)
             assert path.stat().st_size == record["bytes"] and digest(path) == record["sha256"], (
                 rel, "changed frozen admission artifact; publish follow-up work separately")
             checked += 1
@@ -116,7 +125,7 @@ def lean_reports():
         )] if source.stem == "Phase23TransferAnnihilator" else [])
         assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
         result.append(source.name)
-    assert len(result) == 77, result
+    assert len(result) == 78, result
     return result
 
 
@@ -173,7 +182,7 @@ def main():
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
     print(f"PASS: {frozen} frozen question-proof publication artifacts retain their admitted bytes.")
-    print("Trust scope: 76 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
+    print("Trust scope: 77 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
     print("External publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")

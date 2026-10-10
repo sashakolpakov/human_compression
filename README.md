@@ -74,10 +74,16 @@ finite certificates and precise Lean coverage are included.
 The [edition audit](research/case_study/phase220_F014_edition_review.md)
 records the remaining limits on journal-version and priority claims.
 
-The [surface construction for minimal covers](INFINITE_MINIMAL_COVERS.md)
-proves infinitely many finite minimal regular covers throughout four
-specified families. It replaces two selected primes by an argument for
-every odd prime. The arbitrary-polytope conjecture remains unresolved.
+The [general theorem on minimal covers](MINIMAL_REGULAR_COVERS.md)
+answers Cunningham–Pellicer’s unrestricted question: a polytope of finite
+rank has a unique minimal regular polytopal cover exactly when its
+monodromy group is a string C-group. The full written proof and
+independent review cover arbitrary flag sets; five new Lean declarations
+verify the stated algebraic steps. The covers may be infinite.
+
+The [surface construction](INFINITE_MINIMAL_COVERS.md) gives the stronger
+conclusion of infinitely many **finite** minimal regular covers throughout
+four specified families, by an argument valid for every odd prime.
 
 The study of costs as proofs are developed and reused draws on
 [GKM](https://github.com/sashakolpakov/gkm). The proposed sawtooth pattern

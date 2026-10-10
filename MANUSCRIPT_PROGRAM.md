@@ -150,11 +150,12 @@ that has not been measured should be reported as such.
 ## Conjectures and questions: recorded solutions
 
 Solutions to questions posed in the source literature are a separate
-part of the programme. The repository currently records **nine complete
+part of the programme. The repository currently records **ten complete
 answers to the stated questions, under their specified hypotheses**, including
-the negative answer to F014 in its cited preprint version. Two further
-entries cover a particular interpretation or specified families;
-their limits are listed separately below. These results belong in the account
+the general minimal-cover theorem and the negative answer to F014 in its
+cited preprint version. One further entry addresses the two readings of
+an ambiguously worded question; its limits are listed separately below.
+These results belong in the account
 of what the project has achieved, alongside
 the recovered published theorems. They do not increase a source-length
 compression ratio: there was no earlier proof to put in its numerator.
@@ -170,13 +171,13 @@ compression ratio: there was no earlier proof to put in its numerator.
 | L052, Problem 9.3 | The requested thin, residually connected but non-flag-transitive example cannot occur for the standard parabolic coset construction. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; Lean verifies propagation of a chamber orbit. |
 | L052, Problem 9.4 | A rank-three standard parabolic coset system is residually connected, excluding the requested simultaneous failure. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; the complete geometric theorem remains written. |
 | F014, Conjecture 3.7, arXiv v1 | **False:** no regular d-polytope satisfying all the stated relations at label 11 exists for any d≥5. Every quotient retaining the adjacent order is excluded. | [Complete proof and certificates](LABEL_ELEVEN_OBSTRUCTION.md), independently reviewed. Nine general Lean declarations support the quotient argument; finite group computations and the full theorem remain outside Lean. The 2026 journal formulation and priority are unverified. |
+| Cunningham–Pellicer, Problem 5; N016, §4 | Every finite-rank abstract polytope has a minimal regular polytopal cover, unique exactly when its distinguished monodromy group is a string C-group. | [Full general proof and independent review](MINIMAL_REGULAR_COVERS.md). Covers may be infinite. Five new and six retained Lean declarations verify algebraic steps; the geometry and full theorem remain written. [Infinitely many finite covers](INFINITE_MINIMAL_COVERS.md) are proved separately in four families. |
 
-### An ambiguous question and an advance on a broader conjecture
+### The remaining ambiguous formulation
 
 | Source question | Result obtained | Remaining scope |
 |---|---|---|
 | L003, Problem 9.2 | Finite examples exist for every s≥2; the exact universal groups are infinite for every s≥6. | [The two readings explained](TOROIDAL_QUESTION.md). Lean proves infinitude of the exact presentations; the geometric identification remains written. Universal-group structure and priority are separate questions. |
-| Cunningham–Pellicer, Problem 5; N016, §4 | Infinitely many finite minimal regular polytopal covers in four specified two-primary families, and at least two in the fifth family. | The arbitrary-polytope conjecture remains unresolved. See the [surface construction and review](INFINITE_MINIMAL_COVERS.md) and [complete five-family table](COVER_FIVE_FAMILIES.md). Six general kernel lemmas are formalized; the topology remains written. |
 
 The [question-results catalogue](CONJECTURE_RESULTS.md) gives the full
 parameter ranges, original attribution, borrowed results, review records
@@ -184,4 +185,6 @@ and precise Lean coverage. Historical priority has not been established
 for these answers. A recorded solution, a complete formal proof and a
 verified first solution to a still-open problem are distinct claims.
 F014 moves from a partial result to a complete negative answer for the
-bound source version. The total remains eleven distinct question entries.
+bound source version. The minimal-cover result now answers the unrestricted
+question, beyond the earlier five families. The total remains eleven
+distinct question entries.
