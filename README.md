@@ -27,10 +27,10 @@ The active manuscripts have descriptive mathematical titles:
 - **[Module A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md).**
 - **[Module B: Forest coordinates and primitive coset geometries](MODULE_B.md).**
 - **[Module C: Halving and Petrial operations on regular geometries](MODULE_C.md).**
+- **[Module D: Marked actions, field orbits and geometry enumeration](MODULE_D.md).**
 
-The next proposed volume is **[Module D: Marked actions, field orbits and
-geometry enumeration](MODULE_D_PLAN.md)**. Its initial three-source
-manuscript is in preparation, with a fourth classification under investigation.
+Module D's three-source manuscript has passed independent review, with a
+fourth classification retained as a qualified component.
 
 **Complete reviewed manuscripts are available:** U has 30 statements with
 proofs in 16 pages; A has 24 pages and derives the declared principal
@@ -63,6 +63,13 @@ toroidal identifications remain explicit application work. Its complete
 core with U and three programs costs 146,126 UTF-8 bytes; no matched
 compression ratio or full Lean certificate is yet claimed.
 
+Module D has a reviewed 18-page manuscript deriving three principal
+contracts from 2002–2013. Marked actions, exact field support and complete
+panel augmentation organize its counting and classification arguments.
+The required U+D text and executable programs cost 178,689 UTF-8 bytes;
+the qualified M22 comparison and its unresolved table labels are explicit.
+No matched ratio or end-to-end Lean certificate is claimed.
+
 The previous combined manuscripts are working source material. Their
 proved lemmas, computations, source readings and certificates are being
 reworked into U and the modules; their organization and size are not the
@@ -70,7 +77,7 @@ new project's product or benchmark. Historical records remain available
 in [the research directory](research/case_study) and earlier commits.
 
 The intake contains **161 indexed works**, with **102 complete texts
-retrieved**, **39 named result/component rederivations**, and **18 records
+retrieved**, **40 named result/component rederivations**, and **18 records
 covering all identified principal results**. These categories overlap.
 They do not count completed modular manuscripts or a complete bibliography
 of every collaborator. The existing working compilations now account for
@@ -78,7 +85,7 @@ thirteen distinct principal-result contracts.
 These fixed-registry figures exclude the additional auxiliary Loyola
 comparison above, whose partial source contract is recorded separately.
 
-Modules A, B and C now have thirteen distinct sources in their combined intake.
+Modules A–D now have sixteen distinct sources in their principal-contract intake.
 Their principal-result contracts, retained inputs and corrections are
 explicit; source membership is not a length ratio. The earlier
 [hypertope attachment](MODULE_A_HYPERTOPES.md) is retained for provenance.

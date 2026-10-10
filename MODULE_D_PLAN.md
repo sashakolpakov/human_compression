@@ -1,5 +1,9 @@
 # Proposed Module D: Marked actions, field orbits and geometry enumeration
 
+Historical planning note. The [reviewed Module D](MODULE_D.md) now has
+three admitted principal contracts and a qualified fourth component.
+The original planning text below records the earlier stage.
+
 This manuscript is in preparation. Its initial intake is three sources
 with existing principal-result derivations; their assembly into a complete
 module has not yet passed independent review.

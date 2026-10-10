@@ -74,13 +74,15 @@ J1 census are also included. All local proofs and the required finite
 programs are charged. No matched ratio or complete Lean formalization is
 yet admitted.
 
-## Proposed Module D: Marked actions, field orbits and geometry enumeration
+## Module D: Marked actions, field orbits and geometry enumeration
 
-The [initial three-source draft](MODULE_D_PLAN.md) uses finite actions and
-stabilizer orbits on extension fibers for L066, L074 and L104. The complete
-L073 classification is the first expansion target. Field-counting and
-geometric recognition arguments are being written with their actual
-hypotheses and complete finite inputs. This module remains in preparation.
+The [reviewed 18-page manuscript](MODULE_D.md) uses finite actions and
+stabilizer orbits on extension fibers for L066, L074 and L104. Its field
+counting, geometric recognition and exhaustive augmentation proofs are
+complete under the stated retained inputs. L073's census and shadows
+are a qualified component; its refined historical table remains the
+first expansion target. The full U+D text and required programs cost
+178,689 UTF-8 bytes, with no matched ratio or complete Lean certificate.
 
 Each later module will likewise
 receive a descriptive mathematical title tied to its actual reusable

@@ -1,9 +1,9 @@
 # Provenance and verification scope
 
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
-with reviewed six-source U+A, four-source Module B and three-source Module C
-manuscripts. There are
-sixty-six scoped Lean components. Source coverage, complete modular
+with reviewed six-source U+A, four-source Module B, and three-source
+Modules C and D. There are
+sixty-nine scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
 An earlier snapshot admitted [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
@@ -430,3 +430,12 @@ proof reading and a fresh four-file public build support eleven new
 printed declarations. The scoped Lean total is 69; confluence and the full
 group construction remain separate formal obligations. Source counts,
 conjecture entries and measured ratios are unchanged.
+
+The [phase-108 record](phase108_review.md) admits Module D under its
+descriptive title and three complete principal contracts, with a qualified
+M22 component. A–D contain sixteen distinct principal contracts; the
+corpus's eighteen principal-result records remain unchanged, while
+component rederivations rise to forty. Printed J2 omissions and later M22
+notation-source access are explicitly corrected in additive records.
+The required U+D package costs 178,689 bytes, with no matched ratio or
+end-to-end Lean claim.

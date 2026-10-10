@@ -16,6 +16,8 @@ STUDY = ROOT / "research/case_study"
 # Exact project-authored renderings only. Primary publication PDFs and source
 # raster/text captures remain excluded from the distributed snapshot.
 OWN_RENDERED_PDFS = {
+    "research/case_study/phase164_enumeration.pdf":
+        "fa29377f2139bfbf7bb338227c9efd6b33e8e2f4f3c03365d0853bbd79d8bbf2",
     "research/case_study/phase150_module_C_render/application.pdf":
         "9ab28c9313517f94f927b8b1e99c1a43f9702bdb505045d9d59e1108072c7202",
     "research/case_study/phase144_render/replacement.pdf":

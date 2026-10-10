@@ -1,5 +1,22 @@
 # Reproducing the checks
 
+The [three-contract Module D](MODULE_D.md) distributes a structural audit
+and a portable complete finite replay:
+
+```sh
+python3 -B -O research/case_study/phase173_D_review_check.py --report /tmp/NEW-D-binding.json
+python3 -B -O research/case_study/phase164_enumeration_run.py --part all --output-dir /tmp/NEW-D-replay
+```
+
+The runner accepts `small`, `j2` or `m22` instead of `all`. It requires
+GAP and TomLib, verifies its mathematical programs and refuses existing
+output directories. All 146 J2 Borel anchors must reach an empty terminal
+level. The independent review includes actual subgroup comparisons where
+generating strings vary. The [admission record](provenance/phase108_review.md)
+distinguishes fresh complete independent runs from the public binding and
+small-diagnostic replay. None of these commands proves the uniform written
+arguments in Lean or completes the refined M22 table correspondence.
+
 The general triangular rewrite theorem and its all-rank label-eight
 termination application have a fresh four-file Lean replay:
 

@@ -27,18 +27,32 @@ U+C and the three required programs total 146,126 UTF-8 bytes. No matched
 ratio or complete Lean formalization is admitted. These sources already
 had principal-result coverage, so the corpus counts below are unchanged.
 
+**[D: Marked actions, field orbits and geometry enumeration](MODULE_D.md)**
+now has a reviewed 18-page manuscript deriving the principal contracts of
+L066, L074 and L104, spanning 2002–2013. It also derives a qualified L073
+census and shadow component; the refined source-table correspondence is
+unfinished. The complete U+D text, eleven mathematical programs and three
+drivers cost 178,689 UTF-8 bytes. No matched ratio or full Lean certificate
+is claimed. The combined A–D principal-contract intake has sixteen
+distinct sources. Its three D contracts were already covered in the proof
+bank; L073 adds one component rederivation, not a principal contract.
+
 | Intake layer | Count |
 |---|---:|
 | Indexed mathematical works | 161 |
 | Complete texts retrieved | 102 |
-| At least one named result/component rederived | 39 |
+| At least one named result/component rederived | 40 |
 | All identified principal results rederived | 18 |
+| Distinct principal contracts in reviewed modules A–D | 16 |
 | Distinct sources represented in the existing working compilations | 13 |
 | Additional source comparisons outside the fixed registry | 1 |
 
 The layers overlap. Retrieval is not complete reading; principal-result
 coverage is not every assertion in a paper. The inventory is bounded and
-is not an exhaustive bibliography of all collaborators.
+is not an exhaustive bibliography of all collaborators. These current
+totals include the [dated L073/L104 overlay](research/case_study/phase181_registry_overlay.json)
+on the preserved registry baseline: L073 gains component coverage and
+L104 explicitly records its remaining printed-body omissions.
 
 A separate [cyclic-index attachment](LARGE_CYCLIC_SUBGROUPS.md) now derives
 Loyola's high-exponent classification from Module A's common quotient,
@@ -61,7 +75,7 @@ four required computational artifacts 56,375. This is 5,856 bytes below
 the fully corrected six-source additive package, under the raw inventory
 convention. It is not a source ratio or proof of a long-run sawtooth trend.
 U's six statements used by B retain their previous proofs exactly. The
-combined A/B/C intake has thirteen distinct sources, with U charged once in any
+combined A–D principal-contract intake has sixteen distinct sources, with U charged once in any
 future aggregate comparison. Source counts do not rise merely
 because existing results have been reorganized.
 
@@ -137,10 +151,10 @@ applications, numerical formulas and the full conjecture remain incomplete.
 These additions change neither source coverage nor the number of recorded
 conjecture answers.
 
-The next proposed volume is **[D: Marked actions, field orbits and geometry
-enumeration](MODULE_D_PLAN.md)**. Its initial intake is L066, L074 and
-L104, with the complete L073 classification as the first expansion target.
-It has not yet earned modular replacement credit.
+The next expansion of **[D: Marked actions, field orbits and geometry
+enumeration](MODULE_D.md)** targets the full refined L073 table contract.
+Further intakes are being assessed against the actual shared arguments
+and complete source bodies before earning new principal-contract credit.
 
 The [measurement protocol](PROOF_LIBRARY.md) compares original source
 lengths with complete modules and with U charged once across modules. It

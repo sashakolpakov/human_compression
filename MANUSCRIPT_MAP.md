@@ -8,10 +8,13 @@ Each has a descriptive mathematical title; its letter is a stable identifier.
 | [U: Marked groups, kernels and intersections](UMBRELLA.md) | 16 pages; 30 complete statements and proofs shared by the modules |
 | [A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md) | 24 pages; declared principal contracts of L032, L035, F013, F016, N009 and L034, plus four required computational artifacts |
 | [B: Forest coordinates and primitive coset geometries](MODULE_B.md) | 16 pages; declared contracts of N001, N003, N008 and L030 |
+| [C: Halving and Petrial operations on regular geometries](MODULE_C.md) | 18 pages; corrected principal contracts of L088, N013 and L108, with complete required finite programs |
+| [D: Marked actions, field orbits and geometry enumeration](MODULE_D.md) | 18 pages; principal contracts of L066, L074 and L104, plus qualified L073 census/shadow component and required programs |
 
-The two application bundles contain ten distinct sources. Their corrected
+The four application bundles contain sixteen distinct principal-contract sources. Their corrected
 contracts and retained inputs are explicit. This counts source membership,
-not a tenfold length saving. No matched modular ratio is admitted yet.
+not a sixteenfold length saving. The [complete U+A measurement](MEASUREMENT_A.md)
+is admitted under its stated encoding conventions; B, C and D remain unmeasured.
 Full Lean formalization remains incomplete.
 
 The separate [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)
