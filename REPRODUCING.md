@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty-five saved Lean reports
+checks local documentation links, and checks the thirty-six saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty-five certificates and their unformalized boundaries. With Git
+describes all thirty-six certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1620,9 +1620,10 @@ python3 research/case_study/formal/verify_lean.py ParabolicProductComparison.lea
 
 The runner computes transitive local imports and compiles the two earlier
 transport modules before this certificate. The formal theorem includes both
-typed-Helly directions; marked subgroup IP and the matrix/geometric adapter
-retain their separate written proofs. The Lake root list also includes all
-35 modules; no frozen historical reports are overwritten by the scratch run.
+typed-Helly directions. The subsequent marked comparison module below adds
+full subgroup IP; the matrix/geometric adapter remains a written proof.
+The Lake root list also includes all
+36 modules; no frozen historical reports are overwritten by the scratch run.
 
 
 ## Full-body measurement of Compress_A
@@ -1641,3 +1642,17 @@ to the runner. Add `--source-pdf /path/to/N003.pdf --verify-pdf-extraction`
 to repeat the optional pypdf extraction check. The output path must be new.
 The runner measures representations; it does not approve theorem coverage
 or turn the divergent token/character metrics into a single factor.
+
+
+## Full marked comparison
+
+```sh
+python3 research/case_study/formal/verify_lean.py ParabolicMarkedComparison.lean \
+  --packages /path/to/pinned/packages --lean /path/to/lean \
+  --output-dir scratch/parabolic-marked-fresh
+```
+
+This selects the complete four-module import chain. Both abstract IP and
+typed-Helly equivalences are formalized for actual markings; concrete matrix
+hypotheses and geometry identifications remain separate. See the
+[root interface review](research/case_study/phase37_parabolic_marked_root_audit.md).

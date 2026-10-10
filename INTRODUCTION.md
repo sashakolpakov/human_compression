@@ -3877,9 +3877,11 @@ The new [Lean certificate](research/case_study/formal/ParabolicProductComparison
 proves the entire typed-Helly equivalence and its membership/product/image-meet
 ingredients. Choosing representatives at one protected anchor avoids finite
 induction, so that formal statement covers arbitrary type sets and does not
-need a globally surjective homomorphism. Full marked IP and the tensor source
-adapter remain written proofs. All three local modules were freshly compiled
-with pinned dependencies; only standard axioms occur.
+need a globally surjective homomorphism. The subsequent [marked comparison certificate](research/case_study/formal/ParabolicMarkedComparison.scope.md)
+now also proves full marked IP in both directions and connects the subgroup
+families to actual generated markings. All four modules in its import chain
+passed a fresh run with pinned dependencies and standard axioms. The tensor
+source adapter remains a written proof.
 
 ## 67. The remaining work, and how a living reduction should record it
 
@@ -3918,7 +3920,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-five Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-six Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

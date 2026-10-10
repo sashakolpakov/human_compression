@@ -44,4 +44,5 @@ lean_lib MathCompressionCertificates where
     `SplitLatticeReduction,
     `CompactAffineData,
     `FibonacciModulus,
-    `ParabolicProductComparison]
+    `ParabolicProductComparison,
+    `ParabolicMarkedComparison]

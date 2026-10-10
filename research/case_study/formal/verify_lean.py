@@ -35,6 +35,7 @@ CERTIFICATES = (
     "CompactAffineData",
     "FibonacciModulus",
     "ParabolicProductComparison",
+    "ParabolicMarkedComparison",
 )
 
 

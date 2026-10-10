@@ -63,7 +63,7 @@ and the [theorem-by-theorem scope table](research/case_study/torsor_compression_
 The [general parabolic comparison theorem](research/case_study/phase36_parabolic_comparison.md)
 now isolates the bounded-product mechanism: exact protected products and
 exceptional membership preserve both subgroup intersections and flag
-completion across unrelated quotients. [Lean proves the complete flag-completion equivalence](research/case_study/formal/ParabolicProductComparison.scope.md),
+completion across unrelated quotients. [Lean proves both full subgroup-intersection and flag-completion equivalences](research/case_study/formal/ParabolicMarkedComparison.scope.md),
 even for arbitrary type sets and nonsurjective homomorphisms.
 
 ## Results in this snapshot
@@ -275,10 +275,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirty-five Lean modules certify specified components, with no `sorry` in the checked
+Thirty-six Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 34 reports have no native-evaluation axioms.
+axioms; the other 35 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 
