@@ -1708,7 +1708,143 @@ disjoint subgroups, and its exhaustion of a finite subgroup when the
 stated cardinalities agree. The Lie spanning, cardinality calculation
 and descending induction remain written proof steps.
 
-## 22. The remaining work, and how a living reduction should record it
+## 22. Concentrating the non-class-two part into a bounded core
+
+The canonical quotient gives a stronger way to compare whole families.
+For a nondegenerate marked string C-group of order 2^(2d−1+k), call k
+its excess over the class-two path group. Its kernel γ₃ has order 2ᵏ.
+The [support theorem](research/case_study/phase16_fixed_excess.md) says
+that this entire kernel is contained in a parabolic on at most 3k markers,
+occupying at most k intervals of the path. Add one neighboring marker on
+either side of each interval. The resulting core has at most 5k markers
+and order at most 2^(11k−1), for k>0. These bounds are sharp.
+
+Why should group order bound spatial support? Start with basic third
+commutators, each using at most three markers. At most k independent
+subgroup enlargements can occur inside a kernel of order 2ᵏ. When
+conjugation introduces a fresh marker, the actual intersection property
+forces another strict subgroup enlargement. Each new support vertex
+therefore consumes part of the same finite budget. Distant markers commute,
+so this process can grow intervals but cannot create a new disconnected
+interval without an initial commutator. This is a structural bound,
+independent of a finite catalogue.
+
+The complete marked multiplication data of the bounded core, together
+with the positions of those intervals, reconstruct the whole group by
+the standard class-two relations outside it. Thus increasing the rank
+adds specified path segments around a bounded amount of exceptional data.
+For each fixed k the number of ordered marked groups is Θ_k(d^k): the
+upper bound follows from the possible core positions, and the matching
+lower bound comes from choosing k exceptional triple sections in the
+construction below. This counts marked isomorphism classes, not ordinary
+group isomorphism classes, and does not give their exact coefficients.
+
+The [central-join theorem](research/case_study/phase16_central_join.md)
+completes the converse: every core satisfying the stated finite conditions
+attaches automatically. Take its direct product with one binary coordinate
+per outside marker, and add a central binary coordinate per edge outside
+the core. The multiplication receives the term
+β_e(x,y)=χ_head(e)(x)χ_tail(e)(y), where each χ is a generator-parity
+character. This cocycle makes the boundary interactions explicit.
+Every parabolic has an exact coordinate-support description, proving
+all intersections at once. Its third lower central subgroup is precisely
+the original core kernel. Extracting the canonical core and performing
+this attachment are inverse operations on ordered marked groups.
+
+```mermaid
+flowchart LR
+    G["Marked group G"] --> K["Kernel γ₃ and its support J"]
+    K --> H["Core H on N[J]"]
+    H --> C["H, outside bits and central edge cocycle"]
+    C --> G
+```
+
+This also gives an exact counting consequence. At fixed k, only finitely
+many core patterns remain. A long gap between them contributes one freely
+variable nonnegative length, so each pattern contributes a rational term
+m z^b/(1−z)^r to the rank-generating function. Hence the number of ordered
+marked groups is a polynomial of degree exactly k for every d≥6k−1.
+The finite core multiplicities m determine its coefficients; their full
+census has not been computed here. The result supplies a classification
+by a finite library and a sufficient stabilization bound, rather than
+an unsupported list of coefficients.
+
+## 23. Deletion maps connect the 2005 and 2025 reductions
+
+An endomorphism that keeps selected generators and deletes all others
+is a particularly useful projection. If these maps obey
+e_S e_T=e_(S∩T), an element belonging to both generated subgroups
+is fixed by their composite. Their intersection is therefore exactly
+the subgroup on the common markers. This recovers the full intersection
+property from one reusable identity, now checked abstractly in Lean.
+
+Two marked groups A and B with compatible retractions to a common
+parabolic C can be joined as the fiber product A×_C B. Its order is
+|A||B|/|C|, and its Boolean deletion maps preserve the intersection
+property. The [2025 reduction](research/case_study/phase16_fiber_products.md)
+places a square-torus group of order 2^(n_i) on each three-marker window
+and joins neighboring windows over their shared order-eight edge group.
+The order formula becomes a product of local orders divided by separator
+orders. The entire third lower central subgroup is a direct product of
+the local kernels. A short four-marker identity then proves the complete
+presentation, uniformly in every rank and parameter.
+
+The same fiber operation makes the alternating finite construction.
+For the three infinite extension theorems, the operation is instead a
+free product with amalgamation: its normal form puts every finite-order
+element inside a conjugate of an input group. This proves the required
+two-primary torsion assertion. The source allows infinite-order elements;
+its “infinite two-group” convention is explicitly preserved. These
+arguments recover six principal theorems, with the geometric construction
+and universal-extension correspondences listed as retained inputs.
+
+The [2005 Frattini reduction](research/case_study/phase16_frattini_geometry_reduction.md)
+uses another projection of the same coset data. A maximal intersection
+chain forces the Frattini subgroup into the Borel subgroup. Quotienting
+by that kernel preserves every typed coset and its incidence relations.
+For finite p-groups the quotient is a vector space. Panel witnesses give
+a basis modulo the Borel, and every subgroup becomes a coordinate
+hyperplane. This recovers the complete geometric classification and the
+residue tests without reproducing a group-by-group census. Its infinite
+group hypotheses are audited separately: the unrestricted relative-
+generator converse is false, while the geometric chain theorem remains
+valid under its stated finite-rank assumptions.
+
+These reductions share useful projections and coset coordinates, but a
+matched proof-length comparison must still pay for their separate ladder,
+coordinate, fiber-product and normal-form arguments. Their twenty-year
+separation alone supplies no numerical compression factor.
+
+## 24. A small triangular subgroup can certify a large matrix group
+
+The new [linear diagonal construction](research/case_study/phase16_linear_diagonal.md)
+uses four explicit projective involutions over F_q. Three of their
+matrix lifts generate the lower unitriangular group over the prime field,
+together with an eight-element sign group. Its order is 8p⁶ even when
+q=p^e is much larger. The fourth matrix contains one field generator h.
+Conjugation supplies one upper elementary matrix with coefficient −1/h;
+elementary commutators multiply coefficients until every element of
+F_p(h)=F_q is available. This proves generation of the full linear socle.
+The determinant classes specify exactly its diagonal index-two extension.
+
+For the intersection property, the first three generators preserve an
+explicit symmetric form up to scalar. Instead of classifying that form's
+full stabilizer, intersect it with the already known triangular subgroup.
+Successive matrix entries leave exactly 4p possibilities. Those are exactly
+the middle dihedral subgroup. Two smaller triangularity and root-coordinate
+checks give the remaining rank-three intersections. The recursive criterion
+then gives the full rank-four representation of type {4,2p,2p}.
+
+The parameter restrictions are only F_p(h)=F_q and 1+4h≠0. A primitive
+element avoids the one forbidden value for q≥5; h=1 handles q=3.
+This replaces a potentially large subgroup search by elementary generation
+and one small intersection calculation. Exact symbolic and finite checks
+support the all-field written proof. With the retained upper bound, it
+completes the maximum-rank question in the odd linear diagonal interval.
+The broader almost-simple question includes field and graph extensions,
+and remains outside this result; publication priority is unverified.
+
+## 25. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -1745,7 +1881,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [nineteen Lean certificates](research/case_study/formal/README.md) cover
+The [twenty Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -1754,7 +1890,8 @@ implications for coset Helly, separation of matrix intertwiners by an
 invertible additive commutator, vanishing of transvection-invariant forms,
 the abstract involution-centralizer rank obstruction, and the exact
 four-case binary Frattini-action lemma, abstract marked-square descent,
-and the split-kernel image and finite product steps in graded support lifting.
+the split-kernel image and finite product steps in graded support lifting,
+and Boolean-image intersections and four-marker centralization.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.

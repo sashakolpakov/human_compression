@@ -289,7 +289,7 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker additionally covers the nine later modules and their
+public snapshot checker additionally covers the eleven later modules and their
 successful reports. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 
@@ -303,3 +303,27 @@ This phase updates the earlier [36-paper audit](compression_audit.md), which
 is retained as a baseline with its narrower scope. The [research README](README.md)
 separately records the proposed conjecture proofs and the significant questions
 that remain unresolved.
+
+The phase-sixteen [bounded-core theorem](phase16_fixed_excess.md) confines
+the full third lower central subgroup at excess k to at most 3k markers
+and reconstructs the group from a core on at most 5k markers. The
+[fiber-product reduction](phase16_fiber_products.md) recovers six principal
+2025 construction theorems, including the exact all-parameter presentation.
+Boolean deletion maps prove IP once for the whole family, and a single
+amalgam torsion lemma supplies the three infinite-extension conclusions.
+The [2005 Frattini reduction](phase16_frattini_geometry_reduction.md)
+recovers the principal geometric quotient and classification results
+through a maximal-chain argument and vector-space coordinates. Its finite
+relative-generator scope and the infinite geometric proof are distinguished.
+These add two principal-result works, bringing the scoped ledger to twelve;
+they do not change the two measured description-length ratios.
+
+The [central join](phase16_central_join.md) supplies automatic attachment
+for every qualifying finite core and proves that extraction and attachment
+are inverse for ordered markings. The rank-generating function is rational,
+and the count is a degree-k polynomial for d≥6k−1; its finite library
+multiplicities are not enumerated. The [linear diagonal theorem](phase16_linear_diagonal.md)
+also completes the classification of maximum ranks in the odd interval
+PSL₄(q)≤G≤PGL₄(q): four at socle index one or two, and no involution
+generating set at index four. It is a subcase of the larger almost-simple
+question, with priority unverified and no new Lean formalization.

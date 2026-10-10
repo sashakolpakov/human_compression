@@ -144,3 +144,11 @@ were freshly rerun from exported sources. The
 [original-file manifest](phase15_original_files.json) preserves byte-identical
 proofs and certificates. The two ratios remain separately scoped, and no
 infinity marker or current-priority claim is assigned.
+
+The [phase-sixteen review](phase16_review.md) records exact bounded-core
+attachment and polynomial counting, the completed odd linear diagonal
+interval, and the 2005/2025 principal-result reductions. The ledger now
+contains twelve works. Sixty-two new original artifacts retain their
+recorded bytes; the twentieth partial Lean module was freshly compiled.
+The two matched ratios remain separately scoped and unchanged. The
+structural group-description bound is recorded as a different quantity.

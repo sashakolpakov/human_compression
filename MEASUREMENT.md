@@ -43,6 +43,28 @@ the ratio depends strongly on the chosen background or level of detail.
 These are reproducible descriptive measurements, not claims about shortest
 possible proofs or the intrinsic value of previous research.
 
+## A separate structural description bound
+
+The [bounded-core classification](research/case_study/phase16_central_join.md)
+provides an exact asymptotic encoding result. For fixed excess k>=1, let
+a_k(d) count the ordered marked groups of rank d and order 2^(2d−1+k).
+It is eventually a positive degree-k polynomial. Therefore
+
+    log2 a_k(d) = k log2 d + O_k(1).
+
+Conditional on d, k and the specified finite core library, a fixed-length
+index identifying one marked class requires exactly ceil(log2 a_k(d))
+bits in the worst case. A finite enumeration supplies a decoder; no
+efficient enumeration or decoding time is asserted. The canonical
+core and its positions also give an explicit structural encoding of
+the same asymptotic order. Its library cost is a fixed k-dependent
+constant, not a free contribution to an unrelated corpus measurement.
+
+This is a theorem about descriptions of mathematical objects. It is
+not a numerical ratio between the literature's proofs and ours. The
+finite library multiplicities have not been computed in general, so
+this statement does not assign numerical coefficients or a corpus ratio.
+
 ## The infinity marker
 
 A verified solution to a previously open problem deserves a separate,
@@ -289,3 +311,22 @@ The written proof, independent sieve and all exceptional parameter witnesses
 are reviewed separately from the earlier priority search. This is a stronger
 coverage claim, with current priority unverified; it receives neither a
 matched-length ratio nor an infinity marker.
+
+Phase sixteen adds two scoped principal-result reductions: the 2005
+Frattini-geometry paper and the six principal construction theorems of
+the 2025 two-group paper. The ledger now contains twelve works. The
+fixed-excess theorem concentrates all non-class-two data into a bounded
+core and gives a sharp Θ_k(d^k) growth order for ordered marked groups.
+These are substantive coverage and structural gains. No matched source
+and replacement spans have yet been measured for them, so the two existing
+ratios remain unchanged. Neither rederiving an existing theorem nor proving
+a companion result with unverified priority receives the infinity marker.
+
+The same phase's [linear diagonal construction](research/case_study/phase16_linear_diagonal.md)
+proves uniform rank-four existence for every odd-field diagonal index-two
+extension. With the retained upper bound, it completes the classification
+of maxima within PSL₄(q)≤G≤PGL₄(q). This is a proper part of the broader
+survey problem about all almost-simple extensions. The
+[dated primary-source audit](research/case_study/phase16_linear_diagonal_status.md)
+does not establish current priority, so this result receives neither an
+infinity marker nor a finite proof-length ratio.

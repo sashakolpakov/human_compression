@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the nineteen saved Lean reports
+checks local documentation links, and checks the twenty saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all nineteen certificates and their unformalized boundaries. With Git
+describes all twenty certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -630,7 +630,7 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The nineteen certificates cover intersection transport, field and matrix
+The twenty certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
@@ -648,6 +648,71 @@ the equivariant transport obstruction with its stated assumptions.
 They formalize the stated components, not the complete geometric
 instantiations, all source-group classifications, or every written theorem.
 The saved successful runs report no `sorryAx` dependency.
+
+## Fixed excess, fiber products and the 2005 Frattini reduction
+
+From the repository root, use a scratch output directory to preserve the
+saved reports:
+
+```sh
+mkdir -p scratch/phase16
+python3 research/case_study/phase16_frattini_coordinate_check.py --output scratch/phase16/frattini.json
+python3 research/case_study/phase16_fiber_products_check.py --output scratch/phase16/fibers.json
+python3 research/case_study/phase16_central_join_check.py --output scratch/phase16/joins.json
+gap -q research/case_study/phase16_fixed_excess_check.g > scratch/phase16/core.log
+gap -q research/case_study/phase16_hidden_kernel_check.g > scratch/phase16/hidden_kernel.log
+python3 research/case_study/formal/verify_lean.py BooleanRetractions.lean
+```
+
+The first checker uses only the Python standard library. It examines
+774,039 subspace families and verifies 1,801 coordinate bijections.
+Its optional `--source-pdf` verifies separately supplied primary bytes;
+the mathematical diagnostic does not require that PDF.
+
+The second requires GAP and constructs the eight presented groups before
+checking their orders, 136 deletion maps, all 3,008 subgroup intersections
+and their local kernel products. Its runner checks the complete case list
+and binds the output. The fixed-excess scripts additionally require GAP's
+NQ package. Their six examples check 23,616 meets and 296 kernel restrictions;
+the separate class-four example checks 256 meets and exhibits an extra
+kernel element produced only by normal closure. These are finite diagnostics
+for the uniform written proofs, not an exhaustive classification at every
+excess.
+
+The standard-library central-join checker builds its order-64 torus seed
+from affine coordinates and checks its multiplication. Its four joins
+have orders 128, 256, 4,096 and 32,768; it constructs 224 parabolics,
+tests 20,992 meets, and computes the derived and lower central subgroups.
+The fresh exported run is byte-identical to the saved deterministic report,
+recorded in [the public check](provenance/phase16_join_public_check.json).
+This tests actual cocycle groups, including two separated nonabelian cores;
+it is not a finite census proving the counting polynomial.
+
+The twentieth Lean module proves exactly the Boolean-image intersection
+and four-marker centralization statements. The public runner was freshly
+executed against the pinned dependencies; its report is
+[saved separately](provenance/phase16_boolean_public_compile.json).
+The preceding nineteen source files and historical compiler reports are
+unchanged. The geometric bridges and full constructions remain written
+arguments with the retained inputs listed in their notes.
+
+For the linear diagonal construction, preserve the timestamped symbolic
+report by running a scratch copy:
+
+```sh
+mkdir -p scratch/phase16_linear
+cp research/case_study/phase16_linear_diagonal_symbolic.py scratch/phase16_linear/
+python3 scratch/phase16_linear/phase16_linear_diagonal_symbolic.py
+gap -q -T research/case_study/phase16_linear_diagonal_check.g > scratch/phase16_linear/finite.log
+```
+
+The symbolic checker requires SymPy (recorded version 1.14.0) and verifies
+89 exact identities, including the root chains and all form-elimination
+sign cases. The GAP check constructs the projective groups over q=3,5,7,9
+and checks every one of their 16 marked subgroups and 256 meets. Root and
+independent agent executions agree on all mathematical outputs. This
+supports the written all-field proof; there is no new Lean formalization
+of this matrix-family theorem or certification of publication priority.
 
 ## GAP computations and retained catalogues
 

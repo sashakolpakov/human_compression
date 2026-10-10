@@ -15,7 +15,7 @@ STUDY = ROOT / "research/case_study"
 INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "workspace_proof_audits.json", "phase4_old_problem_intake.json",
           "older_literature_updates.json", "phase5_network_intake.json",
-          "phase6_network_intake.json")
+          "phase6_network_intake.json", "phase16_frattini_geometry_intake.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -133,7 +133,7 @@ UPDATES = {
         "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). A uniform matrix template generates SU4(q) for q=1 mod4 and has projective IP whenever the middle order is q^2-1 or q^2+1, using two auxiliary forms and a regular-torus bound. An elliptic primitive-character sieve and 406 independently checked field witnesses prove parameter existence for every odd q=1 mod4; characteristic three uses the rational curve from phase twelve. A second sphere template, twisted norm curve and primitive sieve cover q=3 mod4, q>=7, with 1699 independently checked exceptional parameter records and full q7/q11 finite group certificates. Together these prove maximum rank four for every odd q>=5. The failed-IP control remains.",
         "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; PGL2 maximal-subgroup classification, rank-one unitary identification and perfection; Standard projective unitary order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms; Katz Euler/trace/weight and Lang character-sheaf machinery; Hasse-Weil for the smooth genus-one curves; The stated symplectic torus list and recursive string C-group IP criterion; Exact primitive sieves and all 406 first-family and 1699 second-family exceptional parameter records",
         "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json;phase12_unitary_parameters.md;phase12_unitary_root_audit.md;phase12_unitary_root_audit.json;phase13_unitary_elliptic.md;phase13_unitary_sieve.md;phase13_unitary_manifest.json;phase13_unitary_independent_check.json;phase13_unitary_sieve_independent_audit.md;phase13_unitary_priority_audit.md;phase13_root_review.md;phase14_unitary_q7.md;phase14_unitary_q7_check.json;phase14_unitary_q7_root_check.json;phase14_unitary_q7_manifest.json;phase15_unitary_sieve.md;phase15_unitary_generation.md;phase15_unitary_intersection.md;phase15_unitary_parameter_reduction.md;phase15_unitary_curve.md;phase15_unitary_manifest.json;phase15_unitary_independent_audit.md;phase15_unitary_sieve_independent_check.json;phase15_unitary_witnesses_independent_check.json;phase15_unitary_q11.md;phase15_unitary_q11_root_check.json",
-        "Problem 7 remains incomplete: field and graph extensions and general index-two existence are unresolved here. The two curve/sieve constructions now give maximum rank four for PSU4(q) for every odd q>=5; published rank-three existence yields rank set {3,4}. PSU4(3) has no representation by retained published input. Both sieves and all 406 first-family and 1699 second-family finite parameter exceptions have independent checks; q7/q11 retain full group/IP certificates. Generation, intersection and character bounds remain written proofs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted as a second solution; current priority and external review remain."),
+        "Problem 7 remains incomplete: field and graph extensions and unitary index-two existence are unresolved here. The odd linear diagonal interval now has a complete maximum-rank classification: four at socle index one or two, and no involution generation at index four. The two curve/sieve constructions now give maximum rank four for PSU4(q) for every odd q>=5; published rank-three existence yields rank set {3,4}. PSU4(3) has no representation by retained published input. Both sieves and all 406 first-family and 1699 second-family finite parameter exceptions have independent checks; q7/q11 retain full group/IP certificates. Generation, intersection and character bounds remain written proofs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted as a second solution; current priority and external review remain."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",
@@ -216,8 +216,8 @@ UPDATES = {
         "principal_results_rederived", "Four parts of Theorem 1: RWPRI/(2T)1/(IP)2, even-rank PRI, QPRI/middle criterion, and RPRI/complete-diagram criterion",
         "Forest component groups and two-block stabilizers reduce all property tests to leaf cuts, balanced cuts and stars.",
         "Foundational 1997 classification and uniqueness of inductively minimal pairs; Known transposition-tree model",
-        "phase5_tree_cuts.md;phase5_tree_check.json;phase5_tree_audit.md",
-        "Foundational classification remains an input; no end-to-end Lean proof or numerical compression ratio. External review remains."),
+        "phase5_tree_cuts.md;phase5_tree_check.json;phase5_tree_audit.md;phase16_older_source_access.md",
+        "Foundational classification remains an input. The complete indexed primary text is now read, including the formerly missing proof sections; the original PDF remains unavailable. No end-to-end Lean proof or numerical compression ratio. External review remains."),
     "N002": (
         "component_rederived", "Tree correspondence announced in the primary abstract",
         "An explicit maximal-clique reconstruction converts the foundational diagram conditions into a unique tree; tree-cut geometry realizes it.",
@@ -236,6 +236,18 @@ UPDATES = {
         "Burnside basis theorem; Ordinary lower-central graded Lie construction and generation in degree one; Finite nilpotency; Standard marked C-group/regular-polytope covering correspondence; Elementary square collection for the separate auxiliary counterexamples",
         "phase15_graded_support.md;phase15_graded_support_scope.md;phase15_graded_support_certificate.json;phase15_graded_support_independent_audit.md;phase15_graded_support_root_audit.md;phase15_quotient_ip.md;phase15_quotient_ip_certificate.json;phase12_path_cocycle.md;phase12_path_cocycle_check.json;phase12_hou_schulte_independent_audit.md;phase12_hou_schulte_independent_audit.json;phase12_hou_schulte_root.log",
         "Both identified principal results are recovered without a class cutoff; the false auxiliary kernel assertions are not repaired. This is a replacement proof of an already stated theorem, not resolution of a conjecture left open by that source. Forest-extension priority and external review remain unverified. No matched-length ratio, end-to-end Lean proof or infinity marker."),
+    "F016": (
+        "principal_results_rederived", "Theorems 5.1(a-d), 5.3, 6.1(a-b), and 7.1-7.3; Lemma 4.1 relative to square-torus classification",
+        "Boolean deletion maps give marked IP and split kernels. Compatible path and two-branch fiber products recover the finite regular and alternating semiregular constructions, orders and flatness. A four-marker identity gives the entire finite presentation; an amalgam normal-form argument proves the three infinite-extension torsion statements under the source's convention.",
+        "Regular-polytope/string-C-group correspondence; Classification of regular square maps by invariant translation lattices; Monson-Schulte tail-triangle construction and full-automorphism criterion; The three geometric universal-extension/amalgam identifications; Amalgam normal-form theorem",
+        "phase16_fiber_products.md;phase16_fiber_products_certificate.json;phase16_fiber_products_independent_audit.md;phase16_fiber_products_independent_audit.json;phase16_fiber_products_check.json;phase16_fiber_products_independent_run.json;formal/BooleanRetractions.lean;formal/BooleanRetractions.scope.md;phase16_fixed_excess.md;phase16_fixed_excess_certificate.json;phase16_fixed_excess_independent_audit.md;phase16_fixed_excess_independent_audit.json",
+        "All six identified principal theorems are recovered with the stated geometric inputs. Quoted earlier constructions, the full geometric bridges and every informal remark are not rederived. Lean proves Boolean range intersections and the four-marker implication only. The fixed-excess core theorem is a companion application, not additional paper credit. No matched-length ratio or priority claim; external review remains."),
+    "N008": (
+        "principal_results_rederived", "Theorem 2.1 in finite-group scope; Theorem 3.1 including infinite groups; Proposition 3.2, Corollary 3.3, Theorem 3.4, Proposition 3.5, Lemma 3.6, Proposition 3.7, Theorem 3.8 and the Section 4.2 residue Frattini test",
+        "An irredundant subgroup-intersection family with one maximal chain contains the Frattini subgroup in its Borel. Exact coset-kernel transport gives the quotient correspondence; an elementary coordinate basis classifies every finite-p-group example. Relative generation and deletion tests give the finite generating-set theorem.",
+        "Elementary subgroup correspondence and the Frattini definition; Finite-p-group Frattini quotient is elementary abelian; Zorn's lemma for the relatively finitely generated infinite-group case",
+        "phase16_frattini_geometry_reduction.md;phase16_frattini_geometry_intake.json;phase16_frattini_manifest.json;phase16_frattini_root_audit.md;phase16_frattini_root_audit.json;phase16_frattini_coordinate_check.json;phase16_frattini_root_check.json;phase16_older_source_access.md",
+        "Scope is all principal new geometric results and the finite relative-generating-set theorem. The unqualified infinite-group converse of Theorem 2.1 requires an extra hypothesis; its explicit scope counterexample is separate from correction priority. Quoted Gaschütz Theorem 4.1, historical SmallGroups counts and Frattini-computation algorithms are not rederived or rerun. No matched ratio or end-to-end formalization; external review remains."),
     "N004": (
         "component_rederived", "Advertised RWPRI/(IP)2 truncation target, via a complete weighted-tree model",
         "Contract omitted edges and retain component sizes as weights; forest and laminar incidence formulas give exact primitivity, local two-transitivity, rank-two and full-shadow criteria.",
@@ -252,8 +264,11 @@ UPDATES = {
 
 READING_UPDATES = {
     "F013": ("full_text_read", "Complete eleven-page cached primary manuscript read by root; definitions (7)-(9) and Theorem 4.2 compared independently on PDF pages 5-8 and in versioned v1 HTML. Header dates differ; the exact checked claims are recorded in the proof.", "phase12_path_cocycle.md"),
+    "F016": ("full_text_read", "All nineteen pages of arXiv:2512.15511v1 read by root, including references and all six principal statements/proofs. The independent reviewer read the full targeted sections 4-7. The title-page date is 18 December 2025 and the arXiv stamp is 17 December 2025.", "phase16_fiber_products.md"),
+    "N001": ("full_text_read", "Complete seven-page authored text read through the indexed Academia rendering, including all definitions, Lemmas 1-7, Corollaries 1-2, Theorem 1 and proofs. Formerly missing pages 217-218 are present. Original PDF still unavailable; no original-PDF extraction or matched ratio is claimed.", "phase16_older_source_access.md"),
+    "N008": ("full_text_read", "Complete nine-page primary PDF read, including every numbered statement and proof, computational remarks and references. Two EMIS mirrors returned identical validated PDF bytes.", "phase16_frattini_geometry_reduction.md"),
     "L074": ("full_text_read", "All twelve pages of the primary author manuscript read, dated 27 September 2011; journal publication is 2010. Both principal counting theorems, their full proofs, the subgroup table and the L085 restatement are checked.", "phase10_suzuki_marked_fields.md"),
-    "L085": ("abstract_read", "Original author abstract read; original full body remains unavailable. The complete principal rank/existence theorem is read through its primary restatement in L074, Theorem 3, manuscript p.5; this does not mean the original L085 sections were read.", "phase10_suzuki_marked_fields.md"),
+    "L085": ("abstract_read", "Original author abstract read; original full body remains unavailable. The complete principal rank/existence theorem is read through its primary restatement in L074, Theorem 3, manuscript p.5. The Luxembourg szpoly3 révisé PDF was identity-checked and belongs to L074, not L085; no original L085 section reading is inferred.", "phase16_older_source_access.md"),
     "L091": ("selected_sections_read", "Pages 231–233 visually read, including Table 1 and local-two-transitivity/truncation conventions; no HS census reproduction.", "phase6_sporadic_source_audit.md"),
     "L110": ("selected_sections_read", "Rank-three R1–R13, higher-rank construction context and p.11 flag-transitivity uncertainty checked; exact hypotheses compared with L114.", "phase5_suzuki_intake.json"),
     "L114": ("selected_sections_read", "Theorems 5.3–5.5 and their case analyses read; printed pp.58–60 visually checked; Lemma3.11 and final p.61 realization qualification checked.", "phase5_suzuki_intake.json"),
@@ -279,6 +294,8 @@ def reading_category(scope, available):
         return "metadata_and_access_only"
     if scope in {"read_full_short_paper", "read_full_short_editorial"}:
         return "full_short_text_read"
+    if scope == "complete_all_9_pages_statements_proofs_and_references":
+        return "full_text_read"
     if scope == "full_text_searched_for_open_problems":
         return "full_text_search_only"
     return "selected_sections_read"
@@ -394,6 +411,33 @@ def record(row, baseline, overlay, later_readings, older_access):
     if identifier == "N003":
         r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
         r["access_coverage"]["notes"] = "The complete primary manuscript has been read and all eight numbered targets rederived in the finite-group/n>=7 scope. Whiston W1/W2 remain retained inputs; the earlier tree-only assessment is superseded. Phase15 independently audits a compact complete proof and its matched 4/3 description-length ratio."
+    if identifier == "N001":
+        r["primary_urls"].append("https://www.academia.edu/54639280/Some_properties_of_inductively_minimal_geometries")
+        r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
+        r["access_coverage"].update(
+            retrieved_full_text=True, original_pdf_available=False,
+            source_representation="complete_indexed_rendering_of_primary_text",
+            retrieval_status="complete_rendered_primary_text_accessed_original_pdf_unavailable",
+            notes="Complete authored text is now read, including all formerly missing proof sections. The private browser record identifies the authored body separately from website navigation. The original PDF remains unavailable; this access improvement adds no theorem credit and no new measurement ratio.")
+    if identifier == "N008":
+        r["source_intake_id"] = "ACK2005_unassigned"
+        r["source_intake_id_note"] = "Assigned living-registry ID N008; frozen intake bytes and original ID are unchanged."
+        r["access_coverage"]["original_pdf_available"] = True
+        r["excluded_source_claims"] = load("phase16_frattini_geometry_intake.json")["excluded"]
+        r["exact_target"] = [
+            {"reference": "Theorem 2.1, finite groups",
+             "scope": "Relative independent generation is equivalent modulo the Frattini subgroup. The unrestricted infinite converse is not asserted; a scope counterexample is recorded separately.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+            {"reference": "Theorem 3.1; Proposition 3.2; Corollary 3.3; Theorem 3.4",
+             "scope": "The Frattini subgroup lies in the Borel, including the theorem's infinite-group setting because the finite maximal chain supplies relative finite generation. Exact coset-kernel transport preserves the stated geometry and residue conditions.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+            {"reference": "Proposition 3.5; Lemma 3.6; Proposition 3.7; Theorem 3.8",
+             "scope": "Coordinate hyperplanes classify all firm RWPRI finite-p-group coset geometries in the source conventions: they are direct sums of primitive rank-one geometries.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+            {"reference": "Section 4.2 residue Frattini test",
+             "scope": "Apply the subgroup ladder inside each residue group to obtain the exact necessary Frattini-containment test, not a sufficient recognition criterion.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+        ]
     if identifier == "F013":
         r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
         r["access_coverage"]["notes"] = "Complete cached manuscript read; primary pages1-4 rechecked for the exact principal-target adapter. Phase15 graded support recovers both principal Theorems1.1-1.2 in all classes and ranks. The phase-twelve counterexamples to specified auxiliary C conclusions in v1 Theorem4.2(c-e) remain valid."
@@ -414,11 +458,57 @@ def record(row, baseline, overlay, later_readings, older_access):
             {"reference": "Theorem 2", "scope": "Complete Suzuki polyhedron count up to isomorphism and duality, including nondegeneracy; the compact formula is proved equal to the published nested formula in all parameters.",
              "relation_to_source": "specified_existing_target_or_encoding"},
         ]
-    if identifier == "L085":
         r["primary_urls"].append("https://math.uni.lu/kiefer/Publications/szpoly3%20r%C3%A9vis%C3%A9.pdf")
         r["primary_urls"] = list(dict.fromkeys(r["primary_urls"]))
+    if identifier == "L085":
+        foreign_url = "https://math.uni.lu/kiefer/Publications/szpoly3%20r%C3%A9vis%C3%A9.pdf"
+        r["primary_urls"] = [u for u in r["primary_urls"] if u != foreign_url]
+        r["cross_references"] = [{
+            "paper_id": "L074", "url": foreign_url,
+            "scope": "Verified full text of the distinct Kiefer-Leemans counting paper, containing the principal L085 theorem as Theorem 3. This is not an L085 full-text URL.",
+        }]
+        r["evidence"].append(evidence("phase16_older_source_access.md", "L074/L085 primary PDF identity audit"))
+    if identifier == "F016":
+        r["primary_urls"] = ["https://arxiv.org/abs/2512.15511v1", "https://arxiv.org/pdf/2512.15511v1"]
+        r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes", "")
+        r["access_coverage"]["notes"] = "Complete nineteen-page version read. Six principal theorems rederived with explicit retained geometric inputs. The infinite-group terminology permits infinite-order elements; all finite-order elements must have two-power order. The fixed-excess theorem is a separate companion application, not another paper reduction."
+        r["exact_target"] = [
+            {"reference": "Theorem 5.1(a-d)",
+             "scope": "Every prescribed toroidal triple sequence: existence, exact group order, specified flatness and all stated FAP assertions, via path fiber products and deletion maps.",
+             "relation_to_source": "principal_results_rederived"},
+            {"reference": "Theorem 5.3",
+             "scope": "Complete all-rank presentation with the stated disjoint-edge-square commutator relators. Lattice-index kernel counts avoid assuming the two squared translations intersect trivially.",
+             "relation_to_source": "principal_results_rederived"},
+            {"reference": "Theorem 6.1(a-b)",
+             "scope": "The alternating semiregular construction and both full-automorphism order cases, conditional on the expressly retained tail-triangle geometric theorem.",
+             "relation_to_source": "principal_results_rederived"},
+            {"reference": "Theorems 7.1, 7.2 and 7.3",
+             "scope": "All three free-extension results, including infinite input groups, use the source's two-primary-torsion convention and retained geometric amalgam identifications.",
+             "relation_to_source": "principal_results_rederived"},
+            {"reference": "Lemma 4.1",
+             "scope": "The two-power square-torus parameter classification relative to the standard classification by invariant lattices.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+            {"reference": "Companion fixed-excess theorem for all finite nondegenerate two-group string C-groups",
+             "scope": "For rank d>=3 and |G|=2^(2d-1+k), k>=0, supp(gamma3(G)) has at most 3k vertices in at most k intervals. For k>0 its closed neighborhood has at most 5k vertices and core order at most 2^(11k-1). The exact attachment presentation and central cocycle give a canonical bijection with finite cores: every qualifying core attaches automatically, with no global order/IP acceptance test. All bounds are sharp; for each fixed positive k the ordered-marking count is a polynomial of degree k for every d>=6k-1. Its rational generating function has finite core multiplicities; the rederived F016 family gives the lower bound. Those multiplicities have not been enumerated. For k=0 the canonical group is unique. This is not a second paper-credit item or an efficient core census.",
+             "relation_to_source": "proposed_uniform_companion_application"},
+        ]
+        r["proposed_new_result"] = True
+        for name in ("phase16_central_join.md", "phase16_central_join_independent_audit.json", "phase16_central_join_root_review.json"):
+            r["evidence"].append(evidence(name, "Exact central attachment and eventual polynomial count; companion result"))
+        r["retained_inputs"].append("For the companion fixed-excess theorem: reviewed all-class forest quotient theorem; the rederived F016 family supplies sharpness and the counting lower bound")
     if identifier == "L120":
         r["exact_target"][0]["scope"] = "Dimension-four bilinear-form obstructions give the stated odd linear and unitary intermediate-group upper bounds, with the phase-eight PSL4 argument retained. Field and graph extensions are not covered."
+        r["exact_target"].append({
+            "reference": "Problem 7, diagonal linear interval PSL4(q)<=G<=PGL4(q), every odd q",
+            "scope": "An explicit four-matrix template gives type {4,2p,2p} on the diagonal index-two subgroup for q=p^e. Together with the retained upper bound and published simple-socle existence, maximum rank is four at socle index one or two; index four has no involution generating set. This does not assert rank-three extension existence or field/graph cases.",
+            "relation_to_source": "proposed_resolution_of_exact_subcase",
+            "retained_inputs": ["Burnside basis theorem and unitriangular abelianization", "Elementary matrix generation", "Recursive marked intersection criterion", "Earlier written rank-four upper bound", "Published simple-socle rank-four existence only for the interval corollary"],
+        })
+        r["method"].append("Prime-field triangular generators plus one field parameter produce every elementary root. A symmetric-form intersection inside the known triangular subgroup has exactly 4p elements, giving the full rank-four IP without an orthogonal subgroup classification.")
+        for name in ("phase16_linear_diagonal.md", "phase16_linear_diagonal_manifest.json",
+                     "phase16_linear_diagonal_independent_audit.json", "phase16_linear_diagonal_root_audit.json",
+                     "phase16_linear_diagonal_status.md", "phase16_linear_diagonal_status.json"):
+            r["evidence"].append(evidence(name, "Odd linear diagonal interval; exact subcase, priority unverified"))
         r["exact_target"].append({
             "reference": "Companion unitary application: maximum rank four and rank set {3,4} for PSU4(q), every odd q>=5",
             "scope": "Two curve/character-sieve constructions, complete exceptional parameter certificates and full q7/q11 group/IP checks give rank-four existence in both odd congruence classes. Generation/intersection and the separate rank obstruction are written proofs. Published rank-three existence is retained; PSU4(3) has no representation by retained published input. Broader almost-simple survey scope remains unresolved.",
@@ -465,6 +555,22 @@ def phase6_network_rows():
             "retained_inputs": source["retained_inputs"],
         })
     return result
+
+
+def phase16_network_rows():
+    """Assign a living-map ID without changing the frozen source intake."""
+    source = load("phase16_frattini_geometry_intake.json")
+    return [{
+        "id": "N008", "title": source["title"],
+        "publication_year_from_catalogue": source["year"],
+        "citation": ", ".join(source["authors"]) + ". " + source["journal"] + " (2005).",
+        "category": "Network publication", "mathematical": True,
+        "fulltext_available": True, "reading_scope": source["reading"],
+        "retrieval_status": "complete_primary_pdf_verified_from_two_identical_mirrors",
+        "status_note": source["scope_note"],
+        "assets": [{"url": u} for u in source["primary_urls"]], "source_urls": [],
+        "intake_file": "phase16_frattini_geometry_intake.json",
+    }]
 
 
 def escaped(text):
@@ -529,6 +635,7 @@ def render(registry):
             "L034": ("Complete proposed conjecture proof", "phase14_cyclic_tpp.md"),
             "L120": ("Every odd q>=5", "phase15_unitary_sieve.md"),
             "F013": ("All-class theorem and source adapter", "phase15_graded_support_scope.md"),
+            "F016": ("Fixed-excess companion theorem", "phase16_fixed_excess.md"),
         }.get(r["id"])
         extra_link = (f" [{companion[0]}](research/case_study/{companion[1]})."
                       if companion else "")
@@ -567,6 +674,16 @@ def render(registry):
         "  groups and the full generator/geometry classifications for n>=7. Whiston's",
         "  maximum-family theorem and omission trichotomy remain explicit inputs;",
         "  the 1997 geometry classification is unnecessary for this separate reduction.",
+        "- **N001 (1998), source access:** the complete indexed primary text is now read,",
+        "  including the previously missing proof sections. The original PDF remains",
+        "  unavailable; this adds source coverage, not another theorem or measured ratio.",
+        "- **N008 (2005), Archer–Cara–Krempa:** a subgroup-intersection ladder and exact",
+        "  coset-kernel transport recover the principal Frattini reductions; a coordinate",
+        "  basis gives the full finite-p-group geometry classification and residue test.",
+        "  The finite relative-generating-set theorem is included. Its unqualified infinite",
+        "  converse requires an extra hypothesis; the explicitly infinite geometric theorem",
+        "  remains valid by relative finite generation. Gaschütz's quoted structure theorem,",
+        "  historical SmallGroups counts and Frattini-computation algorithms are excluded.",
         "- **N004 (2003):** contraction with vertex weights incorporates every tree-family",
         "  truncation. Exact local and full-shadow criteria are proved, with a new Lean",
         "  witness theorem for retained consecutive ranks. The source full text remains",
@@ -641,6 +758,8 @@ def main():
              for r in load("phase5_network_intake.json")["entries"]]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase6_network_rows()]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase16_network_rows()]
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]

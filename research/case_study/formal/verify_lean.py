@@ -23,7 +23,7 @@ CERTIFICATES = (
     "BooleanShadow", "ConsecutiveShadow", "RankThreeFactorization", "CosetCoordinates",
     "IntertwinerSeparation", "TransvectionForms",
     "InvolutionCentralizers", "BinaryFrattiniActions", "MarkedSquareDescent",
-    "GradedSupport",
+    "GradedSupport", "BooleanRetractions",
 )
 
 
