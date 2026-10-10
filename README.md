@@ -1,4 +1,6 @@
-# Math Compression
+# Human Compression
+
+[Public repository](https://github.com/sashakolpakov/human_compression)
 
 **How much of a research programme can a few good ideas and a strong LLM compress?**
 
