@@ -530,3 +530,10 @@ Phase thirty-nine determines |G_m|=1296m^6 for the specified even-parameter
 quotients and formally checks the generic integral-reduction step. A group
 order is not a proof-compression ratio. The two matched-proof ratios and
 the unassigned infinity marker are unchanged.
+
+
+Phase forty adds finite regular existence at every source parameter divisible
+by three. Combined with the even family, it covers parameters divisible by
+two or three; the uniform cases coprime to six and current priority remain
+undetermined. Parameter coverage is not a proof-compression ratio. No
+existing-paper count or infinity marker changes.

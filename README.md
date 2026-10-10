@@ -47,7 +47,14 @@ and the [theorem-by-theorem scope table](research/case_study/torsor_compression_
 
 ## Results in this snapshot
 
-The latest [varying-parameter construction](research/case_study/phase33_L003_even_family.md)
+Two constructions now give finite regular hypertopes for every source
+parameter $s\ge2$ divisible by two or three. The [multiples-of-three family](research/case_study/phase34_L003_triple_family.md)
+uses the same quotient theorem and has an independent exhaustive check
+of all 56,225 base flags. The [combined universal corollary](research/case_study/phase34_L003_combined_universal.md)
+establishes the marked regular universal objects at those parameters.
+Uniform existence for parameters coprime to six and priority remain unresolved.
+
+The earlier [varying-parameter construction](research/case_study/phase33_L003_even_family.md)
 gives a finite regular hypertope for every even source parameter $s\ge2$,
 with exact ordered toroidal residues $((3,0),(2,0),(1,1),(s,0))$.
 One integral voltage certificate and the Lean-checked quotient theorem prove
@@ -56,7 +63,7 @@ of the finite base. A [separate corollary](research/case_study/phase33_L003_univ
 establishes the universal regular object for every even parameter and proves
 it infinite whenever six divides the parameter. The [exact order supplement](research/case_study/phase34_L003_even_order.md)
 proves that the constructed finite group has order $1296(s/2)^6$.
-Uniform odd-parameter existence and priority remain unresolved.
+Parameters coprime to six and priority remain unresolved after the second family above.
 
 The preceding additions recover the merging/splitting construction from 2000,
 give [two counterexamples to assertions in its accessed version](research/case_study/phase32_L111_section6_theory.md),

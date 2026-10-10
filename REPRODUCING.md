@@ -1508,3 +1508,20 @@ vectors, their unit minor and literal words. Its written uniform argument
 gives kernel mL and order1296m^6 at every modulus. Lean certifies the
 abstract additive-left-inverse reduction and the literal matrix inverse;
 it does not run the full Schreier enumeration.
+
+
+## Source parameters divisible by three
+
+```sh
+python3 research/case_study/phase34_L003_triple_check.py \
+  --output scratch/L003-triple-fresh.json
+python3 research/case_study/phase34_L003_triple_base_root_check.py \
+  --output scratch/L003-triple-base-independent-fresh.json
+```
+
+These standard-library checks verify the literal integral action and its
+modulus-two base. The first uses finite subgroup meets and flag-orbit
+counts; the second independently constructs Cayley components and checks
+all56225 flags, including13824 singleton-intersection chambers. Both
+require a new output path. The all-m argument uses twice-integral local
+translations, exact toroidal order bounds and the existing quotient theorem.

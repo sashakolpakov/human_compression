@@ -3561,7 +3561,50 @@ the two-sided inverse of the literal six-coordinate matrix. The full basis
 enumeration and its connection to the group remain separately checked
 computation and written mathematics.
 
-## 58. The remaining work, and how a living reduction should record it
+## 58. The same theorem reaches multiples of three
+
+A [second literal construction](research/case_study/phase34_L003_triple_family.md)
+gives finite regular hypertopes with the same ordered residue pattern for
+every source parameter $s=3m$, $m\ge1$. It uses 272 voltage states, doubled
+to 544, and reduces the integer coordinate modulo $2m$. Its modulus-two
+base has order 13,824 and maximal parabolic orders $36,108,48,108$.
+
+The parameter word $T=y(zy)^2$ has underlying order three. The translations
+$A=T^3$ and $B=u^{-1}Au$ have coordinates in $\{-2,0,2\}$, with minor
+
+$$\begin{pmatrix}0&-2\\-2&0\end{pmatrix}.$$
+
+Modulo $2m$, these translations generate $(\mathbb Z/m\mathbb Z)^2$:
+the selected coordinates force $m$ to divide both exponents. This uses
+integer divisibility and works even when two is not invertible modulo
+$2m$. Thus $T$ has exact order $3m$. The growing parabolic's lower bound
+$108m^2$ matches the toroidal upper bound $12(3m)^2$, identifying the
+exact local group. Three fixed integer parabolics inject into every base
+projection, so the same one-exceptional transport theorem applies.
+
+The author certificate checks 4,896 integral relator/state equalities,
+all 256 base subgroup meets and all required coset-Helly counts. A separate
+implementation constructs the actual modulus-two cosets by Cayley
+components and checks all 56,225 pairwise-incident flags directly. All
+have common representatives; the 13,824 chambers have singleton
+intersections. The all-modulus conclusion is the written argument above,
+using the previously Lean-checked generic theorem.
+
+Together, the two constructions cover every $s\ge2$ divisible by two or
+three. A [combined universal corollary](research/case_study/phase34_L003_combined_universal.md)
+also gives the marked regular universal object and $U_s=P_s\rtimes C_2$
+at those parameters. The local lattice reflection argument does not
+depend on parity. Universal infinitude remains proved whenever $6\mid s$;
+no other universal order is inferred. The two constructions can yield
+different finite quotients at the same parameter.
+
+The remaining uniform existence cases are parameters coprime to six.
+The source's isolated example at five is retained input, not a proof of
+that remaining family. Current priority is still unverified, particularly
+the overlap with the inaccessible 2024 main theorems. No infinity marker
+or proof-compression ratio follows from this increased parameter coverage.
+
+## 59. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

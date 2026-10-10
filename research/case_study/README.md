@@ -324,3 +324,10 @@ The later [exact-order supplement](phase34_L003_even_order.md) proves
 |G_m|=1296m^6 for the specified even-parameter family. A saturated rank-six
 Schreier lattice establishes the actual coordinate-reduction kernel mL.
 It adds no splitting or universal-group order claim.
+
+
+The [multiples-of-three family](phase34_L003_triple_family.md) extends finite
+regular existence to every source s=3m. Its fixed base has13824 chambers;
+an independent implementation checks all56225 flags. The [combined universal
+corollary](phase34_L003_combined_universal.md) covers2|s or3|s. Parameters
+coprime to6 and priority remain the uniform outstanding cases.

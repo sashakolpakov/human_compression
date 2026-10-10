@@ -478,6 +478,11 @@ def record(row, baseline, overlay, later_readings, older_access):
     if identifier == "L003":
         r["exact_target"].append({"reference":"Exact order of the specified even-parameter quotients", "scope":"Full integral image has a saturated rank6 translation kernel and quotient order1296. Literal reduction has kernel mL, so |G_m|=1296m^6 for all m>=1. No splitting or universal-order assertion.", "relation_to_source":"specified_quotient_order_consequence"})
         r["evidence"] += [evidence(n,"Exact even-family quotient order") for n in ("phase34_L003_even_order.md","phase34_L003_even_order_manifest.json","phase34_L003_even_order_root_audit.md","formal/SplitLatticeReduction.scope.md")]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Every source parameter divisible by three, and combined universal existence", "scope":"Finite regular hypertope at s=3m>=3 with exact local orders36,108m²,48,108. Together the two families cover2|s or3|s. Marked regular U_s=P_s semidirect C2 exists throughout that union.", "relation_to_source":"second_infinite_parameter_subfamily"})
+        r["method"].append("Scaled unit translation minor modulo2m, exact base order13824 and three injective parabolics; one-exceptional transport. Independent exhaustive base census checks56225 flags.")
+        r["evidence"] += [evidence(n,"Multiples-of-three and combined universal scope") for n in ("phase34_L003_triple_family.md","phase34_L003_triple_manifest.json","phase34_L003_triple_root_audit.md","phase34_L003_triple_base_root_check.json","phase34_L003_combined_universal.md")]
+        r["remaining_work"] = ["Uniform existence at parameters coprime to6, further universal orders, current priority and end-to-end formalization remain unverified. N015 full main-theorem comparison is still unavailable. No all-integer claim or infinity marker."]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True
