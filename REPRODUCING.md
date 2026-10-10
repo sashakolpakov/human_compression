@@ -14,6 +14,20 @@ claims separate.
 
 ## Covers with enlarged ends
 
+The complete [coprime fiber-product theorem](research/case_study/phase115_coprime_pullback_theorem.md)
+and paired-generator corollary have a separate Lean certificate. With the
+pinned package checkout installed, compile it through the public runner:
+
+```sh
+python3 research/case_study/formal/verify_lean.py CoprimePullback.lean --packages /path/to/.lake/packages --output-dir /tmp/coprime-pullback-replay
+```
+
+The [scope](research/case_study/formal/CoprimePullback.scope.md) states the
+full hypotheses and separates this algebraic result from geometric cover
+applications. The [independent review](research/case_study/phase126_coprime_pullback_review.md)
+and [fresh public replay](research/case_study/phase128_coprime_pullback_public_build.json)
+record all three declarations and their standard axioms.
+
 The [Γ2 theorem](COVER_ENLARGED_ENDS.md) has a standard-library finite
 checker. Use new output directories:
 
@@ -52,7 +66,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the forty-three saved Lean reports
+checks local documentation links, and checks the forty-four saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -894,7 +908,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all forty-three certificates and their unformalized boundaries. With Git
+describes all forty-four certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh

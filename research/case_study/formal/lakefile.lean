@@ -52,4 +52,5 @@ lean_lib MathCompressionCertificates where
     `QuotientIntersectionCriterion,
     `CoverCharacterSeparation,
     `OddKernelWord,
-    `OddCoverSeparation]
+    `OddCoverSeparation,
+    `CoprimePullback]

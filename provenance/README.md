@@ -317,3 +317,9 @@ descriptive mathematical names and publishes a separate catalogue of
 ten existing question-answer entries. Its public binding record checks
 all 56 retained evidence files and distinguishes five documented public
 variants. This adds no new proof or formalization claim.
+
+The [phase-91 record](phase91_review.md) admits the complete coprime
+fiber-product theorem and paired-generator corollary in Lean after an
+independent proof review and fresh public compilation. The repository now
+has 44 scoped Lean certificates; the geometric cover applications remain
+separate obligations.

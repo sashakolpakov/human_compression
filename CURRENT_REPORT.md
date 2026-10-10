@@ -54,7 +54,7 @@ and two qualified family or interpretation results. This is an inventory
 of existing claims and evidence, not ten newly audited solutions or a
 count of conjectures confirmed still open before our work.
 
-Forty-three existing Lean components retain their individual statements,
+Forty-four existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.

@@ -4,6 +4,15 @@ These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).
 
+[CoprimePullback.lean](CoprimePullback.lean) proves complete generation of
+a fiber product by a compatible subgroup with surjective projections and
+coprime kernel cardinalities. Its paired-generator corollary proves the
+projection-generation obligations explicitly. This classical argument
+allows nonabelian kernels. The [scope](CoprimePullback.scope.md) and
+[independent review](../phase126_coprime_pullback_review.md) distinguish
+this full algebraic theorem from the still separate geometric applications.
+All three declarations use only the standard recorded axioms.
+
 [OddCoverSeparation.lean](OddCoverSeparation.lean) proves six general
 kernel-divisibility, odd-degree and finite-maximality statements. A quotient
 over the same base preserves odd covering degree and cannot factor onto
@@ -70,7 +79,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are forty-three certificates. To compile them on another machine, install Git,
+There are forty-four certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -87,7 +96,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the forty-three modules, but does not produce the runner's JSON reports.
+way to compile the forty-four modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -118,9 +127,9 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all forty-three source hashes match the historical successful reports
+This checks that all forty-four source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. Forty-two saved runs use only a subset of the standard axioms
+Lean or verify a proof anew. Forty-three saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
 prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
 for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below

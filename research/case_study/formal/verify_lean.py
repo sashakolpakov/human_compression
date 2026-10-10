@@ -43,6 +43,7 @@ CERTIFICATES = (
     "CoverCharacterSeparation",
     "OddKernelWord",
     "OddCoverSeparation",
+    "CoprimePullback",
 )
 
 
