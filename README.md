@@ -33,7 +33,10 @@ bundle has a [reviewed conditional factor of 3.93×](research/case_study/phase38
 32,476 source PDF-extracted tokens versus 8,267 in the complete rendered
 replacement, including its census appendix. Nonwhitespace characters give
 3.35×. The listed background proofs remain imported. The three-paper
-measurement and integration into one shorter seven-paper theory remain work.
+measurement remains work. The subsequent [seven-source integration](COMPRESS_UNIFIED.md)
+has now passed independent internal mathematical review: all 34 scoped main-result
+adapters follow from one continuous manuscript. It adds 706 raw tokens compared
+with A and B together, so no additional length saving or seven-paper factor is claimed.
 
 A [proved bridge between the two replacements](research/case_study/phase38_primitive_saturation.md)
 now identifies the unique primitive coarsening of each omission action in an
@@ -41,9 +44,9 @@ irredundantly marked finite p-group. For the forest two-groups it factors
 through the canonical class-two quotient, with exact parabolic kernels and
 coset fibers. This yields all face and induced-residue indices of the
 prescribed-square family by one formula. The [root review and fresh diagnostics](research/case_study/phase38_primitive_saturation_root_audit.md)
-pass the stated theorem. This connects A's Frattini branch to B; A's symmetric
-classification remains separate, and the two full manuscripts are not yet
-one shorter replacement.
+pass the stated theorem. Its primitive-saturation core is now inside the
+seven-source replacement. The symmetric classification remains a distinct branch;
+integration has not yet shortened the two predecessors' combined body.
 
 The [new independent assessment](CURRENT_STATE.md) gives the exact named
 intake-to-replacement map, the measured four-paper factor and the next steps.

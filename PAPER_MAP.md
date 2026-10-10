@@ -10,8 +10,8 @@ student or postdoc. Coauthorship alone does not establish those relationships.
 
 [Registry](research/case_study/paper_registry.json) · [Introduction](INTRODUCTION.md) · [Reduction scope](research/case_study/torsor_compression_overview.md) · [Historical inventory](research/case_study/literature_inventory.json)
 
-The [named manuscript map](MANUSCRIPT_MAP.md) records two reviewed
-assembled replacements with seven distinct source manuscripts. Their
+The [named manuscript map](MANUSCRIPT_MAP.md) records a reviewed seven-source
+integration and its two reviewed predecessors, covering seven distinct manuscripts. Their
 declared main-result contracts and retained inputs remain explicit;
 Compress_B has a reviewed conditional full-body factor of 3.928390x
 under its frozen PDF-token convention; A and the combined set remain unmeasured.
