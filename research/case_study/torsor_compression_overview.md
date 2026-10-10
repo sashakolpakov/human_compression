@@ -74,27 +74,25 @@ or historical judgment about the original authors.
 
 ## Useful extensions beyond the reproduced statements
 
-The [odd-order nilpotent theorem](phase11_odd_nilpotent.md) reduces every
-cyclic-TPP inequality in that class to minimality and a retained powerful-group
-factorization theorem. The [Frattini extension](phase11_powerful_frattini.md)
-uses a four-case binary action lemma to handle the hereditary powerful-Frattini
-2-group class; a [short adapter](phase11_metacyclic_adapter.md) recovers the
-earlier metacyclic family within that framework. The unrestricted 2-group
-inequality remains. These are theorem gains without a new measured ratio.
+The [complete proposed cyclic-TPP theorem](phase14_cyclic_tpp.md) gives
+`|A||B||C| <= |P|` for every cyclic TPP triple in every finite nilpotent
+group. Two equivariant square maps exclude the minimum 2-group
+counterexample; the [odd-prime proof](phase11_odd_nilpotent.md) supplies
+the other Sylow factors. This subsumes the earlier metacyclic,
+hereditary-powerful-Frattini, class-three and small-factor results.
+The full lower bound in the published 2019 hypertope Conjecture 3.3
+follows from the flag-transitive geometric adapter. Two independent
+internal reviews passed. Current priority remains unverified, and the
+[Lean component](formal/MarkedSquareDescent.scope.md) checks only the
+specified actions and transport obstruction. No finite catalogue or
+marked-isobicyclic classification is retained in the new proof.
 
-The [class-three theorem](phase12_class_three.md) now covers every
-nilpotent group whose Sylow 2-subgroup has class at most three. The
-[power-layer restriction](phase12_power_layers.md) forces any smallest
-remaining 2-group counterexample to have a specified order-32 quotient
-and powerful eighth powers of index 256. Its deeper ordered coordinates
-are proved, while the final nonexistence argument remains unresolved.
-
-The [unitary template](phase11_unitary_template.md) and its
-[two-form intersection proof](phase11_unitary_intersection.md) give a conditional
-family for q≡1 mod4 and exact rank-four examples at q=5,9,13. Suitable
-parameter existence is now proved for every q=9^e by the
-[torus-character argument](phase12_unitary_parameters.md). Other odd
-field sizes remain unresolved. The source survey
+The [elliptic parameter sieve](phase13_unitary_sieve.md) and retained
+matrix generation/intersection arguments give maximum rank four for
+PSU4(q), every odd q congruent to one modulo four. The [q=7 witness](phase14_unitary_q7.md)
+adds type {4,24,4}, with the full group order and all 256 subgroup
+intersections checked. Uniform existence for q congruent to three modulo
+four, q at least eleven, remains unresolved here. The source survey
 receives partial-progress coverage, not a full-survey reduction.
 
 The [path cocycle](phase12_path_cocycle.md) gives a reusable support proof
@@ -252,7 +250,8 @@ bodies prevent a whole-paper claim.
 The [metacyclic cyclic-TPP theorem](phase7_cyclic_tpp.md) supplies a new
 uniform structural class for the hypertope order bound, for all primes and
 all orders. Its separate order-512 certificate extends the finite hypertope
-range through order2^12. The unrestricted conjecture remains unresolved.
+range through order2^12. These historical partial results are now
+subsumed by the complete proposed theorem above.
 
 The [small-factor theorem](phase10_cyclic_tpp.md) proves the inequality for
 every cyclic-TPP triple in a finite 2-group with a factor of order at most
@@ -260,7 +259,8 @@ four. Equality in an elementary cyclic-subgroup bound forces an involutory
 swap of a marked isobicyclic pair; the retained classification then gives a
 central-involution obstruction. Consequently the hypertope order conjecture
 holds whenever a distinguished pair product has order at most eight, at any
-ambient order. Larger-factor cases remain unresolved.
+ambient order. The complete phase-fourteen argument now removes the
+factor restriction and the classification dependency.
 
 The [two-coordinate Suzuki reduction](phase10_suzuki_marked_fields.md)
 recovers the full rank/existence theorem restated from L085 (2006) and both
@@ -274,7 +274,7 @@ this reduction yet.
 
 ## Evidence and limits
 
-Sixteen [Lean modules](formal/README.md) compile with the pinned toolchain and
+Eighteen [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -289,7 +289,7 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker additionally covers the six later modules and their
+public snapshot checker additionally covers the nine later modules and their
 successful reports. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 

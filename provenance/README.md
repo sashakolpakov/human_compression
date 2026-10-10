@@ -123,3 +123,14 @@ All 406 unitary witnesses have a fresh independent polynomial-arithmetic
 verification. The existing seventeen Lean reports and earlier original
 proof packages remain unchanged. No new matched-length ratio or verified
 new-resolution infinity marker is assigned.
+
+The [phase-fourteen review](phase14_review.md) records a complete proposed
+cyclic-TPP theorem for finite nilpotent groups and its published 2019
+hypertope-conjecture consequence. Two independent internal reviews passed.
+The proof removes the former census and isobicyclic dependencies, retaining
+powerful-group structure. The new eighteenth Lean component and its
+dependency were freshly compiled with the public runner; the full group
+proof remains written. An exact PSU4(7) witness was reviewed and freshly
+rerun. The [original-file manifest](phase14_original_files.json) binds the
+exported bytes. Current priority remains unverified, and neither the
+existing measured ratio nor the nine-work principal-result count changes.

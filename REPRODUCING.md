@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the seventeen saved Lean reports
+checks local documentation links, and checks the eighteen saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -302,7 +302,8 @@ elements in the specified Frattini classes, 386,688 swap equations and
 n≤8; larger parameters use generator-local equations. This is neither a
 census of all groups through order 8,192 nor a proof of the retained marked
 isobicyclic classification. The written argument proves the small-factor
-case uniformly; unrestricted cyclic TPP remains unresolved.
+case uniformly; it is now subsumed by the complete proposed phase-fourteen
+theorem below.
 
 For the finite unitary example, run from the artifact directory:
 
@@ -477,10 +478,44 @@ JSON is the recorded coordinate package checked by the independent runner. The [
 separates author checks, fresh independent arithmetic, written reviews,
 and retained mathematical inputs. No new Lean module is added.
 
+## The complete cyclic-TPP proof and the q=7 witness
+
+The [phase-fourteen theorem](research/case_study/phase14_cyclic_tpp.md)
+is an all-parameter written proof, with two independent internal reviews.
+It uses the specified powerful-group theorems and elementary group facts;
+there is no new finite census to run. Its partial formal component can be
+freshly compiled using the pinned setup below:
+
+```sh
+python3 research/case_study/formal/verify_lean.py MarkedSquareDescent.lean
+```
+
+The runner first compiles its `BinaryFrattiniActions` dependency. The new
+module checks the finite action classification and the final abstract
+fixed-coordinate obstruction. It does not formalize the entire group or
+geometric proof. The two fresh public compilation reports and their
+review boundaries are linked from the [phase-fourteen review](provenance/phase14_review.md).
+
+The independent q=7 unitary witness has a short exact GAP check. From a
+disposable directory, copy the checker and execute it there:
+
+```sh
+mkdir -p /tmp/math-compression-q7
+cp research/case_study/phase14_unitary_q7_check.g /tmp/math-compression-q7/
+cd /tmp/math-compression-q7
+gap -q -T phase14_unitary_q7_check.g
+```
+
+It writes `phase14_unitary_q7_check.json` in the working directory.
+The recorded fresh run verifies the full group order, type `{4,24,4}`,
+and all 256 subgroup intersections. This is a finite q=7 certificate,
+not a uniform existence proof for its congruence class. Use a fresh
+scratch directory to preserve any previous local run reports.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all seventeen certificates and their unformalized boundaries. With Git
+describes all eighteen certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -504,7 +539,7 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The seventeen certificates cover intersection transport, field and matrix
+The eighteen certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
@@ -517,6 +552,8 @@ The seventeenth module, BinaryFrattiniActions, proves the exact four-case
 binary action classification and its coordinate-support consequence using
 kernel-checked finite decisions. The full p-group theorem remains a written
 proof; its source/report boundary is specified in the accompanying scope note.
+The eighteenth module, MarkedSquareDescent, adds marked action rigidity and
+the equivariant transport obstruction with its stated assumptions.
 They formalize the stated components, not the complete geometric
 instantiations, all source-group classifications, or every written theorem.
 The saved successful runs report no `sorryAx` dependency.

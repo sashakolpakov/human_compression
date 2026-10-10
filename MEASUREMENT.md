@@ -116,6 +116,7 @@ The main proposed-resolution targets to assess are:
 | Source target | Current mathematical claim | Verification and scope record |
 |---|---|---|
 | L025, Conjecture 3.2 | Suzuki graph pentagon count for all stated parameters | [Proof](research/case_study/suzuki_cycle_proof.md); Lean checks the matrix-membership equivalence, with the graph bridge in the written proof |
+| L034, Conjecture 3.3 | Complete proposed lower bound n≥s+t+l for regular rank-three hypertopes of type (2ˢ,2ᵗ,2ˡ) and order 2ⁿ in the published source range | [Cyclic-TPP theorem and geometric adapter](research/case_study/phase14_cyclic_tpp.md); independent internal reviews, retained powerful-group theory and an abstract square-descent Lean component. Current priority unverified |
 | L043, Conjectures 6.1 and 6.2 | Field/intersection statements and their chiral construction consequence | [Proof chain](research/case_study/psl2_chiral_corollary.md); exact finite-field witnesses and partial formalization |
 | L052, Problems 9.3 and 9.4 | Nonexistence under the specified standard parabolic coset construction | [Scope audit](research/case_study/hypertope_questions_independent_audit.md); written proofs and an abstract chamber-orbit certificate |
 | L092, Conjecture 1 | Hermitian-unital residue connectivity | [Proof](research/case_study/hermitian_unital_proof.md); finite checks and abstract connectivity formalization |
@@ -125,10 +126,10 @@ The main proposed-resolution targets to assess are:
 
 The [central cyclic lift](research/case_study/central_lift_proof.md) also supplies
 a proposed omitted existence range. Its source does not have the same status
-as a named conjecture. The partial
-[hypertope order bound](research/case_study/phase3_order_bound.md) still has
-unresolved cases. These distinctions prevent a novelty score from swallowing
-the outstanding mathematics.
+as a named conjecture. The earlier partial
+[hypertope order bound](research/case_study/phase3_order_bound.md) is now
+superseded by the complete proposed argument above. Its named-target match
+does not itself establish publication priority.
 
 The PSL₄ proof now excludes rank six as well as rank five, completing its
 mathematical argument against every rank above four. Its status is therefore
@@ -144,14 +145,14 @@ It located no explicit later resolution and does not certify current priority.
 The [metacyclic extension](research/case_study/phase7_cyclic_tpp.md) proves a
 uniform cyclic-subgroup inequality and another full structural class of that
 order conjecture. Its separate finite certificate increases the verified
-hypertope range to order \(2^{12}\). Neither result settles the unrestricted
-conjecture, so neither receives the new-resolution marker.
+hypertope range to order \(2^{12}\). These were partial results, now
+subsumed by phase fourteen; neither received the new-resolution marker.
 
 The [small-factor extension](research/case_study/phase10_cyclic_tpp.md) now
 proves the same order conjecture whenever a distinguished pair has order at
 most eight, without an ambient-order cutoff. It retains the classification
-of marked isobicyclic 2-groups and still leaves the unrestricted conjecture
-open. The [PSU₄(5) matrix certificate](research/case_study/phase10_unitary_matrix_certificate.md)
+of marked isobicyclic 2-groups. The complete phase-fourteen proof removes
+that dependency. The [PSU₄(5) matrix certificate](research/case_study/phase10_unitary_matrix_certificate.md)
 settles one finite rank-four existence case, with publication priority
 unverified. Neither is assigned an infinity marker.
 
@@ -186,11 +187,12 @@ does not establish novelty or identify a named open conjecture resolved by
 that theorem; it also attributes the known order-21 boundary example. The
 [hereditary powerful-Frattini theorem](research/case_study/phase11_powerful_frattini.md)
 unifies further 2-group classes. Neither has a matched-length measurement;
-the unrestricted 2-group hypertope conjecture remains open. Likewise, the
+both are now subsumed by the complete proposed nilpotent theorem. The
 [unitary template](research/case_study/phase11_unitary_intersection.md)
-proves a conditional family and certifies additional finite examples, while
-the all-field parameter problem remains. These are substantive theorem
-coverage gains, with unverified publication priority. The measured ratio
+proved a conditional family and certified additional finite examples;
+phase thirteen subsequently supplied parameters for every odd q≡1 mod 4.
+These are substantive theorem coverage gains, with unverified publication
+priority. The measured ratio
 stays **127/38≈3.34**, and no infinity marker is assigned.
 
 Phase twelve adds a [complete 2002 principal-result reduction](research/case_study/phase12_N003_reduction.md),
@@ -198,8 +200,8 @@ raising that coverage ledger to nine works. All eight numbered targets
 have exact source-span metadata, but their fully charged matched-length
 comparison is not yet measured. The new [class-three bound](research/case_study/phase12_class_three.md)
 and [PSU₄(9^e) family](research/case_study/phase12_unitary_parameters.md)
-are uniform mathematical gains, with priority unverified and the broader
-problems still open. The [2026 correction](research/case_study/phase12_path_cocycle.md)
+are uniform mathematical gains, with priority unverified; the TPP bound
+is now subsumed by phase fourteen. The [2026 correction](research/case_study/phase12_path_cocycle.md)
 disproves specified auxiliary assertions, without refuting the paper's
 separate main existence claim. None changes the existing numerical ratio
 or qualifies here for a verified-new-resolution infinity marker.
@@ -210,9 +212,10 @@ all 406 fields left by the uniform sieve. The [cyclic TPP extension](research/ca
 proves the smallest-factor-eight bound and all 2-groups through order 1024.
 A [canonical quotient](research/case_study/phase13_common_quotient_class_three.md)
 repairs the common-quotient existence argument through nilpotency class
-three, uniformly in rank. These gains do not settle the unrestricted
-unitary or hypertope questions, and a correction to a proof is not by
-itself an open-problem resolution. They have no matched-length measurement.
+three, uniformly in rank. At that stage the unrestricted hypertope bound
+and the other unitary congruence class were still unresolved. A correction
+to a proof is not by itself an open-problem resolution. These results have
+no matched-length measurement.
 The numerical ratio and nine-work principal-result count remain unchanged;
 no infinity marker is assigned in this phase.
 The [unitary status audit](research/case_study/phase13_unitary_priority_audit.md)
@@ -221,3 +224,29 @@ published baseline. It located no matching earlier uniform theorem or
 named unitary conjecture, and does not certify novelty. The named survey
 conjecture concerns the linear group and must not be attributed to the
 unitary companion result.
+
+Phase fourteen supplies a [complete proposed cyclic-TPP theorem](research/case_study/phase14_cyclic_tpp.md)
+for finite 2-groups. Combined with the odd-prime argument, it covers every
+finite nilpotent group, with no order or class cutoff. The proof retains
+published powerful-group structure but removes the earlier isobicyclic
+classification and finite catalogues. Its geometric consequence matches
+the exact assertion of Hou–Feng–Leemans Conjecture 3.3 (2019); combined
+with the source's construction, it gives the parameter criterion in the
+stated range. This is a complete proposed resolution, replacing the
+earlier partial-progress status.
+
+The [bounded status audit](research/case_study/phase14_cyclic_tpp_status.md)
+records 24 fresh searches and exact primary-source reading limits. It
+found no later resolution, but the latest explicit open checkpoint located
+is the original 2019 paper. Current priority is therefore unverified.
+Internal proof agreement and an abstract Lean descent certificate do not
+constitute external peer review or full formalization. No infinity marker
+is assigned, and no matched proof-length measurement has been made.
+
+The [PSU₄(7) certificate](research/case_study/phase14_unitary_q7.md)
+adds one exact rank-four existence case, of type {4,24,4}, with all 16
+subset groups and 256 intersections checked. It does not establish a
+uniform family for q≡3 mod 4; the range q≥11 in that class remains
+unresolved here. It receives no novelty marker or length ratio. The
+existing **127/38≈3.34** measurement and nine-work principal-result
+count remain unchanged.

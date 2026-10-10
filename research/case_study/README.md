@@ -1,26 +1,28 @@
 # Case-study research notes, proofs, and certificates
 
-Research date: 9 October 2026. We have proposed proofs of the two 2017 PSL(2,q) conjectures, the 2005 Hermitian-unital conjecture, the Suzuki graph pentagon-count conjecture, and the missing range in a recent existence theorem for chiral polyhedra, together with exact computations and Lean certificates for key proof components. These results have received internal agent reviews, not external peer review. Priority and novelty remain provisional.
+Research begun 9 October 2026; updated 10 October 2026. We have proposed proofs of the two 2017 PSL(2,q) conjectures, the 2005 Hermitian-unital conjecture, the Suzuki graph pentagon-count conjecture, and the missing range in a recent existence theorem for chiral polyhedra, together with exact computations and Lean certificates for key proof components. These results have received internal agent reviews, not external peer review. Priority and novelty remain provisional.
 
 ## The latest uniform reductions
 
-The [short odd-order theorem](phase11_odd_nilpotent.md) proves cyclic TPP
-for every finite nilpotent group of odd order. Minimality forces a powerful
-group; the retained Lubotzky–Mann factorization theorem then contradicts TPP.
-The [hereditary powerful-Frattini theorem](phase11_powerful_frattini.md)
-handles further 2-group classes and recovers the earlier metacyclic case
-through a [short adapter](phase11_metacyclic_adapter.md). Its binary action
-lemma has a complete [Lean certificate](formal/BinaryFrattiniActions.scope.md);
-the whole group theorem is not formalized. The unrestricted 2-group bound
-remains open.
+The [complete proposed cyclic-TPP theorem](phase14_cyclic_tpp.md) now gives
+`|A||B||C| <= |P|` for three cyclic subgroups with TPP in every finite
+nilpotent group. Two equivariant squaring maps through Frattini layers
+exclude a minimum 2-group counterexample; the odd-prime proof supplies
+the remaining Sylow factors. The regular-hypertope adapter gives the
+complete lower bound in the published 2019 Conjecture 3.3. Two independent
+internal reviews passed. The [status audit](phase14_cyclic_tpp_status.md)
+leaves current priority unverified; the [Lean certificate](formal/MarkedSquareDescent.scope.md)
+covers specified action and transport components, not the whole theorem.
+The new uniform proof supersedes the earlier bounded subcases and removes
+their finite-census and marked-isobicyclic dependencies.
 
-The [unitary matrix template](phase11_unitary_template.md) gives uniform
-generation for q≡1 mod4. Its [two-form intersection proof](phase11_unitary_intersection.md)
-gives a string C-group when the middle rotation has order q²±1. Exact
-certificates verify q=5,9,13 and a failed marking at q=9. The general
-parameter-existence problem remains. See the
-[phase-eleven review](../../provenance/phase11_review.md) for fresh runs,
-retained inputs and internal-review scope.
+The [elliptic parameter sieve](phase13_unitary_sieve.md), together with
+the retained generation and intersection arguments, gives maximum rank
+four for PSU4(q) for every odd q congruent to one modulo four. A separate
+[exact q=7 witness](phase14_unitary_q7.md) has type `{4,24,4}` and passes
+all 256 subgroup intersections. Uniform existence for q congruent to
+three modulo four, q at least eleven, remains. The [latest review](../../provenance/phase14_review.md)
+records fresh executions and exact scope.
 
 ## The older-paper extension
 
@@ -32,7 +34,8 @@ The [2004 shadow-IP reduction](phase4_shadow_ip.md) supplies a flag-constrained
 covering criterion, with exact small-structure checks. It is distinct from
 C-group subgroup intersection. The [2002 J2 track](phase4_old_classification.md)
 recovers the thin classification in every rank and verifies the nonthin source
-representatives; nonthin completeness remains a separate retained input.
+representatives. The subsequent [complete augmentation](phase5_j2_theory.md)
+rederived the full census, retaining the subgroup catalogue.
 
 ## Torsors and permutation matrices: stronger compression
 
@@ -74,7 +77,8 @@ For the conjectural minimum order of rank-three 2-power hypertopes, the
 pair order is at most four, when the derived subgroup has class at most two
 or an abelian subgroup of index two, or when two distinguished cyclic rotation
 subgroups permute. It reduces the remaining cases to a cyclic triple-product
-inequality. The full conjecture remains unresolved here.
+inequality. The [complete phase-fourteen proof](phase14_cyclic_tpp.md)
+now supplies that inequality and the full proposed conjecture consequence.
 
 The [Wenger graph audit](phase3_egr_conjecture_audit.md) gives one Vandermonde
 rank calculation for the classical Wenger girth counts. It identifies a

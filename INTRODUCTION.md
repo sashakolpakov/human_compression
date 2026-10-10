@@ -658,8 +658,9 @@ $PSU_4(5)$. Since scalars act trivially, containment and equality of orders
 identify the projective group. The checker then verifies all 256 ordered
 intersections of the 16 generated subset groups. The same example is therefore
 both a short matrix object and an exactly checked permutation object. It gives
-maximum rank four at $q=5$; a construction for every odd $q\ge5$ remains open
-within this project.
+maximum rank four at $q=5$. Section 19 extends existence to every odd
+$q\equiv1\pmod4$ and adds a finite certificate at $q=7$; the remaining
+existence range here is $q\equiv3\pmod4$, $q\ge11$.
 
 **Vandermonde cycle counts.** A coordinate change puts the classical Wenger
 graph $W_2(q)$ into the incidence equations
@@ -1117,8 +1118,9 @@ has excluded an infinite class of potential counterexamples.
 This proves the hypertope bound whenever $G'$ is metacyclic. A separate
 exhaustion of two-generator groups of order512 extends the finite result to
 hypertope groups of order at most $2^{12}$. The universal structural theorem
-and the finite certificate have different scopes; neither settles the
-unrestricted conjecture.
+and the finite certificate have different scopes; neither alone settles the
+unrestricted conjecture. The complete proposed argument in
+§20 now subsumes these partial bounds.
 
 A [further structural argument](research/case_study/phase10_cyclic_tpp.md)
 settles every cyclic-TPP triple in a finite 2-group having a factor of
@@ -1151,14 +1153,14 @@ also preserve the small-factor subclass, proving its inequality by induction.
 For the hypertope conjecture the factors are square-rotation subgroups,
 of half the distinguished pair orders. Thus any case with a pair order
 at most eight satisfies the desired bound, at any ambient order. Cases
-where all pair orders are at least sixteen remain after this step; §20
-subsequently includes sixteen and leaves pair orders at least thirty-two.
+where all pair orders are at least sixteen remained after this step; the
+subsequent argument in §20 removes the restriction entirely.
 
 The marked classification is a substantial retained theorem. The new
 coordinate checker tests 48 models and 48,336 relevant elements; it checks
 all associativity triples only at the smaller parameters and local equations
-at larger ones. Neither the finite checks nor this partial result settle
-the unrestricted conjecture.
+at larger ones. This is a historical partial argument: §20 supplies a
+complete proposed proof that no longer retains the marked classification.
 
 ## 14. Frattini coordinates and a shorter odd-prime argument
 
@@ -1241,13 +1243,15 @@ equations force both Φ(P) and Φ²(P) to need exactly three generators
 in a smallest counterexample. The next layer P⁸ is powerful and has
 index 256, and P/P⁴ is a specific group of order 32. Every deeper
 power layer has genuine ordered cyclic coordinates. The proof of this
-last restriction retains the earlier small-factor theorem and its
-isobicyclic classification input. A fixed vector need not be one of
-the marked coordinates, so these restrictions do not finish the proof.
+last restriction originally retained the earlier small-factor theorem and
+its isobicyclic classification input. A fixed vector need not be one of
+the marked coordinates, so these restrictions alone did not finish the
+proof. Section 20 supplies the missing argument and removes that input.
 
 For the hypertope order conjecture these results add the entire
 abelian-Frattini and hereditary-powerful-Frattini classes of derived
-2-groups, at every order. The unrestricted 2-group problem remains.
+2-groups, at every order. They are now subsumed by the proposed complete
+2-group theorem in §20.
 Numerical equality alone never supplies the coordinates: the exact
 [order-32](research/case_study/phase11_tpp_equality_witness.g) and
 [order-64](research/case_study/phase11_rank3_equality_witness.g) examples
@@ -1450,51 +1454,95 @@ matrix-to-geometry theorems remain written proofs with retained inputs.
 
 Combining this with §17 proves maximum rank four for PSU₄(q) for every
 odd q≡1 mod 4. The construction has type {4,q²−1,2p} for q>5 and
-{4,26,10} for q=5. Existence for q≡3 mod 4 remains a separate problem.
-This is a uniform extension of the method; its publication priority is
-assessed separately from correctness and scope.
+{4,26,10} for q=5. This is a uniform extension of the method; its
+publication priority is assessed separately from correctness and scope.
 
-## 20. The highest power layer forces equal cyclic orders
+A separate [four-matrix certificate](research/case_study/phase14_unitary_q7.md)
+gives type {4,24,4} for PSU₄(7). The matrices have determinant one and
+preserve the identity Hermitian form over $\mathbb F_{49}$. Their action
+on 2,752 totally isotropic planes has order 1,165,572,172,800, exactly
+$|PSU_4(7)|$. Scalar matrices act trivially, so unitary containment and
+the order equality identify the projective group. The checker builds
+all 16 subset-generated groups and verifies all 256 intersections.
+Together with the retained upper bound, this gives maximum rank four
+at $q=7$. It does not establish a uniform construction in the other
+congruence class: existence for $q\equiv3\pmod4$, $q\ge11$, remains
+unresolved here.
 
-The power-layer theorem in §14 puts any minimum cyclic-TPP counterexample
-inside a powerful core N=P⁸ of index 256, with ordered coordinates
-⟨a⁸⟩,⟨b⁸⟩,⟨c⁸⟩. Let 2^r be the largest of these three cyclic orders.
-The characteristic subgroup
+## 20. Two square maps close the cyclic-TPP argument
 
-$$U=N^{2^{r-1}}$$
+The [complete proposed proof](research/case_study/phase14_cyclic_tpp.md)
+now establishes the cyclic-subgroup TPP inequality in every finite 2-group.
+Combined with the odd-prime argument in §14 and Sylow decomposition,
+it gives
 
-is elementary abelian. The top involutions of the longest marked factors
-form a basis of U. This follows from powerful power generation and the
-actual injectivity of the ordered coordinates in N.
+$$|A||B||C|\leq |P|$$
 
-If one factor alone is longest, U has order two and is central in P.
-If two are longest, P acts on their span through a 2-subgroup of GL₂(F₂),
-which has order at most two. Each pair-generator fixes its own top
-involution, so at least one of those involutions is fixed by all of P.
-Both conclusions contradict the center avoidance of a minimum
-counterexample. Therefore all three orders are equal.
+for every cyclic TPP triple in every finite nilpotent group. The proof
+retains Lubotzky–Mann's powerful-group structure, but removes the earlier
+isobicyclic classification, finite-group catalogue and order cutoff.
 
-The [complete argument](research/case_study/phase13_cyclic_tpp.md)
-retains the finite bound through order 256 to exclude a trivial core.
-Any minimum counterexample must have cyclic orders 2^e, e≥4, and group
-order 2^(3e−1), starting at 2048. This proves the bound for every
-2-group through order 1024 without classifying groups of that order.
+Suppose a counterexample has minimum order. Its three cyclic factors
+avoid the center, every pair generates $P$, and their order product
+is $2|P|$. Put
 
-It also proves the uniform bound whenever the smallest cyclic factor has
-order at most eight. That inference needs its own restricted minimum:
-all central quotients, subgroup restrictions and power steps in the earlier
-reduction preserve the bound on the smallest factor. A minimum violation
-would then have a trivial eighth-power coordinate, contradicting the
-equal-order result for the core. The hypertope adapter consequently gives
-all distinguished pair orders up to sixteen, at arbitrary ambient order,
-and every group order up to 2¹³. The unrestricted conjecture remains open.
+$$K=\Phi(P),\qquad S=\Phi(K),\qquad N=\Phi(S).$$
 
-A [further action calculation](research/case_study/phase13_cyclic_tpp_top_action.md)
-shows exactly what survives in a minimum counterexample: P acts on the
-three top involutions through C₂², with kernel Φ(P). Its common fixed
-line is generated by the product of all three involutions. This line is
-not a marked coordinate, so it gives no contradiction. The explicit
-three-dimensional action identifies the next obstruction to study.
+Elementary action and power-layer arguments force $K$ and $S$ to have
+Frattini rank three. A weak-embedding lemma makes $N$ powerful. The
+three marked generators at these levels are the squares,
+fourth powers and eighth powers of $a,b,c$, respectively. Minimality
+supplies generation and equality of orders; powerful factorization
+supplies coordinate bijectivity only where it applies.
+
+The largest power layer explains why the marked coordinates matter.
+For a nontrivial normal powerful coordinate subgroup, one largest
+coordinate would give a central involution. Two largest coordinates
+give a two-dimensional binary space; pairwise generation and the
+order-at-most-two image in $GL_2(2)$ again force a marked involution
+to be central. Thus all three coordinate orders are equal and
+nonzero. This observation closes the earlier small-factor gap.
+
+For $N\neq1$, powerful-group theory identifies $W=N/N^2$ equivariantly
+with its actual top involution subgroup. None of its marked basis
+vectors is globally fixed. A three-dimensional module lemma now applies:
+if $a,b,c$ fix their respective marked vectors and $c\in ab\Phi(P)$,
+absence of a globally fixed marked coordinate forces $\Phi(P)$ to act
+trivially. The proof uses the order-eight Sylow subgroup of $GL_3(2)$
+and excludes its order-four actions. Consequently $[N,K]\leq N^2$.
+
+This gives a well-defined equivariant square map
+
+$$q:S/N\longrightarrow N/N^2,\qquad sN\longmapsto s^2N^2.$$
+
+It carries each marked coordinate to its corresponding marked coordinate.
+Therefore $S/N$ also has no globally fixed marked coordinate. Applying
+the module lemma again gives $[S,K]\leq N$, which makes a second square
+map well defined and equivariant:
+
+$$r:K/S\longrightarrow S/N,\qquad kS\longmapsto k^2N.$$
+
+But the binary square-compatibility equations from §14 force some marked
+coordinate of $K/S$ to be globally fixed. Its image under $r$ must then
+be fixed, contradicting the conclusion for $S/N$. Neither square map
+is assumed additive or multiplicative. If $N=1$, the elementary abelian
+group $S$ gives the same contradiction with just the second map; no
+order-256 census is needed. The [Lean component](research/case_study/formal/MarkedSquareDescent.scope.md)
+certifies its stated abstract descent step, not the complete group proof.
+
+For a regular rank-three hypertope, the geometric adapter supplies a
+cyclic TPP triple in $G'$ with orders $2^{s-1},2^{t-1},2^{l-1}$ and
+$|G:G'|=8$. The inequality is exactly $n\geq s+t+l$. This is a complete
+proposed proof of Hou–Feng–Leemans's published 2019 Conjecture 3.3;
+flag transitivity remains essential to the adapter. Combined with the
+source's construction theorem, it gives the exact parameter criterion
+in the source range $n\geq10$, $s,t\geq2$, $l\geq1$.
+
+The complete written argument has independent internal reviews. The
+[bounded status audit](research/case_study/phase14_cyclic_tpp_status.md)
+found no later resolution, but the latest explicit open checkpoint it
+located is the original 2019 conjecture. Current priority remains
+unverified, and no infinity marker or new proof-length ratio is assigned.
 
 
 ## 21. Support intersections recover a canonical quotient
@@ -1566,7 +1614,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [seventeen Lean certificates](research/case_study/formal/README.md) cover
+The [eighteen Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -1574,7 +1622,7 @@ the rank-three factorization and arbitrary-family coordinate-attachment
 implications for coset Helly, separation of matrix intertwiners by an
 invertible additive commutator, vanishing of transvection-invariant forms,
 the abstract involution-centralizer rank obstruction, and the exact
-four-case binary Frattini-action lemma.
+four-case binary Frattini-action lemma and abstract marked-square descent.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.
