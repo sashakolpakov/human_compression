@@ -48,4 +48,5 @@ lean_lib MathCompressionCertificates where
     `ParabolicMarkedComparison,
     `TriangleWreathQuotient,
     `TriangleWreathInvolutory,
-    `TriangleReflection]
+    `TriangleReflection,
+    `QuotientIntersectionCriterion]

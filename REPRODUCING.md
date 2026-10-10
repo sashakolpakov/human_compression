@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty-nine saved Lean reports
+checks local documentation links, and checks the forty saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty-nine certificates and their unformalized boundaries. With Git
+describes all forty certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1623,7 +1623,7 @@ transport modules before this certificate. The formal theorem includes both
 typed-Helly directions. The subsequent marked comparison module below adds
 full subgroup IP; the matrix/geometric adapter remains a written proof.
 The Lake root list also includes all
-39 modules; no frozen historical reports are overwritten by the scratch run.
+40 modules; no frozen historical reports are overwritten by the scratch run.
 
 
 ## Full-body measurement of Compress_A
@@ -1860,3 +1860,18 @@ lattice addendum. Running finite code does not prove those all-parameter
 theorems or supply a C compression ratio. No source PDF is needed to rerun
 the finite programs, but the bound primary sources are required for an
 independent literature and statement audit.
+
+## Exact quotient-intersection criterion
+
+```sh
+python3 research/case_study/formal/verify_lean.py QuotientIntersectionCriterion.lean \
+  --packages /path/to/project/.lake/packages \
+  --lean /path/to/lean --output-dir /tmp/quotient-intersection-new
+```
+
+This compiles the actual image-intersection/kernel-product equivalence and its
+quotient and locally injective specializations. The [root audit](research/case_study/phase53_cover_kernel_root_audit.md)
+records two fresh builds with pinned Lean 4.32.2 and all nine dependency
+revisions. Four theorem axiom reports use only standard axioms. Geometry,
+module classification, cover minimality and source-specific finite code are
+outside the [formal scope](research/case_study/formal/QuotientIntersectionCriterion.scope.md).

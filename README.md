@@ -342,10 +342,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Thirty-nine Lean modules certify specified components, with no `sorry` in the checked
+Forty Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 38 reports have no native-evaluation axioms.
+axioms; the other 39 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

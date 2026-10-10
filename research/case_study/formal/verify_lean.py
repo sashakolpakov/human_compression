@@ -39,6 +39,7 @@ CERTIFICATES = (
     "TriangleWreathQuotient",
     "TriangleWreathInvolutory",
     "TriangleReflection",
+    "QuotientIntersectionCriterion",
 )
 
 

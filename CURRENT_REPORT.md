@@ -67,6 +67,14 @@ universal geometry retains a separate written argument. A new solution, if
 novelty is established, will be reported as new mathematics rather than assigned
 an infinite value in the finite manuscript-length quotient.
 
+Since that snapshot, a [freshly compiled exact quotient-intersection criterion](research/case_study/phase53_cover_kernel_root_audit.md)
+brings the current total to **40 scoped Lean components**. For any group
+homomorphism with kernel N it proves
+`f(A) ∩ f(B) = f(A ∩ B) iff N ∩ AB = (N ∩ A)(N ∩ B)`, where products are
+subset products. It also proves the actual-quotient and locally injective
+specializations. This strengthens a shared algebraic interface without adding
+a manuscript or resolving the general cover conjecture.
+
 The next work is to shorten the integrated exposition and review the expanded
 continuous manuscript. The operations manuscript now has a fresh exhaustive
 Janko-group certificate: 100,016 rank-four extensions yield six classes and
