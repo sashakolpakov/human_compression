@@ -18,12 +18,19 @@ raw presentations and 3,328 actual subgroup intersections.
 The [third-excess theorem](phase22_excess3_transitions.md) gives the exact
 all-rank cubic; the [common generation theorem](phase23_generation_core.md)
 unifies specified linear and unitary parabolic-generation steps. There are
-24 [formal modules](formal/README.md). One checks finite transfer
+25 [formal modules](formal/README.md). One checks finite transfer
 arithmetic using native evaluation, with four compiler-evaluation axioms
 disclosed separately from the preceding 22 reports. The newest module proves
-the endpoint fixed-overlap intersection step without native evaluation. The two measured ratios
+the endpoint two-coset obstruction without native evaluation, alongside
+the preceding fixed-overlap certificate. The two measured ratios
 remain 3.34 and 4/3; no infinity marker is assigned. Earlier dated progress
 notes below should be read with these later proofs and the living map.
+
+The [general endpoint-change criterion](phase26_halving_core.md) now handles
+every endpoint order and infinite ambient groups through one overlap and
+one least-support condition. The S6 counterexample proves that the support
+condition is indispensable. It adds a reusable theorem, not another paper
+credit or numerical ratio.
 
 ## The latest uniform reductions
 

@@ -304,3 +304,17 @@ its two restrictions. The [scope](EndpointDoublingIntersections.scope.md)
 excludes the remaining C-group cases, odd-order generation, typed Helly
 and the finite Janko-group recognition. Fresh compilation prints only
 `propext` and `Quot.sound`; no native-evaluation axiom is used.
+
+
+## The two-coset obstruction
+
+[TwoCosetIntersection.lean](TwoCosetIntersection.lean) proves that an
+intermediate subgroup in a two-coset interval equals its lower endpoint
+exactly when containing the chosen representative adds nothing. The
+intersection form supplies both directions of the endpoint criterion's
+support obstruction; a third lemma transports any excess element to
+that representative. All three theorems allow arbitrary groups and
+print only `propext` and `Quot.sound`. The
+[scope note](TwoCosetIntersection.scope.md) leaves the actual marked
+subgroup definitions, two-coset covering hypothesis, all-subset assembly
+and geometric recognition to the written argument.

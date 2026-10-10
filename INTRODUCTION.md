@@ -2684,7 +2684,66 @@ the group shrinks from $C_2^3$ to $C_2^2$. Exact small checks exercise
 both branches of the proof and this lost-symmetry case. The proof itself
 also allows infinite groups.
 
-## 42. The remaining work, and how a living reduction should record it
+## 42. The same support condition beyond odd endpoint orders
+
+The endpoint argument in Section 40 extends to every endpoint order and
+even to infinite groups. Write $E$ for the rest-generator indices and
+
+$$H_J=\langle aba,b,r_j:j\in J\rangle,\qquad
+\mathcal F=\{J\subseteq E:a\in H_J\}.$$
+
+Conjugation by $a$ exchanges $b$ and $aba$ and fixes the remaining
+generators. Thus $H_J$ is normal of index at most two in
+$U_J=\langle a,b,r_j:j\in J\rangle$. This tiny interval in the subgroup
+lattice isolates every additional difficulty. The
+[general criterion](research/case_study/phase26_halving_core.md) says that
+the changed marking has the full intersection property exactly when
+
+$$P\cap aPa=R\quad\text{and}\quad
+\mathcal F\text{ is closed under intersections}.$$
+
+The family is already upward closed. For finite rank, it is therefore
+either empty or consists exactly of the subsets containing one least
+support $S$. This is the same mechanism encountered for marked kernels:
+the recovered element must have a single least set of required generators.
+Here neither centrality of a kernel nor nilpotence of the group is assumed.
+
+To see why the condition is exact, let $K=I\cap J$. Old IP gives
+
+$$H_K\le H_I\cap H_J\le U_K.$$
+
+When $a\notin H_K$, the outer interval has index two. Its middle member
+is too large precisely when both $H_I$ and $H_J$ recover $a$. Every other
+kind of marked meet follows either from old IP, conjugation, or the single
+overlap test. This proves an all-subset conclusion with one uniform
+case argument.
+
+| Situation | Recovering family | Remaining test |
+|---|---|---|
+| $ab$ has odd finite order | Every subset, least support empty | Parabolic overlap |
+| New group has index two | Empty | Parabolic overlap |
+| New group equals the old group, even endpoint order | Nonempty | Overlap and one least support |
+
+The last row is necessary. In $S_6$, choose
+$a=(12)$, $b=(13)(24)(56)$, $c=(45)$ and $d=(46)$.
+The original marking satisfies IP and the overlap test passes. Yet the
+recovering family is $\{\{c\},\{d\},\{c,d\}\}$, with two competing
+minimal supports. The changed marking fails exactly the meet between
+the groups using respectively $c$ or $d$ alongside both new endpoints.
+Two independent permutation implementations check the complete example.
+Rank four is the first possible rank for this obstruction: with at most
+one rest generator, every upward family is intersection closed.
+
+The operation and geometric overlap criterion have published precedents,
+attributed in the note. The broader abstract criterion is internally
+reviewed, with 21,888 bounded diagnostic meets. Separate Lean modules
+check the mixed-intersection step and the
+[two-coset obstruction](research/case_study/formal/TwoCosetIntersection.scope.md).
+The latter proves both directions and transports an excess element to
+the distinguished coset representative, for arbitrary groups. These facts do not establish its publication
+priority, geometric flag transitivity or a numerical proof-length ratio.
+
+## 43. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -2721,7 +2780,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-four Lean certificates](research/case_study/formal/README.md) cover
+The [twenty-five Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -2733,7 +2792,8 @@ four-case binary Frattini-action lemma, abstract marked-square descent,
 the split-kernel image and finite product steps in graded support lifting,
 Boolean-image intersections and four-marker centralization, and the
 principal-kernel and nested-kernel criteria for full subgroup intersections.
-The new endpoint module proves the fixed-overlap mixed-intersection step.
+The endpoint modules prove the fixed-overlap mixed-intersection step and
+the two-coset obstruction.
 The additional transfer module checks exact finite arithmetic with native
 evaluation and its explicitly reported compiler trust.
 They do not formalize every geometric instantiation or classification used

@@ -180,6 +180,15 @@ retain their explicit completeness and literal-source qualifications. Their
 shared ideas and certificates increase coverage; neither has a matched
 source/replacement proof-length measurement yet.
 
+The [general endpoint criterion](research/case_study/phase26_halving_core.md)
+replaces a full marked-intersection argument by one parabolic-overlap test
+and a least-support condition. Its precise S6 counterexample proves that
+the extra condition matters. This is a reusable theorem, with bounded
+computational diagnostics; it adds no paper count or measured ratio by
+itself. The operation and geometric overlap criterion have prior literature,
+and the general criterion's priority remains unverified. It receives no
+infinity marker.
+
 The [complete measurement record](research/case_study/phase9_L066_measurement.md)
 compares the exact formulas in L066, Theorems 1.1 and 1.2, in degrees
 $N\ge4$, $N\ne6$. It excludes both degree-six exceptions and the paper's

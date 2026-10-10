@@ -63,6 +63,7 @@ The proposed PSL₄ resolution has a separate
 | Six principal construction theorems from 2025 | Boolean deletion maps and fiber products recover the full finite regular family and presentation, the alternating family, and—with an amalgam torsion lemma—all three infinite extension results | [Complete scoped reduction](research/case_study/phase16_fiber_products.md); 3,008 finite subgroup meets, independent review and two Lean components. The specified geometric correspondences remain explicit inputs |
 | Frattini geometry, 2005 | A maximal-chain argument, coset-kernel transport and a coordinate basis recover all principal new geometric results and the finite relative-generator theorem | [Reduction](research/case_study/phase16_frattini_geometry_reduction.md); independent source/proof review and 774,039 finite families checked. The unrestricted infinite relative-generator converse is explicitly excluded |
 | Six constructions from one marking, 2005 | Endpoint conjugation and a central involution twist recover all six principal Janko-group construction theorems | [Uniform reduction](research/case_study/phase24_L088_theory.md); fresh verification of 1,536 subgroup meets, 168 typed Helly equalities and 66 residue-generation tests. The source presentation is checked by a completed coset enumeration. The exhaustive six-only classification is retained background; a printed figure-label transposition is recorded. Lean checks the mixed-intersection step |
+| General endpoint changes | At any finite rank, including infinite groups, the changed marking has IP exactly when one parabolic overlap is correct and the subsets recovering the removed endpoint have a least support (or are absent) | [Exact criterion](research/case_study/phase26_halving_core.md); independent written review and 21,888 finite diagnostic meets. An explicit S6 example shows the support condition cannot be dropped. Two scoped Lean modules prove the mixed meet and the two-coset obstruction. The geometric overlap criterion has published precedents; full geometry, priority and a matched length ratio remain separate |
 | Petrial obstruction and biduality, 2001 | A retained-object action with explicit kernel proves the principal obstruction from thinness alone, then recovers thin-case faithfulness, automorphism equality and biduality | [Proof and exact source ledger](research/case_study/phase25_L108_reduction.md); independent review and seven finite geometric checks. The unconditional automorphism inclusion is corrected by an explicit counterexample, not counted as proved. No finiteness assumption is needed in the written proof |
 | Eight high-type families of regular rank-three polytopes | Both principal existence and classification theorems of the source paper rederived | [Proof](research/case_study/phase3_classification.md); eight model checks; exhaustive order-256 seed census |
 | Suzuki graph pentagons | Proposed uniform proof of exactly \(q-1\) pentagons per edge | [Proof](research/case_study/suzuki_cycle_proof.md); Lean checks the complete matrix-membership equivalence; independent coset graph |
@@ -175,10 +176,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Twenty-four Lean modules certify specified components, with no `sorry` in the checked
+Twenty-five Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 23 reports have no native-evaluation axioms.
+axioms; the other 24 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

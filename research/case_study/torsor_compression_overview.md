@@ -77,6 +77,15 @@ or historical judgment about the original authors.
 
 ## Useful extensions beyond the reproduced statements
 
+The [general endpoint-halving criterion](phase26_halving_core.md) gives an
+exact iff test for changing an endpoint in any finite-rank C-group marking,
+including infinite groups. One parabolic overlap handles all mixed meets;
+a least-support condition handles the remaining index-two intervals.
+An explicit S6 example separates the conditions. Independent review and
+21,888 bounded diagnostic meets pass. The geometric overlap criterion has
+prior literature; no additional paper count, priority or ratio is assigned.
+
+
 The [complete proposed cyclic-TPP theorem](phase14_cyclic_tpp.md) gives
 `|A||B||C| <= |P|` for every cyclic TPP triple in every finite nilpotent
 group. Two equivariant square maps exclude the minimum 2-group
@@ -276,7 +285,7 @@ this reduction yet.
 
 ## Evidence and limits
 
-Twenty-four [Lean modules](formal/README.md) compile with the pinned toolchain and
+Twenty-five [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -291,9 +300,9 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker covers all 24 current modules and their successful
+public snapshot checker covers all 25 current modules and their successful
 reports. The transfer module uses native evaluation with four explicit
-compiler-evaluation axioms. The other 23 modules, including the new
+compiler-evaluation axioms. The other 24 modules, including the new
 endpoint mixed-intersection lemma, have no native-evaluation axioms. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 

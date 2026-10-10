@@ -1225,3 +1225,37 @@ nonfaithful actions and all four thin-case bidualities. Its finite scope
 is separate from the written proof for arbitrary groups. Use a new output
 filename to preserve earlier results. The Lean command verifies only the
 fixed-overlap mixed-subgroup lemma, under the pinned dependencies above.
+
+
+## General endpoint changes and the isolated support obstruction
+
+```sh
+python3 research/case_study/phase26_halving_check.py --output scratch/halving-fresh.json
+mkdir -p scratch/halving-S6
+cp research/case_study/phase26_halving_filter_check.py scratch/halving-S6/
+python3 scratch/halving-S6/phase26_halving_filter_check.py
+```
+
+Both use only Python's standard library. The first refuses an existing
+output file and checks nine named examples plus all168 eligible S4 triples,
+for21,888 actual ordered subgroup meets. It verifies the full iff criterion
+in every qualifying finite example; the arbitrary-group result remains
+the written proof. The independent S6 checker writes beside its own source,
+so run the scratch copy as above. It checks all32 complete subgroup element
+sets, all512 old/new meets and the actual set-stabilizer identifications.
+Its two changed-meet failures are the intended negative certificate.
+
+The frozen example note's command `python 3` is a typographical error;
+the invocation above uses `python3`. Its original bytes and hash are
+preserved. No source catalogue or external group package is required.
+
+The separate formal supplement for the support obstruction is checked by:
+
+```sh
+python3 research/case_study/formal/verify_lean.py TwoCosetIntersection.lean --output-dir scratch/two-coset-lean
+```
+
+It proves the iff statement for a general two-coset interval and the
+excess-witness implication. The printed axioms are only `propext` and
+`Quot.sound`; it does not derive the interval hypotheses from an arbitrary
+marked group or formalize the complete geometric construction.
