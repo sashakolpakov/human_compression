@@ -2570,7 +2570,43 @@ established prior art, explicitly cited in the note. Independent written
 review and finite exact checks support this synthesis; it supplies no
 additional whole-paper reduction or novelty marker.
 
-## 39. The remaining work, and how a living reduction should record it
+## 39. Exact names are marked isomorphisms
+
+A count by group order or adjacent product orders does not identify a
+classification table's individual objects. Different ordered generators can
+give different geometries on the same abstract group. The
+[Table 6 adapter](research/case_study/phase22_N009_table_labels.md) therefore
+interprets each published name through its ordered permutation generators,
+and maps those generators to the ordered generators of a computed facet.
+A bijective homomorphism proves that the named markings agree.
+
+This separates two tasks that otherwise become circular. A complete normal-
+kernel search produces the candidates. A library of published markings then
+assigns names; it never filters the search or supplies its completeness.
+Reversing a marking sends a pair of facets `(A,B)` to
+`(dual(B),dual(A))`, so a same-type dual may still change its letter suffix.
+The exact dual involution, rather than an unordered pair of names, gives the
+correct comparison. In this application, 428 marked isomorphisms recover
+all 107 rank-four and rank-five table rows.
+
+There is a second useful certificate. For each named facet, its permutations
+satisfy the displayed presentation, and a complete coset enumeration has
+the same order. Surjectivity and equal finite orders identify the raw
+presentation with the marking. Joining two such presentations along their
+common ordered generators, with the remaining distant commutator, gives
+the universal presentation. Its finite order is then checked directly:
+all 106 finite entries agree. The single infinite entry retains a cited
+structural decomposition. A finite quotient alone would not prove that
+a presentation is finite, or that an uncompleted enumeration is infinite.
+
+The transfer calculation in Section 37 now also has a
+[Lean supplement](research/case_study/formal/Phase23TransferAnnihilator.scope.md).
+It embeds the exact graph and checks the complete integer-vector identities
+using native evaluation. Four generated evaluation axioms make its compiler
+trust explicit. The formal statement stops at the arithmetic identities;
+the graph's completeness and the binomial argument remain written proofs.
+
+## 40. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -2607,7 +2643,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-two Lean certificates](research/case_study/formal/README.md) cover
+The [twenty-three Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -2619,6 +2655,8 @@ four-case binary Frattini-action lemma, abstract marked-square descent,
 the split-kernel image and finite product steps in graded support lifting,
 Boolean-image intersections and four-marker centralization, and the
 principal-kernel and nested-kernel criteria for full subgroup intersections.
+The additional transfer module checks exact finite arithmetic with native
+evaluation and its explicitly reported compiler trust.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.

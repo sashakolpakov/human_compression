@@ -1,5 +1,13 @@
 # Provenance and verification scope
 
+The latest [phase-24 review](phase24_review.md) adds exact Table 6 labels and
+finite universal orders, with independent primary-data review and fresh GAP
+replays. It also adds a 23rd formal module whose four arithmetic checks use
+native evaluation. Its compiler trust is explicit; the preceding 22 formal
+source/report pairs remain unchanged. [Original-file provenance](phase24_originals.json)
+and separate fresh root reports preserve the distinction between computation,
+formal scope and artifact integrity.
+
 The research was developed with an LLM and coordinated agents. Independent
 agent checks are internal reviews, not external peer review. The model family
 reported by the working session was GPT-6; no claim is made about unrecorded

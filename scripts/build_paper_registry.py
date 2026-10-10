@@ -255,7 +255,7 @@ UPDATES = {
         "A dihedral product normal form and Burnside basis exclude the bad central quotient; an order sandwich proves the three relator-lift cases. The universal class-five path group, complete invariant index-two kernel ladder and exact kernel-profile IP test recover all rank-four marked groups. Reversal gives every source type count. Two direct Todd-Coxeter computations prove the exceptional presentations have order1024, and the complete census proves there are exactly two with the specified oriented facets. The prior first-excess classification already recovers the rank-five counts.",
         "Reviewed canonical forest quotient and class bound; Burnside basis theorem and elementary dihedral facts; GAP/NQ universal nilpotent-quotient and exact subgroup algorithms; Todd-Coxeter coset enumeration; Earlier first/second-excess uniqueness of the two named rank-three facets",
         "phase21_central_quotient.md;phase21_N009_presentations.md;phase21_N009_manifest.json;phase21_N009_presentations_certificate.json;phase21_N009_source_compare.json;phase21_kernel_ladder.md;phase21_rank4_census.json;phase21_kernel_root_audit.json;phase17_k1_classification.md;phase17_k1_source_intake.json;formal/PrincipalKernelIntersections.lean;formal/PrincipalKernelIntersections.scope.md",
-        "Individual facet labels, universal amalgam orders and other displayed presentation claims remain outside this reviewed reduction. The quoted lattice classification and infinite universal-group structure theorem are retained. No whole-paper credit, matched proof-length ratio or novelty claim. The finite census is not an all-rank third-excess formula or a full Lean formalization."),
+        "All Table6 facet labels and finite universal orders are now checked. Other displayed presentation claims remain outside this reviewed reduction. The quoted lattice classification, universal-polytope interpretation and infinite universal-group structure theorem are retained. No whole-paper credit, matched proof-length ratio or novelty claim. The finite census is not a full Lean formalization; the companion all-rank third-excess formula has its own proof and scope."),
     "N011": (
         "source_theorem_retained", "Theorem 2, printed p.248: exact PGL_n(q) commuting-pair involution-generation criterion",
         "Retain the published theorem. In dimension four and odd characteristic it gives PGL4(q) rank-three existence exactly for q=3 mod4, using the source's rank-three adapter.",
@@ -647,6 +647,15 @@ def record(row, baseline, overlay, later_readings, older_access):
         for name in ("phase22_N009_rank3.md", "phase22_N009_rank3_certificate.json",
                      "phase22_N009_lemma_adapters.md", "phase22_root_audit.md", "phase22_root_audit.json"):
             r["evidence"].append(evidence(name, "Complete rank-three census and two numbered lemma adapters"))
+        r["method"].append("Exact marked isomorphisms identify all428 facets in the rank-four/five censuses. Correct dual-label pairing recovers all107 Table6 rows; complete Todd-Coxeter tables verify all106 finite universal orders. The single infinite order retains quoted Theorem5.3.")
+        for name in ("phase22_N009_table_labels.md", "phase22_N009_table_labels_certificate.json",
+                     "phase22_N009_labels_rank_audit.md", "phase22_N009_labels_rank_audit.json"):
+            r["evidence"].append(evidence(name, "All Table6 marked labels and finite universal orders; independent primary-data review and fresh replay"))
+        r["exact_target"].append({
+            "reference": "Table 6, all107 rows",
+            "scope": "All99 rank-four rows and eight rank-five rows, exact marked facet labels and all106 finite universal-group orders. Four printed vertex types are explicitly interpreted using dual markings. The sole infinite row and standard universal-polytope correspondence remain quoted inputs.",
+            "relation_to_source": "complete_table_rederivation_with_retained_background",
+        })
         r["proposed_new_result"] = True
         r["exact_target"].append({
             "reference": "Companion all-rank first-excess classification",

@@ -40,8 +40,13 @@ def lean_reports():
         assert report["sha256"] == digest(source), (source.name, "stale source hash")
         assert "sorryAx" not in report.get("stdout", ""), source.name
         assert not re.search(r"\b(sorry|admit)\b", source.read_text()), source.name
+        native = re.findall(r"\b\w+\._native\.native_decide\.ax_\d+_\d+", report.get("stdout", ""))
+        expected_native = ([f"{name}._native.native_decide.ax_1_1" for name in (
+            "third_difference", "terminal_basis_fixed", "fourth_difference", "newton_coefficients"
+        )] if source.stem == "Phase23TransferAnnihilator" else [])
+        assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
         result.append(source.name)
-    assert len(result) == 22, result
+    assert len(result) == 23, result
     return result
 
 
@@ -86,6 +91,7 @@ def main():
     manifest = json.loads(MANIFEST.read_text())
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
+    print("Trust scope: 22 earlier reports; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve; external publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")
 

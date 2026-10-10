@@ -77,8 +77,8 @@ This is a theorem about descriptions of mathematical objects. It is
 not a numerical ratio between the literature's proofs and ours. The
 finite library multiplicities have not been computed in general.
 The leading coefficient is now known. The unrestricted lower coefficients
-are also known at excesses one and two, while higher-excess core libraries
-remain uncomputed here; no corpus ratio follows.
+are also known at excesses one, two and three, while higher-excess core
+libraries remain uncomputed here; no corpus ratio follows.
 
 The [first-excess classification](research/case_study/phase17_k1_classification.md)
 now gives the exact special case a₁(d)=5d−10 for every d≥3. An optimal

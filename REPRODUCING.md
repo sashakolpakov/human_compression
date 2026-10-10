@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the twenty-two saved Lean reports
+checks local documentation links, and checks the twenty-three saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all twenty-two certificates and their unformalized boundaries. With Git
+describes all twenty-three certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -630,7 +630,7 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The twenty-two certificates cover intersection transport, field and matrix
+The first twenty-two certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
@@ -1124,3 +1124,50 @@ proof remains in the [note](research/case_study/phase23_generation_core.md);
 the [independent review](research/case_study/phase23_generation_core_independent_audit.md)
 and [root technical review](research/case_study/phase23_generation_core_root_audit.md)
 have distinct roles. These additions supply no new Lean module in this snapshot.
+
+
+## Exact Table 6 labels and finite universal presentations
+
+The [independent replay checker](research/case_study/phase22_N009_labels_rank_check.py)
+runs all four GAP scripts in a disposable directory and compares the resulting
+eight data files with the saved outputs. It verifies the frozen input hashes
+and the complete table comparison. This command leaves historical files intact:
+
+```sh
+mkdir -p scratch/labels
+python3 research/case_study/phase22_N009_labels_rank_check.py --gap gap --output scratch/labels/replay.json
+```
+
+Expected results are 428 marked facet identifications, all 107 source rows,
+and all 106 finite universal orders. The rank-five search checks all 127
+hyperplanes and 130,048 actual subgroup intersections. The original
+[review](research/case_study/phase22_N009_labels_rank_audit.md) additionally
+parsed 67 primary Atlas pages, their actual permutations and relator words,
+and re-extracted the source table. Those primary files are not distributed.
+The optional `--primary-sources` flag requires the hash-matching private
+snapshots at the paths in the manifest. Without it, the mathematical reruns
+and comparison of distributed numerical data still execute.
+
+Rank-four completeness comes from the earlier kernel census; the infinite
+universal row retains the cited decomposition. The Atlas assigns names to
+exact marked objects and is not used as a candidate-completeness oracle.
+
+## Lean transfer arithmetic with native evaluation
+
+```sh
+mkdir -p scratch/transfer
+python3 research/case_study/formal/verify_lean.py Phase23TransferAnnihilator.lean --output-dir scratch/transfer
+python3 research/case_study/phase23_transfer_lean_data_check.py --compile-report scratch/transfer/Phase23TransferAnnihilator.check.json --output scratch/transfer/data_check.json
+python3 research/case_study/phase23_transfer_lean_generate.py --output scratch/transfer/Phase23TransferAnnihilator.lean
+```
+
+Use the pinned dependency setup above, or provide `--packages` and `--lean`.
+Fresh compilation verifies the literal integer transfer identities; its output
+prints four generated native-evaluation axioms. It therefore trusts Lean's
+compiler/interpreter for these arithmetic decisions. The data checker binds
+the embedded rows and edges to the frozen graph and to the successful compile
+report; it does not itself run Lean. Regeneration should reproduce SHA256
+`0ee15f12f7cb9583380cf49ff5467da3001fb184ca912002487e6d35044f198f`.
+The [scope](research/case_study/formal/Phase23TransferAnnihilator.scope.md)
+excludes the group-to-graph correspondence and general all-rank algebra.
+The earlier 22 source/report pairs remain unchanged.

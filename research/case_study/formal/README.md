@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are twenty-two certificates. To compile them on another machine, install Git,
+There are twenty-three certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the twenty-two modules, but does not produce the runner's JSON reports.
+way to compile the twenty-three modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,10 +95,12 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all twenty-two source hashes match the historical successful reports
+This checks that all twenty-three source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. The saved runs print only the standard axioms
-`propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
+Lean or verify a proof anew. The first twenty-two saved runs print only the standard axioms
+`propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
+prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
+for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below
 are part of each certificate's claim; none certifies the entire research corpus.
 
 Saved reports: [lift](LiftCertificate.check.json),
@@ -277,3 +279,16 @@ noncentral seeds or prove the excess-two classification. A
 [fresh compilation](../../../provenance/phase19_nested_kernel_public_compile.json)
 checks the exported module and its unchanged principal-kernel dependency;
 all twenty-one earlier sources and historical reports retain their bytes.
+
+
+[Phase23TransferAnnihilator.lean](Phase23TransferAnnihilator.lean) embeds all
+706 initial rows and 1,522 edges of the saved 708-state integer transfer graph.
+It verifies complete 2,832-coordinate identities, including
+`delta^3(v7) = 125*e`, `T(e) = e`, `delta^4(v7) = 0`, and the Newton
+coefficients `[2499, 1780, 715, 125]`. These four checks use native evaluation;
+the [scope note](Phase23TransferAnnihilator.scope.md) and
+[saved report](Phase23TransferAnnihilator.check.json) explicitly name the four
+generated evaluation axioms. This has a stronger compiler trust requirement
+than the preceding certificates. The [fresh public compilation](../../../provenance/phase24_transfer_public_compile.json)
+rechecks the unchanged source and pinned dependencies. The general binomial
+argument and the group-to-graph completeness theorem remain outside Lean.
