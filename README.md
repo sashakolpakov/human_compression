@@ -45,12 +45,13 @@ pass the stated theorem. This connects A's Frattini branch to B; A's symmetric
 classification remains separate, and the two full manuscripts are not yet
 one shorter replacement.
 
-The [current independent assessment](CURRENT_ASSESSMENT.md) gives the exact
-intake-to-replacement map and the earlier two-paper baseline. The new
-[integration review](research/case_study/phase37_compress_forest_recent_audit.md)
-records the subsequent three-paper result. The [earlier assessment](INDEPENDENT_ASSESSMENT.md)
-is preserved with its original baseline and wider bundle proposals. The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
-defines the user's sum-of-manuscripts ratio and its required coverage audit.
+The [new independent assessment](CURRENT_STATE.md) gives the exact named
+intake-to-replacement map, the measured four-paper factor and the next steps.
+Its author is separate from the manuscript authors and integration reviewers,
+and independently reproduced the counts. The [previous two-paper assessment](CURRENT_ASSESSMENT.md)
+and [earlier candidate assessment](INDEPENDENT_ASSESSMENT.md) remain unchanged.
+The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
+defines the sum-of-manuscripts ratio and its required coverage audit.
 
 ## The method
 

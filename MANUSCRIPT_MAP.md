@@ -41,5 +41,7 @@ one shorter replacement.
 Current work extends the named intake to further independently checked replacements,
 and closes the source/rendering boundaries needed for measurement.
 New conjecture solutions have separate statement, proof and priority audits.
-The earlier [independent assessment](CURRENT_ASSESSMENT.md) stays frozen at
-its two-paper baseline; the two linked bundle reviews record later progress.
+The [new independent assessment](CURRENT_STATE.md) reviews this seven-source,
+two-replacement snapshot and independently reproduces the four-paper count.
+The [previous assessment](CURRENT_ASSESSMENT.md) stays frozen at its two-paper
+baseline; it is preserved as history rather than silently updated.
