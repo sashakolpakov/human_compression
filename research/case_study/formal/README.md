@@ -59,7 +59,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are forty-one certificates. To compile them on another machine, install Git,
+There are forty-two certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -76,7 +76,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the forty-one modules, but does not produce the runner's JSON reports.
+way to compile the forty-two modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -107,7 +107,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all forty-one source hashes match the historical successful reports
+This checks that all forty-two source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. Thirty-nine saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
@@ -479,3 +479,14 @@ family construction, kernel orders, action tables and geometry remain written in
 The [independent semantic review](../phase69_cover_family_interfaces_recent_audit.md)
 and [root build admission](../phase68_cover_character_root_audit.md) record
 the exact family interface and two fresh successful compiler runs.
+
+## Noncommutative odd-kernel obstruction
+
+[OddKernelWord.lean](OddKernelWord.lean) proves that 35 literal cell equations
+in an arbitrary group force a distinguished word to square to one. A second
+theorem proves that the two distinguished entries coincide in a finite
+group of odd order. The [scope](OddKernelWord.scope.md),
+[saved fresh build](OddKernelWord.check.json) and
+[independent review](../phase86_nonabelian_cover_recent_audit.md) bind the
+exact statements. The fixed permutation orbit, Sylow normalization and
+source-family geometry remain separately checked inputs.

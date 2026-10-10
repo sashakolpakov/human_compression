@@ -50,4 +50,5 @@ lean_lib MathCompressionCertificates where
     `TriangleWreathInvolutory,
     `TriangleReflection,
     `QuotientIntersectionCriterion,
-    `CoverCharacterSeparation]
+    `CoverCharacterSeparation,
+    `OddKernelWord]

@@ -62,7 +62,7 @@ The eleven-source file adds 28,061 raw bytes, including its complete new
 10,533-byte Python program. A comparable eleven-source measurement is still
 needed; none of the older factors transfers.
 
-Forty-one scoped Lean components are distributed. They include the exact
+Forty-two scoped Lean components are distributed. They include the exact
 quotient-intersection criterion
 `f(A) ∩ f(B) = f(A ∩ B) iff N ∩ AB = (N ∩ A)(N ∩ B)` for kernel N,
 and the triangle infinitude certificates for the exact two universal
@@ -81,9 +81,13 @@ interval beneath their shared cover. It does not classify all covers.
 The [two-primary cover analysis](COVER_TWO_PRIMARY.md) is now independently
 reviewed. The construction routes give the same minimal double cover for
 every stated parameter, and the sample degree-two/four census is complete.
-A separate general module criterion and fixed 55-term integer identity exclude
-odd abelian kernels with injective end maps throughout the family. This
-provides useful restrictions without proving global uniqueness.
+A further [universal complement-group theorem](research/case_study/phase83_nonabelian_cover_theorem.md),
+read with its [required erratum](research/case_study/phase83_nonabelian_cover_erratum.md),
+excludes arbitrary finite odd kernels with injective end maps throughout
+the family. Its 35-cell word obstruction and odd-cardinality consequence
+are checked in Lean; the complete written argument and original-cell
+computations have a separate review. This strengthens the older abelian
+obstruction without proving global uniqueness.
 
 The [expanded attribution comparison](research/case_study/phase72_cover_family_priority_report.md)
 credits published mix, chirality and facet-cover criteria for the relevant

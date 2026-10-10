@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the forty-one saved Lean reports
+checks local documentation links, and checks the forty-two saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -116,6 +116,22 @@ with the reviewed originals. Existing output paths are refused. Primary
 captures and historical wrappers are unnecessary. The uniform parameter
 reduction remains a separately reviewed written proof; this is no Lean build.
 See [the exact theorem scopes](COVER_TWO_PRIMARY.md).
+
+The stronger obstruction for arbitrary finite odd kernels has a separate
+replay, using the pinned Lean packages:
+
+```sh
+python3 -O research/case_study/phase83_nonabelian_cover_check.py \
+  --packages /path/to/pinned/packages --lean /path/to/lean-4.32.2 \
+  --output-dir /tmp/human-compression-odd-kernel-new
+```
+
+It verifies the actual cell orbit, regenerates the elementary elimination
+trace and exact Lean source, then compiles both word/cardinality theorems.
+The independent review supplies separate implementations of the complete
+111-step trace and the 35-cell subproof. The written family transport and
+geometric recognition remain necessary; read the manuscript with its
+[required correction](research/case_study/phase83_nonabelian_cover_erratum.md).
 
 ## Odd-prime cover-family diagnostics and formal separation
 
@@ -721,7 +737,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all forty-one certificates and their unformalized boundaries. With Git
+describes all forty-two certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh

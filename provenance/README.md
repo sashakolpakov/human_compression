@@ -9,7 +9,7 @@ audit and [original-file record](phase70_originals.json).
 The [complete C measurement](../COMPRESS_C.md) is recorded honestly as 2.386%
 expansion, with its [bound measurement and authored PDF](phase71_originals.json).
 The current registry has seventeen principal-result candidates, eleven sources
-in reviewed assemblies and forty-one scoped Lean components. These are different
+in reviewed assemblies and forty-two scoped Lean components. These are different
 coverage measures, not a corpus compression ratio.
 
 The separately reviewed [odd-prime cover family](../COVER_FAMILY.md) has its
@@ -41,6 +41,15 @@ independent semantic review and fresh public regeneration. Its
 generators, reviews and separate root replay. Stripping the notes preserves
 every proof byte. This adds neither mathematics nor a measurement or
 open-conjecture claim; the ten-source edition remains frozen.
+
+The stronger [odd-kernel obstruction](../COVER_TWO_PRIMARY.md) has its own
+[original-file record](phase79_originals.json), complete written review and
+required conjugation erratum. A fresh public replay checks the full
+original-cell trace, the 35-cell subproof and the 42nd scoped Lean module.
+The kernel may be nonabelian; injectivity on both ends remains essential.
+The [root admission](../research/case_study/phase89_nonabelian_root_admission.md)
+records the actual execution and inherited source inputs. No measured
+ratio or source count changes with this separate theorem.
 
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite

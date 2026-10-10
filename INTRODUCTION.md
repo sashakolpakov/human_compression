@@ -4043,7 +4043,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [forty-one Lean certificates](research/case_study/formal/README.md) cover
+The [forty-two Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -4184,3 +4184,47 @@ under the stated geometric hypotheses. Affine extensions, averaging and
 permutation modules are established ingredients. The explicit family
 reduction and certificate are the repository calculation; neither implies
 a classification of unrestricted covers or a historical-priority claim.
+
+## A noncommutative universal group removes the abelian assumption
+
+The preceding module construction has a group-level version. For a finite
+odd kernel K over the same 2-group G, Sylow theory splits the extension
+and aligns its two injective ends as A and B^w. No solvability assumption
+on K is required. The equations for w are now noncommutative:
+
+```text
+w^r1 = w^r2 = w,
+u = (w^r3)^−1 w,   u^r0 = u,   w^z ≠ w.
+```
+
+Introduce a generator t_(Cg) for each right coset and impose the translated
+cell relations
+
+```text
+(t_(Cr3r0g))^−1 t_(Cr0g) (t_(Cg))^−1 t_(Cr3g) = 1.
+```
+
+Every candidate w defines a homomorphism from this one group U to K. Its
+distinguished defect δ=t_C^−1 t_(Cz) records precisely the required
+intersection repair. Conversely, any finite odd quotient in which δ
+survives can be made G-invariant by intersecting its kernel's finitely
+many G-translates. The resulting quotient embeds in a product of odd
+groups and remains odd. Thus survival of δ in a finite odd quotient is
+an exact necessary-and-sufficient criterion under the stated interface.
+
+For the Γ2 family, the parameter-independent coset action gives the same
+128-generator U for every β and sign pair. Thirty-five actual cells
+already imply δ²=1. [Lean verifies the precise word implication](research/case_study/formal/OddKernelWord.scope.md)
+and the finite odd-cardinality consequence. Independent exact programs
+check the cells against the actual permutation orbit and replay the
+elementary substitutions. Odd order then kills δ and rules out all such
+covers, including those with nonabelian kernels.
+
+This is a useful distinction between the permutation representation and
+the equations placed on it. The action on 128 labels is linearizable by
+permutation matrices; the kernel values need not commute. Abelianizing U
+recovers the integral-module type of obstruction. Keeping the group words
+proves the stronger result. The [full manuscript](research/case_study/phase83_nonabelian_cover_theorem.md)
+must be read with its [conjugation correction](research/case_study/phase83_nonabelian_cover_erratum.md).
+Classical Sylow theory, presentations and recognition are retained; the
+specific organization and certificate carry no verified priority claim.

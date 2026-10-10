@@ -1,8 +1,8 @@
 # Two-primary covers and an integral obstruction
 
 For one specified infinite family, the facet and cofacet construction routes
-produce **the same minimal double cover**. A second theorem excludes covers
-with **odd abelian kernel and injective maps on both ends**. These results
+produce **the same minimal double cover**. A further theorem now excludes covers
+with **any finite odd-order kernel and injective maps on both ends**. These results
 restrict the search for further minimal covers; global uniqueness remains
 unproved.
 
@@ -87,6 +87,37 @@ not give the same conclusion.
 
 ## Attribution, reproduction and remaining scope
 
+The newer [nonabelian proof](research/case_study/phase83_nonabelian_cover_theorem.md),
+with its [required wording correction](research/case_study/phase83_nonabelian_cover_erratum.md),
+strengthens the integral obstruction. For an arbitrary finite odd kernel K,
+Sylow theory aligns the two local complements as A and B^w. The required
+conditions become
+
+```text
+w^r1 = w^r2 = w,
+u = (w^r3)^−1 w,       u^r0 = u,
+w^z ≠ w.
+```
+
+There is one universal group with generators indexed by C\G and relations
+given by the translates of this noncommutative cell equation. Such a cover
+exists exactly when its defect `δ=t_C^−1 t_Cz` survives in a finite odd-order
+quotient. The complete written proof establishes both directions, including
+how to make a quotient invariant under the G-action.
+
+For this family, the same fixed 128-point action supplies the universal
+presentation for every parameter and sign. Just 35 original cells force
+`δ²=1`. The new [Lean certificate](research/case_study/formal/OddKernelWord.scope.md)
+proves that exact group-word implication and its finite odd-cardinality
+consequence. An [independent review](research/case_study/phase86_nonabelian_cover_recent_audit.md)
+checks the complete argument, fresh compilation and two independently
+implemented relation checks. The orbit calculation and geometric transport
+remain outside the formalized scope. The reviewer contributed exploratory
+reasoning before the final audit; this is disclosed in the report.
+
+This removes the abelian assumption. It supplies no source-count increment,
+new compression factor, historical-priority claim or open-conjecture marker.
+
 The source-family construction and standard group-to-polytope recognition
 remain imported. The mix with trivial end extensions comes from Cunningham's
 earlier cover example. The repository derives the uniform coincidence,
@@ -107,10 +138,12 @@ records the fresh public replay. The historical author wrappers additionally
 require private source captures; the public verifier requires only distributed
 files. An [independent interface review](research/case_study/phase81_two_primary_interfaces.md)
 repeats the run from only those files under optimized Python and checks
-altered-input and overwrite rejection. These packages introduce no new Lean component or measured length
-factor, and add no manuscript to Compress_11.
+altered-input and overwrite rejection. Those earlier two packages introduce
+no Lean component or measured length factor. The stronger nonabelian package
+adds the one scoped certificate described above. None adds a manuscript to
+Compress_11.
 
-Nonabelian odd kernels, noninjective ends, mixed kernels, new even-kernel
+Noninjective ends, mixed kernels, new even-kernel
 covers, the other source families and unrestricted multiplicity remain
 outside these conclusions. The [odd-prime theorem](COVER_FAMILY.md) and
 [general cover-kernel criteria](COVER_KERNELS.md) retain their separate scopes.

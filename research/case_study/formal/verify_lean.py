@@ -41,6 +41,7 @@ CERTIFICATES = (
     "TriangleReflection",
     "QuotientIntersectionCriterion",
     "CoverCharacterSeparation",
+    "OddKernelWord",
 )
 
 
