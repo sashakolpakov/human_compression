@@ -90,6 +90,7 @@ def digest(path):
 def frozen_question_exports():
     """Preserve admitted proof packages when refreshing the public snapshot."""
     manifests = {
+        "phase275_export.json": "424e086716452bf776c5ad7e56061b90a9023c62dda92f3ca4d2562d564bf73b",
         "phase270_export.json": "31a643201a8e4b85adcea74064391d74d23a74430f605e08d6c471883b4bfb17",
         "phase269_export.json": "957b996134bad5df0dfe8146a345d8f4d0f0c99629424c1318e8a7a6a08bd4aa",
         "phase260_export.json": "2b1f0ed5cd074950b9d0a20dfa69004b0de6c2a04dd646962ed2c3d7f291cb19",
@@ -170,7 +171,7 @@ def lean_reports():
         )] if source.stem == "Phase23TransferAnnihilator" else [])
         assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
         result.append(source.name)
-    assert len(result) == 92, result
+    assert len(result) == 93, result
     return result
 
 
@@ -227,7 +228,7 @@ def main():
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
     print(f"PASS: {frozen} frozen question-proof publication artifacts retain their admitted bytes.")
-    print("Trust scope: 91 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
+    print("Trust scope: 92 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
     print("External publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")

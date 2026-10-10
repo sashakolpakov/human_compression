@@ -1,5 +1,10 @@
 # Lean certificates and their scope
 
+[HermitianPlaneTransport.lean](HermitianPlaneTransport.lean) proves thirteen
+uniform statements about actual Hermitian Gram equations, unique transport
+and isotropic root moves. Its [scope](HermitianPlaneTransport.scope.md)
+keeps the finite-field and geometric interfaces explicit.
+
 [GraphClones.lean](GraphClones.lean) gives four axiom-free proofs that lift
 actual paths and preserve connectedness under vertex cloning. Its
 [scope](GraphClones.scope.md) leaves the incidence-geometric application

@@ -74,6 +74,11 @@ gonality-two suggestion in the final L009 journal source. Twin points are
 allowed by its definitions; a variant excluding them remains unanswered.
 This adds one question entry and no principal-source credit.
 
+The [Hermitian-unital proof](HERMITIAN_UNITALS.md) now has its complete
+independent review and a separate semantic audit of thirteen Lean
+transport declarations. It strengthens the existing question entry and
+exposes the complete dependency used by the triangle-geometry paper.
+
 ## Further application material
 
 Each page states exactly which source results it recovers. Listing it here

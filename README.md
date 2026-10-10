@@ -83,6 +83,10 @@ The [point-cloning counterexample](POINT_CLONING.md) refutes the journal
 gonality-two experimental suggestion under its stated definitions. It gives
 an infinite family, independent checks and four axiom-free Lean path proofs.
 
+The [Hermitian-unital result](HERMITIAN_UNITALS.md) now includes its complete
+independent review and thirteen Lean declarations for explicit unitary
+transport, a reusable part of the connectivity proof.
+
 ## Proof and attribution
 
 Each application must derive the historical main results it promises to recover,

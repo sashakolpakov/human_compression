@@ -410,7 +410,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the ninety-two saved Lean reports
+checks local documentation links, and checks the ninety-three saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -2675,3 +2675,14 @@ This checks frozen public bindings, both actual finite incidence programs
 and four axiom-free Lean path proofs. See [the result and its twin-point
 qualification](POINT_CLONING.md). The complete counterexample is not
 formalized in Lean.
+
+## Hermitian-unital audit and transport
+
+```sh
+python3 -B -O research/case_study/phase275_check.py --out /tmp/NEW-unitary-audit --gap GAP --lean LEAN --packages PACKAGES
+```
+
+The adapter replays thirteen new and one retained Lean declaration, literal
+unitals and chamber actions at four field orders, 18,612 transport pairs
+and four rejection controls. Private primary files and old compiled objects
+are not required. See [the complete result and scope](HERMITIAN_UNITALS.md).
