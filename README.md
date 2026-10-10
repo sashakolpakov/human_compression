@@ -25,6 +25,7 @@ The active manuscripts have descriptive mathematical titles:
 
 - **[Umbrella theory U: Marked groups, kernels and intersections](UMBRELLA.md).**
 - **[Module A: Construction and classification of two-group polytopes](MODULE_A.md).**
+- **[Module B: Forest coordinates and primitive coset geometries](MODULE_B.md).**
 
 **Complete drafts are available for review:** U has 28 statements with
 proofs; A has 21 rendered pages. U develops
@@ -36,6 +37,11 @@ Additional sources enter only when their main results actually follow.
 The [root review](research/case_study/phase127_modular_root_review.md)
 records a complete proof reading and fresh reproduction checks. Full
 formalization, final source admission and matched measurement remain pending.
+
+Module B is being drafted around four sources from 1998–2021. Forest
+cuts, compatible partitions and Frattini coordinates connect its tree,
+generation and coset-geometry arguments. Its source-contract audit is
+in progress; it is not yet a completed replacement manuscript.
 
 The previous combined manuscripts are working source material. Their
 proved lemmas, computations, source readings and certificates are being

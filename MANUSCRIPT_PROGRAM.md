@@ -49,12 +49,20 @@ classification, universal-presentation and geometric arguments. Full
 formalization and final source admission remain pending. Enlarging this
 bundle requires further proved source reductions.
 
-Later modules will group other related papers around the actual reusable
+## Module B: Forest coordinates and primitive coset geometries
+
+The [module outline](MODULE_B.md) connects forest cuts and compatible
+partitions with independent generation and Frattini coordinates. Its
+planned intake is N001 (1998), N003 (2002), N008 (2005) and L030 (2021).
+The application proofs are being reworked from existing source material;
+the complete manuscript and its source-contract audit remain in progress.
+
+Later modules will group related papers around the actual reusable
 machinery they need. Their intake will be frozen before a compression
 claim. The earlier mixed compilation does not dictate these groupings.
-Each module will have a descriptive mathematical title; its letter is
-only an identifier. Titles for B and later modules will be assigned when
-their source bundles and common arguments are established.
+Each module has a descriptive mathematical title; its letter is only an
+identifier. Titles for C and later modules will follow their mathematical
+scope rather than anticipate an unproved grouping.
 
 ## Open questions and formal proofs
 

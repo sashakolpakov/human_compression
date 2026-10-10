@@ -8,6 +8,12 @@ Their titles are **Marked groups, kernels and intersections** (U) and
 Module A begins with L032, L035, F013, F016 and N009. Further sources will
 be added through complete deductions of their main results.
 
+**[Module B: Forest coordinates and primitive coset geometries](MODULE_B.md)**
+is being drafted around N001, N003, N008 and L030 (1998–2021). Its shared
+arguments concern forest cuts, compatible partitions, independent
+generation and Frattini coordinates. This planned intake has not yet
+been admitted as a completed modular replacement.
+
 The [living paper map](PAPER_MAP.md) records all 161 indexed works and the
 existing source-level derivations. Its older assembled-replacement records
 are working compilations, retained as source material for reworking. They
