@@ -3960,7 +3960,30 @@ relations rule them out. Their forest/laminar and classification arguments
 remain proof cost in any future combined manuscript. No new source coverage
 or seven-paper compression factor is assigned by this bridge alone.
 
-## 69. The remaining work, and how a living reduction should record it
+## 69. A triangle quotient settles universal infinitude above the small cases
+
+Finite examples at every parameter do not imply that their universal group
+is finite. The [triangle quotient theorem](research/case_study/phase38_L003_universal_triangle.md)
+proves that the exact universal presentations are infinite at every integer
+s≥6. Its common object is a three-coordinate wreath product built from the
+Coxeter triangle group with pair labels 2,3,s. Nine fixed presentation
+words cancel using two small finite factors; the remaining word is the
+parameter relation itself. Three explicit elements in the permutation
+kernel project onto the triangle generators.
+
+Three real reflection matrices then give a direct infinitude proof: the
+product has an eigenvalue greater than one when s>6, and its square is a
+nontrivial unipotent matrix when s=6. The integer polynomial identities and
+all fixed group words have an exact executable check. The eigenvalue and
+surjective-subgroup arguments have a complete written root review.
+
+This settles the infinite side of the parameter range without classifying
+the whole universal group. The small finite cases remain the source's
+published computations. The universal-geometry identification is a separate
+retained theorem. No extra source manuscript or novelty credit is counted;
+the outstanding 2024 prior-art comparison still matters.
+
+## 70. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

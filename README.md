@@ -112,7 +112,13 @@ The separate [multiples-of-three family](research/case_study/phase34_L003_triple
 has an independent exhaustive check of all 56,225 base flags. The [all-parameter universal corollary](research/case_study/phase35_L003_all_universal.md)
 establishes actual marked regular universal objects for every integer
 $s\ge2$. Each has a finite quotient preserving all four local groups;
-the universal groups themselves are infinite whenever six divides $s$.
+a [new triangle-group quotient proof](research/case_study/phase38_L003_universal_triangle.md)
+shows that the universal groups themselves are infinite for **every integer
+$s\ge6$**. A subgroup of the wreath-product image maps onto the triangle
+group of type (2,3,s), and explicit real reflection matrices prove infinitude.
+The [complete written review and fresh exact check](research/case_study/phase38_L003_universal_triangle_root_audit.md)
+pass. Finiteness at s=2,3,4,5 remains a retained published computation;
+the new theorem's historical priority is unverified.
 The [source-scope audit](research/case_study/phase35_L003_problem92_scope.md)
 explains precisely which reading of the 2018 existence question is answered.
 The [priority audit](research/case_study/phase35_L003_priority_status.md)

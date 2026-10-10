@@ -1727,3 +1727,19 @@ overgroups on five further p-groups. This uses exact GAP arithmetic and
 the SmallGroups catalogue for those five examples. The all-parameter
 [theorem and review](research/case_study/phase38_primitive_saturation_root_audit.md)
 are separate written evidence; no higher lower-central restriction is claimed.
+
+
+## Triangle quotient and universal infinitude
+
+```sh
+python3 research/case_study/phase38_L003_universal_triangle_check.py \
+  --output /tmp/triangle-check-new.json
+```
+
+The output path must be new. This standard-library checker verifies the
+nine fixed relators in an abstract amalgam, the tenth word's uniform
+formula, the subgroup projection witnesses, the involutory lift and the
+exact polynomial reflection identities. The all-parameter spectral and
+infinitude arguments are [written and reviewed](research/case_study/phase38_L003_universal_triangle_root_audit.md).
+It does not recompute universal finiteness at parameters 2–5 or establish
+historical novelty.
