@@ -21,7 +21,7 @@ map is **all seven named manuscripts → [Compress_Unified](COMPRESS_UNIFIED.md)
 Its independent review passes all 34 scoped/corrected adapters, with explicit
 retained inputs and a qualification on incomplete per-adapter dependency lists.
 These overlapping replacements still cover seven distinct sources. The wider [paper registry](PAPER_MAP.md)
-contains 160 indexed works and 16 principal-result candidates; neither count
+contains 161 indexed works and 17 principal-result candidates; neither count
 is a count of assembled or compressed whole manuscripts.
 
 The [seven-source measurement review](research/case_study/phase43_unified_lower_bound_root_audit.md)
@@ -54,6 +54,11 @@ The [current independent report](CURRENT_REPORT.md) assesses the seven-source
 integration and the separate measurement and verification obligations.
 Current work extends the named intake to further independently checked replacements,
 and closes the source/rendering boundaries needed for measurement.
+The [reviewed chiral-cover adapter](research/case_study/phase43_chiral_cover_root_audit.md)
+maps Cunningham's *Chiral polytopes whose smallest regular cover is a polytope*
+(2024 publication; 2023 author version) to kernel transport plus local geometry
+and an exact finite computation. This is a standalone principal-result candidate
+with retained inputs; it has no measured factor and is not part of the seven.
 New conjecture solutions have separate statement, proof and priority audits.
 The [earlier independent assessment](CURRENT_STATE.md) preserves the seven-source,
 two-replacement snapshot and independently reproduces the four-paper count.

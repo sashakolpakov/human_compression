@@ -4,7 +4,7 @@ This living map distinguishes source access from mathematical progress.
 It includes books, proceedings papers and errata as well as journal articles.
 The historical inventory is preserved; later assessments apply only to their named targets.
 
-**160 mathematical works** are indexed: 128 catalogue entries and 17 followups and 15 network additions. **48 entries date from 1996–2006.**
+**161 mathematical works** are indexed: 128 catalogue entries and 17 followups and 16 network additions. **48 entries date from 1996–2006.**
 This is not complete proof reading or an exhaustive bibliography of every collaborator,
 student or postdoc. Coauthorship alone does not establish those relationships.
 
@@ -37,15 +37,15 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 10 |
+| full text read | 11 |
 | full text search only | 19 |
 | metadata and access only | 9 |
 | selected sections read | 69 |
 
-101 works have a retrieved full text; 52 have a specified encoding or conditional/component reduction; 38 have a rederived component, finite subfamily or principal target.
+102 works have a retrieved full text; 53 have a specified encoding or conditional/component reduction; 39 have a rederived component, finite subfamily or principal target.
 These overlapping totals must not be read as counts of fully reduced papers.
 
-The conservative **principal-result set has 16 works: L008, L030, L032, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013**.
+The conservative **principal-result set has 17 works: L008, L030, L032, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013, N016**.
 Proposed conjecture proofs are separate and do not increase that count.
 
 ## Exact reductions and proposed consequences
@@ -101,6 +101,7 @@ Proposed conjecture proofs are separate and do not increase that count.
 | N010 | [Problems on polytopes, their groups, and realizations](https://link.springer.com/article/10.1007/s10998-006-0035-y) | Problem 30, printed p.19: restricted regular two-group components; Companion complete excess-two ordered-marking classification; Companion finite-state classification at every fixed nilpotency class; Companion exact third-excess ordered-marking count in every rank | [partial progress](research/case_study/phase18_schulte_weiss_intake.md). [Fixed-class transition theory and exact low-excess counts](research/case_study/phase20_finite_state.md). The original unmarked group characterization, chiral cases and orders 2^k p remain outside these conclusions. Exact unrestricted excess-three counts are now supplied by a complete finite graph and integer-vector certificate; higher excess coefficients remain uncomputed. This is progress on a restricted component, not a solution of Problem 30 or a rederivation of the survey. Publication priority, complete formalization and a matched proof-length ratio remain unestablished. |
 | N011 | [On generation of the groups GL_n(q) and PGL_n(q) by three involutions, two of which commute](https://journal.imm.uran.ru/2025-v.31-4-fon-03) | Theorem 2, printed p.248: exact PGL_n(q) commuting-pair involution-generation criterion | [source theorem retained](research/case_study/phase20_linear_rank3_intake.md). Selected statement, preliminary passages and the n4 construction on pp256-258 read; no complete source-proof audit or rederivation credit. The related N012 thesis now supplies an earlier public claim for the proper index-two subgroup at q=5 mod8, with a defect in its printed witness. The q=1 mod8 group in that thesis is a different central extension. No source compression or infinity-marker credit. |
 | N012 | [Linear groups over finite fields and over the ring of integers as automorphism groups of regular polytopes of rank 3](https://sfu.ru/ru/science/dissertations/2b9582cf-c095-4bb6-9b28-c46d7421416e) | Theorem 4.3.1 and Corollary 4.3.1, pp70–75; printed n4 witness p72; Theorem 3.3.1 as context | [related only](research/case_study/phase22_linear_priority_supplement.md). Selected sections only, not a whole-thesis proof audit. No theorem rederivation, principal-result, matched-ratio or novelty credit. The separate 2026 subscription article remains an unexhausted lead; q=1 mod8 priority remains unverified. |
+| N016 | [Chiral polytopes whose smallest regular cover is a polytope](https://gabrielcunningham.com/WhichChiralPolytopes.pdf) | All proved conclusions of the eight-page July25 2023 author manuscript; source conjectures excluded | [principal results rederived](research/case_study/phase41_chiral_cover_manuscript.md). Author-version conditional adapter only; full publisher PDF unacquired. The older atomic classification is retained, not compressed. General multiplicity and five-family conjectures remain unproved here; current priority/open status and external review remain. Not yet integrated into the seven-source assembly, no length factor and no new formal component. |
 
 ## The 1996–2006 track
 
@@ -397,6 +398,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | N013 | 2020 | [Locally Spherical Hypertopes from Generalised Cubes](https://arxiv.org/abs/2001.11082v1) | full text read | principal results rederived |
 | N014 | 2024 | [Constructing new geometries: a generalized approach to halving for hypertopes](https://arxiv.org/abs/2405.19050v1) | selected sections read | proposed new result |
 | N015 | 2024 | [Abelian covers of regular hypertopes](https://www.sciencedirect.com/science/article/abs/pii/S0021869324001534) | abstract read | unassessed |
+| N016 | 2024 | [Chiral polytopes whose smallest regular cover is a polytope](https://gabrielcunningham.com/WhichChiralPolytopes.pdf) | full text read | principal results rederived |
 
 ## Updating the map
 

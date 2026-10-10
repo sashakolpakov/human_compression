@@ -1822,3 +1822,19 @@ The frozen runner's report retains its original pending-review label. The
 [subsequent root audit](research/case_study/phase43_unified_lower_bound_root_audit.md)
 admits only a conditional lower bound, with N001 credited zero. Neither
 command estimates N001's length or supplies an exact seven-source factor.
+
+## Chiral-cover finite certificate
+
+```sh
+python3 research/case_study/phase43_chiral_cover_verify.py \
+  --gap /path/to/gap --output-dir /tmp/chiral-cover-new
+```
+
+Use stock GAP 4.15.1. The no-clobber runner checks six literal presentations
+and mixes, actual subgroup intersections, mirror/cover/dual maps and a word
+distinguishing the two minimal covers. It binds the entire output after the
+historical universal-newline conversion and saves raw logs separately. No
+source PDF, finite catalogue or RAMP is needed. GAP's exact algorithms are
+trusted; this is not a Lean certificate. The [root proof review](research/case_study/phase43_chiral_cover_root_audit.md)
+supplies the mathematical interfaces and minimality argument. The author's
+old in-place Python runner and primary fulltexts are intentionally not exported.

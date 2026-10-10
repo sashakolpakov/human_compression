@@ -24,11 +24,18 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase32_L003_geometry_intake.json", "phase32_L003_universal_intake.json",
           "phase32_L111_section6_intake.json", "phase33_L003_even_intake.json",
           "phase33_L003_universal_even_intake.json", "phase33_source_status.json",
+          "phase41_chiral_cover_intake.json", "phase43_chiral_cover_root_audit.json",
           "manuscript_replacements.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
 UPDATES = {
+    "N016": (
+        "principal_results_rederived", "All proved conclusions of the eight-page July25 2023 author manuscript; source conjectures excluded",
+        "The shared kernel transport theorem, proved local mirror compatibility and regular-end induction recover the chirality criterion and corollaries. An affine square-torus argument handles the torus family; exact bare-presentation GAP computations and a prime-kernel argument recover the two distinct minimal regular covers.",
+        "Standard string C+ and marked-cover correspondence; Chiral depth-two regular-section theorem; Square-tessellation quotient identification; Specified older atomic-family existence and prime chirality theorem; GAP exact algorithms for the finite example",
+        "phase41_chiral_cover_manuscript.md;phase41_chiral_cover_ledger.md;phase41_chiral_cover_intake.json;phase41_chiral_cover_manifest.json;phase43_chiral_cover_root_audit.md;phase43_chiral_cover_root_audit.json;phase43_chiral_cover_verify.py;phase43_chiral_cover_safe_root_replay.json",
+        "Author-version conditional adapter only; full publisher PDF unacquired. The older atomic classification is retained, not compressed. General multiplicity and five-family conjectures remain unproved here; current priority/open status and external review remain. Not yet integrated into the seven-source assembly, no length factor and no new formal component."),
     "L003": (
         "partial_progress", "Section9 rotational presentation with ((3,0),(2,0),(1,1),(s,0)); algebraic consequence near Problem9.2",
         "An exact216-state integer-voltage action proves the displayed group infinite for every positive6|s. Complete finite Schreier data describe its image as a rank-six free abelian extension of an order216 quotient. Lean proves Infinite of the literal s6 PresentedGroup; exact finite quotients216m6 of the image follow in the written proof.",
@@ -326,6 +333,7 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "N016": ("full_text_read", "Complete eight-page author manuscript, all statements, proofs and exact presentations read through primary web text by author agent and independently by root. No local PDF-byte, visual-page or complete publisher-version verification.", "phase43_chiral_cover_root_audit.md"),
     "L003": ("selected_sections_read", "Primary internal pages17–19: complete rotational presentation, Table8, surrounding finite-family prose and Problem9.2; later2021 first-family theorem and corrections compared. No current-resolution claim.", "phase32_L003_source_intake.json"),
     "L111": ("selected_sections_read", "Primary indexed definitions, graph convention, both theorem input formulations, complete verbal Theorem4.1 and Construction5.1, and relevant section5 proofs. Arbitrary-rank flag quantifiers independently checked. Complete body/PDF and application tables remain unavailable.", "phase32_L111_scope.json"),
     "F015": ("selected_sections_read", "Sections2.2–2.4 and orthoplex Section3.2 including Proposition13; not all family proofs.", "phase26_access.json"),
@@ -1005,6 +1013,23 @@ def phase31_network_rows():
     }]
 
 
+def phase41_network_rows():
+    """Exact chiral-cover author-version intake; no integrated assembly credit."""
+    source = load("phase41_chiral_cover_intake.json")["target"]
+    return [{
+        "id": "N016", "title": source["title"],
+        "publication_year_from_catalogue": 2024,
+        "citation": source["author"] + ". " + source["publication"] + ". DOI " + source["doi"],
+        "category": "Network publication / chiral regular covers", "mathematical": True,
+        "fulltext_available": True,
+        "reading_scope": "complete_eight_page_author_text_statements_proofs_presentations_and_references",
+        "retrieval_status": "primary_author_PDF_web_text_read_publisher_full_PDF_unacquired",
+        "status_note": "Exact author-version contract; standard geometry and specified older classification retained. Root full proof review and exact GAP replay pass. No conjecture or length claim.",
+        "assets": [{"url": source["author_url"]}, {"url": "https://doi.org/"+source["doi"]}],
+        "source_urls": [], "intake_file": "phase41_chiral_cover_intake.json",
+    }]
+
+
 def linked_title(r):
     title = escaped(r["title"])
     return f"[{title}]({r['primary_urls'][0]})" if r["primary_urls"] else title
@@ -1212,6 +1237,8 @@ def main():
              for r in phase26_network_rows()]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase31_network_rows()]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase41_network_rows()]
     replacements = load("manuscript_replacements.json")["replacements"]
     by_id = {r["id"]: r for r in rows}
     for r in rows:

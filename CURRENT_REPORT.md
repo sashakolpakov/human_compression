@@ -60,13 +60,16 @@ bundle's source contracts. The operations manuscript now has a fresh exhaustive
 Janko-group certificate: 100,016 rank-four extensions yield six classes and
 21,352 rank-five extensions yield none. Its independent replay passes; review
 is resolving exactly which toroidal lattice identifications remain imported.
-Another researcher has adapted the shared kernel theorem to chiral regular
-covers and is investigating a normal-subgroup formulation of the unresolved
-multiplicity question. A possible ten-source integration is being planned.
-These candidates do not yet add to the seven sources in reviewed assemblies;
-their proofs and integration must receive separate review.
+The [chiral-cover adapter](research/case_study/phase41_chiral_cover_manuscript.md)
+now has a [complete root proof review and fresh exact replay](research/case_study/phase43_chiral_cover_root_audit.md).
+It recovers the proved source conclusions under its author-version contract,
+including the two distinct minimal covers; standard geometry and older atomic
+classification remain imported. The general multiplicity conjecture remains
+unproved here. A possible ten-source integration is being planned. These
+standalone candidates do not yet add to the seven sources in reviewed assemblies;
+the expanded integration must receive separate review.
 
-The broader registry contains 160 works and sixteen principal-result candidate
+The broader registry contains 161 works and seventeen principal-result candidate
 entries. Those counts measure literature and component intake, not completed
 whole-manuscript compression. The [previous state report](CURRENT_STATE.md)
 remains frozen at its earlier two-replacement snapshot. Local commits and

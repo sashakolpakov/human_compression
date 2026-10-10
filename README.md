@@ -63,6 +63,12 @@ and [candidate assessment](INDEPENDENT_ASSESSMENT.md) remain unchanged.
 The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
 defines the sum-of-manuscripts ratio and its required coverage audit.
 
+A [reviewed chiral-cover adapter](research/case_study/phase43_chiral_cover_root_audit.md)
+now derives a further source's proved conclusions from kernel transport,
+local geometry and an exact finite certificate, with older geometric and
+classification inputs explicit. It is a candidate for the next integrated
+manuscript; its conjectures remain unresolved here and no length factor is claimed.
+
 ## The method
 
 The initial case study concerns finite groups, highly symmetric polytopes,
@@ -255,7 +261,7 @@ and the separate liftability assumption are retained explicitly.
 The common census theorem now supports six finite-group censuses with 262
 independently recognized representatives under their recorded axioms. This
 measures verified coverage; it is not a numerical proof-compression ratio.
-The [principal-result ledger](PAPER_MAP.md) now contains sixteen works, with
+The [principal-result ledger](PAPER_MAP.md) now contains seventeen works, with
 the exact statement scopes and retained inputs recorded for each.
 
 ## What “compression” means
@@ -306,8 +312,8 @@ still need priority verification.
 The starting bibliography was seeded from Dimitri Leemans's publication
 catalogue and expanded through coauthored papers and relevant followups.
 It currently indexes 128 mathematical catalogue entries, 17 followups and
-15 additional works across the collaborator network, for 160 in total.
-The living registry records 101 accessible complete texts or primary renderings;
+16 additional works across the collaborator network, for 161 in total.
+The living registry records 102 accessible complete texts or primary renderings;
 reading depth ranges from targeted searches to complete proof reading.
 Across the full inventory, 49 entries have abstract-level reading and nine
 have metadata/access records only. That is neither complete
