@@ -20,7 +20,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json",
           "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json",
           "phase26_access.json", "phase30_source_intake.json", "phase31_cover_prior_art.json", "phase32_L003_source_intake.json",
-          "phase32_L111_intake.json", "phase32_L111_scope.json")
+          "phase32_L111_intake.json", "phase32_L111_scope.json",
+          "phase32_L003_geometry_intake.json", "phase32_L003_universal_intake.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -460,6 +461,12 @@ def record(row, baseline, overlay, later_readings, older_access):
                               "relation_to_source": "proposed_consequence" if r["proposed_new_result"]
                               else "specified_existing_target_or_encoding"}]
         r["evidence"] = r["evidence"][:1] + [evidence(x, ref) for x in paths.split(";")]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Universal regular object and finite residue-preserving quotients at fixed source parameter6", "scope":"The four-involution universal group U6=P6 semidirect C2 is an actual infinite regular hypertope. Every even coordinate modulus gives a finite regular quotient with the same exact four toroidal residues; their orders are unbounded. The modulus is not the source parameter.", "relation_to_source":"proposed_fixed_parameter_consequence"})
+        r["method"].append("Injectivity on maximal parabolics lifts full subgroup IP and typed coset Helly from one exact modulus-two group of order27648. Local torus order bounds attain equality; reflection-invariant local lattices identify the rotation subgroup of the universal group.")
+        r["evidence"] += [evidence(n, "Fixed-s6 geometric and universal corollary") for n in ("phase32_L003_fixed_parameter_hypertopes.md", "phase32_L003_geometry_manifest.json", "phase32_L003_geometry_rank_audit.md", "phase32_L003_geometry_root_audit.md", "phase32_L003_universal_hypertope.md", "phase32_L003_universal_manifest.json", "phase32_L003_universal_root_audit.md", "formal/ParabolicQuotientTransport.scope.md")]
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase32_L003_geometry_intake.json", "reading_depth":"Exact equation2.3 local-generator substitutions, standard triangular torus lattice and source section3 universality definition compared with the fixed-s6 construction."})
+        r["remaining_work"] = ["The varying-source-parameter question, other principal paper results and priority remain unresolved here. No identification of the monomial image with the universal group and no general coordinate-quotient order formula. Formal components do not constitute an end-to-end formalization of the source/geometric adapter. No infinity marker."]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

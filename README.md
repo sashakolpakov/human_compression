@@ -51,8 +51,11 @@ The latest additions recover the complete [2000 neighbourhood construction
 theorem](research/case_study/phase32_L111_arbitrary_rank.md), including infinite
 rank, and give an [infinite matrix image](research/case_study/phase32_L003_infinite_presentation.md)
 of a 2018 presentation for every parameter divisible by six. Lean verifies
-infinitude of the exact presented group at six. This is partial progress on
-the surrounding geometric question; it is not credited as its resolution.
+infinitude of the exact presented group at six. A [geometric supplement](research/case_study/phase32_L003_fixed_parameter_hypertopes.md)
+now constructs infinitely many finite regular hypertopes at that fixed
+parameter; a [separate corollary](research/case_study/phase32_L003_universal_hypertope.md)
+identifies its universal regular object and proves it infinite. The
+varying-parameter question and current priority remain unverified.
 
 These are internally reviewed research drafts. Proposed new resolutions have
 not received external peer review, and publication priority remains unverified.
@@ -217,10 +220,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Twenty-nine Lean modules certify specified components, with no `sorry` in the checked
+Thirty Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 28 reports have no native-evaluation axioms.
+axioms; the other 29 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

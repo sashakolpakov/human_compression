@@ -3,8 +3,10 @@
 The current additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite
 surface-cover family](phase34_review.md), and the [infinite presentation
-certificate and2000 construction theorem](phase35_review.md). The living ledger
-has sixteen principal-result works and29 scoped Lean modules. These are
+certificate and2000 construction theorem](phase35_review.md). The latest
+[geometric and universal supplement](phase36_review.md) gives the parameter-six
+universal regular hypertope and unbounded finite residue-preserving quotients.
+The living ledger has sixteen principal-result works and30 scoped Lean modules. These are
 coverage and verification counts, not a corpus compression ratio. Fresh
 execution reports are separate from every frozen original.
 

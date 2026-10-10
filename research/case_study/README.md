@@ -9,8 +9,8 @@ extension](phase32_L111_arbitrary_rank.md) recover complete Theorem4.1 through
 chamber/residue maps and parity. The [2018 presentation certificate](phase32_L003_infinite_presentation.md)
 proves infinitude for every positive parameter divisible by six, with Lean
 checking the exact presentation at six. Its [image structure](phase32_L003_root_audit.md)
-also gives finite quotients of unbounded order; geometric realization remains
-a separate obligation. These additions give component and proposed-result
+also gives finite quotients of unbounded order; the later geometric supplement
+establishes actual hypertopes and the universal regular object at parameter six. These additions give component and proposed-result
 credit, with no extra principal-paper reduction or infinity marker.
 
 The [parity-compatible halving theorem](phase27_parity_theory.md) gives an
@@ -46,7 +46,7 @@ all-rank cubic; the [common generation theorem](phase23_generation_core.md)
 unifies specified linear and unitary parabolic-generation steps. There are
 27 [formal modules](formal/README.md). One checks finite transfer
 arithmetic using native evaluation, with four compiler-evaluation axioms
-disclosed separately from the other 28 reports. The affine-data module checks the counterexample's
+disclosed separately from the other 29 reports. The affine-data module checks the counterexample's
 literal binary data by kernel evaluation. The preceding module proves
 the common-coset monodromy obstruction for the
 [general graph-cover theorem](phase28_voltage_shadow_theory.md). That theorem
@@ -289,3 +289,13 @@ instances; the infinite-family arguments are the written proofs.
 The public repository includes [source metadata and links](sources/README.md).
 Cached PDFs, extracted full texts and source images are not redistributed.
 No author contact was made during the research audit.
+
+
+The [fixed-parameter geometry certificate](phase32_L003_fixed_parameter_hypertopes.md)
+now lifts a checked modulus-two action to every even coordinate modulus,
+producing infinitely many finite regular hypertopes with source parameter6.
+The [universal corollary](phase32_L003_universal_hypertope.md) proves that the
+regular universal object itself is infinite and has the exact source rotation
+presentation. The [formal quotient criterion](formal/ParabolicQuotientTransport.scope.md)
+checks the reusable subgroup and flag-completion transport. Source parameters
+do not vary with the quotient modulus, and priority remains unverified.

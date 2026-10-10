@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the twenty-nine saved Lean reports
+checks local documentation links, and checks the thirty saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all twenty-nine certificates and their unformalized boundaries. With Git
+describes all thirty certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1431,3 +1431,23 @@ installed packages unchanged. Both certificates are compiled afresh. The
 formal theorem proves infinitude of the displayed s6 presentation; the
 all-multiples extension, source identification, image-rank computation and
 neighbourhood theorem are written arguments with separate evidence.
+
+
+## Fixed-parameter geometry and quotient transport
+
+```sh
+python3 research/case_study/phase32_L003_geometry_check.py \
+  --output scratch/L003-geometry-fresh.json
+python3 research/case_study/formal/verify_lean.py ParabolicQuotientTransport.lean \
+  --packages /path/to/pinned/.lake/packages \
+  --lean /path/to/lean-4.32.2 \
+  --output-dir scratch/quotient-transport-fresh
+```
+
+The standard-library geometry checker closes all15 proper integer-action
+subgroups, computes the full modulus-two order27,648 from432 permutations
+and1,728 binary Schreier generators, and verifies all256 marked meets and16
+nonautomatic typed-Helly counts. A fresh report path is required. The
+all-even-modulus and universal-group conclusions are separate written
+proofs. The Lean module checks the abstract quotient criterion, with its
+explicit hypotheses; it does not execute the geometric census.

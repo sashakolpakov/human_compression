@@ -3277,7 +3277,93 @@ to every parameter. It does not rule out finite quotients, an infinite family
 on other parameter values, or infinite hypertopes. This algebraic result has
 no open-problem-resolution or infinity marker; current priority is unverified.
 
-## 51. The remaining work, and how a living reduction should record it
+## 51. Lift a checked finite geometry through its parabolics
+
+An [additional theorem](research/case_study/phase32_L003_fixed_parameter_hypertopes.md)
+turns the infinite presentation's voltage data into genuine regular
+hypertopes. Its reusable step is a quotient criterion that checks flag
+completion as well as subgroup intersections.
+
+Let a homomorphism G→Q preserve the marked generators and be injective on
+every maximal marked parabolic. Suppose Q has the full intersection property
+and its typed parabolic cosets satisfy Helly. Then both properties lift to G.
+For intersections, an element in two upstairs subgroups has the image of an
+element in their prescribed common subgroup. Injectivity in a containing
+parabolic identifies the two elements.
+
+For Helly, normalize one member of a pairwise-intersecting coset family to
+P0. Each other member Pi gi then has a representative gi in P0. A common
+point downstairs lifts to h in P0. Each image of h gi^(-1) lies in the two
+parabolic images. Their prescribed intersection supplies a lift in Pi∩P0;
+injectivity on P0 identifies it with h gi^(-1). Thus h is a common point
+upstairs. This short proof retains the actual coset-incidence condition.
+The [Lean transport module](research/case_study/formal/ParabolicQuotientTransport.scope.md)
+formalizes subgroup IP and typed Helly transport for arbitrary groups and
+arbitrary type sets. Its image-family formulation does not require global
+surjectivity or a central kernel.
+
+For the application, double the 216-state action. Let r0 swap the copies and
+let X,Y,Z act by the original generators on one copy and their inverses on
+the other. The four marks r0,r0X,r0Y,r0Z are involutions. Exact integer
+closure shows that all proper marked subgroups are finite and inject into
+their underlying permutation action. The four maximal parabolics have
+orders 36,432,48,108. Consequently they survive every reduction of the
+integer coordinate modulo m.
+
+At modulus two, the group has order 27,648. A separate exact certificate
+checks its 256 marked subgroup intersections and all sixteen nonautomatic
+flag-orbit counts. These counts establish typed Helly. Every even-modulus
+action maps onto this checked action, injectively on the local groups, so
+the quotient criterion proves the geometric conditions for every even m.
+The translation witness has order m after reduction, making the orders
+unbounded. There are therefore infinitely many finite regular hypertopes
+with the same four residue parameters ((3,0),(2,0),(1,1),(6,0)). The integer
+action itself gives an infinite regular hypertope.
+
+The source's local torus presentations and the attained order bounds
+identify the exact marked residues. This is stronger than matching their
+orders alone. The modulus m is not the source parameter s: every example
+in this theorem has s=6. No general formula for the coordinate-reduction
+group orders is inferred from the order at modulus two.
+
+## 52. The universal object at parameter six
+
+The [universal-group corollary](research/case_study/phase32_L003_universal_hypertope.md)
+uses the same finite certificate once more. Define U6 by four involutions,
+the six prescribed pair relations, and the four local torus relations.
+Each maximal parabolic is a quotient of the specified finite torus group.
+Its image in the checked group of order 27,648 attains that full local
+order, so the universal-to-finite map is injective on every maximal
+parabolic. The quotient criterion now gives an actual regular hypertope
+for U6 itself. Its infinite-voltage image proves U6 infinite.
+
+Every marked regular hypertope with the same diagram and ordered marked
+residues satisfies these defining relations. Thus U6 maps onto its marked
+group, preserving the residues. This is the precise universality proved;
+it does not identify U6 with the particular matrix image.
+
+The rotation presentation also matches exactly. Before imposing local torus
+relations, the even Coxeter subgroup has the six displayed rotational
+relations. Conjugation by a distinguished reflection inverts the rotation
+generators. For each local parameter (a,0) or (a,a), its triangular
+translation lattice is reflection-invariant. Conjugation by the
+distinguished reflection differs from a local reflection by conjugation
+with an even word. Hence the even normal closure of the four local
+relations is already stable under that reflection; no additional conjugate
+relations have been silently imposed. This proves
+
+$$U_6\cong P_6\rtimes C_2.$$
+
+The source's exact rotational group P6 is therefore the rotation subgroup
+of this universal infinite regular object. It has finite residue-preserving
+regular quotients of unbounded orders from the preceding construction.
+The local toroidal presentation/lattice identification remains a credited
+input. Internal reviews check the complete written corollary; the formal
+modules certify infinitude and the general transport steps, not the full
+source-to-geometry derivation. The varying-parameter Problem9.2 and current
+priority remain unverified, so no new-resolution infinity marker is assigned.
+
+## 53. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3314,7 +3400,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-nine Lean certificates](research/case_study/formal/README.md) cover
+The [thirty Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

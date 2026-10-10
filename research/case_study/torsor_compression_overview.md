@@ -413,3 +413,13 @@ Its literal s6 case is formally proved for the actual PresentedGroup. The
 [image](phase32_L003_root_audit.md) has translation kernel Z6, quotient216,
 and finite quotients of order216m6; no hypertope assertion or literal
 Problem9.2 resolution is included in this package.
+
+
+The [later fixed-s6 supplement](phase32_L003_fixed_parameter_hypertopes.md)
+adds the missing geometric verification for this parameter. One finite
+marked group of order27,648, exact finite local groups and a parabolic-
+injective quotient criterion give every even-modulus hypertope and an
+infinite one. The [universal corollary](phase32_L003_universal_hypertope.md)
+identifies U6=P6 semidirect C2 and proves universal regular existence and
+infinitude. These are scoped advances on L003, not a varying-s solution or
+principal-paper reduction. The criterion has a separate Lean certificate.
