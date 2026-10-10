@@ -3988,6 +3988,15 @@ nontrivial unipotent matrix when s=6. The integer polynomial identities and
 all fixed group words have an exact executable check. The eigenvalue and
 surjective-subgroup arguments have a complete written root review.
 
+
+The [two triangle-wreath certificates](research/case_study/phase40_triangle_quotients_root_audit.md)
+now formally construct the exact rotational and four-involution presentation
+maps and explicit subgroup surjections onto the triangle group, uniformly
+in the parameter. All ten and fourteen defining words are kernel checked.
+Their infinitude transfers explicitly assume triangle-group infinitude;
+the real-matrix proof of that hypothesis remains written mathematics.
+Both fresh public builds use only the standard recorded axioms.
+
 This settles the infinite side of the parameter range without classifying
 the whole universal group. The small finite cases remain the source's
 published computations. The universal-geometry identification is a separate
@@ -4031,7 +4040,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-six Lean certificates](research/case_study/formal/README.md) cover
+The [thirty-eight Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

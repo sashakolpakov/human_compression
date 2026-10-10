@@ -59,7 +59,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are thirty-six certificates. To compile them on another machine, install Git,
+There are thirty-eight certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -76,7 +76,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the thirty-six modules, but does not produce the runner's JSON reports.
+way to compile the thirty-eight modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -107,9 +107,9 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all thirty-six source hashes match the historical successful reports
+This checks that all thirty-eight source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. Thirty-five saved runs use only a subset of the standard axioms
+Lean or verify a proof anew. Thirty-seven saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
 prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
 for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below
@@ -417,3 +417,24 @@ source/image marking bridge. Its [scope](ParabolicMarkedComparison.scope.md)
 covers both IP and typed Helly, even for infinite groups and type sets.
 All four local modules passed a fresh public compilation with standard axioms.
 The concrete arithmetic hypotheses and geometric adapters remain separate.
+
+
+## Uniform triangle quotients of the two universal presentations
+
+[TriangleWreathQuotient.lean](TriangleWreathQuotient.lean) defines the exact
+six-relator triangle group and ten-relator rotational source, checks the
+marked row-wreath homomorphism and constructs a subgroup surjecting onto
+the triangle group. [Its scope](TriangleWreathQuotient.scope.md) records
+the literal source convention. [TriangleWreathInvolutory.lean](TriangleWreathInvolutory.lean)
+adds the explicit reversing involution, all fourteen full-group relations
+and a direct subgroup surjection for that presentation; [its scope](TriangleWreathInvolutory.scope.md)
+does not assume the separate split-extension identification.
+
+Both conclusions require triangle-group infinitude as an explicit hypothesis.
+Its real-matrix proof remains written mathematics. The [root review](../phase40_triangle_quotients_root_audit.md)
+records fresh public builds and all eight standard-axiom audits.
+
+The general runner now builds absent imported mathlib objects in its output
+overlay, without changing installed package sources or object files. Existing
+compiled dependencies remain trusted inputs. Missing-object builds are
+recorded separately in `dependency_builds.json`.

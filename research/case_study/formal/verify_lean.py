@@ -36,6 +36,8 @@ CERTIFICATES = (
     "FibonacciModulus",
     "ParabolicProductComparison",
     "ParabolicMarkedComparison",
+    "TriangleWreathQuotient",
+    "TriangleWreathInvolutory",
 )
 
 
@@ -123,6 +125,62 @@ def environment(args):
     return lean, version, checked, output, env
 
 
+def prepare_mathlib(names, lean, output, env, timeout):
+    """Build missing imported mathlib objects in a private overlay only."""
+    libraries = [Path(p) for p in env["LEAN_PATH"].split(os.pathsep)]
+    build = next(p for p in libraries if p.name == "lean" and
+                 p.parent.name == "lib" and p.parent.parent.name == "build" and
+                 p.parent.parent.parent.parent.name == "mathlib")
+    checkout = build.parent.parent.parent.parent
+    output.mkdir(parents=True, exist_ok=True)
+    overlay = output / "Mathlib"
+    if not overlay.exists():
+        overlay.symlink_to(build / "Mathlib", target_is_directory=True)
+    records = []
+
+    def writable_directory(path):
+        if path == output:
+            return
+        writable_directory(path.parent)
+        if path.is_symlink():
+            original = path.resolve()
+            path.unlink()
+            path.mkdir()
+            for child in original.iterdir():
+                (path / child.name).symlink_to(child, target_is_directory=child.is_dir())
+        elif not path.exists():
+            path.mkdir()
+
+    def ensure(module):
+        relative = Path(module.replace(".", "/") + ".olean")
+        if any((library / relative).exists() for library in libraries):
+            return
+        source = checkout / (module.replace(".", "/") + ".lean")
+        if not source.is_file():
+            raise RuntimeError(f"Missing pinned dependency source: {module}")
+        for child in re.findall(r"^(?:public )?import ([A-Za-z0-9_.]+)", source.read_text(), re.M):
+            ensure(child)
+        target = output / relative
+        writable_directory(target.parent)
+        source_hash = sha256(source)
+        run = subprocess.run([lean, "-o", str(target), str(source)], cwd=checkout,
+                             env=env, text=True, capture_output=True, timeout=timeout)
+        records.append({"module": module, "source_sha256": source_hash,
+                        "exit_code": run.returncode, "stdout": run.stdout, "stderr": run.stderr})
+        if run.returncode or sha256(source) != source_hash:
+            raise RuntimeError(f"Dependency build failed or source changed: {module}\n"
+                               + run.stdout + run.stderr)
+
+    for name in names:
+        text = (ROOT / (name + ".lean")).read_text()
+        for module in re.findall(r"^import (Mathlib\.[A-Za-z0-9_.]+)", text, re.M):
+            ensure(module)
+    (output / "dependency_builds.json").write_text(json.dumps({
+        "scope": "Only missing imported objects built in private overlay; installed checkout unchanged.",
+        "modules": records,
+    }, indent=2) + "\n")
+
+
 def compile_one(name, lean, version, checked, output, env, timeout):
     source = ROOT / (name + ".lean")
     output.mkdir(parents=True, exist_ok=True)
@@ -169,6 +227,7 @@ def main():
                 print(f"PASS pinned dependency: {package['name']} {package['revision']}")
             print("Environment only: no certificate was compiled.")
             return 0
+        prepare_mathlib(names, lean, output, env, args.timeout)
         for name in names:
             code = compile_one(name, lean, version, checked, output, env, args.timeout)
             if code:

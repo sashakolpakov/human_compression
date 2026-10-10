@@ -45,4 +45,6 @@ lean_lib MathCompressionCertificates where
     `CompactAffineData,
     `FibonacciModulus,
     `ParabolicProductComparison,
-    `ParabolicMarkedComparison]
+    `ParabolicMarkedComparison,
+    `TriangleWreathQuotient,
+    `TriangleWreathInvolutory]

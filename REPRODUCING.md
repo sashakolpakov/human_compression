@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the thirty-six saved Lean reports
+checks local documentation links, and checks the thirty-eight saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all thirty-six certificates and their unformalized boundaries. With Git
+describes all thirty-eight certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1623,7 +1623,7 @@ transport modules before this certificate. The formal theorem includes both
 typed-Helly directions. The subsequent marked comparison module below adds
 full subgroup IP; the matrix/geometric adapter remains a written proof.
 The Lake root list also includes all
-36 modules; no frozen historical reports are overwritten by the scratch run.
+38 modules; no frozen historical reports are overwritten by the scratch run.
 
 
 ## Full-body measurement of Compress_A
@@ -1761,3 +1761,20 @@ Ghostscript to produce page images for a separate visual review. The runner
 checks full-body spans, the complete proof/census appendix, exact extraction,
 render diagnostics and every reported count. It does not reprove the
 mathematics, rerun the group census or establish bibliographic priority.
+
+
+## Exact triangle-wreath maps for both presentations
+
+```sh
+python3 research/case_study/formal/verify_lean.py TriangleWreathInvolutory.lean \
+  --packages /path/to/pinned/packages \
+  --lean /path/to/lean-4.32.2 \
+  --output-dir /tmp/triangle-wreath-new
+```
+
+The runner includes the unchanged rotational module automatically and builds
+absent mathlib objects in a private output overlay. It compiles the exact
+ten-relator and fourteen-relator maps and their subgroup-surjection proofs.
+Both infinitude transfers retain `Infinite (Triangle s)` as a hypothesis;
+the spectral proof and universal geometry are outside these formal modules.
+See the [fresh root replay and interface review](research/case_study/phase40_triangle_quotients_root_audit.md).
