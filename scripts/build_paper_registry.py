@@ -38,6 +38,7 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase130_intake.json", "phase130_geometry_erratum_manifest.json",
           "phase134_L034_root_review.md", "phase134_L034_export.json",
           "phase136_typed_helly_review.json", "phase136_typed_helly_manifest.json",
+          "phase131_equal_label_admission.json", "phase131_equal_label_export.json",
           "phase119_five_family_root_admission.md",
           "phase80_two_primary_root_audit.json",
           "phase72_cover_family_priority_claims.json",
@@ -46,6 +47,12 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
 UPDATES = {
+    "F014": (
+        "partial_progress", "Conjecture 3.7, arXiv:2505.09505v1: specified all-rank label families; universal strengthening only at labels 3 and 4",
+        "Path-block symmetric and unitriangular models, an ambient quadratic translation identity and a proved componentwise parity-fiber intersection theorem give finite examples in every rank for labels 4 and n,2n,4n with n=3 or n=2^e+1(e>=2) or n=2^e-1(e>=3). A bidirectional relator adapter to the retained Biss-Dasgupta presentation identifies the universal label-four group as UT_(d+1)(F2); the classical type-A presentation handles label three.",
+        "Brooksbank-Ferrara-Leemans full-adjacent-order symmetry IP theorem at q+1(q>=4), q-1(q>=8); Dickson homomorphism on a nonsingular even-dimensional ambient quadratic space; Biss-Dasgupta Theorem1 at m=2, crediting Biss1998; Classical type-A Coxeter presentation and standard string-C-group/polytope correspondence; Finite-field structure and Goursat's argument",
+        "phase131_equal_label_root_review.md;phase131_equal_label_admission.json;phase131_equal_label_export.json;phase124_equal_label_partial.md;phase124_equal_label_char2_bridge.md;phase124_even_label_mix.md;phase124_universal_four_adapter.md;phase131_equal_label_model_root.json;phase131_equal_label_char2_root.json;phase131_even_label_mix_root.json",
+        "The full all-label conjecture remains unresolved; labels8,11,13 lie outside the argument. Universal presentation IP/order at other labels, full Lean proof, current openness and historical priority are unverified. Primary Biss-Dasgupta formulas were checked through extracted PDF text, without a viewable rendered page. This partial question result adds no known principal-result reduction or compression ratio."),
     "N016": (
         "principal_results_rederived", "All proved conclusions of the eight-page July25 2023 author manuscript; source conjectures excluded",
         "The shared kernel transport theorem, proved local mirror compatibility and regular-end induction recover the chirality criterion and corollaries. An affine square-torus argument handles the torus family; exact bare-presentation GAP computations and a prime-kernel argument recover the two distinct minimal regular covers.",
@@ -533,6 +540,11 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["exact_target"].append({"reference":"All-parameter universal regularity and literal Problem9.2 scope", "scope":"For every integer s>=2 the literal full universal presentation defines a regular hypertope with exact local residues and U_s=P_s semidirect C2. Each has a finite local-preserving regular quotient; U_s is infinite if6 divides s. The finite-existence reading of Problem9.2 is answered; universal finiteness is false.", "relation_to_source":"all_parameter_existence_and_universal_corollary"})
         r["evidence"] += [evidence(n,"Universal corollary, exact problem scope and bounded priority comparison") for n in ("phase35_L003_all_universal.md","phase35_L003_all_universal_manifest.json","phase35_L003_all_universal_root_audit.md","phase35_L003_universal_survey_audit.md","phase35_L003_problem92_scope.md","phase35_L003_priority_status.md")]
         r["remaining_work"] = ["Complete N0152024 covering-theorem comparison and current priority remain unverified. Universal orders/finiteness away from the proved multiples-of-six infinitude, other principal source results and end-to-end formalization remain. No whole-paper reduction or infinity marker."]
+    if identifier == "F014":
+        r["primary_urls"].append("https://arxiv.org/html/2505.09505v1")
+        r["access_coverage"]["additional_readings"].append({
+            "source": "research/case_study/phase131_equal_label_root_review.md",
+            "reading_depth": "Exact Conjecture3.7 and Definition2.2 checked in primary HTML and the private primary extraction; current arXiv record lists v1 only. Bounded later-literature search is not priority clearance."})
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

@@ -64,11 +64,18 @@ A new census will account for the questions and conjectures in all 161
 entries, including explicit access/reading gaps, exact source statements
 and later literature. Solving related questions through shared arguments
 continues alongside the module work.
-The [question-results catalogue](CONJECTURE_RESULTS.md) now collects ten
+The [question-results catalogue](CONJECTURE_RESULTS.md) now collects eleven
 existing entries: eight recorded answers under their exact stated scope
-and two qualified family or interpretation results. This is an inventory
-of existing claims and evidence, not ten newly audited solutions or a
+and three qualified family or interpretation results. This is an inventory
+of existing claims and evidence, not eleven newly audited solutions or a
 count of conjectures confirmed still open before our work.
+
+The latest independently reviewed entry is
+[Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md).
+It gives every-rank constructions for specified infinite families of
+labels and identifies the universal presentations at labels three and
+four. The full conjecture, historical priority and complete Lean proof
+remain unresolved. It adds no known-source compression credit.
 
 Forty-five existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate

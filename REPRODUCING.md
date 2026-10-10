@@ -1,5 +1,16 @@
 # Reproducing the checks
 
+The [equal-label question result](EQUAL_LABEL_POLYTOPES.md) has three
+standard-library finite checks and a wrapper that verifies their frozen
+inputs and exact outputs:
+
+```sh
+python3 -B -O research/case_study/phase131_equal_label_verify.py --output /tmp/NEW-equal-label-check.json --replay
+```
+
+Its every-rank proofs retain explicitly named published theorems. This
+command checks finite examples and file integrity, not the whole conjecture.
+
 The current mathematical writing target is [U plus application modules](MANUSCRIPT_PROGRAM.md).
 Existing exact computations and Lean components below are reusable proof
 material. The latest public-only replays are documented in the

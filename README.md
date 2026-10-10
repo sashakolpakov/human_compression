@@ -65,6 +65,9 @@ unresolved case in the intake, checks later work, and attacks related
 questions through shared theory. The
 [question-results catalogue](CONJECTURE_RESULTS.md) keeps recorded answers,
 qualified cases and formalization gaps separate from compression credit.
+The [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)
+track now has reviewed all-rank constructions for specified infinite
+families of labels; the general conjecture remains unresolved.
 The separately reviewed
 [five-family cover result](COVER_FIVE_FAMILIES.md) establishes the stated
 multiplicity assertion in the checked source proposal. Historical priority

@@ -80,6 +80,12 @@ consequence may enter an application manuscript with precise attribution.
 The existing [question-results catalogue](CONJECTURE_RESULTS.md) collects
 recorded answers separately from the compression modules.
 
+The first separately named question-solving track is
+**[Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)**.
+Its reviewed cases use path blocks, quadratic identities and parity
+fibers. They do not constitute a completed compression module or a
+solution of the general all-label conjecture.
+
 Lean statements must correspond to the theorems actually proved in U and
 the modules. Existing certificates are mapped to those statements; missing
 formal arguments are completed separately. Written proof, finite checking,

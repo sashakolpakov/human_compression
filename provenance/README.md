@@ -346,3 +346,9 @@ fresh public checks. The required local-involutivity correction is part
 of the proof and its cost. This supplies a sixth source for a future A
 edition and raises principal-result coverage to eighteen; it does not
 change the frozen five-source draft or add a conjecture-resolution claim.
+
+The [phase-95 record](phase95_review.md) admits the separate equal-label
+question result after complete proof reading and fresh finite checks.
+It covers specified all-rank families and universal presentations at
+labels three and four. The full conjecture, priority and complete Lean
+verification remain open; no known-source compression credit is added.
