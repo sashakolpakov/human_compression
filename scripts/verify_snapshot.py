@@ -16,6 +16,12 @@ STUDY = ROOT / "research/case_study"
 # Exact project-authored renderings only. Primary publication PDFs and source
 # raster/text captures remain excluded from the distributed snapshot.
 OWN_RENDERED_PDFS = {
+    "research/case_study/phase238_topic_E_umbrella.pdf":
+        "26f89586c13c75b278ad5cc701e8e71ed71b2dacc9cd4b121606c92a970471b4",
+    "research/case_study/phase238_L083_application.pdf":
+        "65a448586998eef8314bd215b51d9be90aa6da04dcec3019d64696df9f5aa2a6",
+    "research/case_study/phase238_L079_application.pdf":
+        "b4ae8804c17be65ffdf056ebfc900c498f880393e892a2c28b2a8915726acc0d",
     "research/case_study/phase230_rank_one_classification.pdf":
         "fc8364d6e4a04f522fc634f12fd106121e79bd21d1219deb0d2a67c8508eaa7a",
     "research/case_study/phase232_application.pdf":
@@ -68,6 +74,7 @@ def digest(path):
 def frozen_question_exports():
     """Preserve admitted proof packages when refreshing the public snapshot."""
     manifests = {
+        "phase243_export.json": "a6eac730f11e8f8a7b81e67d826f1e9adfba08807436c27ae4111972252dd9cb",
         "phase235_export.json": "18882d876f74b42ee6c6a91c192b46a82d25ca90c659cf5f447f2eba81b21ed8",
         "phase217_export.json": "af256c4766c31865608b5c333cef200533b3f8280351e59295cbf3db292aaeb8",
         "phase221_export.json": "7325a1698d540caf372ac8b4e0bf0f392e706c26ef59279dde7f027d6e797ab7",

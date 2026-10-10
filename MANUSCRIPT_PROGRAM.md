@@ -35,7 +35,7 @@ provides two further complete principal classifications for topic E.
 | B: Forest coordinates and primitive coset geometries | [Forest coordinates](MODULE_B.md) | Identify its full topic umbrella and preserve the complete recognition, generation and geometric applications |
 | C: Halving and Petrial operations on regular geometries | [Operations on regular geometries](MODULE_C.md) | Separate reusable changes of generators and arguments about the objects preserved by these operations from full geometric identifications and censuses |
 | D: Marked actions, field orbits and geometry enumeration | [Marked actions and enumeration](MODULE_D.md) | Extract shared theorems about actions and extensions; keep complete field and classification arguments, including correspondence with historical tables, in the application papers |
-| E: Projective centralizers and regular polytopes | [Two reviewed classifications](PROJECTIVE_LINE_POLYTOPES.md) | Separate the common centralizer and finite-amalgam argument from complete PSL₂ and PGL₂ applications |
+| E: Projective centralizers and regular polytopes | [Complete U_E and two applications](PROJECTIVE_LINE_POLYTOPES.md) | Extend the two-source topic and prepare a matched cost comparison; the 7 + 3 + 2-page papers are independently reviewed |
 
 The [existing U manuscript](UMBRELLA.md) is a source of reusable proofs.
 A topic may retain an overlapping part of the same mathematics as another
@@ -123,8 +123,11 @@ statements verify the abstract normalizer obstruction. The matrix argument,
 classical inputs and complete classifications remain written and computational.
 The additional Conjecture 11 is [historically answered](research/case_study/phase240_L079_status.md);
 it remains outside our present replacement.
-The separate U_E, PSL₂ application and PGL₂ application are in preparation;
-no topic compression ratio has yet been measured.
+The [separate U_E and both complete applications](PROJECTIVE_LINE_POLYTOPES.md)
+are now independently reviewed: seven umbrella pages, three PSL₂ pages and
+two PGL₂ pages, with one required shared program. The historical answer to
+Conjecture 11 is [recorded separately](research/case_study/phase240_L079_status.md).
+No topic compression ratio has yet been measured.
 
 ## What each paper must supply
 

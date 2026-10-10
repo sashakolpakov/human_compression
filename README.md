@@ -41,7 +41,7 @@ application families are unfinished.
 | Forest coordinates and primitive coset geometries | [B source material](MODULE_B.md) |
 | Halving and Petrial operations on regular geometries | [C source material](MODULE_C.md) |
 | Marked actions, field orbits and geometry enumeration | [D source material](MODULE_D.md) |
-| Projective centralizers and regular polytopes | [Two reviewed principal classifications](PROJECTIVE_LINE_POLYTOPES.md); umbrella and separate applications in preparation |
+| Projective centralizers and regular polytopes | [Complete U_E and two applications](PROJECTIVE_LINE_POLYTOPES.md): 7 + 3 + 2 pages |
 
 The [existing umbrella manuscript](UMBRELLA.md) supplies proved components
 for choosing and completing each topic's umbrella. The

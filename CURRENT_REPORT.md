@@ -26,7 +26,9 @@ verify the general algebraic core. The
 [projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) now recovers two more
 complete principal classifications, with independent review and fresh
 finite and Lean checks. Principal-source coverage is **23 of 161**; the
-separate topic umbrella and two application papers are in preparation.
+topic umbrella and both application papers are now complete, at 7 + 3 + 2
+pages, with independent review. The shared finite proof is charged once
+within this topic; no matched ratio has yet been measured.
 
 ## Further application material
 

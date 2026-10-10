@@ -1,11 +1,20 @@
 # Dihedral centralizers and polytopes over a projective line
 
-One common argument recovers the two specified principal classifications
-of regular polytopes with automorphism group PSL₂(q) or PGL₂(q), in every
-rank at least four. The complete proof is available as a
-[manuscript](research/case_study/phase230_rank_one_classification.md) and
-[nine-page PDF](research/case_study/phase230_rank_one_classification.pdf),
-with an [independent review](research/case_study/phase234_review.md).
+**Topic E now has a complete umbrella and two complete application papers.**
+They recover the specified principal classifications for PSL₂(q) and
+PGL₂(q) in every rank at least four, from the same centralizer and
+finite-presentation argument.
+
+| Paper | Complete text | PDF |
+|---|---|---|
+| U_E: Centralizers, facets and finite amalgams on the projective line | [Umbrella](research/case_study/phase238_topic_E_umbrella.md) | [7 pages](research/case_study/phase238_topic_E_umbrella.pdf) |
+| E₁: The two projective special linear four-polytopes | [PSL₂ application](research/case_study/phase238_L083_application.md) | [3 pages](research/case_study/phase238_L083_application.pdf) |
+| E₂: The simplex as the unique higher-rank projective general linear polytope | [PGL₂ application](research/case_study/phase238_L079_application.md) | [2 pages](research/case_study/phase238_L079_application.pdf) |
+
+The [independent review](provenance/phase122_review.md) checks the complete
+arguments, all twelve rendered pages and a fresh public replay. The
+[earlier combined proof](research/case_study/phase230_rank_one_classification.md)
+is their provenance source; it is not an extra mathematical premise.
 
 | Intake | Main results recovered | Exclusions |
 |---|---|---|
@@ -24,11 +33,27 @@ The extra Conjecture 11 was [answered in later literature](research/case_study/p
 by Connor, De Saedeleer and Leemans in 2015. Its exclusion here records a
 limit of this replacement, not a currently open question.
 
-The split into a complete topic umbrella U_E and two complete application
-papers is in progress. The reviewed combined proof supplies their
-mathematical content. Neither the nine-page rendering nor the two-source
-count establishes a compression factor: matched source spans and all
-required computational content still need to be measured.
+The umbrella includes the complete common proof and the
+[required finite program](research/case_study/phase230_finite_check.g).
+Each application supplies its quotient exclusions and geometric
+identifications without repeating the umbrella proof. The two applications
+are independent consequences of U_E.
+
+```mermaid
+flowchart LR
+    D[Retained classical inputs] --> U[U_E: centralizers, facets and ten presentations]
+    F[One exact finite program] --> U
+    U --> P[E₁: PSL₂ classification]
+    U --> G[E₂: PGL₂ classification]
+```
+
+The [dependency inventory](research/case_study/phase238_dependency.json)
+and [measurement proposal](research/case_study/phase238_measurement.md)
+charge the full umbrella and its program once within Topic E, followed
+by both complete applications. Every other topic pays its own full
+umbrella. The displayed pages describe the actual papers; they are not
+a matched compression ratio. Source spans, typography and retained
+inputs still need a common measurement convention.
 
 ## The common argument
 
@@ -75,12 +100,16 @@ that formal proof. GAP's exact algorithms are part of the trust boundary.
 Use a new output directory:
 
 ```sh
-python3 -B -O research/case_study/phase234_check.py --out /tmp/NEW-projective-line --lean LEAN --packages PACKAGES --gap GAP
+python3 -B -O research/case_study/phase238_check.py --out /tmp/NEW-projective-line --lean LEAN --packages PACKAGES --gap GAP
 ```
 
-The [replay guide](research/case_study/phase234_replay.md) specifies the
+The [replay guide](research/case_study/phase238_README.md) specifies the
 versions and optional primary-source checks. The
 [publication record](provenance/phase121_review.md) and
 [registry addition](research/case_study/phase235_projective_line_overlay.json)
 admit two principal source results, bringing that count to 23. This
 recovers known theorems and adds no solved-question entry.
+
+The three-paper structure adds no second credit for either historical
+source. The principal-source total remains 23, and the solved-question
+ledger is unchanged.
