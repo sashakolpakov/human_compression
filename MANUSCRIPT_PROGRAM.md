@@ -147,10 +147,37 @@ archive. Its rates and coarse checkpoints do not carry over to these
 new papers. The comparison may show an increase in length; an outcome
 that has not been measured should be reported as such.
 
-## Open questions
+## Conjectures and questions: recorded solutions
 
-Conjecture work continues alongside source compression. The
-[question-results catalogue](CONJECTURE_RESULTS.md) keeps statements,
-later resolutions, verified cases and open gaps separate. An answered
-question needs its own proof and a check of the later literature; it does not
-produce a numerical saving against a prior proof that did not exist.
+Solutions to questions posed in the source literature are a separate
+part of the programme. The repository currently records **eight answers
+within the stated hypotheses**, in addition to the three qualified results
+below. They belong in the account of what the project has achieved, alongside
+the recovered published theorems. They do not increase a source-length
+compression ratio: there was no earlier proof to put in its numerator.
+
+| Source question | Recorded answer | Proof and verification |
+|---|---|---|
+| L043, Conjecture 6.1 | For every stated odd prime and pair of odd extension degrees greater than one, suitable primitive elements make the specified expression a nonzero square. | [Arithmetic proof](research/case_study/psl2_square_proof.md) and exact exceptional-case computations; a separate detailed arithmetic review and complete Lean proof remain outstanding. |
+| L043, Conjecture 6.2 | For the specified matrices and coprime odd extension degrees, the middle parabolics intersect exactly in their common cyclic subgroup. | [Intersection proof](research/case_study/psl2_intersection_proof.md); Lean verifies field and entrywise intersection components, with the source-group and geometry identifications remaining written. |
+| L025, Conjecture 3.2 | The specified Suzuki graphs have girth five and exactly q−1 pentagons through each edge. | [Cycle proof](research/case_study/suzuki_cycle_proof.md) and dedicated mathematical review; Lean verifies the matrix membership component. |
+| L092, Conjecture 1 | The Hermitian-unital construction is firm, residually connected and flag-transitive for every prime power q>2. | [Unital proof](research/case_study/hermitian_unital_proof.md) and finite checks; Lean verifies a supporting connectivity lemma. The catalogue records a remaining need for a separate detailed audit of the whole proof. |
+| L102, §5.1.2 | In the stated affine semilinear case, the spread is Desarguesian; the specified existence and uniqueness conclusions follow. | [Written argument](research/case_study/phase4_old_problem_audit.md) and [descent review](research/case_study/phase4_spread_descent_audit.md); both local primitivity assumptions are essential. No complete Lean proof. |
+| L007, §7 | Non-tight chiral polyhedra exist throughout the omitted even-exponent range. | [Construction](research/case_study/central_lift_proof.md) and dedicated review; Lean verifies conditional transfer, with the actual group construction and order calculation remaining written. |
+| L052, Problem 9.3 | The requested thin, residually connected but non-flag-transitive example cannot occur for the standard parabolic coset construction. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; Lean verifies propagation of a chamber orbit. |
+| L052, Problem 9.4 | A rank-three standard parabolic coset system is residually connected, excluding the requested simultaneous failure. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; the complete geometric theorem remains written. |
+
+### Qualified answers and conjectures still open in general
+
+| Source question | Result obtained | Remaining scope |
+|---|---|---|
+| L003, Problem 9.2 | Finite examples exist throughout the specified toroidal family; the exact universal groups are infinite for every s≥6. | Answers the finite-existence interpretation. Lean proves infinitude of the exact presentations; their geometric interpretation remains written. See the [detailed catalogue](CONJECTURE_RESULTS.md). |
+| N016 / F005, minimal-cover questions | Each of the five specified chiral-facet families has at least two distinct minimal regular polytopal covers. | The arbitrary-polytope conjecture remains unresolved. See the [five-family theorem and its certificates](COVER_FIVE_FAMILIES.md). |
+| F014, Conjecture 3.7 | All-rank existence results hold for the stated label families, including labels 4 and 8. | The all-label conjecture remains unresolved. Lean verifies the specified rewriting components, table bounds and termination; confluence and the resulting group theorem remain written. See [exact parameters and proofs](EQUAL_LABEL_POLYTOPES.md). |
+
+The [question-results catalogue](CONJECTURE_RESULTS.md) gives the full
+parameter ranges, original attribution, borrowed results, review records
+and precise Lean coverage. Historical priority has not been established
+for these answers. A recorded solution, a complete formal proof and a
+verified first solution to a still-open problem are distinct claims.
+These tables expose the existing results; they add no new solution credit.
