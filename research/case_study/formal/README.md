@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are twenty-one certificates. To compile them on another machine, install Git,
+There are twenty-two certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the twenty-one modules, but does not produce the runner's JSON reports.
+way to compile the twenty-two modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,7 +95,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all twenty-one source hashes match the historical successful reports
+This checks that all twenty-two source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. The saved runs print only the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
@@ -265,3 +265,15 @@ and 5d−10 count remain written proofs. The [scope](PrincipalKernelIntersection
 and [saved report](PrincipalKernelIntersections.check.json) specify that
 boundary. The new [fresh public compilation](../../../provenance/phase17_kernel_public_compile.json)
 checks the exported source independently of its historical report.
+
+[NestedKernelIntersections.lean](NestedKernelIntersections.lean) extends
+the kernel adapter to nested supports. An exact K/L/1 parabolic kernel
+profile, with L≤K and its smaller support contained in its larger support,
+has exact meets. Together with exact image intersections and monotonicity,
+this gives actual IP. A second theorem allows arbitrary chains of supports.
+The [scope note](NestedKernelIntersections.scope.md) makes the actual kernel
+profile an explicit hypothesis: this certificate does not construct the
+noncentral seeds or prove the excess-two classification. A
+[fresh compilation](../../../provenance/phase19_nested_kernel_public_compile.json)
+checks the exported module and its unchanged principal-kernel dependency;
+all twenty-one earlier sources and historical reports retain their bytes.

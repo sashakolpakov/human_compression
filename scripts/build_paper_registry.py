@@ -134,7 +134,7 @@ UPDATES = {
         "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). A uniform matrix template generates SU4(q) for q=1 mod4 and has projective IP whenever the middle order is q^2-1 or q^2+1, using two auxiliary forms and a regular-torus bound. An elliptic primitive-character sieve and 406 independently checked field witnesses prove parameter existence for every odd q=1 mod4; characteristic three uses the rational curve from phase twelve. A second sphere template, twisted norm curve and primitive sieve cover q=3 mod4, q>=7, with 1699 independently checked exceptional parameter records and full q7/q11 finite group certificates. Together these prove maximum rank four for every odd q>=5. The failed-IP control remains.",
         "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; PGL2 maximal-subgroup classification, rank-one unitary identification and perfection; Standard projective unitary order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms; Katz Euler/trace/weight and Lang character-sheaf machinery; Hasse-Weil for the smooth genus-one curves; The stated symplectic torus list and recursive string C-group IP criterion; Exact primitive sieves and all 406 first-family and 1699 second-family exceptional parameter records",
         "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json;phase12_unitary_parameters.md;phase12_unitary_root_audit.md;phase12_unitary_root_audit.json;phase13_unitary_elliptic.md;phase13_unitary_sieve.md;phase13_unitary_manifest.json;phase13_unitary_independent_check.json;phase13_unitary_sieve_independent_audit.md;phase13_unitary_priority_audit.md;phase13_root_review.md;phase14_unitary_q7.md;phase14_unitary_q7_check.json;phase14_unitary_q7_root_check.json;phase14_unitary_q7_manifest.json;phase15_unitary_sieve.md;phase15_unitary_generation.md;phase15_unitary_intersection.md;phase15_unitary_parameter_reduction.md;phase15_unitary_curve.md;phase15_unitary_manifest.json;phase15_unitary_independent_audit.md;phase15_unitary_sieve_independent_check.json;phase15_unitary_witnesses_independent_check.json;phase15_unitary_q11.md;phase15_unitary_q11_root_check.json",
-        "Problem 7 concerns linear socles and remains incomplete for field and graph extensions. The odd linear diagonal interval has maximum rank four at socle index one or two; index four forbids involution generation. A separate companion theorem now gives maximum rank four for the diagonal index-two unitary extension at every odd q>=3. Rank-three existence for these extensions remains unresolved here. The two curve/sieve constructions give the simple PSU4(q) rank set {3,4} for odd q>=5, retaining published rank-three existence; PSU4(3) itself has no representation by retained published input. All generation, intersection and character arguments retain their stated inputs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted twice; publication priority and external review remain."),
+        "Problem 7 concerns linear socles and remains incomplete for field and graph extensions. The odd linear diagonal interval has maximum rank four at socle index one or two; index four forbids involution generation. A separate companion theorem now gives maximum rank four for the diagonal index-two unitary extension at every odd q>=3. Rank-three existence is now supplied for q>=5 with q=1 mod4 or q=3 mod8; q=3 and the q=7 mod8 extensions remain unresolved here. The two curve/sieve constructions give the simple PSU4(q) rank set {3,4} for odd q>=5, retaining published rank-three existence; PSU4(3) itself has no representation by retained published input. All generation, intersection and character arguments retain their stated inputs. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted twice; publication priority and external review remain."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",
@@ -509,7 +509,7 @@ def record(row, baseline, overlay, later_readings, older_access):
         for name in ("phase16_central_join.md", "phase16_central_join_independent_audit.json", "phase16_central_join_root_review.json"):
             r["evidence"].append(evidence(name, "Exact central attachment and eventual polynomial count; companion result"))
         r["retained_inputs"].append("For the companion fixed-excess theorem: reviewed all-class forest quotient theorem; the rederived F016 family supplies sharpness and the counting lower bound")
-        r["exact_target"][-1]["scope"] += " Phase18 determines the leading coefficient exactly as 5^k/k!, proves the higher-class contribution has eventual degree at most k-1, and classifies all class-at-most-three markings by a two-state transfer matrix. The unrestricted lower coefficients remain uncomputed here."
+        r["exact_target"][-1]["scope"] += " Phase18 determines the leading coefficient exactly as 5^k/k!, proves the higher-class contribution has eventual degree at most k-1, and classifies all class-at-most-three markings by a two-state transfer matrix. Phase19 also determines every excess-two coefficient: a_2(d)=(25d^2-107d+122)/2 for d>=3, including 9d-20 class-four markings. Unrestricted lower coefficients at excess at least three remain uncomputed here."
         for name in ("phase18_class_three.md", "phase18_class_three_root_audit.json",
                      "phase18_leading_coefficient.md", "phase18_leading_coefficient_rank_audit.json"):
             r["evidence"].append(evidence(name, "All-rank class-three classification and fixed-excess leading coefficient; companion results"))
@@ -551,6 +551,26 @@ def record(row, baseline, overlay, later_readings, older_access):
         for name in ("phase18_rank3_forms.md", "phase18_rank3_forms_independent_audit.json",
                      "phase18_rank3_forms_root_audit.json"):
             r["evidence"].append(evidence(name, "Form-space argument and uniform failure of the two specified folds"))
+    if identifier == "L120":
+        r["exact_target"].append({
+            "reference": "Companion rank-three diagonal unitary extension theorem in two congruence families",
+            "scope": "For odd q>=5 with q=1 mod4 or q=3 mod8, explicit unitary involutions generate the diagonal index-two extension and satisfy actual IP. Its rank set is {3,4} with the retained upper bound and rank-four construction. At q=7 mod8 this triple generates only the simple socle. It does not settle q=3, the remaining diagonal-extension family, linear rank-three extensions or field/graph cases. Simple-socle rank-three existence was already known; extension priority is unverified.",
+            "relation_to_source": "proposed_uniform_companion_application",
+        })
+        for name in ("phase19_unitary_rank3.md", "phase19_unitary_rank3_manifest.json",
+                     "phase19_unitary_rank3_independent_audit.json", "phase19_unitary_rank3_root_audit.json",
+                     "phase19_unitary_rank3_status.md", "phase19_unitary_rank3_status.json"):
+            r["evidence"].append(evidence(name, "Rank-three unitary generation and exact intersection adapter; specified congruence families only"))
+    if identifier in {"F016", "N010"}:
+        r["exact_target"].append({
+            "reference": "Companion complete excess-two ordered-marking classification",
+            "scope": "For d>=3, exactly (25d^2-107d+122)/2 nondegenerate ordered string C-group markings of order 2^(2d+1). Of these 9d-20 have class four: 4d-8 with cyclic gamma3, and 5d-12 with elementary-abelian gamma3. The exact constructions and marked presentations establish completeness. Lean verifies the nested-kernel IP adapter under its explicit profile assumptions, not the full classification. The independent rank-three quotient census is a bounded diagnostic. No additional principal-paper credit or priority claim.",
+            "relation_to_source": "proposed_uniform_companion_application",
+        })
+        for name in ("phase19_k2_classification.md", "phase19_k2_manifest.json",
+                     "phase19_k2_independent_audit.json", "phase19_k2_root_audit.json",
+                     "formal/NestedKernelIntersections.lean", "formal/NestedKernelIntersections.scope.md"):
+            r["evidence"].append(evidence(name, "All-rank excess-two classification; restricted regular two-group component"))
     if identifier == "N009":
         r["proposed_new_result"] = True
         r["exact_target"].append({
@@ -716,7 +736,7 @@ def render(registry):
             "L120": ("Every odd q>=5", "phase15_unitary_sieve.md"),
             "F013": ("All-class theorem and source adapter", "phase15_graded_support_scope.md"),
             "F016": ("Fixed-excess companion theorem", "phase16_fixed_excess.md"),
-            "N010": ("Class-three classification and leading count", "phase18_class_three.md"),
+            "N010": ("Class-three and excess-two classifications", "phase19_k2_classification.md"),
         }.get(r["id"])
         extra_link = (f" [{companion[0]}](research/case_study/{companion[1]})."
                       if companion else "")

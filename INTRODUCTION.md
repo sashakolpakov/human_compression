@@ -2106,7 +2106,115 @@ fall outside these possibilities. The full ambient groups have no
 such form, so the folds cannot generate them. Different triples
 remain possible; proving their generation is a separate problem.
 
-## 30. The remaining work, and how a living reduction should record it
+## 30. A nested kernel completes the next census
+
+The class-three transfer does not see every group at a given excess.
+At excess two the missing cases can nevertheless be classified completely.
+The canonical quotient gives a kernel $K=\gamma_3(G)$ of order four.
+Its lower central series decreases strictly until it vanishes, so the
+whole group has class at most four. Central $K$ is already covered by
+section 27; a noncentral $K$ is either cyclic of order four or a Klein
+four-group. This small kernel forces a short list of marked supports.
+
+Write $c_i=[r_i,r_{i+1}]$, $\alpha_i=c_i^2$ and
+$\beta_i=[c_i,r_{i+2}]$. When $K$ is cyclic, precisely one edge word
+$\alpha_i$ generates it. Only its two neighboring triple words can be
+nontrivial, and either is the square of that generator. When $K$ is a
+Klein four-group, precisely one triple word $\beta_i$ is moved by
+conjugation; only the middle marker moves it. A possible fixed kernel
+element belongs to one of that triple's two edges. Actual subgroup
+intersections exclude competing supports. The proof uses the exact
+class-four commutator identities, including their weight-four terms.
+
+These descriptions are realized by a dihedral seed and an affine seed
+$(\mathbb Z/4)^2\rtimes D_8$, followed by the central attachments already
+used above. The affine seed is small, but the argument works in every
+rank. A useful new feature is its **nested parabolic kernel**. For an
+edge $E$ inside a triple $T$, and subgroups $L\le K$, its profile is
+
+\[
+G_S\cap K=
+\begin{cases}
+K&T\subseteq S,\\
+L&E\subseteq S\text{ and }T\not\subseteq S,\\
+1&\text{otherwise}.
+\end{cases}
+\]
+
+Because the supports are nested, these kernels have exact intersections.
+The same lift-and-correct argument from section 5 transports IP from the
+quotient to the group. The new
+[Lean module](research/case_study/formal/NestedKernelIntersections.scope.md)
+verifies this implication, and a version for arbitrary chains of supports.
+It takes the exact kernel profile as a hypothesis; the seed construction
+and the proof that it has that profile remain written mathematics.
+
+Counting the noncentral cases gives $4d-8$ cyclic-kernel markings and
+$5d-12$ Klein-kernel markings. Adding the central contribution produces
+the [complete excess-two formula](research/case_study/phase19_k2_classification.md)
+for every $d\ge3$:
+
+\[
+a_2(d)=\frac{25d^2-107d+122}{2},\qquad
+a_2(d)-c_2(d)=9d-20.
+\]
+
+The first three counts are 13, 47 and 106. At rank 100 there are 119,711
+ordered marked classes, so an optimal fixed-length index needs 17 bits
+once the rank and decoder are fixed. This describes objects, not the
+length of their proofs. The rank-three census was independently exhausted
+through all eligible quotients of the universal class-four group; it
+agrees with the formula without being an input to the all-rank proof.
+
+## 31. A small radical proves rank-three unitary generation
+
+The form alternative in section 29 also guides a successful construction.
+Take anticommuting endpoint lifts and a reflection as the middle
+generator. Over $E=\mathbb F_{q^2}$, $q\ge5$ odd, choose a nonzero
+trace-zero $z$ with $\mathbb F_p(z^2)=\mathbb F_q$, and put $s=-z^2$.
+For the Hermitian matrix $H=\operatorname{diag}(1,-1,1,-1)$, set
+
+\[
+A=\operatorname{diag}(I_2,-I_2),\quad
+C=\begin{pmatrix}0&I_2\\I_2&0\end{pmatrix},\quad
+v=(z,-1,s-z,s+1)^t,\quad B=I+v\bar v^tH.
+\]
+
+The three matrices are unitary involutions; $AC=-CA$, so their projective
+endpoints commute. Generation is the substantive issue. The element
+$U=(BC)^2$ fixes an isotropic plane and acts there as a unipotent with
+parameter $t=2s(z-1)$. Its conjugate gives the opposite unipotent.
+The identity $\mathbb F_p(t^2)=E$, together with the retained rank-one
+subgroup list, proves that the plane action contains $\mathrm{SL}_2(E)$.
+
+The kernel of that plane action cannot be trivial. Otherwise a torus
+splits the four-dimensional action, and four additive off-block functions
+must have weights absent from the powers $2p^j$ modulo $q^2-1$.
+All four functions vanish. This would force the unipotent blocks to have
+size at most two, contradicting the directly calculated size-three block
+of $U$. A nonzero kernel is enough: the abelian unitary radical is an
+irreducible additive module for the plane action. Thus the group contains
+the whole radical. The reflection then supplies an opposite root group,
+and elementary unitary generation gives $\mathrm{SU}_4(q)$.
+
+The [full proof](research/case_study/phase19_unitary_rank3.md) spells out
+the splitting obstruction and radical irreducibility. It also proves
+the rank-three intersection step for this marking: a failure of IP
+would force a nontrivial cyclic normal subgroup, impossible in the
+resulting almost-simple group. Six finite examples and 24 independently
+checked symbolic identities support these arguments; they do not replace
+the universal generation proof.
+
+The determinants select the projective group. This triple gives the
+diagonal index-two extension when $q\equiv1\pmod4$ or
+$q\equiv3\pmod8$, and the simple socle when $q\equiv7\pmod8$.
+Combined with the earlier rank-four construction and upper bound,
+the first two extension families have rank set $\{3,4\}$. This does
+not cover the index-two extension at $q\equiv7\pmod8$ or at $q=3$.
+Simple-socle rank-three existence was known already; publication priority
+of the extension result remains unverified.
+
+## 32. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -2143,7 +2251,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-one Lean certificates](research/case_study/formal/README.md) cover
+The [twenty-two Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -2154,7 +2262,7 @@ the abstract involution-centralizer rank obstruction, and the exact
 four-case binary Frattini-action lemma, abstract marked-square descent,
 the split-kernel image and finite product steps in graded support lifting,
 Boolean-image intersections and four-marker centralization, and the
-principal-kernel criterion for full subgroup intersections.
+principal-kernel and nested-kernel criteria for full subgroup intersections.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.

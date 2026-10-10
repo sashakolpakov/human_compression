@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the twenty-one saved Lean reports
+checks local documentation links, and checks the twenty-two saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all twenty-one certificates and their unformalized boundaries. With Git
+describes all twenty-two certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -630,7 +630,7 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The twenty-one certificates cover intersection transport, field and matrix
+The twenty-two certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
@@ -800,6 +800,60 @@ endpoint multiplicity patterns, the middle-involution dimensions and
 the specified fold identities. Its Smith factors are only one and two,
 so the dimension systems lose no rank in odd characteristic. This
 is a linear-algebra diagnostic, not a group-generation certificate.
+
+## Complete excess two and unitary rank three
+
+The excess-two proof classifies every rank d>=3 at order 2^(2d+1).
+Its independent rank-three diagnostic starts with the universal class-four
+quotient, enumerates all 207 normal subgroups and tests all 23 eligible
+quotients. The 13 accepted markings split as six central, four noncentral
+cyclic and three noncentral elementary-abelian kernels. The affine seed
+has a separate 128-element check using only Python's standard library.
+
+```sh
+mkdir -p scratch/phase19
+gap -q -T research/case_study/phase19_k2_independent_census.g > scratch/phase19/k2_census.log
+python3 research/case_study/phase19_k2_affine_check.py --output scratch/phase19/affine.json
+gap -q -T research/case_study/phase19_k2_check.g > scratch/phase19/noncentral_groups.log
+```
+
+The first run checks 184 parabolics and all 1,472 meets. The third
+constructs the 48 proposed noncentral groups at ranks three through
+five and checks 1,112 parabolic kernels/orders and 30,144 meets; it is
+not an independent exhaustive search at those three ranks. The
+[root review](research/case_study/phase19_k2_root_audit.json) records fresh
+runs of the independent census and affine checker. The source-census
+parser needs the separately obtained primary text identified in its
+saved report; that full text is not bundled.
+
+The unitary rank-three proof has both independent symbolic checks
+and exact finite-group diagnostics. The Python command needs SymPy.
+
+```sh
+python3 research/case_study/phase19_unitary_rank3_independent_symbolic.py --output scratch/phase19/unitary_symbolic.json
+gap -q -T research/case_study/phase19_unitary_rank3_check.g > scratch/phase19/unitary_groups.log
+```
+
+These check 24 identities and six markings, respectively: q=5,7,9,11,13
+and a second q=7 parameter. Every computed projective group has the
+predicted order, and all 48 subgroup closures and 384 meets pass.
+The [root review](research/case_study/phase19_unitary_rank3_root_audit.json)
+binds fresh runs from the frozen scripts. Full-field generation is proved
+in the written argument; the finite examples alone do not establish it.
+
+The new nested-kernel Lean adapter can be freshly compiled with the
+same pinned environment described above:
+
+```sh
+python3 research/case_study/formal/verify_lean.py NestedKernelIntersections.lean --packages /path/to/pinned/.lake/packages --output-dir scratch/phase19/lean
+```
+
+The runner compiles its principal-kernel dependency first. The
+[public-run report](provenance/phase19_nested_kernel_public_compile.json)
+records Lean 4.32.2, checked dependency revisions, exit zero and the
+five theorem axiom lists. The exact parabolic kernel profile remains
+a formal hypothesis. All twenty-one older source/report pairs remain
+unchanged; there are now twenty-two partial certificates.
 
 ## GAP computations and retained catalogues
 

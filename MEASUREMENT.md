@@ -76,8 +76,9 @@ constant, not a free contribution to an unrelated corpus measurement.
 This is a theorem about descriptions of mathematical objects. It is
 not a numerical ratio between the literature's proofs and ours. The
 finite library multiplicities have not been computed in general.
-The leading coefficient is now known, while the unrestricted lower
-coefficients remain uncomputed here; no corpus ratio follows.
+The leading coefficient is now known. The unrestricted lower coefficients
+are also known at excesses one and two, while higher-excess core libraries
+remain uncomputed here; no corpus ratio follows.
 
 The [first-excess classification](research/case_study/phase17_k1_classification.md)
 now gives the exact special case a₁(d)=5d−10 for every d≥3. An optimal
@@ -96,6 +97,18 @@ rank-d count is the Fibonacci number F_(4d−5), giving a conditional
 index cost ceil(log₂ F_(4d−5)). That total ranges over different
 orders; it must not be substituted for a count at fixed excess.
 Neither formula measures the length of a mathematical proof.
+
+The [complete excess-two census](research/case_study/phase19_k2_classification.md)
+now gives a₂(d)=(25d²−107d+122)/2 for every d≥3, including all class-four
+cases. Its conditional fixed-length class index is exactly
+ceil(log₂ a₂(d)) bits. At rank 100 the count is 119,711 and the index
+needs 17 bits. The decoder, rank and theorem remain additional information
+unless already fixed. The independent rank-three quotient census and
+the nested-kernel Lean adapter verify their stated components, rather than
+the whole classification. Neither this new formula nor the
+[unitary rank-three construction](research/case_study/phase19_unitary_rank3.md)
+has a matched source-proof length or established publication priority.
+They do not change the two measured ratios or receive an infinity marker.
 
 ## The infinity marker
 

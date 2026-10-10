@@ -24,6 +24,7 @@ CERTIFICATES = (
     "IntertwinerSeparation", "TransvectionForms",
     "InvolutionCentralizers", "BinaryFrattiniActions", "MarkedSquareDescent",
     "GradedSupport", "BooleanRetractions", "PrincipalKernelIntersections",
+    "NestedKernelIntersections",
 )
 
 

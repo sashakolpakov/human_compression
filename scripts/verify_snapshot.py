@@ -41,7 +41,7 @@ def lean_reports():
         assert "sorryAx" not in report.get("stdout", ""), source.name
         assert not re.search(r"\b(sorry|admit)\b", source.read_text()), source.name
         result.append(source.name)
-    assert len(result) == 21, result
+    assert len(result) == 22, result
     return result
 
 
