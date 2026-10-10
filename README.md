@@ -16,70 +16,44 @@ their open problems. Success means reproducing exact theorem statements with
 fewer independent arguments, exposing the inputs that remain, and obtaining
 new consequences. The evidence is the mathematics and its checks.
 
-[Compress_A](COMPRESS_A.md) now maps three named manuscripts from 1998,
-2002 and 2005 to one continuous replacement with 23 explicit source adapters.
-Forest cuts, sign kernels and one relative-generation proof connect symmetric
-groups to Frattini quotients and finite-p-group coordinate geometries. A
-separate agent has reviewed the whole assembled text and its corrected,
-explicitly scoped main-result contract. Retained background remains visible.
-No three-paper length ratio has been measured. The earlier two-paper
-measurement remains a separate representation-sensitive experiment.
+[**Compress_10**](COMPRESS_10.md) now derives the declared principal results
+of **ten named manuscripts spanning 1998–2026** from one continuous
+replacement. The [exact intake](COMPRESS_10.md#exact-intake) credits every
+source author and states the result contract. An independent agent read
+all 24 sections, all adapters and all four complete finite programs; the
+[integration review](research/case_study/phase52_ten_source_recent_audit.md)
+passes with one required reference correction. Retained background and
+source corrections remain explicit.
 
-A second reviewed manuscript, [Compress_B](COMPRESS_B.md), derives the
-declared main theorems of four papers from 2019–2026 using deletion maps,
-one square-lattice seed, graded support and bounded cyclic extensions. Its
-complete eight-family classification includes an independently replayed
-finite census. The [named manuscript map](MANUSCRIPT_MAP.md) records the
-seven distinct source manuscripts across these two replacements. The four-paper
-bundle has a [reviewed conditional factor of 3.93×](research/case_study/phase38_compress_B_measurement_root_audit.md):
-32,476 source PDF-extracted tokens versus 8,267 in the complete rendered
-replacement, including its census appendix. Nonwhitespace characters give
-3.35×. The listed background proofs remain imported. The three-paper
-measurement remains work. The subsequent [seven-source integration](COMPRESS_UNIFIED.md)
-has now passed independent internal mathematical review: all 34 scoped main-result
-adapters follow from one continuous manuscript. It adds 706 raw tokens compared
-with A and B together. Against the original sources, its
-[reviewed conservative lower bound is 2.21×](research/case_study/phase43_unified_lower_bound_root_audit.md):
-40,358 tokens from six source main bodies divided by 18,241 in the complete
-replacement, with the unavailable 1998 source credited zero. Nonwhitespace
-characters give at least 1.86×. The exact seven-source factor remains unknown;
-integration itself has not shortened A+B.
+The shared arguments concern exact kernels, relative generation, primitive
+coordinates, square lattices and endpoint operations on marked groups.
+Substantial forest, cyclic-classification, geometric and census branches
+remain inside the replacement. The source-to-corollary map exposes their cost.
+The [attribution annotations](ATTRIBUTION.md) distinguish borrowed results,
+repository contributions, shared derivations and the exact scope of Lean.
 
-A [proved bridge between the two replacements](research/case_study/phase38_primitive_saturation.md)
-now identifies the unique primitive coarsening of each omission action in an
-irredundantly marked finite p-group. For the forest two-groups it factors
-through the canonical class-two quotient, with exact parabolic kernels and
-coset fibers. This yields all face and induced-residue indices of the
-prescribed-square family by one formula. The [root review and fresh diagnostics](research/case_study/phase38_primitive_saturation_root_audit.md)
-pass the stated theorem. Its primitive-saturation core is now inside the
-seven-source replacement. The symmetric classification remains a distinct branch;
-integration has not yet shortened the two predecessors' combined body.
+The ten-source length measurement is in progress. Earlier, separately
+reviewed measurements are available:
 
-The [current independent report](CURRENT_REPORT.md) gives the exact named intake:
-seven sources to Unified, two more to C plus its required bridge, and a separate
-tenth adapter. It includes both measured factors, integration costs and next
-steps. Its author wrote none of the replacements and reviewed the entire
-seven-source integration and C extension.
-The [preceding independent assessment](CURRENT_STATE.md), whose author separately
-reproduced the four-paper counts, the [two-paper assessment](CURRENT_ASSESSMENT.md)
-and [candidate assessment](INDEPENDENT_ASSESSMENT.md) remain unchanged.
-The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
-defines the sum-of-manuscripts ratio and its required coverage audit.
+| Exact replacement | Conditional length result |
+|---|---|
+| [Compress_B](COMPRESS_B.md), four sources | **32,476 / 8,267 = 3.93×** |
+| [Compress_Unified](COMPRESS_UNIFIED.md), seven sources | **At least 40,358 / 18,241 = 2.21×**, crediting the unmeasurable 1998 source zero |
+| [Compress_C plus lattice bridge](COMPRESS_C.md), two sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
+| [Compress_10](COMPRESS_10.md), ten sources | Measurement pending; earlier factors do not transfer |
 
-A [reviewed chiral-cover adapter](research/case_study/phase43_chiral_cover_root_audit.md)
-now derives a further source's proved conclusions from kernel transport,
-local geometry and an exact finite certificate, with older geometric and
-classification inputs explicit. It is a candidate for the next integrated
-manuscript; its conjectures remain unresolved here and no length factor is claimed.
+These use normalized PDF-extracted whitespace tokens and include the complete
+required proof and code. Retained background proofs remain imported. The
+seven-source integration adds 706 raw Markdown tokens over its two
+predecessors together. A common framework can improve organization while
+adding exposition; every measured outcome is reported under its exact scope.
 
-[Compress_C plus its required lattice bridge](COMPRESS_C.md) now adds two
-reviewed source contracts from 2005 and 2020. The same endpoint/support theorem
-handles six Janko-group constructions and generalized-cube halving. A complete
-residue-extension census proves the six-class classification and excludes all
-higher ranks; explicit face maps and lattices prove the toroidal models.
-There are now **nine distinct sources in reviewed assemblies**, split seven
-and two. C has no measured factor. The continuous ten-source candidate is now
-author-frozen for independent integration review; it is not yet admitted.
+The [current report](CURRENT_REPORT.md), [named manuscript map](MANUSCRIPT_MAP.md)
+and [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
+give the evidence and remaining work. Earlier independent reports remain
+frozen at their assessed commits. The general and full five-family
+minimal-cover conjectures are unproved by Compress_10; subsequent family
+work has a separate proof and priority audit.
 
 ## The method
 

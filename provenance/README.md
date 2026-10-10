@@ -1,13 +1,23 @@
 # Provenance and verification scope
 
-The current additions include the [nested-shadow source reductions](phase32_review.md),
+The current snapshot admits [ten named manuscripts to one continuous replacement](../COMPRESS_10.md),
+with its required erratum, complete independent integration review and
+[hash-bound export](phase69_originals.json). The [attribution reader](../ATTRIBUTION.md)
+has a separate independent semantic/integrity audit and [original-file record](phase70_originals.json).
+The [complete C measurement](../COMPRESS_C.md) is recorded honestly as 2.386%
+expansion, with its [bound measurement and authored PDF](phase71_originals.json).
+The current registry has seventeen principal-result candidates, ten sources
+in reviewed assemblies and forty scoped Lean components. These are different
+coverage measures, not a corpus compression ratio.
+
+Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite
 surface-cover family](phase34_review.md), and the [infinite presentation
 certificate and2000 construction theorem](phase35_review.md). The latest
 [geometric and universal supplement](phase36_review.md) gives the parameter-six
 universal regular hypertope and unbounded finite residue-preserving quotients.
-The living ledger has sixteen principal-result works and30 scoped Lean modules. These are
-coverage and verification counts, not a corpus compression ratio. Fresh
+That earlier snapshot had sixteen principal-result works and thirty scoped Lean modules. These are
+historical coverage and verification counts, not a corpus compression ratio. Fresh
 execution reports are separate from every frozen original.
 
 The [phase-25 review](phase25_review.md) completes the N009 principal-result
@@ -135,6 +145,9 @@ changing their source or silently rewriting their checksums.
 
 External PDFs, extracted texts and GAP library inputs are identified by source
 metadata and checksums. Their absence from the public snapshot is intentional.
+The exact project-authored C replacement PDF is distributed for inspection;
+the snapshot checker permits only its explicitly reviewed path and hash.
+It does not permit the external primary PDFs or their extracted bodies.
 A checksum identifies bytes; it is not a proof that the mathematical claim is
 correct or that an external catalogue is complete.
 

@@ -69,7 +69,8 @@ The factor is conditional on the named retained background; certificate
 and executable bytes are recorded separately. A fresh root rendering and
 extraction replay matches all counts and exact source boundaries. The
 [named map](MANUSCRIPT_MAP.md) now records those two predecessors and the
-subsequent reviewed seven-source integration, with seven distinct sources.
+subsequent reviewed seven-source integration. The later ten-source assembly
+is listed separately, with overlapping intakes counted only once.
 
 The [seven-source measurement audit](research/case_study/phase43_unified_lower_bound_root_audit.md)
 admits a **conservative lower bound of 40,358/18,241 = 2.212488×** under the
@@ -88,7 +89,25 @@ complete C manuscript **plus its required lattice addendum**. Its whole
 denominator must include both embedded GAP programs and that entire addendum;
 the executable copies are charged once, and runtime/output costs are reported
 separately. The declared main-result contract passes independent review,
-but no C factor or combined nine-source factor has yet been measured.
+and the [complete independent measurement audit](research/case_study/phase60_compress_C_measurement_recent_audit_report.md)
+now admits **8,382 / 8,582 = 0.976695409×**: the replacement is **200 tokens,
+or 2.386%, longer** than the source sum. The nonwhitespace-character factor
+is **0.666262×**; all ten reported sensitivity factors are below one. This
+experiment demonstrates no length reduction. All 16 replacement and 21 source
+pages were independently inspected, including L088's late mathematical diagrams.
+The [measured authored PDF](research/case_study/phase51_compress_C_measurement_replacement.pdf)
+is distributed; the primary PDFs remain separately acquired inputs.
+
+The [continuous ten-source replacement](COMPRESS_10.md) now passes complete
+independent integration review with its exact required reference erratum.
+Its denominator must include all 24 sections, every source adapter, the
+complete internal lattice bridge, all four embedded programs and that
+correction. No ten-source numerical factor is admitted yet. The separate
+[annotation reader](ATTRIBUTION.md) adds attribution and verification metadata;
+its bytes are reported separately and no ratio for the annotated edition is
+implied by a future measurement of the proof manuscript. Annotation text
+that adds a necessary argument must enter the proof denominator. None of the
+current annotations adds a mathematical premise or proof step.
 
 ## A finite compression ratio
 

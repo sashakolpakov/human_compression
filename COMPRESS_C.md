@@ -44,13 +44,26 @@ remark are corrected explicitly. Its comparison against an external catalogue
 and auxiliary semiregular identification remain outside the declared contract.
 The Petrial paper and the lattice-notation reference are not intake sources.
 
-**No C compression ratio has yet been measured.** Any denominator must include
-the entire continuous manuscript, both complete code appendices and the entire
-lattice addendum. No new conjecture solution or end-to-end Lean certificate
-is claimed. The [reproduction instructions](REPRODUCING.md#two-source-operations-census)
-describe the exact computational check.
+The [independently reviewed measurement](research/case_study/phase60_compress_C_measurement_recent_audit_report.md)
+now gives **8,382 / 8,582 = 0.976695409×** in NFC PDF-extracted whitespace
+tokens: **200 tokens, or 2.386%, expansion**. There is no demonstrated length
+saving for this replacement. The denominator includes the entire substantive
+manuscript, both complete code appendices and the entire lattice addendum.
+The source sum includes the mathematical diagram pages that follow L088's
+bibliography. The nonwhitespace-character factor is **0.666262×**; all ten
+reported sensitivity factors are below one. Retained background remains
+explicit, and drawn diagram information is not fully measured by extracted
+text tokens.
 
-Together with [Compress_Unified](COMPRESS_UNIFIED.md), this establishes reviewed
-main-result replacements for **nine distinct sources**, split seven and two.
-A single ten-source integration, also incorporating the separate chiral-cover
-adapter, remains work in progress.
+Read the [complete measured PDF](research/case_study/phase51_compress_C_measurement_replacement.pdf),
+the [protocol and exact counts](research/case_study/phase51_compress_C_measurement_report.md)
+and [root admission](research/case_study/phase64_compress_C_measurement_root_audit.md).
+The independent reviewer viewed all 16 replacement and 21 source pages,
+freshly rendered the replacement and independently recounted all inputs.
+The root re-extracted the actual published PDF and reproduced its denominator.
+No new conjecture solution or end-to-end Lean certificate is claimed.
+
+The [reproduction instructions](REPRODUCING.md#two-source-operations-census)
+describe the mathematical computation. The later [ten-source integration](COMPRESS_10.md)
+now includes both contracts in one continuous manuscript with the other eight.
+Its length measurement is separate; this C factor does not transfer to it.

@@ -13,6 +13,13 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "provenance/snapshot_manifest.json"
 STUDY = ROOT / "research/case_study"
 
+# Exact project-authored renderings only. Primary publication PDFs and source
+# raster/text captures remain excluded from the distributed snapshot.
+OWN_RENDERED_PDFS = {
+    "research/case_study/phase51_compress_C_measurement_replacement.pdf":
+        "e7b7a19ea3dc979ef12e57885bd0ba8d8e87c087ef4d09979167a6e2870b59f8",
+}
+
 
 def digest(path):
     return sha256(path.read_bytes()).hexdigest()
@@ -77,7 +84,10 @@ def main():
             assert path.resolve().is_relative_to(ROOT), rel
             rows.append({"file": rel, "symlink": str(path.readlink())})
         else:
-            assert path.suffix not in {".pdf", ".png", ".html", ".pid"}, rel
+            if path.suffix == ".pdf":
+                assert rel in OWN_RENDERED_PDFS and digest(path) == OWN_RENDERED_PDFS[rel], rel
+            else:
+                assert path.suffix not in {".png", ".html", ".pid"}, rel
             rows.append({"file": rel, "sha256": digest(path), "bytes": path.stat().st_size})
     if args.write_manifest:
         MANIFEST.write_text(json.dumps({

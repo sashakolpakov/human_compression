@@ -24,6 +24,42 @@ hashes from the public snapshot. Portability and citation edits can change an
 exported file's hash. Historical reports describe their original runs; they
 are not relabeled as fresh executions of an edited script.
 
+## Continuous ten-source replacement
+
+```sh
+python3 research/case_study/phase45_ten_source_verify.py --output-dir /tmp/human-compression-ten-structure
+```
+
+Choose an output directory that does not exist. This verifies the 79 contract
+spans, unique equation labels and exact extraction of all four embedded GAP
+programs. It does not check mathematical proofs or execute GAP. The
+[independent full-text review](research/case_study/phase52_ten_source_recent_audit.md)
+and [root admission](research/case_study/phase56_ten_source_root_audit.md)
+record the written proof review and previous exact computational evidence.
+Read the [required erratum](research/case_study/phase45_ten_source_errata.md)
+with the original manuscript.
+
+For a fresh execution of all four programs, use another new output directory
+and add `--run --gap gap`. The original runs used GAP 4.15.1, SmallGroups and
+TomLib; the full exhaustive J1 stage can take several minutes. All extracted
+programs and logs are retained in that new directory. The independent
+`phase52_ten_source_recent_audit_check.py` is a historical source-continuity
+checker that also requires the private primary captures identified by hash;
+it is not the public reproduction entry point.
+
+The [attribution reader](ATTRIBUTION.md) has its own standard-library generator
+and [independent semantic/integrity audit](research/case_study/phase62_attribution_recent_audit.md).
+Its signs do not add proof premises or broaden any certificate's scope.
+
+The [complete C measurement](research/case_study/phase60_compress_C_measurement_recent_audit_report.md)
+is distributed with its exact authored replacement PDF and independent recount
+program. Its full rerun requires separately acquired primary PDFs at the bound
+hashes, plus pypdf 6.13.0, Pandoc, XeLaTeX and the recorded fonts. The original
+protocol builder also expects private source-extraction files. The report gives
+the exact render/count commands and exclusion intervals; no standalone public
+remeasurement without those primary inputs is implied. The approved outcome
+is 2.386% expansion, with the entire required lattice bridge charged.
+
 ## Fresh Python computations
 
 ```sh
