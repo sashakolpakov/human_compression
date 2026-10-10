@@ -33,8 +33,13 @@ L032, L035, F013, F016 and N009. Their existing derivations and certificates
 have been reworked. The supported-kernel theorem supplies the edge, path
 and fork constructions; all classification and geometric arguments remain
 explicit. The ledger binds 44 source records and 17 multipart clauses.
-The complete raw cost is 190,995 bytes including U and all four external
-computational artifacts; A's 21 pages alone are not the whole proof cost.
+The original raw inventory was 190,995 bytes including U and all four
+external computational artifacts. The mandatory
+[diagonal-factor correction](research/case_study/phase138_N009_decomposition_erratum.md)
+adds 5,967 bytes, making the complete package 196,962 bytes. A's 21 pages
+alone are not the whole proof cost. Independent review confirms the
+corrected all-parameter affine decomposition; the classification targets
+and recorded census remain unchanged.
 
 A [reviewed hypertope attachment](MODULE_A_HYPERTOPES.md) now recovers
 L034's complete principal construction, including the exact presentation

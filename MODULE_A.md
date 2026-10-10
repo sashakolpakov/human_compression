@@ -1,5 +1,12 @@
 # Module A: Construction and classification of two-group polytopes
 
+**Required correction:** the quoted diagonal factors in §7.4 of this
+frozen draft are incorrect. Read the
+[complete correction](research/case_study/phase138_N009_decomposition_erratum.md)
+and [independent review](research/case_study/phase143_n009_decomposition_review.md).
+The corrected affine proof preserves the classification targets and
+recorded census; the new edition will incorporate it directly.
+
 Read the [21-page manuscript PDF](research/case_study/phase117_two_group_application_render/application.pdf)
 or [complete Markdown source](research/case_study/phase117_two_group_application.md).
 This first full application draft cites [U](UMBRELLA.md) for shared proofs
@@ -40,7 +47,9 @@ files remain required proof inputs and are charged in full:
 | Module A | 78,524 |
 | Complete U manuscript, charged once | 56,096 |
 | Four complete computational artifacts | 56,375 |
-| Total | 190,995 |
+| Original frozen package | 190,995 |
+| Required diagonal-factor correction | 5,967 |
+| Current complete package | 196,962 |
 
 This is a raw inventory, **not a compression ratio**. A matched comparison
 of the complete package with the source bodies remains to be made. The
@@ -61,7 +70,8 @@ byte-exact rebuild from the retained proof material, run:
 python3 -B -O research/case_study/phase117_two_group_application_verify_v2.py --output /tmp/NEW-module-A-check.json --rebuild
 ```
 
-This checks integrity, not mathematical validity. Use the
+This checks integrity, not mathematical validity. The separately bound
+correction above is also required. Use the
 [corrected portable checker](research/case_study/phase117_two_group_application_portability.md);
 the original author manifest's command assumed a different directory
 layout. No primary publication PDF is included in this export.

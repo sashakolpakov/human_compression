@@ -39,6 +39,7 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase134_L034_root_review.md", "phase134_L034_export.json",
           "phase136_typed_helly_review.json", "phase136_typed_helly_manifest.json",
           "phase131_equal_label_admission.json", "phase131_equal_label_export.json",
+          "phase143_n009_decomposition_review.md", "phase143_n009_export.json",
           "phase119_five_family_root_admission.md",
           "phase80_two_primary_root_audit.json",
           "phase72_cover_family_priority_claims.json",
@@ -918,6 +919,11 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["access_coverage"]["reading_category"] = "full_text_read"
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase44_operations_recent_audit.md", "reading_depth":"Independent complete11-page primary text reading; original pages5–10 visually checked, including all application formulas and diagrams."})
         r["remaining_work"] = ["The reference[9] comparison and auxiliary semiregular identification remain unproved; Remark4.1 is rank-qualified. No length factor, novelty, conjecture solution or end-to-end formalization. C alone retains a target-identification gap; the entire bound lattice bridge is required and charged."]
+    if identifier == "N009":
+        r["evidence"] += [evidence(name, "Mandatory corrected diagonal factors in quoted Lemma5.1(ii); complete classification targets and finite census unchanged") for name in (
+            "phase138_N009_decomposition_erratum.md", "phase143_n009_decomposition_review.md",
+            "phase143_n009_decomposition_check.py", "phase143_n009_decomposition_root.json")]
+        r["remaining_work"].append("The diagonal structural display in Lemma5.1(ii), repeated in older repository expositions, requires the phase138 mandatory factor-pairing correction. Root independently checked the exact printed page, all-parameter affine proof and seven finite cases including s=1. The original classification remains attributed; no extra theorem or source count is assigned.")
     return r
 
 

@@ -1,5 +1,10 @@
 # Attribution in the twelve-source manuscript
 
+The frozen annotated body inherits the incorrect N009 diagonal-factor
+display. Its [mandatory correction](research/case_study/phase138_N009_decomposition_erratum.md)
+distinguishes the retained original classification from our corrected
+affine proof. The historical annotation counts below remain unchanged.
+
 Read the [annotated manuscript](research/case_study/phase91_n009_annotations_reader.md)
 or its [compact ledger](research/case_study/phase91_n009_annotations_ledger.md).
 The [independent semantic review](research/case_study/phase94_twelve_annotations_review.md)

@@ -352,3 +352,9 @@ question result after complete proof reading and fresh finite checks.
 It covers specified all-rank families and universal presentations at
 labels three and four. The full conjecture, priority and complete Lean
 verification remain open; no known-source compression credit is added.
+
+The [phase-96 record](phase96_review.md) corrects the N009 diagonal factors
+quoted in the first Module A and older compilations. Independent primary
+page inspection, complete proof reading and a new seven-case regression
+support the correction. The full erratum is required and charged; the
+principal classification targets and census outputs remain unchanged.

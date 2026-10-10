@@ -34,9 +34,13 @@ integrated edition; it has not yet been folded into those 21 pages.
 Known principal-result coverage in the registry rises from seventeen to
 eighteen sources. The number of sources with any rederivation remains 39.
 
-The complete additive package costs 208,750 raw UTF-8 bytes, including U,
+The original additive inventory was 208,750 raw UTF-8 bytes, including U,
 A, its four required computational artifacts, this attachment and the
-mandatory correction. This is an inventory, not a compression ratio.
+mandatory involutivity correction. The subsequent
+[N009 diagonal-factor correction](research/case_study/phase138_N009_decomposition_erratum.md)
+is also required for the quoted background in A. Charging its full 5,967
+bytes gives **214,717 bytes** for the complete additive package.
+This is an inventory, not a compression ratio.
 No end-to-end Lean proof of the new geometry or application is claimed.
 The separate older proposed answer to Conjecture 3.3 is not re-audited or
 counted as a new result by this construction.

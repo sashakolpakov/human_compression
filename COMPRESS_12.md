@@ -1,5 +1,12 @@
 # Twelve named manuscripts → one continuous replacement
 
+**Required later correction:** read the quoted N009 diagonal decomposition
+with its [corrected factors and proof](research/case_study/phase138_N009_decomposition_erratum.md).
+The [independent review](research/case_study/phase143_n009_decomposition_review.md)
+checks the correction and its unchanged classification scope. The length
+figures below measure the earlier frozen artifact; the corrected package
+has no matched length ratio yet.
+
 **The declared principal results of twelve manuscripts spanning 1998–2026
 follow as explicit corollaries of one continuous manuscript**, relative to
 its disclosed background and corrected source contracts. The

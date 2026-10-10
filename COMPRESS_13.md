@@ -1,5 +1,11 @@
 # Working source compilation: thirteen principal contracts
 
+**Required later correction:** the quoted N009 diagonal factors must be
+read with the [corrected affine proof](research/case_study/phase138_N009_decomposition_erratum.md)
+and [independent review](research/case_study/phase143_n009_decomposition_review.md).
+This adds 5,967 required bytes to the historical inventory below, giving
+357,315 bytes. The principal classification targets and census are unchanged.
+
 This compilation is retained as reusable source material for the new
 [umbrella and module programme](MANUSCRIPT_PROGRAM.md). It is not that
 programme's product or benchmark.

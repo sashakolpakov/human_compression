@@ -38,6 +38,11 @@ The [root review](research/case_study/phase127_modular_root_review.md)
 records a complete proof reading and fresh reproduction checks. Full
 formalization, final source admission and matched measurement remain pending.
 
+A later integration check found an incorrect quoted factor pairing in
+A's §7.4. The [mandatory correction](research/case_study/phase138_N009_decomposition_erratum.md)
+now supplies the proper affine decomposition; its independent review and
+full additional cost are recorded on the Module A page.
+
 Module B is being drafted around four sources from 1998–2021. Forest
 cuts, compatible partitions and Frattini coordinates connect its tree,
 generation and coset-geometry arguments. Its source-contract audit is
