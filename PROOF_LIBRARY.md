@@ -8,22 +8,30 @@ and an application includes proofs of every hypothesis. The original
 working derivations supply material to rework; they are not the new
 programme's product or comparator.
 
-The mathematical output is U plus coherent application manuscripts.
-U contains full general proofs. A module cites them and provides complete
-application proofs and source-specific arguments in ordinary academic
-language. The intended saving comes from shared mathematics, not
-abbreviated proof sketches or omitted exceptional cases.
+The mathematical output is a family of papers for each coherent topic.
+Topic A has shared theory U_A and application papers A₁, …, Aₖ, matched to
+historical papers LA₁, …, LAₖ. Each application provides complete hypothesis
+checks and source-specific proofs in ordinary academic language. The intended
+saving comes from shared mathematics, not abbreviated proof sketches or
+omitted exceptional cases.
 
-For a source bundle S_A, the conditional module factor is
+The [topic-complexity protocol](TOPIC_COMPLEXITY.md) distinguishes:
 
-    R_A = sum of comparable source lengths in S_A / length(A), conditional on U.
+- An independent topic comparison: Σ c(LAᵢ) / (c(U_A) + Σ c(Aᵢ)).
+  Topic B pays its full U_B too, even when U_A and U_B overlap.
+- Conditional paper comparisons: c(LAᵢ) / c(Aᵢ), with the acquisition cost
+  c(U_A) displayed separately and charged once within that topic.
+- A separate chronological GKM account: charge each new application for
+  its complete proof-dependency closure absent from the already paid library,
+  including all new interfaces and hypothesis checks. This account records
+  the actual library snapshots and does not reduce the independent topic costs.
 
-For several modules, the total factor is
+The dependency graphs of the original papers and the replacement must both
+represent genuine earlier reuse. A globally deduplicated storage inventory
+is a different quantity from the independent topic comparison.
 
-    R_total = sum of lengths of distinct sources / (length(U) + sum length(modules)).
-
-Source overlap is counted once. Specify source editions, target statements,
-retained background and representation before comparing. Required proof
+Specify source editions, target statements, retained background and
+representation before comparing. Required proof
 appendices, source-specific lemmas and certificate interfaces must be
 included; separately report complete reproducibility artifacts and execution
 requirements. Report page and normalized text counts under a common format,
@@ -38,14 +46,15 @@ Bibliographic repetition alone is not a theorem-reduction result.
 
 At each meaningful revision retain the task contract and record:
 
-- The complete U-plus-application cost for that contract.
+- The full topic umbrella and the complete matched application costs.
 - Gross new proof, interface, application and certificate material.
 - Removed material, identifying which portion was repeated reasoning.
 - Signed net change and the cost of genuinely new applications.
 - Which earlier results still follow, and their exact proof/Lean status.
 
-A shared body counts once; each hypothesis check and binding counts where
-used. Mere relocation preserves cost. Removing a lemma and breaking one
+A shared body counts once within a topic; an overlapping umbrella remains
+fully charged in each other independent topic. Each hypothesis check and
+binding counts where used. Mere relocation preserves cost. Removing a lemma and breaking one
 derivation demonstrates that derivation's dependence, not necessity for
 all possible proofs. A prospective application tests actual reuse beyond
 the examples that motivated the theorem. Both large savings and expansion
@@ -60,7 +69,6 @@ a group pushout requires a specified diagram and a proved universal
 property. Shared text or a dependency graph alone is not a pushout theorem.
 
 An independent [earlier method and intake audit](research/case_study/phase121_gkm_proof_library_note.md)
-records the precise GKM readings and the pre-reorganization state. It is
-historical: the latest working compilation has thirteen source contracts,
-and the present deliverable is U plus modules. Its stale registry cache
-was corrected by regenerating the living map.
+records the earlier GKM readings and the pre-reorganization state. It is
+historical; its mixed compilation is reusable proof material, not the present
+topic-family deliverable or its comparator.
