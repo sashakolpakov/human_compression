@@ -2,7 +2,7 @@
 
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with complete U and A drafts and Module B in preparation. There are
-forty-five scoped Lean components. Source coverage, complete modular
+forty-seven scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
 An earlier snapshot admitted [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
@@ -358,3 +358,9 @@ quoted in the first Module A and older compilations. Independent primary
 page inspection, complete proof reading and a new seven-case regression
 support the correction. The full erratum is required and charged; the
 principal classification targets and census outputs remain unchanged.
+
+The [phase-97 record](phase97_review.md) admits the order, local, separator
+and lower-central consequences and the complete typed-Helly transfer in
+Lean after full proof reading, dedicated checks and a fresh public build.
+There are now 47 scoped modules. Full geometry and source-application
+bindings remain distinct from these general algebraic certificates.

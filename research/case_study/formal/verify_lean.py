@@ -45,6 +45,8 @@ CERTIFICATES = (
     "OddCoverSeparation",
     "CoprimePullback",
     "SupportedKernelGeneration",
+    "SupportedKernelConsequences",
+    "SupportedKernelHelly",
 )
 
 
@@ -169,6 +171,14 @@ def prepare_mathlib(names, lean, output, env, timeout):
             ensure(child)
         target = output / relative
         writable_directory(target.parent)
+        # Cached companion objects may exist even when the main .olean is
+        # missing. Detach their overlay links before Lean writes this stem.
+        stem = target.name.removesuffix(".olean")
+        for sibling in target.parent.iterdir():
+            if sibling.is_symlink() and (
+                sibling.name == stem or sibling.name.startswith(stem + ".")
+            ):
+                sibling.unlink()
         source_hash = sha256(source)
         run = subprocess.run([lean, "-o", str(target), str(source)], cwd=checkout,
                              env=env, text=True, capture_output=True, timeout=timeout)

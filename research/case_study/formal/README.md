@@ -4,14 +4,26 @@ These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).
 
+[SupportedKernelConsequences.lean](SupportedKernelConsequences.lean) proves
+the order formula, local recognition, separator factorization and the
+lower-central consequence from the actual supported-kernel hypotheses.
+[SupportedKernelHelly.lean](SupportedKernelHelly.lean) proves typed-coset
+Helly transfer and discharges its kernel profiles and lifting conditions
+for the supported-kernel construction. Both allow nonabelian kernel factors.
+Their [consequences scope](SupportedKernelConsequences.scope.md) and
+[Helly scope](SupportedKernelHelly.scope.md) bind the complete independent
+proof reviews and fresh compilations. Geometry recognition, source-specific
+presentations and Boolean deletions remain separate formal tasks.
+
 [SupportedKernelGeneration.lean](SupportedKernelGeneration.lean) proves
 the structural part of U.SK: generation of the full simultaneous fiber
 product, both directions of every actual parabolic kernel profile and
 the complete intersection property. The kernel profile is derived from
 the local construction hypotheses. Its [scope](SupportedKernelGeneration.scope.md)
 and [independent review](../phase133_supported_kernel_review.md) distinguish
-these ten declarations from the order formula, corollaries and application
-bindings still to be formalized. Nonabelian kernels are allowed. The
+these ten declarations from the separate consequences and Helly modules
+above and from application bindings still to be formalized. Nonabelian
+kernels are allowed. The
 [fresh public report](SupportedKernelGeneration.check.json) records only
 standard axioms.
 
@@ -90,8 +102,8 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are forty-five certificates. To compile them on another machine, install Git,
-Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
+There are forty-seven certificates. To compile them on another machine, install Git,
+Python 3.10 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
 ```sh
@@ -107,7 +119,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the forty-five modules, but does not produce the runner's JSON reports.
+way to compile the forty-seven modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -138,9 +150,9 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all forty-five source hashes match the historical successful reports
+This checks that all forty-seven source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. Forty-four saved runs use only a subset of the standard axioms
+Lean or verify a proof anew. Forty-six saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
 prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
 for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below

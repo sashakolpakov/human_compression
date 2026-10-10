@@ -54,4 +54,6 @@ lean_lib MathCompressionCertificates where
     `OddKernelWord,
     `OddCoverSeparation,
     `CoprimePullback,
-    `SupportedKernelGeneration]
+    `SupportedKernelGeneration,
+    `SupportedKernelConsequences,
+    `SupportedKernelHelly]

@@ -38,8 +38,14 @@ The structural part of U.SK now has a
 it proves generation, every parabolic kernel profile and the full
 intersection property from the actual local hypotheses. The
 [independent review](research/case_study/phase133_supported_kernel_review.md)
-checks its correspondence to the written argument. The order formula,
-separate corollaries and application bindings remain outside this certificate.
+checks its correspondence to the written argument. The separately reviewed
+[consequences certificate](research/case_study/formal/SupportedKernelConsequences.scope.md)
+now proves the order formula, local recognition, separator factorization
+and lower-central consequence. A
+[typed-Helly certificate](research/case_study/formal/SupportedKernelHelly.scope.md)
+proves both the general marked transfer and its actual supported-kernel
+application. Boolean deletions, full geometric recognition and source
+application bindings remain separate formal tasks.
 
 A [reviewed extension](MODULE_A_HYPERTOPES.md) proves typed-coset Helly
 transfer when every parabolic kernel is a product of full coordinate

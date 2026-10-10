@@ -109,7 +109,7 @@ Lean verification must match our actual written statements, including
 assumptions and retained inputs. A certified helper does not certify an
 entire application. Formal gaps and axioms remain visible.
 
-Forty-five existing scoped Lean components and exact computational
+Forty-seven existing scoped Lean components and exact computational
 certificates supply reusable verified material. They do not constitute
 an end-to-end formalization of U, Module A or all conjecture claims.
 See [reproduction instructions](REPRODUCING.md) and individual scope files.

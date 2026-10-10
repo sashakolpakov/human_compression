@@ -82,17 +82,22 @@ labels and identifies the universal presentations at labels three and
 four. The full conjecture, historical priority and complete Lean proof
 remain unresolved. It adds no known-source compression credit.
 
-Forty-five existing Lean components retain their individual statements,
+Forty-seven existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.
 
-The latest component proves the structural part of U.SK: actual generation
+The construction certificate proves the structural part of U.SK: actual generation
 of the simultaneous fiber product, every parabolic kernel profile and full
 IP. The [independent review](research/case_study/phase133_supported_kernel_review.md)
 and fresh public compilation cover all ten new declarations. Its kernel
-profile is a conclusion, not an assumption. The order formula and separate
-corollaries remain outside this admitted certificate.
+profile is a conclusion, not an assumption. Two further reviewed modules
+now prove the order formula, local
+recognition, separator factorization and lower-central consequence, and
+the complete marked typed-Helly transfer with its actual supported-kernel
+application. Their [exact formal scopes](research/case_study/formal/README.md)
+and fresh pinned compilations are public. Full geometry recognition and
+source-specific application bindings remain separate tasks.
 
 The [measurement protocol](PROOF_LIBRARY.md) compares original source
 lengths with complete modules and with U charged once across modules. It

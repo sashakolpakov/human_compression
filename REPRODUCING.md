@@ -45,6 +45,34 @@ also read the complete Lean statement and proof. The ordinary
 `formal/verify_lean.py SupportedKernelGeneration.lean` entry point is
 registered and was separately executed from this public layout.
 
+## Supported-kernel consequences and typed Helly
+
+The [consequences scope](research/case_study/formal/SupportedKernelConsequences.scope.md)
+and [Helly scope](research/case_study/formal/SupportedKernelHelly.scope.md)
+identify the actual general theorems. The latter's generic public build
+also recompiles all four local prerequisites:
+
+```sh
+python3 -B research/case_study/formal/verify_lean.py SupportedKernelHelly.lean --packages /path/to/.lake/packages --lean /path/to/lean --output-dir /tmp/NEW-helly-build
+```
+
+For the exact hash-pinned author interfaces and rejection controls, use
+new paths for each command:
+
+```sh
+python3 -B -O research/case_study/phase129_supported_kernel_consequences_check.py --packages /path/to/.lake/packages --lean /path/to/lean --output-dir /tmp/NEW-consequences-pinned
+python3 -B -O research/case_study/phase129_supported_kernel_consequences_controls.py --packages /path/to/.lake/packages --lean /path/to/lean --output-dir /tmp/NEW-consequences-controls
+python3 -B -O research/case_study/phase137_supported_kernel_helly_check.py --packages /path/to/.lake/packages --lean /path/to/lean --output-dir /tmp/NEW-helly-pinned
+python3 -B -O research/case_study/phase137_supported_kernel_helly_controls.py --packages /path/to/.lake/packages --lean /path/to/lean --output-dir /tmp/NEW-helly-controls
+python3 -B -O research/case_study/phase137_helly_semantic_checks.py --output-dir /tmp/NEW-helly-semantic
+```
+
+These runs rebuild the two required missing Mathlib objects privately.
+Other cached dependencies and the compiler remain trusted. The eight and
+nine wrapper controls test integrity and output preservation. The finite
+Helly cases include a nonabelian positive example and three failures on
+removing a hypothesis; the universal proof is the Lean theorem.
+
 ## Covers with enlarged ends
 
 The complete [coprime fiber-product theorem](research/case_study/phase115_coprime_pullback_theorem.md)
@@ -99,7 +127,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the forty-five saved Lean reports
+checks local documentation links, and checks the forty-seven saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -941,7 +969,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all forty-five certificates and their unformalized boundaries. With Git
+describes all forty-seven certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
