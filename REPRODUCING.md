@@ -23,6 +23,28 @@ for the public runners. A successful hash check, a fresh computation, and a
 Lean compilation establish different things; the commands below keep those
 claims separate.
 
+## Current application manuscripts
+
+The [six-source Module A](MODULE_A.md) and [four-source Module B](MODULE_B.md)
+have distinct documentary and mathematical checks. With fresh output paths:
+
+```sh
+python3 -B -O research/case_study/phase138_verify.py --rebuild --output /tmp/NEW-UA-integrity.json
+python3 -B -O research/case_study/phase145_affine_independent.py --output /tmp/NEW-UA-affine.json
+python3 -B -O research/case_study/phase145_interface_checks.py --output /tmp/NEW-UA-interfaces.json
+python3 -B -O research/case_study/phase132_module_B_verify.py --output /tmp/NEW-B-integrity.json
+python3 -B -O research/case_study/phase141_module_B_independent.py --output /tmp/NEW-B-finite.json
+```
+
+The integrity commands verify frozen files, exact proof spans and accounting.
+A's interface harness additionally checks the required locator correction
+and output-preservation controls in an isolated public layout. The affine
+and B programs execute bounded independent mathematics. They do not prove
+all-parameter claims by extrapolation. Module A's four required classification
+programs have their separate full replay in its Appendix C; their earlier
+verified executions are retained for this integration. No primary source
+PDF or private raster is required for the commands above.
+
 ## Supported-kernel construction
 
 The [scope](research/case_study/formal/SupportedKernelGeneration.scope.md)

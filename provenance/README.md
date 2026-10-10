@@ -1,7 +1,7 @@
 # Provenance and verification scope
 
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
-with complete U and A drafts and a reviewed four-source Module B. There are
+with reviewed six-source U+A and four-source Module B manuscripts. There are
 forty-seven scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
@@ -368,3 +368,8 @@ bindings remain distinct from these general algebraic certificates.
 The [phase-98 record](phase98_review.md) publishes the reviewed four-source
 Module B under its descriptive title, with its complete 16-page manuscript,
 source-contract ledger, independent review and fresh public checks.
+
+The [phase-99 record](phase99_review.md) makes the integrated U3 and
+six-source A2 the main editions under descriptive mathematical titles.
+Their complete reviews, required metadata corrections and fresh public
+checks accompany the manuscripts. Previous editions remain archived.

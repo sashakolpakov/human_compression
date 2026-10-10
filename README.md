@@ -24,24 +24,18 @@ and [method and measurement rules](PROOF_LIBRARY.md).
 The active manuscripts have descriptive mathematical titles:
 
 - **[Umbrella theory U: Marked groups, kernels and intersections](UMBRELLA.md).**
-- **[Module A: Construction and classification of two-group polytopes](MODULE_A.md).**
+- **[Module A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md).**
 - **[Module B: Forest coordinates and primitive coset geometries](MODULE_B.md).**
 
-**Complete drafts are available for review:** U has 28 statements with
-proofs; A has 21 rendered pages. U develops
-exact kernels, marked subgroup intersections, compatible extensions and
-finite actions. Module A starts with five related papers on groups and
-polytopes of two-power order, spanning 2018–2026. Its source-specific
-classification and geometric arguments remain complete application proofs.
-Additional sources enter only when their main results actually follow.
-The [root review](research/case_study/phase127_modular_root_review.md)
-records a complete proof reading and fresh reproduction checks. Full
-formalization, final source admission and matched measurement remain pending.
-
-A later integration check found an incorrect quoted factor pairing in
-A's §7.4. The [mandatory correction](research/case_study/phase138_N009_decomposition_erratum.md)
-now supplies the proper affine decomposition; its independent review and
-full additional cost are recorded on the Module A page.
+**Complete reviewed manuscripts are available:** U has 30 statements with
+proofs in 16 pages; A has 24 pages and derives the declared principal
+results of six related sources from 2018–2026. U develops marked subgroup
+intersections, compatible extensions and coset geometry. Module A supplies
+the complete application-specific construction and classification proofs.
+Its hypertope construction and corrected diagonal decomposition are now
+integrated. The four computational proof artifacts remain required and
+fully charged. Full Lean formalization and matched measurement remain
+incomplete.
 
 Module B now has a reviewed 16-page manuscript deriving the declared
 results of four sources from 1998–2021. Forest cuts, compatible partitions
@@ -62,9 +56,10 @@ They do not count completed modular manuscripts or a complete bibliography
 of every collaborator. The existing working compilations now account for
 thirteen distinct principal-result contracts.
 
-The latest addition is a [three-generator hypertope attachment](MODULE_A_HYPERTOPES.md)
-that recovers the complete corrected construction of a sixth source for
-Module A. Its integration into a new edition is pending.
+Modules A and B now have ten distinct sources in their combined intake.
+Their principal-result contracts, retained inputs and corrections are
+explicit; source membership is not a length ratio. The earlier
+[hypertope attachment](MODULE_A_HYPERTOPES.md) is retained for provenance.
 
 A parallel track inventories every explicit conjecture, open question and
 unresolved case in the intake, checks later work, and attacks related

@@ -40,6 +40,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase136_typed_helly_review.json", "phase136_typed_helly_manifest.json",
           "phase131_equal_label_admission.json", "phase131_equal_label_export.json",
           "phase143_n009_decomposition_review.md", "phase143_n009_export.json",
+          "phase148_integrated_root_admission.md", "phase145_manifest.json",
+          "phase139_module_B_root_admission.md", "phase141_module_B_manifest.json",
           "phase119_five_family_root_admission.md",
           "phase80_two_primary_root_audit.json",
           "phase72_cover_family_priority_claims.json",
@@ -924,6 +926,34 @@ def record(row, baseline, overlay, later_readings, older_access):
             "phase138_N009_decomposition_erratum.md", "phase143_n009_decomposition_review.md",
             "phase143_n009_decomposition_check.py", "phase143_n009_decomposition_root.json")]
         r["remaining_work"].append("The diagonal structural display in Lemma5.1(ii), repeated in older repository expositions, requires the phase138 mandatory factor-pairing correction. Root independently checked the exact printed page, all-parameter affine proof and seven finite cases including s=1. The original classification remains attributed; no extra theorem or source count is assigned.")
+    if identifier in {"L032", "L035", "F013", "F016", "N009", "L034"}:
+        r["application_modules"] = [{
+            "id": "A", "title": "Construction and classification of two-group polytopes and hypertopes",
+            "edition": 2, "umbrella_edition": 3,
+            "scope": "Reviewed corrected declared source contract; retained inputs and four complete computational artifacts remain required.",
+            "ledger": "research/case_study/phase138_module_A_v2_ledger.json",
+            "required_ledger_correction": "research/case_study/phase138_detailed_locator_erratum.json",
+            "review": "research/case_study/phase148_integrated_root_admission.md"}]
+        r["evidence"] += [evidence(name, "Complete six-source modular derivation; no new source count or conjecture credit") for name in (
+            "phase138_module_A_v2.md", "phase138_umbrella_v3.md", "phase138_module_A_v2_ledger.json",
+            "phase138_detailed_locator_erratum.json", "phase145_manifest.json", "phase148_integrated_root_admission.md")]
+        if identifier == "L034":
+            r["remaining_work"] = [item.replace("An integrated six-source Module A edition, matched measurement, full Lean application proof and journal-version collation remain.", "The construction is now integrated in the reviewed six-source Module A edition. Matched measurement, full Lean application proof and journal-version collation remain.") for item in r["remaining_work"]]
+    elif identifier in {"N001", "N003", "N008", "L030"}:
+        r["application_modules"] = [{
+            "id": "B", "title": "Forest coordinates and primitive coset geometries",
+            "edition": 1, "bound_umbrella_edition": 2,
+            "compatible_umbrella_edition": 3,
+            "scope": "Reviewed corrected declared source contract; retained classifications and finite numerical scope remain explicit.",
+            "ledger": "research/case_study/phase132_module_B_checkpoint03.json",
+            "review": "research/case_study/phase139_module_B_root_admission.md"}]
+        r["evidence"] += [evidence(name, "Complete four-source modular derivation; no new source count or conjecture credit") for name in (
+            "phase132_module_B_manuscript.md", "phase132_module_B_checkpoint03.json",
+            "phase141_module_B_review.md", "phase139_module_B_root_admission.md")]
+        r["access_coverage"]["additional_readings"].append({
+            "source": "research/case_study/phase141_module_B_review.md",
+            "reading_depth": "Independent complete reading of the available primary mathematical text for the four-source review; exact versions and limitations recorded in that review."})
+        r["access_coverage"]["reading_category"] = "full_text_read"
     return r
 
 
@@ -1118,10 +1148,11 @@ def render(registry):
         "[Reduction scope](research/case_study/torsor_compression_overview.md) · "
         "[Historical inventory](research/case_study/literature_inventory.json)", "",
         "The [named manuscript map](MANUSCRIPT_MAP.md) organizes the product as",
-        "U plus coherent application modules. U and the five-source Module A have",
-        "complete drafts; Module B is in preparation. A separately reviewed",
-        "[hypertope attachment](MODULE_A_HYPERTOPES.md) supplies a sixth source",
-        "for a future integrated A edition, with a mandatory geometric correction.",
+        "U plus coherent application modules under descriptive mathematical titles.",
+        "[Module A](MODULE_A.md) has a reviewed 24-page six-source edition;",
+        "[Module B](MODULE_B.md) has a reviewed 16-page four-source edition.",
+        "Their corrected declared contracts contain ten distinct sources;",
+        "this source membership is not a length factor or complete Lean proof.",
         f"The historical proof compilations cover {counts['manuscripts_in_reviewed_assemblies']} distinct sources",
         f"in {counts['reviewed_assembled_replacements']} overlapping assemblies. They are reusable source material.",
         "Their [frozen measurements](MEASUREMENT.md) do not transfer to U or the new modules.", "",

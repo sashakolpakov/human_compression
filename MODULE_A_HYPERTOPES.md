@@ -1,4 +1,4 @@
-# Module A extension: Supported kernels and regular three-generator hypertopes
+# Earlier Module A attachment: Supported kernels and regular three-generator hypertopes
 
 The [complete attachment](research/case_study/phase130_typed_helly_L034.md),
 with its **[mandatory geometric correction](research/case_study/phase130_geometry_erratum.md)**,
@@ -28,11 +28,12 @@ factors. To obtain a hypertope, the local marked generators must also be
 involutions. Independent review found this missing hypothesis in the first
 version; the attached dihedral groups satisfy it.
 
-The frozen [21-page Module A](MODULE_A.md) still has its original five-source
-intake. This complete attachment supplies a sixth source for its next
-integrated edition; it has not yet been folded into those 21 pages.
-Known principal-result coverage in the registry rises from seventeen to
-eighteen sources. The number of sources with any rederivation remains 39.
+The complete construction is now integrated in the
+[24-page second edition of Module A](MODULE_A.md). This page preserves the
+earlier standalone attachment and its historical additive accounting.
+The [21-page first edition](MODULE_A_V1.md) retains its original five-source
+intake. The earlier admission of this sixth source raised principal-result
+coverage from seventeen to eighteen; integration changes no source count.
 
 The original additive inventory was 208,750 raw UTF-8 bytes, including U,
 A, its four required computational artifacts, this attachment and the

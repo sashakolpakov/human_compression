@@ -14,46 +14,42 @@ deductions, not thematic similarity or a shared encoding.
 
 ## Umbrella theory U: Marked groups, kernels and intersections
 
-The [complete draft](UMBRELLA.md) has 28 statements with proofs and an
+The [complete draft](UMBRELLA.md) has 30 statements with proofs and an
 exact attribution, dependency and formal-coverage ledger.
 
 The draft develops exact image/kernel transport, marked parabolic
 comparison, compatible extensions with kernels supported on selected
 sets of generators, finite actions and relative generation. Existing
 proofs and Lean components are reused where their precise hypotheses
-match. A new support-induction argument is under independent review.
+match. The support-induction argument and its typed-Helly extension have
+independent mathematical reviews and scoped Lean certificates.
 Attribution distinguishes re-proved classical results, retained background
 and repository arguments. Neither a new universal theory nor historical
 priority is presumed from common notation.
 
-## Module A: Construction and classification of two-group polytopes
+## Module A: Construction and classification of two-group polytopes and hypertopes
 
-The [complete application draft](MODULE_A.md) is available as a 21-page
+The [complete application draft](MODULE_A.md) is available as a 24-page
 PDF with the full source-contract ledger and required computational inputs.
 
-The initial coherent source bundle is:
+The coherent source bundle is:
 
-| ID | Source | Principal contract to derive |
+| ID | Source | Declared principal contract |
 |---|---|---|
 | N009 | Gomi–Loyola–De Las Peñas, *String C-groups of order 1024* (2018) | Complete declared marked classifications, central descent/lifts, exact presentations and universal orders, with source corrections explicit |
 | L035 | Hou–Feng–Leemans, *Existence of regular 3-polytopes of order 2^n* (2019 author version) | Existence and eight-presentation classification with converses |
 | L032 | Hou–Feng–Leemans, *On regular polytopes of 2-power order* (2020; revised 2019 author version) | Prescribed type and exact-order existence |
 | F016 | Cunningham–Feng–Hou–Schulte, *Symmetric polytopes whose automorphism groups are 2-groups* (2025 preprint) | Declared regular, alternating and free-extension clauses, orders and presentations |
 | F013 | Hou–Schulte, *String C-groups of 2-power order project onto a common string C-group* (2026 preprint) | Principal common-quotient and covering results |
+| L034 | Hou–Feng–Leemans, *Existence of regular 3-hypertopes with 2^n chambers* (2019 author version) | Exact presentation, order, type, regular geometry, cyclic kernels and corrected quotient structure |
 
-These five are the starting bundle, not a claim that a twelve-paper module
-has already been completed. Their existing proofs and certificates have
-been reworked into a coherent application manuscript. The draft includes
-edge inflation and square-section assembly as well as complete written
-classification, universal-presentation and geometric arguments. Full
-formalization and final source admission remain pending. Enlarging this
-bundle requires further proved source reductions.
-
-The [three-generator hypertope attachment](MODULE_A_HYPERTOPES.md) now
-supplies such a reduction for L034 (2019), with all principal construction
-clauses and explicit corrections. The five-source draft remains frozen;
-its next edition must incorporate this proof and broaden the title to
-include hypertopes, then undergo the same source and cost audit.
+These six form the reviewed second edition. They do not constitute a
+twelve-paper module. Earlier proofs and certificates have been reworked
+into complete construction, classification and geometric arguments. The
+hypertope proof now uses the existing edge-inflation theorem and the new
+shared coset-intersection theorem. The corrected diagonal factors are
+integrated directly. Full Lean formalization and matched measurement
+remain incomplete; enlarging the bundle requires further source deductions.
 
 ## Module B: Forest coordinates and primitive coset geometries
 

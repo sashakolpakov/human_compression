@@ -1,31 +1,31 @@
 # Manuscripts and source contracts
 
-The product is now [umbrella theory U and coherent application modules](MANUSCRIPT_PROGRAM.md).
-Full drafts of [U](UMBRELLA.md) and [Module A](MODULE_A.md) are available;
-no new modular length factor is approved.
-Their titles are **Marked groups, kernels and intersections** (U) and
-**Construction and classification of two-group polytopes** (A).
-Module A begins with L032, L035, F013, F016 and N009. Further sources will
-be added through complete deductions of their main results.
+The product is [umbrella U and coherent application manuscripts](MANUSCRIPT_PROGRAM.md).
+Each has a descriptive mathematical title; its letter is a stable identifier.
 
-**[Module B: Forest coordinates and primitive coset geometries](MODULE_B.md)**
-is being drafted around N001, N003, N008 and L030 (1998–2021). Its shared
-arguments concern forest cuts, compatible partitions, independent
-generation and Frattini coordinates. This planned intake has not yet
-been admitted as a completed modular replacement.
+| Manuscript | Current edition and scope |
+|---|---|
+| [U: Marked groups, kernels and intersections](UMBRELLA.md) | 16 pages; 30 complete statements and proofs shared by the modules |
+| [A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md) | 24 pages; declared principal contracts of L032, L035, F013, F016, N009 and L034, plus four required computational artifacts |
+| [B: Forest coordinates and primitive coset geometries](MODULE_B.md) | 16 pages; declared contracts of N001, N003, N008 and L030 |
 
-The [living paper map](PAPER_MAP.md) records all 161 indexed works and the
-existing source-level derivations. Its older assembled-replacement records
-are working compilations, retained as source material for reworking. They
-are not the new programme's product or benchmark. The latest such source
-bank contains thirteen distinct principal contracts; the [exact intake](COMPRESS_13.md#exact-intake)
-and corrected proof ledger preserve their provenance.
+The two application bundles contain ten distinct sources. Their corrected
+contracts and retained inputs are explicit. This counts source membership,
+not a tenfold length saving. No matched modular ratio is admitted yet.
+Full Lean formalization remains incomplete.
+
+The separate [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)
+track studies open questions. Its reviewed family results and formal scopes
+are kept separate from known-result compression. Titles for future modules
+will follow their actual mathematical contents.
+
+The [living paper map](PAPER_MAP.md) records all 161 indexed works and
+existing source-level derivations. Older assemblies are reusable proof
+material. Their [exact intake](COMPRESS_13.md#exact-intake), corrections and
+historical measurements remain attached to those earlier artifacts.
 
 The [current report](CURRENT_REPORT.md) distinguishes verified material,
-active mathematical work and unmeasured claims. The [measurement rules](PROOF_LIBRARY.md)
-charge the umbrella once, complete applications separately, and each source
-once in an aggregate comparison. The [historical measurement archive](MEASUREMENT.md)
-retains factors for older artifacts without transferring them to U or the modules.
-
-The separate [question-results catalogue](CONJECTURE_RESULTS.md) records
-answers and qualified cases, with proof and Lean scopes for each entry.
+active work and unmeasured claims. The [measurement rules](PROOF_LIBRARY.md)
+charge complete U once, complete applications separately, and each source
+once in a combined comparison. The [historical measurement archive](MEASUREMENT.md)
+does not supply a factor for a new edition.

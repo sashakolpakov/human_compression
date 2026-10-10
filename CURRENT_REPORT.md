@@ -1,15 +1,11 @@
 # Current work and verified source material
 
-The project is being reorganized into **umbrella theory U and focused
-application manuscripts A, B, C, …**, each intended to recover a coherent
-bundle of source results in about 20–25 pages. U and the first application
-volume now have complete drafts; no modular compression factor is yet measured.
-The [programme](MANUSCRIPT_PROGRAM.md) specifies their mathematical scope:
-**U: Marked groups, kernels and intersections** and **A: Construction and
-classification of two-group polytopes**. Read [U's 28-statement draft](UMBRELLA.md)
-and [A's 21-page manuscript](MODULE_A.md). Root has read both complete
-proof texts and verified the frozen export and rebuild; formalization,
-final source admission and matched measurement remain incomplete.
+The project now has complete mathematical manuscripts under descriptive titles:
+**[U: Marked groups, kernels and intersections](UMBRELLA.md)** and
+**[A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md)**.
+U version 3 has 30 statements with proofs in 16 pages. A version 2 has
+24 pages and a reviewed six-source contract. Full Lean formalization and
+matched source measurement remain incomplete; no modular ratio is yet admitted.
 
 **[B: Forest coordinates and primitive coset geometries](MODULE_B.md)**
 now has a reviewed 16-page manuscript deriving the declared contracts of
@@ -31,25 +27,21 @@ The layers overlap. Retrieval is not complete reading; principal-result
 coverage is not every assertion in a paper. The inventory is bounded and
 is not an exhaustive bibliography of all collaborators.
 
-Module A begins with five related two-power-group papers from 2018–2026:
-L032, L035, F013, F016 and N009. Their existing derivations and certificates
-have been reworked. The supported-kernel theorem supplies the edge, path
-and fork constructions; all classification and geometric arguments remain
-explicit. The ledger binds 44 source records and 17 multipart clauses.
-The original raw inventory was 190,995 bytes including U and all four
-external computational artifacts. The mandatory
-[diagonal-factor correction](research/case_study/phase138_N009_decomposition_erratum.md)
-adds 5,967 bytes, making the complete package 196,962 bytes. A's 21 pages
-alone are not the whole proof cost. Independent review confirms the
-corrected all-parameter affine decomposition; the classification targets
-and recorded census remain unchanged.
+Module A covers L032, L035, F013, F016, N009 and L034 in the specified
+2018–2026 editions. Its 50 source records and 23 detailed multipart clauses
+preserve the earlier five-source targets and add L034's six construction
+clauses. All geometric hypotheses and source-presentation arguments are
+included. The corrected diagonal factors are integrated; a small mandatory
+ledger erratum fixes six old section locators only.
 
-A [reviewed hypertope attachment](MODULE_A_HYPERTOPES.md) now recovers
-L034's complete principal construction, including the exact presentation
-and corrected quotient structure. Its coset-intersection theorem adds a
-reusable geometric argument; the required local-involutivity correction
-is explicit. This is the eighteenth principal-result source. A new
-six-source edition of A remains to be integrated and measured.
+The complete package costs 208,861 UTF-8 bytes: U 61,576, A 90,910 and the
+four required computational artifacts 56,375. This is 5,856 bytes below
+the fully corrected six-source additive package, under the raw inventory
+convention. It is not a source ratio or proof of a long-run sawtooth trend.
+U's six statements used by B retain their previous proofs exactly. The
+combined A/B intake has ten distinct sources, with U charged once in any
+future aggregate comparison. Source counts do not rise merely
+because existing results have been reorganized.
 
 The preceding combined manuscripts are a source bank, not the product,
 organizing structure or benchmark of this programme. The latest working
