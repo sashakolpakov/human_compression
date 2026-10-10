@@ -11,7 +11,7 @@ verified for any of them.
 
 | Source question | Recorded conclusion | Qualification |
 |---|---|---|
-| L043, Conjecture 6.1 | The specified field expression is a nonzero square for all stated odd primes and odd extension degrees greater than one. | No full Lean proof; this inventory did not locate a separate detailed arithmetic review. |
+| L043, Conjecture 6.1 | The specified field expression is a nonzero square for all stated odd primes and odd extension degrees greater than one. | [Complete arithmetic proof and detailed independent review](PRIMITIVE_SQUARES.md); six Lean declarations verify the polynomial steps, not the whole theorem. The exact bound source is the June 2016 author edition. |
 | L043, Conjecture 6.2 | For the stated coprime odd degrees, the two middle parabolics intersect in their common cyclic subgroup. | Lean covers field and entrywise intersection components; the source matrix and geometric applications remain written. |
 | L025, Conjecture 3.2 | The source Suzuki graphs have girth five and exactly q−1 pentagons through each edge. | Dedicated mathematical review; Lean verifies the matrix membership component. |
 | L092, Conjecture 1 | The specified unital geometry has the asserted firmness, connectivity and flag transitivity. | Internal reviews are cited; this inventory did not locate a separate detailed mathematical review. Lean covers a connectivity lemma. |

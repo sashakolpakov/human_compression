@@ -1,5 +1,9 @@
 # Provenance and verification scope
 
+The [primitive-square audit admission](phase131_review.md) supplies a complete
+independent arithmetic review of the existing L043 result, fresh finite
+checks and six polynomial Lean proofs. No additional question is counted.
+
 The [locally faithful cover admission](phase130_review.md) publishes the
 complete general abelian criterion and restricted Tomotope classification,
 with independent review, a fresh public replay and three scoped Lean

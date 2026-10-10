@@ -75,6 +75,10 @@ stated classifications and constructions using affine periods and supported
 extensions, with its source-sign correction and full retained costs explicit.
 This count is distinct from the number of completed new topic papers.
 
+The [primitive-square result](PRIMITIVE_SQUARES.md) now has a complete
+independent arithmetic review, fresh exceptional-case checks and six
+additional Lean declarations for its polynomial arguments.
+
 ## Proof and attribution
 
 Each application must derive the historical main results it promises to recover,

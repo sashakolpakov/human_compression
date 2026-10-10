@@ -410,7 +410,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the ninety saved Lean reports
+checks local documentation links, and checks the ninety-one saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -2653,3 +2653,14 @@ complex and check the conjugation action on the kernel. Deliberate false
 homology and group inputs are rejected by the author driver. Topology and
 the uniform cover theorems remain separately reviewed written proofs; no
 general finite multiplicity claim follows from running the programs.
+
+## Primitive-square arithmetic audit
+
+```sh
+python3 -B -O research/case_study/phase269_check.py --out /tmp/NEW-square-audit --gap GAP --lean LEAN --packages PACKAGES
+```
+
+This checks the frozen public inputs and freshly replays the complete finite
+reduction, eleven witnesses, independent arithmetic and six scoped Lean
+proofs. Legacy assertion-based checks run in isolated copies with assertions
+enabled. See [the result and exact scope](PRIMITIVE_SQUARES.md).

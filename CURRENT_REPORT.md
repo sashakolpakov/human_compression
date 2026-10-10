@@ -64,6 +64,11 @@ independent review, integer certificates and three scoped Lean proofs. It
 adds no principal source or complete question answer; the general finite
 multiplicity problem is still under investigation.
 
+The [primitive-square proof](PRIMITIVE_SQUARES.md) has passed a detailed
+independent arithmetic audit, covering every field configuration and the
+complete finite reduction. Six new Lean declarations verify its polynomial
+steps. This strengthens an existing result without adding a question entry.
+
 ## Further application material
 
 Each page states exactly which source results it recovers. Listing it here

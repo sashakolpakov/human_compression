@@ -1,5 +1,10 @@
 # Lean certificates and their scope
 
+[PrimitiveSquarePolynomial.lean](PrimitiveSquarePolynomial.lean) proves six
+actual polynomial statements for the primitive-square argument. Its
+[scope](PrimitiveSquarePolynomial.scope.md) leaves norms, character sums
+and the complete existence theorem outside Lean.
+
 [LocallyFaithfulIntersection.lean](LocallyFaithfulIntersection.lean) proves
 three actual subgroup and quotient statements used in the locally faithful
 cover criterion. Its [scope](LocallyFaithfulIntersection.scope.md) keeps
