@@ -391,3 +391,22 @@ survey problem about all almost-simple extensions. The
 [dated primary-source audit](research/case_study/phase16_linear_diagonal_status.md)
 does not establish current priority, so this result receives neither an
 infinity marker nor a finite proof-length ratio.
+
+Phase twenty-one adds the [linear diagonal rank-three construction](research/case_study/phase21_linear_rank3.md), completing the exact rank set
+for the index-two diagonal extension at every odd field size. Its proof
+uses independent rank-one factors, a Jordan-block obstruction and root
+extraction. Some existence cases are already published; the
+[bounded priority audit](research/case_study/phase21_linear_rank3_status.md)
+records possible further overlap and a 2026 dissertation lead. Neither
+a full matched-length comparison nor verified new-resolution status is
+established. The measured ratios remain **127/38** and **4/3**, and no
+infinity marker is assigned.
+
+The same phase also recovers N009 Theorems 3.6, 3.8 and 5.5 and every
+rank-four Table 6 type count, through a uniform central adapter and exact
+normal-kernel census. The previously recovered rank-five counts are not
+counted again. The rank-three order-1,024 component and other presentation
+claims remain outstanding, so the principal-result ledger stays at
+**twelve works**. A terminating algorithm, a count of 105 classes, and
+a short proof of the enumeration mechanism do not by themselves supply
+a matched source/replacement proof-length ratio.

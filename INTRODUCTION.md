@@ -2305,10 +2305,121 @@ asks for all finite almost-simple groups of rank three; this family
 is a partial answer, with priority still unverified. A
 [2025 linear theorem](research/case_study/phase20_linear_rank3_intake.md)
 already gives rank three for $\mathrm{PGL}_4(q)$ when $q\equiv3\pmod4$.
-That is retained published input. The proper linear index-two subgroup
-when $q\equiv1\pmod4$ remains unresolved in this investigation.
+That is retained published input. The next construction supplies the
+proper linear index-two subgroup when $q\equiv1\pmod4$ as well.
 
-## 34. The remaining work, and how a living reduction should record it
+## 34. Independent rank-one factors force linear generation
+
+The linear companion has an especially short mechanism. Over an odd field
+$F=\mathbb F_q$, choose a primitive element $\nu$ and set
+
+\[
+A=\begin{pmatrix}0&I_2\\\nu I_2&0\end{pmatrix},\qquad
+C=\operatorname{diag}(I_2,-I_2),\qquad
+B=I-2(e_1+e_4)(0,1,1,1).
+\]
+
+Their projective images are three involutions with commuting endpoints.
+The nonsquare scalar in $A^2=\nu I$ is useful: its determinant class
+supplies the desired index-two extension of the simple group. The question
+is whether these matrices generate enough of the ambient group.
+
+The [complete argument](research/case_study/phase21_linear_rank3.md)
+first uses $U=(BC)^2$ and its conjugate by $A$. Both preserve the plane
+$W=\langle e_1,e_3\rangle$. On that plane and its quotient they give two
+full $\mathrm{SL}_2(F)$ groups. Goursat's lemma leaves a precise obstruction
+to independent action: their projective images might be the graph of an
+automorphism. Trace-square differences would then force
+$\nu^{p^j+1}=1$, impossible for a primitive element and $q\ge5$.
+Thus the two factors act independently.
+
+Now use the shape of one matrix, rather than classify large subgroups.
+The element $U$ has a Jordan block of size three. If the additive radical
+kernel vanished, a central Levi involution would split the space into
+two invariant planes, making such a block impossible. The kernel is
+therefore nonzero. Independent left and right root operations extract
+any matrix entry and spread it to all four positions, so the kernel is
+the entire additive $2\times2$ matrix space. One explicit conjugation
+then supplies an opposite root; elementary commutators generate
+$\mathrm{SL}_4(F)$.
+
+This gives a reusable pattern: independent quotient factors, a Jordan
+obstruction to a zero kernel, an irreducible additive kernel, and an
+explicit opposite root. The determinant calculation and the same-marking
+intersection argument finish the group identification. Together with
+retained earlier results, the diagonal index-two extension has exact
+rank set $\{3,4\}$ for every odd $q\ge3$.
+
+Two internal written reviews and fresh exact checks support the proof;
+34 symbolic identities and six finite fields are diagnostic evidence.
+They are not an all-parameter formalization. The
+[status audit](research/case_study/phase21_linear_rank3_status.md)
+separates the already published $q\equiv3\pmod4$ cases, possible further
+source overlap, and an unexhausted 2026 dissertation lead. The broader
+almost-simple classification and publication priority remain unresolved.
+
+## 35. Enumerating small kernels instead of whole groups
+
+The finite-state theory needs a complete library of its small windows.
+There is now an exact way to construct such a library without using a
+catalogue of the desired groups. Start with the universal nilpotent group
+$U$ on involutions with the required path commutations. Deleting any subset
+of its generators respects its relations, so these deletion maps prove
+that its own marked subgroups have the intersection property.
+
+At excess three, the canonical quotient forces $K=\gamma_3(G)$ to have
+order eight, hence the nilpotency class is at most five. Every desired
+group is therefore $U/N$, for one unique ambient-normal subgroup
+$N\le\gamma_3(U)$ of index eight. The universal rank-four group has order
+$2^{34}$, but its relevant quotient kernel has just eight elements.
+That distinction makes an exact search manageable.
+
+The [kernel ladder](research/case_study/phase21_kernel_ladder.md)
+enumerates all ambient-normal subgroups of index two in an intermediate
+$M$ by taking hyperplanes of
+
+\[
+M/\bigl(\Phi(M)[M,U]\bigr).
+\]
+
+Repeat this three times and remove exact duplicate subgroups. Completeness
+has a short proof: a two-group acts on the nonzero characters of a
+nontrivial elementary abelian two-group, an odd-sized set, so at least
+one character is fixed. Every target kernel therefore admits the required
+invariant chain. Its generators and coordinate keys are retained as
+reproducible witnesses.
+
+To test an output, the canonical quotient already supplies the correct
+subgroup intersections. The only remaining obstruction is inside the
+small kernel. Its marked subgroup profiles have exact intersections
+if and only if the full quotient does. At rank four, 1,483 candidate
+kernels reduce to 199 accepted ordered markings; identifying reversal
+gives 105 classes. Every type count agrees with the 2018 source, and
+all accepted full groups receive direct subgroup-intersection checks.
+This is a proved exhaustive finite procedure, not a fit to known counts.
+The same guarded algorithm gives 37, 199 and 584 ordered markings at
+excess three in ranks three, four and five, respectively. Together with
+the earlier lower-excess classifications, rank five now has a complete
+706-window library through excess three. Its transition graph is the
+remaining step toward counts in every rank.
+
+Two complementary [central-extension adapters](research/case_study/phase21_central_quotient.md)
+recover that source's quotient and presentation-lifting theorems. A
+Burnside-basis argument excludes the bad central word, while a complete
+presentation gives an immediate order sandwich for the three lift patterns.
+For the [exceptional two presentations](research/case_study/phase21_N009_presentations.md),
+coset enumeration over the trivial subgroup proves their actual order is
+1,024. The complete kernel census then supplies uniqueness. This connects
+a short structural argument, an exhaustive kernel search and concrete
+presentation certificates.
+
+The precise coverage still matters. This phase recovers the rank-four
+counts and three numbered results, alongside the previously recovered
+rank-five counts. The rank-three order-1,024 census and other presentation
+claims remain outstanding. A complete third-excess window library also
+needs its transition graph before it yields an all-rank formula.
+
+## 36. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

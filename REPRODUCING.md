@@ -967,3 +967,64 @@ Written proofs, computations, internal agent reviews, and formal certificates
 are labeled separately throughout the notes. Internal reviews are not external
 peer review. Reproduction verifies the stated checks and their assumptions;
 it does not establish research priority or resolve unaddressed conjectures.
+
+## Phase twenty-one: linear rank-three generation
+
+The [standalone proof](research/case_study/phase21_linear_rank3.md) covers
+all odd q≥5; the exact rank-set corollary retains the published q=3 case
+and earlier rank-four and upper-bound results. To reproduce its diagnostics:
+
+```sh
+mkdir -p scratch/phase21
+cp research/case_study/phase21_linear_rank3_symbolic.py scratch/phase21/
+python3 scratch/phase21/phase21_linear_rank3_symbolic.py
+gap -q -T research/case_study/phase21_linear_rank3_check.g > scratch/phase21/linear_groups.log
+```
+
+The symbolic script writes beside its own copy; running it in scratch
+preserves the historical report. It needs SymPy (recorded version 1.14.0).
+Expected results are 34 exact symbolic checks and six fields
+q=5,7,9,13,17,25, with 48 marked subgroup closures and 384 exact meets.
+The checker also verifies both rank-one projection orders and the exact
+projective ambient-order sandwich. The [root record](research/case_study/phase21_linear_rank3_root_audit.json)
+binds fresh executions of the unchanged scripts. Reproducing those cases
+does not add new parameter coverage. The group argument and retained
+classification inputs remain written mathematics; no new Lean module
+is included in this phase.
+
+The independent-kernel census requires GAP with NQ (recorded versions
+4.15.1 and 2.5.11). Set the rank before reading the unchanged script.
+This example preserves fresh raw kernel checkpoints in scratch:
+
+```sh
+mkdir -p scratch/phase21
+gap -q -T > scratch/phase21/rank4.log <<'GAP'
+rank21 := 4;;
+checkpoint21 := "scratch/phase21/rank4";;
+Read("research/case_study/phase21_kernel_census.g");
+GAP
+gap -q -T research/case_study/phase21_N009_presentations_check.g > scratch/phase21/presentations.log
+python3 research/case_study/phase21_N009_source_compare.py --accepted scratch/phase21/rank4.accepted.json --output scratch/phase21/source_comparison.json
+```
+
+The rank-four expected result is 1,483 candidate kernels, 199 accepted
+ordered markings, 11 fixed by reversal and 105 reversal classes. It checks
+73,880 small-kernel meets and all 50,944 full marked meets in the accepted
+groups. The source comparison checks all thirteen type counts and the two
+specified oriented facet cases. The separate raw-presentation run uses
+Todd–Coxeter without NQ or added class relations; each presented group has
+order 1,024 and their combined 512 marked intersections pass.
+
+The [report packager](research/case_study/phase21_build_census_report.py)
+checks completed logs, all kernel checkpoints, accepted witness metadata
+and executed-source hashes. It does not rerun GAP or prove the census
+independently. The compressed checkpoints are original mathematical data,
+not third-party group catalogues. Historical reports and compressed files
+remain unchanged when rerunning into scratch.
+
+Setting `rank21` to 3 or 5 runs the corresponding completed third-excess
+census. Expected ordered totals are 37 and 584, respectively. The rank-five
+run exhausts 35,971 kernels, checks 3,072,608 small-kernel comparisons and
+598,016 full meets on accepted groups. Its recorded runtime was about
+12 minutes; this is an observation, not a performance guarantee. These
+finite totals alone do not establish an all-rank counting formula.
