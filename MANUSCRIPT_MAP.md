@@ -41,6 +41,8 @@ pass the stated theorem. The primitive-saturation core is now in the integrated
 replacement; its symmetric classification remains a separate branch. Complete
 integration adds proof and adapter exposition, as recorded in its accounting.
 
+The [current independent report](CURRENT_REPORT.md) assesses the seven-source
+integration and the separate measurement and verification obligations.
 Current work extends the named intake to further independently checked replacements,
 and closes the source/rendering boundaries needed for measurement.
 New conjecture solutions have separate statement, proof and priority audits.

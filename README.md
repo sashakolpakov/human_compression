@@ -48,11 +48,12 @@ pass the stated theorem. Its primitive-saturation core is now inside the
 seven-source replacement. The symmetric classification remains a distinct branch;
 integration has not yet shortened the two predecessors' combined body.
 
-The [new independent assessment](CURRENT_STATE.md) gives the exact named
-intake-to-replacement map, the measured four-paper factor and the next steps.
-Its author is separate from the manuscript authors and integration reviewers,
-and independently reproduced the counts. The [previous two-paper assessment](CURRENT_ASSESSMENT.md)
-and [earlier candidate assessment](INDEPENDENT_ASSESSMENT.md) remain unchanged.
+The [current independent report](CURRENT_REPORT.md) gives the seven-source-to-one
+judgment, the measured four-paper factor, integration costs and next steps.
+Its author wrote none of the manuscripts and read the entire new integration.
+The [preceding independent assessment](CURRENT_STATE.md), whose author separately
+reproduced the four-paper counts, the [two-paper assessment](CURRENT_ASSESSMENT.md)
+and [candidate assessment](INDEPENDENT_ASSESSMENT.md) remain unchanged.
 The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
 defines the sum-of-manuscripts ratio and its required coverage audit.
 
