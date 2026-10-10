@@ -52,3 +52,6 @@ spans and do not substitute for this two-manuscript experiment.
 The next proposed intake is the 2005 manuscript on the Frattini subgroup and
 RWPRI geometries. It remains outside this numerator until the complete source
 contract and its extra proofs have passed review.
+
+The [current independent assessment](CURRENT_ASSESSMENT.md) places this
+reviewed bundle within the full intake programme and reports the next steps.

@@ -23,9 +23,10 @@ gives 7,222 source whitespace tokens against 5,300 replacement tokens, but
 character counts reverse the comparison because mathematical representations
 differ. No single final manuscript factor or corpus ratio is claimed.
 
-The [independent assessment](INDEPENDENT_ASSESSMENT.md) records the earlier
-baseline, names sixteen principal-result intake candidates and proposes six
-bundles. The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
+The [current independent assessment](CURRENT_ASSESSMENT.md) gives the exact
+intake-to-replacement map, evaluates the first assembled manuscript and
+sets out the next steps. The [earlier assessment](INDEPENDENT_ASSESSMENT.md)
+is preserved with its original baseline and wider bundle proposals. The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
 defines the user's sum-of-manuscripts ratio and its required coverage audit.
 
 ## The method
