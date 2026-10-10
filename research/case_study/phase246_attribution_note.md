@@ -1,0 +1,13 @@
+# Attribution and unresolved questions
+
+The complete rank-independent result of this package is conditional on both end groups already being string C-groups. It gives a decision procedure for locally faithful covers with finite abelian kernel. It does not establish that an arbitrary finite polytope satisfies a rational-homology survival condition, or that a cover with nonabelian kernel can always be made finite with the required intersection property.
+
+The finite minimal-cover problem remains open in this packet. The arbitrary-cover theorem of phase216/222 and the finite existence theorem of Monson–Schulte are separate retained results. Their kernel-containment directions are spelled out in §6 of the paper. Residual finiteness alone is never used as a substitute for the intersection property.
+
+The Tomotope already has known regular covers of orders 73728 and 36864 and known infinitely many finite minimal covers. The source is Monson–Pellicer–Williams, *The Tomotope*, Examples4.1–4.2, Proposition4.5, and Theorem5.9 in the bound18-page author edition. Our36864 cover is identified with their Proposition4.5 cover by the complete locally faithful abelian-kernel classification. We do not identify marked groups from their orders alone.
+
+The present contribution is a complete finite abelian-kernel criterion from an end-coset complex, its conditional multiplicity consequence, the classification of the Tomotope's locally faithful abelian-kernel covers, and an obstruction to any locally faithful nontrivial odd-primary cover. The independent phase245 integer checker establishes the lattice calculation conditional on the supplied complex; the phase246 paper supplies the geometric interpretation. A full independent review of the combined mathematical argument remains required.
+
+No historical priority claim is made. A bounded search during the finite-cover investigation included the queries “right angled Coxeter group one relator quotient torsion residually finite high powers”, “graph products one relator quotients virtually special high powers residual finiteness”, and “one relator quotients graph products cyclic subgroup high powers cubical small cancellation”. It located graph-product one-relator papers but did not establish an applicable finite quotient theorem preserving all parabolic intersections. Search snippets were not used as mathematical inputs. Agent245 separately investigated the filling literature; this note makes no exhaustive literature claim.
+
+The three Lean declarations verify actual homomorphism/subgroup interfaces. They are useful parts of the proof, but they neither evaluate the finite matrices nor formalize the topological argument. This distinction is preserved in the manifest and replay scope.

@@ -1,5 +1,10 @@
 # Provenance and verification scope
 
+The [locally faithful cover admission](phase130_review.md) publishes the
+complete general abelian criterion and restricted Tomotope classification,
+with independent review, a fresh public replay and three scoped Lean
+proofs. It adds no principal-source or general-question credit.
+
 The [equal-label application admission](phase120_review.md) recovers the
 complete stated positive rank-three results of F014 through the earlier
 polygon construction and an exact presentation proof. It raises principal

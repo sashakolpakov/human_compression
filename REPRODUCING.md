@@ -410,7 +410,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the sixty-six saved Lean reports
+checks local documentation links, and checks the ninety saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -2634,3 +2634,22 @@ marker that violates a distant commutation. The
 state the retained classical inputs and exact formal boundary. The full
 principal theorem is not entirely formalized. The existing Topic E cost
 measurement excludes this third application.
+
+## Covers preserving both ends
+
+The [locally faithful cover criterion](LOCALLY_FAITHFUL_COVERS.md) has a
+public replay with no private source dependencies:
+
+```sh
+python3 -B -O research/case_study/phase260_check.py \
+  --out /tmp/NEW-locally-faithful-check \
+  --gap GAP --lean LEAN_4_32_2 --packages PINNED_PACKAGES
+```
+
+It rebuilds three complexes and the actual Tomotope voltage action, checks
+integer homology and all 256 marked intersections, and compiles three
+scoped Lean declarations. Independent programs reconstruct the Tomotope
+complex and check the conjugation action on the kernel. Deliberate false
+homology and group inputs are rejected by the author driver. Topology and
+the uniform cover theorems remain separately reviewed written proofs; no
+general finite multiplicity claim follows from running the programs.

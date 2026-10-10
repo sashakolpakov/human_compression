@@ -58,6 +58,12 @@ under their stated hypotheses. The new proof uses the centralizer theory and
 adds eleven scoped Lean declarations; full formalization and priority remain
 separate obligations.
 
+The [locally faithful cover paper](LOCALLY_FAITHFUL_COVERS.md) adds a general
+abelian criterion and an exact restricted Tomotope classification, with
+independent review, integer certificates and three scoped Lean proofs. It
+adds no principal source or complete question answer; the general finite
+multiplicity problem is still under investigation.
+
 ## Further application material
 
 Each page states exactly which source results it recovers. Listing it here

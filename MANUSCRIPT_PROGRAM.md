@@ -247,3 +247,10 @@ F014 moves from a partial result to a complete negative answer for the
 bound source version. The minimal-cover result now answers the unrestricted
 question, beyond the earlier five families. The four-family PGL answer
 adds one entry. The total is now twelve distinct question entries.
+
+The [locally faithful cover criterion](LOCALLY_FAITHFUL_COVERS.md) is a
+separate proved tool for the remaining finite-cover problem. It includes a
+complete classification of Tomotope covers with abelian kernel preserving
+both ends, and an obstruction for every odd-primary kernel under that
+condition. Its rational-homology multiplicity theorem has explicit
+hypotheses; no additional complete-answer count is assigned.

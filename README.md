@@ -122,6 +122,12 @@ finite minimal covers for every odd square-torus pyramid, with controlled
 prime-power kernels for every permitted prime. The arbitrary-polytope
 finite version remains unresolved.
 
+The [locally faithful cover criterion](LOCALLY_FAITHFUL_COVERS.md) gives an
+exact homology test for abelian covers preserving both end subgroups. Its
+Tomotope application classifies that restricted class and excludes every
+nontrivial odd-prime-power kernel. Three Lean declarations check its
+quotient interfaces; the general finite question remains open.
+
 The study of costs as proofs are developed and reused draws on
 [GKM](https://github.com/sashakolpakov/gkm). The proposed sawtooth pattern
 must appear in measured proof costs and valid dependencies. Node counts,

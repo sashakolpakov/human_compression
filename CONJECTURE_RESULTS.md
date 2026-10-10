@@ -78,3 +78,8 @@ The [four-family admission](research/case_study/phase262_L021_question_overlay.j
 adds the twelfth entry. Its complete affirmative answer, sources and
 independent review are [recorded separately](PGL_MANIPLEX_FAMILIES.md).
 It does not add a recovered historical principal contract or a ratio.
+
+The [reviewed locally faithful criterion](LOCALLY_FAITHFUL_COVERS.md) adds
+a general abelian existence test, a conditional multiplicity theorem and
+a complete Tomotope classification within that class. The general finite
+multiplicity question remains open, and the question count is unchanged.

@@ -1,0 +1,30 @@
+# Input HMarks, GMarks and ExpectedKernelOrder supplied by the portable driver.
+Need246:=function(b,s) if not b then Print("PHASE246_REJECT ",s,"\n");QUIT_GAP(2);fi;end;;
+H:=Group(HMarks);;G:=Group(GMarks);;
+Need246(IsTransitive(H,[1..LargestMovedPoint(H)]),"connected actual voltage action");;
+Need246(Size(H)=LargestMovedPoint(H),"actual cover regular action");;
+pi:=GroupHomomorphismByImages(H,G,HMarks,GMarks);;
+Need246(pi<>fail and Image(pi)=G,"actual generator-bound cover epimorphism");;
+N:=Kernel(pi);;Need246(Size(N)=ExpectedKernelOrder and IsElementaryAbelian(N),"actual elementary abelian kernel");;
+sets:=Combinations([1..4]);;subs:=List(sets,I->Subgroup(H,HMarks{I}));;
+for i in [1..16] do for j in [1..16] do
+ k:=Position(sets,Intersection(sets[i],sets[j]));
+ Need246(Intersection(subs[i],subs[j])=subs[k],"all standard-parabolic intersections");
+od;od;
+A:=Subgroup(H,HMarks{[1..3]});;B:=Subgroup(H,HMarks{[2..4]});;
+Need246(Size(A)=Size(Subgroup(G,GMarks{[1..3]})) and Size(B)=Size(Subgroup(G,GMarks{[2..4]})),"both ends retained faithfully");;
+Print("PHASE246_VOLTAGE_PASS cover=",Size(H)," base=",Size(G)," kernel=",AbelianInvariants(N)," ends=",[Size(A),Size(B)]," intersections=256\n");;
+Need246(Size(N) in [2,4],"bounded kernel line census");;
+GA:=Subgroup(G,GMarks{[1..3]});;GB:=Subgroup(G,GMarks{[2..4]});;GC:=Subgroup(G,GMarks{[2,3]});;
+GD:=Intersection(GA,GB);;Need246(Index(GD,GC)=2,"single parallel defect coset");;
+gdef:=First(Elements(GD),x->not x in GC);;
+ares:=RestrictedMapping(pi,A);;bres:=RestrictedMapping(pi,B);;
+aLift:=PreImagesRepresentative(ares,gdef);;bLift:=PreImagesRepresentative(bres,gdef);;
+defect:=aLift*bLift^-1;;Need246(defect in N and defect<>One(H),"actual lift discrepancy");;
+lines:=Filtered(AllSubgroups(N),L->Size(L)=2);;
+normalLines:=Filtered(lines,L->IsNormal(H,L));;
+goodLines:=Filtered(normalLines,L->not defect in L);;
+minimalQuotientOrders:=List(goodLines,L->Size(H)/Size(L));;
+if Length(minimalQuotientOrders)=0 then Add(minimalQuotientOrders,Size(H));fi;
+Print("PHASE246_MINIMAL normal_kernel_lines=",Length(normalLines)," good_lines=",Length(goodLines)," minimal_quotient_orders=",minimalQuotientOrders,"\n");;
+QUIT_GAP(0);

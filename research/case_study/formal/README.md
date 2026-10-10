@@ -1,5 +1,10 @@
 # Lean certificates and their scope
 
+[LocallyFaithfulIntersection.lean](LocallyFaithfulIntersection.lean) proves
+three actual subgroup and quotient statements used in the locally faithful
+cover criterion. Its [scope](LocallyFaithfulIntersection.scope.md) keeps
+topology, integer homology and the full cover theorems outside Lean.
+
 [StringCentralizerBridge.lean](StringCentralizerBridge.lean) proves three
 general steps used in the PSL₂ maniplex application: extending commutation
 from generators, noncommutation of the first pair, and the rank-four bound
