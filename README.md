@@ -43,10 +43,11 @@ A's §7.4. The [mandatory correction](research/case_study/phase138_N009_decompos
 now supplies the proper affine decomposition; its independent review and
 full additional cost are recorded on the Module A page.
 
-Module B is being drafted around four sources from 1998–2021. Forest
-cuts, compatible partitions and Frattini coordinates connect its tree,
-generation and coset-geometry arguments. Its source-contract audit is
-in progress; it is not yet a completed replacement manuscript.
+Module B now has a reviewed 16-page manuscript deriving the declared
+results of four sources from 1998–2021. Forest cuts, compatible partitions
+and Frattini coordinates connect its tree, generation and coset-geometry
+arguments. Its source corrections and retained inputs are explicit.
+Matched length measurement and full Lean formalization remain incomplete.
 
 The previous combined manuscripts are working source material. Their
 proved lemmas, computations, source readings and certificates are being

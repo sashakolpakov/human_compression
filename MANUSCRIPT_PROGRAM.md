@@ -57,11 +57,12 @@ include hypertopes, then undergo the same source and cost audit.
 
 ## Module B: Forest coordinates and primitive coset geometries
 
-The [module outline](MODULE_B.md) connects forest cuts and compatible
-partitions with independent generation and Frattini coordinates. Its
-planned intake is N001 (1998), N003 (2002), N008 (2005) and L030 (2021).
-The application proofs are being reworked from existing source material;
-the complete manuscript and its source-contract audit remain in progress.
+The [complete 16-page manuscript](MODULE_B.md) connects forest cuts and
+compatible partitions with independent generation and Frattini coordinates.
+Its reviewed intake is N001 (1998), N003 (2002), N008 (2005) and L030 (2021).
+The declared main results follow from U+B with the documented source
+corrections and retained inputs. The ledger binds 30 source rows to 22 proof
+nodes. Matched length measurement and full Lean formalization remain pending.
 
 Later modules will group related papers around the actual reusable
 machinery they need. Their intake will be frozen before a compression

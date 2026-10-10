@@ -12,9 +12,12 @@ proof texts and verified the frozen export and rebuild; formalization,
 final source admission and matched measurement remain incomplete.
 
 **[B: Forest coordinates and primitive coset geometries](MODULE_B.md)**
-is the next application manuscript, currently in preparation. Its planned
-four-source bundle is N001, N003, N008 and L030, spanning 1998–2021.
-This title and grouping add no source-coverage or compression credit.
+now has a reviewed 16-page manuscript deriving the declared contracts of
+N001, N003, N008 and L030, spanning 1998–2021. It binds 30 source rows and
+22 proof nodes, with source corrections and retained inputs explicit.
+Its complete U-v2+B inventory is 120,923 UTF-8 bytes; no matched ratio
+is yet measured. These four were already covered in the source bank, so
+this modular replacement adds no new source-count or conjecture credit.
 
 | Intake layer | Count |
 |---|---:|

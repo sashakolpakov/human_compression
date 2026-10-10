@@ -1,7 +1,7 @@
 # Provenance and verification scope
 
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
-with complete U and A drafts and Module B in preparation. There are
+with complete U and A drafts and a reviewed four-source Module B. There are
 forty-seven scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
@@ -364,3 +364,7 @@ and lower-central consequences and the complete typed-Helly transfer in
 Lean after full proof reading, dedicated checks and a fresh public build.
 There are now 47 scoped modules. Full geometry and source-application
 bindings remain distinct from these general algebraic certificates.
+
+The [phase-98 record](phase98_review.md) publishes the reviewed four-source
+Module B under its descriptive title, with its complete 16-page manuscript,
+source-contract ledger, independent review and fresh public checks.
