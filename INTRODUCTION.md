@@ -2757,7 +2757,76 @@ can contain an isolated vertex, preventing the required edge completion.
 The source papers are indexed with selected-reading and retained-input
 status, without additional principal-result credit.
 
-## 43. The remaining work, and how a living reduction should record it
+## 43. A common shadow can split even when its pieces do not
+
+The geometric version of endpoint halving exposes the same obstruction
+as the subgroup support filter. Let the original geometry have a simple
+vertex-edge graph, and suppose an edge belongs to a higher object's
+shadow exactly when both endpoints do. Residual connectivity of the
+original geometry makes every common shadow of a higher flag connected.
+It does not determine the parity of its walks.
+
+For a connected graph X, its canonical bipartite double cover has vertices
+(v,0) and (v,1); each original edge joins opposite bits. The cover is
+connected exactly when X contains an odd cycle. Otherwise it has two
+components. Lift each higher object by taking the connected components
+of the double cover over its shadow. Use the two vertex colors as the
+new lower types, and incidence as component membership or intersection.
+
+The [complete parity theorem](research/case_study/phase27_parity_theory.md)
+proves that this construction is a geometry under the stated original
+hypotheses. Its residual connectivity has one additional, exact condition:
+
+> For every higher flag, if each individual shadow is nonbipartite,
+> their common shadow must also be nonbipartite.
+
+If one individual shadow is bipartite, its selected component fixes the
+parity choice on the connected common shadow. Compatible choices agree.
+If all individual shadows contain odd cycles, none makes a parity choice;
+their intersection is the entire double cover of the common shadow.
+That intersection is connected precisely under the displayed condition.
+Residues involving a lifted vertex are original vertex residues. For the
+remaining residues, this common cover controls connectivity. Necessity
+uses the proved fact that every two-type truncation of a residually
+connected finite-rank geometry is connected.
+
+For a regular input, the local shadow associated with J is bipartite
+exactly when a is absent from H_J. Thus the geometric parity condition
+is equivalent to closure of the endpoint-support family under
+intersections. The combinatorial and subgroup arguments identify the
+same obstruction from different data. Under that condition, residue
+transport also gives thinness, regular actions, the changed marking
+and its diagram.
+
+This recovers the geometric halving construction in
+[Montero–Weiss, section 3](https://arxiv.org/abs/2001.11082v1) for lattice
+polytopes. An edge is the join of its two vertices, providing the two
+local graph conditions. Higher faces in a flag form a chain, so their
+shadows are nested and the parity condition is automatic. The proof
+recovers the actual flag-transitive coset geometry as well as subgroup
+IP, replacing the source's external semiregular-polytope bridge. Its
+later generalized-cube groups, orders and applications remain separate.
+
+The condition cannot be dropped from the broad geometric statement.
+Partition vertices into four parts of size m; take all cross-part edges,
+and let each of two higher types consist of the four unions of three
+parts, with every cross-type pair incident. The original geometry is
+residually connected and is firm for m≥2. Each individual higher shadow
+is a nonbipartite complete tripartite graph. Distinct higher shadows
+intersect in a bipartite complete bipartite graph, whose double cover
+splits. There are exactly twelve disconnected transformed residues.
+The written proof covers every m≥1. Two independent finite checkers
+verify the firm m=2 example: 801 original flags, 192 chambers and all
+original residues connected.
+
+The [version audit](research/case_study/phase27_halving_version_status.md)
+limits this counterexample to the broad residual-connectivity assertion
+in arXiv:2405.19050v1. The revised journal text remains unverified, and
+the example is neither thin nor flag-transitive. It does not refute the
+regular-hypertope specialization. This is a checked source discrepancy
+and an exact repair, without a novelty claim or an infinity marker.
+
+## 44. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

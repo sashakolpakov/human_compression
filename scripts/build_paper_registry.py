@@ -459,15 +459,30 @@ def record(row, baseline, overlay, later_readings, older_access):
              "relation_to_source": "proposed_uniform_companion_application"},
         ]
     if identifier in {"N013", "N014"}:
-        r.update(status="source_theorem_retained", encoded=False, rederived=False,
-                 full_principal_results=False, proposed_new_result=False)
+        lattice = identifier == "N013"
+        r.update(status="component_rederived" if lattice else "proposed_new_result",
+                 encoded=True, rederived=lattice, full_principal_results=False,
+                 proposed_new_result=not lattice)
         ref = ("Section3, Theorem3.1, Proposition3.2 and Corollary3.3, arXiv2001.11082v1"
-               if identifier == "N013" else "Lemma4.5, Theorem4.4 and Proposition4.7, arXiv2405.19050v1")
-        r["exact_target"] = [{"reference": ref, "scope": "Exact primary-source overlap and geometric-dependency bridge; selected sections read, no full-paper rederivation.", "relation_to_source": "retained_published_input"}]
-        r["method"] = ["Compare the published endpoint operation and actual geometric hypotheses with the general abstract marked-group criterion."]
-        r["retained_inputs"] = ["The named primary-source geometric theorem and its hypotheses; geometric realization is not inferred from subgroup IP alone."]
-        r["evidence"] += [evidence(n, ref) for n in ("phase26_halving_source_adapter.md", "phase26_halving_source_rank_audit.json")]
-        r["remaining_work"] = ["Full principal-result rederivation remains unestablished. Source access/attribution is not compression credit or a novelty assessment."]
+               if lattice else "Construction3.6; residual-connectivity claims of Proposition3.13, Theorem3.18 and introductory TheoremA, arXiv2405.19050v1")
+        scope = ("Complete geometric halving construction for lattice polytopes: C-group, actual flag-transitive coset geometry, regularity, full type-preserving automorphism group and diagram. Higher flag shadows are nested, so parity compatibility is automatic. Section4 generalized-cube groups, orders and applications are not rederived."
+                 if lattice else "Exact parity-compatible repair of the broad partitioned construction, with geometry before the parity assumption and residual connectivity iff PC. A firm all-parameter counterexample family disproves the broad residual-connectivity claim in the inspected preprint. This is not a counterexample to the regular-hypertope specialization; the revised journal body remains unverified.")
+        r["exact_target"] = [{"reference": ref, "scope": scope,
+                              "relation_to_source": "specified_existing_component" if lattice else "version_bound_counterexample_and_conditional_repair"}]
+        r["method"] = ["Use components of the canonical bipartite double cover of each graph shadow; common-component intersections control chamber completion and every residue. For regular inputs PC equals the principal endpoint-support filter."]
+        r["retained_inputs"] = ["Basic regular-polytope/hypertope and coset correspondences; actual residual connectivity of the original geometry; B1/B2 and the stated lattice hypothesis when applicable."]
+        if not lattice:
+            r["retained_inputs"].append("Published Lemma4.5 overlap identification is attributed; the unconditional regular-hypertope Theorem4.4 is not independently recovered without PC.")
+        r["evidence"] += [evidence(n, ref) for n in (
+            "phase26_halving_source_adapter.md", "phase27_parity_theory.md",
+            "phase27_parity_manifest.json", "phase27_parity_sources.json",
+            "phase27_parity_shadow_rank_audit.md", "phase27_parity_shadow_rank_audit.json",
+            "phase27_parity_shadow_check.json", "phase27_parity_shadow_rank_check.json",
+            "phase27_halving_version_status.md", "phase27_halving_version_status.json")]
+        r["access_coverage"]["additional_readings"].append({
+            "source":"research/case_study/phase27_parity_sources.json",
+            "reading_depth":"Sections1–3 and exact geometric construction proofs read; section4 applications not audited." if lattice else "Full sections3–4 construction and halving arguments read; section5 applications excluded. Exact arXiv version audited; revised journal body unavailable."})
+        r["remaining_work"] = ["Application sections and all principal paper targets remain incomplete. No whole-paper reduction, matched proof-length ratio, publication priority or infinity marker. Complete geometric argument is written, not formalized end to end."]
     if identifier in {"L081", "L111"}:
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase26_access.json", "reading_depth":"Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately."})
     if identifier == "L108":

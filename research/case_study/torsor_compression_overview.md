@@ -285,6 +285,16 @@ this reduction yet.
 
 ## Evidence and limits
 
+The [parity repair](phase27_parity_theory.md) now makes the geometric
+endpoint criterion exact: every common shadow of individually nonbipartite
+shadows must remain nonbipartite. Components of a graph double cover turn
+this into a single residue-connectivity test. For regular inputs it is
+equivalent to the subgroup support-filter condition. Nested shadows in
+lattice polytopes recover the complete Montero–Weiss section 3 construction;
+later applications remain outside the reduction. A firm counterexample
+family detects the missing condition in a broader inspected preprint claim,
+with the revised journal version explicitly unverified.
+
 Twenty-five [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.

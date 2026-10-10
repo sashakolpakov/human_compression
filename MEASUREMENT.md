@@ -453,3 +453,12 @@ consequences, but the standard cohomological ingredients are credited
 and no matched source-length measurement has been made. Neither addition
 increases the principal-paper count or receives an infinity marker.
 The two measured ratios remain **127/38** and **4/3**.
+
+The geometric parity theorem adds a complete section-level construction
+reduction and a source-version-bound counterexample family. It leaves
+the fifteen-work principal-result count unchanged: the application sections
+of the two newly assessed papers are not covered. Source and replacement
+spans have not been matched, so no new finite ratio is assigned. A defect
+in a stated theorem is also different from resolving a documented open
+conjecture; this finding receives no infinity marker, and correction
+priority remains unverified.

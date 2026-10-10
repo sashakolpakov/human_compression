@@ -4,6 +4,15 @@ Research begun 9 October 2026; updated 10 October 2026. We have proposed proofs 
 
 ## Current coverage and verification
 
+The [parity-compatible halving theorem](phase27_parity_theory.md) gives an
+exact residual-connectivity criterion and recovers the full lattice-polytope
+geometric construction in Montero–Weiss section 3. The same proof isolates
+a firm counterexample family to the broader assertion in the inspected
+Piedade–Tranchida preprint. An [independent review](phase27_parity_shadow_rank_audit.md)
+and two finite implementations agree. The revised journal text is unverified,
+the regular-hypertope specialization remains separate, and neither entire
+paper is counted as reduced.
+
 The [living paper map](../../PAPER_MAP.md) indexes 159 works and records
 15 principal-result reductions. These now include the six 2005 Janko-group
 [construction theorems](phase24_L088_theory.md) and the 2001

@@ -1276,3 +1276,24 @@ of the cited halving theorem. The source adapter also gives an explicit
 Johnson-graph/partition witness. Python standard library only; the output
 path must be new. Source PDF reading and the general source theorems are
 separate from this exact finite diagnostic.
+
+## The actual geometric parity obstruction
+
+```sh
+mkdir -p scratch/parity-author
+cp research/case_study/phase27_parity_shadow_check.py scratch/parity-author/
+python3 scratch/parity-author/phase27_parity_shadow_check.py
+python3 research/case_study/phase27_parity_shadow_rank_check.py --output scratch/parity-independent.json
+```
+
+Both checkers use only Python's standard library. The first writes beside
+its source, so run the scratch copy to preserve the frozen report. It
+checks part sizes one and two. The independent bitset implementation
+computes the even-walk classes and reconstructs the published construction
+for part size two. Expected output is 801 original flags and 192 chambers,
+with panel counts 336 of size two and 24 of size four. Every original
+residue is connected. Every transformed flag still extends to a chamber,
+but exactly twelve transformed residues split into two components of size
+four. These are the intended negative results. The all-part-size family,
+the exact iff theorem and the lattice-polytope reduction are written proofs;
+these finite checks do not formalize them or establish publication priority.

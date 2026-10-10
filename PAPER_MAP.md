@@ -34,7 +34,7 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 | metadata and access only | 9 |
 | selected sections read | 69 |
 
-101 works have a retrieved full text; 48 have a specified encoding or conditional/component reduction; 35 have a rederived component, finite subfamily or principal target.
+101 works have a retrieved full text; 50 have a specified encoding or conditional/component reduction; 36 have a rederived component, finite subfamily or principal target.
 These overlapping totals must not be read as counts of fully reduced papers.
 
 The conservative **principal-result set has 15 works: L008, L030, L032, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009**.
@@ -384,8 +384,8 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | N010 | 2006 | [Problems on polytopes, their groups, and realizations](https://link.springer.com/article/10.1007/s10998-006-0035-y) | selected sections read | partial progress |
 | N011 | 2025 | [On generation of the groups GL_n(q) and PGL_n(q) by three involutions, two of which commute](https://journal.imm.uran.ru/2025-v.31-4-fon-03) | selected sections read | source theorem retained |
 | N012 | 2025 | [Linear groups over finite fields and over the ring of integers as automorphism groups of regular polytopes of rank 3](https://sfu.ru/ru/science/dissertations/2b9582cf-c095-4bb6-9b28-c46d7421416e) | selected sections read | related only |
-| N013 | 2020 | [Locally Spherical Hypertopes from Generalised Cubes](https://arxiv.org/abs/2001.11082v1) | selected sections read | source theorem retained |
-| N014 | 2024 | [Constructing new geometries: a generalized approach to halving for hypertopes](https://arxiv.org/abs/2405.19050v1) | selected sections read | source theorem retained |
+| N013 | 2020 | [Locally Spherical Hypertopes from Generalised Cubes](https://arxiv.org/abs/2001.11082v1) | selected sections read | component rederived |
+| N014 | 2024 | [Constructing new geometries: a generalized approach to halving for hypertopes](https://arxiv.org/abs/2405.19050v1) | selected sections read | proposed new result |
 
 ## Updating the map
 

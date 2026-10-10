@@ -102,6 +102,16 @@ Further notes cover affine lattice families, Hermitian-unital connectivity,
 normalizer-orbit classifications, incidence constructions and a corrected
 Wenger graph cycle count. Exact retained assumptions are listed in the notes.
 
+The [exact geometric halving criterion](research/case_study/phase27_parity_theory.md)
+now identifies when local parity choices preserve residual connectivity.
+It recovers the complete lattice-polytope construction in a 2020 preprint's
+section 3 and gives a firm counterexample family to a broader assertion in
+the inspected 2024 preprint. Both finite implementations verify the example;
+the all-parameter theorem has an independently reviewed written proof.
+The [source-version boundary](research/case_study/phase27_halving_version_status.md)
+is explicit: the revised journal theorem and the regular-hypertope
+specialization have not been refuted. Application sections remain separate.
+
 The common census theorem now supports six finite-group censuses with 262
 independently recognized representatives under their recorded axioms. This
 measures verified coverage; it is not a numerical proof-compression ratio.
