@@ -1,5 +1,15 @@
 # Current work and verified source material
 
+The latest [design-residue attachment](DESIGN_RESIDUES.md) corrects two
+assertions in the 2005 source L092. Its iterated affine deleted-line
+construction satisfies firmness, residual connectivity and flag transitivity
+exactly at q=8, correcting the printed value q=4. The subline construction
+is residually connected in dimension two for every stated q; its
+flag-transitive case still requires q=4. Both uniform proofs are reviewed.
+Lean verifies the literal q=4 residue as three disjoint hexagons, with its
+source identification written. This is partial source work, separate from
+conjecture results; the coverage and compression totals below are unchanged.
+
 The project now has complete mathematical manuscripts under descriptive titles:
 **[U: Marked groups, kernels and intersections](UMBRELLA.md)** and
 **[A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md)**.
@@ -121,7 +131,7 @@ sufficient collector fuel. All-rank support transfer, confluence and the
 group proof remain written. The full conjecture, historical priority and complete Lean proof
 remain unresolved. It adds no known-source compression credit.
 
-Sixty-nine existing Lean components retain their individual statements,
+Seventy existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.

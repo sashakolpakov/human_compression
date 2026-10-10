@@ -1,5 +1,12 @@
 # Lean certificates and their scope
 
+[DeletedLineFourResidue.lean](DeletedLineFourResidue.lean) verifies the literal
+four-element-field residue as three disjoint hexagons and proves its
+disconnection. The [source bridge](../phase182_deleted_line_lean_bridge.md)
+is written; the [admission](../phase185_root_admission.md) separates this
+finite certificate from the two uniform source corrections. Seven named
+axiom reports use only standard axioms.
+
 These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).

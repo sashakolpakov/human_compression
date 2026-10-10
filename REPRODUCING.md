@@ -1,5 +1,20 @@
 # Reproducing the checks
 
+The [design-residue corrections](DESIGN_RESIDUES.md) have one public replay
+for both finite constructions, the independent subline check and the
+literal F4 Lean certificate:
+
+```sh
+python3 -B -O research/case_study/phase185_corrections_check.py --output-dir /tmp/NEW-design-residues --packages PACKAGES --lean LEAN --gap GAP
+```
+
+It requires the pinned compiler and package checkout used below, and GAP.
+It checks the q=4 and q=8 deleted-line cases, the independently constructed
+q=3 subline counterexample, a fresh Lean build and four targeted rejection
+controls. No private source PDF is required. The
+[admission](provenance/phase109_review.md) separates these checks from the
+reviewed written uniform proofs and their retained classification input.
+
 The [three-contract Module D](MODULE_D.md) distributes a structural audit
 and a portable complete finite replay:
 

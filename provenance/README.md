@@ -3,8 +3,14 @@
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with reviewed six-source U+A, four-source Module B, and three-source
 Modules C and D. There are
-sixty-nine scoped Lean components. Source coverage, complete modular
+seventy scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
+
+The [design-residue admission](phase109_review.md) adds two reviewed
+uniform source corrections and a Lean certificate for the literal
+four-element-field residue. Its [export bindings](../research/case_study/phase185_corrections_export.json)
+preserve the author, independent-review and fresh public replay records.
+Whole-source coverage and measured compression do not increase.
 
 An earlier snapshot admitted [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
 with the shared universal finite-kernel theorem, complete corrected N009

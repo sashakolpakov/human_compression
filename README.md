@@ -32,6 +32,12 @@ The active manuscripts have descriptive mathematical titles:
 Module D's three-source manuscript has passed independent review, with a
 fourth classification retained as a qualified component.
 
+The older-paper intake now includes two reviewed
+[design-residue corrections](DESIGN_RESIDUES.md), with complete uniform
+written proofs and a Lean certificate for the literal disconnected
+four-element-field residue. This partial source work adds no whole-paper
+coverage or measured compression credit.
+
 **Complete reviewed manuscripts are available:** U has 30 statements with
 proofs in 16 pages; A has 24 pages and derives the declared principal
 results of six related sources from 2018–2026. U develops marked subgroup
@@ -139,7 +145,7 @@ Lean verification must match our actual written statements, including
 assumptions and retained inputs. A certified helper does not certify an
 entire application. Formal gaps and axioms remain visible.
 
-Sixty-nine existing scoped Lean components and exact computational
+Seventy existing scoped Lean components and exact computational
 certificates supply reusable verified material. They do not constitute
 an end-to-end formalization of U, Module A or all conjecture claims.
 The [parity-mix construction](PARITY_MIX.md) now has a reviewed Lean proof

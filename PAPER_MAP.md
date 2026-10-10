@@ -41,15 +41,18 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 15 |
+| full text read | 16 |
 | full text search only | 18 |
 | metadata and access only | 9 |
-| selected sections read | 66 |
+| selected sections read | 65 |
 
 102 works have a retrieved full text; 55 have a specified encoding or conditional/component reduction; 40 have a rederived component, finite subfamily or principal target.
 These current totals apply the [dated L073/L104 assessment](research/case_study/phase181_registry_overlay.json)
 to the preserved registry baseline. L073 adds a qualified component;
 L104 retains its fixed census contract with explicit printed-body omissions.
+The [L092 reading and correction addendum](research/case_study/phase185_L092_overlay.json)
+records a full primary-text reading and two reviewed corrections, with no
+increase in known-result replacement or principal-source totals.
 These overlapping totals must not be read as counts of fully reduced papers.
 
 The conservative **principal-result set has 18 works: L008, L030, L032, L034, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013, N016**.
@@ -81,7 +84,7 @@ Proposed conjecture proofs are separate and do not increase that count.
 | L085 | [Almost simple groups of Suzuki type acting on polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/szpoly.html) | Full principal rank/existence theorem as restated in L074, Theorem 3 | [component rederived](research/case_study/phase10_suzuki_marked_fields.md). The exact principal theorem is read in the primary L074 restatement. The original L085 full body remains unavailable, so its auxiliary statements and original proof are not compared and no whole-paper reduction is claimed. External review remains. |
 | L088 | [On the thin regular geometries of rank four for the Janko group J(1)](https://msp.org/iig/2005/1-1/iig-v1-n1-p08-s.pdf) | All six principal construction theorems and generation lemmas; exhaustive six-class rank-four classification and absence in all higher ranks | [principal results rederived](research/case_study/phase40_compress_operations_manuscript.md). The source geometry census is no longer retained. Printed Gamma3/Gamma4 figure labels are corrected against their defining markings. The completeness statement concerns thin regular residually connected geometries, not non-Helly C-group markings. Catalogue completeness and exact GAP algorithms remain trusted. No length factor, conjecture solution, novelty or end-to-end Lean claim. |
 | L089 | [On inductively minimal geometries that satisfy the intersection property](https://leemans.dimitri.web.ulb.be/abstracts/imgip.html) | Advertised characterization of inductively minimal geometries with geometric intersection property | [component rederived](research/case_study/phase5_tree_cuts.md). Full 2005 text unavailable; target is the primary abstract and exact earlier restatement. Foundational classification retained, no new-resolution claim. |
-| L092 | [A generalization of a construction due to Van Nypelseer](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.46/no.2/b46h2lee.pdf) | Conjecture 1, Section 4.6, p. 569 | [proposed new result](research/case_study/hermitian_unital_proof.md). External review and priority verification. Other constructions and applications in the paper are not all rederived; Lean checks abstract connectivity only. |
+| L092 | [A generalization of a construction due to Van Nypelseer](https://ftp.gwdg.de/pub/misc/EMIS/journals/BAG/vol.46/no.2/b46h2lee.pdf) | Reviewed corrections to Theorem6 and Lemma5; separately, Conjecture1, Section4.6, p.569 | [Uniform residue corrections](DESIGN_RESIDUES.md) with exact finite checks and Lean verification of the literal q=4 disconnected graph; source bridge and uniform proofs written. The [unital proof](research/case_study/hermitian_unital_proof.md) remains a separate proposed question result with priority unverified. The complete paper is not rederived; no principal-source or new conjecture credit is added. |
 | L096 | [An algorithmic analysis of the intersection property](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/2108DB59271CED59B950340F28252A28/S1461157000001133a.pdf/div-class-title-an-algorithmic-analysis-of-the-intersection-property-div.pdf) | Sections 2-3 shadow-IP decision problem and known rank-two characterization | [generic encoding](research/case_study/phase4_shadow_ip.md). The original Magma implementation and sporadic classification tables are not rerun. No performance claim or whole-paper reproduction is made. |
 | L098 | [The residually weakly primitive geometries of M_23](https://www.math.auckland.ac.nz/~dleemans/abstracts/m23.html) | The firm/FT/RC/RWPRI/(IP)2/(2T)1 M23 census stated in the primary abstract and later primary tables | [component rederived](research/case_study/phase7_sporadic_theory.md). Original article body and supplement conventions remain unavailable; no claim to reproduce every construction or diagram. Catalogue completeness is retained; no whole-paper or novelty claim. |
 | L101 | [The residually weakly primitive geometries of M_22](https://www.math.auckland.ac.nz/~dleemans/abstracts/m22.html) | The firm/FT/RC/RWPRI/(IP)2/(2T)1 M22 census stated in the primary abstract and later primary tables | [component rederived](research/case_study/phase7_sporadic_theory.md). Original two-page article body and supplement conventions remain unavailable; no claim to reproduce every construction or diagram. Catalogue completeness is retained; no whole-paper or novelty claim. |
