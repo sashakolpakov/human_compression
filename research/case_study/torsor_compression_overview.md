@@ -423,3 +423,13 @@ infinite one. The [universal corollary](phase32_L003_universal_hypertope.md)
 identifies U6=P6 semidirect C2 and proves universal regular existence and
 infinitude. These are scoped advances on L003, not a varying-s solution or
 principal-paper reduction. The criterion has a separate Lean certificate.
+
+
+The [even-parameter extension](phase33_L003_even_family.md) uses the same
+quotient strategy with one exceptional maximal parabolic. A two-by-two
+unimodular translation minor supplies the growing torus, while three fixed
+local groups inject into the finite base. It proves finite regular examples
+for every even exact source parameter. The [universal corollary](phase33_L003_universal_even.md)
+also establishes the marked regular universal objects, infinite for6|s.
+This is infinitely many varying parameters; all-integer existence and
+priority are separate outstanding questions, with no infinity marker.

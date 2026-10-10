@@ -3445,7 +3445,91 @@ local residue in an application, but such an application still needs its
 exact marked quotient, local presentations and source-parameter match.
 The formal module alone makes no claim about a particular toroidal family.
 
-## 55. The remaining work, and how a living reduction should record it
+## 55. A varying toroidal family from one unimodular minor
+
+The [even-parameter theorem](research/case_study/phase33_L003_even_family.md)
+applies the one-exceptional criterion to the second family proposed in the
+2018 source. For every even $s\ge2$, it constructs a finite regular
+rank-four hypertope with the exact ordered toroidal parameters
+
+$$((3,0),(2,0),(1,1),(s,0)).$$
+
+This time the reduction modulus changes the actual source parameter.
+Start with three integral permutation-voltage maps on 648 states, double
+the states to obtain four involutions, and reduce the integer coordinate
+modulo $m=s/2$. The resulting group $G_m$ maps onto the modulus-one group
+$G_1$, of order 1,296. Three maximal parabolics have orders 36, 48 and 108
+already in the integer action and inject into this base.
+
+The fourth parabolic contains the parameter word $T=y(zy)^2$. Its base
+permutation has order two. The word $A=T^2$ and a conjugate $B=u^{-1}Au$,
+where $u=y^{-1}z$, are pure translations. At two specified coordinates
+their translation vectors form the matrix
+
+$$\begin{pmatrix}-1&-1\\-1&0\end{pmatrix}.$$
+
+Its determinant is minus one. Hence these translations generate a copy
+of $(\mathbb Z/m\mathbb Z)^2$ for every modulus, including composite and
+even moduli. The growing parabolic has a base image of order 48, so its
+order is at least $48m^2$. The exact toroidal presentation with parameter
+$(2m,0)$ bounds its order above by the same number. Equality identifies
+the marked local group. The other three presentation/order comparisons
+identify the fixed residues. Thus the last source parameter is exactly
+$s=2m$, and the local orders are $36,12s^2,48,108$.
+
+The literal certificate verifies all nine fixed source relations over the
+integers, closes the three fixed parabolics, and checks the base group's
+full intersection property and typed Helly. The one-exceptional theorem
+then supplies both properties for every $G_m$. This proves actual regular
+hypertopes rather than only groups satisfying a presentation.
+
+An [independent base implementation](research/case_study/phase33_L003_even_base_root_check.py)
+constructs cosets as components of left Cayley actions and enumerates all
+5,287 pairwise-incident flags. Every flag has a common representative;
+the 1,296 chambers each have exactly one. It also checks all 256 marked
+subgroup intersections. This replaces the author's flag-orbit count with
+a different exhaustive verification. The uniform argument remains written
+mathematics; Lean certifies its abstract transport step.
+
+## 56. Universal existence and the questions it separates
+
+The [universal-even corollary](research/case_study/phase33_L003_universal_even.md)
+defines $U_s$ by the four involutions, the six fixed Coxeter pair relations,
+and the four local torus relations. It maps onto the finite $G_{s/2}$.
+Every universal parabolic has the finite toroidal upper bound attained in
+that image, so the map is injective on all maximal parabolics. The earlier
+quotient theorem gives a universal regular hypertope for every even $s$.
+
+Reflection invariance of the four local triangular lattices identifies its
+rotation subgroup with the exact source presentation $P_s$:
+
+$$U_s\cong P_s\rtimes C_2.$$
+
+When six divides $s$, the defining relations give an epimorphism
+$U_s\to U_6$. The already proved infinitude of $U_6$ makes all these
+universal groups infinite. They still have the finite quotients with
+unchanged marked residues constructed above. Thus universal existence,
+universal finiteness and finite quotient existence are different questions.
+
+| Precise question near source Problem 9.2 | Present result |
+|---|---|
+| Finite regular examples at infinitely many distinct exact parameters | Proved: every even $s\ge2$ |
+| Finite regular examples at every integer $s\ge2$ | Not proved here; the uniform odd-parameter case remains |
+| Universal regular existence at every even parameter | Proved by the local order bounds and quotient transport |
+| All corresponding universal groups finite | False: the universal group is infinite whenever $6\mid s$ |
+| Exact universal orders at the other parameters | Not determined by this construction |
+| New resolution relative to all later literature | Undetermined; no infinity marker assigned |
+
+The source table reports finite universal examples, while the problem's
+literal wording asks about an infinite family of hypertopes and nearby
+prose discusses finite objects. The table above avoids silently replacing
+one question with another. The [dated status audit](research/case_study/phase33_source_status.md)
+also records a material priority gap: the complete main theorems of the
+2024 paper *Abelian covers of regular hypertopes* were not accessible.
+Abelian-cover methods are established prior work; their exact overlap with
+this source-parameter family has not yet been determined.
+
+## 57. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

@@ -1470,3 +1470,23 @@ for the odd square torus at modulus five. The all-odd-modulus argument and
 arbitrary-rank construction are written proofs. Lean independently checks
 the generic one-exceptional-parabolic transport theorem and imports the
 previous transport module. It does not certify either geometric example.
+
+
+## Every even source parameter
+
+```sh
+python3 research/case_study/phase33_L003_even_check.py \
+  --output scratch/L003-even-fresh.json
+python3 research/case_study/phase33_L003_even_base_root_check.py \
+  --output scratch/L003-even-base-independent-fresh.json
+```
+
+The first standard-library checker verifies11,664 literal integer
+relator/state equalities, three finite injective parabolics, a unit
+translation minor and the base group's IP and typed Helly. The second
+implementation independently builds Cayley components and checks all5,287
+pairwise-incident coset flags, including1,296 chambers with unique common
+representatives. Both require a new output path. The all-even theorem
+uses these finite data, the separately Lean-checked one-exceptional
+transport theorem, and retained toroidal presentation/order bounds.
+Universal-even existence and infinitude for6|s are written corollaries.

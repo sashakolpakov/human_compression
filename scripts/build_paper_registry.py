@@ -22,7 +22,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase26_access.json", "phase30_source_intake.json", "phase31_cover_prior_art.json", "phase32_L003_source_intake.json",
           "phase32_L111_intake.json", "phase32_L111_scope.json",
           "phase32_L003_geometry_intake.json", "phase32_L003_universal_intake.json",
-          "phase32_L111_section6_intake.json")
+          "phase32_L111_section6_intake.json", "phase33_L003_even_intake.json",
+          "phase33_L003_universal_even_intake.json", "phase33_source_status.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -468,6 +469,12 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["evidence"] += [evidence(n, "Fixed-s6 geometric and universal corollary") for n in ("phase32_L003_fixed_parameter_hypertopes.md", "phase32_L003_geometry_manifest.json", "phase32_L003_geometry_rank_audit.md", "phase32_L003_geometry_root_audit.md", "phase32_L003_universal_hypertope.md", "phase32_L003_universal_manifest.json", "phase32_L003_universal_root_audit.md", "formal/ParabolicQuotientTransport.scope.md")]
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase32_L003_geometry_intake.json", "reading_depth":"Exact equation2.3 local-generator substitutions, standard triangular torus lattice and source section3 universality definition compared with the fixed-s6 construction."})
         r["remaining_work"] = ["The varying-source-parameter question, other principal paper results and priority remain unresolved here. No identification of the monomial image with the universal group and no general coordinate-quotient order formula. Formal components do not constitute an end-to-end formalization of the source/geometric adapter. No infinity marker."]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Every even exact source parameter in the second proposed family", "scope":"Finite regular hypertope with ordered parameters((3,0),(2,0),(1,1),(s,0)) for every even s>=2. Marked universal U_s also exists, equals P_s semidirect C2, and is infinite for6|s.", "relation_to_source":"proposed_infinite_parameter_subfamily"})
+        r["method"].append("One-exceptional quotient transport; three fixed integral parabolics and a determinant-minus-one translation minor identify the growing torus by matching order bounds. A separate independent Cayley-component census checks all5287 base flags.")
+        r["evidence"] += [evidence(n,"All-even finite and universal regular hypertopes") for n in ("phase33_L003_even_family.md","phase33_L003_even_manifest.json","phase33_L003_even_rank_audit.md","phase33_L003_even_root_audit.md","phase33_L003_even_base_root_check.json","phase33_L003_universal_even.md","phase33_L003_universal_even_root_audit.md","phase33_source_status.md")]
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase33_L003_even_intake.json", "reading_depth":"Exact source presentation, ordered residue adapters, Table8 and Problem9.2 rechecked for the genuinely varying even parameter."})
+        r["remaining_work"] = ["Uniform odd-parameter existence, universal orders at other parameters, current priority and end-to-end formalization remain unverified. N015 main-theorem overlap remains undetermined because its complete body was not obtained. Infinitely many exact finite parameters are proved; no complete all-integer claim or infinity marker."]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

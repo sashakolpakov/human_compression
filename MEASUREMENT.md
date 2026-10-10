@@ -514,3 +514,13 @@ version. It also formally proves quotient transport allowing one exceptional
 maximal parabolic. These additions change neither existing paper counts nor
 the two measured ratios. Published-statement counterexamples are tracked
 separately from previously open problems; no infinity marker is assigned.
+
+
+Phase thirty-eight proves finite regular existence for infinitely many
+distinct exact parameters in the 2018 family: every even s>=2. It also
+establishes the marked regular universal objects at those parameters,
+infinite whenever6|s. This is recorded as substantive partial progress on
+the source problem, separately from compression of published proofs.
+Uniform odd-parameter existence and priority remain undetermined; unread
+2024 main theorems are a material comparison gap. No corpus ratio or
+infinity marker is inferred, and the two matched-proof ratios are unchanged.

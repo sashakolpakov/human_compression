@@ -308,3 +308,13 @@ global graph bipartiteness. Its statement ledger records the corrections
 separately. The [one-exceptional quotient theorem](phase33_one_exceptional_transport.md)
 and Lean module allow one maximal local group to grow under an otherwise
 injective quotient. Particular varying-parameter applications remain separate.
+
+
+The [all-even construction](phase33_L003_even_family.md) now varies the
+actual source parameter s=2m, with one toroidal residue growing by m².
+A unit translation minor proves the exact local type at every modulus;
+three fixed parabolics allow quotient transport from a checked base.
+The [universal-even corollary](phase33_L003_universal_even.md) proves
+marked regular universality and infinitude when6|s. The source-status audit
+keeps finite existence, universal finiteness, all-integer scope and priority
+separate. No general full-group order formula is asserted by this package.

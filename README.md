@@ -47,7 +47,17 @@ and the [theorem-by-theorem scope table](research/case_study/torsor_compression_
 
 ## Results in this snapshot
 
-The latest additions recover the merging/splitting construction from 2000,
+The latest [varying-parameter construction](research/case_study/phase33_L003_even_family.md)
+gives a finite regular hypertope for every even source parameter $s\ge2$,
+with exact ordered toroidal residues $((3,0),(2,0),(1,1),(s,0))$.
+One integral voltage certificate and the Lean-checked quotient theorem prove
+the uniform result. An independent implementation verifies all 5,287 flags
+of the finite base. A [separate corollary](research/case_study/phase33_L003_universal_even.md)
+establishes the universal regular object for every even parameter and proves
+it infinite whenever six divides the parameter. Uniform odd-parameter
+existence and priority remain unresolved.
+
+The preceding additions recover the merging/splitting construction from 2000,
 give [two counterexamples to assertions in its accessed version](research/case_study/phase32_L111_section6_theory.md),
 and formally verify [quotient transport allowing one growing local group](research/case_study/formal/OneExceptionalParabolic.scope.md).
 Correction priority and later versions remain unverified.
@@ -60,7 +70,8 @@ infinitude of the exact presented group at six. A [geometric supplement](researc
 now constructs infinitely many finite regular hypertopes at that fixed
 parameter; a [separate corollary](research/case_study/phase32_L003_universal_hypertope.md)
 identifies its universal regular object and proves it infinite. The
-varying-parameter question and current priority remain unverified.
+all-integer existence question and current priority remain unverified;
+the even-parameter construction above supplies infinitely many exact parameters.
 
 These are internally reviewed research drafts. Proposed new resolutions have
 not received external peer review, and publication priority remains unverified.
