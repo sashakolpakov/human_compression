@@ -70,9 +70,15 @@ The [phase-eight review record](phase8_review.md) records the complete
 proposed rank proof, its broader form alternative and the two additional
 older construction analyses.
 
-[Measurement](../MEASUREMENT.md) defines future quantitative accounting and
-the separate status of new resolutions. No corpus ratio or infinity marker
-is assigned by this publication snapshot.
+The [phase-nine review record](phase9_review.md) records the first matched-proof
+measurement and new linear/unitary consequences of the same form theorem.
+Its fifteenth Lean certificate checks actual transvection invariance of a
+matrix. The frozen written application predates that certificate and retains
+its original hashes; the separate scope note records the later formalization.
+
+[Measurement](../MEASUREMENT.md) records a conditional 3.34× ratio for two
+exact counting formulas and the separate status of new resolutions. No
+corpus ratio or infinity marker is assigned by this publication snapshot.
 
 Historical reports retain their original mathematical-source hashes and run
 results. Where a script's executable path was made portable, its historical

@@ -78,10 +78,31 @@ with its exact scope; neither automatically settles an entire conjecture.
 
 ## Current assessment
 
-**No numerical corpus compression ratio has been measured. No infinity marker
-is assigned in this snapshot.** Several proposed resolutions have written
+**The first matched-proof ratio is 3.34× for a specified two-theorem subset.
+No corpus ratio or infinity marker is assigned in this snapshot.** Several proposed resolutions have written
 arguments and substantial checks, but their external priority remains
 unverified and their formal certificates cover specified components.
+
+The [complete measurement record](research/case_study/phase9_L066_measurement.md)
+compares the exact formulas in L066, Theorems 1.1 and 1.2, in degrees
+$N\ge4$, $N\ne6$. It excludes both degree-six exceptions and the paper's
+polyhedron theorems. Shared spans are counted once. A source centralizer
+proposition is recorded but excluded from the conservative primary count,
+because its extra order assertion is unnecessary for the target formulas.
+
+| Metric | Source | Replacement | Ratio |
+|---|---:|---:|---:|
+| Normalized non-whitespace characters | 10,668 | 3,192 | 3.3421 |
+| Alphanumeric tokens, extraction-sensitive | 2,534 | 835 | 3.0347 |
+| Raw selected-span UTF-8 bytes | 13,722 | 4,080 | 3.3632 |
+
+These are description lengths of particular proofs, conditional on the
+declared common background. Typeset-source extraction and plain-text proof
+formatting differ, so the figures are reported with sensitivity checks.
+The protocol records exact source/replacement spans and hashes; the script
+recomputes all counts from the original PDF without distributing its text.
+The added cost of the second theorem is reported separately, showing reuse
+of the shared proof. This measurement does not assess mathematical importance.
 
 The [dated status audit](research/case_study/phase6_status_audit.md) searches
 later primary literature for four of the strongest proposed resolutions.
@@ -135,8 +156,7 @@ prominent result entry, but a corrected exhaustive classification and
 publication priority remain unresolved. No infinity marker is assigned.
 
 The [paper registry](research/case_study/paper_registry.json) records exact
-targets, retained inputs and coverage. A future quantitative report must
-add source and replacement proof spans, the measurement convention, shared
-dependency accounting, source hashes and the actual calculation. Until then,
-the number of papers indexed, pages downloaded, agents used, or elapsed
-research years cannot substitute for a measured ratio.
+targets, retained inputs and coverage. Further quantitative reports must
+extend the same source/replacement span and dependency accounting to other
+matched theorem sets. The number of papers indexed, pages downloaded, agents
+used, or elapsed research years cannot substitute for those measurements.

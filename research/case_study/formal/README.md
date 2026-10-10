@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are fourteen certificates. To compile them on another machine, install Git,
+There are fifteen certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the fourteen modules, but does not produce the runner's JSON reports.
+way to compile the fifteen modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,7 +95,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all fourteen source hashes match the historical successful reports
+This checks that all fifteen source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. The saved runs print only the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
@@ -113,7 +113,9 @@ Saved reports: [lift](LiftCertificate.check.json),
 [Boolean shadow witnesses](BooleanShadow.check.json),
 [consecutive-rank witnesses](ConsecutiveShadow.check.json),
 [rank-three factorization](RankThreeFactorization.check.json),
-[all-rank coset coordinates](CosetCoordinates.check.json).
+[all-rank coset coordinates](CosetCoordinates.check.json),
+[intertwiner separation](IntertwinerSeparation.check.json),
+[transvection-invariant forms](TransvectionForms.check.json).
 
 [ResidueConnectivity.lean](ResidueConnectivity.lean) proves that a transitive
 group action connects a relation whenever a generating set moves each point
@@ -203,3 +205,10 @@ the right additive commutator has a right inverse, the intertwiner is zero.
 Both theorems are axiom-free as reported by Lean. The
 [scope note](IntertwinerSeparation.scope.md) separates this ring lemma from
 the written endpoint normal forms and their complete case coverage.
+
+[TransvectionForms.lean](TransvectionForms.lean) proves that exact invariance
+under all elementary-transvection congruences forces a bilinear-form matrix
+to vanish when a third coordinate is available. It verifies actual matrix
+products and transposes over any ring, with a four-dimensional instance.
+The [scope note](TransvectionForms.scope.md) separates this certificate from
+the written projective-multiplier reduction and complete group rank theorem.

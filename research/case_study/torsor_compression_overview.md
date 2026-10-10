@@ -148,6 +148,21 @@ actions in dimension four and odd characteristic. The new Lean
 intertwiner-separation lemma checks one algebraic implication; the
 Pauli-support and module-classification arguments remain written proofs.
 
+The [linear/unitary corollary](phase9_linear_unitary.md) verifies the form
+theorem's hypotheses for every odd-field group between PSL4 and PGL4, and
+between PSU4 and PGU4. Both intervals have rank at most four; index-four
+extensions have a cyclic quotient obstruction to involution generation.
+The unitary rank-four existence question and field/graph extensions remain
+unresolved here. An additional Lean certificate checks the actual
+transvection-invariance matrix obstruction, with its projective-multiplier
+reduction and full group theorem outside the formal scope.
+
+The first [matched-proof measurement](phase9_L066_measurement.md) is now
+available: 10,668/3,192, approximately 3.34, for the two exact commuting-pair
+formulas outside degree six. It counts shared arguments once and retains
+explicit common background. It does not measure the other two principal
+results of that paper or the full literature corpus.
+
 ## Later extensions and a withdrawn completeness assumption
 
 The [weighted-tree theorem](phase6_weighted_tree.md) extends the known
@@ -209,7 +224,7 @@ range through order2^12. The unrestricted conjecture remains unresolved.
 
 ## Evidence and limits
 
-Fourteen [Lean modules](formal/README.md) compile with the pinned toolchain and
+Fifteen [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -224,7 +239,7 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker additionally covers the five later modules and their
+public snapshot checker additionally covers the six later modules and their
 successful reports. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 

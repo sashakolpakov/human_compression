@@ -234,6 +234,35 @@ higher-rank exclusions and the published rank-four existence theorem.
 `IntertwinerSeparation.lean` formalizes the abstract commutator obstruction;
 the full representation classification is not formalized.
 
+The subsequent linear/unitary application has two independent standard-library
+checkers. Both accept fresh output paths:
+
+```sh
+python3 research/case_study/phase9_linear_unitary_check.py --output /tmp/linear-unitary.json
+python3 research/case_study/phase9_torus_character_audit.py --output /tmp/torus-characters.json
+```
+
+The 45 integer character comparisons certify separation for every torus
+exponent at least three. The finite matrix-unit checks verify universal
+entry identities. The written proof supplies the group-theoretic deductions;
+`TransvectionForms.lean` independently checks actual transvection matrix
+invariance, without formalizing the full rank theorem.
+
+For the first proof-length measurement, obtain the primary PDF linked in
+[the measurement protocol](research/case_study/phase9_L066_measurement_protocol.json)
+and use its declared extractor version `pypdf==6.13.0`:
+
+```sh
+python3 research/case_study/phase9_L066_measure.py \
+  --source-pdf /path/to/Involutions.pdf --output /tmp/L066-measurement.json
+```
+
+The script checks the PDF, extracted-text and selected-span hashes before
+counting. It reproduces the matched two-formula comparison, its optional
+source-span sensitivity and marginal costs. It outputs counts and hashes,
+not the source text. This is a measurement, not a proof checker; the
+replacement argument and independent source-span review are separate files.
+
 For the pure-subfield and mixed-center Suzuki extension, run in a disposable
 copy, since the checker writes adjacent output:
 
@@ -249,7 +278,7 @@ are written proofs, with independent mathematical and primary-source review.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all fourteen certificates and their unformalized boundaries. With Git
+describes all fifteen certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
