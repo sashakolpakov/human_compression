@@ -92,3 +92,11 @@ case uniformly for the specified tight chiral family: every odd prime p,
 α≥2 and nonzero k modulo p. Its proof constructs the required covers,
 kernel actions and local injections. It retains the earlier source family
 construction and does not prove the general existence hypotheses above.
+
+The [two-primary analysis](COVER_TWO_PRIMARY.md) shows why the same two-axis
+argument does not transfer automatically to characteristic two: the two
+reductions become the same marked cover. It also supplies a different linear
+method. Aligning local complements turns odd abelian covers with injective
+ends into a vector problem in `Z[C\G]`; one exact 55-term integer identity
+excludes that class throughout the specified family. Its hypotheses and
+finite certificate are explicit.

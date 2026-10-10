@@ -87,6 +87,24 @@ pypdf 6.13.0 and the recorded rendering tools and fonts. The approved
 lower bound is 51,739/30,957, with N001 credited zero and the full required
 reference erratum included. It does not measure the annotated reader.
 
+## Two-primary covers and exact integer obstruction
+
+```sh
+python3 research/case_study/phase80_two_primary_verify.py \
+  --gap /path/to/gap --output-dir /tmp/human-compression-two-primary-new
+```
+
+This public runner needs Python and stock GAP 4.15.1. It verifies the 128-point
+model and all 55 integer terms, then runs the three unchanged GAP programs:
+eight construction checks, the complete degree-two/four census at β=5 with
+signs (+,+), and eight source-binding checks for the integral obstruction.
+It checks all 33 distributed input bindings before and after execution, keeps
+the three executed programs and raw logs, and compares both combined logs
+with the reviewed originals. Existing output paths are refused. Primary
+captures and historical wrappers are unnecessary. The uniform parameter
+reduction remains a separately reviewed written proof; this is no Lean build.
+See [the exact theorem scopes](COVER_TWO_PRIMARY.md).
+
 ## Odd-prime cover-family diagnostics and formal separation
 
 ```sh

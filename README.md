@@ -107,6 +107,14 @@ distinct minimal covers for every member of one specified infinite family,
 with a complete written review and eight exact finite checks. A separate
 Lean certificate verifies the algebraic character-separation step.
 
+The [two-primary cover analysis](COVER_TWO_PRIMARY.md) now has a complete
+written review and public replay. It proves that two natural construction
+routes yield the same minimal double cover throughout a specified family.
+A general affine-module criterion and one 55-term integer identity exclude
+odd abelian covering kernels when both end maps are injective. Global
+uniqueness remains unproved. The odd-prime [attribution audit](research/case_study/phase72_cover_family_priority_report.md)
+also identifies published criteria that already supply its polytopality steps.
+
 ## Results in this snapshot
 
 The [eleventh-source extension](COMPRESS_11.md) proves the 2001 Petrial
@@ -340,10 +348,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Forty Lean modules certify specified components, with no `sorry` in the checked
+Forty-one Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 39 reports have no native-evaluation axioms.
+axioms; the other 40 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

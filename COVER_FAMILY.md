@@ -38,12 +38,22 @@ join also proves the stated universal-kernel join-density for this family.
 ## Attribution and verification
 
 Cunningham's [earlier smallest-cover manuscript](https://gabrielcunningham.com/WhichChiralPolytopes.pdf)
-already uses a mix with a trivial facet extension and its dual in one finite
-example. Prime-degree minimality is part of that earlier strategy. The
-repository contribution is the uniform calculation: the full mirror fiber
-product, exact normal closure and common quotient, cover intersections,
-distinct characters and shared interval. The [claim ledger](research/case_study/phase59_cover_family_recent_audit_attribution.json)
-separates those contributions from borrowed construction and geometry.
+already supplies the finite example, the mix with a trivial facet extension
+and its dual, and the prime-index minimality argument. Published chirality
+results imply the order of R; its nonpolytopality was also established.
+The mix formula and facet-cover criteria are earlier results. In particular,
+the [published facet-cover criterion](https://arxiv.org/html/2506.19334v1#S6.SS1)
+establishes polytopality of Q, Q′ and H once the local maps are identified.
+
+The repository supplies an explicit all-parameter specialization: the exact
+normal closure, common marked quotient, degree-p calculations, local maps,
+distinct characters and complete interval under H. The
+[attribution audit](research/case_study/phase72_cover_family_priority_report.md)
+and [exact adapters to published criteria](research/case_study/phase72_cover_family_priority_adapters.md)
+identify what is borrowed and what is additionally calculated here.
+An [independent source comparison](research/case_study/phase82_cover_family_attribution_review.md)
+checks the exact cited hypotheses and applications. Independent derivation
+does not establish historical novelty.
 
 The complete GAP program rebuilds eight finite examples from bare
 presentations. Author, independent and public replays agree exactly after
@@ -69,9 +79,13 @@ checks both the public wrapper and the exact formal statement.
 
 This establishes the multiplicity assertion for the specified first family.
 The other four families and the general conjecture remain unresolved here.
-The [bounded literature check](research/case_study/phase55_cover_family_source_status.md)
-does not establish historical priority or comprehensive current openness;
+The [expanded literature check](research/case_study/phase72_cover_family_priority_report.md)
+retains material unread comparisons with a 2014 mix paper and relevant
+chapters of the 2025 book *Abstract Chiral Polytopes*. It does not establish
+historical priority or comprehensive current openness;
 no newly solved open-conjecture marker is cleared. This separate theorem
 adds no manuscript to Compress_10 and has no measured compression factor.
 Frozen author files retain their earlier pending-review wording; the linked
-independent review and root admission record the later status.
+independent review and root admission record the later status. The separate
+[two-primary analysis](COVER_TWO_PRIMARY.md) proves a construction coincidence
+and a restricted odd-abelian obstruction; it does not settle global uniqueness.

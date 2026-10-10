@@ -31,6 +31,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase63_ten_source_measurement_recent_audit_report.json",
           "phase70_petrial_integration_recent_audit.json",
           "phase76_eleven_source_root_audit.json",
+          "phase80_two_primary_root_audit.json",
+          "phase72_cover_family_priority_claims.json",
           "manuscript_replacements.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
@@ -40,7 +42,7 @@ UPDATES = {
         "principal_results_rederived", "All proved conclusions of the eight-page July25 2023 author manuscript; source conjectures excluded",
         "The shared kernel transport theorem, proved local mirror compatibility and regular-end induction recover the chirality criterion and corollaries. An affine square-torus argument handles the torus family; exact bare-presentation GAP computations and a prime-kernel argument recover the two distinct minimal regular covers.",
         "Standard string C+ and marked-cover correspondence; Chiral depth-two regular-section theorem; Square-tessellation quotient identification; Specified older atomic-family existence and prime chirality theorem; GAP exact algorithms for the finite example",
-        "phase41_chiral_cover_manuscript.md;phase41_chiral_cover_ledger.md;phase41_chiral_cover_intake.json;phase41_chiral_cover_manifest.json;phase43_chiral_cover_root_audit.md;phase43_chiral_cover_root_audit.json;phase43_chiral_cover_verify.py;phase43_chiral_cover_safe_root_replay.json;phase67_cover_family_root_audit.md;phase59_cover_family_recent_audit.md;formal/CoverCharacterSeparation.scope.md",
+        "phase41_chiral_cover_manuscript.md;phase41_chiral_cover_ledger.md;phase41_chiral_cover_intake.json;phase41_chiral_cover_manifest.json;phase43_chiral_cover_root_audit.md;phase43_chiral_cover_root_audit.json;phase43_chiral_cover_verify.py;phase43_chiral_cover_safe_root_replay.json;phase67_cover_family_root_audit.md;phase59_cover_family_recent_audit.md;formal/CoverCharacterSeparation.scope.md;phase80_two_primary_root_audit.md;phase72_cover_family_priority_report.md",
         "Author-version conditional contract; full publisher PDF unacquired. Now included in the independently reviewed Compress_10 assembly with its exact reference erratum. The older atomic classification is retained, not compressed. General multiplicity and complete five-family conjectures remain unproved by that assembly; current priority/open status and external review remain. A separate reviewed first-family theorem now constructs two minimal covers for all specified odd-prime parameters; the other four families remain. Its Lean module covers only character separation. Compress_10 has a conditional length lower bound 51739/30957, with N001 credited zero."),
     "L003": (
         "partial_progress", "Section9 rotational presentation with ((3,0),(2,0),(1,1),(s,0)); algebraic consequence near Problem9.2",

@@ -4043,7 +4043,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [thirty-nine Lean certificates](research/case_study/formal/README.md) cover
+The [forty-one Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -4057,6 +4057,8 @@ Boolean-image intersections and four-marker centralization, and the
 principal-kernel and nested-kernel criteria for full subgroup intersections.
 The endpoint modules prove the fixed-overlap mixed-intersection step and
 the two-coset obstruction.
+The later quotient-intersection module proves the exact kernel criterion;
+the character-separation module rules out the specified marked isomorphism.
 The additional transfer module checks exact finite arithmetic with native
 evaluation and its explicitly reported compiler trust.
 They do not formalize every geometric instantiation or classification used
@@ -4133,3 +4135,52 @@ order-two panel preimage forces the action kernel to vanish. The Petrial
 proof uses this after establishing transitivity, then checks that the second
 operation recovers distinct original faces. The kernel argument is shared;
 the connectivity and face-recovery arguments remain necessary and explicit.
+
+## Local complements and one universal permutation module
+
+The [two-primary cover analysis](COVER_TWO_PRIMARY.md) gives a further use
+of permutation matrices. Start with a finite 2-group G whose marked ends
+A and B are regular polytope groups, but whose intersection is too large:
+`A∩B=C⟨z⟩`, where C is the required medial subgroup, z centralizes C and
+the index is two. We want a cover in which the two lifted ends intersect
+only in the lifted C.
+
+Restrict the covering kernel to a finite odd abelian group V and require
+both end maps to be injective. Averaging splits every such extension as an
+affine group, since the orders of G and its subgroups act invertibly on V.
+After conjugation by a translation, one lifted end is the standard A and
+the other is a translate of B by a vector w. Their common elements are
+precisely those g in A∩B fixing w. The excess intersection is therefore
+removed exactly when z moves w while C fixes w.
+
+The marked outer commutation adds one more linear constraint. For the four
+reflection generators, the complete vector conditions are
+
+\[
+w r_1=w r_2=w,\qquad
+w(1-r_3)(1-r_0)=0,\qquad w(z-1)\ne0.
+\]
+
+We need not search through every odd abelian module separately. In the
+universal integral permutation module `P=Z[C\G]`, every C-fixed w is the
+image of the distinguished coset vector under a unique module map. Put
+`y=e_C(1−r3)(1−r0)` and `d=e_C(z−1)`. If a power of two times d belongs
+to the integral span of the translates of y, every candidate w satisfying
+the commutation constraint must also satisfy `w(z−1)=0`. This contradicts
+the required intersection repair.
+
+For the specified Γ2 family, a written normal-subgroup and presentation
+argument identifies the same quotient of order 1,024 and the same action
+on 128 cosets for every parameter. One exact 55-term identity expresses
+`2d` in that integral orbit span. The identity is checked with signed integer
+arithmetic; the proof transports it uniformly. It excludes all finite odd
+abelian kernels with injective ends, including kernels that are not vector
+spaces over a field.
+
+Over an odd finite field the criterion also constructs a cover whenever
+d survives in `P/(y F_pG)`: use that finite quotient module and its
+distinguished vector. This is a necessary-and-sufficient linear interface
+under the stated geometric hypotheses. Affine extensions, averaging and
+permutation modules are established ingredients. The explicit family
+reduction and certificate are the repository calculation; neither implies
+a classification of unrestricted covers or a historical-priority claim.

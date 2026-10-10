@@ -76,9 +76,23 @@ scoped Lean character-separation certificate. It gives two distinct minimal
 covers throughout the specified first family and a complete two-cover
 interval beneath their shared cover. It does not classify all covers.
 
+The [two-primary cover analysis](COVER_TWO_PRIMARY.md) is now independently
+reviewed. The construction routes give the same minimal double cover for
+every stated parameter, and the sample degree-two/four census is complete.
+A separate general module criterion and fixed 55-term integer identity exclude
+odd abelian kernels with injective end maps throughout the family. This
+provides useful restrictions without proving global uniqueness.
+
+The [expanded attribution comparison](research/case_study/phase72_cover_family_priority_report.md)
+credits published mix, chirality and facet-cover criteria for the relevant
+odd-prime proof steps. Exact normal-closure, degree, character and interval
+calculations remain the additional repository derivation; historical priority
+is unverified, with two material unread literature comparisons recorded.
+
 The immediate work is the next source integration, eleven-source attribution
-annotations and measurement, and independent review of the two-primary cover
-obstructions. Further cover constructions and priority comparison continue.
+annotations and measurement, and further cover constructions. A shared
+rank/excess census is being checked as a possible replacement for an imported
+finite catalogue lookup. Priority comparison continues.
 The general and complete five-family multiplicity
 conjectures remain unproved here. Proof review and computational diagnostics
 are distinct from establishing that a result was previously open; no

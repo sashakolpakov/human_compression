@@ -20,6 +20,21 @@ measurement bindings](phase74_originals.json) include the authored PDF and
 independent count/visual audit: a conditional lower bound of 1.671318×,
 crediting N001 zero. These additions clear no historical-priority marker.
 
+The [two-primary cover packages](../COVER_TWO_PRIMARY.md) have complete
+independent mathematical reviews, a fresh public replay of all three GAP
+programs and the integer certificate, and an independent isolated interface
+audit. Their [original-file bindings](phase76_originals.json) preserve every
+exported proof, program, data file and review. The all-parameter results and
+single-sample degree-two/four census have distinct scopes. They add no Lean
+component, assembled source or measured length factor.
+
+The odd-prime [expanded attribution comparison](../research/case_study/phase72_cover_family_priority_report.md)
+and [independent source review](../research/case_study/phase82_cover_family_attribution_review.md)
+have a separate [nine-file original record](phase77_originals.json).
+Published chirality, mix and facet-cover criteria supply designated proof
+steps. Additional exact family calculations and retained inputs are separated;
+the material gaps in current-priority verification remain explicit.
+
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite
 surface-cover family](phase34_review.md), and the [infinite presentation
