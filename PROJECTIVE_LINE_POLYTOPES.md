@@ -20,6 +20,10 @@ common centralizer proof + local markings + ten universal presentations
     → L079's stated principal classification.
 ```
 
+The extra Conjecture 11 was [answered in later literature](research/case_study/phase240_L079_status.md)
+by Connor, De Saedeleer and Leemans in 2015. Its exclusion here records a
+limit of this replacement, not a currently open question.
+
 The split into a complete topic umbrella U_E and two complete application
 papers is in progress. The reviewed combined proof supplies their
 mathematical content. Neither the nine-page rendering nor the two-source

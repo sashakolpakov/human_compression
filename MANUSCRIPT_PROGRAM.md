@@ -121,6 +121,8 @@ The [complete common proof and independent review](PROJECTIVE_LINE_POLYTOPES.md)
 include exact computation of all ten universal presentations. Five Lean
 statements verify the abstract normalizer obstruction. The matrix argument,
 classical inputs and complete classifications remain written and computational.
+The additional Conjecture 11 is [historically answered](research/case_study/phase240_L079_status.md);
+it remains outside our present replacement.
 The separate U_E, PSL₂ application and PGL₂ application are in preparation;
 no topic compression ratio has yet been measured.
 

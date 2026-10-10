@@ -65,3 +65,8 @@ by this catalogue.
 The [publication record](provenance/phase90_review.md) distinguishes the
 frozen private evidence hashes from five existing public versions with
 documented navigation, path or documentation changes.
+
+The census also records questions answered by later authors. In particular,
+[L079 Conjecture 11](research/case_study/phase240_L079_status.md) was answered
+by Connor, De Saedeleer and Leemans in 2015. It is not a new solution by
+this project and is not added to the eleven repository-result entries.
