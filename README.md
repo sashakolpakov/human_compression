@@ -87,6 +87,12 @@ including exact statements, the extent of each proof, checks of later
 literature and uncertainty about priority. These results are assessed
 separately from compression of previously proved results.
 
+The [four PGL maniplex families](PGL_MANIPLEX_FAMILIES.md) answer the
+2023 source conjecture in all four cases, with explicit prime progressions,
+a complete written proof and independent review. Eleven Lean declarations
+verify its matrix and unipotent algebra. A full Lean formalization and
+historical priority remain unverified.
+
 The [label-eleven obstruction](LABEL_ELEVEN_OBSTRUCTION.md) gives a
 complete negative answer to Li–Zhang’s preprint Conjecture 3.7: every
 rank d≥5 is excluded at that label. The full proof, independent review,

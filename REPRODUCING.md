@@ -2592,3 +2592,22 @@ files; its historical source-reading record remains bound. One cached
 review `.olean` is omitted and recompiled from source. See the
 [admission](provenance/phase127_review.md) and
 [fresh replay](research/case_study/phase259_replay/report.json).
+
+## Four infinite PGL families
+
+The public replay checks all author and independent finite samples and
+compiles the eleven scoped Lean declarations, without primary full texts:
+
+```sh
+python3 -B -O research/case_study/phase262_check.py \
+  --out /tmp/NEW-four-family-check \
+  --gap GAP_4_15_1 --lean LEAN_4_32_2 --packages PINNED_PACKAGES
+```
+
+It verifies 48 local S₄ cases, the two literal Coxeter presentation orders,
+three excluded parameters and four semantic mutations. The
+[full written proof and scope](PGL_MANIPLEX_FAMILIES.md),
+[independent review](research/case_study/phase261_review.md), and
+[fresh replay](research/case_study/phase262_public_replay/report.json)
+are separate evidence. The unchanged private review driver additionally
+requires the bound primary PDFs; those PDFs are not redistributed.

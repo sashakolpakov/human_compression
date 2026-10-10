@@ -689,3 +689,13 @@ equal-sign power collapse and their direct source specialization. The
 [fresh compilation report](PeriodSignObstruction.check.json) distinguish
 this formal obstruction from the written positive classifications and
 trusted finite catalogue. All three declarations use standard axioms only.
+
+## Four projective marks
+
+[FourProjectiveMarks.lean](FourProjectiveMarks.lean) proves eleven actual
+matrix and lower-unipotent identities used in the four-family PGL proof.
+The [scope](FourProjectiveMarks.scope.md) and
+[fresh compilation](FourProjectiveMarks.check.json) distinguish those
+standard-axiom declarations from the remaining written group and
+number-theoretic arguments. No complete Lean proof of the four families
+is claimed.

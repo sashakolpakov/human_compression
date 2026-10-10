@@ -521,3 +521,9 @@ phase250/254 author and independent review packets, with one explicitly
 omitted cached build product. It adds one complete specified principal
 contract and three limited period-sign Lean declarations, with no question
 credit or compression ratio.
+
+The [four-family PGL admission](phase128_review.md) publishes one complete
+answer to the bound 2023 conjecture, with preserved author/reviewer packets
+and a fresh public replay. It adds eleven scoped Lean declarations in one
+component and no principal-source or compression credit. Historical
+priority and full formalization remain unverified.

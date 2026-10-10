@@ -48,6 +48,13 @@ corrected source periods and finite nonexistence base. Three new Lean
 declarations verify the sign obstruction only; no ratio or new question
 credit is claimed.
 
+The [four-family PGL conjecture](PGL_MANIPLEX_FAMILIES.md) now has a complete
+reviewed affirmative answer. It is separate from principal-source recovery:
+the question catalogue has twelve entries, including eleven complete answers
+under their stated hypotheses. The new proof uses the centralizer theory and
+adds eleven scoped Lean declarations; full formalization and priority remain
+separate obligations.
+
 ## Further application material
 
 Each page states exactly which source results it recovers. Listing it here

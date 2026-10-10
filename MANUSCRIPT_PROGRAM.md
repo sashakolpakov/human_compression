@@ -200,7 +200,7 @@ that has not been measured should be reported as such.
 ## Conjectures and questions: recorded solutions
 
 Solutions to questions posed in the source literature are a separate
-part of the programme. The repository currently records **ten complete
+part of the programme. The repository currently records **eleven complete
 answers to the stated questions, under their specified hypotheses**, including
 the general minimal-cover theorem and the negative answer to F014 in its
 cited preprint version. One further entry addresses the two readings of
@@ -222,6 +222,7 @@ compression ratio: there was no earlier proof to put in its numerator.
 | L052, Problem 9.4 | A rank-three standard parabolic coset system is residually connected, excluding the requested simultaneous failure. | [Coset argument](research/case_study/coset_geometry_obstructions.md) and dedicated review; the complete geometric theorem remains written. |
 | F014, Conjecture 3.7, arXiv v1 | **False:** no regular d-polytope satisfying all the stated relations at label 11 exists for any d≥5. Every quotient retaining the adjacent order is excluded. | [Complete proof and certificates](LABEL_ELEVEN_OBSTRUCTION.md), independently reviewed. Nine general Lean declarations support the quotient argument; [coset bounds through rank three](COSET_CERTIFICATES.md) are now kernel-checked. The larger computations and full theorem remain outside Lean. The 2026 journal formulation and priority are unverified. |
 | Cunningham–Pellicer, Problem 5; N016, §4 | Every finite-rank abstract polytope has a minimal regular polytopal cover, unique exactly when its distinguished monodromy group is a string C-group. | [Full general proof and independent review](MINIMAL_REGULAR_COVERS.md). Covers may be infinite. Five new and six retained Lean declarations verify algebraic steps; the geometry and full theorem remain written. [Infinitely many finite covers](INFINITE_MINIMAL_COVERS.md) are proved separately in four families, and the [uniform square-torus application](SQUARE_TORUS_COVERS.md) adds every odd square-torus pyramid. The general finite version remains unresolved. |
+| L021, final conjecture of §5, May 2023 author edition | Four infinite regular rank-four PGL₂ families with one full end and other end S₄, A₅, PSL₂(p), or PGL₂(p). | [Complete proof and independent review](PGL_MANIPLEX_FAMILIES.md). Eleven Lean matrix/root-group declarations; the full existence theorem remains written. The bounded priority search does not establish a first-proof claim. |
 
 ### The remaining ambiguous formulation
 
@@ -236,5 +237,5 @@ for these answers. A recorded solution, a complete formal proof and a
 verified first solution to a still-open problem are distinct claims.
 F014 moves from a partial result to a complete negative answer for the
 bound source version. The minimal-cover result now answers the unrestricted
-question, beyond the earlier five families. The total remains eleven
-distinct question entries.
+question, beyond the earlier five families. The four-family PGL answer
+adds one entry. The total is now twelve distinct question entries.

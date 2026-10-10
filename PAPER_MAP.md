@@ -38,12 +38,12 @@ survey does not imply that its original source has been read.
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 23 |
+| full text read | 24 |
 | full text search only | 15 |
 | metadata and access only | 9 |
-| selected sections read | 61 |
+| selected sections read | 60 |
 
-**102** works have a retrieved full text; **60** have an explicit representation or a specified conditional or partial derivation; **47** have a recovered result, finite subfamily or stated main result.
+**102** works have a retrieved full text; **61** have an explicit representation or a specified conditional or partial derivation; **47** have a recovered result, finite subfamily or stated main result.
 
 The set with **stated main results recovered contains 25 works: L008, L012, L014, L030, L032, L034, L035, L066, L074, L079, L083, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
 The exact targets and qualifications govern membership in this set. Proposed
@@ -63,10 +63,9 @@ files preserve the exact statements, earlier results used, evidence and remainin
 | F010 | The main constructive theorems are recovered in a complete written argument, with local corrections. Lean verifies the stated hexagon component, not the universal constructions. | [Reviewed addition](research/case_study/phase193_F010_overlay.json); [proof reader](FINITE_INCIDENCE_REPRESENTATIONS.md) |
 | F014 | All stated positive rank-three main results in arXiv v1: exact construction, matrices, universal presentation and both corollaries. Montero–Ivić Weiss supply the earlier polygon construction; the printed inverse-action convention is corrected. The higher-rank counterexample is a separate result. | [Reviewed addition](research/case_study/phase233_F014_overlay.json); [complete application](EQUAL_LABEL_POLYGONS.md) |
 | L079 and L083 | Both complete specified rank-at-least-four PGL₂/PSL₂ classifications, their rank restrictions, universal table and stated geometric properties. L079’s extra seventeen-case census and Conjecture 11 are excluded. | [Reviewed addition](research/case_study/phase235_projective_line_overlay.json); [common proof](PROJECTIVE_LINE_POLYTOPES.md) |
-
 | L014 | Complete normal-Sylow structure, abelian/tight classification and all-parameter nonabelian construction, with the exact presentation and corrected v1 marking. The tightness converse retains Cunningham–Pellicer. | [Reviewed addition](research/case_study/phase249_L014_overlay.json); [complete application](ODD_KERNEL_POLYHEDRA.md) |
-
 | L012 | Complete declared mixed-prime type restriction, odd-factor presentation, exact existence range and all six affine families. Corrected period sign; Burnside, Lucchini, the order-384 catalogue and earlier umbrella/cubic proofs remain inputs. General classification, full Table 1 and ancillary seed uniqueness are excluded. | [Reviewed addition](research/case_study/phase259_L012_overlay.json); [complete application and affine theory](MIXED_PRIME_POLYHEDRA.md) |
+| L021 | Complete four-family PGL existence conjecture answered for explicit prime progressions; whole source read. This is a new question answer, not recovery of its principal PSL results. Priority and complete Lean verification remain unproved. | [Question admission](research/case_study/phase262_L021_question_overlay.json); [proof and review](PGL_MANIPLEX_FAMILIES.md) |
 
 Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain
 explicitly rejected; those entries have only abstract-level access. L125's
@@ -100,7 +99,7 @@ remaining-work record in the frozen JSON or the reviewed additions above.
 | L018 | 2024 | [There is no perfect Mondrian partition for squares of side lengths less than 1001](https://arxiv.org/pdf/2311.02385) | selected sections read | outside the present study |
 | L019 | 2024 | [The number of string C-groups of high rank](https://arxiv.org/pdf/2212.12723) | selected sections read | related work only |
 | L020 | 2024 | [A rank augmentation theorem for rank 3 string C-group representations of the symmetric groups](https://arxiv.org/pdf/2212.12563) | selected sections read | related work only |
-| L021 | 2023 | [Maniplexes with automorphism group PSL(2,q)](https://dipot.ulb.ac.be/dspace/bitstream/2013/359689/3/projectivemaniplexes_final.pdf) | selected sections read | related work only |
+| L021 | 2023 | [Maniplexes with automorphism group PSL(2,q)](https://dipot.ulb.ac.be/dspace/bitstream/2013/359689/3/projectivemaniplexes_final.pdf) | full text read | [proposed answer or new result](research/case_study/phase262_L021_question_overlay.json) |
 | L022 | 2023 | [Preface to the Special Issue in Memoriam of Jacques Tits](https://msp.org/iig/2023/20-2/p01.xhtml) | full short text read | not assessed |
 | L023 | 2023 | [Incidence geometries with trialities coming from maps with Wilson trialities](https://arxiv.org/pdf/2208.08215v2) | full text search only | related work only |
 | L024 | 2022 | [String C-groups with real Schur index 2](https://arxiv.org/pdf/2201.01313) | selected sections read | outside the present study |

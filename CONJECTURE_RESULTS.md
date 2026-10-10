@@ -1,7 +1,7 @@
 # Answers to source questions
 
 Question solving has its own record, separate from compression of known
-published results. The current catalogue contains **eleven entries: ten
+published results. The current catalogue contains **twelve entries: eleven
 recorded complete answers under their stated hypotheses and one answer to
 an explicit interpretation of an ambiguously worded question**. Completeness
 here concerns question coverage; Lean coverage and historical priority are
@@ -22,6 +22,7 @@ verified for any of them.
 | L003, Problem 9.2 | Finite examples exist for every specified parameter s≥2; the exact universal groups are infinite for every s≥6. | [Source wording and both answers](TOROIDAL_QUESTION.md). Finite-existence is affirmative; universal finiteness is false. Lean proves infinitude of the exact presentations, with geometric identification remaining written. Full universal-group structure and priority remain unverified. |
 | Cunningham–Pellicer, Problem 5; N016, §4 | Every abstract polytope of finite rank has a minimal regular polytopal cover; it is unique exactly when its distinguished monodromy group is a string C-group. | [Complete general proof and independent review](MINIMAL_REGULAR_COVERS.md). Covers may be infinite. Five new and six retained Lean declarations verify algebraic steps; the geometry and full theorem remain written. The [surface theorem](INFINITE_MINIMAL_COVERS.md) proves infinitely many finite covers in four families; the [square-torus application](SQUARE_TORUS_COVERS.md) adds every odd square-torus pyramid. The general finite version remains unresolved. |
 | F014, Conjecture 3.7, arXiv v1 | **False at label 11 in every rank d≥5.** The universal rank-five presentation and a signed intersection witness exclude every quotient retaining exact adjacent order. | [Full proof and independent review](LABEL_ELEVEN_OBSTRUCTION.md). Nine general Lean declarations and [kernel-checked coset bounds through rank three](COSET_CERTIFICATES.md), alongside the separate larger certificates; no complete Lean proof. Published 2026 wording and historical priority are unverified. |
+| L021, final conjecture of §5, May 2023 author edition | All four infinite rank-four PGL₂ families exist: the other end is S₄, A₅, PSL₂(p), or PGL₂(p), with explicit prime progressions. | [Complete proof and independent review](PGL_MANIPLEX_FAMILIES.md). Eleven Lean declarations verify actual matrix and unipotent algebra; the whole theorem remains written. A bounded later-literature search found no solution, but historical priority is unverified. |
 
 The [detailed catalogue](research/case_study/phase124_question_results.md)
 and [structured ledger](research/case_study/phase124_question_results.json)
@@ -71,4 +72,9 @@ documented navigation, path or documentation changes.
 The census also records questions answered by later authors. In particular,
 [L079 Conjecture 11](research/case_study/phase240_L079_status.md) was answered
 by Connor, De Saedeleer and Leemans in 2015. It is not a new solution by
-this project and is not added to the eleven repository-result entries.
+this project and is not added to the twelve repository-result entries.
+
+The [four-family admission](research/case_study/phase262_L021_question_overlay.json)
+adds the twelfth entry. Its complete affirmative answer, sources and
+independent review are [recorded separately](PGL_MANIPLEX_FAMILIES.md).
+It does not add a recovered historical principal contract or a ratio.
