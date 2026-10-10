@@ -1,9 +1,9 @@
 # Topic material A: Two-group polytopes and hypertopes
 
-**Status: a previously reviewed manuscript, to be reorganized into several
-papers on this topic.** Its proofs remain usable within their
-stated limits. The requested family A₁, A₂, … still needs to be written,
-and the cost of the new topic papers remains to be measured.
+**Status: retained proof material.** The [complete topic umbrella and first
+L032 application](TOPIC_A.md) are now independently reviewed. Five further
+application papers remain to be reworked from this manuscript. Its proofs
+remain usable within their stated limits; new topic costs remain unmeasured.
 
 Read the [complete PDF](research/case_study/phase138_render_A_v2/application.pdf),
 [Markdown manuscript](research/case_study/phase138_module_A_v2.md),
@@ -18,8 +18,8 @@ Prescribed orders, common quotients, local constructions and classifications
 need to be assigned to complete application papers, including the
 programs required by their proofs.
 
-The planned version will contain a complete umbrella for this topic, U_A,
-and complete application papers corresponding to historical manuscripts.
+The new version already contains a complete U_A and its first application;
+further applications will correspond to the remaining historical manuscripts.
 The full umbrella
 is charged independently within this topic, including any overlap with
 other topics. See the [programme](MANUSCRIPT_PROGRAM.md) and

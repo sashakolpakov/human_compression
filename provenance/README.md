@@ -1,5 +1,10 @@
 # Provenance and verification scope
 
+The [Topic A admission](phase119_review.md) publishes a complete umbrella
+and first source-specific application, with independent review and fresh
+public provenance replay. It also publishes the bounded minimal-cover
+literature audit. Counts and measured compression rates are unchanged.
+
 The [coset-certificate admission](phase118_review.md) adds a proved Lean
 inference kernel and concrete bounds through rank three, including all
 3,072 transitions in the rank-three certificate. Complete semantic review,

@@ -1,0 +1,145 @@
+# Prescribed rank, type and two-power order
+
+## Abstract
+
+For integers \(d\ge3\), \(n\ge5\) and \(k_1,\ldots,k_{d-1}\ge2\) satisfying \(\sum_i k_i\le n-1\), we construct a string C-group of rank \(d\), order \(2^n\) and type \(\{2^{k_1},\ldots,2^{k_{d-1}}\}\). This recovers the existence theorem of Hou, Feng and Leemans. The construction attaches dihedral groups to a product of elementary abelian factors and one affine square group. We verify all hypotheses of the supported-extension theorem, the exact order and every pair-product order. A standard correspondence then gives the regular polytope. We also include the elementary order bound showing that the parameter inequality is necessary. The construction works throughout the stated range without a separate small-order census.
+
+## 1. Markings and the source theorem
+
+Let \(G=\langle r_0,\ldots,r_{d-1}\rangle\), where the \(r_i\) are nonidentity involutions. For \(J\subseteq\{0,\ldots,d-1\}\), write \(G_J=\langle r_j:j\in J\rangle\). The marking has the intersection property if
+\[
+G_J\cap G_K=G_{J\cap K}\qquad(J,K\subseteq\{0,\ldots,d-1\}).
+\]
+It is a string C-group if it also satisfies \([r_i,r_j]=1\) whenever \(|i-j|>1\). Its rank is \(d\), and its type is the ordered list of adjacent product orders \((|r_0r_1|,\ldots,|r_{d-2}r_{d-1}|)\). We use \(D_{2m}\) for the dihedral group of order \(2m\).
+
+We retain the regular-polytope/string-C-group correspondence in [MS02, Section 2E], in exactly the form stated in Section 10 of the companion umbrella [UA]. A string C-group with its distinguished marking is the full automorphism group of a regular abstract polytope of the same rank and type; the group acts regularly on flags. Its order is therefore the number of flags. No geometric recognition stronger than this correspondence is needed below.
+
+**Theorem 1 (Hou–Feng–Leemans).** Suppose
+\[
+d\ge3,\qquad n\ge5,\qquad k_i\ge2\ (1\le i\le d-1),\qquad
+\sum_{i=1}^{d-1}k_i\le n-1.
+\tag{1}
+\]
+There exists a string C-group of rank \(d\), order \(2^n\), and type
+\[
+\{2^{k_1},\ldots,2^{k_{d-1}}\}.
+\tag{2}
+\]
+Consequently there is a regular abstract \(d\)-polytope with exactly that type and \(2^n\) flags.
+
+This is Theorem 1.2 in the specified author edition of [HFL20], dated 8 November 2019, together with its stated geometric interpretation. We give a proof using [UA]; the proof does not assert that the constructed group is the particular presentation used in the source's induction. The theorem is an existence statement, not uniqueness or classification of all such groups.
+
+## 2. The base and its local quotients
+
+Put
+\[
+\delta=n-1-\sum_{i=1}^{d-1}k_i.
+\tag{3}
+\]
+Then \(\delta\) is a nonnegative integer. Proposition UA.Square gives a three-generator group \(H_{\delta+5}=\langle a,b,c\rangle\), of order \(2^{\delta+5}\), with pair orders
+\[
+|ab|=|bc|=4,\qquad |ac|=2,
+\tag{4}
+\]
+and all Boolean deletions. These assertions come from the complete affine square presentation and its square or diagonal lattice quotient; they do not use classification of all groups of this order.
+
+Let \(V=C_2^{d-3}\), with coordinate generators \(e_0,\ldots,e_{d-4}\), and set
+\[
+B=V\times H_{\delta+5}.
+\tag{5}
+\]
+When \(d=3\), the first factor and its generator list are empty. Give \(B\) the ordered marking
+\[
+b_j=(e_j,1)\quad(0\le j\le d-4),\qquad
+b_{d-3}=(1,a),\quad b_{d-2}=(1,b),\quad b_{d-1}=(1,c).
+\tag{6}
+\]
+These markers generate \(B\) and are nonidentity involutions. Restricting coordinates in \(V\), together with any deletion of the three square markers, gives the deletion of any chosen subset of (6). Thus \(B\) has every Boolean deletion and hence IP by UA.D.
+
+For the consecutive pair \(S_i=\{i-1,i\}\), let \(q_i=|b_{i-1}b_i|\). Directly from (4) and the direct product in (5),
+\[
+q_i=\begin{cases}
+2,&1\le i\le d-3,\\
+4,&i=d-2,d-1.
+\end{cases}
+\tag{7}
+\]
+The first range is empty for \(d=3\). Every \(q_i\) divides \(m_i=2^{k_i}\). The subgroup \(B_{S_i}\) is the marked dihedral group \(D_{2q_i}\). There is a marked quotient
+\[
+\pi_i:E_i=D_{2m_i}\longrightarrow B_{S_i},\qquad
+u_i\longmapsto b_{i-1},\quad v_i\longmapsto b_i,
+\tag{8}
+\]
+where \(u_i,v_i\) are the standard generating reflections. Its kernel has order \(m_i/q_i\). It is injective on every proper marked subgroup of \(E_i\): the only possibilities are the trivial subgroup and the two order-two reflection subgroups. Let \(p_i:B\to B_{S_i}\) be the deletion which keeps the two markers in \(S_i\). Thus every local datum required by UA.SK and UA.Edge has been supplied, including genuine deletions and proper-parabolic injectivity.
+
+## 3. Construction and proof of Theorem 1
+
+Form the compatible product
+\[
+H=\left\{(g,x_1,\ldots,x_{d-1})\in B\times\prod_{i=1}^{d-1}E_i:
+\pi_i(x_i)=p_i(g)\text{ for every }i\right\}.
+\tag{9}
+\]
+For \(0\le j\le d-1\), define \(r_j\) to have base coordinate \(b_j\), local coordinate \(u_i\) when \(j=i-1\), local coordinate \(v_i\) when \(j=i\), and identity in all other local coordinates. The deletion rule makes each tuple satisfy (9). Every coordinate is an involution or the identity, while the base coordinate is nonidentity. Thus \(r_j\) has order exactly two.
+
+The hypotheses checked in Section 2 allow us to apply UA.Edge. It proves that these tuples generate the whole group (9), that their marking has IP, and that
+\[
+|r_{i-1}r_i|=m_i=2^{k_i}\qquad(1\le i\le d-1).
+\tag{10}
+\]
+Generation of the whole compatible product is essential for the order calculation: it is a conclusion of the supported-kernel theorem, not an assumption that the tuple-generated subgroup has the ambient product's order.
+
+For \(|j-\ell|>1\), the base markers \(b_j,b_\ell\) commute. This follows from the central elementary abelian factor and, for the only such pair within the three square markers, from \(ac=ca\). No support \(S_i\) contains both \(j\) and \(\ell\); therefore in every local coordinate at least one of \(r_j,r_\ell\) is the identity. The two tuples commute in the full direct product and hence in \(H\). This proves the string condition.
+
+The exact order formula of UA.Edge gives
+\[
+\begin{aligned}
+|H|
+&=2^{d-3+\delta+5}
+  \prod_{i=1}^{d-3}2^{k_i-1}
+  \prod_{i=d-2}^{d-1}2^{k_i-2}\\
+&=2^{d+\delta+2+\sum_{i=1}^{d-1}k_i-(d-3)-4}\\
+&=2^{1+\delta+\sum_{i=1}^{d-1}k_i}
+ =2^n.
+\end{aligned}
+\tag{11}
+\]
+All kernel exponents are nonnegative by \(k_i\ge2\). The first product is empty when \(d=3\), so the same calculation applies without a separate argument. We have proved generation, exact involutory orders, IP, the string condition, every adjacent product order and the full group order. Thus the marking is the string C-group claimed in Theorem 1. The retained correspondence gives the regular polytope and identifies its full automorphism group with \(H\). \(\square\)
+
+The boundary \(\delta=0\) uses \(H_5\) and is included. For example, \(d=3\), \(n=5\), \(k_1=k_2=2\) gives \(B=H_5\); both local quotients have trivial kernels, and (9) recovers the order-32 square group. This checks the lower endpoint through the same construction, without an external list of small groups.
+
+## 4. The necessary order bound
+
+We include the elementary bound used to interpret (1). It is due to Conder in the source's attribution [Con13, Theorem 3.2; HFL20, Proposition 2.2]. The proof is the endpoint-coset argument already used in the reviewed two-group manuscript.
+
+**Proposition 2.** A finite string C-group of rank \(d\), with adjacent product orders \(m_1,\ldots,m_{d-1}\), has order at least \(2\prod_{i=1}^{d-1}m_i\).
+
+*Proof.* Write \(a=r_0\), \(b=r_1\), and \(K=\langle r_1,\ldots,r_{d-1}\rangle\). IP gives
+\[
+K\cap\langle a,b\rangle=\langle b\rangle.
+\]
+The dihedral group \(\langle a,b\rangle\) has rotation subgroup \(\langle ab\rangle\) of order \(m_1\), meeting \(\langle b\rangle\) trivially. If \(K(ab)^i=K(ab)^j\), then \((ab)^{i-j}\) belongs to that trivial intersection. Thus the \(m_1\) right cosets \(K(ab)^i\), \(0\le i<m_1\), are distinct, and \([G:K]\ge m_1\).
+
+The induced marking of \(K\) is a string C-group of rank \(d-1\), because string commutation and IP restrict to subsets of markers. Iterate the argument, terminating at a subgroup generated by one nonidentity involution, of order two. Multiplying the successive index bounds proves the result. \(\square\)
+
+For a group of order \(2^n\) and type (2), Proposition 2 gives \(\sum_i k_i\le n-1\). Combined with Theorem 1, the inequality is exactly the existence condition within the stated finite, nondegenerate two-power setting. Since every \(k_i\ge2\), it also gives \(2d-1\le n\). This concerns possible types and orders, not classification of all realizing marked groups.
+
+## 5. Source coverage and retained work
+
+The intake is one edition: [HFL20], the eight-page revised author manuscript dated 8 November 2019. The principal source contract is Theorem 1.2. The proof covers every stated parameter, including \(5\le n\le9\), and the regular-polytope interpretation. Proposition 2 recovers the recalled order bound with its original attribution. We do not claim the source's particular defining presentation or every auxiliary proposition, and do not solve its recalled classification problem for all two-power orders.
+
+The common proofs in [UA] are the affine normal form and square/diagonal seed, Boolean deletions, supported-kernel generation, exact local recognition and order formula. The local work here is the choice of base and maps, each proper-parabolic injection, the distant-marker calculation, and the parameter calculation. These were present in the reviewed combined manuscript and have been reworked into a closed source-specific argument. No new historical existence theorem is claimed.
+
+The geometric correspondence in Section 1 is retained without proof. Standard elementary group and integer arithmetic are also used. No GAP program, saved census, atlas table, small-group classification or theorem recognizing all square maps is an input to this construction. Existing Lean certificates verify their declared supported-kernel core; the full affine premise and complete source-to-conclusion chain are not presently formalized in Lean. The accompanying scope distinguishes those declarations from any newly checked arithmetic.
+
+The shared umbrella and this complete application both belong to the cost of the derivation. No compression rate is assigned before independent review and matched rendering; the final substitution in (11) alone is not the cost of the paper.
+
+## References
+
+[UA] *Supported extensions and finite two-group quotients*, companion topic umbrella, phase207 author edition.
+
+[HFL20] D.-D. Hou, Y.-Q. Feng and D. Leemans, *On regular polytopes of 2-power order*, revised author manuscript dated 8 November 2019; *Discrete & Computational Geometry* 64 (2020), 339–346. DOI: 10.1007/s00454-019-00119-5. The exact primary edition is hash-bound in the accompanying source contract.
+
+[Con13] M. Conder, *The smallest regular polytopes of given rank*, *Advances in Mathematics* 236 (2013), 92–110.
+
+[MS02] P. McMullen and E. Schulte, *Abstract Regular Polytopes*, Cambridge University Press, 2002, Section 2E.

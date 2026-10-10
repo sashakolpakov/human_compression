@@ -31,11 +31,13 @@ Read the [manuscript programme](MANUSCRIPT_PROGRAM.md),
 The existing A–D documents each combine several sources in one reviewed
 manuscript. They must be **reworked into families of papers on each topic**.
 Their proofs, records of the source results and certificates remain
-usable. The new application papers A₁, A₂, … still need to be written.
+usable. [Topic A now has a complete umbrella and first application](TOPIC_A.md),
+independently reviewed and rendered at 15 and 4 pages. The remaining
+application families are unfinished.
 
 | Mathematical topic | Reviewed material and restructuring status |
 |---|---|
-| Two-group polytopes and hypertopes | [A source material](MODULE_A.md) |
+| Two-group polytopes and hypertopes | [Complete U_A and first application](TOPIC_A.md); [remaining source material](MODULE_A.md) |
 | Forest coordinates and primitive coset geometries | [B source material](MODULE_B.md) |
 | Halving and Petrial operations on regular geometries | [C source material](MODULE_C.md) |
 | Marked actions, field orbits and geometry enumeration | [D source material](MODULE_D.md) |
@@ -81,7 +83,9 @@ answers Cunningham–Pellicer’s unrestricted question: a polytope of finite
 rank has a unique minimal regular polytopal cover exactly when its
 monodromy group is a string C-group. The full written proof and
 independent review cover arbitrary flag sets; five new Lean declarations
-verify the stated algebraic steps. The covers may be infinite.
+verify the stated algebraic steps. The covers may be infinite. A
+[bounded literature audit](research/case_study/phase227_priority_audit.md)
+found no earlier complete resolution; historical priority remains unverified.
 
 The [surface construction](INFINITE_MINIMAL_COVERS.md) gives the stronger
 conclusion of infinitely many **finite** minimal regular covers throughout

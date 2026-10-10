@@ -16,6 +16,10 @@ STUDY = ROOT / "research/case_study"
 # Exact project-authored renderings only. Primary publication PDFs and source
 # raster/text captures remain excluded from the distributed snapshot.
 OWN_RENDERED_PDFS = {
+    "research/case_study/phase228_umbrella.pdf":
+        "a847695734b9e9bb88f3b0a6b977197c480fa8b667998751268898e3eb500166",
+    "research/case_study/phase228_application.pdf":
+        "3bd794ddfc116ab28d83d8d99c43160db4311e28dd2c574678658bc49bcf590b",
     "research/case_study/phase179_livingstone.pdf":
         "e5ff46b8b96e00402470eff20b5ba6815bb647d577a58de0ec08f0726316b836",
     "research/case_study/phase164_enumeration.pdf":
@@ -64,6 +68,7 @@ def frozen_question_exports():
         "phase221_export.json": "7325a1698d540caf372ac8b4e0bf0f392e706c26ef59279dde7f027d6e797ab7",
         "phase223_export.json": "89f51c64ef3f86c0b1f566223ce0afb8e92e366f11dc52f963e454b887ef65a7",
         "phase225_export.json": "2da3e1b6d6fea721b051bf4f575c615de80ff7c3a1b65465d23f844860c9e061",
+        "phase231_export.json": "73b010822235ac33101c4cd30e29a159b1a6870affb5bf72aab986828cc9a298",
     }
     # Current readers may be updated; their original publication bytes stay
     # bound at these explicit archive paths. No proof bytes are rewritten.

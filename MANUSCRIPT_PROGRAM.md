@@ -24,12 +24,13 @@ split one argument into nominally separate papers.
 
 The current A–D documents each combine several sources in one reviewed
 manuscript. We will reorganize their proofs while preserving every
-mathematical qualification. The families of application papers still need
+mathematical qualification. [Topic A now has its complete umbrella and
+first application](TOPIC_A.md). The other application papers still need
 to be written.
 
 | Topic | Existing reviewed manuscript | Required next structural work |
 |---|---|---|
-| A: Two-group polytopes and hypertopes | [Construction and classification](MODULE_A.md) | Separate the shared theorems about kernels, quotients and local constructions from complete papers devoted to the individual historical results; review the L032 dependency pilot |
+| A: Two-group polytopes and hypertopes | [Complete U_A and L032 application](TOPIC_A.md); [remaining proof material](MODULE_A.md) | Rework the five remaining applications; retain their full presentation, classification and geometric arguments |
 | B: Forest coordinates and primitive coset geometries | [Forest coordinates](MODULE_B.md) | Identify its full topic umbrella and preserve the complete recognition, generation and geometric applications |
 | C: Halving and Petrial operations on regular geometries | [Operations on regular geometries](MODULE_C.md) | Separate reusable changes of generators and arguments about the objects preserved by these operations from full geometric identifications and censuses |
 | D: Marked actions, field orbits and geometry enumeration | [Marked actions and enumeration](MODULE_D.md) | Extract shared theorems about actions and extensions; keep complete field and classification arguments, including correspondence with historical tables, in the application papers |
@@ -46,8 +47,8 @@ does not establish all the results promised by an application paper.
 ## Source papers and results already recovered
 
 These tables describe the existing reviewed proofs that will be reused.
-They do not claim that the new families of application papers have already
-been written. Each qualification remains part of the result when the
+The standalone L032 application is now complete; the other new families
+of application papers have not yet been written. Each qualification remains part of the result when the
 proof is moved into the new structure.
 
 ### A. Two-group polytopes and hypertopes
@@ -61,8 +62,9 @@ proof is moved into the new structure.
 | F013 | Hou and Schulte, *String C-groups of 2-power order project onto a common string C-group* (2026 preprint, arXiv:2605.20691v1) | The common marked quotient and associated polytope covering results, Theorems 1.1–1.2 | Applies to the stated finite nondegenerate groups; auxiliary source corrections and the standard group/polytope correspondence remain explicit |
 | L034 | Hou, Feng and Leemans, *Existence of regular 3-hypertopes with 2^n chambers* (2019 author version, arXiv:1901.09034v1) | The exact group presentation, order, type and regular geometry; the three cyclic kernels and the quotient decomposition | The source's parity assignments and repeated kernel generator are corrected; Conjecture 3.3 is not proved by this construction |
 
-See the [A manuscript and review](MODULE_A.md) for the full statements and
-all computations needed by the proofs.
+The [complete U_A and first application](TOPIC_A.md) recover L032 through
+an explicit supported construction. The [earlier A manuscript](MODULE_A.md)
+retains the other proofs and their required computations.
 
 ### B. Forest coordinates and primitive coset geometries
 

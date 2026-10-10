@@ -6,6 +6,10 @@ The active task is to turn the existing reviewed manuscripts into
 and [dependency pilot](DEPENDENCY_PILOT.md). The existing combined A–D manuscripts
 are material for that task, not completed Aᵢ/Bᵢ families.
 
+The first completed pair is [Topic A’s umbrella and L032 application](TOPIC_A.md),
+with independent review, complete 15+4-page texts and 34 inherited Lean checks.
+This reorganizes an existing recovery and adds no principal-source credit.
+
 ## Reviewed material to reuse
 
 | Material | What the landing page supplies |

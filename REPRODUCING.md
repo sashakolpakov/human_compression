@@ -1,5 +1,17 @@
 # Reproducing the checks
 
+The [complete Topic A papers](TOPIC_A.md) have a public binding and provenance replay:
+
+```sh
+python3 -B -O research/case_study/phase228_check.py --rebuild --out /tmp/NEW-topic-A-review.json
+```
+
+This reconstructs the common paper byte for byte and verifies the bound
+review and rendering evidence. It does not execute Lean; the separate
+[formal replay instructions](research/case_study/phase228_replay.md) reproduce
+the 34 inherited declarations. Full primary verification requires the
+source PDF acquired separately.
+
 The [formal coset certificates](COSET_CERTIFICATES.md) have a dedicated
 Lean replay and a separate independent deduction replay:
 
