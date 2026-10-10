@@ -44,6 +44,7 @@ CERTIFICATES = (
     "OddKernelWord",
     "OddCoverSeparation",
     "CoprimePullback",
+    "SupportedKernelGeneration",
 )
 
 

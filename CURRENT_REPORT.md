@@ -63,10 +63,17 @@ and two qualified family or interpretation results. This is an inventory
 of existing claims and evidence, not ten newly audited solutions or a
 count of conjectures confirmed still open before our work.
 
-Forty-four existing Lean components retain their individual statements,
+Forty-five existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.
+
+The latest component proves the structural part of U.SK: actual generation
+of the simultaneous fiber product, every parabolic kernel profile and full
+IP. The [independent review](research/case_study/phase133_supported_kernel_review.md)
+and fresh public compilation cover all ten new declarations. Its kernel
+profile is a conclusion, not an assumption. The order formula and separate
+corollaries remain outside this admitted certificate.
 
 The [measurement protocol](PROOF_LIBRARY.md) compares original source
 lengths with complete modules and with U charged once across modules. It

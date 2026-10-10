@@ -12,6 +12,28 @@ for the public runners. A successful hash check, a fresh computation, and a
 Lean compilation establish different things; the commands below keep those
 claims separate.
 
+## Supported-kernel construction
+
+The [scope](research/case_study/formal/SupportedKernelGeneration.scope.md)
+identifies the structural U.SK theorem proved in Lean. Its dedicated
+runner recompiles all three local modules and checks the exact hashes,
+pinned dependencies and all ten new axiom reports:
+
+```sh
+python3 -B -O research/case_study/phase129_supported_kernel_check.py --packages /path/to/.lake/packages --lean /path/to/lean --output-dir /tmp/NEW-supported-kernel-build
+python3 -B -O research/case_study/phase129_supported_kernel_controls.py --packages /path/to/.lake/packages --lean /path/to/lean --output-dir /tmp/NEW-supported-kernel-controls
+python3 -B -O research/case_study/phase133_supported_kernel_hypotheses.py --output /tmp/NEW-supported-kernel-hypotheses.json
+```
+
+Every output path must be new. The second command checks seven wrapper
+rejections; the third checks one positive finite example and six cases
+where removing a single hypothesis makes a conclusion fail. These finite
+diagnostics do not prove the general theorem. The
+[independent review](research/case_study/phase133_supported_kernel_review.md)
+also read the complete Lean statement and proof. The ordinary
+`formal/verify_lean.py SupportedKernelGeneration.lean` entry point is
+registered and was separately executed from this public layout.
+
 ## Covers with enlarged ends
 
 The complete [coprime fiber-product theorem](research/case_study/phase115_coprime_pullback_theorem.md)
@@ -66,7 +88,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the forty-four saved Lean reports
+checks local documentation links, and checks the forty-five saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -908,7 +930,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all forty-four certificates and their unformalized boundaries. With Git
+describes all forty-five certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh

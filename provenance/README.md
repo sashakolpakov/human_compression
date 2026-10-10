@@ -1,6 +1,11 @@
 # Provenance and verification scope
 
-The current snapshot admits [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
+The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
+with complete U and A drafts and Module B in preparation. There are
+forty-five scoped Lean components. Source coverage, complete modular
+replacement and measured compression are distinct claims.
+
+An earlier snapshot admitted [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
 with the shared universal finite-kernel theorem, complete corrected N009
 contract, independent mathematical review and fresh public replay. Its
 [108-file export record](phase81_originals.json) preserves author, reviewer
@@ -11,9 +16,9 @@ and root artifacts. The previous
 audit and [original-file record](phase70_originals.json).
 The [complete C measurement](../COMPRESS_C.md) is recorded honestly as 2.386%
 expansion, with its [bound measurement and authored PDF](phase71_originals.json).
-The current registry has seventeen principal-result candidates, twelve sources
-in reviewed assemblies and forty-three scoped Lean components. These are different
-coverage measures, not a corpus compression ratio.
+Those historical assemblies remain reusable proof material, with their
+own frozen measurements; their structure and size are not the new
+programme's product or benchmark.
 
 The [Γ2 construction with enlarged ends](../COVER_ENLARGED_ENDS.md) has a
 separate [22-file record](phase86_originals.json), with eighteen unchanged
@@ -329,3 +334,8 @@ U+A drafts, with 28 umbrella statements and a 21-page five-source
 application. Root's full proof reading, exact rebuild and corrected
 portable reproduction are recorded separately from pending source
 admission, formalization and matched measurement.
+
+The [phase-93 record](phase93_review.md) admits the actual supported-kernel
+generation, profile and intersection theorem in Lean after independent
+review and two fresh compilation paths. Its local hypotheses and remaining
+formal obligations are explicit. This is the forty-fifth scoped component.

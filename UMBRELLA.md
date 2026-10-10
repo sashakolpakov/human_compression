@@ -32,3 +32,11 @@ Root has read the complete U and A proofs. The
 what was checked and what remains. Full formalization, final source
 admission and matched length measurement remain incomplete. The earlier
 U checkpoint is preserved only for reproducible edit accounting.
+
+The structural part of U.SK now has a
+[Lean certificate](research/case_study/formal/SupportedKernelGeneration.lean):
+it proves generation, every parabolic kernel profile and the full
+intersection property from the actual local hypotheses. The
+[independent review](research/case_study/phase133_supported_kernel_review.md)
+checks its correspondence to the written argument. The order formula,
+separate corollaries and application bindings remain outside this certificate.
