@@ -3692,7 +3692,33 @@ unfilled universal geometry. Prescribing an arbitrary finite parameter
 requires an additional quotient argument preserving the local groups and
 the geometry; largeness alone does not supply that argument.
 
-## 61. The remaining work, and how a living reduction should record it
+## 61. One parity-fixed origin splits the entire affine family
+
+The [splitting supplement](research/case_study/phase35_L003_affine_split.md)
+adds a short structural result to the compact model. Its four generators
+fix $t=(1,0,1,1,0,0)$ modulo two. In the coordinates $a=t+2c$, their
+translation parts are integral, and the already proved translation kernel
+becomes the full lattice $\mathbb Z^6$.
+
+For any linear image $M\in Q$, take an affine lift $(M,v)$. Translation by
+$-v$ already belongs to the group, so $(M,0)$ belongs too. Therefore
+
+$$\Gamma\cong\mathbb Z^6\rtimes Q,\qquad
+G_m\cong(\mathbb Z/m\mathbb Z)^6\rtimes Q.$$
+
+The displayed six-dimensional integral matrices specify the action of
+$Q$, whose order is 1,296. The argument uses four parity checks and the
+retained complete lattice certificate; it makes no extension-class guess.
+The finite reduction kernel is exactly $m\mathbb Z^6$ in these coordinates,
+so the description works for every modulus.
+
+The group $Q$ remains the abstract integral group even when its matrix
+action modulo $m$ has a kernel. At $m=1$, for example, the group is $Q$,
+although the lattice has one point. This distinction prevents an incorrect
+collapse when converting a group extension into a finite affine action.
+The original action modulo $2m$ supplies the faithful marked model.
+
+## 62. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

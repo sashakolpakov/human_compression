@@ -54,7 +54,9 @@ uses just four affine maps on six integer coordinates. Reducing modulo
 $2m$ gives parameter $s=2m$ and group order $1296m^6$. Its standalone
 certificate checks all 5,287 flags of the finite base; an exact intertwiner
 identifies it with the earlier voltage construction. [Lean checks](research/case_study/formal/CompactAffineData.scope.md)
-the literal matrix relations and translation words.
+the literal matrix relations and translation words. A [short splitting argument](research/case_study/phase35_L003_affine_split.md)
+also identifies every group as $(\mathbb Z/m\mathbb Z)^6\rtimes Q$, with
+the same explicit integral group $Q$ of order 1,296.
 
 The [multiples-of-three family](research/case_study/phase34_L003_triple_family.md)
 uses the same quotient theorem, with an independent exhaustive check of

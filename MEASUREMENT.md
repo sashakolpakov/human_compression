@@ -553,3 +553,10 @@ quotient. These are new structural consequences in the stated scope,
 with priority unverified; they do not close every finite parameter case.
 The two matched ratios, existing-paper coverage and infinity marker stay
 unchanged.
+
+
+Phase forty-three identifies every specified even-family group as a split
+extension C_m^6 semidirect Q, with one fixed integral action of the order-1296
+group Q. This short structural consequence has not been matched against
+source proof spans. It changes no existing-paper count, measured ratio or
+infinity marker.

@@ -491,6 +491,9 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["exact_target"].append({"reference":"Universal geometry before imposing the parameter relator", "scope":"Actual regular rank4 U_infinity=P_omit semidirect C2; fixed local orders36,48,108 and one exact Euclidean[6,3] local group. Its index1296 subgroup surjects ontoF2, so it is not virtually solvable and its compact affine quotient is proper.", "relation_to_source":"unfilled_structural_consequence"})
         r["method"].append("Nonabelian free-word voltages with two explicit onto-F2 witnesses; three protected universal parabolics; Euclidean lattice injectivity and its centralizer.")
         r["evidence"] += [evidence(n,"Free quotient and unfilled universal geometry") for n in ("phase34_L003_unfilled_structure.md","phase34_L003_unfilled_manifest.json","phase35_L003_unfilled_geometry.md","phase35_L003_unfilled_geometry_manifest.json","phase35_unfilled_rank_audit.md","phase35_L003_unfilled_root_audit.md")]
+    if identifier == "L003":
+        r["exact_target"].append({"reference":"Uniform splitting of the compact affine family", "scope":"A common origin modulo2 gives Gamma=Z6 semidirect Q and every G_m=C_m6 semidirect Q, with Q the fixed integral order1296 group, not its potentially smaller modm matrix image.", "relation_to_source":"specified_quotient_structure_consequence"})
+        r["evidence"] += [evidence(n,"Exact affine splitting") for n in ("phase35_L003_affine_split.md","phase35_L003_affine_split_manifest.json","phase35_L003_affine_split_root_audit.md")]
     if identifier == "L034":
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True

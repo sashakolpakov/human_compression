@@ -1563,3 +1563,15 @@ identification are separate written consequences of the compact family.
 The retained GAP finder and log record discovery only and are unnecessary
 for verification. Run that finder only from a fresh scratch directory:
 it writes its data filename in the current directory.
+
+
+## Splitting the compact family
+
+```sh
+python3 research/case_study/phase35_L003_affine_split_check.py \
+  --output scratch/L003-affine-split-fresh.json
+```
+
+This checks the 24 integer coordinates of the change of origin and scale.
+The short written splitting proof retains the earlier full translation
+kernel calculation. The exact abstract group Q is preserved at every modulus.
