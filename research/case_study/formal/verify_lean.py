@@ -51,6 +51,18 @@ CERTIFICATES = (
     "CharacteristicTwoTranslations",
     "IntervalOverlapCancellation",
     "FinIntervalOverlapCancellation",
+    "ParityMix",
+    "ParityMixComponents",
+    "ParityMixLocal",
+    "ParityMixProfile",
+    "ParitySupportIntervals",
+    "ParityMixFiniteProfile",
+    "ParityComponentCoordinates",
+    "ParityMixCoordinateProfile",
+    "ParityOverlapGrid",
+    "ParityRefinementCharacters",
+    "ParityMixIntersections",
+    "ParityMixTheorem",
 )
 
 

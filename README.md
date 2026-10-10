@@ -29,7 +29,7 @@ The active manuscripts have descriptive mathematical titles:
 
 The next proposed volume is **[Module C: Halving and Petrial operations on
 regular geometries](MANUSCRIPT_PROGRAM.md#proposed-module-c-halving-and-petrial-operations-on-regular-geometries)**.
-Its three-source intake and complete proof obligations are being checked.
+Its complete three-source draft and proof obligations are under review.
 
 **Complete reviewed manuscripts are available:** U has 30 statements with
 proofs in 16 pages; A has 24 pages and derives the declared principal
@@ -112,9 +112,12 @@ Lean verification must match our actual written statements, including
 assumptions and retained inputs. A certified helper does not certify an
 entire application. Formal gaps and axioms remain visible.
 
-Fifty-one existing scoped Lean components and exact computational
+Sixty-three existing scoped Lean components and exact computational
 certificates supply reusable verified material. They do not constitute
 an end-to-end formalization of U, Module A or all conjecture claims.
+The [parity-mix construction](PARITY_MIX.md) now has a reviewed Lean proof
+of its full group-theoretic intersection property under the stated input
+hypotheses. Its twelve supporting modules constitute one proof package.
 See [reproduction instructions](REPRODUCING.md) and individual scope files.
 
 ```sh

@@ -49,10 +49,20 @@ prove the local relator equivalence in both directions.
 [Interval-overlap cancellation](research/case_study/formal/IntervalOverlapCancellation.scope.md)
 and its [finite-marker adapter](research/case_study/formal/FinIntervalOverlapCancellation.scope.md)
 prove the complete combinatorial cancellation theorem used by the mixing
-argument. They do not yet formalize the group consumer, retained
-presentation and generation theorems, or complete polytope conclusions.
+argument. Retained presentation and generation theorems and complete
+polytope conclusions remain separate formal obligations.
 The [publication review](provenance/phase100_review.md) records fresh pinned
 compilations and the precise trust boundary.
+
+The [parity-mix construction](PARITY_MIX.md) now also has a complete Lean
+proof of its general group-theoretic intersection property. Twelve
+supporting modules derive the actual fibers, component coordinates and
+character equations before applying interval cancellation. The theorem
+requires genuine input characters and both factor intersection properties.
+Its [independent review](research/case_study/phase157_parity_mix_review.md)
+and fresh public build cover these precise hypotheses and conclusions.
+Concrete finite-field applications and numerical order formulas remain
+outside this formal package; the allowed-label range above is unchanged.
 
 Finite checks include all parabolics of fifteen explicit groups or mixes,
 42 quadratic markings, 2,310 quadratic power words and 8,448 translation

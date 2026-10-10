@@ -12,9 +12,22 @@ equivalence in both directions. [IntervalOverlapCancellation](IntervalOverlapCan
 proves zero-sum weight cancellation on the derived interval-overlap forest;
 [FinIntervalOverlapCancellation](FinIntervalOverlapCancellation.scope.md)
 transports that theorem to actual finite marker sets. Complete independent
-proof reviews and fresh compilations accompany all four. The group consumer,
-retained presentation/generation theorems and complete polytope conclusions
-remain separate obligations.
+proof reviews and fresh compilations accompany all four. Retained
+presentation/generation theorems and complete polytope conclusions remain
+separate obligations.
+
+[ParityMixTheorem.lean](ParityMixTheorem.lean) now proves the general
+group consumer: the actual paired marking has full ambient and intrinsic
+intersection property, generates its group, and consists of nonidentity
+string involutions. Its twelve-module package derives the connected fibers,
+component profiles and overlap character equations from the two-primary,
+odd-adjacency, genuine-character and factor string/IP hypotheses. The
+[complete scope](../phase146_parity_mix_scope.md) and
+[independent review](../phase157_parity_mix_review.md) cover fifty new
+printed declarations, with twenty-five reports from six retained modules.
+All use standard axioms. The package is one construction theorem; finite
+order formulas, concrete characters and the complete polytope application
+remain outside its formal scope.
 
 [SupportedKernelConsequences.lean](SupportedKernelConsequences.lean) proves
 the order formula, local recognition, separator factorization and the
@@ -114,7 +127,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are forty-seven certificates. To compile them on another machine, install Git,
+There are sixty-three certificates. To compile them on another machine, install Git,
 Python 3.10 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -131,7 +144,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the forty-seven modules, but does not produce the runner's JSON reports.
+way to compile the sixty-three modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -162,9 +175,9 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all fifty-one source hashes match the historical successful reports
+This checks that all sixty-three source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. Fifty saved runs use only a subset of the standard axioms
+Lean or verify a proof anew. Sixty-two saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
 prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
 for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below

@@ -60,4 +60,16 @@ lean_lib MathCompressionCertificates where
     `LabelFourRelations,
     `CharacteristicTwoTranslations,
     `IntervalOverlapCancellation,
-    `FinIntervalOverlapCancellation]
+    `FinIntervalOverlapCancellation,
+    `ParityMix,
+    `ParityMixComponents,
+    `ParityMixLocal,
+    `ParityMixProfile,
+    `ParitySupportIntervals,
+    `ParityMixFiniteProfile,
+    `ParityComponentCoordinates,
+    `ParityMixCoordinateProfile,
+    `ParityOverlapGrid,
+    `ParityRefinementCharacters,
+    `ParityMixIntersections,
+    `ParityMixTheorem]

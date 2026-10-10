@@ -66,8 +66,9 @@ nodes. Matched length measurement and full Lean formalization remain pending.
 ## Proposed Module C: Halving and Petrial operations on regular geometries
 
 The next candidate groups L088, N013 and L108 around operations on marked
-groups and their geometries. The intake and proof-obligation map are being
-prepared from the existing source bank. Endpoint conjugation connects two
+groups and their geometries. A complete draft and proof-obligation map have
+been prepared from the existing source bank and are under review.
+Endpoint conjugation connects two
 halving constructions; the Petrial branch needs its own thinness and
 biduality arguments. The J1 classification also requires the complete
 construction list and exhaustive census. These obligations are charged to

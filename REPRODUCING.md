@@ -179,7 +179,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the fifty-one saved Lean reports
+checks local documentation links, and checks the sixty-three saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -1021,7 +1021,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all fifty-one certificates and their unformalized boundaries. With Git
+describes all sixty-three certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -2275,6 +2275,34 @@ lattice addendum. Running finite code does not prove those all-parameter
 theorems or supply a C compression ratio. No source PDF is needed to rerun
 the finite programs, but the bound primary sources are required for an
 independent literature and statement audit.
+
+## Generated parity fibers and full mixed intersection property
+
+The [parity-mix package](PARITY_MIX.md) has a dedicated exact-source runner:
+
+```sh
+python3 -B -O research/case_study/phase146_parity_mix_check.py \
+  --packages /path/to/pinned/.lake/packages --lean /path/to/lean \
+  --output-dir /tmp/NEW-parity-build
+python3 -B -O research/case_study/phase146_parity_mix_controls.py \
+  --packages /path/to/pinned/.lake/packages --lean /path/to/lean \
+  --output-dir /tmp/NEW-parity-controls
+```
+
+Both output directories must be new. With pinned Lean 4.32.2 and Mathlib,
+the first command compiles eighteen local sources and checks all 75
+expected declaration reports. The second runs 23 input-mutation and
+occupied-path checks. The independent reviewer also ran a separate
+twelve-case interface suite including an isolated positive build. The
+[public admission](research/case_study/phase163_parity_mix_root_admission.md)
+records a fresh public generic build. No private PDF or manuscript file
+is needed by the dedicated formal replay.
+
+The certified conclusion is the actual generated mix's full group IP and
+its marking properties under the stated factor and character hypotheses.
+Numerical order formulas, concrete finite-field applications and the full
+equal-label conjecture remain outside this package. Twelve supporting
+modules are one construction proof, not twelve additional research results.
 
 ## Exact quotient-intersection criterion
 

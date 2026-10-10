@@ -2,7 +2,7 @@
 
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with reviewed six-source U+A and four-source Module B manuscripts. There are
-fifty-one scoped Lean components. Source coverage, complete modular
+sixty-three scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
 An earlier snapshot admitted [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
@@ -387,3 +387,10 @@ token factor is 1.6339741771, beside the materially smaller character
 factor 1.0625499262 and collapsed-byte factor 1.1259335014. Fresh independent
 source/PDF recounts, all-page review and public reproduction passed.
 No normalized source-page ratio or sawtooth trend is inferred.
+
+The [phase-102 record](phase102_review.md) admits the complete group-theoretic
+parity-mix construction after independent proof review and a fresh public
+compile. Twelve supporting modules prove one construction theorem, with
+50 new and 25 retained axiom reports, all standard. The actual component
+profiles and overlap equations are derived. Concrete source applications,
+numerical formulas and the full conjecture remain separate obligations.
