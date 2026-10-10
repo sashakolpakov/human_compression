@@ -135,6 +135,14 @@ fixes a journal-title typo without changing any measured span. This measures
 the unannotated proof manuscript; no factor is transferred to its annotation
 reader or a later replacement.
 
+The [twelve-source replacement](COMPRESS_12.md) adds the 2018 order-1024
+classification through a shared finite-kernel theorem. It removes the
+SmallGroups seed dependency but retains the quoted geometric, square and
+infinite-group interfaces. The complete proof has 317,916 raw bytes and
+eight full program/data blocks totaling 79,874 bytes, all included in the
+file. No comparable rendered measurement is approved yet. Any denominator
+must count the whole new manuscript; no older factor transfers.
+
 ## A finite compression ratio
 
 Fix a set of exact theorem statements $S$, a common background $B$, and a

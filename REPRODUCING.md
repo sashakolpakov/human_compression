@@ -24,7 +24,29 @@ hashes from the public snapshot. Portability and citation edits can change an
 exported file's hash. Historical reports describe their original runs; they
 are not relabeled as fresh executions of an edited script.
 
-## Continuous ten-source replacement
+## Continuous twelve-source replacement
+
+The latest [twelve-source edition](COMPRESS_12.md) has a public structural
+verifier and complete new mathematical replay:
+
+```sh
+python3 research/case_study/phase78_n009_integration_verify.py \
+  --output /tmp/human-compression-twelve-structure.json \
+  --run-new-gap /tmp/human-compression-twelve-mathematics
+```
+
+Both output paths must be new. The verifier checks 120 proof spans,
+preservation of 87 previous adapters and 19 complete sections, and all eight
+printed program/data blocks. The new computation uses GAP 4.15.1 and NQ
+2.5.11 in the recorded run. Its complete kernel census and raw-presentation
+recognition use only public inputs and took 88.6 seconds in the root replay.
+The optional `--primary-check` needs private primary snapshots and is omitted
+above. The independent review's separate checker additionally reparses those
+snapshots; they are not distributed. The assembly builder writes output files
+and should be run only in an isolated copy. Old programs are not rerun by this
+command. None of these executions constitutes a Lean proof of the manuscript.
+
+## Earlier continuous replacements
 
 The successor [eleven-source edition](COMPRESS_11.md) has a standalone runner:
 

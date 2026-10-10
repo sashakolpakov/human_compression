@@ -31,6 +31,7 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase63_ten_source_measurement_recent_audit_report.json",
           "phase70_petrial_integration_recent_audit.json",
           "phase76_eleven_source_root_audit.json",
+          "phase95_twelve_public_admission.json",
           "phase80_two_primary_root_audit.json",
           "phase72_cover_family_priority_claims.json",
           "manuscript_replacements.json")
@@ -823,6 +824,9 @@ def record(row, baseline, overlay, later_readings, older_access):
         r.update(encoded=False, rederived=False, full_principal_results=False, proposed_new_result=False)
         r["exact_target"][0]["relation_to_source"] = "prior_claim_located_printed_witness_defective"
     if identifier == "N009":
+        r["method"].append("The reviewed continuous Compress_12 manuscript now proves one universal finite-kernel classification and invariant index-two ladder for every forest/rank/excess. Its same program supplies L035's order-256 seed and all three nondegenerate order-1024 ranks, removing the SmallGroups catalogue input. Fresh public execution checks 539264 census meets, 214 complete presentations, 43840 additional meets and 428 end isomorphisms; prior component methods below remain historical evidence.")
+        r["remaining_work"].append("Now admitted to the continuous twelve-source replacement. No twelve-source length factor, new Lean proof, historical-priority clearance or open-conjecture claim. The full exceptional infinite marked decomposition and quoted geometric/square interfaces remain retained.")
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase87_n009_integration_recent_audit.md", "reading_depth":"Independent full 22-page extraction reading, all 27 numbered items and six tables; printed pages 10,13,14,15,16,17,19,20 visually inspected. Root inherits this source review."})
         r["method"].append("The class-seven invariant-kernel census handles a nonabelian universal gamma3, checks all401 candidates and all25664 actual meets, and recovers125 rank-three classes and all12type counts. Affine fixed translations give every center formula in Lemma5.2, including both small exceptions; independent Frattini characters give Lemma5.4 under its retained infinite decomposition.")
         r["retained_inputs"] += ["Quoted affine lattice-family identification (Lemma5.1)", "Quoted infinite semidirect decomposition (Theorem5.3)"]
         for name in ("phase22_N009_rank3.md", "phase22_N009_rank3_certificate.json",
@@ -1073,14 +1077,15 @@ def render(registry):
         "[Registry](research/case_study/paper_registry.json) · [Introduction](INTRODUCTION.md) · "
         "[Reduction scope](research/case_study/torsor_compression_overview.md) · "
         "[Historical inventory](research/case_study/literature_inventory.json)", "",
-        "The [named manuscript map](MANUSCRIPT_MAP.md) records a reviewed seven-source",
-        "integration and its two reviewed predecessors, plus the two-source C with its required",
-        "lattice addendum: nine distinct manuscripts across reviewed assemblies. Their",
-        "declared main-result contracts and retained inputs remain explicit;",
-        "Compress_B has a reviewed conditional full-body factor of 3.928390x",
-        "under its frozen PDF-token convention. The complete seven-source replacement has",
-        "a reviewed conservative lower bound of 2.212488x with N001 credited zero;",
-        "its exact factor and A's factor remain unmeasured.", "",
+        "The [named manuscript map](MANUSCRIPT_MAP.md) records twelve distinct sources",
+        "in seven overlapping reviewed assemblies. The latest continuous replacement",
+        "uses one universal finite-kernel classification for the order-256 seed and",
+        "order-1024 census, removing its SmallGroups catalogue completeness input.",
+        "Declared contracts, source corrections and substantive retained inputs remain explicit.",
+        "Compress_B has a conditional full-body factor of 3.928390x. The preceding",
+        "eleven-source replacement has a conservative lower bound of 1.484833x,",
+        "crediting N001 and L108 zero. The twelve-source factor is unmeasured;",
+        "older factors do not transfer to it.", "",
         "## Read the stages separately", "",
         "| Stage | Meaning |", "|---|---|",
         "| Retrieved | A matched primary full text was accessed; it is not redistributed. |",

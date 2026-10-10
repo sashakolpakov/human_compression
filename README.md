@@ -16,13 +16,13 @@ their open problems. Success means reproducing exact theorem statements with
 fewer independent arguments, exposing the inputs that remain, and obtaining
 new consequences. The evidence is the mathematics and its checks.
 
-[**Compress_11**](COMPRESS_11.md) now derives the declared principal results
-of **eleven named manuscripts spanning 1998–2026** from one continuous
-replacement. The [exact intake](COMPRESS_11.md#exact-intake) credits every
+[**Compress_12**](COMPRESS_12.md) now derives the declared principal results
+of **twelve named manuscripts spanning 1998–2026** from one continuous
+replacement. The [exact intake](COMPRESS_12.md#exact-intake) credits every
 source author and states the result contract. The
-[independent extension review](research/case_study/phase70_petrial_integration_recent_audit.md)
+[independent extension review](research/case_study/phase87_n009_integration_recent_audit.md)
 checks all new proofs and applications and verifies continuity with the
-earlier complete ten-source review. Retained background and source
+earlier reviewed manuscript. Retained background and source
 corrections remain explicit.
 
 The shared arguments concern exact kernels, relative generation, primitive
@@ -34,6 +34,10 @@ distinguishes source results, shared arguments and corrected assertions.
 The [eleven-source annotated reader](ATTRIBUTION_11.md) now has an independent
 semantic review: 35 notes distinguish borrowed inputs, repository arguments,
 shared consequences, corrections and exact certificate scopes.
+That reader remains tied to the preceding eleven-source proof. The new
+twelve-source manuscript uses one universal finite-kernel classification
+for both its order-256 seed and order-1024 census, removing the SmallGroups
+catalogue completeness input. Its new annotations require separate review.
 
 The [independently reviewed eleven-source measurement](research/case_study/phase88_eleven_measurement_review_report.md)
 gives a conservative **1.485×** length factor, including all proofs and five
@@ -47,6 +51,7 @@ faithful PDF bodies have not been acquired. The exact factor is unknown.
 | [Compress_C plus lattice bridge](COMPRESS_C.md), two sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | [Compress_10](COMPRESS_10.md), ten sources | **At least 51,739 / 30,957 = 1.671318×**, crediting the 1998 source zero |
 | [Compress_11](COMPRESS_11.md), eleven sources | **At least 51,739 / 34,845 = 1.484833×**, crediting N001 and L108 zero |
+| [Compress_12](COMPRESS_12.md), twelve sources | Complete principal-result contract reviewed; no measured length factor |
 
 These use normalized PDF-extracted whitespace tokens and include the complete
 required proof and code. Retained background proofs remain imported. The

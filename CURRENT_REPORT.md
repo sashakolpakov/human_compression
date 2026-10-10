@@ -1,27 +1,27 @@
-# Current judgment: eleven manuscripts, one reviewed replacement
+# Current judgment: twelve manuscripts, one reviewed replacement
 
-**Eleven named principal-result contracts now follow from one continuous
+**Twelve named principal-result contracts now follow from one continuous
 replacement, with the stated background and source corrections.**
-[Compress_11](COMPRESS_11.md) gives the exact authors, titles, editions and
-source-to-corollary map. The [independent extension review](research/case_study/phase70_petrial_integration_recent_audit.md)
+[Compress_12](COMPRESS_12.md) gives the exact authors, titles, editions and
+source-to-corollary map. The [independent extension review](research/case_study/phase87_n009_integration_recent_audit.md)
 reads all new proofs and applications and inherits the complete earlier
 integration review for unchanged branches. The
-[root admission](research/case_study/phase76_eleven_source_root_audit.md)
+[root admission](research/case_study/phase95_twelve_public_admission.md)
 checks the new shared theory, source contract and public replay. This is
 internal mathematical review.
 
 The intake is
 
 ```text
-N001 + N003 + N008 + L032 + L035 + F013 + F016 + L088 + N013 + N016 + L108
-    → Compress_11.
+N001 + N003 + N008 + L032 + L035 + F013 + F016 + L088 + N013 + N016 + L108 + N009
+    → Compress_12.
 ```
 
-It spans 1998–2026. The six reviewed assemblies overlap and cover eleven
-distinct source manuscripts. The 87 contract rows include qualifications,
-corrected assertions and unproved conjectures; they are not 87 proved
+It spans 1998–2026. The seven reviewed assemblies overlap and cover twelve
+distinct source manuscripts. The 120 contract rows include definitions,
+retained inputs, corrections and unproved conjectures; they are not 120 proved
 theorems or a claim about every assertion in the originals. The new version
-incorporates the earlier reference correction and all five complete programs.
+incorporates the earlier corrections and all eight complete program/data blocks.
 
 The common theory uses exact image/kernel transport, relative generation,
 Frattini coordinates, a shared square-lattice model and endpoint/support
@@ -35,6 +35,19 @@ records its source ideas, corrections and repository arguments. The
 [eleven-source margin reader](ATTRIBUTION_11.md) now has 35 independently
 reviewed notes. Fresh public regeneration preserves every proof byte;
 its single Lean sign remains limited to the image/kernel implication.
+It annotates the preceding eleven-source edition only.
+
+The new shared classification theorem constructs a finite universal group
+from the marked forest and excess, then enumerates all invariant kernels
+and tests their exact intersection profiles. The same proof and program
+give L035's order-256 seed and N009's complete nondegenerate order-1024
+classification. SmallGroups catalogue completeness is removed as an input.
+The quoted square classification, geometric universal interpretation and
+exceptional infinite decomposition remain substantial prior results.
+The fresh public replay passed in 88.6 seconds: 539,264 census intersections,
+214 complete presentations, 43,840 further intersections and 428 exact end
+isomorphisms. The replacement has 26 sections, 317,916 bytes and eight full
+program/data blocks totaling 79,874 bytes. Its length factor is unmeasured.
 
 | Replacement | Intake | Approved length result |
 |---|---:|---|
@@ -44,6 +57,7 @@ its single Lean sign remains limited to the image/kernel implication.
 | C plus its lattice bridge | 2 further sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | Compress_10 plus reference erratum | All 10 | **At least 51,739 / 30,957 = 1.671318×**, with N001 credited zero |
 | Compress_11 | All 11 | **At least 51,739 / 34,845 = 1.484833×**, with N001 and L108 credited zero |
+| Compress_12 | All 12 | No approved length factor yet |
 
 The approved factors use a frozen NFC PDF-extracted token convention and
 count complete required proof/code. They remain conditional on retained
@@ -100,22 +114,22 @@ odd-prime proof steps. Exact normal-closure, degree, character and interval
 calculations remain the additional repository derivation; historical priority
 is unverified, with two material unread literature comparisons recorded.
 
-The immediate work is the next source integration and further cover
-constructions. A shared
-rank/excess census is being checked as a possible replacement for an imported
-finite catalogue lookup. Priority comparison continues.
+The immediate work is independent review of the twelve-source annotations,
+a complete new length measurement, and further cover theory. A square-complex
+construction relating local groups to universal completions is under review.
+Priority comparison continues.
 The general and complete five-family multiplicity
 conjectures remain unproved here. Proof review and computational diagnostics
 are distinct from establishing that a result was previously open; no
 historical-priority or newly solved open-conjecture marker is cleared.
 
 The wider registry contains 161 indexed works and 17 principal-result
-candidates. Those counts exceed the eleven sources in the assembled replacement
+candidates. Those counts exceed the twelve sources in the assembled replacement
 and do not measure complete corpus compression. The public repository is
 [Human Compression](https://github.com/sashakolpakov/human_compression).
 
 The [preceding independent state report](research/case_study/phase47_independent_state.md)
 remains frozen at commit `1cecc59`, where it assessed nine assembly sources,
 a separate tenth adapter and 39 Lean components. Its author wrote none of
-the replacements. The present page records the later eleven-source admission
+the replacements. The present page records the later twelve-source admission
 and other changes separately; it does not retroactively update that review.

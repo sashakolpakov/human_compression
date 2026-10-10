@@ -1,14 +1,17 @@
 # Provenance and verification scope
 
-The current snapshot admits [eleven named manuscripts to one continuous replacement](../COMPRESS_11.md),
-with its corrected Petrial contract, independent extension/continuity review,
-public verifier and [hash-bound export](phase75_originals.json). The earlier
+The current snapshot admits [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
+with the shared universal finite-kernel theorem, complete corrected N009
+contract, independent mathematical review and fresh public replay. Its
+[108-file export record](phase81_originals.json) preserves author, reviewer
+and root artifacts. The previous
+[eleven-source export](phase75_originals.json) remains unchanged. The earlier
 [ten-source export](phase69_originals.json) remains unchanged. Its
 [attribution reader](../ATTRIBUTION.md) has a separate independent semantic/integrity
 audit and [original-file record](phase70_originals.json).
 The [complete C measurement](../COMPRESS_C.md) is recorded honestly as 2.386%
 expansion, with its [bound measurement and authored PDF](phase71_originals.json).
-The current registry has seventeen principal-result candidates, eleven sources
+The current registry has seventeen principal-result candidates, twelve sources
 in reviewed assemblies and forty-two scoped Lean components. These are different
 coverage measures, not a corpus compression ratio.
 
