@@ -76,11 +76,14 @@ identifies every group as $(\mathbb Z/m\mathbb Z)^6\rtimes Q$, with one
 explicit integral group $Q$ of order 1,296.
 
 The separate [multiples-of-three family](research/case_study/phase34_L003_triple_family.md)
-has an independent exhaustive check of all 56,225 base flags. The already
-reviewed [universal corollary](research/case_study/phase34_L003_combined_universal.md)
-establishes marked regular universal objects whenever two or three divides
-the parameter; they are infinite whenever six divides it. A further universal
-corollary for the newly covered parameters is being checked separately.
+has an independent exhaustive check of all 56,225 base flags. The [all-parameter universal corollary](research/case_study/phase35_L003_all_universal.md)
+establishes actual marked regular universal objects for every integer
+$s\ge2$. Each has a finite quotient preserving all four local groups;
+the universal groups themselves are infinite whenever six divides $s$.
+The [source-scope audit](research/case_study/phase35_L003_problem92_scope.md)
+explains precisely which reading of the 2018 existence question is answered.
+The [priority audit](research/case_study/phase35_L003_priority_status.md)
+retains a material unread comparison with a 2024 covering theorem.
 
 The [unfilled universal group](research/case_study/phase35_L003_unfilled_geometry.md),
 before the final parameter relation is imposed, is also an actual regular

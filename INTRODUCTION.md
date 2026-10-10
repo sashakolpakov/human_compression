@@ -3810,7 +3810,33 @@ stated finite-existence theorem internally. Historical priority, universal
 group orders and full Lean formalization are separate matters; neither a
 whole-paper compression count nor an infinity marker follows automatically.
 
-## 64. The remaining work, and how a living reduction should record it
+## 64. Finite examples also certify the universal geometry
+
+The [all-parameter corollary](research/case_study/phase35_L003_all_universal.md)
+applies the quotient-transport theorem to the group defined by the source
+relations themselves. At each integer $s\ge2$, the finite example attains
+the four maximal-parabolic upper bounds $36,12s^2,48,108$. Every universal
+parabolic therefore injects into that finite example. Full subgroup
+intersections and flag completion lift, producing an actual regular
+universal geometry at every parameter.
+
+Reflection invariance of the local triangular lattices also identifies its
+rotation group with the literal ten-relator source presentation: no hidden
+rotational relators arise on adjoining a reflection. The full group is its
+semidirect product with $C_2$. A finite quotient at every parameter does not
+make these universal groups finite: whenever $6\mid s$, they map onto the
+already certified infinite parameter-six group.
+
+The [primary-source rereading](research/case_study/phase35_L003_problem92_scope.md)
+separates the literal infinite-family question from its finite-existence
+context and the preceding table of universal examples. The construction
+answers the finite-existence interpretation for every parameter. Universal
+orders remain a separate problem. The [bounded priority audit](research/case_study/phase35_L003_priority_status.md)
+still lacks a full comparison with the 2024 abelian-cover theorems, so the
+repository does not turn this mathematical result into a verified novelty
+claim or an infinite compression-ratio marker.
+
+## 65. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

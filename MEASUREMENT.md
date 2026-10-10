@@ -619,3 +619,11 @@ is recorded separately from rederiving existing proofs and from finiteness
 of universal groups. Current priority remains unverified, so no infinity
 marker is assigned. Both earlier proof-span ratios and the sixteen principal
 intake candidates remain unchanged; there is still no manuscript-level ratio.
+
+
+Phase forty-six establishes actual universal marked regular geometries for
+every integer parameter in that family, with finite local-preserving quotients.
+The historical problem's finite-existence reading is now explicitly matched.
+Its universal groups are infinite at multiples of six. The bounded priority
+comparison still has a material unread2024 theorem, so novelty and any optional
+infinity marker remain unverified. This is separate from manuscript compression.
