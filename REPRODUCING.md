@@ -46,6 +46,24 @@ snapshots; they are not distributed. The assembly builder writes output files
 and should be run only in an isolated copy. Old programs are not rerun by this
 command. None of these executions constitutes a Lean proof of the manuscript.
 
+The [twelve-source annotation edition](ATTRIBUTION_12.md) has a separate
+public regeneration and independent proof-byte recovery check:
+
+```sh
+python3 -O research/case_study/phase91_n009_annotations_controls.py \
+  --output-dir /tmp/human-compression-twelve-annotation-controls
+python3 -O research/case_study/phase94_twelve_annotations_review_check.py \
+  --output /tmp/human-compression-twelve-annotation-check.json
+```
+
+Use new paths. Python and Pandoc suffice; no primary captures are needed.
+The complete controls regenerate both readers, reject altered inputs and
+existing outputs, and check 41 Lua margin commands. The separate checker
+imports no author annotation code. The exact historical planning file is
+distributed because the frozen checker validates that manifest binding too.
+These are annotation integrity checks, without a new census, Lean build or
+PDF layout review.
+
 ## Earlier continuous replacements
 
 The successor [eleven-source edition](COMPRESS_11.md) has a standalone runner:

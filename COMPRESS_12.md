@@ -43,6 +43,10 @@ and unproved questions are distinguished. **This is not 120 proved theorems.**
 N001 and L108 use complete authored browser bases; faithful primary PDFs
 have not been acquired. Each other source retains its specified edition.
 
+The inherited Section 16 exclusion of N009 is local to the earlier four-source
+branch. The later Sections 24–25 and full contract ledger explicitly include
+N009 in this twelve-source assembly; annotation S16 records that boundary.
+
 ## One classification theorem, two uses
 
 For a forest diagram with d vertices, m edges and excess k, start with the
@@ -84,7 +88,10 @@ inside the manuscript and must be counted.
 
 ## Attribution, dependencies and corrections
 
-The source authors retain credit for the original results and constructions.
+The [annotated reader](ATTRIBUTION_12.md) supplies 41 independently reviewed
+notes for borrowed inputs, repository arguments, shared consequences,
+corrections and exact verification scope. Removing them recovers every proof
+byte. The source authors retain credit for the original results and constructions.
 Hartley's Atlas supplies 72 complete defining presentations for the exact
 names, not classification completeness. Conder–Oliveros supplies the quoted
 intersection criteria. McMullen–Schulte supplies the quoted geometric
@@ -107,8 +114,8 @@ The manuscript has 26 numbered sections and **317,916 raw bytes**, an
 increase of 88,125 bytes over Compress_11. Its eight full program/data blocks
 total **79,874 bytes** and are included in that total. A future comparable
 measurement must charge all of them. The eleven-source lower bound of
-1.484833× does not transfer to this larger manuscript. Its future attribution
-reader likewise needs its own review and cost accounting.
+1.484833× does not transfer to this larger manuscript. The separately reviewed
+attribution reader adds 43,507 presentation bytes and remains unmeasured.
 
 The independent reviewer read all changed proofs, new programs, source
 contracts and complete primary text, and inspected eight specified source

@@ -62,6 +62,13 @@ conditional lower bound is **51,739/34,845 = 1.484833×**, crediting N001 and
 L108 zero. Primary PDFs and the 57 bound rasters remain separately acquired
 inputs; the annotated edition and subsequent manuscripts are unmeasured.
 
+The [twelve-source annotation edition](../ATTRIBUTION_12.md) has 41
+independently reviewed notes and a fresh public regeneration/independent
+recovery check. Its [21-file record](phase82_originals.json) includes the
+17 frozen author/review exports, one exact historical plan needed by the
+checker, and three root records. Every proof byte is preserved. No new
+mathematics, Lean component, length factor or priority marker follows.
+
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite
 surface-cover family](phase34_review.md), and the [infinite presentation

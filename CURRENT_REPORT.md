@@ -32,10 +32,10 @@ explicit imports. A new exact action-kernel theorem is used for typed cosets,
 endpoint constructions and Petrials, with a shared gallery lemma. The
 [new attribution ledger](research/case_study/phase65_petrial_integration_attribution.json)
 records its source ideas, corrections and repository arguments. The
-[eleven-source margin reader](ATTRIBUTION_11.md) now has 35 independently
+[twelve-source margin reader](ATTRIBUTION_12.md) now has 41 independently
 reviewed notes. Fresh public regeneration preserves every proof byte;
 its single Lean sign remains limited to the image/kernel implication.
-It annotates the preceding eleven-source edition only.
+The annotated edition adds no proof step and remains unmeasured.
 
 The new shared classification theorem constructs a finite universal group
 from the marked forest and excess, then enumerates all invariant kernels
@@ -114,8 +114,8 @@ odd-prime proof steps. Exact normal-closure, degree, character and interval
 calculations remain the additional repository derivation; historical priority
 is unverified, with two material unread literature comparisons recorded.
 
-The immediate work is independent review of the twelve-source annotations,
-a complete new length measurement, and further cover theory. A square-complex
+The immediate work is a complete twelve-source length measurement and
+further cover theory. A square-complex
 construction relating local groups to universal completions is under review.
 Priority comparison continues.
 The general and complete five-family multiplicity

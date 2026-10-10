@@ -31,13 +31,13 @@ Substantial forest, cyclic-classification, geometric and census branches
 remain inside the replacement. The source-to-corollary map exposes their cost.
 The [new attribution ledger](research/case_study/phase65_petrial_integration_attribution.json)
 distinguishes source results, shared arguments and corrected assertions.
-The [eleven-source annotated reader](ATTRIBUTION_11.md) now has an independent
-semantic review: 35 notes distinguish borrowed inputs, repository arguments,
+The [twelve-source annotated reader](ATTRIBUTION_12.md) now has an independent
+semantic review: 41 notes distinguish borrowed inputs, repository arguments,
 shared consequences, corrections and exact certificate scopes.
-That reader remains tied to the preceding eleven-source proof. The new
+Removing its notes recovers every original proof byte. The
 twelve-source manuscript uses one universal finite-kernel classification
 for both its order-256 seed and order-1024 census, removing the SmallGroups
-catalogue completeness input. Its new annotations require separate review.
+catalogue completeness input. The annotated edition is separately unmeasured.
 
 The [independently reviewed eleven-source measurement](research/case_study/phase88_eleven_measurement_review_report.md)
 gives a conservative **1.485×** length factor, including all proofs and five
