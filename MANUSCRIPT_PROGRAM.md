@@ -1,128 +1,153 @@
-# Umbrella theory and application manuscripts
+# Topic umbrellas and application papers
 
-The intended mathematical product is
+The intended unit is a **topic containing several complete papers**:
 
-    U + A -> principal results of source bundle S_A
-    U + B -> principal results of source bundle S_B
-    U + C -> principal results of source bundle S_C.
+```text
+Topic A:  U_A + A₁ + A₂ + …  →  LA₁, LA₂, …
+Topic B:  U_B + B₁ + B₂ + …  →  LB₁, LB₂, …
+```
 
-U contains complete reusable theorems and their proofs. Each application
-manuscript is a coherent mathematical paper, normally about 20–25 pages,
-which proves all application hypotheses and all source-specific arguments.
-The papers do not repeat U's proofs. Source coverage is earned by actual
-deductions, not thematic similarity or a shared encoding.
+U_A contains the reusable theorems for topic A, with complete proofs.
+Each Aᵢ is one of our application manuscripts, matched to an explicit
+historical manuscript contract LAᵢ. It proves the parameter bindings,
+local constructions, exceptional cases and all other necessary arguments.
+The final source results should follow as straightforward corollaries
+only after that work has actually been paid for.
 
-## Umbrella theory U: Marked groups, kernels and intersections
+Application papers should use ordinary academic exposition, at a level
+of detail comparable to the source literature. About 20–25 pages is a
+working scale, not a limit that permits omitted proofs or a reason to
+split one argument into nominally separate papers.
 
-The [complete draft](UMBRELLA.md) has 30 statements with proofs and an
-exact attribution, dependency and formal-coverage ledger.
+## Rework the proof material already available
 
-The draft develops exact image/kernel transport, marked parabolic
-comparison, compatible extensions with kernels supported on selected
-sets of generators, finite actions and relative generation. Existing
-proofs and Lean components are reused where their precise hypotheses
-match. The support-induction argument and its typed-Helly extension have
-independent mathematical reviews and scoped Lean certificates.
-Attribution distinguishes re-proved classical results, retained background
-and repository arguments. Neither a new universal theory nor historical
-priority is presumed from common notation.
+The current A–D documents are reviewed monolithic drafts. They are
+inputs to the reorganization, with their mathematical qualifications
+preserved. No completed family of Aᵢ papers is asserted by their labels.
 
-## Module A: Construction and classification of two-group polytopes and hypertopes
-
-The [complete application draft](MODULE_A.md) is available as a 24-page
-PDF with the full source-contract ledger and required computational inputs.
-
-The coherent source bundle is:
-
-| ID | Source | Declared principal contract |
+| Topic | Existing reviewed draft | Required next structural work |
 |---|---|---|
-| N009 | Gomi–Loyola–De Las Peñas, *String C-groups of order 1024* (2018) | Complete declared marked classifications, central descent/lifts, exact presentations and universal orders, with source corrections explicit |
-| L035 | Hou–Feng–Leemans, *Existence of regular 3-polytopes of order 2^n* (2019 author version) | Existence and eight-presentation classification with converses |
-| L032 | Hou–Feng–Leemans, *On regular polytopes of 2-power order* (2020; revised 2019 author version) | Prescribed type and exact-order existence |
-| F016 | Cunningham–Feng–Hou–Schulte, *Symmetric polytopes whose automorphism groups are 2-groups* (2025 preprint) | Declared regular, alternating and free-extension clauses, orders and presentations |
-| F013 | Hou–Schulte, *String C-groups of 2-power order project onto a common string C-group* (2026 preprint) | Principal common-quotient and covering results |
-| L034 | Hou–Feng–Leemans, *Existence of regular 3-hypertopes with 2^n chambers* (2019 author version) | Exact presentation, order, type, regular geometry, cyclic kernels and corrected quotient structure |
+| A: Two-group polytopes and hypertopes | [Construction and classification](MODULE_A.md) | Separate the common kernel, quotient and local-construction theory from complete source-specific papers; audit the L032 dependency pilot |
+| B: Forest coordinates and primitive coset geometries | [Forest coordinates](MODULE_B.md) | Identify its full topic umbrella and preserve the complete recognition, generation and geometric applications |
+| C: Halving and Petrial operations on regular geometries | [Operations on regular geometries](MODULE_C.md) | Separate reusable changes of generators and retained-object arguments from full geometric identifications and censuses |
+| D: Marked actions, field orbits and geometry enumeration | [Marked actions and enumeration](MODULE_D.md) | Extract the common action/extension theory and retain complete field, classification and source-table obligations in application papers |
 
-These six form the reviewed second edition. They do not constitute a
-twelve-paper module. Earlier proofs and certificates have been reworked
-into complete construction, classification and geometric arguments. The
-hypertope proof now uses the existing edge-inflation theorem and the new
-shared coset-intersection theorem. The corrected diagonal factors are
-integrated directly. The [complete measured comparison](MEASUREMENT_A.md)
-gives 1.634× by PDF-text tokens, with sensitivities of 1.063× by
-nonwhitespace characters and 1.126× by collapsed UTF-8 bytes. Full Lean
-formalization remains incomplete; enlarging the bundle requires further
-source deductions.
+The [existing U manuscript](UMBRELLA.md) is a source of reusable proofs.
+A topic may retain an overlapping part of the same mathematics as another
+topic, or need additional theorems. Its full chosen umbrella must be stated
+and proved before it can serve as a completed U_A or U_B.
 
-## Module B: Forest coordinates and primitive coset geometries
+The [current work index](CURRENT_REPORT.md) lists later source contracts
+that may inform these choices. A partial correction or an equivalence
+observation does not complete an application paper's principal contract.
 
-The [complete 16-page manuscript](MODULE_B.md) connects forest cuts and
-compatible partitions with independent generation and Frattini coordinates.
-Its reviewed intake is N001 (1998), N003 (2002), N008 (2005) and L030 (2021).
-The declared main results follow from U+B with the documented source
-corrections and retained inputs. The ledger binds 30 source rows to 22 proof
-nodes. Matched length measurement and full Lean formalization remain pending.
+## Source papers and results already recovered
 
-## Module C: Halving and Petrial operations on regular geometries
+These tables describe the existing reviewed proofs that will be reused.
+They do not claim that the new application-paper families have already
+been written. Each qualification remains part of the result when the
+proof is moved into the new structure.
 
-The [complete 18-page manuscript](MODULE_C.md) derives the corrected
-principal contracts of L088, N013 and L108, spanning 2001–2020, after
-independent proof and source review. Endpoint conjugation connects two
-halving constructions; the Petrial branch supplies its full thinness and
-biduality arguments. The toroidal geometry identifications and exhaustive
-J1 census are also included. All local proofs and the required finite
-programs are charged. No matched ratio or complete Lean formalization is
-yet admitted.
+### A. Two-group polytopes and hypertopes
 
-## Module D: Marked actions, field orbits and geometry enumeration
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| N009 | Gomi, Loyola and De Las Peñas, *String C-groups of order 1024* (2018) | Classification of the nondegenerate marked groups; central descent and lifts; explicit presentations and the stated universal group orders | Uses the specified earlier results on square quotients and universal polytopes; corrected diagonal factors and required exhaustive computations remain part of the proof |
+| L035 | Hou, Feng and Leemans, *Existence of regular 3-polytopes of order 2^n* (2019 author version, arXiv:1802.08947v2; published as *2-groups behaving as automorphism groups of regular 3-polytopes*) | Existence for the stated orders and types; classification into eight stated families, with explicit presentations and converses | The ranges in Theorems1.2–1.3 and the earlier cyclic-core theorem remain in force; this is not a classification of every two-group polytope |
+| L032 | Hou, Feng and Leemans, *On regular polytopes of 2-power order* (2020; revised author version dated8 November2019) | Theorem1.2: a string C-group of order2^n for every stated admissible rank and sequence of adjacent orders | The hypotheses d≥3, n≥5, kᵢ≥2 and Σkᵢ≤n−1 are retained; the broader classification problem is not solved |
+| F016 | Cunningham, Feng, Hou and Schulte, *Symmetric polytopes whose automorphism groups are 2-groups* (2025 preprint, arXiv:2512.15511v1) | The stated regular, alternating and free-extension constructions, including their orders, local sections and presentations | Earlier geometric assembly theorems are cited inputs; infinite groups are included only in the extension clauses that allow them |
+| F013 | Hou and Schulte, *String C-groups of 2-power order project onto a common string C-group* (2026 preprint, arXiv:2605.20691v1) | The common marked quotient and associated polytope covering results, Theorems1.1–1.2 | Applies to the stated finite nondegenerate groups; auxiliary source corrections and the standard group/polytope correspondence remain explicit |
+| L034 | Hou, Feng and Leemans, *Existence of regular 3-hypertopes with 2^n chambers* (2019 author version, arXiv:1901.09034v1) | The exact group presentation, order, type and regular geometry; the three cyclic kernels and the quotient decomposition | The source's parity assignments and repeated kernel generator are corrected; Conjecture3.3 is not proved by this construction |
 
-The [reviewed 18-page manuscript](MODULE_D.md) uses finite actions and
-stabilizer orbits on extension fibers for L066, L074 and L104. Its field
-counting, geometric recognition and exhaustive augmentation proofs are
-complete under the stated retained inputs. L073's census and shadows
-are a qualified component; its refined historical table remains the
-first expansion target. The full U+D text and required programs cost
-178,689 UTF-8 bytes, with no matched ratio or complete Lean certificate.
+See the [A manuscript and review](MODULE_A.md) for the full statements and
+all required computational proofs.
 
-Each later module will likewise
-receive a descriptive mathematical title tied to its actual reusable
-arguments; its letter is only an identifier. The earlier mixed compilation
-does not dictate these groupings.
+### B. Forest coordinates and primitive coset geometries
 
-## Open questions and formal proofs
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| N001 | Buekenhout and Cara, *Some properties of inductively minimal geometries* (1998; complete authored text) | All four parts of Theorem1: the stated primitivity, transitivity and intersection properties and the diagram criterion | The earlier1997 classification and uniqueness theorem remain cited inputs; ambiguous wording about quasi-primitivity is disambiguated. The original PDF is unavailable and the retrieved diagrams are damaged |
+| N003 | Cameron and Cara, *Independent generating sets and geometries for symmetric groups* (2002; complete author manuscript) | Extremal generating families, three counting conventions, strong and relative independence, and recognition of the geometries of maximum rank | The symmetric-group classification uses degree at least7; general numerical statements keep their finite-group scope. Whiston's bound and the separate result about omission subgroups are cited inputs, including their classification dependence |
+| N008 | Archer, Cara and Krempa, *Using the Frattini Subgroup and Independent Generating Sets to Study RWPRI Geometries* (2005 journal article) | Containment in geometric stabilizers, quotient and residue results, and the stated classification for finite p-groups | The unrestricted infinite-group converse about relative generators is false and is replaced by its proved finite-group form |
+| L030 | García-Colín and Leemans, *An infinite family of locally X graphs based on incidence geometries* (2021; revised institutional manuscript titled *An infinite family of incidence geometries whose incidence graphs are locally X*) | The weighted-star construction, residues, distances, diagram parameters and full graph automorphism groups | Uses the revised manuscript's numbering; three source assertions are corrected, and its identity with the final journal layout is not assumed |
 
-A separate paper-by-paper question ledger is in preparation for all 161
-indexed works. It distinguishes access gaps, exact historical statements,
-later resolutions, repository proofs, partial cases and current-status
-uncertainty. Related questions will be attacked together, and a new
-consequence may enter an application manuscript with precise attribution.
-The existing [question-results catalogue](CONJECTURE_RESULTS.md) collects
-recorded answers separately from the compression modules.
+The [B manuscript and review](MODULE_B.md) give the exact theorem ranges,
+older dependencies and source-access limits.
 
-The first separately named question-solving track is
-**[Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)**.
-Its reviewed cases use path blocks, quadratic identities and parity
-fibers. They do not constitute a completed compression module or a
-solution of the general all-label conjecture.
+### C. Halving and Petrial operations on regular geometries
 
-Lean statements must correspond to the theorems actually proved in U and
-the modules. Existing certificates are mapped to those statements; missing
-formal arguments are completed separately. Written proof, finite checking,
-complete formalization and historical-priority review are separate statuses.
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| L088 | Hartley and Leemans, *On the thin regular geometries of rank four for the Janko group J1* (2005 journal article) | All six constructions and their invariants; exhaustive classification in rank4 and exclusion of higher ranks for the stated geometries | Thinness, regularity and residual connectivity are required. Two printed figure labels are interchanged; the complete subgroup catalogue and the required J1 computations remain explicit |
+| N013 | Montero and Ivić Weiss, *Locally Spherical Hypertopes from Generalised Cubes* (2020, arXiv:2001.11082v1) | Halving and parity groups; polygon parameters; all stated locally spherical cases and exceptional orders; the original and halved toroidal geometries | Preserves the source's lattice-face interpretation of nondegeneracy and dual convention; Danzer's construction and classical Coxeter results are cited inputs |
+| L108 | Bonheure, Buekenhout and Leemans, *On the Petrials of thin rank 3 geometries* (2001; complete saved authored text) | Obstruction to thinness, connectivity, faithful regularity and recovery by taking a second Petrial, including the proved infinite cases | Unconditional assertions about action kernels and lengths are corrected. The original PDF is unavailable; the complete authored rendering and its review are the available evidence |
 
-## Length and complexity
+The [C manuscript and review](MODULE_C.md) include the geometric
+identifications and the complete finite programs; those arguments cannot
+be omitted from the new application papers.
 
-For a module, report the original source sum divided by the complete
-module length, explicitly conditional on U. For several modules, divide
-the length of the union of source manuscripts by U plus the complete
-modules, charging U once. Use the same representation and declared
-background; expose overlap, required addenda and certificate costs.
-Source pages are not assumed to have a particular length.
+### D. Marked actions, field orbits and geometry enumeration
 
-The GKM-style record follows the actual evolution of U and its applications:
-which theorem was acquired, which old derivations were replaced, what each
-new application costs, and whether all existing contracts still follow.
-Shared proof bodies, application hypotheses and exceptional arguments all
-count. Measurements may show acquisition spikes, cheaper later applications
-and reductions after refactoring. We will test for that pattern rather
-than manufacture it by changing the intake or moving text into supplements.
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| L066 | Kiefer and Leemans, *On pairs of commuting involutions in Sym(n) and Alt(n)* (2013; nine-page author PDF) | Both counting formulas in every stated degree, the exceptional degree-six cases, and the complete stated regular-polyhedron classification for S₆ and A₆ | The ambient automorphism theorem and group/polytope correspondence remain cited inputs; the author PDF has not been collated with the publisher's edition |
+| L074 | Kiefer and Leemans, *On the number of abstract regular polytopes whose automorphism group is a Suzuki simple group Sz(q)* (2010 publication; author manuscript dated27 September2011) | Both counting formulas for every odd exponent, generation, the intersection property, rank restrictions, absence of self-duality and the prime specialization | Classical Suzuki-group structure remains a cited input; the older source L085 is not counted as an additional completed paper |
+| L104 | Leemans, *The residually weakly primitive geometries of J₂* (2002 journal article) | The complete census of8,19 and3 classes in ranks2,3 and4, respectively, and exclusion of higher ranks, with the stated fusion of automorphisms and types | The complete subgroup catalogue is an input. Further printed diagrams, geometric automorphism/correlation groups and the doubling relation have not all been recovered |
+
+**Additional partial result — no completed principal-result credit:**
+
+| ID | Source, authors and edition | Results recovered so far | Remaining work |
+|---|---|---|---|
+| L073 | Leemans and Rowley, *Rank three residually connected geometries for M₂₂, revisited* (2010 journal article) | The81 rank-two and431 rank-three classes, explicit witnesses and eight families of geometric shadows | The refined correspondence with the printed table is incomplete. This row is separate from D's three accepted principal results |
+
+The [D manuscript and review](MODULE_D.md) distinguish these results from
+the unrecovered parts of the source papers.
+
+## What each paper must supply
+
+1. Exact historical editions and a principal-result contract, including
+   exclusions, corrected statements and retained inputs.
+2. A dependency map separating our proved shared theorems, substantial
+   local proofs and borrowed results. The source proof's own reuse must
+   also be represented fairly.
+3. Complete mathematical arguments, with attribution at the point of use.
+4. Computational and Lean scopes tied to our actual statements. A finite
+   check, a written proof and a full formal proof are distinct evidence.
+5. Independent source/proof review and a cost record including every
+   required appendix and mathematical program.
+
+The [dependency pilot](DEPENDENCY_PILOT.md) tests the comparison on a
+specific existence theorem. It is not a certificate that the full source
+paper or the whole topic has already been replaced. Graph node counts
+are not a complexity metric.
+
+## Independent topic costs and chronological reuse
+
+For topic A, compare the matched historical cost with
+
+```text
+c(U_A) + c(A₁) + c(A₂) + …
+```
+
+Each application cost includes its required proof artifacts. Topic B pays
+its own full c(U_B), even when U_A and U_B overlap. Do not deduplicate that
+overlap in the independent topic statistic. There is no single global U
+charged once across all topics in this comparison.
+
+A separate, explicitly conditional chronological GKM account may track
+which proof nodes were already paid for and then reused. It needs actual
+dependencies and complete local costs; it cannot silently replace the
+independent topic comparison. The exact definitions and diagram conventions
+belong in [TOPIC_COMPLEXITY.md](TOPIC_COMPLEXITY.md).
+
+The [older compilation programme](archive/README.md) has a separate
+archive. Its rates and coarse checkpoints do not carry over to these
+new objects. Expansion and unmeasured outcomes remain reportable results.
+
+## Open questions
+
+Conjecture work continues alongside source compression. The
+[question-results catalogue](CONJECTURE_RESULTS.md) keeps statements,
+later resolutions, verified cases and open gaps separate. A solved
+question needs its own proof and historical-status audit; it does not
+create a numerical source-compression credit for nonexistent prior proofs.
