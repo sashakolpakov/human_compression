@@ -38,8 +38,11 @@ intersections, compatible extensions and coset geometry. Module A supplies
 the complete application-specific construction and classification proofs.
 Its hypertope construction and corrected diagonal decomposition are now
 integrated. The four computational proof artifacts remain required and
-fully charged. Full Lean formalization and matched measurement remain
-incomplete.
+fully charged. The [first complete measurement](MEASUREMENT_A.md) gives
+**1.634× by PDF-text tokens, 1.063× by nonwhitespace characters and 1.126×
+by collapsed UTF-8 bytes**. Its denominator includes all of U, A and the
+four programs. These representation-sensitive figures are not a matched
+page ratio. Full Lean formalization remains incomplete.
 
 Module B now has a reviewed 16-page manuscript deriving the declared
 results of four sources from 1998–2021. Forest cuts, compatible partitions

@@ -48,8 +48,11 @@ twelve-paper module. Earlier proofs and certificates have been reworked
 into complete construction, classification and geometric arguments. The
 hypertope proof now uses the existing edge-inflation theorem and the new
 shared coset-intersection theorem. The corrected diagonal factors are
-integrated directly. Full Lean formalization and matched measurement
-remain incomplete; enlarging the bundle requires further source deductions.
+integrated directly. The [complete measured comparison](MEASUREMENT_A.md)
+gives 1.634× by PDF-text tokens, with sensitivities of 1.063× by
+nonwhitespace characters and 1.126× by collapsed UTF-8 bytes. Full Lean
+formalization remains incomplete; enlarging the bundle requires further
+source deductions.
 
 ## Module B: Forest coordinates and primitive coset geometries
 

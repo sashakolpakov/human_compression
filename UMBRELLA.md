@@ -44,7 +44,10 @@ separate formalization tasks. No entire module is certified by a helper.
 
 U's complete body costs 61,576 UTF-8 bytes and is charged once in a combined
 comparison. Its 16 rendered pages do not include the four programs required
-by Module A. Matched source measurement remains separate from this inventory.
+by Module A. The [complete U+A measurement](MEASUREMENT_A.md) includes those
+programs and gives 1.634× by extracted-text tokens, 1.063× by nonwhitespace
+characters and 1.126× by collapsed UTF-8 bytes. It remains separate from
+this raw inventory and supplies no matched source-page ratio.
 The [previous draft](research/case_study/phase123_umbrella_manuscript_v2.md)
 and its [original review](research/case_study/phase127_modular_root_review.md)
 remain available for provenance.

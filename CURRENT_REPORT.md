@@ -4,8 +4,12 @@ The project now has complete mathematical manuscripts under descriptive titles:
 **[U: Marked groups, kernels and intersections](UMBRELLA.md)** and
 **[A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md)**.
 U version 3 has 30 statements with proofs in 16 pages. A version 2 has
-24 pages and a reviewed six-source contract. Full Lean formalization and
-matched source measurement remain incomplete; no modular ratio is yet admitted.
+24 pages and a reviewed six-source contract. Full Lean formalization
+remains incomplete. The first [complete U+A measurement](MEASUREMENT_A.md)
+is now admitted: **1.634× by PDF-text tokens**, alongside **1.063× by
+nonwhitespace characters** and **1.126× by collapsed UTF-8 bytes**. Its
+65-page denominator contains all of U, A and four complete programs.
+There is no normalized source-page ratio.
 
 **[B: Forest coordinates and primitive coset geometries](MODULE_B.md)**
 now has a reviewed 16-page manuscript deriving the declared contracts of

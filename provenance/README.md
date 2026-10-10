@@ -380,3 +380,10 @@ adapter, interval-overlap cancellation and its finite-marker transport.
 Complete proof reading, fresh dedicated/public builds and 23 controls
 passed. There are now 51 scoped components. The unfinished group consumer
 and full conjecture remain outside this admission.
+
+The [phase-101 record](phase101_review.md) admits the complete six-source
+U3+A2 measurement, with all four required programs counted. The exact
+token factor is 1.6339741771, beside the materially smaller character
+factor 1.0625499262 and collapsed-byte factor 1.1259335014. Fresh independent
+source/PDF recounts, all-page review and public reproduction passed.
+No normalized source-page ratio or sawtooth trend is inferred.

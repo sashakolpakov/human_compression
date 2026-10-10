@@ -42,6 +42,19 @@ claims separate.
 
 ## Current application manuscripts
 
+The [complete U+A measurement](MEASUREMENT_A.md) has a separate independent
+counter, requiring pypdf 6.13.0 and a new output path:
+
+```sh
+python3 -B -O research/case_study/phase153_independent_recount.py --output /tmp/NEW-UA-measurement.json
+```
+
+This recounts the complete public replacement and checks exact manuscript
+and printed-code coverage; it uses bound source measurements. Its optional
+`--primary` mode also re-extracts the six exact primary PDFs when privately
+available. The scope and all metric sensitivities are recorded on the
+measurement page.
+
 The [six-source Module A](MODULE_A.md) and [four-source Module B](MODULE_B.md)
 have distinct documentary and mathematical checks. With fresh output paths:
 

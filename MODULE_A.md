@@ -50,7 +50,16 @@ This is a raw inventory, not a source compression ratio. Compared with the
 fully corrected six-source additive package of 214,717 bytes, integration
 removes a net 5,856 bytes. The uncorrected historical package is not used
 as a valid proof comparator. One reduction does not establish a long-run
-sawtooth pattern. Matched source measurement is a separate task.
+sawtooth pattern.
+
+The [reviewed source comparison](MEASUREMENT_A.md) now measures the six
+complete cleaned source bodies against full U+A and all four programs:
+**46,065/28,192 = 1.634× by PDF-text tokens**. Nonwhitespace characters give
+**1.063×**, and collapsed UTF-8 bytes give **1.126×**. The complete counted
+PDF has 65 pages, including every program; the standalone 24-page A is
+not used as the full denominator. Source editions, body cuts, retained
+inputs and representation sensitivity remain explicit. No normalized
+source-page ratio is claimed.
 
 The independent and root reviews are recorded in the
 [publication review](provenance/phase99_review.md). The general
