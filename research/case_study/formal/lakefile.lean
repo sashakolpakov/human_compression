@@ -13,4 +13,4 @@ lean_lib MathCompressionCertificates where
     `ResidueConnectivity, `ChamberOrbit, `TorsorPartitions,
     `CoordinateKernels, `SuzukiPentagons, `StringIntersection, `BooleanShadow,
     `ConsecutiveShadow, `RankThreeFactorization, `CosetCoordinates,
-    `IntertwinerSeparation, `TransvectionForms, `InvolutionCentralizers]
+    `IntertwinerSeparation, `TransvectionForms, `InvolutionCentralizers, `BinaryFrattiniActions]

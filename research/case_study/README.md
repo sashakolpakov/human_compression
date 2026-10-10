@@ -2,6 +2,26 @@
 
 Research date: 9 October 2026. We have proposed proofs of the two 2017 PSL(2,q) conjectures, the 2005 Hermitian-unital conjecture, the Suzuki graph pentagon-count conjecture, and the missing range in a recent existence theorem for chiral polyhedra, together with exact computations and Lean certificates for key proof components. These results have received internal agent reviews, not external peer review. Priority and novelty remain provisional.
 
+## The latest uniform reductions
+
+The [short odd-order theorem](phase11_odd_nilpotent.md) proves cyclic TPP
+for every finite nilpotent group of odd order. Minimality forces a powerful
+group; the retained Lubotzky–Mann factorization theorem then contradicts TPP.
+The [hereditary powerful-Frattini theorem](phase11_powerful_frattini.md)
+handles further 2-group classes and recovers the earlier metacyclic case
+through a [short adapter](phase11_metacyclic_adapter.md). Its binary action
+lemma has a complete [Lean certificate](formal/BinaryFrattiniActions.scope.md);
+the whole group theorem is not formalized. The unrestricted 2-group bound
+remains open.
+
+The [unitary matrix template](phase11_unitary_template.md) gives uniform
+generation for q≡1 mod4. Its [two-form intersection proof](phase11_unitary_intersection.md)
+gives a string C-group when the middle rotation has order q²±1. Exact
+certificates verify q=5,9,13 and a failed marking at q=9. The general
+parameter-existence problem remains. See the
+[phase-eleven review](../../provenance/phase11_review.md) for fresh runs,
+retained inputs and internal-review scope.
+
 ## The older-paper extension
 
 The [2003 spread-space proof](phase4_old_problem_audit.md) gives a proposed

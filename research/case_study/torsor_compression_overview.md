@@ -9,7 +9,7 @@ which geometric constraints it solves. These are internally reviewed proof
 drafts and exact computations, not externally reviewed publications.
 
 The [detailed introduction](../../INTRODUCTION.md) explains the ideas with
-worked examples. The [living paper map](../../PAPER_MAP.md) records all 145
+worked examples. The [living paper map](../../PAPER_MAP.md) records all 152
 indexed works, including the 1996–2006 intake; this note focuses on reductions.
 
 ## The common calculus
@@ -55,7 +55,7 @@ an entire paper.
 | L032, *On regular polytopes of 2-power order*, Theorem 1.2 | Explicit square-grid seed plus independent dihedral factors | Whole principal all-rank existence theorem; no classification of every group |
 | L030, *An infinite family of locally X graphs based on incidence geometries*, principal construction and parameters | The single tensor relation K_r tensor KG(N,k), replacement distances and a spectral automorphism argument | Construction, residues, diagram and full graph automorphism group recovered; two source displays corrected |
 | L008, *Testing chirality on hypertopes*, Theorem 1.1 | Double-coset extension fiber with two points, then a uniform residue argument | Principal criterion recovered, retaining the standard marked-inversion correspondence |
-| L034, *Existence of regular 3-hypertopes with 2^n chambers*, Theorem 3.2 and parts of Conjecture 3.3 | Same grid/dihedral construction; presentation comparison; cyclic triple-product lower bound | Presented construction recovered; alternate printed quotient display not separately verified. Bound proved for minimum pair order ≤4 and several uniform derived-subgroup classes; full bound remains |
+| L034, *Existence of regular 3-hypertopes with 2^n chambers*, Theorem 3.2 and parts of Conjecture 3.3 | Same grid/dihedral construction; presentation comparison; cyclic triple-product lower bound | Presented construction recovered; alternate printed quotient display not separately verified. Bound proved for minimum pair order ≤8 and for hereditary powerful-Frattini derived groups, including metacyclic and abelian-Frattini cases; full bound remains |
 | L035, *2-groups behaving as automorphism groups of regular 3-polytopes*, Theorems 1.2 and 1.3 | Grid construction, bounded cyclic-core quotients, eight binary extension models | Both principal theorems recovered, including completeness of all eight families; retains Lucchini's theorem and one exhaustive order-256 SmallGroups census |
 | L025, Suzuki graph Conjecture 3.2 | Three zero matrix entries solve a four-parameter coset-walk word | Proposed all-q proof of exactly q−1 pentagons per edge; full matrix-membership equivalence Lean checked; graph/source correspondence is a written proof |
 | L012, *Regular 3-polytopes of order 2^n p*, Theorem 5.1 and Corollary 5.2 | Three affine transformations, one index-48 presentation, three invariant lattices | Actual three families and every order 3·2^n for n≥5 recovered; other classification/nonexistence results remain |
@@ -72,6 +72,20 @@ by rewriting them as hypotheses. Nor does a shorter proof establish a personal
 or historical judgment about the original authors.
 
 ## Useful extensions beyond the reproduced statements
+
+The [odd-order nilpotent theorem](phase11_odd_nilpotent.md) reduces every
+cyclic-TPP inequality in that class to minimality and a retained powerful-group
+factorization theorem. The [Frattini extension](phase11_powerful_frattini.md)
+uses a four-case binary action lemma to handle the hereditary powerful-Frattini
+2-group class; a [short adapter](phase11_metacyclic_adapter.md) recovers the
+earlier metacyclic family within that framework. The unrestricted 2-group
+inequality remains. These are theorem gains without a new measured ratio.
+
+The [unitary template](phase11_unitary_template.md) and its
+[two-form intersection proof](phase11_unitary_intersection.md) give a conditional
+family for q≡1 mod4 and exact rank-four examples at q=5,9,13. Suitable
+parameter existence for every field remains unresolved. The source survey
+receives partial-progress coverage, not a full-survey reduction.
 
 The [all-rank action formula](elementary_action_theorem.md) counts independent
 commuting r-tuples modulo point conjugacy and generator reordering. Subspace

@@ -84,6 +84,15 @@ separately from historical reports; the source classifications retained by
 each argument remain explicit. [Export provenance](phase10_original_files.json)
 records the original hashes and the one documentation-link adjustment.
 
+The [phase-eleven review record](phase11_review.md) adds the short odd-order
+nilpotent theorem, the hereditary powerful-Frattini reduction, the metacyclic
+adapter and the conditional unitary template. The seventeenth Lean module
+certifies the finite binary action lemma. Fresh symbolic and GAP runs cover
+three positive unitary examples and a failed-marking control. Its
+[export record](phase11_original_files.json) preserves the frozen proofs and
+audits, including historical drafting labels, separately from the fresh
+public compiler and execution reports.
+
 [Measurement](../MEASUREMENT.md) records a conditional 3.34× ratio for two
 exact counting formulas and the separate status of new resolutions. No
 corpus ratio or infinity marker is assigned by this publication snapshot.

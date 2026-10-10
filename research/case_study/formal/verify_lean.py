@@ -22,7 +22,7 @@ CERTIFICATES = (
     "CoordinateKernels", "SuzukiPentagons", "StringIntersection",
     "BooleanShadow", "ConsecutiveShadow", "RankThreeFactorization", "CosetCoordinates",
     "IntertwinerSeparation", "TransvectionForms",
-    "InvolutionCentralizers",
+    "InvolutionCentralizers", "BinaryFrattiniActions",
 )
 
 

@@ -320,10 +320,62 @@ simple-group recognition is required. The older permutation certificate
 and its independently implemented bitmask check are also retained, with
 their different identification dependencies recorded.
 
+## Frattini actions and the unitary template
+
+The phase-eleven finite action checks use Python's standard library. From
+the repository root, write fresh reports outside the saved artifact names:
+
+```sh
+python3 research/case_study/phase11_binary_action_check.py --output /tmp/binary_action.json
+python3 research/case_study/phase11_abelian_frattini_independent_check.py --output /tmp/frattini_independent.json
+python3 research/case_study/phase11_odd_norm_independent_check.py --output /tmp/odd_norm.json
+python3 research/case_study/phase11_cyclic_tpp_check.py --output /tmp/cyclic_structure.json
+```
+
+The first two independently encode the binary lemma; the second also checks
+bounded unequal-exponent lifting. The third exhausts the F3 norm equations:
+2,187 solutions in 81 action pairs. The last checks 46 retained normal-form
+models and 96,640 outside elements. None enumerates all finite p-groups or
+formalizes the group-theoretic induction. The shorter all-odd-prime proof
+does not depend on these finite action checks.
+
+Three standalone GAP witnesses make the limitations concrete:
+
+```sh
+gap -q -T research/case_study/phase11_tpp_equality_witness.g
+gap -q -T research/case_study/phase11_rank3_equality_witness.g
+gap -q -T research/case_study/phase11_odd_nonnilpotent_witness.g
+```
+
+These require SmallGrp. The first two show that TPP and equality of the
+factor-order product with group order do not imply an injective global
+product map. The third gives a cyclic TPP triple of orders 3,3,3 in a
+nonnilpotent group of order 21. These are individual witnesses, not censuses.
+
+For the unitary matrices, run the two Python scripts in a **disposable copy**
+of the artifact directory: they require SymPy and write adjacent JSON reports.
+Then run the GAP checker from that copy:
+
+```sh
+python3 phase11_unitary_template_check.py
+python3 phase11_unitary_intersection_check.py
+gap -q -T phase11_unitary_examples_check.g
+```
+
+The Python scripts verify 33 generation identities and 14 intersection-proof
+identities or checks. They do not certify the retained rank-one subgroup
+theorem or the complete group argument. GAP constructs the natural action
+on isotropic two-spaces and verifies the full projective-unitary order,
+all 16 subset groups and all 256 intersections for each of four markings.
+Three give C-groups at q=5,9,13; the negative control at q=9 has exactly two
+failed ordered intersection checks. No external group-generator database
+or simple-group recognition is used. Compare mathematical fields in the
+saved reports; timestamps and runtimes vary.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all sixteen certificates and their unformalized boundaries. With Git
+describes all seventeen certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -347,15 +399,19 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The sixteen certificates cover intersection transport, field and matrix
+The seventeen certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
 theorems from factorization or arbitrary-family coordinate coverage.
 Further modules check an abstract additive-commutator obstruction to an
 intertwiner, vanishing of transvection-invariant forms, and the rank-three
-obstruction from involution centralizers. The last uses actual subgroup
+obstruction from involution centralizers. That module uses actual subgroup
 closure for generation; it does not formalize Suzuki structure or existence.
+The seventeenth module, BinaryFrattiniActions, proves the exact four-case
+binary action classification and its coordinate-support consequence using
+kernel-checked finite decisions. The full p-group theorem remains a written
+proof; its source/report boundary is specified in the accompanying scope note.
 They formalize the stated components, not the complete geometric
 instantiations, all source-group classifications, or every written theorem.
 The saved successful runs report no `sorryAx` dependency.

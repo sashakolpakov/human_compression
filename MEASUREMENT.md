@@ -177,3 +177,18 @@ targets, retained inputs and coverage. Further quantitative reports must
 extend the same source/replacement span and dependency accounting to other
 matched theorem sets. The number of papers indexed, pages downloaded, agents
 used, or elapsed research years cannot substitute for those measurements.
+
+The phase-eleven [odd-order nilpotent theorem](research/case_study/phase11_odd_nilpotent.md)
+has a short all-parameter proof using a retained 1987 factorization theorem.
+It subsumes the odd-prime metacyclic and abelian-Frattini cases. The
+[bounded priority audit](research/case_study/phase11_odd_nilpotent_status.md)
+does not establish novelty or identify a named open conjecture resolved by
+that theorem; it also attributes the known order-21 boundary example. The
+[hereditary powerful-Frattini theorem](research/case_study/phase11_powerful_frattini.md)
+unifies further 2-group classes. Neither has a matched-length measurement;
+the unrestricted 2-group hypertope conjecture remains open. Likewise, the
+[unitary template](research/case_study/phase11_unitary_intersection.md)
+proves a conditional family and certifies additional finite examples, while
+the all-field parameter problem remains. These are substantive theorem
+coverage gains, with unverified publication priority. The measured ratio
+stays **127/38≈3.34**, and no infinity marker is assigned.

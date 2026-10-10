@@ -69,11 +69,11 @@ UPDATES = {
         "compression_phase2.md;formal/CoordinateKernels.lean",
         "This existence theorem does not classify every group of the given order. Lean covers abstract kernel transport only."),
     "L034": (
-        "component_rederived", "Theorem 3.2; Conjecture 3.3 when at least one distinguished pair product has order at most eight; earlier specified classes",
-        "Grid/dihedral construction identifies the presentation. A marked isobicyclic normal form excludes the extremal cyclic-core case, proving the cyclic-TPP inequality whenever one factor has order at most four and the hypertope bound whenever one pair order is at most eight. Earlier metacyclic and finite-order results remain separate.",
-        "Hypertope-to-cyclic-TPP reduction with the geometric hypotheses retained; Published classification of marked isobicyclic 2-groups, including its factor-swapping marking; Bounded group catalogue only for the separate finite-order certificate",
-        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md;phase7_cyclic_tpp.md;phase7_cyclic_tpp_certificate.json;phase10_cyclic_tpp.md;phase10_cyclic_tpp_certificate.json;phase10_cyclic_tpp_independent_audit.md;phase10_cyclic_tpp_independent_audit.json",
-        "Unrestricted Conjecture 3.3 and cyclic TPP remain unresolved; any remaining hypertope counterexample has all three pair orders at least sixteen. The marked isobicyclic classification is retained, not rederived. The source's alternate dihedral-by-dihedral quotient display is not separately verified; external review and priority remain."),
+        "component_rederived", "Theorem 3.2; Conjecture 3.3 for hereditary powerful-Frattini derived groups, including abelian-Frattini and metacyclic groups; pair-order-at-most-eight and earlier finite classes",
+        "Grid/dihedral construction identifies the presentation. A marked isobicyclic normal form excludes the extremal cyclic-core case, proving the cyclic-TPP inequality whenever one factor has order at most four and the hypertope bound whenever one pair order is at most eight. The new Frattini action obstruction proves the hereditary powerful-Frattini class and subsumes metacyclic 2-groups. A separate short theorem covers all odd-order nilpotent cyclic TPP triples; it does not settle the source 2-group conjecture.",
+        "Hypertope-to-cyclic-TPP reduction with the geometric hypotheses retained; Published classification of marked isobicyclic 2-groups, including its factor-swapping marking; Bounded group catalogue only for the separate finite-order certificate; Lubotzky-Mann powerful-group power-layer and arbitrary-generating-list factorization theorems for the new hereditary class",
+        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md;phase7_cyclic_tpp.md;phase7_cyclic_tpp_certificate.json;phase10_cyclic_tpp.md;phase10_cyclic_tpp_certificate.json;phase10_cyclic_tpp_independent_audit.md;phase10_cyclic_tpp_independent_audit.json;phase11_abelian_frattini.md;phase11_abelian_frattini_certificate.json;phase11_nilpotent_frattini.md;phase11_nilpotent_frattini_intake.json;phase11_powerful_frattini.md;phase11_powerful_frattini_certificate.json;phase11_metacyclic_adapter.md;phase11_odd_nilpotent.md;formal/BinaryFrattiniActions.lean;formal/BinaryFrattiniActions.scope.md",
+        "Unrestricted Conjecture 3.3 and cyclic TPP remain unresolved; a minimum remaining hypertope counterexample has all three pair orders at least sixteen, and a minimum cyclic-TPP counterexample has nonpowerful Frattini subgroup. The hereditary condition cannot simply be dropped. The marked isobicyclic classification is retained, not rederived. The source's alternate dihedral-by-dihedral quotient display is not separately verified; external review and priority remain."),
     "L035": (
         "principal_results_rederived", "Theorems 1.2 and 1.3",
         "Grid existence construction, bounded cyclic-core quotient and eight binary extension models prove completeness.",
@@ -130,10 +130,10 @@ UPDATES = {
         "The exact principal theorem is read in the primary L074 restatement. The original L085 full body remains unavailable, so its auxiliary statements and original proof are not compared and no whole-paper reduction is claimed. External review remains."),
     "L120": (
         "partial_progress", "Conjecture 2, section 5.7: proposed odd-PSL4 maximum four; Problem 7: odd linear intermediate groups have rank at most four",
-        "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). Four explicit GF(25) unitary matrices give a rank-four PSU4(5) example of type {4,26,10}; containment plus order identifies the group, and all 256 subset intersections are checked.",
-        "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; Classical PSU4(5) order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms for the finite matrix certificate",
-        "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json",
-        "Problem 7 remains incomplete: field and graph extensions and general index-two existence are unresolved here. PSU4(5) now has maximum rank four; rank-four existence for general odd q>=5 with q!=5 remains undecided. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted as a second solution; priority and external review remain."),
+        "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). A uniform matrix template generates SU4(q) for q=1 mod4 and has projective IP whenever the middle order is q^2-1 or q^2+1, using two auxiliary forms and a regular-torus bound. Exact checks certify maximum rank four for q=5,9,13, with a failed-IP control at q=9.",
+        "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; PGL2 maximal-subgroup classification, rank-one unitary identification and perfection; Standard projective unitary order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms",
+        "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json;phase11_unitary_template.md;phase11_unitary_intersection.md;phase11_unitary_manifest.json;phase11_unitary_examples_root_check.json",
+        "Problem 7 remains incomplete: field and graph extensions and general index-two existence are unresolved here. PSU4(q) now has maximum rank four at q=5,9,13. The uniform template leaves existence of the required middle-order parameter unproved, and q=3 mod4 is not covered by that construction. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted as a second solution; priority and external review remain."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",
@@ -394,8 +394,8 @@ def record(row, baseline, overlay, later_readings, older_access):
     if identifier == "L120":
         r["exact_target"][0]["scope"] = "Dimension-four bilinear-form obstructions give the stated odd linear and unitary intermediate-group upper bounds, with the phase-eight PSL4 argument retained. Field and graph extensions are not covered."
         r["exact_target"].append({
-            "reference": "Companion unitary application: maximum rank four for PSU4(5)",
-            "scope": "Explicit determinant-one GF(25) matrices preserve a Hermitian form. Their projective plane-action order identifies PSU4(5), and all 256 subset intersections establish type {4,26,10}. The maximum uses the separate phase-nine upper bound; this is not a separate named survey conjecture or a uniform existence theorem.",
+            "reference": "Companion unitary application: conditional template and maximum rank four for PSU4(5), PSU4(9), PSU4(13)",
+            "scope": "Explicit matrices give uniform generation for q=1 mod4 and full intersection property conditional on middle projective order q^2-1 or q^2+1. Natural-action certificates at q=5,9,13 check all 256 intersections each. Maximality uses the separate phase-nine upper bound; this is not a separate named survey conjecture, and all-field parameter existence remains unresolved.",
             "relation_to_source": "proposed_finite_companion_application",
         })
     if identifier == "L114" and identifier not in UPDATES:
@@ -500,8 +500,8 @@ def render(registry):
         ref = "; ".join(t["reference"] for t in r["exact_target"])
         proof = next(e["file"] for e in r["evidence"] if e["file"].endswith(".md"))
         companion = {
-            "L034": ("Uniform pair-order-at-most-eight proof", "phase10_cyclic_tpp.md"),
-            "L120": ("PSU4(5) matrix certificate", "phase10_unitary_matrix_certificate.md"),
+            "L034": ("Uniform Frattini-class proof", "phase11_powerful_frattini.md"),
+            "L120": ("Conditional unitary construction", "phase11_unitary_intersection.md"),
         }.get(r["id"])
         extra_link = (f" [{companion[0]}](research/case_study/{companion[1]})."
                       if companion else "")

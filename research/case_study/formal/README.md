@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are sixteen certificates. To compile them on another machine, install Git,
+There are seventeen certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the sixteen modules, but does not produce the runner's JSON reports.
+way to compile the seventeen modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,7 +95,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all sixteen source hashes match the historical successful reports
+This checks that all seventeen source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. The saved runs print only the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
@@ -115,8 +115,19 @@ Saved reports: [lift](LiftCertificate.check.json),
 [rank-three factorization](RankThreeFactorization.check.json),
 [all-rank coset coordinates](CosetCoordinates.check.json),
 [intertwiner separation](IntertwinerSeparation.check.json),
-[transvection-invariant forms](TransvectionForms.check.json), and
-[involution-centralizer rank obstruction](InvolutionCentralizers.check.json).
+[transvection-invariant forms](TransvectionForms.check.json),
+[involution-centralizer rank obstruction](InvolutionCentralizers.check.json), and
+[binary Frattini actions](BinaryFrattiniActions.check.json).
+
+[BinaryFrattiniActions.lean](BinaryFrattiniActions.lean) proves the exact
+four-case classification of the commuting binary actions satisfying the
+three square-extension equations. Its six theorems include the converse,
+nonvacuous coordinate support, and preservation of binary addition. The
+finite decision proofs are checked by the Lean kernel. The
+[scope note](BinaryFrattiniActions.scope.md) separates this complete finite
+lemma from the written minimum-counterexample and central-element arguments
+needed for the cyclic-subgroup inequality. The public report records a fresh
+compilation; the sixteen older saved reports retain their original bytes.
 
 [ResidueConnectivity.lean](ResidueConnectivity.lean) proves that a transitive
 group action connects a relation whenever a generating set moves each point

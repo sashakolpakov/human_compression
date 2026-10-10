@@ -1159,7 +1159,116 @@ all associativity triples only at the smaller parameters and local equations
 at larger ones. Neither the finite checks nor this partial result settle
 the unrestricted conjecture.
 
-## 14. The remaining work, and how a living reduction should record it
+## 14. Frattini coordinates and a shorter odd-prime argument
+
+The next reduction works with the subgroup of nongenerators,
+$\Phi(P)=P^p[P,P]$, rather than a chosen normal cyclic subgroup. In a
+smallest cyclic-TPP counterexample among finite $p$-groups, each pair of
+cyclic factors generates $P$, so $|P:\Phi(P)|=p^2$. The triple
+$A^p,B^p,C^p$ lies in $K=\Phi(P)$ and still has TPP. Minimality gives
+
+$$\frac{|A||B||C|}{p^3}\le |K|=\frac{|P|}{p^2}.$$
+
+The violating ratio is a power of $p$, so it must equal $p$. Hence
+$|A^p||B^p||C^p|=|K|$. These three subgroups generate $K$: otherwise
+their generated subgroup would be a smaller counterexample. Consequently
+
+$$\Phi(P)=\langle a^p,b^p,c^p\rangle=P^p.$$
+
+For odd $p$ this says that $P$ is **powerful**. A classical theorem of
+Lubotzky and Mann says that any generating list of a powerful group gives
+an ordered product of its cyclic subgroups. Apply it to $P=\langle a,b\rangle$:
+then $P=AB$. Every nonidentity $c\in C$ now gives $c^{-1}=ab$, contradicting
+TPP. This proves the inequality for every finite odd-prime-power group;
+splitting cyclic factors into Sylow components proves it for every finite
+nilpotent group of odd order. The full proof and exact retained theorem are
+in the [odd-order note](research/case_study/phase11_odd_nilpotent.md).
+
+This is a useful compression within the research itself: the odd-prime
+norm calculation developed earlier is unnecessary for this stronger result.
+The proof retains a substantial published factorization theorem and credits
+it explicitly. No proof-length ratio has yet been measured for this argument.
+
+At $p=2$, $\Phi(P)=P^2$ is automatic and does not make $P$ powerful.
+The [abelian-Frattini theorem](research/case_study/phase11_abelian_frattini.md)
+instead assumes that $K$ is abelian. Its cyclic square factors then give
+an actual direct product
+
+$$K=\langle x\rangle\times\langle y\rangle\times\langle z\rangle,
+\qquad x=a^2,\quad y=b^2,\quad z=c^2.$$
+
+Conjugation by $a,b$ induces commuting involutions $S,T$ on
+$V=K/2K\cong\mathbf F_2^3$. They fix $x,y$ respectively. Writing
+$d=[b,a]$ and $c=abf$ gives three further compatibility equations:
+
+$$ (T-I)x=(S-I)d,\qquad (S-I)y=(T-I)d,$$
+$$ z=x+y+Td+f+STf.$$
+
+These equations leave exactly four action pairs: the identity pair, and
+three pairs whose common correction image is one of the coordinate lines.
+That line is fixed by both actions. The complete finite classification,
+including its converse, is
+[checked in Lean](research/case_study/formal/BinaryFrattiniActions.scope.md).
+The written proof then lifts a fixed coordinate to the top involution of
+one of the actual cyclic factors. Unequal factor orders are handled by
+choosing a maximal-order coordinate: corrections in shorter factors vanish
+at its top power. The resulting central involution contradicts the
+minimal-counterexample reduction.
+
+The [powerful-Frattini extension](research/case_study/phase11_powerful_frattini.md)
+uses the same action lemma even when $K$ is nonabelian. Powerful-group
+factorization supplies genuine coordinates, and successive power layers
+supply an equivariant linear top-power map. It proves the inequality when
+$\Phi(H)$ is powerful for **every** subgroup $H\le P$. The hereditary
+condition is needed for induction; merely assuming that $\Phi(P)$ is
+powerful has not been justified by this proof.
+
+For the hypertope order conjecture these results add the entire
+abelian-Frattini and hereditary-powerful-Frattini classes of derived
+2-groups, at every order. The unrestricted 2-group problem remains.
+Numerical equality alone never supplies the coordinates: the exact
+[order-32](research/case_study/phase11_tpp_equality_witness.g) and
+[order-64](research/case_study/phase11_rank3_equality_witness.g) examples
+have TPP and equality of factor-order product with group order, but their
+three-factor multiplication maps are not injective.
+
+## 15. One unitary template and two auxiliary forms
+
+The [unitary construction](research/case_study/phase11_unitary_template.md)
+turns the earlier finite example into four matrices over $E=\mathbf F_{q^2}$,
+for $q=p^e\equiv1\pmod4$. Choose $i\in\mathbf F_q$ with $i^2=-1$ and
+a nonzero trace-zero parameter $k$ such that $\mathbf F_p(k^2)=\mathbf F_q$.
+The matrices preserve $H=\operatorname{diag}(1,-1,1,-1)$, have determinant
+one, and become a string of involutions projectively.
+
+Their generation proof first isolates a two-dimensional block. A unipotent,
+an involution outside the special projective group, and the trace invariant
+$-4k^2$ exclude the proper groups in the retained rank-one subgroup list.
+A kernel word then produces a whole coordinate $\mathrm{SU}_2(q)$.
+Conjugation gives such groups on a connected graph of coordinate pairs;
+unitary elimination shows that they generate $\mathrm{SU}_4(q)$.
+
+Generation leaves a genuine second problem: the intersection property.
+The two adjacent rank-three groups preserve an explicit symmetric form $B$
+and alternating form $A$, respectively, up to scalar. The
+[intersection theorem](research/case_study/phase11_unitary_intersection.md)
+uses these two forms to bound their common stabilizer. If the middle
+projective rotation has order $m=q^2-1$ or $q^2+1$, its square is regular
+semisimple in a descended symplectic group. Its centralizer is a torus
+of order $m$. Accounting for the two form signs and scalar center bounds
+the projective common stabilizer by $2m$; the middle dihedral group
+already has that size. This proves the required equality. Explicit matrix
+entries verify the two smaller rank-three intersections.
+
+Thus one template gives type $\{4,m,2p\}$ whenever the stated parameter
+condition holds. Exact natural-action checks give successful examples at
+$q=5,9,13$, with $m=26,80,170$. A second parameter at $q=9$ generates
+the same full group but fails the intersection property. This control
+shows why generation alone cannot replace the stabilizer argument.
+Existence of a suitable parameter for every $q\equiv1\pmod4$, and a
+construction for the other odd congruence class, remain unresolved here.
+
+## 16. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -1196,14 +1305,15 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [sixteen Lean certificates](research/case_study/formal/README.md) cover
+The [seventeen Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
 the rank-three factorization and arbitrary-family coordinate-attachment
 implications for coset Helly, separation of matrix intertwiners by an
 invertible additive commutator, vanishing of transvection-invariant forms,
-and the abstract involution-centralizer rank obstruction.
+the abstract involution-centralizer rank obstruction, and the exact
+four-case binary Frattini-action lemma.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.
