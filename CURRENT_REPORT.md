@@ -75,6 +75,13 @@ subset products. It also proves the actual-quotient and locally injective
 specializations. This strengthens a shared algebraic interface without adding
 a manuscript or resolving the general cover conjecture.
 
+The [conditional cover-kernel theory](COVER_KERNELS.md) has also passed full
+independent written review. It gives a support classification for suitable
+semisimple kernels, an exact central-kernel complement count, and a complete
+finite interval with two maximal admissible kernels. The standalone exact
+GAP replay is distributed. These results strengthen the common theory without
+increasing source coverage or establishing the general conjecture.
+
 The next work is to shorten the integrated exposition and review the expanded
 continuous manuscript. The operations manuscript now has a fresh exhaustive
 Janko-group certificate: 100,016 rank-four extensions yield six classes and

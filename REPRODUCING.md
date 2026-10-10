@@ -1875,3 +1875,25 @@ records two fresh builds with pinned Lean 4.32.2 and all nine dependency
 revisions. Four theorem axiom reports use only standard axioms. Geometry,
 module classification, cover minimality and source-specific finite code are
 outside the [formal scope](research/case_study/formal/QuotientIntersectionCriterion.scope.md).
+
+## Complete finite cover interval
+
+```sh
+python3 research/case_study/phase54_cover_interval_verify.py \
+  --gap /path/to/gap --output-dir /tmp/cover-interval-new
+```
+
+Stock GAP 4.15.1 reconstructs the literal source groups and the rotation group
+of order 8,748. The program checks the order-nine kernel, exact defect, every
+subspace, every invariant quotient, and both maximal admissible axes. It also
+checks the scoped tetrahedral counterexample. The directory must be new;
+raw and canonical logs are saved and the entire canonical output is bound.
+The complete program matches the assembly in the
+[independent review](research/case_study/phase50_cover_recent_audit.md).
+
+No private primary capture or older manifest tree is needed by this command.
+The preserved phase46 author runner has those private dependencies and is
+not the public entry point. The [root admission](research/case_study/phase54_cover_interval_root_audit.md)
+records the new runner and fresh replay. The support and central-kernel
+theorems are written proofs; the finite program does not establish the
+general cover conjecture or classify covers outside the specified interval.

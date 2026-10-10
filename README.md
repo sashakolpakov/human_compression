@@ -116,6 +116,14 @@ exceptional membership preserve both subgroup intersections and flag
 completion across unrelated quotients. [Lean proves both full subgroup-intersection and flag-completion equivalences](research/case_study/formal/ParabolicMarkedComparison.scope.md),
 even for arbitrary type sets and nonsurjective homomorphisms.
 
+The [cover-kernel theory](COVER_KERNELS.md) gives an exact quotient-intersection
+test, now proved in Lean, and conditional classifications by invariant
+subspaces. A central kernel gives the explicit count `p^(e(d-e))`; a
+multiplicity-free kernel gives a defect-support hypergraph. Complete written
+review and a standalone GAP replay establish the stated theorems and one
+finite cover interval. The existence hypotheses for arbitrary polytopes remain
+unproved.
+
 ## Results in this snapshot
 
 An [eight-dimensional integer tensor construction](research/case_study/phase35_L003_tensor_model.md),
