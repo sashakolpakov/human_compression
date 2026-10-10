@@ -47,10 +47,23 @@ possible proofs or the intrinsic value of previous research.
 
 The [bounded-core classification](research/case_study/phase16_central_join.md)
 provides an exact asymptotic encoding result. For fixed excess k>=1, let
-a_k(d) count the ordered marked groups of rank d and order 2^(2d−1+k).
+a_k(d) count the ordered nondegenerate involutory path markings with
+actual IP, of rank d and group order 2^(2d−1+k).
 It is eventually a positive degree-k polynomial. Therefore
 
     log2 a_k(d) = k log2 d + O_k(1).
+
+The [leading-coefficient theorem](research/case_study/phase18_leading_coefficient.md)
+now sharpens this to
+
+    a_k(d) = (5^k/k!) d^k + O_k(d^(k−1)),
+    log2 a_k(d) = k log2 d + k log2 5 − log2(k!) + O_k(1/d).
+
+The coefficient is derived from the exact canonical-core patterns:
+the terms of maximal degree have k separated excess-one components,
+each with four edge choices or one triple choice. It is not estimated
+by fitting finite counts. Higher nilpotency class contributes only
+O_k(d^(k−1)) marked classes.
 
 Conditional on d, k and the specified finite core library, a fixed-length
 index identifying one marked class requires exactly ceil(log2 a_k(d))
@@ -62,8 +75,9 @@ constant, not a free contribution to an unrelated corpus measurement.
 
 This is a theorem about descriptions of mathematical objects. It is
 not a numerical ratio between the literature's proofs and ours. The
-finite library multiplicities have not been computed in general, so
-this statement does not assign general numerical coefficients or a corpus ratio.
+finite library multiplicities have not been computed in general.
+The leading coefficient is now known, while the unrestricted lower
+coefficients remain uncomputed here; no corpus ratio follows.
 
 The [first-excess classification](research/case_study/phase17_k1_classification.md)
 now gives the exact special case a₁(d)=5d−10 for every d≥3. An optimal
@@ -74,6 +88,14 @@ certificate are additional information whenever the application has not
 already fixed them. This object-index cost is not a source-proof ratio.
 The 2018 rank-five source count is a rederivation within this theorem,
 not a newly solved conjecture or an infinity-marker entry.
+
+Within nilpotency class at most three, the
+[complete transfer formula](research/case_study/phase18_class_three.md)
+computes every excess coefficient exactly. Across all excesses its
+rank-d count is the Fibonacci number F_(4d−5), giving a conditional
+index cost ceil(log₂ F_(4d−5)). That total ranges over different
+orders; it must not be substituted for a count at fixed excess.
+Neither formula measures the length of a mathematical proof.
 
 ## The infinity marker
 

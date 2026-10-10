@@ -152,3 +152,18 @@ contains twelve works. Sixty-two new original artifacts retain their
 recorded bytes; the twentieth partial Lean module was freshly compiled.
 The two matched ratios remain separately scoped and unchanged. The
 structural group-description bound is recorded as a different quantity.
+
+The phase-eighteen [review record](phase18_review.md) adds the complete
+class-at-most-three path-marking classification, its transfer formula and
+Fibonacci total, and the unrestricted fixed-excess leading coefficient.
+The [originals manifest](phase18_originals.json) records byte-identical
+exports. Root freshly reran the actual-group checker and the independent
+all-subspace checker. The leading-count review distinguishes the
+independent reviewer from a contributor to its normal-component argument.
+
+The source intake now includes the exact 2006 Problem 30, with partial
+regular two-group coverage and a source-date audit. This adds no principal
+paper credit: that ledger remains at twelve works. The existing twenty-one
+Lean modules and their saved reports are unchanged. No source full texts,
+exploratory generation probes, corpus ratio or infinity marker are included
+in this addition.

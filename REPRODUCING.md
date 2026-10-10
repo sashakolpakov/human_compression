@@ -759,6 +759,48 @@ now both list all twenty-one modules. This corrects the older Lake target's
 omission of `GradedSupport` and `BooleanRetractions`; their historical
 certificates and explicit runner verification were already present.
 
+## All-excess class-three checks
+
+The [class-three classification](research/case_study/phase18_class_three.md)
+has a written all-rank proof. Its bounded diagnostics deliberately test
+two different objects: actual finite groups and the vector-space model
+of central kernel quotients. These commands preserve the saved reports:
+
+```sh
+mkdir -p scratch/phase18
+gap -q -T research/case_study/phase18_class_three_check.g > scratch/phase18/groups.log
+python3 research/case_study/phase18_class_three_linear_check.py --output scratch/phase18/rank_two.json
+python3 research/case_study/phase18_class_three_independent_linear_check.py --output scratch/phase18/all_subspaces.json
+```
+
+The GAP/NQ run constructs every rank-two kernel quotient at ranks
+three and four, and the 81 predicted accepted ones at rank five.
+It checks 243 groups, 5,128 parabolic orders and 123,072 subgroup
+intersections. It does not construct the predicted rejected rank-five
+groups. The first Python script tests all 2,829 rank-two quotient
+maps up to change of basis. The independent script instead enumerates
+all 29,602 kernel subspaces in these ranks, at every excess, without
+using the proposed classification to select candidates. It performs
+4,320,898 intersections, stopping early on rejected candidates.
+
+Root freshly reproduced the group run and the independent subspace
+run from their frozen scripts; the
+[review record](research/case_study/phase18_class_three_root_audit.json)
+binds those outputs. The transfer formula, Fibonacci identity and
+fixed-excess leading coefficient are written derivations, not fitted
+finite data. No new Lean module is claimed for them; the existing
+twenty-one modules retain their stated partial scopes.
+
+The [rank-three form diagnostic](research/case_study/phase18_rank3_forms_check.py)
+uses SymPy for exact integer Smith forms and matrix identities. In a
+disposable directory, copy that script and `phase18_rank3_forms.md`,
+then run the script with a Python environment containing SymPy. It
+writes its report beside itself. The saved check covers all 35 joint
+endpoint multiplicity patterns, the middle-involution dimensions and
+the specified fold identities. Its Smith factors are only one and two,
+so the dimension systems lose no rank in odd characteristic. This
+is a linear-algebra diagnostic, not a group-generation certificate.
+
 ## GAP computations and retained catalogues
 
 GAP runs use exact finite group computations. For example, in a disposable

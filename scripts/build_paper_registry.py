@@ -16,7 +16,7 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "workspace_proof_audits.json", "phase4_old_problem_intake.json",
           "older_literature_updates.json", "phase5_network_intake.json",
           "phase6_network_intake.json", "phase16_frattini_geometry_intake.json",
-          "phase17_k1_source_intake.json")
+          "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -255,6 +255,12 @@ UPDATES = {
         "Reviewed canonical class-two quotient theorem; Exact central-join construction; Elementary D16 and UT4(F2) seeds; Class-three commutator collection",
         "phase17_k1_classification.md;phase17_k1_source_intake.json;phase17_k1_root_audit.md;phase17_k1_root_audit.json;phase17_k1_independent_audit.json;phase17_k1_check.json;formal/PrincipalKernelIntersections.lean;formal/PrincipalKernelIntersections.scope.md",
         "Only the rank-five counts and type multiplicities are matched; individual source presentations and all rank-three/rank-four source results remain outside this reduction. No full-paper credit, matched proof-length ratio, or novelty claim. The general all-rank formula is a companion theorem; Lean checks the quotient/kernel IP transport step only."),
+    "N010": (
+        "partial_progress", "Problem 30, printed p.19: restricted regular two-group components",
+        "Canonical bounded cores classify ordered nondegenerate regular two-group markings at fixed excess. A global marked-kernel basis gives every class-at-most-three marking in every rank, with a two-state transfer formula and Fibonacci total. Separated first-excess cores give the unrestricted leading coefficient 5^k/k! and a lower-degree higher-class contribution.",
+        "Actual marked intersection property and nondegenerate path condition; Reviewed forest quotient and canonical central attachment; Elementary edge/triple seed covers; Regular-polytope/string-C-group correspondence",
+        "phase18_schulte_weiss_intake.md;phase18_schulte_weiss_intake.json;phase18_class_three.md;phase18_class_three_manifest.json;phase18_class_three_root_audit.json;phase18_class_three_independent_audit.json;phase18_class_three_status.md;phase18_leading_coefficient.md;phase18_leading_coefficient_rank_audit.json",
+        "The original unmarked group characterization, chiral cases and orders 2^k p remain outside these conclusions. Larger fixed-excess core libraries have not been explicitly enumerated. This is progress on a restricted component, not a solution of Problem 30 or a rederivation of the survey. Publication priority, complete formalization and a matched proof-length ratio remain unestablished."),
     "N004": (
         "component_rederived", "Advertised RWPRI/(IP)2 truncation target, via a complete weighted-tree model",
         "Contract omitted edges and retain component sizes as weights; forest and laminar incidence formulas give exact primitivity, local two-transitivity, rank-two and full-shadow criteria.",
@@ -503,6 +509,10 @@ def record(row, baseline, overlay, later_readings, older_access):
         for name in ("phase16_central_join.md", "phase16_central_join_independent_audit.json", "phase16_central_join_root_review.json"):
             r["evidence"].append(evidence(name, "Exact central attachment and eventual polynomial count; companion result"))
         r["retained_inputs"].append("For the companion fixed-excess theorem: reviewed all-class forest quotient theorem; the rederived F016 family supplies sharpness and the counting lower bound")
+        r["exact_target"][-1]["scope"] += " Phase18 determines the leading coefficient exactly as 5^k/k!, proves the higher-class contribution has eventual degree at most k-1, and classifies all class-at-most-three markings by a two-state transfer matrix. The unrestricted lower coefficients remain uncomputed here."
+        for name in ("phase18_class_three.md", "phase18_class_three_root_audit.json",
+                     "phase18_leading_coefficient.md", "phase18_leading_coefficient_rank_audit.json"):
+            r["evidence"].append(evidence(name, "All-rank class-three classification and fixed-excess leading coefficient; companion results"))
     if identifier == "L120":
         r["exact_target"][0]["scope"] = "Dimension-four bilinear-form obstructions give the stated odd linear and unitary intermediate-group upper bounds, with the phase-eight PSL4 argument retained. Field and graph extensions are not covered."
         r["exact_target"].append({
@@ -533,6 +543,14 @@ def record(row, baseline, overlay, later_readings, older_access):
                      "phase17_unitary_twisted_independent_audit.json",
                      "phase17_unitary_diagonal_status.md", "phase17_unitary_diagonal_status.json"):
             r["evidence"].append(evidence(name, "All odd diagonal index-two unitary groups; companion result, priority unverified"))
+        r["exact_target"].append({
+            "reference": "Companion dimension-four rank-three form alternative and direct-fold obstructions",
+            "scope": "Irreducible projective involution triples without a bilinear similarity form have two specified endpoint/middle eigenspace configurations. Both direct folds of the frozen rank-four linear and unitary templates are uniformly proper subgroups. This is not a rank-three existence or nonexistence theorem for their ambient groups.",
+            "relation_to_source": "proposed_uniform_companion_application",
+        })
+        for name in ("phase18_rank3_forms.md", "phase18_rank3_forms_independent_audit.json",
+                     "phase18_rank3_forms_root_audit.json"):
+            r["evidence"].append(evidence(name, "Form-space argument and uniform failure of the two specified folds"))
     if identifier == "N009":
         r["proposed_new_result"] = True
         r["exact_target"].append({
@@ -540,6 +558,9 @@ def record(row, baseline, overlay, later_readings, older_access):
             "scope": "Exactly 5d−10 ordered marked nondegenerate string C-group two-groups of order 2^(2d), for every d>=3. A nonzero binary vector of d−1 edge and d−2 triple parameters describes every involutory string-marked central cover of C_d with kernel gamma3 of order two; IP holds exactly when its active supports have a least member. This uniform theorem is not additional principal-paper credit.",
             "relation_to_source": "proposed_uniform_companion_application",
         })
+    if identifier == "N010":
+        r["proposed_new_result"] = True
+        r["access_coverage"]["notes"] = "Selected Problem 30 passage, front matter and corresponding TeX read; not the entire survey. The 2024 PDF title date is a default compilation date, while arXiv v1 and journal publication are 2006. No whole-problem or current-priority claim."
     if identifier == "L114" and identifier not in UPDATES:
         r["exact_target"] = [{"reference": "Theorems 5.3-5.5 and final paragraph p. 61",
                               "scope": "Realization of the listed rank-three Suzuki RWPRI sublattices beyond Sz(8).",
@@ -616,6 +637,22 @@ def phase17_network_rows():
     }]
 
 
+def phase18_network_rows():
+    """Register the exact 2006 problem source without inflating paper coverage."""
+    source = load("phase18_schulte_weiss_intake.json")
+    return [{
+        "id": "N010", "title": source["title"],
+        "publication_year_from_catalogue": source["year"],
+        "citation": ", ".join(source["authors"]) + ". " + source["journal"] + " 53 (2006), 231–255.",
+        "category": "Network publication", "mathematical": True,
+        "fulltext_available": True, "reading_scope": "selected_sections_read",
+        "retrieval_status": "primary_v1_pdf_and_TeX_retrieved_selected_sections_read",
+        "status_note": "Problem 30 and source/version metadata read; restricted regular two-group progress only.",
+        "assets": [{"url": u} for u in source["primary_urls"]],
+        "source_urls": [], "intake_file": "phase18_schulte_weiss_intake.json",
+    }]
+
+
 def escaped(text):
     return str(text).replace("|", "\\|").replace("\n", " ")
 
@@ -679,6 +716,7 @@ def render(registry):
             "L120": ("Every odd q>=5", "phase15_unitary_sieve.md"),
             "F013": ("All-class theorem and source adapter", "phase15_graded_support_scope.md"),
             "F016": ("Fixed-excess companion theorem", "phase16_fixed_excess.md"),
+            "N010": ("Class-three classification and leading count", "phase18_class_three.md"),
         }.get(r["id"])
         extra_link = (f" [{companion[0]}](research/case_study/{companion[1]})."
                       if companion else "")
@@ -687,6 +725,10 @@ def render(registry):
     out += [
         "", "## The 1996–2006 track", "",
         "The older entries now include these explicit reductions and proof targets:", "",
+        "- **N010 (2006):** Problem 30 is matched to the fixed-excess core reduction",
+        "  and complete class-at-most-three marking classification. The original",
+        "  unmarked, chiral and mixed-order characterization remains outside the result.",
+        "  This source addition gives no principal-paper or whole-problem credit.",
         "- **L102 (2003):** the one-dimensional affine RWPRI spread-space question has a",
         "  proposed existence-and-uniqueness solution by cyclic semilinear descent and",
         "  an explicit scalar affine action. It retains the translation/spread reduction",
@@ -805,6 +847,8 @@ def main():
              for r in phase16_network_rows()]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase17_network_rows()]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase18_network_rows()]
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]
