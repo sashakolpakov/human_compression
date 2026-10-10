@@ -4,6 +4,14 @@ These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).
 
+[LabelEightTriangular.lean](LabelEightTriangular.lean) proves all-rank
+strict triangularity of the actual square and correction table, and
+alphabet-range preservation for steps and finite rewrite chains. The
+[scope and fresh build](../phase174_label_eight_scope.md) and
+[independent reading review](../phase174_label_eight_independent_review.md)
+cover all five declarations. This supplies local hypotheses for a
+separate termination proof; it does not assume or establish confluence.
+
 [LabelEightAlphabet.lean](LabelEightAlphabet.lean) completes a three-module
 proof of the finite rewrite lemma behind the uniform label-eight construction.
 All 43,680 descending triples on its rank-fourteen alphabet have joining

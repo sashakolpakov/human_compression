@@ -75,4 +75,5 @@ lean_lib MathCompressionCertificates where
     `ParityMixTheorem,
     `LabelEightCriticalPairs,
     `LabelEightFiniteCertificate,
-    `LabelEightAlphabet]
+    `LabelEightAlphabet,
+    `LabelEightTriangular]

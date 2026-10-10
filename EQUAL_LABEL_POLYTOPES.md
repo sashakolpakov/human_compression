@@ -88,6 +88,13 @@ evaluation, with no native-evaluation axioms. Uniform termination, support
 transfer, confluence and the resulting all-rank group theorem remain
 written proofs.
 
+The [uniform table certificate](research/case_study/phase174_label_eight_scope.md)
+now proves that every square and swap correction lies strictly later in
+the generator order, and that every rewrite preserves the allowed
+alphabet, for all ranks. Its five declarations were independently read
+and freshly compiled with standard axioms. Termination and the remaining
+group theorem are separate formal obligations.
+
 Finite checks include all parabolics of fifteen explicit groups or mixes,
 42 quadratic markings, 2,310 quadratic power words and 8,448 translation
 parameter pairs. They support the written arguments without replacing

@@ -66,6 +66,7 @@ CERTIFICATES = (
     "LabelEightCriticalPairs",
     "LabelEightFiniteCertificate",
     "LabelEightAlphabet",
+    "LabelEightTriangular",
 )
 
 

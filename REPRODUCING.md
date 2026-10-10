@@ -1,5 +1,26 @@
 # Reproducing the checks
 
+The [cyclic-index classification deduction](LARGE_CYCLIC_SUBGROUPS.md)
+has a public three-file finite replay, independent of private sources:
+
+```sh
+python3 -B -O research/case_study/phase169_cyclic_index_verify.py --output-dir /tmp/NEW-cyclic-index
+```
+
+It requires Python and GAP. Its 11 coordinate models, 704 IP checks and
+seven literal presentations corroborate a separate written uniform proof.
+
+The all-rank triangularity and alphabet-closure certificate can be rebuilt
+without rebuilding the finite critical-pair computation:
+
+```sh
+python3 -B research/case_study/formal/verify_lean.py LabelEightTriangular.lean --packages PACKAGES --lean LEAN --timeout 180 --output-dir /tmp/NEW-label-eight-triangular
+```
+
+The fresh two-file run took 15.2 seconds and uses only standard axioms.
+Its [scope](research/case_study/phase174_label_eight_scope.md) separates
+table arithmetic and range preservation from termination and confluence.
+
 The new label-eight construction has a separate ordinary-kernel certificate
 for its complete finite rewrite lemma. With the pinned compiler/packages
 and a new output directory:

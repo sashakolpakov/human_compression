@@ -45,6 +45,11 @@ by collapsed UTF-8 bytes**. Its denominator includes all of U, A and the
 four programs. These representation-sensitive figures are not a matched
 page ratio. Full Lean formalization remains incomplete.
 
+A separately reviewed [cyclic-index deduction](LARGE_CYCLIC_SUBGROUPS.md)
+now recovers Loyola's earlier high-exponent classification from Module A's
+common quotient and a complete local argument. The source's independent
+abstract-group catalogue remains outside this partial contract.
+
 Module B now has a reviewed 16-page manuscript deriving the declared
 results of four sources from 1998–2021. Forest cuts, compatible partitions
 and Frattini coordinates connect its tree, generation and coset-geometry
@@ -70,6 +75,8 @@ covering all identified principal results**. These categories overlap.
 They do not count completed modular manuscripts or a complete bibliography
 of every collaborator. The existing working compilations now account for
 thirteen distinct principal-result contracts.
+These fixed-registry figures exclude the additional auxiliary Loyola
+comparison above, whose partial source contract is recorded separately.
 
 Modules A, B and C now have thirteen distinct sources in their combined intake.
 Their principal-result contracts, retained inputs and corrections are
@@ -85,7 +92,8 @@ The [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)
 track now has reviewed all-rank constructions for specified infinite
 families of labels, including the new class-four construction at label
 eight and its 8n parity mixes. Lean verifies the complete finite rewrite
-lemma underlying label eight; the uniform group proof remains written.
+lemma underlying label eight and the all-rank triangularity and alphabet
+closure of its actual rule table; the uniform group proof remains written.
 The general conjecture remains unresolved.
 The separately reviewed
 [five-family cover result](COVER_FIVE_FAMILIES.md) establishes the stated
@@ -123,7 +131,7 @@ Lean verification must match our actual written statements, including
 assumptions and retained inputs. A certified helper does not certify an
 entire application. Formal gaps and axioms remain visible.
 
-Sixty-six existing scoped Lean components and exact computational
+Sixty-seven existing scoped Lean components and exact computational
 certificates supply reusable verified material. They do not constitute
 an end-to-end formalization of U, Module A or all conjecture claims.
 The [parity-mix construction](PARITY_MIX.md) now has a reviewed Lean proof

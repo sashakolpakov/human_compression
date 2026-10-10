@@ -28,6 +28,13 @@ not 50 new theorems. Read its required
 The main proof spans and mathematical statements are unchanged by that
 correction. Source versions, borrowed inputs and exclusions remain explicit.
 
+The later [Large cyclic subgroups in two-group polytopes](LARGE_CYCLIC_SUBGROUPS.md)
+attachment uses A's quotient to recover Loyola's 2016 high-exponent
+classification. It supplies a complete additional local proof, but does
+not recover the source's independent abstract-group catalogue. It is
+separately costed and is not included in this edition's six-source
+contract, 24 pages or measured compression factor.
+
 One forest quotient supplies the common finite search space. One affine
 square family and U's supported-kernel theorem give several existence
 constructions. The coordinate-kernel coset-intersection theorem provides

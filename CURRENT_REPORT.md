@@ -34,10 +34,20 @@ had principal-result coverage, so the corpus counts below are unchanged.
 | At least one named result/component rederived | 39 |
 | All identified principal results rederived | 18 |
 | Distinct sources represented in the existing working compilations | 13 |
+| Additional source comparisons outside the fixed registry | 1 |
 
 The layers overlap. Retrieval is not complete reading; principal-result
 coverage is not every assertion in a paper. The inventory is bounded and
 is not an exhaustive bibliography of all collaborators.
+
+A separate [cyclic-index attachment](LARGE_CYCLIC_SUBGROUPS.md) now derives
+Loyola's high-exponent classification from Module A's common quotient,
+including exact presentations and the small boundary cases. This auxiliary
+source is outside the fixed registry. Its abstract-group catalogue remains
+unrecovered, so this is a partial source contract and the counts above do
+not increase. The complete local proof costs 14,968 UTF-8 bytes; shared
+inputs and finite corroboration are separately recorded, with no ratio
+or full Lean claim.
 
 Module A covers L032, L035, F013, F016, N009 and L034 in the specified
 2018–2026 editions. Its 50 source records and 23 detailed multipart clauses
@@ -89,11 +99,13 @@ labels, now including label eight and the stated 8n families, and
 identifies the universal presentations at labels three and four.
 The label-eight group has order 2^(5d−7) and class exactly four. Its
 finite critical-pair and source-word lemma is verified in Lean, including
-the finite alphabet throughout every rewrite. The all-rank transfer and
+the finite alphabet throughout every rewrite. A further Lean component
+proves all-rank triangularity and alphabet closure for the actual rule
+table. The all-rank transfer and
 group proof remain written. The full conjecture, historical priority and complete Lean proof
 remain unresolved. It adds no known-source compression credit.
 
-Sixty-six existing Lean components retain their individual statements,
+Sixty-seven existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.

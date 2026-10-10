@@ -410,3 +410,15 @@ support the full argument. Three new Lean modules verify the actual finite
 rewrite lemma, with all intermediate alphabets checked and a fresh public
 build. They bring the scoped module count to66; the all-rank group theorem
 remains a written proof and historical priority remains unverified.
+
+The [phase-105 record](phase105_review.md) adds the actual all-rank table
+triangularity and alphabet-range invariants in Lean, after independent
+source reading and a fresh public compilation. It brings the scoped
+module count to 67; it does not claim the separate termination theorem.
+
+The [phase-106 record](phase106_review.md) admits a complete deduction of
+Loyola's high-exponent C-group classification through Module A's quotient.
+The independent abstract-group catalogue remains outside this partial
+source contract. Exact presentations, product actions, source correction
+and fresh finite replays are public; complete-source counts and measured
+ratios remain unchanged.
