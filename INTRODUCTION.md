@@ -3840,7 +3840,7 @@ claim or an infinite compression-ratio marker.
 
 [Compress_A](COMPRESS_A.md) now assembles the forest, parity, overgroup and
 relative-generation arguments into one continuous mathematical text. Four
-1998 theorem clauses and eight numbered2002 results appear as explicit
+1998 theorem clauses and eight numbered 2002 results appear as explicit
 corollaries. The independent reviewer checked complete primary source
 representations and every proof in the assembled text.
 
@@ -3851,7 +3851,7 @@ recognition statements. The module obstruction and arbitrary-parabolic
 recognition remain full arguments inside the manuscript. Stating them as
 lemmas does not erase their cost.
 
-The retained1997 classification and the two Whiston inputs, including CFSG,
+The retained 1997 classification and the two Whiston inputs, including CFSG,
 remain outside the expanded proof. General group statements are specialized
 to finite groups; the symmetric-group classification retains degree at least
 seven. This is a reviewed replacement for the declared main-result contract.

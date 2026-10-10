@@ -15,11 +15,13 @@ fewer independent arguments, exposing the inputs that remain, and obtaining
 new consequences. The evidence is the mathematics and its checks.
 
 The first actual replacement is now assembled: [Compress_A](COMPRESS_A.md)
-derives twelve declared main results from two manuscripts published in1998
-and2002, with a shared forest/sign-kernel core and explicit retained inputs.
+derives twelve declared main results from two manuscripts published in 1998
+and 2002, with a shared forest/sign-kernel core and explicit retained inputs.
 A separate agent has reviewed every proof and source target in the stated
-finite-group/degree-at-least-seven scope. Manuscript-length measurement remains
-separate; no aggregate ratio is claimed yet.
+finite-group/degree-at-least-seven scope. A [reproducible body-length measurement](research/case_study/phase36_compress_forest_measurement.md)
+gives 7,222 source whitespace tokens against 5,300 replacement tokens, but
+character counts reverse the comparison because mathematical representations
+differ. No single final manuscript factor or corpus ratio is claimed.
 
 The [independent assessment](INDEPENDENT_ASSESSMENT.md) records the earlier
 baseline, names sixteen principal-result intake candidates and proposes six

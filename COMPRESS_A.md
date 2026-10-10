@@ -26,18 +26,29 @@ gives source statements, exact locations, common theorem, adapter and retained
 input for every result. The [root status note](research/case_study/phase36_compress_forest_root_audit.md)
 supersedes historical pending labels and records a bibliography-only correction.
 
-The result is conditional on the retained1997 classification, Whiston's two
+The result is conditional on the retained 1997 classification, Whiston's two
 distinct inputs including their CFSG dependence, Cayley and standard coset
 background. It does not certify unrestricted infinite-group generalizations
 or the excluded small-degree computational discussion. These are internal
 reviews, with no end-to-end Lean verification or external peer review claimed.
 
-No manuscript-level ratio is assigned on this page. Source extraction,
-body boundaries and equal mathematical-text conventions require their own
-measurement. A correct shared replacement need not be shorter; the complete
-replacement and every necessary adapter must be charged. The older4/3 and
-127/38 figures measure matched proof spans, not this two-manuscript experiment.
+The [full-body measurement](research/case_study/phase36_compress_forest_measurement.md)
+now binds the source and replacement spans and reproduces these counts:
 
-The next proposed intake is the2005 manuscript on the Frattini subgroup and
+| Metric | Combined sources | Replacement | Source sum / replacement |
+|---|---:|---:|---:|
+| Whitespace tokens | 7,222 | 5,300 | 1.362642 |
+| Alphanumeric units | 7,157 | 6,126 | 1.168299 |
+| Nonwhitespace characters | 28,617 | 30,388 | 0.941720 |
+
+These are text-representation measurements. The replacement uses TeX command
+strings while the sources use extracted mathematical glyphs, including
+damaged layout in the 1998 rendering. The metrics disagree even on the
+direction of savings, so **no single final manuscript factor is approved**.
+Common mathematical rendering and the exact scope contract must accompany
+the next measurement. The older 4/3 and 127/38 figures measure matched proof
+spans and do not substitute for this two-manuscript experiment.
+
+The next proposed intake is the 2005 manuscript on the Frattini subgroup and
 RWPRI geometries. It remains outside this numerator until the complete source
 contract and its extra proofs have passed review.

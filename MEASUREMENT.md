@@ -42,7 +42,13 @@ corollaries of the replacement.
 
 The repository now has a [frozen assembled two-paper replacement](COMPRESS_A.md)
 with twelve independently reviewed source corollaries in its declared scope.
-It has no approved manuscript-level ratio yet. The finite-group qualifications,
+Its [first full-body measurement](research/case_study/phase36_compress_forest_measurement.md)
+reports source/replacement ratios of 1.362642 by whitespace tokens, 1.168299
+by alphanumeric units and 0.941720 by nonwhitespace characters. These are
+descriptive sensitivities to mathematical text representation, not one
+approved factor. Exact source spans and all necessary manuscript material
+are bound; common mathematical rendering remains to be established.
+The finite-group qualifications,
 excluded unnumbered material and source-rendering limitations accompany the
 contract; they cannot be removed by a word-count calculation. The earlier
 [independent assessment](INDEPENDENT_ASSESSMENT.md) supplies the wider intake

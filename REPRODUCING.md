@@ -1623,3 +1623,21 @@ transport modules before this certificate. The formal theorem includes both
 typed-Helly directions; marked subgroup IP and the matrix/geometric adapter
 retain their separate written proofs. The Lake root list also includes all
 35 modules; no frozen historical reports are overwritten by the scratch run.
+
+
+## Full-body measurement of Compress_A
+
+```sh
+python3 research/case_study/phase36_compress_forest_measurement.py \
+  --n001-text /path/to/bound/N001-browser-record.txt \
+  --n003-text /path/to/bound/N003-extraction.txt \
+  --output scratch/compress-A-lengths.json
+```
+
+The exact third-party source transcriptions are intentionally excluded from
+the repository. Their hashes and body/exclusion intervals are in the protocol;
+changed source bytes fail verification. The public replacement is found next
+to the runner. Add `--source-pdf /path/to/N003.pdf --verify-pdf-extraction`
+to repeat the optional pypdf extraction check. The output path must be new.
+The runner measures representations; it does not approve theorem coverage
+or turn the divergent token/character metrics into a single factor.
