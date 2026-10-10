@@ -610,3 +610,12 @@ scalar-power argument is formally verified for every parameter. Global
 intersection and coset Helly remain pending, so no complete open-problem
 resolution or infinity marker is assigned. Existing-paper counts and both
 matched ratios remain unchanged.
+
+
+Phase forty-five completes finite regular existence at every integer s>=2
+in the specified 2018 toroidal family. Its global geometry follows from a
+uniform bounded-product argument with exact finite certificates. The result
+is recorded separately from rederiving existing proofs and from finiteness
+of universal groups. Current priority remains unverified, so no infinity
+marker is assigned. Both earlier proof-span ratios and the sixteen principal
+intake candidates remain unchanged; there is still no manuscript-level ratio.

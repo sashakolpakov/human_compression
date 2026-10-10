@@ -1593,3 +1593,18 @@ It verifies all fixed integer relations, local closures, reductions and 23
 sample parameters. The all-parameter argument is written; Lean independently
 checks its uniform Fibonacci matrix arithmetic. Neither command proves the
 pending global intersection/incidence assertions.
+
+
+## Complete tensor geometry at every parameter
+
+```sh
+python3 research/case_study/phase35_L003_tensor_geometry_check.py \
+  --output scratch/L003-tensor-geometry-fresh.json
+```
+
+This standard-library checker has no data-file or discovery-script input.
+It uses literal tensor matrices, completes the three fixed groups, checks
+all 1,928 bounded products and 52 membership witnesses, and verifies every
+proper-subgroup meet and typed-Helly count at moduli three and five. The
+all-modulus transfer and source geometry adapter are written proofs. The
+output must be new; the checker does not enumerate either full ambient group.

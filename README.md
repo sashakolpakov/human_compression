@@ -54,31 +54,33 @@ and the [theorem-by-theorem scope table](research/case_study/torsor_compression_
 
 ## Results in this snapshot
 
-Two constructions give finite regular hypertopes for every source parameter
-$s\ge2$ divisible by two or three, with exact ordered toroidal residues
-$((3,0),(2,0),(1,1),(s,0))$. The [compact even family](research/case_study/phase35_L003_affine_model.md)
-uses just four affine maps on six integer coordinates. Reducing modulo
-$2m$ gives parameter $s=2m$ and group order $1296m^6$. Its standalone
-certificate checks all 5,287 flags of the finite base; an exact intertwiner
-identifies it with the earlier voltage construction. [Lean checks](research/case_study/formal/CompactAffineData.scope.md)
-the literal matrix relations and translation words. A [short splitting argument](research/case_study/phase35_L003_affine_split.md)
-also identifies every group as $(\mathbb Z/m\mathbb Z)^6\rtimes Q$, with
-the same explicit integral group $Q$ of order 1,296.
+An [eight-dimensional integer tensor construction](research/case_study/phase35_L003_tensor_model.md),
+with its [geometric completion](research/case_study/phase35_L003_tensor_geometry.md),
+now gives finite regular hypertopes with exact ordered toroidal residues
+$((3,0),(2,0),(1,1),(s,0))$ for **every integer $s\ge2$**. Fibonacci moduli
+give all $s\ge4$; two previously certified small examples supply $s=2,3$.
+The uniform geometry proof reduces to 1,928 bounded products, 52 exact
+membership witnesses and complete subgroup/flag tests at moduli three and
+five. [Lean verifies the uniform Fibonacci arithmetic](research/case_study/formal/FibonacciModulus.scope.md);
+the geometric transfer is a separately reviewed written proof with an exact
+computational certificate. Current priority remains unverified. This proves
+finite examples, not finiteness of every universal group.
 
-The [multiples-of-three family](research/case_study/phase34_L003_triple_family.md)
-uses the same quotient theorem, with an independent exhaustive check of
-all 56,225 base flags. The [combined universal corollary](research/case_study/phase34_L003_combined_universal.md)
-establishes the marked regular universal objects throughout this union;
-they are infinite whenever six divides the parameter. Uniform existence
-for parameters coprime to six, further universal orders and priority remain
-unresolved. The compact affine image is not identified with a universal group.
+The [compact even family](research/case_study/phase35_L003_affine_model.md)
+also gives a smaller six-coordinate construction for $s=2m$, with group
+order $1296m^6$. Its standalone certificate checks all 5,287 flags of the
+finite base, and an exact intertwiner identifies it with the earlier voltage
+construction. [Lean checks](research/case_study/formal/CompactAffineData.scope.md)
+the literal relations and translations. A [short splitting argument](research/case_study/phase35_L003_affine_split.md)
+identifies every group as $(\mathbb Z/m\mathbb Z)^6\rtimes Q$, with one
+explicit integral group $Q$ of order 1,296.
 
-A separate [eight-dimensional tensor model](research/case_study/phase35_L003_tensor_model.md)
-now gives every exact parameter s>=3 and every required local group for
-s>=4, by reducing modulo Fibonacci numbers. Its uniform arithmetic has
-a [Lean certificate](research/case_study/formal/FibonacciModulus.scope.md).
-The global intersection and coset flag conditions remain pending, so this
-addition is not yet an all-parameter hypertope theorem.
+The separate [multiples-of-three family](research/case_study/phase34_L003_triple_family.md)
+has an independent exhaustive check of all 56,225 base flags. The already
+reviewed [universal corollary](research/case_study/phase34_L003_combined_universal.md)
+establishes marked regular universal objects whenever two or three divides
+the parameter; they are infinite whenever six divides it. A further universal
+corollary for the newly covered parameters is being checked separately.
 
 The [unfilled universal group](research/case_study/phase35_L003_unfilled_geometry.md),
 before the final parameter relation is imposed, is also an actual regular

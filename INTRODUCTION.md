@@ -3758,7 +3758,59 @@ for the tensor quotient to be a regular hypertope. The modulus-two
 case has a genuine collapsed local group and is excluded from that
 local theorem; the earlier parameter-three construction remains available.
 
-## 63. The remaining work, and how a living reduction should record it
+## 63. Bounded products complete the global geometry
+
+The [geometric completion](research/case_study/phase35_L003_tensor_geometry.md)
+proves that the tensor marking defines a regular hypertope for every
+modulus $n\ge5$, and separately for $n=3$. Combined with section 62 and
+the two earlier small examples, this supplies finite examples with the
+exact four prescribed residues at every source parameter $s\ge2$.
+
+Let $B$ be the union of the three fixed maximal parabolics and $W=BB$.
+Their complete integer matrix closure has $|B|=172$ and $|W|=1928$.
+Every entry of every matrix in $W$ has absolute value at most two, so
+reduction is injective on $W$ for every modulus at least five.
+
+Only membership in the fourth, growing parabolic remains. Its generators
+permute the three tensor copies of $N$ and either preserve all three or
+replace all three by $I-N$. Hence a word belongs to that parabolic only
+if its three factors, or those after multiplying by the extra generator
+$z$, commute with $N$. All relevant factor-commutator entries are bounded
+by four. Vanishing modulo $n\ge5$ is therefore exactly integral vanishing.
+
+There are 52 passing cases among the 3,856 word/choice pairs. Each has an
+explicit witness: three signed powers of $N$ whose exponents sum to zero
+and whose signs multiply to one. Those conditions put the word in the
+known translation/permutation subgroup over the integers. This proves
+sufficiency as well as necessity; no classification of units in a quadratic
+ring is needed. Exceptional-parabolic membership on $W$ is consequently
+identical at every such modulus.
+
+Every proper marked subgroup except that exceptional parabolic lies in
+one of the three protected groups. All subgroup meets are therefore
+controlled by these bounded equalities and membership decisions.
+Flag completion needs an additional argument: normalize a partial flag,
+choose one of its protected parabolics as an anchor, and enumerate the
+candidate cosets inside that fixed group. Testing incidence reduces to
+the same products in $W$. Compare the eligible cosets with those supplied
+by the common subgroup intersection. All sixteen nonautomatic typed tests
+pass at modulus five and transfer unchanged to every $n\ge5$.
+
+The checker separately verifies modulus three and executes 450 proper
+subgroup meets and 32 typed flag counts across the two bases. The remaining
+meets with the full group are tautological. The written transfer, followed
+by the exact local-source adapter, yields thinness, residual connectivity
+and a regular action on chambers for every parameter. Finite checks supply
+the complete bounded inputs; they are not extrapolated as sample evidence.
+
+The [root review](research/case_study/phase35_L003_tensor_geometry_root_audit.md)
+and [second review](research/case_study/phase35_L003_tensor_geometry_survey_audit.md)
+record complete proof/code reads and fresh exact runs. This establishes the
+stated finite-existence theorem internally. Historical priority, universal
+group orders and full Lean formalization are separate matters; neither a
+whole-paper compression count nor an infinity marker follows automatically.
+
+## 64. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
