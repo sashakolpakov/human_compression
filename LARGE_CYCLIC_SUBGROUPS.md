@@ -1,7 +1,8 @@
 # Large cyclic subgroups in two-group polytopes
 
 The [complete deduction](research/case_study/phase169_cyclic_index_completion.md)
-recovers the high-exponent C-group classification in Mark L. Loyola,
+recovers the classification of C-groups with the stated lower bound on
+their exponent in Mark L. Loyola,
 [*String C-groups from groups of order 2^m and exponent at least 2^(m−3)*](https://arxiv.org/abs/1607.01457v1),
 Theorem 4.1 and the structural content of Proposition 4.2, with an explicit
 correction to the checked edition's final product assignment.
@@ -20,25 +21,27 @@ decompositions, and handles every small and disconnected case.
 This recovers the classification without the source's exhaustive
 abstract-group catalogue. That catalogue, its completeness and its
 involution tables are separate source results and are not recovered.
-Accordingly this is a **partial source contract**, not a replacement for
-the entire 31-page paper or a seventh complete source in Module A.
+Thus **only part of the source paper is recovered**. This does not replace
+the entire 31-page paper or add a seventh source to the six whose stated
+main results are recovered in the earlier Module A manuscript.
 The auxiliary source is outside the fixed 161-entry registry.
 
 The classification remains attributed to Loyola. Our contribution here
 is the deduction through the shared forest quotient and cyclic-index
 reduction, with all remaining local arguments supplied. The source's
-Theorem 4.1 reverses its final parameter assignment: the inner product is
-direct at epsilon=0 and nontrivially semidirect at epsilon=1, as in its
+Theorem 4.1 reverses its final parameter assignment: the indicated group
+product is direct at ε = 0 and nontrivially semidirect at ε = 1, as in its
 Proposition 4.2. The actual actions establish this correction. No
-historical novelty or correction-priority claim is made.
+historical novelty or priority for the correction is claimed.
 
-Read the [source ledger](research/case_study/phase169_cyclic_index_ledger.json),
+Read the [list of source results and proofs](research/case_study/phase169_cyclic_index_ledger.json),
 [independent review of the initial argument](research/case_study/phase169_cyclic_index_review.md),
 and [separate review of the completed proof](research/case_study/phase175_cyclic_index_root_review.md).
-The complete added proof costs 14,968 UTF-8 bytes; the exact retained U
-and A inputs and the corroborating programs are recorded separately.
-No matched compression ratio or complete Lean certificate is claimed.
-This is a deduction of known results, not a solved open conjecture.
+The complete added proof costs 14,968 UTF-8 bytes. The record lists the
+results of U and A that it uses, and the corroborating programs, separately.
+No comparable source length has been assigned, and the proof is not fully
+formalized in Lean. This is a deduction of known results, not a solved
+open conjecture.
 
 Fresh public checks cover 11 coordinate models through M=128, all 704
 marked-subset intersections, seven literal presentations through M=32,

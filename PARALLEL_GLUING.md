@@ -4,9 +4,9 @@ The [written application](research/case_study/phase187_parallel_gluing.md)
 and its [independent review](research/case_study/phase191_parallel_gluing_review.md)
 recover the matching, reconstruction, orbit and uniqueness arguments for
 parallel gluings. The application uses the existing coset-intersection
-interface in [U](UMBRELLA.md). It also corrects a pairwise sufficiency
-claim in the 1994 source. This is a partial source contract, outside the
-fixed 161-work registry.
+theorem in [U](UMBRELLA.md). It also corrects the 1994 source's claim that
+pairwise compatibility suffices. Only part of that paper is recovered.
+The source is outside the fixed registry of 161 works.
 
 ## The common argument
 
@@ -30,7 +30,7 @@ This common argument yields the diagonal-orbit classification, the
 two-factor double-coset description, the exact automorphism fiber product
 and the uniqueness criterion. Pairwise intersection suffices when the
 conjugated direction groups satisfy U's typed coset Helly property.
-The application proves that binding explicitly; an arbitrary family of
+The application checks those hypotheses explicitly; an arbitrary family of
 subgroups need not satisfy it.
 
 ## Source, correction and attribution
@@ -42,8 +42,8 @@ The construction, reconstruction and orbit method remain attributed to
 that paper. Its own proof already expresses simultaneous lifting before
 replacing it with the insufficient pairwise test. Our contribution here
 is the explicit correction, its application of U.Helly, the counterexample
-and the checked proof organization. Historical priority of the correction
-has not been established.
+and the reviewed organization of the proof. Historical priority of the
+correction has not been established.
 
 Three copies of an eight-point geometry provide a literal counterexample
 to Lemma 3.4 on p. 365. Their direction-action constraints become
@@ -56,22 +56,22 @@ nonisomorphism even if type permutations are permitted.
 The [eleven-row source ledger](research/case_study/phase191_source_contract.json)
 separates borrowed results, the corrected statement and the use of U.
 The parallel-expansion theory and examples in the rest of the source
-remain outside this admission. This is not a solved open conjecture or
-a replacement of the whole paper.
+have not been recovered here. This corrects a published assertion; it
+does not answer an open conjecture or replace the whole paper.
 
 ## Verification and cost
 
 Two independent implementations reconstruct the example: a Python
 permutation enumeration and a native GAP set-stabilizer calculation.
 They agree on the full base group, direction action, objects, flags,
-panels and every residue of rank at least two. The fresh public replay
-also rejects five deliberate changes to the hypotheses or certificates.
+panels and every residue of rank at least two. The public rerun also
+rejects five deliberate changes to the hypotheses or certificates.
 
 [SimultaneousMatching.lean](research/case_study/formal/SimultaneousMatching.lean)
 proves twelve declarations concerning simultaneous lifting and the
-finite coset obstruction. Its [scope](research/case_study/formal/SimultaneousMatching.scope.md)
-excludes the full geometric reconstruction. It imports only `Std`;
-the printed reports use `Classical.choice` and `propext`, without a
+finite coset obstruction. The [formalization notes](research/case_study/formal/SimultaneousMatching.scope.md)
+explain that the full geometric reconstruction is not formalized. The file
+imports only `Std`; the printed reports use `Classical.choice` and `propext`, without a
 native-evaluation axiom.
 
 Run the public check with Python, GAP 4.15.1 and Lean 4.32.2, using a
@@ -82,14 +82,15 @@ python3 -B -O research/case_study/phase195_public_check.py \
   --output-dir /tmp/NEW-gluing-check --gap /path/to/gap --lean /path/to/lean
 ```
 
-Primary PDFs are not required for this execution. The frozen reviewer
-driver is also retained as provenance; its original private-checkpoint
-inputs are distinguished from the public adapter.
+Primary PDFs are not required for this execution. The original review
+program is also preserved. Its inputs from the private working copy are
+documented separately from the public check above.
 
 The written application, author checker, author driver and Lean source
 cost **31,440 UTF-8 bytes**. Full U, the independent GAP program, public
 adapter and complete written review supplement bring the conservative
-package cost to **123,587 bytes**. Logs and audit records are separate.
-There is no matched whole-source numerator and therefore no compression
-ratio for this partial contract. The existing A–D editions and their
-measurements are unchanged. See the [root admission](research/case_study/phase195_root_admission.md).
+package cost to **123,587 bytes**. Logs and review records are separate.
+These are the recorded costs of this proof package. There is no comparable
+source length for the selected results, so no compression ratio is assigned.
+The costs of future topic papers remain to be measured. See the
+[publication review](research/case_study/phase195_root_admission.md).
