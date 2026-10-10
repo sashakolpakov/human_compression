@@ -143,6 +143,18 @@ The [complete eight-page application](ODD_KERNEL_POLYHEDRA.md) has independent
 review, exact finite checks and five limited Lean declarations. A separate
 full U_F and further application papers remain to be completed.
 
+### Affine periods and mixed-prime polyhedra
+
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| L012 | Hou, Feng and Leemans, *Regular 3-polytopes of order 2^n p*, arXiv:2001.02945v2 (14 July 2024; later journal publication 2025) | Theorems 1.2/3.1, 4.1, 1.3, 4.3 and 5.1, with Corollaries 4.2, 4.4 and 5.2: full type restriction, exact presentations, existence range and all six affine families | Corrected first period sign in Lemma 4.5; Burnside, Lucchini, the complete order-384 catalogue and exact presentation algorithms remain inputs. The general classification problem, full Table 1 census and seed uniqueness are excluded. |
+
+The [separate five-page affine theory and nine-page application](MIXED_PRIME_POLYHEDRA.md)
+are independently reviewed. Their required Topic A umbrella, existing cubic
+proof and programs remain chargeable; this is not a fourteen-page total
+dependency claim. A larger topic of complete applications and its matched
+measurement remain to be developed.
+
 ## What each paper must supply
 
 1. Name the exact historical editions and main results to recover. State

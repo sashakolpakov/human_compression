@@ -62,11 +62,14 @@ The [equal-label polygon application](EQUAL_LABEL_POLYGONS.md) recovers
 Li–Zhang’s complete stated rank-three results from the earlier polygon
 construction and an exact presentation proof. The
 [common projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) recovers two more
-principal classifications. In total, **24 of the 161 indexed works** have
+principal classifications. In total, **25 of the 161 indexed works** have
 their specified main results recovered. The
 [odd-kernel application](ODD_KERNEL_POLYHEDRA.md) adds L014’s three main
 theorems through characters and a cyclotomic module, with an explicit
-source correction and the retained tightness classification.
+source correction and the retained tightness classification. The
+[mixed-prime application](MIXED_PRIME_POLYHEDRA.md) completes L012’s
+stated classifications and constructions using affine periods and supported
+extensions, with its source-sign correction and full retained costs explicit.
 This count is distinct from the number of completed new topic papers.
 
 ## Proof and attribution

@@ -679,3 +679,13 @@ group of odd order. The [scope](OddKernelWord.scope.md),
 [independent review](../phase86_nonabelian_cover_recent_audit.md) bind the
 exact statements. The fixed permutation orbit, Sylow normalization and
 source-family geometry remain separately checked inputs.
+
+## Mixed-prime period words
+
+[PeriodSignObstruction.lean](PeriodSignObstruction.lean) verifies three
+general identities for the literal source words: conjugate inverses,
+equal-sign power collapse and their direct source specialization. The
+[scope](PeriodSignObstruction.scope.md) and
+[fresh compilation report](PeriodSignObstruction.check.json) distinguish
+this formal obstruction from the written positive classifications and
+trusted finite catalogue. All three declarations use standard axioms only.

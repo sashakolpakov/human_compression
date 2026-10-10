@@ -25,7 +25,7 @@ F014’s complete stated rank-three main results. Its five Lean declarations
 verify the general algebraic core. The
 [projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) now recovers two more
 complete principal classifications, with independent review and fresh
-finite and Lean checks. Principal-source coverage is **24 of 161**; the
+finite and Lean checks. Principal-source coverage is **25 of 161**; the
 topic umbrella and both application papers are now complete, at 7 + 3 + 2
 pages, with independent review. The shared finite proof is charged once
 within this topic. The [matched measurement](TOPIC_E_MEASUREMENT.md) gives
@@ -39,6 +39,14 @@ eight-page recovery of L014’s principal results. Its character and
 cyclotomic arguments begin Topic F; a separate umbrella and additional
 applications remain unfinished. Five Lean declarations verify specified
 algebraic steps. The source marking correction is stated explicitly.
+
+The [mixed-prime application](MIXED_PRIME_POLYHEDRA.md) adds a complete
+nine-page recovery of L012’s principal contract and a five-page reusable
+affine theory paper. It retains the full Topic A extension framework and
+the earlier cubic proof. Independent review accepts the uniform arguments,
+corrected source periods and finite nonexistence base. Three new Lean
+declarations verify the sign obstruction only; no ratio or new question
+credit is claimed.
 
 ## Further application material
 

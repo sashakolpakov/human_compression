@@ -2571,3 +2571,24 @@ not the public entry point. The [root admission](research/case_study/phase54_cov
 records the new runner and fresh replay. The support and central-kernel
 theorems are written proofs; the finite program does not establish the
 general cover conjecture or classify covers outside the specified interval.
+
+## Mixed-prime principal application
+
+The [accepted application and affine theory](MIXED_PRIME_POLYHEDRA.md) retain
+all earlier proof dependencies. The public adapter replays the frozen
+author checks, eighteen independently implemented affine quotients, six
+literal source presentations and all three new Lean declarations:
+
+```sh
+python3 -B -O research/case_study/phase259_check.py \
+  --out /tmp/NEW-mixed-prime-check \
+  --gap GAP --lean LEAN_4_32_2 --packages PINNED_PACKAGES
+```
+
+Use GAP with SmallGroups 1.5.4 and the pinned Lean 4.32.2 package trees.
+No primary full texts are required by this public command. The unchanged
+phase254 review driver additionally checks privately acquired primary
+files; its historical source-reading record remains bound. One cached
+review `.olean` is omitted and recompiled from source. See the
+[admission](provenance/phase127_review.md) and
+[fresh replay](research/case_study/phase259_replay/report.json).

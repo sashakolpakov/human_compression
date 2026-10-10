@@ -38,14 +38,14 @@ survey does not imply that its original source has been read.
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 22 |
+| full text read | 23 |
 | full text search only | 15 |
 | metadata and access only | 9 |
-| selected sections read | 62 |
+| selected sections read | 61 |
 
 **102** works have a retrieved full text; **60** have an explicit representation or a specified conditional or partial derivation; **47** have a recovered result, finite subfamily or stated main result.
 
-The set with **stated main results recovered contains 24 works: L008, L014, L030, L032, L034, L035, L066, L074, L079, L083, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
+The set with **stated main results recovered contains 25 works: L008, L012, L014, L030, L032, L034, L035, L066, L074, L079, L083, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
 The exact targets and qualifications govern membership in this set. Proposed
 conjecture proofs do not add to it. The [question catalogue](CONJECTURE_RESULTS.md)
 keeps answers to questions separate from recovery of published results.
@@ -65,6 +65,8 @@ files preserve the exact statements, earlier results used, evidence and remainin
 | L079 and L083 | Both complete specified rank-at-least-four PGL₂/PSL₂ classifications, their rank restrictions, universal table and stated geometric properties. L079’s extra seventeen-case census and Conjecture 11 are excluded. | [Reviewed addition](research/case_study/phase235_projective_line_overlay.json); [common proof](PROJECTIVE_LINE_POLYTOPES.md) |
 
 | L014 | Complete normal-Sylow structure, abelian/tight classification and all-parameter nonabelian construction, with the exact presentation and corrected v1 marking. The tightness converse retains Cunningham–Pellicer. | [Reviewed addition](research/case_study/phase249_L014_overlay.json); [complete application](ODD_KERNEL_POLYHEDRA.md) |
+
+| L012 | Complete declared mixed-prime type restriction, odd-factor presentation, exact existence range and all six affine families. Corrected period sign; Burnside, Lucchini, the order-384 catalogue and earlier umbrella/cubic proofs remain inputs. General classification, full Table 1 and ancillary seed uniqueness are excluded. | [Reviewed addition](research/case_study/phase259_L012_overlay.json); [complete application and affine theory](MIXED_PRIME_POLYHEDRA.md) |
 
 Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain
 explicitly rejected; those entries have only abstract-level access. L125's
@@ -89,7 +91,7 @@ remaining-work record in the frozen JSON or the reviewed additions above.
 | L009 | 2026 | [Geometries with trialities arising from linear spaces](https://arxiv.org/pdf/2504.06025) | selected sections read | part of the results recovered |
 | L010 | 2026 | [Two gluing methods for string C-group representations of the symmetric groups](https://arxiv.org/pdf/2504.17535) | selected sections read | related work only |
 | L011 | 2026 | [On simple groups that admit a string C-group representation](https://dipot.ulb.ac.be/dspace/bitstream/2013/397490/3/simpleGroups6.pdf) | selected sections read | related work only |
-| L012 | 2025 | [Regular 3-polytopes of order 2 n p](https://arxiv.org/pdf/2001.02945) | selected sections read | part of the results recovered |
+| L012 | 2025 | [Regular 3-polytopes of order 2 n p](https://arxiv.org/pdf/2001.02945) | full text read | [stated main results recovered](research/case_study/phase259_L012_overlay.json) |
 | L013 | 2025 | [A note on girth-diameter cages](https://arxiv.org/pdf/2401.15539) | selected sections read | outside the present study |
 | L014 | 2025 | [String C-groups of order 4p m](https://arxiv.org/pdf/2407.10388) | full text read | [stated main results recovered](research/case_study/phase249_L014_overlay.json) |
 | L015 | 2025 | [Flag transitive geometries with trialities and no dualities coming from Suzuki groups](https://arxiv.org/pdf/2311.13522) | full text search only | related work only |

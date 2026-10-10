@@ -515,3 +515,9 @@ component rederivations rise to forty. Printed J2 omissions and later M22
 notation-source access are explicitly corrected in additive records.
 The required U+D package costs 178,689 bytes, with no matched ratio or
 end-to-end Lean claim.
+
+The [mixed-prime principal admission](phase127_review.md) preserves the
+phase250/254 author and independent review packets, with one explicitly
+omitted cached build product. It adds one complete specified principal
+contract and three limited period-sign Lean declarations, with no question
+credit or compression ratio.
