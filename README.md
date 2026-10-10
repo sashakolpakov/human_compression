@@ -14,6 +14,13 @@ their open problems. Success means reproducing exact theorem statements with
 fewer independent arguments, exposing the inputs that remain, and obtaining
 new consequences. The evidence is the mathematics and its checks.
 
+The [independent manuscript-level assessment](INDEPENDENT_ASSESSMENT.md)
+names the sixteen principal-result intake candidates, maps them to proposed
+common manuscripts, and identifies what still needs assembly and review.
+The [manuscript measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
+compares the combined intake manuscripts with an actual common replacement
+and its necessary adapters. That aggregate ratio has not yet been measured.
+
 ## The method
 
 The initial case study concerns finite groups, highly symmetric polytopes,

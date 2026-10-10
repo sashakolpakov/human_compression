@@ -4,6 +4,48 @@ The project has two measurable ambitions: replace existing arguments with a
 smaller reusable theory, and obtain verified results beyond the known proofs.
 Both belong in the assessment. They require different evidence.
 
+## The manuscript-level experiment
+
+The requested test is a named intake-to-manuscript reduction:
+
+$$X_1,X_2,\ldots,X_n\longrightarrow C=\operatorname{Compress}(X_1,\ldots,X_n).$$
+
+Each intake manuscript contributes a declared list of its main results.
+The replacement manuscript must state a common theory and derive every
+listed result through explicit corollaries, with the remaining source-specific
+work visible. Reproducing every auxiliary lemma is not required by this test.
+A shared vocabulary or a collection of separate long proofs does not yet
+establish the intended common-theory reduction.
+
+For a frozen eligible intake and an assembled replacement, report
+
+$$R_{\rm manuscript}=
+\frac{\sum_i L(X_i)}{L(C)+L(\text{required adapters outside }C)
++L(\text{additional dependency exposition outside }C)}.$$
+
+The primary manuscript measure should be normalized main-body words, with
+the same exclusions for references and acknowledgments on both sides.
+Required proof appendices are included. Report page and character measures
+as sensitivity checks; retain the exact source versions and counted spans.
+Shared replacement material is charged once. A background theorem retained
+without proof must be listed explicitly, with the ratio marked conditional
+on that background. Executable/formal certificates and checking costs get
+their own columns rather than being silently treated as zero-cost prose.
+
+This measure answers how compactly the manuscripts' main results can be
+presented together. The proof-span ratios below answer a narrower question
+and cannot be substituted for it. An eligible intake paper can contribute
+its manuscript length once its entire declared main-result list is recovered;
+partial component reductions remain outside that numerator. Corrected
+versions and refuted assertions must be labeled separately from literal
+corollaries of the replacement.
+
+The current repository has replacement proofs and several candidate bundles,
+but no frozen assembled multi-manuscript replacement with a measured
+manuscript-level ratio. The next measurement must name both sides explicitly.
+The [independent assessment](INDEPENDENT_ASSESSMENT.md) lists the named
+intake candidates, their grouped replacements and the remaining assembly work.
+
 ## A finite compression ratio
 
 Fix a set of exact theorem statements $S$, a common background $B$, and a
