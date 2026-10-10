@@ -120,10 +120,20 @@ The later [eleven-source replacement](COMPRESS_11.md) is now admitted under
 its corrected principal-result contract. It adds the 2001 Petrial paper,
 the exact retained-object kernel interface and all necessary branch proofs.
 The whole new Python appendix is included: 10,533 bytes, within a raw total
-increase of 28,061 bytes over the ten-source manuscript. No eleven-source
-factor has been measured or approved. A future denominator must count the
-whole 25-section manuscript and all five programs. The ten-source factor
-cannot be applied to this larger replacement without remeasurement.
+increase of 28,061 bytes over the ten-source manuscript. The
+[independent measurement review](research/case_study/phase88_eleven_measurement_review_report.md)
+and [root admission](research/case_study/phase93_eleven_measurement_root_admission.md)
+now establish **at least 51,739 / 34,845 = 1.484833×**. The denominator counts
+the whole 25-section manuscript and all five full programs. Both N001 and
+L108 receive zero source credit; the exact eleven-source factor is unknown.
+The nonwhitespace-character lower bound is **198,889 / 176,656 = 1.125855×**.
+All 57 pages of the
+[authored PDF](research/case_study/phase84_eleven_measurement_replacement.pdf)
+were independently inspected. A
+[metadata-only correction](research/case_study/phase88_eleven_measurement_review_metadata_erratum.md)
+fixes a journal-title typo without changing any measured span. This measures
+the unannotated proof manuscript; no factor is transferred to its annotation
+reader or a later replacement.
 
 ## A finite compression ratio
 

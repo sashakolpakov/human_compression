@@ -99,6 +99,17 @@ pypdf 6.13.0 and the recorded rendering tools and fonts. The approved
 lower bound is 51,739/30,957, with N001 credited zero and the full required
 reference erratum included. It does not measure the annotated reader.
 
+The [eleven-source measurement review](research/case_study/phase88_eleven_measurement_review_report.md)
+adds a 57-page authored PDF and a separate independent recount program,
+`research/case_study/phase88_eleven_measurement_review_check.py`. Its full
+replay requires the exact privately acquired primary PDFs, bound earlier
+protocols and all 57 replacement rasters, together with the pinned tools.
+These primary captures and rasters are not distributed. The public report
+records a fresh root replay of all 132 input bindings, extraction and
+counting checks. The approved bound is 51,739/34,845, with N001 and L108
+credited zero. It measures all five programs and the complete unannotated
+proof; the accompanying metadata erratum changes no count.
+
 ## Two-primary covers and exact integer obstruction
 
 ```sh

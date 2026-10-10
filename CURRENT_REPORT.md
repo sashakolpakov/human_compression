@@ -43,7 +43,7 @@ its single Lean sign remains limited to the image/kernel implication.
 | Unified | The same 7 | **At least 40,358 / 18,241 = 2.212488×**, with N001 credited zero |
 | C plus its lattice bridge | 2 further sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | Compress_10 plus reference erratum | All 10 | **At least 51,739 / 30,957 = 1.671318×**, with N001 credited zero |
-| Compress_11 | All 11 | No approved length factor yet |
+| Compress_11 | All 11 | **At least 51,739 / 34,845 = 1.484833×**, with N001 and L108 credited zero |
 
 The approved factors use a frozen NFC PDF-extracted token convention and
 count complete required proof/code. They remain conditional on retained
@@ -59,8 +59,13 @@ finds the complete replacement 200 tokens longer than the source sum; all
 reported sensitivity factors are below one. A faithful length measurement
 of N001 is still absent in the admitted record.
 The eleven-source file adds 28,061 raw bytes, including its complete new
-10,533-byte Python program. A comparable eleven-source measurement is still
-needed; none of the older factors transfers.
+10,533-byte Python program. Its
+[independent measurement review](research/case_study/phase88_eleven_measurement_review_report.md)
+and [fresh root recount](research/case_study/phase93_eleven_measurement_root_admission.md)
+include all 25 sections and five programs. Its exact factor awaits faithful
+measurements of N001 and L108; the nonwhitespace-character lower bound is
+1.125855×. A required bibliographic correction changes no measured span.
+The annotated reader remains unmeasured.
 
 Forty-two scoped Lean components are distributed. They include the exact
 quotient-intersection criterion
@@ -95,8 +100,8 @@ odd-prime proof steps. Exact normal-closure, degree, character and interval
 calculations remain the additional repository derivation; historical priority
 is unverified, with two material unread literature comparisons recorded.
 
-The immediate work is the next source integration, eleven-source length
-measurement, and further cover constructions. A shared
+The immediate work is the next source integration and further cover
+constructions. A shared
 rank/excess census is being checked as a possible replacement for an imported
 finite catalogue lookup. Priority comparison continues.
 The general and complete five-family multiplicity

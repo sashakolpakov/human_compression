@@ -51,6 +51,14 @@ The [root admission](../research/case_study/phase89_nonabelian_root_admission.md
 records the actual execution and inherited source inputs. No measured
 ratio or source count changes with this separate theorem.
 
+The [eleven-source measurement](../COMPRESS_11.md) now has an independently
+rendered and inspected 57-page authored PDF, an independent recount and a
+fresh root replay of that counter. Its [32-file record](phase80_originals.json)
+includes the required metadata-only correction and root admission. The
+conditional lower bound is **51,739/34,845 = 1.484833×**, crediting N001 and
+L108 zero. Primary PDFs and the 57 bound rasters remain separately acquired
+inputs; the annotated edition and subsequent manuscripts are unmeasured.
+
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite
 surface-cover family](phase34_review.md), and the [infinite presentation

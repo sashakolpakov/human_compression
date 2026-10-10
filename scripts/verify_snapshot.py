@@ -20,6 +20,8 @@ OWN_RENDERED_PDFS = {
         "e7b7a19ea3dc979ef12e57885bd0ba8d8e87c087ef4d09979167a6e2870b59f8",
     "research/case_study/phase57_ten_source_measurement_replacement.pdf":
         "5a21613dd5310db8daac0700cea5994e50fb0a8c404c6896f832735d15c3119b",
+    "research/case_study/phase84_eleven_measurement_replacement.pdf":
+        "9af1d1dda508d061d12993d93f2b63d630a08bf3fdc95c01b9594302f698239b",
 }
 
 # This immutable rendering input is a byte-for-byte snapshot of the root

@@ -5,7 +5,10 @@ follow as explicit corollaries of one continuous manuscript**, relative to
 its disclosed background and corrected source contracts. The
 [independent extension review](research/case_study/phase70_petrial_integration_recent_audit.md)
 and [root admission](research/case_study/phase76_eleven_source_root_audit.md)
-pass. There is no approved eleven-source length factor yet.
+pass. The [independent length review](research/case_study/phase88_eleven_measurement_review_report.md)
+now establishes **at least 51,739 / 34,845 = 1.484833×** under the frozen
+PDF-token convention, conditional on the declared background. N001 and L108
+receive zero source credit; the exact eleven-source factor remains unknown.
 
 Read the [complete manuscript](research/case_study/phase65_petrial_integration_manuscript.md)
 with its [exact contract ledger](research/case_study/phase65_petrial_integration_ledger.json).
@@ -66,16 +69,24 @@ the replacement; the short final corollary depends on them.
 The source authors receive credit for the operation and original results.
 The [new attribution ledger](research/case_study/phase65_petrial_integration_attribution.json)
 separates source ideas, integration arguments, reused phase25 work and
-corrections. The [ten-source margin reader](ATTRIBUTION.md) remains a
-separate frozen edition; its annotations have not been transferred silently
-to this new manuscript. No historical novelty is claimed for the elementary
+corrections. The [eleven-source margin reader](ATTRIBUTION_11.md) has 35
+independently reviewed annotations, with every proof byte preserved. It is
+a separate, unmeasured edition. No historical novelty is claimed for the elementary
 action or gallery lemmas.
 
 The replacement has 25 numbered sections, 229,791 bytes and five complete
 programs totaling 25,954 bytes. Adding this source costs 28,061 raw bytes,
 including the full 10,533-byte Python controls. These are disclosed costs,
-not a measured compression factor. The **1.6713× ten-source lower bound**
-applies only to [Compress_10](COMPRESS_10.md).
+not themselves a measured compression factor. The complete
+[57-page authored PDF](research/case_study/phase84_eleven_measurement_replacement.pdf)
+has now been independently rendered, visually inspected and recounted. Its
+**1.484833× lower bound** charges all 25 sections and five programs. The
+[root measurement admission](research/case_study/phase93_eleven_measurement_root_admission.md)
+records a further independent-counter replay and the required
+[metadata correction](research/case_study/phase88_eleven_measurement_review_metadata_erratum.md).
+The nonwhitespace-character lower bound is **1.125855×**. No measurement of
+the annotated reader is implied. The **1.6713× ten-source lower bound**
+continues to apply only to [Compress_10](COMPRESS_10.md).
 
 The independent review reads all new proofs and actual applications, and
 inherits the complete earlier integration review for unchanged branches.
@@ -96,7 +107,7 @@ the exact proof spans and programs and runs the seven finite controls; it
 does not machine-check the written proofs or reread private source captures.
 The [independent wrapper audit](research/case_study/phase77_eleven_wrapper_recent_audit.md)
 also checks rejected altered inputs and execution with assertions enabled.
-The 41 Lean components retain their individual scopes; this extension adds
+The 42 Lean components retain their individual scopes; this extension adds
 no new formal module. General conjectures and the separate
 [cover-family theorem](COVER_FAMILY.md) are outside this assembly's claimed
 principal-result reduction.

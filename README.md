@@ -35,9 +35,10 @@ The [eleven-source annotated reader](ATTRIBUTION_11.md) now has an independent
 semantic review: 35 notes distinguish borrowed inputs, repository arguments,
 shared consequences, corrections and exact certificate scopes.
 
-The [independently reviewed ten-source measurement](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
-gives a conservative **1.67×** length factor. The 1998 source is credited
-zero because its faithful PDF body remains unavailable.
+The [independently reviewed eleven-source measurement](research/case_study/phase88_eleven_measurement_review_report.md)
+gives a conservative **1.485×** length factor, including all proofs and five
+full programs. The 1998 and 2001 sources are credited zero because their
+faithful PDF bodies have not been acquired. The exact factor is unknown.
 
 | Exact replacement | Conditional length result |
 |---|---|
@@ -45,11 +46,11 @@ zero because its faithful PDF body remains unavailable.
 | [Compress_Unified](COMPRESS_UNIFIED.md), seven sources | **At least 40,358 / 18,241 = 2.21×**, crediting the unmeasurable 1998 source zero |
 | [Compress_C plus lattice bridge](COMPRESS_C.md), two sources | **8,382 / 8,582 = 0.976695×: 2.386% expansion** |
 | [Compress_10](COMPRESS_10.md), ten sources | **At least 51,739 / 30,957 = 1.671318×**, crediting the 1998 source zero |
-| [Compress_11](COMPRESS_11.md), eleven sources | Complete principal-result contract reviewed; length measurement pending |
+| [Compress_11](COMPRESS_11.md), eleven sources | **At least 51,739 / 34,845 = 1.484833×**, crediting N001 and L108 zero |
 
 These use normalized PDF-extracted whitespace tokens and include the complete
 required proof and code. Retained background proofs remain imported. The
-ten-source factor does not transfer to the new eleven-source manuscript. The
+factors apply to their exact unannotated manuscripts. The
 seven-source integration adds 706 raw Markdown tokens over its two
 predecessors together. A common framework can improve organization while
 adding exposition; every measured outcome is reported under its exact scope.
