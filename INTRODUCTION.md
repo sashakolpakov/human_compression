@@ -2353,10 +2353,14 @@ rank set $\{3,4\}$ for every odd $q\ge3$.
 Two internal written reviews and fresh exact checks support the proof;
 34 symbolic identities and six finite fields are diagnostic evidence.
 They are not an all-parameter formalization. The
-[status audit](research/case_study/phase21_linear_rank3_status.md)
-separates the already published $q\equiv3\pmod4$ cases, possible further
-source overlap, and an unexhausted 2026 dissertation lead. The broader
-almost-simple classification and publication priority remain unresolved.
+[primary thesis supplement](research/case_study/phase22_linear_priority_supplement.md)
+identifies an earlier claim also covering $q\equiv5\pmod8$. At
+$q\equiv1\pmod8$, the thesis quotient is instead
+$\mathrm{PSL}_4(q)\times C_2$, so that claim does not give our diagonal
+extension. The displayed thesis generator has order four in its stated
+quotient, a defect in that witness; this does not disprove the existence
+theorem. The broader almost-simple classification and publication priority
+for the remaining range are unresolved.
 
 ## 35. Enumerating small kernels instead of whole groups
 
@@ -2413,13 +2417,52 @@ coset enumeration over the trivial subgroup proves their actual order is
 a short structural argument, an exhaustive kernel search and concrete
 presentation certificates.
 
-The precise coverage still matters. This phase recovers the rank-four
-counts and three numbered results, alongside the previously recovered
-rank-five counts. The rank-three order-1,024 census and other presentation
-claims remain outstanding. A complete third-excess window library also
-needs its transition graph before it yields an all-rank formula.
+The next section completes the rank-three census and two auxiliary lemmas.
+Individual presentation labels remain separate obligations. A complete
+third-excess window library also needs its transition graph before it
+yields an all-rank formula.
 
-## 36. The remaining work, and how a living reduction should record it
+## 36. The same kernel ladder beyond abelian kernels
+
+At rank three and order 1,024, the canonical quotient has order 32, so
+the third lower-central subgroup has order 32. Its five possible strict
+descents bound the nilpotency class by seven. The universal class-seven
+path group has order $2^{38}$ and third lower-central subgroup $K$ of
+order $2^{33}$. Here $K$ is nonabelian: its derived subgroup has order 512.
+
+The invariant index-two ladder still applies. Its proof uses characters
+of a Frattini quotient, which is elementary abelian even when the group
+itself is not. Five steps produce respectively 7, 23, 61, 147 and 401
+distinct kernels. Their full coordinate lists make the search reproducible.
+Every resulting group receives all 64 marked subgroup-intersection tests,
+including the candidates rejected by the smaller kernel-profile test.
+The two tests agree on every candidate.
+
+The [completed census](research/case_study/phase22_N009_rank3.md) has 235
+ordered markings and 15 fixed by reversal. Burnside's two-element orbit
+formula gives $(235+15)/2=125$ classes, with all twelve published type
+counts recovered. Alongside ranks four and five, the order-1,024 census
+is therefore 125, 105 and 8. An exact independent rerun reproduced all
+five checkpoint files and the accepted marking data byte for byte;
+it uses the same algorithm and retains GAP/NQ as computational inputs.
+
+Two [lemma adapters](research/case_study/phase22_N009_lemma_adapters.md)
+show how more source statements fit the common language. In an affine
+square group $T\rtimes D_8$, a central element has a linear part acting
+trivially on $T$ and a translation fixed by $D_8$. Solving those lattice
+congruences gives every stated center formula, with the two small cases
+handled before assuming the linear action faithful. In the other lemma,
+two independent coordinates of the Frattini quotient force the kernel
+of a marked epimorphism into the prescribed normal factor. The lattice
+classification and the infinite semidirect decomposition remain inputs.
+
+This extends the same mechanisms to a nonabelian kernel and two distinct
+lemma types. The number of enumerated objects is not a proof-length ratio.
+Individual facet labels, universal-amalgam orders and other displayed
+presentations require their own checks before full source coverage can
+be claimed.
+
+## 37. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

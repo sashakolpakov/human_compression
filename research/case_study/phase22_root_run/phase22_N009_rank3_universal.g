@@ -1,0 +1,14 @@
+if LoadPackage("nq")=fail then Error("NQ required");fi;
+SizeScreen([4096,100000]);;
+F22:=FreeGroup(3);;f22:=GeneratorsOfGroup(F22);;
+Q22:=F22/[f22[1]^2,f22[2]^2,f22[3]^2,Comm(f22[1],f22[3])];;
+t22:=Runtime();;
+e22:=NqEpimorphismNilpotentQuotient(Q22,7);;
+i22:=IsomorphismPcGroup(Image(e22));;U22:=Image(i22);;
+lc22:=LowerCentralSeries(U22);;
+Print("GAP ",GAPInfo.Version," NQ ",PackageInfo("nq")[1].Version,"\n");
+Print("rank=3 class=",Length(lc22)-1," universal_order=",Size(U22)," pc_length=",Length(Pcgs(U22))," relative_orders=",Collected(RelativeOrders(Pcgs(U22))),"\n");
+Print("lowercentral_orders=",List(lc22,Size),"\n");
+Print("gamma3_order=",Size(lc22[3])," abelian=",IsAbelian(lc22[3])," gamma3_derived_order=",Size(DerivedSubgroup(lc22[3])),"\n");
+Print("elapsed_ms=",Runtime()-t22,"\n");
+QUIT;

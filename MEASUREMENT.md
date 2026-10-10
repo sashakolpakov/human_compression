@@ -396,8 +396,11 @@ Phase twenty-one adds the [linear diagonal rank-three construction](research/cas
 for the index-two diagonal extension at every odd field size. Its proof
 uses independent rank-one factors, a Jordan-block obstruction and root
 extraction. Some existence cases are already published; the
-[bounded priority audit](research/case_study/phase21_linear_rank3_status.md)
-records possible further overlap and a 2026 dissertation lead. Neither
+[primary thesis supplement](research/case_study/phase22_linear_priority_supplement.md)
+now records an earlier public claim for the q≡5 mod8 range. Its printed
+witness has a specific order defect; that does not make the existence
+statement false or erase the earlier claim. The thesis quotient at
+q≡1 mod8 is a different group, and priority there remains unverified. Neither
 a full matched-length comparison nor verified new-resolution status is
 established. The measured ratios remain **127/38** and **4/3**, and no
 infinity marker is assigned.
@@ -405,8 +408,10 @@ infinity marker is assigned.
 The same phase also recovers N009 Theorems 3.6, 3.8 and 5.5 and every
 rank-four Table 6 type count, through a uniform central adapter and exact
 normal-kernel census. The previously recovered rank-five counts are not
-counted again. The rank-three order-1,024 component and other presentation
-claims remain outstanding, so the principal-result ledger stays at
+counted again. Phase twenty-two completes the rank-three order-1,024
+component and recovers Lemmas 5.2 and 5.4, with all-parameter written
+arguments and a fresh finite census. Individual labels and other presentation
+claims remain separate, so the principal-result ledger stays at
 **twelve works**. A terminating algorithm, a count of 105 classes, and
 a short proof of the enumeration mechanism do not by themselves supply
 a matched source/replacement proof-length ratio.

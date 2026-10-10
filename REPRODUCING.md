@@ -1028,3 +1028,47 @@ run exhausts 35,971 kernels, checks 3,072,608 small-kernel comparisons and
 598,016 full meets on accepted groups. Its recorded runtime was about
 12 minutes; this is an observation, not a performance guarantee. These
 finite totals alone do not establish an all-rank counting formula.
+
+## Rank-three order-1,024 census, auxiliary lemmas and priority audit
+
+The [phase22 root review](research/case_study/phase22_root_audit.md)
+records fresh executions separate from the frozen authored reports. To
+repeat the complete nonabelian-kernel census, use a fresh directory:
+
+```sh
+mkdir -p scratch/phase22
+cp research/case_study/phase22_N009_rank3_census.g scratch/phase22/
+cp research/case_study/phase22_N009_rank3_universal.g scratch/phase22/
+cp research/case_study/phase22_N009_rank3_build_report.py scratch/phase22/
+cd scratch/phase22
+gap -q -T phase22_N009_rank3_census.g > phase22_N009_rank3_census.log
+gap -q -T phase22_N009_rank3_universal.g > phase22_N009_rank3_universal.log
+python3 phase22_N009_rank3_build_report.py --directory . --output fresh_certificate.json
+cd ../..
+```
+
+Expected totals are 401 candidate kernels, 235 ordered markings, 15
+reversal-fixed markings and 125 classes. All 25,664 actual subgroup meets
+are tested, including rejected candidates. The five complete kernel
+levels contain 7, 23, 61, 147 and 401 entries. The universal kernel is
+nonabelian, with derived subgroup of order 512. GAP/NQ's exact universal
+quotient and subgroup operations remain explicit computational inputs.
+The builder checks data and all twelve source type totals; it does not
+regenerate the groups itself.
+
+The affine-center and priority diagnostics use only Python's standard
+library. Copy the priority checker because it writes its report beside
+its script:
+
+```sh
+python3 research/case_study/phase22_N009_centers_check.py --output scratch/phase22/centers.json
+cp research/case_study/phase22_linear_priority_check.py scratch/phase22/
+python3 scratch/phase22/phase22_linear_priority_check.py
+```
+
+These check all 4,080 elements in eight affine models, and five integer
+matrix identities plus eight scalar-quotient cases. The uniform center
+and kernel-location arguments are written proofs. The source supplement
+attributes the earlier thesis claim, records a specific printed-witness
+defect and preserves the limits of its selected-section reading. These
+checks do not audit the complete thesis or establish publication novelty.

@@ -17,7 +17,7 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "older_literature_updates.json", "phase5_network_intake.json",
           "phase6_network_intake.json", "phase16_frattini_geometry_intake.json",
           "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json",
-          "phase20_linear_rank3_intake.json")
+          "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -251,17 +251,23 @@ UPDATES = {
         "phase16_frattini_geometry_reduction.md;phase16_frattini_geometry_intake.json;phase16_frattini_manifest.json;phase16_frattini_root_audit.md;phase16_frattini_root_audit.json;phase16_frattini_coordinate_check.json;phase16_frattini_root_check.json;phase16_older_source_access.md",
         "Scope is all principal new geometric results and the finite relative-generating-set theorem. The unqualified infinite-group converse of Theorem 2.1 requires an extra hypothesis; its explicit scope counterexample is separate from correction priority. Quoted Gaschütz Theorem 4.1, historical SmallGroups counts and Frattini-computation algorithms are not rederived or rerun. No matched ratio or end-to-end formalization; external review remains."),
     "N009": (
-        "component_rederived", "Theorems 3.6 and 3.8/Table 1, printed pp7-9; Table 6 rank-four and rank-five counts and type multiplicities; Theorem 5.5, printed p20, including both raw presentations",
+        "component_rederived", "Theorems 3.6 and 3.8/Table 1; complete rank-three, rank-four and rank-five order1024 censuses with all type counts in Tables 5–6; Lemmas 5.2 and 5.4; Theorem 5.5 including both raw presentations",
         "A dihedral product normal form and Burnside basis exclude the bad central quotient; an order sandwich proves the three relator-lift cases. The universal class-five path group, complete invariant index-two kernel ladder and exact kernel-profile IP test recover all rank-four marked groups. Reversal gives every source type count. Two direct Todd-Coxeter computations prove the exceptional presentations have order1024, and the complete census proves there are exactly two with the specified oriented facets. The prior first-excess classification already recovers the rank-five counts.",
         "Reviewed canonical forest quotient and class bound; Burnside basis theorem and elementary dihedral facts; GAP/NQ universal nilpotent-quotient and exact subgroup algorithms; Todd-Coxeter coset enumeration; Earlier first/second-excess uniqueness of the two named rank-three facets",
         "phase21_central_quotient.md;phase21_N009_presentations.md;phase21_N009_manifest.json;phase21_N009_presentations_certificate.json;phase21_N009_source_compare.json;phase21_kernel_ladder.md;phase21_rank4_census.json;phase21_kernel_root_audit.json;phase17_k1_classification.md;phase17_k1_source_intake.json;formal/PrincipalKernelIntersections.lean;formal/PrincipalKernelIntersections.scope.md",
-        "The rank-three order1024 census, label-by-label facet comparison and other displayed presentation claims remain outside this reduction. The quoted infinite universal-group structure theorem is retained, not rederived. No whole-paper credit, matched proof-length ratio or novelty claim. The finite kernel census is not an all-rank third-excess formula or a full Lean formalization."),
+        "Individual facet labels, universal amalgam orders and other displayed presentation claims remain outside this reviewed reduction. The quoted lattice classification and infinite universal-group structure theorem are retained. No whole-paper credit, matched proof-length ratio or novelty claim. The finite census is not an all-rank third-excess formula or a full Lean formalization."),
     "N011": (
         "source_theorem_retained", "Theorem 2, printed p.248: exact PGL_n(q) commuting-pair involution-generation criterion",
         "Retain the published theorem. In dimension four and odd characteristic it gives PGL4(q) rank-three existence exactly for q=3 mod4, using the source's rank-three adapter.",
         "Markovskaya–Nuzhin Theorem 2 and its source proof; Same-marking rank-three intersection principle",
         "phase20_linear_rank3_intake.md;phase20_linear_rank3_intake.json;phase20_unitary_rank3_status.md",
-        "Selected statement, preliminary passages and the n4 construction on pp256-258 read; no complete source-proof audit or rederivation credit. The proper index-two subgroup for q=1 mod4 is not in the source theorem, but has a separate internally reviewed construction in phase21. Possible extension of the source argument to q=5 mod8 and a 2026 thesis remain priority leads. No source compression or infinity-marker credit."),
+        "Selected statement, preliminary passages and the n4 construction on pp256-258 read; no complete source-proof audit or rederivation credit. The related N012 thesis now supplies an earlier public claim for the proper index-two subgroup at q=5 mod8, with a defect in its printed witness. The q=1 mod8 group in that thesis is a different central extension. No source compression or infinity-marker credit."),
+    "N012": (
+        "related_only", "Theorem 4.3.1 and Corollary 4.3.1, pp70–75; printed n4 witness p72; Theorem 3.3.1 as context",
+        "Identify Q4=GL±4/Z(SL4): it is the diagonal index-two group for q=3 mod4 and q=5 mod8, but PSL4 times C2 for q=1 mod8. The printed beta has noncentral square and projective order four. This records a prior claim and a limited witness defect, without deciding the existence theorem from that defect.",
+        "Primary thesis definitions and stated claims; Elementary determinant and scalar-center calculations",
+        "phase22_linear_priority_supplement.md;phase22_linear_priority_supplement.json;phase22_linear_priority_audit.json;phase22_root_audit.json",
+        "Selected sections only, not a whole-thesis proof audit. No theorem rederivation, principal-result, matched-ratio or novelty credit. The separate 2026 subscription article remains an unexhausted lead; q=1 mod8 priority remains unverified."),
     "N010": (
         "partial_progress", "Problem 30, printed p.19: restricted regular two-group components",
         "Canonical bounded cores classify ordered nondegenerate regular two-group markings at fixed excess. A global marked-kernel basis gives every class-at-most-three marking in every rank, with a two-state transfer formula and Fibonacci total. Separated first-excess cores give the unrestricted leading coefficient 5^k/k! and a lower-degree higher-class contribution.",
@@ -601,7 +607,7 @@ def record(row, baseline, overlay, later_readings, older_access):
     if identifier == "L120":
         r["exact_target"].append({
             "reference": "Companion exact rank set {3,4} for every odd linear diagonal index-two extension",
-            "scope": "For every odd q>=5, explicit nonsquare-endpoint matrices generate the index-two extension L2(q) over PSL4(q), with actual rank-three IP. Independent rank-one factors, Jordan radical forcing and root extraction prove generation. Earlier bounds, rank-four constructions and published q3 existence give exact rank set {3,4} for every odd q>=3. The q=3 mod4 existence range is already published; further overlap and a 2026 thesis remain priority leads. This does not classify field/graph extensions or all almost-simple groups.",
+            "scope": "For every odd q>=5, explicit nonsquare-endpoint matrices generate the index-two extension L2(q) over PSL4(q), with actual rank-three IP. Independent rank-one factors, Jordan radical forcing and root extraction prove generation. Earlier bounds, rank-four constructions and published q3 existence give exact rank set {3,4} for every odd q>=3. The q=3 mod4 range is already published, and the N012 thesis contains a prior q=5 mod8 claim with a printed-witness defect. Its q=1 mod8 quotient is a different group; priority for L2 there remains unverified. Field/graph extensions remain outside this result.",
             "relation_to_source": "proposed_uniform_companion_application",
         })
         for name in ("phase21_linear_rank3.md", "phase21_linear_rank3_manifest.json",
@@ -616,7 +622,17 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["full_principal_results"] = False
         r["proposed_new_result"] = False
         r["exact_target"][0]["relation_to_source"] = "source_theorem_retained"
+    if identifier in {"L120", "N011", "N012"}:
+        r["evidence"].append(evidence("phase22_linear_priority_supplement.md", "Primary thesis quotient identification and limited printed-witness diagnostic"))
+    if identifier == "N012":
+        r.update(encoded=False, rederived=False, full_principal_results=False, proposed_new_result=False)
+        r["exact_target"][0]["relation_to_source"] = "prior_claim_located_printed_witness_defective"
     if identifier == "N009":
+        r["method"].append("The class-seven invariant-kernel census handles a nonabelian universal gamma3, checks all401 candidates and all25664 actual meets, and recovers125 rank-three classes and all12type counts. Affine fixed translations give every center formula in Lemma5.2, including both small exceptions; independent Frattini characters give Lemma5.4 under its retained infinite decomposition.")
+        r["retained_inputs"] += ["Quoted affine lattice-family identification (Lemma5.1)", "Quoted infinite semidirect decomposition (Theorem5.3)"]
+        for name in ("phase22_N009_rank3.md", "phase22_N009_rank3_certificate.json",
+                     "phase22_N009_lemma_adapters.md", "phase22_root_audit.md", "phase22_root_audit.json"):
+            r["evidence"].append(evidence(name, "Complete rank-three census and two numbered lemma adapters"))
         r["proposed_new_result"] = True
         r["exact_target"].append({
             "reference": "Companion all-rank first-excess classification",
@@ -732,6 +748,23 @@ def phase20_network_rows():
         "status_note": source["reading_scope"] + " Published input only, no rederivation credit.",
         "assets": [{"url": u} for u in source["primary_urls"]],
         "source_urls": [], "intake_file": "phase20_linear_rank3_intake.json",
+    }]
+
+
+def phase22_network_rows():
+    """Record a thesis priority source without proof-reduction credit."""
+    source = load("phase22_linear_priority_supplement.json")
+    meta = source["thesis_metadata"]
+    return [{
+        "id": "N012", "title": meta["title_english"],
+        "publication_year_from_catalogue": meta["title_page_year"],
+        "citation": meta["author"] + ". Dissertation, Siberian Federal University, title page 2025; defence 14 May 2026.",
+        "category": "Network thesis / priority source", "mathematical": True,
+        "fulltext_available": True, "reading_scope": "selected_sections_read",
+        "retrieval_status": "primary_institutional_pdf_retrieved_selected_sections_read",
+        "status_note": "80-page thesis retrieved; definitions, Theorem3.3.1 and selected sections4.2–4.3 read; printed p72 witness visually checked. No whole-thesis audit or reduction credit.",
+        "assets": [{"url": item["url"]} for item in source["sources"]],
+        "source_urls": [], "intake_file": "phase22_linear_priority_supplement.json",
     }]
 
 
@@ -933,6 +966,8 @@ def main():
              for r in phase18_network_rows()]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase20_network_rows()]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase22_network_rows()]
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]
