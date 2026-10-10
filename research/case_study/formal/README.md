@@ -1,5 +1,26 @@
 # Lean certificates and their scope
 
+[OddKernelIntersection.lean](OddKernelIntersection.lean) proves five
+prime-index and reflection statements used in the cyclotomic application.
+Its [scope](OddKernelIntersection.scope.md) leaves the full arithmetic,
+character classification and source recovery outside Lean.
+
+[PyramidKernelTransport.lean](PyramidKernelTransport.lean) proves four
+support, congruence and restricted-injectivity statements for the uniform
+square-torus argument. Its [scope](PyramidKernelTransport.scope.md)
+distinguishes these from the geometric and topological proof.
+
+[ProjectiveDihedralMatrices.lean](ProjectiveDihedralMatrices.lean) proves
+six actual matrix statements, including both normal-form centralizers
+and the trace-zero representative. Its
+[scope](ProjectiveDihedralMatrices.scope.md) leaves the general descent
+and geometric applications written.
+
+[DihedralFacetObstruction.lean](DihedralFacetObstruction.lean) proves five
+general normalizer statements used in Topic E. Its
+[scope](DihedralFacetObstruction.scope.md) states the retained group
+classification and geometric boundary.
+
 [BinaryDihedralDisplacements.lean](BinaryDihedralDisplacements.lean) proves
 five general displacement statements, including the finite-period adapter
 for the exact equal-label presentation. Its [scope](BinaryDihedralDisplacements.scope.md)

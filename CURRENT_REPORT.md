@@ -25,12 +25,18 @@ F014’s complete stated rank-three main results. Its five Lean declarations
 verify the general algebraic core. The
 [projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) now recovers two more
 complete principal classifications, with independent review and fresh
-finite and Lean checks. Principal-source coverage is **23 of 161**; the
+finite and Lean checks. Principal-source coverage is **24 of 161**; the
 topic umbrella and both application papers are now complete, at 7 + 3 + 2
 pages, with independent review. The shared finite proof is charged once
 within this topic; no matched ratio has yet been measured. Six additional
 [Lean matrix declarations](provenance/phase123_review.md) now verify its
 actual normal-form centralizers; full field descent remains written.
+
+The [odd-kernel application](ODD_KERNEL_POLYHEDRA.md) is a complete
+eight-page recovery of L014’s principal results. Its character and
+cyclotomic arguments begin Topic F; a separate umbrella and additional
+applications remain unfinished. Five Lean declarations verify specified
+algebraic steps. The source marking correction is stated explicitly.
 
 ## Further application material
 

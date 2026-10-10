@@ -21,6 +21,7 @@ OVERLAYS = (
     "phase208_L092_overlay.json",
     "phase233_F014_overlay.json",
     "phase235_projective_line_overlay.json",
+    "phase249_L014_overlay.json",
 )
 
 
@@ -120,7 +121,7 @@ def render(registry):
         "every collaborator, student or postdoc. Coauthorship alone does not establish those relationships.", "",
         "The [current programme](MANUSCRIPT_PROGRAM.md) organizes the new papers by topic,",
         "with a full umbrella for each topic and complete applications to historical papers.",
-        "Its A–E tables name the results already available for reworking. The counts below",
+        "Its A–F tables name the results already available for reworking. The counts below",
         "describe the source records; they do not count completed new application papers",
         "or measure compression.", "",
         "The [frozen registry](research/case_study/paper_registry.json) contains the detailed",
@@ -162,6 +163,7 @@ def render(registry):
         "| F010 | The main constructive theorems are recovered in a complete written argument, with local corrections. Lean verifies the stated hexagon component, not the universal constructions. | [Reviewed addition](research/case_study/phase193_F010_overlay.json); [proof reader](FINITE_INCIDENCE_REPRESENTATIONS.md) |",
         "| F014 | All stated positive rank-three main results in arXiv v1: exact construction, matrices, universal presentation and both corollaries. Montero–Ivić Weiss supply the earlier polygon construction; the printed inverse-action convention is corrected. The higher-rank counterexample is a separate result. | [Reviewed addition](research/case_study/phase233_F014_overlay.json); [complete application](EQUAL_LABEL_POLYGONS.md) |",
         "| L079 and L083 | Both complete specified rank-at-least-four PGL₂/PSL₂ classifications, their rank restrictions, universal table and stated geometric properties. L079’s extra seventeen-case census and Conjecture 11 are excluded. | [Reviewed addition](research/case_study/phase235_projective_line_overlay.json); [common proof](PROJECTIVE_LINE_POLYTOPES.md) |", "",
+        "| L014 | Complete normal-Sylow structure, abelian/tight classification and all-parameter nonabelian construction, with the exact presentation and corrected v1 marking. The tightness converse retains Cunningham–Pellicer. | [Reviewed addition](research/case_study/phase249_L014_overlay.json); [complete application](ODD_KERNEL_POLYHEDRA.md) |", "",
         "Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain",
         "explicitly rejected; those entries have only abstract-level access. L125's",
         "original J1 list must be read with the later correction reported by L105.", "",

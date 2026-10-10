@@ -36,6 +36,7 @@ provides two further complete principal classifications for topic E.
 | C: Halving and Petrial operations on regular geometries | [Operations on regular geometries](MODULE_C.md) | Separate reusable changes of generators and arguments about the objects preserved by these operations from full geometric identifications and censuses |
 | D: Marked actions, field orbits and geometry enumeration | [Marked actions and enumeration](MODULE_D.md) | Extract shared theorems about actions and extensions; keep complete field and classification arguments, including correspondence with historical tables, in the application papers |
 | E: Projective centralizers and regular polytopes | [Complete U_E and two applications](PROJECTIVE_LINE_POLYTOPES.md) | Extend the two-source topic and prepare a matched cost comparison; the 7 + 3 + 2-page papers are independently reviewed |
+| F: Odd kernels and cyclotomic polyhedra | [Complete L014 application](ODD_KERNEL_POLYHEDRA.md) | Develop further applications and extract the full topic umbrella from the character and cyclotomic arguments; the first eight-page paper is independently reviewed |
 
 The [existing U manuscript](UMBRELLA.md) is a source of reusable proofs.
 A topic may retain an overlapping part of the same mathematics as another
@@ -128,6 +129,16 @@ are now independently reviewed: seven umbrella pages, three PSL₂ pages and
 two PGL₂ pages, with one required shared program. The historical answer to
 Conjecture 11 is [recorded separately](research/case_study/phase240_L079_status.md).
 No topic compression ratio has yet been measured.
+
+### F. Odd kernels and cyclotomic polyhedra
+
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| L014 | Hou, Feng, Leemans and Qu, *String C-groups of order 4p^m*, arXiv:2407.10388v1 (2024; later journal publication 2025) | Theorems 1.1–1.3 and the marked construction of Theorem 5.1: normal odd kernel, abelian/tight classification and nonabelian family for all stated parameters | The literal v1 marking is corrected. Cunningham–Pellicer's tight classification is a cited input; the introductory census and a classification of all nonabelian kernels are excluded. |
+
+The [complete eight-page application](ODD_KERNEL_POLYHEDRA.md) has independent
+review, exact finite checks and five limited Lean declarations. A separate
+full U_F and further application papers remain to be completed.
 
 ## What each paper must supply
 
