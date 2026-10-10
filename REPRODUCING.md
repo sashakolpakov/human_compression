@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the eighteen saved Lean reports
+checks local documentation links, and checks the nineteen saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -507,6 +507,97 @@ gap -q -T phase14_unitary_q7_check.g
 ```
 
 It writes `phase14_unitary_q7_check.json` in the working directory.
+
+## Graded support and the second matched measurement
+
+The [all-class forest theorem](research/case_study/phase15_graded_support.md)
+is a written proof, with two complete internal reviews bound by its
+[certificate](research/case_study/phase15_graded_support_certificate.json).
+Its graded Lie and descending-factorization steps do not depend on the
+earlier class-four diagnostics or a finite census.
+
+The separate permutation witness shows that a last lower-central quotient
+can lose the intersection property. Its standard-library verifier closes
+the supplied permutations, constructs actual commutators and checks every
+original and relevant quotient subgroup intersection:
+
+```sh
+python3 research/case_study/phase15_quotient_ip_verify.py \
+  --output /tmp/quotient-ip-fresh.json
+```
+
+The [N003 measurement](research/case_study/phase15_N003_measurement.md)
+uses the exact twelve-page primary PDF identified by the protocol. Obtain
+it separately and use `pypdf==6.13.0`:
+
+```sh
+python3 research/case_study/phase15_N003_measure.py \
+  --source-pdf /path/to/igsgsn.pdf \
+  --output /tmp/N003-measurement-fresh.json
+```
+
+This freshly extracts the PDF, verifies the full text and every selected
+span hash, and recomputes 9,680/7,260=4/3. It does not verify mathematical
+correctness; that has a separate complete written review. A second
+[accounting implementation](research/case_study/phase15_N003_scope_check.py)
+uses the bound extraction, without importing the first runner. To reproduce
+it, copy the `phase15_N003_*` files into a scratch directory and
+put the exact PDF at `sources/network_independent_generators.pdf` and its
+page-labelled extraction at `sources/phase10_N003_extracted.txt` there.
+The extraction convention is specified in the first runner. Then run
+the second script with `--directory /path/to/scratch --output /tmp/N003-scope.json`.
+Neither primary source nor extracted publication text is redistributed.
+
+The optional historical class-four diagnostics need GAP with NQ. Copy
+`phase15_common_quotient_check.g` to scratch space and run it with
+`gap -q -T phase15_common_quotient_check.g`. It checks universal collection
+in ranks two through six and all relevant quotients of the computed
+rank-three group. The separate uniform forest proof supersedes that
+class restriction and uses none of these finite checks as a premise.
+
+## Completing the second unitary family
+
+The [uniform proof](research/case_study/phase15_unitary_sieve.md) combines
+written generation/intersection and curve bounds with complete finite
+arithmetic. The [independent audit](research/case_study/phase15_unitary_independent_audit.md)
+and [author manifest](research/case_study/phase15_unitary_manifest.json)
+record their different trust boundaries. Run the two independent
+standard-library checks directly from the public copy:
+
+```sh
+python3 research/case_study/phase15_unitary_sieve_independent_check.py \
+  --output /tmp/unitary-sieve-fresh.json
+python3 research/case_study/phase15_unitary_witnesses_independent_check.py \
+  --output /tmp/unitary-witnesses-fresh.json
+gap -q -T research/case_study/phase15_unitary_example_check.g > /tmp/unitary-q11-fresh.log
+```
+
+The first recomputes the three cutoff bounds, all 40,389 field sizes,
+80,778 factorizations and the complete set of 1,699 exceptions. The second
+checks that same exception list using the saved, hash-bound independent
+sieve record, then rebuilds every polynomial field and verifies all 1,697
+primitive norm witnesses and the direct q=19,23,43 parameters. It imports
+neither GAP nor an author checker. The final command separately constructs
+the full q=11 projective group and checks all 256 subset intersections;
+it uses GAP's exact arithmetic and retains the unitary order formula.
+
+The q=7 full group certificate is retained from phase fourteen. The uniform
+generation, intersection and character-sum bounds remain written proofs;
+the finite checks establish their parameter instances and coverage, not
+those universal statements. To rerun the 37 symbolic identities with SymPy,
+copy `phase15_unitary_symbolic_check.py` into scratch space before executing
+it: that author script writes its adjacent report. The other author search
+scripts likewise belong in a disposable copy. Preserve the saved originals.
+
+The nineteenth Lean component can be freshly compiled with the pinned setup
+described below:
+
+```sh
+python3 research/case_study/formal/verify_lean.py GradedSupport.lean
+```
+
+It verifies the explicitly documented group-factorization lemmas. It does
+not formalize either the full forest theorem or the unitary theorem.
 The recorded fresh run verifies the full group order, type `{4,24,4}`,
 and all 256 subgroup intersections. This is a finite q=7 certificate,
 not a uniform existence proof for its congruence class. Use a fresh
@@ -515,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all eighteen certificates and their unformalized boundaries. With Git
+describes all nineteen certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -539,7 +630,7 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The eighteen certificates cover intersection transport, field and matrix
+The nineteen certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point

@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are eighteen certificates. To compile them on another machine, install Git,
+There are nineteen certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the eighteen modules, but does not produce the runner's JSON reports.
+way to compile the nineteen modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,7 +95,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all eighteen source hashes match the historical successful reports
+This checks that all nineteen source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. The saved runs print only the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
@@ -236,3 +236,12 @@ separates those components from the written group and hypertope proofs.
 The [fresh public-run reports](../../../provenance/phase14_review.md) include
 both this module and its binary-action dependency. All seventeen earlier
 saved reports retain their original bytes.
+
+[GradedSupport.lean](GradedSupport.lean) proves disjointness of subgroup
+images when a homomorphism kernel factors through the two original
+disjoint subgroups, injectivity of their ordered product, and finite
+product exhaustion from a stated cardinality equality. Its
+[scope note](GradedSupport.scope.md) distinguishes these kernel-checked
+steps from the written Lie-algebra spanning argument, quotient-index
+calculation, descending induction and complete forest theorem. This is
+the nineteenth partial certificate; all earlier saved reports are preserved.

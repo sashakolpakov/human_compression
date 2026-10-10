@@ -1400,7 +1400,7 @@ property; further geometric properties still require their own
 hypotheses. This is a reusable calculation with a precisely limited
 source consequence, not an open-conjecture resolution.
 
-## 19. An elliptic curve supplies every field in one congruence class
+## 19. Curves and a primitive-character sieve supply the unitary parameters
 
 The characteristic-three construction in §17 is one component of a broader
 parameter curve. Outside characteristics two and three, choose a nonsquare
@@ -1465,9 +1465,79 @@ $|PSU_4(7)|$. Scalar matrices act trivially, so unitary containment and
 the order equality identify the projective group. The checker builds
 all 16 subset-generated groups and verifies all 256 intersections.
 Together with the retained upper bound, this gives maximum rank four
-at $q=7$. It does not establish a uniform construction in the other
-congruence class: existence for $q\equiv3\pmod4$, $q\ge11$, remains
-unresolved here.
+at $q=7$. This finite case is now part of a second uniform construction.
+
+For $q\equiv3\pmod4$, put $i^2=-1$ and choose a point on the sphere
+
+$$a=it,\qquad b=x+iy,\qquad t^2+x^2+y^2=1.$$
+
+The [generation argument](research/case_study/phase15_unitary_generation.md)
+finds a full projective SU₂ in a two-by-two block. Its kernel under the
+other block projection has nontrivial image in that simple group; taking
+commutators removes scalar first blocks and supplies an actual coordinate
+SU₂. Conjugation supplies connected coordinate pairs, which generate SU₄
+by the earlier elimination argument. Dickson's subgroup list remains an
+explicit input; a full-field condition and three small-order exclusions
+are the exact parameter tests.
+
+The [intersection proof](research/case_study/phase15_unitary_intersection.md)
+uses a symmetric form fixed up to sign by one maximal parabolic and an
+alternating form fixed up to sign by the other. Their common exact stabilizer
+centralizes a regular semisimple element in Sp₄(q). The torus orders bound
+that stabilizer, forcing the two parabolics to meet in precisely the middle
+dihedral group. Two direct two-by-two power calculations verify the remaining
+rank-three intersections. The large projective middle order needed is
+(q²−1)/2 or (q²+1)/2; the order-four scalar center must be accounted for.
+
+The characteristic polynomial of the middle product is
+
+$$P_a(X)=X^4+aX^3-aX+1.$$
+
+It does not depend on b. This separates finding a large rotation from
+choosing the rest of the generating matrices. The
+[parameter lemma](research/case_study/phase15_unitary_parameter_reduction.md)
+proves that for q≥27 a suitable a leaves enough norm-compatible choices
+of b to satisfy both the generation and intersection tests.
+
+One primitive element now supplies a. Seek λ∈F_(q²)* with
+
+$$\operatorname{Norm}(\lambda-\lambda^{-1})=-2.$$
+
+Writing u=λ−λ⁻¹ and a=ū−u gives roots
+λ, −λ⁻¹, −λ^q and λ^(−q) for P_a. Primitivity makes their combined
+projective order exactly (q²−1)/2. The norm equation is the twisted curve
+
+$$ (X^2-1)(Y^2-1)+2XY=0,\qquad Y=X^q.$$
+
+Outside characteristic three, its smooth closure has genus one. The
+coordinate functions have eight distinct simple zeros and poles, with
+none rational under the twist. The
+[Lang-isogeny calculation](research/case_study/phase15_unitary_curve.md)
+shows that every nontrivial character of F_(q²)*, including characters of
+even order, has nontrivial monodromy at all eight points. The retained
+Weil machinery therefore gives error at most 8√q. In characteristic three,
+one rational component with four punctures gives the stronger error 2√q.
+
+The same core-prime sieve now has q+1 on the left, since there are no
+rational boundary points. Three exact primorial bounds reduce the threshold
+to 1,029,254. Below it, the
+[complete arithmetic check](research/case_study/phase15_unitary_sieve.md)
+examines 40,389 prime-power fields and leaves 1,699 exceptions. The portable
+certificate supplies 1,697 primitive norm witnesses and direct matrix
+parameters for q=19 and q=43; q=23 also has a direct small-field check.
+The independent verifier uses polynomial arithmetic and recomputes the
+exact exception coverage. The separate q=7 certificate above and a
+[full q=11 certificate](research/case_study/phase15_unitary_q11.md), with
+type {4,60,10} and all 256 subgroup intersections, close the small cases.
+
+Combining the two congruence classes gives a complete proposed proof that
+PSU₄(q) has maximum rank four for every odd q≥5. Retaining the published
+rank-three existence theorem gives rank set {3,4}. The source-backed
+exception PSU₄(3) admits no string C-group representation. Current priority
+and external peer review remain unverified. The common method is the
+separation of matrix generation, form-controlled intersections and primitive
+points on a torus curve; none of those steps is inferred from a finite
+example alone.
 
 ## 20. Two square maps close the cyclic-TPP argument
 
@@ -1545,37 +1615,98 @@ located is the original 2019 conjecture. Current priority remains
 unverified, and no infinity marker or new proof-length ratio is assigned.
 
 
-## 21. Support intersections recover a canonical quotient
+## 21. Graded support gives a canonical quotient in every class
 
-The path cocycle in §18 is more than a counterexample to a kernel formula.
-For every nondegenerate string C-group G of nilpotency class at most three,
-with d marked generators, it is the canonical marked quotient
+The path cocycle in §18 is also a universal quotient. Let G be a finite
+2-group generated by marked involutions, with the subgroup intersection
+property. Join two vertices when their marked generators do not commute.
+If this graph is a forest with d vertices and m edges, then
 
-$$G/\gamma_3(G)\cong G(C_d),\qquad
-  |G/\gamma_3(G)|=2^{2d-1}.$$
+$$G/\gamma_3(G)\cong G_{\mathrm{forest}},\qquad
+  |G/\gamma_3(G)|=2^{d+m}.$$
 
-The [support proof](research/case_study/phase13_common_quotient_class_three.md)
-uses the intersection property in G itself. The marked involutions give
-an elementary abelian abelianization of rank d. Adjacent commutators
-c_i are supported on path edges. In class three, γ₃ is central elementary
-abelian, generated by their squares and the adjacent triple commutators.
+Here the right side is an explicit class-two group: its vertex coordinates
+are in F₂ᵈ and its edge coordinates in F₂ᵐ. Choose an orientation of every
+edge and multiply by
 
-Suppose an edge relation existed modulo γ₃. Squaring it kills the selected
-edge squares: the first supported edge can meet the later support in only
-one vertex, whose cyclic subgroup meets G′ trivially. Commuting the
-relation with each vertex similarly kills the adjacent triple terms.
-Cut the path at its first selected edge. All remaining γ₃ generators
-lie on one side or the other; two more support intersections force that
-edge commutator to be trivial, contradicting nondegeneracy.
+$$ (v,z)(w,t)=(v+w,z+t+\beta(v,w)),\qquad
+   \beta(v,w)_e=v_{\mathrm{head}(e)}w_{\mathrm{tail}(e)}.$$
 
-Thus all d−1 edge commutators remain independent modulo γ₃. The quotient
-has the same presentation and order as the coordinate group in §18;
-this establishes the marked isomorphism and its intersection property.
-No general preservation of the intersection property under quotients is
-assumed. The proof works in every rank, with no finite-group catalogue.
-It repairs the common-quotient existence claim through class three.
-For higher nilpotency class, centrality and exponent two of γ₃ fail,
-so those cases still require a different argument.
+Bilinearity is exactly the cocycle identity that proves associativity.
+The marked subgroup on a vertex set I consists of the coordinates on I
+and edges wholly contained in I. Subgroup intersections are therefore
+ordinary coordinate-support intersections. For a path, m=d−1: the quotient
+has order 2^(2d−1), all adjacent products have order four, and it is the
+source's common string C-group G(C_d). This holds in every nilpotency class.
+
+The [short uniform proof](research/case_study/phase15_graded_support.md)
+uses two reusable steps. First pass to the lower-central graded Lie algebra
+
+$$L(G)=\bigoplus_{j\ge1}\gamma_j(G)/\gamma_{j+1}(G).$$
+
+It is generated in degree one, and involutory generators make its homogeneous
+components F₂-vector spaces. Suppose the edge commutators had a nonzero
+linear relation in degree two. Root the forest and select a participating
+edge furthest from the root in its component. Cutting it leaves no other
+participating edge on its descendant side X; put all other vertices in Y.
+The only possible cross bracket is now a sum of brackets wholly supported
+in Y. The derivation identity propagates this containment to every bracket
+word. Thus, in every degree, L is the sum of its pure-X and pure-Y parts.
+
+The second step returns from this linear statement to the actual group.
+Put A=G_X and B=G_Y, so A∩B=1 by the original intersection property. Suppose
+the images of A∩γ_j and B∩γ_j generate every lower-central layer. Descending
+from the final trivial term proves
+
+$$\gamma_j(G)=(A\cap\gamma_j(G))(B\cap\gamma_j(G)).$$
+
+To see the nontrivial step, assume factorization in degree j+1. If a and b
+have the same image in degree j, write ab⁻¹=n_A n_B in that deeper term.
+Then n_A⁻¹a=n_Bb lies in A∩B, hence is the identity. The two layer images
+are disjoint. Their orders, multiplied by the deeper-term order, show that
+the actual product of the two subgroup pieces fills γ_j. This uses finite
+cardinalities and A∩B=1; it does not assume A and B are normal or commute.
+
+Apply this at j=2 to the selected edge commutator c. Its factorization
+c=uv, with u in A∩G′ and v in B∩G′, has support only at the two endpoints.
+Intersecting supports forces u into the first endpoint subgroup and then
+c into the second. Burnside's basis theorem gives G′∩⟨r_i⟩=1, so c=1,
+contradicting the chosen edge. All edge commutators are independent.
+Collection in the class-two presentation and the explicit cocycle then
+identify the quotient and prove its intersection property.
+
+This [recovers both principal statements](research/case_study/phase15_graded_support_scope.md)
+of the 2026 common-quotient paper, using the standard marked
+C-group/polytope-covering correspondence for its geometric formulation.
+It leaves the earlier counterexamples to the specified auxiliary kernel
+formula intact. The full written proof passed independent internal reviews;
+it has no finite-census or bounded-class input. It is a replacement proof
+of an already stated theorem, with priority for the forest extension
+unverified.
+
+There is a concrete reason to retain the lifting step. An independently
+checked [group of order 256](research/case_study/phase15_quotient_ip.md),
+with type {8,8}, has the intersection property, but its quotient by γ₄
+does not. A diagonal central involution identifies two different parabolic
+involutions and enlarges their intersection. Its eventual quotient by γ₃
+does have the property. The uniform proof works in the original group and
+therefore survives this failure of an intermediate quotient.
+
+The same proof has an [all-prime version](research/case_study/phase15_graded_support_corollaries.md)
+for order-p markings of finite p-groups. If the group order is p^(d+m+k),
+its canonical kernel γ₃ has order pᵏ, so its nilpotency class is at most
+k+2. In the involutory case, let the edge product orders be 2^(s_e).
+Peeling leaves from the forest shows that the ordered product of the edge
+fourth-power subgroups is injective inside γ₃. Consequently
+Σ_e(s_e−2)≤k. For paths this recovers a known numerical type bound; the
+support mechanism and canonical kernel place it within the same theory.
+Classifying all extensions with that kernel remains a separate problem.
+
+The [new partial Lean module](research/case_study/formal/GradedSupport.scope.md)
+checks the split-kernel image argument, injectivity of a product of two
+disjoint subgroups, and its exhaustion of a finite subgroup when the
+stated cardinalities agree. The Lie spanning, cardinality calculation
+and descending induction remain written proof steps.
 
 ## 22. The remaining work, and how a living reduction should record it
 
@@ -1614,7 +1745,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [eighteen Lean certificates](research/case_study/formal/README.md) cover
+The [nineteen Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,
@@ -1622,7 +1753,8 @@ the rank-three factorization and arbitrary-family coordinate-attachment
 implications for coset Helly, separation of matrix intertwiners by an
 invertible additive commutator, vanishing of transvection-invariant forms,
 the abstract involution-centralizer rank obstruction, and the exact
-four-case binary Frattini-action lemma and abstract marked-square descent.
+four-case binary Frattini-action lemma, abstract marked-square descent,
+and the split-kernel image and finite product steps in graded support lifting.
 They do not formalize every geometric instantiation or classification used
 in the notes. [REPRODUCING.md](REPRODUCING.md) separates fresh computations
 from historical reports and explains the excluded third-party source cache.
@@ -1643,6 +1775,17 @@ characters. This is conditional on common background such as the
 automorphisms of symmetric and alternating groups. It measures these two
 arguments, and does not estimate the full corpus or the shortest possible
 proofs. Rendering and background-cost sensitivity are explicit.
+
+The [second matched proof](research/case_study/phase15_N003_measurement.md)
+covers all eight numbered results of the 2002 independent-generator and
+geometry paper in the stated finite-group/n≥7 scope. The tree-cut and sign
+kernel core is charged once, followed by the counting, relative-rank and
+arbitrary-parabolic adapters. Exact source and replacement spans give
+9,680/7,260=4/3 in the same primary character measure, a 25 percent reduction.
+Whiston's two inputs and their CFSG dependence remain common background.
+Independent reviews check both the complete proof and the measurement.
+This smaller ratio is recorded alongside the first, with no extrapolation
+to the corpus or conversion of zero marginal reuse cost into novelty.
 
 [Measurement](MEASUREMENT.md) specifies this accounting and a separate novelty
 assessment for verified solutions of open problems. Its optional infinity

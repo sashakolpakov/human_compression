@@ -134,3 +134,13 @@ proof remains written. An exact PSU4(7) witness was reviewed and freshly
 rerun. The [original-file manifest](phase14_original_files.json) binds the
 exported bytes. Current priority remains unverified, and neither the
 existing measured ratio nor the nine-work principal-result count changes.
+
+The [phase-fifteen review](phase15_review.md) records an all-class forest
+quotient, the completed second unitary family, and the second matched
+measurement, 4/3 for eight numbered 2002 results. The principal-result
+ledger now contains ten works. The nineteenth partial Lean component was
+freshly compiled; independent field/sieve checks and the q=11 group check
+were freshly rerun from exported sources. The
+[original-file manifest](phase15_original_files.json) preserves byte-identical
+proofs and certificates. The two ratios remain separately scoped, and no
+infinity marker or current-priority claim is assigned.

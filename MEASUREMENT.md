@@ -78,7 +78,8 @@ with its exact scope; neither automatically settles an entire conjecture.
 
 ## Current assessment
 
-**The first matched-proof ratio is 3.34× for a specified two-theorem subset.
+**There are two matched-proof ratios: 3.34× for two counting formulas,
+and 4/3≈1.33× for eight numbered generator/geometry results from 2002.
 No corpus ratio or infinity marker is assigned in this snapshot.** Several proposed resolutions have written
 arguments and substantial checks, but their external priority remains
 unverified and their formal certificates cover specified components.
@@ -103,6 +104,27 @@ The protocol records exact source/replacement spans and hashes; the script
 recomputes all counts from the original PDF without distributing its text.
 The added cost of the second theorem is reported separately, showing reuse
 of the shared proof. This measurement does not assess mathematical importance.
+
+The [second measurement](research/case_study/phase15_N003_measurement.md)
+matches N003, Theorems 1.1, 2.1, 3.1 and 3.2 and Corollaries 2.2–2.4 and
+3.3, with general bounds restricted to finite groups and the symmetric-group
+classification to n≥7. It covers both generator families, all three counts,
+the relative bounds and the complete maximum-rank geometry argument.
+
+| Metric | Source | Replacement | Ratio |
+|---|---:|---:|---:|
+| Normalized non-whitespace characters | 9,680 | 7,260 | 1.333333 |
+| Unicode alphanumeric tokens, extraction-sensitive | 2,439 | 1,675 | 1.456119 |
+| Raw selected-span UTF-8 bytes | 12,462 | 8,693 | 1.433567 |
+
+The replacement is 25 percent shorter in the primary measure. Whiston's
+two specified inputs, including their CFSG dependence, Cayley's count and
+the general coset criteria remain common background. Exact source spans,
+23 physical-layout exclusions and the replacement blocks are hash-bound;
+a second implementation independently recomputes every count and marginal
+allocation. Reuse that gives a later corollary zero additional charge is
+already-paid proof material, not a new resolution or an infinity marker.
+These two measurements are reported separately, without an aggregate ratio.
 
 The [dated status audit](research/case_study/phase6_status_audit.md) searches
 later primary literature for four of the strongest proposed resolutions.
@@ -192,13 +214,14 @@ both are now subsumed by the complete proposed nilpotent theorem. The
 proved a conditional family and certified additional finite examples;
 phase thirteen subsequently supplied parameters for every odd q≡1 mod 4.
 These are substantive theorem coverage gains, with unverified publication
-priority. The measured ratio
-stays **127/38≈3.34**, and no infinity marker is assigned.
+priority. At that stage the measured ratio stayed **127/38≈3.34**;
+phase fifteen adds the separately scoped **4/3** measurement above.
+No infinity marker is assigned.
 
 Phase twelve adds a [complete 2002 principal-result reduction](research/case_study/phase12_N003_reduction.md),
 raising that coverage ledger to nine works. All eight numbered targets
-have exact source-span metadata, but their fully charged matched-length
-comparison is not yet measured. The new [class-three bound](research/case_study/phase12_class_three.md)
+had exact source-span metadata; phase fifteen now supplies their fully
+charged matched-length comparison above. The [class-three bound](research/case_study/phase12_class_three.md)
 and [PSU₄(9^e) family](research/case_study/phase12_unitary_parameters.md)
 are uniform mathematical gains, with priority unverified; the TPP bound
 is now subsumed by phase fourteen. The [2026 correction](research/case_study/phase12_path_cocycle.md)
@@ -216,8 +239,9 @@ three, uniformly in rank. At that stage the unrestricted hypertope bound
 and the other unitary congruence class were still unresolved. A correction
 to a proof is not by itself an open-problem resolution. These results have
 no matched-length measurement.
-The numerical ratio and nine-work principal-result count remain unchanged;
-no infinity marker is assigned in this phase.
+The numerical ratio and nine-work principal-result count remained unchanged
+in phase thirteen; no infinity marker was assigned.
+
 The [unitary status audit](research/case_study/phase13_unitary_priority_audit.md)
 records thirty primary-literature searches and the exact rank-three
 published baseline. It located no matching earlier uniform theorem or
@@ -246,7 +270,22 @@ is assigned, and no matched proof-length measurement has been made.
 The [PSU₄(7) certificate](research/case_study/phase14_unitary_q7.md)
 adds one exact rank-four existence case, of type {4,24,4}, with all 16
 subset groups and 256 intersections checked. It does not establish a
-uniform family for q≡3 mod 4; the range q≥11 in that class remains
-unresolved here. It receives no novelty marker or length ratio. The
-existing **127/38≈3.34** measurement and nine-work principal-result
-count remain unchanged.
+uniform family for q≡3 mod 4; the range q≥11 in that class was still
+unresolved at the end of phase fourteen. It receives no novelty marker
+or length ratio. That phase left the **127/38≈3.34** measurement and
+nine-work principal-result count unchanged.
+
+Phase fifteen adds the second measured ratio above and an
+[all-class forest quotient theorem](research/case_study/phase15_graded_support.md).
+Its [source adapter](research/case_study/phase15_graded_support_scope.md)
+recovers both principal results of F013, bringing that coverage ledger
+to ten works. The earlier counterexamples to its auxiliary kernel formula
+remain valid. A replacement proof of an already stated theorem does not
+qualify as a new resolution; its proof length has not been measured here.
+
+The [second unitary construction](research/case_study/phase15_unitary_sieve.md)
+also completes the proposed maximum-rank-four theorem for every odd q≥5.
+The written proof, independent sieve and all exceptional parameter witnesses
+are reviewed separately from the earlier priority search. This is a stronger
+coverage claim, with current priority unverified; it receives neither a
+matched-length ratio nor an infinity marker.
