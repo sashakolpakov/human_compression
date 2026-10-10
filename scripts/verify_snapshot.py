@@ -55,6 +55,24 @@ def digest(path):
     return sha256(path.read_bytes()).hexdigest()
 
 
+def frozen_question_exports():
+    """Preserve admitted proof packages when refreshing the public snapshot."""
+    manifests = {
+        "phase217_export.json": "af256c4766c31865608b5c333cef200533b3f8280351e59295cbf3db292aaeb8",
+        "phase221_export.json": "7325a1698d540caf372ac8b4e0bf0f392e706c26ef59279dde7f027d6e797ab7",
+    }
+    checked = 0
+    for name, expected in manifests.items():
+        manifest = STUDY / name
+        assert digest(manifest) == expected, (name, "changed admission manifest")
+        for rel, record in json.loads(manifest.read_text())["files"].items():
+            path = ROOT / rel
+            assert path.stat().st_size == record["bytes"] and digest(path) == record["sha256"], (
+                rel, "changed frozen admission artifact; publish follow-up work separately")
+            checked += 1
+    return checked
+
+
 def own_rendered_pages():
     """Admit exactly the independently reviewed authored replacement rasters.
 
@@ -125,6 +143,7 @@ def main():
     parser.add_argument("--write-manifest", action="store_true",
                         help="Record reviewed publication bytes; does not certify new mathematics.")
     args = parser.parse_args()
+    frozen = frozen_question_exports()
     checked = lean_reports()
     check_links()
     rendered_pages = own_rendered_pages()
@@ -153,6 +172,7 @@ def main():
     manifest = json.loads(MANIFEST.read_text())
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
+    print(f"PASS: {frozen} frozen question-proof publication artifacts retain their admitted bytes.")
     print("Trust scope: 76 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
     print("External publications are referenced, not bundled.")
