@@ -28,8 +28,12 @@ declared main theorems of four papers from 2019–2026 using deletion maps,
 one square-lattice seed, graded support and bounded cyclic extensions. Its
 complete eight-family classification includes an independently replayed
 finite census. The [named manuscript map](MANUSCRIPT_MAP.md) records the
-seven distinct source manuscripts across these two replacements. Their
-integration into one shorter theory and their length measurements remain work.
+seven distinct source manuscripts across these two replacements. The four-paper
+bundle has a [reviewed conditional factor of 3.93×](research/case_study/phase38_compress_B_measurement_root_audit.md):
+32,476 source PDF-extracted tokens versus 8,267 in the complete rendered
+replacement, including its census appendix. Nonwhitespace characters give
+3.35×. The listed background proofs remain imported. The three-paper
+measurement and integration into one shorter seven-paper theory remain work.
 
 A [proved bridge between the two replacements](research/case_study/phase38_primitive_saturation.md)
 now identifies the unique primitive coarsening of each omission action in an

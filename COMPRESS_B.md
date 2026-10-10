@@ -41,7 +41,23 @@ an infinite two-group permits elements of infinite order; every finite-order
 element must have two-power order. The exact rank and parameter restrictions
 remain in the ledger. N009 and other excluded source material are not intake.
 
-**No four-paper length ratio is assigned yet.** A future denominator must
-charge the full manuscript and its required census executable/certificate
-under the stated accounting convention. These internal reviews do not
-establish external acceptance, priority or complete Lean formalization.
+The [reviewed full-body measurement](research/case_study/phase38_compress_B_measurement_root_audit.md)
+now gives a **conditional manuscript factor of 3.93×**:
+
+| Frozen PDF-extraction measure | Four source bodies | Complete replacement | Factor |
+|---|---:|---:|---:|
+| NFC whitespace tokens, including mathematics/code | 32,476 | 8,267 | 3.928390 |
+| Alphanumeric units | 34,338 | 8,183 | 4.196261 |
+| Nonwhitespace characters | 122,382 | 36,570 | 3.346514 |
+
+The full proof appendix and census code are included in the denominator.
+The 2,455-byte executable and two 396-byte census logs are recorded separately.
+Both sides exclude references, acknowledgments and document metadata under
+explicit bound spans. A fresh root render and extraction reproduce all counts;
+the [protocol and report](research/case_study/phase38_compress_B_measurement_report.md)
+record rendering checks and normalization sensitivities.
+
+This measures the declared main-result replacement conditional on its listed
+background; external proofs of the cyclic-core, catalogue-completeness and
+geometric extension inputs are not expanded. It does not measure every source
+assertion, all seven manuscripts, external acceptance or complete Lean proof.

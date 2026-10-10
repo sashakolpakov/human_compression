@@ -3925,6 +3925,17 @@ geometry remain explicit retained inputs. Corrections to source auxiliary
 claims are labelled, and all rank/parameter restrictions remain. No length
 ratio or complete Lean formalization follows from the written review.
 
+A separate [full-body measurement and fresh replay](research/case_study/phase38_compress_B_measurement_root_audit.md)
+now supply a conditional manuscript factor: the four complete source bodies
+have 32,476 NFC PDF-extracted whitespace tokens, and the complete rendered
+replacement has 8,267, including every proof and the census appendix.
+Their ratio is 3.928390; nonwhitespace characters give 3.346514. Exact
+metadata exclusions, rendering checks and normalization sensitivities are
+recorded. External proofs of the named background remain imported, and
+executable/certificate bytes are separate costs. This is a measured
+main-result replacement under that convention, not a foundational or
+whole-document equivalence claim.
+
 The [manuscript map](MANUSCRIPT_MAP.md) separates these two completed
 assemblies from the wider set of principal-result candidates. Seven named
 sources now feed two replacements; a single shorter replacement for all

@@ -1743,3 +1743,21 @@ exact polynomial reflection identities. The all-parameter spectral and
 infinitude arguments are [written and reviewed](research/case_study/phase38_L003_universal_triangle_root_audit.md).
 It does not recompute universal finiteness at parameters 2–5 or establish
 historical novelty.
+
+
+## Four-paper Compress_B manuscript factor
+
+```sh
+python3 research/case_study/phase38_compress_B_measurement.py \
+  --input-root /path/to/verified-inputs \
+  --output-dir /tmp/compress-b-measurement-new
+```
+
+Use Python with pypdf 6.13.0, Pandoc 3.10 and the recorded XeLaTeX toolchain.
+The input root needs the bound authored artifacts/helper and the four primary
+PDFs at their protocol paths. PDFs and full extracted source texts are not
+redistributed. The output directory must be new. Add `--rasterize` with
+Ghostscript to produce page images for a separate visual review. The runner
+checks full-body spans, the complete proof/census appendix, exact extraction,
+render diagnostics and every reported count. It does not reprove the
+mathematics, rerun the group census or establish bibliographic priority.

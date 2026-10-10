@@ -13,7 +13,8 @@ student or postdoc. Coauthorship alone does not establish those relationships.
 The [named manuscript map](MANUSCRIPT_MAP.md) records two reviewed
 assembled replacements with seven distinct source manuscripts. Their
 declared main-result contracts and retained inputs remain explicit;
-no three-paper, four-paper or combined manuscript factor is measured.
+Compress_B has a reviewed conditional full-body factor of 3.928390x
+under its frozen PDF-token convention; A and the combined set remain unmeasured.
 
 ## Read the stages separately
 

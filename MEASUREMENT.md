@@ -61,7 +61,13 @@ map and the remaining assembly work for other bundles.
 
 The [second assembled replacement](COMPRESS_B.md) now has a complete
 internal review of its four-paper main-result contract and an independent
-finite census replay. It has no whole-body length measurement yet. The
+finite census replay. Its [reviewed whole-body measurement](research/case_study/phase38_compress_B_measurement_root_audit.md)
+gives **32,476/8,267 = 3.928390×** under a frozen NFC PDF-extracted token
+convention, including the entire proof appendix and census code. The
+nonwhitespace-character sensitivity is **122,382/36,570 = 3.346514×**.
+The factor is conditional on the named retained background; certificate
+and executable bytes are recorded separately. A fresh root rendering and
+extraction replay matches all counts and exact source boundaries. The
 [named map](MANUSCRIPT_MAP.md) records seven sources across two replacements;
 adding those source lengths does not create a seven-paper factor without
 a specified combined denominator and coverage/dependency accounting.
