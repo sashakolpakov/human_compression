@@ -11,12 +11,13 @@ polytopes satisfying all the source's additional power relations at
 labels
 
 $$
-4,\qquad n,\ 2n,\ 4n,
+4,\ 8,\qquad n,\ 2n,\ 4n,\ 8n,
 \quad n\in\{3\}\cup\{2^e+1:e\ge2\}\cup\{2^e-1:e\ge3\}.
 $$
 
-This includes 3, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 18 and 20,
-among other labels. Labels 8, 11 and 13 remain outside this argument.
+This includes 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 17, 18, 20,
+24, 40, 56 and 72, among other labels. Labels 11, 13 and 16 remain
+outside this all-rank range.
 
 The source asks for a quotient with the required relations and exact
 type. The stronger assertion about the entire universal presentation
@@ -31,6 +32,8 @@ UT_(d+1)(F₂). At label four its order is 2^(d(d+1)/2).
 | [Quadratic symmetries and a singular vector](research/case_study/phase124_equal_label_char2_bridge.md) | The extra source relations hold on the whole ambient space; the published Brooksbank–Ferrara–Leemans theorem supplies IP for the stated q±1 labels |
 | [Parity fibers and interval forests](research/case_study/phase124_even_label_mix.md) | Exact parabolic descriptions preserve IP while doubling or quadrupling an allowed odd label; Dickson parity is a retained classical input |
 | [Universal label-four presentation](research/case_study/phase124_universal_four_adapter.md) | A bidirectional relator calculation identifies the source presentation with the retained Biss–Dasgupta presentation |
+| [Class-four normal forms and finite support](research/case_study/phase168_label_eight_reader.md) | A finite critical-pair certificate and an all-rank support-transfer proof give label eight, exact group and parabolic orders, full IP and genuine parity |
+| [The 8n consequence](research/case_study/phase168_label_eight_mix.md) | The new two-group factor and the earlier orientable odd-label construction discharge the actual parity-mix hypotheses |
 
 The [independent review](research/case_study/phase131_equal_label_root_review.md)
 checks all four proofs, their precise source interfaces and three fresh
@@ -39,6 +42,15 @@ retained mathematics and records the source-access limitations. These
 are internally reviewed written proofs; historical priority and current
 openness have not been established. Complete Lean verification remains
 unfinished.
+
+The [label-eight review](research/case_study/phase168_label_eight_review.md)
+checks the complete terminating presentation and its support-transfer proof,
+with a separately implemented collector. In rank d, the constructed group
+has order **2^(5d−7)** and class exactly four. Its normal forms describe
+every parabolic, so IP follows uniformly rather than from sampled ranks.
+Class at most three is impossible under the label-eight hypotheses.
+This constructs a finite image of the source presentation; it does not
+identify the universal group.
 
 Four scoped Lean components now verify specific parts of these written
 arguments. [Characteristic-two translations](research/case_study/formal/CharacteristicTwoTranslations.scope.md)
@@ -62,7 +74,19 @@ requires genuine input characters and both factor intersection properties.
 Its [independent review](research/case_study/phase157_parity_mix_review.md)
 and fresh public build cover these precise hypotheses and conclusions.
 Concrete finite-field applications and numerical order formulas remain
-outside this formal package; the allowed-label range above is unchanged.
+outside this formal package. The new label-eight factor expands the written
+application range above; the complete concrete mix is still not formalized.
+
+Three further Lean modules now prove the finite rewriting lemma used by
+the label-eight construction. All **43,680** descending triples in its
+63-letter rank-fourteen alphabet have joining rewrite paths, and all eight
+rank-three source words reduce to the empty word. Every intermediate word
+stays in the stated finite alphabet. The [formal review and fresh public
+build](research/case_study/phase171_label_eight_formal_review.md) cover the
+actual contextual rewrite relation. The 63 row proofs use ordinary kernel
+evaluation, with no native-evaluation axioms. Uniform termination, support
+transfer, confluence and the resulting all-rank group theorem remain
+written proofs.
 
 Finite checks include all parabolics of fifteen explicit groups or mixes,
 42 quadratic markings, 2,310 quadratic power words and 8,448 translation
@@ -88,3 +112,19 @@ This checks the frozen inputs and reruns all three bounded computations.
 It does not certify the general written proofs or establish priority.
 No completed source replacement or compression ratio is assigned to
 this partial conjecture result.
+
+For the new construction, the [separate export record](research/case_study/phase168_label_eight_export.json)
+preserves the frozen proof, its delimiter-only reader and fresh review
+reports. Run the author or independent finite collector with a new path:
+
+```sh
+python3 -B -O research/case_study/phase161_label_eight_collector.py --report /tmp/NEW-label-eight-author.json
+python3 -B -O research/case_study/phase168_label_eight_independent.py --report /tmp/NEW-label-eight-independent.json
+```
+
+To freshly compile all three formal sources with the pinned compiler and
+dependencies, allow several minutes and several GB of memory:
+
+```sh
+python3 -B research/case_study/formal/verify_lean.py LabelEightAlphabet.lean --packages PACKAGES --lean LEAN --timeout 900 --output-dir /tmp/NEW-label-eight-Lean
+```

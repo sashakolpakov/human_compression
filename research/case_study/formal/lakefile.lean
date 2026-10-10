@@ -72,4 +72,7 @@ lean_lib MathCompressionCertificates where
     `ParityOverlapGrid,
     `ParityRefinementCharacters,
     `ParityMixIntersections,
-    `ParityMixTheorem]
+    `ParityMixTheorem,
+    `LabelEightCriticalPairs,
+    `LabelEightFiniteCertificate,
+    `LabelEightAlphabet]

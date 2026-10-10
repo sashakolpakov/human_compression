@@ -3,7 +3,7 @@
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with reviewed six-source U+A, four-source Module B and three-source Module C
 manuscripts. There are
-sixty-three scoped Lean components. Source coverage, complete modular
+sixty-six scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
 An earlier snapshot admitted [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
@@ -402,3 +402,11 @@ all-page visual inspection and fresh public binding/portability checks
 support the admission. The unchanged finite census retains its earlier
 verified execution. A, B and C now cover thirteen distinct source
 contracts; corpus coverage, Lean counts and measured ratios are unchanged.
+
+The [phase-104 record](phase104_review.md) admits the uniform label-eight
+construction and its stated 8n consequence, separately from source
+compression. Independent written review and two distinct finite collectors
+support the full argument. Three new Lean modules verify the actual finite
+rewrite lemma, with all intermediate alphabets checked and a fresh public
+build. They bring the scoped module count to66; the all-rank group theorem
+remains a written proof and historical priority remains unverified.

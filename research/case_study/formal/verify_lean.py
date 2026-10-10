@@ -63,6 +63,9 @@ CERTIFICATES = (
     "ParityRefinementCharacters",
     "ParityMixIntersections",
     "ParityMixTheorem",
+    "LabelEightCriticalPairs",
+    "LabelEightFiniteCertificate",
+    "LabelEightAlphabet",
 )
 
 

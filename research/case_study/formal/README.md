@@ -4,6 +4,17 @@ These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).
 
+[LabelEightAlphabet.lean](LabelEightAlphabet.lean) completes a three-module
+proof of the finite rewrite lemma behind the uniform label-eight construction.
+All 43,680 descending triples on its rank-fourteen alphabet have joining
+rewrite paths; all eight local source words reduce to empty. Every
+intermediate word remains in the finite alphabet. The [readable scope](../phase171_label_eight_scope_reader.md)
+and [independent review/fresh build](../phase171_label_eight_formal_review.md)
+state the exact proof and trust boundary. The kernel evaluates all cases
+using ordinary `decide`. The remaining all-rank termination, locality,
+confluence and group construction are written proofs, not consequences
+claimed formalized by these three files.
+
 Four scoped components support the separately named equal-label question
 track. [CharacteristicTwoTranslations](CharacteristicTwoTranslations.scope.md)
 proves the full ambient quadratic power relation for every integer exponent.
@@ -127,7 +138,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are sixty-three certificates. To compile them on another machine, install Git,
+There are sixty-six certificates. To compile them on another machine, install Git,
 Python 3.10 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -144,7 +155,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the sixty-three modules, but does not produce the runner's JSON reports.
+way to compile the sixty-six modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -175,7 +186,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all sixty-three source hashes match the historical successful reports
+This checks that all sixty-six source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. Sixty-two saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also

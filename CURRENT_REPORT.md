@@ -85,11 +85,15 @@ count of conjectures confirmed still open before our work.
 The latest independently reviewed entry is
 [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md).
 It gives every-rank constructions for specified infinite families of
-labels and identifies the universal presentations at labels three and
-four. The full conjecture, historical priority and complete Lean proof
+labels, now including label eight and the stated 8n families, and
+identifies the universal presentations at labels three and four.
+The label-eight group has order 2^(5d−7) and class exactly four. Its
+finite critical-pair and source-word lemma is verified in Lean, including
+the finite alphabet throughout every rewrite. The all-rank transfer and
+group proof remain written. The full conjecture, historical priority and complete Lean proof
 remain unresolved. It adds no known-source compression credit.
 
-Sixty-three existing Lean components retain their individual statements,
+Sixty-six existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.

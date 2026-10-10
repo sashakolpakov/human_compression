@@ -1,5 +1,20 @@
 # Reproducing the checks
 
+The new label-eight construction has a separate ordinary-kernel certificate
+for its complete finite rewrite lemma. With the pinned compiler/packages
+and a new output directory:
+
+```sh
+python3 -B research/case_study/formal/verify_lean.py LabelEightAlphabet.lean --packages PACKAGES --lean LEAN --timeout 900 --output-dir /tmp/NEW-label-eight-Lean
+```
+
+It freshly compiles three local modules. The observed run took about
+90 seconds and the author's measured peak child memory was 4.76 GiB.
+The [formal review](research/case_study/phase171_label_eight_formal_review.md)
+separates its actual finite-alphabet joining paths from the remaining
+written all-rank proof. The dedicated hash-pinned wrapper and twelve
+author controls are also distributed in the phase167 package.
+
 The [equal-label question result](EQUAL_LABEL_POLYTOPES.md) has three
 standard-library finite checks and a wrapper that verifies their frozen
 inputs and exact outputs:
@@ -198,7 +213,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the sixty-three saved Lean reports
+checks local documentation links, and checks the sixty-six saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -1040,7 +1055,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all sixty-three certificates and their unformalized boundaries. With Git
+describes all sixty-six certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
