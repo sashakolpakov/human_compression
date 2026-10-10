@@ -69,11 +69,11 @@ UPDATES = {
         "compression_phase2.md;formal/CoordinateKernels.lean",
         "This existence theorem does not classify every group of the given order. Lean covers abstract kernel transport only."),
     "L034": (
-        "component_rederived", "Theorem 3.2; specified cases of Conjecture 3.3",
-        "Grid/dihedral construction identifies the presentation; cyclic triple-product inequalities give lower-bound classes, now including all metacyclic derived subgroups, and a finite bound through hypertope order2^12.",
-        "Hypertope correspondence with geometric hypotheses explicitly verified; Bounded group catalogue for the separate finite certificate",
-        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md;phase7_cyclic_tpp.md;phase7_cyclic_tpp_certificate.json;phase7_cyclic_tpp_independent_audit.md",
-        "Full Conjecture 3.3 remains unresolved. The source's alternate dihedral-by-dihedral quotient display is not separately verified."),
+        "component_rederived", "Theorem 3.2; Conjecture 3.3 when at least one distinguished pair product has order at most eight; earlier specified classes",
+        "Grid/dihedral construction identifies the presentation. A marked isobicyclic normal form excludes the extremal cyclic-core case, proving the cyclic-TPP inequality whenever one factor has order at most four and the hypertope bound whenever one pair order is at most eight. Earlier metacyclic and finite-order results remain separate.",
+        "Hypertope-to-cyclic-TPP reduction with the geometric hypotheses retained; Published classification of marked isobicyclic 2-groups, including its factor-swapping marking; Bounded group catalogue only for the separate finite-order certificate",
+        "compression_phase2.md;phase3_order_bound.md;phase3_cyclic_tpp_exploration.md;phase7_cyclic_tpp.md;phase7_cyclic_tpp_certificate.json;phase10_cyclic_tpp.md;phase10_cyclic_tpp_certificate.json;phase10_cyclic_tpp_independent_audit.md;phase10_cyclic_tpp_independent_audit.json",
+        "Unrestricted Conjecture 3.3 and cyclic TPP remain unresolved; any remaining hypertope counterexample has all three pair orders at least sixteen. The marked isobicyclic classification is retained, not rederived. The source's alternate dihedral-by-dihedral quotient display is not separately verified; external review and priority remain."),
     "L035": (
         "principal_results_rederived", "Theorems 1.2 and 1.3",
         "Grid existence construction, bounded cyclic-core quotient and eight binary extension models prove completeness.",
@@ -116,12 +116,24 @@ UPDATES = {
         "Automorphisms of symmetric/alternating groups including degree-six exceptions",
         "commuting_pairs_compression.md;elementary_action_theorem.md;commuting_pairs_formula_check.json;phase9_L066_matched_proof.md;phase9_L066_measurement.md;phase9_L066_measurement_protocol.json",
         "External review; no priority claim for classical orbit, Burnside or Möbius ingredients. The first matched-proof ratio measures only Theorems 1.1/1.2 outside degree six, conditional on the declared common background; it is not a whole-paper ratio."),
+    "L074": (
+        "principal_results_rederived", "Theorems 1 and 2: distinct commuting-involution pair count and complete Suzuki polyhedron count, with nondegeneracy",
+        "Unique normalized triples (z(1),wz(c)w,z(b)) turn inner-conjugacy classes into two field coordinates. Their joint field is exactly the generated Suzuki subgroup. Frobenius and duality orbits give both counts, with an all-parameter derivation of the published nested lambda/psi formula.",
+        "Classical Suzuki maximal-subgroup types, root/torus centralizers, ovoid action, subfield embeddings, automorphism group and simplicity; String C-group/regular-polytope correspondence; Exact finite-field and GAP algorithms only for the separate finite diagnostics",
+        "phase10_suzuki_marked_fields.md;phase10_suzuki_marked_intake.json;phase10_suzuki_marked_fields_independent_audit.md;phase10_suzuki_marked_fields_independent_audit.json;phase10_suzuki_marked_fields_check.json;phase10_suzuki_marked_groups_check.json;phase10_suzuki_marked_fields_independent_run.json;phase10_suzuki_marked_groups_independent_run.json;formal/InvolutionCentralizers.lean;formal/InvolutionCentralizers.scope.md",
+        "Both principal counts are recovered for every stated odd field exponent. Classical Suzuki structure remains an input. No whole-paper proof-length ratio, end-to-end formalization or novelty claim; external review remains."),
+    "L085": (
+        "component_rederived", "Full principal rank/existence theorem as restated in L074, Theorem 3",
+        "Centralizers force a nontrivial central string generator in every rank at least four. A full-field normalized triple gives rank-three existence, and the odd outer quotient excludes involution generation in every proper almost-simple extension.",
+        "Classical Suzuki involution and odd-element centralizers, maximal-subgroup types, ovoid action, compatible subfield embeddings and simplicity; Aut(Sz(2^N))/Sz(2^N) has odd order N; String C-group/regular-polytope correspondence",
+        "phase10_suzuki_marked_fields.md;phase10_suzuki_marked_intake.json;phase10_suzuki_marked_fields_independent_audit.md;phase10_suzuki_marked_fields_independent_audit.json;phase10_suzuki_marked_groups_check.json;formal/InvolutionCentralizers.lean;formal/InvolutionCentralizers.scope.md",
+        "The exact principal theorem is read in the primary L074 restatement. The original L085 full body remains unavailable, so its auxiliary statements and original proof are not compared and no whole-paper reduction is claimed. External review remains."),
     "L120": (
         "partial_progress", "Conjecture 2, section 5.7: proposed odd-PSL4 maximum four; Problem 7: odd linear intermediate groups have rank at most four",
-        "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The same upper-bound argument also applies to PSU4(q)<=G<=PGU4(q).",
-        "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5",
-        "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md",
-        "Problem 7 remains incomplete: field and graph extensions and general index-two existence are unresolved here. PSU4 rank-four existence for odd q>=5 is undecided. Other survey targets are not collectively settled. Conjecture 2 is the same proposed resolution cross-referenced under L048, not a second independent solution; priority and external review remain."),
+        "The dimension-four form alternative combines with a monomial torus obstruction, transvection equations and the self-centralizing simple socle. The upper bound also applies to PSU4(q)<=G<=PGU4(q). Four explicit GF(25) unitary matrices give a rank-four PSU4(5) example of type {4,26,10}; containment plus order identifies the group, and all 256 subset intersections are checked.",
+        "Written phase-eight structural theorem; Simplicity of the natural socles; Published rank-four existence for PSL4 and rank-three existence for odd PSU4(q), q>=5; Classical PSU4(5) order formula and GAP exact finite-field, matrix, orbit and subgroup algorithms for the finite matrix certificate",
+        "phase9_linear_unitary.md;phase9_linear_unitary_intake.json;phase9_linear_unitary_audit.md;phase9_linear_unitary_status.md;phase8_psl4_rank6.md;formal/TransvectionForms.lean;formal/TransvectionForms.scope.md;phase10_unitary_matrix_certificate.md;phase10_unitary_matrix_intake.json;phase10_unitary_matrix_check.json;phase10_unitary_matrix_independent_audit.md;phase10_unitary_matrix_independent_run.json",
+        "Problem 7 remains incomplete: field and graph extensions and general index-two existence are unresolved here. PSU4(5) now has maximum rank four; rank-four existence for general odd q>=5 with q!=5 remains undecided. Other survey targets are not collectively settled. Conjecture 2 is cross-referenced under L048, not counted as a second solution; priority and external review remain."),
     "L092": (
         "proposed_new_result", "Conjecture 1, Section 4.6, p. 569",
         "An SU(2,q) norm-shell torsor and generating root-group moves connect the difficult residue.",
@@ -233,6 +245,8 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "L074": ("full_text_read", "All twelve pages of the primary author manuscript read, dated 27 September 2011; journal publication is 2010. Both principal counting theorems, their full proofs, the subgroup table and the L085 restatement are checked.", "phase10_suzuki_marked_fields.md"),
+    "L085": ("abstract_read", "Original author abstract read; original full body remains unavailable. The complete principal rank/existence theorem is read through its primary restatement in L074, Theorem 3, manuscript p.5; this does not mean the original L085 sections were read.", "phase10_suzuki_marked_fields.md"),
     "L091": ("selected_sections_read", "Pages 231–233 visually read, including Table 1 and local-two-transitivity/truncation conventions; no HS census reproduction.", "phase6_sporadic_source_audit.md"),
     "L110": ("selected_sections_read", "Rank-three R1–R13, higher-rank construction context and p.11 flag-transitivity uncertainty checked; exact hypotheses compared with L114.", "phase5_suzuki_intake.json"),
     "L114": ("selected_sections_read", "Theorems 5.3–5.5 and their case analyses read; printed pp.58–60 visually checked; Lemma3.11 and final p.61 realization qualification checked.", "phase5_suzuki_intake.json"),
@@ -357,6 +371,33 @@ def record(row, baseline, overlay, later_readings, older_access):
                               "relation_to_source": "proposed_consequence" if r["proposed_new_result"]
                               else "specified_existing_target_or_encoding"}]
         r["evidence"] = r["evidence"][:1] + [evidence(x, ref) for x in paths.split(";")]
+    if identifier == "L034":
+        # Existing construction and a proposed conjecture subcase are separate axes.
+        r["proposed_new_result"] = True
+        r["exact_target"] = [
+            {"reference": "Theorem 3.2", "scope": "The specified grid/dihedral construction is rederived; its alternate quotient display remains unverified.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+            {"reference": "Conjecture 3.3 when at least one distinguished pair product has order at most eight; earlier specified classes",
+             "scope": "Uniform small-factor cyclic-TPP proof using the retained marked isobicyclic classification, with the geometry-to-TPP reduction explicit. No unrestricted resolution.",
+             "relation_to_source": "proposed_consequence"},
+        ]
+    if identifier == "L074":
+        r["exact_target"] = [
+            {"reference": "Theorem 1", "scope": "Exact isomorphism-class count of unordered pairs of distinct commuting involutions for every stated odd field exponent.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+            {"reference": "Theorem 2", "scope": "Complete Suzuki polyhedron count up to isomorphism and duality, including nondegeneracy; the compact formula is proved equal to the published nested formula in all parameters.",
+             "relation_to_source": "specified_existing_target_or_encoding"},
+        ]
+    if identifier == "L085":
+        r["primary_urls"].append("https://math.uni.lu/kiefer/Publications/szpoly3%20r%C3%A9vis%C3%A9.pdf")
+        r["primary_urls"] = list(dict.fromkeys(r["primary_urls"]))
+    if identifier == "L120":
+        r["exact_target"][0]["scope"] = "Dimension-four bilinear-form obstructions give the stated odd linear and unitary intermediate-group upper bounds, with the phase-eight PSL4 argument retained. Field and graph extensions are not covered."
+        r["exact_target"].append({
+            "reference": "Companion unitary application: maximum rank four for PSU4(5)",
+            "scope": "Explicit determinant-one GF(25) matrices preserve a Hermitian form. Their projective plane-action order identifies PSU4(5), and all 256 subset intersections establish type {4,26,10}. The maximum uses the separate phase-nine upper bound; this is not a separate named survey conjecture or a uniform existence theorem.",
+            "relation_to_source": "proposed_finite_companion_application",
+        })
     if identifier == "L114" and identifier not in UPDATES:
         r["exact_target"] = [{"reference": "Theorems 5.3-5.5 and final paragraph p. 61",
                               "scope": "Realization of the listed rank-three Suzuki RWPRI sublattices beyond Sz(8).",
@@ -458,8 +499,14 @@ def render(registry):
             continue
         ref = "; ".join(t["reference"] for t in r["exact_target"])
         proof = next(e["file"] for e in r["evidence"] if e["file"].endswith(".md"))
+        companion = {
+            "L034": ("Uniform pair-order-at-most-eight proof", "phase10_cyclic_tpp.md"),
+            "L120": ("PSU4(5) matrix certificate", "phase10_unitary_matrix_certificate.md"),
+        }.get(r["id"])
+        extra_link = (f" [{companion[0]}](research/case_study/{companion[1]})."
+                      if companion else "")
         out.append(f"| {r['id']} | {linked_title(r)} | {escaped(ref)} | "
-                   f"[{stage(r)}]({proof}). {escaped(' '.join(r['remaining_work']))} |")
+                   f"[{stage(r)}]({proof}).{extra_link} {escaped(' '.join(r['remaining_work']))} |")
     out += [
         "", "## The 1996–2006 track", "",
         "The older entries now include these explicit reductions and proof targets:", "",
@@ -480,6 +527,10 @@ def render(registry):
         "- **L109 (2000):** cyclic/dihedral rank-two rigidity and CRT give an all-rank",
         "  arithmetic classification. Its full all-rank theorem is matched through L110; the original",
         "  full text is unavailable, so a whole-paper comparison remains open.",
+        "- **L085 (2006):** involution centralizers exclude every string rank above three,",
+        "  marked field coordinates give rank-three existence, and the odd outer quotient",
+        "  excludes proper almost-simple extensions. The exact principal theorem is matched",
+        "  through L074's primary restatement; the original full body remains unavailable.",
         "- **N001–N003 and L089 (1998–2005):** one tree-cut derivation gives the four",
         "  1998 property tests, the tree correspondence, the known transposition-tree",
         "  geometry branch, and the advertised 2005 path/shadow-IP characterization.",

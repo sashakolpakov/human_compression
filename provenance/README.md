@@ -76,6 +76,14 @@ Its fifteenth Lean certificate checks actual transvection invariance of a
 matrix. The frozen written application predates that certificate and retains
 its original hashes; the separate scope note records the later formalization.
 
+The [phase-ten review record](phase10_review.md) adds the two-coordinate
+Suzuki derivation, the uniform small-factor bound and the explicit PSU4(5)
+matrix certificate. Its sixteenth Lean module proves the abstract
+involution-centralizer rank obstruction. New fresh executions are recorded
+separately from historical reports; the source classifications retained by
+each argument remain explicit. [Export provenance](phase10_original_files.json)
+records the original hashes and the one documentation-link adjustment.
+
 [Measurement](../MEASUREMENT.md) records a conditional 3.34× ratio for two
 exact counting formulas and the separate status of new resolutions. No
 corpus ratio or infinity marker is assigned by this publication snapshot.

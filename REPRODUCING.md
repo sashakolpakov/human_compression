@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the fourteen saved Lean reports
+checks local documentation links, and checks the sixteen saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -275,10 +275,55 @@ proper intermediate groups in one explicit mixed-parabolic example. The
 uniform maximality obstruction and the sharp all-rank subfield criterion
 are written proofs, with independent mathematical and primary-source review.
 
+The marked-field Suzuki derivation has two complementary checks:
+
+```sh
+python3 research/case_study/phase10_suzuki_marked_fields_check.py --output /tmp/suzuki-fields.json
+gap -q -T research/case_study/phase10_suzuki_marked_groups_check.g
+```
+
+The Python checker compares both counting formulas in 49 odd degrees and
+exhausts the normalized coordinate pairs over fields of sizes 8, 32 and 512.
+The GAP checker uses actual Suzuki matrices at q=8: all 42 normalized triples
+generate the group, all 2,688 ordered subgroup intersections hold, and all
+42 duality identities hold by diagonal conjugation. The all-parameter
+generation and counting arguments remain written proofs with explicit
+classical group-theoretic inputs.
+
+The new small-factor cyclic-TPP check uses only the standard library:
+
+```sh
+python3 research/case_study/phase10_cyclic_tpp_check.py --output /tmp/cyclic-tpp.json
+```
+
+Its 48 normal-form models have ambient orders through 8,192. It checks 48,336
+elements in the specified Frattini classes, 386,688 swap equations and
+1,966,080 associativity equations. Full associativity is exhausted only for
+n≤8; larger parameters use generator-local equations. This is neither a
+census of all groups through order 8,192 nor a proof of the retained marked
+isobicyclic classification. The written argument proves the small-factor
+case uniformly; unrestricted cyclic TPP remains unresolved.
+
+For the finite unitary example, run from the artifact directory:
+
+```sh
+cd research/case_study
+gap -q -T phase10_unitary_matrix_check.g
+```
+
+This checker reads only the four explicit matrices in the accompanying
+witness file. It verifies the field convention, determinant-one Hermitian
+isometries, isotropic-plane orbit, exact projective order, string relations,
+type {4,26,10} and all 256 subgroup intersections. Identification uses
+unitary containment and the standard order formula. No ATLAS file or
+simple-group recognition is required. The older permutation certificate
+and its independently implemented bitmask check are also retained, with
+their different identification dependencies recorded.
+
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all fifteen certificates and their unformalized boundaries. With Git
+describes all sixteen certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -302,13 +347,15 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The fourteen certificates cover intersection transport, field and matrix
+The sixteen certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
 theorems from factorization or arbitrary-family coordinate coverage.
-The latest module also checks an abstract additive-commutator obstruction
-to an intertwiner, with no axioms reported for its two theorems.
+Further modules check an abstract additive-commutator obstruction to an
+intertwiner, vanishing of transvection-invariant forms, and the rank-three
+obstruction from involution centralizers. The last uses actual subgroup
+closure for generation; it does not formalize Suzuki structure or existence.
 They formalize the stated components, not the complete geometric
 instantiations, all source-group classifications, or every written theorem.
 The saved successful runs report no `sorryAx` dependency.

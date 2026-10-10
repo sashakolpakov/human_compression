@@ -147,6 +147,23 @@ order conjecture. Its separate finite certificate increases the verified
 hypertope range to order \(2^{12}\). Neither result settles the unrestricted
 conjecture, so neither receives the new-resolution marker.
 
+The [small-factor extension](research/case_study/phase10_cyclic_tpp.md) now
+proves the same order conjecture whenever a distinguished pair has order at
+most eight, without an ambient-order cutoff. It retains the classification
+of marked isobicyclic 2-groups and still leaves the unrestricted conjecture
+open. The [PSU₄(5) matrix certificate](research/case_study/phase10_unitary_matrix_certificate.md)
+settles one finite rank-four existence case, with publication priority
+unverified. Neither is assigned an infinity marker.
+
+The [Suzuki marked-field reduction](research/case_study/phase10_suzuki_marked_fields.md)
+recovers both principal counting theorems of L074 and the older L085
+rank/existence theorem as exactly restated there. This enlarges theorem
+coverage but has no matched-length measurement yet. The first 3.34× ratio
+is unchanged. The [cross-paper tree scope audit](research/case_study/phase10_measurement_scope.md)
+identifies exact 1998/2002 targets and shared dependencies; missing complete
+1998 source spans prevent a cross-paper numerator. No page-count proxy or
+extrapolation from the existing ratio is used.
+
 The proposed 1999 realization decisions retain classical Suzuki structure.
 A subsequent [exact counterexample](research/case_study/phase6_suzuki_realization.md)
 shows that the printed candidate list is not exhaustive; the former assumption

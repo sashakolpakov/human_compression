@@ -152,8 +152,10 @@ The [linear/unitary corollary](phase9_linear_unitary.md) verifies the form
 theorem's hypotheses for every odd-field group between PSL4 and PGL4, and
 between PSU4 and PGU4. Both intervals have rank at most four; index-four
 extensions have a cyclic quotient obstruction to involution generation.
-The unitary rank-four existence question and field/graph extensions remain
-unresolved here. An additional Lean certificate checks the actual
+The [explicit unitary matrix certificate](phase10_unitary_matrix_certificate.md)
+now gives maximum rank four for PSU4(5), with all 256 subgroup intersections
+checked. General unitary rank-four existence and field/graph extensions remain
+incomplete here. An additional Lean certificate checks the actual
 transvection-invariance matrix obstruction, with its projective-multiplier
 reduction and full group theorem outside the formal scope.
 
@@ -193,8 +195,8 @@ matrix membership and classical subgroup maximality are separate inputs.
 The [living paper map](../../PAPER_MAP.md) includes the later source intake
 and supersedes this overview's earlier coverage totals. The
 [measurement rules](../../MEASUREMENT.md) keep finite proof-length ratios
-separate from proposed new results; no numerical ratio or infinity marker
-has been assigned.
+separate from proposed new results. The measured ratio above concerns only
+its two-theorem subset; no corpus ratio or infinity marker is assigned.
 
 The [next Suzuki extension](phase7_suzuki_descent.md) closes the rank-four
 geometry gap and gives an unconditional family in every rank. Compatible
@@ -222,9 +224,27 @@ uniform structural class for the hypertope order bound, for all primes and
 all orders. Its separate order-512 certificate extends the finite hypertope
 range through order2^12. The unrestricted conjecture remains unresolved.
 
+The [small-factor theorem](phase10_cyclic_tpp.md) proves the inequality for
+every cyclic-TPP triple in a finite 2-group with a factor of order at most
+four. Equality in an elementary cyclic-subgroup bound forces an involutory
+swap of a marked isobicyclic pair; the retained classification then gives a
+central-involution obstruction. Consequently the hypertope order conjecture
+holds whenever a distinguished pair product has order at most eight, at any
+ambient order. Larger-factor cases remain unresolved.
+
+The [two-coordinate Suzuki reduction](phase10_suzuki_marked_fields.md)
+recovers the full rank/existence theorem restated from L085 (2006) and both
+principal counting theorems of L074 (2010). Generation is exactly the joint
+field-of-definition condition; Frobenius and duality give one Möbius sum.
+Classical subgroup and centralizer facts remain inputs. The full L074
+manuscript has been read; the original L085 body remains unavailable. Lean
+certifies the abstract rank obstruction, and exact finite checks verify
+field orbits and actual generating triples. No length ratio is assigned to
+this reduction yet.
+
 ## Evidence and limits
 
-Fifteen [Lean modules](formal/README.md) compile with the pinned toolchain and
+Sixteen [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire

@@ -146,3 +146,13 @@ The [machine-readable register](source_assets.json) records the archived bytes u
 | `symplectic_ranks2020.pdf` | [source](https://arxiv.org/pdf/1912.05512) | `272f766af4180e3466a35d6deaeec708bc57e464a274a06197ba0e652000cea6` |
 | `weil_bound_primary2024.pdf` | [source](https://link.springer.com/content/pdf/10.1007/s11139-024-00888-5.pdf) | `9a864806aba2fab588a65ff20da6ba0ebdf8d68ebd9319695204dcecbac7b0bd` |
 | `wenger_egr2023.pdf` | [source](https://arxiv.org/pdf/2311.04401v1) | `c1b192d65e7ccc5ef020b01333cde475bdd2b4a780891b53e2181fe4a7341e43` |
+
+Phase ten retains the marked isobicyclic classification from
+[Du–Jones–Kwak–Nedela–Škoviera, arXiv:1112.2376v1](https://arxiv.org/pdf/1112.2376).
+The private PDF has SHA-256 `6ad3216b0cbc07088fd652787bb566917cf0c1aabbea0e1e2399c9a71ab47ac7`;
+its marked forms and exact reading scope are recorded in
+[the cyclic-TPP certificate](../phase10_cyclic_tpp_certificate.json).
+The PDF and extraction are not distributed. The Suzuki count uses the
+already recorded L074 author manuscript (2011 manuscript date, 2010 journal
+year); all twelve pages were read. Original L085 full-text access remains
+unavailable, and its theorem is matched through the primary L074 restatement.

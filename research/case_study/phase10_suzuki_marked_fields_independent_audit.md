@@ -1,0 +1,137 @@
+# Independent audit of the Suzuki marked-field derivation
+
+10 October 2026. **PASS for the written all-parameter argument.** This review
+covers the two principal formulas of L074 and the exact L085 rank/existence
+theorem restated in L074, Theorem 3. It does not claim comparison with the
+unavailable original body of L085, new historical priority, or a measured
+compression ratio. Exact reviewed hashes and both fresh runs are bound in the accompanying
+[review metadata](phase10_suzuki_marked_fields_independent_audit.json).
+
+The reviewed argument is [phase10_suzuki_marked_fields.md](phase10_suzuki_marked_fields.md).
+I independently read the primary cached L074 manuscript's theorem statements,
+its subgroup table and C-group definitions, and the complete counting argument
+on printed pages 6–11. The definitions and formulas agree with the proposed
+matched targets. In particular Theorem 1 concerns distinct commuting
+involutions, consistently with its proof excluding the parameter 1. The
+source's Theorem 2 counts up to both isomorphism and duality.
+
+## Normalization and subfield position
+
+Fixing the first involution as z(1) leaves exactly its root group U_q as
+inner stabilizer. This stabilizer fixes the entire central involution set,
+so the second endpoint parameter b is unchanged. Every involution outside
+this root group fixes a different ovoid point; the regular action of U_q
+on those points gives a unique conjugator putting that point at zero.
+The resulting third root parameter c is unique. Thus the normalization
+really gives a bijection on inner-conjugacy classes, not merely a supply
+of representatives with a residual unidentified equivalence.
+
+For the subfield-position lemma, the two fixed points belong to the embedded
+subfield ovoid: an involution in the subfield group has its own unique fixed
+point there, and its ambient fixed point is unique as well. Internal double
+transitivity therefore permits a change of conjugator fixing the ordered
+pair (infinity,zero). The adjusted conjugator belongs to H_q. Its central
+scaling parameter t satisfies 1 in t F_(2^d), hence t is in F_(2^d)^*.
+The torus's central-coordinate power is a bijection on F_q^* and restricts
+to a bijection on the subfield multiplicative group; its inverse image of
+that group is precisely that same group. This justifies the diagonal-
+parameter step, rather than assuming a coordinate implies membership
+without checking its power map. The conjugator is consequently in H_(2^d)
+and the subfield copy is canonical.
+
+The standard subfield action remains valid for d=1 if such a maximal subgroup
+arises: Sz(2)=5:4 is doubly transitive on its five-point ovoid. The generated
+field has d>1 because b is outside F_2, so simplicity is used only in the
+proper range. Every possible maximal overgroup in that generated field is
+excluded: a point stabilizer cannot contain involutions with two different
+fixed points; a torus normalizer has cyclic Sylow2 subgroups and cannot
+contain the endpoint four-group; a proper subfield conjugate is canonical
+and contradicts the definition of the joint field. This proves equality
+with the generated subfield group, not only containment in it.
+
+## String C-group property and rank
+
+The even-rotation argument needs both cases, and the current proof supplies
+them. If the 2-part of an adjacent product's order is at least four, its
+dihedral Sylow2 subgroup has noncommuting involutions, impossible in a
+Suzuki root group. If the 2-part is exactly two, the dihedral central
+involution puts both generators into its root-group centralizer, again
+forcing them to commute. Merely citing the absence of noncommuting
+involutions in a Sylow2 subgroup would not cover this second case.
+
+For the intersection of the two adjacent dihedral groups, any extra element
+beyond their shared reflection produces a nontrivial common odd rotation.
+Both cyclic rotation groups then lie in the same torus, by the retained
+odd-element centralizer theorem. The common reflection normalizes that
+torus, and hence so do all three generators, contradicting generation of
+the subfield Suzuki group. The endpoint four-group meets either adjacent
+dihedral group in exactly its indicated involution by order divisibility.
+These facts cover all subset intersections in rank three. Pairwise
+coprimality of torus orders alone would not be a sufficient substitute;
+the retained centralizer rigidity is explicit in the proof.
+
+For rank at least four, every generator with index at least two is an
+involution in C_G(r_0), hence in the center of one root group. Therefore
+r_3 commutes with all those generators, and the string relations also
+make it commute with r_0 and r_1. This excludes every higher rank, not
+only rank four. Simplicity excludes ranks one and two. Taking b of full
+field degree and c=1 gives existence in rank three. Every involution of
+an almost-simple extension maps trivially to its odd-order outer quotient,
+so a proper extension cannot even be generated by involutions.
+
+## Counting and exact formula agreement
+
+Field automorphisms square both normalized coordinates. Reversing the
+endpoints followed by torus normalization gives exactly
+D(b,c)=(b^(-1),bc), which commutes with Frobenius. If a Frobenius power sends
+b to b^(-1), its square fixes b. The orbit length of b is odd, so that
+power already fixes b, forcing b=1. Thus reversal is free on Frobenius
+orbits; the factor one-half is valid, and no self-dual exception is lost.
+
+For pairs, the exact-degree b-orbits are counted by the stated lambda(d).
+For triples, the number of parameters defined over F_(2^d) is
+(2^d-2)(2^d-1). Joint-degree Möbius inversion followed by division by 2N
+therefore gives the displayed short formula for groups of full field
+degree N. There are no artificial contributions from degree one.
+
+The equivalence to the published nested formula is proved in every degree.
+Stratifying first by the degree n of b leaves the stabilizer generated by
+F^n; its fixed-point counts on nonzero c are 2^(nm)-1, giving precisely
+the source's psi(n,N). Stratifying those same orbits by their joint field
+degree d instead gives sum_(d|N) E(d)/d. A second divisor inversion
+recovers E(N)/(2N). This verifies the source's outer Möbius inversion,
+the denominators n and m, and the duality factor simultaneously. It is
+not an inference from agreement at a few field sizes.
+
+## Retained inputs and limits
+
+The proof retains the classical Suzuki centralizers, root groups, torus
+normalizers, complete maximal-subgroup types, subfield embeddings, ovoid
+action, automorphism group, simplicity, and string-C-group/polytope
+correspondence. Those are substantial inputs; the normalization and field
+generation arguments do not reclassify them. No field-size computation
+proves the universal statement: that work is done by the arguments above.
+The complete source formula is recovered, whereas an entire-paper proof
+comparison for L085 is unavailable. This is internal review, not external
+peer review.
+
+## Fresh computational checks
+
+I read both original checkers and reran them without changing their inputs.
+The Python run passed all49 odd degrees3–99 using exact integer/rational
+arithmetic, and exhausted the marked field pairs for q=8,32,512. Its report
+matches the author report exactly apart from the execution timestamp. The
+polynomial-quotient field construction is checked by testing that every
+nonzero residue satisfies a^(q-1)=1; the finite quotient is therefore a field,
+rather than relying on an unchecked irreducible-polynomial label.
+
+The GAP run independently passed all42 normalized triples over GF(8), full
+generation of the order29120 matrix group, all2688 ordered subset subgroup
+intersections, and all42 explicit diagonal duality-conjugation identities.
+The parsed report equals the author's saved report. This confirms the actual
+matrix convention for the duality formula at q=8. It does not extrapolate
+generation or intersections to arbitrary q; those implications are the
+written arguments reviewed above. GAP's standard Suzuki matrix realization
+and exact subgroup algorithms remain dependencies. Both reruns share the
+original software engines rather than constituting new implementations of
+finite-group algorithms.
