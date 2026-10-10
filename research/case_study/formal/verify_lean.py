@@ -47,6 +47,10 @@ CERTIFICATES = (
     "SupportedKernelGeneration",
     "SupportedKernelConsequences",
     "SupportedKernelHelly",
+    "LabelFourRelations",
+    "CharacteristicTwoTranslations",
+    "IntervalOverlapCancellation",
+    "FinIntervalOverlapCancellation",
 )
 
 

@@ -56,4 +56,8 @@ lean_lib MathCompressionCertificates where
     `CoprimePullback,
     `SupportedKernelGeneration,
     `SupportedKernelConsequences,
-    `SupportedKernelHelly]
+    `SupportedKernelHelly,
+    `LabelFourRelations,
+    `CharacteristicTwoTranslations,
+    `IntervalOverlapCancellation,
+    `FinIntervalOverlapCancellation]

@@ -60,12 +60,21 @@ The declared main results follow from U+B with the documented source
 corrections and retained inputs. The ledger binds 30 source rows to 22 proof
 nodes. Matched length measurement and full Lean formalization remain pending.
 
-Later modules will group related papers around the actual reusable
-machinery they need. Their intake will be frozen before a compression
-claim. The earlier mixed compilation does not dictate these groupings.
-Each module has a descriptive mathematical title; its letter is only an
-identifier. Titles for C and later modules will follow their mathematical
-scope rather than anticipate an unproved grouping.
+## Proposed Module C: Halving and Petrial operations on regular geometries
+
+The next candidate groups L088, N013 and L108 around operations on marked
+groups and their geometries. The intake and proof-obligation map are being
+prepared from the existing source bank. Endpoint conjugation connects two
+halving constructions; the Petrial branch needs its own thinness and
+biduality arguments. The J1 classification also requires the complete
+construction list and exhaustive census. These obligations are charged to
+C rather than assumed to follow from a common operation.
+
+This is a working title and proposed three-source intake, not a completed
+replacement or additional coverage claim. Each later module will likewise
+receive a descriptive mathematical title tied to its actual reusable
+arguments; its letter is only an identifier. The earlier mixed compilation
+does not dictate these groupings.
 
 ## Open questions and formal proofs
 

@@ -2,7 +2,7 @@
 
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with reviewed six-source U+A and four-source Module B manuscripts. There are
-forty-seven scoped Lean components. Source coverage, complete modular
+fifty-one scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
 An earlier snapshot admitted [twelve named manuscripts to one continuous replacement](../COMPRESS_12.md),
@@ -373,3 +373,10 @@ The [phase-99 record](phase99_review.md) makes the integrated U3 and
 six-source A2 the main editions under descriptive mathematical titles.
 Their complete reviews, required metadata corrections and fresh public
 checks accompany the manuscripts. Previous editions remain archived.
+
+The [phase-100 record](phase100_review.md) admits four scoped Lean modules:
+the all-integer ambient quadratic relation, the bidirectional label-four
+adapter, interval-overlap cancellation and its finite-marker transport.
+Complete proof reading, fresh dedicated/public builds and 23 controls
+passed. There are now 51 scoped components. The unfinished group consumer
+and full conjecture remain outside this admission.

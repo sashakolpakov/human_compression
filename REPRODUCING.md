@@ -11,6 +11,23 @@ python3 -B -O research/case_study/phase131_equal_label_verify.py --output /tmp/N
 Its every-rank proofs retain explicitly named published theorems. This
 command checks finite examples and file integrity, not the whole conjecture.
 
+Four supporting formal components also have fresh Lean builds and complete
+statement/proof reviews. With the pinned package checkout and compiler
+described in [the formal README](research/case_study/formal/README.md), run:
+
+```sh
+python3 -B -O research/case_study/phase140_source_relators_check.py --packages PACKAGES --lean LEAN --output-dir /tmp/NEW-source-relators
+python3 -B -O research/case_study/phase154_fin_interval_check.py --packages PACKAGES --lean LEAN --output-dir /tmp/NEW-finite-intervals
+```
+
+The first compiles the local label-four equivalence and full ambient
+quadratic relation. The second freshly compiles interval cancellation and
+its finite-marker adapter. Each requires a new output directory. Their
+exact statements, remaining group/application obligations and trusted
+compiler/dependency inputs are recorded in the
+[publication review](provenance/phase100_review.md). They do not formalize
+the full conjecture.
+
 The current mathematical writing target is [U plus application modules](MANUSCRIPT_PROGRAM.md).
 Existing exact computations and Lean components below are reusable proof
 material. The latest public-only replays are documented in the
@@ -149,7 +166,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the forty-seven saved Lean reports
+checks local documentation links, and checks the fifty-one saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -991,7 +1008,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all forty-seven certificates and their unformalized boundaries. With Git
+describes all fifty-one certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh

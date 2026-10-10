@@ -77,7 +77,7 @@ labels and identifies the universal presentations at labels three and
 four. The full conjecture, historical priority and complete Lean proof
 remain unresolved. It adds no known-source compression credit.
 
-Forty-seven existing Lean components retain their individual statements,
+Fifty-one existing Lean components retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.
@@ -93,6 +93,19 @@ the complete marked typed-Helly transfer with its actual supported-kernel
 application. Their [exact formal scopes](research/case_study/formal/README.md)
 and fresh pinned compilations are public. Full geometry recognition and
 source-specific application bindings remain separate tasks.
+
+Four further scoped components verify the full ambient quadratic power
+relation for every integer exponent, the bidirectional local label-four
+relator equivalence, and interval-overlap cancellation with its finite-marker
+adapter. Their [proof reviews and fresh builds](provenance/phase100_review.md)
+close these particular formal obligations. The group application of interval
+cancellation and the full conjecture remain incomplete. These additions
+change neither source coverage nor the number of recorded conjecture answers.
+
+The next proposed volume is **[C: Halving and Petrial operations on regular
+geometries](MANUSCRIPT_PROGRAM.md#proposed-module-c-halving-and-petrial-operations-on-regular-geometries)**.
+Its candidate intake is L088, N013 and L108. The agent is mapping all required
+application proofs and census inputs before drafting the manuscript.
 
 The [measurement protocol](PROOF_LIBRARY.md) compares original source
 lengths with complete modules and with U charged once across modules. It

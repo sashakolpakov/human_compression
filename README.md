@@ -27,6 +27,10 @@ The active manuscripts have descriptive mathematical titles:
 - **[Module A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md).**
 - **[Module B: Forest coordinates and primitive coset geometries](MODULE_B.md).**
 
+The next proposed volume is **[Module C: Halving and Petrial operations on
+regular geometries](MANUSCRIPT_PROGRAM.md#proposed-module-c-halving-and-petrial-operations-on-regular-geometries)**.
+Its three-source intake and complete proof obligations are being checked.
+
 **Complete reviewed manuscripts are available:** U has 30 statements with
 proofs in 16 pages; A has 24 pages and derives the declared principal
 results of six related sources from 2018–2026. U develops marked subgroup
@@ -105,7 +109,7 @@ Lean verification must match our actual written statements, including
 assumptions and retained inputs. A certified helper does not certify an
 entire application. Formal gaps and axioms remain visible.
 
-Forty-seven existing scoped Lean components and exact computational
+Fifty-one existing scoped Lean components and exact computational
 certificates supply reusable verified material. They do not constitute
 an end-to-end formalization of U, Module A or all conjecture claims.
 See [reproduction instructions](REPRODUCING.md) and individual scope files.

@@ -4,6 +4,18 @@ These files compile with Lean 4.32.2 and mathlib revision
 `905b95818eb32af7874a58b427f50c1711a5e96c`. Exact dependency revisions
 are in [dependency_manifest.json](dependency_manifest.json).
 
+Four scoped components support the separately named equal-label question
+track. [CharacteristicTwoTranslations](CharacteristicTwoTranslations.scope.md)
+proves the full ambient quadratic power relation for every integer exponent.
+[LabelFourRelations](LabelFourRelations.scope.md) proves the local relator
+equivalence in both directions. [IntervalOverlapCancellation](IntervalOverlapCancellation.scope.md)
+proves zero-sum weight cancellation on the derived interval-overlap forest;
+[FinIntervalOverlapCancellation](FinIntervalOverlapCancellation.scope.md)
+transports that theorem to actual finite marker sets. Complete independent
+proof reviews and fresh compilations accompany all four. The group consumer,
+retained presentation/generation theorems and complete polytope conclusions
+remain separate obligations.
+
 [SupportedKernelConsequences.lean](SupportedKernelConsequences.lean) proves
 the order formula, local recognition, separator factorization and the
 lower-central consequence from the actual supported-kernel hypotheses.
@@ -150,9 +162,9 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all forty-seven source hashes match the historical successful reports
+This checks that all fifty-one source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. Forty-six saved runs use only a subset of the standard axioms
+Lean or verify a proof anew. Fifty saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
 prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
 for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below

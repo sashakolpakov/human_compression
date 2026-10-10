@@ -40,6 +40,20 @@ are internally reviewed written proofs; historical priority and current
 openness have not been established. Complete Lean verification remains
 unfinished.
 
+Four scoped Lean components now verify specific parts of these written
+arguments. [Characteristic-two translations](research/case_study/formal/CharacteristicTwoTranslations.scope.md)
+prove the power relation on the whole ambient space for every integer
+exponent, with no nondegeneracy assumption.
+[Label-four relations](research/case_study/formal/LabelFourRelations.scope.md)
+prove the local relator equivalence in both directions.
+[Interval-overlap cancellation](research/case_study/formal/IntervalOverlapCancellation.scope.md)
+and its [finite-marker adapter](research/case_study/formal/FinIntervalOverlapCancellation.scope.md)
+prove the complete combinatorial cancellation theorem used by the mixing
+argument. They do not yet formalize the group consumer, retained
+presentation and generation theorems, or complete polytope conclusions.
+The [publication review](provenance/phase100_review.md) records fresh pinned
+compilations and the precise trust boundary.
+
 Finite checks include all parabolics of fifteen explicit groups or mixes,
 42 quadratic markings, 2,310 quadratic power words and 8,448 translation
 parameter pairs. They support the written arguments without replacing
