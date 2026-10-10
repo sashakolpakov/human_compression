@@ -52,8 +52,11 @@ recovered. These totals do not measure completion of the new application papers.
 
 Earlier combined compilations, edition measurements, status reports and
 the coarse complexity plot are isolated in the [historical archive](archive/README.md).
-Their measurements apply to those earlier versions. The costs of the new
-topic papers remain to be measured.
+Their measurements apply to those earlier versions. The first
+[measurement of a complete topic](TOPIC_E_MEASUREMENT.md) is now available:
+the two projective-line applications give conditional factors of 1.62× and
+2.38×, but their full umbrella has not yet paid for itself. The designated
+total written factor is 0.835×; other topics remain to be measured.
 
 The [equal-label polygon application](EQUAL_LABEL_POLYGONS.md) recovers
 Li–Zhang’s complete stated rank-three results from the earlier polygon

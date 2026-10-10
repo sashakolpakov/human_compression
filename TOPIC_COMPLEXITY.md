@@ -126,6 +126,16 @@ not yet been divided into complete papers and measured.
 
 ## 4. Measurement and current status
 
+The [first completed topic comparison](TOPIC_E_MEASUREMENT.md) now follows
+this acquisition rule for U_E and two complete applications. Its primary
+written factor is 0.835×, with conditional local factors 1.62× and 2.38×.
+Its graphs display document costs and explicit theorem dependencies;
+individual theorem nodes have not been assigned separate length weights.
+All five fixed PDF-text proxies and both normalizations are reported.
+The two applications have not yet repaid the complete umbrella on the
+designated coordinate. The other topic families still require their own
+measurements.
+
 Use identical length rules on comparable written material. Include necessary
 definitions, interfaces, proof appendices and local computational proof
 artifacts. Inventory optional Lean validation, audit records and rendering

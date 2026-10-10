@@ -128,7 +128,10 @@ The [separate U_E and both complete applications](PROJECTIVE_LINE_POLYTOPES.md)
 are now independently reviewed: seven umbrella pages, three PSL₂ pages and
 two PGL₂ pages, with one required shared program. The historical answer to
 Conjecture 11 is [recorded separately](research/case_study/phase240_L079_status.md).
-No topic compression ratio has yet been measured.
+The [first topic measurement](TOPIC_E_MEASUREMENT.md) gives conditional local
+factors of 1.62× and 2.38×. The full written factor is 0.835×: the two
+applications have not yet repaid their umbrella. The complete program is
+also charged, with unknown historical artifact cost stated separately.
 
 ### F. Odd kernels and cyclotomic polyhedra
 

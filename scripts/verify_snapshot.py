@@ -16,6 +16,8 @@ STUDY = ROOT / "research/case_study"
 # Exact project-authored renderings only. Primary publication PDFs and source
 # raster/text captures remain excluded from the distributed snapshot.
 OWN_RENDERED_PDFS = {
+    "research/case_study/phase251_code_appendix.pdf":
+        "8d160981cf9d96fb2c0ca849d8d0179161bcdfa0e18992da98e71b81f3036ad5",
     "research/case_study/phase236_odd_kernel_manuscript.pdf":
         "aafaf06208e37deadb354be5c24907a0d51a972672587cdaec7a32228d6de580",
     "research/case_study/phase238_topic_E_umbrella.pdf":
@@ -76,6 +78,7 @@ def digest(path):
 def frozen_question_exports():
     """Preserve admitted proof packages when refreshing the public snapshot."""
     manifests = {
+        "phase253_export.json": "34ea2524bc18a08bbf676495a32facae5b433359fee4d773b4a557c4a7b12c07",
         "phase249_export.json": "6c6866615a17f9d2e2bd70f67d98bba462e1c704212a993082a867e57f8b1bbc",
         "phase247_export.json": "cc75729ebfa9457b610cf4596f913f2ea36edb2fd13697c9274b016bc6141f58",
         "phase244_export.json": "0c127e2b1ef4cdce3d150565e224c06a13af17a2fa26f8a59e23eb67421f4e43",

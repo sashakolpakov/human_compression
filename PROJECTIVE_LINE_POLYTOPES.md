@@ -47,13 +47,12 @@ flowchart LR
     U --> G[E₂: PGL₂ classification]
 ```
 
-The [dependency inventory](research/case_study/phase238_dependency.json)
-and [measurement proposal](research/case_study/phase238_measurement.md)
-charge the full umbrella and its program once within Topic E, followed
-by both complete applications. Every other topic pays its own full
-umbrella. The displayed pages describe the actual papers; they are not
-a matched compression ratio. Source spans, typography and retained
-inputs still need a common measurement convention.
+The [reviewed measurement](TOPIC_E_MEASUREMENT.md) charges the full umbrella
+and its program once, followed by both complete applications. Conditional
+local factors are 1.62× and 2.38×; the total written factor is 0.835×, so
+these two applications have not yet repaid the umbrella. Every other topic
+pays its own full umbrella. The [two detailed theorem graphs](research/case_study/phase251_dependency_dags.md)
+also preserve the historical PGL₂ paper's reuse of the earlier PSL₂ table.
 
 ## The common argument
 
@@ -86,7 +85,7 @@ principal classifications. No historical priority claim is made for the
 centralizer calculation.
 
 The independent review checks every row of the historical table and all
-nine pages of the replacement. Fresh public execution reproduces all ten
+twelve pages of the separate papers. Fresh public execution reproduces all ten
 universal group orders, the marked intersection tests and four controls
 that reject altered claims. Separate field computations check the
 centralizer calculation on 384 semisimple and 144 unipotent pairs.
@@ -117,9 +116,9 @@ The [replay guide](research/case_study/phase238_README.md) specifies the
 versions and optional primary-source checks. The
 [publication record](provenance/phase121_review.md) and
 [registry addition](research/case_study/phase235_projective_line_overlay.json)
-admit two principal source results, bringing that count to 23. This
+admitted two principal source results, bringing the count at that time to 23. This
 recovers known theorems and adds no solved-question entry.
 
-The three-paper structure adds no second credit for either historical
-source. The principal-source total remains 23, and the solved-question
-ledger is unchanged.
+The three-paper structure and its measurement add no second credit for
+either historical source. The current principal-source total is 24 after
+the separate L014 recovery; the measurement leaves the question ledger unchanged.
