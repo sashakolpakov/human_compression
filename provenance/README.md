@@ -1,7 +1,8 @@
 # Provenance and verification scope
 
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
-with reviewed six-source U+A and four-source Module B manuscripts. There are
+with reviewed six-source U+A, four-source Module B and three-source Module C
+manuscripts. There are
 sixty-three scoped Lean components. Source coverage, complete modular
 replacement and measured compression are distinct claims.
 
@@ -394,3 +395,10 @@ compile. Twelve supporting modules prove one construction theorem, with
 50 new and 25 retained axiom reports, all standard. The actual component
 profiles and overlap equations are derived. Concrete source applications,
 numerical formulas and the full conjecture remain separate obligations.
+
+The [phase-103 record](phase103_review.md) admits the three-source Module C
+under its descriptive mathematical title. Complete source/proof review,
+all-page visual inspection and fresh public binding/portability checks
+support the admission. The unchanged finite census retains its earlier
+verified execution. A, B and C now cover thirteen distinct source
+contracts; corpus coverage, Lean counts and measured ratios are unchanged.

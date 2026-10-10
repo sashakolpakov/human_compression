@@ -63,19 +63,26 @@ The declared main results follow from U+B with the documented source
 corrections and retained inputs. The ledger binds 30 source rows to 22 proof
 nodes. Matched length measurement and full Lean formalization remain pending.
 
-## Proposed Module C: Halving and Petrial operations on regular geometries
+## Module C: Halving and Petrial operations on regular geometries
 
-The next candidate groups L088, N013 and L108 around operations on marked
-groups and their geometries. A complete draft and proof-obligation map have
-been prepared from the existing source bank and are under review.
-Endpoint conjugation connects two
-halving constructions; the Petrial branch needs its own thinness and
-biduality arguments. The J1 classification also requires the complete
-construction list and exhaustive census. These obligations are charged to
-C rather than assumed to follow from a common operation.
+The [complete 18-page manuscript](MODULE_C.md) derives the corrected
+principal contracts of L088, N013 and L108, spanning 2001–2020, after
+independent proof and source review. Endpoint conjugation connects two
+halving constructions; the Petrial branch supplies its full thinness and
+biduality arguments. The toroidal geometry identifications and exhaustive
+J1 census are also included. All local proofs and the required finite
+programs are charged. No matched ratio or complete Lean formalization is
+yet admitted.
 
-This is a working title and proposed three-source intake, not a completed
-replacement or additional coverage claim. Each later module will likewise
+## Proposed Module D: Marked actions, field orbits and geometry enumeration
+
+The [initial three-source draft](MODULE_D_PLAN.md) uses finite actions and
+stabilizer orbits on extension fibers for L066, L074 and L104. The complete
+L073 classification is the first expansion target. Field-counting and
+geometric recognition arguments are being written with their actual
+hypotheses and complete finite inputs. This module remains in preparation.
+
+Each later module will likewise
 receive a descriptive mathematical title tied to its actual reusable
 arguments; its letter is only an identifier. The earlier mixed compilation
 does not dictate these groupings.

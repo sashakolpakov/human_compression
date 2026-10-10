@@ -26,10 +26,11 @@ The active manuscripts have descriptive mathematical titles:
 - **[Umbrella theory U: Marked groups, kernels and intersections](UMBRELLA.md).**
 - **[Module A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md).**
 - **[Module B: Forest coordinates and primitive coset geometries](MODULE_B.md).**
+- **[Module C: Halving and Petrial operations on regular geometries](MODULE_C.md).**
 
-The next proposed volume is **[Module C: Halving and Petrial operations on
-regular geometries](MANUSCRIPT_PROGRAM.md#proposed-module-c-halving-and-petrial-operations-on-regular-geometries)**.
-Its complete three-source draft and proof obligations are under review.
+The next proposed volume is **[Module D: Marked actions, field orbits and
+geometry enumeration](MODULE_D_PLAN.md)**. Its initial three-source
+manuscript is in preparation, with a fourth classification under investigation.
 
 **Complete reviewed manuscripts are available:** U has 30 statements with
 proofs in 16 pages; A has 24 pages and derives the declared principal
@@ -50,6 +51,13 @@ and Frattini coordinates connect its tree, generation and coset-geometry
 arguments. Its source corrections and retained inputs are explicit.
 Matched length measurement and full Lean formalization remain incomplete.
 
+Module C now has a reviewed 18-page manuscript deriving three corrected
+source contracts from 2001–2020. Endpoint conjugation, graph halving and
+actions on retained objects connect the proofs. The full J1 census and
+toroidal identifications remain explicit application work. Its complete
+core with U and three programs costs 146,126 UTF-8 bytes; no matched
+compression ratio or full Lean certificate is yet claimed.
+
 The previous combined manuscripts are working source material. Their
 proved lemmas, computations, source readings and certificates are being
 reworked into U and the modules; their organization and size are not the
@@ -63,7 +71,7 @@ They do not count completed modular manuscripts or a complete bibliography
 of every collaborator. The existing working compilations now account for
 thirteen distinct principal-result contracts.
 
-Modules A and B now have ten distinct sources in their combined intake.
+Modules A, B and C now have thirteen distinct sources in their combined intake.
 Their principal-result contracts, retained inputs and corrections are
 explicit; source membership is not a length ratio. The earlier
 [hypertope attachment](MODULE_A_HYPERTOPES.md) is retained for provenance.

@@ -19,6 +19,14 @@ Its complete U-v2+B inventory is 120,923 UTF-8 bytes; no matched ratio
 is yet measured. These four were already covered in the source bank, so
 this modular replacement adds no new source-count or conjecture credit.
 
+**[C: Halving and Petrial operations on regular geometries](MODULE_C.md)**
+has a reviewed 18-page manuscript deriving the three corrected contracts
+L088, N013 and L108, spanning 2001–2020. Its source ledger, complete
+geometry proofs, J1 programs and explicit retained inputs are public.
+U+C and the three required programs total 146,126 UTF-8 bytes. No matched
+ratio or complete Lean formalization is admitted. These sources already
+had principal-result coverage, so the corpus counts below are unchanged.
+
 | Intake layer | Count |
 |---|---:|
 | Indexed mathematical works | 161 |
@@ -43,7 +51,7 @@ four required computational artifacts 56,375. This is 5,856 bytes below
 the fully corrected six-source additive package, under the raw inventory
 convention. It is not a source ratio or proof of a long-run sawtooth trend.
 U's six statements used by B retain their previous proofs exactly. The
-combined A/B intake has ten distinct sources, with U charged once in any
+combined A/B/C intake has thirteen distinct sources, with U charged once in any
 future aggregate comparison. Source counts do not rise merely
 because existing results have been reorganized.
 
@@ -111,11 +119,10 @@ applications, numerical formulas and the full conjecture remain incomplete.
 These additions change neither source coverage nor the number of recorded
 conjecture answers.
 
-The next proposed volume is **[C: Halving and Petrial operations on regular
-geometries](MANUSCRIPT_PROGRAM.md#proposed-module-c-halving-and-petrial-operations-on-regular-geometries)**.
-Its candidate intake is L088, N013 and L108. A complete draft is being
-checked against its source contracts, application proofs and census inputs;
-it has not yet earned additional replacement credit.
+The next proposed volume is **[D: Marked actions, field orbits and geometry
+enumeration](MODULE_D_PLAN.md)**. Its initial intake is L066, L074 and
+L104, with the complete L073 classification as the first expansion target.
+It has not yet earned modular replacement credit.
 
 The [measurement protocol](PROOF_LIBRARY.md) compares original source
 lengths with complete modules and with U charged once across modules. It

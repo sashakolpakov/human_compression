@@ -42,6 +42,25 @@ claims separate.
 
 ## Current application manuscripts
 
+The [three-source Module C](MODULE_C.md) has public integrity and independent
+binding/proof-span checks. Each output path must be new:
+
+```sh
+python3 -B -O research/case_study/phase150_module_C_verify.py --output /tmp/NEW-C-integrity.json
+python3 -B -O research/case_study/phase162_module_C_checks.py --output-dir /tmp/NEW-C-independent
+```
+
+These check the exact package and its recorded finite evidence, including
+eight altered-input controls; they are not fresh execution of the census.
+To rerun the complete J1 construction and exhaustion with GAP and TomLib:
+
+```sh
+python3 -B research/case_study/phase150_module_C_run.py --output-dir /tmp/NEW-C-J1
+```
+
+The uniform operation proofs remain written. The limited existing Lean
+endpoint helper does not certify the entire module.
+
 The [complete U+A measurement](MEASUREMENT_A.md) has a separate independent
 counter, requiring pypdf 6.13.0 and a new output path:
 

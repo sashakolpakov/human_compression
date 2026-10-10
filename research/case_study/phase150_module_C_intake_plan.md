@@ -1,0 +1,84 @@
+# Module C intake: Halving and Petrial operations on regular geometries
+
+10 October 2026. **Proposed three-source intake, not a completed application module.** The current registry has eighteen principal-result records. Six belong to Module A and four to Module B. This note screens the other eight and selects the three whose proofs can support a coherent volume about operations on regular geometries. It does not add source credit, a compression factor, a conjecture solution or a new priority claim.
+
+## Proposed intake and exact editions
+
+| Source | Exact principal contract | Edition and existing review |
+|---|---|---|
+| L108, Bonheure–Buekenhout–Leemans, *On the Petrials of thin rank 3 geometries* (2001) | The thin-Petrial obstruction; residual connectedness; conventional-walk adapter; thin-case faithful full action and biduality. The unconditional embedding assertion and unconditional length/order assertion are corrected explicitly. Finite and infinite groups and residues remain in scope. | Complete seven-page authored rendered text, printed pp.19–25, DOI 10.1007/s00022-001-8548-2; faithful publisher/author PDF unavailable. Reviewed phase25 reduction and phase65 integration, independent phase70 PASS. |
+| L088, Hartley–Leemans, *On the thin regular geometries of rank four for the Janko group J1* (2005) | All six source-defined constructions, generation, distinguishing invariants, literal seed presentation, full six-class rank-four census and absence in every higher rank. The two displayed unsuccessful operations and the figure-label correction are preserved. | Ten-page journal PDF, *Innovations in Incidence Geometry* 1,181–190. Reviewed phase40 operations proof and independent phase44 census/assembly. |
+| N013, Montero–Ivić Weiss, *Locally Spherical Hypertopes from Generalised Cubes* (2020 author version; 2021 journal) | Halving IP, actual flag-transitive geometry, index/diagram, exact parity groups and orders, polygon parameters/duality/genus, all locally spherical applications, and exact toroidal face-poset/marking/lattice identifications. | arXiv:2001.11082v1, 29 January 2020, eleven pages. Phase40 plus the entire phase45 lattice bridge passed independent phase44 review. Later journal wording is not silently substituted. |
+
+The accompanying JSON preserves all twenty-seven records of the two-source operations ledger and all six numbered L108 records, plus its two mathematical unnumbered boundaries: **thirty-five scope records**. A record is not a paper. The two-source ledger's eighteen principal rows remain principal; L108's declared corrected contract is separately identified. Auxiliary exclusions do not become newly proved theorems by inclusion in the ledger.
+
+## Common mathematics and the actual division of work
+
+The proposed volume has two related operations, not one formula that proves everything.
+
+1. **Endpoint conjugation.** For a C-group marking \((a,b,(r_i)_{i\in E})\), with a commuting with every r_i, replace a by aba. The resulting subgroup is normal of index at most two. The exact IP test is the mixed overlap \(\langle b,R_E\rangle\cap\langle b,R_E\rangle^a=R_E\), together with intersection closure of \(\{J\subseteq E:a\in\langle aba,b,R_J\rangle\}\). This is one proved theorem used by both the odd-endpoint J1 constructions and generalized-cube halving. The least-support case must not be discarded merely because an endpoint order is even.
+2. **Graph realization.** A component of the bipartite double cover realizes the changed marking when the vertex–edge truncation is simple and higher shadows satisfy the exact parity compatibility condition. Lattice-polytope flags have nested shadows, proving that condition. The full proof of geometry, thinness, residual connectedness and the panel marking remains in C. Its faithfulness argument is now an explicit application of U.Action.
+3. **Retained objects and Petrials.** A Petrial replaces faces by actual pairs of vertex and edge subsets. U.Action gives the exact core kernel and U.Geometry gives the full group after chamber transitivity is established. The two-case thin-residue argument proves the commuting-pair obstruction, faithfulness and biduality. Those arguments remain in full; endpoint conjugation does not imply them.
+4. **Finite recognition and exhaustion.** U.Helly gives the finite common-point test, U.Geometry converts it and IP into actual regular geometry, and U.ExtensionOrbits explains the exact permutation-image orbit reduction. The proper-residue extension theorem and its J1 specialization must still prove census completeness and the all-higher-rank exclusion. No source geometry list is used.
+
+The new bounded note `phase150_module_C_action_attachment.md` proves both U.Action attachments with all encoding and surjectivity hypotheses. Halving retains old vertices and higher objects, with each omitted edge uniquely determined by its endpoints; it therefore remains faithful. A Petrial retains only vertices and edges and can have kernel core_G⟨a⟩. This is a real common application with different conclusions, not an assumption that changed generators are the image of the old marking under a homomorphism.
+
+**No new edition of U is required for the initial C draft.** U.Action, U.Geometry, U.Helly and U.ExtensionOrbits are the definite shared interfaces. U.K, U.Compare and U.SK are not presently justified shortcuts for endpoint changes. The new markers are not known to be a homomorphic marking image, and no protected-product injectivity or supported coordinate profile has been supplied. The algebraic endpoint proof therefore remains a local theorem, stated and proved once for both of its uses.
+
+## Necessary application branches
+
+| Proposed local statement | Complete obligation | Sources recovered |
+|---|---|---|
+| C.Endpoint | All mixed marked intersections; index-two interval; least-support equivalence; odd-endpoint and proper-halving cases | L088 generation/conjugation steps; N013 halving algebra |
+| C.Graph | Flag completion, all residues, panel correspondence, exact parity compatibility and its equivalence to algebraic support | N013 main halving theorem; geometric interpretation of the common endpoint test |
+| C.Parity | Identify the generated even-weight module, source dual convention, exact stabilizers/counts, orientation and duality | N013 polygon and general cube applications |
+| C.Spherical | Prove necessity and sufficiency of the source's locally spherical list, including actual spherical residues, not just their diagrams | N013 all section-four locally spherical constructions |
+| C.Lattice | Product Gray map on actual face posets; explicit duality; affine reflection marking; paired chambers; exact quotient lattice, including the rank-three basis change | N013 N8(p=4) and N12; these are proved target identifications, not retained labels |
+| C.J1 | Literal presentation via completed Todd–Coxeter index; all six tuples; central twist; full marked meets and typed Helly; negative controls and definition-based diagram labels | L088 six constructions and associated stated invariants |
+| C.Census | Complete maximal-subgroup list; local orbit action and lifts; exact extension completeness; type-permutation convention; independent rank-five search in all subgroups; rank reduction | L088 exhaustive classification and no-higher-rank assertion |
+| C.Petrial | Walk definition; all connectivity cases; exact U.Action kernel; both thin-obstruction cases; actual new panel marking; regularity, faithfulness and distinct old face shadows | L108 corrected principal contract, without a finite-group restriction |
+
+The source hypotheses and retained inputs remain visible at the relevant application. In particular, “non-degenerate” in N013 means the lattice face-poset condition used by its halving theorem; no weaker abstract-polytope hypothesis is substituted. The parity condition has to be proved for the actual shadows. For L088, Helly filtering excludes failed geometries but does not prove the absence of arbitrary non-Helly C-group markings. For L108, labelled walks cannot replace equal geometric Petrie sets.
+
+## Computational and retained-input cost
+
+The two required finite programs are unchanged:
+
+- `phase40_compress_operations_check.g`: 4,458 bytes; literal seed presentation, six constructions, 1,536 marked meets, 96 global Helly rows, and two failed-operation controls.
+- `phase40_compress_operations_exhaustive.g`: 4,783 bytes; all seven maximal-subgroup classes, 245 local triple orbits, 1,476 local quadruple orbits, 100,016 rank-four extensions and 21,352 rank-five extensions. The six class keys and distinct parabolic-order multisets establish the final counting convention.
+
+Their **9,241 bytes are necessary mathematical certificate cost** even if placed in separately supplied appendices instead of copied into the main exposition. The existing 6,320-byte author runner is historical infrastructure; a new portable C binding/checker will be priced at its actual size and must not depend on the old assembled manuscript merely to find these code blocks. Its no-clobber and changed-input controls will be reviewed. Unchanged GAP computations need not be rerun during rewriting; the independent phase44 exact replay and its bound class output are available. A final replay is warranted only by changed mathematical input, unresolved concern or a required new reproducibility check.
+
+The 10,533-byte phase65 Petrial program supplies seven optional finite controls. The uniform proof and both counterexamples are written proofs, so that program is not a premise for the infinite theorem. If distributed or used for new validation, its full cost will be separately disclosed. It cannot be presented as an exhaustive Petrial proof or omitted silently after being invoked.
+
+Substantial retained inputs are the complete TomLib J1 subgroup catalogue and permutation model; GAP's exact finite-group and completed coset algorithms; Danzer's generalized-cube construction and full original group; classical finite/affine/compact-hyperbolic Coxeter classifications and the named spherical models/orders; and conventional orientation/Euler facts. Pellicer's extension construction is retained only in the qualified auxiliary remark. These dependencies do not include the source geometry census, the target toroidal identifications, or any claimed full classification of maps.
+
+The source bank contains 49,272 bytes for the old two-source operations manuscript, 11,058 for its mandatory lattice bridge, and 10,363 for the Petrial branch: 70,693 bytes, of which 9,241 are the two embedded programs. The remaining 61,452 bytes are a **reusable input inventory**, including old introductions, repeated generic proofs and scope prose. This is neither the new C size nor an estimate of saved proof. U has 61,576 bytes in its current edition and is charged once in the shared library inventory; each application still pays its own hypothesis proofs and bindings. No source/replacement ratio or sawtooth conclusion follows from these raw figures.
+
+## Corrections and exclusions that must survive rewriting
+
+- L088's printed Γ3/Γ4 figure names are transposed relative to their definitions. All six structures and counts use the definitions. The two displayed unsuccessful tuples remain explicit failed-thinness cases.
+- N013 N8(p=4) and N12 require the whole exact lattice argument. The earlier C-only ledger's retained-identification status is superseded for these targets by the reviewed bridge, not erased from history.
+- N013 Remark 4.1 has the proved non-local-sphericity conclusion in output rank at least four; its blanket rank-three formulation is not adopted. The comparison with every object in reference [9] and the unused alternating-semiregular identification remain excluded auxiliary assertions.
+- L108 Lemma 3.2(ii) becomes a natural action with its exact kernel, with the complete tripartite (2,2,2) counterexample to unconditional embedding. The C2×S3 example disproves an unconditional geometric-length/step-order equality. The thin-case conclusions and infinite scope remain fully proved.
+- The old source bank's numbered locators are not final C locators. A new theorem/adapter ledger will be generated from the actual final section bodies; no sliced heading-only spans or inherited appendix references are acceptable.
+
+## Other screened sources
+
+| Source | Existing full principal contract | Reason not added to this intake |
+|---|---|---|
+| L066, *On pairs of commuting involutions in Sym(n) and Alt(n)* (2013) | All four principal results, including degree-six polyhedra; reviewed phase110+mandatory phase116 ledger, phase114 review | U.ExtensionOrbits genuinely helps both this source and the J1 census, but the all-degree formulas, parity cases and complete degree-six classification are a substantial counting branch unrelated to the operations themselves. The older two-theorem matched proof is insufficient for whole-source intake. |
+| L074, Suzuki polytope counts (2010) | Both principal counts, normalized field-coordinate generation and the complete all-parameter formula comparison; phase10 review | Unique field-of-definition coordinates, Möbius inversion and Frobenius/duality actions fit a prospective work titled *Orbit counts for regular polytopes*. The substantial Suzuki subgroup structure remains a retained input. Shared word “involution” does not make these endpoint-operation corollaries. |
+| L104, *The residually weakly primitive geometries of J2* (2002) | Complete 8/19/3 census and all-higher-rank exhaustion; phase5 certificates | Arbitrary-Borel panel augmentation, local two-transitivity and full outer-automorphism fusion have different hypotheses from thin J1 residue extension. A prospective *Finite coset geometry classification by panel stabilizers* could unify the precise augmentation interface, but the combined theorem and complete cost have not yet been assembled. |
+| L008, *Testing chirality on hypertopes* (2026) | Principal C+-chirality criterion via exact double-coset extension fibers | Fits a prospective *Chirality tests and regular covers*. Proper-flag transitivity and the marked-inversion correspondence must be retained precisely; the current screen does not refresh its complete primary contract or repair the separate L029 full-Aut/designated-action gap. |
+| N016, *Chiral polytopes whose smallest regular cover is a polytope* (2024) | All proved conclusions of the eight-page July 2023 author version, specified older family classification retained; reviewed phase41/43 and later assemblies | Mirror mixes, embedded chirality kernels and minimal-cover examples genuinely use U.K/U.Q but require a separate chiral-section theory. Later cover-family resolutions are additional repository mathematics, not extra paper counts or an automatic extension of the author's proved contract. |
+
+These descriptive headings are provisional mechanisms, not newly assigned module letters or completed volumes. L066 and L074 have a plausible common counting route; L104 may belong with them only after an actual shared enumeration theorem is written. L008 and N016 have a plausible chirality route, with nontrivial distinct geometry interfaces. No numerical target determines the grouping.
+
+## Draft and review route
+
+After this intake proposal is accepted, write a fresh mathematical abstract and introduction around the two operations, then the shared endpoint and retained-object interfaces, complete halving/cube applications, the six J1 constructions and census, and the Petrial recovery theorem. Cite U for its exact statements; do not repeat its proofs or import the old monolith as an unpriced premise. Put the full source-contract ledger, software/certificate interfaces and accounting alongside the scientific exposition. Preserve all source-specific proofs and named background.
+
+The normal house rendering should aim for a useful focused volume; 20–25 pages is an editorial goal, not a premise or permission to omit arguments. Exact pages and complete written/computational cost become known after rendering. A first structural verifier should check all thirty-five scope records, each actual U attachment, all preserved corrections and the two byte-identical required programs without rerunning their unchanged mathematics. Independent review must read the continuous new proof, not only approve that old pieces existed. No C admission or factor is warranted before that review.
+
+This phase reread the existing operation proofs, complete lattice bridge, complete Petrial branch, the relevant exact U signatures, old source contracts and independent review records. It did not repeat complete primary-source reading, retrieve new editions, rerun GAP, or claim a fresh literature-priority search. The reading log distinguishes complete internal proof reads from bounded alternative screens and inherited primary review.
