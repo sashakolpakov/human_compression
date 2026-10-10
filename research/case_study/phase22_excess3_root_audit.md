@@ -1,0 +1,11 @@
+# Root review of the third-excess theorem and transfer identity
+
+10 October 2026. The complete [transition proof](phase22_excess3_transitions.md), GAP source, input runner, sparse checker and [annihilator supplement](phase22_excess3_annihilator.md) passed internal root review. The independent agent review is separate.
+
+The fresh complete GAP/NQ run reconstructed all 706 windows, checked 722,944 actual window meets, and regenerated all 708 states and 1,522 edges. It also constructed both additional rank-six deletion states and checked all 8,192 meets. Graph, window and gluing files are byte-identical to the frozen author's outputs. The [fresh run](phase22_excess3_root.run.json) retains separate log hashes. The sparse checker and the independent integer-graph checker also passed afresh.
+
+The proof correctly confines deletion defects to the canonical small kernel without assuming deletion retractions on arbitrary quotients. Boundary isomorphisms are uniquely marked, both compatibility tests are present, and nonnegative weights justify least-cost budget pruning. The graph completeness uses the retained finite-state theorem and exhaustive kernel library. Both compatibility rejection counts are zero; the two actual extra-state gluings have trivial diagonal intersection. Those runs do not test every general rejection or nontrivial diagonal case.
+
+The original polynomial proof uses an independently established degree bound and threshold17, then handles ranks4–16 separately. The alternate proof instead checks the complete vector identity (T−I)^4v7=0. Commutation with T, or the binomial operator theorem, proves every later rank; no scalar sequence fit is substituted for that identity. The exact Newton coefficients are 2499,1780,715,125. Root also directly recomputed the 2,832-coordinate zero identity from the saved edges. Rank4=199 remains a separate census input, and rank3=37 is an explicit exception.
+
+This proves the stated computer-assisted ordered-marking count relative to the linked mathematical and GAP/NQ inputs. It supplies no unmarked or reversal count, no publication-priority determination, no external peer review and no end-to-end Lean proof. The previous proof snapshots are unchanged.

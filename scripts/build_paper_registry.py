@@ -273,7 +273,7 @@ UPDATES = {
         "Canonical bounded cores classify ordered nondegenerate regular two-group markings at fixed excess. A global marked-kernel basis gives every class-at-most-three marking in every rank, with a two-state transfer formula and Fibonacci total. Separated first-excess cores give the unrestricted leading coefficient 5^k/k! and a lower-degree higher-class contribution.",
         "Actual marked intersection property and nondegenerate path condition; Reviewed forest quotient and canonical central attachment; Elementary edge/triple seed covers; Regular-polytope/string-C-group correspondence",
         "phase18_schulte_weiss_intake.md;phase18_schulte_weiss_intake.json;phase18_class_three.md;phase18_class_three_manifest.json;phase18_class_three_root_audit.json;phase18_class_three_independent_audit.json;phase18_class_three_status.md;phase18_leading_coefficient.md;phase18_leading_coefficient_rank_audit.json",
-        "The original unmarked group characterization, chiral cases and orders 2^k p remain outside these conclusions. Larger fixed-excess core libraries have not been explicitly enumerated. This is progress on a restricted component, not a solution of Problem 30 or a rederivation of the survey. Publication priority, complete formalization and a matched proof-length ratio remain unestablished."),
+        "The original unmarked group characterization, chiral cases and orders 2^k p remain outside these conclusions. Exact unrestricted excess-three counts are now supplied by a complete finite graph and integer-vector certificate; higher excess coefficients remain uncomputed. This is progress on a restricted component, not a solution of Problem 30 or a rederivation of the survey. Publication priority, complete formalization and a matched proof-length ratio remain unestablished."),
     "N004": (
         "component_rederived", "Advertised RWPRI/(IP)2 truncation target, via a complete weighted-tree model",
         "Contract omitted edges and retain component sizes as weights; forest and laminar incidence formulas give exact primitivity, local two-transitivity, rank-two and full-shadow criteria.",
@@ -614,6 +614,20 @@ def record(row, baseline, overlay, later_readings, older_access):
                      "phase21_linear_rank3_independent_audit.json", "phase21_linear_rank3_root_audit.json",
                      "phase21_linear_rank3_status.md", "phase21_linear_rank3_status.json"):
             r["evidence"].append(evidence(name, "All odd linear diagonal index-two extensions; publication priority unverified"))
+        r["method"].append("The common cocycle/complement theorem replaces the additive-kernel generation steps in the linear and unitary constructions. Independent factors work over every field and arbitrary block sizes; the coupled unitary criterion holds for odd q>=5 and has an explicit proper-complement counterexample at q=3. Full projected image, ambient roots and IP remain separate.")
+        for name in ("phase23_generation_core.md", "phase23_generation_core_independent_audit.json",
+                     "phase23_generation_core_root_audit.json"):
+            r["evidence"].append(evidence(name, "Shared generation step; no new paper or novelty credit"))
+    if identifier in {"F016", "N010"}:
+        r["exact_target"].append({
+            "reference": "Companion exact third-excess ordered-marking count in every rank",
+            "scope": "For rank d>=4 and order2^(2d+2), a3(d)=(125d^3-855d^2+2380d-2646)/6; rank3 has37. All706 rank-five windows give708 states and1522 edges. The exact2832-coordinate identity (T-I)^4 v7=0 gives an alternate all-rank proof without the eventual-polynomiality input. Ranks4–6 use separate exact bases. GAP/NQ and the finite-state completeness theorem remain inputs; no unmarked or reversal count, whole-problem solution or priority claim.",
+            "relation_to_source": "proposed_uniform_companion_application",
+        })
+        for name in ("phase22_excess3_transitions.md", "phase22_excess3_annihilator.md",
+                     "phase22_excess3_certificate.json", "phase22_excess3_independent_audit.json",
+                     "phase22_excess3_root_audit.json", "phase22_excess3_status.md"):
+            r["evidence"].append(evidence(name, "Complete excess-three graph and exact all-rank count"))
     if identifier == "N011":
         for name in ("phase21_linear_rank3_status.md", "phase21_linear_rank3_status.json"):
             r["evidence"].append(evidence(name, "Additional selected source reading and possible theorem overlap; no rederivation credit"))

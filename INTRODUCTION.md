@@ -2404,8 +2404,8 @@ This is a proved exhaustive finite procedure, not a fit to known counts.
 The same guarded algorithm gives 37, 199 and 584 ordered markings at
 excess three in ranks three, four and five, respectively. Together with
 the earlier lower-excess classifications, rank five now has a complete
-706-window library through excess three. Its transition graph is the
-remaining step toward counts in every rank.
+706-window library through excess three. Section 37 builds its complete
+transition graph and obtains a count in every rank.
 
 Two complementary [central-extension adapters](research/case_study/phase21_central_quotient.md)
 recover that source's quotient and presentation-lifting theorems. A
@@ -2418,9 +2418,8 @@ a short structural argument, an exhaustive kernel search and concrete
 presentation certificates.
 
 The next section completes the rank-three census and two auxiliary lemmas.
-Individual presentation labels remain separate obligations. A complete
-third-excess window library also needs its transition graph before it
-yields an all-rank formula.
+Individual presentation labels remain separate obligations. Section 37
+turns the complete window library into an all-rank formula.
 
 ## 36. The same kernel ladder beyond abelian kernels
 
@@ -2462,7 +2461,116 @@ Individual facet labels, universal-amalgam orders and other displayed
 presentations require their own checks before full source coverage can
 be claimed.
 
-## 37. The remaining work, and how a living reduction should record it
+## 37. A finite vector identity proves the count in every rank
+
+Local windows alone do not determine how a longer group is assembled.
+The state must also retain the subgroup lost when earlier generators
+are killed. In the canonical quotient, the normal closure of omitted
+vertices occupies their vertex coordinates and incident edges. Those
+coordinates are disjoint from the retained parabolic's coordinates.
+Consequently its deletion defect lies in that parabolic's third
+lower-central subgroup, of order at most eight at excess three.
+
+The [complete transition calculation](research/case_study/phase22_excess3_transitions.md)
+keeps this actual subgroup and both compatibility conditions from the
+gluing theorem. The 706 windows produce 708 reachable states and 1,522
+edges within excess budget three. The two extra states have nontrivial
+deletion kernels; discarding that state information would lose the
+mathematical justification. Actual constructions of their rank-six groups
+verify the new kernels and every marked subgroup intersection.
+
+Each edge carries the nonnegative increment in excess. Expand the graph
+into four coordinates per state, one for each excess from zero to three.
+Its integer transfer operator $T$ acts on $\mathbb Z^{2832}$. The vector
+$v_d$ counts rank-$d$ markings by their final state and excess, so
+$v_{d+1}=Tv_d$. A separate exact checker establishes
+
+\[
+(T-I)^3v_7=125e_{1,3},\qquad Te_{1,3}=e_{1,3}.
+\]
+
+This is an identity in every coordinate. Put $\Delta=T-I$. Then
+$\Delta^4v_7=0$ and, for every $n\ge0$,
+
+\[
+v_{7+n}=(I+\Delta)^nv_7
+ =\sum_{j=0}^3\binom nj\Delta^jv_7.
+\]
+
+Summing the excess-three coordinates gives
+
+\[
+a_3(d)=2499+1780(d-7)+715\binom{d-7}{2}
+                 +125\binom{d-7}{3}
+       =\frac{125d^3-855d^2+2380d-2646}{6}.
+\]
+
+The operator identity proves this for every $d\ge7$. The exact initial
+counts at ranks five and six and the separate rank-four census extend
+the result to every $d\ge4$. Rank three has 37 markings, whereas this
+polynomial gives 29, so that boundary is an explicit exception.
+These are ordered markings; counting reversal classes requires their
+fixed points as well.
+
+The [annihilator proof](research/case_study/phase22_excess3_annihilator.md)
+removes the need to import the earlier eventual-polynomiality theorem.
+The complete graph, its interpretation and the kernel census remain
+dependencies. Fresh GAP regeneration reproduced the saved graph exactly
+and checked 731,136 actual meets across the windows and two extensions.
+Independent integer arithmetic verifies the vector identity. This is
+a computer-assisted all-rank result with an explicit finite certificate;
+it is not an inference from several matching counts. Publication priority
+remains unverified.
+
+## 38. One complement argument for linear and unitary generation
+
+The two matrix constructions repeatedly face the same problem. A subgroup
+already projects onto the diagonal part of a block parabolic; it remains
+to prove that the subgroup contains the additive off-diagonal part.
+Write the parabolic as $R\rtimes L$, with $R$ additive. If $R$ has no
+nonzero proper invariant additive subgroup, the unknown intersection
+with $R$ is either all of $R$ or zero. In the zero case, each $g\in L$
+has a unique lift $(c(g),g)$, and multiplication forces
+
+\[
+c(gh)=c(g)+g\,c(h).
+\]
+
+This is a one-cocycle. If every such cocycle is a coboundary
+$c(g)=(g-1)v$, changing the origin by $v$ makes the subgroup block
+diagonal. A unipotent element with a Jordan block larger than either
+diagonal block rules out that possibility. It therefore forces all of
+the additive part, and hence the whole parabolic.
+
+The [common generation theorem](research/case_study/phase23_generation_core.md)
+proves the required splitting for independent factors over every field,
+including characteristic two. For finite-dimensional modules $V,W$ with
+$V^G=W^H=0$, a commuting-factor cocycle identity gives
+$H^1(G\times H,V\otimes W)=0$. No averaging over the groups is needed.
+Independent elementary row and column differences isolate a matrix unit;
+varying their parameters and adding units proves additive irreducibility
+without assuming the subgroup is already a vector subspace. Thus the
+criterion works for any block sizes $a,b\ge2$ and finite or infinite fields.
+
+For the unitary application the factors are related by Frobenius, so
+that product argument does not apply. A torus-weight calculation instead
+eliminates all possible off-diagonal additive polynomials, except at
+two adjacent Frobenius twists in characteristic three. The cubic
+symmetric-power representation realizes the exceptional cocycles.
+Projecting a concrete one to skew-Hermitian matrices gives a proper
+complement in the $q=3$ unitary parabolic that still contains a
+Jordan-three element. The exception is real; the separate finite
+certificate for the earlier $q=3$ polytope construction is still needed.
+
+This theorem replaces specified generation steps in both constructions.
+Surjectivity onto the diagonal factors, the matrix word with the required
+Jordan block, extraction of ambient roots and the intersection property
+remain application-specific proofs. The cohomological mechanisms have
+established prior art, explicitly cited in the note. Independent written
+review and finite exact checks support this synthesis; it supplies no
+additional whole-paper reduction or novelty marker.
+
+## 39. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require

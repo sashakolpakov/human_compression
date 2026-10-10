@@ -415,3 +415,19 @@ claims remain separate, so the principal-result ledger stays at
 **twelve works**. A terminating algorithm, a count of 105 classes, and
 a short proof of the enumeration mechanism do not by themselves supply
 a matched source/replacement proof-length ratio.
+
+The completed third-excess graph now yields the exact cubic count in
+every rank at least four, with an explicit rank-three exception. Its
+[integer-vector certificate](research/case_study/phase22_excess3_annihilator.md)
+proves all later ranks without importing an eventual-polynomiality
+theorem. This removes a proof dependency. It does not give a new measured
+ratio until the same target and background costs are charged on both
+sides. The bounded literature search establishes no verified novelty.
+
+The [common generation theorem](research/case_study/phase23_generation_core.md)
+also replaces the additive-kernel/complement steps in two constructions.
+Its arbitrary-field extension and exact exceptional boundary are useful
+consequences, but the standard cohomological ingredients are credited
+and no matched source-length measurement has been made. Neither addition
+increases the principal-paper count or receives an infinity marker.
+The two measured ratios remain **127/38** and **4/3**.

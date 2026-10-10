@@ -1,0 +1,9 @@
+# Phase 23 publication review
+
+10 October 2026. This snapshot integrates the sealed phase22 third-excess theorem and its separate exact-vector proof, together with the phase23 common generation theorem. The [40-file allowlist](phase23_originals.json) contains only reviewed originals and separate fresh-run addenda. All 104 originals in the preceding phase21/22 allowlists remain byte-identical; 140 explicit path/hash pairs in the new JSON records resolve and agree.
+
+The complete root GAP/NQ regeneration reproduced graph, windows and gluing witnesses byte for byte: 706 windows, 708 states, 1,522 edges and 731,136 actual meets across windows and two extensions. Both graph arithmetic checkers passed. The exact vector identity gives an alternate all-rank proof of the cubic without retaining the separate eventual-polynomiality theorem. The canonical quotient, complete kernel library and finite-state completeness proof remain inputs. The bounded run has no compatibility rejections and its two extra gluings have trivial diagonal intersection; the general theorem's other cases remain written proofs.
+
+The generation note has a separate independent complete proof/code review and a root technical review. Root contributed to the exceptional unitary argument, so its review is not labelled independent. Fresh diagnostic runs passed all 22 check groups, including every matrix and generator product in the explicit F9 complement. The arbitrary-field theorem and coupled criterion remain written proofs; finite checks alone do not establish them.
+
+The registry stays at 157 works and 12 principal-result reductions. The ratios remain 127/38 and 4/3. No infinity marker, new Lean module, external review or established novelty is added. All 22 saved formal reports remain unchanged. Pending table-label adapters and the new formalization attempt are excluded. GitHub publication remains uncompleted.

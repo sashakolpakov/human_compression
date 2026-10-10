@@ -1072,3 +1072,55 @@ and kernel-location arguments are written proofs. The source supplement
 attributes the earlier thesis claim, records a specific printed-witness
 defect and preserves the limits of its selected-section reading. These
 checks do not audit the complete thesis or establish publication novelty.
+
+## Third-excess transition graph and exact all-rank certificate
+
+This run reconstructs all 706 windows from the immutable kernel data,
+verifies their actual intersections, executes both compatibility tests,
+builds the complete budget-three graph and constructs its two additional
+deletion states:
+
+```sh
+python3 research/case_study/phase22_excess3_run.py --output-prefix scratch/excess3/phase22_excess3_final
+python3 research/case_study/phase22_excess3_check.py --prefix scratch/excess3/phase22_excess3_final --output scratch/excess3/recount.json
+cp research/case_study/phase21_rank[345]_census.json scratch/excess3/
+python3 research/case_study/phase22_excess3_annihilator.py --inputs scratch/excess3 --output scratch/excess3/annihilator.json
+```
+
+The first command requires GAP with NQ; the two Python checkers use only
+the standard library. The fresh root run took about 104 seconds and
+reproduced graph, windows and gluings byte for byte. It checked 722,944
+actual window meets and 8,192 meets in the two additional groups. Both
+general compatibility rejection counts are zero in this bounded run,
+and both extra examples have trivial diagonal gluing intersection;
+the general theorem retains its written proof for the other cases.
+
+The separate integer-vector checker verifies `(T-I)^3 v7=125e` and
+`Te=e` in all 2,832 coordinates. The binomial operator theorem then
+gives the all-rank cubic; ranks four through six are handled separately
+and rank three remains exceptional. This is independent arithmetic on
+the exact graph, not an independent implementation of GAP's group
+algorithms. See the [root audit](research/case_study/phase22_excess3_root_audit.md).
+
+## Common generation theorem and its exceptional complement
+
+Copy both the checker and its proof input, since the checker binds the
+proof hash when writing its new report:
+
+```sh
+mkdir -p scratch/generation
+cp research/case_study/phase23_generation_core_check.py scratch/generation/
+cp research/case_study/phase23_generation_core.md scratch/generation/
+python3 scratch/generation/phase23_generation_core_check.py
+```
+
+Python with SymPy is required. Expected output is 22 passing check groups,
+including all 5,184 cocycle equations for the characteristic-two product,
+all 720 explicit unitary-complement matrices over F9 and 2,880 products
+by a verified generating set. The nilpotent ranks are 2,1,0, certifying
+the exceptional Jordan type (3,1). Another 2,880 integer parameter cases
+corroborate the all-parameter weight argument. The universal mathematical
+proof remains in the [note](research/case_study/phase23_generation_core.md);
+the [independent review](research/case_study/phase23_generation_core_independent_audit.md)
+and [root technical review](research/case_study/phase23_generation_core_root_audit.md)
+have distinct roles. These additions supply no new Lean module in this snapshot.
