@@ -71,6 +71,8 @@ The [label-eleven obstruction](LABEL_ELEVEN_OBSTRUCTION.md) gives a
 complete negative answer to Li–Zhang’s preprint Conjecture 3.7: every
 rank d≥5 is excluded at that label. The full proof, independent review,
 finite certificates and precise Lean coverage are included.
+The [edition audit](research/case_study/phase220_F014_edition_review.md)
+records the remaining limits on journal-version and priority claims.
 
 The [surface construction for minimal covers](INFINITE_MINIMAL_COVERS.md)
 proves infinitely many finite minimal regular covers throughout four
