@@ -127,7 +127,12 @@ two independently implemented computational checks pass. The earlier
 [two-primary analysis](COVER_TWO_PRIMARY.md) and
 [scoped Lean obstruction](research/case_study/formal/OddKernelWord.scope.md)
 remain separate certificates; the full classification is not formalized.
-Global uniqueness remains unproved. The
+The separately reviewed [construction with enlarged ends](COVER_ENLARGED_ENDS.md)
+now proves a second minimal regular cover throughout this Γ2 family. An
+explicit degree-`3^130` cover has a minimal odd-degree descendant, distinct
+from the double cover. Its full finite certificate and all-parameter proof
+pass independent review and fresh computation. The particular minimal
+descendant is not selected, and historical novelty remains unverified. The
 [expanded attribution audit](research/case_study/phase100_cover_priority_completion_report.md)
 credits classical universal amalgamation and retains material gaps in
 historical-priority verification.

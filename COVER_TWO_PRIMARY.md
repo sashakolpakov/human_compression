@@ -6,7 +6,8 @@ produce **the same minimal double cover**. The subsequent
 are exactly two covers with injective end maps, of degrees four and two,
 throughout the family. Only the double cover is minimal. This page records
 the earlier constructions, finite census and odd-kernel obstruction used
-along the way. Global uniqueness remains unproved.
+along the way. A separate [construction with enlarged ends](COVER_ENLARGED_ENDS.md)
+now proves a second minimal cover throughout this family.
 
 The input is Cunningham–Pellicer, [*Tight chiral polytopes*, author
 version](https://arxiv.org/pdf/2009.04566v1), Table 2 row Γ2 and Theorem 4.8:
@@ -147,6 +148,8 @@ Compress_11.
 
 The later [completion theorem](COVER_COMPLETION.md) closes the entire
 injective-end class, with arbitrary kernels, for this specified family.
-Noninjective ends, the other source families and unrestricted multiplicity
-remain outside these conclusions. The [odd-prime theorem](COVER_FAMILY.md) and
+The subsequent [enlarged-end theorem](COVER_ENLARGED_ENDS.md) proves
+unrestricted multiplicity for this Γ2 family. A classification of all
+minimal covers and the remaining two-primary families is still absent.
+The [odd-prime theorem](COVER_FAMILY.md) and
 [general cover-kernel criteria](COVER_KERNELS.md) retain their separate scopes.

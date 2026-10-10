@@ -100,7 +100,9 @@ These are full group orders, unlike the rotation-group orders in the
 earlier construction table. Universality proves completeness even for
 covers not initially assumed finite. The double cover agrees, as a marked
 cover over G, with the earlier construction. A second unrestricted minimal
-cover would have to enlarge at least one end.
+cover must enlarge at least one end. The separately reviewed
+[enlarged-end construction](COVER_ENLARGED_ENDS.md) now proves that such a
+minimal cover exists for every stated parameter; it has odd degree.
 
 ## Attribution and verification
 

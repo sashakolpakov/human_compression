@@ -15,6 +15,16 @@ The current registry has seventeen principal-result candidates, twelve sources
 in reviewed assemblies and forty-three scoped Lean components. These are different
 coverage measures, not a corpus compression ratio.
 
+The [Γ2 construction with enlarged ends](../COVER_ENLARGED_ENDS.md) has a
+separate [22-file record](phase86_originals.json), with eighteen unchanged
+author/reviewer exports and four root records. It proves existence of a
+second minimal regular cover throughout the stated family and the stated
+universal-kernel join equality. Fresh root runs regenerate the full finite
+certificate, pass the independent 136-pair computation and repeat all six
+changed-input and three occupied-output controls. The all-parameter proof
+remains written, historical priority is unverified, and all manuscript,
+measurement and Lean counts remain unchanged.
+
 The separately reviewed [odd-prime cover family](../COVER_FAMILY.md) has its
 own [original-file bindings](phase72_originals.json), complete written
 reviews and fresh public GAP replay. The [41st Lean component](phase73_originals.json)

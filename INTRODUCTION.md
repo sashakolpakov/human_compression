@@ -4343,4 +4343,52 @@ conditions. The [complete proof and review route](COVER_COMPLETION.md)
 separates the classical machinery, repository calculations, computational
 certificate and remaining historical-priority questions. The full
 classification has no new Lean formalization. Any different minimal cover
-must enlarge at least one end; that is the next proof-search branch.
+must enlarge at least one end. The construction below establishes its
+existence throughout the same Γ2 family.
+
+## Allowing the end groups to grow
+
+Fixing both end groups makes the preceding completion small. To obtain a
+different minimal cover, release those local relations and build an affine
+extension in which both ends can acquire translation kernels. The same
+marked incidence problem still determines which intersections must hold.
+
+For the fixed quotient D of order 1,024, use
+`E=F3[⟨r0⟩\D] ⊕ F3[⟨r3⟩\D]`. The two coset sets supply a permutation
+basis. Four explicit affine lifts satisfy the involution and string
+commutations. Schreier rewriting computes their full translation kernel L;
+the orbit span M of the literal medial relation `(h1h2)^4` is a subspace
+of L. Exact arithmetic gives dimensions 257 and 127, leaving a covering
+kernel of dimension 130.
+
+The crucial test goes beyond ranks. Above a shared base element g, each
+parabolic has an affine fiber `t_I(g)+L_I`. After quotienting by M, two
+such fibers intersect exactly when their representative difference lies
+in `L_I+L_J+M`. Their intersection dimension is computed from the same
+three subspace ranks. This proves the required subgroup equality by
+checking both the kernel and every extra projected fiber. The independent
+calculation checks all 16 parabolics and all 136 unordered subset pairs.
+
+The uniform source group G acts through D. Its cyclic 2-group kernel N
+lies in the medial subgroup. Cubing any affine lift above n removes its
+translation, and cubing permutes N. Thus the generated group contains the
+standard copy of N and equals the required full pullback. The same argument
+applies to both ends and the medial group; separate local intersection
+checks complete the proof. Every stated Γ2 parameter therefore has a
+polytopal cover of type `{24,q,24}` and degree `3^130`.
+
+Choose an inclusion-maximal J≤ker(H→G) that is normal in H and for which
+H/J remains polytopal. The quotient is a minimal regular cover, has
+odd degree greater than one, and differs from the earlier double cover.
+This proves existence without identifying that maximal subgroup. In the
+universal relation-kernel lattice, the two explicit kernels have product
+equal to the kernel of G because its index divides both `3^130` and two.
+
+The [complete result and attribution](COVER_ENLARGED_ENDS.md) distinguish
+the original family and earlier multiplicity proposal from this affine
+construction. The [independent review](research/case_study/phase104_expanded_end_review_audit.md)
+checks the uniform proof as well as the finite certificate. The scoped
+Lean certificate covers general divisibility and finite maximality, while
+the construction and geometric interpretation retain written proofs.
+Historical priority remains unverified; this standalone theorem changes
+neither the manuscript intake nor its measured compression ratio.

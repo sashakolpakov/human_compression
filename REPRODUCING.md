@@ -5,6 +5,38 @@ for the public runners. A successful hash check, a fresh computation, and a
 Lean compilation establish different things; the commands below keep those
 claims separate.
 
+## Covers with enlarged ends
+
+The [Γ2 theorem](COVER_ENLARGED_ENDS.md) has a standard-library finite
+checker. Use new output directories:
+
+```sh
+python3 -O research/case_study/phase102_expanded_end_covers_check.py --expected-certificate research/case_study/phase102_expanded_end_covers_certificate.json --output-dir /tmp/enlarged-cover-replay
+python3 -O research/case_study/phase102_expanded_end_covers_controls.py --successful-replay-dir /tmp/enlarged-cover-replay --output-dir /tmp/enlarged-cover-controls
+```
+
+The first command rebuilds the fixed group, affine action, complete kernel
+spaces and all necessary recursive intersections, then compares the
+generated certificate byte for byte. The second checks six altered inputs
+and refuses three occupied outputs. Both work from distributed files.
+
+The [independent checker](research/case_study/phase104_expanded_end_review_check.py)
+uses different finite-field arithmetic and checks all 136 subset pairs.
+Its outer manifest also verifies the original private primary sources and
+one unexported context-only note. A complete replay therefore requires the
+recorded original study tree, supplied explicitly:
+
+```sh
+python3 -O research/case_study/phase104_expanded_end_review_check.py --study-root /path/to/original-study --output-dir /tmp/enlarged-cover-independent
+```
+
+The saved independent report and [fresh root rerun](research/case_study/phase111_expanded_end_root_admission.md)
+are public. Neither finite checker proves the all-parameter pullback,
+minimal-descendant interpretation or historical novelty; those boundaries
+are stated in the written theorem and independent review. The separate
+OddCoverSeparation Lean component formalizes only its general algebraic
+statements.
+
 ## Snapshot integrity and saved results
 
 ```sh

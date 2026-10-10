@@ -149,11 +149,20 @@ no additional Lean component or measured factor follows.
 
 The [latest attribution comparison](research/case_study/phase100_cover_priority_completion_report.md)
 explicitly credits established universal-amalgamation machinery and
-records which original proofs remain unread. The immediate work is covers
-with enlarged ends and a complete thirteenth-source intake.
-The latter are necessary for any second minimal cover in the Γ2 family.
-The general and complete five-family multiplicity
-conjectures remain unproved here. Proof review and computational diagnostics
+records which original proofs remain unread. A separate
+[enlarged-end theorem](COVER_ENLARGED_ENDS.md) now gives every specified Γ2
+parameter an explicit regular polytopal cover of degree `3^130` and type
+`{24,q,24}`. Finite descent proves a distinct minimal odd-degree cover,
+without selecting its exact degree or normal kernel. Coprime covering
+indices also prove the stated universal-kernel join equality. Independent
+review and fresh root computations pass, including all 136 subset-pair
+intersections. This is a written and computational family theorem; the
+Lean component above supplies only its stated general algebraic facts.
+
+The immediate work is uniform transport to the remaining two-primary
+families and a complete thirteenth-source intake. The general and complete
+five-family multiplicity conjectures remain unproved here. Proof review and
+computational diagnostics
 are distinct from establishing that a result was previously open; no
 historical-priority or newly solved open-conjecture marker is cleared.
 
