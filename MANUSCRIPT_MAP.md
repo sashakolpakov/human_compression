@@ -1,43 +1,19 @@
-# Manuscripts and source contracts
+# Manuscript navigation
 
-The product is [umbrella U and coherent application manuscripts](MANUSCRIPT_PROGRAM.md).
-Each has a descriptive mathematical title; its letter is a stable identifier.
+Start with the [current topic programme](MANUSCRIPT_PROGRAM.md).
+A topic comprises its own umbrella U_A and several complete application
+papers Aᵢ matched to historical manuscript contracts LAᵢ.
 
-| Manuscript | Current edition and scope |
+| Current navigation | Purpose |
 |---|---|
-| [U: Marked groups, kernels and intersections](UMBRELLA.md) | 16 pages; 30 complete statements and proofs shared by the modules |
-| [A: Construction and classification of two-group polytopes and hypertopes](MODULE_A.md) | 24 pages; declared principal contracts of L032, L035, F013, F016, N009 and L034, plus four required computational artifacts |
-| [B: Forest coordinates and primitive coset geometries](MODULE_B.md) | 16 pages; declared contracts of N001, N003, N008 and L030 |
-| [C: Halving and Petrial operations on regular geometries](MODULE_C.md) | 18 pages; corrected principal contracts of L088, N013 and L108, with complete required finite programs |
-| [D: Marked actions, field orbits and geometry enumeration](MODULE_D.md) | 18 pages; principal contracts of L066, L074 and L104, plus qualified L073 census/shadow component and required programs |
+| [Current work index](CURRENT_REPORT.md) | Reviewed proof material and subsequent applications |
+| [Existing umbrella manuscript](UMBRELLA.md) | Shared theorem source for the topic umbrellas |
+| [A](MODULE_A.md), [B](MODULE_B.md), [C](MODULE_C.md), [D](MODULE_D.md) | Reviewed monolithic drafts awaiting topic-family restructuring |
+| [Source registry](PAPER_MAP.md) | Named intake and source coverage qualifications |
+| [Topic complexity](TOPIC_COMPLEXITY.md) | Full independent umbrella charges and complete application costs |
+| [Dependency pilot](DEPENDENCY_PILOT.md) | A specific source/replacement proof comparison |
+| [Question results](CONJECTURE_RESULTS.md) | Separate conjecture and unresolved-case work |
+| [Historical archive](archive/README.md) | Previous compilations, measurements and reports |
 
-The four application bundles contain sixteen distinct principal-contract sources. Their corrected
-contracts and retained inputs are explicit. This counts source membership,
-not a sixteenfold length saving. The [complete U+A measurement](MEASUREMENT_A.md)
-is admitted under its stated encoding conventions; B, C and D remain unmeasured.
-Full Lean formalization remains incomplete.
-
-The separately reviewed [Recognizable extensions and finite incidence representations](FINITE_INCIDENCE_REPRESENTATIONS.md)
-application recovers F010's principal constructive theorems, with its
-local example qualifications explicit. It adds one source-level principal
-contract but has not been integrated into the fixed A–D editions. The
-[Livingstone-graph attachment](GRAPH_INCIDENCE.md) and
-[design-residue attachment](DESIGN_RESIDUES.md) remain qualified partial
-source work. Their costs and scopes do not silently enlarge the contracts
-or alter the measurements of an earlier module edition.
-
-The separate [Equal-label polytopes and quadratic symmetries](EQUAL_LABEL_POLYTOPES.md)
-track studies open questions. Its reviewed family results and formal scopes
-are kept separate from known-result compression. Titles for future modules
-will follow their actual mathematical contents.
-
-The [living paper map](PAPER_MAP.md) records all 161 indexed works and
-existing source-level derivations. Older assemblies are reusable proof
-material. Their [exact intake](COMPRESS_13.md#exact-intake), corrections and
-historical measurements remain attached to those earlier artifacts.
-
-The [current report](CURRENT_REPORT.md) distinguishes verified material,
-active work and unmeasured claims. The [measurement rules](PROOF_LIBRARY.md)
-charge complete U once, complete applications separately, and each source
-once in a combined comparison. The [historical measurement archive](MEASUREMENT.md)
-does not supply a factor for a new edition.
+The earlier [manuscript map](archive/MANUSCRIPT_MAP.md) remains a dated
+record. Its old module labels do not establish the new decomposition.

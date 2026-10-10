@@ -1,70 +1,28 @@
-# Module C: Halving and Petrial operations on regular geometries
+# Topic material C: Halving and Petrial operations on regular geometries
 
-The separately reviewed [Graph incidences and stabilizer orbits](GRAPH_INCIDENCE.md)
-attachment connects C's two J1 polytope markings to the literal graph
-objects of L068. One source construction agrees exactly; the other needs
-an explicit incidence repair. Its additional costs and partial coverage
-are recorded separately from this three-source edition.
+**Status: reviewed monolithic draft to rework into a topic family.**
+This is usable proof material under its original contract. It is not
+already the requested family C₁, C₂, …, and its earlier
+measurement does not establish the new topic's complexity.
 
-Read the complete [18-page manuscript](research/case_study/phase150_module_C_render/application.pdf)
-or its [Markdown source](research/case_study/phase150_module_C_manuscript.md).
-The [independent review](research/case_study/phase162_module_C_review.md)
-and [root admission](research/case_study/phase170_module_C_root_admission.md)
-accept the three corrected principal-result contracts below, with the
-retained inputs and required finite programs stated explicitly.
+Read the [complete PDF](research/case_study/phase150_module_C_render/application.pdf),
+[Markdown manuscript](research/case_study/phase150_module_C_manuscript.md),
+[source-contract ledger](research/case_study/phase150_module_C_ledger.json) and
+[independent/publication review](research/case_study/phase162_module_C_review.md).
+Its original intake is L088, N013 and L108. The ledger's restrictions, retained
+inputs and corrections govern that statement; principal-contract
+coverage does not assert that every sentence of a source is recovered.
 
-    U + Halving and Petrial operations on regular geometries
-      + complete J1 construction and census programs
-        -> corrected principal results of L088, N013 and L108.
+The new papers must retain exact geometric identifications, the full required J1 construction/census programs and every corrected source qualification.
 
-| Source | Results derived |
-|---|---|
-| Hartley–Leemans, *On the thin regular geometries of rank four for the Janko group J1* (2005), L088 | All six constructions and their invariants, exhaustive rank-four classification, and exclusion of higher ranks for thin regular residually connected geometries |
-| Montero–Ivić Weiss, *Locally Spherical Hypertopes from Generalised Cubes* (2020, v1), N013 | Halving, parity groups, polygon parameters, locally spherical cases, exceptional orders and the exact original and halved toroidal geometries |
-| Bonheure–Buekenhout–Leemans, *On the Petrials of thin rank 3 geometries* (2001), L108 | Thinness obstruction, connectivity, faithful regularity and recovery by a second Petrial, including infinite groups and residues, with corrected action-kernel and length assertions |
+The next organisation is a full topic umbrella U_C and complete
+application papers matched to historical manuscripts. The full umbrella
+is charged independently within this topic, including any overlap with
+other topics. See the [programme](MANUSCRIPT_PROGRAM.md) and
+[topic complexity protocol](TOPIC_COMPLEXITY.md).
 
-The common argument tracks a change of chamber generators and the objects
-retained by that change. Endpoint conjugation has an exact subgroup
-intersection criterion. Graph double covers realize halving, while the
-kernel of the action on retained vertices and edges controls Petrials.
-The manuscript proves the geometry, toroidal lattice identifications,
-finite classification and recovery arguments in full.
-
-The [ledger](research/case_study/phase150_module_C_ledger.json) attaches
-35 source and qualification records to 29 proof spans. Danzer's cube
-construction, classical Coxeter results and the complete TomLib J1
-subgroup catalogue remain attributed inputs. The old geometry census is
-not an input to our census. Source figure labels, nondegeneracy and rank
-qualifications, and the false unconditional Petrial assertions are
-addressed explicitly. L108 was read through a complete saved authored
-rendering; its original PDF remains unavailable.
-
-The complete C text is 68,972 UTF-8 bytes. All of U adds 61,576 bytes;
-the two finite programs and their standalone runner add 15,578. The
-resulting core inventory is **146,126 bytes**. Binding, planning and render
-infrastructure are [itemized separately](research/case_study/phase150_module_C_costs.json).
-The 18 exposition pages exclude U and the programs. A matched source
-compression ratio has not yet been measured.
-
-Independent review read the entire manuscript, all three available source
-texts and both complete programs, and inspected all 18 rendered pages.
-Fresh public checks verify the exact bindings of proofs, dependencies and
-earlier executed census records and reject eight altered-input cases.
-The unchanged census was not rerun for this publication. Its recorded
-execution checks 100,016 rank-four extensions and 21,352 rank-five extensions.
-Full Lean formalization remains incomplete; the existing endpoint helper
-covers only a fixed-overlap subgroup identity.
-
-```sh
-python3 -B -O research/case_study/phase150_module_C_verify.py --output /tmp/NEW-C-integrity.json
-python3 -B -O research/case_study/phase162_module_C_checks.py --output-dir /tmp/NEW-C-independent
-```
-
-To rerun the full finite construction and census with GAP and TomLib:
-
-```sh
-python3 -B research/case_study/phase150_module_C_run.py --output-dir /tmp/NEW-C-J1
-```
-
-These checks do not formalize the uniform written proofs. Open-question
-results remain in the separate [question-results catalogue](CONJECTURE_RESULTS.md).
+The [archived edition reader](archive/MODULE_C.md) preserves its
+full earlier scope, reproduction commands and accounting. Frozen proof
+bodies, reviews and certificate paths have not changed. The
+[formal scope index](research/case_study/formal/README.md) records the
+limits of the existing Lean components.
