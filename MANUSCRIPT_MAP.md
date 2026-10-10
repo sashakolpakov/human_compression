@@ -1,7 +1,8 @@
 # Manuscripts and source contracts
 
 The product is now [umbrella theory U and coherent application modules](MANUSCRIPT_PROGRAM.md).
-U and Module A are being written; no new modular length factor is approved.
+Full drafts of [U](UMBRELLA.md) and [Module A](MODULE_A.md) are available;
+no new modular length factor is approved.
 Their titles are **Marked groups, kernels and intersections** (U) and
 **Construction and classification of two-group polytopes** (A).
 Module A begins with L032, L035, F013, F016 and N009. Further sources will

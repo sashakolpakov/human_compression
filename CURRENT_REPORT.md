@@ -3,10 +3,13 @@
 The project is being reorganized into **umbrella theory U and focused
 application manuscripts A, B, C, …**, each intended to recover a coherent
 bundle of source results in about 20–25 pages. U and the first application
-volume are in preparation; no modular compression factor is yet measured.
+volume now have complete drafts; no modular compression factor is yet measured.
 The [programme](MANUSCRIPT_PROGRAM.md) specifies their mathematical scope:
 **U: Marked groups, kernels and intersections** and **A: Construction and
-classification of two-group polytopes**.
+classification of two-group polytopes**. Read [U's 28-statement draft](UMBRELLA.md)
+and [A's 21-page manuscript](MODULE_A.md). Root has read both complete
+proof texts and verified the frozen export and rebuild; formalization,
+final source admission and matched measurement remain incomplete.
 
 | Intake layer | Count |
 |---|---:|
@@ -22,10 +25,11 @@ is not an exhaustive bibliography of all collaborators.
 
 Module A begins with five related two-power-group papers from 2018–2026:
 L032, L035, F013, F016 and N009. Their existing derivations and certificates
-are being reworked, not independently rediscovered. A supported-kernel
-theorem may unify previously separate construction arguments; its general
-proof and every application hypothesis are under independent scrutiny.
-Full classification and geometric obligations remain explicit.
+have been reworked. The supported-kernel theorem supplies the edge, path
+and fork constructions; all classification and geometric arguments remain
+explicit. The ledger binds 44 source records and 17 multipart clauses.
+The complete raw cost is 190,995 bytes including U and all four external
+computational artifacts; A's 21 pages alone are not the whole proof cost.
 
 The preceding combined manuscripts are a source bank, not the product,
 organizing structure or benchmark of this programme. The latest working

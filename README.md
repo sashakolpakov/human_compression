@@ -23,15 +23,19 @@ and [method and measurement rules](PROOF_LIBRARY.md).
 
 The active manuscripts have descriptive mathematical titles:
 
-- **Umbrella theory U: Marked groups, kernels and intersections.**
-- **Module A: Construction and classification of two-group polytopes.**
+- **[Umbrella theory U: Marked groups, kernels and intersections](UMBRELLA.md).**
+- **[Module A: Construction and classification of two-group polytopes](MODULE_A.md).**
 
-**Both are being written and independently checked.** U develops
+**Complete drafts are available for review:** U has 28 statements with
+proofs; A has 21 rendered pages. U develops
 exact kernels, marked subgroup intersections, compatible extensions and
 finite actions. Module A starts with five related papers on groups and
 polytopes of two-power order, spanning 2018–2026. Its source-specific
 classification and geometric arguments remain complete application proofs.
 Additional sources enter only when their main results actually follow.
+The [root review](research/case_study/phase127_modular_root_review.md)
+records a complete proof reading and fresh reproduction checks. Full
+formalization, final source admission and matched measurement remain pending.
 
 The previous combined manuscripts are working source material. Their
 proved lemmas, computations, source readings and certificates are being

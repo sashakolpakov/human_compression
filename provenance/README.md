@@ -323,3 +323,9 @@ fiber-product theorem and paired-generator corollary in Lean after an
 independent proof review and fresh public compilation. The repository now
 has 44 scoped Lean certificates; the geometric cover applications remain
 separate obligations.
+
+The [phase-92 record](phase92_review.md) distributes the first complete
+U+A drafts, with 28 umbrella statements and a 21-page five-source
+application. Root's full proof reading, exact rebuild and corrected
+portable reproduction are recorded separately from pending source
+admission, formalization and matched measurement.

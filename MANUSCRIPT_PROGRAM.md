@@ -14,6 +14,9 @@ deductions, not thematic similarity or a shared encoding.
 
 ## Umbrella theory U: Marked groups, kernels and intersections
 
+The [complete draft](UMBRELLA.md) has 28 statements with proofs and an
+exact attribution, dependency and formal-coverage ledger.
+
 The draft develops exact image/kernel transport, marked parabolic
 comparison, compatible extensions with kernels supported on selected
 sets of generators, finite actions and relative generation. Existing
@@ -24,6 +27,9 @@ and repository arguments. Neither a new universal theory nor historical
 priority is presumed from common notation.
 
 ## Module A: Construction and classification of two-group polytopes
+
+The [complete application draft](MODULE_A.md) is available as a 21-page
+PDF with the full source-contract ledger and required computational inputs.
 
 The initial coherent source bundle is:
 
@@ -36,12 +42,12 @@ The initial coherent source bundle is:
 | F013 | Hou–Schulte, *String C-groups of 2-power order project onto a common string C-group* (2026 preprint) | Principal common-quotient and covering results |
 
 These five are the starting bundle, not a claim that a twelve-paper module
-has already been completed. Existing proofs, exact source contracts and
-certificates are available for reworking. The current proposed common
-construction covers edge inflation and square-section assembly; finite
-classification, universal presentations and geometric recognition still
-need their full application arguments. Enlarging this bundle requires
-further proved source reductions.
+has already been completed. Their existing proofs and certificates have
+been reworked into a coherent application manuscript. The draft includes
+edge inflation and square-section assembly as well as complete written
+classification, universal-presentation and geometric arguments. Full
+formalization and final source admission remain pending. Enlarging this
+bundle requires further proved source reductions.
 
 Later modules will group other related papers around the actual reusable
 machinery they need. Their intake will be frozen before a compression
