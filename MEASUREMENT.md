@@ -63,7 +63,17 @@ constant, not a free contribution to an unrelated corpus measurement.
 This is a theorem about descriptions of mathematical objects. It is
 not a numerical ratio between the literature's proofs and ours. The
 finite library multiplicities have not been computed in general, so
-this statement does not assign numerical coefficients or a corpus ratio.
+this statement does not assign general numerical coefficients or a corpus ratio.
+
+The [first-excess classification](research/case_study/phase17_k1_classification.md)
+now gives the exact special case a₁(d)=5d−10 for every d≥3. An optimal
+fixed-length class index therefore has ceil(log₂(5d−10)) bits, conditional
+on d and the declared decoder. For example, rank 100 has 490 classes and
+requires nine index bits. The rank, decoder, theorem and any proof
+certificate are additional information whenever the application has not
+already fixed them. This object-index cost is not a source-proof ratio.
+The 2018 rank-five source count is a rederivation within this theorem,
+not a newly solved conjecture or an infinity-marker entry.
 
 ## The infinity marker
 

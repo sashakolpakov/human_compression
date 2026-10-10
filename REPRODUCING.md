@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the twenty saved Lean reports
+checks local documentation links, and checks the twenty-one saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all twenty certificates and their unformalized boundaries. With Git
+describes all twenty-one certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -630,7 +630,7 @@ files are preserved. The compiled dependency cache and the Lean toolchain are
 trusted inputs. Revision checking does not independently authenticate cached
 binaries or reproduce a clean build of the toolchain.
 
-The twenty certificates cover intersection transport, field and matrix
+The twenty-one certificates cover intersection transport, field and matrix
 obstructions, connectivity and chamber orbits, torsor partitions, coordinate
 kernels, the Suzuki matrix word, a local string-intersection obstruction,
 exact Boolean-shadow witnesses of at most two vertices, and common-coset-point
@@ -713,6 +713,51 @@ and checks every one of their 16 marked subgroups and 256 meets. Root and
 independent agent executions agree on all mathematical outputs. This
 supports the written all-field proof; there is no new Lean formalization
 of this matrix-family theorem or certification of publication priority.
+
+## First-excess and diagonal unitary checks
+
+The first-excess [classification](research/case_study/phase17_k1_classification.md)
+has a uniform written proof and separate finite diagnostics:
+
+```sh
+mkdir -p scratch/phase17
+gap -q -T research/case_study/phase17_k1_check.g > scratch/phase17/k1.log
+gap -q -T research/case_study/phase17_unitary_diagonal_check.g > scratch/phase17/unitary_one.log
+gap -q -T research/case_study/phase17_unitary_twisted_check.g > scratch/phase17/unitary_three.log
+python3 research/case_study/phase17_unitary_diagonal_independent_check.py --output scratch/phase17/symbolic_one.json
+python3 research/case_study/phase17_unitary_twisted_independent_check.py --output scratch/phase17/symbolic_three.json
+```
+
+The k1 script requires GAP's NQ package (recorded versions GAP 4.15.1 and
+NQ 2.5.11). It tests all 165 nonzero parameter vectors at ranks 3–5:
+4,616 parabolic orders and 138,432 exact meets, with 5, 10 and 15 accepted
+markings. It also verifies every rejected vector against the support
+criterion. These are bounded checks; the proof establishes all ranks.
+
+The unitary scripts construct natural permutation actions and check
+generation, orders and all marked subgroup intersections. The first uses
+q=5,9,13,17 and the second q=3,7,11, totaling 112 subgroup closures and
+1,792 meets. Their independently authored symbolic checkers pass 32
+identities each using SymPy 1.14.0, with the correct field conjugation
+in each branch. The author's separate symbolic checks pass 86 identities.
+The [standalone q=3 script](research/case_study/phase17_unitary_q3_check.g)
+also constructs the exceptional base using explicit field coordinates.
+Generation at q=3 is a finite proof input; generation at the other fields
+and the all-field intersection argument remain written proofs.
+
+Compile the new narrow formal component through the existing runner:
+
+```sh
+python3 research/case_study/formal/verify_lean.py PrincipalKernelIntersections.lean
+```
+
+Supply `--packages` and `--lean` as above if using an existing pinned
+checkout. The [fresh exported-source report](provenance/phase17_kernel_public_compile.json)
+records successful compilation. The earlier twenty source files and
+historical reports remain unchanged. The Lake target and portable runner
+now both list all twenty-one modules. This corrects the older Lake target's
+omission of `GradedSupport` and `BooleanRetractions`; their historical
+certificates and explicit runner verification were already present.
 
 ## GAP computations and retained catalogues
 

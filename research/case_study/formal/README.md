@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are twenty certificates. To compile them on another machine, install Git,
+There are twenty-one certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the twenty modules, but does not produce the runner's JSON reports.
+way to compile the twenty-one modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,7 +95,7 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all twenty source hashes match the historical successful reports
+This checks that all twenty-one source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
 Lean or verify a proof anew. The saved runs print only the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The detailed boundaries below
@@ -253,3 +253,15 @@ fiber-product presentation. Its [scope note](BooleanRetractions.scope.md)
 separates these two formal implications from the toroidal lattice,
 finite-order and geometric arguments. The public runner freshly compiled
 it with the pinned dependencies, preserving all earlier saved reports.
+
+[PrincipalKernelIntersections.lean](PrincipalKernelIntersections.lean) proves
+the full intersection property for a monotone family of subgroups when
+their images have exact intersections and the possible kernel involution
+belongs to a subgroup precisely when its index set contains a fixed
+support. Its more general first lemma corrects a common lift by a kernel
+element. This proves a reusable implication in the first-excess census;
+the actual seed extensions, kernel-membership calculation, completeness
+and 5d−10 count remain written proofs. The [scope](PrincipalKernelIntersections.scope.md)
+and [saved report](PrincipalKernelIntersections.check.json) specify that
+boundary. The new [fresh public compilation](../../../provenance/phase17_kernel_public_compile.json)
+checks the exported source independently of its historical report.
