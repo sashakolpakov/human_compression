@@ -1,5 +1,11 @@
 # Provenance and verification scope
 
+The [F014 edition audit](../research/case_study/phase220_F014_edition_review.md)
+records the inspected preprint, journal preview and bounded literature
+search. It leaves the complete journal conjecture and priority unresolved.
+The [toroidal question explanation](../TOROIDAL_QUESTION.md) separates
+finite examples from the universal groups; it adds no new result credit.
+
 The [surface-cover admission](phase116_review.md) strengthens four
 family results to infinitely many finite minimal regular polytopal
 covers. It adds one scoped Lean file with six declarations. The

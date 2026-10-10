@@ -8,8 +8,11 @@ failure of one proposed construction.
 
 The [complete manuscript](research/case_study/phase212_n11_obstruction.md)
 and [universal-group proof](research/case_study/phase214_universal_bounds.md)
-give the argument in detail. The conjecture's wording in the 2026 journal
-edition and historical priority remain unverified.
+give the argument in detail. The
+[edition and literature audit](research/case_study/phase220_F014_edition_review.md)
+confirms that arXiv still lists only v1. The journal introduction was
+revised, but its complete conjecture section has not been obtained.
+The journal formulation and historical priority remain unverified.
 
 ## The proof
 
