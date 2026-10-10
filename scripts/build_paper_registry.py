@@ -19,11 +19,24 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json",
           "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json",
           "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json",
-          "phase26_access.json", "phase30_source_intake.json", "phase31_cover_prior_art.json")
+          "phase26_access.json", "phase30_source_intake.json", "phase31_cover_prior_art.json", "phase32_L003_source_intake.json",
+          "phase32_L111_intake.json", "phase32_L111_scope.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
 UPDATES = {
+    "L003": (
+        "partial_progress", "Section9 rotational presentation with ((3,0),(2,0),(1,1),(s,0)); algebraic consequence near Problem9.2",
+        "An exact216-state integer-voltage action proves the displayed group infinite for every positive6|s. Complete finite Schreier data describe its image as a rank-six free abelian extension of an order216 quotient. Lean proves Infinite of the literal s6 PresentedGroup; exact finite quotients216m6 of the image follow in the written proof.",
+        "Standard free abelian subgroup structure and the elementary Schreier telescoping argument; Primary source presentation and parameter substitution, independently read",
+        "phase32_L003_infinite_presentation.md;phase32_L003_manifest.json;phase32_L003_rank_audit.md;phase32_L003_root_audit.md;phase32_L003_root_second_audit.md;phase32_L003_formal_manifest.json;formal/Phase32L003Infinitude.scope.md",
+        "Literal Problem9.2 remains unsettled by this package. Infinite presented groups can have suitable finite quotients; exact geometric residues and finite quotient conditions are separate obligations. Other parameter values, principal source results, current priority and end-to-end formalization remain unverified. No infinity marker."),
+    "L111": (
+        "component_rederived", "Complete Theorem4.1, including arbitrary rank and both A1/A2/A3 and B1/B2 input formulations",
+        "Exact chamber and residue maps recover construction, rank-two classes, residual and strong connectivity in both directions, designated action and disjoint-pair iteration. Full parity monodromy explains the positive finite-rank cover adapter; direct path and truncation proofs extend the complete statement to arbitrary rank.",
+        "Elementary graph path parity; Source graph convention and geometry axioms, including extension of arbitrary flags to chambers",
+        "phase32_L111_theory.md;phase32_L111_arbitrary_rank.md;phase32_L111_scope.json;phase32_L111_manifest.json;phase32_L111_rank_audit.md;phase32_L111_root_audit.md;phase32_L111_arbitrary_root_audit.md;phase32_L111_check.json",
+        "Only one complete numbered construction theorem. Complete primary body/PDF, hypothesis-conversion corollary, section6 and application tables are outside this package. No principal-paper credit, matched ratio or novelty claim."),
     "L007": (
         "proposed_new_result", "Section 7 omitted even-exponent non-tight existence range, 6 <= m <= p+1",
         "Central cyclic fiber-product lift preserves intersections and forbids a reversing automorphism.",
@@ -309,6 +322,8 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "L003": ("selected_sections_read", "Primary internal pages17–19: complete rotational presentation, Table8, surrounding finite-family prose and Problem9.2; later2021 first-family theorem and corrections compared. No current-resolution claim.", "phase32_L003_source_intake.json"),
+    "L111": ("selected_sections_read", "Primary indexed definitions, graph convention, both theorem input formulations, complete verbal Theorem4.1 and Construction5.1, and relevant section5 proofs. Arbitrary-rank flag quantifiers independently checked. Complete body/PDF and application tables remain unavailable.", "phase32_L111_scope.json"),
     "F015": ("selected_sections_read", "Sections2.2–2.4 and orthoplex Section3.2 including Proposition13; not all family proofs.", "phase26_access.json"),
     "L088": ("full_text_read", "All ten primary pages and six construction proofs read; figures on pages9–10 independently visually checked. The exhaustive introductory classification is retained background.", "phase24_L088_sources.json"),
     "L108": ("full_text_read", "All seven printed pages19–25, definitions, statements, proofs and references read from the complete primary authored rendering. Publisher PDF unavailable.", "phase25_L108_intake.json"),
@@ -501,6 +516,11 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase26_access.json", "reading_depth":"Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately."})
     if identifier == "L111":
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase31_older_source_targets.md", "reading_depth":"Selected author-indexed Theorem4.1/B1/B2 excerpts and construction leads; complete body and diagrams still unavailable. No theorem or fulltext credit."})
+    if identifier == "L111":
+        r["primary_urls"] += ["https://doi.org/10.36045/bbms/1103055618", "https://www.researchgate.net/publication/29655004_New_geometries_for_finite_groups_and_polytopes"]
+        r["access_coverage"]["historical_notes"] = r["access_coverage"].get("notes")
+        r["access_coverage"].update(retrieval_status="selected_primary_indexed_passages_read_complete_body_unavailable",
+            notes="Complete single Theorem4.1 and literal construction now source-matched and independently rederived, including arbitrary rank. No complete-body, application-table or principal-paper credit.")
     if identifier == "N005":
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase31_cover_prior_art.json", "reading_depth":"Proposition2.2, Definitions4.1/4.5/4.6 and Theorem4.12/Corollary4.13 with displayed proofs; primary rendered preprint only, not final journal body. No new reduction credit."})
     if identifier == "L108":

@@ -488,3 +488,13 @@ principal-paper reduction or a measured source/replacement length. The
 relevant abelian-cover and coset-twisting prior art is recorded with exact
 access limits. Both finite ratios remain unchanged and no infinity marker
 is assigned.
+
+
+Phase thirty-five recovers one complete 2000 construction theorem and proves
+an algebraic obstruction for an exact2018 presentation. The latter is an
+infinite-group theorem with a finite certificate; it is not an infinite
+compression ratio. It does not settle the source's broader geometric
+question. The ledger has52 encoded works,38 with specified existing
+components rederived, and16 with principal-result coverage. Those are
+coverage counts. The two measured ratios remain127/38 and4/3, with no
+corpus-wide ratio or infinity marker assigned.

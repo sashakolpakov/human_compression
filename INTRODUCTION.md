@@ -3168,7 +3168,116 @@ C-group input. This rules out that direct identification, not every possible
 adapter. No novelty conclusion follows from the access gap. The inspected
 halving preprint and unread revised journal version remain distinguished.
 
-## 49. The remaining work, and how a living reduction should record it
+## 49. Recovering the 2000 neighbourhood theorem
+
+The [older construction adapter](research/case_study/phase32_L111_theory.md)
+recovers Theorem 4.1 of *New geometries for finite groups and polytopes*.
+A separate [extension](research/case_study/phase32_L111_arbitrary_rank.md)
+covers its infinite-rank formulation too. This is one complete construction
+theorem, with the remaining paper still outside the coverage claim.
+
+Suppose types 0 and 1 are the vertices and edges of a simple graph. An edge
+meets a higher object exactly when both endpoints do. Replace the two lower
+types by two copies of the vertices. Opposite-type copies are incident when
+their original vertices are adjacent; their incidences with higher objects
+are inherited. A chamber chooses a vertex p on an edge {p,q}; its new
+chamber chooses (p,0) and (q,1). This gives an equivariant chamber bijection.
+
+Three local descriptions supply the proof. A residue containing one copied
+vertex is the old vertex residue, with edges relabelled by their opposite
+endpoints. A residue containing both copies is the corresponding old
+vertex-edge residue. A residue containing only higher objects is the same
+construction applied to its old residue. At rank two it is exactly the
+bipartite double of the old graph. At remaining rank at least three, the two
+copies of each vertex connect through a higher object, so connected
+components correspond to those of the old geometry.
+
+Thus the new geometry is residually connected exactly when the old one is
+and every graph residue of cotype {0,1} contains an odd cycle. In the positive
+finite-rank case every common higher shadow has full C2-monodromy. The
+cover theorem's coset-completion and monodromy-intersection tests then hold
+automatically, and each higher object has one lifted component. This is the
+precise link between the old neighbourhood construction and the common
+cover theory.
+
+The same local maps recover the diagram classes, the designated group action
+and its kernel, and repetition at disjoint pairs of types. The reverse
+connectivity implication also checks old flags containing an edge without
+a vertex: both endpoints meet every remaining higher object, making that
+residue connected. At infinite rank, strong connectivity is proved directly
+on every two-type truncation of every residue. Potentially infinite flags
+remain allowed, exactly as in the source definition; no finite-rank induction
+is extrapolated. A short endpoint argument also recovers the theorem's
+alternative local-graph hypotheses.
+
+Two independent finite-rank reviews and a root review of the arbitrary-rank
+extension record the proof scope. Fresh finite checks cover 316 graph/subset
+inputs, 12,628 local isomorphisms and 26,802 flags, plus named examples and
+iterations. They corroborate the maps, not the infinite-rank theorem. Source
+access consists of selected primary indexed passages, including the complete
+verbal theorem and construction; the full PDF and application tables remain
+unread. No whole-paper or matched-length claim follows.
+
+## 50. A finite matrix certificate for an infinite presented group
+
+The [2018 presentation analysis](research/case_study/phase32_L003_infinite_presentation.md)
+uses the same finite-state viewpoint to prove an infinite conclusion. Let
+P_s be the exact three-generator, ten-relator presentation associated with
+Problem 9.2 after substituting ((3,0),(2,0),(1,1),(s,0)). The representation
+has 216 states. Each generator a consists of a permutation p_a and integer
+weights v_a and acts by
+
+$$(i,n)^a=(p_a(i),n+v_a(i)).$$
+
+A word is the identity on this infinite set if its state permutation is the
+identity and its total weight vanishes at every state. Checking the ten
+relators therefore requires just 2,160 state computations. For these literal
+data all checks pass at s=6. The word (xyxz)^2 fixes the states but translates
+one of their integer coordinates by −1. Its powers are distinct, so P_6 is
+infinite. The parameter word y(zy)^2 has order six; the same representation
+proves P_s infinite for every positive s divisible by six.
+
+This can also be viewed as a rational monomial representation: set
+
+$$e_iM_a=2^{v_a(i)}e_{p_a(i)}.$$
+
+The witness scales one fixed basis coordinate by 1/2, so no positive power
+is the identity. There is no floating-point test and no inference from a
+large finite group. The finite tables certify a homomorphism from the
+presented group to an explicitly infinite matrix group.
+
+The [image calculation](research/case_study/phase32_L003_root_audit.md)
+adds structure. Its permutation quotient Q has order 216. A complete list
+of 648 Schreier translations generates the kernel L, and exact rational
+elimination proves rank six. Hence
+
+$$1\longrightarrow L\cong\mathbb Z^6\longrightarrow H
+ \longrightarrow Q\longrightarrow1,\qquad |Q|=216.$$
+
+For every m≥1, H/mL is a finite quotient of P_6 of order 216m^6. Finite
+subgroups of H inject into it because mL is torsion-free. This describes
+H, the certified image; it does not identify P_6 with H or assert that the
+extension splits. Geometric residue orders, subgroup intersections and flag
+completion are additional obligations for a hypertope construction.
+
+Two [Lean modules](research/case_study/formal/Phase32L003Infinitude.scope.md)
+prove the general voltage-to-infinitude implication and then instantiate it
+with the literal data and ten relators. The formal conclusion is
+`Infinite (PresentedGroup ...)`, at s=6. Kernel evaluation proves the inverse
+tables, all relations and the witness; there are no native-evaluation axioms
+or unproved placeholders. The general bridge uses the standard propositional,
+choice and quotient axioms. A separate transcription check matches every
+formal table and source word. The written multiples-six extension and
+translation-kernel rank calculation remain outside this formal certificate.
+
+The source lists finite universal examples at s=2,3,4,5, and its nearby prose
+suggests a finite family. Its literal problem sentence is broader. Infinitude
+at six rules out extrapolating finiteness of the displayed universal groups
+to every parameter. It does not rule out finite quotients, an infinite family
+on other parameter values, or infinite hypertopes. This algebraic result has
+no open-problem-resolution or infinity marker; current priority is unverified.
+
+## 51. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3205,7 +3314,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-seven Lean certificates](research/case_study/formal/README.md) cover
+The [twenty-nine Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

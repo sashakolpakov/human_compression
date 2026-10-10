@@ -4,6 +4,15 @@ Research begun 9 October 2026; updated 10 October 2026. We have proposed proofs 
 
 ## Current coverage and verification
 
+The [2000 construction](phase32_L111_theory.md) and its [arbitrary-rank
+extension](phase32_L111_arbitrary_rank.md) recover complete Theorem4.1 through
+chamber/residue maps and parity. The [2018 presentation certificate](phase32_L003_infinite_presentation.md)
+proves infinitude for every positive parameter divisible by six, with Lean
+checking the exact presentation at six. Its [image structure](phase32_L003_root_audit.md)
+also gives finite quotients of unbounded order; geometric realization remains
+a separate obligation. These additions give component and proposed-result
+credit, with no extra principal-paper reduction or infinity marker.
+
 The [parity-compatible halving theorem](phase27_parity_theory.md) gives an
 exact residual-connectivity criterion and recovers the full lattice-polytope
 geometric construction in Montero–Weiss section 3. The same proof isolates
@@ -37,7 +46,7 @@ all-rank cubic; the [common generation theorem](phase23_generation_core.md)
 unifies specified linear and unitary parabolic-generation steps. There are
 27 [formal modules](formal/README.md). One checks finite transfer
 arithmetic using native evaluation, with four compiler-evaluation axioms
-disclosed separately from the other 26 reports. The newest module checks the affine counterexample's
+disclosed separately from the other 28 reports. The affine-data module checks the counterexample's
 literal binary data by kernel evaluation. The preceding module proves
 the common-coset monodromy obstruction for the
 [general graph-cover theorem](phase28_voltage_shadow_theory.md). That theorem

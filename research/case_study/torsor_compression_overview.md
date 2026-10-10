@@ -399,3 +399,17 @@ adds a preview-only abelian-cover source and updates the existing twisting
 source, without further reduction or novelty credit. [Older-source leads](phase31_older_source_targets.md)
 identify the explicit connectivity hypothesis in the 2000 construction;
 its full body and complete theorem-family reduction remain unavailable.
+
+
+The later [2000 theorem adapter](phase32_L111_theory.md), with its [arbitrary-rank
+extension](phase32_L111_arbitrary_rank.md), now recovers all of Theorem4.1.
+In finite rank the positive case has full C2-monodromy on every higher
+shadow; the direct residue/path argument supplies the converse, diagram,
+actions, iteration and infinite-rank extension. This supersedes the earlier
+access-only assessment for that theorem, without complete-body or
+principal-paper credit. The [2018 presentation](phase32_L003_infinite_presentation.md)
+has a 216-state voltage certificate proving infinitude for positive6|s.
+Its literal s6 case is formally proved for the actual PresentedGroup. The
+[image](phase32_L003_root_audit.md) has translation kernel Z6, quotient216,
+and finite quotients of order216m6; no hypertope assertion or literal
+Problem9.2 resolution is included in this package.

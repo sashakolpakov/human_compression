@@ -28,6 +28,7 @@ CERTIFICATES = (
     "EndpointDoublingIntersections", "TwoCosetIntersection",
     "Phase29CosetMonodromy",
     "Phase30AffineData",
+    "Phase32VoltageTheory", "Phase32L003Infinitude",
 )
 
 
