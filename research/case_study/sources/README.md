@@ -156,3 +156,9 @@ The PDF and extraction are not distributed. The Suzuki count uses the
 already recorded L074 author manuscript (2011 manuscript date, 2010 journal
 year); all twelve pages were read. Original L085 full-text access remains
 unavailable, and its theorem is matched through the primary L074 restatement.
+
+The 1994 gluing attachment uses F. Buekenhout, C. Huybrechts and A. Pasini,
+*Parallelism in diagram geometry*, pp.355–397. Its [primary PDF](https://ftp.gwdg.de/pub/misc/EMIS/journals/BBMS/Bulletin/bul943/PASINI.PDF)
+has SHA256 `6ed25cefb93b1be3bf6c378ea0e5f718b9c9f3b130a4fe9feb25b95973983a06`
+and is not redistributed. The source ledger and review limit the current
+admission to the corrected gluing component.

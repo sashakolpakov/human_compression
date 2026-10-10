@@ -33,6 +33,12 @@ The active manuscripts have descriptive mathematical titles:
 Module D's three-source manuscript has passed independent review, with a
 fourth classification retained as a qualified component.
 
+The [parallel-gluing application](PARALLEL_GLUING.md) derives matching,
+orbit and automorphism statements from one common-lift criterion, applying
+U's existing coset-intersection theorem. A checked finite counterexample
+corrects the 1994 source's pairwise test. Attribution, the partial source
+scope and twelve limited Lean declarations are explicit.
+
 The older-paper intake now includes two reviewed
 [design-residue corrections](DESIGN_RESIDUES.md), with complete uniform
 written proofs and a Lean certificate for the literal disconnected
@@ -159,7 +165,7 @@ Lean verification must match our actual written statements, including
 assumptions and retained inputs. A certified helper does not certify an
 entire application. Formal gaps and axioms remain visible.
 
-Seventy existing scoped Lean components and exact computational
+Seventy-three scoped Lean files and exact computational
 certificates supply reusable verified material. They do not constitute
 an end-to-end formalization of U, Module A or all conjecture claims.
 The [parity-mix construction](PARITY_MIX.md) now has a reviewed Lean proof

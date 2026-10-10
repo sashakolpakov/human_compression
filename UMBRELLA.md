@@ -6,6 +6,13 @@ Version 3 contains 30 statements with proofs. All 28 statement/proof pairs
 from version 2 are preserved exactly; typed-coset Helly transfer and its
 corrected geometric consequence are now integrated.
 
+The reviewed [parallel-gluing application](PARALLEL_GLUING.md) gives a
+further use of U.Helly: compatible local direction actions glue precisely
+when their lift cosets have a common element. It derives the orbit and
+automorphism descriptions and isolates when pairwise compatibility is
+sufficient. This attachment leaves the frozen U-v3 body and its measured
+cost unchanged; its full application cost is recorded separately.
+
 The principal construction assembles local extensions over sets of
 marked generators. Injectivity on every proper local parabolic isolates
 each kernel, even with overlapping or nested supports and nonabelian

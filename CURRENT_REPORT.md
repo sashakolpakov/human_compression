@@ -1,5 +1,14 @@
 # Current work and verified source material
 
+The [parallel-gluing application](PARALLEL_GLUING.md) now derives matching,
+reconstruction, orbit, automorphism and uniqueness statements through one
+common-lift criterion and the retained U.Helly interface. It corrects the
+1994 source's pairwise test with a literal 136-versus-128-object example.
+Fresh independent Python/GAP reconstructions, twelve scoped Lean
+declarations and five rejected controls pass. This is an auxiliary partial
+source contract: registry coverage and A–D ratios are unchanged. The
+scoped Lean-file count is now 73.
+
 The [complexity graph](COMPLEXITY.md) plots the three comparable corrected
 U+A checkpoints and all five admitted length metrics. It shows one
 fixed-coverage decrease; a repeating sawtooth remains unestablished.
@@ -75,7 +84,7 @@ bank; L073 adds one component rederivation, not a principal contract.
 | All identified principal results rederived | 19 |
 | Distinct principal contracts in reviewed modules A–D | 16 |
 | Distinct sources represented in the existing working compilations | 13 |
-| Additional source comparisons outside the fixed registry | 1 |
+| Additional source comparisons outside the fixed registry | 2 |
 
 The layers overlap. Retrieval is not complete reading; principal-result
 coverage is not every assertion in a paper. The inventory is bounded and
@@ -156,7 +165,7 @@ sufficient collector fuel. All-rank support transfer, confluence and the
 group proof remain written. The full conjecture, historical priority and complete Lean proof
 remain unresolved. It adds no known-source compression credit.
 
-Seventy existing Lean components retain their individual statements,
+Seventy-three scoped Lean files retain their individual statements,
 hypotheses and trust records. They are reusable material, not a certificate
 of the whole new programme. Formalization will follow our actual U and
 module proofs, for both old results and conjecture claims.

@@ -1,5 +1,11 @@
 # Lean certificates and their scope
 
+[SimultaneousMatching.lean](SimultaneousMatching.lean) proves the general
+common-image/coherent-family equivalence and a literal finite coset
+obstruction. Its [scope](SimultaneousMatching.scope.md) distinguishes the
+twelve declarations from the written geometric reconstruction. It imports
+only Std and uses Classical.choice and propext in its printed reports.
+
 [CompletedHexagonCounterexample.lean](CompletedHexagonCounterexample.lean)
 proves an explicit adjacency- and colour-preserving reflection of order
 two in F010's completed example. The [scope](CompletedHexagonCounterexample.scope.md)
