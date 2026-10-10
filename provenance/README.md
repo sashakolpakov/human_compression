@@ -1,5 +1,9 @@
 # Provenance and verification scope
 
+The [complexity-figure review](phase111_review.md) records the exact
+admitted inputs and visual check behind the current graph. No new source
+measurement or mathematical result is inferred from plotting those points.
+
 The current product is [U and focused application modules](../MANUSCRIPT_PROGRAM.md),
 with reviewed six-source U+A, four-source Module B, and three-source
 Modules C and D. There are

@@ -1,5 +1,9 @@
 # Current work and verified source material
 
+The [complexity graph](COMPLEXITY.md) plots the three comparable corrected
+U+A checkpoints and all five admitted length metrics. It shows one
+fixed-coverage decrease; a repeating sawtooth remains unestablished.
+
 The [Livingstone-graph attachment](GRAPH_INCIDENCE.md) adds a reviewed
 source-to-coset reconstruction for L068. Its second polytope is recovered
 literally; the first requires an explicit incidence repair, with an exact

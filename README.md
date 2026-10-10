@@ -17,7 +17,8 @@ its actual source coverage and savings must be established.
 
 Read the [manuscript programme](MANUSCRIPT_PROGRAM.md),
 [current report](CURRENT_REPORT.md), [source registry](PAPER_MAP.md),
-and [method and measurement rules](PROOF_LIBRARY.md).
+[complexity graph and rates](COMPLEXITY.md), and
+[method and measurement rules](PROOF_LIBRARY.md).
 
 ## Current work
 
