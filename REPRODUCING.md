@@ -67,7 +67,19 @@ programs and logs are retained in that new directory. The independent
 checker that also requires the private primary captures identified by hash;
 it is not the public reproduction entry point.
 
-The [attribution reader](ATTRIBUTION.md) has its own standard-library generator
+The [eleven-source attribution reader](ATTRIBUTION_11.md) reproduces with:
+
+```sh
+python3 -O research/case_study/phase79_eleven_attribution_generate.py \
+  --output-dir /tmp/human-compression-eleven-reader-new
+```
+
+It preserves all proof bytes and checks the 35 notes and their evidence
+bindings. Its [independent review](research/case_study/phase85_eleven_attribution_recent_audit.md)
+separately assesses the meanings of those notes. No new PDF or mathematical
+proof check is performed by this presentation command.
+
+The earlier [ten-source attribution reader](ATTRIBUTION.md) has its own standard-library generator
 and [independent semantic/integrity audit](research/case_study/phase62_attribution_recent_audit.md).
 Its signs do not add proof premises or broaden any certificate's scope.
 

@@ -35,6 +35,13 @@ Published chirality, mix and facet-cover criteria supply designated proof
 steps. Additional exact family calculations and retained inputs are separated;
 the material gaps in current-priority verification remain explicit.
 
+The [eleven-source annotation edition](../ATTRIBUTION_11.md) now has an
+independent semantic review and fresh public regeneration. Its
+[twenty-file record](phase78_originals.json) binds the frozen notes/readers,
+generators, reviews and separate root replay. Stripping the notes preserves
+every proof byte. This adds neither mathematics nor a measurement or
+open-conjecture claim; the ten-source edition remains frozen.
+
 Earlier additions include the [nested-shadow source reductions](phase32_review.md),
 the [regular affine counterexample](phase33_review.md), the [infinite
 surface-cover family](phase34_review.md), and the [infinite presentation

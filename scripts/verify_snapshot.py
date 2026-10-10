@@ -22,6 +22,14 @@ OWN_RENDERED_PDFS = {
         "5a21613dd5310db8daac0700cea5994e50fb0a8c404c6896f832735d15c3119b",
 }
 
+# This immutable rendering input is a byte-for-byte snapshot of the root
+# ATTRIBUTION.md, whose links keep their original base. It is not the reader's
+# navigation page; ATTRIBUTION_11.md links to the live root legend instead.
+FROZEN_LINK_BASES = {
+    "research/case_study/phase79_eleven_attribution_legend.md":
+        ("27a576a7d958ee620a4afe736a28f49a0043e19df17a4b70d29aaf418610ae85", ROOT),
+}
+
 
 def digest(path):
     return sha256(path.read_bytes()).hexdigest()
@@ -61,14 +69,18 @@ def lean_reports():
 
 def check_links():
     missing = []
-    for path, _ in files():
+    for path, rel in files():
         if path.suffix != ".md":
             continue
+        link_base = path.parent
+        if rel in FROZEN_LINK_BASES:
+            expected_hash, link_base = FROZEN_LINK_BASES[rel]
+            assert digest(path) == expected_hash, (rel, "changed frozen link context")
         for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
             if target.startswith(("http:", "https:", "mailto:", "#")):
                 continue
             target = target.split("#", 1)[0].strip("<>")
-            if target and not (path.parent / target).exists():
+            if target and not (link_base / target).exists():
                 missing.append((str(path.relative_to(ROOT)), target))
     assert not missing, missing
 
@@ -104,7 +116,8 @@ def main():
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
     print("Trust scope: 40 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
-    print("PASS: local documentation links resolve; external publications are referenced, not bundled.")
+    print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
+    print("External publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")
 
 

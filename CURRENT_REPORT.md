@@ -32,7 +32,9 @@ explicit imports. A new exact action-kernel theorem is used for typed cosets,
 endpoint constructions and Petrials, with a shared gallery lemma. The
 [new attribution ledger](research/case_study/phase65_petrial_integration_attribution.json)
 records its source ideas, corrections and repository arguments. The
-[margin reader](ATTRIBUTION.md) remains specific to the ten-source edition.
+[eleven-source margin reader](ATTRIBUTION_11.md) now has 35 independently
+reviewed notes. Fresh public regeneration preserves every proof byte;
+its single Lean sign remains limited to the image/kernel implication.
 
 | Replacement | Intake | Approved length result |
 |---|---:|---|
@@ -89,8 +91,8 @@ odd-prime proof steps. Exact normal-closure, degree, character and interval
 calculations remain the additional repository derivation; historical priority
 is unverified, with two material unread literature comparisons recorded.
 
-The immediate work is the next source integration, eleven-source attribution
-annotations and measurement, and further cover constructions. A shared
+The immediate work is the next source integration, eleven-source length
+measurement, and further cover constructions. A shared
 rank/excess census is being checked as a possible replacement for an imported
 finite catalogue lookup. Priority comparison continues.
 The general and complete five-family multiplicity

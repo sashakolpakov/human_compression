@@ -31,7 +31,9 @@ Substantial forest, cyclic-classification, geometric and census branches
 remain inside the replacement. The source-to-corollary map exposes their cost.
 The [new attribution ledger](research/case_study/phase65_petrial_integration_attribution.json)
 distinguishes source results, shared arguments and corrected assertions.
-The [ten-source margin reader](ATTRIBUTION.md) remains a separate frozen edition.
+The [eleven-source annotated reader](ATTRIBUTION_11.md) now has an independent
+semantic review: 35 notes distinguish borrowed inputs, repository arguments,
+shared consequences, corrections and exact certificate scopes.
 
 The [independently reviewed ten-source measurement](research/case_study/phase63_ten_source_measurement_recent_audit_report.md)
 gives a conservative **1.67×** length factor. The 1998 source is credited
