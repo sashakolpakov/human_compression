@@ -42,8 +42,11 @@ Burnside, cyclic-core and named geometric construction theorems, and catalogue
 completeness remain retained background. Open questions and specified auxiliary
 material are outside the recovered main-result contract. Some JSON arrays
 labelled dependency closures list selected inputs only; the independent review
-records this limitation explicitly. The global inventory and internal proof
-graph determine the retained inputs.
+records this limitation explicitly. The [qualified dependency index](research/case_study/phase42_unified_dependency_index.md)
+now names these selected inputs accurately and uses consistent retained-input
+identifiers across all 34 adapters. It also records the reviewer's identified
+inherited inputs. The global inventory and internal proofs remain authoritative;
+an exhaustive dependency-closure certificate is still future work.
 
 **There is no approved seven-source length factor yet.** The full raw Markdown
 bodies measure 8,078 tokens for A and 6,735 for B, versus 15,519 for the integrated

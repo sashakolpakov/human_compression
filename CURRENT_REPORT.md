@@ -20,8 +20,10 @@ branches. Significant classification proofs, the full finite census algorithm
 and explicit source adapters remain inside the manuscript. The independent
 review finds no unresolved integration gap. Retained classification, cyclic-core,
 catalogue and geometry inputs remain visible, as do corrected source assertions
-and parameter restrictions. Some per-adapter dependency lists are abbreviated;
-the complete internal proof graph and global retained inventory are authoritative.
+and parameter restrictions. The [qualified dependency index](research/case_study/phase42_unified_dependency_index.md)
+now labels the abbreviated per-adapter lists as selected inputs and gives them
+consistent identifiers. The complete internal proofs and global retained
+inventory remain authoritative; the index does not claim exhaustive closures.
 
 | Replacement | Named sources | Approved length result |
 |---|---:|---|
