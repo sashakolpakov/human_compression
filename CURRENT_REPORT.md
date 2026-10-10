@@ -53,7 +53,7 @@ credit is claimed.
 
 The [four-family PGL conjecture](PGL_MANIPLEX_FAMILIES.md) now has a complete
 reviewed affirmative answer. It is separate from principal-source recovery:
-the question catalogue has twelve entries, including eleven complete answers
+the question catalogue has thirteen entries, including twelve complete answers
 under their stated hypotheses. The new proof uses the centralizer theory and
 adds eleven scoped Lean declarations; full formalization and priority remain
 separate obligations.
@@ -68,6 +68,11 @@ The [primitive-square proof](PRIMITIVE_SQUARES.md) has passed a detailed
 independent arithmetic audit, covering every field configuration and the
 complete finite reduction. Six new Lean declarations verify its polynomial
 steps. This strengthens an existing result without adding a question entry.
+
+The [point-cloning counterexample](POINT_CLONING.md) answers the unnumbered
+gonality-two suggestion in the final L009 journal source. Twin points are
+allowed by its definitions; a variant excluding them remains unanswered.
+This adds one question entry and no principal-source credit.
 
 ## Further application material
 

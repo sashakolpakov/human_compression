@@ -1,5 +1,10 @@
 # Lean certificates and their scope
 
+[GraphClones.lean](GraphClones.lean) gives four axiom-free proofs that lift
+actual paths and preserve connectedness under vertex cloning. Its
+[scope](GraphClones.scope.md) leaves the incidence-geometric application
+and full counterexample outside Lean.
+
 [PrimitiveSquarePolynomial.lean](PrimitiveSquarePolynomial.lean) proves six
 actual polynomial statements for the primitive-square argument. Its
 [scope](PrimitiveSquarePolynomial.scope.md) leaves norms, character sums

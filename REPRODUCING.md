@@ -410,7 +410,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the ninety-one saved Lean reports
+checks local documentation links, and checks the ninety-two saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -2664,3 +2664,14 @@ This checks the frozen public inputs and freshly replays the complete finite
 reduction, eleven witnesses, independent arithmetic and six scoped Lean
 proofs. Legacy assertion-based checks run in isolated copies with assertions
 enabled. See [the result and exact scope](PRIMITIVE_SQUARES.md).
+
+## Point-cloning counterexample
+
+```sh
+python3 -B -O research/case_study/phase270_check.py --out /tmp/NEW-cloning --lean LEAN --packages PACKAGES
+```
+
+This checks frozen public bindings, both actual finite incidence programs
+and four axiom-free Lean path proofs. See [the result and its twin-point
+qualification](POINT_CLONING.md). The complete counterexample is not
+formalized in Lean.

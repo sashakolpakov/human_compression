@@ -208,10 +208,11 @@ that has not been measured should be reported as such.
 ## Conjectures and questions: recorded solutions
 
 Solutions to questions posed in the source literature are a separate
-part of the programme. The repository currently records **eleven complete
+part of the programme. The repository currently records **twelve complete
 answers to the stated questions, under their specified hypotheses**, including
 the general minimal-cover theorem and the negative answer to F014 in its
-cited preprint version. One further entry addresses the two readings of
+cited preprint version and the unnumbered gonality-two experimental
+suggestion. One further entry addresses the two readings of
 an ambiguously worded question; its limits are listed separately below.
 These results belong in the account
 of what the project has achieved, alongside
@@ -221,6 +222,7 @@ compression ratio: there was no earlier proof to put in its numerator.
 | Source question | Recorded answer | Proof and verification |
 |---|---|---|
 | L043, Conjecture 6.1 | For every stated odd prime and pair of odd extension degrees greater than one, suitable primitive elements make the specified expression a nonzero square. | [Complete arithmetic proof and independent review](PRIMITIVE_SQUARES.md), exact exceptional-case computations and six polynomial Lean declarations. The character-sum argument and full theorem remain written. |
+| L009, §7, final 2026 journal | Point cloning refutes the experimental gonality-two suggestion for every multiplicity a ≥ 2. | [Complete proof and independent review](POINT_CLONING.md); exact finite checks and four axiom-free Lean path proofs. Twin points are allowed by the stated definitions; the variant excluding them remains unanswered. |
 | L043, Conjecture 6.2 | For the specified matrices and coprime odd extension degrees, the middle parabolics intersect exactly in their common cyclic subgroup. | [Intersection proof](research/case_study/psl2_intersection_proof.md); Lean verifies field and entrywise intersection components, with the source-group and geometry identifications remaining written. |
 | L025, Conjecture 3.2 | The specified Suzuki graphs have girth five and exactly q−1 pentagons through each edge. | [Cycle proof](research/case_study/suzuki_cycle_proof.md) and dedicated mathematical review; Lean verifies the matrix membership component. |
 | L092, Conjecture 1 | The Hermitian-unital construction is firm, residually connected and flag-transitive for every prime power q>2. | [Unital proof](research/case_study/hermitian_unital_proof.md) and finite checks; Lean verifies a supporting connectivity lemma. The catalogue records a remaining need for a separate detailed audit of the whole proof. |

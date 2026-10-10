@@ -87,7 +87,7 @@ remaining-work record in the frozen JSON or the reviewed additions above.
 | L006 | 2000 | [Incidence Geometry](https://leemans.dimitri.web.ulb.be/abstracts/incgeom.html) | abstract read | not assessed |
 | L007 | unconfirmed | [Chiral polytopes of order 2p m](https://amc-journal.eu/index.php/amc/article/download/3716/2232) | selected sections read | proposed answer or new result |
 | L008 | 2026 | [Testing chirality on hypertopes](https://arxiv.org/pdf/2511.14562) | selected sections read | stated main results recovered |
-| L009 | 2026 | [Geometries with trialities arising from linear spaces](https://arxiv.org/pdf/2504.06025) | selected sections read | part of the results recovered |
+| L009 | 2026 | [Geometries with trialities arising from linear spaces](https://arxiv.org/pdf/2504.06025) | selected sections read | [part of the results recovered](research/case_study/phase270_L009_question_overlay.json) |
 | L010 | 2026 | [Two gluing methods for string C-group representations of the symmetric groups](https://arxiv.org/pdf/2504.17535) | selected sections read | related work only |
 | L011 | 2026 | [On simple groups that admit a string C-group representation](https://dipot.ulb.ac.be/dspace/bitstream/2013/397490/3/simpleGroups6.pdf) | selected sections read | related work only |
 | L012 | 2025 | [Regular 3-polytopes of order 2 n p](https://arxiv.org/pdf/2001.02945) | full text read | [stated main results recovered](research/case_study/phase259_L012_overlay.json) |

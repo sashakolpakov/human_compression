@@ -1,8 +1,9 @@
 # Answers to source questions
 
 Question solving has its own record, separate from compression of known
-published results. The current catalogue contains **twelve entries: eleven
-recorded complete answers under their stated hypotheses and one answer to
+published results. The current catalogue contains **thirteen entries: twelve
+recorded complete answers under their stated hypotheses (including one
+explicitly unnumbered experimental suggestion) and one answer to
 an explicit interpretation of an ambiguously worded question**. Completeness
 here concerns question coverage; Lean coverage and historical priority are
 separate matters. This is an inventory of existing proofs and evidence, not a
@@ -23,6 +24,7 @@ verified for any of them.
 | Cunningham–Pellicer, Problem 5; N016, §4 | Every abstract polytope of finite rank has a minimal regular polytopal cover; it is unique exactly when its distinguished monodromy group is a string C-group. | [Complete general proof and independent review](MINIMAL_REGULAR_COVERS.md). Covers may be infinite. Five new and six retained Lean declarations verify algebraic steps; the geometry and full theorem remain written. The [surface theorem](INFINITE_MINIMAL_COVERS.md) proves infinitely many finite covers in four families; the [square-torus application](SQUARE_TORUS_COVERS.md) adds every odd square-torus pyramid. The general finite version remains unresolved. |
 | F014, Conjecture 3.7, arXiv v1 | **False at label 11 in every rank d≥5.** The universal rank-five presentation and a signed intersection witness exclude every quotient retaining exact adjacent order. | [Full proof and independent review](LABEL_ELEVEN_OBSTRUCTION.md). Nine general Lean declarations and [kernel-checked coset bounds through rank three](COSET_CERTIFICATES.md), alongside the separate larger certificates; no complete Lean proof. Published 2026 wording and historical priority are unverified. |
 | L021, final conjecture of §5, May 2023 author edition | All four infinite rank-four PGL₂ families exist: the other end is S₄, A₅, PSL₂(p), or PGL₂(p), with explicit prime progressions. | [Complete proof and independent review](PGL_MANIPLEX_FAMILIES.md). Eleven Lean declarations verify actual matrix and unipotent algebra; the whole theorem remains written. A bounded later-literature search found no solution, but historical priority is unverified. |
+| L009, §7, final 2026 journal | The gonality-two experimental suggestion is false: cloning the points of AG(2,3) gives residually connected, firm, flag-transitive triangle geometries for every multiplicity a ≥ 2. | [Complete proof and independent review](POINT_CLONING.md). Twin points are permitted by the source definition and essential to this construction. Four Lean proofs verify connectivity transfer; no full geometric formalization or answer to the twin-free variant. |
 
 The [detailed catalogue](research/case_study/phase124_question_results.md)
 and [structured ledger](research/case_study/phase124_question_results.json)
@@ -72,7 +74,7 @@ documented navigation, path or documentation changes.
 The census also records questions answered by later authors. In particular,
 [L079 Conjecture 11](research/case_study/phase240_L079_status.md) was answered
 by Connor, De Saedeleer and Leemans in 2015. It is not a new solution by
-this project and is not added to the twelve repository-result entries.
+this project and is not added to the thirteen repository-result entries.
 
 The [four-family admission](research/case_study/phase262_L021_question_overlay.json)
 adds the twelfth entry. Its complete affirmative answer, sources and
@@ -83,3 +85,8 @@ The [reviewed locally faithful criterion](LOCALLY_FAITHFUL_COVERS.md) adds
 a general abelian existence test, a conditional multiplicity theorem and
 a complete Tomotope classification within that class. The general finite
 multiplicity question remains open, and the question count is unchanged.
+
+The [gonality-two admission](research/case_study/phase270_L009_question_overlay.json)
+adds the thirteenth entry, explicitly as a counterexample to an unnumbered
+experimental suggestion. Its [proof and scope](POINT_CLONING.md) are separate
+from recovery of the principal results in the same source.

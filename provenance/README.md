@@ -1,5 +1,10 @@
 # Provenance and verification scope
 
+The [point-cloning admission](phase132_review.md) publishes the complete
+counterexample to the journal gonality-two experimental suggestion, with
+independent review and four axiom-free Lean path proofs. It adds one
+question entry while keeping principal-source recovery separate.
+
 The [primitive-square audit admission](phase131_review.md) supplies a complete
 independent arithmetic review of the existing L043 result, fresh finite
 checks and six polynomial Lean proofs. No additional question is counted.
