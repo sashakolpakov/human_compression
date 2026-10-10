@@ -42,6 +42,10 @@ new topic programme.
 
 - [Previous README](README.previous.md) and [programme](MANUSCRIPT_PROGRAM.md).
 - [Previous current report](CURRENT_REPORT.md) and [manuscript map](MANUSCRIPT_MAP.md).
+- [Earlier paper map](PAPER_MAP.previous.md), with its detailed assessments
+  and compilation summaries. The [original generator](build_paper_registry.previous.py.txt)
+  is preserved as text; the [record of this move](paper_map_manifest.json)
+  identifies both files by checksum.
 - [Earlier current state](CURRENT_STATE.md), [assessment](CURRENT_ASSESSMENT.md)
   and [independent assessment](INDEPENDENT_ASSESSMENT.md).
 - [Initial attribution pass](ATTRIBUTION.md),
