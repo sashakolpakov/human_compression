@@ -251,11 +251,11 @@ UPDATES = {
         "phase16_frattini_geometry_reduction.md;phase16_frattini_geometry_intake.json;phase16_frattini_manifest.json;phase16_frattini_root_audit.md;phase16_frattini_root_audit.json;phase16_frattini_coordinate_check.json;phase16_frattini_root_check.json;phase16_older_source_access.md",
         "Scope is all principal new geometric results and the finite relative-generating-set theorem. The unqualified infinite-group converse of Theorem 2.1 requires an extra hypothesis; its explicit scope counterexample is separate from correction priority. Quoted Gaschütz Theorem 4.1, historical SmallGroups counts and Frattini-computation algorithms are not rederived or rerun. No matched ratio or end-to-end formalization; external review remains."),
     "N009": (
-        "component_rederived", "Theorems 3.6 and 3.8/Table 1; complete rank-three, rank-four and rank-five order1024 censuses with all type counts in Tables 5–6; Lemmas 5.2 and 5.4; Theorem 5.5 including both raw presentations",
+        "principal_results_rederived", "Complete principal nondegenerate order1024 classification in all ranks, named facets and universal orders; central-extension and exceptional-presentation mechanisms; every numbered item and table mapped, with explicit literal-source qualifications",
         "A dihedral product normal form and Burnside basis exclude the bad central quotient; an order sandwich proves the three relator-lift cases. The universal class-five path group, complete invariant index-two kernel ladder and exact kernel-profile IP test recover all rank-four marked groups. Reversal gives every source type count. Two direct Todd-Coxeter computations prove the exceptional presentations have order1024, and the complete census proves there are exactly two with the specified oriented facets. The prior first-excess classification already recovers the rank-five counts.",
         "Reviewed canonical forest quotient and class bound; Burnside basis theorem and elementary dihedral facts; GAP/NQ universal nilpotent-quotient and exact subgroup algorithms; Todd-Coxeter coset enumeration; Earlier first/second-excess uniqueness of the two named rank-three facets",
         "phase21_central_quotient.md;phase21_N009_presentations.md;phase21_N009_manifest.json;phase21_N009_presentations_certificate.json;phase21_N009_source_compare.json;phase21_kernel_ladder.md;phase21_rank4_census.json;phase21_kernel_root_audit.json;phase17_k1_classification.md;phase17_k1_source_intake.json;formal/PrincipalKernelIntersections.lean;formal/PrincipalKernelIntersections.scope.md",
-        "All Table6 facet labels and finite universal orders are now checked. Other displayed presentation claims remain outside this reviewed reduction. The quoted lattice classification, universal-polytope interpretation and infinite universal-group structure theorem are retained. No whole-paper credit, matched proof-length ratio or novelty claim. The finite census is not a full Lean formalization; the companion all-rank third-excess formula has its own proof and scope."),
+        "Principal classification and constructive mechanisms recovered: rank2/3/4/5 counts1/125/105/8, with higher ranks excluded. All27 numbered items and six tables have an explicit ledger. Quoted lattice classification, universal-polytope interpretation, infinite decomposition and standard IP criteria remain inputs. Literal Corollary3.7 stops at order8; Table4 e/f/h require the recorded RHS repairs; four Table6 labels retain an explicit dual-orientation interpretation. Geometric realizations, correction priority, a matched proof-length ratio and end-to-end formalization remain outside this credit."),
     "N011": (
         "source_theorem_retained", "Theorem 2, printed p.248: exact PGL_n(q) commuting-pair involution-generation criterion",
         "Retain the published theorem. In dimension four and odd characteristic it gives PGL4(q) rank-three existence exactly for q=3 mod4, using the source's rank-three adapter.",
@@ -289,6 +289,7 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "N009": ("full_text_read", "All22 primary pages read cumulatively across source-bound audits; the final independent review matches all27 numbered items and allsix tables. Root and the independent reviewer visually inspected printedp10. This reading record does not claim literal validity of every printed assertion.", "phase24_N009_coverage.md"),
     "F013": ("full_text_read", "Complete eleven-page cached primary manuscript read by root; definitions (7)-(9) and Theorem 4.2 compared independently on PDF pages 5-8 and in versioned v1 HTML. Header dates differ; the exact checked claims are recorded in the proof.", "phase12_path_cocycle.md"),
     "F016": ("full_text_read", "All nineteen pages of arXiv:2512.15511v1 read by root, including references and all six principal statements/proofs. The independent reviewer read the full targeted sections 4-7. The title-page date is 18 December 2025 and the arXiv stamp is 17 December 2025.", "phase16_fiber_products.md"),
     "N001": ("full_text_read", "Complete seven-page authored text read through the indexed Academia rendering, including all definitions, Lemmas 1-7, Corollaries 1-2, Theorem 1 and proofs. Formerly missing pages 217-218 are present. Original PDF still unavailable; no original-PDF extraction or matched ratio is claimed.", "phase16_older_source_access.md"),
@@ -655,6 +656,16 @@ def record(row, baseline, overlay, later_readings, older_access):
             "reference": "Table 6, all107 rows",
             "scope": "All99 rank-four rows and eight rank-five rows, exact marked facet labels and all106 finite universal-group orders. Four printed vertex types are explicitly interpreted using dual markings. The sole infinite row and standard universal-polytope correspondence remain quoted inputs.",
             "relation_to_source": "complete_table_rederivation_with_retained_background",
+        })
+        r["method"].append("One raw-presentation checker closes all remaining finite examples with34 complete coset enumerations and3328 fullIP meets. The endpoint-coset index bound excludes higher ranks. Exact marked maps expose three literal Table4 duplicates and verify their Table3-consistent repairs; the order-eight central-reduction boundary is explicit.")
+        r["retained_inputs"] += ["Quoted standard string-IP criteria (Lemmas2.2–2.4)", "Source Theorem4.2 universal-polytope interpretation"]
+        for name in ("phase24_N009_coverage.md", "phase24_N009_coverage.json", "phase24_N009_certificate.json",
+                     "phase24_N009_rank_audit.md", "phase24_N009_rank_audit.json"):
+            r["evidence"].append(evidence(name, "Complete principal-result coverage with all numbered items and literal source qualifications; independent review passed"))
+        r["exact_target"].append({
+            "reference": "Example3.9/Tables2–4; Examples4.3–4.5; preliminary rank bounds and quotient lemmas",
+            "scope": "All34 raw presentations and their actual IP, exact named bases/facets, all12 Table3 assignments, all8 type48 census markings and the three exhaustive Example4.5 central kernels. Printed Table4 e/f/h identify c/a/c; changing each second RHS to tau gives the distinct Table3 targets. No correction-priority claim.",
+            "relation_to_source": "complete_principal_reduction_with_explicit_literal_corrections",
         })
         r["proposed_new_result"] = True
         r["exact_target"].append({

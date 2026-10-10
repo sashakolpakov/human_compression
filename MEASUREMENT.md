@@ -167,6 +167,14 @@ No corpus ratio or infinity marker is assigned in this snapshot.** Several propo
 arguments and substantial checks, but their external priority remains
 unverified and their formal certificates cover specified components.
 
+The principal-result ledger now covers 13 works, including the complete
+nondegenerate order-1024 classification and its constructive mechanisms.
+That increase measures verified coverage. Its 27-item statement ledger,
+retained background and literal-source repairs do not supply a new
+proof-length ratio; those costs must be measured before another ratio is
+reported. The new native Lean arithmetic module is also a verification
+component, not evidence of publication priority.
+
 The [complete measurement record](research/case_study/phase9_L066_measurement.md)
 compares the exact formulas in L066, Theorems 1.1 and 1.2, in degrees
 $N\ge4$, $N\ne6$. It excludes both degree-six exceptions and the paper's

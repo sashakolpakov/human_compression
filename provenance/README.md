@@ -1,6 +1,12 @@
 # Provenance and verification scope
 
-The latest [phase-24 review](phase24_review.md) adds exact Table 6 labels and
+The [phase-25 review](phase25_review.md) completes the N009 principal-result
+ledger, with all 27 numbered items and six tables mapped, explicit retained
+inputs, and separately verified literal-source discrepancies. It raises
+principal-result coverage to 13 works, without assigning a new length ratio
+or novelty marker.
+
+The [phase-24 review](phase24_review.md) adds exact Table 6 labels and
 finite universal orders, with independent primary-data review and fresh GAP
 replays. It also adds a 23rd formal module whose four arithmetic checks use
 native evaluation. Its compiler trust is explicit; the preceding 22 formal

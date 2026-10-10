@@ -2599,6 +2599,18 @@ all 106 finite entries agree. The single infinite entry retains a cited
 structural decomposition. A finite quotient alone would not prove that
 a presentation is finite, or that an uncompleted enumeration is infinite.
 
+The [completed source ledger](research/case_study/phase24_N009_coverage.md)
+then maps every one of the paper's 27 numbered items and six tables to a
+derivation, computation, definition or retained prior theorem. Another 34
+raw presentations close the illustrative examples. This matters because
+matching the main totals alone could conceal a bad presentation: three
+printed rows do in fact repeat other markings, and the separately checked
+repairs recover their distinct intended table entries. An order-eight
+boundary also limits the literal central-reduction corollary. The result
+is complete principal-classification coverage with explicit source
+qualifications; a numerical whole-paper compression ratio still requires
+a matched accounting of the source and replacement proofs.
+
 The transfer calculation in Section 37 now also has a
 [Lean supplement](research/case_study/formal/Phase23TransferAnnihilator.scope.md).
 It embeds the exact graph and checks the complete integer-vector identities

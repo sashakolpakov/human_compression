@@ -1171,3 +1171,29 @@ report; it does not itself run Lean. Regeneration should reproduce SHA256
 The [scope](research/case_study/formal/Phase23TransferAnnihilator.scope.md)
 excludes the group-to-graph correspondence and general all-rank algebra.
 The earlier 22 source/report pairs remain unchanged.
+
+
+## Complete N009 statement ledger and remaining finite examples
+
+```sh
+mkdir -p scratch/N009-examples
+python3 research/case_study/phase24_N009_examples_run.py --gap gap --output-dir scratch/N009-examples
+python3 research/case_study/phase24_N009_rank_audit.py --gap gap --output scratch/N009-examples/review.json
+```
+
+The first command runs the 34 raw presentations in isolation and saves its
+log, five mathematical outputs and execution report. The second additionally
+checks the frozen manifest, complete 27-item/six-table ledger, numerical data
+transport and agreement with the authored outputs, then independently reruns
+the same GAP checker. Either is sufficient for a mathematical replay; running
+both is optional. The recorded root and agent reviews used separate runs.
+
+Expected output is 3,328 actual IP meets, all twelve Table 3 assignments,
+eight distinct type-{4,8} markings matched to the unfiltered census, and all
+three central-involution quotient kernels in Example 4.5. The literal Table 4
+map sends e/f/h to c/a/c. The
+[coverage note](research/case_study/phase24_N009_coverage.md) explains the
+verified repairs and the quoted inputs that remain. The independent audit's
+optional `--primary-sources` mode needs the excluded hash-matching snapshots.
+A successful finite replay does not independently rerun the earlier censuses
+or prove the quoted infinite decomposition.

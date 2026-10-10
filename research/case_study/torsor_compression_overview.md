@@ -9,7 +9,7 @@ which geometric constraints it solves. These are internally reviewed proof
 drafts and exact computations, not externally reviewed publications.
 
 The [detailed introduction](../../INTRODUCTION.md) explains the ideas with
-worked examples. The [living paper map](../../PAPER_MAP.md) records all 152
+worked examples. The [living paper map](../../PAPER_MAP.md) records all 157
 indexed works, including the 1996–2006 intake; this note focuses on reductions.
 
 ## The common calculus
@@ -45,18 +45,19 @@ an entire paper.
 
 | Source and target | Replacement argument | Scope and remaining input |
 |---|---|---|
+| N009 (2018), complete principal nondegenerate order-1024 classification | Universal marked-kernel ladder, central lifts, exact facet isomorphisms and complete raw presentations | [All 27 numbered items and six tables mapped](phase24_N009_coverage.md); unique rank-two class and 125/105/8 classes in ranks three/four/five; higher ranks excluded. Quoted background, three Table 4 repairs and the order-eight boundary remain explicit. No matched length ratio |
 | L102 (2003), Section 5.1.2 and the remaining spread case | Prime-degree arithmetic, irreducible semilinear descent and an explicit scalar-affine converse | Proposed exact existence and uniqueness of the spaces in the one-dimensional RWPRI case; source translation/spread reduction retained, external review and priority unverified |
 | L096 (2004), geometric shadow-IP decision problem | Flag-constrained covering inequalities, orbit normalization and a rank-two four-cycle argument | Exact criterion and independent finite checks; original Magma implementation and sporadic tables not reproduced by this criterion |
 | L104 (2002), full principal census in every rank | Arbitrary-Borel maximal-residue augmentation, normalizer panel actions and automorphism/type fusion | Complete 8/19/3 census and higher-rank exclusion independently reproduced, conditional on TomLib; original geometry lists are not inputs |
 | L109 (2000), dihedral classification | Rank-two rigidity, prime-index subgroup arithmetic and CRT Helly | Complete published all-rank theorem and counts matched through L110 Theorem4; original full-paper comparison still unavailable |
 | N001–N003 and L089 (1998–2005), symmetric-group tree geometries | Forest component groups, laminar subset flags, balanced cuts and Boolean shadow witnesses | Four 1998 principal property tests and specified tree/path results rederived; foundational 1997 classification retained and source-access limits explicit |
-| N003 (2002), all eight numbered results in finite-group/n≥7 scope | Tree-cut reconstruction and the parity kernel, with module, counting, overgroup and panel adapters | Both complete generator/geometry classifications and all numbered corollaries rederived; Whiston W1/W2 and CFSG dependence retained, small-n unnumbered exceptions excluded; no new measured ratio |
+| N003 (2002), all eight numbered results in finite-group/n≥7 scope | Tree-cut reconstruction and the parity kernel, with module, counting, overgroup and panel adapters | Both complete generator/geometry classifications and all numbered corollaries rederived; Whiston W1/W2 and CFSG dependence retained, small-n unnumbered exceptions excluded; matched character ratio 4/3 in the stated scope |
 | L114/L110 (1999–2001), Suzuki subgroup realizations | Normalizer uniqueness, field intersections, trace transversal and invariant-subspace obstruction | Proposed decisions for every printed parameter shape: four impossible intersections; one further embedded pattern fails RWPRI; all others realized. Candidate completeness was subsequently disproved and withdrawn; a full replacement classification and external priority remain unresolved |
 | L066, *On pairs of commuting involutions in Sym(n) and Alt(n)*, all four principal results | Five orbit multiplicities for C2²-actions, two rational generating functions, one degree-six orbit certificate | All principal counts and both S6/A6 polyhedron conclusions recovered; standard automorphism theorems remain inputs |
 | L032, *On regular polytopes of 2-power order*, Theorem 1.2 | Explicit square-grid seed plus independent dihedral factors | Whole principal all-rank existence theorem; no classification of every group |
 | L030, *An infinite family of locally X graphs based on incidence geometries*, principal construction and parameters | The single tensor relation K_r tensor KG(N,k), replacement distances and a spectral automorphism argument | Construction, residues, diagram and full graph automorphism group recovered; two source displays corrected |
 | L008, *Testing chirality on hypertopes*, Theorem 1.1 | Double-coset extension fiber with two points, then a uniform residue argument | Principal criterion recovered, retaining the standard marked-inversion correspondence |
-| L034, *Existence of regular 3-hypertopes with 2^n chambers*, Theorem 3.2 and parts of Conjecture 3.3 | Same grid/dihedral construction; presentation comparison; cyclic triple-product lower bound | Presented construction recovered; alternate printed quotient display not separately verified. Bound proved for minimum pair order ≤8 and for hereditary powerful-Frattini derived groups, including metacyclic and abelian-Frattini cases; full bound remains |
+| L034, *Existence of regular 3-hypertopes with 2^n chambers*, Theorem 3.2 and Conjecture 3.3 | Same grid/dihedral construction; presentation comparison; proposed all-nilpotent cyclic triple-product bound | Presented construction recovered; alternate printed quotient display not separately verified. The complete proposed bound now subsumes the earlier bounded cases; internal proof reviews passed, publication priority remains unverified |
 | L035, *2-groups behaving as automorphism groups of regular 3-polytopes*, Theorems 1.2 and 1.3 | Grid construction, bounded cyclic-core quotients, eight binary extension models | Both principal theorems recovered, including completeness of all eight families; retains Lucchini's theorem and one exhaustive order-256 SmallGroups census |
 | L025, Suzuki graph Conjecture 3.2 | Three zero matrix entries solve a four-parameter coset-walk word | Proposed all-q proof of exactly q−1 pentagons per edge; full matrix-membership equivalence Lean checked; graph/source correspondence is a written proof |
 | L012, *Regular 3-polytopes of order 2^n p*, Theorem 5.1 and Corollary 5.2 | Three affine transformations, one index-48 presentation, three invariant lattices | Actual three families and every order 3·2^n for n≥5 recovered; other classification/nonexistence results remain |
@@ -87,13 +88,12 @@ internal reviews passed. Current priority remains unverified, and the
 specified actions and transport obstruction. No finite catalogue or
 marked-isobicyclic classification is retained in the new proof.
 
-The [elliptic parameter sieve](phase13_unitary_sieve.md) and retained
-matrix generation/intersection arguments give maximum rank four for
-PSU4(q), every odd q congruent to one modulo four. The [q=7 witness](phase14_unitary_q7.md)
-adds type {4,24,4}, with the full group order and all 256 subgroup
-intersections checked. Uniform existence for q congruent to three modulo
-four, q at least eleven, remains unresolved here. The source survey
-receives partial-progress coverage, not a full-survey reduction.
+The [completed unitary parameter sieve](phase15_unitary_sieve.md) and
+retained matrix generation/intersection arguments now give rank set {3,4}
+for PSU4(q), every odd q≥5. This supersedes the earlier congruence-class gap;
+PSU4(3) remains excluded by the cited nonexistence theorem. The source survey
+receives partial-progress coverage, not a full-survey reduction, and priority
+remains unverified.
 
 The [path cocycle](phase12_path_cocycle.md) gives a reusable support proof
 of marked subgroup intersections and an all-rank counterexample to the
@@ -274,7 +274,7 @@ this reduction yet.
 
 ## Evidence and limits
 
-Eighteen [Lean modules](formal/README.md) compile with the pinned toolchain and
+Twenty-three [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -289,8 +289,9 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker additionally covers the eleven later modules and their
-successful reports. Finite examples support uniform proofs; they are
+public snapshot checker covers all 23 current modules and their successful
+reports. The newest transfer module uses native evaluation with four explicit
+compiler-evaluation axioms; its scope differs from the earlier 22 modules. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 
 For the public distribution, run `python3 scripts/verify_snapshot.py` from
@@ -315,8 +316,9 @@ The [2005 Frattini reduction](phase16_frattini_geometry_reduction.md)
 recovers the principal geometric quotient and classification results
 through a maximal-chain argument and vector-space coordinates. Its finite
 relative-generator scope and the infinite geometric proof are distinguished.
-These add two principal-result works, bringing the scoped ledger to twelve;
-they do not change the two measured description-length ratios.
+Those additions brought the scoped ledger to twelve. The completed N009
+ledger now brings it to thirteen; neither step changes the two measured
+description-length ratios.
 
 The [central join](phase16_central_join.md) supplies automatic attachment
 for every qualifying finite core and proves that extraction and attachment

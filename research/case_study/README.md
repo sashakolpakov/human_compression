@@ -2,6 +2,24 @@
 
 Research begun 9 October 2026; updated 10 October 2026. We have proposed proofs of the two 2017 PSL(2,q) conjectures, the 2005 Hermitian-unital conjecture, the Suzuki graph pentagon-count conjecture, and the missing range in a recent existence theorem for chiral polyhedra, together with exact computations and Lean certificates for key proof components. These results have received internal agent reviews, not external peer review. Priority and novelty remain provisional.
 
+## Current coverage and verification
+
+The [living paper map](../../PAPER_MAP.md) indexes 157 works and records
+13 principal-result reductions. The latest addition is the
+[complete order-1024 statement ledger](phase24_N009_coverage.md): all 27
+numbered items and six tables are accounted for, with quoted background
+and literal-source discrepancies explicit. Its fresh checks verify 34
+raw presentations and 3,328 actual subgroup intersections.
+
+The [third-excess theorem](phase22_excess3_transitions.md) gives the exact
+all-rank cubic; the [common generation theorem](phase23_generation_core.md)
+unifies specified linear and unitary parabolic-generation steps. There are
+23 [formal modules](formal/README.md). The newest checks finite transfer
+arithmetic using native evaluation, with four compiler-evaluation axioms
+disclosed separately from the preceding 22 reports. The two measured ratios
+remain 3.34 and 4/3; no infinity marker is assigned. Earlier dated progress
+notes below should be read with these later proofs and the living map.
+
 ## The latest uniform reductions
 
 The [complete proposed cyclic-TPP theorem](phase14_cyclic_tpp.md) now gives
