@@ -1259,3 +1259,20 @@ It proves the iff statement for a general two-coset interval and the
 excess-witness implication. The printed axioms are only `propext` and
 `Quot.sound`; it does not derive the interval hypotheses from an arbitrary
 marked group or formalize the complete geometric construction.
+
+
+## Why the S6 input is not a geometry
+
+```sh
+python3 research/case_study/phase26_s6_geometry_check.py --output scratch/S6-geometry-fresh.json
+```
+
+This independent diagnostic builds every typed coset flag of the old S6
+marking and checks its common intersection and actual chamber extensions.
+It finds 720 full chambers and 90 unextendible flags, all of type {0,2,3}.
+The two local graph conditions B1 and B2 pass. Thus the old subgroup-IP
+and these graph conditions do not supply the original geometry hypothesis
+of the cited halving theorem. The source adapter also gives an explicit
+Johnson-graph/partition witness. Python standard library only; the output
+path must be new. Source PDF reading and the general source theorems are
+separate from this exact finite diagnostic.

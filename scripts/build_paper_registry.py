@@ -18,7 +18,8 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase6_network_intake.json", "phase16_frattini_geometry_intake.json",
           "phase17_k1_source_intake.json", "phase18_schulte_weiss_intake.json",
           "phase20_linear_rank3_intake.json", "phase22_linear_priority_supplement.json",
-          "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json")
+          "phase24_L088_sources.json", "phase25_L108_intake.json", "phase25_older_access.json",
+          "phase26_access.json")
 
 # id: status, exact target, replacement method, retained inputs, evidence paths,
 # remaining work. Semicolons separate inputs and evidence paths.
@@ -287,6 +288,12 @@ UPDATES = {
         "Actual marked intersection property and nondegenerate path condition; Reviewed forest quotient and canonical central attachment; Elementary edge/triple seed covers; Regular-polytope/string-C-group correspondence",
         "phase18_schulte_weiss_intake.md;phase18_schulte_weiss_intake.json;phase18_class_three.md;phase18_class_three_manifest.json;phase18_class_three_root_audit.json;phase18_class_three_independent_audit.json;phase18_class_three_status.md;phase18_leading_coefficient.md;phase18_leading_coefficient_rank_audit.json",
         "The original unmarked group characterization, chiral cases and orders 2^k p remain outside these conclusions. Exact unrestricted excess-three counts are now supplied by a complete finite graph and integer-vector certificate; higher excess coefficients remain uncomputed. This is progress on a restricted component, not a solution of Problem 30 or a rederivation of the survey. Publication priority, complete formalization and a matched proof-length ratio remain unestablished."),
+    "F015": (
+        "conditional_component", "Matching-diagram semidirect-product order; orthoplex order factor in Proposition13 for n>=3 and finite s>=2",
+        "The matching diagram gives m independent dihedral coordinates. Multiplying their orders and applying endpoint parity gives (2s)^m times the seed order and its halved value; for the orthoplex this is (4s)^n n!/2.",
+        "Published diagram-group/semidirect-product construction; Published halving and geometric realization theorems; Index-two endpoint parity in the specified families",
+        "phase26_halving_source_adapter.md;phase26_access.json;phase26_halving_source_rank_audit.md;phase26_halving_source_rank_audit.json",
+        "Order component only, conditional on the constructed group model. Other families, explicit presentations, local residues and geometric existence are not rederived. No full-paper or principal-result credit; no matched ratio or novelty claim."),
     "N004": (
         "component_rederived", "Advertised RWPRI/(IP)2 truncation target, via a complete weighted-tree model",
         "Contract omitted edges and retain component sizes as weights; forest and laminar incidence formulas give exact primitivity, local two-transitivity, rank-two and full-shadow criteria.",
@@ -302,6 +309,7 @@ UPDATES = {
 }
 
 READING_UPDATES = {
+    "F015": ("selected_sections_read", "Sections2.2–2.4 and orthoplex Section3.2 including Proposition13; not all family proofs.", "phase26_access.json"),
     "L088": ("full_text_read", "All ten primary pages and six construction proofs read; figures on pages9–10 independently visually checked. The exhaustive introductory classification is retained background.", "phase24_L088_sources.json"),
     "L108": ("full_text_read", "All seven printed pages19–25, definitions, statements, proofs and references read from the complete primary authored rendering. Publisher PDF unavailable.", "phase25_L108_intake.json"),
     "N009": ("full_text_read", "All22 primary pages read cumulatively across source-bound audits; the final independent review matches all27 numbered items and allsix tables. Root and the independent reviewer visually inspected printedp10. This reading record does not claim literal validity of every printed assertion.", "phase24_N009_coverage.md"),
@@ -450,6 +458,18 @@ def record(row, baseline, overlay, later_readings, older_access):
              "scope": "Every three cyclic subgroups with TPP have order product at most the ambient group order. No order or nilpotency-class cutoff. Cyclicity and nilpotence remain essential scope restrictions.",
              "relation_to_source": "proposed_uniform_companion_application"},
         ]
+    if identifier in {"N013", "N014"}:
+        r.update(status="source_theorem_retained", encoded=False, rederived=False,
+                 full_principal_results=False, proposed_new_result=False)
+        ref = ("Section3, Theorem3.1, Proposition3.2 and Corollary3.3, arXiv2001.11082v1"
+               if identifier == "N013" else "Lemma4.5, Theorem4.4 and Proposition4.7, arXiv2405.19050v1")
+        r["exact_target"] = [{"reference": ref, "scope": "Exact primary-source overlap and geometric-dependency bridge; selected sections read, no full-paper rederivation.", "relation_to_source": "retained_published_input"}]
+        r["method"] = ["Compare the published endpoint operation and actual geometric hypotheses with the general abstract marked-group criterion."]
+        r["retained_inputs"] = ["The named primary-source geometric theorem and its hypotheses; geometric realization is not inferred from subgroup IP alone."]
+        r["evidence"] += [evidence(n, ref) for n in ("phase26_halving_source_adapter.md", "phase26_halving_source_rank_audit.json")]
+        r["remaining_work"] = ["Full principal-result rederivation remains unestablished. Source access/attribution is not compression credit or a novelty assessment."]
+    if identifier in {"L081", "L111"}:
+        r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase26_access.json", "reading_depth":"Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately."})
     if identifier == "L108":
         r["historical_catalogue_title"] = r["title"]
         r["title"] = "On the Petrials of thin rank 3 geometries"
@@ -833,6 +853,25 @@ def phase22_network_rows():
     }]
 
 
+def phase26_network_rows():
+    """Assign two previously unindexed primary bridges; source reading only."""
+    rows = []
+    for identifier, source in zip(("N013", "N014"),
+            [p for p in load("phase26_access.json")["papers"] if p["id"] is None]):
+        rows.append({
+            "id": identifier, "title": source["title"],
+            "publication_year_from_catalogue": source["year"],
+            "citation": ", ".join(source["authors"]) + ". " + source["version"] + ". " + source["version_note"],
+            "category": "Network publication / primary bridge", "mathematical": True,
+            "fulltext_available": True, "reading_scope": "selected_sections_read",
+            "retrieval_status": "primary_pdf_accessed_selected_sections_read",
+            "status_note": source["reading"] + " No whole-paper credit.",
+            "assets": [{"url": source["primary_url"]}], "source_urls": [],
+            "intake_file": "phase26_access.json",
+        })
+    return rows
+
+
 def escaped(text):
     return str(text).replace("|", "\\|").replace("\n", " ")
 
@@ -1033,6 +1072,8 @@ def main():
              for r in phase20_network_rows()]
     rows += [record(r, baseline, overlay, later_readings, older_access)
              for r in phase22_network_rows()]
+    rows += [record(r, baseline, overlay, later_readings, older_access)
+             for r in phase26_network_rows()]
     assert len({r["id"] for r in rows}) == len(rows)
     for r in rows:
         assert not r["full_principal_results"] or r["rederived"]

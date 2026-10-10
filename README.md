@@ -156,8 +156,8 @@ still need priority verification.
 The starting bibliography was seeded from Dimitri Leemans's publication
 catalogue and expanded through coauthored papers and relevant followups.
 It currently indexes 128 mathematical catalogue entries, 17 followups and
-12 additional works across the collaborator network, for 157 in total.
-The living registry records 99 accessible complete texts or primary renderings;
+14 additional works across the collaborator network, for 159 in total.
+The living registry records 101 accessible complete texts or primary renderings;
 reading depth ranges from targeted searches to complete proof reading.
 Across the full inventory, 49 entries have abstract-level reading and nine
 have metadata/access records only. That is neither complete

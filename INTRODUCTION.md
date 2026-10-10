@@ -2743,6 +2743,20 @@ The latter proves both directions and transports an excess element to
 the distinguished coset representative, for arbitrary groups. These facts do not establish its publication
 priority, geometric flag transitivity or a numerical proof-length ratio.
 
+The [primary-source bridge](research/case_study/phase26_halving_source_adapter.md)
+compares this algebraic test with the 2020 and 2024 geometric constructions
+and the 2023 matching-diagram families. Their hypotheses carry mathematical
+content. In the S6 example, even the simple-graph condition and the correct
+edge-shadow incidences both hold, but 90 pairwise-incident flags cannot be
+completed to chambers. Thus the original coset system is not a geometry.
+Its 720 full chambers still form a single orbit; that fact cannot certify
+the missing flags. A direct model makes the failure visible: vertices are
+two-element subsets of six points, edges are Johnson-graph edges, and two
+higher types are balanced three-plus-three partitions. A common shadow
+can contain an isolated vertex, preventing the required edge completion.
+The source papers are indexed with selected-reading and retained-input
+status, without additional principal-result credit.
+
 ## 43. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.

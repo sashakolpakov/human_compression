@@ -9,7 +9,7 @@ which geometric constraints it solves. These are internally reviewed proof
 drafts and exact computations, not externally reviewed publications.
 
 The [detailed introduction](../../INTRODUCTION.md) explains the ideas with
-worked examples. The [living paper map](../../PAPER_MAP.md) records all 157
+worked examples. The [living paper map](../../PAPER_MAP.md) records all 159
 indexed works, including the 1996–2006 intake; this note focuses on reductions.
 
 ## The common calculus

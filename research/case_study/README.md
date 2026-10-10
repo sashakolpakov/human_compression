@@ -4,7 +4,7 @@ Research begun 9 October 2026; updated 10 October 2026. We have proposed proofs 
 
 ## Current coverage and verification
 
-The [living paper map](../../PAPER_MAP.md) indexes 157 works and records
+The [living paper map](../../PAPER_MAP.md) indexes 159 works and records
 15 principal-result reductions. These now include the six 2005 Janko-group
 [construction theorems](phase24_L088_theory.md) and the 2001
 [Petrial obstruction and conditional structural results](phase25_L108_reduction.md),
