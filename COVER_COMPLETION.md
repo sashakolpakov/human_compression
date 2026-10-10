@@ -46,11 +46,13 @@ It fixes the paths, orientations and defect words. Killing the actual
 tree-edge generators recovers K; matching abstract free ranks alone would
 not justify that step.
 
-For any nonempty class of finite groups closed under subgroups and finite
-direct products, a finite cover with kernel in that class and unchanged
-ends exists **if and only if every nontrivial defect survives in a finite
-quotient of U in that class**. The proof combines separating maps and
-takes a normal core. It needs neither coprimality nor an abelian kernel.
+For any nonempty class of finite groups closed under isomorphisms, subgroups
+and finite direct products, a finite cover with kernel in that class and
+unchanged ends exists **if and only if, for every coset Ci≠C in C\I, its
+defect δ_i survives in a finite quotient of U in that class**. If such a
+defect is already trivial in U, existence is obstructed. The proof combines
+separating maps and takes a normal core. It needs neither coprimality nor
+an abelian kernel.
 
 If one such polytopal cover exists, W itself is polytopal. If K is finite,
 every cover in this scope is a finite quotient `W/N`, where
