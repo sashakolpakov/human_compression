@@ -35,6 +35,9 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase106_twelve_measurement_root_admission.json",
           "phase120_thirteen_root_admission.json",
           "phase114_commuting_pairs_review_reading.json",
+          "phase130_intake.json", "phase130_geometry_erratum_manifest.json",
+          "phase134_L034_root_review.md", "phase134_L034_export.json",
+          "phase136_typed_helly_review.json", "phase136_typed_helly_manifest.json",
           "phase119_five_family_root_admission.md",
           "phase80_two_primary_root_audit.json",
           "phase72_cover_family_priority_claims.json",
@@ -534,8 +537,9 @@ def record(row, baseline, overlay, later_readings, older_access):
         # The existing construction and the proposed conjecture proof are separate axes.
         r["proposed_new_result"] = True
         r["exact_target"] = [
-            {"reference": "Theorem 3.2", "scope": "The specified grid/dihedral construction is rederived; its alternate quotient display remains unverified.",
-             "relation_to_source": "specified_existing_target_or_encoding"},
+            {"reference": "Theorem 3.2, arXiv:1901.09034v1; auxiliary Lemma 3.1",
+             "scope": "All six principal construction clauses: exact bare presentation, order, pair orders, regular coset geometry, cyclic kernel product and corrected quotient decomposition. The printed structural parity rows and repeated B pair-word are explicitly corrected. The required involutory-local-marker erratum is part of the new proof. Square decompositions hold for every integer q>=2 and retain their earlier attribution.",
+             "relation_to_source": "principal_results_rederived_with_explicit_corrections"},
             {"reference": "Conjecture 3.3, complete stated range n>=10, s,t>=2, l>=1",
              "scope": "The proposed all-2-group cyclic TPP theorem and regular-hypertope adapter exclude n<s+t+l. The written proof retains powerful-group structure and elementary finite-p-group facts, with no finite catalogue or isobicyclic classification. Internal reviews passed; current priority remains unverified.",
              "relation_to_source": "proposed_consequence"},
@@ -543,6 +547,20 @@ def record(row, baseline, overlay, later_readings, older_access):
              "scope": "Every three cyclic subgroups with TPP have order product at most the ambient group order. No order or nilpotency-class cutoff. Cyclicity and nilpotence remain essential scope restrictions.",
              "relation_to_source": "proposed_uniform_companion_application"},
         ]
+        r.update(status="principal_results_rederived", full_principal_results=True)
+        r["method"].append("The new modular attachment uses U.SK, exact square/diagonal affine quotients, coordinate-kernel typed Helly and a sharp presentation order bound. It is separate from the older proposed conjecture proof.")
+        r["retained_inputs"].append("U supported-kernel/local-recognition/order/geometry theorems and A square models; standard square-torus and regular-polytope correspondence inputs; mandatory involutory-local-marker correction")
+        for name in ("phase130_typed_helly_L034.md", "phase130_geometry_erratum.md",
+                     "phase130_intake.json", "phase134_L034_root_review.md",
+                     "phase134_L034_export.json", "phase136_typed_helly_review.md",
+                     "phase136_typed_helly_review.json"):
+            r["evidence"].append(evidence(name, "Complete corrected known principal construction; conjecture credit is separate"))
+        r["remaining_work"] = ["The corrected complete principal construction has two independent proof reviews. An integrated six-source Module A edition, matched measurement, full Lean application proof and journal-version collation remain. The older proposed Conjecture3.3/cyclic-TPP answer retains its own reviews and unverified historical priority; this construction adds no new conjecture claim."]
+        r["access_coverage"]["reading_category"] = "full_text_read"
+        r["access_coverage"]["additional_readings"].append({
+            "source": "research/case_study/phase134_L034_root_review.md",
+            "reading_depth": "Root read all eleven extracted pages of arXiv1901.09034v1 and independently rendered/visually inspected pages7-8. No journal-edition collation or fresh priority search."})
+        r["primary_urls"].insert(0, "https://arxiv.org/abs/1901.09034v1")
     if identifier in {"N013", "N014"}:
         lattice = identifier == "N013"
         r.update(status="principal_results_rederived" if lattice else "proposed_new_result",
@@ -1081,15 +1099,14 @@ def render(registry):
         "[Registry](research/case_study/paper_registry.json) · [Introduction](INTRODUCTION.md) · "
         "[Reduction scope](research/case_study/torsor_compression_overview.md) · "
         "[Historical inventory](research/case_study/literature_inventory.json)", "",
-        "The [named manuscript map](MANUSCRIPT_MAP.md) records twelve distinct sources",
-        "in seven overlapping reviewed assemblies. The latest continuous replacement",
-        "uses one universal finite-kernel classification for the order-256 seed and",
-        "order-1024 census, removing its SmallGroups catalogue completeness input.",
-        "Declared contracts, source corrections and substantive retained inputs remain explicit.",
-        "Compress_B has a conditional full-body factor of 3.928390x. The preceding",
-        "eleven-source replacement has a conservative lower bound of 1.484833x,",
-        "crediting N001 and L108 zero. The twelve-source factor is unmeasured;",
-        "older factors do not transfer to it.", "",
+        "The [named manuscript map](MANUSCRIPT_MAP.md) organizes the product as",
+        "U plus coherent application modules. U and the five-source Module A have",
+        "complete drafts; Module B is in preparation. A separately reviewed",
+        "[hypertope attachment](MODULE_A_HYPERTOPES.md) supplies a sixth source",
+        "for a future integrated A edition, with a mandatory geometric correction.",
+        f"The historical proof compilations cover {counts['manuscripts_in_reviewed_assemblies']} distinct sources",
+        f"in {counts['reviewed_assembled_replacements']} overlapping assemblies. They are reusable source material.",
+        "Their [frozen measurements](MEASUREMENT.md) do not transfer to U or the new modules.", "",
         "## Read the stages separately", "",
         "| Stage | Meaning |", "|---|---|",
         "| Retrieved | A matched primary full text was accessed; it is not redistributed. |",

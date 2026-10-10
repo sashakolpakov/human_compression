@@ -65,3 +65,9 @@ This checks integrity, not mathematical validity. Use the
 [corrected portable checker](research/case_study/phase117_two_group_application_portability.md);
 the original author manifest's command assumed a different directory
 layout. No primary publication PDF is included in this export.
+
+A separately reviewed [three-generator hypertope attachment](MODULE_A_HYPERTOPES.md)
+now derives the full corrected principal construction of a sixth source,
+L034 (2019), through a coordinate-kernel coset-intersection theorem. Its
+mandatory involutivity correction is explicit. Integration into a new
+edition is pending; the five-source 21-page draft above remains frozen.

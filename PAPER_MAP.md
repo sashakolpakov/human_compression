@@ -10,15 +10,14 @@ student or postdoc. Coauthorship alone does not establish those relationships.
 
 [Registry](research/case_study/paper_registry.json) · [Introduction](INTRODUCTION.md) · [Reduction scope](research/case_study/torsor_compression_overview.md) · [Historical inventory](research/case_study/literature_inventory.json)
 
-The [named manuscript map](MANUSCRIPT_MAP.md) records twelve distinct sources
-in seven overlapping reviewed assemblies. The latest continuous replacement
-uses one universal finite-kernel classification for the order-256 seed and
-order-1024 census, removing its SmallGroups catalogue completeness input.
-Declared contracts, source corrections and substantive retained inputs remain explicit.
-Compress_B has a conditional full-body factor of 3.928390x. The preceding
-eleven-source replacement has a conservative lower bound of 1.484833x,
-crediting N001 and L108 zero. The twelve-source factor is unmeasured;
-older factors do not transfer to it.
+The [named manuscript map](MANUSCRIPT_MAP.md) organizes the product as
+U plus coherent application modules. U and the five-source Module A have
+complete drafts; Module B is in preparation. A separately reviewed
+[hypertope attachment](MODULE_A_HYPERTOPES.md) supplies a sixth source
+for a future integrated A edition, with a mandatory geometric correction.
+The historical proof compilations cover 13 distinct sources
+in 8 overlapping assemblies. They are reusable source material.
+Their [frozen measurements](MEASUREMENT.md) do not transfer to U or the new modules.
 
 ## Read the stages separately
 
@@ -39,15 +38,15 @@ a problem stated in a survey does not imply its inaccessible original paper was 
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 12 |
+| full text read | 13 |
 | full text search only | 19 |
 | metadata and access only | 9 |
-| selected sections read | 68 |
+| selected sections read | 67 |
 
 102 works have a retrieved full text; 53 have a specified encoding or conditional/component reduction; 39 have a rederived component, finite subfamily or principal target.
 These overlapping totals must not be read as counts of fully reduced papers.
 
-The conservative **principal-result set has 17 works: L008, L030, L032, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013, N016**.
+The conservative **principal-result set has 18 works: L008, L030, L032, L034, L035, L066, L074, L088, L104, L108, F013, F016, N001, N003, N008, N009, N013, N016**.
 Proposed conjecture proofs are separate and do not increase that count.
 
 ## Exact reductions and proposed consequences
@@ -63,7 +62,7 @@ Proposed conjecture proofs are separate and do not increase that count.
 | L029 | [On residual connectedness in chiral geometries](https://arxiv.org/pdf/1911.03227v1) | Designated-action version of Theorem 1.1; rank-three Proposition 4.9 | [component rederived](research/case_study/incidence_compression.md). The bridge from the source's full-automorphism chirality convention to the designated action remains unproved here. |
 | L030 | [An infinite family of locally X graphs based on incidence geometries](https://arxiv.org/pdf/1811.11438v1) | Theorem 4.9; Corollaries 4.10-4.11 and principal construction | [principal results rederived](research/case_study/incidence_compression.md). The note records corrections to two checked source displays. External review remains. |
 | L032 | [On regular polytopes of 2-power order](https://dipot.ulb.ac.be/dspace/bitstream/2013/292444/3/HRRPR-revised.pdf) | Theorem 1.2 | [principal results rederived](research/case_study/compression_phase2.md). This existence theorem does not classify every group of the given order. Lean covers abstract kernel transport only. |
-| L034 | [Existence of regular 3-hypertopes with 2 n chambers](https://dipot.ulb.ac.be/dspace/bitstream/2013/287227/5/Hy2g.pdf) | Theorem 3.2; Conjecture 3.3, complete stated range n>=10, s,t>=2, l>=1; Stronger companion theorem: cyclic subgroup TPP in every finite nilpotent group | [component rederived](research/case_study/compression_phase2.md). [Complete proposed conjecture proof](research/case_study/phase14_cyclic_tpp.md). External review and current priority verification remain. The bounded search found no later resolution, but its latest explicit open checkpoint is the original 2019 source. Lean checks finite action and equivariant transport components; the group and geometric arguments remain written proofs. The source's alternate dihedral-by-dihedral quotient display is not separately verified. No whole-paper reduction or infinity marker is assigned. |
+| L034 | [Existence of regular 3-hypertopes with 2 n chambers](https://arxiv.org/abs/1901.09034v1) | Theorem 3.2, arXiv:1901.09034v1; auxiliary Lemma 3.1; Conjecture 3.3, complete stated range n>=10, s,t>=2, l>=1; Stronger companion theorem: cyclic subgroup TPP in every finite nilpotent group | [principal results rederived](research/case_study/compression_phase2.md). [Complete proposed conjecture proof](research/case_study/phase14_cyclic_tpp.md). The corrected complete principal construction has two independent proof reviews. An integrated six-source Module A edition, matched measurement, full Lean application proof and journal-version collation remain. The older proposed Conjecture3.3/cyclic-TPP answer retains its own reviews and unverified historical priority; this construction adds no new conjecture claim. |
 | L035 | [2-groups behaving as automorphism groups of regular 3-polytopes](https://arxiv.org/pdf/1802.08947v2) | Theorems 1.2 and 1.3 | [principal results rederived](research/case_study/phase3_classification.md). External review; the all-parameter classification is not formalized end to end and the retained finite catalogue is not rederived. |
 | L043 | [Projective linear groups as automorphism groups of chiral polytopes](https://arxiv.org/pdf/1606.08017) | Conjectures 6.1 and 6.2; missing nonprime-field case of the introductory classification | [proposed new result](research/case_study/psl2_square_proof.md). External review and priority verification. The character argument and full geometric consequence are not formalized; other published principal results are not all rederived. |
 | L048 | [Polytopes of large rank for PSL(4,q)](https://digitalcommons.bucknell.edu/fac_journ/1204/) | Odd-characteristic PSL4 maximum rank four; exact conjecture read in L120, Conjecture 2, Section 5.7 | [proposed new result](research/case_study/phase8_psl4_rank6.md). Complete written argument with internal independent review and exact symbolic checks; publication priority and external review remain. The original L048 rank-four construction is retained, not rederived; this is no whole-paper reduction. Lean formalizes specified components only. |
@@ -273,7 +272,7 @@ inputs, evidence, remaining work and the earlier assessment for comparison.
 | L031 | 2020 | [Orthogonal groups in characteristic 2 acting on polytopes of high rank](https://arxiv.org/pdf/1709.02219) | selected sections read | conditional component |
 | L032 | 2020 | [On regular polytopes of 2-power order](https://dipot.ulb.ac.be/dspace/bitstream/2013/292444/3/HRRPR-revised.pdf) | selected sections read | principal results rederived |
 | L033 | 2020 | [An exploration of locally spherical regular hypertopes](https://dipot.ulb.ac.be/dspace/bitstream/2013/309163/3/LSRH-revised.pdf) | selected sections read | unassessed |
-| L034 | 2019 | [Existence of regular 3-hypertopes with 2 n chambers](https://dipot.ulb.ac.be/dspace/bitstream/2013/287227/5/Hy2g.pdf) | selected sections read | component rederived |
+| L034 | 2019 | [Existence of regular 3-hypertopes with 2 n chambers](https://arxiv.org/abs/1901.09034v1) | full text read | principal results rederived |
 | L035 | 2019 | [2-groups behaving as automorphism groups of regular 3-polytopes](https://arxiv.org/pdf/1802.08947v2) | selected sections read | principal results rederived |
 | L036 | 2019 | [On primitive geometries of rank two](https://adam-journal.eu/index.php/ADAM/article/download/1301/1075) | full text search only | unassessed |
 | L037 | 2019 | [Rank reduction of string C-group representations](https://arxiv.org/pdf/1812.01055) | full short text read | source theorem retained |

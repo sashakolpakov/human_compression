@@ -21,7 +21,7 @@ This title and grouping add no source-coverage or compression credit.
 | Indexed mathematical works | 161 |
 | Complete texts retrieved | 102 |
 | At least one named result/component rederived | 39 |
-| All identified principal results rederived | 17 |
+| All identified principal results rederived | 18 |
 | Distinct sources represented in the existing working compilations | 13 |
 
 The layers overlap. Retrieval is not complete reading; principal-result
@@ -35,6 +35,13 @@ and fork constructions; all classification and geometric arguments remain
 explicit. The ledger binds 44 source records and 17 multipart clauses.
 The complete raw cost is 190,995 bytes including U and all four external
 computational artifacts; A's 21 pages alone are not the whole proof cost.
+
+A [reviewed hypertope attachment](MODULE_A_HYPERTOPES.md) now recovers
+L034's complete principal construction, including the exact presentation
+and corrected quotient structure. Its coset-intersection theorem adds a
+reusable geometric argument; the required local-involutivity correction
+is explicit. This is the eighteenth principal-result source. A new
+six-source edition of A remains to be integrated and measured.
 
 The preceding combined manuscripts are a source bank, not the product,
 organizing structure or benchmark of this programme. The latest working

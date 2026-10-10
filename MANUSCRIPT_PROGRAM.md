@@ -49,6 +49,12 @@ classification, universal-presentation and geometric arguments. Full
 formalization and final source admission remain pending. Enlarging this
 bundle requires further proved source reductions.
 
+The [three-generator hypertope attachment](MODULE_A_HYPERTOPES.md) now
+supplies such a reduction for L034 (2019), with all principal construction
+clauses and explicit corrections. The five-source draft remains frozen;
+its next edition must incorporate this proof and broaden the title to
+include hypertopes, then undergo the same source and cost audit.
+
 ## Module B: Forest coordinates and primitive coset geometries
 
 The [module outline](MODULE_B.md) connects forest cuts and compatible

@@ -50,11 +50,15 @@ new project's product or benchmark. Historical records remain available
 in [the research directory](research/case_study) and earlier commits.
 
 The intake contains **161 indexed works**, with **102 complete texts
-retrieved**, **39 named result/component rederivations**, and **17 records
+retrieved**, **39 named result/component rederivations**, and **18 records
 covering all identified principal results**. These categories overlap.
 They do not count completed modular manuscripts or a complete bibliography
 of every collaborator. The existing working compilations now account for
 thirteen distinct principal-result contracts.
+
+The latest addition is a [three-generator hypertope attachment](MODULE_A_HYPERTOPES.md)
+that recovers the complete corrected construction of a sixth source for
+Module A. Its integration into a new edition is pending.
 
 A parallel track inventories every explicit conjecture, open question and
 unresolved case in the intake, checks later work, and attacks related

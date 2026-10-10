@@ -339,3 +339,10 @@ The [phase-93 record](phase93_review.md) admits the actual supported-kernel
 generation, profile and intersection theorem in Lean after independent
 review and two fresh compilation paths. Its local hypotheses and remaining
 formal obligations are explicit. This is the forty-fifth scoped component.
+
+The [phase-94 record](phase94_review.md) admits the corrected complete
+L034 principal construction after two independent proof readings and
+fresh public checks. The required local-involutivity correction is part
+of the proof and its cost. This supplies a sixth source for a future A
+edition and raises principal-result coverage to eighteen; it does not
+change the frozen five-source draft or add a conjecture-resolution claim.
