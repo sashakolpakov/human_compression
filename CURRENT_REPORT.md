@@ -21,8 +21,12 @@ This reorganizes an existing recovery and adds no principal-source credit.
 | [Marked actions and enumeration](MODULE_D.md) | Previously reviewed combined manuscript, field arguments and census results with their remaining gaps stated |
 
 The [equal-label polygon application](EQUAL_LABEL_POLYGONS.md) also recovers
-F014’s complete stated rank-three main results, raising principal-source
-coverage to 21. Its five Lean declarations verify the general algebraic core.
+F014’s complete stated rank-three main results. Its five Lean declarations
+verify the general algebraic core. The
+[projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) now recovers two more
+complete principal classifications, with independent review and fresh
+finite and Lean checks. Principal-source coverage is **23 of 161**; the
+separate topic umbrella and two application papers are in preparation.
 
 ## Further application material
 

@@ -16,6 +16,8 @@ STUDY = ROOT / "research/case_study"
 # Exact project-authored renderings only. Primary publication PDFs and source
 # raster/text captures remain excluded from the distributed snapshot.
 OWN_RENDERED_PDFS = {
+    "research/case_study/phase230_rank_one_classification.pdf":
+        "fc8364d6e4a04f522fc634f12fd106121e79bd21d1219deb0d2a67c8508eaa7a",
     "research/case_study/phase232_application.pdf":
         "5f5d32b0c1699e0253939c48042e14e072ad1684f02a7aee2a55068081520df5",
     "research/case_study/phase228_umbrella.pdf":
@@ -66,6 +68,7 @@ def digest(path):
 def frozen_question_exports():
     """Preserve admitted proof packages when refreshing the public snapshot."""
     manifests = {
+        "phase235_export.json": "18882d876f74b42ee6c6a91c192b46a82d25ca90c659cf5f447f2eba81b21ed8",
         "phase217_export.json": "af256c4766c31865608b5c333cef200533b3f8280351e59295cbf3db292aaeb8",
         "phase221_export.json": "7325a1698d540caf372ac8b4e0bf0f392e706c26ef59279dde7f027d6e797ab7",
         "phase223_export.json": "89f51c64ef3f86c0b1f566223ce0afb8e92e366f11dc52f963e454b887ef65a7",
@@ -134,7 +137,7 @@ def lean_reports():
         )] if source.stem == "Phase23TransferAnnihilator" else [])
         assert native == expected_native, (source.name, "native-evaluation trust boundary changed")
         result.append(source.name)
-    assert len(result) == 82, result
+    assert len(result) == 83, result
     return result
 
 
@@ -191,7 +194,7 @@ def main():
     assert manifest["files"] == rows, "Snapshot differs from its publication manifest."
     print(f"PASS: {len(rows)} published artifacts; {len(checked)} saved Lean reports match their sources.")
     print(f"PASS: {frozen} frozen question-proof publication artifacts retain their admitted bytes.")
-    print("Trust scope: 81 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
+    print("Trust scope: 82 reports without native-evaluation axioms; 1 transfer report with four explicitly recorded native-evaluation axioms.")
     print("PASS: local documentation links resolve in their recorded context; the frozen root-legend input retains its original base.")
     print("External publications are referenced, not bundled.")
     print("This is an integrity check. Run scripts/smoke_check.py to rerun selected computations.")

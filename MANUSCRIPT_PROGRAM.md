@@ -26,7 +26,8 @@ The current A–D documents each combine several sources in one reviewed
 manuscript. We will reorganize their proofs while preserving every
 mathematical qualification. [Topic A now has its complete umbrella and
 first application](TOPIC_A.md). The other application papers still need
-to be written.
+to be written. The [new projective-line proof](PROJECTIVE_LINE_POLYTOPES.md)
+provides two further complete principal classifications for topic E.
 
 | Topic | Existing reviewed manuscript | Required next structural work |
 |---|---|---|
@@ -34,6 +35,7 @@ to be written.
 | B: Forest coordinates and primitive coset geometries | [Forest coordinates](MODULE_B.md) | Identify its full topic umbrella and preserve the complete recognition, generation and geometric applications |
 | C: Halving and Petrial operations on regular geometries | [Operations on regular geometries](MODULE_C.md) | Separate reusable changes of generators and arguments about the objects preserved by these operations from full geometric identifications and censuses |
 | D: Marked actions, field orbits and geometry enumeration | [Marked actions and enumeration](MODULE_D.md) | Extract shared theorems about actions and extensions; keep complete field and classification arguments, including correspondence with historical tables, in the application papers |
+| E: Projective centralizers and regular polytopes | [Two reviewed classifications](PROJECTIVE_LINE_POLYTOPES.md) | Separate the common centralizer and finite-amalgam argument from complete PSL₂ and PGL₂ applications |
 
 The [existing U manuscript](UMBRELLA.md) is a source of reusable proofs.
 A topic may retain an overlapping part of the same mathematics as another
@@ -107,6 +109,20 @@ be omitted from the new application papers.
 
 The [D manuscript and review](MODULE_D.md) distinguish these results from
 the unrecovered parts of the source papers.
+
+### E. Projective centralizers and regular polytopes
+
+| ID | Source, authors and edition | Main results recovered | Qualifications |
+|---|---|---|---|
+| L083 | Leemans and Schulte, *Groups of type L₂(q) acting on polytopes*, retained arXiv math/0606660v1 PDF | Rank restriction; Theorems 1, 3 and 4; the complete ten-row universal table; uniqueness and stated geometric properties of the 11-cell and 57-cell | Classical subgroup types and the group–polytope correspondence are retained inputs. Introductory claims about other presentations and chiral constructions remain background. The bound PDF includes a later typesetting date; no different edition is inferred. |
+| L079 | Leemans and Schulte, *Polytopes with groups of type PGL₂(q)*, arXiv:0909.1991v1 | Rank restriction and Theorem 10: the unique example in rank at least four is the 4-simplex with PGL₂(5) | The seventeen-case PΣL₂(25) census and Conjecture 11 remain outside this recovery. |
+
+The [complete common proof and independent review](PROJECTIVE_LINE_POLYTOPES.md)
+include exact computation of all ten universal presentations. Five Lean
+statements verify the abstract normalizer obstruction. The matrix argument,
+classical inputs and complete classifications remain written and computational.
+The separate U_E, PSL₂ application and PGL₂ application are in preparation;
+no topic compression ratio has yet been measured.
 
 ## What each paper must supply
 

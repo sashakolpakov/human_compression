@@ -8,7 +8,7 @@ every collaborator, student or postdoc. Coauthorship alone does not establish th
 
 The [current programme](MANUSCRIPT_PROGRAM.md) organizes the new papers by topic,
 with a full umbrella for each topic and complete applications to historical papers.
-Its A–D tables name the results already available for reworking. The counts below
+Its A–E tables name the results already available for reworking. The counts below
 describe the source records; they do not count completed new application papers
 or measure compression.
 
@@ -38,14 +38,14 @@ survey does not imply that its original source has been read.
 |---|---:|
 | abstract read | 49 |
 | full short text read | 4 |
-| full text read | 19 |
-| full text search only | 17 |
+| full text read | 21 |
+| full text search only | 16 |
 | metadata and access only | 9 |
-| selected sections read | 63 |
+| selected sections read | 62 |
 
-**102** works have a retrieved full text; **57** have an explicit representation or a specified conditional or partial derivation; **44** have a recovered result, finite subfamily or stated main result.
+**102** works have a retrieved full text; **59** have an explicit representation or a specified conditional or partial derivation; **46** have a recovered result, finite subfamily or stated main result.
 
-The set with **stated main results recovered contains 21 works: L008, L030, L032, L034, L035, L066, L074, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
+The set with **stated main results recovered contains 23 works: L008, L030, L032, L034, L035, L066, L074, L079, L083, L088, L092, L104, L108, F010, F013, F014, F016, N001, N003, N008, N009, N013, N016**.
 The exact targets and qualifications govern membership in this set. Proposed
 conjecture proofs do not add to it. The [question catalogue](CONJECTURE_RESULTS.md)
 keeps answers to questions separate from recovery of published results.
@@ -62,6 +62,7 @@ files preserve the exact statements, earlier results used, evidence and remainin
 | L068 | Complete primary text read; construction P recovered as printed and Q recovered after an explicit repair. This adds a partial derivation, with the necessary group and graph inputs stated. | [Construction review](research/case_study/phase189_L068_overlay.json); [proof reader](GRAPH_INCIDENCE.md) |
 | F010 | The main constructive theorems are recovered in a complete written argument, with local corrections. Lean verifies the stated hexagon component, not the universal constructions. | [Reviewed addition](research/case_study/phase193_F010_overlay.json); [proof reader](FINITE_INCIDENCE_REPRESENTATIONS.md) |
 | F014 | All stated positive rank-three main results in arXiv v1: exact construction, matrices, universal presentation and both corollaries. Montero–Ivić Weiss supply the earlier polygon construction; the printed inverse-action convention is corrected. The higher-rank counterexample is a separate result. | [Reviewed addition](research/case_study/phase233_F014_overlay.json); [complete application](EQUAL_LABEL_POLYGONS.md) |
+| L079 and L083 | Both complete specified rank-at-least-four PGL₂/PSL₂ classifications, their rank restrictions, universal table and stated geometric properties. L079’s extra seventeen-case census and Conjecture 11 are excluded. | [Reviewed addition](research/case_study/phase235_projective_line_overlay.json); [common proof](PROJECTIVE_LINE_POLYTOPES.md) |
 
 Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain
 explicitly rejected; those entries have only abstract-level access. L125's
@@ -153,11 +154,11 @@ remaining-work record in the frozen JSON or the reviewed additions above.
 | L076 | 2010 | [On the rank two geometries of the PSL(2,q) groups : part I](https://amc-journal.eu/index.php/amc/article/download/107/114) | full text search only | not assessed |
 | L077 | 2009 | [On locally spherical polytopes of type {5,3,5}](https://doi.org/10.1016/j.disc.2007.12.084) | abstract read | not assessed |
 | L078 | 2009 | [Locally s-arc-transitive graphs related to sporadic simple groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/lsarc.html) | abstract read | not assessed |
-| L079 | 2009 | [Polytopes with groups of type PGL(2,q)](https://arxiv.org/pdf/0909.1991v1) | selected sections read | not assessed |
+| L079 | 2009 | [Polytopes with groups of type PGL(2,q)](https://arxiv.org/pdf/0909.1991v1) | full text read | [stated main results recovered](research/case_study/phase235_projective_line_overlay.json) |
 | L080 | 2009 | On apartments in incidence geometry | metadata and access only | not assessed |
 | L081 | 2008 | [A new Petrie-like construction for abstract polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/newpetrie.html) | abstract read | not assessed |
 | L082 | 2007 | [A rank six geometry related to the McLaughlin sporadic simple group](https://link.springer.com/article/10.1007/s10623-007-9082-5) | abstract read | not assessed |
-| L083 | 2007 | [Groups of type L(2,q) acting on polytopes](https://arxiv.org/pdf/math/0606660v1) | full text search only | not assessed |
+| L083 | 2007 | [Groups of type L(2,q) acting on polytopes](https://arxiv.org/pdf/math/0606660v1) | full text read | [stated main results recovered](research/case_study/phase235_projective_line_overlay.json) |
 | L084 | 2006 | Errata : "Quotients of a universal locally projective polytope of type {5,3,5}" | metadata and access only | not assessed |
 | L085 | 2006 | [Almost simple groups of Suzuki type acting on polytopes](https://www.math.auckland.ac.nz/~dleemans/abstracts/szpoly.html) | abstract read | part of the results recovered |
 | L086 | 2006 | [An atlas of abstract regular polytopes for small groups](https://www.math.auckland.ac.nz/~dleemans/abstracts/atlaspoly.html) | abstract read | not assessed |
