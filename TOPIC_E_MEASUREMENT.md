@@ -1,5 +1,10 @@
 # Measured reuse in the projective-line topic
 
+This is the frozen phase251/253 **two-application baseline**, covering E₁ and
+E₂ only. Topic E’s later [third application](PROJECTIVE_LINE_MANIPLEXES.md)
+is excluded from every number and graph below. Its expanded matched cost
+comparison remains unmeasured.
+
 **The two local applications are shorter; the complete written package is
 still longer on the designated metric.** The [independent review](research/case_study/phase252_measurement_review.md)
 accepts this first measurement of one complete topic umbrella and its two

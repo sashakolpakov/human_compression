@@ -24,6 +24,7 @@ OVERLAYS = (
     "phase249_L014_overlay.json",
     "phase259_L012_overlay.json",
     "phase262_L021_question_overlay.json",
+    "phase264_L021_principal_overlay.json",
 )
 
 
@@ -167,7 +168,7 @@ def render(registry):
         "| L079 and L083 | Both complete specified rank-at-least-four PGL₂/PSL₂ classifications, their rank restrictions, universal table and stated geometric properties. L079’s extra seventeen-case census and Conjecture 11 are excluded. | [Reviewed addition](research/case_study/phase235_projective_line_overlay.json); [common proof](PROJECTIVE_LINE_POLYTOPES.md) |",
         "| L014 | Complete normal-Sylow structure, abelian/tight classification and all-parameter nonabelian construction, with the exact presentation and corrected v1 marking. The tightness converse retains Cunningham–Pellicer. | [Reviewed addition](research/case_study/phase249_L014_overlay.json); [complete application](ODD_KERNEL_POLYHEDRA.md) |",
         "| L012 | Complete declared mixed-prime type restriction, odd-factor presentation, exact existence range and all six affine families. Corrected period sign; Burnside, Lucchini, the order-384 catalogue and earlier umbrella/cubic proofs remain inputs. General classification, full Table 1 and ancillary seed uniqueness are excluded. | [Reviewed addition](research/case_study/phase259_L012_overlay.json); [complete application and affine theory](MIXED_PRIME_POLYHEDRA.md) |",
-        "| L021 | Complete four-family PGL existence conjecture answered for explicit prime progressions; whole source read. This is a new question answer, not recovery of its principal PSL results. Priority and complete Lean verification remain unproved. | [Question admission](research/case_study/phase262_L021_question_overlay.json); [proof and review](PGL_MANIPLEX_FAMILIES.md) |", "",
+        "| L021 | Complete corrected principal PSL rank/end-group restrictions, two-proper-end classification, torus extension theorem and both source families. Natural-subfield qualifications, omitted S₄ ends and self-duality corrections are explicit. The four-family PGL question is counted separately, once; no full marking census or full Lean theorem is claimed. | [Principal admission](research/case_study/phase264_L021_principal_overlay.json); [PSL proof and review](PROJECTIVE_LINE_MANIPLEXES.md); [separate question admission](research/case_study/phase262_L021_question_overlay.json); [PGL answer](PGL_MANIPLEX_FAMILIES.md) |", "",
         "Earlier mistaken PDF identifications for L097, L098, L101 and L123 remain",
         "explicitly rejected; those entries have only abstract-level access. L125's",
         "original J1 list must be read with the later correction reported by L105.", "",

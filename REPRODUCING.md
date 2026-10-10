@@ -2611,3 +2611,26 @@ three excluded parameters and four semantic mutations. The
 [fresh replay](research/case_study/phase262_public_replay/report.json)
 are separate evidence. The unchanged private review driver additionally
 requires the bound primary PDFs; those PDFs are not redistributed.
+
+## Principal PSL maniplex recovery
+
+```sh
+python3 -B -O research/case_study/phase264_check.py \
+  --out /tmp/NEW-PSL-maniplex-review \
+  --gap GAP --lean LEAN --packages PACKAGES
+```
+
+This public-only adapter checks the frozen phase258/263 bytes without
+requiring primary PDFs. It replays all ten shared universal presentations,
+432 local sggi markings, eight author models, three new and two reused Lean
+interface declarations, and the semantic controls. Independent Python
+permutation arithmetic repeats all 27,648 local intersections and the two
+literal correction witnesses; separate native constructions check four
+additional prime cases and fields of orders 25 and 49. It rejects an altered
+marker that violates a distant commutation. The
+[review](research/case_study/phase263_review.md),
+[reader](PROJECTIVE_LINE_MANIPLEXES.md) and
+[public report](research/case_study/phase264_public_replay/report.json)
+state the retained classical inputs and exact formal boundary. The full
+principal theorem is not entirely formalized. The existing Topic E cost
+measurement excludes this third application.

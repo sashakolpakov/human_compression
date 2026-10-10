@@ -74,3 +74,8 @@ separate from recovering the paper's already proved principal results.
 It adds no principal-source credit and no source-length compression
 factor. The [publication record](provenance/phase128_review.md) binds
 the preserved proof packets and fresh public checks.
+
+The same source's already proved principal PSL results now have their own
+[complete application and corrections](PROJECTIVE_LINE_MANIPLEXES.md).
+That separate admission adds one principal-source recovery, without counting
+this question answer again.

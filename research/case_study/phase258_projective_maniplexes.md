@@ -1,0 +1,518 @@
+---
+title: "Centralizer extensions of projective-line maniplexes"
+author: "human_compression project — private author draft"
+date: "10 October 2026"
+geometry: margin=27mm
+fontsize: 11pt
+---
+
+## 1. Results and dependencies
+
+A string marking of a group $G$ is a generating ordered tuple
+$(r_0,\ldots,r_{n-1})$ of distinct nonidentity involutions such that
+$r_i r_j=r_j r_i$ whenever $|i-j|>1$. We do not impose the intersection
+property. A group with such a marking is often called an sggi. We write
+$G_I=\langle r_i:i\in I\rangle$ and
+$G_i=\langle r_j:j\ne i\rangle$. Its type is the sequence of adjacent
+product orders. Put $L(q)=\operatorname{PSL}_2(q)$ and
+$P(q)=\operatorname{PGL}_2(q)$.
+
+This paper recovers the principal results of Leemans–Toledo [LT] from the
+common projective-line theory [E]. The change of category requires a proof:
+[E]'s classification assumes the intersection property, whereas a string
+marking need not have it. Sections 3–4 supply this interface. We then
+recover the source's two infinite constructions. A third infinite
+construction corrects its introduction and concluding face-count claim.
+The exact edition under consideration is the eleven-page author manuscript
+dated 15 May 2023, bound in the accompanying source ledger.
+
+**Theorem 1 (rank and local groups; Leemans–Toledo).** If $L(q)$ has a
+string marking of rank at least four, then $q$ is odd, the rank is four,
+and each end group $G_0,G_3$ is isomorphic to $S_4,A_5$, or $L(q)$.
+If both end groups are proper, there is exactly one marking up to
+isomorphism for $q=11$, of type $\{3,5,3\}$, and exactly one for $q=19$,
+of type $\{5,3,5\}$. These are the 11-cell and 57-cell; both satisfy IP.
+
+**Theorem 2 (extensions and the two source families).**
+
+1. Let $q$ be odd, choose $\alpha\in\{1,-1\}$ with
+   $q\equiv\alpha\pmod4$, and put $N=(q-\alpha)/2$. Every rank-three
+   string marking of $L(q)$ whose first adjacent order is an odd divisor
+   of $N$ extends, with the same group, to rank four.
+2. For every prime $p\equiv1\pmod{12}$ there is such a marking with
+   both end groups equal to $L(p)$. Its first three generators have type
+   $\{3,p\}$.
+3. For every prime $p\equiv\pm1\pmod{20}$, $p\ne19$, there is such a
+   marking with one end group $A_5$ and the other $L(p)$.
+
+Both families in parts 2–3 are infinite and nonorientable. These are
+[LT, Theorem 4.4, Lemma 4.5, Proposition 4.7 and their corollaries].
+
+**Theorem 3 (the omitted symmetric-end family).** For every prime
+$p\equiv\pm1\pmod{24}$ there is a rank-four string marking of $L(p)$
+with facet group $S_4$ of type $\{3,4\}$ and vertex group $L(p)$.
+Consequently the associated regular maniplex has one vertex and
+$|L(p)|/24$ facets. There are infinitely many such examples.
+
+Theorem 3 is a correction to the restricted face-count statement in the
+source's introduction and conclusion. It is consistent with its correctly
+stated Theorem 3.10 and Remark 4.1, which allow $S_4$. No priority claim or
+new open-question credit is attached to the correction. Section 8 gives
+small exact witnesses for it and for two other literal source errors.
+The final PGL conjecture in [LT, §5] is treated in a separate packet;
+it is not silently included in the recovery of the above known results.
+
+We retain the full common paper [E], including its classical Dickson
+subgroup input and exact finite-amalgam program. The parts used here are
+the characteristic-two involution centralizer, the centralizer descent
+for a nonabelian dihedral group, the six exceptional local markings and
+the ten universal presentations. We additionally retain the usual cyclic
+tori and their normalizers, and the maximal $A_5$ and $S_4$ cases of
+Dickson's theorem as printed in Giudici [G, Theorem 2.2(6),(8), p.4].
+Dirichlet's theorem supplies infinitude of primes in the stated progressions.
+These outside theorems are not reproved or formalized here.
+
+## 2. Marked groups and regular maniplexes
+
+We recall the group–object correspondence so that the category change is
+explicit. Given a string marking, let the flags be the elements of $G$
+and let the $i$-adjacency be left multiplication by $r_i$. Each adjacency
+is fixed-point-free and involutory. The product of two distinct
+adjacencies is fixed-point-free because $r_i r_j\ne1$. Nonconsecutive
+adjacencies commute, and connectedness is precisely generation of $G$.
+Thus these data satisfy the definition of a maniplex in [LT, §2].
+
+A permutation of the flags preserves every adjacency exactly when it
+commutes with every left multiplication by a generator, hence with the
+left regular action of $G$. Such a permutation is right multiplication
+by its value at the identity: if $f(1)=h$, then $f(g)=gh$. Conversely
+every right multiplication commutes with the left action. The full
+colour-preserving automorphism group is therefore the right regular
+group, isomorphic to $G$ by sending $h$ to multiplication on the right
+by $h^{-1}$, and the maniplex is regular. This establishes the full
+automorphism group, rather than merely a flag-transitive subgroup.
+
+Conversely, in a regular maniplex choose a base flag and the unique
+automorphism taking it to each adjacent flag. Automorphisms commute
+with the adjacency permutations. Moving the base flag along a coloured
+path therefore expresses its terminal automorphism as the corresponding
+reversed product of these distinguished automorphisms. They generate,
+are distinct nonidentity involutions, and commute at nonconsecutive
+positions. Changing the base flag conjugates the marking. This gives
+the claimed correspondence up to marking-preserving isomorphism.
+
+An $i$-face is an orbit of the subgroup on every colour except $i$.
+For our regular model its number is $[G:G_i]$. Reversing the marking
+interchanges vertices and facets and gives the dual maniplex. In
+particular a reversal automorphism of the marked group gives a duality.
+The even-length word subgroup has index at most two. If $G$ is a
+nonabelian simple group it is all of $G$: it is normal, and the quotient
+is generated by the common image of the involutions, of order at most
+two. This is exactly the source's nonorientability criterion.
+
+## 3. Centralizer bounds without the intersection property
+
+We record precisely the two results borrowed from the umbrella.
+In characteristic two the centralizer of a nonidentity involution in
+$P(q)$ is abelian [E, Lemma 3]. In odd characteristic, if $a,b$ are
+involutions and $|ab|>2$, their common centralizer in $P(K)$ has at most
+two elements. It is trivial in the unipotent case; otherwise its unique
+nonidentity element is represented by
+
+$$ A-\tfrac12\operatorname{tr}(A)I, \tag{1} $$
+
+where $A$ represents $ab$. If $a,b$ are defined over a subfield $k$,
+this whole centralizer lies in $P(k)$ [E, Theorem 5]. Neither centralizer
+statement uses IP. Their complete proofs remain in [E].
+
+**Lemma 4 (a string endpoint).** In a centre-free group with a string
+marking, $r_0$ and $r_1$ do not commute.
+
+*Proof.* Otherwise $r_0$ commutes with $r_1$ and, by the string relations,
+with all remaining generators. It then commutes with every word in the
+generators, so is central and hence trivial, a contradiction. $\square$
+
+**Lemma 5 (rank obstruction).** Suppose a centre-free group has the
+property that any two noncommuting involutions have at most one
+nonidentity common centralizer element. Every string marking of that
+group has rank at most four.
+
+*Proof.* At rank at least five, Lemma 4 makes $r_0,r_1$ noncommuting.
+Both $r_3$ and $r_4$ centralize them. The hypothesis forces
+$r_3=r_4$, contradicting distinctness of the marking. $\square$
+
+In characteristic two, a rank-four marking of $L(q)$ is also impossible:
+$r_0,r_1$ both centralize $r_3$, whose centralizer is abelian. This
+contradicts Lemma 4. For $q\ge4$, the group $L(q)$ is nonabelian simple
+and centre-free, so these arguments apply. For $q=2$, there are only
+three involutions in $S_3$; for $q=3$, the involutions of $A_4$ generate
+only its four-group. These dispose of the small groups independently.
+We have proved the entire rank assertion of Theorem 1, including even
+characteristic, without importing the umbrella's C-group rank theorem.
+
+For the remaining discussion $q$ is odd and the rank is four. Every
+adjacent product has order at least three. An order-one product would
+repeat a marker. If an adjacent product has order two, divide the
+marking at that edge. The nontrivial subgroups generated on its two
+sides centralize one another and generate $G$. Each is therefore normal.
+Simplicity makes either one equal to $G$, whereupon the other lies in
+the trivial centre, a contradiction. This argument does not assume that
+the two sides have trivial intersection in advance.
+
+## 4. Proper ends and the finite interface
+
+Let $H=\langle r_0,r_1,r_2\rangle$ be proper in $G=L(q)$ and put
+$D=\langle r_0,r_1\rangle$. The first adjacent order exceeds two, so
+$D$ is nonabelian. We apply the complete subgroup-type input of [E, §2].
+
+A cyclic or elementary abelian group cannot contain $D$. In $A_4$ all
+involutions lie in a four-group, so they cannot generate $A_4$. In an
+odd-characteristic affine group an involution has multiplier $-1$ and
+form $x\mapsto-x+v$. Two such transformations commute precisely when
+their translation parameters agree. The distinct commuting endpoints
+$r_0,r_2$ therefore exclude the affine alternative, including its
+unipotent dihedral subgroups.
+
+Suppose $H$ is dihedral. Since $r_0,r_2$ are distinct commuting
+involutions, $H$ has even rotation order and has a central involution
+$z$. Indeed, an odd dihedral group has only reflections, and two
+reflections commute only when they are equal. The involution $z$
+centralizes $D$. So does $r_3$. The common-centralizer bound forces
+$r_3=z\in H$, contradicting $G=\langle H,r_3\rangle$ and properness.
+This replaces both geometric and algebraic proofs of [LT, Lemma 3.9];
+no assertion that every involution centralizer is maximal is needed.
+
+If $H$ is a subfield group, the retained projective form of Dickson's
+theorem conjugates it into $P(k)$ for a proper subfield $k\subsetneq
+\mathbb F_q$. Theorem 5 of [E] places $r_3$ in the same $P(k)$, since
+it centralizes $D$. Hence $G\subseteq P(k)$. Write $s=|k|$. Since
+$q\ge s^2$,
+
+$$ |G|=q(q^2-1)/2>s(s^2-1)=|P(k)|, \tag{2} $$
+
+which is impossible. This handles both $L(k)$ and $P(k)$ subgroups,
+including the small subfields; it uses their natural embeddings, not
+only their abstract isomorphism types. We conclude that $H$ is $S_4$
+or $A_5$. Reversing the marking proves the same assertion for $G_0$.
+This proves [LT, Theorem 3.10].
+
+The source's odd-end-label lemma also follows without IP. If $|r_0r_1|$
+were even, its half-power would be the central involution of $D$.
+The common-centralizer bound would identify it with $r_3$, again putting
+$r_3$ in the proper group $H$. Thus the first label is odd whenever
+$H$ is proper. This recovers [LT, Lemma 3.5] with its actual hypothesis.
+It does not assert that a marking with both ends equal to $G$ has odd
+end labels.
+
+**Finite interface.** Every rank-three string marking of $S_4$ or $A_5$
+has IP. Up to automorphisms of the marked group its adjacent orders and
+Petrie order are exactly
+
+$$\begin{array}{c|ccc}
+ S_4&(3,3,4)&(3,4,3)&(4,3,3)\\
+ A_5&(3,5,5)&(5,3,5)&(5,5,3).
+\end{array}\tag{3}$$
+
+Here the third entry is $|r_0r_1r_2|$. The new exhaustive program
+`phase258_local_sggi.g` enumerates all ordered triples of distinct
+involutions with commuting endpoints and tests generation. IP is an
+output test, never an admission filter. There are 72 such triples in
+$S_4$ and 360 in $A_5$; all pass the 64 subset-pair intersections.
+Full automorphism orbits give (3). An explicit dihedral string marking
+failing IP is a control against extending this assertion to arbitrary
+groups. The exact presentations for (3) and the ten compatible rank-four
+universals are already proved by [E, Lemmas 10–11] and its single bound
+GAP program. We reuse that calculation in full.
+
+Suppose both end groups are proper. The local census now licenses the
+ten universal presentations, even though global IP is still unknown.
+Every possible $G$ is a quotient preserving the four generators.
+Four rows are trivial. In the rows of orders 60 and 24 a stipulated
+end group is already the whole universal group, and remains the whole
+image in every quotient; this contradicts the required proper end.
+The order-96 row has no quotient $L(q)$ in odd characteristic: $60$
+does not divide 96, and for $q\ge7$ the order is at least 168.
+The order-120 row is $S_5$, whose only nontrivial proper quotient is
+$C_2$; neither this nor $S_5$ is $L(q)$ for odd $q\ge5$.
+
+The remaining rows are the simple groups $L(11)$ and $L(19)$.
+Their only nontrivial quotients are themselves. The increasing odd-field
+order formula forces $q=11$ or $19$, and the bound universal markings
+already satisfy IP. Their reversal automorphisms give uniqueness under
+duality as well as ordered-marking uniqueness. This is the complete
+proof of [LT, Proposition 4.2], with the missing sggi-to-C interface made
+explicit. The standard local-map identifications give hemi-icosahedral
+facets for the 11-cell and hemi-dodecahedral facets for the 57-cell;
+their vertex figures are the dual local maps. The exact face counts,
+self-duality and markings are retained from the same complete table.
+
+## 5. The half-turn extension theorem
+
+Let $q$ be odd and let $N=(q-\alpha)/2$ for
+$q\equiv\alpha\pmod4$. Then $N$ is even. A split or nonsplit cyclic
+torus of $L(q)$ of order $N$ has a dihedral normalizer of order $2N$.
+For clarity, the split torus comes from diagonal projectivities of
+square eigenvalue ratio and has order $(q-1)/2$. The nonsplit torus
+comes from multiplication on $\mathbb F_{q^2}$ modulo scalar
+multiplications, followed by the determinant-square condition, and has
+order $(q+1)/2$. Inversion of the two eigenlines supplies the other
+normalizer coset. These standard torus facts do not assert maximality
+of the normalizer.
+
+Suppose $(r_0,r_1,r_2)$ generates $L(q)$, with distinct involutions,
+commuting endpoints, and $|r_0r_1|=k$ an odd divisor of $N$.
+Necessarily $k\ge3$. The element $r_0r_1$ is semisimple and has two
+eigenlines over at most a quadratic field extension. The two possible
+PSL torus orders $(q-1)/2$ and $(q+1)/2$ are coprime; since $k>1$
+divides $N$, its torus has order $N$. Since
+$r_0(r_0r_1)r_0=(r_0r_1)^{-1}$, both reflections preserve this unordered
+eigenline pair. Thus $D=\langle r_0,r_1\rangle$ lies in the associated
+dihedral torus normalizer. Its cyclic torus has a unique involution
+$z$, which centralizes the normalizer and hence $D$.
+
+The involution $z$ is not in $D$: that dihedral group has odd rotation
+order and trivial centre, whereas $z$ centralizes it. In particular
+$z\ne r_0,r_1$. It also differs from $r_2$, since $z$ commutes with
+$r_1$ whereas $|r_1r_2|\ge3$. Therefore
+$(r_0,r_1,r_2,z)$ is a string marking of rank four, and still generates
+the original group. By the group–maniplex correspondence its facets are
+the original map: there is one facet because the first three markers
+already generate $G$. This proves Theorem 2(1) and the complete scope
+of [LT, Theorem 4.4].
+
+There is a useful local version. If a proper maximal subgroup $H\le G$
+has a rank-three string marking, its first adjacent order is an odd
+divisor of $N$, and $C_H(D)=1$, the same torus involution $z$ lies
+outside $H$. Maximality gives $\langle H,z\rangle=G$. The resulting
+rank-four marking has facet group $H$. The condition on the internal
+centralizer is essential: membership in the ambient torus alone does
+not prove that a new marker leaves the facet group.
+
+## 6. The explicit family with two full ends
+
+For a prime $p\equiv1\pmod{12}$, consider the projective classes of
+
+$$R_0=\begin{pmatrix}0&1\\1&0\end{pmatrix},\quad
+R_1=\begin{pmatrix}1&0\\1&-1\end{pmatrix},\quad
+R_2=\begin{pmatrix}-1&0\\0&1\end{pmatrix},\quad
+R_3=\begin{pmatrix}1&-2\\2&-1\end{pmatrix}.\tag{4}$$
+
+The first three determinants are $-1$ and the last is $3$. Both are
+squares modulo these primes: $-1$ is a square since $4\mid p-1$; if
+$\zeta$ has order three, then $(2\zeta+1)^2=-3$, and multiplication
+by a square root of $-1$ gives a square root of $3$. Thus all four
+classes lie in $L(p)$.
+Their traces are zero and their determinants nonzero, giving
+nonidentity involutions. Direct multiplication shows that $R_0,R_2$
+commute projectively, that $(R_0R_1)^3$ is scalar and
+$R_0R_1$ is nonscalar, and that
+
+$$[R_1R_2]=\left[\begin{pmatrix}1&0\\1&1\end{pmatrix}\right].\tag{5}$$
+
+The latter element has exact order $p$. Its powers give all lower
+unipotent elementary matrices over $\mathbb F_p$. Conjugation by $R_0$
+gives all upper ones. These generate $\operatorname{SL}_2(p)$: left
+multiplication by lower and upper elementary matrices performs elementary
+row elimination. Explicitly, writing $u(t)$ and $v(t)$ for the upper
+and lower elementary matrices, put
+
+$$h(t)=u(t)v(-t^{-1})u(t)=\begin{pmatrix}0&t\\-t^{-1}&0\end{pmatrix}.
+\qquad h(t)h(-1)=\operatorname{diag}(t,t^{-1}).$$
+
+The matrix $h(1)$ interchanges the two coordinate lines, and the displayed
+identity handles the last diagonal matrix after elimination. Passing to
+projective classes proves $\langle r_0,r_1,r_2\rangle=L(p)$.
+This direct argument replaces a subgroup-type exclusion for this step.
+
+For the fourth matrix, set $A=R_0R_1$. Then
+$2A-\operatorname{tr}(A)I=R_3$. Formula (1) shows that $r_3$ centralizes
+$r_0,r_1$. The first product has odd order three, so $r_3$ lies outside
+$\langle r_0,r_1\rangle$. It differs from $r_2$ because the latter
+has product order $p$ with $r_1$. Thus (4) is the extension of §5.
+The opposite end contains $r_1r_2$ of order $p\ge13$. By Theorem 1
+it is $S_4,A_5$ or $L(p)$; the first two groups have no element of that
+order. Both end groups are therefore $L(p)$, and the maniplex has one
+facet and one vertex.
+
+These are the actual source generators, up to an explicit change of
+basis. Choose $a\in\mathbb F_p$ with $a^2=-1$ and put
+$C=\operatorname{diag}(-a,1)$. If $S_0,S_1,S_2$ denote the three
+matrices printed in [LT, Lemma 4.5], then the projective classes of
+$CS_iC^{-1}$ are exactly the first three classes in (4).
+Indeed the three actual conjugated matrices are $-aR_0,aR_1,aR_2$.
+This identifies the construction at the level of its marked group,
+not just by order or type. The fourth generator is the unique
+nonidentity common centralizer element, so it agrees with the source's
+half-turn extension as well.
+
+The prime progressions are nonempty and infinite by Dirichlet's theorem.
+Distinct primes give different group orders. Simplicity and §2 give
+nonorientability. This proves Theorem 2(2) and [LT, Corollary 4.6].
+
+## 7. Alternating and symmetric proper ends
+
+Let $p\equiv\pm1\pmod{20}$ be prime. Dickson's theorem gives a
+maximal $A_5$ subgroup $H$ of $L(p)$ [G, Theorem 2.2(6)]. Give it the
+local marking $(5,3,5)$ from (3), corresponding to the hemi-dodecahedral
+map of type $\{5,3\}$. Its first pair generates $D_{10}$. The internal
+centralizer $C_{A_5}(D_{10})$ is trivial: the centralizer of a 5-cycle
+in $A_5$ is its cyclic group of order five, and a reflection inverts
+that cycle, fixing only the identity in this centralizer.
+
+For these primes, the torus order $N=(p-\alpha)/2$ is divisible by ten,
+where $p\equiv\alpha\pmod4$. The construction of §5 gives a new
+involution outside $H$, hence a rank-four marking generating $L(p)$.
+If $p\ne19$, then $p$ is neither 11 nor 19. The two-proper-end
+classification in §4 forces the other end to be $L(p)$. Thus this is
+Class 2, with one vertex and $|L(p)|/60$ hemi-dodecahedral facets.
+For $p=19$, the construction still gives a string marking, but the
+two-proper-end theorem no longer forces the opposite end to be full.
+The source excludes this value from its Class 2 assertion; no additional
+classification at this value is needed here. Infinitely many
+admissible primes remain, proving Theorem 2(3), [LT, Proposition 4.7]
+and Corollary 4.8.
+
+Now let $p\equiv\pm1\pmod{24}$ be prime. Then $p\ge23$, and Dickson's
+theorem gives a maximal $S_4$ subgroup $H$ of $L(p)$
+[G, Theorem 2.2(8)]. Use its local marking $(3,4,3)$ in (3).
+The first dihedral group is $S_3$, of order six. Its centralizer in
+$S_4$ is trivial: this $S_3$ fixes one point in the natural degree-four
+action and permutes the other three transitively, and an element
+centralizing that action must fix all four points. The relevant torus
+order $N=(p-\alpha)/2$ is divisible by twelve. The construction of §5
+therefore adjoins a centralizing involution outside $H$ and generates
+$L(p)$ by maximality. Again the other end cannot be proper, since
+$p\notin\{11,19\}$. This proves Theorem 3, including the complete
+all-prime range and the facet count. Dirichlet gives infinitude in
+both residue classes.
+
+Consequently the correct classification of end-group sizes is:
+
+| Case | End groups, up to reversal | Vertices and facets |
+|---|---|---|
+| Both full | $G,G$ | $1,1$ |
+| One proper | $G,S_4$ | $1,|G|/24$ |
+| One proper | $G,A_5$ | $1,|G|/60$ |
+| Both proper | the 11-cell or 57-cell | $11,11$ or $57,57$ |
+
+The middle two cases cannot be self-dual, since their vertex and facet
+counts differ. The first case can be self-dual; an exact example follows.
+We make no complete enumeration of its possible markings or dualities.
+
+## 8. Literal source corrections and finite certificates
+
+The new `phase258_local_sggi.g` supplies the precise category bridge used
+in §4. It also checks a counterexample to [LT, Lemma 3.3] as printed:
+in $L(5)\cong A_5$, an involution centralizer has order four and lies
+properly in a subgroup $A_4$ of order twelve. It is not maximal in
+$A_5$. The lemma also needs an odd-characteristic qualification for
+its displayed dihedral formula. Our proof uses the correct common
+centralizer theorem and torus normalizer, not this maximality assertion.
+The broad uniqueness clauses of source Lemma 3.4 are not retained inputs.
+
+For the omitted symmetric-end case, the certificate gives four explicit
+permutations in the natural degree-24 action of $L(23)$. They are
+involutions, pairwise distinct, satisfy all string commutations and
+generate the group of order 6072. Their adjacent orders are $3,4,12$;
+the first end has order 24 and is $S_4$, while the other end is the full
+group. The maniplex therefore has one vertex and 253 facets. These
+facts directly contradict the introduction's restricted alternatives,
+without relying on the all-prime proof or any conjectural classification.
+
+For the self-duality sentence on source page 9, use the following
+marking of $L(13)$ in degree 14:
+
+$$\begin{aligned}
+r_0&=(3\ 9)(4\ 10)(5\ 11)(6\ 12)(7\ 13)(8\ 14),\\
+r_1&=(1\ 4)(2\ 14)(3\ 9)(5\ 13)(6\ 11)(7\ 12),\\
+r_2&=(1\ 2)(3\ 7)(4\ 6)(8\ 14)(9\ 13)(10\ 12),\\
+r_3&=(1\ 2)(4\ 14)(5\ 13)(6\ 12)(7\ 11)(8\ 10).
+\end{aligned}\tag{6}$$
+
+Both end groups have order 1092, and its type is $\{3,7,3\}$. The
+permutation
+
+$$d=(1\ 3)(2\ 9)(4\ 7)(5\ 8)(6\ 12)(10\ 11)(13\ 14)\tag{7}$$
+
+conjugates $r_i$ to $r_{3-i}$ for all four indices. Thus it normalizes
+the generated group and induces the required reversal automorphism.
+The resulting Class 1 maniplex is self-dual. This is an explicit
+counterexample to the source's assertion about Class 1; the elementary
+face-count exclusion applies to Class 2 instead. A deliberately altered
+conjugator fails the four conjugacy identities in the checker.
+
+The source's paragraph following Proposition 4.7 first correctly calls
+the local map of type $\{5,3\}$ hemi-dodecahedral, then calls its facets
+hemi-icosahedral. Our statement preserves the actual local marking and
+uses the consistent hemi-dodecahedral name. None of these corrections
+is presented as an answer to an open conjecture, and no claim about
+unexamined editions is made.
+
+## 9. Remaining source scope, formal coverage and cost
+
+The unnumbered Suzuki observation in [LT, §5] uses a separate retained
+group fact: in the natural action of a simple Suzuki group, every
+involution fixes exactly one point, and commuting involutions have the
+same fixed point. In a rank-four string marking, $r_0,r_2,r_3$ would
+fix the same point, and then $r_1$, which commutes with $r_3$, would fix
+it too. The generated group would fix a point, contrary to the natural
+transitive action. The same argument applies to any higher rank, since
+every later generator commutes with $r_0$. This proves the stated rank
+bound from that retained Suzuki input. The general abstract centralizer
+version is already in the proof library; no new Suzuki classification is
+claimed here. The nonsimple small group $\operatorname{Sz}(2)$ cannot be
+generated by involutions at all, since its quotient $C_4$ cannot be so
+generated.
+
+The PGL observations and final four-family conjecture of source §5 are
+kept separate from this PSL principal contract. In particular the literal
+claim there about every proper nonabelian subgroup of $P(q)$ omits its
+affine, dihedral and subfield subgroups. It cannot serve as a background
+classification. The companion work on that question retains the actual
+maximal-subgroup theorem instead.
+
+The source rank restriction, Theorem 3.10, Proposition 4.2, Theorem 4.4,
+Lemma 4.5, Proposition 4.7 and Corollaries 4.6/4.8 are recovered in full.
+The local maps and 11-/57-cell classification remain attributed to their
+original authors and the reviewed common proof. The source matrices are
+matched by an explicit conjugacy, the two infinite families are proved
+for their full stated parameter ranges, and all necessary small fields
+are handled. The omitted symmetric-end family and the literal
+counterexamples are separate corrections. No complete census of all
+rank-four PSL markings is claimed or needed by the source contract.
+
+The new Lean file proves three general statements: commutation extends
+from generators to the group; the first adjacent pair of a centre-free
+string marking does not commute; and the common-centralizer uniqueness
+condition forces rank at most four. These are the actual sggi bridge,
+not a theorem assuming IP. The characteristic-two bridge and the normal-form
+matrix calculations already have their separate, scoped certificates.
+The projective conjugacy/descent, Dickson classification, torus existence,
+finite universal orders, Dirichlet theorem and all positive construction
+claims remain written or computational proof obligations. They are not
+asserted to be covered by those three Lean declarations.
+
+The full [E] umbrella and finite table are required mathematical inputs.
+The application adds the category bridge, complete source-specific
+constructions and explicit corrections. Its local and shared proof costs
+must be measured under the same convention as the source; importing a
+previously proved theorem does not erase its acquisition cost. This
+packet reports no compression ratio or chronological sawtooth, and
+awards no new principal credit before independent review.
+
+## References
+
+[LT] D. Leemans and M. Toledo, *Maniplexes with automorphism group
+$\operatorname{PSL}(2,q)$*, author manuscript dated 15 May 2023, 11 pages.
+Bound primary: `sources/psl2_maniplex2023.pdf`.
+
+[E] *Centralizers, facets and finite amalgams on the projective line*,
+frozen `phase238_topic_E_umbrella.md`, with the complete finite proof
+program `phase230_finite_check.g`. The subgroup inputs and older
+classifications retain the attributions given there.
+
+[G] M. Giudici, *Maximal subgroups of almost simple groups with socle
+$\operatorname{PSL}(2,q)$*, arXiv:math/0703685v1 (23 March 2007),
+Theorem 2.2, physical and printed page 4. Bound primary:
+`sources/phase257_Giudici.pdf`. The maximal-subgroup classification is
+retained, not recovered as an additional source here.

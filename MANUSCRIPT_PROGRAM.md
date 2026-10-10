@@ -27,7 +27,9 @@ manuscript. We will reorganize their proofs while preserving every
 mathematical qualification. [Topic A now has its complete umbrella and
 first application](TOPIC_A.md). The other application papers still need
 to be written. The [new projective-line proof](PROJECTIVE_LINE_POLYTOPES.md)
-provides two further complete principal classifications for topic E.
+provides two complete principal classifications for topic E. Its
+[third application](PROJECTIVE_LINE_MANIPLEXES.md) now recovers the complete
+specified PSL₂ maniplex contract with source corrections.
 
 | Topic | Existing reviewed manuscript | Required next structural work |
 |---|---|---|
@@ -35,7 +37,7 @@ provides two further complete principal classifications for topic E.
 | B: Forest coordinates and primitive coset geometries | [Forest coordinates](MODULE_B.md) | Identify its full topic umbrella and preserve the complete recognition, generation and geometric applications |
 | C: Halving and Petrial operations on regular geometries | [Operations on regular geometries](MODULE_C.md) | Separate reusable changes of generators and arguments about the objects preserved by these operations from full geometric identifications and censuses |
 | D: Marked actions, field orbits and geometry enumeration | [Marked actions and enumeration](MODULE_D.md) | Extract shared theorems about actions and extensions; keep complete field and classification arguments, including correspondence with historical tables, in the application papers |
-| E: Projective centralizers and regular polytopes | [Complete U_E and two applications](PROJECTIVE_LINE_POLYTOPES.md) | Extend the two-source topic and prepare a matched cost comparison; the 7 + 3 + 2-page papers are independently reviewed |
+| E: Projective centralizers, polytopes and maniplexes | [Complete U_E and three applications](PROJECTIVE_LINE_POLYTOPES.md) | Extend the frozen two-application measurement to the new third intake; the 7 + 3 + 2 + 9-page papers are independently reviewed |
 | F: Odd kernels and cyclotomic polyhedra | [Complete L014 application](ODD_KERNEL_POLYHEDRA.md) | Develop further applications and extract the full topic umbrella from the character and cyclotomic arguments; the first eight-page paper is independently reviewed |
 
 The [existing U manuscript](UMBRELLA.md) is a source of reusable proofs.
@@ -50,9 +52,10 @@ does not establish all the results promised by an application paper.
 ## Source papers and results already recovered
 
 These tables describe the existing reviewed proofs that will be reused.
-The standalone L032 application is now complete; the other new families
-of application papers have not yet been written. Each qualification remains part of the result when the
-proof is moved into the new structure.
+The standalone L032 application and three Topic E applications are complete.
+The remaining combined A–D material still needs further application papers.
+Each qualification remains part of the result when its proof is moved into
+the new structure.
 
 ### A. Two-group polytopes and hypertopes
 
@@ -111,12 +114,13 @@ be omitted from the new application papers.
 The [D manuscript and review](MODULE_D.md) distinguish these results from
 the unrecovered parts of the source papers.
 
-### E. Projective centralizers and regular polytopes
+### E. Projective centralizers, polytopes and maniplexes
 
 | ID | Source, authors and edition | Main results recovered | Qualifications |
 |---|---|---|---|
 | L083 | Leemans and Schulte, *Groups of type L₂(q) acting on polytopes*, retained arXiv math/0606660v1 PDF | Rank restriction; Theorems 1, 3 and 4; the complete ten-row universal table; uniqueness and stated geometric properties of the 11-cell and 57-cell | Classical subgroup types and the group–polytope correspondence are retained inputs. Introductory claims about other presentations and chiral constructions remain background. The bound PDF includes a later typesetting date; no different edition is inferred. |
 | L079 | Leemans and Schulte, *Polytopes with groups of type PGL₂(q)*, arXiv:0909.1991v1 | Rank restriction and Theorem 10: the unique example in rank at least four is the 4-simplex with PGL₂(5) | The seventeen-case PΣL₂(25) census and Conjecture 11 remain outside this recovery. |
+| L021 | Leemans and Toledo, *Maniplexes with automorphism group PSL(2,q)*, May 15, 2023 author manuscript | All-prime-power rank and end-group restrictions, two-proper-end classification, full torus extension theorem and both source families | Natural-subfield distinction and S₄/self-duality/centralizer corrections are explicit. The separate PGL question is not counted here; no complete marking census or full Lean theorem is claimed. |
 
 The [complete common proof and independent review](PROJECTIVE_LINE_POLYTOPES.md)
 include exact computation of all ten universal presentations. Five Lean
@@ -132,6 +136,10 @@ The [first topic measurement](TOPIC_E_MEASUREMENT.md) gives conditional local
 factors of 1.62× and 2.38×. The full written factor is 0.835×: the two
 applications have not yet repaid their umbrella. The complete program is
 also charged, with unknown historical artifact cost stated separately.
+This phase251/253 measurement is the two-application baseline and excludes
+the new nine-page [PSL₂ maniplex application](PROJECTIVE_LINE_MANIPLEXES.md).
+The third application retains the full umbrella and adds its actual sggi
+interface, torus arguments, local census and three scoped Lean declarations.
 
 ### F. Odd kernels and cyclotomic polyhedra
 

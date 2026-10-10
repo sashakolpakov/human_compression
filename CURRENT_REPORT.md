@@ -25,12 +25,15 @@ F014’s complete stated rank-three main results. Its five Lean declarations
 verify the general algebraic core. The
 [projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) now recovers two more
 complete principal classifications, with independent review and fresh
-finite and Lean checks. Principal-source coverage is **25 of 161**; the
-topic umbrella and both application papers are now complete, at 7 + 3 + 2
-pages, with independent review. The shared finite proof is charged once
+finite and Lean checks. The [third application](PROJECTIVE_LINE_MANIPLEXES.md)
+recovers the complete specified PSL₂ maniplex contract, with its source
+corrections and a new string-generator interface. Principal-source coverage
+is **26 of 161**; the topic umbrella and three application papers are complete,
+at 7 + 3 + 2 + 9 pages, with independent review. The shared finite proof is charged once
 within this topic. The [matched measurement](TOPIC_E_MEASUREMENT.md) gives
 conditional local factors of 1.62× and 2.38×, but a total written factor of
-0.835× after charging the full umbrella. Six additional
+0.835× after charging the full umbrella. This remains the frozen first-two-application
+baseline and excludes the third application. Six additional
 [Lean matrix declarations](provenance/phase123_review.md) now verify its
 actual normal-form centralizers; full field descent remains written.
 

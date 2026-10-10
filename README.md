@@ -41,7 +41,7 @@ application families are unfinished.
 | Forest coordinates and primitive coset geometries | [B source material](MODULE_B.md) |
 | Halving and Petrial operations on regular geometries | [C source material](MODULE_C.md) |
 | Marked actions, field orbits and geometry enumeration | [D source material](MODULE_D.md) |
-| Projective centralizers and regular polytopes | [Complete U_E and two applications](PROJECTIVE_LINE_POLYTOPES.md): 7 + 3 + 2 pages |
+| Projective centralizers, polytopes and maniplexes | [Complete U_E and three applications](PROJECTIVE_LINE_POLYTOPES.md): 7 + 3 + 2 + 9 pages |
 
 The [existing umbrella manuscript](UMBRELLA.md) supplies proved components
 for choosing and completing each topic's umbrella. The
@@ -56,13 +56,16 @@ Their measurements apply to those earlier versions. The first
 [measurement of a complete topic](TOPIC_E_MEASUREMENT.md) is now available:
 the two projective-line applications give conditional factors of 1.62× and
 2.38×, but their full umbrella has not yet paid for itself. The designated
-total written factor is 0.835×; other topics remain to be measured.
+total written factor is 0.835×. This frozen two-application baseline excludes
+the new third application; other topics remain to be measured.
 
 The [equal-label polygon application](EQUAL_LABEL_POLYGONS.md) recovers
 Li–Zhang’s complete stated rank-three results from the earlier polygon
 construction and an exact presentation proof. The
 [common projective-line proof](PROJECTIVE_LINE_POLYTOPES.md) recovers two more
-principal classifications. In total, **25 of the 161 indexed works** have
+principal classifications. Its [third application](PROJECTIVE_LINE_MANIPLEXES.md)
+recovers the full specified PSL₂ maniplex contract, including the required
+source corrections. In total, **26 of the 161 indexed works** have
 their specified main results recovered. The
 [odd-kernel application](ODD_KERNEL_POLYHEDRA.md) adds L014’s three main
 theorems through characters and a cyclotomic module, with an explicit

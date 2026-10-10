@@ -527,3 +527,10 @@ answer to the bound 2023 conjecture, with preserved author/reviewer packets
 and a fresh public replay. It adds eleven scoped Lean declarations in one
 component and no principal-source or compression credit. Historical
 priority and full formalization remain unverified.
+
+The [PSL maniplex principal admission](phase129_review.md) preserves the
+phase258/263 proof and independent review. It adds one complete corrected
+principal contract, a third Topic E application and three scoped Lean
+interface declarations. The PGL question remains separately counted;
+no new question or compression rate is added. Natural subfield embeddings
+are distinguished from accidental abstract isomorphisms in the source.

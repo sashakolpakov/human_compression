@@ -1,25 +1,31 @@
-# Dihedral centralizers and polytopes over a projective line
+# Dihedral centralizers, polytopes and maniplexes over a projective line
 
-**Topic E now has a complete umbrella and two complete application papers.**
-They recover the specified principal classifications for PSL₂(q) and
-PGL₂(q) in every rank at least four, from the same centralizer and
-finite-presentation argument.
+**Topic E has a complete umbrella and three complete application papers.**
+The first two recover the specified principal polytope classifications for
+PSL₂(q) and PGL₂(q) in every rank at least four. The third recovers the
+specified PSL₂ maniplex results by proving the additional interface needed
+without the intersection property.
 
 | Paper | Complete text | PDF |
 |---|---|---|
 | U_E: Centralizers, facets and finite amalgams on the projective line | [Umbrella](research/case_study/phase238_topic_E_umbrella.md) | [7 pages](research/case_study/phase238_topic_E_umbrella.pdf) |
 | E₁: The two projective special linear four-polytopes | [PSL₂ application](research/case_study/phase238_L083_application.md) | [3 pages](research/case_study/phase238_L083_application.pdf) |
 | E₂: The simplex as the unique higher-rank projective general linear polytope | [PGL₂ application](research/case_study/phase238_L079_application.md) | [2 pages](research/case_study/phase238_L079_application.pdf) |
+| E₃: Centralizer extensions of projective-line maniplexes | [PSL₂ maniplex application](research/case_study/phase258_projective_maniplexes.md) | [9 pages](research/case_study/phase258_projective_maniplexes.pdf) |
 
 The [independent review](provenance/phase122_review.md) checks the complete
 arguments, all twelve rendered pages and a fresh public replay. The
 [earlier combined proof](research/case_study/phase230_rank_one_classification.md)
 is their provenance source; it is not an extra mathematical premise.
+The [third application’s reader](PROJECTIVE_LINE_MANIPLEXES.md) and
+[independent review](research/case_study/phase263_review.md) state its full
+contract and literal source corrections separately.
 
 | Intake | Main results recovered | Exclusions |
 |---|---|---|
 | L083: Leemans and Schulte, *Groups of type L₂(q) acting on polytopes*, retained arXiv math/0606660v1 PDF | Rank restriction, Theorems 1, 3 and 4, the full ten-row table, uniqueness and the stated geometric properties of the 11-cell and 57-cell | Introductory results about other presentations and chiral constructions remain cited background. The bound PDF also has an August 2018 typesetting date; no later edition is inferred. |
 | L079: Leemans and Schulte, *Polytopes with groups of type PGL₂(q)*, arXiv:0909.1991v1 | Rank restriction and Theorem 10: the unique example in rank at least four is the 4-simplex with PGL₂(5) | The additional seventeen-case PΣL₂(25) census and Conjecture 11 remain outside this recovery. |
+| L021: Leemans and Toledo, *Maniplexes with automorphism group PSL(2,q)*, May 15, 2023 author edition | All-prime-power rank and end-group restrictions, two-proper-end classification, full torus extension theorem and both stated infinite PSL families | Natural subfield qualifications and S₄/self-duality/centralizer corrections are explicit. The final PGL question is a separate answer; no complete marking census is claimed. |
 
 Thus the matched implication is
 
@@ -27,6 +33,8 @@ Thus the matched implication is
 common centralizer proof + local markings + ten universal presentations
     → L083's stated principal classification
     → L079's stated principal classification.
+    + proved string-generator interface + complete torus constructions
+    → L021's stated principal PSL results, with source corrections.
 ```
 
 The extra Conjecture 11 was [answered in later literature](research/case_study/phase240_L079_status.md)
@@ -36,8 +44,9 @@ limit of this replacement, not a currently open question.
 The umbrella includes the complete common proof and the
 [required finite program](research/case_study/phase230_finite_check.g).
 Each application supplies its quotient exclusions and geometric
-identifications without repeating the umbrella proof. The two applications
-are independent consequences of U_E.
+identifications without repeating the umbrella proof. The three applications
+are independent consequences of U_E, with additional arguments and
+certificates charged locally.
 
 ```mermaid
 flowchart LR
@@ -45,10 +54,12 @@ flowchart LR
     F[One exact finite program] --> U
     U --> P[E₁: PSL₂ classification]
     U --> G[E₂: PGL₂ classification]
+    U --> M[E₃: PSL₂ maniplexes and extensions]
 ```
 
-The [reviewed measurement](TOPIC_E_MEASUREMENT.md) charges the full umbrella
-and its program once, followed by both complete applications. Conditional
+The [reviewed measurement](TOPIC_E_MEASUREMENT.md) is the frozen baseline
+for E₁ and E₂, excluding E₃. It charges the full umbrella
+and its program once, followed by those two complete applications. Conditional
 local factors are 1.62× and 2.38×; the total written factor is 0.835×, so
 these two applications have not yet repaid the umbrella. Every other topic
 pays its own full umbrella. The [two detailed theorem graphs](research/case_study/phase251_dependency_dags.md)
@@ -119,6 +130,7 @@ versions and optional primary-source checks. The
 admitted two principal source results, bringing the count at that time to 23. This
 recovers known theorems and adds no solved-question entry.
 
-The three-paper structure and its measurement add no second credit for
-either historical source. The current principal-source total is 24 after
-the separate L014 recovery; the measurement leaves the question ledger unchanged.
+The first two applications and their measurement add no second credit for
+either historical source. The third application adds one principal L021
+recovery, bringing current coverage to 26 works. The question ledger remains
+at twelve entries; the separate four-family PGL answer was admitted earlier.

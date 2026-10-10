@@ -1,5 +1,13 @@
 # Lean certificates and their scope
 
+[StringCentralizerBridge.lean](StringCentralizerBridge.lean) proves three
+general steps used in the PSL₂ maniplex application: extending commutation
+from generators, noncommutation of the first pair, and the rank-four bound
+under the actual common-centralizer hypothesis. Its
+[scope](StringCentralizerBridge.scope.md) leaves projective classification,
+finite universal orders and the complete infinite families written or
+computational. There is no intersection-property premise.
+
 [OddKernelIntersection.lean](OddKernelIntersection.lean) proves five
 prime-index and reflection statements used in the cyclotomic application.
 Its [scope](OddKernelIntersection.scope.md) leaves the full arithmetic,
