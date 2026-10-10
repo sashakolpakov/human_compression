@@ -40,9 +40,10 @@ partial component reductions remain outside that numerator. Corrected
 versions and refuted assertions must be labeled separately from literal
 corollaries of the replacement.
 
-The repository now has a [frozen assembled two-paper replacement](COMPRESS_A.md)
-with twelve independently reviewed source corollaries in its declared scope.
-Its [first full-body measurement](research/case_study/phase36_compress_forest_measurement.md)
+The repository now has a [reviewed three-paper replacement](COMPRESS_A.md)
+with 23 explicit adapters under its declared corrected contract. It has no
+three-paper measurement yet. The earlier frozen two-paper version has twelve
+reviewed adapters and a separate measurement experiment. Its [first full-body measurement](research/case_study/phase36_compress_forest_measurement.md)
 reports source/replacement ratios of 1.362642 by whitespace tokens, 1.168299
 by alphanumeric units and 0.941720 by nonwhitespace characters. These are
 descriptive sensitivities to mathematical text representation, not one

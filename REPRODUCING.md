@@ -1656,3 +1656,20 @@ This selects the complete four-module import chain. Both abstract IP and
 typed-Helly equivalences are formalized for actual markings; concrete matrix
 hypotheses and geometry identifications remain separate. See the
 [root interface review](research/case_study/phase37_parabolic_marked_root_audit.md).
+
+
+## Integrated three-paper manuscript
+
+The [manuscript and contract](COMPRESS_A.md) have a complete internal written
+review. To replay the read-only provenance check, use a private source root
+containing the exact source assets and component artifacts bound in its intake:
+
+```sh
+python3 research/case_study/phase37_compress_forest_recent_check.py \
+  --root /path/to/complete/private/intake --output scratch/forest-v2-check.json
+```
+
+The output path must be new. The check binds 23 source/replacement spans,
+ten N008 numbered anchors and the source files; it does not verify the proof
+or measure length. The author assembler/binder are preserved as construction
+provenance and write generated files; run them only on an isolated copy.

@@ -14,18 +14,19 @@ their open problems. Success means reproducing exact theorem statements with
 fewer independent arguments, exposing the inputs that remain, and obtaining
 new consequences. The evidence is the mathematics and its checks.
 
-The first actual replacement is now assembled: [Compress_A](COMPRESS_A.md)
-derives twelve declared main results from two manuscripts published in 1998
-and 2002, with a shared forest/sign-kernel core and explicit retained inputs.
-A separate agent has reviewed every proof and source target in the stated
-finite-group/degree-at-least-seven scope. A [reproducible body-length measurement](research/case_study/phase36_compress_forest_measurement.md)
-gives 7,222 source whitespace tokens against 5,300 replacement tokens, but
-character counts reverse the comparison because mathematical representations
-differ. No single final manuscript factor or corpus ratio is claimed.
+[Compress_A](COMPRESS_A.md) now maps three named manuscripts from 1998,
+2002 and 2005 to one continuous replacement with 23 explicit source adapters.
+Forest cuts, sign kernels and one relative-generation proof connect symmetric
+groups to Frattini quotients and finite-p-group coordinate geometries. A
+separate agent has reviewed the whole assembled text and its corrected,
+explicitly scoped main-result contract. Retained background remains visible.
+No three-paper length ratio has been measured. The earlier two-paper
+measurement remains a separate representation-sensitive experiment.
 
 The [current independent assessment](CURRENT_ASSESSMENT.md) gives the exact
-intake-to-replacement map, evaluates the first assembled manuscript and
-sets out the next steps. The [earlier assessment](INDEPENDENT_ASSESSMENT.md)
+intake-to-replacement map and the earlier two-paper baseline. The new
+[integration review](research/case_study/phase37_compress_forest_recent_audit.md)
+records the subsequent three-paper result. The [earlier assessment](INDEPENDENT_ASSESSMENT.md)
 is preserved with its original baseline and wider bundle proposals. The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
 defines the user's sum-of-manuscripts ratio and its required coverage audit.
 

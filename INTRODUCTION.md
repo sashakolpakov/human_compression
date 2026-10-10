@@ -3836,26 +3836,39 @@ still lacks a full comparison with the 2024 abelian-cover theorems, so the
 repository does not turn this mathematical result into a verified novelty
 claim or an infinite compression-ratio marker.
 
-## 65. An actual two-paper manuscript
+## 65. Three papers through forest cuts and relative generation
 
-[Compress_A](COMPRESS_A.md) now assembles the forest, parity, overgroup and
-relative-generation arguments into one continuous mathematical text. Four
-1998 theorem clauses and eight numbered 2002 results appear as explicit
-corollaries. The independent reviewer checked complete primary source
-representations and every proof in the assembled text.
+[Compress_A](COMPRESS_A.md) maps the 1998 inductively minimal geometry paper,
+the 2002 independent-generator paper and the 2005 Frattini geometry paper
+to one complete manuscript. It has 23 explicit source adapters, a full
+dependency ledger and a separate review of every integrated proof.
 
-The logical savings are identifiable: the same forest partition formula
-handles both marking families, the same laminar-atom proof completes their
-flags, and the same overgroup lemma supports several primitivity and
-recognition statements. The module obstruction and arbitrary-parabolic
-recognition remain full arguments inside the manuscript. Stating them as
-lemmas does not erase their cost.
+The shared mechanisms can be located exactly. Unique tree paths determine
+subgroup intersections. Laminar cuts complete flags. The sign-kernel formula
+reuses the same forest calculation for the second marking family. A two-block
+overgroup lemma supplies several primitivity and recognition consequences.
 
-The retained 1997 classification and the two Whiston inputs, including CFSG,
-remain outside the expanded proof. General group statements are specialized
-to finite groups; the symmetric-group classification retains degree at least
-seven. This is a reviewed replacement for the declared main-result contract.
-Whether it is shorter, and by how much, is a separate measurement question.
+The relative-generation theorem then crosses the two branches: residual
+maximality allows one panel element per type to generate every parabolic
+relative to the Borel. This gives the 2002 rank and strong-independence bounds.
+For a finite p-group, the new normal-subgroup ladder puts the Frattini subgroup
+inside the Borel. Passing to the elementary abelian quotient makes the same
+panel generators a basis, so every parabolic becomes a coordinate span.
+The geometry is consequently a direct sum of primitive rank-one geometries.
+
+The ladder, exact coset quotient, module obstruction and arbitrary-parabolic
+recognition are fully proved inside the replacement. The 1997 classification,
+both Whiston inputs and their CFSG dependence remain named background.
+Numerical group bounds remain finite and symmetric classifications keep n>=7.
+The Frattini geometry theorem allows infinite groups at finite rank, while
+the source's false unrestricted infinite generation converse is explicitly
+corrected. These qualifications are part of the replacement contract.
+
+No length ratio has been assigned to this three-paper version. The earlier
+two-paper body experiment is preserved separately; its text metrics are
+sensitive to TeX versus extracted mathematical glyphs. See the
+[integration review](research/case_study/phase37_compress_forest_recent_audit.md)
+and [measurement protocol](MEASUREMENT.md) for the exact status.
 
 ## 66. A general theorem behind the bounded computations
 

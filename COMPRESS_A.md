@@ -1,57 +1,63 @@
-# Compress_A: the first assembled replacement
+# Compress_A: three manuscripts, one replacement
 
-The intake is:
+The reviewed intake-to-replacement map is:
 
-1. **Some properties of inductively minimal geometries** (1998), all four
-   parts of Theorem1.
-2. **Independent generating sets and geometries for symmetric groups**
-   (2002 author manuscript), all eight numbered results in the stated
-   finite-group and degree-at-least-seven scope.
+| Intake manuscript | Declared results recovered |
+|---|---|
+| **Some properties of inductively minimal geometries** (1998), N001 | All four parts of Theorem1 |
+| **Independent generating sets and geometries for symmetric groups** (2002 author manuscript), N003 | All eight numbered results, with finite numerical bounds and symmetric degree at least seven |
+| **Using the Frattini Subgroup and Independent Generating Sets to Study RWPRI Geometries** (2005), N008 | Principal geometric and finite-p-group results, subsidiary statements, residue/kernel consequences; the unrestricted infinite generation converse is corrected |
 
-They map to one actual text:
+**N001 + N003 + N008 → [Forest cuts, relative generators and Frattini kernels](research/case_study/phase37_compress_forest_manuscript.md).**
 
-**N001 + N003 → [Forest cuts, relative generators and symmetric-group geometries](research/case_study/phase36_compress_forest_manuscript.md).**
+This is one continuous manuscript with definitions, complete common proofs
+and 23 explicit source adapters. Forest cuts determine subgroup intersections;
+laminar sets complete flags; a sign kernel supplies the second symmetric
+marking family. One relative-generation proof gives both the rank bounds
+and, after the Frattini quotient, the coordinate classification of finite
+p-group geometries. The additional normal-subgroup ladder and quotient
+arguments are proved inside the same text.
 
-The manuscript gives definitions, proves the shared results once, and ends
-with twelve labelled source corollaries. Unique tree paths determine subgroup
-intersections; laminar cuts complete flags; a sign kernel gives the second
-marking family; one overgroup calculation supports several primitivity and
-recognition results. The necessary module and arbitrary-parabolic proofs
-are included in full.
+The [independent integration review](research/case_study/phase37_compress_forest_recent_audit.md)
+passes the declared corrected main-result contract after reading the whole
+assembled text. The [full source ledger](research/case_study/phase37_compress_forest_ledger.md)
+records every source statement, adapter and retained input. The
+[root review](research/case_study/phase37_compress_forest_root_audit.md)
+supersedes the frozen draft's historical pending-review labels. These are
+internal mathematical reviews; the manuscript is not fully Lean-formalized.
 
-The [separate mathematical/source review](research/case_study/phase36_compress_forest_recent_audit.md)
-passes all twelve targets after reading both complete accessible source
-texts and the complete assembled proof. The [target ledger](research/case_study/phase36_compress_forest_ledger.md)
-gives source statements, exact locations, common theorem, adapter and retained
-input for every result. The [root status note](research/case_study/phase36_compress_forest_root_audit.md)
-supersedes historical pending labels and records a bibliography-only correction.
+The contract retains the 1997 foundational classification, both Whiston
+inputs including their CFSG dependence, and named elementary/coset background.
+The quoted Gaschuetz and earlier Archer results remain imports; the new
+Frattini core does not use them. The 2005 unrestricted infinite-generation
+converse is false and is replaced by a proved conditional version. Its
+geometric Frattini theorem still covers arbitrary groups at finite rank.
+Source historical counts, open questions and specified auxiliary material
+remain outside the contract. No claim recovers every source sentence.
 
-The result is conditional on the retained 1997 classification, Whiston's two
-distinct inputs including their CFSG dependence, Cayley and standard coset
-background. It does not certify unrestricted infinite-group generalizations
-or the excluded small-degree computational discussion. These are internal
-reviews, with no end-to-end Lean verification or external peer review claimed.
+**No three-paper compression factor has been measured.** Twenty-three
+adapter labels are an inventory, not a ratio. The full main-body length
+of each source must be compared with the complete replacement, including
+all necessary extra proofs, under a comparable rendering convention.
 
-The [full-body measurement](research/case_study/phase36_compress_forest_measurement.md)
-now binds the source and replacement spans and reproduces these counts:
+The [earlier two-paper version](research/case_study/phase36_compress_forest_manuscript.md)
+and its [frozen measurement](research/case_study/phase36_compress_forest_measurement.md)
+remain available as a separate experiment:
 
-| Metric | Combined sources | Replacement | Source sum / replacement |
+| Metric | Two source bodies | Earlier replacement | Source sum / replacement |
 |---|---:|---:|---:|
 | Whitespace tokens | 7,222 | 5,300 | 1.362642 |
 | Alphanumeric units | 7,157 | 6,126 | 1.168299 |
 | Nonwhitespace characters | 28,617 | 30,388 | 0.941720 |
 
-These are text-representation measurements. The replacement uses TeX command
-strings while the sources use extracted mathematical glyphs, including
-damaged layout in the 1998 rendering. The metrics disagree even on the
-direction of savings, so **no single final manuscript factor is approved**.
-Common mathematical rendering and the exact scope contract must accompany
-the next measurement. The older 4/3 and 127/38 figures measure matched proof
-spans and do not substitute for this two-manuscript experiment.
+Those representations differ: the replacement contains TeX command strings,
+while source text contains extracted glyphs and damaged 1998 layout. These
+figures are descriptive sensitivities, with no approved single factor.
+They do not measure the new three-paper manuscript. The older matched-proof
+figures 4/3 and 127/38 likewise do not measure whole manuscript bundles.
 
-The next proposed intake is the 2005 manuscript on the Frattini subgroup and
-RWPRI geometries. It remains outside this numerator until the complete source
-contract and its extra proofs have passed review.
-
-The [current independent assessment](CURRENT_ASSESSMENT.md) places this
-reviewed bundle within the full intake programme and reports the next steps.
+The [independent corpus assessment](CURRENT_ASSESSMENT.md) is frozen at the
+earlier two-paper baseline. This page and the newly bound integration review
+record subsequent progress without rewriting that assessment. The next
+parallel manuscript targets four papers on two-groups; its assembled proof,
+source contract and census need their own review before coverage is admitted.
