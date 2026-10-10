@@ -2822,9 +2822,10 @@ original residues connected.
 The [version audit](research/case_study/phase27_halving_version_status.md)
 limits this counterexample to the broad residual-connectivity assertion
 in arXiv:2405.19050v1. The revised journal text remains unverified, and
-the example is neither thin nor flag-transitive. It does not refute the
-regular-hypertope specialization. This is a checked source discrepancy
-and an exact repair, without a novelty claim or an infinity marker.
+this first example is neither thin nor flag-transitive. Section 47 below
+supplies an actual regular input with the same defect. The source-version
+boundary remains: literal coset isomorphism is separate from hypertope
+preservation. No novelty claim or infinity marker is assigned.
 
 ## 44. Replace parity by a group torsor
 
@@ -3018,7 +3019,90 @@ Six raw GAP presentations verify their actual orders, generator/product
 orders and all 768 subgroup meets. These finite checks support the written
 uniform proofs; they do not replace them or establish priority.
 
-## 47. The remaining work, and how a living reduction should record it
+## 47. Build an actual regular obstruction from a binary code
+
+The recognition criterion suggests how to construct a stronger test case.
+Arrange for every individual higher shadow to have an odd cycle, while an
+incident pair has a square as its common shadow. The difficulty is making
+the *original* incidence structure a regular hypertope with all its residues
+connected. A small seed map and an invariant binary code do this explicitly.
+
+Start with the regular map of type {5,5} with group K=A₅×C₂. One literal
+seven-point marking is
+
+$$c=(12)(34)(67),\quad b=(15)(23)(67),\quad d=(13)(24)(67).$$
+
+Its 12 vertices, 30 edges and 12 faces are the appropriate parabolic cosets.
+Every vertex star and face boundary has five edges. The 60 incident
+vertex-face pairs have exactly two common edges. These are actual incidence
+properties checked together with all seed flags and residues, not inferred
+from a group order or diagram.
+
+Let C be the K-invariant binary code in F₂^30 spanned by the characteristic
+vectors of the 12 stars and 12 boundaries. It has rank 17. Write
+N=F₂^30/C, of dimension 13, and q_e for the image of an edge coordinate.
+For each star or boundary B write W_B=span{q_e:e∈B}. Exact arithmetic gives:
+
+* the 30 columns q_e are distinct and nonzero;
+* q_e belongs to W_B exactly when e belongs to B;
+* for each incident star-boundary pair, W_B∩W_D is the span of its two common
+  edge columns;
+* each five-column block spans a four-dimensional space and has zero sum.
+
+The [affine construction theorem](research/case_study/phase30_affine_map.md)
+uses vectors n∈N as type-zero objects and the lines n+⟨q_e⟩ as type-one
+objects. Higher objects are labeled affine cosets n+W_B. Keep the seed label
+as part of each object: equal underlying sets must not silently identify
+different objects. Incidence is containment at the lower types, and seed
+incidence plus nonempty affine intersection between the higher types.
+
+The listed linear conditions now prove the geometric axioms. Every flag
+extends by choosing a common vector and completing a seed flag. Panels have
+two chambers. A vector residue is the seed map; an edge residue is a join
+of three two-point sets. A higher-object residue has a connected Cayley
+shadow on W_B. A higher-pair shadow is connected because its two common
+columns span the intersection. The full graph is connected because all
+columns span N. This covers every residue case.
+
+Chambers are pairs of a vector and a seed chamber, so N⋊K acts freely and
+transitively. Thinness and residual connectivity identify it with the full
+type-preserving automorphism group. There are 2^13·120=983,040 chambers.
+The distinct-column and exact-membership tests supply B1 and B2. Thus the
+input satisfies the regular geometric hypotheses, independently of any
+assumption that a group quotient preserves subgroup intersections.
+
+Each individual higher shadow is a folded five-cube: the unique relation
+among its five columns has odd length. Each incident pair's common shadow
+is a square. In the canonical bipartite double cover the former stays
+connected, while the latter splits into two squares. Consequently all
+122,880 higher-pair rank-two residues of the halved geometry disconnect.
+The transformed structure still has complete flags, thin panels and a
+regular chamber action; its **global chamber graph is connected**. The
+failure is local residual connectivity.
+
+The subgroup obstruction is equally explicit. Change a to a′=aba. Each of
+the two larger changed parabolics still has order 160 and equals its
+original counterpart. Their intersection has order eight, whereas
+⟨a′,b⟩ has order four; a itself is an excess-intersection witness. This is
+exactly the support/monodromy defect predicted by the common theory.
+
+Two independent implementations and two internal written reviews support
+the construction. The [Lean supplement](research/case_study/formal/Phase30AffineData.scope.md)
+certifies the literal column shapes, 720 memberships, 60 exact span
+intersections and 24 odd relations and span sizes. All six proofs use
+kernel `decide`, without native evaluation. Seed identification, code
+invariance, quotient interpretation and the full geometric theorem remain
+outside that formal module. The million-chamber geometry is proved by the
+affine theorem, not claimed to have been exhaustively enumerated.
+
+The conclusion concerns [arXiv:2405.19050v1](https://arxiv.org/abs/2405.19050v1):
+its residual-connectivity and regular-hypertope-preservation claims fail
+even for a regular input. The literal Theorem B/4.4 sentence asserting a
+coset isomorphism is not refuted. The revised journal body remains unread,
+and no absence of prior correction is claimed. This is a theorem
+counterexample; it receives no open-conjecture-resolution infinity marker.
+
+## 48. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -3055,7 +3139,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-six Lean certificates](research/case_study/formal/README.md) cover
+The [twenty-seven Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

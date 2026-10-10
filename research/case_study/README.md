@@ -10,7 +10,10 @@ geometric construction in Montero–Weiss section 3. The same proof isolates
 a firm counterexample family to the broader assertion in the inspected
 Piedade–Tranchida preprint. An [independent review](phase27_parity_shadow_rank_audit.md)
 and two finite implementations agree. The revised journal text is unverified,
-the regular-hypertope specialization remains separate, and the literal coset-isomorphism claim has a separate scope. The later
+a later [actual regular counterexample](phase30_affine_map.md) disproves the
+preprint's regular-preservation consequence too. Its 983,040-chamber geometry
+has 122,880 disconnected transformed rank-two residues. The literal Theorem
+B/4.4 coset-isomorphism assertion is not refuted. The later
 [nested-shadow adapters](phase30_source_adapters.md) recover the 2020 source's
 principal application sections and F015 Propositions 11 and 13, with their
 complete presentations. Retained inputs and source qualifications are explicit.
@@ -29,9 +32,10 @@ raw presentations and 3,328 actual subgroup intersections.
 The [third-excess theorem](phase22_excess3_transitions.md) gives the exact
 all-rank cubic; the [common generation theorem](phase23_generation_core.md)
 unifies specified linear and unitary parabolic-generation steps. There are
-26 [formal modules](formal/README.md). One checks finite transfer
+27 [formal modules](formal/README.md). One checks finite transfer
 arithmetic using native evaluation, with four compiler-evaluation axioms
-disclosed separately from the other 25 reports. The newest module proves
+disclosed separately from the other 26 reports. The newest module checks the affine counterexample's
+literal binary data by kernel evaluation. The preceding module proves
 the common-coset monodromy obstruction for the
 [general graph-cover theorem](phase28_voltage_shadow_theory.md). That theorem
 gives exact geometry and residual-connectivity criteria for arbitrary deck

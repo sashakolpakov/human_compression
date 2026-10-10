@@ -47,7 +47,7 @@ uses the expanded conjugation formula. Identifying that formula with finite
 matrix multiplication and packaging the result as an SL or GL subgroup
 intersection are mathematical corollaries, not additional hidden Lean results.
 
-There are twenty-three certificates. To compile them on another machine, install Git,
+There are twenty-seven certificates. To compile them on another machine, install Git,
 Python 3.9 or newer, and Lean's `elan` toolchain manager, then run from the
 repository root:
 
@@ -64,7 +64,7 @@ The first Lake command obtains missing dependency checkouts and their compiled
 cache; it requires network access. Keep the supplied manifest when reproducing
 these results. Running `lake update` is an intentional dependency update, not
 part of this reproduction procedure. A plain `lake build` is an alternative
-way to compile the twenty-three modules, but does not produce the runner's JSON reports.
+way to compile the twenty-seven modules, but does not produce the runner's JSON reports.
 
 For an existing built checkout of exactly these dependencies:
 
@@ -95,9 +95,9 @@ To inspect the saved results without installing Lean:
 python3 verify_lean.py --check-saved
 ```
 
-This checks that all twenty-three source hashes match the historical successful reports
+This checks that all twenty-seven source hashes match the historical successful reports
 and that those reports contain no `sorryAx` dependency. It does **not** execute
-Lean or verify a proof anew. The first twenty-two saved runs print only the standard axioms
+Lean or verify a proof anew. Twenty-six saved runs use only a subset of the standard axioms
 `propext`, `Classical.choice`, and `Quot.sound`. The transfer supplement also
 prints four `native_decide` evaluation axioms and trusts the compiler/interpreter
 for its four arithmetic claims. Its dimensions assertion is kernel checked. The detailed boundaries below
@@ -337,3 +337,14 @@ Helly and the full incidence theorem to the written argument. The
 uses the unchanged source and pinned dependencies. Use the public scratch
 runner in [REPRODUCING.md](../../../REPRODUCING.md); the frozen scope note's
 private-workspace invocation records its original development environment.
+
+
+[Phase30AffineData.lean](Phase30AffineData.lean) checks six literal finite-data
+predicates for the affine regular counterexample: shapes and distinct columns,
+720 block memberships, 60 exact span intersections, and all 24 odd relations
+and span sizes. The [scope](Phase30AffineData.scope.md) excludes seed geometry,
+code generation/invariance, quotient interpretation and the affine theorem.
+The [transcription adapter](../phase30_affine_formal_data_check.py) binds its
+four arrays to the separately frozen report. A fresh public-run compile passed:
+five theorem axiom lists contain only `propext`, one contains no axioms, and
+none uses native evaluation. Historical compile reports retain their bytes.

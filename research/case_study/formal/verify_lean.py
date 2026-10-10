@@ -27,6 +27,7 @@ CERTIFICATES = (
     "NestedKernelIntersections", "Phase23TransferAnnihilator",
     "EndpointDoublingIntersections", "TwoCosetIntersection",
     "Phase29CosetMonodromy",
+    "Phase30AffineData",
 )
 
 

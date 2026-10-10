@@ -13,7 +13,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the twenty-three saved Lean reports
+checks local documentation links, and checks the twenty-seven saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -606,7 +606,7 @@ scratch directory to preserve any previous local run reports.
 ## Fresh Lean compilation
 
 The [formal setup and scope document](research/case_study/formal/README.md)
-describes all twenty-three certificates and their unformalized boundaries. With Git
+describes all twenty-seven certificates and their unformalized boundaries. With Git
 and Lean's `elan` toolchain manager installed:
 
 ```sh
@@ -1352,3 +1352,27 @@ component pairs. GAP checks six raw presentations, of orders 64,144,384,1296,
 subgroup meets. It prints `PHASE30_SOURCE_PRESENTATIONS_PASS`; inspect the
 log for errors as well as the process exit. Neither script modifies historical
 reports. These are finite diagnostics of separate uniform written arguments.
+
+
+## Actual regular affine counterexample
+
+```sh
+python3 research/case_study/phase30_affine_map_check.py --output scratch/affine-author-fresh.json
+python3 research/case_study/phase30_regular_halving_root_check.py --output scratch/affine-independent-fresh.json
+python3 research/case_study/phase30_affine_formal_data_check.py --output scratch/affine-transcription-fresh.json
+python3 research/case_study/formal/verify_lean.py Phase30AffineData.lean --output-dir scratch/affine-lean
+```
+
+Use new output names. The two standard-library implementations use different
+seed coordinates and import neither one another nor external group data.
+They check the 120-element seed, its 355 flags, code rank17/quotient dimension13,
+all 720 memberships and 60 span intersections, and local changed groups of
+orders160,160 with intersection8 instead of4. The global 983,040-chamber
+geometry and 122,880 failed transformed residues follow from the written
+affine theorem; a full global enumeration is not performed.
+
+The transcription check binds four Lean arrays to the authored JSON.
+The fresh pinned Lean compile checks six literal predicates using kernel
+`decide`, with no native-evaluation axioms. See the scope document for the
+unformalized code, seed and geometric adapters. Historical reports are
+preserved by every command above.

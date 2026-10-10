@@ -167,7 +167,7 @@ No corpus ratio or infinity marker is assigned in this snapshot.** Several propo
 arguments and substantial checks, but their external priority remains
 unverified and their formal certificates cover specified components.
 
-The principal-result ledger now covers 15 works, including the complete
+The principal-result ledger now covers 16 works, including the complete
 nondegenerate order-1024 classification and its constructive mechanisms,
 the six principal construction theorems from 2005, and the 2001 Petrial
 obstruction with its valid conditional structural conclusions.
@@ -471,3 +471,11 @@ ledger rises to **sixteen works**. Shared theory, retained constructions and
 classification inputs still need matched span accounting before a new ratio
 can be stated. The two measured ratios remain **127/38** and **4/3**; no
 infinity marker is assigned.
+
+
+Phase thirty-three strengthens the version-bound counterexample to an actual
+regular input, using an invariant binary code and a uniform affine theorem.
+The independent computations and kernel-decide data certificate check stated
+components; they do not give a matched proof-length ratio. A false theorem
+consequence is not itself a documented open conjecture. No infinity marker,
+new principal-work credit or correction-priority claim is assigned.

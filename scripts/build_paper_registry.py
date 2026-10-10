@@ -466,13 +466,13 @@ def record(row, baseline, overlay, later_readings, older_access):
         ref = ("Complete principal construction and section4 applications; Theorem3.1, Proposition3.2, Corollary3.3 and Lemma2.4, arXiv2001.11082v1"
                if lattice else "Construction3.6; residual-connectivity claims of Proposition3.13, Theorem3.18 and introductory TheoremA, arXiv2405.19050v1")
         scope = ("Complete geometric halving construction plus generalized-cube even-coordinate groups, orders, polygon counts, self-duality, genus, actual spherical residues and stated finite hyperbolic examples. All eight numbered items and the principal unnumbered applications are accounted for relative to retained background. Remark4.1 needs a rank qualification; literal whole-document truth is not asserted."
-                 if lattice else "Exact parity-compatible repair of the broad partitioned construction, with geometry before the parity assumption and residual connectivity iff PC. A firm all-parameter counterexample family disproves the broad residual-connectivity claim in the inspected preprint. This is not a counterexample to the regular-hypertope specialization; the revised journal body remains unverified.")
+                 if lattice else "Exact parity-compatible repair, plus a regular rank-four B1/B2 counterexample with 983040 chambers and 122880 disconnected transformed rank-two residues. The residual-connectivity and hypertope-preservation claims fail even for a regular input. The literal TheoremB/4.4 coset-isomorphism assertion is not refuted; the revised journal body remains unverified.")
         r["exact_target"] = [{"reference": ref, "scope": scope,
                               "relation_to_source": "specified_existing_component" if lattice else "version_bound_counterexample_and_conditional_repair"}]
         r["method"] = ["Use components of the canonical bipartite double cover of each graph shadow; common-component intersections control chamber completion and every residue. For regular inputs PC equals the principal endpoint-support filter."]
         r["retained_inputs"] = ["Basic regular-polytope/hypertope and coset correspondences; actual residual connectivity of the original geometry; B1/B2 and the stated lattice hypothesis when applicable."]
         if not lattice:
-            r["retained_inputs"].append("Published Lemma4.5 overlap identification is attributed; the unconditional regular-hypertope Theorem4.4 is not independently recovered without PC.")
+            r["retained_inputs"].append("Published Lemma4.5 overlap identification is attributed. The literal TheoremB/4.4 coset-isomorphism assertion is distinct from the false surrounding hypertope/C-group-preservation claim.")
         r["evidence"] += [evidence(n, ref) for n in (
             "phase26_halving_source_adapter.md", "phase27_parity_theory.md",
             "phase27_parity_manifest.json", "phase27_parity_sources.json",
@@ -490,6 +490,11 @@ def record(row, baseline, overlay, later_readings, older_access):
             r["access_coverage"]["reading_category"] = "full_text_read"
             r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase30_source_intake.json", "reading_depth":"Sections1–4 read across the source audits, with all numbered items and principal unnumbered applications explicitly mapped."})
             r["remaining_work"] = ["No literal whole-document truth, matched ratio, novelty or end-to-end formalization claim. The reference[9] comparison is unverified; the auxiliary semiregular identification and Pellicer construction are retained. Remark4.1 is rank-qualified in the source ledger."]
+        else:
+            r["method"].append("An explicit regular {5,5} seed with group A5 times C2 and an invariant binary code gives an actual affine hypertope. Odd individual shadows meet in squares. Changed local parabolics have orders160,160 and intersection8 instead of4.")
+            r["evidence"] += [evidence(n, ref) for n in ("phase30_affine_map.md", "phase30_affine_map_manifest.json", "phase30_affine_root_audit.md", "phase30_affine_map_second_audit.md", "phase30_regular_halving_root_check.json", "phase30_affine_formal_manifest.json", "formal/Phase30AffineData.scope.md")]
+            r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase30_affine_root_audit.json", "reading_depth":"Exact introduction TheoremsA/B, standing assumptions, Theorem3.18 and section4 through Theorem4.4/degeneracy discussion rechecked against the regular-input counterexample; arXivv1 only."})
+            r["remaining_work"] = ["Section5 applications and full principal-paper reduction remain incomplete. Literal TheoremB/4.4 coset isomorphism is not disproved. Revised journal body, correction priority, matched ratio and end-to-end formalization remain unverified. This is a theorem counterexample, not a documented open-conjecture resolution; no infinity marker."]
     if identifier in {"L081", "L111"}:
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase26_access.json", "reading_depth":"Renewed bounded primary-source access; original full body unavailable. Later primary restatements are attributed separately."})
     if identifier == "L108":

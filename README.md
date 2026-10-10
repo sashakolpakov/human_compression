@@ -111,8 +111,11 @@ section 3 and gives a firm counterexample family to a broader assertion in
 the inspected 2024 preprint. Both finite implementations verify the example;
 the all-parameter theorem has an independently reviewed written proof.
 The [source-version boundary](research/case_study/phase27_halving_version_status.md)
-is explicit: the revised journal theorem and the regular-hypertope
-specialization have not been refuted. The later [nested-shadow adapters](research/case_study/phase30_source_adapters.md) recover the 2020 source's principal application sections and two complete presentation families in F015.
+is explicit: the revised journal body remains unverified. The later
+[affine-code construction](research/case_study/phase30_affine_map.md) gives a
+regular rank-four counterexample too: 983,040 chambers and 122,880 disconnected
+transformed rank-two residues. The literal Theorem B/4.4 coset-isomorphism
+assertion is not refuted; its surrounding hypertope-preservation claim fails. The later [nested-shadow adapters](research/case_study/phase30_source_adapters.md) recover the 2020 source's principal application sections and two complete presentation families in F015.
 
 The [general cover theorem](research/case_study/phase28_voltage_shadow_theory.md)
 extends this from parity to arbitrary deck-group torsors. It separates two
@@ -201,10 +204,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Twenty-six Lean modules certify specified components, with no `sorry` in the checked
+Twenty-seven Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 25 reports have no native-evaluation axioms.
+axioms; the other 26 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 

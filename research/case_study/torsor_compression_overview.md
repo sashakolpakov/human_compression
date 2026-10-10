@@ -313,11 +313,12 @@ shadows must remain nonbipartite. Components of a graph double cover turn
 this into a single residue-connectivity test. For regular inputs it is
 equivalent to the subgroup support-filter condition. Nested shadows in
 lattice polytopes recover the complete Montero–Weiss section 3 construction;
-later applications remain outside the reduction. A firm counterexample
+the later [nested-shadow adapters](phase30_source_adapters.md) recover its
+principal applications as well. A firm counterexample
 family detects the missing condition in a broader inspected preprint claim,
 with the revised journal version explicitly unverified.
 
-Twenty-six [Lean modules](formal/README.md) compile with the pinned toolchain and
+Twenty-seven [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -332,9 +333,9 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker covers all 26 current modules and their successful
+public snapshot checker covers all 27 current modules and their successful
 reports. The transfer module uses native evaluation with four explicit
-compiler-evaluation axioms. The other 25 modules, including the common-fiber
+compiler-evaluation axioms. The other 26 modules, including the common-fiber
 monodromy criterion, have no native-evaluation axioms. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 
@@ -362,7 +363,8 @@ through a maximal-chain argument and vector-space coordinates. Its finite
 relative-generator scope and the infinite geometric proof are distinguished.
 Those additions brought the scoped ledger to twelve. The completed N009
 ledger brought it to thirteen. The two 2001/2005 reductions now bring it to
-fifteen, with their exact construction and auxiliary-claim boundaries;
+fifteen, with their exact construction and auxiliary-claim boundaries.
+The N013 construction/application reduction brings the current ledger to sixteen;
 none of these steps changes the two measured
 description-length ratios.
 
@@ -375,3 +377,13 @@ also completes the classification of maximum ranks in the odd interval
 PSL₄(q)≤G≤PGL₄(q): four at socle index one or two, and no involution
 generating set at index four. It is a subcase of the larger almost-simple
 question, with priority unverified and no new Lean formalization.
+
+
+The [affine-code example](phase30_affine_map.md) now realizes the missing
+parity condition inside an actual regular rank-four hypertope. Its 983,040
+chambers follow from a proved affine construction; 122,880 transformed
+rank-two residues disconnect. Independent finite checks and a partial
+kernel-decide Lean data certificate support that proof. This refutes the
+inspected preprint's regular-preservation consequence, while leaving its
+literal TheoremB/4.4 coset-isomorphism assertion separate. The revised journal
+body and correction priority remain unverified. No new paper count or ∞.
