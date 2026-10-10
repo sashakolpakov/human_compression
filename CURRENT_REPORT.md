@@ -65,7 +65,10 @@ adds no principal source or complete question answer. The subsequent
 [rank-four theorem](FINITE_RANK_FOUR_COVERS.md) proves infinitely many finite
 minimal covers for every finite rank-four polytope with non-C monodromy.
 Its full written proof is independently reviewed and has five supporting
-Lean declarations. The finite higher-rank problem remains under investigation.
+Lean declarations. The [interval theorem](INTERVAL_MINIMAL_COVERS.md) now
+extends this to any rank with a non-C four-mark interval. Its complete
+proof and independent review add three scoped Lean order lemmas. The
+remaining higher-rank cases are still under investigation.
 
 The [primitive-square proof](PRIMITIVE_SQUARES.md) has passed a detailed
 independent arithmetic audit, covering every field configuration and the

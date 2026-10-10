@@ -93,12 +93,14 @@ formalized in Lean.
 |---|---|
 | Can nonpolytopal monodromy coexist with a unique minimal regular polytopal cover? | No, in every finite rank, with arbitrary flag sets and arbitrary covers. |
 | Does every abstract polytope of finite rank have a minimal regular polytopal cover? | Yes. |
-| Must a finite polytope with nonpolytopal monodromy have two finite minimal regular covers? | [Yes in rank four, with infinitely many finite covers](FINITE_RANK_FOUR_COVERS.md). Higher ranks remain unresolved here. |
+| Must a finite polytope with nonpolytopal monodromy have two finite minimal regular covers? | [Yes in rank four](FINITE_RANK_FOUR_COVERS.md), and [in any rank with a non-C four-mark interval](INTERVAL_MINIMAL_COVERS.md), with infinitely many finite covers. The other higher-rank cases remain unresolved here. |
 | Must nonpolytopal monodromy always give infinitely many minimal covers? | [Proved for every finite rank-four polytope](FINITE_RANK_FOUR_COVERS.md). Not established in general. |
 | Is this the first solution in the literature? | Historical priority remains unverified. |
 
 The [two-cover argument](FINITE_RANK_FOUR_COVERS.md) now gives infinitely
-many finite minimal covers throughout rank four. The earlier
+many finite minimal covers throughout rank four. The
+[interval theorem](INTERVAL_MINIMAL_COVERS.md) extends this to any ambient
+rank containing a non-C four-mark interval. The earlier
 [surface construction](INFINITE_MINIMAL_COVERS.md) retains its exact family
 results and attribution.
 The general theorem answers the existing minimal-cover question; it does

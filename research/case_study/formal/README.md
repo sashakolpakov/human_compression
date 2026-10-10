@@ -1,5 +1,9 @@
 # Lean certificates and their scope
 
+[IntervalMinimalCoverLifting.lean](IntervalMinimalCoverLifting.lean) proves
+three axiom-free order statements for minimal-cover restriction. The
+[scope](IntervalMinimalCoverLifting.scope.md) makes its geometric inputs explicit.
+
 [HomologyCoverAvoidance.lean](HomologyCoverAvoidance.lean) proves five
 affine-avoidance, counting and parity steps of the finite rank-four cover
 argument. The [scope](HomologyCoverAvoidance.scope.md) leaves topology written.

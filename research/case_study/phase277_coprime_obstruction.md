@@ -1,0 +1,100 @@
+# A necessary condition for a coprime kernel
+
+Private continuation, phase 277. This obstruction concerns independent
+marked groups in arbitrary rank. The displayed example is expressly not
+a polytope monodromy group, and is not a counterexample to the finite-cover
+conjecture for polytopes.
+
+Let \(\pi:H\to G\) be an epimorphism of finite marked string groups, and
+suppose \(H\) has the intersection property. Take disjoint color sets
+\(I,J\) such that every mark in one set commutes with every mark in the
+other; it is enough that every cross distance exceeds one. Put
+\(A=H_I\), \(B=H_J\), and \(K=\ker\pi\).
+
+**Proposition 1.** The order of \(G_I\cap G_J\) divides \(|K|\).
+Consequently a C-cover with kernel order coprime to \(|G|\) is possible
+only if all such separated parabolic intersections in \(G\) are trivial.
+
+**Proof.** The subgroups \(A\) and \(B\) commute and intersect trivially,
+so multiplication identifies \(AB\) with \(A\times B\). Let
+\(D=\pi(A)\cap\pi(B)\). Define a homomorphism
+\[
+ f:K\cap AB\longrightarrow D,\qquad f(ab)=\pi(a).
+\]
+The factors \(a,b\) are unique. If \(ab\in K\), then
+\(\pi(a)=\pi(b)^{-1}\in D\), so the map is well-defined. Commutation of
+\(A\) and \(B\) proves multiplicativity. For every \(d\in D\), choose
+\(a\in A\) and \(b\in B\) with \(\pi(a)=d=\pi(b)\). Then
+\(ab^{-1}\in K\cap AB\) and \(f(ab^{-1})=d\), proving surjectivity.
+The first isomorphism theorem and Lagrange's theorem now show
+\(|D|\mid|K\cap AB|\mid|K|\). Since \(|D|\) also divides \(|G|\),
+the coprime assertion follows. ∎
+
+This condition cannot be omitted from a higher-rank extension of the
+rank-four p-kernel theorem. Let \(D_8=\langle a,b\mid a^2=b^2=(ab)^4=1\rangle\),
+with central involution \(z=(ab)^2\). Use two copies, with marks
+\((a_0,a_1)\) and \((b_3,b_4)\), and define
+\[
+ G=\bigl(D_8\times D_8\bigr)/\langle(z,z)\rangle\times C_2.
+\]
+Mark the five factors in the order
+\(a_0,a_1,t,b_3,b_4\), where \(t\) generates the final direct factor.
+Then \(|G|=64\). The five marks are independent: the abelianization of
+the central product is \(C_2^4\), since the identified central subgroup
+already lies in the commutator subgroup, and the extra factor contributes
+one more independent coordinate. All required string commutations hold.
+
+Both maximal contiguous end groups have order 32 and are isomorphic, with
+the indicated separated components, to \(D_8\times C_2\times C_2\).
+They are C-groups; so are all their standard parabolics. But
+\[
+ G_{\{0,1\}}\cap G_{\{3,4\}}=\langle\bar z\rangle\cong C_2.
+\]
+Proposition 1 implies that **every finite C-cover of this marked group has
+even kernel order**. In particular no odd-prime p-group kernel can work,
+regardless of its dimension or number of stages. The product
+\(D_8\times D_8\times C_2\) itself is a finite C-cover with kernel of
+order2, so the example does not obstruct finite existence.
+
+Why this is not a polytope counterexample is equally precise. In the
+monodromy action of an actual polytope, a word using only colors in \(I\)
+fixes every face of ranks outside \(I\), at every flag. If an element also
+belongs to the subgroup on a disjoint set \(J\), it fixes faces of every
+rank, and therefore fixes every flag. The monodromy permutation is the
+identity. Thus actual monodromy satisfies
+\[
+ G_I\cap G_J=1\quad\text{whenever }I\cap J=\varnothing,
+\]
+with no need for the separated-color assumption. The example above violates
+this necessary condition.
+
+The remaining finite-polytope problem must exploit this genuine flag-action
+condition when attempting a uniform p-kernel construction in higher rank.
+Extreme independence alone, sufficient in rank four, no longer suffices.
+No assertion of historical novelty for Proposition 1 or this central-product
+example is made without a separate literature check.
+
+## Exact finite model and a qualification about covers
+
+The independent reader can reconstruct the example without identifying a
+small-group catalogue entry. Write an element of the order-64 group as
+\((v_0,v_1,v_3,v_4,z,t)\in\mathbb F_2^6\), with multiplication
+\[
+ (v,z,t)(w,d,u)=
+ (v+w,\ z+d+v_1w_0+v_4w_3,\ t+u).
+\]
+The five marks are the coordinate vectors in positions \(v_0,v_1,t,v_3,v_4\).
+The order-128 cover uses two central coordinates, with cocycles
+\(v_1w_0\) and \(v_4w_3\) separately; its quotient map adds those coordinates.
+The program `phase277_obstruction_check.py` checks both multiplication tables,
+all associativity triples, the marked epimorphism and its two-element kernel,
+all 1,024 parabolic intersections of the cover, and all 256 pairs in each
+end of the base group. This is a certificate for the displayed finite model.
+The divisibility assertion about every finite C-cover is Proposition 1's
+written proof, not a conclusion of those finite checks.
+
+There is no claim that the order-128 cover is the only minimal cover. In
+particular, centrality of \(g_2\) does not force centrality of its lift:
+the adjacent commutations with \(g_1\) and \(g_3\) need not survive in a
+cover. It would be incorrect to split every cover into three direct factors
+on the basis of the direct-product presentation of this particular base.

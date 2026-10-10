@@ -410,7 +410,7 @@ python3 research/case_study/formal/verify_lean.py --check-saved
 ```
 
 The snapshot check compares distributed files with the publication manifest,
-checks local documentation links, and checks the ninety-five saved Lean reports
+checks local documentation links, and checks the ninety-six saved Lean reports
 against their source files. The second command checks only those saved Lean
 records. Neither command executes Lean or reruns the mathematical computations.
 Do not use `--write-manifest` to repair a failed check: that option records a
@@ -2710,3 +2710,16 @@ and five symbolic-voltage models, compiles five actual Lean statements and
 rejects six altered assumptions or inputs. The [complete written theorem
 and its review](FINITE_RANK_FOUR_COVERS.md) establish the quantified result.
 The public execution does not require the five bound primary PDFs.
+
+## Extending finite minimal covers from intervals
+
+```sh
+python3 -B -O research/case_study/phase280_check.py --out /tmp/NEW-interval-covers --lean LEAN --packages PACKAGES
+```
+
+This checks the exact author and independent-review packets, reconstructs
+the separate obstruction in two coordinate systems, compares all finite
+parabolic data and compiles three axiom-free order lemmas. The
+[interval theorem and its all-rank conditional consequence](INTERVAL_MINIMAL_COVERS.md)
+have complete written proofs; their geometric inputs remain outside Lean.
+The full finite higher-rank conjecture is not an output of this check.

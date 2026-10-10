@@ -1,5 +1,9 @@
 # Provenance and verification scope
 
+The [interval-cover admission](phase136_review.md) accepts exact local-cover
+preservation through global minimal descent and its all-rank conditional
+consequence. The finite higher-rank conjecture remains only partly settled.
+
 The [rank-four cover admission](phase135_review.md) accepts the complete
 uniform finite theorem and preserves the exact earlier general-cover
 reader while updating its current status. No question is counted twice.

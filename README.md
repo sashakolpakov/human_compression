@@ -97,7 +97,9 @@ The [finite rank-four cover theorem](FINITE_RANK_FOUR_COVERS.md) now proves
 infinitely many finite minimal regular covers for every finite rank-four
 polytope with non-C monodromy. It has a complete seven-page proof,
 independent review and five scoped Lean declarations. This strengthens
-the existing question entry; the finite higher-rank question remains open.
+the existing question entry. The [interval theorem](INTERVAL_MINIMAL_COVERS.md)
+now extends it to every ambient rank containing a non-C four-mark interval;
+the remaining finite higher-rank cases are open here.
 
 ## Proof and attribution
 
