@@ -318,3 +318,22 @@ print only `propext` and `Quot.sound`. The
 [scope note](TwoCosetIntersection.scope.md) leaves the actual marked
 subgroup definitions, two-coset covering hypothesis, all-subset assembly
 and geometric recognition to the written argument.
+
+## Common fibers and monodromy
+
+[Phase29CosetMonodromy.lean](Phase29CosetMonodromy.lean) proves that a
+nonempty intersection of left cosets is a coset of the subgroup intersection.
+For H contained in that intersection, the common fiber is one H-class
+exactly when H is the whole intersection. A further lemma supplies an
+explicit pair in different classes from any excess element. The five
+theorems allow arbitrary groups and indexed families, without normality.
+Their printed axioms are standard: `propext`, with `Classical.choice`
+and `Quot.sound` in four of them; no native evaluation is used.
+
+The [scope](Phase29CosetMonodromy.scope.md) leaves graph covers, walk lifting,
+the identification of monodromy classes with connected components, typed
+Helly and the full incidence theorem to the written argument. The
+[fresh public compile](../../../provenance/phase30_monodromy_compile.json)
+uses the unchanged source and pinned dependencies. Use the public scratch
+runner in [REPRODUCING.md](../../../REPRODUCING.md); the frozen scope note's
+private-workspace invocation records its original development environment.

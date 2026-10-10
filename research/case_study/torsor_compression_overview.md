@@ -285,6 +285,16 @@ this reduction yet.
 
 ## Evidence and limits
 
+The [graph-cover theorem](phase28_voltage_shadow_theory.md) extends the
+parity calculation to arbitrary deck-group torsors. Component fibers are
+cosets; typed coset Helly is exactly the geometry condition. A nonempty
+common fiber has one component precisely when its common-shadow monodromy
+equals the intersection of the individual monodromies. This is proved
+for arbitrary groups, with exact finite diagnostics and a
+[Lean algebraic component](formal/Phase29CosetMonodromy.scope.md). Classical
+voltage and covering-space foundations remain attributed; no new paper
+count or novelty credit is assigned for this companion theorem.
+
 The [parity repair](phase27_parity_theory.md) now makes the geometric
 endpoint criterion exact: every common shadow of individually nonbipartite
 shadows must remain nonbipartite. Components of a graph double cover turn
@@ -295,7 +305,7 @@ later applications remain outside the reduction. A firm counterexample
 family detects the missing condition in a broader inspected preprint claim,
 with the revised journal version explicitly unverified.
 
-Twenty-five [Lean modules](formal/README.md) compile with the pinned toolchain and
+Twenty-six [Lean modules](formal/README.md) compile with the pinned toolchain and
 without `sorry`. They include subgroup/partition reconstruction, intersection
 transfer for coordinate kernels, the exact Suzuki closing-word equivalence, and a local string-intersection obstruction.
 They do not formalize the entire
@@ -310,10 +320,10 @@ IP alone does not imply the coset Helly condition.
 The construction, incidence and classification notes link each exact script,
 saved output and source version. The [verification manifest](torsor_verification_manifest.json)
 records the earlier artifacts and their nine historical Lean reports. The
-public snapshot checker covers all 25 current modules and their successful
+public snapshot checker covers all 26 current modules and their successful
 reports. The transfer module uses native evaluation with four explicit
-compiler-evaluation axioms. The other 24 modules, including the new
-endpoint mixed-intersection lemma, have no native-evaluation axioms. Finite examples support uniform proofs; they are
+compiler-evaluation axioms. The other 25 modules, including the common-fiber
+monodromy criterion, have no native-evaluation axioms. Finite examples support uniform proofs; they are
 not described as proofs of infinite parameter ranges.
 
 For the public distribution, run `python3 scripts/verify_snapshot.py` from

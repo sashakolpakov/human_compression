@@ -26,6 +26,7 @@ CERTIFICATES = (
     "GradedSupport", "BooleanRetractions", "PrincipalKernelIntersections",
     "NestedKernelIntersections", "Phase23TransferAnnihilator",
     "EndpointDoublingIntersections", "TwoCosetIntersection",
+    "Phase29CosetMonodromy",
 )
 
 

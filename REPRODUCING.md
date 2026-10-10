@@ -1297,3 +1297,26 @@ but exactly twelve transformed residues split into two components of size
 four. These are the intended negative results. The all-part-size family,
 the exact iff theorem and the lattice-polytope reduction are written proofs;
 these finite checks do not formalize them or establish publication priority.
+
+## Arbitrary deck-group torsors
+
+```sh
+python3 research/case_study/phase28_voltage_shadow_check.py --output scratch/voltage-shadow-fresh.json
+python3 research/case_study/formal/verify_lean.py Phase29CosetMonodromy.lean --output-dir scratch/monodromy-lean
+```
+
+The first command needs only Python's standard library and a new output
+filename. Expected counts are 28 component cosets and 2,350 shadow
+families in an explicit S₃-cover of K₄. The tetrahedral graph-incidence
+lift has 144 chambers; its bipartite compression has 72. Every flag,
+extension and residue of these rank-three examples is checked. A second
+cover verifies a common-shadow intersection splitting into two components.
+The C₂² three-coset Helly failure is an algebraic illustration; the
+checker does not realize it inside a higher-rank base geometry.
+
+The Lean command uses the pinned dependencies described above and writes
+fresh results outside the historical reports. It certifies five algebraic
+lemmas about nonempty common fibers, equivalence classes and the subgroup
+equality criterion. It does not formalize graph lifting or the complete
+geometric theorem. All five printed axiom lists contain standard axioms
+only, with no native evaluation.

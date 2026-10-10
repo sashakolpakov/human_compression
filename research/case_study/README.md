@@ -27,11 +27,14 @@ raw presentations and 3,328 actual subgroup intersections.
 The [third-excess theorem](phase22_excess3_transitions.md) gives the exact
 all-rank cubic; the [common generation theorem](phase23_generation_core.md)
 unifies specified linear and unitary parabolic-generation steps. There are
-25 [formal modules](formal/README.md). One checks finite transfer
+26 [formal modules](formal/README.md). One checks finite transfer
 arithmetic using native evaluation, with four compiler-evaluation axioms
-disclosed separately from the preceding 22 reports. The newest module proves
-the endpoint two-coset obstruction without native evaluation, alongside
-the preceding fixed-overlap certificate. The two measured ratios
+disclosed separately from the other 25 reports. The newest module proves
+the common-coset monodromy obstruction for the
+[general graph-cover theorem](phase28_voltage_shadow_theory.md). That theorem
+gives exact geometry and residual-connectivity criteria for arbitrary deck
+groups, with its classical foundations credited and full written reviews.
+The endpoint certificates retain their separate scopes. The two measured ratios
 remain 3.34 and 4/3; no infinity marker is assigned. Earlier dated progress
 notes below should be read with these later proofs and the living map.
 

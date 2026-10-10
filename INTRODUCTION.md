@@ -2826,7 +2826,79 @@ the example is neither thin nor flag-transitive. It does not refute the
 regular-hypertope specialization. This is a checked source discrepancy
 and an exact repair, without a novelty claim or an infinity marker.
 
-## 44. The remaining work, and how a living reduction should record it
+## 44. Replace parity by a group torsor
+
+The double-cover argument extends to a connected regular graph cover
+Y→X with any deck group A. Each vertex fiber is an A-torsor: A acts
+freely and transitively, and choosing one lift supplies coordinates.
+Following a closed walk in a connected shadow X_F permutes that fiber.
+The resulting subgroup H_F is its monodromy group. With voltages acting
+on the right, a component over an individual shadow X_x meets the fiber
+in a left coset g_x H_x.
+
+This is classical graph-cover and voltage theory. The
+[general recognition theorem](research/case_study/phase28_voltage_shadow_theory.md)
+uses it to give exact criteria for the specified incidence construction.
+Keep lifted vertices and edges as the lower objects, and replace each
+higher object by the connected components over its shadow. Two higher
+objects are incident when the original objects are incident and their
+chosen components meet. The base is a finite-rank residually connected
+geometry satisfying the same simple-graph and endpoint-shadow conditions.
+
+Connected pair shadows let us transport any meeting point into one common
+fiber. Thus a higher flag is exactly a pairwise-intersecting family of
+cosets. It completes to a chamber exactly when the whole family has a
+common point. This gives the first criterion: every such typed family
+must satisfy the coset Helly property.
+
+When the intersection is nonempty, choose z in it. Then
+
+$$\bigcap_{x\in F}g_xH_x=zK_F,
+\qquad K_F=\bigcap_{x\in F}H_x.$$
+
+Paths inside the common shadow have monodromy H_F≤K_F. Two points zh
+and zh′ in the common fiber are connected precisely when
+h⁻¹h′ belongs to H_F. Therefore
+
+$$\#\pi_0\!\left(\bigcap_{x\in F}C_x\right)=[K_F:H_F].$$
+
+This equality also describes infinite cardinalities; normality is
+unnecessary. Once the Helly condition holds, residual connectivity of
+the lifted geometry is equivalent to H_F=K_F for every higher flag.
+Local residues at lifted vertices and edges are original residues, which
+also proves that firmness and thinness are preserved in both directions.
+For a bipartite cover, replace the vertex-edge incidence by its two vertex
+colors; the same two criteria hold for this second construction.
+
+For the canonical C₂ double cover, a connected shadow has trivial
+monodromy exactly when it is bipartite. Subgroup cosets are singletons or
+the whole two-element group, so Helly is automatic. The equality H_F=K_F
+then becomes exactly the parity condition of the previous section.
+Larger groups can introduce both obstructions. For example, three affine
+lines in C₂² can meet pairwise with empty total intersection; this example
+illustrates the algebraic obstruction, without claiming a geometric
+realization of those three shadows.
+
+The [Lean component](research/case_study/formal/Phase29CosetMonodromy.scope.md)
+proves common-coset rebasing and the exact one-class criterion for arbitrary
+groups and indexed families. It also gives a defect witness: any
+k∈K_F\H_F separates z from zk. Graph walks, chamber completion and the
+geometric identification remain in the written proof. A standalone exact
+checker uses S₃-covers of K₄ to verify 28 component cosets and 2,350
+shadow families, then every flag and residue in two tetrahedral lifts
+with 144 and 72 chambers. A second cover exhibits a nontrivial component
+index. These finite diagnostics support the general argument; they do
+not supply it.
+
+This is a concrete role for the proposed group-torsor object. A local
+choice is a coset, compatibility is a common-fiber question, and the
+remaining connectivity defect is a subgroup index. For finite groups,
+their regular permutation matrices and invariant relation matrices
+retain these exact data. Computing the monodromy subgroups and satisfying
+the two criteria remain mathematical tasks; a matrix encoding does not
+automatically solve them.
+
+## 45. The remaining work, and how a living reduction should record it
 
 The framework does not turn every problem into ordinary linear algebra.
 Selecting a finite quotient and classifying its marked generators may require
@@ -2863,7 +2935,7 @@ The evidence has several layers:
 | Lean certificate | The exact formal theorem and assumptions in the module, with its dependency trust boundary |
 | Snapshot or saved-hash check | Agreement of bytes and recorded results; no new mathematical execution |
 
-The [twenty-five Lean certificates](research/case_study/formal/README.md) cover
+The [twenty-six Lean certificates](research/case_study/formal/README.md) cover
 substantial components, including kernel transport, partition reconstruction,
 connectivity propagation, field and matrix obstructions, the Suzuki word,
 exact Boolean-shadow witnesses including consecutive-rank truncations,

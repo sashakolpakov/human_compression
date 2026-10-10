@@ -23,6 +23,8 @@ the work:
 1. **Marked group torsors.** Represent subgroups by invariant partitions of a
    common torsor. Hadamard products compute intersections; matrix products
    count factorizations; a coset Helly condition detects flag transitivity.
+   In graph covers, the same coset data control chamber completion, and
+   common-shadow monodromy gives an exact residual-connectivity test.
 2. **Small quotients and cyclic extensions.** Reduce growing groups to bounded
    quotients. Associativity and marked generator relations become affine
    linear congruences in cocycle coefficients. Kernel arithmetic tests the
@@ -112,6 +114,13 @@ The [source-version boundary](research/case_study/phase27_halving_version_status
 is explicit: the revised journal theorem and the regular-hypertope
 specialization have not been refuted. Application sections remain separate.
 
+The [general cover theorem](research/case_study/phase28_voltage_shadow_theory.md)
+extends this from parity to arbitrary deck-group torsors. It separates two
+exact tests: common points for compatible cosets, and equality of local
+monodromy with the subgroup intersection. Two written reviews, exact
+nonabelian-cover diagnostics and a [Lean common-fiber certificate](research/case_study/formal/Phase29CosetMonodromy.scope.md)
+support its stated scope. Classical covering foundations are credited.
+
 The common census theorem now supports six finite-group censuses with 262
 independently recognized representatives under their recorded axioms. This
 measures verified coverage; it is not a numerical proof-compression ratio.
@@ -186,10 +195,10 @@ The first command checks the published artifact hashes and saved certificate
 scope. The second reruns selected exact computations in scratch space.
 See [REPRODUCING.md](REPRODUCING.md) for dependencies, broader checks and Lean.
 
-Twenty-five Lean modules certify specified components, with no `sorry` in the checked
+Twenty-six Lean modules certify specified components, with no `sorry` in the checked
 sources. They do not constitute an end-to-end formalization of every theorem.
 One transfer-arithmetic module uses four explicitly recorded native-evaluation
-axioms; the other 24 reports have no native-evaluation axioms.
+axioms; the other 25 reports have no native-evaluation axioms.
 Finite computations, exhaustive finite classifications, written all-parameter
 proofs and formal certificates are identified separately.
 
