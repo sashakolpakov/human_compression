@@ -1,5 +1,12 @@
 # Reproducing the checks
 
+The current mathematical writing target is [U plus application modules](MANUSCRIPT_PROGRAM.md).
+Existing exact computations and Lean components below are reusable proof
+material. The latest public-only replays are documented in the
+[five-family cover result](COVER_FIVE_FAMILIES.md#attribution-and-reproduction)
+and [commuting-pair source compilation](COMPRESS_13.md#correction-verification-and-cost).
+A certificate applies only to its stated theorem and hypotheses.
+
 Run these commands from the repository root. Python 3.10 or newer is required
 for the public runners. A successful hash check, a fresh computation, and a
 Lean compilation establish different things; the commands below keep those

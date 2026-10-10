@@ -1,5 +1,10 @@
 # An introduction to mathematical compression
 
+This is the working introduction to the earlier derivations. The current
+[manuscript programme](MANUSCRIPT_PROGRAM.md) reworks them into an umbrella
+theory and coherent application modules; this source bank does not dictate
+their organization or serve as their compression benchmark.
+
 This project asks how much of a connected body of mathematics can be recovered
 from a small collection of arguments that remain useful as the examples change.
 The initial subject is finite groups acting on polytopes, incidence geometries

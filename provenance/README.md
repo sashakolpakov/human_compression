@@ -300,3 +300,14 @@ paper credit: that ledger remains at twelve works. The existing twenty-one
 Lean modules and their saved reports are unchanged. No source full texts,
 exploratory generation probes, corpus ratio or infinity marker are included
 in this addition.
+
+
+Phases 87–89 add the four two-primary-family construction and five-row
+synthesis, the complete commuting-pair derivation with its required
+corrected proof ledger, and a historical independent GKM/intake note.
+Their manifests bind 34, 73 and five files respectively. Fresh public
+computations pass; primary texts are excluded. The project entry points
+now organize work as U plus coherent modules. Older compilations and
+measurements remain source records, without being transferred to the new
+products. The corrected living registry distinguishes the current thirteen
+compiled source contracts from completed modular manuscripts.

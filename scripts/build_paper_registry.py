@@ -32,6 +32,10 @@ INPUTS = ("literature_inventory.json", "compression_audit_rows.json",
           "phase70_petrial_integration_recent_audit.json",
           "phase76_eleven_source_root_audit.json",
           "phase95_twelve_public_admission.json",
+          "phase106_twelve_measurement_root_admission.json",
+          "phase120_thirteen_root_admission.json",
+          "phase114_commuting_pairs_review_reading.json",
+          "phase119_five_family_root_admission.md",
           "phase80_two_primary_root_audit.json",
           "phase72_cover_family_priority_claims.json",
           "manuscript_replacements.json")
@@ -44,7 +48,7 @@ UPDATES = {
         "The shared kernel transport theorem, proved local mirror compatibility and regular-end induction recover the chirality criterion and corollaries. An affine square-torus argument handles the torus family; exact bare-presentation GAP computations and a prime-kernel argument recover the two distinct minimal regular covers.",
         "Standard string C+ and marked-cover correspondence; Chiral depth-two regular-section theorem; Square-tessellation quotient identification; Specified older atomic-family existence and prime chirality theorem; GAP exact algorithms for the finite example",
         "phase41_chiral_cover_manuscript.md;phase41_chiral_cover_ledger.md;phase41_chiral_cover_intake.json;phase41_chiral_cover_manifest.json;phase43_chiral_cover_root_audit.md;phase43_chiral_cover_root_audit.json;phase43_chiral_cover_verify.py;phase43_chiral_cover_safe_root_replay.json;phase67_cover_family_root_audit.md;phase59_cover_family_recent_audit.md;formal/CoverCharacterSeparation.scope.md;phase80_two_primary_root_audit.md;phase72_cover_family_priority_report.md",
-        "Author-version conditional contract; full publisher PDF unacquired. Now included in the independently reviewed Compress_10 assembly with its exact reference erratum. The older atomic classification is retained, not compressed. General multiplicity and complete five-family conjectures remain unproved by that assembly; current priority/open status and external review remain. A separate reviewed first-family theorem now constructs two minimal covers for all specified odd-prime parameters; the other four families remain. Its Lean module covers only character separation. Compress_10 has a conditional length lower bound 51739/30957, with N001 credited zero."),
+        "Author-version conditional contract; full publisher PDF unacquired. Included in Compress_10 and subsequent assemblies with the exact reference correction. The older atomic classification remains retained. Separately, phase119 admits multiplicity for all five specified source families after independent mathematical and source-scope review; arbitrary-polytope multiplicity remains unresolved. Historical priority/current openness and external review remain. The scoped Lean results do not formalize the family constructions. The Compress_10 token lower bound 51739/30957 applies only to its exact manuscript."),
     "L003": (
         "partial_progress", "Section9 rotational presentation with ((3,0),(2,0),(1,1),(s,0)); algebraic consequence near Problem9.2",
         "An exact216-state integer-voltage action proves the displayed group infinite for every positive6|s. Complete finite Schreier data describe its image as a rank-six free abelian extension of an order216 quotient. Lean proves Infinite of the literal s6 PresentedGroup; exact finite quotients216m6 of the image follow in the written proof.",
@@ -149,10 +153,10 @@ UPDATES = {
         "Other subgroup rows and completeness remain. Composite-degree extensions are not RWPRI. The ordered/unordered discrepancy is version-specific."),
     "L066": (
         "principal_results_rederived", "All four principal counting and degree-six polyhedron results",
-        "Five C2^2-action multiplicities, rational generating functions and an exact degree-six orbit certificate.",
-        "Automorphisms of symmetric/alternating groups including degree-six exceptions",
-        "commuting_pairs_compression.md;elementary_action_theorem.md;commuting_pairs_formula_check.json;phase9_L066_matched_proof.md;phase9_L066_measurement.md;phase9_L066_measurement_protocol.json",
-        "External review; no priority claim for classical orbit, Burnside or Möbius ingredients. The first matched-proof ratio measures only Theorems 1.1/1.2 outside degree six, conditional on the declared common background; it is not a whole-paper ratio."),
+        "Shared finite-action theorem K(e), used also in the J1 extension census, gives five C2^2-action multiplicities, complete floor/rational formulas and stabilizer-fiber enumeration. Independent raw degree-six census checks 41175 configurations and 138240 subgroup intersections. All four principal results are now included in continuous Compress_13 with the required corrected ledger.",
+        "Nonexceptional ambient automorphism theorem for symmetric/alternating groups; Standard finite-action and string-C-group/polytope correspondences; GAP exact group and automorphism algorithms for degree six",
+        "commuting_pairs_compression.md;elementary_action_theorem.md;phase9_L066_matched_proof.md;phase9_L066_measurement.md;phase9_L066_measurement_protocol.json;phase114_commuting_pairs_review.md;phase116_commuting_pairs_corrected_ledger.json;phase120_thirteen_root_admission.json",
+        "External review and publisher-edition collation remain. No priority claim for classical orbit, Burnside or parity ingredients. The original phase110 ledger alone fails admission; phase116 is required. Compress_13 is unmeasured. The older matched-proof factor covers only Theorems1.1/1.2 outside degree six and does not transfer to this complete contract."),
     "L074": (
         "principal_results_rederived", "Theorems 1 and 2: distinct commuting-involution pair count and complete Suzuki polyhedron count, with nondegeneracy",
         "Unique normalized triples (z(1),wz(c)w,z(b)) turn inner-conjugacy classes into two field coordinates. Their joint field is exactly the generated Suzuki subgroup. Frobenius and duality orbits give both counts, with an all-parameter derivation of the published nested lambda/psi formula.",
@@ -364,7 +368,7 @@ READING_UPDATES = {
     "L030": ("selected_sections_read", "Principal construction, theorem/corollaries and the source displays corrected in the reduction checked.", "incidence_compression.md"),
     "L032": ("selected_sections_read", "Principal Theorem 1.2 and its all-rank order/type hypotheses checked.", "compression_phase2.md"),
     "L063": ("selected_sections_read", "Sections 2 and 4.1, Tables 2 and 5, and the publisher appendix proof of Proposition 26 checked.", "classification_compression.md"),
-    "L066": ("selected_sections_read", "All four main statements, floor-formula argument, printed table and degree-six conclusions checked.", "commuting_pairs_compression.md"),
+    "L066": ("full_text_read", "Independent phase114 reviewer read every line of the complete nine-page author text and individually inspected all nine PDF pages, including references. All thirteen numbered items, fourteen table rows and five endpoint representatives checked. Publisher edition not collated.", "phase114_commuting_pairs_review.md"),
     "L104": ("full_short_text_read", "All five pages read by rank_stability; confirmed in the root's registry review on 2026-10-09. Section 3 counts compared in the classification reduction.", "classification_compression.md"),
 }
 
@@ -825,7 +829,7 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["exact_target"][0]["relation_to_source"] = "prior_claim_located_printed_witness_defective"
     if identifier == "N009":
         r["method"].append("The reviewed continuous Compress_12 manuscript now proves one universal finite-kernel classification and invariant index-two ladder for every forest/rank/excess. Its same program supplies L035's order-256 seed and all three nondegenerate order-1024 ranks, removing the SmallGroups catalogue input. Fresh public execution checks 539264 census meets, 214 complete presentations, 43840 additional meets and 428 end isomorphisms; prior component methods below remain historical evidence.")
-        r["remaining_work"].append("Now admitted to the continuous twelve-source replacement. No twelve-source length factor, new Lean proof, historical-priority clearance or open-conjecture claim. The full exceptional infinite marked decomposition and quoted geometric/square interfaces remain retained.")
+        r["remaining_work"].append("Admitted to continuous Compress_12 and Compress_13. The exact twelve-source token lower bound is59636/44269; the thirteen-source factor is unmeasured. No new Lean proof, historical-priority clearance or open-conjecture claim. The full exceptional infinite marked decomposition and quoted geometric/square interfaces remain retained.")
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase87_n009_integration_recent_audit.md", "reading_depth":"Independent full 22-page extraction reading, all 27 numbered items and six tables; printed pages 10,13,14,15,16,17,19,20 visually inspected. Root inherits this source review."})
         r["method"].append("The class-seven invariant-kernel census handles a nonabelian universal gamma3, checks all401 candidates and all25664 actual meets, and recovers125 rank-three classes and all12type counts. Affine fixed translations give every center formula in Lemma5.2, including both small exceptions; independent Frattini characters give Lemma5.4 under its retained infinite decomposition.")
         r["retained_inputs"] += ["Quoted affine lattice-family identification (Lemma5.1)", "Quoted infinite semidirect decomposition (Theorem5.3)"]
