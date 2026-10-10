@@ -577,6 +577,9 @@ def record(row, baseline, overlay, later_readings, older_access):
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase32_L111_section6_intake.json", "reading_depth":"Complete verbal Theorems6.1/6.2, constructions, Cor6.1/proof and selected source definitions read in primary indexed passages; diagram images and complete PDF unavailable."})
         r["access_coverage"]["notes"] = "Theorem4.1 and positive section6 statements source-matched; two separate indexed-statement counterexamples. No complete-body, application-table or principal-paper credit."
         r["remaining_work"] = ["Remaining auxiliary statements/application tables, complete PDF, later corrections and correction priority are unverified. No literal whole-paper validity, matched ratio or infinity marker."]
+    if identifier in {"N001", "N003"}:
+        r["evidence"] += [evidence(n,"Assembled Compress_A and complete independent source/proof review") for n in ("phase36_compress_forest_manuscript.md","phase36_compress_forest_ledger.md","phase36_compress_forest_intake.json","phase36_compress_forest_manifest.json","phase36_compress_forest_recent_audit.md","phase36_compress_forest_root_audit.md")]
+        r["method"].append("The first assembled two-paper manuscript proves the shared forest/sign-kernel/overgroup/relative-generation core once and supplies twelve explicit source corollaries. Independent full proof/source review passes the finite-group/n>=7 contract; no manuscript ratio yet.")
     if identifier == "N005":
         r["access_coverage"]["additional_readings"].append({"source":"research/case_study/phase31_cover_prior_art.json", "reading_depth":"Proposition2.2, Definitions4.1/4.5/4.6 and Theorem4.12/Corollary4.13 with displayed proofs; primary rendered preprint only, not final journal body. No new reduction credit."})
     if identifier == "L108":

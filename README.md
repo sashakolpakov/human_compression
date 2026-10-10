@@ -14,12 +14,17 @@ their open problems. Success means reproducing exact theorem statements with
 fewer independent arguments, exposing the inputs that remain, and obtaining
 new consequences. The evidence is the mathematics and its checks.
 
-The [independent manuscript-level assessment](INDEPENDENT_ASSESSMENT.md)
-names the sixteen principal-result intake candidates, maps them to proposed
-common manuscripts, and identifies what still needs assembly and review.
-The [manuscript measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
-compares the combined intake manuscripts with an actual common replacement
-and its necessary adapters. That aggregate ratio has not yet been measured.
+The first actual replacement is now assembled: [Compress_A](COMPRESS_A.md)
+derives twelve declared main results from two manuscripts published in1998
+and2002, with a shared forest/sign-kernel core and explicit retained inputs.
+A separate agent has reviewed every proof and source target in the stated
+finite-group/degree-at-least-seven scope. Manuscript-length measurement remains
+separate; no aggregate ratio is claimed yet.
+
+The [independent assessment](INDEPENDENT_ASSESSMENT.md) records the earlier
+baseline, names sixteen principal-result intake candidates and proposes six
+bundles. The [measurement protocol](MEASUREMENT.md#the-manuscript-level-experiment)
+defines the user's sum-of-manuscripts ratio and its required coverage audit.
 
 ## The method
 

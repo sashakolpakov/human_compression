@@ -40,11 +40,13 @@ partial component reductions remain outside that numerator. Corrected
 versions and refuted assertions must be labeled separately from literal
 corollaries of the replacement.
 
-The current repository has replacement proofs and several candidate bundles,
-but no frozen assembled multi-manuscript replacement with a measured
-manuscript-level ratio. The next measurement must name both sides explicitly.
-The [independent assessment](INDEPENDENT_ASSESSMENT.md) lists the named
-intake candidates, their grouped replacements and the remaining assembly work.
+The repository now has a [frozen assembled two-paper replacement](COMPRESS_A.md)
+with twelve independently reviewed source corollaries in its declared scope.
+It has no approved manuscript-level ratio yet. The finite-group qualifications,
+excluded unnumbered material and source-rendering limitations accompany the
+contract; they cannot be removed by a word-count calculation. The earlier
+[independent assessment](INDEPENDENT_ASSESSMENT.md) supplies the wider intake
+map and the remaining assembly work for other bundles.
 
 ## A finite compression ratio
 
