@@ -1,0 +1,20 @@
+Check:=function(ok,why) if not ok then Error(why);fi;end;;
+a:=[(1,2)(3,5)(4,7)(6,8),(1,3)(2,4)(5,7)(6,9),(3,6)(4,7)(5,8)(9,10),(1,3)(2,5)(4,7)(10,11)];;
+b:=[(12,13),(13,14),(14,15),(15,16)];;
+c:=List([1..4],i->a[i]*b[i]);;
+subs:=function(xs)local G,sets;G:=Group(xs);sets:=Combinations([1..4]);return List(sets,I->rec(indices:=I,group:=Subgroup(G,xs{I})));end;;
+ip:=function(xs)local sub,x,y,expected,n;sub:=subs(xs);n:=0;for x in sub do for y in sub do expected:=Subgroup(Group(xs),xs{Intersection(x.indices,y.indices)});Check(Intersection(x.group,y.group)=expected,"IP");n:=n+1;od;od;return n;end;;
+for xs in [a,b] do
+ Check(ForAll(xs,x->Order(x)=2),"involutions");
+ for i in [1..4] do for j in [i+2..4] do Check(xs[i]*xs[j]=xs[j]*xs[i],"string");od;od;
+od;
+Check(List([1..3],i->Order(a[i]*a[i+1]))=[3,5,3],"eleven cell type");;
+Check(List([1..3],i->Order(b[i]*b[i+1]))=[3,3,3],"simplex type");;
+G:=Group(a);;S:=Group(b);;M:=Group(c);;
+Check(Size(G)=660 and IsSimpleGroup(G) and Size(S)=120 and Size(M)=79200,"groups");;
+A:=Group(c{[1,2,3]});;B:=Group(c{[2,3,4]});;C:=Group(c{[2,3]});;
+Check(Size(A)=1440 and Size(B)=1440 and Size(C)=30,"end sizes");;
+Check(Size(Intersection(A,B))=60 and a[2] in A and a[2] in B and not a[2] in C,"actual shared witness");;
+Check(ForAll(b,x->SignPerm(x)=-1),"simplex orientation");;
+Print("PASS independent fixed16point inputs_IP_pairs=",ip(a)+ip(b)," mixed_end_intersection=60 middle=30 actual_witness=",a[2],"\n");
+QUIT_GAP(0);

@@ -5058,6 +5058,194 @@ def check_overview41():
     return nf, nb
 
 
+
+def run_historical41_check(function):
+    """Preserve all reviewed forty-one-original checks under their original pointers."""
+    from types import FunctionType
+    base = 'audit/topic-mixes/v1/'
+    routes = {'audit/corpus/latest.json': base + 'previous_corpus_pointer.json',
+              'audit/overview/latest.json': base + 'previous_overview_pointer.json',
+              'papers/latest_catalogue.json': base + 'previous_catalogue.json'}
+    rows = {r['path']: r for r in load(base + 'admission.json')['artifacts']}
+    check_bindings([rows[p] for p in routes.values()])
+    scope = dict(function.__globals__, load=lambda path: load(routes.get(str(path), path)))
+    original = check_current_measurement_pointer
+    scope[original.__name__] = FunctionType(original.__code__, scope, original.__name__, original.__defaults__, original.__closure__)
+    return FunctionType(function.__code__, scope, function.__name__, function.__defaults__, function.__closure__)()
+
+
+def check_mixes_admission():
+    base = 'audit/topic-mixes/v1/'; a = load(base + 'admission.json')
+    pins = ['794ae902e7e06a7eacc7af6da5ed853a39182b8e94efb4695de253902b8c454a',
+            '488d97e76d1bc640886f16bf83e65668657aa51a31ff61ce3c5c143ae8e06690',
+            'cf6f5e47347a0f905a2f4a566439b3d3562164a5827ef8e7467fa2bb37c28b96',
+            '3f02f43dd6e0037cfded61d4b3096b69a8412eeba669ec5714ea1190a24990a8',
+            '77597436ddeeadc12ae94c20aa1355b52d51251a48d894192afebb5491775010',
+            '280555bfa0f45388bea391b35ef92c44bdaf9f0b22af79fca6dff469a733b7d0',
+            '8e0d5c0f1c3212cf96a02361aad84aec5c26b464c8c7c0f98cb1b984dbf28b52']
+    check_bindings(a['artifacts'] + a['packets'] + a['public_replays'])
+    need([r['sha256'] for r in a['packets']] == pins, 'Changed reviewed Mixes editions.')
+    for r in a['packets']:
+        parent = Path(r['path']).parent
+        check_bindings([dict(e, path=str(parent / e['path'])) for e in load(r['path'])['exports']])
+    need(a['status'] == 'ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT_AND_NUMERICAL_COMPARISON' and
+         a['source_ids'] == ['F005'] and a['principal_originals_added'] == 1 and a['source_rows'] == 38 and
+         a['principal_background_rows'] == 35 and a['unanswered_final_problems'] == 3 and
+         a['source_pages'] == [21] and a['whole_common_pages'] == 5 and a['application_pages'] == [8, 4] and
+         a['complete_printed_program_pages'] == [4, 3] and a['declared_program_files'] == 3 and
+         a['required_program_files'] == 1 and a['validation_program_files'] == 2 and
+         a['separate_driver_files'] == 3 and a['separate_formal_files'] == 1 and a['formal_declarations'] == 2 and
+         a['new_question_credit'] == a['original_intake_added'] == 0 and a['whole_common_charged_once'] and
+         not any(a[k] for k in ['whole_source_formalized', 'cross_topic_overlap_discount',
+                               'prior_correction_free', 'source_PDFs_redistributed', 'historical_priority_claim']),
+         'Mixes source, correction, formal or cost boundary changed.')
+    need(all(a[k] is None for k in ['retained_external_proof_cost', 'full_runtime_cost',
+                                   'full_graphics_cost', 'full_formalization_cost']), 'Unknown Mixes costs became zero.')
+    science = load(base + 'science_review/review.json')
+    need(science['status'] == 'ROOT_ACCEPTED_COMPLETE_CORRECTED_PRINCIPAL_F005' and
+         science['written_recovery_accepted'] and science['corrected_principal_and_background_rows'] == 35 and
+         len(science['accepted_literal_counterexample_targets']) == 5 and
+         len(science['accepted_qualified_counterexample_targets']) == 2 and
+         science['unresolved_literal_correspondence'] == [], 'Complete corrected Mixes scientific acceptance missing.')
+    need(load(base + 'measurement/input_review/review.json')['status'] == 'ROOT_ACCEPTED_UNCHANGED_COMPLETE_F005_MEASUREMENT_INPUTS' and
+         load(base + 'measurement/review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_F005_NUMERICAL_COMPARISON',
+         'Distinct complete Mixes input and numerical reviews missing.')
+    spec = importlib.util.spec_from_file_location('mixes_distinct_numbers', ROOT / base / 'measurement/review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'measurement/packet'
+    counts = load(base + 'measurement/input_review/independent_counts.json')
+    rows = q.derive(counts); result = load(base + 'measurement/packet/results.json')
+    q.validate(result, rows, counts, load(base + 'measurement/inputs/policy.json'), science)
+    need(result['primary'] == a['primary'] and len(rows) == a['metric_coordinates'] == 30 and
+         a['exact_fractions'] == a['CSV_rows'] == 120 and
+         q.actual_vectors(packet / 'complete_costs.svg', packet / 'complete_costs.pdf', rows[2]) == 14,
+         'Complete Mixes arithmetic or actual graph changed.')
+    fresh = load(base + 'public_distinct_numbers.json')
+    need(fresh['status'] == 'PASS_DISTINCT_F005_NUMERICAL_REVIEW' and len(fresh['independent_controls']) == 15 and
+         fresh['actual_SVG_rectangles'] == fresh['actual_PDF_rectangles'] == 14 and
+         fresh['author_modules_imported'] is False, 'Distinct public-copy numerical replay missing.')
+    return 1, 120
+
+
+def check_accessible106_programme():
+    base = 'audit/corpus/accessible106/'; scope = load(base + 'admission.json')
+    check_bindings(scope['artifacts'] + [scope['previous_snapshot']])
+    current = load('audit/corpus/latest.json'); previous = load('audit/topic-mixes/v1/previous_corpus_pointer.json')
+    check_bindings([current[k] for k in ['snapshot', 'base_inventory', 'previous_snapshot',
+                                       'active_catalogue', 'scope_admission', 'scope_archive']] +
+                   current['added_admissions'] + current['added_measurements'] + current['access_additions'])
+    need({k: v for k, v in current.items() if k != 'snapshot'} == load(current['snapshot']['path']),
+         'Current accessible106 pointer differs from snapshot.')
+    active = set(previous['admitted_original_ids']) | set(previous['accessible_pending_original_ids'])
+    archived = set(previous['retrieval_original_ids']); admitted = set(previous['admitted_original_ids']) | {'F005'}
+    need(current['status'] == 'CURRENT_PROGRAMME_42_ADMITTED_OF_106_ACTIVE_ORIGINALS' and
+         current['originals'] == current['accessible_originals'] == len(active) == 106 and
+         current['historical_originals'] == 161 and current['archived_unavailable_originals'] == len(archived) == 55 and
+         set(current['active_original_ids']) == active and set(current['archived_original_ids']) == archived and
+         not active & archived and len(active | archived) == 161 and
+         current['admitted_principal_originals'] == current['currently_measured_originals'] == len(admitted) == 42 and
+         set(current['admitted_original_ids']) == set(current['measured_original_ids']) == admitted and
+         current['accessible_pending_complete_recovery'] == 64 and
+         set(current['accessible_pending_original_ids']) == active - admitted and
+         current['pending_source_retrieval'] == 0 and current['retrieval_original_ids'] == [] and
+         current['source_retrieval_in_scope'] is False and current['all_originals_remain_active'] and
+         current['all_historical_originals_remain_active'] is False and
+         current['measurement_pending_original_ids'] == [] and
+         not current['all_original_proofs_recovered'] and not current['all_conjectures_resolved'],
+         'User-requested active106 partition or remaining obligations changed.')
+    catalogue = load(base + 'catalogue.json'); archive = load(base + 'archived_unavailable.json')
+    need(len(catalogue['entries']) == len({e['original_id'] for e in catalogue['entries']}) == 106 and
+         {e['original_id'] for e in catalogue['entries']} == active and
+         len(archive['entries']) == len({e['original_id'] for e in archive['entries']}) == 55 and
+         {e['original_id'] for e in archive['entries']} == archived and
+         all(not e['active'] and not e['retrieval_scheduled'] and e['reason'] for e in archive['entries']),
+         'Individual active or archived original lost or duplicated.')
+    for e in catalogue['entries']:
+        need(e['active'] and e['original_count'] == 1 and e['source_access']['accessible'] and
+             e['source_access']['usable_representations'] and not e['source_access']['pending_retrieval'],
+             'Active original lacks usable source evidence.')
+        need((e['current_principal_recovery']['status'] == 'ADMITTED_AND_MEASURED') == (e['original_id'] in admitted),
+             'Individual original recovery status differs.')
+        check_bindings(e['current_principal_recovery']['latest_admission_references'])
+    need(scope['active_originals'] == 106 and scope['archived_originals'] == 55 and
+         scope['principal_credit_added'] == scope['question_credit_added'] == scope['measurement_factor_changes'] == scope['singletons_excluded'] == 0,
+         'Scope change creates mathematical credit or excludes a singleton.')
+    singleton = load(base + 'singleton_topics.json')
+    need(singleton['excluded_originals'] == [] and singleton['measured_singleton_topics'] == len(singleton['entries']) == 10 and
+         all(e['exclusion_applied'] is False for e in singleton['entries']), 'Unapproved singleton exclusion.')
+    old_catalogue = load('audit/topic-mixes/v1/previous_catalogue.json')
+    new_catalogue = load('papers/latest_catalogue.json')
+    need(new_catalogue == load('papers/catalogue_accessible106.json') and
+         new_catalogue['entries'][:-5] == old_catalogue['entries'] and
+         new_catalogue['active_originals'] == 106 and
+         set(new_catalogue['original_ids']) == set(old_catalogue['original_ids']) | {'F005'} and
+         check_current_measurement_pointer() == 42, 'Catalogue changes older proofs or double-counts original.')
+    for row in new_catalogue['entries'][-5:]:
+        need(row['topic'] == 'Mixes' and row['measurement_status'] == 'admitted' and
+             (ROOT / row['tex']).is_file() and (ROOT / row['pdf']).is_file(), 'Complete Mixes paper missing.')
+    return 42, 64
+
+
+
+def check_accessible106_independent_review():
+    base = 'audit/corpus/accessible106/'; a = load(base + 'review_admission.json')
+    check_bindings(a['artifacts'] + [a['scope_admission'], a['independent_manifest'], a['public_replay']])
+    need(a['independent_manifest']['sha256'] == '10211d9436896d92cb4c2e4406817ec6d2fc32bd1e409cae57f42cb2a505c5f4',
+         'Changed independently reviewed scope edition.')
+    parent = Path(a['independent_manifest']['path']).parent
+    check_bindings([dict(r, path=str(parent / r['path'])) for r in load(a['independent_manifest']['path'])['exports']])
+    review = load(base + 'independent_review/review.json'); replay = load(base + 'public_review_replay.json')
+    check_bindings([review['catalogue'], review['scope_admission']])
+    need(review['status'] == 'INDEPENDENTLY_ACCEPTED_ACCESSIBLE_106_SCOPE' and
+         review['verified']['source_bindings'] == 112 and review['verified']['post_baseline_contracts'] == 15 and
+         review['verified']['canonical_baseline_contracts'] == 27 and
+         review['verified']['current_application_route_records'] == 25 and review['semantic_controls_rejected'] == 18 and
+         review['remaining_required_scope_corrections'] == [] and
+         replay['status'] == 'PASS' and len(replay['semantic_controls_rejected']) == 18 and
+         replay['counts'] == dict(active=106, archive=55, admitted_and_measured=42, pending=64,
+                                 new_contract_routes=15, singletons_retained=10),
+         'Independent scope review or exact source/contract partition missing.')
+    return 106, 55
+
+
+def check_overview42():
+    base = 'audit/overview/v9/'; a = load(base + 'admission.json')
+    check_bindings(a['artifacts'] + a['current_measurement_admissions'] +
+                   [a[k] for k in ['previous_overview', 'current_corpus', 'current_catalogue',
+                                   'scientific_admission', 'scope_admission', 'scope_review_admission']])
+    for key, pin in [('author_manifest', 'd1959483e7df6e257aaadebf2548b7e73817fc0cb69a3924b068a497284154e3'),
+                     ('independent_manifest', '9c75a6c9323468c64257ee9137bb73d11e6d3738df7f7ab3dfd705afc8910a6b')]:
+        row = a[key]; check_bindings([row]); need(row['sha256'] == pin, 'Changed reviewed overview42 edition.')
+        parent = Path(row['path']).parent
+        check_bindings([dict(r, path=str(parent / r['path'])) for r in load(row['path'])['exports']])
+    spec = importlib.util.spec_from_file_location('overview42_distinct', ROOT / base / 'independent_review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'packet'; data = load(base + 'packet/results.json')
+    need(q.bindings(packet, ROOT) == 14, 'Missing exact overview42 input.')
+    nf = q.arithmetic(data, ROOT); nb = q.graphs(packet, data, q.prior_checker(ROOT)); q.csv_check(packet, data)
+    need(a['status'] == 'ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW42' and nf == a['exact_comparisons'] == 98 and
+         nb == a['actual_SVG_bars'] == a['actual_PDF_bars'] == 179 and a['CSV_rows'] == 61 and
+         a['topic_count'] == 19 and a['distinct_originals'] == 42 and a['unmeasured_originals'] == [] and
+         a['active_catalogue_originals'] == 106 and a['archived_unavailable_originals'] == 55 and
+         a['unchanged_topic_records'] == 18 and
+         set(a['original_ids']) == set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and
+         a['complete_exceptional_application_charged'] and a['programme_counts_from_separate_snapshot'] and
+         all(a[k] == 0 for k in ['new_source_credit', 'new_question_credit', 'new_formal_credit']),
+         'Overview42 scope, counts or complete costs changed.')
+    replay = load(a['author_replay']['path']); distinct = load(a['independent_replay']['path'])
+    need(replay['status'] == 'PASS' and len(replay['exact_rebuilt_outputs']) == 12 and replay['reader_pages'] == 6 and
+         distinct['status'] == 'PASS_DISTINCT_OVERVIEW42' and len(distinct['controls_rejected']) == 15 and
+         load(base + 'independent_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_OVERVIEW42',
+         'Overview42 independent acceptance or fresh replay missing.')
+    pointer = load('audit/overview/latest.json'); check_bindings([pointer['admission'], pointer['reader'], pointer['counts_source']])
+    need(pointer['admission']['path'] == base + 'admission.json' and pointer['reader']['path'] == base + 'packet/summary.pdf' and
+         pointer['measured_originals'] == 42 and pointer['topics'] == 19 and pointer['unmeasured_recovery'] == [] and
+         pointer['active_catalogue_originals'] == 106 and pointer['archived_unavailable_originals'] == 55,
+         'Current overview42 pointer differs.')
+    return nf, nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -5136,9 +5324,15 @@ def main():
     run_historical40_check(check_programme40)
     overview40_fractions, overview40_bars = run_historical40_check(check_overview40)
     augmentation_added, augmentation_fractions = check_rank_augmentation_admission()
-    active_admitted, active_pending = check_programme41()
-    overview41_fractions, overview41_bars = check_overview41()
-    print(f"PASS: current eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
+    run_historical41_check(check_programme41)
+    overview41_fractions, overview41_bars = run_historical41_check(check_overview41)
+    mixes_added, mixes_fractions = check_mixes_admission()
+    active_admitted, active_pending = check_accessible106_programme()
+    check_accessible106_independent_review()
+    overview42_fractions, overview42_bars = check_overview42()
+    print(f"PASS: active106 catalogue, 55 archived, 42 admitted/measured and 64 pending; no singleton exclusions.")
+    print(f"PASS: nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format; Mixes adds one corrected principal recovery.")
+    print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
     print(f"PASS: augmentation adds {augmentation_added} corrected principal original and {augmentation_fractions} exact comparisons; all six local pages paid.")
     print(f"PASS: historical seventeen-topic overview: {overview40_fractions} exact comparisons and {overview40_bars} actual vector bars per format for 40 originals.")
     print(f"PASS: locally projective and Mathieu topics add {finite_added} originals and {finite_fractions} exact comparisons; 40 measured originals, no new formal or question credit.")

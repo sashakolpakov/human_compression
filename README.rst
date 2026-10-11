@@ -5,42 +5,47 @@ Can reusable mathematics and capable language-model agents recover decades
 of published results in shorter, complete papers? This project tests that
 question through explicit proofs, attribution and measured comparisons.
 
-The fixed catalogue contains 161 original manuscripts. At the intake cutoff,
-102 full texts had been retrieved and 27 manuscripts had admitted recoveries
-of specified principal results. These are progress counts, not a boundary
-on the work. Every accessible original in the catalogue remains in the
-compression programme, including papers whose replacement proofs have not
-yet been written. Source retrieval continues within these 161 titles.
+The active catalogue contains **106 original manuscripts with usable full
+texts**. The `complete active list <audit/corpus/accessible106/README.rst>`_
+records each original's source, proof targets and current status. At the
+user's request, the other `55 previously indexed originals
+<audit/corpus/accessible106/archived_unavailable.json>`_ are archived outside
+the programme; source retrieval is no longer scheduled. The historical
+161-title inventory and earlier reports remain preserved.
 
-The `register of every original <audit/corpus/v1/README.rst>`_ and
-`subsequent admissions <audit/corpus/latest.json>`_ now record **106
-accessible manuscripts: 41 with admitted principal-result recoveries and
-65 awaiting complete recovery**. The other **55 remain retrieval targets**.
-The register gives each original's source, mathematical targets, proof
-evidence and next obligation. All forty-one admitted recoveries now have
-measured comparisons. The `L084 erratum
-<papers/topic-locally-projective/v1/README.rst>`_ now has a complete corrected
-recovery together with the L095 parent preprint.
-The complete `L100 institutional preprint <audit/corpus/access/halle-preprint/README.rst>`_
-also joins the recovery queue. The catalogue itself has not grown.
+**42 accessible originals have admitted principal-result recoveries with
+measured comparisons; 64 await complete recovery.** The `current programme
+<audit/corpus/latest.json>`_ binds those counts to the proof and measurement
+admissions. An accessible original awaiting a proof remains pending.
+Recovery refers to the specified principal results with their explicit
+corrections and retained inputs, not every cited fact or open question.
 
-An accessible paper awaiting a proof or measurement is pending, not excluded.
-A complete authored rendering is a usable source even when its PDF is
-unavailable. An original without a usable full text stays in the retrieval
-queue and receives no numerical comparison until its source can be checked.
-Each published numerical comparison identifies the originals whose declared
-principal results its current proofs recover. The remaining accessible
-originals stay on the programme until their proofs and comparisons are done.
+Ten measured topics currently contain one original. The `consolidation
+proposals <audit/corpus/accessible106/singleton_assessment/README.rst>`_ identify
+shared theorems and remaining obligations for all ten, including affine
+constructions with A and matching extensions with group operations. Work on
+the first merger has begun. None has yet been excluded. These proposals add
+no proofs or numerical savings; any later exclusions will retain their
+reasons and previous measurements.
 
-The `consolidated comparison <audit/overview/v8/packet/summary.pdf>`_ gives
-all eighteen measured topics, all forty-one individual factors and declared
+The `consolidated comparison <audit/overview/v9/packet/summary.pdf>`_ gives
+all nineteen measured topics, all forty-two individual factors and declared
 program and data costs in six pages. The `topic graph
-<audit/overview/v8/packet/whole_topics.svg>`_ shows every complete common paper
+<audit/overview/v9/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
-<audit/overview/v8/packet/conditional_1.svg>`_ and `remaining twenty-four
-<audit/overview/v8/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v8/README.rst>`_ links exact tables,
+<audit/overview/v9/packet/conditional_1.svg>`_ and `remaining twenty-five
+<audit/overview/v9/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v9/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
+
+The new `mixes topic <papers/topic-mixes/v1/README.rst>`_ recovers F005's
+corrected principal results through a common theorem about fibers of group
+actions. Its five-page common paper and applications of eight and four pages
+give **1.322 times** written compression, or **1.858 times** conditionally
+after full acquisition. Including all three programs gives **0.967** with
+printed code or **0.991** with raw code. The three final problems remain
+unanswered. The `complete review <audit/topic-mixes/v1/README.rst>`_ states
+the counterexamples, corrected criteria and partial Lean coverage.
 
 The new `rank-augmentation topic <papers/topic-rank-augmentation/v1/README.rst>`_
 recovers the corrected principal results of L020. Its five-page common paper
@@ -142,6 +147,11 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 1 / 1
      - 1.200
      - 0.865
+
+   * - Mixes and simultaneous actions
+     - 1 / 1
+     - 1.322
+     - 0.967
 
 These are text costs, not minimum proof complexities. The reports specify
 the complete program boundary, raw-code alternatives, retained external
@@ -1228,8 +1238,8 @@ in `audit/source_registry.json <audit/source_registry.json>`_.
 The historical `completion audit <audit/completion.rst>`_ maps the earlier 27 principal
 result sets to their proofs and remaining manuscript work. Its resolved
 contracts use later admissions where older registry fields are stale.
-The catalogue remains fixed; recovery work continues for every accessible
-original. A supporting paper on
+The active catalogue is fixed at 106 accessible originals; recovery work
+continues across that set. A supporting paper on
 `normal kernel recognition <papers/formal/normal-kernel-recognition.pdf>`_
 replaces two separate finite-order comparisons by one group-theoretic
 argument. These lemmas now serve the complete Topic A applications; their
