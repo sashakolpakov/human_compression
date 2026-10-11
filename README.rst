@@ -14,11 +14,11 @@ yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
 `subsequent admissions <audit/corpus/latest.json>`_ now record **104
-accessible manuscripts: 33 with admitted principal-result recoveries and
-71 awaiting complete recovery**. The other **57 remain retrieval targets**.
+accessible manuscripts: 34 with admitted principal-result recoveries and
+70 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. All thirty-three recovered originals now have measured
-comparisons. The catalogue
+evidence and next obligation. Thirty-three recovered originals have measured
+comparisons; the newly admitted N006 awaits measurement. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
@@ -103,8 +103,8 @@ once; B pays both of its current common papers in full.
      - 1 / 1
      - 0.925
      - 0.674
-   * - Diagonal twistings
-     - 1 / 1
+   * - Orbit constructions: earlier N007 comparison
+     - 1 / 2
      - 1.007
      - 0.884
 
@@ -1065,12 +1065,14 @@ tokens, so the small word saving is sensitive to the unit. The
 `current paper catalogue <papers/latest_catalogue.json>`_ preserves these
 additions separately from the earlier 27-original audit.
 
-Orbit intersections and diagonal twistings
-------------------------------------------
+Orbit constructions, diagonal twistings and wreath products
+-----------------------------------------------------------
 
-The five-page `common theory <papers/topic-diagonal/v1/umbrella.pdf>`_
-proves a regular semidirect construction from intersections of parabolic
-orbits. The application obtains both diagonal constructions from that theorem.
+The complete eight-page `common theory
+<papers/topic-diagonal/v2/papers/umbrella.pdf>`_ proves the orbit construction
+with general chamber stabilizers, as well as module intersections and changes
+of marking by cocycles. It extends the earlier five-page N007 theory. The
+whole enlarged common paper will be charged once for the two originals.
 
 .. list-table:: Source and results recovered
    :header-rows: 1
@@ -1085,13 +1087,36 @@ orbits. The application obtains both diagonal constructions from that theorem.
      - `Diagonal twistings and finite tree diagrams
        <papers/topic-diagonal/v1/diagonal-twistings.pdf>`_;
        classical Coxeter facts and named construction descriptions retained
+   * - N006: Piedade–Tranchida, *The geometry of wreath and semi-direct
+       products*; arXiv:2605.04646v2, twenty-two pages
+     - Joins, generalized twisting, wreath products, all six signed families,
+       reversal constructions, all ten affirmative sporadic cases and the
+       restricted and unrestricted lamplighter geometries
+     - `Joins, wreath products and reversal of polytope markings
+       <papers/topic-diagonal/v2/papers/wreath_applications.pdf>`_, with
+       complete `nine-case <papers/topic-diagonal/v2/papers/sporadic/sporadic_certificates.pdf>`_
+       and `Harada–Norton <papers/topic-diagonal/v2/papers/harada-norton/harada_norton.pdf>`_
+       notes; literal source corrections and retained classification inputs
+       are explicit, while Fi22 and Fi24-prime remain outside this contract
+
+The `N006 admission <audit/topic-diagonal/v2/README.rst>`_ adds one original,
+not ten cases. Its full written application costs eight plus five plus four
+pages, including references. Seventeen scoped Lean declarations pass: eight
+reused and nine new. They do not formalize the whole geometry, module
+generation or sporadic computations. All finite certificates independently
+pass generation, full subset intersection and actual flag-product tests.
+The Harada–Norton case fills an omission in the source discussion; the O’Nan
+existence proof uses a direct witness because the proposed duality route fails.
+This recovery adds no open-question credit. The enlarged topic’s complete
+length comparison remains pending; the older N007-only factor below does not
+apply to it.
 
 Independent review corrected our quotient argument and checked a separate
 example with a nontrivial chamber kernel. Eight Lean identities and complete
 finite validation pass; the geometry and presentation proofs remain written.
 The `admission <audit/topic-diagonal/v1/admission.json>`_ adds one original
 and no conjecture answer. The general finite-diagram question remains open
-here, and N006 still requires its own complete recovery. The `complete length
+here. The preserved N007-only `complete length
 comparison <audit/diagonal-measurement/v1/README.rst>`_ gives 1.007 as written,
 0.884 with the full printed validation program, and 1.944 for the application
 after acquiring the whole common theory and program. Word and byte units

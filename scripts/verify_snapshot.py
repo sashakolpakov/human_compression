@@ -3553,6 +3553,67 @@ def check_b5_measurement():
     return 360
 
 
+def check_wreath_recovery():
+    base='audit/topic-diagonal/v2';a=load(base+'/admission.json')
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+         a['source_id']=='N006' and a['topic']=='Diagonal' and a['principal_originals_added']==1 and
+         a['source_rows']==27 and a['source_pages']==22 and a['affirmative_sporadic_cases']==10 and
+         a['new_question_credit']==0 and not a['whole_source_formalized'] and
+         a['compression_factor'] is None and a['measurement_status']=='pending' and
+         a['new_common_pages']==8 and a['application_pages']==[8,5,4] and
+         a['formal_declarations']==17 and a['reused_formal_declarations']==8 and
+         a['new_formal_declarations']==9 and a['source_exceptions_outside_contract']==['Fi22','Fi24prime'] and
+         a['charge_full_common_paper'] and a['charge_common_once_within_topic'] and
+         not a['cross_topic_overlap_discount'] and a['unknown_retained_proof_cost'] is None,'N006 recovery boundary.')
+    check_bindings(a['artifacts'])
+    for k in ['author','review','root_adoption','root_primary_replay','public_replay','source_contract',
+              'previous_science','previous_measurement','current_common','replaced_common',
+              'retained_N007_application','retained_N007_program']:check_bindings([a[k]])
+    m=load(a['author']['path']);parent=Path(a['author']['path']).parent
+    need(len(m['exports'])==a['author']['exports']==161 and m['source_id']=='N006' and m['originals']==1,
+         'N006 export files are not original manuscripts.')
+    check_bindings([dict(x,path=str(parent/x['path'])) for x in m['exports']])
+    review=load(str(Path(a['review']['path']).parent/'review.json'))
+    need(review['status']=='ACCEPTED_COMPLETE_CORRECTED_N006_PRINCIPAL_CONTRACT' and
+         not review['findings']['remaining_mathematical_defects'] and
+         review['findings']['all_ten_affirmative_cases'] and review['findings']['lamplighter_missing_square_corrected'],
+         'Complete corrected N006 distinct review.')
+    r=load(a['public_replay']['path']);q=load(a['root_primary_replay']['path'])
+    need(r['status']==q['status']=='PASS' and r['bound_exports']==161 and r['scientific_bindings']==32 and
+         q['primary_files_verified'] and q['exact_input_bindings']==121 and
+         not r['distinct_review']['primary_files_verified'] and
+         r['distinct_review']['exact_input_bindings']==118 and
+         r['distinct_review']['source_rows']==27 and r['distinct_review']['affirmative_cases']==10 and
+         r['distinct_review']['fresh_evidence']['fresh_formal_declarations']==17 and
+         len(r['distinct_review']['semantic_controls'])==9 and
+         [x['pages'] for x in r['render']]==[8,8,5,4] and
+         all(x['per_page_text_identical'] for x in r['render']) and
+         not r['expensive_program_replay'] and not r['expensive_formal_replay'],
+         'N006 public replay and separately verified primary boundary.')
+    contract=load(a['source_contract']['path'])
+    need(contract['status']=='ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+         contract['originals']==1 and contract['rows_count']==len(contract['rows'])==27 and
+         contract['new_question_credit']==0 and contract['measurement'] is None,'N006 source contract.')
+    cur=load('audit/corpus/updates/wreath-products.json');check_bindings([cur['previous_snapshot']]+cur['added_admissions'])
+    old=load(cur['previous_snapshot']['path'])
+    need(cur['admitted_principal_originals']==34 and cur['accessible_pending_complete_recovery']==70 and
+         set(cur['admitted_original_ids'])==set(old['admitted_original_ids'])|{'N006'} and
+         set(cur['accessible_pending_original_ids'])==set(old['accessible_pending_original_ids'])-{'N006'} and
+         cur['currently_measured_originals']==33 and cur['measured_original_ids']==old['measured_original_ids'] and
+         cur['measurement_pending_original_ids']==['N006'] and cur['retrieval_original_ids']==old['retrieval_original_ids'],
+         'N006 one-original admission preserves access and measurement partition.')
+    cat=load('papers/catalogue_wreath.json');check_bindings([cat['previous_catalogue']]);prior=load(cat['previous_catalogue']['path'])
+    need(cat['entries'][:11]==prior['entries'] and len(cat['entries'])==15 and
+         set(cat['original_ids'])==set(prior['original_ids'])|{'N006'} and
+         cat['common_supersession']['source_ids']==['N007','N006'] and
+         cat['common_supersession']['whole_common_charged_once'],'N006 catalogue and enlarged common acquisition.')
+    for x in cat['entries'][11:]:
+        need(x['topic']=='Diagonal' and x['measurement_status']=='pending' and
+             x['admission']==base+'/admission.json' and (ROOT/x['tex']).is_file() and (ROOT/x['pdf']).is_file(),
+             'N006 canonical current manuscript.')
+    return 34,70
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3598,8 +3659,10 @@ def main():
     diagonal_fractions = check_diagonal_measurement()
     ac_extension_fractions = check_ac_extension_measurements()
     b5_fractions = check_b5_measurement()
+    wreath_admitted, wreath_pending = check_wreath_recovery()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
+    print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
     print(f'PASS: complete B5 comparison preserves {b5_fractions} exact fractions; {active_measured} originals measured.')
     print(f'PASS: expanded A/C topics preserve {ac_extension_fractions} exact fractions for twelve originals; two are newly measured.')
     print(f'PASS: diagonal measurement adds {diagonal_fractions} exact fractions; {active_measured} originals now measured.')
