@@ -1,0 +1,128 @@
+"""Generate the complete input reader from bound integer counts; no ratios."""
+from pathlib import Path
+import argparse,json
+def build(c):
+ rows=[]
+ labels={'L084':'L084: publisher erratum (2006)','L095':'L095: arXiv v1 (2003)','U':'Whole common proof','TABLES':'Whole common census tables','A1':'Complete L084 application','A2':'Complete L095 application','CODE':'All six programs, printed once'}
+ for k,r in c['documents'].items():
+  vals=[r['metrics'][v]['NFC']['characters_without_whitespace'] for v in ['raw_untrimmed','raw_selected','calibrated_selected']]
+  rows.append(labels[k]+' & '+str(r['pages'])+' & '+' & '.join(f'{x:,}' for x in vals)+r'\\')
+ raw=[]
+ for cat,label in [('programs','Six whole required programs'),('required_data','Whole historical comparison data'),('operational_drivers','Three complete operational drivers')]:
+  rs=c['raw_files'][cat];raw.append(label+' & '+f"{sum(x['bytes'] for x in rs.values()):,}"+' & '+f"{sum(x['metrics']['NFC']['characters_without_whitespace'] for x in rs.values()):,}"+r'\\')
+ tex=r'''\documentclass[11pt,a4paper]{article}
+ \usepackage[margin=27mm]{geometry}
+ \usepackage{fontspec,unicode-math,booktabs,array,hyperref}
+ \setmainfont{STIXGeneral}\setmathfont{STIX Two Math}\setmonofont{Menlo}
+ \hypersetup{hidelinks}
+ \title{Inputs for two locally projective quotient papers}
+ \author{}\date{}
+ \begin{document}\maketitle
+ This proposal fixes the complete input boundary. It does not calculate a
+ compression factor. The mathematical migration has passed distinct root review;
+ independent acceptance of these extraction and calibration choices is still
+ required. All 52 inherited source records and their qualifications are retained.
+
+ \section*{Complete papers}
+ L084 is the two-page publisher erratum of Hartley and Leemans (2006).
+ L095 is their fifteen-page arXiv v1, dated 5 July 2003. The unseen journal
+ edition is not substituted. Titles, abstracts, addresses, references, the
+ version banner, and every historical table remain included. Calibration does
+ not repair the source's erroneous historical counts.
+
+ The whole common acquisition comprises the seven-page proof and five-page
+ census companion. It contains the marked universal-group proof needed by
+ both complete applications. No application obtains a missing premise free
+ from its sibling. The previous fourteen-page written arrangement remains
+ immutable provenance; it is not an extra current cost.
+
+ \begin{center}\small
+ \begin{tabular}{p{62mm}rrrr}\toprule
+ Input & Pages & Raw & Selected & Calibrated\\\midrule
+ '''+'\n'.join(rows)+r'''
+ \bottomrule\end{tabular}\end{center}
+ The three integer columns count NFC characters excluding whitespace.
+ The selected variants remove only the erratum's second-page running header
+ and isolated trailing page numbers. The first-page publication metadata is
+ retained. In total, seven PDFs contain forty physical pages. Physical extent
+ and extractable text are distinct coordinates.
+
+ A later written comparison uses both originals against the entire common
+ bundle plus both applications. A per-original conditional comparison uses
+ that original and its complete application \emph{after acquiring the whole
+ common proof and tables, all six required programs, all required comparison
+ data, and retained external inputs}. No cross-topic discount is proposed.
+
+ \section*{Complete programs and data}
+ All six programs are required finite calculations. They include the marked
+ group, presentation bound, local geometry, full maximal-subgroup and quotient
+ censuses, and exact reconciliation. The shared marking file is charged once.
+ The six-page appendix prints all six files without line pruning.
+
+ \begin{center}\small
+ \begin{tabular}{p{79mm}rr}\toprule
+ Whole raw category & Bytes & NFC nonspace\\\midrule
+ '''+'\n'.join(raw)+r'''
+ \bottomrule\end{tabular}\end{center}
+ The complete historical comparison file contains all 145 literal rows. It is
+ required by reconciliation, although it is not a subgroup-enumeration
+ premise. Either the whole printed appendix \emph{plus this raw data file},
+ or the six whole raw programs \emph{plus the same data file}, may provide a
+ later programme comparison. Printed and raw copies of the same code are
+ alternatives; they are never added together.
+
+ All eleven output/evidence files are separately bound, totalling 3,470,182
+ bytes. This includes the complete computed subgroup representatives. They
+ are regenerated outputs, not an unseen catalogue input. The three full
+ operational drivers are reported separately. Thirteen selected installed
+ algorithm/model pins are preserved, without claiming they measure the
+ complete software installation. No Lean module or formal declaration is
+ part of this science bundle.
+
+ \section*{Actual glyphs and sensitivity}
+ The audit inspected all seventeen source pages and all 502 actual source
+ glyph classes. Eight dictionary-and-byte classes require 61 calibrated
+ occurrences: mathematical calligraphic capitals, one correspondence envelope,
+ two proof-end squares and four mapsto tails. Each repair binds the actual
+ font dictionary, effective encoding, encoded byte, event and page context.
+ The mapsto tail remains a separate event from its adjacent arrow. No source
+ formula is emended, no two events are merged, and no graphical proxy is used.
+ Both raw variants retain the literal extracted characters.
+
+ The parser explicitly handles three input-specific cases: a name-keyed CFF
+ font's omitted charset operator has its ISOAdobe default; an explicit
+ MacRoman encoding is respected before PDF differences; and the standard
+ unembedded Times-Roman banner uses its default encoding. Fonts sharing a
+ name are never assumed to share an encoding. The current five replacement
+ PDFs use unchanged Unicode extraction, with all twenty-three pages visually
+ reviewed in the science migration.
+
+ L095 contains inline image rules, principally table borders; L084 has
+ publisher rules. Their presence is inventoried separately. No absent
+ mathematical diagram was identified, but table layout and graphic construction
+ are not measured by text or by an image count. Full retained classical proof,
+ runtime, historical software, graphics/layout and full formalization costs
+ remain unknown, not zero. The unavailable historical \texttt{g.txt} is not a
+ premise of the replacement computation.
+
+ The data retain all five established units (whitespace tokens, alphanumeric
+ units, characters without whitespace, characters with collapsed whitespace,
+ and UTF-8 bytes with collapsed whitespace), both NFC and NFKC, and all three
+ extraction variants. There are 210 PDF metric cells and 100 raw-file metric
+ cells. Printed hyphens and ligatures are not silently modernized. Exact text
+ hashes, raw sensitivity and every selected cut are preserved.
+
+ The portable recount requires the pinned original PDFs and accepted science
+ files. It runs no GAP calculation. Separate controls test omitted full-paper
+ and data costs, body truncation, font/byte substitution, and the actual parser
+ defaults. No primary text, font program, outline image or page raster is
+ redistributed in this input packet.
+ \end{document}
+ '''
+ return tex
+
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--counts',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);a=ap.parse_args()
+ if a.out.exists() or a.out.is_symlink():raise ValueError('fresh output required')
+ a.out.mkdir(parents=True);(a.out/'input_reader.tex').write_text(build(json.loads(a.counts.read_text())))
+if __name__=='__main__':main()

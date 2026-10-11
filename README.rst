@@ -14,12 +14,13 @@ yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
 `subsequent admissions <audit/corpus/latest.json>`_ now record **106
-accessible manuscripts: 37 with admitted principal-result recoveries and
-69 awaiting complete recovery**. The other **55 remain retrieval targets**.
+accessible manuscripts: 40 with admitted principal-result recoveries and
+66 awaiting complete recovery**. The other **55 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. All thirty-seven admitted recoveries now have
-measured comparisons. The newly obtained
-`L084 erratum <audit/corpus/access/erratum-2006/README.rst>`_ awaits recovery.
+evidence and next obligation. All forty admitted recoveries now have
+measured comparisons. The `L084 erratum
+<papers/topic-locally-projective/v1/README.rst>`_ now has a complete corrected
+recovery together with the L095 parent preprint.
 The complete `L100 institutional preprint <audit/corpus/access/halle-preprint/README.rst>`_
 also joins the recovery queue. The catalogue itself has not grown.
 
@@ -31,14 +32,14 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
-The `consolidated comparison <audit/overview/v6/packet/summary.pdf>`_ gives
-all fifteen measured topics, all thirty-seven individual factors and complete
-program costs in six pages. The `topic graph
-<audit/overview/v6/packet/whole_topics.svg>`_ shows every complete common paper
+The `consolidated comparison <audit/overview/v7/packet/summary.pdf>`_ gives
+all seventeen measured topics, all forty individual factors and declared
+program and data costs in six pages. The `topic graph
+<audit/overview/v7/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
-<audit/overview/v6/packet/conditional_1.svg>`_ and `remaining twenty
-<audit/overview/v6/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v6/README.rst>`_ links exact tables,
+<audit/overview/v7/packet/conditional_1.svg>`_ and `remaining twenty-three
+<audit/overview/v7/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v7/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
 
 The new `gluing topic <papers/topic-gluing/v1/README.rst>`_ supplies two common
@@ -58,7 +59,7 @@ theory once, independently of other topics. Earlier reports remain preserved.
    * - Topic
      - Measured / recovered originals
      - Whole written factor
-     - With printed programs
+     - With declared computation
    * - A: Supported kernels and finite two-groups
      - 7 / 7
      - 1.571
@@ -119,14 +120,25 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 1 / 1
      - 0.888
      - 0.761
+   * - Locally projective polytopes and their quotients
+     - 2 / 2
+     - 0.707
+     - 0.299
+   * - Complete Mathieu geometry census
+     - 1 / 1
+     - 0.332
+     - 0.113
 
 These are text costs, not minimum proof complexities. The reports specify
 the complete program boundary, raw-code alternatives, retained external
 proofs, graphic costs and counting-unit sensitivity. B and C use complete
 available text, including authored non-PDF sources and page furniture; the
-rank-contraction comparison uses complete raw PDF extraction, including all
-page furniture. The remaining comparisons use their declared calibrated text
-boundaries.
+rank-contraction and Mathieu comparisons use complete raw PDF extraction,
+including all page furniture. The remaining comparisons use their declared
+calibrated text boundaries. The two new census comparisons charge the whole
+mandatory data separately from their whole printed programs. Their raw-program
+alternatives retain the same data charge; earlier unmeasured external costs
+remain unknown.
 No pooled factor is inferred across these representations. Factors below
 one stay in the comparison. A near-unity factor shows little saving by our
 current proofs; it does not establish originality. For D, the applications
@@ -1405,3 +1417,83 @@ Four scoped Lean lemmas pass with standard axioms; the full contraction
 induction and classical seeds remain written mathematics. Conjecture 5.1 is
 not solved by this work. The `admission <audit/topic-rank-contraction/v1/admission.json>`_
 records both the recovery and every qualification.
+
+Locally projective polytopes and their quotients
+-----------------------------------------------
+
+The `common paper and complete census tables
+<papers/topic-locally-projective/v1/README.rst>`_ combine a presentation bound,
+the marked local geometry and a general conjugacy test for quotients.
+The particular universal group is proved before the census uses it. Both
+applications consequently use the common theory without borrowing a sibling
+application. Classical quotient correspondences and exact finite-group
+algorithms remain explicit inputs.
+
+.. list-table:: Two originals recovered by the common theory and its applications
+   :header-rows: 1
+   :widths: 35 43 22
+
+   * - Source, authors and edition
+     - Declared principal results and qualifications
+     - Our application
+   * - L084: Hartley–Leemans, erratum to *Quotients of a Universal Locally
+       Projective Polytope of type {5,3,5}*; 2006 publisher edition, two pages
+     - All eight deletions; 137 surviving quotients, 349 containment edges,
+       26 maximal quotients and 66 section-regular quotients. Source notation
+       discrepancies remain explicit.
+     - `Complete erratum recovery
+       <papers/topic-locally-projective/v1/packet/erratum.pdf>`_
+   * - L095: Hartley–Leemans, *Quotients of a Universal Locally Projective
+       Polytope of type {5,3,5}*; arXiv:math/0307075v1, 2003, fifteen pages
+     - The literal universal presentation, group order 600,415,200, local
+       geometry, universality and the corrected complete quotient census.
+       The unseen journal edition is not substituted.
+     - `Universal polytope and corrected quotients
+       <papers/topic-locally-projective/v1/packet/universal-polytope.pdf>`_
+
+The complete written factor is **26,490 / (25,498 + 11,966) = 0.707079**.
+The replacement is longer. With all six programs and the whole required
+data file, the factors are **0.298536** for printed code and **0.300538** for
+raw code. After that full acquisition, the application factors are **0.426395**
+for L084 and **3.434942** for L095. The `numerical reader
+<audit/topic-locally-projective/v1/measurement/packet/reader.pdf>`_ supplies
+every cost and qualification. This topic has no Lean declarations or new
+conjecture credit.
+
+Complete Mathieu geometry census
+--------------------------------
+
+The `finite coset theory and application
+<papers/topic-mathieu/v1/README.rst>`_ give a complete corrected classification,
+explicit witnesses and a disposition for every physical source-table row.
+The proof combines recognition by stabilizer intersections with exhaustive
+augmentation and geometric signatures. The complete subgroup catalogue,
+named-group identification and exact algorithms remain declared inputs.
+
+.. list-table:: Original recovered by the common theory and complete application
+   :header-rows: 1
+   :widths: 35 43 22
+
+   * - Source, authors and edition
+     - Declared principal results and qualifications
+     - Our application
+   * - L073: Leemans–Rowley, *Rank three residually connected geometries for
+       M22, revisited*; Electronic Journal of Combinatorics 17 (2010), N4,
+       nine pages
+     - The complete 81 rank-two and 431 rank-three classes, with all 431
+       literal source-row dispositions. Unavailable historical geometry
+       identifiers are not claimed. The predecessor supplies notation,
+       not another recovered original.
+     - `Main proof <papers/topic-mathieu/v1/packet/mathieu-census.pdf>`_,
+       `all classes <papers/topic-mathieu/v1/science/class-tables.pdf>`_ and
+       `all source rows <papers/topic-mathieu/v1/science/source-rows.pdf>`_
+
+The whole written factor is **13,736 / (5,516 + 35,862) = 0.331964**.
+Both table companions are charged as part of the application. All seven
+programs and both mandatory JSON inputs give **0.113232** with printed code
+or **0.113942** with raw code. Even after acquiring that complete machinery,
+the conditional factor is **0.383024**. These expansions remain visible;
+corrections and reproducibility are separate achievements from compression.
+The `numerical reader <audit/topic-mathieu/v1/measurement/packet/reader.pdf>`_
+records every coordinate. No Lean verification or new conjecture solution
+is claimed for this topic.

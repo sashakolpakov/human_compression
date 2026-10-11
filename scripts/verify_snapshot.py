@@ -4751,6 +4751,176 @@ def check_overview37():
     return nf, nb
 
 
+def run_historical37_check(function):
+    """Retain the reviewed thirty-seven-original pointers for earlier checks."""
+    from types import FunctionType
+    base = 'audit/topic-locally-projective/v1/'
+    routes = {'audit/corpus/latest.json': base + 'previous_corpus_pointer.json',
+              'audit/overview/latest.json': base + 'previous_overview_pointer.json',
+              'papers/latest_catalogue.json': base + 'previous_catalogue.json'}
+    rows = {r['path']: r for r in load(base + 'admission.json')['artifacts']}
+    check_bindings([rows[p] for p in routes.values()])
+    scope = dict(function.__globals__, load=lambda path: load(routes.get(str(path), path)))
+    original = check_current_measurement_pointer
+    scope[original.__name__] = FunctionType(original.__code__, scope, original.__name__, original.__defaults__, original.__closure__)
+    return FunctionType(function.__code__, scope, function.__name__, function.__defaults__, function.__closure__)()
+
+
+def check_locally_projective_and_mathieu_admissions():
+    pins = {
+        'locally-projective': ['7bfce9d4a4c0acd3c898d852501550178d5d9a442cccd1603baddb0fdaa1fb85',
+            'b7535f010d143e18e13c3eb27acd1d0ac2f7b6a4a83b2ed22e464c85038b52c5',
+            '24994f8e6a30131dde603cd4c78b2ad96b369742b795216d932e595a76c066ac',
+            '0d548c296855637641592e539c4401895ac38c4c094eaf6f6aa8923f57e058a4',
+            '2f9ded604bd5ca6b4b9b882c5b694124eacb653102b9f44e823f04ac731c519a'],
+        'mathieu': ['e70770940fe3db852b77a3e400bf913263eec6f1114e89d311f6d4e07b0dad57',
+            '50f4c08a990f3d6e43f4544fe5daa8e819649a62f5fbe47f7f89b9b8aa3b463d',
+            '13aa42fa08b4a6517945c91c08c51ee3eaec87f572662dad991fe9b519cd6676',
+            'dba5b09e539f6149ca16f251c28d1bb5e31354202041e35035e29a0333304f0e',
+            'bbef6f90211122f5b5db138bfadd8bb1538bd88f1d6dd7b41dd175e268512de2',
+            'e33647116d0bd471cba28eb43448090153f7a6dde8b3e366fbaaa30670a50467',
+            '1f7256e911cc3bf0797672e4237a7ef8fe6e6b24cbcca30d13142c82c7dc2d36',
+            'b163f3c5bf37ef0406016be81e036c1b7f52a7d5be3245d43f2586081ca88307']}
+    for slug, ids in [('locally-projective', ['L084', 'L095']), ('mathieu', ['L073'])]:
+        base = 'audit/topic-' + slug + '/v1/'
+        a = load(base + 'admission.json')
+        check_bindings(a['artifacts'] + a['packets'] + a['public_replays'])
+        need([r['sha256'] for r in a['packets']] == pins[slug], 'Changed accepted finite-classification packets.')
+        for row in a['packets']:
+            parent = Path(row['path']).parent
+            check_bindings([dict(r, path=str(parent / r['path'])) for r in load(row['path'])['exports']])
+        need(a['status'] == 'ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT_AND_NUMERICAL_COMPARISON' and
+             a['source_ids'] == ids and a['principal_originals_added'] == len(ids) and
+             a['whole_common_charged_once'] and not any(a[k] for k in ['cross_topic_overlap_discount',
+                 'sibling_application_free_premise', 'source_PDFs_redistributed', 'whole_source_formalized',
+                 'historical_priority_claim']) and
+             a['formal_declarations'] == a['new_question_credit'] == a['original_intake_added'] == 0 and
+             all(a[k] is None for k in ['retained_external_proof_cost', 'full_runtime_cost',
+                 'full_graphics_cost', 'full_formalization_cost']), 'Finite-classification scope or attribution changed.')
+        spec = importlib.util.spec_from_file_location('distinct_' + slug.replace('-', '_'),
+            ROOT / base / 'measurement/independent_review/check.py')
+        q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+        packet = ROOT / base / 'measurement/packet'; data = load(base + 'measurement/packet/results.json')
+        need(data['primary'] == a['primary'] and a['metric_coordinates'] == 30, 'Changed complete primary comparison.')
+        migration = load(base + 'public_migration_replay.json')
+        distinct = load(base + 'public_distinct_numeric.json')
+        if slug == 'locally-projective':
+            rows = q.expected(q.inputs(packet)); primary = q.validate(data, rows)
+            sizes = q.csvs(packet, rows); rectangles = q.graphs(packet, primary)
+            need(sum(sizes.values()) == a['CSV_rows'] == 510 and a['exact_fractions'] == 150 and
+                 rectangles == a['actual_vector_rectangles_each'] == 16, 'Complete locally projective arithmetic.')
+            need(load(base + 'science_review/review.json')['status'] == 'PASS_DISTINCT_ROOT_MODULAR_MIGRATION' and
+                 load(base + 'erratum_review/review.json')['status'] == 'PASS_DISTINCT_ROOT_REVIEW_COMPLETE_L084_CONTRACT' and
+                 load('papers/topic-locally-projective/v1/packet/accepted/L095_root/review.json')['complete_principal_recovery_accepted'] and
+                 load(base + 'measurement/independent_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_LOCALLY_PROJECTIVE_NUMBERS',
+                 'Locally projective independent acceptance missing.')
+            need((a['source_rows'], a['source_pages'], a['whole_common_pages'], a['application_pages'],
+                  a['complete_printed_program_pages'], a['required_program_files'], a['mandatory_data_bytes']) ==
+                 (52, [2, 15], 12, [2, 3], 6, 6, 39150) and
+                 (a['source_table_rows'], a['corrected_quotient_classes'], a['containment_edges'],
+                  a['maximal_quotients'], a['section_regular_quotients']) == (145, 137, 349, 26, 66) and
+                 not a['missing_historical_g_txt_used'] and not a['unseen_journal_collated'],
+                 'Locally projective complete corrected contract changed.')
+            need(migration['status'] == 'AUTHOR_MIGRATION_SCOPE_RENDER_PASS' and
+                 migration['migrated_environments'] == dict(byte_identical=15, one_placement_phrase=1,
+                     explicit_source_application_restatement=2) and
+                 [r['pages'] for r in migration['renders']] == [7, 2, 3, 5, 6] and
+                 all(r['diagnostics'] == [] for r in migration['renders']) and
+                 not migration['finite_computation_repeated'] and
+                 distinct['status'] == 'PASS_DISTINCT_LOCALLY_PROJECTIVE_NUMBERS', 'Locally projective publication replay changed.')
+        else:
+            inputs = q.inputs(packet); rows = q.derive(inputs); primary = q.validate(data, rows, inputs)
+            size = q.csvs(packet, rows, inputs); rectangles = q.vector_check(packet, primary); q.acquisition_graph(packet, primary)
+            need(size == a['CSV_rows'] == 640 and a['exact_fractions'] == 120 and
+                 rectangles == a['actual_vector_rectangles_each'] == 21, 'Complete Mathieu arithmetic.')
+            need(load(base + 'science_review/review.json')['status'] == 'PASS_DISTINCT_ROOT_COMPLETE_CORRECTED_L073' and
+                 load(base + 'modular_review/review.json')['status'] == 'PASS_DISTINCT_ROOT_L073_MODULAR_MIGRATION' and
+                 load(base + 'measurement/independent_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_L073_NUMBERS',
+                 'Mathieu independent acceptance missing.')
+            need((a['source_rows'], a['source_pages'], a['whole_common_pages'], a['application_pages'],
+                  a['complete_printed_program_pages'], a['required_program_files'], a['mandatory_data_bytes']) ==
+                 (14, [9], 2, [5, 10, 9], 11, 7, 83965) and
+                 (a['rank_two_classes'], a['rank_three_classes'], a['source_table_rows']) == (81, 431, 431) and
+                 not any(a[k] for k in ['historical_geo_numbering_recovered', 'all_literal_source_labels_valid',
+                     'predecessor_counted_as_original']), 'Mathieu exact correction contract changed.')
+            need(migration['status'] == 'PASS' and migration['whole_bound_files'] == 44 and
+                 migration['complete_application_pages'] == 24 and
+                 [r['pages'] for r in migration['render']['documents'].values()] == [2, 5] and
+                 all(r['diagnostics'] == [] for r in migration['render']['documents'].values()) and
+                 not migration['science_programs_or_Lean_reexecuted'] and distinct['status'] == 'PASS_DISTINCT_L073_NUMBERS',
+                 'Mathieu publication replay changed.')
+    return 3, 270
+
+
+def check_programme40():
+    base = 'audit/topic-locally-projective/v1/'
+    old = load(base + 'previous_corpus_pointer.json'); current = load('audit/corpus/latest.json')
+    check_bindings([current['snapshot'], current['base_inventory'], current['previous_snapshot']] +
+                   current['added_admissions'] + current['added_measurements'] + current['access_additions'])
+    need({k: v for k, v in current.items() if k != 'snapshot'} == load(current['snapshot']['path']),
+         'Current40 pointer differs from its complete snapshot.')
+    added = {'L073', 'L084', 'L095'}; expected = set(old['admitted_original_ids']) | added
+    need(current['originals'] == 161 and current['accessible_originals'] == 106 and
+         current['admitted_principal_originals'] == current['currently_measured_originals'] == 40 and
+         current['accessible_pending_complete_recovery'] == 66 and current['pending_source_retrieval'] == 55 and
+         set(current['admitted_original_ids']) == set(current['measured_original_ids']) == expected and
+         set(current['accessible_pending_original_ids']) == set(old['accessible_pending_original_ids']) - added and
+         current['retrieval_original_ids'] == old['retrieval_original_ids'] and
+         current['access_additions'] == old['access_additions'] and current['measurement_pending_original_ids'] == [] and
+         current['all_originals_remain_active'] and not current['all_conjectures_resolved'] and
+         not current['all_original_proofs_recovered'], 'Current40 original partition changed.')
+    paths = ['audit/topic-locally-projective/v1/admission.json', 'audit/topic-mathieu/v1/admission.json']
+    need(current['added_admissions'][:-2] == old['added_admissions'] and
+         current['added_measurements'][:-2] == old['added_measurements'] and
+         current['added_admissions'][-2:] == current['added_measurements'][-2:] and
+         [r['path'] for r in current['added_admissions'][-2:]] == paths and
+         check_current_measurement_pointer() == 40, 'Current40 new original or measurement duplicated.')
+    c = load('papers/latest_catalogue.json'); prior = load(base + 'previous_catalogue.json')
+    need(c == load('papers/catalogue_locally_projective_and_mathieu_measured.json') and
+         c['entries'][:-10] == prior['entries'] and set(c['original_ids']) == set(prior['original_ids']) | added,
+         'Current40 catalogue alters an old edition.')
+    for row in c['entries'][-10:]:
+        need(row['topic'] in ['LocallyProjective', 'MathieuCensus'] and row['measurement_status'] == 'admitted' and
+             row['measurement_admission'] in paths and (ROOT / row['tex']).is_file() and (ROOT / row['pdf']).is_file(),
+             'Current40 complete document missing.')
+    return 40, 66
+
+
+def check_overview40():
+    base = 'audit/overview/v7/'
+    a = load(base + 'admission.json')
+    check_bindings(a['artifacts'] + a['current_measurement_admissions'] + a['scientific_admissions'] +
+                   [a[k] for k in ['previous_overview', 'current_corpus', 'current_catalogue']])
+    for key, pin in [('author_manifest', '66edf6c8ad5d0b1ce23bc152546beaac6c98c523097fcc12ded1d4543d806cfd'),
+                     ('independent_manifest', '0a5c71a7426c89828c087ecdbce26bcd46b6d8f721217cc30addb7fd01569235')]:
+        row = a[key]; check_bindings([row]); need(row['sha256'] == pin, 'Changed accepted overview40 edition.')
+        parent = Path(row['path']).parent
+        check_bindings([dict(r, path=str(parent / r['path'])) for r in load(row['path'])['exports']])
+    spec = importlib.util.spec_from_file_location('overview40_distinct', ROOT / base / 'independent_review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'packet'; data = load(base + 'packet/results.json')
+    need(q.bindings(packet, ROOT) == 14, 'Missing accepted overview40 input.')
+    nf = q.arithmetic(data, ROOT); nb = q.graphs(packet, data, q.prior_checker(ROOT)); q.csv_check(packet, data)
+    need(a['status'] == 'ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW40' and
+         nf == a['exact_comparisons'] == 90 and nb == a['actual_SVG_bars'] == a['actual_PDF_bars'] == 165 and
+         a['CSV_rows'] == 57 and a['topic_count'] == 17 and a['distinct_originals'] == 40 and
+         a['unmeasured_originals'] == [] and a['unchanged_topic_records'] == 15 and
+         set(a['original_ids']) == set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and
+         a['mandatory_data_separate_in_both_new_computational_routes'] and
+         all(a[k] == 0 for k in ['new_source_credit', 'new_question_credit', 'new_formal_credit']),
+         'Overview40 complete accounting or scope changed.')
+    need(load(a['author_replay']['path'])['status'] == 'PASS' and
+         load(a['independent_replay']['path'])['status'] == 'PASS_DISTINCT_OVERVIEW40' and
+         load(base + 'independent_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_OVERVIEW40',
+         'Overview40 acceptance or public replay missing.')
+    pointer = load('audit/overview/latest.json'); check_bindings([pointer['admission'], pointer['reader']])
+    need(pointer['admission']['path'] == base + 'admission.json' and pointer['reader']['path'] == base + 'packet/summary.pdf' and
+         pointer['measured_originals'] == 40 and pointer['topics'] == 17 and pointer['unmeasured_recovery'] == [],
+         'Overview40 current pointer differs.')
+    return nf, nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4823,10 +4993,15 @@ def main():
     run_historical36_check(check_programme36)
     overview36_fractions, overview36_bars = run_historical36_check(check_overview36)
     contraction_added, contraction_fractions = check_rank_contraction_admission()
-    active_admitted, active_pending = check_programme37()
-    overview37_fractions, overview37_bars = check_overview37()
-    print(f"PASS: current fifteen-topic overview: {overview37_fractions} exact comparisons and {overview37_bars} actual vector bars per format for 37 originals.")
-    print(f"PASS: rank contraction adds {contraction_added} original and {contraction_fractions} exact comparisons, with four scoped Lean lemmas; 37 measured originals.")
+    run_historical37_check(check_programme37)
+    overview37_fractions, overview37_bars = run_historical37_check(check_overview37)
+    finite_added, finite_fractions = check_locally_projective_and_mathieu_admissions()
+    active_admitted, active_pending = check_programme40()
+    overview40_fractions, overview40_bars = check_overview40()
+    print(f"PASS: current seventeen-topic overview: {overview40_fractions} exact comparisons and {overview40_bars} actual vector bars per format for 40 originals.")
+    print(f"PASS: locally projective and Mathieu topics add {finite_added} originals and {finite_fractions} exact comparisons; 40 measured originals, no new formal or question credit.")
+    print(f"PASS: historical fifteen-topic overview: {overview37_fractions} exact comparisons and {overview37_bars} actual vector bars per format for 37 originals.")
+    print(f"PASS: rank contraction adds {contraction_added} original and {contraction_fractions} exact comparisons, with four scoped Lean lemmas.")
     print(f"PASS: historical fourteen-topic overview: {overview36_fractions} exact comparisons and {overview36_bars} bars per format for36 originals.")
     print(f"PASS: Operations adds {operations_added} original with {operations_fractions} exact fractions; {active_admitted} admitted/measured and {active_pending} accessible pending.")
     print(f"PASS: {gluing_added} gluing original admitted with complete written proofs; L084 and L100 source acquisitions remain separate from recovery.")
