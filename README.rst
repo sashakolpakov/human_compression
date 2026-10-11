@@ -679,9 +679,16 @@ the full geometric applications and external classifications remain outside
 their formal scope. Earlier question answers are reused without new credit.
 
 This brought the number of admitted contracts with complete canonical
-applications and common theory to 24 of 27. Topic G's lengths and paired
-dependency costs remain to be audited; no numerical compression factor is
-claimed for this edition.
+applications and common theory to 24 of 27. The `length audit
+<audit/topic-g/v2/measurement/README.rst>`_ now gives a combined written
+factor of **0.630 times**: 73,199 source characters divided by 116,135 for
+the whole common paper and both applications. After acquiring the whole
+theory and all thirteen programs, the individual factors are **2.119** and
+**0.378**. The complete replacement is longer overall, and the Steiner
+application remains longer after acquisition. Including the complete
+printed program appendix gives **0.433**; using all raw programs instead
+gives **0.440**. Retained proof and graphical costs remain unknown. Paired
+dependency costs are still being audited.
 
 Recognizable extensions and finite normal pairs
 -----------------------------------------------

@@ -116,9 +116,13 @@ scoped Lean declarations. It preserves every source correction, exclusion
 and retained classification. All 42 scientific pages and the twenty-page
 program appendix were reviewed. This brought the number of contracts with
 complete canonical applications and common theory to twenty-four of 27.
-Topic G's lengths and paired
-dependency costs remain pending. The two contracts and earlier question
-answers earn no additional result credit from this edition.
+Topic G's `length comparison <topic-g/v2/measurement/README.rst>`_ is now
+accepted: 0.630 combined for the complete written replacement, with
+individual factors 2.119 and 0.378 after acquiring the whole common theory
+and all thirteen programs. Including the complete printed appendix gives
+0.433. The complete replacement is longer overall; paired dependency costs
+remain pending. The two contracts and earlier question answers earn no
+additional result credit from this edition.
 
 The representation topic now supplies the five-page common theory and
 five-page F010 application, with both whole validation programs. The
@@ -190,8 +194,9 @@ subject does not itself prove a compression theorem.
    * - G and incidence residues: Flag relations and Steiner geometry
      - L009, L092
      - Complete common paper and both applications reviewed, with all
-       residue arguments and exceptional-group data. Measure complete lengths
-       and paired dependencies, retaining classifications and finite premises.
+       residue arguments and exceptional-group data. Complete lengths and
+       combined/individual fractions accepted; paired dependencies remain
+       pending. Retained classifications and finite premises stay explicit.
    * - F: Odd kernels and cyclotomic polyhedra
      - L014
      - Complete common theory and application reviewed, including the exact

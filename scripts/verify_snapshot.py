@@ -2693,6 +2693,123 @@ def check_chamber_proofs():
     return 27,14
 
 
+def check_topic_g_measurement():
+    base = 'audit/topic-g/v2/measurement/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_G_MEASUREMENT',
+         'Topic G numerical comparison lacks acceptance.')
+    check_bindings(admission['artifacts'])
+    pins = admission['packet_manifests']
+    need(set(pins)=={'original_inputs','inputs','input_review','input_adoption',
+                    'packet','arithmetic_review','root_adoption'},
+         'Topic G measurement archive inventory changed.')
+    for folder,pin in pins.items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin,
+             'Changed Topic G measurement archive: '+folder)
+        check_bindings([dict(r,path=base+folder+'/'+r['path'])
+                        for r in load(base+folder+'/manifest.json')['exports']])
+    counts = load(base+'inputs/author_counts.json')
+    recount = load(base+'input_review/recount.json')
+    result = load(base+'packet/measurement.json')
+    need(counts['documents']==recount['documents'] and
+         all(counts[k]==v for k,v in recount['raw_files'].items()),
+         'Topic G primitive counts disagree with the independent recount.')
+    spec = importlib.util.spec_from_file_location('topic_g_independent_arithmetic',
+                                                 ROOT/base/'arithmetic_review/check.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    expected,sensitivity,fractions = checker.calculate(recount,counts['identification_cover_sensitivity'])
+    checker.verify(result,expected,sensitivity)
+    bars = checker.chart((ROOT/base/'packet/complete_costs.svg').read_text(),result['primary'])
+    checker.reader((ROOT/base/'packet/measurement.tex').read_text(),result)
+    with (ROOT/base/'arithmetic_review/fractions.csv').open(newline='') as stream:
+        recorded = list(csv.DictReader(stream))
+    need(recorded==[{k:str(v) for k,v in row.items()} for row in fractions] and
+         len(fractions)==admission['all_exact_fractions']==270 and bars==9,
+         'Topic G exact fractions or actual graph geometry changed.')
+    input_review = load(base+'input_review/review.json')
+    input_adoption = load(base+'input_adoption/review.json')
+    review = load(base+'arithmetic_review/review.json')
+    adoption = load(base+'root_adoption/review.json')
+    accepted_inputs = {k:pins[k] for k in ['inputs','input_review','input_adoption']}
+    need(input_review['status']=='ACCEPTED_INDEPENDENT_TOPIC_G_MEASUREMENT_INPUTS_V2' and
+         input_review['author_manifest']['sha256']==pins['inputs'] and
+         input_review['preserved_original']['sha256']==pins['original_inputs'] and
+         input_adoption['status']=='ROOT_ACCEPTED_TOPIC_G_INPUTS_V2_WITH_EXPLICIT_EXTRACTION_BOUNDARY' and
+         input_adoption['input_manifests']=={'author':pins['inputs'],'independent':pins['input_review'],
+                                           'preserved_original':pins['original_inputs']} and
+         review['status']=='ACCEPTED_INDEPENDENT_TOPIC_G_NUMERICAL_COMPARISON' and
+         review['accepted_author_packet']['sha256']==pins['packet'] and
+         review['accepted_inputs']==result['input_manifests']==accepted_inputs and
+         adoption['status']=='ROOT_ACCEPTED_G_COMPLETE_NUMERICAL_COMPARISON' and
+         adoption['manifests']=={'author':pins['packet'],'independent':pins['arithmetic_review']} and
+         adoption['input_manifests']==accepted_inputs and
+         all(d['corrections_requested']==[] for d in [input_adoption,review,adoption]),
+         'Topic G numerical acceptance refers to different inputs.')
+    fresh = load(base+'root_adoption/fresh_independent_replay.json')
+    need(fresh['status']=='PASS_INDEPENDENT_TOPIC_G_NUMERICAL_AND_READER_CHECK' and
+         fresh['primary']==result['primary']==review['primary']==adoption['primary']==admission['primary'] and
+         fresh['metric_coordinates']==admission['policy_coordinates']==30 and
+         fresh['combined_fractions']==admission['combined_fractions']==90 and
+         fresh['conditional_fractions']==admission['conditional_fractions']==60 and
+         fresh['article_only_fractions']==admission['article_only_fractions']==120 and
+         fresh['all_exact_fractions']==270 and fresh['bar_rectangles_checked']==9 and
+         len(fresh['arithmetic_controls'])==17 and len(fresh['presentation_controls'])==2 and
+         all(r['rejected'] for r in fresh['arithmetic_controls']+fresh['presentation_controls']),
+         'Topic G independent numerical evidence changed.')
+    mapping = load(base+'recount_mapping.json')
+    routes = mapping['routes']; by_private = {r['private_path']:r for r in routes}
+    public = [dict(path=r['public_path'],bytes=r['bytes'],sha256=r['sha256'])
+              for r in routes if r['public_path'] is not None]
+    private = [r for r in routes if r['public_path'] is None]
+    need(len(routes)==len(by_private)==35 and len(public)==33 and len(private)==2 and
+         {r['source_id'] for r in private}=={'L009','L092'} and mapping['primary_exported'] is False,
+         'Topic G recount mapping changed its public/original boundary.')
+    check_bindings(public)
+    replacement = load(base+'inputs/replacement_input_spec.json')
+    policy = load(base+'inputs/policy.json')
+    measured = list(policy['source_roster'].values())+list(policy['replacement_roster'].values())
+    for kind in ['complete_programs','complete_operational_drivers','complete_formal_files']:
+        measured += replacement[kind]
+    measured += [policy[k] for k in ['author','current_edition','root_adoption',
+                                    'accepted_scope','program_inventory']]
+    measured += [replacement['appendix_tex']]
+    for row in measured:
+        mapped = by_private.get(row['path'])
+        need(mapped is not None and all(mapped[k]==row[k] for k in ['bytes','sha256']),
+             'Topic G recount omits a frozen input: '+row['path'])
+    need(set(by_private)-{r['path'] for r in measured}=={'topic_G_current_edition/formal/scope.json'},
+         'Topic G recount has unexplained inputs.')
+    need(by_private['topic_G_current_edition/formal/scope.json']['public_path']==
+         'papers/topic-g/v2/formal/scope.json' and
+         load('papers/topic-g/v2/formal/scope.json')==replacement['formal_scope'],
+         'Topic G formal scope differs from its measured boundary.')
+    scope = load('papers/topic-g/v2/scope.json')
+    boundary = load(base+'inputs/source_contract_boundary.json')
+    need(digest((ROOT/'audit/topic-g/v2/admission.json').read_bytes())==admission['proof_admission_sha256'] and
+         admission['source_ids']==boundary['source_ids']==result['source_ids']==['L009','L092'] and
+         admission['source_records']==boundary['row_count']==len(scope['rows'])==79 and
+         boundary['source_rows']==scope['rows'] and boundary['proof_spans']==scope['proof_spans'] and
+         admission['proof_spans']==len(scope['proof_spans'])==34 and
+         all(boundary[k]==scope[k] for k in ['complete_application_closure','qualification','source_bindings']) and
+         admission['principal_contracts']==boundary['principal_contracts']==2 and
+         admission['project_total_preserved']==27,
+         'Topic G measurement changed scientific coverage.')
+    need(admission['pdf_metric_cells']==recount['pdf_metric_cells']==180 and
+         admission['raw_metric_cells']==recount['raw_metric_cells']==220 and
+         admission['required_finite_programs']==4 and admission['witness_certificate_bridges']==2 and
+         admission['validation_programs']==7 and admission['complete_programs']==13 and
+         admission['separate_drivers']==3 and admission['separate_formal_files']==6 and
+         admission['scoped_Lean_declarations']==40 and
+         admission['unknown_external_costs']==dict.fromkeys(['retained_BDL_full_proof',
+             'retained_Kantor_full_proof','other_external_proofs','historical_programs','graphics_formula_layout']) and
+         admission['paired_dependency_audit_complete'] is False and
+         admission['source_specific_formalization'] is False and
+         admission['original_input_not_current'] is True and
+         admission['new_source_credit']==admission['new_question_credit']==admission['new_formal_credit']==0,
+         'Topic G numerical summary invents costs, proof coverage or credits.')
+    return 180,270
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -2722,6 +2839,7 @@ def main():
     f_rows, f_declarations = check_topic_f_proofs()
     f_cells, f_fractions = check_topic_f_measurement()
     g_rows, g_declarations = check_topic_g_proofs()
+    g_cells, g_fractions = check_topic_g_measurement()
     representation_rows, representation_declarations = check_representation_proofs()
     chamber_rows, chamber_declarations = check_chamber_proofs()
     check_project_lean_runner(lean)
@@ -2758,6 +2876,7 @@ def main():
     print(f'PASS: Topic F preserves {f_rows} source records, {f_declarations} scoped Lean declarations, complete uniform written proofs and all three validation programs; measurements remain separate.')
     print(f'PASS: Topic F has {f_cells} independent PDF metric cells and {f_fractions} exact combined/conditional fractions; the whole common paper and validation costs are explicit.')
     print(f'PASS: Topic G preserves {g_rows} source records, {g_declarations} scoped Lean declarations, complete common theory and both corrected applications with all thirteen programs; measurements remain separate.')
+    print(f'PASS: Topic G has {g_cells} independent PDF metric cells and {g_fractions} exact combined/individual and cover-sensitivity fractions; the complete written replacement is longer overall.')
     print(f'PASS: representation preserves {representation_rows} source blocks, {representation_declarations} scoped Lean declarations and two whole validation programs; measurement remains separate.')
     print(f'PASS: chamber papers preserve {chamber_rows} scope rows, {chamber_declarations} scoped Lean declarations and the complete finite-cover program; all 27 admitted contracts have current common theory and applications, with measurement and full formalization separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
