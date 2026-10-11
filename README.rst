@@ -5,6 +5,14 @@ Can reusable mathematics and capable language-model agents recover decades
 of published results in shorter, complete papers? This project tests that
 question through explicit proofs, attribution and measured comparisons.
 
+**Measurement correction.** Validation programs must be excluded on both
+sides or included on both sides. Earlier reports added our programs to the
+replacement without measuring the originals' software. Those software-inclusive
+fractions are withdrawn as compression measures. The current tables report
+manuscript lengths; program and data costs remain separately inventoried.
+The `current measurement policy <audit/measurement_policy/v1/README.rst>`_
+defines the symmetric comparison and the limits of the existing measurements.
+
 The active catalogue contains **106 original manuscripts with usable full
 texts**. The `complete active list <audit/corpus/accessible106/README.rst>`_
 records each original's source, proof targets and current status. At the
@@ -30,7 +38,9 @@ reasons and previous measurements.
 
 The `consolidated comparison <audit/overview/v9/packet/summary.pdf>`_ gives
 all nineteen measured topics, all forty-two individual factors and declared
-program and data costs in six pages. The `topic graph
+program and data costs in six pages. Its software-inclusive ratios are
+withdrawn under the current policy; its manuscript counts remain unchanged.
+The `topic graph
 <audit/overview/v9/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
 <audit/overview/v9/packet/conditional_1.svg>`_ and `remaining twenty-five
@@ -42,26 +52,23 @@ The new `mixes topic <papers/topic-mixes/v1/README.rst>`_ recovers F005's
 corrected principal results through a common theorem about fibers of group
 actions. Its five-page common paper and applications of eight and four pages
 give **1.322 times** written compression, or **1.858 times** conditionally
-after full acquisition. Including all three programs gives **0.967** with
-printed code or **0.991** with raw code. The three final problems remain
+after full acquisition. The three final problems remain
 unanswered. The `complete review <audit/topic-mixes/v1/README.rst>`_ states
 the counterexamples, corrected criteria and partial Lean coverage.
 
 The new `rank-augmentation topic <papers/topic-rank-augmentation/v1/README.rst>`_
 recovers the corrected principal results of L020. Its five-page common paper
 and two three-page local papers give **1.200×** written compression. The
-conditional application factor is **2.384×** after full acquisition. Including
-all three programs gives **0.865×** with printed code or **0.884×** with raw
-code; those complete computational versions are longer than the source.
+conditional application factor is **2.384×** after full acquisition.
 The valid first two cases of the source theorem are proved; the false third
 case has an exact corrected criterion and a complete counterexample.
 Its general higher-rank questions remain unanswered.
 
 The new `gluing topic <papers/topic-gluing/v1/README.rst>`_ supplies two common
 papers and an application recovering the main results of L010. Its complete
-written factor is **0.677**, or **0.508** with all printed programs. Its
+written factor is **0.677**. Its
 application factor is **2.342** after acquiring both whole common papers and
-all declared programs. The `complete numerical audit
+the retained mathematical premises. The `complete numerical audit
 <audit/gluing-measurement/v1/README.rst>`_ retains every cost and qualification.
 
 B now uses one complete common paper. The joint operations topic includes
@@ -74,86 +81,70 @@ theory once, independently of other topics. Earlier reports remain preserved.
    * - Topic
      - Measured / recovered originals
      - Whole written factor
-     - With declared computation
    * - A: Supported kernels and finite two-groups
      - 7 / 7
      - 1.571
-     - 1.124
    * - B: Coset geometries and symmetric markings
      - 5 / 5
      - 1.094
-     - 0.981
    * - C: Chamber operations and binary translations
      - 5 / 5
      - 1.292
-     - 1.052
    * - D: Stabilizers and geometry enumeration
      - 3 / 3
      - 1.053
-     - 0.660
    * - E: Projective groups
      - 3 / 3
      - 1.816
-     - 1.523
    * - F: Odd kernels and marked semidirect products
      - 1 / 1
      - 1.264
-     - 0.875
    * - G: Linear spaces and support
      - 2 / 2
      - 0.630
-     - 0.433
    * - Affine constructions
      - 1 / 1
      - 0.786
-     - 0.556
    * - Group representations by geometries
      - 1 / 1
      - 1.015
-     - 0.746
    * - Chamber systems and covers
      - 2 / 2
      - 0.982
-     - 0.811
    * - Matching extensions
      - 1 / 1
      - 1.119
-     - 0.976
    * - Chiral enumeration
      - 1 / 1
      - 0.925
-     - 0.674
    * - Coset geometries under group operations
      - 3 / 3
      - 1.267
-     - Unavailable; 0.357 with full raw software
    * - Gluing by common points and synchronized trees
      - 1 / 1
      - 0.677
-     - 0.508
    * - Rank contraction and rank intervals
      - 1 / 1
      - 0.888
-     - 0.761
    * - Locally projective polytopes and their quotients
      - 2 / 2
      - 0.707
-     - 0.299
    * - Complete Mathieu geometry census
      - 1 / 1
      - 0.332
-     - 0.113
    * - Rank augmentation and exact subgroup intersections
      - 1 / 1
      - 1.200
-     - 0.865
-
    * - Mixes and simultaneous actions
      - 1 / 1
      - 1.322
-     - 0.967
 
-These are text costs, not minimum proof complexities. The reports specify
+These are complete manuscript text costs, not minimum proof complexities or
+a complete cost comparison of executable proofs. Separate software is excluded
+from both manuscript totals. The older records have not all been screened for
+validation listings printed inside manuscripts, so they are not yet a universal
+program-free measurement. Proof-essential algorithms and certificates cannot
+be discarded as optional checks. The reports specify
 the complete program boundary, raw-code alternatives, retained external
 proofs, graphic costs and counting-unit sensitivity. B and C use complete
 available text, including authored non-PDF sources and page furniture; the
@@ -235,7 +226,7 @@ Its three-page application and complete one-page program appendix are included
 in the `expanded comparison <audit/ac-extensions-measurement/v1/packet/measurement.pdf>`_.
 The seven originals cost 213,803 characters, the whole common theory 49,059
 and all applications 87,019: **1.571×** as written. All five printed programs
-add 54,210, giving **1.124×**; the raw alternative gives **1.132×**.
+cost another 54,210 characters, recorded separately.
 After acquiring the whole theory and program bundle, L128/A7 is **2.101×**.
 The six earlier application factors are unchanged. The older figures below
 remain the comparison of their original six-manuscript set.
@@ -255,8 +246,7 @@ checked the exhaustive census and presentations against all 107 comparison
 rows. GAP's exact group algorithms remain an explicit trust boundary.
 
 The `three-page length audit <audit/topic-a/v2/measurement/reader/measurement.pdf>`_ gives
-**1.535 times** for the complete written topic and **1.083 times** including
-the whole required program. The six source manuscripts total 195,379
+**1.535 times** for the complete written topic. The six source manuscripts total 195,379
 characters. Our full theory costs 49,059 and the six applications cost
 78,251: together, 127,310. The complete program appendix adds 53,035,
 bringing the denominator to 180,345.
@@ -379,8 +369,7 @@ principal-result contract. No new original or conjecture answer is added.
 
 The `current five-original comparison
 <audit/b-unified-measurement/v1/packet/reader.pdf>`_ is
-124,906 / (44,905 + 69,265) = **1.094×**. Including every printed program gives
-**0.981×**; the complete raw alternative gives **0.987×**. After full prior
+124,906 / (44,905 + 69,265) = **1.094×**. After full prior
 acquisition, the five application factors are **1.970×, 1.942×, 1.618×,
 1.848× and 1.770×**. The complete written edition is 4,620 characters shorter
 than our previous edition. This measures the present proof method, not an
@@ -471,7 +460,7 @@ has eight. The `expanded comparison <audit/ac-extensions-measurement/v1/packet/m
 charges the shared construction once and retains the whole old exhaustive census.
 The five originals cost 118,433 characters, the complete enlarged common theory
 30,437 and all applications 61,248: **1.292×** as written. The three complete
-printed programs add 20,933, giving **1.052×**; raw files give **1.061×**.
+printed programs cost 20,933 characters, recorded separately.
 After acquiring the whole enlarged theory and bundle, L068/C5 is **2.603×**.
 The four earlier application factors remain unchanged. The following figures
 cover that earlier four-original set only.
@@ -495,8 +484,8 @@ scope and separate replay commands.
 The preserved earlier `complete available-text comparison
 <audit/available-text/v1/packet/measurement.pdf>`_ includes four originals,
 using L108's complete authored rendering. Its written factor is **1.037×**:
-73,953 / (27,142 + 44,163). Including both complete required programs gives
-**0.923×** as printed, or **0.929×** using their raw files instead.
+73,953 / (27,142 + 44,163). Both complete required programs remain available
+and separately inventoried.
 
 After acquiring the whole common theory and both programs, the individual
 factors are **1.164×, 1.730×, 1.275× and 2.956×**, respectively. The
@@ -579,11 +568,10 @@ compilation; source-specific applications remain outside that supplement.
 Those proof admissions add no source or solved-question credit.
 
 The separate `length audit <audit/topic-d/v2/measurement/README.rst>`_
-now gives **1.053 times** for the whole written topic and **0.660 times**
-including the whole program appendix. The three source manuscripts cost
+now gives **1.053 times** for the whole written topic. The three source manuscripts cost
 47,894 characters; our common theory costs 15,632 and the three applications
 29,855. Thus the written denominator is 45,487. The complete appendix adds
-27,070, giving 72,557. Its cost outweighs the written saving in this comparison.
+27,070, recorded separately from the manuscript comparison.
 
 .. list-table:: Each result after acquiring the whole common theory and programs
    :header-rows: 1
@@ -607,8 +595,8 @@ including the whole program appendix. The three source manuscripts cost
 
 These use NFC characters without whitespace and count complete documents.
 The individual ratios assume the whole theory and all eight mathematical
-programs have already been acquired. Substituting their full raw code for
-the printed appendix gives 0.668; the two representations are alternatives.
+programs have already been acquired. Full raw code and the printed appendix
+are alternative representations of the same programs.
 Both execution drivers are inventoried separately. Historical software,
 external proofs and unextracted graphics retain unknown costs. The
 `two-page calculation <audit/topic-d/v2/measurement/packet/measurement.pdf>`_
@@ -672,10 +660,6 @@ characters:
      - Factor
    * - All three source manuscripts / common theory plus all three applications
      - 1.816
-   * - Same comparison including our full required finite program
-     - 1.523
-   * - Also include the complete diagnostic program
-     - 1.372
    * - L083 / its application, after acquiring the common theory and program
      - 6.957
    * - L079 / its application, on the same basis
@@ -701,8 +685,8 @@ same rule. The mathematical results and programs are unchanged.
 
 These are costs of concrete complete proofs under the stated source
 contracts, not estimates of minimum mathematical complexity. Historical
-program costs and external library proof costs remain unknown. The two
-program-inclusive factors are known-cost comparisons. All ten length
+program costs and external library proof costs remain unknown. The earlier
+program-inclusive factors are withdrawn as compression measures. All ten length
 coordinates, the fixed boundary and an independent recount are retained.
 The `cost graphs <audit/topic-e/v2/costs.svg>`_ show the acquisition and
 application stages; `summary.json <audit/topic-e/v2/summary.json>`_ records
@@ -772,9 +756,9 @@ replacement is longer than this single source by the declared measure.
 After acquiring the whole common theory and all six required programs, the
 local source/application ratio is **1.447 times**: 32,767 / 22,638. The full
 common paper remains charged in the combined comparison, including proofs
-also used elsewhere. The complete printed program appendix adds 17,250,
-giving **0.556 times** including programs. All six raw files give **0.561
-times** as an alternative representation. Three auxiliary scripts and three
+also used elsewhere. The complete printed program appendix costs 17,250
+characters, recorded separately; the six raw files are an alternative
+representation. Three auxiliary scripts and three
 formal files are inventoried separately. The `two-page calculation
 <audit/topic-affine/v2/measurement/packet/measurement.pdf>`_ shows the formulas,
 exclusions and unknown costs.
@@ -839,11 +823,10 @@ At that stage, the number of contracts with complete canonical applications
 and common theory reached 23 of 27. It adds no source or solved-question
 credit. The `length audit <audit/topic-f/v2/measurement/README.rst>`_ now
 gives **1.264 times combined**: 25,115 / (7,118 + 12,744), charging the whole
-common theory once. After acquiring that theory and the complete declared
-validation package, the application ratio is **1.971 times**: 25,115 / 12,744.
+common theory once. After acquiring that theory and its retained mathematical
+premises, the application ratio is **1.971 times**: 25,115 / 12,744.
 
-The complete validation appendix adds 8,837 characters, giving **0.875 times**
-including validation; all three raw programs give **0.899 times** instead.
+The complete validation appendix costs 8,837 characters, recorded separately.
 Two operational drivers and the Lean file are priced separately. The
 `two-page calculation <audit/topic-f/v2/measurement/packet/measurement.pdf>`_
 shows every denominator, the cost graph and alternative units. These are
@@ -901,9 +884,9 @@ factor of **0.630 times**: 73,199 source characters divided by 116,135 for
 the whole common paper and both applications. After acquiring the whole
 theory and all thirteen programs, the individual factors are **2.119** and
 **0.378**. The complete replacement is longer overall, and the Steiner
-application remains longer after acquisition. Including the complete
-printed program appendix gives **0.433**; using all raw programs instead
-gives **0.440**. Retained proof and graphical costs remain unknown. Paired
+application remains longer after acquisition. The complete printed program
+appendix and raw files remain separately inventoried. Retained proof and
+graphical costs remain unknown. Paired
 dependency costs are still being audited.
 
 Recognizable extensions and finite normal pairs
@@ -948,10 +931,10 @@ This brought the number of admitted contracts with complete canonical
 applications and common theory to 25 of 27. The `length audit
 <audit/topic-representation/v2/measurement/README.rst>`_ now gives
 **1.015 times combined** and **1.852 times for the application**, after
-acquiring the whole common paper and both validation programs. The combined
+acquiring the whole common paper and its retained premises. The combined
 written saving is only 372 characters and reverses under UTF-8 counting,
-which gives **0.971**. Including the complete printed appendix gives
-**0.746**; the complete raw files are an alternative, giving **0.762**.
+which gives **0.971**. The printed appendix and raw files remain separately
+inventoried.
 This does not establish a consistent saving in complete written length.
 Paired dependency costs remain to be audited; no source or question credit
 is added.
@@ -998,8 +981,7 @@ The `complete length comparison <audit/topic-chamber/v2/measurement/packet/measu
 now gives **0.982×** for both sources against the whole common paper and both
 applications: 35,802 / (15,199 + 21,254). After acquiring the common paper
 and both complete programs, the application factors are **2.877×** and
-**1.024×**. Including the entire program appendix gives **0.811×**, or
-**0.835×** with the raw files instead. The `component graph
+**1.024×**. The `component graph
 <audit/topic-chamber/v2/measurement/packet/complete_costs.svg>`_ shows every
 complete paper. The `numerical review <audit/topic-chamber/v2/measurement/README.rst>`_
 records all exact fractions, the independent arithmetic and unit sensitivity.
@@ -1040,8 +1022,7 @@ The `admission <audit/topic-matching/v1/admission.json>`_ adds one original.
 The `publication guide <papers/topic-matching/v1/PUBLICATION.rst>`_ links the
 full program and review. The `accepted length comparison
 <audit/additional-measurements/v1/README.rst>`_ gives
-37,951 / (16,732 + 17,168) = **1.119×** as written. Including the complete
-printed program gives **0.976×**, or **0.991×** using its whole raw file.
+37,951 / (16,732 + 17,168) = **1.119×** as written.
 After acquiring the full common theory and program, the application factor
 is **2.211×**.
 
@@ -1079,8 +1060,7 @@ The `admission <audit/topic-chiral-enumeration/v1/admission.json>`_ adds one
 original and no conjecture answer. The `publication guide
 <papers/topic-chiral-enumeration/v1/PUBLICATION.rst>`_ gives replay commands.
 The `accepted length comparison <audit/additional-measurements/v1/README.rst>`_
-gives 29,599 / (8,831 + 23,171) = **0.925×** as written. Including all three
-complete programs gives **0.674×** as printed, or **0.687×** as raw files.
+gives 29,599 / (8,831 + 23,171) = **0.925×** as written.
 After acquiring the whole common theory and program bundle, the application
 factor is **1.277×**. The written result changes to **1.003×** in whitespace
 tokens, so the small word saving is sensitive to the unit. The
@@ -1135,8 +1115,8 @@ Piedade and Tranchida. The `source table and complete current paper set
 The `complete three-original comparison
 <audit/topic-operations/v1/measurement/packet/reader.pdf>`_ gives
 200,891 / (58,215 + 100,379) = **1.267×** as written. All 23 whole mathematical
-or validation files and both required decoders add 403,848 characters, giving
-**0.357×** with complete raw software. No complete printed software alternative
+or validation files and both required decoders cost 403,848 characters,
+recorded separately. No complete printed software alternative
 exists. The two printed appendices replace only their specified raw files.
 Required representation files and installed catalogue files are separately
 inventoried; full external proof and historical software costs remain unknown.
@@ -1429,8 +1409,7 @@ proves contraction and iteration. Its applications preserve the exact
 classical construction inputs and address the printed indexing qualification.
 
 The complete written comparison is **15,530 / (6,937 + 10,555) = 0.887834**.
-This replacement is longer in the primary measure. Including the entire
-program gives **0.760641** in printed form or **0.776772** using its raw source.
+This replacement is longer in the primary measure.
 The conditional application factor is **1.471341**, after acquiring all the
 common theory and code. Earlier B theory supplies no free premise.
 
@@ -1476,9 +1455,8 @@ algorithms remain explicit inputs.
        <papers/topic-locally-projective/v1/packet/universal-polytope.pdf>`_
 
 The complete written factor is **26,490 / (25,498 + 11,966) = 0.707079**.
-The replacement is longer. With all six programs and the whole required
-data file, the factors are **0.298536** for printed code and **0.300538** for
-raw code. After that full acquisition, the application factors are **0.426395**
+The replacement is longer. All six programs and the whole required data file
+remain separately inventoried. After full acquisition, the application factors are **0.426395**
 for L084 and **3.434942** for L095. The `numerical reader
 <audit/topic-locally-projective/v1/measurement/packet/reader.pdf>`_ supplies
 every cost and qualification. This topic has no Lean declarations or new
@@ -1514,8 +1492,8 @@ named-group identification and exact algorithms remain declared inputs.
 
 The whole written factor is **13,736 / (5,516 + 35,862) = 0.331964**.
 Both table companions are charged as part of the application. All seven
-programs and both mandatory JSON inputs give **0.113232** with printed code
-or **0.113942** with raw code. Even after acquiring that complete machinery,
+programs and both mandatory JSON inputs remain separately inventoried.
+Even after acquiring that complete machinery,
 the conditional factor is **0.383024**. These expansions remain visible;
 corrections and reproducibility are separate achievements from compression.
 The `numerical reader <audit/topic-mathieu/v1/measurement/packet/reader.pdf>`_

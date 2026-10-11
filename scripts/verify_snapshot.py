@@ -5246,6 +5246,49 @@ def check_overview42():
     return nf, nb
 
 
+def check_symmetric_measurement_policy():
+    base = 'audit/measurement_policy/v1/'
+    policy = load(base + 'policy.json')
+    check_bindings([policy[k] for k in ['previous_overview', 'previous_topic_table',
+                                      'written_table', 'replacement_cost_inventory']])
+    old = list(csv.DictReader((ROOT / policy['previous_topic_table']['path']).open()))
+    written = list(csv.DictReader((ROOT / policy['written_table']['path']).open()))
+    costs = list(csv.DictReader((ROOT / policy['replacement_cost_inventory']['path']).open()))
+    fields = ['topic', 'title', 'originals', 'representation', 'sources', 'common',
+              'applications', 'written', 'written_factor']
+    need(written == [{k: r[k] for k in fields} for r in old] and
+         len(written) == len(costs) == 19 and sum(int(r['originals']) for r in written) == 42,
+         'Symmetry correction changes the established manuscript comparisons.')
+    for original, row in zip(old, costs):
+        need(all(row[k] == original[k] for k in ['topic', 'printed_programs', 'raw_programs', 'mandatory_data']) and
+             row['original_program_cost'] == row['symmetric_program_inclusive_factor'] == 'unknown' and
+             row['additional_optional_validation_printed'] == ('5173' if row['topic'] == 'E' else ''),
+             'Symmetry correction drops a cost or invents source software costs.')
+    current = policy['current_measurement']
+    need(policy['status'] == 'CURRENT_SYMMETRIC_MEASUREMENT_POLICY' and
+         current['retained_written_values_unchanged'] and
+         current['symmetric_validation_inclusive_factors'] is None and
+         current['all_embedded_validation_listings_screened'] is False and
+         current['pooled_factor'] is None and current['active_originals'] == 106 and
+         current['pending_originals'] == 64 and
+         set(current['withdrawn_fields']) == {'printed_factor', 'raw_factor', 'including_optional_validation'} and
+         all(current[k] == 0 for k in ['new_original_credit', 'new_question_credit', 'new_formal_credit']),
+         'Symmetric measurement policy invents credit or a complete source software inventory.')
+    manifest = load(base + 'review/manifest.json')
+    check_bindings([dict(r, path=base + 'review/' + r['path']) for r in manifest['exports']])
+    review = load(base + 'review/review.json')
+    need(review['new_credits'] == 0 and review['expanded_F']['symmetric_program_inclusive_ratio'] is None and
+         review['expanded_F']['source_validation_cost'] is None and review['role_disclosure'],
+         'Bounded audit loses its unknown source cost or reviewer role disclosure.')
+    pointer = load('audit/overview/latest.json')
+    check_bindings([pointer['measurement_policy'], pointer['measurement_policy_reader']])
+    need(pointer['measurement_policy']['path'] == base + 'policy.json' and
+         pointer['software_inclusive_factors_status'] == 'WITHDRAWN_AS_ASYMMETRIC' and
+         pointer['written_factors_status'] == 'UNCHANGED_MANUSCRIPT_LENGTHS',
+         'Current overview does not expose the measurement correction.')
+    return len(written)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -5330,6 +5373,8 @@ def main():
     active_admitted, active_pending = check_accessible106_programme()
     check_accessible106_independent_review()
     overview42_fractions, overview42_bars = check_overview42()
+    symmetric_topics = check_symmetric_measurement_policy()
+    print(f"PASS: {symmetric_topics} unchanged manuscript comparisons; asymmetric software-inclusive factors withdrawn, source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, 42 admitted/measured and 64 pending; no singleton exclusions.")
     print(f"PASS: nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format; Mixes adds one corrected principal recovery.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
