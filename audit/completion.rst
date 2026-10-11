@@ -132,8 +132,11 @@ scoped Lean declarations: eight new generic statements and four reused
 local ones. Original authorship, the three source qualifications and the
 absence of a new answer to Question 2.4 remain explicit. At that stage,
 twenty-five of the 27 contracts had complete canonical applications and
-common theory. Representation
-lengths and paired dependency costs are still pending.
+common theory. Its `length audit <topic-representation/v2/measurement/README.rst>`_
+is now accepted: 1.015 combined and 1.852 for the application after whole
+theory and validation acquisition. The 372-character written saving reverses
+under UTF-8 counting to 0.971. Including the complete printed appendix gives
+0.746. Paired dependency costs remain pending.
 
 The chamber edition supplies the six-page common paper, three-page L008
 application and six-page N016 application, with a complete program appendix.
@@ -206,8 +209,9 @@ subject does not itself prove a compression theorem.
    * - Recognizable incidence extensions
      - F010
      - Complete common theory and application independently accepted.
-       Measure their full lengths and paired dependencies; retain the
-       explicit source corrections and partial formal scope.
+       Complete lengths and combined/individual fractions accepted, with
+       the reversal under UTF-8 counting explicit. Audit paired dependencies;
+       preserve source corrections and partial formal scope.
    * - Chamber orbits and regular covers
      - L008, N016
      - Complete common theory and both applications reviewed, including

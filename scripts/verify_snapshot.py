@@ -2810,6 +2810,128 @@ def check_topic_g_measurement():
     return 180,270
 
 
+def check_representation_measurement():
+    base = 'audit/topic-representation/v2/measurement/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_REPRESENTATION_MEASUREMENT',
+         'Representation numerical comparison lacks acceptance.')
+    check_bindings(admission['artifacts'])
+    pins = admission['packet_manifests']
+    need(set(pins)=={'inputs','input_review','input_adoption','packet','arithmetic_review','root_adoption'},
+         'Representation numerical archive inventory changed.')
+    for folder,pin in pins.items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin,
+             'Changed representation measurement archive: '+folder)
+        check_bindings([dict(r,path=base+folder+'/'+r['path'])
+                        for r in load(base+folder+'/manifest.json')['exports']])
+    counts = load(base+'inputs/author_counts.json')
+    recount = load(base+'input_review/independent_replay.json')
+    result = load(base+'packet/results.json')
+    boundary = load(base+'inputs/source_contract_boundary.json')
+    bindings = load(base+'packet/input_bindings.json')
+    need(counts['documents']==recount['documents'] and
+         all(counts[k]==v for k,v in recount['raw_files'].items()),
+         'Representation primitive counts disagree with the independent recount.')
+    spec = importlib.util.spec_from_file_location('representation_independent_arithmetic',
+                                                 ROOT/base/'arithmetic_review/check.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    expected,fractions = checker.calculate(counts)
+    checker.verify(result,expected,counts,boundary,bindings)
+    bars = checker.chart((ROOT/base/'packet/complete_costs.svg').read_text(),result['primary'])
+    checker.reader((ROOT/base/'packet/measurement.tex').read_text(),result)
+    for file in ['packet/comparisons.csv','arithmetic_review/fractions.csv']:
+        with (ROOT/base/file).open(newline='') as stream:
+            recorded = list(csv.DictReader(stream))
+        need(recorded==[{k:str(v) for k,v in row.items()} for row in fractions],
+             'Representation exact CSV fractions differ: '+file)
+    input_review = load(base+'input_review/review.json')
+    input_adoption = load(base+'input_adoption/review.json')
+    review = load(base+'arithmetic_review/review.json')
+    adoption = load(base+'root_adoption/review.json')
+    accepted_inputs = {k:pins[k] for k in ['inputs','input_review','input_adoption']}
+    need(input_review['status']=='ACCEPTED_INDEPENDENT_REPRESENTATION_MEASUREMENT_INPUTS' and
+         input_review['author_manifest_sha256']==pins['inputs'] and
+         input_adoption['status']=='ROOT_ACCEPTED_REPRESENTATION_MEASUREMENT_INPUTS' and
+         input_adoption['input_manifests']=={'author':pins['inputs'],'independent':pins['input_review']} and
+         review['status']=='ACCEPTED_INDEPENDENT_REPRESENTATION_NUMERICAL_AND_READER_REVIEW' and
+         review['numerical_manifest_sha256']==pins['packet'] and
+         adoption['status']=='ROOT_ACCEPTED_REPRESENTATION_COMPLETE_NUMERICAL_COMPARISON' and
+         adoption['manifests']=={'author':pins['packet'],'independent':pins['arithmetic_review']} and
+         review['input_manifests']==adoption['input_manifests']==bindings['accepted_manifest_sha256']==accepted_inputs and
+         all(d['corrections_requested']==[] for d in [input_adoption,review,adoption]),
+         'Representation acceptance refers to different numerical inputs.')
+    fresh = load(base+'root_adoption/fresh_independent_replay.json')
+    utf8 = expected['calibrated_selected','NFC','utf8_bytes_with_collapsed_whitespace']['comparisons']['written_papers']
+    need(fresh['status']=='PASS_INDEPENDENT_REPRESENTATION_NUMERICAL_REVIEW' and
+         fresh['primary']==result['primary']==review['primary']==adoption['primary']==admission['primary'] and
+         fresh['calibrated_NFC_UTF8_written']==review['UTF8_reversal']==adoption['UTF8_reversal']==admission['UTF8_reversal']==utf8 and
+         utf8['numerator']<utf8['denominator'] and
+         fresh['coordinates']==admission['policy_coordinates']==30 and
+         fresh['combined_fractions']==admission['combined_fractions']==90 and
+         fresh['conditional_fractions']==admission['conditional_fractions']==30 and
+         fresh['all_exact_fractions']==admission['all_exact_fractions']==len(fractions)==120 and
+         fresh['bar_rectangles_checked']==bars==9 and
+         len(fresh['controls'])==22 and len(fresh['presentation_controls'])==3 and
+         all(r['rejected'] for r in fresh['controls']+fresh['presentation_controls']),
+         'Representation exact arithmetic or its unit-sensitive reversal changed.')
+    mapping = load(base+'recount_mapping.json')
+    routes = mapping['routes']; by_private = {r['private_path']:r for r in routes}
+    public = [dict(path=r['public_path'],bytes=r['bytes'],sha256=r['sha256'])
+              for r in routes if r['public_path'] is not None]
+    private = [r for r in routes if r['public_path'] is None]
+    need(len(routes)==len(by_private)==17 and len(public)==16 and len(private)==1 and
+         private[0]['source_id']=='F010' and mapping['primary_exported'] is False,
+         'Representation recount changed its public/original boundary.')
+    check_bindings(public)
+    replacement = load(base+'inputs/replacement_input_spec.json')
+    policy = load(base+'inputs/policy.json')
+    measured = list(policy['source_roster'].values())+list(policy['replacement_roster'].values())
+    for kind in ['complete_validation_programs','complete_operational_drivers','complete_formal_files']:
+        measured += replacement[kind]
+    measured += [policy[k] for k in ['author','independent_review','role_delta','root_adoption','accepted_scope']]
+    measured += [replacement['appendix_tex']]
+    for row in measured:
+        mapped = by_private.get(row['path'])
+        need(mapped is not None and all(mapped[k]==row[k] for k in ['bytes','sha256']),
+             'Representation recount omits a frozen input: '+row['path'])
+    need(set(by_private)-{r['path'] for r in measured}=={'topic_Representation_volume/formal/scope.json'} and
+         by_private['topic_Representation_volume/formal/scope.json']['public_path']==
+         'papers/topic-representation/v2/formal/scope.json' and
+         load('papers/topic-representation/v2/formal/scope.json')==replacement['formal_scope'],
+         'Representation formal scope differs from its measured boundary.')
+    original_mapping = load(base+'input_adoption/public_mapping.json')
+    need(bindings['published_artifacts']==original_mapping['artifacts'],
+         'Representation numeric input routing differs from the accepted mapping.')
+    for row in bindings['published_artifacts']:
+        need(digest((ROOT/row['path']).read_bytes())==row['sha256'],
+             'Changed measured representation artifact: '+row['path'])
+    scope = load('papers/topic-representation/v2/scope.json')
+    need(digest((ROOT/'audit/topic-representation/v2/admission.json').read_bytes())==admission['proof_admission_sha256'] and
+         admission['source_ids']==['F010'] and
+         admission['source_blocks']==boundary['row_count']==len(scope['contracts'])==6 and
+         boundary['source_rows']==scope['contracts'] and
+         all(boundary[k]==scope[k] for k in ['proof_spans','precise_hypotheses','source_qualifications',
+                                            'exclusions','validation_boundary','inherited_source_block_order']) and
+         boundary['attribution']==scope['source'] and
+         admission['proof_contexts']==len(scope['proof_spans'])==13 and
+         admission['principal_contracts']==boundary['principal_contracts']==1 and
+         admission['project_total_preserved']==27,
+         'Representation measurement changed scientific coverage or attribution.')
+    need(admission['pdf_metric_cells']==recount['pdf_metric_cells']==120 and
+         admission['raw_metric_cells']==recount['raw_metric_cells']==60 and
+         admission['complete_validation_programs']==2 and admission['uniform_finite_proof_premises']==0 and
+         admission['separate_drivers']==2 and admission['separate_formal_files']==2 and
+         admission['scoped_Lean_declarations']==12 and admission['generic_declarations']==8 and
+         admission['reused_local_declarations']==4 and
+         admission['unknown_external_costs']==dict.fromkeys(['retained_external_proofs',
+             'historical_programs','graphics_formula_layout','operational_engineering']) and
+         admission['paired_dependency_audit_complete'] is False and
+         admission['source_specific_formalization'] is False and
+         admission['new_source_credit']==admission['new_question_credit']==admission['new_formal_credit']==0,
+         'Representation numerical summary invents costs, proof coverage or credits.')
+    return 120,120
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -2841,6 +2963,7 @@ def main():
     g_rows, g_declarations = check_topic_g_proofs()
     g_cells, g_fractions = check_topic_g_measurement()
     representation_rows, representation_declarations = check_representation_proofs()
+    representation_cells, representation_fractions = check_representation_measurement()
     chamber_rows, chamber_declarations = check_chamber_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
@@ -2878,6 +3001,7 @@ def main():
     print(f'PASS: Topic G preserves {g_rows} source records, {g_declarations} scoped Lean declarations, complete common theory and both corrected applications with all thirteen programs; measurements remain separate.')
     print(f'PASS: Topic G has {g_cells} independent PDF metric cells and {g_fractions} exact combined/individual and cover-sensitivity fractions; the complete written replacement is longer overall.')
     print(f'PASS: representation preserves {representation_rows} source blocks, {representation_declarations} scoped Lean declarations and two whole validation programs; measurement remains separate.')
+    print(f'PASS: representation has {representation_cells} independent PDF metric cells and {representation_fractions} exact combined/individual fractions; its small written saving reverses under UTF-8 counting.')
     print(f'PASS: chamber papers preserve {chamber_rows} scope rows, {chamber_declarations} scoped Lean declarations and the complete finite-cover program; all 27 admitted contracts have current common theory and applications, with measurement and full formalization separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')

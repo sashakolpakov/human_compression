@@ -729,9 +729,16 @@ proofs. The four-page `validation appendix
 bounded programs; the uniform proofs do not depend on their finite samples.
 
 This brought the number of admitted contracts with complete canonical
-applications and common theory to 25 of 27. Representation
-lengths and paired dependency costs remain to be audited; this edition
-adds no source, solved-question or numerical compression credit.
+applications and common theory to 25 of 27. The `length audit
+<audit/topic-representation/v2/measurement/README.rst>`_ now gives
+**1.015 times combined** and **1.852 times for the application**, after
+acquiring the whole common paper and both validation programs. The combined
+written saving is only 372 characters and reverses under UTF-8 counting,
+which gives **0.971**. Including the complete printed appendix gives
+**0.746**; the complete raw files are an alternative, giving **0.762**.
+This does not establish a consistent saving in complete written length.
+Paired dependency costs remain to be audited; no source or question credit
+is added.
 
 Chamber fibers, reflections and regular covers
 ----------------------------------------------
