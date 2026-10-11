@@ -129,8 +129,22 @@ retains five units, two normalizations and the raw extraction sensitivities.
 The `cost graph <audit/topic-a/v2/measurement/reader/costs.svg>`_ shows the
 common acquisition followed by all six applications. The `numerical admission
 <audit/topic-a/v2/measurement/admission.json>`_ records the independent
-recount and exact fraction checks. The paired weighted dependency graph is
-under separate review.
+recount and exact fraction checks.
+
+The `paired proof graph <audit/topic-a/v2/dag/default_view.svg>`_ shows
+the historical arguments and their replacements. Download and open the
+`interactive explorer <audit/topic-a/v2/dag/explorer.html>`_ to select any
+of the six comparisons, expand a theorem's proof, and inspect its costs,
+prerequisites and source references. It works without a network connection;
+proof links resolve when it is opened within a repository checkout.
+
+The audit assigns every counted passage to one owner: 341 spans across
+14 documents. The 236 argument and reference nodes can share these owners,
+so their displayed costs must not be added together. Totals count each
+passage once, including the complete program appendix. The `graph review
+<audit/topic-a/v2/dag_admission.json>`_ records the independent checks and
+the remaining limits, including unknown external costs. Static SVG rendering
+and interface checks pass; actual browser layout has not been certified.
 
 Common proofs for projective groups
 ----------------------------------
@@ -328,6 +342,14 @@ To rebuild its measurement reader and cost graph, use the dependencies
 listed in the reader manifest and a fresh output directory::
 
     python3 -B -O audit/topic-a/v2/measurement/reader/build_reader.py --author-pdf audit/topic-a/v2/measurement/reader/measurement.pdf --out /tmp/human-compression-topic-a-reader
+
+Replay Topic A's proof-cost partition against the same primary PDFs and
+the current published manuscripts::
+
+    python3 -B -O audit/topic-a/v2/dag/check.py --sources-root PRIMARY_ROOT --artifacts-root . --out /tmp/human-compression-topic-a-dag
+
+The `graph instructions <audit/topic-a/v2/dag/README.rst>`_ also describe
+how to regenerate the explorer and check its controls without the primary PDFs.
 
 Working notes and the intake archive
 -----------------------------------

@@ -453,7 +453,69 @@ def check_topic_a_measurement():
          'Unknown Topic A costs must remain unknown.')
     primary = result['factors']['NFC']['calibrated_selected']['characters_without_whitespace']
     need(admission['primary']==primary, 'Topic A headline values differ from the complete ledger.')
+    reader = load(prefix+'reader_admission.json')
+    check_bindings(reader['artifacts'])
+    need(reader['numerical_admission_sha256']==digest((ROOT/(prefix+'admission.json')).read_bytes()),
+         'Topic A reader uses a different numerical admission.')
     return 420, fractions
+
+def check_topic_a_dag():
+    prefix = 'audit/topic-a/v2/dag/'
+    admission = load('audit/topic-a/v2/dag_admission.json')
+    need(admission['status']=='PASS_ROOT_REVIEWED_TOPIC_A_PAIRED_DAG',
+         'Topic A paired graph has not been admitted.')
+    check_bindings(admission['artifacts'])
+    for name, original in [('measurement.json','results.json'),
+                           ('measurement_admission.json','admission.json')]:
+        need((ROOT/(prefix+'inputs/'+name)).read_bytes()==
+             (ROOT/('audit/topic-a/v2/measurement/'+original)).read_bytes(),
+             'Topic A graph uses a different numerical edition.')
+    weights = load(prefix+'inputs/weighted/weights.json')
+    partition = load(prefix+'inputs/weighted/partition.json')
+    graph = load(prefix+'inputs/logical/logical_graph.json')
+    measured = load('audit/topic-a/v2/measurement/results.json')
+    forms = ['NFC','NFKC']
+    metrics = ['whitespace_tokens','alphanumeric_units','characters_without_whitespace',
+               'characters_with_collapsed_whitespace','utf8_bytes_with_collapsed_whitespace']
+    need(weights['normalizations']==forms and weights['metrics']==metrics,
+         'Topic A graph changed its measurement conventions.')
+    need(set(partition['documents'])==set(weights['document_totals'])==set(measured['documents']),
+         'Topic A graph omitted a document.')
+    need(set(weights['owner_weights'])==set(partition['owners']),
+         'Topic A owner weights and partition differ.')
+    node_ids = {n['id'] for n in graph['nodes']}
+    need(len(node_ids)==len(graph['nodes'])==236 and len(graph['edges'])==392,
+         'Topic A documentary graph changed without review.')
+    need(set(weights['logical_node_cost_interfaces'])==node_ids,
+         'Topic A graph nodes lack cost interfaces.')
+    cells = spans = 0
+    for key, document in partition['documents'].items():
+        owners = {owner for owner, row in partition['owners'].items() if row['document']==key}
+        end = 0
+        for span in document['spans']:
+            need(span['start']==end and span['end']>end and span['node'] in owners,
+                 'Topic A text partition has a gap, overlap or foreign owner.')
+            end = span['end']; spans += 1
+        need(end==document['selected_calibrated_codepoints'], 'Topic A partition omits trailing text.')
+        for form in forms:
+            for metric in metrics:
+                total = sum(weights['owner_weights'][owner][form][metric] for owner in owners)
+                expected = measured['documents'][key]['metrics'][form]['calibrated_selected'][metric]
+                need(total==weights['document_totals'][key][form][metric]==expected,
+                     'Topic A graph loses or duplicates paid text.')
+                cells += 1
+    need(cells==140 and spans==341 and len(partition['owners'])==337,
+         'Topic A ownership review dimensions changed.')
+    need(weights['whole_document_total_is_authoritative'] and
+         weights['raw_node_count_ratio'] is None and weights['proof_count_ratio'] is None,
+         'Topic A graph cannot create a ratio from node counts.')
+    for key, value in weights['unknown_costs'].items():
+        if key != 'note':
+            need(value is None, 'Unknown Topic A dependency costs became numbers.')
+    need(weights['program_representation']['raw_file_metrics_are_alternative_not_additional'] and
+         weights['program_representation']['shared_across_A5_A6_charged_once'],
+         'Topic A program must be paid once in its complete representation.')
+    return cells
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
@@ -467,6 +529,7 @@ def main():
     check_topic_measurement()
     a_cells, a_fractions = check_topic_a_measurement()
     check_topic_dag()
+    a_dag_cells = check_topic_a_dag()
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
     if args.write_manifest:
@@ -483,6 +546,7 @@ def main():
     print('PASS: Topic E has 150 independent metric cells and separate overall/conditional denominators.')
     print(f'PASS: Topic A has {a_cells} independent metric cells and {a_fractions} checked fractions; common costs are explicit.')
     print('PASS: Topic E paired proof graphs preserve all 90 source/application/program cost coordinates.')
+    print(f'PASS: Topic A paired proof graphs preserve all {a_dag_cells} complete-document cost coordinates.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
 
