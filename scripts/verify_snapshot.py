@@ -192,6 +192,10 @@ def check_completion():
 
 def check_catalogue():
     catalogue = load('papers/catalogue.json')
+    builder_spec = importlib.util.spec_from_file_location('paper_builder', ROOT/'scripts/build_papers.py')
+    builder = importlib.util.module_from_spec(builder_spec)
+    builder_spec.loader.exec_module(builder)
+    builder.select_papers(catalogue)
     papers = catalogue['papers']
     need(len({r['id'] for r in papers})==len(papers),'Duplicate paper IDs.')
     intake = load('audit/intake.json')
@@ -202,6 +206,8 @@ def check_catalogue():
     need(len(migration)==len(migration_rows) and set(migration)=={r['id'] for r in papers},
          'Migration report does not cover exactly the canonical papers.')
     for row in papers:
+        builder.source_bundle(row)
+        need(not row.get('tex_inputs'), 'Preserved TeX migrations cannot acquire unaudited inputs.')
         for key, suffix in [('tex','.tex'),('pdf','.pdf')]:
             name = row[key]
             need(name.startswith('papers/') and '..' not in Path(name).parts and name.endswith(suffix)
@@ -234,6 +240,7 @@ def check_catalogue():
     need(len({r['id'] for r in papers+editions})==len(papers)+len(editions),
          'Duplicate mathematical edition ID.')
     for row in editions:
+        builder.source_bundle(row)
         review = load(row['review_record'])
         need(review['status'].startswith('PASS'), 'Unreviewed proof edition: '+row['id'])
         if row['review_record']=='audit/lean_extension.json':
@@ -241,6 +248,8 @@ def check_catalogue():
         else:
             check_bindings(review['artifacts'])
         recorded = {r['path']:r for r in review['artifacts']}
+        for name in row.get('tex_inputs', []):
+            need(name in recorded, 'TeX input missing from the proof review: '+name)
         for key,suffix in [('tex','.tex'),('pdf','.pdf')]:
             name = row[key]
             need(name.startswith('papers/') and name.endswith(suffix) and name in recorded,

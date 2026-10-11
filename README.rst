@@ -161,6 +161,14 @@ the sources::
     python3 scripts/build_papers.py --output-dir /tmp/human-compression-papers
 
 Use a fresh output directory. Markdown and Pandoc are not build inputs.
+To build particular documents, repeat ``--paper`` with their exact IDs
+from ``papers/catalogue.json`` (or ``audit/protocol``). Shared TeX inputs
+must be listed explicitly in the catalogue's ``tex_inputs`` field and
+bound in the same proof review. The builder copies only those sources
+and records their hashes; a whole source directory is never copied.
+The `build review <audit/tex-build/tex_inputs_design_review.rst>`_ records
+the checks and the external TeX dependency boundary.
+
 For Lean, use the pinned toolchain and dependencies::
 
     cd research/case_study/formal
