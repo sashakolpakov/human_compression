@@ -289,7 +289,22 @@ After acquiring the complete common theory and required programs, the
 individual source/application factors are 1.118 for L088, 1.709 for N013
 and 2.960 for F014. L108's factor remains unknown. The `two-page reader
 <audit/topic-c/v2/measurement/packet/measurement.pdf>`_ gives the counts,
-formulas and qualifications. Paired dependency graphs remain in progress.
+formulas and qualifications. The accepted `dependency and cost reader
+<audit/topic-c/v2/dag/costs/reader.pdf>`_ now traces all forty clauses through
+the historical and current proofs. Download the `offline explorer
+<audit/topic-c/v2/dag/costs/explorer.html>`_ to inspect a selected result,
+its prerequisites and source locations. The `acquisition plot
+<audit/topic-c/v2/dag/costs/acquisition.pdf>`_ shows the entire common paper,
+program appendix and four applications in sequence.
+
+The graph uses 199 exclusive passage owners and preserves all 270 measured
+document coordinates. Overlapping statements are counted once in each
+prerequisite union; every complete paper still includes its context and
+references. No node-count factor is reported. The `review guide
+<audit/topic-c/v2/dag/README.rst>`_ records the independent semantic and
+cost checks, the corrected reader, and the unknown outside costs. Static
+figures and deterministic DOM behavior were checked; a real-browser layout
+test has not been performed.
 These are four existing principal contracts; the higher-rank question
 associated with F014 stays separate.
 

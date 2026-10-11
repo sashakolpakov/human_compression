@@ -1362,6 +1362,182 @@ def check_affine_proofs():
     return 33,9
 
 
+def check_topic_c_dag():
+    base = 'audit/topic-c/v2/dag/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_REVIEWED_TOPIC_C_PAIRED_DAG',
+         'Topic C paired graph is not admitted.')
+    check_bindings(admission['artifacts'])
+    for folder, expected in admission['packet_manifests'].items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==expected,
+             'Topic C graph packet changed: '+folder)
+        for row in load(base+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=base+folder+'/'+row['path'])])
+    for kind, path in [('proof','audit/topic-c/v2/admission.json'),
+                       ('measurement','audit/topic-c/v2/measurement/admission.json')]:
+        need(digest((ROOT/path).read_bytes())==admission[kind+'_admission_sha256'],
+             'Topic C graph uses another scientific or numerical admission.')
+    logical_review = load(base+'logical_review/review.json')
+    cost_review = load(base+'independent_review/review.json')
+    need(logical_review['status']=='ACCEPT_CORRECTED_LOGICAL_GRAPH_WITH_RECORDED_SCOPE' and
+         logical_review['accepted_manifest']['sha256']==admission['packet_manifests']['logical'] and
+         cost_review['status']=='ACCEPTED_UNCHANGED_COST_DATA_WITH_ADDITIVE_READER_CORRECTION' and
+         cost_review['accepted_author_manifest']['sha256']==admission['packet_manifests']['costs'],
+         'Topic C dependency or cost review refers to another edition.')
+    correction = load(base+'costs/correction.json')
+    for name in correction['exact_unchanged_exports']:
+        need((ROOT/base/'costs'/name).read_bytes()==(ROOT/base/'costs_previous'/name).read_bytes(),
+             'Topic C reader correction changed frozen cost or mathematical data.')
+    graph = load(base+'logical/logical_graph.json')
+    coverage = load(base+'logical/coverage.json')
+    expected = load(base+'logical_review/reviewed_interfaces.json')
+    spec = importlib.util.spec_from_file_location('topic_c_graph_review',ROOT/base/'logical_review/check.py')
+    review_check = importlib.util.module_from_spec(spec); spec.loader.exec_module(review_check)
+    logical_result = review_check.validate(graph,coverage,expected,load('papers/topic-c/v2/scope.json'))
+    need((logical_result['nodes'],logical_result['edges'],logical_result['closures'])==(156,249,85),
+         'Topic C reviewed logical scope changed.')
+    partition = load(base+'costs/partition.json'); weights = load(base+'costs/weights.json')
+    view = load(base+'costs/view_data.json'); acquisition = load(base+'costs/acquisition.json')
+    measured = load('audit/topic-c/v2/measurement/packet/independent/recount.json')['documents']
+    variants = ['raw_untrimmed','raw_selected','calibrated_selected']; forms = ['NFC','NFKC']
+    metrics = ['whitespace_tokens','alphanumeric_units','characters_without_whitespace',
+               'characters_with_collapsed_whitespace','utf8_bytes_with_collapsed_whitespace']
+    owners = partition['owners']; costs = weights['owner_costs']
+    need(set(owners)==set(costs) and len(owners)==199 and len(measured)==9 and
+         set(partition['documents'])==set(measured), 'Topic C complete ownership inventory changed.')
+    def total(names):
+        names=set(names)
+        return {v:{f:{m:sum(costs[n][v][f][m] for n in names) for m in metrics}
+                   for f in forms} for v in variants}
+    cells = spans = 0
+    for key, row in partition['documents'].items():
+        local = {n for n,o in owners.items() if o['document']==key}
+        need(row['pdf_sha256']==measured[key]['pdf_sha256'] and row['pages']==measured[key]['pages'],
+             'Topic C graph changed a measured PDF binding.')
+        for variant, data in row['variants'].items():
+            end = 0
+            for span in data['spans']:
+                need(span['start']==end and span['end']>end and span['owner'] in local and
+                     span['category']==owners[span['owner']]['category'],
+                     'Topic C passage ownership has a gap, overlap or foreign owner.')
+                end = span['end']; spans += 1
+            need(end==data['length'], 'Topic C trailing measured text omitted.')
+        expected_cost = {v:{f:{m:measured[key]['variants'][v][f][m] for m in metrics}
+                            for f in forms} for v in variants}
+        need(total(local)==weights['document_costs'][key]==expected_cost,
+             'Topic C ownership loses or duplicates complete-document cost.')
+        cells += 30
+    need((cells,spans)==(270,703), 'Topic C document or span dimensions changed.')
+    nodes = {n['id']:n for n in graph['nodes']}; links = weights['node_interfaces']
+    reader_owners={key:{field:value for field,value in row.items() if field!='label'}
+                   for key,row in view['owners'].items()}
+    need(set(nodes)==set(links) and view['edges']==graph['edges'] and reader_owners==owners and
+         view['owner_weights']==costs, 'Topic C reader changed logical or owner data.')
+    predecessors = {n:set() for n in nodes}
+    for edge in graph['edges']:
+        if edge['kind'] in graph['logical_edge_kinds']:
+            predecessors[edge['target']].add(edge['source'])
+    for name, interface in links.items():
+        paid = interface['owners']; node = nodes[name]
+        unknown = node['side'] in ('external','verification') or node['document']=='L108'
+        owner_document='CODE' if name in graph['required_mathematical_programs'] else node['document']
+        need(paid==sorted(set(paid)) and set(paid)<=set(owners) and
+             all(owners[n]['document']==owner_document for n in paid) and
+             interface['known_weight']==(None if unknown else total(paid)) and
+             not interface['charged_again'] and interface['expanded_dependency_cost'] is None,
+             'Topic C node interface changed its unique owners or unknown cost.')
+    def closure(targets):
+        reached=set(targets); pending=list(targets)
+        while pending:
+            for n in predecessors[pending.pop()]-reached:
+                reached.add(n); pending.append(n)
+        return reached
+    def union(names):
+        return {owner for n in names for owner in links[n]['owners']}
+    def check_route(targets, record):
+        reached=closure(targets); paid=union(reached)
+        need(record['logical_nodes']==sorted(reached) and record['owners']==sorted(paid) and
+             record['known_extracted_subtotal']==total(paid) and
+             record['unknown_inputs']==sorted(n for n in reached if links[n]['known_weight'] is None) and
+             record['expanded_dependency_cost'] is None and record['graphics_cost'] is None,
+             'Topic C prerequisite closure changed its cost union or unknown inputs.')
+    rows={r['id']:r for r in weights['source_contract_closures']}
+    need(len(rows)==len(coverage['rows'])==40, 'Topic C source clauses changed.')
+    for clause in coverage['rows']:
+        check_route(clause['historical_outputs'],rows[clause['id']]['historical'])
+        check_route(clause['new_outputs'],rows[clause['id']]['replacement'])
+    for field, result in [('new_application_outputs','new_application_closures'),
+                          ('additional_current_comparisons','additional_current_comparisons')]:
+        for key,targets in graph[field].items(): check_route(targets,weights[result][key])
+    for node in view['nodes']:
+        if node['id'] not in nodes: continue
+        reached=closure([node['id']]); paid=union(reached)
+        need(node['owners']==links[node['id']]['owners'] and node['weight']==links[node['id']]['known_weight'] and
+             node['closure']['unique_owner_ids']==sorted(paid) and
+             node['closure']['known_owned_text_subtotal']==total(paid) and
+             node['closure']['unknown_external_nodes']==sorted(n for n in reached if links[n]['known_weight'] is None),
+             'Topic C reader changed a proof route.')
+        for locator in node['current_public_locators']:
+            text=(ROOT/locator['path']).read_text()
+            passage=text[locator['start_codepoint']:locator['end_codepoint_exclusive']]
+            need(digest(passage.encode())==locator['sha256_utf8'], 'Topic C public proof locator changed.')
+    paid=set()
+    need(acquisition==view['acquisition'] and acquisition['sequence']==['U_C','CODE','C1','C2','C3','C4'],
+         'Topic C acquisition sequence changed.')
+    for step in acquisition['stages']:
+        key=step['stage']; local={n for n,o in owners.items() if o['document']==key}
+        used=union(closure([n for n,b in nodes.items() if b['document']==key and not n.startswith('program.')]))
+        need(not (used-paid-local) and step['previous_owner_ids']==sorted(paid) and
+             step['complete_local_owner_ids']==step['new_owner_ids']==sorted(local) and
+             step['logical_route_owner_ids']==sorted(used) and step['reused_owner_ids']==sorted(used&paid) and
+             step['local_text_outside_route']==sorted(local-used) and step['new_cost']==total(local) and
+             step['reused_route_cost']==total(used&paid), 'Topic C acquisition omitted context or discounted reuse twice.')
+        paid|=local
+        need(step['cumulative_owner_ids']==sorted(paid) and step['cumulative_cost']==total(paid) and
+             step['written_cumulative_cost']==total(n for n in paid if owners[n]['document']!='CODE'),
+             'Topic C acquisition failed to charge whole theory and applications once.')
+    need(view['measurement']==load('audit/topic-c/v2/measurement/packet/results.json'),
+         'Topic C graph changed an admitted whole-document or conditional comparison.')
+    dimensions={'source_contracts':len(graph['new_application_outputs']),
+                'source_rows':len(coverage['rows']),'logical_nodes':len(nodes),
+                'typed_edges':len(graph['edges']),'exclusive_owners':len(owners),
+                'document_metric_cells':cells,'owner_metric_cells':len(owners)*30,
+                'all_variant_spans':spans,'output_closures':logical_result['closures'],
+                'known_conditional_fractions':view['measurement']['known_conditional_fractions'],
+                'symbolic_combined_expressions':len(view['measurement']['coordinates'])*3}
+    need(all(admission[key]==value for key,value in dimensions.items()) and
+         admission['independent_logical_review_accepted'] is True and
+         admission['independent_cost_and_reader_review_accepted'] is True,
+         'Topic C admission summary contradicts the reviewed graph or ownership dimensions.')
+    primary=next(row for row in view['measurement']['coordinates']
+                 if (row['variant'],row['normalization'],row['unit'])==
+                 ('calibrated_selected','NFC','characters_without_whitespace'))
+    need(admission['primary_written_denominator']==primary['written_denominator'] and
+         admission['primary_program_inclusive_denominator']==primary['complete_denominator'] and
+         admission['primary_raw_program_alternative_denominator']==primary['raw_program_denominator'],
+         'Topic C admission summary contradicts the complete measured denominators.')
+    for row in weights['raw_program_alternative'].values():
+        binding=row['binding'];check_bindings([dict(binding,path=binding['public_path'])])
+    fresh = load(base+'root_adoption/fresh_cost_review.json')
+    need(fresh['status']=='PASS_INDEPENDENT_COSTS_READER_AND_CORRECTION' and
+         fresh['independent_arithmetic']['document_metric_cells']==270 and
+         fresh['independent_arithmetic']['owner_metric_cells']==5970 and
+         len(fresh['independent_arithmetic']['controls'])==15 and
+         all(x['rejected'] for x in fresh['independent_arithmetic']['controls']) and
+         fresh['independent_viewer']['selected_route_views']==180 and
+         all(x['rejected'] for x in fresh['independent_viewer']['controls']),
+         'Topic C lacks the independent ownership and reader replay.')
+    need(all(weights[k] is None for k in ['complete_historical_pdf_cost','expanded_external_proof_cost',
+         'graphic_cost','compression_ratio']) and partition['missing_L108_original_pdf_cost'] is None and
+         partition['node_count_ratio'] is None and acquisition['historical_complete_numeric_curve'] is None and
+         all(admission[k] is None for k in ['combined_factor','L108_original_pdf_cost','expanded_external_proof_cost',
+                                           'graphic_cost','node_count_ratio']) and
+         admission['new_source_credit']==admission['new_question_credit']==admission['new_formal_credit']==0 and
+         admission['real_browser_layout_test'] is False,
+         'Topic C dependency audit invented a missing cost, a ratio or scientific credit.')
+    return cells,85
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -1380,6 +1556,7 @@ def main():
     b_dag_cells = check_topic_b_dag()
     c_rows, c_declarations = check_topic_c_proofs()
     c_cells, c_fractions = check_topic_c_measurement()
+    c_dag_cells, c_closures = check_topic_c_dag()
     d_rows, d_declarations = check_topic_d_proofs()
     d_support_declarations = check_topic_d_support_formal()
     d_cells, d_fractions = check_topic_d_measurement()
@@ -1407,6 +1584,7 @@ def main():
     print(f'PASS: Topic B paired proof graphs preserve all {b_dag_cells} complete-document coordinates and 64 prerequisite closures.')
     print(f'PASS: Topic C preserves {c_rows} contract rows, {c_declarations} scoped Lean declarations and the full Janko census.')
     print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, L108 remains unknown.')
+    print(f'PASS: Topic C paired proof graphs preserve all {c_dag_cells} complete-document coordinates and {c_closures} prerequisite unions; L108 remains unknown.')
     print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
     print(f'PASS: Topic D generic support counting has {d_support_declarations} independently compiled declarations; source-specific instances remain separate.')
     print(f'PASS: Topic D has {d_cells} independent PDF metric cells and {d_fractions} exact combined/conditional fractions; complete programs and separate drivers are explicit.')

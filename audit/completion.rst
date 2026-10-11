@@ -56,8 +56,11 @@ applications and common theory; nine retain their earlier accepted proof
 packages. Topic C's `length audit <topic-c/v2/measurement/README.rst>`_ is
 accepted, with separate written and program-inclusive comparisons and
 three measurable conditional factors. L108's missing original PDF leaves
-its factor and the whole-topic factor unknown. Its paired dependency audit
-remains unfinished. The immutable baseline audit above has not been rewritten.
+its factor and the whole-topic factor unknown. Its `paired dependency audit
+<topic-c/v2/dag/README.rst>`_ is now accepted: 199 exclusive passage owners
+conserve all 270 document metric cells, and 85 prerequisite unions preserve
+shared statements and unknown external inputs. The source and application
+comparisons are unchanged. The immutable baseline audit above has not been rewritten.
 
 Topic D adds the complete common paper and three applications for L066,
 L074 and L104, with all eight mathematical programs and both execution
@@ -117,8 +120,8 @@ subject does not itself prove a compression theorem.
    * - C: Halving, parity and Petrial operations
      - L088, N013, L108, F014
      - Complete common theory, four applications and both required programs
-       reviewed and their complete lengths independently counted. Finish
-       the paired dependency audit; L108's original PDF cost remains unknown.
+       reviewed, with complete lengths and paired dependencies independently
+       checked. L108's original PDF cost remains unknown.
    * - B: Forest coordinates and primitive coset geometries
      - N001, N003, N008, L030
      - Complete common theory and four applications reviewed, with their
