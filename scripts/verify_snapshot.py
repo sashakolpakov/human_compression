@@ -894,6 +894,76 @@ def check_topic_c_proofs():
     return 40,16
 
 
+def check_topic_c_measurement():
+    base = 'audit/topic-c/v2/measurement/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_C_MEASUREMENT',
+         'Topic C measurement is not independently admitted.')
+    check_bindings(admission['artifacts'])
+    for folder, expected in admission['packet_manifests'].items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==expected,
+             'Changed Topic C numerical packet: '+folder)
+        for row in load(base+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=base+folder+'/'+row['path'])])
+    packet = base+'packet/'
+    result = load(packet+'results.json')
+    counts = load(packet+'inputs/author_counts.json')
+    recount = load(packet+'independent/recount.json')
+    specification = load(packet+'inputs/replacement_input_spec.json')
+    input_review = load(packet+'independent/review.json')
+    review = load(base+'arithmetic_review/review.json')
+    need(input_review['status']=='ACCEPT_INDEPENDENT_DOCUMENT_MEASUREMENT' and
+         input_review['proposal_manifest_sha256']==digest((ROOT/packet/'inputs/manifest.json').read_bytes()) and
+         review['status']=='ACCEPT_INDEPENDENT_ARITHMETIC_AND_READER_REVIEW' and
+         review['author_manifest_sha256']==admission['packet_manifests']['packet'] and
+         review['independent_input_review_manifest_sha256']==digest((ROOT/packet/'independent/manifest.json').read_bytes()),
+         'Topic C recount and arithmetic reviews refer to different inputs.')
+    for path, value in result['bindings'].items():
+        need(not Path(path).is_absolute() and '..' not in Path(path).parts and
+             digest((ROOT/packet/path).read_bytes())==value,'Topic C arithmetic input changed.')
+    spec = importlib.util.spec_from_file_location('topic_c_arithmetic',ROOT/base/'arithmetic_review/check.py')
+    arithmetic = importlib.util.module_from_spec(spec); spec.loader.exec_module(arithmetic)
+    with (ROOT/packet/'overall_costs.csv').open(newline='') as stream:
+        overall = list(csv.DictReader(stream))
+    with (ROOT/packet/'conditional_costs.csv').open(newline='') as stream:
+        conditional = list(csv.DictReader(stream))
+    primary = arithmetic.audit(result,counts,recount,specification,overall,conditional)
+    need(primary==review['primary']==admission['primary'] and
+         admission['headline_written_formula']==result['headline_formula'] and
+         admission['required_program_inclusive_formula']==result['required_program_inclusive_formula'],
+         'Topic C written and required-program figures changed.')
+    previous = load(base+'previous/results.json')
+    need(previous['coordinates']==result['coordinates'] and previous['primary']==primary and
+         (ROOT/base/'previous/conditional_costs.csv').read_bytes()==(ROOT/packet/'conditional_costs.csv').read_bytes(),
+         'Topic C additive presentation revision changed measured values.')
+    binding = load(packet+'inputs/publication_binding.json')
+    need(set(binding['scientific_documents'])=={'U_C','C1','C2','C3','C4','CODE'},
+         'Topic C omitted a complete scientific paper or code appendix.')
+    for name, row in binding['scientific_documents'].items():
+        need(row['public_path'].startswith('papers/topic-c/v2/') and
+             digest((ROOT/row['public_path']).read_bytes())==row['pdf_sha256']==counts['documents'][name]['pdf_sha256'],
+             'Topic C measured proof PDF changed.')
+    need(binding['admission']['path']=='audit/topic-c/v2/admission.json' and
+         digest((ROOT/binding['admission']['path']).read_bytes())==binding['admission']['sha256'],
+         'Topic C measurement changed the admitted mathematical edition.')
+    for row in specification['required_mathematical_programs']:
+        check_bindings([dict(path=row['public_path'],bytes=row['bytes'],sha256=row['sha256'])])
+    fresh = load(base+'root_replay.json')
+    need(fresh['status']=='PASS_INDEPENDENT_ARITHMETIC_AND_CSV_REVIEW' and
+         fresh['author_manifest_sha256']==admission['packet_manifests']['packet'] and
+         fresh['coordinates']==30 and fresh['exact_known_conditional_fractions']==90 and
+         fresh['symbolic_overall_formulas']==90 and fresh['unknown_conditional_coordinates']==30 and
+         len(fresh['controls'])==12 and all(r['rejected'] for r in fresh['controls']),
+         'Topic C lacks complete independent arithmetic replay.')
+    need(admission['metric_cells']==270 and admission['normalized_text_hashes']==54 and
+         admission['raw_program_metric_cells']==20 and admission['overall_factor'] is None and
+         admission['L108_original_pdf_cost'] is None and
+         admission['new_source_credit']==admission['new_question_credit']==0 and
+         admission['paired_dependency_audit_complete'] is False,
+         'Topic C counting scope or unknown input changed.')
+    return 270,90
+
+
 def check_project_lean_runner(legacy_modules):
     admission = load('audit/formal-project/admission.json')
     need(admission['status']=='PASS_ROOT_ADMITTED_PROJECT_LEAN_RUNNER', 'Unreviewed project Lean runner.')
@@ -937,6 +1007,7 @@ def main():
     b_cells, b_fractions = check_topic_b_measurement()
     b_dag_cells = check_topic_b_dag()
     c_rows, c_declarations = check_topic_c_proofs()
+    c_cells, c_fractions = check_topic_c_measurement()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -958,7 +1029,8 @@ def main():
     print(f'PASS: Topic B preserves {b_clauses} source clauses and {b_declarations} separately checked Lean declarations.')
     print(f'PASS: Topic B has {b_cells} independent metric cells and {b_fractions} conditional fractions; N001 and the overall factor remain unknown.')
     print(f'PASS: Topic B paired proof graphs preserve all {b_dag_cells} complete-document coordinates and 64 prerequisite closures.')
-    print(f'PASS: Topic C preserves {c_rows} contract rows, {c_declarations} scoped Lean declarations and the full Janko census; no measured factor yet.')
+    print(f'PASS: Topic C preserves {c_rows} contract rows, {c_declarations} scoped Lean declarations and the full Janko census.')
+    print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, L108 remains unknown.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

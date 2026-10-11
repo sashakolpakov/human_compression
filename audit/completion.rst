@@ -42,7 +42,9 @@ thirteen retain their earlier accepted proof packages. Topic B's
 `length audit <topic-b/v2/measurement/README.rst>`_ is complete within its
 stated scope: three conditional factors are available, while N001's missing
 PDF leaves its conditional factor and the whole-topic factor unknown.
-The paired dependency audit remains unfinished.
+The `paired dependency audit <topic-b/v2/dag/README.rst>`_ is also accepted:
+all eighty document coordinates are conserved through 214 exclusive text
+owners. The missing PDF still prevents a numerical whole-topic factor.
 
 Topic C adds its complete common paper and four applications for L088,
 N013, L108 and F014, with both required Janko programs in full. The
@@ -51,8 +53,11 @@ rows, including their corrections and exclusions, and binds independent
 mathematical review, a full fresh census and the sixteen scoped Lean
 declarations. Eighteen of the 27 contracts now have complete canonical
 applications and common theory; nine retain their earlier accepted proof
-packages. Topic C's measurements remain pending. The immutable baseline
-audit above has not been rewritten.
+packages. Topic C's `length audit <topic-c/v2/measurement/README.rst>`_ is
+accepted, with separate written and program-inclusive comparisons and
+three measurable conditional factors. L108's missing original PDF leaves
+its factor and the whole-topic factor unknown. Its paired dependency audit
+remains unfinished. The immutable baseline audit above has not been rewritten.
 
 Work by topic
 -------------
@@ -84,13 +89,13 @@ subject does not itself prove a compression theorem.
    * - C: Halving, parity and Petrial operations
      - L088, N013, L108, F014
      - Complete common theory, four applications and both required programs
-       reviewed. Measure their full lengths and paired proof dependencies;
-       L108's original PDF cost remains unknown.
+       reviewed and their complete lengths independently counted. Finish
+       the paired dependency audit; L108's original PDF cost remains unknown.
    * - B: Forest coordinates and primitive coset geometries
      - N001, N003, N008, L030
      - Complete common theory and four applications reviewed, with their
-       graph reconstruction proofs and matched lengths. Finish the paired
-       dependency audit; N001's source PDF cost remains unknown.
+       graph reconstruction proofs, matched lengths and paired dependency
+       audit. N001's source PDF cost remains unknown.
    * - D: Marked actions and geometry enumeration
      - L066, L074, L104
      - Complete the common enumeration arguments and all three

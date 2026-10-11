@@ -277,9 +277,21 @@ unchanged declarations verify supporting displacement and intersection
 statements. All sixteen were freshly compiled. The specific augmentation
 maps, geometric applications and finite census remain outside Lean.
 The `publication guide <papers/topic-c/v2/PUBLICATION.rst>`_ gives the exact
-scope and separate replay commands. Length and dependency measurements are
-next; no Topic C factor is assigned yet. These are four existing principal
-contracts, and the higher-rank question associated with F014 stays separate.
+scope and separate replay commands. The `length audit
+<audit/topic-c/v2/measurement/README.rst>`_ measures the complete common
+paper at 27,131 non-whitespace characters and the four applications at
+44,146. The written comparison is therefore ``(x + 60,256) / 71,277``,
+where ``x`` is the unknown length of L108's original PDF. Including both
+complete required programs, as printed, gives ``(x + 60,256) / 80,076``.
+Neither expression supplies a numerical whole-topic factor yet.
+
+After acquiring the complete common theory and required programs, the
+individual source/application factors are 1.118 for L088, 1.709 for N013
+and 2.960 for F014. L108's factor remains unknown. The `two-page reader
+<audit/topic-c/v2/measurement/packet/measurement.pdf>`_ gives the counts,
+formulas and qualifications. Paired dependency graphs remain in progress.
+These are four existing principal contracts; the higher-rank question
+associated with F014 stays separate.
 
 Common proofs for projective groups
 ----------------------------------
