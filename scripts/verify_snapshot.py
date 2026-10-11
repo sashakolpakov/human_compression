@@ -1641,6 +1641,192 @@ def check_affine_measurement():
     return 120,120
 
 
+def check_topic_d_dag():
+    base = 'audit/topic-d/v2/dag/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_REVIEWED_TOPIC_D_PAIRED_DAG',
+         'Topic D paired dependencies lack acceptance.')
+    check_bindings(admission['artifacts'])
+    exports = 0
+    for folder,pin in admission['packet_manifests'].items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin,
+             'Topic D frozen graph archive changed: '+folder)
+        rows=load(base+folder+'/manifest.json')['exports']; exports+=len(rows)
+        for row in rows: check_bindings([dict(row,path=base+folder+'/'+row['path'])])
+    need(exports==admission['preserved_frozen_exports']==169 and len(admission['packet_manifests'])==10,
+         'Topic D frozen graph inventory changed.')
+    for kind,path in [('proof','audit/topic-d/v2/admission.json'),
+                      ('measurement','audit/topic-d/v2/measurement/admission.json'),
+                      ('support_formal','audit/topic-d/v2/support-formal/admission.json')]:
+        need(digest((ROOT/path).read_bytes())==admission[kind+'_admission_sha256'],
+             'Topic D graph changed its scientific, numerical or formal input.')
+    logical_review=load(base+'logical_review/review.json')
+    delta_review=load(base+'logical_delta_review/review.json')
+    cost_review=load(base+'independent_review/review.json')
+    adoption=load(base+'root_adoption/review.json')
+    pins=admission['packet_manifests']
+    need(logical_review['status']=='ACCEPTED_INDEPENDENT_SEMANTIC_REVIEW_OF_REVISED_LOGICAL_GRAPH' and
+         logical_review['author_manifest_sha256']==pins['logical_previous'] and
+         logical_review['requested_further_corrections']==[] and
+         delta_review['status']=='ACCEPTED_BOUNDED_LOGICAL_DELTA' and
+         delta_review['author_manifest_sha256']==pins['logical'] and
+         delta_review['previous_review_manifest_sha256']==pins['logical_review'] and
+         cost_review['status']=='ACCEPTED_INDEPENDENT_D_OWNERSHIP_AND_READER' and
+         cost_review['author_manifest_sha256']==pins['costs'] and
+         cost_review['logical_v3_manifest_sha256']==pins['logical'] and
+         cost_review['requested_further_corrections']==[] and
+         adoption['status']=='ACCEPT_ROOT_D_LOGICAL_V3_AND_COST_V2' and
+         adoption['requested_further_corrections']==[], 'Topic D acceptance refers to another edition.')
+    graph=load(base+'logical/logical_graph.json'); coverage=load(base+'logical/coverage.json')
+    previous=load(base+'logical_previous/logical_graph.json')
+    added=[e for e in graph['edges'] if e not in previous['edges']]
+    need(graph['nodes']==previous['nodes'] and all(e in graph['edges'] for e in previous['edges']) and
+         len(added)==1 and (added[0]['source'],added[0]['target'],added[0]['kind'])==
+         ('UD.ExactSupport','D2.Support','proof_use'), 'Topic D exact logical correction changed.')
+    spec=importlib.util.spec_from_file_location('topic_d_logical_review',ROOT/base/'logical_review/check_independent.py')
+    logical=importlib.util.module_from_spec(spec); spec.loader.exec_module(logical)
+    checked=logical.inspect(graph,coverage)
+    need((checked['nodes'],checked['typed_edges'],checked['closures_checked'])==(137,284,116),
+         'Topic D logical dimensions changed.')
+    scope=load('papers/topic-d/v2/scope.json')
+    need({r['id']:r['accepted_record'] for r in coverage['rows']}=={r['id']:r for r in scope['contracts']} and
+         len(graph['accepted_scope_spans'])==len(scope['proof_spans'])==19,
+         'Topic D graph changed accepted source clauses or proof contexts.')
+    partition=load(base+'costs/partition.json'); weights=load(base+'costs/weights.json')
+    old_weights=load(base+'costs_previous/weights.json')
+    view=load(base+'costs/view_data.json'); acquisition=load(base+'costs/acquisition.json')
+    measured=load('audit/topic-d/v2/measurement/packet/independent/recount_corrected.json')['documents']
+    variants=['raw_untrimmed','raw_selected','calibrated_selected']; forms=['NFC','NFKC']
+    metrics=['whitespace_tokens','alphanumeric_units','characters_without_whitespace',
+             'characters_with_collapsed_whitespace','utf8_bytes_with_collapsed_whitespace']
+    owners=partition['owners']; costs=weights['owner_costs']
+    need(set(owners)==set(costs) and len(owners)==220 and set(partition['documents'])==set(measured) and
+         len(measured)==8 and weights['owner_costs']==old_weights['owner_costs'] and
+         weights['document_costs']==old_weights['document_costs'], 'Topic D complete cost inventory changed.')
+    def total(names):
+        names=set(names)
+        return {v:{f:{m:sum(costs[n][v][f][m] for n in names) for m in metrics} for f in forms} for v in variants}
+    spans=selected=0
+    for key,row in partition['documents'].items():
+        local={n for n,o in owners.items() if o['document']==key}
+        need(row['pdf_sha256']==measured[key]['pdf_sha256'] and row['pages']==measured[key]['pages'],
+             'Topic D ownership uses a different measured PDF.')
+        for variant,data in row['variants'].items():
+            end=0
+            for span in data['spans']:
+                need(span['start']==end and span['end']>end and span['owner'] in local and
+                     span['category']==owners[span['owner']]['category'], 'Topic D passage gap, overlap or foreign owner.')
+                end=span['end']; spans+=1; selected+=variant=='calibrated_selected'
+            need(end==data['length'], 'Topic D measured trailing text omitted.')
+        expected={v:{f:{m:measured[key]['variants'][v][f][m] for m in metrics} for f in forms} for v in variants}
+        need(total(local)==weights['document_costs'][key]==expected, 'Topic D complete-document costs not conserved.')
+    nodes={n['id']:n for n in graph['nodes']}; interfaces=weights['node_interfaces']
+    need(set(nodes)==set(interfaces) and view['edges']==graph['edges'] and view['owner_weights']==costs and
+         {n:{k:v for k,v in r.items() if k!='label'} for n,r in view['owners'].items()}==owners,
+         'Topic D reader changed graph or cost data.')
+    need(owners['h.L074.9']['category']=='statement' and
+         'h.L074.composite_setup' in interfaces['h.L074.12']['owners'] and
+         'D2.Polyhedra.setup' in interfaces['D2.Duality']['owners'], 'Topic D reviewed passage correction lost.')
+    for name,interface in interfaces.items():
+        paid=interface['owners']; node=nodes[name]
+        unknown=node['side']=='external' or (node['side']=='verification' and not name.startswith('diagnostic.'))
+        document='CODE' if name in graph['required_mathematical_programs']+graph['diagnostic_programs'] else node['document']
+        need(paid==sorted(set(paid)) and set(paid)<=set(owners) and
+             all(owners[o]['document']==document for o in paid) and
+             interface['known_weight']==(None if unknown else total(paid)) and
+             (not unknown or not paid) and not interface['charged_again'] and
+             interface['expanded_dependency_cost'] is None, 'Topic D node owners or unknown cost changed.')
+    predecessors={n:set() for n in nodes}
+    for edge in graph['edges']:
+        if edge['kind'] in graph['logical_edge_kinds']: predecessors[edge['target']].add(edge['source'])
+    def closure(targets):
+        reached=set(targets); pending=list(targets)
+        while pending:
+            for n in predecessors[pending.pop()]-reached: reached.add(n); pending.append(n)
+        return reached
+    def union(names): return {o for n in names for o in interfaces[n]['owners']}
+    def route(names,record):
+        paid=union(names)
+        need(record['logical_nodes']==sorted(names) and record['owners']==sorted(paid) and
+             record['known_extracted_subtotal']==total(paid) and
+             record['unknown_inputs']==sorted(n for n in names if interfaces[n]['known_weight'] is None) and
+             record['expanded_dependency_cost'] is None and record['graphics_cost'] is None,
+             'Topic D prerequisite union or unknown input changed.')
+    rows={r['id']:r for r in weights['source_contract_closures']}; routes=0
+    need(len(rows)==len(coverage['rows'])==37, 'Topic D source clause inventory changed.')
+    for row in coverage['rows']:
+        for output,key in [('historical_outputs','historical'),('new_outputs','replacement')]:
+            route(closure(row[output]),rows[row['id']][key]); routes+=1
+        route(closure(row['retained_input_nodes'])|set(row['qualification_context_nodes']),
+              rows[row['id']]['retained_and_qualification_context']); routes+=1
+    for key,targets in graph['new_application_outputs'].items():
+        route(closure(targets),weights['new_application_closures'][key]); routes+=1
+    for key,record in weights['additional_current_comparisons'].items(): route(closure([key]),record); routes+=1
+    locators=0
+    for node in view['nodes']:
+        if node['id'] not in nodes: continue
+        names=closure([node['id']]); paid=union(names)
+        need(node['owners']==interfaces[node['id']]['owners'] and node['weight']==interfaces[node['id']]['known_weight'] and
+             node['closure']['unique_owner_ids']==sorted(paid) and node['closure']['known_owned_text_subtotal']==total(paid) and
+             node['closure']['unknown_external_nodes']==sorted(n for n in names if interfaces[n]['known_weight'] is None),
+             'Topic D reader changed a node prerequisite closure.')
+        for locator in node['current_public_locators']:
+            text=(ROOT/locator['path']).read_text(); passage=text[locator['start_codepoint']:locator['end_codepoint_exclusive']]
+            need(digest(passage.encode())==locator['sha256_utf8'], 'Topic D exact public proof locator changed.'); locators+=1
+    paid=set()
+    need(acquisition==view['acquisition'] and acquisition['sequence']==['U_D','CODE','D1','D2','D3'],
+         'Topic D acquisition order changed.')
+    for step in acquisition['stages']:
+        key=step['stage']; local={n for n,o in owners.items() if o['document']==key}
+        used=union(closure([n for n,b in nodes.items() if b['document']==key and not n.startswith('program.')]))
+        need(not (used-paid-local) and step['previous_owner_ids']==sorted(paid) and
+             step['complete_local_owner_ids']==step['new_owner_ids']==sorted(local) and
+             step['logical_route_owner_ids']==sorted(used) and step['reused_owner_ids']==sorted(used&paid) and
+             step['local_text_outside_route']==sorted(local-used) and step['new_cost']==total(local) and
+             step['reused_route_cost']==total(used&paid), 'Topic D acquisition omits context or discounts reuse twice.')
+        paid|=local
+        need(step['cumulative_owner_ids']==sorted(paid) and step['cumulative_cost']==total(paid) and
+             step['written_cumulative_cost']==total(n for n in paid if owners[n]['document']!='CODE'),
+             'Topic D acquisition does not pay whole manuscripts and programs once.')
+    need(view['measurement']==load('audit/topic-d/v2/measurement/packet/results.json') and
+         view['bindings']['topic_D_logical_dag_v3/manifest.json']==pins['logical'],
+         'Topic D reader uses a different numerical comparison or logical edition.')
+    for group in ['raw_program_alternative','raw_operational_drivers']:
+        for row in weights[group].values():
+            binding=row['binding']; check_bindings([dict(binding,path=binding['public_path'])])
+    check_bindings(load(base+'costs/public_links.json')['proof_documents_and_source_locators'])
+    dimensions=dict(source_contracts=len(graph['new_application_outputs']),source_rows=len(rows),logical_nodes=len(nodes),
+         typed_edges=len(graph['edges']),exclusive_owners=len(owners),document_metric_cells=len(measured)*30,
+         owner_metric_cells=len(owners)*30,all_variant_spans=spans,selected_text_spans=selected,
+         output_and_context_unions=routes,individual_node_closures=len(nodes),policy_coordinates=30,
+         complete_programs=len(weights['raw_program_alternative']),required_programs=len(graph['required_mathematical_programs']),
+         diagnostics=len(graph['diagnostic_programs']),separate_operational_drivers=len(graph['operational_drivers']),
+         initial_scoped_Lean_declarations=graph['formal_evidence']['initial_report_count'],
+         later_scoped_Lean_declarations=graph['formal_evidence']['later_support_report_count'],
+         later_Lean_components=graph['formal_evidence']['later_components'])
+    primary=view['measurement']['primary']
+    need(all(admission[k]==v for k,v in dimensions.items()) and
+         admission['independent_logical_review_accepted'] is True and admission['independent_cost_and_reader_review_accepted'] is True and
+         admission['primary_written_denominator']==primary['written_denominator'] and
+         admission['primary_program_inclusive_denominator']==primary['comparisons']['including_printed_program']['denominator'] and
+         admission['primary_raw_program_alternative_denominator']==primary['comparisons']['including_raw_program_alternative']['denominator'] and
+         admission['primary_written_fraction']==primary['comparisons']['written_papers']['exact_fraction'] and
+         admission['primary_conditionals']==[r['exact_fraction'] for r in primary['per_result']],
+         'Topic D graph admission summary contradicts accepted data.')
+    fresh=load(base+'root_adoption/fresh_allocation.json'); viewer=load(base+'root_adoption/fresh_viewer.json')
+    need(fresh['status']=='PASS_INDEPENDENT_D_ALLOCATION_AND_UNIONS' and fresh['document_cells']==240 and
+         fresh['owner_cells']==6600 and fresh['independent_route_unions']==116 and len(fresh['negative_controls'])==6 and
+         viewer['status']=='PASS_INDEPENDENT_ACCEPTED_GRAPH_UI_PROJECTION' and viewer['selected_views']==168 and
+         len(viewer['regression_controls'])==2, 'Topic D lacks its accepted independent replay evidence.')
+    need(all(admission[k] is None for k in ['expanded_external_proof_cost','historical_software_cost','graphic_cost',
+         'node_count_ratio','minimum_proof_complexity']) and not admission['complete_costs_changed'] and
+         not admission['source_specific_full_formalization'] and not admission['real_browser_layout_test'] and
+         admission['new_source_credit']==admission['new_question_credit']==admission['new_formal_credit']==0 and
+         partition['node_count_ratio'] is None and weights['compression_ratio'] is None,
+         'Topic D graph invents a cost, factor, proof or result credit.')
+    return 240,116
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -1663,6 +1849,7 @@ def main():
     d_rows, d_declarations = check_topic_d_proofs()
     d_support_declarations = check_topic_d_support_formal()
     d_cells, d_fractions = check_topic_d_measurement()
+    d_dag_cells, d_closures = check_topic_d_dag()
     affine_rows, affine_declarations = check_affine_proofs()
     affine_cells, affine_fractions = check_affine_measurement()
     check_project_lean_runner(lean)
@@ -1692,6 +1879,7 @@ def main():
     print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
     print(f'PASS: Topic D generic support counting has {d_support_declarations} independently compiled declarations; source-specific instances remain separate.')
     print(f'PASS: Topic D has {d_cells} independent PDF metric cells and {d_fractions} exact combined/conditional fractions; complete programs and separate drivers are explicit.')
+    print(f'PASS: Topic D paired dependencies conserve {d_dag_cells} complete-document metric cells and {d_closures} prerequisite unions; whole-paper factors remain unchanged.')
     print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs.')
     print(f'PASS: affine comparison has {affine_cells} independent PDF metric cells and {affine_fractions} exact combined/conditional fractions; the whole common paper is charged.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')

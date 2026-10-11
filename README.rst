@@ -396,8 +396,18 @@ the printed appendix gives 0.668; the two representations are alternatives.
 Both execution drivers are inventoried separately. Historical software,
 external proofs and unextracted graphics retain unknown costs. The
 `two-page calculation <audit/topic-d/v2/measurement/packet/measurement.pdf>`_
-shows all denominators and qualifications. Paired dependency costs remain
-under review.
+shows all denominators and qualifications.
+
+The `paired dependency audit <audit/topic-d/v2/dag/README.rst>`_ is now
+independently accepted. Its `offline explorer
+<audit/topic-d/v2/dag/costs/explorer.html>`_ shows the historical and current
+arguments for all 37 clauses. The 137 nodes refer to 220 exclusive passage
+owners; prerequisite unions prevent shared statements from being counted twice.
+Context, unused common theorems and all eight programs remain paid in the
+complete comparison. The `acquisition plot
+<audit/topic-d/v2/dag/costs/acquisition.pdf>`_ shows the whole common paper,
+programs and three complete applications in their declared reading order.
+The graph changes none of the combined or individual manuscript ratios.
 
 Common proofs for projective groups
 ----------------------------------
