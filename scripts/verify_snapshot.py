@@ -4280,6 +4280,100 @@ def check_l019_partial_formal_obstruction():
     return 10
 
 
+def check_l019_historical_formal_pointer():
+    """Keep the earlier scoped formal check at its exact admitted pointer."""
+    from types import FunctionType
+    base='corrections/rank-extension/transitive/v1/'
+    a=load(base+'admission.json');check_bindings([a['previous_pointer']])
+    pointers={'corrections/rank-extension/latest.json':base+'previous_pointer.json'}
+    scope=dict(check_l019_partial_formal_obstruction.__globals__,
+               load=lambda path:load(pointers.get(str(path),path)))
+    replay=FunctionType(check_l019_partial_formal_obstruction.__code__,scope,
+                        check_l019_partial_formal_obstruction.__name__,
+                        check_l019_partial_formal_obstruction.__defaults__,
+                        check_l019_partial_formal_obstruction.__closure__)
+    return replay()
+
+
+def check_l019_transitive_correction():
+    import sys,tempfile
+    base='corrections/rank-extension/transitive/v1/';a=load(base+'admission.json')
+    check_bindings(a['artifacts']+a['packets']+[a['previous_pointer']])
+    pins=['553e01b6f2d9d9675b6b855339ed5d1985be3bce7451baa075fddb3ca9b06cb2',
+          '7c4bffb5cc042d5bf1fbbbe9eae4894093cfc98cbeafa0d40d0e6364a3a7d953',
+          'abdb25d913624194ec675dd789a82b5fe7e6aa6ac15e2b2f3601b5820866c060',
+          '1d254280500c3128e9ad75c4680225e4e5286c5c0daa212ece05c236425dd37b']
+    need([r['sha256'] for r in a['packets']]==pins,'Transitive L019 accepted editions changed.')
+    for row in a['packets']:
+        parent=Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    need(a['status']=='ROOT_ADMITTED_TRANSITIVE_L019_CORRECTION_AND_PARTIAL_LEAN' and
+         a['source_id']=='L019' and a['statement_id']=='L019.T6.4' and
+         a['source_sha256']=='e64ed65af04d61964b124f864535477e46f100c4dd2f5f35e612c3bc4c52fff1' and
+         a['complete_written_pages']==4 and a['new_partial_Lean_declarations']==16 and
+         a['transitive_input'] and (a['input_rank'],a['input_degree'])==(5,11) and
+         a['transitive_T6_4_disproved'] and not a['main_stability_theorem_disproved'] and
+         not a['old_input_C_formalized'] and not a['source_hypotheses_formalized'] and
+         not a['full_source_theorem_formalized'] and not a['whole_source_recovered'] and
+         a['all_finite_computations_validation_only'] and not a['historical_priority_claim'] and
+         a['compression_factor'] is None and
+         all(a[k]==0 for k in ['new_corrected_statement_credit','new_source_credit','new_question_credit']),
+         'Transitive L019 scope inflated.')
+    review=load(base+'written_review/review.json')
+    need(review['status']=='ROOT_ACCEPTED_TRANSITIVE_COUNTEREXAMPLE_TO_LITERAL_L019_T6_4' and
+         review['full_written_proof_read'] and review['fresh_proof_pages_viewed']==[1,2,3,4] and
+         len(review['mathematical_checks'])==6 and all(r['verdict']=='ACCEPTED' for r in review['mathematical_checks']),
+         'Complete transitive written review missing.')
+    author=load(base+'public_author.json')
+    need(author['status']=='PASS' and author['original_failures']==0 and author['extended_failures']==96 and
+         author['original_intersection_checks']==1024 and author['extended_intersection_checks']==4096 and
+         len(author['rejected_damaged_examples'])==4,'Transitive author replay incomplete.')
+    with tempfile.TemporaryDirectory(prefix='human-compression-l019-transitive-') as tmp:
+        out=Path(tmp)/'report.json'
+        proc=subprocess.run([sys.executable,'-B','-O',str(ROOT/base/'written_review/check.py'),
+                             '--out',str(out)],capture_output=True,text=True)
+        need(proc.returncode==0 and out.is_file(),'Distinct tuple model failed.')
+        fresh=json.loads(out.read_text());expected=load(base+'public_distinct.json')
+        fresh.pop('elapsed_seconds');expected.pop('elapsed_seconds')
+        need(fresh==expected,'Distinct transitive result changed.')
+    need(fresh['status']=='PASS' and fresh['computed_proper_pair_intersections']==961 and
+         fresh['whole_group_pair_intersections_by_containment']==63 and
+         fresh['old_total_intersection_identities']==1024 and fresh['subgroup_formulas']==7 and
+         fresh['end_intersections']==6 and fresh['all_literal_split_hypotheses'] and
+         fresh['input_transitive'] and fresh['output_failure_labels']==[[2,3],[3,4,5]] and
+         fresh['common_labels']==[3] and fresh['witness_intersection_order']==4 and
+         fresh['common_label_subgroup_order']==2 and not fresh['source_main_stability_range_satisfied'],
+         'Actual transitive witness changed.')
+    formal=load(base+'formal_review/review.json');report=load(base+'public_formal.json')
+    need(formal['status']=='ROOT_ACCEPTED_PARTIAL_TRANSITIVE_L019_LEAN_OBSTRUCTION' and
+         formal['complete_Lean_source_read'] and formal['all_sixteen_declarations_freshly_compiled'] and
+         formal['standard_axioms_only'] and not formal['author_checker_imported'] and
+         len(formal['rejected_mutations'])==4,'Transitive formal review missing.')
+    raw=(ROOT/base/'formal/TransitiveExtensionObstruction.lean').read_text()
+    need(digest(raw.encode())=='af42f0159de8b96de73f81b366f31bfa6942876e942ba9ab2fcaae425d032c6e' and
+         not re.search(r'\b(sorry|admit|axiom|native_decide)\b',raw),'Transitive Lean source changed.')
+    logged=re.findall(r"'([^']+)' depends on axioms:\s*\[([^\]]*)\]",
+                      (ROOT/base/'public_lean.log').read_text(),re.S)
+    rows=[dict(declaration=n,axioms=re.findall(r'[A-Za-z][\w.]*',ax)) for n,ax in logged]
+    need(report['status']=='PASS_DISTINCT_FRESH_L019_TRANSITIVE_FORMAL' and report['declarations']==16 and
+         report['axiom_reports']==rows and len(rows)==16 and
+         all(set(r['axioms'])<={'propext','Classical.choice','Quot.sound'} for r in rows) and
+         rows[-1]['declaration']=='TransitiveExtensionObstruction.delta_not_C' and
+         not report['full_source_theorem_formalized'],'Transitive fresh axiom reports incomplete.')
+    pointer=load('corrections/rank-extension/latest.json')
+    check_bindings([pointer['written'],pointer['formal'],pointer['transitive']])
+    need(pointer['transitive']['path']==base+'admission.json' and
+         pointer['corrected_statements']==['L019.P2.4','L019.T6.4'] and pointer['written_pages']==9 and
+         pointer['partial_Lean_declarations']==26 and pointer['transitive_T6_4_disproved'] and
+         not pointer['main_stability_theorem_disproved'] and not pointer['whole_source_recovered'] and
+         not pointer['full_source_theorem_formalized'] and pointer['new_question_credit']==0,
+         'Current L019 statement or formal count inflated.')
+    current=load('audit/corpus/latest.json')
+    need('L019' in current['accessible_pending_original_ids'] and
+         'L019' not in current['admitted_original_ids'],'Transitive correction counted as a recovered original.')
+    return 16
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4336,7 +4430,9 @@ def main():
     nonfirm_corrections = check_nonfirm_hnn_correction()
     twist_corrections = check_affine_twist_correction()
     l019_corrections = check_l019_bounded_corrections()
-    l019_formal = check_l019_partial_formal_obstruction()
+    l019_formal = check_l019_historical_formal_pointer()
+    l019_transitive = check_l019_transitive_correction()
+    print(f"PASS: transitive L019 counterexample has a complete written input proof and {l019_transitive} fresh scoped Lean declarations; main stability and whole-source recovery remain separate.")
     print(f"PASS: {l019_formal} fresh scoped Lean declarations verify the actual rank-extension output obstruction; input C-property and source hypotheses remain written.")
     print(f"PASS: {l019_corrections} bounded L019 corrections have complete written proofs and independent finite models; full source and main stability remain separate.")
     active_measured = check_current_measurement_pointer()

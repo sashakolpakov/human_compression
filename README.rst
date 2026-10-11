@@ -1323,3 +1323,16 @@ Compression is charged honestly: each topic pays for its full umbrella once,
 then its applications, interfaces and required computations. Overlapping
 umbrellas are charged separately in independent topic comparisons. Answers
 to open questions have a separate ledger and do not inflate recovery counts.
+
+A transitive rank-extension counterexample
+-----------------------------------------
+
+The correction now also has a `four-page proof with an S11 input
+<corrections/rank-extension/transitive/v1/written/transitive_extension.pdf>`_.
+It satisfies the printed extension hypotheses and its output fails the
+intersection property. A separate `Lean certificate
+<corrections/rank-extension/transitive/v1/formal/TransitiveExtensionObstruction.lean>`_
+verifies that output obstruction in sixteen declarations. The input and
+source hypotheses remain written; the main stability theorem is outside
+this counterexample's range. This strengthens the same correction, with
+no additional manuscript or open-conjecture credit.
