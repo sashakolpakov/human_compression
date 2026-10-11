@@ -17,8 +17,8 @@ The `register of every original <audit/corpus/v1/README.rst>`_ and
 accessible manuscripts: 33 with admitted principal-result recoveries and
 71 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. Thirty-two recovered originals have measured
-comparisons; L040 awaits measurement. The catalogue
+evidence and next obligation. All thirty-three recovered originals now have measured
+comparisons. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
@@ -43,9 +43,10 @@ extensions and chiral enumeration. The `diagonal comparison
 <audit/diagonal-measurement/v1/packet/measurement.pdf>`_ brings the measured
 total to 30 originals. The `expanded A and C comparison
 <audit/ac-extensions-measurement/v1/packet/measurement.pdf>`_ brings it to
-32, covering all seven A originals and all five C originals.
-The current rates below count each complete common theory once. B retains
-its four-original factor while measurement of its fifth application is reviewed.
+32, covering all seven A originals and all five C originals. The complete
+`five-original B comparison <audit/b5-measurement/v1/packet/measurement.pdf>`_
+brings the total to 33. The current rates count each complete common theory
+once; B pays both of its current common papers in full.
 
 .. list-table:: Current measured sets within the recovery programme
    :header-rows: 1
@@ -59,9 +60,9 @@ its four-original factor while measurement of its fifth application is reviewed.
      - 1.571
      - 1.124
    * - B: Forests and marked permutations
-     - 4 / 5
-     - 1.236
-     - 1.236
+     - 5 / 5
+     - 1.051
+     - 0.947
    * - C: Chamber operations and binary translations
      - 5 / 5
      - 1.292
@@ -346,8 +347,18 @@ checked module; the existing 100-module default library is unchanged.
 Fresh compilation, hypothesis controls and reproduction of every PDF page
 passed. The geometry and complete source applications remain written proofs.
 
-The `complete available-text comparison
-<audit/available-text/v1/packet/measurement.pdf>`_ includes all four originals,
+The current `five-original B comparison
+<audit/b5-measurement/v1/packet/measurement.pdf>`_ includes L040. The originals
+cost 124,906 characters; both entire common papers cost 42,547, and all five
+applications cost 76,243. The written factor is **1.051×**. Including all four
+printed programs gives **0.947×**; using their complete raw files gives
+**0.953×**. The L040 conditional factor is **1.659×**, after acquiring both
+whole common papers and every declared program. The earlier four conditionals
+remain unchanged. Written UTF-8 counting is also below one. This is weak
+compression by the current proof method, not a measure of originality.
+
+The preserved earlier `complete available-text comparison
+<audit/available-text/v1/packet/measurement.pdf>`_ includes four originals,
 using N001's complete authored rendering. Its written factor is **1.236×**:
 73,012 / (14,124 + 44,959), charging the whole common theory once.
 After acquiring it, the four application factors are **1.970×, 1.255×,
@@ -449,8 +460,18 @@ unchanged declarations verify supporting displacement and intersection
 statements. All sixteen were freshly compiled. The specific augmentation
 maps, geometric applications and finite census remain outside Lean.
 The `publication guide <papers/topic-c/v2/PUBLICATION.rst>`_ gives the exact
-scope and separate replay commands. The `complete available-text comparison
-<audit/available-text/v1/packet/measurement.pdf>`_ includes all four originals,
+scope and separate replay commands. The current `five-original B comparison
+<audit/b5-measurement/v1/packet/measurement.pdf>`_ includes L040. The originals
+cost 124,906 characters; both entire common papers cost 42,547, and all five
+applications cost 76,243. The written factor is **1.051×**. Including all four
+printed programs gives **0.947×**; using their complete raw files gives
+**0.953×**. The L040 conditional factor is **1.659×**, after acquiring both
+whole common papers and every declared program. The earlier four conditionals
+remain unchanged. Written UTF-8 counting is also below one. This is weak
+compression by the current proof method, not a measure of originality.
+
+The preserved earlier `complete available-text comparison
+<audit/available-text/v1/packet/measurement.pdf>`_ includes four originals,
 using L108's complete authored rendering. Its written factor is **1.037×**:
 73,953 / (27,142 + 44,163). Including both complete required programs gives
 **0.923×** as printed, or **0.929×** using their raw files instead.
