@@ -41,8 +41,11 @@ def main():
     for i,s,a in zip(range(1,7),sources,apps):
         top.text(i-.16,c[s]+2100,f'{c[s]:,}',ha='center',fontsize=8)
         top.text(i+.16,c[a]+2100,f'{c[a]:,}',ha='center',fontsize=8)
-    top.text(.16,c['U_A']/2,f"U: {c['U_A']:,}",ha='center',va='center',color='white',fontsize=9)
-    top.text(.16,c['U_A']+c['code']/2,f"Code: {c['code']:,}",ha='center',va='center',fontsize=9)
+    for label,y in [(f"U: {c['U_A']:,}",c['U_A']/2),
+                    (f"Code: {c['code']:,}",c['U_A']+c['code']/2)]:
+        top.annotate(label,(.16,y),xytext=(18,0),textcoords='offset points',
+                     ha='left',va='center',color=blue,fontsize=9,
+                     arrowprops={'arrowstyle':'-','color':blue,'lw':.8})
     top.set_xticks(range(7),['Acquisition']+[f'{s} / {a}' for s,a in zip(sources,apps)])
     top.set_xlim(-.5,6.55);top.set_ylim(0,112000)
     top.set_title('The full common theory and program are acquired once',loc='left',pad=12)
