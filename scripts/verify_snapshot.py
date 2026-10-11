@@ -3614,6 +3614,42 @@ def check_wreath_recovery():
     return 34,70
 
 
+def check_overview33():
+    base = 'audit/overview/v2/'
+    a = load(base+'admission.json')
+    need(a['status']=='ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW33',
+         'Current overview lacks root admission.')
+    check_bindings(a['artifacts']+[a['previous_overview']])
+    for key in ['author_manifest','independent_manifest','author_replay','independent_replay']:
+        check_bindings([a[key]])
+    for key in ['author_manifest','independent_manifest']:
+        parent = Path(a[key]['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(a[key]['path'])['exports']])
+    spec = importlib.util.spec_from_file_location('overview33_distinct',ROOT/base/'independent_review/check.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    data = load(base+'packet/results.json')
+    fractions = checker.arithmetic(data,checker.expected(ROOT))
+    bars = checker.graphs(ROOT/base/'packet',data)
+    checker.csv_check(ROOT/base/'packet',data)
+    need(fractions==a['exact_comparisons']==72 and
+         bars==a['actual_SVG_bars']==a['actual_PDF_bars']==127 and
+         a['topic_count']==13 and a['distinct_originals']==33 and
+         set(a['original_ids'])==set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['unmeasured_originals']==['N006'] and a['pooled_factor'] is None and
+         a['no_cross_topic_common_discount'] and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Current overview scope changed.')
+    need(load(a['independent_replay']['path'])['status']=='PASS_DISTINCT_OVERVIEW33' and
+         load(a['author_replay']['path'])['status']=='PASS', 'Current overview replay missing.')
+    latest = load('audit/overview/latest.json')
+    check_bindings([latest['admission'],latest['reader']])
+    need(latest['admission']['path']==base+'admission.json' and
+         latest['reader']['path']==base+'packet/summary.pdf' and
+         latest['measured_originals']==33 and latest['topics']==13 and
+         latest['unmeasured_recovery']==['N006'], 'Current overview pointer changed.')
+    return fractions,bars
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3660,9 +3696,11 @@ def main():
     ac_extension_fractions = check_ac_extension_measurements()
     b5_fractions = check_b5_measurement()
     wreath_admitted, wreath_pending = check_wreath_recovery()
+    overview33_fractions, overview33_bars = check_overview33()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
+    print(f'PASS: current thirteen-topic overview has {overview33_fractions} exact comparisons and {overview33_bars} bars in each vector format for33 originals.')
     print(f'PASS: complete B5 comparison preserves {b5_fractions} exact fractions; {active_measured} originals measured.')
     print(f'PASS: expanded A/C topics preserve {ac_extension_fractions} exact fractions for twelve originals; two are newly measured.')
     print(f'PASS: diagonal measurement adds {diagonal_fractions} exact fractions; {active_measured} originals now measured.')

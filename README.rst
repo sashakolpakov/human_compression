@@ -29,24 +29,21 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
-The `consolidated comparison <audit/overview/v1/packet/summary.pdf>`_ gives
-all ten measured topics, all 27 individual factors and complete program costs
-in five pages. Its `whole-topic graph <audit/overview/v1/packet/whole_topics.svg>`_
-shows the full common theory and applications; the `individual graph
-<audit/overview/v1/packet/conditional_applications.svg>`_ shows each original
-and its application. See the `numerical overview <audit/overview/v1/README.rst>`_
-for exact inputs and the independent review.
+The `consolidated comparison <audit/overview/v2/packet/summary.pdf>`_ gives
+all thirteen measured topics, all thirty-three individual factors and complete
+program costs in six pages. The `topic graph
+<audit/overview/v2/packet/whole_topics.svg>`_ shows every complete common paper
+and application. Two graphs show the `first seventeen
+<audit/overview/v2/packet/conditional_1.svg>`_ and `remaining sixteen
+<audit/overview/v2/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v2/README.rst>`_ links exact tables,
+inputs and independent arithmetic and graph review.
 
-The `two additional comparisons
-<audit/additional-measurements/v1/packet/measurement.pdf>`_ add matching
-extensions and chiral enumeration. The `diagonal comparison
-<audit/diagonal-measurement/v1/packet/measurement.pdf>`_ brings the measured
-total to 30 originals. The `expanded A and C comparison
-<audit/ac-extensions-measurement/v1/packet/measurement.pdf>`_ brings it to
-32, covering all seven A originals and all five C originals. The complete
-`five-original B comparison <audit/b5-measurement/v1/packet/measurement.pdf>`_
-brings the total to 33. The current rates count each complete common theory
-once; B pays both of its current common papers in full.
+These comparisons include the expanded A, B and C sets, matching extensions,
+chiral enumeration and the earlier N007 edition. Each topic pays its whole
+common theory once; B pays both current common papers in full. N006's enlarged
+orbit-construction comparison remains pending. The earlier 27-original report
+is preserved as a historical edition.
 
 .. list-table:: Current measured sets within the recovery programme
    :header-rows: 1
