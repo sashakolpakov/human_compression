@@ -17,9 +17,8 @@ The `register of every original <audit/corpus/v1/README.rst>`_ and
 accessible manuscripts: 34 with admitted principal-result recoveries and
 70 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. Thirty-three recovered originals have measured
-comparisons; the newly admitted N006 awaits measurement. The catalogue
-itself has not grown.
+evidence and next obligation. All thirty-four recovered originals now have measured comparisons. The
+catalogue itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
 A complete authored rendering is a usable source even when its PDF is
@@ -29,21 +28,19 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
-The `consolidated comparison <audit/overview/v2/packet/summary.pdf>`_ gives
-all thirteen measured topics, all thirty-three individual factors and complete
+The `consolidated comparison <audit/overview/v3/packet/summary.pdf>`_ gives
+all thirteen measured topics, all thirty-four individual factors and complete
 program costs in six pages. The `topic graph
-<audit/overview/v2/packet/whole_topics.svg>`_ shows every complete common paper
+<audit/overview/v3/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
-<audit/overview/v2/packet/conditional_1.svg>`_ and `remaining sixteen
-<audit/overview/v2/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v2/README.rst>`_ links exact tables,
+<audit/overview/v3/packet/conditional_1.svg>`_ and `remaining seventeen
+<audit/overview/v3/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v3/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
 
-These comparisons include the expanded A, B and C sets, matching extensions,
-chiral enumeration and the earlier N007 edition. Each topic pays its whole
-common theory once; B pays both current common papers in full. N006's enlarged
-orbit-construction comparison remains pending. The earlier 27-original report
-is preserved as a historical edition.
+B now uses one complete common paper; the enlarged orbit topic includes both
+N007 and N006 with all companion papers. Each topic pays its entire common
+theory once, independently of other topics. Earlier reports remain preserved.
 
 .. list-table:: Current measured sets within the recovery programme
    :header-rows: 1
@@ -56,10 +53,10 @@ is preserved as a historical edition.
      - 7 / 7
      - 1.571
      - 1.124
-   * - B: Forests and marked permutations
+   * - B: Coset geometries and symmetric markings
      - 5 / 5
-     - 1.051
-     - 0.947
+     - 1.094
+     - 0.981
    * - C: Chamber operations and binary translations
      - 5 / 5
      - 1.292
@@ -100,10 +97,10 @@ is preserved as a historical edition.
      - 1 / 1
      - 0.925
      - 0.674
-   * - Orbit constructions: earlier N007 comparison
-     - 1 / 2
-     - 1.007
-     - 0.884
+   * - Orbit and semidirect constructions
+     - 2 / 2
+     - 1.129
+     - Unavailable; 0.170 with full raw software
 
 These are text costs, not minimum proof complexities. The reports specify
 the complete program boundary, raw-code alternatives, retained external
@@ -272,12 +269,13 @@ and interface checks pass; actual browser layout has not been certified.
 Forest coordinates and primitive geometries
 -------------------------------------------
 
-Topic B's `common theory <papers/topic-b/v2/umbrella.pdf>`_ proves how
-weighted tree cuts determine subgroup intersections and complete partial
-flags. A second shared argument derives generation from maximal subgroup
-intersections. Four applications check these hypotheses in their own
-geometries. The fifth adds a complete common paper on irredundant generation
-and finite cores on trees, then proves the high-rank classification.
+Topic B's sixteen-page `common theory <papers/topic-b/v3/umbrella.pdf>`_
+proves the shared coset, tree, generation and extremal-classification results
+used by all five applications. One classification now supplies both arbitrary
+maximal independent markings and the involution case. A single normal-quotient
+argument and a common extension theorem for nested subsets remove repeated
+proofs. Local core, fracture, presentation and retained classification
+obligations remain explicit.
 
 .. list-table:: Five source manuscripts and the results recovered
    :header-rows: 1
@@ -289,70 +287,46 @@ and finite cores on trees, then proves the high-rank classification.
    * - N001: Buekenhout–Cara, *Some properties of inductively minimal
        geometries* (1998); complete authored browser text
      - Theorem 1, all four clauses; the PRI criterion is stated precisely
-     - `Tree coordinates <papers/topic-b/v2/inductively-minimal-geometries.pdf>`_
+     - `Tree coordinates <papers/topic-b/v3/inductively-minimal-geometries.pdf>`_
    * - N003: Cameron–Cara, *Independent generating sets and geometries for
        symmetric groups* (2002); twelve-page author manuscript
      - Eight stated results, including the classification for n >= 7 and
        all three counting conventions
-     - `Extremal markings <papers/topic-b/v2/maximal-symmetric-markings.pdf>`_
+     - `Extremal markings <papers/topic-b/v3/maximal-symmetric-markings.pdf>`_
    * - N008: Archer–Cara–Krempa, *Using the Frattini Subgroup and Independent
        Generating Sets to Study RWPRI Geometries* (2005); published edition
      - Eleven clauses: geometric containment, finite p-group coordinates
        and counts; corrected infinite generating-set converse
-     - `Frattini coordinates <papers/topic-b/v2/frattini-coordinate-geometries.pdf>`_
+     - `Frattini coordinates <papers/topic-b/v3/frattini-coordinate-geometries.pdf>`_
    * - L030: Garcia-Colin–Leemans, *An infinite family of incidence
        geometries whose incidence graphs are locally X*; ten-page revised
        institutional manuscript associated with the 2021 publication
      - Seven clauses, including distances, residues and full graph
        automorphisms; panel, thin-boundary and example corrections retained
-     - `Disjoint-subset geometries <papers/topic-b/v2/disjoint-subset-geometries.pdf>`_
+     - `Disjoint-subset geometries <papers/topic-b/v3/disjoint-subset-geometries.pdf>`_
    * - L040: Fernandes–Leemans, *C-groups of high rank for the symmetric
        groups* (2018); accepted manuscript, twenty authored pages and cover
      - Ranks n−1 and n−2 in their full ranges: classification, tree
        presentations and regular hypertopes; corrected branching clause
-     - `Finite cores and high rank <papers/topic-b/extensions/high-rank/v1/high-rank-symmetric-markings.pdf>`_
+     - `Finite cores and high rank <papers/topic-b/v3/high-rank-symmetric-markings.pdf>`_
 
-The fifth application's `common addition
-<papers/topic-b/extensions/high-rank/v1/umbrella.pdf>`_ has ten pages and its
-application eleven. The `complete program appendix
-<papers/topic-b/extensions/high-rank/v1/program-appendix.pdf>`_ prints four
-whole programs in seven pages. Its `distinct review and admission
-<audit/topic-b/extensions/high-rank/v1/README.rst>`_ cover the full uniform
-converse, all allowed branching and all flags. Eight scoped Lean declarations
-verify normalization and independence; they do not formalize the classification.
-The auxiliary exact primitive-rank census and numerical leaf convention are
-not recovered by this edition. No open-conjecture answer is added.
+The `scientific admission <audit/topic-b/v3/README.rst>`_ preserves all 65
+source dispositions and records distinct review of the complete arguments.
+The five applications have 3, 4, 4, 5 and 11 pages; the complete four-program
+appendix has seven. Fourteen reused Lean declarations verify specified
+subgroup and normalization lemmas, not the full classification. The auxiliary
+primitive-rank census and unspecified leaf convention remain outside the
+principal-result contract. No new original or conjecture answer is added.
 
-The enlarged topic pays the whole earlier common paper and the whole new
-common addition. A numerical comparison is pending. The four-original rates
-below retain their earlier scope; they are not a factor for all five originals.
-
-For the earlier four-original set, the common paper has five pages and the
-four applications total seventeen.
-Their `independent review <audit/topic-b/v2/independent_review/review.rst>`_
-and `admission <audit/topic-b/v2/admission.json>`_ preserve all thirty
-declared source clauses. These are four existing contracts, with their
-original attribution; no new manuscript or solved-question credit is added.
-Buekenhout–Cara–Dehon's foundational classification and the two distinct
-Whiston inputs remain explicit dependencies. The applications prove their
-local Frattini and graph reconstruction arguments in full.
-
-The `publication guide <papers/topic-b/v2/README.rst>`_ links the corrected
-source map and explains the formal limits. Six new Lean declarations verify
-the actual subgroup induction and its consequences. They form a separately
-checked module; the existing 100-module default library is unchanged.
-Fresh compilation, hypothesis controls and reproduction of every PDF page
-passed. The geometry and complete source applications remain written proofs.
-
-The current `five-original B comparison
-<audit/b5-measurement/v1/packet/measurement.pdf>`_ includes L040. The originals
-cost 124,906 characters; both entire common papers cost 42,547, and all five
-applications cost 76,243. The written factor is **1.051×**. Including all four
-printed programs gives **0.947×**; using their complete raw files gives
-**0.953×**. The L040 conditional factor is **1.659×**, after acquiring both
-whole common papers and every declared program. The earlier four conditionals
-remain unchanged. Written UTF-8 counting is also below one. This is weak
-compression by the current proof method, not a measure of originality.
+The `current five-original comparison
+<audit/b-unified-measurement/v1/packet/reader.pdf>`_ is
+124,906 / (44,905 + 69,265) = **1.094×**. Including every printed program gives
+**0.981×**; the complete raw alternative gives **0.987×**. After full prior
+acquisition, the five application factors are **1.970×, 1.942×, 1.618×,
+1.848× and 1.770×**. The complete written edition is 4,620 characters shorter
+than our previous edition. This measures the present proof method, not an
+intrinsic minimum or originality. The previous `two-common-paper comparison
+<audit/b5-measurement/v1/packet/measurement.pdf>`_ remains a historical record.
 
 The preserved earlier `complete available-text comparison
 <audit/available-text/v1/packet/measurement.pdf>`_ includes four originals,
@@ -457,15 +431,7 @@ unchanged declarations verify supporting displacement and intersection
 statements. All sixteen were freshly compiled. The specific augmentation
 maps, geometric applications and finite census remain outside Lean.
 The `publication guide <papers/topic-c/v2/PUBLICATION.rst>`_ gives the exact
-scope and separate replay commands. The current `five-original B comparison
-<audit/b5-measurement/v1/packet/measurement.pdf>`_ includes L040. The originals
-cost 124,906 characters; both entire common papers cost 42,547, and all five
-applications cost 76,243. The written factor is **1.051×**. Including all four
-printed programs gives **0.947×**; using their complete raw files gives
-**0.953×**. The L040 conditional factor is **1.659×**, after acquiring both
-whole common papers and every declared program. The earlier four conditionals
-remain unchanged. Written UTF-8 counting is also below one. This is weak
-compression by the current proof method, not a measure of originality.
+scope and separate replay commands.
 
 The preserved earlier `complete available-text comparison
 <audit/available-text/v1/packet/measurement.pdf>`_ includes four originals,
@@ -1069,7 +1035,7 @@ The complete eight-page `common theory
 <papers/topic-diagonal/v2/papers/umbrella.pdf>`_ proves the orbit construction
 with general chamber stabilizers, as well as module intersections and changes
 of marking by cocycles. It extends the earlier five-page N007 theory. The
-whole enlarged common paper will be charged once for the two originals.
+whole enlarged common paper is charged once for the two originals.
 
 .. list-table:: Source and results recovered
    :header-rows: 1
@@ -1104,9 +1070,15 @@ generation or sporadic computations. All finite certificates independently
 pass generation, full subset intersection and actual flag-product tests.
 The Harada–Norton case fills an omission in the source discussion; the O’Nan
 existence proof uses a direct witness because the proposed duality route fails.
-This recovery adds no open-question credit. The enlarged topic’s complete
-length comparison remains pending; the older N007-only factor below does not
-apply to it.
+This recovery adds no open-question credit. The `complete two-original
+comparison <audit/diagonal-measurement/v2/packet/reader.pdf>`_ is
+78,889 / (19,859 + 50,036) = **1.129×** as written. All nineteen whole
+programs and witnesses plus both required decoders add 394,294 characters,
+giving **0.170×**. No complete printed software alternative exists. Required
+representation files (21,960,689 bytes) and listed installed files (2,516,249
+bytes) are separately inventoried. The conditional factors are **1.944×**
+and **1.464×**, after acquiring the full theory, software and required data.
+The older N007-only factor below remains historical.
 
 Independent review corrected our quotient argument and checked a separate
 example with a nontrivial chamber kernel. Eight Lean identities and complete

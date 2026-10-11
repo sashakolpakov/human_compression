@@ -3688,6 +3688,123 @@ def check_fischer_answers():
     return 2
 
 
+def check_historical_overview33():
+    """Run the unchanged historical check against its exact admitted pointers."""
+    from types import FunctionType
+    current = load('audit/overview/v3/admission.json')
+    check_bindings([current['historical33_pointer']])
+    original_load = load
+    historical_paths = {
+        'audit/corpus/latest.json': 'audit/corpus/updates/wreath-products.json',
+        'audit/overview/latest.json': 'audit/overview/v2/latest_at_admission.json',
+    }
+    def historical_load(path):
+        return original_load(historical_paths.get(str(path), path))
+    context = dict(check_overview33.__globals__, load=historical_load)
+    old_check = FunctionType(check_overview33.__code__, context,
+                             check_overview33.__name__, check_overview33.__defaults__)
+    return old_check()
+
+
+def check_unified_b_science_and_new_measurements():
+    base = 'audit/topic-b/v3/'
+    a = load(base+'admission.json')
+    need(a['status']=='ROOT_ADMITTED_UNIFIED_B_COMPLETE_CORRECTED_CONTRACTS' and
+         a['originals']==['N001','N003','N008','L030','L040'] and
+         [a[k] for k in ['source_rows','proof_contexts','transfer_pairs','complete_programs',
+                        'reused_partial_Lean_declarations']]==[65,56,18,4,14] and
+         a['whole_common_charged_once'] and not a['full_formalization'] and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Unified B scientific scope changed.')
+    check_bindings(a['artifacts']+a['prior_admissions'])
+    need(a['author_manifest']['sha256']=='21aeba398dfda4766d3ff441032672ddde2efdac14fef8f67258c971dd827965' and
+         a['independent_manifest']['sha256']=='f4199f6f7dc0e6b41e921df1bbb88f71ad2b779e8dc90dcbc450ebf41736c937',
+         'Unified B accepted editions changed.')
+    for key in ['author_manifest','independent_manifest','public_author_replay','public_distinct_replay']:
+        check_bindings([a[key]])
+    for key in ['author_manifest','independent_manifest']:
+        row=a[key];parent=Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    m=load(base+'independent_review/mathematical_review.json')
+    need(m['status']=='ACCEPTED_FULL_DECLARED_TRANSFER' and
+         not m['remaining_mathematical_corrections_requested'] and
+         len(m['actual_eliminations'])==5 and len(m['not_eliminated'])==4,
+         'Unified B mathematical review missing.')
+    own=load(a['public_author_replay']['path']);distinct=load(a['public_distinct_replay']['path'])
+    need(own['status']==distinct['status']=='PASS' and own['unchanged_source_rows']==65 and
+         len(own['controls'])==8 and len(distinct['semantic_controls'])==11 and
+         distinct['inherited_transfer_pairs']==18 and distinct['proof_contexts']==56 and
+         distinct['new_Lean_declarations']==0,'Unified B published replays changed.')
+    s=load('papers/topic-b/v3/scope.json')
+    for node,row in s['proof_contexts'].items():
+        text=(ROOT/'papers/topic-b/v3'/row['path']).read_text()
+        fragment=text[row['start_codepoint']:row['end_codepoint_exclusive']]
+        need(sha256(fragment.encode()).hexdigest()==row['sha256_utf8'],
+             'Unified B complete proof context changed: '+node)
+    total=0
+    for topic,folder,pin,review_pin,nf,nb in [
+        ('B','audit/b-unified-measurement/v1/','5b04d4bb4b10cf085bb57a591d91d4e01e0508b4c684bb9b78d1942111095a05','b409816ba7e38fa47669630ac2a59a193438a40cb39d02995587e2d8537e055d',360,15),
+        ('Diagonal','audit/diagonal-measurement/v2/','53bfa0d55a9c834014f53a74798cee0b9e65ed1f7a42b184891889362a172fce','cb9f98d5139380a1f32f7d845d50a429f74248933c45f7870fbac5817d92b35e',160,7)]:
+        ad=load(folder+'admission.json');check_bindings(ad['artifacts']+ad['scientific_admissions'])
+        need(ad['status']=='ROOT_ADMITTED_COMPLETE_TOPIC_NUMERICAL_COMPARISON' and
+             ad['topic']==topic and ad['author_manifest']['sha256']==pin and
+             ad['independent_manifest']['sha256']==review_pin and ad['exact_fractions']==nf and
+             all(ad[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+             'New complete numerical acceptance changed.')
+        for key in ['author_manifest','independent_manifest','public_author_replay','public_distinct_replay']:
+            check_bindings([ad[key]])
+        spec=importlib.util.spec_from_file_location('new_distinct_'+topic,ROOT/folder/'independent_review/check.py')
+        checker=importlib.util.module_from_spec(spec);spec.loader.exec_module(checker)
+        packet=ROOT/folder/'packet';checker.manifest(packet,pin)
+        rows,counts=checker.derive(packet);data=load(folder+'packet/results.json')
+        primary=checker.validate(data,rows);checker.csvs(packet,rows,counts)
+        svg=checker.svg_rectangles((packet/'costs.svg').read_bytes());pdf,height=checker.pdf_rectangles(packet/'costs.pdf')
+        if topic=='B':checker.vectors(svg,pdf,height,primary)
+        else:checker.vector_costs(svg,pdf,height,primary)
+        need(ad['primary']==primary and len(svg)==len(pdf)==nb and
+             load(ad['public_author_replay']['path'])['status']=='PASS' and
+             load(ad['public_distinct_replay']['path'])['exact_fractions']==nf,
+             'New complete arithmetic or replay changed.')
+        total+=nf
+    current=load('audit/corpus/latest.json')
+    need(current['currently_measured_originals']==34 and current['measurement_pending_original_ids']==[] and
+         current['admitted_principal_originals']==34 and current['accessible_pending_complete_recovery']==70 and
+         current['pending_source_retrieval']==57,'Current34 partition changed.')
+    return total
+
+
+def check_overview34():
+    base='audit/overview/v3/'
+    a=load(base+'admission.json')
+    check_bindings(a['artifacts']+[a['previous_overview'],a['historical33_pointer']]+a['current_measurement_admissions'])
+    for key in ['author_manifest','independent_manifest','author_replay','independent_replay']:
+        check_bindings([a[key]])
+    for key in ['author_manifest','independent_manifest']:
+        parent=Path(a[key]['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(a[key]['path'])['exports']])
+    need(a['author_manifest']['sha256']=='cef9498931b3abd646babe4cdbdb8e15ee87cf5a52c25febee7ff9e3239a83e0' and
+         a['independent_manifest']['sha256']=='684a41119279ffa79bd36bc2038473d70f9d432637a596de41089b09b1428045',
+         'Current34 accepted editions changed.')
+    spec=importlib.util.spec_from_file_location('overview34_distinct',ROOT/base/'independent_review/check.py')
+    checker=importlib.util.module_from_spec(spec);spec.loader.exec_module(checker)
+    data=load(base+'packet/results.json');nf=checker.arithmetic(data,checker.expected(ROOT))
+    nb=checker.graphs(ROOT/base/'packet',data);checker.csv_check(ROOT/base/'packet',data)
+    need(a['status']=='ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW34' and
+         nf==a['exact_comparisons']==72 and nb==a['actual_SVG_bars']==a['actual_PDF_bars']==133 and
+         a['topic_count']==13 and a['distinct_originals']==34 and a['unmeasured_originals']==[] and
+         set(a['original_ids'])==set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Current34 overview accounting changed.')
+    need(load(a['independent_replay']['path'])['status']=='PASS_DISTINCT_OVERVIEW34' and
+         load(a['author_replay']['path'])['status']=='PASS','Current34 published replays changed.')
+    latest=load('audit/overview/latest.json');check_bindings([latest['admission'],latest['reader']])
+    need(latest['admission']['path']==base+'admission.json' and
+         latest['reader']['path']==base+'packet/summary.pdf' and latest['measured_originals']==34 and
+         latest['topics']==13 and latest['unmeasured_recovery']==[],'Current34 overview pointer changed.')
+    return nf,nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3734,12 +3851,15 @@ def main():
     ac_extension_fractions = check_ac_extension_measurements()
     b5_fractions = check_b5_measurement()
     wreath_admitted, wreath_pending = check_wreath_recovery()
-    overview33_fractions, overview33_bars = check_overview33()
+    overview33_fractions, overview33_bars = check_historical_overview33()
+    unified_fractions = check_unified_b_science_and_new_measurements()
+    overview34_fractions, overview34_bars = check_overview34()
     fischer_cases = check_fischer_answers()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
-    print(f'PASS: current thirteen-topic overview has {overview33_fractions} exact comparisons and {overview33_bars} bars in each vector format for33 originals.')
+    print(f'PASS: current thirteen-topic overview has {overview34_fractions} exact comparisons and {overview34_bars} bars in each vector format for34 originals.')
+    print(f'PASS: unified B scientific transfer and enlarged orbit comparison preserve {unified_fractions} new-edition fractions; historical33 overview is separately checked.')
     print(f'PASS: {fischer_cases} Fischer possible-exception cases have separate accepted proofs and exact certificates; no new original, priority or full Lean claim.')
     print(f'PASS: complete B5 comparison preserves {b5_fractions} exact fractions; {active_measured} originals measured.')
     print(f'PASS: expanded A/C topics preserve {ac_extension_fractions} exact fractions for twelve originals; two are newly measured.')
@@ -3766,11 +3886,11 @@ def main():
     print('PASS: Topic E paired proof graphs preserve all 90 source/application/program cost coordinates.')
     print(f'PASS: Topic A paired proof graphs preserve all {a_dag_cells} complete-document cost coordinates.')
     print(f'PASS: Topic B preserves {b_clauses} source clauses and {b_declarations} separately checked Lean declarations.')
-    print(f'PASS: Topic B has {b_cells} independent metric cells and {b_fractions} conditional fractions; N001 and the overall factor remain unknown.')
+    print(f'PASS: Topic B has {b_cells} independent metric cells and {b_fractions} conditional fractions; historical PDF-only N001 cost stays unknown; current available-text measurements are checked separately.')
     print(f'PASS: Topic B paired proof graphs preserve all {b_dag_cells} complete-document coordinates and 64 prerequisite closures.')
     print(f'PASS: Topic C preserves {c_rows} contract rows, {c_declarations} scoped Lean declarations and the full Janko census.')
-    print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, L108 remains unknown.')
-    print(f'PASS: Topic C paired proof graphs preserve all {c_dag_cells} complete-document coordinates and {c_closures} prerequisite unions; L108 remains unknown.')
+    print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, historical PDF-only L108 cost stays unknown; current available-text measurements are separate.')
+    print(f'PASS: Topic C paired proof graphs preserve all {c_dag_cells} complete-document coordinates and {c_closures} prerequisite unions; historical PDF-only L108 cost stays unknown; current available-text measurements are separate.')
     print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
     print(f'PASS: Topic D generic support counting has {d_support_declarations} independently compiled declarations; source-specific instances remain separate.')
     print(f'PASS: Topic D has {d_cells} independent PDF metric cells and {d_fractions} exact combined/conditional fractions; complete programs and separate drivers are explicit.')
