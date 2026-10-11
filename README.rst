@@ -17,8 +17,8 @@ The `register of every original <audit/corpus/v1/README.rst>`_ and
 accessible manuscripts: 33 with admitted principal-result recoveries and
 71 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. Thirty recovered originals have measured
-comparisons; L040, L068 and L128 await measurement. The catalogue
+evidence and next obligation. Thirty-two recovered originals have measured
+comparisons; L040 awaits measurement. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
@@ -41,11 +41,11 @@ The `two additional comparisons
 <audit/additional-measurements/v1/packet/measurement.pdf>`_ add matching
 extensions and chiral enumeration. The `diagonal comparison
 <audit/diagonal-measurement/v1/packet/measurement.pdf>`_ brings the measured
-total to 30 originals.
-The current rates below count each complete common theory once. The A and C
-rates still cover their earlier six and four originals. B likewise retains
-its four-original factor; all three enlarged topics
-await measurement.
+total to 30 originals. The `expanded A and C comparison
+<audit/ac-extensions-measurement/v1/packet/measurement.pdf>`_ brings it to
+32, covering all seven A originals and all five C originals.
+The current rates below count each complete common theory once. B retains
+its four-original factor while measurement of its fifth application is reviewed.
 
 .. list-table:: Current measured sets within the recovery programme
    :header-rows: 1
@@ -55,17 +55,17 @@ await measurement.
      - Whole written factor
      - With printed programs
    * - A: Supported kernels and finite two-groups
-     - 6 / 7
-     - 1.535
-     - 1.083
+     - 7 / 7
+     - 1.571
+     - 1.124
    * - B: Forests and marked permutations
      - 4 / 5
      - 1.236
      - 1.236
    * - C: Chamber operations and binary translations
-     - 4 / 5
-     - 1.037
-     - 0.923
+     - 5 / 5
+     - 1.292
+     - 1.052
    * - D: Stabilizers and geometry enumeration
      - 3 / 3
      - 1.053
@@ -177,9 +177,14 @@ The `seventh application's admission
 <audit/topic-a/extensions/diagram-symmetries/v1/admission.json>`_ includes a
 distinct review of all fourteen source clauses, an independent finite search
 and six scoped Lean declarations. It uses the whole existing common paper.
-Its three-page application and complete one-page program appendix await a
-length audit. The figures below remain the comparison of the earlier six
-originals; they are not a factor for the enlarged seven-original topic.
+Its three-page application and complete one-page program appendix are included
+in the `expanded comparison <audit/ac-extensions-measurement/v1/packet/measurement.pdf>`_.
+The seven originals cost 213,803 characters, the whole common theory 49,059
+and all applications 87,019: **1.571×** as written. All five printed programs
+add 54,210, giving **1.124×**; the raw alternative gives **1.132×**.
+After acquiring the whole theory and program bundle, L128/A7 is **2.101×**.
+The six earlier application factors are unchanged. The older figures below
+remain the comparison of their original six-manuscript set.
 
 The `scope reader <audit/topic-a/v2/SCOPE.rst>`_ states the exact coverage,
 exclusions, attribution and formal limits. The `proof admission
@@ -421,10 +426,14 @@ computations and three reused Lean incidence lemmas. The complete
 `incidence note <papers/topic-c/extensions/livingstone/v1/incidence-reconstruction.pdf>`_
 adds two pages to the common input; the application has six pages and its
 `complete program appendix <papers/topic-c/extensions/livingstone/v1/programs.pdf>`_
-has eight. The shared construction program will be charged once within C;
-the old exhaustive census remains in the full-topic boundary. Measurement
-of the enlarged five-original topic is pending. The following figures cover
-the earlier four originals only.
+has eight. The `expanded comparison <audit/ac-extensions-measurement/v1/packet/measurement.pdf>`_
+charges the shared construction once and retains the whole old exhaustive census.
+The five originals cost 118,433 characters, the complete enlarged common theory
+30,437 and all applications 61,248: **1.292×** as written. The three complete
+printed programs add 20,933, giving **1.052×**; raw files give **1.061×**.
+After acquiring the whole enlarged theory and bundle, L068/C5 is **2.603×**.
+The four earlier application factors remain unchanged. The following figures
+cover that earlier four-original set only.
 
 The earlier common paper has ten pages and its four applications total seventeen.
 The `four-page program appendix <papers/topic-c/v2/required-programs.pdf>`_

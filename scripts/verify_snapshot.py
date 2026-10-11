@@ -3452,6 +3452,58 @@ def check_diagonal_measurement():
     return 120
 
 
+def check_ac_extension_measurements():
+    base='audit/ac-extensions-measurement/v1';a=load(base+'/admission.json')
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_UPDATED_TOPIC_MEASUREMENTS' and
+         a['source_ids']==['L068','L128'] and a['newly_measured_originals']==2 and
+         a['original_manuscripts']==12 and a['independent_topics']==2 and
+         a['new_principal_credit']==a['new_question_credit']==0 and
+         not a['full_formalization_claim'] and a['whole_common_charged'] and
+         not a['cross_topic_discount'] and all(x is None for x in a['unknown_costs'].values()),
+         'Expanded A/C measurement scope.')
+    check_bindings(a['artifacts']+a['scientific_admissions']+a['earlier_measurements'])
+    for row in a['packets'].values():
+        check_bindings([row]);parent=Path(row['path']).parent;exports=load(row['path'])['exports']
+        need(len(exports)==row['exports'],'Expanded A/C export count.')
+        check_bindings([dict(x,path=str(parent/x['path'])) for x in exports])
+    check_bindings([a['public_replay'],a['public_independent_replay']])
+    r=load(a['public_replay']['path']);q=load(a['public_independent_replay']['path'])
+    need(r['status']=='PASS' and r['exact_generated_files']==6 and r['exact_reader_page_texts']==2 and
+         len(r['arithmetic']['semantic_controls'])==18 and
+         q['status']=='PASS_DISTINCT_NUMERICAL_REVIEW' and q['coordinates']==60 and
+         q['exact_fractions']==q['csv_rows']==540 and q['svg_bars']==q['pdf_bars']==12 and
+         q['baselines_and_stacking'] and len(q['independent_controls'])==9 and q['primary']==a['primary'],
+         'Expanded A/C independent arithmetic and actual plots.')
+    covered=[]
+    for topic,source,common,apps,printed,raw,count in [('A',213803,49059,87019,54210,52807,7),
+                                                    ('C',118433,30437,61248,20933,19937,5)]:
+        x=a['primary'][topic]
+        need(x['source_sum']==source and x['common_theory']==common and x['applications']==apps and
+             x['printed_program_cost']==printed and x['raw_program_alternative']==raw and
+             x['original_manuscripts']==count and len(x['individual'])==count,'Complete A/C costs.')
+        for kind,den in [('written',common+apps),('including_printed_programs',common+apps+printed),
+                         ('including_raw_programs',common+apps+raw)]:
+            need(x['whole'][kind]['numerator']==source and x['whole'][kind]['denominator']==den,
+                 'Whole enlarged topic denominator.')
+        need(x['conditional_acquisition']==dict(full_common=common,full_printed_programs=printed,
+             full_raw_programs=raw,printed_and_raw_are_alternatives=True),'Full conditional acquisition.')
+        covered.extend(y['source'] for y in x['individual'])
+    need(len(set(covered))==12 and sorted(covered)==a['compared_original_ids'],'Unique compared originals.')
+    cur=load('audit/corpus/updates/ac-extensions-measurement.json');check_bindings([cur['previous_snapshot']]+cur['added_measurements'])
+    old=load(cur['previous_snapshot']['path'])
+    need(cur['currently_measured_originals']==32 and cur['measurement_pending_original_ids']==['L040'] and
+         set(cur['measured_original_ids'])==set(old['measured_original_ids'])|{'L068','L128'} and
+         all(cur[k]==old[k] for k in ['admitted_original_ids','accessible_pending_original_ids','retrieval_original_ids']),
+         'Measurement update preserves scientific and retrieval status.')
+    cat=load('papers/catalogue_ac_measurement.json');check_bindings([cat['previous_catalogue']]);oldcat=load(cat['previous_catalogue']['path'])
+    need(len(cat['entries'])==len(oldcat['entries'])==11,'Expanded measurement catalogue extent.')
+    for row,prior in zip(cat['entries'],oldcat['entries']):
+        want=dict(prior)
+        if row['topic'] in ['A','C']:want.update(measurement_status='admitted',measurement_admission=base+'/admission.json')
+        need(row==want,'A/C measurement changes scientific identity.')
+    return 540
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3495,8 +3547,10 @@ def main():
     extra_measure_fractions = check_two_additional_measurements()
     high_rank_admitted, high_rank_pending = check_high_rank_symmetric_extension()
     diagonal_fractions = check_diagonal_measurement()
+    ac_extension_fractions = check_ac_extension_measurements()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
+    print(f'PASS: expanded A/C topics preserve {ac_extension_fractions} exact fractions for twelve originals; two are newly measured.')
     print(f'PASS: diagonal measurement adds {diagonal_fractions} exact fractions; {active_measured} originals now measured.')
     print(f'PASS: high-rank extension preserves {high_rank_admitted} admitted originals and {high_rank_pending} accessible pending; measurement remains separate.')
     print(f'PASS: graph application extensions preserve {graph_admitted} admitted originals and {graph_pending} accessible pending; no new question credits.')
