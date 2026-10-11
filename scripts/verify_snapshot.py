@@ -4560,6 +4560,68 @@ def check_overview36():
     return nf,nb
 
 
+def check_l020_case_three_correction():
+    base = 'corrections/rank-augmentation/v1/'
+    admission = load(base + 'admission.json')
+    need(admission['status'] == 'ROOT_ADMITTED_L020_CASE_THREE_CORRECTION' and
+         admission['source_statement'] == 'L020.Theorem4.1(3)' and
+         admission['written_pages'] == 3 and admission['partial_Lean_declarations'] == 13 and
+         admission['new_principal_original_credit'] == admission['new_question_credit'] == 0 and
+         admission['compression_factor'] is None and
+         not any(admission[k] for k in ['whole_source_recovered', 'cases_one_two_decided',
+             'high_rank_stability_disproved', 'end_to_end_source_disproof_formalized',
+             'historical_priority_claim']), 'L020 correction scope inflated.')
+    check_bindings(admission['artifacts'])
+    for directory, pin, count in [
+        ('written', '95447aed8d01e873306eb55b463b13ab037c709a752ffcb3bcca172c70534bfd', 9),
+        ('formal', '0ccc90e1df556584071527d0b1271d26379e60e1a5839133e274ba7013dcf57e', 11),
+        ('independent_review', 'a7bff99650e4a219ed2e0d8487e37f3cd8f870c5ad1a143d27fc64172ca14a63', 12)]:
+        manifest_path = base + directory + '/manifest.json'
+        need(digest((ROOT / manifest_path).read_bytes()) == pin, 'Changed reviewed L020 packet.')
+        rows = load(manifest_path)['exports']
+        need(len(rows) == count, 'Incomplete L020 packet.')
+        check_bindings([dict(r, path=base + directory + '/' + r['path']) for r in rows])
+    written = load(base + 'written/scope.json')
+    review = load(base + 'independent_review/review.json')
+    need(len(written['hypotheses']) == 10 and len(written['proof_contexts']) == 5 and
+         review['all_three_written_pages_read'] and review['all_thirteen_formal_declarations_read'] and
+         review['source_theorem_pages'] == [5, 6] and review['source_proof_defect_page'] == 16 and
+         not review['whole_original_read'], 'Missing exact L020 review scope.')
+    fresh = load(base + 'public_replay.json')
+    need(fresh == load(base + 'independent_review/distinct_report.json') and
+         fresh['status'] == 'PASS_DISTINCT_ROOT' and fresh['old_IP_pairs'] == 64 and
+         fresh['old_group_order'] == fresh['last_end_order'] == 6402373705728000 and
+         fresh['tree_edges'] == 17 and fresh['middle_group_order'] == 6 and
+         fresh['first_end_order'] == fresh['end_intersection_order'] == 48 and
+         fresh['exact_disjoint_label_witness'] and not fresh['author_program_imports'] and
+         fresh['standard_axioms_only'], 'Distinct L020 computation changed.')
+    formal = load(base + 'formal/scope.json')
+    need(fresh['formal_declarations'] == formal['declarations'] and len(formal['declarations']) == 13,
+         'Actual output formal inventory changed.')
+    author_formal = load(base + 'independent_review/formal_author_replay.json')
+    need(author_formal['status'] == 'PASS' and len(author_formal['rejected_mutations']) == 4 and
+         set(author_formal['actual_permutation_bridge']) == {'a', 'b', 'c', 't'} and
+         not author_formal['old_input_C_formalized'] and not author_formal['source_hypotheses_formalized'],
+         'Formal bridge or mutation evidence missing.')
+    raw = (ROOT / base / 'formal/RankAugmentationObstruction.lean').read_text()
+    need(not re.search(r'\b(sorry|admit|axiom|native_decide)\b', raw), 'Changed L020 formal trust boundary.')
+    source = (ROOT / base / 'written/case_three.tex').read_text()
+    changes = load(base + 'publication_changes.json')['changes']
+    need(len(changes) == 2, 'Unexpected publication changes.')
+    for change in changes:
+        need(source.count(change['old']) == 1, 'Missing reviewed publication anchor.')
+        source = source.replace(change['old'], change['new'])
+    need(source == (ROOT / base / 'case_three.tex').read_text(), 'Unreviewed mathematical publication edit.')
+    edition = load(base + 'publication_edition.json')
+    need(edition['status'] == 'PASS_REVIEW_STATUS_ONLY_PUBLICATION_EDITION' and
+         edition['pages'] == 3 and edition['mathematical_text_identical_after_recorded_status_changes'] and
+         edition['fresh_pages_viewed'] == [1, 2, 3] and not edition['diagnostics'], 'Public render not reviewed.')
+    current = load('audit/corpus/latest.json')
+    need('L020' in current['accessible_pending_original_ids'] and
+         'L020' not in current['admitted_original_ids'], 'Bounded correction counted as a complete original.')
+    return 13
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4619,6 +4681,8 @@ def main():
     l019_formal = check_l019_historical_formal_pointer()
     l019_transitive = check_l019_transitive_correction()
     restriction_kernel_declarations = check_restriction_kernel_theory()
+    l020_formal = check_l020_case_three_correction()
+    print(f"PASS: L020 case(3) has a complete written counterexample and {l020_formal} scoped Lean declarations; full source remains pending.")
     print(f"PASS: complete restriction-kernel criteria and {restriction_kernel_declarations} generic Lean lemmas; no additional original, question or compression credit.")
     print(f"PASS: transitive L019 counterexample has a complete written input proof and {l019_transitive} fresh scoped Lean declarations; main stability and whole-source recovery remain separate.")
     print(f"PASS: {l019_formal} fresh scoped Lean declarations verify the actual rank-extension output obstruction; input C-property and source hypotheses remain written.")

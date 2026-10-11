@@ -1360,3 +1360,18 @@ counterexample and give uniform positive families. The `independent audit
 <audit/restriction-kernels/v1/README.rst>`_ includes three generic Lean lemmas;
 the full permutation criteria remain written proofs. This supporting theory
 adds no recovered original, conjecture answer or measured compression credit.
+
+An eighteen-point rank-augmentation counterexample
+=================================================
+
+The `three-page proof and independent review
+<corrections/rank-augmentation/v1/README.rst>`_ disprove Theorem 4.1(3) in
+the bound 2022 author edition of the rank-three augmentation paper (L020).
+The example satisfies every input hypothesis in the natural S18 action.
+An explicit word violates the output intersection property; thirteen
+`Lean declarations
+<corrections/rank-augmentation/v1/formal/RankAugmentationObstruction.lean>`_
+verify that actual output obstruction. Input generation and the original
+C-property remain written proofs. The other theorem cases, complete L020
+recovery and the separate high-rank stability theorem remain outside this
+correction. The admitted-original and conjecture counts are unchanged.
