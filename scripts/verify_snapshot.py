@@ -3650,6 +3650,44 @@ def check_overview33():
     return fractions,bars
 
 
+def check_fischer_answers():
+    base = 'answers/fischer-extensions/v1/'
+    a = load(base+'admission.json')
+    need(a['status']=='ROOT_ADMITTED_TWO_EXPLICIT_POSSIBLE_EXCEPTION_CASES' and
+         a['source_original']=='N006' and a['case_answers_admitted']==2 and
+         a['new_original_credit']==a['new_numbered_conjectures_claimed']==0 and
+         not a['global_conjecture_count_recomputed'] and not a['priority_claim'] and
+         not a['full_Lean_verification'] and a['compression_factor'] is None,
+         'Fischer answer scope changed.')
+    check_bindings(a['artifacts']+[a['cases'],a['known_cases_admission']]+a['packet_manifests'])
+    for row in a['packet_manifests']:
+        parent = Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    ledger = load(a['cases']['path'])
+    need(ledger['source_id']=='N006' and ledger['case_answers_admitted']==2 and
+         ledger['new_numbered_conjectures_claimed']==ledger['new_original_credit']==0 and
+         not ledger['priority_claim'] and not ledger['simple_socle_claim'] and
+         not ledger['full_Lean_verification'] and not ledger['global_conjecture_count_recomputed'] and
+         ledger['compression_factor'] is None and ledger['external_classification_proof_cost'] is None,
+         'Fischer ledger overclaims scope.')
+    expected = [('Fi22:2',[6,13],[6,6,13]),('Fi24prime:2',[6,35],[6,6,35])]
+    need(len(ledger['resolved_cases'])==2,'Fischer case count.')
+    for row,(group,polytope,triangle) in zip(ledger['resolved_cases'],expected):
+        need(row['group']==group and row['regular_polytope_type']==polytope and
+             row['nonlinear_hypertope_triangle']==triangle and row['Lean_declarations']==0,
+             'Fischer case geometry changed.')
+        check_bindings([row[k] for k in ['proof','source','author_manifest','distinct_review','replay']])
+        report = load(row['replay']['path'])
+        need(report['status']=='PASS' and report['proper_IP_pairs']==98 and
+             report['elementary_full_subset_pairs']==30 and report.get('all_flag_families',report.get('anchored_flag_families'))==6 and
+             report['Lean_declarations']==0 and not report['priority_claim'],
+             'Fischer distinct replay missing.')
+    need(ledger['independent_verification']==dict(markings=4,proper_subset_intersections=196,
+         elementary_full_subset_pairs=60,anchored_flag_families=12,author_controls=22,
+         distinct_review_scope_controls=16), 'Fischer verification counts changed.')
+    return 2
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3697,10 +3735,12 @@ def main():
     b5_fractions = check_b5_measurement()
     wreath_admitted, wreath_pending = check_wreath_recovery()
     overview33_fractions, overview33_bars = check_overview33()
+    fischer_cases = check_fischer_answers()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
     print(f'PASS: current thirteen-topic overview has {overview33_fractions} exact comparisons and {overview33_bars} bars in each vector format for33 originals.')
+    print(f'PASS: {fischer_cases} Fischer possible-exception cases have separate accepted proofs and exact certificates; no new original, priority or full Lean claim.')
     print(f'PASS: complete B5 comparison preserves {b5_fractions} exact fractions; {active_measured} originals measured.')
     print(f'PASS: expanded A/C topics preserve {ac_extension_fractions} exact fractions for twelve originals; two are newly measured.')
     print(f'PASS: diagonal measurement adds {diagonal_fractions} exact fractions; {active_measured} originals now measured.')

@@ -1120,6 +1120,23 @@ after acquiring the whole common theory and program. Word and byte units
 reverse the near-unit written comparison. The `current additions catalogue
 <papers/latest_catalogue.json>`_ records all subsequent admissions.
 
+Answers to the two Fischer cases
+--------------------------------
+
+The two possible exceptions in N006, Theorem 5.3, now have separately
+reviewed answers: **Fi22:2** has a regular polytope of type **{6,13}** and
+a triangular hypertope **(6,6,13)**; **Fi24-prime:2** has types **{6,35}**
+and **(6,6,35)**. The `two complete proofs and case ledger
+<answers/fischer-extensions/v1/README.rst>`_ include saved witnesses,
+full programs, distinct mathematical review and independent coset checks.
+
+These answer both possible-exception cases in the specified preprint edition.
+The named groups and representations remain borrowed inputs; the Fi24 proof
+also uses the complete maximal-subgroup classification. No historical priority
+or full Lean verification is claimed. The results are separate from recovery
+of the source's ten affirmative cases, add no original to the corpus and
+receive no manuscript-compression factor.
+
 Papers and verification
 -----------------------
 
