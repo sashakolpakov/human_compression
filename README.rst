@@ -123,6 +123,14 @@ remain available in the archive and are material for further common
 arguments, not claims of completed compression. The fixed source view is
 in `audit/source_registry.json <audit/source_registry.json>`_.
 
+The `completion audit <audit/completion.rst>`_ maps all 27 admitted principal
+result sets to their proofs and remaining manuscript work. Its resolved
+contracts use later admissions where older registry fields are stale.
+Intake remains closed. A new supporting paper on
+`normal kernel recognition <papers/formal/normal-kernel-recognition.pdf>`_
+replaces two separate finite-order comparisons by one group-theoretic
+argument. The full Topic A volume and its measurement are still in preparation.
+
 The complete `finite program <papers/topic-e/v2/required_finite.g>`_ checks
 432 local markings, the six local presentations, all ten universal groups,
 their required geometry and the literal correction witnesses. The
@@ -130,14 +138,19 @@ their required geometry and the literal correction witnesses. The
 controls are separate. GAP's group algorithms remain an explicit trust
 boundary; uniform infinite-family claims have written proofs.
 
-The `canonical Lean library <research/case_study/formal>`_ has 97 modules.
+The `canonical Lean library <research/case_study/formal>`_ has 99 modules.
 The new `extension proofs <papers/formal/marked-involution-extension.pdf>`_
 verify nine generic declarations about actual marked tuples, their string
 relations and generation. They do not formalize the entire projective
-classification. Build evidence combines the prior fresh run of 96 unchanged
-modules with a separately checked new module; every module is in the default
-build. One unchanged legacy module uses four recorded native-evaluation
-axioms. The precise scope is in `audit/lean_extension.json <audit/lean_extension.json>`_.
+classification. Two further modules prove normal-kernel recognition and
+construct the explicit direct-product isomorphism, with fourteen declaration
+reports. They do not formalize the applications' source presentations or
+geometric conclusions. Build evidence combines the prior fresh run of 96
+unchanged modules with the separately checked extension module and the two
+kernel modules; every module is in the default build. One unchanged legacy
+module uses four recorded native-evaluation axioms. The precise scopes are
+in the `extension audit <audit/lean_extension.json>`_ and
+`kernel audit <audit/normal-kernels/admission.json>`_.
 
 Build and check
 ---------------

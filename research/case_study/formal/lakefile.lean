@@ -55,6 +55,8 @@ lean_lib MathCompressionCertificates where
     `LiftCertificate,
     `LocallyFaithfulIntersection,
     `MarkedInvolutionExtension,
+    `NormalKernelRecognition,
+    `NormalKernelProduct,
     `MarkedSquareDescent,
     `NestedKernelIntersections,
     `OddCoverSeparation,

@@ -85,6 +85,21 @@ def check_archive():
     need(count==len(notes),'Unmatched archived notes.')
     return len(baseline['files']), count
 
+def check_previous_extension_artifacts(extension,kernels):
+    lake = 'research/case_study/formal/lakefile.lean'
+    for row in extension['artifacts']:
+        if row['path']==lake:
+            need(row==kernels['previous_lake'], 'Wrong previous default build.')
+            restored = (ROOT/lake).read_text()
+            for name in kernels['modules']:
+                line = '    `'+name+',\n'
+                need(restored.count(line)==1, 'New module must occur once in default build.')
+                restored = restored.replace(line,'',1)
+            need(len(restored.encode())==row['bytes'] and digest(restored.encode())==row['sha256'],
+                 'Default build changed beyond the two reviewed additions.')
+        else:
+            check_bindings([row])
+
 def check_lean():
     formal = ROOT/'research/case_study/formal'; names = []
     for source in sorted(formal.glob('*.lean')):
@@ -105,18 +120,75 @@ def check_lean():
     need(extension['status']=='PASS_ROOT_REVIEWED_SEPARATE_MODULE_EXTENSION',
          'Unreviewed Lean extension.')
     check_bindings(extension['old_artifact_preservation']['bindings'])
-    check_bindings(extension['artifacts'])
+    kernels = load('audit/normal-kernels/admission.json')
+    need(kernels['status']=='PASS_ROOT_ADMITTED_NORMAL_KERNEL_PROOFS',
+         'Unreviewed normal-kernel proofs.')
+    need(kernels['previous_extension_sha256']==digest((ROOT/'audit/lean_extension.json').read_bytes()),
+         'The previous extension audit changed.')
+    check_bindings(kernels['artifacts'])
+    check_previous_extension_artifacts(extension,kernels)
     old = load(extension['old_run']['path'])
-    expected_names = old['discovered_modules'] + [extension['module']]
-    need(len(names)==97 and set(names)==set(expected_names),
+    expected_names = old['discovered_modules'] + [extension['module']] + kernels['modules']
+    need(len(names)==99 and set(names)==set(expected_names),
          'Changed canonical Lean inventory without audit.')
     fresh = load(extension['new_independent_root_replay']['report']['path'])
     need(fresh['status']=='PASS' and len(fresh['declarations'])==9 and
          fresh['source_sha256']==extension['new_source']['sha256'],
          'New Lean source lacks its fresh independent report.')
+    replay = load(kernels['independent_public_replay'])
+    need(replay['status']=='PASS' and len(replay['modules'])==2 and
+         sum(len(m['declarations']) for m in replay['modules'])==14,
+         'Incomplete fresh normal-kernel replay.')
+    need([Path(m['source']['path']).stem for m in replay['modules']]==kernels['modules'],
+         'Normal-kernel dependency order changed.')
+    for module in replay['modules']:
+        source = formal/module['source']['path']
+        need(digest(source.read_bytes())==module['source']['sha256'] and
+             module['exit_code']==0, 'Normal-kernel source differs from independent replay.')
+        need(all(set(d['axioms']) <= {'propext','Classical.choice','Quot.sound'}
+                 for d in module['declarations']), 'Unapproved normal-kernel axiom.')
     roots = re.findall(r'`([A-Za-z0-9_]+)',(formal/'lakefile.lean').read_text())
     need(set(roots)==set(names) and len(roots)==len(names),'Default build omits or duplicates modules.')
     return names
+
+def check_completion():
+    audit = load('audit/completion.json')
+    intake = load('audit/intake.json')
+    registry = {row['id']:row for row in load('audit/source_registry.json')['entries']}
+    contracts = audit['contracts']
+    ids = [row['source_id'] for row in contracts]
+    need(len(ids)==len(set(ids))==27 and set(ids)==set(intake['admitted_principal_contracts']),
+         'Completion audit must preserve exactly the admitted contracts.')
+    totals = {k:v for k,v in intake['counts_at_cutoff'].items() if k!='reading_categories'}
+    need(audit['counts_recomputed']==totals, 'Completion counts drifted.')
+    need(audit['new_principal_credit']==audit['new_question_credit']==0 and
+         audit['new_ratios_evaluated'] is False and audit['no_new_source_intake'] is True,
+         'A completion map cannot create admissions or ratios.')
+    assigned = [s for row in audit['bounded_completion_sequence'] for s in row['source_ids']]
+    need(len(assigned)==27 and set(assigned)==set(ids), 'Completion topics omit or duplicate a contract.')
+    table = audit['binding_table']
+    need(len(table)==187, 'Completion evidence inventory changed without review.')
+    by_revision = {}
+    for key,row in table.items():
+        need(key==row['git_revision']+':'+row['path'], 'Invalid completion binding.')
+        by_revision.setdefault(row['git_revision'],[]).append(row)
+    for rev,rows in by_revision.items():
+        blobs = archive_blobs(rev,[r['path'] for r in rows])
+        for row in rows:
+            raw = blobs[row['path']]
+            need(len(raw)==row['bytes'] and digest(raw)==row['sha256'],
+                 'Changed completion evidence: '+row['path'])
+    for row in contracts:
+        need(row['principal_contract_admitted'] and
+             not row['lean']['end_to_end_principal_contract_formalized'],
+             'Completion map changed mathematical/formal scope.')
+        record = registry[row['source_id']].get('current_record')
+        if record:
+            current = row['current_record']
+            need(current is not None and current['binding'] in table and
+                 table[current['binding']]['path']=='research/case_study/'+record,
+                 'Completion view lost a later admission: '+row['source_id'])
+    return len(contracts),len(table)
 
 def check_catalogue():
     catalogue = load('papers/catalogue.json')
@@ -164,7 +236,10 @@ def check_catalogue():
     for row in editions:
         review = load(row['review_record'])
         need(review['status'].startswith('PASS'), 'Unreviewed proof edition: '+row['id'])
-        check_bindings(review['artifacts'])
+        if row['review_record']=='audit/lean_extension.json':
+            check_previous_extension_artifacts(review,load('audit/normal-kernels/admission.json'))
+        else:
+            check_bindings(review['artifacts'])
         recorded = {r['path']:r for r in review['artifacts']}
         for key,suffix in [('tex','.tex'),('pdf','.pdf')]:
             name = row[key]
@@ -279,6 +354,7 @@ def main():
     historical, markdown = check_archive(); lean = check_lean(); papers, editions = check_catalogue()
     check_topic_measurement()
     check_topic_dag()
+    contracts, completion_bindings = check_completion()
     rows = publication_rows()
     if args.write_manifest:
         MANIFEST.write_text(json.dumps({
@@ -289,10 +365,11 @@ def main():
     print(f'PASS: {len(rows)} tracked artifacts; zero tracked Markdown.')
     print(f'PASS: {historical} historical bindings; {markdown} notes checked in Git, not local files.')
     print(f'PASS: {len(lean)} saved Lean reports and default build entries; {papers} preserved and {editions} new TeX/PDF editions.')
-    print('Trust: 96 reports without native axioms; one legacy report has four recorded native axioms.')
-    print('Lean evidence: 96 unchanged modules from the prior fresh run, plus one separately compiled module.')
+    print('Trust: 98 reports without native axioms; one legacy report has four recorded native axioms.')
+    print('Lean evidence: prior 96-module run, separate marked extension, and two fresh normal-kernel modules.')
     print('PASS: 150 independent metric cells; overall and conditional factors have separate denominators.')
     print('PASS: paired proof graphs preserve all 90 current source/application/program cost coordinates.')
+    print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
 
 if __name__=='__main__':
