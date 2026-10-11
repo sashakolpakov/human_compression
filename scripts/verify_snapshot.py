@@ -4089,6 +4089,97 @@ def check_affine_twist_correction():
     return 1
 
 
+def check_historical_overview34():
+    """Replay the complete unchanged comparison at its admitted pointers."""
+    from types import FunctionType
+    base='audit/overview/v4/'
+    a=load(base+'admission.json')
+    check_bindings([a['historical_corpus_pointer'],a['historical_overview_pointer']])
+    pointers={'audit/corpus/latest.json':base+'previous_corpus_pointer.json',
+              'audit/overview/latest.json':base+'previous_overview_pointer.json'}
+    scope=dict(check_overview34.__globals__,load=lambda path:load(pointers.get(str(path),path)))
+    replay=FunctionType(check_overview34.__code__,scope,check_overview34.__name__,
+                        check_overview34.__defaults__,check_overview34.__closure__)
+    return replay()
+
+
+def check_gluing_numerical_comparison():
+    base='audit/gluing-measurement/v1/'
+    a=load(base+'admission.json');check_bindings(a['artifacts']+a['scientific_admissions'])
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_TOPIC_NUMERICAL_COMPARISON' and
+         a['source_ids']==['L010'] and a['exact_fractions']==120 and a['coordinates']==30 and
+         a['whole_common_papers']==['U1','U2'] and a['whole_common_charged_once'] and
+         not a['cross_topic_discount'] and a['complete_validation_programs']==3 and
+         a['finite_program_premises']==0 and a['partial_Lean_declarations']==10 and
+         not a['full_source_formalized'] and not a['complete_proof_step_DAG'] and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Gluing numerical scope changed.')
+    pins={'input_manifest':'7f7cc0dc06b772ca150535d53d0a4d20799255da6e447dffa8e88a25f32d5306',
+          'input_review_manifest':'0b82b7ba065bacb6ccfac7515667503617c57ec0db1f810a064dcf23468be9c1',
+          'author_manifest':'d52e82dc1b613ae9cb9f43937bc514f7818b3da92a58c3ffd87eccfbb611bc80',
+          'independent_manifest':'8239745069c688b960566bbf091e1d7bfce20cb32a92c19b68731340a443387c'}
+    for key,pin in pins.items():
+        row=a[key];check_bindings([row]);need(row['sha256']==pin,'Gluing accepted edition changed.')
+        parent=Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    spec=importlib.util.spec_from_file_location('gluing_distinct_numbers',ROOT/base/'independent_review/check.py')
+    checker=importlib.util.module_from_spec(spec);spec.loader.exec_module(checker)
+    packet=ROOT/base/'packet';data=load(base+'packet/results.json');recount=load(base+'input_review/recount.json')
+    nf=checker.arithmetic(data,recount);need(checker.csvs(packet,data)==360,'Complete Gluing CSV rows.')
+    checker.acquisition(packet,data);groups=checker.svg_groups(packet/'costs.svg','cost-')
+    rects={k:checker.rect(p[0]) for k,p in groups.items()};primary=data['primary']
+    need(checker.bar_geometry(rects,primary['costs'],primary['raw_costs'])==9 and
+         checker.compare_pdf_bars(packet,groups,primary['costs'],primary['raw_costs'])==9 and
+         checker.document_graph(packet,data)==8 and primary==a['primary'] and nf==120,
+         'Gluing complete arithmetic or actual figures changed.')
+    for key in ['public_author_replay','public_distinct_replay']:check_bindings([a[key]])
+    need(load(a['public_author_replay']['path'])['status']=='PASS_AUTHOR_CHECK_PENDING_DISTINCT_REVIEW' and
+         load(a['public_distinct_replay']['path'])['status']=='PASS_DISTINCT_GLUING_NUMERICAL' and
+         load(base+'independent_review/review.json')['status']=='ROOT_ACCEPTED_GLUING_NUMERICAL_COMPARISON',
+         'Gluing public replay or distinct acceptance missing.')
+    catalogue=load('papers/latest_catalogue.json');previous=load('papers/catalogue_gluing.json')
+    check_bindings([load('audit/overview/v4/admission.json')['current_catalogue']])
+    need(catalogue==load('papers/catalogue_gluing_measured.json') and
+         catalogue['entries'][:-3]==previous['entries'][:-3],
+         'Gluing measurement catalogue changed older manuscripts.')
+    for row,old in zip(catalogue['entries'][-3:],previous['entries'][-3:]):
+        want=dict(old,measurement_status='admitted',measurement_admission=base+'admission.json')
+        need(row==want,'Gluing measurement changes mathematical identity.')
+    return nf
+
+
+def check_overview35():
+    base='audit/overview/v4/';a=load(base+'admission.json')
+    check_bindings(a['artifacts']+a['current_measurement_admissions']+[a['previous_overview'],
+                   a['historical_corpus_pointer'],a['historical_overview_pointer']])
+    for key,pin in [('author_manifest','37ba7781a0f9c99e8cd210e3a72215c20d3ef7cd8640302ef7a2244d871a13bd'),
+                    ('independent_manifest','59e80e2346db293abe72f67ad5bfa35d536cf6b0ddf0b6d60899dc5a01c13451')]:
+        row=a[key];check_bindings([row]);need(row['sha256']==pin,'Current35 accepted edition changed.')
+        parent=Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    spec=importlib.util.spec_from_file_location('overview35_distinct',ROOT/base/'independent_review/check.py')
+    checker=importlib.util.module_from_spec(spec);spec.loader.exec_module(checker)
+    packet=ROOT/base/'packet';data=load(base+'packet/results.json');old=checker.prior_checker(ROOT)
+    need(checker.bindings(packet,ROOT)==8,'All eight overview inputs.')
+    nf=checker.arithmetic(data,ROOT,old);nb=checker.graphs(packet,data,old);checker.csv_check(packet,data)
+    need(a['status']=='ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW35' and
+         nf==a['exact_comparisons']==76 and nb==a['actual_SVG_bars']==a['actual_PDF_bars']==139 and
+         a['topic_count']==14 and a['distinct_originals']==35 and a['unmeasured_originals']==[] and
+         set(a['original_ids'])==set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Current35 overview scope or accounting changed.')
+    for key in ['author_replay','independent_replay']:check_bindings([a[key]])
+    need(load(a['author_replay']['path'])['status']=='PASS' and
+         load(a['independent_replay']['path'])['status']=='PASS_DISTINCT_OVERVIEW35',
+         'Current35 public replays missing.')
+    latest=load('audit/overview/latest.json');check_bindings([latest['admission'],latest['reader']])
+    need(latest['admission']['path']==base+'admission.json' and latest['reader']['path']==base+'packet/summary.pdf'
+         and latest['measured_originals']==35 and latest['topics']==14 and latest['unmeasured_recovery']==[],
+         'Current35 overview pointer changed.')
+    return nf,nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4137,7 +4228,10 @@ def main():
     wreath_admitted, wreath_pending = check_wreath_recovery()
     overview33_fractions, overview33_bars = check_historical_overview33()
     unified_fractions = run_historical34_check(check_unified_b_science_and_new_measurements)
-    overview34_fractions, overview34_bars = check_overview34()
+    overview34_fractions, overview34_bars = check_historical_overview34()
+    gluing_fractions = check_gluing_numerical_comparison()
+    overview35_fractions, overview35_bars = check_overview35()
+    print(f"PASS: current fourteen-topic overview has {overview35_fractions} exact comparisons and {overview35_bars} actual bars per format for 35 originals; Gluing preserves {gluing_fractions} fractions.")
     fischer_cases = check_fischer_answers()
     nonfirm_corrections = check_nonfirm_hnn_correction()
     twist_corrections = check_affine_twist_correction()
@@ -4146,7 +4240,7 @@ def main():
     active_admitted, active_pending = check_current_programme_after_access_updates()
     print(f"PASS: {gluing_added} gluing original admitted with complete written proofs; L084 and L100 source acquisitions remain separate from recovery.")
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
-    print(f'PASS: current thirteen-topic overview has {overview34_fractions} exact comparisons and {overview34_bars} bars in each vector format for34 originals.')
+    print(f'PASS: historical thirteen-topic overview has {overview34_fractions} exact comparisons and {overview34_bars} bars in each vector format for34 originals.')
     print(f'PASS: unified B scientific transfer and enlarged orbit comparison preserve {unified_fractions} new-edition fractions; historical33 overview is separately checked.')
     print(f'PASS: {nonfirm_corrections} explicit nonfirm HNN correction; no whole-source, numbered-conjecture or Lean credit.')
     print(f'PASS: {twist_corrections} uniform affine twisting correction; literal quotient subgroups proved, finite validation supplementary, no whole-source or Lean credit.')

@@ -17,8 +17,8 @@ The `register of every original <audit/corpus/v1/README.rst>`_ and
 accessible manuscripts: 35 with admitted principal-result recoveries and
 71 awaiting complete recovery**. The other **55 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. Thirty-four recovered originals have measured comparisons; L010 has just
-passed scientific review and its measurement is pending. The newly obtained
+evidence and next obligation. All thirty-five admitted recoveries now have
+measured comparisons. The newly obtained
 `L084 erratum <audit/corpus/access/erratum-2006/README.rst>`_ awaits recovery.
 The complete `L100 institutional preprint <audit/corpus/access/halle-preprint/README.rst>`_
 also joins the recovery queue. The catalogue itself has not grown.
@@ -31,20 +31,22 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
-The `consolidated comparison <audit/overview/v3/packet/summary.pdf>`_ gives
-all thirteen measured topics, all thirty-four individual factors and complete
+The `consolidated comparison <audit/overview/v4/packet/summary.pdf>`_ gives
+all fourteen measured topics, all thirty-five individual factors and complete
 program costs in six pages. The `topic graph
-<audit/overview/v3/packet/whole_topics.svg>`_ shows every complete common paper
+<audit/overview/v4/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
-<audit/overview/v3/packet/conditional_1.svg>`_ and `remaining seventeen
-<audit/overview/v3/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v3/README.rst>`_ links exact tables,
+<audit/overview/v4/packet/conditional_1.svg>`_ and `remaining eighteen
+<audit/overview/v4/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v4/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
 
 The new `gluing topic <papers/topic-gluing/v1/README.rst>`_ supplies two common
-papers and an application recovering the main results of L010. It does not yet
-have a numerical factor. The consolidated graphs above cover the 34 measured
-originals; they do not silently count this additional recovery.
+papers and an application recovering the main results of L010. Its complete
+written factor is **0.677**, or **0.508** with all printed programs. Its
+application factor is **2.342** after acquiring both whole common papers and
+all declared programs. The `complete numerical audit
+<audit/gluing-measurement/v1/README.rst>`_ retains every cost and qualification.
 
 B now uses one complete common paper; the enlarged orbit topic includes both
 N007 and N006 with all companion papers. Each topic pays its entire common
@@ -109,6 +111,10 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 2 / 2
      - 1.129
      - Unavailable; 0.170 with full raw software
+   * - Gluing by common points and synchronized trees
+     - 1 / 1
+     - 0.677
+     - 0.508
 
 These are text costs, not minimum proof complexities. The reports specify
 the complete program boundary, raw-code alternatives, retained external
@@ -116,7 +122,10 @@ proofs, graphic costs and counting-unit sensitivity. B and C use complete
 available text, including authored non-PDF sources and page furniture; the
 other comparisons use calibrated PDF text with repeated furniture removed.
 No pooled factor is inferred across these representations. Factors below
-one stay in the comparison.
+one stay in the comparison. A near-unity factor shows little saving by our
+current proofs; it does not establish originality. For D, the applications
+cost 29,855 against 47,894 for the sources, but the common theory adds 15,632.
+Further reuse must be proved before it earns a larger measured saving.
 
 Read the `audit protocol <audit/protocol.pdf>`_ and its
 `TeX source <audit/protocol.tex>`_. The historical cutoff is recorded in
@@ -1111,8 +1120,8 @@ input argument, the infinite-group identification and the failed output flag.
 Independent finite validations also pass. The example is nonfirm and not
 residually connected; it does not refute the restricted assertions. This is
 a source-theorem correction, with no numbered-conjecture, historical-priority
-or full Lean claim. N005 remains pending as a whole-paper recovery, and the
-34-original numerical comparison is unchanged.
+or full Lean claim. N005 remains pending as a whole-paper recovery and is not counted in the
+35-original numerical comparison.
 
 Regularity of the smallest affine twist
 ---------------------------------------
