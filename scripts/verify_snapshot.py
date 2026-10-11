@@ -5374,6 +5374,16 @@ def main():
     check_accessible106_independent_review()
     overview42_fractions, overview42_bars = check_overview42()
     symmetric_topics = check_symmetric_measurement_policy()
+    policy_review_binding = load('audit/overview/latest.json')['measurement_policy_review']
+    check_bindings([policy_review_binding])
+    policy_review = load(policy_review_binding['path'])
+    need(policy_review['status'] == 'ACCEPTED_FINAL_SYMMETRIC_POLICY_PRESENTATION' and
+         len(policy_review['files']) == 4 and policy_review['role_disclosure'],
+         'Final bounded policy review missing.')
+    check_bindings([dict(r, path='audit/measurement_policy/v1/' + Path(r['path']).name)
+                    for r in policy_review['files']])
+    need(digest((ROOT / 'audit/measurement_policy/v1/review/manifest.json').read_bytes()) ==
+         policy_review['prior_frozen_review']['sha256'], 'Bounded policy audit changed.')
     print(f"PASS: {symmetric_topics} unchanged manuscript comparisons; asymmetric software-inclusive factors withdrawn, source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, 42 admitted/measured and 64 pending; no singleton exclusions.")
     print(f"PASS: nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format; Mixes adds one corrected principal recovery.")
