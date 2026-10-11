@@ -1,0 +1,116 @@
+diff --git a/research/case_study/formal/lakefile.lean b/research/case_study/formal/lakefile.lean
+index c7e2d94..2a75639 100644
+--- a/research/case_study/formal/lakefile.lean
++++ b/research/case_study/formal/lakefile.lean
+@@ -16,6 +16,7 @@ lean_lib MathCompressionCertificates where
+     `BooleanShadow,
+     `ChamberOrbit,
+     `CharacteristicTwoTranslations,
++    `CommutingRetractions,
+     `CompactAffineData,
+     `CompletedHexagonCounterexample,
+     `ConsecutiveShadow,
+diff --git a/scripts/verify_snapshot.py b/scripts/verify_snapshot.py
+index e6da98b..25cd819 100644
+--- a/scripts/verify_snapshot.py
++++ b/scripts/verify_snapshot.py
+@@ -85,18 +85,32 @@ def check_archive():
+     need(count==len(notes),'Unmatched archived notes.')
+     return len(baseline['files']), count
+ 
+-def check_previous_extension_artifacts(extension,kernels):
++def restored_lake(modules):
++    text = (ROOT/'research/case_study/formal/lakefile.lean').read_text()
++    for name in modules:
++        line = '    `'+name+',\n'
++        need(text.count(line)==1, 'New module must occur once in default build.')
++        text = text.replace(line,'',1)
++    return text.encode()
++
++def check_previous_extension_artifacts(extension,kernels,retractions):
+     lake = 'research/case_study/formal/lakefile.lean'
+     for row in extension['artifacts']:
+         if row['path']==lake:
+             need(row==kernels['previous_lake'], 'Wrong previous default build.')
+-            restored = (ROOT/lake).read_text()
+-            for name in kernels['modules']:
+-                line = '    `'+name+',\n'
+-                need(restored.count(line)==1, 'New module must occur once in default build.')
+-                restored = restored.replace(line,'',1)
+-            need(len(restored.encode())==row['bytes'] and digest(restored.encode())==row['sha256'],
+-                 'Default build changed beyond the two reviewed additions.')
++            restored = restored_lake(kernels['modules']+[retractions['module']])
++            need(len(restored)==row['bytes'] and digest(restored)==row['sha256'],
++                 'Default build changed beyond the reviewed additions.')
++        else:
++            check_bindings([row])
++
++def check_previous_kernel_artifacts(kernels,retractions):
++    for row in kernels['artifacts']:
++        if row['path']=='research/case_study/formal/lakefile.lean':
++            need(row==retractions['previous_lake'], 'Wrong previous kernel default build.')
++            restored = restored_lake([retractions['module']])
++            need(len(restored)==row['bytes'] and digest(restored)==row['sha256'],
++                 'Default build changed beyond the commuting-retraction addition.')
+         else:
+             check_bindings([row])
+ 
+@@ -125,11 +139,17 @@ def check_lean():
+          'Unreviewed normal-kernel proofs.')
+     need(kernels['previous_extension_sha256']==digest((ROOT/'audit/lean_extension.json').read_bytes()),
+          'The previous extension audit changed.')
+-    check_bindings(kernels['artifacts'])
+-    check_previous_extension_artifacts(extension,kernels)
++    retractions = load('audit/commuting-retractions/admission.json')
++    need(retractions['status']=='PASS_ROOT_ADMITTED_COMMUTING_RETRACTIONS',
++         'Unreviewed commuting-retraction proof.')
++    need(retractions['previous_kernel_admission_sha256']==digest((ROOT/'audit/normal-kernels/admission.json').read_bytes()),
++         'The previous normal-kernel audit changed.')
++    check_bindings(retractions['artifacts'])
++    check_previous_kernel_artifacts(kernels,retractions)
++    check_previous_extension_artifacts(extension,kernels,retractions)
+     old = load(extension['old_run']['path'])
+-    expected_names = old['discovered_modules'] + [extension['module']] + kernels['modules']
+-    need(len(names)==99 and set(names)==set(expected_names),
++    expected_names = old['discovered_modules'] + [extension['module']] + kernels['modules'] + [retractions['module']]
++    need(len(names)==100 and set(names)==set(expected_names),
+          'Changed canonical Lean inventory without audit.')
+     fresh = load(extension['new_independent_root_replay']['report']['path'])
+     need(fresh['status']=='PASS' and len(fresh['declarations'])==9 and
+@@ -147,6 +167,13 @@ def check_lean():
+              module['exit_code']==0, 'Normal-kernel source differs from independent replay.')
+         need(all(set(d['axioms']) <= {'propext','Classical.choice','Quot.sound'}
+                  for d in module['declarations']), 'Unapproved normal-kernel axiom.')
++    paired = load(retractions['independent_replay'])
++    paired_source = formal/(retractions['module']+'.lean')
++    need(paired['status']=='PASS' and len(paired['declarations'])==11 and
++         paired['source_sha256']==digest(paired_source.read_bytes()),
++         'Commuting-retraction source lacks its fresh independent replay.')
++    need(all(set(d['axioms']) <= {'propext','Classical.choice','Quot.sound'}
++             for d in paired['declarations']), 'Unapproved commuting-retraction axiom.')
+     roots = re.findall(r'`([A-Za-z0-9_]+)',(formal/'lakefile.lean').read_text())
+     need(set(roots)==set(names) and len(roots)==len(names),'Default build omits or duplicates modules.')
+     return names
+@@ -244,7 +271,10 @@ def check_catalogue():
+         review = load(row['review_record'])
+         need(review['status'].startswith('PASS'), 'Unreviewed proof edition: '+row['id'])
+         if row['review_record']=='audit/lean_extension.json':
+-            check_previous_extension_artifacts(review,load('audit/normal-kernels/admission.json'))
++            check_previous_extension_artifacts(review,load('audit/normal-kernels/admission.json'),
++                                               load('audit/commuting-retractions/admission.json'))
++        elif row['review_record']=='audit/normal-kernels/admission.json':
++            check_previous_kernel_artifacts(review,load('audit/commuting-retractions/admission.json'))
+         else:
+             check_bindings(review['artifacts'])
+         recorded = {r['path']:r for r in review['artifacts']}
+@@ -374,8 +404,8 @@ def main():
+     print(f'PASS: {len(rows)} tracked artifacts; zero tracked Markdown.')
+     print(f'PASS: {historical} historical bindings; {markdown} notes checked in Git, not local files.')
+     print(f'PASS: {len(lean)} saved Lean reports and default build entries; {papers} preserved and {editions} new TeX/PDF editions.')
+-    print('Trust: 98 reports without native axioms; one legacy report has four recorded native axioms.')
+-    print('Lean evidence: prior 96-module run, separate marked extension, and two fresh normal-kernel modules.')
++    print('Trust: 99 reports without native axioms; one legacy report has four recorded native axioms.')
++    print('Lean evidence: prior 96-module run and four separately checked additions.')
+     print('PASS: 150 independent metric cells; overall and conditional factors have separate denominators.')
+     print('PASS: paired proof graphs preserve all 90 current source/application/program cost coordinates.')
+     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')

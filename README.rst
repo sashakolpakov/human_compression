@@ -14,6 +14,73 @@ Read the `audit protocol <audit/protocol.pdf>`_ and its
 `TeX source <audit/protocol.tex>`_. The exact cutoff and the limited
 work already in progress are recorded in `audit/intake.json <audit/intake.json>`_.
 
+Common proofs for finite two-groups
+----------------------------------
+
+The `common theory <papers/topic-a/v2/umbrella.pdf>`_ proves how separately
+supported kernels determine marked subgroup intersections, how to recognize
+the resulting presentations, and how a finite quotient bounds a search
+through normal kernels. Six complete applications recover the following
+principal result sets. Their proofs, retained inputs and corrections have
+passed independent mathematical and source review.
+
+.. list-table:: Six source manuscripts and the results recovered
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - L032: Hou–Feng–Leemans, *On regular polytopes of 2-power order*;
+       revised author manuscript, 8 November 2019
+     - Theorem 1.2 for every stated rank, type and order, with the necessary bound
+     - `Prescribed orders <papers/topic-a/v2/two-power-orders.pdf>`_
+   * - L034: Hou–Feng–Leemans, *Existence of regular 3-hypertopes with 2^n
+       chambers*; arXiv:1901.09034v1
+     - Lemma 3.1 and Theorem 3.2: presentation, order, structure and geometry;
+       explicit corrections
+     - `Three-generator hypertopes <papers/topic-a/v2/three-generator-hypertopes.pdf>`_
+   * - F016: Cunningham–Feng–Hou–Schulte, *Symmetric polytopes whose
+       automorphism groups are 2-groups*; arXiv:2512.15511v1
+     - Square classification, section assemblies, presentations and three
+       free extensions; stated geometric inputs retained
+     - `Square sections and extensions <papers/topic-a/v2/square-sections-and-free-extensions.pdf>`_
+   * - F013: Hou–Schulte, *String C-groups of 2-power order project onto a
+       common string C-group*; arXiv:2605.20691v1
+     - Both principal common-quotient and covering theorems in all ranks;
+       auxiliary correction kept separate
+     - `Common quotients <papers/topic-a/v2/common-two-group-quotient.pdf>`_
+   * - L035: Hou–Feng–Leemans, *Existence of regular 3-polytopes of order
+       2^n*; arXiv:1802.08947v2
+     - Theorems 1.2–1.3: full existence range and all three high-type
+       classifications, with converse and finite seed checks
+     - `High-type classifications <papers/topic-a/v2/high-type-two-groups.pdf>`_
+   * - N009: Gomi–Loyola–De Las Peñas, *String C-groups of order 1024*;
+       Contributions to Discrete Mathematics 13(1) (2018), 1–22
+     - Nondegenerate marked classification, all six source tables and
+       finite universal orders; explicit literal corrections
+     - `Markings of order 1024 <papers/topic-a/v2/order-1024-markings.pdf>`_
+
+The `scope reader <audit/topic-a/v2/SCOPE.rst>`_ states the exact coverage,
+exclusions, attribution and formal limits. The `proof admission
+<audit/topic-a/v2/admission.json>`_ binds the accepted edition and its
+independent reviews. These six existing contracts add no new manuscript
+or solved-question credits. The original classifications and constructions
+retain their authors' attribution.
+
+The common paper is 17 pages and the six applications total 33 pages.
+The `complete computation appendix <papers/topic-a/v2/two-group-computation.pdf>`_
+is another 21 pages; all four executable files are in
+`required-code <papers/topic-a/v2/required-code>`_. An independent replay
+checked the exhaustive census and presentations against all 107 comparison
+rows. GAP's exact group algorithms remain an explicit trust boundary.
+
+The Topic A numerical comparison and weighted dependency graph are being
+finalized. They will report the whole topic, then each result after acquiring
+the whole common paper and required program. Source diagrams and image labels
+missing from PDF text extraction have unknown costs; they are not counted
+as zero. No new Topic A factor is asserted by this proof admission.
+
 Common proofs for projective groups
 ----------------------------------
 
@@ -118,7 +185,7 @@ Papers and verification
 -----------------------
 
 The `paper catalogue <papers/catalogue.json>`_ distinguishes the new common
-proof edition from ten preserved baseline TeX papers. Other topic proofs
+proof editions from ten preserved baseline TeX papers. Other topic proofs
 remain available in the archive and are material for further common
 arguments, not claims of completed compression. The fixed source view is
 in `audit/source_registry.json <audit/source_registry.json>`_.
@@ -129,7 +196,8 @@ contracts use later admissions where older registry fields are stale.
 Intake remains closed. A new supporting paper on
 `normal kernel recognition <papers/formal/normal-kernel-recognition.pdf>`_
 replaces two separate finite-order comparisons by one group-theoretic
-argument. The full Topic A volume and its measurement are still in preparation.
+argument. These lemmas now serve the complete Topic A applications; their
+source-specific hypotheses are checked in the written proofs.
 
 The complete `finite program <papers/topic-e/v2/required_finite.g>`_ checks
 432 local markings, the six local presentations, all ten universal groups,
@@ -138,7 +206,7 @@ their required geometry and the literal correction witnesses. The
 controls are separate. GAP's group algorithms remain an explicit trust
 boundary; uniform infinite-family claims have written proofs.
 
-The `canonical Lean library <research/case_study/formal>`_ has 99 modules.
+The `canonical Lean library <research/case_study/formal>`_ has 100 modules.
 The new `extension proofs <papers/formal/marked-involution-extension.pdf>`_
 verify nine generic declarations about actual marked tuples, their string
 relations and generation. They do not formalize the entire projective
@@ -147,10 +215,16 @@ construct the explicit direct-product isomorphism, with fourteen declaration
 reports. They do not formalize the applications' source presentations or
 geometric conclusions. Build evidence combines the prior fresh run of 96
 unchanged modules with the separately checked extension module and the two
-kernel modules; every module is in the default build. One unchanged legacy
+kernel modules, followed by the separately checked commuting-retraction
+module; every module is in the default build. One unchanged legacy
 module uses four recorded native-evaluation axioms. The precise scopes are
-in the `extension audit <audit/lean_extension.json>`_ and
-`kernel audit <audit/normal-kernels/admission.json>`_.
+in the `extension audit <audit/lean_extension.json>`_,
+`kernel audit <audit/normal-kernels/admission.json>`_ and
+`commuting-retraction audit <audit/commuting-retractions/admission.json>`_.
+The last module proves the compatible-pair inverse for two commuting
+retractions, with four checked definitions and seven checked theorems.
+Application-specific deletion maps and their joint faithfulness remain
+written obligations.
 
 Build and check
 ---------------

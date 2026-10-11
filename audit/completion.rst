@@ -23,6 +23,17 @@ publication and measurement; it does not withdraw their mathematical
 admissions. Topic E alone had a complete current comparison of both the
 written manuscripts and the paired proof graphs.
 
+Since that snapshot, Topic A has a complete common paper and all six
+applications in `the current edition <../papers/topic-a/v2>`_. Their
+`proof admission <topic-a/v2/admission.json>`_ preserves the six existing
+contracts and binds the independent reviews and full program replay.
+This brings the number of contracts with complete canonical applications
+and common theory to ten: the original five plus L034, L035, F013, F016
+and N009. The remaining seventeen retain their earlier accepted proof
+packages. Numerical and dependency audits have separate completion states;
+Topic A's are still being finalized. The immutable baseline audit above
+has not been rewritten.
+
 Work by topic
 -------------
 
@@ -43,8 +54,8 @@ subject does not itself prove a compression theorem.
        within the stated scope. Full source formalization remains separate.
    * - A: Supported kernels and two-group polytopes
      - L032, L034, L035, F013, F016, N009
-     - Complete six applications and their common theory; preserve the
-       classification, census, geometric conclusions and required programs.
+     - Complete theory, six applications and required programs now reviewed.
+       Finish the matched length and weighted dependency audits.
    * - Affine lattices and mixed-prime polyhedra
      - L012
      - Prepare the complete accepted proof in TeX and include its actual

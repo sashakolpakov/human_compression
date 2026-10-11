@@ -16,6 +16,7 @@ lean_lib MathCompressionCertificates where
     `BooleanShadow,
     `ChamberOrbit,
     `CharacteristicTwoTranslations,
+    `CommutingRetractions,
     `CompactAffineData,
     `CompletedHexagonCounterexample,
     `ConsecutiveShadow,
