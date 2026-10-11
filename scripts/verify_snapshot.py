@@ -4622,6 +4622,135 @@ def check_l020_case_three_correction():
     return 13
 
 
+def run_historical36_check(function):
+    """Earlier checks retain their exact pre-contraction pointers and code."""
+    from types import FunctionType
+    base = 'audit/topic-rank-contraction/v1/'
+    a = load(base + 'admission.json')
+    check_bindings([a[k] for k in ['historical_corpus_pointer', 'historical_overview_pointer', 'historical_catalogue_pointer']])
+    routes = {'audit/corpus/latest.json': base + 'previous_corpus_pointer.json',
+              'audit/overview/latest.json': base + 'previous_overview_pointer.json',
+              'papers/latest_catalogue.json': base + 'previous_catalogue.json'}
+    scope = dict(function.__globals__, load=lambda path: load(routes.get(str(path), path)))
+    original = check_current_measurement_pointer
+    scope[original.__name__] = FunctionType(original.__code__, scope, original.__name__, original.__defaults__, original.__closure__)
+    return FunctionType(function.__code__, scope, function.__name__, function.__defaults__, function.__closure__)()
+
+
+def check_rank_contraction_admission():
+    base = 'audit/topic-rank-contraction/v1/'
+    a = load(base + 'admission.json')
+    check_bindings(a['artifacts'] + a['packets'])
+    pins = ['79d9cdf2723db2ba8e7729f1333fa918f241265db95e98d5e681b632fe01f489',
+            'f0e7e0aa152bc7f71114916d8fbbbdff861e518cea98cba52dea4c454d56ad8f',
+            '7eb6e66ff1fdd291624a52ef86f2d54906c8a723aad6f9e6f99fbf9593782330',
+            '9e3d09defb11e1a289ea63308608724d7aabea2154777b2d240419c455d73316']
+    for row, pin in zip(a['packets'], pins):
+        need(row['sha256'] == pin, 'Changed accepted rank-contraction edition.')
+        parent = Path(row['path']).parent
+        check_bindings([dict(x, path=str(parent / x['path'])) for x in load(row['path'])['exports']])
+    need(a['status'] == 'ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT_AND_NUMERICAL_COMPARISON' and
+         a['source_ids'] == ['L037'] and a['principal_originals_added'] == 1 and
+         a['source_rows'] == 22 and a['proof_contexts'] == 20 and
+         (a['source_pages'], a['common_pages'], a['application_pages'], a['printed_program_pages']) == (6, 3, 5, 1) and
+         a['partial_Lean_declarations'] == 4 and a['full_program_files'] == a['finite_certificate_programs'] == 1 and
+         a['uniform_required_programs'] == 0 and a['whole_common_charged_once'] and
+         not any(a[k] for k in ['whole_source_formalized', 'cross_topic_overlap_discount', 'old_topic_B_free_premise',
+             'source_conjecture_5_1_solved', 'historical_priority_claim', 'source_PDFs_redistributed']) and
+         a['new_question_credit'] == a['original_intake_added'] == 0,
+         'Rank-contraction scope changed.')
+    need(load(base + 'science_review/review.json')['complete_corrected_principal_recovery_accepted'] and
+         load(base + 'measurement/independent_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_L037_NUMBERS',
+         'Rank-contraction distinct acceptance missing.')
+    fresh = load(base + 'public_science_replay.json')
+    need(fresh['status'] == 'PASS' and fresh['lean_declarations'] == 4 and fresh['axioms'] == 'standard only' and
+         fresh['matrix_unordered_IP'] == 172 and fresh['A11_unordered_IP'] == 6240 and
+         len(fresh['rejected_GAP_mutations']) == 4 and len(fresh['rejected_Lean_weakenings']) == 3 and
+         [r['pages'] for r in fresh['render']] == [3, 5, 1] and
+         all(r['per_page_text_equal'] for r in fresh['render']) and fresh['full_program_text_included'],
+         'Rank-contraction public scientific replay incomplete.')
+    need(load(base + 'public_distinct_science.json')['status'] == 'PASS_DISTINCT_PYTHON' and
+         load(base + 'public_inputs_replay.json')['pdf_cells'] == 120 and
+         load(base + 'public_inputs_replay.json')['raw_cells'] == 30,
+         'Rank-contraction independent finite or full input replay missing.')
+    spec = importlib.util.spec_from_file_location('rank_contraction_distinct_numbers', ROOT / base / 'measurement/independent_review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'measurement/packet'; data = load(base + 'measurement/packet/results.json')
+    coords = q.check(packet, data); csvs = q.csvs(packet, coords); vectors = q.vector_rectangles(packet)
+    need(data['primary'] == a['primary'] and len(coords) == a['metric_coordinates'] == 30 and
+         a['exact_fractions'] == 120 and sum(csvs.values()) == a['CSV_rows'] == 360 and
+         vectors['SVG_rectangles'] == vectors['PDF_rectangles'] == a['actual_vector_rectangles_each'] == 9,
+         'Rank-contraction complete numeric comparison changed.')
+    return 1, 120
+
+
+def check_programme37():
+    base = 'audit/topic-rank-contraction/v1/'
+    old = load(base + 'previous_corpus_pointer.json'); current = load('audit/corpus/latest.json')
+    check_bindings([current['snapshot'], current['base_inventory'], current['previous_snapshot']] +
+                   current['added_admissions'] + current['added_measurements'] + current['access_additions'])
+    need({k:v for k,v in current.items() if k != 'snapshot'} == load(current['snapshot']['path']),
+         'Current37 pointer differs from complete snapshot.')
+    expected = set(old['admitted_original_ids']) | {'L037'}
+    need(current['originals'] == 161 and current['accessible_originals'] == 106 and
+         current['admitted_principal_originals'] == current['currently_measured_originals'] == 37 and
+         current['accessible_pending_complete_recovery'] == 69 and current['pending_source_retrieval'] == 55 and
+         set(current['admitted_original_ids']) == set(current['measured_original_ids']) == expected and
+         set(current['accessible_pending_original_ids']) == set(old['accessible_pending_original_ids']) - {'L037'} and
+         current['retrieval_original_ids'] == old['retrieval_original_ids'] and
+         current['access_additions'] == old['access_additions'] and current['measurement_pending_original_ids'] == [] and
+         current['all_originals_remain_active'] and not current['all_conjectures_resolved'] and not current['all_original_proofs_recovered'],
+         'Current37 original partition changed.')
+    need(current['added_admissions'][:-1] == old['added_admissions'] and
+         current['added_measurements'][:-1] == old['added_measurements'] and
+         current['added_admissions'][-1] == current['added_measurements'][-1] and
+         current['added_admissions'][-1]['path'] == base + 'admission.json' and
+         check_current_measurement_pointer() == 37, 'Current37 new original or measurement duplicated.')
+    c = load('papers/latest_catalogue.json'); prior = load(base + 'previous_catalogue.json')
+    need(c == load('papers/catalogue_rank_contraction_measured.json') and
+         c['entries'][:-3] == prior['entries'] and set(c['original_ids']) == set(prior['original_ids']) | {'L037'},
+         'Current37 catalogue alters or omits an old edition.')
+    for row in c['entries'][-3:]:
+        need(row['topic'] == 'RankContraction' and row['measurement_status'] == 'admitted' and
+             row['measurement_admission'] == base + 'admission.json' and
+             (ROOT / row['tex']).is_file() and (ROOT / row['pdf']).is_file(), 'Current37 complete documents missing.')
+    return 37, 69
+
+
+def check_overview37():
+    base = 'audit/overview/v6/'
+    a = load(base + 'admission.json')
+    check_bindings(a['artifacts'] + a['current_measurement_admissions'] +
+                   [a[k] for k in ['previous_overview', 'current_corpus', 'current_catalogue', 'scientific_admission']])
+    for key, pin in [('author_manifest', 'be15a2ef573f2694fa72eb9b9df77f7644937fbfc16aa6f1842013965dfa4a84'),
+                     ('independent_manifest', '0e5a23375a4097ff8156295d6c580fdcda509fcdcc5049be266c5742de7a583f')]:
+        row = a[key]; check_bindings([row]); need(row['sha256'] == pin, 'Changed accepted overview37 edition.')
+        parent = Path(row['path']).parent
+        check_bindings([dict(x, path=str(parent / x['path'])) for x in load(row['path'])['exports']])
+    spec = importlib.util.spec_from_file_location('overview37_distinct', ROOT / base / 'independent_review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'packet'; data = load(base + 'packet/results.json')
+    need(q.bindings(packet, ROOT) == 9, 'Missing complete overview37 input.')
+    nf = q.arithmetic(data, ROOT); nb = q.graphs(packet, data, q.prior_checker(ROOT)); q.csv_check(packet, data)
+    need(a['status'] == 'ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW37' and
+         nf == a['exact_comparisons'] == 81 and nb == a['actual_SVG_bars'] == a['actual_PDF_bars'] == 147 and
+         a['CSV_rows'] == 52 and a['topic_count'] == 15 and a['distinct_originals'] == 37 and
+         a['unmeasured_originals'] == [] and a['unchanged_topic_records'] == 14 and
+         set(a['original_ids']) == set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and
+         all(a[k] == 0 for k in ['new_source_credit', 'new_question_credit', 'new_formal_credit']),
+         'Overview37 accounting or scope changed.')
+    need(load(a['author_replay']['path'])['status'] == 'PASS' and
+         load(a['independent_replay']['path'])['status'] == 'PASS_DISTINCT_OVERVIEW37' and
+         load(base + 'independent_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_OVERVIEW37',
+         'Overview37 distinct acceptance or public replay missing.')
+    pointer = load('audit/overview/latest.json'); check_bindings([pointer['admission'], pointer['reader']])
+    need(pointer['admission']['path'] == base + 'admission.json' and pointer['reader']['path'] == base + 'packet/summary.pdf' and
+         pointer['measured_originals'] == 37 and pointer['topics'] == 15 and pointer['unmeasured_recovery'] == [],
+         'Overview37 current pointer differs.')
+    return nf, nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4691,9 +4820,14 @@ def main():
     gluing_added = check_gluing_scientific_admission()
     historical_admitted, historical_pending = run_historical35_check(check_current_programme_after_access_updates)
     operations_added, operations_fractions = check_operations_science_and_measurement()
-    active_admitted, active_pending = check_programme36()
-    overview36_fractions, overview36_bars = check_overview36()
-    print(f"PASS: current fourteen-topic overview: {overview36_fractions} exact comparisons and {overview36_bars} bars per format for36 originals.")
+    run_historical36_check(check_programme36)
+    overview36_fractions, overview36_bars = run_historical36_check(check_overview36)
+    contraction_added, contraction_fractions = check_rank_contraction_admission()
+    active_admitted, active_pending = check_programme37()
+    overview37_fractions, overview37_bars = check_overview37()
+    print(f"PASS: current fifteen-topic overview: {overview37_fractions} exact comparisons and {overview37_bars} actual vector bars per format for 37 originals.")
+    print(f"PASS: rank contraction adds {contraction_added} original and {contraction_fractions} exact comparisons, with four scoped Lean lemmas; 37 measured originals.")
+    print(f"PASS: historical fourteen-topic overview: {overview36_fractions} exact comparisons and {overview36_bars} bars per format for36 originals.")
     print(f"PASS: Operations adds {operations_added} original with {operations_fractions} exact fractions; {active_admitted} admitted/measured and {active_pending} accessible pending.")
     print(f"PASS: {gluing_added} gluing original admitted with complete written proofs; L084 and L100 source acquisitions remain separate from recovery.")
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')

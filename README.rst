@@ -14,10 +14,10 @@ yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
 `subsequent admissions <audit/corpus/latest.json>`_ now record **106
-accessible manuscripts: 36 with admitted principal-result recoveries and
-70 awaiting complete recovery**. The other **55 remain retrieval targets**.
+accessible manuscripts: 37 with admitted principal-result recoveries and
+69 awaiting complete recovery**. The other **55 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. All thirty-six admitted recoveries now have
+evidence and next obligation. All thirty-seven admitted recoveries now have
 measured comparisons. The newly obtained
 `L084 erratum <audit/corpus/access/erratum-2006/README.rst>`_ awaits recovery.
 The complete `L100 institutional preprint <audit/corpus/access/halle-preprint/README.rst>`_
@@ -31,14 +31,14 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
-The `consolidated comparison <audit/overview/v5/packet/summary.pdf>`_ gives
-all fourteen measured topics, all thirty-six individual factors and complete
+The `consolidated comparison <audit/overview/v6/packet/summary.pdf>`_ gives
+all fifteen measured topics, all thirty-seven individual factors and complete
 program costs in six pages. The `topic graph
-<audit/overview/v5/packet/whole_topics.svg>`_ shows every complete common paper
+<audit/overview/v6/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
-<audit/overview/v5/packet/conditional_1.svg>`_ and `remaining nineteen
-<audit/overview/v5/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v5/README.rst>`_ links exact tables,
+<audit/overview/v6/packet/conditional_1.svg>`_ and `remaining twenty
+<audit/overview/v6/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v6/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
 
 The new `gluing topic <papers/topic-gluing/v1/README.rst>`_ supplies two common
@@ -115,12 +115,18 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 1 / 1
      - 0.677
      - 0.508
+   * - Rank contraction and rank intervals
+     - 1 / 1
+     - 0.888
+     - 0.761
 
 These are text costs, not minimum proof complexities. The reports specify
 the complete program boundary, raw-code alternatives, retained external
 proofs, graphic costs and counting-unit sensitivity. B and C use complete
 available text, including authored non-PDF sources and page furniture; the
-other comparisons use calibrated PDF text with repeated furniture removed.
+rank-contraction comparison uses complete raw PDF extraction, including all
+page furniture. The remaining comparisons use their declared calibrated text
+boundaries.
 No pooled factor is inferred across these representations. Factors below
 one stay in the comparison. A near-unity factor shows little saving by our
 current proofs; it does not establish originality. For D, the applications
@@ -1375,3 +1381,27 @@ verify that actual output obstruction. Input generation and the original
 C-property remain written proofs. The other theorem cases, complete L020
 recovery and the separate high-rank stability theorem remain outside this
 correction. The admitted-original and conjecture counts are unchanged.
+
+Rank contraction and rank intervals
+----------------------------------
+
+The `complete common theory and application <papers/topic-rank-contraction/v1/README.rst>`_
+recover the principal contract of L037, Brooksbank and Leemans, *Rank reduction
+of string C-group representations*, arXiv:1812.01055v2 (2019). The common
+proof handles a central twist, gives an elementary dihedral obstruction, and
+proves contraction and iteration. Its applications preserve the exact
+classical construction inputs and address the printed indexing qualification.
+
+The complete written comparison is **15,530 / (6,937 + 10,555) = 0.887834**.
+This replacement is longer in the primary measure. Including the entire
+program gives **0.760641** in printed form or **0.776772** using its raw source.
+The conditional application factor is **1.471341**, after acquiring all the
+common theory and code. Earlier B theory supplies no free premise.
+
+The `numerical reader <audit/topic-rank-contraction/v1/measurement/packet/reader.pdf>`_
+retains all thirty coordinates and 120 exact fractions. The independent review
+checks the integer arithmetic, complete CSVs and actual SVG/PDF bar geometry.
+Four scoped Lean lemmas pass with standard axioms; the full contraction
+induction and classical seeds remain written mathematics. Conjecture 5.1 is
+not solved by this work. The `admission <audit/topic-rank-contraction/v1/admission.json>`_
+records both the recovery and every qualification.
