@@ -25,6 +25,15 @@ def digest(data):
 def load(path):
     return json.loads((ROOT/path).read_text())
 
+def check_bindings(rows):
+    for row in rows:
+        name = row.get('path', row.get('file'))
+        need(isinstance(name,str) and not Path(name).is_absolute() and
+             '..' not in Path(name).parts, 'Invalid binding path.')
+        data = (ROOT/name).read_bytes()
+        need(digest(data)==row['sha256'] and len(data)==row['bytes'],
+             'Changed audited artifact: '+name)
+
 def archive_blobs(commit, paths):
     need(re.fullmatch(r'[0-9a-f]{40}',commit) is not None,'Use the full archive commit.')
     for path in paths:
@@ -92,13 +101,26 @@ def check_lean():
                     if source.stem=='Phase23TransferAnnihilator' else [])
         need(native==expected,'Changed Lean trust boundary: '+source.name)
         names.append(source.stem)
-    need(len(names)==96,'Changed canonical Lean inventory without audit.')
+    extension = load('audit/lean_extension.json')
+    need(extension['status']=='PASS_ROOT_REVIEWED_SEPARATE_MODULE_EXTENSION',
+         'Unreviewed Lean extension.')
+    check_bindings(extension['old_artifact_preservation']['bindings'])
+    check_bindings(extension['artifacts'])
+    old = load(extension['old_run']['path'])
+    expected_names = old['discovered_modules'] + [extension['module']]
+    need(len(names)==97 and set(names)==set(expected_names),
+         'Changed canonical Lean inventory without audit.')
+    fresh = load(extension['new_independent_root_replay']['report']['path'])
+    need(fresh['status']=='PASS' and len(fresh['declarations'])==9 and
+         fresh['source_sha256']==extension['new_source']['sha256'],
+         'New Lean source lacks its fresh independent report.')
     roots = re.findall(r'`([A-Za-z0-9_]+)',(formal/'lakefile.lean').read_text())
     need(set(roots)==set(names) and len(roots)==len(names),'Default build omits or duplicates modules.')
     return names
 
 def check_catalogue():
-    papers = load('papers/catalogue.json')['papers']
+    catalogue = load('papers/catalogue.json')
+    papers = catalogue['papers']
     need(len({r['id'] for r in papers})==len(papers),'Duplicate paper IDs.')
     intake = load('audit/intake.json')
     archived_notes = {r['path']:r for r in load('audit/archive_markdown.json')['files']}
@@ -136,7 +158,19 @@ def check_catalogue():
     need(view['entries']==saved['entries'],'Intake entries drifted.')
     need({r['id'] for r in view['entries'] if r['full_principal_results']}==
          set(intake['admitted_principal_contracts']),'Principal contract list drifted.')
-    return len(papers)
+    editions = catalogue.get('new_editions', [])
+    need(len({r['id'] for r in papers+editions})==len(papers)+len(editions),
+         'Duplicate mathematical edition ID.')
+    for row in editions:
+        review = load(row['review_record'])
+        need(review['status'].startswith('PASS'), 'Unreviewed proof edition: '+row['id'])
+        check_bindings(review['artifacts'])
+        recorded = {r['path']:r for r in review['artifacts']}
+        for key,suffix in [('tex','.tex'),('pdf','.pdf')]:
+            name = row[key]
+            need(name.startswith('papers/') and name.endswith(suffix) and name in recorded,
+                 'New proof edition missing from its review: '+row['id'])
+    return len(papers), len(editions)
 
 def publication_rows():
     names = subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')[:-1]
@@ -154,6 +188,35 @@ def publication_rows():
             data = path.read_bytes(); rows.append({'file':name,'bytes':len(data),'sha256':digest(data)})
     return rows
 
+def check_topic_measurement():
+    review = load('audit/topic-e/v2/measurement_admission.json')
+    need(review['status']=='PASS_ROOT_ADMITTED_MEASUREMENT', 'Unadmitted topic measurement.')
+    check_bindings(review['artifacts'])
+    measured = load('audit/topic-e/v2/measurement.json')
+    recounted = load('audit/topic-e/v2/root_recount.json')
+    costs = {key:value for group in measured['costs'].values() for key,value in group.items()}
+    cells = 0
+    for key,forms in recounted['costs'].items():
+        for form,metrics in forms.items():
+            for metric,value in metrics.items():
+                need(costs[key][form][metric]==value, 'Independent recount differs: '+key)
+                cells += 1
+    need(cells==150, 'Incomplete three-source comparison.')
+    need(measured['historical_program_cost'] is None and
+         measured['retained_library_cost'] is None and
+         measured['full_Lean_cost'] is None and
+         measured['exact_all_artifact_factor'] is None, 'Unknown costs cannot become zero.')
+    summary = load('audit/topic-e/v2/summary.json')
+    c = {k:v['NFC']['characters_without_whitespace'] for k,v in costs.items()}
+    total = sum(c[k] for k in ('L083','L079','L021'))
+    denominator = sum(c[k] for k in ('New_U','New_A1','New_A2','New_A3'))
+    need(summary['overall_written_factor']==total/denominator,
+         'Overall factor does not charge the common theory once.')
+    for row in summary['per_result_contract']:
+        need(row['conditional_factor']==c[row['source']]/c[row['application']] and
+             row['already_acquired_common_theory_and_required_program']==c['New_U']+c['New_Code'],
+             'Incorrect conditional result factor.')
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -162,7 +225,8 @@ def main():
         changed = subprocess.check_output(['git','diff','--name-only','-z'],cwd=ROOT).decode().split('\0')
         changed = [p for p in changed if p and p!='provenance/publication_manifest.json']
         need(not changed,'Stage all publication edits before recording their bytes: '+repr(changed))
-    historical, markdown = check_archive(); lean = check_lean(); papers = check_catalogue()
+    historical, markdown = check_archive(); lean = check_lean(); papers, editions = check_catalogue()
+    check_topic_measurement()
     rows = publication_rows()
     if args.write_manifest:
         MANIFEST.write_text(json.dumps({
@@ -172,8 +236,10 @@ def main():
     need(load('provenance/publication_manifest.json')['files']==rows,'Publication differs from manifest.')
     print(f'PASS: {len(rows)} tracked artifacts; zero tracked Markdown.')
     print(f'PASS: {historical} historical bindings; {markdown} notes checked in Git, not local files.')
-    print(f'PASS: {len(lean)} saved Lean reports and default build entries; {papers} TeX/PDF papers.')
-    print('Trust: 95 reports without native axioms; one legacy report has four recorded native axioms.')
+    print(f'PASS: {len(lean)} saved Lean reports and default build entries; {papers} preserved and {editions} new TeX/PDF editions.')
+    print('Trust: 96 reports without native axioms; one legacy report has four recorded native axioms.')
+    print('Lean evidence: 96 unchanged modules from the prior fresh run, plus one separately compiled module.')
+    print('PASS: 150 independent metric cells; overall and conditional factors have separate denominators.')
     print('Historical computations require the pinned intake checkout.')
 
 if __name__=='__main__':

@@ -54,6 +54,7 @@ lean_lib MathCompressionCertificates where
     `LabelFourRelations,
     `LiftCertificate,
     `LocallyFaithfulIntersection,
+    `MarkedInvolutionExtension,
     `MarkedSquareDescent,
     `NestedKernelIntersections,
     `OddCoverSeparation,

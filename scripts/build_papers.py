@@ -27,7 +27,8 @@ def main():
         ap.error('XeLaTeX is required, with the fonts specified in the TeX sources.')
     out = args.output_dir.resolve()
     out.mkdir(parents=True)
-    papers = json.loads((ROOT/'papers/catalogue.json').read_text())['papers']
+    catalogue = json.loads((ROOT/'papers/catalogue.json').read_text())
+    papers = catalogue['papers'] + catalogue.get('new_editions', [])
     papers = papers + [{'id':'audit/protocol','tex':'audit/protocol.tex'}]
 
     def build(row):
