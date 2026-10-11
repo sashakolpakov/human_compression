@@ -99,7 +99,11 @@ reading of all 25 inherited records, fresh finite validation and the five
 scoped Lean declarations. The four-page common paper, five-page application
 and four-page validation appendix have all been reviewed. At that stage,
 twenty-three of the 27 contracts had complete canonical applications and
-common theory. Topic F's lengths and paired dependency costs remain pending.
+common theory. The `length audit <topic-f/v2/measurement/README.rst>`_ is now
+accepted: 1.264 combined and 1.971 for the application after acquiring the
+whole common theory and complete declared validation package. Including
+the full printed validation appendix gives 0.875. Its paired dependency
+costs remain pending.
 These manuscript editions add no source or solved-question credit.
 
 Topic G now supplies the complete common paper and both L009 and L092
@@ -165,8 +169,9 @@ subject does not itself prove a compression theorem.
    * - F: Odd kernels and cyclotomic polyhedra
      - L014
      - Complete common theory and application reviewed, including the exact
-       presentation and cyclotomic calculations. Measure full lengths and
-       paired dependencies; retain the external tightness classification.
+       presentation and cyclotomic calculations. Full lengths and the
+       combined and individual factors are accepted. Audit paired
+       dependencies, retaining the external tightness classification.
    * - Recognizable incidence extensions
      - F010
      - Assemble the full construction and reconstruction criterion,

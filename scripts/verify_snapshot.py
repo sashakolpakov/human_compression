@@ -2155,6 +2155,97 @@ def check_topic_g_proofs():
     return 79,40
 
 
+def check_topic_f_measurement():
+    base = 'audit/topic-f/v2/measurement/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_F_MEASUREMENT',
+         'Topic F numerical comparison lacks acceptance.')
+    check_bindings(admission['artifacts'])
+    pins = admission['packet_manifests']
+    need(set(pins)=={'inputs','input_review','input_adoption','packet','arithmetic_review','root_adoption'},
+         'Topic F measurement archive inventory changed.')
+    for folder,pin in pins.items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin,
+             'Changed Topic F measurement archive: '+folder)
+        for row in load(base+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=base+folder+'/'+row['path'])])
+    result = load(base+'packet/measurement.json')
+    counts = load(base+'inputs/author_counts.json')
+    recount = load(base+'input_review/recount.json')
+    need(counts['documents']==recount['documents'] and
+         all(counts[k]==recount['raw_files'][k] for k in recount['raw_files']),
+         'Topic F inputs disagree with the independent recount.')
+    spec = importlib.util.spec_from_file_location('topic_f_independent_arithmetic',
+                                                 ROOT/base/'arithmetic_review/arithmetic.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    checked = checker.check(result,counts)
+    controls = checker.controls(result,counts)
+    need(len(checked)==30 and len(controls)==21 and all(r['rejected'] for r in controls),
+         'Topic F arithmetic coordinates or corruption controls changed.')
+    input_review = load(base+'input_review/review.json')
+    input_adoption = load(base+'input_adoption/review.json')
+    review = load(base+'arithmetic_review/review.json')
+    adoption = load(base+'root_adoption/review.json')
+    need(input_review['status']=='ACCEPTED_INPUT_BOUNDARY_NO_FACTORS' and
+         input_review['author_manifest']['sha256']==pins['inputs'] and
+         input_review['corrections_requested']==[] and
+         input_adoption['status']=='ROOT_ACCEPTED_TOPIC_F_INPUTS_WITH_EXPLICIT_EXTRACTION_BOUNDARY' and
+         input_adoption['author_manifest_sha256']==pins['inputs'] and
+         input_adoption['independent_manifest_sha256']==pins['input_review'] and
+         review['status']=='ACCEPTED_INDEPENDENT_NUMERICAL_AND_READER_REVIEW' and
+         review['author_manifest']['sha256']==pins['packet'] and
+         review['corrections_requested']==[] and
+         adoption['status']=='ROOT_ACCEPTED_TOPIC_F_NUMERICAL_MEASUREMENT' and
+         adoption['input_manifests']['numerical']==pins['packet'] and
+         adoption['input_manifests']['numerical_review']==pins['arithmetic_review'] and
+         adoption['corrections_requested']==[], 'Topic F acceptance refers to other inputs.')
+    expected_inputs = {k:pins[k] for k in ['inputs','input_review','input_adoption']}
+    need(result['input_manifests']==review['input_manifests']==expected_inputs and
+         all(adoption['input_manifests'][k]==v for k,v in expected_inputs.items()),
+         'Topic F numerical calculation bypasses accepted input boundaries.')
+    fresh = load(base+'root_adoption/fresh_arithmetic.json')
+    need(fresh['status']=='PASS_INDEPENDENT_NUMERICAL_REVIEW' and
+         fresh['primary']==result['primary']==review['primary']==adoption['primary']==admission['primary'] and
+         fresh['coordinate_count']==admission['policy_coordinates']==30 and
+         fresh['exact_fractions']==admission['exact_fractions']==120 and
+         fresh['combined_fractions']==result['combined_fractions']==admission['combined_fractions']==90 and
+         fresh['conditional_fractions']==result['conditional_fractions']==admission['conditional_fractions']==30 and
+         len(fresh['controls'])==21 and all(r['rejected'] for r in fresh['controls']),
+         'Topic F admission changed independently verified fractions.')
+    mapping = load(base+'input_adoption/public_mapping.json')
+    immutable = load(base+'inputs/manifest.json')['immutable_inputs']
+    need([{k:r[k] for k in ['path','bytes','sha256']} for r in mapping['routes']]==immutable,
+         'Topic F public mapping omits a measured input.')
+    public = [dict(path=r['public_path'],bytes=r['bytes'],sha256=r['sha256'])
+              for r in mapping['routes'] if r['public_path'] is not None]
+    check_bindings(public)
+    private = [r for r in mapping['routes'] if r['public_path'] is None]
+    need(len(public)==15 and len(private)==1 and private[0]['path']=='sources/regular_4pm2025.pdf' and
+         mapping['no_primary_export'] is True, 'Topic F source input boundary changed.')
+    proof = load('audit/topic-f/v2/admission.json')
+    scope = load('papers/topic-f/v2/scope.json')
+    boundary = load(base+'inputs/source_contract_boundary.json')
+    need(digest((ROOT/'audit/topic-f/v2/admission.json').read_bytes())==admission['proof_admission_sha256'] and
+         admission['source_ids']==proof['source_ids']==result['source_ids']==['L014'] and
+         admission['source_records']==proof['source_rows']==boundary['row_count']==25 and
+         boundary['source_rows']==scope['contracts'] and boundary['proof_spans']==scope['proof_spans'] and
+         admission['principal_contracts']==boundary['principal_contracts']==1 and
+         admission['project_total_preserved']==27, 'Topic F measurement changed scientific coverage.')
+    need(admission['pdf_metric_cells']==recount['pdf_metric_cells']==120 and
+         admission['raw_metric_cells']==sum(recount[k] for k in
+             ['raw_program_metric_cells','raw_driver_metric_cells','raw_formal_metric_cells'])==60 and
+         admission['required_uniform_proof_programs']==0 and admission['complete_validation_programs']==3 and
+         admission['separate_drivers']==2 and admission['separate_formal_files']==1 and
+         admission['scoped_Lean_declarations']==5 and
+         admission['unknown_external_costs']==dict.fromkeys(['retained_CP_fulltext','retained_external',
+             'graphics_layout','historical_software']) and
+         admission['paired_dependency_audit_complete'] is False and
+         admission['source_specific_formalization'] is False and
+         admission['new_source_credit']==admission['new_question_credit']==admission['new_formal_credit']==0,
+         'Topic F numerical summary invents a cost, proof or credit.')
+    return 120,120
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -2181,6 +2272,7 @@ def main():
     affine_rows, affine_declarations = check_affine_proofs()
     affine_cells, affine_fractions = check_affine_measurement()
     f_rows, f_declarations = check_topic_f_proofs()
+    f_cells, f_fractions = check_topic_f_measurement()
     g_rows, g_declarations = check_topic_g_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
@@ -2213,6 +2305,7 @@ def main():
     print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs.')
     print(f'PASS: affine comparison has {affine_cells} independent PDF metric cells and {affine_fractions} exact combined/conditional fractions; the whole common paper is charged.')
     print(f'PASS: Topic F preserves {f_rows} source records, {f_declarations} scoped Lean declarations, complete uniform written proofs and all three validation programs; measurements remain separate.')
+    print(f'PASS: Topic F has {f_cells} independent PDF metric cells and {f_fractions} exact combined/conditional fractions; the whole common paper and validation costs are explicit.')
     print(f'PASS: Topic G preserves {g_rows} source records, {g_declarations} scoped Lean declarations, complete common theory and both corrected applications with all thirteen programs; measurements remain separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')

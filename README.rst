@@ -611,8 +611,18 @@ formalized in Lean.
 
 At that stage, the number of contracts with complete canonical applications
 and common theory reached 23 of 27. It adds no source or solved-question
-credit. Lengths and paired dependencies are being audited separately;
-no compression factor is asserted for Topic F yet.
+credit. The `length audit <audit/topic-f/v2/measurement/README.rst>`_ now
+gives **1.264 times combined**: 25,115 / (7,118 + 12,744), charging the whole
+common theory once. After acquiring that theory and the complete declared
+validation package, the application ratio is **1.971 times**: 25,115 / 12,744.
+
+The complete validation appendix adds 8,837 characters, giving **0.875 times**
+including validation; all three raw programs give **0.899 times** instead.
+Two operational drivers and the Lean file are priced separately. The
+`two-page calculation <audit/topic-f/v2/measurement/packet/measurement.pdf>`_
+shows every denominator, the cost graph and alternative units. These are
+written-length comparisons with explicit exclusions and unknown external
+costs. Paired proof dependencies and passage costs remain pending.
 
 Flag relations and incidence residues
 ------------------------------------
