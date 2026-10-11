@@ -13,12 +13,14 @@ compression programme, including papers whose replacement proofs have not
 yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
-`subsequent admissions <audit/corpus/latest.json>`_ now record **104
-accessible manuscripts: 34 with admitted principal-result recoveries and
-70 awaiting complete recovery**. The other **57 remain retrieval targets**.
+`subsequent admissions <audit/corpus/latest.json>`_ now record **105
+accessible manuscripts: 35 with admitted principal-result recoveries and
+70 awaiting complete recovery**. The other **56 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. All thirty-four recovered originals now have measured comparisons. The
-catalogue itself has not grown.
+evidence and next obligation. Thirty-four recovered originals have measured comparisons; L010 has just
+passed scientific review and its measurement is pending. The newly obtained
+`L084 erratum <audit/corpus/access/erratum-2006/README.rst>`_ awaits recovery.
+The catalogue itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
 A complete authored rendering is a usable source even when its PDF is
@@ -37,6 +39,11 @@ and application. Two graphs show the `first seventeen
 <audit/overview/v3/packet/conditional_2.svg>`_ source/application comparisons.
 The `numerical overview <audit/overview/v3/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
+
+The new `gluing topic <papers/topic-gluing/v1/README.rst>`_ supplies two common
+papers and an application recovering the main results of L010. It does not yet
+have a numerical factor. The consolidated graphs above cover the 34 measured
+originals; they do not silently count this additional recovery.
 
 B now uses one complete common paper; the enlarged orbit topic includes both
 N007 and N006 with all companion papers. Each topic pays its entire common

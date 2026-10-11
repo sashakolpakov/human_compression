@@ -3852,6 +3852,123 @@ def check_nonfirm_hnn_correction():
     return 1
 
 
+
+def run_historical34_check(function):
+    """Replay an unchanged earlier checker against its exact admitted pointers."""
+    import types
+    redirects = {
+        'audit/corpus/latest.json': 'audit/corpus/updates/before-gluing-and-erratum.json',
+        'papers/latest_catalogue.json': 'papers/catalogue_unified_and_orbit.json',
+    }
+    scope = dict(function.__globals__)
+    scope['load'] = lambda p: load(redirects.get(str(p), p))
+    preserved = types.FunctionType(function.__code__, scope, function.__name__,
+                                   function.__defaults__, function.__closure__)
+    return preserved()
+
+
+def check_gluing_scientific_admission():
+    base='audit/topic-gluing/v1/'
+    a=load(base+'admission.json')
+    check_bindings(a['artifacts']+a['packets'])
+    pins=[
+      '7e025d845c102f7ab976f60049bb33d15a249ee7a0a776c754d4c9c17bd58e26',
+      '636505ba05e2b26c5396d7ff03427b3aa9397bdd40abc55f14dcc0a1d88fbc21',
+      '8e2f60d6d5c98679f6e1a863be0d920ec2bf1c51a10ba410dd1a1f76d732e8b8',
+      '7e0842741f856bc581e1f24bbdf5938149d92dc71120d96b741f08b5477d8530',
+      'd2580bee35571112385023c22da038ae00d5cdeaac0e02eabe9d495c4b73c3ec',
+      '45715d640f28ac3663058d946cb41d08f3a41eb716f9dc2fa37384b03fba4ece']
+    need([p['sha256'] for p in a['packets']]==pins,'L010 accepted packet editions changed.')
+    for p in a['packets']:
+        parent=Path(p['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(p['path'])['exports']])
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_PRINCIPAL_CONTRACT' and a['source_id']=='L010' and
+         a['principal_originals_added']==1 and a['source_pages']==15 and a['source_rows']==23 and
+         a['common_pages']==[5,6] and a['application_pages']==[5] and
+         a['source_sha256']=='77b983a8367b12849920f4365891d8df39286e4a71329ccea34a20a4bddb5cf8' and
+         a['partial_Lean_declarations']==10 and a['new_partial_Lean_declarations']==4 and
+         a['reused_partial_Lean_declarations']==6 and a['new_question_credit']==0 and
+         not a['whole_source_formalized'] and not a['historical_priority_claim'] and
+         a['compression_factor'] is None and a['measurement_status']=='pending' and
+         a['charge_full_common_paper'] and a['charge_common_once_within_topic'] and
+         not a['cross_topic_overlap_discount'] and a['validation_programs']==3 and
+         not a['finite_validation_is_uniform_proof_premise'],'L010 scope changed.')
+    source=load('papers/topic-gluing/v1/application/source_map.json')
+    rows=source['records'];ids={r['id'] for r in rows}
+    need(len(rows)==len(ids)==23 and
+         {r['id'] for r in rows if r['status']=='retained_input'}==set(a['retained_inputs'])=={'L010.P2.2','L010.P2.3'} and
+         {r['id'] for r in rows if r['status']=='excluded_ancillary'}=={'L010.sequence'} and
+         {r['id'] for r in rows if r['status']=='historically_answered'}=={'L010.C4.1.answer','L010.Table6.X'} and
+         source['new_question_credit']==0,'L010 source dispositions changed.')
+    q=load(base+'complete-review/review.json')
+    need(q['status']=='ACCEPTED_PRINCIPAL_RESULTS_WITH_EXPLICIT_RETAINED_INPUTS' and
+         len(q['mathematical_checks'])==8 and all(r['verdict']=='ACCEPTED' for r in q['mathematical_checks']) and
+         q['render']['all11_pages_visually_read'] and q['render']['per_page_text_identical'] and
+         q['formal']['new_fresh_compilation'] and q['formal']['false_weakenings_rejected']==4 and
+         not q['formal']['end_to_end'] and q['remaining_mathematical_corrections']==[],
+         'L010 complete proof review missing.')
+    narrow=load(base+'second-example-review/review.json')
+    need(narrow['roles']['argument_author']=='root' and narrow['roles']['reviewer']=='enumeration_review' and
+         narrow['reading']['sha256']=='0b7ee9461c37cc85495523159ae0f3ea440080cc6872c5c22cac4e15707ba7ed' and
+         narrow['status']=='ACCEPTED_BOUNDED_ROOT_CONTRIBUTION','L010 root contribution lacks distinct review.')
+    for name,pages in [('parallel_author_replay',6),('application_author_replay',5)]:
+        r=load(base+'complete-review/'+name+'.json')
+        need(r['status']=='PASS' and r['render']['pages']==pages and r['render']['per_page_text_equal'],
+             'L010 fresh replay/render changed.')
+    return 1
+
+
+def check_programme_with_access_additions():
+    need(run_historical34_check(check_current_programme_pointer)==(34,70),
+         'Historical34 programme no longer replays.')
+    current=load('audit/corpus/latest.json')
+    check_bindings([current['snapshot'],current['base_inventory'],current['previous_snapshot']]+
+                   current['access_additions']+current['added_admissions'])
+    need({k:v for k,v in current.items() if k!='snapshot'}==load(current['snapshot']['path']),
+         'Current programme differs from its snapshot.')
+    entries=load(current['base_inventory']['path'])['entries']
+    originals={r['original_id'] for r in entries}
+    old_access={r['original_id'] for r in entries if r['source_access']['accessible']}
+    historical={r['original_id'] for r in entries if r['proof']['principal_contract_admitted']}
+    access_ids=[]
+    for row in current['access_additions']:
+        a=load(row['path']);check_bindings(a['artifacts'])
+        need(a['status']=='ROOT_ADMITTED_SOURCE_ACCESS_ADDITION' and a['accessible_added_ids']==['L084'] and
+             a['source_pages']==2 and a['source_sha256']=='63789bad8fa35c53feee35275bf1f85dd52a54df905c768dd5257240b7f7ddb6' and
+             all(a[k]==0 for k in ['new_original_intake','new_principal_credit','new_question_credit']),
+             'Source access credited as a mathematical recovery.')
+        access_ids.extend(a['accessible_added_ids'])
+    need(len(access_ids)==len(set(access_ids)) and not set(access_ids)&old_access and
+         set(access_ids)<=originals,'Source addition duplicates or enlarges the intake.')
+    accessible=old_access|set(access_ids)
+    additions=[load(r['path'])['source_id'] for r in current['added_admissions']]
+    need(len(additions)==len(set(additions)) and not set(additions)&historical,'Duplicate recovered original.')
+    admitted=historical|set(additions)
+    need(set(current['admitted_original_ids'])==admitted and admitted<=accessible and
+         set(current['accessible_pending_original_ids'])==accessible-admitted and
+         set(current['retrieval_original_ids'])==originals-accessible and
+         current['originals']==len(originals)==161 and current['accessible_originals']==len(accessible)==105 and
+         current['admitted_principal_originals']==len(admitted)==35 and
+         current['accessible_pending_complete_recovery']==len(accessible-admitted)==70 and
+         current['pending_source_retrieval']==len(originals-accessible)==56 and
+         current['measurement_pending_original_ids']==['L010'] and current['currently_measured_originals']==34 and
+         current['all_originals_remain_active'] and not current['all_original_proofs_recovered'] and
+         not current['all_conjectures_resolved'],'Current105/35 programme partition changed.')
+    q=load('audit/corpus/access/erratum-2006/root_review.json')
+    need(q['full_text_read'] and q['pages_viewed']==[1,2] and q['original_distinct_from_2004_article'] and
+         not q['mathematical_reproof'] and not q['source_bytes_public'] and q['new_principal_credit']==0,
+         'L084 complete source review changed.')
+    c=load('papers/latest_catalogue.json');check_bindings([c['previous_catalogue']])
+    previous=load(c['previous_catalogue']['path'])
+    need(c['entries'][:-3]==previous['entries'] and len(c['entries'])==len(previous['entries'])+3 and
+         set(c['original_ids'])==set(additions) and
+         {k for r in c['entries'] for k in r['source_contracts']}==set(additions),
+         'Latest catalogue loses a recovered original or common paper.')
+    for row in c['entries']:
+        need((ROOT/row['tex']).is_file() and (ROOT/row['pdf']).is_file(),'Missing current paper.')
+    return len(admitted),len(accessible-admitted)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3899,12 +4016,14 @@ def main():
     b5_fractions = check_b5_measurement()
     wreath_admitted, wreath_pending = check_wreath_recovery()
     overview33_fractions, overview33_bars = check_historical_overview33()
-    unified_fractions = check_unified_b_science_and_new_measurements()
+    unified_fractions = run_historical34_check(check_unified_b_science_and_new_measurements)
     overview34_fractions, overview34_bars = check_overview34()
     fischer_cases = check_fischer_answers()
     nonfirm_corrections = check_nonfirm_hnn_correction()
     active_measured = check_current_measurement_pointer()
-    active_admitted, active_pending = check_current_programme_pointer()
+    gluing_added = check_gluing_scientific_admission()
+    active_admitted, active_pending = check_programme_with_access_additions()
+    print(f"PASS: {gluing_added} gluing original admitted with complete written proofs;105 accessible,35 recovered,34 measured; L084 acquired with no proof credit.")
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
     print(f'PASS: current thirteen-topic overview has {overview34_fractions} exact comparisons and {overview34_bars} bars in each vector format for34 originals.')
     print(f'PASS: unified B scientific transfer and enlarged orbit comparison preserve {unified_fractions} new-edition fractions; historical33 overview is separately checked.')
