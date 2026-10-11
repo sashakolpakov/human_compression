@@ -5925,6 +5925,132 @@ def check_projective_covers_overview_independent():
 
 
 
+def check_unified_a_current_admission():
+    path = 'audit/topic-a/v3/admission.json'
+    need(digest((ROOT / path).read_bytes()) ==
+         'b8d70f166c344ec53d9f828565d876cb8903bbdb73c09fcaf8f65bd54a497bc7',
+         'Changed accepted unified A edition.')
+    spec = importlib.util.spec_from_file_location('unified_a_current', ROOT / 'scripts/check_unified_a_admission.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result = checker.verify(ROOT)
+    need(result['status'] == 'PASS_UNIFIED_A_ADMISSION', 'Unified A admission failed.')
+    return result['exact_fractions']
+
+
+def check_faithfulness_current_admission():
+    path = 'audit/topic-mixes/v3/admission.json'
+    need(digest((ROOT / path).read_bytes()) ==
+         'be66fa2a3ec237b91648977e67a6210dbc02ad9ade0fd03ad0822a660210ceda',
+         'Changed accepted Mixes edition.')
+    spec = importlib.util.spec_from_file_location('faithfulness_current', ROOT / 'scripts/check_mix3_admission.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result = checker.verify(ROOT)
+    need(result['status'] == 'PASS_MIX3_ADMISSION', 'Mixes admission failed.')
+    return result['exact_fractions']
+
+
+def check_programme47():
+    spec = importlib.util.spec_from_file_location('programme47', ROOT / 'scripts/check_programme47.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result = checker.verify(ROOT)
+    need(result['status'] == 'PASS_PROGRAMME47' and check_current_measurement_pointer() == 47,
+         'Programme 47 and measurement registration disagree.')
+    review = load('audit/programme47/v1/publication_review.json')
+    check_bindings([review['checker'], review['registration_report']] + review['scientific_and_numerical_admissions'])
+    need(review['checks'] == result and review['role_disclosure'] and not review['corrections_requested'],
+         'Programme 47 review differs.')
+    return result['recovered'], result['pending']
+
+
+def check_previous_programme47():
+    """Check the preserved programme 46 through its unchanged verification functions."""
+    from types import FunctionType
+    import tempfile
+    routes = {
+        'audit/corpus/latest.json': 'audit/programme47/v1/previous_corpus_pointer.json',
+        'papers/latest_catalogue.json': 'audit/programme47/v1/previous_catalogue.json',
+        'audit/overview/latest.json': 'audit/programme47/v1/previous_overview_pointer.json',
+        'README.rst': 'audit/programme47/v1/previous_README.rst',
+        'papers/topic-mixes/latest.json': 'audit/programme47/v1/previous_Mixes_pointer.json',
+    }
+    with tempfile.TemporaryDirectory(prefix='programme47-history-') as temporary:
+        historical_root = Path(temporary)
+        def populate(source, destination, prefix=''):
+            destination.mkdir(exist_ok=True)
+            for child in source.iterdir():
+                relative = prefix + child.name
+                target = destination / child.name
+                if relative in routes:
+                    target.symlink_to(ROOT / routes[relative])
+                elif any(k.startswith(relative + '/') for k in routes):
+                    populate(child, target, relative + '/')
+                else:
+                    target.symlink_to(child, target_is_directory=child.is_dir())
+        populate(ROOT, historical_root)
+        scope = dict(globals(), ROOT=historical_root)
+        for name, value in list(globals().items()):
+            if isinstance(value, FunctionType) and value.__globals__ is globals():
+                scope[name] = FunctionType(value.__code__, scope, value.__name__,
+                                          value.__defaults__, value.__closure__)
+        previous = scope['check_previous_programme46']()
+        need(scope['check_programme46']() == (46, 60), 'Previous original registration changed.')
+        overview46 = scope['check_projective_covers_overview']()
+        need(scope['check_projective_covers_overview_independent']() == overview46,
+             'Previous overview46 checks disagree.')
+        return previous, overview46
+
+
+def check_unified_faithfulness_overview():
+    base = 'audit/overview/v14/'
+    need(digest((ROOT / base / 'admission.json').read_bytes()) ==
+         '12e0dacd879e21850a0ca1a62781961f78ccb38241c8d56c6d1cb7947bf5f86a',
+         'Changed accepted overview47 admission.')
+    spec = importlib.util.spec_from_file_location(
+        'unified_faithfulness_overview', ROOT / 'scripts/check_unified_faithfulness_overview.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    return checker.verify(ROOT)
+
+
+def check_unified_faithfulness_overview_independent():
+    base = 'audit/overview/v14/'
+    admission = load(base + 'admission.json')
+    for key, pin, count in [
+            ('author_manifest', '8c3eec6569d6f4e1e7bc797f29889955cafc0b0be6260c2f62538156c7053915', 40),
+            ('independent_manifest', 'c357cdcb3e25692f011cffbdd6df1d453506dc2b876603453d5deed8183781df', 5)]:
+        row = admission[key]; check_bindings([row])
+        need(row['sha256'] == pin, 'Changed reviewed overview47 packet.')
+        exports = load(row['path'])['exports']
+        need(len(exports) == count, 'Incomplete overview47 evidence.')
+        check_bindings([dict(e, path=str(Path(row['path']).parent / e['path'])) for e in exports])
+    check_bindings([admission[k] for k in ['previous_overview', 'previous_overview_pointer',
+                   'current_corpus', 'current_catalogue', 'active_original_catalogue',
+                   'original_registration', 'programme_review', 'registration_report']] +
+                   admission['scientific_and_numerical_admissions'])
+    need(admission['topic_count'] == 18 and admission['distinct_originals'] == 47 and
+         admission['active_originals'] == 106 and admission['pending_originals'] == 59 and
+         admission['archived_originals'] == 55 and admission['exact_fractions'] == 65 and
+         admission['actual_SVG_bars'] == admission['actual_PDF_bars'] == 148 and
+         admission['reader_pages'] == 6 and admission['unchanged_topic_records'] == 16 and
+         admission['unchanged_other_individual_records'] == 36 and
+         admission['newly_registered_originals'] == ['F007'] and
+         admission['merged_previous_topics'] == ['A', 'Affine'] and
+         admission['new_source_credit'] == admission['new_question_credit'] == admission['new_formal_credit'] == 0 and
+         admission['software_inclusive_factors'] is None and admission['source_software_cost'] is None and
+         admission['pooled_factor'] is None and admission['required_program_roles_preserved'] and
+         admission['no_cross_topic_discount'], 'Overview47 source or cost boundary changed.')
+    spec = importlib.util.spec_from_file_location('overview47_root_review', ROOT / base / 'independent_review/check.py')
+    reviewer = importlib.util.module_from_spec(spec); spec.loader.exec_module(reviewer)
+    report = reviewer.check(ROOT / base / 'packet', ROOT)
+    need(report == load(base + 'independent_review/report.json'), 'Independent overview47 replay differs.')
+    review = load(base + 'independent_review/review.json')
+    visual = load(base + 'independent_review/visual_review.json')
+    need(review['status'] == 'ROOT_ACCEPTED_CONSOLIDATED_OVERVIEW47' and review['corrections_requested'] == []
+         and review['role_disclosure'] and visual['pages'] == 6 and
+         visual['reader_sha256'] == digest((ROOT / base / 'packet/reader.pdf').read_bytes()),
+         'Independent overview47 acceptance missing.')
+    return report['exact_fractions'], report['SVG_bars']
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6013,10 +6139,13 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    (overview43_fractions, overview43_bars), (current_fractions, current_bars) = check_previous_programme46()
-    active_admitted, active_pending = check_programme46()
-    current_fractions, current_bars = check_projective_covers_overview()
-    need(check_projective_covers_overview_independent() == (current_fractions, current_bars), "Distinct overview46 counts disagree.")
+    ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = check_previous_programme47()
+    unified_a_fractions = check_unified_a_current_admission()
+    faithfulness_fractions = check_faithfulness_current_admission()
+    active_admitted, active_pending = check_programme47()
+    current_fractions, current_bars = check_unified_faithfulness_overview()
+    need(check_unified_faithfulness_overview_independent() == (current_fractions, current_bars), "Distinct overview47 counts disagree.")
+    print(f"PASS: unified A and expanded Mixes preserve {unified_a_fractions + faithfulness_fractions} exact topic fractions; F007 is the only additional original.")
     print(f"PASS: expanded E and Mixes add {expanded_e_added + mixes_covers_added} originals; {expanded_e_fractions + mixes_covers_fractions} topic sensitivity fractions checked with symmetric program exclusions.")
     policy_review_binding = load('audit/overview/latest.json')['measurement_policy_review']
     check_bindings([policy_review_binding])
@@ -6031,7 +6160,7 @@ def main():
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, {active_admitted} recovered and {active_pending} pending; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
-    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 19 whole and 46 conditional factors checked.")
+    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 18 whole and 47 conditional factors checked.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
     print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
