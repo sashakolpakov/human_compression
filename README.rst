@@ -8,10 +8,11 @@ question through explicit proofs, attribution and measured comparisons.
 **Measurement correction.** Validation programs must be excluded on both
 sides or included on both sides. Earlier reports added our programs to the
 replacement without measuring the originals' software. Those software-inclusive
-fractions are withdrawn as compression measures. The current tables report
-manuscript lengths; program and data costs remain separately inventoried.
-The `current measurement policy <audit/measurement_policy/v1/README.rst>`_
-defines the symmetric comparison and the limits of the existing measurements.
+fractions are withdrawn as compression measures. An audit of printed listings
+also found source-only code charges in three manuscript comparisons. The
+`current correction <audit/overview/v11/README.rst>`_ withholds those whole-topic
+factors and the three affected individual factors until both sides have matching
+code exclusions. Program and data costs remain separately inventoried.
 
 The active catalogue contains **106 original manuscripts with usable full
 texts**. The `complete active list
@@ -22,10 +23,11 @@ user's request, the other `55 previously indexed originals
 the programme; source retrieval is no longer scheduled. The historical
 161-title inventory and earlier reports remain preserved.
 
-**43 accessible originals have admitted principal-result recoveries with
-measured comparisons; 63 await complete recovery.** The `current programme
-<audit/corpus/latest.json>`_ binds those counts to the proof and measurement
-admissions. An accessible original awaiting a proof remains pending.
+**43 accessible originals have admitted principal-result recoveries;
+63 await complete recovery.** Sixteen whole-topic factors and forty individual
+factors remain available after the listing audit. The `current programme
+<audit/corpus/latest.json>`_ records the proof and earlier measurement
+admissions; the current comparison status is given in the correction above. An accessible original awaiting a proof remains pending.
 Recovery refers to the specified principal results with their explicit
 corrections and retained inputs, not every cited fact or open question.
 
@@ -37,17 +39,19 @@ F now has two originals; the affine consolidation remains in progress. None has 
 no proofs or numerical savings; any later exclusions will retain their
 reasons and previous measurements.
 
-The `consolidated comparison <audit/overview/v10/packet/summary.pdf>`_ gives
-all nineteen measured topics, all forty-three individual factors and declared
-program and data costs in six pages. It contains only written manuscript
-ratios. Software-inclusive factors remain unknown until comparable source
-program costs have been measured. The `topic graph
-<audit/overview/v10/packet/whole_topics.svg>`_ shows every complete common
-paper and application. Two graphs show the `first twenty-one
-<audit/overview/v10/packet/conditional_1.svg>`_ and `remaining twenty-two
-<audit/overview/v10/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v10/README.rst>`_ links exact tables,
-inputs and independent arithmetic and graph review.
+The `consolidated comparison <audit/overview/v11/packet/reader.pdf>`_ accounts
+for all nineteen topics and forty-three originals. Three whole-topic factors
+and the individual factors for L008, L028 and N006 are withheld: their original
+manuscripts contain executable listings while our counted manuscripts exclude
+the separate programs. The unaffected individual comparisons for N016, N005
+and N007 remain available. Software-inclusive factors stay unknown until both
+sides have comparable software inventories.
+The current `topic graph <audit/overview/v11/packet/whole_topics.svg>`_ and
+application graphs (`first twenty-two
+<audit/overview/v11/packet/conditional_1.svg>`_; `remaining twenty-one
+<audit/overview/v11/packet/conditional_2.svg>`_) omit numeric bars for held
+comparisons. The `numerical overview <audit/overview/v11/README.rst>`_ gives
+the exact current tables, historical observations and review.
 
 The expanded `odd-kernel topic <papers/topic-f/v3/README.rst>`_ now covers
 L014 and L007 with one seven-page common paper and applications of five and
@@ -85,76 +89,77 @@ B now uses one complete common paper. The joint operations topic includes
 N005, N006 and N007 with all companion papers. Each topic pays its entire common
 theory once, independently of other topics. Earlier reports remain preserved.
 
-.. list-table:: Current measured sets within the recovery programme
+.. list-table:: Recovered originals and current whole-topic comparisons
    :header-rows: 1
 
    * - Topic
-     - Measured / recovered originals
+     - Recovered originals
      - Whole written factor
    * - A: Supported kernels and finite two-groups
-     - 7 / 7
+     - 7
      - 1.571
    * - B: Coset geometries and symmetric markings
-     - 5 / 5
+     - 5
      - 1.094
    * - C: Chamber operations and binary translations
-     - 5 / 5
+     - 5
      - 1.292
    * - D: Stabilizers and geometry enumeration
-     - 3 / 3
+     - 3
      - 1.053
    * - E: Projective groups
-     - 3 / 3
+     - 3
      - 1.816
    * - F: Odd kernels and cyclotomic constructions
-     - 2 / 2
+     - 2
      - 1.614
    * - G: Linear spaces and support
-     - 2 / 2
+     - 2
      - 0.630
    * - Affine constructions
-     - 1 / 1
+     - 1
      - 0.786
    * - Group representations by geometries
-     - 1 / 1
+     - 1
      - 1.015
    * - Chamber systems and covers
-     - 2 / 2
-     - 0.982
+     - 2
+     - Pending code exclusion
    * - Matching extensions
-     - 1 / 1
+     - 1
      - 1.119
    * - Chiral enumeration
-     - 1 / 1
-     - 0.925
+     - 1
+     - Pending code exclusion
    * - Coset geometries under group operations
-     - 3 / 3
-     - 1.267
+     - 3
+     - Pending code exclusion
    * - Gluing by common points and synchronized trees
-     - 1 / 1
+     - 1
      - 0.677
    * - Rank contraction and rank intervals
-     - 1 / 1
+     - 1
      - 0.888
    * - Locally projective polytopes and their quotients
-     - 2 / 2
+     - 2
      - 0.707
    * - Complete Mathieu geometry census
-     - 1 / 1
+     - 1
      - 0.332
    * - Rank augmentation and exact subgroup intersections
-     - 1 / 1
+     - 1
      - 1.200
    * - Mixes and simultaneous actions
-     - 1 / 1
+     - 1
      - 1.322
 
 These are complete manuscript text costs, not minimum proof complexities or
 a complete cost comparison of executable proofs. Separate software is excluded
-from both manuscript totals. The older records have not all been screened for
-validation listings printed inside manuscripts, so they are not yet a universal
-program-free measurement. Proof-essential algorithms and certificates cannot
-be discarded as optional checks. The reports specify
+from both manuscript totals. The listing audit screens the counted text and
+replacement TeX; it does not measure unseen software or unextracted graphics.
+It retains written algorithm explanations, proofs and tables. Required programs
+and certificates keep their proof role, but that role does not justify counting
+their code on only one side. The reports specify
 the complete program boundary, raw-code alternatives, retained external
 proofs, graphic costs and counting-unit sensitivity. B and C use complete
 available text, including authored non-PDF sources and page furniture; the

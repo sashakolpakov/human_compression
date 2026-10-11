@@ -5485,6 +5485,80 @@ def check_overview43():
     return nf, nb
 
 
+def run_historical43_check(function):
+    """Replay the unchanged v10 checks against their preserved overview pointer."""
+    from types import FunctionType
+    row = load('audit/overview/v11/admission.json')['previous_overview_pointer']
+    check_bindings([row])
+    routes = {'audit/overview/latest.json': row['path']}
+    scope = dict(function.__globals__, load=lambda path: load(routes.get(str(path), path)))
+    return FunctionType(function.__code__, scope, function.__name__,
+                        function.__defaults__, function.__closure__)()
+
+
+def check_listing_symmetry_overview():
+    base = 'audit/overview/v11/'
+    admission = load(base + 'admission.json')
+    check_bindings(admission['artifacts'] + [admission[k] for k in
+                   ['previous_admission', 'previous_overview_pointer',
+                    'current_corpus', 'measurement_policy']])
+    pins = {
+        'author_manifest': ('91fa3605d78286c0dcf53872ae82be6eedc2cb7c2dc458df450d537cd430b694', 50),
+        'independent_manifest': ('97ceb55382f71ebbe751bf3a2c26f12a8e07f7e9c22b1c6ed268f5fecdb5cfb1', 5),
+        'listing_manifest': ('eb605489814f8bc43f10445d34101159053a3da99f987925316fb0a6c7b9be5a', 10),
+        'listing_review_manifest': ('21b87530003ef6295e7ef945e3d81bb89229b9c05bdee323549f0f4fa5997ab6', 4),
+    }
+    for key, (pin, count) in pins.items():
+        row = admission[key]
+        check_bindings([row])
+        need(row['sha256'] == pin, 'Changed accepted listing correction edition.')
+        exports = load(row['path'])['exports']
+        need(len(exports) == count, 'Incomplete listing correction packet.')
+        check_bindings([dict(r, path=str(Path(row['path']).parent / r['path'])) for r in exports])
+    spec = importlib.util.spec_from_file_location('listing_comparison_review',
+                                                  ROOT / base / 'independent_review/check.py')
+    reviewer = importlib.util.module_from_spec(spec); spec.loader.exec_module(reviewer)
+    report = reviewer.check(ROOT / base / 'packet', ROOT)
+    need(report == load(base + 'independent_review/report.json'), 'Independent comparison replay differs.')
+    spec = importlib.util.spec_from_file_location('listing_scope_review',
+                                                  ROOT / base / 'listing_review/check.py')
+    listing = importlib.util.module_from_spec(spec); spec.loader.exec_module(listing)
+    scope = listing.verify(ROOT / base / 'listing_audit', ROOT)
+    need(scope['retained_whole'] == 16 and scope['retained_conditional'] == 40 and
+         scope['private_bindings_skipped'] > 0 and scope['source_blocks_checked'] == 0,
+         'Public-only listing replay must disclose unavailable primary sources.')
+    need(admission['status'] == 'ROOT_ADMITTED_LISTING_SYMMETRY_CORRECTION' and
+         admission['recovered_originals'] == 43 and admission['pending_accessible_originals'] == 63 and
+         admission['active_catalogue_originals'] == 106 and admission['archived_unavailable_originals'] == 55 and
+         admission['topic_count'] == 19 and admission['current_whole_factors'] == 16 and
+         admission['current_conditional_factors'] == 40 and admission['historical_factors_preserved'] == 62 and
+         admission['held_topics'] == ['Chamber', 'ChiralEnumeration', 'Operations'] and
+         admission['held_sources'] == ['L008', 'L028', 'N006'] and
+         admission['actual_SVG_bars'] == admission['actual_PDF_bars'] == 128 and
+         admission['reader_pages'] == 2 and admission['software_inclusive_factors'] is None and
+         admission['pooled_factor'] is None and admission['no_cross_topic_common_discount'] and
+         all(admission[k] == 0 for k in ['new_ratios', 'new_source_credit', 'new_question_credit', 'new_formal_credit']),
+         'Listing correction scope changed.')
+    pointer = load('audit/overview/latest.json')
+    check_bindings([pointer[k] for k in ['admission', 'reader', 'counts_source', 'measurement_policy',
+                                       'measurement_policy_reader', 'measurement_policy_review']])
+    need(pointer['admission']['path'] == base + 'admission.json' and
+         pointer['reader']['path'] == base + 'packet/reader.pdf' and
+         pointer['recovered_originals'] == pointer['historically_measured_originals'] == 43 and
+         pointer['current_whole_factors'] == 16 and pointer['current_conditional_factors'] == 40 and
+         pointer['held_topics'] == admission['held_topics'] and pointer['held_sources'] == admission['held_sources'] and
+         pointer['software_inclusive_factors_status'] == 'UNAVAILABLE_UNTIL_BOTH_SIDES_INVENTORIED',
+         'Current listing correction pointer differs.')
+    review = load(base + 'independent_review/review.json')
+    need(review['status'] == 'ROOT_ACCEPTED_CURRENT_LISTING_COMPARISON' and
+         review['corrections_requested'] == [] and review['role_disclosure'], 'Missing correction review.')
+    readme = (ROOT / 'README.rst').read_text()
+    need(base + 'packet/reader.pdf' in readme and readme.count('Pending code exclusion') == 3 and
+         'Sixteen whole-topic factors and forty individual' in readme,
+         'Current README omits comparison holds.')
+    return 56, 128
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -5572,7 +5646,8 @@ def main():
     symmetric_topics = run_historical42_check(check_symmetric_measurement_policy)
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     active_admitted, active_pending = check_programme43()
-    overview43_fractions, overview43_bars = check_overview43()
+    overview43_fractions, overview43_bars = run_historical43_check(check_overview43)
+    current_fractions, current_bars = check_listing_symmetry_overview()
     policy_review_binding = load('audit/overview/latest.json')['measurement_policy_review']
     check_bindings([policy_review_binding])
     policy_review = load(policy_review_binding['path'])
@@ -5584,8 +5659,9 @@ def main():
     need(digest((ROOT / 'audit/measurement_policy/v1/review/manifest.json').read_bytes()) ==
          policy_review['prior_frozen_review']['sha256'], 'Bounded policy audit changed.')
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
-    print(f"PASS: active106 catalogue, 55 archived, {active_admitted} admitted/measured and {active_pending} pending; no singleton exclusions.")
-    print(f"PASS: current symmetric overview has {overview43_fractions} exact written comparisons and {overview43_bars} actual bars per format for43 originals.")
+    print(f"PASS: active106 catalogue, 55 archived, {active_admitted} recovered and {active_pending} pending; no singleton exclusions.")
+    print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
+    print(f"PASS: current listing correction retains {current_fractions} comparisons and {current_bars} bars per format; three whole and three individual factors held.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
     print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
