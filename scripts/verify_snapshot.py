@@ -2392,6 +2392,175 @@ def check_representation_proofs():
     return 6,12
 
 
+def check_affine_dag():
+    base = 'audit/topic-affine/v2/dag/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_REVIEWED_AFFINE_PAIRED_DAG', 'Affine graph lacks acceptance.')
+    check_bindings(admission['artifacts'])
+    pins = admission['packet_manifests']
+    need(set(pins)=={'logical_previous','logical','logical_review','logical_root_adoption',
+                     'costs_previous','costs','independent_cost_review'}, 'Affine graph packet inventory.')
+    need(pins['logical']=='f46a2579e8ea3035710b92285ddd134fdc1384177cecc976f100a681519b6382' and
+         pins['costs']=='7a1cd77556e3addc9a9453f010d9ddfa1b94f816d0a648060d00e0874a363216' and
+         pins['independent_cost_review']=='ef627885e37ee4197c1820245f5b413ccfe089f9c9e3b9cd65d8e65d65785b77',
+         'Affine accepted graph/cost/review editions changed.')
+    exports=0
+    for folder,pin in pins.items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin, 'Affine frozen manifest '+folder)
+        for row in load(base+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=base+folder+'/'+row['path'])]);exports+=1
+    need(exports==admission['preserved_frozen_exports']==110,'Affine frozen export inventory.')
+    for key,path in [('proof','audit/topic-affine/v2/admission.json'),
+                     ('measurement','audit/topic-affine/v2/measurement/admission.json')]:
+        need(digest((ROOT/path).read_bytes())==admission[key+'_admission_sha256'], 'Affine input edition '+key)
+    logical_adoption=load(base+'logical_root_adoption/review.json')
+    reviewed=load(base+'independent_cost_review/review.json')
+    need(logical_adoption['status']=='ROOT_ACCEPTED_AFFINE_LOGICAL_V2_WITH_EXPLICIT_REUSE' and
+         logical_adoption['input_manifests']['author']==pins['logical'] and
+         logical_adoption['requested_corrections']==[] and
+         reviewed['status']=='ACCEPTED_INDEPENDENT_AFFINE_PASSAGE_COST_REVIEW' and
+         reviewed['accepted_author_manifest']==pins['costs'] and reviewed['remaining_corrections']==[],
+         'Affine review targets or unresolved corrections.')
+    graph=load(base+'logical/logical_graph.json'); coverage=load(base+'logical/coverage.json')
+    spec=importlib.util.spec_from_file_location('affine_logical_public_review', ROOT/base/'logical_review/check_independent.py')
+    logical=importlib.util.module_from_spec(spec);spec.loader.exec_module(logical)
+    logical_result=logical.inspect(graph,coverage,load('papers/topic-affine/v2/scope.json'))
+    mapping=load(base+'publication_mapping.json')
+    need(mapping['public_input_count']==len(mapping['graph_inputs'])==44 and
+         mapping['separate_primary_input_count']==len(mapping['separate_primary_inputs'])==6,
+         'Affine primary/public input boundary.')
+    bound={(r['namespace'],r['path']):r for r in graph['immutable_inputs']}
+    for r in mapping['graph_inputs']:
+        need({k:v for k,v in r.items() if k!='public_path'}==bound[r['namespace'],r['path']], 'Affine public input identity.')
+        check_bindings([dict(r,path=r['public_path'])])
+    for r in mapping['separate_primary_inputs']:
+        need({k:v for k,v in r.items() if k!='availability'}==bound[r['namespace'],r['path']] and
+             r['namespace']=='research' and r['path'].startswith('sources/'), 'Affine separate primary input.')
+    need({(r['namespace'],r['path']) for r in mapping['graph_inputs']+mapping['separate_primary_inputs']}==set(bound),
+         'Affine graph input omitted.')
+    locators=set()
+    for loc in ([s for n in graph['nodes'] for s in n['locators']]+
+                [s for e in graph['edges'] for s in e['target_evidence']]+list(graph['accepted_scope_spans'].values())):
+        if loc['namespace']!='public':continue
+        text=(ROOT/loc['path']).read_text();start,stop=loc['start_codepoint'],loc['end_codepoint_exclusive']
+        need(0<=start<stop<=len(text) and digest(text[start:stop].encode())==loc['sha256_utf8'] and
+             text.count('\n',0,start)+1==loc['first_line'] and text.count('\n',0,stop-1)+1==loc['last_line'],
+             'Affine public proof locator changed.')
+        locators.add((loc['path'],start,stop))
+    partition=load(base+'costs/partition.json'); weights=load(base+'costs/weights.json')
+    measured=load('audit/topic-affine/v2/measurement/packet/independent/recount.json')['documents']
+    owners=partition['owners'];costs=weights['owner_costs']
+    variants=['raw_untrimmed','raw_selected','calibrated_selected'];forms=['NFC','NFKC']
+    units=['whitespace_tokens','alphanumeric_units','characters_without_whitespace',
+           'characters_with_collapsed_whitespace','utf8_bytes_with_collapsed_whitespace']
+    need(set(costs)==set(owners) and len(owners)==194 and set(partition['documents'])==set(measured),
+         'Affine complete ownership inventory changed.')
+    def total(names):
+        names=set(names)
+        return {v:{f:{u:sum(costs[n][v][f][u] for n in names) for u in units} for f in forms} for v in variants}
+    spans=selected=0
+    for name,doc in partition['documents'].items():
+        local={n for n,o in owners.items() if o['document']==name}
+        need(doc['pdf_sha256']==measured[name]['pdf_sha256'] and doc['pages']==measured[name]['pages'], 'Affine measured document changed.')
+        need(set(doc['variants'])==set(variants), 'Affine extraction policy omitted.')
+        for variant,data in doc['variants'].items():
+            end=0
+            for span in data['spans']:
+                need(span['start']==end and span['end']>end and span['owner'] in local and
+                     span['category']==owners[span['owner']]['category'], 'Affine passage gap or overlap.')
+                end=span['end'];spans+=1;selected+=variant=='calibrated_selected'
+            need(end==data['length'], 'Affine trailing text omitted.')
+        expected={v:{f:{u:measured[name]['variants'][v][f][u] for u in units} for f in forms} for v in variants}
+        need(total(local)==weights['document_costs'][name]==expected,'Affine full document not conserved.')
+    nodes={n['id']:n for n in graph['nodes']};interfaces=weights['node_interfaces']
+    need(set(nodes)==set(interfaces),'Affine interface inventory.')
+    for name,entry in interfaces.items():
+        paid=entry['owners'];unknown=nodes[name]['side'] in ['external','verification']
+        need(paid==sorted(set(paid)) and set(paid)<=set(owners) and
+             entry['known_weight']==(None if unknown else total(paid)) and (not unknown or not paid) and
+             entry['expanded_dependency_cost'] is None and not entry['charged_again'], 'Affine interface cost or unknown boundary.')
+    route_count=0
+    def route(names,record):
+        nonlocal route_count
+        names=set(names);paid={o for n in names for o in interfaces[n]['owners']}
+        expected=total(n for n in paid if owners[n]['document']!='CODE')
+        program_ids=names & weights['raw_program_alternative'].keys()
+        for v in variants:
+            for f in forms:
+                for u in units:
+                    expected[v][f][u]+=sum(weights['raw_program_alternative'][n]['metrics'][f][u] for n in program_ids)
+        docs={owners[n]['document'] for n in paid}
+        need(record['logical_nodes']==sorted(names) and record['owners']==sorted(paid) and
+             record['known_extracted_subtotal']==total(paid) and
+             record['by_document']=={d:total(n for n in paid if owners[n]['document']==d) for d in sorted(docs)} and
+             record['raw_program_alternative_subtotal']==expected and
+             record['unknown_inputs']==sorted(n for n in names if interfaces[n]['known_weight'] is None) and
+             record['expanded_dependency_cost'] is None and record['graphics_cost'] is None,
+             'Affine dependency union, raw alternative or unknown cost changed.')
+        route_count+=1
+    for name,closure in logical_result['individual_closures'].items():route(closure,weights['individual_node_closures'][name])
+    rows={r['id']:r for r in weights['source_contract_closures']}
+    need(set(rows)=={r['id'] for r in coverage['rows']} and len(rows)==33,'Affine source rows changed.')
+    for row in coverage['rows']:
+        r=rows[row['id']]
+        route(row['historical_closure'],r['historical']);route(row['new_closure'],r['replacement'])
+        route(set(row['retained_context_closure'])|set(row['qualification_context_nodes']),r['retained_and_qualification_context'])
+    for name,closure in graph['new_output_closures'].items():route(closure,weights['new_application_closures'][name])
+    route(graph['full_record_closure'],weights['full_record_closure'])
+    for name,closure in graph['additional_current_outputs'].items():route(closure,weights['additional_current_outputs'][name])
+    import unicodedata
+    replacement=load('audit/topic-affine/v2/measurement/packet/inputs/replacement_input_spec.json')
+    for key,source_key,count in [('raw_program_alternative','complete_mathematical_programs',6),
+                                 ('raw_auxiliary_files','complete_auxiliary_scripts',3),
+                                 ('raw_formal_files','complete_formal_files',3)]:
+        records=weights[key];accepted={r['path']:r for r in replacement[source_key]}
+        need(len(records)==count and {r['binding']['path'] for r in records.values()}==set(accepted),'Affine whole raw files omitted.')
+        for r in records.values():
+            binding=r['binding'];need(binding==accepted[binding['path']],'Affine whole-file binding or role changed.')
+            folder,rest=binding['path'].split('/',1);path=mapping['private_prefixes'][folder]+'/'+rest
+            check_bindings([dict(binding,path=path)]);text=(ROOT/path).read_text()
+            for form in forms:
+                s=unicodedata.normalize(form,text);collapsed=' '.join(s.split())
+                values=[len(s.split()),len(re.findall(r'[^\W_]+',s)),sum(not c.isspace() for c in s),len(collapsed),len(collapsed.encode())]
+                need(r['metrics'][form]==dict(zip(units,values)),'Affine independent complete raw-file metrics.')
+    acquisition=load(base+'costs/acquisition.json');paid=set()
+    need([r['stage'] for r in acquisition['stages']]==['U_Affine','CODE','AF1'],'Affine acquisition order.')
+    for stage in acquisition['stages']:
+        local={n for n,o in owners.items() if o['document']==stage['stage']}
+        need(not paid&local and stage['complete_owner_ids']==sorted(local) and stage['new_cost']==total(local),
+             'Affine full common, program or application charge omitted.')
+        paid|=local
+        need(stage['cumulative_owner_ids']==sorted(paid) and stage['cumulative_cost']==total(paid),'Affine cumulative cost.')
+    need(acquisition['historical_full_document_cost']==total(n for n,o in owners.items() if o['document']=='L012') and
+         not acquisition['cross_topic_discount'] and acquisition['expanded_external_proof_cost'] is None and
+         acquisition['graphics_cost'] is None,'Affine acquisition boundary.')
+    spec=importlib.util.spec_from_file_location('affine_public_diagram_review',ROOT/base/'independent_cost_review/reader_check.py')
+    diagrams=importlib.util.module_from_spec(spec);spec.loader.exec_module(diagrams)
+    diagrams.check_interfaces(weights,load(base+'independent_cost_review/semantic_reading.json')['owner_interface_snapshot'])
+    diagrams.check_graphs(graph,weights,load(base+'costs/graphs.json'),
+                          {side:(ROOT/base/'costs'/(side+'_graph.svg')).read_text() for side in ['historical','new']})
+    need(weights['unchanged_complete_document_measurement']==load('audit/topic-affine/v2/measurement/packet/results.json') and
+         admission['primary']==load('audit/topic-affine/v2/measurement/admission.json')['primary'], 'Affine full ratios changed.')
+    dims=dict(source_contracts=1,source_rows=33,logical_nodes=len(nodes),typed_edges=len(graph['edges']),
+              exclusive_owners=len(owners),document_metric_cells=len(measured)*30,owner_metric_cells=len(costs)*30,
+              all_variant_spans=spans,selected_text_spans=selected,individual_node_closures=len(nodes),
+              source_row_unions=len(rows)*3,all_prerequisite_unions=route_count,policy_coordinates=30,
+              required_programs=6,separate_operational_drivers=2,separate_diagnostic_programs=1,
+              separate_Lean_files=3,scoped_Lean_declarations=9)
+    need(all(admission[k]==v for k,v in dims.items()) and (spans,selected,route_count)==(642,190,222),
+         'Affine graph admission contradicts complete data.')
+    fresh=load(base+'publication_replay/report.json')
+    need(fresh['status']=='PASS_INDEPENDENT_AFFINE_COST_REVIEW_REPLAY' and
+         (fresh['owner_metric_cells'],fresh['routes'],fresh['arithmetic_controls'],fresh['reader_controls'])==(5820,222,17,11),
+         'Affine fresh independent evidence missing.')
+    need(all(admission[k] is None for k in ['expanded_external_proof_cost','historical_software_cost','graphic_cost',
+              'node_count_ratio','minimum_proof_complexity']) and not admission['complete_costs_changed'] and
+         not admission['source_specific_full_formalization'] and not admission['real_browser_layout_test'] and
+         all(admission[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Affine graph invents costs or credit.')
+    return len(measured)*30,route_count
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -2417,6 +2586,7 @@ def main():
     d_dag_cells, d_closures = check_topic_d_dag()
     affine_rows, affine_declarations = check_affine_proofs()
     affine_cells, affine_fractions = check_affine_measurement()
+    affine_dag_cells, affine_routes = check_affine_dag()
     f_rows, f_declarations = check_topic_f_proofs()
     f_cells, f_fractions = check_topic_f_measurement()
     g_rows, g_declarations = check_topic_g_proofs()
@@ -2451,6 +2621,7 @@ def main():
     print(f'PASS: Topic D paired dependencies conserve {d_dag_cells} complete-document metric cells and {d_closures} prerequisite unions; whole-paper factors remain unchanged.')
     print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs.')
     print(f'PASS: affine comparison has {affine_cells} independent PDF metric cells and {affine_fractions} exact combined/conditional fractions; the whole common paper is charged.')
+    print(f'PASS: affine dependencies conserve {affine_dag_cells} complete-document metric cells and {affine_routes} prerequisite unions; full ratios remain unchanged.')
     print(f'PASS: Topic F preserves {f_rows} source records, {f_declarations} scoped Lean declarations, complete uniform written proofs and all three validation programs; measurements remain separate.')
     print(f'PASS: Topic F has {f_cells} independent PDF metric cells and {f_fractions} exact combined/conditional fractions; the whole common paper and validation costs are explicit.')
     print(f'PASS: Topic G preserves {g_rows} source records, {g_declarations} scoped Lean declarations, complete common theory and both corrected applications with all thirteen programs; measurements remain separate.')

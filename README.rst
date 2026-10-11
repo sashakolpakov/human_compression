@@ -561,7 +561,17 @@ giving **0.556 times** including programs. All six raw files give **0.561
 times** as an alternative representation. Three auxiliary scripts and three
 formal files are inventoried separately. The `two-page calculation
 <audit/topic-affine/v2/measurement/packet/measurement.pdf>`_ shows the formulas,
-exclusions and unknown costs. Paired dependency costs remain pending.
+exclusions and unknown costs.
+
+The `paired dependency audit <audit/topic-affine/v2/dag/README.rst>`_ now
+connects the historical and current proofs to their measured passages. Its
+`two-page reader <audit/topic-affine/v2/dag/costs/reader.pdf>`_ and separate
+`historical <audit/topic-affine/v2/dag/costs/historical_graph.svg>`_ and
+`current <audit/topic-affine/v2/dag/costs/new_graph.svg>`_ graphs show which
+arguments are reused. Every passage is charged once in a dependency union;
+all complete-document costs and the combined and individual ratios above
+remain unchanged. The audit checks 194 exclusive passage owners and 222
+prerequisite unions. Node counts are not compression factors.
 
 Odd kernels and cyclotomic polyhedra
 ------------------------------------
