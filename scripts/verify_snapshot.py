@@ -964,6 +964,123 @@ def check_topic_c_measurement():
     return 270,90
 
 
+def check_topic_d_proofs():
+    base = 'papers/topic-d/v2/'
+    audit = 'audit/topic-d/v2/'
+    admission = load(audit+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_D_COMMON_PROOFS',
+         'Unreviewed Topic D mathematical edition.')
+    check_bindings(admission['artifacts'])
+    for prefix, key in [(base,'author_manifest_sha256'),
+                        (audit+'independent_review/','independent_review_manifest_sha256'),
+                        (audit+'root_adoption/','root_adoption_manifest_sha256')]:
+        need(digest((ROOT/prefix/'manifest.json').read_bytes())==admission[key],
+             'Changed Topic D frozen packet.')
+        for row in load(prefix+'manifest.json')['exports']:
+            check_bindings([dict(row,path=prefix+row['path'])])
+    scope = load(base+'scope.json')
+    review = load(audit+'independent_review/review.json')
+    need(review['status']=='ACCEPTED' and review['corrections_requested']==[] and
+         review['author_manifest']['sha256']==admission['author_manifest_sha256'],
+         'Topic D review does not accept this edition.')
+    need(scope['intake_closed'] and scope['source_ids']==admission['source_ids']==['L066','L074','L104'],
+         'Topic D changed the source boundary.')
+    expected = [f'{s}.{i}' for s,n in [('L066',16),('L074',17),('L104',4)] for i in range(1,n+1)]
+    need([r['id'] for r in scope['contracts']]==expected and
+         scope['contract_count']==admission['contract_rows']==37 and
+         len(scope['proof_spans'])==admission['proof_spans']==19,
+         'Topic D omitted a source row or proof span.')
+    statuses = {}
+    for row in scope['contracts']:
+        statuses[row['current_status']] = statuses.get(row['current_status'],0)+1
+        need(row['current_proof_spans'] and
+             all(s in scope['proof_spans'] for s in row['current_proof_spans']) and
+             row['source_pages'] and
+             all(1 <= p <= scope['sources'][row['source_id']]['pages'] for p in row['source_pages']),
+             'Topic D source row lost its proof or exact page reference.')
+    need(statuses==admission['row_status_counts'] and scope['contracts'][-1]['current_status']==
+         'excluded_secondary_assertions_in_printed_main_article_and_supplement',
+         'Topic D erased a qualification or excluded printed-body assertion.')
+    for row in scope['proof_spans'].values():
+        source = (ROOT/base/row['path']).read_text()
+        a,b = row['start_codepoint'],row['end_codepoint_exclusive']
+        need(0 <= a < b <= len(source) and digest(source[a:b].encode())==row['sha256_utf8'],
+             'Topic D proof span changed.')
+    for row in scope['documents']:
+        check_bindings([dict(row,path=base+row['path'])])
+    inventory = scope['program_inventory']
+    need(inventory==admission['program_inventory'] and len(inventory)==10 and
+         sum(r['category']=='mathematical_program' for r in inventory)==8 and
+         sum(r['category']=='driver' for r in inventory)==2,
+         'Topic D lost a complete program or driver.')
+    for row in inventory:
+        check_bindings([dict(path=base+row['copy'],bytes=row['bytes'],sha256=row['sha256'])])
+    cost = scope['cost_scope']
+    need(cost['full_common_paper_charged_once_in_this_topic'] and not cost['cross_topic_discount'] and
+         cost['full_mathematical_programs']==8 and cost['required_programs']==5 and
+         cost['additional_diagnostic_programs']==3 and cost['complete_drivers']==2 and
+         cost['ratio'] is None and cost['historical_program_cost'] is None and cost['image_cost'] is None,
+         'Topic D changed its full cost boundary or invented a measurement.')
+    catalogue = load('papers/catalogue.json')
+    entries = [r for r in catalogue['new_editions'] if r['topic']=='D']
+    need(entries==admission['catalogue_entries'] and len(entries)==4 and
+         catalogue['current_topic_editions']['D']==[r['id'] for r in entries] and
+         [r['application_id'] for r in entries]==['U_D','D1','D2','D3'] and
+         [r['source_contracts'] for r in entries]==[[],['L066'],['L074'],['L104']] and
+         [r['physical_pages'] for r in entries]==[6,5,6,2],
+         'Topic D catalogue changed its complete manuscript routes.')
+    for row in entries:
+        name = row['id'].removeprefix('topic-d/v2/')
+        need(row['tex']==base+name+'.tex' and row['pdf']==base+name+'.pdf' and
+             row['review_record']==audit+'admission.json' and
+             row['role']==('umbrella' if row['application_id']=='U_D' else 'application'),
+             'Topic D catalogue has an incorrect mathematical route.')
+        inputs = re.findall(r'\\input\{([^}]+)\}',(ROOT/row['tex']).read_text())
+        need(row['tex_inputs']==[base+s+('' if s.endswith('.tex') else '.tex') for s in inputs],
+             'Topic D catalogue omitted a complete TeX input.')
+    formal = load(base+'formal/scope.json')
+    fresh = load(audit+'independent_review/fresh_formal_report.json')
+    need(fresh['status']=='PASS' and fresh['formal_scope']==formal['formal_scope'] and
+         fresh['not_formalized']==formal['not_formalized'] and len(fresh['countermodels'])==6 and
+         [m['source'] for m in fresh['modules']]==formal['modules'],
+         'Topic D fresh Lean report changed its hypotheses or scope.')
+    for module in fresh['modules']:
+        source = module['source']
+        check_bindings([dict(path=base+'formal/'+source['file'],bytes=source['bytes'],sha256=source['sha256'])])
+        need([r['name'] for r in module['axioms']]==source['declarations'] and
+             all(set(r['axioms']) <= {'propext','Classical.choice','Quot.sound'} for r in module['axioms']),
+             'Topic D Lean declarations or axioms changed.')
+    need(sum(len(m['axioms']) for m in fresh['modules'])==10 and
+         admission['fresh_lean_declarations']==10 and admission['new_lean_declarations']==8 and
+         admission['reused_lean_declarations']==2 and not admission['end_to_end_source_formalization'] and
+         review['formal_review']['later_support_formal_packet_included'] is False and
+         admission['later_support_formal_packet_included'] is False,
+         'Topic D formal coverage was inflated.')
+    replay = load(audit+'independent_review/independent_checks.json')
+    census = replay['fresh_replay']
+    need(replay['status']=='PASS' and replay['author_manifest_sha256']==admission['author_manifest_sha256'] and
+         census['anchors']==146 and census['augmentation_by_rank']==[644,1226,1931,271,0] and
+         census['total_candidates']==4072 and census['fusion'][:3]==[[2,8,8],[3,24,19],[4,5,3]] and
+         all(r[1:]==[0,0] for r in census['fusion'][3:]) and
+         census['witness_semantic_comparison']['exact_groups']==170 and
+         census['witness_semantic_comparison']['geometries']==30 and
+         census['witness_semantic_comparison']['controls']==2,
+         'Topic D lacks the full census and exact witness comparison.')
+    packet = load(audit+'independent_review/fresh_packet_report.json')
+    need(packet['status']=='PASS' and packet['program_replays']==['small','j2'] and
+         packet['formal_replayed'] is True and len(packet['controls'])==7 and
+         all(r['rejected'] for r in packet['controls']) and
+         packet['code_pdf']['exact_nonspace_text'] is True and len(packet['code_pdf']['programs'])==8 and
+         [(r['document'],r['pages'],r['per_page_text_identical']) for r in packet['render']]==
+         [('umbrella',6,True),('commuting-involutions',5,True),('suzuki-polyhedra',6,True),
+          ('hall-janko-geometries',2,True),('program-appendix',12,True)],
+         'Topic D complete computation, code appendix or render evidence changed.')
+    need(admission['compression_ratio'] is None and
+         admission['new_source_credit']==admission['new_question_credit']==0,
+         'Topic D mathematical admission cannot create a ratio or new result credit.')
+    return 37,10
+
+
 def check_project_lean_runner(legacy_modules):
     admission = load('audit/formal-project/admission.json')
     need(admission['status']=='PASS_ROOT_ADMITTED_PROJECT_LEAN_RUNNER', 'Unreviewed project Lean runner.')
@@ -1008,6 +1125,7 @@ def main():
     b_dag_cells = check_topic_b_dag()
     c_rows, c_declarations = check_topic_c_proofs()
     c_cells, c_fractions = check_topic_c_measurement()
+    d_rows, d_declarations = check_topic_d_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -1031,6 +1149,7 @@ def main():
     print(f'PASS: Topic B paired proof graphs preserve all {b_dag_cells} complete-document coordinates and 64 prerequisite closures.')
     print(f'PASS: Topic C preserves {c_rows} contract rows, {c_declarations} scoped Lean declarations and the full Janko census.')
     print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, L108 remains unknown.')
+    print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

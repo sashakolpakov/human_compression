@@ -51,13 +51,23 @@ N013, L108 and F014, with both required Janko programs in full. The
 `proof admission <topic-c/v2/admission.json>`_ preserves all forty contract
 rows, including their corrections and exclusions, and binds independent
 mathematical review, a full fresh census and the sixteen scoped Lean
-declarations. Eighteen of the 27 contracts now have complete canonical
+declarations. At that stage eighteen of the 27 contracts had complete canonical
 applications and common theory; nine retain their earlier accepted proof
 packages. Topic C's `length audit <topic-c/v2/measurement/README.rst>`_ is
 accepted, with separate written and program-inclusive comparisons and
 three measurable conditional factors. L108's missing original PDF leaves
 its factor and the whole-topic factor unknown. Its paired dependency audit
 remains unfinished. The immutable baseline audit above has not been rewritten.
+
+Topic D adds the complete common paper and three applications for L066,
+L074 and L104, with all eight mathematical programs and both execution
+drivers. The `proof admission <topic-d/v2/admission.json>`_ binds the full
+independent review of all 37 source rows, fresh computations, ten scoped
+Lean declarations and all 31 rendered pages. Twenty-one of the 27 contracts
+now have complete canonical applications and common theory; six retain
+their earlier accepted proof packages. Topic D's lengths and paired
+dependency costs remain pending. The later support-count Lean supplement
+is separate from this proof admission.
 
 Work by topic
 -------------
@@ -98,8 +108,9 @@ subject does not itself prove a compression theorem.
        audit. N001's source PDF cost remains unknown.
    * - D: Marked actions and geometry enumeration
      - L066, L074, L104
-     - Complete the common enumeration arguments and all three
-       applications, with their algorithms and exact census scope.
+     - Complete common theory, three applications and all programs reviewed.
+       Measure full lengths and paired dependencies, retaining classical
+       group structure and the exact census scope.
    * - G and incidence residues: Flag relations and Steiner geometry
      - L009, L092
      - Preserve the current G papers; assemble all accepted residue proofs,

@@ -293,6 +293,58 @@ formulas and qualifications. Paired dependency graphs remain in progress.
 These are four existing principal contracts; the higher-rank question
 associated with F014 stays separate.
 
+Stabilizers, support and geometry enumeration
+--------------------------------------------
+
+The `common theory <papers/topic-d/v2/umbrella.pdf>`_ counts admissible
+extensions through their stabilizers and exact support. It combines
+classical orbit counting and Möbius inversion, and contains complete
+recognition and augmentation proofs for coset geometries with an arbitrary
+chamber stabilizer. The applications supply the local group arguments
+and computations.
+
+.. list-table:: Three source manuscripts and the results recovered
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - L066: Kiefer–Leemans, *On pairs of commuting involutions in Sym(n)
+       and Alt(n)*; nine-page author edition, 2013
+     - Pair counts in every degree and the complete degree-six
+       polyhedron classification; source proof correction explicit
+     - `Commuting involutions <papers/topic-d/v2/commuting-involutions.pdf>`_
+   * - L074: Kiefer–Leemans, *On the number of abstract regular polytopes
+       whose automorphism group is a Suzuki simple group Sz(q)*;
+       twelve-page author edition dated 27 September 2011
+     - Both uniform counting formulas, generation, intersections, rank
+       and duality; classical Suzuki structure retained
+     - `Suzuki polyhedra <papers/topic-d/v2/suzuki-polyhedra.pdf>`_
+   * - L104: Leemans, *The residually weakly primitive geometries of J₂*;
+       five-page journal article, 2002
+     - Complete 8/19/3 census and absence of higher ranks under the stated
+       subgroup catalogue; printed diagrams, Aut/Cor groups and doubling
+       relation excluded
+     - `Hall–Janko geometries <papers/topic-d/v2/hall-janko-geometries.pdf>`_
+
+The common paper has six pages and the three applications total thirteen.
+The `twelve-page program appendix <papers/topic-d/v2/program-appendix.pdf>`_
+contains eight complete mathematical programs: five required computations
+and three diagnostics. The independent review checked all 37 source rows,
+all 31 rendered pages and a fresh full program run. All 146 Hall–Janko
+anchors terminated, and all thirty final geometries passed verification.
+
+Ten scoped Lean declarations were freshly compiled. They cover the
+stabilizer-fiber correspondence, the odd-period action argument and an
+abstract rank obstruction. They do not formalize the whole source results
+or the finite census. The `publication guide
+<papers/topic-d/v2/PUBLICATION.rst>`_ gives attribution, qualifications,
+formal boundaries and replay commands. The separate support-count Lean
+supplement remains under review. Lengths and paired dependency costs are
+being measured; this mathematical admission assigns no compression factor
+or new source or solved-question credit.
+
 Common proofs for projective groups
 ----------------------------------
 
