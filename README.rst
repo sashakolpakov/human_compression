@@ -12,12 +12,14 @@ on the work. Every accessible original in the catalogue remains in the
 compression programme, including papers whose replacement proofs have not
 yet been written. Source retrieval continues within these 161 titles.
 
-The `current register of every original <audit/corpus/v1/README.rst>`_
-finds **104 accessible manuscripts: 27 with admitted principal-result
-recoveries and 77 awaiting complete recovery**. The other **57 remain
-retrieval targets**. The table records each original's source, mathematical
-targets, existing proof evidence and next obligation. Two older access flags
-were stale; the catalogue itself has not grown.
+The `register of every original <audit/corpus/v1/README.rst>`_ and
+`subsequent admissions <audit/corpus/current.json>`_ now record **104
+accessible manuscripts: 29 with admitted principal-result recoveries and
+75 awaiting complete recovery**. The other **57 remain retrieval targets**.
+The register gives each original's source, mathematical targets, proof
+evidence and next obligation. Twenty-seven recovered originals have measured
+comparisons; the two newest recoveries await measurement. The catalogue
+itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
 A complete authored rendering is a usable source even when its PDF is
@@ -795,8 +797,8 @@ passages, six finite groups and fourteen scoped Lean declarations. Seven
 new declarations prove the actual reflection formula; the full geometric
 applications remain written mathematics.
 
-**All 27 admitted contracts now have complete canonical applications and
-common theory.** This is a manuscript milestone within the closed corpus,
+**The historical 27 admitted contracts have complete canonical applications
+and common theory.** This is a manuscript milestone within the fixed corpus,
 not a claim that all 161 indexed papers or their conjectures are resolved.
 The `complete length comparison <audit/topic-chamber/v2/measurement/packet/measurement.pdf>`_
 now gives **0.982×** for both sources against the whole common paper and both
@@ -811,6 +813,76 @@ Dependency costs remain to be measured. Earlier cover
 answers have a separate `question map <papers/topic-chamber/v2/question_map.json>`_;
 general finite minimal-cover multiplicity in all ranks remains unresolved.
 
+Matching extensions and parity
+-------------------------------
+
+The `common theory <papers/topic-matching/v1/umbrella.pdf>`_ proves
+presentations from permutation orbits, complete parity rewriting and the
+needed bipartite halving argument. The common paper is six pages; the
+application is seven, with a two-page complete computation appendix.
+
+.. list-table:: Source and results recovered
+   :header-rows: 1
+
+   * - Source, authors and edition
+     - Principal results recovered
+     - Application and qualifications
+   * - F015: Claudio Alexandre Piedade, *Infinite Families of Hypertopes
+       from Centrally Symmetric Polytopes*; EJC 30(2) (2023), P2.20; 21 pages
+     - All eight stated families, corrected defining presentations, orders,
+       marked residues, regularity and even-parameter iteration
+     - `Spherical families <papers/topic-matching/v1/spherical-families.pdf>`_;
+       classical extension, lattice, toroidal and Coxeter inputs retained
+
+Two published 120-cell presentations omit twenty pair relations. We prove
+that the literal presentations define infinite groups for every stated
+integer parameter, then supply the relations for the intended finite
+constructions. An independent reflection-matrix calculation checks all
+179,700 vertex pairs. This is a correction of published assertions, not an
+open-conjecture answer. Seven reused Lean declarations check component
+algebra; the geometry and presentation equivalence remain written proofs.
+
+The `admission <audit/topic-matching/v1/admission.json>`_ adds one original.
+The `publication guide <papers/topic-matching/v1/PUBLICATION.rst>`_ links the
+full program and review. Its complete length comparison is pending.
+
+Marked coordinates and chiral enumeration
+-----------------------------------------
+
+The four-page `common theory
+<papers/topic-chiral-enumeration/v1/phase282_marked_coordinate_umbrella.pdf>`_
+proves the subgroup-coordinate dictionary, exact orbit searches and reflection
+criterion. The nine-page application proves completeness in every rank.
+
+.. list-table:: Source and results recovered
+   :header-rows: 1
+
+   * - Source, authors and edition
+     - Principal results recovered
+     - Application and qualifications
+   * - L028: Buekenhout–Leemans–Tranchida, *A new algorithm to classify
+       chiral polytopes with a given automorphism group*; complete revised
+       fourteen-page ULB author manuscript associated with the 2021 publication
+     - Complete enumeration for finite groups and connected symbols in every
+       rank, exact oriented and unrooted equivalence, mathematical table columns
+     - `Chiral enumeration
+       <papers/topic-chiral-enumeration/v1/phase282_chiral_enumeration.pdf>`_;
+       Schulte–Weiss reconstruction and the Liebeck–Shalev bound retained
+
+The source substitution and search idea retain their original attribution.
+Duality is not quotiented; historical timings are not reproduced. Independent
+review read the full source and both manuscripts, freshly ran the complete
+finite/formal checks, and implemented separate native rotation-pair searches.
+Seven Lean declarations verify actual subgroup-coordinate and reflection
+algebra; the complete algorithm and geometry are written proofs.
+
+The `admission <audit/topic-chiral-enumeration/v1/admission.json>`_ adds one
+original and no conjecture answer. The `publication guide
+<papers/topic-chiral-enumeration/v1/PUBLICATION.rst>`_ gives replay commands.
+The length comparison is pending. Both additions are listed separately in
+the `expanded paper catalogue <papers/expansion_catalogue.json>`_, preserving
+the earlier 27-original audit as a historical record.
+
 Papers and verification
 -----------------------
 
@@ -820,10 +892,11 @@ remain available in the archive and are material for further common
 arguments, not claims of completed compression. The fixed source view is
 in `audit/source_registry.json <audit/source_registry.json>`_.
 
-The `completion audit <audit/completion.rst>`_ maps all 27 admitted principal
+The historical `completion audit <audit/completion.rst>`_ maps the earlier 27 principal
 result sets to their proofs and remaining manuscript work. Its resolved
 contracts use later admissions where older registry fields are stale.
-Intake remains closed. A new supporting paper on
+The catalogue remains fixed; recovery work continues for every accessible
+original. A supporting paper on
 `normal kernel recognition <papers/formal/normal-kernel-recognition.pdf>`_
 replaces two separate finite-order comparisons by one group-theoretic
 argument. These lemmas now serve the complete Topic A applications; their

@@ -3052,6 +3052,67 @@ def check_complete_corpus_programme():
     return 161,104,77,57
 
 
+def check_additional_original_recoveries():
+    current = load('audit/corpus/current.json')
+    check_bindings([current['base_inventory']]+current['added_admissions'])
+    entries = load(current['base_inventory']['path'])['entries']
+    accessible = {r['original_id'] for r in entries if r['source_access']['accessible']}
+    historical = {r['original_id'] for r in entries if r['proof']['principal_contract_admitted']}
+    need(set(current['historical_admitted_ids'])==historical,
+         'Additive programme changed the historical admission set.')
+    additions = set()
+    for record in current['added_admissions']:
+        a = load(record['path']); additions.add(a['source_id'])
+        need(a['status']=='ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+             a['principal_originals_added']==1 and a['source_rows']==32 and
+             a['new_question_credit']==0 and not a['whole_source_formalized'] and
+             a['compression_factor'] is None and a['measurement_status']=='pending',
+             'Additional admission changed proof, question or measurement scope.')
+        check_bindings(a['artifacts'])
+        for key in ['author','review']:
+            row = a[key]; need(digest((ROOT/row['path']).read_bytes())==row['sha256'],
+                              'Additional author/review manifest changed.')
+            parent = Path(row['path']).parent
+            check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+        review = load(str(Path(a['review']['path']).parent/'review.json'))
+        if a['source_id']=='F015':
+            need(review['status']=='ROOT_ACCEPTED_COMPLETE_CORRECTED_F015_PRINCIPAL_CONTRACT' and
+                 review['accepted_author_manifest_sha256']==a['author']['sha256'] and
+                 review['clarifications_resolved'] and a['formal']['new']==0 and
+                 review['independent_120_cell_check']['unordered_pair_orbits']==35,
+                 'Matching review or correction scope changed.')
+        else:
+            need(a['source_id']=='L028' and review['status']=='ACCEPTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+                 review['author_manifest_sha256']==a['author']['sha256'] and
+                 review['scope']['connected_symbols_only'] and not review['scope']['duality_quotiented'] and
+                 a['formal']['new']==7,'Chiral enumeration scope changed.')
+            check_bindings([a['root_replay']])
+            replay = load(a['root_replay']['path'])
+            need(replay['status']=='PASS' and len(replay['controls_rejected'])==10,
+                 'Chiral enumeration independent replay changed.')
+    need(additions=={'F015','L028'} and not additions&historical,
+         'A new original was counted twice.')
+    admitted = historical|additions
+    need(len(admitted)==current['admitted_principal_originals']==29 and
+         set(current['admitted_original_ids'])==admitted and
+         set(current['accessible_pending_original_ids'])==accessible-admitted and
+         len(current['accessible_pending_original_ids'])==current['accessible_pending_complete_recovery']==75 and
+         len(current['retrieval_original_ids'])==current['pending_source_retrieval']==57 and
+         set(current['retrieval_original_ids'])=={r['original_id'] for r in entries}-accessible and
+         current['all_originals_remain_active'] and not current['all_conjectures_resolved'] and
+         not current['all_original_proofs_recovered'] and current['currently_measured_originals']==27 and
+         set(current['measurement_pending_original_ids'])==additions,
+         'Current original partition or completion scope changed.')
+    catalogue = load('papers/expansion_catalogue.json')
+    need(len(catalogue['entries'])==4 and set(catalogue['original_ids'])==additions and
+         {k for r in catalogue['entries'] for k in r['source_contracts']}==additions,
+         'Additional canonical paper catalogue changed.')
+    for row in catalogue['entries']:
+        need((ROOT/row['tex']).is_file() and (ROOT/row['pdf']).is_file() and
+             row['measurement_status']=='pending','Missing additional manuscript.')
+    return 29,75
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3088,6 +3149,7 @@ def main():
     chamber_cells, chamber_fractions = check_chamber_measurement()
     available_text_fractions = check_available_text_comparisons()
     corpus_originals, corpus_accessible, corpus_pending, corpus_retrieval = check_complete_corpus_programme()
+    current_admitted, current_pending = check_additional_original_recoveries()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -3129,6 +3191,7 @@ def main():
     print(f'PASS: chamber measurement has {chamber_cells} independent PDF cells and {chamber_fractions} exact fractions; the complete written comparison is slightly below one.')
     print(f'PASS: additional available-text comparisons retain all eight B/C originals and check {available_text_fractions} exact fractions; historical PDF-only unknowns remain separate.')
     print(f'PASS: the complete programme retains {corpus_originals} originals: {corpus_accessible} accessible, {corpus_pending} awaiting full recovery and {corpus_retrieval} retrieval targets at this snapshot.')
+    print(f'PASS: additive admissions recover {current_admitted} unique originals; {current_pending} accessible originals remain pending. F015/L028 measurements remain pending.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
