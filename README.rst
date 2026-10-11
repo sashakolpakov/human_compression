@@ -12,6 +12,13 @@ on the work. Every accessible original in the catalogue remains in the
 compression programme, including papers whose replacement proofs have not
 yet been written. Source retrieval continues within these 161 titles.
 
+The `current register of every original <audit/corpus/v1/README.rst>`_
+finds **104 accessible manuscripts: 27 with admitted principal-result
+recoveries and 77 awaiting complete recovery**. The other **57 remain
+retrieval targets**. The table records each original's source, mathematical
+targets, existing proof evidence and next obligation. Two older access flags
+were stale; the catalogue itself has not grown.
+
 An accessible paper awaiting a proof or measurement is pending, not excluded.
 A complete authored rendering is a usable source even when its PDF is
 unavailable. Only a source that cannot be obtained after documented retrieval
@@ -210,20 +217,21 @@ checked module; the existing 100-module default library is unchanged.
 Fresh compilation, hypothesis controls and reproduction of every PDF page
 passed. The geometry and complete source applications remain written proofs.
 
-The `length comparison and graph
-<audit/topic-b/v2/measurement/packet/measurement.pdf>`_ charge 14,119
-characters for the common theory and 44,942 for all four applications.
-The three available source PDFs cost 57,539. If the missing N001 PDF has
-cost x, the complete-topic expression is **(x + 57,539) / 59,061**.
-No numerical overall factor is assigned. B1 remains in the denominator.
+The `complete available-text comparison
+<audit/available-text/v1/packet/measurement.pdf>`_ includes all four originals,
+using N001's complete authored rendering. Its written factor is **1.236×**:
+73,012 / (14,124 + 44,959), charging the whole common theory once.
+After acquiring it, the four application factors are **1.970×, 1.255×,
+1.618× and 1.848×**. No mathematical program is required by these proofs.
 
-After acquiring the whole common theory, the source/application factors
-are **unknown, 1.254×, 1.576× and 1.811×**, respectively. These use NFC
-characters without whitespace, with the same full-document boundary as
-Topics A and E. No finite enumeration is required by these written proofs.
-The `measurement audit <audit/topic-b/v2/measurement/README.rst>`_ binds
-the independent recount of all 240 metric cells and the separate arithmetic
-review. Graphic and retained external-proof costs remain unknown.
+These are NFC nonspace character counts with running furniture retained
+throughout: literal rendered text for N001 and untrimmed PDF text for all
+other documents. The `common/application graph
+<audit/available-text/v1/packet/B-costs.svg>`_ and `independent audit
+<audit/available-text/v1/README.rst>`_ state this representation explicitly.
+The earlier `PDF-only measurement <audit/topic-b/v2/measurement/README.rst>`_
+is preserved as a historical comparison; its missing PDF is not grounds for
+excluding N001. Graphic and retained external-proof costs remain unknown.
 
 The `proof routes and acquisition costs
 <audit/topic-b/v2/dag/reader/reader.pdf>`_ explain the same comparison through
@@ -288,19 +296,20 @@ unchanged declarations verify supporting displacement and intersection
 statements. All sixteen were freshly compiled. The specific augmentation
 maps, geometric applications and finite census remain outside Lean.
 The `publication guide <papers/topic-c/v2/PUBLICATION.rst>`_ gives the exact
-scope and separate replay commands. The `length audit
-<audit/topic-c/v2/measurement/README.rst>`_ measures the complete common
-paper at 27,131 non-whitespace characters and the four applications at
-44,146. The written comparison is therefore ``(x + 60,256) / 71,277``,
-where ``x`` is the unknown length of L108's original PDF. Including both
-complete required programs, as printed, gives ``(x + 60,256) / 80,076``.
-Neither expression supplies a numerical whole-topic factor yet.
+scope and separate replay commands. The `complete available-text comparison
+<audit/available-text/v1/packet/measurement.pdf>`_ includes all four originals,
+using L108's complete authored rendering. Its written factor is **1.037×**:
+73,953 / (27,142 + 44,163). Including both complete required programs gives
+**0.923×** as printed, or **0.929×** using their raw files instead.
 
-After acquiring the complete common theory and required programs, the
-individual source/application factors are 1.118 for L088, 1.709 for N013
-and 2.960 for F014. L108's factor remains unknown. The `two-page reader
-<audit/topic-c/v2/measurement/packet/measurement.pdf>`_ gives the counts,
-formulas and qualifications. The accepted `dependency and cost reader
+After acquiring the whole common theory and both programs, the individual
+factors are **1.164×, 1.730×, 1.275× and 2.956×**, respectively. The
+`common/application graph <audit/available-text/v1/packet/C-costs.svg>`_
+shows every complete component. Running furniture remains included
+throughout: L108 uses literal rendered text and the other documents use
+untrimmed PDF text. The earlier `PDF-only audit
+<audit/topic-c/v2/measurement/README.rst>`_ is preserved separately.
+The accepted `dependency and cost reader
 <audit/topic-c/v2/dag/costs/reader.pdf>`_ now traces all forty clauses through
 the historical and current proofs. Download the `offline explorer
 <audit/topic-c/v2/dag/costs/explorer.html>`_ to inspect a selected result,

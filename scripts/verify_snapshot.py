@@ -2977,6 +2977,81 @@ def check_chamber_measurement():
     return 180,150
 
 
+def check_available_text_comparisons():
+    base = 'audit/available-text/v1/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='ROOT_ADOPTED_COMPLETE_AVAILABLE_TEXT_COMPARISONS',
+         'Available authored-text comparisons lack adoption.')
+    check_bindings(admission['artifacts'])
+    for folder,pin in admission['packets'].items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin,
+             'Available-text archive changed: '+folder)
+        check_bindings([dict(r,path=base+folder+'/'+r['path'])
+                        for r in load(base+folder+'/manifest.json')['exports']])
+    for row in admission['proof_admissions'].values():
+        need(digest((ROOT/row['path']).read_bytes())==row['sha256'],
+             'B/C principal-result scope changed.')
+    spec = importlib.util.spec_from_file_location('available_text_independent_arithmetic',
+                                                 ROOT/base/'arithmetic_review/check.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    old = {}
+    for topic,(path,pin) in checker.PREVIOUS.items():
+        need(digest((ROOT/path).read_bytes())==pin,'Historical PDF-only result changed.')
+        old[topic] = load(path)
+    expected = checker.expected_rows(old,load(base+'inputs/counts.json'))
+    result = load(base+'packet/results.json')
+    primary = checker.check_result(result,expected)
+    need(primary==admission['primary'],'Available-text primary comparison changed.')
+    need(checker.csv_check((ROOT/base/'packet/comparisons.csv').read_text(),expected)==360,
+         'Available-text exact CSV fractions changed.')
+    for topic,row in primary.items():
+        need(checker.bars((ROOT/base/('packet/'+topic+'-costs.svg')).read_text(),topic,row)==9,
+             'Available-text actual graph bars changed.')
+    checker.reader((ROOT/base/'packet/measurement.tex').read_text(),primary)
+    review = load(base+'arithmetic_review/review.json')
+    need(review['status']=='ACCEPTED_NEW_B_C_COMPLETE_AVAILABLE_TEXT_COMPARISONS' and
+         review['author_manifest_sha256']==admission['packets']['packet'] and
+         digest((ROOT/base/'root_replay.json').read_bytes())==admission['root_replay_sha256'] and
+         admission['original_manuscripts']==8 and admission['historical_PDF_comparisons_unchanged'] and
+         all(admission[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Available-text review, count or scope changed.')
+    return 360
+
+
+def check_complete_corpus_programme():
+    base = 'audit/corpus/v1/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='ROOT_ADOPTED_COMPLETE_CORPUS_PROGRAMME',
+         'Complete corpus programme lacks adoption.')
+    check_bindings(admission['artifacts'])
+    need(digest((ROOT/base/'packet/manifest.json').read_bytes())==admission['author_manifest_sha256'] and
+         digest((ROOT/base/'root_replay.json').read_bytes())==admission['root_replay_sha256'],
+         'Corpus programme or its evidence replay changed.')
+    entries = load(base+'packet/inventory.json')['entries']
+    by_id = {r['original_id']:r for r in entries}
+    previous = {r['id']:r for r in load('audit/source_registry.json')['entries']}
+    need(len(entries)==len(by_id)==161 and set(by_id)==set(previous) and
+         all(r['title']==previous[k]['title'] for k,r in by_id.items()),
+         'Original manuscript identity set changed.')
+    need(all(r['target_remains_active'] and r['unique_original_count']==1 for r in entries),
+         'An original was excluded or counted more than once.')
+    accessible = {k for k,r in by_id.items() if r['source_access']['accessible']}
+    admitted = {k for k,r in by_id.items() if r['proof']['principal_contract_admitted']}
+    need(len(accessible)==104 and len(admitted)==27 and admitted<=accessible and
+         len(accessible-admitted)==77 and len(set(by_id)-accessible)==57,
+         'Corpus access/proof partition changed.')
+    batches = load(base+'packet/prioritized_batches.json')['batches']
+    pending = [k for batch in batches for k in batch['original_ids']]
+    need(len(pending)==len(set(pending))==134 and set(pending)==set(by_id)-admitted,
+         'An unfinished original was dropped from the programme.')
+    need(admission['all_originals_remain_targets'] and admission['source_retrieval_continues_within_fixed_titles'] and
+         not admission['fresh_exhaustive_unavailability_claim'] and
+         admission['new_source_credit']==admission['new_question_credit']==0 and
+         admission['compression_factor'] is None,
+         'Corpus inventory invents mathematical credit or excludes retrieval targets.')
+    return 161,104,77,57
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3011,6 +3086,8 @@ def main():
     representation_cells, representation_fractions = check_representation_measurement()
     chamber_rows, chamber_declarations = check_chamber_proofs()
     chamber_cells, chamber_fractions = check_chamber_measurement()
+    available_text_fractions = check_available_text_comparisons()
+    corpus_originals, corpus_accessible, corpus_pending, corpus_retrieval = check_complete_corpus_programme()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -3050,6 +3127,8 @@ def main():
     print(f'PASS: representation has {representation_cells} independent PDF metric cells and {representation_fractions} exact combined/individual fractions; its small written saving reverses under UTF-8 counting.')
     print(f'PASS: chamber papers preserve {chamber_rows} scope rows, {chamber_declarations} scoped Lean declarations and the complete finite-cover program; all 27 admitted contracts have current common theory and applications, with measurement and full formalization separate.')
     print(f'PASS: chamber measurement has {chamber_cells} independent PDF cells and {chamber_fractions} exact fractions; the complete written comparison is slightly below one.')
+    print(f'PASS: additional available-text comparisons retain all eight B/C originals and check {available_text_fractions} exact fractions; historical PDF-only unknowns remain separate.')
+    print(f'PASS: the complete programme retains {corpus_originals} originals: {corpus_accessible} accessible, {corpus_pending} awaiting full recovery and {corpus_retrieval} retrieval targets at this snapshot.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
