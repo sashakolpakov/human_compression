@@ -2932,6 +2932,51 @@ def check_representation_measurement():
     return 120,120
 
 
+def check_chamber_measurement():
+    base = 'audit/topic-chamber/v2/measurement/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='ROOT_ADMITTED_CHAMBER_MEASUREMENT',
+         'Chamber numerical admission missing.')
+    check_bindings(admission['artifacts'])
+    check_bindings(admission['measured_public_inputs'])
+    need(digest((ROOT/'audit/topic-chamber/v2/admission.json').read_bytes())==
+         admission['proof_admission_sha256'], 'Chamber scientific input changed.')
+    pins = admission['packet_manifests']
+    need(set(pins)=={'inputs','input_review','input_adoption','packet','arithmetic_review'},
+         'Chamber measurement archive inventory changed.')
+    for folder,pin in pins.items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin,
+             'Changed Chamber measurement archive: '+folder)
+        check_bindings([dict(r,path=base+folder+'/'+r['path'])
+                        for r in load(base+folder+'/manifest.json')['exports']])
+    counts = load(base+'inputs/input_counts.json')
+    recount = load(base+'input_review/recount.json')
+    for k,d in counts['documents'].items():
+        need(d['variants']==recount['documents'][k]['variants'],
+             'Chamber independent primitive PDF counts disagree.')
+    for k,v in recount['raw_files'].items():
+        need(counts[k]==v,'Chamber complete raw files disagree.')
+    spec = importlib.util.spec_from_file_location('chamber_independent_arithmetic',
+                                                 ROOT/base/'arithmetic_review/check.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    expected = checker.expected_rows(counts)
+    result = load(base+'packet/results.json')
+    review = load(base+'arithmetic_review/review.json')
+    need(result['coordinates']==expected and result['primary']==expected[22]==admission['primary'],
+         'Chamber complete sums or exact fractions changed.')
+    need(review['status']=='ROOT_ACCEPTED_CHAMBER_NUMERICAL_COMPARISON' and
+         review['numerical_manifest_sha256']==pins['packet'] and review['primary']==result['primary'],
+         'Chamber distinct numerical review not bound.')
+    need(checker.bars((ROOT/base/'packet/complete_costs.svg').read_text(),result['primary'])==9,
+         'Chamber actual plot bars changed.')
+    need((admission['original_manuscripts'],admission['source_rows'],admission['proof_contexts'],
+          admission['coordinates'],admission['exact_fractions'])==(2,27,22,30,150) and
+         all(admission[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']) and
+         admission['external_and_graphic_costs'] is None,
+         'Chamber measurement changes scope or invents a cost.')
+    return 180,150
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -2965,6 +3010,7 @@ def main():
     representation_rows, representation_declarations = check_representation_proofs()
     representation_cells, representation_fractions = check_representation_measurement()
     chamber_rows, chamber_declarations = check_chamber_proofs()
+    chamber_cells, chamber_fractions = check_chamber_measurement()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -3003,6 +3049,7 @@ def main():
     print(f'PASS: representation preserves {representation_rows} source blocks, {representation_declarations} scoped Lean declarations and two whole validation programs; measurement remains separate.')
     print(f'PASS: representation has {representation_cells} independent PDF metric cells and {representation_fractions} exact combined/individual fractions; its small written saving reverses under UTF-8 counting.')
     print(f'PASS: chamber papers preserve {chamber_rows} scope rows, {chamber_declarations} scoped Lean declarations and the complete finite-cover program; all 27 admitted contracts have current common theory and applications, with measurement and full formalization separate.')
+    print(f'PASS: chamber measurement has {chamber_cells} independent PDF cells and {chamber_fractions} exact fractions; the complete written comparison is slightly below one.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

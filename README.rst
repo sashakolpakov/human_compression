@@ -5,14 +5,25 @@ Can reusable mathematics and capable language-model agents recover decades
 of published results in shorter, complete papers? This project tests that
 question through explicit proofs, attribution and measured comparisons.
 
-Intake is closed. The fixed catalogue has 161 works, including 102 retrieved
-full texts and 27 previously admitted recoveries of specified principal
-results. These are different counts. The next stage audits and reorganizes
-the existing mathematics.
+The fixed catalogue contains 161 original manuscripts. At the intake cutoff,
+102 full texts had been retrieved and 27 manuscripts had admitted recoveries
+of specified principal results. These are progress counts, not a boundary
+on the work. Every accessible original in the catalogue remains in the
+compression programme, including papers whose replacement proofs have not
+yet been written. Source retrieval continues within these 161 titles.
+
+An accessible paper awaiting a proof or measurement is pending, not excluded.
+A complete authored rendering is a usable source even when its PDF is
+unavailable. Only a source that cannot be obtained after documented retrieval
+attempts can be left out of the analysis; later access reopens its entry.
+Each published numerical comparison identifies the originals whose declared
+principal results its current proofs recover. The remaining accessible
+originals stay on the programme until their proofs and comparisons are done.
 
 Read the `audit protocol <audit/protocol.pdf>`_ and its
-`TeX source <audit/protocol.tex>`_. The exact cutoff and the limited
-work already in progress are recorded in `audit/intake.json <audit/intake.json>`_.
+`TeX source <audit/protocol.tex>`_. The historical cutoff is recorded in
+`audit/intake.json <audit/intake.json>`_. Its carry-over restrictions describe
+that earlier stage, not the current programme across all accessible originals.
 
 Common proofs for finite two-groups
 ----------------------------------
@@ -778,7 +789,16 @@ applications remain written mathematics.
 **All 27 admitted contracts now have complete canonical applications and
 common theory.** This is a manuscript milestone within the closed corpus,
 not a claim that all 161 indexed papers or their conjectures are resolved.
-Chamber lengths and dependency costs remain to be measured. Earlier cover
+The `complete length comparison <audit/topic-chamber/v2/measurement/packet/measurement.pdf>`_
+now gives **0.982×** for both sources against the whole common paper and both
+applications: 35,802 / (15,199 + 21,254). After acquiring the common paper
+and both complete programs, the application factors are **2.877×** and
+**1.024×**. Including the entire program appendix gives **0.811×**, or
+**0.835×** with the raw files instead. The `component graph
+<audit/topic-chamber/v2/measurement/packet/complete_costs.svg>`_ shows every
+complete paper. The `numerical review <audit/topic-chamber/v2/measurement/README.rst>`_
+records all exact fractions, the independent arithmetic and unit sensitivity.
+Dependency costs remain to be measured. Earlier cover
 answers have a separate `question map <papers/topic-chamber/v2/question_map.json>`_;
 general finite minimal-cover multiplicity in all ranks remains unresolved.
 
