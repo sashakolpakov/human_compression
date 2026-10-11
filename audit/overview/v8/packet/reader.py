@@ -1,0 +1,74 @@
+from plotting import SHORT
+def tex(r):
+    n=lambda x:'--' if x is None else f'{x:,}';f=lambda q:'--' if q is None else f"{float(q['decimal']):.3f}";short=lambda t:SHORT.get(t,t)
+    s=r"""\documentclass[11pt,a4paper]{article}
+\usepackage[margin=23mm]{geometry}
+\usepackage{fontspec,unicode-math,booktabs,graphicx,array,hyperref}
+\setmainfont{STIXGeneral}\setmathfont{STIX Two Math}\hypersetup{hidelinks}
+\setlength{\parindent}{0pt}\setlength{\parskip}{5pt}
+\newcommand{\tabsetup}{\small\setlength{\tabcolsep}{4pt}\renewcommand{\arraystretch}{1.10}}
+\begin{document}
+\begin{center}\Large\textbf{Complete papers and shared theories}\\[4pt]
+\normalsize Eighteen topics, forty-one original texts\end{center}
+This candidate preserves all seventeen topic records from the admitted forty-original overview. It adds Rank augmentation (L020), using its distinctly accepted complete numerical boundary. This consolidated overview still requires independent acceptance. Earlier editions remain preserved, with committed baseline and new packet hashes bound directly.
+
+For each topic, $S=\sum_i c(L_i)$ counts its complete original texts, $U$ every complete common paper, and $A=\sum_i c(A_i)$ every complete application. The comparisons are
+\[
+ R=\frac{S}{U+A},\qquad r_i=\frac{c(L_i)}{c(A_i)}
+ \quad\text{after acquiring the whole theory and declared software/data.}
+\]
+Each topic pays its common theory independently, even when proofs overlap another topic. A factor above one means a shorter replacement in that coordinate; a factor below one means a longer one. Conditional factors do not include acquisition a second time, and are not standalone application savings.
+
+\textbf{Complete written costs.} All rows use NFC characters without whitespace at their stated representations. Full-document boundaries include introductions, context, proofs and references.
+\begin{center}\tabsetup\begin{tabular}{lrrrrrr}\toprule
+Topic & Originals & Sources & Common & Applications & Written & Factor\\\midrule
+"""
+    for t in r['topics']:s+=' & '.join([short(t['topic']),str(t['source_count']),n(t['source_sum']),n(t['common_theory']),n(t['applications_sum']),n(t['written_denominator']),f(t['written'])])+r' \\'+'\n'
+    s+=r"""\bottomrule\end{tabular}\end{center}
+\textbf{Representations remain distinct.} B and C use complete authored-text renderings for N001 and L108, with raw untrimmed PDFs for their other documents. Those originals' unavailable-PDF costs remain unknown. Rank contraction, Rank augmentation and the Mathieu census also use complete raw untrimmed PDFs. Locally projective and other rows use their accepted selected, calibrated PDF coordinate. Operations' encoded-event graphical proxies retain raw and text-only sensitivities. No pooled factor is formed.
+
+\textbf{Scope.} There are 41 measured originals in 18 topics. The separately bound root admission snapshot records 41 admitted, 65 accessible pending recovery and 55 awaiting retrieval, within the fixed 161. Equality of measured and admitted counts here is not inferred from lengths. Corrections and retained inputs remain. Rank augmentation has written factor 1.200; its program-inclusive factors 0.865 and 0.884 are below one. This overview adds no scientific, source, question or formal credit.
+\newpage
+\textbf{Complete common theories and applications.}
+Dark bars are whole original sums. Blue segments are whole common papers; green segments are all complete applications. Unified B pays its entire current common paper once. C still pays its complete additional incidence note. The N006 application retains all three companions. Locally projective common theory includes both the proof and its complete tables; the Mathieu application includes the main paper, all class tables and all source-row dispositions. Rank augmentation pays its full common paper, application and counterproof.
+\begin{center}\includegraphics[width=\linewidth]{whole_topics.pdf}\end{center}
+All earlier common and application boundaries remain unchanged. Locally projective pays 7+5 common pages and both applications (2+3 pages). Mathieu pays its two-page common paper and all 5+10+9 application pages. Rank augmentation pays 5 common and 3+3 local pages; neither old B nor the earlier counterproof is free. Companion papers are fully charged. Text length is not minimum proof complexity or originality.
+\newpage
+\textbf{Complete programs and prior acquisition.}
+The written comparison remains first. These alternatives add the entire declared code representation and any separately measured mandatory data. Raw and printed code are never added together. The data column is separate from code in both denominators.
+\begin{center}\tabsetup\begin{tabular}{lrrrrrr}\toprule
+Topic & Printed code & Data & With printed & Raw code & With raw & Upfront\\\midrule
+"""
+    for t in r['topics']:s+=' & '.join([short(t['topic']),n(t['printed_program_cost']),n(t.get('mandatory_data_cost')),f(t['including_printed_programs']),n(t['raw_program_alternative']),f(t['including_raw_programs']),n(t['conditional_prepaid']['total'])])+r' \\'+'\n'
+    s+=r"""\bottomrule\end{tabular}\end{center}
+Upfront means the whole common theory, complete printed code when available, and separately measured mandatory data. A dash in the Data column for an older record does not mean its external data is free; those historical boundaries remain unchanged. Locally projective adds all 28,574 data characters (39,150 literal bytes), and Mathieu all 48,686 (83,965 bytes), to both code alternatives. For Operations it uses all twenty-three whole mathematical/validation files plus both required decoding drivers. Its complete printed route is unavailable: the two partial appendices cover only four named raw files. Operations conditionals also assume acquisition of all required external data, separately inventoried as 21,960,689 representation bytes and 2,516,249 listed installed bytes. Byte storage is not added to character units. Large witnesses are not discounted.
+
+E retains its separate optional-validation sensitivity: another 5,173 characters gives a program-inclusive factor of 1.372. No unadmitted raw-code alternative is invented for E.
+
+\textbf{Roles.} A pays five files; B a finite premise, two validations and an auxiliary example. C pays three GAP files, including its exhaustive census and the shared construction once. D pays five required and three diagnostic programs. E separates required code from optional validation. F's three and Representation's two programs are validations. G pays four finite computations, two certificate bridges and seven validations; Affine six mathematical programs; Chamber one required and one diagnostic; Matching its census; Chiral all three files. Operations pays seventeen proof/witness files, six validations and both required decoders. Gluing pays three validations; its three drivers and two partial Lean files stay separate. Rank contraction pays its finite-example program, with driver and four partial declarations separate. Locally projective requires six programs and its full historical JSON; Mathieu seven programs and both JSON inputs. Their three drivers each and eleven/ten outputs are separate; neither has Lean declarations. Rank augmentation pays three programs: required finite examples, bounded validation and supporting counterexample check. Three drivers and two Lean files (15 scoped declarations) stay separate; no full source formalization is claimed.
+
+\textbf{Limits.} Complete external proofs, unprovided historical software, full graphics and end-to-end formalization have unknown costs, not zero. Every topic retains its underlying multi-unit and source-cover sensitivities. B's source costs are unchanged from the prior edition. This table does not compare a theorem closure with a complete original or use a node-count ratio.
+\newpage
+\textbf{Every complete application after full acquisition.}
+The entire common theory and all declared software/data have already been acquired. Every local page is charged, including context, references and companions. DG2 includes all N006 papers; MC1 includes all 24 Mathieu application pages; RA1 includes both the application and counterproof.
+\begin{center}\tabsetup\renewcommand{\arraystretch}{1.03}\begin{tabular}{lllrrr}\toprule
+Topic & Original & Application & Source cost & Application cost & Conditional\\\midrule
+"""
+    for t in r['topics']:
+        for q in t['pairs']:s+=' & '.join([short(t['topic']),q['source'],q['application'],n(q['source_cost']),n(q['application_cost']),f(q['conditional'])])+r' \\'+'\n'
+    s+=r"""\bottomrule\end{tabular}\end{center}
+All seventeen previous topic records remain unchanged. One complete application is added. Recovery counts come from the separate admission snapshot; no scientific credit is assigned here.
+\newpage
+\textbf{Individual source and application costs: first seventeen originals.}
+Dark bars show complete original texts; green bars show complete applications. Factors at right assume full prior acquisition. The source and replacement bars share the same scale within each chart.
+\begin{center}\includegraphics[width=\linewidth]{conditional_1.pdf}\end{center}
+Source IDs remain stable catalogue cross-references. LP1 is the complete 2006 erratum; LP2 uses the full fifteen-page 2003 arXiv edition, not the unseen journal text. Their source-column corrections remain qualified. MC1 gives the corrected 81/431-class census and all 431 literal-row dispositions, not unavailable historical \texttt{geo[]} identities. Its 48-page predecessor is retained notation, not a newly recovered original. L020 cases 1 and 2 keep their hypotheses; false case 3 is replaced by the corrected criterion and full S18 counterproof. Its motivating Table 1 census is retained, not regenerated; higher-rank questions remain open.
+\newpage
+\textbf{Individual source and application costs: remaining twenty-four originals.}
+The same conventions apply. LP1 and LP2 assume acquisition of the whole Locally projective proof, common tables, all six programs and mandatory JSON. MC1 contains all three Mathieu application papers, after whole common theory, all seven programs and both JSON inputs. RA1 pays both local papers after its full five-page common theory and three programs. Other topics remain separately paid; no overlap is deducted.
+\begin{center}\includegraphics[width=\linewidth]{conditional_2.pdf}\end{center}
+\textbf{Data and provenance.} Exact integers and rational comparisons are in \texttt{results.json}, \texttt{topics.csv} and \texttt{applications.csv}. The protocol pins committed unchanged numerical/admission records and the new frozen numerical packet and its distinct root acceptance directly. No primary text is copied or extracted. Bar segments use complete document costs, not theorem counts. Distinct review is required before this overview becomes the public current edition.
+\end{document}
+"""
+    return s
+

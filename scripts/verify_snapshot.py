@@ -4921,6 +4921,143 @@ def check_overview40():
     return nf, nb
 
 
+def run_historical40_check(function):
+    """Keep forty-original checks bound to their reviewed historical pointers."""
+    from types import FunctionType
+    base = 'audit/topic-rank-augmentation/v1/'
+    routes = {'audit/corpus/latest.json': base + 'previous_corpus_pointer.json',
+              'audit/overview/latest.json': base + 'previous_overview_pointer.json',
+              'papers/latest_catalogue.json': base + 'previous_catalogue.json'}
+    rows = {r['path']: r for r in load(base + 'admission.json')['artifacts']}
+    check_bindings([rows[p] for p in routes.values()])
+    scope = dict(function.__globals__, load=lambda path: load(routes.get(str(path), path)))
+    original = check_current_measurement_pointer
+    scope[original.__name__] = FunctionType(original.__code__, scope, original.__name__, original.__defaults__, original.__closure__)
+    return FunctionType(function.__code__, scope, function.__name__, function.__defaults__, function.__closure__)()
+
+
+def check_rank_augmentation_admission():
+    base = 'audit/topic-rank-augmentation/v1/'; a = load(base + 'admission.json')
+    pins = ['fa57821c117ba7814cf3f652587beb93b0f346d79a37d0e9a91cc76b36c657a0',
+            '7432603519e9e854f5044de3349e6b2707685110f889bdfe4e1e249e6e751504',
+            '8e9fa6a10c70c244c143df572643b305b4fad14912dd88111da7082189c9db05',
+            '8a7a1728b5f6809e77d13f516f682f0f8902c1a26fd44e115c0b48c382194d03',
+            'fb6b56fa264b35faec3ac8151023cf5ad083d25e5e9eed0ffce68f5e0ce9e439',
+            '32dae3ac7ef573d886c774f513136d7e29ebd3e7e119a9761e6ab7a50e1c1588',
+            'b4232452cba25cae64bef0091a4adc947d8f679418fe73f1d439b5966ff587b7',
+            '444797a88e089d973c1c9df3e82558903c12326c42843ca62c591e8b7c92c59e']
+    check_bindings(a['artifacts'] + a['packets'] + a['public_replays'] + [a['existing_correction']])
+    need([r['sha256'] for r in a['packets']] == pins, 'Changed reviewed augmentation editions.')
+    for r in a['packets']:
+        parent = Path(r['path']).parent
+        check_bindings([dict(e, path=str(parent / e['path'])) for e in load(r['path'])['exports']])
+    need(a['status'] == 'ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT_AND_NUMERICAL_COMPARISON' and
+         a['source_ids'] == ['L020'] and a['principal_originals_added'] == 1 and a['source_rows'] == 19 and
+         a['source_pages'] == [19] and a['whole_common_pages'] == 5 and a['application_pages'] == [3, 3] and
+         a['complete_printed_program_pages'] == 3 and a['declared_program_files'] == 3 and
+         a['raw_program_bytes'] == 11533 and a['formal_declarations'] == 15 and
+         a['new_formal_declarations'] == 2 and a['previous_obstruction_formal_declarations'] == 13 and
+         a['new_question_credit'] == a['original_intake_added'] == 0 and
+         a['whole_common_charged_once'] and not any(a[k] for k in ['whole_source_formalized',
+             'cross_topic_overlap_discount', 'sibling_application_free_premise', 'earlier_counterproof_free',
+             'old_B_common_free', 'old_two_page_appendix_added', 'source_PDFs_redistributed', 'historical_priority_claim']),
+         'Augmentation source, proof, formal or cost boundary changed.')
+    need(all(a[k] is None for k in ['retained_external_proof_cost', 'full_runtime_cost', 'full_graphics_cost',
+                                   'full_formalization_cost']), 'Unknown augmentation costs became zero.')
+    science = load(base + 'science_review/review.json'); appendix = load(base + 'program_review/review.json')
+    need(science['status'] == 'PASS_DISTINCT_ROOT_CORRECTED_PRINCIPAL_L020' and
+         science['complete_source_pages_read_and_viewed'] == 19 and science['complete_corrected_principal_recovery_accepted'] and
+         appendix['status'] == 'ACCEPTED_UNCHANGED_COMPLETE_PROGRAM_APPENDIX' and appendix['whole_files'] == 3 and
+         appendix['whole_raw_bytes'] == 11533 and appendix['whole_text_printed_exactly_once'],
+         'Complete scientific or appendix acceptance missing.')
+    need(load(base + 'measurement/input_review/review.json')['status'] == 'ACCEPTED_UNCHANGED_DISTINCT_L020_MEASUREMENT_INPUTS' and
+         load(base + 'measurement/independent_review/review.json')['status'] == 'ACCEPTED_UNCHANGED_DISTINCT_L020_NUMBERS',
+         'Distinct augmentation extraction/numerical review missing.')
+    spec = importlib.util.spec_from_file_location('augmentation_distinct_numbers', ROOT / base / 'measurement/independent_review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'measurement/packet'; items = q.inputs(packet); rows = q.derive(items)
+    primary = q.validate(load(base + 'measurement/packet/results.json'), rows, items)
+    need(primary == a['primary'] and q.csvs(packet, rows, items) == a['CSV_rows'] == 440 and
+         q.vector_check(packet, primary) == a['actual_vector_rectangles_each'] == 15 and
+         q.acquisition_graph(packet, primary)['edges'] == 8 and a['exact_fractions'] == 120 and
+         a['metric_coordinates'] == len(rows) == 30, 'Augmentation arithmetic, vectors or full dependencies changed.')
+    fresh = load(base + 'public_science_replay.json'); code = load(base + 'public_program_replay.json')
+    need(fresh['status'] == 'PASS' and fresh['source_old_IP_pairs'] == 192 and fresh['new_Lean_declarations'] == 2 and
+         fresh['inherited_obstruction_declarations_not_recompiled_here'] == 13 and fresh['axioms'] == 'standard only' and
+         len(fresh['rejected_GAP_controls']) == 4 and len(fresh['rejected_Lean_weakenings']) == 3 and
+         code['status'] == 'PASS_COMPLETE_PROGRAM_APPENDIX' and code['whole_files'] == code['pages'] == 3 and
+         code['per_page_text_equal'] and not code['mathematics_replayed'] and
+         load(base + 'public_distinct_numeric.json')['status'] == 'PASS_DISTINCT_L020_NUMBERS',
+         'Declared fresh augmentation replays missing.')
+    return 1, 120
+
+
+def check_programme41():
+    base = 'audit/topic-rank-augmentation/v1/'; old = load(base + 'previous_corpus_pointer.json')
+    current = load('audit/corpus/latest.json')
+    check_bindings([current['snapshot'], current['base_inventory'], current['previous_snapshot']] +
+                   current['added_admissions'] + current['added_measurements'] + current['access_additions'])
+    need({k: v for k, v in current.items() if k != 'snapshot'} == load(current['snapshot']['path']),
+         'Current41 pointer differs from its complete snapshot.')
+    expected = set(old['admitted_original_ids']) | {'L020'}
+    need(current['status'] == 'CURRENT_PROGRAMME_41_ADMITTED_ORIGINALS_106_ACCESSIBLE' and
+         current['originals'] == 161 and current['accessible_originals'] == 106 and
+         current['admitted_principal_originals'] == current['currently_measured_originals'] == 41 and
+         current['accessible_pending_complete_recovery'] == 65 and current['pending_source_retrieval'] == 55 and
+         set(current['admitted_original_ids']) == set(current['measured_original_ids']) == expected and
+         set(current['accessible_pending_original_ids']) == set(old['accessible_pending_original_ids']) - {'L020'} and
+         current['retrieval_original_ids'] == old['retrieval_original_ids'] and current['access_additions'] == old['access_additions'] and
+         current['measurement_pending_original_ids'] == [] and current['all_originals_remain_active'] and
+         not current['all_conjectures_resolved'] and not current['all_original_proofs_recovered'],
+         'Current41 original partition or completion boundary changed.')
+    need(current['added_admissions'][:-1] == old['added_admissions'] and
+         current['added_measurements'][:-1] == old['added_measurements'] and
+         current['added_admissions'][-1] == current['added_measurements'][-1] and
+         current['added_admissions'][-1]['path'] == base + 'admission.json' and
+         check_current_measurement_pointer() == 41, 'Original or measurement added twice.')
+    c = load('papers/latest_catalogue.json'); prior = load(base + 'previous_catalogue.json')
+    need(c == load('papers/catalogue_rank_augmentation_measured.json') and c['entries'][:-4] == prior['entries'] and
+         set(c['original_ids']) == set(prior['original_ids']) | {'L020'}, 'Current41 catalogue changes an older edition.')
+    for row in c['entries'][-4:]:
+        need(row['topic'] == 'RankAugmentation' and row['measurement_status'] == 'admitted' and
+             row['measurement_admission'] == base + 'admission.json' and (ROOT / row['tex']).is_file() and
+             (ROOT / row['pdf']).is_file(), 'Complete augmentation dependency absent.')
+    return 41, 65
+
+
+def check_overview41():
+    base = 'audit/overview/v8/'; a = load(base + 'admission.json')
+    check_bindings(a['artifacts'] + a['current_measurement_admissions'] +
+                   [a[k] for k in ['previous_overview', 'current_corpus', 'current_catalogue', 'scientific_admission']])
+    for key, pin in [('author_manifest', '3df08f128c5924f599f58a4299a6934914f56a96a3f27b756b63bd05aa2cff55'),
+                     ('independent_manifest', 'd3bb0a8655ad7d4202d2ff7128ed1c9256feb6ae5a1658a468197f3f18c1f19e')]:
+        row = a[key]; check_bindings([row]); need(row['sha256'] == pin, 'Changed reviewed overview41 edition.')
+        parent = Path(row['path']).parent
+        check_bindings([dict(r, path=str(parent / r['path'])) for r in load(row['path'])['exports']])
+    spec = importlib.util.spec_from_file_location('overview41_distinct', ROOT / base / 'independent_review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'packet'; data = load(base + 'packet/results.json')
+    need(q.bindings(packet, ROOT) == 13, 'Missing exact overview41 input.')
+    nf = q.arithmetic(data, ROOT); nb = q.graphs(packet, data, q.prior_checker(ROOT)); q.csv_check(packet, data)
+    need(a['status'] == 'ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW41' and nf == a['exact_comparisons'] == 94 and
+         nb == a['actual_SVG_bars'] == a['actual_PDF_bars'] == 172 and a['CSV_rows'] == 59 and
+         a['topic_count'] == 18 and a['distinct_originals'] == 41 and a['unmeasured_originals'] == [] and
+         a['unchanged_topic_records'] == 17 and set(a['original_ids']) == set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and a['complete_counterproof_charged'] and
+         a['programme_counts_from_separate_snapshot'] and
+         all(a[k] == 0 for k in ['new_source_credit', 'new_question_credit', 'new_formal_credit']),
+         'Overview41 scope, counts or full cost boundary changed.')
+    need(load(a['author_replay']['path'])['status'] == 'PASS' and
+         load(a['independent_replay']['path'])['status'] == 'PASS_DISTINCT_OVERVIEW41' and
+         load(base + 'independent_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_OVERVIEW41',
+         'Complete overview41 independent acceptance missing.')
+    pointer = load('audit/overview/latest.json'); check_bindings([pointer['admission'], pointer['reader'], pointer['counts_source']])
+    need(pointer['admission']['path'] == base + 'admission.json' and pointer['reader']['path'] == base + 'packet/summary.pdf' and
+         pointer['measured_originals'] == 41 and pointer['topics'] == 18 and pointer['unmeasured_recovery'] == [],
+         'Current overview41 pointer differs.')
+    return nf, nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4980,8 +5117,8 @@ def main():
     l019_formal = check_l019_historical_formal_pointer()
     l019_transitive = check_l019_transitive_correction()
     restriction_kernel_declarations = check_restriction_kernel_theory()
-    l020_formal = check_l020_case_three_correction()
-    print(f"PASS: L020 case(3) has a complete written counterexample and {l020_formal} scoped Lean declarations; full source remains pending.")
+    l020_formal = run_historical40_check(check_l020_case_three_correction)
+    print(f"PASS: historical L020 case(3) correction preserves its complete counterexample and {l020_formal} scoped Lean declarations.")
     print(f"PASS: complete restriction-kernel criteria and {restriction_kernel_declarations} generic Lean lemmas; no additional original, question or compression credit.")
     print(f"PASS: transitive L019 counterexample has a complete written input proof and {l019_transitive} fresh scoped Lean declarations; main stability and whole-source recovery remain separate.")
     print(f"PASS: {l019_formal} fresh scoped Lean declarations verify the actual rank-extension output obstruction; input C-property and source hypotheses remain written.")
@@ -4996,9 +5133,14 @@ def main():
     run_historical37_check(check_programme37)
     overview37_fractions, overview37_bars = run_historical37_check(check_overview37)
     finite_added, finite_fractions = check_locally_projective_and_mathieu_admissions()
-    active_admitted, active_pending = check_programme40()
-    overview40_fractions, overview40_bars = check_overview40()
-    print(f"PASS: current seventeen-topic overview: {overview40_fractions} exact comparisons and {overview40_bars} actual vector bars per format for 40 originals.")
+    run_historical40_check(check_programme40)
+    overview40_fractions, overview40_bars = run_historical40_check(check_overview40)
+    augmentation_added, augmentation_fractions = check_rank_augmentation_admission()
+    active_admitted, active_pending = check_programme41()
+    overview41_fractions, overview41_bars = check_overview41()
+    print(f"PASS: current eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
+    print(f"PASS: augmentation adds {augmentation_added} corrected principal original and {augmentation_fractions} exact comparisons; all six local pages paid.")
+    print(f"PASS: historical seventeen-topic overview: {overview40_fractions} exact comparisons and {overview40_bars} actual vector bars per format for 40 originals.")
     print(f"PASS: locally projective and Mathieu topics add {finite_added} originals and {finite_fractions} exact comparisons; 40 measured originals, no new formal or question credit.")
     print(f"PASS: historical fifteen-topic overview: {overview37_fractions} exact comparisons and {overview37_bars} actual vector bars per format for 37 originals.")
     print(f"PASS: rank contraction adds {contraction_added} original and {contraction_fractions} exact comparisons, with four scoped Lean lemmas.")

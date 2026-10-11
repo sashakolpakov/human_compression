@@ -14,10 +14,10 @@ yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
 `subsequent admissions <audit/corpus/latest.json>`_ now record **106
-accessible manuscripts: 40 with admitted principal-result recoveries and
-66 awaiting complete recovery**. The other **55 remain retrieval targets**.
+accessible manuscripts: 41 with admitted principal-result recoveries and
+65 awaiting complete recovery**. The other **55 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. All forty admitted recoveries now have
+evidence and next obligation. All forty-one admitted recoveries now have
 measured comparisons. The `L084 erratum
 <papers/topic-locally-projective/v1/README.rst>`_ now has a complete corrected
 recovery together with the L095 parent preprint.
@@ -32,15 +32,25 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
-The `consolidated comparison <audit/overview/v7/packet/summary.pdf>`_ gives
-all seventeen measured topics, all forty individual factors and declared
+The `consolidated comparison <audit/overview/v8/packet/summary.pdf>`_ gives
+all eighteen measured topics, all forty-one individual factors and declared
 program and data costs in six pages. The `topic graph
-<audit/overview/v7/packet/whole_topics.svg>`_ shows every complete common paper
+<audit/overview/v8/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
-<audit/overview/v7/packet/conditional_1.svg>`_ and `remaining twenty-three
-<audit/overview/v7/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v7/README.rst>`_ links exact tables,
+<audit/overview/v8/packet/conditional_1.svg>`_ and `remaining twenty-four
+<audit/overview/v8/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v8/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
+
+The new `rank-augmentation topic <papers/topic-rank-augmentation/v1/README.rst>`_
+recovers the corrected principal results of L020. Its five-page common paper
+and two three-page local papers give **1.200×** written compression. The
+conditional application factor is **2.384×** after full acquisition. Including
+all three programs gives **0.865×** with printed code or **0.884×** with raw
+code; those complete computational versions are longer than the source.
+The valid first two cases of the source theorem are proved; the false third
+case has an exact corrected criterion and a complete counterexample.
+Its general higher-rank questions remain unanswered.
 
 The new `gluing topic <papers/topic-gluing/v1/README.rst>`_ supplies two common
 papers and an application recovering the main results of L010. Its complete
@@ -128,6 +138,10 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 1 / 1
      - 0.332
      - 0.113
+   * - Rank augmentation and exact subgroup intersections
+     - 1 / 1
+     - 1.200
+     - 0.865
 
 These are text costs, not minimum proof complexities. The reports specify
 the complete program boundary, raw-code alternatives, retained external
