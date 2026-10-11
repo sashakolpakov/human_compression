@@ -3226,6 +3226,69 @@ def check_current_programme_pointer():
     return len(admitted),len(accessible-admitted)
 
 
+def check_graph_application_extensions():
+    paths = {
+        'L128': 'audit/topic-a/extensions/diagram-symmetries/v1',
+        'L068': 'audit/topic-c/extensions/livingstone/v1',
+    }
+    for source, base in paths.items():
+        a = load(base+'/admission.json')
+        need(a['source_id']==source and a['principal_originals_added']==1 and
+             a['status']=='ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+             a['new_question_credit']==0 and not a['whole_source_formalized'] and
+             a['compression_factor'] is None and a['measurement_status']=='pending' and
+             a['charge_full_common_paper'] and a['charge_common_once_within_topic'] and
+             not a['cross_topic_overlap_discount'], 'Graph application admission scope.')
+        check_bindings(a['artifacts'])
+        for key in ['author','review','public_replay','public_review_replay']:
+            check_bindings([a[key]])
+        for key in ['author','review']:
+            row = a[key]; parent = Path(row['path']).parent
+            exports = load(row['path'])['exports']
+            need(len(exports)==row['exports'],'Graph application export count.')
+            check_bindings([dict(r,path=str(parent/r['path'])) for r in exports])
+        r = load(a['public_replay']['path']); q = load(a['public_review_replay']['path'])
+        review = load(str(Path(a['review']['path']).parent/'review.json'))
+        need(r['status']==q['status']=='PASS' and
+             review['author_manifest_sha256']==a['author']['sha256'], 'Graph application review binding.')
+        if source=='L128':
+            need(a['source_rows']==14 and a['proof_spans']==7 and a['formal']['new']==6 and
+                 len(r['formal_axiom_reports'])==6 and r['finite_groups']==79 and
+                 r['finite_involution_triples']==32628 and len(r['controls_rejected'])==3 and
+                 q['coordinate_models']==13 and len(q['controls_rejected'])==10 and
+                 review['status']=='ACCEPTED_INDEPENDENT_COMPLETE_L128_APPLICATION_REVIEW' and
+                 not review['open_requests'], 'Diagram-symmetry evidence scope.')
+        else:
+            need(a['source_rows']==17 and a['proof_spans']==9 and a['formal']['new']==0 and
+                 a['formal']['reused']==3 and not a['literal_Q_recovered'] and
+                 a['literal_P_recovered'] and a['corrected_Q_recovered'] and
+                 len(r['Lean_axioms'])==3 and len(r['incidence_rows'])==12 and
+                 all(z['rejected'] for z in r['controls']) and len(r['controls'])==3 and
+                 review['status']=='ACCEPT_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+                 not review['remaining_math_corrections'], 'Livingstone evidence scope.')
+    latest = load('audit/corpus/updates/diagram-symmetries-and-livingstone.json')
+    check_bindings([latest['previous_snapshot']]+latest['added_admissions'])
+    previous = load(latest['previous_snapshot']['path'])
+    need(set(latest['admitted_original_ids'])==set(previous['admitted_original_ids'])|set(paths) and
+         set(latest['accessible_pending_original_ids'])==set(previous['accessible_pending_original_ids'])-set(paths) and
+         latest['retrieval_original_ids']==previous['retrieval_original_ids'] and
+         latest['admitted_principal_originals']==len(latest['admitted_original_ids'])==32 and
+         latest['accessible_pending_complete_recovery']==len(latest['accessible_pending_original_ids'])==72 and
+         latest['accessible_originals']==104 and latest['originals']==161 and
+         latest['pending_source_retrieval']==57 and latest['currently_measured_originals']==27 and
+         set(latest['measurement_pending_original_ids'])=={'F015','L028','N007','L128','L068'},
+         'Graph application snapshot partition.')
+    c = load('papers/catalogue_graph_extensions.json')
+    check_bindings([c['previous_catalogue']])
+    need(c['entries'][:6]==load(c['previous_catalogue']['path'])['entries'] and
+         len(c['entries'])==9 and set(c['original_ids'])=={'F015','L028','N007','L128','L068'} and
+         {x for r in c['entries'] for x in r['source_contracts']}==set(c['original_ids']),
+         'Graph application catalogue.')
+    for row in c['entries']:
+        need((ROOT/row['tex']).is_file() and (ROOT/row['pdf']).is_file(),'Missing graph application paper.')
+    return 32,72
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3265,7 +3328,9 @@ def main():
     current_admitted, current_pending = check_additional_original_recoveries()
     overview_fractions, overview_svg, overview_pdf = check_consolidated_measurement_overview()
     latest_admitted, latest_pending = check_diagonal_admission_and_latest_programme()
+    graph_admitted, graph_pending = check_graph_application_extensions()
     active_admitted, active_pending = check_current_programme_pointer()
+    print(f'PASS: graph application extensions preserve {graph_admitted} admitted originals and {graph_pending} accessible pending; no new question credits.')
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()

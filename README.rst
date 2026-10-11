@@ -14,11 +14,11 @@ yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
 `subsequent admissions <audit/corpus/latest.json>`_ now record **104
-accessible manuscripts: 30 with admitted principal-result recoveries and
-74 awaiting complete recovery**. The other **57 remain retrieval targets**.
+accessible manuscripts: 32 with admitted principal-result recoveries and
+72 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
 evidence and next obligation. Twenty-seven recovered originals have measured
-comparisons; the three newest recoveries await measurement. The catalogue
+comparisons; the five newest recoveries await measurement. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
@@ -48,11 +48,11 @@ Common proofs for finite two-groups
 The `common theory <papers/topic-a/v2/umbrella.pdf>`_ proves how separately
 supported kernels determine marked subgroup intersections, how to recognize
 the resulting presentations, and how a finite quotient bounds a search
-through normal kernels. Six complete applications recover the following
+through normal kernels. Seven complete applications recover the following
 principal result sets. Their proofs, retained inputs and corrections have
 passed independent mathematical and source review.
 
-.. list-table:: Six source manuscripts and the results recovered
+.. list-table:: Seven source manuscripts and the results recovered
    :header-rows: 1
    :widths: 34 44 22
 
@@ -88,6 +88,20 @@ passed independent mathematical and source review.
      - Nondegenerate marked classification, all six source tables and
        finite universal orders; explicit literal corrections
      - `Markings of order 1024 <papers/topic-a/v2/order-1024-markings.pdf>`_
+   * - L128: Leemans–Spiga–Tranchida, *Hypertopes with prescribed diagram
+       symmetries*; arXiv:2610.09711v1, nine pages
+     - Every graph diagram, full groups and correlations, exact orders and
+       parabolics, two-group minima and the unrestricted rank-three minimum;
+       the proper-quotient assertion requires the same diagram
+     - `Graph symmetries <papers/topic-a/extensions/diagram-symmetries/v1/graph_symmetries.pdf>`_
+
+The `seventh application's admission
+<audit/topic-a/extensions/diagram-symmetries/v1/admission.json>`_ includes a
+distinct review of all fourteen source clauses, an independent finite search
+and six scoped Lean declarations. It uses the whole existing common paper.
+Its three-page application and complete one-page program appendix await a
+length audit. The figures below remain the comparison of the earlier six
+originals; they are not a factor for the enlarged seven-original topic.
 
 The `scope reader <audit/topic-a/v2/SCOPE.rst>`_ states the exact coverage,
 exclusions, attribution and formal limits. The `proof admission
@@ -96,7 +110,7 @@ independent reviews. These six existing contracts add no new manuscript
 or solved-question credits. The original classifications and constructions
 retain their authors' attribution.
 
-The common paper is 17 pages and the six applications total 33 pages.
+The common paper is 17 pages and the earlier six applications total 33 pages.
 The `complete computation appendix <papers/topic-a/v2/two-group-computation.pdf>`_
 is another 21 pages; all four executable files are in
 `required-code <papers/topic-a/v2/required-code>`_. An independent replay
@@ -264,8 +278,9 @@ identity then gives an explicit inverse for the resulting group presentation.
 The generalized-cube and equal-parameter applications share the graph
 argument; the latter replaces an order comparison by inverse homomorphisms.
 The common paper also includes the complete geometric operation arguments.
+The fifth application adds a common incidence reconstruction note.
 
-.. list-table:: Four source manuscripts and the results recovered
+.. list-table:: Five source manuscripts and the results recovered
    :header-rows: 1
    :widths: 34 44 22
 
@@ -291,8 +306,27 @@ The common paper also includes the complete geometric operation arguments.
      - Marked construction, matrices and universal presentation; corrected
        multiplication convention and separate small-parameter case
      - `Equal adjacent parameters <papers/topic-c/v2/equal-adjacent-parameters.pdf>`_
+   * - L068: Hartley–Hubard–Leemans, *Regular 4-polytopes from the Livingstone
+       graph of Janko's first group*; Journal of Algebraic Combinatorics 35
+       (2012), 193–214
+     - Complete graph constructions, face and flag-stabilizer tables and full
+       group J1; the second construction is literal, while the first needs
+       the explicitly stated induced-quadruple condition
+     - `Livingstone polytopes <papers/topic-c/extensions/livingstone/v1/livingstone-polytopes.pdf>`_
 
-The common paper has ten pages and the applications total seventeen.
+The `Livingstone admission
+<audit/topic-c/extensions/livingstone/v1/admission.json>`_ records all seventeen
+source dispositions, the literal counterexample and its repair, fresh exact
+computations and three reused Lean incidence lemmas. The complete
+`incidence note <papers/topic-c/extensions/livingstone/v1/incidence-reconstruction.pdf>`_
+adds two pages to the common input; the application has six pages and its
+`complete program appendix <papers/topic-c/extensions/livingstone/v1/programs.pdf>`_
+has eight. The shared construction program will be charged once within C;
+the old exhaustive census remains in the full-topic boundary. Measurement
+of the enlarged five-original topic is pending. The following figures cover
+the earlier four originals only.
+
+The earlier common paper has ten pages and its four applications total seventeen.
 The `four-page program appendix <papers/topic-c/v2/required-programs.pdf>`_
 contains both complete programs required for the Janko census. The
 `independent review <audit/topic-c/v2/independent_review/review.pdf>`_
