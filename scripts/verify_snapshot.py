@@ -2561,6 +2561,138 @@ def check_affine_dag():
     return len(measured)*30,route_count
 
 
+def check_chamber_proofs():
+    import sys
+    base = 'papers/topic-chamber/v2/'
+    audit = 'audit/topic-chamber/v2/'
+    admission = load(audit+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_CHAMBER_COMMON_PROOFS',
+         'Unreviewed chamber edition.')
+    check_bindings(admission['artifacts'])
+    for prefix,key,count,pin in [
+        (base,'author',68,'087fc503dd4d3f11df74cf751f251c3b585dd9f1ec9aefbb94a8dc3af4124e63'),
+        (audit+'independent_review/','independent',24,'cacdc46a81c130da2b76adc09a55548afc0a9998ee558a7b27a00a97844dadbe'),
+        (audit+'root_adoption/','root',4,'406ffbeefee18c723568f779cc66db656d02e3e6a1a776ab19cdf3c73e544c9d')]:
+        manifest = load(prefix+'manifest.json')
+        need(digest((ROOT/prefix/'manifest.json').read_bytes())==admission['manifests'][key]==pin and
+             len(manifest['exports'])==count, 'Changed frozen chamber packet.')
+        check_bindings([dict(r,path=prefix+r['path']) for r in manifest['exports']])
+    scope = load(base+'scope.json'); formal = load(base+'formal/scope.json')
+    inventory = load(base+'program_inventory.json'); questions = load(base+'question_map.json')
+    reviewed = load(audit+'independent_review/review.json')
+    adopted = load(audit+'root_adoption/review.json')
+    fresh = load(audit+'independent_review/fresh_replay/report.json')
+    # Reuse the accepted scientific scope checker without its private-source entrypoint.
+    saved_path = sys.path[:]
+    saved_local_cases = sys.modules.pop('local_cases',None)
+    try:
+        sys.path.insert(0,str(ROOT/audit/'independent_review'))
+        spec = importlib.util.spec_from_file_location('chamber_scientific_scope',ROOT/audit/'independent_review/check.py')
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        mod.semantic(scope,formal,inventory,questions,fresh)
+        need(mod.local_cases()==load(audit+'independent_review/local_cases.json'),
+             'Chamber independent finite interface models changed.')
+    finally:
+        sys.path[:] = saved_path
+        sys.modules.pop('local_cases',None)
+        if saved_local_cases is not None:sys.modules['local_cases'] = saved_local_cases
+    need(reviewed['status']=='ACCEPTED_WITH_DECLARED_RETAINED_INPUTS_AND_PARTIAL_FORMAL_SCOPE' and
+         adopted['status']=='ROOT_ACCEPTED_CHAMBER_EDITION_WITH_EXPLICIT_RETAINED_INPUTS' and
+         reviewed['author_manifest_sha256']==admission['manifests']['author'] and
+         adopted['input_manifests']=={k:admission['manifests'][k] for k in ['author','independent']} and
+         reviewed['corrections_requested']==adopted['corrections_requested']==[] and
+         reviewed['review_roles']['current_edition_author']=='rewrite_termination' and
+         reviewed['review_roles']['independent_reviewer']=='enumeration_review',
+         'Chamber scientific acceptance or reviewer roles changed.')
+    need([r['id'] for r in scope['rows']]==admission['source_row_ids'] and
+         len(scope['rows'])==admission['source_rows']==27 and len(scope['proof_spans'])==22 and
+         admission['source_ids']==adopted['source_ids']==['L008','N016'] and
+         scope['principal_count_unchanged']==admission['existing_principal_contracts']==2 and
+         not scope['whole_manuscript_all_assertions_claim'], 'Chamber source boundary changed.')
+    coverage = load(audit+'independent_review/coverage_review.json')
+    need([{k:v for k,v in r.items() if k not in ['review_status','independent_note']} for r in coverage['rows']]==scope['rows'],
+         'Chamber review lost a source row or exclusion.')
+    proof = load(audit+'independent_review/proof_reading.json')
+    need(set(proof['spans'])==set(scope['proof_spans']), 'Chamber proof review incomplete.')
+    for key,row in scope['proof_spans'].items():
+        text = (ROOT/base/row['path']).read_text()
+        start = text.index(row['start_anchor'])
+        end = text.index(row['end_anchor'],start+len(row['start_anchor'])) if row['end_anchor'] else len(text)
+        data = text[start:end].encode()
+        need(len(data)==row['bytes'] and digest(data)==row['sha256'] and proof['spans'][key]['binding']==row,
+             'Chamber written proof passage changed.')
+    for row in inventory['programs']+formal['modules']:
+        check_bindings([dict(row,path=base+row['path'])])
+    printed = re.findall(r'\\VerbatimInput\[[^\]]*\]\{([^}]+)\}',(ROOT/base/'programs.tex').read_text())
+    need(printed==['programs/chiral_cover.g','programs/reflection_models.py'] and
+         [r['path'] for r in inventory['programs'] if r['printed']]==printed and
+         digest((ROOT/base/'programs/chiral_cover.g').read_bytes())==
+             '59bf1cd96626df42e1e1baed82b88538416f336443c1a4076dfbb5f09bdcc69e' and
+         (admission['required_mathematical_programs'],admission['diagnostic_programs'],
+          admission['historical_drivers'],admission['current_drivers'])==(1,1,2,1),
+         'Chamber complete program roles changed.')
+    for row in fresh['programs']+fresh['controls']+fresh['formal']:
+        need(digest((ROOT/audit/'independent_review/fresh_replay'/(row['label']+'.log')).read_bytes())==row['log_sha256'],
+             'Chamber computational or formal log changed.')
+    finite = re.sub(r'\s+','',(ROOT/audit/'independent_review/fresh_replay/finite_cover.log').read_text())
+    expected = {'P':'[324,[6,9,6],[54,54],9,false]','T':'[324,[6,9,2],[162,18],9,true]',
+                'Td':'[324,[2,9,6],[18,162],9,true]','R':'[972,[6,9,6],[162,162],27,true]',
+                'Q':'[2916,[6,9,6],[162,162],9,true]','Qd':'[2916,[6,9,6],[162,162],9,true]'}
+    need(all('ROW'+k+v in finite for k,v in expected.items()) and
+         'DISTINGUISH(b*c^-1)^2*a*c^2*a^-1ORDERS[1,3]' in finite,
+         'Chamber six-group evidence or distinguishing word changed.')
+    for row in formal['modules']:
+        name = Path(row['path']).stem
+        log = (ROOT/audit/'independent_review/fresh_replay'/(name+'.log')).read_text()
+        axioms = re.findall(r'depends on axioms:\s*\[([^]]*)\]',log)
+        need(len(axioms)==row['reports'] and all(set(x.strip() for x in s.split(',') if x.strip())<=
+             {'propext','Classical.choice','Quot.sound'} for s in axioms) and
+             'warning:' not in log and 'sorryAx' not in log, 'Chamber scoped Lean evidence changed.')
+    need((admission['fresh_lean_declarations'],admission['new_lean_declarations'],admission['reused_lean_declarations'])==(14,7,7) and
+         not admission['end_to_end_source_formalization'] and not formal['end_to_end_application_formalized'],
+         'Chamber formal scope overstated.')
+    for q in questions['questions']:
+        for key in ['accepted_record','review']:
+            if q.get(key):check_bindings([q[key]])
+    check_bindings(questions['separate_prior_baselines'])
+    need(reviewed['allrank_finite_multiplicity_remains_unresolved'] and
+         admission['allrank_finite_multiplicity_remains_unresolved'] and
+         all(q['proof_premise_here'] is False for q in questions['questions']),
+         'Chamber separate question used as a premise or open finite question closed.')
+    catalogue = load('papers/catalogue.json')
+    entries = [r for r in catalogue['new_editions'] if r['topic']=='Chamber']
+    need(entries==admission['catalogue_entries'] and len(entries)==3 and
+         catalogue['current_topic_editions']['Chamber']==[r['id'] for r in entries] and
+         [r['source_contracts'] for r in entries]==[[],['L008'],['N016']] and
+         [r['physical_pages'] for r in entries]==[6,3,6] and
+         admission['scientific_pages']==15 and admission['program_appendix_pages']==3,
+         'Chamber catalogue or scientific page counts changed.')
+    for row in entries:
+        inputs = re.findall(r'\\input\{([^}]+)\}',(ROOT/row['tex']).read_text())
+        need(row['tex_inputs']==[base+x for x in inputs] and row['review_record']==audit+'admission.json',
+             'Chamber catalogue lost an input or review.')
+    rebuilt = load(audit+'publication_replay/catalogue.json')['papers']
+    need(len(rebuilt)==4 and all(r['status']=='compiled' and r['diagnostics']==[] for r in rebuilt) and
+         [(r['physical_pages'],r['per_page_text_identical']) for r in rebuilt[:3]]==[(6,True),(3,True),(6,True)],
+         'Chamber public catalogue rebuild failed.')
+    appendix = load(audit+'publication_replay/appendix.json')
+    need(appendix['pages']==3 and appendix['per_page_text_identical'] and appendix['complete_programs']==printed and
+         appendix['diagnostics']==[], 'Chamber appendix public rebuild failed.')
+    canonical = set(load('audit/completion.json')['publication_summary']['canonical_contract_ids'])
+    for row in catalogue['new_editions']:
+        if row['id'].startswith('topic-') and '/v2/' in row['id']:canonical.update(row.get('source_contracts',[]))
+    admitted = set(load('audit/intake.json')['admitted_principal_contracts'])
+    need(canonical==admitted and len(canonical)==admission['canonical_complete_contract_count_at_this_admission']==
+         admission['project_total_preserved']==27 and admission['remaining_contracts_for_canonical_topic_editions']==[],
+         'Chamber completion count exceeds admitted contracts.')
+    need(all(admission[k] is None for k in ['compression_ratio','full_retained_proof_cost','historical_program_cost','source_graphics_cost']) and
+         scope['retained_input_full_expansion_cost'] is None and scope['compression_factor'] is None and
+         all(admission[k]==reviewed[k]==adopted[k]==0 for k in ['new_source_credit','new_question_credit']) and
+         adopted['whole_common_cost_required'] and not adopted['cross_topic_discount'],
+         'Chamber invents costs, new credits or a cross-topic discount.')
+    return 27,14
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -2591,6 +2723,7 @@ def main():
     f_cells, f_fractions = check_topic_f_measurement()
     g_rows, g_declarations = check_topic_g_proofs()
     representation_rows, representation_declarations = check_representation_proofs()
+    chamber_rows, chamber_declarations = check_chamber_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -2626,6 +2759,7 @@ def main():
     print(f'PASS: Topic F has {f_cells} independent PDF metric cells and {f_fractions} exact combined/conditional fractions; the whole common paper and validation costs are explicit.')
     print(f'PASS: Topic G preserves {g_rows} source records, {g_declarations} scoped Lean declarations, complete common theory and both corrected applications with all thirteen programs; measurements remain separate.')
     print(f'PASS: representation preserves {representation_rows} source blocks, {representation_declarations} scoped Lean declarations and two whole validation programs; measurement remains separate.')
+    print(f'PASS: chamber papers preserve {chamber_rows} scope rows, {chamber_declarations} scoped Lean declarations and the complete finite-cover program; all 27 admitted contracts have current common theory and applications, with measurement and full formalization separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

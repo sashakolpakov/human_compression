@@ -721,11 +721,52 @@ proofs. The four-page `validation appendix
 <papers/topic-representation/v2/program-appendix.pdf>`_ prints both complete
 bounded programs; the uniform proofs do not depend on their finite samples.
 
-**25 of 27** admitted contracts now have complete canonical applications
-and common theory. L008 and N016 retain their earlier accepted proofs while
-their common theory and applications are being prepared. Representation
+This brought the number of admitted contracts with complete canonical
+applications and common theory to 25 of 27. Representation
 lengths and paired dependency costs remain to be audited; this edition
 adds no source, solved-question or numerical compression credit.
+
+Chamber fibers, reflections and regular covers
+----------------------------------------------
+
+The six-page `common paper <papers/topic-chamber/v2/umbrella.pdf>`_ describes
+flag extensions through double cosets, proves an explicit chamber reflection
+and isolates cover intersections in the embedded relation kernels. Both
+applications supply the geometric hypotheses and local group arguments.
+
+.. list-table:: Source manuscripts and recovered results
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and checked edition
+     - Declared principal results
+     - Our application
+   * - L008: W.-J. Zhang and D. Leemans, *Testing chirality on hypertopes*;
+       arXiv:2511.14562v1, November 2025; ten pages
+     - Theorem 1.1 with both directions, residual connectedness and the
+       full automorphism argument; exact coset qualification for infinite groups
+     - `A two-coset criterion for chiral hypertopes
+       <papers/topic-chamber/v2/testing-chirality.pdf>`_; three pages
+   * - N016: Gabe Cunningham, *Chiral polytopes whose smallest regular
+       cover is a polytope*; author edition of 25 July 2023; eight pages
+     - All proved conclusions, including the square-torus family, five
+       specified atomic families and all six groups in the minimal-cover example
+     - `Chirality kernels and the smallest regular cover
+       <papers/topic-chamber/v2/minimal-regular-covers.pdf>`_; six pages
+
+The `publication guide <papers/topic-chamber/v2/PUBLICATION.rst>`_ records
+the retained classifications, exact source qualifications, whole programs
+and formal limits. Independent review checked all 27 scope rows, 22 proof
+passages, six finite groups and fourteen scoped Lean declarations. Seven
+new declarations prove the actual reflection formula; the full geometric
+applications remain written mathematics.
+
+**All 27 admitted contracts now have complete canonical applications and
+common theory.** This is a manuscript milestone within the closed corpus,
+not a claim that all 161 indexed papers or their conjectures are resolved.
+Chamber lengths and dependency costs remain to be measured. Earlier cover
+answers have a separate `question map <papers/topic-chamber/v2/question_map.json>`_;
+general finite minimal-cover multiplicity in all ranks remains unresolved.
 
 Papers and verification
 -----------------------

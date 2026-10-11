@@ -90,7 +90,9 @@ the 27 contracts had complete canonical applications and common theory.
 The `affine length audit <topic-affine/v2/measurement/README.rst>`_ is now
 accepted: 0.786 combined, 1.447 for the application after the whole theory
 and required programs are acquired, and 0.556 including the full printed
-program appendix. Its paired dependency audit remains pending.
+program appendix. Its `paired dependency audit
+<topic-affine/v2/dag/README.rst>`_ now conserves all 120 document metric cells
+through exclusive passage costs and checks 222 prerequisite unions.
 
 Topic F now adds the complete common paper and L014 application, with
 all three validation programs and both historical drivers. The
@@ -124,10 +126,22 @@ five-page F010 application, with both whole validation programs. The
 source blocks, thirteen written passages, the full source review and twelve
 scoped Lean declarations: eight new generic statements and four reused
 local ones. Original authorship, the three source qualifications and the
-absence of a new answer to Question 2.4 remain explicit. **Twenty-five of
-the 27 contracts** now have complete canonical applications and common
-theory. L008 and N016 remain to be published in that form. Representation
+absence of a new answer to Question 2.4 remain explicit. At that stage,
+twenty-five of the 27 contracts had complete canonical applications and
+common theory. Representation
 lengths and paired dependency costs are still pending.
+
+The chamber edition supplies the six-page common paper, three-page L008
+application and six-page N016 application, with a complete program appendix.
+Its `proof admission <topic-chamber/v2/admission.json>`_ binds independent
+review of 27 scope rows, 22 proof passages, six exact finite groups and
+fourteen scoped Lean declarations. The infinite-coset qualification,
+nonidentity-power correction and retained geometric and classification
+inputs remain explicit. **All 27 admitted contracts now have complete
+canonical applications and common theory.** The manuscript lengths and paired
+dependency costs still require their own audit. Later question answers
+remain separate; general finite minimal-cover multiplicity in all ranks
+remains unresolved. No additional source or solved-question credit is added.
 
 Work by topic
 -------------
@@ -156,7 +170,8 @@ subject does not itself prove a compression theorem.
      - L012
      - Complete common paper, corrected application and all six programs
        independently reviewed. Complete lengths accepted, with all reused
-       theory charged within this topic. Finish the paired dependency audit.
+       theory charged within this topic. Paired dependencies and physical
+       passage costs accepted; further reductions require new proofs.
    * - C: Halving, parity and Petrial operations
      - L088, N013, L108, F014
      - Complete common theory, four applications and both required programs
@@ -190,8 +205,10 @@ subject does not itself prove a compression theorem.
        explicit source corrections and partial formal scope.
    * - Chamber orbits and regular covers
      - L008, N016
-     - Prepare complete applications with the marked-inversion argument
-       and every required family and finite example.
+     - Complete common theory and both applications reviewed, including
+       the actual reflection, all required families and the finite example.
+       Measure full lengths and paired dependencies, retaining the stated
+       older classifications and separate question limits.
 
 Measurement and formal proofs
 -----------------------------
