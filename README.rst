@@ -367,7 +367,18 @@ and records their hashes; a whole source directory is never copied.
 The `build review <audit/tex-build/tex_inputs_design_review.rst>`_ records
 the checks and the external TeX dependency boundary.
 
-For Lean, use the pinned toolchain and dependencies::
+To check both configured Lean components with one command, use the pinned
+compiler and dependency cache::
+
+    python3 -B scripts/check_project_lean.py --lean PATH_TO_LEAN --packages PATH_TO_PACKAGES --out /tmp/human-compression-project-lean --jobs 1
+
+This runs the 100-module library checker followed by Topic B's separate
+checker. It preserves each fresh report and distinguishes complete and
+explicitly selected partial runs. The `runner review <audit/formal-project/README.rst>`_
+records fourteen dispatch tests and a fresh Topic B check; that validation
+does not claim a fresh run of all 101 sources.
+
+For the original 100-module Lake library alone::
 
     cd research/case_study/formal
     lake build

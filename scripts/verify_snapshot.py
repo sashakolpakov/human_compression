@@ -609,6 +609,32 @@ def check_topic_b_proofs():
     return len(rows), len(fresh['axioms'])
 
 
+def check_project_lean_runner(legacy_modules):
+    admission = load('audit/formal-project/admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_PROJECT_LEAN_RUNNER', 'Unreviewed project Lean runner.')
+    check_bindings(admission['artifacts'])
+    need((ROOT/'scripts/check_project_lean.py').read_bytes()==
+         (ROOT/'audit/formal-project/author/check_project_lean.py').read_bytes(),
+         'Published runner differs from its reviewed author source.')
+    fresh = load('audit/formal-project/root_review/project_report.json')
+    fixtures = load('audit/formal-project/root_review/fixture_report.json')
+    need(fixtures['status']=='PASS_ORCHESTRATION_FIXTURES_ONLY' and fixtures['case_count']==14 and
+         fixtures['actual_lean_compilations']==0, 'Runner fixture scope changed.')
+    need(fresh['status']=='PASS_PARTIAL' and fresh['selected_components']==['topic-b'] and
+         fresh['fresh_source_count']==1 and fresh['fresh_axiom_declaration_reports']==6 and
+         fresh['all_configured_sources_recompiled_this_invocation'] is False and
+         fresh['components']['legacy']['status']=='NOT_SELECTED', 'Runner validation inflated its coverage.')
+    expected = {'research/case_study/formal/'+name+'.lean' for name in legacy_modules}
+    need({r['path'] for r in fresh['unchecked_sources']}==expected and
+         len(fresh['unchecked_sources'])==100, 'Runner lost the unselected library sources.')
+    for component in fresh['input_inventory'].values():
+        for path, value in component['input_bindings'].items():
+            need(digest((ROOT/path).read_bytes())==value, 'Runner input changed: '+path)
+    need(fresh['configured_source_count_inventory_only']==101 and
+         admission['fresh_full_project_compilation'] is False,
+         'Runner inventory must not be reported as a completed whole-project run.')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -623,6 +649,7 @@ def main():
     check_topic_dag()
     a_dag_cells = check_topic_a_dag()
     b_clauses, b_declarations = check_topic_b_proofs()
+    check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
     if args.write_manifest:
@@ -641,6 +668,7 @@ def main():
     print('PASS: Topic E paired proof graphs preserve all 90 source/application/program cost coordinates.')
     print(f'PASS: Topic A paired proof graphs preserve all {a_dag_cells} complete-document cost coordinates.')
     print(f'PASS: Topic B preserves {b_clauses} source clauses and {b_declarations} separately checked Lean declarations; no measured ratio yet.')
+    print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
 
