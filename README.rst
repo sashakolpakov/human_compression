@@ -1336,3 +1336,16 @@ verifies that output obstruction in sixteen declarations. The input and
 source hypotheses remain written; the main stability theorem is outside
 this counterexample's range. This strengthens the same correction, with
 no additional manuscript or open-conjecture credit.
+
+Restriction kernels for extending a marking
+-------------------------------------------
+
+The `five-page theory <papers/restriction-kernels/v1/restriction_kernels.pdf>`_
+characterizes when adding a new transposition preserves the string intersection
+property. It replaces that question by pointwise-stabilizer tests in the
+original prefix groups, and gives an exact criterion for a separated split
+extension. The proofs identify the lost parity condition in the transitive
+counterexample and give uniform positive families. The `independent audit
+<audit/restriction-kernels/v1/README.rst>`_ includes three generic Lean lemmas;
+the full permutation criteria remain written proofs. This supporting theory
+adds no recovered original, conjecture answer or measured compression credit.

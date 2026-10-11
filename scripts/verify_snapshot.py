@@ -4374,6 +4374,62 @@ def check_l019_transitive_correction():
     return 16
 
 
+def check_restriction_kernel_theory():
+    base = 'audit/restriction-kernels/v1/'
+    a = load(base + 'admission.json')
+    need(a['status'] == 'ROOT_ADMITTED_RESTRICTION_KERNEL_CRITERIA' and
+         a['written_pages'] == 5 and a['named_written_results'] == 8 and
+         a['partial_Lean_declarations'] == 3 and
+         a['new_principal_original_credit'] == a['new_question_credit'] == 0 and
+         a['compression_factor'] is None and
+         not any(a[k] for k in ['full_string_criteria_formalized',
+             'finite_computations_are_uniform_proof_premises', 'historical_priority_claim',
+             'whole_L019_recovered', 'main_stability_recovered_or_disproved']),
+         'Restriction-kernel theory scope changed.')
+    check_bindings(a['artifacts'])
+    for key, pin, count in [
+        ('author_manifest', '79e1e922dc4da4290d498d516b79f45fa5e5944059d1fd6c728fef806f653b1b', 14),
+        ('independent_manifest', 'b21e1cc53451a5057500274411d47d71d63a8c6ebe51e593bf6d088d740f0dc2', 8)]:
+        row = a[key]
+        check_bindings([row])
+        need(row['sha256'] == pin, 'Restriction-kernel reviewed edition changed.')
+        manifest = load(row['path'])
+        need(len(manifest['exports']) == count, 'Incomplete theory packet.')
+        parent = Path(row['path']).parent
+        check_bindings([dict(x, path=str(parent / x['path'])) for x in manifest['exports']])
+    review = load(base + 'independent_review/review.json')
+    replay = load(a['public_replay']['path'])
+    need(review['status'] == 'PASS_DISTINCT_ROOT_WRITTEN_AND_SCOPED_FORMAL_REVIEW' and
+         review['all_written_proofs_read'] and review['fresh_written_pages_viewed'] == [1, 2, 3, 4, 5],
+         'Complete written review missing.')
+    need(replay['status'] == 'PASS_DISTINCT_ROOT' and replay['independent_python_subgroups'] == 30 and
+         replay['independent_kernel_cases'] == 600 and replay['positive_cases'] == 480 and
+         replay['negative_cases'] == 120 and not replay['author_program_imported'] and
+         not replay['GAP_used_for_distinct_finite_check'] and replay['standard_axioms_only'] and
+         not replay['complete_string_criteria_formalized'], 'Distinct kernel replay changed.')
+    scope = load(base + 'author/scope.json')
+    need(replay['formal_declarations'] == scope['declarations'] and len(scope['declarations']) == 3,
+         'Kernel declaration inventory changed.')
+    source = (ROOT / base / 'author/RestrictionKernelCriterion.lean').read_text()
+    need(not re.search(r'\b(sorry|admit|axiom|native_decide)\b', source),
+         'Unapproved kernel formal trust boundary.')
+    original = (ROOT / base / 'author/restriction_kernels.tex').read_text()
+    publication = (ROOT / a['tex']['path']).read_text()
+    old_date = r'\date{Private theorem development; independent review pending}'
+    need(original.count(old_date) == 1 and original.replace(old_date, r'\date{}') == publication,
+         'Publication changed beyond the reviewed title date.')
+    from pypdf import PdfReader
+    def body(path):
+        pages = [p.extract_text() for p in PdfReader(ROOT / path).pages]
+        return len(pages), re.sub(r'\s+', '', ''.join('\n'.join(t.splitlines()[:-1]) for t in pages))
+    old_n, old_text = body(base + 'author/restriction_kernels.pdf')
+    new_n, new_text = body(a['paper']['path'])
+    banner = re.sub(r'\s+', '', 'Private theorem development; independent review pending')
+    need(old_n == new_n == 5 and old_text.replace(banner, '') == new_text,
+         'Publication mathematical PDF text changed.')
+    return len(scope['declarations'])
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4432,6 +4488,8 @@ def main():
     l019_corrections = check_l019_bounded_corrections()
     l019_formal = check_l019_historical_formal_pointer()
     l019_transitive = check_l019_transitive_correction()
+    restriction_kernel_declarations = check_restriction_kernel_theory()
+    print(f"PASS: complete restriction-kernel criteria and {restriction_kernel_declarations} generic Lean lemmas; no additional original, question or compression credit.")
     print(f"PASS: transitive L019 counterexample has a complete written input proof and {l019_transitive} fresh scoped Lean declarations; main stability and whole-source recovery remain separate.")
     print(f"PASS: {l019_formal} fresh scoped Lean declarations verify the actual rank-extension output obstruction; input C-property and source hypotheses remain written.")
     print(f"PASS: {l019_corrections} bounded L019 corrections have complete written proofs and independent finite models; full source and main stability remain separate.")
