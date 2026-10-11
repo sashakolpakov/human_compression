@@ -17,8 +17,8 @@ The `register of every original <audit/corpus/v1/README.rst>`_ and
 accessible manuscripts: 32 with admitted principal-result recoveries and
 72 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. Twenty-seven recovered originals have measured
-comparisons; the five newest recoveries await measurement. The catalogue
+evidence and next obligation. Twenty-nine recovered originals have measured
+comparisons; L068, L128 and N007 await measurement. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
@@ -36,6 +36,81 @@ shows the full common theory and applications; the `individual graph
 <audit/overview/v1/packet/conditional_applications.svg>`_ shows each original
 and its application. See the `numerical overview <audit/overview/v1/README.rst>`_
 for exact inputs and the independent review.
+
+The `two additional comparisons
+<audit/additional-measurements/v1/packet/measurement.pdf>`_ add matching
+extensions and chiral enumeration. Together the reports measure 29 originals.
+The current rates below count each complete common theory once. The A and C
+rates still cover their earlier six and four originals; their enlarged topics
+await measurement.
+
+.. list-table:: Current measured sets within the recovery programme
+   :header-rows: 1
+
+   * - Topic
+     - Measured / recovered originals
+     - Whole written factor
+     - With printed programs
+   * - A: Supported kernels and finite two-groups
+     - 6 / 7
+     - 1.535
+     - 1.083
+   * - B: Forests and marked permutations
+     - 4 / 4
+     - 1.236
+     - 1.236
+   * - C: Chamber operations and binary translations
+     - 4 / 5
+     - 1.037
+     - 0.923
+   * - D: Stabilizers and geometry enumeration
+     - 3 / 3
+     - 1.053
+     - 0.660
+   * - E: Projective groups
+     - 3 / 3
+     - 1.816
+     - 1.523
+   * - F: Odd kernels and marked semidirect products
+     - 1 / 1
+     - 1.264
+     - 0.875
+   * - G: Linear spaces and support
+     - 2 / 2
+     - 0.630
+     - 0.433
+   * - Affine constructions
+     - 1 / 1
+     - 0.786
+     - 0.556
+   * - Group representations by geometries
+     - 1 / 1
+     - 1.015
+     - 0.746
+   * - Chamber systems and covers
+     - 2 / 2
+     - 0.982
+     - 0.811
+   * - Matching extensions
+     - 1 / 1
+     - 1.119
+     - 0.976
+   * - Chiral enumeration
+     - 1 / 1
+     - 0.925
+     - 0.674
+   * - Diagonal twistings
+     - 0 / 1
+     - Pending
+     - Pending
+
+These are text costs, not minimum proof complexities. The reports specify
+the complete program boundary, raw-code alternatives, retained external
+proofs, graphic costs and counting-unit sensitivity. B and C use complete
+available text, including authored non-PDF sources and page furniture; the
+other comparisons use calibrated PDF text with repeated furniture removed.
+No pooled factor is inferred across these representations. Factors below
+one stay in the comparison.
 
 Read the `audit protocol <audit/protocol.pdf>`_ and its
 `TeX source <audit/protocol.tex>`_. The historical cutoff is recorded in
@@ -886,7 +961,12 @@ algebra; the geometry and presentation equivalence remain written proofs.
 
 The `admission <audit/topic-matching/v1/admission.json>`_ adds one original.
 The `publication guide <papers/topic-matching/v1/PUBLICATION.rst>`_ links the
-full program and review. Its complete length comparison is pending.
+full program and review. The `accepted length comparison
+<audit/additional-measurements/v1/README.rst>`_ gives
+37,951 / (16,732 + 17,168) = **1.119×** as written. Including the complete
+printed program gives **0.976×**, or **0.991×** using its whole raw file.
+After acquiring the full common theory and program, the application factor
+is **2.211×**.
 
 Marked coordinates and chiral enumeration
 -----------------------------------------
@@ -921,9 +1001,14 @@ algebra; the complete algorithm and geometry are written proofs.
 The `admission <audit/topic-chiral-enumeration/v1/admission.json>`_ adds one
 original and no conjecture answer. The `publication guide
 <papers/topic-chiral-enumeration/v1/PUBLICATION.rst>`_ gives replay commands.
-The length comparison is pending. Both additions are listed separately in
-the `expanded paper catalogue <papers/expansion_catalogue.json>`_, preserving
-the earlier 27-original audit as a historical record.
+The `accepted length comparison <audit/additional-measurements/v1/README.rst>`_
+gives 29,599 / (8,831 + 23,171) = **0.925×** as written. Including all three
+complete programs gives **0.674×** as printed, or **0.687×** as raw files.
+After acquiring the whole common theory and program bundle, the application
+factor is **1.277×**. The written result changes to **1.003×** in whitespace
+tokens, so the small word saving is sensitive to the unit. The
+`current paper catalogue <papers/latest_catalogue.json>`_ preserves these
+additions separately from the earlier 27-original audit.
 
 Orbit intersections and diagonal twistings
 ------------------------------------------

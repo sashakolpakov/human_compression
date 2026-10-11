@@ -3289,6 +3289,71 @@ def check_graph_application_extensions():
     return 32,72
 
 
+def check_two_additional_measurements():
+    base = 'audit/additional-measurements/v1'
+    a = load(base+'/admission.json')
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_MEASUREMENTS' and
+         a['source_ids']==['F015','L028'] and a['newly_measured_originals']==2 and
+         a['new_principal_credit']==a['new_question_credit']==0 and
+         not a['full_formalization_claim'] and a['whole_common_charged'] and
+         not a['cross_topic_discount'] and all(v is None for v in a['unknown_costs'].values()),
+         'Two additional measurement scope.')
+    check_bindings(a['artifacts']+a['scientific_admissions']+[a['earlier_overview']])
+    for row in a['packets'].values():
+        check_bindings([row]); parent=Path(row['path']).parent
+        exports=load(row['path'])['exports']
+        need(len(exports)==row['exports'],'Additional measurement export count.')
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in exports])
+    for key in ['public_replay','public_independent_replay']:
+        check_bindings([a[key]])
+    r=load(a['public_replay']['path']); q=load(a['public_independent_replay']['path'])
+    need(r['status']=='PASS' and len(r['exact_regenerated_files'])==6 and r['reader_pages_equal']==2 and
+         len(r['checks']['semantic_controls'])==12 and q['status']=='PASS_DISTINCT_ARITHMETIC_AND_GRAPH_REVIEW' and
+         q['exact_fractions']==q['csv_rows']==240 and q['actual_svg_bars']==q['actual_pdf_bars']==12 and
+         len(q['controls_rejected'])==5 and q['stacking_checked'], 'Additional numerical/plot replay.')
+    need(q['primary']==a['primary'],'Additional primary factors differ from review.')
+    for topic,nums in [('Matching',(37951,16732,17168,4998,4408)),
+                       ('ChiralEnumeration',(29599,8831,23171,11940,11090))]:
+        source,common,app,printed,raw=nums;row=a['primary'][topic]
+        need(row['document_costs']==dict(source=source,common=common,application=app,program=printed) and
+             row['raw_costs']['complete_programs']==raw, 'Additional whole costs.')
+        for name,denom in [('written',common+app),('including_printed_programs',common+app+printed),
+                           ('including_raw_programs',common+app+raw),('conditional_application',app)]:
+            f=row['comparisons'][name]
+            need(f['numerator']==source and f['denominator']==denom, 'Additional complete denominator.')
+    latest=load('audit/corpus/updates/two-additional-measurements.json')
+    check_bindings([latest['previous_snapshot']]+latest['added_measurements'])
+    previous=load(latest['previous_snapshot']['path'])
+    need(latest['admitted_original_ids']==previous['admitted_original_ids'] and
+         latest['accessible_pending_original_ids']==previous['accessible_pending_original_ids'] and
+         latest['retrieval_original_ids']==previous['retrieval_original_ids'] and
+         latest['admitted_principal_originals']==32 and latest['currently_measured_originals']==29 and
+         set(latest['measurement_pending_original_ids'])=={'L068','L128','N007'} and
+         set(latest['measured_original_ids'])==set(latest['historical_admitted_ids'])|{'F015','L028'},
+         'Measurement snapshot changes scientific scope.')
+    c=load('papers/catalogue_two_measurements.json');check_bindings([c['previous_catalogue']])
+    previous_c=load(c['previous_catalogue']['path'])
+    need(len(c['entries'])==len(previous_c['entries'])==9,'Measurement catalogue loses a manuscript.')
+    for row,old in zip(c['entries'],previous_c['entries']):
+        want=dict(old)
+        if row['topic'] in ['Matching','ChiralEnumeration']:
+            want.update(measurement_status='admitted',measurement_admission=base+'/admission.json')
+        need(row==want,'Measurement catalogue changes scientific identity.')
+    return 240
+
+
+def check_current_measurement_pointer():
+    current=load('audit/corpus/latest.json');check_bindings(current['added_measurements'])
+    extra=[x for row in current['added_measurements'] for x in load(row['path'])['source_ids']]
+    historical=set(current['historical_admitted_ids']);measured=historical|set(extra)
+    need(len(extra)==len(set(extra)) and not set(extra)&historical and
+         set(current['measured_original_ids'])==measured and measured<=set(current['admitted_original_ids']) and
+         current['currently_measured_originals']==len(measured) and
+         set(current['measurement_pending_original_ids'])==set(current['admitted_original_ids'])-measured,
+         'Current measurement partition duplicates or drops an original.')
+    return len(measured)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3329,8 +3394,11 @@ def main():
     overview_fractions, overview_svg, overview_pdf = check_consolidated_measurement_overview()
     latest_admitted, latest_pending = check_diagonal_admission_and_latest_programme()
     graph_admitted, graph_pending = check_graph_application_extensions()
+    extra_measure_fractions = check_two_additional_measurements()
+    active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
     print(f'PASS: graph application extensions preserve {graph_admitted} admitted originals and {graph_pending} accessible pending; no new question credits.')
+    print(f'PASS: two additional comparisons preserve {extra_measure_fractions} fractions; {active_measured} unique originals have current measurements.')
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
