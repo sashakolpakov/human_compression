@@ -13,14 +13,15 @@ compression programme, including papers whose replacement proofs have not
 yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
-`subsequent admissions <audit/corpus/latest.json>`_ now record **105
+`subsequent admissions <audit/corpus/latest.json>`_ now record **106
 accessible manuscripts: 35 with admitted principal-result recoveries and
-70 awaiting complete recovery**. The other **56 remain retrieval targets**.
+71 awaiting complete recovery**. The other **55 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
 evidence and next obligation. Thirty-four recovered originals have measured comparisons; L010 has just
 passed scientific review and its measurement is pending. The newly obtained
 `L084 erratum <audit/corpus/access/erratum-2006/README.rst>`_ awaits recovery.
-The catalogue itself has not grown.
+The complete `L100 institutional preprint <audit/corpus/access/halle-preprint/README.rst>`_
+also joins the recovery queue. The catalogue itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
 A complete authored rendering is a usable source even when its PDF is
@@ -1112,6 +1113,17 @@ residually connected; it does not refute the restricted assertions. This is
 a source-theorem correction, with no numbered-conjecture, historical-priority
 or full Lean claim. N005 remains pending as a whole-paper recovery, and the
 34-original numerical comparison is unchanged.
+
+Regularity of the smallest affine twist
+---------------------------------------
+
+The `three-page proof and distinct review
+<corrections/affine-twist/v1/README.rst>`_ correct Example 5.11 in the same
+preprint. Its twist is regular for every positive parameter, including the
+parameter-one case the source calls nonregular. The proof checks the literal
+quotient subgroups and retains the standard affine Coxeter realization;
+independent finite validation is supplementary. This example correction adds
+no whole-paper recovery, numbered-conjecture answer or compression factor.
 
 Answers to the two Fischer cases
 --------------------------------

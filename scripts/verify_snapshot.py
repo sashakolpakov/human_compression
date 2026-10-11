@@ -3969,6 +3969,126 @@ def check_programme_with_access_additions():
     return len(admitted),len(accessible-admitted)
 
 
+
+def check_current_programme_after_access_updates():
+    """Preserve the earlier edition, then validate the full current partition."""
+    import types
+    old_function=check_programme_with_access_additions
+    scope=dict(old_function.__globals__)
+    scope['load']=lambda p: load('audit/corpus/updates/before-halle-preprint.json'
+                                  if str(p)=='audit/corpus/latest.json' else p)
+    replay=types.FunctionType(old_function.__code__,scope,old_function.__name__,
+                              old_function.__defaults__,old_function.__closure__)
+    need(replay()==(35,70),'Historical105 programme no longer replays.')
+    current=load('audit/corpus/latest.json')
+    check_bindings([current['snapshot'],current['base_inventory'],current['previous_snapshot']]+
+                   current['access_additions']+current['added_admissions'])
+    need({k:v for k,v in current.items() if k!='snapshot'}==load(current['snapshot']['path']),
+         'Current programme differs from its admitted snapshot.')
+    entries=load(current['base_inventory']['path'])['entries']
+    originals={r['original_id'] for r in entries}
+    baseline_access={r['original_id'] for r in entries if r['source_access']['accessible']}
+    historical={r['original_id'] for r in entries if r['proof']['principal_contract_admitted']}
+    newly_accessible=[]
+    for row in current['access_additions']:
+        a=load(row['path']);check_bindings(a['artifacts'])
+        need(a['status']=='ROOT_ADMITTED_SOURCE_ACCESS_ADDITION' and a['source_pages']>0 and
+             len(a['source_sha256'])==64 and all(a[k]==0 for k in
+             ['new_original_intake','new_principal_credit','new_question_credit']),
+             'Access update credited as mathematical recovery.')
+        newly_accessible.extend(a['accessible_added_ids'])
+    need(len(newly_accessible)==len(set(newly_accessible)) and
+         not set(newly_accessible)&baseline_access and set(newly_accessible)<=originals,
+         'Access update duplicates or enlarges the fixed intake.')
+    accessible=baseline_access|set(newly_accessible)
+    additions=[load(r['path'])['source_id'] for r in current['added_admissions']]
+    need(len(additions)==len(set(additions)) and not set(additions)&historical,
+         'Current recovery duplicates an original.')
+    admitted=historical|set(additions)
+    need(admitted<=accessible and set(current['admitted_original_ids'])==admitted and
+         set(current['accessible_pending_original_ids'])==accessible-admitted and
+         set(current['retrieval_original_ids'])==originals-accessible and
+         current['originals']==len(originals)==161 and
+         current['accessible_originals']==len(accessible) and
+         current['admitted_principal_originals']==len(admitted) and
+         current['accessible_pending_complete_recovery']==len(accessible-admitted) and
+         current['pending_source_retrieval']==len(originals-accessible) and
+         current['all_originals_remain_active'],'Current full original partition changed.')
+    base='audit/corpus/access/halle-preprint/'
+    a=load(base+'admission.json');q=load(base+'root_review.json');t=load(base+'recovery_targets.json')
+    need(a['accessible_added_ids']==['L100'] and a['source_pages']==22 and
+         a['source_sha256']=='3bd275e4bd344dea8a75fd2c4aeafd69cbe2ca975b3b58933dc7fe4105c5e11e' and
+         a['derived_pdf_sha256']=='13f207232f40ca0e00674b9e9de02a91e98226b325ddd428320c661e6131ff84' and
+         q['status']=='ACCEPTED_COMPLETE_L100_PREPRINT_SOURCE' and
+         q['complete_pages_read']==list(range(1,23)) and q['all22_pages_visually_read'] and
+         q['raster_hashes_checked'] and not q['source_extraction_usable'] and
+         not q['mathematical_reproof'] and not q['new_numerical_comparison'] and
+         q['admitted_principal_originals']==0 and q['new_question_credit']==0 and
+         t['status']=='ACCESSIBLE_AWAITING_COMPLETE_RECOVERY' and
+         all(r['proof_status']=='pending' for r in t['principal_targets']) and
+         t['complexity_ratio'] is None,'L100 edition, source review or pending scope changed.')
+    c=load('papers/latest_catalogue.json');check_bindings([c['previous_catalogue']])
+    need(set(c['original_ids'])==set(additions) and
+         {k for r in c['entries'] for k in r['source_contracts']}==set(additions),
+         'Current catalogue loses a recovered original.')
+    for row in c['entries']:
+        need((ROOT/row['tex']).is_file() and (ROOT/row['pdf']).is_file(),'Missing current manuscript.')
+    return len(admitted),len(accessible-admitted)
+
+
+def check_affine_twist_correction():
+    base='corrections/affine-twist/v1/'
+    a=load(base+'admission.json')
+    need(a['status']=='ROOT_ADMITTED_LITERAL_N005_AFFINE_TWIST_CORRECTION' and
+         a['source_id']=='N005' and a['edition']=='arXiv:2505.24662v1' and
+         a['source_sha256']=='9ac31adc29a5cc66a4b412e0adae7fb47152568db89d1207ee2c34f134ee1427' and
+         a['proof_pages']==3 and a['all_written_proofs_reviewed'] and
+         a['uniform_parameters']=='all positive integers' and
+         a['exact_source_parabolics_proved'] and a['retained_affine_Coxeter_realization'] and
+         a['finite_programs_role']=='validation only' and a['required_finite_premises']==[] and
+         all(a[k]==0 for k in ['new_original_credit','new_numbered_conjecture_credit','new_formal_credit']) and
+         not any(a[k] for k in ['full_Lean_verified','historical_priority_claim','whole_N005_recovered']) and
+         a['compression_factor'] is None,'Affine twist correction scope changed.')
+    check_bindings(a['artifacts'])
+    for key in ['author_manifest','independent_manifest','author_replay','independent_replay','written_proof']:
+        check_bindings([a[key]])
+    need(a['author_manifest']['sha256']=='372ef96e589021c9f4eadeddfa55e7e4426b3c490c65ac4f174e73288d035be0' and
+         a['independent_manifest']['sha256']=='36cff7ebd18c7a351ddce91298e0c85fbb84112e1a8ca88aa8303206d95a51aa',
+         'Affine twist accepted proof or distinct review edition changed.')
+    for key in ['author_manifest','independent_manifest']:
+        parent=Path(a[key]['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(a[key]['path'])['exports']])
+    q=load(base+'independent_review/review.json')
+    need(q['status']=='ROOT_ACCEPTED_LITERAL_N005_AFFINE_TWIST_CORRECTION' and
+         q['author_manifest_sha256']==a['author_manifest']['sha256'] and
+         q['author_proof_pages_read_and_viewed']==3 and q['complete_written_proof_accepted'] and
+         q['exact_source_parabolics_proved'] and q['retained_affine_Coxeter_realization'] and
+         q['fresh_author_controls']==4 and q['required_finite_premises']==[] and
+         len(q['mathematical_review'])==7,'Affine twist complete proof review missing.')
+    r=load(a['author_replay']['path']);d=load(a['independent_replay']['path'])
+    t=r['reports']['literal']; controls=r['reports']['controls']['controls']
+    need(r['status']=='PASS' and r['exports']==13 and not r['source_verified'] and
+         r['manifest_sha256']==a['author_manifest']['sha256'] and
+         t['status']=='PASS' and t['base_order']==96 and t['outer_order']==8 and
+         t['whole_order']==768 and t['actual_base_intersection_orders']==[2,6,1] and
+         t['IP_pairs']==64 and t['proper_product_triples']==343 and
+         len(controls)==4 and all(c['rejected'] for c in controls),
+         'Affine twist author validation changed.')
+    need(d['status']=='PASS_DISTINCT_N005_TWIST' and not d['author_program_imported'] and
+         d['base_order']==96 and d['diagram_order']==8 and d['whole_order']==768 and
+         d['literal_parabolic_orders']==[8,4,12] and d['subgroup_intersection_pairs']==64 and
+         d['proper_product_identities']==343 and d['input_residue_order']==8 and
+         d['input_child_generated_order']==4,'Affine twist distinct finite reconstruction changed.')
+    check_bindings([d['log']])
+    marker='PASS_DISTINCT_TWIST:base=96;diagram=8;whole=768;literal=[8,4,12];IP=64;products=343;input-residue=8/4'
+    text=(ROOT/d['log']['path']).read_text()
+    need(marker in re.sub(r'\s','',text) and 'Error' not in text,'Affine twist distinct replay marker missing.')
+    current=load('audit/corpus/latest.json')
+    need('N005' in current['accessible_pending_original_ids'] and
+         'N005' not in current['admitted_original_ids'],'Example correction credited as whole-source recovery.')
+    return 1
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4020,14 +4140,16 @@ def main():
     overview34_fractions, overview34_bars = check_overview34()
     fischer_cases = check_fischer_answers()
     nonfirm_corrections = check_nonfirm_hnn_correction()
+    twist_corrections = check_affine_twist_correction()
     active_measured = check_current_measurement_pointer()
     gluing_added = check_gluing_scientific_admission()
-    active_admitted, active_pending = check_programme_with_access_additions()
-    print(f"PASS: {gluing_added} gluing original admitted with complete written proofs;105 accessible,35 recovered,34 measured; L084 acquired with no proof credit.")
+    active_admitted, active_pending = check_current_programme_after_access_updates()
+    print(f"PASS: {gluing_added} gluing original admitted with complete written proofs; L084 and L100 source acquisitions remain separate from recovery.")
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
     print(f'PASS: current thirteen-topic overview has {overview34_fractions} exact comparisons and {overview34_bars} bars in each vector format for34 originals.')
     print(f'PASS: unified B scientific transfer and enlarged orbit comparison preserve {unified_fractions} new-edition fractions; historical33 overview is separately checked.')
     print(f'PASS: {nonfirm_corrections} explicit nonfirm HNN correction; no whole-source, numbered-conjecture or Lean credit.')
+    print(f'PASS: {twist_corrections} uniform affine twisting correction; literal quotient subgroups proved, finite validation supplementary, no whole-source or Lean credit.')
     print(f'PASS: {fischer_cases} Fischer possible-exception cases have separate accepted proofs and exact certificates; no new original, priority or full Lean claim.')
     print(f'PASS: complete B5 comparison preserves {b5_fractions} exact fractions; {active_measured} originals measured.')
     print(f'PASS: expanded A/C topics preserve {ac_extension_fractions} exact fractions for twelve originals; two are newly measured.')
