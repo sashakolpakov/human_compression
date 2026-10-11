@@ -340,10 +340,13 @@ stabilizer-fiber correspondence, the odd-period action argument and an
 abstract rank obstruction. They do not formalize the whole source results
 or the finite census. The `publication guide
 <papers/topic-d/v2/PUBLICATION.rst>`_ gives attribution, qualifications,
-formal boundaries and replay commands. The separate support-count Lean
-supplement remains under review. Lengths and paired dependency costs are
-being measured; this mathematical admission assigns no compression factor
-or new source or solved-question credit.
+formal boundaries and replay commands. A separately reviewed
+`Lean supplement <audit/topic-d/v2/support-formal/README.rst>`_ now verifies
+the generic global orbit decomposition and the full Möbius–Burnside
+support formula. All 28 declaration reports passed a fresh independent
+compilation; source-specific applications remain outside that supplement.
+Lengths and paired dependency costs are being measured. Neither admission
+assigns a compression factor or new source or solved-question credit.
 
 Common proofs for projective groups
 ----------------------------------

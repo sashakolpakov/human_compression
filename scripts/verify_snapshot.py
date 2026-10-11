@@ -1081,6 +1081,69 @@ def check_topic_d_proofs():
     return 37,10
 
 
+def check_topic_d_support_formal():
+    base = 'papers/topic-d/v2/support-formal/'
+    audit = 'audit/topic-d/v2/support-formal/'
+    admission = load(audit+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_GLOBAL_SUPPORT_FORMALIZATION',
+         'Unreviewed global support formalization.')
+    check_bindings(admission['artifacts'])
+    for prefix, key in [(base,'author_manifest_sha256'),
+                        (audit+'first_supplement/','first_supplement_manifest_sha256'),
+                        (audit+'independent_review/','independent_review_manifest_sha256')]:
+        need(digest((ROOT/prefix/'manifest.json').read_bytes())==admission[key],
+             'Changed support-formal packet.')
+        for row in load(prefix+'manifest.json')['exports']:
+            check_bindings([dict(row,path=prefix+row['path'])])
+    scope = load(base+'scope.json')
+    fresh = load(audit+'independent_review/fresh_report.json')
+    review = load(audit+'independent_review/review.json')
+    need(review['status']=='ACCEPT_INDEPENDENT_GLOBAL_SUPPORT_FORMAL_REVIEW' and
+         review['author_manifest_sha256']==admission['author_manifest_sha256'] and
+         review['both_actual_local_Lean_sources_read_completely'] is True and
+         review['actual_exported_types_inspected']==6 and review['corrections_requested']==[] and
+         fresh['status']=='PASS' and [m['source'] for m in fresh['modules']]==scope['modules'] and
+         fresh['formal_scope']==scope['formal_scope'] and fresh['not_formalized']==scope['not_formalized'],
+         'Support-formal review and compiled statements disagree.')
+    need(digest((ROOT/audit/'independent_review/fresh_report.json').read_bytes())==
+         review['fresh_replay_report_sha256'] and
+         digest((ROOT/audit/'independent_review/actual_types.txt').read_bytes())==review['actual_types_sha256'],
+         'Changed independent formal replay or actual type transcript.')
+    for module in fresh['modules']:
+        source = module['source']
+        check_bindings([dict(path=base+source['file'],bytes=source['bytes'],sha256=source['sha256'])])
+        need([r['name'] for r in module['axioms']]==source['declarations'] and
+             all(set(r['axioms']) <= {'propext','Classical.choice','Quot.sound'} for r in module['axioms']) and
+             digest((ROOT/audit/'independent_review/logs'/(Path(source['file']).stem+'.txt')).read_bytes())==module['log_sha256'],
+             'Support-formal declaration, axiom or compiler log changed.')
+    need([len(m['axioms']) for m in fresh['modules']]==[12,16] and
+         admission['declaration_reports']==review['declaration_reports']==28 and
+         admission['first_module_reports']==12 and admission['global_module_reports']==16 and
+         (ROOT/base/'SupportCounting.lean').read_bytes()==
+         (ROOT/audit/'first_supplement/SupportCounting.lean').read_bytes(),
+         'The first formal module must be preserved and counted once.')
+    need(len(fresh['Lean_mutations'])==7 and all(r['rejected'] for r in fresh['Lean_mutations']) and
+         len(fresh['countermodels'])==10, 'Missing formal hypothesis controls.')
+    for row in fresh['Lean_mutations']:
+        need(digest((ROOT/audit/'independent_review/logs'/(row['name']+'.txt')).read_bytes())==row['log_sha256'],
+             'Changed rejected-mutation log.')
+    retained = load(base+'manifest.json')['retained_bindings']
+    need([r['original_private_path'] for r in admission['retained_public_bindings']]==[r['path'] for r in retained],
+         'Support formalization lost a retained manuscript or previous-source binding.')
+    for original, public in zip(retained,admission['retained_public_bindings']):
+        need(original['sha256']==public['sha256'] and original['bytes']==public['bytes'],
+             'Support-formal retained input differs from the manuscript.')
+        check_bindings([public])
+    need(digest((ROOT/'audit/topic-d/v2/admission.json').read_bytes())==admission['proof_admission_sha256'] and
+         admission['end_to_end_source_formalization'] is False and
+         admission['source_specific_hypotheses_verified'] is False and
+         admission['divisor_poset_and_number_theoretic_mobius_bridge_verified'] is False and
+         admission['new_source_credit']==admission['new_question_credit']==0 and
+         admission['compression_ratio'] is None,
+         'Generic support formalization cannot inflate source scope or measured credit.')
+    return 28
+
+
 def check_project_lean_runner(legacy_modules):
     admission = load('audit/formal-project/admission.json')
     need(admission['status']=='PASS_ROOT_ADMITTED_PROJECT_LEAN_RUNNER', 'Unreviewed project Lean runner.')
@@ -1126,6 +1189,7 @@ def main():
     c_rows, c_declarations = check_topic_c_proofs()
     c_cells, c_fractions = check_topic_c_measurement()
     d_rows, d_declarations = check_topic_d_proofs()
+    d_support_declarations = check_topic_d_support_formal()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -1150,6 +1214,7 @@ def main():
     print(f'PASS: Topic C preserves {c_rows} contract rows, {c_declarations} scoped Lean declarations and the full Janko census.')
     print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, L108 remains unknown.')
     print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
+    print(f'PASS: Topic D generic support counting has {d_support_declarations} independently compiled declarations; source-specific instances remain separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

@@ -66,8 +66,12 @@ independent review of all 37 source rows, fresh computations, ten scoped
 Lean declarations and all 31 rendered pages. Twenty-one of the 27 contracts
 now have complete canonical applications and common theory; six retain
 their earlier accepted proof packages. Topic D's lengths and paired
-dependency costs remain pending. The later support-count Lean supplement
-is separate from this proof admission.
+dependency costs remain pending. The separately accepted
+`support-count Lean supplement <topic-d/v2/support-formal/README.rst>`_
+verifies the complete generic orbit decomposition and Möbius–Burnside
+formula through 28 scoped declarations. Concrete source-specific
+admissibility, support and geometry hypotheses remain written obligations;
+this adds no end-to-end source formalization claim or new result credit.
 
 Work by topic
 -------------

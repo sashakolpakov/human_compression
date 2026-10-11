@@ -1,0 +1,9 @@
+import OrbitFiberDecomposition
+set_option pp.universes false
+set_option pp.explicit false
+#check @MathCompression.SupportCounting.exact_top_indicator
+#check @MathCompression.SupportCounting.exact_support_orbits
+#check @MathCompression.SupportCounting.orbitFiberSumEquiv
+#check @MathCompression.SupportCounting.admissible_extension_orbit_count
+#check @MathCompression.SupportCounting.canonical_admissible_extension_orbit_count
+#check @MathCompression.SupportCounting.order_automorphic_admissible_extension_orbit_count
