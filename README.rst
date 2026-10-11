@@ -537,9 +537,21 @@ no conjecture credit. Lean verifies the stated quotient, period and sign
 lemmas; it does not formalize the complete classification.
 
 This completes the manuscripts for one existing principal contract,
-bringing that count to 22 of the fixed 27. Its length comparison and paired
-dependency audit remain pending. The whole common theory will be charged
-in this topic, including the proofs also used elsewhere.
+bringing that count to 22 of the fixed 27. The `length audit
+<audit/topic-affine/v2/measurement/README.rst>`_ gives **0.786 times combined**:
+the whole source costs 32,767 characters, against 19,070 for the common paper
+and 22,638 for the application, or 41,708 together. The complete written
+replacement is longer than this single source by the declared measure.
+
+After acquiring the whole common theory and all six required programs, the
+local source/application ratio is **1.447 times**: 32,767 / 22,638. The full
+common paper remains charged in the combined comparison, including proofs
+also used elsewhere. The complete printed program appendix adds 17,250,
+giving **0.556 times** including programs. All six raw files give **0.561
+times** as an alternative representation. Three auxiliary scripts and three
+formal files are inventoried separately. The `two-page calculation
+<audit/topic-affine/v2/measurement/packet/measurement.pdf>`_ shows the formulas,
+exclusions and unknown costs. Paired dependency costs remain pending.
 
 Papers and verification
 -----------------------

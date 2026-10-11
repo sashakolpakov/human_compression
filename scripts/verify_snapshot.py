@@ -1538,6 +1538,109 @@ def check_topic_c_dag():
     return cells,85
 
 
+def check_affine_measurement():
+    base = 'audit/topic-affine/v2/measurement/'
+    packet = base+'packet/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_AFFINE_MEASUREMENT',
+         'Affine numerical comparison lacks independent acceptance.')
+    check_bindings(admission['artifacts'])
+    need(set(admission['packet_manifests'])=={'packet','arithmetic_review','root_adoption'},
+         'Affine measurement archive inventory changed.')
+    for folder,pin in admission['packet_manifests'].items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==pin,
+             'Changed affine numerical archive: '+folder)
+        for row in load(base+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=base+folder+'/'+row['path'])])
+    for folder,key in [('inputs','input_manifest_sha256'),('independent','input_review_manifest_sha256')]:
+        need(digest((ROOT/packet/folder/'manifest.json').read_bytes())==admission[key],
+             'Changed affine input or independent review manifest.')
+        for row in load(packet+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=packet+folder+'/'+row['path'])])
+    result = load(packet+'results.json')
+    counts = load(packet+'inputs/author_counts.json')
+    recount = load(packet+'independent/recount.json')
+    specification = load(packet+'inputs/replacement_input_spec.json')
+    boundary = load(packet+'inputs/source_contract_boundary.json')
+    input_review = load(packet+'independent/review.json')
+    review = load(base+'arithmetic_review/review.json')
+    adoption = load(base+'root_adoption/review.json')
+    need(input_review['status']=='ACCEPTED_ROOT_INDEPENDENT_AFFINE_MEASUREMENT_INPUTS' and
+         input_review['requested_corrections']==[] and
+         input_review['proposal_manifest_sha256']==admission['input_manifest_sha256'] and
+         review['status']=='ACCEPTED_INDEPENDENT_AFFINE_NUMERICAL_AND_READER_REVIEW' and
+         review['requested_corrections']==[] and
+         review['author_manifest_sha256']==admission['packet_manifests']['packet'] and
+         review['input_proposal_manifest_sha256']==admission['input_manifest_sha256'] and
+         review['independent_input_review_manifest_sha256']==admission['input_review_manifest_sha256'] and
+         adoption['status']=='ACCEPT_ROOT_ADOPTION_OF_INDEPENDENT_AFFINE_MEASUREMENT' and
+         adoption['independent_manifest_sha256']==admission['packet_manifests']['arithmetic_review'] and
+         adoption['independent_requested_corrections']==[],
+         'Affine measurement acceptance refers to different inputs.')
+    for path,pin in result['bindings'].items():
+        need(not Path(path).is_absolute() and '..' not in Path(path).parts and
+             digest((ROOT/packet/path).read_bytes())==pin, 'Changed affine arithmetic input.')
+    documents = {'L012','U_Affine','AF1','CODE'}
+    need(set(counts['documents'])==set(recount['documents'])==documents and
+         all(counts['documents'][n]['variants']==recount['documents'][n]['variants'] for n in documents),
+         'Affine author counts differ from the independently accepted recount.')
+    spec = importlib.util.spec_from_file_location('affine_independent_arithmetic',ROOT/base/'arithmetic_review/check.py')
+    arithmetic = importlib.util.module_from_spec(spec); spec.loader.exec_module(arithmetic)
+    tables = arithmetic.audit(result,recount,specification)
+    for name,expected in zip(['overall_costs.csv','conditional_costs.csv'],tables):
+        with (ROOT/packet/name).open(newline='') as stream:
+            need(list(csv.DictReader(stream))==[{k:str(v) for k,v in row.items()} for row in expected],
+                 'Affine complete CSV comparison changed.')
+    fresh = load(base+'root_adoption/fresh_independent_arithmetic.json')
+    need(fresh['status']=='PASS_INDEPENDENT_AFFINE_RESULT_ARITHMETIC' and
+         fresh['author_manifest_sha256']==admission['packet_manifests']['packet'] and
+         fresh['primary']==result['primary']==admission['primary'] and
+         fresh['combined_exact_fractions']==admission['exact_combined_fractions']==90 and
+         fresh['conditional_exact_fractions']==admission['exact_conditional_fractions']==30 and
+         fresh['CSV_rows']==120 and len(fresh['negative_controls'])==12,
+         'Affine arithmetic evidence or primary fractions changed.')
+    proof = load('audit/topic-affine/v2/admission.json')
+    scope = load('papers/topic-affine/v2/scope.json')
+    need(digest((ROOT/'audit/topic-affine/v2/admission.json').read_bytes())==
+         admission['proof_admission_sha256']==result['public_proof_admission_sha256']==
+         input_review['mathematical_admission_sha256'] and
+         admission['source_ids']==proof['source_ids']==[scope['source']]==['L012'] and
+         admission['source_contract_rows']==boundary['row_count']==len(boundary['source_rows'])==33 and
+         boundary['source_rows']==scope['source_rows'] and
+         admission['principal_contracts']==boundary['principal_contracts']==1 and
+         admission['project_total_preserved']==boundary['project_total_preserved']==27,
+         'Affine measurement changed its mathematical coverage.')
+    binding = load(packet+'inputs/publication_binding.json')
+    need(set(binding['documents'])=={'U_Affine','AF1','CODE'},
+         'Affine omitted a complete replacement document.')
+    for name,row in binding['documents'].items():
+        need(row['public_path'].startswith('papers/topic-affine/v2/') and
+             digest((ROOT/row['public_path']).read_bytes())==row['sha256']==counts['documents'][name]['pdf_sha256'],
+             'Affine measured scientific PDF changed.')
+    for category in ['complete_mathematical_programs','complete_auxiliary_scripts','complete_formal_files']:
+        need(binding[category]==specification[category]==result[category], 'Affine file inventory changed.')
+        for row in specification[category]:
+            check_bindings([dict(path=row['public_path'],bytes=row['bytes'],sha256=row['sha256'])])
+    need(admission['complete_required_programs']==len(result['complete_mathematical_programs'])==6 and
+         all(r['classification']=='required' for r in result['complete_mathematical_programs']) and
+         admission['complete_auxiliary_scripts_separate']==len(result['complete_auxiliary_scripts'])==3 and
+         admission['complete_formal_files_separate']==len(result['complete_formal_files'])==3 and
+         admission['existing_Lean_declarations']==sum(len(r['declarations']) for r in result['complete_formal_files'])==9,
+         'Affine program or formal summary changed.')
+    need(admission['metric_cells']==recount['pdf_metric_cells']==120 and
+         admission['normalized_text_hashes']==recount['normalized_PDF_text_hashes']==24 and
+         admission['required_program_metric_cells']==recount['required_program_metric_cells']==60 and
+         admission['auxiliary_metric_cells']==recount['auxiliary_metric_cells']==30 and
+         admission['formal_metric_cells']==recount['formal_metric_cells']==30 and
+         admission['policy_coordinates']==result['policy_coordinates']==30 and
+         admission['unknown_external_costs']==dict.fromkeys(['retained_external_proofs','historical_software',
+             'algorithm_and_catalogue_construction','unextracted_graphics','intrinsic_minimum_complexity']) and
+         not admission['source_specific_formalization'] and not admission['paired_dependency_audit_complete'] and
+         admission['new_source_credit']==admission['new_question_credit']==admission['new_formal_credit']==0,
+         'Affine numerical summary invented a cost, proof, dependency audit or credit.')
+    return 120,120
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -1561,6 +1664,7 @@ def main():
     d_support_declarations = check_topic_d_support_formal()
     d_cells, d_fractions = check_topic_d_measurement()
     affine_rows, affine_declarations = check_affine_proofs()
+    affine_cells, affine_fractions = check_affine_measurement()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -1588,7 +1692,8 @@ def main():
     print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
     print(f'PASS: Topic D generic support counting has {d_support_declarations} independently compiled declarations; source-specific instances remain separate.')
     print(f'PASS: Topic D has {d_cells} independent PDF metric cells and {d_fractions} exact combined/conditional fractions; complete programs and separate drivers are explicit.')
-    print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs; lengths remain pending.')
+    print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs.')
+    print(f'PASS: affine comparison has {affine_cells} independent PDF metric cells and {affine_fractions} exact combined/conditional fractions; the whole common paper is charged.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
