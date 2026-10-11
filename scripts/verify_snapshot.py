@@ -5602,6 +5602,329 @@ def check_restored_overview_independent():
     return report['exact_fractions'], report['SVG_bars']
 
 
+def check_mixes_covers_admission():
+    base = 'audit/topic-mixes/v2/'
+    admission = load(base + 'admission.json')
+    need(admission['status'] == 'ROOT_ADMITTED_CORRECTED_PRINCIPAL_CONTRACTS_AND_SYMMETRIC_MEASUREMENT', 'Root publication acceptance missing.')
+    pins = [
+        '794ae902e7e06a7eacc7af6da5ed853a39182b8e94efb4695de253902b8c454a',
+        '488d97e76d1bc640886f16bf83e65668657aa51a31ff61ce3c5c143ae8e06690',
+        'a1398f54debff3981d1606cb1055060b4abc75ae51f056a00c46a03c7821401a',
+        'ebe16e59f738086a8e6333baa5da00809df920b2e83865720f4b22855695e9a8',
+        '6176e7c0b7a9753beee793946be26c46ef856ffbb172d10d6af70cf1076e1bc7',
+        '4950c88b3260b9ac8e1dd14de8f006ec4bca4a291b8f0f4f8a96c6f43f6a1767',
+        '6327d4327795eeebd3c3ceb044a99f056ea18ddf865bba720c4920d378db727e',
+        'e34a51d925bd900257d06f7b1b0aee33487c7a236b3239c7ece32b193ff43a65',
+        'c6a5365047aba5b466737aeaf20a42bb6e6aac27184dfdf9ef0c2eccbe0533fe',
+        '7d7f131ce35ee380f5d72935a9abeae2eb98f6903bdf77ab60d430145483ece2']
+    need([x['sha256'] for x in admission['accepted_packets']] == pins,
+         'Changed enlarged Mixes accepted packet sequence.')
+    check_bindings(admission['artifacts'] + admission['accepted_packets'] + admission['retained_accepted_packets'])
+    for row in admission['accepted_packets'] + admission['retained_accepted_packets']:
+        parent = Path(row['path']).parent
+        check_bindings([dict(e, path=str(parent / e['path'])) for e in load(row['path'])['exports']])
+    need(admission['source_ids'] == ['F005', 'L016'] and
+         admission['principal_originals_proposed_added'] == ['L016'] and
+         admission['original_intake_added'] == admission['new_question_credit'] == admission['new_formal_credit'] == 0 and
+         not admission['F007_included'] and not admission['whole_source_formalized'],
+         'Enlarged Mixes source or credit boundary changed.')
+    need(admission['source_pages'] == [21, 12] and admission['whole_common_pages'] == [5, 4] and
+         admission['whole_application_pages'] == [8, 4, 6] and
+         admission['source_dispositions'] == dict(F005_principal_background=35, F005_unanswered_final_problems=3, L016=19),
+         'Whole Mixes manuscripts or corrected source contract omitted.')
+    need(admission['computation'] == dict(required_files=2, optional_validation_files=4,
+         operational_drivers=5, partial_formal_files=2, partial_declarations=6, required_printed_pages=2,
+         new_optional_printed_pages=3, historical_mixed_appendix_pages=[4, 3], raw_and_printed_alternatives=True),
+         'Mixes full required/optional/data/formal inventory changed.')
+    need(admission['symmetric_optional_validation'] and not admission['source_executable_listing_present'] and
+         admission['historical_source_software_cost'] is None and admission['software_inclusive_factor'] is None and
+         all(v is None for v in admission['unknown_costs'].values()) and
+         admission['whole_umbrellas_charged_once'] and not admission['cross_topic_overlap_discount'] and
+         not admission['prior_correction_free'], 'Mixes symmetric or complete cost boundary changed.')
+    need(load(base + 'covers_review/review.json')['status'] == 'ACCEPTED_UNCHANGED_FOR_DECLARED_CORRECTED_PRINCIPAL_CONTRACT' and
+         load(base + 'covers_root_adoption/review.json')['status'] == 'ROOT_ACCEPTED_L016_CORRECTED_PRINCIPAL_CONTRACT' and
+         load(base + 'measurement/input_review/review.json')['status'] == 'ROOT_ACCEPTED_ENLARGED_MIXES_MEASUREMENT_INPUTS' and
+         load(base + 'measurement/review/review.json')['status'] == 'ROOT_ACCEPTED_ENLARGED_MIXES_NUMERICAL_COMPARISON',
+         'Distinct complete Mixes scientific/input/numerical acceptance missing.')
+    scope = load('papers/topic-mixes/v2/covers/scope.json')
+    need(scope['original'] == 'L016' and len(scope['source_rows']) == 19 and len(scope['proof_contexts']) == 20 and
+         scope['pdf_pages'] == dict(cover_fibers=4, faithful_thin_covers=6, programs=3), 'L016 exact source/proof boundary.')
+    thin = [x for x in scope['source_rows'] if x['id'] == 'B3']
+    need(len(thin) == 1 and thin[0]['disposition'] == 'disproved_literal_auxiliary_with_repair',
+         'False literal thin-base lemma silently restored.')
+    result = load(base + 'measurement/packet/results.json')
+    policy = load(base + 'measurement/packet/protocol.json')
+    new = load(base + 'measurement/inputs/author_counts.json')
+    old = load('audit/topic-mixes/v1/measurement/inputs/author_counts.json')
+    need(new['retained_accepted_inputs'] == old and new['retained_cells_unchanged'] and
+         not new['retained_PDFs_reextracted'], 'Changed retained F005 input cells.')
+    documents = {{'U': 'U0', 'CODE1': 'OLD_CODE1', 'CODE2': 'OLD_CODE2'}.get(k, k): v for k, v in old['documents'].items()}
+    documents.update(new['documents'])
+    need(result['document_pages'] == {k: v['pages'] for k, v in documents.items()} and
+         result['common_documents'] == admission['common_documents'] == ['U0', 'U1'] and
+         admission['applications'] == {'MX1': ['A1', 'A2'], 'MX2': ['A3']}, 'Full common/application documents changed.')
+    need(result['software_inclusive_factor'] is None and result['historical_software_cost'] is None and
+         result['optional_validation_symmetric_exclusion'] and result['required_finite_premises_not_optional'] and
+         result['whole_umbrellas_charged_once'] and not result['overlap_discount'] and not result['cross_topic_discount'] and
+         result['conditional_prepaid'] == admission['conditional_prepaid'], 'Invalid software or conditional comparison.')
+    need(len(result['coordinates']) == admission['metric_coordinates'] == 30 and
+         result['exact_fraction_count'] == admission['exact_fractions'] == 90, 'All Mixes sensitivities required.')
+    seen = set(); count = 0
+    definitions = {'whole_topic': (['F005', 'L016'], ['U0', 'U1', 'A1', 'A2', 'A3']),
+                   'conditional_MX1': (['F005'], ['A1', 'A2']), 'conditional_MX2': (['L016'], ['A3'])}
+    for coordinate in result['coordinates']:
+        variant, normalization, unit = [coordinate[k] for k in ('variant', 'normalization', 'unit')]
+        need((variant, normalization, unit) not in seen, 'Duplicate Mixes coordinate.')
+        seen.add((variant, normalization, unit))
+        costs = {k: v['metrics'][variant][normalization][unit] for k, v in documents.items()}
+        need(coordinate['document_costs'] == costs and coordinate['common_cost'] == costs['U0'] + costs['U1'] and
+             coordinate['written_denominator'] == sum(costs[k] for k in definitions['whole_topic'][1]),
+             'An enlarged Mixes paper was discounted.')
+        need(set(coordinate['comparisons']) == set(definitions), 'Unsupported Mixes comparison added.')
+        for key, (num, den) in definitions.items():
+            n, d = sum(costs[k] for k in num), sum(costs[k] for k in den)
+            ratio = coordinate['comparisons'][key]; reduced = Fraction(n, d)
+            need(ratio['numerator'] == n and ratio['denominator'] == d and
+                 ratio['reduced_numerator'] == reduced.numerator and ratio['reduced_denominator'] == reduced.denominator and
+                 ratio['exact_fraction'] == str(reduced) and ratio['decimal'] == f'{float(reduced):.12f}',
+                 'Changed Mixes exact manuscript arithmetic.')
+            count += 1
+    need(result['primary'] == admission['primary'] and
+         result['primary']['source_cost'] == 93259 and result['primary']['written_denominator'] == 70458 and
+         result['primary']['common_cost'] == 24256, 'Changed primary Mixes complete-paper costs.')
+    need(set(result['required_files']) == set(policy['required_files']) and len(result['required_files']) == 2 and
+         set(result['optional_files']) == set(policy['optional_files']) and len(result['optional_files']) == 4 and
+         result['partial_formal_declarations'] == 6 and not result['end_to_end_formalization'],
+         'Proof-required or optional program role changed.')
+    return 1, count
+
+
+def check_expanded_e_admission():
+    """Accepted five-original E closure; no source extraction or proof rerun."""
+    from collections import Counter
+    from decimal import Decimal, localcontext
+    base = 'audit/topic-e/v3/'
+    a = load(base + 'admission.json')
+    need(a['status'] == 'ROOT_ADMITTED_CORRECTED_PRINCIPAL_CONTRACTS_AND_SYMMETRIC_MEASUREMENT', 'Root publication acceptance missing.')
+    expected_pins = [
+        '533612648b17120fada68d10141d4852d9b90b93ccf3bcca4f6163975bcad640',
+        '25f63875e8c717c6ca7f6064625d8407f516b78ad1639db1382c78355c0491cd',
+        '79665aca7c42d2153c32f4dd367bec1fcb3aa7ee9f249ac18a1bc350be7010be',
+        '5fbb2cb3c3d1339804f1a30bfca5df5261f0de609c4a71a1aacdc9276cb02561',
+        'a63257277ea16e273b4ab27cf08a8809a15d0782a1091fa85173b0bd79b6aeaf',
+        'a615c0156be27a671b2a7d1a0d7140c3593e5bbd14fc96a80228e94b365a0b30',
+        'ae44e8ecbfa2392afd1cc4a9051d55b65edf2ca7e8fb6f5e2740ab93d765956e',
+        '99854aae4631351db39d6b248a811e09337b48d5c052628f04e2f89417ae4fef',
+        'b5eba088d711072b33f830dc3b06ad833292d523fb08191b1ced4e408a9b44e3',
+        '3868cd8e79ca8fcb506b8ea3c0fdcd16b5681a515879a1d34a6d4fb4c4222bfc',
+        'dfca259d46839f6a04ebaff91983884fe4efd4cb959ac8746a7aad2c3343c410']
+    need([r['sha256'] for r in a['accepted_packets']] == expected_pins, 'Expanded E acceptance pins changed.')
+    check_bindings(a['artifacts'] + a['accepted_packets'])
+    for row in a['accepted_packets']:
+        folder = Path(row['path']).parent
+        check_bindings([dict(e, path=str(folder / e['path'])) for e in load(row['path'])['exports']])
+    need(a['source_ids'] == ['L079', 'L083', 'L021', 'L056', 'L043'] and
+         a['principal_originals_proposed_added'] == ['L056', 'L043'] and
+         a['retained_originals'] == ['L079', 'L083', 'L021'] and
+         a['original_intake_added'] == a['new_question_credit'] == a['new_formal_credit'] == 0 and
+         not a['historical_novelty_claim'] and not a['F007_included'] and not a['Mixes_included'] and
+         not a['whole_source_formalized'], 'Expanded E source, question or formal credit boundary.')
+    need(a['source_dispositions'] == dict(retained=54, new=56, total=110) and
+         a['source_pages'] == dict(L079=9, L083=14, L021=11, L056=8, L043=25) and
+         a['whole_common_pages'] == 20 and a['whole_application_pages'] == dict(A1=2, A2=1, A3=5, A4=2, A5=4),
+         'Expanded E full-document or principal-contract boundary.')
+    inventory = dict(required_programs=6, required_data_files=1, optional_programs=6,
+                     operational_drivers=5, formal_files=7, partial_declarations=42,
+                     new_partial_declarations=9, printed_required_includes_JSON=True,
+                     printed_and_raw_alternatives_never_added=True)
+    need(a['computation'] == inventory and a['symmetric_validation_boundary'] and
+         not a['source_executable_listing_present'] and a['source_software_cost'] is None and
+         a['software_inclusive_factor'] is None and all(v is None for v in a['unknown_costs'].values()) and
+         a['whole_common_paid_once'] and not a['cross_topic_discount'] and not a['optional_validation_is_prerequisite'],
+         'Expanded E full program/data, symmetric comparison or unknown-cost boundary.')
+    correction = 'L043 historical computations use Magma and the L2-quotient algorithm. Three frozen input metadata labels saying GAP are historical wording errors; our required programs use GAP/Python. No input values or roles change.'
+    need(a['historical_computation_correction'] == correction, 'Historical L043 Magma/L2 correction lost.')
+    need(a['scientific_source_boundary'] == load(base + 'science_root_adoption/review.json')['source_boundary'],
+         'Expanded E retained/excluded source boundary changed.')
+    science = load('papers/topic-e/v3/scope.json')
+    formal = load('papers/topic-e/v3/formal/scope.json')
+    need(science['new_source_dispositions'] == 56 and science['retained_source_dispositions'] == 54 and
+         science['migration_environments'] == 32 and science['new_originals'] == ['L056', 'L043'] and
+         science['retained_originals'] == ['L079', 'L083', 'L021'] and science['whole_common_paid_once'],
+         'Expanded E scientific transfer changed.')
+    need(formal['reported_declarations'] == 42 and formal['new_declarations'] == 9 and
+         len(formal['modules']) == 7 and sum(len(x['declarations']) for x in formal['modules']) == 42 and
+         len(formal['not_formalized']) == 6, 'Expanded E partial Lean scope changed.')
+    need(load(base + 'science_root_adoption/review.json')['status'] == 'ROOT_ACCEPTED_EXPANDED_E_CORRECTED_PRINCIPAL_CONTRACT' and
+         load(base + 'measurement/input_root_adoption/adoption.json')['status'] == 'ROOT_ACCEPTED_EXPANDED_E_MEASUREMENT_INPUTS' and
+         load(base + 'measurement/root_adoption/adoption.json')['status'] == 'ROOT_ACCEPTED_EXPANDED_E_NUMERICAL_COMPARISON',
+         'Expanded E distinct science/input/numerical acceptance missing.')
+    r = load(base + 'measurement/packet/results.json')
+    p = load(base + 'measurement/packet/protocol.json')
+    d = load(base + 'measurement/inputs/author_counts.json')
+    roles = load(base + 'measurement/inputs/policy.json')
+    need(d == load(base + 'measurement/packet/inputs/input/author_counts.json'), 'Changed accepted E input vectors.')
+    sources = ['L079', 'L083', 'L021', 'L056', 'L043']
+    apps = dict(L079='A2', L083='A1', L021='A3', L056='A4', L043='A5')
+    need(r['source_ids'] == sources and r['applications'] == a['applications'] == p['applications'] == apps and
+         p['common'] == a['common_documents'] == ['U'] and p['all_written'] == a['all_written'] == ['U', 'A1', 'A2', 'A3', 'A4', 'A5'] and
+         p['full_common_paid_once'] and p['no_cross_topic_discount'] and p['no_free_application_premises'] and
+         a['conditional_acquisition'] == p['formula_conditional'] and not p['conditional_optional_validation_required'],
+         'Expanded E whole common acquisition or application routing changed.')
+    need(p['attribution_correction'] == correction and p['programme_inventory'] == inventory and
+         r['software_inclusive_factors'] is None and r['historical_source_software_cost'] is None and
+         r['unknown_costs'] == a['unknown_costs'] == p['unknown_costs'] and
+         r['source_registration_or_question_credit'] == 0 and r['no_source_extraction'] and r['no_science_replay'],
+         'Expanded E impermissible software factor, zero unknown or credit.')
+    count = 0
+    expected_keys = set()
+    for variant in ['raw_untrimmed', 'raw_selected', 'calibrated_selected']:
+        for norm in ['NFC', 'NFKC']:
+            for unit in ['whitespace_tokens', 'alphanumeric_units', 'characters_without_whitespace',
+                         'characters_with_collapsed_whitespace', 'utf8_bytes_with_collapsed_whitespace']:
+                key = '/'.join([variant, norm, unit]); expected_keys.add(key)
+                c = r['coordinates'][key]
+                costs = {name: row['metrics'][variant][norm][unit] for name, row in d['documents'].items()}
+                n = sum(costs[s] for s in sources); appcost = sum(costs[x] for x in apps.values()); den = costs['U'] + appcost
+                need(c['document_costs'] == costs and c['source_sum'] == n and c['whole_common'] == costs['U'] and
+                     c['application_sum'] == appcost and c['whole_written'] == den, 'Discounted complete E manuscript.')
+                for f, num, denom in [(c['written'], n, den)] + [(c['conditional'][s], costs[s], costs[apps[s]]) for s in sources]:
+                    exact = Fraction(num, denom)
+                    with localcontext() as ctx:
+                        ctx.prec = 45
+                        dec = format(Decimal(num) / Decimal(denom), '.12f')
+                    need(f == dict(source_cost=num, replacement_cost=denom, numerator=exact.numerator,
+                                   denominator=exact.denominator, decimal=dec), 'Expanded E exact fraction changed.')
+                    count += 1
+                need(c['separate_software']['software_inclusive_factor'] is None and
+                     c['separate_software']['historical_source_software_cost'] is None and
+                     c['separate_software']['required_printed_with_data'] == costs['REQUIRED'] and
+                     c['separate_software']['optional_printed'] == costs['VALIDATION'], 'Separate program alternatives changed.')
+    need(set(r['coordinates']) == expected_keys and len(expected_keys) == a['coordinates'] == 30 and
+         count == a['exact_fractions'] == r['exact_fraction_count'] == 180 and
+         a['PDF_component_cells'] == 390 and a['raw_file_cells'] == 250, 'Expanded E coordinate boundary changed.')
+    primary = 'raw_untrimmed/NFC/characters_without_whitespace'
+    need(r['primary_coordinate'] == a['primary_coordinate'] == primary and
+         r['primary'] == a['primary'] == r['coordinates'][primary] and
+         r['primary']['source_sum'] == 140286 and r['primary']['whole_common'] == 57473 and
+         r['primary']['application_sum'] == 32337 and r['primary']['whole_written'] == 89810,
+         'Changed raw-untrimmed E primary or complete costs.')
+    wanted_roles = {x['path']: x['role'] for x in roles['programs_and_data']}
+    items = []
+    for category, files in d['raw_files'].items():
+        for path, row in files.items():
+            if category == 'programs_and_data':
+                role = wanted_roles[path]
+                group = {'required finite proof': 'required_programs', 'required certificate data': 'required_data',
+                         'validation only': 'optional_validation'}[role]
+            elif category == 'operational_drivers': group, role = 'operational_drivers', 'operational'
+            elif category == 'formal_files': group, role = 'partial_formal', 'partial formal evidence'
+            else: raise ValueError('Unknown E inventory category.')
+            items.append(dict(path=path, role=role, group=group, **row))
+    need(r['whole_file_inventory'] == items and Counter(x['group'] for x in items) ==
+         dict(required_programs=6, required_data=1, optional_validation=6, operational_drivers=5, partial_formal=7),
+         'Missing whole E required/data/optional/driver/formal file.')
+    for item in items:
+        rel = item['path'].removeprefix('topic_E_chiral_extension_bibliography_v2/')
+        need(rel != item['path'], 'Unmapped E whole-file origin.')
+        check_bindings([dict(path='papers/topic-e/v3/' + rel, bytes=item['bytes'], sha256=item['sha256'])])
+    return 2, count
+
+
+def check_programme46():
+    spec = importlib.util.spec_from_file_location('programme46', ROOT / 'scripts/check_programme46.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result = checker.verify(ROOT)
+    need(result['status'] == 'PASS_PROGRAMME46' and check_current_measurement_pointer() == 46,
+         'Programme 46 and measurement registration disagree.')
+    return result['recovered'], result['pending']
+
+
+def check_previous_programme46():
+    """Run unchanged previous checks against their exact preserved current files."""
+    from types import FunctionType
+    import tempfile
+    routes = {
+        'audit/corpus/latest.json': 'audit/programme46/v1/previous_corpus_pointer.json',
+        'papers/latest_catalogue.json': 'audit/programme46/v1/previous_catalogue.json',
+        'audit/overview/latest.json': 'audit/programme46/v1/previous_overview_pointer.json',
+        'README.rst': 'audit/programme46/v1/previous_README.rst',
+    }
+    with tempfile.TemporaryDirectory(prefix='programme46-history-') as temporary:
+        historical_root = Path(temporary)
+        def populate(source, destination, prefix=''):
+            destination.mkdir(exist_ok=True)
+            for child in source.iterdir():
+                relative = prefix + child.name
+                target = destination / child.name
+                if relative in routes:
+                    target.symlink_to(ROOT / routes[relative])
+                elif any(k.startswith(relative + '/') for k in routes):
+                    populate(child, target, relative + '/')
+                else:
+                    target.symlink_to(child, target_is_directory=child.is_dir())
+        populate(ROOT, historical_root)
+        scope = dict(globals(), ROOT=historical_root)
+        for name, value in list(globals().items()):
+            if isinstance(value, FunctionType) and value.__globals__ is globals():
+                scope[name] = FunctionType(value.__code__, scope, value.__name__,
+                                          value.__defaults__, value.__closure__)
+        need(scope['check_programme43']() == (43, 63), 'Previous original registration changed.')
+        overview43 = scope['run_historical43_check'](scope['check_overview43'])
+        scope['check_historical_listing_symmetry_overview']()
+        restored = scope['check_listing_restored_overview']()
+        need(scope['check_restored_overview_independent']() == restored, 'Previous v12 checks disagree.')
+        return overview43, restored
+
+
+
+# Append this function without editing any existing non-main function.
+def check_projective_covers_overview():
+    spec = importlib.util.spec_from_file_location(
+        'current_projective_covers_overview', ROOT / 'scripts/check_projective_covers_overview.py')
+    checker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checker)
+    return checker.verify(ROOT)
+
+
+def check_projective_covers_overview_independent():
+    base = 'audit/overview/v13/'
+    admission = load(base + 'admission.json')
+    for key, pin, count in [
+            ('author_manifest', '1d4fb7b0bdb4c5d4482dc93eeb24a2968b4e4dd510d80dccb9d1089f57d048c1', 120),
+            ('independent_manifest', '93312272069da6ed77965c6c5b781f2db855e490b86896d21dd8d08ae93b4870', 5)]:
+        row = admission[key]; check_bindings([row])
+        need(row['sha256'] == pin, 'Changed accepted overview edition.')
+        exports = load(row['path'])['exports']
+        need(len(exports) == count, 'Incomplete overview evidence.')
+        check_bindings([dict(e, path=str(Path(row['path']).parent / e['path'])) for e in exports])
+    check_bindings([admission[k] for k in ['previous_overview', 'previous_overview_pointer',
+                   'current_corpus', 'current_catalogue', 'active_original_catalogue',
+                   'original_registration', 'programme_review', 'registration_report']] +
+                   admission['scientific_and_numerical_admissions'])
+    need(admission['status'] == 'ROOT_ADMITTED_EXPANDED_PROJECTIVE_MIXES_OVERVIEW' and
+         admission['topic_count'] == 19 and admission['distinct_originals'] == 46 and
+         admission['active_originals'] == 106 and admission['pending_originals'] == 60 and
+         admission['archived_originals'] == 55 and admission['exact_fractions'] == 65 and
+         admission['actual_SVG_bars'] == admission['actual_PDF_bars'] == 149 and
+         admission['reader_pages'] == 6 and admission['unchanged_topic_records'] == 17 and
+         admission['unchanged_other_individual_records'] == 39 and
+         admission['newly_registered_originals'] == ['L016', 'L043', 'L056'] and
+         admission['new_source_credit'] == admission['new_question_credit'] == admission['new_formal_credit'] == 0 and
+         admission['software_inclusive_factors'] is None and admission['source_software_cost'] is None and
+         admission['pooled_factor'] is None and admission['required_program_roles_preserved'] and
+         admission['no_cross_topic_discount'], 'Overview source, scope or cost boundary changed.')
+    spec = importlib.util.spec_from_file_location('overview46_root_review', ROOT / base / 'independent_review/check.py')
+    reviewer = importlib.util.module_from_spec(spec); spec.loader.exec_module(reviewer)
+    report = reviewer.check(ROOT / base / 'packet', ROOT)
+    need(report == load(base + 'independent_review/report.json'), 'Independent overview46 replay differs.')
+    review = load(base + 'independent_review/review.json')
+    need(review['status'] == 'ROOT_ACCEPTED_CONSOLIDATED_OVERVIEW46' and review['corrections_requested'] == []
+         and review['role_disclosure'], 'Independent acceptance missing.')
+    return report['exact_fractions'], report['SVG_bars']
+
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -5688,12 +6011,13 @@ def main():
     overview42_fractions, overview42_bars = run_historical42_check(check_overview42)
     symmetric_topics = run_historical42_check(check_symmetric_measurement_policy)
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
-    active_admitted, active_pending = check_programme43()
-    overview43_fractions, overview43_bars = run_historical43_check(check_overview43)
-    check_historical_listing_symmetry_overview()
-    current_fractions, current_bars = check_listing_restored_overview()
-    need(check_restored_overview_independent() == (current_fractions, current_bars),
-         "Distinct overview counts disagree.")
+    expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
+    mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
+    (overview43_fractions, overview43_bars), (current_fractions, current_bars) = check_previous_programme46()
+    active_admitted, active_pending = check_programme46()
+    current_fractions, current_bars = check_projective_covers_overview()
+    need(check_projective_covers_overview_independent() == (current_fractions, current_bars), "Distinct overview46 counts disagree.")
+    print(f"PASS: expanded E and Mixes add {expanded_e_added + mixes_covers_added} originals; {expanded_e_fractions + mixes_covers_fractions} topic sensitivity fractions checked with symmetric program exclusions.")
     policy_review_binding = load('audit/overview/latest.json')['measurement_policy_review']
     check_bindings([policy_review_binding])
     policy_review = load(policy_review_binding['path'])
@@ -5707,7 +6031,7 @@ def main():
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, {active_admitted} recovered and {active_pending} pending; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
-    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all19whole and43conditional factors restored.")
+    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 19 whole and 46 conditional factors checked.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
     print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
