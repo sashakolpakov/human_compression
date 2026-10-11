@@ -31,7 +31,7 @@ def main():
     need(not args.out.exists(), 'Use a fresh output file.')
     protocol = args.repo/'audit/topic-e/v2/protocol.json'
     data = protocol.read_bytes()
-    need(digest(data)=='1e3a2c97bc32d1edf5d1844fe871384ea71588a3dab64cb799c347ba16eea982',
+    need(digest(data)=='46e5b99c7e0aefd85f4687e4031470332cf8134d07c3dc9496fc7f142f6afbbb',
          'Changed measurement boundary.')
     p = json.loads(data)
     need(pypdf.__version__==p['pypdf_version'], 'Different PDF extractor.')

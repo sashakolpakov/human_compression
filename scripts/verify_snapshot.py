@@ -194,6 +194,10 @@ def check_topic_measurement():
     check_bindings(review['artifacts'])
     measured = load('audit/topic-e/v2/measurement.json')
     recounted = load('audit/topic-e/v2/root_recount.json')
+    protocol_hash = digest((ROOT/'audit/topic-e/v2/protocol.json').read_bytes())
+    need(protocol_hash == review['measurement_protocol_sha256'] ==
+         measured['protocol_sha256'] == recounted['protocol_sha256'],
+         'Measurement reports refer to different editions.')
     costs = {key:value for group in measured['costs'].values() for key,value in group.items()}
     cells = 0
     for key,forms in recounted['costs'].items():
@@ -210,12 +214,59 @@ def check_topic_measurement():
     c = {k:v['NFC']['characters_without_whitespace'] for k,v in costs.items()}
     total = sum(c[k] for k in ('L083','L079','L021'))
     denominator = sum(c[k] for k in ('New_U','New_A1','New_A2','New_A3'))
+    need(summary['historical_manuscripts']==total and
+         summary['common_theory']==c['New_U'] and
+         summary['all_applications']==denominator-c['New_U'] and
+         summary['complete_written_denominator']==denominator,
+         'Summary costs differ from the complete manuscript counts.')
     need(summary['overall_written_factor']==total/denominator,
          'Overall factor does not charge the common theory once.')
+    expected_pairs = {('L083','New_A1'), ('L079','New_A2'), ('L021','New_A3')}
+    rows = summary['per_result_contract']
+    need(len(rows)==3 and {(r['source'],r['application']) for r in rows}==expected_pairs,
+         'Conditional comparison must cover exactly the three result contracts.')
+    need(summary['required_program']==c['New_Code'] and
+         summary['optional_validation_program']==c['New_Validation'] and
+         summary['overall_with_required_program_known_cost']==total/(denominator+c['New_Code']) and
+         summary['overall_with_required_and_validation_known_cost']==
+         total/(denominator+c['New_Code']+c['New_Validation']),
+         'Program-inclusive figures must charge the complete programs.')
     for row in summary['per_result_contract']:
-        need(row['conditional_factor']==c[row['source']]/c[row['application']] and
+        need(row['full_source_length']==c[row['source']] and
+             row['complete_application_length']==c[row['application']] and
+             row['conditional_factor']==c[row['source']]/c[row['application']] and
              row['already_acquired_common_theory_and_required_program']==c['New_U']+c['New_Code'],
              'Incorrect conditional result factor.')
+
+def check_topic_dag():
+    review = load('audit/topic-e/v2/dag_admission.json')
+    need(review['status']=='PASS_ROOT_REVIEWED_PAIRED_DAG', 'Unreviewed paired graph.')
+    check_bindings(review['artifacts'])
+    prefix = 'audit/topic-e/v2/dag/'
+    need((ROOT/(prefix+'measurement_protocol.json')).read_bytes()==
+         (ROOT/'audit/topic-e/v2/protocol.json').read_bytes() and
+         (ROOT/(prefix+'accepted_measurement.json')).read_bytes()==
+         (ROOT/'audit/topic-e/v2/measurement.json').read_bytes(),
+         'Graph and headline figures refer to different manuscript editions.')
+    result = load(prefix+'result.json')
+    fresh = load(prefix+'root_replay.json')
+    dag = load(prefix+'dag.json')
+    measured = load('audit/topic-e/v2/measurement.json')
+    costs = measured['costs']['sources'] | measured['costs']['new']
+    need(result['status']==fresh['status']=='PASS_PAIRED_ACCOUNTING_AND_BOUND_DOCUMENTARY_DAGS',
+         'Graph accounting replay did not pass.')
+    need(result['costs']==fresh['costs'] and len(result['costs'])==9,
+         'Public graph replay differs from the recorded costs.')
+    cells = 0
+    for key,forms in result['costs'].items():
+        for form,metrics in forms.items():
+            for metric,value in metrics.items():
+                need(costs[key][form][metric]==value, 'Graph partition loses text: '+key)
+                cells += 1
+    need(cells==90 and dag['no_node_count_ratio'] and dag['measurement_pays_all_text'],
+         'Graph must preserve complete costs and stated granularity.')
+    need(result['headline_from_accepted_measurement']==fresh['headline_from_accepted_measurement'],
+         'Graph headline differs on replay.')
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
@@ -227,6 +278,7 @@ def main():
         need(not changed,'Stage all publication edits before recording their bytes: '+repr(changed))
     historical, markdown = check_archive(); lean = check_lean(); papers, editions = check_catalogue()
     check_topic_measurement()
+    check_topic_dag()
     rows = publication_rows()
     if args.write_manifest:
         MANIFEST.write_text(json.dumps({
@@ -240,6 +292,7 @@ def main():
     print('Trust: 96 reports without native axioms; one legacy report has four recorded native axioms.')
     print('Lean evidence: 96 unchanged modules from the prior fresh run, plus one separately compiled module.')
     print('PASS: 150 independent metric cells; overall and conditional factors have separate denominators.')
+    print('PASS: paired proof graphs preserve all 90 current source/application/program cost coordinates.')
     print('Historical computations require the pinned intake checkout.')
 
 if __name__=='__main__':

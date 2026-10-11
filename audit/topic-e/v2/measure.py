@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure complete old and new three-application Topic E proofs.
+"""Measure the readable edition of complete three-application Topic E proofs.
 
 Private: --root STUDY --sources-root STUDY
 Public: --repo REPO --sources-root EXTERNAL_PRIMARY_ROOT
@@ -10,7 +10,7 @@ is emitted. Requires pypdf6.13.0. All outputs must be fresh.
 import argparse,copy,hashlib,importlib.util,json,re,sys,unicodedata
 from pathlib import Path
 sys.dont_write_bytecode=True
-PROTOCOL_SHA256='1e3a2c97bc32d1edf5d1844fe871384ea71588a3dab64cb799c347ba16eea982'
+PROTOCOL_SHA256='46e5b99c7e0aefd85f4687e4031470332cf8134d07c3dc9496fc7f142f6afbbb'
 ROOT=Path(__file__).resolve().parent
 
 def need(ok,msg):
@@ -23,7 +23,7 @@ def main():
     ap.add_argument('--root',type=Path);ap.add_argument('--repo',type=Path)
     ap.add_argument('--sources-root',type=Path,required=True)
     ap.add_argument('--locations',type=Path)
-    ap.add_argument('--protocol',type=Path,default=ROOT/'topic_E_new_comparison_protocol.json')
+    ap.add_argument('--protocol',type=Path,default=ROOT/'readable_protocol.json')
     ap.add_argument('--out',type=Path,required=True)
     args=ap.parse_args();need(args.root is not None or args.repo is not None,'root or repo required')
     need(not args.out.exists() and not args.out.is_symlink(),'fresh output required')
@@ -55,6 +55,22 @@ def main():
     review=json.loads(bound(p['independent_mathematical_review']))
     need(review['status']=='ACCEPTED_COMPLETE_WRITTEN_PROOFS_AND_REQUIRED_FINITE_CLOSURE','accepted complete mathematical review')
     need(not review['unresolved_mathematical_objections'],'no outstanding mathematical objection')
+    edition=json.loads(bound(p['readable_edition_review']))
+    need(edition['status']=='ACCEPTED_LANGUAGE_EDITION_OF_PREVIOUSLY_REVIEWED_PROOFS','language edition review')
+    need(edition['root_acceptance_reported_in_thread'] and not edition['unresolved_mathematical_objections'],'independent language delta accepted')
+    need(not edition['new_mathematical_credit'] and not edition['proof_library_or_program_cost_deleted'],'unchanged mathematical scope and costs')
+    for row in edition['bound_artifacts']:bound(row)
+    ledger=json.loads(bound(p['literal_edit_ledger']))
+    def check_literal_edits(rows):
+        for row in rows:
+            current=bound(row['new']).decode()
+            for edit in reversed(row['edits']):
+                need(current.count(edit['new'])==1,'literal reverse edit uniqueness')
+                current=current.replace(edit['new'],edit['old'],1)
+            need(sha(current.encode())==row['old']['sha256'],'complete old TeX recovered by reverse edits')
+    check_literal_edits(ledger['files'])
+    bound(p['prior_comparison_protocol'])
+    prior_result=json.loads(bound(p['prior_comparison_result']))
     for row in p['new_scientific_files']:bound(row)
     need(p['sources']==old['sources'] and p['old']==old['ours'],'unchanged old boundary')
     need(p['old_required_programs']==old['required_programs'],'complete old program boundary')
@@ -94,7 +110,11 @@ def main():
             comparisons[form][metric]=dict(source_full_manuscripts=src,old_written=ow,old_all_required_programs=oc,old_written_and_programs=ow+oc,new_written=nw,new_required_program=nc,new_validation_program=nv,new_written_and_required=nw+nc,new_written_required_and_validation=nw+nc+nv,
                 source_over_old_written=src/ow,source_over_old_written_and_programs=src/(ow+oc),source_over_new_written=src/nw,source_over_new_written_and_required=src/(nw+nc),source_over_new_written_required_and_validation=src/(nw+nc+nv),
                 old_over_new_written=ow/nw,old_over_new_with_required= (ow+oc)/(nw+nc),old_over_new_including_validation=(ow+oc)/(nw+nc+nv),written_characters_removed=ow-nw,program_change_required_only=oc-nc,program_change_including_validation=oc-nc-nv,
-                exact_all_artifact_factor=None,unconditional_library_factor=None)
+                exact_all_artifact_factor=None,unconditional_library_factor=None,
+                conditional_application_factors={l:dict(source_full_manuscript=c[l],complete_local_application=c[a],factor=c[l]/c[a]) for l,a in [('L083','New_A1'),('L079','New_A2'),('L021','New_A3')]},
+                conditional_application_basis='Complete common manuscript and required common program are already available; their full costs are included once in the combined topic total, not zero.',
+                previous_common_proof_draft_written=prior_result['comparisons'][form][metric]['new_written'],
+                readable_prose_change=nw-prior_result['comparisons'][form][metric]['new_written'])
             chronology[form][metric]=dict(stage_order=['acquisition','L083','L079','L021'],
                 source_marginal=[0,c['L083'],c['L079'],c['L021']],source_cumulative=[0,c['L083'],c['L083']+c['L079'],src],
                 old_written_marginal=[c['U_E'],c['A1'],c['A2'],c['A3']],old_written_cumulative=[c['U_E'],c['U_E']+c['A1'],c['U_E']+c['A1']+c['A2'],ow],
@@ -123,14 +143,17 @@ def main():
     reject('unknown_historical_code_forged_zero',lambda:need(sha((json.dumps(changed,indent=2,ensure_ascii=False)+'\n').encode())==PROTOCOL_SHA256,'changed unknown'))
     first=Path(input_paths['New_U'])
     reject('changed_new_pdf_bytes',lambda:need(sha(first.read_bytes()+b' ') == p['new']['New_U']['pdf_sha256'],'PDF changed'))
+    altered=copy.deepcopy(ledger['files']);altered[0]['edits'][0]['old']+=' '
+    reject('unrecorded_or_changed_language_edit',lambda:check_literal_edits(altered))
+    reject('old_review_silently_rebound_to_new_edition',lambda:need(edition['prior_complete_review']['sha256']==sha(b'changed old proof review'),'prior complete review changed'))
     # Exact arithmetic and closure checks independent of rounded display values.
     for form in chronology:
         for metric,ch in chronology[form].items():
             for prefix in ['source','old_written','old_with_code','new_written','new_with_required','new_including_validation']:
                 need(ch[prefix+'_cumulative']==[sum(ch[prefix+'_marginal'][:i+1]) for i in range(4)],'cumulative account '+prefix)
-    result=dict(status='PASS_PRIVATE_COMPARISON_PENDING_ROOT_INDEPENDENT_RECOUNT',protocol_sha256=PROTOCOL_SHA256,checker_sha256=sha(Path(__file__).read_bytes()),pypdf_version=m.pypdf.__version__,scope=p['scope'],costs=costs,comparisons=comparisons,chronology=chronology,
+    result=dict(status='PASS_READABLE_COMPARISON_AUTHOR_REPLAY',protocol_sha256=PROTOCOL_SHA256,checker_sha256=sha(Path(__file__).read_bytes()),pypdf_version=m.pypdf.__version__,scope=p['scope'],costs=costs,comparisons=comparisons,chronology=chronology,
         complete_programs=programs,program_byte_lengths={x['path']:x['bytes'] for x in programs},glyph_metric_invariance_all_documents=True,primary=p['primary'],new_pages={k:v['pages'] for k,v in p['new'].items()},old_pages={k:v['pages'] for k,v in p['old'].items()},source_pages={k:v['pages'] for k,v in p['sources'].items()},
-        negative_controls=rejected,diagnostic_relocation_sensitivity=True,retained_library_cost=None,historical_program_cost=None,full_Lean_cost=None,exact_all_artifact_factor=None,conditions=p['conditions'],cost_allocation=p['cost_allocation'],no_new_source_question_or_priority_credit=True,
+        negative_controls=rejected,readable_edition=True,previous_public_edition_commit=p['prior_public_edition_commit'],literal_edit_reversal_verified=True,conditioned_application_ratio_definition=p['conditioned_application_ratios'],diagnostic_relocation_sensitivity=True,retained_library_cost=None,historical_program_cost=None,full_Lean_cost=None,exact_all_artifact_factor=None,conditions=p['conditions'],cost_allocation=p['cost_allocation'],no_new_source_question_or_priority_credit=True,
         interpretation='The source/new written factor compares full manuscript lengths for accepted main results. Known program coordinates include complete current required artifacts, with a separate complete-validation sensitivity. They are not exact all-artifact or unconditional proof costs. Cumulative stages use declared whole-file charging, not inferred historical discovery or repeated sawtooth evidence.')
     args.out.write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
     print(json.dumps(result['comparisons']['NFC']['characters_without_whitespace'],indent=2))

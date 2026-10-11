@@ -60,25 +60,33 @@ characters:
    * - Comparison
      - Factor
    * - All three source manuscripts / common theory plus all three applications
-     - 1.851
+     - 1.816
    * - Same comparison including our full required finite program
-     - 1.547
+     - 1.523
    * - Also include the complete diagnostic program
-     - 1.391
+     - 1.372
    * - L083 / its application, after acquiring the common theory and program
-     - 7.167
+     - 6.957
    * - L079 / its application, on the same basis
-     - 11.296
+     - 11.271
    * - L021 / its application, on the same basis
-     - 2.048
+     - 2.018
 
-The full written denominator is 38,568 characters: the common theory costs
-19,362, followed by applications of 2,914, 1,851 and 14,441. The required
+The two headline measures are the whole topic and each application after
+acquiring the common theory. Required program costs are shown alongside
+them.
+
+The full written denominator is 39,303 characters: the common theory costs
+19,790, followed by applications of 3,002, 1,855 and 14,656. The required
 program adds 7,565 and diagnostics add 5,173. All three source manuscripts
 total 71,375. Our previous proofs of these same results occupied 53,895
-written characters; the new proofs remove 15,327. Including diagnostics,
+written characters; the new proofs remove 14,592. Including diagnostics,
 the combined code is slightly longer than before. The gain therefore does
 not come from discarding diagnostic code.
+
+The earlier edition at commit ``6d203fd`` gave 1.851 overall. Clearer
+explanation adds 735 characters in the current edition, charged under the
+same rule. The mathematical results and programs are unchanged.
 
 These are costs of concrete complete proofs under the stated source
 contracts, not estimates of minimum mathematical complexity. Historical
@@ -92,12 +100,19 @@ The earlier `two-source audit <audit/topic-e/measurement.pdf>`_ is a
 baseline of the older proofs, not the current result or a limit on what
 further common ideas could achieve.
 
-The `audit protocol <audit/protocol.pdf>`_ also specifies paired dependency
-DAGs: count distinct proof nodes, measure their complete statement/proof
-costs, expose branches inside bundled theorems, and charge shared
-prerequisites once within a topic. Raw node counts alone are not complexity
-ratios. Separate topic umbrellas are each charged in full even when they
-overlap.
+The `paired dependency graphs <audit/topic-e/v2/dag/default_view.svg>`_
+show which arguments supply each result. Download and open the
+`interactive explorer <audit/topic-e/v2/dag/explorer.html>`_ to switch
+between historical and new proofs, inspect individual costs and expand
+the branches inside a theorem. It works locally without a network connection.
+
+Every text span has one cost owner. A theorem box sums its branches without
+charging them again, and the complete manuscript totals include context
+and references. Historical assertions retain their recorded qualifications.
+Raw node counts alone are not complexity ratios. Separate topic umbrellas
+are each charged in full even when they overlap. The exact accounting and
+its limits are in the `graph review <audit/topic-e/v2/dag_admission.json>`_
+and the `audit protocol <audit/protocol.pdf>`_.
 
 Papers and verification
 -----------------------
@@ -174,16 +189,6 @@ the complete archived tree. Run a historical replay in a separate checkout::
     git worktree add --detach /tmp/human-compression-intake intake-2026-10-11
     cd /tmp/human-compression-intake
     python3 scripts/verify_snapshot.py
-
-Replay the current finite certificate and its mutation controls::
-
-    python3 papers/topic-e/v2/check_common.py --out /tmp/human-compression-finite
-
-Recount the fixed measurement with pypdf 6.13.0 and separately supplied
-primary PDFs (their exact paths and hashes are in the protocol)::
-
-    python3 audit/topic-e/v2/measure.py --repo . --sources-root PRIMARY_ROOT --protocol audit/topic-e/v2/protocol.json --out /tmp/human-compression-measurement.json
-    python3 audit/topic-e/v2/recount.py --repo . --sources-root PRIMARY_ROOT --out /tmp/human-compression-independent.json
 
 That checkout contains its historical Markdown. Current proofs, measurements
 and formalization will develop in TeX, Lean and explicit JSON ledgers.
