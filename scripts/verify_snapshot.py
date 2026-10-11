@@ -2246,6 +2246,152 @@ def check_topic_f_measurement():
     return 120,120
 
 
+def check_representation_proofs():
+    base = 'papers/topic-representation/v2/'
+    audit = 'audit/topic-representation/v2/'
+    admission = load(audit+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_REPRESENTATION_COMMON_PROOFS',
+         'Unreviewed representation edition.')
+    check_bindings(admission['artifacts'])
+    packets = [(base,'author',46), (audit+'independent_review/','independent',25),
+               (audit+'review_role_delta/','role_correction',2), (audit+'root_adoption/','root',5)]
+    for prefix,key,count in packets:
+        manifest = load(prefix+'manifest.json')
+        need(digest((ROOT/prefix/'manifest.json').read_bytes())==admission['manifests'][key] and
+             len(manifest['exports'])==count, 'Changed frozen representation packet.')
+        check_bindings([dict(r,path=prefix+r['path']) for r in manifest['exports']])
+    scope = load(base+'scope.json')
+    original = load(audit+'independent_review/review.json')
+    corrected = load(audit+'review_role_delta/review.json')
+    delta = load(audit+'review_role_delta/correction.json')
+    adoption = load(audit+'root_adoption/review.json')
+    expected = json.loads(json.dumps(original))
+    expected['review_roles']['current_edition_author'] = 'enumeration_volume'
+    need(corrected==expected and original['review_roles']['current_edition_author']=='rewrite_termination' and
+         delta['json_pointer']=='/review_roles/current_edition_author' and
+         delta['old']=='rewrite_termination' and delta['new']=='enumeration_volume' and
+         delta['only_field_change'] and not delta['mathematics_scope_bindings_or_verdict_changed'] and
+         delta['old_review_sha256']==digest((ROOT/audit/'independent_review/review.json').read_bytes()) and
+         delta['corrected_review_sha256']==adoption['corrected_independent_review_sha256']==
+             digest((ROOT/audit/'review_role_delta/review.json').read_bytes()),
+         'Representation review role correction is not the exact declared single-field change.')
+    need(corrected['status']=='ACCEPTED_COMPLETE_WRITTEN_CONTRACT_WITH_SCOPED_FORMAL_EVIDENCE' and
+         corrected['author_manifest_sha256']==admission['manifests']['author'] and
+         adoption['status']=='ROOT_ACCEPTED_COMPLETE_REPRESENTATION_EDITION_WITH_EXPLICIT_FORMAL_SCOPE' and
+         adoption['manifests']=={k:admission['manifests'][k] for k in ['author','independent','role_correction']} and
+         corrected['requested_author_corrections']==adoption['root_mathematical_corrections_requested']==[],
+         'Representation scientific acceptance refers to a different edition.')
+    need(scope['source_ids']==admission['source_ids']==adoption['source_ids']==['F010'] and scope['intake_closed'] and
+         scope['source']['authors']==corrected['source_authors']==adoption['source_authors']==
+             ['Antonio Díaz Ramos','Rémi Molinier','Antonio Viruel'] and
+         scope['source']['edition']==corrected['source_edition']==adoption['source_edition']=='arXiv:2511.02410v2, 2025-12-16' and
+         scope['source']['primary']['sha256']==corrected['source_sha256']==
+             'a8ff604a96a57ab8baf20aaa808a90308c01237ab0607a1062207fcb49f736e7',
+         'Representation source edition or attribution changed.')
+    baseline = load(base+'baseline_contract.json')
+    need([r['inherited_record'] for r in scope['contracts']]==baseline['principal_blocks'] and
+         [r['id'] for r in scope['contracts']]==admission['source_row_ids'] and
+         len(scope['contracts'])==admission['source_rows']==6 and
+         len(scope['proof_spans'])==admission['proof_spans']==13,
+         'Representation source blocks or proof contexts changed.')
+    for row in scope['contracts']:
+        need(row['current_spans'] and all(k in scope['proof_spans'] for k in row['current_spans']),
+             'Representation source result lacks its proof contexts.')
+    for row in scope['proof_spans'].values():
+        text = (ROOT/base/row['path']).read_text()
+        start,end = row['start_codepoint'],row['end_codepoint_exclusive']
+        need(0<=start<end<=len(text) and digest(text[start:end].encode())==row['sha256_utf8'],
+             'Representation proof passage changed.')
+    rows = {r['id']:r for r in scope['contracts']}
+    need(rows['F010.Example5.1']['status']=='corrected_example' and
+         rows['F010.Example5.2']['status']=='qualified_base_case' and
+         scope['source_qualifications']==corrected['qualifications']==adoption['source_qualifications'] and
+         len(scope['source_qualifications'])==3 and
+         scope['exclusions']==corrected['preserved_exclusions']==adoption['exclusions'] and len(scope['exclusions'])==5,
+         'Representation qualifications or exclusions changed.')
+    hyp = scope['precise_hypotheses']
+    need(hyp['finite'] and hyp['normal_subgroup_required'] and hyp['main_nontrivial_rank']=='[G:H]+3' and
+         hyp['trivial_rank']==1 and hyp['connected_main_construction'] and
+         hyp['arbitrary_input_cleaning_need_not_be_connected'] and not hyp['rank_two_universal_claim'],
+         'Representation construction hypotheses or component limits changed.')
+    programs = ['phase177_hexagon_check.g','phase188_gadget_check.g']
+    drivers = ['phase188_verify.py','phase193_public_check.py']
+    need([r['original'] for r in scope['program_inventory']]==programs+drivers and
+         admission['complete_programs']==2 and admission['required_mathematical_programs']==0 and
+         admission['separate_operational_drivers']==2, 'Representation whole program inventory changed.')
+    for row in scope['program_inventory']:
+        check_bindings([dict(path=base+row['copy'],bytes=row['bytes'],sha256=row['sha256'])])
+        need(row['role']==('bounded_validation' if row['original'] in programs else 'historical_operational_driver') and
+             row['universal_proof_premise'] is False, 'Representation bounded validation promoted to a proof premise.')
+    printed = re.findall(r'\\VerbatimInput\[[^\]]*\]\{programs/([^}]+)\}',(ROOT/base/'program-appendix.tex').read_text())
+    need(printed==programs and not scope['validation_boundary']['uniform_written_proof_depends_on_finite_results'],
+         'Representation whole-program appendix or proof role changed.')
+    fresh = load(audit+'independent_review/fresh_replay/report.json')
+    public = load(audit+'publication_replay/render.json')
+    for replay in [fresh,public]:
+        need(replay['status']=='PASS' and replay['source_blocks']==6 and replay['proof_spans']==13 and
+             len(replay['controls'])==11 and all(r['rejected'] for r in replay['controls']) and
+             replay['code_inclusion']['files']==programs and
+             [(r['document'],r['pages'],r['per_page_text_identical'],r['diagnostics']) for r in replay['render']]==
+             [('umbrella',5,True,[]),('finite-normal-pairs',5,True,[]),('program-appendix',4,True,[])],
+             'Representation replay, complete code or render evidence changed.')
+    finite = fresh['bounded_validation']
+    local = load(audit+'independent_review/local_cases.json')
+    need([r['file'] for r in finite['runs']]==programs and all(r['pass_result'] for r in finite['runs']) and
+         len(finite['controls'])==3 and all(r['rejected'] for r in finite['controls']) and
+         (finite['small_colored_graphs'],finite['normal_pairs'],finite['completed_pairs'])==(25,7,4) and
+         finite['family_n']==[2,3,4,5] and finite['universal_proof'] is False and
+         local['status']=='PASS' and local['uniform_proof'] is False and
+         local['models']['all_tips']['kernel_order']==6 and local['models']['recursive_n2']['degrees']==[1,2,2,1],
+         'Representation finite evidence or correction changed.')
+    formal = load(base+'formal/scope.json')
+    compiled = load(audit+'independent_review/fresh_replay/formal/report.json')
+    names = [n for m in formal['modules'] for n in m['declarations']]
+    reports = [r for m in compiled['modules'] for r in m['axioms']]
+    need(compiled['status']=='PASS' and len(names)==len(set(names))==len(reports)==12 and
+         [r['name'] for r in reports]==names and [m['source'] for m in compiled['modules']]==formal['modules'] and
+         all(set(r['axioms'])<={'propext','Classical.choice','Quot.sound'} for r in reports) and
+         len(compiled['countermodels'])==4 and formal['not_formalized']==adoption['formal_scope']['unformalized'] and
+         len(formal['not_formalized'])==6 and formal['source_specific_claims'] is False and
+         formal['new_declarations']==admission['new_lean_declarations']==8 and
+         formal['reused_declarations']==admission['reused_lean_declarations']==4 and
+         admission['end_to_end_source_formalization'] is False and
+         [r['declaration'] for r in scope['formal_statement_map']]==names,
+         'Representation partial formal scope or compiled evidence changed.')
+    catalogue = load('papers/catalogue.json')
+    entries = [r for r in catalogue['new_editions'] if r['topic']=='Representation']
+    need(entries==admission['catalogue_entries'] and len(entries)==2 and
+         catalogue['current_topic_editions']['Representation']==[r['id'] for r in entries] and
+         [r['source_contracts'] for r in entries]==[[],['F010']] and
+         [r['physical_pages'] for r in entries]==[5,5] and admission['scientific_pages']==10 and
+         admission['complete_validation_pages']==4, 'Representation catalogue or page counts changed.')
+    for row in entries:
+        inputs = re.findall(r'\\input\{([^}]+)\}',(ROOT/row['tex']).read_text())
+        need(row['tex_inputs']==[base+x for x in inputs] and row['review_record']==audit+'admission.json',
+             'Representation catalogue omits an input or review.')
+    build = load(audit+'publication_replay/catalogue.json')['papers']
+    need(len(build)==3 and all(r['status']=='compiled' and r['diagnostics']==[] for r in build) and
+         all(r['per_page_text_identical'] and r['physical_pages']==5 for r in build[:2]),
+         'Representation public catalogue build failed.')
+    canonical = set(load('audit/completion.json')['publication_summary']['canonical_contract_ids'])
+    prefixes = tuple('topic-'+t+'/v2/' for t in ['e','a','b','c','d','affine','f','g','representation'])
+    for row in catalogue['new_editions']:
+        if row['id'].startswith(prefixes):canonical.update(row.get('source_contracts',[]))
+    admitted = set(load('audit/intake.json')['admitted_principal_contracts'])
+    need(canonical<=admitted and len(admitted)==admission['project_total_preserved']==27 and
+         len(canonical)==admission['canonical_complete_contract_count_at_this_admission']==25 and
+         set(admission['remaining_contracts_for_canonical_topic_editions'])==admitted-canonical=={'L008','N016'},
+         'Representation completion summary exceeds the fixed edition boundary.')
+    costs = scope['cost_boundary']
+    need(costs['full_common_paper_charged_once'] and costs['full_application_charged'] and not costs['cross_topic_discount'] and
+         not costs['prior_own_proof_bank_as_unpriced_logical_premise'] and
+         all(costs[k] is None for k in ['ratio','external_proof_cost','source_graphics_cost']) and
+         all(admission[k] is None for k in ['compression_ratio','external_proof_cost','source_graphics_cost']) and
+         all(admission[k]==scope[k]==corrected[k]==adoption[k]==0 for k in ['new_source_credit','new_question_credit']),
+         'Representation invents source/question credit or a compression ratio.')
+    return 6,12
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -2274,6 +2420,7 @@ def main():
     f_rows, f_declarations = check_topic_f_proofs()
     f_cells, f_fractions = check_topic_f_measurement()
     g_rows, g_declarations = check_topic_g_proofs()
+    representation_rows, representation_declarations = check_representation_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -2307,6 +2454,7 @@ def main():
     print(f'PASS: Topic F preserves {f_rows} source records, {f_declarations} scoped Lean declarations, complete uniform written proofs and all three validation programs; measurements remain separate.')
     print(f'PASS: Topic F has {f_cells} independent PDF metric cells and {f_fractions} exact combined/conditional fractions; the whole common paper and validation costs are explicit.')
     print(f'PASS: Topic G preserves {g_rows} source records, {g_declarations} scoped Lean declarations, complete common theory and both corrected applications with all thirteen programs; measurements remain separate.')
+    print(f'PASS: representation preserves {representation_rows} source blocks, {representation_declarations} scoped Lean declarations and two whole validation programs; measurement remains separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

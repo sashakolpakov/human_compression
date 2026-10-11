@@ -112,11 +112,22 @@ applications in `its current edition <../papers/topic-g/v2>`_. The
 written reviews of all 79 records, the thirteen-program replay and forty
 scoped Lean declarations. It preserves every source correction, exclusion
 and retained classification. All 42 scientific pages and the twenty-page
-program appendix were reviewed. **Twenty-four of the 27 contracts** now
-have complete canonical applications and common theory; F010, L008 and N016
-retain their earlier accepted proof packages. Topic G's lengths and paired
+program appendix were reviewed. This brought the number of contracts with
+complete canonical applications and common theory to twenty-four of 27.
+Topic G's lengths and paired
 dependency costs remain pending. The two contracts and earlier question
 answers earn no additional result credit from this edition.
+
+The representation topic now supplies the five-page common theory and
+five-page F010 application, with both whole validation programs. The
+`proof admission <topic-representation/v2/admission.json>`_ binds all six
+source blocks, thirteen written passages, the full source review and twelve
+scoped Lean declarations: eight new generic statements and four reused
+local ones. Original authorship, the three source qualifications and the
+absence of a new answer to Question 2.4 remain explicit. **Twenty-five of
+the 27 contracts** now have complete canonical applications and common
+theory. L008 and N016 remain to be published in that form. Representation
+lengths and paired dependency costs are still pending.
 
 Work by topic
 -------------
@@ -174,8 +185,9 @@ subject does not itself prove a compression theorem.
        dependencies, retaining the external tightness classification.
    * - Recognizable incidence extensions
      - F010
-     - Assemble the full construction and reconstruction criterion,
-       including its gadgets, connectedness and arbitrary-rank arguments.
+     - Complete common theory and application independently accepted.
+       Measure their full lengths and paired dependencies; retain the
+       explicit source corrections and partial formal scope.
    * - Chamber orbits and regular covers
      - L008, N016
      - Prepare complete applications with the marked-inversion argument

@@ -668,9 +668,54 @@ Six Lean modules supplied forty freshly checked supporting declarations;
 the full geometric applications and external classifications remain outside
 their formal scope. Earlier question answers are reused without new credit.
 
-**24 of 27** admitted contracts now have complete canonical applications
-and common theory. Topic G's lengths and paired dependency costs remain to
-be audited; no numerical compression factor is claimed for this edition.
+This brought the number of admitted contracts with complete canonical
+applications and common theory to 24 of 27. Topic G's lengths and paired
+dependency costs remain to be audited; no numerical compression factor is
+claimed for this edition.
+
+Recognizable extensions and finite normal pairs
+-----------------------------------------------
+
+The `common paper <papers/topic-representation/v2/umbrella.pdf>`_ proves
+how recognizing the old vertices, ruling out symmetries that fix them, and
+extending every old symmetry determine the full group of a constructed
+graph. The application proves the graph hypotheses and recovers the exact
+finite normal pair. Both scientific papers have five pages.
+
+.. list-table:: Source manuscript and recovered results
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - F010: Díaz Ramos–Molinier–Viruel, *Every finite group is represented
+       by a finite incidence geometry*; arXiv:2511.02410v2, 16 December 2025
+     - Explicit pair encoding, chamber completion, cleaning, the finite
+       normal-pair theorem, the full recursive symmetric family and the
+       corrected hexagon example
+     - `Finite normal pairs as incidence geometries
+       <papers/topic-representation/v2/finite-normal-pairs.pdf>`_
+
+This is an independent followup source already in the corpus; its original
+results retain their authors' attribution. The `publication guide
+<papers/topic-representation/v2/PUBLICATION.rst>`_ gives all six source
+blocks and the three corrections: chamber degrees, the completed hexagon's
+color-preserving group, and the degree-one recursive base case. The source's
+own Theorem A already answers its Question 2.4; no new question is credited.
+
+Eight new generic Lean declarations verify the restriction and extension
+criterion. Four reused declarations check local hexagon facts. Concrete
+graph recognition and the full representation theorem remain written
+proofs. The four-page `validation appendix
+<papers/topic-representation/v2/program-appendix.pdf>`_ prints both complete
+bounded programs; the uniform proofs do not depend on their finite samples.
+
+**25 of 27** admitted contracts now have complete canonical applications
+and common theory. L008 and N016 retain their earlier accepted proofs while
+their common theory and applications are being prepared. Representation
+lengths and paired dependency costs remain to be audited; this edition
+adds no source, solved-question or numerical compression credit.
 
 Papers and verification
 -----------------------
