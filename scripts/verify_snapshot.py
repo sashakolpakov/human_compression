@@ -3113,6 +3113,39 @@ def check_additional_original_recoveries():
     return 29,75
 
 
+def check_consolidated_measurement_overview():
+    base = 'audit/overview/v1/'
+    a = load(base+'admission.json')
+    need(a['status']=='ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW',
+         'Consolidated comparison lacks root admission.')
+    check_bindings(a['artifacts'])
+    for key in ['author_manifest','independent_manifest','public_replay']:
+        check_bindings([a[key]])
+    for key in ['author_manifest','independent_manifest']:
+        parent = Path(a[key]['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(a[key]['path'])['exports']])
+    locations = load(base+'public_locations.json')
+    inputs = load(base+'packet/inputs.json')['bindings']
+    need(set(locations)==set(inputs) and len(inputs)==20,'Overview input set changed.')
+    check_bindings([dict(row,path=locations[k]) for k,row in inputs.items()])
+    spec = importlib.util.spec_from_file_location('independent_overview_recount',ROOT/base/'independent_review/check.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result = load(base+'packet/results.json')
+    fractions = checker.arithmetic(result,checker.expected(ROOT))
+    svg,pdf = checker.graphs(ROOT/base/'packet',result)
+    need(fractions==a['independent_exact_fractions']==57 and
+         svg==a['actual_SVG_bars']==84 and pdf==a['actual_PDF_bars']==84 and
+         a['distinct_originals']==27 and a['topic_count']==10 and
+         set(a['original_ids'])=={r['original_id'] for r in load('audit/corpus/v1/packet/inventory.json')['entries'] if r['proof']['principal_contract_admitted']} and
+         a['additional_measurements_pending']==['F015','L028'] and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Overview cost, source or scope changed.')
+    need(load(a['public_replay']['path'])['status']=='PASS_PUBLIC_ONLY_PORTABLE_REPLAY',
+         'Overview portable replay missing.')
+    return fractions,svg,pdf
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3150,6 +3183,7 @@ def main():
     available_text_fractions = check_available_text_comparisons()
     corpus_originals, corpus_accessible, corpus_pending, corpus_retrieval = check_complete_corpus_programme()
     current_admitted, current_pending = check_additional_original_recoveries()
+    overview_fractions, overview_svg, overview_pdf = check_consolidated_measurement_overview()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -3192,6 +3226,7 @@ def main():
     print(f'PASS: additional available-text comparisons retain all eight B/C originals and check {available_text_fractions} exact fractions; historical PDF-only unknowns remain separate.')
     print(f'PASS: the complete programme retains {corpus_originals} originals: {corpus_accessible} accessible, {corpus_pending} awaiting full recovery and {corpus_retrieval} retrieval targets at this snapshot.')
     print(f'PASS: additive admissions recover {current_admitted} unique originals; {current_pending} accessible originals remain pending. F015/L028 measurements remain pending.')
+    print(f'PASS: consolidated ten-topic comparison checks {overview_fractions} exact fractions and {overview_svg}/{overview_pdf} actual SVG/PDF bars for27 original manuscripts.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

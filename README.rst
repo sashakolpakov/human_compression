@@ -29,6 +29,14 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
+The `consolidated comparison <audit/overview/v1/packet/summary.pdf>`_ gives
+all ten measured topics, all 27 individual factors and complete program costs
+in five pages. Its `whole-topic graph <audit/overview/v1/packet/whole_topics.svg>`_
+shows the full common theory and applications; the `individual graph
+<audit/overview/v1/packet/conditional_applications.svg>`_ shows each original
+and its application. See the `numerical overview <audit/overview/v1/README.rst>`_
+for exact inputs and the independent review.
+
 Read the `audit protocol <audit/protocol.pdf>`_ and its
 `TeX source <audit/protocol.tex>`_. The historical cutoff is recorded in
 `audit/intake.json <audit/intake.json>`_. Its carry-over restrictions describe
