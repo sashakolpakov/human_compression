@@ -1967,6 +1967,194 @@ def check_topic_f_proofs():
     return 25,5
 
 
+def check_topic_g_proofs():
+    base, audit = 'papers/topic-g/v2/', 'audit/topic-g/v2/'
+    admission = load(audit+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_G_COMMON_PROOFS',
+         'Unreviewed Topic G mathematical edition.')
+    check_bindings(admission['artifacts'])
+    expected = [('current_edition',base,106),('original_author',audit+'original_author/',105),
+                ('notation_delta',audit+'notation_delta/',9),
+                ('program_formal_review',audit+'program_formal_review/',42),
+                ('steiner_review',audit+'steiner_review/',7),
+                ('root_adoption',audit+'root_adoption/',9),
+                ('assembly_replay',audit+'assembly_replay/',3)]
+    need([(r['role'],r['path']+'/',r['exports']) for r in admission['packets']]==expected,
+         'Topic G frozen packet inventory changed.')
+    pins = {}
+    artifact_paths = {base+'PUBLICATION.rst',audit+'publication_replay/catalogue.json',
+                      audit+'publication_replay/bindings.json'}
+    for row in admission['packets']:
+        prefix = row['path']+'/'
+        manifest = load(prefix+'manifest.json')
+        need(digest((ROOT/prefix/'manifest.json').read_bytes())==row['manifest_sha256'] and
+             len(manifest['exports'])==row['exports'], 'Changed Topic G frozen packet.')
+        check_bindings([dict(r,path=prefix+r['path']) for r in manifest['exports']])
+        pins[row['role']] = row['manifest_sha256']
+        artifact_paths.update(prefix+r['path'] for r in manifest['exports'])
+        artifact_paths.add(prefix+'manifest.json')
+    need(len(admission['artifacts'])==len(artifact_paths)==291 and
+         {r['path'] for r in admission['artifacts']}==artifact_paths,
+         'Topic G admission omits or duplicates a publication artifact.')
+    adoption = load(audit+'root_adoption/review.json')
+    steiner = load(audit+'steiner_review/review.json')
+    program_review = load(audit+'program_formal_review/review.json')
+    need(adoption['status']=='ROOT_ACCEPTED_WITH_EXPLICIT_RETAINED_INPUTS_AND_NOTATION_OVERLAY' and
+         all(adoption[k+'_manifest_sha256']==pins[p] for k,p in
+             [('author','original_author'),('notation_delta','notation_delta'),
+              ('program_formal_review','program_formal_review'),('steiner_review','steiner_review')]) and
+         adoption['changes_requested']==[] and
+         steiner['status']=='ACCEPTED_WITH_EXPLICIT_SCOPE_AND_ADDITIVE_NOTATION_REPAIR' and
+         steiner['author_manifest_sha256']==pins['original_author'] and
+         steiner['notation_delta_manifest_sha256']==pins['notation_delta'] and
+         program_review['status']=='ACCEPTED_BOUNDED_TOPIC_G_PROGRAM_AND_FORMAL_EVIDENCE' and
+         program_review['author_manifest_sha256']==pins['original_author'],
+         'Topic G review boundaries or accepted editions changed.')
+    original = load(audit+'original_author/manifest.json')
+    assembly = load(base+'assembly.json')
+    delta = load(audit+'notation_delta/delta.json')
+    replacements = ['sections/linear-bases.tex','steiner-geometries.pdf','scope.json']
+    need(delta['replacement_files']==admission['accepted_notation_replacement_files']==replacements and
+         assembly['original_author_manifest_sha256']==pins['original_author'] and
+         assembly['notation_delta_manifest_sha256']==pins['notation_delta'] and
+         assembly['root_adoption_manifest_sha256']==pins['root_adoption'] and
+         assembly['changed_files']==sorted(replacements), 'Topic G overlay changed its scope.')
+    mapping = {r['path']:r for r in assembly['mapping']}
+    need(len(mapping)==len(assembly['mapping'])==105, 'Topic G assembly omits an original file.')
+    for row in original['exports']:
+        name = row['path']
+        prefix = audit+('notation_delta/' if name in replacements else 'original_author/')
+        current = (ROOT/base/name).read_bytes()
+        need(current==(ROOT/prefix/name).read_bytes() and
+             mapping[name]['original_sha256']==row['sha256'] and
+             mapping[name]['current_sha256']==digest(current) and
+             mapping[name]['origin']==('notation_delta' if name in replacements else 'original_author'),
+             'Topic G current file differs from its accepted source: '+name)
+    old_text = (ROOT/audit/'original_author/sections/linear-bases.tex').read_text()
+    need(old_text.count(delta['old_literal'])==1 and
+         old_text.replace(delta['old_literal'],delta['new_literal'],1)==
+         (ROOT/base/'sections/linear-bases.tex').read_text() and
+         delta['new_literal']==r'\(\mathbb F_{16}^{*}/\mathbb F_4^{*}\)',
+         'Topic G multiplicative quotient correction changed.')
+    scope = load(base+'scope.json')
+    prior = load(audit+'original_author/scope.json')
+    need(scope['rows']==prior['rows'] and scope['intake_closed'] and
+         scope['principal_sources']==admission['source_ids']==['L009','L092'] and
+         scope['counts']==dict(L009=44,L092=35,proof_spans=34) and
+         len(scope['rows'])==admission['source_rows']==79 and
+         admission['source_row_counts']=={'L009':44,'L092':35} and
+         [r['id'] for r in scope['rows']]==admission['source_row_ids'] and
+         len(scope['proof_spans'])==admission['proof_or_context_spans']==34,
+         'Topic G source dispositions or proof contexts changed.')
+    for name,row in scope['proof_spans'].items():
+        text = (ROOT/base/row['path']).read_text()
+        start = text.index(row['start_anchor']) if row['start_anchor'] else 0
+        end = text.index(row['end_anchor'],start+len(row['start_anchor'] or '')) if row['end_anchor'] else len(text)
+        data = text[start:end].encode()
+        need(len(data)==row['bytes'] and digest(data)==row['sha256'], 'Topic G proof passage changed: '+name)
+    rows = {r['id']:r for r in scope['rows']}
+    triangle = load(audit+'root_adoption/L009_source_review.json')
+    need(triangle['rows_checked']==len(triangle['source_rows'])==44 and
+         all(all(r[k]==rows[r['id']][k] for k in ['source_locator','claim','status','proof_spans','qualification'])
+             for r in triangle['source_rows']), 'Topic G triangle reading differs from source dispositions.')
+    notes = load(audit+'steiner_review/proof_reading.json')['rows']
+    need(len(notes)==35 and {r['id'] for r in notes}=={r['id'] for r in scope['rows'] if r['source']=='L092'} and
+         all(r['author_status']==rows[r['id']]['status'] and r['proof_spans']==rows[r['id']]['new_proof_spans']
+             for r in notes), 'Topic G Steiner reading differs from source dispositions.')
+    need(rows['L092.Conj1']['status']=='previously admitted solution reused' and
+         rows['L009.question.gonality3']['status']=='unresolved-here' and
+         rows['L009.question.gonality2']['status']=='separate-question-track' and
+         rows['L092.Pasini.names']['status']=='excluded unproved identification' and
+         rows['L092.Abstract.generality']['status']=='excluded broader claim' and
+         all(rows[n]['status']=='retained external theorem' for n in ['L092.T2','L092.T10']) and
+         steiner['coverage']['whole_literal_source_recovered'] is False,
+         'Topic G promoted an exclusion, retained proof or earlier question answer.')
+    inventory = load(base+'program_inventory.json')
+    reviewed_programs = load(audit+'program_formal_review/program_map.json')
+    need(inventory['programs']==reviewed_programs['programs'] and
+         inventory['operational_files']==reviewed_programs['operational_files'] and
+         len(inventory['programs'])==admission['complete_programs']==13 and
+         inventory['required_mathematical_programs']==admission['required_mathematical_programs']==4 and
+         inventory['required_witness_or_certificate_programs']==admission['witness_or_certificate_programs']==2 and
+         inventory['diagnostic_programs']==admission['validation_programs']==7 and
+         len(inventory['operational_files'])==admission['separate_operational_files']==3,
+         'Topic G whole program roles or operational inventory changed.')
+    check_bindings([dict(r,path=base+r['path']) for r in inventory['programs']])
+    replay = load(audit+'program_formal_review/replay/report.json')
+    evidence = load(audit+'program_formal_review/audit.json')
+    need(replay['status']=='PASS' and len(replay['program_replays'])==13 and
+         len({r['label'] for r in replay['program_replays']})==13 and
+         all(r['status']=='PASS' and r['returncode']==0 for r in replay['program_replays']) and
+         len(replay['controls'])==8 and all(r['status']=='REJECTED' for r in replay['controls']) and
+         evidence['roles']=={'mathematical':4,'witness_or_certificate':2,'validation':7} and
+         evidence['regenerated_finite_Lean_source_equal'] and evidence['pinned_packages']==9 and
+         len(evidence['independent_evidence_controls'])==6 and
+         all(r['status']=='REJECTED' for r in evidence['independent_evidence_controls']),
+         'Topic G independent finite execution or evidence scope changed.')
+    formal = load(base+'formal/scope.json')
+    declarations = evidence['formal_declarations']
+    need(len(formal['modules'])==admission['formal_modules']==6 and
+         formal['distinct_reports']==replay['distinct_formal_reports']==admission['reused_lean_declarations']==40 and
+         len(declarations)==len({r['name'] for r in declarations})==40 and
+         all(set(r['axioms'])<={'propext','Classical.choice','Quot.sound'} for r in declarations) and
+         len(formal['unformalized'])==3 and admission['new_lean_declarations']==0 and
+         admission['end_to_end_source_formalization'] is False and
+         adoption['complete_source_specific_Lean_formalization'] is False,
+         'Topic G formalization scope was inflated.')
+    check_bindings([dict(r,path=base+r['path']) for r in formal['modules']])
+    for module in formal['modules']:
+        names = [r['name'].split('.')[-1] for r in declarations if r['module']==module['path']]
+        need(names==module['declarations'] and len(names)==module['reports'], 'Topic G actual formal statements changed.')
+    render = load(audit+'assembly_replay/render.json')
+    need(render['status']=='PASS' and
+         [(r['document'],r['pages'],r['same_text_as_bound'],r['diagnostics']) for r in render['documents']]==
+         [('umbrella',12,True,[]),('triangle-geometries',8,True,[]),
+          ('steiner-geometries',22,True,[]),('programs',20,True,[])] and
+         render['complete_code_files']==[r['path'] for r in inventory['programs']] and
+         admission['scientific_pages']==42 and admission['common_pages']==12 and
+         admission['application_pages']==[8,22] and admission['whole_program_pages']==20,
+         'Topic G whole documents or code inclusion changed.')
+    public = load(audit+'publication_replay/catalogue.json')
+    bindings = load(audit+'publication_replay/bindings.json')
+    need(public['status']=='PASS' and
+         [(r['document'],r['pages'],r['per_page_text_equal']) for r in public['bound_pdf_comparisons']]==
+         [('umbrella',12,True),('triangle-geometries',8,True),('steiner-geometries',22,True)] and
+         len(public['build']['papers'])==4 and
+         all(r['status']=='compiled' and r['diagnostics']==[] for r in public['build']['papers']) and
+         bindings['status']=='PASS' and bindings['source_rows']==79 and bindings['proof_spans']==34 and
+         bindings['complete_programs']==13 and bindings['formal_modules']==6,
+         'Topic G public build or portable bindings changed.')
+    catalogue = load('papers/catalogue.json')
+    entries = [r for r in catalogue['new_editions'] if r['topic']=='G']
+    need(entries==admission['catalogue_entries'] and len(entries)==3 and
+         catalogue['current_topic_editions']['G']==[r['id'] for r in entries] and
+         [r['source_contracts'] for r in entries]==[[],['L009'],['L092']] and
+         [r['physical_pages'] for r in entries]==[12,8,22], 'Topic G catalogue changed.')
+    for row in entries:
+        inputs = re.findall(r'\\input\{([^}]+)\}',(ROOT/row['tex']).read_text())
+        need(row['tex_inputs']==[base+x for x in inputs] and row['review_record']==audit+'admission.json',
+             'Topic G catalogue omits a TeX input or review.')
+    canonical = set(load('audit/completion.json')['publication_summary']['canonical_contract_ids'])
+    prefixes = tuple('topic-'+t+'/v2/' for t in ['e','a','b','c','d','affine','f','g'])
+    for row in catalogue['new_editions']:
+        if row['id'].startswith(prefixes):
+            canonical.update(row.get('source_contracts',[]))
+    admitted = set(load('audit/intake.json')['admitted_principal_contracts'])
+    remaining = admission['remaining_contracts_for_canonical_topic_editions']
+    need(canonical<=admitted and len(admitted)==admission['project_total_preserved']==27 and
+         len(canonical)==admission['canonical_complete_contract_count_at_this_admission']==24 and
+         len(remaining)==len(set(remaining))==3 and set(remaining)==admitted-canonical=={'F010','L008','N016'},
+         'Topic G completion summary exceeds its fixed edition boundary.')
+    need(admission['existing_principal_contracts']==2 and
+         admission['source_corrections_and_exclusions_preserved'] is True and
+         admission['whole_common_charged_once_within_topic'] and not admission['cross_topic_discount'] and
+         all(admission[k]==0 for k in ['new_source_credit','new_principal_credit','new_question_credit']) and
+         scope['new_source_credit']==scope['new_question_credit']==0 and
+         all(admission[k] is None for k in ['compression_ratio','retained_classification_full_cost','source_graphics_cost']),
+         'Topic G invents credit, a ratio or an external cost.')
+    return 79,40
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -1993,6 +2181,7 @@ def main():
     affine_rows, affine_declarations = check_affine_proofs()
     affine_cells, affine_fractions = check_affine_measurement()
     f_rows, f_declarations = check_topic_f_proofs()
+    g_rows, g_declarations = check_topic_g_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -2024,6 +2213,7 @@ def main():
     print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs.')
     print(f'PASS: affine comparison has {affine_cells} independent PDF metric cells and {affine_fractions} exact combined/conditional fractions; the whole common paper is charged.')
     print(f'PASS: Topic F preserves {f_rows} source records, {f_declarations} scoped Lean declarations, complete uniform written proofs and all three validation programs; measurements remain separate.')
+    print(f'PASS: Topic G preserves {g_rows} source records, {g_declarations} scoped Lean declarations, complete common theory and both corrected applications with all thirteen programs; measurements remain separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

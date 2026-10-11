@@ -609,10 +609,58 @@ those finite examples. Five reused Lean declarations verify the specified
 subgroup intersections and group identities; the full application is not
 formalized in Lean.
 
-This brings the number of contracts with complete canonical applications
-and common theory to **23 of 27**. It adds no source or solved-question
+At that stage, the number of contracts with complete canonical applications
+and common theory reached 23 of 27. It adds no source or solved-question
 credit. Lengths and paired dependencies are being audited separately;
 no compression factor is asserted for Topic F yet.
+
+Flag relations and incidence residues
+------------------------------------
+
+Topic G now has one `complete common paper <papers/topic-g/v2/umbrella.pdf>`_
+and two applications. The common proofs reconstruct points and lines from
+relations on flags, express Steiner chambers through successive stabilizer
+orbits, and use explicit Hermitian transport to identify and connect residues.
+All project proofs needed by the applications are included in the edition.
+
+.. list-table:: Two source manuscripts and their recovered principal results
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - L009: Delaby--Leemans--Tranchida, *Geometries with trialities arising
+       from linear spaces*; Algebraic Combinatorics 9(2) (2026), 379--402
+     - Triangle construction and reconstruction, corrected action
+       classification, automorphisms, correlations, residues and diagrams;
+       affine determinant and polarity qualifications explicit
+     - `Triangle geometries <papers/topic-g/v2/triangle-geometries.pdf>`_
+   * - L092: Leemans, *A generalization of a construction due to Van
+       Nypelseer*; Beiträge zur Algebra und Geometrie 46 (2005), 561--574
+     - Corrected classification from linear spaces and Steiner designs,
+       uniform residue arguments and exceptional group data; exact parameter,
+       numerical and path-convention corrections explicit
+     - `Geometries from Steiner designs
+       <papers/topic-g/v2/steiner-geometries.pdf>`_
+
+The common theory occupies twelve pages and the applications eight and
+twenty-two. The source ledger preserves all 79 records within the two
+contracts. External classification theorems retain their attribution and
+unknown full proof costs. Ancillary examples and unproved identifications
+remain excluded. The `publication guide <papers/topic-g/v2/PUBLICATION.rst>`_
+explains the contributions, source qualifications and review boundaries.
+
+The `twenty-page program appendix <papers/topic-g/v2/programs.pdf>`_ prints
+thirteen complete programs: four finite mathematical premises, two witness
+or certificate programs and seven validations. All were independently run.
+Six Lean modules supplied forty freshly checked supporting declarations;
+the full geometric applications and external classifications remain outside
+their formal scope. Earlier question answers are reused without new credit.
+
+**24 of 27** admitted contracts now have complete canonical applications
+and common theory. Topic G's lengths and paired dependency costs remain to
+be audited; no numerical compression factor is claimed for this edition.
 
 Papers and verification
 -----------------------

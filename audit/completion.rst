@@ -97,11 +97,22 @@ all three validation programs and both historical drivers. The
 `proof admission <topic-f/v2/admission.json>`_ binds the full independent
 reading of all 25 inherited records, fresh finite validation and the five
 scoped Lean declarations. The four-page common paper, five-page application
-and four-page validation appendix have all been reviewed. **Twenty-three
-of the 27 contracts** now have complete canonical applications and common
-theory. Four retain their earlier accepted proof packages: L092, F010,
-L008 and N016. Topic F's lengths and paired dependency costs remain pending.
+and four-page validation appendix have all been reviewed. At that stage,
+twenty-three of the 27 contracts had complete canonical applications and
+common theory. Topic F's lengths and paired dependency costs remain pending.
 These manuscript editions add no source or solved-question credit.
+
+Topic G now supplies the complete common paper and both L009 and L092
+applications in `its current edition <../papers/topic-g/v2>`_. The
+`proof admission <topic-g/v2/admission.json>`_ binds complete source and
+written reviews of all 79 records, the thirteen-program replay and forty
+scoped Lean declarations. It preserves every source correction, exclusion
+and retained classification. All 42 scientific pages and the twenty-page
+program appendix were reviewed. **Twenty-four of the 27 contracts** now
+have complete canonical applications and common theory; F010, L008 and N016
+retain their earlier accepted proof packages. Topic G's lengths and paired
+dependency costs remain pending. The two contracts and earlier question
+answers earn no additional result credit from this edition.
 
 Work by topic
 -------------
@@ -148,8 +159,9 @@ subject does not itself prove a compression theorem.
        accepted, retaining classical group structure and the exact census scope.
    * - G and incidence residues: Flag relations and Steiner geometry
      - L009, L092
-     - Preserve the current G papers; assemble all accepted residue proofs,
-       corrections and exceptional-group data for the second application.
+     - Complete common paper and both applications reviewed, with all
+       residue arguments and exceptional-group data. Measure complete lengths
+       and paired dependencies, retaining classifications and finite premises.
    * - F: Odd kernels and cyclotomic polyhedra
      - L014
      - Complete common theory and application reviewed, including the exact
