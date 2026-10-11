@@ -517,6 +517,98 @@ def check_topic_a_dag():
          'Topic A program must be paid once in its complete representation.')
     return cells
 
+def check_topic_b_proofs():
+    review = load('audit/topic-b/v2/admission.json')
+    need(review['status']=='PASS_ROOT_ADMITTED_TOPIC_B_COMMON_PROOFS',
+         'Unreviewed Topic B proof edition.')
+    check_bindings(review['artifacts'])
+    base = 'papers/topic-b/v2/'
+    author = load(base+'manifest.json')
+    for row in author['exports']:
+        check_bindings([dict(row, path=base+row['path'])])
+    need(digest((ROOT/base/'manifest.json').read_bytes())==review['author_manifest_sha256'],
+         'Topic B author edition changed.')
+    need(digest((ROOT/base/'mapping_correction/manifest.json').read_bytes())==
+         review['mapping_correction_manifest_sha256'] and
+         digest((ROOT/'audit/topic-b/v2/independent_review/manifest.json').read_bytes())==
+         review['independent_review_manifest_sha256'], 'Topic B review or correction edition changed.')
+    independent = load(review['independent_review'])
+    need(independent['status']=='ACCEPT_WITH_DECLARED_SCOPE_AND_ADDITIVE_MAP_CORRECTION' and
+         independent['author_manifest']['sha256']==review['author_manifest_sha256'] and
+         independent['mapping_delta_manifest']['sha256']==review['mapping_correction_manifest_sha256'] and
+         independent['current_source_contract_map']['sha256']==
+         digest((ROOT/review['authoritative_source_map']).read_bytes()),
+         'Topic B admission differs from its independent review.')
+    documents = load(base+'documents.json')['documents']
+    catalogue = load('papers/catalogue.json')
+    editions = [r for r in catalogue['new_editions'] if r['topic']=='B']
+    expected_sources = {'UB':[], 'B1':['N001'], 'B2':['N003'], 'B3':['N008'], 'B4':['L030']}
+    need(len(editions)==5 and catalogue['current_topic_editions']['B']==[r['id'] for r in editions],
+         'Topic B current catalogue must contain exactly its five scientific papers.')
+    for doc, edition in zip(documents[:5], editions):
+        need(edition['id']=='topic-b/v2/'+Path(doc['tex']).stem and
+             edition['tex']==base+doc['tex'] and edition['pdf']==base+doc['pdf'] and
+             edition['tex_inputs']==[base+p for p in doc['tex_inputs'] if p!=doc['tex']] and
+             edition['source_contracts']==expected_sources[doc['id']] and
+             edition['role']==('umbrella' if doc['id']=='UB' else 'application') and
+             edition['application_id']==('U_B' if doc['id']=='UB' else doc['id']) and
+             edition['physical_pages']==doc['physical_pdf_pages'] and
+             edition['review_record']=='audit/topic-b/v2/admission.json',
+             'Topic B catalogue changed a proof, input or source mapping.')
+    original = load(base+'source_contract_map.json')
+    corrected = load(review['authoritative_source_map'])
+    old = {r['adapter']:r for r in original['rows']}
+    rows = corrected['rows']
+    need(len(rows)==len({r['adapter'] for r in rows})==len(old)==30 and
+         {r['source_id'] for r in rows}=={'N001','N003','N008','L030'},
+         'Topic B must preserve exactly four contracts and thirty clauses.')
+    expected = {'C10':['B3.Coordinates','B3.Ladder'],
+                'C11':['B3.Frattini','B3.Quotient']}
+    for row in rows:
+        prior = old[row['adapter']]
+        for key in set(prior)|set(row):
+            if row['adapter'] in expected and key in ('new_tex_nodes','new_tex_spans'):
+                continue
+            need(row.get(key)==prior.get(key), 'Changed Topic B source clause: '+row['adapter'])
+        if row['adapter'] in expected:
+            need(row['new_tex_nodes']==expected[row['adapter']], 'Wrong corrected proof owner.')
+    proof = load(base+'proof_map.json')
+    nodes = {r['id']:r for r in proof['nodes']}
+    need(len(nodes)==len(proof['nodes'])==29, 'Incomplete Topic B proof map.')
+    for node in nodes.values():
+        body = (ROOT/base/node['file']).read_text()
+        span = body[node['start_codepoint']:node['end_codepoint_exclusive']]
+        need(digest(span.encode())==node['sha256_utf8'], 'Changed Topic B written proof span.')
+    for row in rows:
+        need([n['id'] for n in row['new_tex_spans']]==row['new_tex_nodes'],
+             'Topic B mapping must retain each complete proof span.')
+        for node in row['new_tex_spans']:
+            need(all(nodes[node['id']][k]==v for k,v in node.items()),
+                 'Topic B source mapping differs from written proof.')
+    fresh = load(review['root_public_replay'])
+    scope = load(base+'formal/scope.json')
+    need(fresh['status']=='PASS' and fresh['author_manifest_sha256']==review['author_manifest_sha256']
+         and fresh['source_sha256']==digest((ROOT/base/'formal/ResidualGeneration.lean').read_bytes()),
+         'Topic B lacks the fresh public Lean replay.')
+    need([r['name'] for r in fresh['axioms']]==scope['reported_declarations'] and
+         len(fresh['axioms'])==6 and all(set(r['axioms']) <=
+         {'propext','Classical.choice','Quot.sound'} for r in fresh['axioms']),
+         'Topic B declaration or axiom scope changed.')
+    need([(r['label'],r['returncode']) for r in fresh['executions']]==
+         [('ResidualGeneration',0),('without_membership',1),('without_outside',1),
+          ('without_maximality',1)] and fresh['altered_countermodel_rejected'] is True,
+         'Topic B hypothesis controls incomplete.')
+    need([(r['id'],r['pages']) for r in fresh['rendered']]==
+         [('UB',5),('B1',3),('B2',5),('B3',4),('B4',5),('scope',2)],
+         'Topic B lacks the complete PDF replay.')
+    need(author['required_mathematical_programs']==[] and
+         corrected['source_original_pdf_missing']==['N001'] and
+         review['compression_ratio'] is None and review['new_source_credit']==0 and
+         review['new_question_credit']==0,
+         'Topic B publication cannot invent a measurement or new result credit.')
+    return len(rows), len(fresh['axioms'])
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -530,6 +622,7 @@ def main():
     a_cells, a_fractions = check_topic_a_measurement()
     check_topic_dag()
     a_dag_cells = check_topic_a_dag()
+    b_clauses, b_declarations = check_topic_b_proofs()
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
     if args.write_manifest:
@@ -547,6 +640,7 @@ def main():
     print(f'PASS: Topic A has {a_cells} independent metric cells and {a_fractions} checked fractions; common costs are explicit.')
     print('PASS: Topic E paired proof graphs preserve all 90 source/application/program cost coordinates.')
     print(f'PASS: Topic A paired proof graphs preserve all {a_dag_cells} complete-document cost coordinates.')
+    print(f'PASS: Topic B preserves {b_clauses} source clauses and {b_declarations} separately checked Lean declarations; no measured ratio yet.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
 

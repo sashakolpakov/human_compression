@@ -146,6 +146,65 @@ passage once, including the complete program appendix. The `graph review
 the remaining limits, including unknown external costs. Static SVG rendering
 and interface checks pass; actual browser layout has not been certified.
 
+Forest coordinates and primitive geometries
+-------------------------------------------
+
+Topic B's `common theory <papers/topic-b/v2/umbrella.pdf>`_ proves how
+weighted tree cuts determine subgroup intersections and complete partial
+flags. A second shared argument derives generation from maximal subgroup
+intersections. The four applications check these hypotheses in their own
+geometries and give the remaining local proofs.
+
+.. list-table:: Four source manuscripts and the results recovered
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - N001: Buekenhout–Cara, *Some properties of inductively minimal
+       geometries* (1998); complete authored browser text
+     - Theorem 1, all four clauses; the PRI criterion is stated precisely
+     - `Tree coordinates <papers/topic-b/v2/inductively-minimal-geometries.pdf>`_
+   * - N003: Cameron–Cara, *Independent generating sets and geometries for
+       symmetric groups* (2002); twelve-page author manuscript
+     - Eight stated results, including the classification for n >= 7 and
+       all three counting conventions
+     - `Extremal markings <papers/topic-b/v2/maximal-symmetric-markings.pdf>`_
+   * - N008: Archer–Cara–Krempa, *Using the Frattini Subgroup and Independent
+       Generating Sets to Study RWPRI Geometries* (2005); published edition
+     - Eleven clauses: geometric containment, finite p-group coordinates
+       and counts; corrected infinite generating-set converse
+     - `Frattini coordinates <papers/topic-b/v2/frattini-coordinate-geometries.pdf>`_
+   * - L030: Garcia-Colin–Leemans, *An infinite family of incidence
+       geometries whose incidence graphs are locally X*; ten-page revised
+       institutional manuscript associated with the 2021 publication
+     - Seven clauses, including distances, residues and full graph
+       automorphisms; panel, thin-boundary and example corrections retained
+     - `Disjoint-subset geometries <papers/topic-b/v2/disjoint-subset-geometries.pdf>`_
+
+The common paper has five pages and the four applications total seventeen.
+Their `independent review <audit/topic-b/v2/independent_review/review.rst>`_
+and `admission <audit/topic-b/v2/admission.json>`_ preserve all thirty
+declared source clauses. These are four existing contracts, with their
+original attribution; no new manuscript or solved-question credit is added.
+Buekenhout–Cara–Dehon's foundational classification and the two distinct
+Whiston inputs remain explicit dependencies. The applications prove their
+local Frattini and graph reconstruction arguments in full.
+
+The `publication guide <papers/topic-b/v2/README.rst>`_ links the corrected
+source map and explains the formal limits. Six new Lean declarations verify
+the actual subgroup induction and its consequences. They form a separately
+checked module; the existing 100-module default library is unchanged.
+Fresh compilation, hypothesis controls and reproduction of every PDF page
+passed. The geometry and complete source applications remain written proofs.
+
+The length audit is underway. It will use the same overall comparison and
+conditional application comparisons as Topics A and E. N001's original PDF
+is unavailable, so its PDF cost remains unknown. The paper remains part of
+the volume; neither a zero cost nor a four-source compression factor is
+assigned. No finite enumeration is required by these written proofs.
+
 Common proofs for projective groups
 ----------------------------------
 

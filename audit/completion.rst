@@ -27,12 +27,20 @@ Since that snapshot, Topic A has a complete common paper and all six
 applications in `the current edition <../papers/topic-a/v2>`_. Their
 `proof admission <topic-a/v2/admission.json>`_ preserves the six existing
 contracts and binds the independent reviews and full program replay.
-This brings the number of contracts with complete canonical applications
+That brought the number of contracts with complete canonical applications
 and common theory to ten: the original five plus L034, L035, F013, F016
-and N009. The remaining seventeen retain their earlier accepted proof
-packages. Topic A's complete length comparison and paired dependency audit
-are now accepted within their stated scope. The immutable baseline audit
-above has not been rewritten.
+and N009. Topic A's complete length comparison and paired dependency audit
+are accepted within their stated scope.
+
+Topic B now adds complete common theory and four applications for N001,
+N003, N008 and L030 in `its current edition <../papers/topic-b/v2>`_. The
+`new proof admission <topic-b/v2/admission.json>`_ binds independent review
+of all thirty declared clauses and a fresh replay of the six supporting
+Lean declarations and all six PDFs. Fourteen of the 27 contracts therefore
+have complete canonical applications and common theory. The remaining
+thirteen retain their earlier accepted proof packages. Topic B's length
+audit and paired dependency audit remain unfinished. The immutable baseline
+audit above has not been rewritten.
 
 Work by topic
 -------------
@@ -67,8 +75,9 @@ subject does not itself prove a compression theorem.
        including the toroidal geometry and finite census.
    * - B: Forest coordinates and primitive coset geometries
      - N001, N003, N008, L030
-     - Separate the common forest and flag arguments from four complete
-       applications, retaining the graph reconstruction proofs.
+     - Complete common theory and four applications reviewed, with their
+       graph reconstruction proofs. Finish the length and paired dependency
+       audits; N001's source PDF cost remains unknown.
    * - D: Marked actions and geometry enumeration
      - L066, L074, L104
      - Complete the common enumeration arguments and all three
