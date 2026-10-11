@@ -683,6 +683,124 @@ def check_topic_b_measurement():
     return 240, 90
 
 
+def check_topic_b_dag():
+    base = 'audit/topic-b/v2/dag/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_REVIEWED_TOPIC_B_PAIRED_DAG',
+         'Topic B paired graph is not admitted.')
+    check_bindings(admission['artifacts'])
+    for folder, expected in admission['packet_manifests'].items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==expected,
+             'Topic B graph packet changed: '+folder)
+        for row in load(base+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=base+folder+'/'+row['path'])])
+    for reader_path, public_path in [
+            ('logical/logical_graph.json',base+'logical/logical_graph.json'),
+            ('logical/coverage.json',base+'logical/coverage.json'),
+            ('weighted/partition.json',base+'weighted/partition.json'),
+            ('weighted/weights.json',base+'weighted/weights.json'),
+            ('ownership_review/review.json',base+'ownership_review/review.json'),
+            ('measurement/results.json','audit/topic-b/v2/measurement/packet/results.json')]:
+        need((ROOT/base/'reader/inputs'/reader_path).read_bytes()==(ROOT/public_path).read_bytes(),
+             'Topic B reader differs from its accepted mathematical or numerical inputs.')
+    logical_review = load(base+'logical_review/review.json')
+    ownership = load(base+'ownership_review/review.json')
+    need(ownership['status']=='PASS_ROOT_INDEPENDENT_OWNERSHIP_REVIEW' and
+         ownership['accepted_packet']['sha256']==admission['packet_manifests']['weighted'] and
+         ownership['logical_review']['sha256']==admission['packet_manifests']['logical_review'],
+         'Topic B owner review refers to another packet.')
+    need(logical_review['status']=='ACCEPTED_INDEPENDENT_MATHEMATICAL_DEPENDENCY_REVIEW' and
+         logical_review['accepted_packet']['sha256']==admission['packet_manifests']['logical'] and
+         admission['independent_logical_review_accepted'] and admission['independent_reader_review_accepted'],
+         'Topic B graph lacks independent acceptance.')
+    reader_review = load(base+'reader_review/review.json')
+    need(reader_review['status']=='ACCEPTED_BOUNDED_INDEPENDENT_READER_REVIEW' and
+         reader_review['author_manifest']['sha256']==admission['packet_manifests']['reader'] and
+         reader_review['new_source_credit']==reader_review['new_question_credit']==0,
+         'Topic B reader review refers to another edition or changed result credit.')
+    partition = load(base+'weighted/partition.json')
+    weights = load(base+'weighted/weights.json')
+    graph = load(base+'logical/logical_graph.json')
+    coverage = load(base+'logical/coverage.json')['rows']
+    measured = load('audit/topic-b/v2/measurement/packet/independent/recount.json')['documents']
+    owners = partition['owners']; costs = weights['owner_costs']
+    forms = ['NFC','NFKC']
+    metrics = ['whitespace_tokens','alphanumeric_units','characters_without_whitespace',
+               'characters_with_collapsed_whitespace','utf8_bytes_with_collapsed_whitespace']
+    need(set(costs)==set(owners) and set(partition['documents'])==set(measured) and
+         len(owners)==214, 'Topic B ownership inventory changed.')
+    def total(names):
+        return {f:{m:sum(costs[n][f][m] for n in set(names)) for m in metrics} for f in forms}
+    spans = cells = 0
+    for key, row in partition['documents'].items():
+        owned = {n for n,o in owners.items() if o['document']==key}
+        end = 0
+        for span in row['spans']:
+            need(span['start']==end and span['end']>end and span['node'] in owned,
+                 'Topic B ownership has a gap, overlap or foreign owner.')
+            end=span['end']; spans+=1
+        need(end==row['length'],'Topic B trailing text omitted.')
+        expected = {f:{m:measured[key]['calibrated_selected'][f][m] for m in metrics} for f in forms}
+        need(total(owned)==weights['document_costs'][key]==expected,
+             'Topic B graph loses or duplicates complete-document cost.')
+        cells+=10
+    need(spans==217 and cells==80, 'Topic B ownership dimensions changed.')
+    for name in ['h.N008.L3.6','h.N008.T3.4']:
+        need(owners[name]['category']=='statement' and
+             all(s['category']=='statement' for s in partition['documents']['N008']['spans'] if s['node']==name),
+             'A source statement was mislabeled as a printed proof.')
+    nodes = {n['id']:n for n in graph['nodes']}; links = weights['node_interfaces']
+    need(len(nodes)==184 and len(graph['edges'])==348 and set(nodes)==set(links),
+         'Topic B reviewed graph or interface count changed.')
+    predecessors = {n:set() for n in nodes}
+    for edge in graph['edges']:
+        if edge['kind'] in graph['logical_edge_kinds']:
+            predecessors[edge['target']].add(edge['source'])
+    for name, interface in links.items():
+        paid = interface['owners']; node=nodes[name]
+        unknown = node['side'] in ('external','verification') or node['document']=='N001'
+        need(paid==sorted(set(paid)) and set(paid)<=set(owners) and
+             all(owners[n]['document']==node['document'] for n in paid) and
+             interface['weight']==(None if unknown else total(paid)),
+             'Topic B node interface has an invalid owner union or unknown cost.')
+        need(not interface['charged_as_an_additional_item'] and interface['full_dependency_cost'] is None,
+             'Topic B overlapping interfaces cannot become additional charges.')
+    def check_route(targets, record):
+        reached=set(targets); pending=list(targets)
+        while pending:
+            for n in predecessors[pending.pop()]-reached:
+                reached.add(n); pending.append(n)
+        paid={owner for n in reached for owner in links[n]['owners']}
+        need(record['logical_nodes']==sorted(reached) and record['owners']==sorted(paid) and
+             record['known_extracted_text_subtotal']==total(paid) and
+             record['unknown_inputs']==sorted(n for n in reached if links[n]['weight'] is None) and
+             record['expanded_dependency_cost'] is None,
+             'Topic B prerequisite closure loses a premise, text or unknown input.')
+    need(len(coverage)==len(weights['source_contract_closures'])==30, 'Topic B source clauses changed.')
+    for clause, record in zip(coverage,weights['source_contract_closures']):
+        need((clause['adapter'],clause['source_id'])==(record['adapter'],record['source_id']),
+             'Topic B source-clause correspondence changed.')
+        check_route([clause['historical_output']],record['historical'])
+        check_route(clause['new_outputs'],record['replacement'])
+    for key,target in graph['new_application_outputs'].items():
+        check_route([target],weights['new_application_closures'][key])
+    acquisition = load(base+'reader/acquisition.json'); paid=set()
+    need(acquisition['sequence']==['U_B','B1','B2','B3','B4'], 'Topic B acquisition order changed.')
+    for stage in acquisition['stages']:
+        local={n for n,o in owners.items() if o['document']==stage['stage']}
+        need(stage['previous_owner_ids']==sorted(paid) and stage['new_owner_ids']==sorted(local-paid) and
+             stage['new_cost']==total(local), 'Topic B stage omitted context or paid for common theory again.')
+        paid|=local
+        need(stage['cumulative_owner_ids']==sorted(paid) and stage['cumulative_cost']==total(paid),
+             'Topic B cumulative acquisition does not charge each complete paper once.')
+    need(all(weights[k] is None for k in ['whole_historical_pdf_cost','expanded_external_proof_cost',
+         'graphic_cost','compression_ratio']) and partition['N001_original_pdf_cost'] is None and
+         acquisition['source_cumulative_numeric_curve'] is None and acquisition['raw_node_ratio'] is None and
+         admission['new_source_credit']==admission['new_question_credit']==0,
+         'Topic B graph invented an unknown cost, a graph factor or new result credit.')
+    return cells
+
+
 def check_topic_c_proofs():
     base = 'papers/topic-c/v2/'
     audit = 'audit/topic-c/v2/'
@@ -817,6 +935,7 @@ def main():
     a_dag_cells = check_topic_a_dag()
     b_clauses, b_declarations = check_topic_b_proofs()
     b_cells, b_fractions = check_topic_b_measurement()
+    b_dag_cells = check_topic_b_dag()
     c_rows, c_declarations = check_topic_c_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
@@ -838,6 +957,7 @@ def main():
     print(f'PASS: Topic A paired proof graphs preserve all {a_dag_cells} complete-document cost coordinates.')
     print(f'PASS: Topic B preserves {b_clauses} source clauses and {b_declarations} separately checked Lean declarations.')
     print(f'PASS: Topic B has {b_cells} independent metric cells and {b_fractions} conditional fractions; N001 and the overall factor remain unknown.')
+    print(f'PASS: Topic B paired proof graphs preserve all {b_dag_cells} complete-document coordinates and 64 prerequisite closures.')
     print(f'PASS: Topic C preserves {c_rows} contract rows, {c_declarations} scoped Lean declarations and the full Janko census; no measured factor yet.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')

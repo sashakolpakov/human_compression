@@ -212,8 +212,19 @@ characters without whitespace, with the same full-document boundary as
 Topics A and E. No finite enumeration is required by these written proofs.
 The `measurement audit <audit/topic-b/v2/measurement/README.rst>`_ binds
 the independent recount of all 240 metric cells and the separate arithmetic
-review. Graphic and retained external-proof costs remain unknown. The
-paired dependency audit is still in progress.
+review. Graphic and retained external-proof costs remain unknown.
+
+The `proof routes and acquisition costs
+<audit/topic-b/v2/dag/reader/reader.pdf>`_ explain the same comparison through
+paired dependency graphs. The `standalone explorer
+<audit/topic-b/v2/dag/reader/explorer.html>`_ can be downloaded and opened
+locally to select any of the thirty source clauses. The
+`static graph <audit/topic-b/v2/dag/reader/default.svg>`_ shows one application
+of the common forest theory. Every complete paper remains charged; overlapping
+graph boxes refer to shared passages and are never summed as separate costs.
+The `graph audit <audit/topic-b/v2/dag/README.rst>`_ records the independent
+mathematical review, text accounting and reader checks. These graphs add no
+new result or conjecture credit.
 
 Chamber operations and binary translations
 -----------------------------------------
