@@ -1092,6 +1092,20 @@ after acquiring the whole common theory and program. Word and byte units
 reverse the near-unit written comparison. The `current additions catalogue
 <papers/latest_catalogue.json>`_ records all subsequent admissions.
 
+A correction to the unrestricted HNN construction
+-------------------------------------------------
+
+An explicit rank-six coset geometry of S4 satisfies the hypotheses of
+Piedade–Tranchida, arXiv:2505.24662v1, Theorem 3.35, while its prescribed HNN
+output is neither flag-transitive nor a geometry. The `four-page proof and
+distinct review <corrections/nonfirm-hnn/v1/README.rst>`_ give the elementary
+input argument, the infinite-group identification and the failed output flag.
+Independent finite validations also pass. The example is nonfirm and not
+residually connected; it does not refute the restricted assertions. This is
+a source-theorem correction, with no numbered-conjecture, historical-priority
+or full Lean claim. N005 remains pending as a whole-paper recovery, and the
+34-original numerical comparison is unchanged.
+
 Answers to the two Fischer cases
 --------------------------------
 

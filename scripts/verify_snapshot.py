@@ -3805,6 +3805,53 @@ def check_overview34():
     return nf,nb
 
 
+def check_nonfirm_hnn_correction():
+    base='corrections/nonfirm-hnn/v1/'
+    a=load(base+'admission.json')
+    need(a['status']=='ROOT_ADMITTED_EXPLICIT_N005_NONFIRM_HNN_CORRECTION' and
+         a['source_id']=='N005' and a['edition']=='arXiv:2505.24662v1' and
+         a['source_sha256']=='9ac31adc29a5cc66a4b412e0adae7fb47152568db89d1207ee2c34f134ee1427' and
+         a['proof_pages']==4 and a['all_written_proofs_reviewed'] and
+         a['full_infinite_group_identification_written'] and
+         a['finite_programs_role']=='validation only' and
+         all(a[k]==0 for k in ['new_original_credit','new_numbered_conjecture_credit','new_formal_credit']) and
+         not any(a[k] for k in ['input_firm','input_residually_connected',
+              'firm_or_RC_restricted_theorem_refuted','full_Lean_verified',
+              'historical_priority_claim','whole_N005_recovered']) and
+         a['compression_factor'] is None,'N005 correction scope changed.')
+    check_bindings(a['artifacts'])
+    for key in ['author_manifest','independent_manifest','author_replay','independent_replay','written_proof']:
+        check_bindings([a[key]])
+    need(a['author_manifest']['sha256']=='5bff3149addbbb166d729758b7a6c65dd6b97645a5691f72f608838322190d3a' and
+         a['independent_manifest']['sha256']=='9da54b35015e0905ed51f7c89967a5955979b26a33df1debf5d11de9807313e3',
+         'N005 accepted proof and review editions changed.')
+    for key in ['author_manifest','independent_manifest']:
+        parent=Path(a[key]['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(a[key]['path'])['exports']])
+    q=load(base+'independent_review/review.json')
+    need(q['status']=='ROOT_ACCEPTED_LITERAL_N005_NONFIRM_COUNTEREXAMPLE' and
+         q['author_manifest_sha256']==a['author_manifest']['sha256'] and
+         q['complete_written_proof_accepted'] and q['author_proof_pages_read_and_viewed']==4 and
+         q['fresh_author_literal_flags']==1336 and q['fresh_author_controls']==4 and
+         q['independent_finite_reconstruction']['product_identities']==729,
+         'N005 complete distinct mathematical reading missing.')
+    r=load(a['author_replay']['path']);d=load(a['independent_replay']['path'])
+    need(r['status']=='PASS' and r['exports']==10 and not r['source_verified'] and
+         len(r['finite_validation']['controls']['controls'])==4 and
+         d['status']=='PASS_DISTINCT_N005_S4' and d['group_order']==24 and
+         d['standard_parabolics']==9 and d['all_parabolic_product_identities']==729 and
+         d['pair_intersections']==[1,1,1] and d['triple_intersection']==0 and
+         not d['author_program_imported'],'N005 finite validation scope changed.')
+    check_bindings([d['log']])
+    marker='PASS_N005_S4_DISTINCT:order=24;parabolics=9;product-identities=729;pair-intersections=[1,1,1];triple=0'
+    text=(ROOT/d['log']['path']).read_text()
+    need(marker in re.sub(r'\s','',text) and 'Error' not in text,'N005 independent replay marker missing.')
+    current=load('audit/corpus/latest.json')
+    need('N005' in current['accessible_pending_original_ids'] and
+         'N005' not in current['admitted_original_ids'],'Correction silently credited as whole-source recovery.')
+    return 1
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3855,11 +3902,13 @@ def main():
     unified_fractions = check_unified_b_science_and_new_measurements()
     overview34_fractions, overview34_bars = check_overview34()
     fischer_cases = check_fischer_answers()
+    nonfirm_corrections = check_nonfirm_hnn_correction()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
     print(f'PASS: current thirteen-topic overview has {overview34_fractions} exact comparisons and {overview34_bars} bars in each vector format for34 originals.')
     print(f'PASS: unified B scientific transfer and enlarged orbit comparison preserve {unified_fractions} new-edition fractions; historical33 overview is separately checked.')
+    print(f'PASS: {nonfirm_corrections} explicit nonfirm HNN correction; no whole-source, numbered-conjecture or Lean credit.')
     print(f'PASS: {fischer_cases} Fischer possible-exception cases have separate accepted proofs and exact certificates; no new original, priority or full Lean claim.')
     print(f'PASS: complete B5 comparison preserves {b5_fractions} exact fractions; {active_measured} originals measured.')
     print(f'PASS: expanded A/C topics preserve {ac_extension_fractions} exact fractions for twelve originals; two are newly measured.')
