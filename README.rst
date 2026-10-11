@@ -14,11 +14,11 @@ yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
 `subsequent admissions <audit/corpus/latest.json>`_ now record **104
-accessible manuscripts: 32 with admitted principal-result recoveries and
-72 awaiting complete recovery**. The other **57 remain retrieval targets**.
+accessible manuscripts: 33 with admitted principal-result recoveries and
+71 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
 evidence and next obligation. Twenty-nine recovered originals have measured
-comparisons; L068, L128 and N007 await measurement. The catalogue
+comparisons; L040, L068, L128 and N007 await measurement. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
@@ -41,7 +41,8 @@ The `two additional comparisons
 <audit/additional-measurements/v1/packet/measurement.pdf>`_ add matching
 extensions and chiral enumeration. Together the reports measure 29 originals.
 The current rates below count each complete common theory once. The A and C
-rates still cover their earlier six and four originals; their enlarged topics
+rates still cover their earlier six and four originals. B likewise retains
+its four-original factor; all three enlarged topics
 await measurement.
 
 .. list-table:: Current measured sets within the recovery programme
@@ -56,7 +57,7 @@ await measurement.
      - 1.535
      - 1.083
    * - B: Forests and marked permutations
-     - 4 / 4
+     - 4 / 5
      - 1.236
      - 1.236
    * - C: Chamber operations and binary translations
@@ -269,10 +270,11 @@ Forest coordinates and primitive geometries
 Topic B's `common theory <papers/topic-b/v2/umbrella.pdf>`_ proves how
 weighted tree cuts determine subgroup intersections and complete partial
 flags. A second shared argument derives generation from maximal subgroup
-intersections. The four applications check these hypotheses in their own
-geometries and give the remaining local proofs.
+intersections. Four applications check these hypotheses in their own
+geometries. The fifth adds a complete common paper on irredundant generation
+and finite cores on trees, then proves the high-rank classification.
 
-.. list-table:: Four source manuscripts and the results recovered
+.. list-table:: Five source manuscripts and the results recovered
    :header-rows: 1
    :widths: 34 44 22
 
@@ -299,8 +301,29 @@ geometries and give the remaining local proofs.
      - Seven clauses, including distances, residues and full graph
        automorphisms; panel, thin-boundary and example corrections retained
      - `Disjoint-subset geometries <papers/topic-b/v2/disjoint-subset-geometries.pdf>`_
+   * - L040: Fernandes–Leemans, *C-groups of high rank for the symmetric
+       groups* (2018); accepted manuscript, twenty authored pages and cover
+     - Ranks n−1 and n−2 in their full ranges: classification, tree
+       presentations and regular hypertopes; corrected branching clause
+     - `Finite cores and high rank <papers/topic-b/extensions/high-rank/v1/high-rank-symmetric-markings.pdf>`_
 
-The common paper has five pages and the four applications total seventeen.
+The fifth application's `common addition
+<papers/topic-b/extensions/high-rank/v1/umbrella.pdf>`_ has ten pages and its
+application eleven. The `complete program appendix
+<papers/topic-b/extensions/high-rank/v1/program-appendix.pdf>`_ prints four
+whole programs in seven pages. Its `distinct review and admission
+<audit/topic-b/extensions/high-rank/v1/README.rst>`_ cover the full uniform
+converse, all allowed branching and all flags. Eight scoped Lean declarations
+verify normalization and independence; they do not formalize the classification.
+The auxiliary exact primitive-rank census and numerical leaf convention are
+not recovered by this edition. No open-conjecture answer is added.
+
+The enlarged topic pays the whole earlier common paper and the whole new
+common addition. A numerical comparison is pending. The four-original rates
+below retain their earlier scope; they are not a factor for all five originals.
+
+For the earlier four-original set, the common paper has five pages and the
+four applications total seventeen.
 Their `independent review <audit/topic-b/v2/independent_review/review.rst>`_
 and `admission <audit/topic-b/v2/admission.json>`_ preserve all thirty
 declared source clauses. These are four existing contracts, with their

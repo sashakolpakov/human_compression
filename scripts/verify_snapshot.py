@@ -3354,6 +3354,55 @@ def check_current_measurement_pointer():
     return len(measured)
 
 
+
+def check_high_rank_symmetric_extension():
+    base='audit/topic-b/extensions/high-rank/v1'
+    a=load(base+'/admission.json')
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+         a['source_id']=='L040' and a['topic']=='B' and a['principal_originals_added']==1 and
+         a['source_rows']==35 and a['proof_spans']==25 and a['principal_targets']==5 and
+         a['new_question_credit']==0 and not a['whole_source_formalized'] and
+         a['compression_factor'] is None and a['measurement_status']=='pending' and
+         a['charge_full_common_paper'] and a['charge_common_once_within_topic'] and
+         not a['cross_topic_overlap_discount'] and not a['literal_branching_clause_recovered'] and
+         a['corrected_general_presentation'], 'High-rank recovery scope.')
+    check_bindings(a['artifacts']+[a['existing_common_binding']])
+    for k in ['author','review','public_replay','public_review_replay']:check_bindings([a[k]])
+    for k in ['author','review']:
+        row=a[k];parent=Path(row['path']).parent;exports=load(row['path'])['exports']
+        need(len(exports)==row['exports'],'High-rank complete export count.')
+        check_bindings([dict(z,path=str(parent/z['path'])) for z in exports])
+    review=load(base+'/independent_review/review.json')
+    need(review['status']=='INDEPENDENTLY_ACCEPTED_WITH_EXPLICIT_RETAINED_INPUTS_AND_CORRECTION' and
+         review['author_manifest_sha256']==a['author']['sha256'] and not review['blocking_findings'],
+         'High-rank distinct mathematical review.')
+    r=load(a['public_replay']['path']);q=load(a['public_review_replay']['path'])
+    need(r['status']==q['status']=='PASS' and len(r['programs'])==4 and
+         r['formal']['declarations']==8 and r['formal']['hypothesis_countermodels']==6 and
+         [z['pages'] for z in r['render']]==[10,11,7] and
+         all(z['per_page_text_identical'] and z['diagnostics']==[] for z in r['render']) and
+         len(r['integrity_controls'])==11 and len(q['semantic_controls'])==14 and
+         q['author_exports']==46, 'High-rank fresh checks.')
+    current=load('audit/corpus/updates/high-rank-symmetric.json')
+    check_bindings([current['previous_snapshot']]+current['added_admissions'])
+    old=load(current['previous_snapshot']['path'])
+    need(set(current['admitted_original_ids'])==set(old['admitted_original_ids'])|{'L040'} and
+         set(current['accessible_pending_original_ids'])==set(old['accessible_pending_original_ids'])-{'L040'} and
+         current['retrieval_original_ids']==old['retrieval_original_ids'] and
+         current['admitted_principal_originals']==33 and current['accessible_pending_complete_recovery']==71 and
+         current['currently_measured_originals']==29 and
+         current['measured_original_ids']==old['measured_original_ids'] and
+         set(current['measurement_pending_original_ids'])=={'L040','L068','L128','N007'},
+         'High-rank original partition.')
+    c=load('papers/catalogue_high_rank.json');check_bindings([c['previous_catalogue']])
+    prior=load(c['previous_catalogue']['path'])
+    need(c['entries'][:-2]==prior['entries'] and len(c['entries'])==11 and
+         [z['topic'] for z in c['entries'][-2:]]==['B','B'] and
+         [z['role'] for z in c['entries'][-2:]]==['umbrella_addition','application'] and
+         set(c['original_ids'])==set(prior['original_ids'])|{'L040'},'High-rank catalogue.')
+    return 33,71
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3395,8 +3444,10 @@ def main():
     latest_admitted, latest_pending = check_diagonal_admission_and_latest_programme()
     graph_admitted, graph_pending = check_graph_application_extensions()
     extra_measure_fractions = check_two_additional_measurements()
+    high_rank_admitted, high_rank_pending = check_high_rank_symmetric_extension()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
+    print(f'PASS: high-rank extension preserves {high_rank_admitted} admitted originals and {high_rank_pending} accessible pending; measurement remains separate.')
     print(f'PASS: graph application extensions preserve {graph_admitted} admitted originals and {graph_pending} accessible pending; no new question credits.')
     print(f'PASS: two additional comparisons preserve {extra_measure_fractions} fractions; {active_measured} unique originals have current measurements.')
     check_project_lean_runner(lean)
