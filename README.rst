@@ -5,14 +5,14 @@ Can reusable mathematics and capable language-model agents recover decades
 of published results in shorter, complete papers? This project tests that
 question through explicit proofs, attribution and measured comparisons.
 
-**Measurement correction.** Validation programs must be excluded on both
-sides or included on both sides. Earlier reports added our programs to the
-replacement without measuring the originals' software. Those software-inclusive
-fractions are withdrawn as compression measures. An audit of printed listings
-also found source-only code charges in three manuscript comparisons. The
-`current correction <audit/overview/v11/README.rst>`_ withholds those whole-topic
-factors and the three affected individual factors until both sides have matching
-code exclusions. Program and data costs remain separately inventoried.
+**Matched manuscript comparisons.** Concrete program listings are excluded on
+both sides of the current comparison. Exact reviewed block exclusions now
+restore the Chamber, ChiralEnumeration and Operations factors previously held
+in v11. Surrounding proofs, mathematical algorithm prose and tables remain
+counted. The `current comparison <audit/overview/v12/README.rst>`_ records all
+nineteen whole-topic and forty-three individual factors. Required programs and
+data keep their proof role and remain separately inventoried. Software-inclusive
+factors stay unknown until comparable original software is available.
 
 The active catalogue contains **106 original manuscripts with usable full
 texts**. The `complete active list
@@ -24,10 +24,10 @@ the programme; source retrieval is no longer scheduled. The historical
 161-title inventory and earlier reports remain preserved.
 
 **43 accessible originals have admitted principal-result recoveries;
-63 await complete recovery.** Sixteen whole-topic factors and forty individual
-factors remain available after the listing audit. The `current programme
+63 await complete recovery.** Nineteen whole-topic factors and forty-three individual
+factors are available after the matched listing exclusions. The `current programme
 <audit/corpus/latest.json>`_ records the proof and earlier measurement
-admissions; the current comparison status is given in the correction above. An accessible original awaiting a proof remains pending.
+admissions. The overview records current comparison status; an original awaiting a complete proof remains pending.
 Recovery refers to the specified principal results with their explicit
 corrections and retained inputs, not every cited fact or open question.
 
@@ -39,19 +39,20 @@ F now has two originals; the affine consolidation remains in progress. None has 
 no proofs or numerical savings; any later exclusions will retain their
 reasons and previous measurements.
 
-The `consolidated comparison <audit/overview/v11/packet/reader.pdf>`_ accounts
-for all nineteen topics and forty-three originals. Three whole-topic factors
-and the individual factors for L008, L028 and N006 are withheld: their original
-manuscripts contain executable listings while our counted manuscripts exclude
-the separate programs. The unaffected individual comparisons for N016, N005
-and N007 remain available. Software-inclusive factors stay unknown until both
-sides have comparable software inventories.
-The current `topic graph <audit/overview/v11/packet/whole_topics.svg>`_ and
+The `consolidated comparison <audit/overview/v12/packet/reader.pdf>`_ accounts
+for all nineteen topics and forty-three originals. Chamber, ChiralEnumeration
+and Operations now have written factors of **0.938**, **0.862** and **1.265**;
+the individual factors for L008, L028 and N006 are **2.663**, **1.191** and
+**1.449** after acquiring the entire common theory and required premises.
+The other sixteen whole-topic and forty individual comparisons remain unchanged.
+The current `topic graph <audit/overview/v12/packet/whole_topics.svg>`_ and
 application graphs (`first twenty-two
-<audit/overview/v11/packet/conditional_1.svg>`_; `remaining twenty-one
-<audit/overview/v11/packet/conditional_2.svg>`_) omit numeric bars for held
-comparisons. The `numerical overview <audit/overview/v11/README.rst>`_ gives
-the exact current tables, historical observations and review.
+<audit/overview/v12/packet/conditional_1.svg>`_; `remaining twenty-one
+<audit/overview/v12/packet/conditional_2.svg>`_) show all complete manuscript
+lengths, with whole common theory visible in each topic. The
+`numerical overview <audit/overview/v12/README.rst>`_ retains exact current
+tables and historical observations. Operations also retains its separately
+reported text-only sensitivity; source diagram complexity remains unknown.
 
 The expanded `odd-kernel topic <papers/topic-f/v3/README.rst>`_ now covers
 L014 and L007 with one seven-page common paper and applications of five and
@@ -124,16 +125,16 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 1.015
    * - Chamber systems and covers
      - 2
-     - Pending code exclusion
+     - 0.938
    * - Matching extensions
      - 1
      - 1.119
    * - Chiral enumeration
      - 1
-     - Pending code exclusion
+     - 0.862
    * - Coset geometries under group operations
      - 3
-     - Pending code exclusion
+     - 1.265
    * - Gluing by common points and synchronized trees
      - 1
      - 0.677
@@ -154,7 +155,7 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 1.322
 
 These are complete manuscript text costs, not minimum proof complexities or
-a complete cost comparison of executable proofs. Separate software is excluded
+a complete cost comparison of executable proofs. Separate software and the exact reviewed executable listing blocks are excluded
 from both manuscript totals. The listing audit screens the counted text and
 replacement TeX; it does not measure unseen software or unextracted graphics.
 It retains written algorithm explanations, proofs and tables. Required programs

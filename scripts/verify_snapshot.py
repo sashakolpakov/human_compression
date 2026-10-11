@@ -5559,6 +5559,49 @@ def check_listing_symmetry_overview():
     return 56, 128
 
 
+# Add these two functions without changing any existing non-main function.
+def check_historical_listing_symmetry_overview():
+    """Keep the v11 guard against its exact prior pointer and README."""
+    from types import FunctionType
+    base = 'audit/overview/v12/packet/inputs/'
+    record = load('audit/overview/v12/packet/bindings.json')
+    snapshots = {r['public_path']: r for r in record['public_inputs']
+                 if r['public_path'] in ['audit/overview/latest.json', 'README.rst']}
+    check_bindings([dict(r, path='audit/overview/v12/packet/' + r['local'])
+                    for r in snapshots.values()])
+    routes = {'audit/overview/latest.json': base + 'v11_pointer.json'}
+    class HistoricalRoot:
+        def __truediv__(self, path):
+            return ROOT / (base + 'v11_README.rst' if str(path) == 'README.rst' else path)
+    function = check_listing_symmetry_overview
+    scope = dict(function.__globals__, ROOT=HistoricalRoot(),
+                 load=lambda path: load(routes.get(str(path), path)))
+    return FunctionType(function.__code__, scope, function.__name__,
+                        function.__defaults__, function.__closure__)()
+
+
+def check_listing_restored_overview():
+    spec = importlib.util.spec_from_file_location(
+        'current_listing_restoration', ROOT / 'scripts/check_listing_restored_overview.py')
+    checker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checker)
+    return checker.verify(ROOT)
+
+
+def check_restored_overview_independent():
+    base = 'audit/overview/v12/'
+    admission = load(base + 'admission.json')
+    check_bindings([admission['independent_manifest']])
+    spec = importlib.util.spec_from_file_location('restored_listing_root_review',
+                                                  ROOT / base / 'independent_review/check.py')
+    reviewer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(reviewer)
+    report = reviewer.check(ROOT / base / 'packet', ROOT)
+    need(report == load(base + 'independent_review/report.json'),
+         'Independent restored comparison replay differs.')
+    return report['exact_fractions'], report['SVG_bars']
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -5647,7 +5690,10 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     active_admitted, active_pending = check_programme43()
     overview43_fractions, overview43_bars = run_historical43_check(check_overview43)
-    current_fractions, current_bars = check_listing_symmetry_overview()
+    check_historical_listing_symmetry_overview()
+    current_fractions, current_bars = check_listing_restored_overview()
+    need(check_restored_overview_independent() == (current_fractions, current_bars),
+         "Distinct overview counts disagree.")
     policy_review_binding = load('audit/overview/latest.json')['measurement_policy_review']
     check_bindings([policy_review_binding])
     policy_review = load(policy_review_binding['path'])
@@ -5661,7 +5707,7 @@ def main():
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, {active_admitted} recovered and {active_pending} pending; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
-    print(f"PASS: current listing correction retains {current_fractions} comparisons and {current_bars} bars per format; three whole and three individual factors held.")
+    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all19whole and43conditional factors restored.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
     print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
