@@ -1170,6 +1170,106 @@ def check_project_lean_runner(legacy_modules):
          'Runner inventory must not be reported as a completed whole-project run.')
 
 
+def check_topic_d_measurement():
+    base = 'audit/topic-d/v2/measurement/'
+    packet = base+'packet/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_D_MEASUREMENT',
+         'Topic D numerical comparison is not independently admitted.')
+    check_bindings(admission['artifacts'])
+    for folder,expected in admission['packet_manifests'].items():
+        need(digest((ROOT/base/folder/'manifest.json').read_bytes())==expected,
+             'Changed Topic D frozen numerical packet: '+folder)
+        for row in load(base+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=base+folder+'/'+row['path'])])
+    for folder,key in [('previous','original_input_manifest_sha256'),
+                       ('inputs','corrected_input_manifest_sha256'),
+                       ('independent','input_review_manifest_sha256')]:
+        need(digest((ROOT/packet/folder/'manifest.json').read_bytes())==admission[key],
+             'Topic D original, corrected or independent input packet changed.')
+        for row in load(packet+folder+'/manifest.json')['exports']:
+            check_bindings([dict(row,path=packet+folder+'/'+row['path'])])
+    result = load(packet+'results.json')
+    counts = load(packet+'inputs/author_counts.json')
+    recount = load(packet+'independent/recount_corrected.json')
+    specification = load(packet+'inputs/replacement_input_spec.json')
+    boundary = load(packet+'inputs/source_contract_boundary.json')
+    input_review = load(packet+'independent/review.json')
+    review = load(base+'arithmetic_review/review.json')
+    adoption = load(base+'root_adoption/review.json')
+    need(input_review['measurement_inputs_accepted'] and input_review['unresolved_corrections']==[] and
+         input_review['original_proposal_corrected_not_accepted'] and
+         input_review['corrected_proposal_manifest_sha256']==admission['corrected_input_manifest_sha256'] and
+         review['status']=='ACCEPT_EXACT_D_NUMERICAL_PACKET_AND_READER' and
+         review['author_manifest_sha256']==admission['packet_manifests']['packet'] and
+         review['accepted_input_review_sha256']==admission['input_review_manifest_sha256'] and
+         review['requested_author_corrections']==[] and
+         adoption['status']=='ACCEPT_ROOT_ADOPTION_OF_INDEPENDENT_D_MEASUREMENT' and
+         adoption['independent_manifest_sha256']==admission['packet_manifests']['arithmetic_review'],
+         'Topic D measurement acceptance refers to different inputs.')
+    for path,value in result['bindings'].items():
+        need(not Path(path).is_absolute() and '..' not in Path(path).parts and
+             digest((ROOT/packet/path).read_bytes())==value, 'Changed Topic D arithmetic input.')
+    documents = {'L066','L074','L104','U_D','D1','D2','D3','CODE'}
+    need(set(counts['documents'])==set(recount['documents'])==documents and
+         all(counts['documents'][n]['variants']==recount['documents'][n]['variants'] for n in documents),
+         'Topic D author counts disagree with the independent corrected recount.')
+    spec = importlib.util.spec_from_file_location('topic_d_arithmetic',ROOT/base/'arithmetic_review/check.py')
+    arithmetic = importlib.util.module_from_spec(spec); spec.loader.exec_module(arithmetic)
+    expected = arithmetic.derive(recount,specification)
+    arithmetic.validate(result,expected,specification,boundary)
+    arithmetic.check_csv(ROOT/packet,result,expected)
+    arithmetic.reader_tables((ROOT/packet/'measurement.tex').read_text(),expected)
+    primary = expected[('calibrated_selected','NFC','characters_without_whitespace')]
+    need(primary==result['primary']==review['primary']==admission['primary'],
+         'Topic D published combined or conditional fractions changed.')
+    proof = load('audit/topic-d/v2/admission.json')
+    scope = load('papers/topic-d/v2/scope.json')
+    need(digest((ROOT/'audit/topic-d/v2/admission.json').read_bytes())==
+         admission['proof_admission_sha256']==result['public_proof_admission_sha256']==
+         input_review['mathematical_admission_sha256'] and
+         admission['source_ids']==proof['source_ids']==scope['source_ids']==['L066','L074','L104'] and
+         admission['source_contract_rows']==boundary['contract_count']==len(boundary['rows'])==37 and
+         [r['id'] for r in boundary['rows']]==[r['id'] for r in scope['contracts']] and
+         [r['current_status'] for r in boundary['rows']]==[r['current_status'] for r in scope['contracts']],
+         'Topic D measurement changed its exact mathematical coverage.')
+    binding = load(packet+'inputs/publication_binding.json')
+    need(set(binding['scientific_documents'])=={'U_D','D1','D2','D3','CODE'},
+         'Topic D omitted a complete measured replacement document.')
+    for name,row in binding['scientific_documents'].items():
+        need(row['public_path'].startswith('papers/topic-d/v2/') and
+             digest((ROOT/row['public_path']).read_bytes())==row['pdf_sha256']==counts['documents'][name]['pdf_sha256'],
+             'Topic D measured scientific PDF changed.')
+    for category in ['complete_mathematical_programs','complete_drivers']:
+        need(binding[category]==specification[category]==result[category], 'Topic D program specification drifted.')
+        for row in specification[category]:
+            check_bindings([dict(path=row['public_path'],bytes=row['bytes'],sha256=row['sha256'])])
+    need(admission['complete_programs']==len(result['complete_mathematical_programs'])==8 and
+         admission['required_programs']==sum(r['classification']=='required' for r in result['complete_mathematical_programs'])==5 and
+         admission['diagnostics']==sum(r['classification']=='diagnostic' for r in result['complete_mathematical_programs'])==3 and
+         admission['complete_drivers_separate']==len(result['complete_drivers'])==2,
+         'Topic D program or separate driver summary changed.')
+    fresh = load(base+'root_adoption/fresh_independent_arithmetic.json')
+    need(fresh['status']=='PASS_INDEPENDENT_D_ARITHMETIC_CSV_AND_SCOPE' and
+         fresh['author_manifest_sha256']==admission['packet_manifests']['packet'] and
+         admission['policy_coordinates']==fresh['coordinates']==result['policy_coordinates']==30 and
+         admission['exact_combined_fractions']==fresh['exact_combined_fractions']==90 and
+         admission['exact_conditional_fractions']==fresh['exact_conditional_fractions']==90 and
+         fresh['CSV_rows']==180 and fresh['reader_numeric_table_rows']==11 and
+         len(fresh['controls'])==14 and all(r['rejected'] for r in fresh['controls']),
+         'Topic D arithmetic evidence or summary lost a comparison.')
+    need(admission['metric_cells']==recount['pdf_metric_cells']==240 and
+         admission['normalized_text_hashes']==recount['normalized_PDF_text_hashes']==48 and
+         admission['raw_program_and_driver_metric_cells']==recount['raw_program_and_driver_metric_cells']==100 and
+         admission['unknown_external_costs']==review['unknowns'] and
+         all(v is None for v in admission['unknown_external_costs'].values()) and
+         not admission['source_specific_formalization'] and not admission['later_support_formal_counted'] and
+         not admission['paired_dependency_audit_complete'] and
+         admission['new_source_credit']==admission['new_question_credit']==admission['new_formal_credit']==0,
+         'Topic D numerical scope invented a cost, proof, graph or result credit.')
+    return 240,180
+
+
 def check_affine_proofs():
     base = 'papers/topic-affine/v2/'
     audit = 'audit/topic-affine/v2/'
@@ -1282,6 +1382,7 @@ def main():
     c_cells, c_fractions = check_topic_c_measurement()
     d_rows, d_declarations = check_topic_d_proofs()
     d_support_declarations = check_topic_d_support_formal()
+    d_cells, d_fractions = check_topic_d_measurement()
     affine_rows, affine_declarations = check_affine_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
@@ -1308,6 +1409,7 @@ def main():
     print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, L108 remains unknown.')
     print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
     print(f'PASS: Topic D generic support counting has {d_support_declarations} independently compiled declarations; source-specific instances remain separate.')
+    print(f'PASS: Topic D has {d_cells} independent PDF metric cells and {d_fractions} exact combined/conditional fractions; complete programs and separate drivers are explicit.')
     print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs; lengths remain pending.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')

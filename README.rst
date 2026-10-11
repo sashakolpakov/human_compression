@@ -345,8 +345,44 @@ formal boundaries and replay commands. A separately reviewed
 the generic global orbit decomposition and the full Möbius–Burnside
 support formula. All 28 declaration reports passed a fresh independent
 compilation; source-specific applications remain outside that supplement.
-Lengths and paired dependency costs are being measured. Neither admission
-assigns a compression factor or new source or solved-question credit.
+Those proof admissions add no source or solved-question credit.
+
+The separate `length audit <audit/topic-d/v2/measurement/README.rst>`_
+now gives **1.053 times** for the whole written topic and **0.660 times**
+including the whole program appendix. The three source manuscripts cost
+47,894 characters; our common theory costs 15,632 and the three applications
+29,855. Thus the written denominator is 45,487. The complete appendix adds
+27,070, giving 72,557. Its cost outweighs the written saving in this comparison.
+
+.. list-table:: Each result after acquiring the whole common theory and programs
+   :header-rows: 1
+
+   * - Source
+     - Source characters
+     - Application characters
+     - Conditional factor
+   * - L066
+     - 20,916
+     - 10,989
+     - 1.903
+   * - L074
+     - 20,661
+     - 13,367
+     - 1.546
+   * - L104
+     - 6,317
+     - 5,499
+     - 1.149
+
+These use NFC characters without whitespace and count complete documents.
+The individual ratios assume the whole theory and all eight mathematical
+programs have already been acquired. Substituting their full raw code for
+the printed appendix gives 0.668; the two representations are alternatives.
+Both execution drivers are inventoried separately. Historical software,
+external proofs and unextracted graphics retain unknown costs. The
+`two-page calculation <audit/topic-d/v2/measurement/packet/measurement.pdf>`_
+shows all denominators and qualifications. Paired dependency costs remain
+under review.
 
 Common proofs for projective groups
 ----------------------------------

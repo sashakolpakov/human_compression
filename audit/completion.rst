@@ -65,8 +65,11 @@ drivers. The `proof admission <topic-d/v2/admission.json>`_ binds the full
 independent review of all 37 source rows, fresh computations, ten scoped
 Lean declarations and all 31 rendered pages. At that stage twenty-one of
 the 27 contracts had complete canonical applications and common theory;
-six retained their earlier accepted proof packages. Topic D's lengths and paired
-dependency costs remain pending. The separately accepted
+six retained their earlier accepted proof packages. Topic D's
+`length comparison <topic-d/v2/measurement/README.rst>`_ is now accepted:
+1.053 for the complete written topic, 0.660 including all printed programs,
+and conditional factors 1.903, 1.546 and 1.149 after the whole theory and
+programs are acquired. Its paired dependency costs remain pending. The separately accepted
 `support-count Lean supplement <topic-d/v2/support-formal/README.rst>`_
 verifies the complete generic orbit decomposition and Möbius–Burnside
 formula through 28 scoped declarations. Concrete source-specific
@@ -124,8 +127,9 @@ subject does not itself prove a compression theorem.
    * - D: Marked actions and geometry enumeration
      - L066, L074, L104
      - Complete common theory, three applications and all programs reviewed.
-       Measure full lengths and paired dependencies, retaining classical
-       group structure and the exact census scope.
+       Full lengths and all combined/conditional fractions accepted. Finish
+       paired dependencies, retaining classical group structure and the
+       exact census scope.
    * - G and incidence residues: Flag relations and Steiner geometry
      - L009, L092
      - Preserve the current G papers; assemble all accepted residue proofs,
