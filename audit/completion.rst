@@ -42,7 +42,16 @@ thirteen retain their earlier accepted proof packages. Topic B's
 `length audit <topic-b/v2/measurement/README.rst>`_ is complete within its
 stated scope: three conditional factors are available, while N001's missing
 PDF leaves its conditional factor and the whole-topic factor unknown.
-The paired dependency audit remains unfinished. The immutable baseline
+The paired dependency audit remains unfinished.
+
+Topic C adds its complete common paper and four applications for L088,
+N013, L108 and F014, with both required Janko programs in full. The
+`proof admission <topic-c/v2/admission.json>`_ preserves all forty contract
+rows, including their corrections and exclusions, and binds independent
+mathematical review, a full fresh census and the sixteen scoped Lean
+declarations. Eighteen of the 27 contracts now have complete canonical
+applications and common theory; nine retain their earlier accepted proof
+packages. Topic C's measurements remain pending. The immutable baseline
 audit above has not been rewritten.
 
 Work by topic
@@ -74,8 +83,9 @@ subject does not itself prove a compression theorem.
        Topic A, equal-label and cubic-lattice dependencies.
    * - C: Halving, parity and Petrial operations
      - L088, N013, L108, F014
-     - Assemble common operation theorems and four full applications,
-       including the toroidal geometry and finite census.
+     - Complete common theory, four applications and both required programs
+       reviewed. Measure their full lengths and paired proof dependencies;
+       L108's original PDF cost remains unknown.
    * - B: Forest coordinates and primitive coset geometries
      - N001, N003, N008, L030
      - Complete common theory and four applications reviewed, with their

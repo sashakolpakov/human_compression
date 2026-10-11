@@ -215,6 +215,61 @@ the independent recount of all 240 metric cells and the separate arithmetic
 review. Graphic and retained external-proof costs remain unknown. The
 paired dependency audit is still in progress.
 
+Chamber operations and binary translations
+-----------------------------------------
+
+Topic C's `common theory <papers/topic-c/v2/umbrella.pdf>`_ presents even
+binary translations by differences along a connected graph. A covariance
+identity then gives an explicit inverse for the resulting group presentation.
+The generalized-cube and equal-parameter applications share the graph
+argument; the latter replaces an order comparison by inverse homomorphisms.
+The common paper also includes the complete geometric operation arguments.
+
+.. list-table:: Four source manuscripts and the results recovered
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - L088: Hartley–Leemans, *On the thin regular geometries of rank four
+       for the Janko group J1* (2005); ten-page journal article
+     - Six constructions, failed operations and the complete rank census;
+       a figure-label correction remains explicit
+     - `Janko geometries <papers/topic-c/v2/janko-geometries.pdf>`_
+   * - N013: Montero–Ivić Weiss, *Locally spherical hypertopes from
+       generalised cubes*; arXiv v1, 2020
+     - Parity, local sphericity and toroidal identifications; nonsphericity
+       qualification and two excluded auxiliary claims remain explicit
+     - `Generalized cubes <papers/topic-c/v2/halving-generalized-cubes.pdf>`_
+   * - L108: Bonheure–Buekenhout–Leemans, *On the Petrials of thin rank 3
+       geometries* (2001); complete authored text of printed pages 19–25
+     - Natural action kernel, thinness obstruction and recovery; corrected
+       embedding and length assertions; original PDF unavailable
+     - `Petrials <papers/topic-c/v2/petrials-and-faithful-actions.pdf>`_
+   * - F014: Li–Zhang, *Regular 3-polytopes of type {n,n}*; arXiv v1, 2025
+     - Marked construction, matrices and universal presentation; corrected
+       multiplication convention and separate small-parameter case
+     - `Equal adjacent parameters <papers/topic-c/v2/equal-adjacent-parameters.pdf>`_
+
+The common paper has ten pages and the applications total seventeen.
+The `four-page program appendix <papers/topic-c/v2/required-programs.pdf>`_
+contains both complete programs required for the Janko census. The
+`independent review <audit/topic-c/v2/independent_review/review.pdf>`_
+checked all forty contract rows, including their corrections and exclusions,
+and freshly reproduced the full census: six rank-four classes and no
+rank-five classes. Retained subgroup data and classical classifications
+remain explicit inputs.
+
+Nine new Lean declarations verify the general inverse argument; seven
+unchanged declarations verify supporting displacement and intersection
+statements. All sixteen were freshly compiled. The specific augmentation
+maps, geometric applications and finite census remain outside Lean.
+The `publication guide <papers/topic-c/v2/PUBLICATION.rst>`_ gives the exact
+scope and separate replay commands. Length and dependency measurements are
+next; no Topic C factor is assigned yet. These are four existing principal
+contracts, and the higher-rank question associated with F014 stays separate.
+
 Common proofs for projective groups
 ----------------------------------
 
@@ -387,6 +442,15 @@ checker. It preserves each fresh report and distinguishes complete and
 explicitly selected partial runs. The `runner review <audit/formal-project/README.rst>`_
 records fourteen dispatch tests and a fresh Topic B check; that validation
 does not claim a fresh run of all 101 sources.
+
+Topic C has its own additional checker, which is not yet dispatched by
+that runner::
+
+    python3 -B -O papers/topic-c/v2/formal/check.py --lean PATH_TO_LEAN --packages PATH_TO_PACKAGES --out /tmp/human-compression-topic-c-lean
+
+It checks the three Topic C files and sixteen declarations, including
+seven reused declarations. Its scope is detailed in the
+`publication guide <papers/topic-c/v2/PUBLICATION.rst>`_.
 
 For the original 100-module Lake library alone::
 
