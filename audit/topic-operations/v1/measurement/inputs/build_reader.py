@@ -1,0 +1,64 @@
+"""Generate the complete input reader; no compression factors are computed."""
+from pathlib import Path
+import argparse,json
+HERE=Path(__file__).resolve().parent
+
+def render():
+ c=json.loads((HERE/'author_counts.json').read_text())
+ def comma(x):return f'{x:,}'
+ def val(k):return comma(c['documents'][k]['metrics']['calibrated_selected']['NFC']['characters_without_whitespace'])
+ labels={'N005':'N005 original','N006':'N006 original','N007':'N007 original','U':'Whole shared common theory','A0':'N005 complete application','A1':'N007 revised application','A2':'N006 revised general application','A2nine':'N006 nine-case companion','A2HN':'N006 Harada--Norton companion','CODEold':'N007 printed alternative','CODEnew':'N005 printed alternative'}
+ rows='\n'.join(f"{labels[k]} & {r['pages']} & {val(k)}\\\\" for k,r in c['documents'].items())
+ rawrows='\n'.join(f"{label} & {len(c['raw_files'][cat])} & {comma(sum(r['bytes'] for r in c['raw_files'][cat].values()))} & {comma(sum(r['metrics']['NFC']['characters_without_whitespace'] for r in c['raw_files'][cat].values()))}\\\\" for cat,label in [('programs','Mathematical and validation files'),('required_drivers','Required decoding drivers'),('drivers','Operational drivers'),('formal','Unique Lean files')])
+ sensitivity='\n'.join(f"{k} & {comma(c['documents'][k]['metrics']['raw_untrimmed']['NFC']['characters_without_whitespace'])} & {comma(c['documents'][k]['metrics']['raw_selected']['NFC']['characters_without_whitespace'])} & {val(k)} & {comma(c['text_only_sensitivity'][k]['metrics']['NFC']['characters_without_whitespace'])}\\\\" for k in ['N005','N006','N007'])
+ return r'''\documentclass[11pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}\usepackage{fontspec}\setmainfont{STIXGeneral}\usepackage{unicode-math}\setmathfont{STIX Two Math}\usepackage{booktabs,array,hyperref}\hypersetup{hidelinks}\setlength{\parindent}{0pt}\setlength{\parskip}{6pt}
+\title{Length inputs for group operations and coset geometries}\author{Human Compression Project}\date{Proposed input edition; no compression factor}
+\begin{document}\maketitle
+The boundary contains three original manuscripts by Claudio Alexandre Piedade and Philippe Tranchida: \emph{From Group Operations to Geometric Structures} (N005, arXiv:2505.24662v1), \emph{The geometry of wreath and semi-direct products} (N006, arXiv:2605.04646v2), and \emph{Coset geometries acting on their elements: The $j$-diagonals twisting} (N007, arXiv:2608.23223v1). Their 81, 27 and 32 source records are scope records, not additional manuscripts.
+\begin{center}\begin{tabular}{lrr}\toprule
+Complete document & Pages & NFC nonspace characters\\\midrule
+'''+rows+r'''
+\bottomrule\end{tabular}\end{center}
+The full shared common theory is charged once, together with the complete N005 and N007 applications and all three N006 papers. No old common paper is an unpaid premise. The exact correspondence and two additive citation editions have distinct root acceptance; all eighteen theorem/proof environments in those companions are unchanged. Their newly rendered PDF bytes, including changed references, are counted here. Other frozen scientific files are untouched.
+
+All title, abstract, version, author, body, table, reference and address text remains on both sides. Only recorded running headers and isolated page numbers are removed. All 161 physical PDF pages remain; six pages are printed code alternatives, not additional programme costs. The displayed coordinate is calibrated selected NFC nonspace characters. It is an extracted-text coordinate; the new graphical proxies require independent input review. No comparison is admitted here.
+
+The source contract keeps N005's nonfirm HNN counterexample, coherent-map and faithful-action qualifications, corrected presentations and exact affine-parameter proof boundary. It does not settle the general graph-of-geometries or categorical questions. N006's ten affirmative sporadic cases include Harada--Norton; the separately reviewed Fischer exceptions remain outside this original recovery boundary. No source or question credit follows from these lengths.
+\newpage
+\section*{Complete programs and external inputs}
+\begin{center}\begin{tabular}{lrrr}\toprule
+Complete raw boundary & Files & Bytes & NFC nonspace\\\midrule
+'''+rawrows+r'''
+\bottomrule\end{tabular}\end{center}
+All 23 mathematical or validation files are included in full: eighteen inherited N006 files, the N007 validation file, three N005 mathematical programs and the complete N005 auxiliary control file. Seventeen are finite premises or witness files; six are validation. Both complete decoding drivers are required. In particular the N005 affine program supplies the three cases $s=2,3,4$; the uniform larger-parameter proof is written. No diagnostic block is removed from a required file.
+
+Raw code is the primary complete programme representation. There is no printed appendix containing all eighteen N006 files. The two-page N007 appendix may replace only its one raw validation file. The four-page N005 appendix may replace only its three named raw mathematical files. These alternatives never add a second charge for the same files; the auxiliary N005 control remains raw. Five operational drivers are separate. The three unique Lean files contain seventeen partial declarations, including eight reused declarations; no N005 theorem was newly formalized.
+
+The four required Atlas representation files total \textbf{21,960,689 bytes}: O'Nan contributes 3,720,665 bytes and the Harada--Norton binary pair 18,240,024. Sixteen installed catalogue, index and algorithm files total \textbf{2,516,249 bytes}, counted once by identical content within this topic. All pins and roles are explicit. Compact words do not replace these data. Binary and decoded representations, or compressed and decompressed catalogue files, are alternatives rather than additive copies. Four construction-only Atlas files remain visible provenance, outside the fixed replays.
+
+The external normal-form, Artin/Coxeter, affine reflection, polytope correspondence and named-group classification inputs retain their stated attribution. Full outside proof, historical software, runtime verification and graphical construction costs remain null, not zero. The input run does not rerun GAP or Lean or claim their implementations proved. Source-side external inputs are not silently assigned zero either.
+
+Any later written comparison must use the three full originals over the whole common theory plus every application and companion. A source/application comparison is conditional on acquiring the whole common theory and the complete declared programme, including validation files and both required input drivers. Required data and unknown retained proof costs remain explicit. A comparison including the complete raw programme is separate. There is no overlap discount across topics.
+\newpage
+\section*{PDF glyphs and representation sensitivity}
+Actual font dictionaries, effective encodings and original text-showing events are bound separately from shared font streams. N005 has 28 Type1 dictionaries and 774 used classes; N006 has 23 and 698; N007 has 22 and 569. The N005 exceptional set of 85 outlines was rendered and viewed. N006 and N007 reuse their accepted maps only because their whole PDF bytes are identical; their events and counts are freshly replayed. All changed replacement pages were inspected afresh. In total, 116 pages have fresh views and 45 retain bound accepted views of identical PDFs.
+
+N005 has 472 substitutions: 334 ordinary symbol repairs and 138 proposed graphical proxies. Twenty visible strokes decode as carriage returns; the event audit separates them from generated whitespace. The proxies comprise 98 strokes, 16 curved half-tips and 24 brace tips. The ordinary symbol repairs include script letters, wide accents and extensible brace pieces. Correct ligature expansions and the two printed phi variants are retained. No theorem or intended missing formula is reconstructed.
+
+The unchanged N006 source retains 356 substitutions, including 288 graphical events, and N007 retains 237, including 152. N007's seven whitespace-decoded visible components remain counted. Its duplicated Form visitor callback is a metadata issue only: every raw extraction agrees with uninstrumented pypdf, with the version stamp returned once.
+
+Directional and corner tokens are \textbf{not literal Unicode extraction}. They record one proposed component per bound event, not complete curvature, arrows, graphs or brace assembly. Unextracted vector geometry, topology and layout remain unknown costs. No embedded raster image was found in the page content streams; that fact does not make vector or font-drawn graphics free.
+\begin{center}\begin{tabular}{lrrrr}\toprule
+Source & Raw full & Raw selected & Proposed & Text-only\\\midrule
+'''+sensitivity+r'''
+\bottomrule\end{tabular}\end{center}
+The extra text-only sensitivity replaces only bound proxy events by separators, retaining ordinary symbols and diagram labels. It does not remove every graphic or measure full graphic complexity. The untouched raw variants remain available.
+
+The ordinary grid has 330 PDF cells: eleven documents, three variants, two normalizations and five units. Thirty-three raw files give 330 raw cells; the text-only sensitivity has 110 cells. The units are whitespace tokens, alphanumeric runs, nonspace characters, characters after whitespace collapse and UTF-8 bytes after collapse, each in NFC and NFKC. Printed discretionary hyphens are retained.
+
+The portable checker compares exact inputs, source scope, font/event evidence and whole appendix inclusion, then rejects boundary, glyph, role and cost-omission mutations. No primary PDF, extracted body, font program or raster is exported. The input author also authored scientific components; this is an author input proposal awaiting distinct acceptance, not self-acceptance of a numerical result.
+\end{document}
+'''
+if __name__=='__main__':
+ ap=argparse.ArgumentParser();ap.add_argument('--out',type=Path,required=True);args=ap.parse_args();args.out.write_text(render())

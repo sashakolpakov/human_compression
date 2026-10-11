@@ -4430,6 +4430,136 @@ def check_restriction_kernel_theory():
     return len(scope['declarations'])
 
 
+
+def run_historical35_check(function):
+    """Keep earlier checks unchanged at their exact pre-Operations pointers."""
+    from types import FunctionType
+    base='audit/topic-operations/v1/'
+    a=load(base+'admission.json')
+    check_bindings([a[k] for k in ['historical_corpus_pointer','historical_overview_pointer','historical_catalogue_pointer']])
+    routes={'audit/corpus/latest.json':base+'previous_corpus_pointer.json',
+            'audit/overview/latest.json':base+'previous_overview_pointer.json',
+            'papers/latest_catalogue.json':base+'previous_catalogue.json'}
+    scope=dict(function.__globals__,load=lambda path:load(routes.get(str(path),path)))
+    return FunctionType(function.__code__,scope,function.__name__,function.__defaults__,function.__closure__)()
+
+
+def check_operations_science_and_measurement():
+    base='audit/topic-operations/v1/';a=load(base+'admission.json')
+    check_bindings(a['artifacts']+a['packets'])
+    pins={'input_manifest':'3b0d503dcdd3fe778a05213523fa248109b06f6639df31a6ddbc9196cd1b8b03',
+          'input_review_manifest':'edb9e44fe49f5cd32ce66a909cef4e0324861d3026d9863417d23417768960d7',
+          'numerical_manifest':'c211bfc7a4ae9e0855874aa0584b0f8dfa85c855390e59fa49659b5b517ef978',
+          'numerical_review_manifest':'d301b71e5743aa9e5d29a048d6553db644295a6fa4081d5686ab0e42a9f578f5'}
+    for key,pin in pins.items():check_bindings([a[key]]);need(a[key]['sha256']==pin,'Operations accepted measurement edition changed.')
+    for row in a['packets']:
+        parent=Path(row['path']).parent;exports=load(row['path'])['exports']
+        if isinstance(exports,dict):exports=[dict(r,path=p) for p,r in exports.items()]
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in exports])
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT_AND_NUMERICAL_COMPARISON' and
+         a['source_id']=='N005' and a['source_ids']==['N005','N006','N007'] and
+         a['principal_originals_added']==1 and a['previously_admitted_source_ids']==['N006','N007'] and
+         a['source_rows']=={'N005':81,'N006':27,'N007':32} and a['source_pages']==60 and
+         a['source_sha256']=='9ac31adc29a5cc66a4b412e0adae7fb47152568db89d1207ee2c34f134ee1427' and
+         a['common_pages']==[21] and a['application_pages']=={'N005':[18],'N006':[8,5,4],'N007':[5]} and
+         a['full_program_files']==23 and a['required_program_files']==17 and a['validation_files']==6 and
+         a['required_decoders']==2 and a['scientific_documents']==6 and a['scientific_pages']==61 and
+         a['partial_Lean_declarations']==17 and a['new_N005_Lean_declarations']==0 and
+         a['complete_printed_program_factor'] is None and a['whole_common_charged_once'] and
+         not any(a[k] for k in ['whole_source_formalized','historical_priority_claim','source_PDFs_redistributed','cross_topic_overlap_discount']) and
+         all(a[k]==0 for k in ['original_intake_added','new_question_credit','new_formal_credit']),
+         'Operations scientific or numerical scope changed.')
+    migration=load('papers/topic-operations/v1/integrated/source_migration.json')
+    need(len(migration['records'])==81 and len({r['source_record']['id'] for r in migration['records']})==81 and
+         a['questions']==migration['questions'] and migration['questions'][0]['status']=='NOT_SOLVED_BY_THIS_PACKET' and
+         migration['questions'][1]['status']=='NOT_CLAIMED','Operations source or open-question accounting changed.')
+    need(load(base+'integrated_review/review.json')['status']=='ROOT_ACCEPTED_COMPLETE_INTEGRATED_EDITION_WITH_DECLARED_SCOPE' and
+         load(base+'measurement/independent_review/review.json')['status']=='ROOT_ACCEPTED_COMPLETE_OPERATIONS_NUMBERS',
+         'Operations distinct scientific/numerical acceptance missing.')
+    replay=load(base+'public_replay.json')
+    need(replay['status']=='PASS_PUBLISHED_OPERATIONS_EDITION' and replay['source_recount'] and
+         replay['N005_programs_replayed'] and not replay['N006_GAP_and_Lean_repeated'] and
+         [r['pages'] for r in replay['rendered_documents']]==[21,18,4,5,8,5,4,2] and
+         all(r['whole_page_text_equal'] for r in replay['rendered_documents']),
+         'Operations complete public input/program/render replay missing.')
+    spec=importlib.util.spec_from_file_location('operations_distinct_numbers',ROOT/base/'measurement/independent_review/check.py')
+    q=importlib.util.module_from_spec(spec);spec.loader.exec_module(q)
+    packet=ROOT/base/'measurement/packet';rows,counts=q.derive(packet);data=load(base+'measurement/packet/results.json')
+    primary=q.validate(data,rows);q.csvs(packet,rows,counts)
+    svg=q.svg_rectangles((packet/'costs.svg').read_bytes());pdf,height=q.pdf_rectangles(packet/'costs.pdf')
+    q.vector_costs(svg,pdf,height,primary);q.acquisition_vectors(packet,primary)
+    need(primary==a['primary'] and a['exact_fractions']==200 and len(rows)==40,'Operations complete arithmetic changed.')
+    return 1,200
+
+
+def check_programme36():
+    base='audit/topic-operations/v1/';a=load(base+'admission.json')
+    old=load(base+'previous_corpus_pointer.json');current=load('audit/corpus/latest.json')
+    check_bindings([current['snapshot'],current['base_inventory'],current['previous_snapshot']]+
+                   current['added_admissions']+current['added_measurements']+current['access_additions'])
+    need({k:v for k,v in current.items() if k!='snapshot'}==load(current['snapshot']['path']),
+         'Current36 corpus does not match its complete snapshot.')
+    expected_admitted=set(old['admitted_original_ids'])|{'N005'}
+    need(current['originals']==161 and current['accessible_originals']==106 and current['admitted_principal_originals']==36 and
+         current['accessible_pending_complete_recovery']==70 and current['pending_source_retrieval']==55 and
+         current['currently_measured_originals']==36 and current['measurement_pending_original_ids']==[] and
+         set(current['admitted_original_ids'])==set(current['measured_original_ids'])==expected_admitted and
+         set(current['accessible_pending_original_ids'])==set(old['accessible_pending_original_ids'])-{'N005'} and
+         current['retrieval_original_ids']==old['retrieval_original_ids'] and current['access_additions']==old['access_additions'] and
+         current['all_originals_remain_active'] and not current['all_conjectures_resolved'] and not current['all_original_proofs_recovered'],
+         'Current36 original partition changed.')
+    need(current['added_admissions'][:-1]==old['added_admissions'] and
+         current['added_admissions'][-1]['path']==base+'admission.json' and
+         current['added_measurements']==[r for r in old['added_measurements'] if r['path']!='audit/diagonal-measurement/v2/admission.json']+[current['added_admissions'][-1]],
+         'Current36 double-counts an earlier original or loses a comparison.')
+    need(check_current_measurement_pointer()==36,'Every admitted original has its current measured comparison.')
+    c=load('papers/latest_catalogue.json');prior=load(base+'previous_catalogue.json')
+    need(c==load('papers/catalogue_operations_measured.json') and len(c['entries'])==len(prior['entries'])+6 and
+         set(c['original_ids'])==set(prior['original_ids'])|{'N005'},'Current Operations catalogue incomplete.')
+    for actual,earlier in zip(c['entries'],prior['entries']):
+        expected=dict(earlier)
+        if earlier['topic']=='Diagonal':expected.update(historical_manuscript_preserved=True,current_edition='papers/topic-operations/v1',current_scientific_admission=base+'admission.json',current_measurement_admission=base+'admission.json')
+        need(actual==expected,'Operations catalogue alters an older mathematical edition.')
+    for r in c['entries'][-6:]:need(r['topic']=='Operations' and r['measurement_status']=='admitted' and r['measurement_admission']==base+'admission.json' and (ROOT/r['tex']).is_file() and (ROOT/r['pdf']).is_file(),'Missing complete current Operations document.')
+    need(c['common_supersession']['current_common']=='papers/topic-operations/v1/integrated/common-theory.pdf' and
+         c['common_supersession']['whole_common_charged_once'],'Operations common paper missing from current catalogue.')
+    return 36,70
+
+
+
+def check_overview36():
+    base='audit/overview/v5/';a=load(base+'admission.json')
+    check_bindings(a['artifacts']+a['current_measurement_admissions']+[a['previous_overview'],a['current_corpus'],a['current_catalogue'],a['scientific_admission']])
+    for key,pin in [('author_manifest','ea43de7db427900f65f06f94c73cbf81414b61910e1fdf760242fe56597a3b1d'),
+                    ('independent_manifest','b75678a723dff7b4ebe499ae5fa3c4fbbf4c11f83b900366ce0e700f32e7f560')]:
+        row=a[key];check_bindings([row]);need(row['sha256']==pin,'Current36 accepted edition changed.')
+        parent=Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    spec=importlib.util.spec_from_file_location('overview36_distinct',ROOT/base/'independent_review/check.py')
+    q=importlib.util.module_from_spec(spec);spec.loader.exec_module(q)
+    packet=ROOT/base/'packet';data=load(base+'packet/results.json');old=q.prior_checker(ROOT)
+    need(q.bindings(packet,ROOT)==10,'All ten current36 numerical inputs.')
+    nf=q.arithmetic(data,ROOT,old);nb=q.graphs(packet,data,old);q.csv_check(packet,data)
+    need(a['status']=='ROOT_ADMITTED_CONSOLIDATED_NUMERICAL_OVERVIEW36' and
+         nf==a['exact_comparisons']==77 and nb==a['actual_SVG_bars']==a['actual_PDF_bars']==142 and
+         a['CSV_rows']==50 and a['topic_count']==14 and a['distinct_originals']==36 and
+         a['unmeasured_originals']==[] and a['unchanged_topic_records']==13 and
+         set(a['original_ids'])==set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['no_cross_topic_common_discount'] and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'Current36 overview scope or accounting changed.')
+    for key in ['author_replay','independent_replay']:check_bindings([a[key]])
+    need(load(a['author_replay']['path'])['status']=='PASS' and
+         load(a['independent_replay']['path'])['status']=='PASS_DISTINCT_OVERVIEW36' and
+         load(base+'independent_review/review.json')['status']=='ROOT_ACCEPTED_COMPLETE_OVERVIEW36',
+         'Current36 complete distinct acceptance/public replay missing.')
+    pointer=load('audit/overview/latest.json');check_bindings([pointer['admission'],pointer['reader']])
+    need(pointer['admission']['path']==base+'admission.json' and pointer['reader']['path']==base+'packet/summary.pdf' and
+         pointer['measured_originals']==36 and pointer['topics']==14 and pointer['unmeasured_recovery']==[],
+         'Current36 overview pointer changed.')
+    return nf,nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4479,12 +4609,12 @@ def main():
     overview33_fractions, overview33_bars = check_historical_overview33()
     unified_fractions = run_historical34_check(check_unified_b_science_and_new_measurements)
     overview34_fractions, overview34_bars = check_historical_overview34()
-    gluing_fractions = check_gluing_numerical_comparison()
-    overview35_fractions, overview35_bars = check_overview35()
-    print(f"PASS: current fourteen-topic overview has {overview35_fractions} exact comparisons and {overview35_bars} actual bars per format for 35 originals; Gluing preserves {gluing_fractions} fractions.")
+    gluing_fractions = run_historical35_check(check_gluing_numerical_comparison)
+    overview35_fractions, overview35_bars = run_historical35_check(check_overview35)
+    print(f"PASS: historical fourteen-topic overview has {overview35_fractions} exact comparisons and {overview35_bars} actual bars per format for 35 originals; Gluing preserves {gluing_fractions} fractions.")
     fischer_cases = check_fischer_answers()
-    nonfirm_corrections = check_nonfirm_hnn_correction()
-    twist_corrections = check_affine_twist_correction()
+    nonfirm_corrections = run_historical35_check(check_nonfirm_hnn_correction)
+    twist_corrections = run_historical35_check(check_affine_twist_correction)
     l019_corrections = check_l019_bounded_corrections()
     l019_formal = check_l019_historical_formal_pointer()
     l019_transitive = check_l019_transitive_correction()
@@ -4495,7 +4625,12 @@ def main():
     print(f"PASS: {l019_corrections} bounded L019 corrections have complete written proofs and independent finite models; full source and main stability remain separate.")
     active_measured = check_current_measurement_pointer()
     gluing_added = check_gluing_scientific_admission()
-    active_admitted, active_pending = check_current_programme_after_access_updates()
+    historical_admitted, historical_pending = run_historical35_check(check_current_programme_after_access_updates)
+    operations_added, operations_fractions = check_operations_science_and_measurement()
+    active_admitted, active_pending = check_programme36()
+    overview36_fractions, overview36_bars = check_overview36()
+    print(f"PASS: current fourteen-topic overview: {overview36_fractions} exact comparisons and {overview36_bars} bars per format for36 originals.")
+    print(f"PASS: Operations adds {operations_added} original with {operations_fractions} exact fractions; {active_admitted} admitted/measured and {active_pending} accessible pending.")
     print(f"PASS: {gluing_added} gluing original admitted with complete written proofs; L084 and L100 source acquisitions remain separate from recovery.")
     print(f'PASS: N006 corrected full contract; {wreath_admitted} recovered originals, {wreath_pending} accessible pending; measurement separate.')
     print(f'PASS: historical thirteen-topic overview has {overview34_fractions} exact comparisons and {overview34_bars} bars in each vector format for34 originals.')

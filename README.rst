@@ -14,10 +14,10 @@ yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
 `subsequent admissions <audit/corpus/latest.json>`_ now record **106
-accessible manuscripts: 35 with admitted principal-result recoveries and
-71 awaiting complete recovery**. The other **55 remain retrieval targets**.
+accessible manuscripts: 36 with admitted principal-result recoveries and
+70 awaiting complete recovery**. The other **55 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. All thirty-five admitted recoveries now have
+evidence and next obligation. All thirty-six admitted recoveries now have
 measured comparisons. The newly obtained
 `L084 erratum <audit/corpus/access/erratum-2006/README.rst>`_ awaits recovery.
 The complete `L100 institutional preprint <audit/corpus/access/halle-preprint/README.rst>`_
@@ -31,14 +31,14 @@ Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
 
-The `consolidated comparison <audit/overview/v4/packet/summary.pdf>`_ gives
-all fourteen measured topics, all thirty-five individual factors and complete
+The `consolidated comparison <audit/overview/v5/packet/summary.pdf>`_ gives
+all fourteen measured topics, all thirty-six individual factors and complete
 program costs in six pages. The `topic graph
-<audit/overview/v4/packet/whole_topics.svg>`_ shows every complete common paper
+<audit/overview/v5/packet/whole_topics.svg>`_ shows every complete common paper
 and application. Two graphs show the `first seventeen
-<audit/overview/v4/packet/conditional_1.svg>`_ and `remaining eighteen
-<audit/overview/v4/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v4/README.rst>`_ links exact tables,
+<audit/overview/v5/packet/conditional_1.svg>`_ and `remaining nineteen
+<audit/overview/v5/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v5/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
 
 The new `gluing topic <papers/topic-gluing/v1/README.rst>`_ supplies two common
@@ -48,8 +48,8 @@ application factor is **2.342** after acquiring both whole common papers and
 all declared programs. The `complete numerical audit
 <audit/gluing-measurement/v1/README.rst>`_ retains every cost and qualification.
 
-B now uses one complete common paper; the enlarged orbit topic includes both
-N007 and N006 with all companion papers. Each topic pays its entire common
+B now uses one complete common paper. The joint operations topic includes
+N005, N006 and N007 with all companion papers. Each topic pays its entire common
 theory once, independently of other topics. Earlier reports remain preserved.
 
 .. list-table:: Current measured sets within the recovery programme
@@ -107,10 +107,10 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 1 / 1
      - 0.925
      - 0.674
-   * - Orbit and semidirect constructions
-     - 2 / 2
-     - 1.129
-     - Unavailable; 0.170 with full raw software
+   * - Coset geometries under group operations
+     - 3 / 3
+     - 1.267
+     - Unavailable; 0.357 with full raw software
    * - Gluing by common points and synchronized trees
      - 1 / 1
      - 0.677
@@ -1045,69 +1045,80 @@ tokens, so the small word saving is sensitive to the unit. The
 `current paper catalogue <papers/latest_catalogue.json>`_ preserves these
 additions separately from the earlier 27-original audit.
 
-Orbit constructions, diagonal twistings and wreath products
------------------------------------------------------------
+Coset geometries under group operations
+--------------------------------------
 
-The complete eight-page `common theory
-<papers/topic-diagonal/v2/papers/umbrella.pdf>`_ proves the orbit construction
-with general chamber stabilizers, as well as module intersections and changes
-of marking by cocycles. It extends the earlier five-page N007 theory. The
-whole enlarged common paper is charged once for the two originals.
+The `whole common theory
+<papers/topic-operations/v1/integrated/common-theory.pdf>`_ combines coset
+intersection criteria, actions on trees, orbit constructions and semidirect
+product arguments. Its 21 pages supply the proofs used in three complete
+applications. Original constructions and theorems remain attributed to
+Piedade and Tranchida. The `source table and complete current paper set
+<papers/topic-operations/v1/README.rst>`_ identify all editions and qualifications.
 
-.. list-table:: Source and results recovered
+.. list-table:: Three originals and their complete applications
    :header-rows: 1
 
    * - Source, authors and edition
-     - Principal results recovered
-     - Application and qualifications
-   * - N007: Piedade–Tranchida, *Coset geometries acting on their elements:
-       The j-diagonals twisting*; arXiv:2608.23223v1, twelve pages
-     - Both constructions, invariant quotients, exact diagram labels,
-       the finite tree family and both classical polytope identifications
-     - `Diagonal twistings and finite tree diagrams
-       <papers/topic-diagonal/v1/diagonal-twistings.pdf>`_;
-       classical Coxeter facts and named construction descriptions retained
+     - Principal results and qualifications
+     - Complete application
+   * - N005: Piedade–Tranchida, *From Group Operations to Geometric
+       Structures: Amalgamations, HNN-Extensions, and Twisting in Coset
+       Geometries*; arXiv:2505.24662v1, 60 pages
+     - Products, coherent amalgamation, qualified HNN and twisting
+       constructions, Artin and affine applications, and graph operations;
+       all 81 source records, literal corrections and retained inputs
+     - `Amalgamation, HNN extensions and Artin twists
+       <papers/topic-operations/v1/integrated/application.pdf>`_, 18 pages
    * - N006: Piedade–Tranchida, *The geometry of wreath and semi-direct
-       products*; arXiv:2605.04646v2, twenty-two pages
+       products*; arXiv:2605.04646v2, 22 pages
      - Joins, generalized twisting, wreath products, all six signed families,
-       reversal constructions, all ten affirmative sporadic cases and the
-       restricted and unrestricted lamplighter geometries
-     - `Joins, wreath products and reversal of polytope markings
-       <papers/topic-diagonal/v2/papers/wreath_applications.pdf>`_, with
-       complete `nine-case <papers/topic-diagonal/v2/papers/sporadic/sporadic_certificates.pdf>`_
-       and `Harada–Norton <papers/topic-diagonal/v2/papers/harada-norton/harada_norton.pdf>`_
-       notes; literal source corrections and retained classification inputs
-       are explicit, while Fi22 and Fi24-prime remain outside this contract
+       reversal constructions, all ten affirmative sporadic cases and
+       lamplighter geometries; all 27 source records and qualifications
+     - `Main application
+       <papers/topic-operations/v1/citations/N006/wreath_applications.pdf>`_,
+       8 pages, with complete `nine-case
+       <papers/topic-diagonal/v2/papers/sporadic/sporadic_certificates.pdf>`_,
+       5 pages, and `Harada–Norton
+       <papers/topic-diagonal/v2/papers/harada-norton/harada_norton.pdf>`_,
+       4 pages, companions
+   * - N007: Piedade–Tranchida, *Coset geometries acting on their elements:
+       The j-diagonals twisting*; arXiv:2608.23223v1, 12 pages
+     - Both constructions, invariant quotients, exact labels, finite tree
+       families and classical polytope identifications; all 32 source records
+     - `Diagonal twistings
+       <papers/topic-operations/v1/citations/N007/diagonal-twistings.pdf>`_,
+       5 pages
 
-The `N006 admission <audit/topic-diagonal/v2/README.rst>`_ adds one original,
-not ten cases. Its full written application costs eight plus five plus four
-pages, including references. Seventeen scoped Lean declarations pass: eight
-reused and nine new. They do not formalize the whole geometry, module
-generation or sporadic computations. All finite certificates independently
-pass generation, full subset intersection and actual flag-product tests.
-The Harada–Norton case fills an omission in the source discussion; the O’Nan
-existence proof uses a direct witness because the proposed duality route fails.
-This recovery adds no open-question credit. The `complete two-original
-comparison <audit/diagonal-measurement/v2/packet/reader.pdf>`_ is
-78,889 / (19,859 + 50,036) = **1.129×** as written. All nineteen whole
-programs and witnesses plus both required decoders add 394,294 characters,
-giving **0.170×**. No complete printed software alternative exists. Required
-representation files (21,960,689 bytes) and listed installed files (2,516,249
-bytes) are separately inventoried. The conditional factors are **1.944×**
-and **1.464×**, after acquiring the full theory, software and required data.
-The older N007-only factor below remains historical.
+The `complete three-original comparison
+<audit/topic-operations/v1/measurement/packet/reader.pdf>`_ gives
+200,891 / (58,215 + 100,379) = **1.267×** as written. All 23 whole mathematical
+or validation files and both required decoders add 403,848 characters, giving
+**0.357×** with complete raw software. No complete printed software alternative
+exists. The two printed appendices replace only their specified raw files.
+Required representation files and installed catalogue files are separately
+inventoried; full external proof and historical software costs remain unknown.
 
-Independent review corrected our quotient argument and checked a separate
-example with a nontrivial chamber kernel. Eight Lean identities and complete
-finite validation pass; the geometry and presentation proofs remain written.
-The `admission <audit/topic-diagonal/v1/admission.json>`_ adds one original
-and no conjecture answer. The general finite-diagram question remains open
-here. The preserved N007-only `complete length
-comparison <audit/diagonal-measurement/v1/README.rst>`_ gives 1.007 as written,
-0.884 with the full printed validation program, and 1.944 for the application
-after acquiring the whole common theory and program. Word and byte units
-reverse the near-unit written comparison. The `current additions catalogue
-<papers/latest_catalogue.json>`_ records all subsequent admissions.
+After acquiring the entire common paper, software and required data, the
+application factors are **2.460×** for N005, **1.455×** for N006 and **1.860×**
+for N007. Every local paper, companion and reference is charged. The six
+scientific documents total 61 pages, compared with 94 pages in the originals;
+the quoted factors use complete text counts rather than page counts.
+
+The `current admission <audit/topic-operations/v1/README.rst>`_ adds N005 as
+one original. It preserves explicit corrections and unresolved questions;
+it does not affirm every literal source assertion. General fundamental
+geometry, choice independence, categorical questions and the general
+finite-diagram question remain open here. Later Fischer exception answers
+remain separate. Seventeen existing Lean declarations cover components;
+N005 adds no formal declaration. Full geometry, source identifications and
+GAP correctness remain outside their formal scope.
+
+The prior `two-original comparison
+<audit/diagonal-measurement/v2/packet/reader.pdf>`_ and `N007-only comparison
+<audit/diagonal-measurement/v1/README.rst>`_ remain exact historical editions.
+Their smaller common papers are superseded for the current three-original
+comparison; they are not extra unpaid proof premises.
 
 Two corrections to the rank-extension statements
 ------------------------------------------------
@@ -1142,8 +1153,8 @@ input argument, the infinite-group identification and the failed output flag.
 Independent finite validations also pass. The example is nonfirm and not
 residually connected; it does not refute the restricted assertions. This is
 a source-theorem correction, with no numbered-conjecture, historical-priority
-or full Lean claim. N005 remains pending as a whole-paper recovery and is not counted in the
-35-original numerical comparison.
+or full Lean claim. The separate complete N005 principal-contract admission now appears in the
+36-original numerical comparison; this counterexample alone did not earn it.
 
 Regularity of the smallest affine twist
 ---------------------------------------
