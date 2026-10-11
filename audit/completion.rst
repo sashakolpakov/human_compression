@@ -63,15 +63,25 @@ Topic D adds the complete common paper and three applications for L066,
 L074 and L104, with all eight mathematical programs and both execution
 drivers. The `proof admission <topic-d/v2/admission.json>`_ binds the full
 independent review of all 37 source rows, fresh computations, ten scoped
-Lean declarations and all 31 rendered pages. Twenty-one of the 27 contracts
-now have complete canonical applications and common theory; six retain
-their earlier accepted proof packages. Topic D's lengths and paired
+Lean declarations and all 31 rendered pages. At that stage twenty-one of
+the 27 contracts had complete canonical applications and common theory;
+six retained their earlier accepted proof packages. Topic D's lengths and paired
 dependency costs remain pending. The separately accepted
 `support-count Lean supplement <topic-d/v2/support-formal/README.rst>`_
 verifies the complete generic orbit decomposition and Möbius–Burnside
 formula through 28 scoped declarations. Concrete source-specific
 admissibility, support and geometry hypotheses remain written obligations;
 this adds no end-to-end source formalization claim or new result credit.
+
+The affine topic now supplies the complete common paper and corrected L012
+application, including all kernel, square and cubic proofs they use. Its
+`independent review <topic-affine/v2/independent_review/README.rst>`_ checked
+the 33 retained ledger rows, all six mathematical programs, nine scoped
+Lean declarations and all 24 rendered pages. Twenty-two of the 27 contracts
+now have complete canonical applications and common theory; five retain
+their earlier accepted proof packages. The affine length and dependency
+audits remain pending. This manuscript preparation adds no new source or
+solved-question credit.
 
 Work by topic
 -------------
@@ -98,8 +108,9 @@ subject does not itself prove a compression theorem.
        are independently checked. Further reductions require new proofs.
    * - Affine lattices and mixed-prime polyhedra
      - L012
-     - Prepare the complete accepted proof in TeX and include its actual
-       Topic A, equal-label and cubic-lattice dependencies.
+     - Complete common paper, corrected application and all six programs
+       independently reviewed. Measure full lengths and paired dependencies;
+       include all reused theory in this topic's own cost.
    * - C: Halving, parity and Petrial operations
      - L088, N013, L108, F014
      - Complete common theory, four applications and both required programs

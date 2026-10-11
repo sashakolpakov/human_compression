@@ -1170,6 +1170,98 @@ def check_project_lean_runner(legacy_modules):
          'Runner inventory must not be reported as a completed whole-project run.')
 
 
+def check_affine_proofs():
+    base = 'papers/topic-affine/v2/'
+    audit = 'audit/topic-affine/v2/'
+    admission = load(audit+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_AFFINE_COMMON_PROOFS',
+         'Unreviewed affine mathematical edition.')
+    check_bindings(admission['artifacts'])
+    for prefix,key in [(base,'author_manifest_sha256'),
+                       (audit+'independent_review/','independent_review_manifest_sha256')]:
+        need(digest((ROOT/prefix/'manifest.json').read_bytes())==admission[key],
+             'Changed frozen affine packet.')
+        for row in load(prefix+'manifest.json')['exports']:
+            check_bindings([dict(row,path=prefix+row['path'])])
+    scope = load(base+'scope.json')
+    review = load(audit+'independent_review/review.json')
+    need(review['status']=='ACCEPT_INDEPENDENT_AFFINE_PRINCIPAL_EDITION' and
+         review['author_manifest_sha256']==admission['author_manifest_sha256'] and
+         review['outstanding_corrections']==[], 'Affine review does not accept this edition.')
+    need(admission['source_ids']==review['source_ids']==[scope['source']]==['L012'],
+         'Affine admission changed its source identity.')
+    need([r['id'] for r in scope['source_rows']]==admission['source_row_ids'] and
+         len(scope['source_rows'])==scope['ledger_rows']==admission['source_rows']==33 and
+         len(scope['proof_regions'])==admission['proof_regions']==17,
+         'Affine source rows or full proof regions changed.')
+    for row in scope['source_rows']:
+        need(row['id']==row['original_record']['id'] and row['new_credit']==0 and
+             row['current_regions'] and all(k in scope['proof_regions'] for k in row['current_regions']),
+             'Affine source attribution or proof reference changed.')
+    for row in scope['proof_regions'].values():
+        text = (ROOT/base/row['path']).read_text()
+        need(row['start']==0 and row['end']==len(text) and digest(text.encode())==row['sha256'],
+             'Affine proof region is not its complete accepted section.')
+    expected_programs = {'phase250_affine_check.py','phase250_affine64_kernel.g',
+                        'phase250_fixed_groups.g','phase250_base384_census.g',
+                        'phase2_cubic_lattice_check.py','phase2_cubic_kernel_check.g'}
+    need(len(scope['programs'])==admission['complete_programs']==6 and
+         {Path(r['file']).name for r in scope['programs']}==expected_programs,
+         'Affine complete program inventory changed.')
+    for row in scope['programs']:
+        check_bindings([dict(path=base+row['file'],bytes=row['bytes'],sha256=row['sha256'])])
+    printed = re.findall(r'\\VerbatimInput(?:\[[^\]]*\])?\{programs/([^}]+)\}',
+                         (ROOT/base/'required-programs.tex').read_text())
+    need(len(printed)==6 and set(printed)==expected_programs,
+         'Affine appendix lost a complete program.')
+    fresh = load(audit+'independent_review/fresh_replay/report.json')
+    need(fresh['status']=='PASS' and fresh['source_rows']==33 and fresh['proof_spans']==17 and
+         fresh['primary_checked'] and fresh['retained_bindings_checked']==6 and
+         len(fresh['printed_programs'])==6 and all(r['complete'] for r in fresh['printed_programs']) and
+         fresh['census']==dict(groups=20169,exponent_eligible=1178,adjacent_orbits=4436,generating_triples=0),
+         'Affine full replay or catalogue evidence changed.')
+    need([(r['paper'],r['pages'],r['exact_text']) for r in fresh['renders']]==
+         [('umbrella',7,True),('mixed-prime-polyhedra',9,True),('required-programs',8,True)],
+         'Affine complete manuscript or program render changed.')
+    need(admission['scientific_pages']==review['scientific_pages']==
+         sum(r['pages'] for r in fresh['renders'][:2])==16 and
+         admission['complete_program_pages']==review['required_program_pages']==
+         fresh['renders'][2]['pages']==8, 'Affine page summaries disagree with the renders.')
+    formal = scope['formal_scope']
+    names = {n for m in formal['modules'] for n in m['declarations']}
+    need(len(names)==len(fresh['axiom_reports'])==9 and {r[0] for r in fresh['axiom_reports']}==names and
+         all(set(re.findall(r'[\w.]+',r[1])) <= {'propext','Classical.choice','Quot.sound'}
+             for r in fresh['axiom_reports']) and formal['new']==2 and formal['reused']==7 and
+         formal['end_to_end'] is False and admission['end_to_end_source_formalization'] is False,
+         'Affine scoped formal claims were inflated.')
+    need(admission['fresh_lean_declarations']==review['fresh_formal_declarations']==len(names) and
+         admission['new_lean_declarations']==review['new_formal_declarations']==formal['new'] and
+         admission['reused_lean_declarations']==review['reused_formal_declarations']==formal['reused'],
+         'Affine declaration summaries disagree with the checked statements.')
+    matrices = load(audit+'independent_review/matrix_report.json')
+    need(matrices['status']=='PASS_INDEPENDENT_AFFINE_MATRIX_REVIEW' and
+         matrices['source_word_values_checked']==18 and matrices['author_programs_imported'] is False and
+         [r['kernel_index'] for r in matrices['cubic_models']]==[4,16],
+         'Affine independent matrix evidence changed.')
+    catalogue = load('papers/catalogue.json')
+    entries = [r for r in catalogue['new_editions'] if r['topic']=='Affine']
+    need(entries==admission['catalogue_entries'] and len(entries)==2 and
+         catalogue['current_topic_editions']['Affine']==[r['id'] for r in entries] and
+         [r['source_contracts'] for r in entries]==[[],['L012']] and
+         [r['physical_pages'] for r in entries]==[7,9], 'Affine catalogue routes changed.')
+    for row in entries:
+        inputs = re.findall(r'\\input\{([^}]+)\}',(ROOT/row['tex']).read_text())
+        need(row['tex_inputs']==[base+x+('' if x.endswith('.tex') else '.tex') for x in inputs] and
+             row['review_record']==audit+'admission.json', 'Affine TeX input or review omitted.')
+    need(scope['principal_contracts']==admission['existing_principal_contracts']==1 and
+         scope['project_total_preserved']==admission['project_total_preserved']==27 and
+         scope['new_source_credit']==scope['new_question_credit']==admission['new_source_credit']==
+         admission['new_question_credit']==0 and scope['compression_ratio'] is None and
+         admission['compression_ratio'] is None and scope['cost_boundary']['historical_program_cost'] is None,
+         'Affine proof admission invented credit, a ratio or a historical program cost.')
+    return 33,9
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -1190,6 +1282,7 @@ def main():
     c_cells, c_fractions = check_topic_c_measurement()
     d_rows, d_declarations = check_topic_d_proofs()
     d_support_declarations = check_topic_d_support_formal()
+    affine_rows, affine_declarations = check_affine_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -1215,6 +1308,7 @@ def main():
     print(f'PASS: Topic C has {c_cells} independent PDF metric cells and {c_fractions} conditional fractions; written and required-program costs are separate, L108 remains unknown.')
     print(f'PASS: Topic D preserves {d_rows} source rows, {d_declarations} scoped Lean declarations and the full Hall-Janko census; measurements remain separate.')
     print(f'PASS: Topic D generic support counting has {d_support_declarations} independently compiled declarations; source-specific instances remain separate.')
+    print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs; lengths remain pending.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

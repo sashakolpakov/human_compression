@@ -1,0 +1,13 @@
+import QuotientIntersectionCriterion
+import AffinePeriodIntersections
+import PeriodSignObstruction
+
+#check @MathCompression.AffinePeriodIntersections.quotient_inf_of_smaller_period
+#check @MathCompression.AffinePeriodIntersections.quotient_family_of_one_period
+#check @HumanCompression.PeriodSignObstruction.literal_word_conjugacy
+#check @HumanCompression.PeriodSignObstruction.equal_period_signs_collapse
+#check @HumanCompression.PeriodSignObstruction.source_period_sign_obstruction
+#check @MathCompression.QuotientIntersectionCriterion.image_inf_iff_kernel_product
+#check @MathCompression.QuotientIntersectionCriterion.quotient_inf_iff_kernel_product
+#check @MathCompression.QuotientIntersectionCriterion.image_inf_iff_trivial_defect
+#check @MathCompression.QuotientIntersectionCriterion.quotient_inf_iff_trivial_defect

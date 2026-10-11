@@ -1,0 +1,13 @@
+F:=FreeGroup("a","b","c");;a:=F.1;;b:=F.2;;c:=F.3;;
+U:=F/[a^2,b^2,c^2,(a*b)^6,(b*c)^4,(a*c)^2,Comm(a,(b*c)^2)^2];;
+ug:=GeneratorsOfGroup(U);;
+qg:=[(1,2)(4,5),(1,4)(2,3)(5,6),(3,6)];;Q:=Group(qg);;
+if Size(Q)<>48 then Error("point group");fi;
+phi:=GroupHomomorphismByImages(U,Q,ug,qg);;
+if phi=fail or not IsSurjective(phi) then Error("point epimorphism");fi;
+K:=Kernel(phi);;P:=Image(IsomorphismFpGroup(K));;S:=SimplifiedFpGroup(P);;
+Print("INDEX ",Index(U,K)," RAW GENERATORS ",Length(GeneratorsOfGroup(P))," RAW RELATORS ",Length(RelatorsOfFpGroup(P)),"\n");
+Print("SIMPLIFIED GENERATORS ",GeneratorsOfGroup(S)," RELATORS ",RelatorsOfFpGroup(S),"\n");
+if Length(GeneratorsOfGroup(S))<>3 or not IsAbelian(S) or AbelianInvariants(S)<>[0,0,0] then Error("notZ3");fi;
+Print("AFFINE64_Z3_KERNEL_PASS\n");
+QUIT_GAP(0);

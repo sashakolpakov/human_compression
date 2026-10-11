@@ -448,6 +448,48 @@ are each charged in full even when they overlap. The exact accounting and
 its limits are in the `graph review <audit/topic-e/v2/dag_admission.json>`_
 and the `audit protocol <audit/protocol.pdf>`_.
 
+Translation lattices and mixed-prime polyhedra
+---------------------------------------------
+
+The `common theory <papers/topic-affine/v2/umbrella.pdf>`_ identifies an
+affine presentation and tests its distinguished subgroup intersections
+uniformly over all translation periods. It includes the full kernel and
+square-group proofs used in this topic.
+
+.. list-table:: Source manuscript and recovered results
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - L012: Hou–Feng–Leemans, *Regular 3-polytopes of order 2^n p*;
+       arXiv:2001.02945v2, 14 July 2024
+     - Type restriction, arbitrary odd-factor construction, both complete
+       cubic families and the exact existence range for type {6,2^s};
+       one explicit auxiliary presentation correction
+     - `Regular polyhedra with one odd prime factor
+       <papers/topic-affine/v2/mixed-prime-polyhedra.pdf>`_
+
+The common paper is seven pages and the application nine pages. The
+`complete program appendix <papers/topic-affine/v2/required-programs.pdf>`_
+adds eight pages. Independent review checked all 33 source-ledger rows,
+all six programs, nine scoped Lean declarations and the full catalogue
+search over 20,169 groups of order 384. A separate matrix calculation
+checked the source words, translation lattices and parabolic intersections.
+
+The `publication reader <papers/topic-affine/v2/PUBLICATION.rst>`_ states
+the exact attribution, retained inputs and exclusions. The general source
+classification problem is outside this recovery; the equal-label existence
+question was already answered in the literature. The sign correction earns
+no conjecture credit. Lean verifies the stated quotient, period and sign
+lemmas; it does not formalize the complete classification.
+
+This completes the manuscripts for one existing principal contract,
+bringing that count to 22 of the fixed 27. Its length comparison and paired
+dependency audit remain pending. The whole common theory will be charged
+in this topic, including the proofs also used elsewhere.
+
 Papers and verification
 -----------------------
 
