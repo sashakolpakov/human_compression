@@ -3403,6 +3403,55 @@ def check_high_rank_symmetric_extension():
     return 33,71
 
 
+def check_diagonal_measurement():
+    base='audit/diagonal-measurement/v1'
+    a=load(base+'/admission.json')
+    need(a['status']=='ROOT_ADMITTED_COMPLETE_MEASUREMENTS' and
+         a['source_ids']==['N007'] and a['newly_measured_originals']==1 and
+         a['new_principal_credit']==a['new_question_credit']==0 and
+         not a['full_formalization_claim'] and a['whole_common_charged'] and
+         not a['cross_topic_discount'] and all(v is None for v in a['unknown_costs'].values()),
+         'Diagonal numerical scope.')
+    check_bindings(a['artifacts']+a['scientific_admissions']+[a['earlier_overview']])
+    for row in a['packets'].values():
+        check_bindings([row]); parent=Path(row['path']).parent
+        exports=load(row['path'])['exports']
+        need(len(exports)==row['exports'],'Diagonal measurement export count.')
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in exports])
+    for k in ['public_replay','public_independent_replay']:check_bindings([a[k]])
+    r=load(a['public_replay']['path']);q=load(a['public_independent_replay']['path'])
+    need(r['status']=='PASS' and len(r['exact_regenerated_files'])==6 and r['reader_pages_equal']==2 and
+         len(r['checks']['semantic_controls'])==13 and q['status']=='PASS_DISTINCT_ARITHMETIC_AND_GRAPH_REVIEW' and
+         q['exact_fractions']==q['csv_rows']==120 and q['actual_svg_bars']==q['actual_pdf_bars']==6 and
+         len(q['controls_rejected'])==5 and q['stacking_checked'] and q['primary']==a['primary'],
+         'Diagonal distinct arithmetic, graph and fresh reader checks.')
+    row=a['primary']['Diagonal'];source,common,app,printed,raw=22888,10968,11771,3161,2856
+    need(row['document_costs']==dict(source=source,common=common,application=app,program=printed) and
+         row['raw_costs']==dict(programs=raw,drivers=8600,formal=2587),'Complete diagonal costs.')
+    for name,denom in [('written',common+app),('including_printed_programs',common+app+printed),
+                       ('including_raw_programs',common+app+raw),('conditional_application',app)]:
+        f=row['comparisons'][name]
+        need(f['numerator']==source and f['denominator']==denom,'Diagonal complete denominator.')
+    current=load('audit/corpus/updates/diagonal-measurement.json')
+    check_bindings([current['previous_snapshot']]+current['added_measurements'])
+    old=load(current['previous_snapshot']['path'])
+    need(current['admitted_original_ids']==old['admitted_original_ids'] and
+         current['accessible_pending_original_ids']==old['accessible_pending_original_ids'] and
+         current['retrieval_original_ids']==old['retrieval_original_ids'] and
+         current['currently_measured_originals']==30 and
+         set(current['measured_original_ids'])==set(old['measured_original_ids'])|{'N007'} and
+         set(current['measurement_pending_original_ids'])=={'L040','L068','L128'},
+         'Diagonal numerical admission changes no scientific status.')
+    c=load('papers/catalogue_diagonal_measurement.json');check_bindings([c['previous_catalogue']])
+    old_c=load(c['previous_catalogue']['path'])
+    need(len(c['entries'])==len(old_c['entries'])==11,'Diagonal measurement catalogue completeness.')
+    for row,prior in zip(c['entries'],old_c['entries']):
+        want=dict(prior)
+        if row['topic']=='Diagonal':want.update(measurement_status='admitted',measurement_admission=base+'/admission.json')
+        need(row==want,'Diagonal measurement changes scientific identity.')
+    return 120
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3445,8 +3494,10 @@ def main():
     graph_admitted, graph_pending = check_graph_application_extensions()
     extra_measure_fractions = check_two_additional_measurements()
     high_rank_admitted, high_rank_pending = check_high_rank_symmetric_extension()
+    diagonal_fractions = check_diagonal_measurement()
     active_measured = check_current_measurement_pointer()
     active_admitted, active_pending = check_current_programme_pointer()
+    print(f'PASS: diagonal measurement adds {diagonal_fractions} exact fractions; {active_measured} originals now measured.')
     print(f'PASS: high-rank extension preserves {high_rank_admitted} admitted originals and {high_rank_pending} accessible pending; measurement remains separate.')
     print(f'PASS: graph application extensions preserve {graph_admitted} admitted originals and {graph_pending} accessible pending; no new question credits.')
     print(f'PASS: two additional comparisons preserve {extra_measure_fractions} fractions; {active_measured} unique originals have current measurements.')

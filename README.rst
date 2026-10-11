@@ -17,8 +17,8 @@ The `register of every original <audit/corpus/v1/README.rst>`_ and
 accessible manuscripts: 33 with admitted principal-result recoveries and
 71 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
-evidence and next obligation. Twenty-nine recovered originals have measured
-comparisons; L040, L068, L128 and N007 await measurement. The catalogue
+evidence and next obligation. Thirty recovered originals have measured
+comparisons; L040, L068 and L128 await measurement. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
@@ -39,7 +39,9 @@ for exact inputs and the independent review.
 
 The `two additional comparisons
 <audit/additional-measurements/v1/packet/measurement.pdf>`_ add matching
-extensions and chiral enumeration. Together the reports measure 29 originals.
+extensions and chiral enumeration. The `diagonal comparison
+<audit/diagonal-measurement/v1/packet/measurement.pdf>`_ brings the measured
+total to 30 originals.
 The current rates below count each complete common theory once. The A and C
 rates still cover their earlier six and four originals. B likewise retains
 its four-original factor; all three enlarged topics
@@ -101,9 +103,9 @@ await measurement.
      - 0.925
      - 0.674
    * - Diagonal twistings
-     - 0 / 1
-     - Pending
-     - Pending
+     - 1 / 1
+     - 1.007
+     - 0.884
 
 These are text costs, not minimum proof complexities. The reports specify
 the complete program boundary, raw-code alternatives, retained external
@@ -1059,9 +1061,12 @@ example with a nontrivial chamber kernel. Eight Lean identities and complete
 finite validation pass; the geometry and presentation proofs remain written.
 The `admission <audit/topic-diagonal/v1/admission.json>`_ adds one original
 and no conjecture answer. The general finite-diagram question remains open
-here, and N006 still requires its own complete recovery. Measurement is pending.
-The `current additions catalogue <papers/latest_catalogue.json>`_ includes
-all three admissions after the earlier 27-original audit.
+here, and N006 still requires its own complete recovery. The `complete length
+comparison <audit/diagonal-measurement/v1/README.rst>`_ gives 1.007 as written,
+0.884 with the full printed validation program, and 1.944 for the application
+after acquiring the whole common theory and program. Word and byte units
+reverse the near-unit written comparison. The `current additions catalogue
+<papers/latest_catalogue.json>`_ records all subsequent admissions.
 
 Papers and verification
 -----------------------
