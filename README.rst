@@ -199,11 +199,21 @@ checked module; the existing 100-module default library is unchanged.
 Fresh compilation, hypothesis controls and reproduction of every PDF page
 passed. The geometry and complete source applications remain written proofs.
 
-The length audit is underway. It will use the same overall comparison and
-conditional application comparisons as Topics A and E. N001's original PDF
-is unavailable, so its PDF cost remains unknown. The paper remains part of
-the volume; neither a zero cost nor a four-source compression factor is
-assigned. No finite enumeration is required by these written proofs.
+The `length comparison and graph
+<audit/topic-b/v2/measurement/packet/measurement.pdf>`_ charge 14,119
+characters for the common theory and 44,942 for all four applications.
+The three available source PDFs cost 57,539. If the missing N001 PDF has
+cost x, the complete-topic expression is **(x + 57,539) / 59,061**.
+No numerical overall factor is assigned. B1 remains in the denominator.
+
+After acquiring the whole common theory, the source/application factors
+are **unknown, 1.254×, 1.576× and 1.811×**, respectively. These use NFC
+characters without whitespace, with the same full-document boundary as
+Topics A and E. No finite enumeration is required by these written proofs.
+The `measurement audit <audit/topic-b/v2/measurement/README.rst>`_ binds
+the independent recount of all 240 metric cells and the separate arithmetic
+review. Graphic and retained external-proof costs remain unknown. The
+paired dependency audit is still in progress.
 
 Common proofs for projective groups
 ----------------------------------

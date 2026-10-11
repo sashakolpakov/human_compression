@@ -5,6 +5,7 @@ Historical proof replay requires the intake checkout. This is an integrity
 check, not a rerun of the mathematical proofs or their computations.
 """
 import argparse
+import csv
 from hashlib import sha256
 from fractions import Fraction
 import importlib.util
@@ -609,6 +610,79 @@ def check_topic_b_proofs():
     return len(rows), len(fresh['axioms'])
 
 
+def check_topic_b_measurement():
+    base = 'audit/topic-b/v2/measurement/'
+    packet = base+'packet/'
+    admission = load(base+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_B_MEASUREMENT',
+         'Unreviewed Topic B measurement.')
+    check_bindings(admission['artifacts'])
+    for relative, field in [('packet/manifest.json','packet_manifest_sha256'),
+                            ('arithmetic_review/manifest.json','arithmetic_review_manifest_sha256')]:
+        need(digest((ROOT/base/relative).read_bytes())==admission[field],
+             'Changed Topic B measurement edition.')
+    author = load(packet+'manifest.json')
+    for row in author['exports']:
+        check_bindings([dict(row, path=packet+row['path'])])
+    counts = load(packet+'inputs/author_counts.json')
+    recount = load(packet+'independent/recount.json')
+    input_review = load(packet+'independent/review.json')
+    review = load(base+'arithmetic_review/review.json')
+    need(input_review['status']=='ACCEPT_INDEPENDENT_DOCUMENT_MEASUREMENT' and
+         input_review['proposal_manifest_sha256']==
+         digest((ROOT/packet/'inputs/manifest.json').read_bytes()),
+         'Topic B measurement lacks accepted input recount.')
+    need(review['status']=='ACCEPT_INDEPENDENT_ARITHMETIC_AND_READER_REVIEW' and
+         review['author_manifest_sha256']==admission['packet_manifest_sha256'] and
+         review['independent_input_review_manifest_sha256']==
+         digest((ROOT/packet/'independent/manifest.json').read_bytes()),
+         'Topic B arithmetic review refers to different inputs.')
+    result = load(packet+'results.json')
+    for relative, value in result['bindings'].items():
+        need(not Path(relative).is_absolute() and '..' not in Path(relative).parts and
+             digest((ROOT/packet/relative).read_bytes())==value,
+             'Topic B arithmetic input changed.')
+    spec = importlib.util.spec_from_file_location('topic_b_arithmetic',
+        ROOT/base/'arithmetic_review/check.py')
+    arithmetic = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(arithmetic)
+    with (ROOT/packet/'overall_costs.csv').open(newline='') as stream:
+        overall = list(csv.DictReader(stream))
+    with (ROOT/packet/'conditional_costs.csv').open(newline='') as stream:
+        conditional = list(csv.DictReader(stream))
+    primary = arithmetic.audit(result, counts, recount, overall, conditional)
+    need(primary==review['primary']==admission['primary'],
+         'Topic B headline differs from the accepted full calculation.')
+    binding = load(packet+'inputs/publication_binding.json')
+    documents = binding['scientific_documents']
+    need(set(documents)=={'U_B','B1','B2','B3','B4'},
+         'Topic B measurement must charge all five scientific papers.')
+    for name, row in documents.items():
+        need(row['public_path'].startswith('papers/topic-b/v2/') and
+             digest((ROOT/row['public_path']).read_bytes())==row['pdf_sha256']==
+             counts['documents'][name]['pdf_sha256'] and
+             row['pages']==counts['documents'][name]['pages'],
+             'Topic B measured proof edition changed.')
+    proof = binding['public_proof_admission']
+    need(proof['path']=='audit/topic-b/v2/admission.json' and
+         digest((ROOT/proof['path']).read_bytes())==proof['sha256'] and
+         admission['new_source_credit']==admission['new_question_credit']==0 and
+         admission['overall_factor'] is None,
+         'Topic B measurement changed its mathematical scope or missing cost.')
+    fresh = load(base+'root_replay.json')
+    need(fresh['status']=='PASS_INDEPENDENT_ARITHMETIC_AND_READER_BINDINGS' and
+         fresh['coordinates']==30 and fresh['exact_known_conditional_fractions']==90 and
+         fresh['unknown_conditional_coordinates']==fresh['unknown_overall_coordinates']==30 and
+         fresh['primary']==primary and len(fresh['controls'])==9 and
+         all(row['status']=='REJECTED' for row in fresh['controls']),
+         'Topic B arithmetic lacks complete replay and hypothesis controls.')
+    need(admission['metric_cells']==240 and admission['normalized_text_hashes']==48 and
+         admission['full_source_reextraction_in_arithmetic_review'] is False and
+         admission['paired_dependency_audit_complete'] is False,
+         'Topic B measurement review scope changed.')
+    return 240, 90
+
+
 def check_project_lean_runner(legacy_modules):
     admission = load('audit/formal-project/admission.json')
     need(admission['status']=='PASS_ROOT_ADMITTED_PROJECT_LEAN_RUNNER', 'Unreviewed project Lean runner.')
@@ -649,6 +723,7 @@ def main():
     check_topic_dag()
     a_dag_cells = check_topic_a_dag()
     b_clauses, b_declarations = check_topic_b_proofs()
+    b_cells, b_fractions = check_topic_b_measurement()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -667,7 +742,8 @@ def main():
     print(f'PASS: Topic A has {a_cells} independent metric cells and {a_fractions} checked fractions; common costs are explicit.')
     print('PASS: Topic E paired proof graphs preserve all 90 source/application/program cost coordinates.')
     print(f'PASS: Topic A paired proof graphs preserve all {a_dag_cells} complete-document cost coordinates.')
-    print(f'PASS: Topic B preserves {b_clauses} source clauses and {b_declarations} separately checked Lean declarations; no measured ratio yet.')
+    print(f'PASS: Topic B preserves {b_clauses} source clauses and {b_declarations} separately checked Lean declarations.')
+    print(f'PASS: Topic B has {b_cells} independent metric cells and {b_fractions} conditional fractions; N001 and the overall factor remain unknown.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

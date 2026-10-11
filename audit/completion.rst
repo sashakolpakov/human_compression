@@ -38,8 +38,11 @@ N003, N008 and L030 in `its current edition <../papers/topic-b/v2>`_. The
 of all thirty declared clauses and a fresh replay of the six supporting
 Lean declarations and all six PDFs. Fourteen of the 27 contracts therefore
 have complete canonical applications and common theory. The remaining
-thirteen retain their earlier accepted proof packages. Topic B's length
-audit and paired dependency audit remain unfinished. The immutable baseline
+thirteen retain their earlier accepted proof packages. Topic B's
+`length audit <topic-b/v2/measurement/README.rst>`_ is complete within its
+stated scope: three conditional factors are available, while N001's missing
+PDF leaves its conditional factor and the whole-topic factor unknown.
+The paired dependency audit remains unfinished. The immutable baseline
 audit above has not been rewritten.
 
 Work by topic
@@ -76,8 +79,8 @@ subject does not itself prove a compression theorem.
    * - B: Forest coordinates and primitive coset geometries
      - N001, N003, N008, L030
      - Complete common theory and four applications reviewed, with their
-       graph reconstruction proofs. Finish the length and paired dependency
-       audits; N001's source PDF cost remains unknown.
+       graph reconstruction proofs and matched lengths. Finish the paired
+       dependency audit; N001's source PDF cost remains unknown.
    * - D: Marked actions and geometry enumeration
      - L066, L074, L104
      - Complete the common enumeration arguments and all three
