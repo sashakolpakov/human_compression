@@ -31,7 +31,7 @@ This brings the number of contracts with complete canonical applications
 and common theory to ten: the original five plus L034, L035, F013, F016
 and N009. The remaining seventeen retain their earlier accepted proof
 packages. Numerical and dependency audits have separate completion states;
-Topic A's are still being finalized. The immutable baseline audit above
+Topic A's length comparison is accepted; its weighted graph remains under review. The immutable baseline audit above
 has not been rewritten.
 
 Work by topic
@@ -55,7 +55,8 @@ subject does not itself prove a compression theorem.
    * - A: Supported kernels and two-group polytopes
      - L032, L034, L035, F013, F016, N009
      - Complete theory, six applications and required programs now reviewed.
-       Finish the matched length and weighted dependency audits.
+       Matched lengths are independently checked; finish the weighted
+       dependency audit.
    * - Affine lattices and mixed-prime polyhedra
      - L012
      - Prepare the complete accepted proof in TeX and include its actual

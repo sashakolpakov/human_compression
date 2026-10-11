@@ -6,6 +6,7 @@ check, not a rerun of the mathematical proofs or their computations.
 """
 import argparse
 from hashlib import sha256
+from fractions import Fraction
 import importlib.util
 import json
 from pathlib import Path
@@ -382,6 +383,78 @@ def check_topic_dag():
     need(result['headline_from_accepted_measurement']==fresh['headline_from_accepted_measurement'],
          'Graph headline differs on replay.')
 
+def check_topic_a_measurement():
+    prefix = 'audit/topic-a/v2/measurement/'
+    admission = load(prefix+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_A_MEASUREMENT',
+         'Topic A measurement has not been admitted.')
+    check_bindings(admission['artifacts'])
+    spec = load(prefix+'input_spec.json')
+    check_bindings(spec['published_artifacts'])
+    result = load(prefix+'results.json')
+    independent = load(prefix+'accepted_current_recount.json')
+    need(result['documents']==independent['documents'], 'Topic A independent counts differ.')
+    sources = ['L032','L034','F016','F013','L035','N009']
+    applications = ['A1','A2','A3','A4','A5','A6']
+    need(spec['source_sequence']==admission['source_ids']==sources and
+         spec['application_sequence']==admission['application_ids']==applications,
+         'Topic A source/application correspondence changed.')
+    metrics = ['whitespace_tokens','alphanumeric_units','characters_without_whitespace',
+               'characters_with_collapsed_whitespace','utf8_bytes_with_collapsed_whitespace']
+    need(spec['metrics']==metrics and spec['normalizations']==['NFC','NFKC'] and
+         spec['variants']==['untrimmed','raw_selected','calibrated_selected'],
+         'Topic A measurement conventions changed.')
+    need(set(result['documents'])==set(sources+applications+['U_A','code']),
+         'Topic A document set changed.')
+    check_bindings(spec['required_programs'])
+    need(len(spec['required_programs'])==len(result['complete_raw_program_files'])==4 and
+         sum(r['bytes'] for r in spec['required_programs'])==56375,
+         'Topic A complete program boundary changed.')
+    fractions = 0
+    def check_ratio(record, numerator, denominator):
+        expected = Fraction(numerator, denominator)
+        need(record=={'numerator':numerator,'denominator':denominator,
+                      'reduced_fraction':str(expected),'decimal':float(expected)},
+             'Topic A ratio has a changed numerator or denominator.')
+    for form in spec['normalizations']:
+        for variant in spec['variants']:
+            for metric in metrics:
+                c = {key:row['metrics'][form][variant][metric]
+                     for key,row in result['documents'].items()}
+                need(all(isinstance(v,int) and v>0 for v in c.values()),
+                     'Invalid Topic A document cost.')
+                total = sum(c[k] for k in sources)
+                local = sum(c[k] for k in applications)
+                written = c['U_A']+local
+                raw = sum(r['metrics'][form][metric] for r in result['complete_raw_program_files'])
+                saved = result['factors'][form][variant][metric]
+                need(saved['costs']=={'full_sources':total,'full_umbrella':c['U_A'],
+                     'six_applications':local,'full_written_papers':written,
+                     'complete_printed_program_appendix':c['code'],
+                     'full_program_inclusive':written+c['code'],'complete_raw_program_files':raw},
+                     'Topic A acquisition costs changed.')
+                check_ratio(saved['written_topic'],total,written)
+                check_ratio(saved['program_inclusive_topic'],total,written+c['code'])
+                check_ratio(saved['raw_program_representation_sensitivity'],total,written+raw)
+                check_ratio(saved['printed_program_to_written_papers'],c['code'],written)
+                rows = saved['conditional_applications']
+                need(len(rows)==6, 'Topic A conditional list incomplete.')
+                for source,application,entry in zip(sources,applications,rows):
+                    need(entry['source_id']==source and entry['application_id']==application and
+                         entry['given']=='Whole U_A and whole complete required program appendix already acquired.',
+                         'Topic A conditional acquisition assumption changed.')
+                    check_ratio(entry['factor'],c[source],c[application])
+                fractions += 10
+    need(fractions==300 and result['independent_metric_agreements']==420 and
+         result['independent_text_hash_agreements']==84 and result['no_whole_visible_text_claim'],
+         'Topic A review dimensions or visible-content limitation changed.')
+    need(all(result[key] is None for key in ['missing_visible_text_cost',
+         'graphical_structure_cost','external_proof_library_cost','historical_external_program_cost']),
+         'Unknown Topic A costs must remain unknown.')
+    primary = result['factors']['NFC']['calibrated_selected']['characters_without_whitespace']
+    need(admission['primary']==primary, 'Topic A headline values differ from the complete ledger.')
+    return 420, fractions
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -392,6 +465,7 @@ def main():
         need(not changed,'Stage all publication edits before recording their bytes: '+repr(changed))
     historical, markdown = check_archive(); lean = check_lean(); papers, editions = check_catalogue()
     check_topic_measurement()
+    a_cells, a_fractions = check_topic_a_measurement()
     check_topic_dag()
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -406,8 +480,9 @@ def main():
     print(f'PASS: {len(lean)} saved Lean reports and default build entries; {papers} preserved and {editions} new TeX/PDF editions.')
     print('Trust: 99 reports without native axioms; one legacy report has four recorded native axioms.')
     print('Lean evidence: prior 96-module run and four separately checked additions.')
-    print('PASS: 150 independent metric cells; overall and conditional factors have separate denominators.')
-    print('PASS: paired proof graphs preserve all 90 current source/application/program cost coordinates.')
+    print('PASS: Topic E has 150 independent metric cells and separate overall/conditional denominators.')
+    print(f'PASS: Topic A has {a_cells} independent metric cells and {a_fractions} checked fractions; common costs are explicit.')
+    print('PASS: Topic E paired proof graphs preserve all 90 source/application/program cost coordinates.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
 
