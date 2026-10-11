@@ -1827,6 +1827,146 @@ def check_topic_d_dag():
     return 240,116
 
 
+def check_topic_f_proofs():
+    base = 'papers/topic-f/v2/'
+    audit = 'audit/topic-f/v2/'
+    admission = load(audit+'admission.json')
+    need(admission['status']=='PASS_ROOT_ADMITTED_TOPIC_F_COMMON_PROOFS',
+         'Unreviewed Topic F mathematical edition.')
+    check_bindings(admission['artifacts'])
+    for prefix,key,count in [(base,'author_manifest_sha256',49),
+            (audit+'independent_review/','independent_review_manifest_sha256',31),
+            (audit+'root_adoption/','root_adoption_manifest_sha256',3)]:
+        manifest = load(prefix+'manifest.json')
+        need(digest((ROOT/prefix/'manifest.json').read_bytes())==admission[key] and
+             len(manifest['exports'])==count, 'Changed frozen Topic F packet.')
+        for row in manifest['exports']:
+            check_bindings([dict(row,path=prefix+row['path'])])
+    scope = load(base+'scope.json')
+    review = load(audit+'independent_review/review.json')
+    adoption = load(audit+'root_adoption/review.json')
+    need(review['status']=='ACCEPTED_NO_CORRECTION_REQUESTED' and
+         review['author_manifest']['sha256']==admission['author_manifest_sha256'] and
+         adoption['status']=='ROOT_ACCEPTED_WITH_EXPLICIT_RETAINED_INPUTS' and
+         adoption['author_manifest_sha256']==admission['author_manifest_sha256'] and
+         adoption['independent_manifest_sha256']==admission['independent_review_manifest_sha256'] and
+         adoption['changes_requested']==[], 'Topic F acceptance refers to another edition.')
+    need(scope['source_ids']==admission['source_ids']==review['source_contracts']==['L014'] and
+         scope['intake_closed'] and len(scope['contracts'])==admission['source_rows']==25 and
+         [r['id'] for r in scope['contracts']]==scope['inherited_row_ids']==admission['source_row_ids'] and
+         len(scope['proof_spans'])==admission['proof_spans']==16,
+         'Topic F source clauses or proof spans changed.')
+    rows = {r['id']:r for r in scope['contracts']}
+    reviewed = load(audit+'independent_review/source_rows.json')['rows']
+    need([r['id'] for r in reviewed]==scope['inherited_row_ids'] and
+         all(r['current_status']==rows[r['id']]['status'] and
+             r['current_spans']==rows[r['id']]['current_spans'] for r in reviewed),
+         'Topic F reviewed source dispositions changed.')
+    for row in scope['contracts']:
+        need(row['id']==row['inherited_record']['id'] and row['current_spans'] and
+             all(k in scope['proof_spans'] for k in row['current_spans']),
+             'Topic F source attribution or current proof reference changed.')
+    for row in scope['proof_spans'].values():
+        text = (ROOT/base/row['path']).read_text()
+        start,end = row['start_codepoint'],row['end_codepoint_exclusive']
+        need(0<=start<end<=len(text) and digest(text[start:end].encode())==row['sha256_utf8'],
+             'Topic F exact proof passage changed.')
+    need(rows['L014.T1.2.defect']['status']=='literal_preprint_marking_corrected' and
+         all(rows[n]['status']=='excluded_not_recovered' for n in
+             ['excluded.census','excluded.classification']) and
+         rows['CP.T1.1']['status']=='retained_or_context',
+         'Topic F erased a correction, exclusion or retained theorem.')
+    retained = scope['retained_remote_primary']
+    need(retained['not_reproved'] is True and
+         all(retained[k] is None for k in ['local_pdf','local_pdf_sha256','full_text_cost']) and
+         review['retained_external_costs']['CP_full_PDF'] is None and
+         review['retained_external_costs']['CP_full_text_cost'] is None,
+         'Topic F invented the retained classification proof or its cost.')
+    programs = ['phase236_models.py','phase236_finite_check.g','phase248_presentation_check.g']
+    drivers = ['phase236_check.py','phase248_check.py']
+    need([r['original'] for r in scope['program_inventory']]==programs+drivers and
+         admission['complete_programs']==3 and admission['required_mathematical_programs']==0 and
+         admission['separate_operational_drivers']==2,
+         'Topic F complete program or driver inventory changed.')
+    for row in scope['program_inventory']:
+        check_bindings([dict(path=base+row['copy'],bytes=row['bytes'],sha256=row['sha256'])])
+        need(row['role']==('finite_validation' if row['original'] in programs else 'historical_operational_driver') and
+             row['uniform_written_proof_premise'] is False,
+             'Topic F finite validation promoted to a uniform proof premise.')
+    printed = re.findall(r'\\VerbatimInput\[[^\]]*\]\{programs/([^}]+)\}',
+                         (ROOT/base/'program-appendix.tex').read_text())
+    need(printed==programs and not scope['validation_boundary']['uniform_written_proof_depends_on_finite_results'] and
+         not admission['full_uniform_proofs_depend_on_finite_validation'],
+         'Topic F omitted a printed program or changed its mathematical role.')
+    fresh = load(audit+'independent_review/fresh_replay/report.json')
+    public = load(audit+'publication_replay/render.json')
+    for replay in [fresh,public]:
+        need(replay['status']=='PASS' and replay['source_rows']==25 and replay['proof_spans']==16 and
+             len(replay['integrity_controls'])==8 and all(x['rejected'] for x in replay['integrity_controls']) and
+             replay['code_inclusion']['complete_files']==programs and
+             [(r['document'],r['pages'],r['per_page_text_identical'],r['diagnostics']) for r in replay['render']]==
+             [('umbrella',4,True,[]),('odd-kernel-polyhedra',5,True,[]),('program-appendix',4,True,[])],
+             'Topic F complete public render, program inclusion or integrity evidence changed.')
+    finite = fresh['finite_validation']
+    need(finite['cyclotomic_models']==7 and finite['abelian_models']==4 and
+         finite['source_presentations']==[[3,3,27],[3,6,729],[5,3,125],[5,5,3125],[11,3,1331]] and
+         finite['subset_intersections_per_model']==64 and finite['semantic_rejections']==4 and
+         finite['uniform_proof'] is False,
+         'Topic F independent finite validation scope changed.')
+    lattice = load(audit+'independent_review/lattice_result.json')
+    need(lattice['status']=='PASS' and lattice['count']==len(lattice['models'])==40 and
+         all(r['HNF_equal'] and r['conjugation_preserves_ideal'] and r['index']==r['p']**r['n']
+             for r in lattice['models']) and lattice['controls'][0]['status']=='REJECTED',
+         'Topic F independent lattice evidence changed.')
+    formal = load(base+'formal/scope.json')
+    compiled = load(audit+'independent_review/fresh_replay/formal/report.json')
+    names = [n for m in formal['modules'] for n in m['declarations']]
+    reports = [r for m in compiled['modules'] for r in m['axioms']]
+    need(len(names)==len(set(names))==len(reports)==5 and [r['name'] for r in reports]==names and
+         compiled['status']=='PASS' and all(set(r['axioms']) <= {'propext','Classical.choice','Quot.sound'} for r in reports) and
+         len(compiled['countermodels'])==2 and formal['source_specific_claims'] is False and
+         len(formal['not_formalized'])==6 and formal['new_declarations']==0 and
+         admission['fresh_lean_declarations']==admission['reused_lean_declarations']==5 and
+         admission['new_lean_declarations']==0 and admission['end_to_end_source_formalization'] is False,
+         'Topic F scoped formal evidence was inflated.')
+    need([r['declaration'] for r in scope['formal_statement_map']]==names and
+         fresh['formal']['same_five_as_legacy_driver'] and fresh['formal']['not_added_twice'],
+         'Topic F formal statement map changed or counts duplicate compilations.')
+    catalogue = load('papers/catalogue.json')
+    entries = [r for r in catalogue['new_editions'] if r['topic']=='F']
+    need(entries==admission['catalogue_entries'] and len(entries)==2 and
+         catalogue['current_topic_editions']['F']==[r['id'] for r in entries] and
+         [r['source_contracts'] for r in entries]==[[],['L014']] and
+         [r['physical_pages'] for r in entries]==[4,5] and admission['scientific_pages']==9 and
+         admission['complete_validation_pages']==4, 'Topic F catalogue or page summaries changed.')
+    for row in entries:
+        inputs = re.findall(r'\\input\{([^}]+)\}',(ROOT/row['tex']).read_text())
+        need(row['tex_inputs']==[base+x for x in inputs] and row['review_record']==audit+'admission.json',
+             'Topic F catalogue omits a TeX input or proof review.')
+    # Reconstruct the completion summary at this admission, using fixed editions.
+    # Later topic editions must not change this historical boundary.
+    baseline = load('audit/completion.json')['publication_summary']
+    canonical = set(baseline['canonical_contract_ids'])
+    prefixes = tuple('topic-'+topic+'/v2/' for topic in ['e','a','b','c','d','affine','f'])
+    for row in catalogue['new_editions']:
+        if row['id'].startswith(prefixes):
+            canonical.update(row.get('source_contracts',[]))
+    admitted = set(load('audit/intake.json')['admitted_principal_contracts'])
+    remaining = admission['remaining_contracts_for_canonical_topic_editions']
+    need(baseline['principal_contracts']==len(admitted)==27 and canonical <= admitted and
+         len(canonical)==admission['canonical_complete_contract_count_at_this_admission']==23 and
+         len(remaining)==len(set(remaining))==4 and
+         set(remaining)==admitted-canonical=={'L092','F010','L008','N016'},
+         'Topic F completion summary exceeds its fixed canonical edition boundary.')
+    need(admission['existing_principal_contracts']==1 and admission['project_total_preserved']==27 and
+         scope['cost_boundary']['full_common_paper_charged_once'] and
+         not scope['cost_boundary']['cross_topic_discount'] and
+         scope['new_source_credit']==scope['new_question_credit']==admission['new_source_credit']==admission['new_question_credit']==0 and
+         all(admission[k] is None for k in ['compression_ratio','retained_CP_full_proof_cost','source_graphics_cost']),
+         'Topic F invents source credit, a ratio or an external proof cost.')
+    return 25,5
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -1852,6 +1992,7 @@ def main():
     d_dag_cells, d_closures = check_topic_d_dag()
     affine_rows, affine_declarations = check_affine_proofs()
     affine_cells, affine_fractions = check_affine_measurement()
+    f_rows, f_declarations = check_topic_f_proofs()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -1882,6 +2023,7 @@ def main():
     print(f'PASS: Topic D paired dependencies conserve {d_dag_cells} complete-document metric cells and {d_closures} prerequisite unions; whole-paper factors remain unchanged.')
     print(f'PASS: affine papers preserve {affine_rows} source rows, {affine_declarations} scoped Lean declarations and all six complete programs.')
     print(f'PASS: affine comparison has {affine_cells} independent PDF metric cells and {affine_fractions} exact combined/conditional fractions; the whole common paper is charged.')
+    print(f'PASS: Topic F preserves {f_rows} source records, {f_declarations} scoped Lean declarations, complete uniform written proofs and all three validation programs; measurements remain separate.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')

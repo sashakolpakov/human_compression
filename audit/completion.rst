@@ -72,7 +72,9 @@ six retained their earlier accepted proof packages. Topic D's
 `length comparison <topic-d/v2/measurement/README.rst>`_ is now accepted:
 1.053 for the complete written topic, 0.660 including all printed programs,
 and conditional factors 1.903, 1.546 and 1.149 after the whole theory and
-programs are acquired. Its paired dependency costs remain pending. The separately accepted
+programs are acquired. Its `paired dependency audit
+<topic-d/v2/dag/README.rst>`_ is also accepted: 220 exclusive owners conserve
+all 240 document metric cells and 116 prerequisite unions. The separately accepted
 `support-count Lean supplement <topic-d/v2/support-formal/README.rst>`_
 verifies the complete generic orbit decomposition and Möbius–Burnside
 formula through 28 scoped declarations. Concrete source-specific
@@ -83,11 +85,23 @@ The affine topic now supplies the complete common paper and corrected L012
 application, including all kernel, square and cubic proofs they use. Its
 `independent review <topic-affine/v2/independent_review/README.rst>`_ checked
 the 33 retained ledger rows, all six mathematical programs, nine scoped
-Lean declarations and all 24 rendered pages. Twenty-two of the 27 contracts
-now have complete canonical applications and common theory; five retain
-their earlier accepted proof packages. The affine length and dependency
-audits remain pending. This manuscript preparation adds no new source or
-solved-question credit.
+Lean declarations and all 24 rendered pages. At that stage twenty-two of
+the 27 contracts had complete canonical applications and common theory.
+The `affine length audit <topic-affine/v2/measurement/README.rst>`_ is now
+accepted: 0.786 combined, 1.447 for the application after the whole theory
+and required programs are acquired, and 0.556 including the full printed
+program appendix. Its paired dependency audit remains pending.
+
+Topic F now adds the complete common paper and L014 application, with
+all three validation programs and both historical drivers. The
+`proof admission <topic-f/v2/admission.json>`_ binds the full independent
+reading of all 25 inherited records, fresh finite validation and the five
+scoped Lean declarations. The four-page common paper, five-page application
+and four-page validation appendix have all been reviewed. **Twenty-three
+of the 27 contracts** now have complete canonical applications and common
+theory. Four retain their earlier accepted proof packages: L092, F010,
+L008 and N016. Topic F's lengths and paired dependency costs remain pending.
+These manuscript editions add no source or solved-question credit.
 
 Work by topic
 -------------
@@ -115,8 +129,8 @@ subject does not itself prove a compression theorem.
    * - Affine lattices and mixed-prime polyhedra
      - L012
      - Complete common paper, corrected application and all six programs
-       independently reviewed. Measure full lengths and paired dependencies;
-       include all reused theory in this topic's own cost.
+       independently reviewed. Complete lengths accepted, with all reused
+       theory charged within this topic. Finish the paired dependency audit.
    * - C: Halving, parity and Petrial operations
      - L088, N013, L108, F014
      - Complete common theory, four applications and both required programs
@@ -130,17 +144,17 @@ subject does not itself prove a compression theorem.
    * - D: Marked actions and geometry enumeration
      - L066, L074, L104
      - Complete common theory, three applications and all programs reviewed.
-       Full lengths and all combined/conditional fractions accepted. Finish
-       paired dependencies, retaining classical group structure and the
-       exact census scope.
+       Full lengths, combined/conditional fractions and paired dependencies
+       accepted, retaining classical group structure and the exact census scope.
    * - G and incidence residues: Flag relations and Steiner geometry
      - L009, L092
      - Preserve the current G papers; assemble all accepted residue proofs,
        corrections and exceptional-group data for the second application.
    * - F: Odd kernels and cyclotomic polyhedra
      - L014
-     - Prepare the complete existing proof in TeX, including the exact
-       presentation and cyclotomic calculations.
+     - Complete common theory and application reviewed, including the exact
+       presentation and cyclotomic calculations. Measure full lengths and
+       paired dependencies; retain the external tightness classification.
    * - Recognizable incidence extensions
      - F010
      - Assemble the full construction and reconstruction criterion,

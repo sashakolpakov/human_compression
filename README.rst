@@ -546,8 +546,8 @@ question was already answered in the literature. The sign correction earns
 no conjecture credit. Lean verifies the stated quotient, period and sign
 lemmas; it does not formalize the complete classification.
 
-This completes the manuscripts for one existing principal contract,
-bringing that count to 22 of the fixed 27. The `length audit
+This completed the manuscripts for one existing principal contract,
+bringing that count at this stage to 22 of the fixed 27. The `length audit
 <audit/topic-affine/v2/measurement/README.rst>`_ gives **0.786 times combined**:
 the whole source costs 32,767 characters, against 19,070 for the common paper
 and 22,638 for the application, or 41,708 together. The complete written
@@ -562,6 +562,57 @@ times** as an alternative representation. Three auxiliary scripts and three
 formal files are inventoried separately. The `two-page calculation
 <audit/topic-affine/v2/measurement/packet/measurement.pdf>`_ shows the formulas,
 exclusions and unknown costs. Paired dependency costs remain pending.
+
+Odd kernels and cyclotomic polyhedra
+------------------------------------
+
+The `common theory <papers/topic-f/v2/umbrella.pdf>`_ combines an inverted
+orbit, two character components and explicit cyclotomic coordinates.
+These arguments supply the kernel structure, abelian classification and
+nonabelian constructions in one application.
+
+.. list-table:: Source manuscript and recovered results
+   :header-rows: 1
+   :widths: 34 44 22
+
+   * - Source, authors and edition
+     - Declared principal results
+     - Our application
+   * - L014: Hou–Feng–Leemans–Qu, *String C-groups of order 4p^m*;
+       arXiv:2407.10388v1, 15 July 2024
+     - Normal odd kernel and generator number; corrected abelian/tight
+       classification; nonabelian examples for every stated parameter;
+       exact source presentation, automorphisms and auxiliary identities
+     - `Regular polyhedra with an odd kernel of index four
+       <papers/topic-f/v2/odd-kernel-polyhedra.pdf>`_
+
+The common paper has four pages and the application five. One cyclotomic
+lattice calculation proves the coordinate orders and the presentation
+relations, and transports the automorphisms back to the source's named
+generators. This replaces its coefficient-table calculation. The original
+results retain their authorship; the underlying cyclotomic arithmetic is
+classical. The `publication reader <papers/topic-f/v2/PUBLICATION.rst>`_
+explains the exact contribution, attribution and limitations.
+
+The `independent review <audit/topic-f/v2/independent_review/review.pdf>`_
+checked both entire proofs and all 25 source/audit records, including the
+preprint's corrected marking. The tightness converse explicitly retains
+Cunningham–Pellicer's classification; its complete external proof cost is
+unknown. The source's introductory census and general Hughes classification
+are excluded. These qualifications are part of the recovered contract.
+
+The four-page `validation appendix <papers/topic-f/v2/program-appendix.pdf>`_
+prints all three programs. They check eleven marked models and five literal
+presentations, with all 64 subset intersections in each tested marking.
+The written theorems hold for every stated parameter without relying on
+those finite examples. Five reused Lean declarations verify the specified
+subgroup intersections and group identities; the full application is not
+formalized in Lean.
+
+This brings the number of contracts with complete canonical applications
+and common theory to **23 of 27**. It adds no source or solved-question
+credit. Lengths and paired dependencies are being audited separately;
+no compression factor is asserted for Topic F yet.
 
 Papers and verification
 -----------------------
