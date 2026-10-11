@@ -14,39 +14,49 @@ The `current measurement policy <audit/measurement_policy/v1/README.rst>`_
 defines the symmetric comparison and the limits of the existing measurements.
 
 The active catalogue contains **106 original manuscripts with usable full
-texts**. The `complete active list <audit/corpus/accessible106/README.rst>`_
+texts**. The `complete active list
+<audit/corpus/accessible106/updates/odd-kernels-catalogue.json>`_
 records each original's source, proof targets and current status. At the
 user's request, the other `55 previously indexed originals
 <audit/corpus/accessible106/archived_unavailable.json>`_ are archived outside
 the programme; source retrieval is no longer scheduled. The historical
 161-title inventory and earlier reports remain preserved.
 
-**42 accessible originals have admitted principal-result recoveries with
-measured comparisons; 64 await complete recovery.** The `current programme
+**43 accessible originals have admitted principal-result recoveries with
+measured comparisons; 63 await complete recovery.** The `current programme
 <audit/corpus/latest.json>`_ binds those counts to the proof and measurement
 admissions. An accessible original awaiting a proof remains pending.
 Recovery refers to the specified principal results with their explicit
 corrections and retained inputs, not every cited fact or open question.
 
-Ten measured topics currently contain one original. The `consolidation
+Nine measured topics currently contain one original. The `consolidation
 proposals <audit/corpus/accessible106/singleton_assessment/README.rst>`_ identify
-shared theorems and remaining obligations for all ten, including affine
-constructions with A and matching extensions with group operations. Work on
-the first merger has begun. None has yet been excluded. These proposals add
+shared theorems and remaining obligations for the previous ten, including
+affine constructions with A and matching extensions with group operations.
+F now has two originals; the affine consolidation remains in progress. None has yet been excluded. These proposals add
 no proofs or numerical savings; any later exclusions will retain their
 reasons and previous measurements.
 
-The `consolidated comparison <audit/overview/v9/packet/summary.pdf>`_ gives
-all nineteen measured topics, all forty-two individual factors and declared
-program and data costs in six pages. Its software-inclusive ratios are
-withdrawn under the current policy; its manuscript counts remain unchanged.
-The `topic graph
-<audit/overview/v9/packet/whole_topics.svg>`_ shows every complete common paper
-and application. Two graphs show the `first seventeen
-<audit/overview/v9/packet/conditional_1.svg>`_ and `remaining twenty-five
-<audit/overview/v9/packet/conditional_2.svg>`_ source/application comparisons.
-The `numerical overview <audit/overview/v9/README.rst>`_ links exact tables,
+The `consolidated comparison <audit/overview/v10/packet/summary.pdf>`_ gives
+all nineteen measured topics, all forty-three individual factors and declared
+program and data costs in six pages. It contains only written manuscript
+ratios. Software-inclusive factors remain unknown until comparable source
+program costs have been measured. The `topic graph
+<audit/overview/v10/packet/whole_topics.svg>`_ shows every complete common
+paper and application. Two graphs show the `first twenty-one
+<audit/overview/v10/packet/conditional_1.svg>`_ and `remaining twenty-two
+<audit/overview/v10/packet/conditional_2.svg>`_ source/application comparisons.
+The `numerical overview <audit/overview/v10/README.rst>`_ links exact tables,
 inputs and independent arithmetic and graph review.
+
+The expanded `odd-kernel topic <papers/topic-f/v3/README.rst>`_ now covers
+L014 and L007 with one seven-page common paper and applications of five and
+six pages. Its written factor is **1.614×**, with application factors of
+**2.223×** and **2.784×** after acquiring the common theory and retained
+premises. All nine optional validation programs remain available; none
+enters these ratios. L007 adds one recovered original, with the source
+corrections and attribution stated in the papers. No new solved-conjecture
+credit is claimed for this admission.
 
 The new `mixes topic <papers/topic-mixes/v1/README.rst>`_ recovers F005's
 corrected principal results through a common theorem about fibers of group
@@ -96,9 +106,9 @@ theory once, independently of other topics. Earlier reports remain preserved.
    * - E: Projective groups
      - 3 / 3
      - 1.816
-   * - F: Odd kernels and marked semidirect products
-     - 1 / 1
-     - 1.264
+   * - F: Odd kernels and cyclotomic constructions
+     - 2 / 2
+     - 1.614
    * - G: Linear spaces and support
      - 2 / 2
      - 0.630
@@ -148,7 +158,7 @@ be discarded as optional checks. The reports specify
 the complete program boundary, raw-code alternatives, retained external
 proofs, graphic costs and counting-unit sensitivity. B and C use complete
 available text, including authored non-PDF sources and page furniture; the
-rank-contraction and Mathieu comparisons use complete raw PDF extraction,
+rank-contraction, Mathieu and expanded F comparisons use complete raw PDF extraction,
 including all page furniture. The remaining comparisons use their declared
 calibrated text boundaries. The two new census comparisons charge the whole
 mandatory data separately from their whole printed programs. Their raw-program
@@ -774,14 +784,15 @@ remain unchanged. The audit checks 194 exclusive passage owners and 222
 prerequisite unions. Node counts are not compression factors.
 
 Odd kernels and cyclotomic polyhedra
-------------------------------------
+-----------------------------------
 
-The `common theory <papers/topic-f/v2/umbrella.pdf>`_ combines an inverted
-orbit, two character components and explicit cyclotomic coordinates.
-These arguments supply the kernel structure, abelian classification and
-nonabelian constructions in one application.
+The expanded `common paper <papers/topic-f/v3/packet/umbrella.pdf>`_ combines
+normal odd kernels, character components, cyclotomic coordinates and group
+extensions. Both complete applications use this theory. Class-three
+collection supplies a uniform argument for the small orders in the chiral
+application, and an explicit module construction gives the even family.
 
-.. list-table:: Source manuscript and recovered results
+.. list-table:: Source manuscripts and recovered principal results
    :header-rows: 1
    :widths: 34 44 22
 
@@ -789,49 +800,47 @@ nonabelian constructions in one application.
      - Declared principal results
      - Our application
    * - L014: Hou–Feng–Leemans–Qu, *String C-groups of order 4p^m*;
-       arXiv:2407.10388v1, 15 July 2024
-     - Normal odd kernel and generator number; corrected abelian/tight
+       arXiv:2407.10388v1, 15 July 2024, 12 pages
+     - Normal odd kernel and generator number; corrected abelian and tight
        classification; nonabelian examples for every stated parameter;
-       exact source presentation, automorphisms and auxiliary identities
+       source presentations, automorphisms and auxiliary identities
      - `Regular polyhedra with an odd kernel of index four
-       <papers/topic-f/v2/odd-kernel-polyhedra.pdf>`_
+       <papers/topic-f/v3/packet/odd-kernel-polyhedra.pdf>`_
+   * - L007: Kong–Feng–Hou–Leemans–Qu, *Chiral 3-polytopes of order 2p^m*;
+       22-page accepted manuscript, 19 January 2026,
+       DOI 10.26493/1855-3974.3716.b64
+     - Theorems 1.1, 1.2 and 1.4 for all stated parameters; corrected regular
+       byproducts and quotient construction. The fourth family in
+       Remark 1.3 exists exactly when p = 3.
+     - `Chiral polyhedra with an odd kernel
+       <papers/topic-f/v3/packet/chiral-odd-kernels.pdf>`_
 
-The common paper has four pages and the application five. One cyclotomic
-lattice calculation proves the coordinate orders and the presentation
-relations, and transports the automorphisms back to the source's named
-generators. This replaces its coefficient-table calculation. The original
-results retain their authorship; the underlying cyclotomic arithmetic is
-classical. The `publication reader <papers/topic-f/v2/PUBLICATION.rst>`_
-explains the exact contribution, attribution and limitations.
+The `complete reader <papers/topic-f/v3/README.rst>`_ explains the contributions,
+retained classical results and source corrections. The original results keep
+their attribution. Huppert's and Schmidt's group-theoretic results and the
+Cunningham–Pellicer tight classification remain explicit retained inputs;
+their complete external proof costs are unknown. The previously proved
+central lift is separately attributed and adds no new conjecture credit.
 
-The `independent review <audit/topic-f/v2/independent_review/review.pdf>`_
-checked both entire proofs and all 25 source/audit records, including the
-preprint's corrected marking. The tightness converse explicitly retains
-Cunningham–Pellicer's classification; its complete external proof cost is
-unknown. The source's introductory census and general Hughes classification
-are excluded. These qualifications are part of the recovered contract.
+The `length report <audit/topic-f/v3/measurement/packet/reader.pdf>`_ gives
+**1.614×** for the complete written replacement::
 
-The four-page `validation appendix <papers/topic-f/v2/program-appendix.pdf>`_
-prints all three programs. They check eleven marked models and five literal
-presentations, with all 64 subset intersections in each tested marking.
-The written theorems hold for every stated parameter without relying on
-those finite examples. Five reused Lean declarations verify the specified
-subgroup intersections and group identities; the full application is not
-formalized in Lean.
+    (25,574 + 44,251) / (15,876 + 11,504 + 15,894) = 1.613555483662
 
-At that stage, the number of contracts with complete canonical applications
-and common theory reached 23 of 27. It adds no source or solved-question
-credit. The `length audit <audit/topic-f/v2/measurement/README.rst>`_ now
-gives **1.264 times combined**: 25,115 / (7,118 + 12,744), charging the whole
-common theory once. After acquiring that theory and its retained mathematical
-premises, the application ratio is **1.971 times**: 25,115 / 12,744.
+After acquisition of the common theory and retained premises, the two
+application factors are **2.223×** and **2.784×**. The common paper has seven
+pages and the applications five and six. Optional validation is excluded on
+both sides. All nine whole programs are printed in a nine-page appendix and
+inventoried separately. Source software costs and a symmetric software-inclusive
+ratio remain unknown.
 
-The complete validation appendix costs 8,837 characters, recorded separately.
-Two operational drivers and the Lean file are priced separately. The
-`two-page calculation <audit/topic-f/v2/measurement/packet/measurement.pdf>`_
-shows every denominator, the cost graph and alternative units. These are
-written-length comparisons with explicit exclusions and unknown external
-costs. Paired proof dependencies and passage costs remain pending.
+The `independent reviews <audit/topic-f/v3/README.rst>`_ cover 63 source
+records, 28 written proof contexts, the complete numerical inputs and all
+90 exact fractions. Twelve scoped Lean declarations support generic steps;
+the full source theorems are not formalized. The `previous one-source edition
+<papers/topic-f/v2/PUBLICATION.rst>`_ remains available with its original
+measurement boundary. The new raw-text boundary for L014 changes the count;
+that representational change is not credited as mathematical compression.
 
 Flag relations and incidence residues
 ------------------------------------

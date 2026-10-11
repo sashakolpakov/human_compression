@@ -5289,6 +5289,202 @@ def check_symmetric_measurement_policy():
     return len(written)
 
 
+def run_historical42_check(function):
+    """Check the preserved forty-two-original state without weakening its tests."""
+    from types import FunctionType
+    base = 'audit/topic-f/v3/'
+    routes = {'audit/corpus/latest.json': base + 'previous_corpus_pointer.json',
+              'audit/overview/latest.json': base + 'previous_overview_pointer_with_policy.json',
+              'papers/latest_catalogue.json': base + 'previous_catalogue.json'}
+    rows = {r['path']: r for r in load('audit/overview/v10/admission.json')['artifacts']}
+    check_bindings([rows[p] for p in routes.values()])
+    scope = dict(function.__globals__, load=lambda path: load(routes.get(str(path), path)))
+    original = check_current_measurement_pointer
+    scope[original.__name__] = FunctionType(original.__code__, scope, original.__name__, original.__defaults__, original.__closure__)
+    return FunctionType(function.__code__, scope, function.__name__, function.__defaults__, function.__closure__)()
+
+
+def check_expanded_f_symmetric_admission():
+    base = 'audit/topic-f/v3/'; a = load(base + 'admission.json')
+    pins = {
+        'author_manifest': 'e25e0ce52aab130095972d5c038245574ec40182723941880a57f5fbce8387fc',
+        'science_review_manifest': '3dd7fddad598bba7a0a2d4eb5f8e2e55b251ea6ee3e28ae5dfbf289760dcbeb5',
+        'lift_review_manifest': 'fec9f1455a44766df87accf0396e6766f3ce8cd4dc1628e0d434773baba93b2e',
+        'root_adoption_manifest': '2d460b6a74eeef341b8bcd9a4153168b97e2e02cef56fcf4556562e20a6562b9',
+        'input_manifest': '4835714ae78f8069a7b53f6181b770a2b40286eadf8a2c53cc652b96c4ccea0a',
+        'input_review_manifest': 'caf7bb421e325234f2565bece89032d44ee8781c5aea18b09c4ac4bc3fae99c5',
+        'numerical_manifest': '3a24e6ba85542b0cde991b56a40a93cb0e7ed540abd33d0b69b899b5e8f30527',
+        'numerical_review_manifest': '5dfd6f564a6c5ddb2c90f2d79cfb27834b5fd9a47a76aae0b40a85fc7c7b9db7'}
+    check_bindings(a['artifacts'] + [a['previous_admission'], a['measurement_policy']])
+    for key, pin in pins.items():
+        row = a[key]; check_bindings([row]); need(row['sha256'] == pin, 'Changed accepted expanded F edition.')
+        parent = Path(row['path']).parent
+        check_bindings([dict(e, path=str(parent / e['path'])) for e in load(row['path'])['exports']])
+    need(a['status'] == 'ROOT_ADMITTED_EXPANDED_F_PRINCIPAL_CONTRACT_AND_SYMMETRIC_NUMBERS' and
+         a['source_ids'] == ['L014', 'L007'] and a['principal_originals_added'] == 1 and
+         a['new_original_ids'] == ['L007'] and a['existing_originals_recovered_in_new_common_theory'] == ['L014'] and
+         a['source_dispositions'] == 63 and a['inherited_L014_dispositions'] == 25 and
+         a['new_L007_dispositions'] == 38 and a['written_proof_contexts'] == 28 and
+         a['whole_common_pages'] == 7 and a['application_pages'] == [5, 6] and
+         a['validation_appendix_pages'] == a['validation_programs'] == 9 and a['required_programs'] == 0 and
+         a['separate_driver_files'] == 4 and a['separate_formal_files'] == 3 and
+         a['formal_declarations'] == 12 and a['reused_declarations'] == 9 and a['new_generic_declarations'] == 3 and
+         a['new_question_credit'] == a['original_intake_added'] == 0 and a['whole_common_charged_once'] and
+         not any(a[k] for k in ['whole_source_formalized', 'historical_priority_claim',
+              'cross_topic_overlap_discount', 'previous_common_free_premise', 'source_PDFs_redistributed',
+              'validation_required_for_conditional', 'retained_classification_full_proofs_recovered']),
+         'Expanded F source, whole-paper or proof boundary changed.')
+    need(a['source_validation_software_cost'] is None and a['symmetric_software_inclusive_factor'] is None,
+         'Unknown source software cost became zero or an asymmetric ratio.')
+    science = load(base + 'science_review/review.json')
+    need(science['principal_boundary'] == a['complete_principal_scope'] and
+         science['literal_source_qualifications'] == a['source_qualifications'] and
+         science['retained_inputs'] == a['retained_inputs'] and
+         science['status'] == 'ACCEPTED_WITH_EXPLICIT_RETAINED_INPUTS_AND_DISCLOSED_INHERITED_ROLE' and
+         science['review_roles']['inherited_lift'] and
+         load(base + 'measurement/input_review/review.json')['status'] == 'ROOT_ACCEPTED_COMPLETE_EXPANDED_TOPIC_F_INPUTS' and
+         load(base + 'measurement/review/review.json')['status'] == 'ROOT_ACCEPTED_SYMMETRIC_EXPANDED_F_NUMERICAL_COMPARISON',
+         'Expanded F distinct scientific and numerical acceptances missing.')
+    spec = importlib.util.spec_from_file_location('expanded_f_distinct_numbers', ROOT / base / 'measurement/review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'measurement/packet'
+    counts = load(base + 'measurement/input_review/independent_counts.json')
+    rows = q.derive(counts); result = load(base + 'measurement/packet/results.json')
+    q.validate(result, rows, load(base + 'measurement/inputs/policy.json'),
+               load(base + 'measurement/inputs/source_boundary.json'))
+    need(result['primary'] == a['primary'] and len(rows) == a['coordinate_count'] == 30 and
+         a['exact_fractions'] == 90 and a['combined_fractions'] == 30 and a['conditional_fractions'] == 60 and
+         q.actual_vectors(packet / 'costs.svg', packet / 'costs.pdf', rows[2]) == 11 and
+         q.acquisition_graph(packet, rows[2]) == (7, 9), 'Expanded F fractions or actual graph changed.')
+    fresh = load(base + 'public_distinct_numbers.json')
+    need(fresh['status'] == 'PASS_DISTINCT_SYMMETRIC_EXPANDED_F_NUMBERS' and
+         fresh['primary'] == a['primary'] and len(fresh['independent_controls']) == 15 and
+         fresh['author_modules_imported'] is False, 'Expanded F distinct public arithmetic replay missing.')
+    registration = load(base + 'new_original_registration.json')
+    check_bindings([registration['scientific_and_numerical_admission']])
+    need(registration['source_ids'] == ['L007'] and registration['covered_originals'] == ['L014', 'L007'] and
+         registration['already_registered_originals'] == ['L014'] and
+         registration['principal_originals_added'] == registration['measured_originals_added'] == 1,
+         'Expanded F counts L014 again or drops L007.')
+    return 1, 90
+
+
+def check_programme43():
+    current = load('audit/corpus/latest.json')
+    previous = load('audit/topic-f/v3/previous_corpus_pointer.json')
+    check_bindings([current[k] for k in ['snapshot', 'base_inventory', 'previous_snapshot',
+                                       'active_catalogue', 'scope_admission', 'scope_archive']] +
+                   current['added_admissions'] + current['added_measurements'] +
+                   current['access_additions'] + current['current_topic_replacements'])
+    need({k: v for k, v in current.items() if k != 'snapshot'} == load(current['snapshot']['path']),
+         'Current43 pointer differs from frozen snapshot.')
+    active = set(previous['active_original_ids']); archived = set(previous['archived_original_ids'])
+    admitted = set(previous['admitted_original_ids']) | {'L007'}
+    need(current['status'] == 'CURRENT_PROGRAMME_43_ADMITTED_OF_106_ACTIVE_ORIGINALS' and
+         current['originals'] == current['accessible_originals'] == len(active) == 106 and
+         set(current['active_original_ids']) == active and set(current['archived_original_ids']) == archived and
+         len(archived) == current['archived_unavailable_originals'] == 55 and not active & archived and
+         current['admitted_principal_originals'] == current['currently_measured_originals'] == len(admitted) == 43 and
+         set(current['admitted_original_ids']) == set(current['measured_original_ids']) == admitted and
+         current['accessible_pending_complete_recovery'] == 63 and
+         set(current['accessible_pending_original_ids']) == active - admitted and
+         current['pending_source_retrieval'] == 0 and current['retrieval_original_ids'] == [] and
+         current['source_retrieval_in_scope'] is False and current['measurement_pending_original_ids'] == [] and
+         not current['all_original_proofs_recovered'] and not current['all_conjectures_resolved'] and
+         check_current_measurement_pointer() == 43, 'Current43 original partition or remaining work changed.')
+    old = {r['original_id']: r for r in load(previous['active_catalogue']['path'])['entries']}
+    catalogue = load(current['active_catalogue']['path'])
+    new = {r['original_id']: r for r in catalogue['entries']}
+    need(len(catalogue['entries']) == len(new) == 106 and set(new) == active and
+         all(old[k] == new[k] for k in old if k not in ['L014', 'L007']), 'Unrelated original changed.')
+    for key, row in new.items():
+        need(row['active'] and row['original_count'] == 1 and row['source_access']['accessible'] and
+             row['source_access']['usable_representations'] and not row['source_access']['pending_retrieval'] and
+             ((row['current_principal_recovery']['status'] == 'ADMITTED_AND_MEASURED') == (key in admitted)),
+             'Active original access or recovery status differs.')
+        check_bindings(row['current_principal_recovery']['latest_admission_references'])
+    oldpapers = load('audit/topic-f/v3/previous_catalogue.json')
+    papers = load('papers/latest_catalogue.json')
+    need(papers == load('papers/catalogue_odd_kernels_measured.json') and
+         papers['entries'][:-4] == oldpapers['entries'] and
+         set(papers['original_ids']) == set(oldpapers['original_ids']) | {'L007'},
+         'Expanded F changes earlier catalogue entries or double-counts an original.')
+    for row in papers['entries'][-4:]:
+        need(row['topic'] == 'F' and (ROOT / row['tex']).is_file() and (ROOT / row['pdf']).is_file(),
+             'Complete expanded F paper missing.')
+    return 43, 63
+
+
+def check_overview43():
+    base = 'audit/overview/v10/'; a = load(base + 'admission.json')
+    bindings = ['previous_overview', 'current_corpus', 'current_catalogue', 'active_original_catalogue',
+                'scientific_and_numerical_admission', 'original_registration', 'scope_admission',
+                'scope_review_admission', 'measurement_policy', 'author_replay', 'independent_replay']
+    check_bindings(a['artifacts'] + [a[k] for k in bindings])
+    for key, pin, count in [
+            ('author_manifest', '4da624cc48c891c089e05823f88c218a4113f2ad5319fd632c5479dfffc2c26a', 39),
+            ('independent_manifest', '6ca4bf262fd5f59c40cc6ff731aea68918795de4ef7fb1da0eaf8cc6d5bfae47', 12)]:
+        row = a[key]; check_bindings([row]); need(row['sha256'] == pin, 'Changed accepted overview43 edition.')
+        parent = Path(row['path']).parent; exports = load(row['path'])['exports']
+        need(len(exports) == count, 'Overview43 complete exports changed.')
+        check_bindings([dict(r, path=str(parent / r['path'])) for r in exports])
+    protocol = load(base + 'packet/protocol.json')
+    historical = [r['public_path'] for r in protocol['inputs'].values() if r.get('committed_baseline')]
+    blobs = archive_blobs(protocol['baseline_commit'], historical)
+    for r in protocol['inputs'].values():
+        check_bindings([dict(r, path=base + 'packet/' + r['path'])])
+        raw = blobs[r['public_path']] if r.get('committed_baseline') else (ROOT / r['public_path']).read_bytes()
+        need(len(raw) == r['bytes'] and digest(raw) == r['sha256'], 'Overview43 public input changed.')
+    check_bindings(list(protocol['external_catalogue_bindings'].values()))
+    spec = importlib.util.spec_from_file_location('overview43_distinct', ROOT / base / 'independent_review/check.py')
+    q = importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
+    packet = ROOT / base / 'packet'; data = load(base + 'packet/results.json')
+    old = load(base + 'packet/inputs/previous_results.json')
+    f = load(base + 'packet/inputs/F_results.json'); corpus = load(a['current_corpus']['path'])
+    nf = len(q.check_results(data, old, f, corpus)); nc = q.check_csv(packet, data)
+    cats = [load(protocol['external_catalogue_bindings'][k]['path']) for k in ['previous', 'current']]
+    need(q.check_catalogues(*cats) == ['L007', 'L014'], 'Overview43 changes unrelated catalogue records.')
+    reader = q.check_reader(packet / 'summary.pdf', data); nb = 0
+    for name, rows in q.expected_specs(data).items():
+        rectangles, height, record = q.svg_geometry(packet / (name + '.svg'), rows)
+        q.pdf_geometry(packet / (name + '.pdf'), rectangles, height); nb += record['bars']
+    need(a['status'] == 'ROOT_ADMITTED_CONSOLIDATED_SYMMETRIC_OVERVIEW43' and
+         nf == a['exact_comparisons'] == 62 and nc == a['CSV_rows'] == 81 and
+         nb == a['actual_SVG_bars'] == a['actual_PDF_bars'] == 182 and
+         reader['pages'] == a['reader_pages'] == 6 and reader['actual_PDF_table_rows'] == 81 and
+         a['topic_count'] == 19 and a['distinct_originals'] == 43 and
+         a['active_catalogue_originals'] == 106 and a['archived_unavailable_originals'] == 55 and
+         a['pending_accessible_originals'] == 63 and a['unchanged_topic_cost_records'] == 18 and
+         a['unchanged_active_original_records'] == 104 and a['unmeasured_originals'] == [] and
+         set(a['original_ids']) == set(load('audit/corpus/latest.json')['measured_original_ids']) and
+         a['pooled_factor'] is None and a['software_inclusive_factors'] is None and a['source_software_cost'] is None and
+         a['no_cross_topic_common_discount'] and a['required_program_roles_preserved'] and
+         a['all_embedded_validation_listings_screened'] is False and
+         all(a[k] == 0 for k in ['new_source_credit', 'new_question_credit', 'new_formal_credit']),
+         'Overview43 complete costs, symmetric policy or source boundary changed.')
+    review = load(base + 'independent_review/review.json')
+    controls = load(base + 'independent_review/controls.json'); replay = load(a['independent_replay']['path'])
+    author = load(a['author_replay']['path'])
+    need(review['status'] == 'INDEPENDENTLY_ACCEPTED_OVERVIEW43_UNCHANGED' and review['corrections_requested'] == [] and
+         review['roles']['reviewer_prior_role'] and controls['status'] == 'PASS' and
+         controls['count'] == len(controls['controls']) == 24 and all(r['rejected'] for r in controls['controls']) and
+         replay['status'] == 'PASS' and replay['exact_fractions'] == nf and replay['SVG_bars'] == replay['PDF_bars'] == nb and
+         author['status'] == 'PASS_AUTHOR_OVERVIEW43' and author['complete_catalogues_checked'] and
+         author['reader_pages'] == 6, 'Complete distinct overview43 review missing.')
+    pointer = load('audit/overview/latest.json')
+    check_bindings([pointer[k] for k in ['admission', 'reader', 'counts_source', 'measurement_policy',
+                                       'measurement_policy_reader', 'measurement_policy_review']])
+    need(pointer['admission']['path'] == base + 'admission.json' and
+         pointer['reader']['path'] == base + 'packet/summary.pdf' and pointer['measured_originals'] == 43 and
+         pointer['pending_accessible_originals'] == 63 and pointer['topics'] == 19 and
+         pointer['software_inclusive_factors_status'] == 'UNAVAILABLE_UNTIL_BOTH_SIDES_INVENTORIED',
+         'Current overview43 pointer differs.')
+    topic = load('papers/topic-f/latest.json'); check_bindings([topic[k] for k in ['admission', 'measurement', 'reader']])
+    need(topic['source_ids'] == ['L014', 'L007'] and topic['admission']['path'] == 'audit/topic-f/v3/admission.json',
+         'Current F pointer differs.')
+    return nf, nb
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -5370,10 +5566,13 @@ def main():
     run_historical41_check(check_programme41)
     overview41_fractions, overview41_bars = run_historical41_check(check_overview41)
     mixes_added, mixes_fractions = check_mixes_admission()
-    active_admitted, active_pending = check_accessible106_programme()
+    run_historical42_check(check_accessible106_programme)
     check_accessible106_independent_review()
-    overview42_fractions, overview42_bars = check_overview42()
-    symmetric_topics = check_symmetric_measurement_policy()
+    overview42_fractions, overview42_bars = run_historical42_check(check_overview42)
+    symmetric_topics = run_historical42_check(check_symmetric_measurement_policy)
+    expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
+    active_admitted, active_pending = check_programme43()
+    overview43_fractions, overview43_bars = check_overview43()
     policy_review_binding = load('audit/overview/latest.json')['measurement_policy_review']
     check_bindings([policy_review_binding])
     policy_review = load(policy_review_binding['path'])
@@ -5384,9 +5583,11 @@ def main():
                     for r in policy_review['files']])
     need(digest((ROOT / 'audit/measurement_policy/v1/review/manifest.json').read_bytes()) ==
          policy_review['prior_frozen_review']['sha256'], 'Bounded policy audit changed.')
-    print(f"PASS: {symmetric_topics} unchanged manuscript comparisons; asymmetric software-inclusive factors withdrawn, source software costs remain unknown.")
-    print(f"PASS: active106 catalogue, 55 archived, 42 admitted/measured and 64 pending; no singleton exclusions.")
-    print(f"PASS: nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format; Mixes adds one corrected principal recovery.")
+    print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
+    print(f"PASS: active106 catalogue, 55 archived, {active_admitted} admitted/measured and {active_pending} pending; no singleton exclusions.")
+    print(f"PASS: current symmetric overview has {overview43_fractions} exact written comparisons and {overview43_bars} actual bars per format for43 originals.")
+    print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
+    print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
     print(f"PASS: augmentation adds {augmentation_added} corrected principal original and {augmentation_fractions} exact comparisons; all six local pages paid.")
     print(f"PASS: historical seventeen-topic overview: {overview40_fractions} exact comparisons and {overview40_bars} actual vector bars per format for 40 originals.")
