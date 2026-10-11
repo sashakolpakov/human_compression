@@ -1109,6 +1109,28 @@ after acquiring the whole common theory and program. Word and byte units
 reverse the near-unit written comparison. The `current additions catalogue
 <papers/latest_catalogue.json>`_ records all subsequent admissions.
 
+Two corrections to the rank-extension statements
+------------------------------------------------
+
+The `five pages of proofs and distinct checks
+<corrections/rank-extension/v1/README.rst>`_ address two statements in
+Cameron–Fernandes–Leemans, arXiv:2212.12723v2 (L019). An elementary abelian
+example refutes the general endpoint converse in Proposition 2.4. A
+nine-point C-marking satisfies every stated hypothesis of Theorem 6.4,
+but its prescribed extension fails the intersection property: disjoint
+pairs of generators produce the same nonidentity transposition.
+
+The second example is intransitive. It does not disprove a transitive
+restriction or the main stability theorem. Both corrections have complete
+written proofs and independent finite models; the standard end criterion
+is retained and attributed. They add no open-conjecture, full Lean or
+whole-manuscript recovery credit. L019 remains in the recovery programme.
+The separate `Lean certificate
+<corrections/rank-extension/formal/v1/README.rst>`_ verifies the actual
+output obstruction in ten declarations, using generated-subgroup closures
+and kernel-checked permutation identities. The input C-property and all
+source hypotheses remain written proofs.
+
 A correction to the unrestricted HNN construction
 -------------------------------------------------
 

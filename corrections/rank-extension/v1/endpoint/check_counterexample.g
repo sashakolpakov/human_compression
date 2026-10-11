@@ -1,0 +1,22 @@
+Require:=function(ok,msg)if not ok then Error(msg);fi;end;
+Parabolic:=function(gs,inds)return Group(Concatenation([()],gs{inds}));end;
+Failures:=function(gs)local sets,I,J,out;sets:=Combinations([1..Length(gs)]);out:=[];for I in sets do for J in sets do if Intersection(Parabolic(gs,I),Parabolic(gs,J))<>Parabolic(gs,Intersection(I,J)) then Add(out,[I,J]);fi;od;od;return out;end;
+a:=(1,2)(3,4);b:=(1,3)(2,4);tau:=(5,6);old:=[a,b,a*b];lifted:=[a*tau,b,a*b];G:=Group(old);H:=Group(lifted);
+Require(Size(G)=4 and Size(H)=8,"whole group orders");
+Require(not tau in G and ForAll(old,x->x*tau=tau*x),"literal outside central involution");
+Require(Length(Set(old))=3 and ForAll(old,x->Order(x)=2),"three distinct involutions");
+Require(Length(Set(lifted))=3 and ForAll(lifted,x->Order(x)=2),"three distinct lifted involutions");
+Require(ForAll(old,x->ForAll(old,y->x*y=y*x)),"all original string commutations");
+Require(Length(Failures(old))=12,"all64 old pairs");
+Require(Length(Failures(lifted))=0,"all64 lifted pairs");
+Require(ForAll(Combinations([1..3]),I->Size(Parabolic(lifted,I))=2^Length(I)),"all8 independent parabolic orders");
+Require(Size(Intersection(Parabolic(old,[1]),Parabolic(old,[2,3])))=2,"disjoint source index failure");
+Require(Size(Intersection(Parabolic(old,[2,3]),Parabolic(lifted,[1,2])))=2,"left side printed equality");
+Require(Size(Intersection(Parabolic(old,[2,3]),Parabolic(old,[1,2])))=4,"right side printed equality");
+# Meaningful controls: deleting the independent central factor removes the repair;
+# omitting the dependent third mark removes the original defect.
+Require(Length(Failures([a,b,a*b]))>0,"no independent twist control");
+Require(Length(Failures([a,b]))=0,"original basis control");
+Require(a in G,"twist inside G violates source hypothesis control");
+Print("PASS source hypotheses; groups4/8;64+64 intersections;8 independent parabolic orders;3 controls\n");
+QUIT_GAP(0);

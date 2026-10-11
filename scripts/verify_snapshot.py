@@ -4180,6 +4180,106 @@ def check_overview35():
     return nf,nb
 
 
+def check_l019_bounded_corrections():
+    import sys,tempfile
+    base='corrections/rank-extension/v1/';a=load(base+'admission.json')
+    check_bindings(a['artifacts']+a['packets']+[a['statements']])
+    need(a['status']=='ROOT_ADMITTED_TWO_BOUNDED_L019_CORRECTIONS' and
+         a['source_id']=='L019' and a['source_edition']=='arXiv:2212.12723v2, 11 January 2023' and
+         a['source_sha256']=='e64ed65af04d61964b124f864535477e46f100c4dd2f5f35e612c3bc4c52fff1' and
+         a['statement_ids']==['L019.P2.4','L019.T6.4'] and a['complete_written_pages']==5 and
+         a['all_computations_validation_only'] and not a['whole_source_formalized'] and
+         not a['historical_priority_claim'] and not a['main_stability_theorem_disproved'] and
+         not a['transitive_T6_4_disproved'] and a['compression_factor'] is None and
+         all(a[k]==0 for k in ['new_source_credit','new_question_credit','new_formal_credit']),
+         'L019 bounded correction scope changed.')
+    pins=['3f1c343fde1a9cbf9a89e9bbb8c4f1006cdc23e5ce40442750fdf50aeff266e7',
+          '2805482fe0e80686e532626e86610f40d6318bafd4fb3faefd2dd27a563d4bda',
+          '2e182cee7ea5e9148694c8a43244caeebfa1f4bca6993c4dde5cee19bf83ff70',
+          '1d81232c2b81bad2571fdaa602ee20e44867dbede25a1f622367ed0c8b1399ea']
+    need([p['sha256'] for p in a['packets']]==pins,'L019 accepted editions changed.')
+    for row in a['packets']:
+        parent=Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    ledger=load(a['statements']['path'])
+    need([r['id'] for r in ledger['statements']]==a['statement_ids'] and
+         not ledger['main_stability_theorem_disproved'] and not ledger['transitive_T6_4_disproved'] and
+         all(not r['new_open_conjecture_answer'] and not r['full_source_recovery'] for r in ledger['statements']),
+         'L019 correction classified as whole recovery or open conjecture.')
+    eq=load(base+'endpoint_review/review.json');rq=load(base+'rank_extension_review/review.json')
+    need(eq['status']=='ROOT_ACCEPTED_LITERAL_ENDPOINT_CONVERSE_COUNTEREXAMPLE' and
+         eq['full_proof_read'] and eq['fresh_proof_pages_viewed']==[1,2] and
+         rq['status']=='ROOT_ACCEPTED_LITERAL_INTRANSITIVE_RANK_EXTENSION_COUNTEREXAMPLE' and
+         rq['full_written_proof_read'] and rq['fresh_proof_pages_viewed']==[1,2,3] and
+         len(rq['mathematical_checks'])==7 and all(r['verdict']=='ACCEPTED' for r in rq['mathematical_checks']),
+         'L019 complete written review missing.')
+    for folder,label in [('endpoint','endpoint'),('rank_extension','rank')]:
+        report=load(base+'public_'+label+'_author.json')
+        need(report['status']=='PASS' and len(report['rejected_damaged_examples'])==3,
+             'L019 published author checks missing.')
+        with tempfile.TemporaryDirectory(prefix='human-compression-l019-') as tmp:
+            out=Path(tmp)/'report.json'
+            proc=subprocess.run([sys.executable,'-B','-O',str(ROOT/base/(folder+'_review')/'check.py'),
+                                 '--packet',str(ROOT/base/folder),'--out',str(out)],
+                                capture_output=True,text=True)
+            need(proc.returncode==0 and out.is_file(),'L019 distinct finite model failed.')
+            fresh=json.loads(out.read_text());need(fresh==load(base+'public_'+label+'_distinct.json'),
+                                                 'L019 distinct replay differs.')
+    e=load(base+'public_endpoint_distinct.json');r=load(base+'public_rank_distinct.json')
+    need((e['old_order'],e['new_order'],e['old_failures'],e['new_failures'])==(4,8,12,0) and
+         (r['old_order'],r['new_order'],r['old_intersections'],r['new_intersections'],
+          r['old_failures'],r['new_failures'],r['actual_subgroup_formulas'],r['end_intersections'])==
+         (480,2880,256,1024,0,72,5,3) and
+         r['witness']['left_labels']==[1,2] and r['witness']['right_labels']==[3,4] and
+         r['witness']['intersection_order']==2 and r['witness']['common_order']==1 and
+         r['alpha_identity'] and r['both_endpoints_moved'],'L019 literal finite witnesses changed.')
+    current=load('audit/corpus/latest.json')
+    need('L019' in current['accessible_pending_original_ids'] and
+         'L019' not in current['admitted_original_ids'] and 'L019' not in current['measured_original_ids'],
+         'Bounded L019 corrections credited as whole original.')
+    return 2
+
+
+def check_l019_partial_formal_obstruction():
+    base='corrections/rank-extension/formal/v1/';a=load(base+'admission.json')
+    check_bindings(a['artifacts']+[a['author_manifest'],a['independent_manifest'],
+                   a['written_correction'],a['public_replay']])
+    need(a['status']=='ROOT_ADMITTED_PARTIAL_L019_LEAN_OBSTRUCTION' and
+         a['source_id']=='L019' and a['new_partial_Lean_declarations']==10 and
+         a['actual_generated_subgroups'] and a['kernel_checked_finite_identities'] and
+         not a['old_input_C_formalized'] and not a['source_hypotheses_formalized'] and
+         not a['full_source_theorem_formalized'] and a['trusted_cached_upstream_oleans'] and
+         not a['historical_priority_claim'] and a['new_source_credit']==a['new_question_credit']==0 and
+         a['compression_factor'] is None,'Partial L019 formal scope inflated.')
+    for key,pin in [('author_manifest','6f18adac317a26aeeec070473c61d4b6f54ee95c55a4976d3a6ddbf823474cae'),
+                    ('independent_manifest','f7a647884533e98f18c30ba2f38303affe9a0bb2e8a49c47029b096c900b7825')]:
+        row=a[key];need(row['sha256']==pin,'L019 formal accepted edition changed.')
+        parent=Path(row['path']).parent
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in load(row['path'])['exports']])
+    review=load(base+'independent_review/review.json');report=load(a['public_replay']['path'])
+    need(review['status']=='ROOT_ACCEPTED_PARTIAL_L019_PERMUTATION_OBSTRUCTION' and
+         review['complete_Lean_source_read'] and review['all_ten_declarations_freshly_compiled'] and
+         review['standard_axioms_only'] and not review['distinct_checker_imports_author'] and
+         len(review['rejected_mutations'])==3,'L019 formal review missing.')
+    raw=(ROOT/base/'packet/RankExtensionObstruction.lean').read_text()
+    need(digest(raw.encode())=='f6aebf8e966c8a25efb533fc7db4c12e746da3c634d30402b1a2608690bc09e7' and
+         not re.search(r'\b(sorry|admit|axiom|native_decide)\b',raw),'L019 Lean source changed.')
+    logged=re.findall(r"'([^']+)' depends on axioms:\s*\[([^\]]*)\]",
+                      (ROOT/base/'public_lean.log').read_text(),re.S)
+    rows=[dict(declaration=n,axioms=re.findall(r'[A-Za-z][\w.]*',ax)) for n,ax in logged]
+    need(report['status']=='PASS_DISTINCT_FRESH_L019_FORMAL' and report['declarations']==10 and
+         report['axiom_reports']==rows and len(rows)==10 and
+         all(set(r['axioms'])<={'propext','Classical.choice','Quot.sound'} for r in rows) and
+         rows[-1]['declaration']=='RankExtensionObstruction.delta_not_C' and
+         not report['full_source_theorem_formalized'],'L019 scoped fresh axiom reports missing.')
+    pointer=load('corrections/rank-extension/latest.json');check_bindings([pointer['written'],pointer['formal']])
+    need(pointer['formal']['path']==base+'admission.json' and pointer['partial_Lean_declarations']==10 and
+         not pointer['whole_source_recovered'] and not pointer['main_stability_theorem_disproved'] and
+         not pointer['full_source_theorem_formalized'] and pointer['new_question_credit']==0,
+         'L019 current correction pointer inflated.')
+    return 10
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -4235,6 +4335,10 @@ def main():
     fischer_cases = check_fischer_answers()
     nonfirm_corrections = check_nonfirm_hnn_correction()
     twist_corrections = check_affine_twist_correction()
+    l019_corrections = check_l019_bounded_corrections()
+    l019_formal = check_l019_partial_formal_obstruction()
+    print(f"PASS: {l019_formal} fresh scoped Lean declarations verify the actual rank-extension output obstruction; input C-property and source hypotheses remain written.")
+    print(f"PASS: {l019_corrections} bounded L019 corrections have complete written proofs and independent finite models; full source and main stability remain separate.")
     active_measured = check_current_measurement_pointer()
     gluing_added = check_gluing_scientific_admission()
     active_admitted, active_pending = check_current_programme_after_access_updates()
