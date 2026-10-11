@@ -13,18 +13,18 @@ compression programme, including papers whose replacement proofs have not
 yet been written. Source retrieval continues within these 161 titles.
 
 The `register of every original <audit/corpus/v1/README.rst>`_ and
-`subsequent admissions <audit/corpus/current.json>`_ now record **104
-accessible manuscripts: 29 with admitted principal-result recoveries and
-75 awaiting complete recovery**. The other **57 remain retrieval targets**.
+`subsequent admissions <audit/corpus/latest.json>`_ now record **104
+accessible manuscripts: 30 with admitted principal-result recoveries and
+74 awaiting complete recovery**. The other **57 remain retrieval targets**.
 The register gives each original's source, mathematical targets, proof
 evidence and next obligation. Twenty-seven recovered originals have measured
-comparisons; the two newest recoveries await measurement. The catalogue
+comparisons; the three newest recoveries await measurement. The catalogue
 itself has not grown.
 
 An accessible paper awaiting a proof or measurement is pending, not excluded.
 A complete authored rendering is a usable source even when its PDF is
-unavailable. Only a source that cannot be obtained after documented retrieval
-attempts can be left out of the analysis; later access reopens its entry.
+unavailable. An original without a usable full text stays in the retrieval
+queue and receives no numerical comparison until its source can be checked.
 Each published numerical comparison identifies the originals whose declared
 principal results its current proofs recover. The remaining accessible
 originals stay on the programme until their proofs and comparisons are done.
@@ -890,6 +890,36 @@ original and no conjecture answer. The `publication guide
 The length comparison is pending. Both additions are listed separately in
 the `expanded paper catalogue <papers/expansion_catalogue.json>`_, preserving
 the earlier 27-original audit as a historical record.
+
+Orbit intersections and diagonal twistings
+------------------------------------------
+
+The five-page `common theory <papers/topic-diagonal/v1/umbrella.pdf>`_
+proves a regular semidirect construction from intersections of parabolic
+orbits. The application obtains both diagonal constructions from that theorem.
+
+.. list-table:: Source and results recovered
+   :header-rows: 1
+
+   * - Source, authors and edition
+     - Principal results recovered
+     - Application and qualifications
+   * - N007: Piedade–Tranchida, *Coset geometries acting on their elements:
+       The j-diagonals twisting*; arXiv:2608.23223v1, twelve pages
+     - Both constructions, invariant quotients, exact diagram labels,
+       the finite tree family and both classical polytope identifications
+     - `Diagonal twistings and finite tree diagrams
+       <papers/topic-diagonal/v1/diagonal-twistings.pdf>`_;
+       classical Coxeter facts and named construction descriptions retained
+
+Independent review corrected our quotient argument and checked a separate
+example with a nontrivial chamber kernel. Eight Lean identities and complete
+finite validation pass; the geometry and presentation proofs remain written.
+The `admission <audit/topic-diagonal/v1/admission.json>`_ adds one original
+and no conjecture answer. The general finite-diagram question remains open
+here, and N006 still requires its own complete recovery. Measurement is pending.
+The `current additions catalogue <papers/latest_catalogue.json>`_ includes
+all three admissions after the earlier 27-original audit.
 
 Papers and verification
 -----------------------

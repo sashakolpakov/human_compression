@@ -3146,6 +3146,86 @@ def check_consolidated_measurement_overview():
     return fractions,svg,pdf
 
 
+def check_diagonal_admission_and_latest_programme():
+    latest = load('audit/corpus/updates/diagonal.json')
+    check_bindings([latest['previous_snapshot']]+latest['added_admissions'])
+    previous = load(latest['previous_snapshot']['path'])
+    a = load('audit/topic-diagonal/v1/admission.json')
+    need(a['source_id']=='N007' and a['principal_originals_added']==1 and
+         a['status']=='ROOT_ADMITTED_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+         a['source_rows']==32 and a['proof_spans']==13 and
+         a['new_question_credit']==a['N006_whole_original_credit']==0 and
+         not a['whole_source_formalized'] and a['compression_factor'] is None and
+         a['measurement_status']=='pending', 'Diagonal admission scope changed.')
+    check_bindings(a['artifacts'])
+    for key in ['author','review','public_replay','public_review_replay']:
+        check_bindings([a[key]])
+    for key in ['author','review']:
+        row = a[key]; parent = Path(row['path']).parent
+        exports = load(row['path'])['exports']
+        need(len(exports)==row['exports'],'Diagonal export count changed.')
+        check_bindings([dict(r,path=str(parent/r['path'])) for r in exports])
+    review = load(str(Path(a['review']['path']).parent/'review.json'))
+    need(review['status']=='ACCEPT_COMPLETE_CORRECTED_PRINCIPAL_CONTRACT' and
+         review['author_manifest_sha256']==a['author']['sha256'] and
+         not review['whole_geometry_formalized'],'Diagonal distinct review changed.')
+    replay = load(a['public_replay']['path'])
+    independent = load(a['public_review_replay']['path'])
+    need(replay['status']=='PASS' and replay['formal_declarations']==8 and
+         len(replay['controls_rejected'])==5 and independent['status']=='PASS' and
+         independent['independent_quotient_model']=={
+             'raw_group':96,'kernel':2,'faithful_group':48,'chambers':48},
+         'Diagonal public checks changed.')
+    need(set(latest['admitted_original_ids'])==set(previous['admitted_original_ids'])|{'N007'} and
+         set(latest['accessible_pending_original_ids'])==set(previous['accessible_pending_original_ids'])-{'N007'} and
+         latest['retrieval_original_ids']==previous['retrieval_original_ids'] and
+         latest['admitted_principal_originals']==len(latest['admitted_original_ids'])==30 and
+         latest['accessible_pending_complete_recovery']==len(latest['accessible_pending_original_ids'])==74 and
+         latest['accessible_originals']==104 and latest['originals']==161 and
+         latest['pending_source_retrieval']==57 and latest['currently_measured_originals']==27 and
+         set(latest['measurement_pending_original_ids'])=={'F015','L028','N007'} and
+         latest['all_originals_remain_active'] and not latest['all_original_proofs_recovered'] and
+         not latest['all_conjectures_resolved'],'Latest original partition changed.')
+    catalogue = load('papers/catalogue_diagonal.json')
+    check_bindings([catalogue['previous_catalogue']])
+    need(catalogue['entries'][:4]==load(catalogue['previous_catalogue']['path'])['entries'] and
+         len(catalogue['entries'])==6 and set(catalogue['original_ids'])=={'F015','L028','N007'} and
+         {k for r in catalogue['entries'] for k in r['source_contracts']}==set(catalogue['original_ids']),
+         'Latest paper catalogue changed.')
+    for row in catalogue['entries']:
+        need((ROOT/row['tex']).is_file() and (ROOT/row['pdf']).is_file(),'Missing added manuscript.')
+    return 30,74
+
+
+def check_current_programme_pointer():
+    current = load('audit/corpus/latest.json')
+    check_bindings([current['snapshot']])
+    need({k:v for k,v in current.items() if k!='snapshot'}==load(current['snapshot']['path']),
+         'Current programme differs from its admitted snapshot.')
+    check_bindings([current['base_inventory']]+current['added_admissions'])
+    entries = load(current['base_inventory']['path'])['entries']
+    originals = {r['original_id'] for r in entries}
+    accessible = {r['original_id'] for r in entries if r['source_access']['accessible']}
+    historical = {r['original_id'] for r in entries if r['proof']['principal_contract_admitted']}
+    additions = [load(r['path'])['source_id'] for r in current['added_admissions']]
+    need(len(additions)==len(set(additions)) and not set(additions)&historical,
+         'Current programme counts an original twice.')
+    admitted = historical|set(additions)
+    need(set(current['admitted_original_ids'])==admitted and
+         current['admitted_principal_originals']==len(admitted) and admitted<=accessible and
+         set(current['accessible_pending_original_ids'])==accessible-admitted and
+         current['accessible_pending_complete_recovery']==len(accessible-admitted) and
+         set(current['retrieval_original_ids'])==originals-accessible and
+         current['originals']==len(originals)==161 and current['accessible_originals']==len(accessible) and
+         current['all_originals_remain_active'],'Current programme partition changed.')
+    catalogue = load('papers/latest_catalogue.json')
+    check_bindings([catalogue['previous_catalogue']])
+    need(set(catalogue['original_ids'])==set(additions) and
+         {k for r in catalogue['entries'] for k in r['source_contracts']}==set(additions),
+         'Current additional catalogue loses a recovered original.')
+    return len(admitted),len(accessible-admitted)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -3184,6 +3264,8 @@ def main():
     corpus_originals, corpus_accessible, corpus_pending, corpus_retrieval = check_complete_corpus_programme()
     current_admitted, current_pending = check_additional_original_recoveries()
     overview_fractions, overview_svg, overview_pdf = check_consolidated_measurement_overview()
+    latest_admitted, latest_pending = check_diagonal_admission_and_latest_programme()
+    active_admitted, active_pending = check_current_programme_pointer()
     check_project_lean_runner(lean)
     contracts, completion_bindings = check_completion()
     rows = publication_rows()
@@ -3227,6 +3309,8 @@ def main():
     print(f'PASS: the complete programme retains {corpus_originals} originals: {corpus_accessible} accessible, {corpus_pending} awaiting full recovery and {corpus_retrieval} retrieval targets at this snapshot.')
     print(f'PASS: additive admissions recover {current_admitted} unique originals; {current_pending} accessible originals remain pending. F015/L028 measurements remain pending.')
     print(f'PASS: consolidated ten-topic comparison checks {overview_fractions} exact fractions and {overview_svg}/{overview_pdf} actual SVG/PDF bars for27 original manuscripts.')
+    print(f'PASS: diagonal construction and quotient review admitted; latest totals are {latest_admitted} recovered and {latest_pending} accessible pending originals, with all161 targets retained.')
+    print(f'PASS: current programme pointer binds {active_admitted} admitted and {active_pending} accessible pending originals.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
