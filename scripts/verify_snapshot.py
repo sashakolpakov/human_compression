@@ -6414,6 +6414,20 @@ def check_science56():
     return result
 
 
+def check_previous_science57():
+    spec=importlib.util.spec_from_file_location('science57_history',ROOT/'scripts/check_science57_history.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
+def check_science57():
+    spec=importlib.util.spec_from_file_location('science57',ROOT/'scripts/check_science57.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    result=module.verify(ROOT)
+    need(check_current_measurement_pointer()==result['counts']['measured']==53,
+         'Science-only registration changed unique measurements.')
+    return result
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6502,14 +6516,14 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    science_history = check_previous_science56()
+    science_history = check_previous_science57()
     (previous_programme50, unified_a_fractions), (programme51, current_documentation), programme52 = science_history['legacy']
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
     programme53 = science_history['current']
-    science56 = check_science56()
-    active_admitted = science56['counts']['corrected_recoveries']
-    active_pending = science56['counts']['mathematical_pending']
+    science57 = check_science57()
+    active_admitted = science57['counts']['corrected_recoveries']
+    active_pending = science57['counts']['mathematical_pending']
     current_fractions, current_bars = programme53['overview_fractions'], programme53['overview_bars']
     representation_successor_fractions = check_representation_successor()
     lcd = check_lcd_current_admission()
@@ -6528,7 +6542,7 @@ def main():
     need(digest((ROOT / 'audit/measurement_policy/v1/review/manifest.json').read_bytes()) ==
          policy_review['prior_frozen_review']['sha256'], 'Bounded policy audit changed.')
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
-    print(f"PASS: active106 catalogue, 55 archived, {active_admitted} reviewed corrected recoveries (53 measured, three unmeasured), {active_pending} awaiting mathematics, and one editorial without a factor; no singleton exclusions.")
+    print(f"PASS: active106 catalogue, 55 archived, {active_admitted} reviewed corrected recoveries (53 measured, four unmeasured), {active_pending} awaiting mathematics, and one editorial without a factor; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
     print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 19 whole and 53 conditional factors checked.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")

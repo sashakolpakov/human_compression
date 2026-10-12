@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **56 reviewed corrected principal recoveries**:
-53 are measured and three (N014, L024 and L102) are unmeasured. There are 49 originals
+The current register contains **57 reviewed corrected principal recoveries**:
+53 are measured and four (N014, L024, L102 and F011) are unmeasured. There are 48 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024 and L102 have separate scientific admissions; their corrections and retained
+N014, L024, L102 and F011 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science56/v1/new_original_registration.json>`_.
+`science register <science57/v1/new_original_registration.json>`_.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
