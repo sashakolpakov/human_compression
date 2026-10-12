@@ -1,6 +1,8 @@
 Completion of the closed corpus
 ===============================
 
+Current programme51 proposal: 51 recovered/measured originals, 54 pending mathematical originals and one separately accepted editorial (L022), among106 active;55 archived. L121 adds one complete application to A, with entire U23 paid and all prior scientific bytes unchanged. No new question credit. Current nine-source A comparison: audit/topic-a/v4; consolidated overview17 is separately reviewed. Earlier chronological completion records below remain historical.
+
 Current additive update: 48 recovered/measured originals, 58 pending among 106 active; 55 archived. The two-source Representation whole written factor 0.736099 is expansion. Exact current routes: audit/overview/v15 and papers/topic-representation/v3. Earlier chronological completion records below remain historical.
 
 The intake contains 161 indexed manuscripts, of which 102 were retrieved,

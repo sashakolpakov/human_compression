@@ -5,17 +5,24 @@ Can reusable mathematics and capable language-model agents recover decades
 of published results in shorter, complete papers? This project tests that
 question through explicit proofs, attribution and measured comparisons.
 
-Current LCD edition
--------------------
+Current programme and locally toroidal extension
+-----------------------------------------------
 
-The current programme has **50 recovered/measured originals and 56 pending**, within the 106 accessible originals; 55 earlier indexed originals remain archived. The new `LCD edition <papers/topic-lcd/latest.json>`_ adds L050 and F017 only. It pays the complete fourteen-page common paper and applications of fifteen and twelve pages. Its whole written factor is **0.592382: expansion, not achieved whole-topic compression**. The conditional L050/F017 factors are **0.659169** and **1.157126**, after acquiring the entire common theory, complete required programs/data and retained mathematics. There is no software-inclusive or pooled factor. The `six-page current overview <audit/overview/v16/packet/reader.pdf>`_ preserves all 66 previous factors and adds these three.
+The programme contains **51 recovered/measured originals, 54 awaiting mathematical recovery, and one editorial**, within the 106 accessible originals; 55 earlier indexed originals remain archived. L121 adds one complete application to the existing shared theory A. Its whole written factor is **1.354347**, down from the preceding eight-original factor **1.395290**; L121's conditional factor is **1.071157**, after acquisition of the entire common theory and required computational and retained mathematical premises. The `current A guide <papers/topic-a/v4/PUBLICATION.rst>`_ and `numerical reader <audit/topic-a/v4/measurement/packet/reader.pdf>`_ preserve all exact costs and qualifications.
+
+L022 is a completely read editorial preface with no principal mathematical result to recover. Its `accepted disposition <audit/corpus/editorial/L022/v1/admission.json>`_ keeps it active, assigns no factor and adds no measured-original or question credit. The `current overview <audit/overview/v17/packet/reader.pdf>`_ keeps nineteen topics; all eighteen other topic factors and all fifty previous individual factors remain unchanged.
+
+The preceding LCD addition
+-------------------------
+
+The `LCD edition <papers/topic-lcd/latest.json>`_ retains L050 and F017, its complete fourteen-page common paper and applications of fifteen and twelve pages. Its whole written factor remains **0.592382: expansion, not achieved whole-topic compression**. The conditional L050/F017 factors remain **0.659169** and **1.157126**. There is no software-inclusive or pooled factor.
 
 Current LCD papers are the `common theory <papers/topic-lcd/v1/common/umbrella.pdf>`_, `Witt-design and plane codes <papers/topic-lcd/v1/l050/application.pdf>`_ and `graph-family codes <papers/topic-lcd/v1/f017/application.pdf>`_. The `publication guide <papers/topic-lcd/v1/PUBLICATION.rst>`_, `exact audit <audit/topic-lcd/v1/admission.json>`_ and `numerical reader <audit/topic-lcd/v1/measurement/packet/reader.pdf>`_ retain the corrected source contracts. All 83 required whole contents remain acquired premises; all 102 unique contents in 127 occurrences are disclosed separately. Three optional files, eleven drivers and five partial-formal files retain their distinct roles. Nine generic Lean declarations are not full-source formalization. Broader unresolved source questions remain unresolved; L121 is not admitted by this edition.
 
 Current Representation successor
 -------------------------------
 
-The two-source `Representation edition <papers/topic-representation/latest.json>`_ pays U13 plus both complete applications of four and twelve pages. Its whole written factor is **0.736099: expansion, not achieved whole-topic compression**; the separately conditional F010/L126 factors are 2.307510 and 1.019505. Required graph certificate/data and retained mathematics are actual premises; nine optional checks are not. Software-inclusive factors remain unknown. See the `six-page current overview <audit/overview/v16/packet/reader.pdf>`_. The older one-source Representation paragraph below is preserved as historical background.
+The two-source `Representation edition <papers/topic-representation/latest.json>`_ pays U13 plus both complete applications of four and twelve pages. Its whole written factor is **0.736099: expansion, not achieved whole-topic compression**; the separately conditional F010/L126 factors are 2.307510 and 1.019505. Required graph certificate/data and retained mathematics are actual premises; nine optional checks are not. Software-inclusive factors remain unknown. See the `six-page current overview <audit/overview/v17/packet/reader.pdf>`_. The older one-source Representation paragraph below is preserved as historical background.
 
 Current papers: `shared theory <papers/topic-representation/v3/packet/volume/umbrella.pdf>`_, `finite normal pairs <papers/topic-representation/v3/packet/volume/finite-normal-pairs.pdf>`_ and `representations by incidence <papers/topic-representation/v3/packet/volume/representations-by-incidence.pdf>`_. The `complete program appendix <papers/topic-representation/v3/packet/volume/program-appendix.pdf>`_, `required graph data <papers/topic-representation/v3/packet/certificate/graph.json>`_ and `accepted audit <audit/topic-representation/v3/admission.json>`_ preserve the full proof boundary. L126 is Leemans–Stokes–Tranchida, *Groups represented by incidence geometries*, arXiv2506.10464v1; F010 is Díaz Ramos–Molinier–Viruel, *Every finite group is represented by a finite incidence geometry*, arXiv2511.02410v2. The finite-field and splitting corrections retain the source attribution; broader unresolved programmes are not claimed solved.
 
@@ -24,22 +31,22 @@ Current papers: `shared theory <papers/topic-representation/v3/packet/volume/umb
 both sides of the current comparison. Exact reviewed block exclusions now
 restore the Chamber, ChiralEnumeration and Operations factors previously held
 in v11. Surrounding proofs, mathematical algorithm prose and tables remain
-counted. The `current comparison <audit/overview/v16/README.rst>`_ records all
-nineteen whole-topic and fifty individual factors. Required programs and
+counted. The `current comparison <audit/overview/v17/README.rst>`_ records all
+nineteen whole-topic and fifty-one individual factors. Required programs and
 data keep their proof role and remain separately inventoried. Software-inclusive
 factors stay unknown until comparable original software is available.
 
 The active catalogue contains **106 original manuscripts with usable full
 texts**. The `complete active list
-<audit/corpus/accessible106/updates/lcd-catalogue.json>`_
+<audit/corpus/accessible106/updates/l121-editorial-catalogue.json>`_
 records each original's source, proof targets and current status. At the
 user's request, the other `55 previously indexed originals
 <audit/corpus/accessible106/archived_unavailable.json>`_ are archived outside
 the programme; source retrieval is no longer scheduled. The historical
 161-title inventory and earlier reports remain preserved.
 
-**50 accessible originals have admitted principal-result recoveries;
-56 await complete recovery.** Nineteen whole-topic factors and fifty individual
+**51 accessible originals have admitted principal-result recoveries;
+54 await mathematical recovery, and one is editorial.** Nineteen whole-topic factors and fifty-one individual
 factors are available after the matched listing exclusions. The `current programme
 <audit/corpus/latest.json>`_ records the proof and earlier measurement
 admissions. The overview records current comparison status; an original awaiting a complete proof remains pending.
@@ -54,18 +61,19 @@ F now contains two originals and Mixes three; the affine consolidation into A is
 no proofs or numerical savings; any later exclusions will retain their
 reasons and previous measurements.
 
-The `consolidated comparison <audit/overview/v16/packet/reader.pdf>`_ accounts
-for all nineteen topics and fifty originals. Unified A combines its
-seven earlier originals with L012, paying the whole 23-page common paper and
-all 45 application pages. Its written factor is **1.395**. Mixes now covers
-F005, L016 and F007, paying all three common papers and every complete
-application/companion bundle, for **1.513**. Representation now includes F010 and L126 with its full shared theory. LCD is added with its complete common theory and both applications. All eighteen earlier topic records and forty-eight individual records remain exact from v15, including expanded E and the corrected Chamber, ChiralEnumeration and Operations listing boundaries.
+The `consolidated comparison <audit/overview/v17/packet/reader.pdf>`_ accounts
+for nineteen topics and fifty-one measured originals. Topic A pays the whole
+23-page common paper and all 56 application pages for its nine originals;
+its written factor is **1.354**. The eighteen other topic records and all
+fifty previous conditional records remain unchanged from v16. L022 is retained
+separately as editorial material without a factor. All accepted listing
+exclusions, retained premises and unknown source costs remain explicit.
 There is no software-inclusive or pooled factor.
-The current `topic graph <audit/overview/v16/packet/whole_topics.svg>`_ and
-application graphs (`first twenty-five
-<audit/overview/v16/packet/conditional_1.svg>`_; `remaining twenty-five
-<audit/overview/v16/packet/conditional_2.svg>`_) show complete manuscript lengths.
-The `numerical overview <audit/overview/v16/README.rst>`_ preserves exact current
+The current `topic graph <audit/overview/v17/packet/whole_topics.svg>`_ and
+application graphs (`first twenty-six
+<audit/overview/v17/packet/conditional_1.svg>`_; `remaining individual comparisons
+<audit/overview/v17/packet/conditional_2.svg>`_) show complete manuscript lengths.
+The `numerical overview <audit/overview/v17/README.rst>`_ preserves exact current
 and historical tables. Every topic retains its independently adopted coordinate;
 Operations retains its separate text-only sensitivity. Historical software and
 complete source diagram complexity remain unknown.
@@ -139,8 +147,8 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - Recovered originals
      - Whole written factor
    * - A: Supported kernels, translation lattices and finite quotients
-     - 8
-     - 1.395
+     - 9
+     - 1.354
    * - B: Coset geometries and symmetric markings
      - 5
      - 1.094
@@ -227,13 +235,15 @@ Supported kernels and translation lattices
 -----------------------------------------
 
 The `current common paper <papers/topic-a/v3/umbrella.pdf>`_ supplies the
-complete supported-kernel and translation-lattice theory for all eight
+complete supported-kernel and translation-lattice theory for all nine
 originals. Read the `current publication guide
-<papers/topic-a/v3/PUBLICATION.rst>`_ and the `complete numerical reader
-<audit/topic-a/v3/measurement/packet/reader.pdf>`_. Whole common theory costs
-66,140 characters and all applications 110,576, against 246,570 source
-characters. All eleven required program/data files retain their proof roles;
-the three printed appendices and full raw inventories remain separate.
+<papers/topic-a/v4/PUBLICATION.rst>`_ and the `complete numerical reader
+<audit/topic-a/v4/measurement/packet/reader.pdf>`_. Whole common theory costs
+66,140 characters and all applications 136,125, against 273,937 source
+characters. All twenty required program/data files retain their proof roles;
+the three old printed appendices cover only the old eleven-file subset.
+The complete enlarged raw inventory is separate; no enlarged printed-code
+or software-inclusive factor is claimed.
 No original is counted twice when the earlier Affine topic joins A.
 
 .. list-table:: Current unified A applications
@@ -257,6 +267,8 @@ No original is counted twice when the earlier Affine topic joins A.
      - `graph symmetries <papers/topic-a/v3/graph_symmetries.pdf>`_
    * - L012
      - `mixed prime polyhedra <papers/topic-a/v3/mixed-prime-polyhedra.pdf>`_
+   * - L121
+     - `locally toroidal hypertopes <papers/topic-a/extensions/locally-toroidal/v1/application.pdf>`_
 
 Earlier Topic A editions (historical)
 ------------------------------------
