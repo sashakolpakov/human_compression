@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**61 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and eight (N014, L024, L102, F011, F008, L039, L013 and L011) await measurement.
-44 await mathematical recovery; L022 is an editorial with no mathematical result
+**62 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and nine (N014, L024, L102, F011, F008, L039, L013, L011 and L025) await measurement.
+43 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -86,9 +86,16 @@ retained positive classification. The three whole finite programs and their
 receipts remain proof premises; all eleven orders were freshly checked without
 cached size or stabilizer-chain assumptions.
 
-All eight source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science61/v1/new_original_registration.json>`_.
-None of these eight recoveries has a compression factor. N014 is not added to C's measured
+The `L025 guide <papers/recoveries/L025/v1/PUBLICATION.rst>`_ provides the complete seven-page
+application, five-page common theory and three-page odd-cycle companion. All 41
+source dispositions retain the corrected graph identifications, maps and counting
+algorithm, with named finite classification inputs. Both required programs and
+six complete data files are available. The source listings require a symmetric
+software boundary before any future factor.
+
+All nine source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science62/v1/new_original_registration.json>`_.
+None of these nine recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
