@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**70 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and seventeen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018 and N011) await measurement.
-35 await mathematical recovery; L022 is an editorial with no mathematical result
+**71 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and eighteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011 and F002) await measurement.
+34 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -161,9 +161,19 @@ matrix expressions are corrected; the external classification and polytope
 inputs remain explicit. Symbolic checks are optional validation. No factor,
 new question answer or Lean declaration is added.
 
-All seventeen source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science70/v1/new_original_registration.json>`_.
-None of these seventeen recoveries has a compression factor. N014 is not added to C's measured
+The `F002 guide <papers/recoveries/F002/v1/PUBLICATION.rst>`_ gives the following recovery.
+
+F002 recovers the unique rank-four or rank-five polytope for even transitive
+degree-eleven groups: the self-dual eleven-cell. Both complete new papers
+(2+2 pages), the full acquired projective identification, and the required
+finite census and literal comparison data remain available. Five source
+graphs and ten orbit entries are checked. Auxiliary graph lemmas and the
+52-tuple appendix are not separately recovered; all forty named statements
+have explicit dispositions. No factor, question answer or new Lean claim.
+
+All eighteen source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science71/v1/new_original_registration.json>`_.
+None of these eighteen recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected

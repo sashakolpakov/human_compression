@@ -1,0 +1,146 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,hyperref}
+\newtheorem{lemma}{Lemma}\newtheorem{theorem}[lemma]{Theorem}
+\newcommand{\gen}[1]{\langle#1\rangle}
+\title{Finite marked subgroups by successive stabilizers}
+\author{Human Compression project}\date{}
+\begin{document}\maketitle
+Let $G$ be a specified finite group, let $J$ be its nonidentity
+involutions, and let $A$ act on $G$ by automorphisms. The action need
+not be faithful. A string is an ordered tuple $t=(t_1,\ldots,t_m)$
+with $[t_i,t_j]=1$ whenever $|i-j|>1$. Write $H(t)=\gen t$.
+Its intersection property is
+\[
+ \gen{t_i:i\in I}\cap\gen{t_i:i\in K}
+       =\gen{t_i:i\in I\cap K}\quad(I,K\subseteq\{1,\ldots,m\}).
+\]
+A string satisfying this property is a C-marking of its generated
+subgroup. It need not generate the ambient $G$.
+
+\begin{lemma}[An exact extension test]\label{ip}
+Suppose $t$ has the intersection property, $x\in J\setminus H(t)$,
+and $x$ commutes with $t_1,\ldots,t_{m-1}$. The extended string
+$(t_1,\ldots,t_m,x)$ has the intersection property if and only if
+its suffix $(t_2,\ldots,t_m,x)$ has it and
+\[
+ H(t)\cap\gen{t_2,\ldots,t_m,x}=\gen{t_2,\ldots,t_m}.
+\]
+This gives a recursive exact test, ending at length at most two.
+\end{lemma}
+\begin{proof}
+We retain the standard end-intersection criterion for string
+markings: two end deletions with the intersection property, and
+their correct common-middle intersection, imply the property for
+the full string (McMullen--Schulte, Proposition 2E16).
+The first end deletion here is the assumed old marking. In the
+recursive suffix test its old prefix is a submarking of $t$, so
+again has the property. Two distinct nonidentity involutions have
+order-two cyclic subgroups with trivial intersection, giving the
+base case. The condition $x\notin H(t)$ ensures distinctness in
+every suffix. Induction now proves sufficiency. Necessity follows
+by applying the full intersection property to the displayed
+subsets and to every suffix.
+\end{proof}
+
+Let $A_t$ be the subgroup of $A$ fixing every entry of $t$, and put
+\[
+ P(t)=J\cap\bigcap_{i=1}^{m-1}C_G(t_i).
+\]
+The empty intersection is all of $J$. Starting at the empty tuple,
+make the following recursion through a specified depth $d$.
+At $t$, form $P(t)\setminus H(t)$, take one representative from
+each $A_t$-orbit, and append each representative which passes
+Lemma~\ref{ip}. Update $H(t)$ and the pointwise stabilizer.
+Record a visited tuple whenever it has the desired invariant
+property, and continue until depth $d$ or $H(t)=G$.
+
+\begin{theorem}\label{coverage}
+Before any optional pruning, this recursion visits precisely one
+representative of every $A$-orbit of C-markings in $G$ of length
+at most $d$. Thus it classifies any $A$-invariant selected family
+among these markings. No extension of a tuple generating $G$ is
+lost by stopping there.
+\end{theorem}
+\begin{proof}
+The candidate set is invariant under $A_t$, since its conditions
+are generation, membership and commutation with entries fixed
+by $A_t$. Every C-marking is independent: if a mark lay in the
+subgroup on the other marks, intersecting that subgroup with
+the cyclic subgroup of the mark would contradict the property.
+In particular each final mark lies outside its previous prefix
+subgroup and every prefix is a C-marking.
+
+Induct on length. A marking of length $m+1$ has a prefix equivalent
+under $A$ to one already visited. After making that change, its
+last entry is a candidate passing the exact extension test. An
+element of the prefix stabilizer sends it to the chosen orbit
+representative, so its full orbit is visited. Conversely, an
+automorphism between two visited extensions first identifies
+their prefixes. The induction hypothesis makes those prefixes
+equal; the automorphism then belongs to $A_t$, so their last
+entries have the same candidate orbit. This proves uniqueness.
+Independence forbids any extension once the prefix generates $G$.
+The fixed depth and finite candidate sets prove termination.
+\end{proof}
+
+\begin{lemma}[A necessary completion test]\label{completion}
+Every extension of $t$ generates a subgroup of
+$K(t)=\gen{H(t),P(t)}$. If a property required of a recorded
+marking cannot hold in any subgroup of $K(t)$, its whole branch
+may be discarded. In particular, when $G$ acts on $\Omega$,
+an intransitive $K(t)$ has no transitive completion. A proper
+$K(t)<G$ has no completion generating $G$.
+\end{lemma}
+\begin{proof}
+Every future entry has index at least $m+1$, hence commutes with
+the first $m-1$ old marks and belongs to $P(t)$. All completed
+generators therefore lie in $K(t)$. A subgroup of an intransitive
+group is intransitive, and a subgroup of a proper group is proper.
+The conclusion follows. After appending $x$, the new pool is
+$P(t)\cap C_G(t_m)$, independently of $x$. Caching these complete
+commuting sets therefore preserves the recursion exactly.
+The subgroup test must use the entire pool, not merely orbit
+representatives. Pruning changes the counts of visited prefixes;
+these are not then a census of all partial C-markings.
+\end{proof}
+
+\paragraph{Permutation application.}
+Take $G=A_n$ and $A=S_n$, acting by simultaneous conjugation.
+This action classifies the actual permutation markings up to
+renumbering the points. Its stabilizer at $t$ is the successive
+centralizer $C_{S_n}(t_1,\ldots,t_m)$. All even involutions are
+included: in the implementation they are the disjoint union of
+all order-two conjugacy classes of $A_n$. Every transitive
+C-marking under consideration consequently occurs, with no
+classification of transitive subgroups assumed. If a visited
+proper subgroup is already transitive, it is recorded and still
+extended. Transitivity is not a stopping condition.
+
+Permutation equivalence differs from abstract marked-group
+isomorphism. The latter is tested by the homomorphism sending
+the ordered generators of one generated group to those of the
+other, with an explicit bijectivity test. Reversing the tuple
+is duality. An abstractly self-dual marking can have a permutation
+representation inequivalent to its reverse.
+
+\paragraph{Attribution and computational premises.}
+Enumeration by prefix stabilizers is established methodology:
+Leemans--Mixer, \emph{Algorithms for classifying regular polytopes
+with a fixed automorphism group}, Contributions to Discrete
+Mathematics 7(2) (2012), Section 5, attributes it to Hartley--Hulpke
+(2010). The present proof specifies an ambient subgroup search,
+the recursive intersection test and the necessary completion
+test used by the accompanying program. No priority for the
+general orbit method is asserted.
+
+The complete GAP program and exact execution are required finite
+premises for each application, including its ambient model,
+all involutions, candidate orbits and final tuples. Exact group
+generation, conjugacy classes, centralizers, subgroup intersection,
+orbits and homomorphism checks retain GAP's software correctness
+as an explicit premise. The polytope correspondence and the
+end-intersection criterion remain mathematical inputs. A saved
+count without a complete execution is not a census certificate;
+no Lean verification is claimed here.
+\end{document}

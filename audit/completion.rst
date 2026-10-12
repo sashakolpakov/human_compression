@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **70 reviewed corrected principal recoveries**:
-53 are measured and seventeen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018 and N011) are unmeasured. There are 35 originals
+The current register contains **71 reviewed corrected principal recoveries**:
+53 are measured and eighteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011 and F002) are unmeasured. There are 34 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018 and N011 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011 and F002 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science70/v1/new_original_registration.json>`_.
+`science register <science71/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -85,6 +85,14 @@ Both finite linear classifications and all twelve table rows are recovered on
 their intended domain n >= 2, with intermediate literal corrections disclosed.
 External classification inputs remain retained; optional symbolic validation
 is not a finite proof premise. No factor, question or Lean claim is added.
+
+F002 recovers the unique rank-four or rank-five polytope for even transitive
+degree-eleven groups: the self-dual eleven-cell. Both complete new papers
+(2+2 pages), the full acquired projective identification, and the required
+finite census and literal comparison data remain available. Five source
+graphs and ten orbit entries are checked. Auxiliary graph lemmas and the
+52-tuple appendix are not separately recovered; all forty named statements
+have explicit dispositions. No factor, question answer or new Lean claim.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
