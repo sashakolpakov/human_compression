@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **69 reviewed corrected principal recoveries**:
-53 are measured and sixteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017 and L018) are unmeasured. There are 36 originals
+The current register contains **70 reviewed corrected principal recoveries**:
+53 are measured and seventeen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018 and N011) are unmeasured. There are 35 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017 and L018 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018 and N011 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science69/v1/new_original_registration.json>`_.
+`science register <science70/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -79,6 +79,12 @@ seven required programs and twelve whole data/receipt files. The seven-piece
 bound and both finite exclusion ranges are proved. Source arithmetic and
 perimeter qualifications remain explicit, as do the two unanswered general
 questions. No factor, new question answer or Lean declaration is added.
+
+N011 acquires both complete papers (2+7 pages) and all 57 source dispositions.
+Both finite linear classifications and all twelve table rows are recovered on
+their intended domain n >= 2, with intermediate literal corrections disclosed.
+External classification inputs remain retained; optional symbolic validation
+is not a finite proof premise. No factor, question or Lean claim is added.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
