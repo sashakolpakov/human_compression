@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **66 reviewed corrected principal recoveries**:
-53 are measured and thirteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096 and L023) are unmeasured. There are 39 originals
+The current register contains **67 reviewed corrected principal recoveries**:
+53 are measured and fourteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023 and L031) are unmeasured. There are 38 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096 and L023 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023 and L031 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science66/v1/new_original_registration.json>`_.
+`science register <science67/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -62,6 +62,12 @@ counterexamples, corrected even counts and retained classifications are
 separate. Its final broad question is attributed to later accepted L015,
 with no new question credit, formalization or factor.
 
+L031 acquires the whole 23-page corrected proof closure and all 57 source
+dispositions, including exact reused L011 theory. Binary existence/intersection
+and literal-matrix type corrections are explicit; larger-field existence and
+the complete low-dimensional spectrum are proved. Classical inputs and unknown
+source software remain; no finite premise, factor or new question is added.
+
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
 complete written comparison is 319016 / (108271 + 155199) = **1.210825**.
@@ -70,8 +76,8 @@ are charged. L121's proofs moved into that paid common theory; its conditional
 factor is 12.288729. L003's complete application factor is 1.063284.
 
 The `programme53 acceptance <programme53/v1/root_integration.json>`_ records the
-integration of the scientific, numerical and overview reviews. L044 and L096
-remain pending; their partial results receive no whole-original credit here.
+integration of the scientific, numerical and overview reviews. L044 remains pending. L096 received its later corrected scientific admission
+without a manuscript factor; its earlier partial results remain historical.
 Executable software is excluded on both sides of the written comparison.
 Programs and required data are inventoried separately. No software-inclusive
 factor or pooled factor across topics is asserted. Finite certificates and
