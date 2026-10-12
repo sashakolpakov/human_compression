@@ -6443,6 +6443,21 @@ def check_science58():
     return result
 
 
+"""Proposed two additive verifier functions; copy before main without old edits."""
+def check_previous_science59():
+    spec=importlib.util.spec_from_file_location('science59_history',ROOT/'scripts/check_science59_history.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
+def check_science59():
+    spec=importlib.util.spec_from_file_location('science59',ROOT/'scripts/check_science59.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    result=module.verify(ROOT)
+    need(check_current_measurement_pointer()==result['counts']['measured']==53,
+         'Science-only registration changed unique measurements.')
+    return result
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6531,14 +6546,14 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    science_history = check_previous_science58()
+    science_history = check_previous_science59()
     (previous_programme50, unified_a_fractions), (programme51, current_documentation), programme52 = science_history['legacy']
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
     programme53 = science_history['current']
-    science58 = check_science58()
-    active_admitted = science58['counts']['corrected_recoveries']
-    active_pending = science58['counts']['mathematical_pending']
+    science59 = check_science59()
+    active_admitted = science59['counts']['corrected_recoveries']
+    active_pending = science59['counts']['mathematical_pending']
     current_fractions, current_bars = programme53['overview_fractions'], programme53['overview_bars']
     representation_successor_fractions = check_representation_successor()
     lcd = check_lcd_current_admission()
