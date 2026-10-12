@@ -6051,6 +6051,81 @@ def check_unified_faithfulness_overview_independent():
     return report['exact_fractions'], report['SVG_bars']
 
 
+def check_representation_successor():
+    spec = importlib.util.spec_from_file_location('representation_successor_current', ROOT / 'scripts/check_representation_successor.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result = checker.verify(ROOT)
+    need(result['status'] == 'PASS_REPRESENTATION_SUCCESSOR', 'Representation successor admission failed.')
+    return result['exact_fractions']
+
+
+def check_programme48():
+    spec = importlib.util.spec_from_file_location('programme48', ROOT / 'scripts/check_programme48.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result = checker.verify(ROOT)
+    need(result['status'] == 'PASS_PROGRAMME48' and check_current_measurement_pointer() == 48,
+         'Programme48 and current measurement registration disagree.')
+    return result['recovered'], result['pending']
+
+
+def check_representation_overview48():
+    spec = importlib.util.spec_from_file_location('representation_overview48', ROOT / 'scripts/check_representation_overview48.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    return checker.verify(ROOT)
+
+
+def check_previous_programme48():
+    """Run programme47 and all its previous wrappers against exact saved pointers."""
+    from types import FunctionType
+    import tempfile
+    routes = {
+        'audit/corpus/latest.json': 'audit/programme48/v1/previous_corpus_pointer.json',
+        'papers/latest_catalogue.json': 'audit/programme48/v1/previous_catalogue.json',
+        'papers/catalogue.json': 'audit/programme48/v1/previous_full_catalogue.json',
+        'audit/overview/latest.json': 'audit/programme48/v1/previous_overview_pointer.json',
+        'README.rst': 'audit/programme48/v1/previous_README.rst',
+    }
+    with tempfile.TemporaryDirectory(prefix='programme48-history-') as temporary:
+        historical_root = Path(temporary)
+        def populate(source, destination, prefix=''):
+            destination.mkdir(exist_ok=True)
+            for child in source.iterdir():
+                relative = prefix + child.name
+                target = destination / child.name
+                if relative in routes:
+                    target.symlink_to(ROOT / routes[relative])
+                elif any(k.startswith(relative + '/') for k in routes):
+                    populate(child, target, relative + '/')
+                else:
+                    target.symlink_to(child, target_is_directory=child.is_dir())
+        populate(ROOT, historical_root)
+        scope = dict(globals(), ROOT=historical_root)
+        for name, value in list(globals().items()):
+            if isinstance(value, FunctionType) and value.__globals__ is globals():
+                scope[name] = FunctionType(value.__code__, scope, value.__name__,
+                                          value.__defaults__, value.__closure__)
+        previous = scope['check_previous_programme47']()
+        need(scope['check_programme47']() == (47, 59), 'Preserved programme47 changed.')
+        overview47 = scope['check_unified_faithfulness_overview']()
+        need(scope['check_unified_faithfulness_overview_independent']() == overview47,
+             'Preserved overview47 independent counts disagree.')
+        return previous
+
+
+def check_historical_representation_proofs():
+    """Keep the complete v2 proof check tied to its accepted catalogue edition."""
+    from types import FunctionType
+    row = {'path': 'audit/programme48/v1/previous_full_catalogue.json',
+           'bytes': 42260,
+           'sha256': 'f436b2230275396902b5e362298161e2173b6bd84468d9b667094eca03049bc5'}
+    check_bindings([row])
+    function = check_representation_proofs
+    scope = dict(function.__globals__, load=lambda path: load(
+        row['path'] if str(path) == 'papers/catalogue.json' else path))
+    return FunctionType(function.__code__, scope, function.__name__,
+                        function.__defaults__, function.__closure__)()
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6081,7 +6156,7 @@ def main():
     f_cells, f_fractions = check_topic_f_measurement()
     g_rows, g_declarations = check_topic_g_proofs()
     g_cells, g_fractions = check_topic_g_measurement()
-    representation_rows, representation_declarations = check_representation_proofs()
+    representation_rows, representation_declarations = check_historical_representation_proofs()
     representation_cells, representation_fractions = check_representation_measurement()
     chamber_rows, chamber_declarations = check_chamber_proofs()
     chamber_cells, chamber_fractions = check_chamber_measurement()
@@ -6139,13 +6214,14 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = check_previous_programme47()
+    ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = check_previous_programme48()
     unified_a_fractions = check_unified_a_current_admission()
     faithfulness_fractions = check_faithfulness_current_admission()
-    active_admitted, active_pending = check_programme47()
-    current_fractions, current_bars = check_unified_faithfulness_overview()
-    need(check_unified_faithfulness_overview_independent() == (current_fractions, current_bars), "Distinct overview47 counts disagree.")
-    print(f"PASS: unified A and expanded Mixes preserve {unified_a_fractions + faithfulness_fractions} exact topic fractions; F007 is the only additional original.")
+    active_admitted, active_pending = check_programme48()
+    current_fractions, current_bars = check_representation_overview48()
+    representation_successor_fractions = check_representation_successor()
+    print(f"PASS: Representation successor preserves {representation_successor_fractions} fractions; whole written factor0.736099 is expansion.")
+    print(f"PASS: unified A and expanded Mixes preserve {unified_a_fractions + faithfulness_fractions} exact topic fractions; historical F007 addition is preserved; current L126 is registered separately.")
     print(f"PASS: expanded E and Mixes add {expanded_e_added + mixes_covers_added} originals; {expanded_e_fractions + mixes_covers_fractions} topic sensitivity fractions checked with symmetric program exclusions.")
     policy_review_binding = load('audit/overview/latest.json')['measurement_policy_review']
     check_bindings([policy_review_binding])
@@ -6160,7 +6236,7 @@ def main():
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, {active_admitted} recovered and {active_pending} pending; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
-    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 18 whole and 47 conditional factors checked.")
+    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 18 whole and 48 conditional factors checked.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
     print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")

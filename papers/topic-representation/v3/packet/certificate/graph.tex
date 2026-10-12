@@ -1,0 +1,157 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=27mm]{geometry}
+\usepackage{fontspec,unicode-math}
+\setmainfont{STIXGeneral}
+\setmathfont{STIX Two Math}
+\usepackage{amsmath,amsthm,booktabs,hyperref}
+\hypersetup{hidelinks}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\title{A bipartite graph with a nonsplit action on its parts}
+\author{Finite construction and elementary certificate}
+\date{12 October 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+We give an explicit connected cubic bipartite graph whose automorphisms
+preserving its parts act transitively on edges, but whose automorphism group
+does not split over that subgroup.  The graph and two permutations are
+specified by complete finite data.  An elementary certificate proves that
+these permutations generate the full automorphism group, so the absence of
+part-exchanging involutions is not merely a property of a chosen subgroup.
+\end{abstract}
+
+\section{The construction and its finite data}
+Let $B$ be the graph on $\{1,\ldots,896\}$ with adjacency lists in
+\texttt{graph.json}.  A row lists exactly the three neighbours of the vertex
+with that row number.  The same file gives two permutations by their complete
+image lists.  All indices in this data file start at one.  These lists, rather
+than a random search or a chosen graph-library labelling, define the graph.
+
+Two whole files form the required certificate: \texttt{check.py} and
+\texttt{graph.json}.  Only Python's standard library is used.  The successful
+report, \texttt{certificate.json}, binds both files by SHA256.  The checks use
+explicit conditional failures and remain active under Python's \texttt{-O}
+option.  The certificate does not call GAP, nauty, Bliss, or a graph
+isomorphism package.
+
+\begin{theorem}\label{thm:graph}
+The graph $B$ is connected, simple, cubic and bipartite, with parts $P,Q$ of
+size $448$ and $1344$ edges.  Write $A=\operatorname{Aut}(B)$ and let $A^+$
+be the subgroup preserving each part.  Then
+\[
+ |A|=5376,\qquad |A^+|=2688,
+\]
+and $A^+$ is transitive on the edges.  The elements of $A\setminus A^+$
+have the following orders and multiplicities:
+\[
+\begin{array}{c|rrr}
+\text{order}&4&12&28\\ \hline
+\text{multiplicity}&1024&896&768.
+\end{array}
+\]
+In particular, the sequence
+$1\longrightarrow A^+\longrightarrow A\longrightarrow C_2\longrightarrow1$
+does not split.
+\end{theorem}
+
+The proof below separates the small general argument certifying fullness
+from the finite calculations.  The latter are required premises and their
+whole data and implementation are retained.  Optional independent computations
+with nauty and Bliss agree, but are not needed for the elementary proof.
+
+\section{Why the computed group is the full group}
+For a finite graph and an initial assignment of integer colours, replace the
+colour of each vertex by the pair consisting of its previous colour and the
+multiset of the previous colours of its neighbours.  Encode equal pairs by
+equal new integers, using a fixed sorted order.  This is neighbour-colour
+refinement.  It never merges two previous colour classes.
+
+\begin{lemma}\label{lem:bound}
+Let $X$ be a finite $d$-regular graph on $n$ vertices.  Suppose that giving
+distinct colours to one vertex $v$ and its $d$ neighbours, and one additional
+colour to all other vertices, eventually produces singleton classes under
+neighbour-colour refinement.  Then $|\operatorname{Aut}(X)|\leq n d!$.
+\end{lemma}
+\begin{proof}
+An automorphism fixing $v$ and every neighbour of $v$ preserves the initial
+colours.  Inductively it preserves each refined colour: it preserves both
+the old colour and the multiset of old colours in the neighbourhood.  When
+all colour classes are singletons, the automorphism fixes every vertex.
+Consequently an automorphism is determined by its action on the ordered
+star consisting of $v$ and its neighbours.  There are at most $n$ choices
+for the image of $v$ and $d!$ bijections from its neighbourhood to that of
+the image.  This proves the bound.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:graph}]
+The certificate first checks that every adjacency row contains three
+distinct valid vertices, excludes its own vertex, and is reciprocal.
+Breadth-first traversal visits all $896$ vertices, assigns opposite binary
+colours across every edge and finds $448$ vertices of each colour.  Counting
+unordered adjacent pairs gives $1344$ edges.
+
+Individualize vertex $1$ and its three neighbours.  Starting with five
+colour classes, successive strict refinement steps give
+\[
+5,8,11,14,17,20,26,44,135,398,692,842,890,896.
+\]
+The final partition is discrete.  Lemma~\ref{lem:bound} therefore gives
+$|A|\leq896\cdot6=5376$.
+
+The two supplied permutations are bijections of the vertex set and preserve
+every adjacency row.  Their orders are $6$ and $4$.  Starting at the identity,
+the certificate closes a set of permutations under multiplication by these
+two generators and obtains exactly $5376$ distinct permutations.  This
+finite closed monoid of permutations is their generated group: every inverse
+is a positive power in the finite permutation group.  It is contained in
+$A$ and attains the upper bound, so it equals $A$.
+
+For every one of these $5376$ permutations, the certificate tests its image
+of $P$.  Exactly $2688$ preserve $P$, and the other $2688$ send it to $Q$.
+The orbit of one unordered edge under the former permutations consists of
+all $1344$ edges.  For each of the remaining permutations its order is
+computed as the least common multiple of the lengths of its disjoint cycles.
+The resulting distribution is the one displayed in the theorem; its entries
+sum to $2688$.
+
+The part action is onto $C_2$, with kernel $A^+$.  A section of this action
+would send the nonidentity element of $C_2$ to an involution outside $A^+$.
+The exhaustive distribution contains no such element.  Conversely such an
+involution would generate a complement, so the stated obstruction is exact.
+\end{proof}
+
+\newpage
+\section{Scope and reproducibility}
+The graph supplies an input for a separate construction of a thin
+flag-transitive incidence geometry.  This note proves the graph assertions
+only; it does not assert a source-wide result about incidence geometries or
+replace the separate proof identifying the full type-permuting group of
+that construction.  Its distinction between edge transitivity under $A^+$
+and under $A$ is essential.
+
+The graph was found as an eight-fold binary homology cover of a cubic graph
+on $112$ vertices.  That search is provenance, not a premise: the retained
+adjacency and permutations are sufficient to replay the entire proof.
+In particular, no completeness claim about the search is made.  General
+permutation-group arithmetic, breadth-first traversal and neighbour-colour
+refinement are standard procedures; no historical novelty claim is made
+for these methods.
+
+Seven controls reject a loop, a nonbijective proposed generator, a
+permutation not preserving adjacency, substitution of a proper subgroup,
+an incomplete star, the genuine swapping involutions of a six-cycle, and
+the weakened use of root-only colour refinement.  The six-cycle control
+passes all preceding full-group and transitivity tests, so it specifically
+tests the final nonsplitting obstruction.
+
+To replay the required certificate from an exported copy, run
+\begin{quote}\ttfamily\small
+python3 -B -O check.py --out fresh-result.json
+\end{quote}
+There is no Lean formalization in this packet.  The finite certificate is
+an ordinary executable proof by exhaustive verification; both its complete
+program and its mandatory data must be counted wherever this construction
+is used.  Optional GAP/nauty/Bliss checks are separately inventoried as
+validation and cannot stand in for the required fullness argument.
+\end{document}

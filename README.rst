@@ -1,6 +1,14 @@
 Human Compression
 =================
 
+Current Representation successor
+-------------------------------
+
+The current programme has **48 recovered/measured originals and 58 pending**, all within the 106 accessible originals. The two-source `Representation edition <papers/topic-representation/latest.json>`_ pays U13 plus both complete applications of four and twelve pages. Its whole written factor is **0.736099: expansion, not achieved whole-topic compression**; the separately conditional F010/L126 factors are 2.307510 and 1.019505. Required graph certificate/data and retained mathematics are actual premises; nine optional checks are not. Software-inclusive factors remain unknown. See the `six-page current overview <audit/overview/v15/packet/reader.pdf>`_. The older one-source Representation paragraph below is preserved as historical background.
+
+Current papers: `shared theory <papers/topic-representation/v3/packet/volume/umbrella.pdf>`_, `finite normal pairs <papers/topic-representation/v3/packet/volume/finite-normal-pairs.pdf>`_ and `representations by incidence <papers/topic-representation/v3/packet/volume/representations-by-incidence.pdf>`_. The `complete program appendix <papers/topic-representation/v3/packet/volume/program-appendix.pdf>`_, `required graph data <papers/topic-representation/v3/packet/certificate/graph.json>`_ and `accepted audit <audit/topic-representation/v3/admission.json>`_ preserve the full proof boundary. L126 is Leemans–Stokes–Tranchida, *Groups represented by incidence geometries*, arXiv2506.10464v1; F010 is Díaz Ramos–Molinier–Viruel, *Every finite group is represented by a finite incidence geometry*, arXiv2511.02410v2. The finite-field and splitting corrections retain the source attribution; broader unresolved programmes are not claimed solved.
+
+
 Can reusable mathematics and capable language-model agents recover decades
 of published results in shorter, complete papers? This project tests that
 question through explicit proofs, attribution and measured comparisons.
@@ -9,29 +17,29 @@ question through explicit proofs, attribution and measured comparisons.
 both sides of the current comparison. Exact reviewed block exclusions now
 restore the Chamber, ChiralEnumeration and Operations factors previously held
 in v11. Surrounding proofs, mathematical algorithm prose and tables remain
-counted. The `current comparison <audit/overview/v14/README.rst>`_ records all
-eighteen whole-topic and forty-seven individual factors. Required programs and
+counted. The `current comparison <audit/overview/v15/README.rst>`_ records all
+eighteen whole-topic and forty-eight individual factors. Required programs and
 data keep their proof role and remain separately inventoried. Software-inclusive
 factors stay unknown until comparable original software is available.
 
 The active catalogue contains **106 original manuscripts with usable full
 texts**. The `complete active list
-<audit/corpus/accessible106/updates/unified-a-faithfulness-catalogue.json>`_
+<audit/corpus/accessible106/updates/representation-catalogue.json>`_
 records each original's source, proof targets and current status. At the
 user's request, the other `55 previously indexed originals
 <audit/corpus/accessible106/archived_unavailable.json>`_ are archived outside
 the programme; source retrieval is no longer scheduled. The historical
 161-title inventory and earlier reports remain preserved.
 
-**47 accessible originals have admitted principal-result recoveries;
-59 await complete recovery.** Eighteen whole-topic factors and forty-seven individual
+**48 accessible originals have admitted principal-result recoveries;
+58 await complete recovery.** Eighteen whole-topic factors and forty-eight individual
 factors are available after the matched listing exclusions. The `current programme
 <audit/corpus/latest.json>`_ records the proof and earlier measurement
 admissions. The overview records current comparison status; an original awaiting a complete proof remains pending.
 Recovery refers to the specified principal results with their explicit
 corrections and retained inputs, not every cited fact or open question.
 
-Seven measured topics currently contain one original. The `consolidation
+Six measured topics currently contain one original. The `consolidation
 proposals <audit/corpus/accessible106/singleton_assessment/README.rst>`_ identify
 shared theorems and remaining obligations for the previous ten, including
 affine constructions with A and matching extensions with group operations.
@@ -39,20 +47,18 @@ F now contains two originals and Mixes three; the affine consolidation into A is
 no proofs or numerical savings; any later exclusions will retain their
 reasons and previous measurements.
 
-The `consolidated comparison <audit/overview/v14/packet/reader.pdf>`_ accounts
-for all eighteen topics and forty-seven originals. Unified A combines its
+The `consolidated comparison <audit/overview/v15/packet/reader.pdf>`_ accounts
+for all eighteen topics and forty-eight originals. Unified A combines its
 seven earlier originals with L012, paying the whole 23-page common paper and
 all 45 application pages. Its written factor is **1.395**. Mixes now covers
 F005, L016 and F007, paying all three common papers and every complete
-application/companion bundle, for **1.513**. The other sixteen topic records
-and thirty-six individual records remain unchanged, including expanded E and
-the corrected Chamber, ChiralEnumeration and Operations listing boundaries.
+application/companion bundle, for **1.513**. Representation now includes F010 and L126 with its full shared theory. The other seventeen topic records and forty-six individual records remain exact from v14, including expanded E and the corrected Chamber, ChiralEnumeration and Operations listing boundaries.
 There is no software-inclusive or pooled factor.
-The current `topic graph <audit/overview/v14/packet/whole_topics.svg>`_ and
+The current `topic graph <audit/overview/v15/packet/whole_topics.svg>`_ and
 application graphs (`first twenty-four
-<audit/overview/v14/packet/conditional_1.svg>`_; `remaining twenty-three
-<audit/overview/v14/packet/conditional_2.svg>`_) show complete manuscript lengths.
-The `numerical overview <audit/overview/v14/README.rst>`_ preserves exact current
+<audit/overview/v15/packet/conditional_1.svg>`_; `remaining twenty-four
+<audit/overview/v15/packet/conditional_2.svg>`_) show complete manuscript lengths.
+The `numerical overview <audit/overview/v15/README.rst>`_ preserves exact current
 and historical tables. Every topic retains its independently adopted coordinate;
 Operations retains its separate text-only sensitivity. Historical software and
 complete source diagram complexity remain unknown.
@@ -147,8 +153,8 @@ theory once, independently of other topics. Earlier reports remain preserved.
      - 2
      - 0.630
    * - Group representations by geometries
-     - 1
-     - 1.015
+     - 2
+     - 0.736
    * - Chamber systems and covers
      - 2
      - 0.938
@@ -994,8 +1000,8 @@ appendix and raw files remain separately inventoried. Retained proof and
 graphical costs remain unknown. Paired
 dependency costs are still being audited.
 
-Recognizable extensions and finite normal pairs
------------------------------------------------
+Historical one-source Representation edition
+--------------------------------------------
 
 The `common paper <papers/topic-representation/v2/umbrella.pdf>`_ proves
 how recognizing the old vertices, ruling out symmetries that fix them, and

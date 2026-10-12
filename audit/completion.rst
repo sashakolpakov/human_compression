@@ -1,6 +1,8 @@
 Completion of the closed corpus
 ===============================
 
+Current additive update: 48 recovered/measured originals, 58 pending among 106 active; 55 archived. The two-source Representation whole written factor 0.736099 is expansion. Exact current routes: audit/overview/v15 and papers/topic-representation/v3. Earlier chronological completion records below remain historical.
+
 The intake contains 161 indexed manuscripts, of which 102 were retrieved,
 61 encoded and 48 had some results rederived. Within those sets, 27 have
 admitted principal-result contracts. These counts are nested, not additive.
