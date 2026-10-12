@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**60 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and seven (N014, L024, L102, F011, F008, L039 and L013) await measurement.
-45 await mathematical recovery; L022 is an editorial with no mathematical result
+**61 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and eight (N014, L024, L102, F011, F008, L039, L013 and L011) await measurement.
+44 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -79,9 +79,16 @@ The complete solver run is a required finite premise; saved positive graphs
 alone do not prove exhaustion. Endpoint corrections and the unanswered future
 construction direction are preserved.
 
-All seven source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science60/v1/new_original_registration.json>`_.
-None of these seven recoveries has a compression factor. N014 is not added to C's measured
+The `L011 guide <papers/recoveries/L011/v1/PUBLICATION.rst>`_ retains the complete four-page
+common theory and four-page application. All 27 source dispositions include
+the exact simple-group exclusion list, eight finite exceptional cases and the
+retained positive classification. The three whole finite programs and their
+receipts remain proof premises; all eleven orders were freshly checked without
+cached size or stabilizer-chain assumptions.
+
+All eight source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science61/v1/new_original_registration.json>`_.
+None of these eight recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected

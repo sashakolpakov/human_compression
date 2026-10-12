@@ -1,0 +1,13 @@
+Result:=rec(
+  candidates := [ 1104, 371, 103, 2 ],
+  complete := true,
+  full_groups := [ 0, 0, 0, 0 ],
+  group_order := 443520,
+  independence_rejections := [ 0, 0, 2, 0 ],
+  involution_classes := 1,
+  involutions := 1155,
+  ip_rejections := [ 0, 14, 33, 2 ],
+  nodes := [ 1, 8, 178, 40 ],
+  orbit_representatives := [ 8, 192, 75, 2 ],
+  runtime_ms := 385,
+  witnesses := [  ] );
