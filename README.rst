@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**57 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and four (N014, L024, L102 and F011) await measurement.
-48 await mathematical recovery; L022 is an editorial with no mathematical result
+**58 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and five (N014, L024, L102, F011 and F008) await measurement.
+47 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -58,9 +58,16 @@ four pages of common character-sum theory and four pages on Diophantine
 tuples. The exact stronger bound is recovered with a centered-power
 construction; the source conjecture remains unanswered.
 
-All four source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science57/v1/new_original_registration.json>`_.
-None of these four recoveries has a compression factor. N014 is not added to C's measured
+The `F008 guide <papers/recoveries/F008/v1/PUBLICATION.rst>`_ presents an **auxiliary original,
+not focal-group authored**, by Noah Lebowitz-Lockard and Gérald Tenenbaum.
+Its complete five-page common theory, four-page planar application and six-page
+three-dimensional supplement recover the principal density, rectangle-count and
+weighted-moment bounds. General-weight and improved-error ancillary remarks
+remain unproved, and **Conjecture 1.1 remains unanswered**.
+
+All five source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science58/v1/new_original_registration.json>`_.
+None of these five recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
