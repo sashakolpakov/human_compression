@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **59 reviewed corrected principal recoveries**:
-53 are measured and six (N014, L024, L102, F011, F008 and L039) are unmeasured. There are 46 originals
+The current register contains **60 reviewed corrected principal recoveries**:
+53 are measured and seven (N014, L024, L102, F011, F008, L039 and L013) are unmeasured. There are 45 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008 and L039 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039 and L013 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science59/v1/new_original_registration.json>`_.
+`science register <science60/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -22,6 +22,11 @@ Conjecture 1.1 explicit.
 L039 retains both whole scientific papers (3+7 pages), nine named external-input
 classes and its recorded unanswered higher-rank chiral question. The source
 normality argument is corrected; no unconditional literal equivalence is claimed.
+
+L013 retains the complete five-page general theory and four-page finite paper.
+Its 45 source dispositions distinguish exact small censuses from two degree-six
+witnesses. Completed CP-SAT exhaustion is a required finite premise; no kernel
+SAT proof is claimed. Small-field endpoints and future-work limits remain explicit.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
