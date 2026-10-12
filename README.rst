@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**55 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and two (N014 and L024) await measurement.
-50 await mathematical recovery; L022 is an editorial with no mathematical result
+**56 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and three (N014, L024 and L102) await measurement.
+49 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -48,10 +48,16 @@ with its exact finite certificate and retained character-theoretic inputs. The
 unspecified historical marking run, global minimality wording and suggested
 all-family polytopality remain outside its accepted principal conclusions.
 
-Both source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science55/v1/new_original_registration.json>`_.
-Neither recovery has a compression factor. N014 is not added to C's measured
-five-original boundary, and L024 creates no comparison topic. The table and
+The `L102 guide <papers/topic-g/extensions/local-primitivity/v1/PUBLICATION.rst>`_ gives the complete fourteen-page
+local-action theory and eight-page linear-space application. Both finite premises
+and all retained classification inputs are explicit; corrected source assertions
+are distinguished from literal theorem-set equivalence.
+
+All three source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science56/v1/new_original_registration.json>`_.
+None of these three recoveries has a compression factor. N014 is not added to C's measured
+five-original boundary; L102 leaves G's measured boundary unchanged, and L024
+creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
 recovery does not assert equivalence with every literal source assertion.
 
