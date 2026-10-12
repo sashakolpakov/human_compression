@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**68 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and fifteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031 and L017) await measurement.
-37 await mathematical recovery; L022 is an editorial with no mathematical result
+**69 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and sixteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017 and L018) await measurement.
+36 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -143,9 +143,19 @@ source dispositions and retained inputs are explicit. This recovery includes
 corrections; it does not assert that every original statement is true.
 No factor, new question answer or Lean declaration is added.
 
-All fifteen source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science68/v1/new_original_registration.json>`_.
-None of these fifteen recoveries has a compression factor. N014 is not added to C's measured
+The `L018 guide <papers/recoveries/L018/v1/PUBLICATION.rst>`_ gives a written
+seven-piece lower bound and complete exact exclusions for squares through side
+1000 and rectangles with both sides through 400. Both whole papers (8 pages),
+all required programs and completed case receipts are acquired. Printed shape
+products, perimeter conventions and one subset-sum assertion are corrected;
+the separate code audit concerns the pinned current source edition. The two
+general existence and defect questions remain unanswered. This recovery
+includes corrections; it does not assert that every original statement is true.
+No factor, new question answer or Lean declaration is added.
+
+All sixteen source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science69/v1/new_original_registration.json>`_.
+None of these sixteen recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
