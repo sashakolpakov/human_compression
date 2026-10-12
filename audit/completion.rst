@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **64 reviewed corrected principal recoveries**:
-53 are measured and eleven (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122 and L015) are unmeasured. There are 41 originals
+The current register contains **65 reviewed corrected principal recoveries**:
+53 are measured and twelve (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015 and L096) are unmeasured. There are 40 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122 and L015 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015 and L096 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science64/v1/new_original_registration.json>`_.
+`science register <science65/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -48,6 +48,13 @@ and explicit classical inputs. The universal subfield-generation assertion is
 refuted and replaced by uniform existence; the main triality and hypermap
 conclusions are recovered. Optional validation and operational code remain
 separate, with unknown source software and no numerical factor.
+
+L096 retains all 27 current native pages and the complete six-page existing
+Topic D common. Its 73 dispositions, 57 numerical comparisons and 232 positive
+occurrences preserve corrected counts, source-profile proofs and three expressly
+unverified historical J1 ordinals. The full mathematical profile classification
+is complete. Software, external classifications and their limits stay explicit;
+there is no new length factor.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its

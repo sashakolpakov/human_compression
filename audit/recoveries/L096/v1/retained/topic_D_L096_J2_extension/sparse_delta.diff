@@ -1,0 +1,121 @@
+--- accepted/shadow_residues.g
++++ J2/shadow_residues_sparse.g
+@@ -13,45 +13,50 @@
+  elif IsList(x) then return Concatenation("[",JoinStringsWithSeparator(List(x,L096JSON),","),"]");fi;
+  Error("unsupported output type");
+ end;;
++L096Shift:=function(H,S,g)return Set(List(S,x->CanonicalRightCosetElement(H,x*g)));end;;
+ L096Local:=function(G,H,labels)
+- local n,sets,HG,acts,base,sh,i,T,C,phi,pt,expected,j,ft,ext,
++ local n,sets,HG,base,sh,i,T,pt,expected,j,ft,ext,
+  K,dc,h,inter,a,sx,sf,inc,U,q,good,witness,tested,failures,
+- allgood,witness_tests,primitive,connected,generated,degree;
++ allgood,witness_tests,connected,generated,degree;
+  n:=Length(H);sets:=Combinations([1..n]);
+  HG:=List(sets,T->Intersection(Concatenation([G],H{T})));
+- acts:=[];base:=[];sh:=[];primitive:=[];
++ base:=[];sh:=[];
+  for i in [1..n] do
+-  C:=RightCosets(G,H[i]);phi:=ActionHomomorphism(G,C,OnRight);
+-  pt:=Position(C,RightCoset(H[i],One(G)));degree:=Length(C);
+-  Add(acts,phi);Add(base,pt);
+-  Add(sh,List(HG,A->Set(Orbit(Image(phi,A),pt))));
+-  if not ForAny(primitive,x->x) then Add(primitive,degree>=2 and IsPrimitive(Image(phi),[1..degree]));fi;
++  # Store only the shadows of nonempty flags as canonical right-coset reps.
++  # The empty flag has the entire i-object set, represented by its cardinality.
++  degree:=Index(G,H[i]);pt:=CanonicalRightCosetElement(H[i],One(G));
++  Add(base,pt);Add(sh,[]);
++  for T in [1..Length(sets)] do
++   if Length(sets[T])=0 then Add(sh[i],[]);
++   else Add(sh[i],Set(List(RightTransversal(HG[T],Intersection(H[i],HG[T])),x->CanonicalRightCosetElement(H[i],x))));fi;
++  od;
+  od;
+  ft:=true;ext:=0;
+  for i in [1..n] do for T in [1..Length(sets)] do
+   if not i in sets[T] then
+-   expected:=[1..Index(G,H[i])];
++   if Length(sets[T])=0 then ext:=ext+1;continue;fi;
++   expected:=sh[i][Position(sets,[sets[T][1]])];
+    for j in sets[T] do expected:=Intersection(expected,sh[i][Position(sets,[j])]);od;
+    if expected<>sh[i][T] then ft:=false;fi;ext:=ext+1;
+   fi;
+  od;od;
+- generated:=Group(Concatenation(List(H,GeneratorsOfGroup)));
++ generated:=Group(Concatenation([One(G)],Concatenation(List(H,GeneratorsOfGroup))));
+  connected:=n<2 or generated=G;
+- if not ft then return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=false,extension_tests:=ext,primitive_checked_types:=labels{[1..Length(primitive)]},primitive_types:=primitive,connected:=connected);fi;
++ if not ft then return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=false,extension_tests:=ext,primitivity_status:="retained_from_accepted_exact_family",connected:=connected);fi;
+  if n=1 then
+-  phi:=acts[1];degree:=Index(G,H[1]);
+-  return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=true,extension_tests:=ext,primitive_checked_types:=labels{[1..Length(primitive)]},primitive_types:=primitive,connected:=true,panel_size:=degree,firm:=degree>=2,two_transitive:=degree>=2 and Length(Orbits(Image(phi,H[1]),[1..degree]))=2);
++  degree:=Index(G,H[1]);
++  return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=true,extension_tests:=ext,primitivity_status:="retained_from_accepted_exact_family",connected:=true,panel_size:=degree,firm:=degree>=2,two_transitive:=degree>=2 and Length(DoubleCosets(G,H[1],H[1]))=2);
+  fi;
+- if n>=3 and not L096ComputeShadow then return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=true,extension_tests:=ext,primitive_checked_types:=labels{[1..Length(primitive)]},primitive_types:=primitive,connected:=connected,shadow_computed:=false);fi;
++ if n>=3 and not L096ComputeShadow then return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=true,extension_tests:=ext,primitivity_status:="retained_from_accepted_exact_family",connected:=connected,shadow_computed:=false);fi;
+  allgood:=[];tested:=0;failures:=[];witness_tests:=0;
+  for i in [1..n] do
+   good:=true;
+   if n=2 and L096RankTwoShortcut then
+    j:=3-i;sx:=sh[i][Position(sets,[j])];
+    for dc in DoubleCosets(G,H[j],H[j]) do
+-    h:=Representative(dc);if h in H[j] then continue;fi;inter:=Intersection(sx,OnSets(sx,Image(acts[i],h)));tested:=tested+1;
++    h:=Representative(dc);if h in H[j] then continue;fi;inter:=Intersection(sx,L096Shift(H[i],sx,h));tested:=tested+1;
+     if Length(inter)>1 and Length(inter)<>Index(G,H[i]) then
+-     good:=false;Add(failures,rec(type:=labels[i],element_type:=labels[j],flag_types:=[labels[j]],representative:=ListPerm(h,LargestMovedPoint(G)),intersection:=inter,method:="rank_two_common_neighbors"));break;
++     good:=false;Add(failures,rec(type:=labels[i],element_type:=labels[j],flag_types:=[labels[j]],representative:=ListPerm(h,LargestMovedPoint(G)),intersection_size:=Length(inter),intersection_representatives:=List(inter,x->ListPerm(x,LargestMovedPoint(G))),method:="rank_two_common_neighbors"));break;
+     fi;
+    od;
+   else
+@@ -60,23 +65,24 @@
+     for T in [1..Length(sets)] do
+      if Length(sets[T])=0 or i in sets[T] then continue;fi;
+      for dc in DoubleCosets(H[i],Intersection(H[i],HG[T]),K) do
+-      h:=Representative(dc);sf:=OnSets(sh[i][T],Image(acts[i],h));
++      h:=Representative(dc);sf:=L096Shift(H[i],sh[i][T],h);
+       inter:=Intersection(sx,sf);a:=Length(inter);tested:=tested+1;
+       if a<=1 then continue;fi;
+-      inc:=base[j] in OnSets(sh[j][T],Image(acts[j],h));
++      inc:=base[j] in L096Shift(H[j],sh[j][T],h);
+       if a=Minimum(Length(sx),Length(sf)) and inc then continue;fi;
+-      witness:=false;
++      witness:=a=Index(G,H[i]);
++      if witness then continue;fi;
+       for U in [1..Length(sets)] do
+-       if i in sets[U] or Length(sh[i][U])<>a then continue;fi;
++       if Length(sets[U])=0 or i in sets[U] or Length(sh[i][U])<>a then continue;fi;
+        for q in RightTransversal(K,Intersection(K,HG[U])) do
+         witness_tests:=witness_tests+1;
+-        if OnSets(sh[i][U],Image(acts[i],q))<>inter then continue;fi;
+-        if ForAll(sets[U],u->base[u]^Image(acts[u],q) in OnSets(sh[u][T],Image(acts[u],h))) then witness:=true;break;fi;
++        if L096Shift(H[i],sh[i][U],q)<>inter then continue;fi;
++        if ForAll(sets[U],u->CanonicalRightCosetElement(H[u],q) in L096Shift(H[u],sh[u][T],h)) then witness:=true;break;fi;
+        od;
+        if witness then break;fi;
+       od;
+       if not witness then
+-       good:=false;Add(failures,rec(type:=labels[i],element_type:=labels[j],flag_types:=labels{sets[T]},representative:=ListPerm(h,LargestMovedPoint(G)),intersection:=inter,method:="complete_double_coset_witness_search"));break;
++       good:=false;Add(failures,rec(type:=labels[i],element_type:=labels[j],flag_types:=labels{sets[T]},representative:=ListPerm(h,LargestMovedPoint(G)),intersection_size:=Length(inter),intersection_representatives:=List(inter,x->ListPerm(x,LargestMovedPoint(G))),method:="complete_double_coset_witness_search"));break;
+       fi;
+      od;
+      if not good then break;fi;
+@@ -86,7 +92,7 @@
+   fi;
+   Add(allgood,good);
+  od;
+- return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=ft,extension_tests:=ext,primitive_checked_types:=labels{[1..Length(primitive)]},primitive_types:=primitive,connected:=connected,type_results:=allgood,IP:=ForAll(allgood,x->x),WIP:=ForAny(allgood,x->x),orbit_tests:=tested,witness_tests:=witness_tests,negative_witnesses:=failures);
++ return rec(types:=labels,order:=Size(G),parabolic_orders:=List(H,Size),flag_transitive:=ft,extension_tests:=ext,primitivity_status:="retained_from_accepted_exact_family",connected:=connected,type_results:=allgood,IP:=ForAll(allgood,x->x),WIP:=ForAny(allgood,x->x),orbit_tests:=tested,witness_tests:=witness_tests,negative_witnesses:=failures);
+ end;;
+ L096AllResidues:=function(inp)
+  local G,H,n,sets,HG,J,K,rest,P,r,res,byrank,k,rows,filters,result;
+@@ -107,8 +113,8 @@
+   Add(byrank,rec(rank:=k,base_residues:=Length(rows),actual_residues:=Sum(rows,r->r.flag_orbit_size),IPk:=ForAll(rows,r->r.IP),WIPk:=ForAll(rows,r->r.WIP)));
+  od;
+  rows:=Filtered(res,r->r.residue_rank=1);
+- filters:=rec(flag_transitive:=true,firm:=ForAll(rows,r->r.firm),residually_connected:=ForAll(res,r->r.connected),RWPRI:=ForAll(res,r->ForAny(r.primitive_types,x->x)),twoT1:=ForAll(rows,r->r.two_transitive),IP2:=byrank[1].IPk);
+- result:=rec(member:=inp.member,active_row:=inp.active,construction_row:=inp.construction,published_label_verified:=false,order:=Size(G),rank:=n,borel_order:=Size(HG[Position(sets,[1..n])]),parabolic_orders:=List(H,Size),filters:=filters,source_filter_pass:=ForAll(RecNames(filters),s->filters.(s)),by_rank:=byrank,computed_all_ranks:=L096ComputeShadow,IP:=L096ComputeShadow and ForAll(byrank,r->r.IPk),WIP:=L096ComputeShadow and ForAll(byrank,r->r.WIPk),residues:=res);
++ filters:=rec(flag_transitive:=true,firm:=ForAll(rows,r->r.firm),residually_connected:=ForAll(res,r->r.connected),twoT1:=ForAll(rows,r->r.two_transitive),IP2:=byrank[1].IPk);
++ result:=rec(member:=inp.member,active_row:=inp.active,construction_row:=inp.construction,published_label_verified:=false,order:=Size(G),rank:=n,borel_order:=Size(HG[Position(sets,[1..n])]),parabolic_orders:=List(H,Size),filters:=filters,tested_geometry_checks_pass:=ForAll(RecNames(filters),s->filters.(s)),retained_RWPRI:=true,retained_RWPRI_basis:="accepted_complete_phase5_J2_census_exact_representative",by_rank:=byrank,computed_all_ranks:=L096ComputeShadow,IP:=L096ComputeShadow and ForAll(byrank,r->r.IPk),WIP:=L096ComputeShadow and ForAll(byrank,r->r.WIPk),residues:=res);
+  if not L096ComputeShadow then Unbind(result.IP);Unbind(result.WIP);fi;
+  return result;
+ end;;
