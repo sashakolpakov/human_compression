@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **62 reviewed corrected principal recoveries**:
-53 are measured and nine (N014, L024, L102, F011, F008, L039, L013, L011 and L025) are unmeasured. There are 43 originals
+The current register contains **63 reviewed corrected principal recoveries**:
+53 are measured and ten (N014, L024, L102, F011, F008, L039, L013, L011, L025 and L122) are unmeasured. There are 42 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008, L039, L013, L011 and L025 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025 and L122 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science62/v1/new_original_registration.json>`_.
+`science register <science63/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -37,6 +37,11 @@ L025 retains all 15 scientific pages, the two required graph programs and six
 complete data files. Its 41 dispositions keep source corrections, borrowed
 classification completeness and earlier question records explicit. New scientific
 acceptance adds no measurement, question answer or formal declaration.
+
+L122 retains its complete 4+4+3-page science and two-page current contract.
+All 36 source dispositions include the actual nonfirm/non-residually-connected
+coset counterexample to the unrestricted existence lemma and the unchanged
+qualified positive constructions. No new question, formal claim or factor follows.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its

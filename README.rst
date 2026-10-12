@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**62 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and nine (N014, L024, L102, F011, F008, L039, L013, L011 and L025) await measurement.
-43 await mathematical recovery; L022 is an editorial with no mathematical result
+**63 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and ten (N014, L024, L102, F011, F008, L039, L013, L011, L025 and L122) await measurement.
+42 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -93,9 +93,17 @@ algorithm, with named finite classification inputs. Both required programs and
 six complete data files are available. The source listings require a symmetric
 software boundary before any future factor.
 
-All nine source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science62/v1/new_original_registration.json>`_.
-None of these nine recoveries has a compression factor. N014 is not added to C's measured
+The `L122 guide <papers/recoveries/L122/v1/PUBLICATION.rst>`_ retains the complete four-page
+common theory, four-page positive application, three-page actual coset
+counterexample and two-page current contract. All 36 source dispositions are
+adjudicated; the unrestricted triality-existence lemma is refuted under its
+printed assumptions, while the qualified construction and six explicit examples
+remain valid. The counterexample is nonfirm and not residually connected.
+Complete required programs/data and unknown source software remain explicit.
+
+All ten source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science63/v1/new_original_registration.json>`_.
+None of these ten recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
