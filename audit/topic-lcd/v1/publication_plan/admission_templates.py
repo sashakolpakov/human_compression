@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Write concrete root-review drafts; these are not self-issued public admissions."""
+import json,hashlib
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+def read(p):return json.loads(p.read_text())
+def save(p,d):p.write_text(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
+def main():
+ a=read(HERE/'assembly_map.json'); packets={p['study_directory']:p for p in a['packets']}
+ def manifest(name):
+  p=packets[name];return dict(path=p['public_directory']+'/manifest.json',**p['manifest'])
+ science=['topic_LCD_umbrella_v2','topic_LCD_umbrella_independent_review','topic_LCD_umbrella_root_adoption','topic_LCD_L050_application','topic_LCD_L050_root_review','topic_LCD_F017_application','topic_LCD_F017_root_review']
+ maths=dict(status='PROPOSED_LCD_PUBLIC_ADMISSION_FOR_ROOT_REVIEW',source_ids=['L050','F017'],principal_originals_added=2,new_intake_originals=0,new_question_credit=0,new_formal_credit=0,source_title_scope='Two existing indexed originals only; L121 excluded.',science_manifests=[manifest(x)for x in science],scientific_catalogue_rows=read(HERE/'catalogue_rows.json')['entries'],source_dispositions=dict(L050=54,F017=104),whole_common_pages=14,whole_application_pages=dict(L050=15,F017=12),retained_inputs='Exact source maps and complete program/data/formal inventories remain authoritative. Historical code bounds, uniqueness/classification inputs and named module identifications are retained where explicitly stated.',unresolved_questions_retained=True,full_source_formalized=False,unique_partial_Lean_declarations=9,scope=a['scope'],artifacts=[dict(path=x['public_path'],bytes=x['bytes'],sha256=x['sha256'])for x in a['new_copies']],roles=dict(publication_proposal='enumeration_volume',public_writer_and_adopter='root',common_author='root',L050_author='rewrite_termination',F017_author='enumeration_volume',scientific_reviews='Separate frozen reviews/adoptions; this proposal does not re-adjudicate its authors own proof.'),root_publication_acceptance_required=True)
+ save(HERE/'admission_template.json',maths)
+ names=['topic_LCD_measurement_inputs_v2','topic_LCD_measurement_independent_review','topic_LCD_measurement_root_adoption','topic_LCD_measurement_results','topic_LCD_numerical_independent_review','topic_LCD_numerical_root_adoption']
+ measure=dict(status='PROPOSED_LCD_MEASUREMENT_PUBLIC_ADMISSION_FOR_ROOT_REVIEW',source_ids=['L050','F017'],primary=dict(selection='calibrated_selected',normalization='NFC',metric='characters_without_whitespace'),manifests=[manifest(x)for x in names],primary_costs=dict(sources=58756,common=32300,L050_application=37432,F017_application=29454,denominator=99186),whole=dict(numerator=58756,denominator=99186,interpretation='expansion'),conditionals=dict(L050=dict(numerator=24674,denominator=37432,interpretation='expansion'),F017=dict(numerator=34082,denominator=29454,interpretation='conditional saving after acquisition')),acquisition='Entire U and conservative complete topic-wide union of 83 required whole files plus retained mathematical premises; no sibling application premise.',software_inclusive_factor=None,pooled_factor=None,unknown_original_software_cost=None,whole_file_contents=102,whole_file_occurrences=127,original_bytes=548250,required_original_bytes=422956,all30_coordinates=True,exact_fractions=90,numerical_adoption=manifest('topic_LCD_numerical_root_adoption'),roles=dict(numerical_author='enumeration_volume',distinct_numerical_reviewer='rewrite_termination',root_adopter='root'),root_publication_acceptance_required=True)
+ save(HERE/'measurement_admission_template.json',measure)
+if __name__=='__main__':main()

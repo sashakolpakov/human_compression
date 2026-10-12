@@ -1,0 +1,122 @@
+"""Build a short input reader, without ratios or a complete-topic claim."""
+from pathlib import Path
+import argparse,json,subprocess,re
+H=Path(__file__).resolve().parent
+def tex():
+ counts=json.loads((H/'author_stage_counts.json').read_text())['documents']
+ names={'L050':'L050 original','F017':'F017 original','U_LCD':'Complete common paper','A_F017':'F017 application','A_L050':'L050 application'}
+ rows=[]
+ for key,r in counts.items():
+  v=r['variants'];rows.append(f"{names[key]} & {r['pages']} & {v['raw_untrimmed']['NFC']['characters_without_whitespace']:,} & {v['calibrated_selected']['NFC']['characters_without_whitespace']:,} & {r['calibration_occurrences']} \\\\")
+ body='\n'.join(rows)
+ return r'''\documentclass[11pt]{article}
+\usepackage[margin=26mm]{geometry}
+\usepackage{booktabs,array}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\begin{document}
+\begin{center}\Large LCD manuscript inputs\\[3pt]\normalsize Whole sources, common theory and both applications\end{center}
+
+The input boundary contains five complete PDFs and 69 physical pages: both
+originals, the whole accepted common paper, and both complete accepted
+applications. No comparison factor is calculated in this input proposal.
+
+The coordinate was fixed before counting: selected, visibly calibrated text,
+NFC normalization, characters without whitespace. The following lengths are
+individual input observations; they are not compression claims.
+
+\begin{center}\small
+\begin{tabular}{lrrrr}\toprule
+Document & Pages & Raw & Calibrated & Repairs\\\midrule
+'''+body+r'''
+\bottomrule\end{tabular}\end{center}
+
+``Raw'' includes exact extracted running furniture. ``Calibrated'' removes only
+the specified running headers or isolated page numbers and repairs the
+occurrence-bound glyph aliases. Every title, abstract, body page, footnote,
+mathematical table and reference remains. The selected uncalibrated text is also
+recorded. The JSON supplies all five units, NFC and NFKC, and all three variants:
+150 metric cells with text hashes. Printed line hyphens and source mathematical
+errors are unchanged.
+
+The L050 original is the eleven-page published article by Leemans and Rodrigues,
+\emph{Linear codes with complementary duals from some strongly regular
+subgraphs of the McLaughlin graph}. The F017 original is the seventeen-page
+author manuscript by Key and Rodrigues, \emph{LCD codes from adjacency matrices
+of graphs}, dated 4 August 2017. The common paper is the exact accepted
+fourteen-page edition. The twelve-page F017 application is separately accepted
+with 104 source dispositions and seven retained input classes. The fifteen-page
+L050 application has 54 dispositions and its exact retained classification
+inputs. Both applications reuse the same nine scoped generic Lean declarations;
+these do not formalize either complete source.
+
+No executable listing occurs in these five PDFs. Accordingly, the symmetric
+manuscript policy removes no code block here. Mathematical algorithms stated
+in prose and their proofs remain. The complete required certificate files stay
+explicit proof premises outside manuscript length, with optional validation
+kept distinct. Unavailable original software is unknown, not zero.
+
+\newpage
+\begin{center}\Large Glyphs and remaining dependencies\end{center}
+
+The actual-font audit reconciles 2,179 encoded Type1 glyph classes. The source, common
+and L050-application Type1 text is fully aligned; the F017 application has
+unchanged Type0 Unicode text dictionaries, identified separately. A total of
+314 occurrence-bound repairs have exact dictionary, encoding, byte and event
+evidence. They include printable sum/product aliases and styled letters as
+well as control and private-use glyphs. The mapsto tail and its adjacent arrow
+remain separate events. Ordinary ligatures are preserved; normalization
+sensitivity remains visible.
+
+All eleven L050 pages, fourteen common pages and fifteen L050 application pages
+were freshly viewed. The exact
+earlier seventeen-page F017 source views and twelve final application views are
+reused explicitly. In addition, 267 embedded-outline classes were viewed. One
+outline-panel label has a font warning for a combining circle; the actual
+embedded circle outline is visible and inspected. No primary PDF, extracted
+source text, font bytes or source image is distributed with this checkpoint.
+
+The whole-file inventory preserves 127 declared occurrences and counts 102
+unique complete contents once by exact hash. It includes 20 required programs,
+two complete derived GAP certificates, 19 required data files and 42 complete
+finite records. Two optional validation programs with one auxiliary record,
+eleven operational drivers, two partial Lean files and three scope records
+remain separate. All 102 contents have whole-byte pins and ten raw-text
+coordinates, giving 1,020 cells. No file is shortened by removing diagnostic
+branches. No large enumeration, formal compilation or scientific proof review
+is repeated by this audit.
+
+Any eventual written comparison pays the whole common paper once and both
+complete applications. A conditional comparison requires prior acquisition
+of the entire common paper and all declared required certificates and data.
+Old migrated local notes are provenance, not uncharged current prose premises.
+No overlap with another topic is treated as free. Both scientific applications
+are accepted; this input proposal still requires distinct review. Historical
+pending-review wording inside immutable author PDFs predates those acceptances.
+
+Full retained classical proofs, source software, graphics and formula layout,
+external libraries and complete formalization have unknown costs. No raster
+image XObject occurs in these PDFs, but this does not measure mathematical
+layout or vector complexity. The comparison is extracted text, not a claim
+to recover every aspect of the visible page. There is no software-inclusive
+factor, original credit or question credit from this input preparation.
+
+The portable checker re-extracts all pages, checks the precount policies and
+whole-file pins, and exercises 25 corruption controls. All 120 PDF cells and 450 file cells from the earlier
+four-document checkpoint are unchanged. This additive complete input edition
+preserves the fixed metric, raw sensitivities and explicit unknown costs.
+\end{document}
+'''
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--out',type=Path,required=True);ap.add_argument('--xelatex',default='/opt/homebrew/bin/xelatex');a=ap.parse_args()
+ if a.out.exists():raise RuntimeError('fresh output required')
+ a.out.mkdir(parents=True);t=tex();(a.out/'reader.tex').write_text(t)
+ for i in range(2):
+  r=subprocess.run([a.xelatex,'-interaction=nonstopmode','-halt-on-error','reader.tex'],cwd=a.out,text=True,capture_output=True)
+  (a.out/f'run{i+1}.log').write_text(r.stdout+r.stderr)
+  if r.returncode:raise RuntimeError('reader render failed')
+ log=(a.out/'reader.log').read_text();bad=[s for s in log.splitlines()if any(x in s for x in ['Overfull','Missing character','LaTeX Warning','Package fontspec Warning'])]
+ (a.out/'diagnostics.json').write_text(json.dumps(bad,indent=2)+'\n')
+ if bad:raise RuntimeError('reader diagnostic')
+ print('reader build passed')
+if __name__=='__main__':main()

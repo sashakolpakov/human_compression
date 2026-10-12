@@ -1,0 +1,38 @@
+"""Overview50: append the complete LCD topic without altering prior records."""
+from pathlib import Path
+from copy import deepcopy
+from fractions import Fraction
+from decimal import Decimal,localcontext
+import csv,io,json,hashlib
+HERE=Path(__file__).resolve().parent
+NEW=['L050','F017']
+def need(x,m):
+ if not x:raise ValueError('V16_REJECT: '+m)
+def sha(b):return hashlib.sha256(b).hexdigest()
+def read(n):return json.loads((HERE/n).read_text())
+def fraction(n,d):
+ f=Fraction(n,d)
+ with localcontext()as c:c.prec=50;s=format(Decimal(n)/Decimal(d),'.12f')
+ return dict(numerator=n,denominator=d,exact_fraction=f'{f.numerator}/{f.denominator}',decimal=s)
+def derive(old,n):
+ need(old['topic_count']==18 and old['original_manuscript_count']==48,'exact previous48')
+ r=deepcopy(old);p=n['primary'];d=p['costs'];q=p['raw_costs']
+ t=dict(topic='LCD',title=n['title'],source_count=2,source_ids=NEW,source_sum=p['totals']['source'],common_theory=d['U_LCD'],applications_sum=d['A_L050']+d['A_F017'],written_denominator=p['totals']['written'],written=fraction(p['totals']['source'],p['totals']['written']),common_components={'U_LCD':d['U_LCD']},application_components={'L050':{'A_L050':d['A_L050']},'F017':{'A_F017':d['A_F017']}},source_admission='audit/topic-lcd/v1/admission.json',measurement_admission='audit/topic-lcd/v1/measurement/admission.json',admitted_numeric_origin='audit/topic-lcd/v1/measurement/packet/results.json',numeric_origin='inputs/numbers_results.json/primary',representation='calibrated_selected_pdf',normalization='NFC',unit='characters_without_whitespace',primary_coordinate='calibrated_selected/NFC/characters_without_whitespace',current_written_status='AVAILABLE_FROM_ACCEPTED_COMPLETE_MANUSCRIPT_BOUNDARY',current_written_reason='Whole common theory and both complete applications; primary result is expansion. Executable software excluded symmetrically.',written_comparison_scope='Complete manuscript length under the exact corrected source contracts, not minimum proof complexity or total research effort.',conditional_assumption=n['interpretation']['conditional'],program_roles='102 unique whole contents/127 occurrences:20 required programs,2 derived certificates,19 mandatory data,42 retained finite records,3 optional files,11 drivers,2 Lean sources and3 scope files. Complete required83-file union conservatively prepaid; no scientific large enumeration is repeated by the numerical replay.',whole_file_inventory=deepcopy(n['raw_file_inventory']['files']),whole_file_group_costs=deepcopy(q),whole_file_role_counts=deepcopy(n['raw_file_inventory']['roles']),whole_file_original_bytes=n['raw_file_inventory']['whole_bytes'],required_whole_file_count=83,required_original_bytes=422956,printed_program_cost=None,raw_program_alternative=q['required_program']+q['required_derived_certificate']+q['optional_validation'],mandatory_data_cost=q['required_data']+q['required_finite_record'],separate_raw_inventory=deepcopy(n['raw_role_inventory']),including_printed_programs=None,including_raw_programs=None,including_optional_validation=None,historical_software_cost=None,external_proof_cost=None,complete_graphic_cost=None,full_formalization_cost=None,software_comparison_status='UNAVAILABLE_UNTIL_BOTH_SIDES_HAVE_MATCHED_SOFTWARE_BOUNDARIES',entire_source_pages={'L050':11,'F017':17},entire_common_pages=[14],entire_application_pages={'L050':15,'F017':12},entire_program_pages=None,listing_screening_evidence='Adopted input3d4f1a98/distinct2f9fa038/root214712d6: all five PDF bodies screened, no executable listings; actual font/event calibration and retained graphics caveats unchanged.',embedded_validation_listings_screened=True,held_sources=[],scientific_boundary=deepcopy(n['retained_scope']),source_dispositions={'L050':54,'F017':104},unknown_costs=deepcopy(n['unknown_costs']),scoped_Lean_declarations=9,full_source_formalized=False,no_sibling_application_dependency=True,whole_topic_interpretation='Expansion: no achieved whole-topic compression in the fixed primary coordinate.',no_cross_topic_discount=True,multi_coordinate_input_retained=True,pairs=[])
+ for source,app in [('L050','A_L050'),('F017','A_F017')]:
+  t['pairs'].append(dict(source=source,application=app,original_application_id=app,source_cost=d[source],application_cost=d[app],conditional=fraction(d[source],d[app]),source_representation='complete_PDF_calibrated_selected',historical_conditional=None,current_conditional_status='AVAILABLE_FROM_ACCEPTED_COMPLETE_MANUSCRIPT_BOUNDARY',current_conditional_reason=t['conditional_assumption'],interpretation=p['interpretation']['conditional_'+source]))
+ r['topics'].append(t);ids=[s for x in r['topics']for s in x['source_ids']];need(len(ids)==len(set(ids))==50 and set(ids)-set(old['original_ids'])==set(NEW),'exactly two added originals')
+ r.update(status='AUTHOR_V16_OVERVIEW_PENDING_DISTINCT_ROOT_REVIEW',topic_count=19,original_manuscript_count=50,original_ids=ids,accessible_pending_originals=56,available_conditional_comparisons=50,available_whole_topic_comparisons=19,available_written_and_conditional_comparisons=69,written_and_conditional_comparisons=69,comparison_rows=69,historical_written_and_conditional_comparisons=66,historical_overview='audit/overview/v15/packet/results.json',programme_snapshot_status='50_RECOVERED_OF_106_ACTIVE_ORIGINALS_56_PENDING',restoration_scope='Append LCD only; all18 prior topic objects and48 individual records remain exact, including all66 prior factors.',new_originals_reflected_from_scientific_admissions=NEW,whole_programme_binding={'active':106,'recovered':50,'pending':56,'archived':55,'registration':'audit/programme50/v1/new_original_registration.json','source_admission':'audit/topic-lcd/v1/admission.json'},new_source_credit=0,new_question_credit=0,new_formal_credit=0,factors_recomputed=True,recomputed_from_accepted_costs_only=True)
+ return r
+
+def csvs(r):
+ out={};f=io.StringIO(newline='');w=csv.writer(f,lineterminator='\n');w.writerow(['topic','title','originals','source_cost','whole_common','all_applications','written_denominator','written_exact','written_factor','coordinate','required_data_inventory'])
+ for t in r['topics']:w.writerow([t['topic'],t['title'],t['source_count'],t['source_sum'],t['common_theory'],t['applications_sum'],t['written_denominator'],t['written']['exact_fraction'],t['written']['decimal'],t['representation'],t.get('mandatory_data_cost','not_established_separately')])
+ out['topics.csv']=f.getvalue();f=io.StringIO(newline='');w=csv.writer(f,lineterminator='\n');w.writerow(['topic','source','application','actual_documents','source_cost','application_cost','whole_common_prepaid','conditional_exact','conditional_factor','acquisition_condition'])
+ for t in r['topics']:
+  for a in t['pairs']:w.writerow([t['topic'],a['source'],a['application'],a.get('original_application_id',a['application']),a['source_cost'],a['application_cost'],t['common_theory'],a['conditional']['exact_fraction'],a['conditional']['decimal'],t['conditional_assumption']])
+ out['applications.csv']=f.getvalue();return out
+
+def plot_data(r):
+ whole=[dict(id=t['topic'],held=False,values=dict(source=t['source_sum'],common=t['common_theory'],applications=t['applications_sum']),status=t['current_written_status'])for t in r['topics']]
+ pairs=[dict(id=a['source'],topic=t['topic'],held=False,values=dict(source=a['source_cost'],application=a['application_cost']),status=a['current_conditional_status'])for t in r['topics']for a in t['pairs']]
+ return dict(scope='19topics50originals; complete common paid per topic, no pooled/software scalar.',whole_topics=whole,conditional_1=pairs[:25],conditional_2=pairs[25:],graph_bars=157)

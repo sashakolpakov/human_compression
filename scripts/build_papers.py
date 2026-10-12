@@ -73,6 +73,25 @@ def check_repository_reads(target, root=ROOT):
                 raise RuntimeError(f'TeX read an unstaged repository input: {source}')
 
 
+
+def compiler_commands(papers, which=None):
+    """Use the declared compiler, retaining XeLaTeX for every legacy row."""
+    which = shutil.which if which is None else which
+    names = {}
+    for row in papers:
+        name = row.get('compiler', 'xelatex')
+        if name not in ('xelatex', 'pdflatex'):
+            raise ValueError(f"Unsupported compiler for {row['id']}: {name!r}")
+        names[row['id']] = name
+    commands = {}
+    for name in sorted(set(names.values())):
+        command = which(name)
+        if not command:
+            raise ValueError(f'Required compiler is unavailable: {name}')
+        commands[name] = command
+    return names, commands
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--output-dir', type=Path, required=True,
@@ -85,19 +104,18 @@ def main():
         ap.error('Use a fresh output directory.')
     if args.jobs < 1:
         ap.error('--jobs must be positive')
-    engine = shutil.which('xelatex')
-    if not engine:
-        ap.error('XeLaTeX is required, with the fonts specified in the TeX sources.')
     catalogue = json.loads((ROOT/'papers/catalogue.json').read_text())
     try:
         papers = select_papers(catalogue, args.paper)
         bundles = {row['id']: source_bundle(row) for row in papers}
+        compiler_names, compiler_paths = compiler_commands(papers)
     except (ValueError, OSError) as exc:
         ap.error(str(exc))
     out = args.output_dir.resolve()
     out.mkdir(parents=True)
 
     def build(row):
+        engine = compiler_paths[compiler_names[row['id']]]
         files = bundles[row['id']]
         data = files[row['tex']]
         target = out/row['id']
@@ -115,7 +133,7 @@ def main():
                                   text=True, capture_output=True, timeout=180)
             (target/f'run-{turn}.log').write_text(proc.stdout+proc.stderr)
             if proc.returncode:
-                raise RuntimeError(f"{row['id']}: XeLaTeX failed; see {target}")
+                raise RuntimeError(f"{row['id']}: {compiler_names[row['id']]} failed; see {target}")
             check_repository_reads(target)
         log = (target/'paper.log').read_text(errors='replace')
         diagnostics = [s for s in log.splitlines()
@@ -126,6 +144,7 @@ def main():
             if (ROOT/name).read_bytes() != content:
                 raise RuntimeError(f"{name}: source changed during build")
         result = {'id':row['id'], 'tex_sha256':sha256(data).hexdigest(),
+                  'compiler':compiler_names[row['id']],
                   'tex_inputs':[{'path': name, 'bytes': len(content),
                                  'sha256': sha256(content).hexdigest()}
                                 for name, content in files.items() if name != row['tex']],

@@ -6126,6 +6126,75 @@ def check_historical_representation_proofs():
                         function.__defaults__, function.__closure__)()
 
 
+def check_lcd_current_admission():
+    need(digest((ROOT / 'audit/topic-lcd/v1/admission.json').read_bytes()) ==
+         'b9057ea4f18030b7282600339771e36017d7651c45a8f5d175c12664282f6df6',
+         'Changed accepted LCD scientific edition.')
+    need(digest((ROOT / 'audit/topic-lcd/v1/measurement/admission.json').read_bytes()) ==
+         'efee42cffbd587e548069a9ad22d7c6fe181e76f2ed4885e5869b1aa1a43a647',
+         'Changed accepted LCD measurement.')
+    spec = importlib.util.spec_from_file_location('lcd_current', ROOT / 'scripts/check_lcd_publication.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    return checker.verify(ROOT)
+
+
+def check_programme50():
+    spec = importlib.util.spec_from_file_location('programme50', ROOT / 'scripts/check_programme50.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    result, _ = checker.verify(ROOT)
+    need(result['status'] == 'PASS_PROGRAMME50' and check_current_measurement_pointer() == 50,
+         'Programme50 and current measurements disagree.')
+    review = load('audit/programme50/v1/publication_review.json')
+    check_bindings([review['checker'], review['registration_report']] +
+                   review['scientific_and_numerical_admissions'] + review['integration_records'])
+    need({k: v for k, v in review['checks'].items() if k != 'controls'} == result and
+         review['role_disclosure'] and not review['corrections_requested'], 'Programme50 review differs.')
+    return result['recovered'], result['pending']
+
+
+def check_lcd_overview50():
+    spec = importlib.util.spec_from_file_location('lcd_overview50', ROOT / 'scripts/check_lcd_overview50.py')
+    checker = importlib.util.module_from_spec(spec); spec.loader.exec_module(checker)
+    return checker.verify(ROOT)
+
+
+def check_previous_programme50():
+    """Run programme48 and all its previous wrappers against exact saved pointers."""
+    from types import FunctionType
+    import tempfile
+    routes = {
+        'audit/corpus/latest.json': 'audit/programme50/v1/previous_corpus_pointer.json',
+        'papers/latest_catalogue.json': 'audit/programme50/v1/previous_catalogue.json',
+        'papers/catalogue.json': 'audit/programme50/v1/previous_full_catalogue.json',
+        'audit/overview/latest.json': 'audit/programme50/v1/previous_overview_pointer.json',
+        'README.rst': 'audit/programme50/v1/previous_README.rst',
+    }
+    with tempfile.TemporaryDirectory(prefix='programme50-history-') as temporary:
+        historical_root = Path(temporary)
+        def populate(source, destination, prefix=''):
+            destination.mkdir(exist_ok=True)
+            for child in source.iterdir():
+                relative = prefix + child.name
+                target = destination / child.name
+                if relative in routes:
+                    target.symlink_to(ROOT / routes[relative])
+                elif any(k.startswith(relative + '/') for k in routes):
+                    populate(child, target, relative + '/')
+                else:
+                    target.symlink_to(child, target_is_directory=child.is_dir())
+        populate(ROOT, historical_root)
+        scope = dict(globals(), ROOT=historical_root)
+        for name, value in list(globals().items()):
+            if isinstance(value, FunctionType) and value.__globals__ is globals():
+                scope[name] = FunctionType(value.__code__, scope, value.__name__,
+                                          value.__defaults__, value.__closure__)
+        previous = scope['check_previous_programme48']()
+        need(scope['check_programme48']() == (48, 58), 'Preserved programme48 changed.')
+        need(scope['check_representation_overview48']() == (66, 150),
+             'Preserved overview48 counts disagree.')
+        return previous
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6214,12 +6283,14 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = check_previous_programme48()
+    ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = check_previous_programme50()
     unified_a_fractions = check_unified_a_current_admission()
     faithfulness_fractions = check_faithfulness_current_admission()
-    active_admitted, active_pending = check_programme48()
-    current_fractions, current_bars = check_representation_overview48()
+    active_admitted, active_pending = check_programme50()
+    current_fractions, current_bars = check_lcd_overview50()
     representation_successor_fractions = check_representation_successor()
+    lcd = check_lcd_current_admission()
+    print(f"PASS: LCD admits {len(lcd['source_ids'])} originals with {lcd['whole_files']} complete file contents; whole factor 0.592382 is expansion.")
     print(f"PASS: Representation successor preserves {representation_successor_fractions} fractions; whole written factor0.736099 is expansion.")
     print(f"PASS: unified A and expanded Mixes preserve {unified_a_fractions + faithfulness_fractions} exact topic fractions; historical F007 addition is preserved; current L126 is registered separately.")
     print(f"PASS: expanded E and Mixes add {expanded_e_added + mixes_covers_added} originals; {expanded_e_fractions + mixes_covers_fractions} topic sensitivity fractions checked with symmetric program exclusions.")
@@ -6236,7 +6307,7 @@ def main():
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, {active_admitted} recovered and {active_pending} pending; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
-    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 18 whole and 48 conditional factors checked.")
+    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 19 whole and 50 conditional factors checked.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
     print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
