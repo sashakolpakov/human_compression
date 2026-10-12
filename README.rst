@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**67 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and fourteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023 and L031) await measurement.
-38 await mathematical recovery; L022 is an editorial with no mathematical result
+**68 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and fifteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031 and L017) await measurement.
+37 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -134,9 +134,18 @@ claim and the displayed matrices' intermediate type are corrected explicitly.
 All 57 source dispositions and retained classical inputs are visible. There
 is no required finite program, new question answer or new factor.
 
-All fourteen source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science67/v1/new_original_registration.json>`_.
-None of these fourteen recoveries has a compression factor. N014 is not added to C's measured
+The `L017 guide <papers/recoveries/L017/v1/PUBLICATION.rst>`_ acquires all four
+whole papers (16 pages), including two unchanged L023 proofs. The classical
+moving geometry and fixed absolute are recovered. Exact finite certificates
+separate the two q=4 graphs, exclude the claimed q=7 84-vertex quartic graph,
+and correct the full automorphism order of its 168-vertex example. All 53
+source dispositions and retained inputs are explicit. This recovery includes
+corrections; it does not assert that every original statement is true.
+No factor, new question answer or Lean declaration is added.
+
+All fifteen source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science68/v1/new_original_registration.json>`_.
+None of these fifteen recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected

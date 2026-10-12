@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **67 reviewed corrected principal recoveries**:
-53 are measured and fourteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023 and L031) are unmeasured. There are 38 originals
+The current register contains **68 reviewed corrected principal recoveries**:
+53 are measured and fifteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031 and L017) are unmeasured. There are 37 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023 and L031 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031 and L017 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science67/v1/new_original_registration.json>`_.
+`science register <science68/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -67,6 +67,12 @@ dispositions, including exact reused L011 theory. Binary existence/intersection
 and literal-matrix type corrections are explicit; larger-field existence and
 the complete low-dimensional spectrum are proved. Classical inputs and unknown
 source software remain; no finite premise, factor or new question is added.
+
+L017 retains all four complete papers (16 pages), 53 source dispositions and
+seven finite examples. The q=4 graph distinction, q=7 absent 84-vertex example
+and corrected full automorphism order remain explicit. Two exact programs and
+literal data are finite premises; classical inputs and source software costs
+remain declared. No factor, new question answer or Lean declaration is added.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
