@@ -1,6 +1,36 @@
 Completion of the closed corpus
 ===============================
 
+Current position
+----------------
+
+The current register contains **53 recovered and measured originals**, 52
+originals awaiting mathematical recovery, and one editorial (L022): all 106
+accessible originals are accounted for. The other 55 originals remain archived
+because usable full sources were unavailable when intake closed.
+
+The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
+and 53 individual conditional factors. Topic A now recovers ten originals. Its
+complete written comparison is 319016 / (108271 + 155199) = **1.210825**.
+All three common papers (41 pages) and all ten application bundles (63 pages)
+are charged. L121's proofs moved into that paid common theory; its conditional
+factor is 12.288729. L003's complete application factor is 1.063284.
+
+The `programme53 acceptance <programme53/v1/root_integration.json>`_ records the
+integration of the scientific, numerical and overview reviews. L044 and L096
+remain pending; their partial results receive no whole-original credit here.
+Executable software is excluded on both sides of the written comparison.
+Programs and required data are inventoried separately. No software-inclusive
+factor or pooled factor across topics is asserted. Finite certificates and
+supporting Lean lemmas do not constitute complete source formalizations.
+
+Historical completion records
+-----------------------------
+
+The entries below preserve earlier stages. Their counts, missing-input reports
+and software-inclusive factors are historical; the current register, overview
+and symmetric measurement policy above govern the present comparison.
+
 Current programme51 proposal: 51 recovered/measured originals, 54 pending mathematical originals and one separately accepted editorial (L022), among106 active;55 archived. L121 adds one complete application to A, with entire U23 paid and all prior scientific bytes unchanged. No new question credit. Current nine-source A comparison: audit/topic-a/v4; consolidated overview17 is separately reviewed. Earlier chronological completion records below remain historical.
 
 Current additive update: 48 recovered/measured originals, 58 pending among 106 active; 55 archived. The two-source Representation whole written factor 0.736099 is expansion. Exact current routes: audit/overview/v15 and papers/topic-representation/v3. Earlier chronological completion records below remain historical.

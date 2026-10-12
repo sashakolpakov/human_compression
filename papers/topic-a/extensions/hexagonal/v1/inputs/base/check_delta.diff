@@ -1,0 +1,24 @@
+--- v1/check.py
++++ v2/check.py
+@@ -78,7 +78,20 @@
+ 
+  roster=read(HERE/'table_roster.json')['rows'];require(len(roster)==73 and sum(r['prior_reuse_route'] is not None for r in roster)==7,'full source table boundary')
+  require({r['id'] for r in data['rows']}=={r['id'] for r in roster if r['prior_reuse_route'] is None},'separate row coverage')
+- require(len(read(HERE/'source_map.json')['rows'])==117,'all source dispositions')
++ def validate_source_map(data):
++  rows=data['rows'];require(len(rows)==117 and len({r['id'] for r in rows})==117,'117 distinct source dispositions')
++  by={r['id']:r for r in rows};principal={r['id'] for r in roster}
++  for i in principal:require(by[i]['structural_scope_route']=='structural_columns.json/'+i,'exact table structural route')
++  for r in rows:
++   if r['id'] not in principal:require('group_type_column' not in r and 'structural_scope_route' not in r,'no table status on named theorem/background')
++  for i in ['Theorem2.3','Theorem2.4','Theorem3.1','Theorem3.2','Theorem3.3']:require(i in by,'named theorem namespace')
++ source_data=read(HERE/'source_map.json');validate_source_map(source_data)
++ for label,edit in [('table/theorem ID collision',lambda d:next(r for r in d['rows'] if r['id']=='Theorem3.1').__setitem__('id','T3.1')),('named theorem structural-status contamination',lambda d:next(r for r in d['rows'] if r['id']=='Theorem3.3').__setitem__('structural_scope_route','structural_columns.json/T3.3'))]:
++  bad=copy.deepcopy(source_data);edit(bad)
++  try:validate_source_map(bad)
++  except ValueError:negative.append(label)
++  else:raise ValueError('accepted source-map mutation '+label)
++
+  for e in read(HERE/'migration.json')['complete_bodies']:require((HERE/e['destination']).stat().st_size==e['bytes'] and hashfile(HERE/e['destination'])==e['sha256'],'complete moved proof')
+  for rec in read(HERE/'author_replay.json')['rows']:
+   path=HERE/'certificates'/(rec['id']+'.log');require(hashfile(path)==rec['certificate_sha256'],'exact row certificate')

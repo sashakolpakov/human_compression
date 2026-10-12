@@ -6348,6 +6348,44 @@ def check_programme52():
          'Programme52 and unique original registry disagree.')
     return result
 
+def check_previous_programme53():
+    """Run unchanged current52 checks against exact saved current52 routes."""
+    from types import FunctionType
+    import tempfile
+    routes=load('audit/programme53/v1/history_routes.json')['routes']
+    check_bindings(list(routes.values()))
+    with tempfile.TemporaryDirectory(prefix='programme53-history-') as temporary:
+        historical_root=Path(temporary)
+        def populate(source,destination,prefix=''):
+            destination.mkdir(exist_ok=True)
+            for child in source.iterdir():
+                relative=prefix+child.name;target=destination/child.name
+                if relative in routes:target.symlink_to(ROOT/routes[relative]['path'])
+                elif any(k.startswith(relative+'/') for k in routes):
+                    populate(child,target,relative+'/')
+                else:target.symlink_to(child,target_is_directory=child.is_dir())
+        populate(ROOT,historical_root)
+        scope=dict(globals(),ROOT=historical_root)
+        for name,value in list(globals().items()):
+            if isinstance(value,FunctionType)and value.__globals__ is globals():
+                scope[name]=FunctionType(value.__code__,scope,value.__name__,value.__defaults__,value.__closure__)
+        older=scope['check_previous_programme51']()
+        legacy=scope['check_previous_programme52']()
+        previous=scope['check_programme52']()
+        need(previous['measured']==52 and previous['mathematical_pending']==53,
+             'Preserved programme52 partition changed.')
+        return older,legacy,previous
+
+
+def check_programme53():
+    spec=importlib.util.spec_from_file_location('programme53',ROOT/'scripts/check_programme53.py')
+    checker=importlib.util.module_from_spec(spec);spec.loader.exec_module(checker)
+    result=checker.verify(ROOT)
+    need(check_current_measurement_pointer()==result['measured']==53,
+         'Programme53 and unique original registry disagree.')
+    return result
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6436,13 +6474,12 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    previous_programme50, unified_a_fractions = check_previous_programme51()
+    (previous_programme50, unified_a_fractions), (programme51, current_documentation), programme52 = check_previous_programme53()
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
-    programme51, current_documentation = check_previous_programme52()
-    programme52 = check_programme52()
-    active_admitted, active_pending = programme52['measured'], programme52['mathematical_pending']
-    current_fractions, current_bars = programme52['overview_fractions'], programme52['overview_bars']
+    programme53 = check_programme53()
+    active_admitted, active_pending = programme53['measured'], programme53['mathematical_pending']
+    current_fractions, current_bars = programme53['overview_fractions'], programme53['overview_bars']
     representation_successor_fractions = check_representation_successor()
     lcd = check_lcd_current_admission()
     print(f"PASS: LCD admits {len(lcd['source_ids'])} originals with {lcd['whole_files']} complete file contents; whole factor 0.592382 is expansion.")
@@ -6462,7 +6499,7 @@ def main():
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
     print(f"PASS: active106 catalogue, 55 archived, {active_admitted} recovered, {active_pending} awaiting mathematics, and one editorial without a factor; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
-    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 19 whole and 52 conditional factors checked.")
+    print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 19 whole and 53 conditional factors checked.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
     print(f"PASS: historical nineteen-topic overview has {overview42_fractions} exact comparisons and {overview42_bars} actual bars per format for42 originals.")
     print(f"PASS: historical eighteen-topic overview: {overview41_fractions} exact comparisons and {overview41_bars} actual vector bars per format for 41 originals.")
