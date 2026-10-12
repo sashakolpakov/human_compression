@@ -4,16 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **65 reviewed corrected principal recoveries**:
-53 are measured and twelve (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015 and L096) are unmeasured. There are 40 originals
+The current register contains **66 reviewed corrected principal recoveries**:
+53 are measured and thirteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096 and L023) are unmeasured. There are 39 originals
 awaiting mathematical recovery and one editorial (L022), giving 106 accessible
 originals. The other 55 historical originals remain archived. The stop boundary
 is complete reviewed recovery of the 105 mathematical originals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015 and L096 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096 and L023 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science65/v1/new_original_registration.json>`_.
+`science register <science66/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -55,6 +55,12 @@ occurrences preserve corrected counts, source-profile proofs and three expressly
 unverified historical J1 ordinals. The full mathematical profile classification
 is complete. Software, external classifications and their limits stay explicit;
 there is no new length factor.
+
+L023 adds its complete 19-page corrected contract/proof closure, all 70
+dispositions and twelve finite rows. Uniform odd-PSL completion, precise
+counterexamples, corrected even counts and retained classifications are
+separate. Its final broad question is attributed to later accepted L015,
+with no new question credit, formalization or factor.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its

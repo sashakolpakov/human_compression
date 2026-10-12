@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**65 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and twelve (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015 and L096) await measurement.
-40 await mathematical recovery; L022 is an editorial with no mathematical result
+**66 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and thirteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096 and L023) await measurement.
+39 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -117,9 +117,18 @@ remain historical metadata, with the complete mathematical classes stated
 explicitly. Full required software/data and retained classifications remain
 visible. No measurement or new question claim is added.
 
-All twelve source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science65/v1/new_original_registration.json>`_.
-None of these twelve recoveries has a compression factor. N014 is not added to C's measured
+The `L023 guide <papers/recoveries/L023/v1/PUBLICATION.rst>`_ binds all six native documents
+(19 pages), all 70 source dispositions and twelve exact finite table rows.
+The uniform odd-projective-linear family consists of actual geometries; false
+unrestricted construction claims remain explicitly refuted. The three even
+finite rows and borrowed multiplier parity are corrected. The final broad
+flag-transitive question is answered by the attributed later L015 work of
+Leemans, Stokes and Tranchida, with no new question credit here. Required
+software and retained classification/even-family premises remain visible.
+
+All thirteen source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science66/v1/new_original_registration.json>`_.
+None of these thirteen recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
