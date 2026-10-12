@@ -10,21 +10,28 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**51 accessible originals have admitted and measured principal-result recoveries.
-54 await mathematical recovery; L022 is an editorial with no mathematical result
+**52 accessible originals have admitted and measured principal-result recoveries.
+53 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
 partition. L022 has no factor or measured-original credit.
 
-The `six-page overview <audit/overview/v17/packet/reader.pdf>`_ reports nineteen
-whole-topic and fifty-one individual conditional comparisons. Read the
-`whole-topic graph <audit/overview/v17/packet/whole_topics.svg>`_, the
-`first twenty-six individual comparisons <audit/overview/v17/packet/conditional_1.svg>`_
-and the `remaining twenty-five <audit/overview/v17/packet/conditional_2.svg>`_.
+The `six-page overview <audit/overview/v18/packet/reader.pdf>`_ reports nineteen
+whole-topic and fifty-two individual conditional comparisons. Read the
+`whole-topic graph <audit/overview/v18/packet/whole_topics.svg>`_, the
+`first twenty-six individual comparisons <audit/overview/v18/packet/conditional_1.svg>`_
+and the `remaining twenty-six <audit/overview/v18/packet/conditional_2.svg>`_.
 The `current overview record <audit/overview/latest.json>`_ links the accepted
 exact fractions, input policies and independent review.
+
+Topic B now includes L047. Its complete old and new common papers cost 74,303
+characters before the six applications: the whole factor is **0.971866**, an
+expansion. L047's **3.629111** conditional factor assumes that enlarged common
+acquisition and all required premises; the five earlier conditional values
+remain unchanged. The topic reader shows the 29,398-character common addition
+as a separate acquisition stage.
 
 Current papers and comparisons
 ------------------------------
@@ -45,9 +52,9 @@ in the overview; there is no pooled factor across topics.
    * - `Supported kernels, translation lattices and finite marked quotients <papers/topic-a/v4/PUBLICATION.rst>`_
      - L032, L034, F016, F013, L035, N009, L128, L012, L121
      - 1.354347
-   * - `Coset geometries and symmetric group markings <papers/topic-b/v3/README.rst>`_
-     - N001, N003, N008, L030, L040
-     - 1.094035
+   * - `Coset geometries and symmetric group markings <audit/topic-b/v4/README.rst>`_
+     - N001, N003, N008, L030, L040, L047
+     - 0.971866
    * - `Chamber operations and binary translations <papers/topic-c/extensions/livingstone/v1/PUBLICATION.rst>`_
      - L088, N013, L108, F014, L068
      - 1.291738
@@ -169,14 +176,14 @@ imply a fresh compilation of every theorem or a rerun of every finite census.
 Historical evidence
 -------------------
 
-The `preceding README <audit/documentation/v1/previous/README.rst>`_ and
-`preceding protocol <audit/documentation/v1/previous/protocol.pdf>`_ preserve the
+The `preceding README <audit/programme52/v1/previous/README.rst>`_ and
+`preceding protocol <audit/programme52/v1/previous/audit/protocol.pdf>`_ preserve the
 publication chronology. Their relative links were written for the repository
 root and their numerical statements belong to the editions they describe.
 The `intake record <audit/intake.json>`_,
 `original inventory <audit/corpus/v1/packet/inventory.json>`_ and
 `archived notes <audit/archive_markdown.json>`_ remain immutable evidence.
 Earlier overview editions remain under ``audit/overview/``; the current pointer
-selects v17. Previously reported one-sided software factors are historical,
+selects v18. Previously reported one-sided software factors are historical,
 not current comparisons. Source corrections and separately reviewed question
 answers retain their own exact scope and do not acquire new credit here.
