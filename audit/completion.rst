@@ -4,10 +4,16 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **53 recovered and measured originals**, 52
-originals awaiting mathematical recovery, and one editorial (L022): all 106
-accessible originals are accounted for. The other 55 originals remain archived
-because usable full sources were unavailable when intake closed.
+The current register contains **55 reviewed corrected principal recoveries**:
+53 are measured and two (N014 and L024) are unmeasured. There are 50 originals
+awaiting mathematical recovery and one editorial (L022), giving 106 accessible
+originals. The other 55 historical originals remain archived. The stop boundary
+is complete reviewed recovery of the 105 mathematical originals.
+
+N014 and L024 have separate scientific admissions; their corrections and retained
+limits do not assert literal theorem-set equivalence. No factor, comparison topic,
+new question answer or complete Lean claim is added. See the
+`science register <science55/v1/new_original_registration.json>`_.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its

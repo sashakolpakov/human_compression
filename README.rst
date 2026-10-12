@@ -10,8 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**53 accessible originals have admitted and measured principal-result recoveries.
-52 await mathematical recovery; L022 is an editorial with no mathematical result
+**55 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and two (N014 and L024) await measurement.
+50 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -33,6 +34,26 @@ L121's **12.288729** conditional factor follows moving its substantial proofs
 into the fully charged common supplement. L003's complete four-paper
 application has factor **1.063284** after that acquisition. All 99 required
 program/data contents remain explicit prerequisites; no sibling proof is free.
+
+Reviewed recoveries awaiting measurement
+----------------------------------------
+
+The `N014 guide <papers/topic-c/extensions/generalized-halving/v1/PUBLICATION.rst>`_ routes the complete generalized-halving
+recovery: the unchanged ten-page Topic C common paper, its eight-page supplement
+and the seventeen-page application. It distinguishes true coset identification
+from false preservation clauses and supplies their corrections and counterexamples.
+
+The `L024 guide <papers/recoveries/L024/v1/PUBLICATION.rst>`_ gives the five-page Schur-index recovery
+with its exact finite certificate and retained character-theoretic inputs. The
+unspecified historical marking run, global minimality wording and suggested
+all-family polytopality remain outside its accepted principal conclusions.
+
+Both source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science55/v1/new_original_registration.json>`_.
+Neither recovery has a compression factor. N014 is not added to C's measured
+five-original boundary, and L024 creates no comparison topic. The table and
+overview below remain the accepted 53-original measurement edition. Corrected
+recovery does not assert equivalence with every literal source assertion.
 
 Current papers and comparisons
 ------------------------------
@@ -112,8 +133,8 @@ The `manuscript catalogue <papers/latest_catalogue.json>`_ routes complete commo
 papers, applications and computational artifacts. The
 `build catalogue <papers/catalogue.json>`_ separately selects canonical TeX
 sources and preserves earlier editions. Affine is included in A; it is not a
-twentieth current topic. A uses its full 23-page common paper and all nine
-applications, including L121. Existing earlier papers and measurements remain
+twentieth current topic. A uses three complete common papers (41 pages) and all ten
+application bundles (63 pages). Existing earlier papers and measurements remain
 available as historical editions.
 
 What the factors mean
@@ -150,8 +171,8 @@ Reading and reproduction
 ------------------------
 
 Start with the topic guide and its source map; then read the complete common
-paper and applications. Each admission links the immutable author packet,
-distinct review, input audit and numerical review. A frozen packet may retain
+paper and applications. Each scientific admission links the immutable author packet and distinct
+review. Measured editions additionally link the input audit and numerical review. A frozen packet may retain
 an earlier candidate label; the later admission records its accepted status.
 
 Check the published archive, bindings and configured audit replays from the
@@ -177,8 +198,8 @@ imply a fresh compilation of every theorem or a rerun of every finite census.
 Historical evidence
 -------------------
 
-The `preceding README <audit/programme53/v1/previous/README.rst>`_ and
-`preceding protocol <audit/programme53/v1/previous/audit/protocol.pdf>`_ preserve the
+The `preceding README <audit/science55/v1/previous/README.rst>`_ and
+`preceding protocol <audit/science55/v1/previous/audit/protocol.pdf>`_ preserve the
 publication chronology. Their relative links were written for the repository
 root and their numerical statements belong to the editions they describe.
 The `intake record <audit/intake.json>`_,
