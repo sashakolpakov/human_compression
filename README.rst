@@ -10,12 +10,12 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**74 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and twenty-one (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038 and F006) await measurement.
+**76 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and twenty-three (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001 and N012) await measurement.
 One further original, F003, has a reviewed refutation of its principal statement;
-30 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 75 of 105 mathematical originals are
-handled: 74 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
+28 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 77 of 105 mathematical originals are
+handled: 76 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -216,9 +216,21 @@ corrections for I2(m), H3 and E7. Complete exceptional censuses contain
 search proofs and terminal executions establish completeness. No factor,
 new conjecture result or complete Lean proof is claimed.
 
-All twenty-one source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science74/v1/new_original_registration.json>`_.
-None of these twenty-one recoveries has a compression factor. N014 is not added to C's measured
+The `F001 guide <papers/recoveries/F001/v1/PUBLICATION.rst>`_ and
+`N012 guide <papers/recoveries/N012/v1/PUBLICATION.rst>`_ give the two new recoveries.
+
+F001 recovers the complete rank spectrum of the projective symplectic group
+in dimension four over every finite field. A separate counterexample corrects
+an auxiliary lemma on orthogonal subgroups; the principal theorem holds. N012
+recovers all twelve principal classifications and both tables in the 2025
+thesis on linear groups, with an explicit correction to the centre structure in
+Corollary 4.2.1. Their complete proofs, retained inputs and distinct component
+reviews are available through their publication guides. Neither recovery
+adds a compression factor, an open-conjecture claim or a complete Lean proof.
+
+All twenty-three source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science76/v1/new_original_registration.json>`_.
+None of these twenty-three recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
