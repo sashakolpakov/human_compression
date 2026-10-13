@@ -10,9 +10,9 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**71 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and eighteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011 and F002) await measurement.
-34 await mathematical recovery; L022 is an editorial with no mathematical result
+**72 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and nineteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071) await measurement.
+33 await mathematical recovery; L022 is an editorial with no mathematical result
 to recover.** These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
@@ -171,9 +171,20 @@ graphs and ten orbit entries are checked. Auxiliary graph lemmas and the
 52-tuple appendix are not separately recovered; all forty named statements
 have explicit dispositions. No factor, question answer or new Lean claim.
 
-All eighteen source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science71/v1/new_original_registration.json>`_.
-None of these eighteen recoveries has a compression factor. N014 is not added to C's measured
+The `L071 guide <papers/recoveries/L071/v1/PUBLICATION.rst>`_ explains this recovery.
+
+L071 recovers the principal mathematical classifications and search
+arguments of Leemans and Mixer, with two explicit source corrections.
+The chosen permutation action must realize all automorphisms by
+conjugation. H3 has eleven unrestricted classes up to duality, including
+three disconnected classes; the printed eight are the connected ones.
+All A11--A14 and Co3 counts and all 6,047 original sporadic/Tits markings
+are covered. Historical timings and the general alternating-rank question
+receive no new result claim. No factor or Lean credit is added.
+
+All nineteen source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science72/v1/new_original_registration.json>`_.
+None of these nineteen recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected

@@ -1,0 +1,33 @@
+--- reboot_20261013/L071_alternating_distinct/check_receipts.py
++++ alternating.py
+@@ -1,6 +1,7 @@
+ from pathlib import Path
+ import hashlib,json,re,math,ast
+-S=Path('/Users/sasha/medusa/research/leemans');W=S/'reboot_20261013/L071_alternating_distinct';P=S/'corpus106_F002_recovery_v1';rows=[]
++from portable_paths import S, W, resolve
++P=S/'corpus106_F002_recovery_v1';rows=[]
+ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+ def literal(s,k):
+  assert s.count(k)==1,(k,s.count(k));start=s.index('[',s.index(k)+len(k)); depth=0
+@@ -10,15 +11,18 @@
+    depth-=1
+    if depth==0:return s[start:end+1]
+  raise ValueError('unclosed literal')
+-source=(S/'sources/catalogue_L071.txt').read_text();sec=source.split('--- PDF PAGE 9 ---')[1].split('Remark 6.1.')[0];expected={n:{} for n in range(11,15)}
+-for n,r,c in re.findall(r'A(11|12|13|14)\s+(\d+)\s+(\d+)',sec):expected[int(n)][int(r)]=int(c)
++# The frozen table was independently read against the primary source.
++# This portable check verifies the evidence against that table; it does
++# not claim a fresh source-PDF reading.
++prior=json.loads((S/'corpus106_L071_alternating_v1/receipt_report.json').read_text())
++expected={x['degree']:{int(k):v for k,v in x['source_table'].items()} for x in prior['rows']}
+ assert sum(len(x) for x in expected.values())==13
+ for n,dirname in [(11,'L071_A11_restored01'),(12,'L071_A12_restored01'),(13,'L071_A13_restart01'),(14,'L071_A14_full_rank01')]:
+  D=S/'reboot_20261013'/dirname;V=S/'reboot_20261013'/f'L071_A{n}_full_IP01';r=json.loads((D/'report.json').read_text());v=json.loads((V/'report.json').read_text());order=math.factorial(n)//2;limit=order.bit_length()-1
+  assert r['degree']==n and r['rank_limit']==limit
+  for report,base in [(r,P),(v,S)]:
+   assert report['status']=='EXITED' and report['returncode']==0 and report['complete_marker'] and report['unchanged']
+-  for p in report['pins']:assert sha(base/p['path'])==p['sha256'],p
++  for p in report['pins']:assert sha(resolve(p['path'],base))==p['sha256'],p
+  assert (D/'stderr.log').read_bytes()==b'' and (V/'stderr.log').read_bytes()==b''
+  raw=(D/'stdout.log').read_text();vs=(V/'stdout.log').read_text();assert raw.count('COMPLETE_EXHAUSTION')==vs.count('COMPLETE_VALIDATION')==1
+  assert list(map(int,re.findall(r'COMPLETE_MARKS_RANK_(\d+) ',raw)))==list(range(3,limit+1))

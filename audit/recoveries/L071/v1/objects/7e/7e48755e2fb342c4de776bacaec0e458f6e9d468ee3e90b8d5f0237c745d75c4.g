@@ -1,0 +1,14 @@
+recordedMarks:=[];;
+recordedMarks[1]:=[  ];;
+recordedMarks[2]:=[  ];;
+recordedMarks[3]:=[  ];;
+recordedMarks[4]:=[  ];;
+recordedMarks[5]:=[  ];;
+recordedMarks[6]:=[  ];;
+recordedMarks[7]:=[  ];;
+recordedMarks[8]:=[  ];;
+recordedMarks[9]:=[  ];;
+recordedMarks[10]:=[  ];;
+recordedMarks[11]:=[  ];;
+recordedMarks[12]:=[  ];;
+reportedCounts:=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];;
