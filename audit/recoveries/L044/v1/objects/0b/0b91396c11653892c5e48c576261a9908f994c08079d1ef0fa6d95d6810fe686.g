@@ -1,0 +1,2 @@
+modelFile:="/Users/sasha/medusa/research/leemans/corpus106_F004_ends_enumeration_v1/q3_model.g";;recordsFile:="/Users/sasha/medusa/research/leemans/corpus106_F004_ends_enumeration_v1/q3_ends_records.g";;checksFile:="/Users/sasha/medusa/research/leemans/corpus106_F004_ends_enumeration_v1/checks.g";;
+Read("/Users/sasha/medusa/research/leemans/corpus106_F004_ends_enumeration_v1/validate_records_v2.g");

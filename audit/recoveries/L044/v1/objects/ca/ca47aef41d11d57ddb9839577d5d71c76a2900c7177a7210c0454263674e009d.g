@@ -1,0 +1,15 @@
+G0:=PrimitiveGroup(351,7);;
+Gfresh:=Group(GeneratorsOfGroup(G0));;
+if Size(Gfresh)<>4245696 then Error("fresh degree351 model order");fi;
+Print("FRESH_G_ORDER ",Size(Gfresh),"\n");
+au:=AutomorphismGroup(Gfresh);;
+Print("FULL_AUT_ORDER ",Size(au),"\n");
+inn:=InnerAutomorphismsAutomorphismGroup(au);;
+iso:=IsomorphismPermGroup(au);;
+A:=Image(iso);;G:=Image(iso,inn);;
+if Size(A)<>8491392 or Size(G)<>4245696 or not IsNormal(A,G) then Error("aut image");fi;
+if Size(Centralizer(A,G))<>1 then Error("not faithful conjugation");fi;
+Print("COMPATIBLE_DEGREE ",LargestMovedPoint(A),"\n");
+PrintTo(outputModel,"G:=Group(",GeneratorsOfGroup(G),");;\nA:=Group(",GeneratorsOfGroup(A),");;\nexpectedOrder:=4245696;;modelName:=\"G2_3\";;expectedAutOrder:=8491392;;\n");
+Print("PREPARATION_COMPLETE\n");
+QUIT;

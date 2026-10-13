@@ -4,10 +4,10 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **76 reviewed corrected principal recoveries**:
-53 are measured and twenty-three (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001 and N012) are unmeasured. F003 has a separate reviewed principal refutation; 28 originals
+The current register contains **77 reviewed corrected principal recoveries**:
+53 are measured and twenty-four (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012 and L044) are unmeasured. F003 has a separate reviewed principal refutation; 27 originals
 await a complete mathematical disposition. Together with one editorial (L022),
-these give 106 accessible originals. Thus 77 of the 105 mathematical originals
+these give 106 accessible originals. Thus 78 of the 105 mathematical originals
 are handled. The other 55 historical originals remain archived. Complete the
 reviewed principal dispositions for all 105 mathematical originals, then stop.
 
@@ -17,10 +17,10 @@ rank-four chiral Sz(32768) polytope. It receives no ordinary recovery,
 measurement, new open-question or Lean credit. Historical source-reading
 records describing that theorem as a solution are superseded for this target.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001 and N012 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012 and L044 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science76/v1/new_original_registration.json>`_.
+`science register <science77/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -134,6 +134,14 @@ linear group thesis, with an explicit correction to the centre structure in
 Corollary 4.2.1. Their complete proofs, retained inputs and distinct component
 reviews are available through their publication guides. Neither recovery
 adds a compression factor, an open-conjecture claim or a complete Lean proof.
+
+L044 recovers the exact maximal rank of the natural alternating group in
+every degree n >= 3. Complete finite bases and independent lower constructions
+join the primitive, imprimitive and intransitive omission arguments in a
+strict induction. The auxiliary independent-generator claim in Proposition 3.3
+requires the explicit narrower correction. The fourteen immediate manuscripts
+are entry points to the full retained proof closure; their 37 pages are not
+a compression measurement. No new open-conjecture or Lean credit is claimed.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its

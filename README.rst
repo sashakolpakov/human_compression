@@ -10,12 +10,12 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**76 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and twenty-three (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001 and N012) await measurement.
+**77 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and twenty-four (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012 and L044) await measurement.
 One further original, F003, has a reviewed refutation of its principal statement;
-28 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 77 of 105 mathematical originals are
-handled: 76 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
+27 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 78 of 105 mathematical originals are
+handled: 77 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -228,9 +228,20 @@ Corollary 4.2.1. Their complete proofs, retained inputs and distinct component
 reviews are available through their publication guides. Neither recovery
 adds a compression factor, an open-conjecture claim or a complete Lean proof.
 
-All twenty-three source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science76/v1/new_original_registration.json>`_.
-None of these twenty-three recoveries has a compression factor. N014 is not added to C's measured
+The `L044 guide <papers/recoveries/L044/v1/PUBLICATION.rst>`_ gives the newly
+completed maximal-rank proof and its exact retained dependencies.
+
+L044 recovers the exact maximal rank of the natural alternating group in
+every degree n >= 3. Complete finite bases and independent lower constructions
+join the primitive, imprimitive and intransitive omission arguments in a
+strict induction. The auxiliary independent-generator claim in Proposition 3.3
+requires the explicit narrower correction. The fourteen immediate manuscripts
+are entry points to the full retained proof closure; their 37 pages are not
+a compression measurement. No new open-conjecture or Lean credit is claimed.
+
+All twenty-four source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science77/v1/new_original_registration.json>`_.
+None of these twenty-four recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
