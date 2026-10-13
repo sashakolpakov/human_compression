@@ -49,6 +49,19 @@ F003 is counted once as a principal refutation. It has no recovery credit,
 compression ratio, new open-conjecture credit or complete Lean verification.
 The claim does not extend to journal text or later editions.
 
+A corrected count with remaining work
+-------------------------------------
+
+The `O'Nan count correction <corrections/onan-map-count/v1/README.rst>`_
+proves at least **798,370** generating-pair orbits in the fixed source's
+convention, contradicting its stated **796,772**. Type (20,31) has exactly
+**9,118**, rather than **7,246**. The two complete four-page proofs,
+borrowed classification inputs and independent computations are included.
+**L046 remains among the 27 pending originals:** 116 exact table counts,
+the exact total and remaining chirality claims still require recovery.
+This correction adds no completed original, compression factor or
+open-conjecture credit.
+
 Reviewed recoveries awaiting measurement
 ----------------------------------------
 

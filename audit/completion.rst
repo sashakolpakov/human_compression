@@ -17,6 +17,13 @@ rank-four chiral Sz(32768) polytope. It receives no ordinary recovery,
 measurement, new open-question or Lean credit. Historical source-reading
 records describing that theorem as a solution are superseded for this target.
 
+The `L046 count correction <../corrections/onan-map-count/v1/README.rst>`_
+proves a total of at least 798,370 versus the source's 796,772, and the exact
+(20,31) entry 9,118 versus 7,246. L046 remains pending: 116 exact entries,
+the exact total and the remaining chirality claims are unpaid. The common
+and application proofs and independent computations are public; this
+bounded correction changes none of the programme totals.
+
 N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012 and L044 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
