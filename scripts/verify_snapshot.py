@@ -6659,6 +6659,16 @@ def check_F003_disposition():
          'Principal refutation changed measured originals.')
     return result
 
+def check_previous_science73():
+    spec=importlib.util.spec_from_file_location('science73_history',ROOT/'scripts/check_science73_history.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
+def check_science73():
+    spec=importlib.util.spec_from_file_location('science73',ROOT/'scripts/check_science73.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6747,12 +6757,12 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    science_history = check_previous_F003_disposition()
+    science_history = check_previous_science73()
     (previous_programme50, unified_a_fractions), (programme51, current_documentation), programme52 = science_history['legacy']
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
     programme53 = science_history['current']
-    science72 = check_F003_disposition()
+    science72 = check_science73()
     active_admitted = science72['counts']['corrected_recoveries']
     active_pending = science72['counts']['mathematical_pending']
     active_refuted = science72['counts']['refuted']

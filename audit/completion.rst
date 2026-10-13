@@ -4,10 +4,10 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **72 reviewed corrected principal recoveries**:
-53 are measured and nineteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071) are unmeasured. F003 has a separate reviewed principal refutation; 32 originals
+The current register contains **73 reviewed corrected principal recoveries**:
+53 are measured and twenty (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071 and L038) are unmeasured. F003 has a separate reviewed principal refutation; 31 originals
 await a complete mathematical disposition. Together with one editorial (L022),
-these give 106 accessible originals. Thus 73 of the 105 mathematical originals
+these give 106 accessible originals. Thus 74 of the 105 mathematical originals
 are handled. The other 55 historical originals remain archived. Complete the
 reviewed principal dispositions for all 105 mathematical originals, then stop.
 
@@ -17,10 +17,10 @@ rank-four chiral Sz(32768) polytope. It receives no ordinary recovery,
 measurement, new open-question or Lean credit. Historical source-reading
 records describing that theorem as a solution are superseded for this target.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071 and L038 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science72/v1/new_original_registration.json>`_.
+`science register <science73/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -109,6 +109,14 @@ three disconnected classes; the printed eight are the connected ones.
 All A11--A14 and Co3 counts and all 6,047 original sporadic/Tits markings
 are covered. Historical timings and the general alternating-rank question
 receive no new result claim. No factor or Lean credit is added.
+
+L038 recovers every rank from 3 to floor((n-1)/2) for all alternating
+groups of degree n >= 12. The three complete papers contain 17 pages;
+finite end groups, signed permutation groups and acquired rank contraction
+cover every congruence and endpoint. Three earlier maximal constructions
+remain explicit theorem inputs. Some auxiliary types differ from the source.
+All 3,200 finite subset-pair checks passed; the infinite arguments are
+written proofs. No measurement, new conjecture result or Lean claim is added.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its

@@ -10,12 +10,12 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**72 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and nineteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071) await measurement.
+**73 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and twenty (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071 and L038) await measurement.
 One further original, F003, has a reviewed refutation of its principal statement;
-32 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 73 of 105 mathematical originals are
-handled: 72 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
+31 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 74 of 105 mathematical originals are
+handled: 73 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -196,9 +196,19 @@ All A11--A14 and Co3 counts and all 6,047 original sporadic/Tits markings
 are covered. Historical timings and the general alternating-rank question
 receive no new result claim. No factor or Lean credit is added.
 
-All nineteen source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science72/v1/new_original_registration.json>`_.
-None of these nineteen recoveries has a compression factor. N014 is not added to C's measured
+The `L038 guide <papers/recoveries/L038/v1/PUBLICATION.rst>`_ presents the full rank-existence recovery.
+
+L038 recovers every rank from 3 to floor((n-1)/2) for all alternating
+groups of degree n >= 12. The three complete papers contain 17 pages;
+finite end groups, signed permutation groups and acquired rank contraction
+cover every congruence and endpoint. Three earlier maximal constructions
+remain explicit theorem inputs. Some auxiliary types differ from the source.
+All 3,200 finite subset-pair checks passed; the infinite arguments are
+written proofs. No measurement, new conjecture result or Lean claim is added.
+
+All twenty source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science73/v1/new_original_registration.json>`_.
+None of these twenty recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
