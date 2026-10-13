@@ -10,12 +10,12 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**79 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and twenty-six (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059 and L019) await measurement.
+**80 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and twenty-seven (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019 and L042) await measurement.
 One further original, F003, has a reviewed refutation of its principal statement;
-25 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 80 of 105 mathematical originals are
-handled: 79 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
+24 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 81 of 105 mathematical originals are
+handled: 80 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -57,7 +57,7 @@ proves at least **798,370** generating-pair orbits in the fixed source's
 convention, contradicting its stated **796,772**. Type (20,31) has exactly
 **9,118**, rather than **7,246**. The two complete four-page proofs,
 borrowed classification inputs and independent computations are included.
-**L046 remains among the 25 pending originals:** 116 exact table counts,
+**L046 remains among the 24 pending originals:** 116 exact table counts,
 the exact total and remaining chirality claims still require recovery.
 This correction adds no completed original, compression factor or
 open-conjecture credit.
@@ -267,9 +267,15 @@ isomorphism and reversal. Complete rooted wing searches give the six constants
 immediate manuscripts lead to the full acquired proof closure. Their nine
 pages carry no compression measurement. L042 is a separate original.
 
-All twenty-six source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science79/v1/new_original_registration.json>`_.
-None of these twenty-six recoveries has a compression factor. N014 is not added to C's measured
+The `L042 guide <papers/recoveries/L042/v1/PUBLICATION.rst>`_ recovers all
+eighteen explicit high-rank diagram families at defects one through four,
+with counts 1, 1, 7, 9. The four-page application acquires the complete L019
+proof and finite census. The degree-six outer action is qualified explicitly;
+no new measurement or conjecture credit is added.
+
+All twenty-seven source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science80/v1/new_original_registration.json>`_.
+None of these twenty-seven recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
