@@ -5,10 +5,17 @@ Current position
 ----------------
 
 The current register contains **72 reviewed corrected principal recoveries**:
-53 are measured and nineteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071) are unmeasured. There are 33 originals
-awaiting mathematical recovery and one editorial (L022), giving 106 accessible
-originals. The other 55 historical originals remain archived. The stop boundary
-is complete reviewed recovery of the 105 mathematical originals.
+53 are measured and nineteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071) are unmeasured. F003 has a separate reviewed principal refutation; 32 originals
+await a complete mathematical disposition. Together with one editorial (L022),
+these give 106 accessible originals. Thus 73 of the 105 mathematical originals
+are handled. The other 55 historical originals remain archived. Complete the
+reviewed principal dispositions for all 105 mathematical originals, then stop.
+
+The `F003 correction <../corrections/suzuki-rank/v1/PUBLICATION.rst>`_ refutes
+Theorem 1.1 of the fixed arXiv:2010.04080v1 edition through an explicit
+rank-four chiral Sz(32768) polytope. It receives no ordinary recovery,
+measurement, new open-question or Lean credit. Historical source-reading
+records describing that theorem as a solution are superseded for this target.
 
 N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,

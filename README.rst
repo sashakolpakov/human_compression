@@ -12,8 +12,10 @@ Current programme
 
 **72 accessible originals have reviewed corrected principal-result recoveries:
 53 are measured and nineteen (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002 and L071) await measurement.
-33 await mathematical recovery; L022 is an editorial with no mathematical result
-to recover.** These are the 106 active originals. Another 55 unavailable originals
+One further original, F003, has a reviewed refutation of its principal statement;
+32 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 73 of 105 mathematical originals are
+handled: 72 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -34,6 +36,18 @@ L121's **12.288729** conditional factor follows moving its substantial proofs
 into the fully charged common supplement. L003's complete four-paper
 application has factor **1.063284** after that acquisition. All 99 required
 program/data contents remain explicit prerequisites; no sibling proof is free.
+
+A separately reviewed principal refutation
+------------------------------------------
+
+The `Suzuki correction <corrections/suzuki-rank/v1/PUBLICATION.rst>`_ gives a
+complete five-page proof of a chiral polytope of rank four, of type {31,31,25},
+with automorphism group Sz(32768). It refutes Theorem 1.1 in Pablo Spiga's
+fixed preprint arXiv:2010.04080v1 (2020). The source claim, borrowed inputs,
+new construction, distinct review and Python/GAP checks are recorded together.
+F003 is counted once as a principal refutation. It has no recovery credit,
+compression ratio, new open-conjecture credit or complete Lean verification.
+The claim does not extend to journal text or later editions.
 
 Reviewed recoveries awaiting measurement
 ----------------------------------------

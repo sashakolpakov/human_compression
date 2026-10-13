@@ -6646,6 +6646,19 @@ def check_science72():
          'Science-only registration changed unique measurements.')
     return result
 
+def check_previous_F003_disposition():
+    spec=importlib.util.spec_from_file_location('F003_history',ROOT/'scripts/check_F003_history.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
+def check_F003_disposition():
+    spec=importlib.util.spec_from_file_location('F003_disposition',ROOT/'scripts/check_F003_disposition.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    result=module.verify(ROOT)
+    need(check_current_measurement_pointer()==result['counts']['measured']==53,
+         'Principal refutation changed measured originals.')
+    return result
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6734,14 +6747,16 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    science_history = check_previous_science72()
+    science_history = check_previous_F003_disposition()
     (previous_programme50, unified_a_fractions), (programme51, current_documentation), programme52 = science_history['legacy']
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
     programme53 = science_history['current']
-    science72 = check_science72()
+    science72 = check_F003_disposition()
     active_admitted = science72['counts']['corrected_recoveries']
     active_pending = science72['counts']['mathematical_pending']
+    active_refuted = science72['counts']['refuted']
+    active_handled = science72['counts']['handled']
     current_fractions, current_bars = programme53['overview_fractions'], programme53['overview_bars']
     representation_successor_fractions = check_representation_successor()
     lcd = check_lcd_current_admission()
@@ -6760,7 +6775,7 @@ def main():
     need(digest((ROOT / 'audit/measurement_policy/v1/review/manifest.json').read_bytes()) ==
          policy_review['prior_frozen_review']['sha256'], 'Bounded policy audit changed.')
     print(f"PASS: historical policy withdraws asymmetric software-inclusive factors for {symmetric_topics} topics; source software costs remain unknown.")
-    print(f"PASS: active106 catalogue, 55 archived, {active_admitted} reviewed corrected recoveries (53 measured, {science72['counts']['unmeasured']} unmeasured), {active_pending} awaiting mathematics, and one editorial without a factor; no singleton exclusions.")
+    print(f"PASS: active106 catalogue, 55 archived, {active_admitted} reviewed corrected recoveries (53 measured, {science72['counts']['unmeasured']} unmeasured), {active_refuted} separately refuted, {active_pending} awaiting mathematics, and one editorial without a factor; no singleton exclusions.")
     print(f"PASS: historical v10 overview preserves {overview43_fractions} exact comparisons and {overview43_bars} bars per format for43 originals.")
     print(f"PASS: current symmetric listing comparison has {current_fractions} comparisons and {current_bars} bars per format; all 19 whole and 53 conditional factors checked.")
     print(f"PASS: expanded F adds {expanded_f_added} original, preserves {expanded_f_fractions} exact fractions and counts L014 once; optional validation excluded on both sides.")
@@ -6830,7 +6845,7 @@ def main():
     print(f'PASS: additive admissions recover {current_admitted} unique originals; {current_pending} accessible originals remain pending. F015/L028 measurements remain pending.')
     print(f'PASS: consolidated ten-topic comparison checks {overview_fractions} exact fractions and {overview_svg}/{overview_pdf} actual SVG/PDF bars for27 original manuscripts.')
     print(f'PASS: diagonal construction and quotient review admitted; latest totals are {latest_admitted} recovered and {latest_pending} accessible pending originals, with all161 targets retained.')
-    print(f'PASS: current programme pointer binds {active_admitted} admitted and {active_pending} accessible pending originals.')
+    print(f'PASS: current programme pointer binds {active_admitted} recovered, {active_refuted} refuted, {active_handled} handled and {active_pending} pending mathematical originals.')
     print('PASS: project Lean runner preserves both checker interfaces and explicitly partial validation coverage.')
     print(f'PASS: {contracts} admitted contracts and {completion_bindings} bound artifacts in the completion audit.')
     print('Historical computations require the pinned intake checkout.')
