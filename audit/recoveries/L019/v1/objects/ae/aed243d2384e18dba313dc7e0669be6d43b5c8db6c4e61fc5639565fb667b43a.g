@@ -1,0 +1,91 @@
+# Bounded critical-wing census. No classification follows from a timeout.
+# All transitive fractured degree N rank N/2 C-markings, anchor1,
+# and every full supported-prefix kernel condition, up to rooted conjugacy.
+SizeScreen([100000,100000]);;
+Read("parameters.g");; target:=QuoInt(n,2);; ambientGroup:=SymmetricGroup(n);;
+inv:=[];;
+for j in [1..QuoInt(n,2)] do
+ p:=Product(List([1..j],i->(2*i-1,2*i)));
+ Append(inv,AsList(ConjugacyClass(ambientGroup,p)));
+od;
+inv:=Set(inv);; tailinv:=Filtered(inv,x->1^x=1);;
+nodes:=List([0..target],x->0);; solutions:=[];; terminals:=[];;
+rejected:=rec(orbit:=0,endcriterion:=0,evenkernel:=0);;
+
+PartitionOf:=function(gs)
+ local H,parts;
+ H:=Group(Concatenation([()],gs));
+ parts:=List(Orbits(H,[1..n]),Set);Sort(parts);return parts;
+end;;
+
+OrbitEssential:=function(gs)
+ local parts,j,others;
+ parts:=PartitionOf(gs);
+ for j in [1..Length(gs)] do
+  others:=gs{Filtered([1..Length(gs)],i->i<>j)};
+  if PartitionOf(others)=parts then return false;fi;
+ od;
+ return true;
+end;;
+
+# Retained terminal oracle: all pairs of all generated subsets.
+AllIP:=function(gs)
+ local groups,mask,other,common,inds,l;
+ groups:=[];
+ for mask in [0..2^Length(gs)-1] do
+  inds:=Filtered([1..Length(gs)],l->QuoInt(mask,2^(l-1)) mod 2=1);
+  Add(groups,Subgroup(ambientGroup,gs{inds}));
+ od;
+ for mask in [0..Length(groups)-1] do
+  for other in [0..mask] do
+   common:=Sum(Filtered([0..Length(gs)-1],l->QuoInt(mask,2^l) mod 2=1
+                  and QuoInt(other,2^l) mod 2=1),l->2^l);
+   if Intersection(groups[mask+1],groups[other+1])<>groups[common+1] then return false;fi;
+  od;
+ od;
+ return true;
+end;;
+
+Visit:=function(gs,stab,H,ends)
+ local len,cand,reps,x,next,J,rootOrbit,evenSupported,newEnds,good,i;
+ len:=Length(gs);nodes[len+1]:=nodes[len+1]+1;
+ if len=target then
+  if not IsTransitive(H,[1..n]) then return;fi;
+  if not AllIP(gs) then Error("terminal full-subset IP disagrees");fi;
+  Add(terminals,[Size(H),List(PartitionOf(gs),Length)]);
+  if IsTransitive(H,[1..n]) then
+   Add(solutions,ShallowCopy(gs));
+   Print("SOLUTION|",List(gs,x->List([1..n],i->i^x)),"\n");
+  fi;
+  return;
+ fi;
+ if Index(ambientGroup,H)<2^(target-len) then return;fi;
+ if len=0 then cand:=Filtered(inv,x->1^x<>1);
+ else cand:=Filtered(tailinv,x->not x in H and x*gs[len]<>gs[len]*x
+                      and ForAll(gs{[1..len-1]},y->x*y=y*x));fi;
+ reps:=List(OrbitsDomain(stab,cand,OnPoints),o->o[1]);
+ for x in reps do
+  next:=Concatenation(gs,[x]);
+  if not OrbitEssential(next) then rejected.orbit:=rejected.orbit+1;continue;fi;
+  newEnds:=List([1..len+1],i->Subgroup(ambientGroup,next{[i..len+1]}));J:=newEnds[1];
+  good:=true;
+  if len>=2 then
+   for i in [len-1,len-2..1] do
+    if Intersection(ends[i],newEnds[i+1])<>ends[i+1] then good:=false;break;fi;
+   od;
+  fi;
+  if not good then rejected.endcriterion:=rejected.endcriterion+1;continue;fi;
+  rootOrbit:=Orbit(H,1);evenSupported:=Group(());
+  if Length(rootOrbit)>=2 then evenSupported:=Intersection(J,SymmetricGroup(rootOrbit));fi;
+  if not IsSubgroup(H,evenSupported) then rejected.evenkernel:=rejected.evenkernel+1;continue;fi;
+  if len=0 then Print("FIRST_BEGIN|",NrMovedPoints(x),"\n");fi;
+  Visit(next,Centralizer(stab,x),J,newEnds);
+  if len=0 then Print("FIRST_END|",NrMovedPoints(x),"|",nodes,"|",rejected,"\n");fi;
+ od;
+end;;
+
+Visit([],Stabilizer(ambientGroup,1),TrivialSubgroup(ambientGroup),[]);;
+Print("COMPLETE_ANCHORED_CRITICAL_WINGS|",n,"|",target,"|",Length(inv),
+      "|",Length(tailinv),"|",nodes,"|",Length(solutions),"|",rejected,"\n");
+Print("TERMINAL_GROUPS|",Collected(terminals),"\n");
+QUIT;

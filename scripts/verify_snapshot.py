@@ -6719,6 +6719,16 @@ def check_science78():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_previous_science79():
+    spec=importlib.util.spec_from_file_location('science79_history',ROOT/'scripts/check_science79_history.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
+def check_science79():
+    spec=importlib.util.spec_from_file_location('science79',ROOT/'scripts/check_science79.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6774,9 +6784,9 @@ def main():
     fischer_cases = check_fischer_answers()
     nonfirm_corrections = run_historical35_check(check_nonfirm_hnn_correction)
     twist_corrections = run_historical35_check(check_affine_twist_correction)
-    l019_corrections = check_l019_bounded_corrections()
+    l019_corrections = run_historical35_check(check_l019_bounded_corrections)
     l019_formal = check_l019_historical_formal_pointer()
-    l019_transitive = check_l019_transitive_correction()
+    l019_transitive = run_historical35_check(check_l019_transitive_correction)
     restriction_kernel_declarations = check_restriction_kernel_theory()
     l020_formal = run_historical40_check(check_l020_case_three_correction)
     print(f"PASS: historical L020 case(3) correction preserves its complete counterexample and {l020_formal} scoped Lean declarations.")
@@ -6807,16 +6817,17 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    science78_history = check_previous_science78()
+    science79_history = check_previous_science79()
+    science78_history = science79_history['previous']
     L046_history = science78_history['previous']
     science_history = L046_history['previous_history']
     (previous_programme50, unified_a_fractions), (programme51, current_documentation), programme52 = science_history['legacy']
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
     programme53 = science_history['current']
-    science72 = check_science78()
+    science72 = check_science79()
     L046_correction = science78_history['correction']
-    print('PASS: historical L046 bounded correction preserved; L059 complete corrected principal recovery adds one original.')
+    print('PASS: exact science78 history preserved; L019 complete corrected principal recovery adds one original.')
     active_admitted = science72['counts']['corrected_recoveries']
     active_pending = science72['counts']['mathematical_pending']
     active_refuted = science72['counts']['refuted']
