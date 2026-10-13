@@ -1,0 +1,6 @@
+Read("subdivision_actual_actions.g");;
+Read("cubic_2048_markings/CAT_2024_8.g");;
+S:=L059SubdivisionFromBipartite(L059Result);;
+PrintTo("subdivision_markings/CAT_2024_8.g","L059Subdivision := ",S,";\n");
+Print("L059_SUBDIVISION_COMPLETE CAT_2024_8 ",Length(S.witnesses),"\n");
+QUIT;

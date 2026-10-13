@@ -1,0 +1,43 @@
+--- frozen/check.py
++++ portable_integrity.py
+@@ -12,15 +12,27 @@
+ def main():
+  parser=argparse.ArgumentParser()
+  parser.add_argument('--sources',type=Path,required=True)
++ parser.add_argument('--study',type=Path,required=True)
++ parser.add_argument('--packet',type=Path,required=True)
++ parser.add_argument('--transport',type=Path,required=True)
+  parser.add_argument('--replay',type=Path,required=True)
+  parser.add_argument('--replay-inputs',action='store_true')
+  parser.add_argument('--replay-named',action='store_true')
+  parser.add_argument('--gap',default='/opt/homebrew/bin/gap')
+- a=parser.parse_args();H=Path(__file__).resolve().parent;W=a.sources.resolve()
++ a=parser.parse_args();H=a.packet.resolve();W=a.sources.resolve();study=a.study.resolve()
++ transport=json.loads(a.transport.read_text())
++ declarations={(r['origin'],r['path']):r for r in transport['files']}
++ historical='/Users/sasha/medusa/research/leemans/'
++ def dependency(x):
++  old=x['path'];need(old.startswith(historical),'unexpected historical dependency namespace')
++  rel=old[len(historical):];need(not Path(rel).is_absolute() and '..' not in Path(rel).parts,'unsafe dependency')
++  row=declarations.get(('study',rel));need(row is not None and row['bytes']==x['bytes'] and row['sha256']==x['sha256'],'exact declared dependency')
++  if row['transport']=='PRIVATE_PRIMARY_SOURCE_HASH_ONLY':return
++  p=study/rel;need(p.stat().st_size==x['bytes'] and sha(p)==x['sha256'],'restored dependency '+rel)
+  a.replay.mkdir(exist_ok=False)
+  deps=json.loads((H/'dependencies.json').read_text())
+  for x in deps:
+-  p=Path(x['path']);need(p.stat().st_size==x['bytes'] and sha(p)==x['sha256'],'dependency '+str(p))
++  dependency(x)
+  rows=json.loads((H/'census_register.json').read_text())
+  need(len({(r['family'],r['graph']) for r in rows})==len(rows)==1950,'unique source inputs')
+  totals={};old_tokens=0;retry_count=0;reversals=[]
+@@ -86,8 +98,8 @@
+   named.append({'edition':file,'entries':ids})
+  env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None)
+  commands=[]
+- if a.replay_inputs:commands.append(('primary_inputs',[sys.executable,str(H/'verify_cubic_sources.py'),'--sources',str(W),'--output',str(a.replay.resolve()/'primary_inputs.json')],W,120,'PASS_PRIMARY_CUBIC_SOURCES_839_REUSE_261'))
+- if a.replay_named:commands.append(('named_groups',[a.gap,'-q','-b','-T','named_examples_check.g'],W,180,'PASS_MATHIEU_MARKED_ISOMORPHISM_AND_STRUCTURES'))
++ need(not a.replay_inputs,'Use the separate exact bounded public input adapter; original upstream documentary files are hash-only.')
++ if a.replay_named:commands.append(('named_groups',[a.gap,'-q','-b','-T',str(Path(__file__).resolve().parent/'named_examples_portable.g')],W,180,'PASS_MATHIEU_MARKED_ISOMORPHISM_AND_STRUCTURES'))
+  for name,command,cwd,timeout,token in commands:
+   run=subprocess.run(command,cwd=cwd,env=env,text=True,capture_output=True,timeout=timeout)
+   (a.replay/(name+'.stdout')).write_text(run.stdout);(a.replay/(name+'.stderr')).write_text(run.stderr)

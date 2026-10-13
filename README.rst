@@ -10,12 +10,12 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**77 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and twenty-four (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012 and L044) await measurement.
+**78 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and twenty-five (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044 and L059) await measurement.
 One further original, F003, has a reviewed refutation of its principal statement;
-27 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 78 of 105 mathematical originals are
-handled: 77 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
+26 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 79 of 105 mathematical originals are
+handled: 78 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -57,7 +57,7 @@ proves at least **798,370** generating-pair orbits in the fixed source's
 convention, contradicting its stated **796,772**. Type (20,31) has exactly
 **9,118**, rather than **7,246**. The two complete four-page proofs,
 borrowed classification inputs and independent computations are included.
-**L046 remains among the 27 pending originals:** 116 exact table counts,
+**L046 remains among the 26 pending originals:** 116 exact table counts,
 the exact total and remaining chirality claims still require recovery.
 This correction adds no completed original, compression factor or
 open-conjecture credit.
@@ -252,9 +252,17 @@ requires the explicit narrower correction. The fourteen immediate manuscripts
 are entry points to the full retained proof closure; their 37 pages are not
 a compression measurement. No new open-conjecture or Lean credit is claimed.
 
-All twenty-four source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science77/v1/new_original_registration.json>`_.
-None of these twenty-four recoveries has a compression factor. N014 is not added to C's measured
+The `L059 guide <papers/recoveries/L059/v1/PUBLICATION.rst>`_ recovers faithful
+coset geometries through graph actions. Its complete classification covers
+1,950 inputs, 4,254 markings and all 39 printed table cells, including the
+published cubic subdivisions. Eight source qualifications, the borrowed
+catalogue premises and two unanswered classification questions remain explicit.
+The three immediate manuscripts lead to the full proof and validation collection;
+their fifteen pages are not a compression denominator.
+
+All twenty-five source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science78/v1/new_original_registration.json>`_.
+None of these twenty-five recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected

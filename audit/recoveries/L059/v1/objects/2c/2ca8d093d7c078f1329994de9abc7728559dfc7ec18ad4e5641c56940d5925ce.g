@@ -1,0 +1,12 @@
+Read("subdivision_markings.g");;
+Read("maximal_descent_arcs.g");;
+L059Edges:=Set([[1, 2], [1, 5], [1, 6], [2, 3], [2, 7], [3, 4], [3, 8], [4, 5], [4, 9], [5, 10], [6, 8], [6, 9], [7, 9], [7, 10], [8, 10]]);;
+G:=Graph(Group(()),[1..10],OnPoints,function(a,b) return Set([a,b]) in L059Edges; end,true);;
+Need(IsConnectedGraph(G));;
+F:=AutGroupGraph(G);;
+arcs:=Concatenation(List(L059Edges,e->[e,Reversed(e)]));;
+reps:=List(L059DescentArcs(F,arcs),Representative);;
+S:=rec(label:="CAT_10_1",n_original:=10,edges_original:=L059Edges,A_subdivision:=F,witnesses:=L059SubdivisionRows(F,L059Edges,reps),search:=L059Search);;
+PrintTo("nonbipartite_subdivisions/CAT_10_1.g","L059Subdivision := ",S,";\n");
+Print("L059_NONBIPARTITE_COMPLETE CAT_10_1 ",Length(S.witnesses),"\n");
+QUIT;

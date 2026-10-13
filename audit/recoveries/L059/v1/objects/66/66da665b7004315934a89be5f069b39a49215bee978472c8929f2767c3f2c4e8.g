@@ -1,0 +1,14 @@
+Read("subdivision_actual_actions.g");;
+Read("/Users/sasha/medusa/research/leemans/reboot_20261013/L059_recovery_work/subdivision_markings/CAT_1024_10.g");;
+rows:=L059SubdivisionRows(L059Subdivision.A_subdivision,L059Subdivision.edges_original,List(L059Subdivision.witnesses,r->r.H));;
+Need(rows=L059Subdivision.witnesses);;
+Print("PASS_ACTUAL_ACTIONS CAT_1024_10 ",Length(rows),"\n");
+Read("/Users/sasha/medusa/research/leemans/reboot_20261013/L059_recovery_work/subdivision_markings/CAT_1080_1.g");;
+rows:=L059SubdivisionRows(L059Subdivision.A_subdivision,L059Subdivision.edges_original,List(L059Subdivision.witnesses,r->r.H));;
+Need(rows=L059Subdivision.witnesses);;
+Print("PASS_ACTUAL_ACTIONS CAT_1080_1 ",Length(rows),"\n");
+Read("/Users/sasha/medusa/research/leemans/reboot_20261013/L059_recovery_work/subdivision_markings/CAT_1440_6.g");;
+rows:=L059SubdivisionRows(L059Subdivision.A_subdivision,L059Subdivision.edges_original,List(L059Subdivision.witnesses,r->r.H));;
+Need(rows=L059Subdivision.witnesses);;
+Print("PASS_ACTUAL_ACTIONS CAT_1440_6 ",Length(rows),"\n");
+QUIT_GAP(0);

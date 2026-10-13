@@ -1,0 +1,17 @@
+Read("subdivision_actual_actions.g");;
+Read("subdivision_markings/CAT_1440_6.g");;
+t:=Runtime();;
+rows:=L059SubdivisionRows(L059Subdivision.A_subdivision,L059Subdivision.edges_original,List(L059Subdivision.witnesses,r->r.H));;
+Need(rows=L059Subdivision.witnesses);;
+Print("PASS_ACTUAL_ACTIONS CAT_1440_6 ",Length(rows)," rows; ms=",Runtime()-t,"\n");
+Read("subdivision_markings/CAT_1080_1.g");;
+t:=Runtime();;
+rows:=L059SubdivisionRows(L059Subdivision.A_subdivision,L059Subdivision.edges_original,List(L059Subdivision.witnesses,r->r.H));;
+Need(rows=L059Subdivision.witnesses);;
+Print("PASS_ACTUAL_ACTIONS CAT_1080_1 ",Length(rows)," rows; ms=",Runtime()-t,"\n");
+Read("subdivision_markings/CAT_1024_10.g");;
+t:=Runtime();;
+rows:=L059SubdivisionRows(L059Subdivision.A_subdivision,L059Subdivision.edges_original,List(L059Subdivision.witnesses,r->r.H));;
+Need(rows=L059Subdivision.witnesses);;
+Print("PASS_ACTUAL_ACTIONS CAT_1024_10 ",Length(rows)," rows; ms=",Runtime()-t,"\n");
+QUIT_GAP(0);

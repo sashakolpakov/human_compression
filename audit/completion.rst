@@ -4,10 +4,10 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **77 reviewed corrected principal recoveries**:
-53 are measured and twenty-four (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012 and L044) are unmeasured. F003 has a separate reviewed principal refutation; 27 originals
+The current register contains **78 reviewed corrected principal recoveries**:
+53 are measured and twenty-five (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044 and L059) are unmeasured. F003 has a separate reviewed principal refutation; 26 originals
 await a complete mathematical disposition. Together with one editorial (L022),
-these give 106 accessible originals. Thus 78 of the 105 mathematical originals
+these give 106 accessible originals. Thus 79 of the 105 mathematical originals
 are handled. The other 55 historical originals remain archived. Complete the
 reviewed principal dispositions for all 105 mathematical originals, then stop.
 
@@ -24,10 +24,10 @@ the exact total and the remaining chirality claims are unpaid. The common
 and application proofs and independent computations are public; this
 bounded correction changes none of the programme totals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012 and L044 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044 and L059 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science77/v1/new_original_registration.json>`_.
+`science register <science78/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -150,6 +150,14 @@ requires the explicit narrower correction. The fourteen immediate manuscripts
 are entry points to the full retained proof closure; their 37 pages are not
 a compression measurement. No new open-conjecture or Lean credit is claimed.
 
+L059 now has a complete corrected principal recovery: faithful graph actions,
+the historical quartic inputs and the published cubic subdivisions. All 1,950
+inputs, 4,254 markings and 39 printed cells are verified. Eight source
+qualifications and external catalogue premises are explicit. The two recorded
+classification questions remain unanswered; no measurement or Lean credit is
+added. Its `publication guide <../papers/recoveries/L059/v1/PUBLICATION.rst>`_
+links the complete evidence.
+
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
 complete written comparison is 319016 / (108271 + 155199) = **1.210825**.
@@ -158,7 +166,9 @@ are charged. L121's proofs moved into that paid common theory; its conditional
 factor is 12.288729. L003's complete application factor is 1.063284.
 
 The `programme53 acceptance <programme53/v1/root_integration.json>`_ records the
-integration of the scientific, numerical and overview reviews. L044 remains pending. L096 received its later corrected scientific admission
+integration of the scientific, numerical and overview reviews. L044 was still
+pending at that historical stage and has since been recovered. L096 received
+its later corrected scientific admission
 without a manuscript factor; its earlier partial results remain historical.
 Executable software is excluded on both sides of the written comparison.
 Programs and required data are inventoried separately. No software-inclusive
