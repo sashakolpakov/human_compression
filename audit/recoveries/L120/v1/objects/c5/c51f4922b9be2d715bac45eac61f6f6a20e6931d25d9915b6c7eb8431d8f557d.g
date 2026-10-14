@@ -1,0 +1,25 @@
+SizeScreen([1000000,1000000]);;
+Read("/Users/sasha/medusa/research/leemans/reboot_20261013/L120_recovery_work/finite_rows_work/six_automorphisms/input.g");;
+Need:=function(b,s)if not b then Error(s);fi;end;;
+G:=SymmetricGroup(6);;A:=AutomorphismGroup(G);;
+Need(Size(A)=1440,"full automorphism order");;
+phi:=First(GeneratorsOfGroup(A),f->NrMovedPoints(Image(f,(1,2)))=6);;
+Need(phi<>fail and IsBijective(phi),"genuine outer automorphism");;
+Need(ivs=Set(Concatenation(List(Filtered(ConjugacyClasses(G),c->Order(Representative(c))=2),AsList))),"exact sorted involution input");;
+tuples:=[];;Locate:=fail;;
+for k in [3,4,5] do
+ tuples:=List(Filtered(ids,x->Length(x)=k),x->List(x,i->ivs[i]));;
+ Locate:=function(t)
+  local js;
+  js:=Filtered([1..Length(tuples)],j->RepresentativeAction(G,t,tuples[j],OnTuples)<>fail);
+  Need(Length(js)=1,"unique point-conjugacy representative");return js[1];
+ end;;
+ outer:=List(tuples,t->Locate(List(t,x->Image(phi,x))));;
+ reversal:=List(tuples,t->Locate(Reversed(t)));;
+ Need(Set(outer)=[1..Length(tuples)] and Set(reversal)=[1..Length(tuples)],"actual fusion permutations");;
+ autClasses:=Orbits(Group(PermList(outer)),[1..Length(tuples)]);;
+ dualClasses:=Orbits(Group(PermList(outer),PermList(reversal)),[1..Length(tuples)]);;
+ Print("RANK ",k," POINT_CLASSES ",Length(tuples)," OUTER ",outer," REVERSE ",reversal," FULL_AUT ",Length(autClasses)," WITH_DUAL ",Length(dualClasses),"\n");
+od;
+Print("TERMINAL_S6_FUSION\n");
+QUIT;
