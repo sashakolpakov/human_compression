@@ -1,0 +1,47 @@
+--- initial_checker01/portable_check.py
++++ portable_check.py
+@@ -79,13 +79,20 @@
+  # Every old published transport is retained exactly. Decode all its scientific
+  # objects once; documentary rows stay literal inherited exemptions. This avoids
+  # guessing that an old omitted GAP manual is a newly missing scientific input.
+- legacy={};legacy_decoded={};legacy_rows=0;legacy_documents=0
++ legacy={};legacy_decoded={};legacy_rows=0;legacy_documents=0;legacy_literals={};legacy_locators={}
++ prefixes=dict(policy['historical_absolute_roots'])
+  for item in policy['inherited_documentary_exclusions']:
+   p=seen['public',item['transport']['path']];need(sha(p)==item['transport']['sha256'],'Exact inherited transport');old=load(p)
+   docs=[r for r in old['files']if r['transport'].endswith('HASH_ONLY')]
+   need(docs==item['documentary_rows']==item['exact_declared_omissions'],'Unchanged full inherited documentary list')
++  for ns,prefix in old.get('historical_absolute_roots',{}).items():
++   need(ns not in prefixes or prefixes[ns]==prefix,'Consistent inherited absolute root');prefixes[ns]=prefix
++  for loc in old.get('relative_locator_resolutions',[]):
++   key=loc['context'],loc['historical_pin']['path'],loc['historical_pin']['sha256']
++   legacy_locators[key]=loc
+   for r in old['files']:
+    legacy[(r['origin'],r['path'],r['sha256'])]=r;legacy_rows+=1
++   if Path(r['path']).is_absolute():legacy_literals[r['path'],r['sha256']]=r
+    if r['transport'].endswith('HASH_ONLY'):legacy_documents+=1;continue
+    storedkey=('public',r['public_path']);q=seen.get(storedkey);need(q is not None,'Complete stored inherited proof object')
+    direct(storedkey,dict(bytes=r['stored_bytes'],sha256=r['stored_sha256']))
+@@ -94,7 +101,7 @@
+     data=q.read_bytes();need(r['encoding']in ['identity','gzip'],'Inherited exact encoding');data=gzip.decompress(data)if r['encoding']=='gzip'else data
+     need((len(data),hashlib.sha256(data).hexdigest())==ident,'All inherited scientific bytes decoded exactly');legacy_decoded[ident]=True
+  print('INHERITED',legacy_rows,len(legacy_decoded),legacy_documents,flush=True)
+- prefixes=policy['historical_absolute_roots'];audit=[];unresolved=[]
++ audit=[];unresolved=[]
+  def resolve(x,context):
+   name=x.get('path');h=x.get('sha256')
+   if not isinstance(name,str)or not isinstance(h,str)or len(h)!=64:return
+@@ -112,6 +119,13 @@
+   for key in candidates:
+    r=legacy.get((*key,h))
+    if r and matches(r,x):audit.append(dict(context=context,path=name,sha256=h,route='inherited_complete_public_transport',documentary=r['transport'].endswith('HASH_ONLY')));return
++  r=legacy_literals.get((name,h))
++  if r and matches(r,x):audit.append(dict(context=context,path=name,sha256=h,route='inherited_literal_documentary_namespace',documentary=r['transport'].endswith('HASH_ONLY')));return
++  loc=legacy_locators.get((context,name,h))
++  if loc:
++   r=legacy.get((loc['resolved_origin'],loc['resolved_path'],h))
++   need(r is not None and matches(r,x),'Exact inherited historical locator target')
++   audit.append(dict(context=context,path=name,sha256=h,route='inherited_explicit_locator',documentary=r['transport'].endswith('HASH_ONLY')));return
+   unresolved.append(dict(context=context,pin=x))
+  def walk(x,context):
+   if isinstance(x,dict):

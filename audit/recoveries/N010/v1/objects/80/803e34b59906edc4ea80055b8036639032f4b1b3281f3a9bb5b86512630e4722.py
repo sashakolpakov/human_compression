@@ -1,0 +1,28 @@
+from pathlib import Path
+import json,hashlib,shutil
+S=Path('/Users/sasha/medusa/research/leemans');W=S/'reboot_20261013/N010_retained_inputs';A=S/'corpus106_N010_oriented_examples_v1'
+if A.exists():raise ValueError('immutable edition exists')
+A.mkdir()
+def put(p,x):p.write_text(json.dumps(x,indent=2)+'\n')
+def pin(p,base=None):b=p.read_bytes();return {'path':str(p.relative_to(base))if base else str(p),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}
+for name in ['oriented_examples.tex','verify_amalgamations.g','check_amalgamations.py','freeze_examples.py']:shutil.copy2(W/name,A/name)
+shutil.copy2(W/'examples_native01/oriented_examples.pdf',A/'oriented_examples.pdf');shutil.copytree(W/'amalgamation_final01',A/'author_replay');shutil.copytree(W/'examples_native01',A/'author_native')
+shutil.copy2(W/'amalgamation_probe.g',A/'initial_probe_with_warning.g');shutil.copytree(W/'amalgamation_probe01',A/'initial_probe_receipt')
+put(A/'dependencies.json',[pin(p) for p in [S/'sources/phase18_schulte_weiss_2006.pdf',S/'reboot_20261013/N010_work/SchulteWeiss.tex']])
+put(A/'scope.json',{'original_id':'N010','written_pages':2,'source_section':[2,4,5],'claims':['oriented pair(1,3)/(1,3) has group order2000','oriented pair(3,1)/(1,3) has group order960'],'whole_original_credit':0,'new_question_credit':0,'new_Lean_declarations':0,'new_measurements':0,'retained_interfaces':['Square-torus oriented rotation presentation','Rank-four rotation reconstruction and chirality criterion','Oriented universal amalgamation quotient interface'],'attribution':'Two examples are attributed in the fixed2006survey to Hubard--Weiss2005p132; those authors and Schulte--Weiss1994 retain priority. Exact finite computations are independently repeated here.','primary_papers_not_directly_inspected':['Hubard--Weiss2005','Schulte--Weiss1994']})
+put(A/'provenance.json',{'author':'/root/l044_resume','root_contribution':'Assigned exact source audit and two existing example orders; no contribution to finite code or proof.','historical_failure':'Initial diagnostic used a global lambda variable and emitted a GAP syntax warning; final script uses local variables and requires empty stderr. Initial output is preserved, not the final replay.','finite_order_premise':'GAP full finitely presented group isomorphism and IsBijective; independent Python pays only literal permutation image order and intersections, not a separate fp upper-order proof.','native':'Two clean pages independently built and directly viewed before freeze.','scope':'No general toroidal family census or question credit.'})
+(A/'README.rst').write_text('''Two oriented square-torus amalgamations\n======================================\n\nRead oriented_examples.tex for exact retained inputs and computational scope.\nRun normal Python check.py --study STUDY --repo REPO --out FRESH --render.\nThe full two-presentation GAP computation and separate literal group verifier\ncomplete in a few seconds. The upper order of each presentation uses GAP;\nthe Python check independently reconstructs only its literal finite image.\nOriginal articles are documentary inputs, not runtime mathematical oracles.\nThis component has no whole-original or newly solved-question credit.\n''')
+s=(S/'corpus106_N010_chamber_words_v1/check.py').read_text().replace('chamber_words','oriented_examples').replace("written_pages'] == 3","written_pages'] == 2").replace("scope['source_section'] == [2,3] and len(scope['claims']) == 3","scope['source_section'] == [2,4,5] and len(scope['claims']) == 2").replace('len(got) == 3','len(got) == 2').replace('pages=3','pages=2').replace('source_section=[2,3]','source_section=[2,4,5]').replace('PASS_N010_CHAMBER_WORD_COMPONENT_BINDINGS','PASS_N010_ORIENTED_EXAMPLES')
+s=s.replace('    native = None','''    env = dict(__import__('os').environ)
+    env.pop('PYTHONOPTIMIZE', None)
+    p = subprocess.run([sys.executable, str(base/'check_amalgamations.py'), '--out', str(out/'finite')], capture_output=True, timeout=75, env=env)
+    (out/'finite.stdout').write_bytes(p.stdout)
+    (out/'finite.stderr').write_bytes(p.stderr)
+    need(p.returncode == 0 and not p.stderr, 'Full finite calculation')
+    finite = json.loads((out/'finite/report.json').read_text())
+    need(finite['status'] == 'PASS_TWO_EXACT_ORIENTED_AMALGAMATIONS', 'Complete finite report')
+    need([x['order'] for x in finite['cases']] == [2000,960], 'Both exact source orders')
+    native = None''').replace('source_section=[2,4,5], native=native,','source_section=[2,4,5], native=native, finite=finite,')
+(A/'check.py').write_text(s)
+put(A/'manifest.json',{'status':'AUTHOR_FROZEN_ORIENTED_EXAMPLES_AWAITS_DISTINCT_REVIEW','exports':[pin(p,A)for p in sorted(A.rglob('*'))if p.is_file()]})
+print(pin(A/'manifest.json'))

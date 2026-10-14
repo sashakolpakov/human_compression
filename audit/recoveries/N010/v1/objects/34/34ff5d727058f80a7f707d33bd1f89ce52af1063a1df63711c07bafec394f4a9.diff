@@ -1,0 +1,254 @@
+--- v1/README.rst
++++ v2/README.rst
+@@ -1,14 +1,17 @@
+ Chambers, universal constructions, and realization cones
+ ========================================================
+ 
+-Author edition awaiting distinct review of the entire survey assembly.
++Revised author edition awaiting final distinct review of the survey assembly.
++The sole scientific addition to v1 is R52, the attributed distinction
++between finiteness in locally projective ranks four and five. The legacy
++51-row retained register remains unchanged.
+ Read principal.pdf (11 pages), then the four complete components in
+ principal_and_components.pdf (22 immediate pages in total). Older acquired
+ group/chamber/classification proofs remain additional dependencies; this
+ page count is not a compression measurement or the total cost of all inputs.
+ 
+ The fixed source has34 numbered problems and14 secondary records,16contexts,
+-51 established/contextual clauses and66 bibliography entries. All are routed.
++52 established/contextual clauses and66 bibliography entries. All are routed.
+ The source-only17/441 aggregates are explicitly not independently reproduced;
+ the acquired137-family census does not determine a corrected global total.
+ Retained classifications, source reports, acquired old answers and new proofs
+--- v1/check.py
++++ v2/check.py
+@@ -41,7 +41,9 @@
+     need([r['id'] for r in register['contexts']] == [f'C{i:02}' for i in range(1, 17)],
+          'All sixteen contexts')
+     clauses = register['established_clauses']
+-    need([r['id'] for r in clauses] == [f'R{i:02}' for i in range(1, 52)], 'All51 clauses')
++    need([r['id'] for r in clauses] == [f'R{i:02}' for i in range(1, 53)], 'All52 clauses')
++    need(scope['established_clauses'] == 52 and len(retained['rows']) == 51,
++         'Revised assembly preserves the frozen 51-row source register')
+     for old, row in zip(retained['rows'], clauses):
+         for key, value in old.items():
+             if key != 'disposition':
+@@ -51,6 +53,17 @@
+                     else 'NEW_WRITTEN_PROOF_OF_ESTABLISHED_NECESSARY_CONDITION' if row['id'] == 'R46'
+                     else old['disposition'])
+         need(row['disposition'] == expected, 'No promoted retained classification')
++    r52 = clauses[-1]
++    need(r52['context'] == 'C07' and r52['physical_pages'] == [10]
++         and r52['tex_line'] == 337
++         and r52['source_anchor'] == 'In rank $4$ (but not in rank $5$)'
++         and r52['claim'] == 'Every locally projective regular polytope of rank four is finite; the corresponding assertion fails in rank five.'
++         and r52['source_citation_keys'] == ['halp', 'arp']
++         and r52['disposition'] == 'SOURCE_ATTRIBUTED_CLASSIFICATION_NOT_INDEPENDENTLY_VERIFIED'
++         and not r52['independently_inspected_primary_classification']
++         and not r52['exact_acquired_join'] and r52['new_question_credit'] == 0,
++         'Explicit historical rank distinction remains a retained input')
++    need('R52' in register['contexts'][6]['rows'], 'Rank distinction routed to C07')
+     need([r['number'] for r in register['questions']] == list(range(1, 35)), 'All34 numbered problems')
+     for old, row in zip(source['numbered_problems'], register['questions']):
+         need(all(row[k] == v for k,v in old.items()), 'Exact numbered source question')
+@@ -72,7 +85,7 @@
+          and all(r['complete'] for r in manuscripts['immediate_components']), 'All unabridged components')
+     need(manuscripts['synthesis_pages'] == 11 and manuscripts['immediate_reading_volume_pages'] == 22
+          and manuscripts['older_acquired_proofs_are_additional'], 'Honest reading volume boundary')
+-    return dict(contexts=16, established_clauses=51, numbered_questions=34,
++    return dict(contexts=16, established_clauses=52, numbered_questions=34,
+                 secondary_records=14, bibliography_entries=66)
+ 
+ 
+@@ -113,7 +126,8 @@
+              'lose_bibliography', 'promote_global_census', 'invent_corrected_total',
+              'declare_currently_open', 'solve_general_twogroup', 'solve_all_chiral_ranks',
+              'credit_old_sporadic', 'promote_retained_classification', 'abridge_component',
+-             'invent_formalization', 'promote_source_claim']
++             'invent_formalization', 'promote_source_claim', 'promote_rank_distinction',
++             'lose_rank_distinction_route']
+     for case in cases:
+         rr, ss, aa, mm = copy.deepcopy((register, scope, acquired, manuscripts))
+         if case == 'omit_context': rr['contexts'].pop()
+@@ -130,7 +144,9 @@
+         elif case == 'promote_retained_classification': rr['established_clauses'][16]['disposition'] = 'REPROVED'
+         elif case == 'abridge_component': mm['immediate_components'][0]['complete'] = False
+         elif case == 'invent_formalization': rr['new_Lean_declarations'] = 1
+-        else: rr['established_clauses'][21]['claim'] = 'The corrected global total is441'
++        elif case == 'promote_source_claim': rr['established_clauses'][21]['claim'] = 'The corrected global total is441'
++        elif case == 'promote_rank_distinction': rr['established_clauses'][-1]['disposition'] = 'REPROVED'
++        else: rr['contexts'][6]['rows'] = 'R20--R23'
+         try:
+             validate(rr, ss, source, retained, aa, mm)
+         except (ValueError, KeyError):
+--- v1/claim_register.json
++++ v2/claim_register.json
+@@ -41,8 +41,8 @@
+     {
+       "id": "C07",
+       "title": "Local spherical and projective types",
+-      "rows": "R20--R23",
+-      "disposition": "Retain the universal Coxeter tessellation theorem. Acquire the exact J1 times PSL2(19) example and its corrected family census. The global17/441 aggregates remain unverified source reports."
++      "rows": "R20--R23,R52",
++      "disposition": "Retain the universal Coxeter tessellation theorem and the reported finiteness distinction between projective ranks four and five. Acquire the exact J1 times PSL2(19) example and its corrected family census. The global17/441 aggregates remain unverified source reports."
+     },
+     {
+       "id": "C08",
+@@ -1148,6 +1148,26 @@
+       ],
+       "new_question_credit": 0,
+       "source_register_disposition": "PROJECT_COMPONENT_ACQUIRED"
++    },
++    {
++      "id": "R52",
++      "context": "C07",
++      "physical_pages": [
++        10
++      ],
++      "tex_line": 337,
++      "source_anchor": "In rank $4$ (but not in rank $5$)",
++      "claim": "Every locally projective regular polytope of rank four is finite; the corresponding assertion fails in rank five.",
++      "source_citation_keys": [
++        "halp",
++        "arp"
++      ],
++      "qualification": "Retained as a historical classification input reported by the fixed survey. The full primary classification and its correspondence between editions have not been independently inspected. Neither the new common proofs nor the acquired single-family census proves this general rank distinction.",
++      "disposition": "SOURCE_ATTRIBUTED_CLASSIFICATION_NOT_INDEPENDENTLY_VERIFIED",
++      "independently_inspected_primary_classification": false,
++      "exact_acquired_join": [],
++      "new_question_credit": 0,
++      "revision_reason": "Explicit source clause added after distinct review; the frozen 51-row retained register is preserved unchanged."
+     }
+   ],
+   "questions": [
+--- v1/context_table.tex
++++ v2/context_table.tex
+@@ -7,7 +7,7 @@
+ C04: Hole and zigzag periods\newline R09 & The full flag-walk proof gives all stated periods. It gives no classification from period data.\\[5pt]
+ C05: Amalgamation\newline R10--R16 & Prove the regular universal theorem from a witness and reproduce the two oriented examples. Retain oriented universality, the ARP cross-polytope criterion, the negative pair, and historical extension/rank-five assertions.\\[5pt]
+ C06: Global topology\newline R17--R19 & Retain the spherical, projective and toroidal classifications and chiral restrictions from Coxeter and ARP, with their tessellation hypotheses.\\[5pt]
+-C07: Local spherical and projective types\newline R20--R23 & Retain the universal Coxeter tessellation theorem. Acquire the exact J1 times PSL2(19) example and its corrected family census. The global17/441 aggregates remain unverified source reports.\\[5pt]
++C07: Local spherical and projective types\newline R20--R23,R52 & Retain the universal Coxeter tessellation theorem and the reported finiteness distinction between projective ranks four and five. Acquire the exact J1 times PSL2(19) example and its corrected family census. The global17/441 aggregates remain unverified source reports.\\[5pt]
+ C08: Local toroidal types\newline R24--R29 & Retain the precise rank/type and regular finite-family classifications in ARP. Conditional regular universality explains the rank-five/six universal restriction. Finite-list conjectures remain separate.\\[5pt]
+ C09: Other local surfaces\newline R30--R31 & The four orientability combinations are definitions. Retain the historical catalogue report with its unverified chiral-citation scope.\\[5pt]
+ C10: Equivariant realizations\newline R32,R50 & Prove the finite orbit-stabilizer and recursive faithfulness criteria. Infinite Euclidean Wythoff constructions remain separate retained inputs with discreteness and exact stabilizers required.\\[5pt]
+--- v1/freeze_principal.py
++++ v2/freeze_principal.py
+@@ -4,7 +4,7 @@
+ from pathlib import Path
+ 
+ W = Path(__file__).resolve().parent
+-P = Path('/Users/sasha/medusa/research/leemans/corpus106_N010_principal_v1')
++P = Path('/Users/sasha/medusa/research/leemans/corpus106_N010_principal_v2')
+ if P.exists():
+     raise RuntimeError('Refuse to overwrite a frozen author edition')
+ P.mkdir()
+@@ -13,23 +13,26 @@
+          'secondary_table.tex', 'claim_register.json', 'scope.json', 'provenance.json',
+          'acquired_manuscripts.json', 'acquired_packets.json', 'dependencies.json',
+          'prepare_synthesis_tables.py', 'prepare_principal.py', 'freeze_principal.py',
+-         'principal.log', 'synthesis_build04.stdout', 'synthesis_build04.stderr',
+-         'synthesis_build05.stdout', 'synthesis_build05.stderr',
+-         'metadata02.stdout', 'metadata02.stderr']
++         'principal.log', 'synthesis_build06.stdout', 'synthesis_build06.stderr',
++         'synthesis_build07.stdout', 'synthesis_build07.stderr',
++         'metadata03.stdout', 'metadata03.stderr']
+ for name in files:
+     shutil.copyfile(W / name, P / name)
+ shutil.copyfile(W / 'check_principal.py', P / 'check.py')
+ (P / 'README.rst').write_text('''Chambers, universal constructions, and realization cones
+ ========================================================
+ 
+-Author edition awaiting distinct review of the entire survey assembly.
++Revised author edition awaiting final distinct review of the survey assembly.
++The sole scientific addition to v1 is R52, the attributed distinction
++between finiteness in locally projective ranks four and five. The legacy
++51-row retained register remains unchanged.
+ Read principal.pdf (11 pages), then the four complete components in
+ principal_and_components.pdf (22 immediate pages in total). Older acquired
+ group/chamber/classification proofs remain additional dependencies; this
+ page count is not a compression measurement or the total cost of all inputs.
+ 
+ The fixed source has34 numbered problems and14 secondary records,16contexts,
+-51 established/contextual clauses and66 bibliography entries. All are routed.
++52 established/contextual clauses and66 bibliography entries. All are routed.
+ The source-only17/441 aggregates are explicitly not independently reproduced;
+ the acquired137-family census does not determine a corrected global total.
+ Retained classifications, source reports, acquired old answers and new proofs
+--- v1/prepare_principal.py
++++ v2/prepare_principal.py
+@@ -180,7 +180,7 @@
+ save('dependencies.json', sorted(bindings.values(), key=lambda x: (x['namespace'], x['path'])))
+ save('scope.json', dict(original='N010', source_kind='historical survey and problem collection',
+      principal_disposition='Complete survey routing with common proofs, exact finite examples, earlier acquired answers and explicit retained classifications/reports; not all surveyed classifications are reproved.',
+-     contexts=16, established_clauses=51, numbered_questions=34, secondary_records=14,
++     contexts=16, established_clauses=52, numbered_questions=34, secondary_records=14,
+      bibliography_entries=66, immediate_synthesis_pages=11, immediate_component_pages=11,
+      new_question_credit=0, whole_original_credit=0, new_Lean_declarations=0,
+      new_measurements=0, compression_factor=None, all_classifications_reproved=False,
+--- v1/prepare_synthesis_tables.py
++++ v2/prepare_synthesis_tables.py
+@@ -21,7 +21,7 @@
+ ('C04', 'Hole and zigzag periods', 'R09', 'The full flag-walk proof gives all stated periods. It gives no classification from period data.'),
+ ('C05', 'Amalgamation', 'R10--R16', 'Prove the regular universal theorem from a witness and reproduce the two oriented examples. Retain oriented universality, the ARP cross-polytope criterion, the negative pair, and historical extension/rank-five assertions.'),
+ ('C06', 'Global topology', 'R17--R19', 'Retain the spherical, projective and toroidal classifications and chiral restrictions from Coxeter and ARP, with their tessellation hypotheses.'),
+-('C07', 'Local spherical and projective types', 'R20--R23', 'Retain the universal Coxeter tessellation theorem. Acquire the exact J1 times PSL2(19) example and its corrected family census. The global17/441 aggregates remain unverified source reports.'),
++('C07', 'Local spherical and projective types', 'R20--R23,R52', 'Retain the universal Coxeter tessellation theorem and the reported finiteness distinction between projective ranks four and five. Acquire the exact J1 times PSL2(19) example and its corrected family census. The global17/441 aggregates remain unverified source reports.'),
+ ('C08', 'Local toroidal types', 'R24--R29', 'Retain the precise rank/type and regular finite-family classifications in ARP. Conditional regular universality explains the rank-five/six universal restriction. Finite-list conjectures remain separate.'),
+ ('C09', 'Other local surfaces', 'R30--R31', 'The four orientability combinations are definitions. Retain the historical catalogue report with its unverified chiral-citation scope.'),
+ ('C10', 'Equivariant realizations', 'R32,R50', 'Prove the finite orbit-stabilizer and recursive faithfulness criteria. Infinite Euclidean Wythoff constructions remain separate retained inputs with discreteness and exact stabilizers required.'),
+@@ -82,6 +82,17 @@
+         row['disposition'] = 'NEW_WRITTEN_PROOF_OF_ESTABLISHED_NECESSARY_CONDITION'
+         row['acceptance_overlay'] = 'principal.tex Proposition5; whole assembly still awaits distinct review'
+ 
++retained['rows'].append(dict(
++    id='R52', context='C07', physical_pages=[10], tex_line=337,
++    source_anchor='In rank $4$ (but not in rank $5$)',
++    claim='Every locally projective regular polytope of rank four is finite; the corresponding assertion fails in rank five.',
++    source_citation_keys=['halp', 'arp'],
++    qualification='Retained as a historical classification input reported by the fixed survey. The full primary classification and its correspondence between editions have not been independently inspected. Neither the new common proofs nor the acquired single-family census proves this general rank distinction.',
++    disposition='SOURCE_ATTRIBUTED_CLASSIFICATION_NOT_INDEPENDENTLY_VERIFIED',
++    independently_inspected_primary_classification=False,
++    exact_acquired_join=[], new_question_credit=0,
++    revision_reason='Explicit source clause added after distinct review; the frozen 51-row retained register is preserved unchanged.'))
++
+ register = dict(original='N010', source_contract='source_contract02.json',
+                 contexts=[dict(id=a, title=b, rows=c, disposition=d) for a,b,c,d in contexts],
+                 established_clauses=retained['rows'], questions=questions,
+--- v1/principal.tex
++++ v2/principal.tex
+@@ -351,7 +351,7 @@
+ \section{Retained classifications and precise limits}
+ 
+ The survey collects results from many different sources.
+-The accompanying register has fifty-one clauses in sixteen
++The accompanying register has fifty-two clauses in sixteen
+ contexts, with source pages, literal anchors, citation keys,
+ and each acquired proof or retained premise. Its sixty-six
+ bibliography entries preserve the complete source list.
+@@ -360,6 +360,14 @@
+ classification reproved by the arguments above.
+ 
+ \input{context_table.tex}
++
++The source also reports that every locally projective
++regular polytope of rank four is finite, whereas this
++assertion fails in rank five. We retain this distinction
++as a classification input attributed to Hartley and to
++\emph{Abstract Regular Polytopes}. The full primary
++classification has not been independently inspected;
++the common proofs above do not establish this assertion.
+ 
+ There are two numerical limits of particular importance.
+ The source reports seventeen universal locally projective
+--- v1/scope.json
++++ v2/scope.json
+@@ -3,7 +3,7 @@
+   "source_kind": "historical survey and problem collection",
+   "principal_disposition": "Complete survey routing with common proofs, exact finite examples, earlier acquired answers and explicit retained classifications/reports; not all surveyed classifications are reproved.",
+   "contexts": 16,
+-  "established_clauses": 51,
++  "established_clauses": 52,
+   "numbered_questions": 34,
+   "secondary_records": 14,
+   "bibliography_entries": 66,
