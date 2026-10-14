@@ -12,10 +12,10 @@ Current programme
 
 **85 accessible originals have reviewed corrected principal-result recoveries:
 53 are measured and thirty-two (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010 and L041) await measurement.
-One further original, F003, has a reviewed refutation of its principal statement;
-19 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 86 of 105 mathematical originals are
-handled: 85 recoveries and one refutation. These are the 106 active originals. Another 55 unavailable originals
+Two further originals, F003 and L029, have reviewed principal refutations;
+18 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 87 of 105 mathematical originals are
+handled: 85 recoveries and two refutations. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -37,8 +37,8 @@ into the fully charged common supplement. L003's complete four-paper
 application has factor **1.063284** after that acquisition. All 99 required
 program/data contents remain explicit prerequisites; no sibling proof is free.
 
-A separately reviewed principal refutation
-------------------------------------------
+Separately reviewed principal refutations
+-----------------------------------------
 
 The `Suzuki correction <corrections/suzuki-rank/v1/PUBLICATION.rst>`_ gives a
 complete five-page proof of a chiral polytope of rank four, of type {31,31,25},
@@ -49,6 +49,16 @@ F003 is counted once as a principal refutation. It has no recovery credit,
 compression ratio, new open-conjecture credit or complete Lean verification.
 The claim does not extend to journal text or later editions.
 
+The `L029 correction <corrections/chiral-residues/v1/PUBLICATION.rst>`_
+gives a complete five-page counterexample to Theorem 1.1 in the published
+2021 paper On residual connectedness in chiral geometries. Its specified
+C-plus group is PSL(2,13), while the full type-preserving group has twice
+that order. The full group is chiral, but an actual rank-two residue is
+two disjoint six-cycles. All hypotheses of the literal right-coset
+construction are verified. Rank-three Proposition 4.11 and a version
+requiring chirality under the specified group are not refuted. L029 has
+no ordinary recovery, measurement, new-question or Lean credit.
+
 A corrected count with remaining work
 -------------------------------------
 
@@ -57,7 +67,7 @@ proves at least **798,370** generating-pair orbits in the fixed source's
 convention, contradicting its stated **796,772**. Type (20,31) has exactly
 **9,118**, rather than **7,246**. The two complete four-page proofs,
 borrowed classification inputs and independent computations are included.
-**L046 remains among the 19 pending originals:** 116 exact table counts,
+**L046 remains among the 18 pending originals:** 116 exact table counts,
 the exact total and remaining chirality claims still require recovery.
 This correction adds no completed original, compression factor or
 open-conjecture credit.
