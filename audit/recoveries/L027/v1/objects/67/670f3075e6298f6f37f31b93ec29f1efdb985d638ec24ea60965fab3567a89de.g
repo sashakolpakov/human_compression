@@ -1,0 +1,20 @@
+SetAssertionLevel(2);
+Need:=function(ok,message) if not ok then Error(message);fi;end;
+RankFiveControl:=function(q,k)
+ local f,o,z,w,aa,bb,cc,dd,lines,u,v,gens,a,b,c,d,G,A,B,C,E,tests;
+ f:=GF(q);o:=One(f);z:=Zero(f);w:=PrimitiveElement(f)^((q-1)/3);
+ aa:=DiagonalMat([o,w,w^2]);
+ bb:=[[-o,z,-k*o],[z,-w^2,-k*w^2],[z,z,w]];
+ cc:=[[o,k*o,z],[z,k*o,o],[z,-o,z]];
+ dd:=[[z,o,z],[z,z,o],[o,z,z]];
+ lines:=[];
+ for u in f do for v in f do Add(lines,[o,u,v]);od;od;
+ for u in f do Add(lines,[z,o,u]);od;Add(lines,[z,z,o]);
+ gens:=List([aa,bb,cc,dd],m->Permutation(m,lines,OnLines));
+ a:=gens[1];b:=gens[2];c:=gens[3];d:=gens[4];G:=Group(gens);
+ A:=Group(a,b,c);B:=Group(b,c,d);C:=Group(a,b);E:=Group(b,c);
+ tests:=[Size(Intersection(Group(a),Group(b))),Size(Intersection(Group(b),Group(c))),Size(Intersection(C,E)),Size(Intersection(A,B)),Size(Intersection(A,Group(c,d))),Size(Intersection(A,Group(d)))];
+ Print("q=",q," k=",k," group=",Size(G)," orders=",List(gens,Order)," ends=",[Size(A),Size(B)]," local=",[Size(C),Size(E),Size(Group(c,d))]," IPactual=",tests," IPexpected=",[1,1,Order(b),Size(E),Order(c),1],"\n");
+end;
+for q in [7,13,25] do for k in [1,-1] do RankFiveControl(q,k);od;od;
+Print("COMPLETE_FINITE_DIAGNOSTIC\n");QUIT;

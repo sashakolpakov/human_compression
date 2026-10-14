@@ -1,0 +1,26 @@
+SetAssertionLevel(2);
+Need:=function(ok,message) if not ok then Error(message);fi;end;
+for q in [5,7,8,9,13] do
+  f:=GF(q);; x:=PrimitiveElement(f);; o:=One(f);; z:=Zero(f);;
+  aa:=[[x,o,z],[z,o+x^-1,-x^-1],[z,o,z]];;
+  bb:=[[-x^-1,z,z],[z,z,o],[z,x,z]];;
+  cc:=[[x,z,z],[x-x^-1,o,z],[x-x^-1,z,x^-1]];;
+  lines:=[];;
+  for u in f do for v in f do Add(lines,[o,u,v]);od;od;
+  for u in f do Add(lines,[z,o,u]);od;
+  Add(lines,[z,z,o]);
+  gens:=List([aa,bb,cc],m->Permutation(m,lines,OnLines));;
+  Need(ForAll(gens,IsPerm),'projective permutations');
+  a:=gens[1];;b:=gens[2];;c:=gens[3];;
+  group:=Group(gens);;left:=Group(a,b);;right:=Group(b,c);;
+  divisor:=Gcd(3,q-1);;
+  Need(Size(group)=q^3*(q^3-1)*(q^2-1)/divisor,'full group');
+  Need(Size(left)=2*q^2*(q-1)^2/divisor and Size(right)=Size(left),'both full ends');
+  Need(Intersection(left,right)=Group(b),'middle intersection');
+  Need(Size(Intersection(Group(a),Group(b)))=1 and Size(Intersection(Group(b),Group(c)))=1,'cyclic intersections');
+  Need(List(gens,Order)=[q-1,2*(q-1)/divisor,q-1],'type');
+  Need(Order(a*b)=2 and Order(b*c)=2 and Order(a*b*c)=2,'all interval involutions');
+  Print("FIELD ",q," GROUP ",Size(group)," END ",Size(left)," MIDDLE ",Order(b)," PASS\n");
+od;
+Print("PASS_ALL_FINITE_RANK_FOUR_CONTROLS\n");
+QUIT;

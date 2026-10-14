@@ -1,0 +1,11 @@
+Read("centres_records.g");;
+F:=GF(q^2);o:=One(F);z:=Zero(F);LL:=[];
+for x in F do for y in F do if o+x*x^q+y*y^q=z then Add(LL,[o,x,y]);fi;od;od;
+for x in F do if o+x*x^q=z then Add(LL,[z,o,x]);fi;od;
+if Length(LL)<>q^3+1 then Error("exact unitary point degree");fi;
+reps:=[];xx:=[];
+for r in records do if r.y<>z and r.trace<>z and not [r.k,r.x] in xx then Add(xx,[r.k,r.x]);Add(reps,r);fi;od;
+PrintTo("point_input.g","LL:=",LL,";\n");
+PrintTo("case_input.g","q:=",q,";alpha:=",alpha,";reps:=",reps,";\n");
+Print("POINTS ",Length(LL)," CASES ",Length(reps)," BYTYPE ",List([7,8,9],k->Number(reps,r->r.k=k)),"\n");
+QUIT;

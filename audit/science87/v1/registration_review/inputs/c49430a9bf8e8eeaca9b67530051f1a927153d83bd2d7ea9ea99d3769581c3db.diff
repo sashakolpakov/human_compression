@@ -1,0 +1,74 @@
+--- prepare_bundle.py
++++ prepare_bundle_v2.py
+@@ -18,19 +18,34 @@
+ def safe(root,name):
+  q=PurePosixPath(name);need(not q.is_absolute()and'..'not in q.parts,'Safe relative path');p=(root/q).resolve();need(p.is_relative_to(root.resolve()),'No escape');return p
+ def checked(p,r):need(p.is_file()and p.stat().st_size==r['bytes']and sha(p)==r['sha256'],'Exact input '+str(p))
++def documentary_path(row):
++ name=Path(row['path']);origin=row['origin']
++ if origin=='study':return name.resolve() if name.is_absolute() else (S/name).resolve()
++ if origin in ['repo','public']:return name.resolve() if name.is_absolute() else (R/name).resolve()
++ if origin=='gap':
++  need(not name.is_absolute()and '..'not in name.parts,'Literal acquired GAP documentary path')
++  return (Path('/opt/homebrew/Cellar/gap/4.15.1')/name).resolve()
++ need(origin=='local_software_documentation'and name.is_absolute(),'Known explicit documentary origin')
++ return name.resolve()
++def documentary_match(paths,row,declared):
++ # Classification is an exact logical-path decision, never a content-hash decision.
++ # In particular a zero-byte stderr is not an unrelated zero-byte source render.
++ names={p.resolve()for p in paths};matches=[d for d in declared if documentary_path(d)in names and (d['bytes'],d['sha256'])==(row.get('bytes'),row['sha256'])]
++ if not matches:return None
++ return matches[0]
+ def main():
+  ap=argparse.ArgumentParser();ap.add_argument('--config',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);a=ap.parse_args();config=load(a.config);O=a.out.resolve()
+  need(O.is_relative_to(W)and not O.exists(),'Fresh private bundle output');need(config['baseline']=='ade9feeb7f8feaffa8f773932d57a50e60cb64c2','Exact shared baseline');need(subprocess.check_output(['git','rev-parse','HEAD'],cwd=R,text=True).strip()==config['baseline'],'Current baseline')
+  tracked=set(subprocess.check_output(['git','ls-files','-z'],cwd=R).decode().split('\0'))
+  ids=[i for p in config['packages']for i in p['source_ids']];need(len(ids)==len(set(ids)),'Separate source dispositions')
+- sources={};known={};docs={};package_data=[]
++ sources={};known={};package_data=[]
+  def add(source,name):
+   source=source.resolve();safe(O,name);identity=source.stat().st_size,sha(source)
+   if name in sources:need((sources[name].stat().st_size,sha(sources[name]))==identity,'No conflicting stages')
+   else:sources[name]=source
+   known.setdefault(identity,dict(path=name,bytes=identity[0],sha256=identity[1],encoding='identity',decoded_bytes=identity[0],decoded_sha256=identity[1]))
+  for c in config['packages']:
+-  work=S/c['work'];ready=work/'ready.json';checked(ready,c['ready']);stage=work/c['stage'];mp=work/c['stage_manifest'];checked(mp,c['stage_manifest_pin']);manifest=load(mp)
++  package_docs=[];work=S/c['work'];ready=work/'ready.json';checked(ready,c['ready']);stage=work/c['stage'];mp=work/c['stage_manifest'];checked(mp,c['stage_manifest_pin']);manifest=load(mp)
+   proposal=work/c['proposal'];checked(proposal,c['proposal_pin'])
+   for r in manifest['files']:
+    p=safe(stage,r['path']);checked(p,r);add(p,r['path']);q=R/r['path'];need(not q.exists()or q.read_bytes()==p.read_bytes(),'No public replacement '+r['path'])
+@@ -38,7 +53,7 @@
+    t=load(stage/c['transport'])
+    for r in t['files']:
+     identity=r['bytes'],r['sha256']
+-    if r['transport'].endswith('HASH_ONLY'):docs[identity]=r;continue
++    if r['transport'].endswith('HASH_ONLY'):package_docs.append(r);continue
+     p=stage/r['public_path']
+     if not p.exists():
+      p=R/r['public_path'];need(r['public_path']in tracked,'Tracked public reuse');checked(p,dict(bytes=r['stored_bytes'],sha256=r['stored_sha256']))
+@@ -55,18 +70,20 @@
+     if not isinstance(r,dict)or not isinstance(r.get('path'),str)or'sha256'not in r:continue
+     name=Path(r['path']);ns=r.get('namespace','study');choices=[name]if name.is_absolute()else[(R if ns in ['repo','public']else S)/name,op/name,work/name]
+     matches=[q for q in choices if q.is_file()and sha(q)==r['sha256']and q.stat().st_size==r.get('bytes',q.stat().st_size)]
+-    if not matches and (r.get('bytes'),r['sha256'])in docs:
+-     d=docs[r['bytes'],r['sha256']];missing_docs[str(name)]={k:d[k]for k in ['origin','path','bytes','sha256']};continue
++    d=documentary_match(choices,r,package_docs) if not matches else None
++    if d is not None:
++     missing_docs[str(name)]={k:d[k]for k in ['origin','path','bytes','sha256']};continue
+     need(matches,'Exact operational dependency '+str(name));inputs.add(matches[0].resolve())
+-  package_data.append((c,op,om,inputs,missing_docs))
++  package_data.append((c,op,om,inputs,missing_docs,package_docs))
+  # Every potentially failing acquisition has been checked before writing.
+  O.mkdir();ST=O/'stage';ST.mkdir();AUD=config['audit_base'];maps=[]
+  for name,p in sources.items():q=safe(ST,name);q.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,q)
+- for c,op,om,inputs,missing_docs in package_data:
++ for c,op,om,inputs,missing_docs,package_docs in package_data:
+   mapping={};excluded=dict(missing_docs);logical=lambda p:str(p.relative_to(S))if p.is_relative_to(S)else str(p)
+   for p in sorted(inputs):
+    identity=p.stat().st_size,sha(p);key=logical(p)
+-   if identity in docs:excluded[key]={k:docs[identity][k]for k in ['origin','path','bytes','sha256']};continue
++   d=documentary_match([p],dict(bytes=identity[0],sha256=identity[1]),package_docs)
++   if d is not None:excluded[key]={k:d[k]for k in ['origin','path','bytes','sha256']};continue
+    if identity in known:mapping[key]=known[identity];continue
+    name=f"{AUD}/operational/{c['id']}/objects/{sha(p)}{p.suffix}";q=safe(ST,name);q.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,q);mapping[key]=dict(pin(q,ST),encoding='identity',decoded_bytes=identity[0],decoded_sha256=identity[1]);known[identity]=mapping[key]
+   record=dict(status='EXACT_ACCEPTED_OPERATIONAL_REVIEW',package_id=c['id'],source_ids=c['source_ids'],manifest=mapping[logical(op/'manifest.json')],review=mapping[logical(op/'review.json')],original_manifest_sha256=c['operational_review']['sha256'],original_status=om['status'],bindings=mapping,hash_only_bindings=excluded,mathematical_review_role_unchanged=True)

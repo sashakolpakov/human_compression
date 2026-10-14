@@ -10,12 +10,13 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**85 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and thirty-two (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010 and L041) await measurement.
-Five further originals, F003, L029, L110, L114 and L115, have reviewed principal refutations;
-15 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 90 of 105 mathematical originals are
-handled: 85 recoveries and five refutations. These are the 106 active originals. Another 55 unavailable originals
+**87 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and thirty-four (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027 and L076) await measurement.
+Nine further originals, F003, L029, L110, L114, L115, L036, L046, L063 and L064,
+have reviewed principal refutations;
+9 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 96 of 105 mathematical originals have reviewed principal
+dispositions: 87 recoveries and nine refutations. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -71,6 +72,16 @@ classification. Classical inputs and earlier witness provenance remain
 explicit. These dispositions add no ordinary recovery, measurement,
 new-question or Lean credit.
 
+The `Rudvalis correction <corrections/rudvalis-rank-two/v1/PUBLICATION.rst>`_
+proves at least 50,669 unordered Aut(G) classes, contradicting L036's printed
+total 1,511. It does not give the corrected exact total or recover the other
+eleven table rows. The `scalar-plane correction
+<corrections/projective-subfield-planes/v1/PUBLICATION.rst>`_ supplies one
+omission in the two separate fixed sources L063 and L064. Its PSL2(512)
+geometry has local degrees 9 and 8; nine exhibited planes are not a count
+of geometry classes. The L064 target is the proof of Proposition 22, not
+Lemma 21. Retained classical inputs and all unpaid results remain explicit.
+
 A corrected count with remaining work
 -------------------------------------
 
@@ -79,10 +90,13 @@ proves at least **798,370** generating-pair orbits in the fixed source's
 convention, contradicting its stated **796,772**. Type (20,31) has exactly
 **9,118**, rather than **7,246**. The two complete four-page proofs,
 borrowed classification inputs and independent computations are included.
-**L046 remains among the 15 pending originals:** 116 exact table counts,
-the exact total and remaining chirality claims still require recovery.
-This correction adds no completed original, compression factor or
-open-conjecture credit.
+**L046 now has a principal-refutation disposition**, applying the same convention
+as the later refutations to the unchanged published correction. All 116 exact
+table counts, the exact total and the remaining chirality, nonorientable,
+outer-reflexible and inversion claims remain unpaid. The
+`disposition layer <audit/principal-refutations/L046/v1/PUBLICATION.rst>`_
+preserves the earlier pending/no-credit decision as history. This adds no
+ordinary recovery, new mathematics, measurement or open-question credit.
 
 Reviewed recoveries awaiting measurement
 ----------------------------------------
@@ -333,9 +347,19 @@ after actual triple-flag transitivity in this family. Triangular Euclidean
 presentation and acquired chamber theory remain named inputs; the five finite
 fields are controls only. No new measurement or question credit is claimed.
 
-All thirty-two source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science85/v1/new_original_registration.json>`_.
-None of these thirty-two recoveries has a compression factor. N014 is not added to C's measured
+The `L076 guide <papers/projective-line-rank-two/v1/PUBLICATION.rst>`_
+gives the complete six-page corrected projective-line rank-two classification,
+including the ordered/unordered corrections at q=11 and q=13. The
+`L027 guide <papers/recoveries/L027/v1/PUBLICATION.rst>`_ supplies the complete
+34-page proof collection for the three principal dimension-three theorems.
+Its twelve retained-input records and earlier source-attributed censuses remain
+explicit. The three PSU3(17) pairs are positive examples, not an exhaustion;
+the printed q=81 negative claim is corrected by an already acquired theorem.
+Neither recovery adds a measurement, new question answer or Lean claim.
+
+All thirty-four source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science87/v1/new_original_registration.json>`_.
+None of these thirty-four recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
