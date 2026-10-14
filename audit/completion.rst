@@ -4,10 +4,10 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **82 reviewed corrected principal recoveries**:
-53 are measured and twenty-nine (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120 and L045) are unmeasured. F003 has a separate reviewed principal refutation; 22 originals
+The current register contains **83 reviewed corrected principal recoveries**:
+53 are measured and thirty (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045 and L052) are unmeasured. F003 has a separate reviewed principal refutation; 21 originals
 await a complete mathematical disposition. Together with one editorial (L022),
-these give 106 accessible originals. Thus 83 of the 105 mathematical originals
+these give 106 accessible originals. Thus 84 of the 105 mathematical originals
 are handled. The other 55 historical originals remain archived. Complete the
 reviewed principal dispositions for all 105 mathematical originals, then stop.
 
@@ -24,10 +24,10 @@ the exact total and the remaining chirality claims are unpaid. The common
 and application proofs and independent computations are public; this
 bounded correction changes none of the programme totals.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120 and L045 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045 and L052 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science82/v1/new_original_registration.json>`_.
+`science register <science83/v1/new_original_registration.json>`_.
 
 F008 is an auxiliary original, not focal-group authored. Its principal recovery
 keeps the general-weight/improved-error ancillary limits and unanswered
@@ -188,6 +188,15 @@ Excluded-family negatives, the announced PSL3/PSU3 converse, historical counts
 and the almost-simple question are not new conclusions. The `publication guide
 <../papers/recoveries/L045/v1/PUBLICATION.rst>`_ preserves these boundaries;
 measurement remains deferred.
+
+L052 recovers the complete corrected general and finite hypertope contract,
+with 62 source dispositions, 23 finite table entries and three examples. The
+18-page proof volume retains all component proofs and validation. Four named
+classifications remain attributed, and three question dispositions remain
+unanswered. The four corrections include the ancillary A6 rotation example;
+no new general C+ converse or chiral completeness is asserted. The
+`publication guide <../papers/recoveries/L052/v1/PUBLICATION.rst>`_ records these
+boundaries. Measurement remains deferred.
 
 The `current overview <overview/v19/packet/reader.pdf>`_ reports 19 whole-topic
 and 53 individual conditional factors. Topic A now recovers ten originals. Its
