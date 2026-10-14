@@ -1,0 +1,22 @@
+--- draft_v1
++++ draft_v2
+@@ -94,8 +94,18 @@
+  current=copy.deepcopy(old);current.pop('snapshot');current.update(status='CURRENT_PROGRAMME_82_RECOVERED_1_REFUTED_22_PENDING_1_EDITORIAL',admitted_principal_originals=82,accessible_pending_complete_recovery=22,handled_mathematical_originals=83,previous_snapshot=history['audit/corpus/latest.json'],active_catalogue=pin(catpath,root),current_science_registration=pin(root/AUD/'new_original_registration.json',root))
+  for key in ['admitted_original_ids','handled_mathematical_original_ids','measurement_pending_original_ids','scientific_unmeasured_original_ids']:current[key]=sorted(current[key]+['L045'])
+  current['accessible_pending_original_ids'].remove('L045');current['added_admissions'].append(admission_pin);snapshot=root/'audit/corpus/updates/accessible106-corrected-unmeasured82.json';dump(snapshot,current);current['snapshot']=pin(snapshot,root);dump(root/'audit/corpus/latest.json',current)
++ # Preserve the frozen advertised TeX path and supply its literal local input.
++ # This is a registration alias of an already transported exact file.
++ native_aliases=load(drafts/'native_input_aliases.json');need(len(native_aliases)==1,'One exact literal input alias')
++ for row in native_aliases:
++  src=safe(root,row['source']['path']);dst=safe(root,row['alias']['path']);need(sha(src)==row['source']['sha256']and src.stat().st_size==row['source']['bytes'],'Bound native table input')
++  need(row['source']['sha256']==row['alias']['sha256']and row['source']['bytes']==row['alias']['bytes'],'Byte-identical native alias')
++  need(not dst.exists()or dst.read_bytes()==src.read_bytes(),'No native alias replacement')
++  if not dst.exists():dst.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(src,dst)
++ dump(root/AUD/'native_input_aliases.json',native_aliases)
++ native_inputs={row['manuscript_id']:[row['alias']['path']]for row in native_aliases}
+  native=load(root/'papers/catalogue_corrected_unmeasured.json');native['original_ids'].append('L045');native['root_publication_gate']=AUD+'/root_integration.json'
+- for m in admission['new_native_manuscripts']:native['entries'].append(dict(id=m['id'],title=m['title'],tex=m['tex']['path'],pdf=m['pdf']['path'],tex_inputs=[],compiler='pdflatex',physical_pages=m['physical_pages'],role='Immediate principal recovery manuscript; complete acquired proof and validation closure retained',source_ids=['L045'],topic='Chiral polyhedra and finite simple groups',comparison_topic_created=False,measured=False,compression_factor=None,existing_public_dependency=False,admission=admission_pin))
++ for m in admission['new_native_manuscripts']:native['entries'].append(dict(id=m['id'],title=m['title'],tex=m['tex']['path'],pdf=m['pdf']['path'],tex_inputs=native_inputs.get(m['id'],[]),compiler='pdflatex',physical_pages=m['physical_pages'],role='Immediate principal recovery manuscript; complete acquired proof and validation closure retained',source_ids=['L045'],topic='Chiral polyhedra and finite simple groups',comparison_topic_created=False,measured=False,compression_factor=None,existing_public_dependency=False,admission=admission_pin))
+  dump(root/'papers/catalogue_corrected_unmeasured.json',native);paper=load(root/'papers/latest_catalogue.json');paper.update(active_source_catalogue=current['active_catalogue'],corrected_unmeasured_scientific_catalogue=pin(root/'papers/catalogue_corrected_unmeasured.json',root));dump(root/'papers/latest_catalogue.json',paper)
+  # Narrow current-position prose substitutions. Each old phrase is required;
+  # historical numbered results and comparison values are untouched.

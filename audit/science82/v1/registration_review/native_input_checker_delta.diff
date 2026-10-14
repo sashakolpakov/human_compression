@@ -1,0 +1,18 @@
+--- draft_v1
++++ draft_v2
+@@ -85,7 +85,14 @@
+  need(len(application['damaged_controls'])==8 and len(application['optimization_guards'])==6 and len(replay['malformed_transport_controls'])==9 and len(replay['portable_optimization_guards'])==2 and not replay['private_proof_fallback']and not replay['mathematical_census_repeated'],'Meaningful guards and no private fallback')
+  need(replay['native_pages']==7 and replay['native_text_identical']and replay['application_stderr_empty']and(application['acquired_manuscripts'],application['acquired_pages'],application['synthesis_pages'],application['full_reading_volume_pages'])==(14,51,7,58),'Complete native/execution output')
+  prior=load(root,history['papers/catalogue_corrected_unmeasured.json']['path']);native=load(root,'papers/catalogue_corrected_unmeasured.json');need(native['entries'][:-15]==prior['entries']and native['original_ids']==prior['original_ids']+['L045']and native['acquired_dependencies']==prior['acquired_dependencies']and native['existing_comparison_topic_count']==19 and native['new_measurements']==0,'Previous native and measured catalogue unchanged')
+- for x,y in zip(native['entries'][-15:],a['new_native_manuscripts']):need(x['id']==y['id']and x['tex']==y['tex']['path']and x['pdf']==y['pdf']['path']and x['physical_pages']==y['physical_pages']and not x['measured']and x['compression_factor']is None,'Exact native routes')
++ aliases=load(root,AUD+'/native_input_aliases.json')
++ expected_alias={'status': 'EXACT_LITERAL_NATIVE_INPUT_ALIAS', 'manuscript_id': 'L045-finite_lie-4', 'literal_input': 'table.tex', 'source': {'path': 'audit/recoveries/L045/v1/objects/a8/a8d5c1570b35fa73029be9667d8f2e0a25e897548c7d1bd40db5fc63f749ccca.tex', 'bytes': 987, 'sha256': 'a8d5c1570b35fa73029be9667d8f2e0a25e897548c7d1bd40db5fc63f749ccca'}, 'alias': {'path': 'audit/recoveries/L045/v1/objects/a1/table.tex', 'bytes': 987, 'sha256': 'a8d5c1570b35fa73029be9667d8f2e0a25e897548c7d1bd40db5fc63f749ccca'}, 'frozen_scientific_bytes_changed': False}
++ need(aliases==[expected_alias],'Exact literal TeX table alias only')
++ for row in aliases:
++  bind(root,row['source']);bind(root,row['alias']);need((root/row['source']['path']).read_bytes()==(root/row['alias']['path']).read_bytes(),'Literal input byte identity')
++ for x,y in zip(native['entries'][-15:],a['new_native_manuscripts']):
++  need(x['id']==y['id']and x['tex']==y['tex']['path']and x['pdf']==y['pdf']['path']and x['physical_pages']==y['physical_pages']and not x['measured']and x['compression_factor']is None,'Exact native routes')
++  need(x['tex_inputs']==([expected_alias['alias']['path']]if x['id']=='L045-finite_lie-4'else[]),'Every actual literal native input registered')
+  paper=load(root,'papers/latest_catalogue.json');oldpaper=load(root,history['papers/latest_catalogue.json']['path']);need(set(paper)==set(oldpaper),'Paper schema')
+  for k in set(oldpaper)-{'active_source_catalogue','corrected_unmeasured_scientific_catalogue'}:need(paper[k]==oldpaper[k],'Other paper route changed')
+  need(paper['active_source_catalogue']==c['active_catalogue'],'Active source route');bind(root,paper['corrected_unmeasured_scientific_catalogue'])

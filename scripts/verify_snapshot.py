@@ -6749,6 +6749,16 @@ def check_science81():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_previous_science82():
+    spec=importlib.util.spec_from_file_location('science82_history',ROOT/'scripts/check_science82_history.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
+def check_science82():
+    spec=importlib.util.spec_from_file_location('science82',ROOT/'scripts/check_science82.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6837,7 +6847,8 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    science81_history = check_previous_science81()
+    science82_history = check_previous_science82()
+    science81_history = science82_history['previous']
     science80_history = science81_history['previous']
     science79_history = science80_history['previous']
     science78_history = science79_history['previous']
@@ -6847,9 +6858,9 @@ def main():
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
     programme53 = science_history['current']
-    science72 = check_science81()
+    science72 = check_science82()
     L046_correction = science78_history['correction']
-    print('PASS: exact science80 history preserved; L120 attributed survey recovery adds one original.')
+    print('PASS: exact science81 history preserved; L045 positive simple-group theorem adds one original.')
     active_admitted = science72['counts']['corrected_recoveries']
     active_pending = science72['counts']['mathematical_pending']
     active_refuted = science72['counts']['refuted']
