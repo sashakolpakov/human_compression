@@ -4,10 +4,10 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **89 reviewed corrected principal recoveries**:
-53 are measured and thirty-six (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100 and L033) are unmeasured. F003, L029, L110, L114, L115, L036, L046, L063 and L064 have separate reviewed principal refutations; 7 originals
+The current register contains **90 reviewed corrected principal recoveries**:
+53 are measured and thirty-seven (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033 and L070) are unmeasured. F003, L029, L110, L114, L115, L036, L046, L063 and L064 have separate reviewed principal refutations; 6 originals
 await a complete mathematical disposition. Together with one editorial (L022),
-these give 106 accessible originals. Thus 98 of the 105 mathematical originals
+these give 106 accessible originals. Thus 99 of the 105 mathematical originals
 have reviewed principal dispositions. The other 55 historical originals remain archived. Complete the
 reviewed principal dispositions for all 105 mathematical originals, then stop.
 
@@ -56,10 +56,21 @@ chirality/nonorientable/outer-reflexible and inversion claims are unpaid.
 The `new disposition <principal-refutations/L046/v1/PUBLICATION.rst>`_ adds
 no ordinary recovery, new mathematics, measurement or question credit.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100 and L033 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033 and L070 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science89/v1/new_original_registration.json>`_.
+`science register <science90/v1/new_original_registration.json>`_.
+
+The `L070 guide <../papers/recoveries/L070/v1/PUBLICATION.rst>`_ gives the
+complete corrected recovery of the fixed twelve-page article on two atlases
+of abstract chiral polytopes. Sixteen complete manuscripts form a 41-page
+volume, including the four-page synthesis. All 46 source clauses have explicit
+dispositions: the 56 first-atlas examples with arbitrary cores, Table 1 names,
+and 79 named second-atlas groups across 88 printed occurrences. Corrected totals
+are 9,210 regular and 16,974 oriented chiral classes. The omitted Sp4(4) under
+the larger printed domain is identified without claiming its polytope census.
+Classical/software inputs and historical conventions remain explicit.
+This ordinary recovery adds no measurement, new question answer or Lean claim.
 
 The `L033 guide <../papers/recoveries/L033/v1/PUBLICATION.rst>`_ gives the
 complete corrected recovery of the fixed sixteen-page manuscript on locally

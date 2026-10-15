@@ -10,13 +10,13 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**89 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and thirty-six (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100 and L033) await measurement.
+**90 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and thirty-seven (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033 and L070) await measurement.
 Nine further originals, F003, L029, L110, L114, L115, L036, L046, L063 and L064,
 have reviewed principal refutations;
-7 await a complete mathematical disposition. L022 is an editorial with no
-mathematical result to recover.** Thus 98 of 105 mathematical originals have reviewed principal
-dispositions: 89 recoveries and nine refutations. These are the 106 active originals. Another 55 unavailable originals
+6 await a complete mathematical disposition. L022 is an editorial with no
+mathematical result to recover.** Thus 99 of 105 mathematical originals have reviewed principal
+dispositions: 90 recoveries and nine refutations. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
@@ -375,9 +375,20 @@ excluded printed rows and nine qualified minimum interfaces. Eight retained
 input classes and seven correction groups remain explicit. Publication adds
 no measurement, new question answer, principal refutation or Lean claim.
 
-All thirty-six source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science89/v1/new_original_registration.json>`_.
-None of these thirty-six recoveries has a compression factor. N014 is not added to C's measured
+The `L070 guide <papers/recoveries/L070/v1/PUBLICATION.rst>`_ gives the
+complete corrected recovery of the fixed twelve-page article on two atlases
+of abstract chiral polytopes. Sixteen complete manuscripts form a 41-page
+volume, including the four-page synthesis. All 46 source clauses have explicit
+dispositions: the 56 first-atlas examples with arbitrary cores, Table 1 names,
+and 79 named second-atlas groups across 88 printed occurrences. Corrected totals
+are 9,210 regular and 16,974 oriented chiral classes. The omitted Sp4(4) under
+the larger printed domain is identified without claiming its polytope census.
+Classical/software inputs and historical conventions remain explicit.
+This ordinary recovery adds no measurement, new question answer or Lean claim.
+
+All thirty-seven source editions, complete proof packets and distinct reviews are recorded
+in the `science register <audit/science90/v1/new_original_registration.json>`_.
+None of these thirty-seven recoveries has a compression factor. N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
