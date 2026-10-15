@@ -1,0 +1,49 @@
+--- accepted_target_v1/run_target.py
++++ suffix/run_target.py
+@@ -24,8 +24,8 @@
+ ADOPTION_SHA = '1117e60a09345ab4060613c791b6e07c95f0581cf525486eed052c47c80a7c2d'
+ GAP = Path('/opt/homebrew/bin/gap')
+ LIBGAP = Path('/opt/homebrew/Cellar/gap/4.15.1/lib/libgap.10.dylib')
+-IDS = list(range(95, 0, -1))
+-TARGET_CAP = 60
++IDS = list(range(11, 0, -1))
++TARGET_CAP = 180
+ AUDIT_CAP = 20
+ FINAL = 'L100_REQUESTED_ANCHORS_COMPLETE'
+ 
+@@ -101,6 +101,9 @@
+     require(resolve_row(a['review_manifest']) == REVIEW / 'manifest.json' and a['review_manifest']['sha256'] == REVIEW_SHA,
+             'adoption does not bind exact review')
+     rows += [pin(p) for p in [Path(__file__), HERE / 'audit_returned.g', GAP, LIBGAP, Path(sys.executable)]]
++    from previous_boundary import bind_previous
++    rows += bind_previous(manifest_gate, verify, pin)
++    rows.append(pin(HERE / 'previous_boundary.py'))
+     return unique_pins(rows)
+ 
+ 
+@@ -213,7 +216,7 @@
+ 
+ def validate_preparation(prepared):
+     req = json.loads((prepared / 'request.json').read_text())
+-    require(req['borels'] == IDS and req['require_2T'] is False and req['proposed_external_cap_seconds'] == TARGET_CAP,
++    require(req['borels'] == IDS and req['require_2T'] is False and req['proposed_external_cap_seconds'] == 60,
+             'changed target request')
+     require(req['status'] == 'PREPARED_NOT_EXECUTED_NO_CENSUS_CREDIT', 'preparation status')
+     require(req['output'] == str(prepared / 'checkpoints'), 'checkpoint output mismatch')
+@@ -242,11 +245,15 @@
+     out.mkdir(parents=True)
+     receipt = dict(status='PREPARING', target_census=False, requested_anchors=IDS,
+                    target_cap_seconds=TARGET_CAP, audit_cap_seconds=AUDIT_CAP,
++                   preparer_proposed_cap_seconds=60,
++                   previous_receipt=pin(G34 / 'exhaustion_target01/receipt.json'),
++                   previously_completed_anchors=list(range(95, 11, -1)),
++                   unfinished_anchor_restart=11,
+                    completed_anchors=[], unpaid_anchors=IDS, whole_original_credit=0,
+                    equivalence='inner conjugacy and type permutations only', inputs=inputs)
+     save(out / 'receipt.json', receipt)
+     try:
+-        prep = phase([sys.executable, str(P / 'prepare_driver_v2.py'), '--out', str(out / 'prepared')], out / 'prepare', 15, False)
++        prep = phase([sys.executable, str(P / 'prepare_driver_v2.py'), '--out', str(out / 'prepared'), '--borels', ','.join(map(str, IDS))], out / 'prepare', 15, False)
+         require(clean_phase(prep, out / 'prepare'), 'preparation failed')
+         inputs = unique_pins(inputs + validate_preparation(out / 'prepared'))
+         receipt['inputs'] = inputs

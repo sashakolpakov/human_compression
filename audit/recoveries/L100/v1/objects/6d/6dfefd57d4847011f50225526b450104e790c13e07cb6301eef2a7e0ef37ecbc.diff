@@ -1,0 +1,30 @@
+--- literal_joins_v2.py
++++ literal_joins_v3.py
+@@ -143,6 +143,19 @@
+         need(len(acquired)==len(paid)==8 and paid<=set(routes),'exact eight already accepted source links')
+         routes=[r for r in routes if r not in paid]
+         need(len(routes)==16,'precise sixteen remaining printed links')
++    acquired_prefix=[];source_corrections=[]
++    if a.mode=='truncation':
++        prior_receipt=read(P/'truncation01/receipt.json')
++        need(prior_receipt['status']=='FAILED_PRESERVED' and prior_receipt['exit_code']==1 and prior_receipt['inputs_unchanged'],'exact failed prefix preserved')
++        acquired_prefix=read(P/'truncation01/result/partial.json')['complete_routes']
++        done=[(r['source_label'],r['target_label'])for r in acquired_prefix]
++        need(len(done)==10 and done==routes[:10],'exact completed literal prefix')
++        need(routes[10]==('5.3','3.6'),'precise failed source link')
++        parent=model(labels['5.3']).raw;child=model(labels['3.6']).raw
++        need(210 in child['type_sizes'] and 210 not in parent['type_sizes'],'literal type-size obstruction to printed truncation')
++        source_corrections=[dict(physical_page=9,printed_parent='5.3',target='3.6',printed_parent_sizes=parent['type_sizes'],target_sizes=child['type_sizes'],proposed_parent='5.2',reason='A truncation cannot acquire a type of210 objects when no parent type has210 objects.')]
++        routes=[('5.2','3.6')]+routes[11:]
++        need(len(routes)==6,'six exact remaining positive maps including explicit repair')
+     results=[]
+     for src,dst in routes:
+         source=model(labels[src]);target=model(labels[dst]).raw;geometries=[]
+@@ -167,6 +180,6 @@
+             if found:break
+         need(found is not None,'complete positive map '+src+' ->'+dst);results.append(found);print(src,'->',dst,found['automorphism'],found['checks'],flush=True)
+         (a.out/'partial.json').write_text(json.dumps(dict(mode=a.mode,complete_routes=results),indent=2)+'\n')
+-    report=dict(status='PASS_LITERAL_'+a.mode.upper()+'_JOINS',routes=results,acquired_prior_routes=acquired,seconds=time.monotonic()-start,new_ambient_censuses=0,graph_isomorphism_runs=0,source_credit=0)
++    report=dict(status='PASS_LITERAL_'+a.mode.upper()+'_JOINS',routes=results,acquired_prior_routes=acquired,acquired_prefix_maps=acquired_prefix,source_corrections=source_corrections,seconds=time.monotonic()-start,new_ambient_censuses=0,graph_isomorphism_runs=0,source_credit=0)
+     (a.out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(report['status'],flush=True)
+ if __name__=='__main__':main()

@@ -1,0 +1,11 @@
+SizeScreen([100000,24]);;
+INPUT_CATALOGUE:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_applicability_work/input_catalogue01.g";;
+OUTPUT_DIR:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_applicability_work/prepared01/checkpoints";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_applicability_work/catalogue_loader.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_applicability_work/legacy_functions.g");;
+if REQUIRE_2T<>false then Error("broad mode changed");fi;
+BOREL_IDS:=[95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];;
+Print("L100_BROAD_BEGIN anchors=",BOREL_IDS,"\n");
+for bid in BOREL_IDS do RunBorel(bid);od;
+Print("L100_REQUESTED_ANCHORS_COMPLETE\n");
+QUIT_GAP(0);

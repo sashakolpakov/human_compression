@@ -1,0 +1,16 @@
+LoadPackage("tomlib");;
+SizeScreen([100000,24]);;
+modelTom:=TableOfMarks("L3(4)");;
+modelG:=UnderlyingGroup(modelTom);;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/result.g");;
+modelNamed:=Group(PSL34RankTwo.group_generators);;
+modelIso:=IsomorphismGroups(modelG,modelNamed);;
+if modelIso=fail or not IsBijective(modelIso) then Error("no exact model map");fi;
+modelSource:=GeneratorsOfGroup(modelG);;
+modelImages:=List(modelSource,x->Image(modelIso,x));;
+modelLiteral:=GroupHomomorphismByImages(modelG,modelNamed,modelSource,modelImages);;
+if modelLiteral=fail or not IsBijective(modelLiteral) then Error("literal map fails");fi;
+if Size(Image(modelLiteral))<>20160 then Error("wrong image size");fi;
+Print("SOURCE_GENERATORS ",modelSource,"\nIMAGE_GENERATORS ",modelImages,"\n");
+Print("PASS_EXPLICIT_NAMED_MODEL_ISOMORPHISM_NO_EXTENSION\n");
+QUIT_GAP(0);

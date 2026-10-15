@@ -1,0 +1,51 @@
+--- accepted_suffix_v1/run_target.py
++++ single_anchor/run_target.py
+@@ -24,8 +24,8 @@
+ ADOPTION_SHA = '1117e60a09345ab4060613c791b6e07c95f0581cf525486eed052c47c80a7c2d'
+ GAP = Path('/opt/homebrew/bin/gap')
+ LIBGAP = Path('/opt/homebrew/Cellar/gap/4.15.1/lib/libgap.10.dylib')
+-IDS = list(range(11, 0, -1))
+-TARGET_CAP = 180
++IDS = []  # Set only by the required fixed --anchor choice before preflight.
++TARGET_CAP = 300
+ AUDIT_CAP = 20
+ FINAL = 'L100_REQUESTED_ANCHORS_COMPLETE'
+ 
+@@ -102,7 +102,7 @@
+             'adoption does not bind exact review')
+     rows += [pin(p) for p in [Path(__file__), HERE / 'audit_returned.g', GAP, LIBGAP, Path(sys.executable)]]
+     from previous_boundary import bind_previous
+-    rows += bind_previous(manifest_gate, verify, pin)
++    rows += bind_previous(manifest_gate, verify, pin, IDS)
+     rows.append(pin(HERE / 'previous_boundary.py'))
+     return unique_pins(rows)
+ 
+@@ -234,10 +234,13 @@
+ 
+ 
+ def main():
++    global IDS
+     ap = argparse.ArgumentParser()
+     ap.add_argument('--out', required=True, type=Path)
++    ap.add_argument('--anchor', required=True, type=int, choices=(2, 1))
+     ap.add_argument('--prepare-only', action='store_true')
+     args = ap.parse_args()
++    IDS = [args.anchor]
+     require(args.out.is_absolute() and '..' not in args.out.parts, 'absolute output required')
+     out = args.out
+     require(not out.exists(), 'output already exists')
+@@ -246,9 +249,11 @@
+     receipt = dict(status='PREPARING', target_census=False, requested_anchors=IDS,
+                    target_cap_seconds=TARGET_CAP, audit_cap_seconds=AUDIT_CAP,
+                    preparer_proposed_cap_seconds=60,
+-                   previous_receipt=pin(G34 / 'exhaustion_target01/receipt.json'),
+-                   previously_completed_anchors=list(range(95, 11, -1)),
+-                   unfinished_anchor_restart=11,
++                   previous_receipt=pin(G34 / 'exhaustion_target02/receipt.json'),
++                   previously_completed_anchors=list(range(95, 2, -1)),
++                   unfinished_anchor_restart=2 if args.anchor == 2 else None,
++                   separate_fixed_anchor=args.anchor,
++                   other_unpaid_anchor=3-args.anchor,
+                    completed_anchors=[], unpaid_anchors=IDS, whole_original_credit=0,
+                    equivalence='inner conjugacy and type permutations only', inputs=inputs)
+     save(out / 'receipt.json', receipt)

@@ -1,0 +1,1 @@
+borelResult:=rec(id:=1,order:=1,levels:=[3,3,0],geometries:=[[Group((1,2)),Group((3,4))],[Group((1,2)),Group((1,2)(3,4))],[Group((3,4)),Group((1,2)(3,4))]]);

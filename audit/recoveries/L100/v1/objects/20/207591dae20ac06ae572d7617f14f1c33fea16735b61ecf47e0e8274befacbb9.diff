@@ -1,0 +1,37 @@
+--- accepted_v1/incremental.g
++++ v2/incremental.g
+@@ -1,19 +1,29 @@
+ # Prior complete Aut computation and prior class partition are acquired, not rerun.
+ RunIncrementalFusion:=function(G,reps,old,autdata,row,out)
+  local gs,autgens,images,phi,A,allNew,B,t,r,par,panels,i,j,c,oldIds,newIds,
+-      allReps,members,newMembers,rank,candidates,classes,w,hit,counts,comparisons,oldCount;
++      allReps,members,newMembers,rank,candidates,classes,w,hit,counts,comparisons,oldCount,nice;
+  gs:=GeneratorsOfGroup(G);
+  if old.group_generators<>gs or autdata.group_generators<>gs or old.automorphism_order<>autdata.automorphism_order then
+   Error("saved full-Aut/fusion model mismatch");fi;
++ Print("FIXED_ACQUIRED_MODEL_CONFIRMED\n");
+  autgens:=[];
+  for images in autdata.automorphism_generator_images do
++  Print("MAP_BEGIN ",Length(autgens)+1,"\n");
+   phi:=GroupHomomorphismByImages(G,G,gs,images);
+   if phi=fail or not IsBijective(phi) then Error("invalid saved automorphism");fi;
+-  Add(autgens,phi);
++  Add(autgens,phi);Print("MAP_VERIFIED ",Length(autgens),"\n");
+  od;
+- A:=Group(autgens);
+- if Size(A)<>autdata.automorphism_order then Error("saved complete-Aut generator group mismatch");fi;
+- # Equality with full Aut(G) is acquired from its exact earlier complete call.
++ A:=Group(autgens);Print("GENERATOR_GROUP_CONSTRUCTED\n");
++ if not IsGroupOfAutomorphismsFiniteGroup(A) then Error("saved automorphism group property");fi;
++ # The exact generating maps define the same acquired complete group.
++ # Caching its acquired size is not an independent order computation.
++ SetSize(A,autdata.automorphism_order);
++ Print("EXACT_ACQUIRED_ORDER_SET ",Size(A),"\n");
++ nice:=NiceMonomorphism(A);
++ PrintTo(Concatenation(out,"/aut_action.g"),"L100ReusedAutAction:=",rec(
++  order:=Size(A),degree:=LargestMovedPoint(Image(nice)),
++  images:=List(autgens,a->Image(nice,a)),generator_images:=autdata.automorphism_generator_images,
++  injectivity_premise:="Retained GAP NiceMonomorphism algorithm; not inferred from cached order"),";\n");
+  Print("REUSED_FULL_AUT order=",Size(A)," generators=",Length(autgens),"\n");
+  Read(row[2]);
+  if borelResult.id<>row[1] or borelResult.order<>Size(reps[row[1]]) or borelResult.levels<>row[3]

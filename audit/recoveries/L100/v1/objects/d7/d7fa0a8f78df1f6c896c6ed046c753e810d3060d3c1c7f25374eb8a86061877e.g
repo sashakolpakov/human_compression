@@ -1,0 +1,16 @@
+LoadPackage("tomlib");;
+SizeScreen([100000,24]);;
+probeTom:=TableOfMarks("L3(4)");;
+if probeTom=fail then Error("No retained complete table L3(4)");fi;
+probeG:=UnderlyingGroup(probeTom);;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/result.g");;
+probeNamed:=Group(PSL34RankTwo.group_generators);;
+Print("IDENTIFIER ",Identifier(probeTom),"\n");
+Print("ORDER ",Size(probeG)," DEGREE ",LargestMovedPoint(probeG),"\n");
+Print("SUBGROUP_CLASSES ",Length(OrdersTom(probeTom)),"\n");
+Print("SUBGROUP_ORDERS ",OrdersTom(probeTom),"\n");
+Print("EXACT_RETAINED_MODEL_EQUAL ",probeG=probeNamed,"\n");
+Print("GENERATORS ",GeneratorsOfGroup(probeG),"\n");
+Print("GAP ",GAPInfo.Version," TOMLIB ",PackageInfo("tomlib")[1].Version,"\n");
+Print("PASS_RETAINED_TABLE_METADATA_NO_EXTENSION\n");
+QUIT_GAP(0);

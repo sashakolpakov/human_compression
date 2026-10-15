@@ -1,0 +1,25 @@
+--- literal_joins.py
++++ literal_joins_v2.py
+@@ -135,6 +135,14 @@
+             if 'truncation' in text:
+                 parents=text.split('truncation',1)[1].split(';',1)[0].split('/')
+                 routes.extend((x,r['label'])for x in parents)
++    acquired=[]
++    if a.mode=='truncation':
++        prior=read(G/'source_join_component_v2/construction_join03/joins.json')['routes']
++        acquired=[r for r in prior if len(r['retained_types'])<5]
++        paid={(r['model'],r['source_label'])for r in acquired}
++        need(len(acquired)==len(paid)==8 and paid<=set(routes),'exact eight already accepted source links')
++        routes=[r for r in routes if r not in paid]
++        need(len(routes)==16,'precise sixteen remaining printed links')
+     results=[]
+     for src,dst in routes:
+         source=model(labels[src]);target=model(labels[dst]).raw;geometries=[]
+@@ -159,6 +167,6 @@
+             if found:break
+         need(found is not None,'complete positive map '+src+' ->'+dst);results.append(found);print(src,'->',dst,found['automorphism'],found['checks'],flush=True)
+         (a.out/'partial.json').write_text(json.dumps(dict(mode=a.mode,complete_routes=results),indent=2)+'\n')
+-    report=dict(status='PASS_LITERAL_'+a.mode.upper()+'_JOINS',routes=results,seconds=time.monotonic()-start,new_ambient_censuses=0,graph_isomorphism_runs=0,source_credit=0)
++    report=dict(status='PASS_LITERAL_'+a.mode.upper()+'_JOINS',routes=results,acquired_prior_routes=acquired,seconds=time.monotonic()-start,new_ambient_censuses=0,graph_isomorphism_runs=0,source_credit=0)
+     (a.out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(report['status'],flush=True)
+ if __name__=='__main__':main()

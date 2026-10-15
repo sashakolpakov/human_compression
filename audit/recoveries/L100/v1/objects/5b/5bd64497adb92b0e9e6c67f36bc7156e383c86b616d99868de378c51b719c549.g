@@ -1,0 +1,16 @@
+SizeScreen([100000,24]);;
+INPUT_CATALOGUE:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/input_catalogue01.g";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/catalogue_loader_v2.g");;
+OUTPUT_DIR:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/level_resume_controls02/prepared/checkpoints";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/legacy_functions.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/level_resume_work/validate_resume.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/level_resume_work/resume_borel.g");;
+borelCheckpoint:=rec();;RESUME_CHECKPOINTS:=[];;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/level_resume_controls02/prepared/checkpoints/b1_r2.g");;Add(RESUME_CHECKPOINTS,borelCheckpoint);;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/level_resume_controls02/prepared/checkpoints/b1_r3.g");;Add(RESUME_CHECKPOINTS,borelCheckpoint);;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/level_resume_controls02/prepared/checkpoints/b1_r4.g");;Add(RESUME_CHECKPOINTS,borelCheckpoint);;
+RESUME_STATE:=ValidateLevelResume(1,RESUME_CHECKPOINTS,[4, 30, 196, 334]);;
+if RESUME_STATE=fail or REQUIRE_2T<>false then Error("invalid completed-level resume");fi;
+RunBorelFromLevel(1,RESUME_STATE);;
+Print("L100_REQUESTED_ANCHORS_COMPLETE\n");
+QUIT_GAP(0);

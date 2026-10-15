@@ -1,0 +1,13 @@
+SizeScreen([100000,24]);;
+borelResult:=rec();;L100CompleteAutFusion:=rec();;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/postprocess_interface_v1/legacy_fusion_functions.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/postprocess_interface_v1/fusion_witness.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_v2_controls01/function_only.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_fusion_v2_work/tiny_controls.g");;
+g:=Group((1,2),(3,4));;a:=Group((1,2));;b:=Group((3,4));;c:=Group((1,2)(3,4));;
+MakeTinyIncrement(g,[a,b],[[a,c],[b,c]],[[2,3,1]],"/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_v2_controls01/case1");;
+g:=SymmetricGroup(3);;a:=Group((1,2));;b:=Group((1,2,3));;c:=Group((2,3));;
+MakeTinyIncrement(g,[a,b],[[a,c],[c,b]],[[2,3,2]],"/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_v2_controls01/case2");;
+g:=Group((1,2,3),(4,5),(6,7));;a:=Group((1,2,3));;b:=Group((4,5));;c:=Group((6,7));;
+MakeTinyIncrement(g,[ClosureGroup(b,a),ClosureGroup(b,c)],[[a,b,c]],[[2,1,1],[3,1,1]],"/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_v2_controls01/case3");;
+Print("PASS_ALL_INCREMENTAL_TINY_CONTROLS\n");QUIT_GAP(0);

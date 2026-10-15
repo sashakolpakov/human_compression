@@ -1,0 +1,28 @@
+--- accepted RunBorel
++++ RunBorelFromLevel
+@@ -1,7 +1,9 @@
+-RunBorel:=function(bid)
++RunBorelFromLevel:=function(bid,resume)
+  local B,N,panels,hom,A,orders,paircache,PairJoin,Equivalent,levels,rank,next,sigs,checked,ix,t,H,C,over,poss,orb,oo,x,u,K,sig,bucket,allFull,checkpoint,maxrank;
+  B:=reps[bid];N:=Normalizer(G,B);if REQUIRE_2T then panels:=OvergroupsFromInclusions(B,local2T);
+  else panels:=OvergroupsFromInclusions(B,maxinclusions);fi;
++ if Set(panels)<>Set(resume.panels) then Error("saved panel inventory changed");fi;
++ panels:=resume.panels;
+  Print("BOREL_BEGIN id=",bid," order=",Size(B)," normalizer=",Size(N)," panels=",Length(panels),"\n");
+  if Length(panels)=0 then
+   PrintTo(Concatenation(OUTPUT_DIR,"/b",String(bid),"_done.g"),"borelResult:=rec(id:=",bid,",order:=",Size(B),",levels:=[],geometries:=[]);\n");
+@@ -31,11 +33,10 @@
+   od;
+   return false;
+  end;
+- levels:=[List(Orbits(A,[1..Length(panels)]),o->[o[1]])];allFull:=[];
+- Print("BOREL_LEVEL id=",bid," rank=1 classes=",Length(levels[1])," full_group=",Number(levels[1],t->panels[t[1]]=G),"\n");
+- for t in levels[1] do if panels[t[1]]=G then Add(allFull,[panels[t[1]]]);fi;od;
++ levels:=ShallowCopy(resume.levels);allFull:=ShallowCopy(resume.geometries);
++ Print("BOREL_RESUME id=",bid," completed_levels=",List(levels,Length)," next_rank=",Length(levels)+1,"\n");
+  maxrank:=Length(FactorsInt(Index(G,B)))+1;
+- for rank in [2..maxrank] do
++ for rank in [Length(levels)+1..maxrank] do
+   next:=[];sigs:=[];checked:=0;
+   for ix in [1..Length(levels[rank-1])] do
+    t:=levels[rank-1][ix];H:=JoinPanels(B,panels{t});C:=A;

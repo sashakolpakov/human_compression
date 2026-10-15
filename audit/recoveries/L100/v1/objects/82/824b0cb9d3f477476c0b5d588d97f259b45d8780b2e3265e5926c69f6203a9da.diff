@@ -1,0 +1,1189 @@
+--- v1/source_joins.tex
++++ v2/source_joins.tex
+@@ -31,7 +31,7 @@
+ \item The numerical node data, all rank-two residues, local action kernels
+ and local $2$-transitivity flags are determined for each of the 29 acquired
+ representatives.  Within this complete catalogue, every preprint diagram has
+-one representative matching its recorded invariants, subject to the three
++one representative matching its recorded invariants, subject to the two
+ discrepancies in Lemma~\ref{errors}.
+ \item All 52 printed circular, Petersen and affine-plane bond labels have
+ explicit canonical incidence maps, including their displayed polarity.
+@@ -54,8 +54,8 @@
+ $2$-transitivity assumption is imposed.
+ 
+ For every pair of types, all incidence and nonincidence rows of the resulting
+-bipartite graph are retained.  Breadth-first distances give eccentricities and
+-the minimum cycle length; half that length is the gonality.  A residue is a
++bipartite graph are retained.  Breadth-first distances give eccentricities, compared at both ordered
++endpoints of each printed numerical $a/g/b$ label, and the minimum cycle length; half that length is the gonality.  A residue is a
+ digon precisely when it is complete bipartite.  At each base object, every
+ element of its parabolic is tested on every object of its residue.  The
+ elements fixing all these objects are exactly the local action kernel.
+@@ -114,9 +114,7 @@
+ 
+ \begin{lemma}\label{errors}
+ In preprint diagrams 5.1 and 5.2, the printed order $2$ at the unique
+-210-object node must be $1$ for the stated constructions.  In diagram 3.5,
+-the missing bond between the two 120-object nodes must have gonality $3$
+-if the other printed data and the stated geometry hypotheses hold.
++210-object node must be $1$ for the stated constructions.
+ \end{lemma}
+ \begin{proof}
+ The literal construction maps send the 210-object node to the unordered
+@@ -124,13 +122,6 @@
+ verified in the accepted construction.  The order-$2$ line node has 21 objects
+ and cannot be confused with this node.
+ 
+-For 3.5 the 1120-object stabilizer has order $20160/1120=18$, while the printed
+-Borel has order $3$.  Its rank-two residue thus has six chambers.  Both
+-remaining panel orders are $1$, so both vertex degrees are two and each type
+-has three objects.  Residual connectedness forces a six-cycle, not a digon.
+-The actual catalogue residue is retained as this literal six-cycle.  This
+-argument uses the source's own flag-transitive geometry hypotheses and does
+-not assume that a diagram signature identifies a construction.
+ \end{proof}
+ 
+ \paragraph{Scope and reproducibility.}
+@@ -142,9 +133,15 @@
+ duality.  Neither negative attempt is a premise.  No graph-isomorphism target
+ or subgroup census is repeated by this component.
+ 
++The original preprint has a single horizontal bond at the base of diagram 3.5,
++consistent with the literal six-cycle residue.  The first author edition
++misread this bond and incorrectly proposed a source correction; that edition
++and its passing finite checks are preserved, and this false claim is withdrawn.
++The successor additionally compares both ordered endpoint eccentricities
++in every numerical $a/g/b$ bond label, not only its middle gonality.
+ The source has no local-$2$-transitivity marker at 3.5 or 4.11, consistent with
+ the actual panels.  Earlier provisional transcription mistakes at those two
+-rows are disclosed and corrected.  The three discrepancies above do not
++rows are disclosed and corrected.  The two discrepancies above do not
+ establish an error in the uncollated journal edition.  Remaining constructions,
+ the general doubling hypotheses, abstract group-name claims and whole-source
+ completion are outside this component.  There is no new question, Lean,
+--- v1/source_joins.rst
++++ v2/source_joins.rst
+@@ -96,17 +96,14 @@
+ 21-object node of order2 is the line type and is correctly printed. The actual
+ type correspondence prevents interchanging these two readings.
+ 
+-The preprint diagram3.5 draws no bond between its two120-object nodes. This is
+-also inconsistent with its other printed data under the ordinary convention
+-that an absent bond means a digon. The1120-object stabilizer has order18, and
+-the Borel has order3, so its rank-two residue has six chambers. Both remaining
+-panel orders are1, so every residue vertex has degree2. Flag transitivity gives
+-three vertices of each type; residual connectedness forces the six-cycle.
+-Thus the missing bond must have gonality3. The actual catalogue gives exactly
+-this six-cycle. This deduction does not depend on naming a geometry from its
+-diagram, or on a new subgroup classification.
++The preprint diagram3.5 has a single horizontal bond between its two120-object
++nodes, agreeing with the actual six-cycle residue. V1 omitted that visible
++bond and proposed a false source correction; this is withdrawn. The distinct
++reviewer identified the transcription error, confirmed by a fresh500dpi crop
++of the original PDF. The complete v1 and its successful finite replay remain
++preserved; those tests could not establish visual documentary accuracy.
+ 
+-All three observations refer only to the fixed preprint. These corrections do
++Both remaining corrections refer only to the fixed preprint. These corrections do
+ not supply the unpaid constructions, doubling hypotheses, abstract group-name
+ identifications, or journal-edition comparison. No source, question, Lean or
+ measurement credit is claimed by this working component.
+@@ -122,3 +119,7 @@
+ emitted Python whitespace SyntaxWarnings; their exact editions and output data
+ are retained, with a whitespace-only successor. All scientific jobs are finite
+ literal derivations from accepted objects, and no graph target is repeated.
++
++V2 also compares both ordered endpoint eccentricities for all eight printed
++numerical triples a/g/b, with focused damaged endpoint/orientation controls.
++All unchanged finite computations are acquired from the terminal v1 replay.
+--- v1/check.py
++++ v2/check.py
+@@ -22,19 +22,21 @@
+         r=dict(command=cmd,exit_code=q.returncode,elapsed_seconds=time.monotonic()-start)
+         (O/(name+'.receipt.json')).write_text(json.dumps(r,indent=2)+'\n');receipts.append(r)
+         need(q.returncode==0 and not q.stderr,'clean '+name);return q
+-    for name in ['literal_diagrams','construction_join','named_residues','transcribe_diagrams','controls']:
++    V=P.parent/'source_join_component_v1'
++    need(hashlib.sha256((V/'manifest.json').read_bytes()).hexdigest()=='c9fe317d46a97e69fda8b47f803308220a3fd5867d004d6dd4c4129cf30d5702','exact preserved v1')
++    acquired=read(P.parent/'source_join_frozen01/report.json')
++    need(acquired['status']=='PASS_L100_SOURCE_DIAGRAM_JOIN_COMPONENT','terminal v1 finite replay; no documentary acceptance implied')
++    for f in ['literal_diagrams.py','construction_join.py','named_residues.py','controls.py','literal_diagrams01/diagrams.json','construction_join03/joins.json','named_residues02/named_residues.json']:
++        need((P/f).read_bytes()==(V/f).read_bytes(),'unchanged finite derivation '+f)
++    for name in ['transcribe_diagrams','edition_controls']:
+         run(name,[sys.executable,str(P/(name+'.py')),'--out',str(O/name)])
+-    need(read(O/'literal_diagrams/diagrams.json')['records']==read(P/'literal_diagrams01/diagrams.json')['records'],'all29 fresh literal residue tables')
+-    joins=read(O/'construction_join/joins.json');oldjoins=read(P/'construction_join03/joins.json')
+-    need(joins['routes']==oldjoins['routes'] and joins['duality']==oldjoins['duality'],'ten exact fresh construction maps')
+-    need(read(O/'named_residues/named_residues.json')['records']==read(P/'named_residues02/named_residues.json')['records'],'all52 exact fresh named/polarity maps')
+     for name in ['diagram_inventory02','diagram_comparison01']:
+         old=read(P/(name+'.json'))['rows'];fresh=read(O/'transcribe_diagrams'/(name+'.json'))['rows']
+         if name=='diagram_inventory02':
+             old=[{k:v for k,v in q.items()if k!='native_inputs'}for q in old];fresh=[{k:v for k,v in q.items()if k!='native_inputs'}for q in fresh]
+         need(old==fresh,'fresh transcription/comparison '+name)
+     guards=[]
+-    for script in ['literal_diagrams','construction_join','named_residues','transcribe_diagrams','controls','check']:
++    for script in ['endpoint_comparison','transcribe_diagrams','edition_controls','check']:
+         for mode in ['argument','environment']:
+             denied=O/(script+'_'+mode+'_DENIED');env=dict(os.environ);env.pop('PYTHONOPTIMIZE',None)
+             if mode=='environment':env['PYTHONOPTIMIZE']='1'
+@@ -51,8 +53,8 @@
+         need(len(original.pages)==len(new.pages)==2,'two native pages')
+         need([p.extract_text()for p in original.pages]==[p.extract_text()for p in new.pages],'exact native page text');native=dict(pages=2,exact_page_text=True)
+     rehash()
+-    report=dict(status='PASS_L100_SOURCE_DIAGRAM_JOIN_COMPONENT',exports=len(manifest['exports']),dependencies=len(deps),literal_models=29,
+-                named_residue_maps=52,construction_maps=10,controls=read(O/'controls/report.json'),guards=guards,native=native,
++    report=dict(status='PASS_L100_SOURCE_DIAGRAM_JOIN_COMPONENT_V2',exports=len(manifest['exports']),dependencies=len(deps),literal_models=29,
++                named_residue_maps=52,construction_maps=10,controls=read(O/'edition_controls/report.json'),unchanged_finite_evidence='ACQUIRED_FROM_TERMINAL_V1_AUTHOR_REPLAY; V1 documentary claim3.5 rejected',guards=guards,native=native,
+                 target_runs=0,graph_classification_runs=0,source_credit=0)
+     (O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+ if __name__=='__main__':main()
+--- v1/transcribe_diagrams.py
++++ v2/transcribe_diagrams.py
+@@ -3,6 +3,7 @@
+ if not __debug__:raise SystemExit('normal Python required')
+ sys.dont_write_bytecode=True
+ import argparse,hashlib,itertools,json
++from endpoint_comparison import compare_endpoints
+ from pathlib import Path
+ W=Path(__file__).resolve().parent;S=W.parents[2]
+ parser=argparse.ArgumentParser();parser.add_argument('--out',type=Path,required=True);args=parser.parse_args()
+@@ -35,7 +36,7 @@
+ '2.1':'L,R,single','2.2':'L,R,4/3/4','2.3':'L,R,5/4/6','2.4':'L,R,4/3/4',
+ '2.5':'L,R,6/3/5','2.6':'L,R,5/3/5','2.7':'L,R,9/5/10',
+ '3.1':'L,C,C-right C,R,Af*','3.2':'L,C,C-right C,R,C-left','3.3':'T,L,C-left T,R,C-right L,R,single',
+-'3.4':'T,L,C-left T,R,C-right L,R,double','3.5':'T,L,C-right T,R,C-left',
++'3.4':'T,L,C-left T,R,C-right L,R,double','3.5':'T,L,C-right T,R,C-left L,R,single',
+ '3.6':'L,C,6/3/5 C,R,5/3/6','3.7':'L,C,Af C,R,Af*',
+ '4.1':'L,C,single C,U,C-right C,D,C-right','4.2':'L,C,C-right C,U,C-left C,D,C-left',
+ '4.3':'L,C,double C,U,C-left C,D,C-left','4.4':'L,C,double C,U,C-left C,D,P*',
+@@ -68,14 +69,14 @@
+  rows.append(q|dict(nodes=ns,edges=es,absent_edges=[list(p)for p in itertools.combinations([n['position']for n in ns],2)if frozenset(p)not in pairs],
+                    printed_local_2T_marker=label not in not2t,status='EXACT_NATIVE_TRANSCRIPTION_NOT_CONSTRUCTION_IDENTITY'))
+ identity=json.loads((S/'corpus161_access_supplement_v4/L100_whole_source_reading.json').read_text())
+-out=dict(status='NATIVE_PREPRINT_NODE_EDGE_TRANSCRIPTION_V2',rows=rows,source=old['source'],
++out=dict(status='NATIVE_PREPRINT_NODE_EDGE_TRANSCRIPTION_V3',rows=rows,source=old['source'],
+  documentary_identity={k:identity[k]for k in ['edition','journal_target','edition_limit','downloaded_source','derived_pdf']},
+  documentary_record=pin(S/'corpus161_access_supplement_v4/L100_whole_source_reading.json'),
+  superseded_working_inventory=pin(W/'diagram_inventory01.json'),
+- delta='Adds all node positions, printed orders/kernels and visible edges. Corrects preliminary marker transcription for3.5/4.11; both markers are absent in the source.',
++ delta='Preserves the prior local2T marker correction; restores the source3.5 horizontal single bond after distinct review and compares both ordered endpoint eccentricities for every numerical triple.',
+  qualifications=['Unboxed kernel recorded as order1; abstract group structure is not inferred from this number.',
+  'Printed positions are visual, not inherited construction type numbers. Every subsequent type map must be explicit.',
+- 'Source3.5 has no drawn bottom edge. Source5.1/5.2 print panel order2 at their210-object node. These literal facts are preserved even when computed data disagree.',
++ 'Source3.5 has a single horizontal bottom bond; v1 incorrectly omitted it. Source5.1/5.2 print panel order2 at their210-object node.',
+  'No claim of textual identity with, or error in, the unobtained25-page2003 journal edition.'],
+  native_inputs=[pin(W/'native'/f'high-{i:02d}.png')for i in range(1,8)],source_credit=0)
+ (OUT/'diagram_inventory02.json').write_text(json.dumps(out,indent=2)+'\n')
+@@ -94,8 +95,9 @@
+    for i,j in itertools.combinations(range(len(ns)),2):
+     p=[ns[i]['position'],ns[j]['position']];printed=se.get(frozenset(p),2);got=ae[frozenset([perm[i]+1,perm[j]+1])]
+     if printed!=got:mismatches.append(dict(kind='gonality',nodes=p,printed=printed,actual=got))
++   endpoint_checks,endpoint_mismatches=compare_endpoints(q,d,perm);mismatches.extend(endpoint_mismatches)
+    if q['printed_local_2T_marker']!=all(d['panel_two_transitive']):mismatches.append(dict(kind='local_2T_marker',printed=q['printed_local_2T_marker'],actual=all(d['panel_two_transitive'])))
+-   candidates.append(dict(catalogue_index=d['index'],source_node_to_catalogue_type={n['position']:t+1 for n,t in zip(ns,perm)},mismatches=mismatches))
++   candidates.append(dict(catalogue_index=d['index'],source_node_to_catalogue_type={n['position']:t+1 for n,t in zip(ns,perm)},mismatches=mismatches,ordered_endpoint_checks=endpoint_checks))
+  score=min(len(c['mismatches'])for c in candidates);best=[c for c in candidates if len(c['mismatches'])==score]
+  joins.append(dict(label=q['label'],minimum_mismatches=score,candidates=best,
+                    scope='Matching documented invariants only, not a general theorem that diagrams determine geometry.'))
+--- v1/diagram_inventory02.json
++++ v2/diagram_inventory02.json
+@@ -1,5 +1,5 @@
+ {
+-  "status": "NATIVE_PREPRINT_NODE_EDGE_TRANSCRIPTION_V2",
++  "status": "NATIVE_PREPRINT_NODE_EDGE_TRANSCRIPTION_V3",
+   "rows": [
+     {
+       "label": "2.1",
+@@ -662,14 +662,17 @@
+           ],
+           "printed_label": "C-left",
+           "conventional_gonality": 3
+-        }
+-      ],
+-      "absent_edges": [
+-        [
+-          "L",
+-          "R"
+-        ]
+-      ]
++        },
++        {
++          "nodes": [
++            "L",
++            "R"
++          ],
++          "printed_label": "single",
++          "conventional_gonality": 3
++        }
++      ],
++      "absent_edges": []
+     },
+     {
+       "label": "3.6",
+@@ -2348,50 +2351,50 @@
+     "bytes": 8903
+   },
+   "superseded_working_inventory": {
+-    "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/diagram_inventory01.json",
++    "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/diagram_inventory01.json",
+     "sha256": "fc607360728179e911bfd39c7f53cd0f71fc666bac8c2a544659cd9074a4eb77",
+     "bytes": 21550
+   },
+-  "delta": "Adds all node positions, printed orders/kernels and visible edges. Corrects preliminary marker transcription for3.5/4.11; both markers are absent in the source.",
++  "delta": "Preserves the prior local2T marker correction; restores the source3.5 horizontal single bond after distinct review and compares both ordered endpoint eccentricities for every numerical triple.",
+   "qualifications": [
+     "Unboxed kernel recorded as order1; abstract group structure is not inferred from this number.",
+     "Printed positions are visual, not inherited construction type numbers. Every subsequent type map must be explicit.",
+-    "Source3.5 has no drawn bottom edge. Source5.1/5.2 print panel order2 at their210-object node. These literal facts are preserved even when computed data disagree.",
++    "Source3.5 has a single horizontal bottom bond; v1 incorrectly omitted it. Source5.1/5.2 print panel order2 at their210-object node.",
+     "No claim of textual identity with, or error in, the unobtained25-page2003 journal edition."
+   ],
+   "native_inputs": [
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/native/high-01.png",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/native/high-01.png",
+       "sha256": "0fd15e4c4a9e39ce3d820ed1df63b6b86c355214b7ef7eeea8f5169dc60b75c4",
+       "bytes": 81330
+     },
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/native/high-02.png",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/native/high-02.png",
+       "sha256": "6c42987725c2790548955b15df47c6f2ccf0f3e3ec67e51bd22a696083ed9772",
+       "bytes": 55922
+     },
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/native/high-03.png",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/native/high-03.png",
+       "sha256": "a316854b63ff1d17c052b74a7065eb249cd00c712e9c30b655c5a702f4d195a4",
+       "bytes": 51753
+     },
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/native/high-04.png",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/native/high-04.png",
+       "sha256": "775d5f85018d9273bc96c38413e0facae7534e1b820d577a52b06cd99d84b216",
+       "bytes": 46415
+     },
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/native/high-05.png",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/native/high-05.png",
+       "sha256": "77d2fc43ef701f3cf37cc25aafb6c257b5b9813e8abdf6f261c3fc48492b12bb",
+       "bytes": 47229
+     },
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/native/high-06.png",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/native/high-06.png",
+       "sha256": "c3c1249cb34710ed5844d28c2df0cc88fcdc04e2540ca79e20e38298d9171ba9",
+       "bytes": 34763
+     },
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/native/high-07.png",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/native/high-07.png",
+       "sha256": "bbf89b62ff6359a3fde27eb58ac4778ca96abe63dbff2bc72649cf420b5906f8",
+       "bytes": 53062
+     }
+--- v1/diagram_comparison01.json
++++ v2/diagram_comparison01.json
+@@ -11,7 +11,8 @@
+             "L": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 1,
+@@ -19,7 +20,8 @@
+             "L": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -34,7 +36,31 @@
+             "L": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                1,
++                2
++              ],
++              "expected_endpoints": [
++                4,
++                4
++              ],
++              "actual_eccentricities": [
++                [
++                  4
++                ],
++                [
++                  4
++                ]
++              ]
++            }
++          ]
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -49,7 +75,31 @@
+             "L": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                2,
++                1
++              ],
++              "expected_endpoints": [
++                5,
++                6
++              ],
++              "actual_eccentricities": [
++                [
++                  5
++                ],
++                [
++                  6
++                ]
++              ]
++            }
++          ]
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -64,7 +114,31 @@
+             "L": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                1,
++                2
++              ],
++              "expected_endpoints": [
++                4,
++                4
++              ],
++              "actual_eccentricities": [
++                [
++                  4
++                ],
++                [
++                  4
++                ]
++              ]
++            }
++          ]
+         },
+         {
+           "catalogue_index": 5,
+@@ -72,7 +146,31 @@
+             "L": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                2,
++                1
++              ],
++              "expected_endpoints": [
++                4,
++                4
++              ],
++              "actual_eccentricities": [
++                [
++                  4
++                ],
++                [
++                  4
++                ]
++              ]
++            }
++          ]
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -87,7 +185,31 @@
+             "L": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                1,
++                2
++              ],
++              "expected_endpoints": [
++                6,
++                5
++              ],
++              "actual_eccentricities": [
++                [
++                  6
++                ],
++                [
++                  5
++                ]
++              ]
++            }
++          ]
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -102,7 +224,31 @@
+             "L": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                1,
++                2
++              ],
++              "expected_endpoints": [
++                5,
++                5
++              ],
++              "actual_eccentricities": [
++                [
++                  5
++                ],
++                [
++                  5
++                ]
++              ]
++            }
++          ]
+         },
+         {
+           "catalogue_index": 6,
+@@ -110,7 +256,31 @@
+             "L": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                2,
++                1
++              ],
++              "expected_endpoints": [
++                5,
++                5
++              ],
++              "actual_eccentricities": [
++                [
++                  5
++                ],
++                [
++                  5
++                ]
++              ]
++            }
++          ]
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -125,7 +295,31 @@
+             "L": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "R"
++              ],
++              "catalogue_types": [
++                2,
++                1
++              ],
++              "expected_endpoints": [
++                9,
++                10
++              ],
++              "actual_eccentricities": [
++                [
++                  9
++                ],
++                [
++                  10
++                ]
++              ]
++            }
++          ]
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -141,7 +335,8 @@
+             "C": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -157,7 +352,8 @@
+             "C": 1,
+             "R": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 13,
+@@ -166,7 +362,8 @@
+             "C": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -182,7 +379,8 @@
+             "L": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 10,
+@@ -191,7 +389,8 @@
+             "L": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -207,7 +406,8 @@
+             "L": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 11,
+@@ -216,14 +416,15 @@
+             "L": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+     },
+     {
+       "label": "3.5",
+-      "minimum_mismatches": 1,
++      "minimum_mismatches": 0,
+       "candidates": [
+         {
+           "catalogue_index": 14,
+@@ -232,17 +433,8 @@
+             "L": 2,
+             "R": 3
+           },
+-          "mismatches": [
+-            {
+-              "kind": "gonality",
+-              "nodes": [
+-                "L",
+-                "R"
+-              ],
+-              "printed": 2,
+-              "actual": 3
+-            }
+-          ]
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 14,
+@@ -251,17 +443,8 @@
+             "L": 3,
+             "R": 2
+           },
+-          "mismatches": [
+-            {
+-              "kind": "gonality",
+-              "nodes": [
+-                "L",
+-                "R"
+-              ],
+-              "printed": 2,
+-              "actual": 3
+-            }
+-          ]
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -277,7 +460,53 @@
+             "C": 2,
+             "R": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "C"
++              ],
++              "catalogue_types": [
++                1,
++                2
++              ],
++              "expected_endpoints": [
++                6,
++                5
++              ],
++              "actual_eccentricities": [
++                [
++                  6
++                ],
++                [
++                  5
++                ]
++              ]
++            },
++            {
++              "nodes": [
++                "C",
++                "R"
++              ],
++              "catalogue_types": [
++                2,
++                3
++              ],
++              "expected_endpoints": [
++                5,
++                6
++              ],
++              "actual_eccentricities": [
++                [
++                  5
++                ],
++                [
++                  6
++                ]
++              ]
++            }
++          ]
+         },
+         {
+           "catalogue_index": 12,
+@@ -286,7 +515,53 @@
+             "C": 2,
+             "R": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": [
++            {
++              "nodes": [
++                "L",
++                "C"
++              ],
++              "catalogue_types": [
++                3,
++                2
++              ],
++              "expected_endpoints": [
++                6,
++                5
++              ],
++              "actual_eccentricities": [
++                [
++                  6
++                ],
++                [
++                  5
++                ]
++              ]
++            },
++            {
++              "nodes": [
++                "C",
++                "R"
++              ],
++              "catalogue_types": [
++                2,
++                1
++              ],
++              "expected_endpoints": [
++                5,
++                6
++              ],
++              "actual_eccentricities": [
++                [
++                  5
++                ],
++                [
++                  6
++                ]
++              ]
++            }
++          ]
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -302,7 +577,8 @@
+             "C": 1,
+             "R": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 8,
+@@ -311,7 +587,8 @@
+             "C": 1,
+             "R": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -328,7 +605,8 @@
+             "U": 1,
+             "D": 4
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 15,
+@@ -338,7 +616,8 @@
+             "U": 4,
+             "D": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -355,7 +634,8 @@
+             "U": 2,
+             "D": 4
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 24,
+@@ -365,7 +645,8 @@
+             "U": 4,
+             "D": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -382,7 +663,8 @@
+             "U": 2,
+             "D": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 19,
+@@ -392,7 +674,8 @@
+             "U": 3,
+             "D": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -409,7 +692,8 @@
+             "U": 2,
+             "D": 4
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -426,7 +710,8 @@
+             "U": 2,
+             "D": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -443,7 +728,8 @@
+             "U": 3,
+             "D": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -460,7 +746,8 @@
+             "U": 2,
+             "D": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 17,
+@@ -470,7 +757,8 @@
+             "U": 3,
+             "D": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -487,7 +775,8 @@
+             "BL": 4,
+             "BR": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 16,
+@@ -497,7 +786,8 @@
+             "BL": 2,
+             "BR": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 16,
+@@ -507,7 +797,8 @@
+             "BL": 4,
+             "BR": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 16,
+@@ -517,7 +808,8 @@
+             "BL": 2,
+             "BR": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -534,7 +826,8 @@
+             "BL": 3,
+             "BR": 4
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 21,
+@@ -544,7 +837,8 @@
+             "BL": 3,
+             "BR": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -561,7 +855,8 @@
+             "BL": 4,
+             "BR": 3
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -578,7 +873,8 @@
+             "BL": 1,
+             "BR": 2
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 25,
+@@ -588,7 +884,8 @@
+             "BL": 2,
+             "BR": 1
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -613,7 +910,8 @@
+               "printed": 2,
+               "actual": 1
+             }
+-          ]
++          ],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -638,7 +936,8 @@
+               "printed": 2,
+               "actual": 1
+             }
+-          ]
++          ],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 28,
+@@ -656,7 +955,8 @@
+               "printed": 2,
+               "actual": 1
+             }
+-          ]
++          ],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -674,7 +974,8 @@
+             "BR": 4,
+             "R": 5
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 29,
+@@ -685,7 +986,8 @@
+             "BR": 3,
+             "R": 5
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 29,
+@@ -696,7 +998,8 @@
+             "BR": 4,
+             "R": 5
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 29,
+@@ -707,7 +1010,8 @@
+             "BR": 3,
+             "R": 5
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -725,7 +1029,8 @@
+             "BR": 1,
+             "R": 4
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         },
+         {
+           "catalogue_index": 27,
+@@ -736,7 +1041,8 @@
+             "BR": 1,
+             "R": 4
+           },
+-          "mismatches": []
++          "mismatches": [],
++          "ordered_endpoint_checks": []
+         }
+       ],
+       "scope": "Matching documented invariants only, not a general theorem that diagrams determine geometry."
+@@ -744,12 +1050,12 @@
+   ],
+   "inputs": [
+     {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/diagram_inventory02.json",
+-      "sha256": "e542a4eb9237c9c5ad69af1115e563603d735c30177f9dfec3406de055d8d7b7",
+-      "bytes": 57414
+-    },
+-    {
+-      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_work/literal_diagrams01/diagrams.json",
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_transcription02/diagram_inventory02.json",
++      "sha256": "955cc4ad0d60a86293e0860224c616e13c41739cbbae6409df8034d497541753",
++      "bytes": 57562
++    },
++    {
++      "path": "/Users/sasha/medusa/research/leemans/geometry/psl3_4/source_join_edition02/literal_diagrams01/diagrams.json",
+       "sha256": "356d7b982eaaa5e7c96123d29d23ab22fe0becaed1d440c7321354969ce012b5",
+       "bytes": 102584
+     }
+--- /dev/null
++++ v2/endpoint_comparison.py
+@@ -0,0 +1,17 @@
++"""Ordered endpoint checks for literal numerical a/g/b diagram labels."""
++import sys
++if not __debug__:raise SystemExit('normal Python required')
++sys.dont_write_bytecode=True
++
++def compare_endpoints(source,actual,permutation):
++    nodes=source['nodes'];position={n['position']:permutation[i]+1 for i,n in enumerate(nodes)}
++    pairs={frozenset(p['types']):p for p in actual['pairs']};checks=[];mismatches=[]
++    for edge in source['edges']:
++        if '/' not in edge['printed_label']:continue
++        left,g,right=map(int,edge['printed_label'].split('/'))
++        types=[position[n] for n in edge['nodes']];p=pairs[frozenset(types)]
++        expected=[left,right];got=[p['eccentricities'][p['types'].index(t)] for t in types]
++        checks.append(dict(nodes=edge['nodes'],catalogue_types=types,expected_endpoints=expected,actual_eccentricities=got))
++        for n,e,v in zip(edge['nodes'],expected,got):
++            if v!=[e]:mismatches.append(dict(kind='ordered_endpoint_eccentricity',node=n,printed=e,actual=v))
++    return checks,mismatches
+--- /dev/null
++++ v2/edition_controls.py
+@@ -0,0 +1,39 @@
++import sys
++if not __debug__:raise SystemExit('normal Python required')
++sys.dont_write_bytecode=True
++import argparse,copy,json
++from pathlib import Path
++from endpoint_comparison import compare_endpoints
++P=Path(__file__).resolve().parent
++def need(x,s):
++    if not x:raise ValueError(s)
++def main():
++    a=argparse.ArgumentParser();a.add_argument('--out',type=Path,required=True);args=a.parse_args();O=args.out;need(not O.exists(),'fresh output');O.mkdir()
++    inv=json.loads((P/'diagram_inventory02.json').read_text())['rows'];cmp=json.loads((P/'diagram_comparison01.json').read_text())['rows'];data=json.loads((P/'literal_diagrams01/diagrams.json').read_text())['records']
++    positives=damages=ordered_reversals=0
++    for source,join in zip(inv,cmp):
++        hit=join['candidates'][0];actual=data[hit['catalogue_index']-1];perm=[hit['source_node_to_catalogue_type'][n['position']]-1 for n in source['nodes']]
++        checks,bad=compare_endpoints(source,actual,perm);need(not bad,'all ordered endpoints match')
++        for edge in source['edges']:
++            if '/'not in edge['printed_label']:continue
++            single=copy.deepcopy(source);single['edges']=[edge];good,_=compare_endpoints(single,actual,perm);positives+=1
++            for endpoint in [0,2]:
++                damaged=copy.deepcopy(single);parts=list(map(int,edge['printed_label'].split('/')));parts[endpoint]+=1
++                damaged['edges'][0]['printed_label']='/'.join(map(str,parts));need(compare_endpoints(damaged,actual,perm)[1],'changed printed endpoint rejected');damages+=1
++            types=good[0]['catalogue_types'];index=next(i for i,p in enumerate(actual['pairs'])if set(p['types'])==set(types))
++            for endpoint in [0,1]:
++                damaged=copy.deepcopy(actual);pair=damaged['pairs'][index];e=pair['types'].index(types[endpoint]);pair['eccentricities'][e]=[pair['eccentricities'][e][0],999]
++                need(compare_endpoints(single,damaged,perm)[1],'nonuniform actual endpoint rejected');damages+=1
++            reversed_actual=copy.deepcopy(actual);pair=reversed_actual['pairs'][index];pair['types'].reverse();pair['eccentricities'].reverse()
++            need(not compare_endpoints(single,reversed_actual,perm)[1],'actual pair storage orientation transported');ordered_reversals+=1
++            if good[0]['expected_endpoints'][0]!=good[0]['expected_endpoints'][1]:
++                wrong=copy.deepcopy(actual);wrong['pairs'][index]['types'].reverse()
++                need(compare_endpoints(single,wrong,perm)[1],'wrong endpoint/type orientation rejected');damages+=1
++    need(positives==8,'eight literal numerical triples')
++    row=next(q for q in inv if q['label']=='3.5');need(any(set(e['nodes'])=={'L','R'}and e['printed_label']=='single'for e in row['edges']),'visible3.5 base bond restored')
++    need(next(q for q in cmp if q['label']=='3.5')['minimum_mismatches']==0,'3.5 matches')
++    need([q['label']for q in cmp if q['minimum_mismatches']]==['5.1','5.2'],'only two remaining proposed preprint corrections')
++    report=dict(status='PASS_L100_SOURCE_JOIN_EDITORIAL_AND_ENDPOINT_CONTROLS',positive_triples=positives,damaged_endpoints=damages,storage_orientation_controls=ordered_reversals,
++                original_v1_preserved=True,new_group_or_coset_or_construction_runs=0,source_credit=0)
++    (O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
++if __name__=='__main__':main()

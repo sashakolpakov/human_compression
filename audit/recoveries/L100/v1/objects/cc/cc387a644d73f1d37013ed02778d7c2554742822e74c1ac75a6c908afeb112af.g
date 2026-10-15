@@ -1,0 +1,12 @@
+SizeScreen([100000,24]);;
+OUTPUT_DIR:="";;
+INPUT_CATALOGUE:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/input_catalogue01.g";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/catalogue_loader_v2.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/legacy_functions.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/level_resume_work/validate_resume.g");;
+borelCheckpoint:=rec();;cs:=[];;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_target04_anchor1/prepared/checkpoints/b1_r2.g");;Add(cs,borelCheckpoint);;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_target04_anchor1/prepared/checkpoints/b1_r3.g");;Add(cs,borelCheckpoint);;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_target04_anchor1/prepared/checkpoints/b1_r4.g");;Add(cs,borelCheckpoint);;
+rr:=ValidateLevelResume(1,cs,[4,30,196,334]);;if rr=fail then Error("actual checkpoint validation");fi;
+Print("PASS_ACTUAL_COMPLETED_LEVEL_INPUT_ONLY\n");QUIT_GAP(0);

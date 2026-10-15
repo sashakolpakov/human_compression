@@ -1,0 +1,9 @@
+LoadPackage("grape");;LoadPackage("json");;SizeScreen([100000,24]);;
+GRAPE_RANDOM:=false;;GRAPE_NAUTY:=true;;GRAPE_DREADNAUT_EXE:="/opt/homebrew/Cellar/gap/4.15.1/lib/gap/pkg/grape/bin/aarch64-apple-darwin25-default64-kv10/dreadnaut";;
+INPUT_CATALOGUE:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/input_catalogue01.g";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/catalogue_loader_v2.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_target02/result.g");;
+OUTPUT_DIR:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/palette_interface_controls02/actual_prepared";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/palette_work/cosets.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/palette_work/palette.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/palette_work/driver_body.g");;

@@ -1,0 +1,11 @@
+SizeScreen([100000,24]);;
+INPUT_CATALOGUE:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/input_catalogue01.g";;
+OUTPUT_DIR:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_single_controls01/anchor1/prepared/checkpoints";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/catalogue_loader_v2.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/legacy_functions.g");;
+if REQUIRE_2T<>false then Error("broad mode changed");fi;
+BOREL_IDS:=[1];;
+Print("L100_BROAD_BEGIN anchors=",BOREL_IDS,"\n");
+for bid in BOREL_IDS do RunBorel(bid);od;
+Print("L100_REQUESTED_ANCHORS_COMPLETE\n");
+QUIT_GAP(0);

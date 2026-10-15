@@ -1,0 +1,1 @@
+borelCheckpoint:=rec(id:=3,order:=2,rank:=3,panels:=[ Group( [ (5,6), (3,4) ] ), Group( [ (3,4), (1,2) ] ), Group( [ (3,4), (1,2)(5,6) ] ) ],level:=[  ],geometries:=[ [ Group( [ (5,6), (3,4) ] ), Group( [ (3,4), (1,2) ] ) ], [ Group( [ (5,6), (3,4) ] ), Group( [ (3,4), (1,2)(5,6) ] ) ], [ Group( [ (3,4), (1,2) ] ), Group( [ (3,4), (1,2)(5,6) ] ) ] ]);

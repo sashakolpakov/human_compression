@@ -1,0 +1,12 @@
+SizeScreen([100000,24]);;
+INPUT_CATALOGUE:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/input_catalogue01.g";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_component_v2/catalogue_loader_v2.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/postprocess_target01/result.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/postprocess_target01/automorphisms.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/postprocess_interface_v1/legacy_fusion_functions.g");;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/postprocess_interface_v1/fusion_witness.g");;
+borelResult:=rec();;
+NEW_ROW:=[1, "/Users/sasha/medusa/research/leemans/geometry/psl3_4/exhaustion_target05_level_resume/checkpoints/b1_done.g", [4, 30, 196, 334, 36, 0], [4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]];;
+OUTPUT_DIR:="/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_controls01/prepared";;
+Read("/Users/sasha/medusa/research/leemans/geometry/psl3_4/incremental_fusion_work/incremental.g");;
+QUIT_GAP(0);
