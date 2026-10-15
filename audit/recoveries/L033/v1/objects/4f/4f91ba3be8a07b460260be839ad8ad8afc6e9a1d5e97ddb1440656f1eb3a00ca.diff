@@ -1,0 +1,19 @@
+--- stage03/check.py
++++ stage04/check.py
+@@ -24,12 +24,12 @@
+     return json.loads(m.group(1))
+ def execution_aliases():
+     aliases=json.loads((ROOT/'execution_aliases.json').read_text()); checked=0
+-    for typ in json.loads((ROOT/'source_map.json').read_text())['types']:
+-        receipt=json.loads((ROOT/'censuses'/typ/'report.json').read_text())
+-        need(receipt['returncode']==0 and receipt['command'][-1]==receipt['inputs'][2]['path'],'wrong execution closure')
++    for closure in json.loads((ROOT/'execution_closures.json').read_text()):
++        receipt=json.loads((ROOT/closure['receipt']).read_text())
++        need(receipt['status']=='PASS' and receipt['returncode']==0 and receipt['command'][-1]==receipt['inputs'][2]['path'],'wrong execution closure')
+         for kind in ['inputs','outputs']:
+             for row in receipt[kind]:
+-                key=typ+':'+kind+':'+row['path']
++                key=closure['id']+':'+kind+':'+row['path']
+                 need(key in aliases,'missing execution alias '+key)
+                 target=aliases[key]
+                 need(target['sha256']==row['sha256'] and target['bytes']==row['bytes'],'changed historical execution pin')

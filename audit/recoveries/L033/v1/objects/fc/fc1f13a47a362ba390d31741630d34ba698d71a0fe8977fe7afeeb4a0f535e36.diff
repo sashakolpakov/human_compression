@@ -1,0 +1,17 @@
+--- stage02/check.py
++++ stage03/check.py
+@@ -89,10 +89,11 @@
+   for n in [1,2]:
+    rc,so,se=run(f'native{n}',['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','names.tex'],60,cwd=native);need(rc==0 and not se,'clean native build')
+   log=(native/'names.log').read_text();need(not re.search('Warning|Overfull|Underfull',log),'native log clean')
+-  rc,so,se=run('native_text',['/opt/homebrew/bin/pdftotext',str(native/'names.pdf'),str(native/'names.txt')],20);need(rc==0 and not se,'native text extraction');pages=(native/'names.txt').read_text().count('\f');need(pages==3,'three complete manuscript pages')
++  from pypdf import PdfReader
++  pdf=PdfReader(native/'names.pdf');pages=len(pdf.pages);text='\f'.join(page.extract_text()for page in pdf.pages);(native/'names.txt').write_text(text);need(pages==3,'three complete manuscript pages')
+   if (P/'names.pdf').exists():
+-   rc,so,se=run('reference_text',['/opt/homebrew/bin/pdftotext',str(P/'names.pdf'),str(out/'reference.txt')],20);need(rc==0 and (out/'reference.txt').read_bytes()==(native/'names.txt').read_bytes(),'reference native text identity')
+-  rc,so,se=run('native_render',['/opt/homebrew/bin/pdftoppm','-r','110','-png',str(native/'names.pdf'),str(native/'page')],30);need(rc==0 and not se and len(list(native.glob('page-*.png')))==3,'three native views')
++   ref=PdfReader(P/'names.pdf');reference='\f'.join(page.extract_text()for page in ref.pages);(out/'reference.txt').write_text(reference);need(reference==text,'reference native text identity')
++  rc,so,se=run('native_render',['/opt/homebrew/bin/gs','-q','-dSAFER','-dBATCH','-dNOPAUSE','-sDEVICE=png16m','-r110','-sOutputFile='+str(native/'page-%02d.png'),str(native/'names.pdf')],30);need(rc==0 and not se and len(list(native.glob('page-*.png')))==3,'three native views')
+  report=dict(status='PASS_L033_TWENTY_TWO_GROUP_CERTIFICATES',exports=len(own['exports']),dependencies=len(deps),source_rows=22,positive_certificates=22,damaged_certificates=5,damaged_source_joins=damages,optimization_guards=guards,all_selected_universal_local_orders=True,native_pages=pages,LINS_runs=0,target_searches=0,ninth_diagram_claimed=False,whole_original_credit=0,new_question_credit=0,new_measurements=0)
+  (out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+ if __name__=='__main__':main()

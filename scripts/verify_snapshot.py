@@ -6829,6 +6829,16 @@ def check_science88():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_previous_science89():
+    spec=importlib.util.spec_from_file_location('science89_history',ROOT/'scripts/check_science89_history.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
+def check_science89():
+    spec=importlib.util.spec_from_file_location('science89',ROOT/'scripts/check_science89.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--write-manifest',action='store_true',help='Record already staged publication bytes.')
@@ -6917,7 +6927,8 @@ def main():
     expanded_f_added, expanded_f_fractions = check_expanded_f_symmetric_admission()
     expanded_e_added, expanded_e_fractions = check_expanded_e_admission()
     mixes_covers_added, mixes_covers_fractions = check_mixes_covers_admission()
-    science88_history = check_previous_science88()
+    science89_history = check_previous_science89()
+    science88_history = science89_history['previous']
     science87_history = science88_history['previous']
     suzuki_disposition_history = science87_history['previous']
     L029_disposition_history = suzuki_disposition_history['previous']
@@ -6935,9 +6946,9 @@ def main():
     ((overview43_fractions, overview43_bars), restored_overview46), historical_overview46 = previous_programme50
     faithfulness_fractions = check_faithfulness_current_admission()
     programme53 = science_history['current']
-    science72 = check_science88()
+    science72 = check_science89()
     L046_correction = science78_history['correction']
-    print('PASS: exact predecessor history preserved; L100 complete corrected fixed-source recovery admitted without measurement.')
+    print('PASS: exact predecessor history preserved; L033 complete corrected fixed-source recovery admitted without measurement.')
     active_admitted = science72['counts']['corrected_recoveries']
     active_pending = science72['counts']['mathematical_pending']
     active_refuted = science72['counts']['refuted']
