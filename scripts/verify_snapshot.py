@@ -6844,10 +6844,15 @@ def check_science90():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_science91():
+    spec=importlib.util.spec_from_file_location('science91',ROOT/'scripts/check_science91.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_science90()
+    current = check_science91()
     print(json.dumps(current, sort_keys=True))
-    print('PASS: exact accepted predecessor bytes preserved; L070 complete corrected source recovery registered without measurement.')
+    print('PASS: exact accepted predecessor bytes preserved; L091 complete corrected source recovery registered without measurement.')
     print('Scope: current transition and exact prior evidence bindings checked; historical mathematical replays are acquired, not rerun.')
 
 if __name__=='__main__':

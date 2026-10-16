@@ -4,12 +4,19 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **90 reviewed corrected principal recoveries**:
-53 are measured and thirty-seven (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033 and L070) are unmeasured. F003, L029, L110, L114, L115, L036, L046, L063 and L064 have separate reviewed principal refutations; 6 originals
-await a complete mathematical disposition. Together with one editorial (L022),
-these give 106 accessible originals. Thus 99 of the 105 mathematical originals
+The current register contains **91 reviewed corrected principal recoveries**:
+53 are measured and thirty-eight (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070 and L091) are unmeasured. F003, L029, L110, L114, L115, L036, L046, L063 and L064 have separate reviewed principal refutations; 5 originals
+have no complete principal disposition yet. Together with one editorial (L022),
+these give 106 accessible originals. Thus 100 of the 105 mathematical originals
 have reviewed principal dispositions. The other 55 historical originals remain archived. Complete the
-reviewed principal dispositions for all 105 mathematical originals, then stop.
+reviewed source dispositions for all 105 mathematical originals, including
+surviving claims after a refutation, then stop.
+
+The nine principal refutations do not close their other source claims.
+Their surviving-claim obligations remain open alongside the five originals
+without a principal disposition: fourteen originals retain completion work.
+The stopping condition requires those obligations to be settled; the count of
+100 principal dispositions is not a count of 100 completely recovered sources.
 
 The `F003 correction <../corrections/suzuki-rank/v1/PUBLICATION.rst>`_ refutes
 Theorem 1.1 of the fixed arXiv:2010.04080v1 edition through an explicit
@@ -56,10 +63,22 @@ chirality/nonorientable/outer-reflexible and inversion claims are unpaid.
 The `new disposition <principal-refutations/L046/v1/PUBLICATION.rst>`_ adds
 no ordinary recovery, new mathematics, measurement or question credit.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033 and L070 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070 and L091 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science90/v1/new_original_registration.json>`_.
+`science register <science91/v1/new_original_registration.json>`_.
+
+The `L091 guide <../papers/recoveries/L091/v1/PUBLICATION.rst>`_ gives the
+complete corrected disposition of the six-page Higman--Sims article and its
+acquired supplement. The eleven-page synthesis and twenty-six complete proof
+chapters form a 78-page reading volume, including one divider page. All 86
+source diagrams, 398 local occurrences, 312 parabolics and 86 full groups have
+explicit proofs or corrections. Five prescribed doublings are proved; three
+incompatible source prescriptions are qualified separately. The eight
+comparison rows retain their stated equivalence conventions. J3 global
+coverage remains attributed to L091 reference [9], L097, which receives no
+additional recovery credit. Source errors, blank fields and our transcription
+repairs remain distinct. No measurement, new conjecture or Lean claim is added.
 
 The `L070 guide <../papers/recoveries/L070/v1/PUBLICATION.rst>`_ gives the
 complete corrected recovery of the fixed twelve-page article on two atlases
