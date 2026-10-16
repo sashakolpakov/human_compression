@@ -1,0 +1,4 @@
+Compatible tori: development and provenance
+===========================================
+
+The fixed M, scalars and rank-three construction are reused from the separately reviewed phase6 manuscript. Root reread the complete21-page source and critical native pages4,15-19. The current proof replaces finite subgroup intersection enumeration with coprime-order reasoning; a separate direct corollary acquires the accepted L115 scalar-subspace family. Native01 had a terminology correction: the order-four group is a point stabilizer in the local panel action. Native02 is the final author edition. The old discovery search and degree105 extension were not repeated. The complete byte-identical arithmetic library is retained; only its Field, ID and W interfaces are imported after the wrapper optimization guard. Its standalone historical main is not an entrypoint of this packet.

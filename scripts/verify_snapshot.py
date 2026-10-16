@@ -6869,11 +6869,16 @@ def check_science92():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_L114_completion():
+    spec=importlib.util.spec_from_file_location('L114_completion',ROOT/'scripts/check_L114_completion.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_science92()
+    current = check_L114_completion()
     print(json.dumps(current, sort_keys=True))
-    print('PASS: exact accepted predecessor bytes preserved; L054 complete corrected source recovery registered without measurement.')
-    print('Scope: current transition and exact prior evidence bindings checked; historical mathematical replays are acquired, not rerun.')
+    print('PASS: L114 complete source supplement; 96 fully treated originals and 9 remaining.')
+    print('Scope: prior accepted science preserved; no new ordinary recovery, principal refutation, measurement or Lean credit.')
 
 if __name__=='__main__':
     main()

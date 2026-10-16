@@ -22,12 +22,12 @@ programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
 partition. L022 has no factor or measured-original credit.
 
-F003, L029 and L036 now have complete reviewed treatments of their surviving
-source claims. Thus 95 originals are fully treated: 92 ordinary recoveries
-and three complete source treatments after principal refutations. Six other
-refuted originals and four without a principal disposition retain completion
-obligations: 10 originals remain. There are 101 principal dispositions and
-92 ordinary recoveries; the stopping condition is unchanged.
+F003, L029, L036 and L114 now have complete reviewed treatments of their
+surviving source claims. Thus 96 originals are fully treated: 92 ordinary
+recoveries and four complete source treatments after principal refutations.
+Five other refuted originals and four without a principal disposition retain
+completion obligations: 9 originals remain. There are 101 principal
+dispositions and 92 ordinary recoveries; the stopping condition is unchanged.
 
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
@@ -66,6 +66,19 @@ two disjoint six-cycles. All hypotheses of the literal right-coset
 construction are verified. Rank-three Proposition 4.11 and a version
 requiring chirality under the specified group are not refuted. L029 has
 no ordinary recovery, measurement, new-question or Lean credit.
+
+The `complete L114 volume <papers/corrections/L114/v1/complete.pdf>`_
+treats all 61 claim rows in the fixed twenty-one-page article on rank-three
+Suzuki geometries. It proves the surviving restriction theorems, gives the
+realization or obstruction for each displayed pattern, and preserves the
+previously accepted principal counterexample. Two finite examples disprove
+the thinness assertions, and a general scalar-subspace construction disproves
+the stated bound on algebraic local rank. The 68-page reading volume includes
+the exact common theory and component proofs, with classical premises and
+source corrections attributed. It does not claim a complete corrected
+classification or a compression factor. This closes one source obligation
+without adding an ordinary recovery, principal refutation, question or Lean
+credit.
 
 The `complete L036 volume <papers/corrections/L036/v1/complete.pdf>`_
 treats all 35 source claims in the fixed twelve-page journal article.
