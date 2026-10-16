@@ -22,11 +22,12 @@ programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
 partition. L022 has no factor or measured-original credit.
 
-The nine principal refutations do not close their other source claims.
-Their surviving-claim obligations remain open alongside the five originals
-without a principal disposition: fourteen originals retain completion work.
-The stopping condition requires those obligations to be settled; the count of
-100 principal dispositions is not a count of 100 completely recovered sources.
+L029 now also has a complete reviewed treatment of its surviving source claims.
+Thus 92 originals are fully treated: 91 ordinary recoveries and one complete
+source treatment after a principal refutation. Eight other refuted originals
+and five without a principal disposition retain completion obligations: 13
+originals remain. The principal-disposition count stays 100, the ordinary
+recovery count stays 91, and the stopping condition is unchanged.
 
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
@@ -65,6 +66,16 @@ two disjoint six-cycles. All hypotheses of the literal right-coset
 construction are verified. Rank-three Proposition 4.11 and a version
 requiring chirality under the specified group are not refuted. L029 has
 no ordinary recovery, measurement, new-question or Lean credit.
+
+The `complete L029 volume <papers/corrections/L029/v1/complete.pdf>`_
+now treats all 19 source claims. Seven synthesis pages prove the valid
+coset, residue and chamber component arguments; the accepted five-page
+principal counterexample and three- and two-page auxiliary proofs follow
+unchanged. The rank-three result is recovered, while the omitted firmness
+and rank restrictions are corrected separately. General C-plus firmness
+in rank at least four remains an unproved corrected variant. Completing
+this source leaves the ordinary recovery and principal refutation counts
+unchanged, and adds no measurement, question or Lean credit.
 
 The `Suzuki geometry corrections <corrections/suzuki-subfields/v1/PUBLICATION.rst>`_
 give three separate principal refutations, with complete proofs of three,
