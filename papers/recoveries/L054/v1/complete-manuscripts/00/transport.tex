@@ -1,0 +1,255 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=24mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs,hyperref}
+\newtheorem{theorem}{Theorem}\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newcommand{\N}{\operatorname{N}}\newcommand{\Inn}{\operatorname{Inn}}
+\title{Transport, incidence weights, and certificates for finite subgroup data}
+\author{A component for the subgroup atlas of Connor and Leemans}
+\date{}
+\begin{document}\maketitle
+\noindent
+We prove the correctness of the two algorithmic constructions in Sections 2
+and 3 of \cite{CL}, using its seven-page author edition dated 2 December
+2013. The maximal-subgroup descent and the recursive choice of normal
+subgroups are the authors' ideas. Our contribution here is an explicit
+certificate interface: changes of permutation action, fusion of conjugacy
+classes, incidence weights, and extension data have separate hypotheses
+and conclusions. We do not claim that these elementary arguments are new
+group-theoretic results. In particular, this component does not reproduce
+the more than one hundred numerical lattices announced in Section 4.
+
+\paragraph{Conventions and inputs.}
+All groups are finite. Write $H^g=g^{-1}Hg$ and $[H]_G$ for the conjugacy
+class of a subgroup. Order the classes by $[K]_G\leq[H]_G$ when some
+conjugate of $K$ is contained in $H$. This is a partial order: a relation
+in both directions forces equal orders, and containment between finite
+subgroups of equal order is equality. We use the term \emph{poset}; none
+of the arguments assumes that this poset is a lattice. In the actual
+subgroup lattice the join is $\langle H,K\rangle$, not set union.
+
+For each subgroup $H$ selected for processing, the input consists of an
+isomorphism $\phi_H:H\longrightarrow\widetilde H$ and a complete list of
+representatives of the $\widetilde H$-conjugacy classes of maximal proper
+subgroups. Completeness of this list is an explicit input, not a consequence
+of the orders or number of the returned subgroups. Conjugacy tests in the
+ambient group $G$ must be exact. A positive conjugacy test can be checked
+by its transporter; a negative test requires a complete test or certificate.
+
+\begin{lemma}\label{transport}
+An isomorphism $\phi:H\to\widetilde H$ transports subgroup containment,
+maximality, conjugacy within $H$, and normalizers. In particular, if
+$\widetilde M$ runs through a complete set of maximal-subgroup class
+representatives, then $\phi^{-1}(\widetilde M)$ does so in $H$, with
+\[
+ [H:\N_H(\phi^{-1}(\widetilde M))]
+   =[\widetilde H:\N_{\widetilde H}(\widetilde M)].
+\]
+\end{lemma}
+\begin{proof}
+The mutually inverse maps on subgroups are image and preimage. They preserve
+containment in both directions, hence preserve the absence of a strictly
+intermediate subgroup. The identity $\phi(M^h)=\phi(M)^{\phi(h)}$ transports
+conjugacy. Applying it with $M^h=M$ identifies the two normalizers; their
+indices agree because both group orders agree.
+\end{proof}
+
+For a reduced permutation action, it is therefore necessary to establish
+faithfulness, rather than merely the existence of an action homomorphism.
+An explicit inverse is sufficient. So is a presentation of its image on
+the actual images of the generators, provided that all defining relators
+hold on the original generators: the resulting reverse homomorphism is
+inverse on generators and consequently on the groups. This last criterion
+is proved and checked in the separate faithful-action component of this
+project; it is an optional way of supplying the isomorphism required here.
+
+\begin{theorem}\label{descent}
+Start with a registry containing $[G]_G$ and a queue containing $G$.
+Process each registered class once. For a representative $H$, transport
+its complete maximal-subgroup list by Lemma~\ref{transport}, identify each
+resulting subgroup up to $G$-conjugacy, and register and queue every class
+not already registered. Record an edge from $[H]_G$ to each resulting
+class, retaining separately all local $H$-conjugacy classes that fuse there.
+The process terminates and returns every subgroup class of $G$ exactly
+once. Reachability in the resulting graph is precisely containment in
+the class poset.
+\end{theorem}
+\begin{proof}
+There are finitely many subgroups, and a registered class is never queued
+again. Thus termination holds even if the queue is processed in arbitrary
+order. Every inserted vertex and edge is an actual subgroup class and an
+actual proper containment.
+
+Given $K\leq H$, refine the interval from $K$ to $H$ to a chain of maximal
+proper inclusions; this is possible by finiteness. Induction down such a
+chain proves that a conjugate of $K$ is discovered whenever the class of
+$H$ is processed. At each step the complete local maximal list contains a
+conjugate within the current parent, and fusion changes that representative
+only by conjugacy in $G$. Starting from $G$ proves completeness.
+
+Edges imply containment and containment is transitive on classes.
+Conversely, apply the same maximal-chain argument inside a representative
+of the larger class to obtain a path to the smaller class. Exact ambient
+conjugacy tests and the registry ensure that vertices are neither duplicated
+nor incorrectly identified.
+\end{proof}
+
+The registry in this formulation contains both queued and processed
+classes. Testing only the current queue, as the brief prose algorithm in
+\cite{CL} suggests literally, needs an additional scheduling invariant to
+avoid rediscovering a processed class. The permanent registry makes that
+invariant unnecessary. A computation begun from partial data must still
+certify that every registered parent has a complete processed maximal list;
+unprocessed vertices remain obligations.
+
+\paragraph{Weights after fusion.}
+Fix representatives $H,K$. Let $M_1,\ldots,M_t$ be the representatives
+of the $H$-conjugacy classes of maximal subgroups of $H$ which are
+$G$-conjugate to $K$. Put
+\[
+ a^{\max}_{H,K}=\sum_{j=1}^t[H:\N_H(M_j)],\qquad
+ c_H=[G:\N_G(H)].                                      \tag{1}
+\]
+An empty sum is zero. Several local classes may fuse into one ambient
+class; replacing this sum by one summand is not valid.
+
+\begin{theorem}\label{weights}
+The number $a^{\max}_{H,K}$ counts the maximal subgroups of the actual
+$H$ belonging to $[K]_G$. The number of conjugates of $H$ in which an
+actual $K$ is maximal is
+\[
+ b^{\max}_{K,H}=\frac{c_Ha^{\max}_{H,K}}{c_K}.
+                                                               \tag{2}
+\]
+The cover relations of the class poset are the edges left after transitive
+reduction of the graph in Theorem~\ref{descent}. For such a cover,
+$a^{\max}_{H,K}$ and $b^{\max}_{K,H}$ are the full incidence numbers
+$n_{HK}$ and $n_{KH}$ defined in Section 2 of \cite{CL}.
+\end{theorem}
+\begin{proof}
+Orbit--stabilizer for the conjugation action of $H$ gives exactly
+$[H:\N_H(M_j)]$ distinct subgroups in the $j$th local class. These local
+classes are disjoint and complete, proving (1). Count the pairs
+$(H',K')$ with $H'\in[H]_G$, $K'\in[K]_G$, and $K'$ maximal in $H'$.
+Counting by the first coordinate gives $c_Ha^{\max}_{H,K}$; counting by
+the second gives $c_Kb^{\max}_{K,H}$. Conjugacy makes each fibre size
+constant, proving (2), including its integrality.
+
+The graph is acyclic because orders strictly decrease along edges. Its
+reachability is the class order, so its transitive reduction gives exactly
+the covers. If $[H]_G$ covers $[K]_G$ and $K'\leq H'$ are representatives,
+any strict intermediate subgroup would give a strict intermediate class.
+Thus every such containment is maximal and the maximal-incidence counts
+are the required full incidence counts.
+\end{proof}
+
+For a pair that is not a cover, (1) only counts maximal embeddings.
+It need not count every embedding of the smaller class into the larger.
+Likewise, normalizer orders alone do not replace the local fusion data.
+The preceding results recover the weighted class poset without asserting
+that it determines $G$ up to isomorphism.
+
+For example, take $G=S_4$, $H=\langle(1\,2),(3\,4)\rangle$, and
+$K=\langle(1\,2)\rangle$. The two subgroups generated by the individual
+transpositions are distinct local classes in the abelian group $H$, but
+they are conjugate in $G$. Hence $a^{\max}_{H,K}=2$, $c_H=3$, $c_K=6$,
+and $b^{\max}_{K,H}=1$. Keeping only one of the two local classes would
+give the wrong weight. This example occurs in the literal $S_4$ check.
+
+\paragraph{What a recursive group name certifies.}
+Let $N\lhd H$, let $Q=H/N$, and choose a section $s:Q\to H$ with
+$s(1)=1$. Define
+\[
+ \alpha_q(n)=s(q)ns(q)^{-1},\qquad
+ f(q,r)=s(q)s(r)s(qr)^{-1}\in N.                         \tag{3}
+\]
+Here $\Inn(u)(n)=unu^{-1}$, and the multiplication on $N$ and $Q$ is part
+of the data. A structural
+expression involving only their names and a dot omits the maps in (3).
+
+\begin{theorem}\label{extension}
+The map $(n,q)\mapsto ns(q)$ is a bijection $N\times Q\to H$, and under
+this bijection the multiplication is
+\[
+ (n,q)(m,r)=(n\alpha_q(m)f(q,r),qr).                     \tag{4}
+\]
+Conversely, automorphisms $\alpha_q$ and elements $f(q,r)$ define a group
+by (4), with kernel $N$ and quotient $Q$, if
+\begin{align*}
+ \alpha_1&=\mathrm{id},&f(1,q)&=f(q,1)=1,\\
+ \alpha_q\alpha_r&=\Inn(f(q,r))\alpha_{qr},\qquad&
+ f(q,r)f(qr,t)&=\alpha_q(f(r,t))f(q,rt).
+\end{align*}
+Thus the displayed data, with exact identifications of kernel and quotient,
+certify the extension, not merely its order or composition factors.
+\end{theorem}
+\begin{proof}
+Every $h\in H$ lies in exactly one quotient coset $q$ and has a unique
+expression $ns(q)$; this proves the bijection. Inserting $s(q)^{-1}s(q)$
+in a product gives (4). Conjugation by $s(q)s(r)=f(q,r)s(qr)$ proves the
+first identity involving $\alpha$. Associativity of $s(q)s(r)s(t)$ proves
+the last identity.
+
+Conversely, compute the two associations of three pairs in (4). The
+identity involving $\alpha$ moves the conjugating factor $f(q,r)$ through
+$\alpha_{qr}$; the last identity then makes the two products equal.
+The normalization gives identity $(1,1)$. Given $(n,q)$, its product with
+$(m,q^{-1})$ is the identity for the unique
+$m=\alpha_q^{-1}(n^{-1}f(q,q^{-1})^{-1})$. An associative finite monoid
+in which each element has a right inverse is a group: if $xy=1$ and
+$yz=1$, then $x=x(yz)=(xy)z=z$, hence $yx=1$. Finally the projection to
+$Q$ is a surjective homomorphism and its kernel is $N\times\{1\}$.
+\end{proof}
+
+An explicit complement $C$ with $N\cap C=1$ and $NC=H$ certifies a split
+extension; its inverse quotient map supplies a section with $f=1$.
+A complement centralizing $N$ certifies a direct product. Conversely, a
+homomorphic section supplies a complement, and a homomorphic section whose
+image centralizes $N$ supplies a direct decomposition. Failure to find a
+complement does not certify a nonsplit extension: that conclusion needs
+an exhaustive complement test or a separate obstruction proof.
+
+For instance, let $H=\langle x\rangle\cong C_4$ and $N=\langle x^2\rangle$.
+The normalized section taking the nonidentity quotient element to $x$
+centralizes $N$, but its factor at that pair is $x^2\ne1$. It is not a
+homomorphic section. Replacing this factor by $1$ gives $C_2\times C_2$;
+the kernel and quotient have not changed, but the multiplication has.
+The finite check rejects that replacement as a certificate for the original
+$C_4$, even though it is valid data for a different extension.
+
+\begin{corollary}
+The recursive naming procedure of Section 3 of \cite{CL} terminates if,
+at each nonterminal step, it chooses a proper nontrivial normal subgroup
+and recursively treats its kernel and quotient. Exact identifications at
+the leaves and exact extension data at the internal vertices determine the
+original group. Omitting the action and factor data gives only a structural
+description, and distinct groups can have the same resulting description.
+\end{corollary}
+\begin{proof}
+Both child orders are smaller than the parent order, so induction on order
+proves termination. At a terminal simple group or a selected recognizable
+group the supplied identification is checked directly. At each internal
+vertex Theorem~\ref{extension} reconstructs the parent from the already
+identified children and the recorded multiplication. Induction proves the
+claim for the root. No uniqueness claim is made for descriptions that
+discard this multiplication data.
+\end{proof}
+
+\paragraph{Evidence and limits.}
+The accompanying finite checks compare maximal descent with an independent
+enumeration obtained by adjoining elements to subgroups. They check local
+fusion, both incidence counts, transitive reduction, and extension
+multiplication on small explicit groups. These checks validate the stated
+interfaces and supply examples. They do not establish completeness of
+the external maximal-subgroup algorithms on every atlas group, reproduce
+the atlas's numerical files, or reproduce its historical timing comparison.
+The full L054 manuscript therefore remains pending. No conjecture,
+compression ratio, or Lean verification is claimed by this component.
+
+\begin{thebibliography}{1}
+\bibitem{CL} T. Connor and D. Leemans,
+\emph{An Atlas of subgroup lattices of finite almost simple groups},
+arXiv:1306.4820v2, 29 November 2013; retained author PDF dated
+2 December 2013, Sections 2--4.
+\end{thebibliography}
+\end{document}

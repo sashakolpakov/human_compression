@@ -4,20 +4,20 @@ Completion of the closed corpus
 Current position
 ----------------
 
-The current register contains **91 reviewed corrected principal recoveries**:
-53 are measured and thirty-eight (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070 and L091) are unmeasured. F003, L029, L110, L114, L115, L036, L046, L063 and L064 have separate reviewed principal refutations; 5 originals
+The current register contains **92 reviewed corrected principal recoveries**:
+53 are measured and thirty-nine (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070, L091 and L054) are unmeasured. F003, L029, L110, L114, L115, L036, L046, L063 and L064 have separate reviewed principal refutations; 4 originals
 have no complete principal disposition yet. Together with one editorial (L022),
-these give 106 accessible originals. Thus 100 of the 105 mathematical originals
+these give 106 accessible originals. Thus 101 of the 105 mathematical originals
 have reviewed principal dispositions. The other 55 historical originals remain archived. Complete the
 reviewed source dispositions for all 105 mathematical originals, including
 surviving claims after a refutation, then stop.
 
 F003, L029 and L036 now have complete reviewed treatments of their surviving
-source claims. Thus 94 originals are fully treated: 91 ordinary recoveries
+source claims. Thus 95 originals are fully treated: 92 ordinary recoveries
 and three complete source treatments after principal refutations. Six other
-refuted originals and five without a principal disposition retain completion
-obligations: 11 originals remain. The principal-disposition count stays 100,
-the ordinary recovery count stays 91, and the stopping condition is unchanged.
+refuted originals and four without a principal disposition retain completion
+obligations: 10 originals remain. There are 101 principal dispositions and
+92 ordinary recoveries; the stopping condition is unchanged.
 
 The `F003 correction <../corrections/suzuki-rank/v1/PUBLICATION.rst>`_ refutes
 Theorem 1.1 of the fixed arXiv:2010.04080v1 edition through an explicit
@@ -95,10 +95,23 @@ chirality/nonorientable/outer-reflexible and inversion claims are unpaid.
 The `new disposition <principal-refutations/L046/v1/PUBLICATION.rst>`_ adds
 no ordinary recovery, new mathematics, measurement or question credit.
 
-N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070 and L091 have separate scientific admissions; their corrections and retained
+N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070, L091 and L054 have separate scientific admissions; their corrections and retained
 limits do not assert literal theorem-set equivalence. No factor, comparison topic,
 new question answer or complete Lean claim is added. See the
-`science register <science91/v1/new_original_registration.json>`_.
+`science register <science92/v1/new_original_registration.json>`_.
+
+The `L054 guide <../papers/recoveries/L054/v1/PUBLICATION.rst>`_ treats
+the article's generic and quantified main results under explicit interfaces.
+The seven-page synthesis and 41 complete component texts form a 107-page
+volume. The complete classified domain of 127 almost simple groups of order
+at most one million contributes 10,694 subgroup-class rows; seven larger
+applications contribute another 5,294. One printed A11 label is corrected.
+This does not verify the entire named historical or current atlas, the
+stronger companion socle-order bound, or every attributed sporadic output.
+The separate companion ledger retains all unpaid table obligations.
+Source algorithms, classification and software premises remain attributed.
+This adds one ordinary corrected recovery, with no compression measurement,
+new conjecture, principal refutation or Lean credit.
 
 The `L091 guide <../papers/recoveries/L091/v1/PUBLICATION.rst>`_ gives the
 complete corrected disposition of the six-page Higman--Sims article and its

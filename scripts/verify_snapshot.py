@@ -6864,11 +6864,16 @@ def check_L036_completion():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_science92():
+    spec=importlib.util.spec_from_file_location('science92',ROOT/'scripts/check_science92.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_L036_completion()
+    current = check_science92()
     print(json.dumps(current, sort_keys=True))
-    print('PASS: L036 complete source supplement; 94 fully treated originals and 11 remaining.')
-    print('Scope: prior accepted science preserved; no new ordinary recovery, principal refutation, measurement or Lean credit.')
+    print('PASS: exact accepted predecessor bytes preserved; L054 complete corrected source recovery registered without measurement.')
+    print('Scope: current transition and exact prior evidence bindings checked; historical mathematical replays are acquired, not rerun.')
 
 if __name__=='__main__':
     main()
