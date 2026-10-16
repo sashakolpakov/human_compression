@@ -22,12 +22,13 @@ programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
 partition. L022 has no factor or measured-original credit.
 
-F003, L029, L036 and L114 now have complete reviewed treatments of their
-surviving source claims. Thus 96 originals are fully treated: 92 ordinary
-recoveries and four complete source treatments after principal refutations.
-Five other refuted originals and four without a principal disposition retain
-completion obligations: 9 originals remain. There are 101 principal
-dispositions and 92 ordinary recoveries; the stopping condition is unchanged.
+F003, L029, L036, L110 and L114 now have complete reviewed treatments of
+their surviving source claims. Thus 97 originals are fully treated: 92
+ordinary recoveries and five complete source treatments after principal
+refutations. Four other refuted originals and four without a principal
+disposition retain completion obligations: 8 originals remain. There are
+101 principal dispositions and 92 ordinary recoveries; the stopping condition
+is unchanged.
 
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
@@ -66,6 +67,19 @@ two disjoint six-cycles. All hypotheses of the literal right-coset
 construction are verified. Rank-three Proposition 4.11 and a version
 requiring chirality under the specified group are not refuted. L029 has
 no ordinary recovery, measurement, new-question or Lean credit.
+
+The `complete L110 volume <papers/corrections/L110/v1/complete.pdf>`_
+treats all 63 claim rows in the fixed twenty-page article on Suzuki
+pregeometries. It retains the principal boundary counterexample and proves
+the surviving prime-residue and conditional extension assertions, with the
+source conventions and corrected constructions stated precisely. A separate
+scalar-coordinate construction gives thick, connected, flag-transitive and
+locally two-transitive geometries in arbitrary rank. The 105-page reading
+volume contains the exact common theory and component proofs. Classical
+premises and stronger unproved variants remain explicit; no complete corrected
+classification or compression factor is claimed. This closes one source
+obligation without adding an ordinary recovery, principal refutation,
+question or Lean credit.
 
 The `complete L114 volume <papers/corrections/L114/v1/complete.pdf>`_
 treats all 61 claim rows in the fixed twenty-one-page article on rank-three

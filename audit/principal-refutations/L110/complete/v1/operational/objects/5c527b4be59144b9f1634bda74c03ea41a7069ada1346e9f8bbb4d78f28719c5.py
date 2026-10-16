@@ -1,0 +1,25 @@
+from pathlib import Path
+import sys,json,importlib.util
+sys.dont_write_bytecode=True
+S=Path('/Users/sasha/medusa/research/leemans');P=S/'geometry/primitive_pairs';W=P/'table_request02'
+spec=importlib.util.spec_from_file_location('flat',S/'reboot_20261013/component_adoption_flat_v2.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+c=m.Closure();c.packet('geometry/primitive_pairs/table_request02')
+r=json.loads((W/'request.json').read_text())
+for row in r['bindings']:c.binding(row)
+for p in (P/'table_request02_root_controls01').iterdir():
+ if p.is_file():c.add(p)
+c.add(Path(__file__))
+if (W/'export.g').read_bytes()!=(P/'table_request01/export.g').read_bytes():raise ValueError('unchanged exporter')
+q=json.loads((P/'table_request02_root_controls01/report.json').read_text())
+if q['status']!='PASS_L036_MARK_OWNER_CONTROLS' or len(q['cases'])!=4:raise ValueError('root controls')
+c.finish('geometry/primitive_pairs/table_request02_root_review','ACCEPTED_L036_STORED_MARK_INPUT_REQUEST_V2',dict(
+ reviewer='root',author='j3_recovery',
+ review=['Read the full fixed exporter, argument, owner, freeze script and ownership controls. Re-read the acquired normalizer, fixed-point and mark-product proof to check the mathematical input interface.',
+ 'The eleven named inputs comprise six full automorphism groups and five simple-group suborbit tables. The exporter requires stored cyclic fusion and stored marks or equivalent data; it constructs no groups or cosets and initiates no fusion search.',
+ 'The complete library subgroup/character classifications and compatibility with the named groups remain attributed premises. Sparse shape, fusion, powers, subgroup choices and exact arithmetic still need an independent application; no numerical source result follows merely from this export.',
+ 'Root required supervision cleanup, final resource checks and final input rehash. Revised02 keeps the exact scientific exporter and all limits. Fresh root controls verify ordinary completion, interrupted-owner child reaping, changed-input rejection and post-return output-cap rejection.',
+ 'The one initial invocation uses60seconds,512MiBGAPworkspace,64MiBstdout/stderr,4GiBlaunch reserve and2GiBemergency floor. No retry or automatic successor is included. Exact201bindings plus request are rechecked after the child returns.'
+ ],
+ authorized_initial_invocations=1,automatic_successor=False,
+ scope='One retained library-data export only. Group identification/completeness and installed GAP behavior remain premises; no census, whole-source, conjecture, measurement or Lean credit.',
+ source_credit=0,new_target_runs_in_review=0))

@@ -6874,10 +6874,15 @@ def check_L114_completion():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_L110_completion():
+    spec=importlib.util.spec_from_file_location('L110_completion',ROOT/'scripts/check_L110_completion.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_L114_completion()
+    current = check_L110_completion()
     print(json.dumps(current, sort_keys=True))
-    print('PASS: L114 complete source supplement; 96 fully treated originals and 9 remaining.')
+    print('PASS: L110 complete source supplement; 97 fully treated originals and 8 remaining.')
     print('Scope: prior accepted science preserved; no new ordinary recovery, principal refutation, measurement or Lean credit.')
 
 if __name__=='__main__':

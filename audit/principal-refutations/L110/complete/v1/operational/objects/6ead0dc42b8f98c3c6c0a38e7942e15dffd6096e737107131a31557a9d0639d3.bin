@@ -1,0 +1,41 @@
+# Independent review of Suzuki descent and the all-rank construction
+
+10 October 2026. **Pass for the stated uniform theorem and its rank-four specialization**, retaining the classical algebraic-group and Suzuki subgroup inputs explicitly listed in the proof. This is internal independent mathematical review, not external peer review or a priority claim. The exact reviewed versions are bound in [the audit record](phase7_suzuki_audit.json).
+
+## Descent and flag transitivity
+
+The finite cyclic descent lemma follows from Lang–Steinberg without an omitted rationality step: the prescribed norm telescopes to `x^-1 F^m(x)`, which forces the Lang solution to lie in the finite fixed-point group. Coprimality with the characteristic is unnecessary. In the coset-Helly argument, pairwise intersection makes the conjugated field elements commute; their pairwise coprime orders make their generated subgroup cyclic, and its projection to the abstract cyclic factor is injective. Descent conjugates the entire cyclic subgroup, while that injective projection identifies each original marked generator. This establishes a common point for every partial flag, not just three-type flags.
+
+The coordinate attachment argument is valid for sets of left cosets even though the subgroups containing the common complement need not be normal. Independent cyclic factors give the required surjection. Flags omitting the added type are separately covered by the subfield-Helly theorem; this essential distinction is preserved in the statement and in the Lean scope note.
+
+## Algebraic torus and the exact matrix convention
+
+The order-13 seed and M generate the same degree-four field algebra over F8: both have irreducible degree-four minimal polynomials there and commute. Their algebraic general-linear centralizers therefore agree, and intersecting with the symplectic group gives a connected rank-two torus. Since M is binary and `rho(a)=phi_2^2(a)`, this particular torus is stable under both endomorphisms. The exceptional isogeny is bijective on algebraically closed points because its square is Frobenius; hence the centralizer-stability step is justified.
+
+The exterior-square quotient has the stated four-dimensional basis and induced alternating form. Its minors define a group homomorphism, rather than only a list of formulas tested on samples. The generic unipotent, diagonal, and antidiagonal calculations identify its square with Frobenius and bind it to the phase-six matrix convention.
+
+Frobenius cycles the four distinct M-eigenlines. On the paired symplectic weights this gives an order-four rotation, so the character matrix satisfies `B²=2w`. The determinant and trace equations leave exactly the two trace signs. The fixed-point determinant calculation is valid here: its Smith factors are odd, so no characteristic-two multiplicity is being counted as a distinct root of unity. The binary fixed-centralizer computation selects trace +2. It therefore determines the same torus-order sequence for every odd degree; no extrapolation from several finite tori is involved.
+
+The claimed cyclicity and maximal normalizers of finite nonsplit tori are retained Suzuki theory. The constructed order-four element normalizes the algebraic torus and has trivial intersection with its odd-order fixed groups. Its product with each finite torus consequently has the full classical normalizer order. The exceptional base degree one is explicitly separated.
+
+## Prime choices, intersections, maximality and residues
+
+The two torus-order factors are odd and coprime. Lifting the exponent at a prime dividing the base order proves that a relative field prime not dividing the base order adds no valuation at that old prime. Each quotient is greater than one, so it supplies a new prime. The strong gcd identity for the torus sequence then makes choices at different relative field primes distinct. This uses divisibility in one compatible cyclic torus, not a conjecture about prime values or primitive divisors.
+
+The exact intersection calculation remains valid when a relative prime also divides the base degree e: for a removed index, `gcd(e a_i,n_J)=e` still follows from distinctness of the relative primes. Thus a removed cyclic factor cannot reappear in an unintended field intersection. Binary r lets the same calculation apply to all four complement cosets.
+
+Every RWPRI case has a justified maximal step. Before the cyclic-by-four type is selected, a prime-degree simple subfield is maximal; at the bottom, the full base torus normalizer is maximal. After that type is selected, each step has prime subgroup index. The proof never calls Sz(2) simple or maximal in a larger simple Suzuki group.
+
+Residual connectedness is checked for all standard residues, which is sufficient after flag transitivity. Two distinct maximal simple subfields generate their ambient residue; two different cyclic-factor deletions generate a cyclic-by-four residue; the final mixed rank-two residue is generated by a maximal subgroup and an element outside it. In the separate base-two rank-four example, this last maximal subgroup is the full prime-torus normalizer, and the base group supplies an order-five element outside it. The panel indices are at least three; the simple-base panel index is at least 560. Thus the stronger claim of thickness, as well as firmness, is justified.
+
+## Independent executable checks and retained scope
+
+I inspected and reran the seed checker byte-for-byte in a temporary copy with all four bound dependencies. Its complete report agrees except for elapsed time: symbolic polynomial identities, the actual F8 seed, 101 torus-order degrees, 2,500 gcd pairs, 87 prime-quotient checks and the rank-five parameters all pass. The original report was not overwritten. See [the independent run record](phase7_suzuki_audit_run.json).
+
+A separate [binary checker](phase7_suzuki_binary_audit.py), importing no Suzuki arithmetic or group library, exhausts all 65,536 binary matrices. It finds 720 symplectic matrices, verifies the exceptional map's square on each, and finds exactly 20 fixed matrices, precisely the group generated by r and w. Its fixed centralizer of M consists only of the identity. The full binary symplectic centralizer has order five. The [result](phase7_suzuki_binary_audit.json) independently checks the sign-selecting seed and its matrix convention; it does not prove the infinite construction by enumeration.
+
+Primary-source checks covered [De Medts–Naert §2](https://arxiv.org/abs/1904.10741) on the exceptional endomorphism, [Harper §2.2/equation (2.1)](https://arxiv.org/abs/2304.10213) on Lang–Steinberg, the standard matrix model in [Bray–Bäärnhielm](https://arxiv.org/abs/1706.05697), and [L114's maximal-subgroup table](https://ese-journals.unisalento.it/index.php/notemat/article/download/i15900932v19n1p43/837). These classical inputs remain credited. L110 Construction 9 was read as a subgroup-type/intersection pattern; the reviewed theorem establishes an explicitly aligned family, not every possible embedding or a corrected exhaustive classification.
+
+I also inspected `CosetCoordinates.lean` and its scope note. They formalize the abstract coordinate-attachment implication and converse. They do not formalize Lang–Steinberg, the torus calculation, Suzuki maximality, the arithmetic prime choices, or the complete geometric application. No full Lean proof of Theorem A is claimed.
+
+No mathematical gap was found in the reviewed scope. In particular, this audit does not assert a geometric intersection-property axiom, a classification of all Suzuki geometries, or verified publication priority.
