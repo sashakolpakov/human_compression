@@ -12,12 +12,12 @@ have reviewed principal dispositions. The other 55 historical originals remain a
 reviewed source dispositions for all 105 mathematical originals, including
 surviving claims after a refutation, then stop.
 
-L029 now also has a complete reviewed treatment of its surviving source claims.
-Thus 92 originals are fully treated: 91 ordinary recoveries and one complete
-source treatment after a principal refutation. Eight other refuted originals
-and five without a principal disposition retain completion obligations: 13
-originals remain. The principal-disposition count stays 100, the ordinary
-recovery count stays 91, and the stopping condition is unchanged.
+F003 and L029 now have complete reviewed treatments of their surviving source
+claims. Thus 93 originals are fully treated: 91 ordinary recoveries and two
+complete source treatments after principal refutations. Seven other refuted
+originals and five without a principal disposition retain completion
+obligations: 12 originals remain. The principal-disposition count stays 100,
+the ordinary recovery count stays 91, and the stopping condition is unchanged.
 
 The `F003 correction <../corrections/suzuki-rank/v1/PUBLICATION.rst>`_ refutes
 Theorem 1.1 of the fixed arXiv:2010.04080v1 edition through an explicit
@@ -32,6 +32,14 @@ while the specified C-plus group has order 1092. An actual rank-two residue
 is two disconnected six-cycles. The rank-three proposition and specified-
 group qualification remain separate. This principal refutation adds no
 ordinary recovery, measurement, new-question or Lean credit.
+
+The `complete F003 volume <../papers/corrections/F003/v1/complete.pdf>`_
+treats all 19 source rows in the fixed four-page preprint. Six supplement
+pages prove the corrected criterion for symmetric Suzuki matrices and
+retain all six source algebra cases and the final generation argument
+under their exact hypotheses. The accepted five-page rank-four
+counterexample follows unchanged. This closes the surviving source
+obligation without adding a recovery, refutation, measurement or Lean credit.
 
 The `complete L029 volume <../papers/corrections/L029/v1/complete.pdf>`_
 now treats all 19 source claims. Seven synthesis pages prove the valid
