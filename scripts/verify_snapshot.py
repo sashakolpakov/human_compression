@@ -6859,10 +6859,15 @@ def check_F003_completion():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_L036_completion():
+    spec=importlib.util.spec_from_file_location('L036_completion',ROOT/'scripts/check_L036_completion.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_F003_completion()
+    current = check_L036_completion()
     print(json.dumps(current, sort_keys=True))
-    print('PASS: F003 complete source supplement; 93 fully treated originals and 12 remaining.')
+    print('PASS: L036 complete source supplement; 94 fully treated originals and 11 remaining.')
     print('Scope: prior accepted science preserved; no new ordinary recovery, principal refutation, measurement or Lean credit.')
 
 if __name__=='__main__':

@@ -1,0 +1,151 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,hyperref}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}[proposition]{Theorem}
+\newcommand{\core}{\operatorname{core}}
+\newcommand{\Aut}{\operatorname{Aut}}
+\title{Keeping subgroup identities in a coset action}
+\author{Human Compression project}
+\date{}
+\begin{document}\maketitle
+
+Algorithm 3.1 of Leemans and Rodrigues~\cite{LR} takes an arbitrary
+group as input. It passes maximal subgroups to a coset action and then
+takes their full inverse images. This operation can replace a maximal
+subgroup by the whole group. We give the exact obstruction and a repair
+that leaves the orbit computation unchanged. The issue does not arise
+for the nonabelian simple groups in the source's numerical tables.
+
+\section{The inverse image of a subgroup image}
+Let $G$ be finite, let $H$ be a maximal proper subgroup, and let
+$\varphi:G\longrightarrow\operatorname{Sym}(H\backslash G)$
+be the action on right cosets by right multiplication. Its kernel is
+\[
+ N=\core_G(H)=\bigcap_{g\in G}g^{-1}Hg.
+\]
+In particular this action need not be faithful, contrary to the
+unqualified assertion on source page~4.
+
+\begin{proposition}\label{preimage}
+For every subgroup $K\leq G$,
+$\varphi^{-1}(\varphi(K))=KN$.
+If $K$ is maximal proper, this inverse image equals $K$ when
+$N\leq K$, and equals $G$ otherwise. For a point $x=Hg$, however,
+\[
+ \varphi^{-1}\bigl(\varphi(G)_x\bigr)=g^{-1}Hg.
+ \tag{1}
+\]
+\end{proposition}
+\begin{proof}
+An element $y$ has image in $\varphi(K)$ exactly when
+$\varphi(y)=\varphi(k)$ for some $k\in K$, or equivalently
+$k^{-1}y\in N$. This proves the first equality. Normality of $N$
+makes $KN$ a subgroup containing $K$; maximality gives the stated
+dichotomy. Finally $\varphi(y)$ fixes $Hg$ exactly when
+$Hgy=Hg$, equivalently $gyg^{-1}\in H$. This proves (1), with
+no faithfulness assumption.
+\end{proof}
+
+The printed algorithm calls its image subgroup $M_2$ and outputs
+$\{\varphi^{-1}(M_2),\varphi^{-1}(G_x)\}$. In this notation,
+if the original subgroup was $K$, the actual output is
+$\{KN,g^{-1}Hg\}$. The separate instruction to compute the orbits
+of an undefined $K$ is an evident notation error; interpreting it as
+the just-constructed image subgroup does not repair the inverse-image
+problem.
+
+\section{A counterexample of order four}
+Take the additive group $G=\mathbb F_2^2$ with distinct order-two
+subgroups $H=\langle(1,0)\rangle$ and
+$K=\langle(0,1)\rangle$. Both are maximal, and $N=H$. On the two
+cosets of $H$, the image of $K$ is transitive. Its one orbit therefore
+has size two and passes the printed orbit-size test. For either
+representative point the printed output is
+\[
+                   \{G,H\},
+\]
+since $KH=G$ and every point stabilizer in the image is trivial.
+This is not a pair of maximal proper subgroups. The resulting coset
+incidence graph has one vertex on its $G$ side and two on its $H$
+side. Each of the latter has degree one, so the geometry is not firm.
+By contrast the pair $\{K,H\}$ gives the complete bipartite graph
+$K_{2,2}$ and is firm.
+
+The small accompanying certificate enumerates the four elements and
+their three maximal subgroups. Each of the six ordered choices of
+distinct subgroups produces the same obstruction. It also constructs
+the two incidence graphs just described. This finite calculation
+checks the counterexample; Proposition~\ref{preimage} proves the
+obstruction for all finite groups.
+
+\section{The corrected algorithm}
+Keep the list of original maximal subgroups together with their images.
+For each original pair $H,K$ in the representative list, compute the
+$\varphi(K)$-orbits on $H\backslash G$. For a representative $x$
+of each orbit of size greater than one, output
+\[
+             \{K,\varphi^{-1}(\varphi(G)_x)\}.
+ \tag{2}
+\]
+As in the source, retain only one pair from each orbit of $\Aut(G)$
+on unordered pairs. This last step is a required equivalence test,
+not something supplied by the coset orbit calculation alone.
+
+\begin{theorem}\label{correct}
+The corrected algorithm produces precisely the unordered pairs of
+distinct maximal proper subgroups, up to the equivalence specified in
+the source. Consequently it classifies the source's firm, connected,
+flag-transitive primitive coset geometries of rank two for every finite
+group, subject to a complete maximal-subgroup list and an exact
+automorphism-equivalence test.
+\end{theorem}
+\begin{proof}
+For $x=Hg$, put $H_x=g^{-1}Hg$. By (1) this is the second subgroup
+in (2), so both output subgroups are maximal proper. The orbit size is
+\[
+                 |x^K|=[K:K\cap H_x].
+\]
+It equals one exactly when $K\leq H_x$, which by maximality is
+equivalent to $K=H_x$. Thus the orbit-size condition retains exactly
+the distinct pairs. Such a pair generates $G$: a subgroup containing
+both would strictly contain a maximal subgroup. Both residue sizes
+$[K:K\cap H_x]$ and $[H_x:K\cap H_x]$ are at least two, proving
+firmness. Generation gives connectedness, and right multiplication
+is transitive on incident pairs of cosets: any element in their
+intersection carries the standard incident pair to that pair.
+
+For completeness, start with any ordered pair $A,B$ of distinct
+maximal subgroups. Conjugate it so that $B$ becomes a chosen
+representative $K$. The resulting first subgroup is $g^{-1}Hg$ for
+some chosen representative $H$ and some $g\in G$. The point $Hg$
+lies in a $K$-orbit whose chosen representative is $Hgk$ for some
+$k\in K$. Its stabilizer is $k^{-1}g^{-1}Hgk$. Conjugation by $k$
+fixes $K$ and carries the previous pair to the produced pair. The
+orbit is nonsingleton because the subgroups are distinct. Hence every
+pair is produced up to inner conjugacy; the final exact test takes
+the required quotient by all automorphisms and type interchange.
+\end{proof}
+
+If $G$ is nonabelian simple, every proper maximal subgroup has trivial
+core. Proposition~\ref{preimage} then shows that the printed
+inverse-image step already returns $K$. The correction above therefore
+does not explain discrepancies in the sporadic numerical tables; those
+are separate source claims.
+
+The subgroup-orbit method, the orbit-size test and the final
+automorphism test originate in~\cite{LR}. The kernel identity and the
+orbit-stabilizer theorem are elementary group theory. The contribution
+here is the diagnosis of the stated arbitrary-group scope, its explicit
+counterexample, and the correction retaining the original subgroup.
+No new classification of the sporadic incidence graphs, Lean proof or
+compression measurement is claimed by this component.
+
+\begin{thebibliography}{1}
+\bibitem{LR} D. Leemans and B. G. Rodrigues,
+\emph{On primitive geometries of rank two},
+The Art of Discrete and Applied Mathematics 2 (2019), P1.08,
+\href{https://doi.org/10.26493/2590-9770.1301.165}{doi:10.26493/2590-9770.1301.165},
+pages 4--5, Algorithm 3.1.
+\end{thebibliography}
+\end{document}

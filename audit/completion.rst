@@ -12,11 +12,11 @@ have reviewed principal dispositions. The other 55 historical originals remain a
 reviewed source dispositions for all 105 mathematical originals, including
 surviving claims after a refutation, then stop.
 
-F003 and L029 now have complete reviewed treatments of their surviving source
-claims. Thus 93 originals are fully treated: 91 ordinary recoveries and two
-complete source treatments after principal refutations. Seven other refuted
-originals and five without a principal disposition retain completion
-obligations: 12 originals remain. The principal-disposition count stays 100,
+F003, L029 and L036 now have complete reviewed treatments of their surviving
+source claims. Thus 94 originals are fully treated: 91 ordinary recoveries
+and three complete source treatments after principal refutations. Six other
+refuted originals and five without a principal disposition retain completion
+obligations: 11 originals remain. The principal-disposition count stays 100,
 the ordinary recovery count stays 91, and the stopping condition is unchanged.
 
 The `F003 correction <../corrections/suzuki-rank/v1/PUBLICATION.rst>`_ refutes
@@ -32,6 +32,18 @@ while the specified C-plus group has order 1092. An actual rank-two residue
 is two disconnected six-cycles. The rank-three proposition and specified-
 group qualification remain separate. This principal refutation adds no
 ordinary recovery, measurement, new-question or Lean credit.
+
+The `complete L036 volume <../papers/corrections/L036/v1/complete.pdf>`_
+treats all 35 source claims in the fixed twelve-page journal article.
+A common double-coset parameter set and exact counting formulas account
+for all twelve groups. The Rudvalis total is 556287; all 308 suborbit
+cells, 37 M11 graph rows and 70 design entries are checked, with two
+subgroup labels and four type-diameter pairs corrected. The general
+coset algorithm receives a separate correction. The 24-page volume
+retains the accepted principal proof and explicit classification premises.
+External representative files remain unverified; no expanded catalogue
+or compression measurement is claimed. This adds no ordinary recovery,
+principal refutation, question or Lean credit.
 
 The `complete F003 volume <../papers/corrections/F003/v1/complete.pdf>`_
 treats all 19 source rows in the fixed four-page preprint. Six supplement
@@ -65,8 +77,9 @@ new-question or Lean credit.
 
 The `Rudvalis correction <../corrections/rudvalis-rank-two/v1/PUBLICATION.rst>`_
 proves at least 50,669 unordered Aut(G) classes, contradicting L036's printed
-total 1,511. It does not give the corrected exact total or recover the other
-eleven table rows. The `scalar-plane correction
+total 1,511. That earlier correction established only the lower bound. The complete
+L036 treatment linked above now supplies the exact total and the other
+eleven counts. The `scalar-plane correction
 <../corrections/projective-subfield-planes/v1/PUBLICATION.rst>`_ supplies one
 omission in the two separate fixed sources L063 and L064. Its PSL2(512)
 geometry has local degrees 9 and 8; nine exhibited planes are not a count

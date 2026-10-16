@@ -1,0 +1,313 @@
+"""Portable exact L036 completion; no private-file fallback or new acquisition."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+from pathlib import Path
+import argparse
+import copy
+import hashlib
+import importlib.util
+import io
+import json
+import shutil
+import subprocess
+import time
+from pypdf import PdfReader
+import pack_codec as codec
+from prior_transport_reader import Archive
+
+S = '/Users/sasha/medusa/research/leemans'
+R = '/Users/sasha/medusa/math_compression'
+F = S + '/geometry/primitive_pairs'
+A = F + '/source_synthesis'
+ROOT = F + '/source_synthesis_root_review'
+ROOT_SHA = 'b19a2543b1d33ebc1d317c719a4151a20fc3c601fbc5808cb0c82ca46335e5b9'
+AUTHOR_SHA = '2942706b2a9f7e61f96a0faff4dad0a588d4e60cb42507781f21854baba5826c'
+PREFIX = 'audit/principal-refutations/L036/complete/v1'
+PAPER = 'papers/corrections/L036/v1'
+need = codec.need
+
+
+def load(path):
+    return json.loads(path.read_text())
+
+
+def pin(path):
+    size, digest = codec.digest_file(path)
+    return dict(path=str(path), bytes=size, sha256=digest)
+
+
+def exact(path, row):
+    need(codec.digest_file(path) == (row['bytes'], row['sha256']), 'exact file: ' + str(path))
+
+
+def metadata(ar):
+    t = ar.t
+    need(t['format'] == 'L036_COMPLETION_EXACT_CONTENT_V1', 'known transport format')
+    need(t['root_acceptance']['sha256'] == ROOT_SHA and t['author_manifest']['sha256'] == AUTHOR_SHA,
+         'exact accepted root and author')
+    root = ar.load(ROOT + '/manifest.json')
+    need(root['status'] == 'ACCEPTED_L036_COMPLETE_CORRECTED_SOURCE_TREATMENT', 'accepted complete-source status')
+    rows = ar.load(ROOT + '/dependencies.json')
+    rows += [dict(r, path=ROOT + '/' + r['path']) for r in root['exports']]
+    rows.append(t['root_acceptance'])
+    declared = {r['path']: r for r in rows}
+    need(len(rows) == len(declared) and set(declared) == set(ar.originals), 'exact whole accepted closure')
+    for row in rows:
+        ar.exact(row)
+    author = ar.load(A + '/manifest.json')
+    for row in author['exports']:
+        ar.exact(dict(row, path=A + '/' + row['path']))
+    for row in ar.load(A + '/dependencies.json'):
+        ar.exact(row)
+    candidate = load(ar.stage / PREFIX / 'premise_candidates.json')
+    need(candidate['author_sha256'] == AUTHOR_SHA, 'bound premise candidate edition')
+    expected = {}
+    source_occurrences = environment_occurrences = 0
+    for row in candidate['premises']:
+        ar.exact({k: row[k] for k in ['path','bytes','sha256']})
+        if row['kind'] == 'PINNED_ENVIRONMENT_OR_LIBRARY_PREMISE':
+            need(row['path'].startswith('/opt/homebrew/'), 'environment is installed software or library')
+            environment_occurrences += 1
+        else:
+            need(row['kind'] == 'ORIGINAL_SOURCE_DOCUMENTARY_PREMISE', 'explicit documentary kind')
+            need(row['path'].endswith(('.pdf','.txt','.png','-spans.json')), 'original document form')
+            source_occurrences += 1
+        item = dict(kind=row['kind'], bytes=row['bytes'], sha256=row['sha256'],
+                    exact_locator=row['path'], reason=row['reason'])
+        expected.setdefault(row['sha256'], item)
+    need(source_occurrences == candidate['documentary_count'] == 23 and
+         environment_occurrences == candidate['environment_count'] == 196, 'exact premise occurrence counts')
+    actual = {h:r for h,r in ar.objects.items() if r['kind'] not in ['NEW_PACKED_EXACT_CONTENT','EXISTING_PUBLIC']}
+    premises = {r['sha256']:r for r in t['premises']}
+    need(actual == expected == premises and len(t['premises']) == 218,
+         'all and only exact original-document and environment premises')
+    return dict(root_closure=len(rows), author_exports=len(author['exports']))
+
+
+def module(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--repo', type=Path, required=True)
+    parser.add_argument('--stage', type=Path)
+    parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--expected-stage', required=True)
+    parser.add_argument('--expected-transport', required=True)
+    parser.add_argument('--render', action='store_true')
+    args = parser.parse_args()
+    start = time.monotonic()
+    repo = args.repo.resolve()
+    stage = args.stage.resolve() if args.stage else repo
+    d = stage / PREFIX
+    need(args.out.is_absolute() and not args.out.exists(), 'fresh absolute output')
+    need(shutil.disk_usage(args.out.parent).free >= 4 * 2**30 + 40 * 2**20, 'unchanged 4GiB replay reserve')
+    need(pin(d / 'manifest.json')['sha256'] == args.expected_stage, 'externally pinned stage')
+    need(pin(d / 'transport.json')['sha256'] == args.expected_transport, 'externally pinned transport')
+    manifest = load(d / 'manifest.json')
+    need(manifest['status'] == 'PRIVATE_L036_COMPLETION_STAGE_PENDING_OPERATIONAL_REVIEW', 'known stage status')
+    exports = {r['path']: r for r in manifest['exports']}
+    need(len(exports) == len(manifest['exports']), 'unique stage exports')
+    for row in exports.values():
+        exact(codec.resolve(row['path'], [stage]), row)
+    for row in load(d / 'reused_tools.json'):
+        exact(d / row['path'], row)
+    t = load(d / 'transport.json')
+    policy = load(d / 'premises.json')
+    need(policy == dict(root=t['root_acceptance'], premises=t['premises']), 'exact premise inventory')
+    ar = Archive(stage, repo, t)
+    closure = metadata(ar)
+    packs = {r['path']: r for r in t['packs']}
+    need(len(packs) == len(t['packs']), 'unique packs')
+    need({str(p.relative_to(stage)) for p in (d / 'packs').rglob('*') if p.is_file()} == set(packs), 'complete physical pack inventory')
+    for name, row in packs.items():
+        need(exports.get(name) == row and 0 < row['bytes'] <= 48 * 2**20, 'bounded exact pack')
+    public = {r['path']: r for r in t['existing_public_files']}
+    need(len(public) == len(t['existing_public_files']), 'unique public reuse files')
+    tracked = set(subprocess.run(['git', '-C', str(repo), 'ls-files', '-z'], check=True,
+                                capture_output=True).stdout.decode().split('\0'))
+    for name, row in public.items():
+        need(name in tracked, 'reused content is tracked')
+        exact(codec.resolve(name, [repo]), row)
+    spans = {name: [] for name in packs}
+    used_public = set()
+    verified = decoded = 0
+    for h, row in ar.objects.items():
+        need(h == row['sha256'], 'object hash identity')
+        if row['kind'] == 'NEW_PACKED_EXACT_CONTENT':
+            for segment in row['segments']:
+                need(segment['path'] in packs, 'declared new pack')
+                spans[segment['path']].append((segment['offset'], segment['offset'] + segment['bytes']))
+            roots = [stage]
+        elif row['kind'] == 'EXISTING_PUBLIC':
+            name = row['public_path']
+            old = public[name]
+            need(row['encoding'] == 'identity' and (row['bytes'], h) == (old['bytes'], old['sha256']), 'exact old complete object')
+            need(row['segments'] == ([dict(path=name, offset=0, bytes=old['bytes'])] if old['bytes'] else []), 'complete old public file')
+            used_public.add(name)
+            roots = [repo]
+        else:
+            continue
+        codec.verify(row, roots)
+        verified += 1
+        decoded += row['bytes']
+    for name, ranges in spans.items():
+        end = 0
+        for lo, hi in sorted(ranges):
+            need(lo == end and hi > lo, 'nonoverlapping exact pack coverage')
+            end = hi
+        need(end == packs[name]['bytes'], 'no unindexed packed bytes')
+    need(used_public == set(public), 'no unused public declarations')
+    args.out.mkdir()
+    selected = args.out / 'selected'
+    selected.mkdir()
+    def select(original, name):
+        dest=selected/name
+        dest.parent.mkdir(parents=True,exist_ok=True)
+        ar.extract(original,dest)
+        return dest
+    joined=module(select(A+'/check.py','assembly.py'),'accepted_L036_assembly')
+    # Redirect only declared read interfaces; no private-path fallback exists.
+    joined.P=Path(F)
+    joined.load=lambda path: ar.load(str(path))
+    joined.verify=lambda row,base=None: ar.exact(row if base is None else dict(row,path=str(base/row['path'])))
+    claims=ar.load(A+'/claims.json');joined.ledger_check(claims)
+    groups=ar.load(A+'/group_inputs.json');joined.group_check(groups)
+    for name,status in joined.GATES.items():
+        need(ar.load(F+'/'+name+'/manifest.json')['status']==status,'accepted distinct component gate')
+    for row in ar.load(A+'/imports.json'):
+        ar.exact(row['source'])
+        need(ar.content(row['source']['path'])==ar.content(A+'/'+row['destination']['path']),'exact accepted proof import')
+    deltas=ar.load(A+'/edition_deltas.json')
+    need(deltas['frozen_application_unchanged'] and len(deltas['changes'])==3,'explicit final edition scope')
+    for row in deltas['changes']:
+        before=ar.content(row['source']['path']).decode()
+        for change in row['replacements']:
+            need(before.count(change['before'])==change['count'],'exact textual occurrence count')
+            before=before.replace(change['before'],change['after'])
+        need(before.encode()==ar.content(A+'/'+row['destination']['path']),'only declared final-edition delta')
+    ca=module(select(F+'/character_application/arithmetic.py','character_arithmetic.py'),'L036_character_arithmetic')
+    char_raw=ar.content(F+'/character_execution01/stdout')
+    char_data=ca.parse(char_raw)
+    char_expected=ar.load(F+'/character_application/arithmetic01.json')
+    need(ca.calculate(char_data)==char_expected['groups'],'all five acquired character calculations')
+    need(ca.damaged_controls(char_data)==char_expected['controls'],'character damage controls')
+    ma=module(select(F+'/table_application/arithmetic.py','mark_arithmetic.py'),'L036_mark_arithmetic')
+    mark_raw=ar.content(F+'/table_execution01/stdout')
+    mark_data,intervals=ma.parse(mark_raw)
+    mark_result=ma.calculate(mark_data)
+    mark_result.update(literal_GAP_interval_adapter=intervals,input_sha256=hashlib.sha256(mark_raw).hexdigest())
+    need(mark_result==ar.load(F+'/table_application/results.json'),'all eleven acquired mark calculations')
+    mj=module(select(F+'/table_application/join.py','mark_join.py'),'L036_mark_join')
+    mark_join=mj.compare(ar.load(F+'/table_application/printed01/tables.json'),mark_result,char_expected)
+    need(mark_join==ar.load(F+'/table_application/source_join.json'),'all308 suborbit joins and M23 labels')
+    vg=module(select(F+'/m11_application/verify_graphs.py','verify_graphs.py'),'L036_verify_graphs')
+    data=ar.load(F+'/m11_graph_request02/inputs.json')
+    result=ar.load(F+'/m11_graph_execution01/stdout')
+    need(result['input_sha256']==ar.record(F+'/m11_graph_request02/inputs.json')['sha256'],'actual M11 input binding')
+    literal=vg.verify(data,result)
+    need(literal==ar.load(F+'/m11_application/author01/literal.json'),'all37 M11 graph certificates')
+    gj=module(select(F+'/m11_application/join.py','m11_join.py'),'L036_m11_join')
+    sys.modules['join']=gj
+    corrections=module(select(F+'/m11_application/corrections.py','m11_corrections.py'),'L036_m11_corrections')
+    source=ar.load(F+'/m11_application/printed.json')
+    need(gj.compare(source,result)==ar.load(F+'/m11_application/source_join01.json'),'unaltered failed original join')
+    corrected=corrections.corrected(source,result)
+    need(corrected==ar.load(F+'/m11_application/source_join_corrected.json'),'four explicit diameter corrections and70 unchanged designs')
+    alias=module(select(F+'/m11_application/verify_alias.py','verify_alias.py'),'L036_verify_alias')
+    alias_source=S+'/algebra/subgroup_atlas/structural_labels_pilot_v1/discovery01/m11_13.json'
+    alias.SOURCE=select(alias_source,'alias_source.json')
+    alias_result=alias.verify(ar.load(F+'/m11_application/gl23.stdout'))
+    need(alias_result==ar.load(F+'/m11_application/author01/alias.json'),'all2304 matrix products')
+    imports=ar.load(F+'/m11_application/imports.json')['imports']
+    need(sorted(r['actual_class'] for r in imports)==[1,2,4,5,7,8,10,12,17,18,21,23,27,29,30,31,34,35,37,38],'20 structural imports')
+    for row in imports:
+        for key in ['record','author','accepted_review']:ar.exact(row[key])
+        record=ar.load(row['record']['path']);author=ar.load(row['author']['path'])
+        need(dict(row['record'],path=str(Path(row['record']['path']).relative_to(Path(row['author']['path']).parent))) in author['exports'],'literal record in author manifest')
+        need(ar.load(row['accepted_review']['path'])['status'].startswith('ACCEPTED'),'accepted imported structural proof')
+        if row['kind']=='small_structural':
+            origin=record['source'];generators=record['permutation_generators'];actual=origin['actual_record'];source_row=origin['row']
+        elif row['kind']=='mathieu_stabilizer':
+            choices=[x for x in record if x['actual_record']==row['actual_class']];need(len(choices)==1,'unique stabilizer record')
+            origin=choices[0];generators=origin['actual_generators'];actual=origin['actual_record'];source_row=origin['row']
+        else:
+            choices=[x for x in record if x['source']['actual_record']==row['actual_class']];need(len(choices)==1,'unique atom record')
+            generators=choices[0]['actual_generators'];origin=choices[0]['source'];actual=origin['actual_record'];source_row=origin['row']
+        need(actual==row['actual_class'] and source_row==row['source_atlas_row'] and generators==data['subgroup_generators'][actual-1],'literal subgroup generators identify imported structure')
+    example=module(select(F+'/algorithm_scope/example.py','example.py'),'L036_algorithm_example')
+    witness=example.check()
+    need(witness==ar.load(F+'/algorithm_scope/example.json'),'exact order-four counterexample')
+    gate=ar.load(R+'/audit/principal-refutations/L036/v1/admission.json')
+    need(gate['principal_refutation_credit']==1 and gate['ordinary_recovery_credit']==0,'prior principal credit unchanged')
+    damages=[]
+    for name,mutation in [
+        ('missing_source_claim',lambda d:d['claims'].pop()),
+        ('false_recovery_credit',lambda d:d.update(ordinary_recovery_credit=1)),
+        ('external_files_promoted',lambda d:d.update(external_representative_files_verified=True)),
+        ('borrowed_premises_hidden',lambda d:d.update(borrowed_premises=[])),
+    ]:
+        bad=copy.deepcopy(claims);mutation(bad)
+        try:joined.ledger_check(bad)
+        except ValueError:damages.append(name)
+        else:raise ValueError('damaged scope accepted')
+    bad=copy.deepcopy(result);bad['graphs'][0]['adjacency'][0].pop()
+    try:vg.verify(data,bad)
+    except ValueError:damages.append('missing_incidence')
+    else:raise ValueError('damaged graph accepted')
+    bad=copy.deepcopy(source);bad['table4'][0]['lambda_value']+=1
+    need(corrections.corrected(bad,result)['status']=='PRINTED_ROW_DISCREPANCY','printed damage remains discrepancy')
+    damages.append('printed_design_discrepancy_retained')
+    paper=stage/PAPER
+    readable=['completion.tex','completion.pdf','complete.tex','complete.pdf','claims.json','group_inputs.json',
+              'edition_deltas.json','imports.json','README.rst','proofs/tables.tex',
+              'proofs/m11_corrections.py','proofs/m11_source_join_corrected.json']
+    readable+=['proofs/'+stem+ext for stem in ['principal','theory','characters','marks','algorithm','m11'] for ext in ['.tex','.pdf']]
+    for name in readable:exact(paper/name,ar.record(A+'/'+name))
+    volume=PdfReader(paper/'complete.pdf');need(len(volume.pages)==24,'full readable volume')
+    offset=1
+    for name,count in joined.PARTS:
+        doc=PdfReader(paper/name);need(len(doc.pages)==count,'complete component page count')
+        for page in doc.pages:joined.embedded_page_check(page,volume.pages[offset]);offset+=1
+    need(offset==24,'all23 mathematical pages included')
+    runs=[]
+    def run(label,command,cwd=None,timeout=30):
+        start_run=time.monotonic();result_run=subprocess.run(command,cwd=cwd,stdin=subprocess.DEVNULL,capture_output=True,timeout=timeout)
+        (args.out/(label+'.stdout')).write_bytes(result_run.stdout);(args.out/(label+'.stderr')).write_bytes(result_run.stderr)
+        runs.append(dict(label=label,command=command,returncode=result_run.returncode,seconds=time.monotonic()-start_run))
+        need(result_run.returncode==0 and not result_run.stderr,'clean replay: '+label)
+    native_pages=0
+    if args.render:
+        native=args.out/'native';(native/'proofs').mkdir(parents=True)
+        texbin,gs=shutil.which('pdflatex'),shutil.which('gs');need(texbin and gs,'native tools available')
+        for name in readable:
+            if name.endswith('.tex'):
+                target=native/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(paper/name,target)
+        for name in ['proofs/principal','proofs/theory','proofs/characters','proofs/marks','proofs/algorithm','proofs/m11','completion','complete']:
+            tex=native/(name+'.tex')
+            for n in [1,2]:run(tex.stem+'_tex'+str(n),[texbin,'-interaction=nonstopmode','-halt-on-error',tex.name],cwd=tex.parent)
+            log=tex.with_suffix('.log').read_text();need('Overfull' not in log and 'undefined' not in log,'native document warnings')
+            joined.compare_pdfs(paper/(name+'.pdf'),tex.with_suffix('.pdf'))
+        run('native_render',[gs,'-q','-dSAFER','-dBATCH','-dNOPAUSE','-sDEVICE=png16m','-r105','-sOutputFile='+str(native/'page-%02d.png'),str(native/'complete.pdf')])
+        images=sorted(native.glob('page-*.png'));need(len(images)==24,'all24 native pages')
+        for n,path in enumerate(images,1):need(path.read_bytes()==ar.content(A+f'/author01/complete-{n:02d}.png'),'exact accepted native raster')
+        native_pages=len(images)
+    run('codec_controls',[sys.executable,str(d/'codec_controls.py'),'--out',str(args.out/'codec_controls')])
+    for flag in ['-O','-OO']:
+        guard=subprocess.run([sys.executable,flag,str(d/'portable_check.py')],capture_output=True,timeout=10)
+        need(guard.returncode!=0 and b'ordinary Python required' in guard.stderr,'portable optimization guard')
+    report=dict(status='PASS_PORTABLE_L036_SOURCE_COMPLETION',stage_manifest=pin(d/'manifest.json'),transport=pin(d/'transport.json'),root_acceptance=t['root_acceptance'],**closure,
+                logical_files=len(ar.rows),unique_objects=len(ar.objects),verified_payload_objects=verified,verified_decoded_bytes=decoded,premise_objects=len(t['premises']),documentary_premise_occurrences=23,environment_premise_occurrences=196,existing_public_files=len(public),
+                restored_selected_files=sum(f.is_file() for f in selected.rglob('*')),character_groups=5,mark_tables=11,suborbit_cells=308,M11_geometry_rows=37,M11_design_entries=70,structural_imports=20,literal_graph_result=literal,matrix_result=alias_result,algorithm_witness=witness,
+                claim_and_finite_damage_controls=damages,native_entry_points=8,native_pages=native_pages,mathematical_pages=23,volume_pages=24,page_streams_and_font_programs_match=True,codec_controls=load(args.out/'codec_controls/report.json'),optimization_guards=2,
+                new_group_acquisitions=0,principal_acquisition_repeated=False,ordinary_recovery_delta=0,principal_refutation_delta=0,surviving_claim_registration_delta=0,new_Lean=0,mathematical_compression_measurement=None,seconds=time.monotonic()-start,runs=runs)
+    (args.out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+    print(json.dumps({k:v for k,v in report.items() if k not in ['runs','algorithm_witness','codec_controls']}))
+
+if __name__=='__main__':main()
