@@ -22,13 +22,13 @@ programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
 partition. L022 has no factor or measured-original credit.
 
-F003, L029, L036, L110 and L114 now have complete reviewed treatments of
-their surviving source claims. Thus 97 originals are fully treated: 92
-ordinary recoveries and five complete source treatments after principal
-refutations. Four other refuted originals and four without a principal
-disposition retain completion obligations: 8 originals remain. There are
-101 principal dispositions and 92 ordinary recoveries; the stopping condition
-is unchanged.
+F003, L029, L036, L110, L114 and L115 now have complete reviewed treatments
+of their surviving source claims. Thus 98 originals are fully treated:
+92 ordinary recoveries and six complete source treatments after principal
+refutations. Three other refuted originals and four without a principal
+disposition retain completion obligations: 7 originals remain. There are
+101 principal dispositions and 92 ordinary recoveries; the stopping
+condition is unchanged.
 
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
@@ -80,6 +80,17 @@ premises and stronger unproved variants remain explicit; no complete corrected
 classification or compression factor is claimed. This closes one source
 obligation without adding an ordinary recovery, principal refutation,
 question or Lean credit.
+
+The `complete L115 proof collection <papers/corrections/L115/v1/README.rst>`_
+treats all 70 source dispositions in the 24-page article on rank-two Suzuki
+geometries. It gives the corrected general classification and counts,
+certifies all 180 torus integers and 60 numerical rows, and verifies the
+29 diagrams representing 75 inner classes. Eight complete manuscripts
+contain 36 proof pages, including the existing four-page principal
+refutation. Domain, counting and diagram corrections remain explicit,
+and classical structure results are attributed. This closes one source
+obligation without adding an ordinary recovery, principal refutation,
+question, Lean claim or compression measurement.
 
 The `complete L114 volume <papers/corrections/L114/v1/complete.pdf>`_
 treats all 61 claim rows in the fixed twenty-one-page article on rank-three
