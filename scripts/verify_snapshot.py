@@ -6884,10 +6884,15 @@ def check_L115_completion():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_L063_L064_completion():
+    spec=importlib.util.spec_from_file_location('L063_L064_completion',ROOT/'scripts/check_L063_L064_completion.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_L115_completion()
+    current = check_L063_L064_completion()
     print(json.dumps(current, sort_keys=True))
-    print('PASS: L115 complete source supplement; 98 fully treated originals and 7 remaining.')
+    print('PASS: L063_L064 complete source supplement; 100 fully treated originals and 5 remaining.')
     print('Scope: prior accepted science preserved; no new ordinary recovery, principal refutation, measurement or Lean credit.')
 
 if __name__=='__main__':

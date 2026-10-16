@@ -1,0 +1,21 @@
+from pathlib import Path
+import importlib.util,json,sys
+sys.dont_write_bytecode=True
+S=Path('/Users/sasha/medusa/research/leemans');P=S/'geometry/psl2_rank_two';O=Path('/private/tmp/psl2_source_synthesis_root01')
+spec=importlib.util.spec_from_file_location('flat',S/'reboot_20261013/component_adoption_flat_v2.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+c=m.Closure();c.packet('geometry/psl2_rank_two/source_synthesis')
+assert c.add(P/'source_synthesis/manifest.json')['sha256']=='2945e2fb811e92bc783b67f5edda97b638802f341652e7efba39ecd0acd8535e'
+r=json.loads((O/'report.json').read_text());assert r['status']=='PASS_L063_L064_COMPLETE_SOURCE_ASSEMBLY' and r['source_claims']=={'L063':122,'L064':28} and r['volume_pages']==52 and r['accepted_gates']==11 and r['embedded_page_streams_and_glyph_programs_match']
+for p in O.rglob('*'):
+ if p.is_file():c.add(p)
+c.add(__file__)
+status='ACCEPTED_L063_L064_COMPLETE_FIXED_SOURCE_TREATMENT'
+c.finish('geometry/psl2_rank_two/source_synthesis_root_review',status,dict(status=status,author='j3_recovery',reviewer='root',source_ids=['L063','L064'],source_pages={'L063':24,'L064':21},claim_counts={'L063':122,'L064':28},manuscript_pages=52,independence='Root reviewed the new synthesis and multiplier-field proof. Earlier component collaborations have their own distinct reviews and are imported exactly; no author self-review replaces those gates.',review=[
+ 'Read the entire six-page new synthesis and every disposition in both source ledgers. Read fixed L063 preliminary pages5–10 freshly, in addition to the source pages read during component reviews, and checked the explicit subgroup, representation and edition qualifications. The source scope concerns mathematical claims and consequences; historical computer runs remain attributed, not scientific premises.',
+ 'Checked the new multiplier-field normalizer lemma: finite endomorphism scalars form a field; the unique fixed point forces affine normalizers; the nontrivial complement restricts translation toV. Exact normalizer orders and the odd-degree square criterion give both displayed orbit lengths. The parameter k is maximal multiplier-field degree, not an arbitrary common divisor.',
+ 'The eleven accepted gates and twenty exact TeX/PDF imports preserve the independently reviewed affine, scalar, overgroup, exceptional, cyclic, arc and graph-group proofs. All44 table rows and nine Table9 crossreferences are assigned. Repeated families and empty square-field branches add no new configuration or refutation count.',
+ 'The published missing affine family, two unordered-count corrections, four corrected full graph groups, preliminary d>2 and index-factor corrections, missing S4 actions, subgroup-label/fixed-point factors, appendix auxiliary PGL error, three transporter denominator slips and two path/group-name slips have separate dispositions. No false auxiliary assertion is silently reused.',
+ 'The fixed21-page appendix begins with Lemma12 and ends with Proposition30. Its actual Lemma21 is distinguished from its false Proposition22 restriction. Advertised but absent appendix content is not invented. The corresponding published-paper obligations, including q25/S4 and all local arc lengths, are proved by their actual imported components.',
+ 'Fresh root replay passed831 dependency bindings,122+28ledger entries,52assembled pages, all imported drawing streams and glyph programs, six damaged-input/ledger controls and both optimization guards. Root directly viewed the cover and all six new native pages; the45imported proof pages retain their earlier mathematical and visual reviews.',
+ 'All remaining asserted mathematical claims of these two fixed originals now have reviewed dispositions, with classical subgroup theory, Tutte and PartI premises attributed. This is completion after the already recorded principal refutations. Public installation/registration is separate: this review adds no ordinary-recovery, principal-refutation, conjecture, Lean or compression credit.'
+],remaining_fixed_source_claims={'L063':[],'L064':[]},principal_disposition={'L063':'principal_statement_refuted','L064':'principal_statement_refuted'},complete_after_principal_refutation=['L063','L064'],public_registration_performed=False,new_principal_refutation_credit=0,new_named_open_questions_solved=0,compression_measurement=None))

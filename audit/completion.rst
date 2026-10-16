@@ -12,13 +12,12 @@ have reviewed principal dispositions. The other 55 historical originals remain a
 reviewed source dispositions for all 105 mathematical originals, including
 surviving claims after a refutation, then stop.
 
-F003, L029, L036, L110, L114 and L115 now have complete reviewed treatments
-of their surviving source claims. Thus 98 originals are fully treated:
-92 ordinary recoveries and six complete source treatments after principal
-refutations. Three other refuted originals and four without a principal
-disposition retain completion obligations: 7 originals remain. There are
-101 principal dispositions and 92 ordinary recoveries; the stopping
-condition is unchanged.
+F003, L029, L036, L063, L064, L110, L114 and L115 now have complete reviewed
+treatments of their surviving source claims. Thus 100 originals are fully
+treated: 92 ordinary recoveries and eight complete source treatments after
+principal refutations. L046 and four originals without a principal disposition
+retain completion obligations: 5 originals remain. There are 101 principal
+dispositions and 92 ordinary recoveries; the stopping condition is unchanged.
 
 The `F003 correction <../corrections/suzuki-rank/v1/PUBLICATION.rst>`_ refutes
 Theorem 1.1 of the fixed arXiv:2010.04080v1 edition through an explicit
@@ -33,6 +32,18 @@ while the specified C-plus group has order 1092. An actual rank-two residue
 is two disconnected six-cycles. The rank-three proposition and specified-
 group qualification remain separate. This principal refutation adds no
 ordinary recovery, measurement, new-question or Lean credit.
+
+The `shared L063 and L064 volume <../papers/corrections/psl2_rank_two/v1/complete.pdf>`_
+contains one 52-page collection and separate ledgers for 122 claims in the
+published article and 28 in its fixed appendix. It retains the accepted
+affine omission and gives complete counts from scalar spaces and normalizers,
+all 44 printed local arc values, and proofs of the stated full graph groups
+with four corrected groups. Unordered counts, empty parameter branches and
+preliminary or appendix errors have separate dispositions. Ten accepted
+proofs are reused exactly; the common theory, classical premises and new
+source joins remain explicit. This completes two originals without duplicating
+the shared manuscript or adding a recovery, principal refutation, question,
+Lean claim or compression measurement.
 
 The `complete L110 volume <../papers/corrections/L110/v1/complete.pdf>`_
 treats all 63 claim rows in the fixed twenty-page article on Suzuki
@@ -122,7 +133,9 @@ eleven counts. The `scalar-plane correction
 omission in the two separate fixed sources L063 and L064. Its PSL2(512)
 geometry has local degrees 9 and 8; nine exhibited planes are not a count
 of geometry classes. The L064 target is the proof of Proposition 22, not
-Lemma 21. Retained classical inputs and all unpaid results remain explicit.
+Lemma 21. That earlier correction concerned the principal omission. The
+complete joint treatment above now disposes of the remaining assertions in
+both fixed sources, with classical premises explicit.
 
 The `L046 count correction <../corrections/onan-map-count/v1/README.rst>`_
 proves a total of at least 798,370 versus the source's 796,772, and the exact
