@@ -1,0 +1,106 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=27mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}[lemma]{Proposition}
+\title{Reusing the original unit consequences in a proof check}
+\author{Human Compression project}
+\date{}
+\begin{document}\maketitle
+Let $F$ be the original propositional formula in conjunctive normal form.
+The historical RUP checker keeps every original clause and every previously
+verified addition. It ignores deletion instructions after parsing them.
+For an addition $C$, it requires unit propagation to derive a contradiction
+from the retained clauses and the negations of the literals of $C$.
+These are the conventions of the existing checker in this project.
+
+Repeatedly deriving the same original unit consequences is unnecessary.
+The following construction implements the fixed-assignment reduction
+described in the retained note \emph{Fixed original-unit reduction for the
+historical RUP checker}. The propagation algorithm and clause parser are
+imported unchanged from the accepted checker. This is a computational
+improvement of that verification method; no new graph theorem or claim of
+priority for unit propagation is made.
+
+Run unit propagation on $F$, with no assumptions. If it does not find a
+contradiction, let $R$ be its complete assignment. Every literal in $R$ has
+a unit derivation from $F$. The assignment $R$ is frozen for the remainder
+of the check. In particular, values derived while checking a proposed
+addition are never inserted into $R$.
+
+For a clause $C$, let $C\vert_R$ be true if $C$ has a true literal under
+$R$. Otherwise obtain $C\vert_R$ by removing its false literals. Apply
+this operation to a formula by dropping its true clauses.
+
+\begin{lemma}
+Suppose that $H$ contains $F$ and that $R$ is the consistent unit closure
+of $F$. A clause $C$ passes the historical RUP test on $H$ if and only if
+either $C\vert_R$ is true, or $C\vert_R$ passes that test on $H\vert_R$.
+\end{lemma}
+\begin{proof}
+If $C\vert_R$ is true, negating $C$ contradicts a literal with a unit
+derivation from $F$. This gives a unit contradiction from $H$ and those
+negations.
+
+Otherwise the negations of the removed literals already hold in $R$.
+Start propagation from $H$ and the negation of $C$. Each original derivation
+of a literal in $R$ can still be followed: either the same literal is
+derived, or an earlier contradiction occurs. If no such contradiction
+occurs, all of $R$ has been obtained. After this stage a clause already
+satisfied by $R$ has no further effect, and all other clauses and remaining
+assumptions are exactly their residuals. Every subsequent unit step therefore
+is a unit step in the residual problem. Conversely, every residual step
+lifts to an original step after the derivations of $R$.
+
+Exhaustive unit propagation cannot depend on the order of its steps as to
+whether a contradiction is found. Indeed, a finite unit derivation can be
+followed in any exhaustive propagation: each required literal is already
+present, is eventually forced, or conflicts with an earlier assignment.
+Apply this observation to the two corresponding derivations just described.
+\end{proof}
+
+\begin{proposition}
+The residual checker admits exactly the same additions as the historical
+checker, including after arbitrary deletion records. Acceptance of an
+explicit empty addition proves that $F$ is unsatisfiable.
+\end{proposition}
+\begin{proof}
+Maintain in the residual checker the residuals of $F$ and of all previously
+admitted additions. A root-satisfied addition is already entailed by $F$
+and has no residual clause to store. For every other addition, the lemma
+identifies the two admission tests. Add its residual only after the test
+passes. Induction on the addition sequence proves the assertion. Both
+historical checks ignore deletions, so these do not change the induction.
+
+Every RUP addition is a consequence of the retained original clauses and
+previous additions: a truth assignment satisfying them and falsifying the
+addition would satisfy the negated assumptions and could not yield a unit
+contradiction. A second induction makes every admitted addition a consequence
+of $F$. The explicit empty clause is consequently impossible in a model
+of $F$.
+
+If the initial propagation already finds a contradiction, $F$ itself is
+unit-inconsistent. Every subsequent addition passes its RUP test, and the
+same conclusion follows. The implementation still parses the entire proof
+and requires an explicit empty addition.
+\end{proof}
+
+The implementation retains the original variable numbering and input-clause
+count. It parses every input and proof clause before taking a shortcut,
+including deletion instructions and lines following an empty addition.
+A nonempty original clause whose residual is empty does not satisfy the
+explicit-empty requirement. The assignment used for residualization comes
+only from a separate propagator containing $F$; the residual propagator has
+its own mutable assignments and watched clauses.
+
+The test harness reuses the existing independent set-propagation oracle and
+compares the first invalid addition as well as the final result. It includes
+the retained 317 cases, ten additional cases for fixed assignments and
+temporary assumptions, and six malformed proof records. The added cases
+include different original clauses with the same residual, a root-false
+candidate, and a nonempty clause that cannot serve as the concluding empty
+addition. These checks support the implementation; the preceding induction
+is the mathematical justification. Application to any saved graph proof
+still requires its exact formula reconstruction and an actual successful
+proof check.
+\end{document}

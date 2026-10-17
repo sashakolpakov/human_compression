@@ -6889,11 +6889,17 @@ def check_L063_L064_completion():
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_onan_source_completion():
+    spec = importlib.util.spec_from_file_location('onan_source_completion', ROOT/'scripts/onan_regular_maps/registration.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_L063_L064_completion()
+    current = check_onan_source_completion()
     print(json.dumps(current, sort_keys=True))
-    print('PASS: L063_L064 complete source supplement; 100 fully treated originals and 5 remaining.')
-    print('Scope: prior accepted science preserved; no new ordinary recovery, principal refutation, measurement or Lean credit.')
+    print("PASS: O'Nan source treatment; 101 fully treated originals and 4 remaining.")
+    print('Scope: publication integrity and acquired reviews; run the portable checker for a fresh replay.')
 
 if __name__=='__main__':
     main()

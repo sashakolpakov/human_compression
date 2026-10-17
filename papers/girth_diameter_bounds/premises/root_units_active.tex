@@ -1,0 +1,121 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=27mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}[lemma]{Proposition}
+\title{An active store before fixed-root historical RUP}
+\author{Finite recoveries}
+\date{17 October 2026}
+\begin{document}\maketitle
+This is a narrow combination of the accepted original-unit reduction
+(distinct gate \texttt{f158a0a3}) and archived-fallback checker
+(distinct gate \texttt{f9b4ed7d}). The parent supplied the combination;
+the original-unit design is attributed to root and l070.
+No new graph condition, original search, or claim of novelty is involved.
+Both propagator classes and the clause parser are imported unchanged from
+the pinned archived-fallback source. Earlier files remain immutable.
+
+Let $F$ be the original CNF. Run the existing historical propagator on $F$
+without assumptions. If it does not conflict, freeze its complete unit
+assignment $R$. It is derived only from $F$ and never enlarged by later proof
+queries. Write $C|_R=\top$ when $C$ has a root-true literal; otherwise remove
+its root-false literals. The accepted original-unit lemma says that historical
+RUP for $C$ is equivalent to either $C|_R=\top$, or historical RUP for its
+residual against the residual history. Root-satisfied additions need no clause
+in either residual store.
+
+Maintain two stores of residual clauses. The historical store $H$ contains
+all original residuals and every admitted residual addition; deletion records
+never change it. The active store $A$ initially contains all original residuals
+marked permanent. Each admitted residual addition is inserted in both stores.
+An active deletion removes at most one learned occurrence with the normalized
+residual named by the deletion record, and ignores a missing occurrence.
+Original active occurrences remain permanent.
+
+\begin{lemma}
+At every proof prefix, every active clause belongs to the historical store.
+The test ``active RUP, otherwise historical RUP'' admits exactly the clauses
+admitted by historical RUP alone.
+\end{lemma}
+\begin{proof}
+The containment holds initially. An admitted addition enters both stores;
+an active deletion only removes a clause. Thus it is preserved inductively.
+If unit propagation with the negated candidate conflicts using $A$, the same
+finite unit derivation can be followed in $H$: all clauses it uses are present.
+Additional clauses can give an earlier contradiction and cannot invalidate a
+unit derivation. Therefore active RUP implies historical RUP.
+If active propagation fails to find a contradiction, the algorithm explicitly
+tests historical RUP and accepts precisely when that test succeeds. The reverse
+implication follows directly from this fallback. Exhaustiveness and watched
+propagation are the acquired unchanged implementations.
+\end{proof}
+
+\begin{proposition}
+The new checker has the same addition-admission predicate as the accepted
+historical checker on the original formula. A fully parsed proof containing
+an explicitly checked original empty addition proves $F$ unsatisfiable.
+\end{proposition}
+\begin{proof}
+Apply the lemma at each residual addition, then the accepted fixed-root
+equivalence to the original addition. Every admitted addition is a consequence
+of $F$ and the previously admitted additions, hence of $F$ by induction.
+An explicit empty addition is impossible in a model of $F$.
+If the original unit closure already conflicts, $F$ is unit-inconsistent;
+the implementation retains the prior full-parsing and explicit-empty contract.
+\end{proof}
+
+\newpage
+\paragraph{Residual collisions and deletion scope.}
+Different original clauses can have identical residuals. For example, with
+root units $3,4$, the clauses $\{-3,1\}$ and $\{-4,1\}$ both reduce to
+$\{1\}$. A deletion mentioning the second clause may remove an active learned
+occurrence introduced by the first. It may even match when that original
+spelling was never added. This is intentional and does not claim original
+trace-occurrence semantics. It removes one active clause while leaving $H$
+unchanged, so the lemma still applies. An overly aggressive deletion can only
+make an active attempt fail, in which case the exact historical test is used.
+Duplicate residuals, reordered literals, and deletion/reintroduction obey the
+same invariant. The active implementation's occurrence index excludes original
+clauses, and no deletion changes either frozen $R$ or the historical store.
+
+The reported matched and unmatched deletion counts refer solely to normalized
+residual-store operations. Separate counters record root-satisfied deletions
+and records skipped after an original unit contradiction. Their sum is the
+number of fully parsed deletion records. They must not be interpreted as a
+reconstruction of which original learned occurrence the producer deleted.
+
+\paragraph{Implementation boundary.}
+The new edition changes only the former main routine: create an active store,
+insert original residuals as permanent active clauses, process active residual
+deletions, attempt active propagation before historical fallback, and insert
+accepted residual additions in both stores. It adds the corresponding counters
+and a distinct success label. The full source difference is retained.
+The original-formula bootstrap, residual function, original variable numbering,
+declared clause count, parser and both propagator classes are unchanged.
+
+Every clause is fully parsed before any shortcut, including deletion records
+and records after a contradiction or empty addition. A nonempty original clause
+that reduces to empty does not set the explicit-empty flag. The original unit
+assignment is separate from the mutable assignments used by both query stores.
+The inherited parser's broad initial-\texttt{d} deletion spelling is retained;
+the mathematical claim uses only that such records add no consequence.
+
+\paragraph{Small checks and application scope.}
+The control program reuses the independent set-propagation oracle and truth
+table checks from the two accepted methods. It compares the first invalid
+addition and final outcome for all inherited $327$ cases, then twelve new
+cases exercising residual collisions, duplicate learned occurrences,
+unmatched deletions, permanent original residuals, root-satisfied clauses,
+tautologies, deletion after an empty addition, and deletion/reintroduction.
+Nine fixtures additionally check exact residual-deletion/fallback counters,
+including collisions with an original spelling that was never added.
+Six inherited malformed records and four malformed records after an explicit
+empty clause must be rejected.
+
+These checks support the literal implementation; the invariant and accepted
+fixed-root theorem justify its general admission rule. No production graph
+proof has been read by this edition. No speedup, graph exclusion, parent
+retirement or source completion follows from the method packet. A later
+application must bind the exact original CNF, retained proof, compiled binary
+and separately reviewed bounded request.
+\end{document}

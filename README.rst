@@ -22,12 +22,16 @@ programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
 partition. L022 has no factor or measured-original credit.
 
-F003, L029, L036, L063, L064, L110, L114 and L115 now have complete reviewed
-treatments of their surviving source claims. Thus 100 originals are fully
-treated: 92 ordinary recoveries and eight complete source treatments after
-principal refutations. L046 and four originals without a principal disposition
-retain completion obligations: 5 originals remain. There are 101 principal
-dispositions and 92 ordinary recoveries; the stopping condition is unchanged.
+All nine originals with principal refutations now have complete reviewed
+treatments of their surviving source claims. Thus **101 of 105 mathematical
+originals are fully treated**: 92 ordinary recoveries and nine complete source
+treatments after refutations. **F004, F009, F012 and L026 remain.** The stopping
+condition is completion of these four originals.
+
+The `reproduction guide <docs/REPRODUCING.rst>`_ distinguishes integrity checks,
+mathematical replay, paper builds and Lean compilation. Sources, retained inputs,
+certificates and version requirements remain explicit; scratch builds belong
+outside the checkout.
 
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
@@ -171,21 +175,35 @@ Lemma 21. That earlier correction concerned the principal omission. The
 complete joint treatment above now disposes of the remaining assertions in
 both fixed sources, with classical premises explicit.
 
-A corrected count with remaining work
--------------------------------------
+The complete O'Nan source treatment
+-----------------------------------
 
-The `O'Nan count correction <corrections/onan-map-count/v1/README.rst>`_
-proves at least **798,370** generating-pair orbits in the fixed source's
-convention, contradicting its stated **796,772**. Type (20,31) has exactly
-**9,118**, rather than **7,246**. The two complete four-page proofs,
-borrowed classification inputs and independent computations are included.
-**L046 now has a principal-refutation disposition**, applying the same convention
-as the later refutations to the unchanged published correction. All 116 exact
-table counts, the exact total and the remaining chirality, nonorientable,
-outer-reflexible and inversion claims remain unpaid. The
-`disposition layer <audit/principal-refutations/L046/v1/PUBLICATION.rst>`_
-preserves the earlier pending/no-credit decision as history. This adds no
-ordinary recovery, new mathematics, measurement or open-question credit.
+The `O'Nan manuscript <papers/onan_regular_maps/regular_maps.pdf>`_ and its
+`proof and reproduction guide <papers/onan_regular_maps/README.rst>`_ now treat
+all 44 source clauses. The 136 table entries sum to **798,644**, correcting the
+printed total **796,772**; type (20,31) contributes **9,118**, rather than
+**7,246**. The rotation and chiral type counts are 129 and 128. The exact inner
+and outer reflexible type counts are 95 and 97; the claimed outer type {6,12}
+is absent. These are type counts, not global counts of reflexible markings.
+
+All 44 component proofs, finite inputs, certificates and reviews accompany the
+ten-page synthesis. The portable checker verifies the full numerical composition
+and reruns two character/subgroup arithmetic programs. It does not repeat every
+historical group census. This completes L046's remaining source obligation;
+the earlier principal refutation, attribution and formalization limits are
+preserved. No new compression factor or open-conjecture result is claimed.
+
+A reproducible graph bound
+-------------------------
+
+The `diameter twenty-two manuscript <papers/girth_diameter_bounds/order95.pdf>`_
+proves the minimum order 95 for quartic graphs of girth five and diameter 22.
+Its `reproduction guide <papers/girth_diameter_bounds/README.rst>`_ supplies a
+checker that rebuilds the proof reader, checks all 27 saved refutations and
+verifies the included graph. The exact manifest hash is in the
+`component admission <data/girth_diameter_bounds/admission.json>`_. Old search
+caches and a SAT solver are unnecessary. This completes one previously known
+source row; F009 remains pending its two exact censuses and final synthesis.
 
 Reviewed recoveries awaiting measurement
 ----------------------------------------
