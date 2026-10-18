@@ -22,7 +22,8 @@ PUBLICATION = 'provenance/publication_manifest.json'
 SYNTHESIS = '27238130dda9fb1d8a0343e1602dc7ecbe7eb1ee6398d42d680e6a410487e8eb'
 MATH_REVIEW = 'fa03e55dd19c4712062ffe106972d3b9ce094be7227af52614b2770ff154cdf1'
 MODIFIED = {'README.rst', 'audit/corpus/latest.json', 'papers/latest_catalogue.json',
-            'papers/catalogue.json', 'scripts/verify_snapshot.py', PUBLICATION}
+            'papers/catalogue.json', 'scripts/verify_snapshot.py', PUBLICATION, '.gitignore'}
+IGNORE_SUFFIX = b'\n# Regenerable compiler and checker output. Keep sources and certificates.\n*.o\n*.a\n*.so\n*.dylib\n*.dSYM/\n.pytest_cache/\n.mypy_cache/\n.ruff_cache/\n\n# TeX sidecars. Existing tracked evidence is unaffected by these rules.\n*.aux\n*.fls\n*.fdb_latexmk\n*.toc\n*.synctex.gz\n'
 
 
 def need(ok, message):
@@ -167,7 +168,9 @@ def verify(root):
     changed = changed_paths(root)
     need(changed == set(names) | {REGISTRATION, PUBLICATION}, 'Only registered changes')
     old_names = set(git(root, 'ls-tree', '-r', '--name-only', BASELINE).decode().splitlines())
-    need(changed & old_names == MODIFIED, 'Only six declared predecessor files changed')
+    need(changed & old_names == MODIFIED, 'Only seven declared predecessor files changed')
+    need((root/'.gitignore').read_bytes() == old_bytes(root, '.gitignore') + IGNORE_SUFFIX,
+         'Only the exact reviewed regenerable-output ignore suffix')
     need(not any(n.endswith(('.md', '.pyc', '.olean', '.aux', '.fls', '.out')) for n in changed - old_names),
          'No technical build output in new publication')
     a = load(root/ADMISSION)
