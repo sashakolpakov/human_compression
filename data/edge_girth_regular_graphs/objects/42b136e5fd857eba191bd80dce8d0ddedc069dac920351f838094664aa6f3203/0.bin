@@ -1,0 +1,110 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+import argparse,json,hashlib,itertools,subprocess,os,time,shutil
+
+def need(v,m):
+ if not v:raise RuntimeError(m)
+def pin(p):
+ b=p.read_bytes();return {'path':str(p),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}
+def put(p,x):p.write_text(json.dumps(x,indent=2)+'\n')
+def compositions(total,slots):
+ if slots==0:
+  if total==0:yield()
+  return
+ for a in range(min(2,total)+1):
+  for tail in compositions(total-a,slots-1):yield(a,)+tail
+
+def inventory(ell,n):
+ all_a=set();reps=[]
+ for a in itertools.product(range(1,4),repeat=ell):
+  b=tuple(4-a[(i-1)%ell]-a[(i+1)%ell]for i in range(ell));z=n-sum(a)-sum(b)
+  if min(b)<0 or z<0:continue
+  row=(a,b,z);all_a.add(row);orbit=[tuple(b[(sgn*i+j)%ell]for i in range(ell))for sgn in [-1,1]for j in range(ell)]
+  if b==min(orbit):reps.append(row)
+ all_b=set()
+ for z in range(n-2*ell+1):
+  for b in compositions(2*n-4*ell-2*z,ell):
+   for a0,a1 in itertools.product(range(1,4),repeat=2):
+    a=[a0,a1]
+    for i in range(1,ell-1):a.append(4-b[i]-a[i-1])
+    if min(a)<1 or max(a)>3:continue
+    if all(a[(i-1)%ell]+a[(i+1)%ell]+b[i]==4 for i in range(ell)):
+     need(sum(a)+sum(b)+z==n,'recurrent total');all_b.add((tuple(a),b,z))
+ need(all_a==all_b,'independent entire labelled inventory');return reps,len(all_a)
+
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--study',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--render',action='store_true');a=p.parse_args();S=a.study.resolve();W=Path(__file__).resolve().parent;O=a.out.resolve();need(not O.exists(),'fresh output');O.mkdir(parents=True)
+ for r in json.loads((W/'dependencies.json').read_text()):
+  q=Path(r['path']);q=q if q.is_absolute()else S/q;need(pin(q)['sha256']==r['sha256']and q.stat().st_size==r['bytes'],'exact acquired binding')
+ if(W/'manifest.json').exists():
+  for r in json.loads((W/'manifest.json').read_text())['exports']:
+   q=W/r['path'];need(pin(q)['sha256']==r['sha256']and q.stat().st_size==r['bytes'],'author export')
+ base=S/'corpus106_F012_square_six_v1/cycle_search_moments.cpp';v=json.loads((W/'code_changes.json').read_text());need(pin(base)['sha256']==v['sha256'],'base code');raw=base.read_text()
+ for x,y in v['replacements']:need(raw.count(x)==1,'exact degree delta');raw=raw.replace(x,y)
+ need(raw==(W/'cycle_search_degree4.cpp').read_text(),'degree specialization only')
+ for x,y in json.loads((W/'odd_cycle_changes.json').read_text()):need(x in raw,'odd cycle delta');raw=raw.replace(x,y)
+ need(raw==(W/'odd_cycle_degree4.cpp').read_text(),'exact cycle-length changes')
+ raw=(S/'corpus106_F012_pentavalent_v2/bipartite_degree5.cpp').read_text().replace('static constexpr int k=5;','static constexpr int k=4;').replace('m<5||m>10','m<4||m>10').replace('target>16','target>9');need(raw==(W/'bipartite_degree4.cpp').read_text(),'sole bipartite specialization')
+ env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);receipts=[]
+ def run(name,cmd,data=None,cap=90,success=True):
+  start=time.monotonic()
+  try:r=subprocess.run(list(map(str,cmd)),input=data,capture_output=True,text=True,cwd=O,env=env,timeout=cap)
+  except subprocess.TimeoutExpired as e:
+   for suffix,v in [('stdout',e.stdout),('stderr',e.stderr)]:
+    v=v or b'';(O/(name+'.'+suffix)).write_bytes(v.encode()if isinstance(v,str)else v)
+   put(O/(name+'_timeout.json'),{'status':'TIMEOUT_NO_CERTIFICATE','cap':cap});raise
+  (O/(name+'.stdout')).write_text(r.stdout);(O/(name+'.stderr')).write_text(r.stderr);receipts.append({'name':name,'command':list(map(str,cmd)),'returncode':r.returncode,'seconds':time.monotonic()-start});put(O/'receipts.json',receipts)
+  if success:need(r.returncode==0 and not r.stderr,'successful '+name)
+  return r
+ modes=[('ordinary',['-O2']),('sanitized',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'])]
+ for mode,flags in modes:
+  for kind in ['cycle_search','odd_cycle','bipartite']:
+   run('compile_'+kind+'_'+mode,['clang++','-std=c++17',*flags,'-Wall','-Wextra','-pedantic',W/(kind+'_degree4.cpp'),'-o',O/(kind+'_'+mode)],cap=30)
+ expected=json.loads((W/'expected.json').read_text());inventories={};totals={}
+ for ell in [5,7,9]:
+  inputs=[];cases=[];labelled=0
+  for n in range(max(11,2*ell),21):
+   items,count=inventory(ell,n);inventories[f'{ell}/{n}']={'labelled':count,'representatives':len(items)};labelled+=count
+   for aa,bb,z in items:
+    rid=len(cases);cases.append({'id':rid,'ell':ell,'n':n,'a':aa,'b':bb,'z':z});prefix=[rid,n,1,4]if ell==5 else[rid,ell,n,1,4];inputs.append(' '.join(map(str,[*prefix,*aa,*bb,z,30]))+'\n')
+  data=''.join(inputs);(O/f'cycle{ell}.input').write_text(data);e=expected[str(ell)];need(len(cases)==e['cases'],'all pattern counts');results=[]
+  for mode,_ in modes:
+   kind='cycle_search'if ell==5 else'odd_cycle';r=run(f'cycle{ell}_{mode}',[O/(kind+'_'+mode)],data);rows=[json.loads(x)for x in r.stdout.splitlines()];need(len(rows)==len(cases),'complete case return')
+   for j,row in enumerate(rows):need(row['case']==j and row['n']==cases[j]['n']and row['status']=='COMPLETE'and row['positives']==0 and row['examples']==[],'complete zero case')
+   need([r['nodes']for r in rows]==e['nodes'],'every deterministic node count');results.append([{k:v for k,v in row.items()if k!='seconds'}for row in rows])
+  need(results[0]==results[1],'sanitizer case agreement');totals[ell]={'cases':len(cases),'labelled':labelled,'nodes':sum(e['nodes'])}
+  # The balanced two-vertex blowup is an exact nonempty prescribed-profile control.
+  n=2*ell;prefix=[0,n,1,5]if ell==5 else[0,ell,n,1,5];data=' '.join(map(str,[*prefix,*([2]*ell),*([0]*ell),0,30]))+'\n';(O/f'positive{ell}.input').write_text(data)
+  target=[sum(1<<y for j in [(i-1)%ell,(i+1)%ell]for y in [j,j+ell])for i in list(range(ell))*2];positive=[]
+  for mode,_ in modes:
+   kind='cycle_search'if ell==5 else'odd_cycle';r=run(f'positive{ell}_{mode}',[O/(kind+'_'+mode)],data);q=json.loads(r.stdout);need(q['status']=='COMPLETE'and q['positives']==len(q['examples'])and target in q['examples'],'literal balanced blowup survives')
+   for adj in q['examples']:
+    need(len(adj)==n and all(x.bit_count()==4 for x in adj),'positive degree')
+    for x in range(n):
+     for y in range(x+1,n):
+      if adj[x]>>y&1:
+       need(not(adj[x]&adj[y]),'positive triangle');square=sum((adj[u]&adj[y]&~(1<<x)).bit_count()for u in range(n)if u!=y and adj[x]>>u&1);need(square==5,'positive square')
+   positive.append({k:v for k,v in q.items()if k!='seconds'})
+  need(positive[0]==positive[1],'positive sanitizer agreement')
+ put(O/'inventories.json',inventories)
+ data='4 9 60\n5 6 60\n7 4 60\n8 4 60\n9 4 60\n10 4 60\n';(O/'bipartite.input').write_text(data);bip=[]
+ for mode,_ in modes:
+  r=run('bipartite_'+mode,[O/('bipartite_'+mode)],data,cap=120);rows=[json.loads(x)for x in r.stdout.splitlines()];need(len(rows)==6 and all(x['status']=='COMPLETE'for x in rows),'complete bipartite cases');need([x['positives']for x in rows]==[1,1,0,0,0,0],'bipartite outputs');need([x['nodes']for x in rows[2:]]==[8951,174147,2220392,44551878],'bipartite target nodes');bip.append([{k:v for k,v in x.items()if k!='seconds'}for x in rows])
+ need(bip[0]==bip[1],'bipartite sanitizer agreement')
+ r=run('timeout',[O/'bipartite_ordinary'],'10 4 1e-9\n',cap=5);need(json.loads(r.stdout)['status']=='TIMEOUT','timeout distinction')
+ bad=[]
+ for name,data in [('bad_ell','0 8 16 1 4 '+ '2 '*8+'0 '*8+'0 30\n'),('bad_class','0 7 14 1 4 '+'0 '+'2 '*6+'0 '*7+'0 30\n')]:
+  r=run(name,[O/'odd_cycle_ordinary'],data,cap=5,success=False);need(r.returncode!=0,'invalid odd-cycle input');bad.append(name)
+ guards=[]
+ for mode in ['argument','environment']:
+  ee=env.copy();cmd=[sys.executable]
+  if mode=='argument':cmd+=['-O']
+  else:ee['PYTHONOPTIMIZE']='1'
+  cmd+=[str(W/'check.py')];r=subprocess.run(cmd,env=ee,capture_output=True,text=True,timeout=5);(O/('guard_'+mode+'.stderr')).write_text(r.stderr);need(r.returncode!=0 and 'Optimized Python is not accepted'in r.stderr,'optimization guard');guards.append(mode)
+ if a.render:
+  for name in ['quartic.tex','five_nodes.tex','seven_nodes.tex','nine_nodes.tex']:shutil.copy2(W/name,O/name)
+  for i in [1,2]:run('native'+str(i),['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','quartic.tex'],cap=30)
+  text=(O/'quartic.log').read_text();need('Overfull'not in text and 'LaTeX Warning:'not in text,'native content')
+ report={'status':'PASS_QUARTIC_SQUARE_LOWER_BOUND','cycle_totals':totals,'bipartite':bip[0],'cycle_cases':263,'positive_cycle_lengths':[5,7,9],'ordinary_sanitized_agreement':True,'negative_controls':bad,'optimization_guards':guards,'lower_bound':[4,4,4,21],'new_lower_rows':1,'whole_original_credit':0,'new_question_credit':0};put(O/'report.json',report);print(json.dumps(report))
+if __name__=='__main__':main()

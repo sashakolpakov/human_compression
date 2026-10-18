@@ -1,0 +1,21 @@
+#define main target_main
+#include "coupled_cover_cached.cpp"
+#undef main
+#include <set>
+int main(int argc,char**argv){try{
+ require(argc==2,"usage boundary_controls ROOTS");ifstream in(argv[1]);size_t count;require(bool(in>>count),"root count");std::set<size_t>selected{0,1,5,10,100,1000,10000,30000,50000,100000,200000,300000,400000,500000,count-1};
+ cout<<"{\"shapes\":[";bool comma=false;for(int l=0;l<=27;l++)for(int r=0;r<=27;r++){
+  if(comma)cout<<',';comma=true;cout<<'['<<l<<','<<r<<",[";auto shapes=possible_final_sizes(l,r);for(size_t i=0;i<shapes.size();i++){if(i)cout<<',';cout<<'['<<shapes[i][0]<<','<<shapes[i][1]<<','<<shapes[i][2]<<']';}cout<<"]]";
+ }
+ cout<<"],\"cases\":[";comma=false;int cases=0,positive=0;
+ for(size_t z=0;z<count;z++){
+  int n;require(bool(in>>n)&&n==26,"root order");Graph g(n);for(U&row:g)require(bool(in>>row),"root row");if(!selected.count(z)&&z%10000!=0)continue;
+  Side side(g);side.run(0);int take=min(3,(int)side.good.size());for(int k=0;k<take;k++){
+   const auto&left=side.good[k];Coupled c(g);if(comma)cout<<',';comma=true;cases++;cout<<"{\"root_index\":"<<z<<",\"base\":[";for(int i=0;i<26;i++){if(i)cout<<',';cout<<g[i];}cout<<"],\"left\":[";for(size_t i=0;i<left.size();i++){if(i)cout<<',';cout<<left[i];}cout<<"],\"accepted\":[";bool sep=false;
+   for(int e=0;e<8;e++)for(int f=e+1;f<8;f++)if(c.initialise(left,e,f)){
+    if(sep)cout<<',';sep=true;positive++;cout<<"{\"edge\":["<<e<<','<<f<<"],\"need\":[";for(int i=0;i<8;i++){if(i)cout<<',';cout<<c.need[i];}cout<<"],\"rows\":[";for(int i=0;i<34;i++){if(i)cout<<',';cout<<c.g[i];}cout<<"]}";
+   }cout<<"]}";
+  }
+ }
+ require(cases>=10&&positive>0,"nonempty actual boundary controls");cout<<"],\"case_count\":"<<cases<<",\"accepted_starts\":"<<positive<<"}\n";return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

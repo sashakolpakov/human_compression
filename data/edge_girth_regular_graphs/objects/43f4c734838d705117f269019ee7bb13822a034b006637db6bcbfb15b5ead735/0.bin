@@ -1,0 +1,24 @@
+#define main acquired_coupled_main
+#include "coupled_cover_sorted.cpp"
+#undef main
+int main(int argc,char**argv){try{
+ require(argc==3,"usage controls ROOTS POSITIVE");ifstream rootin(argv[1]);size_t nr;int n;require(bool(rootin>>nr>>n)&&n==26,"seed root");Graph seed(n);for(U&x:seed)require(bool(rootin>>x),"seed row");
+ ifstream posin(argv[2]);size_t np;require(bool(posin>>np>>n)&&np==1&&n==32,"one positive order32");Graph full(n);for(U&x:full)require(bool(posin>>x),"positive row");validate_graph(full);require(!has_short_cycle(full),"positive girth");for(U row:full)require(weight(row)==4,"positive quartic");
+ vector<pair<int,int>>edges;for(int x=0;x<9;x++)for(int j=0;j<6;j++)if((full[17+x]>>(26+j))&1)edges.push_back({x,j});require(edges.size()==9,"nine positive right incidences");
+ cout<<"{";cout<<"\"edges\":[";for(size_t k=0;k<edges.size();k++){if(k)cout<<',';cout<<'['<<edges[k].first<<','<<edges[k].second<<']';}cout<<"],\"rows\":[";
+ for(unsigned mask=0;mask<(1U<<edges.size());mask++){
+  Coupled test(seed);test.g=full;for(size_t k=0;k<edges.size();k++)if((mask>>k)&1)remove_edge(test.g,17+edges[k].first,26+edges[k].second);
+  test.items.clear();test.need.fill(0);test.right_masks.fill(0);for(auto&row:test.target)for(int&x:row)x=0;for(auto&row:test.used)for(int&x:row)x=0;
+  for(int x=0;x<9;x++)for(int k=0;k<4-weight(test.g[17+x]);k++)test.items.push_back(x);
+  for(int j=0;j<6;j++){
+   test.need[j]=4-weight(test.g[26+j]);for(int x=0;x<9;x++)if((test.g[26+j]>>(17+x))&1)test.right_masks[j]|=1<<x;
+   for(int x=0;x<9;x++)for(int y=x+1;y<9;y++)if(x/3!=y/3){
+    int a=x/3,b=y/3;if(((full[26+j]>>(17+x))&1)&&((full[26+j]>>(17+y))&1))test.target[a][b]++;
+    if(((test.g[26+j]>>(17+x))&1)&&((test.g[26+j]>>(17+y))&1))test.used[a][b]++;
+   }
+  }
+  Graph before=test.g;test.visit(0,-1);require(test.g==before,"actual visit restoration");require(test.complete>=1&&test.mismatch==test.complete&&test.positive==0,"known lambda18 positive completion reaches terminal check");
+  if(mask)cout<<',';cout<<'['<<mask<<','<<test.complete<<','<<test.nodes<<']';
+ }
+ cout<<"]}\n";return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

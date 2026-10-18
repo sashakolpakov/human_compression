@@ -1,0 +1,133 @@
+"""Portable complete quartic lambda-20 certificate, with explicit reuse mode."""
+import sys
+if sys.flags.optimize:raise RuntimeError('optimized Python is not a verification mode')
+from pathlib import Path
+import argparse, hashlib, json, os, shutil, subprocess, time
+from run_closed import execute, pin
+from prepare_inputs import build
+P=Path(__file__).resolve().parent
+
+def need(value,message):
+    if not value:raise RuntimeError(message)
+def read(path):return json.loads(Path(path).read_text())
+def equal_pin(path,record):
+    actual=pin(path);need(actual['bytes']==record['bytes'] and actual['sha256']==record['sha256'],'pin mismatch: '+str(path))
+def scope_check(scope):
+    need(scope['source_id']=='F012' and scope['parameters']==[4,6,20],'fixed source parameters')
+    need(scope['order_exclusion_inclusive']==35 and scope['lower_bound']==36,'exact bounded order')
+    for name in ['whole_original_credit','new_graph_count_credit','measurement_credit','lean_credit','conjecture_credit']:
+        need(scope[name]==0,'no wider credit: '+name)
+    need(scope['lambda19_covered'] is False and scope['all_order_nonexistence'] is False,'separate unproved claims')
+def verify_manifest(study):
+    manifest=read(P/'manifest.json')
+    for item in manifest['exports']:equal_pin(P/item['path'],item)
+    dependencies=read(P/'bindings.json')
+    checked=0
+    if study:
+        for item in dependencies:
+            equal_pin(study/item['path'],item);checked+=1
+    return len(manifest['exports']),checked
+def verify_history():
+    locator=read(P/'historical_execution_locators.json');resolved=0
+    for entry in locator:
+        if entry['kind']=='supplied_software_hash':continue
+        equal_pin(P/entry['local_path'],entry);resolved+=1
+    known={(entry['sha256'],entry['bytes']) for entry in locator}
+    for folder in ['root_replay01','extension_replay01','root_sanitizer02','extension_sanitizer01']:
+        receipt=read(P/'history'/folder/'receipt.json')
+        # The first extension receipt predates the named-status wrapper; its
+        # actual exit code, unchanged inputs and complete report are retained.
+        need(receipt['returncode']==0 and receipt['inputs_unchanged'] and not receipt.get('timeout',False),'complete historical execution')
+        if folder!='extension_replay01':need(receipt['status'].startswith('PASS'),'explicit terminal status')
+        need(read(P/'history'/folder/'report.json')['status'].startswith('PASS'),'complete historical report')
+        for entry in receipt['pins']+receipt['outputs']:need((entry['sha256'],entry['bytes']) in known,'complete nested execution closure')
+        need((P/'history'/folder/'stderr').stat().st_size==0,'empty historical execution stderr')
+        source='check_roots.cpp' if folder.startswith('root_') else 'check_extensions.cpp'
+        actual_inputs={(item['sha256'],item['bytes']) for item in receipt['pins']}
+        for file in [P/source,P/'literal_graph.h',P/'inputs/root_representatives.txt',P/('inputs/patterns.txt' if folder.startswith('root_') else 'inputs/joined_representatives.txt')]:
+            record=pin(file);need((record['sha256'],record['bytes']) in actual_inputs,'historical execution uses exact current scientific input')
+    return resolved
+def run(command,out,inputs,seconds,report=None):
+    return execute([str(x) for x in command],out,inputs,seconds,report)
+def compile_one(name,out,sanitize=False):
+    binary=out/(name+('_san' if sanitize else ''))
+    options=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'] if sanitize else ['-O2']
+    # All supported graphs use one 64-bit nauty word. The library's own
+    # nauty_check additionally rejects an incompatible installed library.
+    cmd=['clang++','-std=c++17',*options,'-DWORDSIZE=64','-Wall','-Wextra','-pedantic','-I/opt/homebrew/include',str(P/(name+'.cpp')),'-L/opt/homebrew/lib','-lnauty','-o',str(binary)]
+    compile_inputs=[P/(name+'.cpp'),P/'literal_graph.h']
+    if name in ['side_controls','literal_controls']:compile_inputs.append(P/'check_extensions.cpp')
+    run(cmd,out/('compile_'+binary.name),compile_inputs,90)
+    return binary
+def scientific_report(actual,expected):
+    need({k:v for k,v in actual.items() if k!='seconds'}=={k:v for k,v in expected.items() if k!='seconds'},'complete report equality')
+def negative_controls(roots,extensions,out,inputs):
+    dest=out/'damages';dest.mkdir();cases=[]
+    patterns=(inputs/'patterns.txt').read_text().splitlines()
+    altered=patterns.copy();altered[0]='94';(dest/'omitted_matrix.txt').write_text('\n'.join(altered)+'\n')
+    altered=patterns.copy();altered[3]=altered[2];(dest/'duplicate_block.txt').write_text('\n'.join(altered)+'\n')
+    altered=patterns.copy();fields=altered[2].split();fields[2]='4';altered[2]=' '.join(fields);(dest/'invalid_deficit.txt').write_text('\n'.join(altered)+'\n')
+    rep=(inputs/'root_representatives.txt').read_text().splitlines();words=rep[1].split();words[1]=str(int(words[1])|1);rep[1]=' '.join(words);(dest/'loop_graph.txt').write_text('\n'.join(rep)+'\n')
+    for name in ['omitted_matrix','duplicate_block','invalid_deficit']:
+        cases.append((name,[roots,dest/(name+'.txt'),inputs/'root_representatives.txt',dest/(name+'.json'),'30']))
+    cases.append(('loop_graph',[roots,inputs/'patterns.txt',dest/'loop_graph.txt',dest/'loop_graph.json','30']))
+    empty=dest/'empty_targets.txt';empty.write_text('0\n')
+    cases.append(('empty_targets',[extensions,inputs/'root_representatives.txt',empty,dest/'empty_targets.json','30']))
+    for name,command in cases:
+        r=subprocess.run([str(x) for x in command],capture_output=True,timeout=40)
+        (dest/(name+'.stdout')).write_bytes(r.stdout);(dest/(name+'.stderr')).write_bytes(r.stderr)
+        need(r.returncode!=0 and not (dest/(name+'.json')).exists(),'damaged finite input rejected: '+name)
+    # Distinct scope controls exercise the admission boundary directly.
+    scope=read(P/'scope.json');mutations={'lower_bound':37,'order_exclusion_inclusive':36,'parameters':[4,6,19],'whole_original_credit':1,'new_graph_count_credit':1,'measurement_credit':1,'lean_credit':1,'conjecture_credit':1,'lambda19_covered':True,'all_order_nonexistence':True}
+    for key,value in mutations.items():
+        changed=dict(scope);changed[key]=value
+        try:scope_check(changed)
+        except RuntimeError:pass
+        else:raise RuntimeError('scope mutation accepted: '+key)
+    # Both direct and environment optimized invocations must reject before output.
+    guards=0
+    for script in ['check.py','prepare_inputs.py','independent_sides.py','build_native.py','run_closed.py']:
+        for mode in ['argument','environment']:
+            prohibited=dest/(script.replace('.py','')+'_'+mode)
+            env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None)
+            cmd=[sys.executable]
+            if mode=='argument':cmd.append('-O')
+            else:env['PYTHONOPTIMIZE']='1'
+            cmd.extend([str(P/script),'--out',str(prohibited)])
+            r=subprocess.run(cmd,capture_output=True,env=env,timeout=15)
+            (dest/(script+'_'+mode+'.stderr')).write_bytes(r.stderr)
+            need(r.returncode!=0 and not prohibited.exists() and b'RuntimeError' in r.stderr,'pre-output optimize rejection')
+            guards+=1
+    report=dict(status='PASS_DAMAGED_AND_SCOPE_CONTROLS',damaged_finite_inputs=len(cases),scope_mutations=len(mutations),optimization_guards=guards)
+    (dest/'report.json').write_text(json.dumps(report,indent=2)+'\n');return report
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--out',type=Path,required=True);ap.add_argument('--study',type=Path);ap.add_argument('--render',action='store_true');ap.add_argument('--sanitize',action='store_true');ap.add_argument('--reuse-recorded-root',action='store_true');a=ap.parse_args()
+    start=time.monotonic();out=a.out.resolve();need(not out.exists(),'fresh output required');need(not(a.sanitize and a.reuse_recorded_root),'sanitized mode requires fresh root execution');exports,bindings=verify_manifest(a.study);scope_check(read(P/'scope.json'));history=verify_history();out.mkdir()
+    build(P/'inputs',out/'inputs',targets=True)
+    for name in ['patterns.txt','patterns.json','capacities.json','root_representatives.txt','joined_representatives.txt','root_representatives.json','joined_representatives.json']:
+        need((out/'inputs'/name).read_bytes()==(P/'inputs'/name).read_bytes(),'exact independently regenerated input: '+name)
+    binaries={name:compile_one(name,out,a.sanitize) for name in ['check_roots','check_extensions','map_controls','literal_controls','side_controls']}
+    roots=binaries['check_roots'];extensions=binaries['check_extensions'];inputs=out/'inputs';codepins=[P/'literal_graph.h',P/'check_roots.cpp',P/'check_extensions.cpp']
+    if a.reuse_recorded_root:
+        root_report=read(P/'history/root_replay01/report.json')
+        (out/'root_reused.json').write_text(json.dumps(dict(status='REUSED_EXACT_RECORDED_COMPLETE_ROOT_EXECUTION',receipt=pin(P/'history/root_replay01/receipt.json')),indent=2)+'\n')
+    else:
+        d=out/'roots';run([roots,inputs/'patterns.txt',inputs/'root_representatives.txt',d/'report.json',1440 if a.sanitize else 840],d,[roots,*codepins,inputs/'patterns.txt',inputs/'root_representatives.txt'],1500 if a.sanitize else 900,d/'report.json');root_report=read(d/'report.json')
+    scientific_report(root_report,read(P/'expected_root.json'))
+    d=out/'extensions';run([extensions,inputs/'root_representatives.txt',inputs/'joined_representatives.txt',d/'report.json',150],d,[extensions,*codepins,inputs/'root_representatives.txt',inputs/'joined_representatives.txt'],180,d/'report.json');scientific_report(read(d/'report.json'),read(P/'expected_extensions.json'))
+    control_reports={}
+    for name in ['map_controls','literal_controls']:
+        d=out/(name+'_run');run([binaries[name],inputs/'root_representatives.txt'],d,[binaries[name],P/(name+'.cpp'),*codepins,inputs/'root_representatives.txt'],90)
+        control_reports[name]=read(d/'stdout');need(control_reports[name]['status'].startswith('PASS'),'control success')
+    d=out/'sides';run([binaries['side_controls'],inputs/'root_representatives.txt',P/'side_control_indices.txt',d/'sides.json'],d,[binaries['side_controls'],P/'side_controls.cpp',*codepins,P/'side_control_indices.txt',inputs/'root_representatives.txt'],90)
+    d=out/'independent_sides';run([sys.executable,P/'independent_sides.py','--roots',inputs/'root_representatives.json','--actual',out/'sides/sides.json','--out',d/'report.json'],d,[P/'independent_sides.py',inputs/'root_representatives.json',out/'sides/sides.json'],120,d/'report.json');control_reports['independent_sides']=read(d/'report.json')
+    controls=negative_controls(roots,extensions,out,inputs)
+    native=None
+    if a.render:
+        from build_native import build as render
+        native=render(P/'twenty.tex',out/'native')
+        need((out/'native/text.txt').read_text()==(P/'native/text.txt').read_text(),'literal native page text equality')
+    report=dict(status='PASS_QUARTIC_LAMBDA20_LOWER36',exports=exports,acquired_binding_checks=bindings,historical_exact_input_output_locators=history,root_execution='REUSED_EXACT_COMPLETE_RECEIPT' if a.reuse_recorded_root else 'FRESH_COMPLETE',sanitized=a.sanitize,root=root_report,extensions=read(out/'extensions/report.json'),independent_controls=control_reports,controls=controls,native=native,lower_bound=36,parameters=[4,6,20],lambda19_covered=False,whole_original_credit=0,seconds=time.monotonic()-start)
+    (out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

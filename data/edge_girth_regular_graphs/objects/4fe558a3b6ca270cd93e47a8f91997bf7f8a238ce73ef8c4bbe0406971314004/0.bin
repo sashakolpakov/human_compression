@@ -1,0 +1,30 @@
+import sys
+if sys.flags.optimize: raise RuntimeError('normal Python required')
+from pathlib import Path
+import itertools,json
+v=list(map(int,Path('exteriors01.txt').read_text().split()));at=1;graphs=[]
+for z in range(v[0]):
+ t,k=v[at:at+2];at+=2
+ for j in range(k):graphs.append((t,j,v[at:at+t]));at+=t
+assert at==len(v)
+actual=json.loads(Path(sys.argv[1]).read_text());assert len(actual)==len(graphs)==21
+states=orbits=partial=0
+for (t,j,g),item in zip(graphs,actual):
+ assert (item['t'],item['model'])==(t,j)
+ E={frozenset((i,k)) for i in range(t)for k in range(i+1,t)if g[i]>>k&1}
+ autos=[p for p in itertools.permutations(range(t)) if {frozenset((p[i],p[k]))for i in range(t)for k in range(i+1,t)if g[i]>>k&1}==E]
+ order=sorted(range(t),key=lambda i:(-g[i].bit_count(),i))
+ assignments=list(itertools.product(range(3),repeat=t));remaining=set(assignments);expected=set()
+ while remaining:
+  x=next(iter(remaining));orb={tuple(x[p[i]]for i in range(t))for p in autos};representative=min(orb)
+  assert orb<=remaining;remaining-=orb;expected.add(representative)
+ observed=set()
+ for x in assignments:
+  code=sum(v*3**i for i,v in enumerate(x));flags=item['states'][code]
+  assert flags&1
+  if flags>>(t)&1:observed.add(x)
+  if x in expected:assert flags==(1<<(t+1))-1
+  partial+=sum(not(flags>>a&1)for a in range(1,t))
+ assert observed==expected
+ states+=len(assignments);orbits+=len(expected)
+print(json.dumps(dict(status='PASS_INDEPENDENT_EXTERIOR_AUTOMORPHISM_ORBITS',graphs=len(graphs),states=states,orbits=orbits,nonterminal_prunes=partial)))

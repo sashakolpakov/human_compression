@@ -1,0 +1,117 @@
+"""Immutable optional-filter edition of the acquired five-path catalogue."""
+import sys
+sys.dont_write_bytecode = True
+import importlib.util
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('acquired_unfiltered_catalogue', HERE/'required_hexagon_catalogue.py')
+H = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(H)
+need, C, Counter = H.need, H.C, H.Counter
+canonical_cycle, digest_rows = H.canonical_cycle, H.digest_rows
+
+
+def mixed_cycle(cycle):
+    """Only the necessary t4 one-T/one-Z and mixed-transition predicate."""
+    need(len(cycle) == 6 and len(set(cycle)) == 6, 'literal simple hexagon')
+    ts = [v for v in cycle if 18 <= v < 22]
+    zs = [v for v in cycle if 22 <= v < 26]
+    if len(ts) != 1 or len(zs) != 1:
+        return False
+    t, z = ts[0], zs[0]
+    def neighbours(v):
+        i = cycle.index(v)
+        return {cycle[(i-1) % 6], cycle[(i+1) % 6]}
+    tn, zn = neighbours(t), neighbours(z)
+    return (z in tn and t in zn
+            and all(6 <= v < 18 for v in tn-{z})
+            and all(26 <= v < 54 for v in zn-{t}))
+
+
+def catalogue(n, base, allowed, required, limits, accept_cycle=None):
+    """Return deterministic shared activation terms, not graph completions."""
+    need(type(n) is int and 1 <= n <= 54, 'bounded order')
+    base, allowed = frozenset(base), frozenset(allowed)
+    domain = base | allowed
+    need(not base & allowed and all(type(u) is int and type(v) is int
+         and 0 <= u < v < n for u,v in domain), 'simple disjoint edge domain')
+    required = tuple(tuple(e) for e in required)
+    need(1 <= len(required) <= 8 and tuple(sorted(set(required))) == required
+         and set(required) <= base, 'literal sorted unique fixed requirements')
+    need(set(limits) == {'maximum_degree', 'maximum_start_degree',
+                        'maximum_nodes', 'maximum_paths'}
+         and all(type(x) is int and x > 0 for x in limits.values()), 'finite work limits')
+    adjacency = [set() for _ in range(n)]
+    for u,v in domain:
+        adjacency[u].add(v); adjacency[v].add(u)
+    need(max(map(len, adjacency)) <= limits['maximum_degree'], 'host degree bound')
+    need(all(len(adjacency[u]) <= limits['maximum_start_degree']
+             for u,v in required), 'required-edge starting degree bound')
+    need(all(tuple(sorted((u,w))) in base for u,v in required for w in adjacency[u]),
+         'all edges at required starting vertices are forced')
+    neighbours = [tuple(sorted(a)) for a in adjacency]
+    edge_order = tuple(sorted(allowed))
+    edge_number = {e:i+1 for i,e in enumerate(edge_order)}
+    cycles, cycle_requirements, term_requirements = {}, {}, {}
+    counts = [0]*len(required)
+    nodes = paths = rejected_requirement_cycles = 0
+
+    for index,(u,v) in enumerate(required):
+        def walk(path):
+            nonlocal nodes, paths, rejected_requirement_cycles
+            nodes += 1
+            need(nodes <= limits['maximum_nodes'], 'literal DFS node cap')
+            if len(path) == 5:
+                paths += 1
+                need(paths <= limits['maximum_paths'], 'literal completed-path cap')
+                if v not in adjacency[path[-1]]:
+                    return
+                cycle = canonical_cycle(path+[v])
+                es = C.cycle_edges(list(cycle), n)
+                need((u,v) in es and es <= domain, 'literal six-cycle through requested edge')
+                if accept_cycle is not None and not accept_cycle(cycle):
+                    rejected_requirement_cycles += 1
+                    return
+                term = tuple(sorted(edge_number[e] for e in es if e in allowed))
+                need(len(term) <= 4, 'two forced edges at the required starting vertex')
+                need(index not in cycle_requirements.get(cycle, set()),
+                     'no duplicate oriented path for one required edge')
+                need(cycle not in cycles or cycles[cycle] == term, 'same cycle activation')
+                cycles[cycle] = term
+                cycle_requirements.setdefault(cycle, set()).add(index)
+                term_requirements.setdefault(term, set()).add(index)
+                counts[index] += 1
+                return
+            for w in neighbours[path[-1]]:
+                if w != v and w not in path:
+                    walk(path+[w])
+        walk([u])
+
+    terms = tuple(sorted(term_requirements))
+    coverage = tuple(tuple(i for i,t in enumerate(terms)
+                           if j in term_requirements[t]) for j in range(len(required)))
+    hist = Counter(map(len, terms))
+    # Exact gate-size prediction for acquired Formula.conjunction and one
+    # direct existence clause per edge. No Formula or solver is constructed.
+    gate_variables = sum(len(t) >= 2 for t in terms)
+    gate_clauses = sum(len(t)+1 for t in terms if len(t) >= 2)
+    existence_clauses = sum(not any(not terms[i] for i in row) for row in coverage)
+    result = dict(edge_order=edge_order, required=required, terms=terms,
+                  required_term_indices=coverage,
+                  counts=dict(nodes=nodes, completed_paths=paths,
+                    rejected_requirement_cycles=rejected_requirement_cycles,
+                    distinct_cycles=len(cycles), required_cycle_counts=counts,
+                    shared_terms=len(terms),
+                    optional_term_histogram={str(k):hist[k] for k in sorted(hist)},
+                    required_shared_term_counts=[len(row) for row in coverage],
+                    additional_gate_variables=gate_variables,
+                    additional_gate_clauses=gate_clauses,
+                    additional_existence_clauses=existence_clauses,
+                    additional_total_clauses=gate_clauses+existence_clauses),
+                  cycle_catalogue_sha256=digest_rows(
+                    [cycle, cycles[cycle], sorted(cycle_requirements[cycle])]
+                    for cycle in sorted(cycles)),
+                  term_catalogue_sha256=digest_rows(
+                    [term, sorted(term_requirements[term])] for term in terms))
+    return result

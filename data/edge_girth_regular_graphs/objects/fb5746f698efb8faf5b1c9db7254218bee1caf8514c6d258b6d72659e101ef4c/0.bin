@@ -1,0 +1,76 @@
+"""Literal certificates for the two dense triangle-free classifications."""
+import sys
+if sys.flags.optimize: raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+from itertools import combinations
+import json, hashlib, argparse
+
+def need(condition,message):
+    if not condition:raise ValueError(message)
+def crown(m):return [sum(1<<(m+j) for j in range(m) if i!=j) for i in range(m)]+[sum(1<<j for j in range(m) if i!=j) for i in range(m)]
+def pentagon(a):return [sum(1<<v for v in range(5*a) if ((v//a)-(u//a))%5 in [1,4]) for u in range(5*a)]
+def decode(raw):
+    need(raw and all(63<=ord(c)<=126 for c in raw),'graph6 alphabet');n=ord(raw[0])-63
+    need(0<n<=62 and len(raw)==1+(n*(n-1)//2+5)//6,'graph6 length')
+    bits=[(ord(c)-63>>j)&1 for c in raw[1:] for j in range(5,-1,-1)];a=[0]*n;t=0
+    for v in range(n):
+        for u in range(v):
+            if bits[t]:a[u]|=1<<v;a[v]|=1<<u
+            t+=1
+    need(not any(bits[t:]),'graph6 padding');return a
+
+def verify(a,k,lam):
+    n=len(a);need(all(0<=r<1<<n and not r>>u&1 and r.bit_count()==k for u,r in enumerate(a)),'simple regular')
+    need(all((a[u]>>v&1)==(a[v]>>u&1) for u in range(n) for v in range(n)),'undirected')
+    edges=[(u,v) for u in range(n) for v in range(u+1,n) if a[u]>>v&1]
+    need(all(not (a[u]&a[v]) for u,v in edges),'triangle-free')
+    seen={0};todo=[0]
+    for u in todo:
+        for v in range(n):
+            if a[u]>>v&1 and v not in seen:seen.add(v);todo.append(v)
+    need(len(seen)==n,'connected')
+    path_counts={(u,v):sum(1 for x in range(n) for y in range(n) if len({u,v,x,y})==4 and a[u]>>x&1 and a[x]>>y&1 and a[y]>>v&1) for u,v in edges}
+    subset_counts=dict.fromkeys(edges,0);cycles=0
+    for vs in combinations(range(n),4):
+        mask=sum(1<<v for v in vs)
+        if all((a[v]&mask).bit_count()==2 for v in vs):
+            cycles+=1
+            for u,v in combinations(vs,2):
+                if a[u]>>v&1:subset_counts[u,v]+=1
+    need(path_counts==subset_counts,'independent four-cycle counts')
+    need(set(path_counts.values())=={lam} and lam>0,'edge-girth signature')
+    need(sum(path_counts.values())==4*cycles,'cycle incidence')
+    return {'n':n,'k':k,'g':4,'lambda':lam,'edges':len(edges),'four_cycles':cycles}
+
+def check_map(a,raw,mapping):
+    b=decode(raw);need(len(b)==len(a) and sorted(mapping)==list(range(len(a))),'bijection')
+    need(all((a[u]>>v&1)==(b[mapping[u]]>>mapping[v]&1) for u in range(len(a)) for v in range(len(a))),'all adjacency pairs')
+
+def check_frozen(here):
+    manifest=here/'manifest.json'
+    if manifest.exists():
+        for row in json.loads(manifest.read_text())['exports']:
+            raw=(here/row['path']).read_bytes();need(len(raw)==row['bytes'] and hashlib.sha256(raw).hexdigest()==row['sha256'],'export '+row['path'])
+    dep=here/'dependencies.json'
+    if dep.exists():
+        S=Path('/Users/sasha/medusa/research/leemans')
+        for row in json.loads(dep.read_text())['bindings']:
+            raw=(S/row['path']).read_bytes();need(len(raw)==row['bytes'] and hashlib.sha256(raw).hexdigest()==row['sha256'],'input '+row['path'])
+
+def main():
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);args=p.parse_args();here=Path(__file__).resolve().parent
+    check_frozen(here);records=json.loads((here/'source_maps.json').read_text());results=[]
+    for rec in records:
+        a=crown(7) if rec['id']=='UntilOrder250_38' else pentagon(3)
+        need(rec['id'] in ['UntilOrder250_38','UntilOrder250_43'],'source id')
+        results.append({'id':rec['id'],**verify(a,6,rec['lambda'])});check_map(a,rec['graph6'],rec['map'])
+    need(len(records)==2 and len({r['id'] for r in records})==2,'both original entries')
+    families=[verify(crown(m),m-1,(m-2)*(m-3)) for m in range(4,10)]+[verify(pentagon(a),2*a,(a-1)*(3*a-1)) for a in range(2,6)]
+    rejected=[]
+    for label,fn in [('wrong lambda',lambda:verify(crown(7),6,19)),('duplicate image',lambda:check_map(crown(7),records[0]['graph6'],[0]*14)),('deleted edge',lambda:verify([r & ~(1<<8) if i==0 else r & ~1 if i==8 else r for i,r in enumerate(crown(7))],6,20))]:
+        try:fn()
+        except ValueError:rejected.append(label)
+        else:raise ValueError('accepted damaged certificate: '+label)
+    args.out.write_text(json.dumps({'status':'PASS','targets':results,'family_checks':families,'damaged_controls':rejected,'whole_original_credit':0,'new_question_credit':0,'new_Lean_declarations':0},indent=2)+'\n')
+    print('PASS two source maps, ten family checks, three damaged controls')
+if __name__=='__main__':main()

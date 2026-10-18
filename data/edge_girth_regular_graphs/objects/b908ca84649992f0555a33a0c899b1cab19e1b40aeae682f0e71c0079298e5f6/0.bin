@@ -1,0 +1,16 @@
+#include "forest_joint.h"
+int main(int argc,char**argv){try{
+ require(argc==3,"usage joint_control GRAPH SECONDS");ifstream in(argv[1]);int count,n;require(bool(in>>count>>n)&&count==1&&n==32,"exact positive input");Graph full(n);for(U&row:full)require(bool(in>>row),"positive row");validate_graph(full);
+ Graph base(full.begin(),full.begin()+26);for(U&row:base)row&=(U(1)<<26)-1;validate_root(base,18);Budget budget(stod(argv[2]));U cases=0,positives=0,complete=0,oldnodes=0,newnodes=0;
+ for(int variant=0;variant<12;variant++){
+  vector<int>p(26);iota(p.begin(),p.end(),0);
+  for(int side=0;side<2;side++){int root=13*side,leaf=root+4;for(int b=0;b<3;b++){int bb=(b+variant%3)%3;p[root+1+b]=root+1+bb;for(int j=0;j<3;j++)p[leaf+3*b+j]=leaf+3*bb+(j+(variant/3+side+b)%3)%3;}}
+  Graph g(26);for(int i=0;i<26;i++)for(int j=i+1;j<26;j++)if((base[i]>>j)&1)add_edge(g,p[i],p[j]);validate_root(g,18);
+  for(int shape=0;shape<4;shape++){
+   ForestCover old(g,6,shape,18,budget);old.run();JointCover now(g,6,shape,18,budget);now.run_joint();
+   auto a=old.right.positives,b=now.positive_graphs;sort(a.begin(),a.end());sort(b.begin(),b.end());require(a==b&&old.right.complete==now.complete_joint,"exact complete/positive assignment sets");
+   cases++;positives+=a.size();complete+=now.complete_joint;oldnodes+=old.nodes+old.right.nodes;newnodes+=now.jointnodes;
+  }
+ }
+ require(positives>=12,"known positive in every variant");cout<<"{\"status\":\"PASS_JOINT_AND_SEPARATE_COMPLETE_CONTROL\",\"cases\":"<<cases<<",\"positive_outputs\":"<<positives<<",\"complete_graphs\":"<<complete<<",\"old_nodes\":"<<oldnodes<<",\"joint_nodes\":"<<newnodes<<"}\n";return 0;
+}catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

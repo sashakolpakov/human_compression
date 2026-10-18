@@ -1,0 +1,524 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs,longtable,array,hyperref}
+\setlength{\emergencystretch}{2em}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newcommand{\egr}{\operatorname{egr}}
+\newcommand{\vt}{\mathrm{vt}}
+\newcommand{\at}{\mathrm{at}}
+\title{Edge-girth-regular graphs: complete generation, numerical bounds,\newline
+and the quartic one-hexagon obstruction}
+\author{Human Compression project}
+\date{18 October 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+We assemble proofs and finite certificates for the principal mathematical
+results in the June 2024 edition of Goedgebeur and Jooken's
+\emph{Exhaustive generation of edge-girth-regular graphs}. The synthesis
+contains a corrected complete-generation theorem, all 142 lower-bound
+rows, 84 finite upper witnesses, 47 asserted exact counts, and 118 minima
+in two symmetry classes. The printed first-phase generation rule and one
+symmetry minimum require explicit corrections. A computer-assisted local
+argument excludes quartic graphs on 54 vertices having exactly one hexagon
+through each edge; together with the smaller-order argument this gives
+$57\le n(4,6,1)\le84$. The companion proofs state the external
+classification and classical algebraic premises used in their respective
+rows. Neither finite-table completeness nor this new local argument
+settles the three remaining assertions of the source's Conjecture 2.
+\end{abstract}
+
+\section{Definitions, scope and conclusions}
+All graphs are finite, simple and connected unless a partial graph is
+explicitly being considered. An $\egr(n,k,g,\lambda)$ graph has $n$
+vertices, is $k$-regular, has girth $g$, and has exactly $\lambda>0$
+unoriented cycles of length $g$ through every edge. Let $n(k,g,\lambda)$
+be its least possible order, with value $\infty$ if no such graph exists.
+Write $n_{\vt}$ and $n_{\at}$ for minima restricted to vertex-transitive
+and arc-transitive graphs, respectively. These restricted minima need not
+be unrestricted minima.
+
+The fixed source throughout is arXiv:2401.08271v2, dated 25 June 2024
+\cite{source}. Its physical pages 17--20 contain Tables 1--4; physical
+page 21 contains Table 5. The appendices below retain each numerical
+claim separately from any stronger conclusion of its companion proof.
+An infinity symbol in the source's upper-bound column can mean that no
+finite example was reported. It is not, by itself, a nonexistence theorem.
+
+\begin{theorem}[Numerical synthesis]\label{thm:numerical}
+Subject to the external premises explicitly specified by the cited
+companion proofs, every lower inequality and every finite upper
+inequality in Appendix~\ref{app:bounds} holds. Its 47 displayed exact
+counts are counts of isomorphism classes at the stated upper order.
+The 118 corrected symmetry minima in Appendix~\ref{app:symmetry} hold
+in their stated symmetry classes.
+\end{theorem}
+Here ``exact'' applies only where the source asserts an exact count.
+A supplied graph for a row marked ``at least one'' is not an exhaustion
+of that row's extremal graphs. In particular, the last quartic row proved
+here is a pair of inequalities, not an equality or an exact count.
+
+\begin{proof}
+The lower and exact-count columns refer to the numbered companion
+proofs in Appendix~\ref{app:components}. Each of the 142 rows is joined
+to its lower-bound proof; each of the 47 exact counts is separately
+joined to its exhaustion or structural classification. The common
+positive-witness proof C1 checks the 84 finite upper inequalities.
+The symmetry proof C4 supplies the separate catalogue exhaustion and
+symmetry certificates for the 118 rows. The only previously missing
+lower inequality, for $(k,g,\lambda)=(4,6,1)$, follows from
+Theorem~\ref{thm:57} below. The machine-readable concordance preserves
+the literal source rows and identifies the exact companion editions;
+the mathematical statements of those companions, rather than a numerical
+agreement or a solver status, supply these implications.
+\end{proof}
+
+Among the source's highlighted conclusions are
+\[
+\begin{gathered}
+n(3,6,2)=24,\qquad n(3,8,8)=40,\qquad
+n(3,9,6)=n(3,9,8)=60,\\
+n(4,5,1)=30,\qquad n(4,6,9)=35,\qquad n(6,5,20)=42.
+\end{gathered}
+\]
+The first two use the cubic catalogue argument C9; the two order-60
+statements use the unrestricted girth-nine argument C3, including its
+explicit cage-classification premise. They do not follow from a
+vertex-transitive minimum alone. The remaining three use C6, C30
+together with the lower and positive proofs, and C2 with C1,
+respectively. There are two isomorphism classes at $(24,3,6,2)$ and one
+at $(40,3,8,8)$, $(30,4,5,1)$ and $(35,4,6,9)$. No exact count at order
+60 or for the displayed order-42 row is asserted here.
+
+\section{Cycle counting and complete generation}\label{sec:algorithm}
+We state the mathematical interface of the complete-generation proof
+\cite{algorithm}. It is independent of the historical running times or
+the adequacy of fixed arrays in an old implementation.
+
+\begin{lemma}[Deleted-edge counting]\label{lem:count}
+Let $H$ have girth at least $g$ and let $uv$ be an edge. In $H-uv$,
+perform breadth-first search from $u$. Set $a(u)=1$ and
+\[
+a(x)=\sum_{y\sim x,\ d(u,y)=d(u,x)-1}a(y).
+\]
+If $d(u,v)=g-1$, the number of $g$-cycles through $uv$ is $a(v)$;
+otherwise it is zero. The computation takes $O(|V(H)|+|E(H)|)$
+arithmetic operations.
+\end{lemma}
+\begin{proof}
+Deleting $uv$ identifies its cycles with simple $u,v$ paths. Girth
+forbids a path shorter than $g-1$, so a path of that length is shortest.
+Every shortest path has a unique penultimate vertex in the preceding
+layer, giving the recurrence. Before the FIFO queue removes a vertex,
+all preceding-layer contributions have arrived. Each adjacency is
+examined at most twice.
+\end{proof}
+For comparisons with $\lambda$, counts can be capped at $\lambda+1$.
+The identity $\min(C,a+b)=\min(C,\min(C,a)+\min(C,b))$ proves that this
+preserves the decisions below, equal to, or above $\lambda$. Arithmetic
+complexity is not an assumption of constant-time unbounded integers;
+the capped additions use $O(\log(\lambda+2))$ bits.
+
+For odd girth $2s+1$, start with the degree-$k$ tree of depth $s$
+about a vertex, grouping leaves by their first root edge. For even girth
+$2s$, start with an edge and the two degree-$k$ trees of depth $s-1$
+on its sides. Add isolates to reach the target order. Girth prevents
+collisions inside these trees. A horizontal edge joins different leaf
+groups. The tree path it closes is a girth cycle, and conversely every
+girth cycle through a prescribed root edge (or the central edge in the
+even case) arises this way. Consequently each group has horizontal
+incidence quota $\lambda$.
+
+\begin{theorem}[Corrected generation]\label{thm:generation}
+The following serial depth-first scheme covers every target up to
+isomorphism and, with exact terminal keys, outputs it once. Add only
+edges between deficient vertices that preserve girth and do not force
+more than $\lambda$ girth cycles through an edge. In the first phase
+choose a \emph{deficient leaf group} and attempt all eligible horizontal
+edges incident with that group. Once all quotas are met, choose an
+unsaturated nonisolated vertex and attempt all eligible incident edges.
+The scheme may use exact uncoloured keys on the entire graph, literal
+rollback, historical sibling exclusions, and the least-labelled
+isolated-neighbour representative as specified in \cite{algorithm}.
+The final test requires connectedness, degree $k$ and cycle count
+$\lambda$ at every edge.
+\end{theorem}
+\begin{proof}
+Every target contains a seed. If a group is deficient, some missing
+target edge is horizontal and incident with that group. In the second
+phase an unsaturated nonisolated vertex likewise has a missing target
+edge. If every nonisolated vertex is saturated while isolates remain,
+there is no connected completion. Degree-capacity and cycle-excess tests
+are necessary restrictions. Girth-cycle counts cannot decrease when
+edges are added.
+
+The less immediate pruning argument is chronological. A recursive call
+strictly increases edge count, so a previous state with the same exact
+uncoloured key cannot be an ancestor: its call has already finished.
+Earlier sibling edges are excluded only after their entire child calls
+finish. Inductively, a target completion removed by such a historical
+exclusion is already represented by an earlier completed call. If no
+target edge is historically excluded, the deficient-group or selected-
+vertex argument supplies an eligible target edge. Relabelling isolated
+vertices justifies retaining the least isolated neighbour; when its
+representative edge is historically excluded, the same chronological
+argument supplies earlier coverage. It is not necessary to assert that
+the historical exclusion masks are isomorphic.
+
+The complete induction, including capacity pruning in the presence of
+these masks, is given in \cite{algorithm}. Restoration returns exactly
+the parent graph and records before a new sibling exclusion is installed.
+There are at most $nk/2$ edge additions on a branch. The exact terminal
+test proves soundness, and the terminal isomorphism keys give uniqueness.
+\end{proof}
+The proof also admits the one-phase version and delayed excess-cycle
+tests, with the same exact terminal predicate. A bounded memo table may
+omit storing a nonterminal state; doing so loses a pruning opportunity,
+not a completion. Duplicate-free output still requires the stated
+terminal-key rule.
+
+\subsection{The printed first-phase rule}
+Printed Algorithm 2 chooses a minimum-option leaf, which can lie in a
+group whose quota is already full. For $(n,k,g,\lambda)=(9,4,3,1)$,
+take the star with centre 0, leaves $1,2,3,4$, and four isolates. After
+adding $12$, leaves 1 and 2 each have four valid neighbours, all isolated;
+leaves 3 and 4 have five, including each other. The printed rule chooses
+1 or 2 but then has no horizontal edge to attempt. It misses $34$ and
+therefore misses the $3\times3$ rook graph, which is connected,
+4-regular and has exactly one triangle through each edge. The separate
+literal counterexample checks all tie and first-edge histories.
+
+The correction is to loop over a deficient group, as in
+Theorem~\ref{thm:generation}. The later December 2024 C source, at
+commit \texttt{41022f4a3ad84e4502f8889c5b64132225411ca2}, already uses
+this corrected loop. The counterexample to the printed June rule is
+not a counterexample to that later implementation. The abstract theorem
+and exact reference implementation do not retrospectively certify every
+historical machine execution; the numerical claims have their own proofs
+and certificates.
+
+\section{Quartic graphs with one hexagon through every edge}
+Let $Q$ denote the hypotheses of a connected quartic graph of girth six
+with exactly one hexagon through each edge. The following argument has
+no bipartiteness assumption.
+
+\subsection{The smaller-order reduction}
+The two hexagons through a vertex pair its four incident edges. Distinct
+hexagons meet in at most one vertex. The distance spheres of radii
+$0,1,2,3$ about a vertex have sizes
+\[
+                         1,\quad4,\quad12,\quad34.
+\]
+Indeed there are 36 length-three nonbacktracking paths starting at the
+vertex; precisely the two antipodal pairs on its two hexagons identify
+their ends. A further collision would force an edge into two hexagons.
+Thus $|V(G)|\ge51$. Counting edge--hexagon incidences gives
+$6h=2|V(G)|$, so $3$ divides $|V(G)|$.
+
+We import the complete order-51 spectral lemma \cite{reduction}.
+At equality the radius-three ball is the whole graph, and the adjacency
+matrix $A$ and the antipodal two-factor matrix $M$ satisfy
+\[
+             M=A^3+A^2-6A-3I-J.
+\]
+The proof compares the rational multiplicities of the cycle eigenvalues
+of $M$ with the cubic preimages under this polynomial. Its cyclotomic
+integer-ring premise and finite residue certificates are explicit in
+\cite{reduction}. The resulting multiplicity congruences contradict the
+principal eigenspace. This excludes order 51; we do not replace that
+lemma with a numerical spectral approximation.
+
+\subsection{A complete local cover at order 54}
+For a hexagon $C$ of a hypothetical order-54 graph, write $t(C)$ for the
+number of vertices at distance at least three from $C$. The local
+incidence lemmas \cite{order54} give twelve first-layer vertices.
+The second layer consists of vertices $S$ with one first-layer parent
+and vertices $T$ with two parents. The remaining vertices form $Z$, with
+\[
+       |T|=|Z|=t(C),\qquad |S|=36-2t(C).
+\]
+The previously proved three- and four-exterior exclusions, together with
+the layer restrictions, leave $t(C)\in\{0,5,6\}$.
+
+For $t=5$, the auxiliary graph on $Z$ has the three coloured hosts and
+actual parent assignments of the complete five-exterior theorem. Its
+three necessary formulas have separate reconstructed refutations. Thus
+$t=5$ is impossible. This uses the full five-exterior cover; no
+four-exterior filter is transferred to it without a proof.
+
+For $t=6$, each $T$ gives an edge between its two $Z$ neighbours. The
+resulting simple graph $R$ has six vertices and six edges, with colours
+recording the opposite anchors on $C$. The parent-cover theorem excludes
+the fork and ear configurations and gives eight uncoloured shapes,
+twelve coloured rows and seventy raw parent records. The letters
+$N,L,R$ name actual parent choices. Disconnected hosts, a leaf, or an
+isolated $Z$ vertex are allowed where the theorem permits them.
+
+Each raw record gives a host with 54 vertices, 66 fixed edges and the
+complete allowed optional $SS$, $SZ$ and $ZZ$ pairs. The fixed edges are
+the six cycle edges, twelve edges to the first layer, twelve parent edges
+to $T$, twenty-four parent edges to $S$, and twelve $TZ$ edges. Shared
+parents change the individual deficits, not these totals. Optional
+pairs include the isolated-$Z$ possibilities; their host degree can be
+29. No degree-24 assumption from the five-exterior case is used.
+
+Literal permutations of all 54 vertices take these seventy domains to
+the twenty-four domains in Appendix~\ref{app:hosts}. Both the entire
+fixed-edge set and the entire optional-edge set are checked under each
+permutation. These equalities transport every graph completion and its
+cycle properties. A claim that the representatives are mutually
+nonisomorphic is unnecessary.
+
+\subsection{Necessary formulas and their refutations}
+There is one Boolean variable for each optional edge. The original
+completion formula imposes degree four and the necessary girth
+restrictions. Every one of the twelve fixed $TZ$ edges must occur in
+a hexagon. Enumerating simple length-five paths between its ends in the
+literal finite host gives the complete candidate list. Cycles are
+discarded only for the proved degree or shortcut obstructions. A shared
+positive gate is equivalent to the conjunction of the optional edges
+of a cycle; the disjunction of these gates is required for each fixed
+$TZ$ edge. The catalogue is therefore complete even when a host has an
+isolated $Z$ vertex.
+
+A short cycle, or two distinct hexagons sharing an edge, gives a
+necessary negative clause on its optional edges. Every universal clause
+and every subsequent lazy cut carries such a literal witness. Hence a
+$Q$ completion would satisfy the entire final formula, after extending
+its edge assignment to the gate variables. Only this necessary direction
+is used.
+
+The independent saved-certificate procedure recomputes the selected
+catalogue, validates every cut witness, rebuilds the complete DIMACS
+formula in its fixed clause order, and compares it with the formula
+actually refuted. An unchanged reverse-unit-propagation checker then
+validates all proof additions and an explicit empty clause. Its active
+and historical clauses are consequences of that same original formula;
+the solver's own UNSAT declaration is not a premise. Dimensions and
+checked additions for all twenty-four domains appear in
+Appendix~\ref{app:hosts}.
+
+One domain's accepted proof is a separate copy of its original trace
+followed by an empty-clause line. This is not an unconditional rule for
+repairing a trace: the unchanged checker accepted the resulting complete
+trace against the reconstructed original formula. A previous failed
+read remains failed. Another domain uses a separately completed proof
+of its already fixed formula. Neither case repeats or assumes the
+correctness of an incomplete search.
+
+It follows that no hexagon of an order-54 $Q$ graph can have $t=6$:
+its completion would transport to one of the refuted domains and induce
+a satisfying assignment of that domain's necessary formula.
+
+\subsection{The global contradiction and lower bound}
+\begin{theorem}\label{thm:54}
+There is no order-54 graph satisfying $Q$.
+\end{theorem}
+\begin{proof}
+There are 108 edges and therefore 18 hexagons. Their incidence graph
+is simple and 6-regular: the two hexagons through each vertex are
+distinct, and two hexagons meet at most once. The zero-neighbour lemma
+\cite{order54} proves that two zero hexagons cannot meet a zero hexagon
+at opposite vertices. Thus a zero hexagon has at most three zero
+neighbours and at least three positive neighbours, where positive means
+$t(C)>0$.
+
+If $n_0,n_+$ count zero and positive hexagons, then
+\[
+                   3n_0\le6n_+,\qquad n_0+n_+=18,
+\]
+so $n_+\ge6$. But every hexagon has $t\in\{0,5,6\}$, and the complete
+local refutations exclude both positive values. This is a contradiction.
+The argument excludes the all-zero case; it does not assert that a
+single zero hexagon is impossible independently of the others.
+\end{proof}
+
+\begin{theorem}\label{thm:57}
+One has $57\le n(4,6,1)\le84$.
+\end{theorem}
+\begin{proof}
+The sphere bound gives order at least 51 and the incidence count gives
+divisibility by three. The order-51 lemma and Theorem~\ref{thm:54}
+exclude the only possible orders below 57. The explicit 84-vertex graph
+\texttt{UntilOrder250\_427} satisfies the defining properties by the
+independent positive-witness tests C1. Thus the upper inequality holds.
+\end{proof}
+This proves exactly the lower/upper claim in source Table 2. It neither
+excludes order 57 nor determines the exact minimum or number of graphs
+at order 84.
+
+The source's even-girth nonbipartite example also follows from the
+separately classified $\egr(15,6,4,16)$ graph. In any nonempty regular
+bipartite graph, counting edges from the two parts gives equal part
+sizes. Its order is therefore even. The accepted order-15 witness is
+nonbipartite, so the proposed bipartiteness analogue for minimum
+edge-girth-regular graphs fails, as observed by the source authors.
+
+\input{descriptive_figures.tex}
+
+\section{External premises, corrections and attribution}
+The companion proofs distinguish a direct certificate from a borrowed
+classification. In particular, C9 uses the specified complete cubic
+catalogues, C3 uses the classified cubic girth-nine cages, and C4 uses
+the Poto\v cnik--Spiga--Verret catalogues of cubic vertex-transitive
+graphs through order 1280 and tetravalent arc-transitive graphs through
+order 640. Checking every retained record does not prove those external
+catalogues complete. Positive symmetry certificates prove transitivity
+by explicit automorphisms and orbits, without requiring a full
+automorphism-group computation.
+
+The elementary lower-bound and seed arguments retain the source's
+attribution to Drglin, Filipovski, Jajcay and Raiman. The order-51 proof
+retains its stated theorem about cyclotomic integer rings. Other borrowed
+inputs and their exact applicability remain in the corresponding
+companion manuscript; combining the rows does not discharge those
+premises. The proof-source concordance includes each such manuscript
+rather than replacing it with a claim of wholly independent rederivation.
+
+There are two further corrections beyond the printed generation rule.
+First, C4 proves
+\[
+                         n_{\vt}(3,14,56)=486,
+\]
+correcting 506 in Table 5. The literal catalogue graph has 729 edges
+and 2916 fourteen-cycles, so $2916\cdot14=729\cdot56$; independent
+edgewise tests and explicit vertex-transitivity witnesses supply its
+positive certificate. The complete catalogue comparison excludes
+smaller orders. The other 117 minima agree with the fixed source.
+Second, this graph contradicts the unqualified physical-page-12 sentence
+denying a cubic connected vertex-transitive graph on 486 vertices.
+We do not silently insert a girth restriction into that sentence.
+
+The source authors' refutations of the earlier extremality conjecture
+are preserved as their results: the order-40 witness at $(3,8,8)$ is
+smaller than 54, and the order-162 witness at $(3,12,32)$ is smaller
+than 486. This synthesis makes no new priority claim for either.
+
+The source's separate Conjecture 2 asserts four infinite minima. The
+previously proved companion C34 establishes $n(3,8,14)=\infty$ by a
+local forced-configuration and protected-edge argument independent of
+the ambient order. This strengthens the source's finite lower bound 64
+and resolves its fourth clause within the acquired component collection.
+For the other three clauses this synthesis supplies only
+\[
+n(3,7,6)\ge42,\qquad n(3,8,10)\ge48,\qquad n(3,8,12)\ge48.
+\]
+It does not prove their proposed infinity values or assess their current
+status elsewhere. This corrects the overbroad wording in an earlier
+internal completion plan that described all four clauses as unresolved.
+No new conjecture credit arises from assembling the already proved C34.
+
+\section{Reproduction boundary}
+The mathematical payload consists of the companion proofs, exact input
+graphs and classifications with their stated provenance, local-domain
+models and vertex permutations, formula construction and witness-checking
+sources, and complete accepted refutations. A source-only rebuild of the
+RUP checker is sufficient; a historical platform-specific executable is
+not a mathematical premise. Formula construction, certificate verification
+and finite coverage are distinct from rerunning certificate discovery.
+
+All 49 component defaults and the five overarching route families
+have separately accepted private executions. The overarching families
+cover the 29 complete saved refutations, the seventy-to-twenty-four domain
+transport, the literal figure certificates, the order-51 modular
+certificates, and the two algorithm defaults. The current concordance
+joins the 16 principal claim objects, all 260 source-table rows and all
+53 direct written-source or composition records to those exact gates.
+These counts do not remove the external premises stated above or grant
+new conjecture or historical-running-time claims.
+
+The staged scientific interfaces preserve the complete original defaults,
+their controls and their full report comparisons. Their current editions
+include the separately accepted catalogue-inventory and matching-manifest
+repairs. The package-relative binding is
+at \path{scripts/edge_girth_regular_graphs/execution/execute.py}; its
+immutable plan declares 81 bounded application configurations. It binds
+exact acquired worker sources to package paths and allows only explicitly
+named package or environment fields to relocate. The literal figure
+checker remains a separate relative entrypoint with its acquired
+isolation boundary. The readable reproduction guide lists these routes
+and distinguishes metadata preparation from actual scientific execution.
+
+The publication closure retains the selected mathematical and
+runtime payloads, all written-source joins, current adapters, mode and
+runtime manifests, and full case expectations. Historical fixed-host
+supervisors, an entire old receipt roster and old machine binaries are
+not prerequisites merely because a prior gate records their identities.
+Records actually read as scientific comparisons or written premises are
+retained. Documentary identities remain explicit and are not silently
+treated as newly executed files. No old artifact or Git history is
+removed by this publication mechanism.
+
+The first bounded binding targets the acquired macOS/Darwin ownership
+mechanism, including its \texttt{libproc} process-group observations;
+it is not a cross-platform process-reaping claim. Python and its required
+packages, the compiler and sanitizer runtime, and the specified nauty
+headers and library are explicit external environment premises. Canonical
+and classification conventions remain those of the companion proofs.
+The typed package-relative binding has a distinct source review. Its
+metadata generator derives file identities and path projections from logical
+roles, without requiring the author's old host paths as configuration keys.
+The actual focused metadata controls checked all 81 case inverses and 20
+rejections. A separately owned complete dense-bounds integration reproduced
+its unchanged original report through this interface. These observations
+cover the binding boundary and one scientific route in the recorded
+environment. The publication admission at
+\path{data/edge_girth_regular_graphs/admission.json} must separately bind
+the exact assembly, manuscript, rendered PDF, registration and scoped
+selected-checkout evidence. The accepted mathematical executions do not
+by themselves assert that an arbitrary fresh machine can run every route.
+The reproduction guide gives the concrete prerequisites and commands;
+its instructions do not substitute for those actual admission records.
+
+\appendix
+\section{Bounds and asserted exact counts}\label{app:bounds}
+$L_s$ is the fixed source's lower bound, $L$ the proved lower bound, and
+$U_s$ its finite upper bound. A dash in $U_s$ means no finite upper
+claim, not a proof of nonexistence. The column $c(U_s)$ gives only
+asserted exact isomorphism counts; its dash leaves that count unspecified.
+$C_L,C_c$ identify the lower and counting companion proofs below. All
+finite upper witnesses use C1. An infinite $L$ is an all-order
+nonexistence conclusion of its cited component.
+{\small\input{numeric_tables.tex}}
+
+\section{Corrected symmetry minima}\label{app:symmetry}
+For $k=3$ the class is vertex-transitive, and for $k=4$ it is
+arc-transitive. Both the printed value and the actual minimum are shown.
+The complete comparison is C4.
+{\small\input{symmetry_table.tex}}
+
+\section{The twenty-four local refutations}\label{app:hosts}
+``Raw domains'' counts the members of the complete seventy-record
+parent cover transported to that representative. It does not count
+graph isomorphism classes. Every row has a checked empty-clause
+conclusion against its reconstructed necessary formula.
+{\small\input{host_certificate_table.tex}}
+
+\section{Companion proof concordance}\label{app:components}
+The numbering in the numerical tables names the following exact
+mathematical sources. Their byte identities and individual premise
+statements are retained in the machine-readable source concordance.
+The separate generation proof and order-51 reduction are also included
+in that concordance.
+\input{component_concordance.tex}
+
+\begin{thebibliography}{99}
+\bibitem{source} J. Goedgebeur and J. Jooken,
+\emph{Exhaustive generation of edge-girth-regular graphs},
+arXiv:2401.08271v2, 25 June 2024.
+\bibitem{algorithm} Human Compression project,
+\emph{Cycle counting and complete generation of edge-girth-regular graphs}.
+Companion algorithm manuscript, including the corrected rule and exact
+reference implementation.
+\bibitem{reduction} Human Compression project,
+\emph{A spectral obstruction and three remaining cases}. Companion order-51 spectral proof
+and residue certificates.
+\bibitem{order54} Human Compression project,
+\emph{Excluding order 54 with one hexagon through every edge}.
+Companion local proofs, complete domain transports and refutation
+composition, C50.
+\input{component_bibliography.tex}
+\end{thebibliography}
+\end{document}

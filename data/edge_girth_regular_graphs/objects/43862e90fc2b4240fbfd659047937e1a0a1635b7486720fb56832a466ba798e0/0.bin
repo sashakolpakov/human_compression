@@ -1,0 +1,75 @@
+"""Replay the classification and verify its complete literal branching trees."""
+import argparse,copy,hashlib,json,os,shutil,subprocess,sys,time
+from pathlib import Path
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+import seeds
+from verify_tree import verify,girth_six,need
+W=Path(__file__).resolve().parent
+
+def put(p,v):p.write_text(json.dumps(v,indent=2)+'\n')
+def decode(raw):
+    n=raw[0]-63;need(n==30 and all(63<=x<=126 for x in raw),'source graph6 alphabet')
+    bits=[(b-63)>>j&1 for b in raw[1:]for j in range(5,-1,-1)];need(len(bits)==438,'source graph6 length');adj=[0]*n;i=0
+    for y in range(1,n):
+        for x in range(y):
+            if bits[i]:adj[x]|=1<<y;adj[y]|=1<<x
+            i+=1
+    need(not any(bits[i:]),'graph6 padding');return adj
+
+def main():
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--render',action='store_true');a=p.parse_args();o=a.out.resolve();o.mkdir(parents=True,exist_ok=False);start=time.monotonic()
+    bindings=json.loads((W/'bindings.json').read_text())
+    for b in bindings:
+        data=Path(b['path']).read_bytes();need(len(data)==b['bytes']and hashlib.sha256(data).hexdigest()==b['sha256'],'binding')
+    if(W/'manifest.json').exists():
+        for b in json.loads((W/'manifest.json').read_text())['exports']:
+            data=(W/b['path']).read_bytes();need(len(data)==b['bytes']and hashlib.sha256(data).hexdigest()==b['sha256'],'export')
+    groups=json.loads(json.dumps(seeds.generate()));need(groups==json.loads((W/'seeds.json').read_text()),'entire regenerated seed collection')
+    rejected=0
+    for g in groups:
+        for adj in g['rejected_seed_graphs']:need(not girth_six(adj),'excluded seed really has short cycle');rejected+=1
+    need(rejected==602,'all excluded seeds')
+    seeds_input=(W/'literal_seeds.txt').read_text();initial=[x['adjacency']for g in groups for x in g['examples']]
+    need(seeds_input==str(len(initial))+'\n'+'\n'.join(' '.join(map(str,r))for r in initial)+'\n','exact C++ seed input')
+    expected=(W/'certificate.jsonl').read_bytes();summaries=[];env=os.environ.copy();env.update(ASAN_OPTIONS='detect_leaks=0:halt_on_error=1',UBSAN_OPTIONS='halt_on_error=1')
+    for name,flags in[('ordinary',['-O2']),('sanitized',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'])]:
+        r=subprocess.run(['clang++','-std=c++17','-Wall','-Wextra','-pedantic',*flags,str(W/'complete.cpp'),'-o',str(o/name)],capture_output=True,text=True,env=env,timeout=30)
+        (o/f'compile_{name}.stdout').write_text(r.stdout);(o/f'compile_{name}.stderr').write_text(r.stderr);need(r.returncode==0 and not r.stderr,'compile')
+        r=subprocess.run([str(o/name),str(o/f'{name}_certificate.jsonl')],input=seeds_input,capture_output=True,text=True,env=env,timeout=65)
+        (o/f'{name}.stdout').write_text(r.stdout);(o/f'{name}.stderr').write_text(r.stderr);need(r.returncode==0 and not r.stderr,'complete search')
+        need((o/f'{name}_certificate.jsonl').read_bytes()==expected,'literal search tree reproduced')
+        rows=[json.loads(line)for line in r.stdout.splitlines()];need(len(rows)==642 and all(x['status']=='COMPLETE'for x in rows),'all initial forms completed');summaries.append([{k:v for k,v in x.items()if k!='seconds'}for x in rows])
+    need(summaries[0]==summaries[1],'sanitized agreement')
+    records=[json.loads(line)for line in expected.splitlines()];result=verify(groups,records)
+    need((result['seeds'],result['nodes'],result['links'],result['full'],len(result['positives']))==(642,8934,8292,688,48),'literal complete counts')
+    source=json.loads((W/'source.json').read_text());raw=Path(source['graph_file']).read_bytes().splitlines()[source['source_line']-1];need(hashlib.sha256(raw).hexdigest()==source['graph6_line_sha256']and(W/'source.g6').read_bytes()==raw+b'\n','source line')
+    target=decode(raw);maps=json.loads((W/'source_maps.json').read_text());bykey={(r['frame'],r['node']):r['mapping']for r in maps};need(len(bykey)==len(maps)==48,'all maps')
+    for row in result['positives']:
+        key=(row['frame'],row['node']);need(key in bykey,'positive source map');p=bykey[key];need(len(p)==30 and all(type(x)is int for x in p)and set(p)==set(range(30)),'source permutation')
+        need(all((row['adjacency'][x]>>y&1)==(target[p[x]]>>p[y]&1)for x in range(30)for y in range(30)),'all literal adjacency comparisons')
+        need(row['cycles']==210,'six-cycle total')
+    mutations=[]
+    for label in['wrong seed','lost terminal branch','invalid parent']:
+        damaged=copy.deepcopy(records)
+        if label=='wrong seed':damaged[0]['adjacency'][0]^=2
+        elif label=='lost terminal branch':
+            j=max(i for i,r in enumerate(damaged)if r['frame']==0);del damaged[j]
+        else:damaged[1]['parent']=1
+        try:verify(groups,damaged)
+        except RuntimeError as error:mutations.append({'name':label,'rejected':str(error)})
+        else:raise RuntimeError('damaged tree accepted')
+    put(o/'mutations.json',mutations)
+    for name in['argument','environment']:
+        ee=env.copy();command=[sys.executable]
+        if name=='argument':command.append('-O')
+        else:ee['PYTHONOPTIMIZE']='1'
+        r=subprocess.run(command+[str(W/'check.py')],env=ee,capture_output=True,text=True,timeout=5);need(r.returncode!=0 and'Optimized Python is not accepted'in r.stderr,'optimization guard');(o/f'guard_{name}.stderr').write_text(r.stderr)
+    if a.render:
+        shutil.copy2(W/'thirty.tex',o/'thirty.tex')
+        for i in[1,2]:
+            r=subprocess.run(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','thirty.tex'],cwd=o,capture_output=True,text=True,timeout=30);(o/f'native{i}.stdout').write_text(r.stdout);(o/f'native{i}.stderr').write_text(r.stderr);need(r.returncode==0 and not r.stderr,'native build')
+        log=(o/'thirty.log').read_text();need('Overfull'not in log and'LaTeX Warning:'not in log,'native content')
+    report={'status':'PASS_GIRTH_SIX_ORDER30_CLASSIFICATION','seeds':642,'nodes':8934,'links':8292,'full_graphs':688,'qualifying_labelled':48,'literal_source_maps':48,'cycles_per_graph':210,'per_edge':21,'rejected_initial_forms':602,'damaged_certificates_rejected':len(mutations),'ordinary_sanitized_agree':True,'fresh_bindings':len(bindings),'optimization_guards':2,'graph_isomorphism_software_premise':False,'new_exact_rows':1,'new_lower_rows':0,'whole_original_credit':0,'new_question_credit':0,'new_Lean':0,'seconds':time.monotonic()-start}
+    put(o/'report.json',report);print(json.dumps(report))
+if __name__=='__main__':main()

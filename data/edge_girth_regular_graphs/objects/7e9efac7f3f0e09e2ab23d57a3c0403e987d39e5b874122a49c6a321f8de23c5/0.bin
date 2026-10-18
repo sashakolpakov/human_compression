@@ -1,0 +1,74 @@
+import sys
+if sys.flags.optimize:raise SystemExit('normal Python required')
+sys.dont_write_bytecode=True
+from pathlib import Path
+import argparse,json,hashlib,subprocess,os,re,time,shutil
+P=Path(__file__).resolve().parent
+
+def need(ok,msg):
+ if not ok:raise ValueError(msg)
+def pin(p):
+ d=Path(p).read_bytes();return dict(bytes=len(d),sha256=hashlib.sha256(d).hexdigest())
+def main():
+ a=argparse.ArgumentParser();a.add_argument('--study',type=Path,required=True);a.add_argument('--out',type=Path,required=True);a.add_argument('--render',action='store_true');a.add_argument('--reuse-recorded-exhaustion',action='store_true');args=a.parse_args();out=args.out.resolve();need(out.is_absolute()and not out.exists()and out.parent.is_dir(),'fresh output with existing parent');out.mkdir();env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1',PYTHONPYCACHEPREFIX=str(out/'python_cache'));env.pop('PYTHONOPTIMIZE',None);checks=[]
+ def run(name,cmd,timeout=60,input=None,good=True,runenv=None,cwd=None):
+  started=time.monotonic()
+  try:r=subprocess.run([str(x)for x in cmd],capture_output=True,input=input,timeout=timeout,env=runenv or env,cwd=cwd)
+  except subprocess.TimeoutExpired as e:
+   (out/(name+'.stdout')).write_bytes(e.stdout or b'');(out/(name+'.stderr')).write_bytes(e.stderr or b'');raise ValueError('external deadline: '+name)
+  (out/(name+'.stdout')).write_bytes(r.stdout);(out/(name+'.stderr')).write_bytes(r.stderr);checks.append(dict(name=name,command=[str(x)for x in cmd],returncode=r.returncode,seconds=time.monotonic()-started,stdout=pin(out/(name+'.stdout')),stderr=pin(out/(name+'.stderr'))))
+  if good:need(r.returncode==0 and not r.stderr,'clean complete call '+name)
+  return r
+ count=0
+ for x in json.loads((P/'dependencies.json').read_text()):
+  f=Path(x['path']);need(f.is_file()and pin(f)=={k:x[k]for k in ['bytes','sha256']},'acquired binding '+str(f));count+=1
+ own=0
+ if(P/'manifest.json').exists():
+  for x in json.loads((P/'manifest.json').read_text())['exports']:need(pin(P/x['path'])=={k:x[k]for k in ['bytes','sha256']},'own export '+x['path']);own+=1
+ need(args.study.resolve()/'sources/egr_exhaustive2025.pdf' in [Path(x['path'])for x in json.loads((P/'dependencies.json').read_text())],'study binding')
+ run('inventory',[sys.executable,P/'certificate.py',out/'inventory.json'])
+ run('kernel',[sys.executable,P/'kernel_controls.py',out/'kernel'],90)
+ sources=['extension_diagnostic.cpp','extension_symmetry.cpp','extension_local_orbits.cpp'];kernels=[];bins={}
+ for src in sources:
+  txt=(P/src).read_text();kernels.append(txt[txt.index(' void paths('):txt.index(' void choose(')])
+  exe=out/Path(src).stem;run('compile_'+exe.name,['clang++','-std=c++17','-O2',P/src,'-o',exe],45);bins[src]=exe
+ need(len(set(kernels))==1,'literal unchanged path/add/test/rollback kernel')
+ from certificate import parse_summary,parse_input,graph6
+ rows=json.loads((P/'historical_selection.json').read_text());fresh=[]
+ if not args.reuse_recorded_exhaustion:
+  for r in rows:
+   got=run('target_'+str(r['forest']),[bins[r['engine']],P/r['input'],'60'],90);n=parse_summary(got.stdout.decode());old=parse_summary(Path(r['stdout']['path']).read_text());need(n==old,'exact unchanged target nodes');fresh.append(dict(forest=r['forest'],nodes=n,positives=0))
+ source=graph6((P/'source_witness.g6').read_text());mask=[sum(1<<y for y in x)for x in source];positive=[]
+ for j,name in enumerate(['positive64_symmetry','positive64_prefix_symmetry','positive64_full_symmetry']):
+  for src in sources:
+   ip=P/'inputs'/(name+'.input')
+   if src=='extension_diagnostic.cpp':
+    n,ee,aa,autos=parse_input(ip,True);need(not autos,'positive no maps');ip=out/(name+'_plain.input');ip.write_text('\n'.join([f'{n} {len(ee)}']+[f'{a} {b}'for a,b in ee]+[str(len(aa))]+[f'{a} {b}'for a,b in aa])+'\n')
+   r=run('positive_'+str(j)+'_'+Path(src).stem,[bins[src],ip,'3'],10);lines=r.stdout.decode().splitlines();need(len(lines)==2 and list(map(int,lines[0].split()[1:]))==[1]+mask,'literal positive graph');need(re.fullmatch(r'SUMMARY COMPLETE NODES [0-9]+ POSITIVES 1 SECONDS [0-9.e+\-]+',lines[1])is not None,'complete positive');positive.append([j,src])
+ bad=['48 1\n0 0\n0\n','48 2\n0 1\n0 1\n0\n','48 0\n1\n0 48\n','48 0\n0\ntrailing\n']
+ for j,txt in enumerate(bad):
+  ip=out/f'malformed{j}.input';ip.write_text(txt)
+  for src in sources:
+   r=run('malformed_'+str(j)+'_'+Path(src).stem,[bins[src],ip,'1'],5,good=False);need(r.returncode!=0 and b'SUMMARY COMPLETE'not in r.stdout,'malformed input rejected')
+ opt=[]
+ for name in ['check.py','certificate.py','kernel_controls.py']:
+  for mode in ['argument','environment']:
+   denied=out/(name+'_'+mode+'_DENIED');cmd=[sys.executable]+(['-O']if mode=='argument'else[])+[P/name]
+   if name=='check.py':cmd+=['--study',args.study,'--out',denied]
+   else:cmd+=[denied]
+   e=dict(env)
+   if mode=='environment':e['PYTHONOPTIMIZE']='1'
+   r=run('opt_'+name+'_'+mode,cmd,5,good=False,runenv=e);need(r.returncode!=0 and not denied.exists()and b'normal Python required'in r.stderr,'pre-output optimization guard');opt.append([name,mode])
+ native=None
+ if args.render:
+  d=out/'native';d.mkdir();shutil.copy2(P/'cubic_two.tex',d/'cubic_two.tex')
+  for j in [1,2]:run('latex'+str(j),['pdflatex','-interaction=nonstopmode','-halt-on-error','cubic_two.tex'],45,cwd=d)
+  log=(d/'cubic_two.log').read_text();need(not any(x in log for x in ['LaTeX Warning:','Overfull','Underfull']),'clean final native log')
+  from pypdf import PdfReader
+  fresh_pages=PdfReader(d/'cubic_two.pdf').pages;author=PdfReader(P/'cubic_two.pdf').pages;need([p.extract_text()for p in fresh_pages]==[p.extract_text()for p in author],'native proof text equality')
+  (d/'cubic_two.txt').write_text('\f'.join(p.extract_text()for p in fresh_pages))
+  run('native_images',['gs','-q','-dBATCH','-dNOPAUSE','-sDEVICE=png16m','-r100','-sOutputFile=page-%02d.png','cubic_two.pdf'],45,cwd=d)
+  native=dict(pages=len(fresh_pages),pdf=pin(d/'cubic_two.pdf'));need(native['pages']==3,'three native pages')
+ report=dict(status='PASS_CUBIC_TWO_LOWER_BOUND_CERTIFICATE',mode='ACQUIRE_EXACT_HISTORICAL_EXHAUSTION'if args.reuse_recorded_exhaustion else'FRESH_COMPLETE_NINE_FOREST_EXHAUSTION',dependencies=count,exports=own,inventory=json.loads((out/'inventory.json').read_text()),kernel=json.loads((out/'kernel/report.json').read_text()),fresh_targets=fresh,positive_controls=positive,malformed_inputs=12,optimization_guards=opt,native=native,one_lower_clause=[3,8,2,56],whole_original_credit=0,exact_count_credit=0,question_credit=0,checks=checks)
+ (out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items()if k!='checks'}))
+if __name__=='__main__':main()

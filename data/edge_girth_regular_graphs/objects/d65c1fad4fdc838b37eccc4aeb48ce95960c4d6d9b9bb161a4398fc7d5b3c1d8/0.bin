@@ -1,0 +1,37 @@
+"""Replay the bounded small-order classification and its coverage certificate."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+import argparse, hashlib, json, shutil, subprocess, time
+from finite_small import need
+from controls import all_small_controls, verify_maps
+
+def main():
+    p=argparse.ArgumentParser();p.add_argument('--study',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--render',action='store_true');a=p.parse_args()
+    base=Path(__file__).resolve().parent;a.out.mkdir(parents=True,exist_ok=False)
+    manifest=json.loads((base/'manifest.json').read_text());deps=json.loads((base/'dependencies.json').read_text())
+    for root,rows in [(base,manifest['exports']),(a.study,deps)]:
+        for row in rows:
+            b=(root/row['path']).read_bytes();need(len(b)==row['bytes']and hashlib.sha256(b).hexdigest()==row['sha256'],'bound input changed')
+    need((base/'base_cover5.py').read_bytes()==(a.study/'corpus106_F012_pentagon_incidence_v1/base_cover5.py').read_bytes(),'acquired algorithm changed')
+    scope=json.loads((base/'scope.json').read_text())
+    for k in ['whole_original_credit','new_question_credit','new_Lean_credit','new_measurement_credit']:need(scope[k]==0,'unearned credit')
+    start=time.monotonic()
+    run=subprocess.run([sys.executable,str(base/'finite_small.py'),'--input',str(base/'input'),'--out',str(a.out/'census')],capture_output=True,text=True,timeout=240)
+    (a.out/'stdout').write_text(run.stdout);(a.out/'stderr').write_text(run.stderr)
+    need(run.returncode==0 and not run.stderr and run.stdout.count('COMPLETE_SMALL_ORDERS')==1,'complete finite census')
+    result=json.loads((a.out/'census/report.json').read_text());maps=json.loads((base/'source_maps.json').read_text())
+    checked_maps=verify_maps(result,maps,a.study/'corpus106_F012_positive_v1/witnesses.input.gz')
+    controls=all_small_controls();pages=None
+    if a.render:
+        shutil.copy2(base/'small_orders.tex',a.out/'small_orders.tex')
+        shutil.copy2(base/'coverage_rows.tex',a.out/'coverage_rows.tex')
+        for i in [1,2]:
+            q=subprocess.run(['pdflatex','-interaction=nonstopmode','-halt-on-error','small_orders.tex'],cwd=a.out,capture_output=True,timeout=45);(a.out/f'latex{i}.stdout').write_bytes(q.stdout);(a.out/f'latex{i}.stderr').write_bytes(q.stderr);need(q.returncode==0,'native TeX build')
+        from pypdf import PdfReader
+        pages=len(PdfReader(a.out/'small_orders.pdf').pages)
+    report=dict(status='PASS_F012_SMALL_ORDERS',regular_lists=len(result['base_lists']),regular_classes=sum(r['graphs']for r in result['base_lists']),exact_source_counts=20,additional_lower_bound=[4,4,3,14],source_bijections=checked_maps,independent_cycle_controls=controls,native_pages=pages,seconds=time.monotonic()-start,whole_original_credit=0)
+    (a.out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+
+if __name__=='__main__':main()

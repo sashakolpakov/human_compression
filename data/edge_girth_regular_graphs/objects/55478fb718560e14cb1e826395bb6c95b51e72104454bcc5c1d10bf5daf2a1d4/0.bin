@@ -1,0 +1,73 @@
+"""Complete fresh certificate for the source lower bound n(4,6,13)>=36."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,hashlib,json,os,subprocess,time
+from run_closed import execute
+from build_native import build
+P=Path(__file__).resolve().parent
+def need(c,m):
+ if not c:raise RuntimeError(m)
+def pin(p):
+ b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);ap.add_argument('--render',action='store_true');a=ap.parse_args();S=a.study.resolve();O=a.out.resolve();need(not O.exists(),'fresh output required');start=time.monotonic()
+ bindings=json.loads((P/'bindings.json').read_text())
+ for r in bindings:
+  q=pin(S/r['path']);need(all(q[k]==r[k]for k in['bytes','sha256']),'bound interface '+r['path'])
+ exports=[]
+ if(P/'manifest.json').exists():
+  exports=json.loads((P/'manifest.json').read_text())['exports']
+  for r in exports:
+   q=pin(P/r['path']);need(all(q[k]==r[k]for k in['bytes','sha256']),'frozen export '+r['path'])
+ expected_scope=dict(original='F012',degree=4,girth=6,lambda_value=13,lower=36,excluded_order=33,new_lower_clauses=1,new_exact_counts=0,whole_original_credit=0,new_question_credit=0,new_Lean_credit=0,measurement_credit=0)
+ need(json.loads((P/'scope.json').read_text())==expected_scope,'literal scope')
+ code=(P/'coupled_cover_sorted.cpp').read_text();begin=code.index('  nodes++;');end=code.index('  if(position==items.size())',begin);need((P/'size_guard.inc').read_text()==code[begin:end],'literal size guard extraction')
+ O.mkdir(parents=True)
+ common=[P/'check.py',P/'run_closed.py',P/'root_cover.cpp',P/'coupled_cover.cpp',P/'coupled_cover_sorted.cpp',P/'literal_graph.h',P/'size_guard.inc']
+ def run(name,cmd,inputs,cap,report=None):return execute(cmd,O/name,[*common,*inputs],cap,report)
+ def compile_one(name,sanitize=False):
+  b=O/(name+('_san'if sanitize else''));flags=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']if sanitize else['-O3']
+  run('compile_'+b.name,['clang++','-std=c++17',*flags,'-DWORDSIZE=64','-I/opt/homebrew/include',str(P/(name+'.cpp')),'-L/opt/homebrew/lib','-lnauty','-o',str(b)],[P/(name+'.cpp')],90);return b
+ bins={name:compile_one(name)for name in['root_cover','coupled_cover_sorted','size_controls','coupled_controls','left_order_controls']}
+ run('prepare',[sys.executable,str(P/'prepare_patterns.py'),'--study',str(S),'--lambda','13','--out',str(O/'input13')],[P/'prepare_patterns.py',S/'corpus106_F012_matching_forest_v1/forest.py'],30)
+ pattern=O/'input13/patterns.txt';roots=O/'roots13.txt';rootreport=O/'root13.json'
+ run('roots',[str(bins['root_cover']),str(pattern),str(roots),str(rootreport),'120'],[bins['root_cover'],pattern],150,rootreport)
+ r=json.loads(rootreport.read_text());r.pop('seconds');need(r==json.loads((P/'expected_root13.json').read_text()),'complete root coverage')
+ report=O/'coupled13.json';positives=O/'positives13.txt'
+ run('coupled',[str(bins['coupled_cover_sorted']),str(roots),str(positives),str(report),'300'],[bins['coupled_cover_sorted'],roots],330,report)
+ r=json.loads(report.read_text());r.pop('seconds');need(r==json.loads((P/'expected_coupled13.json').read_text()),'complete coupled coverage');need(positives.read_text()=='0\n','no positives')
+ controlreports={}
+ for name in ['size_controls','coupled_controls']:
+  args=[]if name=='size_controls'else[str(roots),str(P/'positive_control_graph.txt')]
+  inputs=[]if name=='size_controls'else[roots,P/'positive_control_graph.txt']
+  run(name+'_run',[str(bins[name]),*args],[bins[name],*inputs],60)
+  actual=O/(name+'_run/stdout');controlreports[name]=json.loads(actual.read_text())
+  san=compile_one(name,True);run(name+'_san_run',[str(san),*args],[san,*inputs],90)
+  need(json.loads((O/(name+'_san_run/stdout')).read_text())==controlreports[name],'sanitized exact control equality')
+ run('left_order_controls_run',[str(bins['left_order_controls']),str(roots)],[bins['left_order_controls'],roots,P/'left_order_controls.cpp'],60)
+ left_control=json.loads((O/'left_order_controls_run/stdout').read_text());need(left_control==json.loads((P/'expected_left_controls.json').read_text()),'complete old/new block families')
+ run('independent_sizes',[sys.executable,str(P/'independent_sizes.py'),'--actual',str(O/'size_controls_run/stdout'),'--out',str(O/'independent_sizes.json')],[P/'independent_sizes.py',O/'size_controls_run/stdout'],90,O/'independent_sizes.json')
+ run('independent_coupled',[sys.executable,str(P/'independent_coupled.py'),'--graph',str(P/'positive_control_graph.txt'),'--actual',str(O/'coupled_controls_run/stdout'),'--out',str(O/'independent_coupled.json')],[P/'independent_coupled.py',P/'positive_control_graph.txt',O/'coupled_controls_run/stdout'],60,O/'independent_coupled.json')
+ original=pattern.read_text().splitlines();cases={'wrong_count':['13 491',*original[1:]],'truncated_block':original[:3]}
+ cases['bad_direction']=original.copy();v=cases['bad_direction'][2].split();v[3]='3';cases['bad_direction'][2]=' '.join(v)
+ cases['duplicate_block']=original.copy();cases['duplicate_block'][3]=cases['duplicate_block'][2]
+ env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);damages=[]
+ for name,lines in cases.items():
+  f=O/(name+'.txt');f.write_text('\n'.join(lines)+'\n');target=O/(name+'_target');rep=O/(name+'_report');c=subprocess.run([str(bins['root_cover']),str(f),str(target),str(rep),'5'],capture_output=True,timeout=10,env=env);(O/(name+'.stderr')).write_bytes(c.stderr);need(c.returncode!=0 and b'NO_CERTIFICATE:'in c.stderr and not rep.exists()and not target.exists(),'malformed inventory '+name);damages.append(name)
+ for name,binary,inputfile in [('root',bins['root_cover'],pattern),('coupled',bins['coupled_cover_sorted'],roots)]:
+  target=O/(name+'_timeout_target');rep=O/(name+'_timeout_report');c=subprocess.run([str(binary),str(inputfile),str(target),str(rep),'0'],capture_output=True,timeout=10,env=env);need(c.returncode!=0 and b'INCOMPLETE_DEADLINE'in c.stderr and not rep.exists()and not target.exists(),'timeout no certificate');(O/(name+'_timeout.stderr')).write_bytes(c.stderr)
+ guards=0
+ for name in ['check.py','prepare_patterns.py','independent_sizes.py','independent_coupled.py','build_native.py','run_closed.py']:
+  for mode in ['argument','environment']:
+   e=env.copy();command=[sys.executable]
+   if mode=='argument':command.append('-O')
+   else:e['PYTHONOPTIMIZE']='1'
+   target=O/(name+'_'+mode+'_forbidden');c=subprocess.run(command+[str(P/name),'--study',str(S),'--out',str(target)],env=e,capture_output=True,timeout=10);need(c.returncode!=0 and b'normal Python required'in c.stderr and not target.exists(),'optimization guard');(O/(name+'_'+mode+'.stderr')).write_bytes(c.stderr);guards+=1
+ native=build(P/'thirteen.tex',O/'native')if a.render else None
+ if a.render and(P/'thirteen.pdf').exists():
+  from pypdf import PdfReader
+  need([p.extract_text()for p in PdfReader(P/'thirteen.pdf').pages]==[p.extract_text()for p in PdfReader(O/'native/thirteen.pdf').pages],'frozen native text')
+ result=dict(status='PASS_THIRTEEN_HEXAGONS_LOWER36',author_exports=len(exports),acquired_bindings=len(bindings),root=json.loads(rootreport.read_text()),coupled=json.loads(report.read_text()),independent_sizes=json.loads((O/'independent_sizes.json').read_text()),independent_coupled=json.loads((O/'independent_coupled.json').read_text()),left_partition_controls=left_control,sanitized='two complete implementation controls; target enumerations ordinary',malformed_inventory_controls=len(damages),timeout_controls=2,optimization_guards=guards,native=native,whole_original_credit=0,new_lower_clauses=1,new_exact_counts=0,seconds=time.monotonic()-start)
+ (O/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:v for k,v in result.items()if k not in ['independent_sizes','independent_coupled']}))
+if __name__=='__main__':main()

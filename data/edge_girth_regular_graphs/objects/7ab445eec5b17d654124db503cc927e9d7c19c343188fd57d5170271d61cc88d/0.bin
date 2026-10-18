@@ -1,0 +1,82 @@
+"""Literal partial matchings, branch permutations and forest representatives."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+import itertools,math
+
+def need(value,message):
+ if not value:raise RuntimeError(message)
+
+def validate(sizes,edges,ks):
+ need(all(type(n)is int and n>0 for n in sizes),'positive branch sizes')
+ need(len(edges)==len(ks)and len(set(edges))==len(edges),'distinct indexed edges')
+ for (u,v),k in zip(edges,ks):
+  need(type(u)is int and type(v)is int and 0<=u<v<len(sizes),'simple ordered edge')
+  need(type(k)is int and 0<=k<=min(sizes[u],sizes[v]),'matching size')
+
+def all_matchings(n,m,k):
+ for left in itertools.combinations(range(n),k):
+  for right in itertools.combinations(range(m),k):
+   for image in itertools.permutations(right):yield tuple(zip(left,image))
+
+def choose_forest(sizes,edges,ks,full_only=False):
+ validate(sizes,edges,ks);parts=[{i}for i in range(len(sizes))];chosen=[]
+ for e in sorted(range(len(edges)),key=lambda e:(-ks[e],edges[e])):
+  u,v=edges[e];k=ks[e]
+  if not k or full_only and not(k==sizes[u]==sizes[v]):continue
+  a=next(p for p in parts if u in p);b=next(p for p in parts if v in p)
+  if a!=b:chosen.append(e);parts.remove(a);parts.remove(b);parts.append(a|b)
+ return tuple(chosen)
+
+def orient(sizes,edges,ks,forest):
+ validate(sizes,edges,ks);need(len(set(forest))==len(forest),'distinct forest edges')
+ adj=[[]for _ in sizes];components=[{i}for i in range(len(sizes))]
+ for e in forest:
+  need(type(e)is int and 0<=e<len(edges)and ks[e]>0,'nonempty forest edge');u,v=edges[e]
+  a=next(p for p in components if u in p);b=next(p for p in components if v in p)
+  need(a!=b,'acyclic forest');components.remove(a);components.remove(b);components.append(a|b)
+  adj[u].append((v,e));adj[v].append((u,e))
+ seen=set();result=[]
+ for root in range(len(sizes)):
+  if root in seen:continue
+  seen.add(root);todo=[root]
+  for parent in todo:
+   for child,e in sorted(adj[parent]):
+    if child in seen:continue
+    seen.add(child);todo.append(child);result.append((e,parent,child))
+ return result
+
+def check_assignment(sizes,edges,ks,assignment):
+ need(len(assignment)==len(edges),'all matching blocks')
+ for (u,v),k,matching in zip(edges,ks,assignment):
+  need(len(matching)==k and len({x for x,y in matching})==k and len({y for x,y in matching})==k,'literal partial injection')
+  need(all(0<=x<sizes[u]and 0<=y<sizes[v]for x,y in matching),'literal labels')
+
+def action(edges,assignment,permutations):
+ return tuple(tuple(sorted((permutations[u][x],permutations[v][y])for x,y in matching))for(u,v),matching in zip(edges,assignment))
+
+def normalize(sizes,edges,ks,forest,assignment):
+ check_assignment(sizes,edges,ks,assignment);current=tuple(tuple(sorted(m))for m in assignment);maps=[list(range(n))for n in sizes]
+ for e,parent,child in orient(sizes,edges,ks,forest):
+  u,v=edges[e];pairs=current[e]if parent==u else tuple((y,x)for x,y in current[e]);pairs=sorted(pairs)
+  permutation=[None]*sizes[child]
+  for j,(x,y)in enumerate(pairs):permutation[y]=j
+  for old,new in zip([x for x,z in enumerate(permutation)if z is None],range(ks[e],sizes[child])):permutation[old]=new
+  need(sorted(permutation)==list(range(sizes[child])),'actual child permutation')
+  step=[list(range(n))for n in sizes];step[child]=permutation;current=action(edges,current,step);maps[child]=[permutation[x]for x in maps[child]]
+ need(action(edges,assignment,maps)==current,'literal simultaneous transporter')
+ check_assignment(sizes,edges,ks,current)
+ return current,tuple(tuple(p)for p in maps)
+
+def representative_blocks(sizes,edges,ks,forest):
+ directions={e:(parent,child)for e,parent,child in orient(sizes,edges,ks,forest)};blocks=[]
+ for e,((u,v),k)in enumerate(zip(edges,ks)):
+  if e not in directions:blocks.append(tuple(all_matchings(sizes[u],sizes[v],k)));continue
+  parent,child=directions[e];choices=[]
+  for subset in itertools.combinations(range(sizes[parent]),k):
+   pairs=tuple((x,j)if parent==u else(j,x)for j,x in enumerate(subset));choices.append(tuple(sorted(pairs)))
+  blocks.append(tuple(choices))
+ return blocks
+
+def product_count(sizes,edges,ks,forest):
+ directions={e:(parent,child)for e,parent,child in orient(sizes,edges,ks,forest)}
+ return math.prod(math.comb(sizes[directions[e][0]],k)if e in directions else math.comb(sizes[u],k)*math.comb(sizes[v],k)*math.factorial(k)for e,((u,v),k)in enumerate(zip(edges,ks)))

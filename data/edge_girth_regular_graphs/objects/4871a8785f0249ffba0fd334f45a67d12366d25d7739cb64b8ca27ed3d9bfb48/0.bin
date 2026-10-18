@@ -1,0 +1,68 @@
+"""Fresh complete nineteen-hexagon coverage, boundary exclusion and controls."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,hashlib,json,os,subprocess,time
+from run_closed import execute
+from build_native import build
+P=Path(__file__).resolve().parent
+def need(c,m):
+ if not c:raise RuntimeError(m)
+def pin(p):
+ b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);ap.add_argument('--render',action='store_true');ap.add_argument('--sanitize',action='store_true');a=ap.parse_args();S=a.study.resolve();O=a.out.resolve();need(not O.exists(),'fresh output required');start=time.monotonic()
+ bindings=json.loads((P/'bindings.json').read_text())
+ for r in bindings:
+  q=pin(S/r['path']);need(all(q[k]==r[k]for k in['bytes','sha256']),'bound interface '+r['path'])
+ exports=[]
+ if(P/'manifest.json').exists():
+  exports=json.loads((P/'manifest.json').read_text())['exports']
+  for r in exports:
+   q=pin(P/r['path']);need(all(q[k]==r[k]for k in['bytes','sha256']),'frozen export '+r['path'])
+ scope=json.loads((P/'scope.json').read_text());need(scope==dict(original='F012',degree=4,girth=6,lambda_value=19,lower=36,order_limit=35,new_lower_clauses=1,new_exact_counts=0,whole_original_credit=0,new_question_credit=0,new_Lean_credit=0,measurement_credit=0),'literal scope')
+ O.mkdir(parents=True)
+ def run(name,cmd,inputs,cap,report=None):return execute(cmd,O/name,[P/'check.py',P/'run_closed.py',*inputs],cap,report)
+ def compile_one(name):
+  b=O/name;flags=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']if a.sanitize else['-O3']
+  run('compile_'+name,['clang++','-std=c++17',*flags,'-DWORDSIZE=64','-Wall','-Wextra','-pedantic','-I/opt/homebrew/include',str(P/(name+'.cpp')),'-L/opt/homebrew/lib','-lnauty','-o',str(b)],[P/(name+'.cpp'),P/'literal_graph.h',P/'root_cover.cpp',P/'extension_cover.cpp'],90);return b
+ bins={name:compile_one(name)for name in['root_cover','extension_cover','controls','compare_control']}
+ for lam in [20,19]:
+  run('prepare'+str(lam),[sys.executable,str(P/'prepare_patterns.py'),'--study',str(S),'--lambda',str(lam),'--out',str(O/('input'+str(lam)))],[P/'prepare_patterns.py',S/'corpus106_F012_matching_forest_v1/forest.py'],30)
+  pattern=O/f'input{lam}/patterns.txt';targets=O/f'roots{lam}.txt';report=O/f'root{lam}.json'
+  run('root'+str(lam),[str(bins['root_cover']),str(pattern),str(targets),str(report),'600'],[bins['root_cover'],P/'root_cover.cpp',P/'literal_graph.h',pattern],630,report)
+  result=json.loads(report.read_text());result.pop('seconds');need(result==json.loads((P/f'expected_root{lam}.json').read_text()),'complete root statistics')
+ acquired=S/'corpus106_F012_quartic_twenty_hexagons_v1/inputs/root_representatives.txt'
+ run('old_root_control',[str(bins['compare_control']),str(acquired),str(O/'roots20.txt')],[bins['compare_control'],P/'compare_control.cpp',P/'literal_graph.h',acquired,O/'roots20.txt'],90)
+ need('PASS_TWO_WAY_LITERAL_ROOT_CONTROL' in(O/'old_root_control/stdout').read_text(),'complete old/new root cover')
+ run('extensions',[str(bins['extension_cover']),str(O/'roots19.txt'),str(O/'joined19.txt'),str(O/'extension19.json'),'600'],[bins['extension_cover'],P/'extension_cover.cpp',P/'literal_graph.h',O/'roots19.txt'],630,O/'extension19.json')
+ result=json.loads((O/'extension19.json').read_text());result.pop('seconds');need(result==json.loads((P/'expected_extension19.json').read_text()),'complete extension statistics')
+ run('literal_controls',[str(bins['controls']),str(O/'roots19.txt'),str(O/'actual_controls.json')],[bins['controls'],P/'controls.cpp',P/'root_cover.cpp',P/'extension_cover.cpp',P/'literal_graph.h',O/'roots19.txt'],90)
+ run('independent_controls',[sys.executable,str(P/'independent_controls.py'),'--actual',str(O/'actual_controls.json'),'--out',str(O/'independent_report.json')],[P/'independent_controls.py',O/'actual_controls.json'],90,O/'independent_report.json')
+ # Malformed inventories cannot issue a completion report or target list.
+ original=(O/'input19/patterns.txt').read_text().splitlines();cases={}
+ cases['wrong_count']=['19 153',*original[1:]]
+ cases['bad_direction']=original.copy();v=cases['bad_direction'][2].split();v[3]='3';cases['bad_direction'][2]=' '.join(v)
+ cases['empty_forest_edge']=original.copy();v=cases['empty_forest_edge'][2].split();v[2]='3';v[3]='1';cases['empty_forest_edge'][2]=' '.join(v)
+ cases['duplicate_block']=original.copy();cases['duplicate_block'][3]=cases['duplicate_block'][2]
+ cases['truncated_block']=original[:3]
+ env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);damages=[]
+ for name,lines in cases.items():
+  f=O/(name+'.txt');f.write_text('\n'.join(lines)+'\n');target=O/(name+'_target');report=O/(name+'_report');c=subprocess.run([str(bins['root_cover']),str(f),str(target),str(report),'5'],capture_output=True,timeout=10,env=env);(O/(name+'.stdout')).write_bytes(c.stdout);(O/(name+'.stderr')).write_bytes(c.stderr);need(c.returncode!=0 and b'NO_CERTIFICATE:'in c.stderr and not report.exists()and not target.exists(),'malformed case '+name);damages.append(name)
+ target=O/'timeout_target';report=O/'timeout_report';c=subprocess.run([str(bins['root_cover']),str(O/'input19/patterns.txt'),str(target),str(report),'0'],capture_output=True,timeout=10,env=env);(O/'timeout.stderr').write_bytes(c.stderr);need(c.returncode!=0 and b'INCOMPLETE_DEADLINE'in c.stderr and not report.exists()and not target.exists(),'timeout no certificate')
+ guards=0
+ for name in ['check.py','prepare_patterns.py','independent_controls.py','build_native.py','run_closed.py']:
+  for mode in ['argument','environment']:
+   e=env.copy();command=[sys.executable]
+   if mode=='argument':command.append('-O')
+   else:e['PYTHONOPTIMIZE']='1'
+   target=O/(name+'_'+mode+'_forbidden');c=subprocess.run(command+[str(P/name),'--study',str(S),'--out',str(target)],env=e,capture_output=True,timeout=10);(O/(name+'_'+mode+'.stderr')).write_bytes(c.stderr);need(c.returncode!=0 and b'normal Python required'in c.stderr and not target.exists(),'optimization guard');guards+=1
+ native=None
+ if a.render:
+  native=build(P/'nineteen.tex',O/'native')
+  if(P/'nineteen.pdf').exists():
+   from pypdf import PdfReader
+   need([p.extract_text()for p in PdfReader(P/'nineteen.pdf').pages]==[p.extract_text()for p in PdfReader(O/'native/nineteen.pdf').pages],'frozen native text')
+ report=dict(status='PASS_NINETEEN_HEXAGONS_LOWER36',author_exports=len(exports),acquired_bindings=len(bindings),root=json.loads((O/'root19.json').read_text()),extensions=json.loads((O/'extension19.json').read_text()),independent_controls=json.loads((O/'independent_report.json').read_text()),malformed_inventory_controls=len(damages),timeout_control=True,optimization_guards=guards,native=native,sanitized=a.sanitize,whole_original_credit=0,new_lower_clauses=1,new_exact_counts=0,seconds=time.monotonic()-start)
+ (O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

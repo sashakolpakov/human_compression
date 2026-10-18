@@ -1,0 +1,103 @@
+"""Literal necessary edge domain for the three-colour t4 square; no solver."""
+import sys
+sys.dont_write_bytecode = True
+import argparse
+from collections import Counter
+import hashlib
+import importlib.util
+from itertools import combinations
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('acquired_fixed_graph_tools', HERE/'hexagon_ball_square_model.py')
+K = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(K)
+need, pin = K.need, K.pin
+
+
+def encode():
+    need(pin(K.ACCEPTANCE)['sha256'] == K.ACCEPTANCE_SHA, 'acquired general repeated-colour premise')
+    parents = {0: [(0,0),(3,0)], 1: [(1,0),(4,0)],
+               2: [(0,1),(3,1)], 3: [(2,0),(5,0)]}
+    used = {x for pair in parents.values() for x in pair}
+    need(len(used) == 8, 'eight distinct T parents')
+    children = [(i,e,j) for i in range(6) for e in range(2)
+                for j in range(2 if (i,e) in used else 3)]
+    names = [f'c_{i}' for i in range(6)] + [f'x_{i}_{e}' for i in range(6) for e in range(2)]
+    names += [f't_{i}' for i in range(4)] + [f'z_{i}' for i in range(4)]
+    names += [f's_{i}_{e}_{j}' for i,e,j in children]
+    need(len(names) == len(set(names)) == 54 and len(children) == 28, 'literal layer sizes')
+    index = {s:i for i,s in enumerate(names)}
+    base = set()
+    def edge(a,b):
+        key = tuple(sorted((index[a],index[b])))
+        need(key[0] != key[1] and key not in base, 'new simple fixed edge')
+        base.add(key)
+    for i in range(6):
+        edge(f'c_{i}',f'c_{(i+1)%6}')
+        for e in range(2):
+            edge(f'c_{i}',f'x_{i}_{e}')
+    for t,pair in parents.items():
+        for i,e in pair:
+            edge(f't_{t}',f'x_{i}_{e}')
+        edge(f't_{t}',f'z_{t}')
+        edge(f't_{t}',f'z_{(t+1)%4}')
+    for i,e,j in children:
+        edge(f'x_{i}_{e}',f's_{i}_{e}_{j}')
+    anchors = {index[f's_{i}_{e}_{j}']:i for i,e,j in children}
+    ss = set()
+    for u,v in combinations(sorted(anchors),2):
+        d = abs(anchors[u]-anchors[v])
+        if min(d,6-d) >= 2:
+            ss.add((u,v))
+    zs = set()
+    for z in range(4):
+        incident_parents = set(parents[z]) | set(parents[(z-1)%4])
+        for i,e,j in children:
+            if i not in (0,3) and (i,e) not in incident_parents:
+                zs.add(tuple(sorted((index[f'z_{z}'],index[f's_{i}_{e}_{j}']))))
+    degree = Counter(v for e in base for v in e)
+    zvertices = {index[f'z_{i}'] for i in range(4)}
+    need(len(base) == 62 and len(ss) == 196 and len(zs) == 64 and not ss & zs, 'exact edge counts')
+    need(not base & (ss|zs), 'fixed and optional pairs disjoint')
+    need(all(degree[v] == 4 for v in range(54) if v not in anchors and v not in zvertices), 'saturated C,L1,T')
+    need(all(degree[v] == 2 for v in zvertices) and all(degree[v] == 1 for v in anchors), 'Z/S residual degrees')
+    need([sum(a == i for a in anchors.values()) for i in range(6)] == [4,5,5,4,5,5], 'anchor multiplicities')
+    need(all(sum(v in e for e in zs) == 16 for v in zvertices), 'sixteen allowed attachments per Z')
+    need(sum(4-degree[v] for v in zvertices) == 8
+         and (sum(4-degree[v] for v in anchors)-8)//2 == 38, 'eight ZS and thirty-eight SS edges')
+    allowed = ss|zs
+    raw = f'54 {len(base)} {len(allowed)}\n'
+    raw += ''.join(f'{u} {v}\n' for u,v in sorted(base))
+    raw += ''.join(f'{u} {v}\n' for u,v in sorted(allowed))
+    cycles = K.fixed_cycles(54,base)
+    ownership = Counter(tuple(sorted((a,b))) for p in cycles if len(p)==6
+                        for a,b in zip(p,p[1:]+p[:1]))
+    record = dict(status='LITERAL_THREE_COLOUR_SQUARE_NECESSARY_DOMAIN',
+        encoder=pin(Path(__file__).resolve()),shared_tools=pin(HERE/'hexagon_ball_square_model.py'),
+        argument=pin(HERE/'hexagon_ball_three_colour_completion.rst'),premise=pin(K.ACCEPTANCE),
+        vertices=names,fixed_edges=sorted(base),allowed_edges=sorted(allowed),
+        optional_edge_counts=dict(ZS=64,SS=196),required_selected_counts=dict(ZS=8,SS=38),
+        fixed_cycles=cycles,fixed_cycle_counts={str(k):sum(len(p)==k for p in cycles) for k in range(3,7)},
+        fixed_obstruction_found=any(len(p)<6 for p in cycles) or any(v>1 for v in ownership.values()),
+        model_sha256=hashlib.sha256(raw.encode('ascii')).hexdigest(),
+        graph_completion_calls=0,solver_calls=0,exclusions=0,source_credit=0)
+    return raw,record
+
+
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--model',type=Path,required=True)
+    ap.add_argument('--metadata',type=Path,required=True)
+    a = ap.parse_args()
+    need(a.model == HERE/'hexagon_ball_three_colour_model.txt'
+         and a.metadata == HERE/'hexagon_ball_three_colour_model.json', 'fixed fresh preparation')
+    need(not a.model.exists() and not a.metadata.exists(), 'preserve prior evidence')
+    raw,record = encode()
+    need(len(raw.encode())<4096 and len(json.dumps(record).encode())<65536, 'bounded metadata')
+    a.model.write_text(raw,encoding='ascii')
+    a.metadata.write_text(json.dumps(record,indent=2)+'\n')
+    print(json.dumps(dict(model=pin(a.model),metadata=pin(a.metadata),
+                         fixed_cycle_counts=record['fixed_cycle_counts'],
+                         fixed_obstruction_found=record['fixed_obstruction_found'],solver_calls=0)))

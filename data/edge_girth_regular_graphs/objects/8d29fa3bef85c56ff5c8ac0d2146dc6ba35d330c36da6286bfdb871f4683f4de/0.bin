@@ -1,0 +1,93 @@
+"""Exact enumeration and literal certificates for the three stated F012 rows."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+import argparse,collections,hashlib,importlib.util,itertools,json,subprocess,time
+from pathlib import Path
+
+def need(ok,message):
+ if not ok:raise ValueError(message)
+def put(p,v):p.write_text(json.dumps(v,indent=2)+'\n')
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def shape(r):return {k:v for k,v in r.items() if k!='seconds'}
+def decode(raw):
+ need(len(raw)==33 and ord(raw[0])-63==20 and all(63<=ord(c)<=126 for c in raw),'graph6 encoding')
+ bits=[(ord(c)-63>>j)&1 for c in raw[1:] for j in range(5,-1,-1)];a=[0]*20;i=0
+ for y in range(20):
+  for x in range(y):
+   if bits[i]:a[x]|=1<<y;a[y]|=1<<x
+   i+=1
+ need(not any(bits[i:]),'padding');return a
+
+def positive(a,target,independent=False):
+ n=len(a);need(n in [15,20],'positive order')
+ need(all(type(row)is int and 0<=row<(1<<n) and not row>>x&1 and row.bit_count()==6 for x,row in enumerate(a)),'simple degree6')
+ need(all(bool(a[x]>>y&1)==bool(a[y]>>x&1) for x in range(n) for y in range(n)),'symmetric adjacency')
+ edges=[(x,y) for x in range(n) for y in range(x+1,n) if a[x]>>y&1];need(all(not a[x]&a[y] for x,y in edges),'no triangles')
+ counts={sum((a[u]&a[y]&~(1<<x)).bit_count() for u in range(n) if u!=y and a[x]>>u&1) for x,y in edges};need(counts=={target},'constant square count')
+ if independent:
+  cycles=[]
+  for t in itertools.combinations(range(n),4):
+   mask=sum(1<<x for x in t)
+   if all((a[x]&mask).bit_count()==2 for x in t):cycles.append(mask)
+  need(len(cycles)*8==n*6*target,'independent square total')
+  need(all(sum(bool(m>>x&1) and bool(m>>y&1) for m in cycles)==target for x,y in edges),'independent per-edge squares')
+ return {'n':n,'degree':6,'lambda':target,'edges':len(edges)}
+
+def invariants(a):
+ n=len(a);neighbours=[[y for y in range(n) if a[x]>>y&1] for x in range(n)];m=[[int(i==j) for j in range(n)] for i in range(n)];traces=[]
+ for t in range(1,11):
+  m=[[sum(m[i][h] for h in neighbours[j]) for j in range(n)] for i in range(n)];traces.append(sum(m[i][i] for i in range(n)))
+ twins=sorted(collections.Counter(a).values());return traces,twins
+
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--study',required=True,type=Path);p.add_argument('--out',required=True,type=Path);args=p.parse_args();S=args.study.resolve();W=Path(__file__).resolve().parent;O=args.out.resolve();need(not O.exists(),'fresh directory required');O.mkdir(parents=True)
+ oldpath=S/'corpus106_F012_order18_v1/check_order18.py';need(sha(oldpath)=='efdea9664f513efc1ce5c8488d6b3ed01de4a67286870be8545d18a3f39ac519','acquired inventory implementation')
+ spec=importlib.util.spec_from_file_location('old',oldpath);old=importlib.util.module_from_spec(spec);spec.loader.exec_module(old)
+ indexpath=S/'corpus106_F012_positive_v1/source_witness_index.json';need(sha(indexpath)=='7f130a02d05d59eb99e45af53a8cc95a8d23a0063a830b8b4ec8934e688e89f4','acquired source index');index={r['id']:r for r in json.loads(indexpath.read_text())}
+ sources=json.loads((W/'source_graphs.json').read_text());need([r['source_id'] for r in sources]==[f'UntilOrder250_{i}' for i in range(84,91)],'all seven literal sources')
+ signatures=[];byid={};source_report=[]
+ for r in sources:
+  rec=index[r['source_id']];raw=r['graph6'];need(hashlib.sha256(raw.encode()).hexdigest()==r['graph6_sha256']==rec['graph6_line_sha256'],'literal graph hash')
+  need(rec['source_line']==r['source_line'] and (rec['n'],rec['k'],rec['g'],rec['lambda'])==(20,6,4,r['lambda']),'literal index parameters')
+  need(Path(rec['graph_file']).read_text().splitlines()[rec['source_line']-1]==raw,'actual acquired graph file')
+  a=decode(raw);need(a==r['adj'],'graph6 adjacency');answer=positive(a,r['lambda'],True);traces,twins=invariants(a)
+  need(traces==r['walk_traces_1_to_12'][:10] and twins==r['twin_class_sizes'],'recorded exact invariants')
+  sig=(r['lambda'],traces[4],traces[9],twins.count(1));need(sig not in signatures,'pairwise distinguishing signatures');signatures.append(sig);byid[r['source_id']]=r;source_report.append(dict(answer,source_id=r['source_id'],trace5=traces[4],trace10=traces[9],singleton_neighbourhood_classes=twins.count(1)))
+ put(O/'source_report.json',source_report)
+ maps=json.loads((W/'source_maps.json').read_text());lookup={(r['case'],r['example']):r for r in maps};need(len(lookup)==len(maps)==86,'every positive map indexed once')
+ receipts=[]
+ def run(label,cmd,data=None):
+  start=time.monotonic();r=subprocess.run(cmd,input=data,text=True,capture_output=True,timeout=60);(O/(label+'.stdout')).write_text(r.stdout);(O/(label+'.stderr')).write_text(r.stderr);receipts.append({'label':label,'command':[str(x) for x in cmd],'returncode':r.returncode,'seconds':time.monotonic()-start});put(O/'receipts.json',receipts);return r
+ for mode,flags in [('ordinary',['-O2']),('sanitized',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'])]:
+  r=run('compile_'+mode,['clang++','-std=c++17',*flags,'-Wall','-Wextra','-pedantic',str(W/'cycle_search_positive.cpp'),'-o',str(O/mode)]);need(r.returncode==0 and not r.stderr,'compiler '+mode)
+ targets={15:[16],16:[13,14,17],17:[12],18:[10,12,14],19:[12],20:[7,8,9,10]};report={'status':'INCOMPLETE','orders':{},'whole_original_credit':0,'new_question_credit':0,'new_Lean':0,'new_lower_rows':1,'new_exact_count_rows':2};seen_maps=set();represented=collections.Counter()
+ for n in range(15,21):
+  patterns,labelled=old.class_cases(n);need(len(patterns)=={15:1,16:4,17:14,18:27,19:42,20:55}[n],'complete class inventory')
+  data=''.join(' '.join(map(str,[j,n,len(targets[n]),*targets[n],*a,*b,z,30]))+'\n' for j,(a,b,z) in enumerate(patterns));(O/f'order{n}.input').write_text(data);runs=[]
+  for mode in ['ordinary','sanitized']:
+   r=run(f'order{n}_{mode}',[str(O/mode)],data);need(r.returncode==0 and not r.stderr,'completed process');rows=[json.loads(line) for line in r.stdout.splitlines()];need(len(rows)==len(patterns),'all patterns returned')
+   for j,row in enumerate(rows):need(row['case']==j and row['n']==n and row['status']=='COMPLETE' and row['positives']==len(row['examples']),'complete uncapped output')
+   runs.append(rows)
+  need([shape(r) for r in runs[0]]==[shape(r) for r in runs[1]],'all sanitized results agree')
+  rows=runs[0];report['orders'][n]={'patterns':len(patterns),'labelled_patterns':labelled,'nodes':sum(r['nodes'] for r in rows),'positive_leaves':sum(r['positives'] for r in rows),'all_cases_completed':True,'sanitizer_agreement':True}
+  if n==15:
+   need(report['orders'][n]['positive_leaves']==1,'positive C5 completion');positive(rows[0]['examples'][0],16,True)
+  elif n<20:need(report['orders'][n]['positive_leaves']==0,'acquired exclusion controls')
+  else:
+   for row in rows:
+    for j,a in enumerate(row['examples']):
+     key=(row['case'],j);need(key in lookup,'literal positive map present');m=lookup[key];rec=byid[m['source_id']];p=m['map'];need(len(p)==20 and all(type(v)is int for v in p) and sorted(p)==list(range(20)),'isomorphism bijection')
+     need(all(bool(a[x]>>y&1)==bool(rec['adj'][p[x]]>>p[y]&1) for x in range(20) for y in range(20)),'all400 adjacency comparisons');positive(a,rec['lambda']);seen_maps.add(key);represented[m['source_id']]+=1
+   need(seen_maps==set(lookup) and set(represented)==set(byid),'every retained graph and source represented')
+  put(O/'report.json',report);print('COMPLETE',n,report['orders'][n],flush=True)
+ # Guards on the actual parser and timeout status.
+ patterns,_=old.class_cases(20);a,b,z=patterns[0];base=[0,20,4,7,8,9,10,*a,*b,z,30];negative=[]
+ for label,changes in [('unsupported_order',{1:22}),('bad_class',{7:0}),('negative_cap',{18:-1})]:
+  values=base[:]
+  for i,v in changes.items():values[i]=v
+  r=run(label,[str(O/'ordinary')],' '.join(map(str,values))+'\n');need(r.returncode!=0,'malformed input rejected');negative.append(label)
+ # Pick a case known to exceed the4096-node timer interval in this run.
+ hard=max(rows,key=lambda r:r['nodes'])['case'];a,b,z=patterns[hard];data=' '.join(map(str,[hard,20,4,7,8,9,10,*a,*b,z,0.000000001]))+'\n';r=run('timeout_control',[str(O/'ordinary')],data);need(r.returncode==0 and json.loads(r.stdout)['status']=='TIMEOUT','unfinished search not counted')
+ report.update(status='PASS_ORDER20_CLASSIFICATIONS_AND_LOWER_BOUND',represented_source_leaves=dict(represented),verified_literal_maps=len(seen_maps),nonisomorphic_source_graphs={9:2,10:5},lower_bound=[6,4,7,24],extra_bounded_exclusion=[20,6,4,8],negative_controls=negative,timeout_status='TIMEOUT_NOT_COMPLETE',labelled_graph_count_claimed=False)
+ put(O/'report.json',report);print('PASS',json.dumps(report),flush=True)
+if __name__=='__main__':main()

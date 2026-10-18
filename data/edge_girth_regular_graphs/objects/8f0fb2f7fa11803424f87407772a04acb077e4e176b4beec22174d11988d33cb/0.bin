@@ -1,0 +1,18 @@
+#ifndef F012_ROOT_SYMMETRY_H
+#define F012_ROOT_SYMMETRY_H
+#include "vertex_ball.h"
+struct RootSymmetry {
+ vector<array<int,12>> maps;
+ explicit RootSymmetry(const Graph&g){
+  validate(g);need(g.size()==17,"root symmetry on17points");Graph tree=ball();for(int i=0;i<5;i++)need(g[i]==tree[i],"literal root and parent rows");for(int i=5;i<17;i++)need((g[i]&31)==tree[i],"literal leaf parent");
+  array<int,4>branch{0,1,2,3};vector<array<int,3>>local;array<int,3>q{0,1,2};do{local.push_back(q);}while(next_permutation(q.begin(),q.end()));
+  do{array<int,12>p;function<void(int)>visit=[&](int i){if(i==4){for(int u=0;u<12;u++)for(int v=0;v<12;v++)if(((g[5+u]>>(5+v))&1)!=((g[5+p[u]]>>(5+p[v]))&1))return;maps.push_back(p);return;}for(auto a:local){for(int j=0;j<3;j++)p[3*i+j]=3*branch[i]+a[j];visit(i+1);}};visit(0);}while(next_permutation(branch.begin(),branch.end()));
+  need(!maps.empty(),"identity root automorphism");std::set<array<int,12>>unique(maps.begin(),maps.end());need(unique.size()==maps.size(),"distinct root automorphisms");
+ }
+ int image(int mask,int index)const{need(mask>=0&&mask<4096&&index>=0&&index<(int)maps.size(),"root mask interface");int out=0;while(mask){int x=firstbit(mask);mask&=mask-1;out|=1<<maps[index][x];}return out;}
+ vector<int>all()const{vector<int>v(maps.size());iota(v.begin(),v.end(),0);return v;}
+ bool retain(int mask,const vector<int>&stabilizer,vector<int>&next)const{
+  next.clear();for(int i:stabilizer){int x=image(mask,i);if(x<mask){next.clear();return false;}if(x==mask)next.push_back(i);}need(!next.empty(),"identity retained in tuple stabilizer");return true;
+ }
+};
+#endif

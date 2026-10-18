@@ -1,0 +1,152 @@
+"""Exact cycle check for the eighteen borrowed cages and two F012 witnesses."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not an accepted execution mode')
+from pathlib import Path
+from collections import deque, Counter
+import argparse
+import hashlib
+import json
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+def graph(n, edges):
+    adj = [set() for _ in range(n)]
+    for u, v in edges:
+        need(0 <= u < n and 0 <= v < n and u != v, 'invalid edge')
+        need(v not in adj[u], 'duplicate edge')
+        adj[u].add(v)
+        adj[v].add(u)
+    return adj
+
+def decode_graph6(line):
+    need(line.isascii() and line[0] != '~', 'this decoder accepts small graph6 only')
+    values = [ord(c) - 63 for c in line]
+    need(all(0 <= v <= 63 for v in values), 'invalid graph6 byte')
+    n = values[0]
+    total = n * (n - 1) // 2
+    need(len(values) == 1 + (total + 5) // 6, 'incorrect graph6 length')
+    bits = [(c >> k) & 1 for c in values[1:] for k in range(5, -1, -1)]
+    need(not any(bits[total:]), 'nonzero graph6 padding')
+    edges = []
+    t = 0
+    for v in range(1, n):
+        for u in range(v):
+            if bits[t]:
+                edges.append((u, v))
+            t += 1
+    return graph(n, edges)
+
+def bfs(adj, source, omitted=None):
+    distances = [-1] * len(adj)
+    distances[source] = 0
+    q = deque([source])
+    while q:
+        u = q.popleft()
+        for v in adj[u]:
+            if omitted is not None and {u, v} == set(omitted):
+                continue
+            if distances[v] < 0:
+                distances[v] = distances[u] + 1
+                q.append(v)
+    return distances
+
+def edge_cycles(adj, u, v, length):
+    """Simple u-to-v paths of length-1 after deleting edge uv."""
+    def visit(x, remaining, used):
+        if remaining == 0:
+            return int(x == v)
+        if x == v:
+            return 0
+        ans = 0
+        for y in adj[x]:
+            if (x == u and y == v) or (x == v and y == u):
+                continue
+            if used & (1 << y):
+                continue
+            ans += visit(y, remaining - 1, used | (1 << y))
+        return ans
+    return visit(u, length - 1, 1 << u)
+
+def canonical_cycles(adj, length):
+    """Independent vertex-root traversal, least vertex first, one direction."""
+    cycles = []
+    def visit(path, used):
+        if len(path) == length:
+            if path[0] in adj[path[-1]] and path[1] < path[-1]:
+                cycles.append(tuple(path))
+            return
+        for y in sorted(adj[path[-1]]):
+            if y > path[0] and not (used & (1 << y)):
+                visit(path + [y], used | (1 << y))
+    for root in range(len(adj)):
+        visit([root], 1 << root)
+    need(len(cycles) == len(set(cycles)), 'duplicate canonical cycles')
+    return cycles
+
+def inspect(adj, identifier):
+    n = len(adj)
+    need(all(len(v) == 3 for v in adj), 'not cubic: ' + identifier)
+    need(all(d >= 0 for d in bfs(adj, 0)), 'not connected: ' + identifier)
+    edges = [(u, v) for u in range(n) for v in sorted(adj[u]) if u < v]
+    shortest = [bfs(adj, u, (u, v))[v] for u, v in edges]
+    girth = min(d + 1 for d in shortest if d >= 0)
+    need(girth == 9, 'wrong girth: ' + identifier)
+    counts = {e: edge_cycles(adj, *e, 9) for e in edges}
+    cycles = canonical_cycles(adj, 9)
+    independent = Counter()
+    for c in cycles:
+        for u, v in zip(c, c[1:] + c[:1]):
+            independent[tuple(sorted((u, v)))] += 1
+    need(all(counts[e] == independent[e] for e in edges), 'independent cycle counts disagree')
+    need(sum(counts.values()) == 9 * len(cycles), 'incidence count mismatch')
+    histogram = Counter(counts.values())
+    return {'id': identifier, 'n': n, 'edges': len(edges), 'girth': girth,
+            'nine_cycles': len(cycles),
+            'edge_cycle_histogram': {str(k): histogram[k] for k in sorted(histogram)},
+            'edge_cycle_counts': [[u + 1, v + 1, counts[(u, v)]] for u, v in edges],
+            'egr': len(histogram) == 1,
+            'canonical_cycles_sha256': hashlib.sha256(json.dumps(cycles).encode()).hexdigest()}
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--data', type=Path, default=Path(__file__).resolve().parent)
+    ap.add_argument('--output', type=Path, required=True)
+    args = ap.parse_args()
+    cage_data = json.loads((args.data / 'cages58.json').read_text())
+    cages = cage_data['graphs']
+    need([g['id'] for g in cages] == ['G' + str(i) for i in range(1, 19)], 'incomplete source list')
+    report = []
+    expected_totals = [80, 97, 100, 84, 84, 86, 93, 95, 96, 73, 75, 95, 95, 96, 92, 70, 70, 92]
+    for g, expected in zip(cages, expected_totals):
+        need(g['n'] == 58 and g['hamilton_cycle'] == list(range(1, 59)), 'wrong source cycle')
+        matching = g['matching_edges']
+        need(len(matching) == 29 and sorted(x for e in matching for x in e) == list(range(1, 59)), 'not a perfect matching')
+        adj = graph(58, [(i, (i + 1) % 58) for i in range(58)] + [(u - 1, v - 1) for u, v in matching])
+        row = inspect(adj, g['id'])
+        need(row['nine_cycles'] == expected, 'source cycle-total crosscheck failed')
+        need(row['nine_cycles'] % 29 != 0, 'incidence divisibility obstruction failed')
+        need(not row['egr'], 'unexpected EGR cage')
+        need(row['nine_cycles'] > 58, 'lambda6 obstruction failed')
+        report.append(row)
+    witnesses = json.loads((args.data / 'witnesses60.json').read_text())
+    need(sorted(g['lambda'] for g in witnesses) == [6, 8], 'wrong witness list')
+    positive = []
+    for g in witnesses:
+        need(hashlib.sha256(g['graph6'].encode()).hexdigest() == g['graph6_line_sha256'], 'wrong source graph6')
+        row = inspect(decode_graph6(g['graph6']), g['id'])
+        need(row['n'] == 60 and row['edge_cycle_histogram'] == {str(g['lambda']): 90}, 'wrong positive witness')
+        positive.append(row)
+    result = {'status': 'PASS', 'cages': report, 'witnesses': positive,
+              'borrowed_premise': 'Brinkmann, McKay and Saager: no cubic girth9 graph below58 vertices, and their Appendix gives all18 isomorphism classes at58. The present check does not reprove that classification.',
+              'independent_cycle_oracles': 'Deleted-edge simple-path count and least-vertex canonical cycle count agree on every edge of all20 graphs.',
+              'conclusions': ['No listed58-vertex cage is edge-girth-regular.', 'n(3,9,6)=60 and n(3,9,8)=60, under the explicitly borrowed complete cage classification.']}
+    args.output.write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps({'status': result['status'], 'cages': len(report),
+                      'cage_totals': [r['nine_cycles'] for r in report],
+                      'witnesses': [(r['id'], r['nine_cycles'], r['edge_cycle_histogram']) for r in positive]}))
+
+if __name__ == '__main__':
+    main()

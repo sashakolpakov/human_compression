@@ -1,0 +1,139 @@
+"""Literal finite certificates for the order-three projective plane."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+import argparse
+import hashlib
+import json
+from itertools import combinations, permutations, product
+from pathlib import Path
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+def plane():
+    vectors = [v for v in product(range(3), repeat=3) if any(v) and next(x for x in v if x) == 1]
+    need(len(vectors) == 13, 'projective representatives')
+    a = [set() for _ in range(26)]
+    for i, u in enumerate(vectors):
+        for j, v in enumerate(vectors):
+            if sum(x * y for x, y in zip(u, v)) % 3 == 0:
+                a[i].add(13 + j)
+                a[13 + j].add(i)
+    return a
+
+def decode(raw):
+    need(isinstance(raw, str) and raw and all(63 <= ord(c) <= 126 for c in raw), 'graph6 alphabet')
+    n = ord(raw[0]) - 63
+    need(0 < n <= 62 and len(raw) == 1 + (n * (n - 1) // 2 + 5) // 6, 'graph6 length')
+    bits = [(ord(c) - 63 >> j) & 1 for c in raw[1:] for j in range(5, -1, -1)]
+    a = [set() for _ in range(n)]
+    t = 0
+    for v in range(n):
+        for u in range(v):
+            if bits[t]:
+                a[u].add(v)
+                a[v].add(u)
+            t += 1
+    need(not any(bits[t:]), 'graph6 padding')
+    return a
+
+def parameters(a, expected_lambda=27):
+    n = len(a)
+    need(n == 26, 'order')
+    need(all(u not in row and len(row) == 4 and all(type(v) is int and 0 <= v < n for v in row) for u, row in enumerate(a)), 'simple regular')
+    need(all((v in a[u]) == (u in a[v]) for u in range(n) for v in range(n)), 'undirected')
+    colors = {0: 0}
+    todo = [0]
+    for u in todo:
+        for v in a[u]:
+            if v not in colors:
+                colors[v] = 1 - colors[u]
+                todo.append(v)
+            need(colors[u] != colors[v], 'bipartite')
+    need(len(colors) == n, 'connected')
+    parts = [[v for v in range(n) if colors[v] == i] for i in (0, 1)]
+    need([len(s) for s in parts] == [13, 13], 'balanced parts')
+    need(all(len(a[u] & a[v]) == 1 for part in parts for u, v in combinations(part, 2)), 'unique join and meet')
+    edges = [(u, v) for u, v in combinations(range(n), 2) if v in a[u]]
+    cycles = set()
+    counts = {}
+    for u, v in edges:
+        paths = []
+        def visit(path):
+            if len(path) == 6:
+                if path[-1] == v:
+                    paths.append(tuple(path))
+                return
+            for w in a[path[-1]]:
+                if w in path or (path[-1] == u and w == v) or (w == v and len(path) != 5):
+                    continue
+                visit(path + [w])
+        visit([u])
+        counts[u, v] = len(paths)
+        for path in paths:
+            edge_set = frozenset(tuple(sorted((path[i], path[(i + 1) % 6]))) for i in range(6))
+            need(len(edge_set) == 6, 'simple cycle')
+            cycles.add(edge_set)
+    need(set(counts.values()) == {expected_lambda} and expected_lambda > 0, 'edge six-cycle counts')
+    need(sum(counts.values()) == 6 * len(cycles), 'cycle incidence')
+    return {'n': 26, 'k': 4, 'g': 6, 'lambda': expected_lambda, 'edges': len(edges), 'six_cycles': len(cycles)}
+
+def check_map(a, record):
+    need(record['id'] == 'UntilOrder250_143', 'source id')
+    raw, mapping = record['graph6'], record['map']
+    need(hashlib.sha256(raw.encode()).hexdigest() == record['source_line_sha256'], 'source line digest')
+    b = decode(raw)
+    need(len(b) == len(a) and all(type(x) is int for x in mapping) and sorted(mapping) == list(range(len(a))), 'bijection')
+    need(all((v in a[u]) == (mapping[v] in b[mapping[u]]) for u in range(len(a)) for v in range(len(a))), 'all adjacency pairs')
+    parameters(b)
+
+def latin_checks():
+    perms = list(permutations(range(3)))
+    squares = [rows for rows in product(perms, repeat=3) if all(len({row[j] for row in rows}) == 3 for j in range(3))]
+    need(len(squares) == 12, 'Latin count')
+    reduced = [s for s in squares if s[0] == (0, 1, 2) and tuple(row[0] for row in s) == (0, 1, 2)]
+    L = ((0, 1, 2), (1, 2, 0), (2, 0, 1))
+    M = ((0, 1, 2), (2, 0, 1), (1, 2, 0))
+    need(reduced == [L], 'unique reduced square')
+    def orth(a, b):
+        return len({(a[i][j], b[i][j]) for i in range(3) for j in range(3)}) == 9
+    mates = [s for s in squares if orth(L, s) and s[0] == (0, 1, 2)]
+    need(mates == [M], 'unique normalized mate')
+    count = sum(orth(a, b) for a in squares for b in squares)
+    need(count == 72, 'ordered orthogonal pairs')
+    return {'row_systems_tested': 216, 'Latin_squares': 12, 'ordered_orthogonal_pairs': count, 'reduced_square': L, 'normalized_mate': M}
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--input', type=Path)
+    args = p.parse_args()
+    here = Path(__file__).resolve().parent
+    source = json.loads((args.input or here / 'source_map.json').read_text())
+    a = plane()
+    result = parameters(a)
+    check_map(a, source)
+    latin = latin_checks()
+    controls = []
+    def reject(label, fn):
+        try:
+            fn()
+        except ValueError:
+            controls.append(label)
+        else:
+            raise ValueError('accepted damaged certificate: ' + label)
+    reject('duplicate map image', lambda: check_map(a, dict(source, map=[0] * 26)))
+    damaged = [set(row) for row in a]
+    v = min(damaged[0])
+    damaged[0].remove(v)
+    damaged[v].remove(0)
+    reject('deleted edge', lambda: parameters(damaged))
+    reject('wrong cycle count', lambda: parameters(a, expected_lambda=26))
+    reject('invalid graph6', lambda: decode(source['graph6'] + '?'))
+    args.out.write_text(json.dumps({'status': 'PASS', 'graph': result, 'source_id': source['id'], 'latin_checks': latin, 'damaged_controls': controls, 'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0}, indent=2) + '\n')
+    print('PASS plane incidence, cycles, source map, complete Latin-square check, four damaged controls')
+
+if __name__ == '__main__':
+    main()

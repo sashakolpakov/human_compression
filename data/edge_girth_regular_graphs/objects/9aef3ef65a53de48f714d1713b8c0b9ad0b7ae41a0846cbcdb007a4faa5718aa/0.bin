@@ -1,0 +1,113 @@
+"""Verify all returned incidence systems and literal maps to the source graph."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+from collections import Counter
+from itertools import permutations
+import argparse, json
+from base_cover5 import need, read_bases
+
+def graph6(raw):
+    n=ord(raw[0])-63
+    need(0<n<=62,'graph6 order')
+    bits=[(ord(c)-63>>j)&1 for c in raw[1:] for j in range(5,-1,-1)]
+    need(len(bits)>=n*(n-1)//2,'graph6 length')
+    adj=[0]*n;at=0
+    for b in range(n):
+        for a in range(b):
+            if bits[at]:adj[a]|=1<<b;adj[b]|=1<<a
+            at+=1
+    need(not any(bits[at:]),'graph6 padding')
+    return adj
+
+def local_graph(base,code):
+    n=len(base);need(len(code)==n and all(0<=c<12 for c in code),'choice code')
+    es=[(a,b)for a in range(n)for b in range(a+1,n)if base[a]>>b&1]
+    ids={e:i for i,e in enumerate(es)};adj=[0]*len(es)
+    # The C++ provider input lists its edges in this same lexicographic order.
+    cycles=[(0,)+p for p in permutations(range(1,5))if p[0]<p[-1]]
+    for v,c in enumerate(code):
+        neighbours=[w for w in range(n)if base[v]>>w&1]
+        cycle=[ids[tuple(sorted((v,neighbours[i])))] for i in cycles[c]]
+        for i,a in enumerate(cycle):
+            b=cycle[(i+1)%5]
+            need(not (adj[a]>>b&1),'duplicated local edge')
+            adj[a]|=1<<b;adj[b]|=1<<a
+    return adj
+
+def cycle_check(adj):
+    n=len(adj)
+    need(all(row.bit_count()==4 and row<(1<<n) and not(row>>u&1) for u,row in enumerate(adj)),'simple degree four')
+    need(all(bool(adj[u]>>v&1)==bool(adj[v]>>u&1)for u in range(n)for v in range(n)),'symmetry')
+    seen={0};queue=[0]
+    for u in queue:
+        for v in range(n):
+            if adj[u]>>v&1 and v not in seen:seen.add(v);queue.append(v)
+    need(len(seen)==n,'disconnected positive')
+    tally=Counter({(u,v):0 for u in range(n)for v in range(u+1,n)if adj[u]>>v&1});cycles=[]
+    for start in range(n):
+        def visit(path):
+            u=path[-1]
+            if len(path)>=3 and adj[u]>>start&1:
+                need(len(path)==5,'short cycle')
+                if path[1]<path[-1]:
+                    cycles.append(path[:])
+                    tally.update(tuple(sorted((path[i],path[(i+1)%5])))for i in range(5))
+            if len(path)==5:return
+            for v in range(start+1,n):
+                if v not in path and adj[u]>>v&1:visit(path+[v])
+        visit([start])
+    need(set(tally.values())=={1},'pentagon multiplicity')
+    return cycles
+
+def read_results(path,bases):
+    lines=path.read_text().splitlines();need(lines[-1]=='COMPLETE','missing completion')
+    active=None;closed=0;positives=[];codes=set();count=0
+    for line in lines[:-1]:
+        x=line.split()
+        if x[0]=='START':
+            i=int(x[1]);need(active is None and i==closed,'base start order');active=i;codes=set();count=0
+        elif x[0]=='FOUND':
+            i=int(x[1]);j=x.index('ADJ');code=tuple(map(int,x[2:j]));adj=list(map(int,x[j+1:]))
+            need(i==active and code not in codes,'positive identifier');codes.add(code);count+=1
+            need(local_graph(bases[i],code)==adj,'literal reconstruction mismatch')
+            cycles=cycle_check(adj)
+            need(len(cycles)==len(bases[i]),'wrong number of pentagons')
+            positives.append(dict(base=i,code=code,adjacency=adj,cycles=cycles))
+        elif x[0]=='END':
+            i=int(x[1]);need(i==active and x[2]=='LEAVES' and int(x[3])==count and x[4]=='NODES','close counts')
+            nodes=list(map(int,x[5:]));need(len(nodes)==len(bases[i])+1 and nodes[0]==1 and nodes[-1]==count,'search-node dimensions')
+            need(all(0<=nodes[t+1]<=12*nodes[t]for t in range(len(nodes)-1)),'search-node bounds')
+            active=None;closed+=1
+        else:raise ValueError('unexpected record')
+    need(active is None and closed==len(bases),'incomplete base sequence')
+    return positives
+
+def check_maps(positives,source):
+    target=graph6(source['graph6']);need(len(target)==30,'source order');cycle_check(target)
+    need(len(source['maps'])==len(positives),'map coverage')
+    for row,certificate in zip(positives,source['maps']):
+        need(row['base']==certificate['base'] and list(row['code'])==certificate['code'],'map identifiers')
+        p=certificate['permutation'];need(sorted(p)==list(range(30)),'source bijection')
+        mapped=[0]*30
+        for u,mask in enumerate(row['adjacency']):
+            for v in range(30):
+                if mask>>v&1:mapped[p[u]]|=1<<p[v]
+        need(mapped==target,'source adjacency map')
+    return len(positives)
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--base10',type=Path,required=True);ap.add_argument('--base12',type=Path,required=True)
+    ap.add_argument('--result10',type=Path,required=True);ap.add_argument('--result12',type=Path,required=True)
+    ap.add_argument('--source',type=Path,required=True);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args()
+    small=read_results(a.result10,read_bases(a.base10));large=read_results(a.result12,read_bases(a.base12))
+    need(not small and len(large)==12,'unexpected complete census')
+    maps=check_maps(large,json.loads(a.source.read_text()))
+    report=dict(status='PASS_COMPLETE_PENTAGON_OUTPUT',order25_systems=0,order30_systems=12,
+                order30_isomorphism_classes=1,literal_source_maps=maps,positives=large,
+                whole_original_credit=0,new_question_credit=0,new_Lean_declarations=0)
+    a.output.write_text(json.dumps(report,indent=2)+'\n')
+    print(json.dumps({k:v for k,v in report.items()if k!='positives'}))
+
+if __name__=='__main__':main()

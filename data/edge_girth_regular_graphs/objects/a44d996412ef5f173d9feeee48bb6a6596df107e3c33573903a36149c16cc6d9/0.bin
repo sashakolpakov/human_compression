@@ -1,0 +1,109 @@
+"""Complete certificate for n(4,6,12)>=35; default mode repeats both target runs."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,hashlib,json,os,subprocess,time
+from run_closed import execute
+from build_native import build
+P=Path(__file__).resolve().parent
+
+def need(c,m):
+    if not c:raise RuntimeError(m)
+
+def pin(p):
+    b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+def same(p,r):
+    return all(pin(p)[k]==r[k]for k in ['bytes','sha256'])
+
+def normalized(p):
+    d=json.loads(p.read_text());d.pop('seconds',None);return d
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);ap.add_argument('--render',action='store_true');ap.add_argument('--reuse-recorded-targets',action='store_true');a=ap.parse_args()
+    S=a.study.resolve();O=a.out.resolve();need(not O.exists(),'fresh output');start=time.monotonic()
+    bindings=json.loads((P/'bindings.json').read_text())
+    for r in bindings:need(same(S/r['path'],r),'acquired binding '+r['path'])
+    exports=[]
+    if(P/'manifest.json').exists():
+        exports=json.loads((P/'manifest.json').read_text())['exports']
+        for r in exports:need(same(P/r['path'],r),'frozen export '+r['path'])
+    need(json.loads((P/'scope.json').read_text())==dict(original='F012',degree=4,girth=6,lambda_value=12,lower=35,excluded_order=34,new_lower_clauses=1,new_exact_counts=0,whole_original_credit=0,new_question_credit=0,new_Lean_credit=0,measurement_credit=0),'exact scope')
+    code=(P/'coupled_cover_cached.cpp').read_text();begin=code.index('  nodes++;');end=code.index('  if(position==items.size())',begin)
+    need((P/'size_guard.inc').read_text()==code[begin:end],'actual partial guard extraction')
+    O.mkdir(parents=True)
+    common=[P/'check.py',P/'run_closed.py',P/'literal_graph.h',P/'coupled_cover.cpp',P/'coupled_cover_cached.cpp',P/'size_guard.inc']
+    def run(name,cmd,inputs,cap,report=None):return execute(cmd,O/name,[*common,*inputs],cap,report)
+    def compile_one(name,san=False):
+        binary=O/(name+('_san'if san else''));flags=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']if san else['-O3']
+        run('compile_'+binary.name,['clang++','-std=c++17',*flags,'-DWORDSIZE=64','-I/opt/homebrew/include',str(P/(name+'.cpp')),'-L/opt/homebrew/lib','-lnauty','-o',str(binary)],[P/(name+'.cpp')],90);return binary
+    names=['root_cover','coupled_cover_cached','boundary_controls_cached','size_controls','coupled_controls_cached']
+    bins={name:compile_one(name)for name in names}
+    run('prepare',[sys.executable,str(P/'prepare_patterns.py'),'--study',str(S),'--lambda','12','--out',str(O/'input12')],[P/'prepare_patterns.py',S/'corpus106_F012_matching_forest_v1/forest.py'],30)
+    pattern=O/'input12/patterns.txt'
+    if a.reuse_recorded_targets:
+        records=json.loads((P/'recorded_execution.json').read_text())
+        for key in ['root','completion']:
+            r=records[key];rp=S/r['receipt']['path'];need(same(rp,r['receipt']),'recorded receipt');receipt=json.loads(rp.read_text())
+            need(receipt['status']=='PASS_CLOSED_EXECUTION'and receipt['inputs_unchanged']and receipt['returncode']==0 and not receipt['timeout'],'complete recorded execution')
+            for old in receipt['pins']+receipt['outputs']:need(same(Path(old['path']),old),'recorded actual input/output')
+            need(not Path(receipt['outputs'][1]['path']).read_bytes(),'recorded clean stderr')
+        roots=S/records['roots']['path'];rootreport=S/records['root_report']['path'];report=S/records['completion_report']['path'];positives=S/records['positives']['path']
+        for key in ['roots','root_report','completion_report','positives']:need(same(S/records[key]['path'],records[key]),'recorded output '+key)
+        need(pattern.read_bytes()==(S/records['patterns']['path']).read_bytes(),'fresh exact normalized inventory')
+    else:
+        roots=O/'roots12.txt';rootreport=O/'root12.json'
+        run('roots',[str(bins['root_cover']),str(pattern),str(roots),str(rootreport),'180'],[bins['root_cover'],P/'root_cover.cpp',pattern],210,rootreport)
+        report=O/'completion12.json';positives=O/'positives12.txt'
+        run('completion',[str(bins['coupled_cover_cached']),str(roots),str(positives),str(report),'600'],[bins['coupled_cover_cached'],roots],630,report)
+    need(normalized(rootreport)==json.loads((P/'expected_root12.json').read_text()),'complete root counts')
+    need(normalized(report)==json.loads((P/'expected_completion12.json').read_text()),'complete boundary counts')
+    need(positives.read_text()=='0\n','no positive graphs')
+    controls={}
+    for name,args,inputs in [
+        ('boundary_controls_cached',[str(roots)],[roots]),
+        ('size_controls',[],[]),
+        ('coupled_controls_cached',[str(roots),str(P/'positive_control_graph.txt')],[roots,P/'positive_control_graph.txt'])]:
+        run(name+'_run',[str(bins[name]),*args],[bins[name],P/(name+'.cpp'),*inputs],60)
+        actual=O/(name+'_run/stdout');controls[name]=json.loads(actual.read_text())
+        san=compile_one(name,True);run(name+'_san_run',[str(san),*args],[san,*inputs],120)
+        need(json.loads((O/(name+'_san_run/stdout')).read_text())==controls[name],'ordinary/sanitized control equality')
+    run('independent_boundary',[sys.executable,str(P/'check_boundary_independent.py'),str(O/'boundary_controls_cached_run/stdout')],[P/'check_boundary_independent.py',O/'boundary_controls_cached_run/stdout'],60)
+    boundary=json.loads((O/'independent_boundary/stdout').read_text());need(boundary['status']=='PASS_INDEPENDENT_BOUNDARY_CHECK','boundary oracle')
+    run('independent_sizes',[sys.executable,str(P/'independent_sizes.py'),'--actual',str(O/'size_controls_run/stdout'),'--out',str(O/'independent_sizes.json')],[P/'independent_sizes.py',O/'size_controls_run/stdout'],60,O/'independent_sizes.json')
+    run('independent_coupled',[sys.executable,str(P/'independent_coupled.py'),'--graph',str(P/'positive_control_graph.txt'),'--actual',str(O/'coupled_controls_cached_run/stdout'),'--out',str(O/'independent_coupled.json')],[P/'independent_coupled.py',P/'positive_control_graph.txt',O/'coupled_controls_cached_run/stdout'],60,O/'independent_coupled.json')
+    env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None)
+    original=pattern.read_text().splitlines();cases={'wrong_count':['12 457',*original[1:]],'truncated_block':original[:3]}
+    cases['bad_direction']=original.copy();v=cases['bad_direction'][2].split();v[3]='3';cases['bad_direction'][2]=' '.join(v)
+    cases['duplicate_block']=original.copy();cases['duplicate_block'][3]=cases['duplicate_block'][2]
+    for name,lines in cases.items():
+        f=O/(name+'.txt');f.write_text('\n'.join(lines)+'\n');target=O/(name+'_target');rep=O/(name+'_report')
+        c=subprocess.run([str(bins['root_cover']),str(f),str(target),str(rep),'5'],capture_output=True,timeout=10,env=env)
+        need(c.returncode!=0 and b'NO_CERTIFICATE:'in c.stderr and not target.exists()and not rep.exists(),'damaged inventory '+name);(O/(name+'.stderr')).write_bytes(c.stderr)
+    for name,binary,inp in [('root',bins['root_cover'],pattern),('completion',bins['coupled_cover_cached'],roots)]:
+        target=O/(name+'_timeout_target');rep=O/(name+'_timeout_report')
+        c=subprocess.run([str(binary),str(inp),str(target),str(rep),'0'],capture_output=True,timeout=10,env=env)
+        need(c.returncode!=0 and b'INCOMPLETE_DEADLINE'in c.stderr and not target.exists()and not rep.exists(),'deadline supplies no certificate');(O/(name+'_timeout.stderr')).write_bytes(c.stderr)
+    guards=0
+    for name in ['check.py','prepare_patterns.py','check_boundary_independent.py','independent_sizes.py','independent_coupled.py','build_native.py','run_closed.py']:
+        for mode in ['argument','environment']:
+            e=env.copy();cmd=[sys.executable]
+            if mode=='argument':cmd.append('-O')
+            else:e['PYTHONOPTIMIZE']='1'
+            target=O/(name+'_'+mode+'_forbidden');c=subprocess.run(cmd+[str(P/name),'--study',str(S),'--out',str(target)],env=e,capture_output=True,timeout=10)
+            need(c.returncode!=0 and(b'normal Python required'in c.stderr or b'Optimization removes validation'in c.stderr)and not target.exists(),'optimization rejection');(O/(name+'_'+mode+'.stderr')).write_bytes(c.stderr);guards+=1
+    native=build(P/'twelve.tex',O/'native')if a.render else None
+    if a.render and(P/'twelve.pdf').exists():
+        from pypdf import PdfReader
+        need([p.extract_text()for p in PdfReader(P/'twelve.pdf').pages]==[p.extract_text()for p in PdfReader(O/'native/twelve.pdf').pages],'native text equality')
+    result=dict(status='PASS_TWELVE_HEXAGONS_LOWER35',author_exports=len(exports),acquired_bindings=len(bindings),
+                target_mode='explicit exact recorded complete execution'if a.reuse_recorded_targets else'fresh complete root and boundary executions',
+                root=normalized(rootreport),completion=normalized(report),independent_boundary=boundary,
+                independent_sizes=json.loads((O/'independent_sizes.json').read_text()),
+                independent_coupled=json.loads((O/'independent_coupled.json').read_text()),
+                sanitized='Three complete implementation controls; target enumerations ordinary',
+                malformed_controls=4,deadline_controls=2,optimization_guards=guards,native=native,
+                whole_original_credit=0,new_lower_clauses=1,new_exact_counts=0,seconds=time.monotonic()-start)
+    (O/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({k:v for k,v in result.items()if k!='independent_coupled'}))
+
+if __name__=='__main__':main()

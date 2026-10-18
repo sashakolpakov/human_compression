@@ -1,0 +1,49 @@
+"""Exact returned calls and their disjoint complete union; zero targets only."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import hashlib,json,re
+
+def need(ok,message):
+ if not ok:raise RuntimeError(message)
+def pin(path):
+ p=Path(path).resolve();b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check_pin(row):need(pin(row['path'])==row,'exact pinned file '+row['path'])
+def parse_calls(data,lam,nr,ne,first,stop):
+ need(0<=first<stop<=nr*ne,'nonempty range within inventory');need(not data or data.endswith('\n'),'whole final newline');rows=[]
+ for line in data.splitlines():
+  m=re.fullmatch(r'LAMBDA (\d+) ROOT (\d+) EXTERIOR (\d+) NODES (\d+) COMPLETE (\d+) POSITIVE (\d+)',line);need(m is not None,'literal returned-call syntax');l,i,j,n,c,z=map(int,m.groups());flat=i*ne+j
+  need(l==lam and 0<=i<nr and 0<=j<ne and flat==first+len(rows)and flat<stop,'literal ordered prefix');need(z==0,'only zero-target calls may be acquired');need(c<=n,'complete leaves no greater than visited nodes');rows.append(dict(root=i,exterior=j,nodes=n,complete=c,positive=z))
+ return rows
+
+def verify_execution(receipt_path,plan):
+ """The caller supplies a frozen reviewed plan, never data read from this receipt."""
+ r=json.loads(Path(receipt_path).read_text());need(r['command']==plan['command'],'literal executed command');need(r['inputs_unchanged'],'immutable inputs')
+ problem=plan['problem'];need(set(problem)=={'lambda','order','nr','ne','roots','exteriors','constructor_sha256','headers','method_manifest'},'complete problem identity')
+ need(problem['lambda']==plan['lambda']and problem['order']==25 and problem['nr']==plan['nr']and problem['ne']==plan['ne'],'problem dimensions')
+ need(problem['roots']['path']==plan['command'][2]and problem['exteriors']['path']==plan['command'][3]and plan['command'][1]==str(problem['lambda']),'literal parameter/model arguments')
+ need(problem['roots']in r['pins']and problem['exteriors']in r['pins']and problem['method_manifest']in r['pins'],'exact model and method identity pins')
+ source=plan['constructor_source'];need(source in r['pins'],'literal constructor source pin');body=Path(source['path']).read_bytes();body=body[:body.index(b'int main(')]
+ need(hashlib.sha256(body).hexdigest()==problem['constructor_sha256'],'exact unchanged constructor body')
+ need({Path(x['path']).name:{k:x[k]for k in ['bytes','sha256']}for x in plan['headers']}==problem['headers'],'complete literal header identity')
+ need(set(problem['headers'])=={'cycle_budget.h','vertex_ball.h','vertex_ball_lambda.h','root_symmetry.h'},'exact acquired header set')
+ for row in plan['headers']:need(row in r['pins'],'actual header pin')
+ for row in r['pins']+r['outputs']:check_pin(row)
+ for row in plan['required_input_pins']:need(row in r['pins'],'required source/runtime/model pin')
+ outputs=r['outputs'];need(len(outputs)>=2 and Path(outputs[0]['path']).name=='stdout'and Path(outputs[1]['path']).name=='stderr','ordered captured streams');out=Path(outputs[0]['path']);err=Path(outputs[1]['path']);need(out.parent==Path(receipt_path).parent and err.parent==out.parent,'receipt-local streams')
+ rows=parse_calls(out.read_text(),plan['lambda'],plan['nr'],plan['ne'],plan['first'],plan['stop'])
+ if r['status']=='PASS_CLOSED_EXECUTION':
+  need(r['returncode']==0 and not r['timeout']and not err.read_bytes(),'normal successful completion');need(len(rows)==plan['stop']-plan['first'],'successful full range');need(len(outputs)==3 and outputs[2]['path']==plan['report'],'literal final report output');d=json.loads(Path(plan['report']).read_text());need(d['status']==plan['report_status']and d['lambda_value']==plan['lambda']and d['order']==25 and d['calls']==len(rows)and d['nodes']==sum(x['nodes']for x in rows)and d['complete']==sum(x['complete']for x in rows)and d['positive']==0 and d['classes']==0,'complete range report')
+ elif r['status']=='FAILED_NO_CERTIFICATE':
+  need(r['returncode']==1 and not r['timeout']and err.read_bytes()==b'NO_CERTIFICATE: INCOMPLETE_DEADLINE\n','only the known internal deadline');need(len(outputs)==2 and not Path(plan['report']).exists(),'no unreturned final report');need(len(rows)<plan['stop']-plan['first'],'strictly incomplete range')
+ else:raise RuntimeError('unsupported terminal status')
+ return dict(status='VERIFIED_RETURNED_ZERO_CALLS',receipt=pin(receipt_path),first=plan['first'],declared_stop=plan['stop'],returned_stop=plan['first']+len(rows),problem=problem,rows=rows,whole_target_credit=0)
+
+def union_calls(parts,nr,ne,problem):
+ need(problem['nr']==nr and problem['ne']==ne,'union dimensions');by_key={}
+ for part in parts:
+  need(part['status']=='VERIFIED_RETURNED_ZERO_CALLS','verified part');need(part['problem']==problem,'one common fixed problem')
+  for row in part['rows']:
+   key=(row['root'],row['exterior']);need(0<=key[0]<nr and 0<=key[1]<ne,'union model range');need(key not in by_key,'duplicate returned call');need(row['positive']==0,'zero-target union');by_key[key]=row
+ required=[(i,j)for i in range(nr)for j in range(ne)];pending=[list(k)for k in required if k not in by_key]
+ return dict(status='COMPLETE_DISJOINT_ZERO_UNION'if not pending else'INCOMPLETE_NO_TARGET_CREDIT',calls=len(by_key),nodes=sum(r['nodes']for r in by_key.values()),complete=sum(r['complete']for r in by_key.values()),positive=0,pending=pending,rows=[by_key[k]for k in required if k in by_key])

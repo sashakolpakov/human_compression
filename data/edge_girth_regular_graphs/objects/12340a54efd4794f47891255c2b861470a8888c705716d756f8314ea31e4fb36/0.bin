@@ -1,0 +1,130 @@
+"""Supplementary examples for the written dense-graph bounds; no graph census."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+import argparse
+import json
+from itertools import combinations, product
+from pathlib import Path
+
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def square_counts(a):
+    n = len(a)
+    need(all(u not in a[u] for u in range(n)), 'simple')
+    need(all((v in a[u]) == (u in a[v]) for u in range(n) for v in range(n)), 'undirected')
+    edges = [e for e in combinations(range(n), 2) if e[1] in a[e[0]]]
+    need(all(not a[u] & a[v] for u, v in edges), 'triangle-free')
+    direct = {(u, v): sum(y in a[x] for x in a[u] - {v} for y in a[v] - {u})
+              for u, v in edges}
+    squares = [s for s in combinations(range(n), 4) if all(len(a[u] & set(s)) == 2 for u in s)]
+    other = {e: sum(set(e) <= set(s) for s in squares) for e in edges}
+    need(direct == other, 'two square counts')
+    return direct
+
+
+def pentagon_example(t):
+    a = [set() for _ in range(5*t)]
+    for u, v in combinations(range(5*t), 2):
+        if (u//t - v//t) % 5 in [1, 4]:
+            a[u].add(v)
+            a[v].add(u)
+    counts = square_counts(a)
+    need(set(counts.values()) == {3*t*t - 4*t + 1}, 'pentagon blowup count')
+    need(all(len(row) == 2*t for row in a), 'regular pentagon blowup')
+    return {'class_size': t, 'degree': 2*t, 'lambda': 3*t*t - 4*t + 1,
+            'edges': len(counts)}
+
+
+def complement_example(k, m, offset=0):
+    d = m-k
+    h = [set() for _ in range(2*m)]
+    for x in range(m):
+        for j in range(d):
+            y = m+(x+j+offset) % m
+            h[x].add(y)
+            h[y].add(x)
+    a = [(set(range(m, 2*m)) if x < m else set(range(m))) - h[x] for x in range(2*m)]
+    counts = square_counts(a)
+    constant = (k-1)*(2*k-m-1)+d*(d-1)
+    for (x, y), count in counts.items():
+        paths = sum(z in h[t] for z in h[x] for t in h[y])
+        need(count == constant-paths, 'bipartite complement identity')
+    return {'degree': k, 'part_size': m, 'complement_degree': d,
+            'constant': constant, 'actual_counts': sorted(set(counts.values()))}
+
+
+def integer_controls():
+    equality = []
+    checked = 0
+    for t in product(range(7), repeat=5):
+        f = [t[i]+t[(i+1)%5]-t[(i-1)%5]*t[(i+2)%5] for i in range(5)]
+        if min(f) >= 1:
+            need(t == (1,)*5, 'integer equality characterization')
+            equality.append(t)
+        checked += 1
+    need(equality == [(1,)*5], 'unique equality example')
+    formula_cases = 0
+    for k in range(4, 9):
+        for a in product(range(1, k), repeat=5):
+            b = [k-a[(i-1)%5]-a[(i+1)%5] for i in range(5)]
+            if min(b) < 0:
+                continue
+            t = [x-1 for x in a]
+            for i in range(5):
+                q = lambda j: a[j % 5]
+                original = ((q(i)-1)*(q(i-1)+q(i+1)-1)+(q(i+1)-1)*q(i+2)
+                            + b[i]*(q(i)+q(i+2)-2)
+                            + b[(i+1)%5]*(q(i-1)+q(i+1)-2)+b[i]*b[(i+1)%5])
+                reduced = (k-2)**2+t[i]+t[(i+1)%5]-t[(i-1)%5]*t[(i+2)%5]
+                need(original == reduced, 'symbolic reduction example')
+                formula_cases += 1
+    return {'integer_examples': checked, 'unique_equality': equality,
+            'formula_examples': formula_cases, 'universal_proof': 'dense_bounds.tex'}
+
+
+def arithmetic():
+    expected = {(5, 10, 20): [12, 16], (6, 18, 22): [12, 14, 16, 18, 20],
+                (6, 19, 24): [12, 16, 20]}
+    rows = []
+    for (k, lam, bound), orders in expected.items():
+        actual = [n for n in range(2*k, bound) if n*k*lam % 8 == 0]
+        need(actual == orders, 'admissible orders')
+        need(all(2*n < 7*k for n in orders), 'shortest odd cycle would be five')
+        rows.append({'degree': k, 'lambda': lam, 'lower_bound': bound, 'orders_excluded': orders})
+    return rows
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    args = p.parse_args()
+    examples = [pentagon_example(t) for t in [2, 3, 4]]
+    complements = [complement_example(k, m) for k in [5, 6] for m in range(k, 11)]
+    controls = []
+    def reject(label, fn):
+        try:
+            fn()
+        except ValueError:
+            controls.append(label)
+        else:
+            raise ValueError('accepted invalid control: '+label)
+    reject('triangle', lambda: square_counts([{1, 2}, {0, 2}, {0, 1}]))
+    reject('asymmetric graph', lambda: square_counts([{1}, set()]))
+    reject('false strict bound at the degree-six example',
+           lambda: need(examples[1]['lambda'] < 16, 'equality is attained'))
+    result = {'status': 'PASS', 'integer_controls': integer_controls(),
+              'pentagon_examples': examples, 'complement_examples': complements,
+              'lower_rows': arithmetic(), 'damaged_controls': controls,
+              'scope': 'Finite controls only; complete written proofs are independent of this program.',
+              'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0}
+    args.out.write_text(json.dumps(result, indent=2)+'\n')
+    print('PASS integer controls, pentagon examples, complement formulas and lower-bound arithmetic')
+
+
+if __name__ == '__main__':
+    main()

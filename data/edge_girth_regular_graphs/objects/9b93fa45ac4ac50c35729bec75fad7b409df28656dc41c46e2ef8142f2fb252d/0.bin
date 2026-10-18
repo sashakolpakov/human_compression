@@ -1,0 +1,170 @@
+"""Verify the finite exclusions at odd orders 17 and 19.
+
+Requires a C++17 compiler and the acquired order18 packet. The latter supplies
+the already reviewed Python search and its complete branching proof.
+"""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError("Optimized Python is not accepted")
+import argparse
+import hashlib
+import importlib.util
+import itertools
+import json
+from pathlib import Path
+import subprocess
+import time
+
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def put(path, value):
+    path.write_text(json.dumps(value, indent=2) + "\n")
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def shape(row):
+    return {k: v for k, v in row.items() if k != "seconds"}
+
+
+def verify_positive(adj):
+    n = len(adj)
+    need(n == 15, "positive order")
+    g = [{y for y in range(n) if row >> y & 1} for row in adj]
+    need(all(x not in row and len(row) == 6 for x, row in enumerate(g)), "positive degree")
+    need(all((y in g[x]) == (x in g[y]) for x in range(n) for y in range(n)), "positive symmetry")
+    edges = [(x, y) for x in range(n) for y in g[x] if x < y]
+    need(all(not g[x] & g[y] for x, y in edges), "positive triangle")
+    cycles = [set(t) for t in itertools.combinations(range(n), 4)
+              if all(len(g[x] & set(t)) == 2 for x in t)]
+    need(len(cycles) == 180, "positive square total")
+    need(all(sum(x in t and y in t for t in cycles) == 16 for x, y in edges), "positive edge squares")
+    return {"vertices": n, "edges": len(edges), "squares": len(cycles), "square_count": 16}
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--study", required=True, type=Path)
+    p.add_argument("--out", required=True, type=Path)
+    args = p.parse_args()
+    out = args.out.resolve()
+    need(not out.exists(), "Use a fresh output directory")
+    out.mkdir(parents=True)
+    here = Path(__file__).resolve().parent
+    acquired = args.study.resolve() / "corpus106_F012_order18_v1"
+    source = acquired / "check_order18.py"
+    need(digest(source) == "efdea9664f513efc1ce5c8488d6b3ed01de4a67286870be8545d18a3f39ac519", "acquired Python search digest")
+    spec = importlib.util.spec_from_file_location("acquired_order18", source)
+    old = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(old)
+    receipts = []
+
+    def run(label, cmd, data=None, cap=60):
+        start = time.monotonic()
+        proc = subprocess.run(cmd, input=data, text=True, capture_output=True, timeout=cap)
+        (out / (label + ".stdout")).write_text(proc.stdout)
+        (out / (label + ".stderr")).write_text(proc.stderr)
+        receipts.append({"label": label, "command": [str(x) for x in cmd],
+                         "returncode": proc.returncode, "seconds": time.monotonic() - start})
+        put(out / "receipts.json", receipts)
+        return proc
+
+    for mode, flags in [("ordinary", ["-O2"]), ("sanitized", ["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"])]:
+        proc = run("compile_" + mode, ["clang++", "-std=c++17", *flags, "-Wall", "-Wextra", "-pedantic", str(here / "cycle_search.cpp"), "-o", str(out / mode)])
+        need(proc.returncode == 0 and not proc.stderr, "clean compiler result " + mode)
+
+    targets = {15: [16], 16: [13, 14, 17], 17: [12], 18: [10, 12, 14], 19: [12]}
+    expected_cases = {15: 1, 16: 4, 17: 14, 18: 27, 19: 42}
+    expected_nodes = {15: 11, 16: 100, 17: 9111, 18: 772757, 19: 9502832}
+    all_results = {}
+    inventories = {}
+    report = {"status": "INCOMPLETE", "orders": {}, "whole_original_credit": 0,
+              "new_question_credit": 0, "new_Lean": 0, "new_lower_rows": 1,
+              "claimed_lower_row": [6, 4, 12, 20], "new_exact_count_rows": 0}
+    for n in range(15, 20):
+        patterns, labelled = old.class_cases(n)
+        need(len(patterns) == expected_cases[n], "complete class inventory")
+        inventories[n] = patterns
+        data = "".join(" ".join(map(str, [j, n, len(targets[n]), *targets[n], *a, *b, z, 30])) + "\n"
+                       for j, (a, b, z) in enumerate(patterns))
+        (out / f"order{n}.input").write_text(data)
+        results = []
+        for mode in ["ordinary", "sanitized"]:
+            proc = run(f"order{n}_{mode}", [str(out / mode)], data)
+            need(proc.returncode == 0 and not proc.stderr, "search process " + mode)
+            rows = [json.loads(line) for line in proc.stdout.splitlines()]
+            need(len(rows) == len(patterns), "every pattern returned")
+            for j, row in enumerate(rows):
+                need(row["case"] == j and row["n"] == n and row["status"] == "COMPLETE", "complete named case")
+                need(row["positives"] == (1 if n == 15 else 0), "expected finite result")
+            need(sum(r["nodes"] for r in rows) == expected_nodes[n], "recorded node count")
+            results.append(rows)
+        need([shape(r) for r in results[0]] == [shape(r) for r in results[1]], "sanitizer agrees on every result")
+        all_results[n] = results[0]
+        report["orders"][n] = {"all_labelled_patterns": labelled, "dihedral_patterns": len(patterns),
+                               "nodes": sum(r["nodes"] for r in results[0]),
+                               "retained": sum(r["positives"] for r in results[0]),
+                               "all_cases_completed": True, "sanitizer_agreement": True}
+        put(out / "report.json", report)
+        print("COMPLETE", n, report["orders"][n], flush=True)
+
+    # This prior report was independently replayed and accepted. Its per-case
+    # counts are a control, not a completeness premise for the new search.
+    old_report = acquired / "report.json"
+    need(digest(old_report) == "ce074888eea8b262de9b9008807590b19d0ec4d9b07120cc099a1c63b31056b3", "acquired report digest")
+    previous = json.loads(old_report.read_text())["classes"]
+    for nrow, prow in zip(all_results[18], previous):
+        need(nrow["nodes"] == prow["nodes"] and nrow["positives"] == prow["positive_count"], "every accepted order18 control agrees")
+
+    # Fresh small Python comparisons, and every small order19 case. Large
+    # order19 cases are covered by complete C++ execution, not by a timeout.
+    python_controls = []
+    for n in [15, 16, 17, 19]:
+        old.N, old.TARGETS = n, set(targets[n])
+        for j, (a, b, z) in enumerate(inventories[n]):
+            native = all_results[n][j]
+            if n == 19 and native["nodes"] > 20000:
+                continue
+            row = old.solve(a, b, z, cap=30)
+            need(row["status"] == "COMPLETE", "Python control completed")
+            need((row["nodes"], row["positive_count"]) == (native["nodes"], native["positives"]), "fresh Python comparison")
+            need([r["adj"] for r in row["positives"]] == native["examples"], "positive adjacency agreement")
+            python_controls.append({"n": n, "case": j, "nodes": row["nodes"], "positive_count": row["positive_count"]})
+    put(out / "python_controls.json", python_controls)
+    report["fresh_python_control_cases"] = len(python_controls)
+    report["positive"] = verify_positive(all_results[15][0]["examples"][0])
+
+    # Parser guards use fully parsed inputs so failure cannot be confused
+    # with a clean end of input. A forced timeout is explicitly incomplete.
+    pattern = inventories[19][0]
+    base = [0, 19, 1, 12, *pattern[0], *pattern[1], pattern[2], 30]
+    negative = []
+    for label, changes in [("unsupported_order", {1: 20}), ("bad_class", {4: 0}), ("negative_cap", {15: -1})]:
+        data = base[:]
+        for index, value in changes.items():
+            data[index] = value
+        proc = run(label, [str(out / "ordinary")], " ".join(map(str, data)) + "\n")
+        need(proc.returncode != 0, "malformed input rejected " + label)
+        negative.append(label)
+    hard = max(all_results[19], key=lambda r: r["nodes"])["case"]
+    a, b, z = inventories[19][hard]
+    data = " ".join(map(str, [hard, 19, 1, 12, *a, *b, z, 0.000000001])) + "\n"
+    proc = run("timeout_control", [str(out / "ordinary")], data)
+    need(proc.returncode == 0, "timeout report returned")
+    row = json.loads(proc.stdout)
+    need(row["status"] == "TIMEOUT", "timeout is not a completed exclusion")
+    report.update(status="PASS_COMPLETE_ODD_ORDER_EXCLUSION", negative_controls=negative,
+                  timeout_control="TIMEOUT_NOT_COMPLETE", acquired_order18_case_agreement=27,
+                  acquired_python_sha256=digest(source), acquired_order18_report_sha256=digest(old_report))
+    put(out / "report.json", report)
+    print("PASS", json.dumps(report), flush=True)
+
+
+if __name__ == "__main__":
+    main()

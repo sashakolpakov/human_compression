@@ -1,0 +1,62 @@
+"""Rebuild and verify the complete pentagon incidence application."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+import argparse,hashlib,json,subprocess,shutil,gzip
+from base_cover5 import need
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--out',type=Path,required=True)
+    ap.add_argument('--sanitize',action='store_true');ap.add_argument('--render',action='store_true');a=ap.parse_args()
+    here=Path(__file__).resolve().parent;out=a.out.resolve()
+    need(here!=out and here not in out.parents,'external output required')
+    manifest=here/'manifest.json'
+    if manifest.exists():
+        for x in json.loads(manifest.read_text())['exports']:
+            raw=(here/x['path']).read_bytes()
+            need(len(raw)==x['bytes'] and hashlib.sha256(raw).hexdigest()==x['sha256'],'export hash')
+    deps=json.loads((here/'dependencies.json').read_text())
+    for x in deps['bindings']:
+        raw=Path(x['absolute_path']).read_bytes()
+        need(len(raw)==x['bytes'] and hashlib.sha256(raw).hexdigest()==x['sha256'],'dependency hash')
+    out.mkdir(exist_ok=False)
+    def run(label,cmd,cap=60,inp=None,cwd=None):
+        try:r=subprocess.run(cmd,input=inp,capture_output=True,timeout=cap,cwd=cwd)
+        except subprocess.TimeoutExpired as e:
+            (out/(label+'.stdout')).write_bytes(e.stdout or b'');(out/(label+'.stderr')).write_bytes(e.stderr or b'')
+            (out/(label+'_timeout.json')).write_text(json.dumps(dict(status='TIMEOUT_NO_CERTIFICATE',seconds=cap))+'\n');raise
+        (out/(label+'.stdout')).write_bytes(r.stdout);(out/(label+'.stderr')).write_bytes(r.stderr)
+        need(r.returncode==0 and not r.stderr,'failed or warning-producing command '+label)
+        return r.stdout
+    flags=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'] if a.sanitize else ['-O2']
+    binary=out/'medial5'
+    run('compile',['clang++','-std=c++17','-pedantic-errors',*flags,str(here/'medial5.cpp'),'-o',str(binary)])
+    controls=run('edge_controls',[str(binary),'--controls'])
+    need(controls==b'COMPLETE_EDGE_CONTROLS GRAPHS 33868 EDGES 251085\n','edge controls')
+    coverage=[]
+    for n in [10,12]:
+        raw=run(f'census{n}',[str(binary)],cap=180,inp=(here/f'base{n}.txt').read_bytes())
+        need(raw==(here/f'census{n}.stdout').read_bytes(),'enumeration output mismatch')
+        run(f'coverage{n}',[sys.executable,str(here/'base_cover5.py'),str(here/f'base{n}.txt'),str(out/f'coverage{n}.json')],cap=90)
+        coverage.append({k:v for k,v in json.loads((out/f'coverage{n}.json').read_text()).items()if k not in ['rows','seconds']})
+    run('canonical_controls',[sys.executable,str(here/'controls5.py'),str(out/'canonical_controls.json')])
+    run('positives',[sys.executable,str(here/'verify_medial5.py'),'--base10',str(here/'base10.txt'),'--base12',str(here/'base12.txt'),
+                    '--result10',str(out/'census10.stdout'),'--result12',str(out/'census12.stdout'),
+                    '--source',str(here/'source_match5.json'),'--output',str(out/'positive_report.json')])
+    source=json.loads((here/'source_match5.json').read_text());witness=Path(deps['positive_witness_file'])
+    lines=[l.split()for l in gzip.decompress(witness.read_bytes()).decode().splitlines()]
+    selected=[r for r in lines if r[0]==source['source_id']]
+    need(len(selected)==1 and selected[0][1:5]==['30','4','5','1'] and selected[0][5]==source['graph6'],'literal source witness')
+    pages=None
+    if a.render:
+        shutil.copy2(here/'pentagon_incidence.tex',out/'pentagon_incidence.tex')
+        for i in [1,2]:run(f'native{i}',['pdflatex','-interaction=nonstopmode','-halt-on-error','pentagon_incidence.tex'],cwd=out)
+        from pypdf import PdfReader
+        pages=len(PdfReader(out/'pentagon_incidence.pdf').pages)
+        need(pages==3 and 'Overfull' not in (out/'pentagon_incidence.log').read_text(),'native layout')
+    result=dict(status='PASS_COMPLETE_PENTAGON_INCIDENCE',coverage=coverage,sanitized=a.sanitize,native_pages=pages,
+                order25_graphs=0,order30_classes=1,positive_literal_maps=12,
+                whole_original_credit=0,new_question_credit=0,new_Lean_declarations=0)
+    (out/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
+
+if __name__=='__main__':main()

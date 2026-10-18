@@ -1,0 +1,49 @@
+"""Independent Bell partitions, literal quadrangles, and final root equations."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+from collections import Counter
+import argparse,json,time
+
+def need(x,m):
+    if not x:raise RuntimeError(m)
+def partitions(items):
+    blocks=[]
+    def recurse(position):
+        if position==len(items):yield tuple(blocks);return
+        x=items[position]
+        for at,mask in enumerate(blocks):
+            if mask>>x&1 or mask.bit_count()==4:continue
+            blocks[at]=mask|(1<<x);yield from recurse(position+1);blocks[at]=mask
+        blocks.append(1<<x);yield from recurse(position+1);blocks.pop()
+    yield from recurse(0)
+def reference(rows,side):
+    base=4 if side==0 else 17
+    opposite=17 if side==0 else 4
+    items=[v for v in range(9)for _ in range(4-rows[base+v].bit_count())]
+    need(len(items)==7,'seven literal incidences');good=Counter();checked=0
+    for part in partitions(items):
+        checked+=1;graph=rows.copy()+[0]*len(part)
+        for at,mask in enumerate(part):
+            for v in range(9):
+                if mask>>v&1:graph[base+v]|=1<<(26+at);graph[26+at]|=1<<(base+v)
+        # These graphs are bipartite by construction. Quadrangles are exactly
+        # two distinct vertices with two common neighbours.
+        if any((graph[u]&graph[v]).bit_count()>1 for u in range(len(graph))for v in range(u)):continue
+        okay=True
+        for i,j in [(0,1),(0,2),(1,2)]:
+            k=3-i-j;left=7<<(base+3*i);right=7<<(base+3*j)
+            value=sum((row&left).bit_count()*(row&right).bit_count() for row in graph)
+            expected=sum((rows[base+3*k+x]&(511<<opposite)).bit_count()for x in range(3))
+            if value!=expected:okay=False;break
+        if okay:good[tuple(sorted(part))]+=1
+    return good,checked
+def main():
+    p=argparse.ArgumentParser();p.add_argument('--roots',type=Path,required=True);p.add_argument('--actual',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();start=time.monotonic()
+    roots=json.loads(a.roots.read_text());actual=json.loads(a.actual.read_text());partitions_checked=0;survivors=0
+    for record in actual:
+        for side,name in enumerate(['left','right']):
+            expected,n=reference(roots[record['index']],side);observed=Counter(tuple(sorted(x))for x in record[name]);need(expected==observed,'literal side partition multiset differs');partitions_checked+=n;survivors+=sum(expected.values())
+    report=dict(status='PASS_INDEPENDENT_BELL_PARTITIONS',root_cases=len(actual),side_cases=2*len(actual),unpruned_incidence_partitions=partitions_checked,matching_surviving_partitions=survivors,seconds=time.monotonic()-start)
+    a.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

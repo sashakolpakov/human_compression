@@ -1,0 +1,24 @@
+"""Bounded closed execution receipt for the new exhaustive root verifier."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import datetime, hashlib, json, subprocess, time
+W=Path(__file__).resolve().parent
+def pin(p):
+    p=Path(p).resolve();b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+O=W/'root_replay01';O.mkdir()
+inputs=[W/'run_roots.py',W/'literal_graph.h',W/'check_roots.cpp',W/'check_roots',W/'inputs01/patterns.txt',W/'inputs01/root_representatives.txt',Path('/opt/homebrew/lib/libnauty.dylib')]
+before=[pin(p)for p in inputs]
+command=[str(W/'check_roots'),str(W/'inputs01/patterns.txt'),str(W/'inputs01/root_representatives.txt'),str(O/'report.json'),'840']
+start=time.monotonic();started=datetime.datetime.now(datetime.timezone.utc).isoformat()
+(O/'active.json').write_text(json.dumps(dict(status='RUNNING',command=command,pins=before,started_utc=started,timeout_seconds=900),indent=2)+'\n')
+try:
+    with (O/'stdout').open('wb')as stdout,(O/'stderr').open('wb')as stderr:
+        process=subprocess.run(command,stdout=stdout,stderr=stderr,timeout=900)
+    code=process.returncode;timed_out=False
+except subprocess.TimeoutExpired:
+    code=None;timed_out=True
+after=[pin(p)for p in inputs];unchanged=after==before
+okay=code==0 and unchanged and not(O/'stderr').stat().st_size and (O/'report.json').exists()
+receipt=dict(status='PASS_COMPLETE_ROOT_EXECUTION'if okay else'TIMEOUT_NO_CERTIFICATE'if timed_out else'FAILED_NO_CERTIFICATE',command=command,returncode=code,timeout=timed_out,seconds=time.monotonic()-start,started_utc=started,terminal_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),pins=before,inputs_unchanged=unchanged,outputs=[pin(p)for p in [O/'stdout',O/'stderr',O/'report.json']if p.exists()])
+(O/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');(O/'active.json').write_text(json.dumps(dict(status='TERMINAL',receipt=pin(O/'receipt.json')),indent=2)+'\n');print(json.dumps(receipt));raise SystemExit(0 if okay else 1)

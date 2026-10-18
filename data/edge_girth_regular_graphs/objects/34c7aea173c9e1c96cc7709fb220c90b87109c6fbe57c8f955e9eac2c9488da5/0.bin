@@ -1,0 +1,88 @@
+"""Classify the small EGR orders using certified regular-graph lists."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+from math import factorial
+from collections import Counter, deque
+import argparse, hashlib, json, time
+from base_cover5 import canonical, labelled_count, read_bases, need
+
+def decode(raw):
+    n=ord(raw[0])-63
+    need(0<n<=62 and all(63<=ord(c)<=126 for c in raw),'graph6 alphabet')
+    total=n*(n-1)//2
+    need(len(raw)==1+(total+5)//6,'exact graph6 length')
+    bits=[(ord(c)-63>>j)&1 for c in raw[1:] for j in range(5,-1,-1)]
+    a=[0]*n;at=0
+    for v in range(n):
+        for u in range(v):
+            if bits[at]:a[u]|=1<<v;a[v]|=1<<u
+            at+=1
+    need(not any(bits[total:]),'nonzero padding')
+    return a
+
+def complement(a):
+    full=(1<<len(a))-1
+    return [full^row^(1<<u) for u,row in enumerate(a)]
+
+def neighbors(a,u):
+    mask=a[u]
+    while mask:
+        v=(mask&-mask).bit_length()-1
+        yield v
+        mask&=mask-1
+
+def signature(a):
+    n=len(a);seen={0};todo=[0]
+    for u in todo:
+        for v in neighbors(a,u):
+            if v not in seen:seen.add(v);todo.append(v)
+    if len(seen)!=n:return None
+    # Deleting an edge identifies its shortest cycles with shortest endpoint paths.
+    girth=n+1;counts=[]
+    for u in range(n):
+        for v in neighbors(a,u):
+            if u>=v:continue
+            dist=[-1]*n;ways=[0]*n;dist[u]=0;ways[u]=1;q=deque([u])
+            while q:
+                x=q.popleft()
+                for y in neighbors(a,x):
+                    if (x==u and y==v) or (x==v and y==u):continue
+                    if dist[y]<0:dist[y]=dist[x]+1;q.append(y)
+                    if dist[y]==dist[x]+1:ways[y]+=ways[x]
+            length=dist[v]+1 if dist[v]>=0 else n+1
+            girth=min(girth,length);counts.append((length,ways[v]))
+    if girth>n:return None
+    lambdas=[count if length==girth else 0 for length,count in counts]
+    return (girth,lambdas[0]) if len(set(lambdas))==1 and lambdas[0]>0 else None
+
+def main():
+    p=argparse.ArgumentParser();p.add_argument('--input',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    a.out.mkdir(exist_ok=False);start=time.monotonic();targets=json.loads((a.input/'targets.json').read_text());plan=json.loads((a.input/'plan.json').read_text());summaries=[];results=[]
+    for item in plan:
+        n,d=item['n'],item['degree'];path=a.input/item['file']
+        graphs=read_bases(path) if item['format']=='degree5' else [decode(line) for line in path.read_text().splitlines()]
+        mass=0;codes=set();cover=[];kept=[]
+        for i,g in enumerate(graphs):
+            need(len(g)==n and all(x.bit_count()==d for x in g),'regular input')
+            code,aut,nodes=canonical(g);need(code not in codes,'duplicate regular class');codes.add(code)
+            need(factorial(n)%aut==0,'automorphism order');mass+=factorial(n)//aut
+            cover.append(dict(index=i,canonical=code,automorphisms=aut))
+            for k in sorted({r['k'] for r in targets if r['n']==n and min(r['k'],n-1-r['k'])==d}):
+                h=g if k==d else complement(g);sig=signature(h)
+                if sig:
+                    for t in targets:
+                        if (t['n'],t['k'],t['g'],t['lambda'])==(n,k,*sig):
+                            kept.append(dict(target=t['id'],base=i,complement=(k!=d),adjacency=h))
+        expected=labelled_count((d,)*n);need(mass==expected,'regular list incomplete')
+        row=dict(n=n,degree=d,graphs=len(graphs),labelled_count=expected,orbit_mass=mass,input_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),coverage=cover,positives=kept)
+        (a.out/f'base_{n}_{d}.json').write_text(json.dumps(row,indent=2)+'\n');results.extend(kept)
+        summary={k:v for k,v in row.items() if k not in ('coverage','positives')};summary['positive_rows']=len(kept);summaries.append(summary)
+        print(json.dumps(dict(**summary,elapsed=time.monotonic()-start)),flush=True)
+    counts=Counter(r['target']for r in results)
+    for t in targets:need(counts[t['id']]==t['expected_count'],'source count differs '+t['id'])
+    report=dict(status='PASS_COMPLETE_SMALL_ORDERS',base_lists=summaries,targets=[dict(t,actual_count=counts[t['id']]) for t in targets],positives=results,whole_original_credit=0)
+    (a.out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print('COMPLETE_SMALL_ORDERS',flush=True)
+
+if __name__=='__main__':main()

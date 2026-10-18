@@ -1,0 +1,76 @@
+import argparse,json,sys,time
+from pathlib import Path
+from itertools import combinations, permutations
+from math import factorial
+if sys.flags.optimize:raise RuntimeError('optimized Python is not an accepted checker')
+import reference as R
+
+def need(v,m):
+    if not v:raise RuntimeError(m)
+
+def literal_cycles(n,E):
+    # Enumerate simple cycles once, from their least vertex in one orientation.
+    a=R.adjacency(n,E);cycles=[]
+    for start in range(n):
+        def visit(path):
+            for v in a[path[-1]]:
+                if v==start and len(path)>=3 and path[1]<path[-1]:
+                    cycle=frozenset(tuple(sorted((path[i],path[(i+1)%len(path)]))) for i in range(len(path)))
+                    cycles.append(cycle)
+                elif v>start and v not in path:visit(path+[v])
+        visit([start])
+    return cycles
+
+def run():
+    begun=time.monotonic();expected={};ngraphs=0;nbfs=0;ncap=0;iso_buckets={}
+    for n in range(3,7):
+        pp=R.pairs(n)
+        for mask in range(1<<len(pp)):
+            E=frozenset(e for i,e in enumerate(pp) if mask>>i&1);ngraphs+=1
+            a=R.adjacency(n,E);ds=list(map(len,a));regular=len(set(ds))==1 and ds[0]>=2
+            if n<=5 or regular:
+                cs=literal_cycles(n,E);girth=min(map(len,cs),default=n+1)
+            else:continue
+            ck=(n,R.canonical(n,E));bucket=iso_buckets.setdefault(ck,[E,0]);bucket[1]+=1
+            if n<=5:
+                for g in range(3,min(girth,n)+1):
+                    for e in E:
+                        answer=sum(len(c)==g and e in c for c in cs)
+                        need(R.edge_cycles(n,E,e,g)==answer,'BFS literal-cycle mismatch');nbfs+=1
+                        for cap in (1,2,3):
+                            need(R.edge_cycles(n,E,e,g,cap)==min(answer,cap),'capped recurrence');ncap+=1
+            if regular and girth<=n and all(R.distance(a,0,v)<=n for v in range(n)):
+                counts={sum(len(c)==girth and e in c for c in cs) for e in E}
+                if len(counts)==1:
+                    lam=next(iter(counts));key=(n,ds[0],girth,lam)
+                    expected.setdefault(key,set()).add(R.canonical(n,E))
+    for (n,key),(E,mass) in iso_buckets.items():
+        aut=0
+        for perm in permutations(range(n)):
+            if frozenset(tuple(sorted((perm[u],perm[v]))) for u,v in E)==E:aut+=1
+        need(aut>0 and factorial(n)//aut==mass,'independent canonical orbit mass')
+    cases=set(expected)
+    # Exhaust every possible lambda at these degrees/girths, including empty
+    # outcomes, within the source elementary upper bound (k-1)^floor(g/2).
+    for n in range(3,7):
+        for k in range(2,n):
+            for g in range(3,n+1):
+                if R.moore(k,g)[0]<=n:
+                    for lam in range(1,(k-1)**(g//2)+1):cases.add((n,k,g,lam))
+    comparisons=[]
+    for p in sorted(cases):
+        want=expected.get(p,set());variants=[]
+        for two in (False,True):
+            for pruning in (False,True):
+                got,stats=R.generate(*p,two_phase=two,cycle_pruning=pruning)
+                need(got==want,f'complete search mismatch {p} {two} {pruning}')
+                variants.append({'two_phase':two,'cycle_pruning':pruning,'classes':sorted(got),'stats':stats})
+        comparisons.append({'parameters':p,'expected_classes':sorted(want),'variants':variants})
+    # A distinct two-source fixture demonstrates that arbitrary histories and
+    # repeated uncolored states are actually exercised by the tests.
+    need(any(v['stats']['hits']>0 for c in comparisons for v in c['variants']),'no visited hits tested')
+    return {'status':'PASS_EXACT_F012_ALGORITHM_CONTROLS','labelled_graphs':ngraphs,'BFS_edge_checks':nbfs,'capped_checks':ncap,'canonical_orbit_mass_checks':len(iso_buckets),'parameter_cases':len(cases),'positive_cases':len(expected),'complete_comparisons':comparisons,'seconds':time.monotonic()-begun}
+if __name__=='__main__':
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);args=p.parse_args();args.out.mkdir(parents=True,exist_ok=False)
+    result=run();(args.out/'report.json').write_text(json.dumps(result,indent=2)+'\n')
+    print(json.dumps({k:v for k,v in result.items() if k!='complete_comparisons'},indent=2))

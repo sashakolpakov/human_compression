@@ -1,0 +1,89 @@
+"""Complete fixed-source (4,5,5) minimum and uniqueness certificate."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,hashlib,json,math,os,subprocess,time
+from run_closed import execute
+from build_native import build
+P=Path(__file__).resolve().parent
+SCOPE=dict(original='F012',degree=4,girth=5,lambda_value=5,minimum=24,exact_classes=1,new_lower_clauses=1,new_exact_counts=1,whole_original_credit=0,new_question_credit=0,new_Lean_credit=0,measurement_credit=0)
+def need(b,m):
+ if not b:raise RuntimeError(m)
+def pin(p):
+ b=p.read_bytes();return dict(bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def same(p,r):return all(pin(p)[k]==r[k]for k in ['bytes','sha256'])
+def validate_scope(x):need(x==SCOPE,'exact fixed-row scope')
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--study',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--render',action='store_true');p.add_argument('--reuse-recorded-boundary',action='store_true');a=p.parse_args();S=a.study.resolve();O=a.out.resolve();need(not O.exists(),'fresh output');started=time.monotonic()
+ bindings=json.loads((P/'bindings.json').read_text())
+ for r in bindings:need(same(S/r['path'],r),'acquired '+r['path'])
+ exports=json.loads((P/'manifest.json').read_text())['exports']if(P/'manifest.json').exists()else[]
+ for r in exports:need(same(P/r['path'],r),'export '+r['path'])
+ validate_scope(json.loads((P/'scope.json').read_text()));O.mkdir();common=[P/x for x in ['check.py','run_closed.py','vertex_ball.h','cycle_budget.h','complete.cpp']]
+ def run(name,cmd,inputs,cap,report=None):return execute(cmd,O/('run_'+name),[*common,*inputs],cap,report)
+ def compile_one(name,sanitized=False):
+  target=O/(name+('_san'if sanitized else''));flags=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']if sanitized else['-O2']
+  run('compile_'+target.name,['clang++','-std=c++17',*flags,'-DWORDSIZE=64','-I/opt/homebrew/include',str(P/(name+'.cpp')),'-L/opt/homebrew/lib','-lnauty','-o',str(target)],[P/(name+'.cpp')],90);return target
+ names=['root_cover','exterior_cover','complete','cycle_controls','normalization_controls','positive_controls'];bins={n:compile_one(n)for n in names}
+ inventory=O/'inventory.json';run('inventory',[sys.executable,str(P/'inventory.py'),'--study',str(S),'--out',str(inventory)],[P/'inventory.py',S/'corpus106_F012_matching_forest_v1/forest.py'],30,inventory)
+ need(json.loads(inventory.read_text())==json.loads((P/'inventory01.json').read_text()),'fresh complete integer inventory');x=json.loads(inventory.read_text());lines=[str(len(x['patterns']))]
+ for r in x['patterns']:
+  order=sorted(range(6),key=lambda i:(math.comb(3,r['matching_sizes'][i])if r['directions'].get(str(i),0)else math.comb(3,r['matching_sizes'][i])**2*math.factorial(r['matching_sizes'][i]),i))
+  for i in order:
+   u,v=x['edges'][i];lines.append(f"{u} {v} {r['matching_sizes'][i]} {r['directions'].get(str(i),0)}")
+ pattern=O/'patterns.txt';pattern.write_text('\n'.join(lines)+'\n');need(pattern.read_bytes()==(P/'patterns01.txt').read_bytes(),'exact forest orientation inventory')
+ roots=O/'roots.txt';rootreport=O/'root.json';run('roots',[str(bins['root_cover']),str(pattern),str(roots),str(rootreport),'60'],[bins['root_cover'],pattern],90,rootreport)
+ ext=O/'exteriors.txt';extreport=O/'exteriors.json';run('exteriors',[str(bins['exterior_cover']),str(ext),str(extreport),'60'],[bins['exterior_cover']],90,extreport)
+ need(json.loads(rootreport.read_text())==json.loads((P/'root_report01.json').read_text()),'full root totals');need(json.loads(extreport.read_text())==json.loads((P/'exterior_report01.json').read_text()),'full exterior totals')
+ if a.reuse_recorded_boundary:
+  old=json.loads((P/'recorded_boundary.json').read_text());r=S/old['receipt']['path'];need(same(r,old['receipt']),'exact acquired boundary receipt');receipt=json.loads(r.read_text());need(receipt['status']=='PASS_CLOSED_EXECUTION'and receipt['inputs_unchanged']and receipt['returncode']==0 and not receipt['timeout'],'complete boundary receipt')
+  for x in receipt['pins']+receipt['outputs']:need(same(Path(x['path']),x),'complete execution closure')
+  need(not Path(receipt['outputs'][1]['path']).read_bytes(),'clean recorded stderr')
+  for key in ['roots','exteriors','report','classes']:need(same(S/old[key]['path'],old[key]),'recorded '+key)
+  need(roots.read_bytes()==(S/old['roots']['path']).read_bytes()and ext.read_bytes()==(S/old['exteriors']['path']).read_bytes(),'fresh inventories equal literal acquired inputs')
+  report=S/old['report']['path'];classes=S/old['classes']['path']
+ else:
+  report=O/'boundary.json';classes=O/'classes.txt';run('boundary',[str(bins['complete']),str(roots),str(ext),str(classes),str(report),'600'],[bins['complete'],roots,ext],630,report)
+ need(json.loads(report.read_text())==json.loads((P/'boundary_report01.json').read_text()),'complete boundary totals')
+ result=O/'result.json';run('result',[sys.executable,str(P/'verify_result.py'),'--result',str(classes),'--source',str(P/'source_positive.txt'),'--out',str(result)],[P/'verify_result.py',classes,P/'source_positive.txt'],30,result)
+ # Bind and decode the exact original graph6 row, without replacing its source.
+ provenance=json.loads((P/'source_positive_provenance.json').read_text());graphfile=Path(provenance['graph_file']);commentfile=Path(provenance['comment_file']);line=graphfile.read_text().splitlines()[provenance['source_line']-1].strip();need(hashlib.sha256(line.encode()).hexdigest()==provenance['graph6_line_sha256'],'primary graph6 row');need(line==(P/'source_positive.g6').read_text().strip(),'exact exported graph6');need(commentfile.read_text().splitlines()[provenance['source_line']-1]==(P/'source_positive_comment.txt').read_text().rstrip('\n'),'exact primary comment row')
+ n=ord(line[0])-63;bits=[(ord(c)-63)>>i&1 for c in line[1:]for i in range(5,-1,-1)];g=[0]*n;at=0
+ for v in range(1,n):
+  for u in range(v):
+   if bits[at]:g[u]|=1<<v;g[v]|=1<<u
+   at+=1
+ need(list(map(int,(P/'source_positive.txt').read_text().split()))==[1,n,*g],'independent graph6 decode')
+ controls={}
+ for name,args in [('cycle_controls',[str(P/'source_positive.txt')]),('normalization_controls',[str(ext)]),('positive_controls',[str(P/'source_positive.txt'),str(roots),str(ext)])]:
+  inputs=[P/'source_positive.txt',roots,ext];run(name,[str(bins[name]),*args],[bins[name],*inputs],60);controls[name]=O/('run_'+name+'/stdout')
+  san=compile_one(name,True);run(name+'_san',[str(san),*args],[san,*inputs],90);need(controls[name].read_bytes()==(O/('run_'+name+'_san/stdout')).read_bytes(),'sanitized '+name)
+ run('normalization_oracle',[sys.executable,str(P/'normalization_oracle.py'),str(controls['normalization_controls']),str(ext)],[P/'normalization_oracle.py',controls['normalization_controls'],ext],30)
+ structural=json.loads((O/'run_normalization_oracle/stdout').read_text());need((structural['graphs'],structural['states'],structural['orbits'])==(21,31185,12963),'orbit oracle totals')
+ env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);damage=0
+ rows=pattern.read_text().splitlines();bad={'count':['4',*rows[1:]],'truncated':rows[:3],'direction':rows.copy(),'duplicate':rows.copy()};z=bad['direction'][1].split();z[-1]='3';bad['direction'][1]=' '.join(z);bad['duplicate'][2]=bad['duplicate'][1]
+ for key,v in bad.items():
+  f=O/(key+'.txt');f.write_text('\n'.join(v)+'\n');out=O/(key+'_roots');rep=O/(key+'_report');r=subprocess.run([str(bins['root_cover']),str(f),str(out),str(rep),'10'],capture_output=True,timeout=15,env=env);need(r.returncode!=0 and b'NO_CERTIFICATE'in r.stderr and not out.exists()and not rep.exists(),'damaged root inventory '+key);(O/(key+'.stderr')).write_bytes(r.stderr);damage+=1
+ for name,cmd in [('roots',[str(bins['root_cover']),str(pattern)]),('exteriors',[str(bins['exterior_cover'])]),('boundary',[str(bins['complete']),str(roots),str(ext)])]:
+  out=O/(name+'_timeout_output');rep=O/(name+'_timeout_report');r=subprocess.run([*cmd,str(out),str(rep),'0'],capture_output=True,timeout=10,env=env);need(r.returncode!=0 and b'INCOMPLETE_DEADLINE'in r.stderr and not out.exists()and not rep.exists(),'deadline '+name);(O/(name+'_timeout.stderr')).write_bytes(r.stderr)
+ scopecontrols=0
+ for key in SCOPE:
+  if key=='original':continue
+  changed=dict(SCOPE);changed[key]+=1
+  try:validate_scope(changed)
+  except RuntimeError:scopecontrols+=1
+  else:raise RuntimeError('scope mutation accepted')
+ guards=0
+ for name in ['check.py','inventory.py','normalization_oracle.py','verify_result.py','build_native.py','run_closed.py']:
+  for mode in ['argument','environment']:
+   environment=env.copy();cmd=[sys.executable]
+   if mode=='argument':cmd.append('-O')
+   else:environment['PYTHONOPTIMIZE']='1'
+   target=O/(name+'_'+mode+'_forbidden');r=subprocess.run(cmd+[str(P/name),'--study',str(S),'--out',str(target)],capture_output=True,timeout=10,env=environment);need(r.returncode!=0 and b'normal Python required'in r.stderr and not target.exists(),'optimization rejection');(O/(name+'_'+mode+'.stderr')).write_bytes(r.stderr);guards+=1
+ native=build(P/'five.tex',O/'native')if a.render else None
+ if a.render and(P/'five.pdf').exists():
+  from pypdf import PdfReader
+  need([x.extract_text()for x in PdfReader(P/'five.pdf').pages]==[x.extract_text()for x in PdfReader(O/'native/five.pdf').pages],'native text equality')
+ result=dict(status='PASS_FIVE_PENTAGONS_MINIMUM24_UNIQUE',exports=len(exports),bindings=len(bindings),target_mode='explicit acquired complete boundary; fresh root and exterior inventories'if a.reuse_recorded_boundary else'fresh complete root, exterior and boundary searches',root=json.loads(rootreport.read_text()),exterior=json.loads(extreport.read_text()),boundary=json.loads(report.read_text()),literal_source=json.loads((O/'result.json').read_text()),normalization=structural,cycle_control=json.loads(controls['cycle_controls'].read_text()),positive_control=json.loads(controls['positive_controls'].read_text()),sanitized='all three bounded controls, ordinary complete target',damaged_inventories=damage,deadline_rejections=3,scope_controls=scopecontrols,optimization_guards=guards,native=native,whole_original_credit=0,seconds=time.monotonic()-started)
+ (O/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
+if __name__=='__main__':main()

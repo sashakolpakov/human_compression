@@ -1,0 +1,38 @@
+#ifndef F012_VERTEX_BALL_H
+#define F012_VERTEX_BALL_H
+#include <nauty/nauty.h>
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstdint>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <numeric>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <vector>
+using namespace std;using U=uint64_t;using Graph=vector<U>;
+inline void need(bool b,const string&m){if(!b)throw runtime_error(m);}
+inline int wt(U x){return __builtin_popcountll(x);}
+inline int bit(U x){need(x!=0,"nonzero bit");return __builtin_ctzll(x);}
+inline void add(Graph&g,int u,int v){need(u!=v&&!(g[u]>>v&1),"new simple edge");g[u]|=U(1)<<v;g[v]|=U(1)<<u;}
+inline void remove_edge(Graph&g,int u,int v){need(g[u]>>v&1,"existing edge");g[u]&=~(U(1)<<v);g[v]&=~(U(1)<<u);}
+inline void validate(const Graph&g){int n=g.size();need(n>0&&n<64,"graph size");for(int u=0;u<n;u++){need(!(g[u]>>n)&&!(g[u]>>u&1),"simple row");for(int v=0;v<n;v++)need(((g[u]>>v)&1)==((g[v]>>u)&1),"symmetric graph");}}
+inline bool girth5(const Graph&g){for(int u=0;u<(int)g.size();u++)for(int v=u+1;v<(int)g.size();v++){U c=g[u]&g[v];if(wt(c)>1||((g[u]>>v&1)&&c))return false;}return true;}
+inline Graph ball(){Graph g(17);for(int i=0;i<4;i++){add(g,0,1+i);for(int j=0;j<3;j++)add(g,1+i,5+3*i+j);}return g;}
+inline void validate_root(const Graph&g){validate(g);need(g.size()==17&&girth5(g),"valid root");auto t=ball();for(int u=0;u<5;u++)need(g[u]==t[u],"literal fixed Moore tree");array<int,4>cross{};for(int u=5;u<17;u++){need(wt(g[u])<=4&&(g[u]&31)==t[u],"leaf capacity and parent");for(int v=u+1;v<17;v++)if(g[u]>>v&1){need((u-5)/3!=(v-5)/3,"different leaf branches");cross[(u-5)/3]++;cross[(v-5)/3]++;}}for(int d:cross)need(d==5,"five root-edge pentagons");}
+struct Canonical{Graph key;vector<int>lab;};
+inline int role(int x){return x==0?0:x<5?1:2;}
+inline Canonical proposal(const Graph&g,bool rooted){
+ int n=g.size();need(!rooted||n==17,"rooted17");nauty_check(WORDSIZE,1,n,NAUTYVERSIONID);vector<graph>a(n),c(n);vector<int>lab(n),ptn(n),orbits(n);iota(lab.begin(),lab.end(),0);fill(ptn.begin(),ptn.end(),1);ptn.back()=0;if(rooted){ptn[0]=0;ptn[4]=0;}
+ EMPTYGRAPH(a.data(),1,n);for(int u=0;u<n;u++)for(int v=u+1;v<n;v++)if(g[u]>>v&1)ADDONEEDGE(a.data(),u,v,1);
+ DEFAULTOPTIONS_GRAPH(options);options.getcanon=TRUE;options.defaultptn=FALSE;statsblk stats;densenauty(a.data(),lab.data(),ptn.data(),orbits.data(),&options,&stats,1,n,c.data());need(stats.errstatus==0,"nauty proposal status");
+ Graph key(n);for(int u=0;u<n;u++)for(int v=0;v<n;v++)if(ISELEMENT(GRAPHROW(c.data(),u,1),v))key[u]|=U(1)<<v;return{key,lab};
+}
+inline void literal(const Graph&g,const Graph&h,const vector<int>&p,const vector<int>&q,bool rooted){int n=g.size();need((int)h.size()==n&&(int)p.size()==n&&(int)q.size()==n,"map dimensions");auto a=p,b=q;sort(a.begin(),a.end());sort(b.begin(),b.end());for(int i=0;i<n;i++)need(a[i]==i&&b[i]==i,"map bijections");for(int i=0;i<n;i++){if(rooted)need(role(p[i])==role(q[i]),"map preserves root roles");for(int j=0;j<n;j++)need(((g[p[i]]>>p[j])&1)==((h[q[i]]>>q[j])&1),"literal adjacency map");}}
+struct Cover{bool rooted;vector<Graph>graphs;vector<Canonical>maps;map<Graph,size_t>lookup;U verified=0;explicit Cover(bool b):rooted(b){};void take(const Graph&g){auto c=proposal(g,rooted);auto it=lookup.find(c.key);if(it==lookup.end()){size_t k=graphs.size();lookup[c.key]=k;graphs.push_back(g);maps.push_back(c);it=lookup.find(c.key);}size_t k=it->second;literal(g,graphs[k],c.lab,maps[k].lab,rooted);verified++;}void write(const string&name){ofstream o(name);need(bool(o),"output file");o<<graphs.size()<<'\n';for(auto&g:graphs){o<<g.size();for(U row:g)o<<' '<<row;o<<'\n';}need(bool(o),"complete write");}};
+struct Deadline{chrono::steady_clock::time_point start=chrono::steady_clock::now();double seconds;explicit Deadline(double s):seconds(s){check();}void check(){need(chrono::duration<double>(chrono::steady_clock::now()-start).count()<seconds,"INCOMPLETE_DEADLINE");}};
+#endif

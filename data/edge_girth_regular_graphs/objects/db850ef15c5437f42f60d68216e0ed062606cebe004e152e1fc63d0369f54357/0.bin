@@ -1,0 +1,28 @@
+"""Exact set-block recursion, independent of the acquired incidence insertion."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+import pathlib,json,itertools,argparse,time
+p=argparse.ArgumentParser();p.add_argument('--actual',type=pathlib.Path,required=True);p.add_argument('--out',type=pathlib.Path,required=True);a=p.parse_args();start=time.monotonic();rows=json.loads(a.actual.read_text())['rows'];results=[]
+expected=[]
+for ones in range(10):
+ for twos in range(7):
+  for threes in range(5):
+   if ones+2*twos+3*threes==12 and ones+twos+threes<=9:expected.append([1]*ones+[2]*twos+[3]*threes)
+assert sorted(expected)==sorted(r[0]for r in rows)
+for profile,bound in rows:
+ labels=sum(([i]*d for i,d in enumerate(profile)),[]);assert len(labels)==12
+ pairs=list(itertools.combinations(range(len(profile)),2));pair_index={p:i for i,p in enumerate(pairs)};blocks=[[]for _ in range(12)]
+ for first in range(12):
+  for more in [(),*((x,)for x in range(first+1,12)),*itertools.combinations(range(first+1,12),2)]:
+   positions=(first,*more);ls=[labels[x]for x in positions]
+   if len(set(ls))!=len(ls):continue
+   pm=sum(1<<pair_index[tuple(sorted(pair))]for pair in itertools.combinations(ls,2));bm=sum(1<<x for x in positions);blocks[first].append((bm,pm,len(more)*(len(more)+1)//2))
+ best=0;leaves=0
+ def visit(left,used,score):
+  global best,leaves
+  if not left:best=max(best,score);leaves+=1;return
+  first=(left&-left).bit_length()-1
+  for bm,pm,gain in blocks[first]:
+   if bm&left==bm and not pm&used:visit(left^bm,used|pm,score+gain)
+ visit((1<<12)-1,0,0);assert best==bound,(profile,bound,best);results.append({'profile':profile,'maximum':best,'partitions':leaves})
+report={'status':'PASS_INDEPENDENT_TWELVE_INCIDENCE_CAPACITIES','profiles':len(results),'partitions':sum(r['partitions']for r in results),'seconds':time.monotonic()-start,'rows':results};a.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items()if k!='rows'}))

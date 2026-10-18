@@ -1,0 +1,11 @@
+#define main acquired_extension_main
+#include "check_extensions.cpp"
+#undef main
+int main(int argc,char**argv){
+ try{
+  require(argc==4,"usage side_controls ROOTS INDICES OUTPUT");RepresentativeIndex roots(argv[1],true);ifstream indices(argv[2]);ofstream out(argv[3]);require(bool(indices)&&bool(out),"control files");out<<'[';bool comma=false;size_t id;
+  while(indices>>id){require(id<roots.graphs.size(),"control index");Side side(roots.graphs[id]);if(comma)out<<',';comma=true;out<<"{\"index\":"<<id;
+   for(int s=0;s<2;s++){side.run(s);out<<(s?",\"right\":[":",\"left\":[");bool outer=false;for(const auto&part:side.good){if(outer)out<<',';outer=true;out<<'[';for(size_t k=0;k<part.size();k++){if(k)out<<',';out<<part[k];}out<<']';}out<<']';}out<<'}';
+  }require(indices.eof(),"complete control index file");out<<"]\n";require(bool(out),"control output write");return 0;
+ }catch(const exception&e){cerr<<e.what()<<'\n';return 1;}
+}

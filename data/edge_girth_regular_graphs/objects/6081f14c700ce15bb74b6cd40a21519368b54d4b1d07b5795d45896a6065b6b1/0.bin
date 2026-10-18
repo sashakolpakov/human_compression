@@ -1,0 +1,195 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,hyperref}
+\setlength{\emergencystretch}{2em}
+\newtheorem{theorem}{Theorem}\newtheorem{lemma}[theorem]{Lemma}
+\title{Distance layers and square moments}
+\author{Human Compression project}\date{}
+\begin{document}\maketitle
+We recover the lower bound $n(6,4,6)\ge24$ from Table~4 of
+Goedgebeur and Jooken~\cite{GJ}. Here $n(k,4,\lambda)$ denotes the
+least order of a simple graph of degree $k$, girth four and exactly
+$\lambda$ squares through each edge, or infinity if none exists.
+Two elementary counts serve different parts of the argument. Distance
+layers force a five-cycle in any small candidate. The second moments
+of common-neighbour counts give a stronger necessary condition within
+the acquired search with that cycle prescribed.
+
+\begin{lemma}\label{layers}
+Let $G$ be a simple $k$-regular graph of order $n$, with $k\ge2$,
+no triangle and no five-cycle. Suppose every edge belongs to exactly
+$\lambda$ squares. For every vertex there is a positive integer $b$
+satisfying
+\begin{equation}\label{both}
+ b(2k+1+b-n)\le k(k-1),\qquad
+ k(k-1)^2\le b(k-1+\lambda).
+\end{equation}
+In particular, if $k=6$ and $n\le22$, then $\lambda\ge9$.
+\end{lemma}
+\begin{proof}
+Fix $x$, put $X=N(x)$, and let $Y$ be the set of vertices at distance
+two from $x$. Write $b=|Y|$ and $r=n-1-k-b$. The set $Y$ is
+independent. Indeed, if $y,z\in Y$ were adjacent, choose neighbours
+$u,v\in X$ of $y,z$, respectively. If $u=v$ there is a triangle;
+otherwise $x,u,y,z,v$ is a simple five-cycle. Both are excluded.
+
+Put $c_y=|N(y)\cap X|$ for $y\in Y$. Since $Y$ is independent,
+all neighbours of $y$ outside $X$ belong to the $r$ remaining vertices.
+Thus $c_y\ge k-r$. Counting walks of length two from $x$ gives
+\[
+ \sum_{y\in Y}c_y=k(k-1).
+\]
+This also shows that $b>0$. Both $\sum_y c_y(c_y-1)$ and $k\lambda$
+count twice the squares through $x$: the former by their opposite
+vertex, the latter by their two incident edges. Hence
+\[
+ \sum_{y\in Y}c_y^2=k(k-1+\lambda).
+\]
+Summing $c_y\ge k-r$ proves the first inequality in~\eqref{both}.
+Cauchy--Schwarz proves the second. No transitivity or connectivity
+assumption is used.
+
+At $k=6$ and $n\le22$, the first inequality implies
+$b(b-9)\le30$, so $b\le11$. If $\lambda\le8$, the second would
+require $150\le13b\le143$, a contradiction.
+\end{proof}
+
+We next work in a partial triangle-free graph which is to be completed
+to degree six. A vertex is \emph{closed} when all of its eventual
+neighbours have already been selected; the other vertices are
+\emph{active}. The acquired completion method~\cite{twenty} retains
+exact degree deficits and, for each active $y$, a candidate set $T_y$
+containing every possible future neighbour: candidates must be active,
+have positive deficit, respect the prescribed cycle, and have no
+present common neighbour with $y$.
+
+\begin{lemma}\label{moment}
+Fix a closed vertex $x$ and write $X=N(x)$, so $|X|=6$. For every
+$y\notin X\cup\{x\}$ let $l_y$ be its present number of neighbours
+in $X$. If $y$ is closed put $u_y=l_y$; otherwise put
+\[
+ u_y=l_y+\min\{r_y,|T_y\cap X|\},
+\]
+where $r_y$ is its degree deficit. Every completion with constant square
+count $\lambda$ supplies integers $c_y$ such that
+\begin{equation}\label{relaxation}
+ l_y\le c_y\le u_y,\qquad \sum_y c_y=30,\qquad
+ \sum_y c_y(c_y-1)=6\lambda.
+\end{equation}
+The least possible value of the last sum subject to the first two
+conditions is found by starting at $c_y=l_y$ and taking the
+$30-\sum_y l_y$ cheapest increments, where incrementing a coordinate
+from $t$ to $t+1$ costs $2t$.
+\end{lemma}
+\begin{proof}
+Because $x$ is closed, $X$ is its final neighbour set. Every as yet
+unselected edge from an active $y$ to $X$ lies in its candidate set
+and consumes one unit of its deficit. This proves the interval bounds.
+Triangle-freeness makes $X$ independent, so its six vertices each have
+five other neighbours, all outside $X\cup\{x\}$. The first sum is
+therefore thirty. Counting the squares through $x$ as in
+Lemma~\ref{layers} proves the second sum. Here no restriction on
+five-cycles is needed.
+
+For coordinate $y$, its available successive increments have costs
+$2l_y,2(l_y+1),\ldots,2(u_y-1)$. The globally cheapest increments
+respect every coordinate's order, because every predecessor has a
+strictly smaller cost. They therefore give a feasible vector whenever
+enough increments exist. Any vector using a more expensive increment
+while omitting an available cheaper one can exchange them and reduce
+its cost. Repeated exchange proves optimality. If the required total
+is negative or exceeds the available capacity, there is no feasible
+vector. The intervals can admit choices which do not arise from any
+graph; allowing these only lowers the minimum and is safe for rejection.
+\end{proof}
+
+For implementation, the number of increments of cost $2t$ is
+$|\{y:l_y\le t<u_y\}|$. Adding one at position $l_y$ and subtracting
+one at $u_y$ in a difference array gives all six counts by cumulative
+sums. Levels $t=0,\ldots,5$ suffice. The current moment plus the
+cheapest required increments is the exact relaxed minimum. A node is
+rejected if its intervals have insufficient capacity or its minimum
+exceeds $6\lambda$. With several target values, comparison to six
+times the largest target remains a necessary condition. This test
+modifies neither the partial graph nor its branching or symmetry rules.
+
+\begin{lemma}\label{finite}
+There is no simple triangle-free graph of degree six, on twenty or
+twenty-two vertices, containing a five-cycle and having six squares
+through every edge.
+\end{lemma}
+\begin{proof}
+Acquire the complete five-cycle partition, integer inventory and
+completion proof from~\cite{eighteen,twenty}. Relative to a named
+cycle, the sizes $a_i,b_i,z$ record vertices with the two cycle
+neighbours $v_{i-1},v_{i+1}$, the single neighbour $v_i$, or none.
+They satisfy
+\[
+ a_{i-1}+a_{i+1}+b_i=6,\qquad
+ \sum_i b_i+2z=2n-30,\qquad a_i\ge1,\quad b_i,z\ge0.
+\]
+The acquired inventory enumerates all solutions, independently checks
+them by the positive $a_i$, and then identifies rotations and reflections
+of the named cycle. Its existing completion engine is changed only to
+allow order twenty-two and to add Lemma~\ref{moment} at the five
+original cycle vertices. Its array lengths and unsigned bit masks
+support that order. Every valid completion survives the new test by
+the lemma, so the acquired completeness proof still applies.
+
+Both ordinary and sanitized builds complete the following inventories,
+with identical outputs and node counts in every case. All outputs are
+empty for target six.
+\begin{center}
+\begin{tabular}{r|r|r|r}
+Order&Labelled size patterns&Dihedral representatives&Search nodes\\\hline
+20&407&55&55\\
+22&512&70&27\,496\,438
+\end{tabular}
+\end{center}
+At order twenty every pattern is rejected at its root. At order
+twenty-two the exact leaf test still checks every edge for the target
+value. The checker requires completion of every indexed case; a deadline
+cannot be interpreted as an empty result. Together with the proved
+inventory and necessary pruning rules, the completed records establish
+the exclusion.
+\end{proof}
+
+\begin{theorem}
+\[n(6,4,6)\ge24.\]
+\end{theorem}
+\begin{proof}
+The acquired tree bound gives
+$ n\ge12+\lceil2(25-6)/6\rceil=19$.
+Counting incidences of edges and squares gives $8\mid6n\lambda$.
+At $\lambda=6$ this requires $n$ even. The only remaining candidate
+orders below twenty-four are twenty and twenty-two.
+Lemma~\ref{layers} forces a five-cycle in either candidate, and
+Lemma~\ref{finite} excludes both.
+\end{proof}
+
+\paragraph{Verification and attribution.}
+The lower bound is a prior entry of Table~4 of~\cite{GJ}, physical
+page~20. The tree bound and the complete cycle inventory and search
+are acquired with their proofs. The two distance-layer inequalities
+and the convex moment relaxation are the added derivation; no general
+priority claim is made. An independent integer-assignment enumeration
+checks the literal moment-minimization loop on $31\,952$ interval
+families and $547\,088$ prescribed sums, in ordinary and sanitized builds.
+Every one of the $86$ positive outputs of the earlier twenty-vertex
+classification remains unchanged when the new bound is enabled.
+These controls check the implementation; the general lemmas prove its
+mathematical validity. No open-conjecture, whole-original, Lean or
+compression-measurement credit is claimed here.
+
+\begin{thebibliography}{3}
+\bibitem{GJ} J.~Goedgebeur and J.~Jooken,
+\emph{Exhaustive generation of edge-girth-regular graphs},
+arXiv:2401.08271v2, 25 June 2024.
+\bibitem{eighteen} Human Compression project,
+\emph{A Latin square in the bipartite complement}, reviewed component,
+13 October 2026.
+\bibitem{twenty} Human Compression project,
+\emph{Square counts on twenty vertices}, reviewed component,
+13 October 2026.
+\end{thebibliography}
+\end{document}

@@ -1,0 +1,158 @@
+"""Literal certificates for the degree-six graph on sixteen vertices."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+import argparse
+import hashlib
+import json
+from itertools import combinations, product
+from pathlib import Path
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+def dense16():
+    a = [set() for _ in range(16)]
+    for u in range(8):
+        for v in range(8):
+            if u // 2 != v // 2:
+                a[u].add(8 + v)
+                a[8 + v].add(u)
+    return a
+
+def decode(raw):
+    need(isinstance(raw, str) and raw and all(63 <= ord(c) <= 126 for c in raw), 'graph6 alphabet')
+    n = ord(raw[0]) - 63
+    need(0 < n <= 62 and len(raw) == 1 + (n * (n - 1) // 2 + 5) // 6, 'graph6 length')
+    bits = [(ord(c) - 63 >> j) & 1 for c in raw[1:] for j in range(5, -1, -1)]
+    a = [set() for _ in range(n)]
+    t = 0
+    for v in range(n):
+        for u in range(v):
+            if bits[t]:
+                a[u].add(v)
+                a[v].add(u)
+            t += 1
+    need(not any(bits[t:]), 'graph6 padding')
+    return a
+
+def parameters(a, expected_lambda=17):
+    n = len(a)
+    need(n == 16, 'order')
+    need(all(u not in row and len(row) == 6 and all(type(v) is int and 0 <= v < n for v in row) for u, row in enumerate(a)), 'simple regular')
+    need(all((v in a[u]) == (u in a[v]) for u in range(n) for v in range(n)), 'undirected')
+    seen = {0}
+    todo = [0]
+    for u in todo:
+        for v in a[u]:
+            if v not in seen:
+                seen.add(v)
+                todo.append(v)
+    need(len(seen) == n, 'connected')
+    edges = [(u, v) for u, v in combinations(range(n), 2) if v in a[u]]
+    need(all(not a[u] & a[v] for u, v in edges), 'triangle-free')
+    counts = {(u, v): sum(y in a[x] for x in a[u] - {v} for y in a[v] - {u}) for u, v in edges}
+    subsets = [t for t in combinations(range(n), 4) if all(len(a[v] & set(t)) == 2 for v in t)]
+    independent = {e: sum(set(e) <= set(t) for t in subsets) for e in edges}
+    need(counts == independent, 'independent cycle count')
+    need(set(counts.values()) == {expected_lambda} and expected_lambda > 0, 'edge four-cycle count')
+    need(sum(counts.values()) == 4 * len(subsets), 'cycle incidence')
+    return {'n': 16, 'k': 6, 'g': 4, 'lambda': expected_lambda, 'edges': len(edges), 'four_cycles': len(subsets)}
+
+def check_map(a, record):
+    need(record['id'] == 'UntilOrder250_52', 'source id')
+    raw, mapping = record['graph6'], record['map']
+    need(hashlib.sha256(raw.encode()).hexdigest() == record['source_line_sha256'], 'source line digest')
+    b = decode(raw)
+    need(len(b) == len(a) and all(type(x) is int for x in mapping) and sorted(mapping) == list(range(len(a))), 'bijection')
+    need(all((v in a[u]) == (mapping[v] in b[mapping[u]]) for u in range(len(a)) for v in range(len(a))), 'all adjacency pairs')
+    parameters(b)
+
+def local_checks(a):
+    sides = [set(range(8)), set(range(8, 16))]
+    h = [sides[1 if v < 8 else 0] - a[v] for v in range(16)]
+    need(all(len(row) == 2 for row in h), 'complement degree')
+    rows = []
+    for x in range(8):
+        mu = {t: len(h[x] & h[t]) for t in range(8) if t != x}
+        need(sum(mu.values()) == 2, 'complement second moment')
+        for y in a[x]:
+            defect = sum(mu[t] for t in h[y])
+            need(defect == 0, 'no complement path with nonadjacent ends')
+            need(sum(3 + mu[t] for t in a[y] - {x}) == 17, 'square complement formula')
+            rows.append({'edge': [x, y], 'defect': defect})
+    return {'complement_formula': rows}
+
+
+def cycle_class_checks():
+    rows = []
+    for z in range(2):
+        for b in product(range(3), repeat=5):
+            if sum(b) + 2*z != 2:
+                continue
+            solutions = [a for a in product(range(1, 7), repeat=5)
+                         if sum(a) + sum(b) + z == 16 and
+                         all(a[(i-1)%5] + a[(i+1)%5] + b[i] == 6 for i in range(5))]
+            need(len(solutions) == 1, 'unique class sizes')
+            a = solutions[0]
+            labels = [{(i-1)%5, (i+1)%5} for i in range(5)]
+            for i in range(5):
+                labels += [{(i-1)%5, (i+1)%5} for _ in range(a[i]-1)]
+                labels += [{i} for _ in range(b[i])]
+            labels += [set() for _ in range(z)]
+            need(len(labels) == 16, 'class template order')
+            template = [set() for _ in labels]
+            for x, y in combinations(range(16), 2):
+                permitted = (x in labels[y]) if x < 5 else labels[x].isdisjoint(labels[y])
+                if permitted:
+                    template[x].add(y)
+                    template[y].add(x)
+            vals = []
+            for i in range(5):
+                t = lambda j: a[j % 5]
+                formula = ((t(i)-1)*(t(i-1)+t(i+1)-1)+(t(i+1)-1)*t(i+2)
+                           + b[i]*(t(i)+t(i+2)-2)
+                           + b[(i+1)%5]*(t(i-1)+t(i+1)-2)+b[i]*b[(i+1)%5])
+                j = (i+1) % 5
+                direct = sum(y in template[x] for x in template[i]-{j} for y in template[j]-{i})
+                need(formula == direct, 'class square bound formula')
+                vals.append(formula)
+            need(min(vals) < 17, 'odd cycle excluded')
+            rows.append({'a': a, 'b': b, 'z': z, 'bounds': vals})
+    need(len(rows) == 16, 'all distributions')
+    return rows
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--input', type=Path)
+    args = p.parse_args()
+    here = Path(__file__).resolve().parent
+    source = json.loads((args.input or here / 'source_map.json').read_text())
+    a = dense16()
+    result = parameters(a)
+    check_map(a, source)
+    local = local_checks(a)
+    templates = cycle_class_checks()
+    controls = []
+    def reject(label, fn):
+        try:
+            fn()
+        except ValueError:
+            controls.append(label)
+        else:
+            raise ValueError('accepted damaged certificate: ' + label)
+    reject('duplicate map image', lambda: check_map(a, dict(source, map=[0] * 16)))
+    damaged = [set(row) for row in a]
+    v = min(damaged[0])
+    damaged[0].remove(v)
+    damaged[v].remove(0)
+    reject('deleted edge', lambda: parameters(damaged))
+    reject('wrong cycle count', lambda: parameters(a, expected_lambda=3))
+    reject('invalid graph6', lambda: decode(source['graph6'] + '?'))
+    args.out.write_text(json.dumps({'status': 'PASS', 'graph': result, 'source_id': source['id'], 'local_checks': local, 'cycle_class_checks': templates, 'damaged_controls': controls, 'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0}, indent=2) + '\n')
+    print('PASS degree-six graph, cycle counts, source map, complement formulas, sixteen class distributions, four damaged controls')
+
+if __name__ == '__main__':
+    main()

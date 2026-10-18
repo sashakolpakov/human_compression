@@ -1,0 +1,54 @@
+"""Independent colour-orbit and degree-vector checks of the literal C++ helper."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('normal Python required')
+import argparse,itertools,json,time
+from pathlib import Path
+p=argparse.ArgumentParser();p.add_argument('actual',type=Path);p.add_argument('out',type=Path);args=p.parse_args()
+start=time.monotonic();actual=json.loads(args.actual.read_text())
+edges=[[(0,1),(2,3),(4,5)],[(0,1),(1,2),(3,4)],[(0,1),(1,2),(2,3)],[(0,1),(0,2),(0,3)]]
+rows=[];total_assignments=0;total_orbits=0;degree_vectors=0
+for shape,es in enumerate(edges):
+    data=actual['shapes'][shape];assert data['shape']==shape
+    active=sorted(set(itertools.chain.from_iterable(es)));m=len(active)
+    edge_set={tuple(sorted(e)) for e in es}
+    generators=[]
+    # Obtain all actual automorphisms of the nonisolated graph independently.
+    for perm in itertools.permutations(range(m)):
+        if {tuple(sorted((perm[u],perm[v]))) for u,v in es}==edge_set:
+            generators.append(tuple(perm)+tuple(range(m,10)))
+    # Adjacent transpositions generate the full symmetric group on isolates.
+    for i in range(m,9):
+        perm=list(range(10));perm[i],perm[i+1]=perm[i+1],perm[i];generators.append(tuple(perm))
+    accepted=set(data['accepted']);assert len(accepted)==len(data['accepted'])
+    unseen=set(range(3**10));orbits=0
+    def encode(v):return sum(c*3**i for i,c in enumerate(v))
+    colours=list(itertools.product(range(3),repeat=10))
+    # An orbit BFS uses graph automorphisms rather than the author's sorting rules.
+    while unseen:
+        first=min(unseen);seen={first};stack=[first];unseen.remove(first)
+        while stack:
+            code=stack.pop();c=[];v=code
+            for _ in range(10):c.append(v%3);v//=3
+            for perm in generators:
+                nxt=encode([c[perm[i]] for i in range(10)])
+                if nxt not in seen:
+                    seen.add(nxt);unseen.remove(nxt);stack.append(nxt)
+        assert len(seen&accepted)==1,(shape,first,len(seen&accepted))
+        orbits+=1
+    assert len(accepted)==orbits
+    # Independent Cartesian enumeration of all allowed remaining degree choices.
+    degree=[0]*10
+    for u,v in es:degree[u]+=1;degree[v]+=1
+    order=data['order'];assert sorted(order)==list(range(10))
+    for at in range(11):
+        ks=[4-degree[i] for i in order[at:]]
+        expected=set()
+        for vals in itertools.product(*(range(max(0,k-3),min(3,k)+1) for k in ks)):
+            expected.add((sum(vals),sum(a*(a-1)//2 for a in vals),sum((k-a)*(k-a-1)//2 for k,a in zip(ks,vals))))
+            degree_vectors+=1
+        assert expected==set(map(tuple,data['suffix'][at])),(shape,at)
+    rows.append(dict(shape=shape,actual_automorphisms=len(generators),colour_assignments=3**10,orbits=orbits))
+    total_assignments+=3**10;total_orbits+=orbits
+report=dict(status='PASS_EXACT_FOREST_NORMALIZATION_AND_SUFFIX_BUDGETS',colour_assignments=total_assignments,orbits=total_orbits,degree_vectors=degree_vectors,shapes=rows,seconds=time.monotonic()-start)
+args.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))

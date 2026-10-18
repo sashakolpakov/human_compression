@@ -1,0 +1,10 @@
+#include "forest_completion.h"
+int main(int argc,char**argv){try{
+ require(argc==3,"usage positive_control GRAPH SECONDS");ifstream in(argv[1]);int count,n;require(bool(in>>count>>n)&&count==1&&n==32,"exact positive input");Graph full(n);for(U&row:full)require(bool(in>>row),"positive row");validate_graph(full);require(!has_short_cycle(full),"positive girth");
+ Graph root(full.begin(),full.begin()+26);for(U&row:root)row&=(U(1)<<26)-1;validate_root(root,18);
+ Budget budget(stod(argv[2]));ForestCover search(root,6,0,18,budget);search.run();require(search.right.positive>0,"full positive covered");
+ auto model=propose_canonical_map(full,false);U matches=0;
+ for(auto&g:search.right.positives){auto c=propose_canonical_map(g,false);if(c.key==model.key){check_literal_map(g,full,c.lab,model.lab,false);matches++;}}
+ require(matches>0,"literal positive match");
+ cout<<"{\"status\":\"PASS_COMPLETE_KNOWN_POSITIVE_SEARCH\",\"left_nodes\":"<<search.nodes<<",\"left_assignments\":"<<search.assignments<<",\"right_nodes\":"<<search.right.nodes<<",\"complete\":"<<search.right.complete<<",\"positive\":"<<search.right.positive<<",\"literal_matches\":"<<matches<<"}\n";return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

@@ -1,0 +1,128 @@
+"""Finite certificates accompanying the written fifteen-vertex classification."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+import argparse
+import hashlib
+import json
+from itertools import combinations, product
+from pathlib import Path
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+def decode(raw):
+    need(isinstance(raw, str) and raw and all(63 <= ord(c) <= 126 for c in raw), 'graph6 alphabet')
+    n = ord(raw[0]) - 63
+    need(0 < n <= 62 and len(raw) == 1 + (n * (n - 1) // 2 + 5) // 6, 'graph6 length')
+    bits = [(ord(c) - 63 >> j) & 1 for c in raw[1:] for j in range(5, -1, -1)]
+    adj = [set() for _ in range(n)]
+    t = 0
+    for v in range(n):
+        for u in range(v):
+            if bits[t]:
+                adj[u].add(v)
+                adj[v].add(u)
+            t += 1
+    need(not any(bits[t:]), 'graph6 padding')
+    return adj
+
+def kneser():
+    pairs = list(combinations(range(6), 2))
+    return [{j for j, y in enumerate(pairs) if not set(x) & set(y)} for x in pairs]
+
+def parameters(adj, k=6, lam=1):
+    n = len(adj)
+    need(n == 15, 'order')
+    need(all(u not in row and len(row) == k and all(type(v) is int and 0 <= v < n for v in row) for u, row in enumerate(adj)), 'simple regular')
+    need(all((v in adj[u]) == (u in adj[v]) for u in range(n) for v in range(n)), 'undirected')
+    seen = {0}
+    todo = [0]
+    for u in todo:
+        for v in adj[u]:
+            if v not in seen:
+                seen.add(v)
+                todo.append(v)
+    need(len(seen) == n, 'connected')
+    edges = list((u, v) for u, v in combinations(range(n), 2) if v in adj[u])
+    triangles = [t for t in combinations(range(n), 3) if all(v in adj[u] for u, v in combinations(t, 2))]
+    counts = {e: sum(set(e) <= set(t) for t in triangles) for e in edges}
+    need(all(counts[u, v] == len(adj[u] & adj[v]) == lam for u, v in edges), 'edge triangle counts')
+    need(bool(triangles) and sum(counts.values()) == 3 * len(triangles), 'triangle incidence')
+    return {'n': n, 'k': k, 'g': 3, 'lambda': lam, 'edges': len(edges), 'triangles': len(triangles)}
+
+def check_map(a, record):
+    need(record['id'] == 'UntilOrder250_44', 'source id')
+    raw, mapping = record['graph6'], record['map']
+    need(hashlib.sha256(raw.encode()).hexdigest() == record['source_line_sha256'], 'source line digest')
+    b = decode(raw)
+    need(len(b) == len(a) and all(type(x) is int for x in mapping) and sorted(mapping) == list(range(len(a))), 'bijection')
+    need(all((v in a[u]) == (mapping[v] in b[mapping[u]]) for u in range(len(a)) for v in range(len(a))), 'all adjacency pairs')
+    parameters(b)
+
+def lifted(bits):
+    pairs = list(combinations(range(4), 2))
+    need(len(bits) == 6 and all(x in (0, 1) for x in bits), 'six binary matchings')
+    a = [set() for _ in range(8)]
+    for (i, j), flip in zip(pairs, bits):
+        for label in (0, 1):
+            u, v = 2 * i + label, 2 * j + (label ^ flip)
+            a[u].add(v)
+            a[v].add(u)
+    return a
+
+def complete_checks():
+    pairs = list(combinations(range(4), 2))
+    triangle_free = []
+    normalized = set()
+    for bits in product((0, 1), repeat=6):
+        a = lifted(bits)
+        need(all(len(row) == 3 for row in a), 'cubic lift')
+        if any(all(v in a[u] for u, v in combinations(t, 2)) for t in combinations(range(8), 3)):
+            continue
+        triangle_free.append(bits)
+        switch = [0, bits[0], bits[1], bits[2]]
+        normalized.add(tuple(bit ^ switch[i] ^ switch[j] for bit, (i, j) in zip(bits, pairs)))
+    need(len(triangle_free) == 8 and normalized == {(0, 0, 0, 1, 1, 1)}, 'matching classification')
+    multiplicities = []
+    for a, b, c, d in product(range(9), repeat=4):
+        if a + b == a + c == a + d == 4 and a + b + c + d == 8:
+            multiplicities.append([a, b, c, d])
+    need(multiplicities == [[2, 2, 2, 2]], 'word multiplicities')
+    return {'matching_choices': 64, 'triangle_free_choices': 8, 'normalized_choices': [list(t) for t in sorted(normalized)], 'multiplicity_vectors_tested': 9 ** 4, 'multiplicity_solutions': multiplicities}
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--input', type=Path)
+    args = p.parse_args()
+    here = Path(__file__).resolve().parent
+    source = json.loads((args.input or here / 'source_map.json').read_text())
+    graph = kneser()
+    result = parameters(graph)
+    check_map(graph, source)
+    finite = complete_checks()
+    controls = []
+    def reject(label, fn):
+        try:
+            fn()
+        except ValueError:
+            controls.append(label)
+        else:
+            raise ValueError('accepted damaged certificate: ' + label)
+    bad = dict(source, map=[0] * 15)
+    reject('duplicate map image', lambda: check_map(graph, bad))
+    bad_graph = [set(row) for row in graph]
+    u = 0
+    v = min(bad_graph[u])
+    bad_graph[u].remove(v)
+    bad_graph[v].remove(u)
+    reject('deleted edge', lambda: parameters(bad_graph))
+    reject('wrong triangle count', lambda: parameters(graph, lam=2))
+    reject('invalid graph6', lambda: decode(source['graph6'] + '?'))
+    args.out.write_text(json.dumps({'status': 'PASS', 'graph': result, 'source_id': source['id'], 'finite_controls': finite, 'damaged_controls': controls, 'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0}, indent=2) + '\n')
+    print('PASS literal graph, source map, 64 matchings, 6561 multiplicities, four damaged controls')
+
+if __name__ == '__main__':
+    main()

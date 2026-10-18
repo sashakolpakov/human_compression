@@ -1,0 +1,39 @@
+"""Independent brute permutation controls for refinement and orbit counting."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+from itertools import combinations,permutations
+from math import factorial
+from collections import Counter
+from pathlib import Path
+import argparse,json,time
+from base_cover5 import canonical,labelled_count,need
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('output',type=Path);a=ap.parse_args()
+    start=time.monotonic();tested=0;degree_cases=0;classes=0
+    for n in range(6):
+        es=list(combinations(range(n),2));perms=list(permutations(range(n)));old_to_new={};new_to_old={};degrees=Counter()
+        for mask in range(1<<len(es)):
+            edges=[e for j,e in enumerate(es)if mask>>j&1];adj=[0]*n
+            for u,v in edges:adj[u]|=1<<v;adj[v]|=1<<u
+            words=[]
+            for p in perms:
+                word=0
+                for u,v in edges:
+                    x,y=sorted((p[u],p[v]));word|=1<<(y*(y-1)//2+x)
+                words.append(word)
+            expected=min(words);aut=words.count(expected)
+            code,actual,_=canonical(adj);need(actual==aut,'automorphism mismatch')
+            need(old_to_new.setdefault(expected,code)==code,'isomorphic graphs separated')
+            need(new_to_old.setdefault(code,expected)==expected,'nonisomorphic graphs merged')
+            degrees[tuple(sorted((row.bit_count()for row in adj),reverse=True))]+=1;tested+=1
+        for ds,count in degrees.items():
+            reorder=factorial(n)
+            for multiplicity in Counter(ds).values():reorder//=factorial(multiplicity)
+            need(labelled_count(ds)*reorder==count,'degree recurrence mismatch');degree_cases+=1
+        classes+=len(old_to_new)
+    result=dict(status='PASS_ALL_LABELLED_GRAPHS_THROUGH_ORDER5',graphs=tested,
+                isomorphism_classes=classes,degree_sequences=degree_cases,
+                seconds=time.monotonic()-start)
+    a.output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
+if __name__=='__main__':main()

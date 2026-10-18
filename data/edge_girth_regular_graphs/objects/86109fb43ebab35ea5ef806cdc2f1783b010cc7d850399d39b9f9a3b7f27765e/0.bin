@@ -1,0 +1,103 @@
+"""Complete certificate for the fixed lower bound n(4,6,10)>=39."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse, hashlib, json, os, subprocess, time
+from run_closed import execute
+from build_native import build
+P=Path(__file__).resolve().parent
+
+def need(condition,message):
+    if not condition: raise RuntimeError(message)
+
+def pin(path):
+    data=path.read_bytes()
+    return dict(path=str(path),bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
+
+def same(path,record):
+    return all(pin(path)[k]==record[k] for k in ['bytes','sha256'])
+
+def normalized(path):
+    data=json.loads(path.read_text());data.pop('seconds',None);return data
+
+def main():
+    parser=argparse.ArgumentParser();parser.add_argument('--study',type=Path,required=True);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--render',action='store_true');parser.add_argument('--reuse-recorded-targets',action='store_true');args=parser.parse_args()
+    S=args.study.resolve();O=args.out.resolve();need(not O.exists(),'fresh output');started=time.monotonic()
+    bindings=json.loads((P/'bindings.json').read_text())
+    for r in bindings:need(same(S/r['path'],r),'acquired binding '+r['path'])
+    exports=json.loads((P/'manifest.json').read_text())['exports'] if (P/'manifest.json').exists() else []
+    for r in exports:need(same(P/r['path'],r),'frozen export '+r['path'])
+    expected_scope=dict(original='F012',degree=4,girth=6,lambda_value=10,lower=39,excluded_order=36,new_lower_clauses=1,new_exact_counts=0,whole_original_credit=0,new_question_credit=0,new_Lean_credit=0,measurement_credit=0)
+    need(json.loads((P/'scope.json').read_text())==expected_scope,'exact scope')
+    original=(P/'structural_control.py').read_text();qualified=(P/'structural_control_qualified.py').read_text()
+    need(original.replace('actual_automorphisms=len(generators)','actual_automorphisms_and_isolate_generators=len(generators)')==qualified,'sole documentary control field qualification')
+    O.mkdir();common=[P/n for n in ['check.py','run_closed.py','literal_graph.h','forest_completion.h','forest_joint.h']]
+    def run(name,cmd,inputs,cap,report=None):return execute(cmd,O/name,[*common,*inputs],cap,report)
+    def compile_one(name,sanitized=False):
+        binary=O/(name+('_san' if sanitized else ''))
+        flags=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'] if sanitized else ['-O3']
+        run('compile_'+binary.name,['clang++','-std=c++17',*flags,'-DWORDSIZE=64','-I/opt/homebrew/include',str(P/(name+'.cpp')),'-L/opt/homebrew/lib','-lnauty','-o',str(binary)],[P/(name+'.cpp')],90)
+        return binary
+    names=['root_cover','check_joint_completions','positive_control','joint_control','structural_control'];bins={n:compile_one(n) for n in names}
+    run('prepare',[sys.executable,str(P/'prepare_patterns.py'),'--study',str(S),'--lambda','10','--out',str(O/'inventory')],[P/'prepare_patterns.py',S/'corpus106_F012_matching_forest_v1/forest.py'],30)
+    pattern=O/'inventory/patterns.txt'
+    if args.reuse_recorded_targets:
+        records=json.loads((P/'recorded_execution.json').read_text())
+        for key in ['root','completion']:
+            rr=records[key];rp=S/rr['receipt']['path'];need(same(rp,rr['receipt']),'recorded receipt');receipt=json.loads(rp.read_text())
+            need(receipt['status']=='PASS_CLOSED_EXECUTION' and receipt['inputs_unchanged'] and receipt['returncode']==0 and not receipt['timeout'],'complete acquired execution')
+            for old in receipt['pins']+receipt['outputs']:need(same(Path(old['path']),old),'actual recorded execution bytes')
+            need(not Path(receipt['outputs'][1]['path']).read_bytes(),'recorded clean stderr')
+        for key in ['roots','root_report','completion_report','positives','patterns']:need(same(S/records[key]['path'],records[key]),'recorded '+key)
+        roots=S/records['roots']['path'];rootreport=S/records['root_report']['path'];completion=S/records['completion_report']['path'];positives=S/records['positives']['path']
+        need(pattern.read_bytes()==(S/records['patterns']['path']).read_bytes(),'fresh exact pattern inventory')
+    else:
+        roots=O/'roots10.txt';rootreport=O/'root10.json'
+        run('roots',[str(bins['root_cover']),str(pattern),str(roots),str(rootreport),'180'],[bins['root_cover'],pattern],210,rootreport)
+        completion=O/'completion10.json';positives=O/'positives10.txt'
+        run('completion',[str(bins['check_joint_completions']),str(roots),str(completion),str(positives),'600'],[bins['check_joint_completions'],roots],630,completion)
+    need(normalized(rootreport)==json.loads((P/'expected_root10.json').read_text()),'complete root coverage')
+    need(normalized(completion)==json.loads((P/'expected_completion10.json').read_text()),'complete boundary coverage')
+    need(positives.read_text()=='0\n','zero complete positives')
+    controls={}
+    for name in ['positive_control','joint_control','structural_control']:
+        arguments=[str(P/'positive_control_graph.txt')] if name=='structural_control' else [str(P/'positive_control_graph.txt'),'60']
+        inputs=[] if not arguments else [P/'positive_control_graph.txt']
+        run(name+'_run',[str(bins[name]),*arguments],[bins[name],*inputs],90)
+        actual=O/(name+'_run/stdout');controls[name]=json.loads(actual.read_text())
+        binary=compile_one(name,True);run(name+'_san_run',[str(binary),*arguments],[binary,*inputs],120)
+        need(json.loads((O/(name+'_san_run/stdout')).read_text())==controls[name],'sanitized control equality')
+    run('independent_structure',[sys.executable,str(P/'structural_control_qualified.py'),str(O/'structural_control_run/stdout'),str(O/'structure.json')],[P/'structural_control_qualified.py',O/'structural_control_run/stdout'],60,O/'structure.json')
+    structural=json.loads((O/'structure.json').read_text());need(structural['colour_assignments']==236196 and structural['orbits']==5208 and structural['degree_vectors']==1011607,'independent structural totals')
+    env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None)
+    lines=pattern.read_text().splitlines();damages={'wrong_count':['10 311',*lines[1:]],'truncated':lines[:3]}
+    damages['bad_direction']=lines.copy();row=damages['bad_direction'][2].split();row[3]='3';damages['bad_direction'][2]=' '.join(row)
+    damages['duplicate_block']=lines.copy();damages['duplicate_block'][3]=damages['duplicate_block'][2]
+    for name,rows in damages.items():
+        path=O/(name+'.txt');path.write_text('\n'.join(rows)+'\n');target=O/(name+'_target');report=O/(name+'_report')
+        r=subprocess.run([str(bins['root_cover']),str(path),str(target),str(report),'5'],capture_output=True,timeout=10,env=env)
+        need(r.returncode!=0 and b'NO_CERTIFICATE:' in r.stderr and not target.exists() and not report.exists(),'malformed inventory '+name)
+        (O/(name+'.stderr')).write_bytes(r.stderr)
+    for name,binary,inp in [('root',bins['root_cover'],pattern),('completion',bins['check_joint_completions'],roots)]:
+        target=O/(name+'_timeout_target');report=O/(name+'_timeout_report')
+        r=subprocess.run([str(binary),str(inp),str(target),str(report),'0'],capture_output=True,timeout=10,env=env)
+        need(r.returncode!=0 and b'INCOMPLETE_DEADLINE' in r.stderr and not target.exists() and not report.exists(),'deadline is not a certificate')
+        (O/(name+'_timeout.stderr')).write_bytes(r.stderr)
+    guards=0
+    for name in ['check.py','prepare_patterns.py','structural_control.py','structural_control_qualified.py','build_native.py','run_closed.py']:
+        for mode in ['argument','environment']:
+            environment=env.copy();cmd=[sys.executable]
+            if mode=='argument':cmd.append('-O')
+            else:environment['PYTHONOPTIMIZE']='1'
+            target=O/(name+'_'+mode+'_forbidden');r=subprocess.run(cmd+[str(P/name),'--study',str(S),'--out',str(target)],env=environment,capture_output=True,timeout=10)
+            need(r.returncode!=0 and b'normal Python required' in r.stderr and not target.exists(),'optimization guard')
+            (O/(name+'_'+mode+'.stderr')).write_bytes(r.stderr);guards+=1
+    native=build(P/'ten.tex',O/'native') if args.render else None
+    if args.render and (P/'ten.pdf').exists():
+        from pypdf import PdfReader
+        need([p.extract_text() for p in PdfReader(P/'ten.pdf').pages]==[p.extract_text() for p in PdfReader(O/'native/ten.pdf').pages],'native text equality')
+    result=dict(status='PASS_TEN_HEXAGONS_LOWER39',author_exports=len(exports),acquired_bindings=len(bindings),target_mode='explicit exact recorded complete execution' if args.reuse_recorded_targets else 'fresh complete root and boundary executions',root=normalized(rootreport),completion=normalized(completion),structural=structural,positive_control=controls['positive_control'],joint_control=controls['joint_control'],sanitized='All three complete implementation controls; target enumeration ordinary',malformed_controls=4,deadline_controls=2,optimization_guards=guards,native=native,new_lower_clauses=1,new_exact_counts=0,whole_original_credit=0,seconds=time.monotonic()-started)
+    (O/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
+
+if __name__=='__main__':main()

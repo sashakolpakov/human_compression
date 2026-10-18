@@ -1,0 +1,65 @@
+"""Filtered acquired catalogue; unchanged formula assembly and cut predicates."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import importlib.util
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('acquired_required_formula', HERE/'required_hexagon_formula.py')
+F = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(F)
+need, pin, acquire, load = F.need, F.pin, F.acquire, F.load
+
+
+class RequiredHexagonFormula(F.RequiredHexagonFormula):
+    """Only initialization changes; build/context/unchanged are inherited."""
+    def __init__(self, case_ref):
+        self.case_ref = case_ref
+        self.case = json.loads(acquire(case_ref))
+        names = ('model', 'catalogue_program', 'filtered_catalogue', 'cnf_program',
+                 'base_formula_program', 'sizing_result', 'sizing_acceptance')
+        need(set(self.case) == {'schema', *names}
+             and self.case['schema'] == 'F012_FIXED_MIXED_REQUIRED_HEXAGON_FORMULA_V1',
+             'fixed mixed formula case')
+        raw = {name: acquire(self.case[name]) for name in names}
+        for name, path in (
+                ('catalogue_program', HERE/'required_hexagon_catalogue.py'),
+                ('filtered_catalogue', HERE/'required_hexagon_filtered_catalogue.py'),
+                ('base_formula_program', HERE/'required_hexagon_formula.py'),
+                ('cnf_program', HERE.parent/'graph_completion_certificate/cnf.py')):
+            need(Path(self.case[name]['path']) == path, 'exact acquired source '+name)
+        self.acceptance = json.loads(raw['sizing_acceptance'])
+        self.sizing = json.loads(raw['sizing_result'])
+        need(self.acceptance['status'] == 'ROOT_ACCEPTED_MIXED_REQUIRED_HEXAGON_SIZING_AND_CUT_VALIDATION'
+             and self.acceptance['result'] == self.case['sizing_result']
+             and self.sizing['status'] == 'PASS_MIXED_REQUIRED_HEXAGON_SIZING_AND_CUT_VALIDATION',
+             'accepted exact mixed sizing result')
+        for name, alias in (('model', 'model'), ('catalogue_program', 'base_catalogue'),
+                            ('filtered_catalogue', 'filtered_catalogue'), ('cnf_program', 'cnf_program')):
+            need(self.sizing['inputs'][alias] == self.case[name], 'sizing source/model join '+name)
+        self.K = load('acquired_mixed_cycle_catalogue', Path(self.case['filtered_catalogue']['path']))
+        self.H, self.C = self.K.H, self.K.C
+        self.cycle_edges = self.C.cycle_edges
+        self.witness_edges = self.C.witness_edges
+        self.model = Path(self.case['model']['path'])
+        self.n, self.base, self.allowed = self.H.read_model(self.model, 4096)
+        need((self.n, len(self.base), len(self.allowed)) == (54, 62, 260), 'same three-colour host')
+        self.seed_ref = self.sizing['inputs']['cuts']
+        raw_seeds = acquire(self.seed_ref)
+        saved = self.H.validate_cuts(Path(self.seed_ref['path']), self.n, self.base, self.allowed,
+                                    maximum_bytes=3*2**20, maximum_records=40000)
+        need(saved == self.sizing['saved_cuts']
+             and saved['validated_records'] == saved['unique_clauses']
+             == self.acceptance['cuts_validated'] == 39071,
+             'all actual saved cuts revalidated, none discarded')
+        self.seeds = [json.loads(line) for line in raw_seeds.splitlines()]
+        self.cat = self.K.catalogue(self.n, self.base, self.allowed,
+                                   self.sizing['required_edges'], self.sizing['work_bounds'],
+                                   self.K.mixed_cycle)
+        need(self.cat['counts'] == self.sizing['catalogue'] == self.acceptance['catalogue'],
+             'exact accepted filtered catalogue counts')
+        for name in ('cycle_catalogue_sha256', 'term_catalogue_sha256'):
+            need(self.cat[name] == self.sizing[name] == self.acceptance[name], 'exact filtered '+name)

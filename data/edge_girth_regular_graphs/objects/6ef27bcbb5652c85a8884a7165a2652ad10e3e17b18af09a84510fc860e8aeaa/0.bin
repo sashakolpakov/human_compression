@@ -1,0 +1,81 @@
+import argparse,hashlib,json,os,shutil,subprocess,sys
+from collections import Counter
+from pathlib import Path
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise RuntimeError('Optimized Python is not accepted')
+from local_model import *
+W=Path(__file__).resolve().parent
+
+def paths_witness(G,e,paths):
+ u,v=e
+ return (len(paths)==8 and len({tuple(p)for p in paths})==8
+  and all(len(p)==5 and p[0]==u and p[-1]==v and len(set(p))==5
+          and all(type(x)is int and 0<=x<len(G)for x in p)
+          and all(p[i+1]in G[p[i]]for i in range(4))for p in paths))
+
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--render',action='store_true');a=p.parse_args();O=a.out.resolve();O.mkdir(parents=True,exist_ok=False)
+ bindings=json.loads((W/'bindings.json').read_text())
+ for item in bindings:
+  b=Path(item['path']).read_bytes();need(len(b)==item['bytes']and hashlib.sha256(b).hexdigest()==item['sha256'],'binding')
+ if(W/'manifest.json').exists():
+  for item in json.loads((W/'manifest.json').read_text())['exports']:
+   b=(W/item['path']).read_bytes();need(len(b)==item['bytes']and hashlib.sha256(b).hexdigest()==item['sha256'],'frozen export')
+ classes=[list(map(set,A))for A in json.loads((W/'classes.json').read_text())];need(len(classes)==8,'eight representatives')
+ for G in classes:
+  need(len(G)==17 and not short_cycle(G),'representative order and girth')
+  need(G[0]==set(range(1,5))and all(G[p]=={0}|set(range(5+3*(p-1),8+3*(p-1)))for p in range(1,5)),'root branches')
+  need(all(G[u]<=set(range(17))and u not in G[u]for u in range(17))and all((v in G[u])==(u in G[v])for u in range(17)for v in range(17)),'simple symmetric graph')
+  need(all(len(G[u])<=4 for u in range(17)),'partial degrees')
+  counts=pentagon_counts(G);need(all(counts[(0,p)]==7 for p in range(1,5)),'root-edge counts')
+ class_counts=[0]*8;shorts=0;total=0
+ with(W/'root_certificate.jsonl').open()as f:
+  for key in keys():
+   line=f.readline();need(bool(line),'missing root case');row=json.loads(line);need(tuple(row['key'])==key,'root key order');G=root_ball(key);total+=1
+   if 'cycle'in row:
+    need(is_cycle(G,row['cycle']),'short-cycle witness');shorts+=1
+   else:
+    i=row['class'];q=row['map'];need(type(i)is int and 0<=i<8 and len(q)==17 and set(q)==set(range(17))and q[0]==0,'literal permutation')
+    need(all((v in G[u])==(q[v]in classes[i][q[u]])for u in range(17)for v in range(17)),'all adjacency entries');class_counts[i]+=1
+  need(not f.read().strip(),'extra root case')
+ need(total==106272 and shorts==105176 and class_counts==[16,144,144,144,144,288,72,144],'complete root inventory')
+ expected=[(354,0,246,108),(436,40,310,86),(195,0,65,130),(631,0,407,224),(253,0,182,71),(127,0,5,122),(69,0,0,69),(141,0,0,141)]
+ summary=[];capacity_queries=0;single_edge_controls=0
+ with(W/'boundary_certificate.jsonl').open()as f:
+  for i,G in enumerate(classes):
+   counts=Counter();targets=parent_edges(G)
+   for number,blocks in enumerate(partitions(G)):
+    line=f.readline();need(bool(line),'missing boundary');row=json.loads(line)
+    need(row['class']==i and row['index']==number and tuple(map(tuple,row['blocks']))==blocks,'literal partition coverage');H=attach(G,blocks);counts['partitions']+=1
+    if row['kind']=='short':need(is_cycle(H,row['cycle']),'boundary short cycle');counts['short']+=1
+    elif row['kind']=='overflow':
+     e=tuple(row['edge']);need(len(e)==2 and e[1]in H[e[0]],'overflow edge');need(paths_witness(H,e,row['paths']),'eight distinct pentagons');counts['overflow']+=1
+    else:
+     need(row['kind']=='capacity'and not short_cycle(H),'capacity case');P=pentagon_counts(H);need(max(P.values())<=7,'nonnegative residuals')
+     residual,available,edges=capacities(H,targets,P);e=tuple(row['edge']);need(e in targets,'parent-leaf witness');j=targets.index(e)
+     need(P[e]==row['base']and available[j]==row['available']and P[e]+available[j]<7,'strict capacity failure');counts['capacity']+=1;capacity_queries+=len(edges)
+     # For the first capacity case of each representative, independently
+     # count actual added pentagons on each parent edge for every candidate.
+     if counts['capacity']==1:
+      for record in edges:
+       u,v=record['edge'];H[u].add(v);H[v].add(u)
+       delta=[len(pentagon_paths(H,e0))-P[e0]for e0 in targets]
+       H[u].remove(v);H[v].remove(u)
+       need(delta==record['vector'],'direct one-edge cycle control');single_edge_controls+=1
+   actual=tuple(counts[x]for x in ['partitions','short','overflow','capacity']);need(actual==expected[i],'boundary summary');summary.append(dict(counts))
+  need(not f.read().strip(),'extra boundary case')
+ guards=[]
+ for mode in ['argument','environment']:
+  env=os.environ.copy();cmd=[sys.executable]
+  if mode=='argument':cmd.append('-O')
+  else:env['PYTHONOPTIMIZE']='1'
+  r=subprocess.run(cmd+[str(W/'check.py')],env=env,capture_output=True,text=True,timeout=5)
+  need(r.returncode!=0 and 'Optimized Python is not accepted'in r.stderr,'optimization guard');(O/('guard_'+mode+'.stderr')).write_text(r.stderr);guards.append(mode)
+ if a.render:
+  shutil.copy2(W/'seven.tex',O/'seven.tex')
+  for i in [1,2]:
+   r=subprocess.run(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','seven.tex'],cwd=O,capture_output=True,text=True,timeout=30)
+   (O/('native'+str(i)+'.stdout')).write_text(r.stdout);(O/('native'+str(i)+'.stderr')).write_text(r.stderr);need(r.returncode==0 and not r.stderr,'native build')
+  log=(O/'seven.log').read_text();need('Overfull'not in log and 'LaTeX Warning:'not in log,'native content')
+ report={'status':'PASS_QUARTIC_SEVEN_LOCAL_EXCLUSION','root_patterns':total,'root_short_cycles':shorts,'literal_maps':sum(class_counts),'ordered_adjacency_checks':sum(class_counts)*17*17,'boundary_partitions':sum(x['partitions']for x in summary),'boundary_summary':summary,'candidate_pair_queries':capacity_queries,'direct_single_edge_controls':single_edge_controls,'fresh_bindings':len(bindings),'optimization_guards':guards,'proof_boundary':'Written complete reduction and finite literal certificates; no graph isomorphism library in verifier.','all_order_exclusion':True,'new_lower_rows':1,'whole_original_credit':0,'new_question_credit':0,'new_Lean':0,'measurement':None}
+ (O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

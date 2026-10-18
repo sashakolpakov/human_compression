@@ -1,0 +1,117 @@
+import sys
+if sys.flags.optimize: raise SystemExit('optimized execution unsupported')
+import itertools
+
+def need(ok,message):
+    if not ok: raise ValueError(message)
+
+def model(kind,bits):
+    adj=[set() for _ in range(26)]
+    def edge(a,b): adj[a].add(b);adj[b].add(a)
+    for i in range(5):
+        edge(0,1+i)
+        for j in range(4):edge(1+i,6+4*i+j)
+    length=5 if kind=='C5' else 3
+    for i in range(length):edge(6+4*i+bits[i],6+4*((i+1)%length))
+    if kind!='C5':edge(18,22);edge(19,23)
+    return adj
+
+def paths(adj,a,b,length):
+    result=[]
+    def visit(p):
+        if len(p)==length+1:
+            if p[-1]==b:result.append(p)
+            return
+        for z in adj[p[-1]]:
+            if z not in p and (z!=b or len(p)==length):visit(p+[z])
+    visit([a]);return result
+
+def direct_valid(adj,mask):
+    g=[set(v) for v in adj]+[set(mask)]
+    for a in mask:g[a].add(26)
+    # Enumerate cycles by their least vertex, independently of pair paths.
+    counts={tuple(sorted((a,b))):0 for a in range(27) for b in g[a]}
+    short=False
+    def visit(p):
+        nonlocal short
+        if len(p)>=3 and p[0] in g[p[-1]]:
+            if len(p)<5:short=True
+            elif p[1]<p[-1]:
+                for a,b in zip(p,p[1:]+p[:1]):counts[tuple(sorted((a,b)))]+=1
+        if len(p)==5:return
+        for z in g[p[-1]]:
+            if z>p[0] and z not in p:visit(p+[z])
+    for v in range(27):visit([v])
+    return not short and max(counts.values())<=2
+
+def run():
+    report=[];literal_checks=0;total_masks=valid_masks=saturation_checks=matching_checks=0
+    for kind,n in [('C5',5),('C3+C2',3)]:
+        for bits in itertools.product(range(2),repeat=n):
+            if kind!='C5' and not any(bits):continue
+            adj=model(kind,bits)
+            edges=[(a,b) for a in range(26) for b in sorted(adj[a]) if a<b]
+            ei={e:i for i,e in enumerate(edges)}
+            base=[len(paths(adj,a,b,4)) for a,b in edges]
+            need(len(edges)==30 and max(base)<=2,'literal root size/counts')
+            need(all(not paths(adj,a,b,l) for a,b in edges for l in (2,3)),'root girth')
+            cross={a:{b for b in adj[a] if b>=6} for a in range(6,26)}
+            need(max(map(len,cross.values()))<=2,'cross maximum degree')
+            for i in range(5):
+                B=range(6+4*i,10+4*i)
+                need(sum(len(cross[a]) for a in B)==2,'two branch incidences')
+                need(sum(4-len(cross[a]) for a in B)==14,'fourteen branch attachments')
+            pair={}
+            for a,b in itertools.combinations(range(6,26),2):
+                forbidden=bool(paths(adj,a,b,1) or paths(adj,a,b,2))
+                ps=paths(adj,a,b,3)
+                pair[a,b]=(forbidden,[[ei[tuple(sorted((p[j],p[j+1])))] for j in range(3)] for p in ps])
+            matching=all(len(v)<=1 for v in cross.values())
+            local_valid=0
+            for index,choice in enumerate(itertools.product(range(-1,4),repeat=5)):
+                mask={6+4*i+j for i,j in enumerate(choice) if j>=0}
+                increment=[0]*30;new={a:0 for a in mask};good=True
+                for a,b in itertools.combinations(sorted(mask),2):
+                    forbidden,ps=pair[a,b]
+                    if forbidden:good=False;break
+                    new[a]+=len(ps);new[b]+=len(ps)
+                    for p in ps:
+                        for e in p:increment[e]+=1
+                good=good and all(c<=2 for c in new.values()) and all(a+b<=2 for a,b in zip(base,increment))
+                if index%97==0:
+                    need(good==direct_valid(adj,mask),'independent literal graph control');literal_checks+=1
+                total_masks+=1
+                if not good:continue
+                valid_masks+=1;local_valid+=1
+                for x in cross:
+                    if len(cross[x])!=2:continue
+                    branch=set(range(6+4*((x-6)//4),10+4*((x-6)//4)))
+                    for w in cross[x]:
+                        need(w not in mask or not mask&branch,'saturation implication');saturation_checks+=1
+                if matching:
+                    for a,b in edges:
+                        if a<6:continue
+                        i,j=(a-6)//4,(b-6)//4
+                        mi=int(bool(mask&set(range(6+4*i,10+4*i))))
+                        mj=int(bool(mask&set(range(6+4*j,10+4*j))))
+                        score=mi+mj+int(a in mask)+int(b in mask)
+                        need(score<=2+increment[ei[a,b]],'matching summation inequality')
+                        need(base[ei[a,b]]==1,'one already present pentagon');matching_checks+=1
+            # Actual graph components give the exact case used in the proof.
+            remaining={a for a in cross if cross[a]};components=[]
+            while remaining:
+                todo=[min(remaining)];component=set(todo)
+                for a in todo:
+                    for b in cross[a]:
+                        if b not in component:component.add(b);todo.append(b)
+                remaining-=component;components.append(component)
+            path_witness=next(((w,next(iter(cross[w]))) for w in cross if len(cross[w])==1 and len(cross[next(iter(cross[w]))])==2),None)
+            cycle_witness=next((min(c) for c in components if all(len(cross[a])==2 for a in c)),None)
+            need(path_witness is not None or cycle_witness is not None or matching,'component trichotomy')
+            report.append({'kind':kind,'bits':bits,'valid_masks':local_valid,'case':'path' if path_witness else 'cycle' if cycle_witness is not None else 'matching'})
+    need(len(report)==39 and total_masks==121875,'complete supplementary inventory')
+    # Explicit negative local attachments, independently counted as graphs.
+    g=model('C5',(0,0,0,0,0))
+    bad_masks={'same_branch':{6,7},'triangle':{6,10},'quadrilateral':{6,14},'third_pentagon':{10,7}}
+    for name,mask in bad_masks.items():need(not direct_valid(g,mask),'invalid attachment '+name)
+    return {'models':report,'total_masks':total_masks,'valid_masks':valid_masks,'saturation_checks':saturation_checks,'matching_checks':matching_checks,'independent_literal_graphs':literal_checks,'negative_attachments':list(bad_masks)}

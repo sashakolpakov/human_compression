@@ -1,0 +1,35 @@
+--- lambda5 complete.cpp
++++ complete_lambda.cpp
+@@ -1,10 +1,11 @@
+ #include "cycle_budget.h"
++#include "vertex_ball_lambda.h"
+ #include <sstream>
+ struct Exterior {Graph g;vector<vector<int>>automorphisms;vector<int>order;explicit Exterior(Graph h):g(h){int t=g.size();order.resize(t);iota(order.begin(),order.end(),0);sort(order.begin(),order.end(),[&](int a,int b){return make_pair(-wt(g[a]),a)<make_pair(-wt(g[b]),b);});vector<int>p(t);iota(p.begin(),p.end(),0);do{bool good=true;for(int i=0;i<t;i++)for(int j=0;j<t;j++)if(((g[i]>>j)&1)!=((g[p[i]]>>p[j])&1))good=false;if(good)automorphisms.push_back(p);}while(next_permutation(p.begin(),p.end()));need(!automorphisms.empty(),"identity exterior automorphism");}};
+ struct Boundary {
+  const Exterior&h;CycleBudget state;Deadline&deadline;array<int,12>missing{};vector<int>masks;vector<bool>done;vector<vector<int>>choices=vector<vector<int>>(5);U nodes=0,complete_count=0,positive=0;Cover&cover;
+  static Graph initial(const Graph&r,const Graph&h){Graph g=r;g.resize(17+h.size());for(int u=0;u<(int)h.size();u++)for(int v=u+1;v<(int)h.size();v++)if(h[u]>>v&1)add(g,17+u,17+v);return g;}
+- Boundary(const Graph&r,const Exterior&e,Deadline&d,Cover&c):h(e),state(initial(r,e.g),5),deadline(d),masks(e.g.size()),done(e.g.size()),cover(c){for(int x=0;x<12;x++)missing[x]=4-wt(r[5+x]);for(int mask=0;mask<4096;mask++){bool good=true;for(int b=0;b<4;b++)if(wt((mask>>(3*b))&7)>1)good=false;if(good)choices[wt(mask)].push_back(mask);}}
++ Boundary(const Graph&r,const Exterior&e,Deadline&d,Cover&c,int lambda=5):h(e),state(initial(r,e.g),lambda),deadline(d),masks(e.g.size()),done(e.g.size()),cover(c){for(int x=0;x<12;x++)missing[x]=4-wt(r[5+x]);for(int mask=0;mask<4096;mask++){bool good=true;for(int b=0;b<4;b++)if(wt((mask>>(3*b))&7)>1)good=false;if(good)choices[wt(mask)].push_back(mask);}}
+  bool canonical()const{for(const auto&p:h.automorphisms)for(int i=0;i<(int)p.size();i++){if(!done[i]||!done[p[i]])break;if(masks[i]>masks[p[i]])return false;if(masks[i]<masks[p[i]])break;}return true;}
+  void visit(int at){if((++nodes&1023)==0)deadline.check();int t=h.g.size();if(at==t){for(int x:missing)need(x==0,"complete leaf capacities");complete_count++;if(state.complete()){positive++;cover.take(state.g);}return;}
+   int y=h.order[at],k=4-wt(h.g[y]);for(int mask:choices[k]){
+@@ -17,11 +18,12 @@
+  void run(){if(!state.valid)return;Graph before=state.g;auto old=state.counts;auto capacity=missing;visit(0);need(state.g==before&&state.counts==old&&missing==capacity,"complete boundary rollback");}
+ };
+ int main(int argc,char**argv){try{
+- need(argc==6,"usage ROOTS EXTERIORS OUTPUT REPORT SECONDS");Deadline d(stod(argv[5]));ifstream input(argv[1]);int nr;need(bool(input>>nr)&&nr==348,"exact root count");vector<Graph>roots;for(int i=0;i<nr;i++){int n;need(bool(input>>n)&&n==17,"root17");Graph g(n);for(U&row:g)need(bool(input>>row),"root row");validate_root(g);roots.push_back(g);}string tail;need(!(input>>tail),"root end");ifstream ext(argv[2]);int orders;need(bool(ext>>orders)&&orders==4,"four exterior orders");ostringstream out,report;out<<4<<'\n';report<<"{\"status\":\"PASS_COMPLETE_FIVE_PENTAGONS_ORDERS21_24\",\"orders\":[";
+- for(int t=4;t<=7;t++){
+-  int n,count;need(bool(ext>>n>>count)&&n==t&&count==array<int,4>{1,2,6,12}[t-4],"exact exterior class count");vector<Exterior>models;for(int i=0;i<count;i++){Graph g(t);for(U&row:g)need(bool(ext>>row),"exterior row");validate(g);need(girth5(g),"exterior girth");int degree=0;for(U row:g){need(wt(row)<=4,"exterior maxdegree");degree+=wt(row);}need(degree==4*t-16,"exterior edge count");models.emplace_back(g);}Cover cover(false);U nodes=0,complete=0,positives=0,calls=0;
+-  for(int i=0;i<nr;i++)for(int j=0;j<count;j++){d.check();Boundary b(roots[i],models[j],d,cover);b.run();nodes+=b.nodes;complete+=b.complete_count;positives+=b.positive;calls++;cout<<"ORDER "<<17+t<<" ROOT "<<i<<" EXTERIOR "<<j<<" NODES "<<b.nodes<<" COMPLETE "<<b.complete_count<<" POSITIVE "<<b.positive<<'\n'<<flush;}
+-  out<<17+t<<' '<<cover.graphs.size()<<'\n';for(auto&g:cover.graphs){for(U row:g)out<<row<<' ';out<<'\n';}if(t>4)report<<',';report<<"{\"order\":"<<17+t<<",\"calls\":"<<calls<<",\"nodes\":"<<nodes<<",\"complete\":"<<complete<<",\"positive\":"<<positives<<",\"classes\":"<<cover.graphs.size()<<'}';
+- }
+- need(!(ext>>tail),"exterior end");report<<"]}\n";ofstream o(argv[3]),r(argv[4]);need(bool(o)&&bool(r),"output files");o<<out.str();r<<report.str();need(bool(o)&&bool(r),"complete output writes");return 0;
++ need(argc==7,"usage LAMBDA ROOTS EXTERIORS OUTPUT REPORT SECONDS");int lambda=stoi(argv[1]);need(lambda>=2&&lambda<=4,"lambda two to four");Deadline d(stod(argv[6]));
++ ifstream input(argv[2]);int nr;need(bool(input>>nr)&&nr==array<int,3>{6,40,178}[lambda-2],"exact root count");vector<Graph>roots;for(int i=0;i<nr;i++){int n;need(bool(input>>n)&&n==17,"root17");Graph g(n);for(U&row:g)need(bool(input>>row),"root row");validate_root_lambda(g,lambda);roots.push_back(g);}string tail;need(!(input>>tail),"root end");
++ ifstream ext(argv[3]);int orders,t,count;need(bool(ext>>orders>>t>>count)&&orders==1&&t==8&&count==array<int,3>{2,8,23}[lambda-2],"exact eight-vertex exterior inventory");vector<Exterior>models;
++ for(int i=0;i<count;i++){Graph g(t);for(U&row:g)need(bool(ext>>row),"exterior row");validate(g);need(girth5(g),"exterior girth");int degree=0;for(U row:g){need(wt(row)<=4,"exterior maximum degree");degree+=wt(row);}need(degree==4*lambda-4,"exterior edge count");models.emplace_back(g);}need(!(ext>>tail),"exterior end");
++ Cover cover(false);U nodes=0,complete=0,positives=0,calls=0;
++ for(int i=0;i<nr;i++)for(int j=0;j<count;j++){d.check();Boundary b(roots[i],models[j],d,cover,lambda);b.run();nodes+=b.nodes;complete+=b.complete_count;positives+=b.positive;calls++;cout<<"LAMBDA "<<lambda<<" ROOT "<<i<<" EXTERIOR "<<j<<" NODES "<<b.nodes<<" COMPLETE "<<b.complete_count<<" POSITIVE "<<b.positive<<'\n'<<flush;}
++ ofstream out(argv[4]),report(argv[5]);need(bool(out)&&bool(report),"complete outputs");out<<cover.graphs.size()<<'\n';for(auto&g:cover.graphs){out<<g.size();for(U row:g)out<<' '<<row;out<<'\n';}
++ report<<"{\"status\":\"PASS_COMPLETE_PENTAGON_LOWER30\",\"lambda_value\":"<<lambda<<",\"order\":25,\"calls\":"<<calls<<",\"nodes\":"<<nodes<<",\"complete\":"<<complete<<",\"positive\":"<<positives<<",\"classes\":"<<cover.graphs.size()<<"}\n";need(bool(out)&&bool(report),"complete write");return 0;
+  }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

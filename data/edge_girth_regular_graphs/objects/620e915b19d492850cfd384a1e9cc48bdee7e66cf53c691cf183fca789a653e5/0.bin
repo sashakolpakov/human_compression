@@ -1,0 +1,36 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+sys.dont_write_bytecode=True
+from pathlib import Path
+import json,math,copy
+P=Path(__file__).resolve().parent
+
+def need(ok,msg):
+ if not ok:raise ValueError(msg)
+def prime(p):return isinstance(p,int)and p>=2 and all(p%d for d in range(2,math.isqrt(p)+1))
+def check(rows,w):
+ need([r['m']for r in rows]==[i for i in range(1,52)if i!=10],'exact certificate inventory');evaluations=0
+ for r in rows:
+  m,p,d=r['m'],r['prime'],r['delta'];need(prime(p),'prime by trial division');need(0<=d<p,'literal residue')
+  if m<=2:need(r['zeta']is None and r['integral_delta']==(2 if m==1 else-2)and d==r['integral_delta']%p,'integral delta')
+  else:
+   z=r['zeta'];need((p-1)%m==0 and 0<z<p and pow(z,m,p)==1,'finite root');need(all(pow(z,m//q,p)!=1 for q in range(2,m+1)if m%q==0 and prime(q)),'exact primitive order');need(d==(z+pow(z,-1,p))%p,'primitive real image')
+  values=[(x**3+x*x-6*x-3-d)%p for x in range(p)];need(all(values),'complete cubic no-root test');evaluations+=p
+ need(w['modulus']==3 and w['cycle_lengths']==list(range(3,52)),'congruence domain');total=[0]*49;rhs=0
+ for r in w['combination']:
+  name=r['name'];coef=r['coefficient'];need(coef in [1,2],'literal coefficient')
+  if name=='all_cycles_minus_principal':v=[1]*49;rhs+=coef
+  else:
+   need(name.startswith('primitive_'),'equation kind');m=int(name.split('_')[1]);need(3<=m<=51 and m!=10,'available primitive equation');v=[int(l%m==0)for l in range(3,52)]
+  total=[(a+coef*b)%3 for a,b in zip(total,v)]
+ need(total==[0]*49==w['left']and rhs%3==1==w['right'],'literal impossible modular combination');return evaluations
+
+def main(out):
+ need(not out.exists(),'fresh output');out.mkdir();rows=json.loads((P/'prime_certificates.json').read_text())['rows'];w=json.loads((P/'cycle_congruence_witness.json').read_text());tests=check(rows,w);need(tests==3880,'residue count');damages=[]
+ for label,f in [('missing row',lambda r,w:r.pop()),('nonprime',lambda r,w:r[2].update(prime=9)),('nonprimitive',lambda r,w:r[2].update(zeta=1)),('changed real image',lambda r,w:r[2].update(delta=0)),('exception used',lambda r,w:w['combination'][0].update(name='primitive_10')),('wrong combination',lambda r,w:w['combination'][0].update(coefficient=1))]:
+  rr=copy.deepcopy(rows);ww=copy.deepcopy(w);f(rr,ww)
+  try:check(rr,ww)
+  except ValueError:damages.append(label)
+  else:raise ValueError('damaged certificate accepted '+label)
+ result=dict(status='PASS_ORDER51_RESIDUE_AND_CONGRUENCE_CERTIFICATES',rows=len(rows),residue_evaluations=tests,max_prime=max(r['prime']for r in rows),congruence_terms=len(w['combination']),damages=damages,order54_claim=False,source_lower57_claim=False);(out/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
+if __name__=='__main__':need(len(sys.argv)==2,'fresh directory');main(Path(sys.argv[1]).resolve())

@@ -1,0 +1,16 @@
+#include "forest_joint.h"
+int main(int argc,char**argv){try{
+ require(argc==5,"usage check_joint_completions ROOTS REPORT POSITIVES SECONDS");ifstream in(argv[1]);int count;require(bool(in>>count)&&count>=0,"root count");Budget budget(stod(argv[4]));
+ U nodes=0,complete=0,mismatch=0,positive=0;vector<Graph>positives;
+ for(int id=0;id<count;id++){
+  int n;require(bool(in>>n)&&n==26,"root order");Graph g(n);for(U&row:g)require(bool(in>>row),"root row");validate_root(g,10);
+  for(int shape=0;shape<4;shape++){
+   budget.check();JointCover search(g,10,shape,10,budget);search.run_joint();nodes+=search.jointnodes;complete+=search.complete_joint;mismatch+=(search.complete_joint-search.positive_joint);positive+=search.positive_joint;
+   positives.insert(positives.end(),search.positive_graphs.begin(),search.positive_graphs.end());
+   cout<<"ROOT "<<id<<" SHAPE "<<shape<<" JOINT_NODES "<<search.jointnodes<<" COMPLETE "<<search.complete_joint<<" POSITIVE "<<search.positive_joint<<'\n'<<flush;
+  }
+ }
+ string extra;require(!(in>>extra),"no extra root input");require(positive==positives.size(),"all positive outputs retained");
+ ofstream outgraphs(argv[3]);require(bool(outgraphs),"positive output");outgraphs<<positives.size()<<'\n';for(auto&g:positives){outgraphs<<g.size();for(U row:g)outgraphs<<' '<<row;outgraphs<<'\n';}require(bool(outgraphs),"complete positive write");
+ ofstream out(argv[2]);out<<"{\"status\":\"PASS_COMPLETE_JOINT_FOREST_COMPLETIONS\",\"lambda\":10,\"order\":36,\"root_targets\":"<<count<<",\"forest_calls\":"<<4*count<<",\"joint_nodes\":"<<nodes<<",\"complete_graphs\":"<<complete<<",\"wrong_hexagons\":"<<mismatch<<",\"positive\":"<<positive<<",\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-budget.started).count()<<"}\n";require(bool(out),"complete report");return 0;
+}catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

@@ -1,0 +1,25 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import hashlib,json
+old=Path('../F012_lambda12_work/root_cover.cpp');text=old.read_text()
+text=text.replace('int lambda=12;', 'int lambda=10;').replace('&&lam==12,','&&lam==10,').replace('products==12864538ULL','products==3565944ULL')
+a=text.index(' for(int code=0;code<729;code++)')
+b=text.index(' std::set<array<int,9>>expected',a)
+replacement=''' const vector<vector<pair<int,int>>> forests={{{0,1},{2,3},{4,5}},{{0,1},{1,2},{3,4}},{{0,1},{1,2},{2,3}},{{0,1},{0,2},{0,3}}};
+ for(const auto&edges:forests){
+  array<int,10>h{},a{};for(auto[u,v]:edges){h[u]++;h[v]++;}
+  function<void(int,int,int,int)> degrees=[&](int at,int sum,int left,int right){
+   if(at==10){
+    if(sum!=17)return;
+    for(auto[u,v]:edges)if(a[u]+a[v]>3||(4-h[u]-a[u])+(4-h[v]-a[v])>3)return;
+    search.allowed_profiles.insert({left,right});return;
+   }
+   int k=4-h[at];for(int s=max(0,k-3);s<=min(3,k);s++){a[at]=s;degrees(at+1,sum+s,left+s*(s-1)/2,right+(k-s)*(k-s-1)/2);}
+  };degrees(0,0,0,0);
+ }
+ require(search.allowed_profiles.size()==43,"complete necessary exterior degree pairs");
+'''
+text=text[:a]+replacement+text[b:]
+Path('root_cover.cpp').write_text(text)
+Path('root_code_derivation.json').write_text(json.dumps(dict(status='PREPARED_NO_TARGET_EXECUTION',acquired_path=str(old.resolve()),acquired_sha256=hashlib.sha256(old.read_bytes()).hexdigest(),new_sha256=hashlib.sha256(text.encode()).hexdigest(),changes=['lambda 12 to 10','complete ten-vertex degree-vector profile inventory for four three-edge forests','normalized product assertion 3565944']),indent=2)+'\n')

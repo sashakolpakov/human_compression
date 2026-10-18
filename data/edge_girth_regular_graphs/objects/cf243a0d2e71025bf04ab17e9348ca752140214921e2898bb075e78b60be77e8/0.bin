@@ -1,0 +1,159 @@
+"""Exact arithmetic and dependency audit for the bounded F012 lower-bound component."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not an accepted execution mode')
+from pathlib import Path
+from fractions import Fraction
+from collections import Counter
+import argparse
+import csv
+import hashlib
+import json
+import math
+import re
+
+def need(ok,message):
+    if not ok: raise ValueError(message)
+
+def ceil(q):
+    return -(-q.numerator//q.denominator)
+
+def rounded(bound,k,g,lam):
+    # Solve the two divisibility conditions by their exact common modulus.
+    period=math.lcm(2//math.gcd(2,k),2*g//math.gcd(2*g,k*lam))
+    return period*((bound+period-1)//period),period
+
+def tree_bound(k,g,lam):
+    s=g//2
+    if g%2:
+        moore=1+k*((k-1)**s-1)//(k-2)
+        bound=moore+(k-1)**s-lam
+    else:
+        moore=2*((k-1)**s-1)//(k-2)
+        bound=moore+ceil(Fraction(2*((k-1)**s-lam),k))
+    return moore,bound
+
+def audit_row(r):
+    k,g,lam=r['k'],r['g'],r['lambda']
+    need(k>=3 and g>=3 and lam>0 and k*lam%2==0,'inadmissible input triple')
+    need(lam<=(k-1)**(g//2),'source exceeds universal cycle upper bound')
+    moore,b=tree_bound(k,g,lam)
+    tree,period=rounded(b,k,g,lam)
+    need(tree==r['elementary_bound_after_divisibility'],'independent formula mismatch')
+    target=r['claimed_lower_bound']
+    complete=False; route='UNRESOLVED_BY_THIS_COMPONENT'; proved=tree
+    local=None
+    if g==3:local=3*(k-lam)
+    if g==4:local=k*k+1-k*lam//2
+    local_rounded=rounded(max(moore,local),k,g,lam)[0] if local is not None else None
+    if isinstance(target,int) and tree>=target:
+        complete=True;route='TREE_DEFICIT_AND_DIVISIBILITY'
+    elif isinstance(target,int) and local_rounded is not None and local_rounded>=target:
+        complete=True;proved=local_rounded
+        route='TRIANGLE_NEIGHBORHOODS' if g==3 else 'SECOND_NEIGHBORHOOD'
+    elif (k,g,lam) in {(3,7,8),(4,5,9),(5,5,16),(6,5,25)}:
+        need(target=='infinity','unexpected odd target')
+        complete=True;proved='infinity';route='ODD_MOORE_SPECTRUM'
+    elif g%2==0 and 0<(k-1)**(g//2)-lam<k-1:
+        need(target=='infinity','unexpected stability target')
+        complete=True;proved='infinity';route='BORROWED_KMS_THEOREM_2_4'
+    elif (k,g,lam)==(5,5,12):
+        need(target==32,'unexpected cage target')
+        complete=True;proved=32;route='ACQUIRED_L025_FOUR_CAGES'
+    if complete and isinstance(proved,int) and r['claimed_upper_bound'] is not None:
+        need(proved<=r['claimed_upper_bound'],'lower bound exceeds source positive target')
+    extra=''
+    if (k,g,lam) in {(4,4,1),(4,4,3)}:
+        extra='Source cites an earlier finite bound, but its original proof or classification has not been acquired here.'
+    return dict(id=f"T{r['table']}:k{k}:g{g}:lambda{lam}",table=r['table'],
+                physical_page=r['physical_page'],source_text_line=r['source_text_line'],
+                literal_source_row=r['literal_row'],k=k,g=g,lambda_value=lam,
+                source_previous_attribution=r['source_previous_lower_reference'],
+                printed_lower_bound=target,moore_bound=moore,tree_bound_before_rounding=b,
+                admissible_order_modulus=period,tree_bound_after_rounding=tree,
+                local_bound_before_rounding=local,local_bound_after_rounding=local_rounded,
+                route=route,printed_lower_bound_recovered=complete,
+                proved_lower_bound=proved if complete else None,
+                improved_over_printed=complete and isinstance(proved,int) and proved>target,
+                qualification=extra)
+
+def verify_dependencies(here):
+    deps=json.loads((here/'dependencies.json').read_text())
+    roots={k:Path(v) for k,v in deps['root_locations'].items()}
+    for b in deps['bindings']:
+        p=roots[b['root']]/b['path'];raw=p.read_bytes()
+        need(len(raw)==b['bytes'] and hashlib.sha256(raw).hexdigest()==b['sha256'],
+             'dependency mismatch: '+str(p))
+    need(all(not x['target_dependence'] for x in deps['acquired_proof_nodes']),
+         'circular acquired premise')
+    R=roots['public_repository']
+    author=json.loads((R/'audit/recoveries/L025/v1/author/reports/finite.json').read_text())
+    review=json.loads((R/'audit/recoveries/L025/v1/independent_review/independent_report.json').read_text())
+    expected=[{'12':45,'14':30},{'12':50,'13':20,'14':5},
+              {'12':60,'14':15},{'12':24,'13':48,'16':3}]
+    for i,h in enumerate(expected):
+        a=next(x for x in author['graphs'] if x['name']==f'Brouwer_cage_{i+1}')
+        v=next(x for x in review['six_graphs'] if x['name']==f'cage{i}')
+        need(a['profile']['order']==v['profile']['order']==30,'wrong cage order')
+        need(a['profile']['degrees']==v['profile']['degree']==[5],'wrong cage degree')
+        need(a['profile']['girth']==v['profile']['girth']==5,'wrong cage girth')
+        need(a['cycles']['edge_histogram']==v['cycle_histogram']==h,'cage histogram mismatch')
+        need(sum(h.values())==75 and len(h)>1,'cage exclusion failed')
+    return roots,len(deps['bindings'])
+
+def main():
+    ap=argparse.ArgumentParser()
+    ap.add_argument('--output',type=Path,required=True)
+    ap.add_argument('--ledger',type=Path)
+    ap.add_argument('--csv',type=Path)
+    args=ap.parse_args();here=Path(__file__).resolve().parent
+    roots,pins=verify_dependencies(here)
+    rows=json.loads((here/'source_rows.json').read_text())
+    F=roots['private_study']/'reboot_20261013/F012_recovery_work'
+    prior=json.loads((F/'source_table_register01.json').read_text())['rows']
+    need(rows==[r for r in prior if r['table']<5],'source row copy differs')
+    source=(F/'source_full.txt').read_text().splitlines()
+    pattern=r'^([3-6]) (\d+) (?:([0-9]+)≤ λ≤ ([0-9]+)|([0-9]+))\s*(∞|\d+) (\[[^\]]+\]) (∞|\d+) (∞|\d+)'
+    for r in rows:
+        literal=source[r['source_text_line']-1]
+        need(literal==r['literal_row'],'source line mismatch')
+        m=re.match(pattern,literal);need(m is not None,'unparsed source row')
+        k,g,lo,hi,one,old,ref,lower,upper=m.groups()
+        labels=list(range(int(lo),int(hi)+1)) if lo else [int(one)]
+        need((r['k'],r['g'])==(int(k),int(g)) and r['lambda'] in labels,'source parameters mismatch')
+        need(r['claimed_lower_bound']==('infinity' if lower=='∞' else int(lower)),
+             'source lower-bound transcription mismatch')
+    ledger=[audit_row(r) for r in rows]
+    retained=here/'row_ledger.json'
+    if retained.exists():
+        need(json.loads(retained.read_text())==ledger,'retained row ledger differs from recomputation')
+    need(len(ledger)==142 and len({r['id'] for r in ledger})==142,'row partition failed')
+    totals=Counter(r['route'] for r in ledger)
+    expected={'TREE_DEFICIT_AND_DIVISIBILITY':63,'TRIANGLE_NEIGHBORHOODS':2,
+              'SECOND_NEIGHBORHOOD':7,'ODD_MOORE_SPECTRUM':4,
+              'BORROWED_KMS_THEOREM_2_4':9,'ACQUIRED_L025_FOUR_CAGES':1,
+              'UNRESOLVED_BY_THIS_COMPONENT':56}
+    need(dict(totals)==expected,'unexpected route totals '+str(totals))
+    # Exact irreducibility arithmetic used in the written spectral proof.
+    for k in [4,5,6]:
+        d=4*k-3;need(math.isqrt(d)**2!=d,'quadratic reducible')
+        need(k*k!=2*k,'trace and degree no longer contradict')
+    cubic_values={str(x):x**3+x*x-4*x-2 for x in [1,-1,2,-2]}
+    need(all(cubic_values.values()) and 3-7!=0,'cubic obstruction failed')
+    result=dict(status='PASS_BOUNDED_LOWER_BOUND_AUDIT',rows=142,recovered=86,
+                unresolved=56,route_counts=dict(totals),dependency_bindings=pins,
+                independently_organized_arithmetic='Closed geometric sums and exact lcm divisibility modulus, compared with source register sums and incremental rounding.',
+                stronger_consequences=[{k:r[k] for k in ['id','printed_lower_bound','proved_lower_bound']}
+                                       for r in ledger if r['improved_over_printed']],
+                cubic_rational_root_checks=cubic_values,
+                classification_reused_not_rerun=True,
+                proof_is_written_mathematics_not_python_assertion=True,
+                whole_original_credit=0,new_question_credit=0,new_formal_declarations=0)
+    args.output.write_text(json.dumps(result,indent=2)+'\n')
+    if args.ledger:args.ledger.write_text(json.dumps(ledger,indent=2)+'\n')
+    if args.csv:
+        with args.csv.open('w',newline='') as f:
+            w=csv.DictWriter(f,fieldnames=list(ledger[0]));w.writeheader();w.writerows(ledger)
+    print(json.dumps(result))
+
+if __name__=='__main__': main()

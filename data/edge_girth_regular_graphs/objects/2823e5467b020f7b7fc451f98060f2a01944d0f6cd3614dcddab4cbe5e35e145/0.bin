@@ -1,0 +1,14 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import hashlib,json
+p=Path('check_completions.cpp');s=p.read_text();s=s.replace('#include "forest_completion.h"','#include "forest_joint.h"').replace('ForestCover search(g,10,shape,10,budget);search.run();','JointCover search(g,10,shape,10,budget);search.run_joint();').replace('search.nodes','search.jointnodes').replace('search.assignments','search.complete_joint').replace('search.right.nodes','0').replace('search.right.complete','search.complete_joint').replace('search.right.mismatch','(search.complete_joint-search.positive_joint)').replace('search.right.positive','search.positive_joint').replace('search.positive_joints','search.positive_graphs').replace('PASS_COMPLETE_FOREST_COMPLETIONS','PASS_COMPLETE_JOINT_FOREST_COMPLETIONS')
+s=s.replace('usage check_completions ', 'usage check_joint_completions ')
+s=s.replace('U nodes=0,assignments=0,rightnodes=0,complete=0,mismatch=0,positive=0;', 'U nodes=0,complete=0,mismatch=0,positive=0;')
+s=s.replace('assignments+=search.complete_joint;rightnodes+=0;', '')
+s=s.replace('" LEFT "<<search.jointnodes<<" ASSIGNMENTS "<<search.complete_joint<<" RIGHT "<<0', '" JOINT_NODES "<<search.jointnodes')
+s=s.replace('\\"left_nodes\\"', '\\"joint_nodes\\"')
+s=s.replace('<<",\\"left_assignments\\":"<<assignments<<",\\"right_nodes\\":"<<rightnodes', '')
+assert 'search.right'not in s and 'assignments'not in s and 'rightnodes'not in s
+Path('check_joint_completions.cpp').write_text(s)
+Path('joint_target_derivation.json').write_text(json.dumps({'status':'PREPARED_NO_TARGET_EXECUTION','original_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'new_sha256':hashlib.sha256(s.encode()).hexdigest(),'scope':'Same root input and target, both-side vertex recursion; bookkeeping renamed in final report only.'},indent=2)+'\n')

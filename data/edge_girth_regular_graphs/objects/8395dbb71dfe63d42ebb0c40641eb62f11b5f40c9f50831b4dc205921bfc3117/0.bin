@@ -1,0 +1,32 @@
+#define main root_program_main
+#include "root_cover.cpp"
+#undef main
+#define main extension_program_main
+#include "extension_cover.cpp"
+#undef main
+int main(int argc,char**argv){try{
+ require(argc==3,"controls ROOTS OUT");nauty_check(WORDSIZE,1,26,NAUTYVERSIONID);ifstream in(argv[1]);size_t count;require(bool(in>>count)&&count>0,"root controls");
+ vector<Graph>sample;vector<size_t>ids;map<vector<int>,int>selected_profiles;int both_selected=0;
+ for(size_t id=0;id<count;id++){
+  int n;require(bool(in>>n)&&n==26,"control rootorder");Graph g(n);for(U&x:g)require(bool(in>>x),"control input");bool select=id<3||(id%(max(size_t(1),count/8))==0);
+  for(int base:{4,17}){vector<int>p;for(int v=base;v<base+9;v++)if(weight(g[v])<4)p.push_back(4-weight(g[v]));sort(p.begin(),p.end());if(selected_profiles[p]<1){selected_profiles[p]++;select=true;}}
+  if(both_selected<3){Side side(g);side.run(0);bool l=!side.good.empty();side.run(1);if(l&&!side.good.empty()){select=true;both_selected++;}}
+  if(select){sample.push_back(g);ids.push_back(id);}
+ }
+ ofstream out(argv[2]);out<<"{\"capacities\":[";vector<int>p;bool comma=false;function<void(int,int)>profiles=[&](int left,int lo){if(!left){if(comma)out<<',';comma=true;out<<"{\"profile\":[";for(size_t i=0;i<p.size();i++){if(i)out<<',';out<<p[i];}out<<"],\"capacity\":"<<capacity(p)<<'}';return;}for(int k=lo;k<=min(3,left);k++){p.push_back(k);profiles(left-k,k);p.pop_back();}};profiles(9,1);
+ out<<"],\"sides\":[";
+ for(size_t id=0;id<sample.size();id++){
+  if(id)out<<',';out<<"{\"index\":"<<ids[id]<<",\"rows\":[";for(int v=0;v<26;v++){if(v)out<<',';out<<sample[id][v];}out<<']';Side side(sample[id]);
+  for(int z=0;z<2;z++){side.run(z);out<<(z?",\"right\":[":",\"left\":[");for(size_t i=0;i<side.good.size();i++){if(i)out<<',';out<<'[';for(size_t j=0;j<side.good[i].size();j++){if(j)out<<',';out<<side.good[i][j];}out<<']';}out<<']';}out<<'}';
+ }
+ U graphs=0,distances=0;for(int code=0;code<1024;code++){
+  Graph g(5);int bit=0;for(int u=0;u<5;u++)for(int v=u+1;v<5;v++,bit++)if((code>>bit)&1)add_edge(g,u,v);
+  bool shortcycle=false;vector<int>order{0,1,2,3,4};do{for(int n=3;n<=5;n++){bool cycle=true;for(int j=0;j<n;j++)if(!((g[order[j]]>>order[(j+1)%n])&1))cycle=false;shortcycle|=cycle;}}while(next_permutation(order.begin(),order.end()));require(shortcycle==has_short_cycle(g),"independent girth");graphs++;
+  for(int u=0;u<5;u++){array<int,5>d;d.fill(99);d[u]=0;for(int pass=0;pass<5;pass++)for(int a=0;a<5;a++)for(int b=0;b<5;b++)if((g[a]>>b)&1)d[b]=min(d[b],d[a]+1);for(int v=0;v<5;v++)for(int low=1;low<=6;low++){require(distance_at_least(g,u,v,low)==(d[v]>=low),"independent distance");distances++;}}
+ }
+ U rejects=0;auto reject=[&](const function<void()>&f){bool caught=false;try{f();}catch(const runtime_error&){caught=true;}require(caught,"invalid literal map accepted");rejects++;};
+ const Graph g=sample.front();auto canon=propose_canonical_map(g,true);auto bad=canon.lab;bad[0]=bad[1];reject([&]{check_literal_map(g,g,canon.lab,bad,true);});
+ vector<int>id(26);iota(id.begin(),id.end(),0);bad=id;swap(bad[0],bad[1]);reject([&]{check_literal_map(g,g,id,bad,true);});Graph damaged=g;remove_edge(damaged,0,13);reject([&]{check_literal_map(g,damaged,id,id,true);});
+ damaged=g;damaged[0]|=1;reject([&]{validate_graph(damaged);});damaged=g;damaged[0]&=~(U(1)<<13);reject([&]{validate_graph(damaged);});
+ out<<"],\"labelled_graphs\":"<<graphs<<",\"distance_checks\":"<<distances<<",\"damaged_maps\":"<<rejects<<"}\n";require(bool(out),"complete controls output");cout<<"PASS_LITERAL_AND_SIDE_CONTROLS "<<sample.size()<<'\n';return 0;
+ }catch(const exception&e){cerr<<e.what()<<'\n';return 1;}}

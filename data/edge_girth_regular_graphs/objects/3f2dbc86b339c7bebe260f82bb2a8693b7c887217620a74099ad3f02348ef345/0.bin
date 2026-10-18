@@ -1,0 +1,236 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs}
+\setlength{\emergencystretch}{2em}
+\newtheorem{theorem}{Theorem}\newtheorem{lemma}[theorem]{Lemma}
+\title{Twenty hexagons through every edge: a finite lower bound}
+\author{Human Compression project}\date{}
+\begin{document}\maketitle
+\begin{theorem}
+There is no finite simple quartic graph of girth six, on at most
+thirty-five vertices, having exactly twenty hexagons through every
+edge. Consequently $n(4,6,20)\ge36$.
+\end{theorem}
+This is precisely the lower-bound assertion in the fixed source
+Table~2 of Goedgebeur--Jooken, arXiv:2401.08271v2. It gives neither
+existence at order thirty-six nor nonexistence at every order.
+The printed row also contains $\lambda=19$; that separate clause
+is not proved here.
+
+\section{The complete local reduction}
+Fix an edge $uv$ of a hypothetical graph. The two trees of depth two
+rooted at its endpoints, omitting $uv$ in their first steps, have
+twenty-six distinct vertices. An identification or any additional edge
+other than an edge between opposite leaves creates a cycle of length
+at most five. The nine leaves on either side are divided into three
+branches of size three. Between each pair of opposite branches the
+cross edges form a matching: two neighbours in one branch would
+produce a quadrangle. Each cross edge determines one hexagon through
+$uv$, and every such hexagon has this form. Thus there are twenty
+cross edges. If the matching sizes are $3-d_{ij}$, then
+\[
+             0\le d_{ij}\le3,\qquad\sum_{i,j=0}^2d_{ij}=7.       \tag{1}
+\]
+Exactly seven unfinished leaf incidences remain on each side. Their
+endpoints are outside the twenty-six vertices.
+
+We reuse the elementary Moore-tree, root-pair and saturation arguments
+of the acquired twenty-two-hexagon component, with the following
+seven-incidence specialization. The preceding nonexistence theorem
+itself is not a premise.
+
+\begin{lemma}\label{profiles}
+For a positive unfinished-degree profile $P$ put
+$f(P)=(21-\sum_{s\in P}s^2)/2$. If $P_L,P_R$ are the two profiles,
+then necessarily $f(P_L)\le b(P_R)$ and $f(P_R)\le b(P_L)$, where
+\[
+\begin{array}{c|rrrrrrrr}
+P&1^7&2,1^5&3,1^4&2^2,1^3&3,2,1^2&2^3,1&3^2,1&3,2^2\\\hline
+f(P)&7&6&4&5&3&4&1&2\\
+b(P)&6&6&6&6&4&5&3&3
+\end{array}                                                    \tag{2}
+\]
+\end{lemma}
+\begin{proof}
+There are forty hexagons through $u$, since its four incident edges
+are each in twenty and each hexagon through $u$ uses two of them.
+Twenty contain $uv$. A right leaf of unfinished degree $s$ has
+$3-s$ cross neighbours, all in distinct left branches, and supplies
+$\binom{3-s}{2}$ of the other twenty hexagons. The missing number
+is therefore
+\[
+       20-\sum_{i=1}^9\binom{3-s_i}{2}
+                 =\frac{21-\sum_i s_i^2}{2}=f(P_R).           \tag{3}
+\]
+These missing hexagons come from pairs of left leaves sharing an
+outside neighbour. One outside vertex meets at most three leaves on
+one side, at most one per branch. No pair of leaves can be used
+twice, since two common neighbours produce a quadrangle.
+
+The bounds $b(P)$ are certified by a separate exact integer
+enumeration. Replace a profile by seven distinguished incidence
+positions, with the specified repeated leaf names. Partition these
+positions by inserting each into every existing part or one new part.
+Reject a part with a repeated leaf or more than three leaves, and
+reject a leaf pair appearing in two parts. Maximize
+$\sum_B\binom{|B|}{2}$ over all remaining partitions. This finite
+recursion covers every partition by first appearance of its parts;
+the independent standard-library checker obtains exactly the eight
+maxima in (2). Ignoring branch restrictions only increases this maximum.
+The analogous equation at $v$ proves both coupled bounds.
+\end{proof}
+
+\begin{lemma}\label{pairs}
+Let $L_0,L_1,L_2$ be the left branches of leaves and $a_i$ the
+cross-edge count incident with $L_i$. Once all left leaves are
+saturated, for distinct $i,j,k$ one must have
+\[
+              \sum_w|N(w)\cap L_i|\,|N(w)\cap L_j|=a_k.        \tag{4}
+\]
+No further extension can change this sum. The analogous right-side
+equations also hold.
+\end{lemma}
+\begin{proof}
+If $b_{ij}$ counts hexagons using the two root edges in branches
+$i,j$, then $a_i+b_{ij}+b_{ik}=20$ and $a_0+a_1+a_2=20$.
+Solving gives $b_{ij}=a_k$. The middle vertex of such a hexagon is
+a common neighbour of one leaf from each branch, giving (4).
+Girth six makes all these paths simple. Saturation fixes all the
+leaf neighbourhoods and hence fixes the sum.
+\end{proof}
+
+\section{Normalized matchings with checked literal maps}
+There are $4\,950$ matrices in (1). Row permutations, column
+permutations and transpose give $95$ orbits. Both the Python checker
+and the C++ enumerator construct the complete integer matrix set
+and check this exact orbit cover. For each representative consider
+the bipartite graph on its six branches whose edges correspond to
+full matchings. Choose a spanning forest. Relabel leaves independently
+within each branch, propagating from a root in every forest component;
+then every forest matching becomes the identity. No consistency
+condition arises on a forest. These relabellings and the preceding
+row, column and transpose operations are actual automorphisms of the
+two rooted trees.
+
+Every other block is enumerated as a partial injective map on three
+leaves. The respective numbers of choices for deficits $0,1,2,3$ are
+$6,18,9,1$. The full normalized product has $1\,415\,940\,318$
+choices. The checker visits every child of every surviving prefix;
+it discards a prefix only when an added edge closes a quadrangle.
+The graph remains bipartite, so this tests all forbidden short cycles.
+At a leaf it applies exactly Lemma~\ref{profiles}. Every other leaf
+must map to one of the supplied $31\,501$ representative graphs.
+
+The map is not accepted on a canonical certificate alone. Nauty only
+proposes a target and a permutation. The verifier checks that the
+permutation is bijective on all twenty-six vertices, takes the
+unordered root edge to itself, and sends every adjacency row exactly
+to the corresponding target row. An absent target or any failed
+literal check aborts the verification. Thus a false canonical split
+cannot omit a graph, and a false merge cannot establish equivalence.
+The list need not be trusted as complete or pairwise nonisomorphic.
+All its graphs are also directly checked for the two literal trees,
+the cross-edge count, degree bounds and girth.
+
+The exhaustive run visits $214\,143\,141$ block choices, reaches
+$56\,703\,540$ girth-admissible leaves and checks literal maps for
+$34\,968\,060$ leaves passing (2). These are traversal statistics,
+not a count of isomorphism classes of regular graphs. Its output is
+a small closed execution receipt; the earlier multi-gigabyte
+diagnostic trace is not a verification input.
+
+\section{The first and second outside boundaries}
+For each representative partition its seven left incidences by their
+actual outside neighbour. Inserting the next incidence into every
+eligible existing part or one new part covers every partition.
+A part has no repeated leaf, at most one leaf from each branch, and
+no leaf pair already used in another part or sharing an old neighbour.
+These exclusions are exactly necessary quadrangle obstructions.
+During insertion, the new pairs between branches may not exceed
+the nonnegative target in (4); at the end they must equal it.
+Apply the same independent procedure on the right. Right attachments
+cannot change the left leaf neighbour sets, so these tests are sound
+before the two sides are combined.
+
+There are $15\,498$ surviving side partitions across all targets;
+only $93$ targets have a surviving partition on both sides. Combine
+a left and a right partition by choosing a partial one-to-one
+matching between their parts, with combined part size at most four.
+Every outside vertex of a full extension consists of one part from
+each side or a part from just one side. Conversely no two distinct
+parts on the same side may be merged, since they denote different
+vertices. This gives complete coverage. All original twenty-six
+vertices are now saturated.
+
+The joining stage has $133\,152$ choices. Direct girth checks reject
+$125\,408$; every other choice has a checked literal isomorphism
+to a supplied joined graph, with the same permutation and adjacency
+tests as before. These maps need not preserve a root, because all
+following tests concern the entire partial graph. The $7\,744$
+survivors use $262$ supplied targets of orders $32,33,34$.
+
+For each target first count simple alternate length-five paths through
+each edge. A count greater than twenty is a permanent obstruction:
+adding vertices or edges cannot remove those hexagons. This rejects
+$120$ targets. For every other target let its deficient vertices be
+the old boundary. Enumerate every subset of possible edges between
+old boundary vertices, rejecting degree overflow or distance less
+than five before insertion. All such edges of an actual completion
+occur in one of these choices.
+
+Next list all remaining incidences at old vertices. Their new
+endpoints are again enumerated by first appearance of parts, with
+no repeated old vertex, degree at most four, and no short cycle.
+At most $35-n$ new vertices may be used when the old target has
+order $n$. In particular more than $4(35-n)$ incidences are impossible.
+This is an order bound on necessary extensions, not an assertion
+that every partial extension has a full regular completion.
+The empty incidence list is included.
+
+Every old vertex is now saturated. No edges among new vertices,
+or farther outside, are chosen. They are unnecessary because of the
+following acquired elementary observation.
+\begin{lemma}\label{saturation}
+If every vertex at distance at most two from $x$ in a partial
+quartic graph $B$ has degree four in $B$, every hexagon through
+$x$ in any quartic completion is already contained in $B$.
+\end{lemma}
+\begin{proof}
+Every edge of a hexagon through $x$ has an endpoint reached from
+$x$ along that hexagon in at most two steps. Such an endpoint is
+saturated, so the edge is already present. Equivalently no first
+edge leaving $B$ can start within this saturated radius-two ball.
+\end{proof}
+The complete boundary search has $7\,778$ old-edge choices and
+$1\,466$ girth-admissible incidence extensions within the order cap.
+For every one, the verifier finds an edge $xy$ with the radius-two
+saturation property at $x$, counts all simple alternate length-five
+paths from $x$ to $y$, and obtains a value different from twenty.
+Lemma~\ref{saturation} makes this disagreement permanent. If even
+one extension lacks such a rejection, verification fails.
+
+\begin{proof}[Proof of the theorem]
+A hypothetical graph of order at most thirty-five gives the Moore
+trees, a normalized cross-matching leaf, two first-side partitions,
+their partial matching, and one enumerated second-boundary extension.
+Every normalization is an actual permutation, and every later reuse
+is checked against every adjacency row. The terminal obstruction
+persists under all undecided farther edges. Since all cases reject,
+the hypothetical graph cannot exist.
+\end{proof}
+
+\paragraph{Verification and attribution.}
+Root supplied the initial diagnostic programs, the target reduction,
+and the previously accepted twenty-two-hexagon geometry. The present
+author assembled the complete streamed coverage verifier, independent
+integer coverage and capacity checks, literal-map guard, closed
+execution interfaces and this explicit bounded-order proof.
+The diagnostic targets are a candidate provider only. Pynauty/nauty
+are not classification-completeness premises: every used permutation
+is directly verified, including root preservation where required.
+Compilation, runtime and numerical controls are recorded separately.
+Goedgebeur and Jooken's fixed original lower bound and their witness
+constructions retain their attribution. No new graph count,
+whole-source recovery, named-conjecture, Lean or measurement claim
+is made by this component.
+\end{document}

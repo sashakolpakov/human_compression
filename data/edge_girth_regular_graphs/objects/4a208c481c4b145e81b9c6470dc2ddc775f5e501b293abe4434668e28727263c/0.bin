@@ -1,0 +1,87 @@
+"""Preliminary exhaustive local forms; no completed graph classification."""
+import itertools,json,time
+from pathlib import Path
+from collections import defaultdict
+W=Path(__file__).resolve().parent
+
+def partitions(values):
+    if not values:
+        yield ()
+        return
+    x,*tail=values
+    for rest in partitions(tail):
+        yield tuple(sorted(((x,),)+rest))
+        for i in range(len(rest)):
+            yield tuple(sorted(rest[:i]+(tuple(sorted((x,)+rest[i])),)+rest[i+1:]))
+
+def small_girth(adj):
+    n=len(adj)
+    for v in range(n):
+        dist={v:0};pending=[v]
+        for x in pending:
+            if dist[x]==2:continue
+            for y in range(n):
+                if adj[x]>>y&1 and y not in dist:dist[y]=dist[x]+1;pending.append(y)
+        for x in pending:
+            if dist[x]!=2:continue
+            # An edge between distance-two vertices yields a triangle or5-cycle,
+            # unless their tree paths share their parent, in which case triangle.
+            if any(adj[x]>>y&1 and dist[y]==2 for y in pending):return False
+        for x in range(n):
+            for y in range(x):
+                common=(adj[x]&adj[y]).bit_count()
+                if common>1 or(common and adj[x]>>y&1):return False
+    return True
+
+def generate():
+    return _generate()
+
+def _generate():
+    results=[]
+    for kind,es in [('matching',[(0,1),(2,3)]),('path',[(0,1),(1,2)])]:
+        ya=[set()for _ in range(4)]
+        for x,y in es:ya[x].add(y);ya[y].add(x)
+        target=tuple(4-len(a)for a in ya)
+        options=set()
+        for mask in range(16):
+            chosen=[x for x in range(4)if mask>>x&1]
+            if any(y in ya[x]for x,y in itertools.combinations(chosen,2)):continue
+            for blocks in partitions(chosen):
+                if len(blocks)>3:continue
+                if any(y in ya[x]or ya[x]&ya[y]for b in blocks for x,y in itertools.combinations(b,2)):continue
+                options.add(blocks)
+        options=sorted(options);sides=[];bydegree=defaultdict(list)
+        for ids in itertools.combinations_with_replacement(range(len(options)),3):
+            blocks=[options[i]for i in ids];degrees=tuple(sum(x in b for row in blocks for b in row)for x in range(4))
+            if sum(degrees)!=6 or any(degrees[x]>target[x]for x in range(4)):continue
+            shared=[p for row in blocks for b in row for p in itertools.combinations(b,2)]
+            if len(shared)!=len(set(shared)):continue
+            item=(ids,degrees,set(shared));sides.append(item);bydegree[degrees].append(item)
+        literal=0;valid=0;unique=[];rejected=[]
+        for ai,da,sa in sides:
+            for bi,db,sb in bydegree[tuple(target[x]-da[x]for x in range(4))]:
+                if sa&sb:continue
+                literal+=1;adj=[0]*30
+                def edge(x,y):adj[x]|=1<<y;adj[y]|=1<<x
+                edge(0,1)
+                for side,ids in enumerate([ai,bi]):
+                    for branch,option in enumerate(ids):
+                        parent=2+side*3+branch;edge(side,parent)
+                        for leaf in range(3):edge(parent,8+side*9+branch*3+leaf)
+                        for leaf,outs in enumerate(options[option]):
+                            for y in outs:edge(8+side*9+branch*3+leaf,26+y)
+                for x,y in es:edge(26+x,26+y)
+                if not small_girth(adj):
+                    rejected.append(adj);continue
+                valid+=1
+                unique.append({'adjacency':adj,'branches':[ai,bi]})
+        result={'kind':kind,'options':options,'side_patterns':len(sides),'literal_pairs':literal,'girth_valid':valid,'literal_seeds':len(unique),'examples':unique,'rejected_seed_graphs':rejected,'status':'COMPLETE_BRANCH_FORMS','whole_credit':0}
+        results.append(result)
+    return results
+
+if __name__=="__main__":
+    results=generate()
+    (W/"seeds.json").write_text(json.dumps(results,indent=2)+"\n")
+    seeds=[r["adjacency"]for group in results for r in group["examples"]]
+    (W/"literal_seeds.txt").write_text(str(len(seeds))+"\n"+"\n".join(" ".join(map(str,r))for r in seeds)+"\n")
+    print([{k:v for k,v in r.items()if k not in["options","examples"]}for r in results])

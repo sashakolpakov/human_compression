@@ -175,3 +175,17 @@ that unpublished local work is recoverable.
 
 This guide supplies entry points and their limits.  It records no new
 scientific execution, clean-machine installation or full-project replay.
+
+F012 package-relative reproduction
+----------------------------------
+
+Read ``papers/edge_girth_regular_graphs/reproduction.rst`` before selecting a
+route. It gives typed environment generation, complete bounded defaults,
+exact payload authentication and restoration of all 53 written sources.
+The public registration preserves the full 8e10ebc3 predecessor Git tree and
+global manifest; locally sparse unchanged files are retained Git objects,
+not deletions. Restore a historical path from Git before invoking a checker
+that needs its working-tree bytes. The registration reports inherited Git
+identity checks separately from full hashing of all new package exports.
+The metadata controls and dense-bounds integration do not replace the
+source's borrowed catalogue premises or amount to an all-route fresh replay.

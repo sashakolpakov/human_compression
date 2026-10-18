@@ -1,0 +1,199 @@
+import argparse
+import copy
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+
+import networkx as nx
+from pair_covers import frames, instance, search, verify_tree, require
+
+W = Path(__file__).resolve().parent
+
+
+def put(p, value):
+    p.write_text(json.dumps(value, indent=2) + '\n')
+
+
+def counts(graph):
+    require(len(graph) == 28 and nx.is_connected(graph), 'connected order28')
+    require(not list(nx.selfloop_edges(graph)) and
+            all(d == 4 for _, d in graph.degree()), 'simple regular4')
+    require(nx.is_bipartite(graph), 'bipartite')
+    require(all(len(set(graph[x]) & set(graph[y])) <= 1
+                for x, y in itertools.combinations(graph, 2)), 'no squares')
+    result = []
+    for x, y in sorted(graph.edges()):
+        def paths(at, used, steps):
+            if steps == 0:
+                return int(at == y)
+            if at == y:
+                return 0
+            return sum(paths(z, used | {z}, steps - 1) for z in graph[at]
+                       if z not in used and {at, z} != {x, y})
+        result.append(paths(x, {x}, 5))
+    require(result == [24] * 56, 'every edge on24 six-cycles')
+    return result
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', type=Path, required=True)
+    p.add_argument('--render', action='store_true')
+    a = p.parse_args()
+    O = a.out.resolve()
+    O.mkdir(parents=True, exist_ok=False)
+    bindings = json.loads((W / 'bindings.json').read_text())
+    for q in bindings:
+        data = Path(q['path']).read_bytes()
+        require(hashlib.sha256(data).hexdigest() == q['sha256']
+                and len(data) == q['bytes'], 'dependency ' + q['path'])
+    source = json.loads((W / 'source.json').read_text())
+    line = Path(source['graph_file']).read_bytes().splitlines()[source['source_line'] - 1]
+    require(hashlib.sha256(line).hexdigest() == source['graph6_line_sha256'], 'source line')
+    require((W / 'source_graph.g6').read_bytes() == line + b'\n', 'copied graph')
+    source_graph = nx.from_graph6_bytes(line)
+
+    # All loopless cubic multigraphs on four labelled vertices.
+    positions = list(itertools.combinations(range(4), 2))
+    profiles = []
+    normalized = set()
+    for values in itertools.product(range(4), repeat=6):
+        if any(sum(v for e, v in zip(positions, values) if x in e) != 3
+               for x in range(4)):
+            continue
+        edges = dict(zip(positions, values))
+        require(edges[0, 1] == edges[2, 3] and edges[0, 2] == edges[1, 3]
+                and edges[0, 3] == edges[1, 2], 'opposite multiplicities')
+        orbit = []
+        for permutation in itertools.permutations(range(4)):
+            orbit.append(tuple(edges[tuple(sorted((permutation[u], permutation[v])))]
+                               for u, v in positions))
+        normalized.add(min(orbit))
+        profiles.append(values)
+    require(len(profiles) == 10 and len(normalized) == 3, 'three exhaustive frames')
+    put(O / 'multigraphs.json', {'profiles': profiles, 'orbits': sorted(normalized)})
+
+    # Small exhaustive set systems compare the whole output, including empties.
+    systems = 0
+    for family in range(1 << 7):
+        masks = [i for i in range(1, 8) if (family >> (i - 1)) & 1]
+        result = search(7, masks)
+        verify_tree(7, masks, result)
+        expected = set()
+        for subset in range(1 << len(masks)):
+            union = 0
+            picked = []
+            for i, m in enumerate(masks):
+                if subset >> i & 1:
+                    if union & m:
+                        break
+                    union |= m
+                    picked.append(i)
+            else:
+                if union == 7:
+                    expected.add(tuple(picked))
+        actual = {tuple(sorted(x)) for x in result['solutions']}
+        require(actual == expected and len(actual) == len(result['solutions']), 'small exact cover')
+        systems += 1
+
+    totals = []
+    covers = []
+    trees = []
+    for frame_id, (multiplicities, fixed) in enumerate(frames()):
+        remaining, candidates, masks = instance(fixed)
+        tree = search(remaining, masks)
+        verify_tree(remaining, masks, tree)
+        require(len(tree['nodes']) == [79, 33, 42][frame_id]
+                and len(tree['solutions']) == [0, 0, 1][frame_id], 'complete counts')
+        trees.append((remaining, masks, tree))
+        record = {'frame': frame_id, 'multiplicities': multiplicities, 'fixed': fixed,
+                  'candidates': candidates, 'masks': [hex(m) for m in masks], 'tree': tree}
+        put(O / ('frame' + str(frame_id) + '.json'), record)
+        totals.append({'frame': frame_id, 'candidates': len(candidates),
+                       'nodes': len(tree['nodes']), 'covers': len(tree['solutions'])})
+        for answer in tree['solutions']:
+            cover = list(fixed) + [candidates[i] for i in answer]
+            pairs = [pair for block in cover for pair in itertools.combinations(block, 2)]
+            require(len(cover) == 14 and len(pairs) == len(set(pairs)) == 84, 'exact pair cover')
+            require(set(pairs) == {(x, y) for x in range(14) for y in range(x + 1, 14)
+                                   if x // 2 != y // 2}, 'all allowed pairs')
+            require(all(sum(x in block for block in cover) == 4 for x in range(14)), 'point replication')
+            graph = nx.Graph()
+            graph.add_nodes_from(range(28))
+            graph.add_edges_from((x, 14 + j) for j, block in enumerate(cover) for x in block)
+            direct = counts(graph)
+            matcher = nx.algorithms.isomorphism.GraphMatcher(graph, source_graph)
+            require(matcher.is_isomorphic(), 'source isomorphism')
+            mapping = matcher.mapping
+            require(set(mapping) == set(range(28)) and set(mapping.values()) == set(range(28)), 'literal bijection')
+            require(all(graph.has_edge(x, y) == source_graph.has_edge(mapping[x], mapping[y])
+                        for x in range(28) for y in range(28)), 'all784 adjacency comparisons')
+            covers.append({'blocks': cover, 'mapping': [mapping[x] for x in range(28)],
+                           'edge_six_counts': direct})
+    require(len(covers) == 1, 'unique cover')
+    counts(source_graph)
+    put(O / 'cover.json', covers[0])
+
+    damaged = []
+    rest, masks, original = trees[2]
+    def reject(name, edit):
+        bad = copy.deepcopy(original)
+        edit(bad)
+        try:
+            verify_tree(rest, masks, bad)
+        except (ValueError, KeyError, IndexError, TypeError):
+            damaged.append(name)
+        else:
+            raise RuntimeError('damaged certificate accepted: ' + name)
+    reject('missing branch', lambda x: x['nodes'][0]['children'].pop())
+    reject('wrong remainder', lambda x: x['nodes'][1].update(remaining='0x0'))
+    reject('reused child', lambda x: x['nodes'][0]['children'][0].__setitem__(1, 0))
+    reject('false positive', lambda x: x['solutions'].append([]))
+    reject('unused node', lambda x: x['nodes'].append(copy.deepcopy(x['nodes'][-1])))
+    reject('invalid pivot', lambda x: x['nodes'][0].update(pivot=-1))
+    guards = []
+    for mode in ['argument', 'environment']:
+        env = os.environ.copy()
+        cmd = [sys.executable]
+        if mode == 'argument':
+            cmd.append('-O')
+        else:
+            env['PYTHONOPTIMIZE'] = '1'
+        cmd.append(str(W / 'check.py'))
+        r = subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=5)
+        require(r.returncode != 0 and 'Optimized Python is not accepted' in r.stderr, 'optimization guard')
+        (O / ('guard_' + mode + '.stderr')).write_text(r.stderr)
+        guards.append(mode)
+    if a.render:
+        shutil.copy2(W / 'girth_six.tex', O / 'girth_six.tex')
+        for i in [1, 2]:
+            r = subprocess.run(['/opt/homebrew/bin/pdflatex', '-interaction=nonstopmode',
+                                '-halt-on-error', 'girth_six.tex'], cwd=O, capture_output=True,
+                               text=True, timeout=30)
+            (O / ('native' + str(i) + '.stdout')).write_text(r.stdout)
+            (O / ('native' + str(i) + '.stderr')).write_text(r.stderr)
+            require(r.returncode == 0 and not r.stderr, 'native build')
+        log = (O / 'girth_six.log').read_text()
+        require('Overfull' not in log and 'LaTeX Warning:' not in log, 'native content')
+    report = {'status': 'PASS_GIRTH_SIX_ORDER28_CLASSIFICATION', 'frames': totals,
+              'small_exact_cover_systems': systems, 'multigraph_profiles': len(profiles),
+              'new_exact_count_rows': 1, 'new_lower_rows': 0,
+              'girth_six_graph': [28, 4, 6, 24], 'source_id': source['id'],
+              'source_and_constructed_literal_cycle_checks': True,
+              'negative_controls': damaged, 'optimization_guards': guards,
+              'fresh_bindings': len(bindings), 'whole_original_credit': 0,
+              'new_question_credit': 0, 'new_Lean': 0}
+    put(O / 'report.json', report)
+    print(json.dumps(report))
+
+
+if __name__ == '__main__':
+    main()

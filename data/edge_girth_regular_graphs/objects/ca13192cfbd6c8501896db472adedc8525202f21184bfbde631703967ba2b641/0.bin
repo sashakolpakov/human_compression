@@ -1,0 +1,43 @@
+#define main acquired_extension_main
+#include "check_extensions.cpp"
+#undef main
+#include <functional>
+int main(int argc,char**argv){try{
+ require(argc==2,"control ROOTS");RepresentativeIndex roots(argv[1],true);
+ U graphs=0,distances=0,paths=0,rejections=0;
+ for(int code=0;code<1024;code++){
+  Graph g(5);int bit=0;for(int u=0;u<5;u++)for(int v=u+1;v<5;v++,bit++)if((code>>bit)&1)add_edge(g,u,v);
+  bool short_cycle=false;
+  // Independently list every ordered sequence of distinct vertices.
+  vector<int>order{0,1,2,3,4};do{for(int size=3;size<=5;size++){
+   bool cycle=true;for(int j=0;j<size;j++)if(!((g[order[j]]>>order[(j+1)%size])&1))cycle=false;
+   short_cycle|=cycle;
+  }}while(next_permutation(order.begin(),order.end()));
+  require(short_cycle==has_short_cycle(g),"all-five-vertex cycle reference");graphs++;
+  for(int u=0;u<5;u++){
+   array<int,5>d;d.fill(99);d[u]=0;for(int pass=0;pass<5;pass++)for(int a=0;a<5;a++)for(int b=0;b<5;b++)if((g[a]>>b)&1)d[b]=min(d[b],d[a]+1);
+   for(int v=0;v<5;v++)for(int bound=1;bound<=6;bound++){require(distance_at_least(g,u,v,bound)==(d[v]>=bound),"independent distance relaxation");distances++;}
+  }
+ }
+ for(int n:{6,7,8}){
+  Graph g(n);for(int u=0;u<n;u++)add_edge(g,u,(u+1)%n);
+  Boundary b(60);b.g=g;
+  for(int u=0;u<n;u++)for(int v=0;v<n;v++)if((g[u]>>v)&1){
+   int reference=0;vector<int> middle;for(int w=0;w<n;w++)if(w!=u&&w!=v)middle.push_back(w);
+   sort(middle.begin(),middle.end());do{vector<int> seq{u,middle[0],middle[1],middle[2],middle[3],v};bool valid=true;for(int j=0;j<5;j++)if(!((g[seq[j]]>>seq[j+1])&1))valid=false;if(valid)reference++;}while(next_permutation(middle.begin(),middle.end()));
+   // The unused vertices can occur in any order in that permutation.
+   int multiplicity=1;for(int i=2;i<=n-6;i++)multiplicity*=i;
+   require(b.paths(u,v,5,U(1)<<u)==reference/multiplicity,"literal six-cycle path control");paths++;
+  }
+ }
+ const Graph g=roots.graphs.front();auto c=propose_canonical_map(g,true);
+ auto reject=[&](const function<void()>&f){bool caught=false;try{f();}catch(const runtime_error&){caught=true;}require(caught,"damaged literal interface accepted");rejections++;};
+ auto bad=c.lab;bad[0]=bad[1];reject([&]{check_literal_map(g,g,c.lab,bad,true);});
+ vector<int>id(26);iota(id.begin(),id.end(),0);bad=id;swap(bad[0],bad[1]);reject([&]{check_literal_map(g,g,id,bad,true);});
+ Graph damaged=g;remove_edge(damaged,0,13);reject([&]{check_literal_map(g,damaged,id,id,true);});
+ damaged=g;damaged[0]|=1;reject([&]{validate_graph(damaged);});
+ damaged=g;damaged[0]&=~(U(1)<<13);reject([&]{validate_graph(damaged);});
+ RepresentativeIndex empty=roots;empty.lookup.clear();reject([&]{empty.cover(g);});
+ cout<<"{\"status\":\"PASS_LITERAL_INDEPENDENT_CONTROLS\",\"labelled_graphs\":"<<graphs<<",\"distance_comparisons\":"<<distances<<",\"path_comparisons\":"<<paths<<",\"damaged_interfaces\":"<<rejections<<"}\n";
+ return 0;
+}catch(const exception&e){cerr<<e.what()<<'\n';return 1;}}

@@ -1,0 +1,38 @@
+--- accepted_lambda14/root_cover.cpp
++++ lambda12/root_cover.cpp
+@@ -15,7 +15,7 @@
+   }
+   size_t id=it->second;check_literal_map(g,graphs[id],c.lab,canonical[id].lab,true);hits[id]++;
+  }
+- int lambda=14;
++ int lambda=12;
+  void write(const string&name){ofstream out(name);require(bool(out),"target output");out<<graphs.size()<<'\n';for(auto&g:graphs){out<<g.size();for(U row:g)out<<' '<<row;out<<'\n';}require(bool(out),"complete target write");}
+ };
+ array<int,9> canonical_matrix(array<int,9>a){
+@@ -38,13 +38,13 @@
+ };
+ int main(int argc,char**argv){try{
+  require(argc==5,"usage root_cover PATTERNS TARGETS REPORT SECONDS");nauty_check(WORDSIZE,1,26,NAUTYVERSIONID);Search search;search.cap=stod(argv[4]);
+- ifstream in(argv[1]);int lam,count;require(bool(in>>lam>>count)&&lam==14,"target lambda");int delta=27-lam;search.delta=delta;search.targets.lambda=lam;
+- for(int code=0;code<243;code++)for(int u=0;u<=3;u++)for(int v=0;v<=3;v++){
++ ifstream in(argv[1]);int lam,count;require(bool(in>>lam>>count)&&lam==12,"target lambda");int delta=27-lam;search.delta=delta;search.targets.lambda=lam;
++ for(int code=0;code<729;code++)for(int u=0;u<=3;u++)for(int v=0;v<=3;v++){
+   int x=code,total=u+v,left=u*(u-1)/2+v*(v-1)/2,right=(3-u)*(2-u)/2+(3-v)*(2-v)/2;
+-  for(int i=0;i<5;i++){int a=1+x%3;x/=3;total+=a;left+=a*(a-1)/2;right+=(4-a)*(3-a)/2;}
+-  if(total==13)search.allowed_profiles.insert({left,right});
++  for(int i=0;i<6;i++){int a=1+x%3;x/=3;total+=a;left+=a*(a-1)/2;right+=(4-a)*(3-a)/2;}
++  if(total==15&&u+v==3)search.allowed_profiles.insert({left,right});
+  }
+- require(search.allowed_profiles.size()==21,"complete necessary exterior degree pairs");
++ require(search.allowed_profiles.size()==6,"complete necessary exterior degree pairs");
+  std::set<array<int,9>>expected,actual;int literal=0;
+  for(int code=0;code<(1<<18);code++){int n=code,total=0;array<int,9>a;for(int&x:a){x=n%4;n/=4;total+=x;}if(total==delta){literal++;expected.insert(canonical_matrix(a));}}
+  require(count==(int)expected.size(),"all matrix orbits");U products=0;
+@@ -61,6 +61,6 @@
+   require(accumulate(matrix.begin(),matrix.end(),0)==delta&&canonical_matrix(matrix)==matrix&&actual.insert(matrix).second,"exact representative");products+=product;search.g=moore_trees();search.visit(0);require(search.g==moore_trees(),"backtracking restoration");
+   cout<<"MATRIX "<<id<<" PREFIXES "<<search.prefixes<<" MAPS "<<search.profiles<<" TARGETS "<<search.targets.graphs.size()<<'\n'<<flush;
+  }
+- string extra;require(!(in>>extra)&&expected==actual,"complete matrix cover and input");require(products==25925190ULL,"accepted forest product inventory");search.targets.write(argv[2]);
++ string extra;require(!(in>>extra)&&expected==actual,"complete matrix cover and input");require(products==12864538ULL,"accepted forest product inventory");search.targets.write(argv[2]);
+  ofstream out(argv[3]);out<<"{\"status\":\"PASS_COMPLETE_ROOT_COVERAGE\",\"lambda\":"<<lam<<",\"literal_matrices\":"<<literal<<",\"orbits\":"<<count<<",\"normalized_products\":"<<products<<",\"prefix_nodes\":"<<search.prefixes<<",\"girth_balls\":"<<search.girth<<",\"literal_maps\":"<<search.profiles<<",\"root_targets\":"<<search.targets.graphs.size()<<",\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-search.start).count()<<"}\n";require(bool(out),"complete report");return 0;
+  }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

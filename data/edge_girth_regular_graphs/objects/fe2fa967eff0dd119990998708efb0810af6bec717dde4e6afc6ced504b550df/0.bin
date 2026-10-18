@@ -1,0 +1,115 @@
+"""Stable fixed blocks before all cuts, for incremental and saved-CNF equality."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import importlib.util
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('acquired_mixed_formula', HERE/'mixed_required_hexagon_formula.py')
+M = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(M)
+need, pin, acquire, load = M.need, M.pin, M.acquire, M.load
+
+
+class RequiredHexagonFormula(M.RequiredHexagonFormula):
+    def __init__(self, case_ref):
+        self.outer_case_ref = case_ref
+        self.outer_case = json.loads(acquire(case_ref))
+        names = ('mixed_formula_case', 'mixed_formula_program', 'forbidden_result',
+                 'forbidden_acceptance', 'previous_terminal')
+        need(set(self.outer_case) == {'schema', *names}
+             and self.outer_case['schema'] == 'F012_FIXED_STABLE_REQUIRED_HEXAGON_FORMULA_V1',
+             'fixed forbidden formula case')
+        raw = {name: acquire(self.outer_case[name]) for name in names}
+        need(Path(self.outer_case['mixed_formula_program']['path']) == HERE/'mixed_required_hexagon_formula.py',
+             'actual unchanged mixed formula source')
+        super().__init__(self.outer_case['mixed_formula_case'])
+        self.negative_sizing = json.loads(raw['forbidden_result'])
+        self.negative_acceptance = json.loads(raw['forbidden_acceptance'])
+        accepted, sized = self.negative_acceptance, self.negative_sizing
+        need(accepted['status'] == 'ROOT_ACCEPTED_FORBIDDEN_REQUIRED_HEXAGON_SIZING_AND_CUT_VALIDATION'
+             and accepted['result'] == self.outer_case['forbidden_result']
+             and sized['status'] == 'PASS_FORBIDDEN_REQUIRED_HEXAGON_SIZING_AND_CUT_VALIDATION'
+             and sized['inputs']['positive_sizing'] == self.case['sizing_result']
+             and sized['inputs']['positive_acceptance'] == self.case['sizing_acceptance']
+             and sized['inputs']['catalogue'] == self.case['filtered_catalogue']
+             and sized['inherited_inputs']['cuts'] == self.seed_ref
+             and sized['saved_cuts'] == self.sizing['saved_cuts']
+             and accepted['validated_cuts'] == 39071,
+             'same acquired positive formula, predicate and entire old cuts')
+        self.forbidden = self.K.catalogue(self.n, self.base, self.allowed,
+                self.sizing['required_edges'], self.sizing['work_bounds'],
+                lambda cycle: not self.K.mixed_cycle(cycle))
+        statistics = {k:v for k,v in self.forbidden['counts'].items() if not k.startswith('additional_')}
+        need(statistics == sized['catalogue'] == accepted['catalogue'], 'exact forbidden cycle and term counts')
+        for key in ('cycle_catalogue_sha256', 'term_catalogue_sha256'):
+            need(self.forbidden[key] == sized[key] == accepted[key], 'exact forbidden '+key)
+        self.negative_clauses = tuple(tuple(-i for i in term) for term in self.forbidden['terms'])
+        need(self.H.digest_rows(self.negative_clauses) == sized['negative_clause_sha256']
+             == accepted['negative_clause_sha256']
+             and len(self.negative_clauses) == sized['negative_clauses'] == accepted['negative_clauses'] == 8160
+             and sum(map(len,self.negative_clauses)) == sized['negative_literals'] == accepted['negative_literals'] == 31952
+             and sum(not c for c in self.negative_clauses) == sized['empty_negative_clauses']
+             == accepted['empty_negative_clauses'] == 0,
+             'complete direct negative clause sequence')
+        terminal = json.loads(raw['previous_terminal'])
+        need(terminal['status'] == 'INCOMPLETE_MIXED_REQUIRED_HEXAGON_SEARCH_NO_EXCLUSION'
+             and terminal['new_cuts'] == terminal['completed_discovery_rounds'] == terminal['exclusions'] == 0
+             and terminal['retained_cuts'] == 39071 and terminal['inputs_unchanged'] is True,
+             'preserved positive-only timeout, no new evidence assumed')
+        journals = [p for p in terminal['outputs'] if Path(p['path']).name == 'cuts.jsonl']
+        need(len(journals) == 1 and acquire(journals[0]) == acquire(self.seed_ref),
+             'latest timeout journal literally equals accepted old cuts')
+        self.previous_journal = journals[0]
+
+    def build(self, n, base, allowed, degree=None, cuts=()):
+        need((n, frozenset(base), frozenset(allowed), degree) ==
+             (self.n, self.base, self.allowed, 4), 'unchanged exact graph domain')
+        cuts = list(cuts)
+        need(cuts[:len(self.seeds)] == self.seeds, 'entire acquired seed sequence retained first')
+        # Every fixed block precedes every cut, including future incremental cuts.
+        formula, variables = self.C.build(n, base, allowed, degree=degree, cuts=())
+        before = formula.variables, len(formula.clauses)
+        self.H.append_existence(formula, variables, self.cat)
+        counts = self.cat['counts']
+        need((formula.variables-before[0], len(formula.clauses)-before[1]) ==
+             (counts['additional_gate_variables'], counts['additional_total_clauses']),
+             'exact signed positive-gate and eight-existence-clause size')
+        order = self.forbidden['edge_order']
+        need(tuple(variables[e] for e in order) == tuple(range(1,len(order)+1)),
+             'actual edge-variable indices equal acquired optional-edge numbering')
+        before = formula.variables, len(formula.clauses)
+        for clause in self.negative_clauses:
+            formula.clause(clause)
+        need((formula.variables-before[0], len(formula.clauses)-before[1]) == (0,8160),
+             'append all necessary negatives without gates or omitted clauses')
+        seen = set()
+        for witness in cuts:
+            edges = self.C.witness_edges(witness, n, self.base, self.allowed)
+            need(edges not in seen, 'distinct valid literal cut sequence')
+            seen.add(edges)
+            formula.clause([-variables[e] for e in edges])
+        return formula, variables
+
+    def unchanged(self):
+        super().unchanged()
+        acquire(self.outer_case_ref)
+        for name, ref in self.outer_case.items():
+            if name != 'schema':
+                acquire(ref)
+        acquire(self.previous_journal)
+
+    def context(self):
+        value = super().context()
+        value.update(formula_case=self.outer_case_ref,
+            mixed_formula_case=self.outer_case['mixed_formula_case'],
+            forbidden_sizing_acceptance=self.outer_case['forbidden_acceptance'],
+            forbidden_cycle_sha256=self.forbidden['cycle_catalogue_sha256'],
+            forbidden_term_sha256=self.forbidden['term_catalogue_sha256'],
+            negative_clause_sha256=self.negative_sizing['negative_clause_sha256'],
+            negative_clauses=8160, negative_literals=31952,
+            formula_order='original base; mixed positive gates and eight ORs;8160 direct forbidden-cycle clauses;all literal cuts')
+        return value

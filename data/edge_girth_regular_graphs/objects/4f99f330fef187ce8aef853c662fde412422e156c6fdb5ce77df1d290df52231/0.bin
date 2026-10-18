@@ -1,0 +1,118 @@
+"""Complete exact covers, with a literal branching certificate."""
+from itertools import combinations
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def frames():
+    result = []
+    for a, b, c in [(3, 0, 0), (2, 1, 0), (1, 1, 1)]:
+        blocks = [{0} for _ in range(4)]
+        group = 1
+        for u, v, multiplicity in [(0, 1, a), (2, 3, a),
+                                   (0, 2, b), (1, 3, b),
+                                   (0, 3, c), (1, 2, c)]:
+            for _ in range(multiplicity):
+                blocks[u].add(2 * group)
+                blocks[v].add(2 * group + 1)
+                group += 1
+        require(group == 7 and all(len(x) == 4 for x in blocks), 'frame')
+        result.append(((a, b, c), [tuple(sorted(x)) for x in blocks]))
+    return result
+
+
+def instance(blocks):
+    pairs = [(x, y) for x in range(14) for y in range(x + 1, 14)
+             if x // 2 != y // 2]
+    position = {p: i for i, p in enumerate(pairs)}
+
+    def mask(block):
+        return sum(1 << position[p] for p in combinations(block, 2))
+
+    used = 0
+    for block in blocks:
+        m = mask(block)
+        require(not (used & m), 'repeated fixed pair')
+        used |= m
+    candidates = []
+    masks = []
+    for block in combinations(range(1, 14), 4):
+        if len({x // 2 for x in block}) < 4:
+            continue
+        m = mask(block)
+        if not m & used:
+            candidates.append(block)
+            masks.append(m)
+    return ((1 << len(pairs)) - 1) ^ used, candidates, masks
+
+
+def search(remaining, masks):
+    require(type(remaining) is int and remaining >= 0, 'universe')
+    require(all(type(m) is int and m > 0 and (m & remaining) == m
+                for m in masks), 'candidate masks')
+    require(len(set(masks)) == len(masks), 'duplicate masks')
+    nodes = []
+    solutions = []
+
+    def visit(rest, picked):
+        index = len(nodes)
+        node = {'remaining': hex(rest), 'pivot': None, 'children': []}
+        nodes.append(node)
+        if not rest:
+            solutions.append(picked)
+            return index
+        best = None
+        bits = rest
+        while bits:
+            one = bits & -bits
+            bits -= one
+            choices = [i for i, m in enumerate(masks)
+                       if m & one and (m & rest) == m]
+            if best is None or len(choices) < len(best):
+                best = choices
+                node['pivot'] = one.bit_length() - 1
+            if len(best) <= 1:
+                break
+        for i in best:
+            child = visit(rest ^ masks[i], picked + [i])
+            node['children'].append([i, child])
+        return index
+
+    visit(remaining, [])
+    return {'nodes': nodes, 'solutions': solutions}
+
+
+def verify_tree(remaining, masks, certificate):
+    """Check every branch locally; no search heuristic is trusted."""
+    nodes = certificate['nodes']
+    seen = set()
+    solutions = []
+
+    def visit(index, rest, chosen):
+        require(type(index) is int and 0 <= index < len(nodes), 'node index')
+        require(index not in seen, 'reused tree node')
+        seen.add(index)
+        node = nodes[index]
+        require(node['remaining'] == hex(rest), 'remaining pairs')
+        if rest == 0:
+            require(node['pivot'] is None and node['children'] == [], 'leaf')
+            solutions.append(chosen)
+            return
+        bit = node['pivot']
+        require(type(bit) is int and 0 <= bit < rest.bit_length()
+                and (rest >> bit) & 1, 'uncovered pivot')
+        eligible = {i for i, m in enumerate(masks)
+                    if (m >> bit) & 1 and (m | rest) == rest}
+        children = node['children']
+        require(len(children) == len(eligible)
+                and {x[0] for x in children} == eligible, 'all branches')
+        for i, child in children:
+            visit(child, rest - masks[i], chosen + [i])
+
+    visit(0, remaining, [])
+    require(seen == set(range(len(nodes))), 'unused tree nodes')
+    require(solutions == certificate['solutions'], 'literal solutions')
+    return solutions

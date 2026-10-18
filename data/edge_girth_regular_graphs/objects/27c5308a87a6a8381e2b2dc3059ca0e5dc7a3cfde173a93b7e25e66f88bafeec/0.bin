@@ -1,0 +1,131 @@
+"""Exact candidate-base coverage by labelled degree counts and canonization.
+
+The candidate provider supplies graphs only; its completeness is not assumed.
+This file has no graph-package dependency.
+"""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+from functools import lru_cache
+from itertools import combinations
+from collections import Counter
+from math import factorial
+import argparse, json, time
+
+def need(value, message):
+    if not value:
+        raise ValueError(message)
+
+@lru_cache(None)
+def labelled_count(ds):
+    if not ds:
+        return 1
+    if min(ds)<0 or max(ds)>=len(ds) or sum(ds)%2:
+        return 0
+    d, tail=ds[0],ds[1:]
+    result=0
+    for selected in combinations(range(len(tail)),d):
+        new=list(tail)
+        for i in selected:
+            new[i]-=1
+        if min(new,default=0)>=0:
+            result+=labelled_count(tuple(sorted(new,reverse=True)))
+    return result
+
+def connected_canonical(adj):
+    """Return a canonical adjacency word and the exact automorphism order."""
+    n=len(adj)
+    if all(row.bit_count()==n-1 for row in adj):
+        return (n,(1<<(n*(n-1)//2))-1),factorial(n),1
+    best=None; multiplicity=0; nodes=0
+    def refine(part):
+        while True:
+            masks=[sum(1<<v for v in cell) for cell in part]
+            new=[]
+            for cell in part:
+                groups={}
+                for v in cell:
+                    key=tuple((adj[v]&mask).bit_count() for mask in masks)
+                    groups.setdefault(key,[]).append(v)
+                new.extend(tuple(groups[key]) for key in sorted(groups))
+            new=tuple(new)
+            if len(new)==len(part):
+                return new
+            part=new
+    def visit(part):
+        nonlocal best,multiplicity,nodes
+        nodes+=1
+        part=refine(part)
+        candidates=[(len(cell),i) for i,cell in enumerate(part) if len(cell)>1]
+        if not candidates:
+            order=[cell[0] for cell in part]; word=0
+            for b in range(n):
+                for a in range(b):
+                    if adj[order[a]]>>order[b]&1:
+                        word|=1<<(b*(b-1)//2+a)
+            if best is None or word<best:
+                best=word;multiplicity=1
+            elif word==best:
+                multiplicity+=1
+            return
+        _,i=min(candidates);cell=part[i]
+        for v in cell:
+            visit(part[:i]+((v,),tuple(w for w in cell if w!=v))+part[i+1:])
+    visit((tuple(range(n)),))
+    need(best is not None and multiplicity>0,'empty canonical search')
+    return (n,best),multiplicity,nodes
+
+def canonical(adj):
+    """Components are independent; equal components may be permuted."""
+    remaining=set(range(len(adj)));parts=[];aut=1;nodes=0
+    while remaining:
+        reached={min(remaining)};queue=list(reached)
+        for v in queue:
+            for w in sorted(remaining-reached):
+                if adj[v]>>w&1:
+                    reached.add(w);queue.append(w)
+        remaining-=reached;vertices=sorted(reached)
+        sub=[sum(1<<j for j,w in enumerate(vertices) if adj[v]>>w&1) for v in vertices]
+        code,count,visited=connected_canonical(sub)
+        parts.append(code);aut*=count;nodes+=visited
+    for count in Counter(parts).values():
+        aut*=factorial(count)
+    return tuple(sorted(parts)),aut,nodes
+
+def read_bases(path):
+    values=iter(map(int,path.read_text().split()));total=next(values);result=[]
+    for _ in range(total):
+        n=next(values);need(n in (10,12),'base order')
+        es=[(next(values),next(values)) for _ in range(5*n//2)]
+        need(len(set(es))==len(es) and all(0<=a<b<n for a,b in es),'base edges')
+        need(es==sorted(es),'literal edge order')
+        adj=[0]*n
+        for a,b in es:
+            adj[a]|=1<<b;adj[b]|=1<<a
+        need(all(row.bit_count()==5 for row in adj),'base degree')
+        result.append(adj)
+    need(next(values,None) is None,'trailing input')
+    return result
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('input',type=Path);ap.add_argument('output',type=Path)
+    args=ap.parse_args();start=time.monotonic();graphs=read_bases(args.input)
+    seen=set();rows=[];mass=0
+    for i,adj in enumerate(graphs):
+        code,aut,nodes=canonical(adj)
+        need(code not in seen,'duplicate isomorphism class');seen.add(code)
+        need(factorial(len(adj))%aut==0,'automorphism divisibility')
+        mass+=factorial(len(adj))//aut
+        rows.append(dict(index=i,canonical=code,automorphisms=aut,search_nodes=nodes))
+        if i%1000==0:
+            print(json.dumps(dict(through=i,seconds=time.monotonic()-start)),flush=True)
+    n=len(graphs[0]);need(all(len(g)==n for g in graphs),'mixed base orders')
+    expected=labelled_count((5,)*n);need(mass==expected,'incomplete labelled coverage')
+    result=dict(status='PASS_EXACT_BASE_COVERAGE',order=n,bases=len(graphs),
+                labelled_count=expected,orbit_mass=mass,rows=rows,seconds=time.monotonic()-start)
+    args.output.write_text(json.dumps(result,indent=2)+'\n')
+    print(json.dumps({k:v for k,v in result.items() if k!='rows'}),flush=True)
+
+if __name__=='__main__':
+    main()

@@ -1,0 +1,117 @@
+// Complete order33 completion: exterior seven vertices are independent and quartic.
+#include "literal_graph.h"
+using namespace std;
+struct Side {
+ const Graph&g;vector<int>items,blocks;vector<vector<int>> good;array<unsigned,9>forbidden{};int target[3][3]{},used[3][3]{};U pairs=0,nodes=0,leaves=0;int final_a=-1;
+ Side(const Graph&graph):g(graph){}
+ static int pair_bit(int a,int b){if(a>b)swap(a,b);require(a!=b,"distinct side leaves");return a*(17-a)/2+b-a-1;}
+ void visit(size_t position,int previous){
+  nodes++;if(blocks.size()>7||blocks.size()+items.size()-position<7)return;
+  int at_least_two=0,three=0;for(int mask:blocks){at_least_two+=weight(mask)>=2;three+=weight(mask)==3;}
+  if(three>final_a||at_least_two>7-final_a)return;
+  if(position==items.size()){
+   if(blocks.size()!=7)return;leaves++;for(int i=0;i<3;i++)for(int j=i+1;j<3;j++)if(used[i][j]!=target[i][j])return;good.push_back(blocks);return;
+  }
+  int x=items[position],branch=x/3;
+  size_t lower=position&&items[position-1]==x?previous+1:0;
+  for(size_t at=lower;at<blocks.size();at++){
+   unsigned mask=blocks[at];if(mask&forbidden[x])continue;U added=0;bool allowed=true;
+   for(int y=0;y<9;y++)if((mask>>y)&1){
+    int i=min(branch,y/3),j=max(branch,y/3);U bit=U(1)<<pair_bit(x,y);
+    if((pairs&bit)||used[i][j]>=target[i][j]){allowed=false;break;}added|=bit;
+   }
+   if(!allowed)continue;
+   blocks[at]|=1<<x;pairs|=added;for(int y=0;y<9;y++)if((mask>>y)&1)used[min(branch,y/3)][max(branch,y/3)]++;
+   visit(position+1,at);
+   for(int y=0;y<9;y++)if((mask>>y)&1)used[min(branch,y/3)][max(branch,y/3)]--;blocks[at]=mask;pairs&=~added;
+  }
+  int new_index=blocks.size();blocks.push_back(1<<x);visit(position+1,new_index);blocks.pop_back();
+ }
+ void run(int side){
+  int base=side?17:4,opposite=side?4:17;items.clear();blocks.clear();good.clear();pairs=0;
+  for(int x=0;x<9;x++){
+   int deficit=4-weight(g[base+x]);require(deficit>=0&&deficit<=3,"side degree");
+   for(int k=0;k<deficit;k++)items.push_back(x);
+   forbidden[x]=0;for(int y=0;y<9;y++)if(x/3==y/3||(g[base+x]&g[base+y]))forbidden[x]|=1<<y;
+  }
+  require(items.size()==14,"all side incidences");
+  for(int i=0;i<3;i++)for(int j=i+1;j<3;j++){
+   int k=3-i-j,required=0,current=0;U other=U(511)<<opposite,li=U(7)<<(base+3*i),lj=U(7)<<(base+3*j);
+   for(int x=0;x<3;x++)required+=weight(g[base+3*k+x]&other);
+   for(U row:g)current+=weight(row&li)*weight(row&lj);
+   target[i][j]=required-current;used[i][j]=0;if(target[i][j]<0)return;
+  }
+  final_a=target[0][1]+target[0][2]+target[1][2]-7;require(final_a>=0&&final_a<=3,"seven-vertex profile passed root guard");
+  visit(0,-1);require(blocks.empty()&&pairs==0,"side restoration");
+ }
+};
+
+
+struct Coupled {
+ const Graph&base;Graph g;vector<int>items;array<unsigned,7>right_masks{};array<int,7>need{};int target[3][3]{},used[3][3]{};U nodes=0,complete=0,mismatch=0,positive=0,pruned=0;vector<Graph>positives;
+ bool possible=true;
+ explicit Coupled(const Graph&b):base(b){
+  for(int x=0;x<9;x++)for(int k=0;k<4-weight(base[17+x]);k++)items.push_back(x);
+  require(items.size()==14,"fourteen right incidences");
+  for(int i=0;i<3;i++)for(int j=i+1;j<3;j++){
+   int k=3-i-j,required=0,current=0;U opposite=U(511)<<4,li=U(7)<<(17+3*i),lj=U(7)<<(17+3*j);
+   for(int x=0;x<3;x++)required+=weight(base[17+3*k+x]&opposite);
+   for(U row:base)current+=weight(row&li)*weight(row&lj);
+   target[i][j]=required-current;if(target[i][j]<0)possible=false;
+  }
+ }
+ int paths(int u,int v,int remaining,U seen){
+  if(remaining==1)return (g[u]>>v)&1;
+  U bits=g[u]&~seen&~(U(1)<<v);int result=0;
+  while(bits){int w=first(bits);bits&=bits-1;result+=paths(w,v,remaining-1,seen|(U(1)<<w));if(result>13)return result;}
+  return result;
+ }
+ void visit(size_t at,int previous){
+  nodes++;
+  if(at==items.size()){
+   for(int x:need)require(x==0,"all exterior capacities filled");
+   for(int i=0;i<3;i++)for(int j=i+1;j<3;j++)if(used[i][j]!=target[i][j])return;
+   for(U row:g)require(weight(row)==4,"quartic completion");require(!has_short_cycle(g),"girth completion");complete++;
+   for(int u=0;u<(int)g.size();u++){U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;if(u<v&&paths(u,v,5,U(1)<<u)!=13){mismatch++;return;}}}
+   positive++;positives.push_back(g);return;
+  }
+  int x=items[at],branch=x/3;int lower=at&&items[at-1]==x?previous+1:0;
+  for(int j=lower;j<7;j++)if(need[j]){
+   unsigned old=right_masks[j];bool good=true;
+   for(int y=0;y<9;y++)if((old>>y)&1){int i=min(branch,y/3),k=max(branch,y/3);if(i==k||used[i][k]>=target[i][k]){good=false;break;}}
+   if(!good||!distance_at_least(g,17+x,26+j,5)){pruned++;continue;}
+   add_edge(g,17+x,26+j);need[j]--;right_masks[j]|=1<<x;
+   for(int y=0;y<9;y++)if((old>>y)&1)used[min(branch,y/3)][max(branch,y/3)]++;
+   visit(at+1,j);
+   for(int y=0;y<9;y++)if((old>>y)&1)used[min(branch,y/3)][max(branch,y/3)]--;
+   right_masks[j]=old;need[j]++;remove_edge(g,17+x,26+j);
+  }
+ }
+ void run(const vector<int>&left){
+  if(!possible)return;require(left.size()==7,"seven exterior vertices");g=base;g.resize(33);right_masks.fill(0);
+  for(int j=0;j<7;j++){
+   require(weight(left[j])>=1&&weight(left[j])<=3,"nonempty proper side block");need[j]=4-weight(left[j]);
+   for(int x=0;x<9;x++)if((left[j]>>x)&1)add_edge(g,4+x,26+j);
+  }
+  require(!has_short_cycle(g),"left partition girth");Graph before=g;visit(0,-1);require(g==before,"coupled restoration");
+  for(int i=0;i<3;i++)for(int j=i+1;j<3;j++)require(used[i][j]==0,"count restoration");
+ }
+};
+int main(int argc,char**argv){try{
+ require(argc==5,"usage coupled_cover ROOTS POSITIVES REPORT SECONDS");auto start=chrono::steady_clock::now();double cap=stod(argv[4]);
+ ifstream in(argv[1]);size_t count;require(bool(in>>count)&&count>0&&count<1000000,"complete root count");
+ U side_nodes=0,side_leaves=0,side_parts=0,roots_with_side=0,coupled_nodes=0,complete=0,mismatch=0,positive=0,pruned=0;vector<Graph>positives;
+ for(size_t z=0;z<count;z++){
+  require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");
+  int n;require(bool(in>>n)&&n==26,"rootorder");Graph g(n);for(U&x:g)require(bool(in>>x),"rootrow");validate_root(g,13);
+  Side side(g);side.run(0);side_nodes+=side.nodes;side_leaves+=side.leaves;side_parts+=side.good.size();
+  if(!side.good.empty()){
+   roots_with_side++;Coupled coupled(g);for(const auto&left:side.good)coupled.run(left);
+   coupled_nodes+=coupled.nodes;complete+=coupled.complete;mismatch+=coupled.mismatch;positive+=coupled.positive;pruned+=coupled.pruned;
+   positives.insert(positives.end(),coupled.positives.begin(),coupled.positives.end());
+  }
+  if(z%1000==0)cout<<"ROOT "<<z<<" SIDES "<<side_parts<<" NODES "<<coupled_nodes<<" COMPLETE "<<complete<<" POSITIVES "<<positive<<'\n'<<flush;
+ }
+ string extra;require(!(in>>extra),"complete root input");ofstream output(argv[2]);require(bool(output),"positive output");output<<positives.size()<<'\n';for(auto&g:positives){output<<g.size();for(U row:g)output<<' '<<row;output<<'\n';}require(bool(output),"complete positive output");
+ ofstream report(argv[3]);require(bool(report),"report output");report<<"{\"status\":\"PASS_COMPLETE_ORDER33_COUPLED_COVERAGE\",\"root_representatives\":"<<count<<",\"side_nodes\":"<<side_nodes<<",\"side_leaves\":"<<side_leaves<<",\"side_partitions\":"<<side_parts<<",\"roots_with_side\":"<<roots_with_side<<",\"coupled_nodes\":"<<coupled_nodes<<",\"pruned\":"<<pruned<<",\"complete_graphs\":"<<complete<<",\"mismatches\":"<<mismatch<<",\"positive_graphs\":"<<positive<<",\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-start).count()<<"}\n";require(bool(report),"complete report");return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

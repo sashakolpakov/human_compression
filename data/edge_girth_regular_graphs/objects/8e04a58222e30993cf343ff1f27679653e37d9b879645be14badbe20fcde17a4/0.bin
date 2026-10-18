@@ -1,0 +1,87 @@
+import itertools,collections,math,sys,os
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise RuntimeError('Optimized Python is not accepted')
+def need(x,m):
+    if not x:raise RuntimeError(m)
+def edge(G,u,v):G[u].add(v);G[v].add(u)
+def tree():
+    G=[set()for _ in range(26)];edge(G,0,13)
+    for b in (0,13):
+        for i in range(3):
+            edge(G,b,b+1+i)
+            for x in range(3):edge(G,b+1+i,b+4+3*i+x)
+    return G
+def patterns():
+    P=tuple(itertools.permutations(range(3)));seen=set();reps=[]
+    for x in itertools.product(range(4),repeat=9):
+        if sum(x)!=4 or x in seen:continue
+        orbit=set()
+        for a in P:
+            for b in P:
+                orbit.add(tuple(x[3*a[i]+b[j]]for i in range(3)for j in range(3)))
+                orbit.add(tuple(x[3*a[j]+b[i]]for i in range(3)for j in range(3)))
+        seen|=orbit;reps.append(min(orbit))
+    need(len(seen)==486,'complete deficit matrices');answer=[]
+    for x in sorted(reps):
+        par=list(range(6));forest=[]
+        def find(i):
+            while par[i]!=i:i=par[i]
+            return i
+        for i,j in itertools.product(range(3),repeat=2):
+            if x[3*i+j]==0 and find(i)!=find(j+3):par[find(i)]=find(j+3);forest.append((i,j))
+        order=forest+sorted([q for q in itertools.product(range(3),repeat=2)if q not in forest],key=lambda q:([6,18,9,1][x[3*q[0]+q[1]]],q))
+        blocks=[]
+        for i,j in order:
+            d=x[3*i+j]
+            opts=((0,1,2),)if (i,j)in forest else tuple(q for q in itertools.product(range(-1,3),repeat=3)if sum(z<0 for z in q)==d and len([z for z in q if z>=0])==len(set(z for z in q if z>=0)))
+            blocks.append((i,j,opts))
+        answer.append((x,blocks))
+    return answer
+def extend(G,B,index):
+    i,j,options=B;H=[s.copy()for s in G]
+    for u,v in enumerate(options[index]):
+        if v>=0:edge(H,4+3*i+u,17+3*j+v)
+    return H
+def four_cycle(G):
+    for u in range(len(G)):
+        for v in range(u):
+            common=sorted(G[u]&G[v])
+            if len(common)>1:return [u,common[0],v,common[1]]
+    return None
+def short_cycle(G):
+    for root in range(len(G)):
+        paths={root:[root]};Q=collections.deque([root])
+        while Q:
+            u=Q.popleft();p=paths[u]
+            if len(p)>3:continue
+            for v in sorted(G[u]):
+                if len(p)>1 and p[-2]==v:continue
+                if v not in paths:
+                    paths[v]=p+[v];Q.append(v);continue
+                q=paths[v];i=0
+                while i<min(len(p),len(q))and p[i]==q[i]:i+=1
+                cycle=p[i-1:]+list(reversed(q[i:]))
+                if valid_cycle(G,cycle):return cycle
+    return None
+def valid_cycle(G,p):
+    return 3<=len(p)<=5 and len(p)==len(set(p))and all(type(x)is int and 0<=x<len(G)for x in p)and all(p[(i+1)%len(p)]in G[p[i]]for i in range(len(p)))
+def profile(G,base):return sorted(4-len(G[u])for u in range(base,base+9)if len(G[u])<4)
+def partitions(items):
+    blocks=[]
+    def go(i):
+        if i==len(items):yield tuple(tuple(b)for b in blocks);return
+        u=items[i]
+        for B in blocks:
+            if len(B)<4 and u not in B:B.append(u);yield from go(i+1);B.pop()
+        blocks.append([u]);yield from go(i+1);blocks.pop()
+    yield from go(0)
+def attach(G,groups):
+    H=[s.copy()for s in G]+[set()for _ in groups]
+    for i,B in enumerate(groups):
+        for u in B:edge(H,26+i,u)
+    return H
+def pair_counts(G,side,i,j):
+    base=4 if side==0 else 17;other=17 if side==0 else 4;k=3-i-j
+    Li=set(range(base+3*i,base+3*i+3));Lj=set(range(base+3*j,base+3*j+3))
+    actual=sum(len(s&Li)*len(s&Lj)for s in G)
+    required=sum(len(G[u]&set(range(other,other+9)))for u in range(base+3*k,base+3*k+3))
+    return actual,required

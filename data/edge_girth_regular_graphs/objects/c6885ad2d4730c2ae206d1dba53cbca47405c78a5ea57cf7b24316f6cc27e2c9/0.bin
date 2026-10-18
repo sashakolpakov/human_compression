@@ -1,0 +1,101 @@
+"""Independent integer deficit coverage and seven-incidence capacities.
+
+Diagnostic representatives supply targets for literal maps, never completeness.
+"""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('optimized Python is not a verification mode')
+from pathlib import Path
+import argparse, hashlib, itertools, json, math
+
+def need(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+def compositions(total, length, cap):
+    if length == 0:
+        if total == 0:
+            yield ()
+        return
+    for head in range(max(0,total-cap*(length-1)),min(cap,total)+1):
+        for tail in compositions(total-head,length-1,cap):
+            yield (head,)+tail
+
+def matrix_orbit(matrix):
+    # Explicit actual automorphisms of the two rooted branch triples.
+    result=set()
+    for rows in itertools.permutations(range(3)):
+        for cols in itertools.permutations(range(3)):
+            t=tuple(matrix[3*rows[i]+cols[j]] for i in range(3) for j in range(3))
+            result.add(t)
+            result.add(tuple(t[3*j+i] for i in range(3) for j in range(3)))
+    return result
+
+def profile_capacity(profile):
+    items=[i for i,count in enumerate(profile) for _ in range(count)]
+    best=0;leaves=0
+    def visit(position,blocks,pairs,value):
+        nonlocal best,leaves
+        if position==len(items):
+            best=max(best,value);leaves+=1;return
+        x=items[position]
+        for index,block in enumerate(blocks):
+            if x in block or len(block)==3:continue
+            added={tuple(sorted((x,y))) for y in block}
+            if added & pairs:continue
+            following=blocks.copy();following[index]=block|{x}
+            visit(position+1,following,pairs|added,value+len(block))
+        visit(position+1,blocks+[{x}],pairs,value)
+    visit(0,[],set(),0)
+    return best,leaves
+
+def build(source,out,targets=False):
+    out.mkdir()
+    all_matrices=set(compositions(7,9,3));covered=set();patterns=[]
+    for matrix in sorted(all_matrices):
+        if matrix in covered:continue
+        orbit=matrix_orbit(matrix)
+        need(orbit<=all_matrices and not orbit&covered,'Disjoint exact matrix orbits')
+        need(matrix==min(orbit),'Canonical orbit representative')
+        covered|=orbit
+        components=[{v} for v in range(6)];forest=[]
+        for i,j in itertools.product(range(3),repeat=2):
+            if matrix[3*i+j]!=0:continue
+            left=next(c for c in components if i in c);right=next(c for c in components if 3+j in c)
+            if left!=right:
+                forest.append((i,j));components.remove(left);components.remove(right);components.append(left|right)
+        # Every remaining full-matching edge has endpoints in one forest component.
+        for i,j in itertools.product(range(3),repeat=2):
+            if matrix[3*i+j]==0:need(any({i,3+j}<=c for c in components),'Spanning full-edge forest')
+        order=forest+sorted([p for p in itertools.product(range(3),repeat=2) if p not in forest],key=lambda p:([6,18,9,1][matrix[3*p[0]+p[1]]],p))
+        blocks=[dict(i=i,j=j,deficit=matrix[3*i+j],forest=(i,j)in forest) for i,j in order]
+        patterns.append(dict(deficit_matrix=matrix,orbit_size=len(orbit),blocks=blocks,normalized_cases=math.prod(1 if b['forest'] else [6,18,9,1][b['deficit']] for b in blocks)))
+    need(covered==all_matrices,'Complete deficit matrix coverage')
+    profiles=sorted({tuple(sorted(x for x in values if x)) for values in compositions(7,9,3)})
+    capacities=[]
+    for profile in profiles:
+        capacity,leaves=profile_capacity(profile)
+        capacities.append(dict(profile=profile,capacity=capacity,required=(21-sum(x*x for x in profile))//2,partition_leaves=leaves))
+    expected={(1,1,1,1,1,1,1):6,(1,1,1,1,1,2):6,(1,1,1,1,3):6,(1,1,1,2,2):6,(1,1,2,3):4,(1,2,2,2):5,(1,3,3):3,(2,2,3):3}
+    need({tuple(c['profile']):c['capacity'] for c in capacities}==expected,'Independent exact capacity maxima')
+    names=['root_representatives.json','joined_representatives.json'] if targets else ['canonical20.json','joined_classes20.json']
+    raw=[json.loads((source/name).read_text()) for name in names]
+    # The portable route reads adjacency-only candidate targets.
+    root_graphs,joined_graphs=raw if targets else [[r['adj'] for r in data['classes']] for data in raw]
+    roots=root_graphs;joined=joined_graphs
+    (out/'root_representatives.json').write_text(json.dumps(root_graphs,separators=(',',':'))+'\n')
+    (out/'joined_representatives.json').write_text(json.dumps(joined_graphs,separators=(',',':'))+'\n')
+    for name,graphs in [('root_representatives',root_graphs),('joined_representatives',joined_graphs)]:
+        (out/(name+'.txt')).write_text(str(len(graphs))+'\n'+'\n'.join(str(len(g))+' '+' '.join(map(str,g)) for g in graphs)+'\n')
+    (out/'patterns.json').write_text(json.dumps(patterns,indent=2)+'\n')
+    lines=[str(len(patterns))]
+    for pattern in patterns:
+        lines.append('9');lines.extend(f"{b['i']} {b['j']} {b['deficit']} {int(b['forest'])}" for b in pattern['blocks'])
+    (out/'patterns.txt').write_text('\n'.join(lines)+'\n')
+    (out/'capacities.json').write_text(json.dumps(capacities,indent=2)+'\n')
+    report=dict(status='PASS_INDEPENDENT_DEFICIT_AND_CAPACITY_ENUMERATION',literal_matrices=len(all_matrices),matrix_orbits=len(patterns),normalized_products=sum(p['normalized_cases'] for p in patterns),capacity_profiles=len(capacities),root_map_targets=len(roots),joined_map_targets=len(joined),targets_are_not_completeness_premises=True,inputs=[dict(path=str(p.resolve()),bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in [source/name for name in names]])
+    need((report['literal_matrices'],report['matrix_orbits'],report['normalized_products'])==(4950,95,1415940318),'Independent inventory agreement')
+    (out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser();mode=parser.add_mutually_exclusive_group(required=True);mode.add_argument('--diagnostic',type=Path);mode.add_argument('--targets',type=Path);parser.add_argument('--out',type=Path,required=True);args=parser.parse_args();build(args.targets or args.diagnostic,args.out,bool(args.targets))

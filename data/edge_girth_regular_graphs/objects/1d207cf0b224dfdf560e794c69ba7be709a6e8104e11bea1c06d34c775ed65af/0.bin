@@ -1,0 +1,145 @@
+"""Verify the complete finite proof without the generator or nauty."""
+import json
+from pathlib import Path
+import sys
+import time
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def verify(records, k):
+    require(k in (4, 6), "supported certificate degree")
+    n = k * k + 4
+    out = n - 3
+    leaf = k + 1
+    colours = [0] + [1] * k + [2] * (k * (k - 1)) + [3] * 3
+    children = [[] for _ in records]
+    roots = {}
+    visits = [0] * 5
+    reused = 0
+    terminals = []
+    expected_edges = 0
+    initial = []
+    for frame in range(5):
+        adj = [0] * n
+        def add(u, v):
+            adj[u] |= 1 << v
+            adj[v] |= 1 << u
+        for branch in range(k):
+            add(0, branch + 1)
+            for j in range(k - 1):
+                add(branch + 1, leaf + (k - 1) * branch + j)
+            for p in range(3):
+                if frame == 4 and branch == 0:
+                    j = 0
+                elif frame != 4 and branch < frame:
+                    j = int(p == branch)
+                else:
+                    j = p
+                add(out + p, leaf + (k - 1) * branch + j)
+        initial.append(tuple(adj))
+    for index, row in enumerate(records):
+        frame = row['frame']
+        require(type(frame) is int and 0 <= frame < 5, 'frame')
+        require(row['node'] == visits[frame], 'all local node indices')
+        visits[frame] += 1
+        adj = row['adjacency']
+        require(len(adj) == n and all(type(x) is int and 0 <= x < (1 << n) for x in adj), 'adjacency integers')
+        require(all((adj[x] & initial[frame][x]) == initial[frame][x]
+                    and not (adj[x] >> x & 1) and adj[x].bit_count() <= k for x in range(n)), 'seed and degrees')
+        for x in range(n):
+            if not leaf <= x < out:
+                require(adj[x] == initial[frame][x], 'only leaves change')
+            for y in range(x + 1, n):
+                require((adj[x] >> y & 1) == (adj[y] >> x & 1), 'undirected')
+                common = (adj[x] & adj[y]).bit_count()
+                require(common <= 1 and (not (adj[x] >> y & 1) or common == 0), 'girth at least5')
+        edges = sum(x.bit_count() for x in adj) // 2
+        require(row['edge_count'] == edges, 'edge count')
+        parent = row['parent']
+        if parent is None:
+            require(frame not in roots and tuple(adj) == initial[frame], 'one exact root')
+            roots[frame] = index
+        else:
+            require(type(parent) is int and 0 <= parent < index, 'parent index')
+            require(records[parent]['frame'] == frame and records[parent]['edge_count'] < edges, 'strict edge level')
+            children[parent].append(index)
+    require(set(roots) == set(range(5)), 'all five roots')
+
+    for index, row in enumerate(records):
+        adj = row['adjacency']
+        previous = row['previous']
+        if previous is not None:
+            require(type(previous) is int and 0 <= previous < index, 'earlier reuse')
+            old = records[previous]
+            require(old['frame'] == row['frame'] and old['edge_count'] == row['edge_count'], 'same level and frame')
+            p = row['permutation']
+            require(len(p) == n and all(type(x) is int for x in p) and set(p) == set(range(n)), 'reuse permutation')
+            require(all(colours[x] == colours[p[x]] for x in range(n)), 'reuse colours')
+            require(all(sum(1 << p[y] for y in range(n) if adj[x] >> y & 1) == old['adjacency'][p[x]]
+                        for x in range(n)), 'literal reuse adjacency')
+            require(children[index] == [], 'reuse has no fresh children')
+            reused += 1
+            continue
+        degrees = [x.bit_count() for x in adj]
+        selected = None
+        best = n + 1
+        dead = False
+        for v in range(leaf, out):
+            need = k - degrees[v]
+            if need == 0:
+                continue
+            candidates = []
+            for w in range(leaf, out):
+                if w == v or degrees[w] == k or (adj[v] >> w & 1) or (adj[v] & adj[w]):
+                    continue
+                if any(adj[u] & adj[w] for u in range(n) if adj[v] >> u & 1):
+                    continue
+                candidates.append(w)
+            if len(candidates) < need:
+                dead = True
+                break
+            if len(candidates) - need < best:
+                selected = (v, need, candidates)
+                best = len(candidates) - need
+        expected = set()
+        if not dead and selected is not None:
+            v, need, candidates = selected
+            def extend(start, chosen):
+                if len(chosen) == need:
+                    result = list(adj)
+                    for w in chosen:
+                        result[v] |= 1 << w
+                        result[w] |= 1 << v
+                    expected.add(tuple(result))
+                    return
+                for i in range(start, len(candidates)):
+                    w = candidates[i]
+                    if all(not (adj[w] >> u & 1) and not (adj[w] & adj[u]) for u in chosen):
+                        extend(i + 1, chosen + [w])
+            extend(0, [])
+        elif not dead:
+            require(all(d == k for d in degrees), 'terminal regularity')
+            terminals.append(index)
+        actual = [tuple(records[j]['adjacency']) for j in children[index]]
+        require(len(actual) == len(set(actual)) and set(actual) == expected, 'complete child list at ' + str(index))
+        expected_edges += len(expected)
+    return {'degree': k, 'nodes': len(records), 'visits': visits, 'reused': reused,
+            'fresh_child_edges': expected_edges, 'terminal_indices': terminals,
+            'status': 'PASS_COMPLETE_DAG_STRUCTURE', 'source_credit': 0,
+            'limit': 'Terminal target counts and source isomorphisms require separate validation.'}
+
+
+if __name__ == '__main__':
+    if not __debug__:
+        raise RuntimeError('unoptimized verifier required')
+    k = int(sys.argv[1])
+    work = Path(__file__).resolve().parent
+    started = time.monotonic()
+    result = verify(json.loads((work / f'degree{k}_certificate.json').read_text()), k)
+    result['seconds'] = time.monotonic() - started
+    (work / f'degree{k}_verification.json').write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps(result))

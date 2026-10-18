@@ -1,0 +1,22 @@
+#include "forest_completion.h"
+int main(int argc,char**argv){try{
+ require(argc==2,"usage structural_control GRAPH");ifstream in(argv[1]);int count,n;require(bool(in>>count>>n)&&count==1&&n==32,"exact positive input");Graph full(n);for(U&row:full)require(bool(in>>row),"positive row");validate_graph(full);
+ Graph root(full.begin(),full.begin()+26);for(U&row:root)row&=(U(1)<<26)-1;validate_root(root,18);Budget budget(60);
+ cout<<"{\"shapes\":[";
+ for(int shape=0;shape<4;shape++){
+  if(shape)cout<<',';ForestCover sample(root,10,shape,18,budget);
+  cout<<"{\"shape\":"<<shape<<",\"accepted\":[";bool firstone=true;
+  for(int code=0;code<59049;code++){
+   vector<int>m(10);vector<bool>done(10,true);int c=code;for(int i=0;i<10;i++){m[i]=c%3;c/=3;}
+   if(!canonical_left(shape,m,done))continue;
+   fill(done.begin(),done.end(),false);require(canonical_left(shape,m,done),"empty prefix");
+   for(int v:sample.order){done[v]=true;require(canonical_left(shape,m,done),"retained full assignment keeps every prefix");}
+   if(!firstone)cout<<',';firstone=false;cout<<code;
+  }
+  cout<<"],\"order\":[";for(int i=0;i<10;i++){if(i)cout<<',';cout<<sample.order[i];}
+  cout<<"],\"suffix\":[";
+  for(int at=0;at<=10;at++){if(at)cout<<',';cout<<'[';bool firstrow=true;for(auto row:sample.suffix[at]){if(!firstrow)cout<<',';firstrow=false;cout<<'['<<row[0]<<','<<row[1]<<','<<row[2]<<']';}cout<<']';}
+  cout<<"]}";
+ }
+ cout<<"]}\n";return 0;
+}catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

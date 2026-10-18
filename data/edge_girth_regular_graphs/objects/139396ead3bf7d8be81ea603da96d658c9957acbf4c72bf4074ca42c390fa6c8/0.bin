@@ -1,0 +1,26 @@
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('normal Python required')
+from pathlib import Path
+import difflib
+P=Path(__file__).resolve().parent
+old=(P/'complete_lambda.cpp').read_text()
+new=old.replace('#include "vertex_ball_lambda.h"','#include "vertex_ball_lambda.h"\n#include "root_symmetry.h"')
+changes=[
+ ('struct Boundary {','struct BoundaryRoot {'),
+ ('const Exterior&h;CycleBudget','const Exterior&h;const RootSymmetry&root_symmetry;CycleBudget'),
+ ('Boundary(const Graph&r,const Exterior&e,Deadline&d,Cover&c,int lambda=5):h(e),state','BoundaryRoot(const Graph&r,const Exterior&e,const RootSymmetry&a,Deadline&d,Cover&c,int lambda=5):h(e),root_symmetry(a),state'),
+ ('for(int i=0;i<(int)p.size();i++){if(!done[i]','for(int at=0;at<(int)p.size();at++){int i=h.order[at];if(!done[i]'),
+ ('void visit(int at){','void visit(int at,const vector<int>&stabilizer){'),
+ ('if(!okay)continue;masks[y]=mask;','if(!okay)continue;vector<int>next_stabilizer;if(!root_symmetry.retain(mask,stabilizer,next_stabilizer))continue;masks[y]=mask;'),
+ ('if(okay)visit(at+1);','if(okay)visit(at+1,next_stabilizer);'),
+ ('visit(0);need(state.g','visit(0,root_symmetry.all());need(state.g'),
+ ('for(int i=0;i<nr;i++)for(int j=0;j<count;j++){d.check();Boundary b(roots[i],models[j],d,cover,lambda);','for(int i=0;i<nr;i++){RootSymmetry action(roots[i]);for(int j=0;j<count;j++){d.check();BoundaryRoot b(roots[i],models[j],action,d,cover,lambda);'),
+ ("<<b.positive<<'\\n'<<flush;}\n ofstream","<<b.positive<<'\\n'<<flush;}}\n ofstream"),
+ ('PASS_COMPLETE_PENTAGON_LOWER30','PASS_COMPLETE_PENTAGON_LOWER30_ROOT_SYMMETRY')]
+for a,b in changes:
+    assert new.count(a)==1,(a,new.count(a))
+    new=new.replace(a,b)
+(P/'complete_root_symmetry.cpp').write_text(new)
+(P/'complete_root_symmetry.cpp.diff').write_text(''.join(difflib.unified_diff(old.splitlines(True),new.splitlines(True),fromfile='complete_lambda.cpp',tofile='complete_root_symmetry.cpp')))
+print('prepared isolated root-action method; no target execution')

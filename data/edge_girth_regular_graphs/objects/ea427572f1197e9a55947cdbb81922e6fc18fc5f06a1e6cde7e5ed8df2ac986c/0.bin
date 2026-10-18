@@ -1,0 +1,84 @@
+"""Portable positive graph and explicit permutation checks; no private reads."""
+import argparse
+from collections import deque
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+def need(x,message):
+    if not x:raise RuntimeError(message)
+
+def decode(s,n):
+    values=[ord(c)-63 for c in s]
+    need(values and all(0<=v<64 for v in values),'graph6 bytes')
+    offset=1;order=values[0]
+    if order==63:
+        need(len(values)>=4,'graph6 header')
+        offset=8 if values[1]==63 else 4
+        need(len(values)>=offset,'extended graph6 header')
+        order=0
+        for v in values[2 if offset==8 else 1:offset]:order=64*order+v
+    need(order==n,'graph6 order')
+    bits=n*(n-1)//2
+    need(len(values)==offset+(bits+5)//6,'graph6 length')
+    a=[set() for _ in range(n)];bit=0
+    for v in range(n):
+        for u in range(v):
+            if values[offset+bit//6]&(1<<(5-bit%6)):a[u].add(v);a[v].add(u)
+            bit+=1
+    for bit in range(bits,6*(len(values)-offset)):
+        need(not values[offset+bit//6]&(1<<(5-bit%6)),'graph6 padding')
+    return a
+
+def main():
+    need(not sys.flags.optimize,'optimized Python forbidden')
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--compiler',default='clang++');args=p.parse_args()
+    base=Path(__file__).resolve().parent;out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
+    manifest=json.loads((base/'manifest.json').read_text())
+    for row in manifest['exports']:
+        q=base/row['path'];data=q.read_bytes()
+        need(len(data)==row['bytes'] and hashlib.sha256(data).hexdigest()==row['sha256'],'changed export '+row['path'])
+    exe=out/'verify_egr_witnesses'
+    done=subprocess.run([args.compiler,'-std=c++17','-O2','-Wall','-Wextra','-Wpedantic',str(base/'verify_egr_witnesses.cpp'),'-o',str(exe)],capture_output=True,text=True,timeout=60)
+    (out/'compile.stdout').write_text(done.stdout);(out/'compile.stderr').write_text(done.stderr)
+    need(done.returncode==0 and not done.stderr,'compiler')
+    data=gzip.decompress((base/'witnesses.input.gz').read_bytes()).decode()
+    rows=[line.split() for line in data.splitlines()];need(len(rows)==736 and all(len(r)==6 for r in rows),'exact positive input set')
+    need(len({r[0] for r in rows})==736,'unique witness ids')
+    expected=''.join(f'PASS {r[0]} {int(r[1])*int(r[2])//2}\n' for r in rows)
+    run=subprocess.run([str(exe)],input=data,text=True,capture_output=True,timeout=120)
+    (out/'positive.stdout').write_text(run.stdout);(out/'positive.stderr').write_text(run.stderr)
+    need(run.returncode==0 and not run.stderr and run.stdout==expected,'full736 positive check')
+    graphs={r[0]:r for r in rows}
+    targets=json.loads((base/'targets.json').read_text())
+    upper=targets['finite_upper_bounds'];need(len(upper)==84,'84finite upper rows')
+    for r in upper:
+        v=graphs[r['witness_id']]
+        need(list(map(int,v[1:5]))==[r['n'],r['k'],r['g'],r['lambda']],'exact bound correspondence')
+    sym=json.loads((base/'symmetry_certificates.json').read_text())['rows']
+    need(len(sym)==118,'118symmetry rows')
+    identities=[]
+    for r in sym:
+        row=graphs[r['witness_id']];n=r['n'];k=r['k'];need(list(map(int,row[1:5]))==[n,k,r['g'],r['lambda']],'symmetry parameters')
+        need(hashlib.sha256(row[5].encode()).hexdigest()==r['graph6_line_sha256'],'symmetry graph binding')
+        adj=decode(row[5],n);generators=r['generators']
+        for s in generators:
+            need(sorted(s)==list(range(n)),'permutation bijection')
+            need(all({s[v] for v in adj[u]}==adj[s[u]] for u in range(n)),'adjacency preservation')
+        kind=r['comparison_class'];need(kind in ['vertex_transitive','arc_transitive'],'declared symmetry class')
+        start=0 if kind=='vertex_transitive' else (0,min(adj[0]));seen={start};q=deque([start])
+        while q:
+            x=q.popleft()
+            for s in generators:
+                y=s[x] if kind=='vertex_transitive' else (s[x[0]],s[x[1]])
+                if y not in seen:seen.add(y);q.append(y)
+        need(len(seen)==(n if kind=='vertex_transitive' else n*k),'transitive orbit')
+        identities.append([r['k'],r['g'],r['lambda'],r['n'],kind])
+    need(identities==targets['symmetry_table'],'exact118 table correspondence')
+    report={'status':'PASS_POSITIVE_AND_SYMMETRY_CERTIFICATES','positive_graphs':736,'finite_upper_rows':84,'symmetry_rows':118,'full_automorphism_group_required':False,'minimum_or_uniqueness_claim':False,'whole_original_credit':0}
+    (out/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+
+if __name__=='__main__':main()

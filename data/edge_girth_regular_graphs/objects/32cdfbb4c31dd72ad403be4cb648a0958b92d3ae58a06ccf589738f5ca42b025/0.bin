@@ -1,0 +1,64 @@
+// Complete normalized Moore-tree enumeration. No diagnostic trace is an input.
+#include "literal_graph.h"
+#include <set>
+using namespace std;
+struct Block{int i,j,d;bool fixed;vector<array<int,3>> choices;};
+struct RootSearch {
+ Graph g;vector<Block> blocks;RepresentativeIndex& representatives;
+ U prefixes=0,girth=0,profiles=0;double cap;chrono::steady_clock::time_point start=chrono::steady_clock::now();
+ RootSearch(RepresentativeIndex&r,double seconds):representatives(r),cap(seconds){}
+ pair<int,int> profile(int base){
+  vector<int> p;int square=0,total=0;for(int v=base;v<base+9;v++){int d=4-weight(g[v]);require(d>=0&&d<=3,"leaf deficit");total+=d;square+=d*d;if(d)p.push_back(d);}
+  require(total==7,"seven missing incidences");sort(p.begin(),p.end());int bound=-1;
+  if(p==vector<int>{1,1,1,1,1,1,1}||p==vector<int>{1,1,1,1,1,2}||p==vector<int>{1,1,1,1,3}||p==vector<int>{1,1,1,2,2})bound=6;
+  else if(p==vector<int>{1,1,2,3})bound=4;else if(p==vector<int>{1,2,2,2})bound=5;
+  else if(p==vector<int>{1,3,3}||p==vector<int>{2,2,3})bound=3;
+  require(bound>=0,"complete profile inventory");return {(21-square)/2,bound};
+ }
+ bool would_make_square(int a,int b){U bits=g[a];while(bits){int v=first(bits);bits&=bits-1;if(g[v]&g[b])return true;}return false;}
+ void visit(int depth){
+  if(depth==9){girth++;auto left=profile(4),right=profile(17);if(left.first>right.second||right.first>left.second)return;profiles++;representatives.cover(g);return;}
+  const auto&block=blocks[depth];
+  for(const auto&q:block.choices){
+   if((++prefixes&1048575)==0)require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");
+   array<pair<int,int>,3> installed;int size=0;bool good=true;
+   for(int x=0;x<3;x++)if(q[x]>=0){int u=4+3*block.i+x,v=17+3*block.j+q[x];if(would_make_square(u,v)){good=false;break;}add_edge(g,u,v);installed[size++]={u,v};}
+   if(good)visit(depth+1);for(int i=0;i<size;i++)remove_edge(g,installed[i].first,installed[i].second);
+  }
+ }
+};
+array<int,9> canonical_matrix(array<int,9>a){
+ array<int,9> result=a;array<int,3> rows{0,1,2};
+ do{array<int,3> columns{0,1,2};do{array<int,9>b{},t{};for(int i=0;i<3;i++)for(int j=0;j<3;j++){b[3*i+j]=a[3*rows[i]+columns[j]];t[3*j+i]=b[3*i+j];}result=min(result,min(b,t));}while(next_permutation(columns.begin(),columns.end()));}while(next_permutation(rows.begin(),rows.end()));
+ return result;
+}
+int main(int argc,char**argv){
+ try{
+  require(argc==5,"usage check_roots PATTERNS REPRESENTATIVES REPORT SECONDS");nauty_check(WORDSIZE,1,26,NAUTYVERSIONID);
+  RepresentativeIndex targets(argv[2],true);RootSearch search(targets,stod(argv[4]));
+  std::set<array<int,9>> expected;int literal=0;
+  for(int code=0;code<(1<<18);code++){int value=code,total=0;array<int,9>a{};for(int&x:a){x=value%4;value/=4;total+=x;}if(total==7){literal++;expected.insert(canonical_matrix(a));}}
+  require(literal==4950&&expected.size()==95,"independent exact deficit inventory");
+  ifstream in(argv[1]);int count;require(bool(in>>count)&&count==95,"all patterns supplied");U products=0;std::set<array<int,9>> actual;
+  for(int id=0;id<count;id++){
+   int size;require(bool(in>>size)&&size==9,"all nine matching blocks");search.blocks.clear();array<int,9> matrix{};matrix.fill(-1);array<int,6> component{0,1,2,3,4,5};U product=1;
+   auto find=[&](int v){while(component[v]!=v)v=component[v];return v;};
+   for(int at=0;at<9;at++){
+    Block b;int fixed;require(bool(in>>b.i>>b.j>>b.d>>fixed),"complete block record");require(b.i>=0&&b.i<3&&b.j>=0&&b.j<3&&b.d>=0&&b.d<=3&&(fixed==0||fixed==1),"block range");require(matrix[3*b.i+b.j]==-1,"each block occurs once");matrix[3*b.i+b.j]=b.d;b.fixed=fixed;
+    if(fixed){require(b.d==0&&find(b.i)!=find(3+b.j),"normalization is a full-edge forest");component[find(b.i)]=find(3+b.j);b.choices.push_back({0,1,2});}
+    else for(int a=-1;a<3;a++)for(int c=-1;c<3;c++)for(int d=-1;d<3;d++){
+     array<int,3> q{a,c,d};if(count_if(q.begin(),q.end(),[](int x){return x<0;})!=b.d)continue;bool unique=true;for(int i=0;i<3;i++)for(int j=0;j<i;j++)if(q[i]>=0&&q[i]==q[j])unique=false;if(unique)b.choices.push_back(q);
+    }
+    require(b.choices.size()==static_cast<size_t>(fixed?1:array<int,4>{6,18,9,1}[b.d]),"literal matching count");product*=b.choices.size();search.blocks.push_back(b);
+   }
+   require(accumulate(matrix.begin(),matrix.end(),0)==7&&canonical_matrix(matrix)==matrix&&actual.insert(matrix).second,"exact distinct matrix representative");
+   for(int i=0;i<3;i++)for(int j=0;j<3;j++)if(matrix[3*i+j]==0)require(find(i)==find(3+j),"spanning forest of full blocks");
+   products+=product;search.g=moore_trees();search.visit(0);require(search.g==moore_trees(),"exact backtracking restoration");
+  }
+  string extra;require(!(in>>extra)&&actual==expected&&products==1415940318ULL,"full normalized product coverage");
+  U used=count_if(targets.hits.begin(),targets.hits.end(),[](U x){return x>0;});
+  ofstream out(argv[3]);require(bool(out),"fresh root report output");
+  out<<"{\"status\":\"PASS_COMPLETE_ROOT_COVERAGE\",\"matrices\":"<<literal<<",\"orbits\":"<<expected.size()<<",\"normalized_products\":"<<products<<",\"prefix_nodes\":"<<search.prefixes<<",\"girth_balls\":"<<search.girth<<",\"profile_balls_literal_maps\":"<<search.profiles<<",\"used_targets\":"<<used<<",\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-search.start).count()<<"}\n";
+  require(bool(out),"complete root report write");return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}
+}

@@ -1,0 +1,44 @@
+"""Separate Bell-partition and literal-neighbourhood controls for nine incidences."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+import argparse,itertools,json,time
+from pathlib import Path
+from collections import Counter
+def need(c,m):
+ if not c:raise RuntimeError(m)
+def bell(n):
+ if n==0:yield ();return
+ for p in bell(n-1):
+  for j in range(len(p)):yield p[:j]+(p[j]+(n-1,),)+p[j+1:]
+  yield p+((n-1,),)
+def side_reference(rows,side,parts):
+ base,other=(4,17)if side==0 else(17,4)
+ items=[x for x in range(9)for _ in range(4-rows[base+x].bit_count())];need(len(items)==9,'nine side incidences');good=Counter()
+ for p in parts:
+  if len(p)>6:continue
+  q=[tuple(items[t]for t in b)for b in p]
+  if any(len(b)>3 or len(set(b))!=len(b)for b in q):continue
+  graph=rows.copy()+[0]*len(q)
+  for at,b in enumerate(q):
+   for x in b:graph[base+x]|=1<<(26+at);graph[26+at]|=1<<(base+x)
+  if any((graph[u]&graph[v]).bit_count()>1 for u in range(len(graph))for v in range(u)):continue
+  if any(sum((r&(7<<(base+3*i))).bit_count()*(r&(7<<(base+3*j))).bit_count()for r in graph)!=sum((rows[base+3*(3-i-j)+x]&(511<<other)).bit_count()for x in range(3))for i,j in[(0,1),(0,2),(1,2)]):continue
+  good[tuple(sorted(sum(1<<x for x in b)for b in q))]+=1
+ return good
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--actual',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();start=time.monotonic();d=json.loads(a.actual.read_text());parts=list(bell(9));need(len(parts)==21147,'complete Bell number');capacities=[]
+ for row in d['capacities']:
+  items=[i for i,n in enumerate(row['profile'])for _ in range(n)];best=-1
+  for p in parts:
+   q=[tuple(items[t]for t in b)for b in p]
+   if any(len(b)>3 or len(set(b))!=len(b)for b in q):continue
+   pairs=[tuple(sorted(e))for b in q for e in itertools.combinations(b,2)]
+   if len(pairs)!=len(set(pairs)):continue
+   best=max(best,len(pairs))
+  need(best==row['capacity'],'complete independent capacity');capacities.append(best)
+ observed=0;survivors=0
+ for row in d['sides']:
+  for side,key in enumerate(['left','right']):
+   expected=side_reference(row['rows'],side,parts);actual=Counter(tuple(sorted(p))for p in row[key]);need(expected==actual,'complete side multiset');observed+=len(parts);survivors+=sum(expected.values())
+ report=dict(status='PASS_INDEPENDENT_INTEGER_AND_SIDE_CONTROLS',capacity_profiles=len(capacities),capacity_partition_checks=21147*len(capacities),root_samples=len(d['sides']),side_partition_checks=observed,surviving_partitions=survivors,seconds=time.monotonic()-start);a.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

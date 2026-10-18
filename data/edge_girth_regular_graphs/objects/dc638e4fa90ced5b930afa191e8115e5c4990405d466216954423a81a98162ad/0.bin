@@ -1,0 +1,172 @@
+"""Bounded literal six-cycle catalogues and exact saved-cut validation; no solver."""
+import sys
+sys.dont_write_bytecode = True
+from collections import Counter
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+CNF = HERE.parent/'graph_completion_certificate/cnf.py'
+spec = importlib.util.spec_from_file_location('acquired_cycle_witnesses', CNF)
+C = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(C)
+
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+def digest_rows(rows):
+    h = hashlib.sha256()
+    for row in rows:
+        h.update((json.dumps(row, separators=(',', ':'))+'\n').encode('ascii'))
+    return h.hexdigest()
+
+
+def read_model(path, maximum_bytes):
+    raw = Path(path).read_bytes()
+    need(len(raw) <= maximum_bytes, 'bounded literal model')
+    values = list(map(int, raw.split()))
+    need(len(values) >= 3, 'complete model header')
+    n, nb, na = values[:3]
+    need(1 <= n <= 54 and min(nb, na) >= 0
+         and len(values) == 3+2*(nb+na), 'exact finite model dimensions')
+    edges = list(zip(values[3::2], values[4::2]))
+    need(len(set(edges)) == len(edges)
+         and all(0 <= u < v < n for u,v in edges), 'simple disjoint edge domain')
+    return n, frozenset(edges[:nb]), frozenset(edges[nb:])
+
+
+def canonical_cycle(path):
+    p = tuple(path)
+    q = tuple(reversed(p))
+    return min(
+        [p[i:]+p[:i] for i in range(len(p))]
+        + [q[i:]+q[:i] for i in range(len(q))])
+
+
+def catalogue(n, base, allowed, required, limits):
+    """Return deterministic shared activation terms, not graph completions."""
+    need(type(n) is int and 1 <= n <= 54, 'bounded order')
+    base, allowed = frozenset(base), frozenset(allowed)
+    domain = base | allowed
+    need(not base & allowed and all(type(u) is int and type(v) is int
+         and 0 <= u < v < n for u,v in domain), 'simple disjoint edge domain')
+    required = tuple(tuple(e) for e in required)
+    need(1 <= len(required) <= 8 and tuple(sorted(set(required))) == required
+         and set(required) <= base, 'literal sorted unique fixed requirements')
+    need(set(limits) == {'maximum_degree', 'maximum_start_degree',
+                        'maximum_nodes', 'maximum_paths'}
+         and all(type(x) is int and x > 0 for x in limits.values()), 'finite work limits')
+    adjacency = [set() for _ in range(n)]
+    for u,v in domain:
+        adjacency[u].add(v); adjacency[v].add(u)
+    need(max(map(len, adjacency)) <= limits['maximum_degree'], 'host degree bound')
+    need(all(len(adjacency[u]) <= limits['maximum_start_degree']
+             for u,v in required), 'required-edge starting degree bound')
+    need(all(tuple(sorted((u,w))) in base for u,v in required for w in adjacency[u]),
+         'all edges at required starting vertices are forced')
+    neighbours = [tuple(sorted(a)) for a in adjacency]
+    edge_order = tuple(sorted(allowed))
+    edge_number = {e:i+1 for i,e in enumerate(edge_order)}
+    cycles, cycle_requirements, term_requirements = {}, {}, {}
+    counts = [0]*len(required)
+    nodes = paths = 0
+
+    for index,(u,v) in enumerate(required):
+        def walk(path):
+            nonlocal nodes, paths
+            nodes += 1
+            need(nodes <= limits['maximum_nodes'], 'literal DFS node cap')
+            if len(path) == 5:
+                paths += 1
+                need(paths <= limits['maximum_paths'], 'literal completed-path cap')
+                if v not in adjacency[path[-1]]:
+                    return
+                cycle = canonical_cycle(path+[v])
+                es = C.cycle_edges(list(cycle), n)
+                need((u,v) in es and es <= domain, 'literal six-cycle through requested edge')
+                term = tuple(sorted(edge_number[e] for e in es if e in allowed))
+                need(len(term) <= 4, 'two forced edges at the required starting vertex')
+                need(index not in cycle_requirements.get(cycle, set()),
+                     'no duplicate oriented path for one required edge')
+                need(cycle not in cycles or cycles[cycle] == term, 'same cycle activation')
+                cycles[cycle] = term
+                cycle_requirements.setdefault(cycle, set()).add(index)
+                term_requirements.setdefault(term, set()).add(index)
+                counts[index] += 1
+                return
+            for w in neighbours[path[-1]]:
+                if w != v and w not in path:
+                    walk(path+[w])
+        walk([u])
+
+    terms = tuple(sorted(term_requirements))
+    coverage = tuple(tuple(i for i,t in enumerate(terms)
+                           if j in term_requirements[t]) for j in range(len(required)))
+    hist = Counter(map(len, terms))
+    # Exact gate-size prediction for acquired Formula.conjunction and one
+    # direct existence clause per edge. No Formula or solver is constructed.
+    gate_variables = sum(len(t) >= 2 for t in terms)
+    gate_clauses = sum(len(t)+1 for t in terms if len(t) >= 2)
+    existence_clauses = sum(not any(not terms[i] for i in row) for row in coverage)
+    result = dict(edge_order=edge_order, required=required, terms=terms,
+                  required_term_indices=coverage,
+                  counts=dict(nodes=nodes, completed_paths=paths,
+                    distinct_cycles=len(cycles), required_cycle_counts=counts,
+                    shared_terms=len(terms),
+                    optional_term_histogram={str(k):hist[k] for k in sorted(hist)},
+                    required_shared_term_counts=[len(row) for row in coverage],
+                    additional_gate_variables=gate_variables,
+                    additional_gate_clauses=gate_clauses,
+                    additional_existence_clauses=existence_clauses,
+                    additional_total_clauses=gate_clauses+existence_clauses),
+                  cycle_catalogue_sha256=digest_rows(
+                    [cycle, cycles[cycle], sorted(cycle_requirements[cycle])]
+                    for cycle in sorted(cycles)),
+                  term_catalogue_sha256=digest_rows(
+                    [term, sorted(term_requirements[term])] for term in terms))
+    return result
+
+
+def append_existence(formula, variables, cat):
+    """Exact shared AND gates then required-edge OR clauses; not used by sizing."""
+    edges = cat['edge_order']
+    need(set(variables) == set(edges)
+         and all(variables[e] == i+1 for i,e in enumerate(edges)),
+         'same inherited primary edge-variable order')
+    literals = [formula.conjunction([variables[edges[i-1]] for i in term])
+                for term in cat['terms']]
+    for row in cat['required_term_indices']:
+        formula.clause([literals[i] for i in row])
+
+
+def validate_cuts(path, n, base, allowed, *, maximum_bytes, maximum_records):
+    """Validate every original complete row; only duplicate clauses are merged."""
+    path = Path(path)
+    need(path.stat().st_size <= maximum_bytes, 'bounded saved cut journal')
+    raw = path.read_bytes()
+    need(raw and raw.endswith(b'\n'), 'nonempty complete submitted journal')
+    rows = raw.splitlines()
+    need(len(rows) <= maximum_records, 'bounded complete cut-record count')
+    seen, unique, kinds = set(), [], Counter()
+    for line in rows:
+        need(line and len(line) <= 4096, 'complete bounded nonblank witness line')
+        witness = json.loads(line)
+        need(type(witness) is dict, 'literal witness object')
+        clause = C.witness_edges(witness, n, base, allowed)
+        kinds[witness['kind']] += 1
+        if clause not in seen:
+            seen.add(clause)
+            unique.append(clause)
+    return dict(submitted_records=len(rows), validated_records=len(rows),
+                unique_clauses=len(unique), duplicate_clause_records=len(rows)-len(unique),
+                kinds=dict(sorted(kinds.items())),
+                empty_clauses=sum(not q for q in unique),
+                maximum_optional_edges=max(map(len, unique), default=0),
+                unique_clause_sequence_sha256=digest_rows(unique),
+                submitted_journal_sha256=hashlib.sha256(raw).hexdigest(),
+                dropped_invalid_records=0, source_credit=0, exclusions=0)

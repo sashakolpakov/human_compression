@@ -1,0 +1,98 @@
+import itertools
+from collections import deque
+
+PERMS=tuple(itertools.permutations(range(3)))
+PARTIALS=[]
+for a in range(3):
+ for b in range(3):
+  aa=[i for i in range(3)if i!=a];bb=[i for i in range(3)if i!=b]
+  for p in itertools.permutations(bb):PARTIALS.append(tuple(zip(aa,p)))
+CROSS=((0,2),(0,3),(1,2),(1,3))
+
+def need(x,message):
+ if not x:raise RuntimeError(message)
+
+def keys():
+ for p in itertools.product(range(6),repeat=4):yield (1,)+p
+ for p in itertools.product(range(18),repeat=4):yield (2,)+p
+
+def root_ball(key):
+ kind=key[0];G=[set()for _ in range(17)]
+ def edge(u,v):G[u].add(v);G[v].add(u)
+ for i in range(4):
+  edge(0,1+i)
+  for j in range(3):edge(1+i,5+3*i+j)
+ for a,b in ((0,1),(2,3)):
+  for j in ((0,)if kind==1 else range(3)):edge(5+3*a+j,5+3*b+j)
+ for (a,b),p in zip(CROSS,key[1:]):
+  pairs=enumerate(PERMS[p])if kind==1 else PARTIALS[p]
+  for i,j in pairs:edge(5+3*a+i,5+3*b+j)
+ return G
+
+def short_cycle(G):
+ n=len(G)
+ for u in range(n):
+  for v in G[u]:
+   if v<=u:continue
+   z=G[u]&G[v]
+   if z:return [u,v,min(z)]
+ for u,v in itertools.combinations(range(n),2):
+  common=sorted(G[u]&G[v])
+  if len(common)>1:return [u,common[0],v,common[1]]
+ return None
+
+def is_cycle(G,path):
+ return len(path)in(3,4)and len(set(path))==len(path)and all(type(x)is int and 0<=x<len(G)for x in path)and all(path[(i+1)%len(path)]in G[u]for i,u in enumerate(path))
+
+def pentagon_paths(G,e):
+ u,v=e;out=[]
+ def visit(path):
+  if len(path)==4:
+   if v in G[path[-1]]:out.append(path+[v])
+   return
+  for x in sorted(G[path[-1]]):
+   if x!=v and x not in path:visit(path+[x])
+ visit([u]);return out
+
+def pentagon_counts(G):
+ return {tuple(sorted((u,v))):len(pentagon_paths(G,(u,v)))for u in range(len(G))for v in G[u]if u<v}
+
+def partitions(G):
+ stubs=[u for u in range(5,17)for _ in range(4-len(G[u]))];need(len(stubs)==8,'eight outgoing incidences')
+ blocks=[]
+ def visit(t):
+  if t==len(stubs):yield tuple(tuple(B)for B in blocks);return
+  x=stubs[t]
+  for B in blocks:
+   if len(B)<4 and all(x!=y and y not in G[x]and not(G[x]&G[y])for y in B):
+    B.append(x);yield from visit(t+1);B.pop()
+  blocks.append([x]);yield from visit(t+1);blocks.pop()
+ yield from visit(0)
+
+def attach(G,blocks):
+ H=[s.copy()for s in G]+[set(B)for B in blocks]
+ for j,B in enumerate(blocks):
+  for x in B:H[x].add(17+j)
+ return H
+
+def far(G,u,v):
+ seen={u};front={u}
+ for _ in range(3):
+  front=set().union(*(G[x]for x in front))-seen
+  if v in front:return False
+  seen|=front
+ return True
+
+def parent_edges(G):return [(p,u)for p in range(1,5)for u in sorted(G[p])if u!=0]
+
+def capacities(G,targets,counts):
+ residual=[7-counts[e]for e in targets];total=[0]*12;eligible=[]
+ for u,v in itertools.combinations(range(17,len(G)),2):
+  if not far(G,u,v):continue
+  vector=[]
+  for p,x in targets:
+   c=(len((G[v]&G[p])-{x})if x in G[u]else 0)+(len((G[u]&G[p])-{x})if x in G[v]else 0)
+   vector.append(c)
+  if any(c>r for c,r in zip(vector,residual)):continue
+  eligible.append({'edge':[u,v],'vector':vector});total=[a+b for a,b in zip(total,vector)]
+ return residual,total,eligible

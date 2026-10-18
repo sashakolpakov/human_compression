@@ -1,0 +1,165 @@
+import argparse
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+import networkx as nx
+
+W = Path(__file__).resolve().parent
+
+
+def need(c, message):
+    if not c:
+        raise RuntimeError(message)
+
+
+def put(p, obj):
+    p.write_text(json.dumps(obj, indent=2) + '\n')
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--render', action='store_true')
+    a = p.parse_args()
+    O = a.out.resolve()
+    O.mkdir(parents=True, exist_ok=False)
+    env = os.environ.copy()
+    env['ASAN_OPTIONS'] = 'detect_leaks=0:halt_on_error=1'
+    env['UBSAN_OPTIONS'] = 'halt_on_error=1'
+    bindings = json.loads((W / 'bindings.json').read_text())
+    for q in bindings:
+        data = Path(q['path']).read_bytes()
+        need(len(data) == q['bytes'] and hashlib.sha256(data).hexdigest() == q['sha256'], 'binding')
+    source = json.loads((W / 'source.json').read_text())
+    raw = Path(source['graph_file']).read_bytes().splitlines()[source['source_line'] - 1]
+    need(hashlib.sha256(raw).hexdigest() == source['graph6_line_sha256'], 'literal source line')
+    need((W / 'source_graph.g6').read_bytes() == raw + b'\n', 'copied source graph')
+    G = nx.from_graph6_bytes(raw)
+
+    # Complete local partition possibilities, independently of graph completion.
+    partitions = [(), ((0, 1),), ((0, 2),), ((1, 2),), ((0, 1), (0, 2), (1, 2))]
+    forms = {}
+    for sequence in itertools.product(range(5), repeat=4):
+        pairs = [pair for i in sequence for pair in partitions[i]]
+        if len(pairs) != len(set(pairs)):
+            continue
+        kind = 4 if 4 in sequence else sum(i != 0 for i in sequence)
+        forms[kind] = forms.get(kind, 0) + 1
+    need(forms == {0: 1, 1: 12, 2: 36, 3: 24, 4: 4}, 'all77 labelled local forms')
+    put(O / 'frame_counts.json', forms)
+
+    modes = [('ordinary', ['-O2']),
+             ('sanitized', ['-O1', '-g', '-fsanitize=address,undefined', '-fno-omit-frame-pointer'])]
+    normalized = []
+    for name, flags in modes:
+        command = ['clang++', '-std=c++17', '-Wall', '-Wextra', '-pedantic', *flags,
+                   str(W / 'root20.cpp'), '-o', str(O / name)]
+        r = subprocess.run(command, capture_output=True, text=True, env=env, timeout=30)
+        (O / ('compile_' + name + '.stdout')).write_text(r.stdout)
+        (O / ('compile_' + name + '.stderr')).write_text(r.stderr)
+        need(r.returncode == 0 and not r.stderr, 'compile')
+        r = subprocess.run([str(O / name)], capture_output=True, text=True, env=env, timeout=50)
+        (O / (name + '.stdout')).write_text(r.stdout)
+        (O / (name + '.stderr')).write_text(r.stderr)
+        need(r.returncode == 0 and not r.stderr, 'complete execution')
+        rows = [json.loads(line) for line in r.stdout.splitlines()]
+        need(len(rows) == 5 and [x['frame'] for x in rows] == list(range(5)), 'every frame')
+        need(all(x['status'] == 'COMPLETE' for x in rows), 'complete not timed out')
+        need([x['nodes'] for x in rows] == [61, 4, 40, 55, 159], 'node counts')
+        need([x['leaves'] for x in rows] == [6, 0, 0, 0, 12], 'complete graph counts')
+        need([x['positives'] for x in rows] == [6, 0, 0, 0, 12], 'retained counts')
+        normalized.append([{k: v for k, v in x.items() if k != 'seconds'} for x in rows])
+    need(normalized[0] == normalized[1], 'ordinary/sanitized exact agreement')
+
+    mappings = []
+    all_graphs = set()
+    for row in normalized[0]:
+        need(row['positives'] == len(row['examples']), 'uncapped outputs')
+        for adj in row['examples']:
+            need(len(adj) == 20 and all(type(x) is int and x >= 0 and x < (1 << 20)
+                                       and x.bit_count() == 4 for x in adj), 'adjacency degrees')
+            need(all(not (adj[x] >> x & 1) for x in range(20)), 'no loops')
+            need(all((adj[x] >> y & 1) == (adj[y] >> x & 1)
+                     for x in range(20) for y in range(20)), 'symmetric')
+            H = nx.Graph()
+            H.add_nodes_from(range(20))
+            H.add_edges_from((x, y) for x in range(20) for y in range(x + 1, 20) if adj[x] >> y & 1)
+            need(nx.is_connected(H), 'connected')
+            for x, y in itertools.combinations(range(20), 2):
+                common = (adj[x] & adj[y]).bit_count()
+                need(common <= 1 and (not H.has_edge(x, y) or common == 0), 'girth at least5')
+            cycles = set()
+            def visit(path):
+                if len(path) == 5:
+                    if H.has_edge(path[-1], path[0]):
+                        edges = tuple(sorted(tuple(sorted(e)) for e in zip(path, path[1:] + path[:1])))
+                        cycles.add(edges)
+                    return
+                for y in H[path[-1]]:
+                    if y not in path and y > path[0]:
+                        visit(path + [y])
+            for x in range(20):
+                visit([x])
+            need(len(cycles) == 48, 'all48 pentagons')
+            counts = {tuple(sorted(e)): 0 for e in H.edges()}
+            for cycle in cycles:
+                for edge in cycle:
+                    counts[edge] += 1
+            need(set(counts.values()) == {6}, 'six through every edge')
+            matcher = nx.algorithms.isomorphism.GraphMatcher(H, G)
+            need(matcher.is_isomorphic(), 'source class')
+            mapping = [matcher.mapping[x] for x in range(20)]
+            need(set(mapping) == set(range(20)), 'literal bijection')
+            need(all(H.has_edge(x, y) == G.has_edge(mapping[x], mapping[y])
+                     for x in range(20) for y in range(20)), 'all400 adjacency comparisons')
+            mappings.append({'frame': row['frame'], 'adjacency': adj, 'mapping': mapping, 'pentagons': len(cycles)})
+            need(tuple(adj) not in all_graphs, 'no duplicated labelled output')
+            all_graphs.add(tuple(adj))
+    need(len(mappings) == 18, 'all18 source maps')
+    put(O / 'mappings.json', mappings)
+    guards = []
+    for name in ['argument', 'environment']:
+        ee = env.copy()
+        command = [sys.executable]
+        if name == 'argument':
+            command.append('-O')
+        else:
+            ee['PYTHONOPTIMIZE'] = '1'
+        command.append(str(W / 'check.py'))
+        r = subprocess.run(command, capture_output=True, text=True, env=ee, timeout=5)
+        need(r.returncode != 0 and 'Optimized Python is not accepted' in r.stderr, 'optimization guard')
+        (O / ('guard_' + name + '.stderr')).write_text(r.stderr)
+        guards.append(name)
+    if a.render:
+        shutil.copy2(W / 'three_exterior.tex', O / 'three_exterior.tex')
+        for i in [1, 2]:
+            r = subprocess.run(['/opt/homebrew/bin/pdflatex', '-interaction=nonstopmode',
+                                '-halt-on-error', 'three_exterior.tex'], cwd=O, capture_output=True,
+                               text=True, timeout=30)
+            (O / ('native' + str(i) + '.stdout')).write_text(r.stdout)
+            (O / ('native' + str(i) + '.stderr')).write_text(r.stderr)
+            need(r.returncode == 0 and not r.stderr, 'native build')
+        log = (O / 'three_exterior.log').read_text()
+        need('Overfull' not in log and 'LaTeX Warning:' not in log, 'native content')
+    report = {'status': 'PASS_QUARTIC_GIRTH_FIVE_ORDER20', 'frames': 5, 'labelled_frame_types': 77,
+              'nodes': 319, 'literal_outputs': 18, 'isomorphism_classes': 1,
+              'all18literal_source_maps': True, 'ordinary_sanitized_agree': True,
+              'pentagons_per_graph': 48, 'pentagons_per_edge': 6,
+              'new_exact_count_rows': 1, 'new_lower_rows': 0,
+              'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0,
+              'optimization_guards': guards, 'fresh_bindings': len(bindings),
+              'general_reduction_scope': 'k>=4, n=k^2+4, lambda=(k-1)^2-3, girth5; no degree6 completion census.'}
+    put(O / 'report.json', report)
+    print(json.dumps(report))
+
+
+if __name__ == '__main__':
+    main()

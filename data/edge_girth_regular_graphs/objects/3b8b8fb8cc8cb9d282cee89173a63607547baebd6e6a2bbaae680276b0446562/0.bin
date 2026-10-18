@@ -1,0 +1,86 @@
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <stdexcept>
+#include <vector>
+using namespace std;
+void need(bool b,const char*s){if(!b)throw runtime_error(s);}
+bool edge_is_valid(const vector<uint32_t>& adj,int u,int v){
+ if(adj[u]&adj[v])return false;
+ uint32_t aSet=adj[u]&~(uint32_t(1)<<v),cSet=adj[v]&~(uint32_t(1)<<u);
+ int pent=0,m=adj.size();
+ for(int a=0;a<m;a++)if(aSet>>a&1){
+  if(adj[a]&cSet)return false;
+  for(int c=0;c<m;c++)if(cSet>>c&1){
+   pent+=__builtin_popcount(adj[a]&adj[c]&~((uint32_t(1)<<u)|(uint32_t(1)<<v)));
+   if(pent>1)return false;
+  }
+ }
+ return pent==1;
+}
+void controls(){
+ uint64_t graphs=0,edges=0;
+ for(int n=0;n<=6;n++){
+  vector<pair<int,int>> es;for(int b=1;b<n;b++)for(int a=0;a<b;a++)es.push_back({a,b});
+  for(uint32_t mask=0;mask<(uint32_t(1)<<es.size());mask++){
+   graphs++;vector<uint32_t> adj(n,0);
+   for(unsigned i=0;i<es.size();i++)if(mask>>i&1){auto [a,b]=es[i];adj[a]|=1u<<b;adj[b]|=1u<<a;}
+   for(auto edge:es){int u=edge.first,v=edge.second;if(adj[u]>>v&1){
+    edges++;array<int,6> count{};
+    function<void(int,uint32_t,int)> visit=[&](int last,uint32_t seen,int size){
+     if(size>=3&&(adj[last]>>u&1))count[size]++;
+     if(size==5)return;
+     for(int w=0;w<n;w++)if(!(seen>>w&1)&&(adj[last]>>w&1))visit(w,seen|(1u<<w),size+1);
+    };
+    visit(v,(1u<<u)|(1u<<v),2);
+    need(edge_is_valid(adj,u,v)==(count[3]==0&&count[4]==0&&count[5]==1),"independent cycle predicate mismatch");
+   }}
+  }
+ }
+ cout<<"COMPLETE_EDGE_CONTROLS GRAPHS "<<graphs<<" EDGES "<<edges<<'\n';
+}
+int main(int argc,char**argv){try{
+ if(argc==2&&string(argv[1])=="--controls"){controls();return 0;}
+ need(argc==1,"arguments");
+ int count;need(bool(cin>>count)&&count>0,"count");
+ for(int id=0;id<count;id++){
+  int n;need(bool(cin>>n)&&(n==10||n==12),"order");int m=5*n/2;
+  vector<vector<int>> nb(n),eid(n,vector<int>(n,-1));
+  for(int j=0;j<m;j++){
+   int a,b;need(bool(cin>>a>>b)&&0<=a&&a<b&&b<n&&eid[a][b]<0,"edge");
+   eid[a][b]=eid[b][a]=j;nb[a].push_back(b);nb[b].push_back(a);
+  }
+  for(auto& a:nb){need(a.size()==5,"degree");sort(a.begin(),a.end());}
+  vector<int> order;vector<bool> chosen(n,false);
+  for(int d=0;d<n;d++){
+   int best=-1,score=-1;for(int v=0;v<n;v++)if(!chosen[v]){int s=0;for(int w:nb[v])if(chosen[w])s++;
+    if(s>score){best=v;score=s;}}
+   order.push_back(best);chosen[best]=true;
+  }
+  vector<vector<vector<pair<int,int>>>> choices(n);
+  for(int v=0;v<n;v++){
+   vector<int> p={1,2,3,4};do{if(p[0]>p[3])continue;
+    vector<int> cycle={0,p[0],p[1],p[2],p[3]};vector<pair<int,int>> edges;
+    for(int i=0;i<5;i++)edges.push_back({eid[v][nb[v][cycle[i]]],eid[v][nb[v][cycle[(i+1)%5]]]});
+    choices[v].push_back(edges);
+   }while(next_permutation(p.begin(),p.end()));need(choices[v].size()==12,"choices");
+  }
+  vector<uint32_t> adj(m,0);vector<uint64_t> nodes(n+1,0);uint64_t leaves=0;vector<int> code(n,-1);
+  function<void(int)> dfs=[&](int d){
+   nodes[d]++;
+   if(d==n){leaves++;cout<<"FOUND "<<id;for(auto x:code)cout<<' '<<x;cout<<" ADJ";for(auto row:adj)cout<<' '<<row;cout<<'\n';return;}
+   int v=order[d];
+   for(int c=0;c<12;c++){
+    auto& es=choices[v][c];for(auto [a,b]:es){need(!(adj[a]>>b&1),"overlapping local edge");adj[a]|=uint32_t(1)<<b;adj[b]|=uint32_t(1)<<a;}
+    bool ok=true;for(auto [a,b]:es)if(!edge_is_valid(adj,a,b)){ok=false;break;}
+    if(ok){code[v]=c;dfs(d+1);code[v]=-1;}
+    for(auto [a,b]:es){adj[a]&=~(uint32_t(1)<<b);adj[b]&=~(uint32_t(1)<<a);}
+   }
+  };
+  cout<<"START "<<id<<endl;dfs(0);cout<<"END "<<id<<" LEAVES "<<leaves<<" NODES";for(auto q:nodes)cout<<' '<<q;cout<<endl;
+ }
+ string extra;need(!(cin>>extra),"trailing input");cout<<"COMPLETE\n";
+}catch(const exception&e){cerr<<e.what()<<'\n';return 1;}}

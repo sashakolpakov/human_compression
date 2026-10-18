@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Direct degree-vector and graph checks, without importing the enumerator."""
+import sys
+if sys.flags.optimize:
+    raise SystemExit('Optimization removes validation; refusing before file access.')
+import itertools
+import json
+from pathlib import Path
+
+
+def short_cycle(rows):
+    n = len(rows)
+    for u in range(n):
+        for v in range(u + 1, n):
+            if not rows[u] >> v & 1:
+                continue
+            seen, todo = {u}, [(u, 0)]
+            for x, d in todo:
+                if d == 4:
+                    continue
+                for y in range(n):
+                    if not rows[x] >> y & 1 or {x, y} == {u, v}:
+                        continue
+                    if y == v:
+                        return True
+                    if y not in seen:
+                        seen.add(y)
+                        todo.append((y, d + 1))
+    return False
+
+
+def edge(rows, u, v):
+    assert u != v and not rows[u] >> v & 1
+    rows[u] |= 1 << v
+    rows[v] |= 1 << u
+
+
+def run(source):
+    data = json.loads(Path(source).read_text())
+    expected = {}
+    degree_vectors = 0
+    for middle in itertools.product((1, 2, 3), repeat=6):
+        for a, b in itertools.product(range(4), repeat=2):
+            left = middle + (a, b)
+            if sum(left) != 15 or a + b != 3:
+                continue
+            degree_vectors += 1
+            right = tuple(4 - x for x in middle) + (3 - a, 3 - b)
+            key = (sum(x * (x - 1) // 2 for x in left),
+                   sum(x * (x - 1) // 2 for x in right))
+            expected.setdefault(key, set()).add(tuple(left.count(k) for k in (1, 2, 3)))
+    assert degree_vectors == 564
+    assert len(data['shapes']) == 784
+    for l, r, shapes in data['shapes']:
+        assert len(shapes) == len(set(map(tuple, shapes)))
+        assert set(map(tuple, shapes)) == expected.get((l, r), set()), (l, r, shapes)
+    starts = rejected = 0
+    for case in data['cases']:
+        base = case['base']
+        left = case['left'] + [0] * (8 - len(case['left']))
+        assert len(base) == 26 and not short_cycle(base)
+        target = 0
+        for i, j in itertools.combinations(range(3), 2):
+            k = 3 - i - j
+            required = sum(sum(base[17 + 3*k + x] >> y & 1 for y in range(4, 13))
+                           for x in range(3))
+            current = sum(sum(row >> y & 1 for y in range(17 + 3*i, 20 + 3*i)) *
+                          sum(row >> y & 1 for y in range(17 + 3*j, 20 + 3*j))
+                          for row in base)
+            target += required - current
+        actual = {tuple(x['edge']): x for x in case['accepted']}
+        assert len(actual) == len(case['accepted'])
+        for e, f in itertools.combinations(range(8), 2):
+            need = [(3 if t in (e, f) else 4) - left[t].bit_count() for t in range(8)]
+            ok = all(mask or t in (e, f) for t, mask in enumerate(left))
+            ok &= left[e].bit_count() + left[f].bit_count() == 3
+            ok &= all(mask.bit_count() <= 3 for mask in left)
+            ok &= all(0 <= x <= 3 for x in need)
+            ok &= sum(x * (x - 1) // 2 for x in need) == target
+            rows = list(base) + [0] * 8
+            for t, mask in enumerate(left):
+                for x in range(9):
+                    if mask >> x & 1:
+                        edge(rows, 4 + x, 26 + t)
+            assert not short_cycle(rows)
+            edge(rows, 26 + e, 26 + f)
+            ok &= not short_cycle(rows)
+            assert ((e, f) in actual) == ok, (case['root_index'], e, f)
+            if ok:
+                starts += 1
+                assert actual[e, f]['need'] == need
+                assert actual[e, f]['rows'] == rows
+                assert sum(need) == 15
+            else:
+                rejected += 1
+    assert starts == data['accepted_starts'] > 0
+    assert len(data['cases']) == data['case_count'] >= 10 and rejected > 0
+    return dict(status='PASS_INDEPENDENT_BOUNDARY_CHECK', degree_vectors=degree_vectors,
+                shape_queries=784, cases=len(data['cases']), starts=starts, rejected=rejected)
+
+
+if __name__ == '__main__':
+    assert len(sys.argv) == 2
+    print(json.dumps(run(sys.argv[1]), sort_keys=True))

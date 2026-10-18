@@ -1,0 +1,26 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,json,shutil,subprocess
+def build(source,out):
+    out.mkdir();shutil.copyfile(source,out/'nineteen.tex')
+    commands=[]
+    for i in range(2):
+        cmd=['pdflatex','-halt-on-error','-interaction=nonstopmode','nineteen.tex']
+        result=subprocess.run(cmd,cwd=out,capture_output=True,timeout=45)
+        (out/f'build{i+1}.stdout').write_bytes(result.stdout);(out/f'build{i+1}.stderr').write_bytes(result.stderr)
+        commands.append(dict(command=cmd,returncode=result.returncode))
+        if result.returncode or result.stderr:raise RuntimeError('native build failed')
+    log=(out/'nineteen.log').read_text()
+    if 'Overfull' in log or 'LaTeX Warning:' in log:raise RuntimeError('native warning')
+    from pypdf import PdfReader
+    pages=PdfReader(out/'nineteen.pdf').pages
+    (out/'text.txt').write_text('\n\n'.join(p.extract_text() for p in pages))
+    cmd=['gs','-q','-dSAFER','-dBATCH','-dNOPAUSE','-sDEVICE=png16m','-r100','-sOutputFile=page-%02d.png','nineteen.pdf']
+    result=subprocess.run(cmd,cwd=out,capture_output=True,timeout=45)
+    (out/'render.stdout').write_bytes(result.stdout);(out/'render.stderr').write_bytes(result.stderr)
+    if result.returncode or result.stderr:raise RuntimeError('native page rendering failed')
+    report=dict(status='PASS_NATIVE_BUILD',commands=commands+[dict(command=cmd,returncode=result.returncode)],pages=len(pages),warnings=[line for line in log.splitlines() if any(x in line for x in ['Warning','Overfull','Underfull'])])
+    (out/'build.json').write_text(json.dumps(report,indent=2)+'\n');return report
+if __name__=='__main__':
+    p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();print(json.dumps(build(a.source.resolve(),a.out.resolve())))

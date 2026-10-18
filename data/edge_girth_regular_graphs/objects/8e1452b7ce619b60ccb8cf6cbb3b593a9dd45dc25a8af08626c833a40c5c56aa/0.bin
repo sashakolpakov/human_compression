@@ -1,0 +1,124 @@
+"""Literal certificates for the Clebsch graph."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+import argparse
+import hashlib
+import json
+from itertools import combinations, product
+from pathlib import Path
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+def clebsch():
+    pairs = list(combinations(range(1, 6), 2))
+    a = [set() for _ in range(16)]
+    def edge(u, v):
+        a[u].add(v)
+        a[v].add(u)
+    for i in range(1, 6):
+        edge(0, i)
+    for j, pair in enumerate(pairs):
+        for i in pair:
+            edge(i, 6 + j)
+    for i, j in combinations(range(10), 2):
+        if set(pairs[i]).isdisjoint(pairs[j]):
+            edge(6 + i, 6 + j)
+    return a
+
+def decode(raw):
+    need(isinstance(raw, str) and raw and all(63 <= ord(c) <= 126 for c in raw), 'graph6 alphabet')
+    n = ord(raw[0]) - 63
+    need(0 < n <= 62 and len(raw) == 1 + (n * (n - 1) // 2 + 5) // 6, 'graph6 length')
+    bits = [(ord(c) - 63 >> j) & 1 for c in raw[1:] for j in range(5, -1, -1)]
+    a = [set() for _ in range(n)]
+    t = 0
+    for v in range(n):
+        for u in range(v):
+            if bits[t]:
+                a[u].add(v)
+                a[v].add(u)
+            t += 1
+    need(not any(bits[t:]), 'graph6 padding')
+    return a
+
+def parameters(a, expected_lambda=4):
+    n = len(a)
+    need(n == 16, 'order')
+    need(all(u not in row and len(row) == 5 and all(type(v) is int and 0 <= v < n for v in row) for u, row in enumerate(a)), 'simple regular')
+    need(all((v in a[u]) == (u in a[v]) for u in range(n) for v in range(n)), 'undirected')
+    seen = {0}
+    todo = [0]
+    for u in todo:
+        for v in a[u]:
+            if v not in seen:
+                seen.add(v)
+                todo.append(v)
+    need(len(seen) == n, 'connected')
+    edges = [(u, v) for u, v in combinations(range(n), 2) if v in a[u]]
+    need(all(not a[u] & a[v] for u, v in edges), 'triangle-free')
+    counts = {(u, v): sum(y in a[x] for x in a[u] - {v} for y in a[v] - {u}) for u, v in edges}
+    subsets = [t for t in combinations(range(n), 4) if all(len(a[v] & set(t)) == 2 for v in t)]
+    independent = {e: sum(set(e) <= set(t) for t in subsets) for e in edges}
+    need(counts == independent, 'independent cycle count')
+    need(set(counts.values()) == {expected_lambda} and expected_lambda > 0, 'edge four-cycle count')
+    need(sum(counts.values()) == 4 * len(subsets), 'cycle incidence')
+    return {'n': 16, 'k': 5, 'g': 4, 'lambda': expected_lambda, 'edges': len(edges), 'four_cycles': len(subsets)}
+
+def check_map(a, record):
+    need(record['id'] == 'UntilOrder250_51', 'source id')
+    raw, mapping = record['graph6'], record['map']
+    need(hashlib.sha256(raw.encode()).hexdigest() == record['source_line_sha256'], 'source line digest')
+    b = decode(raw)
+    need(len(b) == len(a) and all(type(x) is int for x in mapping) and sorted(mapping) == list(range(len(a))), 'bijection')
+    need(all((v in a[u]) == (mapping[v] in b[mapping[u]]) for u in range(len(a)) for v in range(len(a))), 'all adjacency pairs')
+    parameters(b)
+
+def local_checks(a):
+    rows = []
+    for v in range(16):
+        labels = a[v]
+        outside = set(range(16)) - labels - {v}
+        words = {x: a[x] & labels for x in outside}
+        counts = [len(word) for word in words.values()]
+        need(counts == [2] * 10, 'common-neighbour equality')
+        need(sum(counts) == 20 and sum(m*m for m in counts) == 40, 'moment identities')
+        need({frozenset(word) for word in words.values()} == {frozenset(pair) for pair in combinations(labels, 2)}, 'all ten pairs')
+        need(all((y in a[x]) == words[x].isdisjoint(words[y]) for x, y in combinations(outside, 2)), 'forced disjoint-pair adjacency')
+        rows.append({'root': v, 'first_moment': sum(counts), 'second_moment': sum(m*m for m in counts), 'pair_vertices': len(words)})
+    return {'all_roots': rows}
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--input', type=Path)
+    args = p.parse_args()
+    here = Path(__file__).resolve().parent
+    source = json.loads((args.input or here / 'source_map.json').read_text())
+    a = clebsch()
+    result = parameters(a)
+    check_map(a, source)
+    local = local_checks(a)
+    controls = []
+    def reject(label, fn):
+        try:
+            fn()
+        except ValueError:
+            controls.append(label)
+        else:
+            raise ValueError('accepted damaged certificate: ' + label)
+    reject('duplicate map image', lambda: check_map(a, dict(source, map=[0] * 16)))
+    damaged = [set(row) for row in a]
+    v = min(damaged[0])
+    damaged[0].remove(v)
+    damaged[v].remove(0)
+    reject('deleted edge', lambda: parameters(damaged))
+    reject('wrong cycle count', lambda: parameters(a, expected_lambda=3))
+    reject('invalid graph6', lambda: decode(source['graph6'] + '?'))
+    args.out.write_text(json.dumps({'status': 'PASS', 'graph': result, 'source_id': source['id'], 'local_checks': local, 'damaged_controls': controls, 'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0}, indent=2) + '\n')
+    print('PASS Clebsch graph, cycle counts, source map, moments at every root, four damaged controls')
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,24 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import json,hashlib,datetime
+S=Path('/Users/sasha/medusa/research/leemans');X=Path(__file__).resolve().parent
+
+def pin(p):
+ b=p.read_bytes();return dict(path=str(p.relative_to(S)),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+for name in ['root01','completion_cached01']:
+ r=json.loads((X/name/'receipt.json').read_text())
+ assert r['status']=='PASS_CLOSED_EXECUTION'and r['returncode']==0 and not r['timeout']and r['inputs_unchanged']
+ for p in r['pins']+r['outputs']:
+  v=pin(Path(p['path']));assert all(v[k]==p[k]for k in ['bytes','sha256'])
+r=json.loads((X/'completion12_cached_report.json').read_text());assert r['status']=='PASS_COMPLETE_ORDER34_COUPLED_COVERAGE'and r['root_representatives']==50542 and r['positive_graphs']==0
+assert(X/'positives12_cached.txt').read_text()=='0\n';r.pop('seconds');(X/'expected_completion12.json').write_text(json.dumps(r,indent=2)+'\n')
+records={k:pin(X/v)for k,v in dict(roots='roots12.txt',root_report='root12_report.json',completion_report='completion12_cached_report.json',positives='positives12_cached.txt',patterns='inventory01/patterns.txt').items()};records['root']=dict(receipt=pin(X/'root01/receipt.json'));records['completion']=dict(receipt=pin(X/'completion_cached01/receipt.json'));(X/'recorded_execution.json').write_text(json.dumps(records,indent=2)+'\n')
+fmt=lambda n:f'{n:,}'.replace(',',r'\,')
+text='The complete boundary pass processes all $'+fmt(r['root_representatives'])+'$ root representatives, visiting $'+fmt(r['side_nodes'])+'$ side-partition nodes and retaining $'+fmt(r['side_partitions'])+'$ left partitions. Of the roots, $'+fmt(r['roots_with_side'])+'$ have a retained left partition. The right visitor has $'+fmt(r['coupled_nodes'])+'$ nodes and rejects $'+fmt(r['pruned'])+'$ attempted edges. It reaches $'+fmt(r['complete_graphs'])+'$ complete graphs satisfying the root equations, of which $'+fmt(r['mismatches'])+'$ fail the final cycle counts. There are no positive graphs. The input and complete outputs are bound to successful terminal receipts; the earlier timed-out execution contributes no exclusion.\n'
+(X/'completion_counts.tex').write_text(text)
+p=X/'twelve.tex';s=p.read_text().replace('\\noindent\\textbf{Working draft.} The complete boundary certificate is pending; no lower-bound clause is credited.\n','');p.write_text(s)
+p=X/'source_contract.json';d=json.loads(p.read_text());d['status']='AUTHOR_COMPLETE_AWAITING_DISTINCT_REVIEW';d['recovered']=d.pop('proposed_recovery');p.write_text(json.dumps(d,indent=2)+'\n')
+p=X/'attribution.json';d=json.loads(p.read_text());d['new_work'][-1]='Complete fresh lambda12 boundary execution';p.write_text(json.dumps(d,indent=2)+'\n')
+(X/'development.json').write_text(json.dumps(dict(previous_timeout=pin(X/'completion01/receipt.json'),accepted_changed_method=pin(S/'corpus106_F012_boundary_initializer_root_review/manifest.json'),successful_changed_completion=pin(X/'completion_cached01/receipt.json'),no_timeout_credit=True,independent_full_target_review='PENDING',new_lower_claim='Existing source lower35 only',timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat()),indent=2)+'\n')
+print(json.dumps(r))

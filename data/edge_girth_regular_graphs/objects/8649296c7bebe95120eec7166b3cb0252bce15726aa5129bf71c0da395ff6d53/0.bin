@@ -1,0 +1,120 @@
+"""Replay the complete small incidence classification, with explicit failure checks."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not an accepted execution mode')
+from pathlib import Path
+from functools import lru_cache
+from itertools import combinations
+from collections import Counter
+import argparse, json, hashlib, math, subprocess
+
+def need(ok,msg):
+    if not ok:raise ValueError(msg)
+
+@lru_cache(None)
+def labelled_count(ds):
+    if not ds:return 1
+    if min(ds)<0 or max(ds)>=len(ds) or sum(ds)%2:return 0
+    d,tail=ds[0],ds[1:];answer=0
+    for ss in combinations(range(len(tail)),d):
+        new=list(tail)
+        for i in ss:new[i]-=1
+        if min(new,default=0)>=0:answer+=labelled_count(tuple(sorted(new,reverse=True)))
+    return answer
+
+def parse_input(data):
+    it=iter(map(int,data.split()));total=next(it);bases=[]
+    for _ in range(total):
+        n=next(it);es=[(next(it),next(it)) for _ in range(2*n)]
+        need(5<=n<=9 and len(set(es))==2*n,'bad base')
+        need(all(0<=a<b<n for a,b in es),'bad endpoints')
+        ds=Counter(v for e in es for v in e);need([ds[v] for v in range(n)]==[4]*n,'bad degree')
+        bases.append((n,es))
+    need(next(it,None) is None,'input tail');return bases
+
+def verify_output(data,bases):
+    lines=data.decode().splitlines();need(lines and lines[-1]=='COMPLETE','incomplete census')
+    mass={8:0,9:0};trials={8:0,9:0};passes={8:0,9:0};classes={8:set(),9:set()}
+    base_rows=[];positive=[];canonical=set();active=None;seen_codes=set();seen_best=set();ended=0
+    for line in lines[:-1]:
+        x=line.split()
+        if x[0]=='BASE':
+            need(active is None,'unclosed base');i,n,word,canon,aut,perms,total=map(int,x[1:])
+            need(i==len(base_rows) and n==bases[i][0],'base order mismatch')
+            literal=sum(1<<(b*(b-1)//2+a) for a,b in bases[i][1]);need(word==literal,'base word mismatch')
+            need(perms==math.factorial(n) and total==3**n and aut>0 and perms%aut==0,'permutation census mismatch')
+            need((n,canon) not in canonical,'duplicate base orbit');canonical.add((n,canon))
+            mass[n]+=perms//aut;trials[n]+=total;active=i;seen_codes=set();seen_best=set()
+            base_rows.append(dict(index=i,n=n,word=word,canonical=canon,automorphisms=aut,permutations=perms,choices=total))
+        elif x[0]=='PASS':
+            i,code,best,*adj=map(int,x[1:]);need(active==i and code not in seen_codes,'bad positive order')
+            n=bases[i][0];need(len(adj)==2*n and 0<=best<=code<3**n,'bad positive record')
+            seen_codes.add(code);seen_best.add(best);passes[n]+=1;classes[n].add((i,best))
+            for a,row in enumerate(adj):
+                need(row>=0 and row<(1<<len(adj)) and not(row>>a&1) and row.bit_count()==4,'bad medial row')
+                need(all(bool(row>>b&1)==bool(adj[b]>>a&1) for b in range(len(adj))),'asymmetric medial')
+            edges={tuple((a,b)) for a,row in enumerate(adj) for b in range(a+1,len(adj)) if row>>b&1}
+            need(not any(adj[a]&adj[b] for a,b in edges),'triangle in positive')
+            hist=Counter({e:0 for e in edges});cycs=[]
+            for a,b,c,d in combinations(range(len(adj)),4):
+                for cyc in [(a,b,c,d),(a,b,d,c),(a,c,b,d)]:
+                    es=[tuple(sorted((cyc[j],cyc[(j+1)%4]))) for j in range(4)]
+                    if all(e in edges for e in es):hist.update(es);cycs.append(list(cyc))
+            need(set(hist.values())=={1} and len(cycs)==n,'direct cycle discrepancy')
+            positive.append(dict(base=i,code=code,orbit=best,adjacency=adj,cycles=cycs))
+        elif x[0]=='END':
+            i,accepted,k,*ids=map(int,x[1:]);need(active==i,'bad end')
+            need(accepted==len(seen_codes) and k==len(seen_best) and ids==sorted(seen_best),'bad end counts')
+            active=None;ended+=1
+        else:raise ValueError('unexpected line')
+    need(active is None and ended==len(bases)==len(base_rows),'base coverage incomplete')
+    counts={n:labelled_count((4,)*n) for n in [8,9]};need(mass==counts,'labelled coverage discrepancy')
+    need(counts=={8:19355,9:1024380} and trials=={8:39366,9:314928},'unexpected coverage values')
+    need(passes=={8:0,9:5} and {n:len(c) for n,c in classes.items()}=={8:0,9:4},'unexpected classification')
+    return dict(base_rows=base_rows,labelled_counts=counts,orbit_masses=mass,local_systems=trials,
+                accepted_systems=passes,orbit_counts={n:len(c) for n,c in classes.items()},positives=positive)
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--out',type=Path,required=True);a=ap.parse_args()
+    here=Path(__file__).resolve().parent
+    mf=here/'manifest.json'
+    if mf.exists():
+        for r in json.loads(mf.read_text())['exports']:
+            raw=(here/r['path']).read_bytes();need(len(raw)==r['bytes'] and hashlib.sha256(raw).hexdigest()==r['sha256'],'export hash mismatch')
+    deps=json.loads((here/'dependencies.json').read_text())
+    for b in deps['bindings']:
+        raw=Path(b['absolute_path']).read_bytes();need(len(raw)==b['bytes'] and hashlib.sha256(raw).hexdigest()==b['sha256'],'dependency mismatch')
+    a.out.mkdir(exist_ok=False)
+    cmd=['clang++','-O2','-std=c++17',str(here/'medial.cpp'),'-o',str(a.out/'medial')]
+    r=subprocess.run(cmd,capture_output=True,timeout=60)
+    (a.out/'compiler.stdout').write_bytes(r.stdout);(a.out/'compiler.stderr').write_bytes(r.stderr);need(r.returncode==0,'compilation failed')
+    inp=(here/'base_input.txt').read_bytes();bases=parse_input(inp)
+    r=subprocess.run([str(a.out/'medial')],input=inp,capture_output=True,timeout=60)
+    (a.out/'census.stdout').write_bytes(r.stdout);(a.out/'census.stderr').write_bytes(r.stderr)
+    need(r.returncode==0 and not r.stderr,'fresh census failure');need(r.stdout==(here/'census.stdout').read_bytes(),'fresh census differs')
+    report=verify_output(r.stdout,bases)
+    controls=0
+    for n in range(7):
+        es=list(combinations(range(n),2));tally=Counter()
+        for mask in range(1<<len(es)):
+            ds=[0]*n
+            for i,(u,v) in enumerate(es):
+                if mask>>i&1:ds[u]+=1;ds[v]+=1
+            tally[tuple(sorted(ds,reverse=True))]+=1
+        for ds,cnt in tally.items():
+            m=math.factorial(n)
+            for k in Counter(ds).values():m//=math.factorial(k)
+            need(labelled_count(ds)*m==cnt,'small degree recurrence failure');controls+=1
+    need(controls==152,'control partition')
+    source=json.loads((here/'source_matches.json').read_text());used=set()
+    for r in source:
+        p=next(t for t in report['positives'] if(t['base'],t['code'])==(r['base'],r['code']))
+        q=r['map'];need(sorted(q)==list(range(18)),'source map not bijective')
+        mapped={tuple(sorted((q[u],q[v]))) for u,row in enumerate(p['adjacency']) for v in range(u+1,18) if row>>v&1}
+        need(mapped=={tuple(e) for e in r['source_edges']},'source map fails')
+        used.add((p['base'],p['orbit']))
+    need(len(source)==len(used)==4,'source coverage')
+    report.update(status='PASS_COMPLETE_INCIDENCE_COMPONENT',degree_controls=controls,source_isomorphisms=4,
+                  native_pages=4,whole_original_credit=0,new_question_credit=0,new_Lean_declarations=0)
+    (a.out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+    print(json.dumps({k:report[k] for k in ['status','labelled_counts','local_systems','accepted_systems','orbit_counts','degree_controls','source_isomorphisms']}))
+if __name__=='__main__':main()

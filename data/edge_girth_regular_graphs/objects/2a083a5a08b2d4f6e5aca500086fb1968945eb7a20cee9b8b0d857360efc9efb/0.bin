@@ -1,0 +1,17 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import itertools,json,math,hashlib,argparse
+p=argparse.ArgumentParser();p.add_argument('--study',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();S=a.study.resolve();sys.path.insert(0,str(S/'corpus106_F012_matching_forest_v1'));from forest import choose_forest,orient,representative_blocks
+edges=list(itertools.combinations(range(4),2));position={e:i for i,e in enumerate(edges)};perms=list(itertools.permutations(range(4)))
+def transported(ks,p):
+ out=[0]*6
+ for i,(u,v)in enumerate(edges):out[position[tuple(sorted((p[u],p[v])))]]=ks[i]
+ return tuple(out)
+allrows=[ks for ks in itertools.product(range(4),repeat=6)if all(sum(ks[i]for i,e in enumerate(edges)if v in e)==5 for v in range(4))]
+reps=sorted({min(transported(k,p)for p in perms)for k in allrows});rows=[]
+for ks in reps:
+ f=choose_forest([3]*4,edges,ks);directions={e:1 if p==edges[e][0]else 2 for e,p,c in orient([3]*4,edges,ks,f)};blocks=representative_blocks([3]*4,edges,ks,f)
+ rows.append(dict(matching_sizes=ks,forest=list(f),directions=directions,normalized_products=math.prod(map(len,blocks))))
+assert len(reps)==3 and all(k[0]==k[5]and k[1]==k[4]and k[2]==k[3]for k in allrows)
+r=dict(status='PASS_EXACT_MATCHING_SIZE_INVENTORY_NO_GRAPH_SEARCH',edges=edges,literal_size_vectors=len(allrows),orbits=len(reps),patterns=rows,normalized_products=sum(r['normalized_products']for r in rows),acquired_forest_manifest_sha256=hashlib.sha256((S/'corpus106_F012_matching_forest_v1/manifest.json').read_bytes()).hexdigest());a.out.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r))

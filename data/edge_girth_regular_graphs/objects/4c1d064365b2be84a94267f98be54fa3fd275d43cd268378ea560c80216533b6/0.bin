@@ -1,0 +1,134 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+import argparse,hashlib,json,itertools,os,subprocess,time
+from pathlib import Path
+
+def need(v,m):
+ if not v:raise RuntimeError(m)
+def pin(p):
+ b=p.read_bytes();return {'path':str(p),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}
+def put(p,x):p.write_text(json.dumps(x,indent=2)+'\n')
+def comps(total,length):
+ if length==1:yield(total,);return
+ for i in range(total+1):
+  for r in comps(total-i,length-1):yield(i,)+r
+
+def inventory(n):
+ labelled=[];out=[]
+ for z in range((2*n-25)//2+1):
+  for b in comps(2*n-25-2*z,5):
+   c=[5-x for x in b];twice=c[0]+c[1]-c[2]-c[3]+c[4];need(twice%2==0,'integrality');a0=twice//2
+   a=(a0,c[2]-c[4]+a0,c[1]-a0,c[4]-a0,c[0]-c[2]+c[4]-a0)
+   if min(a)<1:continue
+   need(sum(a)+sum(b)+z==n and all(a[(i-1)%5]+a[(i+1)%5]+b[i]==5 for i in range(5)),'size equations')
+   labelled.append((a,b,z));orbit=[tuple(b[(sign*i+j)%5]for i in range(5))for sign in [-1,1]for j in range(5)]
+   if b==min(orbit):out.append((a,b,z))
+ independent=set()
+ for a in itertools.product(range(1,6),repeat=5):
+  b=tuple(5-a[(i-1)%5]-a[(i+1)%5]for i in range(5));z=n-sum(a)-sum(b)
+  if min(b)>=0 and z>=0:independent.add((a,b,z))
+ need(set(labelled)==independent,'independent entire labelled inventory');return out,len(labelled)
+
+def cycle_input(n,target,case,a,b,z,cap=30):return ' '.join(map(str,[case,n,len(target),*target,*a,*b,z,cap]))+'\n'
+def strip_times(rows):return [{k:v for k,v in row.items()if k!='seconds'}for row in rows]
+
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);ap.add_argument('--render',action='store_true');args=ap.parse_args();S=args.study.resolve();W=Path(__file__).resolve().parent;O=args.out.resolve();need(not O.exists(),'fresh output');O.mkdir(parents=True)
+ for row in json.loads((W/'dependencies.json').read_text()):
+  p=Path(row['path']);p=p if p.is_absolute()else S/p;q=pin(p);need(q['sha256']==row['sha256']and q['bytes']==row['bytes'],'binding '+str(p))
+ if(W/'manifest.json').exists():
+  for row in json.loads((W/'manifest.json').read_text())['exports']:
+   q=pin(W/row['path']);need(q['sha256']==row['sha256']and q['bytes']==row['bytes'],'author export')
+ changes=json.loads((W/'code_changes.json').read_text());base=S/'corpus106_F012_square_six_v1/cycle_search_moments.cpp';need(pin(base)['sha256']==changes['sha256'],'acquired exact engine');raw=base.read_text()
+ for old,new in changes['replacements']:need(raw.count(old)==1,'sole code replacement');raw=raw.replace(old,new)
+ need(raw==(W/'cycle_search_degree5.cpp').read_text(),'only listed degree changes')
+ env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);receipts=[]
+ def run(name,cmd,data=None,cap=90,success=True):
+  start=time.monotonic()
+  try:r=subprocess.run(list(map(str,cmd)),input=data,cwd=O,capture_output=True,text=True,env=env,timeout=cap)
+  except subprocess.TimeoutExpired as e:
+   for suffix,t in [('stdout',e.stdout),('stderr',e.stderr)]:
+    t=t or b'';(O/(name+'.'+suffix)).write_bytes(t.encode()if isinstance(t,str)else t)
+   put(O/(name+'_timeout.json'),{'status':'TIMEOUT_NO_CERTIFICATE','cap':cap});raise
+  (O/(name+'.stdout')).write_text(r.stdout);(O/(name+'.stderr')).write_text(r.stderr);receipts.append({'name':name,'command':list(map(str,cmd)),'returncode':r.returncode,'seconds':time.monotonic()-start});put(O/'receipts.json',receipts)
+  if success:need(r.returncode==0 and not r.stderr,'successful '+name)
+  return r
+ modes=[('ordinary',['-O2']),('sanitized',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'])]
+ for mode,flags in modes:
+  for kind in ['cycle_search','bipartite']:
+   run('compile_'+kind+'_'+mode,['clang++','-std=c++17',*flags,'-Wall','-Wextra','-pedantic',W/(kind+'_degree5.cpp'),'-o',O/(kind+'_'+mode)],cap=30)
+ expected={14:(6,40,72),16:(20,141,11078),18:(28,191,314525)};orders={}
+ for n,(count,labelled,nodes)in expected.items():
+  cases,total=inventory(n);need((len(cases),total)==(count,labelled),'pattern totals');data=''.join(cycle_input(n,[6,8],j,*case)for j,case in enumerate(cases));(O/f'cycle_{n}.input').write_text(data);both=[]
+  for mode,_ in modes:
+   r=run(f'cycle_{n}_{mode}',[O/('cycle_search_'+mode)],data);rows=[json.loads(s)for s in r.stdout.splitlines()];need(len(rows)==count,'all cases returned')
+   need(all(row['case']==j and row['n']==n and row['status']=='COMPLETE'and row['positives']==0 and row['examples']==[]for j,row in enumerate(rows)),'complete zero cycle cases');need(sum(row['nodes']for row in rows)==nodes,'nodes');both.append(rows)
+  need(strip_times(both[0])==strip_times(both[1]),'sanitized cycle agreement');orders[n]={'labelled':labelled,'patterns':count,'nodes':nodes}
+ # Known Clebsch example supplies a nonvacuous degree-five cycle completion.
+ index=S/'corpus106_F012_positive_v1/source_witness_index.json';rec=next(x for x in json.loads(index.read_text())if x['id']=='UntilOrder250_51');file=Path(rec['graph_file']);line=file.read_text().splitlines()[rec['source_line']-1];need(hashlib.sha256(line.encode()).hexdigest()==rec['graph6_line_sha256'],'source positive line')
+ need(ord(line[0])-63==16,'positive order');bits=[(ord(c)-63>>j)&1 for c in line[1:]for j in range(5,-1,-1)];g=[0]*16;t=0
+ for y in range(16):
+  for x in range(y):
+   if bits[t]:g[x]|=1<<y;g[y]|=1<<x
+   t+=1
+ need(not any(bits[t:]),'positive padding')
+ def check_graph(graph):
+  need(len(graph)==16 and all(v.bit_count()==5 for v in graph),'positive degree');values=[]
+  for x in range(16):
+   need(not(graph[x]>>x&1),'no loops')
+   for y in range(x+1,16):
+    need(bool(graph[x]>>y&1)==bool(graph[y]>>x&1),'symmetry')
+    if graph[x]>>y&1:
+     need(not(graph[x]&graph[y]),'triangle');values.append(sum((graph[u]&graph[y]&~(1<<x)).bit_count()for u in range(16)if u!=y and graph[x]>>u&1))
+  need(set(values)=={4},'positive edge squares')
+ check_graph(g)
+ def find(path):
+  if len(path)==5:return path if g[path[-1]]>>path[0]&1 else None
+  for y in range(16):
+   if y not in path and g[path[-1]]>>y&1:
+    q=find(path+[y])
+    if q:return q
+  return None
+ cycle=next(q for x in range(16)if(q:=find([x]))is not None);a=[0]*5;b=[0]*5;z=0
+ for x in range(16):
+  profile={i for i,v in enumerate(cycle)if g[x]>>v&1}
+  if len(profile)==0:z+=1
+  elif len(profile)==1:b[next(iter(profile))]+=1
+  else:
+   pos=next(i for i in range(5)if profile=={(i-1)%5,(i+1)%5});a[pos]+=1
+ data=cycle_input(16,[4],0,a,b,z);(O/'positive_cycle.input').write_text(data);positive=[]
+ for mode,_ in modes:
+  r=run('positive_cycle_'+mode,[O/('cycle_search_'+mode)],data);q=json.loads(r.stdout);need(q['status']=='COMPLETE'and q['positives']>0 and q['positives']==len(q['examples']),'nonempty positive completion')
+  for graph in q['examples']:check_graph(graph)
+  positive.append(q)
+ need(strip_times(positive[:1])==strip_times(positive[1:]),'positive agreement')
+ # Independent literal isomorphisms for each positive output, checked on every pair.
+ import networkx as nx
+ def graph(adj):return nx.Graph([(u,v)for u in range(16)for v in range(u+1,16)if adj[u]>>v&1])
+ maps=[]
+ for adj in positive[0]['examples']:
+  matcher=nx.algorithms.isomorphism.GraphMatcher(graph(adj),graph(g));need(matcher.is_isomorphic(),'positive source comparison');p=[matcher.mapping[i]for i in range(16)];need(sorted(p)==list(range(16))and all(bool(adj[i]>>j&1)==bool(g[p[i]]>>p[j]&1)for i in range(16)for j in range(16)),'literal positive map');maps.append(p)
+ put(O/'positive_source.json',{'record':rec,'cycle':cycle,'a':a,'b':b,'z':z,'source_adj':g,'maps':maps})
+ bip=[]
+ for mode,_ in modes:
+  data='5 16 30\n6 12 30\n8 8 30\n9 8 30\n';(O/'bipartite.input').write_text(data);r=run('bipartite_'+mode,[O/('bipartite_'+mode)],data);rows=[json.loads(x)for x in r.stdout.splitlines()];need(len(rows)==4 and all(x['status']=='COMPLETE'for x in rows),'complete bipartite cases');need([(x['m'],x['lambda'],x['nodes'],x['positives'])for x in rows]==[(5,16,6,1),(6,12,17,1),(8,8,304337,0),(9,8,9970414,0)],'bipartite results');bip.append(rows)
+ need(strip_times(bip[0])==strip_times(bip[1]),'sanitized bipartite agreement')
+ # Finite arithmetic of the seven-cycle exceptional partition.
+ solutions=[a for a in itertools.product(range(1,6),repeat=7)if all(a[(i-1)%7]+a[(i+1)%7]+(i==0)==5 for i in range(7))];need(solutions==[(3,2,2,3,3,2,2)],'unique seven-cycle class sizes')
+ bad=[]
+ for name,data in [('order','4 8 30\n'),('target','8 17 30\n'),('cap','8 8 -1\n'),('incomplete','8 8\n'),('token','x\n')]:
+  r=run('reject_'+name,[O/'bipartite_ordinary'],data,success=False,cap=5);need(r.returncode!=0,'malformed input rejected');bad.append(name)
+ r=run('timeout',[O/'bipartite_ordinary'],'9 8 1e-9\n',cap=5);need(json.loads(r.stdout)['status']=='TIMEOUT','timeout is not zero completion')
+ guards=[]
+ for mode in ['argument','environment']:
+  ee=env.copy();cmd=[sys.executable]
+  if mode=='argument':cmd+=['-O']
+  else:ee['PYTHONOPTIMIZE']='1'
+  cmd+=[str(W/'check.py')];r=subprocess.run(cmd,env=ee,capture_output=True,text=True,timeout=5);(O/('guard_'+mode+'.stderr')).write_text(r.stderr);need(r.returncode!=0 and 'Optimized Python is not accepted'in r.stderr,'optimization guard');guards.append(mode)
+ if args.render:
+  import shutil
+  shutil.copy2(W/'pentavalent.tex',O/'pentavalent.tex')
+  for i in [1,2]:run('native'+str(i),['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','pentavalent.tex'],cap=30)
+  log=(O/'pentavalent.log').read_text();need('Overfull'not in log and 'LaTeX Warning:'not in log,'clean native content')
+ report={'status':'PASS_DEGREE_FIVE_LOWER_BOUNDS','cycle_orders':orders,'bipartite_cases':strip_times(bip[0]),'positive_cycle_outputs':positive[0]['positives'],'complete_cycle_patterns':54,'new_lower_rows':2,'lower_bounds':[[5,4,6,20],[5,4,8,20]],'ordinary_sanitized_agree':True,'negative_controls':bad,'optimization_guards':guards,'whole_original_credit':0,'new_question_credit':0};put(O/'report.json',report);print(json.dumps(report))
+if __name__=='__main__':main()

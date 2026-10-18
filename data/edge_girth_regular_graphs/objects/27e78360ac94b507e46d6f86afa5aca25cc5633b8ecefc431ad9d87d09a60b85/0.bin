@@ -1,0 +1,16 @@
+#define main extension_program_main
+#include "extension_cover.cpp"
+#undef main
+vector<Graph> read_graphs(const string&file){ifstream in(file);size_t n;require(bool(in>>n)&&n>0&&n<1000000,"graph input count");vector<Graph>gs;for(size_t i=0;i<n;i++){int size;require(bool(in>>size)&&size>0&&size<64,"graph order");Graph g(size);for(U&x:g)require(bool(in>>x),"graph rows");validate_graph(g);gs.push_back(g);}string extra;require(!(in>>extra),"full graph input");return gs;}
+void rows(ostream&out,const Graph&g){out<<'[';for(size_t i=0;i<g.size();i++){if(i)out<<',';out<<g[i];}out<<']';}
+int main(int argc,char**argv){try{
+ require(argc==5,"completion controls JOINED FINALS SOURCE OUT");nauty_check(WORDSIZE,1,32,NAUTYVERSIONID);auto joined=read_graphs(argv[1]),finals=read_graphs(argv[2]),source=read_graphs(argv[3]);require(finals.size()==1&&source.size()==1&&finals[0].size()==32&&source[0].size()==32,"one source and final32");
+ auto from=propose_canonical_map(finals[0],false),to=propose_canonical_map(source[0],false);check_literal_map(finals[0],source[0],from.lab,to.lab,false);vector<int>map(32);for(int i=0;i<32;i++)map[from.lab[i]]=to.lab[i];
+ Completion positive(60);positive.g=source[0];require(!has_short_cycle(positive.g),"source girth");int edges=0;for(int u=0;u<32;u++){require(weight(positive.g[u])==4,"source degree");U bits=positive.g[u];while(bits){int v=first(bits);bits&=bits-1;if(u<v){require(positive.paths(u,v,5,U(1)<<u)==18,"source exact lambda");edges++;}}}
+ ofstream out(argv[4]);out<<"{\"source_rows\":";rows(out,source[0]);out<<",\"final_rows\":";rows(out,finals[0]);out<<",\"source_map\":[";for(int i=0;i<32;i++){if(i)out<<',';out<<map[i];}out<<"],\"source_edges\":"<<edges<<",\"completions\":[";
+ for(size_t i=0;i<joined.size();i++){
+  Completion c(60);c.run(joined[i]);if(i)out<<',';out<<"{\"rows\":";rows(out,joined[i]);out<<",\"nodes\":"<<c.nodes<<",\"completed\":"<<c.completed<<",\"overflow\":"<<c.overflow<<",\"mismatch\":"<<c.mismatch<<",\"positive\":"<<c.positive<<",\"finals\":[";
+  for(size_t j=0;j<c.finals.graphs.size();j++){if(j)out<<',';rows(out,c.finals.graphs[j]);auto can=propose_canonical_map(c.finals.graphs[j],false);check_literal_map(c.finals.graphs[j],source[0],can.lab,to.lab,false);}out<<"]}";
+ }
+ out<<"]}\n";require(bool(out),"controls written");cout<<"PASS_ALL_JOINED_COMPLETIONS_AND_SOURCE_MAP "<<joined.size()<<'\n';return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

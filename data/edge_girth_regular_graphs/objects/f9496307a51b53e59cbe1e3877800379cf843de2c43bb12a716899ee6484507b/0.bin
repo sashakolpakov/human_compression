@@ -1,0 +1,202 @@
+import argparse
+from collections import Counter, deque
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+
+import networkx as nx
+
+W = Path(__file__).resolve().parent
+
+
+def need(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+def distances(adj, root):
+    d = {root: 0}
+    q = deque([root])
+    while q:
+        v = q.popleft()
+        for x in adj[v]:
+            if x not in d:
+                d[x] = d[v] + 1
+                q.append(x)
+    return d
+
+
+def cycles(adj, length):
+    answer = []
+    for root in range(len(adj)):
+        def visit(path):
+            if len(path) == length:
+                if root in adj[path[-1]] and path[1] < path[-1]:
+                    answer.append(tuple(path))
+                return
+            for x in adj[path[-1]]:
+                if x > root and x not in path:
+                    visit(path + [x])
+        visit([root])
+    return answer
+
+
+def moments(adj, lam):
+    n = len(adj)
+    k = len(adj[0])
+    need(all(len(x) == k for x in adj), 'regularity')
+    need(all(not cycles(adj, length) for length in [3, 4, 5]), 'girth at least six')
+    six = cycles(adj, 6)
+    edges = Counter()
+    roots = Counter()
+    for cycle in six:
+        roots.update(cycle)
+        for i, u in enumerate(cycle):
+            edges[tuple(sorted((u, cycle[(i + 1) % 6])))] += 1
+    actual = {tuple(sorted((u, v))) for u in range(n) for v in adj[u]}
+    need(set(edges) == actual and set(edges.values()) == {lam}, 'all edge cycle counts')
+    data = []
+    for root in range(n):
+        d = distances(adj, root)
+        layer = {v for v in d if d[v] == 2}
+        outside = set(range(n)) - {v for v in d if d[v] <= 2}
+        cs = [len(adj[v] & layer) for v in sorted(outside)]
+        S = k * (k - 1)**2
+        need(len(layer) == k * (k - 1) and len(outside) == n - 1 - k*k, 'layers')
+        need(sum(cs) == S and sum(c*c for c in cs) == S + k*lam, 'moments')
+        need(sum(c*(c-1)//2 for c in cs) == roots[root] == k*lam//2, 'root cycles')
+        data.append({'root': root, 'third_incidence': cs, 'root_six_cycles': roots[root]})
+    return {'n': n, 'k': k, 'lambda': lam, 'six_cycles': len(six), 'roots': data}
+
+
+def reconstruction(adj, root):
+    n = len(adj)
+    need(n == 35, 'order')
+    d = distances(adj, root)
+    branch_roots = sorted(adj[root])
+    branches = [adj[p] - {root} for p in branch_roots]
+    leaf_branch = {x: b for b, branch in enumerate(branches) for x in branch}
+    leaves = set(leaf_branch)
+    Y = {x for x in d if d[x] == 3}
+    need([sum(x == i for x in d.values()) for i in range(4)] == [1, 4, 12, 18], 'equality layers')
+    H = {x: set() for x in leaves}
+    y_edges = {}
+    for y in Y:
+        e = tuple(sorted(adj[y] & leaves))
+        need(len(e) == 2 and len(adj[y] & Y) == 2, 'third layer degrees')
+        need(leaf_branch[e[0]] != leaf_branch[e[1]], 'distinct branches')
+        need(e not in y_edges.values(), 'simple leaf graph')
+        y_edges[y] = e
+        H[e[0]].add(e[1])
+        H[e[1]].add(e[0])
+    for x in leaves:
+        need(sorted(leaf_branch[y] for y in H[x]) == [b for b in range(4) if b != leaf_branch[x]], 'one edge per other branch')
+    components = []
+    remaining = set(leaves)
+    while remaining:
+        component = set(distances(H, min(remaining)))
+        need(len(component) == 4 and all(H[x] == component - {x} for x in component), 'K4 components')
+        components.append(sorted(component))
+        remaining -= component
+    components.sort()
+    need(len(components) == 3, 'three components')
+    component_label = {x: a for a, component in enumerate(components) for x in component}
+    labels = {root: (0, 1, 2)}
+    for b, p in enumerate(branch_roots):
+        labels[p] = tuple(x for x in range(3, 7) if x != b+3)
+    for x in leaves:
+        labels[x] = tuple(sorted(({0, 1, 2} - {component_label[x]}) | {leaf_branch[x]+3}))
+    for y, e in y_edges.items():
+        a = component_label[e[0]]
+        need(component_label[e[1]] == a, 'component edge')
+        pair = {leaf_branch[x] for x in e}
+        expected = {z for z, f in y_edges.items()
+                    if {leaf_branch[x] for x in f} == set(range(4)) - pair
+                    and component_label[f[0]] != a}
+        need(adj[y] & Y == expected, 'forced third layer adjacency')
+        labels[y] = tuple(sorted({a} | ({3, 4, 5, 6} - {b+3 for b in pair})))
+    need(set(labels.values()) == set(itertools.combinations(range(7), 3)), 'complete literal bijection')
+    for u in range(n):
+        for v in range(n):
+            need((v in adj[u]) == set(labels[u]).isdisjoint(labels[v]), 'literal adjacency map')
+    return {'root': root, 'branches': [sorted(x) for x in branches],
+            'components': components, 'map_to_triples': [labels[x] for x in range(n)],
+            'ordered_adjacency_checks': n*n}
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', type=Path, required=True)
+    p.add_argument('--render', action='store_true')
+    a = p.parse_args()
+    O = a.out.resolve()
+    O.mkdir(parents=True, exist_ok=False)
+    bindings = json.loads((W / 'bindings.json').read_text())
+    for item in bindings:
+        data = Path(item['path']).read_bytes()
+        need(len(data) == item['bytes'] and hashlib.sha256(data).hexdigest() == item['sha256'], 'binding')
+    if (W / 'manifest.json').exists():
+        for item in json.loads((W / 'manifest.json').read_text())['exports']:
+            data = (W / item['path']).read_bytes()
+            need(len(data) == item['bytes'] and hashlib.sha256(data).hexdigest() == item['sha256'], 'frozen export')
+    controls, maps = [], []
+    for record in json.loads((W / 'examples.json').read_text()):
+        line = Path(record['graph_file']).read_bytes().splitlines()[record['source_line']-1]
+        need(hashlib.sha256(line).hexdigest() == record['graph6_line_sha256'], 'graph6 source line')
+        G = nx.from_graph6_bytes(line)
+        adj = [set(G[x]) for x in range(len(G))]
+        need(len(G) == record['n'], 'source order')
+        controls.append(dict(source=record['id'], **moments(adj, record['lambda'])))
+        if record['n'] == 35:
+            maps = [reconstruction(adj, root) for root in range(35)]
+    triples = list(itertools.combinations(range(7), 3))
+    odd = [{j for j, b in enumerate(triples) if set(a).isdisjoint(b)} for a in triples]
+    controls.append(dict(source='explicit_Kneser_7_3', **moments(odd, 9)))
+    need(len(maps) == 35, 'all source root maps')
+    guards = []
+    for mode in ['argument', 'environment']:
+        cmd = [sys.executable]
+        env = os.environ.copy()
+        if mode == 'argument':
+            cmd.append('-O')
+        else:
+            env['PYTHONOPTIMIZE'] = '1'
+        cmd.append(str(W / 'check.py'))
+        r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=5)
+        need(r.returncode != 0 and 'Optimized Python is not accepted' in r.stderr, 'guard')
+        (O / ('guard_' + mode + '.stderr')).write_text(r.stderr)
+        guards.append(mode)
+    if a.render:
+        shutil.copy2(W / 'odd.tex', O / 'odd.tex')
+        for i in [1, 2]:
+            r = subprocess.run(['/opt/homebrew/bin/pdflatex', '-interaction=nonstopmode',
+                                '-halt-on-error', 'odd.tex'], cwd=O, capture_output=True,
+                               text=True, timeout=30)
+            (O / ('native'+str(i)+'.stdout')).write_text(r.stdout)
+            (O / ('native'+str(i)+'.stderr')).write_text(r.stderr)
+            need(r.returncode == 0 and not r.stderr, 'native build')
+        log = (O / 'odd.log').read_text()
+        need('Overfull' not in log and 'LaTeX Warning:' not in log, 'native content')
+    (O / 'moment_controls.json').write_text(json.dumps(controls, indent=2)+'\n')
+    (O / 'literal_source_maps.json').write_text(json.dumps(maps, indent=2)+'\n')
+    report = {'status': 'PASS_ORDER35_RECONSTRUCTION_CONTROLS', 'example_graphs': len(controls),
+              'root_moment_checks': sum(x['n'] for x in controls), 'source_maps': len(maps),
+              'ordered_adjacency_checks': sum(x['ordered_adjacency_checks'] for x in maps),
+              'fresh_bindings': len(bindings), 'optimization_guards': guards,
+              'universal_proof': 'Written local reconstruction, not finite example testing.',
+              'new_exact_count_rows': 1, 'new_lower_rows': 0, 'whole_original_credit': 0,
+              'new_question_credit': 0, 'new_Lean': 0, 'measurement': None}
+    (O / 'report.json').write_text(json.dumps(report, indent=2)+'\n')
+    print(json.dumps(report))
+
+
+if __name__ == '__main__':
+    main()

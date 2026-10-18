@@ -1,0 +1,74 @@
+import argparse,hashlib,json,os,re,shutil,subprocess,sys
+from pathlib import Path
+from collections import Counter
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise RuntimeError('Optimized Python is not accepted')
+from local_model import *
+W=Path(__file__).resolve().parent
+
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--out',type=Path,required=True);ap.add_argument('--render',action='store_true');a=ap.parse_args();O=a.out.resolve();O.mkdir(parents=True,exist_ok=False)
+ bindings=json.loads((W/'bindings.json').read_text())
+ for row in bindings:
+  p=Path(row['path']);b=p.read_bytes();need(len(b)==row['bytes']and hashlib.sha256(b).hexdigest()==row['sha256'],'source binding')
+ if(W/'manifest.json').exists():
+  for row in json.loads((W/'manifest.json').read_text())['exports']:
+   b=(W/row['path']).read_bytes();need(len(b)==row['bytes']and hashlib.sha256(b).hexdigest()==row['sha256'],'frozen export')
+ pairing={frozenset([0,1]),frozenset([2,3])}
+ automorphisms=[p for p in FULL if {frozenset(p[x]for x in B)for B in pairing}==pairing];need(len(automorphisms)==8,'binary-subtree automorphisms')
+ normalization=[]
+ for q in FULL:
+  found=None
+  for left in automorphisms:
+   for right in automorphisms:
+    for index,target in enumerate(FIRST):
+     if all(right[q[i]]==target[left[i]]for i in range(4)):found=(left,right,index);break
+    if found:break
+   if found:break
+  need(found is not None,'full matching normalization');normalization.append({'matching':q,'left':found[0],'right':found[1],'template':found[2]})
+ (O/'normalization.json').write_text(json.dumps(normalization,indent=2)+'\n')
+ R=list(map(set,json.loads((W/'representative.json').read_text())));need(len(R)==32 and all(u not in R[u]and all((v in R[u])==(u in R[v])for v in range(32))for u in range(32)),'simple representative')
+ need([len(s)for s in R]==[3]*30+[2]*2 and not short_cycle(R),'representative degrees/girth')
+ expected=tree()
+ for u,v in [(7,22),(8,24),(8,28),(9,23),(9,27),(10,25),(10,29),(11,29),(12,24),(12,27),(13,23),(13,28),(14,25),(14,26),(30,7),(30,11),(31,22),(31,26)]:edge(expected,u,v)
+ need(R==expected,'literal printed representative')
+ stats=Counter();depths=Counter();covered=0
+ with(W/'certificate.jsonl').open()as f:
+  def visit(G,prefix):
+   nonlocal covered
+   level=len(prefix)
+   for index in range(len(OPTIONS[level])):
+    key=prefix+[index];line=f.readline();need(bool(line),'missing prefix');row=json.loads(line);need(row['key']==key,'exact prefix order');H=quadrant(G,level,index);stats['records']+=1;depths[len(key)]+=1
+    if 'cycle'in row:
+     need(valid_cycle(H,row['cycle']),'literal short cycle');stats['root_short']+=1
+     amount=1
+     for t in range(level+1,4):amount*=len(OPTIONS[t])
+     covered+=amount
+    elif level<3:
+     need(row.get('branch')is True and set(row)=={'key','branch'},'complete internal branch');visit(H,key)
+    else:
+     stats['root_survivors']+=1;H=attach(H);covered+=1
+     if 'attached_cycle'in row:need(valid_cycle(H,row['attached_cycle']),'literal attached short cycle');stats['attached_short']+=1
+     else:
+      q=row['map'];need(len(q)==32 and all(type(x)is int for x in q)and set(q)==set(range(32))and {q[30],q[31]}=={30,31},'literal bijection')
+      need(all((v in H[u])==(q[v]in R[q[u]])for u in range(32)for v in range(32)),'all adjacency entries');stats['maps']+=1
+  visit(tree(),[]);need(not f.read().strip(),'extra certificate prefix')
+ need(covered==442368,'full Cartesian coverage')
+ need(dict(stats)=={'records':104546,'root_short':99361,'root_survivors':1024,'attached_short':512,'maps':512},'complete summary')
+ terminal=json.loads((W/'terminal_certificate.json').read_text());small=sum((paths(R,30,31,t)for t in range(1,4)),[]);need(small==terminal['boundary_paths']==[[30,7,22,31]],'complete short boundary paths')
+ octagons=paths(R,1,3,7);need(octagons==terminal['alternate_paths']and len(octagons)==12,'exact octagon paths')
+ need(all(not any({u,v}=={1,3}for u,v in zip(p,p[1:]))for p in small),'protected edge')
+ printed=[list(map(int,m))for m in re.findall(r'(?m)^([0-9]+)&([0-9]+)&([0-9]+)&([0-9]+)&([0-9]+)&([0-9]+)&([0-9]+)&([0-9]+)',(W/'fourteen.tex').read_text())]
+ need(printed==octagons,'literal complete printed path table')
+ guards=[]
+ for mode in ['argument','environment']:
+  env=os.environ.copy();cmd=[sys.executable]
+  if mode=='argument':cmd.append('-O')
+  else:env['PYTHONOPTIMIZE']='1'
+  r=subprocess.run(cmd+[str(W/'check.py')],capture_output=True,text=True,env=env,timeout=5);need(r.returncode!=0 and 'Optimized Python is not accepted'in r.stderr,'optimization guard');(O/('guard_'+mode+'.stderr')).write_text(r.stderr);guards.append(mode)
+ if a.render:
+  shutil.copy2(W/'fourteen.tex',O/'fourteen.tex')
+  for i in [1,2]:
+   r=subprocess.run(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','fourteen.tex'],cwd=O,capture_output=True,text=True,timeout=30);(O/('native'+str(i)+'.stdout')).write_text(r.stdout);(O/('native'+str(i)+'.stderr')).write_text(r.stderr);need(r.returncode==0 and not r.stderr,'native build')
+  log=(O/'fourteen.log').read_text();need('Overfull'not in log and 'LaTeX Warning:'not in log,'native content')
+ report={'status':'PASS_CUBIC_FOURTEEN_LOCAL_EXCLUSION','full_matching_normalizations':len(normalization),'covered_normalized_patterns':covered,'certificate_counts':dict(stats),'depth_counts':dict(depths),'literal_adjacency_checks':stats['maps']*32*32,'protected_edge_octagons':12,'boundary_short_paths':len(small),'bindings':len(bindings),'optimization_guards':guards,'all_order_exclusion':True,'whole_original_credit':0,'new_question_credit':0,'new_Lean':0,'measurement':None};(O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

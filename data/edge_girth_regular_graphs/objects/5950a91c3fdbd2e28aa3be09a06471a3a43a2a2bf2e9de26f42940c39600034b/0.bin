@@ -1,0 +1,50 @@
+"""Every bounded outside-edge subset, independent of the production recursion."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,itertools,json,time
+
+def need(c,m):
+ if not c:raise RuntimeError(m)
+def neighbours(rows):return [{v for v in range(len(rows))if r>>v&1}for r in rows]
+def girth_at_least_six(a):
+ for root in range(len(a)):
+  distance={root:0};parent={root:None};queue=[root]
+  for u in queue:
+   for v in a[u]:
+    if v not in distance:distance[v]=distance[u]+1;parent[v]=u;queue.append(v)
+    elif parent[u]!=v and distance[u]+distance[v]+1<6:return False
+ return True
+
+def cycles(a,u,v):
+ def walk(x,left,seen):
+  if left==1:return int(v in a[x])
+  return sum(walk(y,left-1,seen|{y})for y in a[x]if y not in seen and y!=v)
+ return walk(u,5,{u})
+def all_counts(a):return [cycles(a,u,v)for u in range(len(a))for v in a[u]if u<v]
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--actual',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);args=ap.parse_args();start=time.monotonic();d=json.loads(args.actual.read_text());source=d['source_rows'];final=d['final_rows'];m=d['source_map'];need(sorted(m)==list(range(32)),'literal bijection')
+ for u in range(32):need(sum(1<<m[v]for v in range(32)if final[u]>>v&1)==source[m[u]],'all1024 source adjacency entries')
+ a=neighbours(source);need(all(len(x)==4 for x in a)and girth_at_least_six(a)and all_counts(a)==[18]*64,'independent positive source')
+ subsets=0;quartic=0;short=0;complete=0;positive=0;overflow=0
+ for row in d['completions']:
+  rows=row['rows'];n=len(rows);a=neighbours(rows);need(n in [31,32]and all(len(a[u])==4 for u in range(26)),'first boundary scope')
+  excessive=any(x>18 for x in all_counts(a));need(int(excessive)==row['overflow'],'independent overflow')
+  pairs=list(itertools.combinations(range(26,n),2));edges=(4*n-sum(map(len,a)))//2;need(edges in[1,3],'outside degree identity')
+  this_complete=this_positive=0
+  for chosen in itertools.combinations(pairs,edges):
+   subsets+=1;g=[x.copy()for x in a]
+   for u,v in chosen:g[u].add(v);g[v].add(u)
+   if any(len(x)!=4 for x in g):continue
+   quartic+=1
+   if not girth_at_least_six(g):short+=1;continue
+   this_complete+=1
+   if all_counts(g)==[18]*(2*n):this_positive+=1
+  # Production rejects an already excessive partial graph before its completion recursion.
+  if excessive:need(this_positive==0,'overflow cannot lose positive');overflow+=1
+  else:need(this_complete==row['completed']and this_positive==row['positive']and this_complete-this_positive==row['mismatch'],'every complete outside graph')
+  complete+=this_complete;positive+=this_positive
+ need(positive==1,'single literal positive across retained joined representatives')
+ report=dict(status='PASS_INDEPENDENT_COMPLETE_OUTSIDE_SUBSETS',joined_graphs=len(d['completions']),outside_subsets=subsets,quartic_subsets=quartic,short_cycle_subsets=short,girth_completions=complete,positive_completions=positive,overflow_classes=overflow,literal_source_adjacencies=1024,source_edge_cycle_counts=64,seconds=time.monotonic()-start)
+ args.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

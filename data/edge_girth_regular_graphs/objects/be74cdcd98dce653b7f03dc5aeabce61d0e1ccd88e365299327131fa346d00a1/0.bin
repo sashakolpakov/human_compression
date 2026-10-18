@@ -1,0 +1,114 @@
+"""Check every covering permutation using only literal edge sets and stdlib."""
+import sys
+sys.dont_write_bytecode = True
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def fingerprint(path):
+    path = Path(path)
+    data = path.read_bytes()
+    return {'path':str(path),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
+
+
+def read_bound(reference):
+    require(fingerprint(reference['path']) == reference, 'authenticated complete file')
+    return Path(reference['path']).read_bytes()
+
+
+def read_edges(reference):
+    lines = read_bound(reference).decode('ascii').splitlines()
+    require(len(lines[0].split()) == 3, 'three model dimensions')
+    n, fixed_count, optional_count = map(int,lines[0].split())
+    require(n == 54 and fixed_count == 66 and 0 <= optional_count <= 261,
+            'accepted t6 dimensions')
+    require(len(lines) == 1+fixed_count+optional_count, 'every edge line present')
+    pairs = []
+    for line in lines[1:]:
+        require(len(line.split()) == 2, 'two endpoint columns')
+        a,b = map(int,line.split())
+        require(0 <= a < b < 54, 'simple ordered pair')
+        pairs.append((a,b))
+    require(len(set(pairs)) == len(pairs), 'disjoint simple pair sets')
+    return set(pairs[:fixed_count]), set(pairs[fixed_count:])
+
+
+def verify_rows(rows, domains, originals, representatives):
+    require(type(rows) is list and len(rows) == 70, 'all seventy assignments')
+    require(type(representatives) is list and all(type(i) is int for i in representatives)
+            and representatives == sorted(set(representatives))
+            and all(0 <= i < 70 for i in representatives), 'literal representative indices')
+    targets = []
+    for i,row in enumerate(rows):
+        require(type(row['index']) is int and row['index'] == i
+                and row['row'] == originals[i]['row']
+                and row['parents'] == originals[i]['parents']
+                and row['model'] == originals[i]['model'], 'exact source row and model')
+        j = row['representative']; p = row['permutation']
+        require(type(j) is int and j in representatives, 'declared representative target')
+        require(type(p) is list and all(type(v) is int for v in p)
+                and sorted(p) == list(range(54)), 'literal full vertex bijection')
+        for source_edges,target_edges in zip(domains[i],domains[j]):
+            image = set()
+            for a,b in source_edges:
+                image.add((min(p[a],p[b]),max(p[a],p[b])))
+            require(image == target_edges, 'complete fixed and optional edge images')
+        targets.append(j)
+    require(sorted(set(targets)) == representatives
+            and all(targets[j] == j for j in representatives), 'each representative is itself retained')
+
+
+def run(acceptance, certificate, out):
+    require(not out.exists(), 'fresh independent certificate result')
+    accepted_ref = fingerprint(acceptance); certificate_ref = fingerprint(certificate)
+    accepted = json.loads(read_bound(accepted_ref)); candidate = json.loads(read_bound(certificate_ref))
+    require(accepted['status'] == 'ROOT_ACCEPTED_F012_SEVENTY_T6_MODELS_AND_NECESSARY_CNFS'
+            and accepted['models'] == 70, 'accepted original seventy-domain setup')
+    setup = json.loads(read_bound(accepted['result']))
+    require(accepted['host_summaries'] == setup['records']
+            and candidate['acceptance'] == accepted_ref and candidate['setup'] == accepted['result']
+            and candidate['status'] == 'COMPLETE_DOMAIN_ISOMORPHISM_CANDIDATE', 'exact complete proposed cover')
+    originals = setup['records']
+    domains = [read_edges(row['model']) for row in originals]
+    verify_rows(candidate['assignments'],domains,originals,candidate['representatives'])
+    # These damage the actual certificate, not a substitute discovery problem.
+    controls = []
+    for label,damage in [('missing_row',lambda rows:rows.pop()),
+                         ('non_bijection',lambda rows:rows[0]['permutation'].__setitem__(0,rows[0]['permutation'][1])),
+                         ('wrong_edge_image',lambda rows:rows[0]['permutation'].__setitem__(slice(0,2),rows[0]['permutation'][1::-1]))]:
+        damaged = json.loads(json.dumps(candidate['assignments'])); damage(damaged)
+        try:
+            verify_rows(damaged,domains,originals,candidate['representatives'])
+        except ValueError as error:
+            controls.append({'damage':label,'rejected':str(error)})
+        else:
+            raise ValueError('damaged certificate accepted: '+label)
+    for row in originals:
+        read_bound(row['model'])
+    read_bound(accepted_ref); read_bound(certificate_ref)
+    groups = [{'index':j,'row':originals[j]['row'],'parents':originals[j]['parents'],
+               'model':originals[j]['model'],
+               'covers':[r['index'] for r in candidate['assignments'] if r['representative']==j]}
+              for j in candidate['representatives']]
+    result = dict(status='CHECKED_ALL_SEVENTY_DOMAIN_TRANSPORTS',acceptance=accepted_ref,
+        certificate=certificate_ref,setup=accepted['result'],original_domains=70,
+        representatives=groups,controls=controls,nauty_calls=0,solver_calls=0,
+        exclusions=0,source_credit=0,qualification='Sufficient representative cover; no minimality or inequivalence claim.')
+    out.mkdir(); (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+    print(json.dumps({'status':result['status'],'representatives':len(groups),
+                     'result':fingerprint(out/'result.json')}),flush=True)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--acceptance',type=Path,required=True)
+    parser.add_argument('--certificate',type=Path,required=True)
+    parser.add_argument('--out',type=Path,required=True)
+    args = parser.parse_args(); run(args.acceptance,args.certificate,args.out)

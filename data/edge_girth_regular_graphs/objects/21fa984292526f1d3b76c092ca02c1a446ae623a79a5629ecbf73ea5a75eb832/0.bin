@@ -1,0 +1,180 @@
+"""Check finite coverage and all terminal identifications without a solver."""
+import argparse
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import time
+
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+from verify_dag import verify, require
+W = Path(__file__).resolve().parent
+
+
+def put(p, value):
+    p.write_text(json.dumps(value, indent=2) + '\n')
+
+
+def graph6(raw):
+    n = raw[0] - 63
+    require(0 <= n < 63, 'small graph6 order')
+    require(all(63 <= x <= 126 for x in raw), 'graph6 alphabet')
+    bits = [(x >> shift) & 1 for byte in raw[1:] for x in [byte - 63] for shift in range(5, -1, -1)]
+    require(len(bits) == 6 * ((n * (n - 1) // 2 + 5) // 6), 'graph6 length')
+    adj = [0] * n
+    i = 0
+    for y in range(1, n):
+        for x in range(y):
+            if bits[i]:
+                adj[x] |= 1 << y
+                adj[y] |= 1 << x
+            i += 1
+    require(not any(bits[i:]), 'graph6 padding')
+    return adj
+
+
+def terminal(adj, source, mapping, k, lam):
+    n = len(adj)
+    require(len(mapping) == n and all(type(x) is int for x in mapping)
+            and set(mapping) == set(range(n)), 'source bijection')
+    require(len(source) == n and all((adj[x] >> y & 1) == (source[mapping[x]] >> mapping[y] & 1)
+                                   for x in range(n) for y in range(n)), 'literal source transport')
+    reached, pending = {0}, [0]
+    neighbours = [[y for y in range(n) if row >> y & 1] for row in adj]
+    while pending:
+        x = pending.pop()
+        for y in neighbours[x]:
+            if y not in reached:
+                reached.add(y)
+                pending.append(y)
+    require(len(reached) == n and all(len(row) == k for row in neighbours), 'connected regular')
+    cycles = set()
+    def visit(path):
+        if len(path) == 5:
+            if adj[path[-1]] >> path[0] & 1:
+                cycles.add(tuple(sorted(tuple(sorted(e)) for e in zip(path, path[1:] + path[:1]))))
+            return
+        for y in neighbours[path[-1]]:
+            if y > path[0] and y not in path:
+                visit(path + [y])
+    for x in range(n):
+        visit([x])
+    counts = {(x, y): 0 for x in range(n) for y in neighbours[x] if x < y}
+    for cycle in cycles:
+        for edge in cycle:
+            counts[edge] += 1
+    require(set(counts.values()) == {lam}, 'every edge pentagon count')
+    require(5 * len(cycles) == n * k * lam // 2, 'incidence count')
+    return {'vertices': n, 'edges': len(counts), 'pentagons': len(cycles),
+            'per_edge': lam, 'adjacency_comparisons': n * n}
+
+
+def mutations(records):
+    results = []
+    def reject(name, change):
+        changed = copy.deepcopy(records)
+        change(changed)
+        try:
+            verify(changed, 4)
+        except RuntimeError as error:
+            results.append({'name': name, 'rejection': str(error)})
+            return
+        raise RuntimeError('Mutation accepted: ' + name)
+    reuse = next(i for i, r in enumerate(records) if r['previous'] is not None)
+    reject('missing initial form', lambda r: r.__setitem__(slice(None), [x for x in r if x['frame'] != 4]))
+    reject('wrong fixed seed', lambda r: r[0]['adjacency'].__setitem__(0, r[0]['adjacency'][0] ^ 2))
+    reject('forward reuse', lambda r: r[reuse].__setitem__('previous', reuse))
+    reject('nonbijective reuse', lambda r: r[reuse]['permutation'].__setitem__(0, r[reuse]['permutation'][1]))
+    reject('false edge count', lambda r: r[1].__setitem__('edge_count', r[1]['edge_count'] + 1))
+    reject('lost expansion branch', lambda r: r.__delitem__(1))
+    # A wrong bijection that preserves all four colours must also be rejected.
+    def wrong_map(r):
+        p = r[reuse]['permutation']
+        p[5], p[6] = p[6], p[5]
+    reject('false literal transport', wrong_map)
+    return results
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--render', action='store_true')
+    args = parser.parse_args()
+    out = args.out.resolve()
+    out.mkdir(parents=True, exist_ok=False)
+    started = time.monotonic()
+    bindings = json.loads((W / 'bindings.json').read_text())
+    for b in bindings:
+        data = Path(b['path']).read_bytes()
+        require(len(data) == b['bytes'] and hashlib.sha256(data).hexdigest() == b['sha256'], 'acquired binding')
+    if (W / 'manifest.json').exists():
+        for b in json.loads((W / 'manifest.json').read_text())['exports']:
+            data = (W / b['path']).read_bytes()
+            require(len(data) == b['bytes'] and hashlib.sha256(data).hexdigest() == b['sha256'], 'export')
+    source = json.loads((W / 'source40.json').read_text())
+    raw = Path(source['graph_file']).read_bytes().splitlines()[source['source_line'] - 1]
+    require(hashlib.sha256(raw).hexdigest() == source['graph6_line_sha256'], 'source graph line')
+    require((W / 'source40.g6').read_bytes() == raw + b'\n', 'source graph copy')
+    source40 = graph6(raw)
+    source20 = graph6((W / 'source20.g6').read_bytes().strip())
+    original_maps = json.loads((W / 'source20_maps.json').read_text())
+    mapping40 = json.loads((W / 'source40_mapping.json').read_text())
+    reports = []
+    for k, source_graph, lam in [(4, source20, 6), (6, source40, 22)]:
+        records = json.loads((W / f'degree{k}_certificate.json').read_text())
+        result = verify(records, k)
+        require(result['nodes'] == (101 if k == 4 else 4373), 'certificate size')
+        require(result['reused'] == (21 if k == 4 else 2536), 'reuse count')
+        require(len(result['terminal_indices']) == (2 if k == 4 else 1), 'all terminal nodes')
+        checks = []
+        for i in result['terminal_indices']:
+            adj = records[i]['adjacency']
+            if k == 4:
+                matching = [x for x in original_maps if x['adjacency'] == adj]
+                require(len(matching) == 1, 'quartic control source map')
+                p = matching[0]['mapping']
+            else:
+                p = mapping40
+            checks.append(dict(node=i, **terminal(adj, source_graph, p, k, lam)))
+        result.update(status='PASS_COMPLETE_COVERAGE_AND_ALL_TERMINALS', terminal_checks=checks,
+                      limit='Finite certificate plus the written coverage proof; not a Lean formalization.')
+        reports.append(result)
+    controls = mutations(json.loads((W / 'degree4_certificate.json').read_text()))
+    put(out / 'mutation_controls.json', controls)
+    for name in ['argument', 'environment']:
+        env = os.environ.copy()
+        command = [sys.executable]
+        if name == 'argument':
+            command.append('-O')
+        else:
+            env['PYTHONOPTIMIZE'] = '1'
+        command.append(str(W / 'check.py'))
+        r = subprocess.run(command, env=env, capture_output=True, text=True, timeout=5)
+        require(r.returncode != 0 and 'Optimized Python is not accepted' in r.stderr, 'optimization guard')
+        (out / ('guard_' + name + '.stderr')).write_text(r.stderr)
+    if args.render:
+        shutil.copy2(W / 'sextic.tex', out / 'sextic.tex')
+        for i in [1, 2]:
+            r = subprocess.run(['/opt/homebrew/bin/pdflatex', '-interaction=nonstopmode', '-halt-on-error', 'sextic.tex'],
+                               cwd=out, capture_output=True, text=True, timeout=30)
+            (out / f'native{i}.stdout').write_text(r.stdout)
+            (out / f'native{i}.stderr').write_text(r.stderr)
+            require(r.returncode == 0 and not r.stderr, 'native build')
+        log = (out / 'sextic.log').read_text()
+        require('Overfull' not in log and 'LaTeX Warning:' not in log, 'native content')
+    report = {'status': 'PASS_SEXTIC_GIRTH_FIVE_ORDER40', 'certificates': reports,
+              'fresh_bindings': len(bindings), 'damaged_certificates_rejected': len(controls),
+              'optimization_guards': 2, 'solver_dependency': False, 'native_build': args.render,
+              'new_exact_rows': 1, 'new_lower_rows': 0, 'whole_original_credit': 0,
+              'new_question_credit': 0, 'new_Lean': 0, 'seconds': time.monotonic() - started}
+    put(out / 'report.json', report)
+    print(json.dumps(report))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,142 @@
+"""Three exact t5 edge domains; no solver or graph-completion enumeration."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+from collections import Counter
+import hashlib
+import importlib.util
+from itertools import combinations
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+H = load('acquired_t5_literal_model_reader', HERE/'required_hexagon_catalogue.py')
+K = load('acquired_t5_fixed_graph_tools', HERE/'hexagon_ball_square_model.py')
+need, pin, C = H.need, K.pin, H.C
+HOSTS = {
+    'P0': ((0,1,'A'), (1,2,'B'), (2,3,'A'), (3,4,'B'), (4,0,'C')),
+    'P1': ((0,1,'A'), (1,2,'B'), (2,3,'A'), (3,0,'B'), (0,4,'C')),
+    'P2': ((0,1,'A'), (1,2,'B'), (2,3,'A'), (3,0,'C'), (0,4,'B')),
+}
+ANCHORS = {'A': (0,3), 'B': (1,4), 'C': (2,5)}
+
+
+def skeleton(host):
+    need(type(host) is str and host in HOSTS, 'one literal t5 host P0/P1/P2')
+    rows = HOSTS[host]
+    names = [f'c_{i}' for i in range(6)]
+    names += [f'x_{i}_{slot}' for i in range(6) for slot in range(2)]
+    names += [f'z_{i}' for i in range(5)] + [f't_{i}' for i in range(5)]
+    used_colours, parents, endpoints = Counter(), {}, {}
+    base = set()
+
+    def edge(u, v):
+        key = tuple(sorted((u,v)))
+        need(0 <= key[0] < key[1] < 54 and key not in base,
+             'distinct simple fixed t5 edge')
+        base.add(key)
+
+    for i in range(6):
+        edge(i, (i+1)%6)
+        for slot in range(2):
+            edge(i, 6+2*i+slot)
+    for j, (u,v,colour) in enumerate(rows):
+        slot = used_colours[colour]
+        used_colours[colour] += 1
+        need(slot in (0,1), 'at most two T edges of a colour')
+        parents[23+j] = tuple(6+2*a+slot for a in ANCHORS[colour])
+        endpoints[23+j] = (18+u, 18+v)
+        for x in parents[23+j] + endpoints[23+j]:
+            edge(23+j, x)
+    used = [x for pair in parents.values() for x in pair]
+    need(len(set(used)) == len(used) == 10 and used_colours == {'A':2,'B':2,'C':1},
+         'ten distinct T parents and exact colour multiplicities')
+    single_parent, anchors = {}, {}
+    for p in range(6,18):
+        anchor, slot = divmod(p-6,2)
+        for j in range(3-int(p in used)):
+            s = len(names)
+            names.append(f's_{anchor}_{slot}_{j}')
+            single_parent[s], anchors[s] = p, anchor
+            edge(p,s)
+    need(len(names) == len(set(names)) == 54 and len(single_parent) == 26,
+         'exact 54 labelled vertices and 26 S children')
+    ss = set()
+    for u,v in combinations(single_parent,2):
+        d = abs(anchors[u]-anchors[v])
+        if min(d,6-d) >= 2:
+            ss.add((u,v))
+    sz = set()
+    for z in range(18,23):
+        forbidden_parents = {p for t, pair in endpoints.items() if z in pair for p in parents[t]}
+        for s,p in single_parent.items():
+            if p not in forbidden_parents:
+                sz.add((z,s))
+    zz = set() if host == 'P0' else {(20,22)}
+    allowed = ss | sz | zz
+    degree = Counter(v for e in base for v in e)
+    need(len(base) == 64 and (len(ss),len(sz),len(zz)) == (169,90,int(host != 'P0')),
+         'exact t5 fixed/SS/SZ/ZZ counts')
+    need(not base & allowed and len(allowed) == 259+int(host != 'P0'),
+         'simple disjoint exact t5 optional domain')
+    need(all(degree[v] == 4 for v in range(18))
+         and all(degree[v] == 4 for v in range(23,28))
+         and all(degree[v] == 1 for v in range(28,54)),
+         'C/L1/T saturated and all S singly parented')
+    expected_z = [2]*5 if host == 'P0' else [3,2,2,2,1]
+    need([degree[v] for v in range(18,23)] == expected_z, 'exact Z residual degrees')
+    need([sum(a == i for a in anchors.values()) for i in range(6)] == [4,4,5,4,4,5],
+         'exact parent-labelled anchor multiplicities')
+    need(sum(4-degree[v] for v in range(54)) == 88, 'exact 44 residual edges')
+    full_degree = Counter(v for e in base | allowed for v in e)
+    need(max(full_degree.values()) <= 24, 'bounded complete host degree')
+    metadata = dict(host=host, vertices=names, contracted_coloured_edges=rows,
+                    t_parents={str(k):v for k,v in parents.items()},
+                    t_endpoints={str(k):v for k,v in endpoints.items()},
+                    single_parents={str(k):v for k,v in single_parent.items()},
+                    single_anchors={str(k):v for k,v in anchors.items()},
+                    fixed_edges=sorted(base), allowed_edges=sorted(allowed),
+                    optional_edge_counts=dict(SS=169,SZ=90,ZZ=len(zz)),
+                    optional_ZZ=sorted(zz), required_residual_edges=44,
+                    selected_count_equations=dict(SZ='10-2e',SS='34+e',ZZ='e',
+                                                  allowed_e=[0] if host == 'P0' else [0,1]),
+                    maximum_complete_host_degree=max(full_degree.values()))
+    return names, frozenset(base), frozenset(allowed), metadata
+
+
+def encode(host):
+    names,base,allowed,metadata = skeleton(host)
+    raw = f'{len(names)} {len(base)} {len(allowed)}\n'
+    raw += ''.join(f'{u} {v}\n' for u,v in sorted(base))
+    raw += ''.join(f'{u} {v}\n' for u,v in sorted(allowed))
+    metadata['model_sha256'] = hashlib.sha256(raw.encode('ascii')).hexdigest()
+    return raw, metadata
+
+
+def read_exact(host, path):
+    """Reuse the acquired parser, then require the entire fixed host edge set."""
+    names, expected_base, expected_allowed, _ = skeleton(host)
+    n,base,allowed = H.read_model(path,4096)
+    need((n,base,allowed) == (len(names),expected_base,expected_allowed),
+         'entire exact t5 host domain')
+    return n,base,allowed
+
+
+def build_exact(host, path):
+    """Original necessary degree/girth CNF; no t4 filters or inherited cuts."""
+    n,base,allowed = read_exact(host,path)
+    formula,variables = C.build(n,base,allowed,degree=4,cuts=())
+    need(list(variables) == sorted(allowed)
+         and list(variables.values()) == list(range(1,len(allowed)+1)),
+         'unchanged original primary variable order')
+    need(((20,22) in variables) == (host != 'P0'), 'pendant ZZ remains a free primary variable')
+    return formula,variables

@@ -1,0 +1,80 @@
+// Exact degree completion with a prescribed five-cycle. Working implementation.
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstdint>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+using U=std::uint32_t;
+struct Search{
+ int n,z;std::vector<int>targets;std::array<int,5>a,b;std::array<U,24>adj{},allow{};std::array<int,24>rem{};
+ std::array<U,5>left{},right{};std::uint64_t nodes=0,positives=0;std::vector<std::vector<U>>examples;
+ std::chrono::steady_clock::time_point start;double cap;
+ static int bits(U x){return __builtin_popcount(x);} static int first(U x){return __builtin_ctz(x);}
+ void need(bool x,const char*msg){if(!x)throw std::runtime_error(msg);}
+ void init(){
+  need(15<=n&&n<=19,"unsupported degree");need(!targets.empty(),"empty targets");
+  std::vector<U>profiles;
+  for(int i=0;i<5;i++)profiles.push_back((1u<<((i+4)%5))|(1u<<((i+1)%5)));
+  for(int i=0;i<5;i++){
+   need(a[i]>=1&&b[i]>=0,"class size");
+   for(int j=1;j<a[i];j++)profiles.push_back(profiles[i]);
+   for(int j=0;j<b[i];j++)profiles.push_back(1u<<i);
+  }
+  need(z>=0,"negative Z");for(int j=0;j<z;j++)profiles.push_back(0);
+  need(static_cast<int>(profiles.size())==n,"class total");
+  for(int x=0;x<n;x++)for(int y=0;y<5;y++)if(profiles[x]>>y&1u){adj[x]|=1u<<y;adj[y]|=1u<<x;}
+  for(int x=0;x<n;x++){rem[x]=6-bits(adj[x]);need(rem[x]>=0,"initial deficit");if(x<5)need(rem[x]==0,"cycle degree");}
+  for(int x=5;x<n;x++)for(int y=x+1;y<n;y++)if(!(profiles[x]&profiles[y])){allow[x]|=1u<<y;allow[y]|=1u<<x;}
+  for(int i=0;i<5;i++){int j=(i+1)%5;left[i]=adj[i]&~(1u<<j);right[i]=adj[j]&~(1u<<i);}
+ }
+ void visit(U active){
+  ++nodes;if(nodes%4096==0&&std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count()>cap)throw 1;
+  std::array<U,24>candidates{};int chosen=-1,bestSlack=99,bestCount=99;
+  for(U todo=active;todo;todo&=todo-1){int x=first(todo);U pool=active&allow[x];
+   for(U ys=pool;ys;ys&=ys-1){int y=first(ys);if(rem[y]>0&&!(adj[x]&adj[y]))candidates[x]|=1u<<y;}
+   int count=bits(candidates[x]);if(count<rem[x])return;int slack=count-rem[x];
+   if(slack<bestSlack||(slack==bestSlack&&count<bestCount)){chosen=x;bestSlack=slack;bestCount=count;}
+  }
+  bool feasible=false;
+  for(int target:targets){bool ok=true;
+   for(int i=0;i<5&&ok;i++){int lower=0,upper=0;
+    for(U us=left[i];us;us&=us-1){int u=first(us);lower+=bits(adj[u]&right[i]);if(active>>u&1u)upper+=bits(candidates[u]&right[i]&~adj[u]);}
+    if(lower>target||lower+upper<target)ok=false;
+   }
+   if(ok){feasible=true;break;}
+  }
+  if(!feasible)return;
+  if(!active){
+   for(int x=0;x<n;x++)need(rem[x]==0&&bits(adj[x])==6,"leaf degree");
+   int value=-1;
+   for(int x=0;x<n;x++)for(U ys=adj[x]&~((1u<<(x+1))-1);ys;ys&=ys-1){int y=first(ys),count=0;need(!(adj[x]&adj[y]),"leaf triangle");
+    for(U us=adj[x]&~(1u<<y);us;us&=us-1)count+=bits(adj[first(us)]&adj[y]&~(1u<<x));
+    if(value<0)value=count;else if(value!=count)return;
+   }
+   if(std::find(targets.begin(),targets.end(),value)==targets.end())return;
+   ++positives;if(examples.size()<16)examples.emplace_back(adj.begin(),adj.begin()+n);return;
+  }
+  need(chosen>=0,"missing chosen vertex");
+  choose(chosen,candidates[chosen],rem[chosen],0,active&~(1u<<chosen));
+ }
+ void choose(int x,U remaining,int needCount,U picked,U tail){
+  if(needCount==0){
+   int old=rem[x];for(U ys=picked;ys;ys&=ys-1){int y=first(ys);adj[x]|=1u<<y;adj[y]|=1u<<x;--rem[y];}
+   rem[x]=0;visit(tail);rem[x]=old;
+   for(U ys=picked;ys;ys&=ys-1){int y=first(ys);adj[x]&=~(1u<<y);adj[y]&=~(1u<<x);++rem[y];}return;
+  }
+  if(bits(remaining)<needCount)return;
+  for(U ys=remaining;ys;ys&=ys-1){int y=first(ys);U rest=ys&~(1u<<y);if(bits(rest)<needCount-1)break;
+   if(!(adj[y]&picked))choose(x,rest,needCount-1,picked|(1u<<y),tail);
+  }
+ }
+ void run(int id){
+  init();start=std::chrono::steady_clock::now();bool complete=true;
+  try{visit(((1u<<n)-1)&~31u);}catch(int){complete=false;}
+  std::cout<<"{\"case\":"<<id<<",\"n\":"<<n<<",\"status\":\""<<(complete?"COMPLETE":"TIMEOUT")<<"\",\"nodes\":"<<nodes<<",\"positives\":"<<positives<<",\"seconds\":"<<std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count()<<",\"examples\":[";
+  for(std::size_t i=0;i<examples.size();i++){if(i)std::cout<<',';std::cout<<'[';for(int j=0;j<n;j++){if(j)std::cout<<',';std::cout<<examples[i][j];}std::cout<<']';}std::cout<<"]}"<<std::endl;
+ }
+};
+int main(){try{int id,n,t;while(std::cin>>id>>n>>t){Search s;s.n=n;if(t<1||t>10)throw std::runtime_error("target count");for(int i=0,v;i<t;i++){std::cin>>v;s.targets.push_back(v);}for(int&i:s.a)std::cin>>i;for(int&i:s.b)std::cin>>i;std::cin>>s.z>>s.cap;if(!std::cin||s.cap<=0)throw std::runtime_error("invalid input");s.run(id);}return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

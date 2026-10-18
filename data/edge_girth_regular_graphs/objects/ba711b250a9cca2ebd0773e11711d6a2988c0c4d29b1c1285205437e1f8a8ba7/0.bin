@@ -1,0 +1,213 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=24mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs}
+\setlength{\emergencystretch}{2em}
+\newtheorem{theorem}{Theorem}\newtheorem{lemma}[theorem]{Lemma}
+\title{Eighteen hexagons through every edge: the unique graph of order thirty-two}
+\author{Human Compression project}\date{}
+\begin{document}\maketitle
+\begin{theorem}\label{main}
+The minimum order of a finite simple quartic graph of girth six with
+exactly eighteen hexagons through every edge is thirty-two. There is
+exactly one such graph of order thirty-two, up to isomorphism.
+\end{theorem}
+This recovers the lower bound and exact count in the $\lambda=18$ row
+of Table~2 in Goedgebeur--Jooken, \emph{Exhaustive generation of
+edge-girth-regular graphs}, arXiv:2401.08271v2, physical page~18.
+The retained source graph is \texttt{UntilOrder250\_205}. The argument
+uses the acquired local equations and partial-matching forest theorem,
+with a new observation which makes a second outside boundary unnecessary.
+
+\section{The entire outside set is visible}
+Fix an edge $uv$ in a hypothetical graph. The two rooted trees of depth
+two obtained by excluding $uv$ at the first step have twenty-six distinct
+vertices. An identification or an extra edge within one side produces
+a cycle of length at most five. Thus the only extra edges among these
+vertices join opposite leaves. There are three branches of three leaves
+on each side. Edges between any pair of opposite branches form a
+matching, since two neighbours in the same branch produce a quadrangle.
+Every cross edge gives one hexagon through $uv$, and every such hexagon
+is obtained in this way. There are therefore eighteen cross edges.
+Their nine matching sizes are $3-d_{ij}$, where
+\[
+ 0\le d_{ij}\le3,\qquad \sum_{i,j=0}^2d_{ij}=9.                 \tag{1}
+\]
+There are nine unfinished leaf incidences on each side. Every one must
+meet an outside vertex: another cross edge would change the count
+through $uv$.
+
+\begin{lemma}\label{outside}
+If the graph has at most thirty-two vertices, the complement $Y$ of
+the twenty-six Moore vertices has five or six vertices. Each vertex
+of $Y$ has a neighbour among the Moore leaves. The induced graph on
+$Y$ has one edge if $|Y|=5$ and three edges if $|Y|=6$.
+\end{lemma}
+\begin{proof}
+Put $t=|Y|\le6$. Summing degrees in $Y$ and using the eighteen edges
+from the Moore vertices gives
+\[
+                  2e(Y)=4t-18.                               \tag{2}
+\]
+Nonnegativity forces $t\ge5$ and gives the two edge counts. If a vertex
+of $Y$ had no Moore neighbour, all four of its neighbours would lie
+in $Y$, forcing $e(Y)\ge4$, a contradiction.
+\end{proof}
+For five outside vertices the induced graph is one edge and three
+isolated vertices. For six it is one of
+\[
+ 3K_2,\qquad P_3+K_2+K_1,\qquad P_4+2K_1,\qquad K_{1,3}+2K_1. \tag{3}
+\]
+Indeed, a graph with three edges and no triangle is a forest, and the
+list follows by distributing its three edges among its tree components.
+The program need not assume a type from (3); it completes every possible
+outside edge set directly.
+
+\section{Root configurations and exact outside partitions}
+We recall the acquired local equations in their precise present form.
+For a side profile $P$ of positive unfinished degrees, define
+\(f(P)=(27-\sum_{s\in P}s^2)/2\). Let $b(P)$ be the maximum of
+$\sum_B\binom{|B|}{2}$ over partitions of its nine distinguished
+incidences into parts of size at most three, with neither a repeated
+leaf in a part nor a repeated pair of leaves in different parts.
+The necessary inequalities are
+\[
+                  f(P_L)\le b(P_R),\qquad f(P_R)\le b(P_L).     \tag{4}
+\]
+For completeness, an unfinished degree $s$ at a right leaf supplies
+$\binom{3-s}{2}$ common-neighbour hexagons between left branches.
+There are eighteen hexagons through $u$ which do not use $uv$.
+Subtracting the supplied ones leaves
+$18-\sum_{i=1}^9\binom{3-s_i}{2}=(27-\sum_i s_i^2)/2$.
+Outside common neighbours of left leaves can supply at most $b(P_L)$.
+Interchanging sides proves (4). Ignoring the branch condition when
+computing $b$ only increases the bound. The twelve exact maxima are
+\[
+\begin{array}{c|rrrrrrrrrrrr}
+P&1^9&2,1^7&3,1^6&2^2,1^5&3,2,1^4&2^3,1^3&3^2,1^3&3,2^2,1^2&2^4,1&3^2,2,1&3,2^3&3^3\\\hline
+b(P)&9&9&9&9&7&9&6&7&7&5&6&3
+\end{array}                                                    \tag{5}
+\]
+A first-appearance recursion computes them; a separate implementation
+checks all $21\,147$ partitions of nine distinguished positions for
+each profile.
+
+Write $L_0,L_1,L_2$ for the left branches and $a_i$ for their cross-edge
+counts. Once their leaves have been saturated, the root-pair equations
+are, for distinct $i,j,k$,
+\[
+              \sum_w |N(w)\cap L_i|\,|N(w)\cap L_j|=a_k.       \tag{6}
+\]
+If $b_{ij}$ counts hexagons through the two root edges in branches
+$i,j$, then $a_i+b_{ij}+b_{ik}=18$ and $a_0+a_1+a_2=18$.
+Solving gives $b_{ij}=a_k$. Common neighbours of the leaves give
+exactly these hexagons; girth six ensures that their paths are simple.
+The same equations hold on the right. These are the acquired
+root-pair identities, not an assumption about the final graph.
+
+There are $13\,051$ matrices in (1), in $228$ orbits under row
+permutations, column permutations and transpose. Both the preparer
+and the C++ verifier independently construct this entire integer set.
+These symmetries are actual symmetries of the two rooted trees.
+For each matrix, apply the acquired partial-matching forest theorem
+to the six sets of three leaves. In a forest block of matching size
+$k$, directed from parent to child, retain each parent $k$-subset
+matched in order to the first $k$ child labels. A fresh child
+permutation achieves this form and acts on all incident blocks;
+earlier forest blocks remain fixed. Induction away from the forest
+roots proves coverage. Every block outside the forest retains all
+partial injective matchings. Reverse orientations use the transposed
+prescription. This is an orbit cover, not a uniqueness assertion.
+
+The chosen forests give $51\,869\,700$ normalized product choices.
+The traversal rejects a prefix only for a newly created quadrangle;
+the partial graph is bipartite. At complete assignments it tests (4).
+Every subsequent reuse has a checked literal bijection preserving
+the unordered root edge and every adjacency row. Nauty supplies a
+lookup suggestion and a permutation only. A false merge fails the
+check; a false split merely creates another case to process.
+The complete run visits $19\,336\,649$ prefixes and $7\,310\,487$
+girth-admissible assignments. Its $6\,797\,839$ checked maps retain
+$398\,537$ root graphs.
+
+For each root graph, partition the nine left incidences by their
+outside neighbour, inserting each incidence into every permissible
+existing part or a new part. Lemma~\ref{outside} permits rejection
+as soon as there are more than six parts. A part contains no repeated
+leaf and at most one leaf from each branch. Leaf pairs may neither
+repeat among parts nor already have an old common neighbour.
+These are necessary quadrangle restrictions. New contributions to
+(6) may not exceed its right-hand side; at the end equality is required.
+There is no monotonicity assumption beyond these nonnegative counts.
+Repeat the construction on the right. Every actual graph supplies
+one of the resulting pairs of partitions.
+
+An outside vertex meeting both sides corresponds to a pair of parts,
+one on each side. Enumerate every partial one-to-one matching between
+the two sets of parts, permitting a match only if its combined degree
+is at most four. Unmatched parts are distinct outside vertices.
+The number of current vertices cannot decrease as right parts are
+processed, so a partial join with more than six outside vertices
+cannot be completed within the order bound. Every full join is checked
+for girth. Later reuse is by an unrooted literal isomorphism: all
+Moore vertices are saturated, and the remaining problem depends only
+on the partial graph and its vertex degrees, not on the chosen root.
+
+The complete side search has $2\,260\,809$ partitions; $5\,407$ roots
+have a partition on both sides. There are $648\,732\,191$ terminal
+joins within the order bound; $648\,731\,580$ have a short cycle.
+The remaining $611$ literal maps retain $66$ partial graphs. The
+additional $421\,884\,142$ over-order rejections are prefixes of the
+join recursion, not further terminal choices.
+
+\section{Completion and the source graph}
+By Lemma~\ref{outside}, every vertex of a desired graph is already
+present. The only remaining edges join deficient outside vertices.
+Choose the first deficient vertex $x$ and enumerate every subset of
+later deficient vertices of size $4-\deg(x)$. Add its edges in order,
+rejecting any edge whose endpoints already have distance less than
+five. Earlier vertices are saturated, so this enumerates every simple
+quartic completion. Backtracking restores every adjacency row.
+The recursion has at most six outside vertices and adds one or three
+edges in total. No vertices or untested edges remain afterwards.
+
+Five of the $66$ partial graphs already have more than eighteen
+hexagons on an edge and are impossible. The others yield four
+quartic graphs of girth at least six. Three have the wrong count on
+an edge. The remaining graph has thirty-two vertices and exactly
+eighteen hexagons on each of its sixty-four edges. Counts are obtained
+by enumerating every simple alternate path of length five; stopping
+a count after it exceeds eighteen is valid for rejection. Its literal
+bijection to \texttt{UntilOrder250\_205} is recorded and checked on
+all $1\,024$ ordered vertex pairs. The source graph's degrees, girth
+and sixty-four edge counts are checked separately.
+
+A second program enumerates all $30\,030$ possible outside-edge subsets
+of the $66$ retained graphs, independently of the vertex recursion.
+Of these, $990$ satisfy the degrees and $986$ have a short cycle.
+It recovers the same four completions and the same single positive.
+This check also tests the five early overflow rejections. Independent
+Bell-partition checks compare the actual side recursion on twenty-three
+root samples. They supplement the written coverage proof and the
+complete closed execution; sampling supplies no missing census premise.
+
+\begin{proof}[Proof of Theorem~\ref{main}]
+Every graph of order at most thirty-two supplies a covered Moore
+configuration, outside partitions and a join. Each discarded branch
+violates a necessary condition. Lemma~\ref{outside} shows that the
+finite completion step includes every edge of every remaining graph.
+Every reuse is justified by a literal isomorphism. The only final graph
+is the checked source graph of order thirty-two. Thus no smaller graph
+exists and the graph at the minimum is unique.
+\end{proof}
+
+\paragraph{Attribution and scope.}
+The minimum and uniqueness are source results. The earlier components
+supply the Moore-tree and root-pair identities, partial-matching forest
+normalization, and literal-map architecture. The outside-degree lemma,
+its application to a complete first outside set, the bounded completion
+and its exact new executions are the additional work here. The author
+also authored the nineteen-hexagon component and previously reviewed
+the twenty-hexagon component; distinct review of this proof is recorded
+separately. No priority, newly solved conjecture, whole-original recovery,
+Lean or compression-factor claim is made.
+\end{document}

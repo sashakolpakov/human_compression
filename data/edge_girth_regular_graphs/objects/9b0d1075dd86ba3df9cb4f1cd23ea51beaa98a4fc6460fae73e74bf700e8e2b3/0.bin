@@ -1,0 +1,124 @@
+import sys
+if sys.flags.optimize:raise SystemExit('optimized execution unsupported')
+sys.dont_write_bytecode=True
+import argparse,copy,hashlib,json,math,os,pathlib,shutil,subprocess,time
+ROOT=pathlib.Path(__file__).resolve().parent
+
+def need(ok,msg):
+ if not ok:raise ValueError(msg)
+def trim(a):
+ while len(a)>1 and a[-1]==0:a.pop()
+ return a
+def add(a,b):
+ c=[0]*max(len(a),len(b))
+ for i,v in enumerate(a):c[i]+=v
+ for i,v in enumerate(b):c[i]+=v
+ return trim(c)
+def divide(a,b):
+ a=a[:];q=[0]*max(1,(len(a)-len(b)+1));need(b[-1]==1,'monic divisor')
+ while len(a)>=len(b) and any(a):
+  d=len(a)-len(b);v=a[-1];q[d]=v
+  for i,x in enumerate(b):a[i+d]-=v*x
+  trim(a)
+ need(not any(a),'inexact polynomial division');return trim(q)
+def evaluate(p,x):
+ r=0
+ for v in reversed(p):r=r*x+v
+ return r
+def norm_certificate(rows):
+ need([r['m']for r in rows]==list(range(3,29)),'exact cyclotomic range');polys={};values={};cert=[]
+ for m in range(1,29):
+  p=[-1]+[0]*(m-1)+[1];den=1
+  for d in range(1,m):
+   if m%d==0:p=divide(p,polys[d]);den*=values[d]
+  v,rem=divmod(4**m-1,den);need(rem==0,'exact integer division');need(evaluate(p,4)==v,'polynomial versus integer value');polys[m]=p;values[m]=v
+  if m<3:continue
+  degree=(len(p)-1)//2;need(len(p)==2*degree+1 and p==p[::-1],'real cyclotomic shape')
+  C=[[2],[0,1]]
+  for k in range(2,degree+1):C.append(add([0]+C[-1],[-v for v in C[-2]]))
+  h=[p[degree]]
+  for k in range(1,degree+1):h=add(h,[p[degree+k]*v for v in C[k]])
+  norm=sum(v*17**i*4**(degree-i)for i,v in enumerate(h));need(norm==values[m],'real norm identity')
+  row=rows[m-3];need(row['norm']==norm and row['floor_sqrt']==math.isqrt(norm),'literal table values');s=row['floor_sqrt'];need(s*s<norm<(s+1)**2,'nonsquare witness')
+  cert.append({'m':m,'cyclotomic_polynomial':p,'real_polynomial':h,'norm':norm,'floor_sqrt':s})
+ return cert
+
+def decode(s):
+ need(s and ord(s[0])<126,'small graph6 input');n=ord(s[0])-63;bits=[]
+ for c in s[1:]:
+  z=ord(c)-63;need(0<=z<64,'graph6 character');bits.extend((z>>k)&1 for k in range(5,-1,-1))
+ need(len(bits)>=n*(n-1)//2,'truncated graph6');adj=[set()for _ in range(n)];pos=0
+ for j in range(1,n):
+  for i in range(j):
+   if bits[pos]:adj[i].add(j);adj[j].add(i)
+   pos+=1
+ need(not any(bits[pos:]),'nonzero padding');return adj
+
+def graph_controls(row):
+ g=decode(row['graph6']);n=len(g);need(n==row['n']and row['k']==5 and row['g']==5,'control scope');need(all(len(x)==5 for x in g),'regularity')
+ cycles=set()
+ def visit(path):
+  if len(path)==5:
+   if path[0]in g[path[-1]]:cycles.add(min(tuple(path),tuple([path[0]]+list(reversed(path[1:])))))
+   return
+  for x in g[path[-1]]:
+   if x>path[0]and x not in path:visit(path+[x])
+ for v in range(n):visit([v])
+ edgecounts={tuple(sorted((v,u))):0 for v in range(n)for u in g[v]}
+ for cyc in cycles:
+  for i in range(5):edgecounts[tuple(sorted((cyc[i],cyc[(i+1)%5])))]+=1
+ need(set(edgecounts.values())=={row['lambda']},'actual pentagon counts')
+ D=[];checks=[]
+ for v in range(n):
+  dist=[None]*n;dist[v]=0;todo=[v]
+  for u in todo:
+   for z in g[u]:
+    if dist[z]is None:dist[z]=dist[u]+1;todo.append(z)
+  for u in range(n):
+   common=len(g[v]&g[u]);need(u==v or common<=1,'quadrilateral');need(u not in g[v]or common==0,'triangle')
+  ball={u for u in range(n)if dist[u]is not None and dist[u]<=2};need(len(ball)==26,'Moore ball');Y=set(range(n))-ball;cross=sum(u in Y for z in ball for u in g[z]);e=sum(len(g[u]&Y)for u in Y)//2;need(cross==80-5*row['lambda'] and 2*e==5*len(Y)-cross,'literal exterior count')
+  deg=[len(g[u]&Y)for u in Y];need(len(Y)*(len(Y)-1)>=sum(x*x for x in deg),'Moore sum on exterior');need(len(Y)**2*(len(Y)-1)>=sum(deg)**2,'Cauchy on exterior')
+  d=[int(u not in ball)for u in range(n)];need(all(d[u]==1+4*(u==v)-(u in g[v])-len(g[u]&g[v])for u in range(n)),'literal D matrix');D.append(d);checks.append({'root':v,'exterior_vertices':len(Y),'exterior_edges':e,'cross_edges':cross})
+ need(all(sum(D[u][j]for u in g[i])==sum(D[i][u]for u in g[j])for i in range(n)for j in range(n)),'commuting literal matrices');need(sum(D[j][i]for i in range(n)for j in g[i])==0,'disjoint trace')
+ return {'id':row['id'],'vertices':n,'pentagons':len(cycles),'root_checks':checks,'literal_commutator_entries':n*n}
+
+def scope_check(row):
+ r=row['literal_source_row'];need((r['k'],r['g'],r['lambda'],r['physical_page'],r['claimed_lower_bound'])==(5,5,14,19,42),'source clause');need(row['source_lower']==42 and row['recovered_lower']==48 and row['new_lower_clauses']==1,'one strengthened lower clause');need(all(row[k]==0 for k in ['new_exact_clauses','whole_original_credit','new_question_credit','new_lean_credit','new_measurement_credit']),'no extra credit')
+def pincheck(row,base):
+ b=(base/row['path']).read_bytes();need(len(b)==row['bytes']and hashlib.sha256(b).hexdigest()==row['sha256'],'binding '+row['path'])
+def child(cmd,out):
+ out.mkdir();env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);start=time.monotonic();r=subprocess.run(cmd,capture_output=True,env=env,timeout=45);(out/'stdout').write_bytes(r.stdout);(out/'stderr').write_bytes(r.stderr);need(r.returncode==0,'child failed');(out/'receipt.json').write_text(json.dumps({'status':'PASS','command':cmd,'seconds':time.monotonic()-start,'returncode':r.returncode},indent=2)+'\n')
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--study',type=pathlib.Path,required=True);ap.add_argument('--out',type=pathlib.Path,required=True);ap.add_argument('--render',action='store_true');a=ap.parse_args();m=json.loads((ROOT/'manifest.json').read_text());deps=json.loads((ROOT/'dependencies.json').read_text())
+ for row in m['exports']:pincheck(row,ROOT)
+ for row in deps:pincheck(row,a.study)
+ a.out=a.out.resolve();a.out.mkdir(parents=True,exist_ok=False);rows=json.loads((ROOT/'norms.json').read_text());cert=norm_certificate(rows);scope=json.loads((ROOT/'source_clause.json').read_text());scope_check(scope)
+ positives=json.loads((ROOT/'positive_controls.json').read_text());reports=[]
+ for row in positives:
+  line=pathlib.Path(row['graph_file']).read_text().splitlines()[row['source_line']-1];need(line==row['graph6']and hashlib.sha256(line.encode()).hexdigest()==row['graph6_line_sha256'],'primary positive row');reports.append(graph_controls(row))
+ damaged=[]
+ for name,change in [('value',lambda r:r[0].update(norm=25)),('square',lambda r:r[0].update(floor_sqrt=5)),('missing',lambda r:r.pop()),('duplicate',lambda r:r[1].update(m=3))]:
+  bad=copy.deepcopy(rows);change(bad)
+  try:norm_certificate(bad)
+  except ValueError:damaged.append(name)
+  else:raise ValueError('damaged certificate accepted')
+ scope_controls=0
+ for key in ['new_exact_clauses','whole_original_credit','new_question_credit','new_lean_credit','new_measurement_credit','recovered_lower']:
+  bad=copy.deepcopy(scope);bad[key]+=1
+  try:scope_check(bad)
+  except ValueError:scope_controls+=1
+  else:raise ValueError('damaged scope accepted')
+ for envopt in [False,True]:
+  env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);target=a.out/('optimized'+str(envopt));cmd=[sys.executable]
+  if envopt:env['PYTHONOPTIMIZE']='1'
+  else:cmd+=['-O']
+  cmd += [str(ROOT/'check.py'),'--study',str(a.study),'--out',str(target)];r=subprocess.run(cmd,capture_output=True,env=env,timeout=10);need(r.returncode!=0 and b'optimized execution unsupported'in r.stderr and not target.exists(),'optimization guard')
+ pages=None
+ if a.render:
+  native=a.out/'native';native.mkdir();shutil.copy2(ROOT/'pentavalent14.tex',native/'pentavalent14.tex')
+  for i in [1,2]:child(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','-output-directory',str(native),str(native/'pentavalent14.tex')],a.out/('latex'+str(i)))
+  log=(native/'pentavalent14.log').read_text();need('Overfull'not in log and 'undefined'not in log,'native warning');child(['/opt/homebrew/bin/gs','-q','-dSAFER','-dBATCH','-dNOPAUSE','-sDEVICE=png16m','-r110','-sOutputFile='+str(native/'page-%02d.png'),str(native/'pentavalent14.pdf')],a.out/'render');pages=len(list(native.glob('page-*.png')))
+ result={'status':'PASS','exports':len(m['exports']),'bindings':len(deps),'nonsquare_norms':len(cert),'polynomial_norm_identities':len(cert),'positive_graphs':len(reports),'root_controls':sum(len(r['root_checks'])for r in reports),'damaged_certificates':damaged,'scope_controls':scope_controls,'optimization_guards':2,'native_pages':pages,'new_lower_clauses':1,'proved_lower':48,'source_lower':42,'whole_original_credit':0}
+ for name,data in [('norm_polynomials.json',cert),('literal_graph_controls.json',reports),('report.json',result)]:(a.out/name).write_text(json.dumps(data,indent=2)+'\n')
+ print(json.dumps(result))
+if __name__=='__main__':main()

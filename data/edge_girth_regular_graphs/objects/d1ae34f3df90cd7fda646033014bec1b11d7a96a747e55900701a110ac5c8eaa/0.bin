@@ -1,0 +1,105 @@
+"""Complete fixed-source lower bounds for quartic girth-five graphs."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,hashlib,json,math,os,subprocess,time
+from run_closed import execute
+P=Path(__file__).resolve().parent
+SCOPE=dict(original='F012',degree=4,girth=5,lambda_values=[2,3,4],lower_bounds=[30,30,30],new_lower_clauses=3,new_exact_counts=0,whole_original_credit=0,new_question_credit=0,new_Lean_credit=0,measurement_credit=0)
+def need(ok,why):
+ if not ok:raise RuntimeError(why)
+def pin(p):
+ b=p.read_bytes();return dict(bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def same(p,row):return pin(p)=={k:row[k]for k in ['bytes','sha256']}
+def validate_scope(x):need(x==SCOPE,'exact three lower clauses')
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);ap.add_argument('--render',action='store_true');ap.add_argument('--reuse-recorded-boundaries',action='store_true');a=ap.parse_args();S=a.study.resolve();O=a.out.resolve();start=time.monotonic();need(not O.exists(),'fresh output')
+ bindings=json.loads((P/'bindings.json').read_text());exports=json.loads((P/'manifest.json').read_text())['exports']
+ for row in bindings:need(same(S/row['path'],row),'acquired binding '+row['path'])
+ for row in exports:need(same(P/row['path'],row),'author export '+row['path'])
+ validate_scope(json.loads((P/'scope.json').read_text()));O.mkdir();common=[P/n for n in ['check.py','run_closed.py','vertex_ball.h','vertex_ball_lambda.h','cycle_budget.h','complete_lambda.cpp','complete_root_symmetry.cpp','root_symmetry.h','parts.py','range.cpp']]
+ def run(name,cmd,inputs,cap,report=None):return execute(cmd,O/('run_'+name),[*common,*inputs],cap,report)
+ def compile_one(name,san=False):
+  binary=O/(name+('_san'if san else''));flags=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']if san else['-O2'];run('compile_'+binary.name,['clang++','-std=c++17',*flags,'-DWORDSIZE=64','-I/opt/homebrew/include',str(P/(name+'.cpp')),'-L/opt/homebrew/lib','-lnauty','-o',str(binary)],[P/(name+'.cpp')],90);return binary
+ bins={name:compile_one(name)for name in ['root_cover_lambda','exterior_cover_lambda','complete_lambda','complete_root_symmetry','range','cycle_controls','normalization_controls','positive_controls']}
+ inv=O/'inventory.json';run('inventory',[sys.executable,str(P/'inventory.py'),'--study',str(S),'--out',str(inv)],[P/'inventory.py',S/'corpus106_F012_matching_forest_v1/forest.py'],30)
+ inventory=json.loads(inv.read_text());need(inventory==json.loads((P/'inventory01.json').read_text()),'complete integer inventory')
+ recorded=json.loads((P/'recorded_boundaries.json').read_text());results=[];normalization=[]
+ for row in inventory['rows']:
+  lam=row['lambda_value'];lines=[str(len(row['patterns']))]
+  for pattern in row['patterns']:
+   def cost(i):
+    k=pattern['sizes'][i];return math.comb(3,k)if pattern['directions'].get(str(i),0)else math.comb(3,k)**2*math.factorial(k)
+   for i in sorted(range(6),key=lambda i:(cost(i),i)):
+    u,v=inventory['edges'][i];lines.append(f"{u} {v} {pattern['sizes'][i]} {pattern['directions'].get(str(i),0)}")
+  pattern=O/f'patterns{lam}.txt';pattern.write_text('\n'.join(lines)+'\n');need(pattern.read_bytes()==(P/pattern.name).read_bytes(),'exact forest pattern')
+  roots=O/f'roots{lam}.txt';rr=O/f'root{lam}.json';run(f'roots{lam}',[str(bins['root_cover_lambda']),str(pattern),str(roots),str(rr),'60',str(lam)],[bins['root_cover_lambda'],pattern],90,rr)
+  ext=O/f'exteriors{lam}.txt';er=O/f'exterior{lam}.json';run(f'exteriors{lam}',[str(bins['exterior_cover_lambda']),str(ext),str(er),'60',str(lam)],[bins['exterior_cover_lambda']],90,er)
+  need(roots.read_bytes()==(P/roots.name).read_bytes()and ext.read_bytes()==(P/ext.name).read_bytes(),'fresh literal input inventories')
+  need(json.loads(rr.read_text())==json.loads((P/f'root_report{lam}.json').read_text())and json.loads(er.read_text())==json.loads((P/f'exterior_report{lam}.json').read_text()),'exact complete inventory totals')
+  if lam==4:
+   from parts import verify_execution,union_calls,pin as literal_pin
+   checked=[];problem=None
+   if a.reuse_recorded_boundaries:
+    for part in recorded['4']['parts']:
+     for key in ['receipt','plan']:need(same(S/part[key]['path'],part[key]),'exact union '+key)
+     plan=json.loads((S/part['plan']['path']).read_text());partrow=verify_execution(S/part['receipt']['path'],plan);checked.append(partrow)
+     if problem is None:problem=partrow['problem']
+   else:
+    import hashlib
+    body=(P/'range.cpp').read_bytes();headers=[literal_pin(P/n)for n in ['cycle_budget.h','vertex_ball.h','vertex_ball_lambda.h','root_symmetry.h']];method=S/'corpus106_F012_root_symmetry_v1/manifest.json';problem=dict(order=25,roots=literal_pin(roots),exteriors=literal_pin(ext),constructor_sha256=hashlib.sha256(body[:body.index(b'int main(')]).hexdigest(),headers={Path(x['path']).name:{k:x[k]for k in ['bytes','sha256']}for x in headers},method_manifest=literal_pin(method),**{'lambda':4,'nr':178,'ne':23})
+    for first in range(0,4094,512):
+     stop=min(first+512,4094);name=f'boundary4_{first}_{stop}';report=O/(name+'.json');classes=O/(name+'.txt');cmd=[str(bins['range']),'4',str(roots),str(ext),str(classes),str(report),'600',str(first),str(stop)];inputs=[bins['range'],P/'range.cpp',method,roots,ext,*[Path(x['path'])for x in headers]];plan=dict(command=cmd,required_input_pins=[literal_pin(x)for x in inputs],report=str(report),report_status='PASS_COMPLETE_PENTAGON_RANGE',constructor_source=literal_pin(P/'range.cpp'),headers=headers,problem=problem,**{'lambda':4,'nr':178,'ne':23,'first':first,'stop':stop});run(name,cmd,inputs,630,report);checked.append(verify_execution(O/('run_'+name)/'receipt.json',plan))
+   need(problem['lambda']==4 and problem['order']==25,'exact lambda4 target');need(roots.read_bytes()==Path(problem['roots']['path']).read_bytes()and ext.read_bytes()==Path(problem['exteriors']['path']).read_bytes(),'literal union inventories');union=union_calls(checked,178,23,problem);need(union['status']=='COMPLETE_DISJOINT_ZERO_UNION'and not union['pending'],'all4094 exact pairs');result=dict(status='PASS_COMPLETE_PENTAGON_LOWER30_DISJOINT_UNION',lambda_value=4,order=25,calls=union['calls'],nodes=union['nodes'],complete=union['complete'],positive=0,classes=0);need(result==json.loads((P/'boundary_report4.json').read_text()),'complete lambda4 aggregate');results.append(result);(O/'lambda4_union.json').write_text(json.dumps(union,indent=2)+'\n')
+  else:
+   if a.reuse_recorded_boundaries:
+    old=recorded[str(lam)];receipt=S/old['receipt']['path'];need(same(receipt,old['receipt']),'recorded receipt');r=json.loads(receipt.read_text());need(r['status']=='PASS_CLOSED_EXECUTION'and r['inputs_unchanged']and r['returncode']==0 and not r['timeout'],'full successful execution')
+    for q in r['pins']+r['outputs']:need(same(Path(q['path']),q),'execution closure')
+    need(not Path(r['outputs'][1]['path']).read_bytes(),'clean acquired stderr');report=S/old['report']['path'];classes=S/old['classes']['path'];stdout=Path(r['outputs'][0]['path'])
+    for key in ['report','classes','roots','exteriors']:need(same(S/old[key]['path'],old[key]),'acquired '+key)
+    need(roots.read_bytes()==(S/old['roots']['path']).read_bytes()and ext.read_bytes()==(S/old['exteriors']['path']).read_bytes(),'same literal acquired models')
+   else:
+    report=O/f'boundary{lam}.json';classes=O/f'classes{lam}.txt';name='complete_root_symmetry'if lam==4 else'complete_lambda';run(f'boundary{lam}',[str(bins[name]),str(lam),str(roots),str(ext),str(classes),str(report),'600'],[bins[name],roots,ext],630,report);stdout=O/f'run_boundary{lam}/stdout'
+   result=json.loads(report.read_text());expected=json.loads((P/f'boundary_report{lam}.json').read_text());need(result==expected,'full boundary totals');need(classes.read_text()=='0\n','empty complete output')
+   import re
+   calls=[];nodes=0;complete_count=0
+   for line in stdout.read_text().splitlines():
+    m=re.fullmatch(r'LAMBDA (\d+) ROOT (\d+) EXTERIOR (\d+) NODES (\d+) COMPLETE (\d+) POSITIVE (\d+)',line);need(m is not None,'literal complete-call record');l,i,j,n,c,z=map(int,m.groups());need(l==lam and c>=0 and z==0,'complete call with no target');calls.append((i,j));nodes+=n;complete_count+=c
+   nr=[6,40,178][lam-2];ne=[2,8,23][lam-2];need(calls==[(i,j)for i in range(nr)for j in range(ne)]and nodes==result['nodes']and complete_count==result['complete']and len(calls)==result['calls'],'exact full model-pair coverage');results.append(result)
+  run(f'normalization{lam}',[str(bins['normalization_controls']),str(ext)],[bins['normalization_controls'],ext],60)
+  run(f'orbits{lam}',[sys.executable,str(P/'normalization_oracle.py'),str(O/f'run_normalization{lam}/stdout'),str(ext)],[P/'normalization_oracle.py',O/f'run_normalization{lam}/stdout',ext],60);normalization.append(json.loads((O/f'run_orbits{lam}/stdout').read_text()))
+ A=S/'corpus106_F012_quartic_five_pentagons_v1';control_results={}
+ for name,args in [('cycle_controls',[str(A/'source_positive.txt')]),('positive_controls',[str(A/'source_positive.txt'),str(A/'roots01.txt'),str(A/'exteriors01.txt')])]:
+  inputs=[A/n for n in ['source_positive.txt','roots01.txt','exteriors01.txt']];run(name,[str(bins[name]),*args],[bins[name],*inputs],60);san=compile_one(name,True);run(name+'_san',[str(san),*args],[san,*inputs],90);need((O/('run_'+name+'/stdout')).read_bytes()==(O/('run_'+name+'_san/stdout')).read_bytes(),'sanitized bounded controls');control_results[name]=json.loads((O/('run_'+name+'/stdout')).read_text())
+ env=dict(os.environ);env.pop('PYTHONOPTIMIZE',None);damage=[]
+ for mode in ['truncated','direction','duplicate']:
+  rows=(O/'patterns4.txt').read_text().splitlines()
+  if mode=='truncated':rows=rows[:3]
+  if mode=='direction':
+   s=rows[1].split();s[-1]='3';rows[1]=' '.join(s)
+  if mode=='duplicate':rows[2]=rows[1]
+  f=O/(mode+'.txt');f.write_text('\n'.join(rows)+'\n');out=O/(mode+'_out');rep=O/(mode+'_report');r=subprocess.run([str(bins['root_cover_lambda']),str(f),str(out),str(rep),'10','4'],capture_output=True,timeout=15,env=env);need(r.returncode!=0 and b'NO_CERTIFICATE'in r.stderr and not out.exists()and not rep.exists(),'damaged inventory');(O/(mode+'.stderr')).write_bytes(r.stderr);damage.append(mode)
+ deadline=[]
+ for name in ['complete_lambda','complete_root_symmetry']:
+  out=O/(name+'_timeout_output');rep=O/(name+'_timeout_report');r=subprocess.run([str(bins[name]),'4',str(O/'roots4.txt'),str(O/'exteriors4.txt'),str(out),str(rep),'0'],capture_output=True,timeout=10,env=env);need(r.returncode!=0 and b'INCOMPLETE_DEADLINE'in r.stderr and not out.exists()and not rep.exists(),'timeout cannot certify');deadline.append(name)
+ scope_controls=[]
+ for key in SCOPE:
+  changed=dict(SCOPE);changed[key]=[]if isinstance(changed[key],list)else'changed'if isinstance(changed[key],str)else changed[key]+1
+  try:validate_scope(changed)
+  except RuntimeError:scope_controls.append(key)
+  else:raise RuntimeError('damaged scope accepted')
+ guards=[]
+ for name in ['check.py','inventory.py','normalization_oracle.py','build_native.py','run_closed.py','parts.py']:
+  for mode in ['argument','environment']:
+   ee=env.copy();cmd=[sys.executable]
+   if mode=='argument':cmd+=['-O']
+   else:ee['PYTHONOPTIMIZE']='1'
+   out=O/(name+'_'+mode);r=subprocess.run([*cmd,str(P/name),'--out',str(out)],capture_output=True,env=ee,timeout=10);need(r.returncode!=0 and b'normal Python required'in r.stderr and not out.exists(),'optimization guard');guards.append([name,mode])
+ native=None
+ if a.render:
+  from build_native import build
+  native=build(P/'three_bounds.tex',O/'native')
+  from pypdf import PdfReader
+  need([p.extract_text()for p in PdfReader(P/'three_bounds.pdf').pages]==[p.extract_text()for p in PdfReader(O/'native/three_bounds.pdf').pages],'native text equality')
+ report=dict(status='PASS_THREE_QUARTIC_PENTAGON_LOWER_BOUNDS',exports=len(exports),bindings=len(bindings),target_mode='explicit acquired complete boundary executions; all inventories and bounded controls fresh'if a.reuse_recorded_boundaries else'complete fresh inventories and boundaries',boundaries=results,normalization=normalization,controls=control_results,damaged_inventories=damage,deadline_rejections=deadline,scope_controls=scope_controls,optimization_guards=guards,native=native,whole_original_credit=0,seconds=time.monotonic()-start);(O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

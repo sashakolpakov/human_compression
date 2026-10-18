@@ -1,0 +1,54 @@
+#ifndef F012_FOREST_JOINT_H
+#define F012_FOREST_JOINT_H
+#include "forest_completion.h"
+// Same complete assignments as ForestCover, ordered by exterior vertex.
+struct JointCover:ForestCover {
+ array<int,9>missing_right{};array<int,3>used_right{},target_r{};
+ vector<vector<int>>choices=vector<vector<int>>(4);U jointnodes=0,complete_joint=0,positive_joint=0;vector<Graph>positive_graphs;
+ JointCover(const Graph&root,int n,int sh,int lam,Budget&b):ForestCover(root,n,sh,lam,b){
+  for(int x=0;x<9;x++)missing_right[x]=4-weight(root[17+x]);target_r=root_pair_targets(root,1);
+  for(int mask=0;mask<512;mask++)if(branch_mask(mask))choices[weight(mask)].push_back(mask);
+ }
+ void walk(int at){
+  budget.tick();jointnodes++;
+  int remain=accumulate(missing.begin(),missing.end(),0),lp=0,rp=0;
+  for(int j=0;j<3;j++){lp+=target[j]-used[j];rp+=target_r[j]-used_right[j];}
+  if(!suffix[at].count({remain,lp,rp}))return;
+  if(at==outside){
+   require(remain==0&&accumulate(missing_right.begin(),missing_right.end(),0)==0&&used==target&&used_right==target_r,"complete joint capacities and targets");
+   for(U row:g)require(weight(row)==4,"quartic joint completion");require(!has_short_cycle(g),"girth joint completion");complete_joint++;right.g=g;
+   for(int u=0;u<(int)g.size();u++){U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;if(u<v&&right.paths(u,v,5,U(1)<<u)!=right.lambda)return;}}
+   positive_joint++;positive_graphs.push_back(g);return;
+  }
+  int vertex=order[at],k=4-degree[vertex];
+  for(int s=max(0,k-3);s<=min(3,k);s++)for(int left:choices[s]){
+   budget.tick();bool okay=true;for(int x=0;x<9;x++)if(((left>>x)&1)&&!missing[x])okay=false;
+   auto pl=pair_counts(left);for(int j=0;j<3;j++)if(used[j]+pl[j]>target[j])okay=false;
+   if(!okay)continue;masks[vertex]=left;done[vertex]=true;
+   if(!canonical_left(shape,masks,done)){done[vertex]=false;continue;}
+   vector<int>addedl;
+   for(int x=0;x<9;x++)if((left>>x)&1){if(!distance_at_least(g,4+x,26+vertex,5)){okay=false;break;}add_edge(g,4+x,26+vertex);addedl.push_back(x);}
+   if(okay){
+    for(int rightmask:choices[k-s]){
+     budget.tick();bool good=true;for(int x=0;x<9;x++)if(((rightmask>>x)&1)&&!missing_right[x])good=false;
+     auto pr=pair_counts(rightmask);for(int j=0;j<3;j++)if(used_right[j]+pr[j]>target_r[j])good=false;
+     if(!good)continue;vector<int>addedr;
+     for(int x=0;x<9;x++)if((rightmask>>x)&1){if(!distance_at_least(g,17+x,26+vertex,5)){good=false;break;}add_edge(g,17+x,26+vertex);addedr.push_back(x);}
+     if(good){
+      for(int x:addedl)missing[x]--;for(int x:addedr)missing_right[x]--;for(int j=0;j<3;j++){used[j]+=pl[j];used_right[j]+=pr[j];}
+      walk(at+1);
+      for(int j=0;j<3;j++){used[j]-=pl[j];used_right[j]-=pr[j];}for(int x:addedl)missing[x]++;for(int x:addedr)missing_right[x]++;
+     }
+     for(int x:addedr)remove_edge(g,17+x,26+vertex);
+    }
+   }
+   for(int x:addedl)remove_edge(g,4+x,26+vertex);done[vertex]=false;
+  }
+ }
+ void run_joint(){
+  if(any_of(target.begin(),target.end(),[](int x){return x<0;})||any_of(target_r.begin(),target_r.end(),[](int x){return x<0;}))return;
+  Graph before=g;auto left_before=missing,right_before=missing_right;walk(0);
+  require(g==before&&missing==left_before&&missing_right==right_before&&used==array<int,3>{0,0,0}&&used_right==array<int,3>{0,0,0},"joint restoration");
+ }
+};
+#endif

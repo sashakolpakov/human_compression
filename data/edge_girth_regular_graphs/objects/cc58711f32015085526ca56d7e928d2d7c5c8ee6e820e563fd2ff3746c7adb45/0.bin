@@ -1,0 +1,34 @@
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstdint>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+using U=std::uint32_t;
+struct Search{
+ static constexpr int k=4;
+ int m,target;double cap;std::array<U,12>rows{},col{};std::array<int,12>degree{};std::uint64_t nodes=0,positives=0;std::chrono::steady_clock::time_point start;
+ static int bits(U x){return __builtin_popcount(x);}
+ void visit(int r){
+  ++nodes;if(nodes%4096==0&&std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count()>cap)throw 1;
+  for(int j=0;j<m;j++)if(degree[j]>k||degree[j]+m-r<k)return;
+  for(int i=0;i<r;i++)for(int j=0;j<m;j++)if(rows[i]>>j&1u){
+   int lower=0,upper=0;
+   for(int h=0;h<r;h++)if(h!=i&&(rows[h]>>j&1u))lower+=bits(rows[i]&rows[h])-1;
+   for(int t=0;t<m;t++)if(t!=j&&(rows[i]>>t&1u))upper+=std::min(k-degree[j],k-degree[t]);
+   if(lower>target||lower+upper<target)return;
+  }
+  if(r==m){for(int j=0;j<m;j++)if(degree[j]!=k)throw std::runtime_error("terminal column degree");++positives;return;}
+  std::vector<std::vector<int>>cells;std::vector<U>keys;
+  for(int j=0;j<m;j++)if(degree[j]<k){auto it=std::find(keys.begin(),keys.end(),col[j]);if(it==keys.end()){keys.push_back(col[j]);cells.push_back({j});}else cells[it-keys.begin()].push_back(j);}
+  choose(r,cells,0,k,0);
+ }
+ void choose(int r,const std::vector<std::vector<int>>&cells,int index,int need,U selected){
+  if(need==0){rows[r]=selected;for(int j=0;j<m;j++)if(selected>>j&1u){++degree[j];col[j]|=1u<<r;}visit(r+1);for(int j=0;j<m;j++)if(selected>>j&1u){--degree[j];col[j]&=~(1u<<r);}rows[r]=0;return;}
+  if(index==int(cells.size()))return;int available=0;for(int i=index;i<int(cells.size());i++)available+=cells[i].size();if(available<need)return;
+  U bitsel=0;int limit=std::min(need,int(cells[index].size()));for(int count=0;count<=limit;count++){choose(r,cells,index+1,need-count,selected|bitsel);if(count<limit)bitsel|=1u<<cells[index][count];}
+ }
+ void run(){if(m<4||m>10||target<0||target>9||cap<=0)throw std::runtime_error("invalid input");start=std::chrono::steady_clock::now();bool done=true;try{visit(0);}catch(int){done=false;}std::cout<<"{\"m\":"<<m<<",\"lambda\":"<<target<<",\"status\":\""<<(done?"COMPLETE":"TIMEOUT")<<"\",\"nodes\":"<<nodes<<",\"positives\":"<<positives<<",\"seconds\":"<<std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count()<<"}\n";}
+};
+int main(){try{int m,t;double cap;while(std::cin>>m){if(!(std::cin>>t>>cap))throw std::runtime_error("incomplete input");Search s;s.m=m;s.target=t;s.cap=cap;s.run();}if(!std::cin.eof())throw std::runtime_error("malformed input");return 0;}catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -1,0 +1,231 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs,hyperref}
+\setlength{\emergencystretch}{2em}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\title{Square counts on twenty vertices}
+\author{Human Compression project}
+\date{}
+\begin{document}\maketitle
+We reuse the prescribed-cycle search of~\cite{latin}, adding two
+reductions whose proofs apply to every stage of that search. They
+allow us to recover three further assertions from Table~4 of
+Goedgebeur and Jooken~\cite{GJ}. The classification below uses exact
+finite computation; its completeness does not follow from the
+number of examples in the source.
+
+\begin{theorem}\label{main}
+Up to isomorphism, there are exactly two simple graphs on twenty
+vertices, of degree six and girth four, with nine squares through
+each edge, and exactly five with ten squares through each edge.
+They are the seven explicit graphs in the accompanying certificate.
+Moreover $n(6,4,7)\ge24$.
+\end{theorem}
+
+\begin{lemma}\label{bip}
+If a bipartite $k$-regular graph with parts of size $m\ge2$ has constant
+square count $\lambda$, then
+\[
+ \lambda\ge\frac{k(k-1)^2}{m-1}-(k-1).
+\]
+Consequently a bipartite graph of degree six and order twenty
+has constant square count at least twelve.
+\end{lemma}
+\begin{proof}
+Fix $x$ in one part. For each other vertex $y$ in that part put
+$c_y=|N(x)\cap N(y)|$. Counting paths of length two from $x$
+gives $\sum c_y=k(k-1)$. Counting squares through $x$ gives
+$\sum c_y(c_y-1)=k\lambda$: the left side counts each square
+twice, and the squares through $x$ number $k\lambda/2$.
+Cauchy--Schwarz yields
+\[
+ k\lambda+k(k-1)=\sum c_y^2
+       \ge \frac{k^2(k-1)^2}{m-1}.
+\]
+This is the asserted bound. Substitution of $k=6,m=10$ gives
+$\lambda\ge35/3$, hence $\lambda\ge12$.
+\end{proof}
+
+\section*{The common finite search}
+The acquired shortest-odd-cycle inequality $k\ell\le2n$ forces
+a five-cycle in every nonbipartite case of Theorem~\ref{main}.
+Indeed $6\ell\le40$, whereas an odd cycle longer than five has
+length at least seven. Use the cycle classes from~\cite{latin}:
+$a_i$ vertices have the two cycle neighbours $v_{i-1},v_{i+1}$,
+$b_i$ have the single cycle neighbour $v_i$, and $z$ have none.
+The cycle vertices themselves are included in the $a_i$. Here
+\[
+ a_{i-1}+a_{i+1}+b_i=6,\qquad
+ \sum_i b_i+2z=10,\qquad a_i\ge1,\quad b_i,z\ge0.
+                                                               \tag{1}
+\]
+The same weak-composition enumeration and inverse linear formulas
+as in~\cite{latin} give $407$ labelled patterns, or $55$ patterns
+under the ten rotations and reversals of the specified cycle.
+Enumerating all positive $a$-vectors independently gives the same
+list. Distinct labels are assigned to all vertices in each pattern;
+no automorphism of a completed graph is postulated.
+
+Recall the acquired recursion. All edges incident with the cycle
+are inserted first. At a partial graph, a set $U$ of active vertices
+has unassigned remaining neighbours; every vertex outside $U$ has
+its full degree. Choose one $x\in U$, enumerate admissible subsets
+of its active candidate neighbours of size equal to its deficit,
+insert those edges and remove $x$ from $U$. Triangle and degree
+obstructions are checked as in the acquired complete proof.
+
+\begin{lemma}\label{cells}
+At every node of this recursion, $U$ is independent in the partial
+graph. Among the candidate neighbours of the chosen $x$, partition
+vertices by their exact current neighbourhood. It suffices to
+choose a number from each part and take the first that many vertices
+of the part in the fixed label order. This retains a representative
+of every possible completion up to isomorphism.
+\end{lemma}
+\begin{proof}
+Initially no edge between active vertices has been inserted.
+A recursive step adds edges only from $x$ and then removes $x$
+from the active set. This proves independence by induction.
+The current neighbours of each active vertex are therefore all
+closed vertices.
+
+Two candidates with the same current neighbourhood have the same
+deficit, because the required degree is fixed. They have the same
+original cycle neighbours as well, since all cycle vertices are
+closed. Their initial allowed relations to every other vertex
+consequently agree: that relation forbids exactly a common cycle
+neighbour. They also have identical adjacency to every closed
+vertex and no adjacency within $U$.
+
+Thus every permutation within each indicated part, fixing $x$
+and all other vertices, preserves the entire partial problem:
+present edges, original allowed pairs, degree deficits, closed
+vertices and the constant-square target. The symmetric groups on
+the parts act independently. Their orbits on neighbour subsets
+are specified exactly by the number chosen in each part. Taking
+the first prescribed number supplies one representative of each
+orbit, including zero choices and a zero deficit.
+
+For any valid completion, transport its next neighbour subset to
+this representative by the corresponding permutation. The transported
+graph is another completion of the same partial problem and survives
+that branch. Apply induction at the resulting child. The later
+vertex-selection rule need not commute with the permutation: the
+induction applies to whichever labelled child was reached.
+This proves coverage of isomorphism classes. It neither counts
+labelled completions nor ensures a single representative per class.
+\end{proof}
+
+\begin{lemma}\label{closed}
+The square-count interval used for an initial cycle edge in
+\cite{latin} is valid for every edge whose endpoints are closed.
+\end{lemma}
+\begin{proof}
+Let $xy$ have both endpoints outside $U$. The sets
+$L=N(x)\setminus\{y\}$ and $R=N(y)\setminus\{x\}$ are already
+final. Triangle-freeness makes them disjoint. Every square through
+$xy$ corresponds to exactly one edge from $L$ to $R$.
+The present cross edges therefore give a lower bound $q$.
+Every missing cross edge in a completion has both endpoints
+active: no closed vertex can acquire another edge. Its endpoints
+must still pass the acquired candidate test, since existing common
+neighbours and exhausted degrees cannot later disappear.
+
+Let $p$ count all such currently possible missing cross edges.
+Then the final square count lies in $[q,q+p]$. Some counted edges
+may be mutually incompatible; this only increases the upper bound.
+Retain a target precisely when it lies in these intervals for all
+closed edges. A valid completion with that constant target always
+survives. At a leaf all edges are checked explicitly as before.
+\end{proof}
+
+The new implementation replaces subset enumeration by the integer
+choices of Lemma~\ref{cells}, and applies Lemma~\ref{closed} to
+all closed edges. Every recursive return restores both adjacency
+and deficits. The unsigned masks contain all twenty vertices.
+These are the only mathematical changes to the previously reviewed
+search. Time limits can return an incomplete status but never an
+exclusion. Every retained graph is exported in full; no storage cap
+can discard a positive result.
+
+\section*{The finite result and its verification}
+The certificate completes all $55$ patterns for targets $7,8,9,10$,
+visiting $8\,626\,624$ nodes and retaining $86$ labelled outputs.
+Different outputs may represent the same graph; the count is not an
+isomorphism count.
+No retained graph has count seven or eight. For counts nine and ten,
+every retained adjacency is supplied with a literal permutation to
+one of the following seven source examples. The verifier checks all
+$20^2$ adjacency comparisons for each permutation. Discovery of the
+permutations used a graph-isomorphism program; their verification
+uses only the displayed integer permutations.
+
+The examples are independently checked for degree six, absence of
+triangles and their exact square count on every edge. A triangle-free
+graph of degree six has at least twelve vertices in each component,
+so a graph here is connected. In the table, $A$ denotes adjacency
+and $t$ is the number of singleton classes under equality of open
+neighbourhoods. These invariants distinguish every pair with the
+same square count.
+\begin{center}\small
+\begin{tabular}{c|r|r|r|r}
+Source example&$\lambda$&$\operatorname{tr}(A^5)$&$\operatorname{tr}(A^{10})$&$t$\\\hline
+84&10&2440&74996040&20\\
+85&10&2430&74996010&20\\
+86&10&2440&74996000&20\\
+87&10&2420&74996040&20\\
+88&10&2400&74996040&20\\
+89&9&3840&64665600&8\\
+90&9&3840&64665600&0
+\end{tabular}
+\end{center}
+The source identifiers are the one-based lines of its fixed acquired
+\texttt{UntilOrder250} graph file. The literal encodings and their
+hashes accompany the certificate. The traces are recomputed by
+integer matrix multiplication, and equality of neighbourhoods is
+checked on the actual adjacency rows. No isomorphism-classification
+library is a premise of the nonisomorphism test.
+
+Lemma~\ref{bip} excludes the bipartite alternative. Equations~(1),
+the acquired complete branching proof and Lemmas~\ref{cells}--\ref{closed}
+prove completeness in the other alternative. The verified maps give
+at most two or five classes; the seven verified, distinguished
+examples give the corresponding lower counts. This proves the two
+classification assertions of Theorem~\ref{main}.
+
+For the remaining lower bound, the acquired general tree bound gives
+$n\ge12+\lceil2(25-7)/6\rceil=18$. Counting edge--square incidences
+gives $8\mid6n\cdot7$, hence $4\mid n$. The only possible order
+below twenty-four is therefore twenty, which has been excluded.
+This proves $n(6,4,7)\ge24$. The separate exclusion for count eight
+at twenty is recorded but does not by itself prove the source's
+lower bound twenty-two.
+
+\paragraph{Attribution and limits.}
+All three headline conclusions are prior entries in Table~4 of
+\cite{GJ}, physical page~20. The positive examples remain attributed
+to the acquired source data. The tree bound is the original bound
+of Drglin, Filipovski, Jajcay and Raiman, acquired with its complete
+proof through the preceding lower-bounds component. The fixed-cycle
+partition, initial degree completion and square interval are acquired
+from~\cite{latin}; its underlying recursion and C++ translation are
+attributed in the preceding components. The present work supplies
+the interchangeable-vertex reduction, the use of every closed edge,
+and their application to these finite classifications. No general
+historical priority for these elementary methods is claimed.
+No open conjecture, whole F012 recovery, Lean theorem or compression
+measurement is claimed here.
+
+\begin{thebibliography}{3}
+\bibitem{GJ} J.~Goedgebeur and J.~Jooken,
+\emph{Exhaustive generation of edge-girth-regular graphs},
+arXiv:2401.08271v2, 25 June 2024.
+\bibitem{latin} Human Compression project,
+\emph{A Latin square in the bipartite complement}, reviewed component,
+13 October 2026.
+\bibitem{bounds} A.~Zavrtanik Drglin, S.~Filipovski, R.~Jajcay and
+T.~Raiman, \emph{Extremal Edge-Girth-Regular Graphs},
+Graphs and Combinatorics 37 (2021), 2139--2154.
+\end{thebibliography}
+\end{document}

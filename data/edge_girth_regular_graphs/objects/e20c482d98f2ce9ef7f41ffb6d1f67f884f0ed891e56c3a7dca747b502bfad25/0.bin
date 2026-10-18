@@ -1,0 +1,32 @@
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('normal Python required')
+from pathlib import Path
+import difflib,json
+P=Path(__file__).resolve().parent
+A=P.parents[1]/'corpus106_F012_quartic_five_pentagons_v1'
+old=(A/'complete.cpp').read_text();head=old[:old.index('int main(')]
+head=head.replace('#include "cycle_budget.h"','#include "cycle_budget.h"\n#include "vertex_ball_lambda.h"')
+head=head.replace('Deadline&d,Cover&c):h(e),state(initial(r,e.g),5)','Deadline&d,Cover&c,int lambda=5):h(e),state(initial(r,e.g),lambda)')
+assert head!=old[:old.index('int main(')]
+main=r'''int main(int argc,char**argv){try{
+ need(argc==7,"usage LAMBDA ROOTS EXTERIORS OUTPUT REPORT SECONDS");int lambda=stoi(argv[1]);need(lambda>=2&&lambda<=4,"lambda two to four");Deadline d(stod(argv[6]));
+ ifstream input(argv[2]);int nr;need(bool(input>>nr)&&nr==array<int,3>{6,40,178}[lambda-2],"exact root count");vector<Graph>roots;for(int i=0;i<nr;i++){int n;need(bool(input>>n)&&n==17,"root17");Graph g(n);for(U&row:g)need(bool(input>>row),"root row");validate_root_lambda(g,lambda);roots.push_back(g);}string tail;need(!(input>>tail),"root end");
+ ifstream ext(argv[3]);int orders,t,count;need(bool(ext>>orders>>t>>count)&&orders==1&&t==8&&count==array<int,3>{2,8,23}[lambda-2],"exact eight-vertex exterior inventory");vector<Exterior>models;
+ for(int i=0;i<count;i++){Graph g(t);for(U&row:g)need(bool(ext>>row),"exterior row");validate(g);need(girth5(g),"exterior girth");int degree=0;for(U row:g){need(wt(row)<=4,"exterior maximum degree");degree+=wt(row);}need(degree==4*lambda-4,"exterior edge count");models.emplace_back(g);}need(!(ext>>tail),"exterior end");
+ Cover cover(false);U nodes=0,complete=0,positives=0,calls=0;
+ for(int i=0;i<nr;i++)for(int j=0;j<count;j++){d.check();Boundary b(roots[i],models[j],d,cover,lambda);b.run();nodes+=b.nodes;complete+=b.complete_count;positives+=b.positive;calls++;cout<<"LAMBDA "<<lambda<<" ROOT "<<i<<" EXTERIOR "<<j<<" NODES "<<b.nodes<<" COMPLETE "<<b.complete_count<<" POSITIVE "<<b.positive<<'\n'<<flush;}
+ ofstream out(argv[4]),report(argv[5]);need(bool(out)&&bool(report),"complete outputs");out<<cover.graphs.size()<<'\n';for(auto&g:cover.graphs){out<<g.size();for(U row:g)out<<' '<<row;out<<'\n';}
+ report<<"{\"status\":\"PASS_COMPLETE_PENTAGON_LOWER30\",\"lambda_value\":"<<lambda<<",\"order\":25,\"calls\":"<<calls<<",\"nodes\":"<<nodes<<",\"complete\":"<<complete<<",\"positive\":"<<positives<<",\"classes\":"<<cover.graphs.size()<<"}\n";need(bool(out)&&bool(report),"complete write");return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}
+'''
+(P/'complete_lambda.cpp').write_text(head+main)
+(P/'complete_lambda.cpp.diff').write_text(''.join(difflib.unified_diff(old.splitlines(True),(head+main).splitlines(True),fromfile='lambda5 complete.cpp',tofile='complete_lambda.cpp')))
+for name in ['cycle_controls.cpp','positive_controls.cpp']:
+    s=(A/name).read_text()
+    if name=='cycle_controls.cpp':
+        s=s.replace('control(g,5);graphs++;','for(int limit=2;limit<=5;limit++){control(g,limit);graphs++;}')
+    else:s=s.replace('#include "complete.cpp"','#include "complete_lambda.cpp"')
+    (P/name).write_text(s)
+    (P/(name+'.diff')).write_text(''.join(difflib.unified_diff((A/name).read_text().splitlines(True),s.splitlines(True),fromfile='lambda5 '+name,tofile=name)))
+print('complete constructor differs only by its parameter and exact inventories')

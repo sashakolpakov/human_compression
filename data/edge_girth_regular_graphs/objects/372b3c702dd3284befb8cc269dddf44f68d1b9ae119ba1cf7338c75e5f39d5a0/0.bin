@@ -1,0 +1,67 @@
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstdint>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+using namespace std;
+array<uint32_t,20> adj{};
+uint64_t nodes=0,leaves=0,positives=0;
+chrono::steady_clock::time_point start;
+vector<array<uint32_t,20>> answers;
+bool timeout=false;
+void join(int x,int y){adj[x]|=1u<<y;adj[y]|=1u<<x;}
+void unjoin(int x,int y){adj[x]&=~(1u<<y);adj[y]&=~(1u<<x);}
+bool allowed(int x,int y){
+ if(x==y || adj[x]>>y&1u || __builtin_popcount(adj[x])>=4 || __builtin_popcount(adj[y])>=4)return false;
+ uint32_t reached=1u<<x,frontier=reached;
+ for(int d=0;d<3;++d){uint32_t next=0;for(int v=0;v<20;++v)if(frontier>>v&1u)next|=adj[v];frontier=next&~reached;reached|=frontier;}
+ return !(reached>>y&1u);
+}
+int paths(int at,int end,int steps,uint32_t seen){
+ if(steps==0)return at==end;
+ if(at==end)return 0;
+ int out=0;for(int w=0;w<20;++w)if((adj[at]>>w&1u)&&!(seen>>w&1u))out+=paths(w,end,steps-1,seen|(1u<<w));return out;
+}
+bool check(){
+ for(int x=0;x<20;++x)if(__builtin_popcount(adj[x])!=4)return false;
+ for(int x=0;x<20;++x)for(int y=x+1;y<20;++y)if(adj[x]>>y&1u)
+  if(paths(x,y,4,1u<<x)!=6)return false;
+ return true;
+}
+void visit();
+void choices(int v,const vector<int>&c,int pos,int need){
+ if(timeout)return;
+ if(need==0){visit();return;}
+ if(int(c.size())-pos<need)return;
+ for(int i=pos;i<int(c.size());++i)if(allowed(v,c[i])){join(v,c[i]);choices(v,c,i+1,need-1);unjoin(v,c[i]);}
+}
+void visit(){
+ ++nodes;
+ if(nodes%1024==0 && chrono::duration<double>(chrono::steady_clock::now()-start).count()>8){timeout=true;return;}
+ int selected=-1,best=100,want=0;vector<int> candidates;
+ for(int v=5;v<17;++v){int need=4-__builtin_popcount(adj[v]);if(!need)continue;vector<int>c;
+  for(int w=5;w<17;++w)if(allowed(v,w))c.push_back(w);
+  if(int(c.size())<need)return;
+  if(int(c.size())-need<best){selected=v;best=int(c.size())-need;want=need;candidates=c;}
+ }
+ if(selected<0){++leaves;if(check()){++positives;answers.push_back(adj);}return;}
+ choices(selected,candidates,0,want);
+}
+int main(){
+ for(int frame=0;frame<5;++frame){
+  adj.fill(0);nodes=leaves=positives=0;answers.clear();timeout=false;
+  for(int b=0;b<4;++b){join(0,1+b);for(int j=0;j<3;++j)join(1+b,5+3*b+j);}
+  for(int b=0;b<4;++b){
+   if(frame==4&&b==0){for(int p=0;p<3;++p)join(17+p,5+3*b);}
+   else if(frame!=4&&b<frame){
+    int single=b;for(int p=0;p<3;++p)join(17+p,5+3*b+(p==single));
+   }else for(int p=0;p<3;++p)join(17+p,5+3*b+p);
+  }
+  start=chrono::steady_clock::now();visit();
+  cout<<"{\"frame\":"<<frame<<",\"status\":\""<<(timeout?"TIMEOUT_NO_CERTIFICATE":"COMPLETE")<<"\",\"nodes\":"<<nodes<<",\"leaves\":"<<leaves<<",\"positives\":"<<positives<<",\"examples\":[";
+  for(size_t i=0;i<answers.size();++i){if(i)cout<<',';cout<<'[';for(int j=0;j<20;++j){if(j)cout<<',';cout<<answers[i][j];}cout<<']';}
+  cout<<"],\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-start).count()<<"}"<<endl;
+ }
+}

@@ -1,0 +1,127 @@
+// Positive witnesses only: no uniqueness, completeness, or minimum-order claim.
+// Cycle counts use Goedgebeur--Jooken's edge-deletion/BFS observation.
+// Counts are saturated at lambda+1, which preserves equality with lambda.
+#include <algorithm>
+#include <cstdint>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+using Graph = std::vector<std::vector<int>>;
+
+static void require(bool condition, const std::string& message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+static Graph decode(std::string text, int expected_n) {
+    if (text.rfind(">>graph6<<", 0) == 0) text.erase(0, 10);
+    require(!text.empty(), "empty graph6");
+    std::vector<unsigned> data;
+    for (unsigned char c : text) {
+        require(c >= 63 && c <= 126, "graph6 character");
+        data.push_back(c - 63);
+    }
+    size_t offset = 1;
+    uint64_t n = data[0];
+    if (n == 63) {
+        require(data.size() >= 4, "truncated graph6 header");
+        offset = data[1] == 63 ? 8 : 4;
+        require(data.size() >= offset, "truncated extended header");
+        n = 0;
+        for (size_t i = offset == 4 ? 1 : 2; i < offset; ++i)
+            n = 64 * n + data[i];
+    }
+    require(n == static_cast<uint64_t>(expected_n), "graph6 order");
+    const uint64_t bits = n * (n - 1) / 2;
+    require(data.size() == offset + (bits + 5) / 6, "graph6 length");
+    Graph a(n);
+    uint64_t bit = 0;
+    for (int v = 0; v < expected_n; ++v) {
+        for (int u = 0; u < v; ++u, ++bit) {
+            if (data[offset + bit / 6] & (1u << (5 - bit % 6))) {
+                a[u].push_back(v);
+                a[v].push_back(u);
+            }
+        }
+    }
+    for (; bit < 6 * (data.size() - offset); ++bit)
+        require(!(data[offset + bit / 6] & (1u << (5 - bit % 6))),
+                "nonzero graph6 padding");
+    return a;
+}
+
+static uint64_t check(const Graph& a, int k, int g, uint64_t lambda) {
+    const int n = static_cast<int>(a.size());
+    for (const auto& neighbours : a)
+        require(neighbours.size() == static_cast<size_t>(k), "degree");
+    std::vector<int> distance(n, -1), queue(n);
+    std::vector<uint64_t> count(n);
+    int head = 0, tail = 1;
+    queue[0] = 0;
+    distance[0] = 0;
+    while (head < tail) {
+        const int x = queue[head++];
+        for (int y : a[x]) if (distance[y] < 0) {
+            distance[y] = distance[x] + 1;
+            queue[tail++] = y;
+        }
+    }
+    require(tail == n, "connectedness");
+    const uint64_t cap = lambda + 1;
+    uint64_t checked = 0;
+    for (int u = 0; u < n; ++u) for (int v : a[u]) if (u < v) {
+        std::fill(distance.begin(), distance.end(), -1);
+        std::fill(count.begin(), count.end(), 0);
+        distance[u] = 0;
+        count[u] = 1;
+        head = 0;
+        tail = 1;
+        queue[0] = u;
+        while (head < tail) {
+            const int x = queue[head++];
+            // FIFO order ensures that all shortest-path predecessors of v
+            // have already contributed by the time v is removed.
+            if (x == v || distance[x] >= g - 1) break;
+            for (int y : a[x]) {
+                if ((x == u && y == v) || (x == v && y == u)) continue;
+                if (distance[y] < 0) {
+                    distance[y] = distance[x] + 1;
+                    count[y] = count[x];
+                    queue[tail++] = y;
+                } else if (distance[y] == distance[x] + 1) {
+                    count[y] = std::min(cap, count[y] + count[x]);
+                }
+            }
+        }
+        require(distance[v] == g - 1,
+                "edge distance at " + std::to_string(u) + "," + std::to_string(v));
+        require(count[v] == lambda,
+                "edge cycle count at " + std::to_string(u) + "," + std::to_string(v));
+        ++checked;
+    }
+    require(checked == static_cast<uint64_t>(n) * k / 2, "edge total");
+    return checked;
+}
+
+int main() {
+    // One line: identifier n k g lambda graph6. The driver verifies every
+    // input line has one corresponding result and preserves all rejections.
+    std::string id, graph6;
+    int n, k, g;
+    uint64_t lambda;
+    while (std::cin >> id >> n >> k >> g >> lambda >> graph6) {
+        try {
+            require(n >= 3 && n <= 4096 && k >= 2 && k < n &&
+                    g >= 3 && g <= n && lambda >= 1 && lambda <= 1000000000,
+                    "parameters outside checked interface");
+            const auto a = decode(graph6, n);
+            const uint64_t edges = check(a, k, g, lambda);
+            std::cout << "PASS " << id << " " << edges << "\n";
+        } catch (const std::exception& e) {
+            std::cout << "FAIL " << id << " " << e.what() << "\n";
+        }
+    }
+    if (!std::cin.eof()) return 2;
+    return 0;
+}

@@ -1,0 +1,174 @@
+"""Exact fixed-five-cycle search for the stated degree-six order18 exclusions."""
+import sys
+if sys.flags.optimize:raise RuntimeError("Optimized Python is not accepted")
+import json,time,itertools
+from pathlib import Path
+N=18;K=6;TARGETS={10,12,14}
+def solve(a,b,z,cap=120):
+ profiles=[(1<<((i-1)%5))|(1<<((i+1)%5)) for i in range(5)]
+ for i in range(5):profiles.extend([profiles[i]]*(a[i]-1));profiles.extend([1<<i]*b[i])
+ profiles.extend([0]*z)
+ assert len(profiles)==N
+ adj=[0]*N
+ for x in range(N):
+  for y in range(5):
+   if profiles[x]>>y&1:adj[x]|=1<<y;adj[y]|=1<<x
+ assert all(adj[x].bit_count()==K for x in range(5))
+ rem=[K-row.bit_count() for row in adj]
+ allowed=[0]*N
+ for x in range(5,N):
+  for y in range(x+1,N):
+   if not profiles[x]&profiles[y]:allowed[x]|=1<<y;allowed[y]|=1<<x
+ cycle_pairs=[]
+ for x in range(5):
+  y=(x+1)%5
+  cycle_pairs.append([(u,v) for u in range(N) if adj[x]>>u&1 and u!=y for v in range(N) if adj[y]>>v&1 and v!=x])
+ nodes=0;positives=[];start=time.monotonic()
+ def rec(active):
+  nonlocal nodes
+  nodes+=1
+  if nodes%1000==0 and time.monotonic()-start>cap:raise TimeoutError
+  choices={}
+  for x in active:
+   ys=[y for y in active if x!=y and rem[y]>0 and allowed[x]>>y&1 and not(adj[x]&adj[y])]
+   if len(ys)<rem[x]:return
+   choices[x]=ys
+  targets=set(TARGETS)
+  for pairs in cycle_pairs:
+   current=sum(bool(adj[u]>>v&1) for u,v in pairs)
+   possible=sum(u in active and v in choices[u] for u,v in pairs if not(adj[u]>>v&1))
+   targets={t for t in targets if current<=t<=current+possible}
+   if not targets:return
+  if not active:
+   assert all(r==0 for r in rem)
+   def sq(x,y):return sum((adj[u]&(adj[y]&~(1<<x))).bit_count() for u in range(N) if u!=y and adj[x]>>u&1)
+   vals={sq(x,y) for x in range(N) for y in range(x+1,N) if adj[x]>>y&1}
+   if len(vals)==1 and next(iter(vals)) in TARGETS:positives.append({'lambda':next(iter(vals)),'adj':adj[:]})
+   return
+  x=min(active,key=lambda x:(len(choices[x])-rem[x],len(choices[x]),x));tail=active-{x};need=rem[x]
+  for ys in itertools.combinations(choices[x],need):
+   if any(adj[u]>>v&1 for u,v in itertools.combinations(ys,2)):continue
+   for y in ys:adj[x]|=1<<y;adj[y]|=1<<x;rem[y]-=1
+   rem[x]=0;rec(tail)
+   rem[x]=need
+   for y in ys:adj[x]&=~(1<<y);adj[y]&=~(1<<x);rem[y]+=1
+ status='COMPLETE'
+ try:rec(set(range(5,N)))
+ except TimeoutError:status='TIMEOUT'
+ return {'a':a,'b':b,'z':z,'status':status,'nodes':nodes,'seconds':time.monotonic()-start,'positive_count':len(positives),'positives':positives}
+def comps(total,n):
+ if n==1:yield(total,);return
+ for i in range(total+1):
+  for rest in comps(total-i,n-1):yield(i,)+rest
+
+def need(ok,message):
+ if not ok:raise ValueError(message)
+
+def class_cases(n):
+ patterns=[];all_labelled=[]
+ for z in range(n-15+1):
+  for b in comps(2*n-30-2*z,5):
+   c=[6-v for v in b];need((c[0]+c[1]-c[2]-c[3]+c[4])%2==0,'class integrality')
+   a0=(c[0]+c[1]-c[2]-c[3]+c[4])//2
+   a=[a0,c[2]-c[4]+a0,c[1]-a0,c[4]-a0,c[0]-c[2]+c[4]-a0]
+   if min(a)<1:continue
+   need(sum(a)+sum(b)+z==n and all(a[(i-1)%5]+a[(i+1)%5]+b[i]==6 for i in range(5)),'size equations')
+   all_labelled.append((a,b,z))
+   orbit=[tuple(b[(sign*i+j)%5] for i in range(5)) for sign in [-1,1] for j in range(5)]
+   if b==min(orbit):patterns.append((a,b,z))
+ # Independent enumeration by the A class sizes; B is then forced.
+ independently=set()
+ for a in itertools.product(range(1,7),repeat=5):
+  b=tuple(6-a[(i-1)%5]-a[(i+1)%5] for i in range(5))
+  z=n-sum(a)-sum(b)
+  if min(b)<0 or z<0:continue
+  independently.add((tuple(a),b,z))
+ need(independently=={(tuple(a),b,z) for a,b,z in all_labelled},'independent class inventory')
+ return patterns,len(all_labelled)
+
+def latin_graph():
+ h=[set() for _ in range(18)]
+ for i in range(3):
+  for j in range(3):
+   for x in [i,3+j,6+(i+j)%3]:h[x].add(9+3*i+j);h[9+3*i+j].add(x)
+ g=[set(range(9,18))-h[x] if x<9 else set(range(9))-h[x] for x in range(18)]
+ return h,g
+
+def square(g,x,y):return sum(v in g[u] for u in g[x]-{y} for v in g[y]-{x})
+
+def positive(g):
+ need(len(g)==18,'order')
+ need(all(x not in row and len(row)==6 and all(type(y)is int and 0<=y<18 for y in row) for x,row in enumerate(g)),'simple degree')
+ need(all((y in g[x])==(x in g[y]) for x in range(18) for y in range(18)),'symmetric adjacency')
+ edges=[(x,y) for x,y in itertools.combinations(range(18),2) if y in g[x]]
+ need(all(not g[x]&g[y] for x,y in edges),'triangle-free')
+ need({square(g,x,y) for x,y in edges}=={14},'constant square count')
+ foursets=[set(t) for t in itertools.combinations(range(18),4) if all(len(g[x]&set(t))==2 for x in t)]
+ need(len(foursets)==189,'189 squares')
+ need(all(sum(x in t and y in t for t in foursets)==14 for x,y in edges),'independent square counts')
+ return {'vertices':18,'degree':6,'edge_squares':14,'edges':len(edges),'four_cycles':len(foursets)}
+
+def decode(s):
+ need(s and all(63<=ord(c)<=126 for c in s),'graph6 alphabet')
+ n=ord(s[0])-63;need(n==18 and len(s)==1+(n*(n-1)//2+5)//6,'graph6 order/length')
+ bits=[(ord(c)-63>>j)&1 for c in s[1:] for j in range(5,-1,-1)];g=[set() for _ in range(n)];index=0
+ for y in range(n):
+  for x in range(y):
+   if bits[index]:g[x].add(y);g[y].add(x)
+   index+=1
+ need(not any(bits[index:]),'graph6 padding');return g
+
+def source_check(g,record):
+ import hashlib
+ need(record['source_id']=='UntilOrder250_68' and record['source_line']==68,'source identity')
+ raw=record['graph6'];need(hashlib.sha256(raw.encode()).hexdigest()==record['source_line_sha256'],'source digest')
+ other=decode(raw);p=record['map'];need(len(p)==18 and all(type(x)is int for x in p) and sorted(p)==list(range(18)),'source bijection')
+ need(all((y in g[x])==(p[y] in other[p[x]]) for x in range(18) for y in range(18)),'literal isomorphism')
+ positive(other)
+
+def controls():
+ global N,TARGETS
+ saved=(N,TARGETS);N=16;TARGETS={13,14,17}
+ # The four acquired nonbipartite order16 classes have no constant count.
+ patterns,_=class_cases(16);need(len(patterns)==4,'four acquired order16 classes')
+ lower=[solve(a,b,z) for a,b,z in patterns]
+ need(all(r['status']=='COMPLETE' and not r['positives'] for r in lower),'order16 nonbipartite control')
+ N=15;TARGETS={16}
+ fifteen,_=class_cases(15);need(len(fifteen)==1,'single balanced C5 class')
+ search_positive=solve(*fifteen[0]);need(search_positive['status']=='COMPLETE' and search_positive['positive_count']==1,'positive C5 completion')
+ need(search_positive['positives'][0]['lambda']==16,'positive search square count')
+ N,TARGETS=saved
+ h,g=latin_graph();answer=positive(g)
+ need(all(len(h[x])==3 and all(len(h[x]&h[y])<=1 for y in range(18) if y!=x) for x in range(18)),'linear cubic incidence')
+ for x in range(9):
+  for y in g[x]:
+   defect=sum(y in h[v] for u in h[x] for v in h[u])
+   need(defect==2 and square(g,x,y)==16-defect,'positive defect formula')
+  noncollinear=[y for y in range(9) if x!=y and not(h[x]&h[y])]
+  need(len(noncollinear)==2 and all(not(h[u]&h[v]) for u,v in itertools.combinations([x]+noncollinear,2)),'noncollinear triples')
+ source=json.loads(Path(__file__).with_name('source_map.json').read_text());source_check(g,source)
+ rejected=[]
+ def reject(label,call):
+  try:call()
+  except ValueError:rejected.append(label)
+  else:raise ValueError('damaged certificate accepted: '+label)
+ bad=[set(r) for r in g];y=min(bad[0]);bad[0].remove(y);bad[y].remove(0)
+ reject('deleted edge',lambda:positive(bad))
+ reject('duplicate source image',lambda:source_check(g,dict(source,map=[0]*18)))
+ reject('graph6 padding/length',lambda:decode(source['graph6']+'?'))
+ return {'order16_control':lower,'order15_positive_search':search_positive,'positive':answer,'negative_controls':rejected,'source_id':source['source_id']}
+
+def main():
+ import argparse
+ p=argparse.ArgumentParser();p.add_argument('--out',required=True,type=Path);a=p.parse_args()
+ results=[];patterns,labelled=class_cases(18);need(len(patterns)==27,'twenty-seven patterns')
+ for aa,b,z in patterns:
+  row=solve(aa,b,z)
+  need(row['status']=='COMPLETE','finite search did not complete')
+  need(not row['positives'],'unexpected positive graph')
+  results.append(row)
+  print('COMPLETE',len(results),'OF',len(patterns),'NODES',row['nodes'],flush=True)
+ nodes=sum(r['nodes'] for r in results);need(nodes==772757,'recorded exact node count')
+ report={'status':'PASS_COMPLETE_ORDER18_NONBIPARTITE_EXCLUSION','parameters':{'n':18,'k':6,'lambda':[10,12,14]},'all_labelled_class_patterns':labelled,'dihedral_class_patterns':len(patterns),'nodes':nodes,'retained_graphs':0,'classes':results,'controls':controls(),'whole_original_credit':0,'new_question_credit':0,'new_Lean':0,'new_lower_rows':1,'new_exact_count_rows':1,'lambda12_lower20':'NOT_PROVED_BY_THIS_COMPONENT'}
+ a.out.write_text(json.dumps(report,indent=2)+'\n');print('PASS all27 finite cases, Latin complement, source isomorphism and controls')
+if __name__=='__main__':main()

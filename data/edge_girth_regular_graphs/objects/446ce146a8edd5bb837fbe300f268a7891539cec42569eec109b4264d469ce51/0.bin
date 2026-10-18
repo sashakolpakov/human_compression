@@ -1,0 +1,106 @@
+"""Literal complete-tree verification, independent of the C++ search."""
+from itertools import combinations,product
+from collections import defaultdict
+
+def need(c,m):
+    if not c:raise RuntimeError(m)
+
+def distance(adj,v,limit):
+    ds={v:0};queue=[v]
+    for x in queue:
+        if ds[x]==limit:continue
+        for y in range(30):
+            if adj[x]>>y&1 and y not in ds:ds[y]=ds[x]+1;queue.append(y)
+    return ds
+
+def girth_six(adj):
+    for x in range(30):
+        for y in range(x):
+            if not(adj[x]>>y&1):continue
+            altered=list(adj);altered[x]^=1<<y;altered[y]^=1<<x
+            if y in distance(altered,x,4):return False
+    return True
+
+def cycle_counts(adj):
+    counts=[]
+    for x in range(30):
+        for y in range(x):
+            if not(adj[x]>>y&1):continue
+            left={z for a in range(30)if a!=y and adj[x]>>a&1 for z in range(30)if z!=x and adj[a]>>z&1}
+            right={z for a in range(30)if a!=x and adj[y]>>a&1 for z in range(30)if z!=y and adj[a]>>z&1}
+            need(len(left)==len(right)==9 and not left&right,'Moore edge leaves')
+            count=sum(bool(adj[a]>>b&1)for a in left for b in right)
+            counts.append((x,y,count))
+    return counts
+
+def check_branch_options(groups):
+    cases=0
+    for group in groups:
+        es=[(0,1),(2,3)]if group['kind']=='matching'else[(0,1),(1,2)]
+        neighbors=[set()for _ in range(4)]
+        for x,y in es:neighbors[x].add(y);neighbors[y].add(x)
+        expected=set()
+        for assignment in product(range(-1,3),repeat=4):
+            if any(assignment[x]>=0 and assignment[y]>=0 for x,y in es):continue
+            blocks=tuple(sorted(tuple(x for x in range(4)if assignment[x]==leaf)for leaf in range(3)if leaf in assignment))
+            if any(neighbors[x]&neighbors[y]for block in blocks for x,y in combinations(block,2)):continue
+            expected.add(blocks)
+        actual={tuple(tuple(block)for block in blocks)for blocks in group['options']}
+        need(actual==expected,'all branch options from independent leaf assignments');cases+=len(expected)
+    return cases
+
+def verify(groups,records):
+    check_branch_options(groups)
+    seeds=[r['adjacency']for g in groups for r in g['examples']]
+    split=defaultdict(list)
+    for r in records:split[r['frame']].append(r)
+    need(set(split)==set(range(len(seeds))),'every initial seed')
+    positives=[];full=0;links=0
+    for frame,seed in enumerate(seeds):
+        rows=split[frame];children=[[]for _ in rows]
+        for i,row in enumerate(rows):
+            need(row['node']==i,'local consecutive indices');adj=row['adjacency']
+            need(len(adj)==30 and all(type(x)is int and 0<=x<1<<30 and x.bit_count()<=4 for x in adj),'literal degrees')
+            for x in range(30):
+                need(not(adj[x]>>x&1)and adj[x]&seed[x]==seed[x],'seed and loops')
+                for y in range(x):
+                    need((adj[x]>>y&1)==(adj[y]>>x&1),'undirected')
+                    if bool(adj[x]>>y&1)!=bool(seed[x]>>y&1):need(8<=y<17<=x<26,'only opposite leaf edges')
+            if i==0:need(row['parent']==-1 and adj==seed,'exact seed')
+            else:
+                p=row['parent'];need(type(p)is int and 0<=p<i,'earlier parent');children[p].append(i)
+            # Use common-neighbour tests and distance-two edges for all nodes;
+            # every root is separately checked by edge-deletion BFS below.
+            for x,y in combinations(range(30),2):
+                common=(adj[x]&adj[y]).bit_count()
+                need(common<=1 and(not(adj[x]>>y&1)or common==0),'no triangle or square')
+            for x in range(30):
+                ds=distance(adj,x,2);leaves=[y for y,d in ds.items()if d==2]
+                need(not any(adj[y]>>z&1 for y,z in combinations(leaves,2)),'no pentagon')
+        need(girth_six(seed),'initial girth by independent BFS')
+        for i,row in enumerate(rows):
+            adj=row['adjacency'];selected=None;best=31;dead=False
+            for v in range(8,26):
+                deficit=4-adj[v].bit_count()
+                if not deficit:continue
+                ds=distance(adj,v,4)
+                candidates=[x for x in(range(17,26)if v<17 else range(8,17))if adj[x].bit_count()<4 and x not in ds]
+                if len(candidates)<deficit:dead=True;break
+                if len(candidates)-deficit<best:selected=(v,deficit,candidates);best=len(candidates)-deficit
+            expected=set()
+            if not dead and selected is not None:
+                v,deficit,candidates=selected
+                distances={x:distance(adj,x,3)for x in candidates}
+                for choice in combinations(candidates,deficit):
+                    if any(y in distances[x]for x,y in combinations(choice,2)):continue
+                    nxt=list(adj)
+                    for y in choice:nxt[v]|=1<<y;nxt[y]|=1<<v
+                    expected.add(tuple(nxt))
+            elif not dead:
+                need(all(x.bit_count()==4 for x in adj),'full regular');full+=1
+                counts=cycle_counts(adj)
+                if all(x[2]==21 for x in counts):positives.append({'frame':frame,'node':i,'adjacency':adj,'cycles':sum(x[2]for x in counts)//6})
+            actual=[tuple(rows[j]['adjacency'])for j in children[i]]
+            need(len(actual)==len(set(actual))and set(actual)==expected,'complete child set')
+            links+=len(expected)
+    return {'seeds':len(seeds),'nodes':len(records),'links':links,'full':full,'positives':positives}

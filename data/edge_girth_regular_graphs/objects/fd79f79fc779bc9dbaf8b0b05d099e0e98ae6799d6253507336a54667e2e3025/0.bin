@@ -1,0 +1,111 @@
+"""Exact bounded reference for the proved F012 interface. No historical C import."""
+from itertools import combinations, permutations, product
+from functools import lru_cache
+from collections import deque
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('optimized Python is not an accepted reference')
+
+@lru_cache(None)
+def pairs(n): return tuple(combinations(range(n),2))
+
+def adjacency(n,E):
+    a=[set() for _ in range(n)]
+    for u,v in E: a[u].add(v);a[v].add(u)
+    return a
+
+def edge_cycles(n,E,e,g,cap=None):
+    a=adjacency(n,E);u,v=e;a[u].remove(v);a[v].remove(u)
+    d=[None]*n;c=[0]*n;d[u]=0;c[u]=1;q=deque([u])
+    while q:
+        x=q.popleft()
+        if x==v: return c[v] if d[v]==g-1 else 0
+        if d[x]>=g-1: continue
+        for y in a[x]:
+            if d[y] is None: d[y]=d[x]+1;q.append(y)
+            if d[y]==d[x]+1:
+                c[y]+=c[x]
+                if cap is not None: c[y]=min(cap,c[y])
+    return 0
+
+def distance(a,u,v):
+    d={u:0};q=deque([u])
+    while q:
+        x=q.popleft()
+        if x==v:return d[x]
+        for y in a[x]:
+            if y not in d:d[y]=d[x]+1;q.append(y)
+    return len(a)+1
+
+@lru_cache(None)
+def canonical(n,E):
+    # Exact minimum over all permutations inside degree classes, assigning
+    # the classes consecutive positions in increasing degree order.
+    E=frozenset(E);a=adjacency(n,E);classes=[]
+    for d in sorted({len(t) for t in a}):classes.append([i for i in range(n) if len(a[i])==d])
+    index={p:i for i,p in enumerate(pairs(n))};best=None
+    for chunks in product(*(permutations(c) for c in classes)):
+        seq=tuple(v for c in chunks for v in c); mp={v:i for i,v in enumerate(seq)}
+        key=sum(1<<index[tuple(sorted((mp[u],mp[v])))] for u,v in E)
+        if best is None or key<best:best=key
+    return best
+
+def moore(k,g):
+    if g%2:
+        edges=set(); groups=[];nextv=1
+        for _ in range(k):
+            v=nextv;nextv+=1;edges.add((0,v));layer=[v]
+            for _ in range((g-3)//2):
+                new=[]
+                for u in layer:
+                    for _ in range(k-1):edges.add((u,nextv));new.append(nextv);nextv+=1
+                layer=new
+            groups.append(set(layer))
+    else:
+        edges={(0,1)};groups=[];nextv=2
+        for root in (0,1):
+            layer=[root]
+            for _ in range(g//2-1):
+                new=[]
+                for u in layer:
+                    for _ in range(k-1):edges.add(tuple(sorted((u,nextv))));new.append(nextv);nextv+=1
+                layer=new
+            groups.append(set(layer))
+    return nextv,frozenset(edges),groups
+
+def generate(n,k,g,lam,two_phase=True,cycle_pruning=True):
+    if not (n>=3 and 2<=k<n and g>=3 and lam>=1):raise ValueError('parameter domain')
+    count,E,groups=moore(k,g)
+    if count>n or n*k%2:return set(),{'states':0,'hits':0,'attempts':0}
+    group={v:i for i,G in enumerate(groups) for v in G}
+    def horizontal(e):return all(v in group for v in e) and group[e[0]]!=group[e[1]]
+    visited=set();out=set();stats={'states':0,'hits':0,'attempts':0}
+    def rec(E,F):
+        stats['states']+=1;key=canonical(n,E)
+        if key in visited:stats['hits']+=1;return
+        visited.add(key);a=adjacency(n,E);ds=list(map(len,a))
+        if all(d==k for d in ds):
+            if all(distance(a,0,v)<=n for v in range(n)) and all(edge_cycles(n,E,e,g)==lam for e in E):out.add(key)
+            return
+        legal=[]
+        for e in pairs(n):
+            u,v=e
+            if e in E or e in F or ds[u]>=k or ds[v]>=k or distance(a,u,v)<g-1:continue
+            if cycle_pruning and any(edge_cycles(n,E|{e},f,g,lam+1)>lam for f in E|{e}):continue
+            legal.append(e)
+        if any(ds[v]+sum(v in e for e in legal)<k for v in range(n)):return
+        quota=[sum(horizontal(e) and bool(set(e)&G) for e in E) for G in groups]
+        if two_phase and any(q<lam for q in quota):
+            i=next(i for i,q in enumerate(quota) if q<lam)
+            candidates=[e for e in legal if horizontal(e) and bool(set(e)&groups[i]) and all(quota[group[v]]<lam for v in e)]
+        else:
+            current=[v for v in range(n) if 0<ds[v]<k]
+            if not current:return
+            u=min(current,key=lambda v:(sum(v in e for e in legal),v))
+            isolates=[v for v in range(n) if ds[v]==0]
+            candidates=[e for e in legal if u in e and (not two_phase or not horizontal(e)) and
+                        all(ds[v]>0 or v==min(isolates) for v in e)]
+        history=set(F)
+        for e in candidates:
+            stats['attempts']+=1;rec(E|{e},frozenset(history));history.add(e)
+    rec(E,frozenset());return out,stats

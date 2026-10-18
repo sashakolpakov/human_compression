@@ -1,0 +1,26 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,itertools,json,functools
+p=argparse.ArgumentParser();p.add_argument('--actual',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+finals={}
+for mid in itertools.product((1,2,3),repeat=5):
+ for u in range(4):
+  v=3-u;left=mid+(u,v)
+  if sum(left)!=13:continue
+  f=sum(x*(x-1)//2 for x in left)
+  finals.setdefault(f,set()).add(tuple(sorted(x for x in left if x)))
+d=json.loads(a.actual.read_text());accepted=0
+for f,n1,n2,n3,got in d['rows']:
+ current=tuple([3]*n3+[2]*n2+[1]*n1)
+ @functools.lru_cache(None)
+ def inject(at,remaining):
+  if at==len(current):return True
+  return any(value>=current[at]and inject(at+1,remaining[:j]+remaining[j+1:])for j,value in enumerate(remaining))
+ expected=any(inject(0,final)for final in finals.get(f,()))
+ assert bool(got)==expected,(f,n1,n2,n3,got,expected)
+ accepted+=got
+assert len(d['rows'])==d['cases']
+r=dict(status='PASS_INDEPENDENT_PARTIAL_SIZE_EMBEDDINGS',cases=d['cases'],accepted=accepted,
+       oracle='Complete injections into degree-vector final sizes; literal C++ guard extracted separately.')
+a.out.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r))

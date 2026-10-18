@@ -1,0 +1,54 @@
+"""Exhaustive direct assignment checks of the literal convex-moment loop."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+import json,subprocess
+from pathlib import Path
+W=Path(__file__).resolve().parent
+raw=(W/'cycle_search_moments.cpp').read_text();start=raw.index('   int needed=30-total,available=0;');end=raw.index('\n  }\n  if(!active)',start)
+body=raw[start:end]
+if body.count('if(needed||moment>6*largest_target)return;')!=1:raise RuntimeError('exact actual loop')
+body=body.replace('needed=30-total','needed=goal-total').replace('if(needed<0)return;','if(needed<0)return -1;').replace('if(needed||moment>6*largest_target)return;','if(needed)return -1;return moment;')
+source='''#include <array>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+int actual(std::array<int,8> difference,int total,int moment,int goal){
+'''+body+'''
+}
+long long families=0,queries=0,assignments=0;
+void family(int width,int maximum,const std::vector<int>&lo,const std::vector<int>&hi){
+ std::array<int,8>diff{};int total=0,moment=0;
+ for(int i=0;i<width;i++){++diff[lo[i]];--diff[hi[i]];total+=lo[i];moment+=lo[i]*(lo[i]-1);}
+ std::vector<int> best(width*maximum+1,1000000);
+ auto enumerate=[&](auto&&self,int pos,int sum,int score)->void{
+  if(pos==width){best[sum]=std::min(best[sum],score);++assignments;return;}
+  for(int v=lo[pos];v<=hi[pos];v++)self(self,pos+1,sum+v,score+v*(v-1));
+ };
+ enumerate(enumerate,0,0,0);
+ for(int goal=0;goal<=width*maximum;goal++){
+  int want=best[goal]==1000000?-1:best[goal];
+  if(actual(diff,total,moment,goal)!=want)throw std::runtime_error("independent moment disagreement");
+  ++queries;
+ }
+ ++families;
+}
+void all(int width,int maximum){
+ std::vector<int>lo(width),hi(width);
+ auto enumerate=[&](auto&&self,int pos)->void{
+  if(pos==width){family(width,maximum,lo,hi);return;}
+  for(int a=0;a<=maximum;a++)for(int b=a;b<=maximum;b++){lo[pos]=a;hi[pos]=b;self(self,pos+1);}
+ };
+ enumerate(enumerate,0);
+}
+int main(){all(4,3);all(3,6);std::cout<<families<<" "<<queries<<" "<<assignments<<"\\n";}
+'''
+Path('isolated_moment.cpp').write_text(source);runs=[]
+for mode,flags in [('ordinary',['-O2']),('sanitized',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'])]:
+ cmd=['clang++','-std=c++17',*flags,'isolated_moment.cpp','-o','interval_'+mode];r=subprocess.run(cmd,capture_output=True,text=True,timeout=30);Path('interval_'+mode+'_compile.stderr').write_text(r.stderr)
+ if r.returncode or r.stderr:raise RuntimeError('compile '+r.stderr)
+ r=subprocess.run([str(Path('interval_'+mode).resolve())],capture_output=True,text=True,timeout=30);Path('interval_'+mode+'.stdout').write_text(r.stdout);Path('interval_'+mode+'.stderr').write_text(r.stderr)
+ if r.returncode or r.stderr:raise RuntimeError('control '+r.stderr)
+ nums=list(map(int,r.stdout.split()))
+ if nums!=[31952,547088,752704]:raise RuntimeError('complete control counts '+repr(nums))
+ runs.append({'mode':mode,'families':nums[0],'sum_queries':nums[1],'literal_assignments':nums[2]})
+Path('interval_report.json').write_text(json.dumps({'status':'PASS_LITERAL_MOMENT_LOOP','runs':runs,'extraction':'Actual difference-array minimization; fixed sum30 made a parameter, final threshold test replaced by returning its exact minimum. Independent full integer-assignment enumeration supplies expected minima.'},indent=2)+'\n');print(json.dumps(runs))

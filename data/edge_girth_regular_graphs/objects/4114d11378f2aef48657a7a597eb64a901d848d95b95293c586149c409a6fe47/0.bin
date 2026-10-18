@@ -1,0 +1,62 @@
+--- accepted_lambda15/root_cover.cpp
++++ lambda13/root_cover.cpp
+@@ -15,37 +15,21 @@
+   }
+   size_t id=it->second;check_literal_map(g,graphs[id],c.lab,canonical[id].lab,true);hits[id]++;
+  }
+- int lambda=19;
++ int lambda=13;
+  void write(const string&name){ofstream out(name);require(bool(out),"target output");out<<graphs.size()<<'\n';for(auto&g:graphs){out<<g.size();for(U row:g)out<<' '<<row;out<<'\n';}require(bool(out),"complete target write");}
+ };
+-// Capacity is an exact partition maximum on distinguished missing incidences.
+-int capacity(const vector<int>&p){
+- vector<int>items;for(int i=0;i<(int)p.size();i++)for(int j=0;j<p[i];j++)items.push_back(i);
+- vector<U>parts;U pairs=0;int best=0;
+- function<void(int,int)>visit=[&](int at,int score){
+-  if(at==(int)items.size()){best=max(best,score);return;}
+-  int x=items[at];
+-  for(size_t b=0;b<parts.size();b++){
+-   U old=parts[b];if(((old>>x)&1)||weight(old)>=3)continue;U added=0,bits=old;
+-   while(bits){int y=first(bits);bits&=bits-1;int u=min(x,y),v=max(x,y);int k=u*(17-u)/2+v-u-1;require(k>=0&&k<36,"pair index");added|=U(1)<<k;}
+-   if(pairs&added)continue;parts[b]|=U(1)<<x;pairs|=added;visit(at+1,score+weight(old));pairs&=~added;parts[b]=old;
+-  }
+-  parts.push_back(U(1)<<x);visit(at+1,score);parts.pop_back();
+- };
+- visit(0,0);return best;
+-}
+ array<int,9> canonical_matrix(array<int,9>a){
+  array<int,9> result=a;array<int,3> rows{0,1,2};
+  do{array<int,3> cols{0,1,2};do{array<int,9>b{},t{};for(int i=0;i<3;i++)for(int j=0;j<3;j++){b[3*i+j]=a[3*rows[i]+cols[j]];t[3*j+i]=b[3*i+j];}result=min(result,min(b,t));}while(next_permutation(cols.begin(),cols.end()));}while(next_permutation(rows.begin(),rows.end()));return result;
+ }
+ struct Block{int i,j,d,dir;vector<array<int,3>> choices;};
+ struct Search {
+- Graph g;vector<Block>blocks;DynamicIndex targets;map<vector<int>,int>capacities;int delta;U prefixes=0,girth=0,profiles=0;double cap;chrono::steady_clock::time_point start=chrono::steady_clock::now();
++ Graph g;vector<Block>blocks;DynamicIndex targets;int delta;U prefixes=0,girth=0,profiles=0;double cap;chrono::steady_clock::time_point start=chrono::steady_clock::now();
+  void tick(){require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");}
+- pair<int,int> profile(int base){vector<int>p;int sum=0,squares=0;for(int u=base;u<base+9;u++){int d=4-weight(g[u]);require(d>=0&&d<=3,"leaf degree");sum+=d;squares+=d*d;if(d)p.push_back(d);}require(sum==delta,"exact side incidence count");sort(p.begin(),p.end());auto it=capacities.find(p);require(it!=capacities.end(),"complete profile list");return {(3*delta-squares)/2,it->second};}
++ int profile(int base){int sum=0,squares=0;for(int u=base;u<base+9;u++){int d=4-weight(g[u]);require(d>=0&&d<=3,"leaf degree");sum+=d;squares+=d*d;}require(sum==delta,"exact side incidence count");return (3*delta-squares)/2;}
+  bool square(int a,int b){U bits=g[a];while(bits){int x=first(bits);bits&=bits-1;if(g[x]&g[b])return true;}return false;}
+  void visit(int depth){
+-  if(depth==9){girth++;auto l=profile(4),r=profile(17);if(l.first>r.second||r.first>l.second)return;if(targets.lambda==15&&(l.first!=r.first||l.first<6||l.first>9))return;profiles++;targets.cover(g);return;}
++  if(depth==9){girth++;auto l=profile(4),r=profile(17);if(l!=r||l<7||l>10)return;profiles++;targets.cover(g);return;}
+   for(auto&q:blocks[depth].choices){if((++prefixes&65535)==0)tick();auto&b=blocks[depth];array<pair<int,int>,3>added;int n=0;bool good=true;
+    for(int x=0;x<3;x++)if(q[x]>=0){int u=4+3*b.i+x,v=17+3*b.j+q[x];if(square(u,v)){good=false;break;}add_edge(g,u,v);added[n++]={u,v};}
+    if(good)visit(depth+1);for(int i=0;i<n;i++)remove_edge(g,added[i].first,added[i].second);
+@@ -54,8 +38,7 @@
+ };
+ int main(int argc,char**argv){try{
+  require(argc==5,"usage root_cover PATTERNS TARGETS REPORT SECONDS");nauty_check(WORDSIZE,1,26,NAUTYVERSIONID);Search search;search.cap=stod(argv[4]);
+- ifstream in(argv[1]);int lam,count;require(bool(in>>lam>>count)&&(lam==15||lam==18||lam==19||lam==20),"target lambda");int delta=27-lam;search.delta=delta;search.targets.lambda=lam;
+- vector<int>p;function<void(int,int)>profiles=[&](int left,int lo){if(!left){if(p.size()<=9)search.capacities[p]=capacity(p);return;}for(int k=lo;k<=min(3,left);k++){p.push_back(k);profiles(left-k,k);p.pop_back();}};profiles(delta,1);
++ ifstream in(argv[1]);int lam,count;require(bool(in>>lam>>count)&&lam==13,"target lambda");int delta=27-lam;search.delta=delta;search.targets.lambda=lam;
+  std::set<array<int,9>>expected,actual;int literal=0;
+  for(int code=0;code<(1<<18);code++){int n=code,total=0;array<int,9>a;for(int&x:a){x=n%4;n/=4;total+=x;}if(total==delta){literal++;expected.insert(canonical_matrix(a));}}
+  require(count==(int)expected.size(),"all matrix orbits");U products=0;
+@@ -72,6 +55,6 @@
+   require(accumulate(matrix.begin(),matrix.end(),0)==delta&&canonical_matrix(matrix)==matrix&&actual.insert(matrix).second,"exact representative");products+=product;search.g=moore_trees();search.visit(0);require(search.g==moore_trees(),"backtracking restoration");
+   cout<<"MATRIX "<<id<<" PREFIXES "<<search.prefixes<<" MAPS "<<search.profiles<<" TARGETS "<<search.targets.graphs.size()<<'\n'<<flush;
+  }
+- string extra;require(!(in>>extra)&&expected==actual,"complete matrix cover and input");require(products==(lam==15?36316878ULL:lam==18?51869700ULL:lam==19?24684399ULL:12728016ULL),"accepted forest product inventory");search.targets.write(argv[2]);
++ string extra;require(!(in>>extra)&&expected==actual,"complete matrix cover and input");require(products==19656978ULL,"accepted forest product inventory");search.targets.write(argv[2]);
+  ofstream out(argv[3]);out<<"{\"status\":\"PASS_COMPLETE_ROOT_COVERAGE\",\"lambda\":"<<lam<<",\"literal_matrices\":"<<literal<<",\"orbits\":"<<count<<",\"normalized_products\":"<<products<<",\"prefix_nodes\":"<<search.prefixes<<",\"girth_balls\":"<<search.girth<<",\"literal_maps\":"<<search.profiles<<",\"root_targets\":"<<search.targets.graphs.size()<<",\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-search.start).count()<<"}\n";require(bool(out),"complete report");return 0;
+  }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

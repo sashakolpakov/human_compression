@@ -1,0 +1,44 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import hashlib,json,re,shutil,datetime
+S=Path('/Users/sasha/medusa/research/leemans');W=Path(__file__).resolve().parent
+
+def pin(p):
+ b=p.read_bytes();return dict(path=str(p.relative_to(S)),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+for name in ['root_run01','joint_boundary_run01']:
+ r=json.loads((W/name/'receipt.json').read_text());assert r['status']=='PASS_CLOSED_EXECUTION' and not r['timeout'] and r['returncode']==0 and r['inputs_unchanged']
+ for old in r['pins']+r['outputs']:
+  v=pin(Path(old['path']));assert all(v[k]==old[k]for k in ['bytes','sha256'])
+ assert not(W/name/'stderr').read_bytes()
+root=json.loads((W/'roots_report01.json').read_text());comp=json.loads((W/'joint_boundary_report01.json').read_text());assert comp['root_targets']==root['root_targets']==15799 and comp['forest_calls']==63196 and comp['positive']==0 and(W/'joint_positives01.txt').read_text()=='0\n'
+pattern=re.compile(r'ROOT (\d+) SHAPE ([0-3]) JOINT_NODES (\d+) COMPLETE (\d+) POSITIVE (\d+)')
+rows=[]
+for line in(W/'joint_boundary_run01/stdout').read_text().splitlines():
+ m=pattern.fullmatch(line);assert m;rows.append(tuple(map(int,m.groups())))
+assert[(r[0],r[1])for r in rows]==[(i,j)for i in range(15799)for j in range(4)]
+assert sum(r[2]for r in rows)==comp['joint_nodes'] and sum(r[3]for r in rows)==comp['complete_graphs'] and sum(r[4]for r in rows)==comp['positive']
+(W/'complete_call_audit.json').write_text(json.dumps(dict(status='PASS_EVERY_LITERAL_CALL_ONCE',calls=len(rows),root_targets=15799,forest_indices=[0,1,2,3],joint_nodes=comp['joint_nodes'],complete_graphs=comp['complete_graphs'],positives=comp['positive'],stdout=pin(W/'joint_boundary_run01/stdout')),indent=2)+'\n')
+for name,d in [('root',root),('completion',comp)]:
+ d.pop('seconds',None);(W/f'expected_{name}10.json').write_text(json.dumps(d,indent=2)+'\n')
+records={k:pin(W/v)for k,v in dict(roots='roots01.txt',root_report='roots_report01.json',completion_report='joint_boundary_report01.json',positives='joint_positives01.txt',patterns='inventory01/patterns.txt').items()}
+records['root']=dict(receipt=pin(W/'root_run01/receipt.json'));records['completion']=dict(receipt=pin(W/'joint_boundary_run01/receipt.json'));(W/'recorded_execution.json').write_text(json.dumps(records,indent=2)+'\n')
+(W/'boundary_table.tex').write_text('The complete boundary pass processes all $15\\,799$ root representatives and all $63\\,196$ forest calls. It visits $182\\,532\\,443$ joint nodes and reaches no complete graph satisfying the root equations and girth restriction. The positive list is empty. Each pair consisting of a root index and a forest index occurs exactly once in the complete transcript; its sums agree with the terminal report. The execution ended successfully with unchanged inputs and empty standard error.\n')
+old=S/'corpus106_F012_quartic_twelve_hexagons_v1';shutil.copy2(old/'source18.png',W/'source18.png')
+(W/'source_contract.json').write_text(json.dumps(dict(original='F012',edition='Goedgebeur and Jooken, arXiv:2401.08271v2, 25 June 2024',locator='Table 2, physical page 18, lambda 10 row',recovered='n(4,6,10)>=39',status='AUTHOR_COMPLETE_AWAITING_DISTINCT_REVIEW',new_lower_clauses=1,new_exact_counts=0,whole_original_credit=0),indent=2)+'\n')
+(W/'attribution.json').write_text(json.dumps(dict(source_result='Lower39 belongs to the fixed source row.',acquired=['Moore trees and root pair equations','Partial matching forest normalization','Literal graph map checks and root coverage architecture from lambda12'],new_work=['Three-edge exterior reduction and four forest profiles','Exact forest normalization of left attachments with unrestricted right attachments','Joint boundary traversal, complete order36 exclusion and implementation controls'],roles=dict(author='f003_resume; also author of acquired lambda12 and matching-forest method',preliminary_reader='l044_resume read the already written analytic argument, original helper and joint ordering; no proof or code authorship',distinct_review='PENDING'),no_claims=['priority','new question','whole original','Lean','measurement']),indent=2)+'\n')
+(W/'development.json').write_text(json.dumps(dict(initial_boundary_timeout=pin(W/'boundary_run01/receipt.json'),changed_joint_success=pin(W/'joint_boundary_run01/receipt.json'),structural_output_field_qualification=pin(W/'structural_output_qualification.json'),first_compile_failures=['Unavailable LLVM path, no target run','nauty set name collision; std::set qualification fixed before target'],no_timeout_credit=True,scientific_inputs_unchanged=True),indent=2)+'\n')
+bound={r['path']:r for r in json.loads((old/'bindings.json').read_text())}
+for folder in ['corpus106_F012_quartic_twelve_hexagons_v1','corpus106_F012_quartic_twelve_hexagons_independent_review','corpus106_F012_quartic_twelve_hexagons_root_adoption']:
+ f=S/folder;m=json.loads((f/'manifest.json').read_text());bound[str((f/'manifest.json').relative_to(S))]=pin(f/'manifest.json')
+ for r in m['exports']:
+  p=f/r['path'];v=pin(p);assert all(v[k]==r[k]for k in ['bytes','sha256']);bound[v['path']]=v
+for rel in ['reboot_20261013/F012_lambda10_preliminary_read_l044/joint_addendum01/report.json']:
+ p=S/rel
+ if p.exists():bound[rel]=pin(p)
+for n in ['egr_exhaustive2025.pdf','egr_exhaustive2025.txt']:
+ p=S/'sources'/n;bound[str(p.relative_to(S))]=pin(p)
+(W/'bindings.json').write_text(json.dumps([bound[k]for k in sorted(bound)],indent=2)+'\n')
+checkpoint=json.loads((W/'checkpoint.json').read_text());checkpoint.update(timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),status='COMPLETE_TARGET_PROOF_AND_CHECKER_ASSEMBLY',owned_live_processes=[],next='Build and inspect native proof, fresh bounded wrapper acquiring exact target executions; freeze for distinct review. L052 registration review reserved.')
+checkpoint['joint_traversal'].update(status='COMPLETE_BOUNDARY_PASS',receipt='joint_boundary_run01/receipt.json',report=comp)
+(W/'checkpoint.json').write_text(json.dumps(checkpoint,indent=2)+'\n');print(json.dumps(dict(root=root,completion=comp,bindings=len(bound))))

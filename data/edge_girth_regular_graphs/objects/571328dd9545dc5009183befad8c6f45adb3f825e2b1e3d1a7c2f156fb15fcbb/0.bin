@@ -1,0 +1,89 @@
+"""Exact lower-bound component: eight squares through every edge."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+import argparse,hashlib,importlib.util,itertools,json,os,subprocess,time
+from pathlib import Path
+
+def need(v,m):
+    if not v:raise RuntimeError(m)
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def put(p,x):p.write_text(json.dumps(x,indent=2)+'\n')
+def heptagon():
+    # All degree equations are also checked without using the period-four proof.
+    solutions=[a for a in itertools.product(range(1,7),repeat=7)if all(a[(i-1)%7]+a[(i+1)%7]==6 for i in range(7))]
+    need(solutions==[(3,)*7],'unique seven-cycle class sizes')
+    # Reconstruct all forbidden class distances by literal triangle/five-cycle edges.
+    parts=[[i,i+7,i+14]for i in range(7)];adj=[0]*21
+    for i in range(7):
+        for x in parts[i]:
+            for y in parts[(i+1)%7]:adj[x]|=1<<y;adj[y]|=1<<x
+    need(all(a.bit_count()==6 for a in adj),'degree six')
+    edges=[(x,y)for x in range(21)for y in range(x+1,21)if adj[x]>>y&1]
+    need(all(not adj[x]&adj[y]for x,y in edges),'triangle free')
+    cycles=[t for t in itertools.combinations(range(21),4)if all(sum(adj[x]>>y&1 for y in t)==2 for x in t)]
+    need(len(cycles)==252 and all(sum(x in t and y in t for t in cycles)==16 for x,y in edges),'independent per-edge count sixteen')
+    forbidden=0
+    for i in range(7):
+        for j in range(i,7):
+            dist=min((j-i)%7,(i-j)%7)
+            if dist==1:continue
+            x,y=i+7,j+14
+            if dist in [0,2]:need(bool(adj[x]&adj[y]),'forbidden pair makes a triangle')
+            else:
+                # Find a three-edge path within the named cycle between neighbours.
+                found=False
+                for u in range(7):
+                    for step in [-1,1]:
+                        v=(u+2*step)%7;mid=(u+step)%7
+                        if adj[x]>>u&1 and adj[y]>>v&1 and len({x,u,mid,v,y})==5:found=True
+                need(found,'forbidden pair makes a five-cycle')
+            forbidden+=1
+    return {'solutions':solutions,'vertices':21,'degree':6,'edges':len(edges),'four_cycles':len(cycles),'edge_square_count':16,'forbidden_class_pairs':forbidden}
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);a=ap.parse_args();S=a.study.resolve();W=Path(__file__).resolve().parent;O=a.out.resolve();need(not O.exists(),'fresh output required');O.mkdir(parents=True)
+    deps=json.loads((W/'dependencies.json').read_text())
+    for rec in deps:
+        p=Path(rec['path']);p=p if p.is_absolute()else S/p;need(p.stat().st_size==rec['bytes']and sha(p)==rec['sha256'],'acquired binding '+str(p))
+    if(W/'manifest.json').exists():
+        for rec in json.loads((W/'manifest.json').read_text())['exports']:
+            p=W/rec['path'];need(p.stat().st_size==rec['bytes']and sha(p)==rec['sha256'],'author binding '+str(p))
+    oldcpp=S/'corpus106_F012_order20_v1/cycle_search_positive.cpp';need((W/'cycle_search.cpp').read_text()==oldcpp.read_text().replace('15<=n&&n<=20','15<=n&&n<=21'),'sole inherited implementation change is order limit')
+    inventory=S/'corpus106_F012_order18_v1/check_order18.py';need(sha(inventory)=='efdea9664f513efc1ce5c8488d6b3ed01de4a67286870be8545d18a3f39ac519','exact acquired integer inventory');spec=importlib.util.spec_from_file_location('inventory',inventory);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+    h=heptagon();put(O/'heptagon_report.json',h)
+    expected=json.loads((W/'expected.json').read_text());receipts=[];env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None)
+    def run(name,cmd,data=None,cap=300):
+        start=time.monotonic()
+        try:r=subprocess.run(cmd,input=data,capture_output=True,text=True,env=env,timeout=cap)
+        except subprocess.TimeoutExpired as e:
+            for suffix,raw in [('stdout',e.stdout),('stderr',e.stderr)]:
+                raw=raw or b'';(O/(name+'.'+suffix)).write_bytes(raw.encode()if isinstance(raw,str)else raw)
+            receipts.append({'name':name,'status':'TIMEOUT_NO_CERTIFICATE','cap':cap,'command':list(map(str,cmd))});put(O/'receipts.json',receipts);raise
+        (O/(name+'.stdout')).write_text(r.stdout);(O/(name+'.stderr')).write_text(r.stderr);receipts.append({'name':name,'status':'TERMINAL','returncode':r.returncode,'seconds':time.monotonic()-start,'command':list(map(str,cmd))});put(O/'receipts.json',receipts);return r
+    for mode,flags in [('ordinary',['-O2']),('sanitized',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'])]:
+        r=run('compile_'+mode,['clang++','-std=c++17',*flags,'-Wall','-Wextra','-pedantic',str(W/'cycle_search.cpp'),'-o',str(O/mode)],cap=30);need(r.returncode==0 and not r.stderr,'clean compilation')
+    report={'status':'INCOMPLETE','orders':{},'whole_original_credit':0,'new_question_credit':0,'new_Lean':0}
+    for n in [18,19,21]:
+        patterns,labelled=m.class_cases(n);e=expected[str(n)];need((len(patterns),labelled)==(e['patterns'],e['labelled']),'complete inventory')
+        data=''.join(' '.join(map(str,[j,n,1,8,*aa,*bb,z,120]))+'\n'for j,(aa,bb,z)in enumerate(patterns));(O/f'order{n}.input').write_text(data);runs=[]
+        for mode in ['ordinary','sanitized']:
+            r=run(f'order{n}_{mode}',[str(O/mode)],data);need(r.returncode==0 and not r.stderr,'clean target process');rows=[json.loads(line)for line in r.stdout.splitlines()];need(len(rows)==len(patterns),'all cases returned')
+            for j,row in enumerate(rows):need(row['case']==j and row['n']==n and row['status']=='COMPLETE'and row['positives']==0 and row['examples']==[],'complete exclusion')
+            need(sum(row['nodes']for row in rows)==e['nodes'],'deterministic node total');runs.append(rows);print('COMPLETE',n,mode,e['nodes'],flush=True)
+        strip=lambda rows:[{k:v for k,v in r.items()if k!='seconds'}for r in rows];need(strip(runs[0])==strip(runs[1]),'all sanitized results agree');report['orders'][n]=dict(e,sanitizer_agreement=True);put(O/'report.json',report)
+    # A known graph is retained by the same engine; existing order20 positive
+    # certificates remain acquired, rather than being rediscovered here.
+    p15,_=m.class_cases(15);aa,bb,z=p15[0];data=' '.join(map(str,[0,15,1,16,*aa,*bb,z,10]))+'\n'
+    r=run('positive_control',[str(O/'ordinary')],data);row=json.loads(r.stdout);need(r.returncode==0 and not r.stderr and row['status']=='COMPLETE'and row['positives']==len(row['examples'])==1,'known positive retained')
+    aa,bb,z=m.class_cases(21)[0][22];base=[22,21,1,8,*aa,*bb,z,120];bad=[]
+    for name,pos,value in [('unsupported_order',1,22),('bad_class',4,0),('negative_cap',15,-1)]:
+        v=base[:];v[pos]=value;r=run(name,[str(O/'ordinary')],' '.join(map(str,v))+'\n',cap=5);need(r.returncode!=0,'malformed input rejected');bad.append(name)
+    base[-1]=1e-9;r=run('timeout_control',[str(O/'ordinary')],' '.join(map(str,base))+'\n',cap=5);need(r.returncode==0 and json.loads(r.stdout)['status']=='TIMEOUT','timeout is not completion')
+    guards=[]
+    for mode in ['argument','environment']:
+        out=O/('forbidden_'+mode);ee=env.copy();cmd=[sys.executable]
+        if mode=='argument':cmd+=['-O']
+        else:ee['PYTHONOPTIMIZE']='1'
+        cmd+=[str(W/'check.py'),'--study',str(S),'--out',str(out)];r=subprocess.run(cmd,env=ee,capture_output=True,text=True,timeout=5);(O/(mode+'.stderr')).write_text(r.stderr);need(r.returncode!=0 and not out.exists()and 'Optimized Python is not accepted'in r.stderr,'optimization guard');guards.append(mode)
+    report.update(status='PASS_LOWER_BOUND_FOR_EIGHT_SQUARES',lower_bound=[6,4,8,22],heptagon=h,negative_controls=bad,optimization_controls=guards,timeout_status='TIMEOUT_NOT_COMPLETE',new_lower_rows=1,acquired_order20=True,new_exact_count_rows=0);put(O/'report.json',report);print('PASS',json.dumps(report),flush=True)
+if __name__=='__main__':main()

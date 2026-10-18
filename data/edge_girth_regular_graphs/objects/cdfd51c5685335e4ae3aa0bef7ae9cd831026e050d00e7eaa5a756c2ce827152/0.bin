@@ -1,0 +1,150 @@
+import argparse
+from collections import Counter
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+
+W = Path(__file__).resolve().parent
+PERMS = tuple(itertools.permutations(range(3)))
+FULL = ((0,2),(0,3),(1,2),(1,3))
+
+
+def need(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+def graph(key):
+    flips, choices = key[:2], key[2:]
+    A = [set() for _ in range(12)]
+    def edge(u,v):
+        A[u].add(v)
+        A[v].add(u)
+    for (a,b),flip in zip(((0,1),(2,3)),flips):
+        for i in (1,2):
+            edge(3*a+i,3*b+(3-i if flip else i))
+    for (a,b),choice in zip(FULL,choices):
+        for i,j in enumerate(PERMS[choice]):
+            edge(3*a+i,3*b+j)
+    return A
+
+
+def all_keys():
+    return itertools.product(range(2),range(2),range(6),range(6),range(6),range(6))
+
+
+def obstruction(A):
+    for u,v,w in itertools.combinations(range(12),3):
+        if v in A[u] and w in A[v] and u in A[w]:
+            return [u,v,w]
+    for u,v in itertools.combinations(range(12),2):
+        common = sorted(A[u]&A[v])
+        if len(common)>=2:
+            return [u,common[0],v,common[1]]
+    raise RuntimeError('Unexpected unobstructed matching pattern')
+
+
+def check_cycle(A,cycle):
+    return (len(cycle) in (3,4) and len(set(cycle))==len(cycle)
+            and all(type(x) is int and 0<=x<12 for x in cycle)
+            and all(cycle[(i+1)%len(cycle)] in A[u] for i,u in enumerate(cycle)))
+
+
+def main():
+    p=argparse.ArgumentParser()
+    p.add_argument('--out',type=Path,required=True)
+    p.add_argument('--render',action='store_true')
+    p.add_argument('--generate',action='store_true')
+    a=p.parse_args()
+    O=a.out.resolve()
+    O.mkdir(parents=True,exist_ok=False)
+    bindings=json.loads((W/'bindings.json').read_text())
+    for item in bindings:
+        data=Path(item['path']).read_bytes()
+        need(len(data)==item['bytes'] and hashlib.sha256(data).hexdigest()==item['sha256'],'binding')
+    if (W/'manifest.json').exists():
+        need(not a.generate,'frozen checker cannot replace certificate')
+        for item in json.loads((W/'manifest.json').read_text())['exports']:
+            data=(W/item['path']).read_bytes()
+            need(len(data)==item['bytes'] and hashlib.sha256(data).hexdigest()==item['sha256'],'frozen export')
+    if a.generate:
+        certificate=[{'key':key,'cycle':obstruction(graph(key))} for key in all_keys()]
+        (O/'certificate.json').write_text(json.dumps(certificate,separators=(',',':'))+'\n')
+    else:
+        certificate=json.loads((W/'certificate.json').read_text())
+    need(len(certificate)==5184,'full inventory')
+    expected=set(all_keys())
+    seen=set()
+    lengths=Counter()
+    for row in certificate:
+        key=tuple(row['key'])
+        need(key in expected and key not in seen,'literal inventory key')
+        seen.add(key)
+        A=graph(key)
+        need(sorted(map(len,A))==[2]*4+[3]*8,'forced leaf degrees')
+        need(check_cycle(A,row['cycle']),'literal obstruction cycle')
+        lengths[len(row['cycle'])]+=1
+    need(seen==expected,'complete coverage')
+    # Independently enumerate the possible deficient matching sizes.
+    branch_pairs=list(itertools.combinations(range(4),2))
+    profiles=[]
+    for sizes in itertools.product(range(4),repeat=6):
+        if all(sum(s for pair,s in zip(branch_pairs,sizes) if v in pair)==8 for v in range(4)):
+            deficient=[pair for pair,s in zip(branch_pairs,sizes) if s==2]
+            need(len(deficient)==2 and set(deficient[0]).isdisjoint(deficient[1]),'deficit matching')
+            need(all(s in (2,3) for s in sizes),'only full or deficient matching')
+            profiles.append(sizes)
+    need(len(profiles)==3,'three labelled deficit profiles')
+    # Check the final antipodal obstruction separately from the matching code.
+    chord_cases=[]
+    for chosen in itertools.combinations(range(6),4):
+        A=[{(i-1)%12,(i+1)%12} for i in range(12)]
+        for i in chosen:A[i].add(i+6);A[i+6].add(i)
+        pair=next((i for i in chosen if (i+1)%6 in chosen),None)
+        need(pair is not None,'consecutive chord indices')
+        cycle=[pair,(pair+1)%12,(pair+7)%12,(pair+6)%12]
+        need(check_cycle(A,cycle),'antipodal quadrangle')
+        chord_cases.append({'chords':chosen,'cycle':cycle})
+    # Nonvacuous near-boundary control: a C12 with two nonadjacent antipodal
+    # chords, one on each deficient branch pair, has no triangle/quadrangle.
+    A=[{(i-1)%12,(i+1)%12} for i in range(12)]
+    for i in (0,3):A[i].add(i+6);A[i+6].add(i)
+    need(not any(v in A[u] and w in A[v] and u in A[w]
+                 for u,v,w in itertools.combinations(range(12),3)),'positive no triangle')
+    need(all(len(A[u]&A[v])<2 for u,v in itertools.combinations(range(12),2)),'positive no quadrangle')
+    guards=[]
+    for mode in ('argument','environment'):
+        cmd=[sys.executable];env=os.environ.copy()
+        if mode=='argument':cmd.append('-O')
+        else:env['PYTHONOPTIMIZE']='1'
+        r=subprocess.run(cmd+[str(W/'check.py')],env=env,capture_output=True,text=True,timeout=5)
+        need(r.returncode!=0 and 'Optimized Python is not accepted' in r.stderr,'optimization guard')
+        (O/('guard_'+mode+'.stderr')).write_text(r.stderr);guards.append(mode)
+    if a.render:
+        shutil.copy2(W/'eight.tex',O/'eight.tex')
+        for i in (1,2):
+            r=subprocess.run(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','eight.tex'],cwd=O,capture_output=True,text=True,timeout=30)
+            (O/('native'+str(i)+'.stdout')).write_text(r.stdout);(O/('native'+str(i)+'.stderr')).write_text(r.stderr)
+            need(r.returncode==0 and not r.stderr,'native build')
+        log=(O/'eight.log').read_text()
+        need('Overfull' not in log and 'LaTeX Warning:' not in log,'native content')
+    (O/'chord_controls.json').write_text(json.dumps(chord_cases,indent=2)+'\n')
+    report={'status':'PASS_ALL_LOCAL_MATCHING_OBSTRUCTIONS','literal_patterns':5184,
+            'cycle_lengths':dict(lengths),'deficit_profiles':len(profiles),
+            'antipodal_chord_cases':len(chord_cases),'positive_local_controls':1,
+            'fresh_bindings':len(bindings),'optimization_guards':guards,
+            'universal_proof':'Self-contained cycle argument in eight.tex; enumeration is supplementary.',
+            'new_lower_rows':1,'all_order_exclusion':True,'whole_original_credit':0,
+            'new_question_credit':0,'new_Lean':0,'measurement':None}
+    (O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+
+
+if __name__=='__main__':main()

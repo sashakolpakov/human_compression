@@ -1,0 +1,117 @@
+import argparse
+import hashlib
+import importlib.util
+import itertools
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+
+W = Path(__file__).resolve().parent
+
+
+def need(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--render', action='store_true')
+    a = p.parse_args()
+    O = a.out.resolve()
+    O.mkdir(parents=True, exist_ok=False)
+    bindings = json.loads((W/'bindings.json').read_text())
+    for item in bindings:
+        data = Path(item['path']).read_bytes()
+        need(len(data) == item['bytes'] and hashlib.sha256(data).hexdigest() == item['sha256'], 'binding')
+    if (W/'manifest.json').exists():
+        for item in json.loads((W/'manifest.json').read_text())['exports']:
+            data = (W/item['path']).read_bytes()
+            need(len(data) == item['bytes'] and hashlib.sha256(data).hexdigest() == item['sha256'], 'frozen export')
+    acquired = json.loads((W/'acquired.json').read_text())
+    spec = importlib.util.spec_from_file_location('acquired_moments', acquired['checker'])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    controls = []
+    for record in json.loads((W/'examples.json').read_text()):
+        line = Path(record['graph_file']).read_bytes().splitlines()[record['source_line']-1]
+        need(hashlib.sha256(line).hexdigest() == record['graph6_line_sha256'], 'graph6 source')
+        G = module.nx.from_graph6_bytes(line)
+        adj = [set(G[x]) for x in range(len(G))]
+        result = module.moments(adj, record['lambda'])
+        need(len(G) == record['n'], 'example order')
+        for root in result['roots']:
+            cs = root['third_incidence']
+            for j in range(1, 5):
+                need(sum((c-j)*(c-j-1) for c in cs) == 4*record['lambda']-72*j+j*(j+1)*len(cs), 'integer identity')
+        controls.append(dict(source=record['id'], **result))
+    rows = []
+    wanted = [51,47,45,45,41,39,39]
+    for row in json.loads((W/'source_rows.json').read_text()):
+        lam = row['lambda']
+        raw = 53-2*lam
+        bound = next(n for n in range(raw, raw+3) if n*lam%3 == 0)
+        need(bound == wanted[lam-2] and bound >= row['claimed_lower_bound'], 'recovered source bound')
+        # Independent integer-profile feasibility: c lies in {0,1,2,3,4}.
+        # Check every profile with n below the claimed proved bound, not just
+        # the selected inequality. Each profile counts outside vertices.
+        tested = 0
+        for n in range(18, bound):
+            if n*lam%3:
+                continue
+            t = n-17
+            for c4 in range(min(t,9)+1):
+                for c3 in range(min(t-c4,12)+1):
+                    c2 = 2*lam - 3*c3 - 6*c4
+                    c1 = 36 - 2*c2 - 3*c3 - 4*c4
+                    c0 = t-c1-c2-c3-c4
+                    tested += 1
+                    need(min(c0,c1,c2,c3,c4) < 0, 'unexpected integer profile below bound')
+        rows.append({'lambda': lam, 'source_lower': row['claimed_lower_bound'],
+                     'raw_bound': raw, 'proved_lower': bound,
+                     'rejected_profile_candidates': tested})
+    guards = []
+    for mode in ['argument','environment']:
+        cmd = [sys.executable]
+        env = os.environ.copy()
+        if mode == 'argument':
+            cmd.append('-O')
+        else:
+            env['PYTHONOPTIMIZE'] = '1'
+        cmd.append(str(W/'check.py'))
+        r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=5)
+        need(r.returncode != 0 and 'Optimized Python is not accepted' in r.stderr, 'guard')
+        (O/('guard_'+mode+'.stderr')).write_text(r.stderr)
+        guards.append(mode)
+    if a.render:
+        shutil.copy2(W/'integers.tex', O/'integers.tex')
+        for i in [1,2]:
+            r = subprocess.run(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode',
+                                '-halt-on-error','integers.tex'],cwd=O,capture_output=True,
+                               text=True,timeout=30)
+            (O/('native'+str(i)+'.stdout')).write_text(r.stdout)
+            (O/('native'+str(i)+'.stderr')).write_text(r.stderr)
+            need(r.returncode == 0 and not r.stderr, 'native build')
+        log = (O/'integers.log').read_text()
+        need('Overfull' not in log and 'LaTeX Warning:' not in log, 'native content')
+    (O/'moment_controls.json').write_text(json.dumps(controls,indent=2)+'\n')
+    (O/'lower_rows.json').write_text(json.dumps(rows,indent=2)+'\n')
+    report = {'status':'PASS_INTEGER_MOMENT_COROLLARIES','source_graphs':len(controls),
+              'root_moment_checks':sum(x['n'] for x in controls),'new_lower_rows':7,
+              'stronger_than_source_table':3,'exact_count_credit':0,'whole_original_credit':0,
+              'new_question_credit':0,'new_Lean':0,'measurement':None,
+              'fresh_bindings':len(bindings),'optimization_guards':guards,
+              'universal_proof':'Written inequality using the acquired complete moment proof.'}
+    (O/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+    print(json.dumps(report))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,43 @@
+"""Grouped neighbour-subset oracle for the actual scalar-incidence visitor."""
+import sys
+if sys.flags.optimize: raise RuntimeError('normal Python required')
+import argparse,pathlib,json,itertools,collections,time
+p=argparse.ArgumentParser();p.add_argument('--graph',type=pathlib.Path,required=True);p.add_argument('--actual',type=pathlib.Path,required=True);p.add_argument('--out',type=pathlib.Path,required=True);a=p.parse_args();start=time.monotonic()
+t=list(map(int,a.graph.read_text().split()));assert t[:2]==[1,32]and len(t)==34
+full=[{v for v in range(32)if row>>v&1}for row in t[2:]];assert all(len(s)==4 for s in full)
+actual=json.loads(a.actual.read_text());edges=[(x,j)for x in range(9)for j in range(6)if 26+j in full[17+x]];assert actual['edges']==list(map(list,edges))and len(edges)==9
+
+def signature(g):
+ return tuple(sum(sum(17+x in g[26+j]and 17+y in g[26+j]for x in range(3*i,3*i+3)for y in range(3*k,3*k+3))for j in range(6))for i,k in [(0,1),(0,2),(1,2)])
+
+def girth_ok(g):
+ for s in range(32):
+  dist={s:0};parent={s:-1};queue=collections.deque([s])
+  while queue:
+   u=queue.popleft()
+   if dist[u]>=3:continue
+   for v in g[u]:
+    if v not in dist:dist[v]=dist[u]+1;parent[v]=u;queue.append(v)
+    elif parent[u]!=v and parent[v]!=u and dist[u]+dist[v]+1<6:return False
+ return True
+assert girth_ok(full);target=signature(full);records=[];terminal_candidates=0
+for mask,expected,_ in actual['rows']:
+ g=[set(s)for s in full]
+ for bit,(x,j)in enumerate(edges):
+  if mask>>bit&1:g[17+x].remove(26+j);g[26+j].remove(17+x)
+ need=[4-len(g[26+j])for j in range(6)];requirements=[(x,4-len(g[17+x]))for x in range(9)if len(g[17+x])<4];got=0
+ def visit(at):
+  global got,terminal_candidates
+  if at==len(requirements):
+   if any(need):return
+   terminal_candidates+=1
+   if signature(g)==target and girth_ok(g):got+=1
+   return
+  x,d=requirements[at];choices=[j for j in range(6)if need[j]and 26+j not in g[17+x]]
+  for js in itertools.combinations(choices,d):
+   for j in js:g[17+x].add(26+j);g[26+j].add(17+x);need[j]-=1
+   visit(at+1)
+   for j in js:g[17+x].remove(26+j);g[26+j].remove(17+x);need[j]+=1
+ visit(0);assert got==expected==1,(mask,got,expected);records.append([mask,got])
+assert len(records)==512
+report={'status':'PASS_INDEPENDENT_GROUPED_SUBSET_ORACLE','cases':len(records),'positive_completions':sum(x[1]for x in records),'terminal_candidates':terminal_candidates,'seconds':time.monotonic()-start,'actual_implementation':'Coupled::visit, included unchanged from coupled_cover.cpp','oracle':'Whole neighbour subsets per right vertex; no scalar-incidence recursion, no intermediate girth or pair-count pruning.','rows':records};a.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items()if k!='rows'}))

@@ -1,0 +1,59 @@
+import sys
+if sys.flags.optimize:raise SystemExit('optimized execution unsupported')
+sys.dont_write_bytecode=True
+import argparse,copy,hashlib,json,os,pathlib,shutil,subprocess,time
+from model_controls import run,need
+ROOT=pathlib.Path(__file__).resolve().parent
+
+def scope_check(d):
+    r=d['literal_source_row']
+    need((r['k'],r['g'],r['lambda'],r['physical_page'],r['claimed_lower_bound'])==(5,5,2,19,44),'exact source clause')
+    need(d['source_lower']==d['recovered_lower']==44 and d['new_lower_clauses']==1,'one recovered lower clause')
+    need(all(d[k]==0 for k in ['new_exact_clauses','whole_original_credit','new_question_credit','new_lean_credit','new_measurement_credit']),'no extra credit')
+    need(d['finite_enumeration_premise'] is False,'written proof supplies theorem')
+
+def pincheck(row,base):
+    p=base/row['path'];b=p.read_bytes()
+    need(len(b)==row['bytes'] and hashlib.sha256(b).hexdigest()==row['sha256'],'binding '+str(p))
+
+def child(cmd,out):
+    out.mkdir();env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);start=time.monotonic()
+    r=subprocess.run(cmd,capture_output=True,env=env,timeout=45)
+    (out/'stdout').write_bytes(r.stdout);(out/'stderr').write_bytes(r.stderr)
+    need(r.returncode==0,'child execution')
+    (out/'receipt.json').write_text(json.dumps({'status':'PASS','command':cmd,'seconds':time.monotonic()-start,'returncode':r.returncode},indent=2)+'\n')
+
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--study',type=pathlib.Path,required=True);ap.add_argument('--out',type=pathlib.Path,required=True);ap.add_argument('--render',action='store_true');a=ap.parse_args()
+    manifest=json.loads((ROOT/'manifest.json').read_text());deps=json.loads((ROOT/'dependencies.json').read_text())
+    for p in manifest['exports']:pincheck(p,ROOT)
+    for p in deps:pincheck(p,a.study)
+    a.out=a.out.resolve();a.out.mkdir(parents=True,exist_ok=False)
+    scope=json.loads((ROOT/'source_clause.json').read_text());scope_check(scope)
+    controls=run();(a.out/'model_controls.json').write_text(json.dumps(controls,indent=2)+'\n')
+    bad=0
+    for k in ['recovered_lower','new_exact_clauses','whole_original_credit','new_question_credit','new_lean_credit','new_measurement_credit','finite_enumeration_premise']:
+        d=copy.deepcopy(scope);d[k]=True if k=='finite_enumeration_premise' else d[k]+1
+        try:scope_check(d)
+        except ValueError:bad+=1
+        else:raise ValueError('damaged scope accepted')
+    opt=0
+    for script in ['check.py','model_controls.py']:
+        for envopt in [False,True]:
+            env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);cmd=[sys.executable]
+            if envopt:env['PYTHONOPTIMIZE']='1'
+            else:cmd+=['-O']
+            target=a.out/('optimized_'+script+str(envopt));cmd+=[str(ROOT/script)]
+            if script=='check.py':cmd+=['--study',str(a.study),'--out',str(target)]
+            r=subprocess.run(cmd,capture_output=True,env=env,timeout=10)
+            need(r.returncode!=0 and b'optimized execution unsupported' in r.stderr and not target.exists(),'optimization guard');opt+=1
+    pages=None
+    if a.render:
+        native=a.out/'native';native.mkdir();shutil.copy2(ROOT/'pentavalent2.tex',native/'pentavalent2.tex')
+        for i in [1,2]:child(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','-output-directory',str(native),str(native/'pentavalent2.tex')],a.out/('latex'+str(i)))
+        log=(native/'pentavalent2.log').read_text();need('Overfull' not in log and 'undefined' not in log,'native warning')
+        child(['/opt/homebrew/bin/gs','-q','-dSAFER','-dBATCH','-dNOPAUSE','-sDEVICE=png16m','-r110','-sOutputFile='+str(native/'page-%02d.png'),str(native/'pentavalent2.pdf')],a.out/'render')
+        pages=len(list(native.glob('page-*.png')))
+    result={'status':'PASS','exports':len(manifest['exports']),'bindings':len(deps),'root_models':len(controls['models']),**{k:v for k,v in controls.items() if k!='models'},'scope_controls':bad,'optimization_guards':opt,'native_pages':pages,'source_lower':44,'proved_lower':44,'new_lower_clauses':1,'whole_original_credit':0}
+    (a.out/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
+if __name__=='__main__':main()

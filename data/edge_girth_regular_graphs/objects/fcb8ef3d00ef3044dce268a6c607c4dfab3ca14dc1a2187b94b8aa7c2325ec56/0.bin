@@ -1,0 +1,96 @@
+"""Independent simple-cycle controls and explicit source isomorphisms."""
+import sys
+if sys.flags.optimize:raise RuntimeError('optimized Python is not permitted')
+import argparse,collections,gzip,hashlib,itertools,json,pathlib,subprocess,pynauty
+from audit_catalogues import decode,need
+
+def encode(a):
+ n=len(a);bits=[int(u in a[v]) for v in range(n) for u in range(v)];bits += [0]*((-len(bits))%6)
+ return bytes([n+63]+[63+sum(bits[i+j]<<(5-j) for j in range(6)) for i in range(0,len(bits),6)])
+def connected(a):
+ seen={0};stack=[0]
+ while stack:
+  u=stack.pop()
+  for v in a[u]:
+   if v not in seen:seen.add(v);stack.append(v)
+ return len(seen)==len(a)
+def profile(a,limit=12):
+ """List shortest simple cycles, starting at the least vertex, one orientation."""
+ edges=[(u,v) for u in a for v in a[u] if u<v]
+ for length in range(3,min(limit,len(a))+1):
+  counts=dict.fromkeys(edges,0);cycles=0
+  def walk(path,used):
+   nonlocal cycles
+   u=path[-1]
+   if len(path)==length:
+    if path[0] in a[u] and path[1]<u:
+     cycles+=1
+     for v,w in zip(path,path[1:]+path[:1]):counts[tuple(sorted((v,w)))]+=1
+    return
+   for v in a[u]:
+    if v>path[0] and v not in used:walk(path+[v],used|{v})
+  for start in a:walk([start],{start})
+  if cycles:
+   values=set(counts.values());lam=next(iter(values)) if len(values)==1 else 0
+   need(sum(counts.values())==length*cycles,'cycle incidence')
+   return {'g':length,'lambda':lam,'cycles':cycles,'edge_counts':[[u,v,x] for (u,v),x in counts.items()]}
+ raise ValueError('no cycle in independent depth range')
+def canonical(a):return pynauty.certificate(pynauty.Graph(len(a),adjacency_dict=a))
+def mapping(a,b):
+ need(canonical(a)==canonical(b),'source canonical equality');ga=pynauty.Graph(len(a),adjacency_dict=a);gb=pynauty.Graph(len(b),adjacency_dict=b)
+ la=pynauty.canon_label(ga);lb=pynauty.canon_label(gb);p=[0]*len(a)
+ for x,y in zip(la,lb):p[x]=y
+ need(sorted(p)==list(range(len(a))),'map bijective')
+ need(all((v in a[u])==(p[v] in b[p[u]]) for u in a for v in a),'map all adjacency pairs')
+ return p
+
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--sources',type=pathlib.Path,required=True);ap.add_argument('--witness-input',type=pathlib.Path,required=True);ap.add_argument('--binary',type=pathlib.Path,required=True);ap.add_argument('--out',type=pathlib.Path,required=True);args=ap.parse_args();args.out.mkdir(parents=True,exist_ok=False);roster=json.loads((args.sources/'source_roster01.json').read_text())['rows'];batches=collections.defaultdict(list)
+ # All labelled cubic graphs on four and six vertices, independently by subsets.
+ labelled=0
+ for n in [4,6]:
+  es=list(itertools.combinations(range(n),2))
+  for chosen in itertools.combinations(es,3*n//2):
+   a={i:[] for i in range(n)}
+   for u,v in chosen:a[u].append(v);a[v].append(u)
+   if all(len(a[i])==3 for i in a) and connected(a):batches[n].append(encode(a));labelled+=1
+ # First, last and evenly spaced records from every primary list; every positive too.
+ for row in roster:
+  lines=(args.sources/row['file']).read_bytes().splitlines();indices=sorted(set([0,len(lines)-1]+[i*len(lines)//31 for i in range(31)]));batches[row['n']].extend(lines[i] for i in indices)
+ reports=json.loads((args.sources/'classify02/report.json').read_text())['reports']
+ for r in reports:
+  for x in r['positive']:batches[r['order']].extend(z['graph6'].encode() for z in x['graphs'])
+ controls=[]
+ for n,raws in sorted(batches.items()):
+  raws=list(dict.fromkeys(raws));p=args.out/f'controls_{n}.g6';p.write_bytes(b'\n'.join(raws)+b'\n');refs=[profile(decode(raw)) for raw in raws]
+  r=subprocess.run([str(args.binary.resolve()),str(p.resolve()),str(n),'3'],capture_output=True,text=True,timeout=30);need(r.returncode==0 and not r.stderr,'C++ controls execution');observed=json.loads(r.stdout)
+  expected={}
+  for i,x in enumerate(refs):
+   if x['lambda']>0:expected.setdefault((x['g'],x['lambda']),[]).append({'index':i,'graph6':raws[i].decode()})
+  actual={(x['g'],x['lambda']):x['graphs'] for x in observed['positive']};need(actual==expected,'independent cycle-profile equality')
+  need(observed['girths']=={str(k):v for k,v in sorted(collections.Counter(x['g'] for x in refs).items())},'independent girth histogram')
+  controls.extend({'n':n,'graph6':raw.decode(),**x} for raw,x in zip(raws,refs))
+ # Explicit malformed inputs exercise independent admission conditions.
+ k4=encode({i:[j for j in range(4) if j!=i] for i in range(4)});k33=encode({i:[j for j in range(6) if (j<3)!=(i<3)] for i in range(6)})
+ disconnected=encode({i:[j for j in range(8) if i//4==j//4 and i!=j] for i in range(8)})
+ cycle6=encode({i:[(i-1)%6,(i+1)%6] for i in range(6)})
+ bad=[('empty',b'\n',4,3),('alphabet',b'C!\n',4,3),('length',k4+b'?\n',4,3),('order',k4+b'\n',6,3),('padding',k33[:-1]+bytes([k33[-1]+1])+b'\n',6,3),('degree',cycle6+b'\n',6,3),('disconnected',disconnected+b'\n',8,3),('girth',k4+b'\n',4,4),('crlf',k4+b'\r\n',4,3)]
+ negatives=[]
+ for name,raw,n,g in bad:
+  p=args.out/f'bad_{name}.g6';p.write_bytes(raw);r=subprocess.run([str(args.binary.resolve()),str(p.resolve()),str(n),str(g)],capture_output=True,text=True,timeout=10);need(r.returncode!=0 and bool(r.stderr),'malformed control accepted');negatives.append({'case':name,'exit_code':r.returncode,'stderr':r.stderr})
+ # Every positive record is compared with an actual recorded source graph.
+ source=[]
+ for line in gzip.open(args.witness_input,'rt'):
+  ident,n,k,g,lam,raw=line.split()
+  if int(k)==3:source.append({'id':ident,'n':int(n),'g':int(g),'lambda':int(lam),'graph6':raw})
+ maps=[];unmatched=[]
+ required={(20,5,2),(24,6,2),(18,6,4),(16,6,6),(14,6,8),(28,7,4),(40,8,8),(30,8,16)}
+ for r in reports:
+  for group in r['positive']:
+   for item in group['graphs']:
+    a=decode(item['graph6'].encode());candidates=[x for x in source if (x['n'],x['g'],x['lambda'])==(r['order'],group['g'],group['lambda'])];hits=[x for x in candidates if canonical(decode(x['graph6'].encode()))==canonical(a)];
+    if not hits:
+     need((r['order'],group['g'],group['lambda']) not in required,'missing required source isomorphism target');unmatched.append({'n':r['order'],'g':group['g'],'lambda':group['lambda'],'index':item['index'],'reason':'Supplementary nonminimal or girth-nine class; fixed source does not assert this exact count.'});continue
+    need(len(hits)==1,'unique source isomorphism target');s=hits[0];p=mapping(a,decode(s['graph6'].encode()));maps.append({'n':r['order'],'minimum_girth':r['minimum_girth'],'g':group['g'],'lambda':group['lambda'],'catalogue_index':item['index'],'catalogue_graph6':item['graph6'],'source_id':s['id'],'source_graph6':s['graph6'],'map':p})
+ (args.out/'profiles.json').write_text(json.dumps(controls,indent=2)+'\n');(args.out/'source_maps.json').write_text(json.dumps(maps,indent=2)+'\n');(args.out/'report.json').write_text(json.dumps({'status':'PASS','labelled_cubic_graphs_4_6':labelled,'independent_cycle_profiles':len(controls),'malformed_controls':negatives,'source_bijections':len(maps),'required_extremal_bijections':sum((x['n'],x['g'],x['lambda']) in required for x in maps),'supplementary_without_source_representative':unmatched},indent=2)+'\n');print((args.out/'report.json').read_text())
+if __name__=='__main__':main()

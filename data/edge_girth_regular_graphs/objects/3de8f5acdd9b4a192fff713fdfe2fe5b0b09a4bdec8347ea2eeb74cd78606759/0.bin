@@ -1,0 +1,104 @@
+import argparse
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+import networkx as nx
+
+W = Path(__file__).resolve().parent
+
+
+def need(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--render', action='store_true')
+    a = p.parse_args()
+    O = a.out.resolve()
+    O.mkdir(parents=True, exist_ok=False)
+    bindings = json.loads((W / 'bindings.json').read_text())
+    for item in bindings:
+        data = Path(item['path']).read_bytes()
+        need(len(data) == item['bytes'] and hashlib.sha256(data).hexdigest() == item['sha256'], 'binding')
+    rows = []
+    for record in json.loads((W / 'examples.json').read_text()):
+        line = Path(record['graph_file']).read_bytes().splitlines()[record['source_line'] - 1]
+        need(hashlib.sha256(line).hexdigest() == record['graph6_line_sha256'], 'source line')
+        G = nx.from_graph6_bytes(line)
+        need(len(G) == record['n'] and nx.is_connected(G) and all(d == 4 for _, d in G.degree()), 'source graph')
+        for u, v in G.edges():
+            parents_a = set(G[u]) - {v}
+            parents_b = set(G[v]) - {u}
+            aa = [set(G[x]) - {u} for x in parents_a]
+            bb = [set(G[x]) - {v} for x in parents_b]
+            A = set().union(*aa)
+            B = set().union(*bb)
+            tree = {u, v} | parents_a | parents_b | A | B
+            need(len(tree) == 26 and len(A) == len(B) == 9, 'Moore tree')
+            Y = set(G) - tree
+            cross = sum(G.has_edge(x, y) for x in A for y in B)
+            internal = G.subgraph(Y).number_of_edges()
+            need(cross == record['lambda'] and internal == 2 * len(Y) - 27 + cross, 'exterior identity')
+            incidence_a = sum(G.has_edge(x, y) for x in A for y in Y)
+            incidence_b = sum(G.has_edge(x, y) for x in B for y in Y)
+            need(27 - incidence_a == cross == 27 - incidence_b, 'cross balance')
+            for x in Y:
+                av, bv = len(set(G[x]) & A), len(set(G[x]) & B)
+                need(av <= 3 and bv <= 3, 'one leaf per branch')
+                for leaf in set(G[x]) & A:
+                    need(len(set(G[leaf]) & B) <= 3 - bv, 'A cross capacity')
+                    need(len(set(G[leaf]) & Y) >= bv, 'A exterior capacity')
+                for leaf in set(G[x]) & B:
+                    need(len(set(G[leaf]) & A) <= 3 - av, 'B cross capacity')
+                    need(len(set(G[leaf]) & Y) >= av, 'B exterior capacity')
+            rows.append({'source': record['id'], 'edge': [u, v], 'm': len(Y),
+                         'cross': cross, 'outside_edges': internal})
+    profiles = [a for a in itertools.product([1, 2, 3], repeat=3) if sum(a) == 6]
+    need(len(profiles) == 7 and all(any(2 * x * (4 - x) - 4 > 2 for x in a) for a in profiles), 'all integer profiles impossible')
+    guards = []
+    for mode in ['argument', 'environment']:
+        env = os.environ.copy()
+        cmd = [sys.executable]
+        if mode == 'argument':
+            cmd.append('-O')
+        else:
+            env['PYTHONOPTIMIZE'] = '1'
+        cmd.append(str(W / 'check.py'))
+        r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=5)
+        need(r.returncode != 0 and 'Optimized Python is not accepted' in r.stderr, 'guard')
+        (O / ('guard_' + mode + '.stderr')).write_text(r.stderr)
+        guards.append(mode)
+    if a.render:
+        shutil.copy2(W / 'exterior.tex', O / 'exterior.tex')
+        for i in [1, 2]:
+            r = subprocess.run(['/opt/homebrew/bin/pdflatex', '-interaction=nonstopmode',
+                                '-halt-on-error', 'exterior.tex'], cwd=O, capture_output=True,
+                               text=True, timeout=30)
+            (O / ('native' + str(i) + '.stdout')).write_text(r.stdout)
+            (O / ('native' + str(i) + '.stderr')).write_text(r.stderr)
+            need(r.returncode == 0 and not r.stderr, 'native build')
+        log = (O / 'exterior.log').read_text()
+        need('Overfull' not in log and 'LaTeX Warning:' not in log, 'native content')
+    (O / 'edge_controls.json').write_text(json.dumps(rows, indent=2) + '\n')
+    report = {'status': 'PASS_EXTERIOR_IDENTITIES', 'example_graphs': 4,
+              'root_edges': len(rows), 'rejected_integer_profiles': len(profiles),
+              'optimization_guards': guards, 'fresh_bindings': len(bindings),
+              'certificate_limit': 'Controls of identities only; the general exclusion is the written proof.',
+              'new_lower_rows': 1, 'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0}
+    (O / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
+    print(json.dumps(report))
+
+
+if __name__ == '__main__':
+    main()

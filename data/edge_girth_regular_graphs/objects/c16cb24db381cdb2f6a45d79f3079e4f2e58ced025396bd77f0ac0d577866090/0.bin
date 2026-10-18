@@ -1,0 +1,58 @@
+"""Check the retained full catalogue transactions and the explicit correction."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+from pathlib import Path
+import argparse,hashlib,importlib.util,json,subprocess
+
+def need(b,m):
+ if not b:raise ValueError(m)
+def sha(p):
+ h=hashlib.sha256()
+ with p.open('rb')as f:
+  for data in iter(lambda:f.read(1048576),b''):h.update(data)
+ return h.hexdigest()
+def check_rows(root,rows):
+ for r in rows:
+  p=root/r['path'];need(p.stat().st_size==r['bytes']and sha(p)==r['sha256'],'binding '+str(p))
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);a=ap.parse_args();B=Path(__file__).resolve().parent;S=a.study.resolve();O=a.out.resolve();need(O!=B and B not in O.parents,'external output');O.mkdir(parents=True,exist_ok=False)
+ man=json.loads((B/'manifest.json').read_text());check_rows(B,man['exports']);deps=json.loads((B/'dependencies.json').read_text());check_rows(S,deps['bindings'])
+ # Acquire the reviewed positive certificates without rerunning their entire census.
+ for name in ['corpus106_F012_positive_v1','corpus106_F012_positive_independent_review']:
+  m=json.loads((S/name/'manifest.json').read_text());check_rows(S/name,m['exports'])
+ targets=json.loads((S/'corpus106_F012_positive_v1/targets.json').read_text())['symmetry_table']
+ source={(r[0],r[1],r[2]):r[3]for r in targets};need(len(source)==118,'positive targets')
+ reconstructed=[];totals={}
+ for folder,stem,k,count in [('cubic_census02','filter01',3,111360),('fourval_census01','filter03',4,4820)]:
+  C=B/folder;report=json.loads((C/f'{stem}_report.json').read_text());parse=json.loads((C/'parse_report.json').read_text())
+  need(report['graphs_checked']==parse['graphs']==count,'complete count')
+  index=json.loads((S/'reboot_20261013/F012_recovery_work'/folder/'index.json').read_text());lines=(C/f'{stem}.stdout').read_text().splitlines();need(len(lines)==len(index)==count,'output coverage');need((C/f'{stem}.stderr').read_text()==f'COMPLETE {count}\n','terminal completion')
+  found={};classes={}
+  for idx,line in zip(index,lines):
+   f=line.split();need(len(f)>=6 and f[0]==idx['id']and int(f[1])==idx['n']and int(f[2])==k,'record correspondence')
+   n,kk,g,l=map(int,f[1:5]);status=f[5];need(status in ['EGR','NOT_EGR','IRRELEVANT'],'classification');classes[status]=classes.get(status,0)+1
+   if status=='EGR':need(len(f)==7 and int(f[6])==n*k//2,'all edges');found.setdefault((kk,g,l),[]).append((n,f[0]))
+  comparison=[]
+  for text in (C/'targets.txt').read_text().splitlines():
+   kk,g,l,n=map(int,text.split());need(source[kk,g,l]==n,'source target');matches=found.get((kk,g,l),[]);minimum=min((v for v,_ in matches),default=None)
+   comparison.append({'k':kk,'g':g,'lambda_value':l,'claimed':n,'found_minimum':minimum,'ids':[s for v,s in matches if v==minimum],'agrees':n==minimum})
+  need(comparison==report['comparison'],'reconstructed minimum');reconstructed+=comparison;totals[folder]=classes
+ need(reconstructed==json.loads((B/'rows.json').read_text()),'full result table')
+ changes=[r for r in reconstructed if not r['agrees']];need(len(changes)==1 and changes[0]['k']==3 and changes[0]['g']==14 and changes[0]['lambda_value']==56 and changes[0]['claimed']==506 and changes[0]['found_minimum']==486,'exact correction')
+ # Independent direct-cycle code previously accepted for L025.
+ F=S/'corpus106_L025_recovery/finite';sys.path.insert(0,str(F));spec=importlib.util.spec_from_file_location('retained_direct_cycles',F/'verify.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+ adj=[set(r)for r in json.loads((B/'cubic486_check01/adjacency.json').read_text())];pr=m.profile(adj);need(pr['order']==486 and pr['degrees']==[3]and pr['connected']and pr['girth']==14,'independent graph profile')
+ cycles=m.cycle_counts(adj,14);need(cycles['total']==2916 and cycles['edge_histogram']=={56:729},'direct cycles')
+ perms=json.loads((B/'cubic486_check01/symmetry.json').read_text())['generators']
+ for p in perms:need(sorted(p)==list(range(486))and all({p[v]for v in adj[u]}==adj[p[u]]for u in range(486)),'literal automorphism')
+ seen={0};todo=[0]
+ for u in todo:
+  for p in perms:
+   v=p[u]
+   if v not in seen:seen.add(v);todo.append(v)
+ need(len(seen)==486,'full vertex orbit')
+ exe=O/'positive';p=subprocess.run(['clang++','-std=c++17','-O2',str(B/'verify_egr_witnesses.cpp'),'-o',str(exe)],capture_output=True,text=True,timeout=45);need(p.returncode==0 and not p.stderr,'compile')
+ p=subprocess.run([str(exe)],input=(B/'cubic486_check01/input.txt').read_text(),capture_output=True,text=True,timeout=20);need(p.returncode==0 and not p.stderr and p.stdout=='PASS VT3_486_105 729\n','fresh BFS');(O/'bfs.stdout').write_text(p.stdout)
+ result={'status':'PASS_CORRECTED_SYMMETRY_TABLE_COMPONENT','catalogue_records':116180,'table_rows':118,'unchanged_rows':117,'corrected_row':changes[0],'classification_totals':totals,'fresh_exceptional_graph':{'order':486,'edges':729,'girth':14,'cycles':2916,'edge_multiplicity':56,'verified_generators':len(perms),'vertex_orbit':486},'full_census_repeated':False,'catalogue_completeness_borrowed':True,'whole_original_credit':0,'new_question_credit':0,'new_measurements':0,'new_Lean_declarations':0}
+ (O/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
+if __name__=='__main__':main()

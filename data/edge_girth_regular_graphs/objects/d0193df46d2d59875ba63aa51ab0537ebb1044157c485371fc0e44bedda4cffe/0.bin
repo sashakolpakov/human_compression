@@ -1,0 +1,35 @@
+"""Exact within-list canonical audit. Completeness is an external premise."""
+import sys
+if sys.flags.optimize: raise RuntimeError('optimized Python is not permitted')
+import argparse,hashlib,json,pathlib,time,pynauty
+
+def need(x,m):
+ if not x: raise ValueError(m)
+def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def decode(raw):
+ need(raw and all(63<=c<=126 for c in raw),'graph6 alphabet')
+ n=raw[0]-63; need(0<n<=62,'short graph6 order');bits=n*(n-1)//2
+ need(len(raw)==1+(bits+5)//6,'graph6 length');a={v:[] for v in range(n)};at=0
+ for v in range(n):
+  for u in range(v):
+   if (raw[1+at//6]-63)>>(5-at%6)&1:a[u].append(v);a[v].append(u)
+   at+=1
+ while at%6:
+  need(not ((raw[1+at//6]-63)>>(5-at%6)&1),'nonzero padding');at+=1
+ return a
+
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--sources',type=pathlib.Path,required=True);ap.add_argument('--out',type=pathlib.Path,required=True);args=ap.parse_args();args.out.mkdir(parents=True,exist_ok=False)
+ roster=json.loads((args.sources/'source_roster01.json').read_text()); reports=[];start=time.monotonic()
+ for row in roster['rows']:
+  p=args.sources/row['file'];need(digest(p)==row['sha256'],'input pin');seen=set();h=hashlib.sha256();n=row['n'];count=0
+  with p.open('rb') as f:
+   for line in f:
+    need(line.endswith(b'\n'),'literal newline');raw=line[:-1];a=decode(raw);need(len(a)==n and all(len(v)==3 for v in a.values()),'cubic order')
+    cert=pynauty.certificate(pynauty.Graph(n,adjacency_dict=a));need(cert not in seen,'duplicate isomorphism class');seen.add(cert);h.update(len(cert).to_bytes(4,'big'));h.update(cert);count+=1
+    if count%50000==0:print(json.dumps({'file':row['file'],'checked':count,'seconds':time.monotonic()-start}),flush=True)
+  need(count==row['classes'],'primary list cardinality')
+  x={'file':row['file'],'input_sha256':row['sha256'],'order':n,'minimum_girth':row['minimum_girth'],'records':count,'distinct_canonical_words':len(seen),'ordered_canonical_stream_sha256':h.hexdigest()};reports.append(x)
+  (args.out/(p.name+'.json')).write_text(json.dumps(x,indent=2)+'\n');print(json.dumps(x),flush=True)
+ result={'status':'PASS_CANONICAL_DISTINCTNESS_NOT_A_COMPLETENESS_PROOF','lists':reports,'graphs':sum(x['records'] for x in reports),'pynauty_version':pynauty.__version__};(args.out/'report.json').write_text(json.dumps(result,indent=2)+'\n')
+if __name__=='__main__':main()

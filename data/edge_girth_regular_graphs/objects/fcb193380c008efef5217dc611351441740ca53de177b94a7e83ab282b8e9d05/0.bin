@@ -1,0 +1,13 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('optimized Python is not permitted')
+import argparse,json,pathlib,hashlib
+from audit_catalogues import need,decode
+from controls import canonical
+
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def main():
+ ap=argparse.ArgumentParser();ap.add_argument('--sources',type=pathlib.Path,required=True);ap.add_argument('--out',type=pathlib.Path,required=True);args=ap.parse_args();args.out.mkdir(parents=True,exist_ok=False);rows=json.loads((args.sources/'source_roster01.json').read_text())['rows'];reports=[]
+ for n,g,stem in [(n,6,f'cubic_n{n}_g6') for n in [14,16,18,20,22]]+[(24,6,'snark_n24_g6'),(20,5,'snark_n20_g5'),(28,7,'snark_n28_g7')]:
+  row=next(x for x in rows if (x['n'],x['minimum_girth'])==(n,g));primary=args.sources/row['file'];generated=args.sources/(stem+'.g6');receipt=json.loads((args.sources/(stem+'.receipt.json')).read_text());need(receipt['status']=='TERMINAL' and receipt['returncode']==0,'complete provider receipt');need(receipt['output_sha256']==sha(generated) and receipt['stderr_sha256']==sha(args.sources/(stem+'.stderr')),'provider pins');a=[canonical(decode(x)) for x in primary.read_bytes().splitlines()];b=[canonical(decode(x)) for x in generated.read_bytes().splitlines()];need(len(set(b))==len(b) and len(a)==len(b) and set(a)==set(b),'complete literal canonical class equality');reports.append({'n':n,'minimum_girth':g,'primary_sha256':sha(primary),'generated_file':generated.name,'generated_sha256':sha(generated),'classes':len(a),'exact_canonical_sets_equal':True})
+ timeout=json.loads((args.sources/'cubic_n24_g6.receipt.json').read_text());need(timeout['status']=='TIME_LIMIT_NO_CONCLUSION' and timeout['returncode'] is None,'old timeout preserved');(args.out/'report.json').write_text(json.dumps({'status':'PASS','comparisons':reports,'excluded_timeout':{'file':'cubic_n24_g6.receipt.json','status':timeout['status'],'conclusion':None}},indent=2)+'\n');print('PASS',len(reports),'complete generator comparisons; old timeout excluded')
+if __name__=='__main__':main()

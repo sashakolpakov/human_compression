@@ -1,0 +1,119 @@
+"""Explicit t5 provider: acquired base, ten positive ORs, validated cuts."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+HERE=Path(__file__).resolve().parent
+spec=importlib.util.spec_from_file_location('acquired_formula_file_tools',HERE/'required_hexagon_formula.py')
+U=importlib.util.module_from_spec(spec);spec.loader.exec_module(U)
+need,pin,acquire,load=U.need,U.pin,U.acquire,U.load
+DIGESTS=('fixed_paths_sha256','cycle_catalogue_sha256','term_catalogue_sha256',
+         'cut_catalogue_sha256','unique_clause_sequence_sha256')
+
+
+class RequiredHexagonFormula:
+    def __init__(self,case_ref):
+        self.case_ref=case_ref;self.case=json.loads(acquire(case_ref))
+        names=('model','metadata','catalogue_program','literal_tools','cnf_program',
+               'sizing_case','sizing_result','sizing_acceptance','setup_acceptance')
+        need(set(self.case)=={'schema','host','reports',*names}
+             and self.case['schema']=='F012_FIXED_T5_REQUIRED_HEXAGON_FORMULA_V1'
+             and self.case['host'] in ('P0','P1','P2') and len(self.case['reports'])==3,
+             'one explicit acquired t5 host and all three sizing reports')
+        raw={name:acquire(self.case[name]) for name in names}
+        reports=[json.loads(acquire(ref)) for ref in self.case['reports']]
+        need(Path(self.case['catalogue_program']['path'])==HERE/'five_required_hexagon_catalogue.py'
+             and Path(self.case['literal_tools']['path'])==HERE/'required_hexagon_catalogue.py'
+             and Path(self.case['cnf_program']['path'])==HERE.parent/'graph_completion_certificate/cnf.py',
+             'actual new catalogue and unchanged literal/CNF interfaces')
+        self.acceptance=json.loads(raw['sizing_acceptance'])
+        result=json.loads(raw['sizing_result']);sizing_case=json.loads(raw['sizing_case'])
+        setup=json.loads(raw['setup_acceptance']);metadata=json.loads(raw['metadata'])
+        need(self.acceptance['status']=='ROOT_ACCEPTED_F012_THREE_T5_NECESSARY_CATALOGUE_SIZING'
+             and self.acceptance['result']==self.case['sizing_result']
+             and self.acceptance['helper']==self.case['catalogue_program']
+             and self.acceptance['host_reports']==self.case['reports']
+             and result['status']=='PASS_THREE_T5_UNIVERSAL_CATALOGUES_AND_CONTROLS'
+             and result['case']==self.case['sizing_case']
+             and setup['status']=='ROOT_ACCEPTED_F012_THREE_T5_HOST_MODELS_AND_NECESSARY_CNFS',
+             'actual accepted sizing and original model setup')
+        need([r['host'] for r in reports]==['P0','P1','P2']
+             and len(result['hosts'])==len(sizing_case['hosts'])==len(setup['host_summaries'])==3,
+             'complete ordered three-report joins')
+        for name in ('catalogue_program','literal_tools','cnf_program','setup_acceptance'):
+            need(sizing_case[name]==self.case[name], 'unchanged sizing interface '+name)
+        for i,report in enumerate(reports):
+            actual=result['hosts'][i];declared=sizing_case['hosts'][i];original=setup['host_summaries'][i]
+            need(actual['report']==self.case['reports'][i] and report['complete'] is True
+                 and report['counts']==actual['counts'] and report['digests']==actual['digests']
+                 and all(report[k]==declared[k]==original[k] for k in ('host','model','metadata'))
+                 and report['required']==declared['required']
+                 and report['orientations']==declared['orientations'], 'exact acquired host/report '+str(i))
+        index=('P0','P1','P2').index(self.case['host'])
+        self.sizing=reports[index];self.original=setup['host_summaries'][index]['formula']
+        need(all(self.sizing[k]==self.case[k] for k in ('host','model','metadata')),
+             'selected literal host, never a substituted model')
+        self.K=load('acquired_t5_catalogue',Path(self.case['catalogue_program']['path']))
+        self.H,self.C=self.K.H,self.K.C
+        self.cycle_edges,self.witness_edges=self.C.cycle_edges,self.C.witness_edges
+        self.model=Path(self.case['model']['path'])
+        self.n,self.base,self.allowed=self.H.read_model(self.model,4096)
+        need(self.n==54 and len(self.base)==64 and len(self.allowed)==259+int(index!=0)
+             and self.base==frozenset(map(tuple,metadata['fixed_edges']))
+             and self.allowed==frozenset(map(tuple,metadata['allowed_edges']))
+             and (((20,22) in self.allowed)==(index!=0)), 'entire selected t5 domain including pendant ZZ')
+        self.cat=self.K.catalogue(self.n,self.base,self.allowed,self.sizing['required'],
+                                 self.sizing['orientations'],sizing_case['catalogue_limits'])
+        need(self.cat['complete'] and self.cat['counts']==self.sizing['counts']
+             and {k:self.cat[k] for k in DIGESTS}==self.sizing['digests'],
+             'whole selected catalogue counts and all five acquired digests')
+        self.seeds=list(self.cat['cuts'])
+        need(len(self.seeds)==self.cat['counts']['unique_shortcut_cuts']
+             and tuple(self.C.witness_edges(w,self.n,self.base,self.allowed) for w in self.seeds)
+                 ==self.cat['cut_edges'], 'all selected universal cut witnesses in deterministic order')
+        self.last_build=None
+
+    def build(self,n,base,allowed,degree=None,cuts=()):
+        need((n,frozenset(base),frozenset(allowed),degree)==
+             (self.n,self.base,self.allowed,4), 'unchanged exact t5 domain')
+        cuts=list(cuts)
+        need(cuts[:len(self.seeds)]==self.seeds,'all acquired universal witnesses retained first')
+        f,variables=self.C.build(n,base,allowed,degree=degree,cuts=())
+        base_bytes=f.dimacs().encode()
+        need((f.variables,len(f.clauses),len(variables),len(base_bytes),hashlib.sha256(base_bytes).hexdigest())==
+             tuple(self.original[k] for k in ('variables','clauses','primary_variables','bytes','sha256')),
+             'whole original necessary CNF exactly equals acquired setup bytes')
+        before=f.variables,len(f.clauses)
+        self.H.append_existence(f,variables,self.cat)
+        counts=self.cat['counts']
+        need((f.variables-before[0],len(f.clauses)-before[1])==
+             (counts['additional_gate_variables'],counts['additional_gate_clauses']+
+              counts['additional_existence_clauses']), 'unchanged signed gates and ten OR clauses')
+        seen=set()
+        for witness in cuts:
+            edges=self.C.witness_edges(witness,n,self.base,self.allowed)
+            need(edges not in seen,'distinct valid universal and lazy cut sequence')
+            seen.add(edges);f.clause([-variables[e] for e in edges])
+        raw=f.dimacs().encode()
+        self.last_build=dict(variables=f.variables,clauses=len(f.clauses),bytes=len(raw),
+                             sha256=hashlib.sha256(raw).hexdigest(),cuts=len(cuts))
+        return f,variables
+
+    def unchanged(self):
+        acquire(self.case_ref)
+        for name,ref in self.case.items():
+            if name not in ('schema','host','reports'):acquire(ref)
+        for ref in self.case['reports']:acquire(ref)
+
+    def context(self):
+        return dict(formula_case=self.case_ref,host=self.case['host'],model=self.case['model'],
+            sizing_acceptance=self.case['sizing_acceptance'],reports=self.case['reports'],
+            catalogue=self.cat['counts'],digests={k:self.cat[k] for k in DIGESTS},
+            initial_universal_cuts=len(self.seeds),original_formula=self.original,
+            formula_order='unchanged original CNF; shared gates and ten ORs; all universal cuts; lazy cuts',
+            exclusions=0,whole_original_credit=0)

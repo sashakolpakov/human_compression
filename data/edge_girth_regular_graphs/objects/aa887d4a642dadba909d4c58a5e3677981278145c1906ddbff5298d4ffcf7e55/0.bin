@@ -1,0 +1,28 @@
+#define Side OldSide
+#define Coupled OldCoupled
+#define main old_completion_main
+#include "coupled_cover.cpp"
+#undef Side
+#undef Coupled
+#undef main
+#define Side NewSide
+#define Coupled NewCoupled
+#define main new_completion_main
+#include "coupled_cover_sorted.cpp"
+#undef Side
+#undef Coupled
+#undef main
+#include <set>
+int main(int argc,char**argv){try{
+ require(argc==2,"usage left_order_controls ROOTS");ifstream in(argv[1]);size_t count;require(bool(in>>count),"rootcount");std::set<size_t>selected{0,1,2,100,1000,5000,10000,25000,40000,50000,70000,90000,count-1};U old_count=0,new_count=0,classes=0;int tests=0,nonempty=0;
+ for(size_t z=0;z<count;z++){
+  int n;require(bool(in>>n)&&n==26,"rootorder");Graph g(n);for(U&r:g)require(bool(in>>r),"rootrow");if(!selected.count(z))continue;
+  for(int side=0;side<2;side++){
+   OldSide old(g);NewSide fresh(g);old.run(side);fresh.run(side);std::set<vector<int>>a,b;
+   for(auto row:old.good){sort(row.begin(),row.end());a.insert(row);}
+   for(auto row:fresh.good){sort(row.begin(),row.end());b.insert(row);}
+   require(a==b,"complete block-family equality");tests++;nonempty+=!a.empty();old_count+=old.good.size();new_count+=fresh.good.size();classes+=a.size();
+  }
+ }
+ cout<<"{\"status\":\"PASS_LITERAL_LEFT_PARTITION_FAMILIES\",\"tests\":"<<tests<<",\"nonempty\":"<<nonempty<<",\"old_named_partitions\":"<<old_count<<",\"new_named_partitions\":"<<new_count<<",\"exact_families\":"<<classes<<"}\n";return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

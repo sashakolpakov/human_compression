@@ -1,0 +1,125 @@
+// Adapted exact side/join/boundary search: lambda18 and nine incidences; all outside vertices visible at order<=32.
+#include "literal_graph.h"
+using namespace std;
+struct DynamicJoined {
+ vector<Graph> graphs;vector<Canonical>canonical;unordered_map<string,size_t>lookup;vector<U>hits;
+ void cover(const Graph&g){
+  auto c=propose_canonical_map(g,false);auto it=lookup.find(c.key);
+  if(it==lookup.end()){
+   require(graphs.size()<1000000,"bounded joined storage");size_t id=graphs.size();lookup.emplace(c.key,id);graphs.push_back(g);canonical.push_back(c);hits.push_back(0);it=lookup.find(c.key);
+  }
+  size_t id=it->second;check_literal_map(g,graphs[id],c.lab,canonical[id].lab,false);hits[id]++;
+ }
+ void write(const string&file){ofstream out(file);require(bool(out),"joined output");out<<graphs.size()<<'\n';for(auto&g:graphs){out<<g.size();for(U x:g)out<<' '<<x;out<<'\n';}require(bool(out),"complete joined write");}
+};
+struct Side {
+ const Graph&g;vector<int>items,blocks;vector<vector<int>> good;array<unsigned,9>forbidden{};int target[3][3]{},used[3][3]{};U pairs=0,nodes=0,leaves=0;
+ Side(const Graph&graph):g(graph){}
+ static int pair_bit(int a,int b){if(a>b)swap(a,b);require(a!=b,"distinct side leaves");return a*(17-a)/2+b-a-1;}
+ void visit(size_t position){
+  nodes++;if(blocks.size()>6)return;
+  if(position==items.size()){
+   leaves++;for(int i=0;i<3;i++)for(int j=i+1;j<3;j++)if(used[i][j]!=target[i][j])return;good.push_back(blocks);return;
+  }
+  int x=items[position],branch=x/3;
+  for(size_t at=0;at<blocks.size();at++){
+   unsigned mask=blocks[at];if(mask&forbidden[x])continue;U added=0;bool allowed=true;
+   for(int y=0;y<9;y++)if((mask>>y)&1){
+    int i=min(branch,y/3),j=max(branch,y/3);U bit=U(1)<<pair_bit(x,y);
+    if((pairs&bit)||used[i][j]>=target[i][j]){allowed=false;break;}added|=bit;
+   }
+   if(!allowed)continue;
+   blocks[at]|=1<<x;pairs|=added;for(int y=0;y<9;y++)if((mask>>y)&1)used[min(branch,y/3)][max(branch,y/3)]++;
+   visit(position+1);
+   for(int y=0;y<9;y++)if((mask>>y)&1)used[min(branch,y/3)][max(branch,y/3)]--;blocks[at]=mask;pairs&=~added;
+  }
+  blocks.push_back(1<<x);visit(position+1);blocks.pop_back();
+ }
+ void run(int side){
+  int base=side?17:4,opposite=side?4:17;items.clear();blocks.clear();good.clear();pairs=0;
+  for(int x=0;x<9;x++){
+   int deficit=4-weight(g[base+x]);require(deficit>=0&&deficit<=3,"side degree");
+   for(int k=0;k<deficit;k++)items.push_back(x);
+   forbidden[x]=0;for(int y=0;y<9;y++)if(x/3==y/3||(g[base+x]&g[base+y]))forbidden[x]|=1<<y;
+  }
+  require(items.size()==9,"all side incidences");
+  for(int i=0;i<3;i++)for(int j=i+1;j<3;j++){
+   int k=3-i-j,required=0,current=0;U other=U(511)<<opposite,li=U(7)<<(base+3*i),lj=U(7)<<(base+3*j);
+   for(int x=0;x<3;x++)required+=weight(g[base+3*k+x]&other);
+   for(U row:g)current+=weight(row&li)*weight(row&lj);
+   target[i][j]=required-current;used[i][j]=0;if(target[i][j]<0)return;
+  }
+  visit(0);require(blocks.empty()&&pairs==0,"side restoration");
+ }
+};
+struct Join {
+ const Graph&base;DynamicJoined&targets;vector<U>groups,right;int left_count;U used=0,products=0,shorts=0,covered=0,over_order=0;
+ Join(const Graph&g,DynamicJoined&t):base(g),targets(t){}
+ void visit(size_t at){
+  if(groups.size()>6){over_order++;return;}
+  if(at==right.size()){
+   products++;if(26+groups.size()>32){over_order++;return;}
+   Graph g=base;g.resize(26+groups.size());for(size_t j=0;j<groups.size();j++){
+    U bits=groups[j];while(bits){int leaf=first(bits);bits&=bits-1;add_edge(g,leaf,26+j);}
+   }
+   if(has_short_cycle(g)){shorts++;return;}
+   for(int u=0;u<26;u++)require(weight(g[u])==4,"all Moore vertices saturated after joins");
+   targets.cover(g);covered++;return;
+  }
+  for(int j=0;j<left_count;j++)if(!((used>>j)&1)&&weight(groups[j]|right[at])<=4){
+   U old=groups[j];groups[j]|=right[at];used|=U(1)<<j;visit(at+1);used&=~(U(1)<<j);groups[j]=old;
+  }
+  groups.push_back(right[at]);visit(at+1);groups.pop_back();
+ }
+ void run(const vector<vector<int>>&left,const vector<vector<int>>&rparts){
+  for(const auto&l:left)for(const auto&r:rparts){
+   groups.clear();right.clear();for(int mask:l)groups.push_back(U(mask)<<4);for(int mask:r)right.push_back(U(mask)<<17);left_count=groups.size();used=0;visit(0);require(used==0&&groups.size()==l.size(),"join restoration");
+  }
+ }
+};
+struct Completion {
+ Graph g;DynamicJoined finals;U nodes=0,completed=0,overflow=0,mismatch=0,positive=0;chrono::steady_clock::time_point start=chrono::steady_clock::now();double cap;
+ explicit Completion(double seconds):cap(seconds){}
+ void tick(){if((++nodes%10000)==0)require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");}
+ int paths(int u,int v,int remaining,U seen){
+  if(remaining==1)return (g[u]>>v)&1;
+  U bits=g[u]&~seen&~(U(1)<<v);int result=0;
+  while(bits){int w=first(bits);bits&=bits-1;result+=paths(w,v,remaining-1,seen|(U(1)<<w));if(result>18)return result;}
+  return result;
+ }
+ void visit(){
+  tick();int u=26;while(u<(int)g.size()&&weight(g[u])==4)u++;
+  if(u==(int)g.size()){
+   completed++;for(int v=0;v<(int)g.size();v++){require(weight(g[v])==4,"complete quartic graph");U bits=g[v];while(bits){int w=first(bits);bits&=bits-1;if(v<w&&paths(v,w,5,U(1)<<v)!=18){mismatch++;return;}}}
+   require(!has_short_cycle(g),"complete girth");positive++;finals.cover(g);return;
+  }
+  int need=4-weight(g[u]);vector<int>candidates;
+  for(int v=u+1;v<(int)g.size();v++)if(weight(g[v])<4&&distance_at_least(g,u,v,5))candidates.push_back(v);
+  if((int)candidates.size()<need)return;
+  for(unsigned mask=0;mask<(1U<<candidates.size());mask++)if(weight(mask)==need){
+   vector<int>added;bool good=true;for(int i=0;i<(int)candidates.size();i++)if((mask>>i)&1){int v=candidates[i];if(!distance_at_least(g,u,v,5)){good=false;break;}add_edge(g,u,v);added.push_back(v);}
+   if(good)visit();for(int v:added)remove_edge(g,u,v);
+  }
+ }
+ void run(const Graph&base){
+  g=base;validate_graph(g);require((g.size()==31||g.size()==32)&&!has_short_cycle(g),"bounded joined graph");
+  for(int u=0;u<26;u++)require(weight(g[u])==4,"Moore saturation");
+  for(int u=26;u<(int)g.size();u++)require(g[u]&((U(1)<<26)-1),"all outside vertices visible");
+  for(int u=0;u<(int)g.size();u++){U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;if(u<v&&paths(u,v,5,U(1)<<u)>18){overflow++;return;}}}
+  visit();require(g==base,"completion restoration");
+ }
+};
+int main(int argc,char**argv){try{
+ require(argc==6,"usage extension_cover ROOTS JOINED FINALS REPORT SECONDS");nauty_check(WORDSIZE,1,26,NAUTYVERSIONID);auto start=chrono::steady_clock::now();double cap=stod(argv[5]);
+ ifstream in(argv[1]);size_t count;require(bool(in>>count)&&count>0&&count<1000000,"complete roots");DynamicJoined joined;
+ U side_nodes=0,side_leaves=0,side_parts=0,both_sides=0,products=0,shorts=0,covered=0,over_order=0;
+ for(size_t z=0;z<count;z++){
+  require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");int n;require(bool(in>>n)&&n==26,"rootorder");Graph g(n);for(U&x:g)require(bool(in>>x),"rootrow");validate_root(g,18);
+  Side side(g);side.run(0);auto left=side.good;side.run(1);auto right=side.good;side_parts+=left.size()+right.size();side_nodes+=side.nodes;side_leaves+=side.leaves;
+  if(!left.empty()&&!right.empty()){both_sides++;Join join(g,joined);join.run(left,right);products+=join.products;shorts+=join.shorts;covered+=join.covered;over_order+=join.over_order;}
+  if(z%10000==0)cout<<"ROOT "<<z<<" SIDES "<<side_parts<<" JOINS "<<products<<" TARGETS "<<joined.graphs.size()<<'\n'<<flush;
+ }
+ string extra;require(!(in>>extra),"complete root input");joined.write(argv[2]);Completion completion(cap);
+ for(size_t i=0;i<joined.graphs.size();i++){completion.run(joined.graphs[i]);if(i%1000==0)cout<<"COMPLETION "<<i<<" LEAVES "<<completion.completed<<" POSITIVES "<<completion.positive<<'\n'<<flush;}
+ completion.finals.write(argv[3]);ofstream out(argv[4]);require(bool(out),"report output");out<<"{\"status\":\"PASS_ALL_BOUNDED_COMPLETIONS\",\"root_representatives\":"<<count<<",\"both_sides_survive\":"<<both_sides<<",\"side_partitions\":"<<side_parts<<",\"side_nodes\":"<<side_nodes<<",\"side_leaves\":"<<side_leaves<<",\"join_products\":"<<products<<",\"join_short_cycles\":"<<shorts<<",\"join_over_order\":"<<over_order<<",\"join_literal_maps\":"<<covered<<",\"joined_targets\":"<<joined.graphs.size()<<",\"overflow_classes\":"<<completion.overflow<<",\"complete_graphs\":"<<completion.completed<<",\"mismatches\":"<<completion.mismatch<<",\"completion_nodes\":"<<completion.nodes<<",\"positive_graphs\":"<<completion.positive<<",\"final_classes\":"<<completion.finals.graphs.size()<<",\"order_limit\":32,\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-start).count()<<"}\n";require(bool(out),"complete report write");return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

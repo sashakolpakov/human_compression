@@ -1,0 +1,27 @@
+--- old
++++ new
+@@ -62,7 +62,7 @@
+ 
+ 
+ struct Coupled {
+- const Graph&base;Graph g;vector<int>items;array<unsigned,8>right_masks{};array<int,8>need{};int target[3][3]{},used[3][3]{};U nodes=0,complete=0,mismatch=0,positive=0,pruned=0;vector<Graph>positives;
++ const Graph&base;Graph g,left_cache;vector<int>cached_left;bool left_cache_valid=false;vector<int>items;array<unsigned,8>right_masks{};array<int,8>need{};int target[3][3]{},used[3][3]{};U nodes=0,complete=0,mismatch=0,positive=0,pruned=0;vector<Graph>positives;
+  bool possible=true;
+  explicit Coupled(const Graph&b):base(b){
+   for(int x=0;x<9;x++)for(int k=0;k<4-weight(base[17+x]);k++)items.push_back(x);
+@@ -108,8 +108,13 @@
+    need[j]=(j==e||j==f?3:4)-weight(all[j]);if(need[j]<0||need[j]>3)valid=false;pair_sum+=need[j]*(need[j]-1)/2;
+   }
+   if(!valid||pair_sum!=target[0][1]+target[0][2]+target[1][2])return false;
+-  g=base;g.resize(34);for(int j=0;j<8;j++)for(int x=0;x<9;x++)if((all[j]>>x)&1)add_edge(g,4+x,26+j);
+-  require(!has_short_cycle(g),"left partition girth");add_edge(g,26+e,26+f);if(has_short_cycle(g))return false;
++  if(!left_cache_valid||cached_left!=left){
++   Graph candidate=base;candidate.resize(34);for(int j=0;j<8;j++)for(int x=0;x<9;x++)if((all[j]>>x)&1)add_edge(candidate,4+x,26+j);
++   require(!has_short_cycle(candidate),"left partition girth");
++   left_cache=std::move(candidate);cached_left=left;left_cache_valid=true;
++  }
++  g=left_cache;if(!distance_at_least(g,26+e,26+f,5))return false;
++  add_edge(g,26+e,26+f);
+   right_masks.fill(0);return true;
+  }
+  void run(const vector<int>&left){

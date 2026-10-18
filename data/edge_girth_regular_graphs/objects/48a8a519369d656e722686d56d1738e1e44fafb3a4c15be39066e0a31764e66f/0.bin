@@ -1,0 +1,10 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import re,json,argparse
+p=argparse.ArgumentParser();p.add_argument('--stdout',type=Path,required=True);p.add_argument('--report',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();rows=json.loads(a.report.read_text())['orders'];seen=set();totals={n:[0,0,0,0]for n in range(21,25)}
+for line in a.stdout.read_text().splitlines():
+ m=re.fullmatch(r'ORDER (\d+) ROOT (\d+) EXTERIOR (\d+) NODES (\d+) COMPLETE (\d+) POSITIVE (\d+)',line);assert m,line;n,r,h,nodes,c,positive=map(int,m.groups());key=(n,r,h);assert key not in seen;seen.add(key);assert n in totals and 0<=r<348 and 0<=h<[1,2,6,12][n-21];totals[n]=[x+y for x,y in zip(totals[n],[1,nodes,c,positive])]
+assert seen=={(n,r,h)for n in range(21,25)for r in range(348)for h in range([1,2,6,12][n-21])}
+for r in rows:assert totals[r['order']]==[r[k]for k in ['calls','nodes','complete','positive']]
+result=dict(status='PASS_ALL_LITERAL_COMPLETION_CALLS',calls=len(seen),nodes=sum(x[1]for x in totals.values()),totals=totals);a.out.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))

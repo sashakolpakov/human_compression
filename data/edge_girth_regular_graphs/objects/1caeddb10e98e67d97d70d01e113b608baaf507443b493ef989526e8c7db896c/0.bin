@@ -1,0 +1,55 @@
+import argparse,hashlib,itertools,json,os,shutil,subprocess,sys
+from pathlib import Path
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
+    raise RuntimeError('Optimized Python is not accepted')
+import networkx as nx
+W=Path(__file__).resolve().parent
+
+def need(c,m):
+    if not c:raise RuntimeError(m)
+def put(p,v):p.write_text(json.dumps(v,indent=2)+'\n')
+def main():
+    p=argparse.ArgumentParser();p.add_argument('--out',required=True,type=Path);p.add_argument('--render',action='store_true');a=p.parse_args();o=a.out.resolve();o.mkdir(parents=True,exist_ok=False)
+    bs=json.loads((W/'bindings.json').read_text())
+    for b in bs:
+        raw=Path(b['path']).read_bytes();need(len(raw)==b['bytes']and hashlib.sha256(raw).hexdigest()==b['sha256'],'binding')
+    if(W/'manifest.json').exists():
+        for b in json.loads((W/'manifest.json').read_text())['exports']:
+            raw=(W/b['path']).read_bytes();need(len(raw)==b['bytes']and hashlib.sha256(raw).hexdigest()==b['sha256'],'export')
+    graphs=[];roots=0
+    for row in json.loads((W/'examples.json').read_text()):
+        raw=Path(row['graph_file']).read_bytes().splitlines()[row['source_line']-1];need(hashlib.sha256(raw).hexdigest()==row['graph6_line_sha256'],'source line')
+        g=nx.from_graph6_bytes(raw);n,k,lam=row['n'],row['k'],row['lambda'];need(len(g)==n and nx.is_connected(g) and set(dict(g.degree()).values())=={k},'example regularity')
+        for x,y in itertools.combinations(g,2):
+            common=len(set(g[x])&set(g[y]));need(common<=1 and(not g.has_edge(x,y)or common==0),'example girth')
+        for v in g:
+            distance=nx.single_source_shortest_path_length(g,v);leaves={x for x,d in distance.items()if d==2};outside={x for x,d in distance.items()if d>=3}
+            need(len(leaves)==k*(k-1)and len(outside)==n-k*k-1,'Moore ball')
+            leaf_edges=g.subgraph(leaves).number_of_edges();external_edges=g.subgraph(outside).number_of_edges()
+            need(2*leaf_edges==k*lam,'pentagons at root')
+            need(2*external_edges==k*(len(outside)-((k-1)**2-lam)),'exterior identity')
+            roots+=1
+        graphs.append({'id':row['id'],'n':n,'k':k,'lambda':lam,'checked_roots':n})
+    finite=[]
+    for lam in[23,24]:
+        candidates=[n for n in range(1,45)if n>=37 and(3*lam*n)%5==0];need(candidates==[40],'necessary orders')
+        required=6*(3-(25-lam))//2;survivors=[]
+        for mask in range(8):
+            edges=[e for i,e in enumerate([(0,1),(0,2),(1,2)])if mask>>i&1]
+            if len(edges)==required and len(edges)<3:survivors.append(mask)
+        need(not survivors,'all three-vertex exterior graphs')
+        finite.append({'lambda':lam,'only_order_below45':40,'required_exterior_edges':required,'survivors':0})
+    for name in ['argument','environment']:
+        env=os.environ.copy();command=[sys.executable]
+        if name=='argument':command.append('-O')
+        else:env['PYTHONOPTIMIZE']='1'
+        r=subprocess.run(command+[str(W/'check.py')],env=env,capture_output=True,text=True,timeout=5)
+        need(r.returncode!=0 and'Optimized Python is not accepted'in r.stderr,'optimization guard');(o/f'guard_{name}.stderr').write_text(r.stderr)
+    if a.render:
+        shutil.copy2(W/'exterior.tex',o/'exterior.tex')
+        for i in[1,2]:
+            r=subprocess.run(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','exterior.tex'],cwd=o,capture_output=True,text=True,timeout=30);(o/f'native{i}.stdout').write_text(r.stdout);(o/f'native{i}.stderr').write_text(r.stderr);need(r.returncode==0 and not r.stderr,'native build')
+        log=(o/'exterior.log').read_text();need('Overfull'not in log and'LaTeX Warning:'not in log,'native content')
+    report={'status':'PASS_EXTERIOR_EDGE_IDENTITY_AND_TWO_LOWER_BOUNDS','example_graphs':graphs,'roots_checked':roots,'finite_controls':finite,'fresh_bindings':len(bs),'optimization_guards':2,'new_lower_rows':2,'new_exact_rows':0,'whole_original_credit':0,'new_question_credit':0,'new_Lean':0,'measurement':None,'proof_basis':'Written general double count; finite controls are supplementary.'}
+    put(o/'report.json',report);print(json.dumps(report))
+if __name__=='__main__':main()

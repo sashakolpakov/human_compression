@@ -1,0 +1,181 @@
+"""Ten oriented t5 requirements; universal fixed-path cuts, no solver."""
+import sys
+sys.dont_write_bytecode = True
+from collections import Counter
+from itertools import combinations
+import importlib.util
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('acquired_required_hexagon_tools', HERE/'required_hexagon_catalogue.py')
+H = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(H)
+C, need = H.C, H.need
+LIMITS = dict(maximum_degree=24, maximum_start_degree=4, maximum_nodes=381610,
+              maximum_paths=365010, maximum_fixed_paths=2808)
+
+
+def fixed_path_index(n, base, maximum_paths):
+    """All fixed simple paths of length 1..3, counted before reversal merging."""
+    adjacency = [set() for _ in range(n)]
+    for u,v in base:
+        need(0 <= u < v < n, 'ordinary fixed path edge')
+        adjacency[u].add(v); adjacency[v].add(u)
+    need(max(map(len, adjacency), default=0) <= 4, 'fixed graph degree at most four')
+    neighbours = [tuple(sorted(row)) for row in adjacency]
+    index, oriented = {}, 0
+    def walk(path):
+        nonlocal oriented
+        if len(path) > 1:
+            oriented += 1
+            need(oriented <= maximum_paths, 'fixed short-path cap')
+            if path[0] < path[-1]:
+                index.setdefault((path[0],path[-1]), []).append(tuple(path))
+        if len(path) == 4:
+            return
+        for w in neighbours[path[-1]]:
+            if w not in path:
+                walk(path+[w])
+    for u in range(n):
+        walk([u])
+    index = {pair:tuple(sorted(paths)) for pair,paths in sorted(index.items())}
+    need(all(len(paths) <= 2 for paths in index.values()), 'at most two acquired fixed short paths per pair')
+    return index, oriented
+
+
+def shorter_arc(cycle, u, v):
+    i, j = cycle.index(u), cycle.index(v)
+    forward = tuple(cycle[(i+k)%6] for k in range((j-i)%6+1))
+    backward = tuple(cycle[(i-k)%6] for k in range((i-j)%6+1))
+    return min((forward,backward), key=lambda p:(len(p),p))
+
+
+def classify(cycle, n, base, allowed, base_degree, fixed_paths):
+    """Return necessary degree test and first exact fixed-shortcut witness."""
+    cycle = tuple(cycle)
+    es = C.cycle_edges(list(cycle),n)
+    need(len(cycle) == 6 and es <= base|allowed, 'literal candidate inside host')
+    extra = Counter(v for e in es-base for v in e)
+    degree_ok = all(base_degree[v]+extra[v] <= 4 for v in range(n))
+    vertices = set(cycle)
+    for u,v in combinations(sorted(vertices),2):
+        for path in fixed_paths.get((u,v),()):
+            if len(path) == 2 and (u,v) in es:
+                continue
+            if vertices.intersection(path[1:-1]):
+                continue
+            arc = shorter_arc(cycle,u,v)
+            other = list(H.canonical_cycle(tuple(path)+tuple(reversed(arc[1:-1]))))
+            need(3 <= len(other) <= 6, 'nontrivial shortcut closes a short cycle')
+            witness = (dict(kind='short_cycle',cycles=[other]) if len(other) <= 5 else
+                       dict(kind='shared_hexagons',cycles=[list(cycle),other]))
+            cut = C.witness_edges(witness,n,base,allowed)
+            need(set(cut) <= es-base, 'fixed shortcut cut uses only candidate optional edges')
+            return degree_ok, witness, cut
+    return degree_ok, None, None
+
+
+def catalogue(n, base, allowed, required, orientations, limits):
+    """Complete ten-edge literal catalogue, shared positive gates and cuts."""
+    need(type(n) is int and n == 54, 'fixed t5 order')
+    base, allowed = frozenset(base), frozenset(allowed)
+    domain = base|allowed
+    need(not base&allowed and len(base) == 64 and len(allowed) in (259,260)
+         and all(type(u) is int and type(v) is int and 0 <= u < v < n for u,v in domain),
+         'exact simple t5 domain dimensions')
+    required = tuple(tuple(e) for e in required)
+    expected = tuple(sorted(e for e in base if 18 <= e[0] < 23 and 23 <= e[1] < 28))
+    need(len(required) == 10 and all(type(u) is int and type(v) is int for u,v in required)
+         and required == expected and tuple(sorted(set(required))) == required,
+         'all ten canonical fixed T-Z requirements')
+    orientations = tuple(tuple(e) for e in orientations)
+    need(all(type(u) is int and type(v) is int for u,v in orientations)
+         and orientations == tuple((t,z) for z,t in required), 'exact saturated T-to-Z orientations')
+    need(limits == LIMITS and all(type(v) is int for v in limits.values()), 'exact proved finite t5 bounds')
+    adjacency = [set() for _ in range(n)]
+    for u,v in domain:
+        adjacency[u].add(v); adjacency[v].add(u)
+    need(max(map(len,adjacency)) <= limits['maximum_degree'], 'host degree bound')
+    need(all(len(adjacency[u]) == limits['maximum_start_degree'] for u,v in orientations)
+         and all(tuple(sorted((u,w))) in base for u,v in orientations for w in adjacency[u]),
+         'each oriented T start has four forced neighbours')
+    need(Counter(u for u,v in orientations) == {t:2 for t in range(23,28)},
+         'both Z edges of every T required')
+    neighbours = [tuple(sorted(row)) for row in adjacency]
+    edge_order = tuple(sorted(allowed))
+    edge_number = {e:i+1 for i,e in enumerate(edge_order)}
+    base_degree = Counter(v for e in base for v in e)
+    fixed_paths, fixed_oriented = fixed_path_index(n,base,limits['maximum_fixed_paths'])
+    cycles, cycle_requirements, term_requirements, cuts = {}, {}, {}, {}
+    counts, good_counts = [0]*10, [0]*10
+    nodes = paths = checked_witnesses = 0
+
+    for index,(u,v) in enumerate(orientations):
+        def walk(path):
+            nonlocal nodes, paths, checked_witnesses
+            nodes += 1
+            need(nodes <= limits['maximum_nodes'], 'literal DFS node cap')
+            if len(path) == 5:
+                paths += 1
+                need(paths <= limits['maximum_paths'], 'literal completed-path cap')
+                if v not in adjacency[path[-1]]:
+                    return
+                cycle = H.canonical_cycle(path+[v])
+                es = C.cycle_edges(list(cycle),n)
+                need(required[index] in es and es <= domain, 'literal six-cycle through requested edge')
+                term = tuple(sorted(edge_number[e] for e in es if e in allowed))
+                need(len(term) <= 4, 'two forced edges at oriented T start')
+                need(index not in cycle_requirements.get(cycle,set()), 'one path per cycle and requirement')
+                if cycle not in cycles:
+                    degree_ok,witness,cut = classify(cycle,n,base,allowed,base_degree,fixed_paths)
+                    accepted = degree_ok and witness is None
+                    cycles[cycle] = (term,accepted,degree_ok,cut)
+                    if witness is not None:
+                        checked_witnesses += 1
+                        # classify validated each literal witness before this exact-clause merge.
+                        cuts.setdefault(cut,witness)
+                else:
+                    need(cycles[cycle][0] == term, 'same literal cycle activation')
+                cycle_requirements.setdefault(cycle,set()).add(index)
+                counts[index] += 1
+                if cycles[cycle][1]:
+                    term_requirements.setdefault(term,set()).add(index)
+                    good_counts[index] += 1
+                return
+            for w in neighbours[path[-1]]:
+                if w != v and w not in path:
+                    walk(path+[w])
+        walk([u])
+
+    terms = tuple(sorted(term_requirements))
+    coverage = tuple(tuple(i for i,t in enumerate(terms) if j in term_requirements[t]) for j in range(10))
+    cut_edges = tuple(sorted(cuts))
+    witnesses = tuple(cuts[cut] for cut in cut_edges)
+    for cut,witness in zip(cut_edges,witnesses):
+        need(C.witness_edges(witness,n,base,allowed) == cut, 'all retained exact shortcut witnesses validated')
+    histogram = Counter(map(len,terms))
+    gate_variables = sum(len(t) >= 2 for t in terms)
+    gate_clauses = sum(len(t)+1 for t in terms if len(t) >= 2)
+    existence_clauses = sum(not any(not terms[i] for i in row) for row in coverage)
+    return dict(edge_order=edge_order,required=required,orientations=orientations,
+        terms=terms,required_term_indices=coverage,cuts=witnesses,cut_edges=cut_edges,
+        counts=dict(nodes=nodes,completed_paths=paths,distinct_cycles=len(cycles),
+          required_cycle_counts=counts,retained_required_cycle_counts=good_counts,
+          retained_literal_cycles=sum(row[1] for row in cycles.values()),
+          degree_rejected_cycles=sum(not row[2] for row in cycles.values()),
+          shortcut_rejected_cycles=checked_witnesses,validated_literal_witnesses=checked_witnesses,
+          unique_shortcut_cuts=len(cut_edges),shared_terms=len(terms),
+          optional_term_histogram={str(k):histogram[k] for k in sorted(histogram)},
+          required_shared_term_counts=[len(row) for row in coverage],
+          fixed_oriented_paths=fixed_oriented,fixed_unoriented_paths=sum(map(len,fixed_paths.values())),
+          fixed_maximum_paths_per_pair=max(map(len,fixed_paths.values()),default=0),
+          additional_gate_variables=gate_variables,additional_gate_clauses=gate_clauses,
+          additional_existence_clauses=existence_clauses,
+          additional_shortcut_clauses=len(cut_edges),
+          additional_total_clauses=gate_clauses+existence_clauses+len(cut_edges)),
+        fixed_paths_sha256=H.digest_rows([list(pair),[list(p) for p in pp]] for pair,pp in fixed_paths.items()),
+        cycle_catalogue_sha256=H.digest_rows([cycle,*cycles[cycle],sorted(cycle_requirements[cycle])]
+                                           for cycle in sorted(cycles)),
+        term_catalogue_sha256=H.digest_rows([term,sorted(term_requirements[term])] for term in terms),
+        cut_catalogue_sha256=H.digest_rows([cut,cuts[cut]] for cut in cut_edges),
+        unique_clause_sequence_sha256=H.digest_rows(cut_edges),complete=True)

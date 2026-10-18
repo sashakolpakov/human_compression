@@ -6895,11 +6895,17 @@ def check_onan_source_completion():
     spec.loader.exec_module(module)
     return module.verify(ROOT)
 
+def check_f012_source_completion():
+    spec = importlib.util.spec_from_file_location('f012_source_completion', ROOT/'scripts/edge_girth_regular_graphs/registration.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.verify(ROOT)
+
 def main():
-    current = check_onan_source_completion()
+    current = check_f012_source_completion()
     print(json.dumps(current, sort_keys=True))
-    print("PASS: O'Nan source treatment; 101 fully treated originals and 4 remaining.")
-    print('Scope: publication integrity and acquired reviews; run the portable checker for a fresh replay.')
+    print('PASS: F012 source treatment; 102 fully treated originals and 3 remaining.')
+    print('Scope: exact new exports and acquired reviews; inherited Git identities, not a fresh whole-corpus replay.')
 
 if __name__=='__main__':
     main()

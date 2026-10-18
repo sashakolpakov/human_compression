@@ -1,0 +1,42 @@
+"""Execute one bounded command with complete immutable-input/output receipts."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse, datetime, hashlib, json, os, subprocess, time
+
+def pin(path):
+    path=Path(path).resolve(); data=path.read_bytes()
+    return dict(path=str(path),bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
+
+def execute(command,out,inputs,seconds,expected_report=None):
+    out=Path(out);out.mkdir()
+    before=[pin(p) for p in inputs]
+    started=datetime.datetime.now(datetime.timezone.utc).isoformat(); start=time.monotonic()
+    (out/'active.json').write_text(json.dumps(dict(status='RUNNING',command=command,pins=before,started_utc=started,timeout_seconds=seconds),indent=2)+'\n')
+    environment=os.environ.copy();environment.pop('PYTHONOPTIMIZE',None)
+    environment['ASAN_OPTIONS']='detect_leaks=0:halt_on_error=1'
+    environment['UBSAN_OPTIONS']='halt_on_error=1:print_stacktrace=1'
+    try:
+        with (out/'stdout').open('wb') as stdout,(out/'stderr').open('wb') as stderr:
+            result=subprocess.run(command,stdout=stdout,stderr=stderr,timeout=seconds,env=environment)
+        code=result.returncode; timeout=False
+    except subprocess.TimeoutExpired:
+        code=None;timeout=True
+    unchanged=[pin(p) for p in inputs]==before
+    report=Path(expected_report) if expected_report else None
+    report_ok=report is None or report.is_file() and str(json.loads(report.read_text()).get('status','')).startswith('PASS')
+    okay=code==0 and unchanged and not (out/'stderr').stat().st_size and report_ok
+    outputs=[out/'stdout',out/'stderr']+([report] if report and report.exists() else [])
+    receipt=dict(status='PASS_CLOSED_EXECUTION' if okay else 'TIMEOUT_NO_CERTIFICATE' if timeout else 'FAILED_NO_CERTIFICATE',command=command,returncode=code,timeout=timeout,seconds=time.monotonic()-start,started_utc=started,terminal_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),pins=before,inputs_unchanged=unchanged,outputs=[pin(p) for p in outputs])
+    (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+    (out/'active.json').write_text(json.dumps(dict(status='TERMINAL',receipt=pin(out/'receipt.json')),indent=2)+'\n')
+    if not okay:raise RuntimeError('closed execution failed: '+str(out/'receipt.json'))
+    return receipt
+
+if __name__=='__main__':
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--seconds',type=int,required=True);p.add_argument('--pin',action='append',default=[]);p.add_argument('--report',type=Path);p.add_argument('command',nargs=argparse.REMAINDER);a=p.parse_args()
+    command=a.command[1:] if a.command[:1]==['--'] else a.command
+    if not command:raise RuntimeError('missing command')
+    result=execute(command,a.out,[Path(__file__),*a.pin],a.seconds,a.report)
+    print(json.dumps(result))

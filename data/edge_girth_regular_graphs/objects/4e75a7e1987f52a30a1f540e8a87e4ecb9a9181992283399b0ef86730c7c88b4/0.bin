@@ -1,0 +1,116 @@
+"""Fixed acquired host: original CNF, required hexagon gates, then literal cuts."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+def pin(path):
+    path = Path(path)
+    raw = path.read_bytes()
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def acquire(ref):
+    need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}, 'exact file pin')
+    need(pin(ref['path']) == ref, 'exact input '+ref['path'])
+    return Path(ref['path']).read_bytes()
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    obj = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(obj)
+    return obj
+
+
+class RequiredHexagonFormula:
+    """The same three-method CNF provider for unchanged producer and verifier."""
+    def __init__(self, case_ref):
+        self.case_ref = case_ref
+        self.case = json.loads(acquire(case_ref))
+        names = ('model', 'catalogue_program', 'cnf_program',
+                 'sizing_result', 'sizing_acceptance')
+        need(set(self.case) == {'schema', *names}
+             and self.case['schema'] == 'F012_FIXED_REQUIRED_HEXAGON_FORMULA_V1',
+             'fixed formula case')
+        raw = {name: acquire(self.case[name]) for name in names}
+        need(Path(self.case['catalogue_program']['path']) == HERE/'required_hexagon_catalogue.py'
+             and Path(self.case['cnf_program']['path']) == HERE.parent/'graph_completion_certificate/cnf.py',
+             'acquired catalogue and original CNF source paths')
+        self.acceptance = json.loads(raw['sizing_acceptance'])
+        self.sizing = json.loads(raw['sizing_result'])
+        need(self.acceptance['status'] == 'ROOT_ACCEPTED_FIXED_REQUIRED_HEXAGON_SIZING_AND_SAVED_CUTS'
+             and self.acceptance['result'] == self.case['sizing_result']
+             and self.sizing['status'] == 'PASS_FIXED_REQUIRED_HEXAGON_SIZING_AND_CUT_VALIDATION',
+             'accepted exact sizing result')
+        for name in ('model', 'catalogue_program', 'cnf_program'):
+            need(self.sizing['inputs'][name] == self.case[name], 'sizing source/model join '+name)
+        self.H = load('fixed_required_cycle_catalogue', Path(self.case['catalogue_program']['path']))
+        self.C = self.H.C
+        self.cycle_edges = self.C.cycle_edges
+        self.witness_edges = self.C.witness_edges
+        self.model = Path(self.case['model']['path'])
+        self.n, self.base, self.allowed = self.H.read_model(self.model, 4096)
+        need((self.n, len(self.base), len(self.allowed)) == (54, 62, 260), 'fixed three-colour host')
+        self.seed_ref = self.sizing['inputs']['cuts']
+        raw_seeds = acquire(self.seed_ref)
+        saved = self.H.validate_cuts(Path(self.seed_ref['path']), self.n, self.base, self.allowed,
+                                    maximum_bytes=3*2**20, maximum_records=40000)
+        need(saved == self.sizing['saved_cuts'] == self.acceptance['saved_cuts']
+             and saved['validated_records'] == saved['unique_clauses'] == 37603,
+             'all accepted saved cuts revalidated, none discarded')
+        self.seeds = [json.loads(line) for line in raw_seeds.splitlines()]
+        self.cat = self.H.catalogue(self.n, self.base, self.allowed,
+                                   self.sizing['required_edges'], self.sizing['work_bounds'])
+        need(self.cat['counts'] == self.sizing['catalogue'] == self.acceptance['catalogue'],
+             'exact accepted catalogue counts')
+        for name in ('cycle_catalogue_sha256', 'term_catalogue_sha256'):
+            need(self.cat[name] == self.sizing[name] == self.acceptance[name], 'exact catalogue '+name)
+
+    def build(self, n, base, allowed, degree=None, cuts=()):
+        need((n, frozenset(base), frozenset(allowed), degree) ==
+             (self.n, self.base, self.allowed, 4), 'unchanged exact graph domain')
+        cuts = list(cuts)
+        need(cuts[:len(self.seeds)] == self.seeds, 'entire acquired seed sequence retained first')
+        f, variables = self.C.build(n, base, allowed, degree=degree, cuts=())
+        before = f.variables, len(f.clauses)
+        self.H.append_existence(f, variables, self.cat)
+        counts = self.cat['counts']
+        need((f.variables-before[0], len(f.clauses)-before[1]) ==
+             (counts['additional_gate_variables'], counts['additional_total_clauses']),
+             'exact signed-gate and eight-existence-clause size')
+        seen = set()
+        for witness in cuts:
+            edges = self.C.witness_edges(witness, n, self.base, self.allowed)
+            need(edges not in seen, 'distinct valid literal cut sequence')
+            seen.add(edges)
+            f.clause([-variables[e] for e in edges])
+        return f, variables
+
+    def unchanged(self):
+        acquire(self.case_ref)
+        for name, ref in self.case.items():
+            if name != 'schema':
+                acquire(ref)
+        acquire(self.seed_ref)
+
+    def context(self):
+        return dict(formula_case=self.case_ref, model=self.case['model'],
+                    sizing_acceptance=self.case['sizing_acceptance'],
+                    seeds=self.seed_ref, catalogue=self.cat['counts'],
+                    cycle_catalogue_sha256=self.cat['cycle_catalogue_sha256'],
+                    term_catalogue_sha256=self.cat['term_catalogue_sha256'],
+                    formula_order='original base without cuts; shared hexagon gates and eight OR clauses; literal cuts',
+                    exclusions=0, whole_original_credit=0)

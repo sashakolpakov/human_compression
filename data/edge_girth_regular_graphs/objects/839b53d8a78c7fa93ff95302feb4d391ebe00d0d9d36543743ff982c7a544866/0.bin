@@ -1,0 +1,27 @@
+"""Necessary exterior-degree inventory only; no graph exclusions."""
+import sys
+if sys.flags.optimize: raise RuntimeError('normal Python required')
+from pathlib import Path
+import itertools,json
+shapes={'matching':[(0,1),(2,3),(4,5)],'path_and_edge':[(0,1),(1,2),(3,4)],'path':[(0,1),(1,2),(2,3)],'star':[(0,1),(0,2),(0,3)]}
+results={}
+for name,edges in shapes.items():
+ h=[0]*10
+ for u,v in edges:h[u]+=1;h[v]+=1
+ k=[4-d for d in h];ranges=[range(max(0,d-3),min(3,d)+1)for d in k]
+ profiles=set();vectors=0;deltas=set();size_patterns=set()
+ for a in itertools.product(*ranges):
+  if sum(a)!=17:continue
+  b=[d-c for d,c in zip(k,a)]
+  if any(a[u]+a[v]>3 or b[u]+b[v]>3 for u,v in edges):continue
+  left=sum(c*(c-1)//2 for c in a);right=sum(c*(c-1)//2 for c in b)
+  assert left-right==12-sum(d*d for d in h)//2-sum(d*c for d,c in zip(h,a))
+  profiles.add((left,right));deltas.add(left-right);vectors+=1;size_patterns.add(tuple(sorted(a)))
+ results[name]=dict(edges=edges,exterior_degrees=h,old_degrees=k,necessary_degree_vectors=vectors,profile_pairs=sorted(profiles),profile_differences=sorted(deltas),left_size_patterns=[list(x)for x in sorted(size_patterns)])
+assert all(x==0 for x in results['matching']['profile_differences'])
+assert all(abs(x)<=1 for x in results['path_and_edge']['profile_differences'])
+assert all(abs(x)<=2 for x in results['path']['profile_differences'])
+assert all(abs(x)<=3 for x in results['star']['profile_differences'])
+report=dict(status='PASS_NECESSARY_DEGREE_INVENTORY_NOT_GRAPH_EXCLUSION',shapes=results,all_profile_pairs=sorted(set(tuple(p)for r in results.values()for p in r['profile_pairs'])))
+Path('boundary_profiles01.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:{q:v[q] for q in ['necessary_degree_vectors','profile_differences']} for k,v in results.items()}))

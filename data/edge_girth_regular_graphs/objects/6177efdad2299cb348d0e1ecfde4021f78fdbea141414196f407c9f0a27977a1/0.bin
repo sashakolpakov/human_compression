@@ -1,0 +1,15 @@
+"""Complete injections into the required final size multiset; no pruning formula used."""
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,json,functools
+p=argparse.ArgumentParser();p.add_argument('--actual',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();d=json.loads(a.actual.read_text());checks=0;accepted=0
+for alpha,n1,n2,n3,got in d['rows']:
+ current=tuple([3]*n3+[2]*n2+[1]*n1);final=tuple([1]*alpha+[2]*(7-2*alpha)+[3]*alpha)
+ @functools.lru_cache(None)
+ def inject(at,remaining):
+  if at==len(current):return True
+  return any(current[at]<=value and inject(at+1,remaining[:j]+remaining[j+1:])for j,value in enumerate(remaining))
+ expected=inject(0,final);assert bool(got)==expected,(alpha,n1,n2,n3,got,expected);checks+=1;accepted+=got
+assert checks==d['cases']
+r={'status':'PASS_INDEPENDENT_SIZE_EMBEDDINGS','cases':checks,'possible_partial_profiles':accepted,'method':'Inject current parts into seven final part sizes, allowing increases; exact literal source guard is compiled separately.'};a.out.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r))

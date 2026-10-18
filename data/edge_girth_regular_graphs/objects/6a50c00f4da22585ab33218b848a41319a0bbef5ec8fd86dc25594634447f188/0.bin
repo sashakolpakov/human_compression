@@ -1,0 +1,61 @@
+"""Exact degree-six lower bound using distance layers and square moments."""
+import sys
+if sys.flags.optimize:raise RuntimeError('Optimized Python is not accepted')
+import argparse,hashlib,importlib.util,json,os,subprocess,time
+from pathlib import Path
+
+def need(v,m):
+    if not v:raise RuntimeError(m)
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def put(p,x):p.write_text(json.dumps(x,indent=2)+'\n')
+def shape(rows):return [{k:v for k,v in r.items()if k!='seconds'}for r in rows]
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--study',type=Path,required=True);ap.add_argument('--out',type=Path,required=True);args=ap.parse_args();S=args.study.resolve();W=Path(__file__).resolve().parent;O=args.out.resolve();need(not O.exists(),'fresh output');O.mkdir(parents=True)
+    for rec in json.loads((W/'dependencies.json').read_text()):
+        p=Path(rec['path']);p=p if p.is_absolute()else S/p;need(p.stat().st_size==rec['bytes']and sha(p)==rec['sha256'],'acquired binding '+str(p))
+    if(W/'manifest.json').exists():
+        for rec in json.loads((W/'manifest.json').read_text())['exports']:
+            p=W/rec['path'];need(p.stat().st_size==rec['bytes']and sha(p)==rec['sha256'],'author binding '+str(p))
+    inventory=S/'corpus106_F012_order18_v1/check_order18.py';need(sha(inventory)=='efdea9664f513efc1ce5c8488d6b3ed01de4a67286870be8545d18a3f39ac519','literal acquired inventory');spec=importlib.util.spec_from_file_location('inventory',inventory);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+    source=(W/'cycle_search_moments.cpp').read_text();start=source.index('  // At a closed cycle vertex,');end=source.index('  if(!active)',start)
+    inherited=source[:start]+source[end:];need(inherited==(S/'corpus106_F012_order20_v1/cycle_search_positive.cpp').read_text().replace('15<=n&&n<=20','15<=n&&n<=22'),'exact new moment block and order limit are sole changes')
+    env=os.environ.copy();env.pop('PYTHONOPTIMIZE',None);receipts=[]
+    def run(name,cmd,data=None,cap=240):
+        begin=time.monotonic()
+        try:r=subprocess.run(cmd,input=data,cwd=O,env=env,capture_output=True,text=True,timeout=cap)
+        except subprocess.TimeoutExpired as e:
+            for suffix,raw in [('stdout',e.stdout),('stderr',e.stderr)]:
+                raw=raw or b'';(O/(name+'.'+suffix)).write_bytes(raw.encode()if isinstance(raw,str)else raw)
+            receipts.append({'name':name,'status':'TIMEOUT_NO_CERTIFICATE','cap':cap});put(O/'receipts.json',receipts);raise
+        (O/(name+'.stdout')).write_text(r.stdout);(O/(name+'.stderr')).write_text(r.stderr);receipts.append({'name':name,'status':'TERMINAL','returncode':r.returncode,'seconds':time.monotonic()-begin,'command':list(map(str,cmd))});put(O/'receipts.json',receipts);return r
+    r=run('interval_controls',[sys.executable,str(W/'interval_controls.py')],cap=60);need(r.returncode==0 and not r.stderr,'independent complete moment controls')
+    # Exact integer implications of the written distance-layer lemma.
+    pairs=[(n,b)for n in range(12,23)for b in range(1,n-6)if b*(13+b-n)<=30 and 150<=11*b];need(pairs==[],'no-five-cycle inequalities exclude all n<=22')
+    put(O/'layer_arithmetic.json',{'status':'PASS','orders':list(range(12,23)),'feasible_pairs':pairs,'scope':'integer consequences only; proof of the layer identities is written'})
+    for mode,flags in [('ordinary',['-O2']),('sanitized',['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer'])]:
+        r=run('compile_'+mode,['clang++','-std=c++17',*flags,'-Wall','-Wextra','-pedantic',str(W/'cycle_search_moments.cpp'),'-o',str(O/mode)],cap=30);need(r.returncode==0 and not r.stderr,'clean compiler')
+    expected=json.loads((W/'expected.json').read_text());report={'status':'INCOMPLETE','orders':{},'whole_original_credit':0,'new_question_credit':0,'new_Lean':0}
+    for n in [20,22]:
+        cases,labelled=m.class_cases(n);e=expected[str(n)];need((len(cases),labelled)==(e['patterns'],e['labelled']),'complete size inventory');data=''.join(' '.join(map(str,[j,n,1,6,*a,*b,z,60]))+'\n'for j,(a,b,z)in enumerate(cases));(O/f'order{n}.input').write_text(data);runs=[]
+        for mode in ['ordinary','sanitized']:
+            r=run(f'order{n}_{mode}',[str(O/mode)],data);need(r.returncode==0 and not r.stderr,'clean finite completion');rows=[json.loads(l)for l in r.stdout.splitlines()];need(len(rows)==len(cases),'every case returned')
+            for j,row in enumerate(rows):need(row['case']==j and row['n']==n and row['status']=='COMPLETE'and row['positives']==0 and row['examples']==[],'complete zero result')
+            need(sum(row['nodes']for row in rows)==e['nodes'],'deterministic node count');runs.append(rows);print('COMPLETE',n,mode,e['nodes'],flush=True)
+        need(shape(runs[0])==shape(runs[1]),'complete sanitizer agreement');report['orders'][n]=dict(e,sanitizer_agreement=True);put(O/'report.json',report)
+    old=S/'corpus106_F012_order20_v1/evidence';data=(old/'order20.input').read_text();prior=[json.loads(l)for l in(old/'order20_ordinary.stdout').read_text().splitlines()];positives=[]
+    for mode in ['ordinary','sanitized']:
+        r=run('positive20_'+mode,[str(O/mode)],data);need(r.returncode==0 and not r.stderr,'positive comparison process');rows=[json.loads(l)for l in r.stdout.splitlines()];need(len(rows)==55 and all(row['status']=='COMPLETE'for row in rows),'complete positive comparison');need([row['examples']for row in rows]==[row['examples']for row in prior],'every86acquired output preserved');need(sum(row['positives']for row in rows)==86,'positive total');positives.append(rows)
+    need(shape(positives[0])==shape(positives[1]),'positive sanitizer agreement')
+    cases,_=m.class_cases(22);a,b,z=cases[27];base=[27,22,1,6,*a,*b,z,60];bad=[]
+    for label,pos,value in [('unsupported_order',1,23),('bad_class',4,0),('negative_cap',15,-1)]:
+        v=base[:];v[pos]=value;r=run(label,[str(O/'ordinary')],' '.join(map(str,v))+'\n',cap=5);need(r.returncode!=0,'input rejection');bad.append(label)
+    base[-1]=1e-9;r=run('timeout_control',[str(O/'ordinary')],' '.join(map(str,base))+'\n',cap=5);need(r.returncode==0 and json.loads(r.stdout)['status']=='TIMEOUT','partial work not complete')
+    guards=[]
+    for script in ['check.py','interval_controls.py']:
+        for mode in ['argument','environment']:
+            ee=env.copy();cmd=[sys.executable]
+            if mode=='argument':cmd+=['-O']
+            else:ee['PYTHONOPTIMIZE']='1'
+            cmd+=[str(W/script)];r=subprocess.run(cmd,env=ee,capture_output=True,text=True,timeout=5);(O/(script+'_'+mode+'.stderr')).write_text(r.stderr);need(r.returncode!=0 and 'Optimized Python is not accepted'in r.stderr,'optimization guard');guards.append([script,mode])
+    report.update(status='PASS_LOWER_BOUND_FOR_SIX_SQUARES',lower_bound=[6,4,6,24],new_lower_rows=1,new_exact_count_rows=0,verified_prior_positive_outputs=86,positive_target_nodes=sum(r['nodes']for r in positives[0]),negative_controls=bad,optimization_controls=guards,timeout_status='TIMEOUT_NOT_COMPLETE',moment_interval_queries=547088);put(O/'report.json',report);print('PASS',json.dumps(report),flush=True)
+if __name__=='__main__':main()

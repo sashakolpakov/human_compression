@@ -1,0 +1,109 @@
+#ifndef F012_LITERAL_GRAPH_H
+#define F012_LITERAL_GRAPH_H
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <numeric>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
+extern "C" {
+#include <nauty/nauty.h>
+}
+using U=std::uint64_t;
+using Graph=std::vector<U>;
+inline void require(bool value,const std::string& message){if(!value)throw std::runtime_error(message);}
+inline int weight(U x){return __builtin_popcountll(x);}
+inline int first(U x){require(x!=0,"nonempty bitset");return __builtin_ctzll(x);}
+inline void add_edge(Graph&g,int u,int v){g[u]|=U(1)<<v;g[v]|=U(1)<<u;}
+inline void remove_edge(Graph&g,int u,int v){g[u]&=~(U(1)<<v);g[v]&=~(U(1)<<u);}
+inline bool distance_at_least(const Graph&g,int u,int v,int lower){
+ U seen=U(1)<<u,front=seen;
+ for(int d=0;d<lower;d++){
+  if((front>>v)&1)return false;
+  U next=0;while(front){int w=first(front);front&=front-1;next|=g[w];}
+  front=next&~seen;seen|=front;
+ }
+ return true;
+}
+inline void validate_graph(const Graph&g){
+ const int n=g.size();require(n>0&&n<64,"supported graph order");
+ for(int u=0;u<n;u++){
+  require(!(g[u]>>n)&&!((g[u]>>u)&1)&&weight(g[u])<=4,"simple quartic partial graph");
+  U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;require((g[v]>>u)&1,"symmetric adjacency");}
+ }
+}
+inline bool has_short_cycle(const Graph&g){
+ for(int root=0;root<(int)g.size();root++){
+  int distance[64],parent[64],queue[64],head=0,tail=0;std::fill(distance,distance+64,-1);std::fill(parent,parent+64,-1);
+  queue[tail++]=root;distance[root]=0;
+  while(head<tail){int u=queue[head++];if(distance[u]>2)continue;U bits=g[u];
+   while(bits){int v=first(bits);bits&=bits-1;if(v==parent[u])continue;
+    if(distance[v]<0){distance[v]=distance[u]+1;parent[v]=u;queue[tail++]=v;}
+    else if(distance[u]+distance[v]+1<=5)return true;
+   }
+  }
+ }
+ return false;
+}
+inline Graph moore_trees(){
+ Graph g(26);add_edge(g,0,13);
+ for(int root:{0,13})for(int i=0;i<3;i++){
+  add_edge(g,root,root+1+i);for(int j=0;j<3;j++)add_edge(g,root+1+i,root+4+3*i+j);
+ }
+ return g;
+}
+inline void validate_root(const Graph&g,int lambda){
+ require(g.size()==26,"26 Moore vertices");validate_graph(g);Graph tree=moore_trees();int count=0;
+ for(int u=0;u<26;u++){
+  require((g[u]&tree[u])==tree[u],"literal Moore trees");U extra=g[u]&~tree[u];
+  while(extra){int v=first(extra);extra&=extra-1;
+   require((u>=4&&u<13&&v>=17&&v<26)||(v>=4&&v<13&&u>=17&&u<26),"only opposite-leaf edges");
+   if(u<v)count++;
+  }
+ }
+ require(count==lambda&&!has_short_cycle(g),"root-edge hexagon count and girth");
+}
+struct Canonical {std::string key;std::vector<int> lab;};
+inline Canonical propose_canonical_map(const Graph&g,bool rooted){
+ int n=g.size();require(n>0&&n<64,"one-word nauty range");
+ graph ng[64],canon[64];int lab[64],ptn[64],orbits[64];EMPTYGRAPH(ng,1,n);
+ for(int u=0;u<n;u++){U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;ADDELEMENT(GRAPHROW(ng,u,1),v);}}
+ std::iota(lab,lab+n,0);std::fill(ptn,ptn+n,1);ptn[n-1]=0;
+ if(rooted){require(n==26,"rooted order");lab[0]=0;lab[1]=13;int at=2;for(int v=0;v<n;v++)if(v!=0&&v!=13)lab[at++]=v;ptn[1]=0;}
+ DEFAULTOPTIONS_GRAPH(options);options.getcanon=TRUE;options.defaultptn=FALSE;statsblk stats;
+ densenauty(ng,lab,ptn,orbits,&options,&stats,1,n,canon);require(stats.errstatus==0,"map proposer returned error");
+ Canonical result;result.key=std::string(1,char(n))+std::string(reinterpret_cast<char*>(canon),sizeof(graph)*n);result.lab.assign(lab,lab+n);return result;
+}
+inline void check_literal_map(const Graph&from,const Graph&to,const std::vector<int>&own,const std::vector<int>&target,bool rooted){
+ int n=from.size();require((int)to.size()==n&&(int)own.size()==n&&(int)target.size()==n,"map dimensions");
+ std::array<int,64> map{};U used_from=0,used_to=0;
+ for(int i=0;i<n;i++){
+  int u=own[i],v=target[i];require(u>=0&&u<n&&v>=0&&v<n,"map range");
+  require(!((used_from>>u)&1)&&!((used_to>>v)&1),"map bijection");used_from|=U(1)<<u;used_to|=U(1)<<v;map[u]=v;
+ }
+ if(rooted)require((map[0]==0&&map[13]==13)||(map[0]==13&&map[13]==0),"literal unordered root edge");
+ for(int u=0;u<n;u++){U image=0,bits=from[u];while(bits){int v=first(bits);bits&=bits-1;image|=U(1)<<map[v];}require(image==to[map[u]],"literal adjacency image");}
+}
+struct RepresentativeIndex {
+ bool rooted;std::vector<Graph> graphs;std::vector<Canonical> canonical;std::unordered_map<std::string,std::size_t> lookup;std::vector<U> hits;
+ RepresentativeIndex(const std::string&file,bool root):rooted(root){
+  std::ifstream in(file);require(bool(in),"representative input");std::size_t count;require(bool(in>>count)&&count>0&&count<100000,"representative count");
+  for(std::size_t i=0;i<count;i++){
+   int n;require(bool(in>>n)&&n>0&&n<64,"representative order");Graph g(n);for(U&row:g)require(bool(in>>row),"representative adjacency row");
+   validate_graph(g);if(rooted)validate_root(g,20);else require(!has_short_cycle(g),"joined representative girth");
+   auto c=propose_canonical_map(g,rooted);
+   require(lookup.emplace(c.key,i).second,"duplicate target key; supply distinct or safely enlarge targets");graphs.push_back(g);canonical.push_back(c);
+  }
+  std::string extra;require(!(in>>extra),"full representative file consumption");hits.resize(count);
+ }
+ std::size_t cover(const Graph&g){
+  auto c=propose_canonical_map(g,rooted);auto found=lookup.find(c.key);require(found!=lookup.end(),"uncovered graph: canonical key is only a lookup hint");
+  std::size_t index=found->second;check_literal_map(g,graphs[index],c.lab,canonical[index].lab,rooted);hits[index]++;return index;
+ }
+};
+#endif

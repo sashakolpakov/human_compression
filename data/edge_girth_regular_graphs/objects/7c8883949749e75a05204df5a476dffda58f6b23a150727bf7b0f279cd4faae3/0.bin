@@ -1,0 +1,123 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,hyperref}
+\setlength{\emergencystretch}{2em}
+\newtheorem{proposition}{Proposition}
+\title{Cycle counts and explicit symmetry witnesses}
+\author{Human Compression project: a component of the F012 recovery}
+\date{}
+\begin{document}\maketitle
+We verify the positive graph data needed for Tables 1--5 of Goedgebeur and
+Jooken, \emph{Exhaustive generation of edge-girth-regular graphs},
+arXiv:2401.08271v2, 25 June 2024. A graph with parameters
+$(n,k,g,\lambda)$ is simple, connected and $k$-regular, has girth $g$,
+and has exactly $\lambda$ cycles of length $g$ through each edge.
+Our conclusions in this component are existence and the stated symmetry
+properties. Minimum orders and uniqueness require separate exclusions.
+
+\begin{proposition}\label{bfs}
+Let $X$ be a finite simple connected graph, and let $g\geq3$ and
+$\lambda\geq1$. For an edge $e=uv$, let $d_e$ be the distance from $u$
+to $v$ in $X-e$, and let $p_e$ count shortest paths between them.
+Then $X$ has girth $g$ and exactly $\lambda$ girth cycles through every
+edge if and only if $d_e=g-1$ and $p_e=\lambda$ for every edge.
+\end{proposition}
+\begin{proof}
+Deleting $e$ gives a bijection between cycles containing $e$ and simple
+$u$--$v$ paths in $X-e$, with lengths differing by one. The shortest
+such path has length $d_e$. If $X$ has girth $g$ and positive prescribed
+cycle count at every edge, then every edge lies on a $g$-cycle and on
+no shorter cycle, so $d_e=g-1$. Conversely, these distances exclude
+every shorter cycle and give a $g$-cycle through each edge. At this
+distance every path counted is shortest and therefore simple. The
+bijection identifies $p_e$ with the required cycle count.
+\end{proof}
+
+Breadth-first search computes both quantities. Set the distance of $u$
+to zero and its count to one. On first reaching a vertex $y$ from $x$,
+give it distance $d(x)+1$ and the count at $x$. Every other predecessor
+at distance $d(y)-1$ contributes its count. All shorter layers are
+processed first. Induction on distance proves that this recurrence
+counts precisely the shortest paths. In particular, when $v$ is removed
+from the queue, all its shortest-path predecessors have contributed.
+It is also sufficient to stop when the first vertex at distance $g-1$
+is removed, since the entire preceding layer has then been processed.
+
+The implementation saturates counts at $\lambda+1$. For nonnegative
+integers, replacing every addition by its minimum with this cap gives
+the minimum of the exact sum and the cap. Induction proves this for
+the entire recurrence. Equality with $\lambda$ is therefore unchanged.
+The interface bounds $\lambda$ by $10^9$, so the sum of two capped
+counts is at most $2\cdot10^9+2$, within the unsigned 64-bit type used.
+Distances, graph orders and adjacency indices have separate range checks.
+
+\begin{proposition}\label{symmetry}
+Suppose explicit permutations of the vertices preserve adjacency.
+If their generated action has one orbit on vertices, the graph is
+vertex-transitive. If it has one orbit on ordered adjacent pairs, the
+graph is arc-transitive.
+\end{proposition}
+\begin{proof}
+Each bijective adjacency-preserving permutation is an automorphism,
+so the subgroup they generate lies in the automorphism group. A
+transitive subgroup makes the full group transitive. To compute its
+orbit, repeatedly apply the supplied permutations to the current set.
+The process terminates on a finite set. Inverses do not require an
+extra assumption: the inverse of a permutation of finite order is
+a nonnegative power of that permutation. Thus the computed closure is
+the group orbit, on vertices or on ordered adjacent pairs as appropriate.
+\end{proof}
+
+\paragraph{The acquired data and resulting upper bounds.}
+We retain all 731 graphs in the authors' two annotated graph6 files at
+repository commit
+\begin{center}\texttt{41022f4a3ad84e4502f8889c5b64132225411ca2}.\end{center}
+This December 2024 repository edition is later than the fixed manuscript;
+only the independently checked properties of its explicit graphs are used.
+The degree, connectedness, girth and edge count tests succeed on all
+731 graphs, covering 437889 edges. Five further positive witnesses were
+retrieved from the public House of Graphs database:
+\[
+\begin{array}{c|rrrr}
+\text{database identifier}&n&k&g&\lambda\\\hline
+51010&60&5&5&2\\
+51303&66&5&5&4\\
+51013&24&6&4&6\\
+51012&20&6&4&13\\
+1266&57&6&5&15
+\end{array}
+\]
+Each was checked both by Proposition~\ref{bfs} and by a separate direct
+enumeration of simple cycles. The stored adjacency list and graph6
+encoding agree exactly. The table register binds each of the 84 finite
+upper-bound entries in Tables 1--4 to a verified graph of precisely
+the claimed order. An infinite entry in the upper-bound column means
+that no finite upper bound is reported; it is not a nonexistence theorem.
+
+For each of the 118 parameter triples in Table 5, the retained graph
+has the claimed order and an explicit symmetry certificate satisfying
+Proposition~\ref{symmetry}. Candidate permutations were obtained with
+\texttt{pynauty}; the certificate checker directly verifies their
+bijections, adjacency preservation and orbits. It needs neither a
+complete automorphism group nor a claimed automorphism-group order.
+Consequently every reported minimum in that table is at least an
+established upper bound within its specified symmetry class.
+
+\paragraph{Verification and attribution.}
+The numerical data, constructions and reported upper bounds belong to
+their original providers. The deleted-edge breadth-first method is
+already described by Goedgebeur and Jooken. Our contribution here is the
+complete explicit correspondence, checked symmetry permutations and
+separately replayable certificates, with the mathematical limits stated.
+No priority claim is made for the elementary propositions.
+
+The C++ verifier was compared with a direct-cycle implementation on all
+164 connected regular labelled graphs of orders three through six,
+with both matching and altered parameters. Together with malformed and
+disconnected inputs this gave 332 controls, all agreeing. The full
+731-graph check also passed an address/undefined-behaviour sanitizer build.
+These controls supplement the proof and code audit. They are not a
+proof that a supplied graph list is exhaustive. This component establishes
+no uniqueness, no minimum order by itself, no open-conjecture solution,
+and no complete Lean formalization.
+\end{document}

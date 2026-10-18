@@ -1,0 +1,101 @@
+import argparse,json,hashlib,subprocess,shutil,os,sys
+from pathlib import Path
+from extension_model import *
+W=Path(__file__).resolve().parent
+def main():
+    ap=argparse.ArgumentParser();ap.add_argument('--out',type=Path,required=True);ap.add_argument('--render',action='store_true');a=ap.parse_args();O=a.out.resolve();O.mkdir(parents=True,exist_ok=False)
+    for r in json.loads((W/'bindings.json').read_text()):
+        b=Path(r['path']).read_bytes();need(len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256'],'source binding')
+    if(W/'manifest.json').exists():
+        for r in json.loads((W/'manifest.json').read_text())['exports']:
+            b=(W/r['path']).read_bytes();need(len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256'],'frozen export')
+    for P,bound in CAPACITY.items():need(capacity(P)==bound,'literal linear-partition capacity')
+    reps=[[set(s)for s in G]for G in json.loads((W/'representatives.json').read_text())];finals=[[set(s)for s in G]for G in json.loads((W/'final_representatives.json').read_text())];need(len(reps)==268 and len(finals)==12,'representative inventories')
+    for G in reps+finals:
+        n=len(G);need(all(u not in G[u]and all(type(v)is int and 0<=v<n and u in G[v]for v in G[u])for u in range(n)),'simple representative');need(not short_cycle(G)and all(len(s)<=4 for s in G),'representative girth and degrees')
+    T=tree()
+    for G in reps:
+        need(len(G)==26 and all(T[u]<=G[u]for u in range(26)),'literal labelled tree union');extra=[(u,v)for u in range(26)for v in G[u]-T[u]if u<v];need(len(extra)==22 and all(4<=u<13 and 17<=v<26 for u,v in extra),'literal representative cross edges')
+    stats=collections.Counter();covered=0
+    def read(f,key):
+        line=f.readline();need(bool(line),'missing certificate record');r=json.loads(line);need(all(r.get(k)==v for k,v in key.items()),'exact certificate order');return r
+    def mapped(G,r,targets,rooted):
+        ci=r['class']if rooted else r['final'];q=r['map'];n=len(G)
+        need(type(ci)is int and 0<=ci<len(targets)and len(targets[ci])==n and len(q)==n and all(type(x)is int for x in q)and set(q)==set(range(n)),'literal bijection')
+        if rooted:need({q[0],q[13]}=={0,13},'rooted bijection')
+        need(all((v in G[u])==(q[v]in targets[ci][q[u]])for u in range(n)for v in range(n)),'all literal adjacency entries')
+    allpatterns=patterns();need(len(allpatterns)==29,'twenty-nine deficit orbits')
+    with(W/'local_certificate.jsonl').open()as f:
+        for pi,(matrix,blocks)in enumerate(allpatterns):
+            def visit(G,prefix):
+                nonlocal covered
+                level=len(prefix)
+                for ix in range(len(blocks[level][2])):
+                    key=prefix+[ix];r=read(f,{'matrix':pi,'key':key});H=extend(G,blocks[level],ix);stats['prefixes']+=1
+                    if 'cycle'in r:need(valid_cycle(H,r['cycle']),'literal local short cycle');stats['short_prefixes']+=1;covered+=math.prod(len(b[2])for b in blocks[level+1:])
+                    elif level<8:need(r.get('branch')is True,'complete local branch');visit(H,key)
+                    else:
+                        covered+=1;stats['girth_balls']+=1
+                        if r.get('profile')is True:need(bad_profile(H),'coupled impossible profile');stats['profile_exclusions']+=1
+                        else:mapped(H,r,reps,True);stats['literal_maps']+=1
+            visit(tree(),[])
+        need(not f.read().strip(),'extra local record')
+    need(covered==sum(math.prod(len(b[2])for b in blocks)for _,blocks in allpatterns)==20588580,'complete normalized product')
+    side_good=[]
+    with(W/'sides_certificate.jsonl').open()as f:
+        for ci,G in enumerate(reps):
+            good=[[],[]]
+            for side in [0,1]:
+                for ix,groups in enumerate(side_parts(G,side)):
+                    r=read(f,{'class':ci,'side':side,'partition':ix});H=attach(G,groups);stats['side_partitions']+=1
+                    if 'cycle'in r:need(valid_cycle(H,r['cycle']),'literal side short cycle');stats['side_short']+=1
+                    elif 'mismatch'in r:
+                        i,j,actual,required=r['mismatch'];need(0<=i<j<3 and pair_counts(H,side,i,j)==(actual,required)and actual!=required,'unequal fixed side pair');stats['side_mismatches']+=1
+                    else:
+                        need(r.get('survives')is True and not short_cycle(H)and all(pair_counts(H,side,i,j)[0]==pair_counts(H,side,i,j)[1]for i,j in itertools.combinations(range(3),2)),'valid side survivor');good[side].append(groups);stats['side_survivors']+=1
+            side_good.append(good)
+        need(not f.read().strip(),'extra side record')
+    with(W/'joins_certificate.jsonl').open()as f:
+        for ci,G in enumerate(reps):
+            L,R=side_good[ci]
+            for li,left in enumerate(L):
+                for ri,right in enumerate(R):
+                    for ix,groups in enumerate(joins(left,right)):
+                        r=read(f,{'class':ci,'left':li,'right':ri,'join':ix});H=attach(G,groups);stats['joins']+=1;need(all(len(H[u])==4 for u in range(26)),'saturated original tree union')
+                        if 'cycle'in r:need(valid_cycle(H,r['cycle']),'literal join short cycle');stats['join_short']+=1
+                        else:mapped(H,r,finals,False);stats['join_maps']+=1
+        need(not f.read().strip(),'extra join record')
+    with(W/'boundary_certificate.jsonl').open()as f:
+        for ci,G in enumerate(finals):
+            r=read(f,{'class':ci})
+            if 'overflow'in r:
+                u,v,ps=r['overflow'];need(v in G[u]and len(ps)>=23 and len(set(map(tuple,ps)))==len(ps),'distinct excess paths')
+                for p in ps:need(len(p)==6 and p[0]==u and p[-1]==v and len(set(p))==6 and all(type(z)is int and 0<=z<len(G)for z in p)and all(b in G[a]for a,b in zip(p,p[1:])),'literal excess hexagon')
+                stats['overflow_classes']+=1;continue
+            need(r.get('extend')is True,'complete boundary branch');boundary=[u for u,s in enumerate(G)if len(s)<4];possible=[(u,v)for u,v in itertools.combinations(boundary,2)if distance(G,u,v)>=5]
+            for mask in range(1<<len(possible)):
+                r=read(f,{'class':ci,'mask':mask});H=[s.copy()for s in G];stats['boundary_masks']+=1
+                for i,(u,v)in enumerate(possible):
+                    if mask>>i&1:edge(H,u,v)
+                if 'degree'in r:need(len(H[r['degree']])>4,'boundary degree overflow');continue
+                if 'cycle'in r:need(valid_cycle(H,r['cycle']),'literal boundary short cycle');continue
+                need(r.get('branch')is True and all(len(s)<=4 for s in H),'complete boundary incidence branch');items=[u for u in boundary for _ in range(4-len(H[u]))]
+                for ix,groups in enumerate(partitions(items)):
+                    r=read(f,{'class':ci,'mask':mask,'partition':ix});J=attach_general(H,groups);stats['boundary_partitions']+=1;need(all(len(J[u])==4 for u in range(len(H))),'saturated previous partial graph')
+                    if 'cycle'in r:need(valid_cycle(J,r['cycle']),'literal last short cycle');stats['boundary_short']+=1
+                    else:
+                        u,v,count=r['fixed_count'];need(type(u)is int and 0<=u<len(J)and v in J[u]and saturated_two(J,u),'actual saturated second neighbourhood');need(len(paths(J,u,v,5))==count and count!=22,'exact immutable hexagon count');stats['fixed_count_mismatches']+=1
+        need(not f.read().strip(),'extra boundary record')
+    expected={'prefixes':885165,'short_prefixes':686089,'girth_balls':149724,'profile_exclusions':102360,'literal_maps':47364,'side_partitions':19672,'side_short':13523,'side_mismatches':6019,'side_survivors':130,'joins':128,'join_short':64,'join_maps':64,'boundary_masks':28,'boundary_partitions':956,'boundary_short':850,'fixed_count_mismatches':106,'overflow_classes':5};need(dict(stats)==expected,'literal complete inventory')
+    for mode in ['argument','environment']:
+        env=os.environ.copy();cmd=[sys.executable]
+        if mode=='argument':cmd.append('-O')
+        else:env['PYTHONOPTIMIZE']='1'
+        r=subprocess.run(cmd+[str(W/'check.py')],env=env,capture_output=True,text=True,timeout=5);need(r.returncode!=0 and 'Optimized Python is not accepted'in r.stderr,'optimization guard');(O/('guard_'+mode+'.stderr')).write_text(r.stderr)
+    if a.render:
+        shutil.copy2(W/'twenty_two.tex',O/'twenty_two.tex')
+        for i in [1,2]:
+            r=subprocess.run(['/opt/homebrew/bin/pdflatex','-interaction=nonstopmode','-halt-on-error','twenty_two.tex'],cwd=O,capture_output=True,text=True,timeout=30);(O/f'native{i}.stdout').write_text(r.stdout);(O/f'native{i}.stderr').write_text(r.stderr);need(r.returncode==0 and not r.stderr,'native build')
+        log=(O/'twenty_two.log').read_text();need('Overfull'not in log and 'LaTeX Warning:'not in log,'native content')
+    report={'status':'PASS_QUARTIC_TWENTY_TWO_LOCAL_EXCLUSION','deficit_matrices':1206,'matrix_orbits':29,'covered_normalized_patterns':covered,'certificate_counts':dict(stats),'literal_adjacency_checks':47364*26*26+64*30*30,'all_order_exclusion':True,'whole_original_credit':0,'new_question_credit':0,'new_Lean':0,'measurement':None};(O/'report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+if __name__=='__main__':main()

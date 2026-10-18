@@ -1,0 +1,48 @@
+from local_model import *
+CAPACITY={(1,1,1,1,1):4,(1,1,1,2):4,(1,2,2):3,(1,1,3):3,(2,3):1}
+def bad_profile(G):
+    L,R=tuple(profile(G,4)),tuple(profile(G,17))
+    need(L in CAPACITY and R in CAPACITY,'complete five-incidence profiles')
+    fL=(15-sum(x*x for x in L))//2;fR=(15-sum(x*x for x in R))//2
+    return fL>CAPACITY[R]or fR>CAPACITY[L]
+def capacity(P):
+    items=[i for i,d in enumerate(P)for _ in range(d)];answer=0
+    for blocks in partitions(items):
+        if any(len(B)>3 for B in blocks):continue
+        pairs=[tuple(sorted(p))for B in blocks for p in itertools.combinations(B,2)]
+        if len(pairs)==len(set(pairs)):answer=max(answer,len(pairs))
+    return answer
+def side_parts(G,side):
+    base=4 if side==0 else 17
+    items=[u for u in range(base,base+9)for _ in range(4-len(G[u]))]
+    need(len(items)==5,'five unfinished incidences per side');return partitions(items)
+def joins(L,R):
+    groups=[list(b)for b in L];used=set()
+    def go(i):
+        if i==len(R):yield tuple(tuple(b)for b in groups);return
+        for j in range(len(L)):
+            if j not in used and len(groups[j])+len(R[i])<=4:
+                used.add(j);groups[j].extend(R[i]);yield from go(i+1);del groups[j][-len(R[i]):];used.remove(j)
+        groups.append(list(R[i]));yield from go(i+1);groups.pop()
+    yield from go(0)
+def distance(G,u,v):
+    D={u:0};Q=[u]
+    for x in Q:
+        for y in sorted(G[x]):
+            if y not in D:D[y]=D[x]+1;Q.append(y)
+    return D.get(v,len(G)+1)
+def paths(G,u,v,length):
+    answer=[]
+    def go(p):
+        if len(p)==length:
+            if v in G[p[-1]]:answer.append(p+[v])
+            return
+        for w in sorted(G[p[-1]]):
+            if w!=v and w not in p:go(p+[w])
+    go([u]);return answer
+def attach_general(G,groups):
+    H=[s.copy()for s in G]+[set()for _ in groups]
+    for i,B in enumerate(groups):
+        for u in B:edge(H,len(G)+i,u)
+    return H
+def saturated_two(G,u):return all(len(G[v])==4 for v in {u}|G[u]|set().union(*(G[w]for w in G[u])))

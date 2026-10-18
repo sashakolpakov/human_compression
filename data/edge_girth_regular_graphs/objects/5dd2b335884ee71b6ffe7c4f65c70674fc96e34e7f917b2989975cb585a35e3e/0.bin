@@ -1,0 +1,237 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,longtable,array}
+\setlength{\emergencystretch}{2em}
+\newtheorem{lemma}{Lemma}\newtheorem{theorem}[lemma]{Theorem}
+\title{Seven pentagons through every edge}
+\author{Human Compression project}\date{}
+\begin{document}\maketitle
+We prove an all-order exclusion by reducing the required local
+neighbourhoods to a finite certificate. The reduction and every
+rejection criterion are proved below. The certificate contains explicit
+short cycles or literal graph isomorphisms; its verifier uses no graph
+isomorphism library and no unbounded search.
+
+\begin{theorem}
+There is no finite simple quartic graph of girth five with exactly
+seven pentagons through each edge. Thus $n(4,5,7)=\infty$.
+\end{theorem}
+
+Fix a hypothetical graph and a vertex $v$. Its four neighbours are
+$p_0,\ldots,p_3$, and their other neighbours form four disjoint
+triples $L_i$. No $L_i$ contains an edge. The induced graph $H$ on
+these twelve leaves has at most a matching between any two branches:
+two neighbours in one branch would create a quadrangle through its
+parent. Write $m_{ij}\le3$ for the matching size.
+Pentagons through $vp_i$ correspond bijectively to leaf edges incident
+with branch $i$, so
+\[
+ \sum_{j\ne i}m_{ij}=7,\qquad
+ \sum_{j\ne i}(3-m_{ij})=2.                         \tag{1}
+\]
+
+\begin{lemma}\label{inventory}
+Up to relabelling the branches and leaves, $H$ is included in the
+following complete inventory.
+\begin{enumerate}
+\item $m_{01}=m_{23}=1$ and the other four matchings are complete.
+Normalize the two single edges to join the first leaves in their
+respective branches. There remain $6^4=1296$ choices for the four
+complete matchings.
+\item $m_{01}=m_{23}=3$ and the other four matchings have size two.
+Normalize the two complete matchings to be identities. Each remaining
+matching has $3\cdot3\cdot2=18$ choices, giving $18^4=104976$ cases.
+\end{enumerate}
+Among these $106272$ labelled cases, $105176$ have a triangle or
+quadrangle. Each of the other $1096$ is isomorphic, fixing the root
+of the ball, to one of the eight representatives in the appendix.
+\end{lemma}
+\begin{proof}
+The numbers $3-m_{ij}$ define a loopless multigraph of degree two
+on four branch labels. It is either two disjoint double edges or a
+four-cycle. These give the two stated cases. The normalizations use
+independent relabellings within disjoint pairs of branches, so they
+lose no case. A matching of size two is specified by its unmatched
+leaf on each side and one of two bijections between the remaining
+leaves.
+
+The final finite assertion is certified in
+\texttt{root\_certificate.jsonl}. The verifier constructs each of
+the stated Cartesian products itself. For every case the certificate
+gives either three or four distinct vertices whose consecutive pairs
+are edges, or a permutation of all seventeen vertices fixing $v$.
+In the latter case every one of the $17^2$ ordered adjacency entries
+is compared with the specified representative. Every inventory key
+must occur exactly once. Thus the finite assertion requires neither
+the correctness of a canonical labelling program nor an isomorphism
+test beyond these literal comparisons. The representative counts are
+\[
+                   16,144,144,144,144,288,72,144.
+\]
+The generator used graph software to discover the maps; the verifier
+only checks their stated permutations.
+\end{proof}
+
+Let $B$ be the induced ball of radius two about $v$, including
+$H$, the four parents and the root. Each leaf $x$ has unfinished
+degree $s_x=4-\deg_B(x)=3-\deg_H(x)$. Equation (1) gives fourteen
+leaf edges, so
+\[
+                         \sum_{x\in H}s_x=36-28=8.       \tag{2}
+\]
+All unfinished edges go to vertices outside $B$. Let $Z$ consist
+of those outside vertices adjacent to at least one leaf. Regard the
+eight incidences in (2) as distinct objects, even when two belong to
+the same leaf. Their endpoints in $Z$ partition them into nonempty
+blocks. Each block has size at most four, contains no repeated leaf,
+and contains no two leaves at distance one or two in $B$. These
+conditions follow respectively from degree four, simplicity, and the
+absence of triangles and quadrangles.
+
+\begin{lemma}\label{boundary}
+All possible attachments from $B$ to $Z$ occur in the following finite
+enumeration. Order the eight incidences by leaf label. Process them
+in that order, placing the next incidence either in any existing block
+which obeys the preceding conditions, or in one new last block.
+For the eight representatives the enumeration has, respectively,
+\[
+                     354,436,195,631,253,127,69,141
+\]
+outputs, totalling $2206$.
+\end{lemma}
+\begin{proof}
+In any actual attachment, label the vertices of $Z$ in order of the
+first incidence reaching them. The resulting blocks are produced by
+the enumeration: their prefixes obey every required condition. If a
+leaf has two incidences, give these any fixed order. The procedure
+may list isomorphic attachments more than once, which affects neither
+coverage nor rejection. The stated finite counts are obtained by
+running exactly this recursion in the verifier. No bound on the total
+order of the original graph is used.
+\end{proof}
+
+For an enumerated attachment, let $B'$ contain $B$, the new vertices
+$Z$, and the attachment edges, but initially no edges inside $Z$.
+If $B'$ has a triangle or quadrangle it is impossible. Otherwise
+write $P_e$ for the number of pentagons in $B'$ through an edge $e$.
+These are counted exactly by the simple paths of length four between
+the endpoints of $e$. If any $P_e>7$, the attachment is impossible,
+since later edges cannot remove a cycle.
+
+Only the twelve edges from a parent to its leaves are needed for the
+remaining test. For such an edge $e=p_i x$, and a proposed edge
+$f=zz'$ inside $Z$, put
+\[
+ a_e(f)=
+ \boldsymbol1_{x\sim z}\,|N_{B'}(z')\cap(L_i\setminus\{x\})|
+ +\boldsymbol1_{x\sim z'}\,|N_{B'}(z)\cap(L_i\setminus\{x\})|.
+                                                               \tag{3}
+\]
+Let $\mathcal F$ consist of all unordered pairs of distinct vertices
+of $Z$ whose distance in $B'$ is at least four, and for which
+$a_e(f)\le7-P_e$ for every parent--leaf edge $e$.
+
+\begin{lemma}\label{capacity}
+For every parent--leaf edge in any completion,
+\[
+                   7\le P_e+\sum_{f\in\mathcal F}a_e(f).        \tag{4}
+\]
+Consequently failure of (4) for one edge excludes the attachment
+at every total order.
+\end{lemma}
+\begin{proof}
+Consider a pentagon through $p_i x$ and follow its remaining four
+edges from $x$ back to $p_i$. The last vertex before $p_i$ is the
+root or another leaf of $L_i$. In the first case the whole cycle
+lies in $B$. In the second, the two intermediate vertices either
+both lie in $B$, exactly one lies in $Z$, or both lie in $Z$.
+The first two possibilities are already counted in $P_e$. The
+last uses exactly one edge $zz'$ inside $Z$, and (3) counts its
+possible final leaves. No vertex outside $B\cup Z$ can occur in
+such a cycle, since both intermediate vertices are adjacent to a
+leaf. No such pentagon uses two edges inside $Z$.
+
+Every actual edge inside $Z$ has distance at least four between
+its endpoints in $B'$, or it would close a triangle or quadrangle.
+Its contribution to any one edge cannot exceed that edge's residual
+allowance $7-P_e$. It therefore belongs to $\mathcal F$. The
+actual number of pentagons through $e$ is $P_e$ plus the sum of
+(3) over the edges inside $Z$ which are present. Summing instead
+over all of $\mathcal F$ can only increase this number, proving
+(4). It is harmless that the pairs in $\mathcal F$ might not be
+simultaneously realizable or might violate other degree bounds.
+\end{proof}
+
+\begin{proof}[Proof of the theorem]
+Apply Lemmas~\ref{inventory} and \ref{boundary} to the hypothetical
+root ball and its actual outside neighbours. Every enumerated
+attachment is excluded by one of the three necessary tests just
+proved. The certificate gives the following complete accounting:
+\[
+\begin{array}{c|r|rrr}
+ \text{representative}&\text{attachments}&
+ \text{short cycle}& P_e>7 &\text{failure of (4)}\\\hline
+ 0&354&0&246&108\\
+ 1&436&40&310&86\\
+ 2&195&0&65&130\\
+ 3&631&0&407&224\\
+ 4&253&0&182&71\\
+ 5&127&0&5&122\\
+ 6&69&0&0&69\\
+ 7&141&0&0&141
+\end{array}
+\]
+For a short cycle the certificate supplies its vertices. For excess
+pentagons it supplies eight distinct simple paths of length four
+between the indicated edge's endpoints. For a failure of (4), the
+verifier recounts all such paths in $B'$, enumerates every pair in
+$Z$, computes (3), and checks the strict inequality for the indicated
+parent--leaf edge. The block sequence and its index are compared
+against the complete recursion of Lemma~\ref{boundary}, with neither
+missing nor extra records allowed. Thus every actual attachment is
+impossible, independently of any vertices farther from the root.
+This proves the asserted nonexistence.
+\end{proof}
+
+\paragraph{Attribution and scope.}
+Goedgebeur and Jooken, \emph{Exhaustive generation of edge-girth-regular
+graphs}, arXiv:2401.08271v2, Table 2 on physical page 18, record
+$n(4,5,7)\ge35$ and no finite upper bound. This theorem implies
+that bound and strengthens it to a global exclusion. It does not
+refute the source statement. The root-branch and matching-deficit
+argument is shared with the preceding proof for eight pentagons.
+The present additional work is the complete local inventory and the
+parent--leaf capacity certificate. Its finite casework, software
+verification and written reduction are explicit proof dependencies.
+We make no priority or named-conjecture claim, and assign no
+whole-original, Lean or numerical-compression credit to this component.
+
+\clearpage
+\appendix
+\section*{The eight leaf graphs}
+In this table the leaves are $0,\ldots,11$, with branches
+$\{0,1,2\}$, $\{3,4,5\}$, $\{6,7,8\}$ and $\{9,10,11\}$.
+Each row lists all fourteen edges. Add a parent for each branch and
+one root adjacent to the four parents to recover the seventeen-vertex
+ball used in the verifier. The stored vertex numbers shift each leaf
+label by five; the root is $0$ and the parents are $1,\ldots,4$.
+\small
+\begin{longtable}{r>{\raggedright\arraybackslash}p{0.91\textwidth}}
+0&$(0,4),(0,6),(0,11),(1,7),(1,9),(2,8),(2,10),
+ (3,6),(3,9),(4,7),(4,10),(5,8),(5,11),(8,9)$\\[1ex]
+1&$(0,3),(1,4),(1,7),(1,11),(2,5),(2,8),(2,9),
+ (3,8),(3,10),(4,9),(5,7),(6,9),(7,10),(8,11)$\\[1ex]
+2&$(0,3),(1,4),(1,7),(1,11),(2,5),(2,8),(2,9),
+ (3,6),(3,10),(4,9),(5,7),(6,9),(7,10),(8,11)$\\[1ex]
+3&$(0,3),(1,4),(1,7),(1,11),(2,5),(2,8),(2,9),
+ (3,7),(3,9),(4,6),(5,10),(6,9),(7,10),(8,11)$\\[1ex]
+4&$(0,3),(0,11),(1,4),(1,7),(2,5),(2,8),(2,10),
+ (3,10),(4,8),(4,9),(5,6),(6,9),(7,10),(8,11)$\\[1ex]
+5&$(0,3),(0,11),(1,4),(1,7),(2,5),(2,8),(2,10),
+ (3,7),(3,9),(4,11),(5,6),(6,9),(7,10),(8,11)$\\[1ex]
+6&$(0,3),(0,11),(1,4),(1,7),(2,5),(2,8),(2,9),
+ (3,6),(3,10),(4,11),(5,7),(6,9),(7,10),(8,11)$\\[1ex]
+7&$(0,3),(0,11),(1,4),(1,7),(2,5),(2,8),(2,9),
+ (3,7),(4,6),(4,11),(5,10),(6,9),(7,10),(8,11)$
+\end{longtable}
+\end{document}

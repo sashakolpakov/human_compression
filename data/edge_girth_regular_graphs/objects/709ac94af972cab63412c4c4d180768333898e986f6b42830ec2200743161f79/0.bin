@@ -1,0 +1,124 @@
+// Exhaust all first-side identifications, joins, and bounded second boundaries.
+#include "literal_graph.h"
+using namespace std;
+struct Side {
+ const Graph&g;vector<int>items,blocks;vector<vector<int>> good;array<unsigned,9>forbidden{};int target[3][3]{},used[3][3]{};U pairs=0,nodes=0,leaves=0;
+ Side(const Graph&graph):g(graph){}
+ static int pair_bit(int a,int b){if(a>b)swap(a,b);require(a!=b,"distinct side leaves");return a*(17-a)/2+b-a-1;}
+ void visit(size_t position){
+  nodes++;
+  if(position==items.size()){
+   leaves++;for(int i=0;i<3;i++)for(int j=i+1;j<3;j++)if(used[i][j]!=target[i][j])return;good.push_back(blocks);return;
+  }
+  int x=items[position],branch=x/3;
+  for(size_t at=0;at<blocks.size();at++){
+   unsigned mask=blocks[at];if(mask&forbidden[x])continue;U added=0;bool allowed=true;
+   for(int y=0;y<9;y++)if((mask>>y)&1){
+    int i=min(branch,y/3),j=max(branch,y/3);U bit=U(1)<<pair_bit(x,y);
+    if((pairs&bit)||used[i][j]>=target[i][j]){allowed=false;break;}added|=bit;
+   }
+   if(!allowed)continue;
+   blocks[at]|=1<<x;pairs|=added;for(int y=0;y<9;y++)if((mask>>y)&1)used[min(branch,y/3)][max(branch,y/3)]++;
+   visit(position+1);
+   for(int y=0;y<9;y++)if((mask>>y)&1)used[min(branch,y/3)][max(branch,y/3)]--;blocks[at]=mask;pairs&=~added;
+  }
+  blocks.push_back(1<<x);visit(position+1);blocks.pop_back();
+ }
+ void run(int side){
+  int base=side?17:4,opposite=side?4:17;items.clear();blocks.clear();good.clear();pairs=0;
+  for(int x=0;x<9;x++){
+   int deficit=4-weight(g[base+x]);require(deficit>=0&&deficit<=3,"side degree");
+   for(int k=0;k<deficit;k++)items.push_back(x);
+   forbidden[x]=0;for(int y=0;y<9;y++)if(x/3==y/3||(g[base+x]&g[base+y]))forbidden[x]|=1<<y;
+  }
+  require(items.size()==7,"all side incidences");
+  for(int i=0;i<3;i++)for(int j=i+1;j<3;j++){
+   int k=3-i-j,required=0,current=0;U other=U(511)<<opposite,li=U(7)<<(base+3*i),lj=U(7)<<(base+3*j);
+   for(int x=0;x<3;x++)required+=weight(g[base+3*k+x]&other);
+   for(U row:g)current+=weight(row&li)*weight(row&lj);
+   target[i][j]=required-current;used[i][j]=0;if(target[i][j]<0)return;
+  }
+  visit(0);require(blocks.empty()&&pairs==0,"side restoration");
+ }
+};
+struct Join {
+ const Graph&base;RepresentativeIndex&targets;vector<U>groups,right;int left_count;U used=0,products=0,shorts=0,covered=0,over_order=0;
+ Join(const Graph&g,RepresentativeIndex&t):base(g),targets(t){}
+ void visit(size_t at){
+  if(at==right.size()){
+   products++;if(26+groups.size()>35){over_order++;return;}
+   Graph g=base;g.resize(26+groups.size());for(size_t j=0;j<groups.size();j++){
+    U bits=groups[j];while(bits){int leaf=first(bits);bits&=bits-1;add_edge(g,leaf,26+j);}
+   }
+   if(has_short_cycle(g)){shorts++;return;}
+   for(int u=0;u<26;u++)require(weight(g[u])==4,"all Moore vertices saturated after joins");
+   targets.cover(g);covered++;return;
+  }
+  for(int j=0;j<left_count;j++)if(!((used>>j)&1)&&weight(groups[j]|right[at])<=4){
+   U old=groups[j];groups[j]|=right[at];used|=U(1)<<j;visit(at+1);used&=~(U(1)<<j);groups[j]=old;
+  }
+  groups.push_back(right[at]);visit(at+1);groups.pop_back();
+ }
+ void run(const vector<vector<int>>&left,const vector<vector<int>>&rparts){
+  for(const auto&l:left)for(const auto&r:rparts){
+   groups.clear();right.clear();for(int mask:l)groups.push_back(U(mask)<<4);for(int mask:r)right.push_back(U(mask)<<17);left_count=groups.size();used=0;visit(0);require(used==0&&groups.size()==l.size(),"join restoration");
+  }
+ }
+};
+struct Boundary {
+ Graph g;vector<pair<int,int>> possible;vector<int>items;int old_count;U nodes=0,masks=0,leaves=0,overflow=0,mismatch=0,capacity_rejections=0;chrono::steady_clock::time_point start=chrono::steady_clock::now();double cap;
+ explicit Boundary(double seconds):cap(seconds){}
+ void tick(){if((++nodes%100000)==0)require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");}
+ int paths(int u,int v,int remaining,U seen){
+  if(remaining==1)return (g[u]>>v)&1;
+  U bits=g[u]&~seen&~(U(1)<<v);int result=0;
+  while(bits){int w=first(bits);bits&=bits-1;result+=paths(w,v,remaining-1,seen|(U(1)<<w));if(result>20)return result;}
+  return result;
+ }
+ bool protected_vertex(int u){
+  U near=(U(1)<<u)|g[u],bits=g[u];while(bits){int v=first(bits);bits&=bits-1;near|=g[v];}
+  while(near){int v=first(near);near&=near-1;if(weight(g[v])!=4)return false;}return true;
+ }
+ void attach(size_t at){
+  tick();if(at==items.size()){
+   leaves++;for(int u=0;u<old_count;u++)require(weight(g[u])==4,"all old vertices saturated");
+   for(int u=0;u<(int)g.size();u++)if(protected_vertex(u)){
+    U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;if(paths(u,v,5,U(1)<<u)!=20){mismatch++;return;}}
+   }
+   throw runtime_error("UNEXCLUDED_BOUNDARY: no protected edge mismatch");
+  }
+  int u=items[at];
+  for(int v=old_count;v<(int)g.size();v++)if(weight(g[v])<4&&distance_at_least(g,u,v,5)){
+   add_edge(g,u,v);attach(at+1);remove_edge(g,u,v);
+  }
+  if(g.size()<35){int v=g.size();g.push_back(0);add_edge(g,u,v);attach(at+1);remove_edge(g,u,v);g.pop_back();}
+ }
+ void edges(size_t at){
+  tick();if(at==possible.size()){
+   masks++;items.clear();for(int u=0;u<old_count;u++)for(int k=weight(g[u]);k<4;k++)items.push_back(u);
+   if(items.size()>4*(35-g.size())){capacity_rejections++;return;}attach(0);return;
+  }
+  edges(at+1);auto [u,v]=possible[at];
+  if(weight(g[u])<4&&weight(g[v])<4&&distance_at_least(g,u,v,5)){add_edge(g,u,v);edges(at+1);remove_edge(g,u,v);}
+ }
+ void run(const Graph&base){
+  g=base;validate_graph(g);require(g.size()<=35&&!has_short_cycle(g),"bounded valid joined graph");old_count=g.size();possible.clear();
+  for(int u=0;u<old_count;u++){U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;if(u<v&&paths(u,v,5,U(1)<<u)>20){overflow++;return;}}}
+  for(int u=0;u<old_count;u++)if(weight(g[u])<4)for(int v=u+1;v<old_count;v++)if(weight(g[v])<4&&distance_at_least(g,u,v,5))possible.emplace_back(u,v);
+  edges(0);require(g==base,"boundary exact restoration");
+ }
+};
+int main(int argc,char**argv){
+ try{
+  require(argc==5,"usage check_extensions ROOT_REPS JOINED_REPS REPORT SECONDS");nauty_check(WORDSIZE,1,26,NAUTYVERSIONID);auto start=chrono::steady_clock::now();
+  RepresentativeIndex roots(argv[1],true),joined(argv[2],false);double cap=stod(argv[4]);
+  U side_nodes=0,side_leaves=0,side_parts=0,both_sides=0,products=0,shorts=0,covered=0,over_order=0;
+  for(const auto&g:roots.graphs){
+   require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");Side side(g);side.run(0);auto left=side.good;side.run(1);auto right=side.good;side_parts+=left.size()+right.size();side_nodes+=side.nodes;side_leaves+=side.leaves;
+   if(left.empty()||right.empty())continue;both_sides++;Join join(g,joined);join.run(left,right);products+=join.products;shorts+=join.shorts;covered+=join.covered;over_order+=join.over_order;
+  }
+  Boundary boundary(cap);for(size_t i=0;i<joined.graphs.size();i++)if(joined.hits[i])boundary.run(joined.graphs[i]);
+  U used=count_if(joined.hits.begin(),joined.hits.end(),[](U n){return n>0;});
+  ofstream out(argv[3]);require(bool(out),"extension report output");out<<"{\"status\":\"PASS_ALL_BOUNDED_EXTENSIONS_EXCLUDED\",\"root_representatives\":"<<roots.graphs.size()<<",\"both_sides_survive\":"<<both_sides<<",\"side_partitions\":"<<side_parts<<",\"side_nodes\":"<<side_nodes<<",\"side_leaves\":"<<side_leaves<<",\"join_products\":"<<products<<",\"join_short_cycles\":"<<shorts<<",\"join_over_order\":"<<over_order<<",\"join_literal_maps\":"<<covered<<",\"joined_targets_used\":"<<used<<",\"overflow_classes\":"<<boundary.overflow<<",\"boundary_masks\":"<<boundary.masks<<",\"boundary_capacity_rejections\":"<<boundary.capacity_rejections<<",\"girth_extensions\":"<<boundary.leaves<<",\"protected_mismatches\":"<<boundary.mismatch<<",\"boundary_nodes\":"<<boundary.nodes<<",\"survivors\":0,\"order_limit\":35,\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-start).count()<<"}\n";require(bool(out),"complete extension report write");return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}
+}

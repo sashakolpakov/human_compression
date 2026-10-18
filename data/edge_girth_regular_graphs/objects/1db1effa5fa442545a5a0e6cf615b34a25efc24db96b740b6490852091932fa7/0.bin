@@ -1,0 +1,60 @@
+// Complete local coverage under the acquired partial-matching forest theorem.
+// Every canonical reuse is checked by a literal adjacency-preserving bijection.
+#include "literal_graph.h"
+#include <set>
+#include <map>
+#include <functional>
+using namespace std;
+struct DynamicIndex {
+ vector<Graph> graphs;vector<Canonical> canonical;unordered_map<string,size_t> lookup;vector<U>hits;
+ void cover(const Graph&g){
+  auto c=propose_canonical_map(g,true);auto it=lookup.find(c.key);
+  if(it==lookup.end()){
+   require(graphs.size()<1000000,"bounded representative storage");validate_root(g,lambda);
+   size_t id=graphs.size();lookup.emplace(c.key,id);graphs.push_back(g);canonical.push_back(c);hits.push_back(0);it=lookup.find(c.key);
+  }
+  size_t id=it->second;check_literal_map(g,graphs[id],c.lab,canonical[id].lab,true);hits[id]++;
+ }
+ int lambda=13;
+ void write(const string&name){ofstream out(name);require(bool(out),"target output");out<<graphs.size()<<'\n';for(auto&g:graphs){out<<g.size();for(U row:g)out<<' '<<row;out<<'\n';}require(bool(out),"complete target write");}
+};
+array<int,9> canonical_matrix(array<int,9>a){
+ array<int,9> result=a;array<int,3> rows{0,1,2};
+ do{array<int,3> cols{0,1,2};do{array<int,9>b{},t{};for(int i=0;i<3;i++)for(int j=0;j<3;j++){b[3*i+j]=a[3*rows[i]+cols[j]];t[3*j+i]=b[3*i+j];}result=min(result,min(b,t));}while(next_permutation(cols.begin(),cols.end()));}while(next_permutation(rows.begin(),rows.end()));return result;
+}
+struct Block{int i,j,d,dir;vector<array<int,3>> choices;};
+struct Search {
+ Graph g;vector<Block>blocks;DynamicIndex targets;int delta;U prefixes=0,girth=0,profiles=0;double cap;chrono::steady_clock::time_point start=chrono::steady_clock::now();
+ void tick(){require(chrono::duration<double>(chrono::steady_clock::now()-start).count()<cap,"INCOMPLETE_DEADLINE");}
+ int profile(int base){int sum=0,squares=0;for(int u=base;u<base+9;u++){int d=4-weight(g[u]);require(d>=0&&d<=3,"leaf degree");sum+=d;squares+=d*d;}require(sum==delta,"exact side incidence count");return (3*delta-squares)/2;}
+ bool square(int a,int b){U bits=g[a];while(bits){int x=first(bits);bits&=bits-1;if(g[x]&g[b])return true;}return false;}
+ void visit(int depth){
+  if(depth==9){girth++;auto l=profile(4),r=profile(17);if(l!=r||l<7||l>10)return;profiles++;targets.cover(g);return;}
+  for(auto&q:blocks[depth].choices){if((++prefixes&65535)==0)tick();auto&b=blocks[depth];array<pair<int,int>,3>added;int n=0;bool good=true;
+   for(int x=0;x<3;x++)if(q[x]>=0){int u=4+3*b.i+x,v=17+3*b.j+q[x];if(square(u,v)){good=false;break;}add_edge(g,u,v);added[n++]={u,v};}
+   if(good)visit(depth+1);for(int i=0;i<n;i++)remove_edge(g,added[i].first,added[i].second);
+  }
+ }
+};
+int main(int argc,char**argv){try{
+ require(argc==5,"usage root_cover PATTERNS TARGETS REPORT SECONDS");nauty_check(WORDSIZE,1,26,NAUTYVERSIONID);Search search;search.cap=stod(argv[4]);
+ ifstream in(argv[1]);int lam,count;require(bool(in>>lam>>count)&&lam==13,"target lambda");int delta=27-lam;search.delta=delta;search.targets.lambda=lam;
+ std::set<array<int,9>>expected,actual;int literal=0;
+ for(int code=0;code<(1<<18);code++){int n=code,total=0;array<int,9>a;for(int&x:a){x=n%4;n/=4;total+=x;}if(total==delta){literal++;expected.insert(canonical_matrix(a));}}
+ require(count==(int)expected.size(),"all matrix orbits");U products=0;
+ for(int id=0;id<count;id++){
+  search.tick();int n;require(bool(in>>n)&&n==9,"nine blocks");array<int,9>matrix;matrix.fill(-1);array<int,6>component{0,1,2,3,4,5},indegree{};U product=1;
+  auto find=[&](int v){while(component[v]!=v)v=component[v];return v;};search.blocks.clear();
+  for(int a=0;a<9;a++){
+   Block b;require(bool(in>>b.i>>b.j>>b.d>>b.dir),"full block record");require(b.i>=0&&b.i<3&&b.j>=0&&b.j<3&&b.d>=0&&b.d<=3&&b.dir>=0&&b.dir<=2,"block bounds");require(matrix[3*b.i+b.j]<0,"one block each");matrix[3*b.i+b.j]=b.d;int k=3-b.d;
+   if(b.dir){require(k>0&&find(b.i)!=find(3+b.j),"positive matching forest");component[find(b.i)]=find(3+b.j);int child=b.dir==1?3+b.j:b.i;require(++indegree[child]==1,"rooted orientation: one parent per child");
+    for(int mask=0;mask<8;mask++)if(weight(mask)==k){array<int,3>q{-1,-1,-1};int at=0;for(int x=0;x<3;x++)if((mask>>x)&1){if(b.dir==1)q[x]=at;else q[at]=x;at++;}b.choices.push_back(q);}
+   }else for(int x=-1;x<3;x++)for(int y=-1;y<3;y++)for(int z=-1;z<3;z++){array<int,3>q{x,y,z};if(count_if(q.begin(),q.end(),[](int v){return v<0;})!=b.d)continue;bool good=true;for(int u=0;u<3;u++)for(int v=0;v<u;v++)if(q[u]>=0&&q[u]==q[v])good=false;if(good)b.choices.push_back(q);}
+   require(b.choices.size()==static_cast<size_t>(b.dir?(k==3?1:3):array<int,4>{6,18,9,1}[b.d]),"exact normalized block inventory");product*=b.choices.size();search.blocks.push_back(b);
+  }
+  require(accumulate(matrix.begin(),matrix.end(),0)==delta&&canonical_matrix(matrix)==matrix&&actual.insert(matrix).second,"exact representative");products+=product;search.g=moore_trees();search.visit(0);require(search.g==moore_trees(),"backtracking restoration");
+  cout<<"MATRIX "<<id<<" PREFIXES "<<search.prefixes<<" MAPS "<<search.profiles<<" TARGETS "<<search.targets.graphs.size()<<'\n'<<flush;
+ }
+ string extra;require(!(in>>extra)&&expected==actual,"complete matrix cover and input");require(products==19656978ULL,"accepted forest product inventory");search.targets.write(argv[2]);
+ ofstream out(argv[3]);out<<"{\"status\":\"PASS_COMPLETE_ROOT_COVERAGE\",\"lambda\":"<<lam<<",\"literal_matrices\":"<<literal<<",\"orbits\":"<<count<<",\"normalized_products\":"<<products<<",\"prefix_nodes\":"<<search.prefixes<<",\"girth_balls\":"<<search.girth<<",\"literal_maps\":"<<search.profiles<<",\"root_targets\":"<<search.targets.graphs.size()<<",\"seconds\":"<<chrono::duration<double>(chrono::steady_clock::now()-search.start).count()<<"}\n";require(bool(out),"complete report");return 0;
+ }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

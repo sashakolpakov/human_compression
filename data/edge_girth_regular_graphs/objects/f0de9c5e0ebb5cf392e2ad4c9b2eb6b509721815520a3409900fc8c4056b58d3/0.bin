@@ -1,0 +1,159 @@
+"""Exact acquired t6 domain, required-hexagon formula, then validated lazy cuts."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+HERE=Path(__file__).resolve().parent
+spec=importlib.util.spec_from_file_location('acquired_formula_file_tools',HERE/'required_hexagon_formula.py')
+U=importlib.util.module_from_spec(spec);spec.loader.exec_module(U)
+need,pin,acquire,load=U.need,U.pin,U.acquire,U.load
+NAMES=('program','provider','file_tools','catalogue_program','fixed_predicates','literal_tools',
+       'cnf_program','setup_acceptance','transport_acceptance','method_acceptance','method_case',
+       'method_request','method_result','method_receipt','source_review','argument')
+PAID=(41,56,1)
+REMAINING=(0,4,5,13,16,27,28,30,31,33,34,35,36,37,38,40,42,44,47,48,59)
+
+
+def read_context(ref):
+    case=json.loads(acquire(ref))
+    need(Path(ref['path'])==HERE/'hexagon_ball_six_catalogues_case.json'
+         and set(case)=={'schema','records','completed_reports','limits','output_limit',*NAMES}
+         and case['schema']=='F012_REMAINING_T6_CATALOGUES_AND_FORMULA_CONTEXT_V1',
+         'one exact t6 application context')
+    raw={name:acquire(case[name]) for name in NAMES}
+    paths=dict(program='hexagon_ball_six_catalogues.py',provider='six_required_hexagon_formula.py',
+               file_tools='required_hexagon_formula.py',catalogue_program='six_required_hexagon_catalogue.py',
+               fixed_predicates='five_required_hexagon_catalogue.py',literal_tools='required_hexagon_catalogue.py')
+    need(all(Path(case[k]['path'])==HERE/v for k,v in paths.items())
+         and Path(case['cnf_program']['path'])==HERE.parent/'graph_completion_certificate/cnf.py',
+         'exact imported provider and unchanged catalogue/CNF paths')
+    setup=json.loads(raw['setup_acceptance']);transport=json.loads(raw['transport_acceptance'])
+    accepted=json.loads(raw['method_acceptance']);result=json.loads(raw['method_result'])
+    method=json.loads(raw['method_case']);request=json.loads(raw['method_request'])
+    receipt=json.loads(raw['method_receipt'])
+    need(setup['status']=='ROOT_ACCEPTED_F012_SEVENTY_T6_MODELS_AND_NECESSARY_CNFS'
+         and setup['models']==len(setup['host_summaries'])==70
+         and transport['status']=='ROOT_ACCEPTED_F012_SEVENTY_TO_TWENTY_FOUR_DOMAINS'
+         and transport['setup_acceptance']==case['setup_acceptance']
+         and len(transport['representatives'])==24, 'accepted full setup and literal transport cover')
+    need(accepted['status']=='ROOT_ACCEPTED_THREE_T6_CATALOGUES_AND_NECESSARY_FORMULAS'
+         and accepted['request']==case['method_request'] and accepted['result']==case['method_result']
+         and accepted['receipt']==case['method_receipt'] and receipt['status']=='PASS'
+         and result['status']=='PASS_THREE_T6_CATALOGUES_NECESSARY_FORMULAS_AND_CONTROLS'
+         and result['case']==case['method_case'] and request['provenance']['case']==case['method_case']
+         and tuple(r['index'] for r in result['records'])==PAID,
+         'accepted actual three-record method and unchanged inputs')
+    for name in ('catalogue_program','fixed_predicates','literal_tools','cnf_program',
+                 'setup_acceptance','transport_acceptance'):
+        need(method[name]==case[name],'same acquired method source/premise '+name)
+    need(case['completed_reports']==[r['report'] for r in result['records']]
+         and len(accepted['actual_records'])==3,'all three accepted reports retained')
+    paid={}
+    for i,ref0 in enumerate(case['completed_reports']):
+        report=json.loads(acquire(ref0));old=result['records'][i];root=accepted['actual_records'][i]
+        need(all(root[k]==old[k] for k in root)
+             and report['status']=='COMPLETE_NECESSARY_T6_CATALOGUE_AND_FORMULA_NO_EXCLUSION'
+             and report['complete'] is True
+             and all(report[k]==old[k] for k in ('index','row','parents','counts','digests','formula')),
+             'exact previously accepted catalogue report')
+        paid[old['index']]=(ref0,report)
+    need([r['index'] for r in case['records']]==[r['index'] for r in transport['representatives']]
+         and tuple(r['index'] for r in case['records'] if r['index'] not in PAID)==REMAINING
+         and len(set(r['index'] for r in case['records']))==24,
+         'exact 24 representatives, three paid and 21 unpaid')
+    for row,representative in zip(case['records'],transport['representatives']):
+        need(type(row['index']) is int and 0<=row['index']<70
+             and {k:v for k,v in row.items() if k!='index'}==setup['host_summaries'][row['index']]
+             and all(row[k]==representative[k] for k in ('index','row','parents','model')),
+             'entire unchanged actual representative record')
+        if row['index'] in paid:
+            report=paid[row['index']][1]
+            need(all(report[k]==row[k] for k in ('model','metadata','row','parents'))
+                 and report['original_formula']==row['formula'],'paid report actual-domain join')
+    K=load('acquired_t6_catalogue',Path(case['catalogue_program']['path']))
+    need(case['limits']==K.LIMITS==method['catalogue_limits'] and case['output_limit']==512*1024,
+         'unchanged t6 finite bounds and compact output allowance')
+    return case,K,paid
+
+
+def domain(case,K,index):
+    matches=[r for r in case['records'] if r['index']==index]
+    need(type(index) is int and len(matches)==1,'one declared acquired representative')
+    row=matches[0];metadata=json.loads(acquire(row['metadata']));acquire(row['model'])
+    n,base,allowed=K.H.read_model(row['model']['path'],4096)
+    need(n==54 and metadata['row']==row['row'] and metadata['parent_states']==row['parents']
+         and metadata['model']==row['model'] and metadata['formula']==row['formula']
+         and base==frozenset(map(tuple,metadata['fixed_edges']))
+         and allowed==frozenset(map(tuple,metadata['allowed_edges']))
+         and metadata['fixed_obstruction_found'] is False and row['fixed_obstruction_found'] is False,
+         'whole actual-parent domain and original CNF metadata')
+    required=tuple(sorted(e for e in base if 18<=e[0]<24 and 24<=e[1]<30))
+    orientations=tuple((t,z) for z,t in required)
+    K.admit(n,base,allowed,required,orientations,case['limits'])
+    return row,n,base,allowed,required,orientations
+
+
+class RequiredHexagonFormula:
+    """Same provider API; selection/report pinned by a separately reviewed caller."""
+    def __init__(self,case_ref):
+        self.case_ref=case_ref;self.case=json.loads(acquire(case_ref))
+        need(set(self.case)=={'schema','index','context','report'}
+             and self.case['schema']=='F012_FIXED_T6_REQUIRED_HEXAGON_FORMULA_V1',
+             'one fixed t6 formula selector and literal report')
+        self.inputs,self.K,_=read_context(self.case['context'])
+        self.row,self.n,self.base,self.allowed,required,orientations=domain(
+            self.inputs,self.K,self.case['index'])
+        self.H,self.C=self.K.H,self.K.C
+        self.cycle_edges,self.witness_edges=self.C.cycle_edges,self.C.witness_edges
+        self.model=Path(self.row['model']['path'])
+        self.sizing=json.loads(acquire(self.case['report']))
+        need(self.sizing['status']=='COMPLETE_NECESSARY_T6_CATALOGUE_AND_FORMULA_NO_EXCLUSION'
+             and self.sizing['complete'] is True
+             and all(self.sizing[k]==self.row[k] for k in ('index','row','parents','model','metadata'))
+             and self.sizing['original_formula']==self.row['formula']
+             and self.sizing['required']==[list(e) for e in required]
+             and self.sizing['orientations']==[list(e) for e in orientations],
+             'exact selected actual report, not an adoption assertion')
+        self.cat=self.K.catalogue(self.n,self.base,self.allowed,required,orientations,self.inputs['limits'])
+        need(self.cat['complete'] and self.cat['counts']==self.sizing['counts']
+             and {k:self.cat[k] for k in self.K.DIGESTS}==self.sizing['digests'],
+             'whole recomputed catalogue and all five literal digests')
+        self.seeds=list(self.cat['cuts']);self.last_build=None
+
+    def build(self,n,base,allowed,degree=None,cuts=()):
+        need((n,frozenset(base),frozenset(allowed),degree)==(self.n,self.base,self.allowed,4),
+             'unchanged exact t6 domain')
+        cuts=list(cuts)
+        need(cuts[:len(self.seeds)]==self.seeds,'all universal witnesses retained first')
+        f,variables,report=self.K.necessary_formula(n,base,allowed,self.cat,self.row['formula'])
+        need(report==self.sizing['formula'],'whole acquired necessary formula identity')
+        seen=set(self.cat['cut_edges'])
+        for witness in cuts[len(self.seeds):]:
+            edges=self.C.witness_edges(witness,n,base,allowed)
+            need(edges not in seen,'distinct valid universal and lazy cut sequence')
+            seen.add(edges);f.clause([-variables[e] for e in edges])
+        raw=f.dimacs().encode('ascii')
+        need(len(raw)<=16*2**20,'bounded in-memory final formula; RSS guard remains required')
+        self.last_build=dict(variables=f.variables,clauses=len(f.clauses),bytes=len(raw),
+                             sha256=hashlib.sha256(raw).hexdigest(),cuts=len(cuts))
+        return f,variables
+
+    def unchanged(self):
+        acquire(self.case_ref);acquire(self.case['context']);acquire(self.case['report'])
+        for name in NAMES:acquire(self.inputs[name])
+        for ref in self.inputs['completed_reports']:acquire(ref)
+        acquire(self.row['model']);acquire(self.row['metadata'])
+
+    def context(self):
+        return dict(formula_case=self.case_ref,index=self.row['index'],row=self.row['row'],
+            parents=self.row['parents'],model=self.row['model'],report=self.case['report'],
+            method_acceptance=self.inputs['method_acceptance'],transport_acceptance=self.inputs['transport_acceptance'],
+            catalogue=self.cat['counts'],digests={k:self.cat[k] for k in self.K.DIGESTS},
+            initial_universal_cuts=len(self.seeds),original_formula=self.row['formula'],
+            formula_order='original CNF; shared gates and twelve ORs; universal cuts; validated lazy cuts',
+            exclusions=0,whole_original_credit=0)

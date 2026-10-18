@@ -1,0 +1,40 @@
+import sys
+if sys.flags.optimize:raise SystemExit('normal Python required')
+from pathlib import Path
+import itertools,json,subprocess,random,collections
+from certificate import graph6,cycles,distances,need
+P=Path(__file__).resolve().parent
+
+def keys(cs):return sorted((c[i],*sorted((c[i-1],c[(i+1)%8])))for c in cs for i in range(8))
+def run(out):
+ out.mkdir();g=graph6((P/'source_witness.g6').read_text());edges=[(a,b)for a in range(64)for b in g[a]if a<b];known=cycles(g,8);rng=random.Random(42198);rows=[];rejects=0;accepts=0;controls=[]
+ for case in range(80):
+  prob=[.2,.4,.6,.8,.95][case%5];base=[e for e in edges if rng.random()<prob];h=[set()for _ in range(64)]
+  for a,b in base:h[a].add(b);h[b].add(a)
+  cs=[c for c in known if all(c[(i+1)%8]in h[c[i]]for i in range(8))];used=set(keys(cs));pairs=[(a,b)for a,b in itertools.combinations(range(64),2)if b not in h[a]and len(h[a])<3 and len(h[b])<3];rng.shuffle(pairs);trials=[]
+  for a,b in pairs[:32]:
+   d=distances(h,a).get(b,1000);new=[]
+   if d>=7:
+    # Fixed-length simple paths are independently generated as immutable tuples.
+    todo=[(a,)]
+    for k in range(7):todo=[p+(y,)for p in todo for y in h[p[-1]]if y not in p and(y!=b or k==6)]
+    new=[p for p in todo if p[-1]==b]
+   allkeys=keys(cs+new);good=d>=7 and len(set(allkeys))==len(allkeys)
+   trials.append((a,b,int(good),allkeys if good else []));accepts+=good;rejects+=not good
+  rows.append((base,sorted(used),trials))
+ path=out/'cases.input';chunks=[str(len(rows))]
+ for base,used,trials in rows:
+  chunks.append(f'{len(base)} {len(used)} {len(trials)}');chunks +=[f'{a} {b}'for a,b in base];chunks +=[' '.join(map(str,t))for t in used]
+  for a,b,good,ks in trials:chunks.append(f'{a} {b} {good} {len(ks)}');chunks +=[' '.join(map(str,t))for t in ks]
+ path.write_text('\n'.join(chunks)+'\n')
+ code=r'''
+#include <cstring>
+#define main baseline_main
+#include "extension_diagnostic.cpp"
+#undef main
+int main(int argc,char**argv){if(argc!=2)return 2;ifstream f(argv[1]);int nc;f>>nc;int tests=0;for(int z=0;z<nc;z++){Search s;s.n=64;int ne,np,nt,a,b;f>>ne>>np>>nt;for(int j=0;j<ne;j++){f>>a>>b;if(!s.add(a,b))return 3;}vector<array<int,3>>expected(np);for(auto&t:expected)f>>t[0]>>t[1]>>t[2];auto got=s.changes;sort(got.begin(),got.end());if(got!=expected)return 4;auto adj=s.adj;auto deg=s.deg;auto changes=s.changes;array<unsigned char,64*64*64>saved{};memcpy(saved.data(),s.pairUsed,sizeof(s.pairUsed));for(int j=0;j<nt;j++){int good,nk;f>>a>>b>>good>>nk;vector<array<int,3>>ks(nk);for(auto&t:ks)f>>t[0]>>t[1]>>t[2];if(s.test(a,b)!=bool(good))return 5;size_t cp=s.changes.size();if(s.add(a,b)!=bool(good))return 6;if(good){auto q=s.changes;sort(q.begin(),q.end());if(q!=ks)return 7;for(auto t:q)if(s.pairUsed[t[0]][t[1]][t[2]]!=1)return 8;s.undo(a,b,cp);}if(s.adj!=adj||s.deg!=deg||s.changes!=changes||memcmp(saved.data(),s.pairUsed,sizeof(s.pairUsed)))return 9;tests++;}}string extra;if(f>>extra)return 10;cout<<"PASS "<<nc<<" "<<tests<<"\n";}
+'''
+ (out/'control.cpp').write_text(code);r=subprocess.run(['clang++','-std=c++17','-O2','-I',str(P),str(out/'control.cpp'),'-o',str(out/'control')],capture_output=True,timeout=30);need(r.returncode==0 and not r.stderr,'control compilation');r=subprocess.run([str(out/'control'),str(path)],capture_output=True,timeout=30);need(r.returncode==0 and not r.stderr,'literal kernel control');need(r.stdout.decode()==f'PASS 80 {accepts+rejects}\n','exact kernel result')
+ (out/'stdout.txt').write_bytes(r.stdout);result=dict(status='PASS_LITERAL_CYCLE_KERNEL_CONTROLS',states=80,candidate_checks=accepts+rejects,accepted=accepts,rejected=rejects,actual_add_test_undo=True,full_pair_table_rollback=True)
+ (out/'report.json').write_text(json.dumps(result,indent=2)+'\n');return result
+if __name__=='__main__':need(len(sys.argv)==2,'fresh directory');print(json.dumps(run(Path(sys.argv[1]).resolve())))

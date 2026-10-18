@@ -1,0 +1,43 @@
+--- complete_lambda.cpp
++++ complete_root_symmetry.cpp
+@@ -1,21 +1,22 @@
+ #include "cycle_budget.h"
+ #include "vertex_ball_lambda.h"
++#include "root_symmetry.h"
+ #include <sstream>
+ struct Exterior {Graph g;vector<vector<int>>automorphisms;vector<int>order;explicit Exterior(Graph h):g(h){int t=g.size();order.resize(t);iota(order.begin(),order.end(),0);sort(order.begin(),order.end(),[&](int a,int b){return make_pair(-wt(g[a]),a)<make_pair(-wt(g[b]),b);});vector<int>p(t);iota(p.begin(),p.end(),0);do{bool good=true;for(int i=0;i<t;i++)for(int j=0;j<t;j++)if(((g[i]>>j)&1)!=((g[p[i]]>>p[j])&1))good=false;if(good)automorphisms.push_back(p);}while(next_permutation(p.begin(),p.end()));need(!automorphisms.empty(),"identity exterior automorphism");}};
+-struct Boundary {
+- const Exterior&h;CycleBudget state;Deadline&deadline;array<int,12>missing{};vector<int>masks;vector<bool>done;vector<vector<int>>choices=vector<vector<int>>(5);U nodes=0,complete_count=0,positive=0;Cover&cover;
++struct BoundaryRoot {
++ const Exterior&h;const RootSymmetry&root_symmetry;CycleBudget state;Deadline&deadline;array<int,12>missing{};vector<int>masks;vector<bool>done;vector<vector<int>>choices=vector<vector<int>>(5);U nodes=0,complete_count=0,positive=0;Cover&cover;
+  static Graph initial(const Graph&r,const Graph&h){Graph g=r;g.resize(17+h.size());for(int u=0;u<(int)h.size();u++)for(int v=u+1;v<(int)h.size();v++)if(h[u]>>v&1)add(g,17+u,17+v);return g;}
+- Boundary(const Graph&r,const Exterior&e,Deadline&d,Cover&c,int lambda=5):h(e),state(initial(r,e.g),lambda),deadline(d),masks(e.g.size()),done(e.g.size()),cover(c){for(int x=0;x<12;x++)missing[x]=4-wt(r[5+x]);for(int mask=0;mask<4096;mask++){bool good=true;for(int b=0;b<4;b++)if(wt((mask>>(3*b))&7)>1)good=false;if(good)choices[wt(mask)].push_back(mask);}}
+- bool canonical()const{for(const auto&p:h.automorphisms)for(int i=0;i<(int)p.size();i++){if(!done[i]||!done[p[i]])break;if(masks[i]>masks[p[i]])return false;if(masks[i]<masks[p[i]])break;}return true;}
+- void visit(int at){if((++nodes&1023)==0)deadline.check();int t=h.g.size();if(at==t){for(int x:missing)need(x==0,"complete leaf capacities");complete_count++;if(state.complete()){positive++;cover.take(state.g);}return;}
++ BoundaryRoot(const Graph&r,const Exterior&e,const RootSymmetry&a,Deadline&d,Cover&c,int lambda=5):h(e),root_symmetry(a),state(initial(r,e.g),lambda),deadline(d),masks(e.g.size()),done(e.g.size()),cover(c){for(int x=0;x<12;x++)missing[x]=4-wt(r[5+x]);for(int mask=0;mask<4096;mask++){bool good=true;for(int b=0;b<4;b++)if(wt((mask>>(3*b))&7)>1)good=false;if(good)choices[wt(mask)].push_back(mask);}}
++ bool canonical()const{for(const auto&p:h.automorphisms)for(int at=0;at<(int)p.size();at++){int i=h.order[at];if(!done[i]||!done[p[i]])break;if(masks[i]>masks[p[i]])return false;if(masks[i]<masks[p[i]])break;}return true;}
++ void visit(int at,const vector<int>&stabilizer){if((++nodes&1023)==0)deadline.check();int t=h.g.size();if(at==t){for(int x:missing)need(x==0,"complete leaf capacities");complete_count++;if(state.complete()){positive++;cover.take(state.g);}return;}
+   int y=h.order[at],k=4-wt(h.g[y]);for(int mask:choices[k]){
+-   bool okay=true;for(int x=0;x<12;x++)if((mask>>x&1)&&!missing[x])okay=false;if(!okay)continue;masks[y]=mask;done[y]=true;if(!canonical()){done[y]=false;continue;}vector<Change>changes;
++   bool okay=true;for(int x=0;x<12;x++)if((mask>>x&1)&&!missing[x])okay=false;if(!okay)continue;vector<int>next_stabilizer;if(!root_symmetry.retain(mask,stabilizer,next_stabilizer))continue;masks[y]=mask;done[y]=true;if(!canonical()){done[y]=false;continue;}vector<Change>changes;
+    for(int x=0;x<12;x++)if(mask>>x&1){Change c;if(!state.push(5+x,17+y,c)){okay=false;break;}missing[x]--;changes.push_back(c);}
+-   if(okay){for(int x:missing)if(x>t-at-1)okay=false;if(okay)visit(at+1);}
++   if(okay){for(int x:missing)if(x>t-at-1)okay=false;if(okay)visit(at+1,next_stabilizer);}
+    for(auto it=changes.rbegin();it!=changes.rend();it++){missing[it->u-5]++;state.pop(*it);}done[y]=false;
+   }
+  }
+- void run(){if(!state.valid)return;Graph before=state.g;auto old=state.counts;auto capacity=missing;visit(0);need(state.g==before&&state.counts==old&&missing==capacity,"complete boundary rollback");}
++ void run(){if(!state.valid)return;Graph before=state.g;auto old=state.counts;auto capacity=missing;visit(0,root_symmetry.all());need(state.g==before&&state.counts==old&&missing==capacity,"complete boundary rollback");}
+ };
+ int main(int argc,char**argv){try{
+  need(argc==7,"usage LAMBDA ROOTS EXTERIORS OUTPUT REPORT SECONDS");int lambda=stoi(argv[1]);need(lambda>=2&&lambda<=4,"lambda two to four");Deadline d(stod(argv[6]));
+@@ -23,7 +24,7 @@
+  ifstream ext(argv[3]);int orders,t,count;need(bool(ext>>orders>>t>>count)&&orders==1&&t==8&&count==array<int,3>{2,8,23}[lambda-2],"exact eight-vertex exterior inventory");vector<Exterior>models;
+  for(int i=0;i<count;i++){Graph g(t);for(U&row:g)need(bool(ext>>row),"exterior row");validate(g);need(girth5(g),"exterior girth");int degree=0;for(U row:g){need(wt(row)<=4,"exterior maximum degree");degree+=wt(row);}need(degree==4*lambda-4,"exterior edge count");models.emplace_back(g);}need(!(ext>>tail),"exterior end");
+  Cover cover(false);U nodes=0,complete=0,positives=0,calls=0;
+- for(int i=0;i<nr;i++)for(int j=0;j<count;j++){d.check();Boundary b(roots[i],models[j],d,cover,lambda);b.run();nodes+=b.nodes;complete+=b.complete_count;positives+=b.positive;calls++;cout<<"LAMBDA "<<lambda<<" ROOT "<<i<<" EXTERIOR "<<j<<" NODES "<<b.nodes<<" COMPLETE "<<b.complete_count<<" POSITIVE "<<b.positive<<'\n'<<flush;}
++ for(int i=0;i<nr;i++){RootSymmetry action(roots[i]);for(int j=0;j<count;j++){d.check();BoundaryRoot b(roots[i],models[j],action,d,cover,lambda);b.run();nodes+=b.nodes;complete+=b.complete_count;positives+=b.positive;calls++;cout<<"LAMBDA "<<lambda<<" ROOT "<<i<<" EXTERIOR "<<j<<" NODES "<<b.nodes<<" COMPLETE "<<b.complete_count<<" POSITIVE "<<b.positive<<'\n'<<flush;}}
+  ofstream out(argv[4]),report(argv[5]);need(bool(out)&&bool(report),"complete outputs");out<<cover.graphs.size()<<'\n';for(auto&g:cover.graphs){out<<g.size();for(U row:g)out<<' '<<row;out<<'\n';}
+- report<<"{\"status\":\"PASS_COMPLETE_PENTAGON_LOWER30\",\"lambda_value\":"<<lambda<<",\"order\":25,\"calls\":"<<calls<<",\"nodes\":"<<nodes<<",\"complete\":"<<complete<<",\"positive\":"<<positives<<",\"classes\":"<<cover.graphs.size()<<"}\n";need(bool(out)&&bool(report),"complete write");return 0;
++ report<<"{\"status\":\"PASS_COMPLETE_PENTAGON_LOWER30_ROOT_SYMMETRY\",\"lambda_value\":"<<lambda<<",\"order\":25,\"calls\":"<<calls<<",\"nodes\":"<<nodes<<",\"complete\":"<<complete<<",\"positive\":"<<positives<<",\"classes\":"<<cover.graphs.size()<<"}\n";need(bool(out)&&bool(report),"complete write");return 0;
+  }catch(const exception&e){cerr<<"NO_CERTIFICATE: "<<e.what()<<'\n';return 1;}}

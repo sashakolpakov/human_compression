@@ -1,0 +1,78 @@
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <iostream>
+#include <numeric>
+#include <stdexcept>
+#include <vector>
+using namespace std;
+void need(bool ok,const char* s){if(!ok)throw runtime_error(s);}
+int bit(int a,int b){if(a>b)swap(a,b);return b*(b-1)/2+a;}
+uint64_t word(const vector<pair<int,int>>& es,const vector<int>& p){
+ uint64_t w=0;for(auto [a,b]:es)w|=uint64_t(1)<<bit(p[a],p[b]);return w;
+}
+int main(){try{
+ int count;need(bool(cin>>count)&&count>0,"missing count");
+ for(int index=0;index<count;index++){
+  int n;need(bool(cin>>n)&&n>=5&&n<=9,"bad order");
+  vector<pair<int,int>> es;vector<vector<int>> nb(n);uint64_t original=0;
+  for(int i=0;i<2*n;i++){
+   int a,b;need(bool(cin>>a>>b)&&a>=0&&a<b&&b<n,"bad edge");
+   uint64_t q=uint64_t(1)<<bit(a,b);need(!(q&original),"duplicate");original|=q;
+   es.push_back({a,b});nb[a].push_back(b);nb[b].push_back(a);
+  }
+  for(auto& v:nb){need(v.size()==4,"wrong degree");sort(v.begin(),v.end());}
+  vector<int> p(n);iota(p.begin(),p.end(),0);uint64_t canonical=original;
+  vector<vector<int>> aut;uint64_t perm_count=0;
+  do{auto w=word(es,p);canonical=min(canonical,w);if(w==original)aut.push_back(p);++perm_count;}
+  while(next_permutation(p.begin(),p.end()));
+  vector<vector<int>> edge_id(n,vector<int>(n,-1));
+  for(int i=0;i<2*n;i++){auto [a,b]=es[i];edge_id[a][b]=edge_id[b][a]=i;}
+  // Choice c pairs neighbour 0 with neighbour c+1; the other two are paired.
+  vector<vector<array<int,3>>> action;
+  for(const auto& q:aut){
+   vector<array<int,3>> act(n);
+   for(int v=0;v<n;v++)for(int c=0;c<3;c++){
+    vector<pair<int,int>> pairs;int a=nb[v][0],b=nb[v][c+1];pairs.push_back({q[a],q[b]});
+    vector<int> rem;for(int x:nb[v])if(x!=a&&x!=b)rem.push_back(x);
+    pairs.push_back({q[rem[0]],q[rem[1]]});int t=nb[q[v]][0],partner=-1;
+    for(auto [x,y]:pairs){if(x==t)partner=y;if(y==t)partner=x;}
+    auto it=find(nb[q[v]].begin(),nb[q[v]].end(),partner);
+    need(it!=nb[q[v]].end()&&it!=nb[q[v]].begin(),"bad action");act[v][c]=int(it-nb[q[v]].begin())-1;
+   }action.push_back(act);
+  }
+  vector<int> pow3(n+1,1);for(int i=0;i<n;i++)pow3[i+1]=3*pow3[i];
+  cout<<"BASE "<<index<<' '<<n<<' '<<original<<' '<<canonical<<' '<<aut.size()<<' '<<perm_count<<' '<<pow3[n]<<'\n';
+  int accepted=0;vector<int> classes;
+  for(int code=0;code<pow3[n];code++){
+   int t=code;vector<int> c(n);for(int i=0;i<n;i++){c[i]=t%3;t/=3;}
+   vector<uint32_t> adj(2*n,0);
+   for(int v=0;v<n;v++)for(int i=0;i<4;i++)for(int j=i+1;j<4;j++){
+    bool opposite=(i==0&&j==c[v]+1)||(i!=0&&j!=0&&i!=c[v]+1&&j!=c[v]+1);
+    if(!opposite){int a=edge_id[v][nb[v][i]],b=edge_id[v][nb[v][j]];adj[a]|=uint32_t(1)<<b;adj[b]|=uint32_t(1)<<a;}
+   }
+   bool ok=true;
+   for(int u=0;u<2*n&&ok;u++){
+    need(__builtin_popcount(adj[u])==4,"bad medial degree");
+    for(int v=u+1;v<2*n&&ok;v++)if(adj[u]&(uint32_t(1)<<v)){
+     if(adj[u]&adj[v]){ok=false;break;}
+     int cycles=0;
+     for(int a=0;a<2*n;a++)if(a!=v&&(adj[u]&(uint32_t(1)<<a)))
+      cycles+=__builtin_popcount(adj[a]&adj[v]&~(uint32_t(1)<<u));
+     if(cycles!=1)ok=false;
+    }
+   }
+   if(!ok)continue;
+   ++accepted;int best=code;
+   for(size_t z=0;z<aut.size();z++){
+    int mapped=0;for(int v=0;v<n;v++)mapped+=action[z][v][c[v]]*pow3[aut[z][v]];best=min(best,mapped);
+   }
+   if(find(classes.begin(),classes.end(),best)==classes.end())classes.push_back(best);
+   cout<<"PASS "<<index<<' '<<code<<' '<<best;
+   for(auto row:adj)cout<<' '<<row;cout<<'\n';
+  }
+  sort(classes.begin(),classes.end());cout<<"END "<<index<<' '<<accepted<<' '<<classes.size();
+  for(int c:classes)cout<<' '<<c;cout<<'\n';
+ }
+ string extra;need(!(cin>>extra),"trailing input");cout<<"COMPLETE\n";
+}catch(const exception& e){cerr<<e.what()<<'\n';return 1;}}

@@ -1,0 +1,35 @@
+--- acquired_lambda19/independent_controls.py
++++ lambda18/independent_controls.py
+@@ -1,4 +1,4 @@
+-"""Separate Bell-partition and literal-neighbourhood controls for eight incidences."""
++"""Separate Bell-partition and literal-neighbourhood controls for nine incidences."""
+ import sys
+ if sys.flags.optimize:raise RuntimeError('normal Python required')
+ import argparse,itertools,json,time
+@@ -13,8 +13,9 @@
+   yield p+((n-1,),)
+ def side_reference(rows,side,parts):
+  base,other=(4,17)if side==0 else(17,4)
+- items=[x for x in range(9)for _ in range(4-rows[base+x].bit_count())];need(len(items)==8,'eight side incidences');good=Counter()
++ items=[x for x in range(9)for _ in range(4-rows[base+x].bit_count())];need(len(items)==9,'nine side incidences');good=Counter()
+  for p in parts:
++  if len(p)>6:continue
+   q=[tuple(items[t]for t in b)for b in p]
+   if any(len(b)>3 or len(set(b))!=len(b)for b in q):continue
+   graph=rows.copy()+[0]*len(q)
+@@ -25,7 +26,7 @@
+   good[tuple(sorted(sum(1<<x for x in b)for b in q))]+=1
+  return good
+ def main():
+- p=argparse.ArgumentParser();p.add_argument('--actual',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();start=time.monotonic();d=json.loads(a.actual.read_text());parts=list(bell(8));need(len(parts)==4140,'complete Bell number');capacities=[]
++ p=argparse.ArgumentParser();p.add_argument('--actual',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args();start=time.monotonic();d=json.loads(a.actual.read_text());parts=list(bell(9));need(len(parts)==21147,'complete Bell number');capacities=[]
+  for row in d['capacities']:
+   items=[i for i,n in enumerate(row['profile'])for _ in range(n)];best=-1
+   for p in parts:
+@@ -39,5 +40,5 @@
+  for row in d['sides']:
+   for side,key in enumerate(['left','right']):
+    expected=side_reference(row['rows'],side,parts);actual=Counter(tuple(sorted(p))for p in row[key]);need(expected==actual,'complete side multiset');observed+=len(parts);survivors+=sum(expected.values())
+- report=dict(status='PASS_INDEPENDENT_INTEGER_AND_SIDE_CONTROLS',capacity_profiles=len(capacities),capacity_partition_checks=4140*len(capacities),root_samples=len(d['sides']),side_partition_checks=observed,surviving_partitions=survivors,seconds=time.monotonic()-start);a.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
++ report=dict(status='PASS_INDEPENDENT_INTEGER_AND_SIDE_CONTROLS',capacity_profiles=len(capacities),capacity_partition_checks=21147*len(capacities),root_samples=len(d['sides']),side_partition_checks=observed,surviving_partitions=survivors,seconds=time.monotonic()-start);a.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+ if __name__=='__main__':main()

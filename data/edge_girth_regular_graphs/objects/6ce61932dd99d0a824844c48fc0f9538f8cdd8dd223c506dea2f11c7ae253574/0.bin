@@ -1,0 +1,283 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=22mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,hyperref,longtable}
+\setlength{\emergencystretch}{1em}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\title{Cycle counting and complete generation of edge-girth-regular graphs}
+\author{Human Compression project: F012 algorithm recovery}
+\date{}
+\begin{document}\maketitle
+\section{Scope and attribution}
+Throughout, graphs are finite, simple and connected when called targets. Fix
+integers $n\geq3$, $k\geq2$, $g\geq3$ and $\lambda\geq1$. A target is a
+$k$-regular graph on $n$ vertices of girth $g$ in which every edge lies on
+exactly $\lambda$ cycles of length $g$. Cycles are unoriented.
+
+The fixed source is Goedgebeur and Jooken, \emph{Exhaustive generation of
+edge-girth-regular graphs}, arXiv:2401.08271v2, 25 June 2024. Its Section 2
+supplies shortest-path counting; its Lemma 1 and Section 3 supply the Moore
+seed, horizontal quotas and generation design. The source attributes the
+seed lemma to Drglin, Filipovski, Jajcay and Raiman, Theorem 2.3. We prove
+these elementary interfaces below rather than retaining an unproved seed
+claim. The chronological coverage argument is acquired from the complete
+F009 manuscript \emph{Chronological coverage without a saturated current
+vertex} and its distinct review. Its original mathematical contributors
+were the root agent and enumeration\_volume. We adapt it here to an
+unrooted target and a corrected first phase, giving the full argument.
+
+Printed Algorithm 2 requires a correction. The explicit counterexample in
+Section 3 was supplied by the root agent and independently checked by
+publication\_recovery. The latter authors the present proof and reference
+implementation; a separate review is required. No numerical table of the
+source is inferred from this algorithmic theorem, and no historical
+exhaustion is certified merely by proving an algorithm correct.
+
+\section{Counting cycles and embedding the seed}
+For a partial graph $H$ of girth at least $g$ and $e=uv\in E(H)$, let
+$c_g(H,e)$ count its $g$-cycles through $e$.
+\begin{lemma}\label{count}
+Delete $e$ and perform breadth-first search from $u$. Set $a(u)=1$ and,
+for every other reached vertex $x$, set
+\[
+ a(x)=\sum_{y\sim x,\ d(u,y)=d(u,x)-1}a(y).
+\]
+Then $c_g(H,e)=a(v)$ if $d(u,v)=g-1$, and is zero otherwise. In the
+unreachable case it is zero. This uses $O(|V(H)|+|E(H)|)$ arithmetic
+operations.
+\end{lemma}
+\begin{proof}
+Deleting $uv$ gives a bijection between cycles through this edge and
+simple $u$--$v$ paths of length one less. No such path has length below
+$g-1$. Thus paths of length $g-1$, when present, are shortest paths.
+Every shortest path to $x$ has a unique penultimate vertex in the preceding
+breadth-first layer; conversely each summand extends a shortest path
+uniquely. This proves the recurrence by induction on the distance.
+Before $v$ is removed from the FIFO queue, every vertex in its preceding
+layer has been processed. Returning at that point, as in source Algorithm
+1, therefore uses its final count. Each adjacency is examined at most
+twice and each vertex is queued once.
+\end{proof}
+The complexity is an arithmetic-operation statement. If counts have $B$
+bits, ordinary exact additions give $O((|V|+|E|)B)$ bit operations.
+For the decision whether the count is less than, equal to, or greater than
+$\lambda$, every addition may instead be capped at $\lambda+1$:
+$\min(C,a+b)=\min(C,\min(C,a)+\min(C,b))$ for $C=\lambda+1$.
+This yields $B=O(\log(\lambda+2))$ and does not assume machine integers
+cannot overflow. Only layers through $g-1$ need be expanded.
+
+For odd $g=2s+1$, let $T$ be the tree rooted at a vertex $o$, of depth
+$s$, with every internal vertex of degree $k$. Its $k$ leaf groups $L_i$
+correspond to the children of $o$. For even $g=2s$, let $T$ consist of an
+edge $o_1o_2$ and two rooted trees of depth $s-1$ attached at its ends,
+again with internal degree $k$; its two leaf groups are the two sides.
+Call an edge between distinct groups horizontal. Write $h_i(H)$ for the
+number of horizontal edges of $H$ incident with $L_i$.
+\begin{lemma}\label{seed}
+Every target contains $T$. For every such embedded copy,
+$h_i(H)=\lambda$ in the target, for every group $i$.
+\end{lemma}
+\begin{proof}
+Expose neighbors from the root, or from both ends of the central edge,
+until the prescribed depth. A collision between two exposed tree paths
+would create a cycle of length at most $2s$ in the odd case, or $2s-1$
+in the even case. These lengths are below $g$. Thus all required new
+vertices are distinct and every internal vertex has all its $k$ neighbors
+in the tree.
+
+In the odd case, a horizontal edge incident with $L_i$, together with the
+unique tree path between its ends, gives a $g$-cycle through the root edge
+leading to $L_i$. Conversely a $g$-cycle through that root edge consists
+of two length-$s$ paths from $o$, in different branches, and the joining
+edge. Each path is in the exposed tree: all its internal vertices lie at
+distance below $s$ and already have their full neighbor sets there.
+Equivalently, the uniqueness of paths of length at most $s$ from $o$
+follows from girth greater than $2s$. This proves the claimed bijection.
+In the even case apply the same argument to a cycle through $o_1o_2$:
+the remaining path has two initial segments of length $s-1$ in the two
+trees and a joining edge. Uniqueness follows from the collision bound
+$2s-1$. Both group counts equal the number of these central-edge cycles.
+An edge between two leaves in the same group would give a cycle of
+length at most $2s-1$ in the odd case or $2s-1$ in the even case,
+and is forbidden.
+\end{proof}
+
+\section{The printed rule and its correction}
+Take $(n,k,g,\lambda)=(9,4,3,1)$ and the seed star with center $0$,
+leaves $1,2,3,4$, and isolated vertices $5,6,7,8$. After adding the first
+horizontal edge, say $12$, root edges $01,02$ have their one triangle,
+whereas $03,04$ have none. Hence the first phase is incomplete.
+Each of leaves $1,2$ has exactly four valid neighbors, namely the isolated
+vertices. Leaves $3,4$ each have five, namely the other remaining leaf
+and the four isolates. Printed Algorithm 2, line 19, must choose $1$ or
+$2$. Its line 22 then leaves an empty horizontal-edge loop. The call
+returns without adding $34$. Every vertex still passes the degree-capacity
+test. Earlier first-edge attempts are incident with the initial selected
+leaf; after the chosen edge they are already invalid, so historical
+exclusions do not change this argument. Relabeling covers all first
+choices and tie orders.
+
+There is a target: the $3$ by $3$ rook graph, with adjacency given by
+agreement in one coordinate. It is connected and $4$-regular, and each
+edge has exactly one common neighbor. The independent certificate checks
+all $4\cdot6\cdot3=72$ ordered first-branch histories and the six literal
+triangles of this graph. The counterexample is to the printed rule only.
+
+The corrected first phase chooses a group $L_i$ with $h_i(H)<\lambda$
+and tries \emph{every} eligible horizontal edge incident with that group,
+not merely the edges at one arbitrarily chosen leaf. The order may be
+organized by vertices with fewest options, provided the loop continues
+through the group. Once every quota is met, the second phase starts.
+The later source implementation at commit
+\texttt{41022f4a3ad84e4502f8889c5b64132225411ca2} (December 2024)
+uses such a deficient-group loop; it is not the printed June algorithm.
+
+\section{A precise generation interface}
+Start from $T$ and $n-|V(T)|$ isolates. Return immediately if the seed
+has too many vertices. Maintain a graph $H$ of maximum degree $k$ and
+girth at least $g$, together with a set $F$ of historically excluded
+edges. An edge is necessary-admissible if it is absent, its ends have
+degree below $k$, its addition preserves girth at least $g$, and no
+edge after its addition has more than $\lambda$ $g$-cycles.
+One may omit the final test; the final output test must remain exact.
+Eligible edges are necessary-admissible edges outside $F$.
+
+Execute a serial depth-first recursion with the following rules.
+\begin{enumerate}
+\item Compare an exact uncolored isomorphism key for the entire graph on
+$n$ vertices with previously entered states. On a hit return. Otherwise
+store the key, or omit storage when memory is full. All stored terminal
+keys must be retained if duplicate-free output is required.
+\item If $H$ is $k$-regular, output it precisely when it is connected and
+each edge has count $\lambda$ at length $g$, and return.
+\item If some vertex has degree plus eligible-neighbor count below $k$,
+return. In the first phase select a deficient group and list all eligible
+horizontal edges incident with it. Edges exceeding a group quota are
+omitted. In the second phase choose an unsaturated nonisolated vertex
+and list all eligible incident edges; horizontal edges may be omitted
+when their quotas are full. If no such vertex exists while isolates
+remain, return, since no connected completion is possible.
+\item For a nonisolated current vertex, keep only the edge to the least
+isolated vertex among all isolated-neighbor possibilities. This choice
+is made on the graph's isolated set, before historical exclusions; if
+that representative edge is excluded, the coverage argument below
+applies. First-phase edges have no isolated endpoint.
+\item In any fixed order, attempt each listed edge $e$: add it, recompute
+necessary restrictions, and recurse if the necessary tests permit.
+After the attempt finishes, restore the parent graph and its records,
+then put $e$ in the parent's $F$. Each child inherits the exclusions
+already present when it starts. Never install an exclusion on account
+of a running or interrupted attempt.
+\end{enumerate}
+All state restoration is exact. A child receives a copy of the parent's
+historical set, so exclusions discovered inside that child do not leak
+into a sibling except for the parent's own attempted edge. This is the
+interface used by the reference implementation.
+
+\begin{theorem}\label{coverage}
+An uninterrupted execution of this interface outputs exactly all target
+isomorphism classes. With retained exact terminal keys it outputs each
+class once. Omitting the first phase, or omitting excess-cycle tests
+until the terminal test, preserves this conclusion.
+\end{theorem}
+\begin{proof}
+Every output has the required degree and cycle counts by the terminal
+test. Girth is at least $g$ throughout; since $\lambda>0$ and an edge is
+present, it is exactly $g$. Connectedness is tested explicitly.
+
+Call a partial graph covered at a time if every target completion of it
+has a class already output. Coverage persists with time and passes to
+supergraphs. We induct over the chronological sequence of finished
+attempts and recursive returns, as in the acquired F009 argument. An
+edge historically excluded at $H$ was previously attempted at a graph
+$K$ with $K\subseteq H$. That attempt has finished. Thus all completions
+of $H+e$ are already represented by the induction hypothesis. A degree
+shortage can therefore mean that completions exist but are already
+represented; it need not prove that no completion exists.
+
+A repeated isomorphism key belongs to an earlier state with the same
+number of edges. Strict edge growth rules out an ancestor, so in a
+serial depth-first traversal that state has finished. Relabeling transfers
+any completion of the present graph to a target completion of that
+state. No marked root is part of the target property. The earlier state
+contains its own embedded seed, and Lemma~\ref{seed} applies to every
+such embedding. Thus a key need not preserve a chosen root, seed,
+quota vector or historical exclusion set.
+
+Suppose that a nonterminal return leaves an unrepresented class. Choose
+one completion $G$ in that class. It uses no necessary-forbidden edge,
+and it avoids every historical exclusion by the preceding argument.
+In a deficient group, Lemma~\ref{seed} supplies a missing horizontal
+edge of $G$ incident with that group. Its ends are unsaturated in $H$
+and neither incident quota can be full. Hence the first-phase list
+contains a required edge, unless its attempt has already finished,
+which would already represent the class. In the second phase, any
+chosen unsaturated vertex has a missing neighbor in $G$. If all existing
+nonisolated vertices were saturated while isolates remained, their
+nonempty component would be closed in $G$, contrary to connectedness.
+Full horizontal quotas preclude any further horizontal edge of $G$.
+
+When a required neighbor is isolated, exchange isolated labels to move
+it to the least isolate. This fixes $H$, the nonisolated current vertex
+and the embedded seed, and preserves the target class. If the representative
+edge is historically excluded, its transformed completion is already
+represented. A necessary exclusion is impossible for a target completion.
+Otherwise its branch is attempted. Asymmetry of historical masks does
+not affect this reasoning.
+
+The chosen attempt cannot fail a necessary test. A capacity or visited
+return is covered by the arguments above; otherwise its recursive
+continuation finishes before the present return and is covered by
+induction. In every case the class was already represented, a
+contradiction. This proves coverage of each return and of each finished
+attempt. The root return covers every target by Lemma~\ref{seed}.
+Removing a necessary test only enlarges the attempted set; removing
+the first phase uses the already proved second-phase argument from the
+seed onward. Exact terminal keys reject later isomorphic outputs.
+\end{proof}
+The recursion is finite: each step adds an edge, with at most $nk/2$
+edges in a state, and each finite branch list is attempted once. A time
+limit, unfinished split, arithmetic failure or allocation failure is not
+a root return and proves no exhaustion statement.
+
+\section{Relation to the implementation and to numerical evidence}
+The attached interface ledger pins the later C file, source edition and
+actual procedure ranges. Its \texttt{calcNumberShortestPaths} implements
+the recurrence of Lemma~\ref{count}, deleting and then restoring the
+edge. The deficient-group outer loop supplies the corrected first phase;
+a group vertex is skipped only after all its available horizontal attempts
+have finished. Such a skip, when inherited, represents coverage of
+completions using its previously attempted edges, rather than an assertion
+that the vertex has no missing edges in any completion.
+
+The C implementation maintains distances incrementally. For an added
+edge $ab$, the new distance from $x$ to $y$ is the minimum of the old
+distance and the two quantities $d'(x,a)+1+d'(b,y)$ and
+$d'(x,b)+1+d'(a,y)$, where $d'$ is computed in the new graph. Each
+quantity is a walk length and cannot underestimate distance. If a new
+shortest path uses $ab$, its two subpaths show one quantity is at most
+its length, proving equality. Distances only need be maintained for
+currently available pairs; a pair deleted in a branch cannot return until
+its ancestor snapshot is restored. The two snapshot levels in the code
+separate branch restoration from parent historical exclusions.
+
+These observations identify the mathematical rules, not a general
+machine-code correctness theorem. The historical C program uses signed
+\texttt{int} path counts and fixed arrays; all additions, dimensions,
+seed allocation and bit shifts require bounds. Its canonical routine
+allocates and compares variable-length arrays on the active vertices:
+an exact-key contract must include the active count and valid comparison
+length, or use the fixed $n$-vertex key of our interface. The supplied
+reference uses exact Python integers and fixed-size graph keys. We do
+not alter the historical file, assume the missing machine premises,
+or certify a six-CPU-year run from small tests.
+
+The checker independently enumerates small labelled graphs, counts simple
+cycles directly, and compares complete small outputs with both one-phase
+and corrected two-phase reference searches. It also checks the printed
+counterexample independently. These controls exercise the interface;
+the uniform completeness assertion is Theorem~\ref{coverage}. Source
+numerical minima, uniqueness assertions and enumeration totals each
+still require their own completed evidence or a separate proof.
+\end{document}

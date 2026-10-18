@@ -1,0 +1,27 @@
+"""Exact integer inventory and accepted forest normal forms; no graph search."""
+import sys
+if sys.flags.optimize: raise RuntimeError('normal Python required')
+from pathlib import Path
+import argparse,itertools,json,math,hashlib
+p=argparse.ArgumentParser();p.add_argument('--study',type=Path,required=True);p.add_argument('--lambda',dest='lam',type=int,choices=[12,13,14,15,18,19,20],required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+S=a.study.resolve();sys.path.insert(0,str(S/'corpus106_F012_matching_forest_v1'))
+from forest import choose_forest,orient,representative_blocks
+assert not a.out.exists();a.out.mkdir()
+edges=[(i,j+3)for i in range(3)for j in range(3)];perms=list(itertools.permutations(range(3)))
+delta=27-a.lam;seen=set();reps=[];literal=0
+for m in itertools.product(range(4),repeat=9):
+ if sum(m)!=delta:continue
+ literal+=1
+ if m in seen:continue
+ orbit={tuple(m[3*r[i]+c[j]]for i in range(3)for j in range(3))for r in perms for c in perms}
+ orbit|={tuple(t[3*j+i]for i in range(3)for j in range(3))for t in list(orbit)}
+ seen|=orbit;reps.append(min(orbit))
+reps.sort();lines=[str(a.lam)+' '+str(len(reps))];rows=[]
+for m in reps:
+ ks=[3-d for d in m];f=choose_forest([3]*6,edges,ks);directions={e:1 if p==edges[e][0]else 2 for e,p,c in orient([3]*6,edges,ks,f)}
+ blocks=representative_blocks([3]*6,edges,ks,f);order=sorted(range(9),key=lambda e:(len(blocks[e]),e));lines.append('9')
+ for e in order:lines.append(f'{e//3} {e%3} {m[e]} {directions.get(e,0)}')
+ rows.append(dict(matrix=m,forest=list(f),directions=directions,order=order,products=math.prod(map(len,blocks))))
+(a.out/'patterns.txt').write_text('\n'.join(lines)+'\n')
+(a.out/'inventory.json').write_text(json.dumps(dict(status='PASS_INTEGER_INVENTORY',lambda_value=a.lam,deficit=delta,literal_matrices=literal,matrix_orbits=len(reps),normalized_products=sum(r['products']for r in rows),patterns=rows),indent=2)+'\n')
+print(literal,len(reps),sum(r['products']for r in rows))

@@ -1,0 +1,44 @@
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('normal Python required')
+sys.dont_write_bytecode = True
+from pathlib import Path
+import argparse, itertools, math, json
+parser = argparse.ArgumentParser()
+parser.add_argument('--study', type=Path, required=True)
+parser.add_argument('--out', type=Path, required=True)
+args = parser.parse_args()
+sys.path.insert(0, str(args.study / 'corpus106_F012_matching_forest_v1'))
+from forest import choose_forest, orient, representative_blocks
+edges = list(itertools.combinations(range(4), 2))
+position = {edge: i for i, edge in enumerate(edges)}
+permutations = list(itertools.permutations(range(4)))
+def transport(sizes, permutation):
+    result = [0] * 6
+    for i, (u, v) in enumerate(edges):
+        result[position[tuple(sorted((permutation[u], permutation[v])))]] = sizes[i]
+    return tuple(result)
+rows = []
+for lam in [2, 3, 4]:
+    vectors = [sizes for sizes in itertools.product(range(4), repeat=6)
+               if all(sum(sizes[i] for i, edge in enumerate(edges) if v in edge) == lam
+                      for v in range(4))]
+    representatives = sorted({min(transport(sizes, p) for p in permutations)
+                              for sizes in vectors})
+    patterns = []
+    for sizes in representatives:
+        forest = choose_forest([3] * 4, edges, sizes)
+        blocks = representative_blocks([3] * 4, edges, sizes, forest)
+        directions = {edge: 1 if parent == edges[edge][0] else 2
+                      for edge, parent, child in orient([3] * 4, edges, sizes, forest)}
+        patterns.append(dict(sizes=sizes, forest=list(forest), directions=directions,
+                             products=math.prod(map(len, blocks))))
+    rows.append(dict(lambda_value=lam, source_lower=30, excluded_order=25,
+                     exterior_vertices=8, exterior_edges=2*lam-2,
+                     labelled_exteriors=math.comb(28, 2*lam-2),
+                     literal_vectors=len(vectors), patterns=patterns,
+                     total_products=sum(p['products'] for p in patterns)))
+report = dict(status='COMPLETE_INTEGER_INVENTORY_NO_GRAPH_TARGET', edges=edges, rows=rows)
+assert not args.out.exists()
+args.out.write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report))

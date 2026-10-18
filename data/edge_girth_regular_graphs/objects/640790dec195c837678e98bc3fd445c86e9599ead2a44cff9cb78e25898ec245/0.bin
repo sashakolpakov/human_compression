@@ -1,0 +1,189 @@
+"""The accepted twelve t6 colour rows and seventy actual-parent records."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+from collections import Counter, deque
+import hashlib
+import importlib.util
+from itertools import combinations, product
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+H = load('acquired_t6_literal_reader', HERE/'required_hexagon_catalogue.py')
+K = load('acquired_t6_fixed_graph_tools', HERE/'hexagon_ball_square_model.py')
+need, pin, C = H.need, K.pin, H.C
+ANCHORS = {'A': (0,3), 'B': (1,4), 'C': (2,5)}
+# name, shape, exact ordered edges, colour word, A/B/C state alphabets,
+# omit NNN, number of allowed ZZ pairs. Order is the accepted proof's table.
+ROWS = (
+    ('c6_opposite', 'C6', ((0,1),(1,2),(2,3),(3,4),(4,5),(5,0)), 'ABCABC', ('NLR','NLR','NLR'), False, 3),
+    ('c6_mixed', 'C6', ((0,1),(1,2),(2,3),(3,4),(4,5),(5,0)), 'ABACBC', ('N','NLR','N'), False, 3),
+    ('c5_leaf_far', 'C5+leaf', ((0,1),(1,2),(2,3),(3,4),(4,0),(0,5)), 'ABCABC', ('N','N','NLR'), False, 2),
+    ('c5_leaf_near', 'C5+leaf', ((0,1),(1,2),(2,3),(3,4),(4,0),(0,5)), 'ACBABC', ('N','N','N'), False, 2),
+    ('square_tail', 'C4+tail', ((0,1),(1,2),(2,3),(3,0),(0,4),(4,5)), 'ABCBCA', ('N','N','N'), False, 4),
+    ('square_adj_alternating', 'C4+adj', ((0,1),(1,2),(2,3),(3,0),(0,4),(1,5)), 'ABABCC', ('N','N','N'), False, 3),
+    ('square_adj_three', 'C4+adj', ((0,1),(1,2),(2,3),(3,0),(0,4),(1,5)), 'ACABCB', ('N','N','N'), False, 3),
+    ('square_opp_alternating', 'C4+opp', ((0,1),(1,2),(2,3),(3,0),(0,4),(2,5)), 'ABABCC', ('N','N','NLR'), False, 3),
+    ('square_opp_three', 'C4+opp', ((0,1),(1,2),(2,3),(3,0),(0,4),(2,5)), 'ABCBCA', ('N','N','N'), False, 3),
+    ('k23_isolated', 'K2,3+iso', ((0,2),(0,3),(0,4),(1,2),(1,3),(1,4)), 'ABCBCA', ('N','N','N'), False, 5),
+    ('triangle_tail', 'tri+tail', ((1,2),(2,0),(0,1),(0,3),(3,4),(4,5)), 'ABCABC', ('N','N','LR'), False, 5),
+    ('two_triangles', 'two tri', ((0,1),(1,2),(2,0),(3,4),(4,5),(5,3)), 'ABCABC', ('NLR','NLR','NLR'), True, 9),
+)
+ROW_COUNTS = (27,3,3,1,1,1,1,3,1,1,2,26)
+
+
+def records():
+    result = []
+    for number,(name, shape, edges, colours, states, omit_none, q) in enumerate(ROWS):
+        selected = [''.join(p) for p in product(*states)
+                    if not (omit_none and p == ('N','N','N'))]
+        need(len(selected) == ROW_COUNTS[number],
+             'exact accepted per-row parent count')
+        result += [dict(row=name, parents=p) for p in selected]
+    need(len(result) == 70 and len({(r['row'],r['parents']) for r in result}) == 70,
+         'seventy unique literal raw parent records')
+    return result
+
+
+def select(row, states):
+    need(type(row) is str and row in [r[0] for r in ROWS], 'one accepted t6 colour row')
+    selected = next(r for r in ROWS if r[0] == row)
+    need(type(states) is str and len(states) == 3
+         and all(s in alphabet for s,alphabet in zip(states,selected[4]))
+         and not (selected[5] and states == 'NNN'), 'exact admitted N/L/R parent state')
+    return selected
+
+
+def skeleton(row, states):
+    _,shape,edges,colours,_,_,q = select(row,states)
+    re = {tuple(sorted(e)) for e in edges}
+    need(len(re) == 6 and Counter(colours) == {'A':2,'B':2,'C':2},
+         'six simple R edges, two of each colour')
+    adjacency = [set() for _ in range(6)]
+    for (u,v),colour in zip(edges,colours):
+        need(0 <= u < 6 and 0 <= v < 6 and u != v, 'R endpoint labels')
+        adjacency[u].add(v); adjacency[v].add(u)
+    for v in range(6):
+        incident = [c for e,c in zip(edges,colours) if v in e]
+        need(len(incident) == len(set(incident)) <= 3, 'proper R edge colouring')
+    for colour,state in zip('ABC',states):
+        first,second = [set(e) for e,c in zip(edges,colours) if c == colour]
+        if state != 'N':
+            need(not first & second and not any(tuple(sorted((u,v))) in re
+                 for u in first for v in second), 'shared-parent endpoint-set lemma')
+
+    names = [f'c_{i}' for i in range(6)]
+    names += [f'x_{i}_{slot}' for i in range(6) for slot in range(2)]
+    names += [f'z_{i}' for i in range(6)] + [f't_{i}' for i in range(6)]
+    base, parents, endpoints, seen = set(), {}, {}, Counter()
+
+    def edge(u,v):
+        key = tuple(sorted((u,v)))
+        need(0 <= key[0] < key[1] < 54 and key not in base, 'distinct simple fixed t6 edge')
+        base.add(key)
+
+    for i in range(6):
+        edge(i,(i+1)%6)
+        for slot in range(2):
+            edge(i,6+2*i+slot)
+    for j,((u,v),colour) in enumerate(zip(edges,colours)):
+        occurrence = seen[colour]; seen[colour] += 1
+        state = states['ABC'.index(colour)]
+        slots = (0,0) if occurrence == 0 else {'N':(1,1),'L':(0,1),'R':(1,0)}[state]
+        parents[24+j] = tuple(6+2*a+slot for a,slot in zip(ANCHORS[colour],slots))
+        endpoints[24+j] = (18+u,18+v)
+        for vertex in parents[24+j] + endpoints[24+j]:
+            edge(24+j,vertex)
+    multiplicities = Counter(x for pair in parents.values() for x in pair)
+    single_parent, anchors = {}, {}
+    for p in range(6,18):
+        anchor,slot = divmod(p-6,2)
+        need(0 <= multiplicities[p] <= 2, 'actual L1 T multiplicity')
+        for j in range(3-multiplicities[p]):
+            s = len(names); names.append(f's_{anchor}_{slot}_{j}')
+            single_parent[s],anchors[s] = p,anchor
+            edge(p,s)
+    need(len(names) == len(set(names)) == 54 and set(single_parent) == set(range(30,54)),
+         '54 labels and exactly 24 individually parented S vertices')
+    ss = set()
+    for u,v in combinations(single_parent,2):
+        d = abs(anchors[u]-anchors[v])
+        if min(d,6-d) >= 2:
+            ss.add((u,v))
+    sz = set()
+    for z in range(18,24):
+        forbidden = {p for t,pair in endpoints.items() if z in pair for p in parents[t]}
+        sz.update((z,s) for s,p in single_parent.items() if p not in forbidden)
+    distances = []
+    for start in range(6):
+        dist = {start:0}; queue = deque([start])
+        while queue:
+            u = queue.popleft()
+            for v in sorted(adjacency[u]):
+                if v not in dist:
+                    dist[v] = dist[u]+1; queue.append(v)
+        distances.append(dist)
+    zz = {(18+u,18+v) for u,v in combinations(range(6),2)
+          if v not in distances[u] or distances[u][v] > 2}
+    allowed = ss | sz | zz
+    k = sum(state != 'N' for state in states)
+    need(len(base) == 66 and (len(ss),len(sz),len(zz)) == (144,96+4*k,q),
+         'exact t6 fixed and SS/SZ/ZZ counts')
+    need(not base & allowed and len(allowed) == 240+4*k+q <= 261,
+         'entire simple disjoint optional domain')
+    degree = Counter(v for e in base for v in e)
+    need(all(degree[v] == 4 for v in list(range(18))+list(range(24,30)))
+         and all(degree[v] == 1 for v in range(30,54))
+         and [degree[18+i] for i in range(6)] == list(map(len,adjacency)),
+         'exact fixed C/L1/T/S/Z degrees')
+    need([sum(a == i for a in anchors.values()) for i in range(6)] == [4]*6
+         and sum(4-degree[v] for v in range(54)) == 84, 'four S at each anchor; 42 residual edges')
+    full_degree = Counter(v for e in base | allowed for v in e)
+    need(max(full_degree.values()) <= 29, 't6 host bound including isolated Z')
+    metadata = dict(row=row,shape=shape,parent_states=states,shared_colours=k,
+                    vertices=names,contracted_edges=edges,colour_word=colours,
+                    t_parents={str(t):p for t,p in parents.items()},
+                    t_endpoints={str(t):p for t,p in endpoints.items()},
+                    single_parents={str(s):p for s,p in single_parent.items()},
+                    single_anchors={str(s):a for s,a in anchors.items()},
+                    fixed_edges=sorted(base),allowed_edges=sorted(allowed),
+                    optional_edge_counts=dict(SS=len(ss),SZ=len(sz),ZZ=len(zz)),
+                    optional_ZZ=sorted(zz),required_residual_edges=42,
+                    selected_count_equations=dict(SZ='12-2e',SS='30+e',ZZ='e'),
+                    maximum_complete_host_degree=max(full_degree.values()))
+    return names,frozenset(base),frozenset(allowed),metadata
+
+
+def encode(row, states):
+    names,base,allowed,metadata = skeleton(row,states)
+    raw = f'{len(names)} {len(base)} {len(allowed)}\n'
+    raw += ''.join(f'{u} {v}\n' for u,v in sorted(base))
+    raw += ''.join(f'{u} {v}\n' for u,v in sorted(allowed))
+    metadata['model_sha256'] = hashlib.sha256(raw.encode('ascii')).hexdigest()
+    return raw,metadata
+
+
+def read_exact(row, states, path):
+    names,base,allowed,_ = skeleton(row,states)
+    actual = H.read_model(path,4096)
+    need(actual == (len(names),base,allowed), 'entire exact t6 parent-labelled domain')
+    return actual
+
+
+def build_exact(row, states, path):
+    n,base,allowed = read_exact(row,states,path)
+    formula,variables = C.build(n,base,allowed,degree=4,cuts=())
+    need(list(variables) == sorted(allowed)
+         and list(variables.values()) == list(range(1,len(allowed)+1)),
+         'unchanged original primary variable order')
+    return formula,variables

@@ -1,0 +1,49 @@
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('normal Python required')
+from pathlib import Path
+import json,hashlib,difflib,shutil,math
+P=Path(__file__).resolve().parent
+A=P.parents[1]/'corpus106_F012_quartic_five_pentagons_v1'
+# The immutable author edition is an explicit derivation source, not a reviewed premise.
+def rewrite(source,target,changes):
+    old=(A/source).read_text();new=old
+    for x,y in changes:
+        assert new.count(x)==1,(source,x,new.count(x))
+        new=new.replace(x,y)
+    (P/target).write_text(new)
+    (P/(target+'.diff')).write_text(''.join(difflib.unified_diff(old.splitlines(True),new.splitlines(True),fromfile=source,tofile=target)))
+for name in ['vertex_ball.h','cycle_budget.h','run_closed.py']:
+    shutil.copy2(A/name,P/name)
+old=(A/'vertex_ball.h').read_text()
+start=old.index('inline void validate_root(');end=old.index('\nstruct Canonical',start)
+function=old[start:end].replace('validate_root(const Graph&g)','validate_root_lambda(const Graph&g,int lambda)').replace('d==5,"five root-edge pentagons"','d==lambda,"specified root-edge pentagons"')
+(P/'vertex_ball_lambda.h').write_text('#include "vertex_ball.h"\n'+function+'\n')
+expected='const std::set<array<int,6>>expected={{{0,2,3,3,2,0}},{{1,1,3,3,1,1}},{{1,2,2,2,2,1}}};'
+replacement='const std::map<int,std::set<array<int,6>>> inventories={{2,{{0,0,2,2,0,0},{0,1,1,1,1,0}}},{3,{{0,0,3,3,0,0},{0,1,2,2,1,0},{1,1,1,1,1,1}}},{4,{{0,1,3,3,1,0},{0,2,2,2,2,0},{1,1,2,2,1,1}}}}; const auto&expected=inventories.at(lambda);'
+rewrite('root_cover.cpp','root_cover_lambda.cpp',[
+ ('#include "vertex_ball.h"','#include "vertex_ball_lambda.h"'),
+ ('need(argc==5,"usage PATTERNS ROOTS REPORT SECONDS");','need(argc==6,"usage PATTERNS ROOTS REPORT SECONDS LAMBDA");int lambda=stoi(argv[5]);need(lambda>=2&&lambda<=4,"lambda two to four");'),
+ ('count==3,"three exact patterns"','count==(lambda==2?2:3),"exact pattern count"'),
+ (expected,replacement),
+ ('validate_root(g);','validate_root_lambda(g,lambda);'),
+ ('products==41607','products==array<U,3>{252,19927,20196}[lambda-2]'),
+ ('PASS_COMPLETE_PENTAGON_ROOTS','PASS_COMPLETE_PARAMETERIZED_PENTAGON_ROOTS')])
+rewrite('exterior_cover.cpp','exterior_cover_lambda.cpp',[
+ ('need(argc==4,"usage EXTERIORS REPORT SECONDS");','need(argc==5,"usage EXTERIORS REPORT SECONDS LAMBDA");int lambda=stoi(argv[4]);need(lambda>=2&&lambda<=4,"lambda two to four");'),
+ ("output<<4<<'\\n'","output<<1<<'\\n'"),
+ ('for(int t=4;t<=7;t++)','for(int t=8;t<=8;t++)'),
+ ('int required=2*t-8;','int required=2*lambda-2;'),
+ ('if(t>4)','if(t>8)'),
+ ('PASS_COMPLETE_PENTAGON_EXTERIORS','PASS_COMPLETE_PARAMETERIZED_PENTAGON_EXTERIORS')])
+x=json.loads((P/'inventory01.json').read_text())
+for r in x['rows']:
+    lines=[str(len(r['patterns']))]
+    for q in r['patterns']:
+        def cost(i):
+            k=q['sizes'][i]
+            return math.comb(3,k) if q['directions'].get(str(i),0) else math.comb(3,k)**2*math.factorial(k)
+        for i in sorted(range(6),key=lambda i:(cost(i),i)):
+            u,v=x['edges'][i];lines.append(f"{u} {v} {q['sizes'][i]} {q['directions'].get(str(i),0)}")
+    (P/f"patterns{r['lambda_value']}.txt").write_text('\n'.join(lines)+'\n')
+print('prepared exact parameter deltas and three inventories')

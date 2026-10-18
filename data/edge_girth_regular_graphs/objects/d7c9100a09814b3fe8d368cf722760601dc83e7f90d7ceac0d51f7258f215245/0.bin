@@ -1,0 +1,43 @@
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <stdexcept>
+#include <string>
+#include <vector>
+using namespace std;
+void need(bool b,const char*s){if(!b)throw runtime_error(s);}
+using Graph=vector<array<int,3>>;
+Graph decode(const string&s,int expected){
+ need(!s.empty(),"empty graph6");int n=(unsigned char)s[0]-63;need(n==expected&&n>0&&n<=62,"graph6 order");size_t bits=n*(n-1)/2;need(s.size()==1+(bits+5)/6,"graph6 length");for(unsigned char c:s)need(c>=63&&c<=126,"graph6 alphabet");
+ vector<vector<int>> a(n);size_t at=0;
+ for(int v=0;v<n;v++)for(int u=0;u<v;u++,at++)if((s[1+at/6]-63)>>(5-at%6)&1){a[u].push_back(v);a[v].push_back(u);}
+ for(;at%6;at++)need(!((s[1+at/6]-63)>>(5-at%6)&1),"graph6 padding");
+ Graph g(n);for(int u=0;u<n;u++){need(a[u].size()==3,"cubic degree");copy(a[u].begin(),a[u].end(),g[u].begin());}return g;
+}
+int girth(const Graph&a){
+ int n=a.size(),answer=n+1;
+ for(int s=0;s<n;s++){
+  array<int,62>d,parent,q;d.fill(-1);parent.fill(-1);d[s]=0;q[0]=s;int head=0,tail=1;
+  while(head<tail){int u=q[head++];for(int v:a[u]){if(d[v]<0){d[v]=d[u]+1;parent[v]=u;q[tail++]=v;}else if(parent[u]!=v&&parent[v]!=u)answer=min(answer,d[u]+d[v]+1);}}
+  need(tail==n,"connected");
+ }return answer;
+}
+int edge_multiplicity(const Graph&a,int g){
+ int n=a.size();int common=-1;
+ for(int s=0;s<n;s++)for(int t:a[s])if(s<t){
+  array<int,62>d,q;array<uint64_t,62>w;d.fill(-1);w.fill(0);d[s]=0;w[s]=1;q[0]=s;int head=0,tail=1;
+  while(head<tail){int u=q[head++];if(d[u]>=g-1)continue;for(int v:a[u]){if((u==s&&v==t)||(u==t&&v==s))continue;if(d[v]<0){d[v]=d[u]+1;q[tail++]=v;}if(d[v]==d[u]+1){need(UINT64_MAX-w[v]>=w[u],"path count overflow");w[v]+=w[u];}}}
+  if(d[t]!=g-1)return 0;need(w[t]>0&&w[t]<1000000,"cycle multiplicity range");int count=w[t];if(common<0)common=count;else if(common!=count)return 0;
+ }
+ return common;
+}
+int main(int argc,char**argv){try{
+ need(argc==4,"usage: FILE ORDER MINIMUM_GIRTH");int n=stoi(argv[2]),minimum=stoi(argv[3]);ifstream in(argv[1]);need(bool(in),"input file");string line;size_t total=0;map<int,size_t>girths;map<pair<int,int>,vector<pair<size_t,string>>> positive;
+ while(getline(in,line)){need(!line.empty()&&line.back()!='\r',"empty or nonliteral line");Graph a=decode(line,n);int g=girth(a);need(g>=minimum,"input girth class");girths[g]++;int lambda=edge_multiplicity(a,g);if(lambda>0)positive[{g,lambda}].push_back({total,line});total++;}
+ need(in.eof(),"input read complete");cout<<"{\"status\":\"PASS\",\"order\":"<<n<<",\"minimum_girth\":"<<minimum<<",\"graphs\":"<<total<<",\"girths\":{";bool first=true;
+ for(auto [g,count]:girths){if(!first)cout<<',';first=false;cout<<'"'<<g<<"\":"<<count;}cout<<"},\"positive\":[";first=true;
+ for(auto &item:positive){if(!first)cout<<',';first=false;cout<<"{\"g\":"<<item.first.first<<",\"lambda\":"<<item.first.second<<",\"count\":"<<item.second.size()<<",\"graphs\":[";bool next=false;for(auto [idx,raw]:item.second){if(next)cout<<',';next=true;cout<<"{\"index\":"<<idx<<",\"graph6\":\"";for(char c:raw){if(c=='\\'||c=='"')cout<<'\\';cout<<c;}cout<<"\"}";}cout<<"]}";}cout<<"]}\n";
+ }catch(const exception&e){cerr<<e.what()<<'\n';return 1;}return 0;}

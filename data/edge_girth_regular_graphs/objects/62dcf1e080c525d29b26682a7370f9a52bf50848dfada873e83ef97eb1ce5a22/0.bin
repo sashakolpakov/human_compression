@@ -1,0 +1,178 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,array}
+\setlength{\emergencystretch}{2em}
+\newtheorem{lemma}{Lemma}\newtheorem{theorem}[lemma]{Theorem}
+\title{Twenty-three hexagons through every edge}
+\author{Human Compression project}\date{}
+\begin{document}\maketitle
+\begin{theorem}
+There is no finite simple quartic graph of girth six in which every
+edge belongs to precisely twenty-three hexagons. Consequently
+$n(4,6,23)=\infty$.
+\end{theorem}
+We reduce the assertion to explicit finite local configurations. The
+certificate consists of short cycles, vertex permutations and unequal
+integer pair counts. Its verifier uses only the Python standard library.
+
+Fix an edge $uv$ in a hypothetical graph. The two trees of depth two
+rooted at $u,v$, excluding $uv$ at their first steps, have thirteen
+vertices each and are disjoint. Every additional edge within their
+union joins a left leaf to a right leaf: any other edge or identification
+creates a cycle of length at most five. These cross edges correspond
+bijectively to hexagons through $uv$, so there are twenty-three.
+
+On each side partition the nine leaves into three branches of size
+three. Cross edges between a fixed pair of branches form a matching;
+two cross neighbours in one branch would create a quadrangle.
+Let $m_{ij}$ be its size and put $d_{ij}=3-m_{ij}$. Then
+\[
+ 0\le d_{ij}\le3,\qquad \sum_{i,j=0}^2d_{ij}=4.       \tag{1}
+\]
+There are four unfinished leaf incidences on each side. Every such
+incidence leads outside the twenty-six vertices, since all internal
+edges have already been included.
+
+\begin{lemma}\label{profile}
+On either side the positive unfinished leaf degrees have one of the
+two profiles $(2,1,1)$ and $(3,1)$.
+\end{lemma}
+\begin{proof}
+Write $r_1,\ldots,r_9$ for the unfinished degrees of the right leaves.
+Each is at most three and their sum is four. The number of hexagons
+through $u$ avoiding $uv$ is twenty-three: all four incident edges
+belong to twenty-three hexagons, so there are forty-six through $u$,
+of which twenty-three use $uv$.
+
+A right leaf with $3-r_i$ cross neighbours supplies
+$\binom{3-r_i}{2}$ such hexagons, since these neighbours lie in
+different left branches. The remaining hexagons have their opposite
+vertex outside the tree union. Their required number is
+\[
+ 23-\sum_i\binom{3-r_i}{2}
+          =6-\frac12\sum_i r_i^2.                      \tag{2}
+\]
+The same formula holds with left and right interchanged.
+
+For a side with unfinished-degree profile $P$, let $b(P)$ be an
+upper bound on the pairs of its leaves sharing an outside neighbour.
+There are only four incidences. No outside vertex can meet two leaves
+in the same branch, as that would create a quadrangle. Thus an outside
+vertex meets at most three leaves on this side, giving a universal
+upper bound three. For profiles $(2,2)$ and $(3,1)$ there are just
+two deficient leaves. They have at most one common outside neighbour,
+again because two would create a quadrangle. We obtain
+\[
+\begin{array}{c|rrrr}
+P&(1,1,1,1)&(2,1,1)&(2,2)&(3,1)\\\hline
+6-\tfrac12\sum r_i^2&4&3&2&1\\
+b(P)&3&3&1&1.
+\end{array}                                             \tag{3}
+\]
+If $P_L,P_R$ are the two profiles, formula (2) requires the middle
+entry for $P_R$ to be at most $b(P_L)$, and conversely.
+The profile $(1,1,1,1)$ is therefore impossible. If one profile is
+$(2,2)$, its bound one forces the other to be $(3,1)$; the latter
+has bound one and cannot supply the required two on the first side.
+This excludes $(2,2)$ as well. The two stated profiles remain.
+We need only this necessary conclusion; the subsequent inventory may
+include additional impossible combinations of the two profiles.
+\end{proof}
+
+\begin{lemma}\label{pairs}
+Let $a_i$ be the number of cross edges incident with left branch $i$.
+For distinct $i,j,k\in\{0,1,2\}$ the number of hexagons through
+the two left root edges of branches $i,j$ must equal $a_k$.
+The analogous assertion holds on the right.
+\end{lemma}
+\begin{proof}
+Let $b_{ij}$ count the former hexagons. The three root-edge equations
+are $a_i+b_{ij}+b_{ik}=23$, and $a_0+a_1+a_2=23$.
+Solving gives $b_{ij}=a_k$. Once every leaf has all its neighbours,
+these counts cannot be changed by any farther completion. Explicitly,
+if $L_i$ is its three-element leaf set, then
+\[
+             b_{ij}=\sum_w |N(w)\cap L_i|\,|N(w)\cap L_j|.       \tag{4}
+\]
+Every summand specifies the middle vertex of a length-four path
+between the two branch vertices. Girth six ensures that these are
+exactly the hexagons in question, without repeated vertices. All
+neighbours of the leaves have already been included in (4).
+\end{proof}
+
+\paragraph{Complete local inventory.}
+There are $486$ matrices in (1). Permuting the three left branches,
+the three right branches, and interchanging the two sides reduces
+them to fifteen representatives. The verifier enumerates all matrices
+and all these transformations directly, retaining the least matrix
+in each orbit. No classification premise is used here.
+
+For each representative consider the bipartite graph on the six
+branches whose edges are the complete matchings, namely $d_{ij}=0$.
+Choose its spanning forest in lexicographic order. Independent
+permutations of the three leaves within each branch make every forest
+matching the identity: start in each component and choose the labels
+of a new branch as it is reached. A forest has no consistency cycle,
+so this procedure never conflicts with an earlier choice. All these
+permutations are automorphisms of the original rooted trees.
+
+Every other matching is freely enumerated. A matching of size
+$3,2,1,0$ between two three-element sets has respectively
+$6,18,9,1$ choices. Taking their products over the fifteen matrices
+gives $1\,774\,224$ normalized possibilities. The certificate visits
+this complete product by prefixes. A prefix is discarded only with
+an explicit quadrangle; otherwise every next matching is visited.
+At a complete choice Lemma~\ref{profile} may discard an impossible
+profile. Each remaining graph is carried to one of twenty printed
+adjacency lists by a supplied permutation of its twenty-six vertices.
+The verifier checks every adjacency entry and that the unordered
+root edge is preserved. The lists are in \texttt{representatives.json};
+their completeness follows from these checked maps, independently of
+the software used to discover them.
+
+For each of the twenty representatives list its eight unfinished
+incidences, repeating a leaf when necessary. Partition this list
+according to the outside vertex at the other end of each incidence.
+No part has more than four members and no part contains the same leaf
+twice. These are the only preliminary restrictions. The verifier
+generates every such partition by placing the next incidence in each
+eligible existing part or in one new part. Ordering new parts by their
+first appearance loses no partition. Some partitions of distinguishable
+incidences give the same graph; this harmless redundancy is retained.
+
+Adjoin one vertex for every part and all its specified edges to the
+leaves. Every original tree vertex now has degree four. Edges between
+these outside vertices, or to farther vertices, need not be enumerated:
+they cannot remove a short cycle or change (4). For every partition
+the second certificate supplies either a cycle of length three through
+five or a side and a pair of branches for which (4) differs from the
+required $a_k$. The verifier recomputes these integer counts. Its
+complete inventory is
+\[
+\begin{array}{lr}
+\text{Visited matching prefixes}&52424\\
+\text{Prefixes rejected by a quadrangle}&43005\\
+\text{Complete tree unions of girth at least six}&6420\\
+\text{Rejected degree profiles}&5670\\
+\text{Literal maps to the twenty representatives}&750\\
+\text{Outside incidence partitions}&48816\\
+\text{Partitions rejected by a short cycle}&44371\\
+\text{Partitions rejected by equation (4)}&4445.
+\end{array}
+\]
+The product coverage, exact prefix order and complete consumption of
+both certificate files are checked. Thus no case is accepted merely
+because a search program failed to return one. The two exhaustive
+local steps contradict every hypothetical graph, proving the theorem.
+
+\paragraph{Attribution and scope.}
+Goedgebeur and Jooken, \emph{Exhaustive generation of edge-girth-regular
+graphs}, arXiv:2401.08271v2, Table 2 on physical page 18, record
+$n(4,6,23)\ge42$ without a finite upper example. The theorem strengthens
+that bound to nonexistence at every order. The trees about an edge
+are the classical Moore-bound construction. The present proof combines
+the coupled degree-profile restriction, exact root-pair counts and
+the finite matching and incidence inventories. The literal verification
+is a proof dependency. No priority, whole-source completion, Lean or
+numerical-compression claim is made here.
+\end{document}

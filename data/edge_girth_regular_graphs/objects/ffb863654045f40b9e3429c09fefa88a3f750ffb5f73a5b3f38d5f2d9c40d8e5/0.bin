@@ -1,0 +1,45 @@
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+struct Search{
+ int n=48; array<uint64_t,64>adj{},allow{};array<int,64>deg{};array<bool,64>closed{};
+ unsigned char pairUsed[64][64][64]{}; vector<array<int,3>> changes;array<int,8>path{};
+ uint64_t nodes=0,positives=0;bool timeout=false;double seconds;chrono::steady_clock::time_point start;
+ vector<array<int,3>> extra;bool valid;
+ void paths(int v,int b,int depth,uint64_t seen){
+  if(!valid)return;
+  uint64_t bs=adj[v];
+  while(bs){int w=__builtin_ctzll(bs);bs&=bs-1;if(seen>>w&1)continue;
+   if(w==b){if(depth+1<7){valid=false;return;}if(depth+1==7){path[7]=b;for(int i=0;i<8;i++){int x=path[i],a=path[(i+7)%8],c=path[(i+1)%8];if(a>c)swap(a,c);if(pairUsed[x][a][c]){valid=false;return;}for(auto z:extra)if(z==array<int,3>{x,a,c}){valid=false;return;}extra.push_back({x,a,c});}}continue;}
+   if(depth+1<7){path[depth+1]=w;paths(w,b,depth+1,seen|(1ULL<<w));if(!valid)return;}
+  }
+ }
+ bool test(int a,int b){extra.clear();valid=true;path[0]=a;paths(a,b,0,1ULL<<a);return valid;}
+ bool add(int a,int b){if(deg[a]>=3||deg[b]>=3||adj[a]>>b&1)return false;if(!test(a,b))return false;
+  adj[a]|=1ULL<<b;adj[b]|=1ULL<<a;deg[a]++;deg[b]++;for(auto z:extra){pairUsed[z[0]][z[1]][z[2]]++;changes.push_back(z);}return true;}
+ void undo(int a,int b,size_t checkpoint){adj[a]&=~(1ULL<<b);adj[b]&=~(1ULL<<a);deg[a]--;deg[b]--;while(changes.size()>checkpoint){auto z=changes.back();changes.pop_back();pairUsed[z[0]][z[1]][z[2]]--;}}
+ void choose(int x,const vector<int>&c,int at,int need){if(timeout)return;if(!need){closed[x]=true;visit();closed[x]=false;return;}if(int(c.size())-at<need)return;
+  for(int i=at;i<=int(c.size())-need;i++){int y=c[i];size_t cp=changes.size();if(add(x,y)){choose(x,c,i+1,need-1);undo(x,y,cp);}if(timeout)return;}}
+ void visit(){nodes++;if((nodes&127)==0&&chrono::duration<double>(chrono::steady_clock::now()-start).count()>seconds){timeout=true;return;}
+  int x=-1;vector<int>best;uint64_t score=~0ULL;
+  for(int v=0;v<n;v++)if(!closed[v]&&deg[v]<3){vector<int>c;uint64_t bs=allow[v]&~adj[v];while(bs){int y=__builtin_ctzll(bs);bs&=bs-1;if(!closed[y]&&deg[y]<3&&test(v,y))c.push_back(y);}int need=3-deg[v];if(int(c.size())<need)return;
+   uint64_t s=1;for(int i=1;i<=need;i++)s=s*(c.size()-i+1)/i;if(s<score){score=s;x=v;best=c;}if(score==1)break;}
+  if(x<0){for(int v=0;v<n;v++){if(deg[v]!=3)return;uint64_t bs=adj[v];vector<int>nn;while(bs){int y=__builtin_ctzll(bs);bs&=bs-1;nn.push_back(y);}for(int i=0;i<3;i++)for(int j=i+1;j<3;j++)if(pairUsed[v][nn[i]][nn[j]]!=1)return;}positives++;cout<<"POSITIVE "<<positives;for(auto a:adj)cout<<" "<<a;cout<<"\n";return;}
+  choose(x,best,0,3-deg[x]);
+ }
+};
+int main(int argc,char**argv){
+ if(argc!=3){cerr<<"input and seconds required\n";return 2;}
+ Search s;ifstream f(argv[1]);int edges,a,b,count;if(!(f>>s.n>>edges)||s.n<3||s.n>64||edges<0)return 2;
+ for(int i=0;i<edges;i++){if(!(f>>a>>b)||a<0||b<=a||b>=s.n||!s.add(a,b)){cerr<<"invalid initial graph\n";return 3;}}
+ if(!(f>>count)||count<0)return 2;
+ for(int i=0;i<count;i++){if(!(f>>a>>b)||a<0||b<=a||b>=s.n||(s.adj[a]>>b&1)||(s.allow[a]>>b&1))return 2;s.allow[a]|=1ULL<<b;s.allow[b]|=1ULL<<a;}
+ string extra;if(f>>extra)return 2;s.seconds=stod(argv[2]);if(s.seconds<=0||s.seconds>600)return 2;s.start=chrono::steady_clock::now();s.visit();
+ cout<<"SUMMARY "<<(s.timeout?"DEADLINE":"COMPLETE")<<" NODES "<<s.nodes<<" POSITIVES "<<s.positives<<" SECONDS "<<chrono::duration<double>(chrono::steady_clock::now()-s.start).count()<<"\n";return 0;
+}

@@ -1,0 +1,975 @@
+PHYSICAL PAGE 1
+arXiv:2401.08271v2  [math.CO]  25 Jun 2024
+Exhaustive generation of edge-girth-regular
+graphs
+Jan Goedgebeur 1, 2[0000−0001−8984−2463] and Jorik Jooken 1[0000−0002−5256−1921]
+1 Department of Computer Science, KU Leuven Kulak, 8500 Kortr ijk, Belgium
+jan.goedgebeur@kuleuven.be,jorik.jooken@kuleuven.be
+2 Department of Applied Mathematics, Computer Science and St atistics, Ghent
+University, 9000 Ghent, Belgium
+Abstract. Edge-girth-regular graphs (abbreviated as egr graphs) are a
+class of highly regular graphs. More speciﬁcally, for integ ers v, k, g and λ
+an egr(v, k, g, λ ) graph is a k-regular graph with girth g on v vertices such
+that every edge is contained in exactly λ cycles of length g. The central
+problem in this paper is determining n(k, g, λ ), which is deﬁned as the
+smallest integer v such that an egr(v, k, g, λ ) graph exists (or∞ if no such
+graph exists) as well as determining the corresponding extr emal graphs.
+We propose a linear time algorithm for computing how often an edge is
+contained in a cycle of length g, given a graph with girth g. We use this as
+one of the building blocks to propose another algorithm that can exhaus-
+tively generate all egr(v, k, g, λ ) graphs for ﬁxed parameters v, k, g and λ .
+We implement this algorithm and use it in a large-scale compu tation to
+obtain several new extremal graphs and improvements for low er and up-
+per bounds from the literature for n(k, g, λ ). Among others, we show that
+n(3, 6, 2) = 24 , n (3, 8, 8) = 40 , n (3, 9, 6) = 60 , n (3, 9, 8) = 60 , n (4, 5, 1) =
+30, n (4, 6, 9) = 35 , n (6, 5, 20) = 42 and we disprove a conjecture made
+by Araujo-Pardo and Leemans [ Discrete Math. 345(10):112991 (2022)]
+for the cubic girth 8 and girth 12 cases. Based on our computat ions, we
+conjecture that n(3, 7, 6) = n(3, 8, 10) = n(3, 8, 12) = n(3, 8, 14) =∞ .
+Keywords: Graph algorithms · Extremal problems · Edge-girth-regular
+graphs · Degree sequences.
+1 Introduction
+In 2018, Jajcay, Kiss and Miklaviˇ c [13] introduced a new type of regularity called
+edge-girth-regularity. They deﬁne for integers v, k, g and λ an edge-girth-regular
+(v, k, g, λ ) graph (abbreviated as an egr(v, k, g, λ ) graph) as a k-regular graph
+with girth g on v vertices such that every edge is contained in exactly λ cycles of
+length g. Edge-girth-regular graphs are related to a number of important graph
+classes. More precisely, edge-girth-regular graphs generalize th e well-known no-
+tion of edge-regular graphs [4] (in which each edge appears in the sa me number
+of triangles) and they are related to Moore graphs and the notorio usly diﬃcult
+cage problem [10]. This problem asks to determine the order of the smallest k-
+regular graph with girth g as well as the corresponding extremal graphs, known
+
+PHYSICAL PAGE 2
+2 J. Goedgebeur and J. Jooken
+as cages (we refer the interested reader to [10] for a more thorough over view of
+this topic). Many cages are known to be edge-girth-regular graph s. Moreover,
+edge-transitive graphs are an important subclass of edge-girth- regular graphs.
+Since a disconnected graph G can only be edge-girth-regular if each of its con-
+nected components are edge-girth-regular, all graphs in the rem ainder of this pa-
+per refer to connected graphs without loops and parallel edges. F or the cage prob-
+lem, it is known that for all integers k, g ≥ 3 there exist inﬁnitely many k-regular
+graphs of girth g [24]. For edge-girth-regular graphs on the other hand, there
+can either be zero, ﬁnitely many or inﬁnitely many edge-girth-regula r graphs
+depending on the choice of the parameters k, g and λ [13]. Analogous to the
+important cage problem, Drglin, Filipovski, Jajcay and Raiman [8] con sider the
+class of extremal edge-girth-regular graphs, which are edge-gir th-regular graphs
+of minimum order for given parameters k, g and λ. They initiated the study of
+n(k, g, λ ), which is deﬁned as the smallest integer v such that an egr(v, k, g, λ )
+graph exists (or ∞ if no such graph exists) and determine n(k, g, λ ) exactly for a
+number of parameter triples ( k, g, λ ) with a focus on the 3-regular and 4-regular
+case. However, the exact value of n(k, g, λ ) is only known for a handful of cases
+and most focus in the literature so far has been on lower and upper b ounds
+instead. In the current paper, we determine n(k, g, λ ) exactly for a number of
+open cases (as well as the corresponding extremal graphs) and im prove several
+existing lower and upper bounds from the literature [8, 10, 13, 19].
+We now turn our attention to some basic properties of edge-girth- regular
+graphs that will be used throughout the paper. For ﬁxed paramet ers k and g,
+there are only ﬁnitely many λ such that an egr(v, k, g, λ ) graph exists for some
+integer v. More precisely, Jajcay, Kiss and Miklaviˇ c [13] showed the following
+elemental properties.
+Proposition 1 ([13]) Let G be an egr(v, k, g, λ ) graph. Then the following hold:
+(i) every vertex u of G is contained in exactly kλ
+2 cycles of length g;
+(ii) there are vkλ
+2g cycles of length g in G;
+(iii) kλ is an even integer;
+(iv) if g is even, then λ ≤ (k − 1)
+g
+2 ;
+(v) if g is odd, then λ ≤ (k − 1)
+g−1
+2 .
+A natural lower bound for the minimum order of any k-regular graph with
+ﬁnite girth g is the Moore bound:
+M (k, g ) =
+{
+1 + k + k(k − 1) + . . . + k(k − 1)(g−3)/ 2, g odd,
+2(1 + (k − 1) + . . . + (k − 1)(g−2)/ 2), g even.
+Moore graphs are k-regular graphs with girth g that attain this bound. We
+remark that all Moore graphs of even girth are edge-girth-regula r [14]. In the
+case of edge-girth-regular graphs, Drglin, Filipovski, Jajcay and R aiman [8] gave
+the following improved lower bound, which will turn out to be sharp for a number
+of cases that we consider in the current paper.
+
+PHYSICAL PAGE 3
+Exhaustive generation of edge-girth-regular graphs 3
+Theorem 1 (Theorem 2.3 in [8]) Let k and g be a ﬁxed pair of integers greater
+than or equal to 3, and let λ ≤ (k − 1)
+g−1
+2 , when g is odd, and λ ≤ (k − 1)
+g
+2 ,
+when g is even. Then
+n(k, g, λ ) ≥ M (k, g ) + (k − 1)
+g−1
+2 − λ, for g odd, (1)
+and
+n(k, g, λ ) ≥ M (k, g ) +
+⌈
+2 (k − 1)
+g
+2 − λ
+k
+⌉
+, for g even. (2)
+The rest of this paper is structured as follows: in Section 1.1 we intro duce
+notation and deﬁnitions that will be used throughout the paper. In Section 2 we
+propose a linear time algorithm – based on a recursion relation – for co mputing
+the number of cycles of length g in which an edge is contained, given a graph of
+girth g. Next, in Section 3 we propose an algorithm to exhaustively generat e all
+egr(v, k, g, λ ) graphs, which uses the algorithm from Section 2 as an important
+ingredient. In Section 4 we use these algorithms in a large-scale comp utation
+amounting to 6 CPU-years in order to improve several lower and upp er bounds
+on n(k, g, λ ) and independently verify several claims using diﬀerent algorithms.
+We also highlight several interesting graphs that we discovered and brieﬂy discuss
+their properties. Among others, we discuss two graphs that dispr ove a conjecture
+by Araujo-Pardo and Leemans [1] for the cases of cubic graphs w ith girths 8 and
+12. Finally, in Section 5 we conclude this paper by discussing possible av enues
+for further research and we conjecture that n(3, 7, 6) = n(3, 8, 10) = n(3, 8, 12) =
+n(3, 8, 14) = ∞ based on our computations.
+1.1 Notation and deﬁnitions
+For an integer n ≥ 1 we denote by [ n] the set {1, . . . , n }. The girth g of a graph G
+is the length of the shortest cycle of G (or ∞ if G is acyclic). A girth cycle of G is
+a cycle with length g. We deﬁne ngc(G, u 1u2) as the number of pairwise distinct
+girth cycles in G containing the edge u1u2. An edge-girth-regular (v, k, g, λ ) graph
+G is a k-regular graph of girth g and order v such that for every edge u1u2, we
+have ngc(G, u 1u2) = λ. Such a graph will be abbreviated as an egr(v, k, g, λ )
+graph. We deﬁne n(k, g, λ ) as the smallest value of v for which an egr(v, k, g, λ )
+graph exists (and deﬁne it as ∞ if no such graph exists). We deﬁne nsp(G, u 1, u 2)
+and d(G, u 1, u 2) as, respectively, the number of pairwise distinct shortest paths
+and the distance in G between vertices u1 and u2. For an edge u1u2 from the
+graph G = ( V, E ), we use G − u1u2 to denote the graph ( V, E \ {u1u2}). The
+set NG(u) denotes the neighbors of u in the graph G and degG(u) = |NG(u)|
+denotes the degree of u in the graph G.
+2 An algorithm for calculating ngc(G, u 1u2)
+Let G = ( V, E ) be a graph and u1u2 be an edge of G. We are interested in
+obtaining an eﬃcient algorithm for calculating ngc(G, u 1u2), assuming that the
+
+PHYSICAL PAGE 4
+4 J. Goedgebeur and J. Jooken
+girth g is known (this is indeed the case for the application that we have in mind
+in Section 3). The most straightforward idea would consist of trying to eﬃciently
+generate all girth cycles of G which contain u1u2 and then counting. However,
+the number of girth cycles can be exponential in terms of g so this cannot be
+done eﬃciently in general. Instead, in this section we show that ngc(G, u 1u2)
+can be calculated with a time complexity of O(|V | + |E|) based on a recursion
+relation that does not involve enumerating girth cycles.
+We ﬁrst observe a relationship between girth cycles and shortest p aths.
+Observation 1 Let u1u2 be an edge of the graph G = (V, E ) with girth g. Now
+ngc(G, u 1u2) = 0 if d(G − u1u2, u 1, u 2) > g − 1 and ngc(G, u 1u2) = nsp(G −
+u1u2, u 1, u 2) otherwise.
+Hence, we can instead focus on computing d(G − u1u2, u 1, u 2) and nsp(G −
+u1u2, u 1, u 2). Calculating the distance between two vertices is a classical proble m
+that can be solved using breadth-ﬁrst search and a small modiﬁcat ion allows us
+to compute the number of shortest paths as well. This becomes clea r in the
+following observation.
+Observation 2 Let Di = {u ∈ V (G) | d(G − u1u2, u, u 1) = i} be the set of
+vertices at distance i from u1 in the graph G − u1u2. We now have the following
+base case (for u = u1):
+nsp(G − u1u2, u 1, u 1) = 1 .
+For a vertex u ̸= u1, let d(G − u1u2, u, u 1) = i > 0. Since every shortest path of
+length i can be obtained by adding an edge to a shortest path of length i − 1, we
+have the following recursive case:
+nsp(G − u1u2, u, u 1) =
+∑
+u′∈NG−u1u2 (u)∩Di−1
+nsp(G − u1u2, u ′, u 1).
+These recursion relations can be used to calculate ngc(G, u 1, u 2), assuming
+that the girth g is known, with a time complexity of O(|V |+|E|) using a breadth-
+ﬁrst search algorithm (the pseudocode is given in Algorithm 1).
+3 An algorithm for exhaustively generating all
+egr(v, k, g, λ ) graphs
+In this section, we describe an algorithm for eﬃciently generating all egr(v, k, g, λ )
+graphs for given parameters v, k, g and λ. This algorithm shares similarities with
+the algorithms described in [16] and [11] for generating cages. Howe ver, the cur-
+rent algorithm requires further structural insights related to ed ge-girth-regular
+graphs. We ﬁrst need a lemma that tells us something about subgrap hs of an
+egr(v, k, g, λ ) graph. The lemma and its proof essentially belong to [8, Th. 2.3],
+but we have slightly altered it to better highlight the results that we n eed.
+
+PHYSICAL PAGE 5
+Exhaustive generation of edge-girth-regular graphs 5
+Algorithm 1 calculateNumberGirthCycles(Graph G, Girth g, Edge u1u2)
+1: // This algorithm calculates ngc(G, u 1u2)
+2: // Array with |V| entries intialized to ∞ ; the array stores d(G− u1u2, u, u 1)
+3: dist← newArray (|V|,∞ )
+4: // Array with |V| entries intialized to 0; the array stores nsp(G− u1u2, u, u 1)
+5: nsp← newArray (|V|, 0)
+6: dist[u1] = 0 // base case
+7: nsp[u1] = 1 // base case
+8: q← emptyQueue()
+9: q.addLastElement (u1)
+10: while q is not empty do
+11: currentV ertex← q.f irstElement ()
+12: q.eraseF irstElement ()
+13: // dist[u2] and nsp[u2] cannot change anymore
+14: if currentV ertex = u2 then
+15: if dist[u2] > g− 1 then
+16: return 0
+17: else
+18: return nsp[u2]
+19: end if
+20: end if
+21: for u′∈ NG−u1u2 (currentV ertex ) do
+22: if dist[u′] =∞ then
+23: dist[u′]← dist[currentV ertex ] + 1 // recursive case
+24: q.addLastElement (u′)
+25: end if
+26: if dist[u′] = dist[currentV ertex ] + 1 then
+27: nsp[u′]← nsp[u′] + nsp[currentV ertex ] // recursive case
+28: end if
+29: end for
+30: end while
+31: return 0
+Lemma 1 Let G be an egr(v, k, g, λ ) graph. For odd g, let T u1
+k, g−1
+2
+be a tree rooted
+at vertex u1 in which every internal vertex has degree k and every leaf is at dis-
+tance g−1
+2 from u1. Let v1, v 2, . . . , v k be the children of u1 and let L1, L 2, . . . , L k
+be the set of leaves of T u1
+k, g−1
+2
+at distance g−3
+2 from v1, v 2, . . . , v k, respectively.
+For even g, let T u1,u 2
+k, g
+2 −1 be a tree in which every internal vertex has degree k,
+consisting of the edge u1u2 and two disjoint trees rooted at respectively u1 and
+u2 such that the leaves of the two trees are at distance g
+2 − 1 from u1 and u2,
+respectively. Let L1 and L2 be the set of leaves of T u1,u 2
+k, g
+2 −1 at distance g
+2 − 1 from
+u1 and u2, respectively. Now the following hold:
+(i) If g is odd (even), T u1
+k, g−1
+2
+(T u1,u 2
+k, g
+2 −1) occurs as a subgraph of G.
+(ii) If g is odd (even), for every i ∈ [k] (i ∈ [2]) there are exactly λ edges in G
+with one endpoint in Li and another endpoint in ⋃
+j(Lj) \ Li.
+
+PHYSICAL PAGE 6
+6 J. Goedgebeur and J. Jooken
+We now need the following deﬁnition.
+Deﬁnition 1 Given a graph G = ( V, E ) on v vertices and integers k, g and λ,
+for vertices u1, u 2 ∈ V , u1 ̸= u2, we call the set {u1, u 2} a valid pair (relative to
+G, k, g and λ) if u1u2 /∈ E, degG(u1) < k , degG(u2) < k , the girth of (V, E ∪
+{u1u2}) is at least g and there is no edge in (V, E ∪ {u1, u 2}) which is contained
+in strictly more than λ cycles of length g. For a vertex u1 ∈ V (G), we deﬁne the
+set validP airsG(u1) as {{u1, u 2} | u2 ∈ V (G) and {u1, u 2} is a valid pair }.
+Based on Lemma 1, the algorithm starts from the tree T u1
+k, g−1
+2
+(or the tree
+T u1,u 2
+k, g
+2 −1 depending on the parity of g) and adds isolated vertices until the result-
+ing graph has v vertices. The algorithm then recursively adds edges to this graph
+to exhaustively generate all egr(v, k, g, λ ) graphs. More speciﬁcally, in each re-
+cursion step the algorithm branches by adding one edge in a number o f diﬀerent
+ways, ensuring that no egr(v, k, g, λ ) graphs are omitted from the search space.
+We observe that the algorithm only needs to consider edges corres ponding to
+valid pairs.
+Observation 3 Let G = (V, E ) be a graph on v vertices and u1, u 2 ∈ V be ver-
+tices such that the graph G′ = (V, E ∪{u1u2}) is a subgraph of some egr(v, k, g, λ )
+graph for given integers k, g and λ. Now {u1, u 2} is a valid pair.
+Proof. Since G′ is a subgraph an of egr(v, k, g, λ ) graph, we have degG′(ui) ≤ k
+and thus degG(ui) < k (i ∈ [2]). Moreover, the girth of G′ cannot be strictly
+smaller than g, because adding edges to G′ cannot increase its girth. Similarly,
+there cannot be an edge in G′ which is contained in strictly more than λ cycles
+of length g, because this number cannot decrease by adding more edges to G′.
+⊓ ⊔
+The algorithm adds edges in two phases. In the ﬁrst phase, the algo rithm
+only considers adding an edge between two vertices that are leaves of the tree
+T u1
+k, g−1
+2
+(or the tree T u1,u 2
+k, g
+2 −1). The ﬁrst phase ends when condition (ii) of Lemma 1
+is met. In the second phase, the algorithm also allows all other types of edges
+to be added. The intuition behind these two phases is that the algorit hm tries
+to maximally exploit known structural results about edge-girth-re gular graphs
+in order to quickly detect which graphs can never occur as a subgra ph of an
+edge-girth-regular graph (this follows the fail-ﬁrst principle).
+There are a number of diﬀerent ways in which equivalent subgraphs c an arise
+when edges are added. To overcome this ineﬃciency, the algorithm e mploys the
+following principles:
+– The order in which the edges are added does not matter (e.g. ﬁrst a dding
+edge e1 and then adding edge e2 is equivalent with ﬁrst adding e2 and then
+e1). Therefore, the algorithm keeps track of which edges are eligible t o be
+added at each recursive call. We note that the set of eligible edges is a lways
+a subset of the valid pairs.
+
+PHYSICAL PAGE 7
+Exhaustive generation of edge-girth-regular graphs 7
+At each recursive call, the algorithm determines the vertex with deg ree
+strictly less than k which has the least number of eligible edges that can
+be added (where ties are broken in an arbitrary fashion). The algor ithm
+branches by iterating over all possibilities for the next edge that co uld be
+added incident with the current vertex. If the algorithm decides to add edge
+e in the current node of the recursion tree, then it will mark e as ineligible
+for all subsequent children in the recursion tree to avoid duplicate w ork.
+– If u1, u 2 and u3 are pairwise distinct vertices and u2 and u3 are both isolated,
+then the graph ( V, E ∪ {u1u2}) is isomorphic to the graph ( V, E ∪ {u1u3}).
+The algorithm exploits this by keeping track of which vertices are isola ted
+and only allows the addition of an edge between a non-isolated vertex and
+one particular isolated vertex.
+– Isomorphic graphs may also arise in more complicated ways than what was
+described before. In general, the algorithm avoids this by computin g a canon-
+ical form of the graph using the nauty package [17]. Here, two graphs are
+isomorphic if and only if they have the same canonical form. The cano nical
+forms are stored in a splay tree [25], a classical data structure tha t allows
+eﬃcient insertion and lookup of its elements. The algorithm uses this d ata
+structure to prune graphs for which an isomorphic graph was alrea dy previ-
+ously constructed.
+Finally, the algorithm also prunes graphs from the recursion tree fo r which
+there is some vertex such that there are not enough eligible edges t hat could be
+added in order to make the degree of that vertex equal to k, since such graphs
+can clearly never lead to egr(v, k, g, λ ) graphs. The pseudocodes of the function
+that recursively adds edges and the function that exhaustively ge nerates all
+egr(v, k, g, λ ) graphs are shown in Algorithm 2 and Algorithm 3, respectively.
+3.1 V ariants
+Additionally, we brieﬂy describe two variants of the aforementioned algorithm.
+For most tuples ( v, k, g, λ ) this algorithm is the best option, but for some tuples
+the variants are faster. The ﬁrst variant is related to the two pha ses in which the
+edges are added. In some cases, it is faster to omit the ﬁrst phase and directly
+go to the second phase in which all types of edges are allowed to be ad ded. The
+second variant is related to the cost of computing whether a pair {u1, u 2} is
+valid for a graph G = (V, E ). More speciﬁcally, to determine if there is no edge
+in G′ = (V, E ∪ {u1u2}) that is contained in strictly more than λ cycles of length
+g, the algorithm has to repeatedly calculate ngc(G′, e ) for all edges e ∈ E(G′),
+which can be relatively expensive in practice. For some tuples ( v, k, g, λ ) it is
+faster to assume that λ is inﬁnitely large for determining whether {u1, u 2} is a
+valid pair, because this allows us to avoid having to compute ngc(G′, e ) (making
+this assumption maintains the correctness of the algorithm). In ot her words, the
+second variant also allows certain invalid edges to be added in the hope that this
+will quickly lead to graphs that can be pruned.
+
+PHYSICAL PAGE 8
+8 J. Goedgebeur and J. Jooken
+Algorithm 2 recursivelyAddEdges(Graph G = (V, E ), Initial leaves L, Eligible
+edges EE , Integer v, Integer k, Integer g, Integer λ)
+1: // Each recursive call of this function adds one edge to the graph
+2:
+3: // Do not do the same work twice
+4: if function was called before with a graph as parameter that is i somorphic with G
+then
+5: return
+6: end if
+7: // No more edges need to be added
+8: if|E|= vk
+2 then
+9: if G is an egr(v, k, g, λ ) graph then
+10: Output G
+11: end if
+12: return
+13: end if
+14: verticesT oConsider←{ u∈ V | degG(u) < k}
+15: if Condition (ii) of Lemma 1 is not met then
+16: verticesT oConsider← verticesT oConsider∩ L
+17: end if
+18: // Choose u1 as the vertex with the least number of adjacent eligible edge s
+19: u1← arg minu∈verticesT oConsider|EE [u]|
+20: edgesT oConsider← EE [u1]
+21: if Condition (ii) of Lemma 1 is not met then
+22: edgesT oConsider← edgesT oConsider∩ (L× L)
+23: end if
+24: // Only keep at most one edge between a non-isolated verte x and an isolated vertex
+25: edgesT oConsider← removeAllButOneP endantEdge (edgesT oConsider )
+26: // Branch on the ﬁrst edge incident with u1 that is added
+27: for u1u2∈ edgesT oConsider do
+28: G′← (V, E ∪{ u1u2})
+29: EE ′← updateEligibleEdges (G′, EE )
+30: if degG′ (u) +|EE ′(u)|≥ k for all u∈ V then
+31: recursivelyAddEdges (G′, L, EE ′, v, k, g, λ )
+32: end if
+33: EE← markAsIneligible (u1u2, EE )
+34: end for
+4 Improved lower and upper bounds for n(k, g, λ )
+We implemented the algorithm from Section 3 (as well as the variants d iscussed
+in Section 3.1). We executed these algorithms on a computer cluster for various
+tuples ( v, k, g, λ ) to ﬁnd lower and upper bounds for n(k, g, λ ) (as well as the
+corresponding graphs that attain the upper bounds). In total, t hese computa-
+tions took around 6 CPU-years. If an algorithm was able to ﬁnd an egr(v, k, g, λ )
+graph, then clearly n(k, g, λ ) ≤ v. On the other hand, if an algorithm terminated
+
+PHYSICAL PAGE 9
+Exhaustive generation of edge-girth-regular graphs 9
+Algorithm 3 generateAllEdgeGirthRegularGraphs(Integer v, Integer k, Integer
+g, Integer λ)
+1: // This function generates all egr(v, k, g, λ ) graphs
+2: T← emptyT ree()
+3: if g is odd then
+4: T←T u1
+k, g−1
+2
+5: else
+6: T←T u1,u2
+k, g
+2 −1
+7: end if
+8: // Trivially, no egr(v, k, g, λ ) graph exists if v is too small
+9: if v <|V (T )| then
+10: return
+11: end if
+12: L← leavesOf (T )
+13: // Add isolated vertices until G has v vertices
+14: G← (V (T )∪ [v−| V (T )|], E (T ))
+15: // EE is a data structure indexed by vertices that stores a list of e ligible edges for
+each vertex
+16: EE← listOf Lists(v)
+17: for u∈ V (G) do
+18: EE [u]← validP airsG(u)
+19: end for
+20: recursivelyAddEdges (G, L, EE, v, k, g, λ )
+for all integers v′ < v with input parameters ( v′, k, g, λ ) without generating any
+edge-girth-regular graphs, then clearly n(k, g, λ ) ≥ v since the algorithm is ex-
+haustive. For a given triple ( k, g, λ ), the algorithm always started by generating
+all egr(v, k, g, λ ) graphs, where v is the best available lower bound from the
+literature for n(k, g, λ ). The parameter v was gradually increased if no edge-
+girth-regular graphs could be found, but skipping orders for which vk is not
+even or 2 g is not a divisor of vkλ (see Proposition 1).
+We also searched for edge-girth-regular graphs among available ex haustive
+lists of highly symmetrical graphs, which resulted in improved upper b ounds for
+some cases that were too large for Algorithm 3 to ﬁnd. More speciﬁc ally, we
+tested all vertex-transitive graphs with order at most 47 [12], all g raphs with
+order at most 26 having two vertex orbits [23], all 3-, 4-, 5- and 6-r egular graphs
+available at House of Graphs [6], all 3-regular vertex-transitive gra phs with order
+at most 1280, all 4-regular arc-transitive graphs with order at mo st 640 [22] and
+all 5-regular arc-transitive graphs with order at most 500 [20]. We r efer the
+interested reader to Section 4.1 for additional details about sanity checks and
+independent veriﬁcations related to the correctness of our implem entations of the
+algorithms. All code and data related to this paper is made publicly ava ilable at
+https://github.com/JorikJooken/edgeGirthRegularGraphs. All graphs on
+at most 250 vertices are also made available at House of Graphs [6] b y searching
+for the term “edge-girth-regular”.
+
+PHYSICAL PAGE 10
+10 J. Goedgebeur and J. Jooken
+So far, most attention in the literature has been given to the 3- and 4-
+regular case. In the current paper, we additionally focused on the 5- and 6-
+regular case. More precisely, we focused on the following pairs of ( k, g ) that
+were computationally feasible for the exhaustive generation algorit hm: (3 , 3),
+(3, 4), (3 , 5), (3 , 6), (3 , 7), (3 , 8), (4 , 3), (4 , 4), (4 , 5), (4 , 6), (5 , 3), (5 , 4), (5 , 5),
+(6, 3), (6 , 4) and (6 , 5). For the parameter λ, we considered all values for which
+the existence of an egr(v, k, g, λ ) graph was not ruled out by Proposition 1. In
+Tables 1-4 in Appendix A, we summarized the bounds that we were able to
+obtain as well as the previous best available bounds from the literatu re (to the
+best of our knowledge) for the 3-, 4-, 5- and 6-regular case, res pectively. Results
+where we were able to improve the best available lower or upper bound from
+the literature are shown in italics. We also marked results in bold where we
+were able to prove extremality (i.e. the lower bound equals the upper bound)
+and this was not already known from the literature. For the upper b ounds, we
+indicated between brackets how many pairwise non-isomorphic grap hs there are
+that attain this upper bound. For the lower bounds we additionally us e the fact
+vk is even and that 2 g is a divisor of vkλ (see Proposition 1) without repeating
+this reference everywhere.
+Moreover, we summarized the orders of the smallest egr(v, 3, g, λ ) graphs
+among the vertex-transitive graphs (denoted as nvt(3, g, λ )) for 9 ≤ g ≤ 16 and
+the orders of the smallest egr(v, 4, g, λ ) graphs among the arc-transitive graphs
+(denoted as nat(4, g, λ )) for 7 ≤ g ≤ 10 in Table 5 in Appendix A. Note that
+these orders also yield upper bounds for n(k, g, λ ). Since the smallest 3-regular
+graphs with girth 9 have order 58 [3] and we determined that none of these
+graphs are edge-girth-regular, we also obtain n(3, 9, 6) = 60 and n(3, 9, 8) = 60 .
+Two graphs attaining this bound are shown in Fig. 1.
+Fig. 1: An extremal egr(60, 3, 9, 6) graph (left) and an extremal egr(60, 3, 9, 8)
+graph (right).
+
+PHYSICAL PAGE 11
+Exhaustive generation of edge-girth-regular graphs 11
+Apart from these two graphs, several new extremal graphs wer e determined
+and we improved various lower and upper bounds from the literature . We now
+discuss a few remarkable observations that follow from these calcu lations.
+We have n(3, 6, 6) = 16 and it is attained by the M¨ obius-Kantor graph (a
+vertex-transitive graph on 16 vertices). This graph can also be us ed to obtain
+other extremal edge-girth-regular graphs. More speciﬁcally, we have n(4, 5, 6) =
+20 and it is attained by a graph that can be obtained by adding four ve rtices to
+the M¨ obius-Kantor graph and adding the appropriate edges (see Fig. 2). This
+makes the graph on 20 vertices one of the few known extremal edg e-girth-regular
+graphs which are not vertex-transitive nor edge-transitive. It is less well-known
+than the M¨ obius-Kantor graph, but appears for example in [5] as a 4-regular
+graph containing many connected induced subgraphs.
+Fig. 2: An egr(16, 3, 6, 6) graph (the M¨ obius-Kantor graph) and anegr(20, 4, 5, 6)
+graph. Both graphs are the unique extremal graphs for these pa rameters.
+For the cage problem, an important question that has been open fo r more
+than 40 years asks whether every minimum order k-regular graph with even
+girth g (i.e. cage) is bipartite [10, 26]. We remark that the analogous questio n for
+extremal edge-girth-regular graphs has a negative answer. For example, Fig. 3
+shows the unique extremal egr(15, 6, 4, 16) that we determined in the current
+paper. This graph has girth 4 and is extremal, but is not bipartite.
+Porups´ anszki describes the existence of an egr(54, 3, 8, 8) graph [19, Cor.
+2.6]. Similarly, Yang, Sun and Zhang describe a Wenger graph, which is a n
+egr(54, 3, 8, 8) graph [27, Th. 1]. Araujo-Pardo and Leemans went one step fu r-
+ther and made the following conjecture:
+
+PHYSICAL PAGE 12
+12 J. Goedgebeur and J. Jooken
+Fig. 3: The unique extremal egr(15, 6, 4, 16) graph is not bipartite and has even
+girth.
+Conjecture 1 (Conj. 4.4 in [1]) For q ≥ 3 a prime power and g ∈ { 8, 12}
+there exists a family of egr(2q
+g−2
+2 , q, g, (q − 1)
+g−2
+2 (q − 2)) graphs. These graphs
+are extremal edge-girth-regular graphs.
+However, a careful literature analysis reveals that Potoˇ cnik and Vidali used the
+exhaustive list of all 3-regular vertex-transitive graphs until ord er 1280 [22] to
+ﬁlter out the edge-girth-regular graphs and they describe an egr(v, 3, 8, 8) graph
+in Table 2 of [21] without specifying its order v. In the current paper we prove
+that n(3, 8, 8) = 40 and that this is attained by precisely one graph, which
+is vertex-transitive (shown on the left of Fig. 4). This disproves Co njecture 1
+for q = 3 and g = 8. We also showed that n(3, 12, 32) ≤ 162 = 2 · 34 (see
+Table 5 in Appendix A), thereby also disproving Conjecture 1 for q = 3 and
+g = 12 . Related to this, note that there does not exist any cubic connecte d
+vertex-transitive graph on 486 = 2 · 35 vertices (see [22]).
+We remark that there are 118 369 811 959 connected 4-regular gr aphs of order
+28 with girth equal to 5 (see https://oeis.org/A184945), whereas this number
+is not known yet for order 30. In the current paper, we show that n(4, 5, 1) =
+30 and it is attained by a unique graph (shown on the right of Fig. 4). T his
+emphasizes that many of the results discussed in the current pape r would have
+been computationally infeasible to obtain using existing algorithms.
+4.1 Independent veriﬁcations and sanity checks
+Since the results of this paper rely on the outcome of algorithms, it is very im-
+portant to take extra measures to ensure that the algorithms we re implemented
+
+PHYSICAL PAGE 13
+Exhaustive generation of edge-girth-regular graphs 13
+Fig. 4: The unique extremal egr(40, 3, 8, 8) graph (left) and the unique extremal
+egr(30, 4, 5, 1) graph (right).
+correctly. Therefore, we veriﬁed several claims independently us ing diﬀerent al-
+gorithms and we also did several sanity checks that give us a lot of co nﬁdence
+that the algorithms were implemented correctly. The precise order s for which we
+were able to do this are diﬀerent depending on the tuple ( k, g, λ ), so in the inter-
+est of space we do not describe the precise orders. All results wer e in agreement
+for the following:
+– We implemented three diﬀerent algorithms for the exhaustive gener ation of
+egr(v, k, g, λ ) graphs as discussed in Section 3. These three algorithms were
+always in agreement with each other, also for orders that are large r than
+n(k, g, λ ). For very large orders we were only able to use the most eﬃcient
+variants due to the computational burden.
+– We compared the outcome of these three algorithms with several k nown
+values of n(k, g, λ ) from the literature.
+– We compared the outcome of these three algorithms with the outco me pro-
+duced by generating all k-regular graphs of girth at least g using the genera-
+tor GENREG [18] followed by a ﬁlter that ﬁlters out the edge-girth-regular
+graphs.
+– We changed the implementation of Algorithm 3 to generate all connec ted
+k-regular graphs of girth at least g. We compared the output of this algo-
+rithm with existing algorithms such as snarkhunter [2] and GENREG [18]
+for generating 3-, 4-, 5- and 6-regular graphs.
+5 Conclusion
+In this paper, we developed an algorithm for exhaustively generatin g all egr(v, k, g, λ )
+graphs and used this algorithm to improve existing lower and upper bo unds on
+
+PHYSICAL PAGE 14
+14 J. Goedgebeur and J. Jooken
+n(k, g, λ ). We believe that this algorithm could also be an important tool for
+future research to address several questions related to edge- girth-regular graphs.
+For example, there are several parameters k, g and λ for which it is unknown
+whether an egr(v, k, g, λ ) graph exists. For the cubic case, whenever g ≤ 8 and
+some egr(v, 3, g, λ ) graph is known to exist, there also exists a vertex-transitive
+egr(v, 3, g, λ ) graph. Based on this observation and the computations that we
+did, we make the following conjecture:
+Conjecture 2 The following holds: n(3, 7, 6) = n(3, 8, 10) = n(3, 8, 12) = n(3, 8, 14) =
+∞.
+Moreover, in the literature several families of edge-girth-regular graphs are de-
+scribed, yielding upper bounds for n(k, g, λ ). We think it is worthwhile to investi-
+gate the relationships between diﬀerent extremal edge-girth-re gular graphs (e.g.
+large common subgraphs, systematic ways to transform one grap h into the other
+and so on). We hope that a careful analysis of the new graphs that we discovered
+in the current paper can also lead to new constructions or inﬁnite fa milies and
+perhaps even shed more light on the cage problem. Finally, we expect that our
+overview of the best existing bounds on n(k, g, λ ), which was largely missing
+from earlier literature, will also motivate other researchers to fur ther reduce the
+gaps.
+Acknowledgements
+We thank Tibo Van den Eede and Robert Jajcay for interesting discu ssions about
+edge-girth-regular graphs. Jan Goedgebeur is supported by Int ernal Funds of
+KU Leuven and an FWO grant with grant number G0AGX24N. Jorik Joo ken is
+supported by an FWO grant with grant number 1222524N. The comp utational
+resources and services used in this work were provided by the VSC ( Flemish
+Supercomputer Center), funded by the Research Foundation - F landers (FWO)
+and the Flemish Government – department EWI.
+
+PHYSICAL PAGE 15
+Bibliography
+[1] G. Araujo-Pardo and D. Leemans. Edge-girth-regular graphs arising from
+biaﬃne planes and Suzuki groups. Discrete Math., 345(10):112991, 2022.
+[2] G. Brinkmann, J. Goedgebeur, and B. D. McKay. Generation of c ubic
+graphs. Discrete Math. Theor. Comput. Sci. , 13(2), 2011.
+[3] G. Brinkmann, B. D. McKay, and C. Saager. The smallest cubic gra phs of
+girth nine. Combin. Probab. Comput. , 4(4):317–329, 1995.
+[4] A. E. Brouwer, A. M. Cohen, and A. Neumaier. Distance-regular graphs,
+volume 18 of Ergebnisse der Mathematik und ihrer Grenzgebiete (3) [Resu lts
+in Mathematics and Related Areas (3)] . Springer-Verlag, Berlin, 1989.
+[5] S. Cambie, J. Goedgebeur, and J. Jooken. The maximum number o f con-
+nected sets in regular graphs. arXiv preprint arXiv:2311.00075 , 2023.
+[6] K. Coolsaet, S. D’hondt, and J. Goedgebeur. House of Graphs 2 .0: A
+database of interesting graphs and more. Discrete Appl. Math. , 325:97–
+107, 2023. Available at https://houseofgraphs.org/.
+[7] K. Coolsaet, P. D. Johnson, Jr., K. J. Roblee, and T. D. Smotzer . Some ex-
+tremal problems for edge-regular graphs. Ars Combin. , 105:411–418, 2012.
+[8] A. Z. Drglin, S. Filipovski, R. Jajcay, and T. Raiman. Extremal edg e-girth-
+regular graphs. Graphs and Combin. , 37(6):2139–2154, 2021.
+[9] L. Droogendijk. Private communication, 2024.
+[10] G. Exoo and R. Jajcay. Dynamic cage survey. Electron. J. Combin. ,
+DS16:48, 2008.
+[11] G. Exoo, B. D. McKay, W. Myrvold, and J. Nadon. Computationa l deter-
+mination of (3 , 11) and (4 , 7) cages. J. Discrete Algorithms , 9(2):166–169,
+2011.
+[12] D. Holt and G. Royle. A census of small transitive groups and ver tex-
+transitive graphs. J. Symbolic Comput. , 101:51–60, 2020.
+[13] R. Jajcay, G. Kiss, and ˇS. Miklaviˇ c. Edge-girth-regular graphs. European
+J. Combin. , 72:70–82, 2018.
+[14] T. B. Jajcayov´ a, S. Filipovski, and R. Jajcay. Counting cycles in graphs
+with small excess. In Selected topics in graph theory and its applications ,
+volume 14 of Lect. Notes Semin. Interdiscip. Mat. , pages 17–36. Semin.
+Interdiscip. Mat. (S.I.M.), Potenza, 2017.
+[15] G. Kiss, ˇS. Miklaviˇ c, and T. Sz˝ onyi. A stability result for girth-regular
+graphs with even girth. J. Graph Theory , 100(1):163–181, 2022.
+[16] B. D. McKay, W. Myrvold, and J. Nadon. Fast backtracking prin ciples
+applied to ﬁnd new cages. In Proceedings of the Ninth Annual ACM-SIAM
+Symposium on Discrete Algorithms (San Francisco, CA, 1998) , pages 188–
+191. ACM, New York, 1998.
+[17] B. D. McKay and A. Piperno. Practical graph isomorphism, II. J. Symbolic
+Comput., 60:94–112, 2014.
+[18] M. Meringer. Fast generation of regular graphs and construc tion of cages.
+J. Graph Theory , 30(2):137–146, 1999.
+
+PHYSICAL PAGE 16
+16 J. Goedgebeur and J. Jooken
+[19] I. Porups´ anszki. On edge-girth-regular graphs: lower boun ds and new fam-
+ilies. arXiv preprint arXiv:2305.17014 , 2023.
+[20] P. Potoˇ cnik. Census of pentavalent arc-transitive graphs, 2024. Available
+at https://graphsym.net/.
+[21] P. Potoˇ cnik and J. Vidali. Cubic vertex-transitive graphs of gir th six. Dis-
+crete Math., 345(3):112734, 2022.
+[22] P. Potoˇ cnik, P. Spiga, and G. Verret. Cubic vertex-transitiv e graphs on up
+to 1280 vertices. J. Symbolic Comput. , 50:465–477, 2013.
+[23] G. Royle. Private communication, 2019.
+[24] H. Sachs. Regular graphs with given girth and restricted circuit s. J. London
+Math. Soc. , 38:423–429, 1963.
+[25] D. D. Sleator and R. E. Tarjan. Self-adjusting binary search t rees. J. Assoc.
+Comput. Mach. , 32(3):652–686, 1985.
+[26] P. K. Wong. Cages—a survey. J. Graph Theory , 6(1):1–22, 1982.
+[27] F. Yang, Q. Sun, and C. Zhang. The edge-girth-regularity of W enger graphs.
+arXiv preprint arXiv:2311.04401 , 2023.
+
+PHYSICAL PAGE 17
+Exhaustive generation of edge-girth-regular graphs 17
+Appendix
+A Tables
+k g λ Literature:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≤
+Literature:
+n(k, g, λ )≤
+3 3 2 4 [8, Th. 2.3] 4 4 (1 graph) 4 [13, Prop. 3.1]
+3 4 2 8 [8, Th. 2.3] 8 8 (1 graph) 8 [13, Prop. 3.2]
+3 4 4 6 [8, Th. 2.3] 6 6 (1 graph) 6 [13, Prop. 3.2]
+3 5 2 20 [13, Prop. 3.3] 20 20 (1 graph) 20 [13, Prop. 3.3]
+3 5 4 10 [10] 10 10 (1 graph) 10 [13, Prop. 3.3]
+3 6 2 18 [8, Th. 2.3] 24 24 (2 graphs) 24 [8]
+3 6 4 18 [8, Th. 2.3] 18 18 (1 graph) 18 [13]
+3 6 6 16 [8, Th. 2.3] 16 16 (1 graph) 16 [13]
+3 6 8 14 [10] 14 14 (1 graph) 14 [10]
+3 7 2 28 [8, Th. 2.3] 42 56 (≥ 1 graph) 56 [21]
+3 7 4 28 [8, Th. 2.3] 28 28 (1 graph) 28 [21]
+3 7 6 28 [10] 42 ∞ ∞
+3 7 8 ∞ [13, Prop. 2.5] ∞ ∞ ∞
+3 8 2 40 [8, Th. 2.3] 56 64 (≥ 1 graph) 64 [21]
+3 8 4 40 [8, Th. 2.3] 48 48 (≥ 1 graph) 48 [21]
+3 8 6 40 [8, Th. 2.3] 48 48 (≥ 1 graph) 48 [21]
+3 8 8 36 [8, Th. 2.3] 40 40 (1 graph) 40 [21]
+3 8 10 40 [8, Th. 2.3] 48 ∞ ∞
+3 8 12 36 [8, Th. 2.3] 48 ∞ ∞
+3 8 14 32 [8, Th. 2.3] 64 ∞ ∞
+3 8 16 30 [10] 30 30 (1 graph) 30 [21]
+Table 1: An overview of the best lower and upper bounds for n(3, g, λ ) for g ≤ 8.
+
+PHYSICAL PAGE 18
+18 J. Goedgebeur and J. Jooken
+k g λ Literature:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≤
+Literature:
+n(k, g, λ )≤
+4 3 1 9 [8, Prop. 3.1] 9 9 (1 graph) 9 [13]
+4 3 2 6 [8, Th. 2.3] 6 6 (1 graph) 6 [13]
+4 3 3 5 [8, Th. 2.3] 5 5 (1 graph) 5 [13]
+4 4 1 18 [8] 18 18 (4 graphs) 18 [8]
+4 4 2 13 [8] 13 13 (1 graph) 13 [8]
+4 4 3 14 [8] 14 14 (1 graph) 14 [8]
+4 4 4 19 [8] 21 ∞ ∞
+4 4 5 10 [8, Th. 2.3] 10 10 (1 graph) 10 [8]
+4 4 6 10 [8, Th. 2.3] 10 10 (1 graph) 10 [15, Ex. 5.1]
+4 4 7≤ λ≤ 8 ∞ [15, Th. 2.4] ∞ ∞ ∞
+4 4 9 8 [8, Th. 2.3] 8 8 (1 graph) 8 [8]
+4 5 1 25 [8, Th. 2.3] 30 30 (1 graph) 13 500 [13, Th. 4.5]
+4 5 2 25 [8, Th. 2.3] 30 30 (≥ 1 graph) ∞
+4 5 3 25 [8, Th. 2.3] 30 55 (≥ 1 graph) ∞
+4 5 4 25 [8, Th. 2.3] 30 ∞ ∞
+4 5 5 21 [8, Th. 2.3] 24 24 (1 graph) ∞
+4 5 6 20 [8, Th. 2.3] 20 20 (1 graph) ∞
+4 5 7 20 [10] 35 ∞ ∞
+4 5 8 20 [10] 65 ∞ ∞
+4 5 9 ∞ [13, Prop. 2.5] ∞ ∞ ∞
+4 6 1 39 [8, Th. 2.3] 57 84 (≥ 1 graph) 1 658 880 [13, Th. 4.5]
+4 6 2 39 [8, Th. 2.3] 51 96 (≥ 1 graph) ∞
+4 6 3 38 [8, Th. 2.3] 45 90 (≥ 1 graph) 60 [9]
+4 6 4 39 [8, Th. 2.3] 45 60 (≥ 1 graph) ∞
+4 6 5 39 [8, Th. 2.3] 42 81 (≥ 1 graph) ∞
+4 6 6 37 [8, Th. 2.3] 40 64 (≥ 1 graph) ∞
+4 6 7 36 [8, Th. 2.3] 39 60 (≥ 1 graph) ∞
+4 6 8 36 [8, Th. 2.3] 39 48 (≥ 1 graph) ∞
+4 6 9 35 [8, Th. 2.3] 35 35 (1 graph) ∞
+4 6 10 36 [8, Th. 2.3] 39 48 (≥ 1 graph) ∞
+4 6 11 36 [8, Th. 2.3] 36 42 (≥ 1 graph) ∞
+4 6 12 34 [8, Th. 2.3] 35 40 (≥ 1 graph) ∞
+4 6 13 33 [8, Th. 2.3] 36 60 (≥ 1 graph) ∞
+4 6 14 33 [8, Th. 2.3] 36 ∞ ∞
+4 6 15 32 [8, Th. 2.3] 33 40 (≥ 1 graph) ∞
+4 6 16 33 [8, Th. 2.3] 33 36 (≥ 1 graph) ∞
+4 6 17 33 [8, Th. 2.3] 33 ∞ ∞
+4 6 18 31 [8, Th. 2.3] 32 32 (1 graph) 32 [15, Ex. 5.6]
+4 6 19≤ λ≤ 20 30 [8, Th. 2.3] 36 ∞ ∞
+4 6 21 29 [8, Th. 2.3] 30 30 (1 graph) 30 [15, Ex. 5.4]
+4 6 22 30 [8, Th. 2.3] 39 ∞ ∞
+4 6 23 30 [8, Th. 2.3] 42 ∞ ∞
+4 6 24 28 [8, Th. 2.3] 28 28 (1 graph) 28 [15, Ex. 5.2]
+4 6 25≤ λ≤ 26 ∞ [15, Th. 2.4] ∞ ∞ ∞
+4 6 27 26 [10] 26 26 (1 graph) 26 [10]
+Table 2: An overview of the best lower and upper bounds for n(4, g, λ ) for g ≤ 6.
+
+PHYSICAL PAGE 19
+Exhaustive generation of edge-girth-regular graphs 19
+k g λ Literature:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≤
+Literature:
+n(k, g, λ )≤
+5 3 2 12 [7, Lem. 1] 12 12 (1 graph) ∞
+5 3 4 6 [8, Th. 2.3] 6 6 (1 graph) 6 [27]
+5 4 2 16 [8, Th. 2.3] 24 32 (≥ 1 graph) ∞
+5 4 4 16 [8, Th. 2.3] 16 16 (1 graph) ∞
+5 4 6 16 [8, Th. 2.3] 20 ∞ ∞
+5 4 8 14 [8, Th. 2.3] 20 ∞ ∞
+5 4 10 16 [8, Th. 2.3] 20 ∞ ∞
+5 4 12 12 [8, Th. 2.3] 12 12 (1 graph) 12 [15, Ex. 5.1]
+5 4 14 ∞ [15, Th. 2.4] ∞ ∞ ∞
+5 4 16 10 [8, Th. 2.3] 10 10 (1 graph) 10 [19, Cor. 3.6]
+5 5 2 40 [8, Th. 2.3] 44 60 (≥ 1 graph) 60 [9]
+5 5 4 38 [8, Th. 2.3] 38 66 (≥ 1 graph) ∞
+5 5 6 36 [8, Th. 2.3] 36 ∞ ∞
+5 5 8 34 [8, Th. 2.3] 34 36 (≥ 1 graph) ∞
+5 5 10 32 [8, Th. 2.3] 32 ∞ ∞
+5 5 12 32 [1, Th. 4.4] 32 32 (≥ 1 graph) 32 [1, Th. 2.2]
+5 5 14 30 [10] 42 ∞ ∞
+5 5 16∞ [13, Prop. 2.5] ∞ ∞ ∞
+Table 3: An overview of the best lower and upper bounds for n(5, g, λ ) for g ≤ 5.
+
+PHYSICAL PAGE 20
+20 J. Goedgebeur and J. Jooken
+k g λ Literature:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≥
+Current paper:
+n(k, g, λ )≤
+Literature:
+n(k, g, λ )≤
+6 3 1 15 [8, Prop. 3.1] 15 15 (1 graph) ∞
+6 3 2 12 [7, Lem. 1] 12 12 (1 graph) 16 [13, Th. 4.1]
+6 3 3 9 [8, Th. 2.3] 9 9 (1 graph) ∞
+6 3 4 8 [8, Th. 2.3] 8 8 (1 graph) ∞
+6 3 5 7 [8, Th. 2.3] 7 7 (1 graph) 7 [27]
+6 4 1 32 [8, Prop. 3.2] 32 40 (≥ 1 graph) ∞
+6 4 2 24 [19, Th. 3.5] 30 36 (≥ 1 graph) 320 [13, Th. 5.3]
+6 4 3 20 [8, Th. 2.3] 28 32 (≥ 1 graph) ∞
+6 4 4 19 [8, Th. 2.3] 25 27 (≥ 1 graph) ∞
+6 4 5 20 [8, Th. 2.3] 24 24 (≥ 1 graph) ∞
+6 4 6 20 [8, Th. 2.3] 24 24 (≥ 1 graph) 36 [13, Th. 4.2]
+6 4 7 20 [8, Th. 2.3] 24 36 (≥ 1 graph) ∞
+6 4 8 18 [8, Th. 2.3] 22 26 (≥ 1 graph) ∞
+6 4 9 20 [8, Th. 2.3] 20 20 (2 graphs) ∞
+6 4 10 18 [8, Th. 2.3] 20 20 (5 graphs) ∞
+6 4 11 20 [8, Th. 2.3] 20 ∞ ∞
+6 4 12 17 [8, Th. 2.3] 20 20 (≥ 1 graph) ∞
+6 4 13 16 [8, Th. 2.3] 20 20 (≥ 1 graph) 20 [9]
+6 4 14 16 [8, Th. 2.3] 18 18 (1 graph) ∞
+6 4 15 16 [8, Th. 2.3] 20 ∞ ∞
+6 4 16 15 [8, Th. 2.3] 15 15 (1 graph) ∞
+6 4 17 16 [8, Th. 2.3] 16 16 (1 graph) ∞
+6 4 18 16 [8, Th. 2.3] 22 ∞ ∞
+6 4 19 16 [8, Th. 2.3] 24 ∞ ∞
+6 4 20 14 [8, Th. 2.3] 14 14 (1 graph) 14 [15, Ex. 5.1]
+6 4 21≤ λ≤ 24 ∞ [15, Th. 2.4] ∞ ∞ ∞
+6 4 25 12 [8, Th. 2.3] 12 12 (1 graph) 12 [19, Cor. 3.6]
+6 5 1 65 [8, Th. 2.3] 65 ∞ ∞
+6 5 2 60 [8, Th. 2.3] 60 ∞ 7620 [13, Th. 5.3]
+6 5 3 60 [8, Th. 2.3] 60 ∞ 110 [9]
+6 5 4 60 [8, Th. 2.3] 60 ∞ 910 [13, Th. 5.3]
+6 5 5 57 [8, Th. 2.3] 57 ∞ ∞
+6 5 6 60 [8, Th. 2.3] 60 ∞ ∞
+6 5 7≤ λ≤ 9 55 [8, Th. 2.3] 55 ∞ ∞
+6 5 10 52 [8, Th. 2.3] 52 ∞ ∞
+6 5 11 55 [8, Th. 2.3] 55 ∞ ∞
+6 5 12≤ λ≤ 14 50 [8, Th. 2.3] 50 ∞ ∞
+6 5 15 47 [8, Th. 2.3] 47 57 (≥ 1 graph) 57 [9]
+6 5 16 50 [8, Th. 2.3] 50 ∞ ∞
+6 5 17≤ λ≤ 19 45 [8, Th. 2.3] 45 ∞ ∞
+6 5 20 42 [8, Th. 2.3] 42 42 (≥ 1 graph) ∞
+6 5 21 45 [8, Th. 2.3] 45 ∞ ∞
+6 5 22 40 [10] 40 40 (1 graph) 40 [15]
+6 5 23≤ λ≤ 24 40 [10] 45 ∞ ∞
+6 5 25 ∞ [13, Prop. 2.5] ∞ ∞ ∞
+Table 4: An overview of the best lower and upper bounds for n(6, g, λ ) for g ≤ 5.
+
+PHYSICAL PAGE 21
+Exhaustive generation of edge-girth-regular graphs 21
+k g λ Current paper:
+nvt(3, g, λ ) =
+3 9 2 108
+3 9 4 408
+3 9 6 60
+3 9 8 60
+3 10 2 160
+3 10 4 120
+3 10 10 112
+3 10 12 110
+3 10 16 90
+3 10 20 80
+3 11 2 1012
+3 11 4 1012
+3 11 8 506
+3 12 2 384
+3 12 4 384
+3 12 6 512
+3 12 8 272
+3 12 10 240
+3 12 12 256
+3 12 14 256
+3 12 16 234
+3 12 18 256
+3 12 20 234
+3 12 22 216
+3 12 24 204
+3 12 26 192
+3 12 28 182
+3 12 32 162
+3 12 34 168
+3 12 36 162
+3 13 26 384
+3 14 2 1092
+3 14 6 1092
+3 14 10 1008
+3 14 14 768
+3 14 16 1008
+3 14 28 504
+3 14 42 512
+3 14 44 406
+3 14 56 506
+3 15 10 1248
+3 15 12 1280
+3 15 20 864
+3 15 30 816
+3 15 32 620
+3 16 32 1250
+3 16 72 1240
+3 16 80 1012
+3 16 96 1008
+3 16 104 1280
+(a)
+k g λ Current paper:
+nat(4, g, λ ) =
+4 7 1 252
+4 7 2 224
+4 7 3 273
+4 7 4 224
+4 7 7 160
+4 7 9 91
+4 7 14 80
+4 8 1 612
+4 8 2 320
+4 8 3 336
+4 8 4 252
+4 8 5 384
+4 8 6 288
+4 8 7 512
+4 8 8 243
+4 8 9 320
+4 8 10 240
+4 8 11 336
+4 8 12 288
+4 8 13 256
+4 8 14 256
+4 8 15 204
+4 8 16 240
+4 8 17 224
+4 8 18 256
+4 8 19 240
+4 8 20 162
+4 8 21 192
+4 8 22 256
+4 8 23 256
+4 8 24 126
+4 8 25 192
+4 8 26 160
+4 8 27 168
+4 8 28 144
+4 8 29 192
+4 8 30 160
+4 8 33 160
+4 8 36 140
+4 8 37 128
+4 8 39 128
+4 8 40 135
+4 8 41 128
+4 8 43 128
+4 8 45 128
+4 8 48 110
+4 8 60 100
+4 8 65 96
+(b)
+k g λ Current paper:
+nat(4, g, λ ) =
+4 9 6 504
+4 9 9 600
+4 9 15 546
+4 9 18 506
+4 9 19 504
+4 9 21 285
+4 9 27 320
+4 9 36 320
+4 10 50 625
+4 10 60 546
+4 10 61 640
+4 10 65 640
+4 10 67 640
+4 10 70 624
+4 10 71 640
+4 10 80 546
+4 10 90 512
+4 10 95 576
+4 10 108 420
+4 10 110 432
+(c)
+Table 5: An overview of nvt(3, g, λ ) for 9 ≤ g ≤ 16 and nat(4, g, λ ) for 7 ≤ g ≤ 10.

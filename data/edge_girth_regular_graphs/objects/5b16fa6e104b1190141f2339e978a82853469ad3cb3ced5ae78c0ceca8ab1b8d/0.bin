@@ -1,0 +1,230 @@
+"""Supplementary finite checks for the written order-sixteen theorem.
+
+No graph census or unbounded theorem is certified by this program.
+"""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+import argparse
+import json
+from itertools import combinations, product
+from pathlib import Path
+
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def connect(g, x, y):
+    g[x].add(y)
+    g[y].add(x)
+
+
+def disconnect(g, x, y):
+    g[x].remove(y)
+    g[y].remove(x)
+
+
+def squares(g, x, y):
+    return sum(b in g[a] for a in g[x] - {y} for b in g[y] - {x})
+
+
+def triangle_free(g):
+    return all(not (g[x] & g[y]) for x in range(len(g)) for y in g[x])
+
+
+def regular(g, degree):
+    return all(len(row) == degree for row in g)
+
+
+def classes(a, b, z):
+    aa = [[i] for i in range(5)]
+    bb = [[] for _ in range(5)]
+    n = 5
+    for i in range(5):
+        aa[i] += list(range(n, n+a[i]-1)); n += a[i]-1
+        bb[i] += list(range(n, n+b[i])); n += b[i]
+    zz = list(range(n, n+z)); n += z
+    g = [set() for _ in range(n)]
+    for i in range(5):
+        for x in aa[i]:
+            for y in aa[(i+1)%5]:
+                connect(g,x,y)
+        for x in bb[i]:
+            connect(g,x,i)
+    return g, aa, bb, zz
+
+
+def size_patterns():
+    rows=[]
+    for z in range(2):
+        for b in product(range(3), repeat=5):
+            if sum(b)+2*z != 2:
+                continue
+            sol=[a for a in product(range(1,7),repeat=5)
+                 if sum(a)+sum(b)+z==16 and
+                 all(a[(i-1)%5]+a[(i+1)%5]+b[i]==6 for i in range(5))]
+            need(len(sol)==1,'unique cycle class sizes')
+            rows.append({'a':sol[0],'b':b,'z':z})
+    need(len(rows)==16,'sixteen labelled size patterns')
+    return rows
+
+
+def outside_case():
+    base,a,b,z=classes([3]*5,[0]*5,1)
+    optional=[(x,y) for i in range(5) for x in a[i][1:] for y in a[(i+1)%5][1:]]
+    checked=0; trianglefree=0
+    for missing in combinations(optional,3):
+        ends={v for pair in missing for v in pair}
+        if len(ends)!=6:continue
+        g=[set(r) for r in base]
+        for x,y in missing:disconnect(g,x,y)
+        for x in ends:connect(g,x,z[0])
+        need(regular(g,6),'outside-case degrees')
+        counts=[squares(g,i,(i+1)%5) for i in range(5)]
+        need(sum(counts)==71,'outside-case exact sum')
+        need(len(set(counts))>1,'outside-case nonconstant')
+        checked+=1; trianglefree+=triangle_free(g)
+    need(checked>0,'outside-case nonvacuous control')
+    return {'all_three_edge_matchings':checked,'triangle_free_among_them':trianglefree}
+
+
+def same_neighbour_case():
+    base,a,b,z=classes([2,2,4,4,2],[2,0,0,0,0],0)
+    u,w=b[0]
+    for t in [u,w]:connect(base,t,a[0][1])
+    extra=a[2][1:]+a[3][1:]
+    optional=[(x,y) for x in a[2][1:] for y in a[3][1:]]
+    deletions=[]
+    for missing in combinations(optional,4):
+        degrees={x:sum(x in e for e in missing) for x in extra}
+        deletions.append((missing,degrees))
+    checked=0; trianglefree=0
+    for nu,nw in product(combinations(extra,4),repeat=2):
+        counts={x:int(x in nu)+int(x in nw) for x in extra}
+        for missing,degrees in deletions:
+            if counts!=degrees:continue
+            g=[set(r) for r in base]
+            for x in nu:connect(g,u,x)
+            for x in nw:connect(g,w,x)
+            for x,y in missing:disconnect(g,x,y)
+            need(regular(g,6),'same-neighbour degrees')
+            need(squares(g,0,1)==13,'same-neighbour cycle edge')
+            shared=len(set(nu)&set(nw))
+            need(squares(g,0,u)==13+shared and shared>=2,'same-neighbour unequal edge')
+            checked+=1; trianglefree+=triangle_free(g)
+    need(checked>0,'same-neighbour nonvacuous control')
+    return {'degree_feasible_models':checked,'triangle_free_among_them':trianglefree}
+
+
+def consecutive_parameters():
+    before=[];after=[]
+    for p,q,r,s,e in product(range(3),range(4),range(3),range(4),range(2)):
+        if p+q+e==r+s+e==4 and p+r==q+s:
+            before.append([p,q,r,s,e])
+            need(p>0 and r>0,'positive outer counts')
+            if q<=1 and s<=1:after.append([p,q,r,s,e])
+    need(before and not after,'consecutive-case necessary constraints inconsistent')
+    return {'degree_candidates':before,'after_triangle_constraints':after}
+
+
+def separated_parameters():
+    necessary=[]; remaining=[]
+    for p,pp,q,r,rp,e in product(range(3),range(3),range(3),range(3),range(3),range(2)):
+        if p+q+r+e!=5 or pp+q+rp+e!=5:continue
+        d04=p+q-2;d23=pp+q-2;d34=r-d23
+        need(d34==rp-d04==7-e-p-pp-2*q,'degree deficit identity')
+        if min(d04,d23,d34)<0 or q*r>d23 or q*rp>d04:continue
+        row=[p,pp,q,r,rp,e];necessary.append(row)
+        if e and (p+q>2 or pp+q>2):continue
+        remaining.append(row)
+    need(necessary==[[2,2,0,2,2,1],[2,2,1,1,1,1]],'two necessary parameter patterns')
+    need(remaining==[[2,2,0,2,2,1]],'only q0 avoids forced common neighbour on uw')
+    base,a,b,z=classes([3,2,3,3,3],[1,0,1,0,0],0)
+    u=b[0][0];w=b[2][0]
+    connect(base,u,w)
+    for x in a[0][1:]+a[3][1:]:connect(base,u,x)
+    for x in a[2][1:]+a[4][1:]:connect(base,w,x)
+    graphs=[]
+    for reverse in [False,True]:
+        g=[set(t) for t in base]
+        targets=a[4][1:][::-1] if reverse else a[4][1:]
+        for x,y in zip(a[3][1:],targets):disconnect(g,x,y)
+        need(regular(g,6) and triangle_free(g),'q0 explicit regular triangle-free model')
+        need(squares(g,0,1)==13 and squares(g,u,w)==14,'q0 exact unequal counts')
+        graphs.append({'cycle_edge':13,'uw':14})
+    return {'necessary_parameters':necessary,'triangle_compatible_parameters':remaining,'two_explicit_models':graphs}
+
+
+def partitions(total, minimum=2):
+    if total==0:
+        yield []
+    for first in range(minimum,total+1):
+        for tail in partitions(total-first,first):
+            yield [first]+tail
+
+
+def complement_checks():
+    rows=[]
+    positive=None
+    for parts in partitions(8):
+        h=[set() for _ in range(16)];off=0
+        for size in parts:
+            for i in range(size):
+                connect(h,off+i,8+off+i)
+                connect(h,off+i,8+off+(i+1)%size)
+            off+=size
+        g=[set() for _ in range(16)]
+        for x in range(8):
+            for y in range(8,16):
+                if y not in h[x]:connect(g,x,y)
+        need(regular(g,6) and triangle_free(g),'complement graph properties')
+        counts=set();defects=[]
+        for x in range(8):
+            for y in g[x]:
+                defect=sum(y in h[v] for u in h[x] for v in h[u])
+                actual=squares(g,x,y)
+                need(actual==17-defect,'complement identity on every edge')
+                counts.add(actual);defects.append(defect)
+        constant=len(counts)==1
+        need(constant==(parts==[2,2,2,2]),'cycle partitions classification')
+        if constant:positive=g
+        rows.append({'half_cycle_lengths':parts,'square_counts':sorted(counts),'constant':constant})
+    need(len(rows)==7 and positive is not None,'all seven cycle decompositions')
+    return rows,positive
+
+
+def verify_positive(g):
+    need(len(g)==16 and regular(g,6),'positive degree/order')
+    need(all(x not in g[x] and all(0<=y<16 and x in g[y] for y in g[x]) for x in range(16)),'positive simple symmetric')
+    need(triangle_free(g),'positive triangle-free')
+    all_edges=[(x,y) for x in range(16) for y in g[x] if x<y]
+    foursets=[set(t) for t in combinations(range(16),4) if all(len(g[x]&set(t))==2 for x in t)]
+    for x,y in all_edges:
+        need(squares(g,x,y)==17==sum(x in t and y in t for t in foursets),'positive independent square count')
+    need(len(foursets)==204,'positive number of squares')
+    return {'vertices':16,'degree':6,'edge_square_count':17,'squares':len(foursets)}
+
+
+def main():
+    parser=argparse.ArgumentParser();parser.add_argument('--out',required=True,type=Path);args=parser.parse_args()
+    comps,pos=complement_checks()
+    result={'status':'PASS','class_patterns':size_patterns(),'outside_case':outside_case(),'same_neighbour_case':same_neighbour_case(),'consecutive_case':consecutive_parameters(),'separated_case':separated_parameters(),'complement_cases':comps,'positive':verify_positive(pos)}
+    orders=[]
+    for lam,bound in [(13,20),(14,18),(15,20)]:
+        ns=[n for n in range(12,bound) if (n*6*lam)%8==0]
+        need(ns==([12,14,16] if lam==14 else [12,16]),'all candidate orders')
+        orders.append({'lambda':lam,'lower_bound':bound,'smaller_admissible_orders':ns})
+    result['lower_rows']=orders
+    bad=[set(r) for r in pos]; y=min(bad[0]);disconnect(bad,0,y)
+    rejected=[]
+    for label,g in [('missing edge',bad),('wrong order',pos[:-1])]:
+        try:verify_positive(g)
+        except ValueError:rejected.append(label)
+        else:raise ValueError('damaged positive accepted: '+label)
+    result.update(negative_controls=rejected,whole_original_credit=0,new_question_credit=0,new_Lean=0,scope='Supplementary finite controls for a complete written argument; no general graph census.')
+    args.out.write_text(json.dumps(result,indent=2)+'\n')
+    print('PASS: four cycle-class cases, all7 bipartite complements, positive graph, three lower-row order lists, damaged controls')
+
+if __name__=='__main__':main()

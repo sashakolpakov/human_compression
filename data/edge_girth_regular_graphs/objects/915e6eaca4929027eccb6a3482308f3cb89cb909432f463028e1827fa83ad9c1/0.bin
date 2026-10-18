@@ -1,0 +1,43 @@
+import sys
+if sys.flags.optimize:raise RuntimeError('normal Python required')
+from pathlib import Path
+import itertools,json,argparse
+p=argparse.ArgumentParser();p.add_argument('--result',type=Path,required=True);p.add_argument('--source',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+v=list(map(int,a.result.read_text().split()));assert v[0]==4;at=1;graphs=[]
+for n in range(21,25):
+ assert v[at:at+2]==[n,int(n==24)];at+=2
+ if n==24:graphs.append(v[at:at+n]);at+=n
+assert at==len(v)
+s=list(map(int,a.source.read_text().split()));assert s[:2]==[1,24]and len(s)==26;source=s[2:];g=graphs[0]
+def certify(g):
+ n=len(g);N=[{v for v in range(n)if row>>v&1}for row in g]
+ assert all(g[u]>>n==0 and u not in N[u]and len(N[u])==4 for u in range(n))
+ assert all((v in N[u])==(u in N[v])for u in range(n)for v in range(n))
+ assert all(len(N[u]&N[v])<=1 and not(v in N[u]and N[u]&N[v])for u in range(n)for v in range(u+1,n))
+ counts={tuple(sorted((u,v))):0 for u in range(n)for v in N[u]};cycles=0
+ for subset in itertools.combinations(range(n),5):
+  S=set(subset)
+  if all(len(N[u]&S)==2 for u in subset):
+   cycles+=1
+   for u in subset:
+    for v in N[u]&S:
+     if u<v:counts[u,v]+=1
+ assert set(counts.values())=={5}
+ return N,cycles
+N,cycles=certify(g);M,sourcecycles=certify(source);mapping={};used=set();nodes=0
+
+def find():
+ global nodes
+ nodes+=1
+ if len(mapping)==24:return True
+ u=max((u for u in range(24)if u not in mapping),key=lambda u:len(N[u]&mapping.keys()))
+ for v in range(24):
+  if v in used or any((x in N[u])!=(y in M[v])for x,y in mapping.items()):continue
+  mapping[u]=v;used.add(v)
+  if find():return True
+  del mapping[u];used.remove(v)
+ return False
+assert find()and len(set(mapping.values()))==24
+assert all((v in N[u])==(mapping[v]in M[mapping[u]])for u in range(24)for v in range(24))
+r=dict(status='PASS_LITERAL_SOURCE_CLASS_AND_INDEPENDENT_PENTAGONS',orders=[21,22,23,24],class_counts=[0,0,0,1],edges=48,pentagons=cycles,source_pentagons=sourcecycles,literal_adjacency_checks=576,map=[mapping[u]for u in range(24)],mapping_search_nodes=nodes)
+a.out.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r))

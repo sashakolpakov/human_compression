@@ -680,3 +680,16 @@ Earlier overview editions remain under ``audit/overview/``; the current pointer
 selects v19. Previously reported one-sided software factors are historical,
 not current comparisons. Source corrections and separately reviewed question
 answers retain their own exact scope and do not acquire new credit here.
+
+F012: complete edge-girth-regular graph source treatment
+-------------------------------------------------------
+
+The current reviewed F012 manuscript, its exact source concordance and
+package-relative reproduction instructions are in
+``papers/edge_girth_regular_graphs/``. The additive admission is
+``data/edge_girth_regular_graphs/admission.json``; it retains the source's
+classification/software premises and unresolved infinity assertions.
+Run ``python3 -E -B scripts/verify_snapshot.py`` for registered publication
+integrity. Scientific route commands, supported macOS ownership scope and
+selected-checkout qualifications are in the reproduction guide. No whole
+fresh-machine corpus replay or new compression measurement is claimed.

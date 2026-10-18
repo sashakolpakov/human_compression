@@ -1,0 +1,129 @@
+"""Literal certificates for the complement of the Fano incidence graph."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('Optimized Python is not accepted')
+import argparse
+import hashlib
+import json
+from itertools import combinations, product
+from pathlib import Path
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+def fano_complement():
+    vectors = [v for v in product(range(2), repeat=3) if any(v)]
+    a = [set() for _ in range(14)]
+    for i, u in enumerate(vectors):
+        for j, v in enumerate(vectors):
+            if sum(x * y for x, y in zip(u, v)) % 2 == 1:
+                a[i].add(7 + j)
+                a[7 + j].add(i)
+    return a
+
+def decode(raw):
+    need(isinstance(raw, str) and raw and all(63 <= ord(c) <= 126 for c in raw), 'graph6 alphabet')
+    n = ord(raw[0]) - 63
+    need(0 < n <= 62 and len(raw) == 1 + (n * (n - 1) // 2 + 5) // 6, 'graph6 length')
+    bits = [(ord(c) - 63 >> j) & 1 for c in raw[1:] for j in range(5, -1, -1)]
+    a = [set() for _ in range(n)]
+    t = 0
+    for v in range(n):
+        for u in range(v):
+            if bits[t]:
+                a[u].add(v)
+                a[v].add(u)
+            t += 1
+    need(not any(bits[t:]), 'graph6 padding')
+    return a
+
+def parameters(a, expected_lambda=3):
+    n = len(a)
+    need(n == 14, 'order')
+    need(all(u not in row and len(row) == 4 and all(type(v) is int and 0 <= v < n for v in row) for u, row in enumerate(a)), 'simple regular')
+    need(all((v in a[u]) == (u in a[v]) for u in range(n) for v in range(n)), 'undirected')
+    seen = {0}
+    todo = [0]
+    for u in todo:
+        for v in a[u]:
+            if v not in seen:
+                seen.add(v)
+                todo.append(v)
+    need(len(seen) == n, 'connected')
+    edges = [(u, v) for u, v in combinations(range(n), 2) if v in a[u]]
+    need(all(not a[u] & a[v] for u, v in edges), 'triangle-free')
+    counts = {(u, v): sum(y in a[x] for x in a[u] - {v} for y in a[v] - {u}) for u, v in edges}
+    subsets = [t for t in combinations(range(n), 4) if all(len(a[v] & set(t)) == 2 for v in t)]
+    independent = {e: sum(set(e) <= set(t) for t in subsets) for e in edges}
+    need(counts == independent, 'independent cycle count')
+    need(set(counts.values()) == {expected_lambda} and expected_lambda > 0, 'edge four-cycle count')
+    need(sum(counts.values()) == 4 * len(subsets), 'cycle incidence')
+    return {'n': 14, 'k': 4, 'g': 4, 'lambda': expected_lambda, 'edges': len(edges), 'four_cycles': len(subsets)}
+
+def check_map(a, record):
+    need(record['id'] == 'UntilOrder250_37', 'source id')
+    raw, mapping = record['graph6'], record['map']
+    need(hashlib.sha256(raw.encode()).hexdigest() == record['source_line_sha256'], 'source line digest')
+    b = decode(raw)
+    need(len(b) == len(a) and all(type(x) is int for x in mapping) and sorted(mapping) == list(range(len(a))), 'bijection')
+    need(all((v in a[u]) == (mapping[v] in b[mapping[u]]) for u in range(len(a)) for v in range(len(a))), 'all adjacency pairs')
+    parameters(b)
+
+def local_checks(a):
+    rows = []
+    for v in range(14):
+        labels = a[v]
+        outside = set(range(14)) - labels - {v}
+        word = {x: a[x] & labels for x in outside}
+        need(sorted(map(len, word.values())) == [0, 0, 0, 2, 2, 2, 2, 2, 2], 'local incidence profile')
+        pairs = {frozenset(word[x]): x for x in outside if word[x]}
+        need(set(pairs) == {frozenset(p) for p in combinations(labels, 2)}, 'six distinct pairs')
+        z = [x for x in outside if not word[x]]
+        omissions = []
+        for u in z:
+            missing = [tuple(sorted(pair)) for pair, x in pairs.items() if x not in a[u]]
+            need(len(missing) == 2 and set(missing[0]).isdisjoint(missing[1]) and set(missing[0]) | set(missing[1]) == labels, 'omitted perfect matching')
+            omissions.extend(missing)
+        need(len(set(omissions)) == 6, 'factorization of K4')
+        rows.append({'root': v, 'pair_vertices': len(pairs), 'zero_vertices': len(z)})
+    # Local clique multiplicities used in the proof, independently enumerated.
+    profiles = []
+    for c0, c1, c2, c3, c4 in product(range(10), repeat=5):
+        if c0 + c1 + c2 + c3 + c4 == 9 and c1 + 2*c2 + 3*c3 + 4*c4 == 12 and c2 + 3*c3 + 6*c4 == 6:
+            profiles.append([c0, c1, c2, c3, c4])
+    need(sorted(profiles) == sorted([[0,8,0,0,1],[1,6,0,2,0],[2,3,3,1,0],[3,0,6,0,0]]), 'moment profiles')
+    return {'all_roots': rows, 'moment_profiles': profiles}
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument('--out', required=True, type=Path)
+    p.add_argument('--input', type=Path)
+    args = p.parse_args()
+    here = Path(__file__).resolve().parent
+    source = json.loads((args.input or here / 'source_map.json').read_text())
+    a = fano_complement()
+    result = parameters(a)
+    check_map(a, source)
+    local = local_checks(a)
+    controls = []
+    def reject(label, fn):
+        try:
+            fn()
+        except ValueError:
+            controls.append(label)
+        else:
+            raise ValueError('accepted damaged certificate: ' + label)
+    reject('duplicate map image', lambda: check_map(a, dict(source, map=[0] * 14)))
+    damaged = [set(row) for row in a]
+    v = min(damaged[0])
+    damaged[0].remove(v)
+    damaged[v].remove(0)
+    reject('deleted edge', lambda: parameters(damaged))
+    reject('wrong cycle count', lambda: parameters(a, expected_lambda=2))
+    reject('invalid graph6', lambda: decode(source['graph6'] + '?'))
+    args.out.write_text(json.dumps({'status': 'PASS', 'graph': result, 'source_id': source['id'], 'local_checks': local, 'damaged_controls': controls, 'whole_original_credit': 0, 'new_question_credit': 0, 'new_Lean': 0}, indent=2) + '\n')
+    print('PASS Fano complement, cycle counts, source map, all local configurations, four damaged controls')
+
+if __name__ == '__main__':
+    main()

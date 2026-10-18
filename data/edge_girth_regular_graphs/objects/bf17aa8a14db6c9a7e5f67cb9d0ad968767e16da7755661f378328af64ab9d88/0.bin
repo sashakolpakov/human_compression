@@ -1,0 +1,22 @@
+#ifndef F012_CYCLE_BUDGET_H
+#define F012_CYCLE_BUDGET_H
+#include "vertex_ball.h"
+struct Change{int u,v;vector<array<int,3>>increments;};
+struct CycleBudget {
+ Graph g;int limit;array<array<int,64>,64>counts{};bool valid=true;
+ explicit CycleBudget(const Graph&h,int bound):g(h),limit(bound){validate(g);valid=girth5(g);for(int u=0;u<(int)g.size();u++)for(int v=u+1;v<(int)g.size();v++)if(g[u]>>v&1){int n=paths(u,v).size();counts[u][v]=counts[v][u]=n;if(n>limit)valid=false;}}
+ vector<array<int,5>>paths(int u,int v)const{
+  vector<array<int,5>>out;array<int,5>path;path[0]=u;
+  function<void(int,int,U)>visit=[&](int x,int depth,U seen){if(depth==3){if(g[x]>>v&1){path[4]=v;out.push_back(path);}return;}U next=g[x]&~seen&~(U(1)<<v);while(next){int y=firstbit(next);next&=next-1;path[depth+1]=y;visit(y,depth+1,seen|(U(1)<<y));}};visit(u,0,U(1)<<u);return out;
+ }
+ bool far(int u,int v)const{U seen=U(1)<<u,front=seen;for(int depth=1;depth<=3;depth++){U next=0;while(front){int x=firstbit(front);front&=front-1;next|=g[x];}if(next>>v&1)return false;front=next&~seen;seen|=next;}return true;}
+ bool push(int u,int v,Change&change){
+  need(u!=v&&!(g[u]>>v&1),"candidate new edge");if(!far(u,v))return false;auto found=paths(u,v);if((int)found.size()>limit)return false;map<pair<int,int>,int>increments;
+  for(auto path:found)for(int i=0;i<4;i++){int a=path[i],b=path[i+1];if(a>b)swap(a,b);increments[{a,b}]++;}
+  for(auto item:increments){auto[a,b]=item.first;if(counts[a][b]+item.second>limit)return false;}
+  change={u,v,{}};add(g,u,v);counts[u][v]=counts[v][u]=found.size();for(auto item:increments){auto[a,b]=item.first;int d=item.second;counts[a][b]+=d;counts[b][a]+=d;change.increments.push_back({a,b,d});}return true;
+ }
+ void pop(const Change&change){for(auto x:change.increments){counts[x[0]][x[1]]-=x[2];counts[x[1]][x[0]]-=x[2];need(counts[x[0]][x[1]]>=0,"nonnegative rollback");}counts[change.u][change.v]=counts[change.v][change.u]=0;remove_edge(g,change.u,change.v);}
+ bool complete()const{for(int u=0;u<(int)g.size();u++){if(wt(g[u])!=4)return false;for(int v=u+1;v<(int)g.size();v++)if((g[u]>>v&1)&&counts[u][v]!=limit)return false;}return true;}
+};
+#endif

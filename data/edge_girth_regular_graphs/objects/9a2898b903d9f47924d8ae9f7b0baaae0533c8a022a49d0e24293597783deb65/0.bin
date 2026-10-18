@@ -1,0 +1,140 @@
+#ifndef F012_FOREST_COMPLETION_H
+#define F012_FOREST_COMPLETION_H
+#include "literal_graph.h"
+#include <set>
+#include <functional>
+using namespace std;
+struct Budget {
+ chrono::steady_clock::time_point started=chrono::steady_clock::now();
+ double cap; U ticks=0;
+ explicit Budget(double seconds):cap(seconds){check();}
+ void check(){require(chrono::duration<double>(chrono::steady_clock::now()-started).count()<cap,"INCOMPLETE_DEADLINE");}
+ void tick(){if((++ticks&4095)==0)check();}
+};
+inline vector<pair<int,int>> forest_edges(int shape){
+ require(shape>=0&&shape<4,"one of four exterior forests");
+ if(shape==0)return{{0,1},{2,3},{4,5}};
+ if(shape==1)return{{0,1},{1,2},{3,4}};
+ if(shape==2)return{{0,1},{1,2},{2,3}};
+ return{{0,1},{0,2},{0,3}};
+}
+inline int nonisolated(int shape){return shape==0?6:shape==1?5:4;}
+inline bool canonical_left(int shape,const vector<int>&m,const vector<bool>&done){
+ auto ordered=[&](int u,int v){return !done[u]||!done[v]||m[u]<=m[v];};
+ if(shape==0){
+  for(int i=0;i<6;i+=2)if(!ordered(i,i+1))return false;
+  for(int i=2;i<6;i+=2)if(done[i-2]&&done[i-1]&&done[i]&&done[i+1]&&make_pair(m[i-2],m[i-1])>make_pair(m[i],m[i+1]))return false;
+ }else if(shape==1){if(!ordered(0,2)||!ordered(3,4))return false;}
+ else if(shape==2){
+  if(done[0]&&done[1]&&done[2]&&done[3]&&array<int,4>{m[0],m[1],m[2],m[3]}>array<int,4>{m[3],m[2],m[1],m[0]})return false;
+ }else if(!ordered(1,2)||!ordered(2,3))return false;
+ for(int i=nonisolated(shape)+1;i<(int)m.size();i++)if(!ordered(i-1,i))return false;
+ return true;
+}
+inline bool branch_mask(int mask){
+ for(int j=0;j<3;j++)if(weight((mask>>(3*j))&7)>1)return false;
+ return true;
+}
+inline array<int,3> pair_counts(int mask){
+ int b[3];for(int j=0;j<3;j++)b[j]=weight((mask>>(3*j))&7);
+ return{b[0]*b[1],b[0]*b[2],b[1]*b[2]};
+}
+inline array<int,3> root_pair_targets(const Graph&g,int side){
+ int base=side?17:4,opp=side?4:17;array<int,3> target{};int at=0;
+ for(int i=0;i<3;i++)for(int j=i+1;j<3;j++){
+  int k=3-i-j,required=0,current=0;U other=U(511)<<opp,li=U(7)<<(base+3*i),lj=U(7)<<(base+3*j);
+  for(int x=0;x<3;x++)required+=weight(g[base+3*k+x]&other);
+  for(U row:g)current+=weight(row&li)*weight(row&lj);
+  target[at++]=required-current;
+ }
+ return target;
+}
+struct RightVisitor {
+ Graph g;int outside,lambda;Budget&budget;vector<int>items,need,masks;array<int,3>target{},used{};
+ U nodes=0,complete=0,mismatch=0,positive=0,pruned=0;vector<Graph>positives;
+ RightVisitor(const Graph&base,int n,int lam,Budget&b):outside(n),lambda(lam),budget(b),need(n),masks(n){
+  for(int x=0;x<9;x++)for(int j=0;j<4-weight(base[17+x]);j++)items.push_back(x);
+  target=root_pair_targets(base,1);
+ }
+ int paths(int u,int v,int remaining,U seen){
+  if(remaining==1)return(g[u]>>v)&1;
+  U bits=g[u]&~seen&~(U(1)<<v);int count=0;
+  while(bits){int w=first(bits);bits&=bits-1;count+=paths(w,v,remaining-1,seen|(U(1)<<w));if(count>lambda)return count;}
+  return count;
+ }
+ void visit(size_t at,int previous){
+  budget.tick();nodes++;
+  if(at==items.size()){
+   for(int x:need)require(x==0,"all right capacities filled");
+   if(used!=target)return;
+   for(U row:g)require(weight(row)==4,"quartic completion");
+   require(!has_short_cycle(g),"girth completion");complete++;
+   for(int u=0;u<(int)g.size();u++){U bits=g[u];while(bits){int v=first(bits);bits&=bits-1;if(u<v&&paths(u,v,5,U(1)<<u)!=lambda){mismatch++;return;}}}
+   positive++;positives.push_back(g);return;
+  }
+  int x=items[at],lower=at&&items[at-1]==x?previous+1:0;
+  for(int j=lower;j<outside;j++)if(need[j]){
+   int old=masks[j];if(!branch_mask(old|(1<<x))||(old&(1<<x))){pruned++;continue;}
+   auto prior=pair_counts(old),after=pair_counts(old|(1<<x));bool good=true;
+   for(int k=0;k<3;k++)if(used[k]+after[k]-prior[k]>target[k])good=false;
+   if(!good||!distance_at_least(g,17+x,26+j,5)){pruned++;continue;}
+   add_edge(g,17+x,26+j);need[j]--;masks[j]|=1<<x;for(int k=0;k<3;k++)used[k]+=after[k]-prior[k];
+   visit(at+1,j);
+   for(int k=0;k<3;k++)used[k]-=after[k]-prior[k];masks[j]=old;need[j]++;remove_edge(g,17+x,26+j);
+  }
+ }
+ void run(const Graph&left){
+  g=left;fill(masks.begin(),masks.end(),0);used={0,0,0};for(int j=0;j<outside;j++)need[j]=4-weight(g[26+j]);
+  require(accumulate(need.begin(),need.end(),0)==(int)items.size(),"total right capacity");
+  Graph before=g;auto capacity=need;visit(0,-1);
+  require(g==before&&need==capacity&&used==array<int,3>{0,0,0},"right visitor restoration");
+ }
+};
+struct ForestCover {
+ const Graph&base;Graph g;int outside,shape;Budget&budget;RightVisitor right;
+ vector<pair<int,int>>edges;vector<int>degree,order,masks;vector<bool>done;
+ array<int,9>missing{};array<int,3>target{},used{};int target_right;
+ vector<std::set<array<int,3>>>suffix;U nodes=0,assignments=0,rejections=0;
+ ForestCover(const Graph&root,int n,int sh,int lam,Budget&b):base(root),g(root),outside(n),shape(sh),budget(b),right(root,n,lam,b),edges(forest_edges(sh)),degree(n),masks(n),done(n){
+  require(n>=nonisolated(sh)&&n+26<64,"exterior size");g.resize(26+n);
+  for(auto[u,v]:edges){degree[u]++;degree[v]++;add_edge(g,26+u,26+v);}
+  if(sh==1)order={1,0,2,3,4};else for(int j=0;j<nonisolated(sh);j++)order.push_back(j);
+  for(int j=nonisolated(sh);j<n;j++)order.push_back(j);
+  target=root_pair_targets(base,0);auto rt=root_pair_targets(base,1);target_right=accumulate(rt.begin(),rt.end(),0);
+  for(int x=0;x<9;x++)missing[x]=4-weight(base[4+x]);
+  suffix.resize(n+1);suffix[n].insert({0,0,0});
+  for(int at=n-1;at>=0;at--){int k=4-degree[order[at]];
+   for(int s=max(0,k-3);s<=min(3,k);s++)for(auto a:suffix[at+1])suffix[at].insert({a[0]+s,a[1]+s*(s-1)/2,a[2]+(k-s)*(k-s-1)/2});
+  }
+ }
+ void visit(int at,int assigned_right_pairs){
+  budget.tick();nodes++;
+  int remaining=accumulate(missing.begin(),missing.end(),0),pairs=0;for(int i=0;i<3;i++)pairs+=target[i]-used[i];
+  if(!suffix[at].count({remaining,pairs,target_right-assigned_right_pairs})){rejections++;return;}
+  if(at==outside){
+   require(remaining==0&&used==target,"complete left root equations");assignments++;right.run(g);return;
+  }
+  int vertex=order[at],k=4-degree[vertex];
+  for(int mask=0;mask<512;mask++){
+   budget.tick();int s=weight(mask);if(s<max(0,k-3)||s>min(3,k)||!branch_mask(mask))continue;
+   bool okay=true;for(int x=0;x<9;x++)if(((mask>>x)&1)&&!missing[x])okay=false;
+   auto added_pairs=pair_counts(mask);for(int i=0;i<3;i++)if(used[i]+added_pairs[i]>target[i])okay=false;
+   if(!okay)continue;
+   masks[vertex]=mask;done[vertex]=true;
+   if(!canonical_left(shape,masks,done)){done[vertex]=false;continue;}
+   vector<int>added;
+   for(int x=0;x<9;x++)if((mask>>x)&1){if(!distance_at_least(g,4+x,26+vertex,5)){okay=false;break;}add_edge(g,4+x,26+vertex);added.push_back(x);}
+   if(okay){
+    for(int x:added)missing[x]--;for(int i=0;i<3;i++)used[i]+=added_pairs[i];
+    visit(at+1,assigned_right_pairs+(k-s)*(k-s-1)/2);
+    for(int i=0;i<3;i++)used[i]-=added_pairs[i];for(int x:added)missing[x]++;
+   }
+   for(int x:added)remove_edge(g,4+x,26+vertex);done[vertex]=false;
+  }
+ }
+ void run(){
+  if(any_of(target.begin(),target.end(),[](int x){return x<0;})||any_of(right.target.begin(),right.target.end(),[](int x){return x<0;}))return;
+  Graph before=g;auto prior=missing;visit(0,0);require(g==before&&missing==prior&&used==array<int,3>{0,0,0},"left visitor restoration");
+ }
+};
+#endif

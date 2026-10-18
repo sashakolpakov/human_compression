@@ -1,0 +1,60 @@
+"""Independent cycle enumeration and literal source identifications."""
+from pathlib import Path
+from collections import Counter
+import gzip, json
+from finite_small import decode, signature, need
+
+def direct_signature(adj):
+    n=len(adj);edges={(u,v):0 for u in range(n) for v in range(u+1,n) if adj[u]>>v&1}
+    seen={0};queue=[0]
+    for u in queue:
+        for v in range(n):
+            if adj[u]>>v&1 and v not in seen:seen.add(v);queue.append(v)
+    if len(seen)!=n:return None
+    shortest=n+1;counts={}
+    for first in range(n):
+        def visit(path):
+            nonlocal shortest,counts
+            last=path[-1]
+            if len(path)>=3 and adj[last]>>first&1 and path[1]<last:
+                if len(path)<shortest:shortest=len(path);counts=edges.copy()
+                if len(path)==shortest:
+                    for i,u in enumerate(path):
+                        v=path[(i+1)%len(path)];counts[tuple(sorted((u,v)))]+=1
+            if len(path)>=shortest:return
+            for v in range(first+1,n):
+                if v not in path and adj[last]>>v&1:visit(path+[v])
+        visit([first])
+    if not counts or len(set(counts.values()))!=1 or min(counts.values())==0:return None
+    return shortest,next(iter(counts.values()))
+
+def all_small_controls():
+    tested=0
+    for n in range(1,7):
+        es=[(u,v)for v in range(n)for u in range(v)]
+        for mask in range(1<<len(es)):
+            adj=[0]*n
+            for i,(u,v)in enumerate(es):
+                if mask>>i&1:adj[u]|=1<<v;adj[v]|=1<<u
+            need(signature(adj)==direct_signature(adj),'cycle control')
+            tested+=1
+    return tested
+
+def verify_maps(report,records,witness_file):
+    source={line.split()[0]:line.split() for line in gzip.open(witness_file,'rt')}
+    positives={r['target']:r for r in report['positives']}
+    need(len(positives)==len(report['positives'])==len(records)==20,'complete one-class mapping')
+    for row in records:
+        item=source[row['source_id']];need(item[-1]==row['source_graph6'],'exact source bytes')
+        a=positives[row['target']]['adjacency'];b=decode(row['source_graph6']);p=row['permutation'];n=len(a)
+        need(n==len(b) and sorted(p)==list(range(n)),'bijection')
+        need(all(bool(a[u]>>v&1)==bool(b[p[u]]>>p[v]&1) for u in range(n)for v in range(n)),'literal graph map')
+        need(signature(a)==direct_signature(a)==tuple(map(int,item[3:5])),'source girth/multiplicity')
+        need(len(a)==int(item[1]) and all(x.bit_count()==int(item[2])for x in a),'source order/degree')
+    return len(records)
+
+if __name__=='__main__':
+    import argparse
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    report=dict(status='PASS_INDEPENDENT_CYCLE_CONTROLS',labelled_graphs=all_small_controls())
+    a.out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))

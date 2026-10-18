@@ -1,0 +1,112 @@
+import sys
+if sys.flags.optimize:raise SystemExit('normal Python required')
+from pathlib import Path
+import itertools,json,hashlib,re,collections
+P=Path(__file__).resolve().parent
+
+def need(ok,msg):
+ if not ok:raise ValueError(msg)
+def pin(p):
+ b=Path(p).read_bytes();return dict(bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def root_model():
+ names=[()]+[(i,)+b for i in range(3)for k in range(4)for b in itertools.product(range(2),repeat=k)];ix={x:i for i,x in enumerate(names)};parent=list(range(46))
+ def find(i):
+  while parent[i]!=i:i=parent[i]
+  return i
+ for i,j in itertools.combinations(range(3),2):
+  a=(i,[z for z in range(3)if z!=i].index(j),0,0);b=(j,[z for z in range(3)if z!=j].index(i),0,0);parent[find(ix[b])]=find(ix[a])
+ labels={x:i for i,x in enumerate(sorted({find(i)for i in range(46)}))};g=[set()for _ in range(43)]
+ for x in names[1:]:a,b=labels[find(ix[x])],labels[find(ix[x[:-1]])];g[a].add(b);g[b].add(a)
+ return g
+
+def distances(g,x):
+ d={x:0};todo=[x]
+ for v in todo:
+  for y in g[v]:
+   if y not in d:d[y]=d[v]+1;todo.append(y)
+ return d
+
+def graph6(line):
+ z=[ord(c)-63 for c in line.strip()];need(all(0<=x<64 for x in z),'graph6 bytes')
+ if z[0]<63:n=z.pop(0)
+ else:need(z[1]<63,'bounded graph6');n=(z[1]<<12)+(z[2]<<6)+z[3];z=z[4:]
+ bits=[(v>>i)&1 for v in z for i in range(5,-1,-1)];need(len(bits)>=(n*(n-1))//2,'full graph6');g=[set()for _ in range(n)];at=0
+ for j in range(1,n):
+  for i in range(j):
+   if bits[at]:g[i].add(j);g[j].add(i)
+   at+=1
+ need(not any(bits[at:]),'graph6 padding');return g
+
+def cycles(g,length):
+ out=[]
+ for a in range(len(g)):
+  def visit(path):
+   v=path[-1]
+   if len(path)==length:
+    if a in g[v]and path[1]<path[-1]:out.append(tuple(path))
+    return
+   for y in g[v]:
+    if y>a and y not in path:visit(path+[y])
+  visit([a])
+ return out
+
+def parse_input(path,symmetry):
+ w=list(map(int,Path(path).read_text().split()));at=0
+ def take():
+  nonlocal at
+  need(at<len(w),'truncated input');v=w[at];at+=1;return v
+ n=take();m=take();need(0<=m<=n*(n-1)//2,'base size');ee=[(take(),take())for _ in range(m)];k=take();need(0<=k<=n*(n-1)//2,'allowed size');aa=[(take(),take())for _ in range(k)];autos=[]
+ if symmetry:
+  k=take();need(0<=k<=10000,'map count')
+  for _ in range(k):autos.append(tuple(take()for _ in range(n)))
+ need(at==len(w),'trailing input');need(len(set(ee))==len(ee)and len(set(aa))==len(aa),'duplicate edges');need(all(0<=a<b<n for a,b in ee+aa),'edge range');need(not set(ee)&set(aa),'base/allow disjoint');return n,ee,aa,autos
+
+def parse_summary(txt):
+ m=re.fullmatch(r'SUMMARY COMPLETE NODES ([0-9]+) POSITIVES 0 SECONDS ([0-9.e+\-]+)\n',txt);need(m is not None,'complete zero summary required');need(int(m[1])>0,'nonempty recursion');return int(m[1])
+
+def verify_historical():
+ rows=json.loads((P/'historical_selection.json').read_text());need([r['forest']for r in rows]==list(range(9)),'nine disjoint forest records');counts=[]
+ for r in rows:
+  for key in ['historical_input','stdout','stderr','receipt','executed_source']:
+   x=r[key];need(pin(x['path'])=={k:x[k]for k in ['bytes','sha256']},'historical pin '+key)
+  need((P/r['input']).read_bytes()==Path(r['historical_input']['path']).read_bytes(),'literal executed input');need((P/r['engine']).read_bytes()==Path(r['executed_source']['path']).read_bytes(),'literal executed source');need(not Path(r['stderr']['path']).read_bytes(),'clean execution stderr');count=parse_summary(Path(r['stdout']['path']).read_text());receipt=json.loads(Path(r['receipt']['path']).read_text());i=r['forest']
+  if i==4:
+   rr=receipt['rows'][i];need(rr['forest']==i and rr['exit_code']==0 and rr['pins_unchanged'],'baseline receipt');need(any(x['path']==r['historical_input']['path']and x['sha256']==r['historical_input']['sha256']for x in rr['pins']),'baseline literal input pin');need(any(x['path']==r['executed_source']['path']and x['sha256']==r['executed_source']['sha256']for x in rr['pins']),'baseline literal source pin')
+  else:
+   rr=[x for x in receipt['rows']if x['forest']==i];need(len(rr)==1,'unique returned forest');rr=rr[0];need(receipt['status']=='TERMINAL_BOUNDED_DIAGNOSTIC'and receipt['inputs_unchanged'],'closed wrapper');need(rr['status']=='COMPLETE'and rr['returncode']==0 and rr['nodes']==count and rr['positives']==0,'returned complete forest');need(rr['stdout']==r['stdout']and rr['stderr']==r['stderr'],'literal outputs');need(r['historical_input']in receipt['inputs']and r['executed_source']in receipt['inputs'],'exact execution input pins')
+  counts.append(count)
+ need(counts==[965,8366,279872,57777,44238,121973,35842,197402,6309],'literal historical node counts');return counts
+
+def inventory():
+ g=root_model();stored=json.loads((P/'inventory.json').read_text());need([sorted(x)for x in g]==stored['root_adjacency'],'literal root');dd=distances(g,0);need([sum(x==i for x in dd.values())for i in range(5)]==[1,3,6,12,21],'spheres');B=sorted(x for x in dd if dd[x]==4);need(B==stored['boundary'],'boundary');need(all(len(g[v])==3 for v in range(43)if v not in B),'interior saturated');need(sorted(len(g[v])for v in B)==[1]*18+[2]*3,'boundary degrees');need(not any(cycles(g,k)for k in range(3,8)),'root girth');octs=cycles(g,8);need(len(octs)==3,'root octagons')
+ edges=list(itertools.combinations(range(5),2));reps=set();labelled=0
+ for mask in range(1024):
+  ee=[e for j,e in enumerate(edges)if mask>>j&1];h=[set()for _ in range(5)]
+  for a,b in ee:h[a].add(b);h[b].add(a)
+  if max(map(len,h))>3:continue
+  unseen=set(range(5));comps=0
+  while unseen:comps+=1;unseen-=set(distances(h,min(unseen)))
+  if len(ee)!=5-comps:continue
+  labelled+=1;reps.add(min(tuple(sorted(tuple(sorted((p[a],p[b])))for a,b in ee))for p in itertools.permutations(range(5))))
+ expected=sorted(reps);need([[list(e)for e in h]for h in expected]==stored['exterior_forests'],'complete forest inventory');need(len(expected)==9,'nine forests');root_edges={(a,b)for a in range(43)for b in g[a]if a<b};allowed=set(itertools.combinations(B,2))|{(b,y)for b in B for y in range(43,48)};totalmaps=0
+ for i,H in enumerate(expected):
+  base=root_edges|{(43+a,43+b)for a,b in H}
+  for symmetry,pref in [(False,'forest_'),(True,'forest_symmetry_')]:
+   n,ee,aa,autos=parse_input(P/'inputs'/f'{pref}{i:02}.input',symmetry);need(n==48 and set(ee)==base and set(aa)==allowed,'full actual base/allow inventory')
+   for p in autos:
+    need(sorted(p)==list(range(n)),'map bijective');need({tuple(sorted((p[a],p[b])))for a,b in base}==base,'map preserves base');need({tuple(sorted((p[a],p[b])))for a,b in allowed}==allowed,'map preserves allowed edges');totalmaps+=1
+ source=graph6((P/'source_witness.g6').read_text());need(len(source)==64 and all(len(x)==3 for x in source),'source witness order/degree');need(not any(cycles(source,k)for k in range(3,8)),'source witness girth');cs=cycles(source,8);edge_count=collections.Counter(tuple(sorted((c[i],c[(i+1)%8])))for c in cs for i in range(8));need(set(edge_count.values())=={2}and len(edge_count)==96,'source witness cycle counts')
+ actual={(a,b)for a in range(64)for b in source[a]if a<b}
+ for name in ['positive64_symmetry','positive64_prefix_symmetry','positive64_full_symmetry']:
+  n,ee,aa,autos=parse_input(P/'inputs'/f'{name}.input',True);need(n==64 and set(ee)|set(aa)==actual and not autos,'positive literal graph')
+ return dict(root_vertices=43,boundary_vertices=21,root_octagons=len(octs),labelled_forests=labelled,forest_classes=9,actual_map_checks=totalmaps,source_graph_order=64,source_octagons=len(cs))
+
+def run():
+ r=inventory();r['historical_nodes']=verify_historical();bad=['SUMMARY DEADLINE NODES 1 POSITIVES 0 SECONDS 1\n','SUMMARY COMPLETE NODES 1 POSITIVES 1 SECONDS 1\n','SUMMARY COMPLETE NODES 1 POSITIVES 0 SECONDS 1','SUMMARY COMPLETE NODES 1 POSITIVES 0 SECONDS 1\n'*2,'SUMMARY COMPLETE NODES 0 POSITIVES 0 SECONDS 1\n']
+ for txt in bad:
+  try:parse_summary(txt)
+  except ValueError:pass
+  else:raise ValueError('damaged receipt accepted')
+ r['damaged_receipts']=len(bad);r['status']='PASS_COMPLETE_CUBIC_TWO_INVENTORY_AND_HISTORICAL_EXHAUSTION';return r
+if __name__=='__main__':
+ need(len(sys.argv)==2,'one fresh output filename');out=Path(sys.argv[1]);need(not out.exists(),'fresh output');r=run();out.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r))

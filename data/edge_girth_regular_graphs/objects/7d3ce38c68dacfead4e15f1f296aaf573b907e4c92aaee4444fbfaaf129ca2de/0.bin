@@ -1,0 +1,13 @@
+from pathlib import Path
+import sys,json,hashlib
+if sys.flags.optimize: raise RuntimeError('normal Python required')
+from run_closed import execute,pin
+W=Path(__file__).resolve().parent;S=W.parents[1];F=S/'corpus106_F012_root_symmetry_v1'
+for name,sha in [('corpus106_F012_root_symmetry_v1','03dd108e4a880989efc2ec1dff4dc774f922eaaf46a090f346349a29f34e83f5'),('corpus106_F012_root_symmetry_independent_review','013f625b4d66897e4214788caac3a7c6deaf31319c398c8e29cc61271ef2c125'),('corpus106_F012_root_symmetry_root_adoption','9d4f3cb129a6a80efa3c91781f3781ee09303830991c5c9fdc2a3f45a5b27747')]:
+ assert pin(S/name/'manifest.json')['sha256']==sha
+c=json.loads((W/'root_symmetry_target_compile01/receipt.json').read_text());assert c['status']=='PASS_CLOSED_EXECUTION'
+for r in c['pins']:assert pin(r['path'])==r
+plan=json.loads((W/'root_symmetry_target_plan.json').read_text());assert plan['required_calls']==4094
+inputs=[Path(__file__),W/'run_closed.py',W/'root_symmetry_target_plan.json',W/'root_symmetry_target_compile01/receipt.json',*[Path(r['path'])for r in c['pins']],S/'corpus106_F012_root_symmetry_independent_review/manifest.json',S/'corpus106_F012_root_symmetry_root_adoption/manifest.json',W/'complete_root_symmetry_reviewed',W/'roots4.txt',W/'exteriors4.txt']
+r=execute(plan['run'],W/'boundary4_root_symmetry01',inputs,630,W/'boundary4_root_symmetry01.json')
+print(json.dumps({k:r[k]for k in ['status','seconds','returncode']}))
