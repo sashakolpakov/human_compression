@@ -10,23 +10,29 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**92 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and thirty-nine (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070, L091 and L054) await measurement.
+**93 accessible originals have reviewed corrected principal-result recoveries:
+53 are measured and forty (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070, L091, L054 and F012) await measurement.
 Nine further originals, F003, L029, L110, L114, L115, L036, L046, L063 and L064,
 have reviewed principal refutations;
-4 have no complete principal disposition yet. L022 is an editorial with no
-mathematical result to recover.** Thus 101 of 105 mathematical originals have reviewed principal
-dispositions: 92 recoveries and nine refutations. These are the 106 active originals. Another 55 unavailable originals
+3 have no complete principal disposition yet. L022 is an editorial with no
+mathematical result to recover.** Thus 102 of 105 mathematical originals have reviewed principal
+dispositions: 93 recoveries and nine refutations. These are the 106 active originals. Another 55 unavailable originals
 remain archived; source retrieval and new-title intake are outside the current
 programme. The `original register <audit/corpus/latest.json>`_ and
 `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
 partition. L022 has no factor or measured-original credit.
 
 All nine originals with principal refutations now have complete reviewed
-treatments of their surviving source claims. Thus **101 of 105 mathematical
-originals are fully treated**: 92 ordinary recoveries and nine complete source
-treatments after refutations. **F004, F009, F012 and L026 remain.** The stopping
-condition is completion of these four originals.
+treatments of their surviving source claims. Thus **102 of 105 mathematical
+originals are fully treated**: 93 ordinary recoveries and nine complete source
+treatments after refutations. **F004, F009 and L026 remain.** The stopping
+condition is completion of these three originals.
+
+The `F012 admission <data/edge_girth_regular_graphs/admission.json>`_ records
+its complete reviewed source treatment: 49 components covering 16 principal
+claims and 260 literal rows. Borrowed classification and software premises
+remain explicit, as do unresolved infinity assertions. F012 adds no compression
+measurement, new conjecture resolution or complete Lean formalization.
 
 The `reproduction guide <docs/REPRODUCING.rst>`_ distinguishes integrity checks,
 mathematical replay, paper builds and Lean compilation. Sources, retained inputs,
