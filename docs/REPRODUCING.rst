@@ -58,6 +58,29 @@ complete project replay.  Install its dependencies in the chosen Python
 environment before invoking it; there is no repository-wide Python lockfile
 or fully specified clean-machine environment recipe.
 
+Co2 orbit exclusions
+--------------------
+
+The `conditional Co2 component <../papers/sporadic_rank3/co2_nonfree.rst>`_
+uses ordinary Python 3.11 or newer and the standard library. Its 52 declared
+files contain the proof, normalized orbit data, provenance and checker.
+This particular check needs no Git history, native group program or build.
+The `admission <../audit/sporadic_rank3/co2_nonfree/admission.json>`_ records
+its exact manifest and validation scope.
+
+From the checkout root, select a fresh absolute output directory outside the
+checkout, with an existing parent::
+
+    python3 -E -B scripts/sporadic_rank3/check_co2_nonfree.py \
+      --manifest-sha256 1f603a4d21c25ea7761d61eeb002d0fc91141d6e502d1feaba5b286852daff32 \
+      --out /absolute/external/co2-nonfree-check
+
+Success regenerates all 3,627 nonfree row keys and their canonical digest,
+checks all 24,690 rows and leaves 21,063 full-size rows undecided. The
+identification of the named group, its centralizers and the complete orbit
+partition remain imported premises. This partial certificate does not
+complete L026. Generated output belongs outside the checkout.
+
 Paper and topic replay
 ----------------------
 

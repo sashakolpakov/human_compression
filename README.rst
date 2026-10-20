@@ -34,6 +34,15 @@ claims and 260 literal rows. Borrowed classification and software premises
 remain explicit, as do unresolved infinity assertions. F012 adds no compression
 measurement, new conjecture resolution or complete Lean formalization.
 
+The `Co2 orbit obstruction <papers/sporadic_rank3/co2_nonfree.rst>`_ gives
+an elementary centralizer argument and a portable arithmetic certificate for
+3,627 nongenerating rows among 24,690 recorded orbits. The named group,
+centralizers and completeness of the orbit data remain explicit premises;
+21,063 full-size rows remain undecided by this criterion. The
+`reproduction record <audit/sporadic_rank3/co2_nonfree/admission.json>`_
+binds the exact inputs and checker. This is partial progress on L026 and
+adds no completed original or compression measurement.
+
 The `reproduction guide <docs/REPRODUCING.rst>`_ distinguishes integrity checks,
 mathematical replay, paper builds and Lean compilation. Sources, retained inputs,
 certificates and version requirements remain explicit; scratch builds belong
