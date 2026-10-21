@@ -13,8 +13,8 @@ Lean proofs, with explicit attribution and measured comparisons.
 | **October** | Finite groups, polytopes and incidence geometry, drawn from work by Dimitri Leemans and collaborators. Of 105 mathematical originals, 102 have complete reviewed treatments; three remain. | [Corpus overview](october_corpus/README.md) · [Current programme](october_corpus/README.rst) |
 | **November** | A separate corpus from another researcher. The directory is prepared; its researcher, bibliography and source editions have not yet been registered. | [Corpus overview](november_corpus/README.md) |
 
-Each directory contains that corpus's manuscripts, source register, evidence and
-reproduction instructions. Adding a corpus does not change the scope or results
+Each registered corpus keeps its manuscripts, source register, evidence and
+reproduction instructions in its own directory. Adding a corpus does not change the scope or results
 of the others. The [corpus register](corpora.json) records their entry points.
 
 ## What compression means
