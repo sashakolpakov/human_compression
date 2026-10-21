@@ -6902,14 +6902,14 @@ def check_f012_source_completion():
     return module.verify(ROOT)
 
 def main():
-    spec = importlib.util.spec_from_file_location('catalogue_completion_registration',
-        ROOT/'scripts/catalogue_completion_registration.py')
+    spec = importlib.util.spec_from_file_location('g2_prefix8_publication_registration',
+        ROOT/'scripts/g2_prefix8_certificates/registration.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     current = module.verify(ROOT, require_tracked=True)
     print(json.dumps(current, sort_keys=True))
-    print('PASS: administrative catalogue correction; 102 fully treated originals and 3 remaining.')
-    print('Scope: exact catalogue layer and inherited reviewed Git identities; no fresh scientific or whole-corpus replay.')
+    print('PASS: additive selected F004 certificates; 102 fully treated originals and 3 remaining.')
+    print('Scope: frozen ce997 predecessor plus strict current delta; no fresh whole-corpus replay.')
 
 if __name__=='__main__':
     main()

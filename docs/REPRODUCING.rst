@@ -212,3 +212,25 @@ that needs its working-tree bytes. The registration reports inherited Git
 identity checks separately from full hashing of all new package exports.
 The metadata controls and dense-bounds integration do not replace the
 source's borrowed catalogue premises or amount to an all-route fresh replay.
+
+
+Selected F004 prefix8 certificates
+----------------------------------
+
+Read ``audit/f004/prefix8_certificates/PUBLICATION.rst`` and the exact component
+manifest before selecting ``scripts/g2_prefix8_certificates/check.py``. Metadata
+integrity and the proper230/common118 mathematical modes are separate. The later
+Root records acquire a public-only replay of these fixed historical certificates;
+old Source-proposal labels remain unchanged as history. The prior3283, natural
+full-model/original-frame/catalogue/weights premises stay borrowed. The selected
+cutoff is3631 rejected and148 unpaid, regardless of later private studies. This
+partial publication leaves102/105 originals and F004/F009/L026 pending unchanged.
+
+``scripts/verify_snapshot.py`` now checks the exact additive layer over full
+commit ce9970599fc1e7334f9f3f74ae37929346fbe4ad. The old seven-file checker is
+retained byte-for-byte and evaluated only in an explicitly labelled frozen
+predecessor Git view; no old CLI pass on the enlarged tree is asserted. A separate
+strict current index/delta check allows only the finite exports, one dispatcher
+main edit and this append. No old catalogue, paper, archive or proof is retargeted.
+See the publication guide for exact replay commands, actual Root evidence and
+the inherited Git-history requirement. Keep fresh generated outputs external.
