@@ -234,3 +234,39 @@ strict current index/delta check allows only the finite exports, one dispatcher
 main edit and this append. No old catalogue, paper, archive or proof is retargeted.
 See the publication guide for exact replay commands, actual Root evidence and
 the inherited Git-history requirement. Keep fresh generated outputs external.
+
+
+Selected ON involution-centralizer certificate
+---------------------------------------------
+
+Read ``data/onan_centralizer/README.rst`` and its fixed manifest. The separate
+entrypoint ``scripts/onan_centralizer/check.py`` can run nine standard-permutation
+controls, the fixed standard word orders, thirteen pair-tree controls and direct
+verification of the saved161280-pair tree. It uses ordinary isolated Python and
+the standard library, with a fresh output directory outside the checkout.
+Both full-degree model files and the entire806400-byte tree are explicit inputs.
+The original check bodies remain byte-for-byte; the public entrypoint declares
+only repository-relative I/O bindings and supplies no private fallback.
+
+Named ATLAS model and the exact inner centralizer-order161280 classification are
+borrowed premises. This certificate supplies no45D cover identification, complete
+ON/Fi22 census, whole L026 recovery or conjecture credit. Existing102/105 original
+registration and the earlier selected F004 cutoff3631/148 are unchanged. Root's
+new additive registration must retain the45124925 predecessor in an explicit
+frozen view and independently check the complete current delta; the old strict
+registration is not claimed to pass an enlarged tree.
+
+
+Exact additive ON publication registration
+------------------------------------------
+
+The current ON layer retains the complete45124925 predecessor and its nested
+G2/historical logic in an explicit frozen read/Git view. It separately checks
+the entire actual current delta and exact8-file package. Metadata integrity
+does not repeat a group calculation or grant census/whole L026 credit.
+After real Source/replay proofs exist, Root supplies their exact finite frozen
+publication_manifest.json and publication_delta.json under
+audit/l026/onan_centralizer, prepares registration with both explicit SHA256
+arguments, stages only that layer, and runs scripts/verify_snapshot.py. Read
+audit/l026/onan_centralizer/README.rst for the exact schemas and commands.
+The old strict CLI is never claimed to pass this enlarged tree.
