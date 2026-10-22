@@ -188,6 +188,11 @@ interfaces; the general finite question remains outside that result.
 | [provenance/](provenance/) | Frozen artifacts and their recorded provenance |
 | [archive/](archive/) | Earlier editions and historical material |
 
+The [two graph examples](research/graphs/diameter_eight/README.rst) provide
+independent proofs and standalone checks for graphs of diameter eight,
+together with a counting reduction for the unfinished graph census.
+Both checks passed from an isolated copy of the package.
+
 The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
 the new permutation kernel from source and runs its eighteen kernel checks
 and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
