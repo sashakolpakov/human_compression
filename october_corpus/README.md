@@ -188,6 +188,10 @@ interfaces; the general finite question remains outside that result.
 | [provenance/](provenance/) | Frozen artifacts and their recorded provenance |
 | [archive/](archive/) | Earlier editions and historical material |
 
+The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
+the new permutation kernel from source and runs its eighteen kernel checks
+and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
+
 Start with [the instructions for the new directory layout](REPRODUCING.md),
 then the [detailed reproduction guide](docs/REPRODUCING.rst) and the selected
 paper's guide. Keep generated builds and scratch outputs outside the checkout.
