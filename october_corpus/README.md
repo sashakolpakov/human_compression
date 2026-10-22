@@ -1,6 +1,6 @@
 # October corpus
 
-[Human Compression](../README.md) · [Current programme](README.rst) · [Reproduction](REPRODUCING.md)
+[Human Compression](../README.md) · [November corpus](../november_corpus/README.md) · [Current programme](README.rst) · [Reproduction](REPRODUCING.md)
 
 This corpus studies finite groups, polytopes and incidence geometry through
 publications by Dimitri Leemans and collaborators. It asks whether a few

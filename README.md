@@ -14,8 +14,19 @@ Lean proofs, with explicit attribution and measured comparisons.
 | **November** | A separate corpus from another researcher. The directory is prepared; its researcher, bibliography and source editions have not yet been registered. | [Corpus overview](november_corpus/README.md) |
 
 Each registered corpus keeps its manuscripts, source register, evidence and
-reproduction instructions in its own directory. Adding a corpus does not change the scope or results
-of the others. The [corpus register](corpora.json) records their entry points.
+reproduction instructions in its own directory:
+
+```text
+human_compression/
+├── README.md             Project purpose and principles shared by both corpora
+├── october_corpus/
+│   └── README.md         Leemans and collaborators: results, status and reproduction
+└── november_corpus/
+    └── README.md         Second corpus: scope and status
+```
+
+Adding a corpus does not change the scope or results of the others. The
+[corpus register](corpora.json) records their entry points.
 
 ## What compression means
 
