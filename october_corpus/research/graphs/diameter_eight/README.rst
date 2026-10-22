@@ -1,8 +1,8 @@
-Graphs of diameter eight: reductions and two examples
-===================================================
+Graphs of diameter eight: reductions, certificates and two examples
+=================================================================
 
 This package contains written mathematics, independent mathematical
-reviews and two standalone Python checkers.  The common setting is a simple
+reviews and standalone Python checkers.  The common setting is a simple
 5-regular, triangle-free graph on32 vertices with a marked distance-eight
 geodesic.  Its three spaced center neighborhoods form an independent15-set;
 the complementary induced graph has exactly five edges.
@@ -15,6 +15,11 @@ contains a literal bipartite example with defect support ``K1,5``.  Both
 examples have girth4 and diameter8 by the written arguments.  Their checker
 Sources independently specify finite checks of those literal artifacts.
 Defect-shape names ignore isolated vertices in the17-point complement.
+
+``middle_vertices/`` adds an independently reviewed local bound on defect
+degrees and literal certificates excluding two specified partial families.
+It has its own source manifest and standalone reproduction instructions.
+Its check does not change the unfinished census or supply a Lean proof.
 
 All ten files under these three directories preserve the original bytes.
 ``SourceManifest.json`` gives every original path, destination, byte count
