@@ -193,6 +193,12 @@ independent proofs and standalone checks for graphs of diameter eight,
 together with a counting reduction for the unfinished graph census.
 Both checks passed from an isolated copy of the package.
 
+The [common commutant example](research/groups/common_commutant/README.rst)
+uses one matrix to exclude every completion of a specified group prefix.
+Its standalone checker verifies the finite tables and witness; the original
+group correspondence remains an explicit premise. A further reviewed theory
+describes affine witness spaces for general commutation constraints.
+
 The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
 the new permutation kernel from source and runs its eighteen kernel checks
 and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
