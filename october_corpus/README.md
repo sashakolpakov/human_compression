@@ -203,6 +203,11 @@ The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
 the new permutation kernel from source and runs its eighteen kernel checks
 and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
 
+The [permutation certificate kernel](research/onan/generation_certificates/README.rst)
+checks supplied cycles, transitivity trees and invariant sets. Its corrected
+25-test suite passed after a fresh compilation and review of the execution.
+The production adapter and group census require further checks.
+
 The [nonfree O'Nan orbit certificate](research/onan/nonfree_orbits/README.rst)
 conditionally excludes all 1,776 nonfree rows in the retained endpoint index.
 Its standalone check passed from an isolated copy; named-group, model and
