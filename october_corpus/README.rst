@@ -43,6 +43,12 @@ centralizers and completeness of the orbit data remain explicit premises;
 binds the exact inputs and checker. This is partial progress on L026 and
 adds no completed original or compression measurement.
 
+The `nonfree O'Nan orbit certificate <research/onan/nonfree_orbits/README.rst>`_
+gives a portable conditional nongeneration check for all 1,776 nonfree rows
+in the retained endpoint index. Its standalone checker passed from an isolated
+copy; the named group, model and exact historical orbit data remain borrowed
+premises. L026 and the 102/105 completed-original count remain unchanged.
+
 The `reproduction guide <docs/REPRODUCING.rst>`_ distinguishes integrity checks,
 mathematical replay, paper builds and Lean compilation. Sources, retained inputs,
 certificates and version requirements remain explicit; scratch builds belong
