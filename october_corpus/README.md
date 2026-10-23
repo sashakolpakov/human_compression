@@ -213,6 +213,11 @@ conditionally excludes all 1,776 nonfree rows in the retained endpoint index.
 Its standalone check passed from an isolated copy; named-group, model and
 exact-orbit premises remain explicit. This partial L026 result adds no completed original.
 
+The [Fi22 involution geometry](research/fi22/involution_geometry/README.rst)
+derives products, stabilizers and orbit weights from commuting edges and
+triangle pairs. Its conditional written proof has an independent review;
+the model correspondence and census computations remain to be acquired.
+
 Start with [the instructions for the new directory layout](REPRODUCING.md),
 then the [detailed reproduction guide](docs/REPRODUCING.rst) and the selected
 paper's guide. Keep generated builds and scratch outputs outside the checkout.
