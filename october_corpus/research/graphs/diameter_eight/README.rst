@@ -21,6 +21,11 @@ degrees and literal certificates excluding two specified partial families.
 It has its own source manifest and standalone reproduction instructions.
 Its check does not change the unfinished census or supply a Lean proof.
 
+`side_incidence/ <side_incidence/README.rst>`_ contains the verified catalogue
+of 45 incidence types on six columns and the reviewed proof giving 51 unmarked
+incidence types for one side of every target. Full side, port and graph
+coverage remain separate obligations.
+
 All ten files under these three directories preserve the original bytes.
 ``SourceManifest.json`` gives every original path, destination, byte count
 and SHA256.  Original absolute paths are provenance, not dependencies.
