@@ -22,6 +22,19 @@ least five, and makes the normalized witness spaces additive torsors. Its
 `written review <provenance/commutation_constraints_review.rst>`_ records the
 precise scope. The numerical example here uses the earlier K/H method.
 
+`Canonical fixed vectors in characteristic two <fixed_vectors.pdf>`_
+(`TeX source <fixed_vectors.tex>`_) gives another criterion. A self-adjoint
+operator determines a canonical vector fixed by every linear isometry
+commuting with it. This can replace both a centralizer-order calculation
+and a rank-one search with linear equations. The complete proof and
+`independent written review <provenance/fixed_vectors_review.rst>`_ state
+the required form, original-group correspondences and moved-vector test.
+This is a conditional theory: no additional corpus instance, completed
+original or compression measurement is claimed by the note.
+
+To compile the note, run ``pdflatex -no-shell-escape -halt-on-error`` on
+``fixed_vectors.tex``, with the output directory outside this package.
+
 Reproduce from an isolated copy
 -------------------------------
 
