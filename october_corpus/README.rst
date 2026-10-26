@@ -67,6 +67,12 @@ subtracting the identity, over a perfect field of characteristic two in
 dimension six. It reuses the existing fixed-vector theory. Its reviewed
 proof and projective-count lemma acquire no new endpoint family or original.
 
+The `joint fixed-set criterion <research/groups/joint_fixed_sets/README.rst>`_
+uses two descriptions of one fixed set to obstruct generation by a string
+marking. Its four-page proof has an independent review. The conditional F004
+application and certificate relation remain subject to their finite checks;
+the completed-original and measurement counts are unchanged.
+
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
 `whole-topic graph <audit/overview/v19/packet/whole_topics.svg>`_, the
