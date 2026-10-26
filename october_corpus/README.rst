@@ -61,6 +61,12 @@ Its finite application retains the original representation and endpoint
 correspondences; this publication adds no completed original, conjecture
 resolution, compression measurement or Lean verification.
 
+The `characteristic endpoint theorem <research/groups/characteristic_flags/README.rst>`_
+proves reducibility when both endpoint involutions have rank three after
+subtracting the identity, over a perfect field of characteristic two in
+dimension six. It reuses the existing fixed-vector theory. Its reviewed
+proof and projective-count lemma acquire no new endpoint family or original.
+
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
 `whole-topic graph <audit/overview/v19/packet/whole_topics.svg>`_, the
