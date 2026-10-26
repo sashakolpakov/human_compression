@@ -39,6 +39,14 @@ with the string relations. The criterion was proposed by ``/root``;
 ``/root/packing_projection_review`` independently reviewed them.
 Historical priority has not been established.
 
+The associated original is Malcolm Hoong Wai Chen, *Abstract regular
+polytopes of G2(q) in even characteristic*, arXiv:2609.25004v1 (2026),
+catalogue F004. Its constructions and census claims retain their attribution.
+The application here concerns one prefix in the retained G2(8) model;
+it does not recover the source's complete census. The earlier project
+profile and literal reader below are copied unchanged, with their original
+paths and whole hashes recorded in the publication record.
+
 For original job [68,5], a guarded exploratory scan found both complete
 joint fixed sets equal to ``[1,10,11,12,13,14,15,16,17]``. An earlier
 acquired target-G generator lookup is ``10 -> 586``. Their use together
