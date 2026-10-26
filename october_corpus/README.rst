@@ -54,6 +54,13 @@ mathematical replay, paper builds and Lean compilation. Sources, retained inputs
 certificates and version requirements remain explicit; scratch builds belong
 outside the checkout.
 
+The `symplectic endpoint criterion <research/groups/symplectic_flags/README.rst>`_
+gives a complete written proof and independent hand review excluding string
+generating sets of rank at least five for a specified pair in dimension six.
+Its finite application retains the original representation and endpoint
+correspondences; this publication adds no completed original, conjecture
+resolution, compression measurement or Lean verification.
+
 The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
 whole-topic and fifty-three individual conditional comparisons. Read the
 `whole-topic graph <audit/overview/v19/packet/whole_topics.svg>`_, the
