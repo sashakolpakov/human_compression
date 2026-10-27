@@ -220,6 +220,13 @@ package retains 62 unresolved positions and explicitly states the imported
 group, frame, orbit and classification premises; it adds no completed manuscript
 or compression measurement.
 
+The [complete census for these five families](research/groups/marked_census/README.rst)
+now classifies all 16,414 original positions: 14 valid markings and 16,400
+obstructions. Its independent reproduction passed from an isolated copy in
+52 seconds, using about 104 MB of memory. The package includes the proofs,
+compact certificate data and a standard library checker. Other F004 families
+remain to be completed.
+
 The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
 the new permutation kernel from source and runs its eighteen kernel checks
 and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
