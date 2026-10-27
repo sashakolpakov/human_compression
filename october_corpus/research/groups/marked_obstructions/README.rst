@@ -1,11 +1,12 @@
 Supplied obstructions for marked matrix groups
 =============================================
 
-This package checks three elementary ways in which a proposed four-generator
-marking can fail: a common invariant line moved by an ambient element, a
-forbidden pair-subgroup intersection, or a forbidden intersection of its
-rank-three ends. It contains the actual retained witnesses for one
-F004-associated job, [11,4], over F_11. It performs no witness search.
+This package checks supplied invariant lines, common commutants, subgroup
+intersection words and pairs of prime-order words. These certify failures
+of proposed four-generator markings. It contains the actual retained
+witnesses for one F004-associated job, [11,4], over F_11. It performs no
+witness search. The prime-order criterion imports a classification theorem;
+the other criteria use elementary linear algebra and group theory.
 
 F004's registered source is Malcolm Hoong Wai Chen, *Abstract regular polytopes
 of G2(q) in even characteristic*, arXiv:2609.25004v1 (2026), available at
@@ -20,11 +21,15 @@ original row indices:
 
 * 220 common-line obstructions;
 * 314 pair-word intersection obstructions;
-* three endpoint-word obstructions and one rank-three overlap obstruction.
+* three endpoint-word obstructions and one rank-three overlap obstruction;
+* 27 common-commutant obstructions;
+* 129 pairs of prime-order words in a single rank-three end.
 
-Thus 538 of these 694 rows have a supplied obstruction. The other 156 remain
-unresolved by this package. This is a count within one specified candidate
-family, not a completed original, group census or conjecture resolution.
+All 694 rows have supplied certificates. The first 565 obstructions use
+elementary matrix and subgroup arguments. The remaining 129 also use the
+borrowed maximal-subgroup classification of G2(11), as explained below.
+This covers one specified candidate family under the stated original-group
+premises, not a completed original, full group census or conjecture resolution.
 The corpus's intake counts remain unchanged: 101 of 104 mathematical
 manuscripts have complete reviewed treatments; F004 remains unfinished.
 
@@ -54,9 +59,9 @@ The checker locates its data relative to its own file, so the working directory
 does not matter. No private study tree, GAP installation, original model,
 project module, network service or previous result file is required.
 
-A development run from the repository root passed with 3,911 matrix products,
-about 0.11 seconds of measured checker time and 26,705,920 bytes of sampled
-peak RSS. It printed the stated 538/694 count and created no runtime file.
+A development run from the repository root passed with 8,446 matrix products,
+about 0.22 seconds of measured checker time and 26,984,448 bytes of sampled
+peak RSS. It checked all 694 certificate rows and created no runtime file.
 These are observations of that run, not a portable speed guarantee or a
 compression measurement.
 
@@ -70,7 +75,7 @@ and the retained provenance metadata. The checker reconstructs its canonical
 bytes and verifies the original SHA256. Candidate rows and certificate rows
 are written individually for inspection. There is no custom matrix codec.
 
-The three certificate arrays retain the minimal witness fields from the
+The certificate arrays retain the minimal witness fields from the
 original proposals, checked against the subsequent independent proof records
 when this package was assembled. Full old proof documents are not copied;
 their exact source pins and the original proposal pins are recorded in
@@ -185,11 +190,63 @@ X against every displayed expression. If none equals X, then X belongs to
 intersection for the two rank-three ends. The supplied example has index
 301 and m = 10. No word, period or end-subgroup search is performed.
 
+4. Common commutants
+-------------------
+
+Suppose X commutes with each marked matrix, but not with an included
+ambient element t. The marked subgroup then lies in the centralizer of X,
+whereas t does not. This proves that the marked subgroup is proper in
+the same ambient group. X need not be invertible. The checker compares
+both full products in every commutation equation and in the failed ambient
+equation. Four supplied matrices X account for 27 further rows. It performs
+no linear solving or commutant search.
+
+This is the same standard criterion developed in the corpus's
+``common_commutant`` package, applied to the present field and tuples.
+
+5. Two prime orders in one end
+-----------------------------
+
+For each of the remaining 129 rows, two supplied words use the SAME end:
+012 or 123. A record is ``[row,end,prime,cofactor,word]``, where end is 0
+for 012 and 1 for 123. The digits in the word are local end positions.
+The checker evaluates y = word^cofactor and proves y != 1 and y^p = 1.
+As p is prime, y has exact order p. The two primes are 19 and 37; the
+supplied cofactors are respectively 7 and 3. No word-order search is used.
+
+The classification of maximal subgroups of the finite split group G2(11)
+implies that no proper maximal subgroup has order divisible by both 19 and
+37. The odd-characteristic classification is due to P. B. Kleidman,
+``The maximal subgroups of the Chevalley groups G2(q) with q odd, the Ree
+groups 2G2(q), and their automorphism groups``, Journal of Algebra 117
+(1988), 30–71, DOI ``10.1016/0021-8693(88)90239-6``. The complete odd-q
+table was checked in Table 2, printed page 13, of H. P. Tong-Viet and
+T. P. Wakefield, ``On Huppert's conjecture for G2(q), q >= 7``:
+
+https://www.personal.kent.edu/~htongvie/Publications/G2.pdf
+
+The original publisher full text was unavailable during this check; the
+classification remains a borrowed theorem. At q=11 the table has no proper
+subfield or Ree case. Its linear and unitary types have respectively 19
+and 37 as divisors, but not both; the exceptional J1 case has 19 but not 37.
+The other covering orders also lack at least one prime. The checker verifies
+this divisibility specialization; checking numbers does not prove the
+completeness of the classified list.
+
+If the end were proper, it would lie in a maximal subgroup. Lagrange's
+theorem would force both primes to divide that maximal subgroup's order,
+a contradiction. Thus the end is the full original G2(11). The omitted
+nonidentity mark belongs to it, so its singleton subgroup meets the end
+nontrivially despite their disjoint index sets. The intersection property
+therefore fails. This conclusion requires the exact named-group premise;
+it is not valid for an arbitrary matrix group with these word orders.
+
 Imported original-group premises
 -------------------------------
 
-The finite matrix statements above are unconditional statements about the
-included arrays. Applying them to the historical F004 group uses the following
+The finite matrix identities above are unconditional statements about the
+included arrays. The final 129 group-theoretic exclusions also require the
+classified maximal-subgroup premise. Applying them to the historical F004 group uses the following
 explicit premises. They are retained from the original acquisition and are
 not proved by this small package.
 
@@ -233,6 +290,7 @@ Full SHA256 values and recorded study-relative paths are in ``source_pins``:
 * independent line/mapping proof: 309,917 bytes, ``b21d21fcbfc2...``;
 * independent pair-word proof: 56,660 bytes, ``de2d0696ab3a...``;
 * independent parabolic-word proof: 14,058 bytes, ``1d12c3949215...``;
+* independent final 156-row proof: 80,886 bytes, ``751d49af5343...``;
 * the original line, pair-word and parabolic-word proposal documents.
 
 The original mapping export was prepared by /root/first32_result_review.
@@ -243,6 +301,11 @@ and this portable package are by /root/registration_reuse_review. Bounded
 input checking and column-dot arithmetic adapt those earlier word checkers.
 The group-action stabilizer argument and alternating-word intersection
 arguments are elementary standard mathematics; no novelty claim is made.
+The commutant and prime-word proposals were supplied by /root; their
+independent final verification and mathematical review are by
+/root/readme_structure_audit. The prime-generation criterion reuses the
+corpus's earlier ``g2_11_generation_by_prime_witnesses`` theorem, whose
+classification input keeps the attribution above.
 
 These source hashes identify earlier artifacts. Apart from reconstructing
 the bundled fixture, this checker does not authenticate absent private files,

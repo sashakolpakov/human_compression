@@ -20,8 +20,8 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 DATA = HERE / "certificates.json"
-DATA_BYTES = 137867
-DATA_SHA256 = "2ea8e82737c92f6c5a101ca0d5852a0b875aadd8fb6229f512b8894325dbb835"
+DATA_BYTES = 147703
+DATA_SHA256 = "49f6fe1025683f0cdf8def4f031046da679f9edba1f397e5ace2fef6f5496404"
 FIXTURE_BYTES = 100429
 FIXTURE_SHA256 = "b2a2d44f31a4a2ae66e3bd7af29e1e22dc00a4a1649c8fbab7e386978395ad14"
 P, N, ORBITS = 11, 7, 694
@@ -279,22 +279,87 @@ def main():
             overlaps += 1
         end_indices.append(i)
 
+    commutant_indices = []
+    commutants = tuple(matrix(value) for value in data["commutant_matrices"])
+    need(len(commutants) == 4, "four supplied common commutants")
+    for record in data["commutant_certificates"]:
+        need(type(record) is list and len(record) == 3
+             and all(type(x) is int for x in record), "commutant record")
+        i, witness, generator = record
+        need(0 <= witness < len(commutants) and generator in (0, 1),
+             "specified commutant and ambient element")
+        value = commutants[witness]
+        for mark in marks(i):
+            need(multiply(value, mark) == multiply(mark, value),
+                 "commutant commutes with every full marked matrix")
+        need(multiply(value, ambient[generator])
+             != multiply(ambient[generator], value),
+             "commutant fails to commute with the ambient element")
+        commutant_indices.append(i)
+
+    def power(value, exponent):
+        result = identity
+        while exponent:
+            if exponent & 1:
+                result = multiply(result, value)
+            exponent >>= 1
+            if exponent:
+                value = multiply(value, value)
+        return result
+
+    prime_ends = {}
+    for record in data["prime_end_certificates"]:
+        need(type(record) is list and len(record) == 5
+             and all(type(x) is int for x in record[:4]), "prime-word record")
+        i, end, prime, cofactor, word = record
+        need(end in (0, 1) and prime in (19, 37)
+             and cofactor == {19: 7, 37: 3}[prime],
+             "specified end, prime and cofactor")
+        marked = marks(i)
+        generators = marked[end:end + 3]
+        value = power(digit_word(generators, word, "012", 12), cofactor)
+        need(value != identity and power(value, prime) == identity,
+             "nonidentity supplied word has the exact stated prime order")
+        key = i, prime
+        need(key not in prime_ends, "one witness for each row and prime")
+        prime_ends[key] = end
+    prime_indices = sorted({i for i, prime in prime_ends})
+    need(len(prime_ends) == 258 and len(prime_indices) == 129
+         and all((i, 19) in prime_ends and (i, 37) in prime_ends
+                 and prime_ends[i, 19] == prime_ends[i, 37]
+                 for i in prime_indices), "both primes occur in the same end")
+    # Completeness of this covering list is a borrowed classification theorem.
+    # Only its elementary specialization and divisibility are checked here.
+    q = 11
+    maximal_order_cover = (
+        q**6 * (q - 1) * (q*q - 1), q*q * (q*q - 1)**2, 8 * 168,
+        2 * q**3 * (q**3 - 1) * (q*q - 1),
+        2 * q**3 * (q**3 + 1) * (q*q - 1),
+        q * (q*q - 1), 504, 1092, 12096, 175560)
+    need(all(order % (19 * 37) != 0 for order in maximal_order_cover),
+         "no listed maximal order contains both prime divisors")
+
     need(len(line_indices) == len(set(line_indices)) == 220
          and len(pair_indices) == len(set(pair_indices)) == 314
          and len(end_indices) == len(set(end_indices)) == 4
+         and len(commutant_indices) == len(set(commutant_indices)) == 27
          and endpoints == 3 and overlaps == 1, "retained certificate counts")
-    groups = list(map(set, (line_indices, pair_indices, end_indices)))
+    groups = list(map(set, (line_indices, pair_indices, end_indices,
+                           commutant_indices, prime_indices)))
     union = set.union(*groups)
-    need(len(union) == sum(map(len, groups)) == 538,
-         "three obstruction lists have disjoint original indices")
+    need(len(union) == sum(map(len, groups)) == 694,
+         "all certificate lists have disjoint original indices")
     unresolved = set(range(1, ORBITS + 1)) - union
-    need(len(unresolved) == 156, "156 rows have no supplied obstruction here")
+    need(not unresolved, "all 694 rows have a supplied certificate")
     need(read_data() == raw, "bundled input unchanged after complete checking")
     tick()
-    result = dict(status="PASS_BUNDLED_MATRIX_OBSTRUCTIONS", field=P, dimension=N,
+    result = dict(status="PASS_BUNDLED_MATRIX_CERTIFICATES", field=P, dimension=N,
                   included_rows=ORBITS, line_obstructions=220, pair_word_obstructions=314,
                   endpoint_obstructions=endpoints, overlap_obstructions=overlaps,
-                  disjoint_obstructed_rows=538, unresolved_rows=156,
+                  commutant_obstructions=27, same_end_prime_pairs=129,
+                  elementary_obstructed_rows=565, disjoint_certificate_rows=694,
+                  unresolved_rows=0, G2_11_classification_required_for_rows=129,
+                  maximal_subgroup_classification_reproved=False,
                   original_group_correspondence_reproved=False,
                   full_original_or_census_claim=False, Lean_claim=False,
                   compression_measurement_claim=False,
