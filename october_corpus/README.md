@@ -227,6 +227,13 @@ obstructions. Its independent reproduction passed from an isolated copy in
 compact certificate data and a standard library checker. Other F004 families
 remain to be completed.
 
+The [involution centralizer bound](research/groups/involution_centralizers/README.rst)
+has a complete TeX proof and independent agent review. A subgroup of the
+specified equal-determinant group containing a Klein four and avoiding its
+central involution has order at most 1,320. This gives a compact obstruction
+criterion for rank-five markings under an explicit centralizer identification.
+It adds no completed census or manuscript.
+
 The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
 the new permutation kernel from source and runs its eighteen kernel checks
 and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
