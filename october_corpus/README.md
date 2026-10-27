@@ -207,6 +207,11 @@ Its standalone checker verifies the finite tables and witness; the original
 group correspondence remains an explicit premise. A further reviewed theory
 describes affine witness spaces for general commutation constraints.
 
+The [marked matrix obstruction certificates](research/groups/marked_obstructions/README.rst)
+check supplied invariant-line and intersection-word witnesses for one F004
+candidate family using only Python's standard library. The original-group
+correspondence remains an explicit premise; F004 remains unfinished.
+
 The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
 the new permutation kernel from source and runs its eighteen kernel checks
 and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
