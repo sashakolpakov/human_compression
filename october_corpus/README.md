@@ -213,6 +213,13 @@ using only Python's standard library. The original-group correspondence
 and the classification used by 129 cases remain explicit premises;
 F004 remains unfinished.
 
+The [shared matrix certificates](research/groups/shared_obstructions/README.rst)
+check 16,352 supplied obstructions across five F004 families, using one matrix
+table. Their portable arithmetic check passed from an isolated copy. That
+package retains 62 unresolved positions and explicitly states the imported
+group, frame, orbit and classification premises; it adds no completed manuscript
+or compression measurement.
+
 The [packed conjugacy-key example](research/onan/packed_keys/README.rst) builds
 the new permutation kernel from source and runs its eighteen kernel checks
 and ten I/O checks. These small tests are separate from the unfinished O'Nan census.
