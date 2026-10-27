@@ -6,19 +6,23 @@ This project tests that question across separate research corpora. Its products
 are mathematical theories, application papers, computational certificates and
 Lean proofs, with explicit attribution and measured comparisons.
 
+This README introduces the whole project. Each corpus has its own README for
+its bibliography, mathematical results, progress and reproduction instructions.
+
 ## Corpora
 
 | Corpus | Subject and status | Start here |
 |---|---|---|
-| **October** | Finite groups, polytopes and incidence geometry, drawn from work by Dimitri Leemans and collaborators. Of 105 mathematical originals, 102 have complete reviewed treatments; three remain. | [Corpus overview](october_corpus/README.md) · [Current programme](october_corpus/README.rst) |
+| **October** | Finite groups, polytopes and incidence geometry, drawn from work by Dimitri Leemans and collaborators. The existing project corpus, including its manuscripts, proofs, certificates and audits. | [Corpus overview](october_corpus/README.md) · [Detailed programme](october_corpus/README.rst) |
 | **November** | A separate corpus from another researcher. The directory is prepared; its researcher, bibliography and source editions have not yet been registered. | [Corpus overview](november_corpus/README.md) |
 
-Each registered corpus keeps its manuscripts, source register, evidence and
-reproduction instructions in its own directory:
+Each corpus keeps its manuscripts, source register, evidence and reproduction
+instructions in its own directory as they are added:
 
 ```text
 human_compression/
 ├── README.md             Project purpose and principles shared by both corpora
+├── corpora.json          Corpus register and entry points
 ├── october_corpus/
 │   └── README.md         Leemans and collaborators: results, status and reproduction
 └── november_corpus/
@@ -60,7 +64,8 @@ cd october_corpus
 python3 -E -B scripts/smoke_check.py --quick
 ```
 
-The layout check verifies preservation of the earlier Git tree. The quick suite
+Run the layout check from a clean, committed checkout. It verifies preservation
+of the earlier Git tree. The quick suite
 checks three selected mathematical certificates. Each paper's guide states the
 additional inputs, tools and verification scope needed for its reproduction.
 Historical audits retain their original paths and can be replayed at their

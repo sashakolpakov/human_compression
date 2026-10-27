@@ -9,17 +9,25 @@ agents, can recover decades of published results in shorter, complete papers.
 Sources, borrowed results and contributions made here receive separate
 attribution.
 
-This overview carries forward the original project README. Its navigation now
-points to the published corpus files; the detailed [current programme](README.rst)
-and [original register](audit/corpus/latest.json) record the exact dispositions.
+This is the corpus README carried forward from the original project overview.
+Its navigation points to the published corpus files. The [detailed programme](README.rst)
+and [source register](audit/corpus/latest.json) retain their recorded counts;
+the [manuscript accounting audit](audit/corpus/proposals/manuscript-accounting/README.rst)
+explains the correction from source components to manuscripts used below.
 
 ## Current position
 
-The accessible catalogue contains **106 original sources**: 105 mathematical
-manuscripts and one editorial. **102 of the 105 mathematical originals have
-complete reviewed treatments**: 93 principal-result recoveries and nine
-complete treatments following principal refutations. **F004, F009 and L026
-remain.** The editorial has no mathematical result to recover.
+The accessible corpus contains **105 manuscripts**: 104 mathematical manuscripts
+and one editorial. **101 of the 104 mathematical manuscripts have complete
+reviewed treatments**: 93 principal-result recoveries and eight complete
+treatments following principal refutations. **F004, F009 and L026 remain.**
+The editorial has no mathematical result to recover.
+
+These manuscripts have 106 registered source components. L063 and L064 are
+the main article and its supplementary appendix, counted together as one
+manuscript. The accounting audit preserves both source IDs and all their
+results. Its catalogue correction is published as a proposal; existing
+catalogue pointers remain unchanged while computations bound to them finish.
 
 Of the recoveries, **53 have published measurements** and forty await
 measurement. The current [measurement overview](audit/overview/latest.json)
