@@ -9,10 +9,13 @@ guards, review and result are retained in verification/.
 
 The archived original checks certify 132 additional intersection property
 failures. The q11 block now has 217 baseline imports, 3,478 later
-certificates and 106 unresolved positions. These new literal word
-certificates still need a relative arithmetic interface. The separate
-integer interface has actually reproduced 3,122 certificates, including
-its earlier 27; the 224 section certificates require another interface.
+certificates and 106 unresolved positions. A subsequent relative
+arithmetic check passed for all 132 new literal word certificates;
+the `commands and actual records
+<../../../groups/two_unitary_ends/replay/job_0023/literal_words/README.rst>`_
+are available separately. Together with the earlier integer runs, this
+reproduces all 3,254 adopted certificates in that family. The 224 section
+certificates require another interface.
 
 The Fi22 archive records a completed finite search on 16 selected owners.
 Its 4,096 trials supplied no pair of cycle witnesses. The misses remain
