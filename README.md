@@ -55,6 +55,8 @@ does not imply that its entire manuscript has been formalized.
 ## Read and reproduce
 
 For the October corpus, begin with its [current reproduction instructions](october_corpus/REPRODUCING.md).
+The [latest finite certificate report](october_corpus/research/proof_collection/RUN_REPORT.rst)
+records the completed relative replay, its inputs, results and remaining premises.
 From the repository root, check the directory migration and run the small
 mathematical suite with:
 

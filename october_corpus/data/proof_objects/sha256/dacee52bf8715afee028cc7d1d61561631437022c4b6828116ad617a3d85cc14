@@ -1,0 +1,156 @@
+"""UNRUN byte assembly of already certified quotient values only.
+Author /root/prime_theory_audit. No scientific module, map lookup, orbit search,
+canonical minimum or partner classification is evaluated by this DATA method.
+Historical bodies are authenticated values, never claimed physical rereads.
+"""
+import argparse,base64,gzip,hashlib,io,json,os,resource,signal,stat,struct,sys,time
+from pathlib import Path
+START=time.monotonic();READ=Path(__file__).stat().st_size;SEEN={};WORK=None;MODE=None;MIB=2**20
+PY='/Users/sasha/.venvs/global/bin/python'
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+def bounded():
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    if rss>128*MIB or time.monotonic()-START>=140:raise RuntimeError('unchanged128MiB/140s caller')
+    if WORK is not None and MODE=='proposal' and (WORK.units>=6000000 or WORK.clock()-WORK.start>=14):raise RuntimeError('unchanged6M/14s supplier reserve')
+
+def need(ok,why):
+    bounded()
+    if not ok:raise ValueError(why)
+
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+
+def strict(raw):
+    def pairs(items):
+        out={}
+        for k,v in items:
+            need(k not in out,'unique DATA key');out[k]=v
+        return out
+    def bad(x):raise ValueError('no floats/nonfinite DATA')
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=bad,parse_constant=bad)
+
+def shape(r):
+    need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+         and Path(r['path']).is_absolute()and type(r['bytes'])is int and 0<=r['bytes']<=2*MIB
+         and type(r['sha256'])is str and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),
+         'complete finite whole input')
+    return r
+
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def whole(r,cap=2*MIB):
+    global READ
+    shape(r);p=Path(r['path']);s=p.lstat()
+    need(p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size==r['bytes']<=cap,
+         'canonical ordinary bounded whole input')
+    ancestry=[(q,q.lstat().st_dev,q.lstat().st_ino,q.lstat().st_mode)for q in[p,*p.parents]]
+    need(all(not stat.S_ISLNK(mode)for q,dev,ino,mode in ancestry),'no alias ancestry')
+    need(READ+r['bytes']<=8*MIB,'complete8MiB physical read budget');READ+=r['bytes']
+    fd=os.open(p,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    with os.fdopen(fd,'rb')as f:
+        a=os.fstat(f.fileno());raw=f.read(s.st_size+1);b=os.fstat(f.fileno())
+    need(sig(s)==sig(a)==sig(b)==sig(p.lstat())and len(raw)==r['bytes']
+         and hashlib.sha256(raw).hexdigest()==r['sha256'],'fresh stable complete input bytes')
+    need(all((q.lstat().st_dev,q.lstat().st_ino,q.lstat().st_mode)==(dev,ino,mode)for q,dev,ino,mode in ancestry),
+         'whole ancestry unchanged')
+    need(r['path']not in SEEN or SEEN[r['path']]==r,'one complete version per path');SEEN[r['path']]=dict(r)
+    need(len(SEEN)<=32,'complete32-file read budget');return raw
+
+def argv_ref(path,sha,cap):
+    p=Path(path);need(p.stat().st_size<=cap,'bounded bootstrap extent')
+    return dict(path=str(p),bytes=p.stat().st_size,sha256=sha)
+
+def publish(out,name,raw,cap):
+    need(type(raw)is bytes and len(raw)<=cap,'bounded whole output')
+    q=out/name
+    with q.open('xb')as f:
+        need(f.write(raw)==len(raw),'complete exclusive output');f.flush();os.fsync(f.fileno())
+    return None
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--plan',nargs=2,required=True)
+    ap.add_argument('--root-review',nargs=2,required=True);ap.add_argument('--out',type=Path,required=True);a=ap.parse_args()
+    need(sys.executable==PY and sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+         and not sys.flags.optimize and all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same cleared E-B-S value assembler')
+    signal.signal(signal.SIGALRM,lambda *unused:(_ for _ in()).throw(TimeoutError('140s certified value assembly')));signal.alarm(140)
+    pref=argv_ref(*a.plan,16384);plan=strict(whole(pref,16384));gref=argv_ref(*a.root_review,16384);gate=strict(whole(gref,16384))
+    own=plan['program'];whole(own,16384)
+    need(own['path']==str(Path(__file__).resolve())and plan['schema']=='L026_CERTIFIED_QUOTIENT_VALUE_ASSEMBLY_V1'
+         and gate['schema']=='ROOT_REVIEWED_L026_CERTIFIED_VALUE_ASSEMBLY_V1'and gate['root']=='/root'
+         and gate['status']=='SUPPORTED'and gate['blockers']==[]and gate['program']==own and gate['plan']==pref
+         and gate['bank']==plan['bank']and gate['accepted_stage_adoption']==plan['stage_adoption']
+         and gate['only_already_certified_values_adopted']is True,'fresh exact Root accepted-value assembly release')
+    need(a.out==Path(plan['output_root'])and not os.path.lexists(a.out)and a.out.parent.resolve(strict=True)==a.out.parent,'fresh fixed DATA output')
+    packed=whole(plan['bank']);
+    with gzip.GzipFile(fileobj=io.BytesIO(packed),mode='rb')as stream:raw=stream.read(24*MIB+1)
+    need(len(raw)==plan['decoded_bank_bytes']<=24*MIB,'complete bounded historical value bank')
+    bank=strict(raw);need(bank['schema']=='L026_ACQUIRED_CLASSIFICATION_VALUE_BANK_V1'and bank['scope_digest']==SCOPE,'same original logical fact scope')
+    by={}
+    for e in bank['documents']:
+        r=e['ref'];b=base64.b64decode(e['raw_base64'],validate=True)
+        need(len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256']
+             and base64.b64encode(b).decode()==e['raw_base64']and r['path']not in by,'full exact old raw-body value and canonical encoding')
+        by[r['path']]=(r,b)
+    def get(r):need(r['path']in by and by[r['path']][0]==r,'complete immutable accepted value');return by[r['path']][1]
+    def doc(r):return strict(get(r))
+    adopt=doc(plan['stage_adoption']);stage=bank['stage']
+    need(adopt['root']=='/root'and adopt['adopted']is True and adopt['scope_digest']==SCOPE
+         and stage in('s3-minimum','partner-witness','partner-resolution','product-mass')
+         and adopt['stage']==stage and adopt['checked_results']==bank['checked_results'],'actual complete Root scientific adoption, not a producer result')
+    outputs={};selected=bytearray();cells=bytearray();cursor=0;selected_count=0;mass_total=0;fixed_total=0
+    if stage=='partner-witness':
+        canonical=get(bank['canonical_records']);need(adopt['canonical_records']==bank['canonical_records']
+             and len(canonical)%5==0 and len(canonical)//5==adopt['unordered_owners'],'complete adopted canonical record body')
+        targets=bytearray(b'\xff'*4*500178);masses=bytearray(2*500178)
+    for expected_part,rr in enumerate(bank['checked_results'],1):
+        result=doc(rr);subject=result['subject'];payload=get(result['certificate']);facts=doc(result['facts'])
+        need(result['root']=='/root'and result['mode']=='check'and result['part']==expected_part
+             and subject.get('original_B_scope')==SCOPE and subject['start']==cursor,
+             'exact whole independent checked part/source/original-scope interval')
+        stop=subject['stop'];need(type(stop)is int and stop>cursor,'whole positive gapless certified slice')
+        if stage=='partner-witness':
+            need(result['status']=='VERIFIED_WHOLE_SELECTED_ORIGINAL_PARTNER_WITNESSES'and len(payload)==16*(stop-cursor),
+                 'only already acquired actual original partner witnesses')
+            need(result['source']['operands']['roster']==bank['canonical_records'],'same whole canonical representative meaning as actual Source')
+            for at,i in enumerate(range(cursor,stop)):
+                owner,target,m,x,y,z=struct.unpack_from('<IIHHHH',payload,16*at)
+                root,size=struct.unpack_from('<IB',canonical,5*i)
+                need(owner==root and size in(3,6)and owner<500178 and target<500178 and 0<m<=1024,'whole certified witness/canonical-record identity')
+                struct.pack_into('<I',targets,4*owner,target);struct.pack_into('<H',masses,2*owner,m)
+            selected_count+=facts['unordered_owners'];mass_total+=facts['unordered_triangle_mass']
+        else:
+            need(result['status']=='VERIFIED_WHOLE_SELECTED_FINITE_QUOTIENT_ROWS'and result['stage']==stage,
+                 'only already acquired exact finite classification facts')
+            width=2 if stage=='product-mass'else 4
+            need(len(payload)==width*(stop-cursor),'complete typed cell interval')
+            cells.extend(payload);records=get(result['selected_records']);selected.extend(records)
+            selected_count+=facts['selected_representatives'];mass_total+=facts['selected_product_mass'];fixed_total+=facts['fixed_partner_components']
+        cursor=stop
+    if stage=='partner-witness':
+        need(cursor==adopt['unordered_owners']and selected_count==cursor and mass_total==72972900,'complete certified witness cover and unordered mass')
+        outputs=dict(partner_raw_u32=bytes(targets),unordered_mass_u16=bytes(masses))
+    else:
+        need(cursor==500178 and len(cells)==500178*(2 if stage=='product-mass'else 4),'whole original cell cover')
+        if stage=='product-mass':need(mass_total==36486450,'sum of already certified product masses')
+        outputs=dict(values=bytes(cells),selected_records=bytes(selected))
+    # This stage only copies/joins already certified values. It does not
+    # access the maps to recompute minima, resolve partners or classify orbits.
+    del raw,packed,bank,by
+    for r in list(SEEN.values()):whole(r)
+    need(all(len(b)<=2*MIB for b in outputs.values()),'each whole assembled binary stays below2MiB')
+    a.out.mkdir();refs={}
+    for name,b in outputs.items():
+        publish(a.out,name+'.bin',b,2*MIB);refs[name]=dict(path=str(a.out/(name+'.bin')),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+    result=dict(schema='ROOT_L026_CERTIFIED_VALUE_ASSEMBLY_RETURN_V1',status='ASSEMBLED_ALREADY_CERTIFIED_VALUES_ONLY',
+      root='/root',actor='/root',author='/root/prime_theory_audit',stage=stage,program=own,plan=pref,Root_review=gref,
+      stage_adoption=plan['stage_adoption'],outputs=refs,selected_representatives=selected_count,
+      certified_product_mass_sum=mass_total,certified_fixed_partner_components=fixed_total,
+      physical_bank=plan['bank'],historical_paths_physically_opened=False,
+      whole_inputs_before_after=list(SEEN.values()),physical_read_bytes=READ,new_scientific_classification_calls=0,
+      old_Source_verdict_transferred=False,new_Original_conjecture_Lean_or_measurement_credit=0)
+    scalar=can(result);need(len(scalar)<=16384,'whole DATA scalar16KiB');publish(a.out,'result.json',scalar,16384)
+    fd=os.open(a.out,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    print(json.dumps(dict(status=result['status'],stage=stage,outputs=refs)),flush=True)
+if __name__=='__main__':main()

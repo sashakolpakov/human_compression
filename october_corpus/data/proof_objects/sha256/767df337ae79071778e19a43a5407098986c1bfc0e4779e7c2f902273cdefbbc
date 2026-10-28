@@ -1,0 +1,111 @@
+"""UNRUN strict finite quotients of already acquired owner maps.
+Author /root/prime_theory_audit. Standard S3 presentation, canonical orbit
+minimum, equivariant two-fibre quotient and orbit-mass formulas are borrowed.
+No IO, original model, product search or general component search.
+"""
+import struct,sys
+
+N=500178
+MISSING=4294967295
+
+class View:
+    def __init__(self,raw,n,width,need,work,nullable=False):
+        need(type(raw)is bytes and type(n)is int and n>0 and width in(2,4)
+             and len(raw)==n*width and sys.byteorder=='little','whole explicit little-host typed owner-map field')
+        # Charge every imported byte although cast itself makes no full copy.
+        work.charge(len(raw),'entire_acquired_typed_map_bytes')
+        self.data=memoryview(raw).cast('H'if width==2 else'I')
+        need(self.data.readonly and self.data.itemsize==width and len(self.data)==n,'read-only native view, no rich integer list')
+        self.n,self.need,self.work,self.nullable=n,need,work,nullable
+    def get(self,i,allow_missing=False):
+        self.need(type(i)is int and 0<=i<self.n,'typed exact original owner index')
+        self.work.charge(4,'direct_readonly_owner_map_scalar')
+        v=self.data[i]
+        self.need((allow_missing and self.nullable and v==MISSING)or 0<=v<self.n,
+                  'typed actual owner target, no guessed sentinel');return v
+    def value(self,i,cap):
+        self.need(type(i)is int and 0<=i<self.n,'typed original mass index')
+        self.work.charge(4,'direct_readonly_mass_scalar');v=self.data[i]
+        self.need(0<=v<=cap,'whole bounded actual orbit mass');return v
+
+def interval(start,stop,n,limit,need,work):
+    work.charge(16,'whole_finite_classification_interval')
+    need(type(start)is type(stop)is int and 0<=start<stop<=n and stop-start<=limit,
+         'exact bounded classification slice')
+
+def s3_row(s,t,i,need,work):
+    # Right-action representatives 1,s,t,st,ts,sts. Relations are checked
+    # at every original i across the complete certified family.
+    a=s.get(i);b=t.get(i);ab=t.get(a);ba=s.get(b);aba=s.get(ab)
+    need(s.get(a)==i and t.get(b)==i and t.get(ba)==aba,
+         'both involutions and exact braid relation at this original owner')
+    work.charge(48,'six_exact_S3_images_and_canonical_minimum')
+    images=(i,a,b,ab,ba,aba);distinct=set(images)
+    need(len(distinct)in(3,6),'original2-group B permits only3- or6-owner unordered fibres')
+    return min(images),len(distinct)
+
+def resolve_row(minimum,partner_raw,i,need,work):
+    work.charge(48,'whole_unordered_partner_resolution')
+    m=minimum.get(i);need(minimum.get(m)==m,'accepted canonical minimum is idempotent')
+    raw=partner_raw.get(i,allow_missing=True)
+    if m!=i:
+        need(raw==MISSING,'no invented ordered partner lift outside unordered representatives')
+        return MISSING,0
+    need(raw!=MISSING,'every original unordered owner has a separately checked partner witness')
+    target=minimum.get(raw);need(minimum.get(target)==target,'actual target unordered owner')
+    back_raw=partner_raw.get(target,allow_missing=True)
+    need(back_raw!=MISSING and minimum.get(back_raw)==i,'whole induced partner involution')
+    return target,1 if target==i else 2
+
+def mass_row(partner,masses,i,need,work):
+    work.charge(48,'whole_partner_component_mass_formula')
+    target=partner.get(i,allow_missing=True);m=masses.value(i,1024)
+    if target==MISSING:
+        need(m==0,'noncanonical raw owners carry no duplicate unordered mass');return 0,0
+    need(partner.get(target,allow_missing=True)==i and m>0 and masses.value(target,1024)==m,
+         'same whole unordered B mass on both partner owners')
+    if i>target:return 0,0
+    size=1 if target==i else 2
+    need((size*m)%2==0,'exact product mass integrality, including fixed partner owners')
+    value=size*m//2;need(0<value<=1024,'actual product B orbit mass')
+    return value,size
+
+def prepare(raw_left,raw_right,stage,n,need,work):
+    need(stage in('s3-minimum','partner-resolution','product-mass'),'finite mathematical quotient stage')
+    left=View(raw_left,n,4,need,work,nullable=stage=='product-mass')
+    right=View(raw_right,n,2 if stage=='product-mass'else 4,need,work,nullable=stage=='partner-resolution')
+    return left,right
+
+def row(left,right,stage,i,need,work):
+    if stage=='s3-minimum':return s3_row(left,right,i,need,work)
+    if stage=='partner-resolution':return resolve_row(left,right,i,need,work)
+    return mass_row(left,right,i,need,work)
+
+def propose(left,right,stage,start,stop,need,work):
+    limit=32768 if stage=='product-mass'else 16384
+    interval(start,stop,left.n,limit,need,work);out=bytearray()
+    for i in range(start,stop):
+        work.proposal();v,unused=row(left,right,stage,i,need,work)
+        out.extend(struct.pack('<H'if stage=='product-mass'else'I',v));work.charge(4,'whole_proposed_quotient_cell')
+    return bytes(out)
+
+def verify(left,right,stage,start,stop,raw,need,work):
+    limit=32768 if stage=='product-mass'else 16384;width=2 if stage=='product-mass'else 4
+    interval(start,stop,left.n,limit,need,work)
+    need(type(raw)is bytes and len(raw)==width*(stop-start),'entire supplied typed quotient certificate')
+    data=memoryview(raw).cast('H'if width==2 else'I');need(data.readonly,'supplied immutable typed view')
+    selected=bytearray();count=0;total=0;fixed=0
+    for at,i in enumerate(range(start,stop)):
+        v,size=row(left,right,stage,i,need,work);work.charge(4,'whole_supplied_quotient_cell')
+        need(data[at]==v,'every exact supplied quotient value independently recomputed')
+        if stage=='s3-minimum'and v==i:
+            selected.extend(struct.pack('<IB',i,size));work.charge(5,'certified_unordered_representative_record');count+=1
+        elif stage=='partner-resolution'and v!=MISSING and i<=v:
+            selected.extend(struct.pack('<IB',i,size));work.charge(5,'certified_product_representative_record');count+=1;fixed+=int(size==1)
+        elif stage=='product-mass'and v:
+            selected.extend(struct.pack('<IH',i,v));work.charge(6,'certified_product_mass_record');count+=1;total+=v
+    facts=dict(start=start,stop=stop,rows=stop-start,selected_representatives=count,
+      selected_product_mass=total,fixed_partner_components=fixed,
+      global_cover_and_global_assembly_still_required=True,all_nonfree_branches_retained=True)
+    if stage=='s3-minimum':facts['global_relations_required_for_orbit_minimum_theorem']=True
+    work.charge(len(selected),'whole_certified_record_copy');return bytes(selected),facts

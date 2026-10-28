@@ -1,0 +1,136 @@
+"""Literal used finite primitives from the accepted Cp36 meter; no new algorithm.
+Extraction and new source identity: /root/compact_proof_author.
+"""
+from array import array
+
+import base64,binascii,hashlib,json,sys,time
+
+class WorkStop(RuntimeError):pass
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+class Meter:
+    def __init__(self,bounded,clock=time.monotonic,cap=10000000):
+        need(type(cap)is int and 0<cap<=10000000,'test may lower, never raise shared work cap')
+        self.bounded,self.clock,self.start=bounded,clock,clock();self.cap=cap
+        self.units,self.ledger,self.publication=0,{},None
+    def charge(self,n,bucket='structure'):
+        need(type(n)is int and n>=0,'strict nonnegative work')
+        if n>self.cap-self.units or self.clock()-self.start>=20:raise WorkStop('shared10M/20s exhausted')
+        self.units+=n;self.ledger[bucket]=self.ledger.get(bucket,0)+n;self.bounded()
+    def proposal(self):
+        self.charge(1,'proposal_step')
+        if self.units>=6000000 or self.clock()-self.start>=14:raise WorkStop('proposal6M/14s reserve')
+    def reserve_publication(self,certificate_bound):
+        need(type(certificate_bound)is int and 0<certificate_bound<=2**21,'whole bounded implicit certificate')
+        if self.publication is None:
+            self.charge(3*certificate_bound+16384,'publication_reserved')
+            self.publication=dict(bound=certificate_bound,certificate=3*certificate_bound,spent=0,scalar=16384)
+        elif certificate_bound>self.publication['bound']:
+            self.charge(3*(certificate_bound-self.publication['bound']),'publication_reserved_growth')
+            self.publication['certificate']+=3*(certificate_bound-self.publication['bound'])
+            self.publication['bound']=certificate_bound
+        self.charge(0)
+    def spend_certificate(self,n):
+        p=self.publication
+        need(p is not None and type(n)is int and n>=0 and n<=p['certificate']-p['spent'],'prepaid certificate encoding/write/hash only')
+        self.charge(0);p['spent']+=n
+    def final(self,n):
+        need(self.publication is not None and type(n)is int and 0<=n<=self.publication['scalar'],'bounded prepaid scalar/stdout')
+        self.charge(0)
+
+def index(value,size,why):
+    need(type(value)is int and 0<=value<size,why);return value
+
+def canonical(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+
+def json_bound(value,work):
+    """Exact canonical JSON ASCII byte bound, paid BEFORE later encoding.
+
+    This walks only finite JSON data, not a field/point/group operation. Each
+    node/character and bounded integer conversion is charged before the work.
+    """
+    def walk(v):
+        work.charge(1,'JSON_bound_node')
+        if v is None:return 4
+        if type(v)is bool:return 4 if v else 5
+        if type(v)is int:
+            need(-(2**63)<v<2**63,'bounded exact scientific/metadata integer')
+            work.charge(32,'JSON_bound_integer_conversion');return len(str(v))
+        if type(v)is str:
+            work.charge(len(v),'JSON_bound_string_characters');n=2
+            for ch in v:
+                x=ord(ch)
+                n+=2 if ch in('"','\\','\b','\f','\n','\r','\t')else 6 if x<32 or 127<=x<=65535 else 12 if x>65535 else 1
+            return n
+        if type(v)in(list,tuple):return 2+max(0,len(v)-1)+sum(walk(x)for x in v)
+        need(type(v)is dict,'JSON-only certificate node');work.charge(len(v),'JSON_bound_key_type_visits')
+        need(all(type(k)is str for k in v),'JSON-only certificate string keys')
+        return 2+max(0,len(v)-1)+sum(walk(k)+1+walk(x)for k,x in v.items())
+    return walk(value)+1
+
+def encoded(value,work):
+    bound=json_bound(value,work);work.charge(bound,'canonical_encode_bytes')
+    raw=canonical(value);need(len(raw)<=bound,'complete prepaid canonical ASCII bytes');return raw
+
+def record_equal(left,right,work):
+    """Typed direct record equality without two redundant full serializations."""
+    work.charge(1,'typed_record_node_compare')
+    if type(left)is not type(right):return False
+    if type(left)is dict:
+        work.charge(len(left)+len(right),'typed_record_key_visits')
+        if len(left)!=len(right):return False
+        for k,v in left.items():
+            need(type(k)is str,'record string key');work.charge(2*len(k),'typed_record_key_characters')
+            if k not in right or not record_equal(v,right[k],work):return False
+        return True
+    if type(left)in(list,tuple):
+        work.charge(len(left)+len(right),'typed_record_list_visits')
+        return len(left)==len(right)and all(record_equal(a,b,work)for a,b in zip(left,right))
+    if type(left)is str:work.charge(len(left)+len(right),'typed_record_string_compare')
+    need(type(left)in(str,int,bool,type(None)),'strict finite record scalar')
+    return left==right
+
+def parsed(raw,work,adopted=False):
+    need(type(raw)is bytes,'literal scientific bytes');work.charge(len(raw),'scientific_JSON_scan_bytes')
+    def pairs(items):
+        out={}
+        for key,value in items:
+            work.charge(1,'scientific_JSON_fields');need(key not in out,'duplicate scientific key');out[key]=value
+        return out
+    def bad(value):raise ValueError('no scientific float/nonfinite')
+    value=json.loads(raw,object_pairs_hook=pairs,parse_float=bad,parse_constant=bad)
+    if not adopted:
+        expected=encoded(value,work);work.charge(len(raw),'canonical_compare_bytes');need(expected==raw,'whole canonical scientific LF')
+    return value
+
+def unb64(text,size,work):
+    need(type(text)is str and len(text)==4*((size+2)//3),'entire compact vector base64 length')
+    work.charge(len(text),'base64_input_bytes')
+    try:raw=base64.b64decode(text,validate=True)
+    except(binascii.Error,ValueError)as exc:raise ValueError('strict base64')from exc
+    work.charge(len(raw),'base64_output_bytes');need(len(raw)==size,'whole decoded EOF')
+    work.charge(len(raw)+len(text),'base64_roundtrip_bytes');need(base64.b64encode(raw).decode('ascii')==text,'canonical base64 pad bits');return raw
+
+def vector(raw,n,work):
+    need(type(raw)is bytes and len(raw)==2*n and sys.byteorder=='little','same acquired original little-host native-u16 ABI')
+    work.charge(len(raw),'native_u16_decode_bytes');out=array('H');need(out.itemsize==2,'two-byte original vector');out.frombytes(raw)
+    seen=bytearray(n);work.charge(n,'bijection_seen_initialization')
+    for y in out:
+        work.charge(3,'bijection_entry');index(y,n,'strict original image');need(not seen[y],'bijection');seen[y]=1
+    return out
+
+def identity(n,work):
+    work.charge(n,'identity_initialization');return array('H',range(n))
+
+def compose(g,h,work):
+    need(len(g)==len(h),'same whole permutation degree');n=len(g)
+    work.charge(n,'product_initialization');out=array('H',[0])*n
+    for x in range(n):work.charge(3,'product_read_read_write');out[x]=h[g[x]]
+    return out
+
+def inverse(g,work):
+    n=len(g);work.charge(n,'inverse_initialization');out=array('H',[0])*n
+    for x,y in enumerate(g):work.charge(2,'inverse_read_write');out[y]=x
+    return out

@@ -1,0 +1,370 @@
+"""Root-owned q11 metadata selector, launcher and indexed-data binder; no enumeration."""
+from pathlib import Path
+import os
+ENVIRONMENT_UNSET=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+if any(name in os.environ for name in ENVIRONMENT_UNSET):
+ raise ValueError('clear the four declared startup environment keys before invoking Python')
+import argparse,hashlib,json,re,resource,sys,time
+
+S=Path('/Users/sasha/medusa/research/leemans')
+D=Path(__file__).resolve().parent
+AUTHOR='/root/c5_terminal_audit'
+START=time.monotonic()
+MIB=2**20
+LIMITS=dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,ram_floor=3*2**30,
+ total_rss=512*MIB,wall_seconds=150.0,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+
+def need(value,label):
+ if not value:raise ValueError(label)
+ if time.monotonic()-START>120 or resource.getrusage(resource.RUSAGE_SELF).ru_maxrss>128*MIB:
+  raise ValueError('metadata self bound120s/128MiB')
+
+def unique(pairs):
+ out={}
+ for key,value in pairs:need(key not in out,'duplicate JSON key');out[key]=value
+ return out
+
+def canonical(value):return json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
+
+def parse(raw):return json.loads(raw,object_pairs_hook=unique,parse_constant=lambda value:need(False,'nonfinite JSON'))
+
+def integer(value,low,high):return type(value)is int and low<=value<=high
+
+def shape(row):
+ need(type(row)is dict and set(row)=={'path','bytes','sha256'}and type(row['path'])is str
+  and Path(row['path']).is_absolute()and integer(row['bytes'],0,2*2**30)
+  and re.fullmatch('[0-9a-f]{64}',row['sha256']),'whole explicit file pin')
+ return row
+
+def pin(path):
+ path=Path(path);a=path.stat();need(path.is_file(),'ordinary input file')
+ h=hashlib.sha256()
+ with path.open('rb')as stream:
+  while True:
+   block=stream.read(262144)
+   if not block:break
+   h.update(block);need(True,'bounded streaming hash')
+ b=path.stat();need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns)==(b.st_dev,b.st_ino,b.st_size,b.st_mtime_ns),'stable whole input')
+ return dict(path=str(path),bytes=a.st_size,sha256=h.hexdigest())
+
+def document(row,cap=2*MIB):
+ shape(row);need(row['bytes']<=cap and pin(row['path'])==row,'whole bounded metadata')
+ return parse(Path(row['path']).read_bytes())
+
+def union(*groups):
+ by={}
+ for rows in groups:
+  for row in rows:
+   shape(row);need(by.get(row['path'],row)==row,'conflicting file version');by[row['path']]=row
+ return[by[path]for path in sorted(by)]
+
+def scope(rows):return dict(count=len(rows),bytes=sum(row['bytes']for row in rows),tuple_sha256=hashlib.sha256(canonical(rows)).hexdigest())
+
+def put(path,value,cap=2*MIB):
+ raw=canonical(value)+b'\n';need(len(raw)<=cap,'whole output cap, no clipping')
+ with Path(path).open('xb')as stream:need(stream.write(raw)==len(raw),'whole exclusive output')
+ return pin(path)
+
+def cli(args,name):
+ path=getattr(args,name.replace('-','_'));row=pin(path)
+ need(row['sha256']==getattr(args,name.replace('-','_')+'_sha256'),'explicit current '+name)
+ return row
+
+def source(args):
+ packet_ref=pin(D/'source_packet.json');packet=document(packet_ref)
+ peer_ref=cli(args,'source-review');ex_ref=cli(args,'source-execution')
+ peer,ex=document(peer_ref),document(ex_ref);program=pin(__file__)
+ need(packet['program']==peer['program']==ex['program']==program
+  and packet['programs']==peer['programs']==ex['programs']
+  and set(packet['programs'])=={'metadata','exporter','controls'}and packet['programs']['metadata']==program
+  and packet['source_author']==peer['source_author']==ex['source_author']==AUTHOR
+  and peer['source_packet']==ex['source_packet']==packet_ref and peer['reviewer']!=AUTHOR
+  and ex['actor']==peer['reviewer']and ex['review']==peer_ref and peer['blockers']==ex['blockers']==[]
+  and peer['status']=='PASS_DISTINCT_F004_Q11_GENERIC_PREFIX_EXPORT_SOURCE'
+  and ex['status']=='COMPLETED_GENUINE_DISTINCT_F004_Q11_GENERIC_PREFIX_EXPORT_SOURCE_REVIEW',
+  'genuine current distinct Source, no old rank4 PASS retarget')
+ late=pin(packet['mandatory_late_author_proof'])
+ need(peer['late_author_preparation']==ex['late_author_preparation']==late,'current mandatory late in both proofs')
+ actual=ex['actual_tool'];need(type(actual['exit_code'])is int and actual['exit_code']==0 and ex['full_tool_return']['chunk_id']==actual['terminal_chunk']
+  and ex['full_tool_return']['exit_code']==0,'genuine Source terminal raw')
+ roles=dict(program=program,source_packet=packet_ref,source_review=peer_ref,source_execution=ex_ref)
+ rows=union(packet['required_source_inputs'],list(roles.values()),[late,peer['checks'],peer['method'],ex['checks'],ex['method']])
+ need(len(rows)<=512 and scope(rows)['bytes']<=64*MIB,'whole current Source512/64MiB')
+ for row in rows:need(pin(row['path'])==row,'all current Source freshly hashed')
+ return packet,roles,rows
+
+def selected(plan,manifest,branches,pair):
+ need(type(branches)is list and 1<=len(branches)<=16 and all(integer(b,1,194)for b in branches)
+  and branches==sorted(set(branches))and integer(pair,1,2),'one sorted unique same-pair batch1..16')
+ records={row['original_prefix_index']:row for row in plan['prefix_records']}
+ result=[]
+ for branch in branches:
+  need(branch in records,'one of the170 declared remaining original prefixes')
+  row=records[branch];original=manifest['branches'][branch-1]
+  need(original['branch']==branch and original['pair']==pair==row['original_pair_index']
+   and canonical(original)==canonical(row['exact_manifest_row'])
+   and row['original_manifest_row_one_based']==branch,'exact global ordinal, never batch row number')
+  need(original['pair_record']==f'pair{pair:02d}.g'and original['third_record']==f'branch{branch:04d}.g',
+   'fixed original source basenames')
+  need(row['pair_literal_declared_ref']['sha256']==original['pair_sha256']
+   and row['third_literal_declared_ref']['sha256']==original['third_sha256'],'whole literal manifest pins')
+  jobs=row['original_jobs'];need(type(jobs)is list and jobs and all(type(j)is list and len(j)==2
+   and type(j[0])is type(j[1])is int and j[0]==branch and j[1]in(4,5)and j in plan['jobs']for j in jobs)
+   and len({tuple(j)for j in jobs})==len(jobs),'all separately ranked original jobs')
+  result.append(row)
+ return result
+
+def matrix(value):
+ need(type(value)is list and len(value)==7 and all(type(row)is list and len(row)==7
+  and all(integer(x,0,10)for x in row)for row in value),'whole canonical7x7 integer matrix')
+ return value
+
+def raw_batch(value,selector):
+ need(type(value)is dict and set(value)=={'schema','field','dimension','convention','selection','original_pair_index',
+  'model_A_equals_G_checked','known_membership_external','pair_matrices','records'}
+  and value['schema']=='F004_Q11_GENERIC_PREFIX_RAW_BATCH_V1'and type(value['field'])is int and value['field']==11
+  and type(value['dimension'])is int and value['dimension']==7 and value['convention']=='RIGHT_ROW'
+  and value['selection']==selector['self']and type(value['original_pair_index'])is int
+  and value['original_pair_index']==selector['original_pair_index']and value['model_A_equals_G_checked']is True
+  and value['known_membership_external']is True,'entire rank-neutral raw header')
+ pair=value['pair_matrices'];need(type(pair)is list and len(pair)==2,'two cached fixed-pair matrices')
+ for m in pair:matrix(m)
+ rows=value['records'];need(type(rows)is list and len(rows)==len(selector['prefix_records']),'whole selected count')
+ for row,expected in zip(rows,selector['prefix_records']):
+  need(type(row)is dict and set(row)=={'original_prefix_index','third_source','b_matrix'}
+   and type(row['original_prefix_index'])is int and row['original_prefix_index']==expected['original_prefix_index']
+   and canonical(row['third_source'])==canonical(expected['third_literal_declared_ref']),'entire ordered source-row join')
+  matrix(row['b_matrix'])
+ return pair,rows
+
+def premises(packet):
+ shared=document(packet['shared_premises']);plan=document(shared['selection_plan'])
+ manifest=document(shared['original_frontier_manifest'])
+ need(manifest['status']=='ALL_COMPLETE_PAIR_OUTPUTS_LOSSLESSLY_DECOMPOSED'and len(manifest['branches'])==194,
+  'closed complete194-row original split premise')
+ frame=document(shared['frame_gate']);need(frame['status']=='ROOT_ACCEPTED_Q11_FAITHFUL_MATRIX_FRAME'
+  and frame['reviewer']=='/root'and frame['model']==shared['model']and frame['table']==shared['frame_map']
+  and frame['result']==shared['frame_result']and frame['full_generator_point_checks']==354312,
+  'closed faithful frame/full generator join; no eight-line membership inference')
+ for row in shared['immediate_closed_proof_inputs']:document(row)
+ for item in shared['original_pair_origins']:
+  receipt=document(item['receipt']);need(receipt['status']=='PASSED'and receipt['returncode']==0
+   and receipt['inputs_unchanged']is receipt['complete_marker']is receipt['stderr_empty']is True
+   and item['historical_stdout']in receipt['outputs'],'both whole original pair frontier closed receipts')
+ need(shared['historical_payloads_replayed_or_freshened']is False and shared['rank4_operational_PASS_extended_to_rank5']is False,
+  'explicit changed historical scope, not old2724 all-fresh claim')
+ return shared,plan,manifest
+
+def gap_string(value):
+ need(type(value)is str and value.isascii()and '\n'not in value and '\r'not in value,'bounded ASCII GAP literal string')
+ return json.dumps(value)
+
+def generate_driver(selector,shared,exporter,raw_path):
+ header=dict(schema='F004_Q11_GENERIC_PREFIX_RAW_BATCH_V1',field=11,dimension=7,convention='RIGHT_ROW',
+  selection=selector['self'],original_pair_index=selector['original_pair_index'],model_A_equals_G_checked=True,known_membership_external=True)
+ rows=[]
+ for record in selector['prefix_records']:
+  prefix=dict(original_prefix_index=record['original_prefix_index'],third_source=record['third_literal_declared_ref'])
+  rows.append('rec(index:='+str(record['original_prefix_index'])+',third_file:='+gap_string(record['third_literal_declared_ref']['path'])+
+   ',header:='+gap_string(canonical(prefix).decode()[:-1])+')')
+ fields=dict(model=shared['model']['path'],inverse=shared['frame_inverse']['path'],frame_map=shared['frame_map']['path'],
+  pair_file=selector['prefix_records'][0]['pair_literal_declared_ref']['path'])
+ data=','.join(key+':='+gap_string(value)for key,value in fields.items())
+ data+=',pair_index:='+str(selector['original_pair_index'])+',rows:=['+','.join(rows)+'],header:='+gap_string(canonical(header).decode()[:-1])+',output:='+gap_string(str(raw_path))
+ return 'if ForAny(["F004PrefixBatchNeed","F004PrefixBatchIntegers","F004ExportPrefixBatch"],IsBoundGlobal)then Error("fresh owned exporter namespace");fi;\nRead('+gap_string(exporter['path'])+');;\nF004ExportPrefixBatch(rec('+data+'));;\nQUIT;\n'
+
+def selection(args,packet):
+ shared,plan,manifest=premises(packet)
+ rows=selected(plan,manifest,parse(args.branches),args.pair)
+ out=args.output;need(out.is_absolute()and not out.exists()and re.fullmatch('[a-z][a-z0-9_]{0,63}',out.name),'fresh named Root batch directory')
+ need(out.parent.resolve(strict=True)==out.parent,'existing canonical Root batch parent')
+ value=dict(schema='F004_Q11_GENERIC_PREFIX_SELECTION_V1',root='/root',original_pair_index=args.pair,
+  prefix_records=rows,pending=plan['pending'],pending_gate=plan['pending_gate'],original_manifest=plan['original_frontier_manifest'],
+  shared_premises=packet['shared_premises'],historical_ancestry_scope='CLOSED_SHARED_PROOF_BOUNDARIES_CURRENT_DIRECT_INPUTS',
+  maximum_prefixes=16,candidate_credit=0,whole_original_credit=0)
+ out.mkdir();selection_ref=put(out/'selection.json',value)
+ value['self']=selection_ref
+ driver=generate_driver(value,shared,packet['programs']['exporter'],out/'raw_coordinates.json')
+ need(len(driver.encode())<=128*1024,'whole driver128KiB')
+ with(out/'driver.g').open('x')as stream:stream.write(driver)
+ return value,pin(out/'driver.g')
+
+def acquire_selection(args,packet):
+ row=cli(args,'selection');value=document(row)
+ need(type(value)is dict and set(value)=={'schema','root','original_pair_index','prefix_records','pending','pending_gate',
+  'original_manifest','shared_premises','historical_ancestry_scope','maximum_prefixes','candidate_credit','whole_original_credit'}
+  and value['schema']=='F004_Q11_GENERIC_PREFIX_SELECTION_V1'and value['root']=='/root','whole selector grammar')
+ shared,plan,manifest=premises(packet)
+ expected=selected(plan,manifest,[r['original_prefix_index']for r in value['prefix_records']],value['original_pair_index'])
+ wanted=dict(schema='F004_Q11_GENERIC_PREFIX_SELECTION_V1',root='/root',original_pair_index=value['original_pair_index'],
+  prefix_records=expected,pending=plan['pending'],pending_gate=plan['pending_gate'],original_manifest=plan['original_frontier_manifest'],
+  shared_premises=packet['shared_premises'],historical_ancestry_scope='CLOSED_SHARED_PROOF_BOUNDARIES_CURRENT_DIRECT_INPUTS',
+  maximum_prefixes=16,candidate_credit=0,whole_original_credit=0)
+ need(canonical(wanted)==canonical(value),'entire canonical selector, no extra/missing/type-changed field')
+ value['self']=row;root=Path(row['path']).parent
+ driver=generate_driver(value,shared,packet['programs']['exporter'],root/'raw_coordinates.json')
+ driver_ref=pin(root/'driver.g');need(Path(driver_ref['path']).read_bytes()==driver.encode(),'whole exact generated driver')
+ return value,shared,driver_ref
+
+def current_inputs(packet,source_rows,selector,shared,driver):
+ runtime=document(packet['runtime_component'])[packet['runtime_field']]
+ need(runtime==union(runtime)and len(runtime)==packet['runtime_count'],'entire separately declared runtime domain')
+ direct=[shared[k]for k in('model','frame_inverse','frame_map')]+[selector['prefix_records'][0]['pair_literal_declared_ref']]
+ direct +=[r['third_literal_declared_ref']for r in selector['prefix_records']]
+ rows=union(source_rows,runtime,direct,shared['immediate_closed_proof_inputs'],[packet['shared_premises'],selector['self'],driver])
+ need(len(rows)<=3072 and scope(rows)['bytes']<=2*2**30,'unchanged full current3072/2GiB bound')
+ for row in rows:need(pin(row['path'])==row,'every current file fresh, historical payloads opaque borrowed')
+ return rows
+
+def gap_argv(packet,driver):
+ return[packet['gap'],'-q','-b','-T','-r','-A','-M','-E','-n','--bare','-l',packet['gap_roots'],
+  '-m','128m','-o','768m',driver['path']]
+
+def authenticate_statement(value,rows):
+ need(value['all_freshly_hashed']is True and value['changed_or_unreadable']==0
+  and value['checked']==len(rows)and value['bytes']==scope(rows)['bytes']
+  and value['tuple_sha256']==scope(rows)['tuple_sha256'],'whole Root authentication statement')
+
+def closed(args,roles,selector,driver,packet,required):
+ ref=cli(args,'closed-call');value=document(ref)
+ need(value['schema']=='ROOT_CLOSED_F004_Q11_GENERIC_PREFIX_EXPORT_V1'and value['root']=='/root'
+  and value['source']==roles and value['selection']==selector['self']and value['driver']==driver
+  and value['success']is value['known_scope_drained']is value['all_four_arrays_idle']is True
+  and value['whole_original_credit']==value['candidate_credit']==0,'current complete Root-closed native batch')
+ capture=document(value['capture']);actual=value['actual_tool']
+ need(type(actual)is dict and set(actual)=={'handle','initial_chunk','terminal_chunk','exit_code','synchronous'}
+  and type(actual['synchronous'])is bool and capture['actual_tool']==actual and type(actual['exit_code'])is int and actual['exit_code']==0
+  and capture['full_tool_return']['chunk_id']==actual['terminal_chunk']and capture['full_tool_return']['exit_code']==0,
+  'whole real current native tool capture')
+ initial=capture['full_initial_tool_return']
+ need(initial['chunk_id']==actual['initial_chunk']and((actual['synchronous']and actual['handle']is None
+  and initial==capture['full_tool_return'])or(not actual['synchronous']and type(actual['handle'])is int
+  and initial['session_id']==actual['handle']and initial.get('exit_code')is None)),'genuine complete initial handle/raw')
+ need(capture['inner_gap_argv']==gap_argv(packet,driver),'exact actual GAP command')
+ release_ref=value['release'];release=document(release_ref)
+ expected=[packet['python'],'-E','-B',packet['program']['path'],'launch','--source-review',roles['source_review']['path'],
+  '--source-review-sha256',roles['source_review']['sha256'],'--source-execution',roles['source_execution']['path'],
+  '--source-execution-sha256',roles['source_execution']['sha256'],'--selection',selector['self']['path'],
+  '--selection-sha256',selector['self']['sha256'],'--release',release_ref['path'],'--release-sha256',release_ref['sha256']]
+ need(capture['child_argv']==expected,'actual launcher Source/selection/release argv')
+ receipt=document(value['guard_receipt']);start=document(value['guard_started'])
+ need(capture['guard_receipt']==value['guard_receipt']and receipt['command']==start['command']==capture['child_argv']
+  and receipt['limits']==start['limits']==LIMITS and receipt['status']=='PASS'and receipt['stop']=='RETURNED'
+  and receipt['returncode']==0 and receipt['error']is None and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[],
+  'unchanged actual512/150 guard/child/start/cleanup')
+ guard=[packet['python'],'-E','-B',str(S/'maintenance/runtime/supervise_validation.py'),
+  '--volume',str(S),'--output',str(Path(value['guard_receipt']['path']).parent),'--rss-cap-mib','512','--timeout','150','--']+expected
+ prefix=['/usr/bin/env']
+ for name in ENVIRONMENT_UNSET:prefix+=['-u',name]
+ need(capture['issued_argv']in(guard,prefix+guard),
+  'exact external owned supervisor argv')
+ need(parse(capture['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=value['guard_receipt']['path']),
+  'real outer return is the exact guard summary')
+ need(receipt['seconds']<=150 and receipt['peaks']['total_rss']<=512*MIB
+  and receipt['peaks']['min_available_ram']>=3*2**30 and receipt['peaks']['min_free_disk']>=8*2**30
+  and receipt['admission']['available_ram']>=4*2**30 and receipt['admission']['free_disk']>=10*2**30,'actual unchanged resource floors')
+ before=document(value['source_before']);after=document(value['source_after'])
+ need(release['schema']=='ROOT_RELEASED_F004_Q11_GENERIC_PREFIX_EXPORT_V1'and release['root']=='/root'
+  and release['source']==roles and release['selection']==selector['self']and release['driver']==driver
+  and release['inner_gap_argv']==gap_argv(packet,driver)and release['limits']==LIMITS
+  and release['source_before']==value['source_before']and release['full_current_input_scope']==scope(required),
+  'same exact released current readset and shared proof boundary')
+ a,b=before['inputs'],after['inputs'];need(a==union(a)and b==union(b)and len(b)<=3072
+  and scope(b)['bytes']<=2*2**30,'whole sorted bounded before/after domains')
+ authenticate_statement(before['authentication'],a);authenticate_statement(after['authentication'],b)
+ by={r['path']:r for r in b};need(all(by.get(r['path'])==r for r in a),'entire before retained after')
+ by={r['path']:r for r in a};need(all(by.get(r['path'])==r for r in required),'entire current readset before native')
+ need(before['aliases']==after['aliases']and after['aliases']==value['aliases'],'exact retained Root runtime aliases')
+ for row in b:need(pin(row['path'])==row,'all complete current after leaves fresh')
+ raw_ref=pin(Path(selector['self']['path']).parent/'raw_coordinates.json')
+ need(value['raw_batch']==raw_ref and raw_ref in b and raw_ref['bytes']<=128*1024,'entire raw batch128KiB in after')
+ marker=f"COMPLETE_F004_Q11_GENERIC_PREFIX_EXPORT PAIR {selector['original_pair_index']} COUNT {len(selector['prefix_records'])}\n".encode()
+ need(pin(capture['child_stdout']['path'])==capture['child_stdout']and pin(capture['child_stderr']['path'])==capture['child_stderr'],
+  'whole real native log pins')
+ stdout=Path(capture['child_stdout']['path']).read_bytes();stderr=Path(capture['child_stderr']['path']).read_bytes()
+ need(stdout in(marker,b'\r'+marker)and stderr==b'','only full completion marker, optional initial CR, empty stderr')
+ clearance_ref=cli(args,'clearance');clearance=document(clearance_ref);need(clearance['terminal']==ref and clearance['known_scope_drained']is True
+  and clearance['all_four_arrays_idle']is True,'genuine separately closed Root scope, no current liveness probe')
+ return ref,value,raw_ref,clearance_ref
+
+def bind(args,packet,roles,source_rows):
+ selector,shared,driver=acquire_selection(args,packet)
+ required=current_inputs(packet,source_rows,selector,shared,driver)
+ terminal,closed_value,raw_ref,clearance_ref=closed(args,roles,selector,driver,packet,required)
+ raw=document(raw_ref,128*1024);pair,records=raw_batch(raw,selector)
+ out=args.output;need(out.is_absolute()and not out.exists(),'fresh exact binding directory');out.mkdir()
+ common=dict(schema='F004_Q11_GENERIC_PREFIX_COMPLETE_BINDING_V1',root='/root',selection=selector['self'],
+  original_manifest=selector['original_manifest'],raw_batch=raw_ref,source=roles,records=records,pair_matrices=pair,
+  root_terminal=terminal,root_clearance=clearance_ref,root_source_authentication=closed_value['source_after'],
+  shared_premises=packet['shared_premises'],closed_historical_ancestry_only=True,no_job_or_Original_credit=True)
+ binding=put(out/'batch_binding.json',common)
+ model_join=put(out/'model_source_join.json',dict(schema='ROOT_F004_Q11_GENERIC_PREFIX_MODEL_JOIN_V1',root='/root',
+  model=shared['model'],faithful_frame=shared['frame_gate'],frame_result=shared['frame_result'],
+  original_model_alias=shared['original_model_alias'],original_frontier_origins=shared['original_pair_origins'],
+  complete_manifest=shared['original_frontier_manifest'],batch_binding=binding,actual_raw_model_alias_checked=True,
+  complete_closed_shared_proofs_borrowed=True,historical_payloads_freshened=False,whole_original_credit=0))
+ exports=[]
+ for record,selected_row in zip(records,selector['prefix_records']):
+  for branch,rank in selected_row['original_jobs']:
+   origin=dict(literal_prefix=binding,native_source=packet['programs']['exporter'],root_terminal=terminal,
+    root_clearance=clearance_ref,binding_source=shared['label_binding_source'],prelift_map=shared['frame_inverse'],
+    root_source_authentication=closed_value['source_after'],original_prefix_index_proof=packet['index_proof'])
+   data=dict(schema='F004_Q11_INDEXED_ORIGINAL_PREFIX_MATRICES_V1',field=11,dimension=7,convention='RIGHT_ROW',
+    matrix_frame_result=shared['frame_result'],rank=rank,original_job=[branch,rank],original_prefix_index=branch,
+    selected_labels=[1,rank,2],end_order=[1,4,2,3]if rank==4 else[1,5,2,4,3],origin=origin,
+    external_premises=dict(root='/root',model_bridge_source=shared['model_bridge_source'],model_source_join=model_join,original_A_equals_G=True),
+    matrices=[pair[0],pair[1],record['b_matrix']],matrix_roles=['a','e','b'],candidate_credit=0,whole_original_credit=0)
+   exports.append(put(out/f'prefix_{branch:04d}_rank{rank}.json',data))
+ result=put(out/'result.json',dict(status='BOUND_COMPLETE_Q11_PREFIX_BATCH_UNADOPTED',batch_binding=binding,
+  selector=selector['self'],indexed_exports=exports,job_count=len(exports),prefix_count=len(records),
+  ledger_mutated=False,candidate_credit=0,whole_original_credit=0))
+ return dict(result=result,job_count=len(exports),native_or_enumeration_calls=0)
+
+def immediate_guard(release):
+ import psutil
+ parent=psutil.Process(os.getppid());birth=parent.create_time();cmd=parent.cmdline()
+ need(len(cmd)>=18 and cmd[1:7]==['-E','-B',str(S/'maintenance/runtime/supervise_validation.py'),'--volume',str(S),'--output']
+  and cmd[8:13]==['--rss-cap-mib','512','--timeout','150','--']
+  and cmd[13:]==[sys.executable,'-E','-B',str(Path(__file__).resolve()),*sys.argv[1:]],'actual immediate unchanged512/150 supervisor')
+ observation=Path(cmd[7]);started=document(pin(observation/'started.json'))
+ me=psutil.Process(os.getpid()).create_time()
+ need(started['command']==cmd[13:]and started['limits']==LIMITS and release['guard_observation']==str(observation)
+  and any(row['pid']==os.getpid()and row['birth']==me and row['group']==os.getpgrp()for row in started['identities'])
+  and parent.create_time()==birth,'actual owned start/birth/group and Root observation')
+
+def main():
+ ap=argparse.ArgumentParser(allow_abbrev=False)
+ ap.add_argument('phase',choices=('select','forecast','launch','bind'))
+ for name in('source-review','source-execution','selection','release','closed-call','clearance'):
+  ap.add_argument('--'+name,type=Path);ap.add_argument('--'+name+'-sha256')
+ ap.add_argument('--branches');ap.add_argument('--pair',type=int);ap.add_argument('--output',type=Path)
+ args=ap.parse_args();need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,'ordinary -E -B')
+ packet,roles,source_rows=source(args)
+ if args.phase=='select':
+  selector,driver=selection(args,packet)
+  print(canonical(dict(selection=selector['self'],driver=driver,native_calls=0,all_direct_body_hashes_fresh=False,
+   next_phase='forecast')).decode());return
+ if args.phase=='bind':print(canonical(bind(args,packet,roles,source_rows)).decode());return
+ selector,shared,driver=acquire_selection(args,packet)
+ rows=current_inputs(packet,source_rows,selector,shared,driver)
+ command=gap_argv(packet,driver)
+ if args.phase=='forecast':
+  output=canonical(dict(schema='F004_Q11_GENERIC_PREFIX_EXPORT_FORECAST_V1',source=roles,selection=selector['self'],
+   driver=driver,current_input_scope=scope(rows),all_current_inputs_freshly_hashed=True,
+   inherited_historical_payloads_freshened=False,inputs=rows,inner_gap_argv=command,limits=LIMITS,
+   native_calls=0,partial_completion_credit=False))
+  need(len(output)+1<=262144,'whole forecast must fit unchanged stdout log cap')
+  print(output.decode());return
+ release_ref=cli(args,'release');release=document(release_ref)
+ need(release['schema']=='ROOT_RELEASED_F004_Q11_GENERIC_PREFIX_EXPORT_V1'and release['root']=='/root'
+  and release['source']==roles and release['selection']==selector['self']and release['driver']==driver
+  and release['inner_gap_argv']==command and release['limits']==LIMITS
+  and release['full_current_input_scope']==scope(rows)and release['all_four_arrays_idle_before_registration']is True,
+  'explicit actual Root-only current release; no self-launch or cap lift')
+ before=document(release['source_before']);need(before['inputs']==rows,'exact whole current Root before')
+ authenticate_statement(before['authentication'],rows)
+ immediate_guard(release)
+ need(not(Path(selector['self']['path']).parent/'raw_coordinates.json').exists(),'fresh actual output')
+ os.execv(command[0],command)
+
+if __name__=='__main__':main()

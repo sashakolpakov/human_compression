@@ -1,0 +1,126 @@
+"""Root byte archive for a completed finite quotient stage. No science runs."""
+from pathlib import Path
+import argparse, base64, gzip, hashlib, json, os, resource, stat, sys, time
+
+START = time.monotonic()
+READ = Path(__file__).stat().st_size
+SEEN = {}
+MIB = 2**20
+D = Path(__file__).resolve().parent
+C = D.parent
+T = C.parent
+O = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients')
+
+def ref(p, raw):
+    return dict(path=str(p), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+def whole(p, expected=None):
+    global READ
+    assert time.monotonic() - START < 150
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss < 128 * MIB
+    p = Path(p)
+    a = p.lstat()
+    assert p.resolve(strict=True) == p and stat.S_ISREG(a.st_mode) and a.st_nlink == 1
+    assert a.st_size <= 16 * MIB and READ + a.st_size <= 64 * MIB
+    assert str(p) in SEEN or len(SEEN) < 512
+    raw = p.read_bytes()
+    b = p.lstat()
+    sig = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    assert sig(a) == sig(b) and len(raw) == a.st_size
+    r = ref(p, raw)
+    assert expected is None or r == expected
+    assert SEEN.get(str(p), r) == r
+    READ += len(raw)
+    SEEN[str(p)] = r
+    return r, raw
+
+def document(p):
+    return json.loads(whole(p)[1])
+
+def write(p, raw):
+    with p.open('xb') as f:
+        assert f.write(raw) == len(raw)
+        f.flush()
+        os.fsync(f.fileno())
+    return ref(p, raw)
+
+def canonical(v):
+    return (json.dumps(v, sort_keys=True, separators=(',', ':')) + '\n').encode()
+
+ap = argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--stage', choices=['partner-resolution', 'product-mass'], required=True)
+stage = ap.parse_args().stage
+stem = stage.replace('-', '_')
+ops = D / 'operations' / stem
+composed = document(ops / 'composed/composed.json')
+assert composed['stage'] == stage and composed['adopted'] is False
+paths = {p for p in D.iterdir() if p.is_file() and p.suffix in ('.py', '.json', '.rst', '.patch')}
+paths.update(p for p in ops.rglob('*') if p.is_file())
+for root in (D / 'guards' / stem, D / 'captures' / stem):
+    paths.update(p for p in root.rglob('*') if p.is_file())
+F = T / 'instances' / (stem + '_family')
+paths.update((F / 'plan.json', F / 'Root_review.json'))
+for p in (C / 'bindings').iterdir():
+    if p.is_file() and stem in p.name:
+        paths.add(p)
+for name in ('finite_worker.py', 'finite_quotients.py', 'assemble_values.py', 'argument.rst', 'cost_and_interfaces.rst', 'independent_review.json', 'generic_controls_actual.json', 'generic_controls_actual_capture.json'):
+    paths.add(C / name)
+assert len(paths) <= 256 and sum(p.stat().st_size for p in paths) <= 16 * MIB
+
+old = {}
+for p in (O / 'unordered_triangles/evidence/preservation.json', O / 'partner_witnesses/evidence/preservation.json'):
+    for row in document(p)['files']:
+        old[row['original']['path']] = row
+
+packed = {}
+for sref in composed['metadata_evidence_shards']:
+    shard = document(sref['path'])
+    r, raw = whole(shard['evidence']['path'], shard['evidence'])
+    bank = json.loads(gzip.decompress(raw))
+    for e in bank['documents']:
+        r = e['ref']
+        b = base64.b64decode(e['raw_base64'], validate=True)
+        assert len(b) == r['bytes'] and hashlib.sha256(b).hexdigest() == r['sha256']
+        assert packed.get(r['path'], r) == r
+        packed[r['path']] = r
+
+dest = O / stem / 'evidence'
+assert not dest.exists()
+dest.parent.mkdir(parents=True, exist_ok=True)
+dest.mkdir()
+(dest / 'objects').mkdir()
+rows = []
+objects = set()
+for p in sorted(paths):
+    r, raw = whole(p)
+    prior = old.get(str(p))
+    if prior is not None and prior['original'] == r:
+        retained = prior['retained']
+        whole(retained['path'], retained)
+    else:
+        q = dest / 'objects' / r['sha256']
+        if q not in objects:
+            write(q, raw)
+            objects.add(q)
+        retained = dict(r, path=str(q))
+        whole(q, retained)
+    rows.append(dict(original=r, retained=retained))
+for row in rows:
+    whole(row['original']['path'], row['original'])
+    whole(row['retained']['path'], row['retained'])
+manifest = dict(schema='ROOT_PRESERVED_L026_FINITE_QUOTIENT_PROOFS_V1', root='/root', stage=stage,
+    metadata_only=True, adopted=False, files=rows,
+    complete_actual_pairs=31 if stage == 'partner-resolution' else 16,
+    packed_original_identity_count=len(packed),
+    packed_whole_identity_sha256=hashlib.sha256(canonical([packed[p] for p in sorted(packed)])).hexdigest(),
+    qualification='Complete scientific outputs, commands and guard bodies are retained in the full evidence banks. This archive copies closed bytes only and reuses whole-identical older sources; it supplies no new mathematical or Root stage authority.')
+mr = write(dest / 'preservation.json', canonical(manifest))
+for p in (dest / 'objects', dest, dest.parent):
+    fd = os.open(p, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+print(json.dumps(dict(status='PRESERVED_CLOSED_FINITE_QUOTIENT_PROOFS', stage=stage, manifest=mr,
+    physical_rows=len(rows), new_objects=len(objects), packed_original_identity_count=len(packed),
+    physical_read_bytes=READ, input_paths=len(SEEN))))

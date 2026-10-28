@@ -1,0 +1,76 @@
+# Reviewer-owned stdlib audit of actual immutable metadata and certified bodies only.
+# This does not import or execute a represented utility, kernel, map or case.
+import pathlib,json,hashlib,collections
+T=pathlib.Path('/private/tmp/l026_triangle_quotients/classification/completion');A=pathlib.Path('/private/tmp/l026_triangle_quotients/instances/minimum_family')
+def rf(p):
+ raw=p.read_bytes();return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+seen={}
+def read(r):
+ raw=pathlib.Path(r['path']).read_bytes();assert len(raw)==r['bytes'] and hashlib.sha256(raw).hexdigest()==r['sha256'],r['path'];seen[r['path']]=r;return raw
+def doc(r):return json.loads(read(r))
+h=json.loads((T/'handoff.json').read_text())
+for r in h['roles'].values():read(r)
+pref=rf(A/'plan.json');gref=rf(A/'Root_review.json');plan=doc(pref);gate=doc(gref);source=h['roles']['complete_minimum.py'];worker=plan['program'];kernel=plan['kernel'];wholecode=[worker,kernel]
+for r in wholecode:read(r)
+theorem_ref=gate['input_theorem'];theorem=doc(theorem_ref)
+assert theorem['root']=='/root' and theorem['adopted'] is True and theorem['operand_roles']=={k:plan[k]for k in('left','right')} and theorem['mathematical_imports']==plan['mathematical_imports']
+assert gate['plan']==pref and gate['program']==worker and gate['authorized_parts']==list(range(1,32)) and gate['authorized_modes']==['produce','check'] and gate['status']=='SUPPORTED' and gate['blockers']==[]
+# Preserve/imports are metadata facts; map operands are not opened.
+for r in plan['mathematical_imports'].values():doc(r)
+parts=[];allpaths={};counts=collections.Counter();cursor=0;maxwork=0;maxread=0;guardfiles=0;empties=0;childmean=collections.Counter()
+for i,p in enumerate(plan['parts'],1):
+ assert p['index']==i and p['start']==cursor and p['stop']>cursor and p['stop']-cursor<=16384
+ rb={};rr={};by=[]
+ for mode in ('produce','check'):
+  root=A/'outputs'/f'part_{i:04d}_{mode}';assert sorted(q.name for q in root.iterdir())==['certificate.bin','facts.json','result.json','selected_records.bin']
+  refs={n:rf(root/n)for n in ('certificate.bin','facts.json','result.json','selected_records.bin')};data={n:read(r)for n,r in refs.items()};r=json.loads(data['result.json']);f=json.loads(data['facts.json']);rr[mode]=(refs,r);rb[mode]=data
+  roles={k:plan[k]for k in ('left','right','kernel','primitives')}
+  expectedsource=dict(schema='ROOT_DIRECT_L026_FINITE_QUOTIENT_SOURCE_V1',method=worker,plan=pref,current_Root_release=gref,stage='s3-minimum',inputs=roles)
+  expectedsubject=dict(schema='L026_FINITE_ORIGINAL_OWNER_QUOTIENT_SUBJECT_V1',stage='s3-minimum',part=i,start=p['start'],stop=p['stop'],original_B_scope=plan['scope_digest'],original_owner_count=500178,mathematical_imports=plan['mathematical_imports'],all_nonfree_branches_retained=True,qualified_H_equals_B_available=True,named_model_Reader_action_word_graph_global_class_and_two_fibre_premises_retained=True,no_ordered_partner_lift_claim=True,generation_and_endpoint_reversal_not_claimed=True)
+  assert r['schema']=='ROOT_L026_FINITE_QUOTIENT_RETURN_V1' and r['root']==r['actor']=='/root' and r['status']=='VERIFIED_WHOLE_SELECTED_FINITE_QUOTIENT_ROWS' and r['stage']=='s3-minimum' and r['mode']==mode and r['part']==i
+  assert r['source']==expectedsource and r['subject']==expectedsubject and r['program']==worker and r['plan']==pref and r['Root_review']==gref
+  assert r['certificate']==refs['certificate.bin'] and r['selected_records']==refs['selected_records.bin'] and r['facts']==refs['facts.json']
+  assert r['new_whole_Original_conjecture_Lean_or_measurement_credit']==0 and r['old_Source_verdict_transferred'] is False
+  assert len(data['certificate.bin'])==4*(p['stop']-p['start']) and len(data['selected_records.bin'])%5==0
+  assert f==dict(start=p['start'],stop=p['stop'],rows=p['stop']-p['start'],selected_representatives=len(data['selected_records.bin'])//5,selected_product_mass=0,fixed_partner_components=0,global_cover_and_global_assembly_still_required=True,all_nonfree_branches_retained=True,global_relations_required_for_orbit_minimum_theorem=True)
+  assert all(v in r['whole_inputs_before_after']for v in [pref,gref,worker]+list(roles.values()))
+  maxwork=max(maxwork,r['shared_units']);maxread=max(maxread,r['physical_read_bytes']);assert r['shared_units']<=10000000 and r['physical_read_bytes']<=8*2**20 and len(r['whole_inputs_before_after'])<=32
+  capref=rf(A/'captures'/f'part_{i:04d}_{mode}_actual_capture.json');cap=doc(capref);gdir=A/'guards'/f'part_{i:04d}_{mode}';names=[]
+  for q in sorted(gdir.iterdir()):
+   assert not q.is_symlink()
+   if q.is_dir():assert q.name=='tmp' and not list(q.iterdir());empties+=1
+   else:names.append(q.name);read(rf(q));guardfiles+=1
+  assert {'receipt.json','stdout.log','stderr.log'}<=set(names) and len(names)<=8
+  guard=doc(rf(gdir/'receipt.json'));so=json.loads(read(rf(gdir/'stdout.log')))
+  command=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',worker['path'],'--mode',mode,'--plan',pref['path'],pref['sha256'],'--root-review',gref['path'],gref['sha256'],'--part',str(i)]
+  if mode=='check':command+=['--supplied',rr['produce'][0]['certificate.bin']['path'],rr['produce'][0]['certificate.bin']['sha256']]
+  command+=['--out',str(root)]
+  issued=cap['issued_argv'];frames=cap['all_genuine_api_frames'];assert cap['root']=='/root' and cap['actual_tool']['exit_code']==0 and frames[-1]['exit_code']==0 and 'session_id'not in frames[-1]
+  assert cap['child_argv']in(issued,command) and issued[issued.index('--')+1:]==command==guard['command'];childmean['outer'if cap['child_argv']==issued else'worker']+=1
+  terminal=json.loads(''.join(f0['output']for f0 in frames));assert terminal==dict(status='PASS',stop='RETURNED',receipt=str(gdir/'receipt.json'))
+  assert guard['status']=='PASS' and guard['stop']=='RETURNED' and guard['returncode']==0 and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+  assert guard['limits']['total_rss']==512*2**20 and guard['limits']['wall_seconds']==150
+  assert guard['logs']['stdout']==(gdir/'stdout.log').stat().st_size and guard['logs']['stderr']==(gdir/'stderr.log').stat().st_size
+  assert so==dict(status='VERIFIED_WHOLE_SELECTED_FINITE_QUOTIENT_ROWS',stage='s3-minimum',part=i,mode=mode,result=str(root/'result.json'))
+  by.extend([refs[n]for n in refs]+[capref]+[rf(gdir/n)for n in names])
+ assert rr['produce'][1]['supplied'] is None and rr['check'][1]['supplied']==rr['produce'][0]['certificate.bin']
+ for n in ('certificate.bin','selected_records.bin','facts.json'):assert rb['produce'][n]==rb['check'][n]
+ records=rb['check']['selected_records.bin'];last=p['start']-1
+ for j in range(0,len(records),5):
+  owner=int.from_bytes(records[j:j+4],'little');size=records[j+4];assert last<owner<p['stop'] and owner>=p['start'] and size in(3,6);last=owner;counts[size]+=1
+ parts.append(dict(index=i,start=p['start'],stop=p['stop'],physical_refs=by));cursor=p['stop']
+assert cursor==500178 and 3*counts[3]+6*counts[6]==500178
+# Complete collection planner for exact future configuration: reserve the full131072 cap.
+# Its configuration is a genuine separate metadata input when Root binds it.
+common=[source,pref,gref,theorem_ref,worker,kernel]
+commonbytes=sum(r['bytes']for r in common)+131072;commonpaths=len(common)+1;groups=[];active={r['path']:r['bytes']for r in common};active['<actual_configuration_cap>']=131072;start=1
+for part in parts:
+ trial=dict(active);trial.update({r['path']:r['bytes']for r in part['physical_refs']})
+ fit=lambda rows:len(rows)<=512 and source['bytes']+2*sum(rows.values())<=64*2**20 and sum(rows.values())<=24*2**20
+ if not fit(trial):
+  assert part['index']>start;groups.append(dict(start_part=start,stop_part=part['index'],paths=len(active),full_upper=source['bytes']+2*sum(active.values())));start=part['index'];active={r['path']:r['bytes']for r in common};active['<actual_configuration_cap>']=131072;active.update({r['path']:r['bytes']for r in part['physical_refs']});assert fit(active)
+ else:active=trial
+ groups.append(None)if False else None
+if start<=31:groups.append(dict(start_part=start,stop_part=32,paths=len(active),full_upper=source['bytes']+2*sum(active.values())))
+report=dict(schema='INDEPENDENT_L026_MINIMUM_ACTUAL_METADATA_OBSERVATIONS_V1',reviewer='/root/middle_dictionary_author',family_plan=pref,scientific_Root_release=gref,input_theorem=theorem_ref,complete_pairs=31,complete_actual_invocations=62,whole_guard_files=guardfiles,known_empty_tmp_directories=empties,child_argv_meanings=dict(childmean),complete_original_owner_cover=500178,certified_size3_records=counts[3],certified_size6_records=counts[6],certified_selected_records=counts[3]+counts[6],certified_mass=3*counts[3]+6*counts[6],max_actual_shared_units=maxwork,max_actual_scientific_read_bytes=maxread,all_source_subject_command_return_and_producer_Saved_bytes_checked=True,metadata_planner_at_full_configuration_cap=groups,physical_whole_refs_checked=len(seen),physical_unique_bytes=sum(r['bytes']for r in seen.values()),scientific_map_or_minimum_evaluations=0,represented_Source_activations=0,S_writes=0,qualification='Own stdlib metadata/full certified-byte audit. Counts are sums of supplied certified size fields, not new minima or a Root stage adoption. No original map operand was opened.')
+p=T/'independent_actual_observations.json';assert not p.exists();p.write_text(json.dumps(report,sort_keys=True,indent=2)+'\n');print(json.dumps(ref if False else report,indent=2));print('REPORT',rf(p))

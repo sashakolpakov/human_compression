@@ -1,0 +1,46 @@
+"""Bounded DATA manifests and minimum binding from actual acquired outputs.
+No consolidation/scientific caller is activated and no authority is issued.
+Author /root/prime_theory_audit.
+"""
+import argparse,hashlib,json,os,resource,sys,time
+from pathlib import Path
+START=time.monotonic();TOTAL=Path(__file__).stat().st_size;SEEN={};CACHE={}
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+def need(ok,why):
+    if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>128*2**20 or time.monotonic()-START>=140:raise RuntimeError('128MiB/140s DATA bound')
+    if not ok:raise ValueError(why)
+def read(path,sha=None):
+    global TOTAL
+    p=Path(path);need(p.is_absolute()and p.resolve(strict=True)==p and p.is_file()and p.stat().st_nlink==1 and p.stat().st_size<=32768,'whole bounded ordinary DATA')
+    if str(p)in SEEN:
+        r=SEEN[str(p)];need(sha is None or r['sha256']==sha,'same actual descriptor');return r,json.loads(CACHE[str(p)])
+    need(TOTAL+p.stat().st_size<=8*2**20 and len(SEEN)<32,'8MiB/32-path initial DATA budget')
+    b=p.read_bytes();TOTAL+=len(b);r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());need(sha is None or r['sha256']==sha,'actual supplied DATA hash')
+    SEEN[str(p)]=r;CACHE[str(p)]=b;return r,json.loads(b)
+def main():
+    global TOTAL
+    ap=argparse.ArgumentParser(allow_abbrev=False);sub=ap.add_subparsers(dest='operation',required=True)
+    m=sub.add_parser('merge-manifest');m.add_argument('--facts',nargs='+',required=True);m.add_argument('--out',type=Path,required=True)
+    b=sub.add_parser('minimum-binding');b.add_argument('--theorem',nargs=2,required=True);b.add_argument('--out',type=Path,required=True)
+    a=ap.parse_args();need(a.out.is_absolute()and a.out.is_relative_to('/private/tmp')and not os.path.lexists(a.out)and a.out.parent.resolve(strict=True)==a.out.parent,'fresh normalized temporary DATA output')
+    if a.operation=='merge-manifest':
+        need(1<=len(a.facts)<=13 and len(set(a.facts))==len(a.facts),'bounded exact whole facts list');rows=[];cursor=None
+        for p in a.facts:
+            r,v=read(p);need(v['schema']=='L026_S3_DATA_CONSOLIDATION_RESULT_V1'and v['scope_digest']==SCOPE
+                and v['status']=='ASSEMBLED_ALREADY_CHECKED_BYTES_ONLY'and v['adopted']is False and v['operation']in('collect','merge'),'actual DATA join result only')
+            if cursor is not None:need(v['start']==cursor,'gapless supplied fragment order')
+            cursor=v['stop'];rows.append(r)
+        value=dict(schema='L026_S3_DATA_MERGE_INPUTS_V1',scope_digest=SCOPE,fragments=rows)
+    else:
+        r,v=read(*a.theorem)
+        need(v['root']=='/root'and v['adopted']is True and v['scope_digest']==SCOPE and v['consumer_stage']=='s3-minimum'
+             and set(v['operand_roles'])=={'left','right'}and all(v['operand_roles'][k]['bytes']==4*500178 for k in('left','right')),'actual exact Root input theorem and two complete arrays')
+        value=dict(schema='L026_ADOPTED_QUOTIENT_INPUT_BINDING_V1',stage='s3-minimum',scope_digest=SCOPE,
+          input_theorem=r,mathematical_imports=v['mathematical_imports'],left=v['operand_roles']['left'],right=v['operand_roles']['right'])
+    for p,r in SEEN.items():
+        need(TOTAL+r['bytes']<=8*2**20,'complete final DATA budget');b=Path(p).read_bytes();TOTAL+=len(b)
+        need(len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256'],'whole inputs unchanged')
+    raw=(json.dumps(value,sort_keys=True,separators=(',',':'))+'\n').encode();need(len(raw)<=16384,'small whole output')
+    with a.out.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())
+    print(json.dumps(dict(status='DATA_ONLY_NO_AUTHORITY',out=str(a.out),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),physical_read_bytes=TOTAL,paths=len(SEEN))))
+if __name__=='__main__':main()

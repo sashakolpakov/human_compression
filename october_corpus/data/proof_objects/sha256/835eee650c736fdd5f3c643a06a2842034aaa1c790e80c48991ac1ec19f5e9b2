@@ -1,0 +1,274 @@
+"""UNRUN original-action free carriers and S3 owner maps.
+Author /root/prime_theory_audit. Borrowed: original model/graph and acquired
+forests, standard Schreier words, equivariant transport and finite quotients.
+The caller must import exact Root-adopted operand and atlas theorems.
+No IO, group search, whole-product permutation, GAP or1024-map table.
+"""
+from array import array
+import struct
+
+N=3510
+EDGE_COUNT=4599
+OWNER_COUNT=500178
+GEO_MAGIC=b'L026GEO1'
+B_MAGIC=b'L026BOR1'
+ATLAS_MAGIC=b'L026ATL1'
+
+class Cursor:
+    def __init__(self,raw,need,work):self.raw,self.at,self.need,self.work=raw,0,need,work
+    def take(self,n):
+        self.need(type(n)is int and n>=0 and self.at+n<=len(self.raw),'complete bounded binary field')
+        self.work.charge(n,'binary_field_bytes');v=self.raw[self.at:self.at+n];self.at+=n;return v
+    def number(self,fmt):
+        size=struct.calcsize('<'+fmt);return struct.unpack('<'+fmt,self.take(size))[0]
+    def end(self):self.need(self.at==len(self.raw),'whole exact binary EOF')
+
+def inv(word):return[-x for x in reversed(word)]
+
+def signed(maps,work,K):return maps+[K['inverse'](g,work)for g in maps]
+
+def image(actions,word,point,need,work):
+    width=len(actions)//2
+    need(type(point)is int and 0<=point<len(actions[0]),'original point label')
+    for j in word:
+        need(type(j)is int and 1<=abs(j)<=width,'literal signed original leaf')
+        work.charge(2,'original_leaf_point_image');point=actions[j-1 if j>0 else width-j-1][point]
+    return point
+
+def tree(c,count,labelcap,need,work):
+    vertices=[];parents=[];labels=[];paths=[]
+    for i in range(count):
+        v=c.number('H');p=c.number('H');j=c.number('b');work.charge(4,'operand_tree_node')
+        need(0<=v<N and(i>0 or(p==65535 and j==0)),'typed original tree root')
+        if i:
+            need(0<=p<i and 1<=abs(j)<=labelcap,'strict earlier signed operand tree edge')
+            word=paths[p]+[j]
+        else:word=[]
+        vertices.append(v);parents.append(None if p==65535 else p);labels.append(j);paths.append(word)
+    need(len(set(vertices))==count,'distinct whole original tree vertices')
+    return dict(vertices=vertices,parents=parents,labels=labels,paths=paths,
+                positions={v:i for i,v in enumerate(vertices)})
+
+def geometry(K,raw,need,work):
+    c=Cursor(raw,need,work);need(c.take(8)==GEO_MAGIC,'exact geometry packet edition')
+    maps=[]
+    for unused in range(11):maps.append(K['vector'](c.take(7020),N,work))
+    ambient=signed(maps[:2],work,K);q=signed(maps[2:],work,K)
+    a=tree(c,N,2,need,work);t=tree(c,693,9,need,work)
+    targets=[]
+    for i in range(693):
+        row=[c.number('H')for j in range(9)];need(all(k<693 for k in row),'complete typed Q0 transition row');targets.append(row)
+    s=tree(c,180,5,need,work);pool=[];recipes=[]
+    for unused in range(5):
+        i,j,sign=c.number('H'),c.number('B'),c.number('b')
+        need(i<693 and j<9 and sign in(-1,1),'zero-based exact common pool recipe')
+        h=inv(t['paths'][55])+t['paths'][i];k=targets[i][j]
+        word=h+[j+1]+inv(inv(t['paths'][55])+t['paths'][k])
+        pool.append(word if sign==1 else inv(word));recipes.append([i,j,sign])
+    c.end()
+    need(a['vertices'][0]==2961 and t['vertices'][0]==s['vertices'][0]==2
+         and t['vertices'][55]==1683 and max(map(len,a['paths']))<=10
+         and max(map(len,t['paths']))<=4 and max(map(len,s['paths']))<=8,
+         'exact accepted roots, bases and acquired path bounds')
+    paths=[]
+    for word in s['paths']:
+        paths.append(sum((pool[j-1]if j>0 else inv(pool[-j-1])for j in word),[]))
+    need(max(map(len,paths))<=57,'literal expanded common-tree length bound')
+    work.charge(2*sum(map(len,paths)),'whole_literal_common_word_expansion')
+    return dict(ambient=ambient,q=q,A=a,Q=t,S=s,pool=pool,S_paths=paths,recipes=recipes)
+
+def b_operands(K,raw,geo,need,work):
+    c=Cursor(raw,need,work);need(c.take(8)==B_MAGIC,'exact B operand edition')
+    positive=[K['vector'](c.take(7020),N,work)for unused in range(16)]
+    actions=signed(positive,work,K);cases=[];point_index={};edge=0
+    for case_id in range(51):
+        k=c.number('H');need(k in(2,4,8,16,32,64,128,256),'actual accepted point-orbit size')
+        pt=tree(c,k,16,need,work);need(max(map(len,pt['paths']))<=3,'accepted B point-tree depth')
+        for i,p in enumerate(pt['vertices']):
+            need(p not in point_index,'complete B point partition has no overlap');point_index[p]=(case_id,i)
+        kind=c.number('B');ng=c.number('B');need(kind in(0,1),'raw or sparse neighbor-word family')
+        recipes=[]
+        for unused in range(ng):
+            u,j=c.number('H'),c.number('B');need(u<k and 1<=j<=16,'whole sparse Schreier recipe');recipes.append([u,j])
+        need((kind==0 and ng==0)or(kind==1 and 1<=ng<=3),'exact raw/sparse generator count')
+        count=c.number('H');need(1<=count<=693,'whole nonempty neighbour forest')
+        paths=[None]*693;owners=[None]*693;roots=[];sizes=[]
+        for j in range(count):
+            size=c.number('H');need(1<=size<=693,'bounded neighbour component')
+            vlist=[];local=[]
+            for i in range(size):
+                v,p,label=c.number('H'),c.number('H'),c.number('h')
+                work.charge(12,'whole_neighbor_operand_node_and_path')
+                need(v<693 and owners[v]is None,'whole unique neighbour ordinal')
+                if i==0:need(p==65535 and label==0,'empty neighbor root');word=[]
+                else:
+                    cap=16*k if kind==0 else ng
+                    need(p<i and 1<=abs(label)<=cap,'earlier signed neighbor edge');word=local[p]+[label]
+                local.append(word);vlist.append(v);paths[v]=word;owners[v]=j
+            need(max(map(len,local))<=(3 if kind==0 else 4),'accepted exact neighbour depth bound')
+            roots.append(vlist[0]);sizes.append(size)
+        need(all(v is not None for v in owners)and sum(sizes)==693,'complete693 ordinal partition')
+        x=pt['vertices'][0];aword=geo['A']['paths'][geo['A']['positions'][x]]
+        neighbors=[]
+        for p in geo['Q']['vertices']:neighbors.append(image(geo['ambient'],aword,p,need,work))
+        work.charge(8*693,'whole_original_neighborhood_index')
+        need(len(set(neighbors))==693 and x not in neighbors,'whole transported original neighbour convention')
+        cases.append(dict(index=case_id,point_tree=pt,kind=kind,recipes=recipes,paths=paths,
+          local_owner=owners,roots=roots,sizes=sizes,neighbors=neighbors,
+          positions={p:i for i,p in enumerate(neighbors)},edge_start=edge))
+        edge+=count
+    work.charge(4*N,'whole_original_B_point_partition_index')
+    c.end();need(len(point_index)==N and edge==EDGE_COUNT,'exact51/3510/4599 B cover')
+    return dict(n=N,B=actions,cases=cases,point_index=point_index,geo=geo)
+
+def raw_recipe(ctx,case,u,j,need,work):
+    pt=case['point_tree'];need(0<=u<len(pt['vertices'])and 1<=j<=16,'actual B Schreier recipe')
+    target=image(ctx['B'],[j],pt['vertices'][u],need,work)
+    need(target in pt['positions'],'accepted complete positive B point orbit')
+    v=pt['positions'][target];word=pt['paths'][u]+[j]+inv(pt['paths'][v])
+    need(len(word)<=7,'whole original B Schreier word bound');return word
+
+def neighbor_word(ctx,case,ordinal,need,work):
+    need(type(ordinal)is int and 0<=ordinal<len(case['paths']),'whole neighbour ordinal')
+    out=[]
+    for label in case['paths'][ordinal]:
+        if case['kind']==0:u,j=divmod(abs(label)-1,16);j+=1
+        else:u,j=case['recipes'][abs(label)-1]
+        word=raw_recipe(ctx,case,u,j,need,work)
+        out.extend(word if label>0 else inv(word))
+    need(len(out)<=28,'accepted short neighbour normalization word');return out
+
+def decode_block(raw,edge,need,work,n=N):
+    need(type(edge)is int and 0<=edge<EDGE_COUNT and len(raw)==8+EDGE_COUNT*451,
+         'exact complete atlas binary extent')
+    need(raw[:8]==ATLAS_MAGIC,'exact atlas edition')
+    work.charge(466+8*180,'whole_common_component_decode_index_sort')
+    start=8+edge*451;count=raw[start];need(1<=count<=180,'whole paid common component count')
+    data=raw[start+1:start+451];points=[];components=[]
+    for i in range(45):
+        value=int.from_bytes(data[10*i:10*i+10],'little');work.charge(14,'four_exact_20bit_common_entries')
+        for j in range(4):
+            entry=(value>>(20*j))&((1<<20)-1);p=entry&4095;k=entry>>12
+            need(p<n and k<count,'typed actual common point and component');points.append(p);components.append(k)
+    need(points==sorted(set(points))and len(points)==180,'whole sorted distinct original common set')
+    roots=[None]*count;sizes=[0]*count
+    for p,k in zip(points,components):
+        if roots[k]is None:roots[k]=p
+        sizes[k]+=1
+    need(all(r is not None for r in roots)and roots==sorted(roots),'gapless canonical least common roots')
+    return points,components,roots,sizes
+
+def atlas(ctx,raw,need,work):
+    need(len(raw)==8+EDGE_COUNT*451 and raw[:8]==ATLAS_MAGIC,'complete current adopted atlas')
+    work.charge(12*EDGE_COUNT,'whole_current_atlas_owner_prefix_cover')
+    starts=[];edges=[];total=0;mass=0
+    for case in ctx['cases']:
+        for j,(r,size)in enumerate(zip(case['roots'],case['sizes'])):
+            edge=case['edge_start']+j;count=raw[8+edge*451]
+            need(1<=count<=180,'every original edge has an adopted paid component block')
+            starts.append(total);total+=count;w=len(case['point_tree']['vertices'])*size
+            need(1024%w==0,'same concrete B edge mass')
+            edges.append((case['index'],j,w));mass+=w*180
+    need(total==OWNER_COUNT and mass==437837400,'full500178-owner atlas and exact ordered mass')
+    ctx.update(atlas=raw,owner_starts=starts,edges=edges,representative_block=None)
+
+def block(ctx,edge,need,work):
+    # Sequential source owners share one block. Arbitrary target lookups below
+    # do not evict it and do not repeatedly decode or sort whole180-sets.
+    saved=ctx['representative_block']
+    if saved is None or saved[0]!=edge:
+        saved=(edge,decode_block(ctx['atlas'],edge,need,work,ctx['n']));ctx['representative_block']=saved
+    return saved[1]
+
+def lookup_component(ctx,edge,point,need,work):
+    raw=ctx['atlas'];start=8+edge*451;count=raw[start]
+    need(0<=edge<EDGE_COUNT and 1<=count<=180,'current fully adopted target edge block')
+    def entry(i):
+        work.charge(18,'direct_typed_20bit_lookup')
+        at=start+1+10*(i//4);v=int.from_bytes(raw[at:at+10],'little')
+        v=(v>>(20*(i%4)))&((1<<20)-1);p,k=v&4095,v>>12
+        need(p<ctx['n']and k<count,'typed actual original indexed operand');return p,k
+    lo,hi=0,180
+    while lo<hi:
+        mid=(lo+hi)//2;p,k=entry(mid)
+        if p<point:lo=mid+1
+        else:hi=mid
+    need(lo<180,'actual normalized third point lies in the adopted full common set')
+    p,k=entry(lo);need(p==point,'exact original point membership, not a hash owner');return k
+
+def representative(ctx,owner,need,work):
+    import bisect
+    need(type(owner)is int and 0<=owner<OWNER_COUNT,'typed current ordered B owner')
+    work.charge(16,'owner_prefix_binary_search');edge=bisect.bisect_right(ctx['owner_starts'],owner)-1
+    i,j,w=ctx['edges'][edge];case=ctx['cases'][i];roots=block(ctx,edge,need,work)[2]
+    k=owner-ctx['owner_starts'][edge];need(0<=k<len(roots),'exact ordered common component')
+    return(case['point_tree']['vertices'][0],case['neighbors'][case['roots'][j]],roots[k]),w*block(ctx,edge,need,work)[3][k]
+
+def canonical_owner(ctx,tri,need,work):
+    work.charge(48,'two_stage_owner_structure')
+    need(type(tri)in(list,tuple)and len(tri)==3 and len(set(tri))==3
+         and all(type(p)is int and 0<=p<ctx['n']for p in tri),'three distinct original vertices')
+    i,u=ctx['point_index'][tri[0]];case=ctx['cases'][i];pt=case['point_tree']
+    t=inv(pt['paths'][u]);v=[image(ctx['B'],t,p,need,work)for p in tri]
+    need(v[0]==pt['vertices'][0]and v[1]in case['positions'],'actual first B normalization and adjacency')
+    ordinal=case['positions'][v[1]];j=case['local_owner'][ordinal]
+    q=inv(neighbor_word(ctx,case,ordinal,need,work));work.charge(3*len(q),'whole_literal_neighbor_normalization_word')
+    y=image(ctx['B'],q,v[1],need,work);z=image(ctx['B'],q,v[2],need,work)
+    need(y==case['neighbors'][case['roots'][j]],'actual second B normalization')
+    edge=case['edge_start']+j
+    return ctx['owner_starts'][edge]+lookup_component(ctx,edge,z,need,work)
+
+def s3_interval(ctx,start,stop,need,work):
+    import bisect
+    need(type(start)is type(stop)is int and 0<=start<stop<=OWNER_COUNT and stop-start<=4096,'finite raw owner interval')
+    first=bisect.bisect_right(ctx['owner_starts'],start)-1
+    last=bisect.bisect_right(ctx['owner_starts'],stop-1)-1
+    work.charge(32,'whole_interval_edge_extent')
+    need(last-first+1<=32,'at most32 representative common blocks in a shared S3 call')
+
+def free_domain(geo,row,need,work):
+    # row=[global_edge_id,point_orbit,local_orbit,x,neighbor_ordinal,edge_mass].
+    need(type(row)is list and len(row)==6 and all(type(x)is int for x in row)
+         and 0<=row[0]<EDGE_COUNT and 0<=row[1]<51 and 0<=row[2]<693
+         and 0<=row[3]<N and 0<=row[4]<693 and row[5]==1024,'whole exact selected free edge row')
+    work.charge(96,'whole_free_row_structure_and_words')
+    x=row[3];i=row[4];a=geo['A']['paths'][geo['A']['positions'][x]]
+    h=inv(geo['Q']['paths'][55])+geo['Q']['paths'][i]
+    need(len(h)<=6 and len(a)<=10,'actual short geometric edge transport')
+    def apply(p):return image(geo['ambient'],a,image(geo['q'],h,p,need,work),need,work)
+    y=image(geo['ambient'],a,geo['Q']['vertices'][i],need,work)
+    need(apply(2961)==x and apply(1683)==y,'both actual original edge placement images')
+    out=sorted(apply(p)for p in geo['S']['vertices']);work.charge(8*180,'whole_common_transport_distinct_sort')
+    need(len(set(out))==180 and x not in out and y not in out,'complete bijective180 carrier')
+    return x,y,out
+
+def free_expected(geo,rows,need,work):
+    need(type(rows)is list and 1<=len(rows)<=128,'finite shared free-carrier slice')
+    out=array('H');facts=[]
+    for row in rows:
+        x,y,points=free_domain(geo,row,need,work);out.extend(points)
+        facts.append([row[0],x,y,180,1024])
+    if __import__('sys').byteorder!='little':out.byteswap()
+    work.charge(2*len(out),'whole_free_u16_copy');return out.tobytes(),facts
+
+def propose_s3(ctx,start,stop,need,work):
+    s3_interval(ctx,start,stop,need,work)
+    out=bytearray()
+    for owner in range(start,stop):
+        work.proposal();tri,mass=representative(ctx,owner,need,work)
+        a=canonical_owner(ctx,(tri[1],tri[0],tri[2]),need,work)
+        b=canonical_owner(ctx,(tri[0],tri[2],tri[1]),need,work)
+        out.extend(struct.pack('<II',a,b));work.charge(8,'proposed_complete_swap_row')
+    return bytes(out)
+
+def verify_s3(ctx,start,stop,raw,need,work):
+    s3_interval(ctx,start,stop,need,work)
+    need(type(raw)is bytes and len(raw)==8*(stop-start),'whole strict supplied S3 interval')
+    for pos,owner in enumerate(range(start,stop)):
+        a,b=struct.unpack_from('<II',raw,8*pos);work.charge(8,'supplied_complete_swap_row')
+        tri,mass=representative(ctx,owner,need,work)
+        need(a==canonical_owner(ctx,(tri[1],tri[0],tri[2]),need,work)
+             and b==canonical_owner(ctx,(tri[0],tri[2],tri[1]),need,work),
+             'both exact induced adjacent coordinate transpositions')
+    return dict(start=start,stop=stop,owners=stop-start,swaps=2*(stop-start),
+      all_nonfree_branches_retained=True,quotient_assembly_not_yet_claimed=True)

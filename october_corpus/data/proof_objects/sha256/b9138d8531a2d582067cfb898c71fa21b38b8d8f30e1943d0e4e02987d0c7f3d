@@ -1,0 +1,89 @@
+"""UNRUN generic S3, partner-involution, mass and transport controls.
+All permutations here are artificial fixtures. No corpus/model input is read.
+Author /root/prime_theory_audit.
+"""
+import argparse,hashlib,itertools,json,os,resource,struct,sys,time
+from pathlib import Path
+START=time.monotonic()
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    for k in('kernel','partner','geometry-core','primitives'):ap.add_argument('--'+k,nargs=2,required=True)
+    ap.add_argument('--out',type=Path,required=True);a=ap.parse_args();seen=[]
+    def need(ok,why):
+        if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>128*2**20 or time.monotonic()-START>=140:raise RuntimeError('128MiB/140s finite synthetic controls')
+        if not ok:raise ValueError(why)
+    need(sys.executable=='/Users/sasha/.venvs/global/bin/python'and sys.flags.ignore_environment and sys.flags.no_site
+         and sys.dont_write_bytecode and not sys.flags.optimize and sys.byteorder=='little'
+         and all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same cleared E-B-S synthetic interpreter')
+    def load(pair):
+        p=Path(pair[0]);raw=p.read_bytes();need(len(raw)<=50000 and hashlib.sha256(raw).hexdigest()==pair[1],'whole bounded exact control Source')
+        seen.append((p,len(raw),pair[1]));env={'__file__':str(p),'__name__':'only_synthetic_without_Main'};exec(compile(raw,str(p),'exec'),env);return env
+    K=load(a.primitives);Q=load(a.kernel);P=load(a.partner);G=load(a.geometry_core);work=K['Meter'](lambda:need(True,'bounded'));out=[]
+    def reject(name,f):
+        try:f()
+        except(ValueError,IndexError,KeyError,struct.error):out.append(dict(name=name,status='EXPECTED_REJECTION'));return
+        raise ValueError('negative control accepted: '+name)
+    def u32(xs):return struct.pack('<'+'I'*len(xs),*xs)
+    def u16(xs):return struct.pack('<'+'H'*len(xs),*xs)
+    def prepared(a,b,stage):return Q['prepare'](a,b,stage,len(a)//4,need,work)
+    tuples=list(itertools.permutations(range(3)));position={x:i for i,x in enumerate(tuples)}
+    s=[position[(x[1],x[0],x[2])]for x in tuples];t=[position[(x[0],x[2],x[1])]for x in tuples]
+    left,right=prepared(u32(s),u32(t),'s3-minimum')
+    need(left.data.readonly and left.data.obj is not None,'real read-only cast')
+    raw=u32([0]*6);selected,facts=Q['verify'](left,right,'s3-minimum',0,6,raw,need,work)
+    need(selected==struct.pack('<IB',0,6)and facts['selected_representatives']==1,'six-image S3 canonical minimum')
+    out.append(dict(name='regular_S3_six_owner_fibre',status='PASS'))
+    left3,right3=prepared(u32([1,0,2]),u32([0,2,1]),'s3-minimum')
+    selected,unused=Q['verify'](left3,right3,'s3-minimum',0,3,u32([0,0,0]),need,work)
+    need(selected==struct.pack('<IB',0,3),'nonfree three-owner fibre is retained');out.append(dict(name='three_owner_fibre',status='PASS'))
+    reject('wrong_supplied_minimum',lambda:Q['verify'](left,right,'s3-minimum',0,6,u32([1]*6),need,work))
+    bads,badt=prepared(u32([1,0,2,3]),u32([0,1,3,2]),'s3-minimum')
+    reject('failed_braid',lambda:Q['s3_row'](bads,badt,0,need,work))
+    bads,badt=prepared(u32([1,2,0]),u32([0,2,1]),'s3-minimum')
+    reject('failed_involution',lambda:Q['s3_row'](bads,badt,0,need,work))
+    missing=Q['MISSING'];minimum=u32([0,0,2,2]);tau=u32([2,missing,0,missing])
+    lm,rt=prepared(minimum,tau,'partner-resolution')
+    selected,facts=Q['verify'](lm,rt,'partner-resolution',0,4,tau,need,work)
+    need(selected==struct.pack('<IB',0,2)and facts['selected_representatives']==1,'exchanged unordered partners')
+    out.append(dict(name='unordered_partner_exchange',status='PASS'))
+    bm,bt=prepared(minimum,u32([2,0,0,missing]),'partner-resolution')
+    reject('invented_ordered_partner_lift',lambda:Q['resolve_row'](bm,bt,1,need,work))
+    lp,rp=prepared(tau,u16([8,0,8,0]),'product-mass')
+    selected,facts=Q['verify'](lp,rp,'product-mass',0,4,u16([8,0,0,0]),need,work)
+    need(facts['selected_product_mass']==8 and selected==struct.pack('<IH',0,8),'exchanged partner product mass')
+    out.append(dict(name='exchanged_partner_mass',status='PASS'))
+    lf,rf=prepared(u32([0]),u16([8]),'product-mass')
+    need(Q['mass_row'](lf,rf,0,need,work)==(4,1),'fixed unordered partner gives half mass')
+    out.append(dict(name='fixed_partner_half_mass',status='PASS'))
+    lo,ro=prepared(u32([0]),u16([1]),'product-mass')
+    reject('odd_fixed_partner_mass',lambda:Q['mass_row'](lo,ro,0,need,work))
+    badm,badv=prepared(tau,u16([8,0,4,0]),'product-mass')
+    reject('different_partner_orbit_masses',lambda:Q['mass_row'](badm,badv,0,need,work))
+    reject('mutable_input_map',lambda:Q['View'](bytearray(u32(s)),6,4,need,work))
+    reject('truncated_full_map',lambda:Q['View'](u32(s)[:-1],6,4,need,work))
+    bad=Q['View'](u32([6]*6),6,4,need,work)
+    reject('out_of_range_owner',lambda:bad.get(0))
+    # Artificial degree3510 maps exercise noncommuting right-product order
+    # despite the helper's fixed original template labels. They are not any
+    # acquired original group element and confer no model/case credit.
+    identity=list(range(3510));a0=identity.copy();q0=identity.copy()
+    for x,y in((2961,0),(1683,1),(2,3),(4,5)):a0[x],a0[y]=a0[y],a0[x]
+    q0[2],q0[4]=4,2
+    geo=dict(ambient=[a0,a0],q=[q0,q0],A=dict(positions={0:0},paths=[[1]]),
+      Q=dict(positions={1683:55},paths=[[]for i in range(56)]),S=dict(positions={2:0,4:1}),S_paths=[[],[1]])
+    g=P['transport'](G,geo,(0,1,5),need,work)
+    need(g==([1],[1])and P['apply'](G,geo,g,2,need,work)==5
+         and P['apply'](G,geo,g,5,need,work,inverse=True)==2,'right q-then-a transport and reverse inverse')
+    need(a0[q0[2]]!=q0[a0[2]],'fixture is actually noncommuting')
+    out.append(dict(name='three_leg_right_order_and_inverse',status='PASS'))
+    reject('wrong_triangle_placement',lambda:P['transport'](G,geo,(0,1,6),need,work))
+    for p,size,sha in seen:
+        raw=p.read_bytes();need(len(raw)==size and hashlib.sha256(raw).hexdigest()==sha,'all whole control Sources unchanged')
+    result=dict(schema='L026_FINITE_QUOTIENT_GENERIC_CONTROLS_V1',status='PASS',controls=out,shared_units=work.units,
+      sources=dict(kernel=a.kernel,partner=a.partner,geometry_core=a.geometry_core,primitives=a.primitives),
+      original_scientific_cases=0,new_Original_or_census_credit=0)
+    raw=(json.dumps(result,sort_keys=True,separators=(',',':'))+'\n').encode();need(len(raw)<=16384 and not a.out.exists(),'fresh bounded generic-control output')
+    with a.out.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())
+    print(json.dumps(dict(status='PASS',controls=len(out),out=str(a.out))))
+if __name__=='__main__':main()

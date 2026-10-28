@@ -1,0 +1,445 @@
+"""UNRUN exact typed adoption of already checked proper37 applications.
+New metadata code by /root/compact_proof_author. Original proof/Source/capture
+bodies are read as historical DATA from actual whole-identical S copies.
+No matrix, word, state, case, control or scientific Source is activated.
+Separate exact Root publication authority is mandatory.
+"""
+import argparse,hashlib,json,math,os,resource,stat,sys,time,zlib
+from pathlib import Path
+START=time.monotonic()
+S=Path('/Users/sasha/medusa/research/leemans')
+PY='/Users/sasha/.venvs/global/bin/python'
+CHECKER=dict(path='/private/tmp/q11_rank4_section37_untried_direct_check/verify.py',bytes=43970,
+ sha256='9c643a3429c364d696bc9b5d0988f3d8dc13df9b5cba10383bad5468ebf340fe')
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def canonical(value):
+    return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+
+def digest(value):return hashlib.sha256(canonical(value)).hexdigest()
+
+def decode(raw):
+    def pairs(items):
+        result={}
+        for key,value in items:need(key not in result,'unique JSON keys');result[key]=value
+        return result
+    def floating(text):
+        value=float(text);need(math.isfinite(value),'finite old observations');return value
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,
+        parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def reference(path,raw):
+    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+class Metadata:
+    def __init__(self):self.refs={};self.raw={};self.bytes=0
+    def whole(self,ref,fresh=False):
+        need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int
+             and 0<=ref['bytes']<=2**21 and type(ref['sha256'])is str and len(ref['sha256'])==64
+             and set(ref['sha256'])<=set('0123456789abcdef'),'complete bounded metadata reference')
+        need(self.refs.get(ref['path'],ref)==ref,'one complete version per physical path')
+        if not fresh and ref['path']in self.raw:return self.raw[ref['path']]
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+        need(rss<256*2**20 and time.monotonic()-START<125,'256MiB/125s metadata envelope')
+        need(self.bytes+ref['bytes']<=64*2**20 and(len(self.refs)<512 or ref['path']in self.refs),
+             '64MiB/512-path actual metadata read bound')
+        path=Path(ref['path']);a=path.lstat()
+        need(path.is_absolute()and path.resolve(strict=True)==path and stat.S_ISREG(a.st_mode)
+             and a.st_nlink==1 and a.st_size==ref['bytes'],'canonical ordinary exact input')
+        with path.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(sig(a)==sig(b)==sig(c)==sig(path.lstat())and reference(path,raw)==ref,'stable whole input bytes')
+        self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.bytes+=len(raw);return raw
+    def document(self,ref):return decode(self.whole(ref))
+    def pin(self,path,sha=None):
+        path=Path(path);size=path.stat().st_size;need(size<=2**21,'bounded actual file')
+        if sha is None:
+            if str(path)in self.refs:
+                self.whole(self.refs[str(path)]);return self.refs[str(path)]
+            a=path.lstat();need(path.is_absolute()and path.resolve(strict=True)==path
+                and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'ordinary actual file before hashing')
+            need(self.bytes+size+1<=64*2**20 and len(self.refs)<512,'prepaid bounded actual file hash')
+            rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+            need(rss<256*2**20 and time.monotonic()-START<125,'metadata resource guard before unknown hash')
+            with path.open('rb')as f:
+                opened=os.fstat(f.fileno());raw=f.read(size+1);closed=os.fstat(f.fileno())
+            sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+            need(sig(a)==sig(opened)==sig(closed)==sig(path.lstat())and len(raw)==size,'whole stable bounded actual file')
+            ref=reference(path,raw);self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.bytes+=len(raw)
+            return ref
+        ref=dict(path=str(path),bytes=size,sha256=sha);self.whole(ref);return ref
+    def final(self):
+        for ref in list(self.refs.values()):self.whole(ref,True)
+
+def expand(runs,maximum):
+    out=[];last=0
+    need(type(runs)is list,'complete original position runs')
+    for row in runs:
+        need(type(row)is list and len(row)==2,'run pair');lo,hi=row
+        need(type(lo)is type(hi)is int and last<lo<=hi<=maximum,'ordered disjoint bounded runs')
+        out.extend(range(lo,hi+1));last=hi
+    return out
+
+def pack(values):
+    result=[]
+    for value in values:
+        if result and result[-1][1]+1==value:result[-1][1]=value
+        else:result.append([value,value])
+    return result
+
+def child_argv(program,plan,gate):
+    return[PY,'-E','-B','-S',program['path'],'--self-sha256',program['sha256'],
+        '--plan',plan['path'],'--plan-sha256',plan['sha256'],'--source-gate',gate['path'],gate['sha256']]
+
+def closed_stored_execution(meta,capture_ref,observation,expected_child):
+    capture=meta.document(capture_ref);base=Path(observation)
+    need(base.is_absolute()and base.is_relative_to('/private/tmp')and '..'not in base.parts,'explicit retained historical observation directory')
+    receipt_ref=meta.pin(base/'receipt.json');stdout_ref=meta.pin(base/'stdout.log');stderr_ref=meta.pin(base/'stderr.log')
+    receipt=meta.document(receipt_ref);frames=capture['all_genuine_api_frames']
+    need(capture['root']=='/root'and capture['actual_tool']['exit_code']==0 and type(frames)is list and frames
+         and all(type(frame)is dict and type(frame.get('output'))is str for frame in frames)
+         and frames[-1]['exit_code']==0 and 'session_id'not in frames[-1],
+         'complete actual terminal frames, not prospective output hashes')
+    issued=capture['issued_argv'];need(type(issued)is list and '--'in issued
+        and issued[issued.index('--')+1:]==expected_child,'actual exact supervised scientific argv')
+    need(receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0
+         and receipt['command']==expected_child and type(receipt['cleanup'])is dict
+         and receipt['cleanup']['remaining']==[]and receipt['cleanup']['errors']==[]
+         and receipt['limits']['total_rss']==128*2**20 and receipt['limits']['wall_seconds']==125
+         and receipt['logs']['stdout']==stdout_ref['bytes']and receipt['logs']['stderr']==stderr_ref['bytes'],
+         'actual unchanged scientific guard and known birth-pinned cleanup')
+    emitted=decode(''.join(frame['output']for frame in frames))
+    need(emitted['status']=='PASS'and emitted['stop']=='RETURNED'and emitted['receipt']==receipt_ref['path'],
+         'terminal supervisor report joins the full actual receipt')
+    return dict(capture=capture_ref,guard=receipt_ref,stdout=stdout_ref,stderr=stderr_ref,
+        known_cleanup_qualification=receipt['cleanup']['qualification']),decode(meta.whole(stdout_ref))
+
+ROOT=S/'computation/f004/q11/rank4/section_generation'
+THEOREM_SHA='cd9d2848d12af4f0b195787c53e904446bb3839df59e36cb67e46ce25cb9ae42'
+REVIEW_SHA='826de2cc7879e8d67850ddd34a813357d0af614598b2af96f7d045e2edd4766f'
+
+def destination(path,temporary=False):
+    text=str(path);p=Path(text)
+    need(p.is_absolute()and str(p)==text and '..'not in p.parts and not os.path.lexists(p),
+         'fresh normalized immutable publication path')
+    need(p.is_relative_to('/private/tmp')if temporary else p.is_relative_to(ROOT),
+         'temporary preparation or explicit immutable section-generation publication')
+    ancestor=p.parent
+    while not ancestor.exists():ancestor=ancestor.parent
+    need(ancestor.resolve(strict=True)==ancestor,'canonical existing ancestry before mkdir')
+    return p
+
+def publish_raw(path,raw,temporary=False):
+    p=destination(path,temporary);p.parent.mkdir(parents=True,exist_ok=True)
+    need(p.parent.resolve(strict=True)==p.parent,'canonical final publication parent')
+    with p.open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive metadata publication');f.flush();os.fsync(f.fileno())
+    for directory in(p.parent,p.parent.parent):
+        fd=os.open(directory,os.O_RDONLY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+    return reference(p,raw)
+
+class Stored:
+    """Explicit historical DATA values from preserved whole-identical copies.
+
+    pin() returns an ORIGINAL descriptor for joining immutable old JSON;
+    physical reads are only Metadata.whole(retained). No old physical read
+    or mathematical Source operation is claimed by this view.
+    """
+    def __init__(self,meta):self.meta=meta;self.rows={};self.value_reads={}
+    def bank(self,manifest):
+        need(manifest['root']=='/root','actual Root preservation bank')
+        for row in manifest['files']:
+            a,b=row['original'],row['retained']
+            need(set(a)==set(b)=={'path','bytes','sha256'}and a['bytes']==b['bytes']and a['sha256']==b['sha256']
+                 and Path(b['path']).is_relative_to(S),'complete original/retained identity inside S')
+            prior=self.rows.get(a['path']);need(prior is None or prior['original']==a,'one whole original version')
+            if prior is None:self.rows[a['path']]=row
+    def whole(self,ref):
+        row=self.rows.get(ref['path'])
+        if row is None:
+            need(Path(ref['path']).is_relative_to(S),'a missing temporary historical value is never read or guessed')
+            self.value_reads[ref['path']]=ref;return self.meta.whole(ref)
+        need(row['original']==ref,'exact preserved historical value')
+        self.value_reads[ref['path']]=ref;return self.meta.whole(row['retained'])
+    def document(self,ref):return decode(self.whole(ref))
+    def pin(self,path,sha=None):
+        row=self.rows.get(str(Path(path)));need(row is not None,'declared retained historical filename')
+        r=row['original'];need(sha is None or r['sha256']==sha,'exact historical SHA')
+        self.whole(r);return r
+
+def logical(stored,ref):
+    need(ref['bytes']<=65536,'bounded historical gzip plan before decoding')
+    z=zlib.decompressobj(31);raw=z.decompress(stored.whole(ref),524289)
+    need(len(raw)<=524288 and z.eof and not z.unconsumed_tail and not z.unused_data,'complete bounded metadata plan')
+    return decode(raw)
+
+def build(meta,own,plan,pref):
+    need(plan['schema']=='Q11_TWO_END37_EXACT_APPLICATION_ADOPTION_PLAN_V1'and plan['program']==own
+         and plan['original_job']==[23,4]and plan['theorem']['sha256']==THEOREM_SHA
+         and plan['written_review']['sha256']==REVIEW_SHA,'exact reviewed27 application metadata method')
+    preservation=meta.document(plan['preservation']);stored=Stored(meta);stored.bank(preservation)
+    need(preservation['schema']=='ROOT_PRESERVED_Q11_TWO_END37_THEOREM_APPLICATION_V1'
+         and preservation['Root_written_review']==plan['written_review']
+         and preservation['new_canonical_adoption_or_selector']is False
+         and preservation['scientific_activations']==0,'actual whole proof/application preservation, not prior adoption')
+    for row in preservation['files']:meta.whole(row['retained'])
+    proposal=stored.document(plan['proposal']);review=stored.document(plan['written_review'])
+    invoice=stored.document(plan['evidence_invoice']);stored.whole(plan['theorem'])
+    need(proposal['schema']=='UNADOPTED_Q11_TWO_PROPER37_END_COROLLARIES_V1'
+         and proposal['Root_authority_granted']is False and proposal['new_checked_fact_or_Root_adoption_claim']is False
+         and proposal['actual_matrix_word_group_evaluations']==0 and proposal['original_job']==plan['original_job']
+         and proposal['new_argument']==plan['theorem']and proposal['current_selector']==plan['predecessor_selector']
+         and proposal['proposed_new_IP_failure_count']==27 and proposal['old_complete_trial_history_preserved']is True
+         and proposal['before_partition']==dict(original=3801,baseline=217,new_paid=224,unpaid=3360)
+         and proposal['conditional_after_partition']==dict(original=3801,baseline=217,new_paid=251,unpaid=3333),
+         'separate unadopted theorem application; no old checker-IP retag')
+    need(review['root']==review['reviewer']=='/root'and review['blockers']==[]
+         and review['status']=='SUPPORTED_WRITTEN_THEOREM_AND_EXACT27_APPLICATIONS'
+         and review['proposal']==plan['proposal']and review['argument']==plan['theorem']
+         and review['evidence']==plan['evidence_invoice']and review['current_selector']==plan['predecessor_selector']
+         and review['canonical_adoption_or_selector_or_Source_gate_issued']is False,
+         'exact distinct Root written proof and application review')
+    need(invoice['schema']=='Q11_TWO_END37_THEOREM_APPLICATION_READ_INVOICE_V1'
+         and invoice['metadata_only']is True and invoice['new_case_or_Source_activations']==0
+         and len(invoice['whole_refs'])==invoice['unique_files']==72
+         and sum(r['bytes']for r in invoice['whole_refs'])==invoice['unique_body_bytes'],
+         'complete actual old proof/domain/capture body inventory')
+    for r in invoice['whole_refs']:stored.whole(r)
+    prior=meta.document(plan['predecessor_selector'])
+    need(prior==stored.document(proposal['current_selector'])and prior['root']=='/root'and prior['adopted']is True
+         and prior['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'
+         and prior['original_job']==[23,4]and prior['projection']==proposal['original_projection'],
+         'fresh whole actual predecessor selector, also identical to reviewed historical view')
+    projection=stored.document(prior['projection']);domain=stored.document(proposal['original_domain_whole_pins']['Saved_result'])
+    produced=stored.document(proposal['original_domain_whole_pins']['producer_result'])
+    export=stored.document(proposal['original_domain_whole_pins']['prefix_export'])
+    observed_only={'seconds','peak_self_bytes'}
+    need({k:v for k,v in produced.items()if k not in observed_only}=={k:v for k,v in domain.items()if k not in observed_only}
+         and projection['original_domain_whole_pins']==proposal['original_domain_whole_pins']
+         and domain['schema']=='F004_Q11_INDEXED_CAYLEY_CENTRALIZER_DOMAIN_CERTIFICATE_V1'
+         and domain['certificate_verified']is True and domain['original_job']==projection['original_job']==[23,4]
+         and domain['field']==11 and domain['rank']==4 and domain['selected_labels']==export['selected_labels']==[1,4,2]
+         and export['end_order']==[1,4,2,3]and export['convention']=='RIGHT_ROW'
+         and domain['external_premises']['original_A_equals_G']is True,
+         'same complete acquired original domain/model, without matrix or group evaluation')
+    orbits=domain['orbits'];maximum=len(orbits)
+    need(maximum==projection['original_orbit_rows']==prior['original_orbit_positions']==3801
+         and digest(orbits)==projection['full_orbit_array_sha256']
+         and domain['orbit_schema']==projection['orbit_schema']and domain['orbit_action']==projection['orbit_action'],
+         'same whole original orbit/member/transporter array')
+    covered=[]
+    for rep,members,transport,fixed in orbits:
+        need(rep in members and members==sorted(set(members))and len(members)==len(transport)
+             and type(fixed)is int and fixed>0 and len(members)*fixed==len(domain['prefix_stabilizer_indices']),
+             'same acquired full member/stabilizer metadata')
+        covered.extend(members)
+    need(sorted(covered)==list(range(1,14764)),'complete disjoint14763-member original partition')
+    baseline=prior['original_paid_positions'];paid=prior['accepted_new_paid_positions']
+    unpaid=expand(prior['unresolved_position_runs'],maximum)
+    original_paid=sorted({i for r in projection['known_paid_facts']for i in r['orbit_positions']})
+    need(baseline==original_paid and len(baseline)==prior['original_paid_count']==217
+         and len(paid)==224 and paid==sorted(set(paid))and len(unpaid)==prior['unresolved_positions']==3360
+         and digest(unpaid)==prior['expanded_unresolved_sha256']
+         and sorted(baseline+paid+unpaid)==list(range(1,maximum+1)),'complete exact current217/224/3360 partition')
+    batch_data={};old_IP=[];batch_by_adoption={}
+    for batch in proposal['batches']:
+        oldbank=stored.document(batch['preservation']);stored.bank(oldbank)
+        need(oldbank['schema']=='ROOT_PRESERVED_Q11_SECTION37_BATCH_V1','actual previous strict-batch preservation')
+        a=stored.document(batch['adoption']);result=stored.document(batch['actual_strict_result'])
+        need(a['schema']=='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1'and a['root']=='/root'and a['adopted']is True
+             and a['original_job']==[23,4]and a['Root_projection_acceptance']==prior['Root_projection_acceptance']
+             and a['independent_direct_word_power_row_minor_checks']is True
+             and a['independent_direct_result']==batch['actual_strict_result']
+             and a['actual_independent_check']==batch['capture']and a['preservation']==batch['preservation']
+             and a['finite_miss_positions_without_IP_credit']==batch['old_finite_miss_trial_unchanged'],
+             'actual separately adopted old section-IP conclusion and unchanged finite trials')
+        need(result['status']=='VERIFIED_ALL_SECTION37_BATCH_RECORDS'and result['program']==CHECKER
+             and result['source_gate']==a['direct_checker_gate']and result['verified_IP_failure_positions']==a['new_IP_failure_positions']
+             and result['word_search_or_row_reduction_calls']==result['proposer_or_kernel_or_helper_imports']==0
+             and result['whole_original_credit']==result['conjecture_credit']==result['Lean_credit']==0
+             and result['all_summary_chunks_checked']is True and result['complete_original_selector_partition_checked']is True,
+             'actual unchanged9c whole supplied check, no new IP claim for its proper-only facts')
+        checkplan=logical(stored,result['plan']);gate=stored.document(result['source_gate'])
+        need(checkplan['program']==CHECKER and gate['root']=='/root'and gate['adopted']is True
+             and gate['program']==CHECKER and gate['plan']==result['plan']
+             and result['checked_chunks']==checkplan['proof_chunks'],'exact old checker Source/plan/gate/full chunks')
+        code_review=stored.document(gate['Root_code_math_review'])
+        need(code_review['root']=='/root'and code_review['status']=='SUPPORTED'and code_review['blockers']==[]
+             and code_review['program']==CHECKER and code_review['plan']==result['plan'],
+             'same actual separately reviewed old checker Source and plan')
+        for r in checkplan['inputs']:stored.whole(r)
+        capture=stored.document(batch['capture']);issued=capture['issued_argv']
+        need(issued.count('--output')==1,'one exact old observation argument')
+        closure,stdout=closed_stored_execution(stored,batch['capture'],issued[issued.index('--output')+1],
+            child_argv(CHECKER,result['plan'],result['source_gate']))
+        need(stdout['output']==batch['actual_strict_result']and stdout['status']==result['status'],
+             'complete old genuine SDK/guard/argv/known-cleanup/stdout/result joins')
+        for r in result['checked_chunks']:stored.whole(r)
+        batch_data[batch['actual_strict_result']['path']]=(batch,result,checkplan)
+        batch_by_adoption[batch['adoption']['path']]=batch
+        old_IP.extend(a['new_IP_failure_positions'])
+    need(len(batch_data)==2 and prior['source_adoptions']==[b['adoption']for b in proposal['batches']]
+         and sorted(old_IP)==paid and len(old_IP)==len(set(old_IP)),
+         'all224 existing IP positions keep their old proof category')
+    positions=proposal['proposed_new_IP_failure_positions']
+    need(positions==review['exact_proposed_positions']and positions==sorted(set(positions))and len(positions)==27
+         and set(positions)<=set(unpaid)and len(proposal['proof_rows'])==27,
+         'only exact27 currently unpaid reviewed applications can be adopted')
+    row_positions=[]
+    for row in proposal['proof_rows']:
+        pos=row['original_orbit_position'];orbit=orbits[pos-1]
+        batch,result,checkplan=batch_data[row['actual_strict_result']['path']]
+        need(row['actual_strict_result']==batch['actual_strict_result']and row['original_partial_adoption']==batch['adoption']
+             and row['actual_proof_chunk']in result['checked_chunks']and pos in batch['new_proposed_positions']
+             and pos in result['finite_miss_positions_without_IP_credit']and pos not in result['verified_IP_failure_positions'],
+             'new theorem application imports proper-only old facts, never old IP positives')
+        record=result['checked_records'][row['strict_record_index']-1]
+        chunk=stored.document(row['actual_proof_chunk']);proof=chunk['records'][row['proof_record_index']-1]
+        need(chunk['original_job']==result['original_job']==[23,4]and chunk['projection']==prior['projection']
+             and chunk['original_marking_order']==['a','b','c','e']
+             and chunk['original_domain_whole_pins']==proposal['original_domain_whole_pins']
+             and chunk['original_orbit_array_sha256']==projection['full_orbit_array_sha256'],
+             'same whole proof chunk original model/marking/domain subject')
+        need(record['original_orbit_position']==proof['original_orbit_position']==pos
+             and record['representative_J_index']==proof['representative_J_index']==row['representative_J_index']==orbit[0]
+             and record['original_orbit_row_sha256']==proof['original_orbit_row_sha256']==row['whole_orbit_row_sha256']==digest(orbit)
+             and row['borrowed_original_members']==len(orbit[1])
+             and record['direct_result']['quartet_IP_failure_verified']is False
+             and record['direct_result']['quartet_nongeneration_claim']is False
+             and proof['certificate']is None,'same exact original record, members and old negative-IP disposition')
+        sections=proof['diagnostic']['completed_sections'];facts=record['verified_proper_sections_without_IP_credit']
+        need(len(sections)==len(facts)==len(row['already_checked_proper_end_facts'])==2,
+             'both actual ends, not subgroup-IP or scalar evidence')
+        for expected_section,section,fact,locator in zip(([0,1,2],[1,2,3]),sections,facts,row['already_checked_proper_end_facts']):
+            original=section['proper_section_certificate']
+            need(section['section_indices']==fact['section_indices']==locator['section_indices']==original['section_indices']==expected_section
+                 and fact['kind']==original['kind']=='SECTION_PROPER_ORDER37_LINE'
+                 and fact['proper_section_verified']is True and fact['quartet_IP_failure_verified']is False
+                 and fact['section_generation_verified']is False and fact['quartet_nongeneration_claim']is False
+                 and original['four_mark_IP_failure_proposed']is False and original['four_mark_nongeneration_claim']is False
+                 and original['movement']is None and original['all_section_generators_preserve_prime_line']is True
+                 and original['prime']==37 and original['cofactor']==6
+                 and digest(original)==locator['fact_sha256']
+                 and original['dictionary_origin']['raw_index']==fact['dictionary_raw_index']==locator['dictionary_raw_index']
+                 and original['local_section_word']==locator['local_word']
+                 and original['original_mark_word']==locator['original_mark_word'],
+                 'exact actually checked proper37 facts/words in both ends; their new IP conclusion is separate')
+        row_positions.append(pos)
+    need(row_positions==positions,'complete exact sorted27 application rows')
+    trials=prior['previous_method_attempts'];historical=[]
+    for trial in trials:
+        batch=batch_by_adoption[trial['Root_adoption']['path']]
+        need(trial['Root_adoption']==batch['adoption']and trial['criterion']=='SECTION37_FIXED_DICTIONARY'
+             and trial['finite_miss_positions']==batch['old_finite_miss_trial_unchanged']
+             and trial['finite_misses_are_NOT_paid']is True and trial['do_not_repeat_unchanged_search']is True,
+             'literal old26/6 trial arrays remain history')
+        historical.extend(trial['finite_miss_positions'])
+    remain=sorted(set(unpaid)-set(positions));additional=sorted(paid+positions)
+    need(len(historical)==32 and len(set(historical))==32 and len(additional)==251 and len(remain)==3333
+         and sorted(baseline+additional+remain)==list(range(1,maximum+1)),
+         'exact217 baseline plus224 old IP plus27 new theorem plus3333 unpaid')
+    current_misses=sorted(set(historical)&set(remain))
+    need(current_misses==[11,13,88,191,230],'only the remaining old misses stay skipped and unpaid')
+    method_dir=Path(plan['method_directory']);source_retained=reference(method_dir/'adopt_applications.py',meta.whole(own))
+    plan_retained=reference(method_dir/'plan.json',meta.whole(pref))
+    def retained(ref):return stored.rows[ref['path']]['retained']
+    adoption=dict(schema='ROOT_ACCEPTED_Q11_RANK4_TWO_END37_IP_FACTS_V1',root='/root',adopted=True,
+        original_job=[23,4],projection=prior['projection'],Root_projection_acceptance=prior['Root_projection_acceptance'],
+        Root_unresolved_selector=plan['predecessor_selector'],classification='FOUR_MARK_INTERSECTION_PROPERTY_FAILURE',
+        four_mark_generation_or_nongeneration_claim=False,proof_mode='EXISTING_CHECKED_PROPER_ENDS',
+        theorem=retained(plan['theorem']),theorem_review=retained(plan['written_review']),
+        application_proposal=retained(plan['proposal']),application_review=retained(plan['written_review']),
+        verified_IP_failure_positions=positions,newly_settled_positions=27,preservation=plan['preservation'],
+        metadata_method=source_retained,metadata_plan=plan_retained,
+        proper_end_facts_from_original_checker=True,new_IP_conclusion_from_written_theorem=True,
+        old_checker_was_not_retagged_as_verifying_IP=True,operational_registers_modified=False,
+        finite_miss_history_modified=False,whole_original_credit=0,conjecture_credit=0,Lean_credit=0,new_compression_credit=0,
+        qualification='Only the new Root-reviewed theorem supplies these27 IP conclusions. Old9c proper37 facts, original model/frame/A=G/member-transports and classified-unitary premises remain imported. No quartet generation, census, original or failed-search claim.')
+    aref=reference(plan['adoption_path'],canonical(adoption)+b'\n')
+    groups=dict(cyclic_nongeneration=[],field_nongeneration=[],section_IP_failure=paid,
+        other_legacy_IP_failure=[],two_end_theorem_IP_failure=positions)
+    selector=dict(prior,accepted_new_paid_positions=additional,accepted_paid_by_kind=groups,
+        unresolved_position_runs=pack(remain),unresolved_positions=3333,expanded_unresolved_sha256=digest(remain),
+        source_adoptions=prior['source_adoptions']+[aref],previous_selector=plan['predecessor_selector'],
+        historical_misses_current_unpaid=current_misses,
+        qualification='Typed original baseline and separately attributed section-IP/two-end-theorem conclusions. All32 historical trial misses stay literal; only their CURRENT unpaid intersection is skipped. No generation or whole-original credit.')
+    need(selector['previous_method_attempts']==prior['previous_method_attempts'],'entire trial history preserved')
+    sref=reference(plan['selector_path'],canonical(selector)+b'\n')
+    return dict(adoption=adoption,selector=selector,expected_adoption=aref,expected_selector=sref,
+        historical_value_reads=sorted(stored.value_reads.values(),key=lambda r:r['path']),
+        retained_method_sources=[dict(original=own,retained=source_retained),dict(original=pref,retained=plan_retained)])
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('mode',choices=['prepare','publish'])
+    ap.add_argument('--self-sha256',required=True);ap.add_argument('--plan',nargs=2,required=True)
+    ap.add_argument('--directory');ap.add_argument('--prepared',nargs=2);ap.add_argument('--Root-release',nargs=2)
+    args=ap.parse_args();meta=Metadata();meta.bytes+=Path(__file__).stat().st_size
+    own=meta.pin(Path(__file__).resolve(strict=True),args.self_sha256);pref=meta.pin(*args.plan);plan=meta.document(pref)
+    built=build(meta,own,plan,pref)
+    for key in('adoption_path','selector_path'):destination(plan[key])
+    method=destination(plan['method_directory'])
+    if args.mode=='prepare':
+        need(args.directory is not None and args.prepared is None and args.Root_release is None,'temporary preparation only')
+        directory=destination(args.directory,True);meta.final()
+        prepared=dict(schema='UNADOPTED_Q11_TWO_END37_EXACT_APPLICATIONS_V1',author='/root/compact_proof_author',
+            Root_authority_granted=False,program=own,plan=pref,predecessor_selector=plan['predecessor_selector'],
+            preservation=plan['preservation'],**built,
+            physical_input_frontier=sorted(meta.refs.values(),key=lambda r:r['path']),
+            historical_vs_physical_read_accounting_explicit=True,scientific_calls=0,S_writes=0)
+        raw=canonical(prepared)+b'\n';need(len(raw)<=2**20,'bounded exact prepared metadata')
+        pp=publish_raw(directory/'prepared.json',raw,True)
+        false=dict(schema='ROOT_RELEASE_Q11_TWO_END37_APPLICATIONS_V1',root='/root',adopted=False,program=own,plan=pref,
+            prepared=pp,predecessor_selector=plan['predecessor_selector'],preservation=plan['preservation'],
+            adoption=built['expected_adoption'],selector=built['expected_selector'],
+            exact_current_partition_and_all_old_capture_joins_reviewed=False,
+            new_theorem_IP_conclusions_separately_authorized=False,independent_review=None,
+            blockers=['SEPARATE_EXACT_ROOT_REVIEW_AND_PUBLICATION_RELEASE_OWED'])
+        rr=publish_raw(directory/'Root_release_unapproved.json',canonical(false)+b'\n',True)
+        print(json.dumps(dict(status='UNADOPTED_EXACT27_METADATA_PREPARED',prepared=pp,false_release=rr,
+            conditional_partition=dict(original=3801,baseline=217,old_IP=224,new_theorem_IP=27,unpaid=3333),
+            actual_scientific_calls=0,S_writes=0,Root_authority_granted=False),sort_keys=True));return
+    need(args.directory is None and args.prepared is not None and args.Root_release is not None,'separate actual Root publication inputs')
+    pp=meta.pin(*args.prepared);p=meta.document(pp);rr=meta.pin(*args.Root_release);r=meta.document(rr)
+    need(p['schema']=='UNADOPTED_Q11_TWO_END37_EXACT_APPLICATIONS_V1'and p['Root_authority_granted']is False
+         and p['program']==own and p['plan']==pref and all(p[k]==v for k,v in built.items()),
+         'exact newly reverified reviewed metadata preparation, no future fact hashes')
+    need(r['schema']=='ROOT_RELEASE_Q11_TWO_END37_APPLICATIONS_V1'and r['root']=='/root'and r['adopted']is True
+         and r['program']==own and r['plan']==pref and r['prepared']==pp
+         and r['predecessor_selector']==plan['predecessor_selector']and r['preservation']==plan['preservation']
+         and r['adoption']==built['expected_adoption']and r['selector']==built['expected_selector']
+         and r['exact_current_partition_and_all_old_capture_joins_reviewed']is True
+         and r['new_theorem_IP_conclusions_separately_authorized']is True and r['blockers']==[],
+         'separate fresh exact Root release, not author-issued theorem adoption')
+    need(r['independent_review']['bytes']<=32768,'bounded independent review before decoding')
+    peer=meta.document(r['independent_review'])
+    need(peer['status']=='SUPPORTED'and peer['blockers']==[]and peer['program']==own and peer['plan']==pref,
+         'actual separately pinned independent metadata Source review')
+    for ref in p['physical_input_frontier']:meta.whole(ref)
+    need(len(canonical(r))<=16384,'bounded Root publication support')
+    artifact_refs={method/'adopt_applications.py':own,method/'plan.json':pref,
+        method/'prepared.json':pp,method/'Root_release.json':rr,method/'independent_review.json':r['independent_review']}
+    artifacts={path:meta.whole(ref)for path,ref in artifact_refs.items()}
+    need(sum(map(len,artifacts.values()))+len(canonical(built['adoption']))+len(canonical(built['selector']))+2+131072<=2**20,
+         'finite eight-file1MiB new metadata capsule including final receipt')
+    meta.final()
+    method.mkdir(parents=True);need(method.resolve(strict=True)==method,'canonical immutable method directory')
+    emitted=[]
+    for path,raw in artifacts.items():emitted.append(publish_raw(path,raw))
+    ar=publish_raw(plan['adoption_path'],canonical(built['adoption'])+b'\n')
+    sr=publish_raw(plan['selector_path'],canonical(built['selector'])+b'\n')
+    need(ar==built['expected_adoption']and sr==built['expected_selector'],'exact Root-reviewed published bodies')
+    receipt=dict(schema='ROOT_PUBLISHED_Q11_TWO_END37_APPLICATIONS_V1',root='/root',adoption=ar,selector=sr,
+        method_sources=emitted,
+        actual_to_retained_sources=[dict(original=artifact_refs[path],retained=reference(path,raw))for path,raw in artifacts.items()],
+        Root_release=reference(method/'Root_release.json',artifacts[method/'Root_release.json']),
+        newly_settled_by_theorem=27,old_trial_history_unchanged=True,scientific_calls=0,operational_registers_modified=False,
+        whole_original_credit=0,qualification='Only these new immutable partial authority/selector views were published. No old Source verdict or canonical global progress was changed.')
+    receipt_raw=canonical(receipt)+b'\n';need(len(receipt_raw)<=131072,'bounded final publication receipt')
+    receipt_ref=publish_raw(method/'publication.json',receipt_raw)
+    print(json.dumps(dict(status='ROOT_RELEASED_TWO_END37_TYPED_APPLICATIONS',adoption=ar,selector=sr,receipt=receipt_ref,
+        new_theorem_IP=27,remaining_in_job=3333,scientific_calls=0,operational_registers_modified=False),sort_keys=True))
+
+if __name__=='__main__':main()

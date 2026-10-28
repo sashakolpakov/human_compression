@@ -1,0 +1,109 @@
+"""Root preservation and adoption of already assembled finite arrays; no science."""
+from pathlib import Path
+import argparse, hashlib, json, os
+
+D = Path(__file__).resolve().parent
+C = D.parent
+BASE = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients')
+READ = Path(__file__).stat().st_size
+SEEN = {}
+
+def whole(p, expected=None):
+    global READ
+    p = Path(p)
+    a = p.lstat()
+    assert p.resolve(strict=True) == p and p.is_file() and a.st_nlink == 1 and a.st_size <= 16 * 2**20
+    assert READ + a.st_size <= 64 * 2**20 and (str(p) in SEEN or len(SEEN) < 512)
+    raw = p.read_bytes()
+    b = p.lstat()
+    sig = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    assert sig(a) == sig(b) and len(raw) == a.st_size
+    r = dict(path=str(p), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    assert expected is None or r == expected
+    assert SEEN.get(str(p), r) == r
+    SEEN[str(p)] = r
+    READ += len(raw)
+    return r, raw
+
+def document(p):
+    return json.loads(whole(p)[1])
+
+def write(p, raw):
+    with p.open('xb') as f:
+        assert f.write(raw) == len(raw)
+        f.flush()
+        os.fsync(f.fileno())
+    return whole(p)[0]
+
+def canonical(v):
+    return (json.dumps(v, sort_keys=True, separators=(',', ':')) + '\n').encode()
+
+ap = argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--stage', choices=['partner-resolution', 'product-mass'], required=True)
+stage = ap.parse_args().stage
+stem = stage.replace('-', '_')
+O = BASE / stem
+A = C / 'instances' / (stem + '_assembled')
+adoption_ref, _ = whole(O / 'root_stage_acceptance.json')
+adoption = document(O / 'root_stage_acceptance.json')
+result = document(A / 'result.json')
+guard = document(D / 'guards' / stem / 'assembly/receipt.json')
+capture_ref, _ = whole(D / 'captures' / stem / 'assembly_actual_capture.json')
+capture = document(capture_ref['path'])
+assert adoption['adopted'] is True and adoption['stage'] == stage
+assert adoption['whole_global_stage_cover_from_actual_checked_parts'] is True
+assert result['stage'] == stage and result['status'] == 'ASSEMBLED_ALREADY_CERTIFIED_VALUES_ONLY'
+assert result['stage_adoption'] == adoption_ref
+assert capture['actual_tool']['exit_code'] == 0 and guard['status'] == 'PASS' and guard['returncode'] == 0
+assert capture['issued_argv'][capture['issued_argv'].index('--') + 1:] == guard['command']
+assert guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+for r in result['outputs'].values():
+    whole(r['path'], r)
+
+paths = {Path(__file__).resolve()}
+for root in [D / 'operations' / stem / 'finalized', A] + [D / 'guards' / stem / x for x in ('preservation', 'Root_stage_adoption', 'finalize', 'assembly')]:
+    for p in root.rglob('*'):
+        assert not p.is_symlink()
+        if p.is_file():
+            paths.add(p)
+for name in ('preservation_actual_capture.json', 'Root_stage_adoption_actual_capture.json', 'finalize_actual_capture.json', 'Root_assembly_release_actual_capture.json', 'assembly_actual_capture.json'):
+    paths.add(D / 'captures' / stem / name)
+assert len(paths) <= 128 and sum(p.stat().st_size for p in paths) <= 16 * 2**20
+dest = O / 'assembly'
+assert not dest.exists()
+dest.mkdir()
+(dest / 'objects').mkdir()
+rows = []
+for p in sorted(paths):
+    r, raw = whole(p)
+    q = dest / 'objects' / r['sha256']
+    if not q.exists():
+        write(q, raw)
+    retained, _ = whole(q)
+    assert retained['bytes'] == r['bytes'] and retained['sha256'] == r['sha256']
+    rows.append(dict(original=r, retained=retained))
+by = {r['original']['path']: r['retained'] for r in rows}
+archive_ref, _ = whole(O / 'evidence/preservation.json')
+manifest = dict(schema='ROOT_PRESERVED_L026_FINITE_ARRAY_ASSEMBLY_V1', root='/root', stage=stage,
+    files=rows, proof_stage=adoption_ref, proof_archive=archive_ref,
+    qualification='Exact closed assembly bytes and late runtime records retained. Only certified values were assembled; no scientific operation was replayed.')
+mr = write(dest / 'preservation.json', canonical(manifest))
+outputs = {k: by[r['path']] for k, r in result['outputs'].items()}
+accepted = dict(schema='ROOT_ACCEPTED_L026_FINITE_QUOTIENT_ARRAYS_V1', root='/root', adopted=True,
+    stage=stage, scope_digest=adoption['scope_digest'], stage_acceptance=adoption_ref,
+    preservation=mr, outputs=outputs, original_owners=500178,
+    selected_representatives=adoption['selected_representatives'],
+    selected_product_mass=adoption['selected_product_mass'], fixed_partner_components=adoption['fixed_partner_components'],
+    actual_assembly=by[str(A / 'result.json')], actual_capture=by[capture_ref['path']],
+    all_nonfree_branches_retained=True, no_ordered_partner_lift_claim=True,
+    whole_Original_conjecture_Lean_or_compression_credit=0,
+    qualification='Complete actual stage arrays only. Original model, Reader, faithful action, words, graph, global class, unique two-fibre theorem and separately qualified H=B remain imported through the stage. Generation, endpoint reversal, other endpoints and full manuscript remain owed.')
+ar = write(O / 'root_acceptance.json', canonical(accepted))
+for p in (dest / 'objects', dest, O):
+    fd = os.open(p, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+print(json.dumps(dict(status='ROOT_ADOPTED_CERTIFIED_FINITE_ARRAYS', adoption=ar, outputs=outputs,
+    physical_read_bytes=READ, files=len(rows))))

@@ -1,0 +1,763 @@
+"""Bounded NEW alternating V4-syllable prime certificates for exactly the accepted unpaid24.
+Source only; no represented function was invoked during preparation.
+"""
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import resource
+import stat
+import sys
+import time
+
+TOTAL_SECONDS,WORK_SECONDS,RSS_CAP=100,90,128*2**20
+WORK_RSS_CAP=112*2**20
+DOCUMENT_CAP,UNIQUE_INPUT_CAP,INPUT_COUNT_CAP=2**21,8*2**20,96
+OUTPUT_CAP,RECORD_CAP,REPORT_CAP=256*2**10,16384,64*2**10
+ORBIT_SCHEMA='[representative_J_index,all_member_J_indices,matching_transporter_Q_indices,full_stabilizer_order]'
+ORBIT_ACTION='RIGHT_ROW M_g^-1 M_x M_g; coefficient pairs r p r^-1 and s q s^-1'
+ORIGIN_ROLES={'literal_prefix', 'root_clearance', 'root_terminal', 'native_source', 'binding_source', 'original_prefix_index_proof', 'prelift_map', 'root_source_authentication'}
+EXPECTED={'accepted_gate': {'bytes': 16506, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/prefix8_shared_line_and_triangle/root_certificate_acceptance.json', 'sha256': '3453d0157406873f27c13415826d538dcc8857e3cc93a8f61962abbdb7911660'}, 'catalogue_clearance': {'bytes': 693, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/original_prefix8/root_handle_clearance.json', 'sha256': 'cd0adb4f03b2bd91288645b3325932030ab70ad7ba8f7ed0712bbb2ce5ba9981'}, 'catalogue_program': {'bytes': 22496, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/verify_indexed_frame_catalogue.py', 'sha256': '1cebbda5fcda823b43713f03dd17893480c34d040f27501a0651ab69d8f496d3'}, 'catalogue_release': {'bytes': 3972, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/original_prefix8/root_release.json', 'sha256': 'bc1b7fedaee3e7035f80c7fca8d55db8e337166ed9fd5fa127e3025ccedf6c9f'}, 'catalogue_source_review': {'bytes': 4590, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/root_indexed_source_peer_review.json', 'sha256': '9a0a87d6a8f5334eb46ae1ed936c166cc5471dcc8cae2a9069143541929185fd'}, 'catalogue_terminal': {'bytes': 2248, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/original_prefix8/root_terminal.json', 'sha256': '06e66380da4f05b339e9484c41729f0cdbbc54341be0ca0b9c8b6db04ca56f87'}, 'domain': {'bytes': 513255, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/original_prefix8/output/result.json', 'sha256': 'e7124783eb2e9a5e1ca21c93d79a3e1ab1cf1460109b6ebc60dd451b5099c1f8'}, 'independent_written_review': {'bytes': 6391, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/prefix8_stabilizer_obstruction_independent_review.rst', 'sha256': '533acd27bf211b4be516fb475e35fdcfc91d54b0e23017b90ea1491ef19a2a8f'}, 'model_join': {'bytes': 8118, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/original_prefix8_matrix_export/native_admission/root_model_source_join.json', 'sha256': '38d27708ce1b4be9d10fe24ffae68705d1a63d8f9796c2fd4b7d3fd366b8f6b3'}, 'model_proof': {'bytes': 9716, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/acquired_cayley_full_group_bridge.rst', 'sha256': 'a754edb570ef9d30816c3897deeae2aec7958fb7cfb5fa756536ca8e0ab30801'}, 'reduction_proof': {'bytes': 11574, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/prefix8_remaining62_stabilizer_reduction.rst', 'sha256': 'a728991d5e4c693c8c044a4a67131d0273196cb6ec1ea2565d530bbcdcece891'}, 'stabilizer_program': {'bytes': 18790, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/verify_prefix8_stabilizer_obstruction.py', 'sha256': '71f596bf3dd588870e8977cc2a36f7c7985eeabba6af34256b900e9a821b08ea'}, 'stabilizer_source_packet': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_stabilizer_obstruction_source_packet.json', 'bytes': 10253, 'sha256': '6ee96f78ce0a7a972941c0631fc75f4448954b243707721222a8d4b1e6ae9585'}, 'stabilizer_source_review': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_stabilizer_obstruction_distinct_source_review.json', 'bytes': 6246, 'sha256': 'ab991f25b3295f7baec8572cc0e24d64ddb3f82088a75eef5b9817b24da8a6c3'}, 'stabilizer_source_execution': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_stabilizer_obstruction_distinct_source_execution.json', 'bytes': 3417, 'sha256': '0c07ea5b4bc7c63b1a1e63d1bbf5431d4c65a3011855ef5f958da4c6c3a31f8d'}, 'frame_result': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/matrix_frame_acquisition_result/result.json', 'bytes': 9384, 'sha256': 'b6259de58ace64a7bccf97db50e81e4686c5f6f501c3263c86186fadb09e8391'}, 'frame_gate': {'bytes': 3394, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/matrix_frame_root_acceptance.json', 'sha256': 'a8746058d9d1482ac9ed92157f31b765c0998d195efc312d734a8533ddc86498'}, 'forms_gate': {'bytes': 78082, 'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/invariant_forms_acquisition/root_acceptance.json', 'sha256': '0ab1b853480874ef685a807d5c72d5f98fba22894e7b5727e7cb6815d0cc1d36'}, 'normalization_result': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_normalization_acquisition/result.json', 'bytes': 10559, 'sha256': '47c4f9848a304b7ca821db38271f85e672f29f241790a2203e2ace19307d25a1'}, 'normalization_gate': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_normalization_acquisition/root_acceptance.json', 'bytes': 112192, 'sha256': '208431dc9dd0ec31b7688719e12def55682dd35a085f088ba2cd32d34fdde940'}, 'original_export': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/original_prefix8_matrix_export/indexed_prefix8_coordinates.json', 'bytes': 4345, 'sha256': '6494e0d434e5b62a68d6966227e361bd3118c8afe936bc9900bd776924c2b8d6'}, 'normalization_source': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/verify_cayley_normalization.py', 'bytes': 10508, 'sha256': 'ad8030d47175e58bd22fee6030f7b12a804076b42deaa707774c3eabd2957a67'}, 'borrowed_verifier': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/verify_prefix8_saved_proper_end_certificates.py', 'bytes': 42657, 'sha256': 'edf45f69269c5a1c86f7ad5bc3f851b95160851f96aca813fae9d896175ed1cb'}, 'criterion': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/prefix8_invariant_vector_set_certificate_plan.rst', 'bytes': 12995, 'sha256': '5c86c56c1c761d6d071deddab2bbf66590a64b30ee0d6c71adaaf760e8bad6b9'}}
+STABILIZER_ROLES={'reduction_proof', 'accepted_gate', 'catalogue_terminal', 'domain', 'catalogue_release', 'catalogue_program', 'model_proof', 'independent_written_review', 'catalogue_clearance', 'model_join', 'catalogue_source_review'}
+TEXT_ROLES={'stabilizer_program', 'reduction_proof', 'criterion', 'catalogue_program', 'model_proof', 'independent_written_review', 'borrowed_verifier', 'normalization_source'}
+EXTRA={'base_program': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/verify_prefix8_bounded_invariant_vector_sets.py', 'bytes': 52823, 'sha256': '5211eca8bd10053b544e5733970270676e93e1257165b0f4c50d0f38ceaf5cb7'}, 'base_packet': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_bounded_invariant_vector_sets_source_packet.json', 'bytes': 13039, 'sha256': 'b7f49dca8212c8dca9702582c4c1a743667a50ce1bbd32dd5443068375a38963'}, 'base_review': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_bounded_invariant_vector_sets_distinct_source_review.json', 'bytes': 11631, 'sha256': 'be80b9c9d016dbd2e27fd5e295e589c6bdcc31ab59be90aa6480b11631f6db59'}, 'base_execution': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_bounded_invariant_vector_sets_distinct_source_execution.json', 'bytes': 14016, 'sha256': '534db755e45dce662cbbf5a62534102e13c2c112f3dcecd803d41fbd4778de0f'}, 'current_acceptance': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/prefix8_invariant_vector_sets/root_certificate_acceptance.json', 'bytes': 11807, 'sha256': 'e1dfb6245c7dfa59855e022b51ac7727d891586c36949bbba6741799157b3296'}, 'point_acceptance': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/prefix8_stabilizer_obstruction/root_certificate_acceptance.json', 'bytes': 20944, 'sha256': '4987a1478e9c3105eaec8ccde7a6f69a3cd8b2a1e3652a5c0a3986688f79a47b'}, 'old_stabilizer_result': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/prefix8_stabilizer_obstruction/output/result.json', 'bytes': 21780, 'sha256': '74f2495d47dcb9a0a1cd2bca9674d110318484f316c54dd6215eb96ae7d50f36'}, 'role_map': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_remaining33_cached_end_roles.json', 'bytes': 17864, 'sha256': '699f2f744f28382493c3468d7303863b5b55287710fadf918f7c116d7728a246'}, 'route_proof': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/remaining33_certificate_route_review.rst', 'bytes': 7398, 'sha256': '79959bfba5347bc37204a1365e7abae58b0df019f88034a57f238f27152c1724'}, 'saved_worker': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/search_prefix8_moved19_order4_ends.py', 'bytes': 33413, 'sha256': 'bf862fa619bc7f9dbde21b7024cbc7b958cad308381c4fe109f0ddae87e91392'}, 'moved19_journal': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/prefix8_moved19_order4_ends/output/witnesses.jsonl', 'bytes': 235625, 'sha256': 'fdd9a6d5a8a0dcdd9930e120647070e62915e36b192375cad8ee1d6045b37e15'}, 'old37_journal': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/prefix8_end_rejections/output/witnesses.jsonl', 'bytes': 191639, 'sha256': '58a0c96fdbaec4fd3f0827f88b31ea5a985fd381c9ee5290b9c2918177cfedf8'}, 'moved19_theory': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/g2_11_generation_moved19_order4.rst', 'bytes': 11978, 'sha256': '1d82837bf00b85ed580d87fb59afb8e072c23da572676ff90d3c0fd74cc98f7f'}, 'moved19_review': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/g2_11_generation_moved19_order4_root_review.rst', 'bytes': 3691, 'sha256': '45096e2926da7dacea8e31648c15bf87ffbd53b1524f97a903af047a33f578f3'}, 'tree_contract': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_moved19_reachable_trees.rst', 'bytes': 9322, 'sha256': 'ef8f229a039906484bbe1006648897f8629196a53941e88039b923b9ed658ebb'}}
+EXTRA_TEXT={'route_proof', 'old37_journal', 'saved_worker', 'moved19_journal', 'moved19_theory', 'base_program', 'tree_contract', 'moved19_review'}
+CONTEXT_SOURCE={'borrowed_context_source': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/verify_prefix8_moved19_reachable_trees.py', 'bytes': 67631, 'sha256': 'e83a0ff69f7a81ffa63caa918c0a85d3869266705f114ab5ed9d7e310250f97b'}, 'borrowed_context_packet': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_moved19_reachable_trees_source_packet.json', 'bytes': 14233, 'sha256': '42746e273651f81ca7152e58672f4fe8db56009e1e7169f08fd663da0e442d78'}, 'borrowed_context_review': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_moved19_reachable_trees_distinct_source_review.json', 'bytes': 11952, 'sha256': '6a2669a6d416602957e751228326abcec3488d95d700fd8463b767693709b6f5'}, 'borrowed_context_execution': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_moved19_reachable_trees_distinct_source_execution.json', 'bytes': 13504, 'sha256': '8c46cfcc77ca8691db4558d47a396fecc5142a4c2a25af07e01cad9627d1ec40'}, 'borrowed_context_checks': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_moved19_reachable_trees_distinct_source_checks.json', 'bytes': 17706, 'sha256': 'a764b67c2e69bf57d4d163fbd10e8049bffe3e82c951b1410c3e470f6ab50ab7'}, 'borrowed_context_preparation': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/prefix8_moved19_reachable_trees_source_preparation_execution.json', 'bytes': 6538, 'sha256': 'b45035be388aebbb8ba72b8ebfb1ee97d8da5cb976b5eb292ca3e22468950dd0'}, 'middle19_theorem': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/middle19_normalizer_completion_obstruction.rst', 'bytes': 14726, 'sha256': '2da2143038a6e9dae79d935bfcb0a91c0a3798a73eaf92bcb2b88f4430044e62'}, 'middle19_theorem_preparation': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/middle19_normalizer_completion_source_preparation.json', 'bytes': 1498, 'sha256': '23a543edda19b598f9a6d07aa1b46b6b881f1446cc299236d8125ace38a09718'}, 'middle19_theorem_review': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/middle19_normalizer_completion_root_source_review.json', 'bytes': 3220, 'sha256': '5bca21a968206dcfc3854bba4b3dc428376c4fba56d836126695626cc6ffb18a'}, 'middle19_theorem_execution': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/middle19_normalizer_completion_root_source_execution.json', 'bytes': 6606, 'sha256': 'df2cf5999e1a2b76adcfac2bcdf67b0f5cfb43669cb08b87f4e49b7b6f53ba93'}}
+LIMITS={'work_seconds': 90, 'total_seconds': 100, 'work_rss_bytes': 117440512, 'self_rss_bytes': 134217728, 'input_count': 96, 'document_bytes': 2097152, 'unique_input_bytes': 8388608, 'combined_output_bytes': 262144, 'report_bytes': 65536, 'record_bytes': 16384, 'maximum_selected_representatives': 33}
+OUTER_LIMITS={'rss_mib': 256, 'seconds': 150, 'admit_ram': 4294967296, 'admit_disk': 10737418240, 'ram_floor': 3221225472, 'disk_floor': 8589934592}
+
+
+def need(condition,message):
+    if not condition:raise ValueError(message)
+
+def canonical(value):
+    return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+
+def decode(raw):
+    def unique(pairs):
+        out={}
+        for key,value in pairs:
+            need(key not in out,'duplicate JSON key');out[key]=value
+        return out
+    return json.loads(raw,object_pairs_hook=unique,
+        parse_constant=lambda x:(_ for _ in()).throw(ValueError('nonfinite JSON '+x)))
+
+def peak_bytes():
+    value=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return value if sys.platform=='darwin'else value*1024
+
+def refcheck(ref):
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+        and type(ref['path'])is str and Path(ref['path']).is_absolute()
+        and str(Path(ref['path']))==ref['path'] and '..'not in Path(ref['path']).parts
+        and type(ref['bytes'])is int and 0<=ref['bytes']<=DOCUMENT_CAP
+        and type(ref['sha256'])is str and len(ref['sha256'])==64
+        and all(x in'0123456789abcdef'for x in ref['sha256']),'exact bounded whole-file pin')
+    return ref
+
+def read_exact(ref,budget,work=True):
+    refcheck(ref);budget.check(work);p=Path(ref['path']);a=p.lstat()
+    need(stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==ref['bytes']
+        and p.resolve(strict=True)==p,'ordinary exact pinned document and parents')
+    signature=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    with p.open('rb')as f:
+        if sys.platform=='darwin':fcntl.fcntl(f.fileno(),48,1)
+        b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);z=os.fstat(f.fileno())
+    need(signature(a)==signature(b)==signature(z)==signature(p.lstat())and len(raw)==a.st_size
+        and hashlib.sha256(raw).hexdigest()==ref['sha256'],'stable complete exact document bytes')
+    budget.check(work);return raw
+
+def file_pin(path,raw):
+    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+def vector(value,n):
+    need(type(value)is list and len(value)==n
+        and all(type(x)is int and 0<=x<11 for x in value),'canonical full F11 vector')
+    return tuple(value)
+
+def matrix(value,n):
+    need(type(value)is list and len(value)==n,'full square F11 matrix')
+    return tuple(vector(v,n)for v in value)
+
+def unit(n):
+    return tuple(tuple(1 if i==j else 0 for j in range(n))for i in range(n))
+
+def product(a,b,budget):
+    budget.check();n=len(a)
+    need(n==len(b)and all(len(x)==n for x in a+b),'internal square product dimensions')
+    out=tuple(tuple(sum(a[i][k]*b[k][j]for k in range(n))%11
+        for j in range(n))for i in range(n))
+    budget.check();return out
+
+def right_row(v,a):
+    return tuple(sum(v[i]*a[i][j]for i in range(len(v)))%11 for j in range(len(v)))
+
+def rank(a,budget):
+    work=[list(v)for v in a];pivots=0
+    for col in range(len(work[0])):
+        budget.check();chosen=next((i for i in range(pivots,len(work))if work[i][col]),None)
+        if chosen is None:continue
+        work[pivots],work[chosen]=work[chosen],work[pivots]
+        inverse=pow(work[pivots][col],9,11)
+        work[pivots]=[(x*inverse)%11 for x in work[pivots]]
+        for i in range(pivots+1,len(work)):
+            factor=work[i][col]
+            work[i]=[(x-factor*y)%11 for x,y in zip(work[i],work[pivots])]
+        pivots+=1
+        if pivots==len(work):break
+    return pivots
+
+def catalogue_operator(entry,index,budget):
+    value=vector(entry,7)
+    if index==1:
+        need(value==(0,)*7,'literal first catalogue A0 identity')
+        p=unit(2);q=tuple(tuple(-x%11 for x in row)for row in p)
+    else:
+        delta,x,y,z,a,b,c=value
+        need(delta in(1,2),'acquired trace-zero pair class')
+        p=((x,y),(z,-x%11));q=((a,b),(c,-a%11))
+        need((p[0][0]*p[1][1]-p[0][1]*p[1][0])%11==delta
+            and(q[0][0]*q[1][1]-q[0][1]*q[1][0])%11==delta,'exact paired determinants')
+    determinant=(p[0][0]*p[1][1]-p[0][1]*p[1][0])%11
+    need(determinant!=0,'invertible paired coordinate')
+    inv=pow(determinant,9,11)
+    ip=((p[1][1]*inv%11,-p[0][1]*inv%11),(-p[1][0]*inv%11,p[0][0]*inv%11))
+    need(product(p,ip,budget)==product(ip,p,budget)==unit(2),'explicit2x2 inverse')
+    rows=[]
+    for j in range(8):
+        basis=tuple(tuple(int(2*i+k==j%4)for k in range(2))for i in range(2))
+        block=product(product(p if j<4 else q,basis,budget),ip,budget)
+        flat=tuple(x for row in block for x in row)
+        rows.append(flat+(0,)*4 if j<4 else(0,)*4+flat)
+    return tuple(rows)
+
+def pure_actual(standard,r,ir,q,budget):
+    actual=product(product(ir,standard,budget),r,budget)
+    need(actual[0]==(1,0,0,0,0,0,0,0)and all(actual[i][0]==0 for i in range(1,8)),
+        'scalar-fixed exact actual pure7 block')
+    transpose=tuple(tuple(actual[j][i]for j in range(8))for i in range(8))
+    need(product(product(actual,q,budget),transpose,budget)==q,'same canonical full8 norm isometry')
+    return tuple(tuple(row[1:])for row in actual[1:])
+
+def actual_marks(prefix,c,budget):
+    a,e,b=prefix;identity=unit(7)
+    need(all(h!=identity and product(h,h,budget)==identity for h in(a,b,c,e))
+        and a!=c and b!=e,'all four actual nonidentity involutions/distinct commuting end pairs')
+    need(all(product(x,y,budget)==product(y,x,budget)for x,y in((a,c),(a,e),(b,e))),
+        'all three required actual distant commutations')
+    return(a,b,c),(b,c,e)
+
+def shape(q):
+    need(type(q)is dict and set(q)=={'path','bytes','sha256'}and type(q['path'])is str
+         and Path(q['path']).is_absolute()and type(q['bytes'])is int and q['bytes']>=0
+         and type(q['sha256'])is str and len(q['sha256'])==64
+         and all(c in'0123456789abcdef'for c in q['sha256']),'exact ordinary reference')
+    return q
+
+class WorkStop(Exception):
+    pass
+
+class Budget:
+    def __init__(self):
+        self.start=time.monotonic()
+
+    def check(self,work=True):
+        elapsed=time.monotonic()-self.start
+        if work and (elapsed>=WORK_SECONDS or peak_bytes()>=WORK_RSS_CAP):
+            raise WorkStop('SHARED_WORK_TIME_OR_RSS_CAP')
+        need(elapsed<TOTAL_SECONDS and peak_bytes()<RSS_CAP,
+             'whole100s/128MiB budget including authentication and output')
+
+def sorted_indices(value,upper):
+    need(type(value)is list and all(type(x)is int and 1<=x<=upper for x in value)
+         and value==sorted(set(value)),'complete sorted unique original indices')
+    return set(value)
+
+def successful_tool(value):
+    need(type(value)is dict and set(value)=={'handle','initial_chunk','terminal_chunk','exit_code','synchronous'}
+         and type(value['exit_code'])is int and value['exit_code']==0
+         and type(value['synchronous'])is bool
+         and all(type(value[k])is str and value[k]for k in('initial_chunk','terminal_chunk')),
+         'successful genuine canonical tool')
+    need((value['synchronous']and value['handle']is None and value['initial_chunk']==value['terminal_chunk'])
+         or(not value['synchronous']and type(value['handle'])is int and value['handle']>0),
+         'exact synchronous or asynchronous tool identity')
+
+def algebra_product(x,y,t):
+    answer=[0]*8
+    for i,a in enumerate(x):
+        if a:
+            for j,b in enumerate(y):
+                if b:
+                    for k,c in enumerate(t[i][j]):
+                        answer[k]=(answer[k]+a*b*c)%11
+    return tuple(answer)
+
+def algebra_automorphism(m,t,q,budget):
+    need(rank(m,budget)==7,'invertible actual pure action')
+    extended=((1,0,0,0,0,0,0,0),)+tuple((0,)+row for row in m)
+    transpose=tuple(zip(*extended))
+    need(product(product(extended,q,budget),transpose,budget)==q,'whole canonical8 norm isometry')
+    for i in range(8):
+        for j in range(8):
+            need(right_row(t[i][j],extended)==algebra_product(extended[i],extended[j],t),
+                 'all64 actual multiplication-basis products, not isometry alone')
+        budget.check()
+
+def metadata_selection(d,obstruction,packet_ref,budget):
+    gate,domain,sp=d['accepted_gate'],d['domain'],d['stabilizer_source_packet']
+    need(sp['schema']=='F004_PREFIX8_STABILIZER_OBSTRUCTION_SOURCE_PACKET_V1'
+         and sp['program']==EXPECTED['stabilizer_program']
+         and sp['inputs']=={k:EXPECTED[k]for k in STABILIZER_ROLES},
+         'literal unchanged stabilizer Source/authority packet')
+    peer,execution=d['stabilizer_source_review'],d['stabilizer_source_execution']
+    need(peer['status']=='PASS_DISTINCT_F004_PREFIX8_STABILIZER_OBSTRUCTION_SOURCE'
+         and peer['program']==execution['program']==EXPECTED['stabilizer_program']
+         and peer['source_packet']==execution['source_packet']==EXPECTED['stabilizer_source_packet']
+         and peer['blockers']==[]and peer['source_author']!=peer['reviewer']
+         and execution['actor']==peer['reviewer']and execution['review']==EXPECTED['stabilizer_source_review'],
+         'distinct genuine stabilizer Source authority, not actual adoption')
+    successful_tool(execution['actual_tool'])
+    need(gate['root']=='/root'
+         and gate['schema']=='ROOT_F004_PREFIX8_SHARED148_CERTIFICATE_ACCEPTANCE_V1'
+         and gate['status']=='ROOT_ACCEPTED_PREFIX8_SHARED_LINE_AND_TRIANGLE_CERTIFICATES'
+         and gate['original_job']==[8,4]and gate['original_prefix_index']==8
+         and gate['domain']==EXPECTED['domain']and gate['model_source_join']==EXPECTED['model_join']
+         and gate['prefix_complete']is False and gate['CURRENT_or_SNAP_modified']is False
+         and all(type(gate[k])is int and gate[k]==0 for k in('candidate_credit','census_credit','whole_original_credit')),
+         'exact accepted predecessor; no unadopted stabilizer-row credit')
+    need(domain['schema']=='F004_Q11_INDEXED_CAYLEY_CENTRALIZER_DOMAIN_CERTIFICATE_V1'
+         and domain['status']=='VERIFIED_CAYLEY_FRAME_AND_AUTOMORPHISM_DOMAIN'
+         and domain['certificate_verified']is True and domain['field']==11 and domain['rank']==4
+         and domain['convention']=='RIGHT_ROW'and domain['original_job']==[8,4]
+         and domain['original_prefix_index']==8 and domain['selected_labels']==[1,4,2]
+         and domain['orbit_schema']==ORBIT_SCHEMA and domain['orbit_action']==ORBIT_ACTION
+         and domain['prefix_export']==gate['original_export']==EXPECTED['original_export']
+         and domain['model_bridge_source']==EXPECTED['model_proof']and domain['old_indices_reinterpreted']is False,
+         'same complete acquired original prefix domain and ordered transport')
+    terminal,clearance,release=d['catalogue_terminal'],d['catalogue_clearance'],d['catalogue_release']
+    need(terminal['root']==clearance['root']==release['root']=='/root'
+         and terminal['status']=='ROOT_RETURNED_INDEXED_CAYLEY_CERTIFICATE'
+         and release['status']=='ROOT_RELEASED_INDEXED_CAYLEY_CERTIFICATE'
+         and terminal['result']==EXPECTED['domain']and terminal['release']==EXPECTED['catalogue_release']
+         and clearance['terminal']==EXPECTED['catalogue_terminal']
+         and clearance['actual_tool']==terminal['actual_tool']and clearance['known_scope_drained']is True
+         and terminal['own_positive']is clearance['own_positive']is True
+         and terminal['known']==clearance['known']and terminal['groups']==clearance['groups']
+         and type(clearance['groups'])is dict and clearance['groups']
+         and all(type(v)is list and not v for v in clearance['groups'].values()),
+         'genuine paid catalogue acquisition and drained known ownership')
+    successful_tool(terminal['actual_tool'])
+    cp=d['catalogue_source_review']
+    need(release['program']==cp['program']==EXPECTED['catalogue_program']
+         and release['source_review']==EXPECTED['catalogue_source_review']
+         and cp['status']=='PASS_DISTINCT_F004_Q11_INDEXED_CAYLEY_FRAME_CATALOGUE_SOURCE'
+         and cp['blockers']==[]and cp['reviewer']!=cp['source_author']
+         and release['prefix_export']==EXPECTED['original_export'],
+         'paid whole catalogue producer and distinct Source proof')
+    command=release['command']
+    need(type(command)is list and len(command)==10 and command[1:3]==['-E','-B']
+         and command[3:]==[EXPECTED['catalogue_program']['path'],'--prefix-export',
+             EXPECTED['original_export']['path'],'--prefix-export-sha256',
+             EXPECTED['original_export']['sha256'],'--output',EXPECTED['domain']['path']],
+         'exact paid catalogue command and output')
+    model=d['model_join'];origin=domain['origin'];external=domain['external_premises']
+    need(type(origin)is dict and set(origin)==ORIGIN_ROLES,'all original export roles')
+    for q in origin.values():shape(q)  # Unopened historical leaves; direct read caps remain unchanged.
+    need(external==dict(root='/root',model_bridge_source=EXPECTED['model_proof'],
+                      model_source_join=EXPECTED['model_join'],original_A_equals_G=True)
+         and model['schema']=='F004_PREFIX8_MODEL_SOURCE_JOIN_V1'and model['root']=='/root'
+         and model['original_job']==[8,4]and model['original_prefix_index']==8
+         and model['original_A_equals_G']is True and model['model_bridge_source']==EXPECTED['model_proof']
+         and domain['original_prefix_index_proof']==origin['original_prefix_index_proof']
+         ==model['original_prefix_provenance']['preexport_index_proof'],
+         'exact original image/full-model/faithful transport premises')
+    premise=model['accepted_full_model_equality_premises']
+    need(premise['theorem']==EXPECTED['model_proof']and premise['no_fresh_actual_model_equality_claim']is True
+         and premise['cayley_normalization_gate']==domain['normalization']==EXPECTED['normalization_gate']
+         and premise['direct_forms_gate']==domain['forms_acceptance']==EXPECTED['forms_gate']
+         and premise['faithful_frame_gate']==domain['faithful_frame_acceptance']==EXPECTED['frame_gate'],
+         'same borrowed accepted full natural Cayley image')
+    values=domain['catalogue'];upper=domain['catalogue_size']
+    need(type(upper)is int and upper>0 and type(values)is list and len(values)==upper,
+         'complete acquired catalogue length')
+    need(sorted_indices(domain['selected_raw_domain_indices'],upper)==set(range(1,upper+1))
+         and domain['selected_raw_domain_size']==upper,'entire rank4 raw domain')
+    pairs=domain['endpoint_group_pair_coordinates'];s=domain['prefix_stabilizer_indices']
+    need(type(pairs)is list and len(pairs)==domain['endpoint_group_order']
+         and domain['prefix_stabilizer_order']==len(s)==4,'complete paid prefix stabilizer')
+    ss=sorted_indices(s,len(pairs));seen=set();by_rep={}
+    for row in domain['orbits']:
+        need(type(row)is list and len(row)==4,'whole acquired orbit row')
+        rep,members,transporters,order=row;members_set=sorted_indices(members,upper)
+        need(members_set and type(rep)is int and rep==members[0]and rep not in by_rep
+             and type(transporters)is list and len(transporters)==len(members)
+             and all(type(x)is int and x in ss for x in transporters)
+             and type(order)is int and order>=1 and len(members)*order==4
+             and not(seen&members_set),'complete disjoint member/transporter/stabilizer cover')
+        by_rep[rep]=row;seen.update(members_set);budget.check()
+    need(list(by_rep)==sorted(by_rep)and seen==set(range(1,upper+1)),
+         'whole original orbit cover without new orbit action')
+    targets=gate['unpaid_orbits'];target_set=sorted_indices(targets,upper)
+    previous=sorted_indices(gate['newly_rejected_orbits'],upper)
+    need(target_set<=by_rep.keys()and previous<=by_rep.keys()and not(target_set&previous)
+         and type(gate['old_rejected_orbits'])is int and type(gate['new_rejected_orbits'])is int
+         and gate['new_rejected_orbits']==len(previous)
+         and gate['old_rejected_orbits']+len(previous)==gate['total_rejected_orbits']
+         and gate['remaining_unpaid_count']==len(targets)
+         and gate['total_rejected_orbits']+len(targets)==len(by_rep),'accepted residual partition')
+    selected=[by_rep[r]for r in targets]
+    nonfree=[row for row in selected if row[3]>1];free=[row for row in selected if row[3]==1]
+    need(obstruction['schema']=='F004_PREFIX8_CERTIFIED_STABILIZER_OBSTRUCTION_V1'
+         and obstruction['status']=='VERIFIED_PREFIX8_CERTIFIED_STABILIZER_OBSTRUCTION'
+         and obstruction['program']==EXPECTED['stabilizer_program']
+         and obstruction['source_packet']==EXPECTED['stabilizer_source_packet']
+         and obstruction['inputs']==sp['inputs']
+         and obstruction['original_job']==[8,4]and obstruction['original_prefix_index']==8
+         and obstruction['target_representatives']==targets and obstruction['target_orbit_rows']==selected
+         and obstruction['rejection_orbit_rows']==nonfree and obstruction['unpaid_orbit_rows']==free
+         and obstruction['newly_rejected_orbits']==[row[0]for row in nonfree]
+         and obstruction['unpaid_orbits']==[row[0]for row in free]
+         and obstruction['target_count']==len(selected)and obstruction['new_rejected_count']==len(nonfree)
+         and obstruction['remaining_unpaid_count']==len(free)
+         and obstruction['prior_rejected_orbits_borrowed']==gate['total_rejected_orbits']
+         and obstruction['proposed_composed_rejected_count']==gate['total_rejected_orbits']+len(nonfree)
+         and obstruction['free_orbits_certified_generating']is False
+         and obstruction['prefix_complete']is False
+         and all(type(obstruction[k])is int and obstruction[k]==0
+                 for k in('candidate_credit','census_credit','whole_original_credit')),
+         'exact conditional stabilizer application and independently reconstructed free selection')
+    return values,[row[0]for row in free],origin,external,targets,[row[0]for row in nonfree]
+
+def coordinate_context(d,budget):
+    domain,normal=d['domain'],d['normalization_result']
+    fg,ng,forms=d['frame_gate'],d['normalization_gate'],d['forms_gate']
+    need(fg['status']=='ROOT_ACCEPTED_Q11_FAITHFUL_MATRIX_FRAME'and fg['reviewer']=='/root'
+         and fg['result']==EXPECTED['frame_result']and fg['field']==11 and fg['dimension']==7
+         and fg['full_generator_point_checks']==354312 and fg['inverse_checks']==6
+         and fg['inputs_unchanged']is True,'paid exact acquired faithful matrix frame')
+    need(ng['root']=='/root'and ng['status']=='ROOT_ACCEPTED_F004_ACTUAL_SPLIT_CAYLEY_NORMALIZATION'
+         and ng['result']==EXPECTED['normalization_result']and ng['actual_normalization_certified']is True
+         and ng['faithful_frame_acceptance']==EXPECTED['frame_gate']
+         and ng['invariant_forms_acceptance']==EXPECTED['forms_gate']and ng['kappa']==7
+         and ng['vector_identities_checked']==196 and ng['scalar_identities_checked']==1372
+         and ng['multiplication_coefficients']==512,'paid complete acquired normalized tensor')
+    need(forms['root']=='/root'and forms['status']=='ROOT_ACCEPTED_F004_Q11_DIRECT_INVARIANT_FORMS'
+         and forms['forms_verified']is True and forms['tensor_invariance_independently_checked']is True,
+         'paid actual-generator forms invariance')
+    need(normal['schema']=='F004_GF11_CAYLEY_NORMALIZATION_CERTIFICATE_V1'
+         and normal['status']=='CERTIFIED_GF11_SPLIT_CAYLEY_COMPOSITION'
+         and normal['certificate_verified']is True and normal['field']==11 and normal['kappa']==7
+         and normal['vector_identities_checked']==196 and normal['scalar_identities_checked']==1372
+         and normal['coordinates']=='[scalar,v0,v1,v2,v3,v4,v5,v6]; right row coordinates'
+         and normal['quadratic_matrix_convention']=='N(x)=x*Q*transpose(x); full polar matrix=2*Q',
+         'same canonical normalized actual multiplication and norm')
+    q=matrix(normal['quadratic_form_matrix'],8)
+    need(q==tuple(zip(*q))and rank(q,budget)==8 and q[0]==(1,0,0,0,0,0,0,0)
+         and all(q[i][0]==0 for i in range(1,8))
+         and [list(row[1:])for row in q[1:]]==normal['pure_quadratic_form_matrix'],
+         'exact nonsingular scalar/pure canonical Q, not beta or2Q')
+    tensor=normal['multiplication_tensor']
+    need(type(tensor)is list and len(tensor)==8,'whole eight-layer multiplication tensor')
+    tensor=tuple(matrix(layer,8)for layer in tensor)
+    r=matrix(domain['standard_to_actual_row_map'],8);ir=matrix(domain['actual_to_standard_row_map'],8)
+    need(product(r,ir,budget)==product(ir,r,budget)==unit(8),'both exact coordinate-map inverses')
+    prefix=[pure_actual(matrix(m,8),r,ir,q,budget)for m in domain['standard_ordered_prefix_matrices']]
+    export=d['original_export']
+    need(export['schema']=='F004_Q11_INDEXED_ORIGINAL_PREFIX_MATRICES_V1'
+         and export['convention']=='RIGHT_ROW'and export['original_job']==[8,4]
+         and export['original_prefix_index']==8 and export['field']==11 and export['dimension']==7
+         and export['selected_labels']==[1,4,2]and export['end_order']==[1,4,2,3]
+         and export['matrix_frame_result']==EXPECTED['frame_result']
+         and len(prefix)==3 and prefix==[matrix(m,7)for m in export['matrices']]
+         and len(set(prefix))==3,'exact labelled acquired original pure7 prefix')
+    acquired=d['frame_result']
+    need(acquired['status']=='PASS_LITERAL_Q11_MATRIX_FRAME_ACQUISITION'
+         and acquired['field']==11 and acquired['dimension']==7 and acquired['ordered_generators']==2
+         and acquired['full_generator_point_checks']==354312 and acquired['six_inverse_checks']==6
+         and acquired['table']==fg['table']and acquired['model']==fg['model']
+         and type(acquired['source_matrices'])is list and len(acquired['source_matrices'])==2,
+         'two paid actual-coordinate ambient generator separators')
+    separators=tuple(matrix(m,7)for m in acquired['source_matrices'])
+    for m in tuple(prefix)+separators:algebra_automorphism(m,tensor,q,budget)
+    return tuple(prefix),separators,r,ir,q,tensor
+
+def candidate_marks(rep,context,budget):
+    c=pure_actual(catalogue_operator(context['values'][rep-1],rep,budget),
+                  context['r'],context['ir'],context['q'],budget)
+    a,e,b=context['prefix'];marks=(a,b,c,e)
+    actual_marks(context['prefix'],c,budget)
+    need(len(set(marks))==4,'four distinct genuine original marks')
+    algebra_automorphism(c,context['tensor'],context['q'],budget)
+    return marks
+
+def write_file(path,raw):
+    with path.open('xb')as f:
+        need(f.write(raw)==len(raw),'whole exclusive output write');f.flush();os.fsync(f.fileno())
+    return file_pin(path,raw)
+
+def fresh_directory(path):
+    need(path.is_absolute()and not os.path.lexists(path)
+         and path.parent.resolve(strict=True)==path.parent,'fresh absolute ordinary output directory')
+    path.mkdir()
+
+def cli_pin(path,sha):
+    return refcheck(dict(path=str(path),bytes=path.lstat().st_size,sha256=sha))
+
+def framed(raw,count):
+    lines=raw.splitlines(keepends=True)
+    need(len(lines)==count and all(x.endswith(b'\n')and len(x)<=RECORD_CAP for x in lines),
+        'whole expected LF records, no partial/overlong tail')
+    values=[decode(x)for x in lines]
+    need(all(canonical(v)+b'\n'==line for v,line in zip(values,lines)),'canonical entire LF journal')
+    return values
+
+def power(a,exponent,budget):
+    need(type(exponent)is int and exponent>=0,'nonnegative exact word power')
+    answer=unit(len(a))
+    for bit in bin(exponent)[2:]:
+        answer=product(answer,answer,budget)
+        if bit=='1':answer=product(answer,a,budget)
+    return answer
+
+def exact_keys(value,keys,message):
+    need(type(value)is dict and set(value)==set(keys),message)
+
+def current_selection(d,values,old_free,origin,external,budget):
+    gate,point=d['current_acceptance'],d['point_acceptance']
+    current=sorted_indices(gate['unpaid_orbits'],len(values))
+    newly=sorted_indices(gate['newly_rejected_orbits'],len(values))
+    need(gate['root']==gate['reviewer']=='/root'
+        and gate['status']=='ROOT_ACCEPTED_PREFIX8_BOUNDED_INVARIANT_VECTOR_CERTIFICATES'
+        and gate['program']==EXTRA['base_program'] and gate['domain']==EXPECTED['domain']
+        and gate['original_job']==[8,4]and gate['original_prefix_index']==8
+        and gate['source_packet']==EXTRA['base_packet']
+        and gate['source_review']==EXTRA['base_review']and gate['source_execution']==EXTRA['base_execution']
+        and gate['prior_acceptance']==EXTRA['point_acceptance']
+        and gate['worker_old_predecessor']==EXPECTED['accepted_gate']
+        and gate['origin']==origin and gate['external_premises']==external
+        and gate['model_premises']['theorem']==EXPECTED['model_proof']
+        and gate['model_premises']['faithful_frame_gate']==EXPECTED['frame_gate']
+        and gate['model_premises']['direct_forms_gate']==EXPECTED['forms_gate']
+        and gate['model_premises']['cayley_normalization_gate']==EXPECTED['normalization_gate']
+        and gate['prefix_complete']is False
+        and all(type(gate[k])is int and gate[k]==0 for k in('candidate_credit','census_credit','whole_original_credit')),
+        'exact genuinely accepted current33 full-model/original Source authority')
+    need(point['root']=='/root'and point['status']=='ROOT_ACCEPTED_PREFIX8_STABILIZER_OBSTRUCTION_CERTIFICATES'
+        and point['prior_acceptance']==EXPECTED['accepted_gate']
+        and point['domain']==EXPECTED['domain']and point['result']==EXTRA['old_stabilizer_result']
+        and point['origin']==origin and point['external_premises']==external
+        and point['unpaid_orbits']==old_free
+        and point['total_rejected_orbits']==gate['old_rejected_orbits']==3741
+        and type(gate['new_rejected_orbits'])is int and gate['new_rejected_orbits']==len(newly)
+        and gate['total_rejected_orbits']==point['total_rejected_orbits']+len(newly)==3746
+        and gate['remaining_unpaid_count']==len(current)==33
+        and current.isdisjoint(newly)and current|newly==set(old_free)
+        and len(current)+gate['total_rejected_orbits']==3779,
+        'explicit3741 plus genuinely adopted5, exact current33; no old free38 target substitution')
+    mapping=d['role_map'];rows=mapping['rows']
+    need(mapping['status']=='COMPLETED_ORDINARY_CACHED_END_ROLE_PROJECTION_ONLY'
+        and mapping['reviewer']=='/root/unit_actual_review'
+        and mapping['inputs']==[EXTRA['current_acceptance'],EXTRA['old37_journal'],EXTRA['moved19_journal']]
+        and type(rows)is list and [r['representative']for r in rows]==gate['unpaid_orbits'],
+        'exact current33 cached proposal map, not mathematical credit')
+    records=framed(d['moved19_journal'],497)
+    header=records[0]
+    need(header['schema']=='F004_PREFIX8_MOVED19_ORDER4_WITNESS_JOURNAL_V1'
+        and header['program']==EXTRA['saved_worker']and header['domain']==EXPECTED['domain']
+        and header['original_export']==EXPECTED['original_export']
+        and header['original_job']==[8,4]and header['original_prefix_index']==8
+        and header['new_word_power']==7 and header['new_prime']==19
+        and header['moved19_alone_is_not_FULL_G2']is True,
+        'fixed genuine old moved19 source/header, never a fresh search')
+    by_rep={}
+    for row in rows:
+        rep=row['representative'];line=row['new19_journal_line']
+        need(type(line)is int and 1<=line<len(records),'literal zero-based saved record location')
+        record=records[line]
+        need(record['representative']==rep and record['status']=='UNPAID'
+            and record['all_mark_hypotheses_checked']is True,'exact old unpaid proposal record')
+        for side in('left','right'):
+            tag=row[side];saved=record[side]
+            need(tag['kind']==saved['kind'],'same named side cached kind')
+            if tag['kind']=='MOVED19_UNPAID':
+                need(type(tag['checkpoint'])is int and tag['checkpoint']==saved['checkpoint']
+                    and tag['power']==saved['power']==7 and tag['prime']==saved['prime']==19,
+                    'same named old19 proposal identity')
+        by_rep[rep]=(row,record)
+        budget.check()
+    return gate['unpaid_orbits'],by_rep
+
+
+def context_source_authority(d):
+    source,packet,peer,execution=(CONTEXT_SOURCE[k] for k in ('borrowed_context_source',
+        'borrowed_context_packet','borrowed_context_review','borrowed_context_execution'))
+    p=d['borrowed_context_packet'];r=d['borrowed_context_review'];e=d['borrowed_context_execution']
+    need(p['schema']=='F004_PREFIX8_MOVED19_REACHABLE_TREE_SOURCE_PACKET_V1'
+        and p['program']==source and p['source_author']=='/root/resource_cleanup_audit'
+        and p['inputs']==dict(EXPECTED,**EXTRA),'unchanged exact borrowed context packet')
+    need(r['status']=='PASS_DISTINCT_F004_PREFIX8_MOVED19_REACHABLE_TREE_SOURCE'
+        and r['program']==e['program']==source and r['source_packet']==e['source_packet']==packet
+        and r['source_author']!=r['reviewer'] and r['blockers']==[]
+        and e['review']==peer and e['actor']==r['reviewer']
+        and r['checks']==e['checks']==CONTEXT_SOURCE['borrowed_context_checks'],
+        'genuine distinct borrowed Source authority, not new algorithm controls')
+    successful_tool(e['actual_tool'])
+    r=d['middle19_theorem_review'];e=d['middle19_theorem_execution']
+    need(r['status']=='PASS_DISTINCT_F004_SHARED_MIDDLE19_NORMALIZER_COMPLETION_SOURCE'
+        and r['reviewer']=='/root' and r['source_author']=='/root/c5_terminal_audit'
+        and r['blockers']==[] and r['theorem']==e['theorem']==CONTEXT_SOURCE['middle19_theorem']
+        and r['late_author_proof']==CONTEXT_SOURCE['middle19_theorem_preparation']
+        and e['review']==CONTEXT_SOURCE['middle19_theorem_review'] and e['actor']==r['reviewer'],
+        'real attributed Root logical theorem review; no candidate arithmetic credit')
+    successful_tool(e['actual_tool'])
+
+
+
+NEW_INPUTS={'current24': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/j1_intersection_ten/validation/root_certificate_acceptance.json', 'bytes': 53080, 'sha256': '8fcf636db534d76a519557443c6354b0b0f9e25f5c1b20e0839f4223fc16328c'}, 'criteria': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/remaining24_prime_dictionary_criteria.rst', 'bytes': 7867, 'sha256': '76dc14fa82a0986e4e58128da164e20e0c5f298ab8975462a1f4573ce1749155'}, 'generation_criteria': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/g2_11_generation_by_prime_witnesses.tex', 'bytes': 26437, 'sha256': 'f1b6c8a69780c7b8ac88f239627a7ce6889c24203f72ddc35c86fe93e661e76b'}, 'moved19_criteria': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/g2_11_generation_moved19_order4.rst', 'bytes': 11978, 'sha256': '1d82837bf00b85ed580d87fb59afb8e072c23da572676ff90d3c0fd74cc98f7f'}, 'split_unitary_criteria': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/split_and_unitary_end_intersection_obstruction.rst', 'bytes': 14302, 'sha256': 'c8d38efd6049367e7caad1e07f5fe93275108b6e2ef112e9d436dc578177a9db'}, 'split_unitary_review': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/split_and_unitary_end_intersection_independent_review.rst', 'bytes': 6801, 'sha256': '9feeff10defddf990b76114f90e78e4191f55d3ee9c34851ca6f86fdb8a85ce6'}, 'unitary_criteria': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/double_unitary_end_intersection_obstruction.rst', 'bytes': 14424, 'sha256': 'd7e540f9ad61fbacf1f18ca1a184a0638581e6693a972a7705febd44e21c7126'}, 'unitary_review': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/theory/double_unitary_end_intersection_independent_review.rst', 'bytes': 4341, 'sha256': '591ca8e3a02c9213789f926c8a4fd1f67b5672c0fdeb12f4e33a10f4009047f7'}, 'old_word_source': {'path': '/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/search_prefix8_end_rejections.py', 'bytes': 18889, 'sha256': 'e63ef0bce9015003047b427ac87782e932bb83728293e29147b49c0191919233'}}
+
+def schedule():
+    """Exact old three-mark160-step rule, not the interval rule."""
+    state,last,letters = 17,0,[]
+    for i in range(1,161):
+        state = (1103515245*state+12345) % 2147483648
+        k = 1+(state//65536)%4
+        if (last,k) in ((1,2),(2,1),(3,4),(4,3)): k = ((k+1)%4)+1
+        letters.append(str(k)); last = k
+    return tuple(''.join(letters[:i]) for i in range(4,161,4))
+
+def expand_legacy(text):
+    need(type(text)is str and 1<=len(text)<=160 and all(x in'1234'for x in text),
+        'literal old rotation-letter word')
+    return ''.join({'1':'01','2':'10','3':'12','4':'21'}[x]for x in text)
+
+def free_product_form(text):
+    """C2*V4 normal form uses only the actual end involution/V4 relations."""
+    need(type(text)is str and all(x in'012'for x in text),'literal three involution marks')
+    out=[]
+    for letter in text:
+        value={'0':1,'1':0,'2':2}[letter]
+        if out and (out[-1]==0)==(value==0):
+            previous=out.pop()
+            if value!=0 and previous^value:out.append(previous^value)
+        else:out.append(value)
+    return tuple(out)
+
+def new_dictionary():
+    seen={free_product_form(expand_legacy(text))for text in schedule()}
+    result=[];raw_count=0
+    for size in range(1,5):
+        for number in range(3**size):
+            digits=[];rest=number
+            for unused in range(size):digits.append(rest%3);rest//=3
+            digits.reverse();raw_count+=1
+            text=''.join('1'+('0','2','02')[x]for x in digits)
+            key=free_product_form(text)
+            if key in seen:continue
+            seen.add(key)
+            result.append(dict(raw_index=raw_count,syllables=[x+1 for x in digits],word=text))
+    need(raw_count==120 and len(result)<=120,'fixed finite120 raw choices, no adaptive restart')
+    return result
+
+def mark_word(text,end,budget):
+    need(type(text)is str and 1<=len(text)<=320 and all(x in'012'for x in text),
+        'full literal end word in0,1,2, including old160 rotation letters')
+    value=unit(7)
+    for letter in text:value=product(value,end[int(letter)],budget)
+    return value
+
+def fixed_line(y,budget):
+    equations=[[(y[i][j]-int(i==j))%11 for i in range(7)]for j in range(7)]
+    need(rank(equations,budget)==6,'independent exact rank6 pure prime fixed space')
+    work=[row[:]for row in equations];pivots=[]
+    for col in range(7):
+        chosen=next((i for i in range(len(pivots),7)if work[i][col]),None)
+        if chosen is None:continue
+        k=len(pivots);work[k],work[chosen]=work[chosen],work[k]
+        inverse=pow(work[k][col],9,11);work[k]=[x*inverse%11 for x in work[k]]
+        for i in range(7):
+            if i!=k:
+                factor=work[i][col];work[i]=[(x-factor*z)%11 for x,z in zip(work[i],work[k])]
+        pivots.append(col);budget.check()
+    need(len(pivots)==6,'whole RREF agrees with independent rank')
+    free=next(j for j in range(7)if j not in pivots);v=[0]*7;v[free]=1
+    for i,col in enumerate(pivots):v[col]=-work[i][free]%11
+    inverse=pow(next(x for x in v if x),9,11);v=tuple(x*inverse%11 for x in v)
+    need(right_row(v,y)==v and any(v),'full normalized actual right-row fixed vector')
+    return v
+
+def prime_fact(end,text,cofactor,prime,q,budget,origin):
+    need(prime in(19,37)and type(cofactor)is int and cofactor in(3,6,7,14),
+        'fixed declared prime/cofactor proposals only')
+    y=power(mark_word(text,end,budget),cofactor,budget)
+    if y==unit(7)or power(y,prime,budget)!=unit(7):return None
+    v=fixed_line(y,budget)
+    norm=sum(v[i]*q[i+1][j+1]*v[j]for i in range(7)for j in range(7))%11
+    need(norm!=0,'nondegenerate canonical prime fixed line in actual natural model')
+    root=next((x for x in range(1,11)if x*x%11==-norm%11),None)
+    moved=None
+    for k,h in enumerate(end):
+        vh=right_row(v,h)
+        for i in range(7):
+            for j in range(i+1,7):
+                if(v[i]*vh[j]-v[j]*vh[i])%11:
+                    moved=dict(generator=k,minor=[i,j]);break
+            if moved is not None:break
+        if moved is not None:break
+    kind=('MOVED19'if prime==19 else'MOVED37')if moved else('PROPER19'if prime==19 else'PROPER37')
+    need(moved is not None or(prime==19 and root is not None)or(prime==37 and root is None),
+        'preserved prime line has required canonical split/nonsplit type')
+    return dict(kind=kind,word=text,word_encoding='LITERAL_END_MARKS_012',power=cofactor,prime=prime,
+        matrix=[list(r)for r in y],fixed_line=list(v),canonical_norm=norm,
+        split_square_root=root,movement=moved,origin=origin)
+
+def exact_middle_order(u,budget):
+    identity=unit(7)
+    for order,primes in((5,(5,)),(6,(2,3)),(8,(2,)),(10,(2,5)),(12,(2,3)),(22,(2,11))):
+        if power(u,order,budget)==identity and all(power(u,order//p,budget)!=identity for p in primes):
+            return order
+    return None
+
+def cached_fact(end,proposal,q,budget):
+    kind=proposal['kind']
+    if kind=='NO19_WITNESS_UNPAID':return None
+    need(kind in('PROPER19','PROPER37','MOVED19_UNPAID'),'exact retained current33 proposal kind')
+    prime=37 if kind=='PROPER37'else 19;cofactor=3 if prime==37 else 7
+    number=proposal['checkpoint'];words=schedule()
+    need(type(number)is int and 1<=number<=40 and proposal['word']==words[number-1]
+        and proposal['power']==cofactor and proposal['prime']==prime,'whole stored old40 word identity')
+    fact=prime_fact(end,expand_legacy(proposal['word']),cofactor,prime,q,budget,
+        dict(kind='RECHECKED_RETAINED_PROPOSAL',checkpoint=number,old_word=proposal['word']))
+    need(fact is not None and fact['kind']==('MOVED19'if kind=='MOVED19_UNPAID'else kind),
+        'fresh same-end full prime/fixed-line proposal re-evaluation')
+    expected=([fact['fixed_line'],fact['movement']['generator'],fact['movement']['minor']]if kind=='MOVED19_UNPAID'
+        else[fact['fixed_line'],fact['canonical_norm'],fact['split_square_root']]if prime==19 else[fact['fixed_line']])
+    need(proposal['fact']==expected,'entire saved line/norm/movement fact, never cached label credit')
+    return fact
+
+def full_end_reason(facts,middle_order):
+    if any(f['kind']=='MOVED37'for f in facts):return'EXACT37_MOVED_UNIQUE_LINE'
+    if any(f['kind']=='MOVED19'for f in facts)and middle_order in(8,12,22):
+        return'EXACT19_MOVED_UNIQUE_LINE_AND_LITERAL_MIDDLE_J1_EXCLUSION'
+    if {f['prime']for f in facts}=={19,37}:return'SAME_END_EXACT19_AND37'
+    return None
+
+def end_search(end,proposal,middle_order,q,budget,skip_h3=False):
+    facts=[];attempts=[]
+    cached=cached_fact(end,proposal,q,budget)
+    if cached is not None:facts.append(cached)
+    reason=full_end_reason(facts,middle_order)
+    proper=next((f['kind']for f in facts if f['kind'].startswith('PROPER')),None)
+    if reason or proper:return dict(facts=facts,attempted_dictionary_indices=attempts,full_reason=reason,proper_type=proper,skipped_h3=False)
+    if skip_h3:
+        need(not facts,'H3 cannot contain either retained prime under the guarded actual relations')
+        return dict(facts=[],attempted_dictionary_indices=[],full_reason=None,proper_type=None,skipped_h3=True)
+    for item in new_dictionary():
+        attempts.append(item['raw_index'])
+        value=mark_word(item['word'],end,budget)
+        for prime,cofactor in((19,14),(37,6)):
+            if any(f['prime']==prime for f in facts):continue
+            y=power(value,cofactor,budget)
+            if y==unit(7)or power(y,prime,budget)!=unit(7):continue
+            fact=prime_fact(end,item['word'],cofactor,prime,q,budget,dict(kind='NEW_FIXED_V4_DICTIONARY',**item))
+            need(fact is not None,'independent whole word re-evaluation agrees with proposer')
+            facts.append(fact)
+            reason=full_end_reason(facts,middle_order)
+            proper=next((f['kind']for f in facts if f['kind'].startswith('PROPER')),None)
+            if reason or proper:return dict(facts=facts,attempted_dictionary_indices=attempts,full_reason=reason,proper_type=proper,skipped_h3=False)
+    return dict(facts=facts,attempted_dictionary_indices=attempts,full_reason=None,proper_type=None,skipped_h3=False)
+
+def dictionary_record(rep,context,proposal,budget):
+    marks=candidate_marks(rep,context,budget);a,b,c,e=marks
+    ab=product(a,b,budget)
+    need(ab!=unit(7)and power(ab,3,budget)==unit(7),'fresh exact original fixed-prefix order3')
+    u=product(b,c,budget);middle=exact_middle_order(u,budget)
+    left=end_search((a,b,c),proposal['left'],middle,context['q'],budget,skip_h3=(middle==5))
+    right=(dict(facts=[],attempted_dictionary_indices=[],full_reason=None,proper_type=None,skipped_h3=False,
+        not_needed_full_left=True)if left['full_reason']else end_search((b,c,e),proposal['right'],middle,context['q'],budget))
+    rejection=('FULL_LEFT_END_IP_FAILURE'if left['full_reason']else'FULL_RIGHT_END_IP_FAILURE'if right['full_reason']else
+        'BOTH_FULL_NATURAL_A2_ENDS_INTERSECTION_FAILURE'if left['proper_type']and right['proper_type']else None)
+    return dict(representative=rep,status='VERIFIED_PRIME_END_REJECTION'if rejection else'UNPAID_FIXED_DICTIONARY_MISS',
+        rejection=rejection,original_job=[8,4],original_prefix_index=8,
+        marks=[list(map(list,m))for m in marks],literal_middle_product=[list(r)for r in u],
+        exact_middle_order=middle,left=left,right=right,all_original_mark_hypotheses_checked=True,
+        all64_candidate_cayley_products_checked=True,no_negative_prime_absence_claim=True)
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False,description=__doc__)
+    for flag in('source-packet','source-review','source-execution'):
+        ap.add_argument('--'+flag,type=Path,required=True);ap.add_argument('--'+flag+'-sha256',required=True)
+    ap.add_argument('--out',type=Path,required=True);args=ap.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,'assert-enabled -E -B')
+    budget=Budget();opened={}
+    def read(ref):
+        refcheck(ref);old=opened.get(ref['path']);need(old is None or old==ref,'one literal full input identity')
+        if old is None:need(len(opened)<INPUT_COUNT_CAP and sum(x['bytes']for x in opened.values())+ref['bytes']<=UNIQUE_INPUT_CAP,
+            'unchanged96 direct inputs/8MiB, no historical payload expansion')
+        raw=read_exact(ref,budget);opened[ref['path']]=ref;return raw
+    packet_ref=cli_pin(args.source_packet,args.source_packet_sha256);packet=decode(read(packet_ref))
+    self_ref=file_pin(Path(__file__).resolve(strict=True),Path(__file__).read_bytes())
+    need(packet['schema']=='F004_REMAINING24_PRIME_DICTIONARY_SOURCE_V1'and packet['program']==self_ref
+        and packet['inputs']==dict(EXPECTED,**EXTRA,**CONTEXT_SOURCE,**NEW_INPUTS)
+        and packet['worker_limits']==LIMITS and packet['outer_profile_required']==OUTER_LIMITS,'exact new program/readset/caps')
+    for ref in packet['required_source_inputs']:read(ref)
+    review_ref=cli_pin(args.source_review,args.source_review_sha256);review=decode(read(review_ref))
+    ex_ref=cli_pin(args.source_execution,args.source_execution_sha256);execution=decode(read(ex_ref))
+    need(review['status']=='PASS_DISTINCT_F004_REMAINING24_PRIME_DICTIONARY_SOURCE'
+        and review['program']==execution['program']==self_ref and review['source_packet']==execution['source_packet']==packet_ref
+        and review['theorem']==NEW_INPUTS['criteria']and review['source_author']=='/root/c5_terminal_audit'
+        and review['reviewer']!=review['source_author']and review['blockers']==[]
+        and execution['review']==review_ref and execution['actor']==review['reviewer'],'genuine distinct full Source/math proof')
+    successful_tool(execution['actual_tool'])
+    text_roles=TEXT_ROLES|EXTRA_TEXT|{'borrowed_context_source','middle19_theorem','criteria','generation_criteria',
+        'moved19_criteria','split_unitary_criteria','split_unitary_review','unitary_criteria','unitary_review','old_word_source'}
+    docs={key:(read(ref)if key in text_roles else decode(read(ref)))for key,ref in packet['inputs'].items()}
+    context_source_authority(docs)
+    values,old_free,origin,external,old_targets,old_nonfree=metadata_selection(docs,docs['old_stabilizer_result'],packet_ref,budget)
+    old_remaining,proposals=current_selection(docs,values,old_free,origin,external,budget)
+    gate=docs['current24'];selected=gate['unpaid_orbits']
+    need(gate['root']==gate['reviewer']=='/root'and gate['status']=='ROOT_ACCEPTED_F004_MIDDLE10_LITERAL_WORD_REJECTION'
+        and gate['original_job']==[8,4]and gate['original_prefix_index']==8 and gate['rank']==4
+        and gate['total_orbits']==3779 and gate['total_rejected_orbits']==3755
+        and gate['remaining_unpaid_count']==len(selected)==24 and selected==sorted(set(selected))
+        and all(type(i)is int and i in old_remaining for i in selected)
+        and gate['prefix_complete']is False and gate['original_orbit_accounting_adopted']is True
+        and all(type(gate[k])is int and gate[k]==0 for k in('candidate_credit','census_credit','whole_original_credit')),
+        'only genuinely accepted current24, all old frame/model/weight authority retained')
+    prefix,separators,r,ir,q,tensor=coordinate_context(docs,budget)
+    context=dict(values=values,prefix=prefix,separators=separators,r=r,ir=ir,q=q,tensor=tensor)
+    records=[];started=[];completed=[];stop=None
+    for rep in selected:
+        try:
+            budget.check();started.append(rep);record=dictionary_record(rep,context,proposals[rep][1],budget)
+        except WorkStop as error:
+            stop=str(error);records.append(dict(representative=rep,status='INTERRUPTED_UNPAID',rejection=None));break
+        records.append(record);completed.append(rep)
+    paid=[v['representative']for v in records if v['rejection']is not None]
+    common=dict(program=self_ref,source_packet=packet_ref,source_review=review_ref,source_execution=ex_ref,
+        criterion=NEW_INPUTS['criteria'],accepted_predecessor=NEW_INPUTS['current24'],domain=EXPECTED['domain'],
+        original_job=[8,4],original_prefix_index=8,rank=4,origin=origin,external_premises=external,
+        model_source_join=EXPECTED['model_join'],worker_limits=LIMITS,outer_profile_required=OUTER_LIMITS,
+        selected_representatives=selected,mathematical_credit=0,candidate_credit=0,census_credit=0,whole_original_credit=0,
+        dictionary_raw_choices_per_end=120,old40_free_product_forms_skipped=True,word_encoding='LITERAL_END_MARKS_012',
+        root_adoption=None,prefix_complete=False)
+    all_records=[dict(schema='F004_REMAINING24_PRIME_DICTIONARY_JOURNAL_V1',**common),*records]
+    journal=b''.join(canonical(v)+b'\n'for v in all_records)
+    need(all(len(canonical(v))+1<=RECORD_CAP for v in all_records),'whole16KiB header and certificate records')
+    final_inputs=sorted(opened.values(),key=lambda x:x['path'])
+    for ref in final_inputs:read_exact(ref,budget,False)
+    report=dict(schema='F004_REMAINING24_PRIME_DICTIONARY_RESULT_V1',status='BOUNDED_PRIME_CERTIFICATES_WITH_EXPLICIT_UNPAID',
+        **common,arithmetic_started_representatives=started,arithmetic_completed_representatives=completed,
+        newly_verified_representatives=paid,remaining_unpaid_representatives=[x for x in selected if x not in paid],
+        arithmetic_unvisited_representatives=[x for x in selected if x not in completed],stop=stop,
+        all_direct_inputs_authenticated_before_and_after=True,historical_origin_leaves_freshly_hashed_by_this_worker=False,
+        inputs=final_inputs,input_scope=dict(count=len(final_inputs),bytes=sum(x['bytes']for x in final_inputs),
+            sha256=hashlib.sha256(canonical(final_inputs)).hexdigest()),journal=file_pin(args.out/'certificates.jsonl',journal))
+    raw=canonical(report)+b'\n';need(len(raw)<=REPORT_CAP and len(raw)+len(journal)<=OUTPUT_CAP,'whole64KiB report/256KiB combined')
+    budget.check(False);fresh_directory(args.out)
+    write_file(args.out/'certificates.jsonl',journal);write_file(args.out/'result.json',raw);budget.check(False)
+    print(canonical(dict(result=file_pin(args.out/'result.json',raw),newly_verified=len(paid),stop=stop)).decode())
+
+if __name__=='__main__':main()

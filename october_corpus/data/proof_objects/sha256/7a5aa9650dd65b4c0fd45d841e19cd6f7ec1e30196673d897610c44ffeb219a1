@@ -1,0 +1,257 @@
+"""UNRUN DATA completion of an acquired31-part S3-minimum family.
+Whole actual bodies and closures only. No scientific code or map is loaded.
+Root alone adopts the stage and releases the unchanged value assembler.
+Author /root/prime_theory_audit.
+"""
+import argparse,base64,gzip,hashlib,json,math,os,resource,signal,stat,sys,time
+from pathlib import Path
+START=time.monotonic();READ=Path(__file__).stat().st_size;SEEN={};CACHE={};MIB=2**20
+N=500178;PY='/Users/sasha/.venvs/global/bin/python'
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+WORKER=dict(path='/private/tmp/l026_triangle_quotients/classification/finite_worker.py',bytes=10902,sha256='9ef66b4b226e9c88a32f8956cee67022bba50a062904ab1a323063fbb323fa9a')
+KERNEL=dict(path='/private/tmp/l026_triangle_quotients/classification/finite_quotients.py',bytes=6535,sha256='767df337ae79071778e19a43a5407098986c1bfc0e4779e7c2f902273cdefbbc')
+ASSEMBLER=dict(path='/private/tmp/l026_triangle_quotients/classification/assemble_values.py',bytes=11064,sha256='dacee52bf8715afee028cc7d1d61561631437022c4b6828116ad617a3d85cc14')
+def need(ok,why):
+    if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>256*MIB or time.monotonic()-START>=150:raise RuntimeError('256MiB/150s DATA completion')
+    if not ok:raise ValueError(why)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def strict(raw):
+    def pairs(items):
+        v={}
+        for k,x in items:need(k not in v,'unique DATA key');v[k]=x
+        return v
+    def finite(s):
+        x=float(s);need(math.isfinite(x),'finite original observations');return x
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=finite,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+def reference(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def shape(r,cap=16*MIB):
+    need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str and Path(r['path']).is_absolute()
+         and type(r['bytes'])is int and 0<=r['bytes']<=cap and type(r['sha256'])is str and len(r['sha256'])==64,'complete finite DATA descriptor')
+def whole(r,again=False):
+    global READ
+    shape(r);p=Path(r['path']);need(SEEN.get(str(p),r)==r,'one actual version per path')
+    if not again and str(p)in CACHE:return CACHE[str(p)]
+    need(READ+r['bytes']<=64*MIB and(str(p)in SEEN or len(SEEN)<512),'complete64MiB/512-path metadata envelope')
+    s=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size==r['bytes'],'canonical ordinary exact whole input')
+    with p.open('rb')as f:a=os.fstat(f.fileno());raw=f.read(s.st_size+1);b=os.fstat(f.fileno())
+    need(sig(s)==sig(a)==sig(b)==sig(p.lstat())and reference(p,raw)==r,'fresh stable entire input bytes')
+    READ+=len(raw);SEEN[str(p)]=r
+    if not again:CACHE[str(p)]=raw
+    return raw
+def observe(path,cap):
+    global READ
+    p=Path(path)
+    if str(p)in SEEN:need(SEEN[str(p)]['bytes']<=cap,'same finite observed role');return SEEN[str(p)]
+    s=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size<=cap,'ordinary finite artifact observation')
+    need(READ+s.st_size<=64*MIB and len(SEEN)<512,'observation prepaid before read')
+    with p.open('rb')as f:a=os.fstat(f.fileno());raw=f.read(s.st_size+1);b=os.fstat(f.fileno())
+    need(sig(s)==sig(a)==sig(b)==sig(p.lstat())and len(raw)==s.st_size,'stable entire observed extent')
+    r=reference(p,raw);SEEN[str(p)]=r;CACHE[str(p)]=raw;READ+=len(raw);return r
+def doc(r):return strict(whole(r))
+def argref(pair,cap):
+    p=Path(pair[0]);need(p.stat().st_size<=cap,'bounded supplied metadata extent');return dict(path=str(p),bytes=p.stat().st_size,sha256=pair[1])
+def publish(out,name,raw,cap):
+    need(type(raw)is bytes and len(raw)<=cap,'finite whole metadata output');p=out/name
+    with p.open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive metadata output');f.flush();os.fsync(f.fileno())
+    return reference(p,raw)
+def encoded(r):return dict(ref=r,raw_base64=base64.b64encode(whole(r)).decode())
+def unpack(r,rawcap):
+    with gzip.GzipFile(fileobj=__import__('io').BytesIO(whole(r)),mode='rb')as s:raw=s.read(rawcap+1);need(len(raw)<=rawcap and s.read(1)==b'','whole bounded decoded bank')
+    return strict(raw)
+def by_documents(bank):
+    by={}
+    for e in bank['documents']:
+        r=e['ref'];b=base64.b64decode(e['raw_base64'],validate=True)
+        need(len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256']and base64.b64encode(b).decode()==e['raw_base64']
+             and r['path']not in by,'all full raw bank bodies and exact inverse, not summaries');by[r['path']]=(r,b)
+    return by
+def original_configuration(cfg):
+    shape(cfg['family_plan'],8192);shape(cfg['scientific_Root_release'],8192);shape(cfg['input_theorem'],32768)
+    plan=doc(cfg['family_plan']);gate=doc(cfg['scientific_Root_release']);theorem=doc(cfg['input_theorem'])
+    need(cfg['schema']=='L026_MINIMUM_COMPLETION_DATA_CONFIGURATION_V1'and plan['schema']=='L026_FINITE_OWNER_QUOTIENT_FAMILY_V1'
+         and plan['stage']=='s3-minimum'and plan['program']==WORKER and plan['kernel']==KERNEL and plan['owners']==N and plan['scope_digest']==SCOPE
+         and len(plan['parts'])==31,'exact acquired frozen minimum family')
+    need(gate['schema']=='ROOT_REVIEWED_L026_FINITE_OWNER_QUOTIENT_V1'and gate['root']=='/root'and gate['status']=='SUPPORTED'
+         and gate['blockers']==[]and gate['program']==WORKER and gate['plan']==cfg['family_plan']and gate['stage']=='s3-minimum'
+         and gate['new_case_calls_authorized']is True and gate['authorized_modes']==['produce','check']
+         and gate['authorized_parts']==list(range(1,32))and gate['input_roles']=={k:plan[k]for k in('left','right','kernel','primitives')}
+         and gate['mathematical_imports']==plan['mathematical_imports']and gate['complete_exact_input_array_facts_adopted']is True
+         and gate['qualified_original_model_graph_global_class_and_H_B_meanings_retained']is True,'actual exact scientific family release and retained qualifications')
+    need(theorem['root']=='/root'and theorem['adopted']is True and theorem['scope_digest']==SCOPE
+         and theorem['consumer_stage']=='s3-minimum'and theorem['operand_roles']=={k:plan[k]for k in('left','right')}
+         and theorem['mathematical_imports']==plan['mathematical_imports'],'actual complete raw-array theorem, no guessed inputs')
+    cursor=0
+    for i,p in enumerate(plan['parts'],1):need(p['index']==i and p['start']==cursor and 0<p['stop']-cursor<=16384 and p['stop']<=N,'complete original31-part cover');cursor=p['stop']
+    need(cursor==N,'all original owners covered by the actual plan')
+    whole(WORKER);whole(KERNEL);return plan
+def argv(cfg,plan,i,mode,cert):
+    a=[PY,'-E','-B','-S',WORKER['path'],'--mode',mode,'--plan',cfg['family_plan']['path'],cfg['family_plan']['sha256'],
+      '--root-review',cfg['scientific_Root_release']['path'],cfg['scientific_Root_release']['sha256'],'--part',str(i)]
+    if mode=='check':a+=['--supplied',cert['path'],cert['sha256']]
+    return a+['--out',str(Path(plan['output_root'])/('part_%04d_%s'%(i,mode)))]
+def guard_files(base):
+    entries=sorted(base.iterdir(),key=lambda p:p.name);need(len(entries)<=8,'complete bounded guard directory')
+    files=[];empty=[]
+    for p in entries:
+        need(not p.is_symlink(),'ordinary guard entry')
+        if p.is_dir():need(p.name=='tmp'and not any(p.iterdir()),'only a known empty guard scratch directory');empty.append(p.name)
+        else:need(p.is_file(),'ordinary complete guard file');files.append(p.name)
+    need({'receipt.json','stdout.log','stderr.log'}<=set(files),'all guard record/log bodies present');return files,empty
+def closure(cfg,plan,i,mode,result_ref,cert):
+    e=cfg['execution_evidence'][str(i)][mode];capture_ref=observe(e['capture'],131072);c=doc(capture_ref);base=Path(e['guard_directory'])
+    need(base.is_absolute()and base.resolve(strict=True)==base and base.is_dir(),'actual closed ordinary guard directory')
+    names,empty=guard_files(base)
+    rr=observe(base/'receipt.json',131072);r=doc(rr);so=observe(base/'stdout.log',262144);se=observe(base/'stderr.log',262144)
+    extra=[observe(base/n,131072)for n in names if n not in('receipt.json','stdout.log','stderr.log')]
+    command=argv(cfg,plan,i,mode,cert);issued=c['issued_argv'];frames=c['all_genuine_api_frames']
+    need(c['schema']=='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'and c['root']=='/root'and c['actual_tool']['exit_code']==0
+         and type(frames)is list and frames and all(type(f)is dict and type(f.get('output'))is str for f in frames)
+         and frames[-1]['exit_code']==0 and 'session_id'not in frames[-1], 'complete genuine terminal capture')
+    need('--'in issued and issued[issued.index('--')+1:]==command and c['child_argv']in(issued,command)
+         and r['command']==command,'exact outer issued argv, worker suffix and transparent child-argv ABI')
+    terminal=strict(''.join(f['output']for f in frames));stdout=strict(whole(so));whole(se)
+    need(terminal['status']=='PASS'and terminal['stop']=='RETURNED'and terminal['receipt']==rr['path']
+         and r['status']=='PASS'and r['stop']=='RETURNED'and r['returncode']==0
+         and r['cleanup']['remaining']==r['cleanup']['errors']==[]
+         and r['limits']['total_rss']==512*MIB and r['limits']['wall_seconds']==150
+         and r['logs']['stdout']==so['bytes']and r['logs']['stderr']==se['bytes'],'actual unchanged guard and known cleanup closure')
+    need(stdout==dict(status='VERIFIED_WHOLE_SELECTED_FINITE_QUOTIENT_ROWS',stage='s3-minimum',part=i,mode=mode,result=result_ref['path']),'exact whole actual worker stdout')
+    return dict(capture=capture_ref,receipt=rr,stdout=so,stderr=se,other_guard_bodies=extra,
+      empty_guard_scratch_directories=empty,child_argv_meaning='outer supervisor'if c['child_argv']==issued else'worker suffix',known_scope_qualification=r['cleanup']['qualification'])
+def inventory(cfg,cref,own,out):
+    plan=original_configuration(cfg);common={p:r['bytes']for p,r in SEEN.items()};groups=[];start=1;active=dict(common)
+    for i in range(1,32):
+        paths={}
+        for mode in('produce','check'):
+            root=Path(plan['output_root'])/('part_%04d_%s'%(i,mode));e=cfg['execution_evidence'][str(i)][mode]
+            ps=[root/n for n in('result.json','certificate.bin','selected_records.bin','facts.json')]+[Path(e['capture'])]
+            base=Path(e['guard_directory']);names,empty=guard_files(base);ps += [base/n for n in names]
+            for p in ps:
+                need(p.is_absolute()and p.resolve(strict=True)==p and p.is_file()and p.stat().st_nlink==1,'ordinary prospective role');paths[str(p)]=p.stat().st_size
+        trial=dict(active);trial.update(paths)
+        fits=lambda rows:len(rows)<=512 and own['bytes']+2*sum(rows.values())<=64*MIB and sum(rows.values())<=24*MIB
+        if not fits(trial):
+            need(i>start,'one actual pair must fit the unchanged metadata envelope');groups.append(dict(start_part=start,stop_part=i,paths=len(active),maximum_physical_bytes=own['bytes']+2*sum(active.values())));start=i;active=dict(common);active.update(paths);need(fits(active),'one actual pair fit')
+        else:active=trial
+    groups.append(dict(start_part=start,stop_part=32,paths=len(active),maximum_physical_bytes=own['bytes']+2*sum(active.values())))
+    need(len(groups)<=2,'this closed31-pair method allows at most two complete shards; do not raise caps')
+    for r in list(SEEN.values()):whole(r,True)
+    out.mkdir();result=dict(schema='L026_MINIMUM_COMPLETION_INVENTORY_ONLY_V1',program=own,configuration=cref,adopted=False,groups=groups,
+      qualification='Only stat-derived read planning. No actual pair body/closure, mathematical case or Root stage adoption is certified by inventory.')
+    publish(out,'collection_route.json',can(result),16384);return result
+def collect(cfg,cref,own,start,stop,out):
+    plan=original_configuration(cfg);need(type(start)is type(stop)is int and 1<=start<stop<=32,'one actually budgeted part shard')
+    checked=[];pairs=[];values=[];size3=0;size6=0;cursor=plan['parts'][start-1]['start']
+    for i in range(start,stop):
+        p=plan['parts'][i-1];need(p['start']==cursor,'whole exact shard cover');rows=p['stop']-p['start'];rmap={};bmap={}
+        for mode in('produce','check'):
+            root=Path(plan['output_root'])/('part_%04d_%s'%(i,mode))
+            need(sorted(x.name for x in root.iterdir())==['certificate.bin','facts.json','result.json','selected_records.bin'],'every actual whole worker output, no convenient subset')
+            refs={name:observe(root/name,cap)for name,cap in(('result.json',16384),('certificate.bin',4*rows),('selected_records.bin',5*rows),('facts.json',8192))}
+            result=doc(refs['result.json']);facts=doc(refs['facts.json']);payload=whole(refs['certificate.bin']);records=whole(refs['selected_records.bin'])
+            roles={k:plan[k]for k in('left','right','kernel','primitives')}
+            source=dict(schema='ROOT_DIRECT_L026_FINITE_QUOTIENT_SOURCE_V1',method=WORKER,plan=cfg['family_plan'],current_Root_release=cfg['scientific_Root_release'],stage='s3-minimum',inputs=roles)
+            subject=dict(schema='L026_FINITE_ORIGINAL_OWNER_QUOTIENT_SUBJECT_V1',stage='s3-minimum',part=i,start=p['start'],stop=p['stop'],
+              original_B_scope=SCOPE,original_owner_count=N,mathematical_imports=plan['mathematical_imports'],all_nonfree_branches_retained=True,qualified_H_equals_B_available=True,
+              named_model_Reader_action_word_graph_global_class_and_two_fibre_premises_retained=True,no_ordered_partner_lift_claim=True,generation_and_endpoint_reversal_not_claimed=True)
+            need(result['schema']=='ROOT_L026_FINITE_QUOTIENT_RETURN_V1'and result['root']=='/root'and result['actor']=='/root'
+                 and result['status']=='VERIFIED_WHOLE_SELECTED_FINITE_QUOTIENT_ROWS'and result['mode']==mode and result['part']==i and result['stage']=='s3-minimum'
+                 and result['program']==WORKER and result['plan']==cfg['family_plan']and result['Root_review']==cfg['scientific_Root_release']
+                 and result['source']==source and result['subject']==subject and result['certificate']==refs['certificate.bin']
+                 and result['selected_records']==refs['selected_records.bin']and result['facts']==refs['facts.json']
+                 and result['old_Source_verdict_transferred']is False and result['new_whole_Original_conjecture_Lean_or_measurement_credit']==0
+                 and result['shared_units']<=10000000 and result['physical_read_bytes']<=8*MIB
+                 and len(result['whole_inputs_before_after'])<=32,'exact actual unchanged finite scientific Source and evidence subjects')
+            need(all(r in result['whole_inputs_before_after']for r in[cfg['family_plan'],cfg['scientific_Root_release'],WORKER]+list(roles.values())), 'actual original scientific input roster retained')
+            need(len(payload)==4*rows and len(records)%5==0 and facts==dict(start=p['start'],stop=p['stop'],rows=rows,
+              selected_representatives=len(records)//5,selected_product_mass=0,fixed_partner_components=0,
+              global_cover_and_global_assembly_still_required=True,all_nonfree_branches_retained=True,global_relations_required_for_orbit_minimum_theorem=True),'whole supplied typed extents and certified facts')
+            rmap[mode]=(refs,result);bmap[mode]=(payload,records,whole(refs['facts.json']))
+        pr,produce=rmap['produce'];qr,saved=rmap['check']
+        need(produce['supplied']is None and saved['supplied']==pr['certificate.bin']and bmap['produce']==bmap['check'],'entire independently checked Saved carrier/records/facts byte equality')
+        evidence={mode:closure(cfg,plan,i,mode,rmap[mode][0]['result.json'],pr['certificate.bin'])for mode in('produce','check')}
+        records=bmap['check'][1];last=p['start']-1
+        for at in range(0,len(records),5):
+            owner=int.from_bytes(records[at:at+4],'little');size=records[at+4]
+            need(last<owner<p['stop']and owner>=p['start']and size in(3,6),'whole already certified representative record shape/order');last=owner
+            size3+=int(size==3);size6+=int(size==6)
+        checked.append(qr['result.json']);values.extend(encoded(qr[n])for n in('result.json','certificate.bin','selected_records.bin','facts.json'))
+        pairs.append(dict(part=i,start=p['start'],stop=p['stop'],produce=pr,check=qr,actual=evidence));cursor=p['stop']
+    core=dict(schema='L026_MINIMUM_COMPLETE_VALUE_SHARD_V1',scope_digest=SCOPE,checked_results=checked,documents=values)
+    allbytes=dict(schema='L026_MINIMUM_GENUINE_PAIR_BODY_SHARD_V1',scope_digest=SCOPE,pairs=pairs,
+      documents=[dict(ref=SEEN[k],raw_base64=base64.b64encode(CACHE[k]).decode())for k in sorted(CACHE)if k!=own['path']])
+    cb=gzip.compress(can(core),mtime=0);eb=gzip.compress(can(allbytes),mtime=0);need(len(cb)<=2*MIB and len(eb)<=12*MIB,'finite exact complete value/evidence packets')
+    for r in list(SEEN.values()):whole(r,True)
+    out.mkdir();vr=publish(out,'values.json.gz',cb,2*MIB);er=publish(out,'evidence.json.gz',eb,12*MIB)
+    result=dict(schema='L026_MINIMUM_COMPLETION_SHARD_RETURN_V1',adopted=False,program=own,configuration=cref,start_part=start,stop_part=stop,
+      start=plan['parts'][start-1]['start'],stop=cursor,checked_results=checked,values=vr,evidence=er,size3_orbits=size3,size6_orbits=size6,
+      all_pair_bodies_preserved=True,scientific_calls=0,whole_physical_inputs_before_after=list(SEEN.values()),physical_read_bytes=READ)
+    publish(out,'shard.json',can(result),131072);return result
+def compose(cfg,cref,own,shards,out):
+    original_configuration(cfg);need(1<=len(shards)<=2,'one or two full acquired metadata shards only');documents=[];checked=[];summaries=[];part=1;cursor=0;size3=0;size6=0
+    for rr in shards:
+        s=doc(rr);need(s['schema']=='L026_MINIMUM_COMPLETION_SHARD_RETURN_V1'and s['adopted']is False and s['program']==own and s['configuration']==cref
+          and s['start_part']==part and s['start']==cursor and s['all_pair_bodies_preserved']is True,'exact new DATA provenance and complete ordered shard cover')
+        evidence=unpack(s['evidence'],48*MIB);eb=by_documents(evidence)
+        core=unpack(s['values'],12*MIB);cb=by_documents(core)
+        need(core['schema']=='L026_MINIMUM_COMPLETE_VALUE_SHARD_V1'and core['scope_digest']==SCOPE and core['checked_results']==s['checked_results']
+             and evidence['schema']=='L026_MINIMUM_GENUINE_PAIR_BODY_SHARD_V1'and evidence['scope_digest']==SCOPE
+             and [p['part']for p in evidence['pairs']]==list(range(s['start_part'],s['stop_part']))
+             and [p['check']['result.json']for p in evidence['pairs']]==core['checked_results']
+             and all(k in eb and eb[k]==v for k,v in cb.items()),'whole unchanged logical raw-body/evidence shard joins')
+        n3=0;n6=0
+        for rr0 in core['checked_results']:
+            r=strict(cb[rr0['path']][1]);sr=r['selected_records'];fr=r['facts'];rb=cb[sr['path']][1];facts=strict(cb[fr['path']][1])
+            need(cb[sr['path']][0]==sr and cb[fr['path']][0]==fr and len(rb)%5==0 and len(rb)//5==facts['selected_representatives'],
+                 'complete already checked representative/fact values, no summary-only count')
+            sizes=rb[4::5];need(all(x in(3,6)for x in sizes),'whole certified orbit-size fields');n3+=sizes.count(3);n6+=sizes.count(6)
+        need((n3,n6)==(s['size3_orbits'],s['size6_orbits']),'actual whole typed records give the shard counts')
+        documents+=core['documents'];checked+=core['checked_results'];part=s['stop_part'];cursor=s['stop'];size3+=s['size3_orbits'];size6+=s['size6_orbits'];summaries.append(rr)
+    need(part==32 and cursor==N and len(checked)==31 and 3*size3+6*size6==N,'complete31 actual proofs and sum of already certified orbit sizes')
+    count=size3+size6
+    prospective=dict(schema='ROOT_ACCEPTED_L026_FINITE_QUOTIENT_STAGE_V1',root='/root',adopted=False,stage='s3-minimum',scope_digest=SCOPE,
+      program=WORKER,kernel=KERNEL,family_plan=cfg['family_plan'],scientific_Root_release=cfg['scientific_Root_release'],input_theorem=cfg['input_theorem'],
+      checked_results=checked,metadata_evidence_shards=summaries,original_owners=N,unordered_owners=count,size3_orbits=size3,size6_orbits=size6,
+      whole_global_relation_and_minimum_cover_from_actual_checked_parts=True,all_nonfree_branches_retained=True,
+      named_model_Reader_action_word_graph_global_class_two_fibre_and_H_B_qualifications_retained=True,
+      whole_Original_conjecture_Lean_or_compression_credit=0,qualification='FALSE prospective adoption only. Root must independently preserve/review actual complete evidence and issue its stage theorem. No new scientific case is executed by this constructor.')
+    bank=dict(schema='L026_ACQUIRED_CLASSIFICATION_VALUE_BANK_V1',scope_digest=SCOPE,stage='s3-minimum',checked_results=checked,documents=documents)
+    packed=gzip.compress(can(bank),mtime=0);need(len(can(bank))<=24*MIB and len(packed)<=2*MIB-32768,'unchanged assembler bank envelope with reserved actual-theorem space')
+    for r in list(SEEN.values()):whole(r,True)
+    out.mkdir();br=publish(out,'bank_without_adoption.json.gz',packed,2*MIB);ar=publish(out,'stage_adoption_unapproved.json',can(prospective),16384)
+    record=dict(schema='L026_MINIMUM_COMPLETION_COMPOSED_V1',program=own,configuration=cref,adopted=False,bank_without_adoption=br,
+      stage_adoption_unapproved=ar,metadata_evidence_shards=summaries,whole_physical_inputs_before_after=list(SEEN.values()),physical_read_bytes=READ)
+    publish(out,'composed.json',can(record),131072);return record
+def finalize(cfg,cref,own,composed_ref,adoption_ref,out):
+    c=doc(composed_ref);need(c['schema']=='L026_MINIMUM_COMPLETION_COMPOSED_V1'and c['program']==own and c['configuration']==cref and c['adopted']is False,'exact actual prepared complete bank')
+    before=doc(c['stage_adoption_unapproved']);adopt=doc(adoption_ref)
+    need(before['adopted']is False and adopt['adopted']is True and adopt['root']=='/root'
+         and all(adopt.get(k)==v for k,v in before.items()if k not in('adopted','qualification')),'separately issued exact actual Root stage theorem; never self-issued')
+    bank=unpack(c['bank_without_adoption'],24*MIB);by=by_documents(bank);need(adoption_ref['path']not in by,'no cyclic/overwritten theorem role in old bank')
+    bank['documents'].append(encoded(adoption_ref));raw=can(bank);packed=gzip.compress(raw,mtime=0);need(len(raw)<=24*MIB and len(packed)<=2*MIB,'unchanged whole assembler transport with actual theorem')
+    whole(ASSEMBLER)
+    for r in list(SEEN.values()):whole(r,True)
+    out.mkdir();br=publish(out,'bank.json.gz',packed,2*MIB)
+    plan=dict(schema='L026_CERTIFIED_QUOTIENT_VALUE_ASSEMBLY_V1',program=ASSEMBLER,bank=br,decoded_bank_bytes=len(raw),stage_adoption=adoption_ref,output_root=cfg['assembly_output'])
+    pr=publish(out,'assembly_plan.json',can(plan),16384)
+    gate=dict(schema='ROOT_REVIEWED_L026_CERTIFIED_VALUE_ASSEMBLY_V1',root='/root',status='UNREVIEWED',blockers=['ROOT_EXACT_ACTUAL_BANK_ASSEMBLER_INPUT_REVIEW_OWED'],
+      program=ASSEMBLER,plan=pr,bank=br,accepted_stage_adoption=adoption_ref,only_already_certified_values_adopted=False)
+    gr=publish(out,'assembly_review_unapproved.json',can(gate),16384)
+    return dict(schema='L026_MINIMUM_COMPLETE_BANK_PENDING_ASSEMBLY_RELEASE_V1',adopted=False,bank=br,plan=pr,Root_review_template=gr,
+      new_quotient_or_SCI_or_Root_authority_issued=False,physical_read_bytes=READ)
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True);ap.add_argument('--configuration',nargs=2,required=True)
+    ap.add_argument('--operation',choices=['inventory','collect','compose','finalize'],required=True);ap.add_argument('--parts',nargs=2,type=int);ap.add_argument('--shard',nargs=2,action='append');ap.add_argument('--composed',nargs=2);ap.add_argument('--stage-adoption',nargs=2);ap.add_argument('--out',type=Path,required=True);a=ap.parse_args()
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+         and all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'cleared EBS DATA constructor')
+    signal.signal(signal.SIGALRM,lambda *unused:(_ for _ in()).throw(TimeoutError('150s DATA completion')));signal.alarm(150)
+    own=dict(path=str(Path(__file__).resolve()),bytes=Path(__file__).stat().st_size,sha256=a.self_sha256);whole(own)
+    cref=argref(a.configuration,131072);cfg=doc(cref)
+    need(a.out.is_absolute()and a.out.is_relative_to('/private/tmp')and not a.out.exists()and a.out.parent.resolve(strict=True)==a.out.parent,'fresh normalized DATA destination')
+    if a.operation=='inventory':need(a.parts is None and not a.shard and a.composed is None,'stat-only route request');r=inventory(cfg,cref,own,a.out)
+    elif a.operation=='collect':need(a.parts is not None and not a.shard and a.composed is None,'one exact collect request');r=collect(cfg,cref,own,*a.parts,a.out)
+    elif a.operation=='compose':need(a.parts is None and a.shard and a.composed is None,'actual full shard refs only');r=compose(cfg,cref,own,[argref(x,131072)for x in a.shard],a.out)
+    else:need(a.parts is None and not a.shard and a.composed and a.stage_adoption,'actual separate Root theorem and composed refs');r=finalize(cfg,cref,own,argref(a.composed,131072),argref(a.stage_adoption,16384),a.out)
+    print(json.dumps(dict(status='DATA_ONLY_NO_AUTHORITY',operation=a.operation,output=str(a.out),physical_bytes=READ,paths=len(SEEN),Root_authority_issued=False)),flush=True)
+if __name__=='__main__':main()

@@ -1,0 +1,595 @@
+"""Independent direct section37 untried-batch certificate checker, /root/compact_proof_author.
+No proposer, kernel or helper is imported; no word search, cyclic spin or
+row reduction is performed. Input/model/original-transport adapter and nine
+small arithmetic functions are literal borrowed code from checker5e00d76e,
+ultimately Root29909/9d97b490 and middle-author e722 original context.
+Only supplied word, power, row and minor equations are checked anew.
+"""
+import time
+START=time.monotonic()
+import argparse,gzip,hashlib,json,math,os,resource,signal,stat,sys
+from pathlib import Path
+HERE=Path('/private/tmp/q11_rank4_section37_untried_direct_check')
+I2=((1,0),(0,1))
+I7=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+I8=tuple(tuple(int(i==j)for j in range(8))for i in range(8))
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+def need(ok,why):
+ if not ok:raise ValueError(why)
+def can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+def digest(v):return hashlib.sha256(can(v)).hexdigest()
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique JSON keys');out[k]=v
+  return out
+ def floating(text):
+  value=float(text);need(math.isfinite(value),'finite JSON float');return value
+ return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+class Budget:
+ def __init__(self):self.refs={};self.raw={};self.bytes=0;self.products=0;self.row_images=0;self.peak=0
+ def tick(self):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+  need(rss<128*2**20 and time.monotonic()-START<125,'hard125s128MiB verifier envelope')
+ def read(self,r,again=False):
+  self.tick();need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+   and type(r['bytes'])is int and 0<=r['bytes']<=2**21 and type(r['sha256'])is str
+   and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),'complete bounded input reference')
+  need(self.refs.get(r['path'],r)==r,'one immutable version per path')
+  if r['path']in self.raw and not again:return self.raw[r['path']]
+  need(self.bytes+r['bytes']<=8*2**20 and(r['path']in self.refs or len(self.refs)<96),'96 files8MiB including every real reread')
+  p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+   and a.st_nlink==1 and a.st_size==r['bytes'],'canonical single-link bounded input')
+  with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']
+   and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable physical input')
+  self.refs[r['path']]=r;self.raw[r['path']]=raw;self.bytes+=len(raw);return raw
+ def doc(self,r):return decode(self.read(r))
+ def recheck(self):
+  for r in list(self.refs.values()):self.read(r,True)
+ def multiply(self,A,B):
+  self.products+=1;self.tick();need(self.products<=400000,'400000 direct matrix products')
+  need(type(A)is tuple and type(B)is tuple and 1<=len(A)<=8 and 1<=len(B)<=8
+   and 1<=len(B[0])<=8 and all(len(row)==len(B)for row in A)
+   and all(len(row)==len(B[0])for row in B),'complete small compatible rectangular product')
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(len(B)))%11 for j in range(len(B[0])))for i in range(len(A)))
+ def image(self,row,mark):
+  self.row_images+=1;self.tick();need(self.row_images<=200000,'200000 direct row images')
+  return tuple(sum(row[k]*mark[k][j]for k in range(7))%11 for j in range(7))
+
+
+def matrix(raw,n):
+    need(type(raw) is list and len(raw) == n
+        and all(type(row) is list and len(row) == n for row in raw)
+        and all(type(x) is int and 0 <= x < 11 for row in raw for x in row),'Canonical field matrix')
+    return tuple(tuple(row) for row in raw)
+
+def flat(A):
+    return [x for row in A for x in row]
+
+def matrix2(v):
+    need(type(v) in (list,tuple) and len(v) == 4
+        and all(type(x) is int and 0 <= x < 11 for x in v),'Canonical 2 by 2 coefficients')
+    return (tuple(v[:2]),tuple(v[2:]))
+
+def determinant(A):
+    return (A[0][0]*A[1][1]-A[0][1]*A[1][0]) % 11
+
+def inverse2(A):
+    r = pow(determinant(A),-1,11)
+    return ((r*A[1][1] % 11,-r*A[0][1] % 11),(-r*A[1][0] % 11,r*A[0][0] % 11))
+
+def canonical_pair(P,Q):
+    values = tuple(flat(P)+flat(Q)); r = pow(next(x for x in values[:4] if x),-1,11)
+    return tuple(r*x % 11 for x in values)
+
+def catalogue_pair(row):
+    need(type(row) is list and len(row) == 7
+        and all(type(x) is int and 0 <= x < 11 for x in row),'Literal catalogue row')
+    if row[0] == 0:
+        return I2,((10,0),(0,10))
+    _,x,y,z,a,b,c = row
+    return ((x,y),(z,-x % 11)),((a,b),(c,-a % 11))
+
+def operator(check,P,Q):
+    invP = inverse2(P); rows = []
+    for j in range(8):
+        basis = tuple(tuple(int(2*r+s == j % 4) for s in range(2)) for r in range(2))
+        image = check.multiply(check.multiply(P if j < 4 else Q,basis),invP)
+        coeff = tuple(flat(image))
+        rows.append(coeff+(0,0,0,0) if j < 4 else (0,0,0,0)+coeff)
+    return tuple(rows)
+
+def actual_operator(check,IR,R,P,Q):
+    need(determinant(P) == determinant(Q) != 0,'Equal nonzero pair determinants')
+    actual = check.multiply(check.multiply(IR,operator(check,P,Q)),R)
+    need(actual[0] == (1,0,0,0,0,0,0,0)
+        and all(actual[k][0] == 0 for k in range(1,8)),'Full unital pure-space transport')
+    return tuple(tuple(actual[i][j] for j in range(1,8)) for i in range(1,8))
+
+# Borrowed original-domain reconstruction; no proposer main or kernel.
+def expand_runs(runs, maximum):
+ need(type(runs)is list,'literal position runs');out=[];last=0
+ for a,b in runs:
+  need(type(a)is type(b)is int and last<a<=b<=maximum,'ordered disjoint position runs')
+  out.extend(range(a,b+1));last=b
+ return out
+
+def packed_runs(values):
+ out=[]
+ for x in sorted(values):
+  if out and out[-1][1]+1==x:out[-1][1]=x
+  else:out.append([x,x])
+ return out
+
+def context(plan,budget):
+ projection=budget.doc(plan['projection']);gate=budget.doc(plan['Root_projection_acceptance'])
+ manifest=budget.doc(plan['unpaid_manifest']);job=plan['original_job']
+ need(gate['schema']=='ROOT_ACCEPTED_Q11_RANK4_DISPOSITION_PROJECTIONS_V1'and gate['root']=='/root'
+  and gate['source_manifest']==plan['unpaid_manifest']and gate['no_new_mathematical_case_evaluations']is True,
+  'separate actual Root adoption of the small metadata projection')
+ rows=[r for r in gate['projections']if r[0]==job[0]]
+ need(len(rows)==1 and rows[0][1:]==[plan['projection']['bytes'],plan['projection']['sha256']]
+  and plan['projection']['path']==str(Path(gate['projection_directory'])/('job_%04d.json'%job[0])),
+  'exact adopted same-job byte-identical projection')
+ need(gate['scope_qualification']=='Set difference against explicitly inspected accepted registry; no global absence claim.',
+  'inspected registry qualification is retained')
+ registered=[r for r in manifest['jobs']if r['original_job']==job]
+ need(len(registered)==1 and registered[0]['projection']['bytes']==plan['projection']['bytes']
+  and registered[0]['projection']['sha256']==plan['projection']['sha256'],'same global registered projection bytes')
+ refs=projection['original_domain_whole_pins']
+ pt=budget.doc(refs['producer_terminal']);st=budget.doc(refs['Saved_terminal'])
+ produced=budget.doc(refs['producer_result']);domain=budget.doc(refs['Saved_result']);export=budget.doc(refs['prefix_export'])
+ for term,mode,result in((pt,'produce',refs['producer_result']),(st,'check',refs['Saved_result'])):
+  need(term['schema']=='ROOT_CLOSED_F004_Q11_INDEXED_PREFIX_V1'and term['root']=='/root'
+   and term['success']is True and term['rank']==4 and term['mode']==mode and term['original_job']==job
+   and term['result']==result and term['prefix_export']==refs['prefix_export'],'existing genuine original indexed-domain closure')
+ need(st['producer_terminal']==refs['producer_terminal']and st['complete_fresh_same_code_Saved_comparison']is True
+  and st['Saved_ignored_observational_fields']==['seconds','peak_self_bytes'],'whole original Saved comparison')
+ for x in(produced,domain):x.pop('seconds',None);x.pop('peak_self_bytes',None)
+ need(can(produced)==can(domain),'all nonobservational original domain fields equal');del produced
+ need(domain['schema']=='F004_Q11_INDEXED_CAYLEY_CENTRALIZER_DOMAIN_CERTIFICATE_V1'
+  and domain['certificate_verified']is True and domain['rank']==4 and domain['field']==11
+  and domain['original_job']==export['original_job']==projection['original_job']==job
+  and domain['prefix_export']==refs['prefix_export']and domain['selected_labels']==export['selected_labels']==[1,4,2]
+  and export['end_order']==[1,4,2,3]and export['convention']=='RIGHT_ROW'
+  and export['matrix_frame_result']==plan['matrix_frame_result']
+  and domain['origin']==export['origin']and domain['original_prefix_index']==projection['original_prefix_index']==export['original_prefix_index']
+  and domain['original_prefix_index_proof']==projection['original_prefix_index_proof']==export['origin']['original_prefix_index_proof'],
+  'literal original prefix, labels and actual basis')
+ need(domain['external_premises']==export['external_premises']and domain['external_premises']['root']=='/root'
+  and domain['external_premises']['original_A_equals_G']is True,'original model and A=G premises')
+ for field,key in(('indexed_source','indexed'),('generic_export_source','generic_export')):
+  need(st[field]==plan['old_sources'][key],'exact old Source subjects, no PASS retag')
+  for r in st[field].values():budget.read(r)
+ binding=budget.doc(st['binding_terminal']);model=budget.doc(domain['external_premises']['model_source_join'])
+ frame=budget.doc(domain['faithful_frame_acceptance']);normal=budget.doc(domain['normalization_result'])
+ normal_acceptance=budget.doc(domain['normalization'])
+ need(binding.get('root')=='/root'and binding.get('success')is True and model['root']=='/root'
+  and model['actual_raw_model_alias_checked']is True and model['faithful_frame']==domain['faithful_frame_acceptance']
+  and frame['status']=='ROOT_ACCEPTED_Q11_FAITHFUL_MATRIX_FRAME'and frame['result']==plan['matrix_frame_result']
+  and frame['full_generator_point_checks']==354312 and frame['inverse_checks']==6 and frame['inputs_unchanged']is True,
+  'borrowed complete faithful original point-frame join')
+ need(normal['status']=='CERTIFIED_GF11_SPLIT_CAYLEY_COMPOSITION'and normal['certificate_verified']is True
+  and normal['kappa']==7 and normal_acceptance['status']==plan['normalization_status'],
+  'same acquired actual Cayley norm')
+ R=matrix(domain['standard_to_actual_row_map'],8);IR=matrix(domain['actual_to_standard_row_map'],8)
+ need(budget.multiply(R,IR)==budget.multiply(IR,R)==I8,'whole frame inverses')
+ a,e,b=[matrix(x,7)for x in export['matrices']]
+ for g,standard in zip((a,e,b),domain['standard_ordered_prefix_matrices']):
+  ext=((1,0,0,0,0,0,0,0),)+tuple((0,)+row for row in g)
+  need(budget.multiply(budget.multiply(IR,matrix(standard,8)),R)==ext,'same complete standard/actual prefix transport')
+ need(len({a,e,b})==3 and all(g!=I7 and budget.multiply(g,g)==I7 for g in(a,e,b))
+  and budget.multiply(a,e)==budget.multiply(e,a)and budget.multiply(b,e)==budget.multiply(e,b)
+  and budget.multiply(a,b)!=budget.multiply(b,a),'fixed original nonidentity involution/string relations')
+ need(domain['common_eigenspace_dimensions']==[1,2,2,2]and len(domain['frame'])==8
+  and domain['frame'][1][0]==0 and domain['frame_norms'][1]==domain['delta']in(1,2),
+  'acquired nonsingular common positive line and seed locator')
+ seed=tuple(domain['frame'][1][1:]);need(len(seed)==7 and any(seed)
+  and budget.image(seed,a)==budget.image(seed,e)==seed,'same actual seed and endpoint positive equations')
+ q=matrix(normal['quadratic_form_matrix'],8);seed8=(0,)+seed
+ need(sum(seed8[i]*q[i][j]*seed8[j]for i in range(8)for j in range(8))%11==domain['delta'],
+  'same actual canonical nonsingular seed norm')
+ saved_frame=budget.doc(plan['matrix_frame_result']);ambient=tuple(matrix(m,7)for m in saved_frame['source_matrices'])
+ need(len(ambient)==2 and saved_frame['full_generator_point_checks']==354312
+  and saved_frame['six_inverse_checks']==6,'two original known-G matrices in the acquired faithful frame')
+ catalogue=domain['catalogue'];orbits=domain['orbits'];stabilizer=domain['prefix_stabilizer_indices']
+ need(len(catalogue)==domain['catalogue_size']==14763 and digest(catalogue)==domain['catalogue_sha256']
+  and domain['catalogue_schema']=='INDEX1_IS_A0_OTHER_ROWS_ARE_DELTA_PX_PY_PZ_QX_QY_QZ_SIMULTANEOUS_SIGN_QUOTIENT'
+  and domain['selected_raw_domain_indices']==list(range(1,14764)), 'entire original raw J catalogue, never a new indexing')
+ need(len(orbits)==projection['original_orbit_rows']and digest(orbits)==projection['full_orbit_array_sha256']
+  and domain['orbit_action']==projection['orbit_action']and domain['orbit_schema']==projection['orbit_schema']
+  and stabilizer==projection['prefix_stabilizer_indices'],'whole acquired orbit/member/transporter table')
+ covered=[]
+ for rep,members,transports,fixed in orbits:
+  need(rep in members and members==sorted(set(members))and len(members)==len(transports)
+   and all(type(j)is int and j in stabilizer for j in transports)
+   and type(fixed)is int and fixed>0 and len(members)*fixed==len(stabilizer),'all matching original orbit transport roles')
+  covered.extend(members)
+ need(sorted(covered)==list(range(1,14764)),'whole disjoint14763-member original orbit partition')
+ unpaid=expand_runs(projection['unpaid_representation']['runs'],len(orbits))
+ need(digest(unpaid)==projection['unpaid_representation']['expanded_sha256']
+  and len(unpaid)==projection['exact_unpaid_count_relative_to_inspected_accepted_registry'], 'exact adopted unpaid positions')
+ paid=sorted({i for fact in projection['known_paid_facts']for i in fact['orbit_positions']})
+ need(len(paid)==projection['known_paid_positions_count']and not set(paid)&set(unpaid)
+  and sorted(paid+unpaid)==list(range(1,len(orbits)+1)), 'no paid position replayed or unpaid position omitted')
+ return dict(projection=projection,domain=domain,export=export,refs=refs,R=R,IR=IR,
+  a=a,b=b,e=e,seed=seed,ambient=ambient,catalogue=catalogue,orbits=orbits,unpaid=unpaid,paid=paid,
+  inspected_registry_qualification=gate['scope_qualification'])
+
+# New direct certificate equations. No dictionary or group search.
+def vector(raw):
+ need(type(raw)is list and len(raw)==7 and all(type(x)is int and 0<=x<11 for x in raw),
+  'entire canonical seven-coordinate row')
+ return tuple(raw)
+
+def power(value,exponent,budget):
+ need(type(exponent)is int and exponent>=0,'fixed nonnegative direct exponent')
+ result=I7
+ while exponent:
+  if exponent&1:result=budget.multiply(result,value)
+  exponent//=2
+  if exponent:value=budget.multiply(value,value)
+ return result
+
+def direct_fact(fact,marks,budget,expected_section):
+ keys={'kind','section_indices','omitted_original_mark_index','original_mark_word','local_section_word',
+  'dictionary_origin','cofactor','prime','base_word_value','prime_word_value','nonzero_fixed_row','movement',
+  'all_section_generators_preserve_prime_line','four_mark_IP_failure_proposed',
+  'four_mark_nongeneration_claim','independent_direct_checker_owed'}
+ need(type(fact)is dict and set(fact)==keys,'whole explicit section certificate grammar')
+ need(type(fact['section_indices'])is list and len(fact['section_indices'])==3
+  and all(type(j)is int for j in fact['section_indices']),'three literal original mark indices')
+ section=tuple(fact['section_indices']);need(section==expected_section and section in((0,1,2),(1,2,3)),
+  'exact actual left or right section')
+ need(type(fact['omitted_original_mark_index'])is int and fact['omitted_original_mark_index']==(3 if section[0]==0 else 0)
+  and type(fact['cofactor'])is int and fact['cofactor']==6 and type(fact['prime'])is int and fact['prime']==37
+  and fact['four_mark_nongeneration_claim']is False and fact['independent_direct_checker_owed']is True,
+  'same omitted nonidentity mark, cofactor6 and prime37; no quartet nongeneration assertion')
+ item=fact['dictionary_origin'];need(type(item)is dict and set(item)=={'raw_index','syllables','word'},
+  'literal finite dictionary origin grammar')
+ syllables=item['syllables'];need(type(syllables)is list and 1<=len(syllables)<=4
+  and all(type(j)is int and 1<=j<=3 for j in syllables),'at most four V4 syllables')
+ encoded=0
+ for j in syllables:encoded=3*encoded+j-1
+ raw_index=1+sum(3**j for j in range(1,len(syllables)))+encoded
+ local=''.join('1'+('0','2','02')[j-1]for j in syllables)
+ need(type(item['raw_index'])is int and item['raw_index']==raw_index<=120
+  and item['word']==fact['local_section_word']==local,'independently derived original finite word index and spelling')
+ word=fact['original_mark_word'];mapped=[section[int(j)]for j in local]
+ need(type(word)is list and all(type(j)is int and j in section for j in word)and word==mapped,
+  'every letter is the same actual section mark in the correct original order')
+ base=I7
+ for label in word:base=budget.multiply(base,marks[label])
+ need(matrix(fact['base_word_value'],7)==base,'all entries of the literal actual section word')
+ Y=power(base,6,budget)
+ need(matrix(fact['prime_word_value'],7)==Y and Y!=I7 and power(Y,37,budget)==I7,
+  'actual sixth power, nonidentity, and exact prime37 order')
+ row=vector(fact['nonzero_fixed_row']);need(any(row)and budget.image(row,Y)==row,
+  'actual nonzero right-row fixed vector, without solver replay')
+ movement=fact['movement']
+ if movement is None:
+  need(fact['kind']=='SECTION_PROPER_ORDER37_LINE'
+   and fact['all_section_generators_preserve_prime_line']is True and fact['four_mark_IP_failure_proposed']is False,
+   'proper section has no quartet IP failure claim')
+  for label in section:
+   image=budget.image(row,marks[label])
+   need(all((row[r]*image[t]-row[t]*image[r])%11==0 for r in range(7)for t in range(r+1,7)),
+    'every actual section generator preserves the entire prime fixed line')
+  return dict(kind=fact['kind'],section_indices=list(section),proper_section_verified=True,
+   section_generation_verified=False,quartet_IP_failure_verified=False,quartet_nongeneration_claim=False,
+   dictionary_raw_index=raw_index)
+ need(fact['kind']=='SECTION_GENERATES_AMBIENT_IP_OBSTRUCTION'
+  and fact['all_section_generators_preserve_prime_line']is False and fact['four_mark_IP_failure_proposed']is True
+  and type(movement)is dict and set(movement)=={'original_mark_index','minor_coordinates','nonzero_minor'},
+  'exact moved-line section generation and quartet IP obstruction grammar')
+ label=movement['original_mark_index'];coordinates=movement['minor_coordinates'];minor=movement['nonzero_minor']
+ need(type(label)is int and label in section and type(coordinates)is list and len(coordinates)==2
+  and all(type(j)is int for j in coordinates)and 0<=coordinates[0]<coordinates[1]<7
+  and type(minor)is int and 1<=minor<11,'same-section mover and bounded nonzero projective minor')
+ image=budget.image(row,marks[label]);r,t=coordinates
+ need((row[r]*image[t]-row[t]*image[r])%11==minor,'actual supplied section generator moves the unique prime fixed line')
+ omitted=fact['omitted_original_mark_index'];need(marks[omitted]!=I7,'omitted original mark is nonidentity')
+ return dict(kind=fact['kind'],section_indices=list(section),proper_section_verified=False,
+  section_generation_verified=True,quartet_IP_failure_verified=True,quartet_nongeneration_claim=False,
+  dictionary_raw_index=raw_index,omitted_original_mark_index=omitted,
+  attributed_natural_action_and_maximal_overgroup_theorem_used=True)
+
+def attempted(raw):
+ need(type(raw)is list and 1<=len(raw)<=120 and all(type(j)is int and 1<=j<=120 for j in raw)
+  and raw==sorted(set(raw)),'whole ordered bounded attempted-index diagnostic; no exhaustive-search assertion')
+
+def diagnostics(data,fact,marks,budget):
+ need(type(data)is dict and data.get('failed_search_is_inconclusive')is True,
+  'finite search diagnostics always remain inconclusive without an actual certificate')
+ if fact is None:
+  need(set(data)=={'completed_sections','failed_search_is_inconclusive',
+   'no_four_mark_generation_nongeneration_or_IP_success_claim'}
+   and data['no_four_mark_generation_nongeneration_or_IP_success_claim']is True,
+   'no-certificate diagnostic has no quartet conclusion')
+  wanted=[(0,1,2),(1,2,3)]
+ else:
+  need(set(data)=={'completed_sections','current_section','attempted_dictionary_raw_indices',
+   'failed_search_is_inconclusive'},'whole obstruction diagnostic grammar')
+  section=tuple(fact['section_indices']);need(data['current_section']==list(section),'same current positive section')
+  attempted(data['attempted_dictionary_raw_indices'])
+  need(data['attempted_dictionary_raw_indices'][-1]==fact['dictionary_origin']['raw_index'],
+   'positive word is the last reported current-section attempt')
+  wanted=[] if section==(0,1,2)else[(0,1,2)]
+ completed=data['completed_sections'];need(type(completed)is list and len(completed)==len(wanted),
+  'complete prior-section diagnostic list')
+ verified=[]
+ for entry,section in zip(completed,wanted):
+  need(type(entry)is dict and set(entry)=={'section_indices','attempted_dictionary_raw_indices',
+   'proper_section_certificate','miss_is_not_properness_or_IP_claim'}
+   and entry['section_indices']==list(section)and entry['miss_is_not_properness_or_IP_claim']is True,
+   'proper section or finite miss gives no quartet IP credit')
+  attempted(entry['attempted_dictionary_raw_indices']);proper=entry['proper_section_certificate']
+  if proper is not None:
+   result=direct_fact(proper,marks,budget,section)
+   need(result['proper_section_verified']is True
+    and entry['attempted_dictionary_raw_indices'][-1]==proper['dictionary_origin']['raw_index'],
+    'only a completely checked line-preserving proper section occurs in completed diagnostics')
+   verified.append(result)
+ return verified
+
+def selector_scope(source,ctx,budget):
+ selector=budget.doc(source['selector']);maximum=len(ctx['orbits'])
+ need(selector['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'and selector['root']=='/root'
+  and selector['adopted']is True and selector['original_job']==source['original_job']
+  and selector['Root_projection_acceptance']==source['Root_projection_acceptance']
+  and selector['projection']==source['projection']and selector['original_orbit_positions']==maximum,
+  'actual Root-adopted same-job selector in the unchanged original domain')
+ baseline=selector['original_paid_positions'];additional=selector['accepted_new_paid_positions']
+ need(type(baseline)is list and baseline==ctx['paid']and selector['original_paid_count']==len(baseline)
+  and type(additional)is list and additional==sorted(set(additional))
+  and all(type(x)is int and 1<=x<=maximum for x in additional)and not set(baseline)&set(additional),
+  'original and independently adopted new paid positions remain distinct')
+ unresolved=expand_runs(selector['unresolved_position_runs'],maximum)
+ need(len(unresolved)==selector['unresolved_positions']==source['all_unresolved_positions']
+  and digest(unresolved)==selector['expanded_unresolved_sha256']
+  and sorted(baseline+additional+unresolved)==list(range(1,maximum+1))
+  and len(baseline)+len(additional)+len(unresolved)==maximum,
+  'entire original paid/new-paid/unresolved partition, without absence or replay claims')
+ need(selector['source_adoptions']==source['selector_adoptions']
+  and selector['qualification']==source['selector_qualification'],
+  'exact adopted disposition authorities and inspected-registry qualification')
+ accepted=[]
+ for ref in selector['source_adoptions']:
+  fact=budget.doc(ref)
+  need(fact['root']=='/root'and fact['adopted']is True and fact['original_job']==source['original_job']
+   and fact['whole_original_credit']==0,'borrow an existing exact partial Root adoption, no new original credit')
+  if fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_CYCLIC_PILOT_V1':
+   need(fact['all64_directly_checked']is True,'retained cyclic pilot was actually directly checked')
+   paid=fact['nongeneration_positions']
+  else:
+   need(fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1'
+    and fact['independent_direct_word_power_row_minor_checks']is True,
+    'retained Root section obstruction adoption, not a new unverified proposal')
+   paid=fact['new_IP_failure_positions']
+  need(type(paid)is list and paid==sorted(set(paid))and all(type(i)is int and 1<=i<=maximum for i in paid),
+   'complete explicit newly paid positions of the borrowed adoption')
+  accepted.extend(paid)
+ need(len(accepted)==len(set(accepted))and sorted(accepted)==additional,
+  'every skipped newly paid position comes from one exact retained Root adoption')
+ return unresolved,selector
+
+def prior_misses(source,selector,unresolved,budget):
+ trials=selector.get('previous_method_attempts',[]);need(type(trials)is list,'explicit finite prior method-trial list')
+ tried=[]
+ for trial in trials:
+  need(type(trial)is dict and trial['criterion']=='SECTION37_FIXED_DICTIONARY'
+   and trial['kernel']==source['kernel']and trial['helpers']==source['helpers']
+   and trial['finite_misses_are_NOT_paid']is True and trial['do_not_repeat_unchanged_search']is True,
+   'skip only previously tried instances of this exact unchanged dictionary method; no paid credit')
+  ref=trial['Root_adoption'];need(ref in source['selector_adoptions'],'same exact retained Root adoption')
+  fact=budget.doc(ref)
+  need(fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1'and fact['root']=='/root'
+   and fact['adopted']is True and fact['original_job']==source['original_job']
+   and fact['independent_direct_word_power_row_minor_checks']is True
+   and fact['finite_miss_positions_without_IP_credit']==trial['finite_miss_positions'],
+   'borrow the actual independently checked finite-miss disposition, without claiming a new execution')
+  gate=budget.doc(fact['source_gate'])
+  need(gate['schema']=='ROOT_AUTHORIZED_Q11_RANK4_SECTION37_BATCH_PROPOSER_V1'and gate['root']=='/root'
+   and gate['adopted']is True and gate['program']==trial['source']
+   and gate['kernel']==source['kernel']and gate['helpers']==source['helpers'],
+   'retained adoption Source gate binds the exact previously executed method subject')
+  misses=trial['finite_miss_positions'];visited=trial['visited_positions']
+  need(type(misses)is list and misses==sorted(set(misses))and all(type(i)is int for i in misses)
+   and type(visited)is list and visited==sorted(set(visited))and all(type(i)is int for i in visited)
+   and sorted(fact['new_IP_failure_positions']+misses)==visited
+   and len(fact['new_IP_failure_positions'])+len(misses)==len(visited),
+   'retained actual visited positions split into adopted failures and finite misses')
+  tried.extend(misses)
+ need(len(tried)==len(set(tried)),'no repeated or overlapping prior same-method miss credit')
+ tried=sorted(tried)
+ need(tried==source['previous_method_miss_positions']and tried==unresolved[:len(tried)]
+  and len(tried)<len(unresolved),'previous finite misses form exactly the skipped unpaid residual prefix')
+ return tried
+
+HEADER_KEYS=['source','plan','kernel','helpers','original_job','original_marking_order','original_domain_whole_pins',
+ 'Root_projection_acceptance','projection','original_orbit_array_sha256','frame_key','source_gate',
+ 'actual_control_report','Root_code_math_review','prime37_theory','prime37_independent_review','rank4_section_corollary',
+ 'Root_unresolved_selector','selector_adoptions','Root_selector_qualification','inspected_registry_qualification',
+ 'complete_original_member_transport_proof_borrowed','no_new14763_transport_evaluation_claim',
+ 'outcomes_are_IP_obstructions_not_four_mark_nongeneration','whole_original_credit','conjecture_credit','Lean_credit',
+ 'independent_direct_checker_and_Root_adoption_owed']
+
+def header(value,summary,plan,source,ctx,gate):
+ need(all(k in value and value[k]==summary[k]for k in HEADER_KEYS),'complete identical source/domain/evidence batch header')
+ expected=dict(source=source['program'],plan=plan['proposer_plan'],kernel=source['kernel'],helpers=source['helpers'],
+  original_job=source['original_job'],original_marking_order=['a','b','c','e'],original_domain_whole_pins=ctx['refs'],
+  Root_projection_acceptance=source['Root_projection_acceptance'],projection=source['projection'],
+  original_orbit_array_sha256=ctx['projection']['full_orbit_array_sha256'],
+  frame_key={k:ctx['domain'][k]for k in('standard_to_actual_row_map','actual_to_standard_row_map',
+   'catalogue_sha256','faithful_frame_acceptance')},source_gate=plan['proposer_source_gate'],
+  actual_control_report=gate['control_report'],Root_code_math_review=gate['Root_code_math_review'],
+  prime37_theory=source['prime37_theory'],prime37_independent_review=source['prime37_independent_review'],
+  rank4_section_corollary=source['rank4_section_corollary'],Root_unresolved_selector=source['selector'],
+  selector_adoptions=source['selector_adoptions'],Root_selector_qualification=source['selector_qualification'],
+  inspected_registry_qualification=ctx['inspected_registry_qualification'],
+  complete_original_member_transport_proof_borrowed=True,no_new14763_transport_evaluation_claim=True,
+  outcomes_are_IP_obstructions_not_four_mark_nongeneration=True,whole_original_credit=0,conjecture_credit=0,
+  Lean_credit=0,independent_direct_checker_and_Root_adoption_owed=True)
+ need(all(value[k]==v and type(value[k])is type(v)for k,v in expected.items()),
+  'same actual original domain, adopted residual and attributed theorem; no old verdict retag')
+
+def partitions(summary,source,ctx,unresolved,selector,tried):
+ maximum=len(ctx['orbits']);maximum_positions=source['maximum_positions']
+ need(type(maximum_positions)is int and 1<=maximum_positions<=128,'fixed at most128-position batch')
+ offset=len(tried);selected=unresolved[offset:offset+maximum_positions]
+ visited=expand_runs(summary['visited_position_runs'],maximum)
+ positive=expand_runs(summary['proposed_IP_obstruction_runs'],maximum)
+ miss=expand_runs(summary['visited_without_IP_certificate_runs'],maximum)
+ unvisited=expand_runs(summary['unvisited_position_runs'],maximum)
+ need(selected and selected==source['selected_orbit_positions']==summary['target_positions']
+  and summary['all_original_selector_positions']==unresolved and summary['previous_method_miss_positions_not_retried']==tried
+  and visited==selected[:len(visited)]
+  and sorted(positive+miss)==visited and len(positive)+len(miss)==len(visited)
+  and unvisited==unresolved[:offset]+unresolved[offset+len(visited):]and sorted(positive+miss+unvisited)==unresolved
+  and len(positive)+len(miss)+len(unvisited)==len(unresolved)
+  and not(set(visited)&set(ctx['paid']+selector['accepted_new_paid_positions']))
+  and summary['unvisited_includes_interrupted_current_position_and_outside_batch_selection']is True
+  and summary['original_paid_positions_not_evaluated']==len(ctx['paid'])
+  and summary['accepted_new_paid_positions_not_evaluated']==len(selector['accepted_new_paid_positions'])
+  and summary['no_failed_search_properness_generation_or_IP_success_claim']is True
+  and type(summary['new_paid_credit'])is int and summary['new_paid_credit']==0,
+  'entire original residual is split into verified-candidate/miss/unvisited; misses are not paid')
+ status=summary['status'];need(type(status)is str and(status=='bounded_selection_completed'
+  or status.startswith('soft_stop_with_exact_unvisited_residue:')),'truthful complete or soft-stopped batch status')
+ if status=='bounded_selection_completed':need(visited==selected,'complete status covers exactly the selected batch')
+ return dict(selected=selected,visited=visited,positive=positive,miss=miss,unvisited=unvisited)
+
+
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+  and all(k not in os.environ for k in ENV4),'EBS execution and absent ENV4')
+ signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s direct section37 checker')))
+ signal.setitimer(signal.ITIMER_REAL,max(.001,125-(time.monotonic()-START)))
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ ap.add_argument('--plan',required=True);ap.add_argument('--plan-sha256',required=True);ap.add_argument('--source-gate',nargs=2,required=True)
+ args=ap.parse_args();budget=Budget()
+ own=dict(path=str(HERE/'verify.py'),bytes=(HERE/'verify.py').stat().st_size,sha256=args.self_sha256)
+ need(Path(__file__).resolve(strict=True)==HERE/'verify.py'and own['bytes']<=65536,'exact independent direct checker source')
+ budget.bytes+=own['bytes'];budget.read(own)
+ pref=dict(path=args.plan,bytes=Path(args.plan).stat().st_size,sha256=args.plan_sha256)
+ need(pref['bytes']<=65536,'bounded complete checker plan')
+ raw=gzip.decompress(budget.read(pref));need(len(raw)<=524288,'bounded complete logical checker plan');plan=decode(raw)
+ need(plan['schema']=='Q11_RANK4_SECTION37_BATCH_DIRECT_CHECK_PLAN_V1'and plan['binding_status']=='BOUND_FOR_ROOT_REVIEW'
+  and plan['author']=='/root/compact_proof_author'and plan['program']==own,'current separately bound direct checker plan')
+ sg=dict(path=args.source_gate[0],bytes=Path(args.source_gate[0]).stat().st_size,sha256=args.source_gate[1])
+ need(sg['bytes']<=8192,'bounded new checker authorization');authorization=budget.doc(sg)
+ need(authorization['schema']=='ROOT_AUTHORIZED_Q11_RANK4_SECTION37_BATCH_DIRECT_CHECKER_V1'
+  and authorization['root']=='/root'and authorization['adopted']is True
+  and authorization['program']==own and authorization['plan']==pref
+  and authorization['new_case_calls_authorized']is True and authorization['proposer_or_kernel_execution_authorized']is False,
+  'truthful new direct checker authority; no inherited Source verdict')
+ rr=authorization['Root_code_math_review'];need(rr['bytes']<=32768,'bounded independent Root checker review');review=budget.doc(rr)
+ need(review['schema']=='ROOT_REVIEWED_Q11_RANK4_SECTION37_BATCH_DIRECT_CHECKER_V1'and review['root']=='/root'
+  and review['status']=='SUPPORTED'and review['blockers']==[]and review['program']==own and review['plan']==pref
+  and review['proposer_or_kernel_imported']is False and review['search_or_row_reduction_rerun']is False,
+  'separate Root review for the exact independent checker subject')
+ for ref in plan['inputs']:budget.read(ref)
+ expanded=gzip.decompress(budget.read(plan['proposer_plan']));need(len(expanded)<=524288,'complete proposer schedule DATA')
+ source=decode(expanded);need(source['schema']=='UNRUN_Q11_RANK4_SECTION37_PREFIX_BATCH_PLAN_V1'
+  and source['program']==plan['proposer_program']and source['kernel']==plan['proposer_kernel']
+  and source['helpers']==plan['proposer_helpers']and source['original_job']==plan['original_job'],
+  'exact fixed proposer and job DATA, without import or execution')
+ old=source['context'];need(type(old)is dict and old['original_job']==source['original_job']
+  and old['projection']==source['projection']and old['Root_projection_acceptance']==source['Root_projection_acceptance'],
+  'same retained original context fields, no original proposer activation')
+ producer_gate=budget.doc(plan['proposer_source_gate'])
+ need(producer_gate['schema']=='ROOT_AUTHORIZED_Q11_RANK4_SECTION37_BATCH_PROPOSER_V1'and producer_gate['root']=='/root'
+  and producer_gate['adopted']is True and producer_gate['new_case_calls_authorized']is True
+  and producer_gate['program']==source['program']and producer_gate['kernel']==source['kernel']
+  and producer_gate['helpers']==source['helpers']and producer_gate['plan']==plan['proposer_plan'],
+  'actual accepted new producer source subject, no transferred old authority')
+ controls=budget.doc(producer_gate['control_report']);producer_review=budget.doc(producer_gate['Root_code_math_review'])
+ need(controls['schema']=='ROOT_ACTUAL_Q11_RANK4_SECTION37_CONTROLS_V1'and controls['root']=='/root'
+  and controls['status']=='PASS'and controls['control_program']==source['control_program']
+  and controls['kernel']==source['kernel']and controls['helpers']==source['helpers']
+  and controls['controls']==9 and controls['original_case_calls']==0 and type(controls['actual_capture'])is dict,
+  'actual arithmetic controls at their exact distinct source subject')
+ need(producer_review['schema']=='ROOT_REVIEWED_Q11_RANK4_SECTION37_BATCH_PROPOSER_V1'and producer_review['root']=='/root'
+  and producer_review['status']=='SUPPORTED'and producer_review['blockers']==[]and producer_review['program']==source['program']
+  and producer_review['kernel']==source['kernel']and producer_review['helpers']==source['helpers']
+  and producer_review['control_program']==source['control_program']and producer_review['plan']==plan['proposer_plan'],
+  'exact actual producer review provenance')
+ ctx=context(old,budget);unresolved,selector=selector_scope(source,ctx,budget)
+ tried=prior_misses(source,selector,unresolved,budget);summary=budget.doc(plan['summary'])
+ need(summary['schema']=='Q11_RANK4_SECTION37_PREFIX_BATCH_SUMMARY_V1','current actual section37 summary')
+ header(summary,summary,plan,source,ctx,producer_gate);partition=partitions(summary,source,ctx,unresolved,selector,tried);selected=partition['selected']
+ announced=summary['proof_chunks'];need(type(announced)is list and announced==plan['proof_chunks']
+  and len(announced)<=128 and len({r['path']for r in announced})==len(announced),
+  'every announced whole chunk is independently checked in this finite128-case batch')
+ checked=[];all_positive=[];all_miss=[];proper=[]
+ for index,reference in enumerate(announced,1):
+  need(reference['bytes']<=131072,'whole producer proof chunk at most128KiB');chunk=budget.doc(reference)
+  need(set(chunk)==set(HEADER_KEYS)|{'schema','chunk','records'}
+   and chunk['schema']=='Q11_RANK4_SECTION37_PROPOSALS_V1'and type(chunk['chunk'])is int and chunk['chunk']==index,
+   'complete exact ordered proof-chunk grammar')
+  header(chunk,summary,plan,source,ctx,producer_gate)
+  need(type(chunk['records'])is list and 1<=len(chunk['records'])<=128,'bounded nonempty supplied records')
+  for record in chunk['records']:
+   need(type(record)is dict and set(record)=={'original_orbit_position','representative_J_index',
+    'original_orbit_row_sha256','certificate','diagnostic'},'whole original record grammar')
+   offset=len(checked);pos=record['original_orbit_position'];need(type(pos)is int and offset<len(partition['visited'])
+    and pos==partition['visited'][offset],'one checked record for each original visited position, in exact order')
+   orbit=ctx['orbits'][pos-1];need(record['representative_J_index']==orbit[0]
+    and record['original_orbit_row_sha256']==digest(orbit),'same actual representative and whole original member/transporter row')
+   c=actual_operator(budget,ctx['IR'],ctx['R'],*catalogue_pair(ctx['catalogue'][orbit[0]-1]));marks=(ctx['a'],ctx['b'],c,ctx['e'])
+   need(len(set(marks))==4 and all(g!=I7 and budget.multiply(g,g)==I7 for g in marks)
+    and all(budget.multiply(marks[i],marks[j])==budget.multiply(marks[j],marks[i])for i in range(4)for j in range(i+2,4)),
+    'same actual four distinct nonidentity involutions and every distant relation')
+   fact=record['certificate']
+   if fact is None:
+    need(pos in partition['miss'],'finite miss has no proposed IP proof');all_miss.append(pos)
+    direct=dict(kind='NO_IP_CERTIFICATE_REMAINS_UNPAID',quartet_IP_failure_verified=False,quartet_nongeneration_claim=False)
+   else:
+    need(type(fact)is dict and type(fact.get('section_indices'))is list,'explicit actual section fact')
+    direct=direct_fact(fact,marks,budget,tuple(fact['section_indices']))
+    need(direct['quartet_IP_failure_verified']is True and pos in partition['positive'],
+     'only directly verified section generation enters the quartet IP obstruction partition');all_positive.append(pos)
+   completed=diagnostics(record['diagnostic'],fact,marks,budget)
+   proper.extend(dict(original_orbit_position=pos,section_indices=r['section_indices'])for r in completed)
+   checked.append(dict(original_orbit_position=pos,representative_J_index=orbit[0],original_orbit_row_sha256=digest(orbit),
+    borrowed_original_member_count=len(orbit[1]),direct_result=direct,verified_proper_sections_without_IP_credit=completed))
+ need([r['original_orbit_position']for r in checked]==partition['visited']and all_positive==partition['positive']
+  and all_miss==partition['miss'],'all announced chunks and all declared visited outcomes checked exactly once')
+ expected={r['path']:r for r in plan['inputs']}
+ for r in(own,pref,sg,rr):
+  need(expected.get(r['path'],r)==r,'single complete input version');expected[r['path']]=r
+ need(budget.refs==expected,'whole exact physical read closure, including every proof chunk and evidence leaf')
+ budget.recheck();budget.tick()
+ remaining=sorted(partition['miss']+partition['unvisited'])
+ need(len(remaining)==len(unresolved)-len(all_positive)and not set(remaining)&set(all_positive)
+  and sorted(remaining+all_positive)==unresolved,'only verified IP failures may leave the residual after separate Root adoption')
+ result=dict(schema='Q11_RANK4_SECTION37_BATCH_DIRECT_CHECK_RESULT_V1',status='VERIFIED_ALL_SECTION37_BATCH_RECORDS',
+  author='/root/compact_proof_author',program=own,plan=pref,source_gate=sg,Root_code_math_review=rr,
+  summary=plan['summary'],checked_chunks=announced,original_job=source['original_job'],checked_records=checked,
+  Root_unresolved_selector=source['selector'],selector_adoptions=source['selector_adoptions'],
+  selector_unresolved_count=len(unresolved),selector_expanded_sha256=digest(unresolved),exact_target_positions=selected,
+  previous_method_miss_positions_not_retried=tried,prior_finite_misses_skipped_but_still_unpaid=True,
+  verified_IP_failure_positions=all_positive,finite_miss_positions_without_IP_credit=all_miss,
+  unvisited_position_runs=packed_runs(partition['unvisited']),unvisited_positions_count=len(partition['unvisited']),
+  remaining_if_Root_adopts_verified_failures=dict(position_runs=packed_runs(remaining),count=len(remaining),
+   expanded_sha256=digest(remaining),includes_all_finite_misses=True),
+  verified_proper_sections_without_quartet_IP_credit=proper,
+  all_summary_chunks_checked=True,complete_original_selector_partition_checked=True,
+  original_and_adopted_new_paid_positions_not_evaluated=True,
+  natural_Cayley_model_and_maximal_overgroup_theorem=source['prime37_theory'],theory_independent_review=source['prime37_independent_review'],
+  rank4_section_IP_corollary=source['rank4_section_corollary'],original_model_and14763_member_transports_borrowed=True,
+  new14763_transport_evaluations=0,proposer_or_kernel_or_helper_imports=0,word_search_or_row_reduction_calls=0,
+  quartet_nongeneration_claim=False,whole_original_credit=0,conjecture_credit=0,Lean_credit=0,Root_adoption_owed=True,
+  resources=dict(seconds=time.monotonic()-START,peak_self_rss_bytes=budget.peak,matrix_products=budget.products,
+   row_images=budget.row_images,physical_input_bytes=budget.bytes,unique_input_files=len(budget.refs),initial_source_loader_prepaid=own['bytes']))
+ raw=can(result)+b'\n';need(len(raw)<=131072,'whole bounded128KiB direct-check result')
+ out=Path(plan['output']);need(out.is_absolute()and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),
+  'fresh independently verified output artifact')
+ with out.open('xb')as f:need(f.write(raw)==len(raw),'whole direct checker result');f.flush();os.fsync(f.fileno())
+ print(can(dict(status=result['status'],output=dict(path=str(out),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),
+  checked_records=len(checked),verified_IP_failures=len(all_positive),unvisited=len(partition['unvisited']),whole_Original_credit=0)).decode())
+
+if __name__=='__main__':main()
+
