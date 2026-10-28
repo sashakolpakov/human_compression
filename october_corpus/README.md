@@ -36,6 +36,11 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
+The latest [Fi22 evidence report](research/proof_collection/updates/fi22_invariant_subsets/PUBLICATION.rst)
+records twelve verified nongeneration certificates, their borrowed premises,
+the completed archive checks and the remaining cases. These finite results
+add no completed manuscript or compression measurement.
+
 ## Common theories and applications
 
 A module is a mathematical topic containing several of our papers. Topic A

@@ -1,0 +1,177 @@
+"""Independent stdlib metadata/AST audit; never activates candidate code."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+
+D = Path('/private/tmp/l026_invariant_subsets/history_abi')
+C = D / 'control_boundary'
+O = C / 'independent_review'
+
+
+def ref(path):
+    path = Path(path)
+    raw = path.read_bytes()
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def check(value):
+    assert ref(value['path']) == value
+    return Path(value['path']).read_bytes()
+
+
+def save(name, value):
+    path = O / name
+    assert not path.exists()
+    path.write_bytes((json.dumps(value, sort_keys=True, indent=2) + '\n').encode())
+    return ref(path)
+
+
+H = json.loads((C / 'handoff.json').read_bytes())
+P = json.loads(check(H['plan']))
+I = json.loads(check(H['invoice']))
+subjects = {key: H[key] for key in (
+    'program', 'point_kernel', 'subset_kernel', 'supplier', 'controls', 'plan',
+    'check_template', 'source_inverse', 'control_source_inverse', 'argument',
+    'read_map', 'invoice', 'parent_handoff')}
+for value in subjects.values():
+    check(value)
+fixed = P['inputs']
+for value in fixed:
+    check(value)
+assert len(fixed) == 22 and sum(r['bytes'] for r in fixed) == 1441905
+
+V = json.loads(check(H['source_inverse']))
+worker = check(H['program']).decode()
+old = check(V['old_supplier']).decode()
+assert V['old_supplier_whole_text'] == old
+assert V['new_worker_whole_text'] == worker
+assert V['new_header'] + '\n\n'.join(r['text'] for r in V['literal_definitions']) + V['new_tail'] == worker
+
+
+def definitions(source):
+    tree = ast.parse(source)
+    return {n.name: ast.get_source_segment(source, n) for n in tree.body
+            if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+
+
+before, after = definitions(old), definitions(worker)
+for row in V['literal_definitions']:
+    assert row['text'] == before[row['name']] == after[row['name']]
+for key, target in [('new_subset_kernel', 'subset_kernel'),
+                    ('new_untrusted_supplier', 'supplier')]:
+    assert V[key]['program'] == H[target]
+    assert V[key]['whole_text'].encode() == check(H[target])
+HI = json.loads((D / 'history_field_inverse.json').read_bytes())
+assert worker.replace(HI['after'], HI['before']) == check(HI['prior_source']).decode()
+assert worker.count(HI['after']) == 1
+CI = json.loads(check(H['control_source_inverse']))
+nc = check(H['controls']).decode()
+oc = Path('/private/tmp/l026_invariant_subsets/controls.py').read_text()
+assert oc == CI['old_whole_text'] and nc == CI['new_whole_text']
+assert nc == oc.replace(CI['before'], CI['after']) and oc.count(CI['before']) == 1
+for key in ('program', 'point_kernel', 'subset_kernel', 'supplier', 'controls'):
+    ast.parse(check(H[key]), filename=H[key]['path'])
+
+R = P['roles']
+docs = {key: json.loads(check(R[key])) for key in (
+    'original_input', 'bridge_adoption', 'bridge_certificate', 'maximal_orders',
+    'operand_premises', 'free_projection', 'old_cycle_completion', 'old_cycle_checkpoint')}
+table = docs['maximal_orders']
+G = docs['original_input']['summary']['group_order']
+rows = []
+for row in table['rows']:
+    assert G % row['order'] == 0
+    product = 1
+    for prime, exponent in row['prime_factorization']:
+        product *= prime ** exponent
+    assert product == row['order']
+    rows.append(dict(type=row['type'], order=row['order'], classes=row['conjugacy_classes'],
+                     index=G // row['order']))
+assert len(rows) == 12 and sum(r['classes'] for r in rows) == 14
+assert min(r['index'] for r in rows) == 3510
+root, br, bridge, premises = (docs[k] for k in (
+    'original_input', 'bridge_adoption', 'bridge_certificate', 'operand_premises'))
+assert root['summary']['degree'] == 3510 and root['summary']['ambient_order'] == 2 * G
+assert br['input_gate'] == R['original_input'] and br['saved_certificate'] == R['bridge_certificate']
+assert br['adopted'] is True and br['strict_Saved_status'] == 'VERIFIED'
+assert premises['original_input'] == R['original_input'] == premises['whole_old_proof_roles']['input_root']
+assert premises['whole_old_proof_roles']['bridge_root'] == R['bridge_adoption']
+assert premises['whole_old_proof_roles']['bridge_carrier'] == R['bridge_certificate']
+action = bridge['point_action']
+assert len(action['vertices']) == 3510 and set(action['vertices']) == set(range(3510))
+assert action['root'] == 2961
+assert all(type(action['parents'][i]) is int and 0 <= action['parents'][i] < i
+           and action['labels'][i] in (-2, -1, 1, 2) for i in range(1, 3510))
+history, checkpoint = docs['old_cycle_completion'], docs['old_cycle_checkpoint']
+assert history['complete_unique_trials'] == 4096
+assert history['finite_misses_without_any_paid_credit'] == 16 and history['proposed_pairs'] == 0
+assert checkpoint['selected_free_indices'] == list(range(16))
+assert checkpoint['verification_authority'] is False and len(checkpoint['notes']) == 16
+assert all(row['next_trial'] == 256 for row in checkpoint['notes'])
+
+B, PP = H['program']['bytes'], H['plan']['bytes']
+F = sum(row['bytes'] for row in fixed)
+K, CS, U = (H[k]['bytes'] for k in ('point_kernel', 'subset_kernel', 'supplier'))
+physical = B + 2 * (F + B + PP + 8192 + 16384 + 16384)
+future = B + 2 * (F - U + B + 65536 + 8192 + 16384 + 16384 + 131072)
+assert physical == I['complete_first_final_physical_bytes_upper'] == 3079578
+assert future == I['strict_future_complete_physical_bytes_upper'] == 3441302
+assert B + K + CS == I['compiled_checker_namespace_bytes'] == 37608
+assert B + K + CS + U == I['compiled_producer_namespace_bytes'] == 40689
+assert I['producer_nonsearch_units_upper'] + 16 * I['producer_per_owner_capped_search_upper'] == 9434028
+assert I['producer_units_upper'] == 9434028 and I['strict_future_units_upper'] == 9563556
+assert P['selected_free_indices'] == list(range(16)) and P['maximum_subset_points'] == 512
+assert P['mode'] == 'propose' and P['resume'] is None
+
+observations = dict(
+    schema='INDEPENDENT_L026_INVARIANT_SUBSET_STATIC_OBSERVATIONS_V1',
+    author='/root/middle_dictionary_author', reviewer='/root/compact_proof_author',
+    subjects=subjects, whole_fixed_input_rows=fixed, whole_fixed_input_bytes=F,
+    literal_retained_definitions=V['literal_definition_names'],
+    whole_worker_and_new_provider_inverse_exact=True,
+    history_ABI_one_literal_reverse_exact=True,
+    control_boundary_one_literal_reverse_exact=True,
+    synthetic_first_edge_units=dict(membership=34, preedge=48, rotation=20,
+                                    total=102, next_preedge_total=150, corrected_cut=110),
+    imported_complete_maximal_table_arithmetic=rows,
+    largest_proper_imported_maximal_order=max(r['order'] for r in rows),
+    minimal_imported_proper_index=3510,
+    actual_original_bridge_tree_vertices=3510,
+    original_input_bridge_premise_joins=True,
+    old4096_trial_history=dict(trials=4096, owners=16, next_trial_each=256,
+                              finite_misses_unpaid=16, cycle_pair_hints=0, unchanged=True),
+    bounds=dict(first_producer_physical_bytes=physical, future_strict_physical_bytes=future,
+                physical_paths_each_upper=27, producer_units_upper=9434028,
+                strict_units_upper=9563556, compiled_producer_bytes=40689,
+                compiled_strict_bytes=37608, ordinary_RSS_bytes=134217728,
+                ordinary_wall_seconds=140, shared_work_units=10000000, shared_seconds=20),
+    original_middle_import='The accepted b788 premises retain the original seed/member/class/word/graph/two-fibre/H=B meanings; the b773 projection identifies the same original middle. Involution and membership are imported meanings, not established by a hash, string or generic controls.',
+    candidate_Source_helper_control_case_science_gate_S_W_Git_calls=0,
+    review_operations='Whole byte reads/hashes, JSON/AST parsing, exact inverse reconstruction and integer metadata arithmetic only; no candidate activation.')
+observations_ref = save('observations.json', observations)
+
+review = dict(
+    schema='INDEPENDENT_L026_INVARIANT_SUBSET_METHOD_REVIEW_V1',
+    status='SUPPORTED_STATIC_METHOD_AND_CONTROL_BOUNDARY',
+    author='/root/middle_dictionary_author', reviewer='/root/compact_proof_author',
+    subjects=subjects, observations=observations_ref, blockers=[],
+    independence_disclosure='Reviewer authored retained60ee and some borrowed primitive/fixture ancestry, previously separately reviewed by Middle/Root. This independently audits the new Middle subset/supplier/transitivity/history assembly and control successor; it does not reissue an independent verdict on reviewer own old kernel.',
+    findings=[
+        dict(topic='Exact original G transitivity', proof='The accepted original A-tree is transitive on3510 labels. Normal G of index2 has an A-transitive orbit system factoring through A/G, so one or two equal orbits. Two orbits would have size1755, contradicting minimum proper index3510 from the complete imported12-type/14-class Fi22 table. Exact original input, bridge, orders,1988-correction source lineage and distinct Root theorem review are joined. No Aut-table substitution or new operational G orbit computation.'),
+        dict(topic='Strict subset certificate', proof='Every actual ab and bc image of every point in a nonempty sorted proper supplied set is checked. Finite injectivity makes positive invariance equality and supplies inverse closure. Thus R=<ab,bc> preserves a proper nonempty subset and is proper in the same transitive G. No orbit-minimality, supplier completeness or negative-search premise is used.'),
+        dict(topic='Marking corollary', proof='For the same original imported involutions a,b,c, conjugation by b inverts ab and bc; K=<R,b> and R normal in K with quotient order at most2. If K were named nonabelian simple/perfect G then R=G, contradiction. Original middle involution/member/class/two-fibre semantics stay imported; no arbitrary product-of-three-involutions inference.'),
+        dict(topic='Supplier and strict separation', proof='Supplier queue/cursor is untrusted. Every edge is charged before evaluation; cursor advances only after a whole returned image. Cap misses and partial frontiers are unpaid. False coherent hints still require every independent strict closure edge. Check mode never activates supplier. The future caller authenticates complete providers and genuine filenames.'),
+        dict(topic='Subject and prior history', proof='Complete adopted operand and28908-row16B witness bank, exact free index/owner/rowSHA/triangle and scope bind each case. First window is exactly0..15. Actual old4096 cycle trials/16 unpaid misses/zero pairs are retained without replay or absence inference. No negative count or Original credit exists before actual strict check and Root adoption.'),
+        dict(topic='Corrected synthetic controls', proof='Parent Cut100 could interrupt before the first whole edge costing102. Immutable control successor changes only100 to110; next pre-edge would require150. The intended one-edge frontier is therefore statically consistent. Fourteen proposed generic controls cover closure/all edges/invalid sets/caps/interruption/resume/false hints/transitivity metadata. They remain unrun and confer no original action/group authority.'),
+        dict(topic='Finite resource scope', proof='All22 fixed whole pins matched. Source inverses reconstruct exactly, including8 literal borrowed definitions and both new providers. Producer upper3,079,578B/27paths and9,434,028 units; strict upper3,441,302B/27paths and9,563,556 units. Namespaces40,689/37,608 below50k;128MiB140s,8MiB32paths and10M20s remain unchanged. These are prospective bounds, not actual time/RSS/coverage evidence.')],
+    qualifications=[
+        'Actual controls, exact fresh Root Source/math/plan release, guarded supplier and separate strict execution/adoption remain owed.',
+        'Retained named Fi22/full-Aut/Out2, Reader/member/model/action/frame/word/graph/GLOBAL block2 class/exact two-fibre/H=B and complete maximal classification remain imports.',
+        'Future1024-point or resume plans require exact current invoices and fresh Root review. A full orbit or finite cap miss proves neither generation nor absence.',
+        'No original case was evaluated by reviewer. No generation/IP/reversal/census/whole Original/conjecture/Lean/compression measurement claim is made.'],
+    Root_authority_issued=False,
+    candidate_Source_helper_control_case_science_gate_S_W_Git_calls=0)
+review_ref = save('independent_review.json', review)
+print(json.dumps(dict(review=review_ref, observations=observations_ref,
+                      status=review['status'], blockers=[]), sort_keys=True))

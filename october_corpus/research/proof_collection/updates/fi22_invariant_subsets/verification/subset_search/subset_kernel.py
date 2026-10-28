@@ -1,0 +1,33 @@
+"""Separate full proper-subset-cap edition by /root/compact_proof_author.
+Borrowed machinery and attribution are retained below. All previous files
+are immutable; new Root review, controls and exact case release remain owed.
+"""
+"""Supplied positive invariant-subset checker. Author /root/middle_dictionary_author.
+No IO, discovery, full virtual b vector, group algorithm or old verdict transfer.
+The actual signed point provider is the separately authenticated 60ee kernel.
+"""
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+def check_subset(K, ctx, triangle, points, work, cap=3509):
+    need(type(cap) is int and 1 <= cap <= 3509, 'finite proper-subset cap')
+    need(type(points) is list and 1 <= len(points) <= cap < ctx['n'],
+         'nonempty proper bounded supplied point set')
+    work.charge(ctx['n'] + 24 * len(points), 'complete_subset_shape_slots_and_distinctness')
+    seen = bytearray(ctx['n'])
+    previous = -1
+    for point in points:
+        need(type(point) is int and previous < point < ctx['n'],
+             'strict increasing original integer point labels')
+        seen[point] = 1
+        previous = point
+    paths = K['prepare_triangle'](ctx, triangle, work)
+    for point in points:
+        for label in (1, 2):
+            work.charge(12, 'every_supplied_subset_point_and_positive_rotation_edge')
+            target = K['rotation_word'](ctx, paths, [label], point, work)
+            need(seen[target] == 1, 'every actual ab and bc image belongs to the supplied set')
+    return dict(points=len(points), checked_positive_rotation_edges=2 * len(points))
