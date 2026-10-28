@@ -11,9 +11,15 @@ complete actual call and resource guard are in `verification/ <verification/>`_.
 This check authenticates files and their mappings. The seven referenced
 base manifests retain their separate checks of archived proof bodies.
 
-The archived q11 evidence records 3,346 accepted intersection property
-failures in one block. The earlier arithmetic replay covers 27 of these;
-new relative arithmetic checks for the remaining 3,319 are still pending.
+The archived q11 snapshot records 3,346 accepted intersection property
+failures in one block. Four fresh arithmetic runs using corpus files now
+recheck 3,095 disjoint certificates. Together with the earlier 27-case
+replay, this covers 3,122 of that snapshot's certificates. See the
+`commands and complete results
+<../../groups/two_unitary_ends/replay/job_0023/two_words/README.rst>`_.
+The separate 224 section certificates still need a replay interface.
+A later local adoption adds 132 literal word certificates; those require
+their own interface and are not counted in the 3,122 replays.
 Fi22's projected witnesses and original operands prepare generation tests
 for 28,908 free cases. F009's registered checkpoint 10,997 has 208 pending
 obligations, including one reserved debt.
