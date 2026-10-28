@@ -1,0 +1,227 @@
+"""UNRUN supplied original Fi22 rotation-cycle verifier.
+Author /root/compact_proof_author. No supplier/search, whole virtual middle
+permutation, SGS, GAP, orbit or geometry discovery. Old metadata/proof
+adoptions are imported qualified premises, never a current SCI verdict.
+"""
+import time
+START=time.monotonic()
+import argparse,hashlib,json,math,os,resource,signal,stat,struct,sys
+from pathlib import Path
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+SELECTOR=dict(first_block_index=2,endpoint_position=18,local_class_position=164,middle_block_index=2,first_ambient_class_position=13,middle_ambient_class_position=13)
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def can(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def decode(raw):
+    def pairs(items):
+        out={}
+        for key,value in items:need(key not in out,'unique JSON keys');out[key]=value
+        return out
+    return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+class Budget:
+    def __init__(self):self.refs={};self.raw={};self.bytes=0;self.peak=0
+    def tick(self):
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+        need(rss<128*2**20 and time.monotonic()-START<140,'whole128MiB/140s original caller envelope')
+    def read(self,ref,fresh=False):
+        self.tick();need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+            and type(ref['path'])is str and type(ref['bytes'])is int and 0<=ref['bytes']<=2**21
+            and type(ref['sha256'])is str and len(ref['sha256'])==64
+            and set(ref['sha256'])<=set('0123456789abcdef'),'whole bounded physical role')
+        need(self.refs.get(ref['path'],ref)==ref,'one immutable physical version')
+        if ref['path']in self.raw and not fresh:return self.raw[ref['path']]
+        need(self.bytes+ref['bytes']<=8*2**20 and(ref['path']in self.refs or len(self.refs)<32),'whole first/final8MiB/32-path read scope')
+        p=Path(ref['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+            and a.st_nlink==1 and a.st_size==ref['bytes'],'canonical single-link physical input')
+        with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],
+             'stable entire actual physical role')
+        self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.bytes+=len(raw);return raw
+    def doc(self,ref):return decode(self.read(ref))
+    def final(self):
+        for ref in list(self.refs.values()):self.read(ref,True)
+
+class Work:
+    def __init__(self,check,cap=10000000,seconds=20):
+        need(type(cap)is int and 0<cap<=10000000 and type(seconds)in(int,float)and 0<seconds<=20,'unchanged finite shared work cap')
+        self.units=0;self.cap=cap;self.seconds=seconds;self.start=time.monotonic();self.check=check;self.labels={}
+    def charge(self,amount,label):
+        need(type(amount)is int and amount>=0,'typed nonnegative complete work charge');self.check()
+        need(amount<=self.cap-self.units and time.monotonic()-self.start<self.seconds,'shared10M/20s point/field/framing budget')
+        self.units+=amount;self.labels[label]=self.labels.get(label,0)+amount
+
+
+def load_kernel(ref,budget,source_bytes):
+    raw=budget.read(ref);need(len(raw)<=16384 and len(raw)+source_bytes<=50000,'whole compiled mathematical Source namespace50k')
+    ns={'__name__':'l026_actual_supplied_cycle_kernel','__file__':ref['path']}
+    exec(compile(raw,ref['path'],'exec'),ns)
+    for name in('decode_operands','prepare_triangle','rotation_word','check_cycle','verify_pair'):
+        need(ns[name].__globals__ is ns and ns[name].__code__.co_filename==ref['path'],'genuine exact current provider namespace/filename')
+    return ns
+
+def imported_context(plan,budget,work):
+    need(plan['scope_digest']==SCOPE and plan['original_selector']==SELECTOR,'same currently acquired original endpoint/middle subject')
+    R=plan['roles']
+    def document(name):
+        work.charge(2*R[name]['bytes'],'complete_retained_premise_JSON_byte_admission')
+        return budget.doc(R[name])
+    a=document('operand_adoption');f=document('free_adoption')
+    need(a['schema']=='ROOT_ACCEPTED_L026_PRIME_CYCLE_OPERAND_DATA_V1'and a['root']=='/root'and a['adopted']is True
+        and f['schema']=='ROOT_L026_ACCEPTED_FREE_PRODUCT_WITNESS_PROJECTION_V1'and f['root']=='/root'and f['adopted']is True
+        and a['operand_bytes']==52658 and f['free_rows']==28908
+        and a['all28908_generation_questions_unresolved']is f['all28908_generation_questions_unresolved']is True,
+        'actual metadata operand/witness adoptions, not a transferred scientific verdict')
+    need(a['outputs']['operands.bin']==R['operands']and a['outputs']['premises.json']==R['operand_premises']
+        and a['outputs']['byte_inverse.json']==R['operand_inverse']and a['outputs']['projection.json']==R['operand_projection']
+        and f['outputs']['free_witnesses.bin']==R['witnesses']and f['outputs']['projection.json']==R['free_projection'],
+        'exact whole adopted byte/framing/premise outputs')
+    premises=document('operand_premises');inverse=document('operand_inverse');projection=document('operand_projection');free=document('free_projection')
+    need(premises['schema']=='L026_PRIME_CYCLE_OPERAND_RETAINED_PREMISES_V1'
+        and premises['exact_original_scope']==projection['scope_digest']==free['scope_digest']==SCOPE
+        and premises['path_max']==10 and premises['d_image_elementary_map_bound']==21
+        and premises['b_image_elementary_map_bound']==63 and premises['rotation_image_elementary_map_bound']==64
+        and premises['seed_equals_first_Q_vector_proved_by_same_accepted_compact_identity']is True
+        and projection['qualified_original_a_c_d0_A_and_tree']is True
+        and inverse['schema']=='L026_PRIME_CYCLE_OPERAND_EXACT_BYTE_INVERSE_V1'
+        and free['free_projected']==28908 and free['exact_literal_record_bytes']is True,
+        'actual complete operand/witness identity with retained exact inverse, scope and path bounds')
+    imports=premises['inherited_member_and_Reader_imports']
+    need(imports['original_G_normal_in_A']is True and imports['GAP_IsNormal_A_G_means_G_normal_in_A']is True
+        and imports['same_accepted_original_degree3510_action']is True
+        and imports['original_exact_orders_and_full_class_predicates_borrowed']is True
+        and premises['named_group_or_class_or_GAP_classification_reproved']is False
+        and 'GLOBAL block2 class'in premises['qualification']and 'H=B'in premises['qualification'],
+        'explicit imported known-G seed/normality/faithful Reader/class/graph/two-fibre/qualified H=B meanings')
+    theorem=document('maximal_orders');review=document('theorem_review');note=document('theorem_source_note');handoff=document('theorem_handoff')
+    work.charge(2*R['theorem_argument']['bytes'],'whole_written_theorem_byte_admission')
+    budget.read(R['theorem_argument'])
+    need(theorem['schema']=='FI22_COMPLETE_SIMPLE_MAXIMAL_ORDER_PREMISE_V1'and theorem['named_group']=='Fi22'
+        and theorem['classification_is_borrowed']is True and theorem['completeness_independently_reproved_here']is False
+        and theorem['Aut_Fi22_substitution_permitted']is False and theorem['conjugacy_classes']==14,
+        'borrowed complete simple Fi22 classification with1988 correction; not Aut substitution')
+    rows=theorem['rows'];need(type(rows)is list and len(rows)==12,'all twelve types/fourteen conjugacy classes')
+    total=0
+    for row in rows:
+        work.charge(64,'whole_imported_maximal_order_divisibility_row')
+        n,k=row['order'],row['conjugacy_classes']
+        need(type(n)is type(k)is int and n>0 and k>0 and not(n%11==n%13==0)
+            and row['divisible_by_11']==(n%11==0)and row['divisible_by_13']==(n%13==0),
+            'every imported proper maximal omits one prime')
+        total+=k
+    need(total==14 and review['schema']=='DISTINCT_FI22_PRIME_CYCLE_WRITTEN_THEOREM_REVIEW_V1'
+        and review['status']=='PASS_DISTINCT_FI22_PRIME_CYCLE_WRITTEN_THEOREM'and review['reviewer']==review['actor']=='/root'
+        and review['blockers']==[]and review['all14_maximal_classes_accounted_for']is True
+        and review['exact_G_membership_required']is True and review['Aut_G_substitution_forbidden']is True
+        and review['maximal_avoidance_and_point_cycle_proof_accepted']is True
+        and review['source_handoff']==R['theorem_handoff'],'same actual written-theorem review only, not a current checker verdict')
+    need(handoff['artifacts']['ARGUMENT.rst']==R['theorem_argument']and handoff['artifacts']['maximal_orders.json']==R['maximal_orders']
+        and handoff['artifacts']['source_note.json']==R['theorem_source_note']
+        and note['actual_input_gate_and_point_action_premises']['original_input_acceptance']==premises['original_input']
+        and note['actual_input_gate_and_point_action_premises']['point_bridge_acceptance']==premises['whole_old_proof_roles']['bridge_root'],
+        'exact same original G/Reader/bridge membership and classified theorem source lineage')
+    return dict(premises=premises,adopted_operand=a,adopted_witness=f,qualification=premises['qualification'])
+
+def supplied_rows(raw,plan):
+    carrier=decode(raw)
+    need(raw==can(carrier)and type(carrier)is dict and set(carrier)=={'schema','scope_digest','original_selector','operand_adoption','free_witness_adoption','records'}
+        and carrier['schema']=='L026_ORIGINAL_ROTATION_PRIME_CYCLES_V1'and carrier['scope_digest']==SCOPE
+        and carrier['original_selector']==plan['original_selector']
+        and carrier['operand_adoption']==plan['roles']['operand_adoption']
+        and carrier['free_witness_adoption']==plan['roles']['free_adoption'],'canonical exact original supplied marking context')
+    rows=carrier['records'];need(type(rows)is list and len(rows)<=16,'at most16 actually supplied generation records')
+    expected=plan['expected_positive_free_indices']
+    need(type(expected)is list and all(type(i)is int for i in expected)
+        and expected==sorted(set(expected))and set(expected)<=set(plan['selected_free_indices']),
+        'exact strict-integer announced positive free indices')
+    indices=[]
+    for row in rows:
+        need(type(row)is dict and set(row)=={'free_index','owner','witness_row_sha256','prime11','prime13'}
+            and type(row['free_index'])is int and row['free_index']in plan['selected_free_indices']
+            and type(row['owner'])is int and 0<=row['owner']<500178
+            and type(row['witness_row_sha256'])is str and len(row['witness_row_sha256'])==64,
+            'literal selected original owner/witness row and two supplied parts')
+        indices.append(row['free_index'])
+    need(indices==sorted(set(indices))and indices==plan['expected_positive_free_indices'],'every and only actual announced supplied record once')
+    return rows
+
+def main():
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+        and not sys.flags.optimize and all(k not in os.environ for k in ENV4),'minimal EBS/ENV4 interpreter')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('140s supplied Fi22 cycles')))
+    signal.setitimer(signal.ITIMER_REAL,max(.001,140-(time.monotonic()-START)))
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--Root-gate',nargs=2,required=True);args=ap.parse_args();budget=Budget()
+    own=dict(path=str(Path(__file__).resolve(strict=True)),bytes=Path(__file__).stat().st_size,sha256=args.self_sha256)
+    need(own['bytes']<=32768,'bounded new supplied verifier Source');budget.bytes+=own['bytes'];budget.read(own)
+    p=Path(args.plan[0]);pref=dict(path=str(p),bytes=p.stat().st_size,sha256=args.plan[1]);need(pref['bytes']<=65536,'bounded actual scientific plan');plan=budget.doc(pref)
+    g=Path(args.Root_gate[0]);gref=dict(path=str(g),bytes=g.stat().st_size,sha256=args.Root_gate[1]);need(gref['bytes']<=8192,'bounded fresh Root gate');gate=budget.doc(gref)
+    need(plan['schema']=='L026_SUPPLIED_PRIME_CYCLE_CHECK_PLAN_V1'and plan['program']==own
+        and gate['schema']=='ROOT_AUTHORIZED_L026_SUPPLIED_PRIME_CYCLES_V1'and gate['root']=='/root'and gate['adopted']is True
+        and gate['new_case_calls_authorized']is True and gate['program']==own and gate['plan']==pref and gate['kernel']==plan['kernel'],
+        'fresh exact current scientific Source/kernel/plan authorization')
+    need(gate['Root_code_math_review']['bytes']<=32768 and gate['control_report']['bytes']<=16384,'bounded actual review/control reports')
+    review=budget.doc(gate['Root_code_math_review']);control=budget.doc(gate['control_report'])
+    need(review['root']=='/root'and review['status']=='SUPPORTED'and review['blockers']==[]
+        and review['program']==own and review['kernel']==plan['kernel']and review['plan']==pref
+        and review['named_G_membership_bridge_action_and_two_fibre_imports_checked']is True,
+        'separate whole current code/math/premise review')
+    need(control['schema']=='L026_SUPPLIED_PRIME_CYCLE_GENERIC_CONTROLS_V1'and control['status']=='PASS'
+        and control['consumer']==own and control['kernel']==plan['kernel']and control['program']==plan['control_program']
+        and control['original_case_calls']==0 and control['controls']>=10,'actual focused generic controls, no old Source/control transfer')
+    for ref in plan['inputs']:budget.read(ref)
+    expected={r['path']:r for r in plan['inputs']};need(len(expected)==len(plan['inputs']),'unique complete fixed physical roles')
+    for ref in(own,pref,gref,gate['Root_code_math_review'],gate['control_report']):
+        need(expected.get(ref['path'],ref)==ref,'one actual physical identity');expected[ref['path']]=ref
+    need(len(expected)<=32 and own['bytes']+2*sum(r['bytes']for r in expected.values())<=8*2**20,
+        'complete first/final physical scope and Source bootstrap prepaid')
+    need(type(plan['window_start'])is int and 0<=plan['window_start']<28908
+        and type(plan['maximum_records'])is int and 1<=plan['maximum_records']<=16
+        and type(plan['selected_free_indices'])is list and all(type(i)is int for i in plan['selected_free_indices'])
+        and plan['selected_free_indices']==list(range(plan['window_start'],min(28908,plan['window_start']+plan['maximum_records']))),
+        'exact finite original free-index window, not a complete-generation ledger')
+    need(plan['records']['bytes']<=131072,'whole bounded supplied carrier before decoding')
+    work=Work(budget.tick);imports=imported_context(plan,budget,work)
+    work.charge(2*plan['kernel']['bytes'],'whole_current_kernel_declaration_bytes')
+    K=load_kernel(plan['kernel'],budget,own['bytes']);ctx=K['decode_operands'](budget.read(plan['roles']['operands']),work)
+    raw=budget.read(plan['roles']['witnesses']);need(len(raw)==462528,'whole adopted28908-row16B witness carrier')
+    supplied=budget.read(plan['records']);work.charge(2*len(supplied),'whole_supplied_JSON_byte_admission')
+    rows=supplied_rows(supplied,plan);outcomes=[]
+    for row in rows:
+        index=row['free_index'];work.charge(64,'whole_original_free_witness_record_and_digest_role')
+        record=raw[16*index:16*index+16];owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',record)
+        need(owner==row['owner']and hashlib.sha256(record).hexdigest()==row['witness_row_sha256']
+            and 0<=partner<500178 and mass==1024,'exact previously adopted original owner/middle/partner record')
+        K['verify_pair'](ctx,(x,y,z),dict(prime11=row['prime11'],prime13=row['prime13']),work)
+        outcomes.append(dict(free_index=index,owner=owner,witness_row_sha256=row['witness_row_sha256'],
+            original_product_mass=1024,rotation_group='NAMED_ORIGINAL_SIMPLE_FI22_BY_IMPORTED11_13_CRITERION'))
+    work.charge(16384,'whole_output_scalar_serialization_admission')
+    need(budget.refs==expected,'exact actual physical input closure');budget.final();budget.tick();work.charge(0,'final_shared_work_guard')
+    result=dict(schema='L026_DIRECT_ORIGINAL_ROTATION_CYCLES_RETURN_V1',status='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES',
+        author='/root/compact_proof_author',program=own,kernel=plan['kernel'],plan=pref,Root_source_gate=gref,
+        Root_code_math_review=gate['Root_code_math_review'],control_report=gate['control_report'],scope_digest=SCOPE,
+        original_selector=SELECTOR,actual_supplied_carrier=plan['records'],verified_generation_records=outcomes,
+        adopted_operand_and_membership_premises=plan['roles']['operand_adoption'],adopted_middle_witness_premises=plan['roles']['free_adoption'],
+        borrowed_maximal_classification=plan['roles']['maximal_orders'],borrowed_theorem=plan['roles']['theorem_argument'],
+        same_known_G_seed_and_G_normal_in_A_membership_route_imported=True,
+        actual_direct_signed_word_and_every_closing_edge_checked=True,supplier_or_search_calls=0,whole_virtual_middle_vectors_or_SGS_or_orbits=0,
+        new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit=0,Root_adoption_owed=True,
+        complete_generation_domain_or_census_claim=False,all_other_positions_receive_no_new_conclusion_here=True,
+        resources=dict(work_units=work.units,work_labels=work.labels,physical_read_bytes=budget.bytes,physical_paths=len(budget.refs),peak_RSS=budget.peak),
+        qualification=imports['qualification']+' Fresh supplied cycles only. Classification and original G/action/member meanings remain imported. No IP conclusion or census/Original credit is made by this result.')
+    output=Path(plan['output']);need(output.is_absolute()and output.is_relative_to('/private/tmp')and '..'not in output.parts
+        and output.parent.resolve(strict=True)==output.parent and not os.path.lexists(output),'fresh ordinary temporary strict result')
+    body=can(result);need(len(body)<=16384,'whole scalar16KiB result')
+    with output.open('xb')as f:need(f.write(body)==len(body),'whole fresh result');f.flush();os.fsync(f.fileno())
+    fd=os.open(output.parent,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    print(json.dumps(dict(status=result['status'],output=dict(path=str(output),bytes=len(body),sha256=hashlib.sha256(body).hexdigest()),
+        verified_records=len(outcomes),Root_adoption_owed=True,new_Original_credit=0),sort_keys=True))
+
+if __name__=='__main__':main()

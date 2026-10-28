@@ -1,0 +1,174 @@
+"""UNRUN generic GL7 controls for exact dihedral dictionary reuse.
+New controls by /root/prime_theory_audit; generic budget/refusal helpers
+are borrowed literally from Middle's earlier controls. No original case.
+"""
+import time
+START=time.monotonic()
+import argparse,hashlib,itertools,json,resource,sys
+from pathlib import Path
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+
+class ArithmeticBudget:
+ def __init__(self,stop_type=None,limit=None):self.products=0;self.searching=False;self.need=need;self.stop_type=stop_type;self.limit=limit
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  need(rss<128*2**20 and time.monotonic()-START<100,'generic128MiB100s control bound')
+ def multiply(self,A,B):
+  self.tick()
+  if self.limit is not None and self.products>=self.limit:raise self.stop_type('synthetic forced stop')
+  self.products+=1;need(self.products<=50000,'generic50000products')
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(len(B)))%11 for j in range(len(B[0])))for i in range(len(A)))
+
+
+def refused(call):
+ try:call()
+ except(ValueError,KeyError,TypeError,IndexError):return
+ raise ValueError('bad generic metadata was accepted')
+
+
+def reflection_fixture(kernel,budget):
+    one=(1,0,0,0,0,0);x=(0,1,0,0,0,0);I=kernel['I7']
+    for a in range(11):
+        for b in range(1,11):
+            def mul(u,v):
+                budget.tick(True);out=[0]*11
+                for i in range(6):
+                    for j in range(6):out[i+j]=(out[i+j]+u[i]*v[j])%11
+                for k in range(10,5,-1):
+                    c=out[k];out[k-6]=(out[k-6]-b*c)%11;out[k-5]=(out[k-5]-a*c)%11
+                return tuple(out[:6])
+            def ring_power(z,n):
+                value=one
+                for bit in bin(n)[2:]:
+                    value=mul(value,value)
+                    if bit=='1':value=mul(value,z)
+                return value
+            z=ring_power(x,47880)
+            rows=[mul(tuple(int(i==j)for i in range(6)),z)for j in range(6)]
+            Y=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in rows)
+            if Y==I or kernel['power'](Y,37,budget)!=I:continue
+            frob=[ring_power(tuple(int(i==j)for i in range(6)),1331)for j in range(6)]
+            F=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in frob)
+            if budget.multiply(F,F)!=I:continue
+            if budget.multiply(budget.multiply(F,Y),F)!=kernel['power'](Y,36,budget):continue
+            Z=tuple(tuple((10 if i==0 else 1)if i==j else 0 for j in range(7))for i in range(7))
+            return Y,F,Z
+    raise ValueError('bounded generic ring fixture found no checked reflection pair')
+
+
+def original_power(matrix,exponent,budget):
+    value=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    for bit in bin(exponent)[2:]:
+        value=budget.multiply(value,value)
+        if bit=='1':value=budget.multiply(value,matrix)
+    return value
+
+
+def literal_word(marks,section,word,budget):
+    value=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    for letter in word:value=budget.multiply(value,marks[section[int(letter)]])
+    return value
+
+
+def original_predicate(matrix,budget):
+    I=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    witness=original_power(matrix,6,budget)
+    return witness!=I and original_power(witness,37,budget)==I
+
+
+def main():
+    import copy
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--supplier',nargs=2,required=True);ap.add_argument('--dictionary-map',nargs=2,required=True);a=ap.parse_args()
+    own=Path(__file__).resolve(strict=True);raw=own.read_bytes()
+    need(len(raw)<=16384 and hashlib.sha256(raw).hexdigest()==a.self_sha256,'whole exact new control Source')
+    p=Path(a.supplier[0]);source=p.read_bytes()
+    need(p.resolve(strict=True)==p and len(source)<=65536 and hashlib.sha256(source).hexdigest()==a.supplier[1],
+         'whole exact untrusted supplier declarations before generic activation')
+    mp=Path(a.dictionary_map[0]);mb=mp.read_bytes()
+    need(mp.resolve(strict=True)==mp and len(mb)==61147 and hashlib.sha256(mb).hexdigest()==a.dictionary_map[1],
+         'whole exact finite dictionary DATA')
+    data=json.loads(mb);ns={'__name__':'q11_dihedral_supplier_synthetic','__file__':str(p)}
+    exec(compile(source,str(p),'exec'),ns)
+    entries=ns['validated_entries']();structure=ns['dihedral_structure'](entries,data);names=[]
+    words=[''.join('1'+('0','2','02')[d]for d in digits)for n in range(1,5)for digits in itertools.product(range(3),repeat=n)]
+    need(len(entries)==120 and all(e['word']==words[e['raw_index']-1]==ns['word_from_index'](e['raw_index'])for e in entries),
+         'complete independent original120-index expansion');names.append('same120_literal_dictionary_and_stable_consumer_indices')
+    refused(lambda:ns['word_from_index'](True));refused(lambda:ns['word_from_index'](0));refused(lambda:ns['word_from_index'](121))
+    names.append('malformed_dictionary_index_types_refused')
+    bad=copy.deepcopy(data);bad['raw_to_class'][4]['representative_raw_index']=120;refused(lambda:ns['dihedral_structure'](entries,bad))
+    bad=copy.deepcopy(data);bad['prefix_nodes'][8]['parent_node_id']=44;refused(lambda:ns['dihedral_structure'](entries,bad))
+    bad=copy.deepcopy(data);bad['raw_to_class'][10]['left_rotation']=True;refused(lambda:ns['dihedral_structure'](entries,bad))
+    names.append('all120_formal_classes_and44_parent_nodes_validated_with_mutations')
+    budget=ArithmeticBudget();Y,F,Z=reflection_fixture(ns,budget);I=ns['I7'];FY=budget.multiply(F,Y);ZFY=budget.multiply(Z,FY)
+    positive=(Z,FY,F,ZFY)
+    need(len(set(positive))==4 and all(g!=I and budget.multiply(g,g)==I for g in positive)
+         and all(budget.multiply(positive[i],positive[j])==budget.multiply(positive[j],positive[i])
+             for i in range(4)for j in range(i+2,4)),
+         'proper generic GL7 involutions and all string commutations')
+    names.append('checked_order37_reflection_and_distinct_involutory_V4_string_fixture')
+    for exponent,count in((6,3),(37,7)):
+        b=ArithmeticBudget();got=ns['power'](Y,exponent,b)
+        need(b.products==count and got==original_power(Y,exponent,ArithmeticBudget()),'exact new chain and old binary equality')
+    need(ns['power'](Y,0,ArithmeticBudget())==I,'old exponent-zero interface retained')
+    names.append('explicit6_and37_chains_equal_old_powers_at_exact3_and7_products')
+    negative=tuple(tuple(tuple((10 if i==axis else 1)if i==j else 0 for j in range(7))for i in range(7))for axis in range(4))
+    for marks in(positive,negative):
+        for section in((0,1,2),(1,2,3)):
+            cache=dict(nodes={},blocks={});predicates={}
+            for representative,node in structure['representative_nodes'].items():
+                v=ns['dictionary_value'](marks,section,structure,cache,node,budget)
+                w=ns['power'](v,6,budget);predicates[representative]=w!=I and ns['power'](w,37,budget)==I
+            for e in entries:
+                actual=literal_word(marks,section,e['word'],budget)
+                need(original_predicate(actual,budget)==predicates[structure['classes'][e['raw_index']]],
+                     'every raw original predicate equals its exact dihedral representative')
+    names.append('all120_power_predicates_equal40_DAG_classes_on_actual_involution_V4_fixtures')
+    make=lambda marks:(lambda position:(marks,position,'0'*64))
+    found=ns['scan']([1,2],make(positive),ArithmeticBudget(),entries,structure)
+    need(found['visited']==[1,2]and len(found['records'])==2 and all(r[3:]==[2,1]for r in found['records']),
+         'unchanged first-hit raw index in both ends')
+    names.append('first_positive_raw_indices_preserved_as2_and1')
+    miss=ns['scan']([1],make(negative),ArithmeticBudget(),entries,structure)
+    need(miss['visited']==miss['finite_misses']==[1]and not miss['records']and miss['notes'][0]['completed']==[120,0],
+         'complete finite pool miss remains unpaid and right search unnecessary')
+    names.append('negative_finite_pool_unpaid_with120_completed_raw_predicates')
+    # Both end triples have actual involutions and a genuine V4. This mock
+    # quartet is not claimed to satisfy its unused cross-end a/e relation.
+    partial=ns['scan']([1],make((F,FY,Z,ZFY)),ArithmeticBudget(),entries,structure)
+    need(partial['visited']==partial['finite_misses']==[1]and partial['notes'][0]['hits'][0]>0
+         and partial['notes'][0]['hits'][1]==0,'one end hint retained with the other end unpaid')
+    names.append('one_positive_end_and_other_finite_miss_retain_partial_hint_only')
+    stopped=ns['scan']([1,2],make(positive),ArithmeticBudget(ns['Stop'],0),entries,structure)
+    need(not stopped['visited']and not stopped['records']
+         and ns['partition'](dict(unpaid=[1,2,3]),[1,2],stopped)==[1,2,3],
+         'interrupted first case remains wholly unvisited')
+    names.append('early_stop_preserves_current_and_unselected_positions_unpaid')
+    afterleft=ns['scan']([1,2],make(positive),ArithmeticBudget(ns['Stop'],16),entries,structure)
+    need(not afterleft['visited']and afterleft['notes'][0]['hits'][0]==2,'first left raw hit retained on right interruption')
+    names.append('right_interruption_retains_left_first_hit_without_visited_credit')
+    need(ns['partition'](dict(unpaid=[1,2,3,4]),[2,3],dict(visited=[2],records=[],finite_misses=[2]))==[1,3,4],
+         'same complete exact unpaid set difference')
+    refused(lambda:ns['partition'](dict(unpaid=[1,2]),[1,2],dict(visited=[1],records=[[1]],finite_misses=[1])))
+    names.append('whole_unvisited_partition_and_duplicate_outcomes_refused')
+    need(found['fixed_prefix_predicate_reuses']>=1 and miss['dihedral_predicate_reuses']==80,
+         'old fixed predicate cache and new80 raw-predicate symmetry covers stay distinct')
+    names.append('fixed_left_and_dihedral_reuse_counters_have_explicit_distinct_meanings')
+    byraw={e['raw_index']:e for e in entries}
+    for section in((0,1,2),(1,2,3)):
+        cache=dict(nodes={},blocks={})
+        for node,row in enumerate(data['prefix_nodes'],1):
+            got=ns['dictionary_value'](positive,section,structure,cache,node,budget)
+            need(got==literal_word(positive,section,byraw[row['raw_dictionary_index']]['word'],budget),
+                 'every actual44 prefix matrix equals its literal ordered mark product')
+    names.append('all44_prefix_values_equal_literal_word_matrices_in_both_end_orientations')
+    need(len(names)==14,'complete fourteen focused controls')
+    print(json.dumps(dict(schema='Q11_TWO_END37_SUPPLIER_CONTROLS_V1',status='PASS',author='/root/prime_theory_audit',
+        program=dict(path=str(own),bytes=len(raw),sha256=a.self_sha256),
+        supplier=dict(path=str(p),bytes=len(source),sha256=a.supplier[1]),
+        dictionary_map=dict(path=str(mp),bytes=len(mb),sha256=a.dictionary_map[1]),controls=len(names),names=names,
+        original_case_calls=0,original_model_or_group_calls=0,
+        qualification='Generic GL7 matrices over F11 only; no admitted G2 fixture, original word/model/domain, Source authority, selector or paid case. All actual controls remain owed until Root executes this source.'),sort_keys=True))
+if __name__=='__main__':main()

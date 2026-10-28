@@ -1,0 +1,137 @@
+"""UNRUN tiny generic permutation/word and isolated DATA controls.
+Author /root/compact_proof_author. Synthetic26-point data is not Fi22, not
+its point/involution bridge and not original model/membership authority.
+"""
+import time
+START=time.monotonic()
+import argparse,hashlib,json,resource,struct,sys
+from pathlib import Path
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def bounded():
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    need(rss<128*2**20 and time.monotonic()-START<60,'tiny generic128MiB/60s controls')
+
+def refused(call):
+    try:call()
+    except(ValueError,KeyError,IndexError,TypeError):return
+    raise ValueError('malformed or false synthetic claim was accepted')
+
+def subject(pair):
+    p=Path(pair[0]);raw=p.read_bytes()
+    need(p.is_absolute()and p.resolve(strict=True)==p and len(raw)<=32768
+         and hashlib.sha256(raw).hexdigest()==pair[1],'whole bounded actual generic subject Source')
+    return p,raw
+
+def fixture(changed_ambient=False):
+    n=26;I=list(range(n));d=I.copy();a=I.copy()
+    for start,p in[(0,11),(11,13)]:
+        for i in range(p):d[start+i]=start+(-i)%p;a[start+i]=start+(1-i)%p
+    c=a.copy();c[24],c[25]=25,24
+    A0,A1=I.copy(),I.copy()
+    if changed_ambient:
+        A0[0],A0[1],A0[2]=1,2,0
+        A1[0],A1[3],A1[4]=3,4,0
+    tree=b''.join(struct.pack('<HHb',i,65535 if i==0 else 0,0 if i==0 else(2 if changed_ambient and i==2 else 1))for i in range(n))
+    raw=b'L026CYC1'+b''.join(struct.pack('<26H',*v)for v in[d,a,c,A0,A1])+tree
+    return raw,[d,a,c,A0,A1]
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--kernel',nargs=2,required=True);ap.add_argument('--consumer',nargs=2,required=True);args=ap.parse_args()
+    own=Path(__file__).resolve(strict=True);ownraw=own.read_bytes()
+    need(len(ownraw)<=16384 and hashlib.sha256(ownraw).hexdigest()==args.self_sha256,'whole actual generic-control Source')
+    kp,kraw=subject(args.kernel);cp,craw=subject(args.consumer)
+    K={'__name__':'cycle_kernel_generic_controls','__file__':str(kp)}
+    C={'__name__':'cycle_consumer_generic_controls','__file__':str(cp)}
+    exec(compile(kraw,str(kp),'exec'),K);exec(compile(craw,str(cp),'exec'),C)
+    work=C['Work'](bounded);raw,maps=fixture();ctx=K['decode_operands'](raw,work,26,0);names=[]
+    need(ctx['n']==26 and ctx['path_max']==1,'full generic binary/inverse/tree framing')
+    names.append('whole_generic_frame_five_permutations_involutions_and_both_A_inverses')
+    tri=(0,1,2);pair=dict(prime11=dict(word=[1],cycle=[0]+list(range(10,0,-1))),
+        prime13=dict(word=[1],cycle=[11]+list(range(23,11,-1))))
+    K['verify_pair'](ctx,tri,pair,work)
+    names.append('same_signed_word_supplies_distinct_closed11_and13_cycles')
+    refused(lambda:K['decode_operands'](raw[:-1],work,26,0))
+    bad=bytearray(raw);struct.pack_into('<H',bad,8+2*26,0)
+    refused(lambda:K['decode_operands'](bytes(bad),work,26,0))
+    names.append('truncated_frame_and_duplicate_permutation_value_rejected')
+    bad=bytearray(raw);at=8+2*26;noninvolution=list(range(26));noninvolution[:3]=[1,2,0];struct.pack_into('<26H',bad,at,*noninvolution)
+    refused(lambda:K['decode_operands'](bytes(bad),work,26,0))
+    names.append('noninvolutory_native_endpoint_rejected')
+    for offset,value,fmt in[(8+10*26+5+2,2,'H'),(8+10*26+5+4,0,'b'),(8+10*26,1,'H')]:
+        bad=bytearray(raw);struct.pack_into('<'+fmt,bad,offset,value)
+        refused(lambda bad=bad:K['decode_operands'](bytes(bad),work,26,0))
+    names.append('wrong_root_forward_parent_and_zero_nonroot_tree_label_rejected')
+    import copy
+    wrong=copy.deepcopy(pair);wrong['prime11']['cycle'][1]=wrong['prime11']['cycle'][0]
+    refused(lambda:K['verify_pair'](ctx,tri,wrong,work))
+    names.append('repeated_supplied_cycle_point_rejected')
+    # These first10 edges are valid in the13-cycle, but the11th closing edge
+    # is false. Exact list length alone cannot make this a prime11 witness.
+    wrong=copy.deepcopy(pair);wrong['prime11']['cycle']=[11]+list(range(23,13,-1))
+    refused(lambda:K['verify_pair'](ctx,tri,wrong,work))
+    names.append('last_return_edge_is_checked_not_only_a_valid_open_path')
+    for target,value in[('point',True),('letter',True),('letter',0),('letter',3)]:
+        wrong=copy.deepcopy(pair)
+        if target=='point':wrong['prime11']['cycle'][0]=value
+        else:wrong['prime11']['word'][0]=value
+        refused(lambda wrong=wrong:K['verify_pair'](ctx,tri,wrong,work))
+    refused(lambda:K['rotation_word'](ctx,K['prepare_triangle'](ctx,tri,work),[1],True,work))
+    names.append('Boolean_points_and_letters_or_foreign_rotation_labels_rejected')
+    wrong=copy.deepcopy(pair);wrong['prime11']['word']=[-1]
+    refused(lambda:K['verify_pair'](ctx,tri,wrong,work))
+    names.append('incorrect_rotation_orientation_rejected')
+    raw2,maps2=fixture(True);ctx2=K['decode_operands'](raw2,work,26,0);paths=K['prepare_triangle'](ctx2,tri,work)
+    A=maps2[3];inverse=[0]*26
+    for i,j in enumerate(A):inverse[j]=i
+    expected=[A[maps2[0][inverse[i]]]for i in range(26)]
+    opposite=[inverse[maps2[0][A[i]]]for i in range(26)]
+    actual=[K['D_image'](ctx2,paths[1],i,work)for i in range(26)]
+    need(actual==expected and actual!=opposite,'right action conjugation is inverse(t),d0,t')
+    names.append('noncommuting_fixture_confirms_exact_right_conjugation_order')
+    for i in range(26):
+        x=K['rotation_word'](ctx2,paths,[1,2],i,work)
+        need(K['rotation_word'](ctx2,paths,[-2,-1],x,work)==i,'full signed rotation inverse, including reverse middle factor order')
+    names.append('signed_rotation_inverse_reverses_three_virtual_D_factors')
+    for word in([], [1]*65):
+        wrong=copy.deepcopy(pair);wrong['prime11']['word']=word
+        refused(lambda wrong=wrong:K['verify_pair'](ctx,tri,wrong,work))
+    refused(lambda:K['prepare_triangle'](ctx,[0,0,1],work))
+    names.append('empty_or_over64_word_and_duplicate_middle_vertices_rejected')
+    plan=dict(original_selector=C['SELECTOR'],roles=dict(operand_adoption={'path':'generic_operand_ref','bytes':0,'sha256':'0'*64},free_adoption={'path':'generic_free_ref','bytes':0,'sha256':'0'*64}),
+        selected_free_indices=[0],expected_positive_free_indices=[])
+    carrier=dict(schema='L026_ORIGINAL_ROTATION_PRIME_CYCLES_V1',scope_digest=C['SCOPE'],original_selector=C['SELECTOR'],
+        operand_adoption=plan['roles']['operand_adoption'],free_witness_adoption=plan['roles']['free_adoption'],records=[])
+    need(C['supplied_rows'](C['can'](carrier),plan)==[],'isolated canonical supplied DATA interface')
+    refused(lambda:C['supplied_rows'](b' '+C['can'](carrier),plan))
+    wrong=dict(carrier,scope_digest='different_scope');refused(lambda:C['supplied_rows'](C['can'](wrong),plan))
+    row=dict(free_index=True,owner=1,witness_row_sha256='0'*64,**pair);wrong=dict(carrier,records=[row]);plan2=dict(plan,expected_positive_free_indices=[True])
+    refused(lambda:C['supplied_rows'](C['can'](wrong),plan2))
+    names.append('noncanonical_wrong_original_scope_and_Boolean_free_index_rejected')
+    class NoOriginalPremises:
+        def __init__(self):self.reached=0
+        def doc(self,reference):
+            self.reached+=1;return {'schema':'NOT_AN_ADOPTED_ORIGINAL_MODEL'}
+    contextplan=dict(scope_digest=C['SCOPE'],original_selector=C['SELECTOR'],roles=plan['roles']);probe=NoOriginalPremises()
+    try:C['imported_context'](contextplan,probe,work)
+    except ValueError as error:
+        need(str(error)=='actual metadata operand/witness adoptions, not a transferred scientific verdict',
+             'the negative fixture reaches the intended original-authority predicate')
+    else:raise ValueError('absent original authority was accepted')
+    need(probe.reached==2,'both complete fake descriptors reach the authority-schema checks')
+    names.append('generic_action_does_not_supply_Fi22_or_known_G_membership_authority')
+    tiny=C['Work'](bounded,1);refused(lambda:K['decode_operands'](raw,tiny,26,0))
+    names.append('shared_work_admission_refuses_before_unfunded_kernel_work')
+    kp2,raw_after=subject(args.kernel);cp2,c_after=subject(args.consumer)
+    need(kp2==kp and raw_after==kraw and cp2==cp and c_after==craw and own.read_bytes()==ownraw,'all complete Sources unchanged')
+    def ref(p,raw):return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+    print(json.dumps(dict(schema='L026_SUPPLIED_PRIME_CYCLE_GENERIC_CONTROLS_V1',status='PASS',author='/root/compact_proof_author',
+        program=ref(own,ownraw),kernel=ref(kp,kraw),consumer=ref(cp,craw),controls=len(names),names=names,
+        original_case_calls=0,original_model_Reader_membership_or_group_calls=0,shared_kernel_units=work.units,
+        complete_physical_read_bytes_including_Source_bootstrap=3*len(ownraw)+2*(len(kraw)+len(craw)),paths=3,
+        qualification='Generic26-point permutations, direct word/cycle arithmetic and isolated DATA only. The action/tree is not an original point-to-D bridge; no named Fi22, original marking, control gate or SCI verdict is issued.'),sort_keys=True))
+
+if __name__=='__main__':main()

@@ -1,0 +1,173 @@
+"""UNRUN parameterized generic GL7 and DATA controls for literal even-rotation Sources.
+New author /root/compact_proof_author. The ring/reflection fixture is borrowed
+literally from the previous generic dihedral controls. No admitted G2 model,
+original marking, Source gate or original case is supplied by these controls.
+"""
+import time
+START=time.monotonic()
+import argparse,hashlib,json,resource,sys
+from pathlib import Path
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+class ArithmeticBudget:
+ def __init__(self,stop_type=None,limit=None):self.products=0;self.searching=False;self.need=need;self.stop_type=stop_type;self.limit=limit
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  need(rss<128*2**20 and time.monotonic()-START<100,'generic128MiB100s control bound')
+ def multiply(self,A,B):
+  self.tick()
+  if self.limit is not None and self.products>=self.limit:raise self.stop_type('synthetic forced stop')
+  self.products+=1;need(self.products<=50000,'generic50000products')
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(len(B)))%11 for j in range(len(B[0])))for i in range(len(A)))
+
+def refused(call):
+ try:call()
+ except(ValueError,KeyError,TypeError,IndexError):return
+ raise ValueError('bad generic metadata was accepted')
+
+def reflection_fixture(kernel,budget):
+    one=(1,0,0,0,0,0);x=(0,1,0,0,0,0);I=kernel['I7']
+    for a in range(11):
+        for b in range(1,11):
+            def mul(u,v):
+                budget.tick(True);out=[0]*11
+                for i in range(6):
+                    for j in range(6):out[i+j]=(out[i+j]+u[i]*v[j])%11
+                for k in range(10,5,-1):
+                    c=out[k];out[k-6]=(out[k-6]-b*c)%11;out[k-5]=(out[k-5]-a*c)%11
+                return tuple(out[:6])
+            def ring_power(z,n):
+                value=one
+                for bit in bin(n)[2:]:
+                    value=mul(value,value)
+                    if bit=='1':value=mul(value,z)
+                return value
+            z=ring_power(x,47880)
+            rows=[mul(tuple(int(i==j)for i in range(6)),z)for j in range(6)]
+            Y=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in rows)
+            if Y==I or kernel['power'](Y,37,budget)!=I:continue
+            frob=[ring_power(tuple(int(i==j)for i in range(6)),1331)for j in range(6)]
+            F=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in frob)
+            if budget.multiply(F,F)!=I:continue
+            if budget.multiply(budget.multiply(F,Y),F)!=kernel['power'](Y,36,budget):continue
+            Z=tuple(tuple((10 if i==0 else 1)if i==j else 0 for j in range(7))for i in range(7))
+            return Y,F,Z
+    raise ValueError('bounded generic ring fixture found no checked reflection pair')
+
+def literal_word(marks,section,word,budget):
+    value=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    for letter in word:value=budget.multiply(value,marks[section[int(letter)]])
+    return value
+
+def read_subject(pair,limit):
+    p=Path(pair[0]);raw=p.read_bytes()
+    need(p.is_absolute()and p.resolve(strict=True)==p and len(raw)<=limit
+         and hashlib.sha256(raw).hexdigest()==pair[1],'whole exact current synthetic subject')
+    return p,raw
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--consumer',nargs=2,required=True);ap.add_argument('--supplier',nargs=2,required=True)
+    ap.add_argument('--schedule',nargs=2,required=True);a=ap.parse_args()
+    own=Path(__file__).resolve(strict=True);ownraw=own.read_bytes()
+    need(len(ownraw)<=16384 and hashlib.sha256(ownraw).hexdigest()==a.self_sha256,'whole new generic controls Source')
+    cp,cb=read_subject(a.consumer,65536);sp,sb=read_subject(a.supplier,65536);dp,db=read_subject(a.schedule,16384)
+    C={'__name__':'new_literal_consumer_synthetic_only','__file__':str(cp)}
+    S={'__name__':'new_even_supplier_synthetic_only','__file__':str(sp)}
+    exec(compile(cb,str(cp),'exec'),C);exec(compile(sb,str(sp),'exec'),S)
+    data=json.loads(db);need(hashlib.sha256(db).hexdigest()==S['SCHEDULE_SHA'],'exact frozen new schedule DATA')
+    rows=S['validated_schedule'](data);names=[];budget=ArithmeticBudget()
+    Y,F,Z=reflection_fixture(C,budget);I=C['I7']
+    FY=budget.multiply(F,Y);FZ=budget.multiply(F,Z);FYZ=budget.multiply(FY,Z);marks=(F,FY,FZ,FYZ)
+    # These are generic GL7 involution/V4 local ends. They are not an original
+    # G2 quartet, and not all quartet string relations are asserted here.
+    need(all(budget.multiply(x,x)==I for x in marks)
+         and budget.multiply(F,FZ)==budget.multiply(FZ,F)
+         and budget.multiply(FY,FYZ)==budget.multiply(FYZ,FY),'independent local involution/V4 fixture')
+    for section in((0,1,2),(1,2,3)):
+        values=S['candidate_values'](marks,section,rows,budget)
+        for row,value in zip(rows,values):
+            need(value==literal_word(marks,section,row['word'],budget),'every new DAG value equals independent full literal multiplication')
+    names.append('all32_new_rotation_and_commutator_DAG_values_in_both_local_ends')
+    need(len(rows)==32 and all(len(r['word'])<=30 for r in rows),'fixed finite new pool')
+    import copy
+    for field,value in [('i',True),('proposal_id',True),('word','10')]:
+        broken=copy.deepcopy(data);broken['candidates'][0][field]=value
+        refused(lambda broken=broken:S['validated_schedule'](broken))
+    names.append('malformed_power_indices_order_and_literal_schedule_rejected')
+    C['direct_order37']((I,Y,I,Y),(0,1,2),'1',budget)
+    C['direct_order37']((I,Y,I,Y),(1,2,3),'0',budget)
+    C['direct_order37']((I,Y,I,Y),(0,1,2),'1'*5,budget)
+    names.append('arbitrary_valid_supplied_literal_words_outside_exhausted_pool_allowed')
+    for value in('',True,1,['1'],'3','1'*65,'0 1'):
+        refused(lambda value=value:C['literal_word'](value))
+    names.append('strict_literal_grammar_types_and64_letter_bound')
+    refused(lambda:C['direct_order37']((I,I,I,I),(0,1,2),'01',budget))
+    minus=tuple(tuple(10*int(i==j)for j in range(7))for i in range(7))
+    refused(lambda:C['direct_order37']((I,minus,I,I),(0,1,2),'1',budget))
+    names.append('identity_and_non37_equation_cases_rejected')
+    refused(lambda:C['direct_order37'](marks,(0,1,3),'01',budget))
+    names.append('incorrect_end_context_rejected')
+    b1,b2,b3,b4=[ArithmeticBudget()for unused in range(4)]
+    C['power'](Y,6,b1);C['power'](Y,37,b2);S['power'](Y,6,b3);S['power'](Y,37,b4)
+    need([b1.products,b2.products]==[4,8]and[b3.products,b4.products]==[3,7],
+         'actual strict12 versus supplier10 prime-product charges')
+    names.append('literal_strict_and_supplier_power_bills_are12_and10')
+    front=dict(unpaid=[11,13,88],eligible=[],skipped=[11,13,88])
+    need(C['select_current_unpaid'](front,238)==[11,13,88]
+         and S['select_current_unpaid'](front,238)==[11,13,88],
+         'old historical misses are validated but do not skip a NEW criterion')
+    need(C['select_current_unpaid'](front,1,1)==[13],'generic exact current-unpaid window')
+    for maximum,start in[(True,0),(0,0),(1025,0),(1,True),(1,-1),(1,3)]:
+        refused(lambda maximum=maximum,start=start:C['select_current_unpaid'](front,maximum,start))
+    names.append('current_unpaid238_scope_not_old_empty_eligible_and_window_types')
+    plan=dict(original_job=[23,4],selector={'path':'mock_current'},projection={'path':'mock_original'})
+    carrier=dict(schema='Q11_TWO_END37_SUPPLIED_LITERAL_WORDS_V1',**plan,grammar=C['LITERAL_GRAMMAR'],records=[])
+    need(C['supplied_carrier'](C['can'](carrier)+b'\n',plan)==[],'canonical whole supplied literal carrier')
+    refused(lambda:C['supplied_carrier'](b' '+C['can'](carrier)+b'\n',plan))
+    refused(lambda:C['supplied_carrier'](b'{"schema":1,"schema":2}\n',plan))
+    names.append('noncanonical_and_duplicate_key_carriers_rejected')
+    for field,value in [('selector',{'path':'other'}),('projection',{'path':'other'}),('original_job',[20,4]),('grammar','old_index_pool')]:
+        broken=dict(carrier);broken[field]=value
+        refused(lambda broken=broken:C['validate_carrier'](broken,plan))
+    names.append('wrong_original_job_selector_projection_and_grammar_rejected')
+    orbits=[[1,[1],[1],1],[2,[2],[2],1]];ctx=dict(orbits=orbits)
+    first=[1,1,C['digest'](orbits[0]),'1','0'];second=[2,2,C['digest'](orbits[1]),'1','0']
+    C['validate_record_headers']([first,second],[1,2],ctx)
+    for records in[[second,first],[first,first],[[1,True,first[2],'1','0']],[[1,1,'0'*64,'1','0']],[[1,1,first[2],True,'0']]]:
+        refused(lambda records=records:C['validate_record_headers'](records,[1,2],ctx))
+    names.append('record_order_duplicates_boolean_alias_and_full_original_orbit_binding')
+    # Header success grants no original context. The complete checker still
+    # cannot reconstruct original marks from this intentionally absent frame.
+    refused(lambda:C['verify_records']([first],[1],ctx,budget))
+    names.append('unbound_fixture_is_refused_by_full_original_context_path')
+    def reconstructed(position):return marks,position,'synthetic_orbit_'+str(position)
+    positive_budget=ArithmeticBudget();positive=S['scan']([1,2],reconstructed,positive_budget,rows)
+    need(positive['visited']==[1,2]and len(positive['records'])==2 and not positive['finite_misses'],'generic supplied pair outcome')
+    miss_budget=ArithmeticBudget();miss=S['scan']([1],lambda p:((I,I,I,I),1,'synthetic'),miss_budget,rows)
+    need(miss['visited']==miss['finite_misses']==[1]and not miss['records']
+         and miss['notes'][0]['completed']==[32,0],'finite new-pool miss remains unpaid; right search legitimately skipped')
+    names.append('generic_pair_and_one_end_pool_miss_are_distinct_untrusted_outcomes')
+    stop_budget=ArithmeticBudget(S['Stop'],2);stopped=S['scan']([1,2],reconstructed,stop_budget,rows)
+    unvisited=S['partition'](dict(unpaid=[1,2]),[1,2],stopped)
+    need(not stopped['visited']and unvisited==[1,2]and len(stopped['notes'])==1
+         and stopped['notes'][0]['outcome']==2,'interrupted shared-table construction leaves whole row unvisited')
+    names.append('soft_stop_keeps_exact_interrupted_and_unvisited_partition')
+    need(S['partition'](dict(unpaid=[1,2,3]),[1,2],positive)==[3],'full current set partition')
+    broken=dict(positive);broken['visited']=[2,1]
+    refused(lambda:S['partition'](dict(unpaid=[1,2]),[1,2],broken))
+    names.append('complete_visited_positive_miss_unvisited_partition_and_bad_order')
+    for pair,limit in[(a.consumer,65536),(a.supplier,65536),(a.schedule,16384)]:read_subject(pair,limit)
+    need(own.read_bytes()==ownraw,'control and all complete subject bytes unchanged after controls')
+    counts=dict(main_fixture=budget.products,independent_power_bills=sum(b.products for b in(b1,b2,b3,b4)),
+        positive_scan=positive_budget.products,finite_miss_scan=miss_budget.products,forced_stop_scan=stop_budget.products)
+    need(sum(counts.values())<=50000,'complete synthetic50000-product bound, including isolated scopes')
+    def ref(p,raw):return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+    print(json.dumps(dict(schema='Q11_EVEN_ROTATION_LITERAL_GENERIC_CONTROLS_V1',status='PASS',
+        author='/root/compact_proof_author',program=ref(own,ownraw),consumer=ref(cp,cb),supplier=ref(sp,sb),schedule=ref(dp,db),
+        controls=len(names),names=names,original_case_calls=0,original_model_or_group_calls=0,
+        matrix_products=sum(counts.values()),arithmetic_products_by_scope=counts,
+        complete_physical_read_bytes_including_Source_bootstrap=3*len(ownraw)+2*(len(cb)+len(sb)+len(db)),physical_paths=4,qualification='Generic GL7 arithmetic/local involution fixtures and isolated mock DATA only. No admitted G2 marking, original member/frame proof, Root gate or scientific case authority is created.'),sort_keys=True))
+
+if __name__=='__main__':main()

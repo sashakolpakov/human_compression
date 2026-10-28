@@ -1,0 +1,345 @@
+"""Unrun typed q11 journal update; /root/middle_dictionary_author.
+Ten guards/CAS definitions remain literal to registered10997 journal97f.
+Integer and literal-word accepted facts have separate exact contracts.
+Actual Root publication and runtime evidence are mandatory; no science runs.
+"""
+import argparse,copy,fcntl,hashlib,json,math,os,resource,stat,sys,time
+from pathlib import Path
+S=Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake'
+TARGET=M/'progress/current_intake_verified_exports.json'
+OWNERS=('root_execution_ownership_latest','root_current_ownership','current_execution_ownership')
+START=time.monotonic()
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+
+def canonical(value):
+    return (json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+
+
+def reference(path,raw):
+    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+
+def decode(raw):
+    def pairs(items):
+        out={}
+        for key,value in items:
+            need(key not in out,'unique metadata keys');out[key]=value
+        return out
+    def floating(text):
+        value=float(text);need(math.isfinite(value),'finite old observations');return value
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,
+                      parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+
+class Evidence:
+    def __init__(self):self.refs={};self.raw={};self.bytes=0
+    def whole(self,ref,fresh=False):
+        need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int
+             and 0<=ref['bytes']<=2**21 and type(ref['sha256'])is str
+             and len(ref['sha256'])==64 and set(ref['sha256'])<=set('0123456789abcdef'),'bounded whole metadata ref')
+        need(self.refs.get(ref['path'],ref)==ref,'one physical identity')
+        if not fresh and ref['path']in self.raw:return self.raw[ref['path']]
+        need(self.bytes+ref['bytes']<=32*2**20 and(len(self.refs)<128 or ref['path']in self.refs),'32MiB/128-path metadata read cap')
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+        need(rss<256*2**20 and time.monotonic()-START<90,'256MiB/90s metadata envelope')
+        path=Path(ref['path']);before=path.lstat()
+        need(path.is_absolute()and path.resolve(strict=True)==path and stat.S_ISREG(before.st_mode)
+             and before.st_nlink==1 and before.st_size==ref['bytes'],'ordinary canonical single-link metadata')
+        with path.open('rb')as handle:
+            opened=os.fstat(handle.fileno());raw=handle.read(ref['bytes']+1);closed=os.fstat(handle.fileno())
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(sig(before)==sig(opened)==sig(closed)==sig(path.lstat())and reference(path,raw)==ref,'stable entire metadata body')
+        self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.bytes+=len(raw);return raw
+    def document(self,ref):return decode(self.whole(ref))
+    def file(self,path,sha):
+        path=Path(path);ref=dict(path=str(path),bytes=path.stat().st_size,sha256=sha)
+        return ref,self.whole(ref)
+    def final(self):
+        for ref in list(self.refs.values()):self.whole(ref,True)
+
+
+def fsync_directory(path):
+    fd=os.open(path,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+
+
+def retain(path,raw,evidence):
+    path=Path(path);parent=path.parent
+    ancestor=parent
+    while not ancestor.exists():ancestor=ancestor.parent
+    need(ancestor.resolve(strict=True)==ancestor,'canonical existing ancestry before any directory creation')
+    parent.mkdir(parents=True,exist_ok=True)
+    need(parent.resolve(strict=True)==parent,'canonical retained directory')
+    if os.path.lexists(path):
+        need(evidence.whole(reference(path,raw),True)==raw,'existing immutable copy has exact bounded bytes')
+    else:
+        with path.open('xb')as handle:handle.write(raw);handle.flush();os.fsync(handle.fileno())
+        evidence.whole(reference(path,raw),True)
+    fsync_directory(parent);fsync_directory(parent.parent)
+    return reference(path,raw)
+
+
+def live_conditions(evidence,plan,checkpoint,cpref,spref):
+    current,status,progress=[evidence.document(ref)for ref in plan['live_selectors']]
+    need(current['current_handle']is None and all(current[key]['active_handles']==[]for key in OWNERS)
+         and status['active_scientific_handles']==[],'all four actual arrays idle')
+    for value in (current,status):
+        need(value['F009_checkpoint_current']==checkpoint and value['F009_checkpoint_acceptance_current']==cpref
+             and value['F009_snapshot_acceptance_current']==spref,'both live selectors agree with registered CP/SP')
+    f=progress['F009']
+    need(f['checkpoint']==checkpoint and f['checkpoint_acceptance']==cpref and f['snapshot_adoption']==spref,
+         'third durable progress selector agrees with registered CP/SP')
+    for ref in plan['protected_registers']:evidence.whole(ref)
+
+
+def closed_call(c,g):
+    need(c['root']==c['actor']=='/root'and c['actual_tool']['exit_code']==c['full_tool_return']['exit_code']==0
+         and '--'in c['issued_argv']and c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']
+         and c['child_argv']in(c['issued_argv'],g['command'])and g['status']=='PASS'and g['returncode']==0
+         and g['cleanup']['remaining']==g['cleanup']['errors']==[],'genuine actual command and known-scope closure')
+
+
+def normalize_runtime_rows(rows):
+    need(type(rows)is list and len(rows)<=512,'bounded actual runtime storage rows')
+    normalized=[]
+    for row in rows:
+        need(type(row)is dict and set(row)in({'original','retained'},{'original','preserved'}),
+             'exact retained or preserved storage spelling, never ambiguous aliases')
+        original=row['original'];retained=row['retained']if'retained'in row else row['preserved']
+        for ref in(original,retained):
+            need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+                 and type(ref['path'])is str and Path(ref['path']).is_absolute()
+                 and str(Path(ref['path']))==ref['path']and '..'not in Path(ref['path']).parts
+                 and type(ref['bytes'])is int and 0<=ref['bytes']<=2**21
+                 and type(ref['sha256'])is str and len(ref['sha256'])==64
+                 and set(ref['sha256'])<=set('0123456789abcdef'),'exact bounded storage reference')
+        need(original['bytes']==retained['bytes']and original['sha256']==retained['sha256'],
+             'storage spelling does not change complete byte identity')
+        normalized.append(dict(original=original,retained=retained))
+    return normalized
+
+
+CONTRACTS={
+    'DIRECT_TWO_WORD_CHECK':dict(schema='Q11_TWO_END37_DIRECT_RESULT_V1',status='VERIFIED_TWO_END37_ORIGINAL_RECORDS',
+        checker='9f86b53a64c01061a3606c49f9dfd706728438885536a826140f003b9e887956',
+        publication='ROOT_RELEASED_DIRECT_TWO_WORD_TYPED_ADOPTION',runtime='ROOT_CLOSED_Q11_DIHEDRAL_ADOPTION_RUNTIME_EVIDENCE_V1',
+        criterion='TWO_END37_INDEX_DICTIONARY_V1'),
+    'DIRECT_LITERAL_WORD_CHECK':dict(schema='Q11_TWO_END37_LITERAL_DIRECT_RESULT_V1',status='VERIFIED_TWO_END37_ORIGINAL_LITERAL_RECORDS',
+        checker='ab99b1d5c5671b1e8ac2f029871bb60752e2de0c0be90954abff1b14bf80a43d',
+        publication='ROOT_RELEASED_LITERAL_TWO_WORD_TYPED_ADOPTION',runtime='ROOT_CLOSED_Q11_LITERAL_ADOPTION_RUNTIME_EVIDENCE_V1',
+        criterion='TWO_END37_LITERAL_WORDS_V1')}
+LITERAL_GRAMMAR='SAME_END_LITERAL_012_LENGTH1_TO64_V1'
+
+
+def construct(evidence,own,pref,plan):
+    need(plan['schema']=='ROOT_INTAKE_CURRENT_OVERVIEW_PLAN_V1'and plan['program']==own
+         and plan['predecessor']['path']==str(TARGET),'exact current overview DATA subject')
+    oldraw=evidence.whole(plan['predecessor']);old=decode(oldraw);refs=plan['evidence']
+    need(old['schema']=='CURRENT_REVIEWED_INTAKE_PROGRESS_V3'and old['root']=='/root','actual current journal kind')
+    need(evidence.whole(refs['predecessor_version'])==oldraw,'entire immutable prior journal retained')
+    refs0=refs
+    prior=evidence.document(refs['predecessor_release']);pc=evidence.document(refs['predecessor_capture'])
+    pg=evidence.document(refs['predecessor_guard']);ps=evidence.document(refs['predecessor_stdout']);closed_call(pc,pg)
+    need(prior['schema']=='ROOT_RELEASE_CURRENT_INTAKE_OVERVIEW_V1'and prior['root']=='/root'and prior['adopted']is True
+         and prior['blockers']==[]and prior['successor']==plan['predecessor']
+         and pg['command'][-2:]==[refs['predecessor_release']['path'],refs['predecessor_release']['sha256']]
+         and pg['command'][4]==prior['program']['path']and pg['command'][6]==prior['program']['sha256']
+         and ps['status']=='CURRENT_JOURNAL_UPDATED'and ps['current']==plan['predecessor']
+         and ps['protected_registers_unchanged']is True and ps['scientific_calls']==0,
+         'genuinely published predecessor, not a forecast')
+    live_conditions(evidence,plan,old['F009']['accepted_checkpoint'],old['F009']['checkpoint_acceptance'],old['F009']['snapshot_adoption'])
+    steps=plan['steps']
+    need(type(steps)is list and 1<=len(steps)<=8
+         and len({(s['evidence']['adoption']['path'],s['evidence']['adoption']['sha256'])for s in steps})==len(steps),
+         'bounded ordered distinct published-adoption sequence')
+    out=copy.deepcopy(old);step_counts=[]
+    for step in steps:
+        need(type(step)is dict and set(step)=={'evidence','expected_counts','delta'},
+             'only the exact justified per-step DATA fields')
+        refs=step['evidence']
+        q=out['F004']['q11'];job=q['other_job_progress']['job_0023'];before=evidence.document(job['current_selector'])
+        ad=evidence.document(refs['adoption']);sel=evidence.document(refs['selector']);proof=evidence.document(ad['independent_direct_result'])
+        mode=ad['proof_mode'];need(mode in CONTRACTS,'separate exact integer or literal proof mode')
+        contract=CONTRACTS[mode]
+        need(ad['schema']=='ROOT_ACCEPTED_Q11_RANK4_TWO_END37_IP_FACTS_V1'and ad['root']=='/root'and ad['adopted']is True
+             and ad['original_job']==[23,4]
+             and ad['classification']=='FOUR_MARK_INTERSECTION_PROPERTY_FAILURE'
+             and ad['Root_unresolved_selector']==job['current_selector']
+             and ad['projection']==before['projection']and ad['Root_projection_acceptance']==before['Root_projection_acceptance']
+             and ad['four_mark_generation_or_nongeneration_claim']is False
+             and ad['whole_original_credit']==ad['conjecture_credit']==ad['Lean_credit']==ad['new_compression_credit']==0,
+             'actual partial IP authority, original-model qualifications retained')
+        positions=ad['verified_IP_failure_positions'];oldpaid=before['accepted_new_paid_positions']
+        need(positions==sorted(set(positions))and positions and ad['newly_settled_positions']==len(positions)
+             and not set(positions)&set(before['original_paid_positions']+oldpaid)
+             and proof['schema']==contract['schema']and proof['status']==contract['status']and proof['original_job']==[23,4]
+             and proof['program']['sha256']==contract['checker']
+             and proof['verified_IP_failure_positions']==positions and proof['selector']==job['current_selector']
+             and proof['word_search_or_row_reduction_calls']==proof['proposer_or_kernel_imports']==0,
+             'exact actual independently checked original positions, not supplier hints')
+        if mode=='DIRECT_LITERAL_WORD_CHECK':
+            need(ad['grammar']==proof['grammar']==LITERAL_GRAMMAR
+                 and ad['direct_checker']['sha256']==contract['checker']
+                 and ad['metadata_method']['sha256']=='92b08960f93f19bcbf991034af5bbb682092ba8a05a4c5cbb7c1528e81ba569b',
+                 'actual ab99 literal proof and92b typed publication, no integer-source retag')
+        runtime=evidence.document(refs['runtime_preservation']);cap=evidence.document(refs['publication_capture'])
+        guard=evidence.document(refs['publication_guard']);stdout=evidence.document(refs['publication_stdout']);closed_call(cap,guard)
+        runtime_rows=normalize_runtime_rows(runtime['files'])
+        need(runtime['schema']==contract['runtime']and runtime['root']=='/root'
+             and runtime['adoption']==refs['adoption']and runtime['scientific_calls']==0
+             and runtime['whole_original_conjecture_Lean_or_compression_credit']==0
+             and all(any(r['retained']==refs[k]for r in runtime_rows)for k in('publication_capture','publication_guard','publication_stdout'))
+             and stdout['status']==contract['publication']
+             and stdout['adoption']==refs['adoption']and stdout['selector']==refs['selector']
+             and stdout['preservation']==ad['preservation']and stdout['newly_settled']==len(positions)
+             and stdout['scientific_calls']==0 and stdout['operational_registers_modified']is False,
+             'actual durable runtime bank and successful Root metadata publication')
+        if mode=='DIRECT_LITERAL_WORD_CHECK':
+            need(guard['command'][0:4]==[sys.executable,'-E','-B','-S']
+                 and guard['command'][5]=='publish'
+                 and guard['command'][6:8]==['--self-sha256',ad['metadata_method']['sha256']]
+                 and guard['command'][8]=='--plan'and guard['command'][10]==ad['metadata_plan']['sha256'],'same actual92b metadata caller/plan/publication mode')
+        need(sel['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'and sel['root']=='/root'and sel['adopted']is True
+             and sel['original_job']==[23,4]and sel['original_orbit_positions']==3801
+             and sel['projection']==before['projection']and sel['Root_projection_acceptance']==before['Root_projection_acceptance']
+             and sel['original_paid_positions']==before['original_paid_positions']and sel['original_paid_count']==217
+             and sel['accepted_new_paid_positions']==sorted(oldpaid+positions)
+             and sel['source_adoptions']==before['source_adoptions']+[refs['adoption']]
+             and sel['previous_selector']==job['current_selector'],'all earlier baseline and authorities exact')
+        groups=dict(before['accepted_paid_by_kind']);groups['two_end_theorem_IP_failure']=sorted(groups['two_end_theorem_IP_failure']+positions)
+        need(sel['accepted_paid_by_kind']==groups,'all separately typed proof categories preserved')
+        def expand(runs):
+            values=[];last=0
+            for lo,hi in runs:
+                need(type(lo)is type(hi)is int and last<lo<=hi<=3801,'complete exact original runs')
+                values.extend(range(lo,hi+1));last=hi
+            return values
+        unpaid=expand(sel['unresolved_position_runs']);oldunpaid=expand(before['unresolved_position_runs'])
+        need(unpaid==sorted(set(oldunpaid)-set(positions))and len(unpaid)==sel['unresolved_positions']
+             and hashlib.sha256(canonical(unpaid)[:-1]).hexdigest()==sel['expanded_unresolved_sha256']
+             and sorted(sel['original_paid_positions']+sel['accepted_new_paid_positions']+unpaid)==list(range(1,3802)),
+             'complete original217 baseline/later-paid/unpaid partition')
+        history=sel['previous_method_attempts'];prior_history=before['previous_method_attempts']
+        need(history[:-1]==prior_history and len(history)==len(prior_history)+1
+             and history[-1]['Root_adoption']==refs['adoption']
+             and history[-1]['criterion']==contract['criterion']
+             and history[-1]['finite_miss_positions']==ad['finite_miss_positions_without_IP_credit']
+             and history[-1]['visited_positions']==ad['visited_positions']
+             and history[-1]['finite_misses_are_NOT_paid']is True and history[-1]['do_not_repeat_unchanged_search']is True,
+             'whole old finite trial history and the separate new unpaid misses')
+        if mode=='DIRECT_TWO_WORD_CHECK':
+            need(history[-1]['dictionary']=='V4_THREE_MARKS_LENGTH1_TO4_V1','integer dictionary history unchanged')
+        else:
+            trial=history[-1];visited=ad['visited_positions'];misses=ad['finite_miss_positions_without_IP_credit']
+            need(trial['grammar']==ad['grammar']==LITERAL_GRAMMAR
+                 and trial['search_method']=='EVEN_ROTATION_PRODUCTS_AND_COMMUTATORS_32_V1'
+                 and trial['source']['sha256']=='1a4feaa921aaf8855b485b737f847c918405a3093e04a5e12e812217105d5622'
+                 and visited==sorted(set(visited))and misses==sorted(set(misses))
+                 and set(positions).isdisjoint(misses)and sorted(positions+misses)==visited
+                 and set(visited)<=set(oldunpaid)and ad['unvisited_count']==len(oldunpaid)-len(visited),
+                 'new32 literal pool accounts for the current frontier; no old eligible skip or absence claim')
+        allmiss={i for t in history for i in t['finite_miss_positions']};current=sorted(allmiss&set(unpaid));eligible=sorted(set(unpaid)-set(current))
+        need(sel['historical_misses_current_unpaid']==current,'current miss view is only the unpaid intersection')
+        paid=len(sel['accepted_new_paid_positions']);front=q['current_fixed158_frontier']
+        need(front['later_disjoint_adoptions']==before['source_adoptions']and front['later_fresh_IP_failures']==len(oldpaid)
+             and front['historical_field_snapshot_unpaid']-len(oldpaid)==front['current_unresolved'],
+             'same fixed158 historical field snapshot; no field credit repeated')
+        counts=dict(baseline=217,later_paid=paid,unpaid=len(unpaid),historical_misses=len(allmiss),current_unpaid_misses=len(current),eligible=len(eligible),
+                    fixed158_unpaid=front['historical_field_snapshot_unpaid']-paid,new_IP_failures=len(positions))
+        need(counts==step['expected_counts'],'exact reviewed current count DATA')
+        after_job=dict(Root_adoption=refs['adoption'],current_selector=refs['selector'],independent_direct_result=ad['independent_direct_result'],
+            preservation=ad['preservation'],total_new_IP_failures=paid,remaining_unpaid=len(unpaid),finite_misses_unpaid=len(current),
+            historical_finite_misses=len(allmiss),unvisited_unpaid=len(eligible),
+            qualification='IP only; model/frame/A=G/member/classification premises and all misses retained; no generation/original credit.')
+        after_front=dict(current_unresolved=counts['fixed158_unpaid'],later_fresh_IP_failures=paid,later_disjoint_adoptions=front['later_disjoint_adoptions']+[refs['adoption']])
+        expected=[]
+        for base,values in((['F004','q11','other_job_progress','job_0023'],after_job),(['F004','q11','current_fixed158_frontier'],after_front)):
+            oldvalues=job if base[-1]=='job_0023'else front
+            for key in sorted(values):expected.append(dict(path=base+[key],before=oldvalues[key],after=values[key]))
+        need(step['delta']==expected,'only exact fully justified before/after JSON delta; no arbitrary fields')
+        for row in expected:
+            target=out
+            for part in row['path'][:-1]:target=target[part]
+            key=row['path'][-1];need(target[key]==row['before'],'exact before-image at every delta field');target[key]=row['after']
+        step_counts.append(counts)
+    need(step_counts==plan['expected_step_counts'],'complete reviewed adoption count sequence')
+    # Only these explanatory fields may be shortened. The substantive counts,
+    # proof references and every unrelated corpus value remain exact.
+    descriptive=[
+        (['F004','q11','next'],'Use new predicates; retain typed proofs, finite misses and all imported premises.'),
+        (['next_actions',1],'Use new predicates; retain typed proofs, finite misses and all imported premises.'),
+        (['F004','q11','current_fixed158_frontier','qualification'],'618279 historical; subtract disjoint IP once. No repeated field credit or global absence claim.')]
+    short_delta=[]
+    for path,value in descriptive:
+        target=out
+        for key in path[:-1]:target=target[key]
+        short_delta.append(dict(path=path,before=target[path[-1]],after=value))
+        target[path[-1]]=value
+    need(short_delta==plan['descriptive_delta'],'explicit fixed explanatory-field whitelist only')
+    out['previous_checkpoint']=refs0['predecessor_version'];out['protected_reviewed_registers']=plan['protected_registers'];out['utc']=plan['utc']
+    out['journal_metadata_method']=dict(program=own,plan=pref,scientific_calls=0,protected_register_writes=0,current_mutable_target=str(TARGET),
+        qualified_as='Typed IP update; prior history retained.')
+    final=step_counts[-1]
+    out['current_goal_turn_detail']='Job23:'+str(final['later_paid'])+' IP failures/'+str(final['unpaid'])+' unpaid; fixed158 '+str(final['fixed158_unpaid'])+'. '+('New32'if mode=='DIRECT_LITERAL_WORD_CHECK'else'Index120')+':'+str(len(ad['visited_positions']))+' visited/'+str(len(ad['finite_miss_positions_without_IP_credit']))+' finite misses; no absence/word exhaustion;3 pending.'
+    for key in('F009','L026','counts','measurements','stopping_rule','source_scope_audit','goal_status','public_repository','resource_observation'):
+        need(out[key]==old[key],'all unrelated progress/resource/STOP/metric/public fields exact')
+    need(out['next_actions'][:1]+out['next_actions'][2:]==old['next_actions'][:1]+old['next_actions'][2:],
+         'only the duplicated q11 next action may change')
+    raw=canonical(out);need(len(raw)<=32768,'unchanged32KiB journal cap');return oldraw,raw
+
+
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--preview');ap.add_argument('--write',action='store_true')
+    ap.add_argument('--Root-release',nargs=2);args=ap.parse_args();evidence=Evidence()
+    own,_=evidence.file(Path(__file__).resolve(strict=True),args.self_sha256)
+    pref,praw=evidence.file(*args.plan);plan=decode(praw)
+    lock=None
+    if args.write:
+        need(args.Root_release is not None and args.preview is None,'explicit Root release for current journal CAS')
+        rref,rraw=evidence.file(*args.Root_release);release=decode(rraw)
+        need(release['schema']=='ROOT_RELEASE_CURRENT_INTAKE_OVERVIEW_V1'and release['root']=='/root'
+             and release['adopted']is True and release['program']==own and release['plan']==pref
+             and release['predecessor']==plan['predecessor']and release['protected_registers']==plan['protected_registers']
+             and release['blockers']==[],
+             'exact fresh Root metadata release')
+        lock=(M/'root_state.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    else:need(args.Root_release is None,'forecast carries no Root publication authority')
+    try:
+        oldraw,newraw=construct(evidence,own,pref,plan);newref=reference(TARGET,newraw)
+        evidence.final()
+        if args.write:
+            need(release['successor']==newref,'exact reviewed successor bytes')
+            versions=M/'progress/intake_overview/versions';methods=M/'progress/intake_overview/methods'
+            before=retain(versions/(plan['predecessor']['sha256']+'.json'),oldraw,evidence)
+            after=retain(versions/(newref['sha256']+'.json'),newraw,evidence)
+            retain(methods/(own['sha256']+'.py'),evidence.whole(own),evidence)
+            retain(methods/(pref['sha256']+'.json'),praw,evidence);retain(methods/(rref['sha256']+'.json'),rraw,evidence)
+            evidence.final();need(evidence.whole(plan['predecessor'],True)==oldraw,'exact final predecessor CAS')
+            staging=TARGET.with_name('.'+TARGET.name+'.pending')
+            need(not os.path.lexists(staging),'fresh journal scratch path')
+            retain(staging,newraw,evidence);os.replace(staging,TARGET);fsync_directory(TARGET.parent)
+            need(evidence.bytes+len(newraw)+1<=32*2**20,'prepaid bounded post-CAS journal verification')
+            with TARGET.open('rb')as handle:observed=handle.read(len(newraw)+1)
+            evidence.bytes+=len(observed)
+            need(observed==newraw,'actual complete successor journal image')
+            # These checks observe protected files; this writer never changes them.
+            for ref in plan['protected_registers']:evidence.whole(ref,True)
+            print(json.dumps(dict(status='CURRENT_JOURNAL_UPDATED',before=before,after=after,current=newref,
+                protected_registers_unchanged=True,scientific_calls=0,physical_metadata_bytes=evidence.bytes),sort_keys=True))
+        else:
+            if args.preview:
+                path=Path(args.preview);need(path.is_absolute()and str(path)==str(Path(str(path)))
+                    and '..'not in path.parts and path.is_relative_to('/private/tmp'),'forecast output only in canonical temporary tree')
+                retain(path,newraw,evidence)
+            print(json.dumps(dict(status='UNPUBLISHED_JOURNAL_FORECAST',predecessor=plan['predecessor'],successor=newref,
+                physical_metadata_bytes=evidence.bytes,input_files=len(evidence.refs),scientific_calls=0,S_writes=0),sort_keys=True))
+    finally:
+        if lock is not None:lock.close()
+
+
+if __name__=='__main__':main()

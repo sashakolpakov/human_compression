@@ -59,6 +59,8 @@ The [latest finite certificate report](october_corpus/research/proof_collection/
 records the completed relative replay, its inputs, results and remaining premises.
 The [evidence supplement](october_corpus/research/proof_collection/supplement/RUN_REPORT.rst)
 preserves additional accepted certificates and the current intake record.
+The [later certificates and finite search](october_corpus/research/proof_collection/updates/literal132_cycles/PUBLICATION.rst)
+record the next 132 adopted results, their checks and the remaining work.
 From the repository root, check the directory migration and run the small
 mathematical suite with:
 

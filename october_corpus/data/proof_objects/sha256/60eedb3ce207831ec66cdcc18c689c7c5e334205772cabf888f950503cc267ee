@@ -1,0 +1,128 @@
+"""UNRUN bounded direct point-word kernel for supplied Fi22 prime cycles.
+New author /root/compact_proof_author. No IO, discovery, full virtual middle
+permutation, SGS, group, orbit, bridge or geometry reconstruction.
+"""
+import struct
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def decode_operands(raw,work,n=3510,root=2961):
+    need(type(n)is int and 24<=n<=3510 and type(root)is int and 0<=root<n,'bounded literal point frame')
+    need(type(raw)is bytes and len(raw)==8+15*n and raw[:8]==b'L026CYC1','whole exact five-vector/tree frame')
+    work.charge(len(raw),'complete_operand_bytes')
+    maps=[]
+    for k in range(5):
+        vector=struct.unpack_from('<'+'H'*n,raw,8+2*n*k);seen=bytearray(n)
+        for point in vector:
+            work.charge(4,'whole_vector_field_range_and_unique_slot')
+            need(point<n and not seen[point],'whole actual permutation range and bijection');seen[point]=1
+        maps.append(vector)
+    d0,a,c,A0,A1=maps
+    for vector in(d0,a,c):
+        moved=False
+        for point in range(n):
+            work.charge(6,'whole_nonidentity_involution_two_point_lookups')
+            target=vector[point];need(vector[target]==point,'entire involution equation');moved=moved or target!=point
+        need(moved,'actual nonidentity involution')
+    work.charge(2*n,'whole_endpoint_vector_distinctness_scan')
+    need(a!=c,'actual distinct original endpoints')
+    for point in range(n):
+        work.charge(10,'whole_distant_endpoint_commutation_four_lookups')
+        need(a[c[point]]==c[a[point]],'whole original endpoint string relation')
+    inverses=[]
+    for vector in(A0,A1):
+        inverse=[0]*n
+        for point,target in enumerate(vector):
+            work.charge(4,'whole_inverse_construction_read_and_write');inverse[target]=point
+        for point in range(n):
+            work.charge(8,'both_whole_inverse_composition_equations')
+            need(inverse[vector[point]]==point and vector[inverse[point]]==point,'fresh entire signed ambient inverse')
+        inverses.append(tuple(inverse))
+    paths=[];by_point=[None]*n;depth=0;at=8+10*n
+    for i in range(n):
+        vertex,parent,label=struct.unpack_from('<HHb',raw,at+5*i);work.charge(12,'complete_tree_record_and_parent_role')
+        need(vertex<n and by_point[vertex]is None,'whole distinct tree vertex fields')
+        if i==0:
+            need(vertex==root and parent==65535 and label==0,'same original bridge root');path=()
+        else:
+            need(parent<i and label in(-2,-1,1,2),'strict earlier signed original tree edge')
+            path=paths[parent]+(label,)
+        work.charge(2*len(path)+2,'whole_short_tree_path_copy_and_point_slot')
+        need(len(path)<=10,'acquired original ambient path maximum10');depth=max(depth,len(path))
+        paths.append(path);by_point[vertex]=path
+    work.charge(2*n,'whole_vertex_path_slot_cover')
+    need(all(path is not None for path in by_point),'all original point labels once')
+    return dict(n=n,root=root,d0=d0,a=a,c=c,ambient=(A0,A1,*inverses),paths=tuple(by_point),path_max=depth)
+
+def prepare_triangle(ctx,triangle,work):
+    work.charge(32,'whole_three_vertex_and_path_pair_shape')
+    need(type(triangle)in(list,tuple)and len(triangle)==3
+         and all(type(x)is int and 0<=x<ctx['n']for x in triangle)
+         and len(set(triangle))==3,'three distinct actual bound partner vertices')
+    out=[]
+    for vertex in triangle:
+        work.charge(2,'bound_original_triangle_path_lookup');path=ctx['paths'][vertex]
+        work.charge(2*len(path),'whole_inverse_short_literal_path')
+        out.append((tuple(-j for j in reversed(path)),path))
+    return tuple(out)
+
+def ambient_word(ctx,word,point,work):
+    need(type(point)is int and 0<=point<ctx['n'],'literal original point label')
+    for label in word:
+        need(type(label)is int and label in(-2,-1,1,2),'same literal signed A generator')
+        work.charge(2,'one_original_ambient_map_image')
+        point=ctx['ambient'][label-1 if label>0 else 1-label][point]
+    return point
+
+def D_image(ctx,path_pair,point,work):
+    inverse,path=path_pair
+    point=ambient_word(ctx,inverse,point,work)
+    work.charge(2,'one_original_d0_map_image');point=ctx['d0'][point]
+    return ambient_word(ctx,path,point,work)
+
+def middle_image(ctx,triangle_paths,point,work,inverse=False):
+    for pair in reversed(triangle_paths)if inverse else triangle_paths:
+        point=D_image(ctx,pair,point,work)
+    return point
+
+def rotation_word(ctx,triangle_paths,letters,point,work):
+    work.charge(2,'literal_rotation_start_point')
+    need(type(point)is int and 0<=point<ctx['n'],'literal original start point')
+    need(type(letters)is list and 1<=len(letters)<=64
+         and all(type(j)is int and j in(-2,-1,1,2)for j in letters),'bounded strict signed actual rotation word')
+    work.charge(2*len(letters),'whole_literal_rotation_word_scan')
+    for label in letters:
+        if label==1:
+            work.charge(2,'actual_a_point_image');point=ctx['a'][point]
+            point=middle_image(ctx,triangle_paths,point,work)
+        elif label==-1:
+            point=middle_image(ctx,triangle_paths,point,work,True)
+            work.charge(2,'actual_a_inverse_point_image');point=ctx['a'][point]
+        elif label==2:
+            point=middle_image(ctx,triangle_paths,point,work)
+            work.charge(2,'actual_c_point_image');point=ctx['c'][point]
+        else:
+            work.charge(2,'actual_c_inverse_point_image');point=ctx['c'][point]
+            point=middle_image(ctx,triangle_paths,point,work,True)
+    return point
+
+def check_cycle(ctx,triangle_paths,part,prime,work):
+    need(prime in(11,13)and type(part)is dict and set(part)=={'word','cycle'},'exact prime/word/cycle part')
+    cycle=part['cycle'];letters=part['word']
+    need(type(cycle)is list and len(cycle)==prime
+         and all(type(x)is int and 0<=x<ctx['n']for x in cycle)
+         and len(set(cycle))==prime,'exact distinct closed prime-cycle point list')
+    work.charge(8*len(cycle),'complete_cycle_field_and_distinctness_checks')
+    for i,point in enumerate(cycle):
+        work.charge(4,'supplied_consecutive_and_closing_point_fields')
+        need(rotation_word(ctx,triangle_paths,letters,point,work)==cycle[(i+1)%prime],
+             'every actual signed-word cycle edge INCLUDING last return')
+
+def verify_pair(ctx,triangle,row,work):
+    work.charge(16,'whole_two_prime_part_shape')
+    need(type(row)is dict and set(row)=={'prime11','prime13'},'two exact supplied prime parts')
+    paths=prepare_triangle(ctx,triangle,work)
+    check_cycle(ctx,paths,row['prime11'],11,work)
+    check_cycle(ctx,paths,row['prime13'],13,work)
+    return dict(primes=[11,13],closed_cycle_lengths=[11,13])

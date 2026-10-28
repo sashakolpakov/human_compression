@@ -1,0 +1,212 @@
+"""UNRUN stdlib-only binding of actual new literal supplier/strict returns.
+Author /root/compact_proof_author. Emits T-only92b DATA; imports/activates no
+adopter, mathematical Source, helper, control or original model. Requires
+actual terminal Root supplier and strict-checker evidence, never future pins.
+"""
+import argparse,ast,gzip,hashlib,json,math,os,resource,stat,sys,time
+from pathlib import Path
+START=time.monotonic()
+S=Path('/Users/sasha/medusa/research/leemans')
+R=S/'computation/f004/q11/rank4/section_generation'
+Q=Path('/private/tmp/q11_rank4_even_rotation_search/implementation')
+T=None
+cache={};refs={};physical=Path(__file__).stat().st_size
+
+def canonical(x):return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+
+def digest(x):return hashlib.sha256(canonical(x)).hexdigest()
+
+def reference(path,raw):return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+def whole(path,final=False):
+ global physical
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ assert rss<256*2**20 and time.monotonic()-START<125,'bounded metadata256MiB125s'
+ path=Path(path)
+ if not final and str(path)in cache:return cache[str(path)]
+ a=path.lstat();assert path.is_absolute()and path.resolve(strict=True)==path and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=2**21
+ assert physical+a.st_size<=64*2**20 and(len(cache)<512 or str(path)in cache)
+ with path.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+ sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert sig(a)==sig(b)==sig(c)==sig(path.lstat())and len(raw)==a.st_size
+ physical+=len(raw)
+ if str(path)in cache:assert cache[str(path)]==raw
+ cache[str(path)]=raw;return raw
+
+def ref(path):return reference(Path(path),whole(path))
+
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:assert k not in out;out[k]=v
+  return out
+ return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def document(path):
+ p=Path(path);raw=whole(p)
+ return decode(gzip.decompress(raw)if p.suffix=='.gz'else raw)
+
+def put(name,value):
+ p=T/name;assert not os.path.lexists(p)
+ raw=canonical(value)+b'\n'
+ with p.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())
+ return reference(p,raw)
+
+def add(r):
+ assert set(r)=={'path','bytes','sha256'}and ref(r['path'])==r
+ assert refs.get(r['path'],r)==r
+ refs[r['path']]=r;return r
+
+def existing(path):return add(ref(path))
+
+def walk(value):
+ if type(value)is dict:
+  if set(value)=={'path','bytes','sha256'}:add(value)
+  else:
+   for x in value.values():walk(x)
+ elif type(value)is list:
+  for x in value:walk(x)
+
+def execution(capture):
+ value=document(capture);argv=value['issued_argv'];assert argv.count('--output')==1
+ guard=Path(argv[argv.index('--output')+1])
+ return dict(capture=ref(capture),guard=ref(guard/'receipt.json'),started=ref(guard/'started.json'),stdout=ref(guard/'stdout.log'),stderr=ref(guard/'stderr.log'))
+
+def evidence_for_capture(r):
+ value=document(r['path']);argv=value.get('issued_argv',[])
+ if argv.count('--output')==1:
+  path=Path(argv[argv.index('--output')+1])
+  if (path/'receipt.json').is_file():
+   for x in execution(r['path']).values():add(x)
+
+def close(bundle,program,plan,gate):
+ cap,guard,start=[document(bundle[k]['path'])for k in ['capture','guard','started']]
+ command=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',program['path'],'--self-sha256',program['sha256'],'--plan',plan['path'],plan['sha256'],'--Root-gate',gate['path'],gate['sha256']]
+ argv=cap['issued_argv'];assert cap['root']==cap['actor']=='/root'and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==0
+ assert cap['child_argv']==argv and argv.count('--')==1 and argv[argv.index('--')+1:]==command
+ assert guard['command']==start['command']==command and guard['status']=='PASS'and guard['stop']=='RETURNED'and guard['returncode']==0
+ assert guard['cleanup']['remaining']==guard['cleanup']['errors']==[] and guard['limits']==start['limits']
+ assert guard['limits']['total_rss']==128*2**20 and guard['limits']['wall_seconds']==125
+ stdout=whole(bundle['stdout']['path']);stderr=whole(bundle['stderr']['path'])
+ assert guard['logs']['stdout']==len(stdout)and guard['logs']['stderr']==len(stderr)
+ frames=cap['all_genuine_api_frames'];assert frames[-1]['exit_code']==0 and 'session_id'not in frames[-1]
+ report=decode(''.join(f['output']for f in frames));assert report['status']=='PASS'and report['stop']=='RETURNED'and report['receipt']==bundle['guard']['path']
+ return decode(stdout)
+
+def main():
+ global T
+ assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ ap.add_argument('--request',nargs=2,required=True);ap.add_argument('--strict-result',nargs=2,required=True)
+ ap.add_argument('--strict-capture',nargs=2,required=True);ap.add_argument('--directory',required=True)
+ a=ap.parse_args();own=ref(Path(__file__).resolve(strict=True));assert own['sha256']==a.self_sha256
+ request_ref=ref(a.request[0]);assert request_ref['sha256']==a.request[1];request=document(request_ref['path'])
+ assert request['schema']=='Q11_ACTUAL_LITERAL_ADOPTION_BIND_REQUEST_V1'and request['Root_authority']is False
+ T=Path(a.directory);assert T.is_absolute()and str(T)==a.directory and T.is_relative_to('/private/tmp')and '..'not in T.parts and not os.path.lexists(T)
+ ancestor=T.parent
+ while not ancestor.exists():ancestor=ancestor.parent
+ assert ancestor.resolve(strict=True)==ancestor
+ template_ref=add(request['template']);template=document(template_ref['path']);program=add(request['adopter'])
+ assert program['sha256']=='92b08960f93f19bcbf991034af5bbb682092ba8a05a4c5cbb7c1528e81ba569b'
+ assert template['schema']=='Q11_LITERAL_TWO_WORD_ADOPTION_PLAN_V1'and template['program']==program
+ assert template['preparation_grants_Root_authority']is False and template['scientific_calls']==0
+ supplier_ref=add(request['supplier_result']);supplier=document(supplier_ref['path'])
+ supplier_capture=add(request['supplier_capture']);strict_ref=existing(a.strict_result[0]);strict_capture=existing(a.strict_capture[0])
+ assert strict_ref['sha256']==a.strict_result[1]and strict_capture['sha256']==a.strict_capture[1]
+ direct=document(strict_ref['path']);sp=document(supplier['plan']['path']);dp=document(direct['plan']['path'])
+ assert supplier['schema']=='Q11_EVEN_ROTATION_LITERAL_SUPPLIER_RETURN_V1'and supplier['verification_authority']is False
+ assert direct['schema']=='Q11_TWO_END37_LITERAL_DIRECT_RESULT_V1'and direct['status']=='VERIFIED_TWO_END37_ORIGINAL_LITERAL_RECORDS'
+ assert direct['program']==template['expected_strict_consumer']and supplier['program']==template['expected_supplier']
+ assert supplier['plan']==template['expected_supplier_plan']and direct['plan']==request['strict_plan']
+ assert dp['records']==supplier['carrier']==direct['actual_supplied_literal_carrier']
+ assert supplier['selector']==direct['selector']==sp['selector']==dp['selector']==template['predecessor_selector']
+ assert supplier['original_job']==direct['original_job']==sp['original_job']==dp['original_job']==template['original_job']
+ assert direct['grammar']==supplier['grammar']=='SAME_END_LITERAL_012_LENGTH1_TO64_V1'
+ for rr in(request_ref,own):add(rr)
+ for rr in request['support_refs']:add(rr)
+ for value in(sp,dp):
+  for rr in value['inputs']:add(rr)
+ for result in(supplier,direct):
+  for key in('program','plan','source_gate','Root_code_math_review'):add(result[key])
+  gate=document(result['source_gate']['path']);walk(gate)
+  review=document(gate['Root_code_math_review']['path']);walk(review)
+  control=document(gate['control_report']['path']);walk(control)
+  assert control['schema']=='Q11_EVEN_ROTATION_LITERAL_GENERIC_CONTROLS_V1'and control['status']=='PASS'
+  assert control['program']==sp['control_program']==dp['control_program']and control['controls']>=12 and control['original_case_calls']==0
+  assert control['supplier']==supplier['program']and control['consumer']==direct['program']
+ for rr in[request['supplier_result'],supplier['carrier'],direct['plan'],supplier['plan'],strict_ref]:add(rr)
+ for capture in(supplier_capture,strict_capture):
+  for rr in execution(capture['path']).values():add(rr)
+ prior=document(dp['selector']['path']);assert prior['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'
+ assert prior['root']=='/root'and prior['adopted']is True and prior['original_job']==template['original_job']
+ existing(dp['selector']['path']);walk(dp['context'])
+ walk(prior['source_adoptions'])
+ for rr in prior['source_adoptions']:
+  fact=document(rr['path'])
+  for key in('theorem_review','application_review','application_proposal'):
+   if key in fact:add(fact[key])
+  if fact.get('proof_mode')in('DIRECT_TWO_WORD_CHECK','DIRECT_LITERAL_WORD_CHECK'):add(fact['independent_direct_result'])
+  if fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_FIELD_NG_SLICE_V1':
+   field=add(fact['global_field_adoption']);value=document(field['path'])
+   for key in('proposal','independent_review'):add(value[key])
+ for trial in prior.get('previous_method_attempts',[]):
+  add(trial['Root_adoption'])
+  assert trial['finite_misses_are_NOT_paid']is True and trial['do_not_repeat_unchanged_search']is True
+ original=prior['original_orbit_positions'];baseline=prior['original_paid_positions'];paid=prior['accepted_new_paid_positions']
+ unpaid=[i for lo,hi in prior['unresolved_position_runs']for i in range(lo,hi+1)]
+ history={i for trial in prior.get('previous_method_attempts',[])for i in trial['finite_miss_positions']}
+ positive=direct['verified_IP_failure_positions'];misses=supplier['finite_miss_positions_without_paid_credit'];visited=supplier['visited_positions']
+ assert baseline==sorted(set(baseline))and paid==sorted(set(paid))and unpaid==sorted(set(unpaid))
+ assert sorted(baseline+paid+unpaid)==list(range(1,original+1))and len(baseline)+len(paid)+len(unpaid)==original
+ assert positive==sorted(set(positive))and positive==supplier['proposed_positive_positions']==dp['expected_positive_positions']
+ assert misses==sorted(set(misses))and not set(positive)&set(misses)and sorted(positive+misses)==visited
+ assert visited==supplier['selected_positions'][:len(visited)]and supplier['selected_positions']==sp['selected_positions']==dp['selected_positions']
+ assert sp['selected_positions']==unpaid[sp.get('window_start',0):sp.get('window_start',0)+sp['maximum_positions']]
+ assert not set(positive)&set(baseline+paid)and set(positive)<=set(unpaid)
+ remain=sorted(set(unpaid)-set(positive));allmiss=history|set(misses)
+ counts=dict(original=original,baseline=len(baseline),previous_paid=len(paid),new=len(positive),later_paid=len(paid)+len(positive),
+  remaining=len(remain),historical_misses=len(allmiss),current_misses=len(allmiss&set(remain)),eligible=len(set(remain)-allmiss))
+ assert direct['remaining_if_Root_adopts']==dict(count=len(remain),expanded_sha256=digest(remain))
+ carrier=document(supplier['carrier']['path']);assert whole(supplier['carrier']['path'])==canonical(carrier)+b'\n'
+ assert carrier['schema']=='Q11_TWO_END37_SUPPLIED_LITERAL_WORDS_V1'and carrier['grammar']==direct['grammar']
+ assert[r[0]for r in carrier['records']]==positive
+ for row in carrier['records']:
+  assert type(row)is list and len(row)==5 and type(row[3])is type(row[4])is str
+  assert 1<=len(row[3])<=64 and 1<=len(row[4])<=64 and set(row[3])<=set('012')and set(row[4])<=set('012')
+ strict_run=execution(strict_capture['path']);supplier_run=execution(supplier_capture['path'])
+ ss=close(strict_run,direct['program'],direct['plan'],direct['source_gate'])
+ ps=close(supplier_run,supplier['program'],supplier['plan'],supplier['source_gate'])
+ assert ss['status']==direct['status']and ss['output']==strict_ref and ss['verified_IP_failures']==len(positive)
+ assert ps['status']=='UNTRUSTED_NEW_EVEN_ROTATION_LITERAL_HINTS_ONLY'and ps['summary']==supplier_ref and ps['carrier']==supplier['carrier']
+ assert ps['visited']==len(visited)and ps['proposed']==len(positive)and ps['finite_misses']==len(misses)and ps['unvisited']==len(set(unpaid)-set(visited))
+ for rr in request.get('extra_actual_captures',[]):
+  for er in execution(add(rr)['path']).values():add(er)
+ refs.pop(program['path'],None)
+ for key in('adoption_path','selector_path','method_directory','evidence_directory'):
+  path=Path(template[key]);assert path.is_relative_to(R)and path.is_absolute()and '..'not in path.parts and not os.path.lexists(path)
+ plan=dict(template,status='ACTUAL_RETURN_BOUND_UNADOPTED',author='/root/compact_proof_author',strict_result=strict_ref,supplier_result=supplier_ref,
+  strict_execution=strict_run,supplier_execution=supplier_run,expected_counts=counts,inputs=sorted(refs.values(),key=lambda r:r['path']),
+  qualification='Only exact actual independent literal-word results are proposed for typed IP adoption. Original baseline, old typed paid conclusions and all immutable miss histories stay distinct. Full original model/A=G/frame/member/classified-unitary/theorem premises remain imported. Supplier-only hints, finite misses and unvisited rows receive no proof credit. A separate Root prepared-image review and exact publication release remain owed.')
+ # Refresh every physical input before installing any T-only artifact.
+ for path in list(cache):whole(path,True)
+ T.mkdir(parents=True);assert T.parent.resolve(strict=True)==T.parent
+ pr=put('plan.json',plan)
+ F=sum(rr['bytes']for rr in plan['inputs'])+program['bytes']+pr['bytes'];N=len(plan['inputs'])+2
+ prep=program['bytes']+2*F;pub=prep+2*(2**21+32768+32768)
+ new=sum(rr['bytes']for rr in plan['inputs']if not Path(rr['path']).is_relative_to(S))+program['bytes']+pr['bytes']+2**21+2*32768+3*131072
+ assert pub<=64*2**20 and N+3<=512 and new<=8*2**20
+ inv=put('read_invoice.json',dict(schema='Q11_LITERAL_ADOPTION_ACTUAL_METADATA_INVOICE_V1',program=program,plan=pr,fixed_unique_bytes=F,
+  fixed_paths=N,Source_bootstrap=program['bytes'],prepare_physical_upper=prep,publish_physical_upper=pub,publish_path_upper=N+3,
+  prepared_cap=2**21,Root_release_cap=32768,independent_review_cap=32768,complete_new_publication_upper=new,new_files_upper=len(refs)+9,
+  physical_cap=64*2**20,path_cap=512,publication_cap=8*2**20,publication_file_cap=512,
+  qualification='All actual fixed inputs first/final plus interpreter Source bootstrap; every T input is conservatively counted as a new retained body. Future prepared/release/review descriptors remain unacquired.'))
+ first=put('first_call.json',dict(schema='UNISSUED_Q11_LITERAL_ADOPTION_CLI_V1',program=program,plan=pr,
+  prepare_argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',program['path'],'prepare','--self-sha256',program['sha256'],'--plan',pr['path'],pr['sha256'],'--directory',str(T/'actual_preparation')],
+  Root_authority_issued=False,publish='Use only actual prepared.json and a separately issued exact ROOT_RELEASE_Q11_LITERAL_TWO_WORD_ADOPTION_V1 after independent prepared-image review. Old93cb releases are incompatible.'))
+ hand=put('handoff.json',dict(schema='BOUND_ACTUAL_LITERAL_ADOPTION_DATA_HANDOFF_V1',author='/root/compact_proof_author',program=program,
+  plan=pr,invoice=inv,first_call=first,actual_strict=strict_ref,actual_supplier=supplier_ref,counts=counts,
+  binder=own,adopter_executed=False,scientific_calls=0,Root_authority_issued=False,S_W_writes=0,
+  qualification='Actual-output binding only. Frozen92b still performs the complete proof/Source/domain/partition/genuine-capture rebuild before preparing an unapproved image; Root publication remains separate.'))
+ print(json.dumps(dict(status='ACTUAL_LITERAL_ADOPTION_DATA_BOUND_NOT_ADOPTED',handoff=hand,plan=pr,invoice=inv,counts=counts),sort_keys=True))
+
+if __name__=='__main__':main()
