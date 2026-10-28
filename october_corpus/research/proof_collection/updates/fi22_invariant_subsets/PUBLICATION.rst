@@ -30,8 +30,10 @@ The exact archive selection, staging, installation and corpus-relative
 integrity check all passed. Its manifest contains 113 files and 200 original
 content mappings. CHECK.rst gives the reproducible integrity command.
 The archived mathematical caller uses historical machine paths. Its separate
-corpus-relative mathematical replay is still being prepared; the archive
-integrity result alone does not establish that replay.
+corpus-relative mathematical replay has now passed for all twelve certificates,
+checking all 6,018 edges without opening any historical machine path. See the
+`completed replay report <../../../fi22/triangle_quotients/invariant_subsets/replay/RUN_REPORT.rst>`_.
+Archive integrity and fresh arithmetic have separate records.
 
 The compact intake journal was independently reviewed, forecast, published
 with an exact predecessor check, and checked again after publication. Its
