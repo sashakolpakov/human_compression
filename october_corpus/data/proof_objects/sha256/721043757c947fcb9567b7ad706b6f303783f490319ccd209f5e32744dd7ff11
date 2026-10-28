@@ -1,0 +1,143 @@
+"""UNRUN focused synthetic controls for the direct two-word consumer.
+
+Generic GL7 arithmetic fixtures are not G2 involution markings. Mock typed
+ledgers are isolated test values, never Root publications or original facts.
+The quotient fixture is borrowed literally from section37/control.py.
+Author /root/compact_proof_author.
+"""
+import time
+START=time.monotonic()
+import argparse,hashlib,itertools,json,os,resource,sys
+from pathlib import Path
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+class ArithmeticBudget:
+ def __init__(self):self.products=0
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  need(rss<128*2**20 and time.monotonic()-START<100,'synthetic128MiB100s')
+ def multiply(self,A,B):
+  self.tick();self.products+=1;need(self.products<=50000,'synthetic50000products')
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(len(B)))%11 for j in range(len(B[0])))for i in range(len(A)))
+
+def quotient_fixture(kernel,budget):
+ # Only +/* in F11[X]/(X^6+aX+b). No irreducibility assertion is needed:
+ # the final literal GL7 matrices must themselves pass exact order37.
+ one=(1,0,0,0,0,0);x=(0,1,0,0,0,0)
+ for a in range(11):
+  for b in range(1,11):
+   def mul(u,v):
+    budget.tick(True);out=[0]*11
+    for i in range(6):
+     for j in range(6):out[i+j]=(out[i+j]+u[i]*v[j])%11
+    for k in range(10,5,-1):
+     c=out[k];out[k-6]=(out[k-6]-b*c)%11;out[k-5]=(out[k-5]-a*c)%11
+    return tuple(out[:6])
+   z=one
+   for bit in bin(47880)[2:]:
+    z=mul(z,z)
+    if bit=='1':z=mul(z,x)
+   M=[mul(tuple(int(i==j)for i in range(6)),z)for j in range(6)]
+   Y=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in M)
+   I=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+   if Y!=I and kernel['power'](Y,37,budget)==I:return Y
+ raise ValueError('bounded arithmetic fixture construction found no exact37 matrix')
+
+def refused(call,why):
+ try:call()
+ except (ValueError,KeyError,TypeError,IndexError):return
+ raise ValueError('negative synthetic control accepted: '+why)
+
+def main():
+ parser=argparse.ArgumentParser(allow_abbrev=False)
+ parser.add_argument('--consumer',nargs=2,required=True);parser.add_argument('--self-sha256',required=True)
+ args=parser.parse_args();budget=ArithmeticBudget()
+ own=Path(__file__).resolve(strict=True);ownraw=own.read_bytes()
+ need(hashlib.sha256(ownraw).hexdigest()==args.self_sha256 and len(ownraw)<=16384,'exact bounded controls Source')
+ path=Path(args.consumer[0]);raw=path.read_bytes()
+ need(path.resolve(strict=True)==path and len(raw)<=65536 and hashlib.sha256(raw).hexdigest()==args.consumer[1],
+      'complete exact consumer before declaration activation')
+ ns={'__name__':'q11_two_end37_synthetic_subject','__file__':str(path)}
+ exec(compile(raw,str(path),'exec'),ns)
+ I=ns['I7'];Y=quotient_fixture(ns,budget);names=[]
+ words=[''.join('1'+('0','2','02')[d]for d in digits)
+        for size in range(1,5)for digits in itertools.product(range(3),repeat=size)]
+ need(len(words)==120 and [ns['word_from_index'](i)for i in range(1,121)]==words,'independent dictionary enumeration')
+ for bad in(0,121,-1,True,'1'):
+  refused(lambda bad=bad:ns['word_from_index'](bad),'bad dictionary index')
+ names.append('exact120_dictionary_and_index_types')
+ marks=(I,Y,I,Y)
+ ns['direct_order37'](marks,(0,1,2),1,budget);ns['direct_order37'](marks,(1,2,3),1,budget)
+ names.append('both_literal_end_maps_and_exact37_powers')
+ refused(lambda:ns['direct_order37']((I,I,I,I),(0,1,2),1,budget),'identity witness')
+ refused(lambda:ns['direct_order37'](marks,(0,1,3),1,budget),'foreign end')
+ minus=tuple(tuple(10*int(i==j)for j in range(7))for i in range(7))
+ refused(lambda:ns['direct_order37']((I,minus,I,I),(0,1,2),1,budget),'order2 word sixth power identity')
+ names.append('identity_wrong_order_and_foreign_section_refused')
+ # Full-mark entry checks reject this generic fixture. The successful local
+ # power controls above cannot be promoted to an original involution claim.
+ ctx=dict(orbits=[[1,[1],[1],1]],IR=(),R=(),catalogue=[])
+ refused(lambda:ns['verify_records']([[1,1,'0'*64,1,1]],[1],ctx,budget),'wrong full original orbit digest')
+ names.append('original_record_binding_refuses_unbound_fixture')
+ source=dict(original_job=[20,4],projection={'path':'mock_projection'},
+             Root_projection_acceptance={'path':'mock_projection_acceptance'},
+             legacy_section_kernel={'path':'mock_kernel'},legacy_section_helpers={'path':'mock_helpers'})
+ refs={name:{'path':name}for name in('cyclic','section','gate','selector','global_proposal')}
+ cyclic=dict(schema='ROOT_ACCEPTED_Q11_RANK4_CYCLIC_PILOT_V1',root='/root',adopted=True,
+             original_job=[20,4],whole_original_credit=0,all64_directly_checked=True,nongeneration_positions=[2])
+ section=dict(schema='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1',root='/root',adopted=True,
+             original_job=[20,4],whole_original_credit=0,independent_direct_word_power_row_minor_checks=True,
+             new_IP_failure_positions=[3],finite_miss_positions_without_IP_credit=[3,4],source_gate=refs['gate'])
+ gate=dict(root='/root',adopted=True,program={'path':'mock_source'},kernel=source['legacy_section_kernel'],helpers=source['legacy_section_helpers'])
+ trial=dict(Root_adoption=refs['section'],criterion='SECTION37_FIXED_DICTIONARY',source=gate['program'],
+            kernel=gate['kernel'],helpers=gate['helpers'],finite_miss_positions=[3,4],
+            finite_misses_are_NOT_paid=True,do_not_repeat_unchanged_search=True)
+ selector=dict(schema='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1',root='/root',adopted=True,
+       original_job=[20,4],projection=source['projection'],Root_projection_acceptance=source['Root_projection_acceptance'],
+       original_orbit_positions=8,original_paid_positions=[1],original_paid_count=1,
+       accepted_new_paid_positions=[2,3],source_adoptions=[refs['cyclic'],refs['section']],
+       unresolved_position_runs=[[4,8]],unresolved_positions=5,expanded_unresolved_sha256=ns['digest']([4,5,6,7,8]),
+       previous_method_attempts=[trial])
+ globalpath='/Users/sasha/medusa/research/leemans/computation/f004/q11/rank4/section_generation/residuals/field_centralizers/root_acceptance.json'
+ documents={'cyclic':cyclic,'section':section,'gate':gate,'selector':selector,
+       'global_proposal':{'jobs':[]},globalpath:dict(root='/root',adopted=True,
+       Root_projection_acceptance=source['Root_projection_acceptance'],proposal=refs['global_proposal'])}
+ class Mock:
+  def doc(self,ref):return documents[ref['path']]
+ source['selector']=refs['selector'];context=dict(orbits=[None]*8,paid=[1])
+ front=ns['typed_frontier'](source,context,Mock())
+ need(front['unpaid']==[4,5,6,7,8]and front['skipped']==[4]and front['eligible']==[5,6,7,8],
+      'immutable historical miss3 can become paid; only current unpaid4 is skipped')
+ need(trial['finite_miss_positions']==[3,4],'history is not rewritten')
+ names.append('historical_misses_intersect_current_unpaid_without_history_mutation')
+ refused(lambda:ns['typed_frontier'](source,dict(orbits=[None]*8,paid=[1,2]),Mock()),'baseline relabel')
+ names.append('original_baseline_cannot_absorb_later_deduction')
+ section['new_IP_failure_positions']=[2]
+ refused(lambda:ns['adoption_groups']([refs['cyclic'],refs['section']],source,[1],8,Mock().doc),
+         'full-section generation versus quartet NG contradiction')
+ section['new_IP_failure_positions']=[3]
+ names.append('section_generation_and_quartet_nongeneration_disjoint')
+ # The two-end theorem does not assert generation, so its IP failure may
+ # coexist with an independently acquired quartet nongeneration proof.
+ two=dict(schema='ROOT_ACCEPTED_Q11_RANK4_TWO_END37_IP_FACTS_V1',root='/root',adopted=True,
+     original_job=[20,4],whole_original_credit=0,projection=source['projection'],
+     Root_projection_acceptance=source['Root_projection_acceptance'],classification='FOUR_MARK_INTERSECTION_PROPERTY_FAILURE',
+     four_mark_generation_or_nongeneration_claim=False,theorem={'sha256':ns['THEOREM_SHA']},
+     theorem_review={'path':'mock_review','sha256':ns['THEOREM_REVIEW_SHA']},verified_IP_failure_positions=[2],
+     proof_mode='DIRECT_TWO_WORD_CHECK',independent_direct_result={'path':'mock_direct'})
+ documents.update(two=two,mock_review={},mock_direct=dict(schema='Q11_TWO_END37_DIRECT_RESULT_V1',
+    status='VERIFIED_TWO_END37_ORIGINAL_RECORDS',original_job=[20,4],projection=source['projection'],
+    verified_IP_failure_positions=[2],word_search_or_row_reduction_calls=0))
+ groups=ns['adoption_groups']([refs['cyclic'],{'path':'two'}],source,[1],8,Mock().doc)
+ need(groups['cyclic_nongeneration']==groups['two_end_theorem_IP_failure']==[2],
+      'typed two-end IP failure carries no generation assertion')
+ names.append('two_end_IP_and_independent_NG_overlap_counted_by_union')
+ print(json.dumps(dict(schema='Q11_TWO_END37_SYNTHETIC_CONTROLS_V1',status='PASS',
+   author='/root/compact_proof_author',program=dict(path=str(own),bytes=len(ownraw),sha256=args.self_sha256),
+   consumer=dict(path=str(path),bytes=len(raw),sha256=args.consumer[1]),names=names,controls=len(names),
+   original_case_calls=0,original_model_or_group_calls=0,matrix_products=budget.products,
+   qualification='Generic GL7 arithmetic and isolated mock metadata. No admitted G2 marking, original proof, Root authority or scientific case is created.'),sort_keys=True))
+
+if __name__=='__main__':main()

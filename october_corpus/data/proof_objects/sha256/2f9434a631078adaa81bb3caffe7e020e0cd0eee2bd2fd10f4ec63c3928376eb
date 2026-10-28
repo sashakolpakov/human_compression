@@ -1,0 +1,301 @@
+"""Metadata projection of already checked original Fi22 partner bytes.
+
+Author /root/compact_proof_author. No project Source, geometry, point image,
+word, group, orbit search, case or scientific control is activated here.
+"""
+import argparse,base64,gzip,hashlib,io,json,os,resource,stat,struct,sys,time
+from pathlib import Path
+
+MIB=2**20
+START=time.monotonic()
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def canonical(value):
+    return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def strict(raw):
+    def pairs(values):
+        out={}
+        for k,v in values:need(k not in out,'unique metadata key');out[k]=v
+        return out
+    return json.loads(raw,object_pairs_hook=pairs,
+        parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite metadata')))
+
+def signature(s):
+    return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def identity(raw,ref):
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+         and type(ref['bytes'])is int and len(raw)==ref['bytes']
+         and hashlib.sha256(raw).hexdigest()==ref['sha256'],'entire original body identity')
+
+class Reads:
+    def __init__(self):self.rows={};self.bytes=Path(__file__).stat().st_size
+    def whole(self,ref):
+        need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+             and type(ref['bytes'])is int and 0<=ref['bytes']<=8*MIB,'bounded exact physical ref')
+        need(self.rows.get(ref['path'],ref)==ref,'one physical version')
+        need(self.bytes+ref['bytes']<=64*MIB and(len(self.rows)<512 or ref['path']in self.rows),
+             'whole64MiB/512-path metadata budget before IO')
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+        need(rss<256*MIB and time.monotonic()-START<150,'metadata256MiB/150s guard')
+        p=Path(ref['path']);a=p.lstat()
+        need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+             and a.st_nlink==1 and a.st_size==ref['bytes'],'ordinary immutable physical bank')
+        with p.open('rb')as f:
+            b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+        need(signature(a)==signature(b)==signature(c)==signature(p.lstat()),'stable whole physical bytes')
+        identity(raw,ref);self.bytes+=len(raw);self.rows[ref['path']]=ref;return raw
+    def role(self,mapping):
+        a,b=mapping['logical'],mapping['physical']
+        need(a['bytes']==b['bytes']and a['sha256']==b['sha256'],'exact retained original mapping')
+        return self.whole(b)
+    def document(self,mapping):return strict(self.role(mapping))
+    def final(self):
+        for q in list(self.rows.values()):self.whole(q)
+
+def compressed_document(raw):
+    with gzip.GzipFile(fileobj=io.BytesIO(raw),mode='rb')as stream:body=stream.read(8*MIB+1)
+    need(len(body)<=8*MIB,'bounded bank expansion before JSON parse')
+    return strict(body)
+
+def bodies(*banks):
+    out={};total=0
+    for bank in banks:
+        need(type(bank['documents'])is list and len(bank['documents'])<=1024,'bounded complete body bank')
+        for row in bank['documents']:
+            ref=row['ref'];need(type(ref['bytes'])is int and 0<=ref['bytes']<=2*MIB,'bounded virtual body')
+            raw=base64.b64decode(row['raw_base64'],validate=True);identity(raw,ref)
+            key=ref['path'];prior=out.get(key)
+            need(prior is None or prior==(ref,raw),'identical repeated logical body')
+            if prior is None:out[key]=(ref,raw);total+=len(raw)
+            need(total<=8*MIB,'one bounded complete virtual bank at a time')
+    return out
+
+def value(table,ref):
+    need(ref['path']in table and table[ref['path']][0]==ref,'exact packed logical identity')
+    return table[ref['path']][1]
+
+def record6(raw,count):
+    need(len(raw)==6*count,'whole <IH original record extent')
+    values=list(struct.iter_unpack('<IH',raw))
+    need(all(0<=o<500178 and 0<m<=1024 for o,m in values)
+         and all(values[i-1][0]<values[i][0]for i in range(1,len(values))),
+         'original ordered distinct owner/mass records')
+    return values
+
+def actual_mode(table,pair,mode,stage):
+    refs=pair['actual'][mode];cap=strict(value(table,refs['capture']))
+    guard=strict(value(table,refs['receipt']));stdout=strict(value(table,refs['stdout']))
+    value(table,refs['stderr'])
+    for q in refs['other_guard_bodies']:value(table,q)
+    need(cap['actor']==cap['root']=='/root'and cap['actual_tool']['exit_code']==0
+         and cap['full_tool_return']['exit_code']==0 and cap['all_genuine_api_frames']
+         and cap['issued_argv']==cap['child_argv']and cap['child_argv'].count('--')==1
+         and cap['child_argv'][cap['child_argv'].index('--')+1:]==guard['command']
+         and guard['status']=='PASS'and guard['stop']=='RETURNED'and guard['returncode']==0
+         and guard['error']is None and guard['cleanup']['remaining']==guard['cleanup']['errors']==[],
+         'genuine retained successful SDK/guard and known-scope closure')
+    result_ref=pair[mode]['result.json'];result=strict(value(table,result_ref))
+    certificate=pair[mode]['certificate.bin'];facts=pair[mode]['facts.json']
+    expected=[sys.executable,'-E','-B','-S',stage['program']['path'],
+        '--mode',mode,'--plan',stage['family_plan']['path'],stage['family_plan']['sha256'],
+        '--root-review',stage['scientific_Root_release']['path'],stage['scientific_Root_release']['sha256'],
+        '--part',str(pair['part'])]
+    if mode=='check':expected+=['--supplied',pair['produce']['certificate.bin']['path'],pair['produce']['certificate.bin']['sha256']]
+    expected+=['--out',str(Path(result_ref['path']).parent)]
+    need(guard['command']==expected and result['schema']=='ROOT_L026_UNORDERED_PARTNER_WITNESS_RETURN_V1'
+         and result['status']=='VERIFIED_WHOLE_SELECTED_ORIGINAL_PARTNER_WITNESSES'
+         and result['mode']==mode and result['part']==pair['part']and result['actor']==result['root']=='/root'
+         and result['program']==stage['program']and result['plan']==stage['family_plan']
+         and result['Root_review']==stage['scientific_Root_release']
+         and result['certificate']==certificate and result['facts']==facts
+         and result['original_partner_points_checked']is True
+         and result['old_Source_verdict_transferred']is False,
+         'same original subject and actual checked certificate')
+    need(stdout['status']==result['status']and stdout['part']==pair['part']
+         and stdout['mode']==mode and stdout['result']==result_ref['path'],
+         'actual stdout identifies the same complete result')
+    return result
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--plan',nargs=2,required=True)
+    ap.add_argument('--write',action='store_true');args=ap.parse_args();reads=Reads()
+    p=Path(args.plan[0]);pref=dict(path=str(p),bytes=p.stat().st_size,sha256=args.plan[1]);plan=strict(reads.whole(pref))
+    need(plan['schema']=='L026_PRODUCT_WITNESS_FREE_PROJECTION_PLAN_V1'
+         and plan['author']=='/root/compact_proof_author'and plan['root_authority']is False,
+         'unadopted bounded metadata projection only')
+    own=plan['program'];need(own['path']==str(Path(__file__).resolve()),'actual new projection Source');reads.whole(own)
+    roles=plan['roles'];docs={k:reads.document(roles[k])for k in[
+        'partner_adoption','partner_stage','partner_preservation','product_adoption','product_stage',
+        'product_preservation','negative_adoption','negative_preservation','resolution_adoption',
+        'resolution_stage','resolution_preservation','input_theorem','product_input_theorem',
+        'family_plan','scientific_Root_release','negative_inverse','negative_premises',
+        'import_original_geometry_and_two_fibre_premises','import_owner_atlas',
+        'import_qualified_H_equals_B','import_unordered_triangles']}
+    stage=docs['partner_stage'];product=docs['product_adoption'];negative=docs['negative_adoption'];scope=plan['scope_digest']
+    need(stage['root']==product['root']==negative['root']=='/root'
+         and stage['adopted']is product['adopted']is negative['adopted']is True
+         and stage['scope_digest']==product['scope_digest']==negative['scope_digest']==scope
+         and len(stage['checked_results'])==229 and stage['unordered_owners']==89069
+         and stage['whole_partner_witness_cover_from_actual_checked_parts']is True
+         and stage['named_model_Reader_action_word_graph_global_class_two_fibre_and_H_B_qualifications_retained']is True,
+         'actual accepted complete witness and product authorities with all qualifications')
+    need(product['stage']=='product-mass'and product['selected_representatives']==46596
+         and product['selected_product_mass']==36486450
+         and negative['source_product_adoption']==roles['product_adoption']['logical']
+         and negative['nongenerating_orbits']==17688 and negative['remaining_free_orbits_unresolved']==28908
+         and negative['all_original_premises_retained']is True,
+         'the old negative result is reused, never repaid')
+    need(docs['partner_adoption']['stage_acceptance']==roles['partner_stage']['logical']
+         and product['stage_acceptance']==roles['product_stage']['logical']
+         and stage['input_theorem']==roles['input_theorem']['logical']
+         and stage['family_plan']==roles['family_plan']['logical']
+         and stage['scientific_Root_release']==roles['scientific_Root_release']['logical']
+         and docs['product_stage']['input_theorem']==roles['product_input_theorem']['logical'],
+         'the whole admitted Source/theorem/plan lineage is the exact input')
+    need(docs['input_theorem']['adopted']is True and docs['input_theorem']['root']=='/root'
+         and docs['input_theorem']['scope_digest']==scope
+         and docs['input_theorem']['mathematical_imports']==docs['family_plan']['mathematical_imports'],
+         'original endpoint, two-fibre and member meanings are imported, not inferred from IDs')
+    need(stage['program']==roles['partner_worker']['logical']
+         and stage['partner_core']==roles['partner_core']['logical']
+         and stage['canonical_records']==roles['canonical_unordered_records']['logical']
+         and docs['input_theorem']['operand_roles']['roster']==roles['canonical_unordered_records']['logical']
+         and product['outputs']['selected_records']==roles['selected_product_records']['logical']
+         and product['outputs']['values']==roles['product_mass_values']['logical']
+         and negative['projection']['free_unresolved_records']==roles['free_records']['logical']
+         and negative['projection']['nongenerating_records']==roles['negative_records']['logical']
+         and negative['projection_inverse']==roles['negative_inverse']['logical']
+         and negative['premises']==roles['negative_premises']['logical']
+         and docs['partner_adoption']['outputs']['partner_raw_u32']==roles['raw_partner_values']['logical']
+         and docs['partner_adoption']['outputs']['unordered_mass_u16']==roles['unordered_mass_values']['logical'],
+         'exact adopted Source, roster, arrays, inverse and partition role joins')
+    imports=docs['input_theorem']['mathematical_imports']
+    need(all(imports[k]==roles['import_'+k]['logical']for k in imports)
+         and docs['import_qualified_H_equals_B']['root']=='/root'
+         and docs['import_qualified_H_equals_B']['adopted']is True
+         and docs['import_owner_atlas']['root']=='/root'
+         and docs['import_owner_atlas']['adopted']is True
+         and docs['import_unordered_triangles']['root']=='/root'
+         and docs['import_unordered_triangles']['adopted']is True
+         and docs['product_input_theorem']['mathematical_imports']==dict(
+             unordered_partner_involution=roles['resolution_adoption']['logical'],
+             unordered_partner_witnesses_and_masses=roles['partner_adoption']['logical'])
+         and docs['resolution_adoption']['root']=='/root'
+         and docs['resolution_adoption']['adopted']is True
+         and docs['resolution_adoption']['stage_acceptance']==roles['resolution_stage']['logical'],
+         'whole retained original premise authorities and exact product-to-partner lineage')
+    old_banks=docs['partner_preservation']['scientific_evidence_banks']
+    need(len(plan['banks'])==len(old_banks)==8,'all accepted whole evidence banks')
+    for i,(bank,original)in enumerate(zip(plan['banks'],old_banks),1):
+        need(bank['index']==i and bank['evidence']['logical']==original['bank']
+             and bank['values']['logical']==original['value_bank']
+             and bank['manifest']['logical']==original['manifest']
+             and bank['part_range']==original['parts']and bank['record_range']==original['record_range']
+             and original['all_pair_and_guard_bodies_checked']is True,
+             'exact complete preserved bank/provenance join')
+    for k in ['partner_worker','partner_core']:reads.role(roles[k])
+    canonical_rows=reads.role(roles['canonical_unordered_records'])
+    need(len(canonical_rows)==5*89069,'whole canonical unordered record table')
+    owners=[struct.unpack_from('<I',canonical_rows,5*i)[0]for i in range(89069)]
+    need(all(owners[i-1]<owners[i]for i in range(1,len(owners))),'all89069 distinct canonical owner IDs')
+    final=record6(reads.role(roles['selected_product_records']),46596)
+    free=record6(reads.role(roles['free_records']),28908);excluded=record6(reads.role(roles['negative_records']),17688)
+    need(sorted(free+excluded)==final and all(m==1024 for o,m in free)
+         and all(m<1024 for o,m in excluded)and sum(m for o,m in final)==36486450
+         and sum(m for o,m in free)==29601792,'literal adopted complete free/negative partition')
+    wanted={o:i for i,(o,m)in enumerate(free)};final_ids={o for o,m in final}
+    product_values=reads.role(roles['product_mass_values']);raw_partner=reads.role(roles['raw_partner_values'])
+    unordered_mass=reads.role(roles['unordered_mass_values'])
+    need(len(product_values)==len(unordered_mass)==2*500178 and len(raw_partner)==4*500178,
+         'whole admitted arrays, no action or orbit calculation')
+    for o,m in final:need(struct.unpack_from('<H',product_values,2*o)[0]==m,'exact final product record/array join')
+    witness_bytes=bytearray(16*len(free));locator_bytes=bytearray(8*len(free));seen=bytearray(len(free))
+    cursor=0;next_part=1;total_mass=0;matched_final=0;parts=[];logical_body_reads=0
+    for bank in plan['banks']:
+        manifest=reads.document(bank['manifest']);evidence=compressed_document(reads.role(bank['evidence']))
+        values=compressed_document(reads.role(bank['values']));table=bodies(evidence,values)
+        need(evidence['schema']=='L026_PARTNER_GENUINE_PAIR_BODY_SHARD_V1'
+             and values['schema']=='L026_PARTNER_COMPLETE_VALUE_SHARD_V1'
+             and evidence['scope_digest']==values['scope_digest']==scope
+             and manifest['all_pair_bodies_preserved']is True
+             and manifest['evidence']==bank['evidence']['logical']and manifest['values']==bank['values']['logical']
+             and values['checked_results']==manifest['checked_results']
+             and bank['part_range']==[manifest['start_part'],manifest['stop_part']]
+             and bank['record_range']==[manifest['start'],manifest['stop']],
+             'same whole accepted bank, ranges and original retained identities')
+        need(len(evidence['documents'])==bank['evidence_body_count'],
+             'complete original evidence-body extent, not a selected subset')
+        for pair in evidence['pairs']:
+            need(pair['part']==next_part and pair['start']==cursor and pair['stop']>cursor,
+                 'all229 original parts once, with complete contiguous record cover')
+            a=actual_mode(table,pair,'produce',stage);b=actual_mode(table,pair,'check',stage)
+            need(a['subject']==b['subject']and b['subject']['start']==pair['start']
+                 and b['subject']['stop']==pair['stop']and b['subject']['original_B_scope']==scope
+                 and b['subject']['mathematical_imports']==docs['input_theorem']['mathematical_imports']
+                 and b['subject']['original_model_Reader_action_word_graph_global_class_and_two_fibre_premises_retained']is True
+                 and pair['check']['result.json']==stage['checked_results'][next_part-1],
+                 'strict result is the exact adopted original model/member/geometry subject')
+            supplied=value(table,pair['produce']['certificate.bin']);checked=value(table,pair['check']['certificate.bin'])
+            need(supplied==checked and len(checked)==16*(pair['stop']-cursor),
+                 'complete producer/Saved byte equality and16B extent')
+            mass=0
+            for local,(owner,partner,umass,x,y,z)in enumerate(struct.iter_unpack('<IIHHHH',checked)):
+                need(owner==owners[cursor+local]and 0<=partner<500178
+                     and 0<umass<=1024 and x<3510 and y<3510 and z<3510
+                     and struct.unpack_from('<I',raw_partner,4*owner)[0]==partner
+                     and struct.unpack_from('<H',unordered_mass,2*owner)[0]==umass,
+                     'exact original roster, raw-partner/mass arrays and literal vertex fields')
+                mass+=umass
+                if owner in final_ids:matched_final+=1
+                if owner in wanted:
+                    i=wanted[owner];need(not seen[i]and umass==1024,'each unresolved free owner once')
+                    witness_bytes[16*i:16*i+16]=checked[16*local:16*local+16]
+                    struct.pack_into('<HHI',locator_bytes,8*i,bank['index'],pair['part'],local);seen[i]=1
+            facts=strict(value(table,pair['check']['facts.json']))
+            need(value(table,pair['check']['facts.json'])==value(table,pair['produce']['facts.json'])
+                 and facts['unordered_owners']==pair['stop']-cursor and facts['unordered_triangle_mass']==mass,
+                 'same accepted complete part metrics')
+            parts.append(dict(part=pair['part'],bank=bank['index'],start=cursor,stop=pair['stop'],
+                checked_result=pair['check']['result.json'],checked_certificate=pair['check']['certificate.bin'],
+                producer_certificate=pair['produce']['certificate.bin']))
+            total_mass+=mass;cursor=pair['stop'];next_part+=1
+        logical_body_reads+=len(table)
+        del table,evidence,values
+    need(cursor==89069 and next_part==230 and total_mass==72972900 and matched_final==46596
+         and all(seen),'complete byte-joined original covers and all28908 free records')
+    out=Path(plan['output_root']);need(out.is_absolute()and out.is_relative_to('/private/tmp')
+         and '..'not in out.parts and out.parent.resolve(strict=True)==out.parent
+         and not os.path.lexists(out),'fresh ordinary temporary projection only')
+    index=dict(schema='L026_FREE_PRODUCT_WITNESS_CERTIFICATE_INDEX_V1',parts=parts,banks=plan['banks'],
+        free_record_source=roles['free_records'],all_original_qualifications=plan['qualified_as'])
+    report=dict(schema='L026_ACCEPTED_BYTES_FREE_PRODUCT_PROJECTION_V1',author='/root/compact_proof_author',
+        adopted=False,plan=pref,scope_digest=scope,original_product_adoption=roles['product_adoption'],
+        already_adopted_negative=roles['negative_adoption'],partner_adoption=roles['partner_adoption'],
+        unordered_witness_cover=cursor,all_product_joined=matched_final,free_projected=len(free),
+        free_middle_mass=29601792,certificate_parts=229,exact_literal_record_bytes=True,
+        inverse='For output row i decode <HHI at8*i, locate that bank/part and copy exactly16 bytes at16*local in its complete checked certificate. The independent producer certificate is byte-identical. Owner i equals the same original free6B record; product and unordered masses remain separately attributed.',
+        geometry_point_word_group_or_orbit_calls=0,new_generation_or_negative_or_Original_credit=0,
+        virtual_body_reads=logical_body_reads,physical_input_refs=list(reads.rows.values()),
+        qualification=plan['qualified_as'])
+    blobs={'free_witnesses.bin':bytes(witness_bytes),'free_locators.bin':bytes(locator_bytes),
+        'certificate_index.json':canonical(index),'projection.json':canonical(report)}
+    need(len(blobs)==4 and sum(map(len,blobs.values()))<=4*MIB,'four finite metadata artifacts')
+    reads.final()
+    if args.write:
+        out.mkdir()
+        for name,raw in blobs.items():
+            with(out/name).open('xb')as handle:need(handle.write(raw)==len(raw),'whole exclusive projection');handle.flush();os.fsync(handle.fileno())
+        for directory in(out,out.parent):
+            fd=os.open(directory,os.O_RDONLY)
+            try:os.fsync(fd)
+            finally:os.close(fd)
+    outputs={name:dict(path=str(out/name),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())for name,raw in blobs.items()}
+    print(json.dumps(dict(status='PROJECTED_ALREADY_ACCEPTED_BYTES_ONLY',written=args.write,outputs=outputs,
+        free_records=28908,physical_metadata_bytes=reads.bytes,physical_paths=len(reads.rows),
+        Source_geometry_word_point_group_science_or_gate_calls=0,S_writes=0),sort_keys=True))
+
+if __name__=='__main__':main()

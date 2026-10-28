@@ -1,0 +1,298 @@
+"""New F00910997 current-overview metadata edition; /root/prime_theory_audit.
+Retains ten literal guards/CAS functions from the current journal, and the
+normal registration/Owner/Reader proof joins from Compact's10970 method.
+No old005/9c Source verdict is transferred; actual052 identity is explicit.
+"""
+import argparse,copy,fcntl,hashlib,json,math,os,resource,stat,sys,time
+from pathlib import Path
+S=Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake'
+TARGET=M/'progress/current_intake_verified_exports.json'
+OWNERS=('root_execution_ownership_latest','root_current_ownership','current_execution_ownership')
+START=time.monotonic()
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+
+def canonical(value):
+    return (json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+
+
+def reference(path,raw):
+    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+
+def decode(raw):
+    def pairs(items):
+        out={}
+        for key,value in items:
+            need(key not in out,'unique metadata keys');out[key]=value
+        return out
+    def floating(text):
+        value=float(text);need(math.isfinite(value),'finite old observations');return value
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,
+                      parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+
+class Evidence:
+    def __init__(self):self.refs={};self.raw={};self.bytes=0
+    def whole(self,ref,fresh=False):
+        need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int
+             and 0<=ref['bytes']<=2**21 and type(ref['sha256'])is str
+             and len(ref['sha256'])==64 and set(ref['sha256'])<=set('0123456789abcdef'),'bounded whole metadata ref')
+        need(self.refs.get(ref['path'],ref)==ref,'one physical identity')
+        if not fresh and ref['path']in self.raw:return self.raw[ref['path']]
+        need(self.bytes+ref['bytes']<=32*2**20 and(len(self.refs)<128 or ref['path']in self.refs),'32MiB/128-path metadata read cap')
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+        need(rss<256*2**20 and time.monotonic()-START<90,'256MiB/90s metadata envelope')
+        path=Path(ref['path']);before=path.lstat()
+        need(path.is_absolute()and path.resolve(strict=True)==path and stat.S_ISREG(before.st_mode)
+             and before.st_nlink==1 and before.st_size==ref['bytes'],'ordinary canonical single-link metadata')
+        with path.open('rb')as handle:
+            opened=os.fstat(handle.fileno());raw=handle.read(ref['bytes']+1);closed=os.fstat(handle.fileno())
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(sig(before)==sig(opened)==sig(closed)==sig(path.lstat())and reference(path,raw)==ref,'stable entire metadata body')
+        self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.bytes+=len(raw);return raw
+    def document(self,ref):return decode(self.whole(ref))
+    def file(self,path,sha):
+        path=Path(path);ref=dict(path=str(path),bytes=path.stat().st_size,sha256=sha)
+        return ref,self.whole(ref)
+    def final(self):
+        for ref in list(self.refs.values()):self.whole(ref,True)
+
+
+def fsync_directory(path):
+    fd=os.open(path,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+
+
+def retain(path,raw,evidence):
+    path=Path(path);parent=path.parent
+    ancestor=parent
+    while not ancestor.exists():ancestor=ancestor.parent
+    need(ancestor.resolve(strict=True)==ancestor,'canonical existing ancestry before any directory creation')
+    parent.mkdir(parents=True,exist_ok=True)
+    need(parent.resolve(strict=True)==parent,'canonical retained directory')
+    if os.path.lexists(path):
+        need(evidence.whole(reference(path,raw),True)==raw,'existing immutable copy has exact bounded bytes')
+    else:
+        with path.open('xb')as handle:handle.write(raw);handle.flush();os.fsync(handle.fileno())
+        evidence.whole(reference(path,raw),True)
+    fsync_directory(parent);fsync_directory(parent.parent)
+    return reference(path,raw)
+
+
+def live_conditions(evidence,plan,checkpoint,cpref,spref):
+    current,status,progress=[evidence.document(ref)for ref in plan['live_selectors']]
+    need(current['current_handle']is None and all(current[key]['active_handles']==[]for key in OWNERS)
+         and status['active_scientific_handles']==[],'all four actual arrays idle')
+    for value in (current,status):
+        need(value['F009_checkpoint_current']==checkpoint and value['F009_checkpoint_acceptance_current']==cpref
+             and value['F009_snapshot_acceptance_current']==spref,'both live selectors agree with registered CP/SP')
+    f=progress['F009']
+    need(f['checkpoint']==checkpoint and f['checkpoint_acceptance']==cpref and f['snapshot_adoption']==spref,
+         'third durable progress selector agrees with registered CP/SP')
+    for ref in plan['protected_registers']:evidence.whole(ref)
+
+
+def closed_call(c,g):
+    need(c['root']==c['actor']=='/root'and c['actual_tool']['exit_code']==c['full_tool_return']['exit_code']==0
+         and '--'in c['issued_argv']and c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']
+         and c['child_argv']in(c['issued_argv'],g['command'])and g['status']=='PASS'and g['returncode']==0
+         and g['cleanup']['remaining']==g['cleanup']['errors']==[],'genuine actual command and known-scope closure')
+
+
+def construct(evidence,own,pref,plan):
+    """Registered10997 only; /root/prime_theory_audit. Retained proof joins from Compact.
+
+    Only adopted metadata is imported. Previous journal versions retain the
+    complete historical observations; no scientific program is activated.
+    """
+    need(plan['schema']=='ROOT_INTAKE_CURRENT_OVERVIEW_PLAN_V1'and plan['program']==own
+         and plan['predecessor']['path']==str(TARGET),'exact current overview target')
+    oldraw=evidence.whole(plan['predecessor']);old=decode(oldraw);out=copy.deepcopy(old);refs=plan['evidence']
+    need(old['schema']=='CURRENT_REVIEWED_INTAKE_PROGRESS_V3'and old['root']=='/root'
+         and old['counts']['remaining']==['F004','F009','L026']
+         and old['counts']['complete_mathematical_treatments']==101
+         and old['counts']['editorials']==1 and old['counts']['accessible_manuscripts']==105,
+         'same102 treatments including editorial,105 accessible,three pending')
+    need(evidence.whole(refs['predecessor_version'])==oldraw
+         and refs['predecessor_version']['sha256']==plan['predecessor']['sha256'],
+         'entire previous history already has an immutable retained version')
+    prior=evidence.document(refs['predecessor_release']);cap=evidence.document(refs['predecessor_capture'])
+    guard=evidence.document(refs['predecessor_guard']);returned=evidence.document(refs['predecessor_stdout']);closed_call(cap,guard)
+    need(prior['schema']=='ROOT_RELEASE_CURRENT_INTAKE_OVERVIEW_V1'and prior['root']=='/root'and prior['adopted']is True
+         and prior['blockers']==[]and prior['successor']==plan['predecessor']
+         and guard['command'][-2:]==[refs['predecessor_release']['path'],refs['predecessor_release']['sha256']]
+         and guard['command'][4]==prior['program']['path']and guard['command'][6]==prior['program']['sha256']
+         and returned['status']=='CURRENT_JOURNAL_UPDATED'and returned['current']==plan['predecessor']
+         and returned['protected_registers_unchanged']is True and returned['scientific_calls']==0,
+         'genuine current journal publication, not an unpublished forecast')
+    cp=evidence.document(refs['checkpoint_acceptance']);sp=evidence.document(refs['snapshot_adoption'])
+    reg=evidence.document(refs['registration']);closure=evidence.document(refs['Reader_closure'])
+    expected=dict(sequence=10997,nodes=5779,pending=208,selected_raw_leaf_records=493912,reserved_debts=1)
+    need(cp['root']==sp['root']==reg['root']==closure['root']=='/root'and cp['adopted']is sp['adopted']is True
+         and cp['checkpoint']==sp['checkpoint']==reg['checkpoint']==expected
+         and reg['schema']=='ROOT_F009_STANDALONE_CHECKPOINT_REGISTERED_V1'
+         and reg['checkpoint_acceptance']==sp['checkpoint_acceptance']==refs['checkpoint_acceptance']
+         and reg['snapshot_adoption']==refs['snapshot_adoption']and reg['Reader_closure']==cp['Reader_closure']==refs['Reader_closure']
+         and reg['all_unrelated_fields_preserved']is True and reg['scientific_calls']==reg['new_complete_originals']==0
+         and cp['base_acceptance']==old['F009']['checkpoint_acceptance']
+         and old['F009']['accepted_checkpoint']['sequence']==10970,
+         'actual normal10997 registration from genuine10970')
+    live_conditions(evidence,plan,expected,refs['checkpoint_acceptance'],refs['snapshot_adoption'])
+    rc=evidence.document(refs['registration_capture']);rg=evidence.document(refs['registration_guard'])
+    rs=evidence.document(refs['registration_stdout']);closed_call(rc,rg)
+    method=reg['writer'];release=evidence.document(method['Root_release'])
+    need(rg['command']==[sys.executable,'-E','-B','-S',method['program']['path'],
+             '--plan',method['plan']['path'],method['plan']['sha256'],
+             '--root-release',method['Root_release']['path'],method['Root_release']['sha256'],
+             '--preservation',refs['preservation']['path'],refs['preservation']['sha256'],'--commit']
+         and method==cp['root_metadata_writer']==sp['root_metadata_writer']
+         and method['program']['sha256']=='052abef5f27f6d98afee1787434cda7ef100a021f2118e02cc32d8ff08ed2923'
+         and release['schema']=='ROOT_REVIEWED_F009_STANDALONE_CHECKPOINT_WRITER_V1'
+         and release['root']=='/root'and release['status']=='SUPPORTED'and release['blockers']==[]
+         and release['program']==method['program']and release['plan']==method['plan']
+         and release['canonical_selector_commit_authorized']is release['actual_Reader_and_Native_closure_supported']is True
+         and rs['status']=='ROOT_REGISTERED_STANDALONE_STRICT_READER_CHECKPOINT'
+         and rs['checkpoint_acceptance']==refs['checkpoint_acceptance']and rs['snapshot_adoption']==refs['snapshot_adoption']
+         and rs['registration_result']==refs['registration']and rs['checkpoint']==expected
+         and rs['canonical_selector_writes']==3 and rs['scientific_calls']==rs['new_complete_originals']==0,
+         'actual separate Root-authorized normal metadata commit')
+    need(closure['schema']=='ROOT_CLOSED_F009_STANDALONE_READER_V1'
+         and closure['known_scope_drained']is closure['all_inputs_freshly_hashed']is True
+         and closure['original_sampled_known_scope_qualifications_retained']is True
+         and closure['global_checkpoint_written']is False and closure['preservation']==refs['preservation'],
+         'accepted exact Reader closure; sampled and unseen-process qualifications retained')
+    rr=closure['Reader'];result=evidence.document(rr['result']);owner=evidence.document(rr['Owner_receipt'])
+    request=evidence.document(rr['Owner_request']);worker=evidence.document(rr['worker_return'])
+    outer=evidence.document(rr['outer_guard_receipt']);actual=evidence.document(rr['actual_execution']);closed_call(actual,outer)
+    need(owner['status']=='PASS'and owner['returncode']==0 and owner['inputs_unchanged']is True
+         and owner['owned_child_reaped']is owner['owned_group_absent']is True
+         and owner['error']is owner['owned_finalization_error']is owner['final_resource_stop']is None
+         and owner['request']==rr['Owner_request']and owner['execution_id']==request['execution_id']
+         and request['argv']==[sys.executable,'-E','-B',cp['actual_Root_caller']['path'],
+             '--job',rr['job']['path'],rr['job']['sha256'],
+             '--root-review',rr['Root_job_review']['path'],rr['Root_job_review']['sha256'],
+             '--out',str(Path(cp['snapshot']['path']).parent)]
+         and outer['command']==[sys.executable,'-E','-B',request['supervisor'],
+             '--request',rr['Owner_request']['path']]
+         and request['limits']['family_rss_cap_bytes']==512*2**20 and request['limits']['phase_seconds']==120
+         and outer['limits']['total_rss']==512*2**20 and outer['limits']['wall_seconds']==150
+         and outer['peaks']['total_rss']<512*2**20,
+         'completed strict Reader Owner and outer PASS under unchanged limits')
+    need(result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'
+         and result['checkpoint']==cp['checkpoint']and result['snapshot']==cp['snapshot']==sp['snapshot']
+         and result['snapshot_roundtrip']==cp['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL'
+         and result['base_acceptance']==cp['base_acceptance']and result['delta']==cp['delta']
+         and result['delta']['transactions']==27 and cp['checkpoint']['sequence']-10970==27
+         and result['native_launch_attempts']==worker['native_launch_attempts']==[]
+         and result['reserved_parents']==cp['reserved_parents']==sorted(set(result['reserved_parents']))
+         and len(result['reserved_parents'])==expected['reserved_debts']==1
+         and result['reserved_parents']==['5dcfcfe9b84d3750f5b443d352b834566c6171ce19d96d01a45a5be750b0e556']
+         and result['private_materialization_calls']==1 and result['top_level_load_calls']==result['tail_load_calls']==0
+         and worker['job']==rr['job']and worker['result']==rr['result']and worker['Root_review']==rr['Root_job_review']
+         and worker['actual_caller']==cp['actual_Root_caller']and worker['root']=='/root'
+         and worker['global_checkpoint_written']is False,
+         'complete actual typed/order result with no repeated Native acquisition')
+    evidence.whole(result['snapshot'])
+    # The complete Native closure is an accepted CP/Root-release DAG leaf.
+    # Reopen the small actual execution receipts, not its1.67MiB input roster.
+    need(cp['Native_closure']==refs['accepted_Native_closure'],'exact accepted paid Native closure leaf')
+    nowner=evidence.document(refs['Native_owner_receipt']);nactual=evidence.document(refs['Native_capture'])
+    ng=evidence.document(refs['Native_guard']);closed_call(nactual,ng)
+    need(nowner['status']=='PASS'and nowner['inputs_unchanged']is True
+         and nowner['owned_child_reaped']is nowner['owned_group_absent']is True
+         and nowner['returncode']==0 and nowner['error']is nowner['owned_finalization_error']is nowner['final_resource_stop']is None
+         and ng['limits']['total_rss']==512*2**20 and ng['limits']['wall_seconds']==150
+         and ng['command']==[sys.executable,'-E','-B',request['supervisor'],
+             '--request',nowner['request']['path']],
+         'current paid Native really passed; the separately retained older failures stay failed')
+    need(cp['historical_reference_retention_obligation']==
+         evidence.document(cp['base_acceptance'])['historical_reference_retention_obligation'],
+         'all21 historical payload obligations remain in the accepted proof DAG')
+    audit=evidence.document(refs['registration_audit'])
+    need(audit['status']=='SUPPORTED'and audit['blockers']==[]and audit['reviewer']=='/root/prime_theory_audit'
+         and audit['checkpoint_acceptance']==refs['checkpoint_acceptance']and audit['snapshot_adoption']==refs['snapshot_adoption']
+         and audit['registration_result']==refs['registration']
+         and audit['all_three_saved_next_images_match_actual_live_bytes']is True
+         and audit['all_three_full_unrelated_field_inverses_verified']is True,
+         'separate actual registration and full-selector restoration audit')
+    updated=dict(old['F009'],accepted_checkpoint=expected,checkpoint_acceptance=refs['checkpoint_acceptance'],
+        snapshot_adoption=refs['snapshot_adoption'],registration=refs['registration'],
+        actual_registration_capture=refs['registration_capture'],preservation=refs['preservation'],
+        strict_Reader_closure=refs['Reader_closure'],Reader_snapshot=result['snapshot'],
+        all_three_live_selectors_agree=True,all_four_arrays_idle_at_observation=True,
+        strict_whole_typed_state_and_node_debt_order_equal=True,pending_includes_reserved=True,
+        retained_reserved_dispatch_obligations=1,complete_census_or_Original_credit=0,
+        qualification='Native/strict Reader and registration PASS;208 pending,1 reserved remain unpaid. All21 historical payload, Source/model/IO and sampled-process qualifications stay in CP/history. Earlier failures remain failed; no whole-census/future-fit claim.',
+        next='Review10997 closing records before new continuation;208 remain unpaid, including1 reserved. Retain all21 historical payload obligations.')
+    need(updated==plan['expected_F009'],'exact fully justified F009 before/after DATA')
+    out['F009']=updated
+    out['previous_checkpoint']=refs['predecessor_version'];out['protected_reviewed_registers']=plan['protected_registers'];out['utc']=plan['utc']
+    out['journal_metadata_method']=dict(program=own,plan=pref,scientific_calls=0,protected_register_writes=0,
+        current_mutable_target=str(TARGET),qualified_as='Registered10997; complete prior journal facts retained.')
+    out['current_goal_turn_detail']='Registered10997:5779 nodes,208 pending,1 reserved,493912 leaves. q11/L026 exact; three originals pending.'
+    out['next_actions'][0]=updated['next']
+    out['resource_observation'].update(latest_strict_Reader_outer_guard=rr['outer_guard_receipt'],latest_strict_Reader_seconds=outer['seconds'])
+    for key in ('F004','L026','counts','measurements','stopping_rule','source_scope_audit','goal_status','public_repository',
+                'new_whole_original_conjecture_Lean_or_measurement_credit'):
+        need(out[key]==old[key],'all nonF009 science/count/STOP/public facts exact')
+    need(out['next_actions'][1:]==old['next_actions'][1:],'all other next actions exact')
+    resource_before=copy.deepcopy(out['resource_observation'])
+    for key in ('latest_strict_Reader_outer_guard','latest_strict_Reader_seconds'):resource_before[key]=old['resource_observation'][key]
+    need(resource_before==old['resource_observation'],'only actual Reader guard/time observations change')
+    raw=canonical(out);need(len(raw)<=32768,'same32KiB complete journal cap');return oldraw,raw
+
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--preview');ap.add_argument('--write',action='store_true')
+    ap.add_argument('--Root-release',nargs=2);args=ap.parse_args();evidence=Evidence()
+    own,_=evidence.file(Path(__file__).resolve(strict=True),args.self_sha256)
+    pref,praw=evidence.file(*args.plan);plan=decode(praw)
+    lock=None
+    if args.write:
+        need(args.Root_release is not None and args.preview is None,'explicit Root release for current journal CAS')
+        rref,rraw=evidence.file(*args.Root_release);release=decode(rraw)
+        need(release['schema']=='ROOT_RELEASE_CURRENT_INTAKE_OVERVIEW_V1'and release['root']=='/root'
+             and release['adopted']is True and release['program']==own and release['plan']==pref
+             and release['predecessor']==plan['predecessor']and release['protected_registers']==plan['protected_registers']
+             and release['blockers']==[],
+             'exact fresh Root metadata release')
+        lock=(M/'root_state.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    else:need(args.Root_release is None,'forecast carries no Root publication authority')
+    try:
+        oldraw,newraw=construct(evidence,own,pref,plan);newref=reference(TARGET,newraw)
+        evidence.final()
+        if args.write:
+            need(release['successor']==newref,'exact reviewed successor bytes')
+            versions=M/'progress/intake_overview/versions';methods=M/'progress/intake_overview/methods'
+            before=retain(versions/(plan['predecessor']['sha256']+'.json'),oldraw,evidence)
+            after=retain(versions/(newref['sha256']+'.json'),newraw,evidence)
+            retain(methods/(own['sha256']+'.py'),evidence.whole(own),evidence)
+            retain(methods/(pref['sha256']+'.json'),praw,evidence);retain(methods/(rref['sha256']+'.json'),rraw,evidence)
+            evidence.final();need(evidence.whole(plan['predecessor'],True)==oldraw,'exact final predecessor CAS')
+            staging=TARGET.with_name('.'+TARGET.name+'.pending')
+            need(not os.path.lexists(staging),'fresh journal scratch path')
+            retain(staging,newraw,evidence);os.replace(staging,TARGET);fsync_directory(TARGET.parent)
+            need(evidence.bytes+len(newraw)+1<=32*2**20,'prepaid bounded post-CAS journal verification')
+            with TARGET.open('rb')as handle:observed=handle.read(len(newraw)+1)
+            evidence.bytes+=len(observed)
+            need(observed==newraw,'actual complete successor journal image')
+            # These checks observe protected files; this writer never changes them.
+            for ref in plan['protected_registers']:evidence.whole(ref,True)
+            print(json.dumps(dict(status='CURRENT_JOURNAL_UPDATED',before=before,after=after,current=newref,
+                protected_registers_unchanged=True,scientific_calls=0,physical_metadata_bytes=evidence.bytes),sort_keys=True))
+        else:
+            if args.preview:
+                path=Path(args.preview);need(path.is_absolute()and str(path)==str(Path(str(path)))
+                    and '..'not in path.parts and path.is_relative_to('/private/tmp'),'forecast output only in canonical temporary tree')
+                retain(path,newraw,evidence)
+            print(json.dumps(dict(status='UNPUBLISHED_JOURNAL_FORECAST',predecessor=plan['predecessor'],successor=newref,
+                physical_metadata_bytes=evidence.bytes,input_files=len(evidence.refs),scientific_calls=0,S_writes=0),sort_keys=True))
+    finally:
+        if lock is not None:lock.close()
+
+
+if __name__=='__main__':main()
