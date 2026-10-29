@@ -1,0 +1,93 @@
+from pathlib import Path
+import hashlib, json, os
+
+T = Path('/private/tmp/l026_eleven_cycle_proposals')
+B = T/'remaining_singleton_data'
+O = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients')
+S = O/'direct_generation/initial_window/evidence'
+old_manifest = O/'direct_generation/first_component/evidence/preservation.json'
+rows, seen = [], set()
+
+def pin(p, body=None):
+    if body is None:
+        body = p.read_bytes()
+    return dict(path=str(p), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def retain(p):
+    body = p.read_bytes()
+    ref = pin(p, body)
+    key = (ref['path'], ref['bytes'], ref['sha256'])
+    if key in seen:
+        return ref
+    seen.add(key)
+    q = S/'objects'/ref['sha256']
+    q.parent.mkdir(parents=True, exist_ok=True)
+    if q.exists():
+        assert q.read_bytes() == body
+    else:
+        with q.open('xb') as f:
+            f.write(body)
+            f.flush()
+            os.fsync(f.fileno())
+    rows.append(dict(original=ref, retained=pin(q, body)))
+    return ref
+
+old = json.loads(old_manifest.read_bytes())
+for row in old['files']:
+    p = Path(row['retained']['path'])
+    assert pin(p) == row['retained']
+    assert (row['original']['bytes'], row['original']['sha256']) == (row['retained']['bytes'], row['retained']['sha256'])
+    rows.append(row)
+    seen.add((row['original']['path'], row['original']['bytes'], row['original']['sha256']))
+retain(old_manifest)
+paths = [B/n for n in ('handoff.json', 'build_metadata.py', 'root_review_and_release.py',
+    'Root_release_actual_capture.json', 'bind_strict_pairs.py', 'strict_binding_actual_capture.json',
+    'preserve_family.py', 'independent_review/independent_review.json', 'independent_review/observations.json')]
+for index in (3, 10):
+    A = B/('free_index_%04d' % index)
+    D = T/('instances/free_index_%04d' % index)
+    paths += [A/n for n in ('handoff.json', 'plan.json', 'resume_seed.json', 'resume_provenance.json',
+        'plan_inverse.json', 'read_and_work_invoice.json', 'Root_review.json', 'Root_gate.json',
+        'proposal_actual_capture.json', 'strict_actual_capture.json')]
+    for name in ('actual_guard', 'strict_guard'):
+        paths += [A/name/n for n in ('receipt.json', 'started.json', 'stdout.log', 'stderr.log')]
+    paths += [D/n for n in ('output/records.json', 'output/checkpoint.json', 'output/summary.json',
+        'strict_plan.json', 'strict_Root_code_math_review.json', 'strict_Root_gate.json', 'strict_result.json')]
+theorem = Path('/Users/sasha/medusa/research/leemans/geometry/sporadic_polytopes/subgroup_counting/rank_three_intersections.tex')
+paths += [theorem, Path('/private/tmp/l026_rank3_ip_reuse/independent_review.json'),
+    Path('/private/tmp/l026_rank3_ip_reuse/review_notes.rst')]
+for p in paths:
+    retain(p)
+runs = []
+for index, owner in ((1,1), (3,3), (10,11)):
+    D = T/('instances/free_index_%04d' % index)
+    A = T/'runtime' if index == 1 else B/('free_index_%04d' % index)
+    guard = A/'strict_guard'
+    capture = A/'strict_actual_capture.json'
+    result = json.loads((D/'strict_result.json').read_bytes())
+    plan = json.loads((D/'strict_plan.json').read_bytes())
+    assert result['status'] == 'VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'
+    assert result['verified_generation_records'][0]['free_index'] == index
+    assert result['verified_generation_records'][0]['owner'] == owner
+    runs.append(dict(free_index=index, owner=owner, plan=pin(D/'strict_plan.json'),
+        gate=pin(D/'strict_Root_gate.json'), result=pin(D/'strict_result.json'),
+        carrier=result['actual_supplied_carrier'], original_fixed_inputs=plan['inputs'],
+        strict_execution=dict(capture=pin(capture), receipt=pin(guard/'receipt.json'),
+            started=pin(guard/'started.json'), stdout=pin(guard/'stdout.log'), stderr=pin(guard/'stderr.log'))))
+value = dict(schema='ROOT_CLOSED_L026_DIRECT_GENERATION_FAMILY_SCIENCE_V1', root='/root',
+    files=rows, strict_runs=runs, prior_component_evidence=pin(old_manifest),
+    current_negative_adoption=pin(O/'invariant_subsets/additional_component/root_acceptance.json'),
+    rank_three_theorem=pin(theorem), rank_three_IP_separate_reuse_review=pin(Path('/private/tmp/l026_rank3_ip_reuse/independent_review.json')),
+    strict_verified_generation_records=3, exact_indices=[1,3,10], original_owners=[1,3,11],
+    complete_eleven_plus_thirteen_closing_edges_each=True, new_proposal_trials_used=55,
+    original_old4096_trials_not_replayed=True, Root_adoption_owed=True,
+    scientific_calls_in_this_preservation=0,
+    strict_result_IP_credit_not_retagged=True, Original_conjecture_Lean_or_compression_credit=0,
+    qualification='Three actually strict-verified original generating markings under unchanged original model/member/action/classification/geometry imports. Rank3 IP is a separate composition with the existing0b940 theorem, not new arithmetic or novelty. Full initial16:13 strict negatives and3 strict positives; positive registration is still a separate Root action. Other positions/endpoints/reversal/census and manuscript remain owed.')
+p = S/'preservation.json'
+body = (json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n').encode()
+with p.open('xb') as f:
+    f.write(body)
+print(json.dumps(dict(status='THREE_STRICT_GENERATION_RUNS_AND_EXISTING_IP_THEOREM_DURABLY_PRESERVED',
+    preservation=pin(p, body), files=len(rows), bytes=sum(r['original']['bytes'] for r in rows),
+    strict_generation_records=3, new_proposal_trials=55, adopted_count_unchanged=True)))

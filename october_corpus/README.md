@@ -36,10 +36,13 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-The latest [Fi22 evidence report](research/proof_collection/updates/fi22_invariant_subsets/PUBLICATION.rst)
-records twelve verified nongeneration certificates, their borrowed premises,
-the completed archive checks and the remaining cases. These finite results
-add no completed manuscript or compression measurement.
+The [Fi22 exclusions](research/proof_collection/updates/fi22_invariant_subsets/PUBLICATION.rst)
+record twelve verified nongeneration certificates. The
+[next certificate archive](research/proof_collection/updates/fi22_generation_certificates/PUBLICATION.rst)
+adds one further exclusion and three generating markings, with their
+intersection property derived separately from an existing theorem. Both
+reports state the borrowed premises, completed checks and remaining work.
+These finite results add no completed manuscript or compression measurement.
 
 ## Common theories and applications
 

@@ -1,0 +1,70 @@
+from pathlib import Path
+import copy, hashlib, json
+
+T = Path('/private/tmp/l026_eleven_cycle_proposals')
+B = T/'remaining_singleton_data'
+V = Path('/private/tmp/l026_supplied_prime_cycles')
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def save(p, value):
+    body = (json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    with p.open('xb') as f:
+        f.write(body)
+    return pin(p)
+
+template = json.loads((T/'strict_plan_UNBOUND.json').read_bytes())
+control_report = V/'runtime/control_guard/stdout.log'
+control = json.loads(control_report.read_bytes())
+assert control['status'] == 'PASS' and control['controls'] == 15
+assert control['consumer'] == template['program'] and control['kernel'] == template['kernel']
+rows = []
+for index, owner in ((3, 3), (10, 11)):
+    A = B/('free_index_%04d' % index)
+    cap = json.loads((A/'proposal_actual_capture.json').read_bytes())
+    guard = json.loads((A/'actual_guard/receipt.json').read_bytes())
+    assert cap['actual_tool']['exit_code'] == 0 and guard['status'] == 'PASS'
+    assert guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+    returned = json.loads((A/'actual_guard/stdout.log').read_bytes())
+    assert returned['proposed_pairs'] == 1 and returned['visited'] == 1 and returned['unvisited'] == 0
+    for ref in returned['outputs'].values():
+        assert pin(Path(ref['path'])) == ref
+    carrier_ref = returned['outputs']['records.json']
+    carrier = json.loads(Path(carrier_ref['path']).read_bytes())
+    assert len(carrier['records']) == 1
+    record = carrier['records'][0]
+    assert record['free_index'] == index and record['owner'] == owner
+    assert len(record['prime11']['cycle']) == 11 and len(record['prime13']['cycle']) == 13
+    assert 1 <= len(record['prime11']['word']) <= 20 and len(record['prime13']['word']) == 6
+    seed = json.loads((A/'resume_seed.json').read_bytes())
+    assert record['prime13'] == seed['notes'][0]['hints']['prime13']
+    D = T/('instances/free_index_%04d' % index)
+    plan = copy.deepcopy(template)
+    plan.update(selected_free_indices=[index], expected_positive_free_indices=[index], window_start=index,
+        records=carrier_ref, output=str(D/'strict_result.json'),
+        status='ROOT_BOUND_ACTUAL_SINGLETON_PAIR_FOR_FRESH_STRICT_CHECK')
+    plan['inputs'].append(carrier_ref)
+    for ref in plan['inputs']:
+        assert pin(Path(ref['path'])) == ref
+    pref = save(D/'strict_plan.json', plan)
+    review = json.loads((V/'runtime/Root_unbound_source_review.json').read_bytes())
+    assert review['program'] == pin(V/'verify.py') and review['kernel'] == pin(V/'kernel.py')
+    review.update(plan=pref, actual_carrier_plan_unbound=False, actual_controls_owed=False,
+        actual_generic_controls=pin(V/'runtime/controls_actual_capture.json'),
+        actual_control_report=pin(control_report), actual_supplier=pin(A/'proposal_actual_capture.json'),
+        all_actual_supplier_outputs_closed_and_pinned=True, every11_plus13_closing_edge_must_be_recomputed=True,
+        selected_original_free_indices=[index], original_owner=owner,
+        old_source_or_control_verdict_retagged=False,
+        physical_paths_upper=22, complete_physical_read_upper=1779965,
+        conservative_original16_record_work_upper=4069594,
+        qualification='One original marking only. Same unchanged direct checker, borrowed maximal classification, and original named-G/model/member/action/geometry premises. Every proposed11 and inherited13 closing edge needs fresh direct evaluation; no IP or full census is claimed by this strict result.')
+    rref = save(D/'strict_Root_code_math_review.json', review)
+    gate = json.loads((V/'Root_gate_template.json').read_bytes())
+    gate.update(adopted=True, blockers=[], new_case_calls_authorized=True,
+        plan=pref, Root_code_math_review=rref, control_report=pin(control_report))
+    gref = save(D/'strict_Root_gate.json', gate)
+    rows.append(dict(free_index=index, plan=pref, gate=gref, output=plan['output']))
+print(json.dumps(dict(status='ROOT_TWO_ACTUAL_PAIRS_BOUND_TO_UNCHANGED_STRICT_CHECKER', rows=rows,
+    new_generation_or_adoption_acquired=False)))

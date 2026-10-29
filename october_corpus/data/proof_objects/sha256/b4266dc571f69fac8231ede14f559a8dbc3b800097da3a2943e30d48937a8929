@@ -1,0 +1,72 @@
+"""Own stdlib byte/JSON projection; never imports or executes the journal Source."""
+import pathlib,json,hashlib,copy
+P=pathlib.Path('/private/tmp/intake_journal');D=P/'gen_current_design';S=pathlib.Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake';O=M/'l026_fi22_neighborhood_orbits/operations/triangle_quotients';seen={}
+def ref(p):
+ p=pathlib.Path(p);raw=p.read_bytes();r=dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest());seen[str(p)]=r;return r
+def whole(r):
+ p=pathlib.Path(r['path']);raw=p.read_bytes();assert p.resolve(strict=True)==p and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256'];assert seen.get(str(p),r)==r;seen[str(p)]=r;return raw
+def doc(r):return json.loads(whole(r))
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def put(path,x):
+ path=pathlib.Path(path);path.write_bytes(can(x));return ref(path)
+def by_original(manifest,path):
+ rows=[r for r in manifest['files']if r['original']['path']==str(path)];assert len(rows)==1;return rows[0].get('retained',rows[0].get('preserved'))
+current=ref(M/'progress/current_intake_verified_exports.json');assert current['bytes']==32353 and current['sha256']=='c27e93b809230fbfaf54e58cd2d6e0d6f17500a08bd75b0373a9119e97856b07';old=doc(current)
+version=ref(M/('progress/intake_overview/versions/'+current['sha256']+'.json'));assert whole(version)==whole(current)
+ng=ref(O/'invariant_subsets/additional_component/root_acceptance.json');assert ng['sha256']=='d9a5ea8c390f8d5d33dfe27c2cf6af1391ced45e0655687472f909a68e7a4b60';neg=doc(ng)
+gen=ref(O/'direct_generation/initial_window/root_acceptance.json');assert gen['sha256']=='412d3a9a34aeeb7c41a95bfda828322f78f6260c01d9453fcb333e5e2cc3f1e8';ad=doc(gen)
+meta=doc(ad['metadata_evidence']);runtime_ref=ref(O/'direct_generation/initial_window/publication_evidence/preservation.json');runtime=doc(runtime_ref);assert runtime_ref['sha256']=='87b1baf4ce6bb4e957f29201d6173291ccf633d95921cf129318823456616206'
+pre=P/'ng_current';vdir=pathlib.Path('/private/tmp/l026_generation_ip_adoption')
+e=dict(predecessor_version=version,predecessor_release=ref(pre/'Root_release.json'),predecessor_capture=ref(pre/'runtime/write_actual_capture.json'),predecessor_guard=ref(pre/'runtime/write_guard/receipt.json'),predecessor_stdout=ref(pre/'runtime/write_guard/stdout.log'),negative_adoption=ng,gen_adoption=gen,gen_detail=ad['validated_detail'],gen_partition=ad['validated_partition'],gen_validation=ad['validation_report'],gen_metadata=ad['metadata_evidence'],gen_runtime=runtime_ref)
+for k,path in [('gen_validation_capture',vdir/'actual_validation/actual_capture.json'),('gen_validation_guard',vdir/'actual_validation/guard/receipt.json'),('gen_validation_stdout',vdir/'actual_validation/guard/stdout.log')]:e[k]=by_original(meta,path)
+for k,path in [('gen_publication_capture',vdir/'runtime/publication_actual_capture.json'),('gen_publication_guard',vdir/'publication_guard/receipt.json'),('gen_publication_stdout',vdir/'publication_guard/stdout.log')]:e[k]=by_original(runtime,path)
+e['gen_publication_source']=by_original(meta,vdir/'publish.py')
+for r in e.values():whole(r)
+# Own metadata-only actual ABI checks, not a represented Source invocation.
+detail=doc(e['gen_detail']);partition=doc(e['gen_partition']);validation=doc(e['gen_validation']);pstdout=doc(e['gen_publication_stdout'])
+assert ad['schema']=='ROOT_ACCEPTED_L026_GENERATION_AND_SEPARATE_RANK3_IP_V1'and ad['adopted']is True and ad['Root_adoption_owed']is False
+assert ad['generation_facts']==detail['new_generation_facts']==partition['exact_new_original_owner_rows']
+assert ad['latest_negative_adoption']==ng and detail['whole_latest_negative_acceptance']==neg
+assert validation['new_generation_rows']==3 and validation['Root_adoption']is False
+assert detail['new_GENERATING_product_components']==detail['new_same_marking_rank3_IP_components']==3 and detail['prior_nongenerating_count']==17701
+assert detail['unresolved_original_free_components_after_Root_adoption']==28892 and detail['unresolved_middle_mass_after_Root_adoption']==29585408
+assert pstdout['acceptance']==gen and pstdout['new_generation']==pstdout['separate_IP']==3 and pstdout['current_journal_or_protected_register_writes']==0
+for prefix in ['predecessor','gen_validation','gen_publication']:
+ c=doc(e[prefix+'_capture']);g=doc(e[prefix+'_guard']);stdout=doc(e[prefix+'_stdout'])
+ assert c['root']==c['actor']=='/root'and c['actual_tool']['exit_code']==c['full_tool_return']['exit_code']==0
+ assert c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']and c['child_argv']in(c['issued_argv'],g['command'])
+ assert g['status']=='PASS'and g['returncode']==0 and g['cleanup']['remaining']==g['cleanup']['errors']==[]
+for m in [meta,runtime]:
+ assert all(set(r)in({'original','retained'},{'original','preserved'})for r in m['files'])
+ for r in m['files']:
+  a=r['original'];b=r.get('retained',r.get('preserved'));assert(a['bytes'],a['sha256'])==(b['bytes'],b['sha256'])
+# Only evidence directly opened by this journal Source belongs to its read invoice.
+protected=old['protected_reviewed_registers']
+for r in protected:whole(r)
+live=[ref(S/'reboot_20261013/CURRENT.json'),ref(M/'current_status.json'),ref(M/'reviewed_intake_progress.json')]
+cur,status,progress=[doc(r)for r in live]
+assert cur['current_handle']is None and all(cur[k]['active_handles']==[]for k in ['root_execution_ownership_latest','root_current_ownership','current_execution_ownership'])and status['active_scientific_handles']==[]
+cp=old['F009']['accepted_checkpoint'];cpref=old['F009']['checkpoint_acceptance'];spref=old['F009']['snapshot_adoption']
+assert all(v['F009_checkpoint_current']==cp and v['F009_checkpoint_acceptance_current']==cpref and v['F009_snapshot_acceptance_current']==spref for v in [cur,status])
+assert progress['F009']['checkpoint']==cp and progress['F009']['checkpoint_acceptance']==cpref and progress['F009']['snapshot_adoption']==spref
+p=dict(schema='ROOT_INTAKE_CURRENT_OVERVIEW_PLAN_V1',author='/root/middle_dictionary_author',program=ref(P/'gi.py'),predecessor=current,protected_registers=protected,live_selectors=live,evidence=e,whole_old_L026=old['L026'],whole_old_current_goal_turn_detail=old['current_goal_turn_detail'],metadata_limits=dict(bytes=32*2**20,files=128,rss_bytes=256*2**20,seconds=90,successor_journal_bytes=32768),utc='2026-10-29T00:06:31Z',qualification='Actual NEG13 d9a5 and GEN3/separateIP412d. All old c27e facts/detail retained whole; unrelated q11/F009/counts/STOP/resources/public state exact. This plan grants no Root release.')
+pr=put(P/'gp.json',p);assert pr['bytes']<=65536
+# Independent small projection and exact inverse of the changed L026 fields.
+x=copy.deepcopy(old);del x['L026']['nongeneration_progress']
+x['L026']['product_progress']=dict(NEG=dict(adoption=ng,nonfree=17688,subset=13,total=17701),GEN_IP=dict(adoption=gen,components=3),unresolved=28892,qualification='Original premises retained; full prior L026 is in the retained plan/version.')
+x['L026']['next']='Resolve the remaining 28,892 product components, then reversal and other endpoints under the retained premises.';x['next_actions'][2]=x['L026']['next']
+x['previous_checkpoint']=version;x['protected_reviewed_registers']=protected;x['utc']=p['utc'];x['journal_metadata_method']=dict(program=p['program'],plan=pr,scientific_calls=0,protected_register_writes=0,current_mutable_target=current['path'],qualified_as='Typed L026 progress; prior facts retained.')
+x['current_goal_turn_detail']='L026: 17,701 NG; 3 GEN with rank 3 IP; 28,892 unresolved. Original premises, reversal, endpoints and three manuscripts remain owed.'
+y=copy.deepcopy(x['L026']);del y['product_progress'];y['nongeneration_progress']=old['L026']['nongeneration_progress'];y['next']=old['L026']['next'];assert y==old['L026']
+for k in ['F004','F009','counts','measurements','stopping_rule','source_scope_audit','goal_status','public_repository','resource_observation','current_goal_turn_classification']:assert x[k]==old[k]
+assert x['next_actions'][:2]+x['next_actions'][3:]==old['next_actions'][:2]+old['next_actions'][3:]
+raw=can(x);assert len(raw)<=32768;ex=D/'EXPECTED.json';ex.write_bytes(raw);expected=ref(ex)
+assert len(can(p['program']))<=len(can(old['journal_metadata_method']['program']))and len(can(pr))<=len(can(old['journal_metadata_method']['plan']))+1
+assert len(can(gen))<=513 and len(can(ng))<=276
+I={r['path']:r for r in list(e.values())+live+protected+[p['program'],pr,current]};F=sum(r['bytes']for r in I.values());B=p['program']['bytes'];PP=pr['bytes'];J=len(raw);J0=current['bytes'];R=65536;Q=sum(r['bytes']for r in protected)
+forecast=2*F+J+B+4;write=3*F+5*R+2*J0+4*J+3*B+2*PP+Q+5
+assert write<32*2**20 and len(I)+7<128
+invoice=put(D/'read_and_size_invoice.json',dict(schema='L026_TYPED_PROGRESS_JOURNAL_PHYSICAL_AND_SIZE_INVOICE_V1',author='/root/middle_dictionary_author',program=p['program'],plan=pr,predecessor=current,author_expected_image=expected,author_projection_not_a_Source_or_Root_forecast=True,base_unique_paths=len(I),base_unique_bytes=F,complete_base_inputs=list(I.values()),forecast_whole_read_upper_including_bootstrap_and4magic=forecast,full_write_upper_including_64KiB_Root_release=write,write_paths_upper=len(I)+7,write_formula='3I+5R+2Jold+4Jnew+3B+2P+sum(protected)+5; counts both whole final rechecks, all immutable aliases/staging, final predecessor CAS, complete observed journal and protected rereads plus external bootstrap/prefix.',actual_journal_bytes=J,hard_journal_bytes=32768,actual_margin=32768-J,future_GEN_reference_cap=512,known_NEG_reference_bytes=len(can(ng))-1,full_future_512ref_bound_with_short_method_descriptors=32671,bound_margin=97,all_other_L026_fields_literal=True,whole_old_L026_and_turn_detail_embedded_in_retained_plan=True,Source_runtime_guard_normalizer_main_literal=True,hard=dict(bytes=32*2**20,files=128,RSS=256*2**20,seconds=90),no_Root_release_or_journal_write=True))
+obs=put(D/'author_observations.json',dict(schema='L026_JOURNAL_OWN_METADATA_PROJECTION_V1',author='/root/middle_dictionary_author',program=p['program'],plan=pr,expected=expected,actual_NEG=ng,actual_GEN_IP=gen,old_whole_c27e_preserved=version,whole_L026_restoration_exact=True,unrelated_F004_F009_counts_metrics_STOP_public_resource_and_classification_exact=True,new_live_product_categories=dict(NEG=17701,GEN_and_rank3_IP=3,unresolved=28892),actual_expected_bytes=J,reviewed_scientific_and_metadata_Source_activation=0,own_stdlib_metadata_authoring_performed=True,S_W_Git_or_Root_gates_written=False))
+for r in list(seen.values()):whole(r)
+print(json.dumps(dict(program=p['program'],plan=pr,expected=expected,invoice=invoice,observations=obs,forecast_upper=forecast,write_upper=write,paths=len(I)),sort_keys=True))

@@ -1,0 +1,82 @@
+from pathlib import Path
+import ast, hashlib, json
+
+T = Path('/private/tmp/l026_subset_case5_adoption')
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def check(r):
+    assert pin(Path(r['path'])) == r, r['path']
+
+def defs(text):
+    return {n.name: ast.get_source_segment(text, n) for n in ast.parse(text).body
+            if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+
+h = json.loads((T/'handoff.json').read_bytes())
+for r in h['artifacts'].values():
+    check(r)
+inv = json.loads((T/'source_inverse.json').read_bytes())
+check(inv['parent'])
+check(inv['child'])
+old, new = inv['old_whole_text'], inv['new_whole_text']
+assert Path(inv['parent']['path']).read_text() == old
+assert Path(inv['child']['path']).read_text() == new
+old_lines, new_lines = old.splitlines(True), new.splitlines(True)
+old_pos = new_pos = 0
+for tag, a, b, c, d in inv['line_opcodes']:
+    assert a == old_pos and c == new_pos
+    assert 0 <= a <= b <= len(old_lines) and 0 <= c <= d <= len(new_lines)
+    if tag == 'equal':
+        assert old_lines[a:b] == new_lines[c:d]
+    elif tag == 'insert':
+        assert a == b
+    elif tag == 'delete':
+        assert c == d
+    else:
+        assert tag == 'replace'
+    old_pos, new_pos = b, d
+assert old_pos == len(old_lines) and new_pos == len(new_lines)
+old_defs, new_defs = defs(old), defs(new)
+assert len(inv['literal_definitions']) == 9
+for name in inv['literal_definitions']:
+    assert old_defs[name] == new_defs[name], name
+plan = json.loads((T/'plan.json').read_bytes())
+assert len(plan['inputs']) == 187
+for r in plan['inputs']:
+    check(r)
+retention = json.loads(Path(plan['durable_scientific_evidence']['path']).read_bytes())
+assert len(retention['files']) == 83
+for row in retention['files']:
+    check(row['retained'])
+    assert (row['original']['bytes'], row['original']['sha256']) == (row['retained']['bytes'], row['retained']['sha256'])
+peer_path = T/'independent_review/independent_review.json'
+peer = json.loads(peer_path.read_bytes())
+assert peer['status'].startswith('SUPPORTED') and peer['blockers'] == []
+assert pin(peer_path)['sha256'] == 'da89a2e82471095d379f3a7b62511c9247b2fbb288b4998a0c066efd01818819'
+assert plan['expected_free_indices'] == [5]
+actual = json.loads(Path(plan['strict']['result']['path']).read_bytes())
+assert actual['program'] == plan['supported']['worker']
+assert actual['verified_nongeneration_records'][0]['free_index'] == 5
+assert actual['verified_nongeneration_records'][0]['checked_positive_rotation_edges'] == 702
+review = dict(schema='ROOT_REVIEWED_L026_CASE5_METADATA_SOURCE_DATA_V1', root='/root',
+    status='SUPPORTED', blockers=[], program=h['program'], plan=h['plan'],
+    all_source_new_predecessor_construct_authority_main_and_IO_read=True,
+    full_source_inverse_checked=True, literal_helpers=9, whole_fixed_inputs=187,
+    whole_original_retained_pairs=83, Source_identities_explicit=True,
+    independent_review=pin(peer_path), actual_strict_result=plan['strict']['result'],
+    new_negative_count_if_adopted=1, old_nonfree_17688_and_subset12_preserved=True,
+    proposed_total_negative=17701, proposed_free_without_registration_of_generation=28895,
+    mathematical_Source_calls=0, adopted=False,
+    qualification='Pure metadata review of one already strict-verified negative. The independently verified generating case1 is separately awaiting registration and is not silently counted by this negative-only update. Full model/classification/geometry premises remain.')
+(T/'runtime').mkdir(exist_ok=True)
+p = T/'runtime/Root_source_data_review.json'
+b = (json.dumps(review, sort_keys=True, separators=(',', ':'))+'\n').encode()
+with p.open('xb') as f:
+    f.write(b)
+out_parent = T/'actual_validation'
+assert not out_parent.exists()
+out_parent.mkdir()
+print(json.dumps(dict(status='ROOT_CASE5_METADATA_REVIEW_SUPPORTED', review=pin(p),
+    output_parent=str(out_parent), actual_validation_and_adoption_still_owed=True)))

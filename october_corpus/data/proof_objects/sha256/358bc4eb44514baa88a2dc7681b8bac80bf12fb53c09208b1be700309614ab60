@@ -1,0 +1,76 @@
+"""Author-owned stdlib metadata construction only; no represented Source execution."""
+import copy,hashlib,json,pathlib,struct
+D=pathlib.Path('/private/tmp/l026_eleven_cycle_proposals');N=D/'remaining_singleton_data';P=D/'control_read_counter'
+seen={}
+def ref(p):
+ p=pathlib.Path(p);b=p.read_bytes();r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());seen[str(p)]=r;return r
+def whole(r):
+ p=pathlib.Path(r['path']);b=p.read_bytes();assert p.resolve(strict=True)==p and len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256'];seen[str(p)]=r;return b
+def doc(r):return json.loads(whole(r))
+def put(p,x):
+ p=pathlib.Path(p);p.write_bytes((json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode());return ref(p)
+base_ref=ref(P/'plan.json');assert base_ref['sha256']=='53808b0c9de28a5d44374f53bf5e27bc39263d820606468b0058570d85a852e9'
+base=doc(base_ref);oldseed=doc(base['resume']);oldcp_ref=oldseed['previous_untrusted_checkpoint'];oldcp=doc(oldcp_ref)
+assert len(oldcp['notes'])==16 and all(n['next_trial']==256 for n in oldcp['notes'])
+assert all(n['hints']['prime11']is None for n in oldcp['notes'])
+assert base['program']['sha256']=='c10543a3e6815740728c45029933d4cd3b2fd08f79ec37068b6d6e7ba0de53a6'
+assert base['control_program']['sha256']=='2f25cd65b66fc9792d91b52a95673e54f49d3f43ee6091796f700a671926916a'
+for r in base['inputs']:whole(r)
+schedule=doc(base['schedule']);assert len(schedule['words'])==32 and schedule['start_points']==[0,1]and schedule['exact_target_lengths']==[11]
+ng12=next(r for r in base['inputs']if r['sha256']=='0129dae034586104bf866958d0ffa9731eb764a798b9044886f608523dd22300');prior=doc(ng12)
+paid={r['free_index']for r in prior['new_facts']}
+excluded=dict(generation_case1=dict(result=ref(D/'instances/free_index_0001/strict_result.json'),actual_capture=ref(D/'runtime/strict_actual_capture.json')),nongeneration_case5=dict(result=ref('/private/tmp/l026_invariant_subsets/full_proper_cap/instances/strict_free_index_0005/output/result.json'),actual_capture=ref('/private/tmp/l026_invariant_subsets/full_proper_cap/instances/strict_free_index_0005/strict_actual_capture.json')))
+assert excluded['generation_case1']['result']['sha256']=='41010d831e2c2fe305677e4fd75a719fa3564ae402b7fe268275ed028a879b69'
+assert excluded['generation_case1']['actual_capture']['sha256']=='2f149d13b921f53686b69d699e289888a3b88cecef352f3b51171079432426d5'
+assert excluded['nongeneration_case5']['result']['sha256']=='0d82ad4d087ac131a5d6b1469aa68cf88250d5d1b797295dc43b89e0dbc8f362'
+assert excluded['nongeneration_case5']['actual_capture']['sha256']=='d5198111b9caae49043f896fa06e5dadb8590d7be19d05dfa0a5c064d7e17d40'
+g=doc(excluded['generation_case1']['result']);ng=doc(excluded['nongeneration_case5']['result'])
+assert g['status']=='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'and [r['free_index']for r in g['verified_generation_records']]==[1]
+assert g['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0
+assert ng['status']=='SUPPLIED_CHECK_COMPLETE'and [r['free_index']for r in ng['verified_nongeneration_records']]==[5]
+for role in excluded.values():
+ c=doc(role['actual_capture']);assert c['root']=='/root'and c['actual_tool']['exit_code']==0
+control_report=ref(D/'runtime/controls_guard/stdout.log');c=doc(control_report)
+assert c['status']=='PASS'and c['controls']==13 and c['supplier']==base['program']and c['program']==base['control_program']and c['kernel']==base['kernel']and c['schedule']==base['schedule']
+control_capture=ref(D/'runtime/controls_actual_capture.json');assert control_capture['sha256']=='30ce158435d9662aaa39f26dfe2e4c8f4735b094551cb67973583be8dac71c32'
+cc=doc(control_capture);assert cc['root']=='/root'and cc['actual_tool']['exit_code']==0
+receipt=doc(ref(D/'runtime/controls_guard/receipt.json'));assert receipt['status']=='PASS'and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+source_peer=ref(D/'independent_review/independent_review.json');assert source_peer['sha256']=='c3081f9e0094f428da644069a71cd0f7c85738c871971d989c114e931fb80f82'
+source_own=ref(D/'runtime/Root_source_data_review.json');assert source_own['sha256']=='18e55b28ad7fa506bf3ea769814e11b3dd1aabd73fbe3368cc0764ca92827b16'
+extra=[r for role in excluded.values()for r in role.values()];assert sum(r['bytes']for r in extra)==21511
+witness=whole(base['roles']['witnesses']);results=[]
+for i in [3,10]:
+ I=N/('free_index_%04d'%i);I.mkdir()
+ original=oldcp['notes'][i];assert original['free_index']==i and original['hints']['prime13']is not None and i not in paid|{1,5}
+ row=witness[16*i:16*i+16];owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',row);sha=hashlib.sha256(row).hexdigest()
+ assert owner==original['owner']and mass==1024 and sha==original['witness_row_sha256']
+ seed=copy.deepcopy(oldseed);seed['selected_free_indices']=[i]
+ note=copy.deepcopy(oldseed['notes'][0]);note.update(free_index=i,owner=owner,witness_row_sha256=sha,hints=dict(prime11=None,prime13=copy.deepcopy(original['hints']['prime13'])))
+ assert note['next_trial']==note['complete_trials_in_this_call']==note['inherited_complete_trials']==note['complete_word_edges_in_completed_trials']==0 and note['active_trial']is None and note['outcome']=='unfinished'
+ seed['notes']=[note];seed['pool_transition']['inherited_part_exact_path']='notes[%d].hints.prime13'%i;seed['pool_transition']['inherited_whole_part']=copy.deepcopy(original['hints']['prime13'])
+ sr=put(I/'resume_seed.json',seed)
+ p=copy.deepcopy(base);p.update(author='/root/middle_dictionary_author',selected_free_indices=[i],window_start=i,maximum_records=1,resume=sr,output_directory=str(D/'instances'/('free_index_%04d'%i)/'output'),status='UNRUN_SEPARATE_SINGLETON_NEW11_POOL_ROOT_PLAN_REVIEW_AND_GATE_OWED',qualification='Only original free_index%d/owner%d. Same c105 supplier,2f25 controls,60ee point kernel,268d strict ABI and new32 eleven-only words x starts0/1. Exact old untrusted13 part retained; NEW pool cursor0, no old256 cursor or4096-trial replay. Twelve adopted subset negatives, actual strict generation case1 and strict nongeneration case5 are excluded from this scope; these exclusion documents grant no new adoption or IP credit. All original named-G/member/Reader/model/action/class/graph/two-fibre/qualifiedH=B premises remain imported. Every finite miss or interruption is unpaid and proves no absence.'%(i,owner))
+ p['inputs']=sorted([sr if r==base['resume']else r for r in base['inputs']]+extra,key=lambda r:r['path'])
+ assert len(p['inputs'])==len({r['path']for r in p['inputs']})==26 and p['roles']==base['roles']
+ out=pathlib.Path(p['output_directory']);assert not out.exists()and not out.parent.exists()
+ pr=put(I/'plan.json',p)
+ changes={k:dict(before=base[k],after=p[k])for k in set(base)|set(p)if base.get(k)!=p.get(k)}
+ restored=copy.deepcopy(p)
+ for k,v in changes.items():restored[k]=v['before']
+ assert restored==base
+ inv=put(I/'plan_inverse.json',dict(schema='L026_ELEVEN_SINGLETON_DATA_COMPLETE_PARENT_INVERSE_V1',author='/root/middle_dictionary_author',parent=base_ref,child=pr,changed_fields=changes,all_13_context_roles_literal=True,all_Source_control_schedule_and_strict_ABI_unchanged=True,additional_inputs_are_documentary_exclusion_results_and_SDK_captures=extra,old_and_new_seed_refs=dict(parent=base['resume'],child=sr),whole_parent_body=base,whole_current_body=p))
+ prov=put(I/'resume_provenance.json',dict(schema='L026_NEW_ELEVEN_SINGLETON_EXACT_UNTRUSTED_SEED_PROVENANCE_V1',author='/root/middle_dictionary_author',parent_seed=base['resume'],old_checkpoint=oldcp_ref,original_note=original,original_note_free_index=i,owner=owner,witness_row_sha256=sha,new_seed=sr,exact_inherited_prime13=original['hints']['prime13'],new_cursor=0,new_trials=64,old_cursor=256,old_trials_per_case=256,old_total_trials=4096,old_schedule=seed['pool_transition']['old_schedule'],new_schedule=p['schedule'],old_hints_and_new_seed_are_UNTRUSTED=True,exclusions=excluded,old12_adoption=ng12,Source_or_point_or_word_evaluations=0,new_adoption_or_IP_credit=0))
+ B=p['program']['bytes'];F=sum(r['bytes']for r in p['inputs']);J=sum(r['bytes']for k,r in p['roles'].items()if k not in ['operands','witnesses','theorem_argument'])
+ physical=B+2*(F+B+65536+8192+32768+16384)
+ nonsearch=physical+2*(65536+8192+32768+16384)+4*J+2*p['roles']['theorem_argument']['bytes']+2*p['schedule']['bytes']+2*p['kernel']['bytes']+768+438758+819200+2*sr['bytes']
+ coarse=194+64*(48+11*(16+2+130*20));length=194+2*sum(48+11*(16+2+130*len(w))for w in schedule['words'])
+ assert physical<8*2**20 and 31<=32 and nonsearch+coarse<10000000
+ ir=put(I/'read_and_work_invoice.json',dict(schema='L026_NEW_ELEVEN_SINGLETON_SOURCE_DERIVED_INVOICE_V1',author='/root/middle_dictionary_author',program=p['program'],plan=pr,resume=sr,inherited_source_invoice=ref(P/'invoice.json'),fixed_input_bytes=F,fixed_input_paths=26,complete_physical_bytes_upper=physical,complete_physical_paths_upper=31,formula='B+2*(F+B+65536plan+8192gate+32768Rootreview+16384controlreport). F includes all documentary exclusion records/captures and the exact new seed. No future Root gate/review hash asserted.',Source_bootstrap_included=True,all_JSON_and_declared_Source_and_complete_first_final_IO_in_nonsearch=True,nonsearch_units_upper=nonsearch,coarse_search_units_upper=coarse,complete_coarse_units_upper=nonsearch+coarse,exact_length_search_units_upper=length,complete_literal_length_units_upper=nonsearch+length,old_completed_trials_not_replayed=True,new_pool_trials=64,point_cap_per_trace=11,namespace_bytes=B+p['kernel']['bytes'],hard=dict(bytes=8*2**20,paths=32,individual_input=2**21,Source=32768,namespace=50000,shared_units=10000000,shared_seconds_from_START=20,ordinary_RSS=128*2**20,ordinary_seconds=140),soft=dict(units=6000000,seconds_from_START=14,RSS=112*2**20),Root_selected_outer=dict(RSS=128*2**20,seconds=150),outputs=dict(files=3,per_file=131072,total=393216),new_Root_plan_review_gate_and_observed_case_fit_owed=True,no_scientific_or_timing_or_coverage_claim=True))
+ rt=put(I/'Root_review_template.json',dict(schema='ROOT_REVIEWED_L026_POINT_CYCLE_SUPPLIER_SOURCE_V1',root='/root',status='UNISSUED',blockers=['Exact singleton DATA review and positive Root release owed'],program=p['program'],plan=pr,kernel=p['kernel'],shared_complete_setup_and_final_IO_work_checked=False,previous_Source_own_review=source_own,borrowed_unchanged_Source_peer=source_peer))
+ gt=put(I/'Root_gate_template.json',dict(schema='ROOT_AUTHORIZED_L026_POINT_CYCLE_SUPPLIER_V1',root='/root',adopted=False,candidate_generation_only_authorized=False,program=p['program'],plan=pr,kernel=p['kernel'],direct_consumer=p['direct_consumer'],control_report=control_report,Root_code_math_review=None,qualification='FALSE template. Existing actual13 controls apply only to identical Source/schedule subjects; fresh exact-plan Root review/gate remain owed.'))
+ fc=put(I/'first_call.json',dict(schema='UNISSUED_L026_NEW_ELEVEN_SINGLETON_CALL_V1',argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',p['program']['path'],'--self-sha256',p['program']['sha256'],'--plan',pr['path'],pr['sha256'],'--Root-gate',str(I/'Root_gate.json'),'UNBOUND_ACTUAL_ROOT_GATE_SHA256'],Root_authority=False,ordinary_RSS_mib=128,ordinary_seconds=140,external_RSS_mib=128,external_seconds=150,shared_units=10000000,shared_seconds=20,output_parent_to_create_by_Root=str(out.parent),output_parent_currently_absent=True,output_directory_currently_absent=True,actual_unchanged13_controls=control_report,actual_control_capture=control_capture,new_controls_not_required_for_unchanged_identical_Source=True,fresh_exact_singleton_Root_review_and_gate_required=True))
+ hh=put(I/'handoff.json',dict(schema='FROZEN_L026_NEW_ELEVEN_SINGLETON_DATA_HANDOFF_V1',author='/root/middle_dictionary_author',status='UNRUN_FRESH_EXACT_ROOT_PLAN_REVIEW_GATE_AND_CASE_OWED',parent_plan=base_ref,program=p['program'],controls=p['control_program'],kernel=p['kernel'],strict=p['direct_consumer'],plan=pr,resume=sr,plan_inverse=inv,resume_provenance=prov,invoice=ir,false_Root_review=rt,false_Root_gate=gt,first_call=fc,selected_free_indices=[i],owner=owner,new_pool_cursor=0,new_trials=64,old4096_history_preserved=True,no_old256_trial_prefix_replay=True,old_prime13_exact_and_untrusted=True,actual_unchanged_control_report=control_report,actual_unchanged_control_capture=control_capture,excluded_proven_cases=excluded,new_paid_generation_IP_or_Original_credit=0,future_actual_capture=None,future_actual_outputs=None,Source_helper_control_case_S_W_Git_or_Root_gate_activation=False))
+ results.append(dict(free_index=i,owner=owner,plan=pr,resume=sr,handoff=hh,physical_upper=physical,paths_upper=31,coarse_work_upper=nonsearch+coarse,literal_length_work_upper=nonsearch+length))
+for r in list(seen.values()):whole(r)
+h=put(N/'handoff.json',dict(schema='FROZEN_L026_TWO_SEPARATE_NEW_ELEVEN_SINGLETON_DATA_ROUTES_V1',author='/root/middle_dictionary_author',parent_plan=base_ref,instances=results,selected_free_indices=[3,10],selected_original_owners=[3,11],unchanged_Source_controls_kernel_and_strict=True,actual_unchanged13_controls=control_report,actual_unchanged13_capture=control_capture,old12_adoption=ng12,documentary_scope_exclusions=excluded,excludes_12_accepted_NG_and_case5_strict_NG_and_case1_strict_GEN=True,scope_exclusion_is_not_a_new_canonical_adoption=True,rank3_IP_separate_theorem_review=ref('/private/tmp/l026_rank3_ip_reuse/independent_review.json'),no_Source_or_metadata_utility_or_controls_or_science_activation=True,S_W_Git_or_Root_gate_writes=False,no_future_capture_or_output_descriptor_bound=True,own_stdlib_metadata_builder=ref(N/'build_metadata.py'),status='TWO_SINGLETONS_UNRUN_EXACT_ROOT_RELEASES_AND_CASE_CALLS_OWED'))
+print(json.dumps(dict(handoff=h,instances=results),sort_keys=True))

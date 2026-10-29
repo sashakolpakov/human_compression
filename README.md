@@ -63,6 +63,9 @@ The [later certificates and finite search](october_corpus/research/proof_collect
 record the next 132 adopted results, their checks and the remaining work.
 The [Fi22 exclusions](october_corpus/research/proof_collection/updates/fi22_invariant_subsets/PUBLICATION.rst)
 record twelve verified nongeneration certificates and the updated intake overview.
+The [Fi22 generation certificates](october_corpus/research/proof_collection/updates/fi22_generation_certificates/PUBLICATION.rst)
+add a further exclusion and three generating markings, with their intersection
+property derived separately from an existing theorem.
 From the repository root, check the directory migration and run the small
 mathematical suite with:
 

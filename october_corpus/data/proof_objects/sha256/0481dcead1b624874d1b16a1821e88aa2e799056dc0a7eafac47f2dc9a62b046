@@ -1,0 +1,63 @@
+from pathlib import Path
+import hashlib, json
+
+T = Path('/private/tmp/l026_subset_case5_adoption')
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+p = json.loads((T/'plan.json').read_bytes())
+returned = json.loads((T/'runtime/validation_guard/stdout.log').read_bytes())
+assert returned['status'] == 'VALIDATED_UNADOPTED_ADDITIONAL_NG_METADATA'
+assert returned['Root_adoption'] is False and returned['new_scientific_calls'] == 0
+assert set(returned['outputs']) == {'detail.json', 'partition.json', 'validation.json'}
+for ref in returned['outputs'].values():
+    assert pin(Path(ref['path'])) == ref
+D = T/'actual_validation/output'
+detail = json.loads((D/'detail.json').read_bytes())
+partition = json.loads((D/'partition.json').read_bytes())
+validation = json.loads((D/'validation.json').read_bytes())
+previous = json.loads(Path(p['prior_subset_adoption']['path']).read_bytes())
+assert detail['whole_previous_subset_acceptance'] == previous
+assert detail['whole_previous_validated_detail'] == json.loads(Path(previous['validated_detail']['path']).read_bytes())
+assert detail['whole_previous_validated_partition'] == json.loads(Path(previous['validated_partition']['path']).read_bytes())
+assert detail['validator'] == pin(T/'validate.py') and detail['plan'] == pin(T/'plan.json')
+fact = dict(free_index=5, owner=5, witness_row_sha256='29c660b3a8c783c94737725b63cc73aebc3cb2462475f99d3647a4a42f9bf1d9',
+    middle_mass=1024, invariant_points=351, strict_positive_rotation_edges=702)
+assert detail['new_facts'] == partition['exact_new_owner_rows'] == [fact]
+assert detail['new_free_subset_count'] == 1 and detail['new_free_subset_mass'] == 1024
+assert detail['prior_nonfree_count'] == 17688 and detail['prior_subset_count'] == 12
+assert detail['total_nongenerating_components'] == 17701 and detail['total_nongenerating_mass'] == 6897970
+assert detail['free_components_still_unresolved'] == partition['new_free_count'] == 28895
+assert detail['free_middle_mass_still_unresolved'] == partition['new_free_mass'] == 29588480
+assert partition['prior_accepted_owner_rows'] == previous['new_facts']
+assert partition['newly_settled_free_indices'] == partition['newly_settled_owners'] == [5]
+assert detail['actual_new_Source'] == p['supported']
+assert detail['actual_strict_result'] == p['strict']['result']
+assert detail['durable_scientific_evidence'] == p['durable_scientific_evidence']
+assert detail['adopted'] is False and detail['Root_adoption_owed'] is True
+assert validation['rows'] == 1 and validation['Root_adoption'] is False
+assert validation['mathematical_Source_or_point_word_group_calls'] == 0
+expected = {r['path']: r for r in p['inputs']+[pin(T/'validate.py'), pin(T/'plan.json')]}
+observed = {r['path']: r for r in validation['whole_actual_inputs']}
+assert expected == observed and len(observed) == validation['physical_paths'] == 189
+assert validation['physical_read_bytes'] <= 5860922
+for r in expected.values():
+    assert pin(Path(r['path'])) == r
+capture = json.loads((T/'runtime/validation_actual_capture.json').read_bytes())
+assert capture['actual_tool']['exit_code'] == 0
+guard = json.loads((T/'runtime/validation_guard/receipt.json').read_bytes())
+assert guard['status'] == 'PASS' and guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+review = dict(schema='ROOT_REVIEWED_ACTUAL_CASE5_METADATA_OUTPUTS_V1', root='/root', status='SUPPORTED', blockers=[],
+    outputs=returned['outputs'], actual_validation_capture=pin(T/'runtime/validation_actual_capture.json'),
+    every_complete_output_whole_checked=True, old_accepted12_and_nonfree17688_preserved=True,
+    exact_singleton_owner_witness_mass_points_edges_checked=True,
+    all189_actual_metadata_inputs_fresh=True, science_calls=0, Root_adoption_still_owed=True,
+    qualification='One additional negative only. Independent positive generation records require their own typed adoption and remaining-count update.')
+q = T/'runtime/Root_output_review.json'
+b = (json.dumps(review, sort_keys=True, separators=(',', ':'))+'\n').encode()
+with q.open('xb') as f:
+    f.write(b)
+print(json.dumps(dict(status='ROOT_WHOLE_ACTUAL_METADATA_OUTPUTS_SUPPORTED', review=pin(q),
+    outputs=returned['outputs'], actual_metadata_read_bytes=validation['physical_read_bytes'])))

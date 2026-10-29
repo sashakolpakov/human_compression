@@ -1,0 +1,65 @@
+from pathlib import Path
+import copy, hashlib, json
+
+T = Path('/private/tmp/l026_eleven_cycle_proposals')
+V = Path('/private/tmp/l026_supplied_prime_cycles')
+D = T/'instances/free_index_0001'
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def save(p, value):
+    body = (json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    with p.open('xb') as f:
+        f.write(body)
+    return pin(p)
+
+capture = json.loads((T/'runtime/proposal_actual_capture.json').read_bytes())
+guard = json.loads((T/'runtime/proposal_guard/receipt.json').read_bytes())
+assert capture['actual_tool']['exit_code'] == 0 and guard['status'] == 'PASS'
+assert guard['returncode'] == 0 and guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+returned = json.loads((T/'runtime/proposal_guard/stdout.log').read_bytes())
+assert returned['proposed_pairs'] == 1 and returned['visited'] == 1 and returned['unvisited'] == 0
+for ref in returned['outputs'].values():
+    assert pin(Path(ref['path'])) == ref
+carrier_ref = returned['outputs']['records.json']
+carrier = json.loads(Path(carrier_ref['path']).read_bytes())
+assert len(carrier['records']) == 1
+row = carrier['records'][0]
+assert row['free_index'] == row['owner'] == 1
+assert len(row['prime11']['cycle']) == 11 and len(row['prime13']['cycle']) == 13
+assert len(row['prime11']['word']) == 18 and len(row['prime13']['word']) == 6
+seed = json.loads((T/'resume_seed.json').read_bytes())
+assert row['prime13'] == seed['notes'][0]['hints']['prime13']
+control_report = V/'runtime/control_guard/stdout.log'
+controls = json.loads(control_report.read_bytes())
+template = json.loads((T/'strict_plan_UNBOUND.json').read_bytes())
+assert controls['status'] == 'PASS' and controls['controls'] == 15
+assert controls['consumer'] == template['program'] and controls['kernel'] == template['kernel']
+assert controls['program'] == template['control_program']
+for ref in template['inputs']:
+    assert pin(Path(ref['path'])) == ref
+plan = copy.deepcopy(template)
+plan.update(records=carrier_ref, expected_positive_free_indices=[1],
+    status='ROOT_BOUND_ACTUAL_ELEVEN_THIRTEEN_PAIR_FOR_INDEPENDENT_STRICT_CHECK')
+plan['inputs'].append(carrier_ref)
+pref = save(D/'strict_plan.json', plan)
+review = json.loads((V/'runtime/Root_unbound_source_review.json').read_bytes())
+assert review['program'] == pin(V/'verify.py') and review['kernel'] == pin(V/'kernel.py')
+assert pin(Path(review['independent_review']['path'])) == review['independent_review']
+review.update(plan=pref, actual_carrier_plan_unbound=False, actual_controls_owed=False,
+    actual_generic_controls=pin(V/'runtime/controls_actual_capture.json'),
+    actual_control_report=pin(control_report), actual_supplier=pin(T/'runtime/proposal_actual_capture.json'),
+    all_actual_supplier_outputs_closed_and_pinned=True, every11_plus13_closing_edge_must_be_recomputed=True,
+    selected_original_free_indices=[1], old_source_or_control_verdict_retagged=False,
+    physical_paths_upper=22, complete_physical_read_upper=1779965,
+    conservative_original16_record_work_upper=4069594,
+    qualification='One original marking only, under the unchanged borrowed complete maximal-subgroup and original known-G/model/member/action/global geometry premises. Supplier and saved13 payload remain untrusted; strict arithmetic is still owed. No IP, reversal, full census or manuscript claim.')
+rref = save(D/'strict_Root_code_math_review.json', review)
+gate = json.loads((V/'Root_gate_template.json').read_bytes())
+gate.update(adopted=True, blockers=[], new_case_calls_authorized=True, plan=pref,
+    Root_code_math_review=rref, control_report=pin(control_report))
+gref = save(D/'strict_Root_gate.json', gate)
+print(json.dumps(dict(status='ROOT_BOUND_ACTUAL_PAIR_TO_UNCHANGED_STRICT_CHECKER', plan=pref,
+    gate=gref, actual_carrier=carrier_ref, positive_generation_or_adoption_still_owed=True)))

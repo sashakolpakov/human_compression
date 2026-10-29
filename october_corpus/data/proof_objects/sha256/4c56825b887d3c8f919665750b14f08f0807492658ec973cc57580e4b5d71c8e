@@ -1,0 +1,352 @@
+"""UNRUN metadata-only additional proper-subset NG validator.
+Author /root/prime_theory_audit; borrowed Middle/Compact primitives below.
+New1bdb/2292 scientific identities and19controls are explicit. No scientific
+namespace is imported; outputs are temporary, unapproved DATA candidates.
+Old e951/6538 editions and accepted0129 facts remain immutable premises.
+"""
+
+
+import time
+START=time.monotonic()
+import argparse,hashlib,json,math,os,resource,stat,struct,sys
+from pathlib import Path
+PY='/Users/sasha/.venvs/global/bin/python'
+S='/Users/sasha/medusa/research/leemans'
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+SUPPORTED_SHA={
+    'worker':'1bdbd59e8d62e5b6e344bed37d05c2c43799685f49545e5894d504a7008491be',
+    'point_kernel':'60eedb3ce207831ec66cdcc18c689c7c5e334205772cabf888f950503cc267ee',
+    'subset_kernel':'2292c70a2a21ac1645d4679848e8ac5f9a3d9afb343cf49cb7e55b6bc8feef36',
+    'supplier':'63d337ec610b404e811aa0cf19d80fac645797f2e1b95d0321a2359d99e0231b',
+    'controls':'4fea286d5838612d7ccd649b72349fcf732e4d951cfa2de06eebecb705bbabc8'}
+
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def canonical(value):
+    return(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+
+def reference(path,raw):return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+def decode(raw):
+    def pairs(items):
+        result={}
+        for key,value in items:need(key not in result,'unique metadata key');result[key]=value
+        return result
+    def floating(text):
+        value=float(text);need(math.isfinite(value),'finite actual observations');return value
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,
+        parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+class Metadata:
+    def __init__(self):self.refs={};self.raw={};self.bytes=0
+    def whole(self,ref,fresh=False):
+        need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int
+             and 0<=ref['bytes']<=2**21 and type(ref['sha256'])is str and len(ref['sha256'])==64
+             and set(ref['sha256'])<=set('0123456789abcdef'),'complete bounded artifact reference')
+        need(self.refs.get(ref['path'],ref)==ref,'one complete physical version')
+        if not fresh and ref['path']in self.raw:return self.raw[ref['path']]
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+        need(rss<256*2**20 and time.monotonic()-START<125,'256MiB/125s metadata bound')
+        need(self.bytes+ref['bytes']<=64*2**20 and(len(self.refs)<512 or ref['path']in self.refs),
+             '64MiB/512 actual metadata reads')
+        path=Path(ref['path']);a=path.lstat()
+        need(path.is_absolute()and path.resolve(strict=True)==path and stat.S_ISREG(a.st_mode)
+             and a.st_nlink==1 and a.st_size==ref['bytes'],'canonical ordinary single-link artifact')
+        with path.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+        sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+        need(sig(a)==sig(b)==sig(c)==sig(path.lstat())and reference(path,raw)==ref,'whole stable exact bytes')
+        self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.bytes+=len(raw);return raw
+    def document(self,ref):return decode(self.whole(ref))
+    def file(self,path,sha):
+        path=Path(path);ref=dict(path=str(path),bytes=path.stat().st_size,sha256=sha)
+        return ref,self.whole(ref)
+    def final(self):
+        for ref in list(self.refs.values()):self.whole(ref,True)
+
+def unique(rows):
+    result={}
+    for ref in rows:need(result.get(ref['path'],ref)==ref,'unique whole physical input');result[ref['path']]=ref
+    return[result[key]for key in sorted(result)]
+
+def exact_child(program,plan,gate):
+    return[PY,'-E','-B','-S',program['path'],'--self-sha256',program['sha256'],
+           '--plan',plan['path'],plan['sha256'],'--Root-gate',gate['path'],gate['sha256']]
+
+def closed(meta,run,child):
+    need(type(run)is dict and set(run)=={'capture','receipt','started','stdout','stderr'},'complete finite actual execution roles')
+    capture=meta.document(run['capture']);receipt=meta.document(run['receipt']);start=meta.document(run['started'])
+    stdout=meta.whole(run['stdout']);stderr=meta.whole(run['stderr']);frames=capture['all_genuine_api_frames'];outer=capture['issued_argv']
+    need(capture['root']=='/root'and capture['child_argv']==outer and capture['actual_tool']['exit_code']==0
+         and type(frames)is list and frames and all(type(f)is dict and type(f.get('output'))is str for f in frames)
+         and frames[-1]['exit_code']==0 and 'session_id'not in frames[-1],
+         'genuine complete Root SDK capture and actual outer-argv ABI')
+    need(outer.count('--')==1 and outer[outer.index('--')+1:]==child and outer.count('--output')==1
+         and outer[outer.index('--output')+1]==str(Path(run['receipt']['path']).parent),
+         'exact scientific child and full original guard directory')
+    need(outer[:outer.index('--')]==[PY,'-E','-B',S+'/maintenance/runtime/supervise_validation.py',
+         '--volume',S,'--output',str(Path(run['receipt']['path']).parent),'--rss-cap-mib','128','--timeout','150'],
+         'exact actual retained supervisor command and unchanged resource flags')
+    need(receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0
+         and receipt['command']==start['command']==child and receipt['limits']==start['limits']
+         and receipt['limits']['total_rss']==128*2**20 and receipt['limits']['wall_seconds']==150
+         and receipt['limits']['admit_disk']==10*2**30 and receipt['limits']['admit_ram']==4*2**30
+         and receipt['limits']['disk_floor']==8*2**30 and receipt['limits']['ram_floor']==3*2**30
+         and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+         and receipt['logs']['stdout']==len(stdout)and receipt['logs']['stderr']==len(stderr),
+         'actual complete outer128MiB150s guard, resource admission and birth-pinned cleanup')
+    emitted=decode(''.join(f['output']for f in frames))
+    need(emitted['status']=='PASS'and emitted['stop']=='RETURNED'and emitted['receipt']==run['receipt']['path'],
+         'genuine terminal supervisor output joins the complete receipt')
+    return decode(stdout)
+
+def source_authority(meta,programme,plan_ref,gate_ref,mode,supported):
+    plan=meta.document(plan_ref);gate=meta.document(gate_ref)
+    need(plan['schema']=='L026_ROTATION_INVARIANT_SUBSET_PLAN_V1'and plan['program']==programme
+         and programme==supported['worker']and plan['mode']==mode and plan['scope_digest']==SCOPE
+         and plan['point_kernel']==supported['point_kernel']and plan['subset_kernel']==supported['subset_kernel']
+         and plan['supplier']==supported['supplier']and plan['control_program']==supported['controls'],
+         'exact retained new mathematical namespaces and actual scientific mode/plan')
+    need(gate['schema']=='ROOT_AUTHORIZED_L026_ROTATION_INVARIANT_SUBSETS_V1'and gate['root']=='/root'
+         and gate['adopted']is True and gate['new_case_calls_authorized']is True
+         and gate['program']==programme and gate['plan']==plan_ref,'separate exact genuine Root case authority')
+    review=meta.document(gate['Root_code_math_review']);control=meta.document(gate['control_report'])
+    need(review['root']=='/root'and review['status']=='SUPPORTED'and review['blockers']==[]
+         and review['program']==programme and review['plan']==plan_ref
+         and review['point_kernel']==supported['point_kernel']and review['subset_kernel']==supported['subset_kernel']
+         and review['G_transitivity_and_even_subgroup_proof_reviewed']is True,
+         'actual complete Root Source/transitivity/membership and even-subgroup proof review')
+    need(control['schema']=='L026_INVARIANT_SUBSET_GENERIC_CONTROLS_V1'and control['status']=='PASS'
+         and control['worker']==programme and control['point_kernel']==supported['point_kernel']
+         and control['subset_kernel']==supported['subset_kernel']and control['supplier']==supported['supplier']
+         and control['program']==supported['controls']and control['controls']==19 and control['original_case_calls']==0,
+         'actual exact nineteen generic controls, distinct from original-case proof')
+    for r in supported.values():meta.whole(r)
+    for r in plan['inputs']:meta.whole(r)
+    return plan
+
+def banks(meta,p):
+    negative=meta.document(p['prior_nonfree']);free=meta.document(p['free_adoption']);operand=meta.document(p['operand_adoption'])
+    need(negative['schema']=='ROOT_ACCEPTED_L026_NONFREE_PRODUCT_ORBITS_V1'and negative['root']=='/root'
+         and negative['adopted']is True and negative['scope_digest']==SCOPE
+         and negative['nongenerating_orbits']==17688 and negative['remaining_free_orbits_unresolved']==28908
+         and negative['classification']=='PROPER_THREE_MARK_AND_ROTATION_SUBGROUPS'
+         and negative['all_original_premises_retained']is True,'retain exact old nonfree NG category without repayment')
+    need(free['schema']=='ROOT_L026_ACCEPTED_FREE_PRODUCT_WITNESS_PROJECTION_V1'and free['root']=='/root'
+         and free['adopted']is True and free['free_rows']==28908 and free['prior17688_negative_results_reused']is True
+         and free['all28908_generation_questions_unresolved']is True
+         and operand['schema']=='ROOT_ACCEPTED_L026_PRIME_CYCLE_OPERAND_DATA_V1'and operand['root']=='/root'
+         and operand['adopted']is True,'same actual qualified free-witness and operand DATA premises')
+    need(free['outputs']['free_witnesses.bin']==p['witnesses']
+         and negative['projection']['nongenerating_records']==p['old_negative_records']
+         and negative['projection']['free_unresolved_records']==p['original_free_records'],
+         'exact existing16B witnesses and old6B negative/free partition')
+    projection=meta.document(free['outputs']['projection.json'])
+    need(projection['scope_digest']==SCOPE and projection['original_product_adoption']['logical']==negative['source_product_adoption']
+         and projection['free_projected']==28908 and projection['already_adopted_negative']['logical']==p['prior_nonfree'],
+         'same actual product-mass and free projection scope, never a new orbit quotient')
+    raw=meta.whole(p['witnesses']);old=meta.whole(p['old_negative_records']);fr=meta.whole(p['original_free_records'])
+    need(len(raw)==16*28908 and len(old)==6*17688 and len(fr)==6*28908,'entire old partition byte extents')
+    negative_rows=list(struct.iter_unpack('<IH',old));free_rows=list(struct.iter_unpack('<IH',fr))
+    old_owners=[o for o,m in negative_rows];free_owners=[o for o,m in free_rows]
+    need(len(set(old_owners))==17688 and len(set(free_owners))==28908
+         and not set(old_owners)&set(free_owners)and all(0<=o<500178 and 0<m<1024 for o,m in negative_rows)
+         and all(0<=o<500178 and m==1024 for o,m in free_rows)
+         and sum(m for o,m in negative_rows)==negative['nongenerating_middle_mass']==6884658
+         and sum(m for o,m in free_rows)==negative['remaining_free_middle_mass']==29601792,
+         'full disjoint old partition, exact owner identity and complete original middle masses')
+    for i,(owner,mass)in enumerate(free_rows):
+        o,partner,m,x,y,z=struct.unpack_from('<IIHHHH',raw,16*i)
+        need(o==owner and m==mass and partner<500178 and len({x,y,z})==3 and max(x,y,z)<3510,
+             'all28908 exact original witness-to-free-partition metadata joins')
+    return negative,free,operand,raw,set(old_owners),set(free_owners)
+
+def predecessor(meta,p,raw,old_owners,free_owners):
+    prior=meta.document(p['prior_subset_adoption'])
+    need(prior['schema']=='ROOT_ACCEPTED_L026_ROTATION_INVARIANT_SUBSET_NONGENERATION_V1'
+         and prior['root']=='/root'and prior['adopted']is True and prior['scope_digest']==SCOPE
+         and prior['prior_nonfree_adoption']==p['prior_nonfree']
+         and prior['new_subset_count']==12 and prior['new_subset_mass']==12288
+         and prior['total_nongenerating_components']==17700 and prior['total_nongenerating_mass']==6896946
+         and prior['remaining_free_count']==28896 and prior['remaining_free_middle_mass']==29589504
+         and prior['exact_still_unpaid_cap_indices']==[1,3,5,10]
+         and prior['new_generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0,
+         'actual accepted twelve-subset predecessor, unchanged17688 baseline and exact prior unpaid scope')
+    detail=meta.document(prior['validated_detail']);partition=meta.document(prior['validated_partition'])
+    validation=meta.document(prior['validation_report'])
+    facts=prior['new_facts'];indices=[r['free_index']for r in facts];owners=[r['owner']for r in facts]
+    need(indices==[0,2,4,6,7,8,9,11,12,13,14,15]and len(set(owners))==12
+         and facts==detail['new_facts']==partition['exact_new_owner_rows']
+         and partition['newly_settled_free_indices']==indices and partition['newly_settled_owners']==owners
+         and detail['free_components_still_unresolved']==partition['new_free_count']==28896
+         and detail['free_middle_mass_still_unresolved']==partition['new_free_mass']==29589504
+         and validation['status']=='VALIDATED_UNADOPTED_PARTIAL_NG_METADATA'and validation['rows']==12
+         and validation['old_negatives_unchanged']==17688,
+         'whole prior accepted fact/detail/typed-partition/validation bodies remain exact, not new Source verdicts')
+    for fact in facts:
+        i=fact['free_index'];record=raw[16*i:16*i+16];owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',record)
+        need(owner==fact['owner']and fact['witness_row_sha256']==hashlib.sha256(record).hexdigest()
+             and owner in free_owners and owner not in old_owners and mass==fact['middle_mass']==1024
+             and fact['strict_positive_rotation_edges']==2*fact['invariant_points'],
+             'all twelve old accepted facts bind exact original owner/row/mass without Source replay')
+    need(5 not in indices and 5 not in owners,'new singleton disjoint from both old negative categories')
+    return prior,detail,partition,set(indices),set(owners)
+
+def construct(meta,own,pref,p):
+    need(p['schema']=='L026_FULL_CAP_ADDITIONAL_SUBSET_NG_METADATA_PLAN_V1'and p['program']==own
+         and p['Root_authority_granted']is False and p['scope_digest']==SCOPE,
+         'new explicit metadata Source only; no old e951 or scientific Source verdict retagged')
+    need(set(p['supported'])==set(SUPPORTED_SHA)
+         and all(p['supported'][k]['sha256']==v for k,v in SUPPORTED_SHA.items())
+         and p['prior_nonfree']['sha256']=='c2420d7694412930f601a9dc121d68354f495d75990d59338854091114a69c7e'
+         and p['free_adoption']['sha256']=='b773a6cac0687fab27725748a2174d52555b4f528359246af7b7d43a1112d407'
+         and p['operand_adoption']['sha256']=='b788b6854e7003f5f7e5ee4d6a3ce26bcc1566e6bf64b03f1f51175447a4f58e'
+         and p['prior_subset_adoption']['sha256']=='0129dae034586104bf866958d0ffa9731eb764a798b9044886f608523dd22300',
+         'fixed fullproper scientific cohort and actual immutable predecessor authorities')
+    need(type(p['strict'])is dict and type(p['strict_execution'])is dict
+         and type(p['durable_scientific_evidence'])is dict,
+         'actual strict result and complete durable evidence MUST be bound before metadata validation')
+    inventory=unique(p['inputs']);need(len(inventory)==len(p['inputs'])and len(inventory)<=480,'complete finite physical inventory')
+    for r in inventory:meta.whole(r)
+    negative,free,operand,raw,old_owners,free_owners=banks(meta,p)
+    prior,prior_detail,prior_partition,prior_indices,prior_owners=predecessor(meta,p,raw,old_owners,free_owners)
+    peer=meta.document(p['scientific_source_peer']);supported=p['supported'];strict=p['strict']
+    need(peer['schema']=='INDEPENDENT_L026_FULL_PROPER_SUBSET_CAP_REVIEW_V1'
+         and peer['status']=='SUPPORTED'and peer['blockers']==[]and peer['program']==supported['worker']
+         and all(peer['subjects'][k]==supported[k]for k in('point_kernel','subset_kernel','supplier','controls')),
+         'actual distinct1bdb/2292 fullproper Source peer; no old6538/70ab/14-control retagging')
+    cp=source_authority(meta,supported['worker'],strict['plan'],strict['gate'],'check',supported)
+    cs=closed(meta,p['strict_execution'],exact_child(supported['worker'],strict['plan'],strict['gate']))
+    carrier=meta.document(strict['carrier']);cr=meta.document(strict['result'])
+    need(cs['mode']=='check'and cs['outputs']=={'result.json':strict['result']}
+         and cs['verified_records']==1 and cs['untrusted_closed_hints']==0
+         and cs['status']==cr['status']=='SUPPLIED_CHECK_COMPLETE',
+         'actual independent supplied-only strict output and complete genuine SDK/guard closure')
+    need(cp['selected_free_indices']==cp['expected_positive_free_indices']==[5]
+         and cp['maximum_records']==1 and cp['maximum_subset_points']==3509 and cp['resume']is None
+         and cp['records']==strict['carrier']and cp['roles']['free_adoption']==p['free_adoption']
+         and cp['roles']['operand_adoption']==p['operand_adoption']and cp['roles']['witnesses']==p['witnesses'],
+         'exact original singleton5, new3509cap and same operand/witness/membership scope')
+    need(cr['schema']=='L026_BOUNDED_ROTATION_SUBSET_RESULT_V1'and cr['program']==supported['worker']
+         and cr['plan']==strict['plan']and cr['mode']=='check'and cr['scope_digest']==SCOPE
+         and cr['original_selector']==cp['original_selector']and cr['Root_adoption_owed']is True
+         and cr['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0
+         and cr['strict_check_activates_supplier']is False and cr['supplier_activated']is False
+         and cr['exact_visited_indices']==[5]and cr['exact_unvisited_indices']==[]
+         and cr['capped_orbit_prefix_misses_unpaid']==[]and cr['untrusted_closed_hint_indices']==[]
+         and cr['primary_positive_conclusion']=='ROTATION_SUBGROUP_PROPER_IN_TRANSITIVE_NAMED_G'
+         and cr['marking_nongeneration_uses_additional_imported_original_middle_involution_and_simpleG']is True,
+         'new actual strict Source/context result, every edge checked and no supplier or excess conclusion')
+    trans=cr['imported_transitivity']
+    need(trans['G_transitivity_derived']is True and trans['degree']==trans['minimal_proper_G_index']==3510
+         and trans['original_input']==cp['roles']['original_input']
+         and trans['point_bridge']==cp['roles']['bridge_adoption']
+         and trans['complete_simple_maximal_table']==cp['roles']['maximal_orders'],
+         'exact retained namedG/member/normal-index2/minimal-index transitivity imports')
+    need(carrier['schema']=='L026_SUPPLIED_ROTATION_PROPER_SUBSETS_V1'and carrier['scope_digest']==SCOPE
+         and carrier['operand_adoption']==p['operand_adoption']and carrier['free_witness_adoption']==p['free_adoption']
+         and len(carrier['records'])==len(cr['verified_nongeneration_records'])==1,
+         'same actual one-record supplied complement carrier; complement construction never confers authority')
+    supplied=carrier['records'][0];verified=cr['verified_nongeneration_records'][0]
+    need(supplied['free_index']==verified['free_index']==p['expected_free_indices'][0]==5
+         and p['expected_free_indices']==[5]and 5 not in prior_indices,
+         'only the new announced strict singleton, disjoint from accepted12')
+    record=raw[16*5:16*5+16];owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',record)
+    sha=hashlib.sha256(record).hexdigest();points=supplied['points']
+    need(supplied['owner']==verified['owner']==owner==5 and owner in free_owners
+         and owner not in old_owners and owner not in prior_owners and mass==1024
+         and supplied['witness_row_sha256']==verified['witness_row_sha256']==sha
+         and sha=='29c660b3a8c783c94737725b63cc73aebc3cb2462475f99d3647a4a42f9bf1d9',
+         'exact original owner5/whole16B row/mass, separate from nonfree17688 and prior12')
+    need(type(points)is list and len(points)==351 and all(type(i)is int for i in points)
+         and points==sorted(set(points))and 0<=points[0]<=points[-1]<3510
+         and verified['points']==351 and verified['checked_positive_rotation_edges']==702,
+         'actual nonempty proper complement and strict complete702edge cardinalities, no map reevaluation')
+    facts=[dict(free_index=5,owner=owner,witness_row_sha256=sha,middle_mass=mass,
+                invariant_points=351,strict_positive_rotation_edges=702)]
+    preservation=meta.document(p['durable_scientific_evidence'])
+    need(preservation['root']=='/root'and type(preservation['files'])is list
+         and preservation['new_strict_result']==strict['result']and preservation['new_carrier']==strict['carrier']
+         and preservation['new_strict_actual_capture']==p['strict_execution']['capture']
+         and preservation['strict_verified_records']==1 and preservation['strict_verified_points']==351
+         and preservation['checked_actual_positive_edges']==702,
+         'actual Root full closed scientific-evidence manifest and exact new strict subject')
+    retained={}
+    for row in preservation['files']:
+        need(type(row)is dict and 'original'in row and ('retained'in row)^('preserved'in row),
+             'one explicit original-to-durable mapping, no ambiguous alias')
+        o=row['original'];t=row.get('retained',row.get('preserved'))
+        need(set(o)==set(t)=={'path','bytes','sha256'}and o['bytes']==t['bytes']and o['sha256']==t['sha256'],
+             'entire identical scientific-evidence retention, never a path-only mapping')
+        key=(o['path'],o['bytes'],o['sha256']);need(retained.get(key,t)==t,'one complete durable mapping')
+        retained[key]=t;meta.whole(t)
+    gate=meta.document(strict['gate'])
+    proof_refs=list(supported.values())+[p['scientific_source_peer']]+list(strict.values())
+    proof_refs+=list(p['strict_execution'].values())+cp['inputs']+[gate['Root_code_math_review'],gate['control_report']]
+    proof_refs+=p['additional_evidence']
+    for r in unique(proof_refs):
+        if Path(r['path']).is_relative_to('/private/tmp'):
+            need((r['path'],r['bytes'],r['sha256'])in retained,'all actual new scientific inputs and full closures durably mapped')
+    detail=dict(schema='L026_VALIDATED_ADDITIONAL_SUBSET_NONGENERATION_DETAIL_V1',author='/root/prime_theory_audit',
+         adopted=False,Root_adoption_owed=True,validator=own,plan=pref,scope_digest=SCOPE,
+         classification='PROPER_ROTATION_AND_THREE_MARK_SUBGROUPS_BY_ACTUAL_INVARIANT_SUBSETS',
+         proof_category='ROTATION_INVARIANT_SUBSET',method_variant='FULL_PROPER_CAP_INDEPENDENT_COMPLEMENT_CHECK',
+         prior_nonfree_adoption=p['prior_nonfree'],prior_nonfree_count=17688,prior_nonfree_mass=6884658,
+         prior_subset_adoption=p['prior_subset_adoption'],prior_subset_count=12,prior_subset_mass=12288,
+         whole_previous_subset_acceptance=prior,whole_previous_validated_detail=prior_detail,
+         whole_previous_validated_partition=prior_partition,
+         new_free_subset_count=1,new_free_subset_mass=1024,total_nongenerating_components=17701,
+         total_nongenerating_mass=6897970,free_components_still_unresolved=28895,
+         free_middle_mass_still_unresolved=29588480,full_product_components=46596,full_product_mass=36486450,
+         new_facts=facts,exact_still_unpaid_original_cap_indices=[1,3,10],all_other_free_owners_unpaid=True,
+         original_free_witness_adoption=p['free_adoption'],original_operand_adoption=p['operand_adoption'],
+         exact_supplied_carrier=strict['carrier'],actual_strict_result=strict['result'],actual_strict_execution=p['strict_execution'],
+         actual_new_Source=supported,scientific_source_peer=p['scientific_source_peer'],
+         durable_scientific_evidence=p['durable_scientific_evidence'],additional_evidence=p['additional_evidence'],
+         old_cycle_search_miss_history=cp['roles']['old_cycle_completion'],
+         old_nonfree_and_prior_subset_categories_unchanged=True,new_fact_disjoint_from_both_old_categories=True,
+         whole_original_conjecture_Lean_or_measurement_credit=0,
+         qualification='Same original named Fi22/simple and full-Aut/Out2 model/Reader/member/action/frame/word/graph/GLOBAL class/two-fibre/qualified H=B imports. New1bdb/2292 strict supplied-only check proves exactly one proper rotation subset; three-mark nongeneration additionally uses original middle involution and perfect/simpleG. Complete702edges were checked before this DATA method. Prior17688 plus12 accepted negatives remain exact historical premises. No source retagging, generation, IP, reversal, other endpoint, selector, Original/manuscript or conjecture/Lean claim.')
+    partition=dict(schema='L026_ADDITIONAL_NG_EXACT_TYPED_PARTITION_V1',scope_digest=SCOPE,
+         original_nonfree_count=17688,original_free_count=28908,prior_subset_count=12,
+         new_category='ROTATION_INVARIANT_SUBSET',new_method_variant='FULL_PROPER_CAP_INDEPENDENT_COMPLEMENT_CHECK',
+         newly_settled_free_indices=[5],newly_settled_owners=[5],new_middle_mass=1024,
+         new_free_count=28895,new_free_mass=29588480,baseline_nonfree_count_not_rebased=True,
+         unchanged_baseline_inverse=p['prior_nonfree'],unchanged_subset_predecessor=p['prior_subset_adoption'],
+         exact_new_owner_rows=facts,prior_accepted_owner_rows=prior['new_facts'],
+         new_index_orbit_or_model_evaluations=0,Root_adoption_owed=True)
+    return detail,partition
+
+
+def main():
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'literal EBS metadata interpreter')
+    a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--self-sha256',required=True)
+    a.add_argument('--plan',nargs=2,required=True);a.add_argument('--out',required=True);args=a.parse_args()
+    meta=Metadata();own,_=meta.file(str(Path(__file__).resolve(strict=True)),args.self_sha256);meta.bytes+=own['bytes']
+    need(own['bytes']<=65536,'whole bounded new metadata Source')
+    pref,raw=meta.file(*args.plan);p=decode(raw);need(pref['bytes']<=131072,'whole bounded metadata plan')
+    detail,partition=construct(meta,own,pref,p)
+    inputs=unique(p['inputs']+[own,pref]);need(meta.refs=={r['path']:r for r in inputs},'closed entire actual metadata read domain')
+    meta.final()
+    report=dict(schema='L026_ADDITIONAL_SUBSET_NG_METADATA_VALIDATION_V1',status='VALIDATED_UNADOPTED_ADDITIONAL_NG_METADATA',
+                author='/root/prime_theory_audit',program=own,plan=pref,whole_actual_inputs=inputs,
+                rows=1,old_nonfree_negatives_unchanged=17688,prior_subset_negatives_unchanged=12,
+                future_total_nongenerating_after_Root_adoption=17701,future_remaining_after_Root_adoption=28895,
+                mathematical_Source_or_point_word_group_calls=0,Root_adoption=False,
+                physical_read_bytes=meta.bytes,physical_paths=len(meta.refs))
+    bodies={'detail.json':canonical(detail),'partition.json':canonical(partition),'validation.json':canonical(report)}
+    need(all(len(b)<=2**21 for b in bodies.values())and sum(map(len,bodies.values()))<=8*2**20,'bounded full metadata outputs')
+    out=Path(args.out);need(out.is_absolute()and out.is_relative_to('/private/tmp')and '..'not in out.parts
+         and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh ordinary temporary metadata directory')
+    out.mkdir();outputs={}
+    for n,b in bodies.items():
+        f=out/n
+        with f.open('xb')as stream:need(stream.write(b)==len(b),'whole exclusive metadata output');stream.flush();os.fsync(stream.fileno())
+        outputs[n]=reference(f,b)
+    fd=os.open(out,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    print(json.dumps(dict(status=report['status'],outputs=outputs,Root_adoption=False,new_scientific_calls=0),sort_keys=True))
+
+if __name__=='__main__':main()

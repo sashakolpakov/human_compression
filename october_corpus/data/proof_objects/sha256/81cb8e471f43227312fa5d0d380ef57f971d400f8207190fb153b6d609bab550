@@ -1,0 +1,61 @@
+from pathlib import Path
+import ast,copy,hashlib,json
+T=Path('/private/tmp/intake_journal/gen_current_design')
+def pin(p,b=None):
+    if b is None:b=p.read_bytes()
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert pin(Path(r['path']))==r,r['path']
+def defs(s):return {n.name:ast.get_source_segment(s,n)for n in ast.parse(s).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+h=json.loads((T/'handoff.json').read_bytes())
+for r in h.values():
+    if isinstance(r,dict)and set(r)=={'path','bytes','sha256'}:check(r)
+i=json.loads((T/'source_inverse.json').read_bytes());check(i['parent']);check(i['child'])
+old,new=i['whole_old_text'],i['whole_new_text']
+assert Path(i['parent']['path']).read_text()==old and Path(i['child']['path']).read_text()==new
+ol,nl=old.splitlines(True),new.splitlines(True);op=np=0
+for tag,a,b,c,d in i['line_opcodes']:
+    assert a==op and c==np and 0<=a<=b<=len(ol)and 0<=c<=d<=len(nl)
+    if tag=='equal':assert ol[a:b]==nl[c:d]
+    elif tag=='insert':assert a==b
+    elif tag=='delete':assert c==d
+    else:assert tag=='replace'
+    op,np=b,d
+assert op==len(ol)and np==len(nl)
+od,nd=defs(old),defs(new);assert set(od)==set(nd)
+assert {k for k in od if od[k]!=nd[k]}=={'construct'}
+assert len(i['literal_definitions'])==12
+for k in i['literal_definitions']:assert od[k]==nd[k]
+p=json.loads(Path(h['plan']['path']).read_bytes())
+for r in list(p['evidence'].values())+p['protected_registers']+p['live_selectors']+[p['predecessor']]:check(r)
+raw=Path(p['predecessor']['path']).read_bytes();oldj=json.loads(raw)
+assert p['whole_old_L026']==oldj['L026']and p['whole_old_current_goal_turn_detail']==oldj['current_goal_turn_detail']
+out=copy.deepcopy(oldj);del out['L026']['nongeneration_progress']
+out['L026']['product_progress']=dict(NEG=dict(adoption=p['evidence']['negative_adoption'],nonfree=17688,subset=13,total=17701),
+    GEN_IP=dict(adoption=p['evidence']['gen_adoption'],components=3),unresolved=28892,
+    qualification='Original premises retained; full prior L026 is in the retained plan/version.')
+out['L026']['next']='Resolve the remaining 28,892 product components, then reversal and other endpoints under the retained premises.'
+out['next_actions'][2]=out['L026']['next'];out['previous_checkpoint']=p['evidence']['predecessor_version']
+out['protected_reviewed_registers']=p['protected_registers'];out['utc']=p['utc']
+out['journal_metadata_method']=dict(program=h['program'],plan=h['plan'],scientific_calls=0,protected_register_writes=0,
+    current_mutable_target=p['predecessor']['path'],qualified_as='Typed L026 progress; prior facts retained.')
+out['current_goal_turn_detail']='L026: 17,701 NG; 3 GEN with rank 3 IP; 28,892 unresolved. Original premises, reversal, endpoints and three manuscripts remain owed.'
+b=(json.dumps(out,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+assert len(b)==32417<=32768 and hashlib.sha256(b).hexdigest()=='77d4ba2ad3dfb31560dee0db488215ee251243a81d3abd4921f48cd84efc8f71'
+assert Path(h['author_expected']['path']).read_bytes()==b
+for k in ('F004','F009','counts','measurements','stopping_rule','source_scope_audit','goal_status','public_repository','resource_observation','current_goal_turn_classification'):
+    assert out[k]==oldj[k]
+peerpath=T/'independent_review/independent_review.json';peer=json.loads(peerpath.read_bytes())
+assert pin(peerpath)['sha256']=='bf05b24c69cdddb5f6d3aea9dbefef35a70354e3bb33500fffbc268d8c9e7cdc'
+assert peer['status'].startswith('SUPPORTED')and peer['blockers']==[]
+review=dict(schema='ROOT_REVIEWED_L026_GEN_IP_COMPACT_JOURNAL_SOURCE_DATA_V1',root='/root',status='SUPPORTED',blockers=[],
+    program=h['program'],plan=h['plan'],full_new_constructor_and_header_read=True,whole_inverse_checked=True,
+    all12_guard_main_normalizer_definitions_literal=True,all_bound_whole_metadata_inputs_rehashed=True,
+    predecessor=p['predecessor'],independently_derived_exact_image=dict(bytes=len(b),sha256=hashlib.sha256(b).hexdigest()),
+    actual_negative_and_generation_receipts_separate=True,old_full_L026_and_turn_detail_embedded=True,
+    all_unrelated_fields_and_protected_registers_unchanged=True,independent_review=pin(peerpath),
+    next11_strict_science_not_registered_or_counted=True,actual_forecast_and_fresh_Root_release_still_owed=True,
+    scientific_calls=0,whole_original_or_measurement_credit=0)
+outpath=T/'Root_source_data_review.json';body=(json.dumps(review,sort_keys=True,separators=(',',':'))+'\n').encode()
+with outpath.open('xb')as f:f.write(body)
+print(json.dumps(dict(status='ROOT_COMPACT_GEN_IP_JOURNAL_REVIEW_SUPPORTED',review=pin(outpath),
+    successor_bytes=len(b),successor_sha256=hashlib.sha256(b).hexdigest(),actual_forecast_owed=True)))

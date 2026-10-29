@@ -1,0 +1,101 @@
+from pathlib import Path
+import copy, hashlib, json, struct
+
+T = Path('/private/tmp/l026_eleven_cycle_proposals')
+B = T/'remaining_singleton_data'
+
+def canonical(v):
+    return (json.dumps(v, sort_keys=True, separators=(',', ':'))+'\n').encode()
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def check(r):
+    assert pin(Path(r['path'])) == r, r['path']
+
+def save(p, v):
+    with p.open('xb') as f:
+        f.write(canonical(v))
+    return pin(p)
+
+h = json.loads((B/'handoff.json').read_bytes())
+peer_path = B/'independent_review/independent_review.json'
+assert pin(peer_path)['sha256'] == '772bb571863dac56a69320ec6013bff111675972273740a623839d72bc9b09f8'
+peer = json.loads(peer_path.read_bytes())
+assert peer['status'] == 'SUPPORTED_DATA_ONLY' and peer['blockers'] == []
+parent = json.loads(Path(h['parent_plan']['path']).read_bytes())
+rows = []
+for entry in h['instances']:
+    check(entry['handoff'])
+    route = json.loads(Path(entry['handoff']['path']).read_bytes())
+    for key in ('plan', 'resume', 'resume_provenance', 'plan_inverse', 'invoice', 'program', 'kernel', 'strict', 'controls',
+                'actual_unchanged_control_report', 'actual_unchanged_control_capture'):
+        check(route[key])
+    D = Path(route['plan']['path']).parent
+    plan_raw = Path(route['plan']['path']).read_bytes()
+    plan = json.loads(plan_raw)
+    inverse = json.loads((D/'plan_inverse.json').read_bytes())
+    assert inverse['whole_parent_body'] == parent and inverse['whole_current_body'] == plan
+    assert canonical(parent) == Path(h['parent_plan']['path']).read_bytes()
+    assert canonical(plan) == plan_raw
+    restored = copy.deepcopy(plan)
+    for key, change in inverse['changed_fields'].items():
+        assert change['before'] == parent[key] and change['after'] == plan[key]
+        restored[key] = change['before']
+    assert restored == parent and plan['roles'] == parent['roles']
+    index = entry['free_index']
+    assert index in (3, 10) and plan['selected_free_indices'] == [index]
+    assert plan['window_start'] == index and plan['maximum_records'] == 1
+    assert plan['program'] == parent['program'] and plan['control_program'] == parent['control_program']
+    for r in plan['inputs']:
+        check(r)
+    assert len(plan['inputs']) == 26
+    provenance = json.loads((D/'resume_provenance.json').read_bytes())
+    check(provenance['old_checkpoint'])
+    cp = json.loads(Path(provenance['old_checkpoint']['path']).read_bytes())
+    old_note = next(n for n in cp['notes'] if n['free_index'] == index)
+    assert old_note == provenance['original_note']
+    seed = json.loads(Path(plan['resume']['path']).read_bytes())
+    assert seed['selected_free_indices'] == [index] and len(seed['notes']) == 1
+    assert seed['program'] == plan['program'] and seed['schedule'] == plan['schedule']
+    assert seed['previous_untrusted_checkpoint'] == provenance['old_checkpoint']
+    note = seed['notes'][0]
+    expected_note = dict(old_note, next_trial=0, complete_trials_in_this_call=0,
+        complete_word_edges_in_completed_trials=0, inherited_complete_trials=0,
+        active_trial=None, outcome='unfinished')
+    assert note == expected_note and note['hints']['prime11'] is None
+    assert note['hints']['prime13'] == provenance['exact_inherited_prime13']
+    bank = Path(plan['roles']['witnesses']['path']).read_bytes()
+    raw = bank[16*index:16*index+16]
+    assert struct.unpack('<IIHHHH', raw)[0] == entry['owner'] == note['owner']
+    assert hashlib.sha256(raw).hexdigest() == note['witness_row_sha256']
+    bill = json.loads((D/'read_and_work_invoice.json').read_bytes())
+    added = inverse['additional_inputs_are_documentary_exclusion_results_and_SDK_captures']
+    extra_bytes = sum(r['bytes'] for r in added)
+    seed_growth = plan['resume']['bytes'] - parent['resume']['bytes']
+    assert extra_bytes == 21511
+    assert entry['coarse_work_upper'] == 5261046 + 2*extra_bytes + 4*seed_growth
+    assert entry['physical_upper'] == 1634416 + 2*extra_bytes + 2*seed_growth
+    assert entry['coarse_work_upper'] < 10000000 and entry['physical_upper'] < 8*2**20
+    assert entry['paths_upper'] == 31
+    review = json.loads((D/'Root_review_template.json').read_bytes())
+    check(review['previous_Source_own_review'])
+    check(review['borrowed_unchanged_Source_peer'])
+    review.update(status='SUPPORTED', blockers=[], shared_complete_setup_and_final_IO_work_checked=True,
+        independent_singleton_data_review=pin(peer_path), exact_plan_and_seed_inverse_checked=True,
+        actual_unchanged13controls=route['actual_unchanged_control_capture'],
+        whole26_fixed_inputs_fresh=True, only_untrusted_proposal_authority=True,
+        excludes_gen1_and_ng5=True, physical_read_upper=entry['physical_upper'],
+        physical_paths_upper=31, complete_work_upper=entry['coarse_work_upper'])
+    rref = save(D/'Root_review.json', review)
+    gate = json.loads((D/'Root_gate_template.json').read_bytes())
+    gate.update(adopted=True, candidate_generation_only_authorized=True, Root_code_math_review=rref,
+        qualification='Fresh exact singleton proposal only; both complete prime cycles require the unchanged independent strict checker before any generation result.')
+    gref = save(D/'Root_gate.json', gate)
+    output = Path(plan['output_directory'])
+    assert not output.exists() and not output.parent.exists()
+    output.parent.mkdir(parents=True)
+    rows.append(dict(free_index=index, plan=route['plan'], gate=gref, data_directory=str(D)))
+print(json.dumps(dict(status='ROOT_RELEASED_TWO_EXACT_ELEVEN_SINGLETON_PROPOSALS', rows=rows,
+    strict_results_or_adoptions_acquired=False)))

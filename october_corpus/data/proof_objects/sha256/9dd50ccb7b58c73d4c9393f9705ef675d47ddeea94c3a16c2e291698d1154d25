@@ -1,0 +1,70 @@
+from pathlib import Path
+import copy, hashlib, json
+
+T = Path('/private/tmp/l026_invariant_subsets/full_proper_cap')
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def check(r):
+    assert pin(Path(r['path'])) == r, r['path']
+
+summary = json.loads((T/'remaining_singleton_data.json').read_bytes())
+check(summary['parent_plan'])
+parent = json.loads(Path(summary['parent_plan']['path']).read_bytes())
+controls_path = T/'runtime/control_guard/stdout.log'
+controls = json.loads(controls_path.read_bytes())
+assert controls['status'] == 'PASS' and controls['controls'] == 19
+assert controls['worker'] == parent['program']
+out = []
+for route in summary['instances']:
+    check(route['handoff'])
+    h = json.loads(Path(route['handoff']['path']).read_bytes())
+    for key in ('plan', 'resume', 'resume_provenance', 'invoice', 'program', 'point_kernel', 'subset_kernel', 'supplier', 'controls'):
+        check(h[key])
+    p = Path(h['plan']['path'])
+    D = p.parent
+    plan = json.loads(p.read_bytes())
+    assert set(plan) == set(parent)
+    changed = {k for k in parent if parent[k] != plan[k]}
+    assert changed <= set(h['exact_parent_plan_inverse_fields'])
+    index = route['free_index']
+    assert index in (3, 5, 10) and plan['selected_free_indices'] == [index]
+    assert plan['window_start'] == index and plan['maximum_records'] == 1
+    assert plan['maximum_subset_points'] == 3509 and plan['mode'] == 'propose'
+    assert plan['resume'] == h['resume'] and Path(plan['output_directory']).parent == D
+    assert not Path(plan['output_directory']).exists()
+    for r in plan['inputs']:
+        check(r)
+    prov = json.loads(Path(h['resume_provenance']['path']).read_bytes())
+    for key in ('original_actual_capture', 'original_checkpoint', 'original_result', 'original_plan'):
+        check(prov[key])
+    old = json.loads(Path(prov['original_checkpoint']['path']).read_bytes())
+    note = next(n for n in old['notes'] if n['free_index'] == index)
+    assert note == prov['original_note'] and note['outcome'] == 'cap_miss'
+    assert len(note['points']) == 512
+    assert 2*note['next_vertex'] + note['next_generator'] == route['complete_edges'] == prov['complete_edge_prefix_retained']
+    expected = copy.deepcopy(old)
+    expected['selected_free_indices'] = [index]
+    expected['maximum_subset_points'] = 3509
+    expected['notes'] = [dict(note, outcome='unfinished')]
+    assert json.loads(Path(h['resume']['path']).read_bytes()) == expected
+    bill = json.loads(Path(h['invoice']['path']).read_bytes())
+    assert bill['producer_total_units_upper'] == route['work_upper'] < 10000000
+    assert bill['complete_physical_bytes_upper'] == route['physical_upper'] < 8*2**20
+    assert bill['physical_paths_upper'] == 28
+    assert bill['mathematical_namespace_bytes'] == 41143 < 50000
+    review = json.loads((D/'Root_review_template.json').read_bytes())
+    check(review['previous_actual_Source_review'])
+    review.update(status='SUPPORTED', blockers=[], G_transitivity_and_even_subgroup_proof_reviewed=True,
+        complete_singleton_plan_and_resume_inverse_checked=True,
+        retained_complete_edges=route['complete_edges'], same_source_actual19controls=pin(controls_path),
+        no_previous_paid_owner_or_completed_index1_selected=True, new_case_calls_authorized=False)
+    q = D/'Root_data_review.json'
+    body = (json.dumps(review, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    with q.open('xb') as f:
+        f.write(body)
+    out.append(dict(free_index=index, review=pin(q), plan=h['plan'], complete_edges_retained=route['complete_edges']))
+print(json.dumps(dict(status='ROOT_THREE_SEPARATE_SINGLETON_DATA_REVIEWS_SUPPORTED', rows=out,
+    scientific_calls=0, Root_gates_not_issued=True)))

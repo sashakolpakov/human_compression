@@ -1,0 +1,38 @@
+from pathlib import Path
+import hashlib, json, os, subprocess, sys
+
+T = Path('/private/tmp/l026_generation_ip_adoption')
+P = T/'validate.py'
+SHA = '6f44e709853c09545fb3be7197986cd8cb0714af7fac22b74043b418954a368d'
+assert hashlib.sha256(P.read_bytes()).hexdigest() == SHA
+base = (T/'plan.json').read_bytes()
+assert hashlib.sha256(base).hexdigest() == '8bbff1a0c139e262da3eb34cc16f73cdd5ebd4cc6ce34153da165a4a713bb1d5'
+D = T/'focused_controls'
+D.mkdir()
+mutations = [
+    ('duplicate_positive_index', lambda p: p.update(positive_free_indices=[1, 1, 10]), 'one to three sorted actual'),
+    ('negative_index_is_not_positive', lambda p: p.update(positive_free_indices=[1, 3, 5]), 'one to three sorted actual'),
+    ('missing_middle_membership_role', lambda p: p['roles'].pop('operand_premises'), 'same thirteen original membership'),
+    ('old_negative_authority_substituted', lambda p: p.update(additional_subset_adoption=p['prior_subset_adoption']), 'actual adopted13-subset NEG frontier'),
+]
+rows = []
+for name, mutate, expected in mutations:
+    d = D/name; d.mkdir()
+    p = json.loads(base); mutate(p)
+    raw = (json.dumps(p, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    f = d/'plan.json'; f.write_bytes(raw)
+    child = [sys.executable, '-E', '-B', '-S', str(P), '--self-sha256', SHA,
+             '--plan', str(f), hashlib.sha256(raw).hexdigest(), '--out', str(d/'output')]
+    r = subprocess.run(child, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=25,
+                       check=False, env=dict(os.environ))
+    (d/'stdout.log').write_bytes(r.stdout); (d/'stderr.log').write_bytes(r.stderr)
+    assert r.returncode != 0 and expected.encode() in r.stderr and not (d/'output').exists(), (name, r.returncode, r.stderr)
+    rows.append(dict(name=name, child_argv=child, returncode=r.returncode,
+                     expected_refusal=expected, output_absent=True,
+                     stdout_bytes=len(r.stdout), stderr_bytes=len(r.stderr)))
+report = dict(schema='ROOT_L026_GEN3_IP_FOCUSED_METADATA_CONTROLS_V1', root='/root', status='PASS',
+              controls=rows, original_scientific_calls=0, original_metadata_inputs_unmodified=True,
+              qualification='Four negative metadata tests only. The actual positive metadata execution is separately retained; these controls confer no new mathematical verdict.')
+b = (json.dumps(report, sort_keys=True, separators=(',', ':'))+'\n').encode()
+(D/'report.json').write_bytes(b)
+print(json.dumps(dict(status='PASS', controls=len(rows), report=dict(path=str(D/'report.json'), bytes=len(b), sha256=hashlib.sha256(b).hexdigest()))))

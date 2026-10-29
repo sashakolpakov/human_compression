@@ -1,0 +1,173 @@
+"""Separate full proper-subset-cap edition by /root/compact_proof_author.
+Borrowed machinery and attribution are retained below. All previous files
+are immutable; new Root review, controls and exact case release remain owed.
+"""
+"""UNRUN synthetic controls only; no Fi22 case, model or group acquisition.
+Author /root/middle_dictionary_author. The26-point reflection fixture is
+copied literally with attribution from Compact's cycle-supplier controls.
+"""
+import argparse,copy,hashlib,json,resource,struct,sys,time
+from pathlib import Path
+START=time.monotonic()
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def tick():
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    need(rss<128*2**20 and time.monotonic()-START<60,'synthetic128MiB60s controls')
+
+def source(pair):
+    p=Path(pair[0]);b=p.read_bytes()
+    need(p.is_absolute()and p.resolve(strict=True)==p and len(b)<=32768
+         and hashlib.sha256(b).hexdigest()==pair[1],'whole bounded exact synthetic provider Source')
+    ns={'__name__':'synthetic_invariant_subset_provider','__file__':str(p)}
+    exec(compile(b,str(p),'exec'),ns)
+    return p,b,ns
+
+def refuse(call):
+    try:call()
+    except ValueError:return
+    raise ValueError('intended invalid generic certificate was accepted')
+
+def fixture():
+    n=26;I=list(range(n));d=I.copy();a=I.copy()
+    for start,p in[(0,11),(11,13)]:
+        for i in range(p):d[start+i]=start+(-i)%p;a[start+i]=start+(1-i)%p
+    c=a.copy();c[24],c[25]=25,24
+    tree=b''.join(struct.pack('<HHb',i,65535 if i==0 else 0,0 if i==0 else 1)for i in range(n))
+    return b'L026CYC1'+b''.join(struct.pack('<26H',*v)for v in[d,a,c,I,I])+tree
+
+class Cut:
+    def __init__(self,cap,Stop):self.units=0;self.cap=cap;self.Stop=Stop
+    def charge(self,n,label):
+        if n>self.cap-self.units:raise self.Stop('expected synthetic pre-operation stop')
+        self.units+=n
+
+def large_fixture(transitive=False):
+    """Synthetic3510 labels only; never a Fi22/model/membership fixture."""
+    n=3510;I=list(range(n))
+    if transitive:
+        d=[(-i)%n for i in range(n)]
+        a=[(1-i)%n for i in range(n)]
+        c=[(1+n//2-i)%n for i in range(n)]
+    else:
+        d=I.copy();a=I.copy()
+        for start,p in[(0,11),(11,13)]:
+            for i in range(p):d[start+i]=start+(-i)%p;a[start+i]=start+(1-i)%p
+        c=a.copy();c[24],c[25]=25,24
+    tree=b''.join(struct.pack('<HHb',i,65535 if i==0 else 0,0 if i==0 else 1)for i in range(n))
+    return b'L026CYC1'+b''.join(struct.pack('<3510H',*v)for v in[d,a,c,I,I])+tree
+
+
+def main():
+    a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--self-sha256',required=True)
+    for n in ('worker','point-kernel','subset-kernel','supplier'):a.add_argument('--'+n,nargs=2,required=True)
+    args=a.parse_args();own=Path(__file__).resolve(strict=True);ob=own.read_bytes()
+    need(hashlib.sha256(ob).hexdigest()==args.self_sha256 and len(ob)<=16384,'whole own control Source')
+    wp,wb,W=source(args.worker);kp,kb,K=source(args.point_kernel)
+    cp,cb,C=source(args.subset_kernel);up,ub,U=source(args.supplier)
+    work=W['Work'](tick);ctx=K['decode_operands'](fixture(),work,26,0)
+    paths=K['prepare_triangle'](ctx,(0,1,2),work);names=[]
+    fact=C['check_subset'](K,ctx,(0,1,2),list(range(11)),work,25)
+    need(fact==dict(points=11,checked_positive_rotation_edges=22),'whole genuine synthetic closed11 set')
+    names.append('actual_point_kernel_proper11_point_set_closes_under_both_rotations')
+    need(C['check_subset'](K,ctx,(0,1,2),list(range(11,24)),work,25)['points']==13,'closed synthetic13 set')
+    names.append('second_disjoint_synthetic13_point_set_also_closes')
+    refuse(lambda:C['check_subset'](K,ctx,(0,1,2),list(range(10)),work,25))
+    names.append('missing_an_actual_rotation_image_rejected')
+    for points in ([],[True], [1,0], [0,0],list(range(26))):
+        refuse(lambda points=points:C['check_subset'](K,ctx,(0,1,2),points,work,25))
+    names.append('empty_boolean_unsorted_duplicate_and_whole_frame_sets_rejected')
+    seen=[];wrapped=dict(K)
+    def edge(ctx,paths,letters,point,work):
+        seen.append((point,tuple(letters)));return K['rotation_word'](ctx,paths,letters,point,work)
+    wrapped['rotation_word']=edge
+    C['check_subset'](wrapped,ctx,(0,1,2),list(range(11)),work,25)
+    need(seen==[(p,(g,))for p in range(11)for g in(1,2)],'no skipped actual closure edge')
+    names.append('every_positive_ab_and_bc_edge_checked_once_in_order')
+    note=U['cursor'](None,0,7,'a'*64,26,16,0,work);U['explore'](K,ctx,paths,note,work,16)
+    need(note['outcome']=='closed_hint'and sorted(note['points'])==list(range(11)),'finite complete orbit hint')
+    C['check_subset'](K,ctx,(0,1,2),sorted(note['points']),work,16)
+    names.append('bounded_supplier_hint_is_separately_strictly_checked')
+    miss=U['cursor'](None,0,7,'a'*64,26,10,0,work);U['explore'](K,ctx,paths,miss,work,10)
+    need(miss['outcome']=='cap_miss'and len(miss['points'])==10,'only unpaid supplier cap miss')
+    names.append('orbit_growth_past_cap_never_expands_or_claims_absence')
+    stop=U['cursor'](None,0,7,'a'*64,26,16,0,work);before=copy.deepcopy(stop)
+    try:U['explore'](K,ctx,paths,stop,Cut(0,W['SearchStop']),16)
+    except W['SearchStop']:pass
+    else:raise ValueError('zero funded search did not stop')
+    need(stop==before,'preedge stop retains exact initial cursor')
+    names.append('preedge_stop_retains_exact_unvisited_frontier')
+    partial=U['cursor'](None,0,7,'a'*64,26,16,0,work)
+    try:U['explore'](K,ctx,paths,partial,Cut(110,W['SearchStop']),16)
+    except W['SearchStop']:pass
+    else:raise ValueError('intended partial synthetic frontier did not stop')
+    need(partial['next_vertex']==0 and partial['next_generator']==1 and len(partial['points'])==2,
+         'one complete returned edge retained before interruption')
+    seen.clear();resumed=U['cursor'](partial,0,7,'a'*64,26,16,0,work)
+    U['explore'](wrapped,ctx,paths,resumed,work,16)
+    need(resumed['outcome']=='closed_hint'and (0,(1,))not in seen,'complete edge prefix is not repeated')
+    names.append('resume_preserves_complete_edges_and_finishes_the_same_bounded_frontier')
+    false=dict(note,points=[0,1],next_vertex=2,next_generator=0)
+    inherited=U['cursor'](false,0,7,'a'*64,26,16,0,work)
+    refuse(lambda:C['check_subset'](K,ctx,(0,1,2),sorted(inherited['points']),work,16))
+    names.append('well_formed_false_closed_cursor_gets_no_strict_authority')
+    for bad in (dict(note,next_vertex=True),dict(note,points=[0,0]),dict(note,owner=8)):
+        refuse(lambda bad=bad:U['cursor'](bad,0,7,'a'*64,26,16,0,work))
+    names.append('foreign_owner_duplicate_point_and_boolean_cursor_rejected')
+    refs={k:dict(path='/synthetic/'+k,bytes=1,sha256='0'*64)for k in('original_input','bridge_adoption','bridge_certificate','maximal_orders')}
+    prem=dict(original_input=refs['original_input'],whole_old_proof_roles=dict(input_root=refs['original_input'],bridge_root=refs['bridge_adoption'],bridge_carrier=refs['bridge_certificate']))
+    roots=dict(schema='ROOT_L026_FI22_NORMAL_AMBIENT_INPUT_ACCEPTANCE_V1',root='/root',status='ROOT_ACCEPTED_CONDITIONAL_FI22_NORMAL_AMBIENT_INPUTS',full_Aut_conditional_on_named_Fi22_and_Out2=True,summary=dict(degree=3510,group_order=64561751654400,ambient_order=129123503308800))
+    br=dict(schema='ROOT_ACCEPTED_FI22_ORIGINAL_POINT_ACTION_BRIDGE_V1',root='/root',adopted=True,strict_Saved_status='VERIFIED',input_gate=refs['original_input'],saved_certificate=refs['bridge_certificate'])
+    bridge=dict(schema='FI22_ORIGINAL_3TRANSPOSITION_ACTION_BRIDGE_V1',status='VERIFIED',input_gate=refs['original_input'],premises=dict(original_G_normal_in_A=True,same_accepted_original_degree3510_action=True),point_action=dict(root=2961,vertices=[2961]+[i for i in range(3510)if i!=2961],parents=[None]+[0]*3509,labels=[0]+[1]*3509))
+    docs=dict(original_input=roots,bridge_adoption=br,bridge_certificate=bridge,maximal_orders=dict(rows=[dict(order=18393661440)]))
+    class Docs:
+        def doc(self,r):return docs[r['path'].rsplit('/',1)[-1]]
+    imports=dict(premises=prem,qualification='Synthetic metadata fields, no named model')
+    need(W['transitivity'](dict(roles=refs),Docs(),work,imports)['G_transitivity_derived']is True,'synthetic exact normal/minimal-index join')
+    names.append('normal_index_two_plus_complete_minimal_index_not_A_transitivity_alone')
+    docs['maximal_orders']['rows'][0]['order']=64561751654400//1755
+    refuse(lambda:W['transitivity'](dict(roles=refs),Docs(),work,imports))
+    names.append('hypothetical_proper_index1755_is_explicitly_rejected')
+    docs['maximal_orders']['rows'][0]['order']=18393661440
+    docs['bridge_adoption']['adopted']=False
+    refuse(lambda:W['transitivity'](dict(roles=refs),Docs(),work,imports))
+    names.append('unadopted_point_bridge_rejected_before_transitivity_conclusion')
+    # New large-cap controls use explicit generic permutation actions only.
+    large=K['decode_operands'](large_fixture(),work,3510,0)
+    need(C['check_subset'](K,large,(0,1,2),list(range(1025)),work,3509)['points']==1025,
+         'a strict positive proper set may exceed the old1024 cap')
+    names.append('proper_closed1025_point_set_is_supported_by_the_new_cap')
+    large_count=[0];large_wrapped=dict(K)
+    def large_edge(ctx,paths,letters,point,work):
+        i=large_count[0]
+        need((point,tuple(letters))==(i//2,(i%2+1,)),'every large-set positive edge in literal order')
+        large_count[0]+=1
+        return K['rotation_word'](ctx,paths,letters,point,work)
+    large_wrapped['rotation_word']=large_edge
+    need(C['check_subset'](large_wrapped,large,(0,1,2),list(range(3509)),work,3509)==
+         dict(points=3509,checked_positive_rotation_edges=7018)and large_count[0]==7018,
+         'all7018 actual positive edges of a maximum proper supplied set')
+    names.append('maximum_proper3509_point_set_checks_all7018_edges')
+    for points,cap in[(list(range(3510)),3509),(list(range(3509)),3510),([0],True)]:
+        refuse(lambda points=points,cap=cap:C['check_subset'](K,large,(0,1,2),points,work,cap))
+    names.append('whole3510_set_improper_cap_and_boolean_cap_remain_rejected')
+    transitive=K['decode_operands'](large_fixture(True),work,3510,0)
+    refuse(lambda:C['check_subset'](K,transitive,(0,1,2),list(range(3509)),work,3509))
+    names.append('large_supplied_set_missing_an_actual_rotation_image_is_rejected')
+    transitive_paths=K['prepare_triangle'](transitive,(0,1,2),work)
+    full=U['cursor'](None,0,7,'a'*64,3510,3509,0,work)
+    U['explore'](K,transitive,transitive_paths,full,work,3509)
+    need(full['outcome']=='cap_miss'and len(full['points'])==3509,
+         'a generic full3510 orbit stops unpaid at3509, never proving generation')
+    names.append('generic_full3510_orbit_remains_an_unpaid_cap_miss')
+    for p,b in[(own,ob),(wp,wb),(kp,kb),(cp,cb),(up,ub)]:need(p.read_bytes()==b,'whole synthetic Source subjects unchanged')
+    def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+    print(json.dumps(dict(schema='L026_INVARIANT_SUBSET_GENERIC_CONTROLS_V1',status='PASS',author='/root/compact_proof_author',
+         program=ref(own,ob),worker=ref(wp,wb),point_kernel=ref(kp,kb),subset_kernel=ref(cp,cb),supplier=ref(up,ub),
+         controls=len(names),names=names,original_case_calls=0,original_model_Reader_group_or_classification_calls=0,
+         shared_generic_units=work.units,complete_Source_read_bytes=3*len(ob)+2*(len(wb)+len(kb)+len(cb)+len(ub)),
+         qualification='Synthetic26- and3510-point permutation subsets/cursors and synthetic3510-field metadata joins only. No original action edge, membership, transitivity or case credit acquired.'),sort_keys=True))
+
+if __name__=='__main__':main()

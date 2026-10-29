@@ -1,0 +1,82 @@
+from pathlib import Path
+import hashlib, json
+
+T = Path('/private/tmp/l026_generation_ip_adoption')
+def read(p): return json.loads(p.read_bytes())
+def pin(p):
+    b=p.read_bytes(); return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+p=read(T/'plan.json'); h=read(T/'handoff.json')
+cap=read(T/'actual_validation/actual_capture.json')
+frames=cap['all_genuine_api_frames']
+assert cap['actual_tool']['exit_code']==frames[-1]['exit_code']==0
+guard=read(T/'actual_validation/guard/receipt.json')
+assert guard['status']=='PASS' and guard['stop']=='RETURNED' and guard['returncode']==0
+assert guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+assert guard['limits']['total_rss']==256*2**20 and guard['limits']['wall_seconds']==130
+stdout=read(T/'actual_validation/guard/stdout.log')
+assert stdout['status']=='VALIDATED_UNADOPTED_GENERATION_AND_SEPARATE_RANK3_IP_METADATA'
+assert stdout['Root_adoption'] is False and stdout['new_scientific_calls']==0
+outputs=stdout['outputs']
+assert set(outputs)=={'detail.json','partition.json','validation.json'}
+for name, ref in outputs.items():
+    assert pin(Path(ref['path']))==ref
+    assert Path(ref['path'])==T/'actual_validation/output'/name
+d=read(Path(outputs['detail.json']['path'])); q=read(Path(outputs['partition.json']['path'])); v=read(Path(outputs['validation.json']['path']))
+assert d['validator']==v['program']==h['program'] and d['plan']==v['plan']==h['plan']
+assert d['adopted'] is False and d['Root_adoption_owed'] is True and v['Root_adoption'] is False
+facts=d['new_generation_facts']
+assert [f['free_index'] for f in facts]==[1,3,10]
+assert [f['owner'] for f in facts]==[1,3,11]
+assert facts==q['exact_new_original_owner_rows']
+assert d['new_GENERATING_product_components']==d['new_same_marking_rank3_IP_components']==3
+assert d['new_GENERATING_middle_mass']==3072
+assert d['prior_nongenerating_count']==17701 and d['prior_nongenerating_mass']==6897970
+assert d['unresolved_original_free_components_after_Root_adoption']==q['remaining_without_other_generation_registration']==28892
+assert d['unresolved_middle_mass_after_Root_adoption']==q['remaining_middle_mass']==29585408
+assert 17701+3+28892==46596 and 6897970+3072+29585408==36486450
+neg=read(Path(p['additional_subset_adoption']['path']))
+assert d['whole_latest_negative_acceptance']==neg
+assert neg['total_nongenerating_components']==q['unchanged_total_NEG_count']==17701
+ip=d['separate_existing_rank3_IP_composition']
+assert ip['theorem']==p['rank3_IP_theorem'] and ip['review']==p['rank3_IP_review']
+assert ip['marking_indices']==[1,3,10] and ip['strict_results_IPcredit0_unchanged'] is True
+assert all(value is True for value in ip['hypotheses'].values())
+assert ip['new_point_word_group_or_proof_search_calls']==0
+assert d['initial16_progress_complete_after_Root_adoption'] is True
+assert d['strict_consumer_IPcredit0_unchanged'] is True
+assert d['reversal_other_endpoint_whole_census_Original_conjecture_Lean_or_measurement_credit']==0
+for f,run in zip(facts,p['strict_runs']):
+    assert f['strict_result']==run['strict']['result'] and f['strict_carrier']==run['strict']['carrier']
+    assert f['strict_execution']==run['execution'] and f['durable_scientific_evidence']==run['durable_evidence']
+    assert f['original_strict_IP_credit_retained']==0 and f['rank3_IP_by_separate_retained_theorem_composition'] is True
+    r=read(Path(f['strict_result']['path']))
+    assert r['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0
+expected={r['path']:r for r in p['inputs']+[h['program'],h['plan']]}
+assert {r['path']:r for r in v['whole_actual_inputs']}==expected
+assert v['physical_paths']==267 and v['physical_read_bytes']<=5695192
+assert v['new_generation_rows']==3 and v['strict_result_IP_fields_modified'] is False
+control=read(T/'focused_controls/report.json')
+assert control['status']=='PASS' and len(control['controls'])==4
+assert all(x['returncode']!=0 and x['output_absent'] for x in control['controls'])
+cg=read(T/'focused_controls_guard/receipt.json')
+assert cg['status']=='PASS' and cg['cleanup']['remaining']==cg['cleanup']['errors']==[]
+review=dict(schema='ROOT_REVIEWED_L026_GEN3_IP_EXACT_METADATA_OUTPUTS_V1', root='/root', status='SUPPORTED', blockers=[],
+    program=h['program'], plan=h['plan'], outputs=outputs, source_review=pin(T/'runtime/Root_source_data_review.json'),
+    source_review_failed_parent_assertion_capture=pin(T/'runtime/Root_source_data_review_actual_capture.json'),
+    fresh_parent_closure=pin(T/'runtime/Root_review_parent_closure_actual_capture.json'),
+    actual_metadata_capture=pin(T/'actual_validation/actual_capture.json'),
+    independent_review=pin(T/'independent_review/independent_review.json'),
+    focused_negative_metadata_controls=pin(T/'focused_controls/report.json'),
+    actual_focused_control_capture=pin(T/'runtime/focused4_controls_actual_capture.json'),
+    actual_metadata_bytes=v['physical_read_bytes'], actual_metadata_paths=v['physical_paths'],
+    first16_complete=True, separate_generation=3, separate_existing_theorem_IP=3,
+    old_NEG_17701_unchanged=True, all_strict_result_IP0_fields_unchanged=True,
+    remaining_product_components=28892, remaining_original_middle_mass=29585408,
+    prospective_only=True, metadata_and_scientific_retention_before_publication_required=True,
+    whole_original_conjecture_Lean_or_measurement_credit=0)
+out=T/'runtime/Root_output_review.json'
+b=(json.dumps(review,sort_keys=True,separators=(',',':'))+'\n').encode()
+with out.open('xb') as f: f.write(b)
+print(json.dumps(dict(status='ROOT_GEN3_IP_OUTPUTS_REVIEW_SUPPORTED',review=pin(out),
+    new_generation=3,separate_IP=3,unchanged_NEG=17701,remaining=28892,actual_metadata_read=v['physical_read_bytes'])))

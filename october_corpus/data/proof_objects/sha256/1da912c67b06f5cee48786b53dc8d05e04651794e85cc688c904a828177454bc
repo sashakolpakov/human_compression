@@ -1,0 +1,103 @@
+from pathlib import Path
+import ast, hashlib, json
+
+T = Path('/private/tmp/l026_generation_ip_adoption')
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def check(r):
+    assert pin(Path(r['path'])) == r, r['path']
+
+def defs(text):
+    return {n.name: ast.get_source_segment(text, n) for n in ast.parse(text).body
+            if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+
+h = json.loads((T/'handoff.json').read_bytes())
+for r in h.values():
+    if isinstance(r, dict) and set(r) == {'path', 'bytes', 'sha256'}:
+        check(r)
+i = json.loads((T/'source_inverse.json').read_bytes())
+check(i['parent']); check(i['child'])
+old, new = i['old_whole_text'], i['new_whole_text']
+assert Path(i['parent']['path']).read_text() == old
+assert Path(i['child']['path']).read_text() == new
+ol, nl = old.splitlines(True), new.splitlines(True)
+op = np = 0
+for tag, a, b, c, d in i['line_opcodes']:
+    assert a == op and c == np
+    assert 0 <= a <= b <= len(ol) and 0 <= c <= d <= len(nl)
+    if tag == 'equal': assert ol[a:b] == nl[c:d]
+    elif tag == 'insert': assert a == b
+    elif tag == 'delete': assert c == d
+    else: assert tag == 'replace'
+    op, np = b, d
+assert op == len(ol) and np == len(nl)
+od, nd = defs(old), defs(new)
+assert i['literal_definitions'] == h['ten_literal_parent_definitions']
+assert len(i['literal_definitions']) == 10
+for name in i['literal_definitions']: assert od[name] == nd[name], name
+assert set(nd)-set(od) == set(i['new_definitions'])
+assert {n for n in od.keys() & nd.keys() if od[n] != nd[n]} == set(i['changed_definitions'])
+p = json.loads((T/'plan.json').read_bytes())
+assert p['program'] == h['program'] and p['positive_free_indices'] == [1, 3, 10]
+assert len(p['inputs']) == 265
+assert len({r['path'] for r in p['inputs']}) == 265
+for r in p['inputs']: check(r)
+family = json.loads(Path(h['actual_family_evidence']['path']).read_bytes())
+assert len(family['files']) == 123
+for row in family['files']:
+    o, r = row['original'], row['retained']
+    check(r)
+    assert (o['bytes'], o['sha256']) == (r['bytes'], r['sha256'])
+assert [r['free_index'] for r in p['strict_runs']] == [1, 3, 10]
+owners = []
+for row in p['strict_runs']:
+    s = row['strict']; result = json.loads(Path(s['result']['path']).read_bytes())
+    receipt = json.loads(Path(row['execution']['receipt']['path']).read_bytes())
+    cap = json.loads(Path(row['execution']['capture']['path']).read_bytes())
+    assert result['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit'] == 0
+    assert result['program'] == p['supported']['consumer']
+    assert result['status'] == 'VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'
+    assert receipt['status'] == 'PASS' and receipt['stop'] == 'RETURNED'
+    assert receipt['cleanup']['errors'] == receipt['cleanup']['remaining'] == []
+    assert cap['actual_tool']['exit_code'] == cap['all_genuine_api_frames'][-1]['exit_code'] == 0
+    v = result['verified_generation_records'][0]
+    assert v['free_index'] == row['free_index'] and v['original_product_mass'] == 1024
+    owners.append(v['owner'])
+assert owners == [1, 3, 11]
+peer_path = T/'independent_review/independent_review.json'
+peer = json.loads(peer_path.read_bytes())
+assert pin(peer_path)['sha256'] == 'c894a89db7c11bdeee78df47006513273636279a77c093601f5d22b754b74afc'
+assert peer['status'] == 'SUPPORTED' and peer['blockers'] == []
+assert peer['program'] == h['program'] and peer['plan'] == h['plan']
+assert h['program']['bytes'] + 2*(sum(r['bytes'] for r in p['inputs']) + h['program']['bytes'] + h['plan']['bytes']) <= h['complete_physical_read_upper']
+assert len(p['inputs']) + 2 == h['complete_physical_paths_upper'] == 267
+negative = json.loads(Path(p['additional_subset_adoption']['path']).read_bytes())
+assert negative['total_nongenerating_components'] == 17701
+ip = json.loads(Path(p['rank3_IP_review']['path']).read_bytes())
+assert ip['status'] == 'SUPPORTED' and ip['blockers'] == []
+review = dict(schema='ROOT_REVIEWED_L026_GEN3_SEPARATE_IP_METADATA_SOURCE_DATA_V1', root='/root',
+    status='SUPPORTED', blockers=[], program=h['program'], plan=h['plan'],
+    all_new_or_changed_definitions_and_full_main_read=True, full_source_inverse_checked=True,
+    literal_parent_definitions=10, whole_fixed_inputs=265, full_retained_pairs=123,
+    actual_strict_indices=[1, 3, 10], actual_original_owners=owners,
+    actual_15_control_and_all_strict_closures_checked=True,
+    independent_review=pin(peer_path), existing_rank3_IP_theorem=p['rank3_IP_theorem'],
+    separate_IP_reuse_review=p['rank3_IP_review'], all_strict_zero_IP_fields_unchanged=True,
+    original_model_member_middle_involution_string_and_two_fibre_premises_explicit=True,
+    nonfree_17688_and_subset13_negatives_unchanged=True, prospective_generation_count=3,
+    prospective_separate_IP_count=3, prospective_remaining=28892,
+    prospective_remaining_middle_mass=29585408, physical_read_upper=5695192,
+    physical_paths_upper=267, scientific_calls=0, adopted=False,
+    qualification='Metadata review of three already closed generation proofs and a separate application of the retained rank-three theorem. The existing strict results are not retagged. Original model and classification premises remain explicit; no whole-original, census, reversal, conjecture, Lean or compression credit.')
+(T/'runtime').mkdir(exist_ok=True)
+out = T/'runtime/Root_source_data_review.json'
+b = (json.dumps(review, sort_keys=True, separators=(',', ':'))+'\n').encode()
+with out.open('xb') as f: f.write(b)
+parent = T/'actual_validation'
+assert not parent.exists()
+parent.mkdir()
+print(json.dumps(dict(status='ROOT_GEN3_METADATA_SOURCE_DATA_REVIEW_SUPPORTED', review=pin(out),
+    actual_validation_and_separate_adoption_still_owed=True)))

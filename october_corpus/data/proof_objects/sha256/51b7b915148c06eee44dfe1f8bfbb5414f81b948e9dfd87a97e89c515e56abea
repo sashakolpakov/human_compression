@@ -1,0 +1,216 @@
+"""UNRUN bounded DATA materializer for explicit curated October proof packets.
+
+No mathematical Source is imported. Explicit <=8MiB payload chunks stage in T.
+Install needs a separate exact Root release and creates/reuses declared files
+without deleting or overwriting any existing public artifact. Git is external.
+Author /root/compact_proof_author.
+"""
+import argparse,hashlib,json,math,os,resource,stat,sys,time
+from pathlib import Path,PurePosixPath
+START=time.monotonic();READ=0;WRITTEN=0;MIB=2**20
+FORBIDDEN={'.pyc','.pyo','.olean','.ilean','.o','.a','.so','.dylib','.aux','.fls','.fdb_latexmk','.toc','.pid'}
+BADPARTS={'.git','__pycache__','.lake','.venv','.build','.pytest_cache','scratch'}
+
+def need(ok,why):
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ if not ok:raise ValueError(why)
+ if rss>=256*MIB or time.monotonic()-START>=240:raise RuntimeError('256MiB240s DATA exporter bound')
+
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique JSON keys');out[k]=v
+  return out
+ def finite(s):
+  value=float(s);need(math.isfinite(value),'finite JSON');return value
+ return json.loads(raw,object_pairs_hook=pairs,parse_float=finite,parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def shape(r):
+ need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+  and type(r['bytes'])is int and 0<=r['bytes']<=32*MIB and type(r['sha256'])is str
+  and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),'whole bounded physical descriptor')
+ return r
+
+def rel(s):
+ need(type(s)is str and s and s.isascii(),'literal relative ASCII path')
+ p=PurePosixPath(s);need(not p.is_absolute()and str(p)==s and not set(p.parts)&({'..','.'}|BADPARTS)
+  and p.suffix not in FORBIDDEN,'ordinary declared relative artifact, no build debris')
+ return Path(*p.parts)
+
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def whole(r,body=False,target=None):
+ global READ,WRITTEN
+ shape(r);p=Path(r['path']);a=p.lstat()
+ need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+  and a.st_size==r['bytes'],'canonical ordinary whole source')
+ need(p.suffix not in FORBIDDEN and not set(p.parts)&BADPARTS,'no compiler/cache artifact source')
+ need(not body or r['bytes']<=8*MIB,'bounded JSON before allocation')
+ need(READ+r['bytes']<=64*MIB,'64MiB cumulative DATA read limit')
+ h=hashlib.sha256();count=0;parts=[]if body else None;out=None
+ if target is not None:
+  need(WRITTEN+r['bytes']<=512*MIB,'512MiB total new content limit');out=target.open('xb')
+ try:
+  with p.open('rb')as f:
+   b=os.fstat(f.fileno())
+   while True:
+    chunk=f.read(MIB)
+    if not chunk:break
+    if count==0:
+     need(chunk[:4]not in(b'\x7fELF',b'\xfe\xed\xfa\xce',b'\xfe\xed\xfa\xcf',b'\xce\xfa\xed\xfe',b'\xcf\xfa\xed\xfe',b'\xca\xfe\xba\xbe'),
+      'compiled host executable is not a portable proof payload')
+    count+=len(chunk);need(count<=r['bytes'],'complete immutable source extent');h.update(chunk)
+    if parts is not None:parts.append(chunk)
+    if out is not None:need(out.write(chunk)==len(chunk),'whole exclusive content copy')
+   c=os.fstat(f.fileno())
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and count==r['bytes']and h.hexdigest()==r['sha256'],
+   'fresh full source bytes and stable identity')
+  if out is not None:out.flush();os.fsync(out.fileno());WRITTEN+=count
+ finally:
+  if out is not None:out.close()
+ READ+=count;return b''.join(parts)if body else dict(r)
+
+def actual(path,sha,cap=8*MIB):
+ p=Path(path);r=dict(path=str(p),bytes=p.stat().st_size,sha256=sha);need(r['bytes']<=cap,'bounded argument role');return r
+
+def fsync_dir(p):
+ fd=os.open(p,os.O_RDONLY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+
+def ancestry(path):
+ a=path
+ while not a.exists():a=a.parent
+ need(a.resolve(strict=True)==a,'canonical existing ancestry before directory creation')
+
+def mkdirs(path):
+ ancestry(path);missing=[];p=path
+ while not p.exists():missing.append(p);p=p.parent
+ for q in reversed(missing):q.mkdir();fsync_dir(q.parent)
+ need(path.resolve(strict=True)==path,'canonical final directory')
+
+def publish(path,raw):
+ need(not os.path.lexists(path),'exclusive new metadata output');mkdirs(path.parent)
+ with path.open('xb')as f:need(f.write(raw)==len(raw),'whole metadata publication');f.flush();os.fsync(f.fileno())
+ fsync_dir(path.parent);return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+def source_choice(row):
+ original=shape(row['source']);alternatives=[original]+row.get('reuse_sources',[])
+ for candidate in alternatives:
+  shape(candidate);need(candidate['bytes']==original['bytes']and candidate['sha256']==original['sha256'],
+   'reuse is exact whole content, never a guessed object')
+  if Path(candidate['path']).exists():whole(candidate);return candidate
+ raise FileNotFoundError('No declared complete physical source exists: '+original['path'])
+
+def plan_check(plan,own):
+ need(plan['schema']=='CURATED_OCTOBER_PROOF_EXPORT_PLAN_V1'and plan['program']==own
+  and plan['execution_authority_granted']is False and plan['scientific_calls']==0,
+  'explicit immutable DATA selection, no proof/role authority')
+ need(type(plan['payloads'])is list and len(plan['payloads'])<=4096 and len(plan['packets'])<=8,
+  'finite selected content only, no ambient directory mirror')
+ paths={};total=0
+ for row in plan['payloads']:
+  path=str(rel(row['target']));r=shape(row['source'])
+  need(path not in paths,'one exact selected destination');paths[path]=r;total+=r['bytes']
+  need(type(row['role'])is str and row['role']in('mathematical_source','mathematical_data','archived_evidence','navigation','integrity_verifier'),
+   'explicit portable role; host runtime is not a content artifact')
+  for original in row['originals']:shape(original);need(original['bytes']==r['bytes']and original['sha256']==r['sha256'],
+   'every original mapping retains exact full content')
+ need(total<=512*MIB,'512MiB finite payload maximum')
+ for name in paths:
+  need(not any(str(p)in paths for p in Path(name).parents if str(p)!='.'),'no file/directory collision')
+ return paths,total
+
+def manifests(plan):
+ out={}
+ for packet in plan['packets']:
+  path=rel(packet['manifest_path']);members=[r for r in plan['payloads']if packet['id']in r['packets']]
+  need(packet['id']and members and packet['scientific_replay_status']=='NOT_ACQUIRED_BY_THIS_EXPORT',
+   'packet integrity and scientific replay are separate')
+  value=dict(schema='CURATED_PORTABLE_PROOF_PACKET_MANIFEST_V1',packet=packet['id'],
+   files=[dict(path=r['target'],bytes=r['source']['bytes'],sha256=r['source']['sha256'],role=r['role'])for r in members],
+   original_to_relative=[dict(original=o,relative=r['target'])for r in members for o in r['originals']],
+   packed_members=packet['packed_members'],proof_banks=packet['proof_banks'],scope=packet['scope'],premises=packet['premises'],
+   scientific_replay_status=packet['scientific_replay_status'],whole_original_credit=0,conjecture_credit=0,Lean_credit=0,compression_credit=0,
+   qualifications=['Only declared relative files may be read; original machine paths are opaque provenance.','Whole file/body integrity does not establish the mathematical predicates or named-model premises.','No compiled host runtime, prior Source verdict or future computation is silently substituted.'])
+  raw=can(value);need(len(raw)<=8*MIB,'bounded complete portable manifest');out[str(path)]=raw
+ return out
+
+def chunks(plan):
+ out=[];rows=[];size=0
+ for row in plan['payloads']:
+  extent=row['source']['bytes'];need(extent<=8*MIB,'each selected payload fits one8MiB chunk')
+  if rows and size+extent>8*MIB:out.append(rows);rows=[];size=0
+  rows.append(row);size+=extent
+ if rows:out.append(rows)
+ return out
+
+def main():
+ global READ
+ ap=argparse.ArgumentParser(allow_abbrev=False)
+ ap.add_argument('mode',choices=['stage-chunk','finalize-stage','install-chunk','finalize-install'])
+ ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--out',required=True)
+ ap.add_argument('--chunk',type=int);ap.add_argument('--self-sha256',required=True)
+ ap.add_argument('--Root-release',nargs=2);a=ap.parse_args()
+ own=actual(str(Path(__file__).resolve()),a.self_sha256,65536)
+ # Python's initial source loader is charged separately from explicit reads.
+ READ+=own['bytes'];whole(own)
+ pr=actual(*a.plan);plan=decode(whole(pr,True));paths,total=plan_check(plan,own)
+ need(plan['limits']['cumulative_physical_read_bytes']==64*MIB
+  and plan['limits']['payload_bytes_per_copy_invocation']==8*MIB,'explicit bounded chunk DATA ABI')
+ groups=chunks(plan);out=Path(a.out)
+ need(out.is_absolute()and '..'not in out.parts,'literal absolute destination');ancestry(out)
+ if a.mode in('stage-chunk','finalize-stage'):
+  need(out.is_relative_to('/private/tmp')and a.Root_release is None,'T-only staging; no S/W authority')
+ else:
+  need(a.Root_release is not None and out==Path(plan['public_corpus_root']),'exact separate public installation')
+  rr=actual(*a.Root_release,cap=65536);release=decode(whole(rr,True))
+  need(release['schema']=='ROOT_RELEASE_CURATED_PORTABLE_EXPORT_V1'and release['root']=='/root'
+   and release['adopted']is True and release['program']==own and release['plan']==pr and release['blockers']==[]
+   and release['full_selection_mapping_and_archive_roles_reviewed']is True
+   and release['file_copy_only_no_mathematical_or_Git_authority']is True,
+   'fresh exact Root copy release; no author self-approval')
+ if a.mode.endswith('chunk'):
+  need(type(a.chunk)is int and 0<=a.chunk<len(groups),'one explicit zero-based chunk')
+  selected=groups[a.chunk];selected_bytes=sum(r['source']['bytes']for r in selected)
+  free=os.statvfs(out if out.exists()else out.parent)
+  need(free.f_bavail*free.f_frsize>=2*selected_bytes+512*MIB,'bounded chunk disk reserve')
+  choices=[source_choice(row)for row in selected]
+  for row in selected:
+   target=out/rel(row['target'])
+   if target.exists():whole(dict(path=str(target),bytes=row['source']['bytes'],sha256=row['source']['sha256']))
+  mkdirs(out);copied=0;reused=0
+  for row,source in zip(selected,choices):
+   target=out/rel(row['target']);r=dict(path=str(target),bytes=source['bytes'],sha256=source['sha256'])
+   if target.exists():whole(r);reused+=1;continue
+   mkdirs(target.parent);whole(source,target=target);fsync_dir(target.parent);whole(r);copied+=1
+  for source in choices:whole(source)
+  result=dict(chunk=a.chunk,chunks=len(groups),payload_files=len(selected),payload_bytes=selected_bytes,
+   copied=copied,reused=reused,complete_packet=False,qualification='One declared copy chunk only; no packet manifest or complete verification claimed.')
+ else:
+  need(a.chunk is None and out.exists()and out.resolve(strict=True)==out,'finalize an existing canonical tree')
+  # Authenticate every CURRENT copied payload exactly once here. Original
+  # source bytes were first/final authenticated by each chunk; their old
+  # path names confer no authority and are never opened by finalization.
+  for row in plan['payloads']:
+   whole(dict(path=str(out/rel(row['target'])),bytes=row['source']['bytes'],sha256=row['source']['sha256']))
+  meta=manifests(plan)
+  for name,raw in meta.items():
+   target=out/rel(name)
+   if target.exists():whole(dict(path=str(target),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()))
+  for name,raw in meta.items():
+   target=out/rel(name)
+   if not target.exists():publish(target,raw)
+   whole(dict(path=str(target),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()))
+  result=dict(payload_files=len(paths),payload_bytes=total,chunks=len(groups),complete_packet=True,
+   manifests=[dict(path=str(out/rel(n)),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())for n,raw in meta.items()],
+   qualification='Every declared destination whole-hashed in this invocation. Separate relative archive integrity and fresh mathematical replay remain owed.')
+ whole(pr);whole(own);need(READ<=64*MIB,'complete64MiB chunk/finalization read invoice')
+ result.update(schema='CURATED_PORTABLE_CHUNK_EXPORT_DATA_RESULT_V1',mode=a.mode,plan=pr,program=own,
+  output=str(out),physical_read_bytes=READ,new_content_bytes=WRITTEN,scientific_or_Source_calls=0,
+  Root_mathematical_or_Git_authority_granted=False,git_mutations=0)
+ print(json.dumps(result,sort_keys=True))
+
+if __name__=='__main__':main()

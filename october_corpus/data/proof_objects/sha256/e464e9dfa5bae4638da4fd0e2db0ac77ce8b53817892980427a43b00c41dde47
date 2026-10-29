@@ -1,0 +1,134 @@
+"""Reviewer-owned stdlib byte/JSON audit only. Never imports a candidate."""
+import ast, hashlib, json, pathlib, stat
+D=pathlib.Path('/private/tmp/fi22_generation_certificates_export')
+W=pathlib.Path('/Users/sasha/medusa/human_compression/october_corpus')
+cache={}
+def need(ok,label):
+    if not ok: raise AssertionError(label)
+def can(v):return (json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def ref(p):
+    p=pathlib.Path(p);b=p.read_bytes()
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def whole(r):
+    key=(r['path'],r['bytes'],r['sha256'])
+    if key not in cache:
+        p=pathlib.Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat()
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1,'ordinary '+str(p))
+        need(sig(a)==sig(z) and len(b)==r['bytes'] and hashlib.sha256(b).hexdigest()==r['sha256'],'whole '+str(p))
+        cache[key]=b
+    return cache[key]
+def doc(r):return json.loads(whole(r))
+def relative(s):
+    p=pathlib.PurePosixPath(s)
+    need(s and s.isascii() and not p.is_absolute() and str(p)==s and not set(p.parts)&{'.','..','.git','__pycache__','.lake','.venv','.build','.pytest_cache','scratch'},'relative '+s)
+    return s
+h=doc(ref(D/'handoff.json'))
+for v in h.values():
+    if isinstance(v,dict) and set(v)=={'path','bytes','sha256'}:whole(v)
+    elif isinstance(v,list):
+        for r in v:
+            if isinstance(r,dict) and set(r)=={'path','bytes','sha256'}:whole(r)
+need(h['program']['sha256'].startswith('51b7b915') and h['verifier']['sha256'].startswith('d84128ef'),'programs')
+ast.parse(whole(h['program']));ast.parse(whole(h['verifier']))
+plans=[doc(r) for r in h['plans']];m=doc(h['manifest']);invoice=doc(h['invoice']);inverse=doc(h['retention_inverse']);maps=doc(h['input_maps']);scope=doc(h['scope']);calls=doc(h['first_calls'])
+need(m['schema']=='CURATED_PORTABLE_PROOF_PACKET_MANIFEST_V1' and m['scientific_replay_status']=='NOT_ACQUIRED_BY_THIS_EXPORT','manifest scope')
+need(m['proof_banks']==m['packed_members']==[] and all(m[k]==0 for k in ['whole_original_credit','conjecture_credit','Lean_credit','compression_credit']),'no new proof credit')
+files={r['path']:r for r in m['files']};need(len(files)==len(m['files'])==342,'manifest file count')
+new={};reuse={};physical={}
+for p in plans:
+    need(p['program']==h['program'] and p['schema']=='CURATED_OCTOBER_PROOF_EXPORT_PLAN_V1' and p['execution_authority_granted'] is False and p['scientific_calls']==0,'plan program/authority')
+    need(p['public_corpus_root']==str(W) and p['packets']==[],'plan root/empty generated packets')
+    need(p['precomputed_manifests'] in ([],[dict(source=h['manifest'],target=h['manifest_relative'])]),'explicit precomputed manifest is a normal payload')
+    need(p['limits']==dict(cumulative_physical_read_bytes=64*2**20,payload_bytes_per_copy_invocation=8*2**20),'plan limits')
+    need(len(p['payloads'])==151 and sum(r['source']['bytes'] for r in p['payloads'])<=8*2**20,'one copy chunk')
+    need(p['scope']['pending_eleven_negative_adoption'] is None,'eleven excluded')
+    for row in p['payloads']:
+        target=relative(row['target']);need(target not in new and row['packets']==[],'unique new target')
+        need(row['role'] in ['mathematical_source','mathematical_data','archived_evidence','navigation','integrity_verifier'],'role')
+        whole(row['source']);need(row['source']['bytes']<=8*2**20 and row['reuse_sources']==[],'bounded source')
+        for r in row['originals']:need((r['bytes'],r['sha256'])==(row['source']['bytes'],row['source']['sha256']),'copy source aliases')
+        need(not (W/target).exists(),'new public target absent '+target)
+        new[target]=row;physical[target]=row['source']
+    for r in p['existing_public_reuses']:
+        relative(r['path']);need(reuse.get(r['path'],r)==r,'one reuse version');reuse[r['path']]=r
+need(len(new)==302 and sum(r['source']['bytes'] for r in new.values())==3550236,'new file totals')
+need(len(reuse)==42 and sum(r['bytes'] for r in reuse.values())==4405219,'reuse totals')
+for target,r in reuse.items():
+    need(target not in new,'no recopy');pr=dict(r,path=str(W/target));whole(pr);physical[target]=pr
+excluded={h['manifest_relative'],'research/proof_collection/updates/fi22_generation_certificates/CHECK.rst'}
+need(set(files)==set(physical)-excluded,'manifest exact copy/reuse domain')
+for target,r in files.items():
+    relative(target);need((r['bytes'],r['sha256'])==(physical[target]['bytes'],physical[target]['sha256']),'relative file byte pin')
+need(physical[h['manifest_relative']]==h['manifest'],'manifest payload')
+aliases={}
+for row in m['original_to_relative']:
+    r=row['original'];target=row['relative'];key=(r['path'],r['bytes'],r['sha256'])
+    need(target in files and (r['bytes'],r['sha256'])==(files[target]['bytes'],files[target]['sha256']),'alias byte identity')
+    need(aliases.get(key,target)==target,'one alias location');aliases[key]=target
+need(len(m['original_to_relative'])==len(aliases)==713,'713 complete original aliases')
+for row in new.values():
+    if row['target'] not in excluded:
+        for o in row['originals']:need(aliases[(o['path'],o['bytes'],o['sha256'])]==row['target'],'new source alias in manifest')
+def resolve(r):
+    target=aliases[(r['path'],r['bytes'],r['sha256'])];pr=physical[target]
+    need((r['bytes'],r['sha256'])==(pr['bytes'],pr['sha256']),'resolve exact content')
+    return whole(pr)
+def jref(r):return json.loads(resolve(r))
+def pair(v):
+    r=v['original'];need(aliases[(r['path'],r['bytes'],r['sha256'])]==v['relative'],'navigation map location')
+    return jref(r)
+row_count=0;retention=[]
+for entry in inverse['manifests']:
+    value=pair(entry['manifest'])
+    need(value['schema']==entry['schema'] and len(value['files'])==entry['rows']==len(entry['mappings']),'complete old manifest '+entry['label'])
+    for index,(old,loc) in enumerate(zip(value['files'],entry['mappings'])):
+        need(set(loc)=={'row','relative'} and loc['row']==index,'literal complete old row locator')
+        for n in ['original','retained']:
+            r=old[n];target=aliases[(r['path'],r['bytes'],r['sha256'])]
+            need(target==loc['relative'] and (r['bytes'],r['sha256'])==(physical[target]['bytes'],physical[target]['sha256']),'all old mapped full content')
+        row_count+=1
+    retention.append(dict(label=entry['label'],part=entry['part'],rows=entry['rows'],manifest=entry['manifest']['original']))
+need(row_count==325 and len(retention)==7,'seven complete manifests/325 rows')
+input_count=0
+for entry in inverse['validation_plan_inputs']:
+    value=pair(entry['plan']);need(len(value['inputs'])==len(entry['all_input_descriptors']),'whole old validation inventory')
+    for r,loc in zip(value['inputs'],entry['all_input_descriptors']):
+        need(r==loc['original'] and aliases[(r['path'],r['bytes'],r['sha256'])]==loc['relative'],'one exact validation input');resolve(r);input_count+=1
+need(input_count==452,'452 complete validation rows')
+for r in m['base_manifest_requirements']:
+    whole(dict(r,path=str(W/relative(r['path']))));need(r['path'] in reuse,'base manifest existing reuse')
+need(len(m['base_manifest_requirements'])==4,'four base manifests')
+map_pairs=0
+def visit(v):
+    global map_pairs
+    if isinstance(v,dict):
+        if set(v)=={'original','relative'}:
+            r=v['original'];need(aliases[(r['path'],r['bytes'],r['sha256'])]==v['relative'],'whole navigated binary/text location');resolve(r);map_pairs+=1
+        else:
+            for a in v.values():visit(a)
+    elif isinstance(v,list):
+        for a in v:visit(a)
+visit(maps);visit(scope)
+B=h['program']['bytes'];derived=[]
+for pi,(pref,p) in enumerate(zip(h['plans'],plans)):
+    F=sum(r['source']['bytes'] for r in p['payloads']);P=pref['bytes'];n=len(p['payloads'])
+    vals=dict(stage_read_upper=3*B+2*P+4*F+4,install_read_upper=3*B+2*P+4*F+65536+4,finalize_stage_upper=3*B+2*P+F+4,finalize_install_upper=3*B+2*P+F+65536+4)
+    for k,v in vals.items():need(invoice['chunks'][pi][k]==v and v<64*2**20,'invoice '+k)
+    need(invoice['chunks'][pi]['stage_distinct_path_upper']==2*n+2 and invoice['chunks'][pi]['install_distinct_path_upper']==2*n+3 and invoice['chunks'][pi]['finalizer_distinct_path_upper']==n+3,'path majorants')
+    derived.append(dict(part=pi+1,files=n,payload_bytes=F,**vals))
+V=h['verifier']['bytes'];integrity=3*V+2*h['manifest']['bytes']+sum(r['bytes'] for r in files.values())+4
+need(integrity==invoice['integrity_upper']==8316980,'integrity read majorant')
+need(calls['commands_unissued'] is True and calls['exact_Root_release_owed'] is True and calls['outer_RSS']==invoice['outer_RSS']==256*2**20 and calls['outer_seconds']==invoice['outer_seconds']==150,'unissued commands/envelope')
+for step,pref in zip(calls['steps'],h['plans']):
+    need(step['plan']==pref,'command plan')
+    for name in ['stage','finalize_stage','install','finalize_install']:
+        a=step[name];need(a[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',h['program']['path']],'command Source')
+        need(a[a.index('--plan')+1:a.index('--plan')+3]==[pref['path'],pref['sha256']] and a[a.index('--self-sha256')+1]==h['program']['sha256'],'command exact refs')
+        need(a[a.index('--out')+1]==(str(D/'stage') if name in ['stage','finalize_stage'] else str(W)),'command destination')
+        if name in ['install','finalize_install']:need(a[-1]=='UNBOUND_ACTUAL_ROOT_RELEASE_SHA256','unbound Root authority')
+for r,pref in zip(h['false_Root_releases'],h['plans']):
+    value=doc(r);need(value['program']==h['program'] and value['plan']==pref and value['adopted'] is False,'false exact Root template')
+need(not (D/'stage').exists(),'stage currently absent')
+observations=dict(schema='INDEPENDENT_FI22_GENERATION_ARCHIVE_METADATA_OBSERVATIONS_V1',reviewer='/root/prime_theory_audit',handoff=ref(D/'handoff.json'),program=h['program'],verifier=h['verifier'],plans=h['plans'],manifest=h['manifest'],new_payload_files=len(new),new_payload_bytes=sum(r['source']['bytes'] for r in new.values()),existing_public_files=len(reuse),existing_public_bytes=sum(r['bytes'] for r in reuse.values()),manifest_files=len(files),opaque_original_aliases=len(aliases),full_retention_manifests=retention,complete_retention_rows=row_count,full_validation_plan_input_rows=input_count,full_navigated_reference_pairs=map_pairs,read_envelopes=derived,integrity_upper=integrity,whole_physical_files_checked=len(cache),whole_physical_bytes_checked=sum(k[1] for k in cache),stage_and_new_public_targets_absent=True,Source_utility_or_science_activations=0,S_W_Git_mutations=0)
+p=D/'independent_review/observations.json';need(not p.exists(),'new observations');p.write_bytes(can(observations));print(json.dumps(ref(p)))

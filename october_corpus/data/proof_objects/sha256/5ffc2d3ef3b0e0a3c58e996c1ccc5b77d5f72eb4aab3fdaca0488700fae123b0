@@ -1,0 +1,63 @@
+from pathlib import Path
+import copy, hashlib, json
+
+T = Path('/private/tmp/l026_invariant_subsets/full_proper_cap')
+D = T/'instances/strict_free_index_0005'
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def save(p, value):
+    b = (json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    with p.open('xb') as f:
+        f.write(b)
+    return pin(p)
+
+parent = T/'instances/free_index_0005'
+cap = json.loads((parent/'proposal_actual_capture.json').read_bytes())
+assert cap['actual_tool']['exit_code'] == 0
+result = json.loads((parent/'output/result.json').read_bytes())
+assert result['untrusted_closed_hint_indices'] == [5]
+source = parent/'output/records.json'
+carrier = json.loads(source.read_bytes())
+assert len(carrier['records']) == 1
+row = carrier['records'][0]
+assert row['free_index'] == 5 and row['owner'] == 5
+points = row['points']
+assert len(points) == 3159 and points == sorted(set(points))
+assert all(type(p) is int and 0 <= p < 3510 for p in points)
+complement = sorted(set(range(3510)) - set(points))
+assert len(complement) == 351 and set(points).isdisjoint(complement)
+D.mkdir()
+supplied = copy.deepcopy(carrier)
+supplied['records'][0]['points'] = complement
+record_ref = save(D/'untrusted_complement.json', supplied)
+provenance = save(D/'complement_provenance.json', dict(
+    schema='ROOT_UNTRUSTED_COMPLEMENT_DATA_PROPOSAL_V1', root='/root', original_carrier=pin(source),
+    original_actual_supplier=pin(parent/'proposal_actual_capture.json'), free_index=5, owner=5,
+    original_points=3159, proposed_points=351, degree=3510, preserves_owner_and_witness_row=True,
+    exact_disjoint_union_of_original_domain=True, mathematical_authority=False,
+    qualification='The complement is a new untrusted supplied set. No closure is inferred from the supplier; the strict caller must freshly check both actual images of every supplied point.'))
+template = json.loads((T/'check_plan_template.json').read_bytes())
+plan = copy.deepcopy(template)
+plan.update(author='/root', selected_free_indices=[5], window_start=5, records=record_ref,
+    expected_positive_free_indices=[5], output_directory=str(D/'output'),
+    status='ROOT_BOUND_ACTUAL_CASE5_COMPLEMENT_FOR_FRESH_STRICT_CHECK',
+    qualification='Same reviewed invariant-set theorem and exact original Fi22/model/Reader/member/action/global-class/two-fibre/simple-group imports. Only actual free index5/owner5 is selected. This untrusted351-point complement of the actual3159-point supplier set needs fresh full strict checking; no generation, IP, reversal, whole manuscript or adopted credit follows from its construction.')
+assert plan['mode'] == 'check' and plan['resume'] is None and plan['maximum_subset_points'] == 3509
+for r in plan['inputs']:
+    assert pin(Path(r['path'])) == r
+pref = save(D/'plan.json', plan)
+review = json.loads((T/'Root_review.json').read_bytes())
+review.update(plan=pref, scope='Only strict free index5/owner5, proposed complement351points, every702actualpositiveedges must be checked.',
+    actual_case5_supplier=pin(parent/'proposal_actual_capture.json'), untrusted_complement_provenance=provenance,
+    strict_does_not_activate_supplier=True, physical_paths_upper=28,
+    conservative_full3509_strict_work_upper=8054643,
+    new_Root_adoption_still_owed=True)
+rref = save(D/'Root_code_math_review.json', review)
+gate = json.loads((T/'Root_gate.json').read_bytes())
+gate.update(plan=pref, Root_code_math_review=rref)
+gref = save(D/'Root_gate.json', gate)
+print(json.dumps(dict(status='ROOT_RELEASED_CASE5_COMPLEMENT_FOR_STRICT_CHECK',
+    plan=pref, gate=gref, carrier=record_ref, positive_fact_or_adoption_acquired=False)))

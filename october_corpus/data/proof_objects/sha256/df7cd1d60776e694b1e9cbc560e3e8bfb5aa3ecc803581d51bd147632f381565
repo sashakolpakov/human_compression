@@ -1,0 +1,54 @@
+from pathlib import Path
+import hashlib,json
+T=Path('/private/tmp/fi22_generation_certificates_export')
+W=Path('/Users/sasha/medusa/human_compression/october_corpus')
+def pin(p):
+    b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert pin(Path(r['path']))==r,r['path']
+def relative(s):
+    p=Path(s);assert not p.is_absolute()and '..'not in p.parts and p.parts
+    return p
+h=json.loads((T/'handoff.json').read_bytes())
+for r in h.values():
+    if isinstance(r,dict)and set(r)=={'path','bytes','sha256'}:check(r)
+for r in h['plans']+h['false_Root_releases']:check(r)
+assert h['program']['sha256']=='51b7b915148c06eee44dfe1f8bfbb5414f81b948e9dfd87a97e89c515e56abea'
+assert h['verifier']['sha256']=='d84128ef725e52650330c68b31109ded146da00712b96d5a8740d17492af37fb'
+plans=[json.loads(Path(r['path']).read_bytes())for r in h['plans']]
+targets={};total=0
+for p in plans:
+    assert p['program']==h['program']and p['public_corpus_root']==str(W)
+    assert p['limits']==dict(cumulative_physical_read_bytes=64*2**20,payload_bytes_per_copy_invocation=8*2**20)
+    assert len(p['payloads'])==151 and not p['packets']and not p['precomputed_manifests']
+    for row in p['payloads']:
+        check(row['source']);target=str(relative(row['target']))
+        assert target not in targets;targets[target]=row['source'];total+=row['source']['bytes']
+        assert not(W/target).exists()
+assert len(targets)==302 and total==3550236
+reuses=plans[0]['existing_public_reuses'];assert reuses==plans[1]['existing_public_reuses']and len(reuses)==42
+for r in reuses:
+    path=W/relative(r['path']);v=pin(path);assert v['bytes']==r['bytes']and v['sha256']==r['sha256']
+assert sum(r['bytes']for r in reuses)==4405219
+m=json.loads(Path(h['manifest']['path']).read_bytes());assert len(m['files'])==342 and len(m['original_to_relative'])==713
+available={**targets,**{r['path']:r for r in reuses}}
+for r in m['files']:
+    a=available[str(relative(r['path']))];assert (a['bytes'],a['sha256'])==(r['bytes'],r['sha256'])
+for row in m['original_to_relative']:
+    a=available[str(relative(row['relative']))];o=row['original']
+    assert (a['bytes'],a['sha256'])==(o['bytes'],o['sha256'])
+peerpath=T/'independent_review/independent_review.json';peer=json.loads(peerpath.read_bytes())
+assert pin(peerpath)['sha256']=='41eca77a95b26bbeaa6889ad27ba22c9195e7993eb909f77f85e2bff1211a6ca'
+assert peer['status'].startswith('SUPPORTED')and peer['blockers']==[]
+assert not(T/'stage').exists();(T/'runtime').mkdir(exist_ok=True)
+v=dict(schema='ROOT_REVIEWED_FI22_GEN3_NG5_PUBLIC_ARCHIVE_SELECTION_V1',root='/root',status='SUPPORTED',blockers=[],
+    program=h['program'],verifier=h['verifier'],plans=h['plans'],manifest=h['manifest'],
+    new_files=302,new_bytes=3550236,public_reuses=42,reused_bytes=4405219,
+    all_whole_selected_new_and_reused_bodies_rehashed=True,all713_aliases_match_full_file_values=True,
+    exact_append_only_paths_reviewed=True,independent_review=pin(peerpath),
+    scope='One adopted NG5 certificate,three adopted GEN3 and separate existing IP theorem composition,actual immutable77d journal. Newly adopted11 are outside this fixed selection.',
+    maximum_call_bytes=8378363,maximum_paths=344,all_caps_unchanged=True,
+    scientific_or_fresh_mathematical_replay_or_Git_authority=False,
+    stage_then_exact_Root_install_release_then_full_corpus_integrity_required=True)
+p=T/'runtime/Root_selection_review.json';b=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+with p.open('xb')as f:f.write(b)
+print(json.dumps(dict(status='ROOT_ARCHIVE_SELECTION_SUPPORTED',review=pin(p),new_files=302,new_bytes=total,reused_files=42,stage_unrun=True)))

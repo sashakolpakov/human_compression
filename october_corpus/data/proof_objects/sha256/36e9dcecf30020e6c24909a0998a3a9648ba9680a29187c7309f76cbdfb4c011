@@ -1,0 +1,121 @@
+from pathlib import Path
+import ast, copy, hashlib, json, struct
+
+T = Path('/private/tmp/l026_eleven_cycle_proposals')
+K = T/'control_read_counter'
+
+def pin(p):
+    b = p.read_bytes()
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def check(r):
+    assert pin(Path(r['path'])) == r, r['path']
+
+def definitions(s):
+    return {n.name: ast.get_source_segment(s, n) for n in ast.parse(s).body
+            if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+
+handoff = json.loads((T/'handoff.json').read_bytes())
+final = json.loads((K/'handoff.json').read_bytes())
+for r in list(handoff['artifacts'].values()) + list(final['artifacts'].values()):
+    check(r)
+for key in ('supplier', 'unchanged_kernel', 'unchanged_strict'):
+    check(final[key])
+inverse = json.loads((T/'source_inverse.json').read_bytes())
+check(inverse['parent'])
+check(inverse['child'])
+old, new = inverse['old_whole_text'], inverse['new_whole_text']
+assert Path(inverse['parent']['path']).read_text() == old
+assert Path(inverse['child']['path']).read_text() == new
+rebuilt = inverse['new_header'] + old
+for r in inverse['ordered_replacements']:
+    assert rebuilt.count(r['before']) == 1
+    rebuilt = rebuilt.replace(r['before'], r['after'], 1)
+assert rebuilt == new
+before_defs, after_defs = definitions(old), definitions(new)
+assert len(inverse['literal_definitions']) == 13
+for name in inverse['literal_definitions']:
+    assert before_defs[name] == after_defs[name], name
+control_inverse = json.loads((T/'controls_source_inverse.json').read_bytes())
+check(control_inverse['parent'])
+check(control_inverse['child'])
+assert Path(control_inverse['parent']['path']).read_text() == control_inverse['old_whole_text']
+assert Path(control_inverse['child']['path']).read_text() == control_inverse['new_whole_text']
+old_lines = control_inverse['old_whole_text'].splitlines(True)
+new_lines = control_inverse['new_whole_text'].splitlines(True)
+old_pos = new_pos = 0
+for tag, a, b, c, d in control_inverse['line_opcodes']:
+    assert a == old_pos and c == new_pos
+    assert 0 <= a <= b <= len(old_lines) and 0 <= c <= d <= len(new_lines)
+    if tag == 'equal':
+        assert old_lines[a:b] == new_lines[c:d]
+    elif tag == 'insert':
+        assert a == b
+    elif tag == 'delete':
+        assert c == d
+    else:
+        assert tag == 'replace'
+    old_pos, new_pos = b, d
+assert old_pos == len(old_lines) and new_pos == len(new_lines)
+counter = json.loads((K/'source_inverse.json').read_bytes())
+check(counter['parent'])
+check(counter['child'])
+delta = counter['sole_literal_replacement']
+assert Path(counter['parent']['path']).read_text() == counter['old_whole_text']
+assert Path(counter['child']['path']).read_text() == counter['new_whole_text']
+assert counter['old_whole_text'].count(delta['before']) == 1
+assert counter['old_whole_text'].replace(delta['before'], delta['after'], 1) == counter['new_whole_text']
+plan_inverse = json.loads((K/'plan_inverse.json').read_bytes())
+old_plan, plan = plan_inverse['old_whole_body'], plan_inverse['new_whole_body']
+assert json.loads(Path(plan_inverse['parent']['path']).read_bytes()) == old_plan
+assert json.loads(Path(plan_inverse['child']['path']).read_bytes()) == plan
+assert {k for k in plan if plan[k] != old_plan[k]} == {'control_program', 'inputs'}
+restored = copy.deepcopy(plan)
+restored['control_program'] = old_plan['control_program']
+restored['inputs'] = old_plan['inputs']
+assert restored == old_plan
+original_inverse = json.loads((T/'plan_inverse.json').read_bytes())
+assert original_inverse['new_whole_body'] == old_plan
+assert original_inverse['old_whole_body']['roles'] == plan['roles']
+for r in plan['inputs']:
+    check(r)
+assert len(plan['inputs']) == 22 and plan['selected_free_indices'] == [1]
+seed = json.loads(Path(plan['resume']['path']).read_bytes())
+old_checkpoint = json.loads(Path(original_inverse['old_checkpoint']['path']).read_bytes())
+assert len(old_checkpoint['notes']) == 16
+assert all(n['next_trial'] == 256 for n in old_checkpoint['notes'])
+assert len(seed['notes']) == 1
+note = seed['notes'][0]
+assert note['free_index'] == note['owner'] == 1 and note['next_trial'] == 0
+assert note['hints']['prime11'] is None
+assert note['hints']['prime13'] == old_checkpoint['notes'][1]['hints']['prime13']
+bank = Path(plan['roles']['witnesses']['path']).read_bytes()
+row = bank[16:32]
+assert struct.unpack('<IIHHHH', row)[0] == 1
+assert hashlib.sha256(row).hexdigest() == note['witness_row_sha256']
+schedule = json.loads(Path(plan['schedule']['path']).read_bytes())
+assert len(schedule['words']) == 32 and schedule['start_points'] == [0, 1]
+assert all(10 <= len(w) <= 20 for w in schedule['words'])
+invoice = json.loads((K/'invoice.json').read_bytes())
+assert invoice['complete_first_final_physical_bytes_including_Source_bootstrap'] == 1634416
+assert invoice['complete_physical_paths'] == 27
+assert invoice['shared']['coarse_complete_successful_call_upper'] == 5261046
+assert final['controls_read_majorant'] == 113340
+review = dict(schema='ROOT_REVIEWED_NEW_ELEVEN_ONLY_PROPOSAL_SOURCE_V1', root='/root',
+    status='SUPPORTED', blockers=[], program=final['supplier'], plan=final['new_plan'],
+    kernel=final['unchanged_kernel'], direct_consumer=final['unchanged_strict'],
+    controls=final['new_controls'], literal_inherited_definitions=13,
+    full_supplier_control_and_plan_inverses_checked=True, exact_old13_hint_remains_untrusted=True,
+    selected_free_indices=[1], original_old_trials_not_replayed=4096,
+    new_schedule_trials=64, actual_new_generic_controls_owed=True,
+    Source_controls_and_changed_main_trace_schedule_argument_invoice_read=True,
+    namespace_bytes=34775, physical_read_upper=1634416, physical_paths=27,
+    conservative_work_upper=5261046, outer_RSS_cap_mib=128,
+    qualification='Untrusted proposal Source review only. All actual11+13 closing edges and original group/model/membership/classification imports require the unchanged separate strict checker before any generation result; no new paid fact or adoption.')
+(T/'runtime').mkdir(exist_ok=True)
+p = T/'runtime/Root_source_data_review.json'
+b = (json.dumps(review, sort_keys=True, separators=(',', ':'))+'\n').encode()
+with p.open('xb') as f:
+    f.write(b)
+print(json.dumps(dict(status='ROOT_NEW_ELEVEN_SOURCE_AND_DATA_SUPPORTED', review=pin(p),
+    proposal_controls_cases_activated=0)))
