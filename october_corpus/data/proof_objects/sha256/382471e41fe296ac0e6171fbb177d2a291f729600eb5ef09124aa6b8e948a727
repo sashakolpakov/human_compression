@@ -1,0 +1,66 @@
+"""UNRUN stdlib AST and synthetic scalar controls for the outer140 adopter edition.
+Author /root/journal_peer. No represented Source is imported, compiled or run.
+These check the single metadata guard contract change; no scientific fixture,
+SDK capture forgery, actual metadata adoption or Root authority is supplied.
+"""
+import argparse,ast,hashlib,json,resource,stat,sys,time
+from pathlib import Path
+START=time.monotonic()
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else1024)
+    if rss>=128*2**20 or time.monotonic()-START>=30:raise RuntimeError('bounded AST/mock128MiB30s controls')
+
+def ref(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+
+def read(pair,cap=2**21):
+    p=Path(pair[0]);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=cap,'canonical bounded whole control subject')
+    raw=p.read_bytes();need(ref(p,raw)['sha256']==pair[1]and p.lstat()==a,'whole immutable control subject');return p,raw
+
+def definitions(body):
+    return{n.name:ast.get_source_segment(body.decode(),n)for n in ast.parse(body).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+
+def wall_comparison(body):
+    tree=ast.parse(body);actual=next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name=='actual')
+    matches=[]
+    for node in ast.walk(actual):
+        if isinstance(node,ast.Compare)and len(node.ops)==len(node.comparators)==1 and isinstance(node.ops[0],ast.Eq):
+            left=node.left
+            if isinstance(left,ast.Subscript)and isinstance(left.slice,ast.Constant)and left.slice.value=='wall_seconds':
+                base=left.value
+                if isinstance(base,ast.Subscript)and isinstance(base.slice,ast.Constant)and base.slice.value=='limits'and isinstance(base.value,ast.Name)and base.value.id=='r':matches.append(node)
+    need(len(matches)==1,'one exact r.limits.wall_seconds comparison in actual()');return matches[0]
+
+def scalar(node,r):
+    # Restricted AST interpretation of a single equality and dictionary access.
+    # No eval,compile,exec,represented function call or project import is used.
+    if isinstance(node,ast.Constant):return node.value
+    if isinstance(node,ast.Name):need(node.id=='r','only synthetic r namespace');return r
+    if isinstance(node,ast.Subscript):return scalar(node.value,r)[scalar(node.slice,r)]
+    if isinstance(node,ast.Compare):
+        need(len(node.ops)==len(node.comparators)==1 and isinstance(node.ops[0],ast.Eq),'only literal equality');return scalar(node.left,r)==scalar(node.comparators[0],r)
+    raise ValueError('unsupported AST outside single scalar guard')
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    for name in('program','parent','inverse'):ap.add_argument('--'+name,nargs=2,required=True)
+    a=ap.parse_args();own=Path(__file__).resolve(strict=True);ownraw=own.read_bytes();need(len(ownraw)<=16384 and hashlib.sha256(ownraw).hexdigest()==a.self_sha256,'whole exact new controls Source')
+    pp,program=read(a.program,65536);op,parent=read(a.parent,65536);ip,ib=read(a.inverse);inverse=json.loads(ib)
+    need(inverse['parent']==ref(op,parent)and inverse['child']==ref(pp,program)and inverse['old_whole_Source'].encode()==parent and inverse['new_whole_Source'].encode()==program,'complete exact9605->new140 source inverse')
+    before=inverse['old_site'];after=inverse['new_site'];header=inverse['prepend_header'].encode()
+    need(before=="r['limits']['wall_seconds']==125"and after=="r['limits']['wall_seconds']==140"and parent.count(before.encode())==1 and program==header+parent.replace(before.encode(),after.encode(),1),'exact attributed header plus one permitted comparison change')
+    need(program[len(header):].replace(after.encode(),before.encode(),1)==parent,'whole reverse restores complete immutable9605 bytes')
+    old=definitions(parent);new=definitions(program);need(set(old)==set(new),'same full definition inventory')
+    for name in old:need(new[name].replace(after,before)==old[name]if name=='actual'else new[name]==old[name],'every unchanged definition literal')
+    oldcheck=wall_comparison(parent);check=wall_comparison(program)
+    need(isinstance(oldcheck.comparators[0],ast.Constant)and oldcheck.comparators[0].value==125 and isinstance(check.comparators[0],ast.Constant)and check.comparators[0].value==140,'one exact outer-guard boundary125->140')
+    accepted=[140,140.0];rejected=[125,125.0,124,126,139,139.5,141,150,0,-1,None,True,False,'140',[],{}]
+    for value in accepted:need(scalar(check,{'limits':{'wall_seconds':value}})is True,'new edition accepts only actual140 equality')
+    for value in rejected:need(scalar(check,{'limits':{'wall_seconds':value}})is False,'new edition rejects125 and other wrong wall values')
+    need(scalar(oldcheck,{'limits':{'wall_seconds':125}})is True and scalar(oldcheck,{'limits':{'wall_seconds':140}})is False,'old125 edition is distinct and not retagged')
+    for pair,expected,cap in((a.program,program,65536),(a.parent,parent,65536),(a.inverse,ib,2**21)):need(read(pair,cap)[1]==expected,'all subjects unchanged after AST/mock checks')
+    need(own.read_bytes()==ownraw,'whole controls Source unchanged')
+    print(json.dumps(dict(schema='Q11_SPECTRUM_OUTER140_AST_MOCK_CONTROLS_V1',status='PASS',author='/root/journal_peer',program=ref(own,ownraw),subject=ref(pp,program),parent=ref(op,parent),inverse=ref(ip,ib),controls=['exact_whole_forward_reverse','only_actual_wall_change','all_other_definitions_literal','scalar140_int_float_accept','scalar125_and_other_wrong_values_reject','old125_edition_stays_distinct','all_whole_subjects_finally_unchanged'],mock_accepts=len(accepted),mock_rejects=len(rejected),represented_Source_or_metadata_or_scientific_calls=0,Root_authority=False,physical_paths=4,complete_Source_DATA_read_upper=3*len(ownraw)+2*(len(program)+len(parent)+len(ib)),qualification='Single metadata guard-compatibility boundary only,using AST and synthetic scalar dictionaries. Actual scientific Sources retain inner125s and128MiB. No scientific replay,actual SDK guard,prepared image,adoption or publication is executed.'),sort_keys=True))
+
+if __name__=='__main__':main()

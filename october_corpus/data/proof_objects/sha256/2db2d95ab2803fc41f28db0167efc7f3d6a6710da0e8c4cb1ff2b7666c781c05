@@ -1,0 +1,78 @@
+"""Independent stdlib JSON mapping expansion and S-byte inspection only."""
+import copy,hashlib,json,stat
+from pathlib import Path
+S=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from10997')
+D=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport/retention_DATA/prior_reuse')
+seen={};checks=0
+
+def need(v,m):
+ global checks
+ checks+=1
+ if not v:raise AssertionError(m)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def pin(p,b=None):
+ p=Path(p)
+ if b is None:b=p.read_bytes()
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def body(r,keep=False):
+ p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and p.is_relative_to('/Users/sasha/medusa/research/leemans')and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'canonical exact retained S body')
+ if r['path']in seen:need(seen[r['path']]==r,'one retained S identity');return p.read_bytes()if keep else None
+ h=hashlib.sha256();n=0;parts=[]if keep else None
+ with p.open('rb')as f:
+  opened=f.fileno()
+  for block in iter(lambda:f.read(2**20),b''):
+   n+=len(block);h.update(block)
+   if keep:parts.append(block)
+ z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(sig(a)==sig(z)and n==r['bytes']and h.hexdigest()==r['sha256'],'whole retained S bytes/hash stable '+str(p));seen[r['path']]=r
+ return b''.join(parts)if keep else None
+def document(r):return json.loads(body(r,True))
+def expand(w):
+ if 'Root_Preservation_map_reference'not in w:return w
+ tag=w['Root_Preservation_map_reference'];need(tag['version']=='F009_WHOLE_PRESERVATION_PATH_PAIRS_V1','exact descriptor-pair DATA table version');prefix=tag['prefixes'];need(prefix==sorted(set(prefix)),'complete canonical prefix list');out=copy.deepcopy(w);out.pop('Root_Preservation_map_reference');count=0;used=set()
+ for name,kind,rows in tag['fields']:
+  need(name not in out and kind=='pair','only explicit preserved pair fields');values=[]
+  for li,ri,suffix,size,sha in rows:
+   need(type(li)is type(ri)is type(size)is int and 0<=li<len(prefix)and 0<=ri<len(prefix)and size>=0 and type(suffix)is str and type(sha)is str and len(sha)==64,'typed entire descriptor table row')
+   values.append(dict(original=dict(path=prefix[li]+suffix,bytes=size,sha256=sha),retained=dict(path=prefix[ri]+suffix,bytes=size,sha256=sha)));used.update((li,ri));count+=1
+  out[name]=values
+ b=can(out);need(count==tag['row_count']and used==set(range(len(prefix)))and len(b)==tag['logical_bytes']and hashlib.sha256(b).hexdigest()==tag['logical_sha256'],'complete ordered logical preservation image inverse')
+ return out
+def pair_key(row):
+ o,r=row['original'],row['retained'];need(set(row)=={'original','retained'}and set(o)==set(r)=={'path','bytes','sha256'}and(o['bytes'],o['sha256'])==(r['bytes'],r['sha256']),'whole exact original-to-S pair');return(o['path'],o['bytes'],o['sha256'])
+parent_ref=pin(S/'complete_transport_inputs/preservation.json');parent=expand(document(parent_ref));need(parent_ref['bytes']==372971 and parent_ref['sha256']=='ae5975ebc9a17502db54cc58147346f1f4bed1ee71c7ccb50e875d0a5407265b','actual complete-transport preservation pin')
+need(len(parent['reused_previous_rows'])==2471 and len(parent['rows'])==60 and parent['root']=='/root'and parent['scientific_calls']==0 and parent['canonical_checkpoint_writes']==0,'exact2471 prior reuses and60 earlier copies')
+prior_pool={};prior_paths={}
+for pref in parent['previous_preservations']:
+ old=expand(document(pref));need(old['root']=='/root'and old['no_original_or_previous_artifact_deleted_or_rewritten']is True,'actual immutable prior map')
+ for row in old['rows']+old['reused_previous_rows']:
+  k=pair_key(row);op=row['original']['path'];need(op not in prior_paths or prior_paths[op]==row['original'],'no conflicting previous original version');prior_paths[op]=row['original'];previous=prior_pool.get(k)
+  if previous is None or row['retained']['path']<previous['retained']['path']:prior_pool[k]=row
+accepted=document(parent['accepted_checkpoint']);need(accepted['root']=='/root'and accepted['adopted']is True,'accepted10997 metadata sidecars')
+for v in accepted['root_metadata_writer']['actual_to_retained_sources']:
+ row=dict(original=v['actual'],retained=v['retained']);k=pair_key(row);previous=prior_pool.get(k)
+ if previous is None or row['retained']['path']<previous['retained']['path']:prior_pool[k]=row
+for row in parent['reused_previous_rows']:
+ k=pair_key(row);need(prior_pool.get(k)==row,'all2471 exact selected lexicographic existing-S mappings agree with9prior maps and accepted sidecars')
+failed_ref=pin(S/'native_execution/evidence/preservation.json');failed=document(failed_ref);need(failed_ref['sha256']=='c4f85ccff85c3b88d2817574ad51bf71b0baad3ae5f0dd640260d32d6abc3c8f'and len(failed['files'])==23,'exact c4f failed Native23-file closure')
+need(failed['schema']=='ROOT_CLOSED_F009_INCOMPLETE_NATIVE_ATTEMPT_V1'and failed['observed_stop']=='TREE_RSS_CAP'and failed['checkpoint_advance']==0 and failed['last_registered_checkpoint']==10997 and failed['strict_Reader_result']is None and failed['known_owned_cleanup_closed']is True and failed['Source_or_Native_or_Reader_reexecution_authorized']is False,'old Native failure remains genuine failure with no checkpoint credit')
+allrows=[];positions={};groups={}
+for group,rows in [('prior2471',parent['reused_previous_rows']),('previously_copied60',parent['rows']),('failed_native23',failed['files'])]:
+ indices=[]
+ for row in rows:
+  k=pair_key(row);body(row['retained']);found=positions.get(k)
+  if found is None:found=len(allrows);positions[k]=found;allrows.append(row)
+  else:need(allrows[found]['retained']==row['retained']or allrows[found]['retained']['bytes']==row['retained']['bytes'],'alternate retained S whole copy')
+  indices.append(found)
+ groups[group]=indices
+# Read actual failure only via its complete retained S aliases.
+fm={pair_key(r):r for r in failed['files']}
+def retained_document(original):return document(fm[(original['path'],original['bytes'],original['sha256'])]['retained'])
+cap=retained_document(failed['actual_capture']);guard=retained_document(failed['outer_receipt']);owner=retained_document(failed['incomplete_Owner_receipt'])
+need(cap['root']=='/root'and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==1,'failed Native genuine terminal exit1 retained')
+need(guard['status']=='INCOMPLETE'and guard['stop']=='TREE_RSS_CAP'and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]and guard['limits']['total_rss']==536870912,'old512MiB cap and known-scope failed cleanup closed')
+need(owner['status']=='PENDING_FINAL_RESOURCE_CHECK','pending Owner receipt retained literally')
+selection=dict(schema='F009_EXACT_EXISTING_S_PRESERVATION_REUSE_TABLE_V1',author='/root/journal_peer/f009_prior_reuse',status='EXISTING_S_BYTES_VERIFIED_NO_COPY_OR_AUTHORITY',parent_preservation=parent_ref,nine_prior_preservations=parent['previous_preservations'],accepted_checkpoint=parent['accepted_checkpoint'],failed_Native_manifest=failed_ref,rows=allrows,groups=groups,exact_prior2471_count=2471,all_existing_map_rows=len(allrows),selected_S_body_count=len(seen),selected_S_bytes_whole_hashed=sum(r['bytes']for r in seen.values()),new_original_T_bodies_opened=0,source_or_project_codec_or_Native_Reader_activation=0,proposed_new_destination=str(S/'shared_pin_inputs/evidence'),future_source_preflight_gate=None,future_Native_gate=None,future_Owner_request=None,Root_authority=False,qualification='Only descriptor-pair JSON expansion and whole retained-S hashes. Original temporary paths remain opaque. Reuse the2471 exact prior rows and60 later copies; old c4f remains failure. c4f is a distinct closed-failure schema,so unmodified bb6d previous_preservations must not mislabel it as ROOT_IMMUTABLE. Rootstdlibcopyplan may directly authenticate these existing S reuse pairs or retain the c4f manifest as an exactS reference. No original body is recopied.')
+p=D/'reuse_table.json';p.write_bytes(can(selection))
+summary=dict(schema='F009_PRIOR_REUSE_VERIFICATION_OBSERVATIONS_V1',author=selection['author'],status='SUPPORTED_EXISTING_S_REUSE_DATA_ONLY',blockers=[],reuse_table=pin(p),checks=checks,prior_reuses=2471,prior_copies=60,failed_Native_files=23,unique_original_rows=len(allrows),S_bodies_freshly_hashed=len(seen),S_total_bytes=sum(r['bytes']for r in seen.values()),physical_original_T_opens=0,source_or_scientific_activation=0,S_W_Git_or_gate_mutations=0,Root_authority=False)
+q=D/'observations.json';q.write_bytes(can(summary));print(json.dumps(dict(reuse_table=pin(p),observations=pin(q),prior2471=2471,all_unique_rows=len(allrows),whole_S_files=len(seen),S_bytes=summary['S_total_bytes']),sort_keys=True))

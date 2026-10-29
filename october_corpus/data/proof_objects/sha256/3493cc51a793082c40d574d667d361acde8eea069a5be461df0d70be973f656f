@@ -1,0 +1,30 @@
+from pathlib import Path
+import hashlib,json
+D=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport')
+S=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from10997/shared_pin_native/evidence')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+pref=ref(D/'reader_preparation_plan.json');assert pref['sha256']=='ea1542bede5e430ae7f3504ded8a63e0ce79a9adc807987ff373ecf90099114e'
+p=json.loads(Path(pref['path']).read_bytes());assert p['expected_checkpoint_sequence']==10997 and p['expected_native_output_files']==253 and p['expected_native_output_bytes']==2637208
+for r in p['actual_native'].values():check(r)
+native=json.loads(Path(p['actual_native']['native_result']['path']).read_bytes());handoff=json.loads(Path(p['actual_native']['worker_handoff']['path']).read_bytes())
+assert native['sequence']==handoff['expected_proposal']['sequence']==11046 and native['nodes']==5795 and native['pending']==201 and native['selected_leaf_occurrences']==511753 and native['reserved_debts']==1
+owner=json.loads(Path(p['actual_native']['Owner_receipt']['path']).read_bytes());outer=json.loads(Path(p['actual_native']['outer_guard_receipt']['path']).read_bytes())
+assert owner['status']==outer['status']=='PASS' and owner['changed_input_count']==0 and owner['owned_child_reaped']is owner['owned_group_absent']is True
+assert outer['cleanup']['remaining']==outer['cleanup']['errors']==[] and outer['limits']['total_rss']==512*2**20
+peer=ref(D/'native_DATA_review/independent_review.json');capacity=ref(D/'reader_binding_DATA/invoice_peer/review.json')
+assert peer['sha256']=='0054cbeb8f281032cd9bc7e779558c4d932ee42fff6b096547c221f6c39a37ab' and capacity['sha256']=='5d5235829ce4c85cb10c207dd5be8b8584ff3ffc074f2950ae3f67e460683f0a'
+for name in ['native_outputs','closed_metadata','late_Reader_binding']:
+ r=ref(S/name/'preservation.json');check(r)
+assert not Path(p['metadata_output']).exists()
+source=ref('/private/tmp/f009_complete_transport/complete_tree/sources/prepare_reader.py');assert source['sha256']=='e466e7e0bbcb34b05521c3012ba99dd76b00f62ffa8e4f4d6ea202d8b5934a50'
+release=dict(schema='ROOT_REVIEWED_F009_COMPLETE_CASE_CLOSURE_METADATA_V1',root='/root',status='SUPPORTED',blockers=[],program=source,plan=pref,actual_native_execution_review_supported=True,
+ independent_Native_DATA_peer=peer,independent_metadata_capacity_peer=capacity,whole_native_output_inventory=p['native_output_inventory_sha256'],accepted_checkpoint=10997,proposed_checkpoint_only=11046,
+ actual_native_output_preservation=ref(S/'native_outputs/preservation.json'),actual_closed_Metadata_preservation=ref(S/'closed_metadata/preservation.json'),actual_binding_evidence_preservation=ref(S/'late_Reader_binding/preservation.json'),
+ scope='Root read actual bound plan, Native handoff/scalars/full known-owned closure and independent DATA/capacity audits. Exact253 outputs and full8-role Native provenance are durable. Only unchanged e466 metadata forecast and, after checking its exact five images/caps, write are authorized. No Native replay, state decode, Reader execution, checkpoint adoption or whole-original credit.',
+ upper_body_read_bytes_write=515878844,own_Source_bootstrap_bytes=31702,current_domain_byte_cap=2**31,current_domain_path_cap=40000,maximum_release_bytes=65536,scientific_or_Reader_authority=False)
+out=D/'reader_preparation_Root_release.json';raw=can(release);assert len(raw)<=65536
+with out.open('xb')as f:f.write(raw)
+print(json.dumps(dict(status='ROOT_FRESH_READER_METADATA_PREPARATION_RELEASE',release=ref(out),plan=pref,program=source,accepted_checkpoint=10997,proposed_checkpoint=11046)))

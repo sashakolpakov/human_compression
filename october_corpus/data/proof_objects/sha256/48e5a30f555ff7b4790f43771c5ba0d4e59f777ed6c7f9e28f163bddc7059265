@@ -1,0 +1,45 @@
+from pathlib import Path
+import hashlib,json
+T=Path('/private/tmp/l026_next_subset_window/indices_0016_0031/bound_scope')
+R=T.parent/'runtime'
+def pin(p):
+    b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def put(p,v):
+    b=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+    with p.open('xb') as f:f.write(b)
+    return pin(p)
+cap=json.loads((R/'proposal_actual_capture.json').read_bytes())
+guard=json.loads((R/'proposal_guard/receipt.json').read_bytes())
+assert cap['actual_tool']['exit_code']==cap['all_genuine_api_frames'][-1]['exit_code']==0
+assert guard['status']=='PASS' and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+result=json.loads((R/'proposal_output/result.json').read_bytes())
+carrier=json.loads((R/'proposal_output/records.json').read_bytes())
+assert result['verified_nongeneration_records']==[] and result['supplier_activated'] is True
+indices=[r['free_index'] for r in carrier['records']]
+assert indices==result['untrusted_closed_hint_indices']==[16,17,18,19,20,22,25,26,27,29,31]
+assert result['capped_orbit_prefix_misses_unpaid']==[21,23,24,28,30]
+assert result['exact_visited_indices']==list(range(16,32)) and result['exact_unvisited_indices']==[]
+p=json.loads((T/'strict_plan_UNBOUND.json').read_bytes())
+assert p['records'] is None and p['expected_positive_free_indices'] is None
+for ref in p['inputs']:assert pin(Path(ref['path']))==ref
+p.update(records=pin(R/'proposal_output/records.json'),expected_positive_free_indices=indices,
+         status='ROOT_BOUND_ACTUAL11_SUBSET_CARRIERS_STRICT_CHECK_OWED')
+pr=put(T/'strict_plan.json',p)
+review=json.loads((T/'Root_code_math_review.json').read_bytes())
+assert review['status']=='SUPPORTED' and review['fresh_paid_disjoint_checked'] is True
+review.update(plan=pr,proposal_only=False,supplied_only_strict_check=True,
+    strict_supplier_activation_forbidden=True,all11_supplied_records_require_every_ab_bc_edge=True,
+    actual_untrusted_carrier=p['records'],expected_indices=indices,Source_bodies_and_actual14_controls_unchanged=True,
+    physical_paths_upper=30,physical_bytes_upper=3496862,
+    resource_note='The author invoice path count29 omitted the separate strict carrier. Correct upper30 remains below unchanged32-path cap; its conservative byte/work bills already reserve the complete128KiB carrier and remain unchanged.',
+    no_credit_for_five_cap_misses=True)
+rr=put(T/'strict_Root_code_math_review.json',review)
+gate=json.loads((T/'Root_gate.json').read_bytes());gate.update(plan=pr,Root_code_math_review=rr)
+gr=put(T/'strict_Root_gate.json',gate)
+assert len(p['inputs'])+6==30
+upper=p['program']['bytes']+2*(sum(r['bytes'] for r in p['inputs'])+p['program']['bytes']+65536+8192+16384+gate['control_report']['bytes']+131072)
+assert upper<=3496862<8*2**20
+out=Path(p['output_directory']);assert out.parent.resolve(strict=True)==out.parent and not out.exists()
+print(json.dumps(dict(status='ROOT_BOUND_FRESH_SUPPLIED_ONLY11_SUBSET_CHECK',plan=pr,review=rr,gate=gr,
+    positives=indices,unpaid_cap_misses=[21,23,24,28,30],corrected_physical_paths_upper=30,
+    complete_physical_upper=upper,scientific_calls=0,adopted=False)))

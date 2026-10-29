@@ -1,0 +1,30 @@
+from pathlib import Path
+import hashlib,json
+D=Path('/private/tmp/q11_large_end_spectrum/strict25_DATA')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+planref=ref(D/'adoption_plan.json');preparedref=ref(D/'actual_preparation/prepared.json');peerref=ref(D/'independent_prepared_review/independent_review.json')
+assert preparedref['sha256']=='287c4793fa4c43c0162a781b7ea387472b848f42ed9dc57f3da2b7b7556cacbe' and peerref['sha256']=='fa3867fdd3fbc51638b0d806b62234aeb4b7d7f1fffadb6c4b2d30f21879a214'
+plan=json.loads(Path(planref['path']).read_bytes());v=json.loads(Path(preparedref['path']).read_bytes());peer=json.loads(Path(peerref['path']).read_bytes())
+assert peer['status']=='SUPPORTED' and peer['blockers']==[] and peer['program']==plan['program'] and peer['plan']==planref
+assert v['Root_authority_granted']is False and v['program']==plan['program'] and v['plan']==planref
+before=json.loads(Path(plan['predecessor_selector']['path']).read_bytes());after=v['selector'];adoption=v['adoption']
+positions=adoption['verified_IP_failure_positions'];assert len(positions)==len(set(positions))==25
+assert after['previous_method_attempts'][:-1]==before['previous_method_attempts']
+assert after['source_adoptions'][:-1]==before['source_adoptions'] and after['original_paid_positions']==before['original_paid_positions']
+assert after['accepted_new_paid_positions']==sorted(set(before['accepted_new_paid_positions'])|set(positions))
+assert len(after['accepted_new_paid_positions'])==3503 and after['unresolved_positions']==81
+assert after['accepted_paid_by_kind']['large_end_spectrum_IP_failure']==positions
+for k,value in before['accepted_paid_by_kind'].items():assert after['accepted_paid_by_kind'][k]==value
+assert all(adoption[k]==0 for k in ['whole_original_credit','conjecture_credit','Lean_credit','new_compression_credit'])
+for row in v['retention_files']:
+ check(row['original']);assert row['original']['bytes']==row['retained']['bytes'] and row['original']['sha256']==row['retained']['sha256']
+ if row['original']==row['retained']:check(row['retained'])
+for k in ['expected_adoption','expected_selector','expected_preservation']:assert not Path(v[k]['path']).exists()
+release=json.loads((D/'actual_preparation/Root_release_unapproved.json').read_bytes());release.update(adopted=True,blockers=[],exact_current_partition_and_full_actual_closure_reviewed=True,independent_review=peerref,Root_Source_and_DATA_review=ref(D/'Root_adoption_Source_and_DATA_review.json'),actual_preparation_capture=ref(D/'prepare_actual_capture.json'))
+assert release['program']==plan['program'] and release['plan']==planref and release['prepared']==preparedref
+path=D/'Root_publication_release.json';raw=can(release);assert len(raw)<=32768
+with path.open('xb')as f:f.write(raw)
+print(json.dumps(dict(status='ROOT_EXACT_TYPED_PUBLICATION_RELEASED',release=ref(path),prepared=preparedref,program=plan['program'],plan=planref,partition=dict(baseline=217,later=3503,unresolved=81),whole_original_credit=0)))

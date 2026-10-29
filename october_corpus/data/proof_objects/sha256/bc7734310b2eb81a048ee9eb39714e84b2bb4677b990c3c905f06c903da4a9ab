@@ -1,0 +1,93 @@
+"""Author stdlib DATA selection only. Never imports or activates represented Source."""
+from pathlib import Path
+import hashlib,json,stat
+T=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');A=T/'native_retention_DATA'
+S=Path('/Users/sasha/medusa/research/leemans');D=S/'maintenance/intake/f009_census_continuation/from10997/shared_pin_native/evidence'
+U=Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py')
+P=S/'maintenance/intake/f009_census_continuation/from10997/shared_pin_inputs/evidence/preservation.json'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def ident(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+cache={}
+def read(p,want=None):
+ p=Path(p)
+ if str(p) not in cache:
+  z=p.lstat();assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(z.st_mode) and z.st_nlink==1
+  assert 0<=z.st_size<=4*2**20,(p,z.st_size)
+  b=p.read_bytes();assert ident(z)==ident(p.lstat()),p
+  cache[str(p)]=(ref(p,b),b)
+ r,b=cache[str(p)]
+ if want is not None:assert r==want,(r,want)
+ return r,b
+def write(p,v):
+ b=can(v);assert not p.exists(),p;p.write_bytes(b);return ref(p,b)
+pr,pb=read(P,dict(path=str(P),bytes=73372,sha256='8b1894fb2d41af9528b84b69f8fef7995241a22a343356a22c9c05cfcdc33526'));prior=json.loads(pb)
+ur,ub=read(U,dict(path=str(U),bytes=4874,sha256='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'))
+rr,rb=read(T/'retention_DATA/prior_reuse/reuse_table.json');reuse=json.loads(rb)
+# Parse the complete pair table, but open no mass2553 or old original trees.
+assert reuse['all_existing_map_rows']==2553 and len(reuse['rows'])==2553
+maps=prior['files']+reuse['rows'];byhash={};bypath={}
+for row in maps:
+ o,r=row['original'],row['retained'];assert (o['bytes'],o['sha256'])==(r['bytes'],r['sha256'])
+ byhash.setdefault((r['bytes'],r['sha256']),r);bypath[o['path']]=r
+borrowed=[pr]+prior['borrowed_closures']
+for r in borrowed:read(r['path'],r)
+outputs=sorted(p for p in (T/'native_output').rglob('*') if p.is_file());assert len(outputs)==253
+assert not any(p.is_dir() for p in (T/'native_output').rglob('*'))
+assert sum(read(p)[0]['bytes'] for p in outputs)==2637208
+# Frozen current Native/preflight/constructor/metadata evidence, before Reader work.
+allowed_dirs={'native_job','retention_DATA','independent_review','packer_forecast_guard','allocation_review_guard','preflight_guard','constructor_write_guard','native_execution','verified_allocation_guard','exact_allocation_guard','preflight_request_creator_guard','preflight_execution','constructor_forecast_guard','packer_write_guard','native_guard','native_request_creator_guard','preflight_creator_guard','preflight_output'}
+allowed_top={'handoff.json','Root_allocation_audit_actual_capture.json','preflight_job.json','preflight_request.json','constructor_forecast_actual_capture.json','native_parameters.json','constructor_Root_forecast_review_actual_capture.json','native_actual_capture.json','Root_bind_Native.py','literal_role_path_bills.json','first_calls_UNBOUND.json','read_and_capacity_invoice.json','Root_verified_allocation_audit_actual_capture.json','Root_verify_wire.py','Root_wire_inverse_actual_capture.json','Root_allocation_audit.py','preflight_creator_actual_capture.json','native_request.json','allocation_inverse.json','Root_source_preflight_result_review_actual_capture.json','packer_write_actual_capture.json','parameter_inverse.json','Root_bind_preflight.py','Root_exact_allocation_audit_actual_capture.json','preflight_Root_review.json','native_request_creator_actual_capture.json','allocation.json','native_Root_review.json','Root_allocation_audit_inverse_shape_assumption.py','preflight_gate_actual_capture.json','preflight_request_creator_actual_capture.json','README.txt','Root_allocation_audit_prefix_reserve_assumption.py','packer_forecast_actual_capture.json','native_gate_actual_capture.json','preflight_actual_capture.json','constructor_write_actual_capture.json','Root_allocation_review.json','Root_wire_inverse_review.json','Root_source_preflight_result_review.json'}
+metadata={p for p in T.rglob('*') if p.is_file() and (p.relative_to(T).parts[0] in allowed_dirs or (len(p.relative_to(T).parts)==1 and p.name in allowed_top))}
+review=json.loads(read(T/'native_Root_review.json')[1])
+for r in review['method_sources']:read(r['path'],r);metadata.add(Path(r['path']))
+for p in [U,Path('/private/tmp/intake_artifacts/retain_closed_files.py'),Path('/private/tmp/intake_artifacts/stable_stat_source_inverse.json'),P.parent/'retention_actual_capture.json',P.parent/'stable_stat_retention_actual_capture.json',Path(__file__).resolve()]:metadata.add(p)
+for p in metadata:read(p)
+assert json.loads(read(T/'native_guard/receipt.json')[1])['status']=='PASS'
+assert json.loads(read(T/'native_actual_capture.json')[1])['actual_tool']['exit_code']==0
+# Failures are preserved as whole files, never relabelled as passes.
+assert json.loads(read(T/'retention_DATA/copy_guard/receipt.json')[1])['status']=='INCOMPLETE'
+assert json.loads(read(T/'retention_DATA/stable_stat_copy_guard/receipt.json')[1])['status']=='PASS'
+all_selected=outputs+sorted(metadata)
+index=write(A/'selection_index.json',dict(schema='F009_NATIVE_ACTUAL_CLOSED_FILE_SELECTION_V1',author='/root/journal_peer/f009_invoice',accepted_checkpoint=10997,Native_output_files=253,Native_output_bytes=2637208,selected=[read(p)[0] for p in all_selected],prelaunch_preservation=pr,borrowed_closures=borrowed,previous2553_table=rr,previous2553_leaf_bodies_reopened=0,qualification='Current Native outputs are complete raw byte bodies. STOPPED_WITH_RETAINED_UNPAID_FRONTIER is not original completion or adopted checkpoint. Reader outputs are outside this frozen selection.',Root_authority=False))
+metadata.add(A/'selection_index.json');read(A/'selection_index.json')
+def make_batch(name,paths):
+ dest=D/name;pp=A/(name+'_copy_plan.json');mp=dest/'preservation.json'
+ assert not dest.exists(),dest
+ rows=[];reasons=[]
+ for p in sorted(paths):
+  o,_=read(p);key=(o['bytes'],o['sha256']);reuse_ref=byhash.get(key)
+  if reuse_ref is not None:
+   read(reuse_ref['path'],reuse_ref);r=reuse_ref;why='exact_complete_body_reuse_from_existing_durable_mapping'
+  else:r=dict(path=str(dest/'objects'/o['sha256']),bytes=o['bytes'],sha256=o['sha256']);why='new_raw_complete_content_object'
+  rows.append(dict(original=o,retained=r));reasons.append(dict(original=o['path'],retained=r['path'],reason=why))
+ plan=dict(schema='ROOT_F009_SHARED_PIN_NATIVE_CLOSED_RETENTION_PLAN_V1',author='/root/journal_peer/f009_invoice',destination=str(dest),manifest_path=str(mp),files=rows,borrowed_closures=borrowed,selection_index=index,closed_actual_Native_capture=read(T/'native_actual_capture.json')[0],closed_Native_Root_review=read(T/'native_Root_review.json')[0],copy_Source=ur,accepted_checkpoint_sequence=10997,new_checkpoint_registration=None,strict_Reader_result=None,Root_metadata_copy_review_or_release=None,actual_copy_capture=None,actual_retained_manifest=None,scientific_calls=0,Root_authority=False,execution_authority_granted=False,Source_helper_Native_Reader_codec_or_gate_activations_by_author=0,S_W_Git_mutations_by_author=0,qualification='Complete selected raw bytes only. Prior durable bodies reused by exact SHA/length; whole borrowed manifests are read, old mass2553 payloads are not reopened. Native PASS is distinct from Reader/checkpoint authority. All future Reader and registration outputs remain unbound.')
+ pref=write(pp,plan);raw=read(pp,pref)[1]
+ methods=[dict(original=ur,retained=ref(dest/'method/retain_closed_files.py',ub)),dict(original=pref,retained=ref(dest/'method/plan.json',raw))]
+ manifest=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrowed,source_plan=pref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+ mb=can(manifest);mr=ref(mp,mb);write(A/(name+'_projected_manifest.json'),manifest)
+ calls=[];actual_paths=set();new_targets={}
+ def rd(r,why):calls.append(dict(role=why,descriptor=r));actual_paths.add(r['path'])
+ def put(r,why):new_targets.setdefault(r['path'],r);rd(r,why+'_single_immediate_hash')
+ rd(ur,'Source_bootstrap');rd(pref,'plan_initial')
+ for r in borrowed:rd(r,'borrowed')
+ for row in rows:
+  rd(row['original'],'selection_original')
+  if not Path(row['retained']['path']).is_relative_to(dest):rd(row['retained'],'existing_S_reuse')
+ for row in rows:
+  if Path(row['retained']['path']).is_relative_to(dest):rd(row['original'],'copy_original');put(row['retained'],'new_or_deduplicated_content')
+ for row in rows:rd(row['retained'],'all_retained_final')
+ for row in methods:put(row['retained'],'method')
+ put(mr,'manifest');rd(pref,'plan_final')
+ read_bytes=sum(r['descriptor']['bytes'] for r in calls);new_bytes=sum(r['bytes'] for r in new_targets.values())
+ max_file=max(r['descriptor']['bytes'] for r in calls)
+ invoice=dict(schema='F009_NATIVE_RETENTION_EXACT_STABLE_UTILITY_INVOICE_V1',plan=pref,Source=ur,projected_manifest=mr,selected_rows=len(rows),selected_original_bytes=sum(r['original']['bytes'] for r in rows),reuse_rows=sum(not Path(r['retained']['path']).is_relative_to(dest) for r in rows),new_raw_rows=sum(Path(r['retained']['path']).is_relative_to(dest) for r in rows),new_content_objects=len({r['retained']['path'] for r in rows if Path(r['retained']['path']).is_relative_to(dest)}),READ=read_bytes,new_bytes=new_bytes,PATHS=len(actual_paths),new_files=len(new_targets),largest_file=max_file,limits=dict(READ=64*2**20,new_bytes=16*2**20,PATHS=512,new_files=512,per_file=4*2**20,RSS=256*2**20,seconds=125),exact_whole_calls=calls,mapping_reasons=reasons,Root_authority=False,qualification='Literal stable utility whole() read counter, fresh destination. Source bootstrap is included. All repeated reads, identical-object reuse and method/plan/manifest copies are charged. Stats/directory fsync/interpreter/kernel bootstrap are outside the body counter. Actual execution remains unacquired.')
+ assert read_bytes<=64*2**20 and new_bytes<=16*2**20 and len(actual_paths)<=512 and len(new_targets)<=512 and max_file<=4*2**20,(name,read_bytes,new_bytes,len(actual_paths),max_file)
+ ir=write(A/(name+'_invoice.json'),invoice)
+ return dict(name=name,plan=pref,invoice=ir,projected_manifest=mr,destination=str(dest),READ=read_bytes,new_bytes=new_bytes,PATHS=len(actual_paths),new_files=len(new_targets),selected_rows=len(rows),reuse_rows=invoice['reuse_rows'],new_content_objects=invoice['new_content_objects'],largest_file=max_file)
+outputbatch=make_batch('native_outputs',set(outputs))
+# Phase2 retains phase1 frozen plan and its complete exact arithmetic as raw files.
+metadata.update({A/'native_outputs_copy_plan.json',A/'native_outputs_invoice.json',A/'native_outputs_projected_manifest.json'})
+metabatch=make_batch('closed_metadata',metadata)
+handoff=write(A/'handoff.json',dict(schema='FROZEN_F009_NATIVE_ACTUAL_TWO_BATCH_RETENTION_DATA_V1',author='/root/journal_peer/f009_invoice',copy_Source=ur,selection_index=index,batches=[outputbatch,metabatch],accepted_checkpoint=10997,Native_actual_capture=read(T/'native_actual_capture.json')[0],Native_output_file_count=253,Native_output_bytes=2637208,prelaunch_preservation=pr,old_failed_copy_preserved=True,stable_copy_proofs_preserved=True,raw_whole_bytes_only=True,no_mass2553_reopen=True,Root_authority=False,Root_copy_review_or_release=None,actual_copy_captures=None,actual_retained_manifests=None,strict_Reader_result=None,checkpoint_registration=None,represented_Source_activation=0,S_W_Git_mutations=0,qualification='Execute only after Root review, with frozen stable utility Source/self-SHA. Two distinct fresh destinations and manifests preserve every current Native output and closed selected metadata. A genuine bounded Native run does not adopt its proposed checkpoint or confer Reader/original completion credit.'))
+print(json.dumps(dict(handoff=handoff,batches=[outputbatch,metabatch],selected_total_originals=len(all_selected),selected_unique_originals=len(set(all_selected))),indent=2))

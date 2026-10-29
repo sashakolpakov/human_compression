@@ -1,0 +1,278 @@
+def root_pin_text(contract, ref, name, kind=None):
+    import ast
+    raw=contract.source_text(ref)
+    wanted=ast.FunctionDef if kind is None else kind
+    nodes=[n for n in ast.parse(raw,filename=ref['path']).body if isinstance(n,wanted)and n.name==name]
+    need(len(nodes)==1,'one exact whole retained definition for private pin storage')
+    return ast.get_source_segment(raw,nodes[0])
+
+def root_pin_edit(before, old, new):
+    need(before.count(old)==1 and new not in before,'one exact private allocation/provider site')
+    after=before.replace(old,new,1)
+    need(after.replace(new,old,1)==before,'whole retained definition inverse')
+    return after
+
+def root_pin_rebind(original, replacements):
+    """Same literal code/defaults/closure; only named private providers differ."""
+    need(type(original)is types.FunctionType,'actual retained function provider')
+    old=original.__globals__;private=dict(old)
+    need(set(replacements)<=set(old),'replace only explicitly existing provider globals')
+    private.update(replacements)
+    result=types.FunctionType(original.__code__,private,original.__name__,original.__defaults__,original.__closure__)
+    result.__kwdefaults__=original.__kwdefaults__;result.__annotations__=original.__annotations__
+    result.__qualname__=original.__qualname__;result.__dict__.update(original.__dict__)
+    need(result.__code__ is original.__code__ and result.__defaults__ is original.__defaults__
+         and result.__closure__ is original.__closure__
+         and all(private[k]is v for k,v in old.items()if k not in replacements),
+         'literal function code and every unmodified provider identity')
+    return result
+
+def root_pin_expand(contract, codec, value, *, envelope):
+    """Only dict allocation changes; index(pins,i) still validates EVERY call.
+
+    The original whole pin_shape pass, logical size guard, complete raw LF
+    authentication, reference fields, typed inverse and canonical compact
+    equality are literal. Shared pin dictionaries are read-only here and in
+    the retained Native chain. No occurrence/leaf dictionary is deduplicated.
+    """
+    need(Path(codec.__file__)==Path(ROOT_PIN_CODEC['path'])
+         and codec.expand.__globals__ is vars(codec)
+         and codec.expand.__code__.co_filename==ROOT_PIN_CODEC['path'],
+         'the actual acquired original codec/provider, not a supplied decoder')
+    original=codec.expand
+    before=root_pin_text(contract,ROOT_PIN_CODEC,'expand')
+    after=root_pin_edit(before,ROOT_PIN_BEFORE,ROOT_PIN_AFTER)
+    private=dict(vars(codec))
+    exec(compile(after,str(Path(__file__).resolve())+'::private_pin_expand','exec',dont_inherit=True),private)
+    current=private['expand']
+    need(current.__globals__ is private and all(private[k]is v for k,v in vars(codec).items()if k!='expand'),
+         'all helpers, original START, limits and physical registry remain the original objects')
+    try:
+        result=current(value,envelope=envelope)
+        need(codec.expand is original,'original imported expand never replaced')
+        return result
+    finally:
+        # expand is nonrecursive; remove only the new private self-binding.
+        private.pop('expand',None)
+
+def root_pin_accessor(contract, accessor):
+    """Fresh private class/providers; no imported accessor binding is assigned."""
+    import ast
+    need(isinstance(accessor,types.ModuleType)and Path(accessor.__file__)==Path(ROOT_PIN_ACCESSOR['path'])
+         and accessor.load_direct.__globals__ is vars(accessor)
+         and accessor.segment_class.__globals__ is vars(accessor),
+         'actual retained accessor definitions and original module globals')
+    old_load=accessor.load_direct;old_class=accessor.Admission;old_segment=accessor.segment_class
+    before=root_pin_text(contract,ROOT_PIN_ACCESSOR,'load_direct')
+    after=root_pin_edit(before,"state=c.expand(value['state'],envelope=envelope)",
+        "state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope)")
+    namespace=dict(vars(accessor))
+    need('ROOT_PRIVATE_PIN_EXPAND'not in namespace,'fresh private decoder binding')
+    namespace['ROOT_PRIVATE_PIN_EXPAND']=lambda codec,value,**kw:root_pin_expand(contract,codec,value,**kw)
+    exec(compile(after,str(Path(__file__).resolve())+'::private_load_direct','exec',dont_inherit=True),namespace)
+    new_load=namespace['load_direct']
+    # The Admission class body is byte literal. Its load_direct global alone
+    # differs; ordinary parts/method/check and all acquisition predicates stay.
+    class_before=root_pin_text(contract,ROOT_PIN_ACCESSOR,'Admission',ast.ClassDef)
+    exec(compile(class_before,ROOT_PIN_ACCESSOR['path'],'exec',dont_inherit=True),namespace)
+    new_class=namespace['Admission']
+    # segment_class code is unchanged. Its freshly constructed Admission is
+    # the sole different provider. Its returned original-named Segment keeps
+    # the genuine runtime Source, slots, AUTHENTICATED checks and owned chain.
+    new_segment=root_pin_rebind(old_segment,{'Admission':new_class})
+    facade=types.SimpleNamespace(**vars(accessor))
+    facade.Admission=new_class;facade.load_direct=new_load;facade.segment_class=new_segment
+    need(new_class.acquire_base.__globals__ is namespace
+         and new_class.acquire_base.__globals__['load_direct']is new_load
+         and new_segment.__globals__['Admission']is new_class
+         and accessor.Admission is old_class and accessor.load_direct is old_load
+         and accessor.segment_class is old_segment,
+         'complete private provider chain and every original accessor binding untouched')
+    return facade
+
+def root_pin_profile(contract, entry, application):
+    need(Path(entry.__file__)==Path(ROOT_PIN_ENTRY['path'])
+         and entry.profile_bind.__globals__ is vars(entry)
+         and entry.profile_bind.__code__.co_filename==ROOT_PIN_ENTRY['path'],
+         'same exact retained materialized profile provider')
+    original=entry.profile_bind
+    before=root_pin_text(contract,ROOT_PIN_ENTRY,'profile_bind')
+    after=root_pin_edit(before,'CURRENT_ACCESSOR=A,','CURRENT_ACCESSOR=ROOT_PRIVATE_PIN_ACCESSOR(A),')
+    private=dict(vars(entry));need('ROOT_PRIVATE_PIN_ACCESSOR'not in private,'fresh private profile accessor')
+    private['ROOT_PRIVATE_PIN_ACCESSOR']=lambda accessor:root_pin_accessor(contract,accessor)
+    exec(compile(after,str(Path(__file__).resolve())+'::private_profile_bind','exec',dont_inherit=True),private)
+    current=private['profile_bind']
+    need(all(private[k]is v for k,v in vars(entry).items()if k!='profile_bind'),
+         'all original entry helpers and namespaces preserved')
+    try:
+        result=current(application)
+        need(entry.profile_bind is original,'original imported profile_bind never replaced')
+        return result
+    finally:private.pop('profile_bind',None);private.pop('ROOT_PRIVATE_PIN_ACCESSOR',None)
+
+def root_pin_sharing_route(contract, route, plan):
+    """Count-neutral Native caller seam; Reader and IO routes stay identical."""
+    need(plan['role']=='native'and plan['library_adapter']==ROOT_PIN_ADAPTER
+         and Path(route.__file__)==Path(ROOT_PIN_ADAPTER['path'])
+         and route.native.__globals__ is vars(route)
+         and route.native.__code__.co_filename==ROOT_PIN_ADAPTER['path'],
+         'only this exact paid Native workspace adapter and genuine Root job')
+    original=route.native
+    before=root_pin_text(contract,ROOT_PIN_ADAPTER,'native')
+    after=root_pin_edit(before,'old,run=module.profile_bind(application)',
+        'old,run=ROOT_PRIVATE_PIN_PROFILE(contract,module,application)')
+    private=dict(vars(route));need('ROOT_PRIVATE_PIN_PROFILE'not in private,'fresh Native provider namespace')
+    private['ROOT_PRIVATE_PIN_PROFILE']=root_pin_profile
+    exec(compile(after,str(Path(__file__).resolve())+'::private_native','exec',dont_inherit=True),private)
+    current=private['native'];facade=types.SimpleNamespace(**vars(route));facade.native=current
+    need(facade.reader is route.reader and facade.io_budget is route.io_budget
+         and route.native is original
+         and all(private[k]is v for k,v in vars(route).items()if k!='native'),
+         'only private Native profile provider changes; paid635a module and Reader/IO stay untouched')
+    return facade
+
+def root_pin_control_main():
+    """Synthetic typed-state controls only; no original case or project import."""
+    import ast,copy,tempfile
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--controls',action='store_true',required=True)
+    parser.add_argument('--self-sha256',required=True)
+    args=parser.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,
+         'ordinary exact control interpreter')
+    need(all(k not in os.environ for k in ('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same absent four environment variables')
+    attempted=[]
+    def forbid(event,arguments):
+        if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            attempted.append(event);raise ValueError('generic pin controls forbid Native launch')
+    sys.addaudithook(forbid)
+    own=initial_ref(str(Path(__file__).resolve(strict=True)),args.self_sha256,65536)
+    refs=[own,ROOT_PIN_CODEC,ROOT_PIN_ACCESSOR,ROOT_PIN_ADAPTER,ROOT_PIN_ENTRY,ROOT_PIN_WIRE,ROOT_PIN_OWNED,ROOT_PIN_BACKEND]
+    raw={r['path']:bootstrap(r,65536) for r in refs}
+    class SourceOnly:
+        def source_text(self,reference):
+            need(reference in refs,'only complete fixed generic-control Sources')
+            return raw[reference['path']].decode()
+    contract=SourceOnly();passed=[]
+    def done(name,condition=True):need(condition,name);passed.append(name)
+    def take(text,name,kind=ast.FunctionDef):
+        nodes=[n for n in ast.parse(text).body if isinstance(n,kind)and n.name==name]
+        need(len(nodes)==1,'one exact literal control subject');return ast.get_source_segment(text,nodes[0])
+    def literal_functions(module,text,names,filename):
+        for name in names:
+            exec(compile(take(text,name),filename,'exec',dont_inherit=True),vars(module))
+    ctext=raw[ROOT_PIN_CODEC['path']].decode();wtext=raw[ROOT_PIN_WIRE['path']].decode()
+    W=types.ModuleType('generic_literal_ordered_state');W.__file__=ROOT_PIN_WIRE['path']
+    # Actual literal typed predicates, with only independent generic need and
+    # declared constants. No loader, model, case or transition is activated.
+    state_assign=next(n for n in ast.parse(wtext).body if isinstance(n,ast.Assign)
+        and any(isinstance(t,ast.Name)and t.id=='STATE_KEYS'for t in n.targets))
+    vars(W).update(need=need,Path=Path,STATE_KEYS=ast.literal_eval(state_assign.value),MAX_RAW=64*2**20)
+    literal_functions(W,wtext,['digest','pin_shape','reference','unwire','wire'],ROOT_PIN_WIRE['path'])
+    codec=types.ModuleType('generic_literal_reference_codec');codec.__file__=ROOT_PIN_CODEC['path']
+    legacy=types.SimpleNamespace(W=W,SCHEMA='GENERIC_LEGACY_ENVELOPE',O=types.SimpleNamespace(WIRE='GENERIC_LEGACY_TABLE'))
+    vars(codec).update(need=need,Path=Path,json=json,hashlib=hashlib,os=os,stat=stat,
+        MAX_RAW=64*2**20,MAX_PINS=40000,MAX_INPUT_BYTES=2**31,MAX_LINE=16384,
+        WIRE='F009_PINNED_ORDERED_LEAF_LOCATORS_V1',SCHEMA='F009_REFERENCE_BACKED_CAPACITY8_STATE_V1',
+        _OPEN={},START=time.monotonic(),legacy=lambda:legacy)
+    literal_functions(codec,ctext,['signature','digest','pin_shape','authenticate_lines','logical_reference_size','compact','expand'],ROOT_PIN_CODEC['path'])
+    ordinary=codec.expand
+    def both_bad(value,envelope):
+        answers=[]
+        for call in (lambda:ordinary(copy.deepcopy(value),envelope=envelope),
+                     lambda:root_pin_expand(contract,codec,copy.deepcopy(value),envelope=envelope)):
+            try:call()
+            except Exception:answers.append(True)
+            else:answers.append(False)
+        return answers==[True,True]
+    with tempfile.TemporaryDirectory(prefix='f009_pin_controls_',dir='/private/tmp')as directory:
+        base=Path(directory)
+        bodies={'binary':b'x','completion':b'y','raw_a':b'a\nb\nc\nd\ne\n','raw_b':b'f\ng\n'}
+        pins={}
+        for name,body in bodies.items():
+            p=base/name;p.write_bytes(body);pins[name]=dict(path=str(p),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+        line=lambda name,i:dict(file=pins[name],line=i,sha256=hashlib.sha256(bodies[name].splitlines(keepends=True)[i]).hexdigest())
+        nodes={}
+        for i in range(2):
+            record=line('raw_a',i+3);ident=record['sha256']
+            nodes[ident]=dict(values=[32,5,4,8]+[0]*7,record=record,canonical={'key':str(i),'lab':[0]},receiver=ident,children=None,creation=i)
+        state=dict(target=[32,5,4,8],binary=pins['binary'],completion_binary=pins['completion'],nodes=nodes,
+            pending=set(nodes),leaves=[line('raw_a',0),line('raw_a',1),line('raw_a',0),line('raw_b',0),line('raw_a',2)],sequence=7,started={})
+        value=codec.compact(state)
+        envelope=dict(schema=codec.SCHEMA,head=pins['binary'],producer_case=pins['completion'],upstream_acceptance=pins['raw_a'],source_profile=pins['raw_b'])
+        expected=ordinary(copy.deepcopy(value),envelope=envelope)
+        result=root_pin_expand(contract,codec,copy.deepcopy(value),envelope=envelope)
+        done('whole_rich_typed_values_and_node_debt_order',result==expected and list(result['nodes'])==list(expected['nodes'])and list(result['started'])==list(expected['started']))
+        done('equal_duplicate_file_pins_share_storage',result['leaves'][0]['file']is result['leaves'][1]['file']is result['leaves'][2]['file'])
+        done('duplicate_occurrences_remain_distinct_leaf_dictionaries',result['leaves'][0]is not result['leaves'][2]and result['leaves'][0]==result['leaves'][2])
+        done('different_whole_file_identities_never_share',result['leaves'][0]['file']is not result['leaves'][3]['file'])
+        done('cross_node_and_leaf_pins_equal_before_sharing',next(iter(result['nodes'].values()))['record']['file']is result['leaves'][0]['file'])
+        done('original_codec_provider_and_physical_registry_unchanged',codec.expand is ordinary and codec.expand.__globals__ is vars(codec))
+        reordered=copy.deepcopy(state);reordered['leaves']=list(reversed(reordered['leaves']))
+        rv=codec.compact(reordered);rr=root_pin_expand(contract,codec,rv,envelope=envelope)
+        done('every_leaf_occurrence_order_preserved',rr['leaves']==reordered['leaves']and rr['leaves']!=result['leaves'])
+        bad=copy.deepcopy(value);bad['state']['leaves']['count']+=1
+        done('wrong_count_refused_by_both',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);group=bad['state']['leaves']['groups'][0];bad['state']['leaves']['groups']=[ [group[0],group[1][:1]],[group[0],group[1][1:]] ]+bad['state']['leaves']['groups'][1:]
+        done('nonmaximal_adjacent_group_representation_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['pins'].append(dict(path=str(base/'unused'),bytes=0,sha256=hashlib.sha256(b'').hexdigest()))
+        done('unused_noncanonical_pin_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['binary']=False
+        done('noninteger_boolean_file_ref_refused_on_call',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['binary']=len(value['pins'])
+        done('out_of_range_file_ref_refused_on_call',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['pins'][0]['bytes']=False
+        done('invalid_whole_pin_type_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);slot=bad['state']['leaves']['groups'][0][0];bad['pins'][slot]['sha256']='0'*64
+        done('actual_whole_leaf_file_hash_mismatch_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);p=base/'missing_lf';p.write_bytes(b'q');slot=bad['state']['leaves']['groups'][0][0]
+        bad['pins'][slot]=dict(path=str(p),bytes=1,sha256=hashlib.sha256(b'q').hexdigest())
+        bad['state']['leaves']={'count':1,'groups':[[slot,[0]]]}
+        done('actual_missing_final_LF_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['nodes'].reverse()
+        done('wrong_node_creation_order_refused',both_bad(bad,envelope))
+        # Literal original migration and already-paid owned copier, exercised
+        # only on this tiny generic state. No backend transition is admitted.
+        namespace={'need':need,'copy':copy}
+        owned_text=raw[ROOT_PIN_OWNED['path']].decode();backend_text=raw[ROOT_PIN_BACKEND['path']].decode()
+        exec(compile(take(owned_text,'owned_state_copy'),ROOT_PIN_OWNED['path'],'exec',dont_inherit=True),namespace)
+        migrate=take(backend_text,'migrate')
+        migrate=root_pin_edit(migrate,'return copy.deepcopy(state)','return OWNED_STATE_COPY(state)')
+        migrate=root_pin_edit(migrate,'result=copy.deepcopy(state);','result=OWNED_STATE_COPY(state);')
+        namespace['OWNED_STATE_COPY']=namespace['owned_state_copy']
+        exec(compile(migrate,ROOT_PIN_OWNED['path']+'::private_backend_migrate','exec',dont_inherit=True),namespace)
+        case=dict(target=result['target'],binary=result['binary'],completion_binary=result['completion_binary'],backend_transition=None)
+        migrated=namespace['migrate'](result,case)
+        done('unchanged_owned_None_migration_full_values',migrated==result and migrated is not result and migrated['leaves']is not result['leaves']and migrated['leaves'][0]is result['leaves'][0])
+        first=next(iter(result['nodes']));migrated['nodes'][first]['values'][-1]=1
+        done('deep_nonleaf_isolation_with_cross_pin_alias',result['nodes'][first]['values'][-1]==0 and migrated['nodes'][first]['record']['file']is not result['nodes'][first]['record']['file'])
+        for field in ('target','binary','completion_binary'):
+            wrong=dict(case);wrong[field]=[22,5,4,5]if field=='target'else dict(path='/wrong',bytes=0,sha256='0'*64)
+            try:namespace['migrate'](result,wrong)
+            except Exception:done('None_migration_wrong_'+field+'_refused')
+            else:need(False,'unchanged None migration must refuse wrong backend context')
+    # Provider construction uses exact literal retained bodies in a synthetic
+    # module, without calling Admission, profile_bind or a real Native method.
+    A=types.ModuleType('generic_retained_accessor');A.__file__=ROOT_PIN_ACCESSOR['path']
+    at=raw[ROOT_PIN_ACCESSOR['path']].decode();literal_functions(A,at,['load_direct','segment_class'],ROOT_PIN_ACCESSOR['path'])
+    exec(compile(take(at,'Admission',ast.ClassDef),ROOT_PIN_ACCESSOR['path'],'exec',dont_inherit=True),vars(A))
+    old=(A.Admission,A.load_direct,A.segment_class);facade=root_pin_accessor(contract,A)
+    done('private_accessor_chain_constructs_without_acquisition',old==(A.Admission,A.load_direct,A.segment_class)and facade.segment_class.__globals__['Admission']is facade.Admission and facade.Admission.acquire_base.__globals__['load_direct']is facade.load_direct)
+    route=types.ModuleType('generic_retained_adapter');route.__file__=ROOT_PIN_ADAPTER['path']
+    literal_functions(route,raw[ROOT_PIN_ADAPTER['path']].decode(),['native'],ROOT_PIN_ADAPTER['path'])
+    route.reader=lambda:None;route.io_budget=lambda:None;original=route.native
+    selected=root_pin_sharing_route(contract,route,{'role':'native','library_adapter':ROOT_PIN_ADAPTER})
+    done('private_Native_provider_keeps_reader_IO_and_original_binding',route.native is original and selected.reader is route.reader and selected.io_budget is route.io_budget)
+    et=raw[ROOT_PIN_ENTRY['path']].decode();before=take(et,'profile_bind')
+    after=root_pin_edit(before,'CURRENT_ACCESSOR=A,','CURRENT_ACCESSOR=ROOT_PRIVATE_PIN_ACCESSOR(A),')
+    done('entire_profile_provider_inverse',after.replace('CURRENT_ACCESSOR=ROOT_PRIVATE_PIN_ACCESSOR(A),','CURRENT_ACCESSOR=A,',1)==before)
+    for r in refs:bootstrap(r,65536)
+    need(not attempted,'no Native or subprocess attempt in generic controls')
+    physical=own['bytes']+2*sum(r['bytes']for r in refs)+4
+    report=dict(schema='F009_NATIVE_PIN_SHARING_GENERIC_CONTROLS_V1',status='PASS',program=own,
+       controls=len(passed),names=passed,original_case_calls=0,native_launch_attempts=attempted,
+       project_module_imports=0,synthetic_only=True,full_Source_read_upper=physical,Source_paths=len(refs),
+       actual_Native_RSS_saving_or_original_case_fit_established=False)
+    output=json.dumps(report,sort_keys=True);need(len(output.encode())<=16384,'bounded complete generic-control report')
+    print(output,flush=True)

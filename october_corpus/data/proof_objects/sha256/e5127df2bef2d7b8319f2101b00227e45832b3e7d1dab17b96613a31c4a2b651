@@ -1,0 +1,35 @@
+from pathlib import Path
+import ast,hashlib,json
+D=Path('/private/tmp/l026_generation_ip_append')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+def defs(s):return{n.name:ast.get_source_segment(s,n)for n in ast.parse(s).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+h=json.loads((D/'handoff.json').read_bytes());check(h['program']);check(h['parent'])
+assert h['program']['sha256']=='53b505596b1c1545b80fc5753ed2a1d542abd50069458432858ef16d84a8f5b9'
+old=defs(Path(h['parent']['path']).read_text());new=defs(Path(h['program']['path']).read_text())
+literal=[n for n in old if old[n]==new[n]];changed=[n for n in old if old[n]!=new[n]]
+assert len(literal)==14 and set(changed)=={'retention','generation_run','ip_composition','construct','main'} and set(new)-set(old)=={'accepted_ledger'}
+v1=(D/'read_aid/01_MODULE_AND_NEW_DEFINITIONS.py.txt').read_text();v2=(D/'read_aid/02_CHANGED_EXISTING_DEFINITIONS.py.txt').read_text()
+assert all(new[n]in v1 for n in ['accepted_ledger','construct'])and all(new[n]in v2 for n in changed if n!='construct')
+peer=ref(D/'independent_review/independent_review.json');q=json.loads(Path(peer['path']).read_bytes());assert q['status']=='SUPPORTED_SOURCE_AND_UNBOUND_DATA_ONLY'
+assert not q.get('blockers',q.get('Source_blockers',[]))
+recipe=json.loads((D/'actual_manifest_binding_recipe.json').read_bytes());check(recipe['request']);plan=json.loads(Path(recipe['request']['path']).read_bytes())
+history=ref(recipe['expected_history_manifest_path']);strict=ref(recipe['expected_science_manifest_path'])
+assert history['sha256']=='faad8d4c1b4b255820a3cbc1c0a31e0cc6e772751fb6ac1523887e7662573296' and strict['sha256']=='e59143b5a7908e1354cc71e00528246c0e00576441bbb2df0b83c2eeb3cf8a33'
+hist=json.loads(Path(history['path']).read_bytes());family=json.loads(Path(strict['path']).read_bytes());assert len(hist['files'])==389 and len(family['files'])==49
+assert family['exact_indices']==[21,23,28,30]and family['original_owners']==[23,25,31,33]
+for entry in plan['strict_runs']:assert entry['durable_evidence']is None and entry['additional_evidence']==[];entry.update(durable_evidence=strict,additional_evidence=[history])
+rows=recipe['known_complete_descriptor_inputs']+[history,strict];unique={}
+for r in rows:assert unique.get(r['path'],r)==r;unique[r['path']]=r
+plan['inputs']=sorted(unique.values(),key=lambda r:r['path'])
+for r in plan['inputs']:check(r)
+for row in family['files']:check(row.get('retained',row.get('preserved')))
+assert plan['positive_free_indices']==[21,23,28,30]and plan['expected_counts_if_Root_adopts']==dict(previous_NEG=17712,previous_GEN=3,new_GEN=4,total_GEN=7,separate_IP=7,remaining=28877,remaining_mass=29570048)
+out=D/'bound_plan.json';raw=can(plan);assert len(raw)<=131072
+with out.open('xb')as f:f.write(raw)
+pr=ref(out);allrefs=dict(unique);allrefs[h['program']['path']]=h['program'];allrefs[pr['path']]=pr
+bill=h['program']['bytes']+2*sum(r['bytes']for r in allrefs.values());assert len(allrefs)<=130 and bill<64*2**20
+review=dict(schema='ROOT_L026_GENERIC_GEN_APPEND_SOURCE_AND_BOUND_DATA_REVIEW_V1',root='/root',status='SUPPORTED',blockers=[],program=h['program'],parent=h['parent'],plan=pr,literal_definitions=literal,new_definition='accepted_ledger',changed_definitions=changed,independent_review=peer,actual_history_manifest=history,actual_strict_family_manifest=strict,actual_metadata_read_upper=bill,actual_metadata_paths_upper=len(allrefs),scope='Root read all new and changed definitions and current module prefix; whole14 literal ancestors independently checked. Exact current NEG24/priorGEN3 and four actual268d rows remain separate. Original namedG membership chain and retained0b940 proof checked; strict IPcredit0 unchanged. Complete copied389 history and fresh49 strict-family map confirmed. New metadata controls/validation and separate Root publication remain owed.',whole_original_credit=0)
+rp=D/'Root_Source_and_bound_DATA_review.json';rp.write_bytes(can(review));print(json.dumps(dict(status='ROOT_BOUND_GEN4_METADATA_REVIEW_SUPPORTED',plan=pr,review=ref(rp),paths=len(allrefs),read_upper=bill,proposed_counts=plan['expected_counts_if_Root_adopts'])))

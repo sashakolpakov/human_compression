@@ -1,0 +1,122 @@
+"""Independent bounded stdlib Source/JSON DATA audit. No represented module activation."""
+from pathlib import Path
+import ast,hashlib,json,stat,string
+T=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');A=T/'reader_binding_DATA/invoice_peer'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+seen={};checks=[]
+def whole(r,role):
+ p=Path(r['path']);s=p.lstat();assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1
+ b=p.read_bytes();assert sig(s)==sig(p.lstat()) and ref(p,b)==r,(role,r)
+ seen[str(p)]=r;checks.append(dict(role=role,descriptor=r));return b
+def current(p,role):
+ p=Path(p);b=p.read_bytes();r=ref(p,b);return r,whole(r,role)
+def rows_check(rows):
+ assert rows==sorted(rows,key=lambda r:r['path']) and len({r['path'] for r in rows})==len(rows)
+ for r in rows:
+  assert set(r)=={'path','bytes','sha256'} and type(r['bytes']) is int and r['bytes']>=0
+  p=Path(r['path']);assert p.is_absolute() and '..' not in p.parts and '.' not in p.parts and '\0' not in str(p)
+  assert len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef')
+ assert len(rows)<=40000 and sum(r['bytes'] for r in rows)<=2**31
+ return rows
+pr=dict(path=str(T/'reader_preparation_plan.json'),bytes=9075,sha256='ea1542bede5e430ae7f3504ded8a63e0ce79a9adc807987ff373ecf90099114e');p=json.loads(whole(pr,'frozen_preparation_plan'))
+ir=dict(path=str(T/'reader_binding_DATA/template_binding_inverse.json'),bytes=30955,sha256='d0d2eafa4e91de67ae7a556b3820bb37dc0ccb2cb5f77bdb207f2180e6d1ca22');iv=json.loads(whole(ir,'complete_binding_inverse'))
+template=json.loads(whole(iv['template'],'frozen_template'));assert iv['bound']==pr and iv['whole_template']==template and iv['whole_bound']==p
+actual_changes={k for k in set(template)|set(p) if (k in template)!=(k in p) or template.get(k)!=p.get(k)}
+assert set(iv['changed_fields'])==actual_changes
+restored=dict(p)
+for k,ch in iv['changed_fields'].items():
+ assert ch['after']==p[k] and ch['added']==(k not in template) and ch['before']==template.get(k)
+ if ch['added']:restored.pop(k)
+ else:restored[k]=ch['before']
+assert restored==template and can(restored)==can(template)
+assert p['author']=='/root/compact_proof_author' and p['bound_by']=='/root/journal_peer' and p['Root_authority'] is False
+for k in ['Root_Reader_job_release','Root_preparation_release','actual_Reader_execution','actual_Reader_result','checkpoint_adoption']:assert p[k] is None
+assert p['new_census_credit']==0 and p['expected_checkpoint_sequence']==10997
+ar=p['actual_native'];assert len(ar)==8
+actual={k:json.loads(whole(r,'actual_native:'+k)) for k,r in ar.items()}
+j=actual['job'];qwire=actual['Owner_request'];qtag=qwire['Root_Request_rows_reference']
+assert qtag['prefixes']==sorted(set(qtag['prefixes']))
+qrows=rows_check([dict(path=qtag['prefixes'][e[0]]+e[1],bytes=e[2],sha256=e[3]) for e in qtag['rows']])
+qlogical=dict(qwire);qlogical.pop('Root_Request_rows_reference');qlogical['inputs']=qrows
+assert len(can(qlogical))==qtag['logical_bytes'] and hashlib.sha256(can(qlogical)).hexdigest()==qtag['logical_sha256']
+jrows=rows_check(j['declared_inputs']);lookup={r['path']:r for r in qrows};assert all(lookup.get(r['path'])==r for r in jrows)
+sources=[jrows[i] for i in j['Root_Source_rows_reference']['indices']];assert len(sources)==1015
+assert hashlib.sha256(can(sources)).hexdigest()==j['Root_Source_rows_reference']['Source_rows_sha256']
+assert hashlib.sha256(can(jrows)).hexdigest()==j['Root_Source_rows_reference']['declared_rows_sha256']
+assert j['old_checkpoint_sequence']==10997 and j['output']==p['native_output'] and j['new_census_credit']==0
+assert actual['Owner_receipt']['status']=='PASS' and actual['Owner_receipt']['input_count']==len(qrows)
+assert actual['actual_execution']['actual_tool']['exit_code']==0 and actual['outer_guard_receipt']['status']=='PASS'
+assert actual['worker_handoff']['global_checkpoint_written'] is False and actual['native_result']['new_census_credit']==0
+assert actual['native_result']['sequence']==11046
+N=[]
+for f in sorted(Path(p['native_output']).rglob('*')):
+ assert f.is_file() and not f.is_symlink();r,b=current(f,'Native_output_whole');N.append(r)
+rows_check(N);assert len(N)==253 and sum(r['bytes'] for r in N)==2637208
+assert hashlib.sha256(can(N)).hexdigest()==p['native_output_inventory_sha256']=='5adac49a5da61f8499ba4a895ab1672f8f526956f561533a6aabf6ac9c58b7a0'
+assert all(r['bytes']>=0 and r['path'].isascii() and len(r['path'].encode())<=384 and len(can(r))<=512 for r in N)
+assert ar['worker_handoff'] in N and ar['native_result'] in N and actual['native_result']['checkpoint'] in N
+params=json.loads(whole(p['native_parameters'],'Native_parameters'));assert p['native_parameters']['sha256']=='e039746b5a5ae01e0c56e334e6e552ed7df4a85d617168c6b5af0f23fef186e0'
+assert params['role']=='native' and params['artifact_root']==str(Path(ar['job']['path']).parent) and params['output']==j['output']
+allocation=json.loads(whole(p['current49_allocation'],'whole49_allocation'));roles=allocation['roles'];assert len(roles)==49
+assert p['finite_allocation']['new_physical_role_paths']==[r['path'] for r in roles]
+assert p['finite_allocation']['nonoutput_roles']==49 and p['finite_allocation']['path_bytes']==384
+assert len({r['path'] for r in roles})==49 and sum(r['maximum_bytes'] for r in roles)==20381472
+safe=set(string.ascii_letters+string.digits+'/_.-');availability=[]
+for r in roles:
+ assert set(r['path'])<=safe and len(r['path'])<=384 and Path(r['path']).is_absolute() and '..' not in Path(r['path']).parts
+ f=Path(r['path'])
+ if f.exists():
+  rr,b=current(f,'available49:'+r['role']);assert rr['bytes']<=r['maximum_bytes'];availability.append(dict(role=r['role'],actual_reference=rr))
+ else:availability.append(dict(role=r['role'],actual_reference=None,maximum_bytes=r['maximum_bytes']))
+ if r['actual_reference'] is not None:whole(r['actual_reference'],'fixed49:'+r['role'])
+root=Path(p['metadata_output']);assert root==T/'reader_prepared'
+for f in [root,Path(p['reader_artifact_root']),Path(p['reader_output'])]:
+ assert f.parent.resolve(strict=True)==f.parent and not f.exists() and str(f).isascii() and len(str(f))<=384
+assert p['reader_artifact_root']==str(T/'reader_job') and p['reader_output']==str(T/'reader_output')
+rolemap={r['role']:r for r in roles};release_role=rolemap['Reader_preparation_Root_release'];assert release_role['maximum_bytes']==65536 and release_role['path']==str(T/'reader_preparation_Root_release.json')
+assert not Path(release_role['path']).exists()
+for k in ['Reader_Root_review','Reader_Owner_request']:assert not Path(rolemap[k]['path']).exists()
+# Whole unchanged Source bodies are hashed and AST-parsed, never imported/compiled/called.
+sourcepins=[]
+for r in allocation['all_nine_new_sources']:
+ b=whole(r,'unchanged_Source');ast.parse(b);sourcepins.append(r)
+for f,sha in [('/private/tmp/f009_metadata_references/producer_support/prepare_reader.py','75783ed246dfbfac28f7e1752ba67265ba7e07f59471ea427a7111aee5ab9fda'),('/private/tmp/f009_metadata_references/pack_metadata.py','648975714fe3e9cababaddcc046fecd32a643fc86729abaeed5925f1a3bcae3c')]:
+ r,b=current(f,'unchanged_retained_Source');assert r['sha256']==sha;ast.parse(b);sourcepins.append(r)
+U=rolemap['Source:prepare_reader.py']['actual_reference'];assert U['sha256']=='e466e7e0bbcb34b05521c3012ba99dd76b00f62ffa8e4f4d6ea202d8b5934a50'
+# Every literal role/prefix charge is recomputed under the original majorants.
+invoice_ref,invoice_bytes=current(T/'read_and_capacity_invoice.json','retained_capacity_invoice');oldinvoice=json.loads(invoice_bytes)
+bill_ref,bill_bytes=current(T/'literal_role_path_bills.json','whole49_path_bills');bills=json.loads(bill_bytes)
+# Existing immutable proof supplies complete role growth and bank/closure framing bounds.
+proofs=[]
+for r in oldinvoice['prior_proof_refs']:whole(r,'retained_capacity_proof');proofs.append(r)
+assert oldinvoice['active_role_caps']==sum(r['maximum_bytes'] for r in roles)
+assert oldinvoice['tight_closure_upper']==913004+8324*3+2048*476+49*256+16384+1024==1942776
+outnames=['native_actual_review.json','native_output_rows.json','native_output_manifest.json','native_closure.json','reader_parameters.json']
+outputslots=[rolemap['Reader_preparation:'+n] for n in outnames];assert sum(r['maximum_bytes'] for r in outputslots)==3135160<=3*2**20
+assert oldinvoice['five_preparer_output_upper']==3135160-(1954808-1942776)==3123128
+# Complete descriptor-domain namespace, with explicit null actual refs for all future bodies.
+upper={}
+def add_upper(path,size):
+ if path in upper:assert upper[path]==size,(path,upper[path],size)
+ upper[path]=size
+for r in jrows+qrows+list(ar.values())+N+[U,pr]:add_upper(r['path'],r['bytes'])
+add_upper(release_role['path'],release_role['maximum_bytes'])
+for slot in outputslots[:3]:add_upper(slot['path'],slot['maximum_bytes'])
+closure_domain=dict(files=len(upper),bytes=sum(upper.values()))
+assert closure_domain['files']<=40000 and closure_domain['bytes']<=2**31
+for slot in outputslots[3:]:add_upper(slot['path'],slot['maximum_bytes'])
+namespace_upper=len(upper);assert namespace_upper<=40000
+CP=[]
+for k in ['checkpoint_acceptance','snapshot_adoption','checkpoint_boundary']:
+ r=j[k];whole(r,'base_epoch:'+k);CP.append(r)
+Q=sum(r['bytes'] for r in qrows);NS=sum(r['bytes'] for r in N);ES=sum(r['bytes'] for r in ar.values());CS=sum(r['bytes'] for r in CP);PS=pr['bytes'];RS=release_role['maximum_bytes'];MS=p['native_parameters']['bytes'];US=U['bytes']
+terms=dict(complete_requested_body_stream=Q,two_complete_Native_inventory_passes=2*NS,eight_actual_documents_twice_plus_final=3*ES,three_base_epoch_documents_twice=2*CS,plan_document_twice_plus_final=3*PS,Root_release_document_twice_plus_final_upper=3*RS,Native_parameters_document_twice_plus_final=3*MS,own_Source_pin_and_final=2*US)
+forecast_upper=sum(terms.values());write_upper=forecast_upper+3*2**20;physical_with_explicit_interpreter_Source=write_upper+US
+assert forecast_upper==512733116 and write_upper==515878844 and physical_with_explicit_interpreter_Source==515910546 and physical_with_explicit_interpreter_Source<=2**31
+result=dict(schema='INDEPENDENT_F009_BOUND_READER_PREPARATION_DATA_INVOICE_V1',status='SUPPORTED_STATIC_DATA_CONDITIONAL_ON_FRESH_ROOT_RELEASE_SLOT',blockers=[],reviewer='/root/journal_peer/f009_invoice',plan=pr,whole_template_inverse=ir,capacity_invoice=invoice_ref,capacity_proofs=proofs,all49_literal_paths_and_caps_join=True,Native_inventory=dict(files=len(N),bytes=NS,canonical_sha256=p['native_output_inventory_sha256']),actual_requested_domain=dict(files=len(qrows),bytes=Q),actual_declared_domain=dict(files=len(jrows),bytes=sum(r['bytes'] for r in jrows)),closure_domain_upper=closure_domain,all_read_write_file_namespace_upper=namespace_upper,preparer_body_read_upper_forecast=forecast_upper,preparer_body_read_upper_write_with_max3MiB_output_readback=write_upper,additional_explicit_interpreter_main_Source_body=US,write_body_upper_including_that_bootstrap=physical_with_explicit_interpreter_Source,read_terms=terms,unchanged_complete_extent_limits=dict(bytes=2**31,files=40000),five_output_slots=outputslots,five_slot_cap_sum=3135160,tight_retained_five_output_upper=3123128,total_Source_output_guard=3*2**20,Root_release_slot=dict(path=release_role['path'],maximum_bytes=RS,actual_reference=None,condition='Root must select a fresh exact ordinary release no larger than frozen65536-byte role. Source document ceiling remains8MiB; this invoice uses the stricter existing DATA allocation.'),fresh_metadata_and_Reader_paths=True,all_future_Root_preparation_Reader_and_checkpoint_roles_unbound=True,accepted_checkpoint=10997,Native_proposal_only=11046,new_census_credit=0,Source_or_Helper_activation_by_reviewer=0,Source_derived_forecast_or_new_Reader_image_created=False,restrictions=['Source is inspected and hashed only; no represented preparer/constructor/packer/Owner/Reader/control/math/state codec/gate activation. No S/W/Git mutations.','Descriptor domains are parsed completely; this audit does not reopen the8349 scientific input bodies. The actual preparer must authenticate them fresh. Native253 whole bodies and the literal49 existing roles were checked here.','Body invoices enumerate literal application-level file-body opens, including document re-reads and future output authentication. Interpreter/stdlib/outer SDK/Owner bootstrap beyond the explicit mainSource body is outside this file-body scope.','No actual future Root release, preparation forecast/write, five generated output bodies, packed Reader wire, Reader job/request/release or checkpoint adoption exists or is credited by this review. No actual RSS/time fit claim.'])
+(A/'observations.json').write_bytes(can(dict(checks=checks,role_availability=availability,Source_pins=sourcepins,all_upper_rows=[dict(path=k,maximum_bytes=v,actual_reference=None if k in {release_role['path']}|{r['path'] for r in outputslots} else 'current_descriptor') for k,v in sorted(upper.items())])))
+(A/'review.json').write_bytes(can(result))
+for f in [A/'review.json',A/'observations.json',Path(__file__).resolve()]:print(json.dumps(ref(f,f.read_bytes()),sort_keys=True))
+print(json.dumps(dict(closure_domain=closure_domain,namespace=namespace_upper,forecast_body_upper=forecast_upper,write_body_upper=write_upper,with_main_bootstrap=physical_with_explicit_interpreter_Source),sort_keys=True))

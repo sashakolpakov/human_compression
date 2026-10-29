@@ -1,0 +1,118 @@
+"""Independent stdlib JSON/hash DATA audit. No represented program, state codec or helper activated."""
+import copy,hashlib,json,shlex,stat
+from pathlib import Path
+T=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');OUT=T/'independent_review';seen={};checks=0
+
+def need(v,m):
+ global checks
+ checks+=1
+ if not v:raise AssertionError(m)
+def pairs(xs):
+ d={}
+ for k,v in xs:need(k not in d,'unique JSON key');d[k]=v
+ return d
+def decode(b):return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda s:(_ for _ in()).throw(ValueError(s)))
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def canon(v):return can(v)[:-1]
+def digest(v):return hashlib.sha256(can(v)).hexdigest()
+def pin(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(r):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and sig(a)==sig(z)and pin(p,b)==r,'whole stable canonical body '+str(p));seen[str(p)]=r;return b
+def doc(r):return decode(raw(r))
+def local(p):return raw(pin(p))
+def mapping(rows):
+ d={}
+ for r in rows:
+  need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str and type(r['bytes'])is int and r['bytes']>=0 and type(r['sha256'])is str and len(r['sha256'])==64,'complete finite descriptor')
+  need(r['path']not in d,'one physical identity row');d[r['path']]=r
+ return d
+def closed(prefix):
+ cref=pin(T/(prefix+'_actual_capture.json'));c=doc(cref);r=doc(pin(T/(prefix+'_guard/receipt.json')));start=doc(pin(T/(prefix+'_guard/started.json')));stdout=local(T/(prefix+'_guard/stdout.log'));stderr=local(T/(prefix+'_guard/stderr.log'));frames=c['all_genuine_api_frames'];a=c['issued_argv']
+ need(c['root']==c['actor']=='/root'and c['actual_tool']['exit_code']==frames[-1]['exit_code']==0 and c['full_initial_tool_return']==frames[0]and c['full_tool_return']==frames[-1]and c['child_argv']==a,'complete genuine actual Root SDK closure')
+ need(shlex.split(c['issued_tool_arguments']['cmd'])==a and a[a.index('--')+1:]==r['command']==start['command'],'actual issued exact command and guard join')
+ need(r['status']=='PASS'and r['stop']=='RETURNED'and r['returncode']==0 and r['cleanup']['remaining']==r['cleanup']['errors']==[]and r['limits']==start['limits']and r['logs']==dict(stdout=len(stdout),stderr=len(stderr)),'closed actual known-scope guard and complete logs')
+ need(decode(''.join(f['output']for f in frames))==dict(status='PASS',stop='RETURNED',receipt=str(T/(prefix+'_guard/receipt.json'))),'actual SDK terminal supervisor report joins receipt')
+ return decode(stdout),r['command'],cref
+h=decode(local(T/'handoff.json'));need(pin(T/'handoff.json')['sha256'].startswith('d69d'),'requested handoff d69d')
+for r in h.values():
+ if type(r)is dict and set(r)=={'path','bytes','sha256'}:raw(r)
+p=doc(h['parameters']);allocation=doc(h['allocation']);invoice=doc(h['invoice']);parent=doc(h['parent_parameters']);pi=decode(local(T/'parameter_inverse.json'));ai=decode(local(T/'allocation_inverse.json'));oldallocation=doc(ai['parent']);oldjob=doc(allocation['old_Native_wire']);boundary=doc(p['boundary'])
+# Exact whole DATA inverses, including all fields outside the finite declarations.
+restored=copy.deepcopy(p)
+for k,c in pi['changed_fields'].items():need(p[k]==c['after']and parent[k]==c['before'],'parameter exact old/new field '+k);restored[k]=c['before']
+need(can(restored)==raw(pi['parent'])and can(p)==raw(pi['child']),'whole parameter inverse and unchanged fields exact')
+restored=copy.deepcopy(allocation)
+for k,c in ai['changes'].items():
+ need(allocation[k]==c['after'],'allocation exact new field '+k)
+ if c['added']:restored.pop(k)
+ else:need(oldallocation[k]==c['before'],'allocation exact old field '+k);restored[k]=c['before']
+need(can(restored)==raw(ai['parent'])and can(allocation)==raw(ai['child']),'whole allocation inverse and unchanged fields exact')
+need(p['boundary']==parent['boundary']and p['library_adapter']==parent['library_adapter']and p['preserved_executed_metadata_constructor']==parent['preserved_executed_metadata_constructor'],'registered boundary and scientific adapter unchanged')
+oldrows=oldjob['declared_inputs'];paidindex=oldjob['Root_Source_rows_reference'];need(len(oldrows)==8324 and oldrows==allocation['old8324_rows']==oldallocation['old8324_rows']and digest(oldrows)==allocation['old8324_rows_canonical_sha256']==paidindex['declared_rows_sha256'],'all original8324 rows literal and complete')
+indices=paidindex['indices'];need(len(indices)==1005 and indices==sorted(set(indices))and all(type(i)is int and 0<=i<len(oldrows)for i in indices),'all1005 original paid Source indices exact')
+paid=[oldrows[i]for i in indices];need(digest(paid)==paidindex['Source_rows_sha256'],'all1005 original paid Source complete content identities')
+archive=oldjob['qualified_archive_rows'];need(len(archive)==446 and archive==allocation['archive446_rows']==oldallocation['archive446_rows'],'all446 historical archive rows literal')
+# Actual constructor11 outputs and full acyclic references.
+forecast,forecastcmd,forecastcap=closed('constructor_forecast');written,writecmd,writecap=closed('constructor_write');need(forecast['written']is False and written['written']is True and dict(forecast,written=True)==written,'actual forecast/write complete11-image equality')
+need(written['schema']=='ROOT_F009_STANDALONE_DATA_CONSTRUCTED_PENDING_REVIEW_V1'and written['output_files']==11 and written['output_bytes']==4455134 and written['science_calls']==0 and written['Root_job_release_UNACQUIRED']is True and written['global_checkpoint_written']is False,'actual bounded constructor facts are DATA only')
+for cmd in (forecastcmd,writecmd):need(cmd[4].endswith('/f009_metadata_references/producer_support/construct.py')and cmd[cmd.index('--parameters')+1:cmd.index('--parameters')+3]==[h['parameters']['path'],h['parameters']['sha256']],'actual selected unchanged constructor exact parameters')
+need(writecmd==forecastcmd+['--write'],'exact separate write invocation')
+roles={}
+for r in written['rows']:
+ b=raw(r);need(b==can(decode(b)),'canonical full built role');roles[Path(r['path']).stem]=decode(b)
+need(set(roles)=={'metadata_creator','accessor_profile','runtime_profile','accessor_method','anchor','case_context','case','application','current_inputs','native_binding','job'},'all eleven built roles no omissions')
+rolepins={r['path']:r for r in written['rows']}
+def check_local_refs(v):
+ if type(v)is dict:
+  if set(v)=={'path','bytes','sha256'}and v['path'].startswith(str(T/'native_job')+'/'):need(rolepins.get(v['path'])==v,'every built local reference exact whole body')
+  else:
+   for x in v.values():check_local_refs(x)
+ elif type(v)is list:
+  for x in v:check_local_refs(x)
+for v in roles.values():check_local_refs(v)
+job=roles['job'];current=roles['current_inputs']['inputs'];binding=roles['native_binding'];source=job['source_inputs'];sm=mapping(source);pm=mapping(paid);dm=mapping(job['declared_inputs']);cm=mapping(current);bm=mapping(binding['source_inputs'])
+need(len(source)==1015 and sum(r['bytes']for r in source)==60113534 and all(sm.get(k)==r for k,r in pm.items()),'all1005 paid Sources unchanged inside selected1015/60113534B')
+new={k:r for k,r in sm.items()if k not in pm};need(len(new)==10 and new==mapping(allocation['all_nine_new_sources']),'only exact10 declared new cohort Source identities added')
+need(job['program']==p['program']==allocation['current_new_caller']and job['program']['sha256']=='179260d49d4f6395618add01f916889152a9ae887b5687e644d47de110a24860','reviewed179260 caller exact selected identity')
+# Fresh whole hashes of all selected functional Source bodies; this imports no Source.
+for r in source:raw(r)
+need(len(bm)==1024 and all(bm.get(k)==r for k,r in sm.items()),'full1024 broad binding retains all1015 functional Sources')
+extra={k:r for k,r in bm.items()if k not in sm};expectedmeta={k:r for k,r in rolepins.items()if Path(k).stem not in ('job','native_binding')};need(extra==expectedmeta and len(extra)==9,'broad binding exact9 preexisting metadata roles and no extra scientific rows')
+need(len(current)==8345 and len(dm)==8347 and all(cm.get(r['path'])==r for r in oldrows)and all(dm.get(k)==r for k,r in cm.items()),'all original8324 rows preserved in8345 current and8347 declared closure')
+need({k:r for k,r in dm.items()if k not in cm}=={k:r for k,r in rolepins.items()if Path(k).stem in ('current_inputs','native_binding')},'declared extension is exactly whole current-inputs and binding bodies')
+need(job['qualified_archive_rows']==archive and job['readonly_symlinks']==oldjob['readonly_symlinks'],'qualified446 archival data and exact readonly symlink records preserved')
+need(job['new_census_credit']==0 and job['old_caller_executed']is False and job['old_checkpoint_sequence']==boundary['expected_checkpoint_sequence']==10997 and job['checkpoint_acceptance']==boundary['checkpoint_acceptance']and job['snapshot_adoption']==boundary['snapshot_adoption'],'CP10997/adoptions/count neutral constructed metadata exact')
+need(roles['accessor_method']['native_execution_release_granted']is False and roles['accessor_method']['scientific_execution']is False,'accepted library DATA does not authorize new Native caller')
+need(roles['case_context']['reserved_parents']==['5dcfcfe9b84d3750f5b443d352b834566c6171ce19d96d01a45a5be750b0e556']and roles['case_context']['next_select']['record']['line']==1 and roles['case_context']['pending_includes_reserved']is True,'exact reserved parent pointer retained; state body not decoded')
+need(roles['case']['max_actions']==64 and roles['case']['worker_seconds']==60 and roles['case']['refinement_seconds']==5 and roles['case']['terminal_seconds']==1 and roles['case']['backend_transition']is None,'unchanged bounded scientific case parameters')
+need(written['job']==rolepins[str(T/'native_job/job.json')]and sum(r['bytes']for r in dm.values())==written['current_input_bytes']==492114808,'actual full job and declared byte sum match constructor report')
+# Packer: independent descriptor-index expansion only; no project codec or state decoder.
+pforecast,pcmd,pfc=closed('packer_forecast');pwritten,pwcmd,pwc=closed('packer_write');need(pforecast['written']is False and pwritten['written']is True and dict(pforecast,written=True)==pwritten,'actual packer forecast/write equality')
+wire_ref=pwritten['wire'];wire=doc(wire_ref);need(wire_ref['bytes']==2047529 and wire_ref['sha256']=='411c997c4539c8623064973b676bf19c4b033cac7b636873dc9c1eb78d493572'and wire_ref['bytes']<=2**21,'actual packed411c Native wire under2MiB')
+index=wire['Root_Source_rows_reference'];need(index['schema']=='F009_SOURCE_ROW_INDICES_V1'and index['declared_rows_sha256']==digest(wire['declared_inputs']),'wire full declared table authenticated')
+idx=index['indices'];need(idx==sorted(set(idx))and len(idx)==1015 and all(type(i)is int and 0<=i<len(wire['declared_inputs'])for i in idx),'all1015 strict whole Source indices bounded')
+expanded=copy.deepcopy(wire);expanded.pop('Root_Source_rows_reference');expanded['source_inputs']=[wire['declared_inputs'][i]for i in idx]
+need(expanded['source_inputs']==source and digest(source)==index['Source_rows_sha256']and expanded==job and can(expanded)==raw(written['job'])and len(can(expanded))==index['logical_bytes']==2274439 and hashlib.sha256(can(expanded)).hexdigest()==index['logical_sha256']==written['job']['sha256'],'whole wire inverse restores every2274439 logical byte; no clipped nonSource field')
+need(pwritten['exact_declared_rows']==8347 and pwritten['exact_source_rows']==1015 and pwritten['scientific_gate_or_checkpoint_authority']is False and pwritten['original_scientific_Source_or_Native_Reader_model_case_state_codec_calls']==0,'actual Source-index packing supplies DATA identity only')
+# Fresh preflight job creation is DATA, with no job/Owner gate implied.
+preout,precmd,precap=closed('preflight_creator');pre_ref=preout['job'];pre=doc(pre_ref);need(pre_ref['bytes']==2047498 and pre_ref['sha256']=='dc4728ce6dcd7ca3b9bd8bbba9ae50aea67c950d48cfff85944610aa67ba3f08'and pre_ref['bytes']<=2**21,'actual aecf preflight DATA under raw2MiB')
+need(preout['Native_Reader_or_state_calls']==0 and preout['global_checkpoint_written']is False and pre['origin_native_job']==wire_ref and pre['operation']=='SOURCE_PROFILE_PREFLIGHT_ONLY'and pre['program']['sha256']=='92a90355042e5aaab8d0df41dd1c2b230df83488414e6f9c590f7e9bc831e5c8','preflight creation remains metadata-only with exact origin411c')
+predecl=mapping(pre['declared_inputs']);need(len(predecl)==8348 and all(predecl.get(k)==r for k,r in dm.items())and predecl[wire_ref['path']]==wire_ref,'preflight preserves full8347-domain plus exact wire')
+need(pre['Root_Source_rows_reference']['Source_rows_sha256']==digest(source)and len(pre['Root_Source_rows_reference']['indices'])==1015 and pre['qualified_archive_rows']==archive and pre['old_checkpoint_sequence']==10997 and pre['new_census_credit']==0,'preflight retains exact functional/archival/count-neutral subject')
+# Existing new Source/24-control review binds bytes, but no new job gate or original-case observation.
+need(doc(h['Source_peer'])['status']=='SUPPORTED'and doc(h['Source_peer'])['blockers']==[],'independent6440 Source peer supported')
+rootreview=doc(h['actual_Source_review']);need(rootreview['status']=='SUPPORTED','actual850979 Root Source review supported')
+controls=doc(h['actual24controls']);need(controls['status']=='PASS','actual24 controls status PASS')
+# The Source reviewed root uses various descriptive fields; full handoff hashes bind them without manufacturing authority.
+first=doc(h['first_calls']);need(first['Root_Native_or_preflight_gate']is first['Root_metadata_execution_release']is first['actual_Owner_request']is None,'unissued launch authority remains explicitly null in author handoff')
+capreview=decode(local(OUT/'invoice/review.json'));need(capreview['status']=='SUPPORTED_DATA_CAPACITY_ONLY'and capreview['blockers']==[],'independent all49 capacity peer supported')
+# Recheck the bounded current new metadata and the selected function-body pin list; no host-domain/state freshness claim is added.
+for r in written['rows']:raw(r)
+raw(h['parameters']);raw(h['allocation']);raw(wire_ref);raw(pre_ref)
+summary={'schema':'INDEPENDENT_F009_BUILT11_WIRE_PREFLIGHT_DATA_OBSERVATIONS_V1','reviewer':'/root/journal_peer','checks':checks,'whole_files_hashed':len(seen),'handoff':pin(T/'handoff.json'),'parameters':h['parameters'],'allocation':h['allocation'],'built11':written['rows'],'built11_bytes':4455134,'logical_job':written['job'],'Native_wire':wire_ref,'preflight_job':pre_ref,'old8324_descriptor_array_sha256':digest(oldrows),'archival446_descriptor_array_sha256':digest(archive),'paid1005_Source_array_sha256':digest(paid),'all1015_functional_Source_bodies_freshly_hashed':True,'functional_Source_array_sha256':digest(source),'functional_Source_bytes':60113534,'broad_binding_rows':1024,'declared_Native_rows':8347,'declared_Native_bytes':492114808,'declared_preflight_rows':8348,'constructor_forecast_capture':forecastcap,'constructor_write_capture':writecap,'packer_forecast_capture':pfc,'packer_write_capture':pwc,'preflight_creator_capture':precap,'capacity_peer':pin(OUT/'invoice/review.json'),'job_authority_issued_by_peer':False,'represented_Source_helper_constructor_packer_controls_Native_Reader_state_codec_or_gate_activations':0,'S_W_Git_mutations':0}
+(OUT/'observations.json').write_bytes(can(summary))
+review={'schema':'INDEPENDENT_F009_BUILT11_WHOLE_WIRE_AND_PREFLIGHT_DATA_REVIEW_V1','status':'SUPPORTED_BUILT_DATA_AND_WHOLE_WIRE_ONLY','reviewer':'/root/journal_peer','blockers':[],'observations':pin(OUT/'observations.json'),'parameters':h['parameters'],'allocation':h['allocation'],'Native_wire':wire_ref,'preflight_job':pre_ref,'capacity_peer':summary['capacity_peer'],'findings':['All11 canonical built roles match actual constructor forecast/write images exactly; every local whole reference joins. Data2,274,439-byte job is within3MiB logical cap.','All original8324 descriptor rows and446 qualified historical rows remain literal. Every1005 paid Source identity is retained in1015 selected functional bodies; all1015 bodies freshly whole-hashed. Broad1024 is exactly those1015 plus9 built metadata bodies.','Actual411c wire2,047,529B is below2MiB and independently expands all1015 descriptor indices to the complete2,274,439B/130bf5 logical job, including8347 original-domain declarations and every nonSource field.','Actual aecf-created preflight job2,047,498B is below2MiB, retains the1015/446 subject and all8347 declarations plus the exact origin wire. This is metadata creation only.','Independent capacity peer reconciles all49 literal path bills and unchanged caps; no hidden new executable row for Source/controls support. Output roots and the reserved10997 parent pointer remain explicit and count neutral.'],'restrictions':['Read-only stdlib/JSON/hash audit, including descriptor-index DATA expansion; no represented Source/helper/constructor/packer/state decoder/Native/Reader/control activation, gate creation or S/W/Git mutation.','8324/446 checks compare every complete historical descriptor row; no claim that every historical host/archive body or accepted state was freshly semantically revalidated. Selected functional1015 Source bodies alone were freshly whole-hashed.','Existing Source/24-control reviews and actual metadata receipts do not authorize the new original case. Fresh Root Source-profile preflight and job-specific gates/Owner admissions, actual Native fit and later independent Reader/checkpoint closure remain owed.','CP remains10997 and new census credit0. No actual RAM saving, original-case time/RSS fit, successful state transition or new count is asserted.'],'Root_authority':False}
+(OUT/'independent_review.json').write_bytes(can(review))
+print(json.dumps({'status':review['status'],'review':pin(OUT/'independent_review.json'),'observations':review['observations'],'checks':checks,'functional_Source_bodies':1015,'whole_files':len(seen),'wire':wire_ref,'preflight':pre_ref},sort_keys=True))

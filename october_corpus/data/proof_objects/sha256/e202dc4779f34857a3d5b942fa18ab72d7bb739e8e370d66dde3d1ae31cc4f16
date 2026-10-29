@@ -1,0 +1,675 @@
+"""UNRUN direct supplied LARGE-END SPECTRUM consumer; new separate Source.
+New Source edition by /root/compact_proof_author. Original context, matrix
+arithmetic, member/frame/model joins and prime equations retain their
+9f86/9c/22cd ancestry. No supplier, search, RREF or original case is activated
+by authoring. Separate current controls, Root review and release are owed.
+"""
+import time
+START=time.monotonic()
+import argparse,gzip,hashlib,json,math,os,resource,signal,stat,sys
+from pathlib import Path
+I2=((1,0),(0,1))
+I7=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+I8=tuple(tuple(int(i==j)for j in range(8))for i in range(8))
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+def can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+
+def digest(v):return hashlib.sha256(can(v)).hexdigest()
+
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique JSON keys');out[k]=v
+  return out
+ def floating(text):
+  value=float(text);need(math.isfinite(value),'finite JSON float');return value
+ return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+class Budget:
+ def __init__(self):self.refs={};self.raw={};self.bytes=0;self.products=0;self.row_images=0;self.peak=0
+ def tick(self):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+  need(rss<128*2**20 and time.monotonic()-START<125,'hard125s128MiB verifier envelope')
+ def read(self,r,again=False):
+  self.tick();need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+   and type(r['bytes'])is int and 0<=r['bytes']<=2**21 and type(r['sha256'])is str
+   and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),'complete bounded input reference')
+  need(self.refs.get(r['path'],r)==r,'one immutable version per path')
+  if r['path']in self.raw and not again:return self.raw[r['path']]
+  need(self.bytes+r['bytes']<=8*2**20 and(r['path']in self.refs or len(self.refs)<96),'96 files8MiB including every real reread')
+  p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+   and a.st_nlink==1 and a.st_size==r['bytes'],'canonical single-link bounded input')
+  with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']
+   and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable physical input')
+  self.refs[r['path']]=r;self.raw[r['path']]=raw;self.bytes+=len(raw);return raw
+ def doc(self,r):return decode(self.read(r))
+ def recheck(self):
+  for r in list(self.refs.values()):self.read(r,True)
+ def multiply(self,A,B):
+  self.products+=1;self.tick();need(self.products<=400000,'400000 direct matrix products')
+  need(type(A)is tuple and type(B)is tuple and 1<=len(A)<=8 and 1<=len(B)<=8
+   and 1<=len(B[0])<=8 and all(len(row)==len(B)for row in A)
+   and all(len(row)==len(B[0])for row in B),'complete small compatible rectangular product')
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(len(B)))%11 for j in range(len(B[0])))for i in range(len(A)))
+ def image(self,row,mark):
+  self.row_images+=1;self.tick();need(self.row_images<=200000,'200000 direct row images')
+  return tuple(sum(row[k]*mark[k][j]for k in range(7))%11 for j in range(7))
+
+def matrix(raw,n):
+    need(type(raw) is list and len(raw) == n
+        and all(type(row) is list and len(row) == n for row in raw)
+        and all(type(x) is int and 0 <= x < 11 for row in raw for x in row),'Canonical field matrix')
+    return tuple(tuple(row) for row in raw)
+
+def flat(A):
+    return [x for row in A for x in row]
+
+def matrix2(v):
+    need(type(v) in (list,tuple) and len(v) == 4
+        and all(type(x) is int and 0 <= x < 11 for x in v),'Canonical 2 by 2 coefficients')
+    return (tuple(v[:2]),tuple(v[2:]))
+
+def determinant(A):
+    return (A[0][0]*A[1][1]-A[0][1]*A[1][0]) % 11
+
+def inverse2(A):
+    r = pow(determinant(A),-1,11)
+    return ((r*A[1][1] % 11,-r*A[0][1] % 11),(-r*A[1][0] % 11,r*A[0][0] % 11))
+
+def canonical_pair(P,Q):
+    values = tuple(flat(P)+flat(Q)); r = pow(next(x for x in values[:4] if x),-1,11)
+    return tuple(r*x % 11 for x in values)
+
+def catalogue_pair(row):
+    need(type(row) is list and len(row) == 7
+        and all(type(x) is int and 0 <= x < 11 for x in row),'Literal catalogue row')
+    if row[0] == 0:
+        return I2,((10,0),(0,10))
+    _,x,y,z,a,b,c = row
+    return ((x,y),(z,-x % 11)),((a,b),(c,-a % 11))
+
+def operator(check,P,Q):
+    invP = inverse2(P); rows = []
+    for j in range(8):
+        basis = tuple(tuple(int(2*r+s == j % 4) for s in range(2)) for r in range(2))
+        image = check.multiply(check.multiply(P if j < 4 else Q,basis),invP)
+        coeff = tuple(flat(image))
+        rows.append(coeff+(0,0,0,0) if j < 4 else (0,0,0,0)+coeff)
+    return tuple(rows)
+
+def actual_operator(check,IR,R,P,Q):
+    need(determinant(P) == determinant(Q) != 0,'Equal nonzero pair determinants')
+    actual = check.multiply(check.multiply(IR,operator(check,P,Q)),R)
+    need(actual[0] == (1,0,0,0,0,0,0,0)
+        and all(actual[k][0] == 0 for k in range(1,8)),'Full unital pure-space transport')
+    return tuple(tuple(actual[i][j] for j in range(1,8)) for i in range(1,8))
+
+def expand_runs(runs, maximum):
+ need(type(runs)is list,'literal position runs');out=[];last=0
+ for a,b in runs:
+  need(type(a)is type(b)is int and last<a<=b<=maximum,'ordered disjoint position runs')
+  out.extend(range(a,b+1));last=b
+ return out
+
+def packed_runs(values):
+ out=[]
+ for x in sorted(values):
+  if out and out[-1][1]+1==x:out[-1][1]=x
+  else:out.append([x,x])
+ return out
+
+def context(plan,budget):
+ projection=budget.doc(plan['projection']);gate=budget.doc(plan['Root_projection_acceptance'])
+ manifest=budget.doc(plan['unpaid_manifest']);job=plan['original_job']
+ need(gate['schema']=='ROOT_ACCEPTED_Q11_RANK4_DISPOSITION_PROJECTIONS_V1'and gate['root']=='/root'
+  and gate['source_manifest']==plan['unpaid_manifest']and gate['no_new_mathematical_case_evaluations']is True,
+  'separate actual Root adoption of the small metadata projection')
+ rows=[r for r in gate['projections']if r[0]==job[0]]
+ need(len(rows)==1 and rows[0][1:]==[plan['projection']['bytes'],plan['projection']['sha256']]
+  and plan['projection']['path']==str(Path(gate['projection_directory'])/('job_%04d.json'%job[0])),
+  'exact adopted same-job byte-identical projection')
+ need(gate['scope_qualification']=='Set difference against explicitly inspected accepted registry; no global absence claim.',
+  'inspected registry qualification is retained')
+ registered=[r for r in manifest['jobs']if r['original_job']==job]
+ need(len(registered)==1 and registered[0]['projection']['bytes']==plan['projection']['bytes']
+  and registered[0]['projection']['sha256']==plan['projection']['sha256'],'same global registered projection bytes')
+ refs=projection['original_domain_whole_pins']
+ pt=budget.doc(refs['producer_terminal']);st=budget.doc(refs['Saved_terminal'])
+ produced=budget.doc(refs['producer_result']);domain=budget.doc(refs['Saved_result']);export=budget.doc(refs['prefix_export'])
+ for term,mode,result in((pt,'produce',refs['producer_result']),(st,'check',refs['Saved_result'])):
+  need(term['schema']=='ROOT_CLOSED_F004_Q11_INDEXED_PREFIX_V1'and term['root']=='/root'
+   and term['success']is True and term['rank']==4 and term['mode']==mode and term['original_job']==job
+   and term['result']==result and term['prefix_export']==refs['prefix_export'],'existing genuine original indexed-domain closure')
+ need(st['producer_terminal']==refs['producer_terminal']and st['complete_fresh_same_code_Saved_comparison']is True
+  and st['Saved_ignored_observational_fields']==['seconds','peak_self_bytes'],'whole original Saved comparison')
+ for x in(produced,domain):x.pop('seconds',None);x.pop('peak_self_bytes',None)
+ need(can(produced)==can(domain),'all nonobservational original domain fields equal');del produced
+ need(domain['schema']=='F004_Q11_INDEXED_CAYLEY_CENTRALIZER_DOMAIN_CERTIFICATE_V1'
+  and domain['certificate_verified']is True and domain['rank']==4 and domain['field']==11
+  and domain['original_job']==export['original_job']==projection['original_job']==job
+  and domain['prefix_export']==refs['prefix_export']and domain['selected_labels']==export['selected_labels']==[1,4,2]
+  and export['end_order']==[1,4,2,3]and export['convention']=='RIGHT_ROW'
+  and export['matrix_frame_result']==plan['matrix_frame_result']
+  and domain['origin']==export['origin']and domain['original_prefix_index']==projection['original_prefix_index']==export['original_prefix_index']
+  and domain['original_prefix_index_proof']==projection['original_prefix_index_proof']==export['origin']['original_prefix_index_proof'],
+  'literal original prefix, labels and actual basis')
+ need(domain['external_premises']==export['external_premises']and domain['external_premises']['root']=='/root'
+  and domain['external_premises']['original_A_equals_G']is True,'original model and A=G premises')
+ for field,key in(('indexed_source','indexed'),('generic_export_source','generic_export')):
+  need(st[field]==plan['old_sources'][key],'exact old Source subjects, no PASS retag')
+  for r in st[field].values():budget.read(r)
+ binding=budget.doc(st['binding_terminal']);model=budget.doc(domain['external_premises']['model_source_join'])
+ frame=budget.doc(domain['faithful_frame_acceptance']);normal=budget.doc(domain['normalization_result'])
+ normal_acceptance=budget.doc(domain['normalization'])
+ need(binding.get('root')=='/root'and binding.get('success')is True and model['root']=='/root'
+  and model['actual_raw_model_alias_checked']is True and model['faithful_frame']==domain['faithful_frame_acceptance']
+  and frame['status']=='ROOT_ACCEPTED_Q11_FAITHFUL_MATRIX_FRAME'and frame['result']==plan['matrix_frame_result']
+  and frame['full_generator_point_checks']==354312 and frame['inverse_checks']==6 and frame['inputs_unchanged']is True,
+  'borrowed complete faithful original point-frame join')
+ need(normal['status']=='CERTIFIED_GF11_SPLIT_CAYLEY_COMPOSITION'and normal['certificate_verified']is True
+  and normal['kappa']==7 and normal_acceptance['status']==plan['normalization_status'],
+  'same acquired actual Cayley norm')
+ R=matrix(domain['standard_to_actual_row_map'],8);IR=matrix(domain['actual_to_standard_row_map'],8)
+ need(budget.multiply(R,IR)==budget.multiply(IR,R)==I8,'whole frame inverses')
+ a,e,b=[matrix(x,7)for x in export['matrices']]
+ for g,standard in zip((a,e,b),domain['standard_ordered_prefix_matrices']):
+  ext=((1,0,0,0,0,0,0,0),)+tuple((0,)+row for row in g)
+  need(budget.multiply(budget.multiply(IR,matrix(standard,8)),R)==ext,'same complete standard/actual prefix transport')
+ need(len({a,e,b})==3 and all(g!=I7 and budget.multiply(g,g)==I7 for g in(a,e,b))
+  and budget.multiply(a,e)==budget.multiply(e,a)and budget.multiply(b,e)==budget.multiply(e,b)
+  and budget.multiply(a,b)!=budget.multiply(b,a),'fixed original nonidentity involution/string relations')
+ need(domain['common_eigenspace_dimensions']==[1,2,2,2]and len(domain['frame'])==8
+  and domain['frame'][1][0]==0 and domain['frame_norms'][1]==domain['delta']in(1,2),
+  'acquired nonsingular common positive line and seed locator')
+ seed=tuple(domain['frame'][1][1:]);need(len(seed)==7 and any(seed)
+  and budget.image(seed,a)==budget.image(seed,e)==seed,'same actual seed and endpoint positive equations')
+ q=matrix(normal['quadratic_form_matrix'],8);seed8=(0,)+seed
+ need(sum(seed8[i]*q[i][j]*seed8[j]for i in range(8)for j in range(8))%11==domain['delta'],
+  'same actual canonical nonsingular seed norm')
+ saved_frame=budget.doc(plan['matrix_frame_result']);ambient=tuple(matrix(m,7)for m in saved_frame['source_matrices'])
+ need(len(ambient)==2 and saved_frame['full_generator_point_checks']==354312
+  and saved_frame['six_inverse_checks']==6,'two original known-G matrices in the acquired faithful frame')
+ catalogue=domain['catalogue'];orbits=domain['orbits'];stabilizer=domain['prefix_stabilizer_indices']
+ need(len(catalogue)==domain['catalogue_size']==14763 and digest(catalogue)==domain['catalogue_sha256']
+  and domain['catalogue_schema']=='INDEX1_IS_A0_OTHER_ROWS_ARE_DELTA_PX_PY_PZ_QX_QY_QZ_SIMULTANEOUS_SIGN_QUOTIENT'
+  and domain['selected_raw_domain_indices']==list(range(1,14764)), 'entire original raw J catalogue, never a new indexing')
+ need(len(orbits)==projection['original_orbit_rows']and digest(orbits)==projection['full_orbit_array_sha256']
+  and domain['orbit_action']==projection['orbit_action']and domain['orbit_schema']==projection['orbit_schema']
+  and stabilizer==projection['prefix_stabilizer_indices'],'whole acquired orbit/member/transporter table')
+ covered=[]
+ for rep,members,transports,fixed in orbits:
+  need(rep in members and members==sorted(set(members))and len(members)==len(transports)
+   and all(type(j)is int and j in stabilizer for j in transports)
+   and type(fixed)is int and fixed>0 and len(members)*fixed==len(stabilizer),'all matching original orbit transport roles')
+  covered.extend(members)
+ need(sorted(covered)==list(range(1,14764)),'whole disjoint14763-member original orbit partition')
+ unpaid=expand_runs(projection['unpaid_representation']['runs'],len(orbits))
+ need(digest(unpaid)==projection['unpaid_representation']['expanded_sha256']
+  and len(unpaid)==projection['exact_unpaid_count_relative_to_inspected_accepted_registry'], 'exact adopted unpaid positions')
+ paid=sorted({i for fact in projection['known_paid_facts']for i in fact['orbit_positions']})
+ need(len(paid)==projection['known_paid_positions_count']and not set(paid)&set(unpaid)
+  and sorted(paid+unpaid)==list(range(1,len(orbits)+1)), 'no paid position replayed or unpaid position omitted')
+ return dict(projection=projection,domain=domain,export=export,refs=refs,R=R,IR=IR,
+  a=a,b=b,e=e,seed=seed,ambient=ambient,catalogue=catalogue,orbits=orbits,unpaid=unpaid,paid=paid,
+  inspected_registry_qualification=gate['scope_qualification'])
+
+def power(value,exponent,budget):
+ need(type(exponent)is int and exponent>=0,'fixed nonnegative direct exponent')
+ result=I7
+ while exponent:
+  if exponent&1:result=budget.multiply(result,value)
+  exponent//=2
+  if exponent:value=budget.multiply(value,value)
+ return result
+
+def field_ng_positions(fact,source,baseline,maximum,document):
+ """Read an already adopted per-job slice; no matrix, stabilizer or group work."""
+ authority={'path': '/Users/sasha/medusa/research/leemans/computation/f004/q11/rank4/section_generation/residuals/field_centralizers/root_acceptance.json', 'bytes': 2775, 'sha256': '8952e6f289c83c4845d964ba50b20e23ef534f853d06792c872fcb2a3c15d032'}
+ need(fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_FIELD_NG_SLICE_V1'
+  and fact['root']=='/root'and fact['adopted']is True
+  and fact['original_job']==source['original_job']and fact['projection']==source['projection']
+  and fact['Root_projection_acceptance']==source['Root_projection_acceptance']
+  and fact['global_field_adoption']==authority and fact['original_orbit_positions']==maximum
+  and fact['original_paid_count']==len(baseline)and fact['original_paid_positions_sha256']==digest(baseline)
+  and fact['classification']=='FOUR_MARK_NONGENERATION'
+  and fact['complete_full_stabilizer_model_frame_membership_premises_retained']is True
+  and fact['whole_original_credit']==fact['conjecture_credit']==fact['Lean_credit']==0,
+  'separate typed field-NG slice, never original baseline, cyclic NG or section IP')
+ global_fact=document(authority)
+ need(global_fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_FIELD_CENTRALIZER_DEDUCTIONS_V1'
+  and global_fact['root']=='/root'and global_fact['adopted']is True
+  and global_fact['Root_projection_acceptance']==source['Root_projection_acceptance']
+  and global_fact['complete_full_stabilizer_model_frame_membership_premises_retained']is True
+  and fact['global_field_proposal']==global_fact['proposal']
+  and fact['global_independent_review']==global_fact['independent_review'],
+  'exact actual global field adoption and its qualified theorem/proposal')
+ proposal=document(global_fact['proposal']);review=document(global_fact['independent_review'])
+ need(review['verdict']=='SUPPORTED_CONDITIONAL_METADATA_DEDUCTIONS'and review['blockers']==[]
+  and review['proposed_partition']==global_fact['proposal'],'exact separate original field review')
+ rows=[r for r in proposal['jobs']if r['original_job']==source['original_job']]
+ need(len(rows)==1 and rows[0]['projection']==source['projection'],'exact same-job field row and projection')
+ projection=document(source['projection'])
+ need(projection['original_job']==source['original_job']and projection['original_orbit_rows']==maximum
+  and rows[0]['original_Saved_domain']==projection['original_domain_whole_pins']['Saved_result'],
+  'same acquired complete original Saved domain, with no new stabilizer computation')
+ positions=fact['nongeneration_positions']
+ need(type(positions)is list and positions==sorted(set(positions))and positions
+  and all(type(i)is int and 1<=i<=maximum for i in positions)
+  and positions==rows[0]['proposed_new_positions']and not set(positions)&set(baseline)
+  and fact['positions_sha256']==digest(positions),'whole exact adopted field-NG set, no subset or relabelling')
+ return positions
+
+DICTIONARY='V4_THREE_MARKS_LENGTH1_TO4_V1'
+LITERAL_GRAMMAR='SAME_END_LITERAL_012_LENGTH1_TO64_V1'
+NEW_METHOD='EVEN_ROTATION_PRODUCTS_AND_COMMUTATORS_32_V1'
+THEOREM_SHA='cd9d2848d12af4f0b195787c53e904446bb3839df59e36cb67e46ce25cb9ae42'
+THEOREM_REVIEW_SHA='826de2cc7879e8d67850ddd34a813357d0af614598b2af96f7d045e2edd4766f'
+
+def word_from_index(index):
+    need(type(index)is int and 1<=index<=120,'literal original dictionary index1..120')
+    offset=0
+    for length in range(1,5):
+        count=3**length
+        if index<=offset+count:
+            value=index-1-offset;digits=[0]*length
+            for position in range(length-1,-1,-1):
+                digits[position]=value%3;value//=3
+            word=''.join('1'+('0','2','02')[digit]for digit in digits)
+            need(2<=len(word)<=12 and set(word)<=set('012'),'same-section literal word')
+            return word
+        offset+=count
+    raise ValueError('dictionary index exhausted')
+
+def literal_word(value):
+    need(type(value)is str and 1<=len(value)<=64 and set(value)<=set('012'),
+         'strict bounded literal word in the actual three end marks')
+    return value
+
+def direct_order37(marks,section,literal,budget):
+    need(section in((0,1,2),(1,2,3)),'actual left or right end only')
+    value=I7
+    for letter in literal_word(literal):
+        value=budget.multiply(value,marks[section[int(letter)]])
+    witness=power(value,6,budget)
+    need(witness!=I7 and power(witness,37,budget)==I7,'actual same-end word has exact prime37 order')
+    return dict(section=list(section),literal_word=literal)
+
+def two_end_positions(fact,source,baseline,maximum,document):
+    need(fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_TWO_END37_IP_FACTS_V1'
+         and fact['projection']==source['projection']
+         and fact['Root_projection_acceptance']==source['Root_projection_acceptance']
+         and fact['classification']=='FOUR_MARK_INTERSECTION_PROPERTY_FAILURE'
+         and fact['four_mark_generation_or_nongeneration_claim']is False
+         and fact['theorem']['sha256']==THEOREM_SHA
+         and fact['theorem_review']['sha256']==THEOREM_REVIEW_SHA,
+         'distinct two-end theorem authority, not an old section-generation result')
+    document(fact['theorem_review'])
+    positions=fact['verified_IP_failure_positions']
+    need(type(positions)is list and positions==sorted(set(positions))
+         and all(type(i)is int and 1<=i<=maximum for i in positions)
+         and not set(positions)&set(baseline),'same original two-end proof positions')
+    if fact['proof_mode']=='EXISTING_CHECKED_PROPER_ENDS':
+        proposal=document(fact['application_proposal']);review=document(fact['application_review'])
+        need(proposal['schema']=='UNADOPTED_Q11_TWO_PROPER37_END_COROLLARIES_V1'
+             and proposal['Root_authority_granted']is False
+             and proposal['original_job']==source['original_job']
+             and proposal['original_projection']==source['projection']
+             and proposal['proposed_new_IP_failure_positions']==positions
+             and review['root']==review['reviewer']=='/root'and review['blockers']==[]
+             and review['status']=='SUPPORTED_WRITTEN_THEOREM_AND_EXACT27_APPLICATIONS'
+             and review['exact_proposed_positions']==positions
+             and review['proposal']['bytes']==fact['application_proposal']['bytes']
+             and review['proposal']['sha256']==fact['application_proposal']['sha256'],
+             'exact already checked proper-end applications and separate Root written review')
+    else:
+        need(fact['proof_mode']in('DIRECT_TWO_WORD_CHECK','DIRECT_LITERAL_WORD_CHECK'),'recognized exact theorem proof mode')
+        result=document(fact['independent_direct_result'])
+        expected=('Q11_TWO_END37_DIRECT_RESULT_V1','VERIFIED_TWO_END37_ORIGINAL_RECORDS')if fact['proof_mode']=='DIRECT_TWO_WORD_CHECK'else('Q11_TWO_END37_LITERAL_DIRECT_RESULT_V1','VERIFIED_TWO_END37_ORIGINAL_LITERAL_RECORDS')
+        need(result['schema']==expected[0]
+             and result['status']==expected[1]
+             and result['original_job']==source['original_job']
+             and result['projection']==source['projection']
+             and result['verified_IP_failure_positions']==positions
+             and result['word_search_or_row_reduction_calls']==0,
+             'separate actual direct two-word result, not an old checker retag')
+        if fact['proof_mode']=='DIRECT_LITERAL_WORD_CHECK':
+            need(fact['grammar']==result['grammar']==LITERAL_GRAMMAR,'same separately tagged literal-word authority')
+    return positions
+
+def adoption_groups(authorities,source,baseline,maximum,document,whole=None):
+    groups={key:[]for key in('cyclic_nongeneration','field_nongeneration',
+        'section_IP_failure','other_legacy_IP_failure','two_end_theorem_IP_failure')}
+    need(type(authorities)is list and len({r['path']for r in authorities})==len(authorities),
+         'distinct exact typed proof authorities')
+    legacy={
+        'ROOT_ACCEPTED_Q11_SHARED_MIDDLE19_EXCLUSIONS_V1':'verified_IP_failure_positions',
+        'ROOT_ACCEPTED_Q11_MIDDLE_FAST_PATHS_V1':'verified_IP_failure_positions',
+        'ROOT_ACCEPTED_Q11_COMPOSITE_END_EXCLUSIONS_V1':'verified_IP_failure_positions'}
+    for reference in authorities:
+        fact=document(reference)
+        need(fact.get('root')=='/root'and fact.get('adopted')is True
+             and fact.get('original_job')==source['original_job'],'same original adopted partial proof')
+        credit=fact.get('whole_original_credit',fact.get('new_whole_Original_credit',
+            fact.get('whole_original_conjecture_Lean_or_measurement_credit')))
+        need(type(credit)is int and credit==0,'partial proof never closes an original manuscript')
+        schema=fact['schema']
+        if schema=='ROOT_ACCEPTED_Q11_RANK4_FIELD_NG_SLICE_V1':
+            kind='field_nongeneration';positions=field_ng_positions(fact,source,baseline,maximum,document)
+        elif schema=='ROOT_ACCEPTED_Q11_RANK4_LARGE_END_SPECTRUM_IP_FACTS_V1':
+            kind='large_end_spectrum_IP_failure';groups.setdefault(kind,[])
+            positions=large_end_positions(fact,source,baseline,maximum,document,whole)
+        elif schema=='ROOT_ACCEPTED_Q11_RANK4_CYCLIC_PILOT_V1':
+            need(fact['all64_directly_checked']is True,'actual original cyclic pilot')
+            kind='cyclic_nongeneration';positions=fact['nongeneration_positions']
+        elif schema=='ROOT_ACCEPTED_Q11_RANK4_RESIDUAL_CYCLIC_CERTIFICATES_V1':
+            need(fact['exact_proper_basis_generator_invariance_and_actual_ambient_mover_checked']is True,
+                 'actual proper invariant subspace, not full-span generation')
+            kind='cyclic_nongeneration';positions=fact['new_nongeneration_positions']
+        elif schema=='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1':
+            need(fact['independent_direct_word_power_row_minor_checks']is True,'actual old section IP proof')
+            kind='section_IP_failure';positions=fact['new_IP_failure_positions']
+        elif schema in legacy:
+            kind='other_legacy_IP_failure';positions=fact[legacy[schema]]
+        else:
+            need(schema=='ROOT_ACCEPTED_Q11_RANK4_TWO_END37_IP_FACTS_V1','no unclassified paid proof type')
+            kind='two_end_theorem_IP_failure';positions=two_end_positions(fact,source,baseline,maximum,document)
+        need(type(positions)is list and positions==sorted(set(positions))
+             and all(type(i)is int and 1<=i<=maximum for i in positions)
+             and not set(positions)&set(baseline),'new proof never rebases original baseline')
+        groups[kind].extend(positions)
+    groups={key:sorted(set(values))for key,values in groups.items()}
+    need(not set(groups['section_IP_failure'])&(set(groups['cyclic_nongeneration'])|set(groups['field_nongeneration'])),
+         'a full generating end cannot also fail quartet generation')
+    # Two-end IP failure does not assert quartet generation and may overlap NG.
+    return groups
+
+def typed_frontier(source,ctx,budget):
+    selector=budget.doc(source['selector']);maximum=len(ctx['orbits'])
+    need(selector['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'
+         and selector['root']=='/root'and selector['adopted']is True
+         and selector['original_job']==source['original_job']
+         and selector['projection']==source['projection']
+         and selector['Root_projection_acceptance']==source['Root_projection_acceptance']
+         and selector['original_orbit_positions']==maximum,'exact current original-domain selector')
+    baseline=selector['original_paid_positions'];additional=selector['accepted_new_paid_positions']
+    need(baseline==ctx['paid']and selector['original_paid_count']==len(baseline)
+         and additional==sorted(set(additional))and all(type(i)is int for i in additional),
+         'original baseline and later deductions stay separate')
+    groups=adoption_groups(selector['source_adoptions'],source,baseline,maximum,budget.doc,budget.read)
+    need(additional==sorted({i for values in groups.values()for i in values}),
+         'whole separately typed paid ledger, union counted once')
+    if 'accepted_paid_by_kind'in selector:
+        need(selector['accepted_paid_by_kind']==groups,'exact stored typed category view')
+    else:
+        need(not groups['field_nongeneration']and not groups['two_end_theorem_IP_failure'],
+             'a legacy selector cannot silently import a new field or theorem category')
+    authority={'path':'/Users/sasha/medusa/research/leemans/computation/f004/q11/rank4/section_generation/residuals/field_centralizers/root_acceptance.json',
+        'bytes':2775,'sha256':'8952e6f289c83c4845d964ba50b20e23ef534f853d06792c872fcb2a3c15d032'}
+    global_field=budget.doc(authority);field_proposal=budget.doc(global_field['proposal'])
+    need(global_field['root']=='/root'and global_field['adopted']is True
+         and global_field['Root_projection_acceptance']==source['Root_projection_acceptance'],
+         'current fixed global field proof is not omitted')
+    field_rows=[r for r in field_proposal['jobs']if r['original_job']==source['original_job']]
+    need(len(field_rows)==1 or(source['original_job']==[20,4]and not field_rows),
+         'one exact original-job field row, or the explicitly excluded job20')
+    required_field=field_rows[0]['proposed_new_positions']if field_rows else[]
+    need(set(required_field)<=set(groups['field_nongeneration']),
+         'no already globally paid field position may re-enter a scientific slice')
+    unpaid=expand_runs(selector['unresolved_position_runs'],maximum)
+    need(len(unpaid)==selector['unresolved_positions']and digest(unpaid)==selector['expanded_unresolved_sha256']
+         and sorted(baseline+additional+unpaid)==list(range(1,maximum+1))
+         and len(baseline)+len(additional)+len(unpaid)==maximum,
+         'complete original baseline/later-paid/unpaid partition')
+    historical=[]
+    for trial in selector.get('previous_method_attempts',[]):
+        reference=trial['Root_adoption']
+        need(reference in selector['source_adoptions'],'actual immutable method history authority')
+        fact=budget.doc(reference)
+        if trial['criterion']=='SECTION37_FIXED_DICTIONARY':
+            need(fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1'
+                 and fact['independent_direct_word_power_row_minor_checks']is True
+                 and trial['kernel']==source['legacy_section_kernel']
+                 and trial['helpers']==source['legacy_section_helpers']
+                 and fact['finite_miss_positions_without_IP_credit']==trial['finite_miss_positions'],
+                 'whole old section trial preserved, never relabelled')
+            gate=budget.doc(fact['source_gate'])
+            need(gate['root']=='/root'and gate['adopted']is True and gate['program']==trial['source']
+                 and gate['kernel']==trial['kernel']and gate['helpers']==trial['helpers'],
+                 'old full dictionary subject and gate')
+        else:
+            if trial['criterion']=='LARGE_END_SPECTRUM_V1':
+                need(fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_LARGE_END_SPECTRUM_IP_FACTS_V1'
+                     and fact['proof_mode']==SPECTRUM_MODE and trial['search_method']==SPECTRUM_METHOD
+                     and fact['finite_miss_positions_without_IP_credit']==trial['finite_miss_positions'],
+                     'separate spectrum finite-method history, never old37 retag')
+            elif trial['criterion']=='TWO_END37_INDEX_DICTIONARY_V1':
+                need(trial['dictionary']==DICTIONARY,'unchanged old finite index dictionary')
+            else:
+                need(trial['criterion']=='TWO_END37_LITERAL_WORDS_V1'and trial['grammar']==LITERAL_GRAMMAR
+                     and type(trial['search_method'])is str and fact['proof_mode']=='DIRECT_LITERAL_WORD_CHECK',
+                     'separately attributed literal-word method history')
+            need(fact['schema']==('ROOT_ACCEPTED_Q11_RANK4_LARGE_END_SPECTRUM_IP_FACTS_V1'if trial['criterion']=='LARGE_END_SPECTRUM_V1'else'ROOT_ACCEPTED_Q11_RANK4_TWO_END37_IP_FACTS_V1')
+                 and fact['finite_miss_positions_without_IP_credit']==trial['finite_miss_positions'],
+                 'same immutable finite trial; no failed-search group conclusion')
+        values=trial['finite_miss_positions']
+        need(values==sorted(set(values))and all(type(i)is int and 1<=i<=maximum for i in values)
+             and trial['finite_misses_are_NOT_paid']is True
+             and trial['do_not_repeat_unchanged_search']is True,'literal immutable finite trial data')
+        historical.extend(values)
+    # Later proofs can settle an old miss. Keep the old record, filter its
+    # membership for work selection, and make no negative theorem from a miss.
+    skipped=sorted(set(historical)&set(unpaid))
+    eligible=[i for i in unpaid if i not in set(skipped)]
+    return dict(selector=selector,groups=groups,unpaid=unpaid,skipped=skipped,eligible=eligible)
+
+def select_current_unpaid(front,maximum,window_start=0):
+    need(type(maximum)is int and 1<=maximum<=1024 and type(window_start)is int
+         and 0<=window_start<len(front['unpaid']),'bounded exact current-unpaid window')
+    selected=front['unpaid'][window_start:window_start+maximum]
+    need(selected,'nonempty current unpaid scope for a genuinely new word criterion')
+    return selected
+
+def validate_carrier(carrier,plan):
+    need(type(carrier)is dict and set(carrier)=={'schema','original_job','selector','projection','grammar','proof_mode','records'}
+         and carrier['schema']=='Q11_LARGE_END_SPECTRUM_SUPPLIED_WORDS_V1'and carrier['proof_mode']==SPECTRUM_MODE
+         and carrier['original_job']==plan['original_job']and carrier['selector']==plan['selector']
+         and carrier['projection']==plan['projection']and carrier['grammar']==LITERAL_GRAMMAR,
+         'fresh exact original spectrum carrier, never old two37 DATA')
+    return carrier['records']
+
+def supplied_carrier(raw,plan):
+    carrier=decode(raw)
+    need(raw==can(carrier)+b'\n','whole canonical supplied literal bytes')
+    return validate_carrier(carrier,plan)
+
+def validate_record_headers(records,selected,ctx):
+    need(type(records)is list and len(records)<=1024,'bounded supplied spectrum rows')
+    positions=[]
+    for row in records:
+        need(type(row)is list and len(row)==5,'position/representative/orbit digest/two typed end witnesses')
+        pos,rep,sha,left,right=row;need(type(pos)is int and pos in selected and pos not in positions,'unique current original row')
+        orbit=ctx['orbits'][pos-1]
+        need(type(rep)is int and rep==orbit[0]and sha==digest(orbit),'whole exact original member/orbit join')
+        end_header(left);end_header(right);positions.append(pos)
+    need(positions==sorted(positions),'ordered whole spectrum records')
+
+def verify_records(records,selected,ctx,budget):
+    validate_record_headers(records,selected,ctx);positions=[];members=0;kinds=[]
+    for pos,rep,sha,left,right in records:
+        orbit=ctx['orbits'][pos-1]
+        c=actual_operator(budget,ctx['IR'],ctx['R'],*catalogue_pair(ctx['catalogue'][rep-1]))
+        marks=(ctx['a'],ctx['b'],c,ctx['e'])
+        need(len(set(marks))==4 and all(g!=I7 and budget.multiply(g,g)==I7 for g in marks)
+             and all(budget.multiply(marks[i],marks[j])==budget.multiply(marks[j],marks[i])
+                     for i in range(4)for j in range(i+2,4)),
+             'actual distinct nonidentity original involutions and all string relations')
+        kinds.append([check_end(marks,(0,1,2),left,budget),check_end(marks,(1,2,3),right,budget)])
+        positions.append(pos);members+=len(orbit[1])
+    return positions,members,kinds
+
+def main():
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+         and all(k not in os.environ for k in ENV4),'minimal EBS/ENV4 strict spectrum consumer')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s strict spectrum')))
+    signal.setitimer(signal.ITIMER_REAL,max(.001,125-(time.monotonic()-START)))
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--Root-gate',nargs=2,required=True);a=ap.parse_args();budget=Budget()
+    own=dict(path=str(Path(__file__).resolve(strict=True)),bytes=Path(__file__).stat().st_size,sha256=a.self_sha256)
+    need(own['bytes']<=65536,'finite new strict Source');budget.bytes+=own['bytes'];budget.read(own)
+    p=Path(a.plan[0]);pref=dict(path=str(p),bytes=p.stat().st_size,sha256=a.plan[1]);need(pref['bytes']<=65536,'bounded gzip strict plan')
+    raw=gzip.decompress(budget.read(pref));need(len(raw)<=524288,'bounded logical strict plan');plan=decode(raw)
+    p=Path(a.Root_gate[0]);gref=dict(path=str(p),bytes=p.stat().st_size,sha256=a.Root_gate[1]);need(gref['bytes']<=8192,'bounded current gate');gate=budget.doc(gref)
+    need(plan['schema']=='Q11_LARGE_END_SPECTRUM_DIRECT_PLAN_V1'and plan['program']==own
+         and gate['schema']=='ROOT_AUTHORIZED_Q11_LARGE_END_SPECTRUM_DIRECT_V1'and gate['root']=='/root'and gate['adopted']is True
+         and gate['new_case_calls_authorized']is True and gate['program']==own and gate['plan']==pref,'fresh separate spectrum authority')
+    need(gate['Root_code_math_review']['bytes']<=32768 and gate['control_report']['bytes']<=16384,'bounded actual new review/controls')
+    review=budget.doc(gate['Root_code_math_review']);controls=budget.doc(gate['control_report'])
+    need(review['root']=='/root'and review['status']=='SUPPORTED'and review['blockers']==[]and review['program']==own and review['plan']==pref
+         and review['conditional_large_end_theorem_and_full_primary_premises_checked']is True,'exact new Root Source/theorem review')
+    need(controls['schema']=='Q11_LARGE_END_SPECTRUM_GENERIC_CONTROLS_V1'and controls['status']=='PASS'
+         and controls['consumer']==own and controls['program']==plan['control_program']and controls['original_case_calls']==0,
+         'actual separate spectrum controls; old15 controls do not transfer')
+    for ref in plan['inputs']:budget.read(ref)
+    spectrum_imports(plan,budget)
+    need(plan['original_job']==plan['context']['original_job']and plan['projection']==plan['context']['projection']
+         and plan['Root_projection_acceptance']==plan['context']['Root_projection_acceptance'],'same complete original model context')
+    ctx=context(plan['context'],budget);front=typed_frontier(plan,ctx,budget)
+    need(budget.bytes+sum(r['bytes']for r in budget.refs.values())<=8*2**20,
+         'actual proof-map and fresh-retained reads plus final whole scope prepaid before cases')
+    selected=select_current_unpaid(front,plan['maximum_positions'],plan.get('window_start',0));need(selected==plan['selected_positions'],'exact CURRENT unpaid window')
+    need(plan['records']['bytes']<=131072,'bounded actual supplied positive carrier');records=supplied_carrier(budget.read(plan['records']),plan)
+    positions,members,kinds=verify_records(records,selected,ctx,budget);need(positions==plan['expected_positive_positions'],'all actual supplied positives checked')
+    expected={ref['path']:ref for ref in plan['inputs']};need(len(expected)==len(plan['inputs']),'distinct physical closure')
+    for ref in(own,pref,gref,gate['Root_code_math_review'],gate['control_report']):
+        need(expected.get(ref['path'],ref)==ref,'one whole version');expected[ref['path']]=ref
+    need(budget.refs==expected,'exact complete actual input closure');budget.recheck();budget.tick()
+    remaining=sorted(set(front['unpaid'])-set(positions))
+    result=dict(schema='Q11_LARGE_END_SPECTRUM_DIRECT_RESULT_V1',status='VERIFIED_LARGE_END_SPECTRUM_ORIGINAL_RECORDS',
+        author='/root/compact_proof_author',program=own,plan=pref,source_gate=gref,Root_code_math_review=gate['Root_code_math_review'],
+        proof_mode=SPECTRUM_MODE,grammar=LITERAL_GRAMMAR,actual_supplied_spectrum_carrier=plan['records'],
+        original_job=plan['original_job'],projection=plan['projection'],selector=plan['selector'],verified_IP_failure_positions=positions,
+        verified_end_kinds=kinds,borrowed_original_members=members,original_baseline=dict(count=len(ctx['paid']),sha256=digest(ctx['paid'])),
+        accepted_paid_by_kind={k:dict(count=len(v),sha256=digest(v))for k,v in front['groups'].items()},
+        remaining_if_Root_adopts=dict(count=len(remaining),expanded_sha256=digest(remaining)),
+        historical_current_misses_validated_not_skipped=dict(count=len(front['skipped']),sha256=digest(front['skipped'])),
+        spectrum_theorem=plan['spectrum_theorem'],spectrum_review=plan['spectrum_review'],spectrum_premises=plan['spectrum_premises'],
+        word_search_or_row_reduction_calls=0,proposer_or_kernel_imports=0,four_mark_generation_or_nongeneration_claim=False,
+        Root_adoption_owed=True,whole_original_conjecture_Lean_or_measurement_credit=0,
+        resources=dict(matrix_products=budget.products,physical_read_bytes=budget.bytes,paths=len(budget.refs),peak_RSS=budget.peak),
+        qualification='Only supplied exact same-end37 or19 AND4 spectra were checked. Full original natural Cayley/A=G/frame/member/classified-overgroup and full-normalizer premises remain imported. No missing row, finite miss, original manuscript or generation claim.')
+    out=Path(plan['output']);need(out.is_absolute()and '..'not in out.parts and out.parent.resolve(strict=True)==out.parent
+         and not os.path.lexists(out),'fresh strict result path')
+    raw=can(result)+b'\n';need(len(raw)<=131072,'bounded full strict return')
+    with out.open('xb')as f:need(f.write(raw)==len(raw),'complete strict result');f.flush();os.fsync(f.fileno())
+    print(can(dict(status=result['status'],output=dict(path=str(out),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),verified_IP_failures=len(positions))).decode())
+
+SPECTRUM_THEOREM_SHA='c7ccbd18ca71bba510cea0816b55847b3a57d14377114f9133fe4956fa923c99'
+SPECTRUM_REVIEW_SHA='6fc41502607fbf8c831413e00399b735eb5c4a5e6a32558e567df337d3bb8f3f'
+SPECTRUM_MODE='DIRECT_LARGE_END_SPECTRUM_CHECK'
+SPECTRUM_METHOD='RETAINED37_THEN_COMMON_OR_SAME_END4_AND_NEW19_V1'
+
+def spectrum_imports(plan,budget):
+    need(plan['spectrum_theorem']['sha256']==SPECTRUM_THEOREM_SHA
+         and plan['spectrum_review']['sha256']==SPECTRUM_REVIEW_SHA,'exact separately reviewed spectrum theorem')
+    budget.read(plan['spectrum_theorem']);peer=budget.doc(plan['spectrum_review']);prem=budget.doc(plan['spectrum_premises'])
+    need(peer['schema']=='Q11_LARGE_END_CONDITIONAL_THEOREM_INDEPENDENT_REVIEW_V1'
+         and peer['status']=='SUPPORTED_CONDITIONAL_WRITTEN_THEOREM'and peer['blockers']==[]
+         and peer['argument']==plan['spectrum_theorem']and peer['premises']==plan['spectrum_premises']
+         and peer['full_natural_embedding_premises_retained']is True
+         and peer['Klein_four_kernel_argument_and_both_three_halfturn_fullness_steps_checked']is True
+         and peer['unitary_centre_lift_restored']is True
+         and peer['middle_order_and_product_set_inequalities_checked']is True
+         and prem['schema']=='Q11_LARGE_END_CONDITIONAL_REUSE_PREMISES_V1',
+         'complete classified natural overgroups, V4 kernel, centre, three-halfturn and intersection proof imports')
+    for ref in prem['local_sources'].values():budget.read(ref)
+    need(plan['theorem']['sha256']==THEOREM_SHA and plan['theorem_review']['sha256']==THEOREM_REVIEW_SHA,
+         'old paid two37 theorem attribution remains separate')
+    budget.read(plan['theorem']);old=budget.doc(plan['theorem_review'])
+    need(old['root']=='/root'and old['blockers']==[]and old['status']=='SUPPORTED_WRITTEN_THEOREM_AND_EXACT27_APPLICATIONS',
+         'retained old theorem review is not a spectrum result')
+
+def word_part(part):
+    need(type(part)is dict and set(part)=={'word','power'},'exact literal word and bounded positive cofactor')
+    literal_word(part['word']);need(type(part['power'])is int and 1<=part['power']<=256,'strict bounded positive power')
+    return part
+
+def end_header(end):
+    need(type(end)is dict and type(end.get('kind'))is str,'typed supplied end')
+    if end['kind']=='PRIME37':
+        need(set(end)=={'kind','prime37'},'exact PRIME37 carrier');word_part(end['prime37'])
+    else:
+        need(end['kind']=='PRIME19_AND_ORDER4'and set(end)=={'kind','prime19','order4'},'exact19 AND4 same-end carrier')
+        word_part(end['prime19']);word_part(end['order4'])
+
+def literal_value(marks,section,text,budget):
+    need(section in((0,1,2),(1,2,3)),'same original left or right end')
+    value=I7
+    for letter in literal_word(text):value=budget.multiply(value,marks[section[int(letter)]])
+    return value
+
+def supplied_value(marks,section,part,budget):
+    word_part(part);return power(literal_value(marks,section,part['word'],budget),part['power'],budget)
+
+def check_end(marks,section,end,budget):
+    end_header(end)
+    if end['kind']=='PRIME37':
+        Y=supplied_value(marks,section,end['prime37'],budget)
+        need(Y!=I7 and power(Y,37,budget)==I7,'same-end exact37 witness')
+    else:
+        Y=supplied_value(marks,section,end['prime19'],budget)
+        need(Y!=I7 and power(Y,19,budget)==I7,'same-end exact19 witness')
+        Z=supplied_value(marks,section,end['order4'],budget)
+        need(power(Z,4,budget)==I7 and power(Z,2,budget)!=I7,'same-end exact4 witness, not a Klein-four order')
+    return end['kind']
+
+def large_end_positions(fact,source,baseline,maximum,document,whole):
+    need(fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_LARGE_END_SPECTRUM_IP_FACTS_V1'
+         and fact['projection']==source['projection']and fact['Root_projection_acceptance']==source['Root_projection_acceptance']
+         and fact['proof_mode']==SPECTRUM_MODE and fact['classification']=='FOUR_MARK_INTERSECTION_PROPERTY_FAILURE'
+         and fact['four_mark_generation_or_nongeneration_claim']is False
+         and fact['spectrum_theorem']['sha256']==SPECTRUM_THEOREM_SHA
+         and fact['spectrum_review']['sha256']==SPECTRUM_REVIEW_SHA,'separate adopted spectrum proof type')
+    result=document(fact['independent_direct_result']);positions=fact['verified_IP_failure_positions']
+    need(result['schema']=='Q11_LARGE_END_SPECTRUM_DIRECT_RESULT_V1'
+         and result['status']=='VERIFIED_LARGE_END_SPECTRUM_ORIGINAL_RECORDS'
+         and result['proof_mode']==SPECTRUM_MODE and result['original_job']==source['original_job']
+         and result['projection']==source['projection']and result['verified_IP_failure_positions']==positions
+         and result['word_search_or_row_reduction_calls']==0
+         and type(positions)is list and positions==sorted(set(positions))
+         and all(type(i)is int and 1<=i<=maximum for i in positions)and not set(positions)&set(baseline),
+         'same original independent spectrum result; no old two37 verdict retag')
+    retained_spectrum_imports(fact,result,document,whole)
+    document(fact['spectrum_review']);return positions
+
+def retained_spectrum_imports(fact,result,document,whole):
+    need(callable(whole),'explicit bounded physical proof reader')
+    preservation=document(fact['preservation'])
+    need(preservation['schema']=='ROOT_PRESERVED_Q11_SPECTRUM_CHECK_V1'and preservation['root']=='/root'
+         and preservation['scientific_calls']==0 and type(preservation['files'])is list and len(preservation['files'])<=512,
+         'actual Root spectrum preservation map, never a bare path alias')
+    mappings=fact['proof_import_retentions']
+    need(type(mappings)is dict and set(mappings)=={'spectrum_theorem','spectrum_review','spectrum_premises'},
+         'explicit original-to-retained map for all three proof imports')
+    for key in('spectrum_theorem','spectrum_review','spectrum_premises'):
+        original=result[key];retained=fact[key]
+        for ref in(original,retained):
+            need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['path'])is str
+                 and type(ref['bytes'])is int and 0<=ref['bytes']<=2**21 and type(ref['sha256'])is str
+                 and len(ref['sha256'])==64 and set(ref['sha256'])<=set('0123456789abcdef'),'complete immutable proof descriptor')
+        need((original['bytes'],original['sha256'])==(retained['bytes'],retained['sha256'])
+             and mappings[key]==dict(original=original,retained=retained),'same whole proof body and explicit two identities')
+        rows=[row for row in preservation['files']if row['original']==original]
+        need(len(rows)==1 and rows[0]['retained']==retained
+             and rows[0]['action']==('REUSE_EXACT_S_INPUT'if original==retained else'COPY_COMPLETE_BYTES'),
+             'exact original-to-retained row in the actual immutable preservation')
+        raw=whole(retained,True)
+        need(len(raw)==original['bytes']and hashlib.sha256(raw).hexdigest()==original['sha256'],
+             'fresh entire retained proof body, not an ignored source path')
+
+if __name__=='__main__':main()

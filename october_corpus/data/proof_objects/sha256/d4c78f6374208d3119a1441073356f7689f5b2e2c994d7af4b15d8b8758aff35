@@ -1,0 +1,48 @@
+"""Distinct stdlib-only correction DATA edition; frozen predecessors stay unchanged."""
+from pathlib import Path
+import json,hashlib,stat
+T=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');A=T/'native_retention_DATA'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p):
+ p=Path(p);s=p.lstat();b=p.read_bytes();z=p.lstat();f=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and f(s)==f(z) and len(b)<=4*2**20
+ return ref(p,b),b
+def write(p,v):
+ assert not p.exists();b=can(v);p.write_bytes(b);return ref(p,b)
+oldir,oldib=read(A/'selection_index.json');index=json.loads(oldib)
+oldmap=json.loads(read(T/'retention_DATA/prior_reuse/reuse_table.json')[1]);pre=json.loads(read(index['prelaunch_preservation']['path'])[1]);op={r['retained']['path'] for r in oldmap['rows']};pp={r['retained']['path'] for r in pre['files']}
+plans={n:json.loads(read(A/(n+'_copy_plan.json'))[1]) for n in ['native_outputs','closed_metadata']}
+sets={n:{r['retained']['path'] for r in p['files'] if r['retained']['path'] in op} for n,p in plans.items()};allold=set.union(*sets.values());additional=allold-pp
+assert len(allold)==55 and len(additional)==46 and len(sets['native_outputs'])==10 and len(sets['closed_metadata'])==46
+correction=write(A/'read_scope_correction.json',dict(schema='F009_NATIVE_RETENTION_TARGETED_READ_SCOPE_CORRECTION_V1',author='/root/journal_peer/f009_invoice',supersedes_field=dict(artifact=oldir,field='previous2553_leaf_bodies_reopened',old_value=0),correct_value=55,unique_prior_table_retained_payload_paths=sorted(allold),additional_beyond_prelaunch_mapping_paths=sorted(additional),additional_path_count=46,additional_Source_method_paths=37,additional_Native_output_body_reuse_paths=9,output_reuse_rows=43,output_reuse_unique_retained_paths=10,output_reuse_qualification='Includes exact nonempty bodies as well as empty bodies; all row descriptors checked complete.',mass2553_payload_sweep=False,explicit_current_Source_method_body_rows_read=44,qualification='Only targeted existing retained paths selected by current Native output bytes or explicit Native method Source descriptors were opened. Original frozen artifacts remain history. This record corrects the earlier zero-body claim and the informal all-empty description. Copy mappings, complete hashes and cap calculations were valid.',Root_authority=False))
+index.pop('previous2553_leaf_bodies_reopened');index['previous2553_unique_selected_retained_payload_paths_opened']=55;index['mass2553_leaf_sweep']=False;index['read_scope_correction']=correction;index['supersedes_index']=oldir
+newindex=write(A/'selection_index_corrected.json',index)
+oldplanref,oldplanb=read(A/'closed_metadata_copy_plan.json');p=json.loads(oldplanb);dest=Path(p['destination']);rows=p['files'][:]
+extras=[A/'read_scope_correction.json',A/'selection_index_corrected.json',A/'closed_metadata_copy_plan.json',A/'closed_metadata_invoice.json',A/'closed_metadata_projected_manifest.json',A/'handoff.json',Path(__file__).resolve()]
+for q in extras:
+ r,b=read(q);rows.append(dict(original=r,retained=dict(path=str(dest/'objects'/r['sha256']),bytes=r['bytes'],sha256=r['sha256'])))
+p.update(schema='ROOT_F009_SHARED_PIN_NATIVE_CLOSED_RETENTION_PLAN_CORRECTED_READ_SCOPE_V2',files=rows,selection_index=newindex,read_scope_correction=correction,supersedes_metadata_plan=oldplanref)
+pr=write(A/'closed_metadata_copy_plan_corrected.json',p);pb=read(pr['path'])[1];ur=p['copy_Source'];ub=read(ur['path'])[1];assert ref(Path(ur['path']),ub)==ur
+methods=[dict(original=ur,retained=ref(dest/'method/retain_closed_files.py',ub)),dict(original=pr,retained=ref(dest/'method/plan.json',pb))]
+m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=p['borrowed_closures'],source_plan=pr,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+mb=can(m);mr=ref(Path(p['manifest_path']),mb);write(A/'closed_metadata_projected_manifest_corrected.json',m)
+calls=[];paths=set();new={}
+def rd(r,role):calls.append(dict(role=role,descriptor=r));paths.add(r['path'])
+def put(r,role):new.setdefault(r['path'],r);rd(r,role+'_single_immediate_hash')
+rd(ur,'Source_bootstrap');rd(pr,'plan_initial')
+for r in p['borrowed_closures']:rd(r,'borrowed')
+for row in rows:
+ rd(row['original'],'selection_original')
+ if not Path(row['retained']['path']).is_relative_to(dest):rd(row['retained'],'existing_S_reuse')
+for row in rows:
+ if Path(row['retained']['path']).is_relative_to(dest):rd(row['original'],'copy_original');put(row['retained'],'new_or_deduplicated_content')
+for row in rows:rd(row['retained'],'all_retained_final')
+for row in methods:put(row['retained'],'method')
+put(mr,'manifest');rd(pr,'plan_final')
+READ=sum(r['descriptor']['bytes'] for r in calls);NEW=sum(r['bytes'] for r in new.values());assert READ<=64*2**20 and NEW<=16*2**20 and len(paths)<=512 and max(r['descriptor']['bytes'] for r in calls)<=4*2**20
+invoice=dict(schema='F009_NATIVE_RETENTION_EXACT_STABLE_UTILITY_INVOICE_CORRECTED_READ_SCOPE_V2',plan=pr,Source=ur,projected_manifest=mr,selected_rows=len(rows),reuse_rows=sum(not Path(r['retained']['path']).is_relative_to(dest) for r in rows),new_content_objects=len({r['retained']['path'] for r in rows if Path(r['retained']['path']).is_relative_to(dest)}),READ=READ,new_bytes=NEW,PATHS=len(paths),new_files=len(new),largest_file=max(r['descriptor']['bytes'] for r in calls),limits=dict(READ=64*2**20,new_bytes=16*2**20,PATHS=512,new_files=512,per_file=4*2**20,RSS=256*2**20,seconds=125),exact_whole_calls=calls,read_scope_correction=correction,Root_authority=False,qualification='Exact projected literal whole() counters, fresh metadata destination. Both Source and plan/manifest copies charged. Actual copy remains unacquired; no activation or authority.')
+ir=write(A/'closed_metadata_invoice_corrected.json',invoice)
+h=json.loads(read(A/'handoff.json')[1]);h.update(schema='FROZEN_F009_NATIVE_ACTUAL_TWO_BATCH_RETENTION_DATA_CORRECTED_READ_SCOPE_V2',selection_index=newindex,read_scope_correction=correction,supersedes_handoff=read(A/'handoff.json')[0]);h['batches'][1]=dict(name='closed_metadata',plan=pr,invoice=ir,projected_manifest=mr,destination=str(dest),READ=READ,new_bytes=NEW,PATHS=len(paths),new_files=len(new),selected_rows=len(rows),reuse_rows=invoice['reuse_rows'],new_content_objects=invoice['new_content_objects'],largest_file=invoice['largest_file']);hr=write(A/'handoff_corrected.json',h)
+for x in [correction,newindex,pr,ir,mr,hr]:print(json.dumps(x,sort_keys=True))
+print(json.dumps(h['batches'][1],sort_keys=True))

@@ -1,0 +1,35 @@
+"""Root exact append-only retention; no mathematical module is activated."""
+from pathlib import Path
+import hashlib,json,os,stat
+D=Path('/private/tmp/l026_second_window_generation_DATA')
+S=Path('/Users/sasha/medusa/research/leemans')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def whole(r):
+ p=Path(r['path']);a=p.lstat();assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1 and r['bytes']<=2**21
+ b=p.read_bytes();assert ref(p,b)==r;return b
+def put(p,b):
+ assert p.is_relative_to(DEST);p.parent.mkdir(parents=True,exist_ok=True);assert p.parent.resolve(strict=True)==p.parent
+ if p.exists():assert whole(ref(p,b))==b
+ else:
+  with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert whole(ref(p,b))==b
+ fd=os.open(p.parent,os.O_RDONLY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+ return ref(p,b)
+pp=D/'fullcap_preservation_plan.json';raw=pp.read_bytes();assert hashlib.sha256(raw).hexdigest()=='e3d51c5b9673bbabc5c71584c5a98b48278511ea515caf2fdf226086c39b42b0'
+plan=json.loads(raw);DEST=Path(plan['destination']);assert DEST.is_relative_to(S/'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/invariant_subsets/second_window/full_proper_cap')
+assert plan['Root_authority'] is False and len(plan['files'])==154
+for r in plan['required_prior_receipts']:whole(r)
+for row in plan['files']:
+ b=whole(row['original']);assert row['retained']['bytes']==len(b) and row['retained']['sha256']==hashlib.sha256(b).hexdigest()
+ assert Path(row['retained']['path']).is_relative_to(DEST)or row['retained']==row['original']
+assert not Path(plan['manifest_destination']).exists()
+for row in plan['files']:
+ b=whole(row['original'])
+ if row['retained']!=row['original']:assert put(Path(row['retained']['path']),b)==row['retained']
+for row in plan['files']:whole(row['retained'])
+own=Path(__file__).resolve();methods=[dict(original=ref(own,own.read_bytes()),retained=put(DEST/'method/retain.py',own.read_bytes())),dict(original=ref(pp,raw),retained=put(DEST/'method/plan.json',raw))]
+manifest=dict(schema='ROOT_CLOSED_FIVE_FULLCAP_PROPOSALS_RETAINED_V1',root='/root',files=plan['files']+methods,actual_cases=plan['actual_cases'],actual_outcome=plan['actual_outcome'],scientific_calls=0,proof_credit=0,whole_original_credit=0,known_owned_closed=True,qualification='Exact complete files retained; full-cap misses remain unpaid and supply no mathematical absence or generation statement. Retention call API capture is separately retained after this return.')
+m=put(Path(plan['manifest_destination']),can(manifest));print(json.dumps(dict(status='ROOT_FIVE_FULLCAP_EVIDENCE_RETAINED',preservation=m,files=len(manifest['files']),scientific_calls=0,proof_credit=0)))

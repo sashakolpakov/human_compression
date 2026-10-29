@@ -1,0 +1,101 @@
+"""Independent stdlib-only prospective preservation selection. No represented Source activation."""
+import gzip,hashlib,json,shlex,stat
+from pathlib import Path
+T=Path('/private/tmp/q11_large_end_spectrum');D=T/'retained_imports';OUT=T/'strict25_DATA/preservation_peer';S=Path('/Users/sasha/medusa/research/leemans')
+DEST=S/'computation/f004/q11/rank4/section_generation/residuals/large_end_spectrum/job_0023/batch_0001/evidence'
+seen={};roles={};checks=[]
+def need(ok,why):
+ if not ok:raise AssertionError(why)
+ checks.append(why)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def pairs(xs):
+ d={}
+ for k,v in xs:
+  if k in d:raise ValueError('duplicate JSON field')
+  d[k]=v
+ return d
+def parse(b):return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda s:(_ for _ in()).throw(ValueError(s)))
+def read(r,role):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1,'canonical single-link ordinary body '+str(p));need(sig(a)==sig(z) and ref(p,b)==r,'complete stable identity '+str(p))
+ old=seen.get(str(p));need(old is None or old==r,'one exact physical version '+str(p));seen[str(p)]=r;roles.setdefault(str(p),[])
+ if role not in roles[str(p)]:roles[str(p)].append(role)
+ return b
+def current(p,role):
+ p=Path(p);b=p.read_bytes();return read(ref(p,b),role)
+def document(p,role):return parse(current(p,role))
+def add_descriptor(r,role):return parse(read(r,role))if r['path'].endswith('.json')else read(r,role)
+def frame_check(c,code):
+ f=c['all_genuine_api_frames'];a=c['issued_argv'];need(c['root']==c['actor']=='/root','actual Root capture identity')
+ need(c['actual_tool']['exit_code']==f[-1]['exit_code']==code and c['full_initial_tool_return']==f[0] and c['full_tool_return']==f[-1],'complete initial and terminal SDK frames')
+ need(c['actual_tool']['initial_chunk']==f[0]['chunk_id'] and c['actual_tool']['terminal_chunk']==f[-1]['chunk_id'],'actual SDK chunk join')
+ for k in ('issued_command','canonical_argv_command'):need(shlex.split(c[k])==a,'actual command serialization '+k)
+ need(shlex.split(c['issued_tool_arguments']['cmd'])==a,'actual SDK issued cmd')
+ return a,f[-1]['output']
+def closure(stem):
+ c=document(D/(stem+'_actual_capture.json'),stem+' actual complete SDK capture');g=document(D/(stem+'_guard/receipt.json'),stem+' guard receipt')
+ a,output=frame_check(c,0);need(a[a.index('--')+1:]==g['command'] and c['child_argv']in (a,g['command']),'actual child/guard command')
+ end=parse(output);need(end['status']==g['status']=='PASS' and end['stop']==g['stop']=='RETURNED' and end['receipt']==str(D/(stem+'_guard/receipt.json')) and g['returncode']==0 and g['error']is None and g['cleanup']['remaining']==g['cleanup']['errors']==[],'whole known-scope successful closure '+stem)
+ started=document(D/(stem+'_guard/started.json'),stem+' guard started')
+ out=current(D/(stem+'_guard/stdout.log'),stem+' complete guard stdout');err=current(D/(stem+'_guard/stderr.log'),stem+' complete guard stderr')
+ need(len(out)==g['logs']['stdout'] and len(err)==g['logs']['stderr'] and err==b'','complete guard log extents '+stem)
+ return c,g,parse(out)
+# Exact active supplier closure, all first/final inputs plus Source/plan/gate/control/review.
+plan_bytes=current(D/'supplier_plan.json.gz','actual supplier compressed plan');plan=parse(gzip.decompress(plan_bytes))
+need(len(plan['inputs'])==78,'actual supplier fixed78 input roles')
+for r in plan['inputs']:read(r,'actual supplier fixed whole input')
+read(plan['program'],'actual selected supplier Source');read(plan['direct_consumer'],'selected independent strict consumer Source');read(plan['control_program'],'actual controls Source')
+gate=document(D/'supplier_Root_gate.json','actual supplier Root gate');review=add_descriptor(gate['Root_code_math_review'],'actual supplier Root code/math review');control_report=add_descriptor(gate['control_report'],'actual canonical control report')
+for r in (gate['program'],gate['plan'],gate['direct_consumer'],review['Root_new_Source_review'],review['independent_review'],review['actual_controls_capture'],review['actual_control_report']):read(r,'actual supplier authorization dependency')
+cc,cg,co=closure('controls');sc,sg,so=closure('supplier')
+need(co==control_report and co['status']=='PASS' and co['controls']==13 and co['consumer']==plan['direct_consumer'] and co['supplier']==plan['program'] and co['program']==plan['control_program'] and co['original_case_calls']==0,'actual13 controls report/subjects exact')
+records_ref=so['carrier'];summary_ref=so['summary'];carrier=parse(read(records_ref,'actual untrusted25-row carrier'));summary=parse(read(summary_ref,'actual complete supplier summary/106 trial notes'))
+need(records_ref['bytes']==7345 and records_ref['sha256']=='abfe3d3b47fd6fc65d89b6516cea7c065d1a47c48833d3c3139748aa45b3d7e2','actual7345-byte carrier exact pin')
+need(summary_ref['bytes']==59084 and summary_ref['sha256'].startswith('fc185c7f'),'actual59084-byte summary pin')
+need(len(carrier['records'])==25 and summary['proposed_positive_positions']==[r[0]for r in carrier['records']] and len(summary['visited_positions'])==106 and len(summary['finite_miss_positions_without_paid_credit'])==81,'actual25 hints/81 misses/106 visited')
+need(summary['visited_positions']==summary['selected_positions']==plan['selected_positions'] and sorted(summary['proposed_positive_positions']+summary['finite_miss_positions_without_paid_credit'])==plan['selected_positions'],'complete unchanged current106 partition')
+need(summary['resources']['matrix_products_all_dimensions']==61234 and summary['new_paid_credit']==0 and summary['verification_authority']is False,'actual61234 arithmetic products are untrusted hints only')
+need(sg['command'][sg['command'].index('--plan')+1:sg['command'].index('--plan')+3]==[str(D/'supplier_plan.json.gz'),seen[str(D/'supplier_plan.json.gz')]['sha256']] and sg['command'][-2:]==[str(D/'supplier_Root_gate.json'),seen[str(D/'supplier_Root_gate.json')]['sha256']],'actual supplier exact selected plan/gate bytes')
+# Inspect and select every new Source audit and binding edition/result; first failure stays failed.
+for name in ('Root_source_audit.py','Root_source_audit_ast_range_assumption.py','Root_bind_supplier.py'):
+ current(D/name,'Root stdlib metadata Source, retained as inert evidence')
+failed=document(D/'Root_source_audit_failed_capture.json','FAILED first Root AST-range audit capture');_,fo=frame_check(failed,1)
+need('AssertionError'in fo and "q['new_bytes']"in fo,'failed AST-range assumption remains failure')
+passed=document(D/'Root_source_audit_actual_capture.json','corrected Root Source audit successful capture');_,po=frame_check(passed,0)
+need(parse(po)['review']==seen[str(D/'Root_source_review.json')],'corrected audit capture binds actual Root Source review')
+binding=document(D/'Root_bind_supplier_actual_capture.json','actual Root supplier authorization binding capture');_,bo=frame_check(binding,0);bb=parse(bo)
+need(bb['gate']==seen[str(D/'supplier_Root_gate.json')] and bb['review']==seen[str(D/'supplier_Root_review.json')] and bb['controls']==seen[str(D/'controls_report.json')],'actual Root binding capture exact gate/review/report')
+# Explicit new authoring/read/peer provenance. This is a finite selection, not a directory mirror.
+relative_names=(
+ 'retained_imports/handoff.json','retained_imports/verify_inverse.json','retained_imports/propose_inverse.json','retained_imports/controls_inverse.json',
+ 'retained_imports/supplier_plan.json','retained_imports/consumer_plan_template.json','retained_imports/read_work_invoice.json','retained_imports/first_calls.json','retained_imports/new_logic_read_map.json',
+ 'retained_imports/supplier_Root_review_template.json','retained_imports/supplier_Root_gate_template.json','retained_imports/consumer_Root_review_template.json','retained_imports/consumer_Root_gate_template.json',
+ 'Root_read_aid/definition_view/handoff.json','Root_read_aid/definition_view/exact_definition_coverage.json','Root_read_aid/definition_view/direct_whole_source_inverses.json',
+ 'Root_read_aid/definition_view/01_CURRENT_HEADERS_GLOBALS_BOOTSTRAP.py.txt','Root_read_aid/definition_view/02_CONSUMER_NEW_OR_CHANGED.py.txt','Root_read_aid/definition_view/03_SUPPLIER_NEW_OR_CHANGED.py.txt','Root_read_aid/definition_view/04_ADOPTER_NEW_OR_CHANGED.py.txt','Root_read_aid/definition_view/05_FINAL_CONTROLS_FULL.py.txt','Root_read_aid/definition_view/06_MATH_DAG_AND_JOINS_INDEX.json','Root_read_aid/definition_view/READ_NEXT.rst',
+ 'Root_read_aid/01_SHARED_EXACT_CHANGES.patch','Root_read_aid/exact_reconstruction.json','Root_read_aid/independent_review/READ_MAP.md','Root_read_aid/independent_review/read_map.json','Root_read_aid/independent_review/independent_review.json','Root_read_aid/independent_review/audit_read_map.py','Root_read_aid/independent_review/math_scope/review.json',
+ 'independent_review/independent_review.json','independent_review/parent_observations.json','independent_review/child_observations.json',
+ 'adoption/adopt_spectrum.py','adoption/handoff.json','adoption/source_inverse.json','adoption/new_logic_read_map.json','adoption/INTERFACE.rst','adoption/plan_template.json','adoption/read_invoice_template.json','adoption/first_call_template.json','adoption/Root_release_template.json','adoption/independent_review/independent_review.json','adoption/independent_review/observations.json')
+for name in relative_names:current(T/name,'explicit Source/DATA/read-map/peer provenance')
+# Current supervisor Source is infrastructure provenance only; its path in SDK is not misrepresented as historical self-hash authority.
+current(S/'maintenance/runtime/supervise_validation.py','current ordinary supervisor Source (infrastructure provenance, not new mathematical authority)')
+current(Path(__file__),'independent stdlib selection-authoring Source')
+# Revalidate exact selected bodies; this does not execute any represented Source or helper.
+for r in list(seen.values()):read(r,'final complete selection rehash')
+rows=[];content={}
+for path,r in sorted(seen.items()):
+ reuse=Path(path).is_relative_to(S);target=r if reuse else dict(path=str(DEST/'objects'/r['sha256']),bytes=r['bytes'],sha256=r['sha256'])
+ rows.append(dict(original=r,prospective_retained=target,action='REUSE_EXACT_S_INPUT'if reuse else'COPY_COMPLETE_BYTES',roles=roles[path]))
+ content.setdefault((r['bytes'],r['sha256']),[]).append(r)
+selected_T=[r for r in rows if r['action']=='COPY_COMPLETE_BYTES'];selected_S=[r for r in rows if r['action']=='REUSE_EXACT_S_INPUT']
+result=dict(schema='UNAPPROVED_Q11_SPECTRUM_ACTUAL_CONTROLS_SUPPLIER_PRESERVATION_SELECTION_V1',author='/root/journal_peer/strict25_preservation',status='DATA_ONLY_NO_RETENTION_OR_ADOPTION_AUTHORITY',rows=rows,
+ fixed_supplier_input_roles=78,complete_actual_supplier_subject_roles=83,selected_original_paths=len(rows),selected_T_paths=len(selected_T),selected_S_reuses=len(selected_S),selected_original_bytes=sum(r['original']['bytes']for r in rows),unique_whole_contents=len(content),unique_T_copy_bytes=sum(k[0]for k,v in content.items()if any(not Path(x['path']).is_relative_to(S)for x in v)),
+ actual_controls=dict(capture=seen[str(D/'controls_actual_capture.json')],program=plan['control_program'],report=gate['control_report'],count=13,PASS=True,execution={k:seen[str(D/('controls_guard/'+n))]for k,n in [('guard','receipt.json'),('started','started.json'),('stdout','stdout.log'),('stderr','stderr.log')]}),
+ actual_supplier=dict(capture=seen[str(D/'supplier_actual_capture.json')],program=plan['program'],plan=seen[str(D/'supplier_plan.json.gz')],gate=seen[str(D/'supplier_Root_gate.json')],review=gate['Root_code_math_review'],execution={k:seen[str(D/('supplier_guard/'+n))]for k,n in [('guard','receipt.json'),('started','started.json'),('stdout','stdout.log'),('stderr','stderr.log')]},carrier=records_ref,summary=summary_ref,visited=106,untrusted_hints=25,finite_misses=81,matrix_products=61234,new_paid_credit=0),
+ failed_Root_AST_range_audit=dict(Source=seen[str(D/'Root_source_audit_ast_range_assumption.py')],capture=seen[str(D/'Root_source_audit_failed_capture.json')],exit_code=1,status='FAILED_AND_RETAINED_UNCHANGED'),
+ future=dict(strict_Root_code_math_review=None,strict_Root_gate=None,strict_execution=dict(capture=None,guard=None,started=None,stdout=None,stderr=None),strict_result=None,actual_prepared_image=None,Root_publication_release=None,actual_preservation_receipt=None),
+ qualification='Prospective complete known-body selection only. Actual selected controls and proposal closure are retained as evidence; the25 records remain untrusted pending independent strict checking. Planned retained descriptors state exact known content and intended paths, not existing S files. No Source/control/helper/word/matrix/case/copy/gate/S/W/Git activation or Root authority was performed here.',Root_authority=False,performed_represented_activations=0,performed_S_W_Git_mutations=0)
+output=OUT/'selection.json';output.write_bytes(can(result))
+obs=dict(schema='INDEPENDENT_Q11_SUPPLIER_CLOSURE_SELECTION_OBSERVATIONS_V1',selection=ref(output,output.read_bytes()),checks=len(checks),checks_summary=['Whole stable refs rehashed including every actual supplier input role and full SDK/guard/log closures.','Root failed AST-range Source/capture remains exit1; corrected Source audit/pass binds exact Root Source review.','All25 untrusted hints and81 finite misses exactly partition all106 visited; no paid credit.','Explicit supplemental Source/plan/read/peer files retained; future strict/publication refs null.'],selected_paths=len(rows),selected_bytes=result['selected_original_bytes'],Root_authority=False,represented_activation=0,S_W_Git_mutations=0)
+(OUT/'observations.json').write_bytes(can(obs))
+print(json.dumps(dict(selection=obs['selection'],observations=ref(OUT/'observations.json',(OUT/'observations.json').read_bytes()),paths=len(rows),T_paths=len(selected_T),S_reuses=len(selected_S),bytes=result['selected_original_bytes'],unique_T_copy_bytes=result['unique_T_copy_bytes'],checks=len(checks)),sort_keys=True))

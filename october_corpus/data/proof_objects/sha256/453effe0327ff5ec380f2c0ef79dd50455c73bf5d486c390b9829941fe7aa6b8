@@ -1,0 +1,68 @@
+"""Independent stdlib DATA audit; no represented Source imports or activation."""
+from pathlib import Path
+import json,hashlib,stat
+B=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport/retention_DATA')
+OUT=B/'Root_copy_compatibility'
+def canonical(v):return (json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def identity(s):return (s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+observed={};checks=[]
+def verify(r,role):
+ p=Path(r['path']);a=p.lstat();assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1,(role,'ordinary canonical file')
+ b=p.read_bytes();z=p.lstat();assert identity(a)==identity(z),(role,'stable body identity')
+ assert ref(p,b)==r,(role,'descriptor mismatch')
+ observed[str(p)]=r;checks.append(dict(role=role,descriptor=r,status='PASS'));return b
+pp=B/'copy_plan.json';raw=pp.read_bytes();pref=ref(pp,raw)
+assert pref['bytes']==75319 and pref['sha256']=='b03e582efbdc17ffe8fcbaf820cc1eb1992cd4fcf7d061d5a2411743144f20bd'
+p=json.loads(verify(pref,'frozen_plan'));rows=p['files'];dest=Path(p['destination'])
+assert len(rows)==141
+for i,row in enumerate(rows):
+ verify(row['original'],f'original_{i:03}')
+ assert row['original']['bytes']==row['retained']['bytes'] and row['original']['sha256']==row['retained']['sha256']
+ q=Path(row['retained']['path']);assert q.is_absolute() and '..' not in q.parts
+ if not q.is_relative_to(dest):verify(row['retained'],f'outside_reuse_{i:03}')
+for i,r in enumerate(p['borrowed_closures']):verify(r,f'borrowed_closure_{i:03}')
+inside=[r for r in rows if Path(r['retained']['path']).is_relative_to(dest)]
+outside=[r for r in rows if not Path(r['retained']['path']).is_relative_to(dest)]
+assert len(inside)==120 and len(outside)==21
+old=Path('/private/tmp/intake_artifacts/retain_closed_files.py');oldraw=old.read_bytes()
+assert ref(old,oldraw)==dict(path=str(old),bytes=4570,sha256='8f434aa5103919daa1aa5cf3cb3c9af44ae47069b0753bceb57ec851d069ea70')
+def project(source,source_bytes,existing,edition):
+ methods=[dict(original=ref(source,source_bytes),retained=ref(dest/'method'/source.name,source_bytes)),dict(original=pref,retained=ref(dest/'method/plan.json',raw))]
+ m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=p.get('borrowed_closures',[]),source_plan=pref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+ mb=canonical(m);mr=ref(Path(p['manifest_path']),mb);counter=dict(READ=0,WRITTEN=0);paths=set();emitted=set();seen=set(existing);calls=[]
+ def whole(r,why):
+  counter['READ']+=r['bytes'];paths.add(r['path']);calls.append(dict(why=why,path=r['path'],bytes=r['bytes']))
+ def put(r,why):
+  if r['path'] in seen:
+   if edition=='old':whole(r,why+'_existing_precheck')
+  else:
+   counter['WRITTEN']+=r['bytes'];seen.add(r['path']);emitted.add(r['path'])
+  whole(r,why+'_immediate_hash')
+ whole(pref,'plan_initial')
+ for r in p['borrowed_closures']:whole(r,'borrowed')
+ for row in rows:
+  whole(row['original'],'selection_original')
+  if not Path(row['retained']['path']).is_relative_to(dest):whole(row['retained'],'selection_outside_reuse')
+ for row in inside:whole(row['original'],'copy_original');put(row['retained'],'copy')
+ for row in rows:whole(row['retained'],'all_retained_final')
+ for row in methods:put(row['retained'],'method')
+ put(mr,'manifest');whole(pref,'plan_final')
+ counter.update(PATHS=len(paths),new_files=len(emitted),manifest=mr,unmetered_source_body_read=len(source_bytes),physical_body_read_including_unmetered_source=counter['READ']+len(source_bytes),physical_body_paths_including_unmetered_source=len(paths|{str(source)}),initial_existing_output_paths=len(existing))
+ assert max(r['original']['bytes'] for r in rows)<=4*2**20
+ assert max(len(source_bytes),len(raw),len(mb))<=4*2**20
+ assert counter['READ']<=64*2**20 and counter['WRITTEN']<=16*2**20 and counter['PATHS']<=512
+ assert counter['physical_body_read_including_unmetered_source']<=61619522 and counter['WRITTEN']<=16132370 and counter['physical_body_paths_including_unmetered_source']<=282
+ (OUT/(edition+'_projected_manifest.json')).write_bytes(mb)
+ return counter,calls
+oldprojection,oldcalls=project(old,oldraw,set(),'old')
+existing=[]
+for row in inside:
+ r=row['retained']
+ if Path(r['path']).exists():verify(r,'partial_current_retained');existing.append(r)
+receipt=B/'copy_guard/receipt.json';err=B/'copy_guard/stderr.log'
+actual_old=dict(receipt=ref(receipt,receipt.read_bytes()),stderr=ref(err,err.read_bytes()),status=json.loads(receipt.read_bytes())['status'],partial_selected_outputs=len(existing),partial_selected_output_bytes=sum(r['bytes'] for r in existing),qualification='Observed current partial files only. Old run failed, and its new-write counter is not inferred from this snapshot.')
+oldreport=dict(schema='INDEPENDENT_COPY_DATA_COMPATIBILITY_OLD_EDITION_V1',status='SUPPORTED_PROJECTED_CAPACITY_AND_DESCRIPTORS_ACTUAL_FAILED',blockers_for_success=['Actual old utility failed stable complete hash stat comparison; no successful preservation manifest claimed.'],plan=pref,source=ref(old,oldraw),selected_original_rows=len(rows),outside_reuse_rows=len(outside),outside_reuse_unique_paths=len({r['retained']['path'] for r in outside}),all_whole_descriptors_verified=True,projected_fresh=oldprojection,actual_old=actual_old,authority='No Source or case authority; no activation, S/W/Git/gates mutation by peer.',qualification='Literal Source read arithmetic excludes kernel/interpreter reads, metadata stats and directory fsync. Direct own Source body read is separately charged. Projected fresh quantities remain distinct from actual partial failed run.')
+(OUT/'old_edition_compatibility.json').write_bytes(canonical(oldreport))
+(OUT/'whole_descriptor_observations.json').write_bytes(canonical(dict(checks=checks,unique_body_paths=len(observed),observed=observed,old_projected_whole_calls=oldcalls,initial_partial_selected_outputs=existing)))
+print(json.dumps(dict(old_report=ref(OUT/'old_edition_compatibility.json',canonical(oldreport)),old_projected_fresh=oldprojection,actual_old=actual_old,whole_descriptor_checks=len(checks)),indent=2))

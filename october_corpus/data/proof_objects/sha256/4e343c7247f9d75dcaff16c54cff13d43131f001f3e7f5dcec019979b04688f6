@@ -1,0 +1,61 @@
+from pathlib import Path
+import hashlib,json,os,stat
+D=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);digest=hashlib.sha256();size=0
+ with p.open('rb')as f:
+  while True:
+   b=f.read(65536)
+   if not b:break
+   size+=len(b);digest.update(b)
+ return dict(path=str(p),bytes=size,sha256=digest.hexdigest())
+def check(r):
+ p=Path(r['path']);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1
+ assert ref(p)==r and p.lstat()==a
+def document(r):check(r);return json.loads(Path(r['path']).read_bytes())
+h=json.loads((D/'handoff.json').read_bytes())
+p=document(h['parameters']);a=document(h['allocation']);invoice=document(h['invoice'])
+oldp=document(h['parent_parameters'])
+for n,key in [('parameter_inverse.json','changed_fields'),('allocation_inverse.json','changes')]:
+ inverse=json.loads((D/n).read_bytes());old=document(inverse['parent']);new=document(inverse['child']);delta={k:dict(before=old.get(k),after=new.get(k))for k in set(old)|set(new)if old.get(k)!=new.get(k)}
+ assert delta==inverse[key]
+assert set(k for k in set(p)|set(oldp)if p.get(k)!=oldp.get(k))=={'program','method_sources','artifact_root','output','data_lineage'}
+assert p['program']['sha256']=='179260d49d4f6395618add01f916889152a9ae887b5687e644d47de110a24860'
+assert p['boundary']==oldp['boundary'] and p['library_adapter']==oldp['library_adapter']
+parenta=document(json.loads((D/'allocation_inverse.json').read_bytes())['parent'])
+assert a['old8324_rows']==parenta['old8324_rows'] and a['archive446_rows']==parenta['archive446_rows']
+assert len(a['old8324_rows'])==8324 and len(a['archive446_rows'])==446 and a['CP']==10997
+sub=json.loads(Path('/private/tmp/f009_native_pin_sharing/Source_role_substitution.json').read_bytes())
+paid=sub['all_paid_rows_kept'];sources=sub['candidate_functional_rows'];assert len(paid)==1005 and len(sources)==1015
+union={r['path']:r for r in paid}
+for r in a['all_nine_new_sources']:
+ assert union.get(r['path'],r)==r;union[r['path']]=r
+assert sorted(union.values(),key=lambda r:r['path'])==sources
+assert len(union)==1015 and sum(r['bytes']for r in union.values())==60113534
+assert all(r in sources for r in p['method_sources']) and len(union)+9==1024
+for r in sources:check(r)
+for k in ['actual24controls','actual_Source_review','actual_controls_capture','actual_controls_guard','Source_peer']:check(h[k])
+controls=document(h['actual24controls']);guard=document(h['actual_controls_guard'])
+assert controls['status']=='PASS' and controls['controls']==24 and controls['original_case_calls']==0 and controls['program']==p['program']
+assert guard['status']=='PASS' and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+assert len(a['roles'])==49
+bills=json.loads((D/'literal_role_path_bills.json').read_bytes());assert len(bills['rows'])==49
+for i,(role,bill)in enumerate(zip(a['roles'],bills['rows'])):
+ path=Path(role['path']);assert len(str(path))<=384 and all(c.isascii()and(c.isalnum()or c in '/_.-')for c in str(path))
+ row_charge=len(can([39999,path.name,2147483648,'f'*64]));prefix_charge=len(can(str(path.parent)))
+ assert bill['index']==i and bill['path']==str(path) and bill['role']==role['role']
+ assert bill['encoded_row']==row_charge and bill['new_prefix']==prefix_charge and bill['combined']==row_charge+prefix_charge<=256
+ if role['actual_reference']is not None:check(role['actual_reference'])
+ else:assert role['unacquired_future_reference'] is True and not path.exists()
+closure=913004+24972+2048*476+49*256+16384+1024
+assert closure==1942776 and closure<=1954808 and invoice['tight_closure_upper']==closure
+assert invoice['five_preparer_output_upper']==3123128<3*2**20
+assert invoice['preservation_bytes_upper']==65470240<64*2**20
+for k in ['physical_Native_wire_upper','physical_Reader_wire_upper','physical_preflight_upper','physical_request_upper']:assert invoice[k]<2**21
+assert invoice['logical_Native_upper']<3*2**20 and invoice['logical_Reader_upper']<4*2**20
+assert invoice['preserved_map_caps']['physical']==2**21 and invoice['preserved_map_caps']['logical']==8*2**20
+assert invoice['preserved_map_caps']['logical_upper']==5562195 and invoice['preserved_map_caps']['deterministic_raw_upper']==1899907
+assert not Path(p['artifact_root']).exists() and not Path(p['output']).exists()
+review=dict(schema='ROOT_F009_SHARED_PIN_FRESH_DATA_ALLOCATION_REVIEW_V1',root='/root',status='SUPPORTED',blockers=[],parameters=h['parameters'],allocation=h['allocation'],invoice=h['invoice'],parent=h['parent_parameters'],Source=p['program'],actual_controls=h['actual24controls'],actual_control_capture=h['actual_controls_capture'],all1005_paid_rows_and1015_functional_bodies_whole_hashed=True,old8324_and446_rows_unchanged=True,broad_binding_rows=1024,actual49_path_bills_recomputed=True,tight_closure_upper=closure,scope='Root full changed parameters, explicit49 role/count/byte bounds and complete parent JSON inverses checked without project activation. Actual metadata forecasts/writes and newly bound preflight/Native/Reader authority remain owed. No RSS saving or original result is asserted.',checkpoint_unchanged=10997)
+path=D/'Root_allocation_review.json';path.write_bytes(can(review));print(json.dumps(dict(status='SUPPORTED',review=ref(path),functional_sources=1015,source_bytes=60113534,closure_upper=closure,metadata_forecasts_authorized=True,scientific_calls_authorized=False)))

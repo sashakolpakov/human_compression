@@ -1,0 +1,48 @@
+"""Root negative DATA controls for the reviewed metadata append; no group calls."""
+from pathlib import Path
+import copy,hashlib,json,sys,types
+D=Path('/private/tmp/l026_generation_ip_append');C=D/'metadata_controls';C.mkdir(exist_ok=False)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+attempts=[]
+def no_launch(event,args):
+ if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:attempts.append(event);raise RuntimeError('metadata controls forbid scientific or subprocess launch')
+sys.addaudithook(no_launch)
+source=D/'validate.py';own=ref(source);assert own['sha256']=='53b505596b1c1545b80fc5753ed2a1d542abd50069458432858ef16d84a8f5b9'
+M=types.ModuleType('Root_reviewed_generation_metadata_controls');M.__file__=str(source)
+exec(compile(source.read_bytes(),str(source),'exec',dont_inherit=True),vars(M))
+base=json.loads((D/'bound_plan.json').read_bytes());cases=[]
+def add(name,mutate):
+ p=copy.deepcopy(base);mutate(p);cases.append((name,p))
+def index(p,value):p['positive_free_indices'][0]=value;p['strict_runs'][0]['free_index']=value
+add('new_index_already_GENERATING',lambda p:index(p,1))
+add('new_index_already_NEGATIVE',lambda p:index(p,16))
+def duplicate(p):p['positive_free_indices'][1]=21;p['strict_runs'][1]['free_index']=21
+add('duplicate_new_index',duplicate)
+add('empty_prior_generation_receipts',lambda p:p.update(prior_generation_adoptions=[]))
+add('duplicate_prior_generation_receipt',lambda p:p['prior_generation_adoptions'].append(p['prior_generation_adoptions'][0]))
+add('wrong_current_negative_frontier',lambda p:p.update(current_negative_adoption=p['additional_subset_adoption']))
+add('wrong_total_generation_count',lambda p:p['expected_counts_if_Root_adopts'].update(total_GEN=8))
+add('wrong_original_membership_role',lambda p:p['roles'].pop('operand_premises'))
+add('wrong_existing_IP_theorem_pin',lambda p:p['rank3_IP_theorem'].update(sha256='0'*64))
+add('strict_return_from_another_original_row',lambda p:p['strict_runs'][0]['strict'].update(result=p['strict_runs'][1]['strict']['result']))
+mock=copy.deepcopy(json.loads(Path(base['strict_runs'][0]['durable_evidence']['path']).read_bytes()))
+first=mock['files'][0];field='retained'if'retained'in first else'preserved';first[field]['sha256']='0'*64
+mock['synthetic_negative_control_never_authority']=True
+mp=C/'bad_retained_hash_manifest.json';mp.write_bytes(can(mock));mr=ref(mp)
+def bad_retention(p):
+ old=p['strict_runs'][0]['durable_evidence']
+ for entry in p['strict_runs']:entry['durable_evidence']=mr
+ p['inputs']=[r for r in p['inputs']if r!=old]+[mr];p['inputs'].sort(key=lambda r:r['path'])
+add('wrong_retained_body_hash',bad_retention)
+results=[];total=0
+for name,p in cases:
+ path=C/(name+'.json');path.write_bytes(can(p));pr=ref(path);meta=M.Metadata();meta.file(own['path'],own['sha256']);meta.bytes+=own['bytes'];meta.file(pr['path'],pr['sha256'])
+ try:M.construct(meta,own,pr,p)
+ except(ValueError,KeyError,IndexError,TypeError)as error:results.append(dict(name=name,status='REFUSED',exception=type(error).__name__,reason=str(error)))
+ else:raise AssertionError('Invalid metadata accepted: '+name)
+ total+=meta.bytes
+assert not attempts and len(results)==11 and total<=128*2**20
+report=dict(schema='ROOT_L026_GENERIC_GENERATION_APPEND_NEGATIVE_METADATA_CONTROLS_V1',root='/root',status='PASS',program=own,base_plan=ref(D/'bound_plan.json'),controls=len(results),results=results,aggregate_metadata_read_bytes=total,scientific_or_point_word_group_calls=0,subprocess_attempts=attempts,publication_authority=False,qualification='Counterfactual DATA plans and one explicitly synthetic manifest only. Real receipts and sources stay immutable. No mathematical case, generator, group or strict checker is rerun.')
+out=C/'report.json';out.write_bytes(can(report));print(json.dumps(dict(status='PASS',controls=len(results),report=ref(out),aggregate_metadata_read_bytes=total,scientific_calls=0)))

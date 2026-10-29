@@ -1,0 +1,69 @@
+"""Root metadata release for the prepared independent Reader; no scientific calls."""
+from pathlib import Path
+import argparse, hashlib, json, os
+
+N = Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport')
+
+def canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode()
+
+def reference(path):
+    path = Path(path)
+    raw = path.read_bytes()
+    assert len(raw) <= 4 * 2**20 and path.resolve(strict=True) == path
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+def document(path, digest):
+    row = reference(path)
+    assert row['sha256'] == digest
+    return json.loads(Path(path).read_bytes()), row
+
+ap = argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--peer', nargs=2, required=True)
+ap.add_argument('--peer-status', required=True)
+args = ap.parse_args()
+peer, peer_ref = document(*args.peer)
+assert peer['status'] == args.peer_status and peer.get('blockers', []) == []
+own, own_ref = document(N / 'Root_Reader_full_DATA_review.json', 'e04573c89a24d26e6c57305e64431a2a0726d49bdbdeab575715247370d4fad6')
+assert own['status'] == 'SUPPORTED_DATA_ONLY' and own['all_declared_bodies_hash_exact']
+p, parameters_ref = document(N / 'reader_parameters_selected.json', '607c5f68ea5c42f318b27aba0e398d7cd73e8533fd4631d47188b9b967c03e5b')
+job, logical_ref = document(N / 'reader_job/job.json', '536cad58b3af4ed4244631b39d9a875365f5ac72a7a679842a9ac6e72d427ddd')
+wire_ref = reference(N / 'reader_job/job_complete_rows.json')
+assert wire_ref == own['wire_job'] and logical_ref == own['logical_job']
+assert wire_ref['bytes'] == 1065199 < 2 * 2**20
+assert job['program'] == p['program'] and job['Owner'] == p['Owner']
+assert job['program']['sha256'] == '179260d49d4f6395618add01f916889152a9ae887b5687e644d47de110a24860'
+assert job['library_adapter']['sha256'] == '706954fd5d1ea2523936ce7ecf1b34438bd6b09b72b494d9f05eb8cfaf4744e7'
+assert job['role'] == 'reader' and job['old_checkpoint_sequence'] == 10997
+assert job['checkpoint_boundary'] == p['boundary']
+assert not Path(job['output']).exists() and not (N / 'reader_execution').exists()
+native_peer, native_peer_ref = document(N / 'native_DATA_review/independent_review.json', '0054cbeb8f281032cd9bc7e779558c4d932ee42fff6b096547c221f6c39a37ab')
+assert native_peer['status'] == 'SUPPORTED_NATIVE_DATA_ONLY'
+assert job['contract'] in p['method_sources']
+gate = dict(
+    schema='ROOT_REVIEWED_F009_STANDALONE_JOB_V1', root='/root', status='SUPPORTED', blockers=[],
+    program=job['program'], job=wire_ref, Owner=job['Owner'], authorized_roles=['reader'],
+    method_sources=p['method_sources'], checkpoint_boundary=p['boundary'], expected_checkpoint_sequence=10997,
+    logical_job=logical_ref, parameters=parameters_ref, own_full_DATA_review=own_ref,
+    independent_Reader_job_DATA_review=peer_ref, independent_actual_Native_DATA_review=native_peer_ref,
+    actual_Native_capture=reference(N / 'native_actual_capture.json'),
+    actual_Native_result=reference(N / 'native_output/result.json'),
+    actual_Native_handoff=reference(N / 'native_output/native_handoff.json'),
+    actual_Reader_preparation=reference(N / 'reader_preparation_write_actual_capture.json'),
+    actual_Reader_constructor=reference(N / 'reader_constructor_write_actual_capture.json'),
+    actual_Reader_packer=reference(N / 'reader_packer_write_actual_capture.json'),
+    adapter_selection=reference(N / 'Root_Reader_adapter_selection_review.json'),
+    caller_Source_review=reference('/private/tmp/f009_native_pin_sharing/Root_source_review.json'),
+    caller_actual24controls=reference('/private/tmp/f009_native_pin_sharing/controls_actual_capture.json'),
+    complete_transport_Source_review=reference('/private/tmp/f009_complete_transport/complete_tree/runtime/Root_source_review.json'),
+    complete_transport_actual37controls=reference('/private/tmp/f009_complete_transport/complete_tree/runtime/controls_actual_capture.json'),
+    review='Root reviewed the exact new Reader job, complete Source/declared-table inverse, all declared file bodies, unchanged scientific Reader branch and whole706 adapter. The independent DATA review joins the same actual Native proposal. Only the independent strict Reader is released. Native replay is forbidden.',
+    qualification='Accepted checkpoint remains10997. Proposal11046 requires this actual strict Reader, separate Owner/transport closure and checkpoint registration. Inner512MiB120s and outer512MiB150s stay unchanged. This release proves no census, conjecture, original completion or Lean theorem.')
+raw = canonical(gate)
+assert len(raw) < 65536
+path = N / 'reader_Root_review.json'
+with path.open('xb') as handle:
+    assert handle.write(raw) == len(raw)
+    handle.flush()
+    os.fsync(handle.fileno())
+print(json.dumps(dict(status='ROOT_FRESH_INDEPENDENT_READER_JOB_RELEASED', review=reference(path), job=wire_ref, authorized_roles=['reader'], Native_authorized=False)))

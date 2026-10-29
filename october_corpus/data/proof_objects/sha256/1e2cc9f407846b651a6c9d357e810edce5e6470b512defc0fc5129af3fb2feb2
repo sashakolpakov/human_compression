@@ -1,0 +1,37 @@
+from pathlib import Path
+import ast,hashlib,json
+D=Path('/private/tmp/q11_large_end_spectrum/strict25_DATA');V=D.parent/'Root_read_aid/definition_view'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+def defs(s):return{n.name:ast.get_source_segment(s,n)for n in ast.parse(s).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+planref=ref(D/'adoption_plan.json');assert planref['sha256']=='ead23a7337a2260cb5eb2502225150f0fd5406bf7692f47b01d7258f880e289f'
+p=json.loads(Path(planref['path']).read_bytes());check(p['program'])
+cov=json.loads((V/'exact_definition_coverage.json').read_bytes());r=next(x for x in cov['roles']if x['role']=='adopter')
+for x in [r['final'],r['Root_reviewed_ancestor']]:check(x)
+old,prior=defs(Path(r['Root_reviewed_ancestor']['path']).read_text()),defs(Path(r['final']['path']).read_text())
+for x in r['literal_definitions']:assert old[x['name']]==prior[x['name']]
+for x in r['new_or_changed_definitions']:
+ text=prior[x['name']]+'\n';assert len(text.encode())==x['new_bytes'] and hashlib.sha256(text.encode()).hexdigest()==x['new_sha256']
+inverse=json.loads((D/'adopter_outer140/source_inverse.json').read_bytes());parent=Path(inverse['parent']['path']).read_bytes();child=Path(inverse['child']['path']).read_bytes()
+assert parent==inverse['old_whole_Source'].encode() and child==inverse['new_whole_Source'].encode()
+assert child==inverse['prepend_header'].encode()+parent.replace(inverse['old_site'].encode(),inverse['new_site'].encode(),1)
+assert inverse['old_site']=="r['limits']['wall_seconds']==125" and inverse['new_site']=="r['limits']['wall_seconds']==140"
+assert p['program']==inverse['child']
+for q in p['inputs']:check(q)
+assert len(p['inputs'])==191 and sum(x['bytes']for x in p['inputs'])==5782177
+prior_selector=json.loads(Path(p['predecessor_selector']['path']).read_bytes());strict=json.loads(Path(p['strict_result']['path']).read_bytes())
+positions=strict['verified_IP_failure_positions'];unpaid=[i for lo,hi in prior_selector['unresolved_position_runs']for i in range(lo,hi+1)]
+assert len(positions)==25 and len(unpaid)==106 and set(positions)<=set(unpaid)
+assert not set(positions)&set(prior_selector['original_paid_positions']+prior_selector['accepted_new_paid_positions'])
+assert p['expected_counts']==dict(original=3801,baseline=217,previous_paid=3478,new=25,later_paid=3503,remaining=81,historical_misses=265,current_misses=81,eligible=0)
+for kind in ['strict_execution','supplier_execution']:
+ c=json.loads(Path(p[kind]['capture']['path']).read_bytes());g=json.loads(Path(p[kind]['guard']['path']).read_bytes())
+ assert c['actual_tool']['exit_code']==0 and g['status']=='PASS' and g['limits']['total_rss']==128*2**20 and g['limits']['wall_seconds']==140 and g['cleanup']['remaining']==g['cleanup']['errors']==[]
+peer=D/'adopter_outer140/independent_source_review/independent_review.json';review=json.loads(peer.read_bytes());assert review['status']=='SUPPORTED' and review['blockers']==[]
+mock=json.loads((D/'adopter_outer140/controls_guard/stdout.log').read_bytes());assert mock['status']=='PASS' and len(mock['controls'])==7 and mock['subject']==p['program']
+F=sum(x['bytes']for x in p['inputs'])+planref['bytes'];read=p['program']['bytes']+2*F
+assert read==11708808 and read+2*(2**21+2*32768)<64*2**20
+record=dict(schema='ROOT_SPECTRUM_TYPED_ADOPTION_SOURCE_AND_BOUND_DATA_REVIEW_V1',root='/root',status='SUPPORTED',blockers=[],program=p['program'],plan=planref,independent_Source_peer=ref(peer),actual_guard_controls=ref(D/'adopter_outer140/controls_actual_capture.json'),input_paths=191,prepare_read_upper=read,conditional_counts=p['expected_counts'],scope='Root read all new9605 metadata joins, full build/main/trial interpreter/retention logic and complete new6832 compatibility delta; literal92b ancestry and full9605 inverse verified. All191 bodies freshly hashed; exact25 strict rows and complete genuine140-second closures joined. Preparation only is authorized; independent full prepared-image review and separate Root publication remain owed.',whole_original_credit=0)
+target=D/'Root_adoption_Source_and_DATA_review.json';target.write_bytes(can(record));print(json.dumps(dict(status='ROOT_ADOPTION_PREPARATION_REVIEW_SUPPORTED',review=ref(target),plan=planref)))

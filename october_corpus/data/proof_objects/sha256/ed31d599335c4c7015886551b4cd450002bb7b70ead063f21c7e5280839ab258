@@ -1,0 +1,44 @@
+from pathlib import Path
+import ast, hashlib, json
+
+D=Path('/private/tmp/f009_native_pin_sharing')
+def canonical(v):return (json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+    p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):
+    assert ref(r['path'])==r
+    return Path(r['path']).read_text()
+def definitions(text):
+    return {n.name:ast.get_source_segment(text,n) for n in ast.parse(text).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+h=json.loads((D/'handoff.json').read_bytes())
+source=check(h['program']);inv=json.loads((D/'source_inverse.json').read_bytes())
+assert source==inv['child_whole_body'] and h['program']==inv['child']
+parent=check(inv['parent']);assert parent==inv['parent_whole_body']
+old,new=definitions(parent),definitions(source)
+literal=[name for name in old if new[name]==old[name]]
+assert literal==inv['literal_parent_definitions'] and len(literal)==27
+before,after=inv['original_main_inverse']
+assert new['main'].count(before)==1 and new['main'].replace(before,after,1)==old['main']
+view='\n\n'.join(new[name] for name in ['root_pin_text','root_pin_edit','root_pin_rebind','root_pin_expand','root_pin_accessor','root_pin_profile','root_pin_sharing_route','root_pin_control_main'])+'\n'
+assert view==(D/'NEW_DEFINITIONS_ONLY.txt').read_text()
+pairs=json.loads((D/'provider_inverses.json').read_bytes())
+for role,data in pairs['bodies'].items():
+    actual=definitions(check(data['Source']))
+    for name,body in data['bodies'].items():assert actual[name]==body,(role,name)
+for pair in pairs['complete_changed_definition_pairs']:
+    actual=definitions(check(pair['Source']))[pair['name']]
+    assert actual==pair['whole_before'] and actual.count(pair['old'])==1
+    assert actual.replace(pair['old'],pair['new'],1)==pair['whole_after']
+    assert pair['whole_after'].replace(pair['new'],pair['old'],1)==actual
+peer=json.loads((D/'independent_review/independent_review.json').read_bytes())
+assert peer['program']==h['program'] and peer['status']=='SUPPORTED' and not peer['blockers']
+constants={}
+for node in ast.parse(source).body:
+    if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id.startswith('ROOT_PIN_'):
+        constants[node.targets[0].id]=ast.literal_eval(node.value)
+inputs=[h['program']]+[constants[k] for k in ['ROOT_PIN_CODEC','ROOT_PIN_ACCESSOR','ROOT_PIN_ADAPTER','ROOT_PIN_ENTRY','ROOT_PIN_WIRE','ROOT_PIN_OWNED','ROOT_PIN_BACKEND']]
+for r in inputs:check(r)
+bill=h['program']['bytes']+2*sum(r['bytes'] for r in inputs)+4
+assert bill==310207 and bill+8192==318399 and len(inputs)==8
+review=dict(schema='ROOT_NEW_F009_PIN_SHARING_SOURCE_REVIEW_V1',root='/root',status='SUPPORTED',blockers=[],program=h['program'],parent=inv['parent'],literal_parent_definitions=literal,changed_main='Exactly one Native-only route insertion; parent recovered completely',new_definition_count=8,provider_pairs=len(pairs['complete_changed_definition_pairs']),independent_review=ref(D/'independent_review/independent_review.json'),full_source_read_upper=bill,synthetic_fixture_reserve=8192,controls_expected=24,scope='Root read every new helper and complete controls, constants, dispatcher, full four-provider bodies and alias argument. Whole parent/provider inverses checked independently without project activation. Only synthetic controls authorized by this review; Native/job/memory fit remains owed.',alias_findings=['Every file_ref retains exact index type/range validation; full table, LF, canonical inverse and typed predicates remain literal','Only read-only complete equal file pins share allocation; every leaf occurrence remains distinct and ordered','Private provider namespaces preserve original modules and START; owned nonleaf copying prevents alias mutation across leaves'],original_case_credit=0,checkpoint_unchanged=10997)
+p=D/'Root_source_review.json';p.write_bytes(canonical(review));print(json.dumps(dict(status=review['status'],review=ref(p),controls_expected=24)))

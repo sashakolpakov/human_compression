@@ -1,0 +1,331 @@
+"""Independent stdlib DATA/AST audit. Never imports or runs reviewed Sources."""
+import ast
+import gzip
+import hashlib
+import json
+import os
+import stat
+from pathlib import Path
+
+D = Path('/private/tmp/q11_large_end_spectrum/strict25_DATA')
+S = Path('/Users/sasha/medusa/research/leemans')
+HERE = Path(__file__).parent
+seen = {}
+
+def can(x):
+    return json.dumps(x, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode()
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+def dig(x):
+    return sha(can(x))
+
+def pin(path):
+    p = Path(path)
+    b = p.read_bytes()
+    return {'path':str(p), 'bytes':len(b), 'sha256':sha(b)}
+
+def whole(r):
+    assert set(r) == {'path','bytes','sha256'} and type(r['bytes']) is int
+    p = Path(r['path'])
+    a = p.lstat()
+    assert p.is_absolute() and p.resolve(strict=True) == p and stat.S_ISREG(a.st_mode) and a.st_nlink == 1
+    b = p.read_bytes()
+    z = p.lstat()
+    assert (a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+    assert len(b)==r['bytes'] and sha(b)==r['sha256']
+    assert seen.get(str(p),r)==r
+    seen[str(p)] = r
+    return b
+
+def doc(r):
+    def unique(items):
+        d={}
+        for k,v in items:
+            assert k not in d
+            d[k]=v
+        return d
+    return json.loads(whole(r),object_pairs_hook=unique)
+
+def local(path):
+    return doc(pin(path))
+
+def runs(rr):
+    values=[]
+    for a,b in rr:
+        assert type(a) is type(b) is int and 1<=a<=b and (not values or a>values[-1])
+        values.extend(range(a,b+1))
+    return values
+
+def packed(values):
+    rr=[]
+    for v in values:
+        if rr and rr[-1][1]+1==v: rr[-1][1]=v
+        else: rr.append([v,v])
+    return rr
+
+def child(x):
+    return ['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',x['program']['path'],
+        '--self-sha256',x['program']['sha256'],'--plan',x['plan']['path'],x['plan']['sha256'],
+        '--Root-gate',x['source_gate']['path'],x['source_gate']['sha256']]
+
+def closure(capture,guard,started,stdout,stderr,rss,wall,command=None):
+    c=doc(capture); r=doc(guard); st=doc(started); out=whole(stdout); err=whole(stderr)
+    frames=c['all_genuine_api_frames']
+    assert c['root']=='/root' and c['child_argv']==c['issued_argv'] and c['actual_tool']['exit_code']==0
+    assert frames and frames[-1]['exit_code']==0 and 'session_id' not in frames[-1]
+    assert all(type(f['output']) is str for f in frames)
+    outer=c['issued_argv']; assert outer.count('--')==1 and outer.count('--output')==1
+    actual_child=outer[outer.index('--')+1:]
+    if command is not None: assert actual_child==command
+    assert outer[outer.index('--output')+1]==str(Path(guard['path']).parent)
+    assert json.loads(''.join(f['output'] for f in frames))=={'status':'PASS','stop':'RETURNED','receipt':guard['path']}
+    assert r['status']=='PASS' and r['stop']=='RETURNED' and r['returncode']==0
+    assert r['command']==st['command']==actual_child and r['limits']==st['limits']
+    assert r['limits']['total_rss']==rss and r['limits']['wall_seconds']==wall
+    assert r['cleanup']['remaining']==r['cleanup']['errors']==[]
+    assert r['logs']['stdout']==len(out) and r['logs']['stderr']==len(err)
+    return json.loads(out),r
+
+def fixed_closure(run,rss,wall,command=None):
+    return closure(*(run[k] for k in ['capture','guard','started','stdout','stderr']),rss,wall,command)
+
+def directory_closure(root,capture,rss,wall):
+    return closure(pin(capture),*(pin(Path(root)/n) for n in ['receipt.json','started.json','stdout.log','stderr.log']),rss,wall)
+
+planref=pin(D/'adoption_plan.json'); p=doc(planref); own=p['program']; source=whole(own).decode()
+assert own['sha256']=='6832cb5b80422772c01b85de55b2ff6376a8f396ed80a80ce570ab611e62aca6'
+assert planref['sha256']=='ead23a7337a2260cb5eb2502225150f0fd5406bf7692f47b01d7258f880e289f'
+parent=Path('/private/tmp/q11_large_end_spectrum/adoption/adopt_spectrum.py').read_text()
+first=ast.parse(source).body[0]
+recovered=''.join(source.splitlines(True)[first.end_lineno:])
+assert recovered.count("r['limits']['wall_seconds']==140")==1
+assert recovered.replace("r['limits']['wall_seconds']==140","r['limits']['wall_seconds']==125")==parent
+assert sha(parent.encode())=='96058cc43265c16371d668fc0aabb78f5743af79bbe64ec0201809b6ff863b12'
+fixed={r['path']:r for r in p['inputs']}
+assert len(fixed)==len(p['inputs'])==191
+for r in p['inputs']: whole(r)
+assert sum(r['bytes'] for r in p['inputs'])==5782177
+assert p['schema']=='Q11_SPECTRUM_ADOPTION_PLAN_V1' and p['scientific_calls']==0
+assert p['Root_authority'] is p['preparation_grants_Root_authority'] is False
+
+pr=doc(p['predecessor_selector']); projection=doc(pr['projection']); direct=doc(p['strict_result']); supplier=doc(p['supplier_result'])
+dp=json.loads(gzip.decompress(whole(direct['plan']))); sp=json.loads(gzip.decompress(whole(supplier['plan'])))
+assert p['original_job']==pr['original_job']==projection['original_job']==[23,4]
+assert direct['program']==p['expected_strict_consumer'] and supplier['program']==p['expected_supplier']
+assert supplier['plan']==p['expected_supplier_plan']
+assert direct['program']['sha256']=='e202dc4779f34857a3d5b942fa18ab72d7bb739e8e370d66dde3d1ae31cc4f16'
+assert supplier['program']['sha256']=='be93e9fb2b6162d557be9a48d9b09adfc2e49ad834d844ded4e6d2a6eada4952'
+for name in ['context','projection','Root_projection_acceptance','theorem','theorem_review','spectrum_theorem','spectrum_review','spectrum_premises']:
+    assert dp[name]==sp[name]
+for x in [direct,supplier,dp,sp]:
+    assert x['original_job']==p['original_job'] and x['projection']==pr['projection'] and x['selector']==p['predecessor_selector']
+for x,q,kind in [(direct,dp,'DIRECT'),(supplier,sp,'SUPPLIER')]:
+    assert q['program']==x['program']
+    for r in q['inputs']: assert fixed[r['path']]==r
+    gate=doc(x['source_gate']); code=doc(gate['Root_code_math_review']); control=doc(gate['control_report'])
+    assert gate['root']=='/root' and gate['adopted'] is True and gate['program']==x['program'] and gate['plan']==x['plan']
+    assert code['root']=='/root' and code['status']=='SUPPORTED' and code['blockers']==[]
+    assert code['program']==x['program'] and code['plan']==x['plan'] and code['conditional_large_end_theorem_and_full_primary_premises_checked'] is True
+    assert control['schema']=='Q11_LARGE_END_SPECTRUM_GENERIC_CONTROLS_V1' and control['status']=='PASS' and control['controls']==13
+    assert control['program']==q['control_program'] and control['consumer']==direct['program'] and control['supplier']==supplier['program']
+    assert control['original_case_calls']==control['original_model_or_group_calls']==0
+    for k in ['spectrum_theorem','spectrum_review','spectrum_premises']: assert x[k]==q[k]
+    peer=doc(q['spectrum_review']); prem=doc(q['spectrum_premises'])
+    assert peer['status']=='SUPPORTED_CONDITIONAL_WRITTEN_THEOREM' and peer['blockers']==[]
+    assert peer['argument']==q['spectrum_theorem'] and peer['premises']==q['spectrum_premises']
+    assert prem['schema']=='Q11_LARGE_END_CONDITIONAL_REUSE_PREMISES_V1'
+    for r in prem['local_sources'].values(): assert fixed[r['path']]==r
+assert dp['context']==sp['context'] and dp['records']==direct['actual_supplied_spectrum_carrier']==supplier['carrier']
+assert direct['proof_mode']==supplier['proof_mode']=='DIRECT_LARGE_END_SPECTRUM_CHECK'
+assert direct['grammar']==supplier['grammar']=='SAME_END_LITERAL_012_LENGTH1_TO64_V1'
+assert supplier['verification_authority'] is False and supplier['new_paid_credit']==0
+assert direct['Root_adoption_owed'] is supplier['Root_adoption_owed'] is True
+assert direct['word_search_or_row_reduction_calls']==direct['proposer_or_kernel_imports']==0
+assert direct['four_mark_generation_or_nongeneration_claim'] is False
+assert direct['whole_original_conjecture_Lean_or_measurement_credit']==0
+assert supplier['old37_pool_search_calls']==0
+
+baseline=pr['original_paid_positions']; oldpaid=pr['accepted_new_paid_positions']; un=runs(pr['unresolved_position_runs'])
+assert baseline==sorted({i for f in projection['known_paid_facts'] for i in f['orbit_positions']})
+assert len(baseline)==pr['original_paid_count']==217 and len(oldpaid)==3478 and len(un)==106
+assert sorted(baseline+oldpaid+un)==list(range(1,3802)) and dig(un)==pr['expanded_unresolved_sha256']
+groups={k:[] for k in pr['accepted_paid_by_kind']}
+for ref in pr['source_adoptions']:
+    fact=doc(ref)
+    assert fact['root']=='/root' and fact['adopted'] is True and fact['original_job']==[23,4]
+    assert fact['Root_projection_acceptance']==pr['Root_projection_acceptance']
+    if 'projection' in fact: assert fact['projection']==pr['projection']
+    assert fact.get('whole_original_credit',fact.get('new_whole_Original_credit',fact.get('whole_original_conjecture_Lean_or_measurement_credit')))==0
+    if fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1':
+        kind='section_IP_failure'; vv=fact['new_IP_failure_positions']; assert fact['independent_direct_word_power_row_minor_checks'] is True
+    else:
+        assert fact['schema']=='ROOT_ACCEPTED_Q11_RANK4_TWO_END37_IP_FACTS_V1'
+        kind='two_end_theorem_IP_failure'; vv=fact['verified_IP_failure_positions']
+        assert fact['classification']=='FOUR_MARK_INTERSECTION_PROPERTY_FAILURE' and fact['four_mark_generation_or_nongeneration_claim'] is False
+        assert fact['theorem']['sha256']==dp['theorem']['sha256'] and fact['theorem_review']['sha256']==dp['theorem_review']['sha256']
+        if fact['proof_mode']=='EXISTING_CHECKED_PROPER_ENDS':
+            ap=doc(fact['application_proposal']); ar=doc(fact['application_review'])
+            assert ap['proposed_new_IP_failure_positions']==ar['exact_proposed_positions']==vv
+            assert ar['status']=='SUPPORTED_WRITTEN_THEOREM_AND_EXACT27_APPLICATIONS' and ar['blockers']==[]
+        else:
+            old=doc(fact['independent_direct_result'])
+            assert old['verified_IP_failure_positions']==vv and old['original_job']==[23,4] and old['projection']==pr['projection']
+            assert old['word_search_or_row_reduction_calls']==0
+    assert vv==sorted(set(vv)) and not set(vv)&set(baseline)
+    groups[kind].extend(vv)
+assert all(len(v)==len(set(v)) for v in groups.values())
+groups={k:sorted(v) for k,v in groups.items()}
+assert groups==pr['accepted_paid_by_kind'] and sorted(i for v in groups.values() for i in v)==oldpaid
+historical=[]
+for t in pr['previous_method_attempts']:
+    fact=doc(t['Root_adoption']); values=t['finite_miss_positions']
+    assert t['Root_adoption'] in pr['source_adoptions'] and t['finite_misses_are_NOT_paid'] is t['do_not_repeat_unchanged_search'] is True
+    assert values==fact['finite_miss_positions_without_IP_credit'] and values==sorted(set(values))
+    historical.extend(values)
+historical=sorted(set(historical)); assert len(historical)==265
+assert sorted(set(historical)&set(un))==pr['historical_misses_current_unpaid']==un
+assert supplier['selected_positions']==sp['selected_positions']==dp['selected_positions']==un
+assert supplier['visited_positions']==un and sp['window_start']==dp['window_start']==0
+
+carrier=doc(supplier['carrier']); assert whole(supplier['carrier'])==can(carrier)+b'\n'
+assert carrier['schema']=='Q11_LARGE_END_SPECTRUM_SUPPLIED_WORDS_V1' and carrier['proof_mode']==direct['proof_mode']
+assert carrier['selector']==p['predecessor_selector'] and carrier['projection']==pr['projection'] and carrier['original_job']==[23,4]
+positions=direct['verified_IP_failure_positions']; misses=supplier['finite_miss_positions_without_paid_credit']
+assert positions==[r[0] for r in carrier['records']]==supplier['proposed_positive_positions']==dp['expected_positive_positions']
+assert len(positions)==25 and positions==sorted(set(positions)) and len(misses)==81 and misses==sorted(set(misses))
+assert sorted(positions+misses)==un
+domain=doc(projection['original_domain_whole_pins']['Saved_result']); orbits=domain['orbits']
+assert len(orbits)==3801 and dig(orbits)==projection['full_orbit_array_sha256'] and domain['external_premises']['original_A_equals_G'] is True
+assert supplier['original_domain_whole_pins']==projection['original_domain_whole_pins']
+members=0
+for row in carrier['records']:
+    assert type(row) is list and len(row)==5
+    i,rep,dg,left,right=row; orbit=orbits[i-1]
+    assert rep==orbit[0] and dg==dig(orbit); members+=len(orbit[1])
+    for end in [left,right]:
+        if end['kind']=='PRIME37': assert set(end)=={'kind','prime37'}; fields=['prime37']
+        else: assert end['kind']=='PRIME19_AND_ORDER4' and set(end)=={'kind','prime19','order4'}; fields=['prime19','order4']
+        for f in fields:
+            w=end[f]; assert set(w)=={'word','power'} and type(w['word']) is str and 1<=len(w['word'])<=64 and set(w['word'])<=set('012')
+            assert type(w['power']) is int and 1<=w['power']<=256
+assert members==direct['borrowed_original_members']==100
+assert direct['verified_end_kinds']==[[r[3]['kind'],r[4]['kind']] for r in carrier['records']]
+remain=sorted(set(un)-set(positions)); additional=sorted(oldpaid+positions)
+current_misses=sorted((set(historical)|set(misses))&set(remain))
+assert current_misses==remain and direct['remaining_if_Root_adopts']=={'count':81,'expanded_sha256':dig(remain)}
+counts={'original':3801,'baseline':217,'previous_paid':3478,'new':25,'later_paid':3503,'remaining':81,'historical_misses':265,'current_misses':81,'eligible':0}
+assert p['expected_counts']==counts
+for x,field in [(direct,'historical_current_misses_validated_not_skipped'),(supplier,'old_historical_current_misses_validated_not_skipped')]:
+    assert x['original_baseline']=={'count':217,'sha256':dig(baseline)}
+    assert x[field]=={'count':106,'sha256':dig(un)}
+    assert x['accepted_paid_by_kind']=={k:{'count':len(v),'sha256':dig(v)} for k,v in groups.items()}
+for name,x in [('strict',direct),('supplier',supplier)]:
+    out,r=fixed_closure(p[name+'_execution'],128*2**20,140,child(x))
+    for k,n in [('admit_disk',10),('admit_ram',4),('disk_floor',8),('ram_floor',3)]: assert r['limits'][k]==n*2**30
+    if name=='strict': assert out['output']==p['strict_result'] and out['verified_IP_failures']==25 and out['status']==direct['status']
+    else: assert out['summary']==p['supplier_result'] and out['carrier']==supplier['carrier'] and (out['visited'],out['proposed'],out['finite_misses'],out['unvisited'])==(106,25,81,0)
+
+R=Path('/private/tmp/q11_large_end_spectrum/retained_imports')
+cout,_=directory_closure(R/'controls_guard',R/'controls_actual_capture.json',128*2**20,130)
+assert cout==local(R/'controls_report.json') and cout['controls']==13
+ao=D/'adopter_outer140'
+aout,_=directory_closure(ao/'controls_guard',ao/'controls_actual_capture.json',128*2**20,60)
+assert aout['status']=='PASS'
+
+# Independent reconstruction of every prepared nested body; candidate code is not executed.
+preparedref=pin(D/'actual_preparation/prepared.json'); b=doc(preparedref)
+assert preparedref['sha256']=='287c4793fa4c43c0162a781b7ea387472b848f42ed9dc57f3da2b7b7556cacbe'
+def retained(r):
+    if Path(r['path']).is_relative_to(S): return r
+    return dict(r,path=str(Path(p['evidence_directory'])/'objects'/r['sha256']))
+retentions=[{'original':r,'retained':retained(r),'action':'REUSE_EXACT_S_INPUT' if retained(r)==r else 'COPY_COMPLETE_BYTES'} for r in p['inputs']]
+assert b['retention_files']==retentions
+pres={'schema':'ROOT_PRESERVED_Q11_SPECTRUM_CHECK_V1','root':'/root','files':retentions,'no_old_physical_read_claim':True,'scientific_calls':0,'whole_original_credit':0,
+    'qualification':'Complete current proof/capture/guard/source and input bodies; old accepted S authority DAGs remain immutable imports, not re-executed verdicts.'}
+def outputref(path,value): return {'path':str(path),'bytes':len(can(value))+1,'sha256':sha(can(value)+b'\n')}
+presref=outputref(Path(p['evidence_directory'])/'preservation.json',pres)
+methodref=dict(own,path=str(Path(p['method_directory'])/'adopt_spectrum.py'))
+methodplan=dict(planref,path=str(Path(p['method_directory'])/'plan.json'))
+adoption={'schema':'ROOT_ACCEPTED_Q11_RANK4_LARGE_END_SPECTRUM_IP_FACTS_V1','root':'/root','adopted':True,
+    'original_job':[23,4],'projection':pr['projection'],'Root_projection_acceptance':pr['Root_projection_acceptance'],
+    'Root_unresolved_selector':p['predecessor_selector'],'classification':'FOUR_MARK_INTERSECTION_PROPERTY_FAILURE',
+    'four_mark_generation_or_nongeneration_claim':False,'proof_mode':direct['proof_mode'],'grammar':direct['grammar'],
+    'theorem':retained(dp['theorem']),'theorem_review':retained(dp['theorem_review']),
+    **{k:retained(dp[k]) for k in ['spectrum_theorem','spectrum_review','spectrum_premises']},
+    'proof_import_retentions':{k:{'original':direct[k],'retained':retained(dp[k])} for k in ['spectrum_theorem','spectrum_review','spectrum_premises']},
+    'independent_direct_result':retained(p['strict_result']),'actual_independent_check':retained(p['strict_execution']['capture']),
+    'direct_checker':retained(direct['program']),'direct_checker_gate':retained(direct['source_gate']),
+    'strict_execution':{k:retained(v) for k,v in p['strict_execution'].items()},'supplier_result':retained(p['supplier_result']),
+    'supplier_execution':{k:retained(v) for k,v in p['supplier_execution'].items()},'supplied_carrier':retained(supplier['carrier']),
+    'verified_IP_failure_positions':positions,'newly_settled_positions':25,'finite_miss_positions_without_IP_credit':misses,
+    'visited_positions':un,'unvisited_count':0,'preservation':presref,'metadata_method':methodref,'metadata_plan':methodplan,
+    'no_old_Source_verdict_retagged':True,'operational_registers_modified':False,'finite_miss_history_modified':False,
+    'whole_original_credit':0,'conjecture_credit':0,'Lean_credit':0,'new_compression_credit':0,
+    'qualification':'Only actual independent37 OR19 AND4 same-end spectrum checks plus the separately reviewed full-normalizer theorem supply new IP failures. Original natural model/A=G/frame/member transports and full classified-unitary premises remain imported. Supplier misses and every other position remain unpaid; no quartet-generation or original completion claim.'}
+adoptionref=outputref(p['adoption_path'],adoption)
+trial={'Root_adoption':adoptionref,'criterion':'LARGE_END_SPECTRUM_V1','grammar':direct['grammar'],'search_method':supplier['search_method'],
+    'proof_mode':direct['proof_mode'],'source':retained(supplier['program']),'schedule':retained(sp['schedule']),
+    'profile':retained(sp['profile']),'retained_untrusted_hints':retained(sp['retained_hints']),
+    'supplier_plan':retained(supplier['plan']),'supplier_result':retained(p['supplier_result']),
+    'visited_positions':un,'finite_miss_positions':misses,'finite_misses_are_NOT_paid':True,'do_not_repeat_unchanged_search':True}
+newgroups=dict(groups,large_end_spectrum_IP_failure=positions)
+selector=dict(pr,accepted_new_paid_positions=additional,accepted_paid_by_kind=newgroups,
+    unresolved_position_runs=packed(remain),unresolved_positions=81,expanded_unresolved_sha256=dig(remain),
+    source_adoptions=pr['source_adoptions']+[adoptionref],previous_selector=p['predecessor_selector'],
+    previous_method_attempts=pr['previous_method_attempts']+[trial],historical_misses_current_unpaid=current_misses,
+    qualification='Original baseline and all old typed paid conclusions remain distinct. Complete old trial arrays plus the new finite supplier misses are retained literally; only their current unpaid intersection is skipped. Separately typed spectrum proofs supply IP failure only, never generation or whole-original credit.')
+selectorref=outputref(p['selector_path'],selector)
+assert b['adoption']==adoption and b['selector']==selector and b['preservation']==pres
+assert b['expected_adoption']==adoptionref and b['expected_selector']==selectorref and b['expected_preservation']==presref
+assert b['retained_method_sources']==[{'original':own,'retained':methodref},{'original':planref,'retained':methodplan}]
+frontier=dict(fixed);frontier[own['path']]=own;frontier[planref['path']]=planref
+assert b['physical_input_frontier']==sorted(frontier.values(),key=lambda r:r['path'])
+expected_prepared={'schema':'UNADOPTED_Q11_SPECTRUM_METADATA_V1','author':'/root/compact_proof_author','Root_authority_granted':False,
+    'program':own,'plan':planref,'predecessor_selector':p['predecessor_selector'],'adoption':adoption,'selector':selector,'preservation':pres,
+    'expected_adoption':adoptionref,'expected_selector':selectorref,'expected_preservation':presref,'retention_files':retentions,
+    'retained_method_sources':b['retained_method_sources'],'physical_input_frontier':b['physical_input_frontier'],'scientific_calls':0,'S_writes':0}
+assert b==expected_prepared and whole(preparedref)==can(expected_prepared)+b'\n'
+false_ref=pin(D/'actual_preparation/Root_release_unapproved.json'); false=doc(false_ref)
+assert false['adopted'] is False and false['exact_current_partition_and_full_actual_closure_reviewed'] is False and false['independent_review'] is None
+assert false['program']==own and false['plan']==planref and false['prepared']==preparedref
+assert false['adoption']==adoptionref and false['selector']==selectorref and false['preservation']==presref
+prepareout,preparereceipt=directory_closure(D/'prepare_guard',D/'prepare_actual_capture.json',256*2**20,140)
+assert prepareout['prepared']==preparedref and prepareout['false_release']==false_ref and prepareout['conditional_partition']==counts
+assert prepareout['scientific_calls']==prepareout['S_writes']==0 and prepareout['Root_authority_granted'] is False
+
+invoice=local(D/'adoption_invoice.json')
+copies={r['retained']['path']:r['original']['bytes'] for r in retentions if r['original']!=r['retained']}
+assert len(copies)==131 and sum(copies.values())==3381240
+assert sum(r['original']==r['retained'] for r in retentions)==55
+F=sum(r['bytes'] for r in frontier.values()); B=own['bytes']
+assert F==5826143 and len(frontier)==192
+assert B+2*F==invoice['prepare_whole_read_upper']==11708808
+assert B+2*F+2*(2**21+2*32768)==invoice['publication_whole_read_upper_with_prepared_release_peer_caps']==16034184
+pub_upper=sum(copies.values())+B+planref['bytes']+2*(2**21)+2*32768+131072+4
+assert pub_upper==invoice['publication_new_content_upper']==7872644<8*2**20
+assert len(copies)+9==invoice['publication_new_path_upper']==140
+actual_known=sum(copies.values())+B+planref['bytes']+preparedref['bytes']+len(can(pres))+1+len(can(adoption))+1+len(can(selector))+1
+assert all(r['bytes']<=2**21 for r in p['inputs']) and preparedref['bytes']<2**21
+assert not any(Path(p[k]).exists() for k in ['adoption_path','selector_path','method_directory','evidence_directory'])
+
+observations={'schema':'INDEPENDENT_Q11_ACTUAL_SPECTRUM_METADATA_OBSERVATIONS_V1','reviewer':'/root/compact_proof_author',
+    'program':own,'plan':planref,'prepared':preparedref,'false_release':false_ref,
+    'fixed_input_paths':191,'fixed_input_bytes':5782177,'physical_input_paths':192,'physical_input_bytes':F,
+    'literal_source_delta':'one new author header and exact actual scientific outer wall125→140; complete parent9605 inverse verified',
+    'original_job':[23,4],'original_positions':3801,'baseline':217,'previous_paid':3478,'new_spectrum_IP':25,'later_paid':3503,
+    'remaining_unpaid':81,'borrowed_original_members':100,'old_historical_misses':265,'new_current_misses':81,
+    'positions':positions,'old_groups':{k:len(v) for k,v in groups.items()},'old_histories_literal':True,
+    'actual_source_controls':13,'actual_outer_compatibility_controls':7,'supplier_and_strict_closures':'PASS; exact128MiB140s outer, inner125 retained',
+    'prepared_body_byte_reconstruction':True,'expected_adoption':adoptionref,'expected_selector':selectorref,'expected_preservation':presref,
+    'unique_T_objects':len(copies),'unique_T_bytes':sum(copies.values()),'S_reuse':55,
+    'publication_upper':pub_upper,'publication_cap':8*2**20,'publication_known_body_bytes_before_release_peer_receipt':actual_known,
+    'metadata_prepare_read_upper':B+2*F,'metadata_publish_read_upper':B+2*F+2*(2**21+2*32768),
+    'Root_release_not_issued_by_reviewer':True,'publication_not_executed_by_reviewer':True,'scientific_calls':0,
+    'qualification':'Root publication remains owed. Candidate adopted=true bodies are inert prepared values. No new quartet generation, nongeneration, Original, conjecture, Lean or measurement credit. Complete original model/member/frame and classified spectrum premises remain imported.'}
+raw=can(observations)+b'\n'
+out=HERE/'observations.json'
+assert not out.exists()
+out.write_bytes(raw)
+print(json.dumps({'status':'INDEPENDENT_DATA_AST_AUDIT_PASS','observations':pin(out),'publication_upper':pub_upper,'prepared':preparedref},sort_keys=True))

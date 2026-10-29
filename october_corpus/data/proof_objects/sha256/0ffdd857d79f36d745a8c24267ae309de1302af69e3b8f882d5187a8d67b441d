@@ -1,0 +1,87 @@
+"""Independent closed Native DATA audit: stdlib only, no reviewed Source imports or state decoding."""
+import copy,hashlib,json,shlex,stat,collections
+from pathlib import Path
+T=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');O=T/'native_output';D=T/'native_DATA_review';seen={};checks=0
+S=Path('/Users/sasha/medusa/research/leemans')
+def ck(v,m):
+ global checks
+ checks+=1
+ if not v:raise ValueError(m)
+def pairs(xs):
+ d={}
+ for k,v in xs:ck(k not in d,'unique JSON key');d[k]=v
+ return d
+def dec(b):return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda s:(_ for _ in()).throw(ValueError(s)))
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def pin(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(r):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ ck(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and sig(a)==sig(z)and pin(p,b)==r,'whole stable body '+str(p));ck(seen.get(str(p),r)==r,'one physical version');seen[str(p)]=r;return b
+def doc(r):return dec(raw(r))
+def read(p):return doc(pin(p))
+rows=[pin(p)for p in sorted(O.iterdir())];ck(len(rows)==253 and all(Path(r['path']).is_file()for r in rows),'complete253 regular outputs no subdirs')
+for r in rows:raw(r)
+outputs={r['path']:r for r in rows};total=sum(r['bytes']for r in rows);ck(total==2637208,'whole exact Native byte total')
+cap=read(T/'native_actual_capture.json');outer=read(T/'native_guard/receipt.json');outer_start=read(T/'native_guard/started.json');outlog=raw(pin(T/'native_guard/stdout.log'));errlog=raw(pin(T/'native_guard/stderr.log'));owner=read(T/'native_execution/receipt.json');start=read(T/'native_execution/started.json');request=read(T/'native_request.json');gate=read(T/'native_Root_review.json');handoff=read(O/'native_handoff.json');result=read(O/'result.json');head=read(O/'head.json');genesis=read(O/'genesis.json');io=read(O/'io_attestation.json')
+job=read(T/'native_job/job.json');wire=read(T/'native_job/job_source_indices.json');tag=wire['Root_Source_rows_reference'];ex=copy.deepcopy(wire);ex.pop('Root_Source_rows_reference');ex['source_inputs']=[wire['declared_inputs'][i]for i in tag['indices']]
+ck(ex==job and len(can(ex))==tag['logical_bytes']and hashlib.sha256(can(ex)).hexdigest()==tag['logical_sha256'],'complete logical Native wire inverse remains exact')
+rt=request['Root_Request_rows_reference'];requested=[dict(path=rt['prefixes'][i]+n,bytes=s,sha256=h)for i,n,s,h in rt['rows']];rq=dict(request);rq.pop('Root_Request_rows_reference');rq['inputs']=requested
+ck(len(can(rq))==rt['logical_bytes']and hashlib.sha256(can(rq)).hexdigest()==rt['logical_sha256'],'complete JSON Owner request table inverse')
+by={r['path']:r for r in requested};ck(len(by)==len(requested)==8349 and all(by.get(r['path'])==r for r in job['declared_inputs']),'all8347 declared exact within8349 Owner inputs')
+ck({k:r for k,r in by.items()if k not in {x['path']for x in job['declared_inputs']}}=={str(T/'native_job/job_source_indices.json'):pin(T/'native_job/job_source_indices.json'),str(T/'native_Root_review.json'):pin(T/'native_Root_review.json')},'Owner adds only wire and exact Root gate')
+ck(cap['root']==cap['actor']=='/root'and cap['actual_tool']['exit_code']==0 and cap['full_initial_tool_return']==cap['all_genuine_api_frames'][0]and cap['full_tool_return']==cap['all_genuine_api_frames'][-1]and cap['full_tool_return']['exit_code']==0 and 'session_id'not in cap['full_tool_return'],'genuine SDK complete success closure')
+argv=cap['issued_argv'];ck(argv==cap['child_argv']and shlex.split(cap['issued_command'])==argv and shlex.split(cap['issued_tool_arguments']['cmd'])==argv and argv[argv.index('--')+1:]==outer['command']==outer_start['command'],'exact actual SDK/guard command join')
+ck(outer['status']=='PASS'and outer['stop']=='RETURNED'and outer['returncode']==0 and outer['error']is None and outer['cleanup']['remaining']==outer['cleanup']['errors']==[] and outer['limits']==outer_start['limits']and outer['limits']['total_rss']==512*2**20 and outer['limits']['wall_seconds']==150 and outer['logs']==dict(stdout=len(outlog),stderr=len(errlog)),'unchanged512MiB150s closed outer')
+ck(outer['peaks']['total_rss']==514637824 and outer['peaks']['total_rss']<outer['limits']['total_rss'],'actual sampled peak below unchanged cap')
+ck(dec(''.join(f['output']for f in cap['all_genuine_api_frames']))==dict(status='PASS',stop='RETURNED',receipt=str(T/'native_guard/receipt.json')),'terminal SDK supervisor report')
+ck(owner['status']=='PASS'and owner['returncode']==0 and owner['inputs_unchanged']is True and owner['changed_input_count']==0 and owner['first_changed_inputs']==[] and owner['owned_child_reaped']is owner['owned_group_absent']is True and owner['error']is owner['owned_finalization_error']is owner['final_resource_stop']is None,'complete Owner PASS and known owned closure')
+ck(owner['input_count']==8349 and owner['request']==pin(T/'native_request.json')and start['request']==owner['request']and start['execution_id']==owner['execution_id']==request['execution_id']and owner['no_retry']is owner['no_successor']is True,'same Owner8349/request/execution id')
+ck(request['program']==job['program']['path']and request['supervisor']==job['Owner']['path']and request['argv']==start['command']and request['output_roots']==[str(O)],'exact Native subject/Owner/output join')
+ck(request['limits']['family_rss_cap_bytes']==512*2**20 and request['limits']['phase_seconds']==120 and request['limits']['growth_cap_bytes']==16*2**20,'inner512MiB120s quotas unchanged')
+ck(gate['job']==pin(T/'native_job/job_source_indices.json')and gate['program']==job['program']and gate['Owner']==job['Owner']and gate['status']=='SUPPORTED'and gate['blockers']==[],'exact Root actual Native job release')
+ck(handoff['request']==gate['job']and handoff['Root_review']==pin(T/'native_Root_review.json')and handoff['actual_caller']==job['program']and handoff['native_result']==pin(O/'result.json')and handoff['head']==pin(O/'head.json')==result['checkpoint'],'whole actual handoff/result/head')
+ck(handoff['global_checkpoint_written']is False and handoff['new_census_credit']==result['new_census_credit']==0 and result['no_successor']is True,'no checkpoint or credit from Native')
+ck(result['actions']==27 and all(c['reaped']is True for c in result['calls']),'27 actions and all known call rows reaped')
+# Read only the metadata transaction chain. State/g6/frontier bodies remain opaque.
+txs=sorted(O.glob('transaction_*.json'));ck(len(txs)==49,'exact49 transactions');prev=None;types=collections.Counter()
+for seq,p in enumerate(txs,10998):
+ d=read(p);ck(d['sequence']==seq and d['previous']==prev,'whole previous-to-tail transaction chain');ck(d['attempt']['path']in outputs and outputs[d['attempt']['path']]==d['attempt'],'every transaction attempt exact Native body');prev=pin(p);types[d['schema']]+=1
+ck(head['tail']==prev and head['genesis']==pin(O/'genesis.json')and genesis['case']==job['case'],'head complete genesis/tail joins')
+ck(types=={'F009_QUEUE_DISPATCH_V1':27,'F009_QUEUE_REPLACEMENT_V1':5,'F009_QUEUE_COMPLETION_V1':17},'exact transaction categories')
+returns=[read(p)for p in sorted(O.glob('call_*.return.json'))];ck(len(returns)==27,'one return per dispatch');completed=[r for r in returns if r['schema']=='F009_QUEUE_COMPLETE_RETURN_V1'and r['status']=='RETURNED'];incomplete=[r for r in returns if r['status']=='INCOMPLETE'];refined=[r for r in returns if r['schema']=='F009_QUEUE_NATIVE_RETURN_V1']
+ck(len(completed)==17 and len(incomplete)==len(refined)==5 and all(r['returncode']==0 for r in completed+refined)and all(r['returncode']==-15 for r in incomplete),'17complete5refine5incomplete remain correctly typed')
+leaflines=sum(len(raw(r['leaves']).splitlines())for r in completed);ck(leaflines==17841,'selected returned leaf raw-line delta only, no graph parse')
+replacements=[read(p)for p in txs if read(p)['schema']=='F009_QUEUE_REPLACEMENT_V1'];admissions=[a for r in replacements for a in r['admissions']];receivers=[a['receiver']for a in admissions]
+ck(len(admissions)==16 and len(set(receivers))==16,'sixteen exported admission metadata rows')
+# All complete descriptors nested in output JSON join either this output tree or exact declared request rows.
+external={}
+def walk(v):
+ if isinstance(v,dict):
+  if set(v)=={'path','bytes','sha256'}:
+   if v['path']in outputs:ck(outputs[v['path']]==v,'whole nested output descriptor')
+   else:ck(by.get(v['path'])==v,'whole nested external descriptor is an exact Owner input');external[v['path']]=v
+  else:
+   for x in v.values():walk(x)
+ elif isinstance(v,list):
+  for x in v:walk(x)
+for r in rows:
+ if r['path'].endswith('.json'):walk(doc(r))
+for r in external.values():raw(r)
+base=doc(job['checkpoint_acceptance']);snapshot=doc(job['snapshot_adoption']);ck(base['checkpoint']==snapshot['checkpoint']==dict(sequence=10997,nodes=5779,pending=208,reserved_debts=1,selected_raw_leaf_records=493912),'exact accepted base checkpoint')
+proposal=dict(sequence=11046,nodes=5795,pending=201,reserved_debts=1,selected_raw_leaf_records=511753);delta=handoff['delta_proposal']
+ck(proposal==handoff['expected_proposal']and result['sequence']==11046 and result['nodes']==5795 and result['pending']==201 and result['selected_leaf_occurrences']==511753 and result['reserved_debts']==1,'same Native scalar proposal')
+ck(delta==dict(alias_records=1,completed_families=17,duplicate_admission_records=0,exported_descendants=16,new_node_records=16,new_pending_receivers=15,refined_families=5,selected_raw_leaf_delta=17841,transactions=49),'exact delta proposal')
+ck(10997+49==11046 and 5779+16==5795 and 208-17-5+15==201 and 493912+leaflines==511753,'independent scalar arithmetic only')
+ck(set(outputs)<=set(io['all_known_paths'])and io['known_objects']==len(set(io['all_known_paths']))==387 and io['known_objects']<=io['maximum_write_objects']==2048 and io['maximum_path_bytes']==384 and all(len(p.encode())<=384 for p in io['all_known_paths']),'whole output subset of exact finite IO reservations')
+ck(io['actual_file_bytes']+pin(O/'io_attestation.json')['bytes']==total and total<=16*2**20 and io['kernel_RLIMIT_FSIZE_lowered']is True,'IO accounting includes whole actual tree')
+owner_extra=sum(len(raw(pin(p)))for p in sorted((T/'native_execution').iterdir())if p.name!='receipt.json')
+ck(owner['final']['logical_output_bytes']==total+owner_extra+2*16384 and pin(T/'native_execution/receipt.json')['bytes']==16384,'Owner output bill includes stdout/stderr/started and both slots')
+live=[]
+for p in [S/'reboot_20261013/CURRENT.json',S/'maintenance/intake/current_status.json',S/'maintenance/intake/reviewed_intake_progress.json']:
+ d=read(p);v=d.get('F009_checkpoint_current',d.get('F009',{}).get('checkpoint'));ck(v==base['checkpoint'],'live accepted checkpoint remains10997');live.append(pin(p))
+# Rehash all Native files once more to pin the closed full tree.
+ck([pin(p)for p in sorted(O.iterdir())]==rows,'complete unchanged output set final')
+inventory=D/'native_output_inventory.json';inventory.write_bytes(can(rows));inventorysha=hashlib.sha256(can(rows)).hexdigest()
+r=dict(schema='INDEPENDENT_F009_ACTUAL_NATIVE_CLOSED_OUTPUT_DATA_REVIEW_V1',status='SUPPORTED_NATIVE_DATA_ONLY',reviewer='/root/journal_peer',blockers=[],actual_capture=pin(T/'native_actual_capture.json'),Native_result=pin(O/'result.json'),worker_handoff=pin(O/'native_handoff.json'),Owner_receipt=pin(T/'native_execution/receipt.json'),outer_receipt=pin(T/'native_guard/receipt.json'),output_inventory=pin(inventory),output_array_canonical_sha256=inventorysha,output_files=253,output_bytes=total,whole_files_hashed=len(seen),checks=checks,accepted_checkpoint=base['checkpoint'],live_selectors=live,Native_proposal_only=proposal,delta_proposal_only=delta,strict_Reader_result=None,Root_checkpoint_adoption=None,Owner_request_complete_rows=8349,Owner_all_inputs_unchanged_actual=True,new_census_or_original_credit=0,Native_rerun_permitted_by_peer=False,guard_qualification='Actual sampled outer peak514637824 below536870912 and known cleanup empty. Owner birth/group closure retained; unseen detached descendants not excluded. No OS quota/global absence claim.',restrictions='All253 output bodies and their nested whole references hashed, JSON/transaction/Owner/SDK/IO identities and scalar arithmetic checked. Original full8349 host/archive bodies not all freshly opened by this peer; their arrays and genuine Owner unchanged-input pass are imported. No Source/helper/control/math/state/graph codec, Reader, Native or gate activated, no S/W/Git writes, no Root authority. Plain selected-return g6 newline count is DATA and supplies no graph/Reader verdict.')
+p=D/'independent_review.json';p.write_bytes(can(r));print(json.dumps(dict(review=pin(p),inventory=pin(inventory),checks=checks,whole_files_hashed=len(seen),output_files=253,output_bytes=total,inventorysha=inventorysha)))

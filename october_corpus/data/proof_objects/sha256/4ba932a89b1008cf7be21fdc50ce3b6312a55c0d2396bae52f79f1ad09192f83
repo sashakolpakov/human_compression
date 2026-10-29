@@ -1,0 +1,27 @@
+from pathlib import Path
+import hashlib,json
+D=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport')
+S=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+p=json.loads((D/'native_parameters.json').read_bytes());job=json.loads((D/'native_job/job.json').read_bytes());jr=ref(D/'native_job/job_source_indices.json')
+assert jr['sha256']=='411c997c4539c8623064973b676bf19c4b033cac7b636873dc9c1eb78d493572' and job['program']==p['program']
+assert job['old_checkpoint_sequence']==10997 and job['role']=='native'
+assert not Path(job['output']).exists()and not(D/'native_execution').exists()
+preflight=json.loads((D/'Root_source_preflight_result_review.json').read_bytes());assert preflight['status']=='SUPPORTED'and preflight['checkpoint_unchanged']==10997
+peer=json.loads((D/'independent_review/independent_review.json').read_bytes());assert peer['status']=='SUPPORTED_BUILT_DATA_AND_WHOLE_WIRE_ONLY'and peer['blockers']==[]
+kept=S/'f009_census_continuation/from10997/shared_pin_inputs/evidence/preservation.json';kr=ref(kept);assert kr['sha256']=='8b1894fb2d41af9528b84b69f8fef7995241a22a343356a22c9c05cfcdc33526'
+case=json.loads(Path(job['case']['path']).read_bytes());assert case['max_actions']==64 and case['worker_seconds']==60 and case['reuse']==[] and case['backend_transition']is None
+review=dict(schema='ROOT_REVIEWED_F009_STANDALONE_JOB_V1',root='/root',status='SUPPORTED',blockers=[],program=job['program'],job=jr,Owner=job['Owner'],authorized_roles=['native'],method_sources=p['method_sources'],checkpoint_boundary=p['boundary'],expected_checkpoint_sequence=10997,
+ logical_job=dict(bytes=(D/'native_job/job.json').stat().st_size,sha256=ref(D/'native_job/job.json')['sha256']),
+ finite_allocation_review=ref(D/'Root_allocation_review.json'),actual_full_wire_inverse=ref(D/'Root_wire_inverse_review.json'),independent_actual_Native_DATA_peer=ref(D/'independent_review/independent_review.json'),
+ new_Source_review=ref('/private/tmp/f009_native_pin_sharing/Root_source_review.json'),new_Source_peer=ref('/private/tmp/f009_native_pin_sharing/independent_review/independent_review.json'),actual24controls=ref('/private/tmp/f009_native_pin_sharing/controls_actual_capture.json'),
+ actual_source_preflight_result=preflight['result'],actual_source_preflight_Owner=preflight['Owner_receipt'],actual_source_preflight_outer=preflight['outer_receipt'],actual_source_preflight_capture=preflight['actual_capture'],actual_source_preflight_review=ref(D/'Root_source_preflight_result_review.json'),
+ actual_prelaunch_preservation=kr,actual_preservation_capture=ref(kept.parent/'stable_stat_retention_actual_capture.json'),prior_incomplete_attempt=ref(S/'f009_census_continuation/from10997/native_execution/evidence/preservation.json'),
+ review='Root separately reviewed all new179260 helper/provider/alias/control logic and complete inverses. Actual24 generic checks and fresh Source/profile/backend preflight passed; all1015 Source bodies,1005 paid rows,8324 original/446 archive arrays, complete wire inverse and49 allocation bounds independently checked. Whole new inputs and actual preflight are durably retained. Only the current unpaid64-action/60-second continuation from accepted10997 is released. The old d8e/0d68 memory-stop is immutable failure history and is not re-executed.',
+ qualification='This is a new exact179260 job and source gate. Native memory saving and runtime fit remain unacquired until genuine execution. Preserve inner512MiB120s and outer512MiB150s, existing2GiB/40000-file IO and all2048 output-object reservations. Native output alone supplies no Reader, checkpoint adoption, original completion or conjecture credit.')
+for k in ['program','Owner','checkpoint_boundary']:assert ref(review[k]['path'])==review[k]
+path=D/'native_Root_review.json';raw=can(review);assert len(raw)<65536
+with path.open('xb')as f:f.write(raw)
+print(json.dumps(dict(status='ROOT_FRESH_NEW_SOURCE_NATIVE_JOB_RELEASED',review=ref(path),job=jr,limits=dict(actions=64,worker_seconds=60,inner_RSS=536870912,inner_seconds=120,outer_RSS=536870912,outer_seconds=150))))

@@ -1,0 +1,80 @@
+"""Independent Source text/AST and DATA arithmetic only. No reviewed Source activation."""
+from pathlib import Path
+import json,hashlib,ast,stat
+B=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport/retention_DATA');O=B/'Root_copy_compatibility'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def stable(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+verified=[]
+def whole(r,role):
+ p=Path(r['path']);a=p.lstat();assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1
+ b=p.read_bytes();assert stable(p.lstat())==stable(a) and ref(p,b)==r,(role,r)
+ verified.append(dict(role=role,descriptor=r));return b
+old=Path('/private/tmp/intake_artifacts/retain_closed_files.py');new=Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py');ip=Path('/private/tmp/intake_artifacts/stable_stat_source_inverse.json')
+ob=whole(dict(path=str(old),bytes=4570,sha256='8f434aa5103919daa1aa5cf3cb3c9af44ae47069b0753bceb57ec851d069ea70'),'old_Source')
+nb=whole(dict(path=str(new),bytes=4874,sha256='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'),'new_Source')
+ib=whole(dict(path=str(ip),bytes=11378,sha256='8dcd95a2b6dcd9af736a456d84ba97a9672029364b50d6f71c60a24a82f11fd2'),'whole_inverse');iv=json.loads(ib)
+assert iv['parent']==ref(old,ob) and iv['child']==ref(new,nb) and iv['parent_whole_body'].encode()==ob and iv['child_whole_body'].encode()==nb
+assert len(iv['changes'])==6
+fw=ob.decode()
+for ch in iv['changes']:
+ assert fw.count(ch['before'])==1,ch
+ fw=fw.replace(ch['before'],ch['after'],1)
+assert fw.encode()==nb
+rv=nb.decode()
+for ch in reversed(iv['changes']):
+ assert rv.count(ch['after'])==1,ch
+ rv=rv.replace(ch['after'],ch['before'],1)
+assert rv.encode()==ob
+ast.parse(ob);tree=ast.parse(nb)
+imports=[n.module if isinstance(n,ast.ImportFrom) else ','.join(a.name for a in n.names) for n in ast.walk(tree) if isinstance(n,(ast.Import,ast.ImportFrom))]
+assert imports==['pathlib','argparse,hashlib,json,os,resource,stat,sys,time']
+# Whole AST and literal bodies are inspected as text/data, never compiled or called.
+pp=B/'copy_plan.json';pb=whole(dict(path=str(pp),bytes=75319,sha256='b03e582efbdc17ffe8fcbaf820cc1eb1992cd4fcf7d061d5a2411743144f20bd'),'frozen_plan');pref=ref(pp,pb);p=json.loads(pb);rows=p['files'];dest=Path(p['destination']);assert len(rows)==141
+inside=[];outside=[];existing=[]
+for i,row in enumerate(rows):
+ whole(row['original'],f'original_{i:03}')
+ assert row['original']['bytes']==row['retained']['bytes'] and row['original']['sha256']==row['retained']['sha256']
+ if Path(row['retained']['path']).is_relative_to(dest):
+  inside.append(row)
+  if Path(row['retained']['path']).exists():whole(row['retained'],f'partial_{i:03}');existing.append(row['retained'])
+ else:whole(row['retained'],f'outside_reuse_{i:03}');outside.append(row)
+for i,r in enumerate(p['borrowed_closures']):whole(r,f'borrowed_{i:03}')
+assert len(inside)==120 and len(outside)==21 and len(existing)==93
+assert sum(r['bytes'] for r in existing)==13167079
+assert not Path(p['manifest_path']).exists()
+assert not (dest/'method/retain_closed_files.py').exists() and not (dest/'method/plan.json').exists()
+methods=[dict(original=ref(new,nb),retained=ref(dest/'method/retain_closed_files.py',nb)),dict(original=pref,retained=ref(dest/'method/plan.json',pb))]
+m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=p.get('borrowed_closures',[]),source_plan=pref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+mb=can(m);mr=ref(Path(p['manifest_path']),mb)
+def project(initial):
+ READ=0;WRITTEN=0;paths=set();emitted=set();seen={r['path'] for r in initial};calls=[]
+ def rd(r,why):
+  nonlocal READ
+  READ+=r['bytes'];paths.add(r['path']);calls.append(dict(role=why,descriptor=r))
+ def put(r,why):
+  nonlocal WRITTEN
+  if r['path'] not in seen:seen.add(r['path']);WRITTEN+=r['bytes'];emitted.add(r['path'])
+  rd(r,why+'_single_immediate_hash')
+ rd(ref(new,nb),'initial_Source');rd(pref,'plan_initial')
+ for r in p['borrowed_closures']:rd(r,'borrowed')
+ for row in rows:
+  rd(row['original'],'selection_original')
+  if not Path(row['retained']['path']).is_relative_to(dest):rd(row['retained'],'outside_reuse')
+ for row in inside:rd(row['original'],'copy_original');put(row['retained'],'retained')
+ for row in rows:rd(row['retained'],'all_retained_final')
+ for row in methods:put(row['retained'],'method')
+ put(mr,'manifest');rd(pref,'plan_final')
+ result=dict(READ=READ,WRITTEN=WRITTEN,PATHS=len(paths),new_files=len(emitted),initial_existing_selected_paths=len(initial),initial_existing_selected_bytes=sum(r['bytes'] for r in initial),unmetered_Source_body_reads=0)
+ assert READ<=61619522<=64*2**20 and WRITTEN<=16132370<=16*2**20 and len(paths)<=282<=512
+ return result,calls
+fresh,fc=project([]);retry,rc=project(existing)
+assert fresh==dict(READ=56783018,WRITTEN=14047928,PATHS=281,new_files=123,initial_existing_selected_paths=0,initial_existing_selected_bytes=0,unmetered_Source_body_reads=0)
+assert retry==dict(READ=56783018,WRITTEN=880849,PATHS=281,new_files=30,initial_existing_selected_paths=93,initial_existing_selected_bytes=13167079,unmetered_Source_body_reads=0)
+report=dict(schema='INDEPENDENT_STABLE_STAT_COPY_SOURCE_DATA_COMPATIBILITY_V1',status='SUPPORTED_STATIC_SOURCE_AND_EXACT_PROJECTED_COPY_DATA',blockers=[],author='/root/journal_peer/f009_invoice',source=ref(new,nb),inverse=ref(ip,ib),plan=pref,whole_Source_and_six_site_inverse_verified=True,AST_parse='PASS',source_delta=['stable whole-file identity retains dev/ino/mode/nlink/size/mtime_ns/ctime_ns; atime excluded','Existing and fresh put each receive one immediate complete hash; final selection hash retained','Required self-SHA input with metered <=65536-byte whole own-Source bootstrap; old unmetered body read removed'],unchanged_literals=dict(read_bytes=64*2**20,new_write_bytes=16*2**20,per_file_bytes=4*2**20,path_cap=512,new_file_cap=512,RSS_bytes=256*2**20,seconds=125),descriptor_verification=dict(original_rows=141,outside_reuse_rows=21,outside_reuse_unique_paths=10,borrowed_closure_rows=5,partial_selected_output_rows=93,partial_selected_bytes=13167079),projected_fresh=fresh,projected_retry_from_verified93=retry,projected_manifest=mr,conservative_parent_invoice=dict(read_bytes=61619522,new_write_bytes=16132370,paths=282),actual_new_invocation='UNACQUIRED; this seal is static Source/DATA arithmetic only',old_actual='INCOMPLETE; old failed capture not retagged',restrictions='No represented Source/helper/control/constructor/packer/codec activation. No S/W/Git/gates writes. No mathematical, census, memory/time case-fit or launch authority.',qualification='READ means literal whole() body counter; all own Source body reads now metered. Python/bootstrap kernel reads, stats and directory fsync are outside that explicit counter. Retry projection assumes exactly the verified93 selected output bodies exist, method and manifest files absent; actual results must remain separate.')
+(O/'stable_projected_manifest.json').write_bytes(mb)
+(O/'stable_retry_exact_whole_call_invoice.json').write_bytes(can(dict(fresh=fresh,retry=retry,whole_calls=rc,verified=verified,initial_existing=existing)))
+(O/'stable_edition_compatibility.json').write_bytes(can(report))
+for name in ['stable_edition_compatibility.json','stable_retry_exact_whole_call_invoice.json','stable_projected_manifest.json']:
+ q=O/name;print(json.dumps(ref(q,q.read_bytes()),sort_keys=True))
+print(json.dumps(dict(fresh=fresh,retry=retry,manifest=mr),sort_keys=True))

@@ -1,0 +1,33 @@
+from pathlib import Path
+import hashlib,json,struct
+D=Path('/private/tmp/l026_second_window_generation_DATA/c105_from_actual13')
+E=Path('/private/tmp/l026_eleven_cycle_proposals/instances/free_index_0003')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+def write(p,v):
+ with p.open('xb')as f:f.write(can(v))
+ return ref(p)
+template=json.loads((E/'strict_plan.json').read_bytes());oldgate=json.loads((E/'strict_Root_gate.json').read_bytes());h=json.loads((D/'handoff.json').read_bytes())
+control=json.loads(Path(oldgate['control_report']['path']).read_bytes());assert control['status']=='PASS' and control['consumer']==template['program'] and control['controls']==15
+for r in [template['program'],template['kernel'],template['control_program'],oldgate['control_report']]:check(r)
+bound=[]
+for index in [21,23,28,30]:
+ parent=D/('free_index_%04d'%index);proposal=json.loads((parent/'plan.json').read_bytes());records=ref(Path(proposal['output_directory'])/'records.json');carrier=json.loads(Path(records['path']).read_bytes())
+ assert len(carrier['records'])==1 and carrier['records'][0]['free_index']==index
+ actual=ref(parent/'proposal_actual_capture.json');receipt=json.loads((parent/'proposal_guard/receipt.json').read_bytes());assert receipt['status']=='PASS' and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+ plan=dict(template);plan.update(author='/root',records=records,expected_positive_free_indices=[index],selected_free_indices=[index],window_start=index,maximum_records=1,output=str(parent/'strict_result.json'),status='ROOT_FRESH_BOUND_ACTUAL_SINGLETON_FOR_STRICT_CHECK')
+ plan['inputs']=sorted([r for r in template['inputs']if r!=template['records']]+[records],key=lambda r:r['path'])
+ for r in plan['inputs']:check(r)
+ pr=write(parent/'strict_plan.json',plan)
+ row=carrier['records'][0];raw=Path(plan['roles']['witnesses']['path']).read_bytes()[16*index:16*index+16];owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',raw)
+ assert row['owner']==owner and row['witness_row_sha256']==hashlib.sha256(raw).hexdigest()and mass==1024
+ review=dict(schema='ROOT_FRESH_L026_SECOND_WINDOW_SUPPLIED_CYCLE_REVIEW_V1',root='/root',status='SUPPORTED',blockers=[],program=plan['program'],kernel=plan['kernel'],plan=pr,named_G_membership_bridge_action_and_two_fibre_imports_checked=True,selected_original_free_indices=[index],original_owner=owner,actual_supplier=actual,actual_controls=oldgate['control_report'],unchanged_Source_and_controls=True,every11_plus13_closing_edge_must_be_recomputed=True,scope='Root fresh complete original16B owner, supplied carrier and full imported theorem/member/action/model inputs checked. Same unchanged Root-reviewed268d/60ee/b617 Source and actual15 controls. Re-evaluate all signed11/13 cycle edges and exact namedG membership route. No IP, census, conjecture or Original credit.',conservative_work_upper=4069594)
+ rr=write(parent/'strict_Root_review.json',review)
+ gate=dict(schema='ROOT_AUTHORIZED_L026_SUPPLIED_PRIME_CYCLES_V1',root='/root',adopted=True,new_case_calls_authorized=True,program=plan['program'],kernel=plan['kernel'],plan=pr,Root_code_math_review=rr,control_report=oldgate['control_report']);gr=write(parent/'strict_Root_gate.json',gate)
+ roster={r['path']:r for r in plan['inputs']}
+ for r in [plan['program'],pr,rr,gr,oldgate['control_report']]:assert r['path']not in roster;roster[r['path']]=r
+ bill=plan['program']['bytes']+2*sum(r['bytes']for r in roster.values());assert len(roster)==22 and bill<8*2**20 and len(can(review))<32768 and gr['bytes']<8192
+ bound.append(dict(free_index=index,program=plan['program'],plan=pr,gate=gr,read_upper=bill))
+print(json.dumps(dict(status='ROOT_FOUR_ACTUAL_PAIR_STRICT_GATES',instances=bound)))

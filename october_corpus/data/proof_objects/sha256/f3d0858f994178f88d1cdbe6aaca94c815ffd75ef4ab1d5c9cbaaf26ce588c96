@@ -1,0 +1,47 @@
+"""Pure DATA expansion of the known-body roster; no represented Source/helper activation."""
+import hashlib,json,shlex,stat
+from pathlib import Path
+T=Path('/private/tmp/q11_large_end_spectrum');N=T/'strict25_DATA';OUT=N/'preservation_peer';S=Path('/Users/sasha/medusa/research/leemans');DEST=S/'computation/f004/q11/rank4/section_generation/residuals/large_end_spectrum/job_0023/batch_0001/evidence'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def need(v,m):
+ if not v:raise AssertionError(m)
+def pin(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def load(p):return json.loads(Path(p).read_bytes())
+base=load(OUT/'selection.json');by={r['original']['path']:r for r in base['rows']}
+def check(r):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and sig(a)==sig(z)and pin(p,b)==r,'whole stable ordinary body '+str(p));return b
+def add(p,role):
+ p=Path(p);b=p.read_bytes();r=pin(p,b);check(r)
+ if str(p)in by:
+  need(by[str(p)]['original']==r,'one selected current version')
+  if role not in by[str(p)]['roles']:by[str(p)]['roles'].append(role)
+ else:
+  reuse=p.is_relative_to(S);ret=r if reuse else dict(r,path=str(DEST/'objects'/r['sha256']))
+  by[str(p)]=dict(original=r,prospective_retained=ret,action='REUSE_EXACT_S_INPUT'if reuse else'COPY_COMPLETE_BYTES',roles=[role])
+ return r
+for p in ('consumer_plan.json','consumer_plan.json.gz','consumer_invoice.json','conditional_counts.json','adoption_plan_pending_strict.json','initial_handoff.json','prepare_data.py','consumer_Root_gate.json','consumer_Root_review.json','Root_bind_strict.py','Root_bind_strict_actual_capture.json','strict_actual_capture.json','strict_guard/receipt.json','strict_guard/started.json','strict_guard/stdout.log','strict_guard/stderr.log'):
+ add(N/p,'actual strict25 plan/authorization/runtime or DATA preparation provenance')
+for p in ('adopt_spectrum_outer140.py','source_inverse.json','source_forward.patch','provenance.json','guard_controls.py','first_calls.json'):
+ add(N/'adopter_outer140'/p,'new separate outer140 metadata Source/inverse/mock-control/provenance; Source activation not supplied by this selection')
+result_path=T/'retained_imports/instances/job_0023/first/checked.json';rr=add(result_path,'actual independent25 strict result')
+need(rr['bytes']==4883 and rr['sha256']=='87826c4ccae8eddcd19d9bf59fa7a50d8f3ff783d410a8ac5e49688b7de18e5a','exact actual strict4883-byte result')
+capture=load(N/'strict_actual_capture.json');g=load(N/'strict_guard/receipt.json');out=load(N/'strict_guard/stdout.log');result=load(result_path)
+need(by[str(N/'strict_actual_capture.json')]['original']==dict(path=str(N/'strict_actual_capture.json'),bytes=5241,sha256='4797e8cf55fcd0dc99684b8009e055e2aaf765d4cee31903752be7c1c229bb69'),'exact actual strict capture')
+f=capture['all_genuine_api_frames'];a=capture['issued_argv'];need(capture['root']==capture['actor']=='/root'and capture['actual_tool']['exit_code']==f[-1]['exit_code']==0 and capture['full_initial_tool_return']==f[0]and capture['full_tool_return']==f[-1],'genuine strict first/terminal SDK frames')
+need(a[a.index('--')+1:]==g['command']and capture['child_argv']in(a,g['command']),'strict actual child/guard argv')
+for k in ('issued_command','canonical_argv_command'):need(shlex.split(capture[k])==a,'strict actual command exact serialization')
+need(shlex.split(capture['issued_tool_arguments']['cmd'])==a,'strict SDK command matches')
+need(g['status']=='PASS'and g['returncode']==0 and g['error']is None and g['cleanup']['remaining']==g['cleanup']['errors']==[]and g['limits']['total_rss']==128*2**20 and g['limits']['wall_seconds']==140,'strict actual140s128MiB known-scope closure')
+need(out['output']==rr and out['verified_IP_failures']==25 and len(result['verified_IP_failure_positions'])==25,'actual strict output exact25 rows')
+need(result['actual_supplied_spectrum_carrier']==base['actual_supplier']['carrier'] and result['word_search_or_row_reduction_calls']==result['proposer_or_kernel_imports']==0 and result['Root_adoption_owed']is True,'strict independent result/carrier binds25 without adoption')
+rootgate=load(N/'consumer_Root_gate.json');rootreview=load(N/'consumer_Root_review.json')
+need(rootgate['adopted']is True and rootgate['new_case_calls_authorized']is True and rootgate['Root_code_math_review']==by[str(N/'consumer_Root_review.json')]['original'] and rootgate['plan']==by[str(N/'consumer_plan.json.gz')]['original'] and rootreview['status']=='SUPPORTED'and rootreview['blockers']==[],'actual separate strict Root review/gate bind plan')
+need(result['plan']==rootgate['plan']and result['source_gate']==by[str(N/'consumer_Root_gate.json')]['original']and result['Root_code_math_review']==rootgate['Root_code_math_review'],'actual strict result gate/review exact bytes')
+add(Path(__file__),'independent stdlib actual-strict roster expansion Source')
+for row in by.values():check(row['original'])
+rows=sorted(by.values(),key=lambda r:r['original']['path']);refs=[r['original']for r in rows];copyrows=[r for r in rows if r['action']=='COPY_COMPLETE_BYTES'];unique={(r['original']['bytes'],r['original']['sha256'])for r in copyrows}
+actualstrict=dict(capture=by[str(N/'strict_actual_capture.json')]['original'],result=rr,program=result['program'],plan=result['plan'],gate=result['source_gate'],review=result['Root_code_math_review'],execution={k:by[str(N/('strict_guard/'+n))]['original']for k,n in [('guard','receipt.json'),('started','started.json'),('stdout','stdout.log'),('stderr','stderr.log')]},verified_positions=result['verified_IP_failure_positions'],count=25,Root_adoption_owed=True)
+selection=dict(base);selection.update(schema='UNAPPROVED_Q11_SPECTRUM_ACTUAL25_FULL_KNOWN_BODY_SELECTION_V1',status='CURRENT_DATA_ONLY_PENDING_NEW_OUTER140_ROOT_AUDIT_CONTROLS',rows=rows,selected_original_paths=len(rows),selected_T_paths=len(copyrows),selected_S_reuses=len(rows)-len(copyrows),selected_original_bytes=sum(r['bytes']for r in refs),unique_T_copy_bytes=sum(a for a,b in unique),actual_strict=actualstrict,future=dict(actual_new_outer140_Root_Source_review=None,actual_new_outer140_controls=None,actual_prepared_image=None,Root_publication_release=None,actual_preservation_receipt=None),new_paid_credit=0,qualification='Known-body roster now includes genuine strict25 closure and separate6832 outer140 Source edition. Old9605 is preserved unchanged. New outer140 Root Source review/mock-control actual outputs are pending and must be added before final binding; no metadata preparation/publication or paid credit occurs here.')
+path=OUT/'selection_with_actual_strict.json';path.write_bytes(can(selection));rp=OUT/'input_roster_current_strict25.json';rp.write_bytes(can(dict(schema='CURRENT_Q11_SPECTRUM_METADATA_KNOWN_INPUT_ROSTER_V1',inputs=refs,status='PENDING_NEW_OUTER140_ROOT_AUDIT_AND_CONTROL_INPUTS',source_selection=pin(path,path.read_bytes()),physical_paths=len(refs),unique_input_bytes=sum(r['bytes']for r in refs),actual_strict=actualstrict,Root_authority=False)))
+print(json.dumps(dict(selection=pin(path,path.read_bytes()),input_roster=pin(rp,rp.read_bytes()),paths=len(rows),T=len(copyrows),S=len(rows)-len(copyrows),bytes=selection['selected_original_bytes'],unique_T_copy_bytes=selection['unique_T_copy_bytes']),sort_keys=True))

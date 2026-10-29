@@ -1,0 +1,127 @@
+"""Independent stdlib JSON/hash/record DATA reconstruction; no represented code activation."""
+from pathlib import Path
+import hashlib,json,stat,struct,math
+B=Path('/private/tmp/l026_generation_ip_append');A=B/'independent_review/actual_outputs_peer'
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def ident(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+seen={};checks=[]
+def whole(r,role):
+ p=Path(r['path']);s=p.lstat();assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1
+ b=p.read_bytes();assert ident(s)==ident(p.lstat()) and ref(p,b)==r,(role,r)
+ seen[str(p)]=r;checks.append(dict(role=role,descriptor=r));return b
+def strict(b):
+ def pairs(items):
+  d={}
+  for k,v in items:assert k not in d;k in d;d[k]=v
+  return d
+ return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda s:(_ for _ in ()).throw(ValueError(s)))
+def doc(r,role):return strict(whole(r,role))
+def local(n,role):
+ p=B/n;b=p.read_bytes();r=ref(p,b);return r,doc(r,role)
+pr,p=local('bound_plan.json','actual_bound_plan');assert pr['bytes']==55332 and pr['sha256']=='fa44affcc0755269749ef19fb753ff943c3464a6d9afb7ca75e0ee010321dcbc'
+outs={}
+for n,size,sha in [('detail.json',61503,'a4b734f2673324b587d917d0aca3a8a7e7a16eee5c8044d503e3d56c6d60f7e4'),('partition.json',22559,'41132b265e5652c55916ad594dade7c3813e6365d116f79dbf6fc00ebc15a6e9'),('validation.json',36001,'7d8956c771355ce7921ea7dc1998c9c6b353a5904cec54220adfc43bf1dcf0d2')]:
+ r=dict(path=str(B/'validated_metadata'/n),bytes=size,sha256=sha);d=doc(r,'actual_output:'+n);assert can(d)==whole(r,'canonical_output:'+n);outs[n]=(r,d)
+dr,d=outs['detail.json'];qr,q=outs['partition.json'];vr,v=outs['validation.json']
+assert d['plan']==v['plan']==pr and d['validator']==v['program']==p['program']
+whole(p['program'],'literal_current_validator_Source')
+assert p['program']['sha256']=='53b505596b1c1545b80fc5753ed2a1d542abd50069458432858ef16d84a8f5b9'
+assert d['adopted'] is False and d['Root_adoption_owed'] is True and v['Root_adoption'] is False
+assert d['metadata_input_and_output_retention_before_Root_publication_owed'] is True
+assert v['status']=='VALIDATED_UNADOPTED_APPEND_GENERATION_AND_SEPARATE_RANK3_IP_METADATA'
+assert v['actual_scientific_Source_or_point_word_group_calls']==0 and v['strict_result_IP_fields_modified'] is False
+assert len(v['whole_actual_inputs'])==v['physical_paths']==130
+for r in v['whole_actual_inputs']:whole(r,'whole_validation_input')
+assert 2*sum(r['bytes'] for r in v['whole_actual_inputs'])+p['program']['bytes']==v['physical_read_bytes']==3852770
+assert len(p['inputs'])==129 and all(r in v['whole_actual_inputs'] for r in p['inputs'])
+raw=whole(p['witnesses'],'entire_original16B_witness_table');free_raw=whole(p['original_free_records'],'entire_original6B_free_partition');ng_raw=whole(p['old_negative_records'],'entire_original6B_nonfree_partition')
+assert len(raw)==16*28908 and len(free_raw)==6*28908 and len(ng_raw)==6*17688
+free=list(struct.iter_unpack('<IH',free_raw));ng=list(struct.iter_unpack('<IH',ng_raw));witness=list(struct.iter_unpack('<IIHHHH',raw))
+assert len({o for o,m in free})==28908 and len({o for o,m in ng})==17688 and not {o for o,m in free}&{o for o,m in ng}
+assert sum(m for o,m in ng)==6884658 and sum(m for o,m in free)==29601792
+for (owner,mass),(o,partner,m,x,y,z) in zip(free,witness):assert o==owner and m==mass==1024 and 0<=partner<500178 and len({x,y,z})==3 and max(x,y,z)<3510
+current=doc(p['current_negative_adoption'],'current_c2ff_acceptance');oldgen=[doc(r,'whole_prior_generation_acceptance') for r in p['prior_generation_adoptions']]
+assert p['current_negative_adoption']['sha256']=='c2ffb898962af501a1f5b46e28bf75218d86d81912e344f80560b193259e0c5d'
+assert len(oldgen)==1 and p['prior_generation_adoptions'][0]['sha256']=='412d3a9a34aeeb7c41a95bfda828322f78f6260c01d9453fcb333e5e2cc3f1e8'
+assert d['whole_latest_negative_acceptance']==current and d['whole_prior_generation_acceptances']==oldgen
+assert current['adopted'] is True and current['total_NEG_components']==17712 and current['cumulative_subset_count']==24
+assert current['remaining_product_components_unresolved']==28881 and current['remaining_middle_mass_unresolved']==29574144
+# Restore every old NEG row through its immutable three-stage adoption chain.
+first=doc(p['prior_subset_adoption'],'first12_NEG_acceptance');extra=doc(p['additional_subset_adoption'],'thirteenth_NEG_acceptance')
+negativefacts=first['new_facts']+extra['new_facts']+current['new_facts'];assert len(negativefacts)==24
+assert negativefacts==d['all_prior_subset_owner_rows']==q['all_prior_subset_owner_rows']
+for receipt in [first,extra,current]:
+ dd=doc(receipt['validated_detail'],'retained_NEG_detail');part=doc(receipt['validated_partition'],'retained_NEG_partition')
+ assert receipt['new_facts']==dd['new_facts']
+ assert receipt['new_facts']==part.get('exact_new_owner_rows',part.get('new_NEG_rows'))
+oldfacts=[]
+for rec in oldgen:
+ assert rec['adopted'] is True and rec['Root_adoption_owed'] is False and rec['strict_result_IPcredit0_fields_unchanged'] is True
+ dd=doc(rec['validated_detail'],'retained_GEN_detail');part=doc(rec['validated_partition'],'retained_GEN_partition')
+ assert rec['generation_facts']==dd['new_generation_facts']==part['exact_new_original_owner_rows']
+ oldfacts+=rec['generation_facts']
+assert len(oldfacts)==3 and [f['free_index'] for f in oldfacts]==[1,3,10]
+assert oldfacts==d['all_prior_generation_facts']==q['all_prior_generation_facts']
+ni={f['free_index'] for f in negativefacts};no={f['owner'] for f in negativefacts};gi={f['free_index'] for f in oldfacts};go={f['owner'] for f in oldfacts};oldno={o for o,m in ng}
+assert len(ni)==len(no)==24 and len(gi)==len(go)==3 and not ni&gi and not no&go
+for f in negativefacts+oldfacts:
+ i=f['free_index'];row=raw[16*i:16*i+16];o,partner,m,x,y,z=witness[i]
+ assert f['owner']==o and f['witness_row_sha256']==hashlib.sha256(row).hexdigest() and m==f.get('middle_mass',f.get('original_product_mass'))==1024
+ if 'middle_mass' in f:assert f['strict_positive_rotation_edges']==2*f['invariant_points']
+ else:assert f['original_strict_IP_credit_retained']==0 and f['rank3_IP_by_separate_retained_theorem_composition'] is True
+facts=[];strict_checks=[]
+assert p['positive_free_indices']==[21,23,28,30]
+for e in p['strict_runs']:
+ index=e['free_index'];s=e['strict'];res=doc(s['result'],'fresh_strict_result');car=doc(s['carrier'],'fresh_strict_carrier');sp=doc(s['plan'],'fresh_strict_plan');gate=doc(s['gate'],'fresh_strict_gate')
+ ex={k:(doc(r,'fresh_strict_execution:'+k) if k in ['capture','receipt','started','stdout'] else whole(r,'fresh_strict_execution:'+k)) for k,r in e['execution'].items()}
+ assert ex['receipt']['status']=='PASS' and ex['receipt']['returncode']==0 and not ex['receipt']['cleanup']['remaining'] and not ex['receipt']['cleanup']['errors']
+ assert ex['capture']['actual_tool']['exit_code']==0 and ex['capture']['issued_argv']==ex['capture']['child_argv']
+ launched=ex['capture']['child_argv'];assert launched[launched.index('--')+1:]==ex['receipt']['command']
+ assert ex['stdout']['output']==s['result'] and ex['stdout']['verified_records']==1
+ assert res['status']==ex['stdout']['status']=='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'
+ assert sp['selected_free_indices']==sp['expected_positive_free_indices']==[index] and sp['roles']==p['roles'] and sp['records']==s['carrier']
+ assert res['program']==p['supported']['consumer'] and res['kernel']==p['supported']['kernel'] and res['actual_supplied_carrier']==s['carrier'] and res['plan']==s['plan'] and res['Root_source_gate']==s['gate']
+ assert res['original_selector']==car['original_selector'] and res['scope_digest']==car['scope_digest']==p['scope_digest']
+ assert res['actual_direct_signed_word_and_every_closing_edge_checked'] is True and res['same_known_G_seed_and_G_normal_in_A_membership_route_imported'] is True
+ assert res['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0 and res['complete_generation_domain_or_census_claim'] is False
+ assert len(res['verified_generation_records'])==len(car['records'])==1
+ row=car['records'][0];verified=res['verified_generation_records'][0];o,partner,m,x,y,z=witness[index];digest=hashlib.sha256(raw[16*index:16*index+16]).hexdigest()
+ assert row['free_index']==verified['free_index']==index and row['owner']==verified['owner']==o and row['witness_row_sha256']==verified['witness_row_sha256']==digest and verified['original_product_mass']==m==1024
+ assert index not in ni|gi and o not in no|go|oldno
+ for prime in [11,13]:
+  part=row['prime'+str(prime)];assert set(part)=={'word','cycle'} and 1<=len(part['word'])<=64 and all(type(a)is int and a in [-2,-1,1,2] for a in part['word']) and len(part['cycle'])==len(set(part['cycle']))==prime and all(type(a)is int and 0<=a<3510 for a in part['cycle'])
+ fact=dict(free_index=index,owner=o,witness_row_sha256=digest,original_product_mass=m,classification='NAMED_ORIGINAL_SIMPLE_FI22_GENERATING_ROTATION_AND_THREE_MARK_GROUPS',strict_result=s['result'],strict_carrier=s['carrier'],strict_execution=e['execution'],durable_scientific_evidence=e['durable_evidence'],supplied_prime11=row['prime11'],supplied_prime13=row['prime13'],original_strict_IP_credit_retained=0,rank3_IP_by_separate_retained_theorem_composition=True)
+ facts.append(fact);strict_checks.append(dict(free_index=index,owner=o,witness_record_hex=raw[16*index:16*index+16].hex(),row_sha256=digest,result=s['result'],strict_IP_credit=0,signed_word_closing_edge_credit='Imported actual strict result; not re-evaluated by peer'))
+ family=doc(e['durable_evidence'],'durable_strict_family');assert family['exact_indices']==p['positive_free_indices'] and family['strict_result_IP_credit_not_retagged'] is True
+ for mapping in family['files']:whole(mapping['retained'],'durable_selected_strict_body');assert mapping['original']['bytes']==mapping['retained']['bytes'] and mapping['original']['sha256']==mapping['retained']['sha256']
+ for r in e['additional_evidence']:whole(r,'durable_history_manifest')
+assert facts==d['new_generation_facts']==q['exact_new_original_owner_rows']
+assert [f['owner'] for f in facts]==[23,25,31,33] and len({f['owner'] for f in facts})==4
+ip=d['separate_existing_rank3_IP_composition'];theorem=whole(p['rank3_IP_theorem'],'unchanged_existing_rank3_theorem');ipr=doc(p['rank3_IP_review'],'existing_separate_IP_review');prem=doc(p['roles']['operand_premises'],'original_G_membership_premises');maximals=doc(p['roles']['maximal_orders'],'imported_complete_simple_maximal_orders')
+assert p['rank3_IP_theorem']['sha256']=='0b940e5a217a5e54e91fd13617fd822dd4daebfac6cbdacbd17e0950070c9216' and p['rank3_IP_review']['sha256']=='b7610c401be209df8425a017aa71d61846875544f67919e48269312a37139ef3'
+assert ip['theorem']==p['rank3_IP_theorem'] and ip['review']==p['rank3_IP_review'] and ip['marking_indices']==p['positive_free_indices'] and ip['strict_results_IPcredit0_unchanged'] is True
+assert ipr['status']=='SUPPORTED' and ipr['strict_result_IP_credit_not_retagged'] is True
+imports=prem['inherited_member_and_Reader_imports'];assert imports['original_G_normal_in_A'] is True and imports['GAP_IsNormal_A_G_means_G_normal_in_A'] is True and imports['named_Fi22_Out2_and_full_Aut_conditional'] is True
+assert all(ip['hypotheses'][k] is True for k in ip['hypotheses'] if k!='exact_membership_chain') and 'R<=K=<a,b,c><=G' in ip['hypotheses']['exact_membership_chain']
+assert maximals['named_group']=='Fi22' and maximals['Aut_Fi22_substitution_permitted'] is False and sum(r['conjugacy_classes'] for r in maximals['rows'])==14
+assert all(r['order']%143!=0 for r in maximals['rows'])
+# New counts are recomputed from disjoint typed original owners, not from verdict labels.
+assert 17688+28908==46596 and 6884658+29601792==36486450
+counts=dict(previous_NEG=17688+len(ni),previous_GEN=len(gi),new_GEN=len(facts),total_GEN=len(gi)+len(facts),separate_IP=len(gi)+len(facts),remaining=28908-len(ni)-len(gi)-len(facts),remaining_mass=29601792-1024*(len(ni)+len(gi)+len(facts)))
+assert counts==p['expected_counts_if_Root_adopts']==dict(previous_NEG=17712,previous_GEN=3,new_GEN=4,total_GEN=7,separate_IP=7,remaining=28877,remaining_mass=29570048)
+assert q['total_GENERATING_count']==q['total_separate_rank3_IP_count']==d['total_GENERATING_components_if_Root_adopts']==7
+assert q['unchanged_total_NEG_count']==d['prior_nongenerating_count']==17712 and q['unchanged_total_NEG_mass']==d['prior_nongenerating_mass']==6909234
+assert q['remaining_without_other_generation_registration']==d['unresolved_original_free_components_after_Root_adoption']==28877 and q['remaining_middle_mass']==d['unresolved_middle_mass_after_Root_adoption']==29570048
+assert current['remaining_product_components_unresolved']-4==28877 and current['remaining_middle_mass_unresolved']-4096==29570048
+cr,cap=local('validation_actual_capture.json','actual_validation_SDK_capture');gr,guard=local('validation_guard/receipt.json','actual_validation_outer_guard');sr,stdout=local('validation_guard/stdout.log','actual_validation_stdout')
+assert cr['sha256']=='642bc3560a7514091d6d476c454c7a350de04f72e5f277a56c5538cee2f6759f' and guard['status']=='PASS' and guard['returncode']==0 and cap['actual_tool']['exit_code']==0
+assert cap['issued_argv']==cap['child_argv'];launched=cap['child_argv'];assert launched[launched.index('--')+1:]==guard['command']
+assert guard['command'][-5:]==['--plan',pr['path'],pr['sha256'],'--out',str(B/'validated_metadata')]
+assert stdout['outputs']=={n:r for n,(r,obj) in outs.items()} and stdout['Root_adoption'] is False and stdout['new_scientific_calls']==0
+unbound_r,unbound=local('Root_acceptance_UNBOUND.json','unbound_publication_template');assert unbound['adopted'] is False and unbound['Root_adoption_owed'] is True and unbound['metadata_evidence'] is None and unbound['actual_metadata_execution'] is None
+report=dict(schema='INDEPENDENT_ACTUAL_L026_GEN4_APPEND_OUTPUT_DATA_REVIEW_V1',status='SUPPORTED_ACTUAL_METADATA_OUTPUT_DATA_NO_PUBLICATION_AUTHORITY',blockers=[],reviewer='/root/journal_peer/f009_invoice',actual_plan=pr,program=p['program'],actual_outputs={n:r for n,(r,obj) in outs.items()},actual_validation_capture=cr,actual_validation_guard=gr,whole_original_witness=p['witnesses'],whole_prior_NEG_restored=p['current_negative_adoption'],whole_prior_GEN_receipts_restored=p['prior_generation_adoptions'],reconstructed_new_facts=facts,recomputed_counts_if_Root_adopts=counts,unchanged_NEG_mass=6909234,new_middle_mass=4096,prior_NEG_subset_rows=24,prior_GEN_rows=3,separate_existing_IP_theorem=p['rank3_IP_theorem'],separate_existing_IP_review=p['rank3_IP_review'],strict_original_IP_credit_remains=0,publication_template=unbound_r,Root_publication_receipt=None,Source_or_science_activation_by_peer=0,S_W_Git_gates_mutations_by_peer=0,restrictions=['Whole actual JSON and retained raw record bytes were inspected, hashed and joined using independent stdlib DATA logic only. No represented Source/helper/control/forecaster/state codec or scientific method was activated.','The four current strict returns and signed-word closing-edge verdicts are imported whole actual results; this peer did not rerun point/word/group checks. Original named Fi22/full Aut/Out2, membership/Reader, tree/graph/GLOBAL block2, same middle two-fibre/H=B and complete simple maximal classification hypotheses remain explicit imports.','Rank3 IP is a separate unchanged0b940 theorem composition for the same generating markings via R<=K<=G, never a rewrite of strict IP0. No reversal, other endpoint, full window/census/Original/Lean/measurement credit.','This seal validates actual unadopted metadata output DATA. Complete late retention and fresh Root publication remain owed; no Source verdict or Root authority transfers from earlier peers.'])
+(A/'observations.json').write_bytes(can(dict(whole_file_checks=checks,unique_whole_files=len(seen),strict_rows=strict_checks,negative_indices=sorted(ni),negative_owners=sorted(no),prior_GEN_indices=sorted(gi),prior_GEN_owners=sorted(go),new_indices=[f['free_index'] for f in facts],new_owners=[f['owner'] for f in facts],counts=counts)))
+(A/'review.json').write_bytes(can(report))
+for f in [A/'review.json',A/'observations.json',Path(__file__).resolve()]:print(json.dumps(ref(f,f.read_bytes()),sort_keys=True))
+print(json.dumps(counts,sort_keys=True))

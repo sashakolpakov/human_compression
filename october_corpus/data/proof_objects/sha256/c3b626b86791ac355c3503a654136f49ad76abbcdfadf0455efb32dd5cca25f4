@@ -1,0 +1,105 @@
+"""Prospective profile for separately admitted tasks of at most512MiB/150s.
+
+Reuse the acquired supervisor's code and shared lock.  Only this invocation's
+ADMIT_RAM value changes.  Existing files, profiles and released cases do not.
+This Source is not execution authority and does not impose a kernel quota.
+"""
+
+import argparse
+import hashlib
+import math
+import os
+from pathlib import Path
+import runpy
+import stat
+import sys
+import types
+
+AUTHOR = '/root'
+BASE_BYTES = 18361
+BASE_SHA = '5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42'
+PROFILE = 'VALIDATION_TASK_512_MIB_150_SECONDS_V1'
+
+
+def _require(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def _base(path):
+    with path.open('rb') as stream:
+        before = os.fstat(stream.fileno())
+        _require(stat.S_ISREG(before.st_mode) and before.st_size == BASE_BYTES,
+                 'fixed ordinary base Source')
+        raw = stream.read(BASE_BYTES + 1)
+        after = os.fstat(stream.fileno())
+    fields = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns)
+    _require(fields(before) == fields(after) == fields(path.stat())
+             and len(raw) == BASE_BYTES and hashlib.sha256(raw).hexdigest() == BASE_SHA,
+             'stable acquired base Source')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser.add_argument('--volume', type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--rss-cap-mib', type=int, required=True)
+    parser.add_argument('--timeout', type=float, required=True)
+    parser.add_argument('command', nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    command = args.command[1:] if args.command[:1] == ['--'] else args.command
+    _require(1 <= args.rss_cap_mib <= 512, 'validation profile requires1..512MiB')
+    _require(math.isfinite(args.timeout) and 0 < args.timeout <= 150,
+             'validation profile requires a finite wall limit up to150seconds')
+    _require(command and len(command) <= 128
+             and sum(len(x.encode()) for x in command) <= 16384,
+             'bounded explicit command')
+    _require(args.volume.is_absolute() and args.output.is_absolute(), 'absolute profile paths')
+    _require(not sys.flags.optimize and sys.dont_write_bytecode,
+             'ordinary Python with bytecode writes disabled')
+    path = Path(__file__).resolve().with_name('supervise_transient.py')
+    _base(path)
+    loaded = runpy.run_path(str(path), run_name='acquired_validation_profile_base')
+    entry = loaded['main']
+    scope = entry.__globals__
+    _require(scope['__file__'] == str(path) and scope['__name__'] == 'acquired_validation_profile_base',
+             'original Source path and non-main namespace')
+    _require(scope['main'] is entry and entry.__code__.co_filename == str(path),
+             'acquired entry code')
+    for value in scope.values():
+        if isinstance(value, types.FunctionType) and value.__module__ == scope['__name__']:
+            _require(value.__globals__ is scope, 'shared borrowed function globals')
+    for value in vars(scope['Family']).values():
+        if isinstance(value, types.FunctionType):
+            _require(value.__globals__ is scope, 'shared borrowed Family globals')
+    gib = 2**30
+    _require({k: scope[k] for k in (
+        'ADMIT_DISK', 'ADMIT_RAM', 'DISK_FLOOR', 'RAM_FLOOR', 'LOG_CAP',
+        'RECORD_CAP', 'PID_CAP', 'POLL_SECONDS', 'GRACE_SECONDS')} == dict(
+            ADMIT_DISK=10*gib, ADMIT_RAM=6*gib, DISK_FLOOR=8*gib, RAM_FLOOR=3*gib,
+            LOG_CAP=256*2**10, RECORD_CAP=128*2**10, PID_CAP=128,
+            POLL_SECONDS=.5, GRACE_SECONDS=3.0), 'acquired base profile')
+    _base(path)
+    # runpy returns a shallow copy; mutate the entry function's real globals.
+    # No source file, function, error message, sampling or cleanup code changes.
+    previous, old_argv = scope['ADMIT_RAM'], sys.argv
+    cap = args.rss_cap_mib * 2**20
+    required = max(4*gib, scope['RAM_FLOOR'] + cap + 512*2**20)
+    canonical = [str(path), '--volume', str(args.volume), '--output', str(args.output),
+                 '--rss-cap-mib', str(args.rss_cap_mib), '--timeout', str(args.timeout),
+                 '--', *command]
+    scope['ADMIT_RAM'], sys.argv = required, canonical
+    try:
+        return entry()
+    except RuntimeError as exc:
+        if str(exc) == '10 GiB disk / max(6 GiB, RSS cap + 3 GiB) RAM admission':
+            raise RuntimeError(
+                f'{PROFILE}:10GiB disk and {required} available RAM bytes required; '
+                'the acquired base refused before creating its output or child') from exc
+        raise
+    finally:
+        scope['ADMIT_RAM'], sys.argv = previous, old_argv
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

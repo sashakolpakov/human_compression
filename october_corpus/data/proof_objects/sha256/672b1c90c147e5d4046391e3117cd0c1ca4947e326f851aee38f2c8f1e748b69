@@ -1,0 +1,25 @@
+from pathlib import Path
+import ast,hashlib,json
+D=Path('/private/tmp/q11_large_end_spectrum/retained_imports')
+V=D.parent/'Root_read_aid/definition_view'
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def checked(r):
+ assert ref(r['path'])==r
+ return Path(r['path']).read_text()
+def defs(s):return {n.name:ast.get_source_segment(s,n)for n in ast.parse(s).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+h=json.loads((V/'handoff.json').read_bytes())
+for r in [h['current_module_code'],h['full_current_controls'],h['Root_already_read_shared_01']]+h['remaining_code'][:2]:checked(r)
+coverage=json.loads((V/'exact_definition_coverage.json').read_bytes())
+assert coverage['all_final_bytes_accounted_for'] and not coverage['e366_or6498_assumed_reviewed']
+subjects=[]
+for row in coverage['roles']:
+ if row['role']=='adopter':continue
+ old,new=defs(checked(row['Root_reviewed_ancestor'])),defs(checked(row['final']))
+ for q in row['literal_definitions']:assert old[q['name']]==new[q['name']]
+ assert set(new)=={q['name']for q in row['literal_definitions']+row['new_or_changed_definitions']}
+ for q in row['new_or_changed_definitions']:
+  text=new[q['name']];assert len(text.encode())==q['new_bytes'] and hashlib.sha256(text.encode()).hexdigest()==q['new_sha256']
+ subjects.append(dict(role=row['role'],program=row['final'],literal_definitions=len(row['literal_definitions']),new_or_changed=[q['name']for q in row['new_or_changed_definitions']]))
+review=dict(schema='ROOT_SPECTRUM_CONSUMER_SUPPLIER_SOURCE_REVIEW_V1',root='/root',status='SUPPORTED',blockers=[],subjects=subjects,controls=h['full_current_controls'],scope='Root read shared01 complete ten change pairs in preceding turn; current headers, complete remaining consumer and supplier definitions and complete51c control Source now read. Exact whole reviewed ab99/1a4 ancestry verified via AST bodies without project activation. Only generic controls are released here. Fresh plan, mathematical imports, actual controls and case gate remain owed.',read_only_scope=True,original_cases_authorized=False,original_credit=0)
+p=D/'Root_source_review.json';p.write_text(json.dumps(review,sort_keys=True,separators=(',',':'))+'\n');print(json.dumps(dict(status='SUPPORTED',review=ref(p))))

@@ -1,0 +1,55 @@
+"""Independent Source-as-data/AST/hash audit. Never imports/evals reviewed code."""
+from pathlib import Path
+import ast,hashlib,json,stat,struct
+B=Path('/private/tmp/l026_13_21_spectrum');D=B/'independent_review';checks=0;seen={}
+def ck(x,m):
+ global checks
+ checks+=1
+ if not x:raise ValueError(m)
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(r):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();s=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ ck(p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and s(a)==s(z)and ref(p,b)==r,'whole stable exact body');seen[str(p)]=r;return b
+def doc(r):return json.loads(raw(r))
+def rd(n):return doc(ref(B/n))
+def defs(b):
+ lines=b.splitlines(keepends=True);return{n.name:b''.join(lines[n.lineno-1:n.end_lineno])for n in ast.parse(b).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+h=rd('handoff.json');ck(ref(B/'handoff.json')['sha256']=='cb073f80011e085dda0cc13ea5d4b025881e460592fdb545dba95cc440d67f6a','exact handoff')
+invproof=[]
+for n in ['strict_source_inverse.json','supplier_source_inverse.json']:
+ inv=rd(n);a=raw(inv['parent']);b=raw(inv['child']);ck(a.decode()==inv['parent_whole_body']and b.decode()==inv['child_whole_body'],'entire exact inverse bodies');x=defs(a);y=defs(b);literal=[k for k in x if x[k]==y[k]];changed=[k for k in x if x[k]!=y[k]];new=[k for k in y if k not in x]
+ ck(literal==inv['unchanged_literal_definitions']and changed==inv['changed_existing_definitions']and new==inv['new_definitions']and not(set(x)-set(y)),'complete AST old/new attribution');invproof.append(dict(inverse=ref(B/n),parent=inv['parent'],child=inv['child'],literal=literal,changed=changed,new=new))
+C=defs(raw(h['consumer']));S=defs(raw(h['supplier']));controlraw=raw(h['generic_controls']);ast.parse(controlraw);raw(h['kernel_unchanged']);ck(h['kernel_unchanged']['sha256']=='60eedb3ce207831ec66cdcc18c689c7c5e334205772cabf888f950503cc267ee','unchanged original kernel')
+for name in ['spectrum_premise_check','spectrum_authority']:ck(C[name]==S[name],'identical new shared admission definition')
+prem=doc(h['spectrum_premises']);proof=raw(h['spectrum_argument']);cover=doc(prem['complete_simple_maximal_cover']);ck(prem['argument']==h['spectrum_argument']and prem['complete_simple_maximal_cover']['sha256']=='6b754397c66265940836d3ba13f1c81c421e9245894ec75b1005be136c232eaa','whole exact written proof and imported cover')
+ck(pow(3,6,7)==1 and all(pow(3,k,7)!=1 for k in range(1,6))and(3**6-1)*2==1456 and 1456%3!=0,'elementary order7 centralizer arithmetic only')
+selected=[(r['type'],r['order'],r['conjugacy_classes'])for r in cover['rows']if r['order']%13==0];ck(selected==[('O7(3)',4585351680,2),("2F4(2)'",17971200,1)]and sum(r['conjugacy_classes']for r in cover['rows'])==14 and 17971200%7!=0,'all exact13-containing simple maximal types')
+ck(prem['faithful_module']==dict(group='O7(3)',field_order=3,dimension=7,faithful=True,primary_source='https://brauer.maths.qmul.ac.uk/Atlas/clas/O73/')and prem['same_word_3_and_7_cycles_required']is True and prem['arbitrary_3_cover_substitution_permitted']is False,'exact faithful simpleO7 import, same-word predicate and no3cover substitution')
+schedule=doc(h['schedule']);words=schedule['words'];starts=schedule['start_points'];ck(len(words)==32 and sum(map(len,words))==448 and max(map(len,words))==20 and len(starts)==4 and schedule['exact_target_lengths']==[3,7,21]and schedule['trace_step_cap']==21,'whole schedule dimensions')
+oldsch=doc(schedule['prior_literal_word_pool']);ck(words==oldsch['words'],'same literal old word strings, new predicate only')
+# Recompute literal worst-loop work; this is not code execution or a measured fit.
+trace=4*21*(32*18+130*448)+48*128+96+98;strict=34*(4+2+130*64)+8*34+2*64*2+64+98+16384
+ck(trace==4946882 and strict==300158,'complete literal rotation/field/setup/output bounds')
+invoice=doc(h['read_and_work_invoice']);ck(invoice['work']['nominal_whole_queue_trace_work_upper']==trace and invoice['work']['nominal_strict_cycle_work_upper_at64letter_words']==strict,'claimed nominal work arithmetic')
+ck(invoice['source_namespaces']['strict_with_kernel']==h['consumer']['bytes']+h['kernel_unchanged']['bytes']==31492 and invoice['source_namespaces']['supplier_with_kernel']==h['supplier']['bytes']+h['kernel_unchanged']['bytes']==37844 and 37844<=50000,'whole compiled namespace bound')
+p=doc(h['initial_supplier_plan']);strictp=doc(h['initial_strict_plan_UNBOUND']);ck(p['selected_free_indices']==strictp['selected_free_indices']==[24]and p['window_start']==24 and p['maximum_records']==1 and p['Root_authority']is False and p['actual_new_Root_release']is None and strictp['records']is strictp['inputs']is None,'exact initialunpaid24 context and unbound strict request')
+for r in p['inputs']:raw(r)
+for r in p['roles'].values():raw(r)
+ck(len(p['roles'])==15 and p['kernel']==h['kernel_unchanged']and p['direct_consumer']==h['consumer']and p['program']==h['supplier']and p['schedule']==h['schedule']and p['control_program']==h['generic_controls'],'new exact supplier subjects and15roles')
+seedinv=rd('initial_free24_DATA/seed_full_inverse.json');ck(doc(seedinv['parent'])==seedinv['whole_parent']and doc(seedinv['child'])==seedinv['whole_child'],'whole seed extraction inverse bodies');seed=doc(p['seed13']);ck(seed==seedinv['whole_child']and seed['schema']=='L026_UNTRUSTED_ORIGINAL_13_SEEDS_V1'and seed['selected_free_indices']==[24]and len(seed['records'])==1,'untrusted13-only seed')
+r=seed['records'][0];wit=raw(p['roles']['witnesses']);row=wit[24*16:25*16];o,partner,m,x,y,z=struct.unpack('<IIHHHH',row);ck(r['free_index']==24 and r['owner']==o==26 and r['witness_row_sha256']==hashlib.sha256(row).hexdigest()and m==1024 and set(r)=={'free_index','owner','witness_row_sha256','prime13'},'exact free24owner26 row, no old11/cursor/credit imported')
+for name in ['supplier_Root_gate_UNBOUND.json','supplier_Root_review_UNBOUND.json','strict_Root_gate_UNBOUND.json','strict_Root_review_UNBOUND.json']:rd('initial_free24_DATA/'+name)
+# The invoice uses explicit future caps only. Recompute its finite first/final ranges.
+for r in invoice['strict_fixed_inputs_excluding_future_carrier']:raw(r)
+for r in invoice['fixed_supplier_inputs']:raw(r)
+future=65536+8192+32768+16384
+supplier_fixed=sum(r['bytes']for r in invoice['fixed_supplier_inputs']);strict_fixed=sum(r['bytes']for r in invoice['strict_fixed_inputs_excluding_future_carrier'])
+# Fixed lists include current source? Source-own role is added below only when absent.
+def bill(rs,source,extra=0):
+ m={r['path']:r for r in rs};m[source['path']]=source;return source['bytes']+2*(sum(r['bytes']for r in m.values())+future+extra)
+bs=bill(invoice['fixed_supplier_inputs'],h['supplier']);bc=bill(invoice['strict_fixed_inputs_excluding_future_carrier'],h['consumer'],131072)
+ck(bs<=invoice['physical_read_bounds']['supplier_first_final_plus_explicit_Source_bootstrap']and bc<=invoice['physical_read_bounds']['strict_first_final_plus_bootstrap_and131072carrier']and max(bs,bc)<8*2**20,'whole fixed/future physical bills cover Sourcebootstrap')
+result=dict(schema='INDEPENDENT_ORIGINAL_FI22_13_21_SOURCE_MATH_CONTROL_STATIC_REVIEW_V1',status='SUPPORTED_STATIC_SOURCE_MATH_AND_CONTROL_DESIGN_ONLY',reviewer='/root/journal_peer',blockers=[],handoff=ref(B/'handoff.json'),consumer=h['consumer'],supplier=h['supplier'],controls=h['generic_controls'],unchanged_kernel=h['kernel_unchanged'],full_parent_inverses=invproof,proof=h['spectrum_argument'],premises=h['spectrum_premises'],invoice=h['read_and_work_invoice'],whole_files_hashed=len(seen),checks=checks,strict_nominal_work_upper=strict,supplier_nominal_queue_work_upper=trace,physical_supplier_bill=bs,physical_strict_bill=bc,controls_static_count=50,actual_controls=None,actual_supplier_case=None,actual_strict_case=None,actualowner26decision=None,Root_authority_granted=False,reviewer_Source_control_helper_SCI_state_or_gate_activations=0,S_W_Git_writes=0,mathematics='Conditional on exact retained complete simple-Fi22 cover and faithful O7(3)7-dimensionalF3 import: every order7matrix inGL7(F3) has one irreducible6-dimensional block plus fixedline; centralizer1456 is prime to3, so no element order divisible21. Both O7(3) maximal classes excluded; Titsorder lacks7. A13-divisible element plus21-divisible element forceH=G. Exact same-word closed3/7cycles suffice for21; unrelatedwords do not. Original d0inG/GnormalA/Dconjugate/productmark chain keeps H<=G, not AutG. No3cover substitution. Existingrank3IP is only separate possible later composition, strictnewIP0 retained.',static_coverage='All24763+31115+15072Source bytes read directly. Seven consumer and ten supplier definitions literal to exact268d/c105 parents; allnew/changeddefinitions and ABI read. Generic48point controls exercise positive21/sameword3+7, falseclosing/internaledges, typedfields, malformedvariants/oldschemas, budgets, untrusted13seeds/nocursors, perwordreset, partial/unvisited stops, and imported-cover/module checks. Controls are unrun; no actualPASS or Fi22case is inferred.',qualification='Source/design support only. Roots exact new math/code/control review, actual genericcontrols and distinct supplier/strict gates/cases remain owed. Initial owner26 is unresolved. All original namedmodel/fullAut/Out2/Reader/action/member/word/tree/graph/GLOBALclass/two-fibre/H=B premises remain imported. ParentSource/verdicts,11/13IP0 and finite-miss histories stay immutable. Nominal loop bounds are distinct from actual search allowance or RSS/time fit. No Source activation by reviewer.')
+out=D/'independent_review.json';out.write_bytes(can(result));print(json.dumps(dict(review=ref(out),checks=checks,files=len(seen),supplierbill=bs,strictbill=bc)))

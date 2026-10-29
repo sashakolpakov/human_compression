@@ -1,0 +1,58 @@
+from pathlib import Path
+import ast,hashlib,json
+T=Path('/private/tmp/l026_subset_second_window_adoption')
+def pin(p):
+    b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert pin(Path(r['path']))==r,r['path']
+def defs(s):return {n.name:ast.get_source_segment(s,n)for n in ast.parse(s).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+h=json.loads((T/'handoff.json').read_bytes())
+for r in list(h.values())+list(h['roles'].values()):
+    if isinstance(r,dict)and set(r)=={'path','bytes','sha256'}:check(r)
+i=json.loads((T/'source_inverse.json').read_bytes());check(i['parent']);check(i['child'])
+old,new=i['old_whole_body'],i['new_whole_body']
+assert Path(i['parent']['path']).read_text()==old and Path(i['child']['path']).read_text()==new
+ol,nl=old.splitlines(True),new.splitlines(True);op=np=0
+for tag,a,b,c,d in i['line_opcodes']:
+    assert a==op and c==np and 0<=a<=b<=len(ol)and 0<=c<=d<=len(nl)
+    if tag=='equal':assert ol[a:b]==nl[c:d]
+    elif tag=='insert':assert a==b
+    elif tag=='delete':assert c==d
+    else:assert tag=='replace'
+    op,np=b,d
+assert op==len(ol)and np==len(nl)
+od,nd=defs(old),defs(new)
+assert set(nd)-set(od)==set(i['new_definitions'])
+assert {k for k in od.keys()&nd.keys()if od[k]!=nd[k]}==set(i['changed_definitions'])
+assert len(i['literal_definitions'])==10
+for k in i['literal_definitions']:assert od[k]==nd[k]
+p=json.loads((T/'plan.json').read_bytes());assert len(p['inputs'])==154
+for r in p['inputs']:check(r)
+science=json.loads(Path(p['durable_scientific_evidence']['path']).read_bytes());assert len(science['files'])==83
+for row in science['files']:
+    o,r=row['original'],row['retained'];check(r)
+    assert (o['bytes'],o['sha256'])==(r['bytes'],r['sha256'])
+actual=json.loads(Path(p['strict']['result']['path']).read_bytes())
+assert actual['mode']=='check'and actual['status']=='SUPPLIED_CHECK_COMPLETE'and actual['supplier_activated']is False
+facts=actual['verified_nongeneration_records']
+assert [f['free_index']for f in facts]==[16,17,18,19,20,22,25,26,27,29,31]
+assert sum(f['points']for f in facts)==1971 and sum(f['checked_positive_rotation_edges']for f in facts)==3942
+assert 17712+3+28881==46596 and 6909234+3072+29574144==36486450
+peerpath=T/'independent_review/independent_review.json';peer=json.loads(peerpath.read_bytes())
+assert pin(peerpath)['sha256']=='da3236e28b2b785ba8119d8442a41dfea7904ba5c45f2e591f94d38106a1a076'
+assert peer['status'].startswith('SUPPORTED')and peer['blockers']==[]
+review=dict(schema='ROOT_REVIEWED_SECOND_WINDOW11_NG_METADATA_SOURCE_DATA_V1',root='/root',status='SUPPORTED',blockers=[],
+    program=h['program'],plan=h['plan'],all_new_frontier_control_authority_construct_main_and_header_read=True,
+    ten_parent_definitions_literal=True,whole_inverse_checked=True,whole_fixed_inputs=154,whole_retained_pairs=83,
+    independently_read_strict_records=11,points=1971,edges=3942,
+    original_Model_member_action_transitivity_middle_involution_and_simpleG_premises_retained=True,
+    exact6538_60ee_70ab_14controls_and_full_actual_closure_retained=True,
+    old_NEG17701_and_GEN3_IP3_unchanged=True,independent_review=pin(peerpath),
+    prospective_NEG17712_GEN3_unresolved28881=True,prospective_unresolved_mass=29574144,
+    physical_read_upper=5514945,physical_paths_upper=156,
+    actual_metadata_validation_and_Root_output_review_adoption_owed=True,
+    scientific_calls=0,Original_conjecture_Lean_or_measurement_credit=0)
+(T/'runtime').mkdir(exist_ok=True);(T/'actual_validation').mkdir(exist_ok=True)
+out=T/'runtime/Root_source_data_review.json';b=(json.dumps(review,sort_keys=True,separators=(',',':'))+'\n').encode()
+with out.open('xb')as f:f.write(b)
+assert not(T/'actual_validation/output').exists()
+print(json.dumps(dict(status='ROOT_SECOND_WINDOW11_SOURCE_DATA_REVIEW_SUPPORTED',review=pin(out),actual_validation_owed=True)))

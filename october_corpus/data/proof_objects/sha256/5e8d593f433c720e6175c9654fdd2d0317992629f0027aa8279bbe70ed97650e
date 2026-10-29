@@ -1,0 +1,38 @@
+from pathlib import Path
+import hashlib,json,struct
+D=Path('/private/tmp/l026_second_window_generation_DATA/c105_from_actual13')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+def write(p,v):
+ with p.open('xb')as f:f.write(can(v))
+ return ref(p)
+h=json.loads((D/'handoff.json').read_bytes())
+for k in ['program','kernel','direct_consumer','controls','actual13controls','actual13control_capture','current_NEG','GEN_and_separate_IP']:check(h[k])
+assert h['program']['sha256']=='c10543a3e6815740728c45029933d4cd3b2fd08f79ec37068b6d6e7ba0de53a6'
+control=json.loads(Path(h['actual13controls']['path']).read_bytes());assert control['status']=='PASS' and control['supplier']==h['program'] and control['original_case_calls']==0
+bound=[]
+for case in h['instances']:
+ for k in ['plan','seed','actual_c942_checkpoint']:check(case[k])
+ plan=json.loads(Path(case['plan']['path']).read_bytes());seed=json.loads(Path(case['seed']['path']).read_bytes());old=json.loads(Path(case['actual_c942_checkpoint']['path']).read_bytes())
+ assert plan['selected_free_indices']==seed['selected_free_indices']==[case['free_index']] and plan['resume']==case['seed']
+ note=seed['notes'][0];prior=old['notes'][0]
+ assert prior['outcome']=='finite_pool_miss' and prior['next_trial']==prior['complete_trials_in_this_call']==256
+ assert case['exact13']==prior['hints']['prime13']==note['hints']['prime13'] and prior['hints']['prime11']is note['hints']['prime11']is None
+ assert note['next_trial']==note['complete_trials_in_this_call']==note['inherited_complete_trials']==note['complete_word_edges_in_completed_trials']==0 and note['active_trial']is None and note['outcome']=='unfinished'
+ assert seed['previous_untrusted_checkpoint']==case['actual_c942_checkpoint'] and seed['pool_transition']['old_cursor_not_reused_for_new_pool']is True
+ for r in plan['inputs']:check(r)
+ raw=Path(plan['roles']['witnesses']['path']).read_bytes()[16*case['free_index']:16*case['free_index']+16]
+ owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',raw);assert owner==case['owner']==note['owner'] and mass==1024
+ assert case['free_index']in[21,23,24,28,30]
+ review=json.loads(Path(case['false_review']['path']).read_bytes());review.update(status='SUPPORTED',blockers=[],actual13_checkpoint=case['actual_c942_checkpoint'],actual13_controls=h['actual13control_capture'],current_NEG=h['current_NEG'],current_GEN=h['GEN_and_separate_IP'],scope='Unchanged previously Root-reviewed c105/2f25/60ee cohort and actual13 controls. Exact actual untrusted13 part retained; new64-pool cursor0, old256 cursor retained only as history. Original free16B owner/mass and current disjoint unpaid set checked. Proposal only, no GEN/IP or Original credit.',physical_read_upper=case['physical_upper'],finite_work_upper=case['coarse_work_upper'])
+ parent=Path(case['plan']['path']).parent;rr=write(parent/'Root_review.json',review)
+ gate=json.loads(Path(case['false_gate']['path']).read_bytes());gate.update(adopted=True,candidate_generation_only_authorized=True,Root_code_math_review=rr);gr=write(parent/'Root_gate.json',gate)
+ roster={r['path']:r for r in plan['inputs']}
+ for r in [h['program'],case['plan'],h['actual13controls'],rr,gr]:assert r['path']not in roster;roster[r['path']]=r
+ bill=h['program']['bytes']+2*sum(r['bytes']for r in roster.values());assert len(roster)==32 and bill<=case['physical_upper']<8*2**20 and case['coarse_work_upper']<10000000
+ assert rr['bytes']<=32768 and gr['bytes']<=8192
+ out=Path(plan['output_directory']);assert not out.exists();out.parent.mkdir(parents=True,exist_ok=True)
+ bound.append(dict(free_index=case['free_index'],plan=case['plan'],gate=gr,review=rr,physical_read_upper=bill))
+print(json.dumps(dict(status='ROOT_FIVE_C105_ACTUAL13_PROPOSAL_GATES',program=h['program'],instances=bound,mathematical_credit=0)))

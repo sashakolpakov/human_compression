@@ -1,0 +1,50 @@
+"""Closed Reader prelaunch retention DATA only. No represented Source/helper activation."""
+from pathlib import Path
+import hashlib,json,stat
+N=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');B=N/'reader_prelaunch_retention_DATA';S=Path('/Users/sasha/medusa/research/leemans');BASE=S/'maintenance/intake/f009_census_continuation/from10997';DEST=BASE/'shared_pin_reader/prelaunch/evidence';METHOD=Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def whole(p):
+ p=Path(p);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda v:(v.st_dev,v.st_ino,v.st_mode,v.st_nlink,v.st_size,v.st_mtime_ns,v.st_ctime_ns)
+ assert p.is_absolute()and p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and sig(a)==sig(z)and len(b)<=4*2**20
+ return ref(p,b),b
+def write(p,v):
+ b=can(v)
+ with p.open('xb')as f:f.write(b)
+ return ref(p,b)
+program,programbody=whole(METHOD);assert program['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0';assert not DEST.exists()
+closures=[BASE/'shared_pin_inputs/evidence/preservation.json']+[BASE/'shared_pin_native/evidence'/n/'preservation.json'for n in ['native_outputs','closed_metadata','late_Reader_binding']]
+borrowed=[];borrowbytes=0;by_original={};by_content={}
+for p in closures:
+ r,b=whole(p);borrowed.append(r);borrowbytes+=len(b);m=json.loads(b)
+ for row in m['files']:
+  o=row['original'];t=row['retained'];assert o['bytes']==t['bytes']and o['sha256']==t['sha256']
+  by_original.setdefault((o['path'],o['bytes'],o['sha256']),[]).append(t);by_content.setdefault((o['bytes'],o['sha256']),[]).append(t)
+files=set()
+for n in ['reader_prepared','reader_job','reader_binding_DATA','reader_DATA_review']:
+ files.update(p for p in(N/n).rglob('*')if p.is_file())
+for p in N.iterdir():
+ if p.is_file()and(p.name.startswith('reader_')or p.name.startswith('Root_Reader_')or p.name in ['Root_bind_Reader.py','Root_release_Reader_preparation.py']):files.add(p)
+ if p.is_dir()and p.name.endswith('_guard')and(p.name.startswith('reader_')or p.name.startswith('Root_Reader_')):files.update(q for q in p.rglob('*')if q.is_file())
+files.add(Path(__file__).resolve());assert not any(p.is_relative_to(N/'native_output')for p in files)
+required=['reader_prepared/native_actual_review.json','reader_prepared/native_output_rows.json','reader_prepared/native_output_manifest.json','reader_prepared/native_closure.json','reader_prepared/reader_parameters.json','reader_job/job.json','reader_job/job_complete_rows.json','reader_Root_review.json','reader_request.json','Root_bind_Reader.py','Root_Reader_full_DATA_review_actual_capture.json','Root_Reader_corrected_full_DATA_review_actual_capture.json','reader_DATA_review/independent_review.json']
+assert all(N/n in files for n in required)
+rows=[];newobjects={};reused=[];reusecount=0;originalsum=0;outsideSum=0
+for p in sorted(files):
+ o,b=whole(p);originalsum+=len(b);choices=by_original.get((o['path'],o['bytes'],o['sha256']),[])or by_content.get((o['bytes'],o['sha256']),[])
+ if choices:
+  t=min(choices,key=lambda r:r['path']);tr,tb=whole(t['path']);assert tr==t and tb==b;outsideSum+=len(b);reused.append(t);reusecount+=1
+ else:
+  t=ref(DEST/'objects'/o['sha256'],b);assert newobjects.get(t['path'],b)==b;newobjects[t['path']]=b
+ rows.append(dict(original=o,retained=t))
+rootgate=json.loads((N/'reader_Root_review.json').read_bytes());assert rootgate['authorized_roles']==['reader']and rootgate['job']['sha256']=='815b0eb3cd8e7704f03086e23dfee077aff402ffa7694a97e2853e8c3de1a481';assert whole(N/'reader_request.json')[0]['sha256']=='f2ed9b7edad085f0a67ac34c4da834f7e287af9ab54b0d5cfb10e30203bf9c43'
+plan=dict(schema='ROOT_F009_SHARED_PIN_READER_PRELAUNCH_CLOSED_METADATA_RETENTION_DATA_V1',author='/root/journal_peer',destination=str(DEST),manifest_path=str(DEST/'preservation.json'),files=rows,borrowed_closures=borrowed,scientific_calls=0,Root_authority=False,Root_release=None,actual_copy=None,actual_Reader_execution=None,actual_Reader_result=None,checkpoint_adoption=None,qualification='Exact actual Reader prelaunch metadata snapshot: fivee466 artifacts/forecasts/write/release, selected607c/adapterreview/capture,10ordinaryReaderroles plus815bwire,construct/packer/Rootgate/Ownerrequest creator guards/captures,RootBinder,fullindependentDATApeer/audit,Rootfailed+correctedDATAcaptures/guards,andboundrecipe/inverse/proofs. Four existingNativeSclosuremanifests authenticate parentmetadata and priorSource history; only selected exact mapped bodies are reopened. No253Nativeoutputbodies selected or copied again. Accepted10997 remains;11046 is paidNativeproposalonly. Root alone may execute reviewed66779 copy then fresh strictReader. This plan grants noRoot/science/Reader/CPauthority.')
+pr=write(B/'copy_plan.json',plan);pb=can(plan)
+methods=[dict(original=program,retained=ref(DEST/'method/retain_closed_files.py',programbody)),dict(original=pr,retained=ref(DEST/'method/plan.json',pb))]
+m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrowed,source_plan=pr,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.');mb=can(m);mr=ref(DEST/'preservation.json',mb)
+# Exact fresh-destination call sequence of unchanged66779, every row-read counted.
+newRowSum=sum(r['original']['bytes']for r in rows if Path(r['retained']['path']).is_relative_to(DEST));reads=2*len(programbody)+3*len(pb)+borrowbytes+2*originalsum+outsideSum+2*newRowSum+len(mb);new=sum(map(len,newobjects.values()))+len(programbody)+len(pb)+len(mb)
+paths={program['path'],pr['path'],mr['path']}|{r['path']for r in borrowed}|{r['original']['path']for r in rows}|{r['retained']['path']for r in rows+methods};maxfile=max([len(mb),len(pb),len(programbody)]+[r['original']['bytes']for r in rows]);assert reads+len(programbody)<=64*2**20 and new<=16*2**20 and len(paths)<=512 and maxfile<=4*2**20
+inv=write(B/'invoice.json',dict(schema='LITERAL_ROOT66779_READER_PRELAUNCH_RETENTION_DATA_INVOICE_V1',author='/root/journal_peer',program=program,plan=pr,selected_rows=len(rows),selected_original_bytes=originalsum,reused_rows=reusecount,targeted_existing_S_paths=len({r['path']for r in reused}),new_objects=len(newobjects),new_files=len(newobjects)+3,new_bytes=new,whole_actual_read_projection=reads,whole_reads_plus_interpreter_Source=reads+len(programbody),actual_unique_paths=len(paths),maximum_file_bytes=maxfile,projected_manifest=mr,actual_forecast=None,actual_copy=None,Root_authority=False,formula='2ownSource+3plan+borrowed+2alloriginalRows+outsideReuseRows+2newTargetRows+manifest. Newobjects deduped for writes; every aliasrow read remains charged. Source interpreter whole4874 extra.',caps=dict(per_file=4*2**20,newwrites=16*2**20,reads=64*2**20,actual_paths=512,RSS=256*2**20,seconds=125),qualification='Pure stdlib authored DATA projection, not helperforecast. Parent4wholemanifests parsed; selected mappedStarget bodies verified only. NoNative outputs are recopied; noRootauthority,SCI/Readerfit or CPcredit.'))
+h=write(B/'handoff.json',dict(schema='FROZEN_F009_READER_PRELAUNCH_RETENTION_DATA_HANDOFF_V1',author='/root/journal_peer',program=program,copy_plan=pr,invoice=inv,projected_manifest=mr,quoted_Root_only_CLI=['/Users/sasha/.venvs/global/bin/python','-E','-B',str(METHOD),'--self-sha256',program['sha256'],'--plan',pr['path'],pr['sha256'],'--destination',str(DEST),'--manifest',mr['path']],actual_copy=None,Root_release=None,Reader_actual=None,Reader_result=None,checkpoint_adoption=None,Root_authority=False,Source_helper_or_SCI_activation=0,S_W_Git_writes=0))
+print(json.dumps(dict(handoff=h,plan=pr,invoice=inv,rows=len(rows),newbytes=new,reads=reads,paths=len(paths),newobjects=len(newobjects),reuse_rows=reusecount,manifest=mr)))

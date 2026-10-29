@@ -1,0 +1,96 @@
+"""Root metadata publication by compare-and-swap; no scientific imports or calls."""
+from pathlib import Path
+import argparse, hashlib, json, os, stat, tempfile
+
+S = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+TARGET = S / 'progress/current_intake_verified_exports.json'
+
+def row(path, raw):
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+def whole(reference, cap=4 * 2**20):
+    p = Path(reference['path'])
+    before = p.lstat()
+    assert p.resolve(strict=True) == p and stat.S_ISREG(before.st_mode)
+    assert before.st_nlink == 1 and 0 <= before.st_size == reference['bytes'] <= cap
+    raw = p.read_bytes()
+    signature = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    assert signature(before) == signature(p.lstat()) and row(p, raw) == reference
+    return raw
+
+def refs(value):
+    if isinstance(value, dict):
+        if set(value) == {'path', 'bytes', 'sha256'}:
+            yield value
+        else:
+            for child in value.values():
+                yield from refs(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from refs(child)
+
+def sync_directory(path):
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+ap = argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--expected', required=True)
+ap.add_argument('--proposal', nargs=2, required=True)
+args = ap.parse_args()
+old_ref = dict(path=str(TARGET), bytes=TARGET.stat().st_size, sha256=args.expected)
+old_raw = whole(old_ref, 32768)
+old = json.loads(old_raw)
+p = Path(args.proposal[0])
+new_ref = dict(path=str(p), bytes=p.stat().st_size, sha256=args.proposal[1])
+new_raw = whole(new_ref, 32768)
+new = json.loads(new_raw)
+own = Path(__file__).resolve()
+own_ref = row(own, own.read_bytes())
+assert new['root'] == old['root'] == '/root'
+for key in ('counts', 'measurements', 'protected_reviewed_registers', 'stopping_rule', 'new_whole_original_conjecture_Lean_or_measurement_credit'):
+    assert new[key] == old[key], key
+method = new['journal_metadata_method']
+assert method['program'] == own_ref and method['scientific_calls'] == 0
+assert method['protected_register_writes'] == 0 and method['current_mutable_target'] == str(TARGET)
+protected = list(refs(old['protected_reviewed_registers']))
+assert {r['path'] for r in protected} == {str(S / 'reviewed_intake_progress.json'), str(S / 'progress/reviewed_intake_progress.json')}
+for reference in protected:
+    whole(reference)
+version = S / 'progress/intake_overview/versions' / (args.expected + '.json')
+assert new['previous_checkpoint'] == row(version, old_raw)
+version.parent.mkdir(parents=True, exist_ok=True)
+assert version.parent.resolve(strict=True) == version.parent
+if version.exists():
+    assert whole(row(version, old_raw), 32768) == old_raw
+else:
+    with version.open('xb') as handle:
+        assert handle.write(old_raw) == len(old_raw)
+        handle.flush()
+        os.fsync(handle.fileno())
+    sync_directory(version.parent)
+    assert whole(row(version, old_raw), 32768) == old_raw
+assert whole(old_ref, 32768) == old_raw
+for reference in protected:
+    whole(reference)
+fd, name = tempfile.mkstemp(prefix='.intake-', dir=TARGET.parent)
+temporary = Path(name)
+try:
+    with os.fdopen(fd, 'wb') as handle:
+        assert handle.write(new_raw) == len(new_raw)
+        handle.flush()
+        os.fsync(handle.fileno())
+    assert whole(old_ref, 32768) == old_raw
+    os.replace(temporary, TARGET)
+    sync_directory(TARGET.parent)
+finally:
+    if temporary.exists():
+        temporary.unlink()
+assert whole(row(TARGET, new_raw), 32768) == new_raw
+for reference in protected:
+    whole(reference)
+print(json.dumps(dict(status='ROOT_PROGRESS_JOURNAL_CAS_PUBLISHED', root='/root', program=own_ref,
+    previous=row(version, old_raw), current=row(TARGET, new_raw), proposal=new_ref,
+    protected_registers_unchanged=True, scientific_calls=0, Original_conjecture_Lean_or_measurement_credit=0), sort_keys=True))

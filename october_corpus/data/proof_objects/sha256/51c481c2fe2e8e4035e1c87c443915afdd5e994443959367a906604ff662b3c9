@@ -1,0 +1,201 @@
+"""UNRUN generic GL7 arithmetic and isolated spectrum DATA controls.
+These are not a natural G2 marking, model or original membership fixture.
+No original case, Source verdict, Root authority or group claim is issued.
+"""
+import time
+START=time.monotonic()
+import argparse,copy,hashlib,json,resource,sys
+from pathlib import Path
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+class ArithmeticBudget:
+ def __init__(self,stop_type=None,limit=None):self.products=0;self.searching=False;self.need=need;self.stop_type=stop_type;self.limit=limit
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  need(rss<128*2**20 and time.monotonic()-START<100,'generic128MiB100s control bound')
+ def multiply(self,A,B):
+  self.tick()
+  if self.limit is not None and self.products>=self.limit:raise self.stop_type('synthetic forced stop')
+  self.products+=1;need(self.products<=50000,'generic50000products')
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(len(B)))%11 for j in range(len(B[0])))for i in range(len(A)))
+
+def refused(call):
+ try:call()
+ except(ValueError,KeyError,TypeError,IndexError):return
+ raise ValueError('bad generic metadata was accepted')
+
+def reflection_fixture(kernel,budget):
+    one=(1,0,0,0,0,0);x=(0,1,0,0,0,0);I=kernel['I7']
+    for a in range(11):
+        for b in range(1,11):
+            def mul(u,v):
+                budget.tick(True);out=[0]*11
+                for i in range(6):
+                    for j in range(6):out[i+j]=(out[i+j]+u[i]*v[j])%11
+                for k in range(10,5,-1):
+                    c=out[k];out[k-6]=(out[k-6]-b*c)%11;out[k-5]=(out[k-5]-a*c)%11
+                return tuple(out[:6])
+            def ring_power(z,n):
+                value=one
+                for bit in bin(n)[2:]:
+                    value=mul(value,value)
+                    if bit=='1':value=mul(value,z)
+                return value
+            z=ring_power(x,47880)
+            rows=[mul(tuple(int(i==j)for i in range(6)),z)for j in range(6)]
+            Y=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in rows)
+            if Y==I or kernel['power'](Y,37,budget)!=I:continue
+            frob=[ring_power(tuple(int(i==j)for i in range(6)),1331)for j in range(6)]
+            F=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in frob)
+            if budget.multiply(F,F)!=I:continue
+            if budget.multiply(budget.multiply(F,Y),F)!=kernel['power'](Y,36,budget):continue
+            Z=tuple(tuple((10 if i==0 else 1)if i==j else 0 for j in range(7))for i in range(7))
+            return Y,F,Z
+    raise ValueError('bounded generic ring fixture found no checked reflection pair')
+
+def literal_word(marks,section,word,budget):
+    value=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    for letter in word:value=budget.multiply(value,marks[section[int(letter)]])
+    return value
+
+def read_subject(pair,limit):
+    p=Path(pair[0]);raw=p.read_bytes()
+    need(p.is_absolute()and p.resolve(strict=True)==p and len(raw)<=limit
+         and hashlib.sha256(raw).hexdigest()==pair[1],'whole exact current synthetic subject')
+    return p,raw
+
+def fixture19(C,budget):
+    I=C['I7']
+    # Traceless cubic companions include irreducible elements outside the
+    # kernel of the70th-power map in F_(11^3)^*. Each returned matrix is
+    # checked directly; no chosen polynomial is assumed irreducible.
+    for a in range(11):
+        for b in range(1,11):
+            rows=[list(r)for r in I];rows[0][:3]=[0,1,0];rows[1][:3]=[0,0,1];rows[2][:3]=[(-b)%11,(-a)%11,0]
+            A=tuple(tuple(r)for r in rows);Y=C['power'](A,70,budget)
+            if Y!=I and C['power'](Y,19,budget)==I:return Y
+    raise ValueError('bounded generic cubic fixture has no directly checked19')
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    for name in('consumer','supplier','schedule','profile'):ap.add_argument('--'+name,nargs=2,required=True)
+    a=ap.parse_args();own=Path(__file__).resolve(strict=True);ownraw=own.read_bytes()
+    need(len(ownraw)<=16384 and hashlib.sha256(ownraw).hexdigest()==a.self_sha256,'whole actual new generic control Source')
+    cp,cb=read_subject(a.consumer,65536);sp,sb=read_subject(a.supplier,65536);wp,wb=read_subject(a.schedule,16384);pp,pb=read_subject(a.profile,8192)
+    C={'__name__':'strict_spectrum_generic_controls','__file__':str(cp)};S={'__name__':'supplier_spectrum_generic_controls','__file__':str(sp)}
+    exec(compile(cb,str(cp),'exec'),C);exec(compile(sb,str(sp),'exec'),S)
+    profile=S['validate_profile'](json.loads(pb));rows=S['validated_schedule'](json.loads(wb));names=[];B=ArithmeticBudget();I=C['I7']
+    Y19=fixture19(C,B);Y37,F,Z=reflection_fixture(C,B)
+    X=[list(r)for r in I];X[3][3]=X[4][4]=0;X[3][4]=1;X[4][3]=10;X=tuple(tuple(r)for r in X)
+    need(C['power'](X,4,B)==I and C['power'](X,2,B)!=I,'directly checked generic order4 block')
+    marks=(I,Y19,X,I);prime=dict(kind='PRIME37',prime37=dict(word='1',power=1))
+    split=dict(kind='PRIME19_AND_ORDER4',prime19=dict(word='1',power=1),order4=dict(word='2',power=1))
+    for P in(C,S):
+        P['check_end']((I,Y37,I,I),(0,1,2),prime,B);P['check_end'](marks,(0,1,2),split,B)
+    names.append('both_new_positive_end_kinds_on_independently_power_checked_generic_GL7_matrices')
+    negative=copy.deepcopy(split);negative['order4']=dict(word='0',power=1)
+    refused(lambda:C['check_end'](marks,(0,1,2),negative,B))
+    klein=tuple(tuple((10 if i==0 else 1)if i==j else 0 for j in range(7))for i in range(7))
+    refused(lambda:C['check_end']((I,Y19,klein,I),(0,1,2),split,B))
+    negative=copy.deepcopy(split);negative.pop('order4');refused(lambda:C['end_header'](negative))
+    names.append('19_alone_identity4_and_exponent2_Klein_four_elements_are_refused')
+    for mutate in('word','Boolean_power','zero','large','extra','kind'):
+        bad=copy.deepcopy(split)
+        if mutate=='word':bad['prime19']['word']='3'
+        elif mutate=='Boolean_power':bad['order4']['power']=True
+        elif mutate=='zero':bad['order4']['power']=0
+        elif mutate=='large':bad['order4']['power']=257
+        elif mutate=='extra':bad['prime19']['foreign']=1
+        else:bad['kind']='PRIME19'
+        refused(lambda bad=bad:C['end_header'](bad))
+    names.append('exact_kind_literal_grammar_power_types_bounds_and_fields')
+    refused(lambda:C['check_end']((I,I,I,I),(0,1,2),prime,B))
+    refused(lambda:C['check_end'](marks,(0,1,2),prime,B))
+    refused(lambda:C['check_end'](marks,(0,1,3),split,B))
+    names.append('false_prime_equations_and_wrong_end_indices_refused')
+    # This word belongs to the common pair, with distinct local spellings.
+    shared=(I,I,X,I);left=dict(kind='PRIME19_AND_ORDER4',prime19=dict(word='0',power=1),order4=dict(word='12',power=1))
+    need(C['supplied_value'](shared,(0,1,2),left['order4'],B)==C['supplied_value'](shared,(1,2,3),dict(word='01',power=1),B)==X,
+         'same actual b*c expressed by the two local mark indices')
+    names.append('common_middle_word_has_left12_and_right01_not_fixed_b_e')
+    fixture=(F,B.multiply(F,Y37),B.multiply(F,Z),B.multiply(B.multiply(F,Y37),Z))
+    for section in((0,1,2),(1,2,3)):
+        values=S['candidate_values'](fixture,section,rows,B)
+        for row,value in zip(rows,values):need(value==literal_word(fixture,section,row['word'],B),'retained32 DAG literal byteword equality')
+    names.append('unchanged32_DAG_values_equal_independent_literal_multiplication_in_both_ends')
+    need(S['checked_retained37']((I,Y37,I,I),(0,1,2),'1',B)['kind']=='PRIME37'
+         and S['checked_retained37']((I,I,I,I),(0,1,2),'1',B)is None,'individual retained hint is freshly checked')
+    names.append('individual_stored37_hints_rechecked_without_any_old_pool_search')
+    # Two-row isolated arithmetic test; the actual Source main still insists
+    # on the fixed whole32-row schedule before an original case can run.
+    isolated=[dict(kind='rotation_product',i=1,j=0,word='10'),dict(kind='rotation_product',i=0,j=1,word='12')]
+    note=dict(stage='',active=None,retained37_checked=[False,False],retained37_valid=[False,False],prime19_completed=[0,0],prime19_hit=[0,0],four_completed=[0,0],four_hit=[None,None])
+    end=S['search_spectrum_end']((Y19,I,X,I),(0,1,2),isolated,B,profile,note,0,None,None)
+    need(end['kind']=='PRIME19_AND_ORDER4'and note['prime19_hit'][0]==1 and note['four_hit'][0]==[2,1],'separate NEW19 andsame-end4 selection')
+    C['check_end']((Y19,I,X,I),(0,1,2),end,B)
+    names.append('isolated_NEW19_and4_search_emits_a_separately_valid_direct_certificate')
+    minus=(klein,)*4;n=dict(common_completed=0,common_four_power=None,active=None,stage='')
+    need(S['common_four'](minus,B,profile,n)is None and n['common_completed']==10,'finite common-middle miss is not absence')
+    for field,value in [('common_middle_powers',[True,2,3,5,6,10,11,15,30,33]),('prime19_cofactor',True),('end_four_powers',[1,True])]:
+        bad=dict(profile);bad[field]=value;refused(lambda bad=bad:S['validate_profile'](bad))
+    names.append('common_middle_finite_queue_and_strict_profile_Boolean_rejections')
+    front=dict(unpaid=[1,2],eligible=[],skipped=[1,2]);need(C['select_current_unpaid'](front,106)==[1,2],'new criterion keeps old misses unpaid but eligible')
+    positive=dict(records=[[1,1,'generic',prime,split]],visited=[1],finite_misses=[],notes=[],status='synthetic')
+    need(S['partition'](front,[1],positive)==[2],'positive partial DATA partition')
+    stopped=S['scan']([1,2],lambda p:((I,I,I,I),p,'generic'),ArithmeticBudget(S['Stop'],0),rows,profile,{1:[None,None],2:[None,None]})
+    need(stopped['visited']==[]and stopped['notes'][0]['outcome']==2 and S['partition'](front,[1,2],stopped)==[1,2],
+         'interruptions remain wholly unpaid/unvisited')
+    names.append('new_current_unpaid_selection_and_exact_interrupted_partition')
+    plan=dict(original_job=[23,4],selector={'path':'mock'},projection={'path':'mock_projection'})
+    carrier=dict(schema='Q11_LARGE_END_SPECTRUM_SUPPLIED_WORDS_V1',proof_mode=C['SPECTRUM_MODE'],grammar=C['LITERAL_GRAMMAR'],records=[],**plan)
+    need(C['supplied_carrier'](C['can'](carrier)+b'\n',plan)==[],'canonical new spectrum carrier')
+    for key,value in [('schema','Q11_TWO_END37_SUPPLIED_LITERAL_WORDS_V1'),('proof_mode','DIRECT_LITERAL_WORD_CHECK'),('selector',{'path':'other'}),('grammar','old_index')]:
+        bad=dict(carrier);bad[key]=value;refused(lambda bad=bad:C['validate_carrier'](bad,plan))
+    refused(lambda:C['supplied_carrier'](b' '+C['can'](carrier)+b'\n',plan))
+    names.append('old_carriers_modes_wrong_original_subject_and_noncanonical_values_refused')
+    ctx=dict(orbits=[[1,[1],[1],1]]);row=[1,1,C['digest'](ctx['orbits'][0]),prime,split]
+    C['validate_record_headers']([row],[1],ctx)
+    refused(lambda:C['verify_records']([row],[1],ctx,B))
+    names.append('generic_GL7_fixture_never_supplies_original_context_or_member_frame_authority')
+    # An immutable old result keeps its original paths as historical DATA;
+    # only exact retained bodies are freshly read. These are isolated mocks.
+    originals={};retained={};payloads={};maps={};files=[]
+    for key in('spectrum_theorem','spectrum_review','spectrum_premises'):
+        raw=('synthetic_body_'+key).encode();sha=hashlib.sha256(raw).hexdigest()
+        original=dict(path='/private/tmp/original/'+key,bytes=len(raw),sha256=sha)
+        dest=dict(path='/mock_retained/'+key,bytes=len(raw),sha256=sha)
+        originals[key]=original;retained[key]=dest;payloads[dest['path']]=raw
+        maps[key]=dict(original=original,retained=dest);files.append(dict(original=original,retained=dest,action='COPY_COMPLETE_BYTES'))
+    preservation=dict(schema='ROOT_PRESERVED_Q11_SPECTRUM_CHECK_V1',root='/root',scientific_calls=0,files=files)
+    fact=dict(retained,preservation={'path':'mock_preservation'},proof_import_retentions=maps)
+    def document(ref):need(ref==fact['preservation'],'only exact map role');return preservation
+    for provider in(C,S):
+        reads=[]
+        def whole(ref,fresh):
+            need(fresh is True and ref in retained.values(),'explicit fresh bounded retained role only')
+            reads.append(ref);return payloads[ref['path']]
+        provider['retained_spectrum_imports'](fact,originals,document,whole)
+        need(reads==list(retained.values()),'all three exact retained proofs freshly hashed')
+        for mutation in('wrong_hash','wrong_size','missing_map','wrong_original_map'):
+            bad=copy.deepcopy(fact)
+            if mutation=='wrong_hash':bad['spectrum_theorem']['sha256']='0'*64
+            elif mutation=='wrong_size':bad['spectrum_theorem']['bytes']+=1
+            elif mutation=='missing_map':bad['proof_import_retentions'].pop('spectrum_review')
+            else:bad['proof_import_retentions']['spectrum_review']['original']['path']='different_old_path'
+            refused(lambda bad=bad:provider['retained_spectrum_imports'](bad,originals,document,whole))
+        old=payloads[retained['spectrum_theorem']['path']];payloads[retained['spectrum_theorem']['path']]=b'bad'
+        refused(lambda:provider['retained_spectrum_imports'](fact,originals,document,whole))
+        payloads[retained['spectrum_theorem']['path']]=old
+    names.append('exact_relocated_proof_map_and_all_three_fresh_hashes_required_wrong_hash_size_map_or_body_refused')
+
+    for pair,limit in[(a.consumer,65536),(a.supplier,65536),(a.schedule,16384),(a.profile,8192)]:read_subject(pair,limit)
+    need(own.read_bytes()==ownraw,'all whole current Source/DATA subjects unchanged')
+    def ref(p,raw):return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+    print(json.dumps(dict(schema='Q11_LARGE_END_SPECTRUM_GENERIC_CONTROLS_V1',status='PASS',author='/root/compact_proof_author',
+        program=ref(own,ownraw),consumer=ref(cp,cb),supplier=ref(sp,sb),schedule=ref(wp,wb),profile=ref(pp,pb),controls=len(names),names=names,
+        original_case_calls=0,original_model_or_group_calls=0,matrix_products=B.products,
+        complete_physical_read_bytes_including_Source_bootstrap=3*len(ownraw)+2*(len(cb)+len(sb)+len(wb)+len(pb)),physical_paths=5,
+        qualification='Generic GL7 matrices, an isolated two-row search and mock DATA only; no natural G2 marking, original Source/model/member/theorem authority or actual case is supplied.'),sort_keys=True))
+
+if __name__=='__main__':main()

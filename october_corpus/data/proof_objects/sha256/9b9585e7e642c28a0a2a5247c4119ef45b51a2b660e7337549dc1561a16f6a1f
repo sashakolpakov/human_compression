@@ -1,0 +1,18 @@
+from pathlib import Path
+import hashlib,json
+D=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def sha(v):return hashlib.sha256(can(v)).hexdigest()
+logical=json.loads((D/'native_job/job.json').read_bytes());wire=json.loads((D/'native_job/job_source_indices.json').read_bytes())
+tag=wire.pop('Root_Source_rows_reference');rows=wire['declared_inputs'];indices=tag['indices']
+assert indices==sorted(set(indices))and all(type(i)is int and 0<=i<len(rows)for i in indices)
+sources=[rows[i]for i in indices];assert len(rows)==8347 and len(sources)==1015
+assert sha(rows)==tag['declared_rows_sha256'] and sha(sources)==tag['Source_rows_sha256']
+wire['source_inputs']=sources;assert wire==logical and len(can(wire))==tag['logical_bytes'] and sha(wire)==tag['logical_sha256']
+a=json.loads((D/'allocation.json').read_bytes());sub=json.loads(Path('/private/tmp/f009_native_pin_sharing/Source_role_substitution.json').read_bytes())
+assert sources==sub['candidate_functional_rows'] and all(r in sources for r in sub['all_paid_rows_kept'])
+assert logical['qualified_archive_rows']==a['archive446_rows']
+assert logical['program']['sha256']=='179260d49d4f6395618add01f916889152a9ae887b5687e644d47de110a24860' and logical['old_checkpoint_sequence']==10997
+assert len(logical['binding'])==3 and len((D/'native_job/job_source_indices.json').read_bytes())<2**21
+result=dict(schema='ROOT_F009_SHARED_PIN_WHOLE_WIRE_INVERSE_REVIEW_V1',root='/root',status='PASS',declared=8347,functional=1015,paid=1005,archive=446,checkpoint=10997,entire_logical_value_equal=True,logical_bytes=len(can(logical)),logical_sha256=sha(logical),wire_bytes=(D/'native_job/job_source_indices.json').stat().st_size,Source_or_state_decoder_calls=0,Native_authority=False)
+p=D/'Root_wire_inverse_review.json';p.write_bytes(can(result));print(json.dumps(result))

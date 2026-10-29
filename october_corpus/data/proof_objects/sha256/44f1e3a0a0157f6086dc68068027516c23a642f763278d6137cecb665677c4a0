@@ -1,0 +1,64 @@
+from pathlib import Path
+import hashlib,json,os
+T=Path('/private/tmp/l026_next_subset_window/indices_0016_0031')
+V=Path('/private/tmp/l026_invariant_subsets/history_abi/control_boundary')
+S=Path('/Users/sasha/medusa/research/leemans')
+D=S/'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/invariant_subsets/second_window/evidence'
+def pin(p,b=None):
+    if b is None:b=p.read_bytes()
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def put(p,b):
+    p.parent.mkdir(parents=True,exist_ok=True)
+    if p.exists():assert p.read_bytes()==b
+    else:
+        with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+p=json.loads((T/'bound_scope/strict_plan.json').read_bytes())
+result_path=T/'runtime/strict_output/result.json';result=json.loads(result_path.read_bytes())
+assert result['mode']=='check' and result['status']=='SUPPLIED_CHECK_COMPLETE'
+assert result['supplier_activated']is False and len(result['verified_nongeneration_records'])==11
+assert result['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0
+guard=json.loads((T/'runtime/strict_guard/receipt.json').read_bytes())
+cap=json.loads((T/'runtime/strict_actual_capture.json').read_bytes())
+assert guard['status']=='PASS' and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+assert cap['actual_tool']['exit_code']==cap['all_genuine_api_frames'][-1]['exit_code']==0
+paths=[x for x in sorted(T.rglob('*'))if x.is_file()]
+paths += [Path(r['path'])for r in p['inputs']]
+paths += [Path(p[k]['path'])for k in ('program','point_kernel','subset_kernel','supplier','control_program')]
+paths += [V/n for n in ('independent_review/independent_review.json','independent_review/observations.json',
+    'runtime/Root_source_data_review.json','runtime/controls_actual_capture.json')]
+paths += [V/'runtime/control_guard'/n for n in ('receipt.json','started.json','stdout.log','stderr.log')]
+paths += [Path('/private/tmp/l026_invariant_subsets/ARGUMENT.rst')]
+paths=sorted(set(paths));assert len(paths)<=160
+rows=[];total=0
+for x in paths:
+    assert x.resolve(strict=True)==x and x.stat().st_nlink==1
+    b=x.read_bytes();assert len(b)<=2**21;total+=len(b);assert total<=8*2**20
+    o=pin(x,b)
+    if x.is_relative_to(S):q=x;action='REUSE_EXACT_S_INPUT'
+    else:q=D/'objects'/o['sha256'];put(q,b);action='COPY_COMPLETE_BYTES'
+    r=pin(q);assert (r['bytes'],r['sha256'])==(o['bytes'],o['sha256'])
+    rows.append(dict(original=o,retained=r,action=action))
+facts=result['verified_nongeneration_records']
+points=sum(f['points']for f in facts);edges=sum(f['checked_positive_rotation_edges']for f in facts)
+assert points==1971 and edges==3942
+execution=dict(capture=pin(T/'runtime/strict_actual_capture.json'),
+    **{k:pin(T/'runtime/strict_guard'/n)for k,n in (('receipt','receipt.json'),('started','started.json'),('stdout','stdout.log'),('stderr','stderr.log'))})
+manifest=dict(schema='ROOT_CLOSED_L026_SECOND_WINDOW_ROTATION_SUBSET_SCIENCE_V1',root='/root',
+    files=rows,complete_actual_strict_result=pin(result_path),actual_supplied_carrier=p['records'],
+    strict_plan=pin(T/'bound_scope/strict_plan.json'),strict_Root_gate=pin(T/'bound_scope/strict_final_Root_gate.json'),
+    strict_execution=execution,original_fixed_inputs=p['inputs'],
+    worker=p['program'],point_kernel=p['point_kernel'],subset_kernel=p['subset_kernel'],
+    control_program=p['control_program'],control_execution=dict(capture=pin(V/'runtime/controls_actual_capture.json'),
+        **{k:pin(V/'runtime/control_guard'/n)for k,n in (('receipt','receipt.json'),('started','started.json'),('stdout','stdout.log'),('stderr','stderr.log'))}),
+    current_negative_adoption=p['current_scope_context']['current_negative_receipt'],
+    current_generation_adoption=p['current_scope_context']['actual_typed_GENERATION_receipt'],
+    strict_nongeneration_records=11,strict_nonempty_proper_subset_points=points,strict_closure_edges=edges,
+    untrusted_cap_misses_without_credit=[21,23,24,28,30],
+    all_actual_required_Source_inputs_controls_and_closures_retained=True,
+    historical_failed_Root_binding_assertion_retained=True,
+    scientific_calls_in_this_preservation=0,metadata_adoption_owed=True,
+    new_registered_NG_or_generation_IP_Original_conjecture_Lean_or_measurement_credit=0,
+    qualification='Eleven actual independently checked proper invariant subsets for the original markings under the retained original named-G/model/member/action/graph/GLOBAL class/two-fibre/qualifiedH=B premises. All prior17701 NEG and3GEN/IP facts remain unchanged. Five cap misses are unpaid; new11 NG facts await separate metadata validation and Root registration.')
+b=(json.dumps(manifest,sort_keys=True,separators=(',',':'))+'\n').encode();mp=D/'preservation.json';assert not mp.exists();put(mp,b)
+print(json.dumps(dict(status='ROOT_NEW11_STRICT_SCIENCE_RETAINED',preservation=pin(mp),files=len(rows),
+    payload_bytes=total,strict_records=11,points=points,closure_edges=edges,paid_adoption_owed=True)))

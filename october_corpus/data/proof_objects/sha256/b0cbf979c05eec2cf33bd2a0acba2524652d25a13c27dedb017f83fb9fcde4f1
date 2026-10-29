@@ -1,0 +1,89 @@
+"""Independent Reader metadata and whole JSON table audit. No reviewed Source or state/graph codec activation."""
+from pathlib import Path
+import copy,hashlib,json,os,shlex,stat
+N=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');D=N/'reader_DATA_review';checks=0;seen={};physical=0
+
+def ck(v,m):
+ global checks
+ checks+=1
+ if not v:raise ValueError(m)
+def pairs(xs):
+ d={}
+ for k,v in xs:ck(k not in d,'unique JSON key');d[k]=v
+ return d
+def dec(b):return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda s:(_ for _ in()).throw(ValueError(s)))
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def pin(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def signature(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def whole(r,aliases=None,retain=False):
+ global physical
+ p=Path(r['path']);a=p.lstat();alias=(aliases or {}).get(str(p));ck(p.is_absolute()and str(p)==os.path.normpath(str(p)),'literal absolute normalized input')
+ if alias:
+  ck(stat.S_ISLNK(a.st_mode)and os.readlink(p)==alias['link']and p.resolve()==Path(alias['target']['path'])and(a.st_dev,a.st_ino,a.st_mode,a.st_mtime_ns)==(alias['device'],alias['inode'],alias['mode'],alias['mtime_ns']),'exact retained readonly alias')
+ else:ck(p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'ordinary canonical singlelink body')
+ h=hashlib.sha256();size=0;parts=[]
+ with p.open('rb')as f:
+  b=os.fstat(f.fileno())
+  while True:
+   block=f.read(2**20)
+   if not block:break
+   h.update(block);size+=len(block)
+   if retain:parts.append(block)
+  c=os.fstat(f.fileno())
+ ck(signature(a)==signature(p.lstat())and signature(b)==signature(c),'stable entire streamed file')
+ ck(size==r['bytes']and h.hexdigest()==r['sha256'],'whole descriptor identity '+str(p))
+ if alias:ck(size==alias['target']['bytes']and h.hexdigest()==alias['target']['sha256'],'whole exact alias target')
+ else:ck(signature(a)==signature(b),'same opened inode')
+ ck(seen.get(str(p),r)==r,'one physical version');seen[str(p)]=r;physical+=size
+ return b''.join(parts)if retain else None
+def doc(r):return dec(whole(r,retain=True))
+def rd(path):return doc(pin(path))
+def unique(rs):
+ m={}
+ for r in rs:ck(m.get(r['path'],r)==r,'unique complete current version');m[r['path']]=r
+ return[m[k]for k in sorted(m)]
+def table(v,tagname,field,schema):
+ z=copy.deepcopy(v);tag=z.pop(tagname);ck(tag['schema']==schema and set(tag)=={'schema','prefixes','rows','logical_bytes','logical_sha256'},'exact prefix-table tag');prefixes=tag['prefixes'];ck(prefixes==sorted(set(prefixes))and len(prefixes)<=40000,'ordered unique prefixes');rows=[]
+ for i,name,size,sha in tag['rows']:
+  ck(type(i)is int and 0<=i<len(prefixes)and name not in ('','.','..')and'/'not in name,'exact prefix index/file name');rows.append(dict(path=prefixes[i]+name,bytes=size,sha256=sha))
+ ck(rows==unique(rows)and len(rows)<=40000 and sum(r['bytes']for r in rows)<=2**31,'whole ordered table rows within original limits');z[field]=rows;b=can(z);ck(len(b)==tag['logical_bytes']and hashlib.sha256(b).hexdigest()==tag['logical_sha256'],'entire prefix-table inverse canonical identity');return z
+jobref=pin(N/'reader_job/job.json');wireref=pin(N/'reader_job/job_complete_rows.json');job=doc(jobref);wire=doc(wireref);ck(jobref['bytes']==2328254 and jobref['sha256']=='536cad58b3af4ed4244631b39d9a875365f5ac72a7a679842a9ac6e72d427ddd'and wireref['bytes']==1065199 and wireref['sha256']=='815b0eb3cd8e7704f03086e23dfee077aff402ffa7694a97e2853e8c3de1a481','exact actual Reader ordinary/wire identities')
+intermediate=table(wire,'Root_Declared_rows_reference','declared_inputs','F009_DECLARED_ROW_TABLE_V1');tag=intermediate.pop('Root_Source_rows_reference');rows=intermediate['declared_inputs'];indices=tag['indices'];ck(indices==sorted(set(indices))and len(indices)==1015 and all(type(i)is int and 0<=i<len(rows)for i in indices),'all1015 exact Source row indices');sources=[rows[i]for i in indices];ck(hashlib.sha256(can(rows)).hexdigest()==tag['declared_rows_sha256']and hashlib.sha256(can(sources)).hexdigest()==tag['Source_rows_sha256'],'entire declared and Source table identities');intermediate['source_inputs']=sources;ck(intermediate==job and can(intermediate)==(N/'reader_job/job.json').read_bytes()and len(can(intermediate))==tag['logical_bytes']and hashlib.sha256(can(intermediate)).hexdigest()==tag['logical_sha256'],'entire2328254-byte double inverse equality')
+ck(len(rows)==8622 and len(sources)==1015 and sum(r['bytes']for r in sources)==60113534 and len(rows)<=40000 and sum(r['bytes']for r in rows)<=2**31 and len(sources)<=1024 and sum(r['bytes']for r in sources)<=128*2**20 and wireref['bytes']<=2**21 and jobref['bytes']<=4*2**20,'unchanged logical/physical/domain/Source caps')
+# Stream every declared current input once. Read-only aliases use their literal retained specifications.
+aliases={r['path']:r for r in job['readonly_symlinks']};ck(len(aliases)==2,'same two readonly aliases')
+for r in rows:whole(r,aliases)
+nativejob=rd(N/'native_job/job.json');ck(job['source_inputs']==nativejob['source_inputs']and job['qualified_archive_rows']==nativejob['qualified_archive_rows']and len(job['qualified_archive_rows'])==446 and job['readonly_symlinks']==nativejob['readonly_symlinks'],'all1015Sources/446archive/2aliases unchanged')
+paramsref=pin(N/'reader_parameters_selected.json');selected=doc(paramsref);parentref=pin(N/'reader_prepared/reader_parameters.json');parent=doc(parentref);changed=[k for k in set(selected)|set(parent)if selected.get(k)!=parent.get(k)];ck(set(selected)==set(parent)and changed==['library_adapter'],'single field adapter selection only');restored=dict(selected,library_adapter=parent['library_adapter']);ck(can(restored)==(N/'reader_prepared/reader_parameters.json').read_bytes()and parent['library_adapter']['sha256']=='635a7ffb92def6f554015465b5feca5ab6c1edd9393e65e63512edff42c7511a'and selected['library_adapter']['sha256']=='706954fd5d1ea2523936ce7ecf1b34438bd6b09b72b494d9f05eb8cfaf4744e7'and paramsref['sha256']=='607c5f68ea5c42f318b27aba0e398d7cd73e8533fd4631d47188b9b967c03e5b','whole one-field inverse to actual e466 parent')
+ck(job['library_adapter']==selected['library_adapter']and job['program']==selected['program']==nativejob['program']and job['program']['sha256']=='179260d49d4f6395618add01f916889152a9ae887b5687e644d47de110a24860'and job['Owner']==nativejob['Owner'],'same179260/085 subject, selected706 Reader adapter')
+def closed(prefix):
+ cap=rd(N/(prefix+'_actual_capture.json'));r=rd(N/(prefix+'_guard/receipt.json'));s=rd(N/(prefix+'_guard/started.json'));stdout=(N/(prefix+'_guard/stdout.log')).read_bytes();stderr=(N/(prefix+'_guard/stderr.log')).read_bytes();frames=cap['all_genuine_api_frames'];a=cap['issued_argv'];ck(cap['root']==cap['actor']=='/root'and cap['actual_tool']['exit_code']==frames[-1]['exit_code']==0 and cap['full_tool_return']==frames[-1]and cap['full_initial_tool_return']==frames[0]and 'session_id'not in frames[-1],'complete genuine actual metadata capture');ck(a==cap['child_argv']and shlex.split(cap['issued_command'])==a and shlex.split(cap['issued_tool_arguments']['cmd'])==a and a.count('--')==1 and a[a.index('--')+1:]==r['command']==s['command'],'actual metadata exact command');ck(r['status']=='PASS'and r['stop']=='RETURNED'and r['returncode']==0 and r['cleanup']['remaining']==r['cleanup']['errors']==[]and r['limits']==s['limits']and r['logs']==dict(stdout=len(stdout),stderr=len(stderr)),'actual guard/log/known cleanup closure');ck(dec(''.join(f['output']for f in frames))==dict(status='PASS',stop='RETURNED',receipt=str(N/(prefix+'_guard/receipt.json'))),'actual terminal SDK guard result');return dec(stdout),r['command'],pin(N/(prefix+'_actual_capture.json'))
+prepared,pcmd,pcap=closed('reader_preparation_write');pf,_,pfcap=closed('reader_preparation_forecast');ck(dict(pf,written=True)==prepared and prepared['written']is True and prepared['Source_Reader_Native_state_or_graph_calls']==0 and prepared['Reader_job_release_granted']is False and prepared['new_census_credit']==0 and prepared['global_checkpoint_written']is False,'actual e466 forecast/write full five-image equality only metadata')
+five={Path(r['path']).name:r for r in prepared['rows']};allocation=rd(N/'allocation.json');caps={r['path']:r['maximum_bytes']for r in allocation['roles']};ck(len(five)==prepared['output_files']==5 and sum(r['bytes']for r in five.values())==prepared['output_bytes']==1015582<=3*2**20,'exact1015582-byte five artifacts and aggregatecap')
+for r in five.values():whole(r);ck(r['bytes']<=caps[r['path']],'each stricter49-role five cap')
+bank=doc(five['native_output_rows.json']);manifest_wire=doc(five['native_output_manifest.json']);tag=manifest_wire['Root_Output_manifest_reference'];ck(tag['bank']==five['native_output_rows.json']and bank['schema']=='F009_COMPLETE_NATIVE_OUTPUT_ROWS_V1'and bank['directories']==['.']and len(bank['files'])==253,'complete253-file native bank')
+ck(tag['files_bytes']==len(can(bank['files']))and tag['files_sha256']==hashlib.sha256(can(bank['files'])).hexdigest()=='5adac49a5da61f8499ba4a895ab1672f8f526956f561533a6aabf6ac9c58b7a0','Native bank equals imported0054 full output array')
+manifest=copy.deepcopy(manifest_wire);manifest.pop('Root_Output_manifest_reference');manifest.update(files=bank['files'],directories=bank['directories']);ck(len(can(manifest))==tag['logical_bytes']and hashlib.sha256(can(manifest)).hexdigest()==tag['logical_sha256'],'whole manifest-bank inverse')
+closure=table(doc(five['native_closure.json']),'Root_Native_closure_rows_reference','complete_actual_inputs','F009_NATIVE_CLOSURE_ROW_TABLE_V1');plan=rd(N/'reader_preparation_plan.json');req=rd(N/'native_request.json');rqtag=req['Root_Request_rows_reference'];requested=[dict(path=rqtag['prefixes'][i]+n,bytes=s,sha256=h)for i,n,s,h in rqtag['rows']];method=closure['metadata_closure_method'];expected=unique(nativejob['declared_inputs']+requested+list(plan['actual_native'].values())+bank['files']+[five['native_actual_review.json'],five['native_output_manifest.json'],five['native_output_rows.json'],method['program'],method['plan'],method['Root_release']]);ck(closure['complete_actual_inputs']==expected and len(expected)==8611,'entire8611-row Native closure exact union without omission')
+ck(closure['job']==plan['actual_native']['job']and closure['known_scope_drained']is True and closure['strict_Reader_still_required']is True and closure['new_census_credit']==0 and closure['global_checkpoint_written']is False and job['native_closure']==five['native_closure.json'],'whole closed Native roles remain distinct from Reader verdict')
+ctor,ccmd,ccap=closed('reader_constructor_write');forecast,fcmd,fcap=closed('reader_constructor_forecast');ck(dict(forecast,written=True)==ctor and ccmd==fcmd+['--write']and ctor['output_files']==10 and ctor['output_bytes']==2347395 and ctor['science_calls']==0 and ctor['Root_job_release_UNACQUIRED']is True and ctor['global_checkpoint_written']is False,'actual exact10-role constructor forecast/write')
+ck(ctor['job']==jobref and ctor['current_inputs']==8622 and ctor['current_input_bytes']==sum(r['bytes']for r in rows)==498806168,'constructor actual full domain quantities')
+roles={Path(r['path']).name:doc(r)for r in ctor['rows']};rolepins={r['path']:r for r in ctor['rows']};ck(len(rolepins)==10,'one complete version of all ten roles')
+def localrefs(v):
+ if isinstance(v,dict):
+  if set(v)=={'path','bytes','sha256'}and v['path'].startswith(str(N/'reader_job')+'/'):ck(rolepins.get(v['path'])==v,'acyclic whole local role reference')
+  else:
+   for x in v.values():localrefs(x)
+ elif isinstance(v,list):
+  for x in v:localrefs(x)
+for v in roles.values():localrefs(v)
+case=roles['case.json'];handoff=rd(N/'native_output/native_handoff.json');ck(case['expected']==closure['proposed_checkpoint']==prepared['proposed_checkpoint']==handoff['expected_proposal']==dict(sequence=11046,nodes=5795,pending=201,reserved_debts=1,selected_raw_leaf_records=511753)and case['delta']==handoff['delta_proposal']and case['head']==handoff['head']and case['producer_request']==closure['job'],'same actualNative proposal/delta/head, no accepted successor')
+ck(case['base_acceptance']==job['checkpoint_acceptance']==nativejob['checkpoint_acceptance']and job['snapshot_adoption']==nativejob['snapshot_adoption']and job['checkpoint_boundary']==nativejob['checkpoint_boundary']and job['old_checkpoint_sequence']==10997 and job['new_census_credit']==0 and job['old_caller_executed']is False and job['role']=='reader','accepted10997 unchanged and no Native replay')
+ck(job['producer_reservation']['native_writers']==[]and job['producer_reservation']['maximum_write_objects']==16 and job['producer_reservation']['maximum_path_bytes']==384 and job['producer_reservation']['terminal_bytes']==4*2**20 and job['producer_reservation']['worker_bytes']==14*2**20,'unchanged Reader16-object/4+14MiB IO guard, no Native writers')
+pack,packcmd,packcap=closed('reader_packer_write');packf,packfcmd,packfcap=closed('reader_packer_forecast');ck(dict(packf,written=True)==pack and packcmd==packfcmd+['--write']and pack['wire']==wireref and pack['actual_parent']==jobref and pack['exact_declared_rows']==8622 and pack['exact_source_rows']==1015 and pack['scientific_gate_or_checkpoint_authority']is False and pack['original_scientific_Source_or_Native_Reader_model_case_state_codec_calls']==0,'actual exact9d00 packer forecast/write and no authority')
+peer=rd(N/'native_DATA_review/independent_review.json');ck(peer['status']=='SUPPORTED_NATIVE_DATA_ONLY'and peer['output_array_canonical_sha256']==tag['files_sha256'],'explicit existing0054 Native DATA import')
+# Final exact body checks for raw logical/wire and the metadata phase inputs; no science activation.
+whole(jobref);whole(wireref);whole(paramsref)
+r=dict(schema='INDEPENDENT_F009_CURRENT179260_READER_FULL_METADATA_DATA_REVIEW_V1',status='SUPPORTED_READER_DATA_ONLY',reviewer='/root/journal_peer',blockers=[],logical_job=jobref,wire_job=wireref,selected_parameters=paramsref,actual_e466_parent=parentref,whole_single_adapter_inverse=True,declared_rows=8622,declared_bytes=498806168,functional_Source_rows=1015,functional_Source_bytes=60113534,qualified_archive_rows=446,readonly_aliases=2,all8622declared_bodies_freshly_streamed=True,all_double_prefix_and_Source_inverse_bytes_equal=True,Native_closure_rows=8611,Native_manifest_complete_files=253,five_outputs=prepared['rows'],five_actual_bytes=1015582,five_stricter49caps_checked=True,actual_preparation=pcap,actual_preparation_forecast=pfcap,actual_constructor=ccap,actual_constructor_forecast=fcap,actual_packer=packcap,actual_packer_forecast=packfcap,imported_Native_DATA_peer=pin(N/'native_DATA_review/independent_review.json'),accepted_checkpoint=10997,Native_proposal_only=11046,Reader_actual=None,Reader_result=None,Root_Reader_gate=None,checkpoint_adoption=None,whole_files_hashed=len(seen),actual_peer_streamed_bytes=physical,checks=checks,Root_authority_granted=False,new_census_or_Original_credit=0,reviewer_Source_helper_control_science_state_graph_or_gate_activations=0,S_W_Git_writes=0,qualification='All8622 actual Reader declared bodies freshly hashed including exact readonly alias targets. Full2328254-byte logical job equals complete prefix+Source-index inverse of actual815b wire; actual five e466 outputs/8611-row closure/bank and10 constructor roles/captures join exactly. Existing0054 Native audit imported explicitly; Native is paid and not rerun. No state/graph decode, actual strict Reader, memory/time fit, Root gate or checkpoint adoption is inferred. Future Root-only Reader execution remains owed under unchanged scientific/Owner/IO limits.')
+p=D/'independent_review.json';p.write_bytes(can(r));print(json.dumps(dict(review=pin(p),checks=checks,whole_files_hashed=len(seen),streamed_bytes=physical)))

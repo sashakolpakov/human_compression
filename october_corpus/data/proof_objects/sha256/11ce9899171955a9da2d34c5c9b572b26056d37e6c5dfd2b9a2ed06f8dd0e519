@@ -1,0 +1,29 @@
+from pathlib import Path
+import hashlib,json
+T=Path('/private/tmp/l026_next_subset_window/indices_0016_0031/bound_scope')
+def pin(p):
+    b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def put(p,v):
+    b=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+    with p.open('xb') as f:f.write(b)
+    return pin(p)
+p=json.loads((T/'strict_plan.json').read_bytes())
+proposal=json.loads((T/'plan.json').read_bytes())
+assert len(p['inputs'])==23 and len(proposal['inputs'])==24
+assert [r for r in proposal['inputs'] if r not in p['inputs']]==[p['supplier']]
+assert all(r in proposal['inputs'] for r in p['inputs'])
+for ref in p['inputs']+[p['records']]:assert pin(Path(ref['path']))==ref
+assert p['mode']=='check' and p['expected_positive_free_indices']==[16,17,18,19,20,22,25,26,27,29,31]
+review=json.loads((T/'strict_Root_code_math_review.json').read_bytes())
+review.update(physical_paths_upper=29,
+    resource_note='Strict mode has23 fixed files because the unactivated supplier is omitted; its six dynamic files give29 paths. The author invoice was correct. An earlier Root metadata assertion incorrectly expected24 fixed files and was refused before any strict execution; that complete failure is retained.',
+    prior_failed_binding_capture=pin(T/'strict_Root_binding_actual_capture.json'))
+rr=put(T/'strict_final_Root_code_math_review.json',review)
+gate=json.loads((T/'strict_Root_gate.json').read_bytes());gate['Root_code_math_review']=rr
+gr=put(T/'strict_final_Root_gate.json',gate)
+upper=p['program']['bytes']+2*(sum(r['bytes'] for r in p['inputs'])+p['program']['bytes']+65536+8192+16384+gate['control_report']['bytes']+131072)
+assert upper<=3496862<8*2**20 and 23+6==29<=32
+assert not Path(p['output_directory']).exists()
+print(json.dumps(dict(status='ROOT_FRESH_SUPPLIED11_STRICT_BINDING_CLOSED',plan=pin(T/'strict_plan.json'),
+    review=rr,gate=gr,physical_paths_upper=29,complete_physical_upper=upper,
+    earlier_binding_failure_before_case_preserved=True,scientific_calls=0)))

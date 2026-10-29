@@ -1,0 +1,77 @@
+"""Independent stdlib/AST/byte review of the reader view. No represented Source activation."""
+import ast,gzip,hashlib,json,stat
+from pathlib import Path
+V=Path('/private/tmp/q11_large_end_spectrum/Root_read_aid/definition_view');OUT=V.parent/'independent_review';seen={};checks=0
+
+def need(v,m):
+ global checks
+ checks+=1
+ if not v:raise AssertionError(m)
+def pin(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pairs(xs):
+ d={}
+ for k,v in xs:need(k not in d,'unique JSON keys');d[k]=v
+ return d
+def load(b):return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda s:(_ for _ in()).throw(ValueError(s)))
+def raw(r):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1,'ordinary canonical exact file');need(sig(a)==sig(z) and pin(p,b)==r,'stable full file hash '+str(p));seen[str(p)]=r;return b
+def local(p):
+ p=Path(p);b=p.read_bytes();return raw(pin(p,b))
+def doc(r):return load(raw(r))
+def extract_group(file,id,size,sha):
+ b=local(V/file);at=b.index(('# '+id+' | ').encode());start=b.index(b'\n',b.index(b'\n',at)+1)+1;out=b[start:start+size];need(hashlib.sha256(out).hexdigest()==sha,'displayed exact body '+id);return out
+h=load(local(V/'handoff.json'))
+for r in h.values():
+ if type(r)is dict and set(r)=={'path','bytes','sha256'}:raw(r)
+for r in h['remaining_code']:raw(r)
+for r in h['final_sources'].values():raw(r)
+for r in h['genuinely_reviewed_ancestors'].values():raw(r)
+c=doc(h['exact_coverage']);ivs=doc(h['direct_whole_inverses']);prior=doc(c['prior_exact_reconstruction']);shared={x['id']:x for x in prior['shared_old_new_bodies']}
+need(c['e366_or6498_assumed_reviewed']is h['e366_or6498_assumed_reviewed']is False,'no unreviewed intermediate baseline assumed')
+for r in ivs['subjects']:
+ old=raw(r['parent']);new=raw(r['final']);ops=r['complete_forward_reverse_line_operations'];need(''.join(o['old']for o in ops).encode()==old and ''.join(o['new']for o in ops).encode()==new,'complete direct source inverse '+r['role'])
+ for op in ops:
+  if op['operation']=='equal':need(op['old']==op['new'],'literal inverse equal block')
+roles={x['role']:x for x in c['roles']};sources={k:raw(x['final'])for k,x in roles.items()};ancestors={k:raw(x['Root_reviewed_ancestor'])for k,x in roles.items()}
+for group in c['displayed_groups']:
+ body=extract_group(group['display']['file'],group['display']['id'],group['bytes'],group['sha256'])
+ for use in group['uses']:
+  row=next(x for x in roles[use['role']]['new_or_changed_definitions']if x['name']==use['name']);need(sources[use['role']][row['new_start']:row['new_end']]==body,'complete current displayed definition '+use['role']+'/'+use['name'])
+for group in c['module_groups']:
+ body=extract_group(group['display']['file'],group['display']['id'],group['bytes'],group['sha256'])
+ for use in group['uses']:need(sources[use['role']][use['start']:use['end']]==body,'complete current header/global/bootstrap span')
+role_maps=[]
+for name,role in roles.items():
+ current=sources[name];old=ancestors[name];at=0;newdefs={n.name:ast.get_source_segment(current.decode(),n).encode()+b'\n' for n in ast.parse(current).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))};olddefs={n.name:ast.get_source_segment(old.decode(),n).encode()+b'\n' for n in ast.parse(old).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+ for seg in role['segments']:
+  need(seg['start']==at and seg['end']>=at,'exact no-hole ordered byte coverage');piece=current[at:seg['end']];need((piece==bytes.fromhex(seg['hex']) if seg['kind']=='whitespace' else hashlib.sha256(piece).hexdigest()==seg['sha256']),'full exact segment hash');at=seg['end']
+  if seg['kind']=='whitespace':need(not piece.strip(),'omitted gap is only whitespace')
+  elif seg['kind']=='literal_ancestor_definition':need(old[seg['old_start']:seg['old_end']]==piece==olddefs[seg['name']]==newdefs[seg['name']],'literal reviewed ancestor definition '+name+'/'+seg['name'])
+  elif seg['kind']=='already_Root_01_shared_change':
+   row=shared[seg['id']];n=row['new'].encode();need(n[:len(piece)]==piece and not n[len(piece):].strip(),'exact current shared01 body '+seg['id'])
+   parentbody=olddefs.get(seg['name'],b'');o=row['old'].encode();need(o[:len(parentbody)]==parentbody and not o[len(parentbody):].strip(),'exact reviewed old shared01 body '+seg['id'])
+  else:need(seg['kind']in ('module','displayed_current_definition'),'only explicitly displayed module/changed definition')
+ need(at==len(current),'entire current Source covered')
+ literal={r['name']for r in role['literal_definitions']};changed={r['name']for r in role['new_or_changed_definitions']};need(literal|changed==set(newdefs) and not literal&changed,'all current definitions exactly classified')
+ need({r['name']for r in role['removed_definitions']}==set(olddefs)-set(newdefs),'all removed ancestor definitions explicit')
+ role_maps.append({'role':name,'Source':role['final'],'reviewed_ancestor':role['Root_reviewed_ancestor'],'literal_definition_count':len(literal),'changed_definitions':[{'name':r['name'],'Source_lines':r['new_lines'],'body_sha256':r['new_sha256'],'read':r.get('display',r.get('already_exposed_in_Root_read_01'))}for r in role['new_or_changed_definitions']]})
+control=raw(h['full_current_controls']);actualcontrol=local('/private/tmp/q11_large_end_spectrum/retained_imports/controls.py');need(control==actualcontrol and len(control)==14426,'full current controls whole exact Source')
+names=[n.value.args[0].value for n in ast.walk(ast.parse(control))if isinstance(n,ast.Expr)and isinstance(n.value,ast.Call)and isinstance(n.value.func,ast.Attribute)and isinstance(n.value.func.value,ast.Name)and n.value.func.value.id=='names'and n.value.func.attr=='append'];need(len(names)==13,'complete current13 controls present')
+remaining=sum(r['bytes']for r in h['remaining_code'])+h['current_module_code']['bytes'];need(remaining==70576 and remaining+len(control)==85002,'complete remaining view bytes include full controls')
+peerfile=Path('/private/tmp/q11_large_end_spectrum/independent_review/independent_review.json');adopterfile=Path('/private/tmp/q11_large_end_spectrum/adoption/independent_review/independent_review.json');peer=load(local(peerfile));adopter=load(local(adopterfile));theorem=doc(peer['theorem_peer'])
+need(peer['consumer']==h['final_sources']['consumer'] and peer['program']==h['final_sources']['supplier'] and peer['control_program']['sha256']==h['full_current_controls']['sha256'] and peer['status']=='SUPPORTED' and peer['blockers']==[],'scientific Source peer covers exact selected e202/be93/51c')
+need(adopter['program']==h['final_sources']['adopter'] and adopter['status']=='SUPPORTED' and adopter['blockers']==[],'separate later peer covers exact9605 adopter')
+need(theorem['status']=='SUPPORTED_CONDITIONAL_WRITTEN_THEOREM' and theorem['blockers']==[],'written theorem peer is conditional only')
+sh=load(local('/private/tmp/q11_large_end_spectrum/retained_imports/handoff.json'));sp=load(gzip.decompress(raw(sh['artifacts']['supplier_plan.json.gz'])));selector=doc(sh['current_selector']);hints=doc(sp['retained_hints'])
+unpaid=[i for a,b in selector['unresolved_position_runs']for i in range(a,b+1)]
+need(len(selector['original_paid_positions'])==217 and len(selector['accepted_new_paid_positions'])==3478 and len(unpaid)==106 and selector['unresolved_positions']==106,'current217+3478+106 ledger unchanged')
+need(sp['selected_positions']==unpaid and[r[0]for r in hints['records']]==unpaid,'new criterion genuinely selects exact106 currently unpaid rows')
+need(sum(r[3]is not None for r in hints['records'])==76 and sum(r[4]is not None for r in hints['records'])==0 and hints['verification_authority']is False,'76left0right stored hints are untrusted DATA only')
+need(not any(t.get('criterion')=='LARGE_END_SPECTRUM_V1'for t in selector['previous_method_attempts']),'no actual spectrum history/credit currently acquired')
+plan=load(local('/private/tmp/q11_large_end_spectrum/adoption/plan_template.json'));need(plan['expected_counts']is plan['inputs']is plan['supplier_result']is plan['strict_result']is None and plan['preparation_grants_Root_authority']is False,'actual adopter roster/results/counts unbound')
+for ref in list(seen.values()):raw(ref)
+summary={'schema':'INDEPENDENT_F004_SPECTRUM_COMPLETE_READ_MAP_V1','reviewer':'/root/journal_peer','status':'SUPPORTED_READ_MAP_ONLY','blockers':[],'checks':checks,'whole_files':list(seen.values()),'roles':role_maps,'remaining_views':{'headers_globals_bootstrap':h['current_module_code'],'consumer':h['remaining_code'][0],'supplier':h['remaining_code'][1],'adopter':h['remaining_code'][2],'full_current_controls':h['full_current_controls'],'remaining_bytes_including_controls':85002},'already_read_only_if_Root_confirms':h['Root_already_read_shared_01'],'no_unreviewed_intermediate_baselines':['e366','6498'],'controls':{'count':13,'names':names,'actual_execution':False},'peer_provenance':{'scientific':pin(peerfile,peerfile.read_bytes()),'adopter':pin(adopterfile,adopterfile.read_bytes()),'written_theorem':peer['theorem_peer'],'scientific_peer_says_adopter_not_yet_prepared':'Historical status superseded by separately pinned9605 adopter/peer; not a final missing-Source blocker.'},'current_DATA':{'baseline':217,'later_paid':3478,'unpaid':106,'selected_unpaid':106,'untrusted_left37_hints':76,'untrusted_right37_hints':0,'new_spectrum_paid_credit':0,'future_coverage_guaranteed':False},'scope':'Byte/AST/DATA read-map verification only. No represented code, matrix, word, scientific case, controls, helper, gate, S/W or Git action activated. Root full reading and all actual execution/release steps remain separate.'}
+(OUT/'read_map.json').write_bytes(can(summary))
+print(json.dumps({'status':summary['status'],'read_map':pin(OUT/'read_map.json',(OUT/'read_map.json').read_bytes()),'checks':checks,'files':len(seen),'remaining_bytes':85002,'changed_definition_counts':{r['role']:len(r['changed_definitions'])for r in role_maps},'literal_definition_counts':{r['role']:r['literal_definition_count']for r in role_maps}},sort_keys=True))

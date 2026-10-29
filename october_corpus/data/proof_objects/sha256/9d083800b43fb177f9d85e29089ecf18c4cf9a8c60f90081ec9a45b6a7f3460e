@@ -1,0 +1,33 @@
+from pathlib import Path
+import gzip,hashlib,json
+D=Path('/private/tmp/q11_large_end_spectrum/strict25_DATA');P=D.parent/'retained_imports'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+def write(p,v):
+ with p.open('xb')as f:f.write(can(v))
+ return ref(p)
+h=json.loads((D/'initial_handoff.json').read_bytes());pref=h['consumer_plan'];check(pref)
+plan=json.loads(gzip.decompress(Path(pref['path']).read_bytes()));check(plan['program'])
+for r in plan['inputs']:check(r)
+assert len(plan['inputs'])==78
+supplier=json.loads(Path(h['actual_supplier_summary']['path']).read_bytes());carrier=json.loads(Path(h['actual_carrier']['path']).read_bytes())
+assert plan['expected_positive_positions']==supplier['proposed_positive_positions']==[r[0]for r in carrier['records']] and len(carrier['records'])==25
+assert plan['records']==h['actual_carrier']==supplier['carrier'] and plan['selected_positions']==supplier['selected_positions']
+sp=json.loads(gzip.decompress((P/'supplier_plan.json.gz').read_bytes()))
+for k in ['context','selector','projection','spectrum_theorem','spectrum_review','spectrum_premises','theorem','theorem_review']:assert plan[k]==sp[k]
+controls=json.loads((P/'controls_report.json').read_bytes());assert controls['status']=='PASS' and controls['controls']==13 and controls['consumer']==plan['program']
+assert json.loads((P/'controls_guard/receipt.json').read_bytes())['status']=='PASS'
+review=json.loads((P/'consumer_Root_review_template.json').read_bytes());review.update(status='SUPPORTED',blockers=[],plan=pref,conditional_large_end_theorem_and_full_primary_premises_checked=True,
+ Root_Source_review=ref(P/'Root_source_review.json'),Root_theorem_and_premises_review=ref(P/'supplier_Root_review.json'),actual_controls_capture=ref(P/'controls_actual_capture.json'),actual_controls_report=ref(P/'controls_report.json'),
+ scope='Fresh independent supplied-word check only: exact25 actual rows and100 borrowed members, same106 unpaid original window and whole model/member premises. No supplier search or RREF is activated. All supplied37 OR19+4 end equations and involution/string relations must be evaluated afresh. No original or conjecture credit.',
+ read_paths_upper=83,physical_read_upper=6841640,matrix_products_upper=2502,expected_rows=25)
+rr=write(D/'consumer_Root_review.json',review)
+gate=json.loads((P/'consumer_Root_gate_template.json').read_bytes());gate.update(plan=pref,adopted=True,new_case_calls_authorized=True,Root_code_math_review=rr,control_report=h['actual_control_report'])
+gr=write(D/'consumer_Root_gate.json',gate);assert rr['bytes']<=32768 and gr['bytes']<=8192
+roster={r['path']:r for r in plan['inputs']}
+for r in [plan['program'],pref,rr,gr,h['actual_control_report']]:assert r['path']not in roster;roster[r['path']]=r
+bill=plan['program']['bytes']+2*sum(r['bytes']for r in roster.values());assert len(roster)==83 and bill<=6841640
+assert not Path(plan['output']).exists()
+print(json.dumps(dict(status='ROOT_FRESH_STRICT25_AUTHORITY',program=plan['program'],plan=pref,gate=gr,review=rr,physical_read_upper=bill,expected_rows=25)))

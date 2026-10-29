@@ -1,0 +1,53 @@
+"""Independently inspect Source text, negative DATA and actual captures; no reviewed code activation."""
+from pathlib import Path
+import ast,copy,hashlib,json,shlex,stat
+B=Path('/private/tmp/l026_generation_ip_append');O=B/'independent_review/actual_controls';checks=0;seen={}
+def ck(v,m):
+ global checks
+ checks+=1
+ if not v:raise ValueError(m)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pin(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(r):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();s=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ ck(p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and s(a)==s(z)and pin(p,b)==r,'whole stable body');seen[str(p)]=r;return b
+def doc(r):return json.loads(raw(r))
+def rd(n):return doc(pin(B/n))
+source=pin(B/'validate.py');ck(source['sha256']=='53b505596b1c1545b80fc5753ed2a1d542abd50069458432858ef16d84a8f5b9','exact reviewed53b505 Source');raw(source)
+control=pin(B/'Root_metadata_controls.py');cb=raw(control);ast.parse(cb);ck(control['sha256']=='e7a5b87c36335bdde108559f62a6db505eb93dca37cb6403bd2f3be4b51203af','fully read exact control Source')
+base=rd('bound_plan.json');br=pin(B/'bound_plan.json');ck(br['sha256']=='fa44affcc0755269749ef19fb753ff943c3464a6d9afb7ca75e0ee010321dcbc','exact bound53b subject')
+expected={}
+def add(name,fn):
+ p=copy.deepcopy(base);fn(p);expected[name]=p
+def index(p,i):p['positive_free_indices'][0]=i;p['strict_runs'][0]['free_index']=i
+add('new_index_already_GENERATING',lambda p:index(p,1));add('new_index_already_NEGATIVE',lambda p:index(p,16))
+def dup(p):p['positive_free_indices'][1]=21;p['strict_runs'][1]['free_index']=21
+add('duplicate_new_index',dup);add('empty_prior_generation_receipts',lambda p:p.update(prior_generation_adoptions=[]));add('duplicate_prior_generation_receipt',lambda p:p['prior_generation_adoptions'].append(p['prior_generation_adoptions'][0]));add('wrong_current_negative_frontier',lambda p:p.update(current_negative_adoption=p['additional_subset_adoption']));add('wrong_total_generation_count',lambda p:p['expected_counts_if_Root_adopts'].update(total_GEN=8));add('wrong_original_membership_role',lambda p:p['roles'].pop('operand_premises'));add('wrong_existing_IP_theorem_pin',lambda p:p['rank3_IP_theorem'].update(sha256='0'*64));add('strict_return_from_another_original_row',lambda p:p['strict_runs'][0]['strict'].update(result=p['strict_runs'][1]['strict']['result']))
+realref=base['strict_runs'][0]['durable_evidence'];m=doc(realref);mock=copy.deepcopy(m);f=mock['files'][0];field='retained'if'retained'in f else'preserved';f[field]['sha256']='0'*64;mock['synthetic_negative_control_never_authority']=True
+mockref=pin(B/'metadata_controls/bad_retained_hash_manifest.json');ck(doc(mockref)==mock,'full one-field retained-hash mock plus explicit synthetic marker')
+def bad(p):
+ for e in p['strict_runs']:e['durable_evidence']=mockref
+ p['inputs']=sorted([r for r in p['inputs']if r!=realref]+[mockref],key=lambda r:r['path'])
+add('wrong_retained_body_hash',bad)
+for name,p in expected.items():ck(rd('metadata_controls/'+name+'.json')==p,'whole negative mutation exactly '+name)
+report=rd('metadata_controls/report.json');ck(report['status']=='PASS'and report['controls']==len(expected)==11 and report['program']==source and report['base_plan']==br and report['subprocess_attempts']==[]and report['scientific_or_point_word_group_calls']==0 and report['publication_authority']is False,'exact eleven current-subject negative report')
+ck({r['name']for r in report['results']}==set(expected)and all(r['status']=='REFUSED'and r['exception']=='ValueError'for r in report['results']),'all exact eleven actual refusals')
+ck(report['aggregate_metadata_read_bytes']==21469709 and report['aggregate_metadata_read_bytes']<128*2**20,'actual aggregate metadata read bill')
+def closed(prefix,child):
+ cap=rd(prefix+'_actual_capture.json');receipt=rd(prefix+'_guard/receipt.json');started=rd(prefix+'_guard/started.json');stdout=raw(pin(B/(prefix+'_guard/stdout.log')));stderr=raw(pin(B/(prefix+'_guard/stderr.log')));frames=cap['all_genuine_api_frames'];a=cap['issued_argv']
+ ck(cap['root']==cap['actor']=='/root'and cap['actual_tool']['exit_code']==0 and frames[-1]['exit_code']==0 and 'session_id'not in frames[-1]and cap['full_initial_tool_return']==frames[0]and cap['full_tool_return']==frames[-1],'complete genuine actual SDK')
+ ck(a==cap['child_argv']and shlex.split(cap['issued_command'])==a and shlex.split(cap['issued_tool_arguments']['cmd'])==a and a.count('--')==1 and a[a.index('--')+1:]==child==receipt['command']==started['command'],'exact child ABI joins')
+ ck(a[:a.index('--')]==['/Users/sasha/.venvs/global/bin/python','-E','-B','/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py','--volume','/Users/sasha/medusa/research/leemans','--output',str(B/(prefix+'_guard')),'--rss-cap-mib','256','--timeout','140'],'unchanged256MiB140s outer')
+ ck(receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['limits']==started['limits']and receipt['limits']['total_rss']==256*2**20 and receipt['limits']['wall_seconds']==140 and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]and receipt['logs']==dict(stdout=len(stdout),stderr=len(stderr)),'actual complete guard/log/known cleanup')
+ ck(json.loads(''.join(f['output']for f in frames))==dict(status='PASS',stop='RETURNED',receipt=str(B/(prefix+'_guard/receipt.json'))),'terminal genuine SDK supervisor output')
+ return json.loads(stdout),pin(B/(prefix+'_actual_capture.json')),pin(B/(prefix+'_guard/receipt.json'))
+controlout,controlcap,controlreceipt=closed('metadata_controls',['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(B/'Root_metadata_controls.py')]);ck(controlout['report']==pin(B/'metadata_controls/report.json')and controlout['controls']==11 and controlout['scientific_calls']==0,'actual control stdout report pin')
+validation,validationcap,validationreceipt=closed('validation',['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(B/'validate.py'),'--self-sha256',source['sha256'],'--plan',str(B/'bound_plan.json'),br['sha256'],'--out',str(B/'validated_metadata')]);outputs=validation['outputs'];ck(set(outputs)=={'detail.json','partition.json','validation.json'}and validation['Root_adoption']is False and validation['new_scientific_calls']==0,'actual metadata output ABI no adoption')
+for name,r in outputs.items():ck(r==pin(B/'validated_metadata'/name),'full actual metadata output pin');raw(r)
+v=rd('validated_metadata/validation.json');refs={r['path']:r for r in base['inputs']+[source,br]};ck(v['whole_actual_inputs']==[refs[k]for k in sorted(refs)]and len(refs)==v['physical_paths']==130,'complete actual CLI input roster')
+ck(v['physical_read_bytes']==source['bytes']+2*sum(r['bytes']for r in refs.values())==3852770,'literal first/final/bootstrap actual read bill')
+for r in refs.values():raw(r)
+# The following coverage restrictions are observations, not new controls.
+r=dict(schema='INDEPENDENT_L026_GEN_APPEND_ACTUAL_CONTROLS_AND_CLI_CLOSURE_REVIEW_V1',status='SUPPORTED_ACTUAL_ELEVEN_CONTROLS_AND_POSITIVE_CLI_ONLY',reviewer='/root/journal_peer',Source_blockers=[],program=source,plan=br,control_program=control,control_report=pin(B/'metadata_controls/report.json'),actual_controls=controlcap,control_guard=controlreceipt,actual_validation=validationcap,validation_guard=validationreceipt,actual_metadata_outputs=outputs,actual_CLI_complete_roster_paths=130,actual_CLI_complete_read_bytes=3852770,checks=checks,whole_files_hashed=len(seen),coverage=list(expected),coverage_precision=['Eleven negative plans call construct directly; they do not exercise main exact-roster equality, final rehash, or CLI output-directory absence','wrong_retained_body_hash changes retained.sha alone; it proves original/retained pair equality refusal, not a physical wrong-body digest branch','wrong_original_membership_role and wrong_IP_pin refuse through inherited whole receipt/role joins; actual named-G membership remains imported','Current prior_generation_adoptions has one412d receipt and one current NEG extension. Future multiple-positive-receipt branches are statically reviewed, not claimed exercised by current actual data'],additional_Root_CLI_roster_refusal=None,actual_publication_receipt=None,Root_authority_granted=False,reviewer_Source_helper_control_science_state_or_gate_activations=0,S_W_Git_writes=0,qualification='Fresh independent complete Source-text/AST, JSON mutation, whole-body and SDK/guard/roster inspection only. OldSource peer a9 remains a static baseline and is not retagged. Positive actual metadata is unadopted. Root is acquiring a separately captured twelfth CLI roster-omission refusal; an immutable later addendum must bind it before claiming that coverage. No SCI rerun, novelty, census, Original or publication credit.')
+p=O/'review.json';p.write_bytes(can(r));print(json.dumps(dict(review=pin(p),checks=checks,whole_files_hashed=len(seen),status=r['status'])))

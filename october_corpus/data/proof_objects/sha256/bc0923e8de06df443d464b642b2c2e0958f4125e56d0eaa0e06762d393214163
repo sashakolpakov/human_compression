@@ -1,0 +1,62 @@
+"""Independent stdlib DATA/cap audit, with no represented Source/helper/codec activation."""
+import hashlib,json,stat
+from pathlib import Path
+T=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');D=T/'independent_review/invoice';seen={};checks=0
+
+def need(v,m):
+ global checks
+ checks+=1
+ if not v:raise AssertionError(m)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def pin(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(r):
+ p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and sig(a)==sig(z)and pin(p,b)==r,'complete stable ordinary body '+str(p));seen[str(p)]=r;return b
+def local(p):return raw(pin(p))
+def doc(r):return json.loads(raw(r))
+h=json.loads(local(T/'handoff.json'));p=doc(h['parameters']);a=doc(h['allocation']);i=doc(h['invoice']);b=doc(i['role_path_bills']);review=json.loads(local(T/'Root_allocation_review.json'))
+need(len(a['roles'])==len(b['rows'])==49 and [r['index']for r in b['rows']]==list(range(49)),'complete literal49 ordered bill namespace')
+rolechecks=[];future=[]
+for n,(r,bill)in enumerate(zip(a['roles'],b['rows'])):
+ path=Path(r['path']);name=str(path);need(path.is_absolute()and name==str(path)and '..'not in path.parts and len(name)<=384 and all(c.isascii()and(c.isalnum()or c in '/_.-')for c in name),'safe literal active role path')
+ row=len(can([39999,path.name,2147483648,'f'*64]));prefix=len(can(str(path.parent)+'/'))+1
+ need(bill['index']==n and bill['path']==name and bill['role']==r['role']and bill['encoded_row']==row and bill['new_prefix']==prefix and bill['combined']==row+prefix<=256 and bill['path_chars']==len(name),'independent exact role/row/prefix charge '+r['role'])
+ if r['actual_reference']is not None:
+  need(r['actual_reference']['path']==name and r['actual_reference']['bytes']<=r['maximum_bytes'],'actual role fits cap');raw(r['actual_reference'])
+ elif path.exists():
+  actual=pin(path);raw(actual);need(actual['bytes']<=r['maximum_bytes'],'newly built Native role fits unchanged prospective cap');rolechecks.append(dict(role=r['role'],actual=actual,cap=r['maximum_bytes']))
+ else:need(r['unacquired_future_reference']is True,'future unacquired role stays explicit');future.append(r['role'])
+need(max(r['combined']for r in b['rows'])==b['maximum_combined']==199 and max(r['path_chars']for r in b['rows'])==b['max_path_chars']==106 and b['per_role_majorant']==256,'complete49bill maxima')
+active=sum(r['maximum_bytes']for r in a['roles']);need(active==i['active_role_caps']==20381472,'all49 maximum-byte roles summed')
+closure=913004+8324*3+2048*476+49*256+16384+1024
+need(closure==sum(i['tight_closure_components'].values())==i['tight_closure_upper']==1942776 and i['closure_role_cap']-closure==i['closure_margin']==12032,'independent tight literal closure and margin')
+fivecaps=sum(r['maximum_bytes']for r in a['roles']if r['role'].startswith('Reader_preparation:'));five=fivecaps-i['closure_margin']
+need(fivecaps==i['five_role_cap_sum']==3135160 and five==i['five_preparer_output_upper']==3123128 and 3*2**20-five==i['producer_margin']==22600,'complete five-role preparer output cap')
+need(485621648+16*2**20+active==i['current_domain_bytes_upper']==522780336 and 8324+2048+49==i['current_domain_files_upper']==10421 and i['current_domain_limits']==[2**31,40000],'complete old8324+outputs+49 current-domain bounds')
+preserve=2*16*2**20+active+4*2**20+7*2**20
+need(preserve==i['preservation_bytes_upper']==65470240 and 64*2**20-preserve==i['preservation_margin']==1638624,'all Native/Reader outputs,active roles,closed evidence and logical parents preserved under64MiB')
+# Whole pinned retained capacity proofs supply unchanged codec/framing constants; these are not re-executed.
+proof=doc(i['prior_proof_refs'][0]);mapproof=doc(i['prior_proof_refs'][1]);parent=doc(proof['parent_invoice']);tree=doc(a['retained_complete_tree_bounds'])
+need(i['preserved_map_caps']['deterministic_raw_upper']==mapproof['complete_physical_upper']==1899907 and i['preserved_map_caps']['logical_upper']==mapproof['complete_logical_upper']==5562195 and mapproof['new_mapping_allocation']==3072 and mapproof['new_mapping_scope']['active_roles']==49,'full preserved-map physical/logical proof caps reused literally')
+delta=p['program']['bytes']-p['data_lineage']['old_selected_caller']['bytes'];need(delta==22897 and active==parent['active_role_caps_sum']+delta and preserve==parent['new_preservation']['upper_bytes']+delta and i['current_domain_bytes_upper']==parent['current_Reader_domain_upper']['bytes']+delta,'whole caller Source delta charged in every affected allocation')
+for name in ('physical_Native_wire_upper','physical_Reader_wire_upper','physical_preflight_upper','physical_request_upper'):
+ need(i[name]<2**21,'all unchanged2MiB future physical roles fit static majorant')
+need(i['physical_Native_wire_upper']==parent['physical_Native_wire']['upper_bytes']==2085661 and i['physical_Reader_wire_upper']==parent['physical_Reader_wire']['upper_bytes']==2080171 and i['physical_preflight_upper']==parent['physical_preflight_wire']['upper_bytes']==2088733 and i['physical_request_upper']==parent['physical_request']['upper_bytes']==1987609,'all inherited physical majorants remain unchanged')
+need(i['logical_Native_upper']==parent['logical_jobs']['Native_upper']==2319529 and i['logical_Reader_upper']==parent['logical_jobs']['Reader_upper']==3368105 and i['logical_job_parent_caps']=={'Native':3*2**20,'Reader':4*2**20}and i['logical_decoder_cap']==8*2**20,'raw logical parents are distinct from2MiB physical wires')
+job=json.loads(local(T/'native_job/job.json'));case=json.loads(local(T/'native_job/case.json'));binding=json.loads(local(T/'native_job/native_binding.json'));constructor=json.loads(local(T/'constructor_write_guard/stdout.log'))
+for r in constructor['rows']:raw(r)
+need(constructor['output_files']==11 and constructor['output_bytes']==sum(r['bytes']for r in constructor['rows'])==4455134 and constructor['science_calls']==0 and constructor['Root_job_release_UNACQUIRED']is True,'actual11-role constructor is file-only')
+jobref=constructor['job'];need(jobref['bytes']==2274439<=i['logical_Native_upper']<3*2**20,'actual raw Native job fits logical parent cap only')
+need(sum(r['bytes']for r in job['declared_inputs'])==constructor['current_input_bytes']==492114808<i['current_domain_bytes_upper'] and len(job['declared_inputs'])==constructor['current_inputs']==8347<i['current_domain_files_upper'],'built actual current domain under complete future bound')
+need(len(job['source_inputs'])==1015 and sum(r['bytes']for r in job['source_inputs'])==60113534<128*2**20 and len(binding['source_inputs'])==1024,'actual functional/broad source capacities')
+out=Path(p['output']);need(out.is_absolute()and out.is_relative_to(T)and len(str(out))<=384 and str(out)==str(out.resolve(strict=False))and not out.exists()and all(c.isascii()and(c.isalnum()or c in '/_.-')for c in str(out)),'current Native output absent,canonical,fresh,safeASCII and inside declaredT prefix')
+need(job['output']==job['native_output']==case['output']==job['producer_reservation']['output']==str(out),'all actual Native output roles exactly joined')
+reservation=job['producer_reservation'];need(reservation['maximum_path_bytes']==384 and reservation['maximum_write_objects']==2048 and a['Native_outputs']=={'alphabet':'ASCII alphanumeric or /_.-','bank_complete_file_plus_directory_entries':2049,'complete_file_bytes':16*2**20,'maximum_objects_including_directories':2048,'maximum_path_bytes':384,'whole_descriptor_bytes':512},'actual producer reservation preserves output object/path and whole-bank allocation')
+need(case['worker_seconds']==60 and case['max_actions']==64 and case['refinement_seconds']==5 and case['terminal_seconds']==1 and binding['wire_inputs']==[] and job['new_census_credit']==0 and job['old_checkpoint_sequence']==10997,'case science bounds and credit unchanged')
+need(p['data_lineage']['new_Native_or_Reader_Root_release']is None and not(T/'native_Root_review.json').exists()and not(T/'native_request.json').exists(),'fresh Native/Owner launch authority still unacquired')
+for r in list(seen.values()):raw(r)
+observations=dict(schema='INDEPENDENT_F009_SHARED_PIN_INVOICE_OBSERVATIONS_V1',reviewer='/root/journal_peer/f009_invoice',checks=checks,whole_files=list(seen.values()),role_bills=49,maximum_literal_role_plus_prefix=199,maximum_role_path=106,active_role_caps=active,tight_closure_upper=closure,five_preparer_output_upper=five,preservation_upper=preserve,current_domain_bytes_upper=i['current_domain_bytes_upper'],current_domain_files_upper=i['current_domain_files_upper'],built_Native_roles=rolechecks,unacquired_future_roles=future,new_paid_or_checkpoint_credit=0,represented_Source_helper_Native_Reader_control_codec_or_packer_activations=0,S_W_Git_or_Root_gate_mutations=0,Root_authority=False)
+(D/'observations.json').write_bytes(can(observations))
+result=dict(schema='INDEPENDENT_F009_SHARED_PIN_INVOICE_REVIEW_V1',reviewer='/root/journal_peer/f009_invoice',status='SUPPORTED_DATA_CAPACITY_ONLY',blockers=[],parameters=h['parameters'],allocation=h['allocation'],invoice=h['invoice'],role_path_bills=i['role_path_bills'],observations=pin(D/'observations.json'),findings=['All49 literal role+prefix bills independently recomputed:maximum199<=256;all paths safeASCII<=106<=384. Full49 bytecap sum20,381,472.','Tight closure1,942,776 within1,954,808;five outputs3,123,128 within3MiB;preservation65,470,240 within64MiB;full current domain522,780,336B/10,421files within2GiB/40,000. Caller22,897-byte Source delta is charged.','All eleven built Native DATA bodies fit their declared individual/logical limits. Raw job2,274,439 is a logical parent,not the future2MiB wire. Actual current descriptor domain492,114,808B/8,347files is within the complete prospective bound.','Actual Native destination is canonical,fresh,absent,safeASCII and identical across parameters,job,case and reservation. Original2048object/384path/16MiB complete output-bank allocation and64actions/60worker bounds remain.'],restrictions=['Read-only stdlib DATA/hash/arithmetic audit;no represented Source/helper/codec/Native/Reader/control or packer activation.','Packed wire forecast/write and exact physical inverse still owed as of this audit. No original-case namespace,RSS,time,scientific success or checkpoint fit claim.','All future Reader/Native Root reviews,Owner requests/gates remain unacquired;no Native launch or new checkpoint credit granted.'],Root_authority=False)
+(D/'review.json').write_bytes(can(result));print(json.dumps(dict(review=pin(D/'review.json'),observations=pin(D/'observations.json'),checks=checks),sort_keys=True))

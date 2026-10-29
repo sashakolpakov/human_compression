@@ -1,0 +1,99 @@
+"""Independent stdlib Source-as-data audit. Never imports or executes reviewed code."""
+import ast,hashlib,json,stat,struct
+from pathlib import Path
+B=Path('/private/tmp/l026_generation_ip_append');OUT=B/'independent_review'
+checks=0;seen={};issues=[]
+def ck(x,m):
+ global checks
+ checks+=1
+ if not x:raise ValueError(m)
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def body(r):
+ ck(type(r)is dict and set(r)=={'path','bytes','sha256'},'complete descriptor')
+ p=Path(r['path']);a=p.lstat();ck(p.is_absolute()and p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'ordinary canonical body')
+ b=p.read_bytes();z=p.lstat();sig=lambda v:(v.st_dev,v.st_ino,v.st_mode,v.st_nlink,v.st_size,v.st_mtime_ns,v.st_ctime_ns)
+ ck(sig(a)==sig(z)and ref(p,b)==r,'whole stable descriptor '+str(p));ck(seen.get(str(p),r)==r,'one body per path');seen[str(p)]=r;return b
+def doc(r):return json.loads(body(r))
+def local(n):
+ p=B/n;b=p.read_bytes();r=ref(p,b);body(r);return r,json.loads(b)
+def defs(b):
+ ls=b.splitlines(keepends=True);return {n.name:(n,b''.join(ls[n.lineno-1:n.end_lineno])) for n in ast.parse(b).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+source=ref(B/'validate.py',(B/'validate.py').read_bytes());sb=body(source)
+invr,inv=local('source_inverse.json');pb=body(inv['parent']);ck(inv['selected']==source,'inverse selected')
+ck(inv['whole_parent_source'].encode()==pb and inv['whole_selected_source'].encode()==sb,'full two-way inverse strings')
+D=defs(sb);P=defs(pb);literal=[k for k in D if k in P and D[k][1]==P[k][1]];changed=[k for k in D if k in P and D[k][1]!=P[k][1]]
+ck(literal==inv['literal_definitions'] and len(literal)==14,'all14 exact literal definitions')
+ck(set(changed)==set(inv['changed_old_definitions'])=={'retention','generation_run','ip_composition','construct','main'},'exact five changed definitions')
+ck(set(D)-set(P)=={'accepted_ledger'} and not(set(P)-set(D)),'one new definition no deletion')
+hr,h=local('read_aid/handoff.json');cr,c=local('read_aid/03_INVERSE_COVERAGE.json')
+ck(h['source']==source and h['parent']==inv['parent'] and c['complete_inverse']==invr,'read-aid subjects')
+for r in h['views']:body(r)
+for row in c['old_definition_coverage']:
+ k=row['definition'];n,b=D[k];o,a=P[k]
+ ck(row['current_lines']==[n.lineno,n.end_lineno]and row['parent_lines']==[o.lineno,o.end_lineno],'exact line span')
+ ck(row['current_sha256']==hashlib.sha256(b).hexdigest()and row['parent_sha256']==hashlib.sha256(a).hexdigest()and row['byte_literal']==(a==b),'exact span hashes')
+# New module differs only in attributed header and removal of obsolete ALLOWED tuple.
+ck(len(D)==20 and len(P)==19,'definition census')
+for n in ast.walk(ast.parse(sb)):
+ if isinstance(n,(ast.Import,ast.ImportFrom)):
+  names=[a.name.split('.')[0]for a in n.names]if isinstance(n,ast.Import)else[n.module.split('.')[0]]
+  ck(set(names)<=set('time argparse hashlib json math os resource stat struct sys pathlib'.split()),'stdlib-only module imports')
+ if isinstance(n,ast.Call)and isinstance(n.func,ast.Name):ck(n.func.id not in {'exec','eval','compile','__import__'},'no dynamic activation')
+qr,q=local('binding_request_UNBOUND.json');rr,recipe=local('actual_manifest_binding_recipe.json');pr,p=local('preservation_two_manifests.json')
+ck(q['program']==source and q['inputs']is None and q['Root_authority_granted']is False,'unbound noauthority request')
+ck(q['positive_free_indices']==[21,23,28,30]and len(q['strict_runs'])==4,'exact four fresh indices')
+ck(all(r['durable_evidence']is None for r in q['strict_runs'])and recipe['actual_history_manifest']is None and recipe['actual_science_manifest']is None,'future manifests not invented')
+for r in recipe['known_complete_descriptor_inputs']:
+ if Path(r['path']).exists():body(r)
+# Independently hash all389 actual original history bodies; new destinations stay future DATA.
+new={};existing={};orig=set();ret=set()
+for row in p['files']:
+ o=row['original'];t=row['retained'];body(o);orig.add(o['path']);ret.add(t['path'])
+ ck(o['bytes']==t['bytes']and o['sha256']==t['sha256'],'whole history identity')
+ if Path(t['path']).exists():body(t);existing[t['path']]=t
+ else:new[t['path']]=t
+for r in p['S_input_reuses']:body(r)
+ck(len(orig)==389 and len(new)==209 and sum(r['bytes']for r in new.values())==939559,'exact current retention counts')
+# Old typed receipts and original row domain; no geometry or action evaluation.
+raw=body(q['witnesses']);fr=body(q['original_free_records']);ng=body(q['old_negative_records'])
+free_rows=list(struct.iter_unpack('<IH',fr));old_rows=list(struct.iter_unpack('<IH',ng))
+ck(len(raw)==462528 and len(free_rows)==28908 and len(old_rows)==17688,'whole original domain extents')
+ck(sum(m for _,m in old_rows)==6884658 and sum(m for _,m in free_rows)==29601792,'exact original product masses')
+for j,(o,m)in enumerate(free_rows):
+ a,partner,v,x,y,z=struct.unpack_from('<IIHHHH',raw,16*j);ck(a==o and v==m==1024 and len({x,y,z})==3,'all original witness free joins')
+neg=doc(q['current_negative_adoption']);gen=doc(q['prior_generation_adoptions'][0]);sub=doc(q['additional_subset_adoption']);first=doc(q['prior_subset_adoption'])
+nd=doc(neg['validated_detail']);np=doc(neg['validated_partition']);gd=doc(gen['validated_detail']);gp=doc(gen['validated_partition'])
+ck(neg['prior_negative_adoption']==q['additional_subset_adoption']and nd['whole_prior_negative_acceptance']==sub,'whole negative receipt chain')
+ck(neg['new_facts']==nd['new_facts']==np['new_NEG_rows']and np['unchanged_old_subset_rows']==first['new_facts']+sub['new_facts'],'all prior NEG rows restored')
+ck(gen['generation_facts']==gd['new_generation_facts']==gp['exact_new_original_owner_rows'],'prior GEN whole accepted rows restored')
+ni={f['free_index']for f in first['new_facts']+sub['new_facts']+neg['new_facts']};gi={f['free_index']for f in gen['generation_facts']}
+ck(len(ni)==24 and gi=={1,3,10}and not ni&gi,'all old categories disjoint')
+ck(neg['unchanged_generation_adoption']==q['prior_generation_adoptions'][0]and neg['unchanged_GENERATING_count']==neg['unchanged_separate_rank3_IP_count']==3,'negative historical GEN snapshot')
+selected=q['positive_free_indices'];ck(not set(selected)&(ni|gi),'fresh four not previously credited')
+owner_set=set();run_observations=[]
+for run in q['strict_runs']:
+ i=run['free_index'];s=run['strict'];cp=doc(s['plan']);gate=doc(s['gate']);carrier=doc(s['carrier']);result=doc(s['result']);ex=run['execution']
+ cap=doc(ex['capture']);receipt=doc(ex['receipt']);started=doc(ex['started']);stdout=json.loads(body(ex['stdout']));body(ex['stderr']);review=doc(gate['Root_code_math_review'])
+ ck(cp['selected_free_indices']==cp['expected_positive_free_indices']==[i]and cp['roles']==q['roles']and cp['records']==s['carrier'],'strict singleton role/carrier identity')
+ ck(result['program']==q['supported']['consumer']and result['kernel']==q['supported']['kernel']and result['plan']==s['plan']and result['Root_source_gate']==s['gate'],'unchanged strict subject')
+ ck(cap['root']=='/root'and cap['actual_tool']['exit_code']==0 and cap['all_genuine_api_frames'][-1]['exit_code']==0 and 'session_id'not in cap['all_genuine_api_frames'][-1],'complete genuine SDK')
+ ck(cap['issued_argv']==cap['child_argv']and cap['issued_argv'][cap['issued_argv'].index('--')+1:]==receipt['command']==started['command'],'exact actual command closure')
+ ck(receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['limits']==started['limits']and receipt['limits']['wall_seconds']==150 and receipt['limits']['total_rss']==128*2**20 and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[],'closed actual128MiB150s pass')
+ ck(stdout['output']==s['result']and stdout['verified_records']==1 and result['status']==stdout['status']=='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES','strict stdout whole result join')
+ ck(result['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0 and result['Root_adoption_owed']is True,'strict IP0 not retagged')
+ row=carrier['records'][0];v=result['verified_generation_records'][0];record=raw[16*i:16*i+16];o,partner,m,x,y,z=struct.unpack('<IIHHHH',record)
+ ck(row['free_index']==v['free_index']==i and row['owner']==v['owner']==o and row['witness_row_sha256']==v['witness_row_sha256']==hashlib.sha256(record).hexdigest()and m==v['original_product_mass']==1024,'exact fresh original row identity')
+ ck(o not in owner_set,'fresh distinct original owners');owner_set.add(o)
+ for name,prime in [('prime11',11),('prime13',13)]:
+  z=row[name];ck(len(z['cycle'])==len(set(z['cycle']))==prime and 1<=len(z['word'])<=64 and all(type(t)is int and t in[-2,-1,1,2]for t in z['word']),'literal complete prime-cycle headers')
+ ck(result['actual_direct_signed_word_and_every_closing_edge_checked']is True and result['same_known_G_seed_and_G_normal_in_A_membership_route_imported']is True,'actual result closing edges and membership route')
+ ck(review['status']=='SUPPORTED'and review['named_G_membership_bridge_action_and_two_fibre_imports_checked']is True,'original Root math review')
+ run_observations.append(dict(free_index=i,owner=o,result=s['result'],capture=ex['capture'],strict_IPcredit=0))
+ck(owner_set=={23,25,31,33},'four exact original owners')
+expected=dict(previous_NEG=17712,previous_GEN=3,new_GEN=4,total_GEN=7,separate_IP=7,remaining=28908-24-7,remaining_mass=29601792-1024*(24+7))
+ck(q['expected_counts_if_Root_adopts']==expected and expected['remaining']==28877 and expected['remaining_mass']==29570048,'complete future counts and mass')
+known=recipe['known_complete_descriptor_inputs'];ck(len(known)==127 and sum(r['bytes']for r in known)==1539834,'actual known validator invoice')
+upper=source['bytes']+2*(1539834+2*2**21+source['bytes']+131072)
+ck(upper<64*2**20 and 127+2+1<=512,'validator complete first-final/bootstrap invoice')
+result=dict(schema='INDEPENDENT_L026_GENERIC_GEN_APPEND_SOURCE_DATA_REVIEW_V1',reviewer='/root/journal_peer',status='SUPPORTED_SOURCE_AND_UNBOUND_DATA_ONLY',blockers=[],program=source,parent=inv['parent'],complete_inverse=invr,read_aid=hr,request=qr,two_manifest_selection=pr,binding_recipe=rr,literal_definitions=literal,changed_definitions=changed,new_definition='accepted_ledger',whole_files_hashed=len(seen),checks=checks,fresh_strict_runs=run_observations,conditional_counts=expected,validator_complete_read_upper=upper,validator_future_path_upper=130,history_copy_path_requirement=dict(original_paths=len(orig),retained_paths=len(ret),complete_union=len(orig|ret),declared_single_invocation_cap=p['limits']['path_cap'],requires_different_bounded_copy_strategy=True),pending=['Actual history and strict-family retained manifests, full bound metadata plan and exact roster','Fresh Root Source/math review and Root-only actual metadata validation','Actual output peer, durable metadata retention and separate Root publication'],restrictions=dict(reviewed_Source_helper_control_science_state_codec_or_gate_activations=0,S_W_Git_writes=0,Root_authority_granted=False,new_census_or_adoption_credit=0),mathematics='Borrowed complete simple-Fi22 maximal11/13 criterion and existing0b940 rank3 IP theorem. d0 in G plus G normal A puts bridge D conjugates and original product marks a,b,c in G; strict R=<ab,bc>=G gives R<=K=<a,b,c><=G, so K=G. Nonidentity involutions, distinct commuting endpoints, original middle class/two-fibre action and named-simple/full-Aut/Out2/Reader/H=B premises remain imported. IP is separate theorem composition, every strict IP0 stays unchanged. No novelty, reversal, other endpoint, complete-window or census conclusion.',qualification='All new Source bytes read directly, full inverse and all14 literal definitions checked independently. Current actual four strict JSON/SDK/guard/row joins checked without re-evaluating points or words. Existing model/member/classification and historical Root-adoption authority are imported, not reproved. History selection has741 physical paths if all originals and targets opened in one invocation; its512 cap therefore needs an honest later strategy. This does not block the narrow validator Source with130 future paths. No output or future manifest was invented.')
+out=OUT/'independent_review.json';out.write_text(json.dumps(result,sort_keys=True,indent=2)+'\n');print(json.dumps(dict(review=ref(out,out.read_bytes()),status=result['status'],checks=checks,whole_files_hashed=len(seen),validator_read_upper=upper,history_union_paths=len(orig|ret))))

@@ -1,0 +1,37 @@
+{
+  "utc": "2026-10-29T03:01:31.340570+00:00",
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "from pathlib import Path\nimport hashlib,json,os,stat,time\nN=Path('/private/tmp/f009_continuation/from_10997/shared_pin_transport');READ=0;PATHS=set()\ndef can(d):return(json.dumps(d,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\\n').encode('ascii')\ndef pin(p):\n global READ\n b=p.read_bytes();READ+=len(b);PATHS.add(str(p));return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())\ndef raw(p):\n global READ\n b=p.read_bytes();READ+=len(b);PATHS.add(str(p));assert READ<=2**31 and len(PATHS)<=40000;return b\ndef whole(r,allow=False):\n global READ\n p=Path(r['path']);a=p.stat();la=p.lstat();assert p.is_absolute() and (p.resolve(strict=True)==p or allow) and stat.S_ISREG(a.st_mode) and a.st_size==r['bytes'];h=hashlib.sha256();n=0\n with p.open('rb')as f:\n  b=os.fstat(f.fileno())\n  for x in iter(lambda:f.read(2**20),b''):h.update(x);n+=len(x)\n  c=os.fstat(f.fileno())\n sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)\n assert sig(a)==sig(b)==sig(c)==sig(p.stat()) and sig(la)==sig(p.lstat()) and n==r['bytes'] and h.hexdigest()==r['sha256'];READ+=n;PATHS.add(str(p));assert READ<=2**31 and len(PATHS)<=40000\ndef doc(p,sha):\n r=pin(p);assert r['sha256']==sha;whole(r);return json.loads(raw(p)),r\nj,jr=doc(N/'reader_job/job.json','536cad58b3af4ed4244631b39d9a875365f5ac72a7a679842a9ac6e72d427ddd');w,wr=doc(N/'reader_job/job_complete_rows.json','815b0eb3cd8e7704f03086e23dfee077aff402ffa7694a97e2853e8c3de1a481');assert wr['bytes']==1065199<2*2**20 and jr['bytes']==2328254<4*2**20\nt=w.pop('Root_Declared_rows_reference');prefix=t['prefixes'];assert prefix==sorted(set(prefix));rows=[dict(path=prefix[i]+name,bytes=size,sha256=sha)for i,name,size,sha in t['rows']];assert [r['path']for r in rows]==sorted(set(r['path']for r in rows));w['declared_inputs']=rows;assert len(can(w))==t['logical_bytes'] and hashlib.sha256(can(w)).hexdigest()==t['logical_sha256'];t=w.pop('Root_Source_rows_reference');inds=t['indices'];assert all(type(i)is int for i in inds) and inds==sorted(set(inds));sources=[rows[i]for i in inds];assert hashlib.sha256(can(sources)).hexdigest()==t['Source_rows_sha256'] and hashlib.sha256(can(rows)).hexdigest()==t['declared_rows_sha256'];w['source_inputs']=sources;assert w==j and can(w)==raw(N/'reader_job/job.json') and len(can(w))==t['logical_bytes'] and hashlib.sha256(can(w)).hexdigest()==t['logical_sha256']\nassert j['role']=='reader' and j['old_checkpoint_sequence']==10997 and j['output']==str(N/'reader_output') and not Path(j['output']).exists();assert j['program']['sha256']=='179260d49d4f6395618add01f916889152a9ae887b5687e644d47de110a24860' and j['library_adapter']['sha256']=='706954fd5d1ea2523936ce7ecf1b34438bd6b09b72b494d9f05eb8cfaf4744e7';assert len(sources)==1015 and sum(r['bytes']for r in sources)==60113534<128*2**20;by={r['path']:r for r in rows};assert all(by.get(r['path'])==r for r in sources);assert not set(by)&{r['path']for r in j['qualified_archive_rows']};aliases={r['path']:r for r in j['readonly_symlinks']};assert set(aliases)<=set(by) and set(aliases)<= {'/opt/homebrew/bin/gs','/opt/homebrew/bin/pdflatex'}\nfor r in rows:whole(r,allow=r['path']in aliases)\nfor a in aliases.values():\n p=Path(a['path']);s=p.lstat();assert(s.st_dev,s.st_ino,s.st_mode,s.st_mtime_ns)==(a['device'],a['inode'],a['mode'],a['mtime_ns']) and os.readlink(p)==a['link']\ncp=json.loads(raw(Path(j['checkpoint_acceptance']['path'])));sp=json.loads(raw(Path(j['snapshot_adoption']['path'])));assert cp['adopted'] and sp['adopted'] and cp['checkpoint']['sequence']==sp['checkpoint']['sequence']==10997;cl=json.loads(raw(Path(j['native_closure']['path'])));assert cl['schema']=='ROOT_CLOSED_F009_STANDALONE_NATIVE_V1';res=json.loads(raw(N/'native_output/result.json'));assert res['sequence']==11046\nreport=dict(schema='ROOT_F009_ACTUAL_READER_FULL_DATA_REVIEW_V1',root='/root',status='SUPPORTED_DATA_ONLY',logical_job=jr,wire_job=wr,full_pure_inverse_equal=True,declared_rows=len(rows),Source_rows=len(sources),Source_bytes=sum(r['bytes']for r in sources),actual_whole_read_bytes=READ,actual_paths=len(PATHS),all_declared_bodies_hash_exact=True,accepted_checkpoint=10997,proposal_checkpoint=11046,Native_replay_authorized=False,Reader_or_state_or_graph_calls=0,fresh_Reader_release_and_Owner_owed=True)\nb=can(report);p=N/'Root_Reader_full_DATA_review.json'\nwith p.open('xb')as f:f.write(b);f.flush();os.fsync(f.fileno())\nprint(json.dumps({'review':pin(p),'summary':report}))\n"
+  ],
+  "identities": [
+    {
+      "pid": 25645,
+      "birth": 1793242891.339163,
+      "initial_parent": 25644,
+      "group": 25645,
+      "session": 25645,
+      "peak_rss": 0
+    }
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 268435456,
+    "wall_seconds": 150.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 41013473280,
+    "available_ram": 7784546304
+  }
+}

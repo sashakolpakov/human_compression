@@ -1,0 +1,56 @@
+"""Root append-only byte retention. No mathematical or project module imports."""
+from pathlib import Path
+import argparse,hashlib,json,os,resource,stat,sys,time
+START=time.monotonic();READ=0;WRITTEN=0;PATHS=set();EMITTED=set()
+S=Path('/Users/sasha/medusa/research/leemans')
+def need(ok,message):
+ if not ok:raise ValueError(message)
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ if rss>=256*2**20 or time.monotonic()-START>=125:raise RuntimeError('256MiB125s closed-metadata copy envelope')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def stable(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def whole(r):
+ global READ
+ need(type(r)is dict and set(r)=={'path','bytes','sha256'} and type(r['bytes'])is int and 0<=r['bytes']<=4*2**20,'complete4MiB closed-metadata descriptor')
+ p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'ordinary canonical whole file')
+ PATHS.add(str(p));need(len(PATHS)<=512 and READ+r['bytes']<=64*2**20,'512 actual paths/64MiB actual read cap')
+ b=p.read_bytes();need(stable(p.lstat())==stable(a)and ref(p,b)==r,'stable complete hash');READ+=len(b);return b
+def put(p,b):
+ global WRITTEN
+ need(p.is_relative_to(DEST),'copy destination stays in explicit closed evidence directory')
+ p.parent.mkdir(parents=True,exist_ok=True);need(p.parent.resolve(strict=True)==p.parent,'canonical final destination ancestry')
+ if p.exists():need(whole(ref(p,b))==b,'existing object remains exact; no overwrite')
+ else:
+  need(WRITTEN+len(b)<=16*2**20 and len(EMITTED)<512,'16MiB512-file closed-metadata output cap')
+  with p.open('xb')as f:need(f.write(b)==len(b),'complete exclusive copy');f.flush();os.fsync(f.fileno())
+  WRITTEN+=len(b);EMITTED.add(str(p))
+  need(whole(ref(p,b))==b,'whole final retained hash')
+ fd=os.open(p.parent,os.O_RDONLY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+ return ref(p,b)
+ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True);ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--destination',required=True);ap.add_argument('--manifest',required=True);a=ap.parse_args()
+own=Path(__file__).resolve();need(own.stat().st_size<=65536,'bounded explicit own Source bootstrap');ownref=dict(path=str(own),bytes=own.stat().st_size,sha256=a.self_sha256);ownraw=whole(ownref)
+pp=Path(a.plan[0]);pref=dict(path=str(pp),bytes=pp.stat().st_size,sha256=a.plan[1]);raw=whole(pref);plan=json.loads(raw)
+DEST=Path(a.destination);need(DEST.is_relative_to(S)and plan['destination']==str(DEST),'one explicit S evidence destination')
+mp=Path(a.manifest);need(mp.is_relative_to(DEST)and not mp.exists(),'fresh complete manifest; existing manifests stay immutable')
+rows=plan.get('files')
+if rows is None:rows=plan['copy_rows']+plan['reuse_rows']
+need(type(rows)is list and len(rows)<=512 and plan.get('scientific_calls',0)==0,'closed byte selection only')
+for key in ['Root_authority','Root_authority_granted','execution_authority_granted']:
+ if key in plan:need(plan[key]is False,'selection supplies no Root authority')
+for r in plan.get('borrowed_closures',[]):whole(r)
+for row in rows:
+ b=whole(row['original']);r=row['retained'];need(r['bytes']==len(b)and r['sha256']==hashlib.sha256(b).hexdigest(),'whole original-to-retained identity')
+ target=Path(r['path']);need(target.is_relative_to(S),'all retained bytes are in S')
+ if target.is_relative_to(DEST):continue
+ need(whole(r)==b,'exact existing S reuse outside destination')
+for row in rows:
+ target=Path(row['retained']['path'])
+ if target.is_relative_to(DEST):need(put(target,whole(row['original']))==row['retained'],'exact declared new object')
+for row in rows:whole(row['retained'])
+methods=[dict(original=ref(own,ownraw),retained=put(DEST/'method/retain_closed_files.py',ownraw)),dict(original=pref,retained=put(DEST/'method/plan.json',raw))]
+manifest=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=plan.get('borrowed_closures',[]),source_plan=pref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+mr=put(mp,can(manifest));whole(pref)
+print(json.dumps(dict(status='ROOT_CLOSED_METADATA_RETAINED',preservation=mr,mappings=len(manifest['files']),actual_paths=len(PATHS),actual_read_bytes=READ,new_bytes=WRITTEN,new_files=len(EMITTED),scientific_calls=0),sort_keys=True))

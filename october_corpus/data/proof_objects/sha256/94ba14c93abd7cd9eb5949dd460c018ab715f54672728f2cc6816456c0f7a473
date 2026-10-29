@@ -1,0 +1,77 @@
+from pathlib import Path
+import hashlib,json,struct
+T=Path('/private/tmp/l026_next_subset_window/indices_0016_0031/bound_scope')
+V=Path('/private/tmp/l026_invariant_subsets/history_abi/control_boundary')
+def pin(p):
+    b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert pin(Path(r['path']))==r,r['path']
+def doc(r):check(r);return json.loads(Path(r['path']).read_bytes())
+def put(p,v):
+    b=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+    with p.open('xb') as f:f.write(b)
+    return pin(p)
+h=json.loads((T/'handoff_current_route.json').read_bytes())
+assert pin(T/'plan.json')['sha256']=='42c90244b3079dbf7f7c72dc2db69a9aa05e40ad3be063acdb3e428307c07f54'
+for r in h.values():
+    if isinstance(r,dict) and set(r)=={'path','bytes','sha256'}:check(r)
+p=doc(h['plan']);inv=doc(h['plan_inverse']);old=doc(inv['parent'])
+assert inv['child']==h['plan']
+assert {k for k in set(p)|set(old) if p.get(k)!=old.get(k)}==set(inv['changed_fields'])
+back=dict(p)
+for key,row in inv['changed_fields'].items():
+    assert p.get(key)==row['after'] and old.get(key)==row['before']
+    if row['previously_present']:back[key]=row['before']
+    else:back.pop(key)
+assert back==old
+for r in p['inputs']:check(r)
+assert len(p['inputs'])==24 and p['mode']=='propose' and p['resume'] is None
+assert p['window_start']==16 and p['maximum_records']==16 and p['maximum_subset_points']==512 and p['start_point']==0
+assert p['selected_free_indices']==list(range(16,32))
+assert p['roles']==old['roles']
+neg=doc(h['current_NEG_receipt']);gen=doc(h['current_GEN_receipt'])
+assert neg['adopted'] is gen['adopted'] is True
+assert neg['total_nongenerating_components']==17701 and gen['new_GENERATING_product_components']==3
+prior=doc(neg['prior_subset_adoption']);nonfree=doc(neg['prior_nonfree_adoption'])
+old_ng=Path(nonfree['projection']['nongenerating_records']['path']).read_bytes()
+check(nonfree['projection']['nongenerating_records'])
+neg_owners={o for o,m in struct.iter_unpack('<IH',old_ng)}
+neg_owners|={f['owner'] for f in prior['new_facts']+neg['new_facts']}
+gen_owners={f['owner'] for f in gen['generation_facts']}
+assert len(neg_owners)==17701 and len(gen_owners)==3 and not neg_owners & gen_owners
+done={f['free_index'] for f in prior['new_facts']+neg['new_facts']+gen['generation_facts']}
+assert done==set(range(16))
+raw=Path(p['roles']['witnesses']['path']).read_bytes();selected=[]
+for i in p['selected_free_indices']:
+    r=raw[16*i:16*i+16];owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',r)
+    assert owner not in neg_owners|gen_owners and i not in done and mass==1024
+    selected.append(owner)
+assert selected==h['original_owners']
+control=doc(h['actual14_controls']);cap=doc(h['actual14_capture'])
+assert control['controls']==14 and control['status']=='PASS' and control['worker']==h['program']
+assert control['program']==h['controls'] and control['point_kernel']==h['point_kernel']
+assert control['subset_kernel']==h['subset_kernel'] and control['supplier']==h['supplier']
+assert cap['actual_tool']['exit_code']==cap['all_genuine_api_frames'][-1]['exit_code']==0
+peerpath=V/'independent_review/independent_review.json';peer=json.loads(peerpath.read_bytes())
+assert peer['status']=='SUPPORTED_STATIC_METHOD_AND_CONTROL_BOUNDARY' and peer['blockers']==[]
+assert peer['subjects']['program']==h['program']
+invoice=doc(h['invoice'])
+assert invoice['proposal_complete_units_upper']==9701072<10000000
+assert invoice['proposal_complete_paths_upper']==29<=32
+assert invoice['proposal_complete_physical_upper']==3240880<8*2**20
+review=json.loads((T/'Root_review_FALSE.json').read_bytes())
+review.update(status='SUPPORTED',blockers=[],G_transitivity_and_even_subgroup_proof_reviewed=True,
+    actual_generic_control_report=h['actual14_controls'],independent_review=pin(peerpath),
+    fresh_paid_disjoint_checked=True,current_negative_receipt=h['current_NEG_receipt'],
+    current_generation_receipt=h['current_GEN_receipt'],whole_fixed_inputs=24,selected_indices=list(range(16,32)),
+    selected_original_owners=selected,old_first16_excluded=True,old_history_preserved_without_replay=True,
+    prior_exact_source_review=pin(V/'runtime/Root_source_data_review.json'),source_bodies_unchanged=True,
+    proposal_only=True,strict_case_gate_and_adoption_separately_required=True,
+    invoice=h['invoice'],whole_plan_parent_inverse_checked=True)
+rr=put(T/'Root_code_math_review.json',review)
+gate=json.loads((T/'Root_gate_FALSE.json').read_bytes())
+gate.update(adopted=True,new_case_calls_authorized=True,Root_code_math_review=rr)
+gr=put(T/'Root_gate.json',gate)
+out=Path(p['output_directory']);out.parent.mkdir(exist_ok=True)
+assert out.parent.resolve(strict=True)==out.parent and not out.exists()
+print(json.dumps(dict(status='ROOT_NEW16_EXACT_DATA_AND_PROPOSAL_GATE_SUPPORTED',review=rr,gate=gr,
+    plan=h['plan'],old_paid_objects=17704,overlap=[],scientific_calls=0,proposal_only=True)))

@@ -1,0 +1,77 @@
+"""Read-only stdlib DATA preparation; no represented Source, gates or cases activated."""
+import ast,copy,gzip,hashlib,json,shlex,stat
+from pathlib import Path
+T=Path('/private/tmp/q11_large_end_spectrum');R=T/'retained_imports';D=T/'strict25_DATA';A=D/'adopter_outer140'
+def need(v,m):
+ if not v:raise AssertionError(m)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def pin(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def whole(r):
+ p=Path(r['path']);s=p.lstat();b=p.read_bytes();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1 and pin(p,b)==r,'whole canonical pinned body');return b
+def read(p):return json.loads(Path(p).read_bytes())
+def put(p,b):
+ p=Path(p);p.parent.mkdir(parents=True,exist_ok=True)
+ if p.exists():need(p.read_bytes()==b,'immutable DATA preparation collision')
+ else:
+  with p.open('xb')as f:f.write(b)
+ return pin(p,b)
+def digest(v):return hashlib.sha256(can(v)[:-1]).hexdigest()
+def closed(prefix):
+ c=read(R/(prefix+'_actual_capture.json'));g=read(R/(prefix+'_guard/receipt.json'));start=read(R/(prefix+'_guard/started.json'));f=c['all_genuine_api_frames'];a=c['issued_argv'];cmd=g['command']
+ need(c['root']==c['actor']=='/root'and c['actual_tool']['exit_code']==f[-1]['exit_code']==0 and c['full_initial_tool_return']==f[0]and c['full_tool_return']==f[-1],'genuine complete actual SDK closure')
+ need(a[a.index('--')+1:]==cmd==start['command']and c['child_argv']==a and shlex.split(c['issued_tool_arguments']['cmd'])==a,'exact issued actual command')
+ need(g['status']=='PASS'and g['stop']=='RETURNED'and g['returncode']==0 and g['cleanup']['remaining']==g['cleanup']['errors']==[] and start['limits']==g['limits'],'actual known-scope PASS closure')
+ for stem in ('stdout','stderr'):need((R/(prefix+'_guard')/(stem+'.log')).stat().st_size==g['logs'][stem],'whole actual log extent')
+ return read(R/(prefix+'_guard/stdout.log'))
+control_result=closed('controls');supplier_return=closed('supplier');controls=read(R/'controls_report.json');need(controls==control_result and controls['controls']==13 and controls['status']=='PASS','actual thirteen selected controls')
+carrier_path=R/'instances/job_0023/first/output/records.json';summary_path=carrier_path.with_name('summary.json');carrier=read(carrier_path);summary=read(summary_path);recordref=pin(carrier_path)
+need(recordref['bytes']==7345 and recordref['sha256']=='abfe3d3b47fd6fc65d89b6516cea7c065d1a47c48833d3c3139748aa45b3d7e2','actual7345 abfe carrier')
+need(pin(summary_path)['bytes']==59084 and pin(summary_path)['sha256']=='fc185c7f3dbc35c3b96021c1b10c6c82ca23cc127a57385aa8a63320b600d8b0','actual59084 fc185 summary')
+need(carrier_path.read_bytes()==can(carrier)and summary_path.read_bytes()==can(summary)and supplier_return['carrier']==recordref and supplier_return['summary']==pin(summary_path),'canonical actual supplier output byte joins')
+positions=[r[0]for r in carrier['records']];misses=summary['finite_miss_positions_without_paid_credit'];selected=summary['selected_positions'];need(len(positions)==25 and positions==summary['proposed_positive_positions']and len(misses)==81 and sorted(positions+misses)==selected==summary['visited_positions']and summary['exact_unvisited']['count']==0,'actual106 visited25hints81finite misses partition')
+plan=read(R/'consumer_plan_template.json');template=copy.deepcopy(plan);need(plan['records']is plan['expected_positive_positions']is None,'frozen unbound consumer template')
+need(carrier['original_job']==plan['original_job']and carrier['selector']==plan['selector']and carrier['projection']==plan['projection']and carrier['schema']=='Q11_LARGE_END_SPECTRUM_SUPPLIED_WORDS_V1'and carrier['proof_mode']=='DIRECT_LARGE_END_SPECTRUM_CHECK'and carrier['grammar']=='SAME_END_LITERAL_012_LENGTH1_TO64_V1','whole exact original new spectrum carrier')
+for r in plan['inputs']:whole(r)
+need(plan['program']==controls['consumer']and summary['direct_consumer']==plan['program']and controls['program']==plan['control_program'],'unchanged selected e202/51c Source cohort')
+selector=json.loads(whole(plan['selector']));unpaid=[i for lo,hi in selector['unresolved_position_runs']for i in range(lo,hi+1)];need(unpaid==plan['selected_positions']==selected and len(unpaid)==106,'actual current106 plan window')
+projection=json.loads(whole(plan['projection']));domain=json.loads(whole(projection['original_domain_whole_pins']['Saved_result']));orbits=domain['orbits'];need(digest(orbits)==projection['full_orbit_array_sha256'],'whole original3801-orbit DATA identity')
+member_weight=0;endkind_counts={};equation_products=0
+cost=lambda e:e.bit_count()+e.bit_length()-1 if e else 0
+for row in carrier['records']:
+ pos,rep,sha,left,right=row;o=orbits[pos-1];need(rep==o[0]and sha==digest(o),'whole actual original orbit/representative/digest');member_weight+=len(o[1])
+ for end in (left,right):
+  endkind_counts[end['kind']]=endkind_counts.get(end['kind'],0)+1
+  expected={'kind','prime37'}if end['kind']=='PRIME37'else{'kind','prime19','order4'};need(set(end)==expected,'two exact typed end shapes')
+  for key,part in end.items():
+   if key=='kind':continue
+   need(set(part)=={'word','power'}and type(part['word'])is str and 1<=len(part['word'])<=64 and set(part['word'])<=set('012')and type(part['power'])is int and 1<=part['power']<=256,'literal actual supplied word/power DATA')
+   equation_products+=len(part['word'])+cost(part['power'])
+  equation_products+=cost(37)if end['kind']=='PRIME37'else cost(19)+cost(4)+cost(2)
+plan['records']=recordref;plan['expected_positive_positions']=positions;plan['inputs'].append(recordref);plan['status']='BOUND_ACTUAL25_SUPPLIED_HINTS_FRESH_ROOT_DIRECT_AUTHORITY_OWED';plan['qualification']='Actual25 supplier hints are bound; only fresh independent strict equations in the unchanged acquired original model can verify them. Root review/gate and all strict execution/result references remain unbound. All original imported premises and full retained-import checks remain unchanged.'
+need(set(k for k in plan if plan[k]!=template[k])=={'records','expected_positive_positions','inputs','status','qualification'},'only consumer DATA binding fields changed')
+praw=can(plan);pref=put(D/'consumer_plan.json',praw);gzref=put(D/'consumer_plan.json.gz',gzip.compress(praw,mtime=0));need(gzip.decompress((D/'consumer_plan.json.gz').read_bytes())==praw and len(praw)<=524288 and gzref['bytes']<=65536,'exact bounded gzip consumer plan')
+controlref=pin(R/'controls_report.json');fixed_bytes=sum(r['bytes']for r in plan['inputs']);B=plan['program']['bytes'];P=gzref['bytes'];gate_cap=8192;review_cap=32768
+future_upper=B+2*(fixed_bytes+B+P+gate_cap+review_cap+controlref['bytes']);allcap_upper=B+2*(fixed_bytes+B+P+gate_cap+review_cap+16384)
+strict_products=17+28*len(positions)+equation_products
+invoice={'schema':'Q11_BOUND25_STRICT_CONSUMER_COMPLETE_STATIC_INVOICE_V1','author':'/root/journal_peer','consumer':plan['program'],'plan':gzref,'logical_plan':pref,'frozen_template':pin(R/'consumer_plan_template.json'),'carrier':recordref,'supplier_summary':pin(summary_path),'actual_control_report':controlref,'selected_current_unpaid':106,'actual_supplied_positive_rows':25,'actual_supplied_members_borrowed':member_weight,'actual_supplied_end_kinds':endkind_counts,'actual_scientific_verification_or_credit':False,'fixed_inputs':plan['inputs'],'fixed_unique_paths':len(plan['inputs']),'fixed_unique_bytes':fixed_bytes,'runtime_added_roles':{'own_Source':plan['program'],'gzip_plan':gzref,'Root_gate':None,'Root_code_math_review':None,'control_report':controlref},'future_Root_gate_cap':gate_cap,'future_Root_review_cap':review_cap,'actual_control_report_bytes':controlref['bytes'],'complete_first_final_read_upper_with_actual_controls':future_upper,'conservative_upper_with16KiB_control_cap':allcap_upper,'formula':'B+2*(all78fixed+B+exactgzip+8192Rootgate+32768Rootreview+actual2269controlreport); all Source bootstrap and complete final rereads included. No historical spectrum facts currently exist.','maximum_runtime_paths':len(plan['inputs'])+5,'physical_hard_cap':8*2**20,'paths_hard_cap':96,'per_input_hard_cap':2**21,'Source_cap':65536,'logical_plan_cap':524288,'gzip_plan_cap':65536,'gate_cap':8192,'review_cap':32768,'control_report_cap':16384,'static_matrix_products_for_complete_success':strict_products,'matrix_product_derivation':{'original_context':17,'actual_original_mark_reconstruction_and_checks':28*25,'actual_supplied_literal_and_power_equations':equation_products},'static_row_images':2,'scientific_inner_RSS':128*2**20,'scientific_inner_seconds':125,'intended_actual_outer_RSS':128*2**20,'intended_actual_outer_seconds':140,'matrix_products_hard_cap':400000,'row_images_hard_cap':200000,'strict_output_cap':131072,'runtime_RSS_time_and_equation_success_unacquired':True,'Root_authority':False}
+need(future_upper<8*2**20 and len(plan['inputs'])+5<=96 and strict_products<400000,'complete strict prospective input/product caps fit');iref=put(D/'consumer_invoice.json',can(invoice))
+# New distinct DATA-only adopter compatibility edition; all scientific Source and metadata caps remain untouched.
+parent_path=T/'adoption/adopt_spectrum.py';parent=parent_path.read_bytes();parentref=pin(parent_path,parent);need(parentref['sha256']=='96058cc43265c16371d668fc0aabb78f5743af79bbe64ec0201809b6ff863b12','immutable9605 parent')
+oldsite=b"r['limits']['wall_seconds']==125";newsite=b"r['limits']['wall_seconds']==140";need(parent.count(oldsite)==1,'one exact compatibility comparison')
+header=b'"""UNRUN DATA-only outer140 compatibility edition; author /root/journal_peer.\nParent Compact9605 remains immutable. Only the actual scientific outer-guard\nwall equality125->140 changes below; scientific inner125,128MiB and every\nmathematical predicate/metadata cap stay unchanged. Actual supplier f0a0 used\nouter140; strict is prospective. New Root review/controls/release are owed.\n"""\n'
+child=header+parent.replace(oldsite,newsite,1);child_path=A/'adopt_spectrum_outer140.py';childref=put(child_path,child)
+need(child[len(header):].replace(newsite,oldsite,1)==parent,'complete exact reverse restores9605 bytes');pa=ast.parse(parent);ca=ast.parse(child)
+def defs(raw,tree):return{n.name:ast.get_source_segment(raw.decode(),n).encode() for n in tree.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+pd=defs(parent,pa);cd=defs(child,ca);need(set(pd)==set(cd),'exact unchanged definition inventory')
+for k in pd:need(cd[k].replace(newsite,oldsite)==pd[k]if k=='actual'else cd[k]==pd[k],'all functions literal except actual wall comparison')
+inverse={'schema':'EXACT_Q11_SPECTRUM_OUTER140_COMPATIBILITY_SOURCE_INVERSE_V1','author':'/root/journal_peer','parent':parentref,'child':childref,'prepend_header':header.decode(),'old_site':oldsite.decode(),'new_site':newsite.decode(),'old_whole_Source':parent.decode(),'new_whole_Source':child.decode(),'whole_forward_and_reverse_verified':True,'changed_function':'actual','all_other_definitions_byte_literal':sorted(set(pd)-{'actual'}),'scientific_inner_seconds_unchanged':125,'actual_scientific_outer_seconds_accepted':140,'metadata_own_seconds_unchanged':125,'scientific_RSS_unchanged':134217728,'Root_authority':False}
+invref=put(A/'source_inverse.json',can(inverse));
+import difflib
+patch=''.join(difflib.unified_diff(parent.decode().splitlines(keepends=True),child.decode().splitlines(keepends=True),fromfile=str(parent_path),tofile=str(child_path))).encode();patchref=put(A/'source_forward.patch',patch)
+provenance={'schema':'Q11_SPECTRUM_OUTER140_COMPATIBILITY_PROVENANCE_V1','author':'/root/journal_peer','parent':parentref,'child':childref,'existing_9605_Source_peer':pin(T/'adoption/independent_review/independent_review.json'),'scientific_Source_peer':pin(T/'independent_review/independent_review.json'),'actual_supplier_capture':pin(R/'supplier_actual_capture.json'),'actual_supplier_guard':pin(R/'supplier_guard/receipt.json'),'actual_supplier_outer_seconds':140,'strict_actual_capture':None,'strict_outer_seconds_prospective':140,'all_selected_scientific_Source_unchanged':[pin(R/'verify.py'),pin(R/'propose.py'),pin(R/'controls.py')],'change_scope':'Historical actual scientific guard contract only,125->140 outer timeout. Original scientific Source inner125s and128MiB,all metadata/scientific predicates/Source pins/own125s metadata envelope,prepared/release protocols and publication bounds remain unchanged. No prior actual guard or result is edited or retagged.','new_independent_Source_peer':None,'Root_review':None,'actual_controls':None,'Root_gate_or_publication_release':None,'Root_authority':False};provref=put(A/'provenance.json',can(provenance))
+# Bound known supplier DATA, with every unknown strict/adoption result field kept null.
+adopt=read(T/'adoption/plan_template.json');adopt['program']=childref;adopt['supplier_result']=pin(summary_path);adopt['supplier_execution']={k:pin(R/p)for k,p in {'capture':'supplier_actual_capture.json','guard':'supplier_guard/receipt.json','started':'supplier_guard/started.json','stderr':'supplier_guard/stderr.log','stdout':'supplier_guard/stdout.log'}.items()};adopt['status']='PARTIALLY_BOUND_ACTUAL25_SUPPLIER_AWAITING_GENUINE_STRICT_AND_COMPLETE_ROSTER';adoptref=put(D/'adoption_plan_pending_strict.json',can(adopt))
+historical={i for t in selector.get('previous_method_attempts',[])for i in t['finite_miss_positions']};remain=sorted(set(unpaid)-set(positions));conditional={'schema':'Q11_25HINTS_CONDITIONAL_ADOPTION_COUNT_PROJECTION_V1','strict_verification_required_for_all25':True,'actual_strict_result':None,'actual_credit':0,'supplier_capture':pin(R/'supplier_actual_capture.json'),'supplier_summary':pin(summary_path),'positive_hints':positions,'finite_misses_still_unpaid':misses,'if_and_only_if_strict_accepts_all25_expected_counts':dict(original=3801,baseline=217,previous_paid=3478,new=25,later_paid=3503,remaining=81,historical_misses=len(historical|set(misses)),current_misses=len((historical|set(misses))&set(remain)),eligible=len(set(remain)-(historical|set(misses)))),'Root_authority':False};condref=put(D/'conditional_counts.json',can(conditional))
+initial={'schema':'Q11_ACTUAL25_STRICT_CONSUMER_DATA_BINDING_INITIAL_V1','author':'/root/journal_peer','consumer_plan':gzref,'consumer_plan_logical':pref,'complete_invoice':iref,'actual_carrier':recordref,'actual_supplier_summary':pin(summary_path),'actual_control_report':controlref,'consumer_Root_gate':None,'consumer_Root_review':None,'strict_execution':None,'strict_result':None,'adopter_new_Source':childref,'adopter_inverse':invref,'adopter_patch':patchref,'adopter_provenance':provref,'adoption_plan_pending_strict':adoptref,'conditional_counts':condref,'Root_authority':False,'represented_Source_helper_control_case_gate_S_W_Git_activations':0};put(D/'initial_handoff.json',can(initial))
+print(json.dumps({'consumer_plan':gzref,'consumer_invoice':iref,'bound_fixed_inputs':len(plan['inputs']),'physical_read_upper':future_upper,'static_success_products':strict_products,'borrowed_members':member_weight,'adopter_new_Source':childref,'adoption_pending':adoptref,'conditional_counts':condref},sort_keys=True))

@@ -1,0 +1,40 @@
+from pathlib import Path
+import hashlib,json,struct
+D=Path('/private/tmp/l026_second_window_generation_DATA')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+def write(p,v):
+ with p.open('xb')as f:f.write(can(v))
+ return ref(p)
+h=json.loads((D/'handoff.json').read_bytes())
+for k in ['program','kernel','schedule','actual10controls','actual10control_capture','current_NEG_receipt','GEN_and_separate_IP_receipt']:check(h[k])
+assert h['program']['sha256']=='c942d2f2f699e0f676f6d32d14fbc0c45e69d73908d1353cd832eb87231331e9'
+control=json.loads(Path(h['actual10controls']['path']).read_bytes());assert control['status']=='PASS' and control['original_case_calls']==0 and control['supplier']==h['program'] and control['controls']==10
+roots=[json.loads(Path(h[k]['path']).read_bytes())for k in ['current_NEG_receipt','GEN_and_separate_IP_receipt']]
+bound=[]
+for case,old in zip(h['instances'],h['fullcap_actual']):
+ assert case['free_index']==old['free_index'] and case['owner']==old['owner']
+ for k in ['actual_SDK','checkpoint','result','receipt','plan','gate','Root_review']:check(old[k])
+ stopped=json.loads(Path(old['receipt']['path']).read_bytes());assert stopped['status']=='PASS' and stopped['cleanup']['remaining']==stopped['cleanup']['errors']==[]
+ checkpoint=json.loads(Path(old['checkpoint']['path']).read_bytes());assert checkpoint['notes'][0]['outcome']=='cap_miss'
+ check(case['plan']);plan=json.loads(Path(case['plan']['path']).read_bytes())
+ assert plan['selected_free_indices']==[case['free_index']] and plan['maximum_records']==1 and plan['window_start']==case['free_index'] and plan['resume']is None
+ for r in plan['inputs']:check(r)
+ raw=Path(plan['roles']['witnesses']['path']).read_bytes()[16*case['free_index']:16*case['free_index']+16]
+ owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',raw);assert owner==case['owner'] and mass==1024
+ assert case['free_index']in[21,23,24,28,30] and case['free_index']not in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22,25,26,27,29,31]
+ review=json.loads(Path(case['false_review']['path']).read_bytes());review.update(status='SUPPORTED',blockers=[],Root_fresh_actual_fullcap=old['actual_SDK'],Root_current_NEG_receipt=h['current_NEG_receipt'],Root_current_GEN_receipt=h['GEN_and_separate_IP_receipt'],actual_control_capture=h['actual10control_capture'],scope='Exact unchanged previously Root-reviewed c942/60ee Source and actual10 controls. Fresh original unpaid singleton and whole16B owner/mass match. Full3509 capmiss has no mathematical authority. Shortword11/13 proposals only; no original proof credit.',finite_work_upper=case['work_upper'],physical_read_upper=case['IO_upper'])
+ parent=Path(case['plan']['path']).parent
+ rr=write(parent/'Root_review.json',review)
+ gate=json.loads(Path(case['false_gate']['path']).read_bytes());gate.update(adopted=True,candidate_generation_only_authorized=True,Root_code_math_review=rr)
+ gr=write(parent/'Root_gate.json',gate)
+ assert rr['bytes']<=32768 and gr['bytes']<=8192
+ roster={r['path']:r for r in plan['inputs']}
+ for r in [h['program'],case['plan'],h['actual10controls'],rr,gr]:assert r['path']not in roster;roster[r['path']]=r
+ bill=h['program']['bytes']+2*sum(r['bytes']for r in roster.values())
+ assert len(roster)==31 and bill<=case['IO_upper'] and case['work_upper']<10000000
+ out=Path(plan['output_directory']);assert not out.exists();out.parent.mkdir(parents=True,exist_ok=True)
+ bound.append(dict(free_index=case['free_index'],plan=case['plan'],gate=gr,review=rr,physical_read_upper=bill,paths=len(roster)))
+print(json.dumps(dict(status='ROOT_FIVE_FRESH_UNPAID_PROPOSAL_GATES',program=h['program'],instances=bound,mathematical_credit=0)))

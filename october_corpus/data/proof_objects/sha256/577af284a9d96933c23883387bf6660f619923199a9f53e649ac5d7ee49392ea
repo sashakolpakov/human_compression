@@ -1,0 +1,31 @@
+"""Whole closed journal-CAS evidence retention DATA, no represented utility activation."""
+from pathlib import Path
+import hashlib,json,stat
+T=Path('/private/tmp/intake_journal/verified_gen7_spectrum25_retention_DATA');OLDT=Path('/private/tmp/intake_journal/verified_gen7_spectrum25_DATA');S=Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake';DEST=M/'progress/intake_overview/evidence/verified_frontiers/closed_metadata';METHOD=Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py');CURRENT=M/'progress/current_intake_verified_exports.json'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def whole(p):
+ p=Path(p);a=p.lstat();b=p.read_bytes();z=p.lstat();q=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and q(a)==q(z)and len(b)<=4*2**20
+ return ref(p,b),b
+def write(p,v):
+ b=can(v)
+ with p.open('xb')as f:f.write(b)
+ return ref(p,b)
+program,src=whole(METHOD);assert program['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0';assert not DEST.exists()
+cur,curraw=whole(CURRENT);assert cur['bytes']==32630 and cur['sha256']=='9e34704c93ebeb68081f77b0635ac601db190936d28ef64ccb72c6fb2eac1afa'
+snapshot=T/'journal_9e34704c.json'
+with snapshot.open('xb')as f:f.write(curraw)
+pub=Path('/private/tmp/intake_journal/publish_progress.py');pbr,pb=whole(pub);assert pbr['bytes']==4055 and pbr['sha256']=='c2671878c3bd83146950e7935510822b7f3e9809b5b683d7a52bffe9f267310c';assert json.loads(curraw)['journal_metadata_method']['program']==pbr
+files=[p for p in OLDT.rglob('*')if p.is_file()]+[CURRENT,snapshot,pub,Path(__file__).resolve()];assert len(files)==len(set(files));rows=[];bodies={}
+for p in sorted(files):
+ r,b=whole(p);t=ref(DEST/'objects'/r['sha256'],b);rows.append(dict(original=r,retained=t));assert bodies.get(t['path'],b)==b;bodies[t['path']]=b
+borrowed=[];borrowbytes=0
+for p in [M/'progress/intake_overview/evidence/verified_frontiers/publication_actual_capture.json',M/'progress/intake_overview/versions/0bc71c436c79ced14dad63e23569fc598c0ed770482576db9b8dc553ca603ec4.json']:
+ r,b=whole(p);borrowed.append(r);borrowbytes+=len(b)
+assert borrowed[0]['sha256']=='df9caa04ba148478178ed0d3f2aa1e39d4f357b90613d3185aad3e1ac41a64b3'and borrowed[1]['sha256']=='0bc71c436c79ced14dad63e23569fc598c0ed770482576db9b8dc553ca603ec4'
+plan=dict(schema='ROOT_JOURNAL9E34704C_CLOSED_CAS_RETENTION_DATA_V1',author='/root/journal_peer',destination=str(DEST),manifest_path=str(DEST/'preservation.json'),files=rows,borrowed_closures=borrowed,scientific_calls=0,Root_authority=False,Root_release=None,actual_copy=None,qualification='Wholecurrent32630/9e journal is mutable at CURRENT; exact known bytes also snapshot in T and must become immutable under copiedobject9e. Includesactual4055/c267CASpublisher, allTold0bc/proposals/bound/finalvalues/inverses/peers/Rootpublicationguard. GenuineSdf9capture andold0bcSversion borrowedwhole. Actualnewjournal method is c267, never gn/n2. Oldproposals retain their original conditional/historical qualifiers. Original/currentjournal read identity muststillmatch9e atcopy orfailclosed. NoS/W/Git/gateorSCI/utilityactivation byselector.')
+pr=write(T/'copy_plan.json',plan);raw=can(plan);methods=[dict(original=program,retained=ref(DEST/'method/retain_closed_files.py',src)),dict(original=pr,retained=ref(DEST/'method/plan.json',raw))];m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrowed,source_plan=pr,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.');mb=can(m);mr=ref(DEST/'preservation.json',mb);read=2*len(src)+3*len(raw)+borrowbytes+4*sum(r['original']['bytes']for r in rows)+len(mb);new=sum(map(len,bodies.values()))+len(src)+len(raw)+len(mb);paths={program['path'],pr['path'],mr['path']}|{r['path']for r in borrowed}|{r['original']['path']for r in rows}|{r['retained']['path']for r in rows+methods};assert read+len(src)<64*2**20 and new<16*2**20 and len(paths)<=512
+inv=write(T/'invoice.json',dict(schema='ROOT66779_JOURNAL_CLOSED_RETENTION_LITERAL_DATA_INVOICE_V1',program=program,plan=pr,selected_files=len(rows),dedup_objects=len(bodies),new_files=len(bodies)+3,new_bytes=new,explicit_whole_reads=read,whole_reads_plus_interpreter_Source=read+len(src),actual_unique_paths=len(paths),projected_manifest=mr,actual_forecast=None,actual_copy=None,Root_authority=False,projection_is_stdlib_DATA=True))
+h=write(T/'handoff.json',dict(schema='JOURNAL9E_CLOSED_EVIDENCE_RETENTION_HANDOFF_V1',author='/root/journal_peer',copy_program=program,copy_plan=pr,invoice=inv,projected_manifest=mr,immutable_journal_target=ref(DEST/'objects'/cur['sha256'],curraw),mutable_journal_original=cur,actual_copy=None,Root_release=None,Root_authority=False,Source_helper_orSCI_activation=0,S_W_Git_writes=0))
+print(json.dumps(dict(handoff=h,plan=pr,reads=read,newbytes=new,paths=len(paths),manifest=mr)))

@@ -1,0 +1,51 @@
+"""Independent stdlib DATA-only whole proposed image/inverse audit."""
+from pathlib import Path
+import json,hashlib,copy
+T=Path('/private/tmp/intake_journal/verified_gen7_spectrum25_DATA');A=T/'independent_review'
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def load(p):
+ p=Path(p);b=p.read_bytes();return ref(p,b),b,json.loads(b)
+oldref,oldraw,old=load(A/'baseline_journal.json');pr,pb,new=load(T/'proposed_journal.json');ivref,ivb,iv=load(T/'whole_journal_inverse.json');dfref,dfb,df=load(T/'field_diff.json')
+assert oldref['sha256']=='0bc71c436c79ced14dad63e23569fc598c0ed770482576db9b8dc553ca603ec4' and pr['sha256']=='b9dae02d5dad536f5b6692f2b141a8a936458fe0b35c18230ec88008513b38b2'
+assert len(pb)==32748<=32768 and can(new)==pb and can(old)==oldraw
+assert iv['old_whole']==old and iv['proposed_whole']==new and iv['proposal']==pr and df['proposal']==pr
+MISSING=object();changes=[]
+def walk(a,b,path=[]):
+ if isinstance(a,dict) and isinstance(b,dict):
+  for k in sorted(set(a)|set(b)):
+   if k not in a:changes.append(dict(path=path+[k],before=None,after=b[k],added=True))
+   elif k not in b:changes.append(dict(path=path+[k],before=a[k],after=None))
+   else:walk(a[k],b[k],path+[k])
+ elif a!=b:changes.append(dict(path=path,before=a,after=b))
+walk(old,new);assert changes==iv['changes']==df['changes'] and len(changes)==39
+restored=copy.deepcopy(new)
+for c in reversed(changes):
+ before=old;exists=True
+ for k in c['path']:
+  if not isinstance(before,dict) or k not in before:exists=False;break
+  before=before[k]
+ target=restored
+ for k in c['path'][:-1]:target=target[k]
+ if exists:target[c['path'][-1]]=c['before']
+ else:target.pop(c['path'][-1])
+assert restored==old and can(restored)==oldraw
+for key in ['counts','measurements','protected_reviewed_registers','stopping_rule','new_whole_original_conjecture_Lean_or_measurement_credit','goal_status','root','schema','resource_observation']:
+ assert new[key]==old[key],key
+assert new['source_scope_audit']['report']==old['source_scope_audit']['report'] and new['source_scope_audit']['preservation']==old['source_scope_audit']['preservation']
+for k in old['L026']:
+ if k not in ['next','product_progress']:assert new['L026'][k]==old['L026'][k],k
+assert new['L026']['product_progress']['NEG']==old['L026']['product_progress']['NEG']
+ng=new['L026']['product_progress'];assert ng['GEN_IP']['components']==ng['GEN_IP']['separate_IP_components']==7 and ng['GEN_IP']['adoption']['sha256']=='cb31555622664fff941ccc37dc7e56dd786609c8ece957867da8fd6eaedc77e8' and ng['unresolved']==28877 and ng['unresolved_mass']==29570048
+q=new['F004']['q11'];oldq=old['F004']['q11'];j=q['other_job_progress']['job_0023'];assert j['original_paid']==217 and j['total_new_IP_failures']==3503 and j['remaining_unpaid']==j['finite_misses_unpaid']==81 and j['historical_finite_misses']==265
+assert j['Root_adoption']['sha256']=='63f06773da8dfb387a0ba1752460b852a09505754b7f70a6df4acc9f906a7a71' and j['current_selector']['sha256']=='035f8c8b6363ad0ebe6afb2a3718fa21faadb1cdf8713661ce41a736e95b363e'
+for k in ['original_job','original_paid','original_positions','total_new_settled_in_job','remaining_in_job','actual_disposition_adoptions','current_selector','two_end_corollaries']:assert q[k]==oldq[k],k
+f=q['current_fixed158_frontier'];assert f['later_fresh_IP_failures']==3503 and f['current_unresolved']==614776
+assert f['later_disjoint_adoptions'][:-1]==oldq['current_fixed158_frontier']['later_disjoint_adoptions'] and f['later_disjoint_adoptions'][-1]==j['Root_adoption']
+for k in old['F009']:
+ if k!='next':assert new['F009'][k]==old['F009'][k],k
+n=new['F009']['latest_native_proposal'];assert n['adopted'] is False and n['strict_Reader_owed'] is True and n['checkpoint']==dict(sequence=11046,nodes=5795,pending=201,reserved_debts=1,selected_raw_leaf_records=511753)
+assert new['F009']['accepted_checkpoint']['sequence']==10997 and new['previous_checkpoint']['sha256']==oldref['sha256']
+assert new['journal_metadata_method']==old['journal_metadata_method']
+report=dict(schema='INDEPENDENT_GEN7_SPECTRUM25_WHOLE_JOURNAL_PROPOSED_DATA_REVIEW_V1',status='SUPPORTED_PROPOSED_DATA_ONLY_ROOT_PUBLICATION_METHOD_UNBOUND',blockers=[],reviewer='/root/journal_peer/f009_invoice',proposal=pr,whole_inverse=ivref,declared_diff=dfref,independent_exact_diff_count=len(changes),complete_old_byte_restore=True,old_complete_beforeimage=oldref,required_S_beforeimage=new['previous_checkpoint'],bytes=len(pb),cap=32768,headroom=20,all_nonlisted_fields_literal_unchanged=True,protected_counts_measurements_STOP_and_original_job20_preserved=True,accepted_F00910997_unchanged=True,Native11046_only_unadopted_proposal=True,L026_NEG17712_unchanged_GEN_and_separate_IP7=True,F004_job23_baseline217_later3503_unpaid81_global614776=True,compressed_qualifications='Only field-centralizer attribution/qualification, source-scope verdict and public status text compressed; complete prior bytes remain restorable in whole beforeimage.',Root_publication_method=None,current_journal_method_field_is_prior_actual=new['journal_metadata_method'],conditions=['Before CAS, retain exact current0bc71 complete byte image in the required immutable Sversion and retain this complete proposed DATA/inverse/audit.','The old gn/n2 method field is literal prior actual provenance; it is not an exact new publication authority. Root must author/review/bind the new method separately and keep final canonical image within32768. Only20bytes remain, so any method-field growth requires a new independent whole-image cap/inverse check.','Public HEADae2beb... is supplied by Root/current_actual_evidence, not independently queried through Git by this peer.','Fresh Root Source/math/data review/release, exact predecessorCAS and final live/protected checks remain owed. This seal grants no Source or publication authority.','No13+21 theorem/case credit entered this journal. No Source/helper/Reader/Native/gate/scientific/state activation or S/W/Git writes by peer.'])
+(A/'proposal_review.json').write_bytes(can(report));print(json.dumps(ref(A/'proposal_review.json',can(report)),sort_keys=True))

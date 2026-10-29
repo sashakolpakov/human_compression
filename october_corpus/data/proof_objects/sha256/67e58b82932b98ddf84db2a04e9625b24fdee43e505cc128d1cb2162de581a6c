@@ -1,0 +1,46 @@
+from pathlib import Path
+import gzip,hashlib,json
+D=Path('/private/tmp/q11_large_end_spectrum/retained_imports')
+def canonical(v):return(json.dumps(v,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):assert ref(r['path'])==r
+def write(p,v):
+ with p.open('xb')as f:f.write(canonical(v))
+ return ref(p)
+p=D/'supplier_plan.json.gz';pref=ref(p)
+assert pref['sha256']=='0869dd98abf48cb945bbd3bd29dbbcca97f6ebb7351526d03f1071faeee6baab'
+plan=json.loads(gzip.decompress(p.read_bytes()))
+for r in plan['inputs']:check(r)
+assert len(plan['inputs'])==78 and sum(r['bytes']for r in plan['inputs'])==3340660
+selector=json.loads(Path(plan['selector']['path']).read_bytes())
+positions=[i for a,b in selector['unresolved_position_runs']for i in range(a,b+1)]
+assert positions==plan['selected_positions'] and len(positions)==106
+assert selector['original_paid_count']==217 and selector['unresolved_positions']==106
+assert len(selector['accepted_new_paid_positions'])==3478
+assert not any(t.get('criterion')=='LARGE_END_SPECTRUM_V1' and t.get('search_method')==plan['search_method']for t in selector['previous_method_attempts'])
+receipt=json.loads((D/'controls_guard/receipt.json').read_bytes());controls=json.loads((D/'controls_guard/stdout.log').read_bytes())
+assert receipt['status']=='PASS' and receipt['returncode']==0 and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+assert controls['status']=='PASS' and controls['controls']==13 and controls['original_case_calls']==0
+assert controls['supplier']==plan['program'] and controls['consumer']==plan['direct_consumer'] and controls['program']==plan['control_program']
+report=write(D/'controls_report.json',controls)
+peerref=ref(D.parent/'independent_review/independent_review.json');peer=json.loads(Path(peerref['path']).read_bytes())
+assert peer['status']=='SUPPORTED' and not peer['blockers'] and peer['program']==plan['program'] and peer['plan']==pref
+for key in ['spectrum_theorem','spectrum_review','spectrum_premises','theorem','theorem_review']:check(plan[key])
+review=json.loads((D/'supplier_Root_review_template.json').read_bytes())
+review.update(status='SUPPORTED',blockers=[],conditional_large_end_theorem_and_full_primary_premises_checked=True,
+ Root_new_Source_review=ref(D/'Root_source_review.json'),independent_review=peerref,actual_controls_capture=ref(D/'controls_actual_capture.json'),
+ scope='Root independently read new consumer/supplier bodies, full current13 controls and theorem/premise assembly. Full natural-model, A=G, faithful-frame, membership, catalogue and maximal-overgroup/full-normalizer premises remain explicit imported hypotheses. Exact same-end37 OR19+4 criterion only. Proposal run may discover witnesses; it supplies no proof or paid credit.',
+ actual_control_report=report,physical_read_upper=6979166,physical_paths_upper=83,matrix_products_upper=298831,
+ current_partition=dict(baseline=217,later=3478,unresolved=106),all_fixed_inputs_whole_hashed=True)
+rref=write(D/'supplier_Root_review.json',review)
+gate=json.loads((D/'supplier_Root_gate_template.json').read_bytes())
+gate.update(adopted=True,candidate_generation_only_authorized=True,Root_code_math_review=rref,control_report=report)
+gref=write(D/'supplier_Root_gate.json',gate)
+assert rref['bytes']<=32768 and gref['bytes']<=8192 and report['bytes']<=16384
+expected={r['path']:r for r in plan['inputs']}
+for r in [plan['program'],pref,rref,gref,report]:assert r['path']not in expected;expected[r['path']]=r
+bill=plan['program']['bytes']+2*sum(r['bytes']for r in expected.values())
+assert len(expected)==83 and bill<=6979166 and bill<8*2**20
+out=Path(plan['output_directory']);assert not out.exists();out.parent.mkdir(parents=True,exist_ok=True)
+print(json.dumps(dict(status='ROOT_FRESH_PROPOSAL_GATE_ISSUED',gate=gref,review=rref,controls=report,whole_input_paths=len(expected),physical_read_upper=bill,case_positions=106,mathematical_or_original_credit=0)))
