@@ -1,0 +1,108 @@
+"""Own stdlib Source/AST/JSON authoring only; no represented Source activation."""
+from pathlib import Path
+import ast,hashlib,json,difflib
+D=Path('/private/tmp/l026_cached_rotation_walk');T=Path('/private/tmp')
+S=Path('/Users/sasha/medusa/research/leemans');O=S/'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients'
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def doc(p):return json.loads(Path(p).read_bytes())
+def write(name,x):
+ p=D/name;p.write_bytes(can(x));return ref(p)
+src={k:ref(p)for k,p in dict(supplier=D/'propose.py',core=D/'walk.py',controls=D/'controls.py',
+ kernel=T/'l026_supplied_prime_cycles/kernel.py',strict=T/'l026_supplied_prime_cycles/verify.py',
+ primitives=T/'l026_centralizer_upper/primitives.py',parent=T/'l026_block_partner_schedule/propose.py',
+ old_supplier=T/'l026_prime_cycle_supplier/propose.py').items()}
+texts={k:Path(v['path']).read_text()for k,v in src.items()}
+trees={k:ast.parse(v)for k,v in texts.items()}
+def defs(k):return{n.name:''.join(texts[k].splitlines(True)[n.lineno-1:n.end_lineno])for n in trees[k].body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+old,new=defs('old_supplier'),defs('supplier')
+literal=['need','can','decode','Budget','Work','load_kernel','imported_context','SearchStop','SearchWork','AllOperationBudget']
+assert all(old[k]==new[k]for k in literal)
+assert defs('core')['precompute_rotations']==defs('parent')['precompute_rotations']
+namespace=sum(src[k]['bytes']for k in ('supplier','core','kernel','primitives'))
+assert src['supplier']['bytes']<=32768 and src['core']['bytes']<=16384 and namespace<=50000
+assert src['kernel']['sha256'].startswith('60ee')and src['strict']['sha256'].startswith('268d')and src['primitives']['sha256'].startswith('9abbe')
+schedule=write('schedule.json',dict(schema='L026_UNTRUSTED_CACHED_ROTATION_WALK_SCHEDULE_V1',seed=hashlib.sha256(b'L026-CACHED-RS-WALK-PROPOSALS-v1:ROOT-RECOVERY-TABLE2').hexdigest(),
+ steps_per_case=256,word_limit=64,start_points=[0],trace_step_cap=13,exact_target_lengths=[11,13],misses_never_prove_absence=True))
+oldplan=doc(T/'l026_prime_cycle_supplier/plan.json');plan=dict(oldplan)
+ledger=ref(O/'direct_generation/second_window/root_acceptance.json');part=doc(ledger['path'])['validated_partition']
+hint=ref(T/'l026_second_window_generation_DATA/c105_from_actual13/free_index_0024/output/checkpoint.json')
+roles=dict(oldplan['roles']);roles.update(current_generation_adoption=ledger,current_partition=part)
+out=D/'instances/free_index_0024';out.mkdir(parents=True,exist_ok=True);assert not(out/'output').exists()
+plan.update(schema='L026_UNTRUSTED_CACHED_ROTATION_WALK_PLAN_V1',author='/root/journal_peer',program=src['supplier'],core=src['core'],primitives=src['primitives'],
+ control_program=src['controls'],schedule=schedule,roles=roles,resume=None,untrusted_hints=hint,selected_free_indices=[24],output_directory=str(out/'output'),
+ status='UNRUN_FRESH_ROOT_REVIEW_CONTROLS_AND_PROPOSAL_ONLY_GATE_REQUIRED',Root_authority=False)
+for k in ('window_start','maximum_records'):plan.pop(k,None)
+replace={oldplan['control_program']['path']:src['controls'],oldplan['schedule']['path']:schedule}
+inputs=[replace.get(r['path'],r)for r in oldplan['inputs']]+[src['core'],src['primitives'],ledger,part,hint]
+assert len({r['path']for r in inputs})==len(inputs)
+plan['inputs']=inputs;pref=write('plan.json',plan)
+# All plan bodies and exact pins are observed as DATA, not Source or math calls.
+for r in inputs:assert ref(r['path'])==r
+p=doc(part['path']);paid={r['free_index']for k in('all_prior_subset_owner_rows','all_prior_generation_facts','exact_new_original_owner_rows')for r in p[k]}
+assert len(paid)==31 and 24 not in paid
+seednote=doc(hint['path'])['notes'];assert len(seednote)==1 and seednote[0]['free_index']==24
+assert seednote[0]['hints']['prime11']is None and seednote[0]['hints']['prime13']is not None
+newview=write('Source_read_map.json',dict(schema='L026_CACHED_ROTATION_WALK_SOURCE_READ_MAP_V1',author='/root/journal_peer',
+ sources={k:dict(source=src[k],definitions=[dict(name=n.name,start=n.lineno,end=n.end_lineno,body=''.join(texts[k].splitlines(True)[n.lineno-1:n.end_lineno]))for n in trees[k].body if isinstance(n,(ast.FunctionDef,ast.ClassDef))])for k in('supplier','core','controls')},
+ source_namespace_bytes=namespace,literal_old_supplier_definitions=literal,whole_precompute_definition_literal=True))
+inverse=write('source_inverse.json',dict(schema='L026_CACHED_ROTATION_WALK_WHOLE_SOURCE_INVERSE_V1',author='/root/journal_peer',
+ full_old_and_new=[dict(role=k,source=src[k],body=texts[k])for k in src],literal_old_supplier_definitions=literal,
+ precompute_parent=src['parent'],unchanged_primitives=src['primitives'],unchanged_kernel=src['kernel'],unchanged_strict=src['strict'],
+ supplier_forward_diff=''.join(difflib.unified_diff(texts['old_supplier'].splitlines(True),texts['supplier'].splitlines(True),fromfile=src['old_supplier']['path'],tofile=src['supplier']['path']))))
+controls=[n.args[0].value for n in ast.walk(trees['controls'])if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id=='passed'and n.args and isinstance(n.args[0],ast.Constant)]
+assert len(controls)==len(set(controls))
+physical_upper=src['supplier']['bytes']+2*(sum(r['bytes']for r in inputs)+src['supplier']['bytes']+pref['bytes']+8192+32768+16384)
+paths=len(inputs)+5
+# Static upper against every explicit charged branch in the selected fresh call.
+R=roles
+premises=['operand_adoption','free_adoption','operand_premises','operand_inverse','operand_projection','free_projection','maximal_orders','theorem_review','theorem_source_note','theorem_handoff']
+setup=dict(physical_first_final_and_bootstrap=physical_upper,
+ runtime_plan_gate_review_control_JSON=2*(pref['bytes']+8192+32768+16384),
+ retained_context_documents=4*sum(R[k]['bytes']for k in premises),
+ theorem_argument=2*R['theorem_argument']['bytes'],maximal_rows=12*64,
+ support_compilation=2*(src['core']['bytes']+src['primitives']['bytes']),kernel_declaration=2*src['kernel']['bytes'],
+ schedule_parse_canonical_and_fields=4*schedule['bytes']+256,
+ current_ledger_JSON_and_31_rows=2*(ledger['bytes']+part['bytes'])+31*128,
+ old_hint_seed_JSON_and_row=2*hint['bytes']+128+2*len(seednote[0]['hints']['prime13']['word'])+8*13,
+ full_operand_decode_upper=438758,three_output_serialization_hash_bookkeeping_caps=2*3*131072+32768)
+n=3510;steps=256
+search=dict(one_bound_witness_row_seed=288,triangle_paths=98,
+ literal_two_rotation_precompute=2*(2*n+n*(8+132)),two_full_inverses=2*3*n,
+ initial_identity=n,three_after64_resets=3*n,
+ products=steps*4*n,
+ step_SHA_word_and_commit=steps*(128+256+130),
+ one_start_trace_and_potential_hint_copy=steps*(128+8+13*20+64+13))
+invoice=write('read_work_invoice.json',dict(schema='L026_CACHED_ROTATION_WALK_COMPLETE_STATIC_INVOICE_V1',author='/root/journal_peer',program=src['supplier'],plan=pref,
+ source_namespace_bytes=namespace,source_namespace_cap=50000,physical_read_upper=physical_upper,physical_paths_upper=paths,
+ new_output_bytes_upper=3*131072,setup_and_final_terms=setup,setup_and_final_upper=sum(setup.values()),selected_fresh_search_terms=search,
+ selected_fresh_search_upper=sum(search.values()),complete_selected_fresh_call_upper=sum(setup.values())+sum(search.values()),
+ limits=dict(physical_bytes=8*2**20,physical_paths=32,shared_work=10000000,shared_seconds=20,proposal_work=6000000,proposal_seconds=14,ordinary_rss_mib=128,ordinary_seconds=140,outer_seconds=150),
+ bound_assumptions=dict(Root_gate_bytes_at_most=8192,Root_review_bytes_at_most=32768,actual_control_report_bytes_at_most=16384,
+ exactly_selected_one_fresh_row24=True,one_start=True,steps256=True,no_resume=True,initial_seed_only13=True),
+ actual_forecast=False,actual_timing_RSS_or_completion_observed=False,
+ resumes='First/final physical invoice gains exact checkpoint path/body and2xsemantic admission; restore seed labels and <=64 suffix replay plus fresh rotation precompute are all metered. No future resume fit claimed. Dynamic proposal reserve is min6M,10M-setup-final/output reserve.'))
+assert physical_upper<=8*2**20 and paths<=32
+assert sum(search.values())<=6000000 and sum(setup.values())+sum(search.values())<=10000000
+gate=write('Root_gate_TEMPLATE_UNBOUND.json',dict(schema='ROOT_AUTHORIZED_L026_CACHED_ROTATION_WALK_SUPPLIER_V1',root='/root',adopted=None,
+ candidate_generation_only_authorized=None,program=src['supplier'],plan=pref,kernel=src['kernel'],direct_consumer=src['strict'],Root_code_math_review=None,control_report=None,
+ qualification='Unbound DATA only; requires actual Root own review and actual new generic controls. No Source/case authority is issued.'))
+review=write('Root_review_TEMPLATE_UNBOUND.json',dict(schema='ROOT_L026_CACHED_WALK_SOURCE_MATH_REVIEW_V1',root='/root',status=None,blockers=None,
+ program=src['supplier'],kernel=src['kernel'],plan=pref,core=src['core'],primitives=src['primitives'],independent_peer=None,
+ Source_full_read_completed=None,all_original_context_and_current_unpaid_joins_accepted=None))
+def pair(r):return[r['path'],r['sha256']]
+calls=write('first_calls_UNRUN.json',dict(schema='L026_CACHED_WALK_FIRST_CALLS_UNRUN_V1',controls=['python3','-E','-B','-S',src['controls']['path'],'--self-sha256',src['controls']['sha256']]+sum((['--'+k]+pair(src[k])for k in('supplier','core','kernel','primitives','parent','strict')),[]),
+ supplier=['python3','-E','-B','-S',src['supplier']['path'],'--self-sha256',src['supplier']['sha256'],'--plan',*pair(pref),'--Root-gate','ACTUAL_ROOT_GATE_PATH','ACTUAL_ROOT_GATE_SHA256'],
+ outer=dict(rss_cap_mib=128,timeout=150),Root_review=None,actual_controls=None,Root_gate=None,actual_supplier=None,actual_strict=None,
+ next='Root own whole Source/math/invoice read; independent Source peer; actual new generic controls; Root proposal-only review/gate; optional bounded actual supplier; only actual carrier then fresh unchanged268d strict gate/call/adoption.'))
+write('Source_freeze.json',dict(schema='L026_CACHED_ROTATION_WALK_SOURCE_FREEZE_V1',sources=src,namespace_bytes=namespace,
+ controls_designs=len(controls),pure_generic_designs=sum(not x.startswith('AST_')for x in controls),AST_only_designs=sum(x.startswith('AST_')for x in controls),
+ Source_activated=False,controls_executed=False,original_case_calls=0,Root_authority=False))
+handoff=write('handoff.json',dict(schema='L026_CACHED_ROTATION_WALK_UNRUN_HANDOFF_V1',author='/root/journal_peer',status='FROZEN_FOR_ROOT_OWN_AND_INDEPENDENT_SOURCE_REVIEW',
+ sources=src,artifacts=dict(plan=pref,schedule=schedule,whole_Source_inverse=inverse,Source_read_map=newview,invoice=invoice,
+ Root_gate_template=gate,Root_review_template=review,first_calls=calls,math=ref(D/'MATH.rst'),interface=ref(D/'INTERFACE.rst')),
+ all_represented_Sources_controls_and_cases_UNRUN=True,own_stdlib_DATA_scripts_only=[ref(D/'author_DATA.py'),ref(Path(__file__))],
+ protected_science=dict(current_NEG=17712,current_GEN=7,current_separate_IP=7,current_unpaid=28877,selected_unpaid_free_indices=[24],
+ original_middle_class=2,original_endpoint_position=18,Original_credit=0),future_Root_refs_null=True,S_W_Git_gate_writes=0,Root_authority=False))
+print(json.dumps(handoff,sort_keys=True))

@@ -1,0 +1,121 @@
+"""Root review of thirteen existing strict returns. No group action is evaluated."""
+from pathlib import Path
+import copy, hashlib, json, os, stat, struct
+
+D=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+DEST=S/'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/invariant_subsets/third_window/metadata_evidence'
+OUT=D/'Root_reviewed_DATA'
+READ={}
+
+def can(value):
+    return (json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def ref(path):
+    path=Path(path); raw=path.read_bytes()
+    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+def whole(r):
+    if r['path'] in READ:
+        old,raw=READ[r['path']]; assert old==r; return raw
+    p=Path(r['path']); a=p.lstat()
+    assert p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+    assert a.st_nlink==1 and a.st_size==r['bytes']<=4*2**20
+    raw=p.read_bytes(); b=p.lstat()
+    signature=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    assert signature(a)==signature(b) and len(raw)==r['bytes'] and hashlib.sha256(raw).hexdigest()==r['sha256']
+    READ[r['path']]=(r,raw)
+    assert len(READ)<=512 and sum(len(v[1]) for v in READ.values())<=64*2**20
+    return raw
+
+def doc(r): return json.loads(whole(r))
+
+def descriptors(value):
+    if type(value) is dict:
+        if set(value)=={'path','bytes','sha256'}: yield value
+        else:
+            for v in value.values(): yield from descriptors(v)
+    elif type(value) is list:
+        for v in value: yield from descriptors(v)
+
+def put(name,value):
+    path=OUT/name; raw=can(value)
+    with path.open('xb') as stream:
+        assert stream.write(raw)==len(raw); stream.flush(); os.fsync(stream.fileno())
+    return ref(path)
+
+h=doc(ref(D/'handoff.json'))
+detail=doc(h['detail_DRAFT']); part=doc(h['partition_DRAFT']); draft=doc(h['Root_acceptance_DRAFT'])
+for r in descriptors([detail,part,draft]): whole(r)
+old_negative=doc(h['prior_actual_NEG']); old_generation=doc(h['prior_actual_GEN'])
+baseline=doc(old_generation['validated_partition'])
+old_ng=baseline['all_prior_subset_owner_rows']
+old_gen=baseline['all_prior_generation_facts']+baseline['exact_new_original_owner_rows']
+assert len(old_ng)==24 and len(old_gen)==11
+assert detail['whole_prior_negative_acceptance']==old_negative
+assert detail['whole_current_generation_acceptance']==old_generation
+assert detail['all_prior_subset_owner_rows']==part['unchanged_old_subset_rows']==old_ng
+assert detail['all_prior_generation_facts']==part['unchanged_generation_rows']==old_gen
+new=detail['new_facts']; assert new==part['new_NEG_rows']==draft['new_facts']
+assert [r['free_index'] for r in new]==[32,33,35,36,37,38,40,41,42,43,44,45,46]
+assert not {r['free_index'] for r in new}&{r['free_index'] for r in old_ng+old_gen}
+facts=[]
+for run in detail['actual_strict_runs']:
+    plan=doc(run['strict']['plan']); result=doc(run['strict']['result'])
+    receipt=doc(run['execution']['receipt']); capture=doc(run['execution']['capture'])
+    assert receipt['status']=='PASS' and receipt['returncode']==0
+    assert not receipt['cleanup']['remaining'] and not receipt['cleanup']['errors']
+    assert capture['root']==capture['actor']=='/root' and capture['actual_tool']['exit_code']==0
+    assert result['mode']=='check' and result['supplier_activated'] is False
+    assert result['strict_check_activates_supplier'] is False
+    assert result['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0
+    assert result['exact_unvisited_indices']==[] and result['exact_visited_indices']==run['free_indices']
+    bank=whole(plan['roles']['witnesses'])
+    for row in result['verified_nongeneration_records']:
+        i=row['free_index']; raw=bank[16*i:16*i+16]
+        owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',raw)
+        assert row['owner']==owner and row['witness_row_sha256']==hashlib.sha256(raw).hexdigest()
+        assert 0<row['points']<3510 and row['checked_positive_rotation_edges']==2*row['points'] and mass==1024
+        facts.append(dict(free_index=i,owner=owner,witness_row_sha256=row['witness_row_sha256'],middle_mass=mass,
+                          invariant_points=row['points'],strict_positive_rotation_edges=row['checked_positive_rotation_edges']))
+assert facts==new
+assert sum(r['invariant_points'] for r in facts)==1839
+assert sum(r['strict_positive_rotation_edges'] for r in facts)==3678
+assert len(old_ng+new)==37 and 17688+37==17725
+assert 28908-37-11==28860 and 1024*28860==29552640
+assert part['unpaid_count']==28860 and part['unpaid_mass']==29552640
+assert detail['total_NEG_mass']==6884658+1024*37==6922546
+assert not OUT.exists(); OUT.mkdir()
+review=put('Root_review.json',dict(schema='ROOT_REVIEWED_L026_THIRTEEN_PROPER_SUBSET_PUBLICATION_V1',root='/root',status='SUPPORTED',blockers=[],
+    draft_detail=h['detail_DRAFT'],draft_partition=h['partition_DRAFT'],draft_acceptance=h['Root_acceptance_DRAFT'],
+    prior_negative=h['prior_actual_NEG'],prior_generation=h['prior_actual_GEN'],scientific_evidence=h['scientific_expected_manifest'],
+    independent_SCI_review=h['actual13_SCI_review'],metadata_review_source=ref(Path(__file__).resolve()),
+    all_prior24_negative_and11_generation_rows_preserved=True,verified_new_indices=[r['free_index'] for r in facts],
+    new_invariant_points=1839,new_checked_rotation_edges=3678,whole_input_paths=len(READ),whole_input_bytes=sum(len(v[1]) for v in READ.values()),
+    mathematical_argument='Each finite nonempty proper supplied set is closed under both actual rotations; permutation injectivity gives equality and inverse closure. The imported transitive named G therefore differs from the rotation subgroup. The original middle and endpoint involutions give an even subgroup normal of index at most two in the marking group; simplicity/perfectness rules out that marking generating G. All original model, action, class, membership, transitivity and complete-classification imports remain attributed.',
+    scientific_calls=0,new_Original_conjecture_Lean_or_measurement_credit=0))
+qualification='Thirteen further original markings are rejected by three independent checks of every supplied rotation edge. All old24 subset negatives and11 generation facts, their separate intersection proofs and original imported premises are unchanged. This explicit Root metadata review adds no generation, census, manuscript completion, conjecture, Lean or compression claim.'
+for obj in (detail,part):
+    obj.update(Root_adoption_owed=False,Root_authority=True,root='/root',Root_review=review,qualification=qualification)
+detail['adopted']=True
+dr=put('detail.json',detail); pr=put('partition.json',part)
+draft.update(adopted=True,Root_adoption_owed=False,status='ROOT_ACCEPTED_THIRTEEN_ADDITIONAL_ROTATION_SUBSET_NONGENERATION_FACTS',
+    source_review=review,qualification=qualification,
+    validated_detail=dict(dr,path=str(DEST/'detail.json')),validated_partition=dict(pr,path=str(DEST/'partition.json')))
+for key in ('draft_author','draft_Root_authority','actual_Root_metadata_review_capture','actual_Root_release','actual_Root_publication'):
+    draft.pop(key,None)
+qr=put('acceptance_payload.json',draft)
+selected=[h['handoff']] if 'handoff' in h else [ref(D/'handoff.json')]
+selected += [h[k] for k in ('detail_DRAFT','partition_DRAFT','Root_acceptance_DRAFT','whole_DATA_inverse','unchanged53b_ABI_static_check','actual13_SCI_review')]
+selected += [review,dr,pr,qr,ref(Path(__file__).resolve())]
+rows=[]
+for r in selected:
+    target=r if Path(r['path']).is_relative_to(S) else dict(r,path=str(DEST/'objects'/r['sha256']))
+    if r==dr: target=dict(r,path=str(DEST/'detail.json'))
+    if r==pr: target=dict(r,path=str(DEST/'partition.json'))
+    rows.append(dict(original=r,retained=target))
+cp=put('copy_plan.json',dict(Root_authority=False,destination=str(DEST),files=rows,
+    borrowed_closures=[h['scientific_expected_manifest']],scientific_calls=0))
+print(json.dumps(dict(status='ROOT_EXPLICIT_THIRTEEN_NG_METADATA_REVIEW_PASS',review=review,detail=dr,partition=pr,
+    acceptance_payload=qr,copy_plan=cp,destination=str(DEST),manifest=str(DEST/'preservation.json'),
+    target=h['intended_acceptance_target']),sort_keys=True))

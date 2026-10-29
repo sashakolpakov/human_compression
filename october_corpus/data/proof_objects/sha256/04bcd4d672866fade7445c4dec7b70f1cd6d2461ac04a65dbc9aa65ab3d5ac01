@@ -1,0 +1,97 @@
+"""UNRUN generic metadata Reader-job-role controls; /root/journal_peer/f009_invoice.
+Root alone executes. Synthetic JSON files only; no original job/state/case,
+Native/Reader/scientific program, checkpoint writer or selector is activated.
+"""
+import argparse,ast,hashlib,json,math,os,resource,signal,stat,sys,tempfile,time
+from pathlib import Path
+START=time.monotonic();NAMES=[];SOURCE_READ_BYTES=0;ATTEMPTS=[]
+MIB=2**20
+def need(ok,why):
+    if not ok:raise ValueError(why)
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    if rss>=128*MIB or time.monotonic()-START>=140:raise RuntimeError('generic128MiB140s')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def pin(p):
+    p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def whole_source(path,sha):
+    global SOURCE_READ_BYTES
+    p=Path(path);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=65536,'bounded generic Source')
+    b=p.read_bytes();z=p.lstat();need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)and hashlib.sha256(b).hexdigest()==sha,'exact stable whole Source')
+    SOURCE_READ_BYTES+=len(b);need(SOURCE_READ_BYTES<=262144,'four bounded complete control Sources');return b,dict(path=str(p),bytes=len(b),sha256=sha)
+def load_helpers(raw,ref):
+    source=raw.decode();tree=ast.parse(source)
+    names={'need','pin','strict','sig','tick','whole','doc','reader_job_doc'}
+    pieces=[ast.get_source_segment(source,n)for n in tree.body if isinstance(n,ast.FunctionDef)and(n.name in names or n.name.startswith(('f9_','fmp_')))]
+    ns=dict(__builtins__=__builtins__,__name__='synthetic_Reader_job_metadata',__file__=ref['path'],
+        Path=Path,hashlib=hashlib,json=json,os=os,stat=stat,sys=sys,time=time,math=math,resource=resource,MIB=MIB,
+        START=time.monotonic(),READ_BYTES=0,_F9_LOGICAL_LIMIT=8*MIB,
+        _F9_SOURCE_TAG='Root_Source_rows_reference',_F9_DOMAIN_TAG='Root_Input_rows_reference',
+        _F9_CLOSURE_TAG='Root_Native_closure_rows_reference',_F9_DECLARED_TAG='Root_Declared_rows_reference',
+        _F9_REQUEST_TAG='Root_Request_rows_reference',_F9_MANIFEST_TAG='Root_Output_rows_reference',
+        _FMP_TAG='Root_Preservation_map_reference')
+    # Only definitions are compiled. No top-level Source statement or writer runs.
+    exec(compile('\n\n'.join(pieces),ref['path'],'exec',dont_inherit=True),ns)
+    need(ns['reader_job_doc'].__code__.co_filename==ref['path'],'genuine whole helper filename')
+    return ns,source,tree
+def check(name,condition):need(condition,name);NAMES.append(name)
+def reject(name,call):
+    try:call()
+    except(ValueError,TypeError,KeyError,IndexError,OverflowError):NAMES.append(name);return
+    raise AssertionError('accepted malformed synthetic metadata: '+name)
+def main():
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize
+         and all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'ordinary clearedEB controls')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('140s metadata controls')));signal.setitimer(signal.ITIMER_REAL,140)
+    def deny(event,args):
+        if event in{'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            ATTEMPTS.append(event);raise ValueError('generic metadata controls forbid Native/Reader/process launch')
+    sys.addaudithook(deny)
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--planner',nargs=2,required=True);ap.add_argument('--register',nargs=2,required=True);ap.add_argument('--out',required=True);args=ap.parse_args()
+    ownraw,own=whole_source(str(Path(__file__).resolve()),args.self_sha256)
+    pr,pref=whole_source(*args.planner);rr,rref=whole_source(*args.register)
+    P,ps,pt=load_helpers(pr,pref);R,rs,rt=load_helpers(rr,rref)
+    with tempfile.TemporaryDirectory(prefix='f009_reader_job8_generic_',dir='/private/tmp')as directory:
+        root=Path(directory);counter=0
+        def fixture(raw):
+            nonlocal counter
+            counter+=1;p=root/('fixture_%03d.json'%counter);p.write_bytes(raw);return pin(p)
+        logical=dict(schema='ROOT_F009_STANDALONE_JOB_V1',role='reader',padding='x'*(2*MIB+64))
+        large=fixture(can(logical));small=fixture(can(dict(schema='ROOT_F009_STANDALONE_JOB_V1',role='reader')))
+        need(2*MIB<large['bytes']<8*MIB,'synthetic large file crosses only old generic threshold')
+        for label,ns in [('planner',P),('register',R)]:
+            check(label+'_raw_job_above2MiB_exact',ns['reader_job_doc'](large)==logical)
+            check(label+'_small_raw_job_exact',ns['reader_job_doc'](small)==dict(schema='ROOT_F009_STANDALONE_JOB_V1',role='reader'))
+            reject(label+'_generic_doc_stays2MiB',lambda ns=ns:ns['doc'](large))
+            for tag,changes in [('over8MiB',dict(bytes=8*MIB+1)),('boolean_extent',dict(bytes=True)),('negative_extent',dict(bytes=-1)),('wrong_extent',dict(bytes=large['bytes']-1)),('wrong_sha',dict(sha256='0'*64))]:
+                bad=dict(large,**changes);reject(label+'_'+tag,lambda bad=bad,ns=ns:ns['reader_job_doc'](bad))
+            for tag,value in [('Native_role',dict(schema='ROOT_F009_STANDALONE_JOB_V1',role='native')),('wrong_schema',dict(schema='OTHER',role='reader')),('boolean_role',dict(schema='ROOT_F009_STANDALONE_JOB_V1',role=True)),('not_object',[])]:
+                bad=fixture(can(value));reject(label+'_'+tag,lambda bad=bad,ns=ns:ns['reader_job_doc'](bad))
+            for tag,raw in [('duplicate_keys',b'{"schema":"ROOT_F009_STANDALONE_JOB_V1","role":"reader","x":1,"x":2}\n'),
+                ('nested_duplicate',b'{"schema":"ROOT_F009_STANDALONE_JOB_V1","role":"reader","x":{"a":1,"a":2}}\n'),
+                ('NaN',b'{"schema":"ROOT_F009_STANDALONE_JOB_V1","role":"reader","x":NaN}\n'),
+                ('Infinity',b'{"schema":"ROOT_F009_STANDALONE_JOB_V1","role":"reader","x":Infinity}\n'),
+                ('overflow_float',b'{"schema":"ROOT_F009_STANDALONE_JOB_V1","role":"reader","x":1e999}\n'),('trailing_json',can({})+can({}))]:
+                bad=fixture(raw);reject(label+'_'+tag,lambda bad=bad,ns=ns:ns['reader_job_doc'](bad))
+        before=R['READ_BYTES'];R['reader_job_doc'](small)
+        check('register_exact_physical_body_charge',R['READ_BYTES']-before==small['bytes'])
+        R['READ_BYTES']=2**31-small['bytes']+1
+        reject('register_shared2GiB_read_refusal',lambda:R['reader_job_doc'](small))
+        R['READ_BYTES']=0
+        for label,source,tree in [('planner',ps,pt),('register',rs,rt)]:
+            funcs={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+            caller=ast.get_source_segment(source,funcs['main'if label=='planner'else'run'])
+            doc=ast.get_source_segment(source,funcs['doc'])
+            check(label+'_sole_job_call_site_AST',caller.count("job=reader_job_doc(refs['job'])")==1 and "job=f9_expand_job(doc(refs['job']))"not in source)
+            check(label+'_generic_limit_literal_AST',"r['bytes']<=2*MIB"in doc if label=='planner'else'whole(ref,body=True)'in doc and "if body:need(ref['bytes']<=2*MIB"in source)
+    check('no_Native_Reader_or_process_attempts',ATTEMPTS==[])
+    report=dict(schema='F009_READER_JOB8_METADATA_GENERIC_CONTROLS_V1',status='PASS',program=own,planner=pref,register=rref,
+        controls=len(NAMES),names=NAMES,synthetic_only=True,original_case_calls=0,Reader_Native_calls=0,
+        AST_observations=4,dynamic_generic_controls=len(NAMES)-4,complete_CLI_or_CAS_integration_claimed=False,scientific_predicates_changed=False,
+        complete_Source_read_bytes_excluding_interpreter_bootstrap=SOURCE_READ_BYTES,qualification='Synthetic metadata helpers + four AST site/limit checks. No original runtime/state/case/Reader/checkpoint proof or writer/CAS execution.')
+    out=Path(args.out);need(out.is_absolute()and '..'not in out.parts and out.is_relative_to('/private/tmp')and out.parent.resolve(strict=True)==out.parent and not out.exists(),'fresh Tonly generic report')
+    raw=can(report);need(len(raw)<=16384,'finite generic report')
+    with out.open('xb')as f:need(f.write(raw)==len(raw),'whole generic report');f.flush();os.fsync(f.fileno())
+    need(out.read_bytes()==raw,'entire final report')
+    print(json.dumps(dict(status='PASS',controls=len(NAMES),AST_observations=4,report=pin(out)),sort_keys=True))
+if __name__=='__main__':main()

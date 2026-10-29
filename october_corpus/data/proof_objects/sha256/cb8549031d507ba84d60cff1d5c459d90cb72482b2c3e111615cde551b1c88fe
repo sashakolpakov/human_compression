@@ -1,0 +1,81 @@
+"""Independent stdlib/AST/JSON-only audit. Never activates represented Sources."""
+from pathlib import Path
+import ast,copy,hashlib,json,stat
+D=Path('/private/tmp/intake_journal/registered11099_GEN11_DATA');P=D.parent/'registered11099_DATA';R=D/'independent_review'
+reads=[]
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def raw(p,ref=None):
+ p=Path(p);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and sig(a)==sig(z)
+ r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());assert ref is None or r==ref,(r,ref);reads.append(r);return b
+
+def doc(p,ref=None):return json.loads(raw(p,ref))
+def whole(r):return raw(r['path'],r)
+def jref(r):return json.loads(whole(r))
+def pin(p):b=raw(p);return reads[-1]
+def diff(a,b,path=()):
+ if isinstance(a,dict)and isinstance(b,dict):
+  out=[]
+  for k in sorted(a.keys()|b.keys()):out+=diff(a[k],b[k],path+(k,))if k in a and k in b else[dict(path=list(path+(k,)),before=a.get(k),after=b.get(k))]
+  return out
+ return []if a==b else[dict(path=list(path),before=a,after=b)]
+h=doc(D/'handoff.json');assert reads[-1]['sha256']=='24a2015331bc9c9d775134cdfc23af1eeb15165343c570dcc7e4d03ec48602eb'
+for k in ['program','existing_whole_Source_inverse','whole_DATA_inverse','invoice','Root_quoted_calls','protected_transition','actual_GEN11_receipt','whole_previous_journal']:whole(h[k])
+old=doc(h['expected_current']['path'],h['expected_current']);snap=doc(h['whole_previous_journal']['path'],h['whole_previous_journal']);assert old==snap
+frozen=jref(h['proposal']);parent=doc(P/'proposal.json');inv=jref(h['whole_DATA_inverse']);assert inv['whole_current']==old and inv['whole_parent_UNRUN_proposal']==parent and inv['whole_child_proposal']==frozen
+assert inv['exact_changes_from_parent_DATA']==diff(parent,frozen)
+newref=dict(path=str(D/'Root_corrected_DATA/proposal.json'),bytes=32617,sha256='259c1bb5c82039c613741ba8f90274a4b3c008b47f6fd06eab9a4e59b9010090');new=jref(newref)
+assert diff(frozen,new)==[dict(path=['L026','next'],before='Resolve the remaining 28,877 product components, then reversal and other endpoints under the retained premises.',after='Resolve the remaining 28,873 product components, then reversal and other endpoints under the retained premises.')]
+assert len(can(new))==32617<=32768 and can(new)==whole(newref)
+source=whole(h['program']).decode();si=jref(h['existing_whole_Source_inverse']);assert source==si['whole_child_source'];assert whole(si['parent']).decode()==si['whole_parent_source']
+rebuilt=si['whole_parent_source']
+for r in si['replacements']:assert rebuilt.count(r['before'])==1;rebuilt=rebuilt.replace(r['before'],r['after'])
+assert si['new_header']+rebuilt==source
+pt=ast.parse(si['whole_parent_source']);ct=ast.parse(source);pd={n.name:ast.get_source_segment(si['whole_parent_source'],n)for n in pt.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef))};cd={n.name:ast.get_source_segment(source,n)for n in ct.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef))}
+assert set(pd)==set(cd)=={'row','whole','refs','sync_directory','registered_f009_protected'}
+assert all(pd[n]==cd[n]for n in si['literal_definition_names'])
+# No imported represented science or invocation is performed by this audit.
+assert all(not isinstance(n,(ast.Import,ast.ImportFrom))or all(x.name in ['pathlib','argparse','hashlib','json','os','stat','tempfile']for x in n.names)or isinstance(n,ast.ImportFrom)and n.module=='pathlib'for n in ct.body)
+unchanged=['F004','counts','measurements','stopping_rule','new_whole_original_conjecture_Lean_or_measurement_credit','public_repository','source_scope_audit','resource_observation','current_goal_turn_classification','goal_status','root','schema']
+assert all(new[k]==old[k]for k in unchanged)
+assert new['counts']['accessible_manuscripts']==105 and new['counts']['remaining']==['F004','F009','L026'] and new['measurements']==dict(new_credit=0,published_applications=53,whole_topics=19)
+assert set(new)==set(old)
+restored_L026=copy.deepcopy(new['L026']);restored_L026['next']=old['L026']['next'];restored_L026['product_progress']=old['L026']['product_progress'];assert restored_L026==old['L026']
+assert new['F009']['complete_census_or_Original_credit']==old['F009']['complete_census_or_Original_credit']==0 and new['F009']['pending_includes_reserved']is old['F009']['pending_includes_reserved']is True
+assert new['L026']['product_progress']['NEG']==old['L026']['product_progress']['NEG'] and new['L026']['product_progress']['NEG']==dict(adoption=old['L026']['product_progress']['NEG']['adoption'],nonfree=17688,subset=24,total=17712)
+a=jref(h['actual_GEN11_receipt']);part=jref(a['validated_partition']);assert a['root']=='/root'and a['adopted']is True and a['Root_adoption_owed']is False
+assert a['prior_registered_generation_count']==7 and a['new_GENERATING_product_components']==a['new_same_marking_rank3_IP_components']==4 and len(a['generation_facts'])==4
+assert a['prior_generation_adoptions'][-1]==old['L026']['product_progress']['GEN_IP']['adoption'];assert new['L026']['product_progress']['GEN_IP']==dict(adoption=h['actual_GEN11_receipt'],components=11,separate_IP_components=11)
+assert a['remaining_product_components_unresolved']==new['L026']['product_progress']['unresolved']==28873 and a['remaining_middle_mass_unresolved']==new['L026']['product_progress']['unresolved_mass']==29565952
+assert 17712+11+28873==46596 and 6909234+11*1024+29565952==36486450
+# Whole protected register transition and exact five-field restoration.
+t=jref(h['protected_transition']);reg=jref(t['registration_result']);intent=jref(t['commit_intent']);before=jref(t['before_image']);after=jref(t['after_image']);cp=jref(t['checkpoint_acceptance']);sp=jref(t['snapshot_adoption']);capture=jref(t['actual_registration_capture'])
+assert old['protected_reviewed_registers'][0]==t['previous_protected'] and new['protected_reviewed_registers'][0]==t['current_protected'];assert new['protected_reviewed_registers'][1]==old['protected_reviewed_registers'][1]
+for ref in new['protected_reviewed_registers']:whole(ref)
+assert t['after_image']['sha256']==t['current_protected']['sha256'];restored=copy.deepcopy(after)
+for k in ['checkpoint','checkpoint_acceptance','snapshot_adoption','status','root_metadata_update']:
+ if k in before['F009']:restored['F009'][k]=before['F009'][k]
+ else:restored['F009'].pop(k,None)
+assert restored==before
+assert cp['adopted']is sp['adopted']is True and cp['root']==sp['root']==reg['root']=='/root';assert reg['all_unrelated_fields_preserved']is True
+assert cp['checkpoint']==sp['checkpoint']==reg['checkpoint']==new['F009']['accepted_checkpoint']==dict(sequence=11099,nodes=5815,pending=195,reserved_debts=0,selected_raw_leaf_records=532763)
+assert new['F009']['checkpoint_acceptance']==t['checkpoint_acceptance'] and new['F009']['snapshot_adoption']==t['snapshot_adoption'] and new['F009']['registration']==t['registration_result'] and new['F009']['actual_registration_capture']==t['actual_registration_capture']
+assert reg['intent']==t['commit_intent'] and intent['before_observations'][2]==t['previous_protected'] and reg['three_actual_live_observations'][2]==t['current_protected']
+method=reg['writer'];assert method==intent['writer']==cp['root_metadata_writer']==sp['root_metadata_writer'];assert method['metadata_only']is True and method['program']['sha256']=='8c062f0ff16509101a4191dc3b7f13782face860f9b5135d732fb46897bfc851'
+for e in method['actual_to_retained_sources']:assert e['actual']['sha256']==e['retained']['sha256']and e['actual']['bytes']==e['retained']['bytes'];whole(e['retained'])
+release=jref(method['actual_to_retained_sources'][2]['retained']);assert release['root']=='/root'and release['status']=='SUPPORTED'and release['blockers']==[]and release['program']==method['program']and release['plan']==method['plan']
+assert capture['actor']==capture['root']=='/root'and capture['all_genuine_api_frames']and capture['actual_tool']['exit_code']==capture['full_tool_return']['exit_code']==0 and '--commit'in capture['child_argv']
+# Opaque state snapshot only: whole hash, no decode. Exact registered result/closure references.
+for k in ['Reader_snapshot','result','strict_Reader_closure']:whole(new['F009'][k])
+assert new['journal_metadata_method']['program']==h['program']and new['journal_metadata_method']['protected_F009_transition']==h['protected_transition']
+assert new['journal_metadata_method']['scientific_calls']==new['journal_metadata_method']['protected_register_writes']==0
+assert new['previous_checkpoint']==dict(path=str(Path(h['expected_current']['path']).parent/'intake_overview/versions'/ (h['expected_current']['sha256']+'.json')),bytes=h['expected_current']['bytes'],sha256=h['expected_current']['sha256'])
+# Source-derived independent physical whole-body read ledger for the future call.
+base=[h['expected_current'],newref,h['program'],h['protected_transition'],t['registration_result'],t['commit_intent'],t['before_image'],t['after_image'],t['current_protected'],t['checkpoint_acceptance'],t['snapshot_adoption']]+[e['retained']for e in method['actual_to_retained_sources']]+[method['actual_to_retained_sources'][2]['retained'],t['actual_registration_capture'],new['protected_reviewed_registers'][1]]+new['protected_reviewed_registers']
+check=base+[h['expected_current']]+new['protected_reviewed_registers'];cas=base+[dict(new['previous_checkpoint']),h['expected_current']]+new['protected_reviewed_registers']+[h['expected_current'],newref]+new['protected_reviewed_registers']
+invoice=jref(h['invoice']);assert sum(r['bytes']for r in check)<=invoice['check_body_read_conservative_upper']and sum(r['bytes']for r in cas)<=invoice['CAS_body_read_conservative_upper']
+assert invoice['newwrites_upper']==65241 and invoice['newwrite_files']==2 and invoice['headroom']==151
+ob=dict(schema='INDEPENDENT_JOURNAL_DATA_AND_STATIC_SOURCE_AUDIT_V1',author='/root/journal_peer',reviewed_handoff=h,selected_corrected_proposal=newref,parent_frozen_proposal=h['proposal'],only_Root_correction=diff(frozen,new),exact_delta_from_current=diff(old,new),literal_definitions=si['literal_definition_names'],Source_inverse_exact=True,whole_DATA_inverse_exact=True,protected_five_field_restoration=True,all_unrelated_journal_fields_preserved=unchanged,actual_GEN11_receipt=h['actual_GEN11_receipt'],actual_F009_registration=t['registration_result'],L026_counts=dict(GEN=11,IP=11,NEG=17712,unresolved=28873,mass=29565952),unadopted_13NG_and_five_walk_pairs_credited=False,proposal_bytes=32617,headroom=151,future_check_read_bytes=sum(r['bytes']for r in check),future_CAS_read_bytes=sum(r['bytes']for r in cas),future_check_paths=len({r['path']for r in check}),future_CAS_paths=len({r['path']for r in cas}),audit_read_operations=len(reads),audit_bytes=sum(r['bytes']for r in reads),audit_unique_paths=len({r['path']for r in reads}),audit_whole_read_refs=reads,restrictions='Only own stdlib AST/hash/JSON audit ran. Represented Sources, publisher/check-only/CAS, science, state/graph/gzip decode, S/W/Git/gates never activated; actual latest-hash and Root release remain Root obligations.')
+(R/'observations.json').write_bytes(can(ob))
+report=dict(schema='INDEPENDENT_JOURNAL_DATA_PEER_V1',status='SUPPORTED_STATIC_SOURCE_DATA_ONLY',blockers=[],author='/root/journal_peer',Root_authority=False,subject=newref,source=h['program'],observations=dict(path=str(R/'observations.json'),bytes=(R/'observations.json').stat().st_size,sha256=hashlib.sha256((R/'observations.json').read_bytes()).hexdigest()),findings=['Whole current552e snapshot and both frozen DATA inverse images restore exactly.','Source27e1 is exactly four fixed registration identity replacements plus attribution over1f499; four common definitions literal.','AcceptedF00911099 and actualGEN11 counts/references agree; negative17712 unchanged; thirteen newNG and five newwalk hints uncredited.','Protected primarye181→df8d is exactly actual Root registration five-field update; secondarye404 unchanged; all other counts, measurements, history/publicfacts and STOP preserved.','Root corrected only stale L026.next28877→28873; corrected32617B has151B headroom.','Static publisher read sums fit conservative invoice; no execution/Root authority implied.'],remaining=['Root fresh check-only against expected552e and current exact protected hashes.','Root review/release and actual version-retaining CAS; preserve this peer/proposal and actual runtime.'],Source_activation=False,S_W_Git_gates=False)
+(R/'independent_review.json').write_bytes(can(report));print(json.dumps(dict(review=pin(R/'independent_review.json'),observations=pin(R/'observations.json'),check_bytes=ob['future_check_read_bytes'],CAS_bytes=ob['future_CAS_read_bytes']),sort_keys=True))

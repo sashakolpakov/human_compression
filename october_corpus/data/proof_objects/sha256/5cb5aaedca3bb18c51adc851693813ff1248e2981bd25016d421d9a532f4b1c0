@@ -1,0 +1,102 @@
+"""Independent stdlib/AST/JSON/integer audit; no represented Source activation."""
+from pathlib import Path
+import ast,hashlib,json,stat,struct
+D=Path('/private/tmp/l026_cached_rotation_walk');A=D/'independent_review'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+seen={};checks=[]
+def whole(r,role):
+ p=Path(r['path']);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+ b=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ assert ref(p,b)==r,(role,r);seen[str(p)]=r;checks.append(dict(role=role,ref=r));return b
+def current(p,role):
+ p=Path(p);r=ref(p,p.read_bytes());return r,whole(r,role)
+hr,hb=current(D/'handoff.json','frozen_handoff');h=json.loads(hb);assert hr['bytes']==3892 and hr['sha256']=='0be9a7552ac993c78406f368bb7daaad6e8d1f3560537197243e21d954017151'
+src={}
+for k,r in h['sources'].items():src[k]=whole(r,'wholeSource:'+k).decode();ast.parse(src[k])
+for k,r in h['artifacts'].items():whole(r,'frozenartifact:'+k)
+iv=json.loads(Path(h['artifacts']['whole_Source_inverse']['path']).read_bytes())
+for entry in iv['full_old_and_new']:
+ assert entry['body'].encode()==whole(entry['source'],'fullSourceinverse:'+entry['role'])
+def defs(s):return{n.name:ast.get_source_segment(s,n)for n in ast.parse(s).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+old=defs(src['old_supplier']);new=defs(src['supplier']);core=defs(src['core']);parent=defs(src['parent'])
+assert len(iv['literal_old_supplier_definitions'])==10
+for name in iv['literal_old_supplier_definitions']:assert old[name]==new[name],name
+assert core['precompute_rotations']==parent['precompute_rotations']
+assert iv['unchanged_kernel']==h['sources']['kernel']and iv['unchanged_primitives']==h['sources']['primitives']and iv['unchanged_strict']==h['sources']['strict']
+assert src['primitives'].count('def compose(')==1 and 'out[x]=h[g[x]]'in src['primitives']and 'out[y]=x'in src['primitives']
+assert 'def check_cycle'in src['kernel']and 'cycle[(i+1)%prime]'in src['kernel']and '1<=len(letters)<=64'in src['kernel']
+plan=json.loads(Path(h['artifacts']['plan']['path']).read_bytes());invoice=json.loads(Path(h['artifacts']['invoice']['path']).read_bytes());schedule=json.loads(Path(plan['schedule']['path']).read_bytes())
+assert len(plan['inputs'])==22 and len({r['path']for r in plan['inputs']})==22 and sum(r['bytes']for r in plan['inputs'])==685038
+for r in plan['inputs']:whole(r,'whole_initial_active_input')
+assert plan['selected_free_indices']==[24]and plan['resume']is None and schedule['steps_per_case']==256 and schedule['word_limit']==64 and schedule['start_points']==[0]
+assert schedule['exact_target_lengths']==[11,13]and schedule['trace_step_cap']==13
+assert Path(plan['schedule']['path']).read_bytes()==can(schedule)
+assert not Path(plan['output_directory']).exists()
+sources_size=sum(h['sources'][k]['bytes']for k in ['supplier','core','primitives','kernel']);assert sources_size==49508<=50000
+assert h['sources']['supplier']['bytes']<=32768 and h['sources']['core']['bytes']<=16384
+physical=h['sources']['supplier']['bytes']+2*(sum(r['bytes']for r in plan['inputs'])+h['sources']['supplier']['bytes']+h['artifacts']['plan']['bytes']+8192+32768+16384)
+assert physical==invoice['physical_read_upper']==1591610 and 22+5==invoice['physical_paths_upper']==27
+assert physical<8*2**20 and 27+3<=32
+roles=plan['roles'];docs={k:json.loads(whole(r,'metadata_role:'+k))for k,r in roles.items()if not k.endswith('argument')and k not in ['operands','witnesses']}
+adopt=docs['current_generation_adoption'];partition=docs['current_partition']
+assert adopt['root']=='/root'and adopt['adopted']is True and adopt['validated_partition']==roles['current_partition']
+assert adopt['original_operand_adoption']==roles['operand_adoption']and adopt['original_free_witness_adoption']==roles['free_adoption']
+assert partition['original_free_space']==28908 and partition['unchanged_total_NEG_count']==17712 and partition['total_GENERATING_count']==partition['total_separate_rank3_IP_count']==7
+assert partition['remaining_without_other_generation_registration']==28877 and partition['remaining_middle_mass']==29570048 and partition['strict_results_IPcredit0_unchanged']is True
+raw=whole(roles['witnesses'],'whole_original_witness_DATA');paid=[]
+for group in ['all_prior_subset_owner_rows','all_prior_generation_facts','exact_new_original_owner_rows']:
+ for row in partition[group]:
+  i=row['free_index'];piece=raw[16*i:16*i+16];assert type(i)is int and type(row['owner'])is int and row['owner']==struct.unpack_from('<I',piece)[0]
+  assert row.get('witness_row_sha256',row.get('original_witness_row_sha256'))==hashlib.sha256(piece).hexdigest();paid.append(i)
+assert len(paid)==len(set(paid))==31 and 24 not in paid
+seed=json.loads(whole(plan['untrusted_hints'],'actual_old_hint_checkpoint'));assert len(seed['notes'])==1
+note=seed['notes'][0];piece=raw[24*16:25*16];assert note['free_index']==24 and note['owner']==26 and note['witness_row_sha256']==hashlib.sha256(piece).hexdigest()
+assert note['hints']['prime11']is None and note['hints']['prime13']['word']==[1,1,1,2,1,2]
+assert len(note['hints']['prime13']['cycle'])==13 and len(set(note['hints']['prime13']['cycle']))==13
+# The hint's original point edges are deliberately NOT evaluated.
+retained_names=['operand_adoption','free_adoption','operand_premises','operand_inverse','operand_projection','free_projection','maximal_orders','theorem_review','theorem_source_note','theorem_handoff']
+assert sum(roles[k]['bytes']for k in retained_names)==59169
+setup=invoice['setup_and_final_terms'];search=invoice['selected_fresh_search_terms']
+expected_setup=dict(current_ledger_JSON_and_31_rows=2*(roles['current_generation_adoption']['bytes']+roles['current_partition']['bytes'])+31*128,
+ full_operand_decode_upper=roles['operands']['bytes']+110*3510,kernel_declaration=2*h['sources']['kernel']['bytes'],maximal_rows=12*64,
+ old_hint_seed_JSON_and_row=2*plan['untrusted_hints']['bytes']+128+2*6+8*13,physical_first_final_and_bootstrap=physical,
+ retained_context_documents=4*59169,runtime_plan_gate_review_control_JSON=2*(h['artifacts']['plan']['bytes']+8192+32768+16384),
+ schedule_parse_canonical_and_fields=4*plan['schedule']['bytes']+256,support_compilation=2*(h['sources']['core']['bytes']+h['sources']['primitives']['bytes']),
+ theorem_argument=2*roles['theorem_argument']['bytes'],three_output_serialization_hash_bookkeeping_caps=2*3*131072+32768)
+assert setup==expected_setup and sum(setup.values())==3388738
+expected_search=dict(initial_identity=3510,literal_two_rotation_precompute=2*3510*(2+8+2+2+2+3*(4*10+2)),
+ one_bound_witness_row_seed=288,one_start_trace_and_potential_hint_copy=256*(2*64+8+13*20+64+13),products=256*4*3510,
+ step_SHA_word_and_commit=256*514,three_after64_resets=3*3510,triangle_paths=32+3*(2+2*10),two_full_inverses=2*3*3510)
+assert search==expected_search and sum(search.values())==4879238
+assert sum(setup.values())+sum(search.values())==invoice['complete_selected_fresh_call_upper']==8267976<10000000
+assert sum(search.values())<6000000
+ctrl=src['controls'];ct=ast.parse(ctrl);passed=[n for n in ast.walk(ct)if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id=='passed'and n.args and isinstance(n.args[0],ast.Constant)]
+names=[n.args[0].value for n in passed];assert len(names)==26 and sum(n.startswith('AST_')for n in names)==4
+assert 'time.monotonic()-START<60'in ctrl and '10M units'in ctrl
+assert "'caller'"not in ctrl # Subjects use supplier AST; never activate it.
+assert "for key in('core','kernel','primitives')"in ctrl and "for k in('supplier','core','kernel','primitives','parent','strict')"in ctrl
+assert "work.begin(allowance)"in src['supplier']and "time.monotonic()-self.start<self.seconds"in src['supplier']and 'seconds=20'in src['supplier']
+assert "precomputed=False"in src['supplier']and "maps=C['precompute_rotations']"in src['supplier']and 'precomputed=True'in src['supplier']
+assert "not(set(plan['selected_free_indices'])&paid)"in src['supplier']
+gate=json.loads(Path(h['artifacts']['Root_gate_template']['path']).read_bytes());review=json.loads(Path(h['artifacts']['Root_review_template']['path']).read_bytes())
+assert gate.get('adopted')is not True and review.get('status')!='SUPPORTED'
+observations=dict(schema='INDEPENDENT_CACHED_ROTATION_WALK_STATIC_OBSERVATIONS_V1',whole_pins=checks,whole_unique_read_paths=len(seen),whole_unique_read_bytes=sum(r['bytes']for r in seen.values()),literal_old_supplier_definitions=iv['literal_old_supplier_definitions'],literal_precompute_parent=iv['precompute_parent'],all8whole_Source_inverse_bodies_exact=True,
+ current_paid_indices=sorted(paid),selected_unpaid_row=dict(free_index=24,owner=26,witness_row_sha256=hashlib.sha256(piece).hexdigest()),old13_hint_edge_evaluation=False,
+ setup_terms=expected_setup,search_terms=expected_search,controls=names,controls_generic_count=22,controls_AST_count=4,
+ restrictions='All mathematical loops were read symbolically. Only DATA hashes/JSON/integer bounds/witnessrecordidentity arithmetic performed. No represented module/control/kernel/originalpoint/permutation/word/action evaluation or group/state/science activation.')
+op=A/'observations.json';assert not op.exists();op.write_bytes(can(observations))
+report=dict(schema='INDEPENDENT_L026_CACHED_ROTATION_WALK_SOURCE_MATH_DATA_PEER_V1',reviewer='/root/journal_peer/f009_invoice',status='SUPPORTED_STATIC_SOURCE_MATH_DATA_ONLY',blockers=[],Root_authority=False,handoff=hr,supplier=h['sources']['supplier'],core=h['sources']['core'],controls=h['sources']['controls'],whole_Source_inverse=h['artifacts']['whole_Source_inverse'],observations=ref(op,op.read_bytes()),
+ full_new_Source_control_math_read=True,all22active_input_whole_pins_checked=True,all8_source_inverse_bodies_exact=True,literal_old_supplier_definitions=10,literal_e09_precompute=True,unchanged60ee_9abbe_268d_pins=True,
+ right_action='Literal compose(g,h)[x]=h[g[x]] and inverse[g[x]]=x match60ee rightaction. Cachedmap induction gives exactliteral appendedsignedword. Bothfullrotationmaps return onlyafterallrange/bijectionchecks.',
+ atomic_commit='Newword/map/hints/cursor commit onlyafterwholeproduct andALL selectedpoint screens. Workstop leavespreviousword/counter/hints; active_stepdiagnosticdiscarded. PrecomputeFalse untilbothmapsfullyreturn; no partialmap imported.',
+ resume='Sameprogram/schedule/window/rowdigest/caseseed enforced. Suffixstart64*((steps-1)//64) matchesafter64 reset. Atmost64labels reconstructed and replayed; importedmaps absent. Genericresumes neednewphysical/semantic/replayinvoice; nofuturefitclaimed.',
+ strict_boundary='Carriergrammar remains268d-compatible forinitialsingle24; all11+13consecutive/closingoriginaledges mustfreshlyverifyunder60ee. No suppliercache/hint/cursor authority. Future noncontiguousmulticasewindows may requireseparatestrictDATA slices because268d selectionABI iscontiguous; no onecallfuturefit implied.',
+ original_scope='ExactsameoriginalFi22/knownGmembership/fullAutOut2/Reader/member/model/tree/graph/GLOBALblock2/twofibre/H=B andcomplete14maximalclasses importedbyliteralcontext; not reproved or generalizedtoAut. No newpredicate:11+13generationtheorem unchanged; separateIP/adoption owed.',
+ current_protected=dict(NG=17712,GEN=7,separateIP=7,unpaid=28877,unpaid_middle_mass=29570048,selected_free24_owner26=True),
+ search='FixedSHAhighbits/caseboundseed,256steps/start0/64wordreset. No mixing, probability, samplingcoverage, absence, properness, transitivity or completion result inferred. Immediateinverse/cyclic/repeatedword redundancy remainspossible and harmless to soundness.',
+ resource=dict(compiled_namespace=49508,namespace_cap=50000,namespace_headroom=492,physical_read_upper=1591610,physical_read_paths_upper=27,read_plus3output_files=30,setup_final_upper=3388738,selectedfresh_search_upper=4879238,complete_work_upper=8267976,shared_work_cap=10000000,proposal_work_cap=6000000,physical_bytes_cap=8*2**20,read_path_cap=32,ordinary_RSS=128*2**20,ordinary_seconds=140,outer_seconds=150,shared_seconds=20,proposal_seconds=14),
+ controls_scope='22puregeneric+4AST designs read and countchecked, UNRUNbyreviewer. GenericMeter has10M+128MiB60s; this is expresslyseparatefromproduction10M20s+soft6M14s. Caller/strict/parent are AST-only incontrols; onlysynthetic26pointkernel isexecutedwhenRootlateractivatescontrols. NoCLI/originalcasecoverageclaimed.',
+ actual_controls=None,actual_supplier=None,actual_strict=None,actual_Root_case_release=None,Source_activation_by_reviewer=False,S_W_Git_gate_writes=0,
+ qualification='StaticSource/math/DATA support only, no transferredSource/runtime/caseauthority or observedRSS/time/completion. Rootalonewholeownreview, actualnewcontrols andfreshproposalonlygate beforecases; laterstrictRootcall/adoption separate. Olduntrusted13edgehint nevercredited. No generation/IP/census/Original/Lean/measurement credit.')
+out=A/'independent_review.json';assert not out.exists();out.write_bytes(can(report));print(json.dumps(dict(report=ref(out,out.read_bytes()),observations=ref(op,op.read_bytes())),sort_keys=True))

@@ -1,0 +1,87 @@
+"""Own stdlib Source authoring and AST/inverse arithmetic; never activates subjects."""
+from pathlib import Path
+import ast,hashlib,json
+D=Path('/private/tmp/f009_reader_raw_job_binding');B=Path('/private/tmp/f009_complete_transport/preservation_maps/sources')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+header='''"""UNRUN Reader-job-role metadata edition; /root/journal_peer/f009_invoice.
+Only the actual Reader job document may use the already existing raw8MiB job ABI.
+Generic metadata remains2MiB; original scientific Sources, limits and all CAS
+predicates remain unchanged. Whole immutable parent Source is retained by the
+separate full inverse. No prior Source/control/runtime verdict transfers.
+"""
+'''
+make_helper='''def reader_job_doc(ref):
+    # This is a job-role reader, not a larger generic metadata parser.
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+         and type(ref['bytes'])is int and 0<=ref['bytes']<=8*MIB,
+         'existing8MiB actual Reader job role before allocation')
+    need(pin(ref['path'])==ref,'whole exact actual Reader job identity')
+    raw=Path(ref['path']).read_bytes()
+    need(len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],
+         'same complete Reader job bytes before strict parsing')
+    def pairs(items):
+        out={}
+        for key,value in items:need(key not in out,'unique job keys');out[key]=value
+        return out
+    def floating(text):
+        value=float(text)
+        need(value==value and value not in(float('inf'),float('-inf')),'finite job float')
+        return value
+    job=f9_expand_job(json.loads(raw,object_pairs_hook=pairs,parse_float=floating,
+        parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite job JSON'))))
+    need(type(job)is dict and job.get('schema')=='ROOT_F009_STANDALONE_JOB_V1'
+         and job.get('role')=='reader','only the exact standalone Reader job role')
+    return job
+
+'''
+reg_helper='''def reader_job_doc(ref):
+    # Literal ordinary-input branch of whole(), with only this job-role bound8MiB.
+    global READ_BYTES
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+         and type(ref['bytes'])is int and 0<=ref['bytes']<=8*MIB,
+         'existing8MiB actual Reader job role before allocation')
+    tick();p=Path(ref['path']);a=p.lstat()
+    need(p.is_absolute()and str(p)==str(Path(os.path.normpath(p))),
+         'literal normalized absolute Reader job path')
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,
+         'canonical whole single-link Reader job')
+    need(READ_BYTES+ref['bytes']<=2**31,'unchanged2GiB complete physical input budget')
+    h=hashlib.sha256();parts=[];count=0
+    with p.open('rb')as stream:
+        b=os.fstat(stream.fileno())
+        for block in iter(lambda:stream.read(MIB),b''):
+            h.update(block);count+=len(block);need(count<=ref['bytes'],'unchanged whole input extent')
+            parts.append(block);tick()
+        c=os.fstat(stream.fileno())
+    need(sig(a)==sig(p.lstat())and sig(b)==sig(c)and stat.S_ISREG(b.st_mode)and b.st_nlink==1
+         and count==ref['bytes']and h.hexdigest()==ref['sha256'],'whole stable physical identity')
+    need(sig(a)==sig(b),'same ordinary opened file')
+    READ_BYTES+=count
+    job=f9_expand_job(strict(b''.join(parts)))
+    need(type(job)is dict and job.get('schema')=='ROOT_F009_STANDALONE_JOB_V1'
+         and job.get('role')=='reader','only the exact standalone Reader job role')
+    return job
+
+'''
+changes=[]
+for name,helper,caller in [('make_plans.py',make_helper,'main'),('register_checkpoint.py',reg_helper,'run')]:
+ p=B/name;old=p.read_bytes();text=old.decode();oldtree=ast.parse(text);defs={n.name:ast.get_source_segment(text,n)for n in oldtree.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+ oldcall="job=f9_expand_job(doc(refs['job']))";newcall="job=reader_job_doc(refs['job'])"
+ assert text.count(oldcall)==1 and 'def reader_job_doc('not in text
+ anchor='def inventory(root):';assert text.count(anchor)==1
+ child=header+text.replace(oldcall,newcall,1).replace(anchor,helper+anchor,1)
+ childtree=ast.parse(child);newdefs={n.name:ast.get_source_segment(child,n)for n in childtree.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+ assert set(newdefs)==set(defs)|{'reader_job_doc'}
+ assert all(newdefs[k]==v for k,v in defs.items()if k!=caller)
+ assert newdefs[caller]==defs[caller].replace(oldcall,newcall,1)
+ assert child.removeprefix(header).replace(helper,'',1).replace(newcall,oldcall,1)==text
+ out=D/'sources'/name;assert not out.exists();out.write_bytes(child.encode())
+ changes.append(dict(name=name,parent=ref(p,old),child=ref(out,child.encode()),whole_parent_source=text,
+ whole_child_source=child,attributed_header=header,new_function='reader_job_doc',new_function_body=newdefs['reader_job_doc'],
+ changed_caller=caller,old_call=oldcall,new_call=newcall,literal_retained_definition_names=sorted(k for k in defs if k!=caller),
+ parent_caller=defs[caller],child_caller=newdefs[caller],full_reverse_exact=True))
+iv=dict(schema='F009_READER_JOB8_ROLE_METADATA_SOURCE_FULL_INVERSE_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,
+ Source_activation=False,editions=changes,unchanged_preserver=ref(B/'preserve_continuation.py',(B/'preserve_continuation.py').read_bytes()),
+ qualification='Two fresh metadata editions only. Sole job call replacement+one dedicated bounded Readerjob loader+new attribution. Genericdoc and whole(body=True) remain literal2MiB. Scientific/Reader/Native Sources, all metadata CAS/field/selector/idle-array logic remain literal. No verdict/actual run authority transfers.')
+out=D/'source_inverse.json';assert not out.exists();out.write_bytes(can(iv));print(json.dumps(dict(inverse=ref(out,out.read_bytes()),sources=[x['child']for x in changes]),sort_keys=True))

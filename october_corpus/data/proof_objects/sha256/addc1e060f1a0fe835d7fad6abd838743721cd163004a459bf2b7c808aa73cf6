@@ -1,0 +1,48 @@
+"""Root metadata publication after the four retained strict proofs; no case calls."""
+from pathlib import Path
+import argparse, hashlib, json, os, stat
+
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False)+'\n').encode()
+
+def whole(ref):
+    path=Path(ref['path']); before=path.lstat()
+    assert path.is_absolute() and path.resolve(strict=True)==path and stat.S_ISREG(before.st_mode) and before.st_nlink==1
+    assert before.st_size==ref['bytes'] and before.st_size<=4*2**20
+    raw=path.read_bytes(); after=path.lstat()
+    stable=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    assert stable(before)==stable(after) and len(raw)==ref['bytes'] and hashlib.sha256(raw).hexdigest()==ref['sha256']
+    return raw
+
+def main():
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--release', required=True); parser.add_argument('--release-sha256', required=True)
+    parser.add_argument('--write', action='store_true'); args=parser.parse_args()
+    path=Path(args.release); release_ref=dict(path=str(path),bytes=path.stat().st_size,sha256=args.release_sha256)
+    release=json.loads(whole(release_ref)); assert release['root']=='/root' and release['authorized'] is True
+    assert release['schema']=='ROOT_L026_FOUR_GENERATION_ACCEPTANCE_PUBLICATION_RELEASE_V1'
+    assert release['scientific_calls']==0 and release['overwrite_existing']==False
+    program=release['publisher']; assert program['path']==str(Path(__file__).resolve()); whole(program)
+    for ref in release['inputs']: whole(ref)
+    receipt=release['payload']; assert receipt['root']=='/root' and receipt['adopted'] is True and receipt['Root_adoption_owed'] is False
+    assert receipt['new_GENERATING_product_components']==receipt['new_same_marking_rank3_IP_components']==4
+    assert receipt['prior_registered_generation_count']==7 and receipt['remaining_product_components_unresolved']==28873
+    assert receipt['remaining_middle_mass_unresolved']==29565952 and receipt['unchanged_total_NEG_count']==17712
+    assert [row['free_index'] for row in receipt['generation_facts']]==[24,34,39,47]
+    assert receipt['strict_result_IPcredit0_fields_unchanged'] is True
+    receipt=dict(receipt,actual_Root_release=release_ref)
+    raw=can(receipt); assert len(raw)<=65536
+    target=Path(release['target'])
+    expected=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/direct_generation/cached_walk_batch_0001/root_acceptance.json')
+    assert target==expected and target.parent.resolve(strict=True)==target.parent and not target.exists()
+    result=dict(path=str(target),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+    if args.write:
+        with target.open('xb') as stream:
+            assert stream.write(raw)==len(raw); stream.flush(); os.fsync(stream.fileno())
+        assert whole(result)==raw
+        fd=os.open(target.parent,os.O_RDONLY)
+        try: os.fsync(fd)
+        finally: os.close(fd)
+    print(json.dumps(dict(status='ROOT_L026_GEN11_ACCEPTANCE_PUBLISHED' if args.write else 'ROOT_L026_GEN11_ACCEPTANCE_FORECAST',receipt=result,scientific_calls=0,written=args.write),sort_keys=True))
+
+if __name__=='__main__': main()

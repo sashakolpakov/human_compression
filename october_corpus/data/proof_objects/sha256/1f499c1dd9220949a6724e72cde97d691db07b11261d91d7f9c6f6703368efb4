@@ -1,0 +1,181 @@
+"""Narrow registered-F009 protected-reference successor; /root/compact_proof_author.
+Prior c267 publisher remains immutable. Only actual a062/d719/4de17 transition
+is admitted; this program never writes either protected register. Journal CAS
+and whole prior version retention remain the old literal implementation.
+New --check-only authenticates all DATA before any S write. No science imports.
+"""
+from pathlib import Path
+import argparse, hashlib, json, os, stat, tempfile
+
+S = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+TARGET = S / 'progress/current_intake_verified_exports.json'
+
+def row(path, raw):
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+def whole(reference, cap=4 * 2**20):
+    p = Path(reference['path'])
+    before = p.lstat()
+    assert p.resolve(strict=True) == p and stat.S_ISREG(before.st_mode)
+    assert before.st_nlink == 1 and 0 <= before.st_size == reference['bytes'] <= cap
+    raw = p.read_bytes()
+    signature = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    assert signature(before) == signature(p.lstat()) and row(p, raw) == reference
+    return raw
+
+def refs(value):
+    if isinstance(value, dict):
+        if set(value) == {'path', 'bytes', 'sha256'}:
+            yield value
+        else:
+            for child in value.values():
+                yield from refs(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from refs(child)
+
+def sync_directory(path):
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+def registered_f009_protected(old, new, transition_ref):
+    t = json.loads(whole(transition_ref, 65536))
+    assert t['schema'] == 'F009_REGISTERED_PROTECTED_REGISTER_TRANSITION_V1'
+    previous, current = old['protected_reviewed_registers'], new['protected_reviewed_registers']
+    assert type(previous) is type(current) is list and len(previous) == len(current) == 2
+    assert all(type(r) is dict and set(r) == {'path', 'bytes', 'sha256'} for r in previous + current)
+    main, secondary = str(S / 'reviewed_intake_progress.json'), str(S / 'progress/reviewed_intake_progress.json')
+    assert [r['path'] for r in previous] == [main, secondary] == [r['path'] for r in current]
+    assert previous[1] == current[1] == dict(path=secondary, bytes=1242315,
+        sha256='e4044836f0b54909309c22cd680c073ec1bc8d2535211561253048a402b3ccd3')
+    assert t['previous_protected'] == previous[0] and t['current_protected'] == current[0]
+    assert t['registration_result']['sha256'] == 'd71980507d17a069525534cc4f26b08fabe0b72b766cf8c94938318b337c0ee1'
+    registration = json.loads(whole(t['registration_result']))
+    assert registration['schema'] == 'ROOT_F009_STANDALONE_CHECKPOINT_REGISTERED_V1'
+    assert registration['root'] == '/root' and registration['scientific_calls'] == registration['new_complete_originals'] == 0
+    assert registration['all_unrelated_fields_preserved'] is True
+    assert registration['intent'] == t['commit_intent'] and t['commit_intent']['sha256'] == '4de17f316faf7ffa671f6a0e82b5ad8b7213e85d9bac0e88b3c349ae529444a9'
+    intent = json.loads(whole(t['commit_intent']))
+    assert intent['schema'] == 'ROOT_F009_THREE_SELECTOR_CHECKPOINT_INTENT_V1' and intent['root'] == '/root'
+    assert intent['all_unrelated_fields_preserved'] is True
+    assert intent['live_paths'] == [str(S.parent.parent / 'reboot_20261013/CURRENT.json'), str(S / 'current_status.json'), main]
+    assert len(intent['before_observations']) == len(intent['before_copies']) == len(intent['after_images']) == len(registration['three_actual_live_observations']) == 3
+    assert intent['before_observations'][2] == previous[0] and registration['three_actual_live_observations'][2] == current[0]
+    before_ref, after_ref = t['before_image'], t['after_image']
+    base = Path(t['registration_result']['path']).parent
+    assert before_ref == intent['before_copies'][2] == dict(path=str(base / 'reviewed_intake_progress.before.json'), bytes=previous[0]['bytes'], sha256=previous[0]['sha256'])
+    assert after_ref == intent['after_images'][2] == dict(path=str(base / 'reviewed_intake_progress.next.json'), bytes=current[0]['bytes'], sha256=current[0]['sha256'])
+    before_raw, after_raw = whole(before_ref), whole(after_ref)
+    assert whole(current[0]) == after_raw
+    before, after = json.loads(before_raw), json.loads(after_raw)
+    restored = json.loads(after_raw)
+    fields = ('checkpoint', 'checkpoint_acceptance', 'snapshot_adoption', 'status', 'root_metadata_update')
+    for key in fields:
+        if key in before['F009']:
+            restored['F009'][key] = before['F009'][key]
+        else:
+            restored['F009'].pop(key, None)
+    assert restored == before, 'all old protected semantics outside exactly five F009 fields'
+    cp_ref, sp_ref = registration['checkpoint_acceptance'], registration['snapshot_adoption']
+    assert cp_ref == intent['checkpoint_acceptance'] == t['checkpoint_acceptance']
+    assert sp_ref == intent['snapshot_adoption'] == t['snapshot_adoption']
+    cp, sp = json.loads(whole(cp_ref)), json.loads(whole(sp_ref))
+    assert cp['schema'] == 'ROOT_ACCEPTED_F009_PRIVATE_STATE_CHECKPOINT_V1' and sp['schema'] == 'ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_SNAPSHOT_V1'
+    assert cp['root'] == sp['root'] == '/root' and cp['adopted'] is sp['adopted'] is True
+    assert cp['checkpoint'] == sp['checkpoint'] == registration['checkpoint'] == after['F009']['checkpoint'] == new['F009']['accepted_checkpoint']
+    assert sp['checkpoint_acceptance'] == after['F009']['checkpoint_acceptance'] == new['F009']['checkpoint_acceptance'] == cp_ref
+    assert after['F009']['snapshot_adoption'] == new['F009']['snapshot_adoption'] == sp_ref
+    method = registration['writer']
+    assert method == intent['writer'] == cp['root_metadata_writer'] == sp['root_metadata_writer']
+    assert method['metadata_only'] is True and method['program']['bytes'] == 50614
+    assert method['program']['sha256'] == 'a0626170d0d264409e3706d65862c4c89cbcee4f660a7b044ed0bf27c31f0761'
+    retained = method['actual_to_retained_sources']
+    assert [r['actual'] for r in retained] == [method['program'], method['plan'], method['Root_release']]
+    for entry, name in zip(retained, ('metadata_writer.py', 'metadata_plan.json', 'Root_writer_release.json')):
+        a, b = entry['actual'], entry['retained']
+        assert b == dict(path=str(base / name), bytes=a['bytes'], sha256=a['sha256'])
+        whole(b)
+    release = json.loads(whole(retained[2]['retained']))
+    assert release['schema'] == 'ROOT_REVIEWED_F009_STANDALONE_CHECKPOINT_WRITER_V1'
+    assert release['root'] == '/root' and release['status'] == 'SUPPORTED' and release['blockers'] == []
+    assert release['program'] == method['program'] and release['plan'] == method['plan']
+    assert release['actual_Reader_and_Native_closure_supported'] is release['canonical_selector_commit_authorized'] is True
+    assert after['F009']['root_metadata_update'] == dict(writer=method, Reader_closure=registration['Reader_closure'], checkpoint_acceptance=cp_ref, snapshot_adoption=sp_ref)
+    capture = json.loads(whole(t['actual_registration_capture']))
+    assert capture['actor'] == capture['root'] == '/root' and capture['all_genuine_api_frames']
+    assert capture['actual_tool']['exit_code'] == capture['full_tool_return']['exit_code'] == 0
+    assert method['program']['path'] in capture['child_argv'] and '--commit' in capture['child_argv']
+    whole(current[1])
+    return current
+
+ap = argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--expected', required=True)
+ap.add_argument('--proposal', nargs=2, required=True)
+ap.add_argument('--protected-transition', nargs=2, required=True)
+ap.add_argument('--check-only', action='store_true')
+args = ap.parse_args()
+old_ref = dict(path=str(TARGET), bytes=TARGET.stat().st_size, sha256=args.expected)
+old_raw = whole(old_ref, 32768)
+old = json.loads(old_raw)
+p = Path(args.proposal[0])
+new_ref = dict(path=str(p), bytes=p.stat().st_size, sha256=args.proposal[1])
+new_raw = whole(new_ref, 32768)
+new = json.loads(new_raw)
+own = Path(__file__).resolve()
+own_ref = row(own, own.read_bytes())
+assert new['root'] == old['root'] == '/root'
+for key in ('counts', 'measurements', 'stopping_rule', 'new_whole_original_conjecture_Lean_or_measurement_credit'):
+    assert new[key] == old[key], key
+method = new['journal_metadata_method']
+assert method['program'] == own_ref and method['scientific_calls'] == 0
+assert method['protected_register_writes'] == 0 and method['current_mutable_target'] == str(TARGET)
+transition_path = Path(args.protected_transition[0])
+transition_ref = dict(path=str(transition_path), bytes=transition_path.stat().st_size, sha256=args.protected_transition[1])
+assert method['protected_F009_transition'] == transition_ref
+protected = registered_f009_protected(old, new, transition_ref)
+for reference in protected:
+    whole(reference)
+version = S / 'progress/intake_overview/versions' / (args.expected + '.json')
+assert new['previous_checkpoint'] == row(version, old_raw)
+if args.check_only:
+    assert whole(old_ref, 32768) == old_raw
+    for reference in protected:
+        whole(reference)
+    print(json.dumps(dict(status='PROTECTED_TRANSITION_JOURNAL_FORECAST_ONLY', program=own_ref, previous=old_ref, proposal=new_ref, protected_transition=transition_ref, S_writes=0, scientific_calls=0), sort_keys=True))
+    raise SystemExit(0)
+version.parent.mkdir(parents=True, exist_ok=True)
+assert version.parent.resolve(strict=True) == version.parent
+if version.exists():
+    assert whole(row(version, old_raw), 32768) == old_raw
+else:
+    with version.open('xb') as handle:
+        assert handle.write(old_raw) == len(old_raw)
+        handle.flush()
+        os.fsync(handle.fileno())
+    sync_directory(version.parent)
+    assert whole(row(version, old_raw), 32768) == old_raw
+assert whole(old_ref, 32768) == old_raw
+for reference in protected:
+    whole(reference)
+fd, name = tempfile.mkstemp(prefix='.intake-', dir=TARGET.parent)
+temporary = Path(name)
+try:
+    with os.fdopen(fd, 'wb') as handle:
+        assert handle.write(new_raw) == len(new_raw)
+        handle.flush()
+        os.fsync(handle.fileno())
+    assert whole(old_ref, 32768) == old_raw
+    os.replace(temporary, TARGET)
+    sync_directory(TARGET.parent)
+finally:
+    if temporary.exists():
+        temporary.unlink()
+assert whole(row(TARGET, new_raw), 32768) == new_raw
+for reference in protected:
+    whole(reference)
+print(json.dumps(dict(status='ROOT_PROGRESS_JOURNAL_CAS_PUBLISHED', root='/root', program=own_ref,
+    previous=row(version, old_raw), current=row(TARGET, new_raw), proposal=new_ref,
+    protected_registers_unchanged=True, scientific_calls=0, Original_conjecture_Lean_or_measurement_credit=0), sort_keys=True))

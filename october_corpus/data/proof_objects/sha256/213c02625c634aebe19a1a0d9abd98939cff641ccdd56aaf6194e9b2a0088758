@@ -1,0 +1,122 @@
+"""Bounded untrusted cached rotation walk; /root/journal_peer, UNRUN.
+
+No IO, original operand decoding, membership theorem or acceptance authority.
+The sole original-image routine below is literal reviewed precompute_rotations.
+All imported cursors/hints/maps remain untrusted. A separate268d check is owed.
+"""
+import hashlib
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def precompute_rotations(K,ctx,paths,work,active):
+    n=ctx['n'];result=[]
+    for letter in(1,2):
+        vector=[];seen=bytearray(n);work.charge(2*n,'whole_rotation_precompute_slots')
+        for point in range(n):
+            active.update(phase='rotation_precompute',rotation=letter,completed_points=point)
+            work.charge(8,'each_original_precomputed_rotation_image')
+            target=K['rotation_word'](ctx,paths,[letter],point,work)
+            need(type(target)is int and 0<=target<n and not seen[target],'all genuine original rotation images bijective')
+            seen[target]=1;vector.append(target)
+        result.append(tuple(vector))
+    return tuple(result)
+
+def validate_schedule(value,n,work):
+    work.charge(256,'whole_bounded_walk_schedule_fields')
+    need(type(value)is dict and set(value)=={'schema','seed','steps_per_case','word_limit','start_points','trace_step_cap','exact_target_lengths','misses_never_prove_absence'},'exact generic walk schedule keys')
+    need(value['schema']=='L026_UNTRUSTED_CACHED_ROTATION_WALK_SCHEDULE_V1'
+        and type(value['seed'])is str and len(value['seed'])==64 and set(value['seed'])<=set('0123456789abcdef')
+        and type(value['steps_per_case'])is int and 1<=value['steps_per_case']<=512
+        and type(value['word_limit'])is int and value['word_limit']==64
+        and type(value['trace_step_cap'])is int and value['trace_step_cap']==13
+        and value['exact_target_lengths']==[11,13]and all(type(p)is int for p in value['exact_target_lengths'])
+        and value['misses_never_prove_absence']is True,'bounded256-bit seed/512steps/64letters/exact11+13 criterion')
+    starts=value['start_points']
+    need(type(starts)is list and 1<=len(starts)<=4 and starts==sorted(set(starts))
+        and all(type(x)is int and 0<=x<n for x in starts),'bounded literal point starts')
+    return value
+
+def sha_label(seed,counter,work):
+    need(type(seed)is str and len(seed)==64 and set(seed)<=set('0123456789abcdef')
+        and type(counter)is int and 0<=counter<512,'whole finite SHA stream coordinates')
+    work.charge(256,'seed_hex_SHA256_stream_input_digest_and_high_bit_choice')
+    raw=hashlib.sha256(b'L026-CACHED-RS-WALK-v1\0'+bytes.fromhex(seed)+counter.to_bytes(8,'big')).digest()
+    return (1,2,-1,-2)[raw[0]>>6]
+
+def validate_part(part,prime,n,work):
+    if part is None:return
+    need(type(part)is dict and set(part)=={'word','cycle'},'typed supplied hint part')
+    word,cycle=part['word'],part['cycle'];work.charge(2*len(word)+8*prime,'whole_untrusted_hint_shape_and_copy')
+    need(type(word)is list and 1<=len(word)<=64 and all(type(x)is int and x in(-2,-1,1,2)for x in word)
+        and type(cycle)is list and len(cycle)==prime and len(set(cycle))==prime
+        and all(type(x)is int and 0<=x<n for x in cycle),'bounded literal strict-compatible word and distinct prime points')
+
+def empty_note(index,owner,row_sha,seed,hints=None):
+    return dict(free_index=index,owner=owner,witness_row_sha256=row_sha,seed=seed,next_step=0,word=[],
+        hints={'prime11':None,'prime13':None}if hints is None else dict(hints),outcome='unfinished',
+        inherited_steps_untrusted=0,completed_steps_this_call=0,active_step=None)
+
+def restore_note(note,index,owner,row_sha,seed,schedule,n,work):
+    work.charge(512,'whole_typed_untrusted_walk_cursor_fields')
+    need(type(note)is dict and set(note)==set(empty_note(index,owner,row_sha,seed))
+        and type(note['free_index'])is int and note['free_index']==index
+        and type(note['owner'])is int and note['owner']==owner and note['witness_row_sha256']==row_sha
+        and note['seed']==seed and type(note['next_step'])is int and 0<=note['next_step']<=schedule['steps_per_case']
+        and note['outcome']in('unfinished','finite_walk_miss','pair_hint'),'exact same row/seed and bounded UNTRUSTED cursor')
+    steps=note['next_step'];start=64*((steps-1)//64)if steps else 0
+    expected=[sha_label(seed,i,work)for i in range(start,steps)]
+    need(type(note['word'])is list and all(type(x)is int for x in note['word'])and note['word']==expected,'exact stream suffix, not an imported permutation')
+    hints=note['hints'];need(type(hints)is dict and set(hints)=={'prime11','prime13'},'exact two untrusted hint slots')
+    for p in(11,13):validate_part(hints['prime'+str(p)],p,n,work)
+    both=all(hints.values())
+    need((note['outcome']=='pair_hint'and both)or(note['outcome']=='finite_walk_miss'and not both and steps==schedule['steps_per_case'])
+        or(note['outcome']=='unfinished'and not both and steps<schedule['steps_per_case']),'coherent untrusted progress, never a verdict')
+    for key in('inherited_steps_untrusted','completed_steps_this_call'):
+        need(type(note[key])is int and 0<=note[key]<=512,'bounded untrusted historical counter')
+    need(note['active_step']is None or type(note['active_step'])is dict,'partial step is discarded, never resumed halfway')
+    out=empty_note(index,owner,row_sha,seed,hints);out.update(next_step=steps,word=expected,outcome=note['outcome'],inherited_steps_untrusted=steps)
+    return out
+
+def trace_cached(permutation,word,start,work):
+    n=len(permutation);need(type(start)is int and 0<=start<n and type(word)is list and 1<=len(word)<=64
+        and all(type(x)is int and x in(-2,-1,1,2)for x in word),'strict-compatible current cached word/start')
+    work.charge(2*len(word)+8,'whole_current_word_and_start_shape')
+    path=[start];seen={start}
+    for _ in range(13):
+        work.charge(20,'bounded_cached_cycle_lookup_range_set_and_first_return')
+        target=permutation[path[-1]];need(type(target)is int and 0<=target<n,'cached original permutation point field')
+        if target==start:
+            p=len(path)
+            if p in(11,13):
+                work.charge(len(word)+p,'whole_untrusted_hint_word_and_cycle_copy')
+                return p,dict(word=list(word),cycle=list(path))
+            return None
+        need(target not in seen,'a bijection first returns only to its initial point')
+        seen.add(target);path.append(target)
+    return None
+
+def walk_row(P,maps,note,schedule,work):
+    n=len(maps[0]);need(len(maps)==2 and len(maps[1])==n,'two precomputed original rotation maps')
+    signed={1:maps[0],2:maps[1],-1:P['inverse'](maps[0],work),-2:P['inverse'](maps[1],work)}
+    current=P['identity'](n,work)
+    # Exact bounded suffix is replayed; no imported map is trusted.
+    for label in note['word']:
+        current=P['compose'](current,signed[label],work)
+    while note['next_step']<schedule['steps_per_case']and not all(note['hints'].values()):
+        step=note['next_step'];note['active_step']=dict(step=step,phase='cached_product_or_cycle_screen')
+        work.charge(128,'complete_walk_step_seed_word_and_commit_bookkeeping')
+        label=sha_label(note['seed'],step,work)
+        base=P['identity'](n,work)if len(note['word'])==64 else current
+        word=[]if len(note['word'])==64 else list(note['word'])
+        work.charge(2*len(word)+2,'bounded_written_word_copy_append');word.append(label)
+        candidate=P['compose'](base,signed[label],work)
+        hints=dict(note['hints'])
+        for start in schedule['start_points']:
+            hint=trace_cached(candidate,word,start,work)
+            if hint is not None:hints['prime'+str(hint[0])]=hint[1]
+        # Commit only a whole product and all selected point screens.
+        note.update(next_step=step+1,word=word,hints=hints,completed_steps_this_call=note['completed_steps_this_call']+1,active_step=None)
+        current=candidate
+    note['outcome']='pair_hint'if all(note['hints'].values())else'finite_walk_miss'
+    return note

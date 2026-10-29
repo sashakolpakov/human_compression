@@ -1,0 +1,88 @@
+"""Own stdlib Source/AST text authoring; no represented Source activation."""
+from pathlib import Path
+import ast
+D=Path(__file__).resolve().parent;P=D.parent
+s=(P/'propose.py').read_text();t=ast.parse(s);n=next(n for n in t.body if isinstance(n,ast.FunctionDef)and n.name=='current_unpaid')
+lines=s.splitlines(True);body=(D/'current_unpaid.py.txt').read_text()
+new=''.join(lines[:n.lineno-1])+body+''.join(lines[n.end_lineno:])
+new='"""UNRUN /root/journal_peer."""\n'+new[new.index('import time'):]
+ast.parse(new);(D/'propose.py').write_text(new)
+controls=(P/'controls.py').read_text()
+insertion='''    # New generic metadata-only ledger checks. The caller's math/IO code is not executed.
+    fn=next(n for n in ast.parse(caller).body if isinstance(n,ast.FunctionDef)and n.name=='current_unpaid')
+    ns={'need':need,'struct':struct,'hashlib':hashlib,'can':lambda x:json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False).encode(),
+        'SCOPE':'7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'}
+    exec(compile(ast.Module(body=[fn],type_ignores=[]),str(subjects['supplier'][0]),'exec'),ns)
+    ledger=ns['current_unpaid']
+    def r(path,sha):return dict(path='/synthetic/'+path,bytes=4096,sha256=sha)
+    a3=r('root3','3'*64);a7=r('root7','cb31555622664fff941ccc37dc7e56dd786609c8ece957867da8fd6eaedc77e8');a8=r('root8','8'*64)
+    p7=r('partition7','7'*64);p8=r('partition8','9'*64);fa=r('free','f'*64);oa=r('operands','0'*64)
+    witness=b''.join(struct.pack('<IIHHHH',i,i,1024,0,1,2)for i in range(40))
+    def row(i):return dict(free_index=i,owner=i,witness_row_sha256=hashlib.sha256(witness[16*i:16*i+16]).hexdigest())
+    neg=[row(i)for i in range(8,32)];old=[row(i)for i in range(1,4)];later=[row(i)for i in range(4,8)]
+    def adoption(facts,prior,partition,previous):
+        g=prior+len(facts);u=28908-24-g
+        return dict(schema='ROOT_ACCEPTED_L026_'+('GENERATION_AND_SEPARATE_RANK3_IP_V1'if not previous else'ADDITIONAL_GENERATION_AND_SEPARATE_RANK3_IP_V1'),root='/root',adopted=True,scope_digest=ns['SCOPE'],
+            original_free_witness_adoption=fa,original_operand_adoption=oa,strict_result_IPcredit0_fields_unchanged=True,unchanged_nonfree_NEG_count=17688,
+            unchanged_total_NEG_count=17712,unchanged_total_NEG_middle_mass=6909234,validated_partition=partition,
+            generation_facts=facts,prior_generation_adoptions=previous,prior_registered_generation_count=prior,
+            new_GENERATING_product_components=len(facts),new_same_marking_rank3_IP_components=len(facts),remaining_product_components_unresolved=u,remaining_middle_mass_unresolved=1024*u)
+    def partition(prior,new):
+        g=len(prior)+len(new);u=28908-24-g
+        return dict(schema='L026_APPEND_GEN_AND_SEPARATE_IP_EXACT_TYPED_PARTITION_V1',scope_digest=ns['SCOPE'],all_prior_subset_owner_rows=copy.deepcopy(neg),
+            all_prior_generation_facts=copy.deepcopy(prior),exact_new_original_owner_rows=copy.deepcopy(new),original_free_space=28908,unchanged_total_NEG_count=17712,
+            unchanged_total_NEG_mass=6909234,total_GENERATING_count=g,total_separate_rank3_IP_count=g,prior_registered_generation_count=len(prior),
+            remaining_without_other_generation_registration=u,remaining_middle_mass=1024*u,strict_results_IPcredit0_unchanged=True)
+    docs={a3['path']:adoption(old,0,p7,[]),a7['path']:adoption(later,3,p7,[a3]),
+        a8['path']:adoption([row(32)],7,p8,[a3,a7]),p7['path']:partition(old,later),p8['path']:partition(old+later,[row(32)])}
+    class Docs:
+        def __init__(self,values):self.values=values;self.opened=[]
+        def doc(self,ref):self.opened.append(ref);return self.values[ref['path']]
+    plan7=dict(roles=dict(current_generation_adoption=a7,current_partition=p7,free_adoption=fa,operand_adoption=oa),selected_free_indices=[0])
+    plan8=copy.deepcopy(plan7);plan8['roles'].update(current_generation_adoption=a8,current_partition=p8)
+    ledger(plan7,Docs(copy.deepcopy(docs)),Meter(),witness);passed('metadata_GEN7_known_baseline_accepted_from_whole_chain')
+    ledger(plan8,Docs(copy.deepcopy(docs)),Meter(),witness);passed('metadata_GEN8_derived_totals_and_flat_prior_chain_accepted')
+    nested=copy.deepcopy(docs);nested[a8['path']]['prior_generation_adoptions']=[a7]
+    ledger(plan8,Docs(nested),Meter(),witness);passed('metadata_nested_prior_chain_deduplicates_exact_GEN_facts')
+    def rejection(name,edit,edit_plan=None):
+        values=copy.deepcopy(docs);chosen=copy.deepcopy(plan8);edit(values)
+        if edit_plan is not None:edit_plan(chosen)
+        refused(lambda:ledger(chosen,Docs(values),Meter(),witness));passed('metadata_refuses_'+name)
+    rejection('wrong_scope',lambda d:d[a8['path']].__setitem__('scope_digest','foreign'))
+    rejection('unadopted_prior',lambda d:d[a3['path']].__setitem__('adopted',False))
+    rejection('wrong_nonfree_count',lambda d:d[a8['path']].__setitem__('unchanged_nonfree_NEG_count',17687))
+    rejection('wrong_global_NEG_count',lambda d:d[a8['path']].__setitem__('unchanged_total_NEG_count',17713))
+    rejection('wrong_global_NEG_mass',lambda d:d[p8['path']].__setitem__('unchanged_total_NEG_mass',6909235))
+    rejection('changed_fixed_24NEG_rows',lambda d:d[p8['path']]['all_prior_subset_owner_rows'].__setitem__(-1,row(33)))
+    rejection('missing_known7_baseline',lambda d:d[a8['path']].__setitem__('prior_generation_adoptions',[]))
+    rejection('dropped_prior_GEN_row',lambda d:d[p8['path']]['all_prior_generation_facts'].pop())
+    rejection('wrong_separate_IP_total',lambda d:d[p8['path']].__setitem__('total_separate_rank3_IP_count',9))
+    rejection('wrong_unpaid_total',lambda d:d[p8['path']].__setitem__('remaining_without_other_generation_registration',28875))
+    rejection('wrong_unpaid_mass',lambda d:d[p8['path']].__setitem__('remaining_middle_mass',0))
+    rejection('wrong_new_GEN_count',lambda d:d[a8['path']].__setitem__('new_GENERATING_product_components',2))
+    rejection('wrong_prior_count',lambda d:d[a8['path']].__setitem__('prior_registered_generation_count',6))
+    rejection('retagged_strict_IP_credit',lambda d:d[a8['path']].__setitem__('strict_result_IPcredit0_fields_unchanged',False))
+    def badhash(d):
+        d[a8['path']]['generation_facts'][0]['witness_row_sha256']='0'*64
+        d[p8['path']]['exact_new_original_owner_rows'][0]['witness_row_sha256']='0'*64
+    rejection('wrong_actual_witness_hash',badhash)
+    def badowner(d):
+        d[a8['path']]['generation_facts'][0]['owner']=33;d[p8['path']]['exact_new_original_owner_rows'][0]['owner']=33
+    rejection('wrong_actual_owner',badowner)
+    def duplicate(d):
+        d[a8['path']]['generation_facts']=[row(1)];d[p8['path']]['exact_new_original_owner_rows']=[row(1)]
+    rejection('GEN_overlap_prior',duplicate)
+    def ng_overlap(d):
+        d[a8['path']]['generation_facts']=[row(8)];d[p8['path']]['exact_new_original_owner_rows']=[row(8)]
+    rejection('GEN_overlap_NEG',ng_overlap)
+    rejection('paid_selected_row',lambda d:None,lambda q:q.__setitem__('selected_free_indices',[32]))
+    rejection('old_partition_with_new_Root',lambda d:None,lambda q:q['roles'].__setitem__('current_partition',p7))
+    def canonical(d):d[p8['path']]['all_prior_generation_facts'][0]['owner']=True
+    rejection('Boolean_integer_alias_in_whole_fact',canonical)
+'''
+marker='    for p,raw,_ in subjects.values():need(p.read_bytes()==raw,\'whole final subject equality\')'
+assert controls.count(marker)==1
+controls=controls.replace(marker,insertion+marker)
+controls='"""UNRUN metadata-ledger controls successor; /root/journal_peer.\nParent26 controls retained; new synthetic ledger tests do not activate math.\n"""\n'+controls[controls.index('import time'):]
+ast.parse(controls);(D/'controls.py').write_text(controls)
+print('supplier',len(new.encode()),'controls',len(controls.encode()))

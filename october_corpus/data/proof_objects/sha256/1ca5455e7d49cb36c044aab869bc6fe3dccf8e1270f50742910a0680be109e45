@@ -1,0 +1,20 @@
+def current_unpaid(plan,B,W,witnesses):
+ R=plan['roles'];a=B.doc(R['current_generation_adoption']);p=B.doc(R['current_partition']);msg='ledger'
+ need(a['validated_partition']==R['current_partition']and p['schema']=='L026_APPEND_GEN_AND_SEPARATE_IP_EXACT_TYPED_PARTITION_V1'and p['scope_digest']==SCOPE,msg)
+ W.charge(4*R['current_partition']['bytes'],'L');todo=[R['current_generation_adoption']];seen={};facts={};fixed=None
+ while todo:
+  r=todo.pop();W.charge(4*r['bytes'],'L');q=B.doc(r)
+  if r['path']in seen:need(seen[r['path']]==r,msg);continue
+  seen[r['path']]=r
+  need(q['schema']in('ROOT_ACCEPTED_L026_GENERATION_AND_SEPARATE_RANK3_IP_V1','ROOT_ACCEPTED_L026_ADDITIONAL_GENERATION_AND_SEPARATE_RANK3_IP_V1')and q['root']=='/root'and q['adopted']is True and q['scope_digest']==SCOPE and q['original_free_witness_adoption']==R['free_adoption']and q['original_operand_adoption']==R['operand_adoption']and q['strict_result_IPcredit0_fields_unchanged']is True and q['unchanged_nonfree_NEG_count']==17688,msg)
+  if r['sha256']=='cb31555622664fff941ccc37dc7e56dd786609c8ece957867da8fd6eaedc77e8':fixed=B.doc(q['validated_partition'])['all_prior_subset_owner_rows']
+  for f in q['generation_facts']:
+   i=f['free_index'];need(type(i)is int and can(facts.get(i,f))==can(f),msg);facts[i]=f
+  todo+=q.get('prior_generation_adoptions',[])
+ neg=p['all_prior_subset_owner_rows'];prior=p['all_prior_generation_facts'];new=p['exact_new_original_owner_rows'];m=len(prior);n=len(new);g=m+n;u=28908-24-g
+ need(len(neg)==24 and can(neg)==can(fixed) and can(new)==can(a['generation_facts'])and can({f['free_index']:f for f in prior+new})==can(facts)  and p['original_free_space']==28908 and p['unchanged_total_NEG_count']==a['unchanged_total_NEG_count']==17712 and p['unchanged_total_NEG_mass']==a['unchanged_total_NEG_middle_mass']==6909234 and p['total_GENERATING_count']==p['total_separate_rank3_IP_count']==g and p['prior_registered_generation_count']==a['prior_registered_generation_count']==m and a['new_GENERATING_product_components']==a['new_same_marking_rank3_IP_components']==n and p['remaining_without_other_generation_registration']==a['remaining_product_components_unresolved']==u and p['remaining_middle_mass']==a['remaining_middle_mass_unresolved']==1024*u and p['strict_results_IPcredit0_unchanged']is True,msg)
+ paid=set()
+ for row in neg+prior+new:
+  W.charge(128,'current_paid_witness_identity');i=row['free_index'];need(type(i)is int and 0<=i<28908 and i not in paid,msg)
+  raw=witnesses[16*i:16*i+16];need(type(row['owner'])is int and row['owner']==struct.unpack_from('<I',raw)[0]and row['witness_row_sha256']==hashlib.sha256(raw).hexdigest(),msg);paid.add(i)
+ need(not(set(plan['selected_free_indices'])&paid),msg)

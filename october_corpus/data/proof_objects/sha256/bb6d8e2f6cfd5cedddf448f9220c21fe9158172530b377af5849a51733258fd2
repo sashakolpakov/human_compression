@@ -1,0 +1,388 @@
+"""Separate lossless preservation-map metadata edition; /root/compact_proof_author.
+Original mathematical callers/kernels and all parent predicates remain unchanged.
+Raw2MiB and whole original/retained byte identities are distinct from the restored logical map.
+No previous Source verdict or actual execution is transferred.
+"""
+"""New interrupted-return metadata interface, authored by /root/middle_dictionary_author.
+The complete prior Source and attribution are preserved in source_inverse.json.
+No represented Source, state, graph or scientific operation is activated by this edition.
+"""
+"""Copy only a reviewed immutable F009 artifact inventory into a fresh directory.
+
+No original or older preserved artifact is removed, rewritten or relabelled.
+This metadata utility invokes no project, mathematical, codec or state code.
+"""
+import argparse,hashlib,json,os,stat
+from pathlib import Path
+
+MIB=2**20
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation')
+
+_FMP_TAG = 'Root_Preservation_map_reference'
+_FMP_SCHEMAS = frozenset(('F009_CONTINUATION_IMMUTABLE_PRESERVATION_PLAN_V1',
+    'F009_INTERRUPTED_RETURN_IMMUTABLE_PRESERVATION_PLAN_V1',
+    'ROOT_IMMUTABLE_F009_CONTINUATION_PRESERVATION_V1',
+    'ROOT_IMMUTABLE_F009_COMPLETE_CASE_PRESERVATION_V1'))
+
+def fmp_need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+def fmp_can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False) + '\n').encode('ascii')
+
+def fmp_ref(value):
+    fmp_need(type(value) is dict and set(value) == {'path', 'bytes', 'sha256'},
+             'whole original or retained descriptor')
+    path, size, sha = value['path'], value['bytes'], value['sha256']
+    fmp_need(type(path) is str and 0 < len(path) <= 1024
+             and type(size) is int and 0 <= size <= 2**31
+             and type(sha) is str and len(sha) == 64
+             and set(sha) <= set('0123456789abcdef'), 'bounded exact mapping descriptor')
+    return path, size, sha
+
+def fmp_parts(left, right):
+    # The common suffix is component aligned. New artifact copies share their
+    # entire original /private/tmp-relative path, including long basenames.
+    aa, bb = left.split('/'), right.split('/')
+    count = 0
+    while count < min(len(aa), len(bb)) and aa[-count-1] == bb[-count-1]:
+        count += 1
+    suffix = '/'.join(aa[len(aa)-count:]) if count else ''
+    return (left[:-len(suffix)] if suffix else left,
+            right[:-len(suffix)] if suffix else right, suffix)
+
+def fmp_encode(value):
+    fmp_need(type(value) is dict and _FMP_TAG not in value
+             and value.get('schema') in _FMP_SCHEMAS, 'explicit ordinary preservation role')
+    raw = fmp_can(value)
+    fmp_need(len(raw) <= 8*2**20, 'finite complete logical preservation image')
+    fields, prefixes, total = [], set(), 0
+    for name, kind in (('rows', 'pair'), ('reused_previous_rows', 'pair'), ('new_rows', 'relative')):
+        if name not in value:
+            continue
+        rows = value[name]
+        fmp_need(type(rows) is list, 'ordered complete mapping list')
+        encoded = []
+        for row in rows:
+            fmp_need(type(row) is dict and set(row) ==
+                     ({'original', 'retained'} if kind == 'pair' else {'original', 'relative'}),
+                     'exact mapping record fields')
+            left, size, sha = fmp_ref(row['original'])
+            if kind == 'pair':
+                right, kept_size, kept_sha = fmp_ref(row['retained'])
+                fmp_need((size, sha) == (kept_size, kept_sha), 'whole retained byte and SHA identity')
+            else:
+                right = row['relative']
+                fmp_need(type(right) is str and 0 < len(right) <= 1024,
+                         'bounded complete relative destination value')
+            lp, rp, suffix = fmp_parts(left, right)
+            prefixes.update((lp, rp)); encoded.append([lp, rp, suffix, size, sha])
+            total += 1
+            fmp_need(total <= 8192, 'finite complete preservation mapping count')
+        fields.append([name, kind, encoded])
+    fmp_need(fields, 'at least one explicit preservation mapping field')
+    table = sorted(prefixes); index = {p:i for i,p in enumerate(table)}
+    for _, _, rows in fields:
+        for row in rows:
+            row[0], row[1] = index[row[0]], index[row[1]]
+    wire = dict(value)
+    for name, _, _ in fields:
+        del wire[name]
+    wire[_FMP_TAG] = dict(version='F009_WHOLE_PRESERVATION_PATH_PAIRS_V1',
+        prefixes=table, fields=fields, row_count=total, logical_bytes=len(raw),
+        logical_sha256=hashlib.sha256(raw).hexdigest())
+    fmp_need(len(fmp_can(wire)) <= 2*2**20, 'unchanged physical2MiB preservation role')
+    fmp_need(fmp_expand(wire) == value, 'whole exact ordered preservation inverse')
+    return wire
+
+def fmp_expand(wire):
+    if type(wire) is not dict or _FMP_TAG not in wire:
+        return wire
+    fmp_need(wire.get('schema') in _FMP_SCHEMAS, 'explicit encoded preservation role')
+    tag = wire[_FMP_TAG]
+    fmp_need(type(tag) is dict and set(tag) == {'version', 'prefixes', 'fields',
+        'row_count', 'logical_bytes', 'logical_sha256'}
+        and tag['version'] == 'F009_WHOLE_PRESERVATION_PATH_PAIRS_V1'
+        and type(tag['row_count']) is int and 0 <= tag['row_count'] <= 8192
+        and type(tag['logical_bytes']) is int and 0 < tag['logical_bytes'] <= 8*2**20
+        and type(tag['logical_sha256']) is str and len(tag['logical_sha256']) == 64
+        and set(tag['logical_sha256']) <= set('0123456789abcdef'), 'whole preservation tag')
+    prefixes, fields = tag['prefixes'], tag['fields']
+    fmp_need(type(prefixes) is list and len(prefixes) <= 16384
+        and all(type(p) is str and len(p) <= 1024 for p in prefixes)
+        and prefixes == sorted(set(prefixes)) and type(fields) is list and 1 <= len(fields) <= 3,
+        'unique canonical bounded prefix table and mapping fields')
+    logical = dict(wire); del logical[_FMP_TAG]
+    used, names, total, extent = set(), [], 0, 0
+    order = {'rows':0, 'reused_previous_rows':1, 'new_rows':2}
+    for field in fields:
+        fmp_need(type(field) is list and len(field) == 3, 'whole mapping field tuple')
+        name, kind, rows = field
+        fmp_need(type(name) is str and name in order and name not in logical and name not in names
+            and kind == ('relative' if name == 'new_rows' else 'pair') and type(rows) is list,
+            'unique exact mapping field role')
+        names.append(name); restored = []
+        for row in rows:
+            fmp_need(type(row) is list and len(row) == 5, 'complete compact mapping record')
+            li, ri, suffix, size, sha = row
+            fmp_need(type(li) is type(ri) is int and 0 <= li < len(prefixes)
+                and 0 <= ri < len(prefixes) and type(suffix) is str and len(suffix) <= 1024,
+                'typed in-range whole prefix indices and suffix')
+            left, right = prefixes[li]+suffix, prefixes[ri]+suffix
+            # Pre-admit expansion incrementally, including repeated paths. A
+            # malicious tiny wire cannot allocate an unbounded repeated graph.
+            extent += len(fmp_can([left, right])) + 192
+            fmp_need(extent <= 8*2**20, 'bounded cumulative expanded mapping extent')
+            original = dict(path=left, bytes=size, sha256=sha); fmp_ref(original)
+            if kind == 'pair':
+                retained = dict(path=right, bytes=size, sha256=sha); fmp_ref(retained)
+                restored.append(dict(original=original, retained=retained))
+            else:
+                fmp_need(0 < len(right) <= 1024, 'whole relative path extent')
+                restored.append(dict(original=original, relative=right))
+            used.update((li, ri)); total += 1
+            fmp_need(total <= 8192, 'complete decoded mapping count')
+        logical[name] = restored
+    fmp_need(names == sorted(names, key=order.__getitem__) and used == set(range(len(prefixes)))
+        and total == tag['row_count'], 'canonical field order, complete prefix use and row count')
+    raw = fmp_can(logical)
+    fmp_need(len(raw) <= 8*2**20 and len(raw) == tag['logical_bytes']
+        and hashlib.sha256(raw).hexdigest() == tag['logical_sha256'],
+        'complete canonical logical preservation identity, order and all non-row flags')
+    return logical
+
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def can(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def signature(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def whole(ref,destination=None):
+    p=Path(ref['path']);a=p.lstat()
+    need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+         and a.st_nlink==1 and a.st_size==ref['bytes']<=16*MIB,'bounded immutable ordinary artifact')
+    out=None;h=hashlib.sha256();size=0
+    if destination is not None:out=destination.open('xb')
+    try:
+        with p.open('rb')as stream:
+            b=os.fstat(stream.fileno())
+            for chunk in iter(lambda:stream.read(MIB),b''):
+                h.update(chunk);size+=len(chunk);need(size<=ref['bytes'],'immutable whole source extent')
+                if out is not None:need(out.write(chunk)==len(chunk),'whole exclusive artifact copy')
+            c=os.fstat(stream.fileno())
+        need(signature(a)==signature(b)==signature(c)==signature(p.lstat())
+             and size==ref['bytes']and h.hexdigest()==ref['sha256'],'exact original full bytes preserved')
+        if out is not None:out.flush();os.fsync(out.fileno())
+    finally:
+        if out is not None:out.close()
+    return dict(path=str(destination or p),bytes=size,sha256=h.hexdigest())
+
+def doc(ref):
+    whole(ref);need(ref['bytes']<=2*MIB,'bounded preservation metadata')
+    raw=Path(ref['path']).read_bytes()
+    need(len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],'whole metadata before parse')
+    return fmp_expand(json.loads(raw))
+
+def fsync_dir(path):
+    fd=os.open(path,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+
+def retain_exact_copy(mapping,row,authenticate):
+    need(type(row)is dict and set(row)=={'original','retained'}
+         and all(type(row[k])is dict and set(row[k])=={'path','bytes','sha256'}for k in('original','retained')),
+         'whole original and retained artifact descriptors')
+    original,retained=row['original'],row['retained'];key=original['path']
+    prior=mapping.get(key)
+    need(prior is None or prior['original']==original,'one exact original version; no conflicting history')
+    need(retained['bytes']==original['bytes']and retained['sha256']==original['sha256'],
+         'retained copy has exactly the original full bytes and SHA')
+    authenticate(retained)
+    if prior is None or retained['path']<prior['retained']['path']:mapping[key]=row
+
+def _fmp_copy_main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--plan',nargs=2,required=True)
+    ap.add_argument('--write',action='store_true');args=ap.parse_args()
+    p=Path(args.plan[0]);pref=dict(path=str(p),bytes=p.stat().st_size,sha256=args.plan[1]);plan=doc(pref)
+    interrupted=plan['schema']=='F009_INTERRUPTED_RETURN_IMMUTABLE_PRESERVATION_PLAN_V1'
+    if interrupted:
+        need(Path(plan['destination']).is_relative_to(BASE)and plan['author']=='/root/middle_dictionary_author'
+             and plan['interrupted_return_provenance']['schema']=='STRICT_READER_OVER_INTERRUPTED_RETURN_PROVENANCE_V1'
+             and plan['interrupted_return_provenance']['Native_PASS_claimed']is False,
+             'typed actual-author interrupted-return preservation plan; no Native authority')
+    else:
+        need(plan['schema']=='F009_CONTINUATION_IMMUTABLE_PRESERVATION_PLAN_V1'
+             and Path(plan['destination']).is_relative_to(BASE)and plan['author']=='/root/compact_proof_author',
+             'exact new immutable preservation plan')
+    own=plan['program'];need(own['path']==str(Path(__file__).resolve()),'exact actual preservation utility');whole(own)
+    destination=Path(plan['destination'])
+    need(destination.is_absolute()and destination.resolve(strict=False)==destination,'ordinary new epoch destination')
+    previous_originals={}
+    for oldref in plan['previous_preservations']:
+        previous=doc(oldref)
+        need(previous['root']=='/root'and previous['no_original_or_previous_artifact_deleted_or_rewritten']is True,
+             'genuine previous immutable preservation, never copied again')
+        for row in previous['rows']+previous['reused_previous_rows']:
+            retain_exact_copy(previous_originals,row,whole)
+    accepted=doc(plan['accepted_checkpoint'])
+    need(accepted['root']=='/root'and accepted['adopted']is True,'actual accepted predecessor for method sidecars')
+    for row in accepted['root_metadata_writer']['actual_to_retained_sources']:
+        converted=dict(original=row['actual'],retained=row['retained'])
+        retain_exact_copy(previous_originals,converted,whole)
+    for r in plan['reused_previous_rows']:
+        need(previous_originals.get(r['original']['path'])==r,'exact earlier immutable artifact mapping')
+        whole(r['retained'])
+    rows=plan['new_rows'];names=[]
+    for r in rows:
+        rel=Path(r['relative'])
+        need(not rel.is_absolute()and '..'not in rel.parts and rel.parts,'ordinary meaningful destination path')
+        names.append(str(rel));whole(r['original'])
+    need(len(set(names))==len(names)and len(rows)<=4096
+         and sum(r['original']['bytes']for r in rows)<=64*MIB,'finite4096-file64MiB artifact copy')
+    need(destination.parent.resolve(strict=True)==destination.parent and not os.path.lexists(destination),'fresh immutable destination only')
+    if not args.write:
+        print(json.dumps(dict(status='PRESERVATION_FORECAST_ONLY',files=len(rows)+3,
+          copied_bytes=sum(r['original']['bytes']for r in rows)+pref['bytes']+own['bytes'],
+          previous_artifacts_reused=len(plan['reused_previous_rows']),scientific_calls=0)));return
+    destination.mkdir();retained=[];directories={destination}
+    for row in rows+[dict(original=own,relative='method/preserve.py'),dict(original=pref,relative='method/plan.json')]:
+        target=destination/row['relative'];target.parent.mkdir(parents=True,exist_ok=True)
+        for parent in target.parents:
+            if parent.is_relative_to(destination):directories.add(parent)
+        copied=whole(row['original'],target);whole(copied)
+        retained.append(dict(original=row['original'],retained=copied))
+    # Old snapshots are rechecked, never reflattened into a new execution claim.
+    for oldref in plan['previous_preservations']:whole(oldref)
+    for row in retained:whole(row['retained'])
+    result=dict(schema='ROOT_IMMUTABLE_F009_CONTINUATION_PRESERVATION_V1',root='/root',
+      metadata_method=dict(program=own,plan=pref),previous_preservations=plan['previous_preservations'],accepted_checkpoint=plan['accepted_checkpoint'],
+      reused_previous_rows=plan['reused_previous_rows'],rows=retained,
+      files=len(retained),bytes=sum(r['retained']['bytes']for r in retained),
+      no_original_or_previous_artifact_deleted_or_rewritten=True,
+      scientific_calls=0,Source_verdicts_transferred=0,canonical_checkpoint_writes=0,
+      qualification=plan['qualification'])
+    if interrupted:result['interrupted_return_provenance']=plan['interrupted_return_provenance']
+    raw=can(fmp_encode(result));need(len(raw)<=2*MIB,'bounded complete preservation manifest')
+    out=destination/'preservation.json'
+    with out.open('xb')as stream:need(stream.write(raw)==len(raw),'whole manifest');stream.flush();os.fsync(stream.fileno())
+    for directory in sorted(directories,key=lambda q:len(q.parts),reverse=True):fsync_dir(directory)
+    fsync_dir(destination.parent)
+    print(json.dumps(dict(status='PRESERVED_EXACT_IMMUTABLE_ARTIFACTS',manifest=dict(path=str(out),
+      bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),copied_files=len(retained),
+      copied_bytes=result['bytes'],scientific_calls=0,canonical_checkpoint_writes=0)))
+
+def fmp_controls_main():
+    import copy, ast, sys
+    ap = argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--controls', action='store_true', required=True)
+    ap.add_argument('--self-sha256', required=True)
+    ap.add_argument('--binder', nargs=2, required=True)
+    ap.add_argument('--registrar', nargs=2, required=True)
+    ap.add_argument('--out', type=Path, required=True)
+    args = ap.parse_args()
+    subjects = []
+    bodies = []
+    def source(path, sha):
+        p = Path(path); a = p.lstat()
+        need(p.is_absolute() and p.resolve(strict=True) == p and stat.S_ISREG(a.st_mode)
+            and a.st_nlink == 1 and a.st_size <= 131072, 'whole bounded generic control Source')
+        raw = p.read_bytes()
+        need(signature(a) == signature(p.lstat()) and len(raw) == a.st_size
+             and hashlib.sha256(raw).hexdigest() == sha, 'exact stable generic control Source')
+        subjects.append(dict(path=str(p), bytes=len(raw), sha256=sha)); bodies.append(raw)
+        return raw
+    own = source(Path(__file__).resolve(), args.self_sha256)
+    source(*args.binder); source(*args.registrar)
+    blocks = []
+    for raw in bodies:
+        text = raw.decode('utf-8'); tree = ast.parse(text)
+        block = []
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.Assign)):
+                name = node.name if isinstance(node, ast.FunctionDef) else (
+                    node.targets[0].id if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name) else '')
+                if name.startswith('fmp_') and name != 'fmp_controls_main' or name.startswith('_FMP_'):
+                    block.append(ast.get_source_segment(text, node))
+        blocks.append(block)
+    need(blocks[0] == blocks[1] == blocks[2], 'all three complete map codec bodies byte identical')
+    names = ['all_three_complete_codec_blocks_identical']
+    def good(name, value):
+        wire = fmp_encode(value)
+        need(fmp_expand(wire) == value and fmp_can(fmp_expand(wire)) == fmp_can(value), name)
+        names.append(name); return wire
+    def reject(name, thunk):
+        try: thunk()
+        except (ValueError, KeyError, TypeError, IndexError): names.append(name); return
+        raise ValueError('missing expected refusal: '+name)
+    def r(path, n=17, sha='a'*64): return dict(path=path, bytes=n, sha256=sha)
+    def pair(a, b): return dict(original=r(a), retained=r(b))
+    value = dict(schema='ROOT_IMMUTABLE_F009_CONTINUATION_PRESERVATION_V1', root='generic-fixture',
+        no_original_or_previous_artifact_deleted_or_rewritten=True,
+        rows=[pair('/private/tmp/generic/a.bin', '/generic/retained/artifacts/generic/a.bin'),
+              pair('/private/tmp/generic/renamed.py', '/generic/retained/method/preserve.py')],
+        reused_previous_rows=[pair('/private/tmp/old/b.bin', '/generic/older/artifacts/old/b.bin')],
+        scientific_calls=0, Source_verdicts_transferred=0, qualification='Generic values only; no original authority.')
+    wire = good('whole_pairs_flags_and_order', value)
+    plan = dict(schema='F009_CONTINUATION_IMMUTABLE_PRESERVATION_PLAN_V1', author='generic-fixture',
+        reused_previous_rows=value['reused_previous_rows'],
+        new_rows=[dict(original=r('/private/tmp/generic/a.bin'), relative='artifacts/generic/a.bin')],
+        destination='/generic/retained', unrelated=dict(flags=[True, False], text='retained exact'))
+    good('whole_relative_plan_and_every_nonrow_field', plan)
+    good('empty_mapping_fields', dict(schema=value['schema'], rows=[], reused_previous_rows=[]))
+    need(fmp_expand(dict(schema='ordinary-job', x=[1, 2])) == dict(schema='ordinary-job', x=[1, 2]), 'old ordinary document passthrough')
+    names.append('ordinary_old_documents_passthrough')
+    permuted = copy.deepcopy(value); permuted['rows'].reverse()
+    need(fmp_encode(permuted)[_FMP_TAG]['logical_sha256'] != wire[_FMP_TAG]['logical_sha256'], 'order bound in logical image')
+    names.append('mapping_order_is_authenticated')
+    altered = copy.deepcopy(value); altered['rows'][0]['retained']['bytes'] += 1
+    reject('retained_wrong_size_refused', lambda:fmp_encode(altered))
+    altered = copy.deepcopy(value); altered['rows'][0]['retained']['sha256'] = 'b'*64
+    reject('retained_wrong_SHA_refused', lambda:fmp_encode(altered))
+    def mutate(name, edit):
+        bad = copy.deepcopy(wire); edit(bad); reject(name, lambda:fmp_expand(bad))
+    mutate('bool_index_refused', lambda b:b[_FMP_TAG]['fields'][0][2][0].__setitem__(0, True))
+    mutate('out_of_range_index_refused', lambda b:b[_FMP_TAG]['fields'][0][2][0].__setitem__(1, 100000))
+    mutate('duplicate_prefix_refused', lambda b:b[_FMP_TAG]['prefixes'].append(b[_FMP_TAG]['prefixes'][0]))
+    mutate('unsorted_prefixes_refused', lambda b:b[_FMP_TAG]['prefixes'].reverse())
+    mutate('wrong_count_refused', lambda b:b[_FMP_TAG].__setitem__('row_count', 99))
+    mutate('wrong_logical_SHA_refused', lambda b:b[_FMP_TAG].__setitem__('logical_sha256', '0'*64))
+    mutate('wrong_logical_size_refused', lambda b:b[_FMP_TAG].__setitem__('logical_bytes', 1))
+    mutate('nonrow_flag_mutation_refused', lambda b:b.__setitem__('scientific_calls', 1))
+    mutate('duplicate_field_refused', lambda b:b[_FMP_TAG]['fields'].append(copy.deepcopy(b[_FMP_TAG]['fields'][0])))
+    mutate('plain_and_encoded_field_collision_refused', lambda b:b.__setitem__('rows', []))
+    mutate('wrong_field_kind_refused', lambda b:b[_FMP_TAG]['fields'][0].__setitem__(1, 'relative'))
+    mutate('bool_size_refused', lambda b:b[_FMP_TAG]['fields'][0][2][0].__setitem__(3, True))
+    mutate('malformed_SHA_refused', lambda b:b[_FMP_TAG]['fields'][0][2][0].__setitem__(4, 'x'*64))
+    mutate('unknown_schema_refused', lambda b:b.__setitem__('schema', 'unrelated-job'))
+    wide = dict(schema=value['schema'], rows=[], reused_previous_rows=[], scientific_calls=0)
+    for i in range(2048):
+        suffix = 'generic/'+('x'*300)+str(i)+'.bin'
+        wide['rows'].append(pair('/private/tmp/'+suffix, '/generic/retained/artifacts/'+suffix))
+    good('all_2048_long_basename_pairs_use_one_suffix', wide)
+    for subject in subjects:
+        p=Path(subject['path']); raw=p.read_bytes()
+        need(len(raw)==subject['bytes'] and hashlib.sha256(raw).hexdigest()==subject['sha256'], 'complete final Source reauthentication')
+    result=dict(schema='F009_PRESERVATION_MAP_GENERIC_CONTROLS_V1', status='PASS', controls=len(names), checks=names,
+        program=subjects[0], binder=subjects[1], registrar=subjects[2], original_or_scientific_calls=0,
+        complete_Source_read_upper=3*sum(s['bytes']for s in subjects)+4,
+        qualification='Generic map transport and mutation fixtures only. No actual preservation, Native, Reader, Root release or checkpoint authority.')
+    raw=can(result); need(len(raw)<=16384, 'one bounded generic report')
+    out=args.out
+    need(out.is_absolute() and out.is_relative_to('/private/tmp') and '..' not in out.parts
+         and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out), 'fresh ordinary generic report destination')
+    with out.open('xb')as stream:
+        need(stream.write(raw)==len(raw), 'whole exclusive generic report');stream.flush();os.fsync(stream.fileno())
+    print(json.dumps(result, sort_keys=True))
+
+def main():
+    import sys
+    if '--controls' in sys.argv:
+        fmp_controls_main()
+    else:
+        _fmp_copy_main()
+
+if __name__=='__main__':main()

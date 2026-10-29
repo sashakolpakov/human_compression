@@ -1,0 +1,45 @@
+"""Own stdlib late publication DATA selection, no helper activation."""
+from pathlib import Path
+import hashlib,json,stat
+D=Path('/private/tmp/l026_cached_rotation_walk/gen11_append_DATA');L=D/'late_publication_retention_DATA'
+S=Path('/Users/sasha/medusa/research/leemans');BASE=S/'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/direct_generation/cached_walk_batch_0001'
+DEST=BASE/'publication_evidence';U=Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pin(p):
+ p=Path(p);a=p.lstat();b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and sig(a)==sig(z)
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p):return json.loads(Path(p).read_bytes())
+def write(n,v):
+ p=L/n;assert not p.exists();p.write_bytes(can(v));return pin(p)
+borrowed=[pin(BASE/'metadata_evidence/preservation.json'),pin(BASE/'scientific_evidence/part1/preservation.json'),pin(BASE/'scientific_evidence/part2/preservation.json')]
+prior={}
+for r in borrowed:
+ for x in read(r['path'])['files']:
+  key=(x['original']['path'],x['original']['bytes'],x['original']['sha256']);prior[key]=x['retained']
+selected=[pin(p)for p in D.rglob('*')if p.is_file()and not p.is_relative_to(L)]
+selected +=[pin(BASE/'root_acceptance.json'),pin(Path(__file__))]
+rows=[]
+for r in sorted(selected,key=lambda x:x['path']):
+ key=(r['path'],r['bytes'],r['sha256'])
+ if Path(r['path']).is_relative_to(S):target=r
+ elif key in prior:target=prior[key];assert pin(target['path'])==target
+ else:target=dict(path=str(DEST/'objects'/r['sha256']),bytes=r['bytes'],sha256=r['sha256'])
+ rows.append(dict(original=r,retained=target))
+assert len({r['original']['path']for r in rows})==len(rows)
+receipt=read(BASE/'root_acceptance.json');capture=read(D/'publication_write_actual_capture.json');guard=read(D/'runtime/publication_write_guard/receipt.json')
+assert pin(BASE/'root_acceptance.json')['sha256']=='5a39ee468050879a5d75984d71d25a7943a6f92d7eb8b6897da916f71452f017'
+assert receipt['adopted']is True and receipt['Root_adoption_owed']is False and receipt['prior_registered_generation_count']==7
+assert [f['free_index']for f in receipt['generation_facts']]==[24,34,39,47]and receipt['remaining_product_components_unresolved']==28873
+assert capture['actual_tool']['exit_code']==0 and guard['status']=='PASS'and guard['returncode']==0 and not guard['cleanup']['remaining']and not guard['cleanup']['errors']
+plan=dict(schema='CLOSED_GEN11_ACTUAL_PUBLICATION_LATE_RETENTION_DATA_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,scientific_calls=0,destination=str(DEST),files=rows,borrowed_closures=borrowed,qualification='AllnewRootpublicationSource/reviews/originalandcorrectedreleases/wholegenuinecaptures/forecast/writeSDK/staticpeer+acceptedreceipt andmetadata-plan/auditlineage. ExactpriorSbodymapsreused; nooldSCIreplay. Oldmisnamedunissuedreview/release remainsattributedhistory; corrected00cbrelease authorizedactualpublication. Compactjournalworkseparateandnotincluded.')
+pref=write('copy_plan.json',plan);u=pin(U);methods=[dict(original=u,retained=dict(path=str(DEST/'method/retain_closed_files.py'),bytes=u['bytes'],sha256=u['sha256'])),dict(original=pref,retained=dict(path=str(DEST/'method/plan.json'),bytes=pref['bytes'],sha256=pref['sha256']))]
+m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrowed,source_plan=pref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+projection=write('projected_manifest_DATA.json',m);expected=dict(path=str(DEST/'preservation.json'),bytes=projection['bytes'],sha256=projection['sha256'])
+inside=[r for r in rows if Path(r['retained']['path']).is_relative_to(DEST)];outside=[r for r in rows if r not in inside]
+I=sum(r['original']['bytes']for r in inside);E=sum(r['original']['bytes']for r in outside);paths={u['path'],pref['path'],expected['path']}|{r['path']for r in borrowed}|{r[k]['path']for r in rows+methods for k in ['original','retained']}
+readbytes=2*u['bytes']+3*pref['bytes']+sum(r['bytes']for r in borrowed)+4*I+3*E+projection['bytes'];newbytes=sum({r['retained']['path']:r['retained']['bytes']for r in inside}.values())+u['bytes']+pref['bytes']+projection['bytes']
+assert len(paths)<=512 and readbytes<64*2**20 and newbytes<16*2**20 and max(r['original']['bytes']for r in rows)<=4*2**20
+invoice=write('copy_invoice_DATA.json',dict(schema='GEN11_LATE_PUBLICATION_EXACT_FRESH_RETENTION_INVOICE_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,program=u,plan=pref,selected_rows=len(rows),mappings=len(rows)+2,copy_rows=len(inside),outsideSreuse_rows=len(outside),actual_unique_paths=len(paths),read_bytes=readbytes,interpreter_Source_bootstrap_extra=u['bytes'],new_bytes=newbytes,new_files=len({r['retained']['path']for r in inside})+3,expected_manifest=expected,Source_derived_forecast=False,actual_copy=None,formula='2Source+3plan+borrowedwhole+4inside-rowbytes+3outsideSreuse-rowbytes+manifest; uniqueinsidewrites+Source+plan+manifest'))
+handoff=write('handoff.json',dict(schema='GEN11_ACTUAL_PUBLICATION_LATE_CLOSURE_DATA_HANDOFF_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,copy_program=u,copy_plan=pref,projection=projection,expected_manifest=expected,invoice=invoice,accepted_receipt=pin(BASE/'root_acceptance.json'),actual_publication_capture=pin(D/'publication_write_actual_capture.json'),copy_argv=['/Users/sasha/.venvs/global/bin/python','-E','-B',u['path'],'--self-sha256',u['sha256'],'--plan',pref['path'],pref['sha256'],'--destination',str(DEST),'--manifest',expected['path']],actual_copy=None,qualification='DATAauthorreadallwholepinsandderivedliteral667projection; nohelper/Source/SCI/SW/Git/gateactivation. ActualGEN11adoptionisRootexistingreceipt, neverthisretentionselectionauthority.'))
+print(json.dumps(dict(handoff=handoff,plan=pref,expected=expected,paths=len(paths),read=readbytes,new=newbytes,rows=len(rows)),sort_keys=True))

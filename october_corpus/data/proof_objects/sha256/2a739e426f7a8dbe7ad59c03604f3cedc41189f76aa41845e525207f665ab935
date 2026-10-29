@@ -1,0 +1,55 @@
+"""Own stdlib literal carrier projection and strict-DATA authoring only."""
+from pathlib import Path
+import copy,hashlib,json,stat,struct
+B=Path('/private/tmp/l026_cached_rotation_walk');D=B/'strict_34_39_47_DATA';F=B/'instances/unpaid_0032_0047/phase_12'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def pin(p):
+ p=Path(p);a=p.lstat();b=p.read_bytes();z=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+ assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p):return json.loads(Path(p).read_bytes())
+def write(p,o):assert not p.exists();p.write_bytes(can(o));return pin(p)
+def merge(rows):
+ d={}
+ for r in rows:assert d.get(r['path'],r)==r;d[r['path']]=r
+ return[d[k]for k in sorted(d)]
+parent=read(F/'output/records.json');pr=pin(F/'output/records.json');assert pr['bytes']==2194 and pr['sha256']=='3aa0d35c4ed302a4ac1c103f95e7bbcb4f1369fb75a58fccb75710f8d1559fff'
+assert can(parent)==Path(pr['path']).read_bytes()and [r['free_index']for r in parent['records']]==[34,39,47]
+base=read(B/'strict24_DATA/strict_plan.json');baseref=pin(B/'strict24_DATA/strict_plan.json');controlref=pin('/private/tmp/l026_supplied_prime_cycles/runtime/control_guard/stdout.log')
+control=read(controlref['path']);assert control['status']=='PASS'and control['controls']==15 and control['consumer']==base['program']and control['kernel']==base['kernel']and control['program']==base['control_program']
+finalplan=read(F/'plan.json');capture=read(F/'supplier_actual_capture.json');outer=read(F/'supplier_guard/receipt.json');summary=read(F/'output/summary.json')
+assert capture['actor']==capture['root']=='/root'and capture['actual_tool']['exit_code']==capture['full_tool_return']['exit_code']==0
+assert outer['status']=='PASS'and outer['stop']=='RETURNED'and outer['returncode']==0 and not outer['cleanup']['remaining']and not outer['cleanup']['errors']
+assert summary['proposed_pair_indices']==[34,39,47]and summary['exact_unvisited_indices']==[]
+assert summary['finite_miss_indices_without_any_paid_credit']==[32,33,35,36,37,38,40,41,42,43,44,45,46]
+current={k:finalplan['roles'][k]for k in ['current_generation_adoption','current_partition']};part=read(current['current_partition']['path'])
+paid={r['free_index']for k in ['all_prior_subset_owner_rows','all_prior_generation_facts','exact_new_original_owner_rows']for r in part[k]};assert len(paid)==31 and not paid&{34,39,47}
+witnesses=Path(base['roles']['witnesses']['path']).read_bytes();entries=[]
+for row in parent['records']:
+ i=row['free_index'];C=D/('free_index_%04d'%i);C.mkdir();child=copy.deepcopy(parent);child['records']=[copy.deepcopy(row)]
+ carrier=write(C/'projected_carrier_UNTRUSTED.json',child);piece=witnesses[16*i:16*i+16]
+ assert struct.unpack_from('<I',piece)[0]==row['owner']and hashlib.sha256(piece).hexdigest()==row['witness_row_sha256']
+ inv=write(C/'whole_parent_projection_inverse.json',dict(schema='ROOT_REVIEWABLE_UNTRUSTED_SINGLETON_CARRIER_LITERAL_PROJECTION_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,parent_actual_supplier_output=pr,whole_parent=parent,projected=carrier,whole_projected=child,
+ selected_parent_record_index=[r['free_index']for r in parent['records']].index(i),selected_free_index=i,header_fields_literal_unchanged=True,record_literal_unchanged=True,
+ qualification='NewuntrustedDATAprojection, notanactualsupplieroutput orRootcaseexecution. Whole2194byteparent retainedhere; everyomittedrecord remainsexactinwhole_parent. Projectiondoesnotchangeanyword/cycle/owner/marking, grantsnoSCIauthority andmustbestrictlycheckedindependently.'))
+ provenance=dict(actual_final_multi_carrier=pr,projection_inverse=inv,supplier_Source=pin(B/'propose.py'),actual_final_supplier_plan=pin(F/'plan.json'),actual_final_Root_supplier_gate=pin(F/'Root_gate.json'),actual_final_supplier_capture=pin(F/'supplier_actual_capture.json'),actual_final_outer_guard=pin(F/'supplier_guard/receipt.json'),actual_final_summary=pin(F/'output/summary.json'))
+ p=copy.deepcopy(base);p.update(author='/root/journal_peer/f009_invoice',window_start=i,selected_free_indices=[i],expected_positive_free_indices=[i],records=carrier,output=str(C/'strict_result.json'),
+ actual_supplier_provenance=provenance,current_scope_context=current,status='ROOT_REVIEWABLE_LITERAL_SINGLETON_PROJECTION_FRESH268D_GATE_OWED',
+ qualification='Exactoriginalunpaidfree%d/owner%d fromactualfinalmulti3aa0; thisnewprojectedcarrierwasNOTexecutedbysupplier. Allword/cyclebytes/headerliteralunchangedwithwholeparentinverse. Old268d/60ee/b617actual15controls and13originalroles literal; freshRootstrictgate/24closingedges thenRoottypedGEN/separateIPadoptionowed. No authorSCI/Sourceactivation orcountcredit.'%(i,row['owner']))
+ p['inputs']=merge(list(p['roles'].values())+[p['kernel'],p['control_program'],carrier]+list(current.values())+list(provenance.values()))
+ assert len(p['inputs'])==26
+ for r in p['inputs']:assert pin(r['path'])==r
+ plan=write(C/'strict_plan.json',p);lengths={prime:len(row['prime'+str(prime)]['word'])for prime in [11,13]};letters=sum(prime*lengths[prime]for prime in [11,13])
+ assert all(1<=n<=64 for n in lengths.values())
+ readupper=p['program']['bytes']+2*(sum(r['bytes']for r in p['inputs'])+p['program']['bytes']+plan['bytes']+8192+32768+controlref['bytes'])
+ work=2*59169+2*8320+12*64+2*6729+(52658+110*3510)+2*carrier['bytes']+64+16+98+8*24+4*24+2*24+130*letters+16384
+ assert readupper<8*2**20 and work<10000000
+ invoice=write(C/'strict_invoice.json',dict(schema='PROJECTED_SINGLETON_UNCHANGED268D_STATIC_INVOICE_DATA_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,plan=plan,projected_carrier=carrier,actual_parent=pr,whole_inverse=inv,read_paths=31,read_and_output_paths=32,physical_read_upper_with_Source_bootstrap=readupper,work_upper=work,word_lengths=lengths,fresh_cycle_edges=24,signed_letter_applications=letters,Source_namespace=19003+6729,
+ Root_gate_upper=8192,Root_review_upper=32768,old_actual15control_report=controlref,actual_Root_gate=None,actual_strict=None,qualification='OwnDATAarithmetic/projectiononly; no originalpoint/action/word/cyclecalculation. Noactualsupplieridentityclaimonprojectedcarrier. Rootalonefreshgate andactualall24closingedgecheck.'))
+ entries.append(dict(free_index=i,owner=row['owner'],carrier=carrier,inverse=inv,plan=plan,invoice=invoice,word_lengths=lengths,signed_letter_applications=letters,actual_strict=None,
+ argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',p['program']['path'],'--self-sha256',p['program']['sha256'],'--plan',plan['path'],plan['sha256'],'--Root-gate',str(C/'Root_strict_gate.json'),'FRESH_ROOT_GATE_SHA']))
+handoff=write(D/'handoff.json',dict(schema='ACTUAL_FINAL_MULTI_CARRIER_THREE_UNTRUSTED_SINGLETONS_TO268D_DATA_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,actual_final_parent=pr,template=baseref,program=base['program'],kernel=base['kernel'],old_actual15controls=controlref,entries=entries,
+ actual_final_supplier_capture=pin(F/'supplier_actual_capture.json'),all13_other_final_window_cases_are_finite_misses_unpaid=True,current_GEN_untilbatchadoption=7,current_separate_IP=7,GEN8kit_unchanged_UNRUN=pin(B/'gen8_append_DATA/handoff.json'),
+ actual_three_Root_gates=None,actual_three_stricts=None,GEN11_metadata_plan=None,Root_adoption=None,
+ qualification='Eachcarrier isnewDATAprojectionwithwholeliteralparentinverse, neveranactualsupplieroutput. Rootmustreview/issuefreshonecasegates/actual268dproofs. No Sourceactivation/science/state/gates/SW/Gitwrites, no paidproofrerun/no casecredit. GEN11bindingwaitsthreeactualresults.'))
+print(json.dumps(dict(handoff=handoff,entries=[dict(free_index=x['free_index'],owner=x['owner'],plan=x['plan'],carrier=x['carrier'],letters=x['signed_letter_applications'])for x in entries]),sort_keys=True))
