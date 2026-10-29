@@ -1,0 +1,239 @@
+"""UNRUN Root DATA constructor for one exact standalone F009 job.
+
+No project module activation, snapshot decode, state/graph calculation,
+scientific process, canonical progress write or retrospective Source claim.
+The output is an acyclic proposal, requiring independent review before
+Root supplies its separate job release and actual Owner request.
+"""
+import argparse,hashlib,json,os,stat,sys
+from pathlib import Path
+
+MIB=2**20
+S=Path('/Users/sasha/medusa/research/leemans')
+Q=S/'computation/f009/rooted_census_split'
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def strict(raw):
+    def pairs(rows):
+        d={}
+        for k,v in rows:need(k not in d,'unique DATA keys');d[k]=v
+        return d
+    return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+def read(ref,cap=8*MIB):
+    p=Path(ref['path']);a=p.lstat()
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1 and a.st_size==ref['bytes']<=cap,'bounded exact DATA input')
+    with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(cap+1);c=os.fstat(f.fileno())
+    sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    need(sig(a)==sig(b)==sig(c)==sig(p.lstat()) and len(raw)==ref['bytes'] and hashlib.sha256(raw).hexdigest()==ref['sha256'],'whole stable DATA identity')
+    return strict(raw)
+def merge(*groups):
+    by={}
+    for rows in groups:
+        for r in rows:
+            need(type(r)is dict and set(r)=={'path','bytes','sha256'} and type(r['bytes'])is int and r['bytes']>=0,
+                 'literal complete DATA descriptor')
+            need(by.get(r['path'],r)==r,'one current whole identity');by[r['path']]=r
+    out=[by[p]for p in sorted(by)]
+    need(len(out)<=40000 and sum(r['bytes']for r in out)<=2**31,'unchanged complete40000/2GiB current domain')
+    return out
+
+class Plan:
+    def __init__(self,root):self.root=root;self.values={};self.rows={}
+    def add(self,name,value,cap=2*MIB):
+        p=self.root/name;raw=can(value);need(len(raw)<=cap and str(p)not in self.rows,'one finite metadata output')
+        r=dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+        self.rows[str(p)]=r;self.values[str(p)]=raw;return r
+    def finish(self,write):
+        need(len(self.rows)<=24 and sum(r['bytes']for r in self.rows.values())<=16*MIB,'finite24file/16MiB metadata constructor output')
+        if write:
+            need(not os.path.lexists(self.root)and self.root.parent.resolve(strict=True)==self.root.parent,'fresh exact DATA directory')
+            self.root.mkdir()
+            for p,raw in self.values.items():
+                with Path(p).open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive DATA write');f.flush();os.fsync(f.fileno())
+            for p in(self.root,self.root.parent):
+                fd=os.open(p,os.O_RDONLY)
+                try:os.fsync(fd)
+                finally:os.close(fd)
+        return dict(rows=list(self.rows.values()),output_bytes=sum(r['bytes']for r in self.rows.values()),
+                    output_files=len(self.rows),written=write)
+
+def build(parameters,parameters_ref,write=False):
+    p=parameters;need(p['schema']=='ROOT_F009_STANDALONE_CONSTRUCTION_PARAMETERS_V1'and p['root']=='/root','new explicit Root DATA method')
+    catalogue=read(p['catalogue']);boundary=read(p['boundary']);cp=read(boundary['checkpoint_acceptance']);sp=read(boundary['snapshot_adoption'])
+    need(catalogue['schema']=='ROOT_F009_STANDALONE_CATALOGUE_DATA_ONLY_V1'
+         and cp['root']==sp['root']=='/root'and cp['adopted']is sp['adopted']is True
+         and cp['checkpoint']==sp['checkpoint']and type(boundary['expected_checkpoint_sequence'])is int
+         and cp['checkpoint']['sequence']==boundary['expected_checkpoint_sequence']
+         and sp['checkpoint_acceptance']==boundary['checkpoint_acceptance']and cp['snapshot']==sp['snapshot'],
+         'actual accepted pair and complete current catalogue artifact')
+    epoch=cp['checkpoint']['sequence']
+    need(boundary['schema']=='ROOT_F009_STANDALONE_CHECKPOINT_BOUNDARY_V1'and boundary['root']=='/root'
+         and sp['complete_root_inputs']==cp['complete_root_inputs'],'new explicit same-checkpoint boundary')
+    current_root=read(cp['complete_root_inputs'])
+    need(current_root['all_freshly_hashed']is True,'genuine already adopted complete current physical domain')
+    extraction_review=read(catalogue['Root_review'])
+    need(extraction_review['root']=='/root'and extraction_review['status']=='SUPPORTED'and extraction_review['blockers']==[]
+         and extraction_review['program']==catalogue['program']and extraction_review['plan']==catalogue['plan'],
+         'exact genuine catalogue method review, not a scalar file-count certificate')
+    extraction_plan=read(catalogue['plan']);need(extraction_plan['boundary']==boundary['inherited_catalogue_boundary'],'same exact accepted catalogue boundary')
+    archive=read(catalogue['inherited_qualified_archive'])['inputs'];denied={r['path']for r in archive}
+    need(len(catalogue['inherited_original8'])==8 and all(r in archive for r in catalogue['inherited_original8'])
+         and not any(r['path']in denied for r in catalogue['declared_input_rows']),
+         'all qualified historical identities retained and excluded from current physical reads')
+    need(current_root['historical_archive_rows']==archive,'same complete historical archive, no revived rows')
+    inherited_boundary=read(boundary['inherited_catalogue_boundary'])
+    need(all(boundary[k]==inherited_boundary[k]for k in('native_source','reader_source','controls_gate','runtime_gate')),
+         'exact retained model/library/runtime/control identities')
+    current_inputs=merge(catalogue['declared_input_rows'],current_root['inputs'],
+      [p['boundary'],boundary['checkpoint_acceptance'],boundary['snapshot_adoption'],cp['complete_root_inputs'],
+       boundary['inherited_catalogue_boundary']],boundary['publication_inputs'])
+    need(not any(r['path']in denied for r in current_inputs),'no archived input restored by current-state reuse')
+    profile=read(sp['source_profile']);rt=read(boundary['runtime_gate']);prior=read(sp['producer_case'])
+    need(prior['target']==[32,5,4,8]and prior['reuse']==[]and prior['backend_transition']is None
+         and rt['native_source']==boundary['native_source']and rt['reader_source']==boundary['reader_source']
+         and rt['same_interpreter_and_original11_runtime_verified']is True,'accepted same mathematical domain and runtime')
+    root=Path(p['artifact_root']);plan=Plan(root);role=p['role'];need(role in('native','reader'),'one operation role')
+    sources=merge(catalogue['source_inputs'],p['method_sources'],[p['IO_budget_source'],p['retained_owner']])
+    need(len(sources)<=1024 and sum(r['bytes']for r in sources)<=128*MIB,'same functional Source bound')
+    own=next(r for r in p['method_sources']if r['path']==str(Path(__file__).resolve()))
+    creator=plan.add('metadata_creator.json',dict(schema='ROOT_F009_STANDALONE_METADATA_CREATOR_V1',root='/root',
+       writer=own,construction_parameters=parameters_ref,catalogue=p['catalogue'],old_metadata_Source_executed=False))
+    ap=plan.add('accessor_profile.json',dict(schema='F009_DIRECT_PRIVATE_ANCHOR_SOURCE_PROFILE_V1',
+       anchor=p['retained_accessor'],capacity_profile=sp['source_profile'],capacity_method=sp['export_method_acceptance'],
+       runtime_sources=profile['runtime_sources'],native_source=boundary['native_source'],reader_source=boundary['reader_source']))
+    rp=plan.add('runtime_profile.json',dict(schema='F009_CAPACITY8_ANCHOR_SEGMENT_SOURCE_PROFILE_V1',
+       adapter=boundary['native_source']['program'],inherited_helpers=p['retained_snapshot_helper'],accessor_source_profile=ap))
+    am=plan.add('accessor_method.json',dict(root='/root',status='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_ANCHOR_METHOD_V1',
+       source_profile=ap,native_source=boundary['native_source'],reader_source=boundary['reader_source'],runtime_profile=rp,
+       scientific_execution=False,native_execution_release_granted=False,
+       qualification='Root binding of genuine retained Source libraries to this DATA profile. The new caller needs its own independent job review and actual Owner admission.'))
+    anchor=plan.add('anchor.json',dict(schema='F009_EXPLICIT_ADOPTED_STATE_ANCHOR_V1',format='direct_private_reference_v1',
+       snapshot=sp['snapshot'],head=sp['head'],producer_case=sp['producer_case'],upstream_acceptance=sp['upstream_acceptance'],
+       source_profile=sp['source_profile'],adoption=boundary['snapshot_adoption'],method_acceptance=sp['export_method_acceptance']))
+    common=dict(schema='ROOT_F009_STANDALONE_JOB_V1',root='/root',role=role,program=p['program'],Owner=p['Owner'],
+       contract=p['contract'],library_adapter=p['library_adapter'],metadata_constructor=own,Root_metadata_creator=creator,
+       mathematical_library=boundary[role+'_source']['program'],library_Source=boundary[role+'_source'],
+       mathematical_native_library=boundary['native_source']['program'],mathematical_reader_library=boundary['reader_source']['program'],
+       retained_common=p['retained_common'],IO_budget_source=p['IO_budget_source'],source_inputs=sources,
+       checkpoint_acceptance=boundary['checkpoint_acceptance'],snapshot_adoption=boundary['snapshot_adoption'],
+       old_checkpoint_sequence=epoch,checkpoint_boundary=p['boundary'],readonly_symlinks=rt['readonly_symlinks'],qualified_archive_rows=archive,
+       output=p['output'],old_caller_executed=False,new_census_credit=0)
+    # The accepted runtime gate records two explicit readonly aliases. They
+    # are not part of its860 ordinary runtime-file rows. Preserve each link
+    # identity AND its full resolved target in current DATA, so the unchanged
+    # Owner alias_map-subset check and first/final whole hashes both apply.
+    alias_rows=[]
+    for alias in rt['readonly_symlinks']:
+        need(alias['path']in('/opt/homebrew/bin/gs','/opt/homebrew/bin/pdflatex'),
+             'only the two exact accepted readonly alias roles')
+        target=alias['target']
+        alias_rows.extend([dict(path=alias['path'],bytes=target['bytes'],sha256=target['sha256']),target])
+    alias_rows=merge(alias_rows)
+    # Exact physical document sites in retained entry.controls. The accepted
+    # gate is already current; these three proof/result bodies must also be
+    # physically declared before the unchanged routine can inspect them.
+    controls=read(boundary['controls_gate'])
+    protocol_metadata_rows=merge([controls[k]for k in('actual_review','actual_execution','result')])
+    if role=='native':
+        context=plan.add('case_context.json',dict(schema='ROOT_F009_STANDALONE_CASE_CONTEXT_V1',root='/root',
+          checkpoint_acceptance=boundary['checkpoint_acceptance'],snapshot_adoption=boundary['snapshot_adoption'],
+          catalogue=p['catalogue'],new_metadata_creator=creator,next_select=cp['next_select'],
+          reserved_parents=cp['reserved_parents'],pending_includes_reserved=True,max_actions=64,worker_seconds=60))
+        case=dict(prior,base=cp['head'],output=p['output'],max_actions=64,worker_seconds=60,
+          premises=merge([boundary['checkpoint_acceptance'],boundary['snapshot_adoption'],context,creator],
+            list(boundary['native_source'].values()),list(boundary['reader_source'].values())))
+        inverse=dict(case)
+        for key in('base','output','max_actions','worker_seconds','premises'):inverse[key]=prior[key]
+        need(inverse==prior and set(case)==set(prior),'whole predecessor case inverse; target and algorithms unchanged')
+        case_ref=plan.add('case.json',case)
+        application=plan.add('application.json',dict(schema='F009_CAPACITY8_ANCHOR_SEGMENT_APPLICATION_V1',
+          case=case_ref,anchor=anchor,base_acceptance=boundary['checkpoint_acceptance'],runtime_profile=rp,method_acceptance=am))
+        need(case['reuse']==[]and case['backend_transition']is None,'unchanged no-reuse/no-backend-transition continuation')
+        direct_case_rows=merge([case[k]for k in('base','binary','completion_binary','bridge')],case['premises'])
+        data=merge(current_inputs,sources,list(plan.rows.values()),[p['catalogue'],parameters_ref,own],alias_rows,protocol_metadata_rows,direct_case_rows)
+        data_ref=plan.add('current_inputs.json',dict(inputs=data,Root_DATA_descriptor_domain=True),8*MIB)
+        binding=plan.add('native_binding.json',dict(schema='ROOT_F009_MATERIALIZED_NATIVE_EXECUTION_BINDING_V1',root='/root',
+          program=boundary['native_source']['program'],native_source=boundary['native_source'],reader_source=boundary['reader_source'],
+          metadata_source=creator,application=application,checkpoint_acceptance=boundary['checkpoint_acceptance'],
+          snapshot_adoption=boundary['snapshot_adoption'],controls_gate=boundary['controls_gate'],runtime_gate=boundary['runtime_gate'],
+          source_inputs=merge(sources,list(plan.rows.values())),wire_inputs=[],data_inputs=data_ref))
+        common.update(case=case_ref,application=application,binding=binding,native_output=p['output'])
+        rules=[dict(kind='refine',binary=case['binary']),dict(kind='complete',binary=case['completion_binary']),dict(kind='canonical',binary=case['bridge'])]
+    else:
+        closure=read(p['native_closure']);need(closure['schema']=='ROOT_CLOSED_F009_STANDALONE_NATIVE_V1'
+          and closure['root']=='/root'and closure['known_scope_drained']is True,'actual new native closure, not a worker-return proposal')
+        receipt=read(closure['Owner_receipt']);handoff=read(closure['worker_handoff']);nativejob=read(closure['job'])
+        request=read(closure['Owner_request']);native_review=read(closure['Root_job_review'])
+        actual_review=read(closure['independent_actual_review'])
+        need(receipt['status']=='PASS'and receipt['inputs_unchanged']is receipt['owned_child_reaped']is receipt['owned_group_absent']is True
+          and receipt['returncode']==0 and closure['actual_execution']and closure['independent_actual_review'],
+          'genuine closed Owner plus independently retained outside execution/review facts')
+        need(receipt['request']==closure['Owner_request']and receipt['execution_id']==request['execution_id']
+          and request['schema']=='LOCAL_SMALL_PYTHON_CHECK_V1'and request['program']==nativejob['program']['path']
+          and request['supervisor']==nativejob['Owner']['path']and request['output_roots']==[nativejob['output']]
+          and request['argv']==[sys.executable,'-E','-B',nativejob['program']['path'],
+            '--job',closure['job']['path'],closure['job']['sha256'],
+            '--root-review',closure['Root_job_review']['path'],closure['Root_job_review']['sha256'],
+            '--out',nativejob['output']],
+          'actual PASS Owner belongs to this exact new native job and command')
+        need(native_review['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'and native_review['root']=='/root'
+          and native_review['status']=='SUPPORTED'and native_review['blockers']==[]and native_review['job']==closure['job']
+          and native_review['program']==nativejob['program']and native_review['Owner']==nativejob['Owner'],
+          'same genuine Root-reviewed caller, not a borrowed caller verdict')
+        need(actual_review['schema']=='ROOT_REVIEWED_F009_STANDALONE_OWNER_EXECUTION_V1'
+          and actual_review['root']=='/root'and actual_review['status']=='SUPPORTED'and actual_review['blockers']==[]
+          and actual_review['job']==closure['job']and actual_review['Owner_request']==closure['Owner_request']
+          and actual_review['Owner_receipt']==closure['Owner_receipt']and actual_review['actual_execution']==closure['actual_execution']
+          and actual_review['worker_handoff']==closure['worker_handoff'],
+          'independent outside actual-tool/Owner closure review is exact, not a worker scalar assertion')
+        need(handoff['schema']=='ROOT_F009_STANDALONE_NATIVE_WORKER_RETURN_V1'and handoff['request']==closure['job']
+          and handoff['base_acceptance']==boundary['checkpoint_acceptance']and handoff['snapshot_adoption']==boundary['snapshot_adoption']
+          and nativejob['case']==handoff['case']and nativejob['role']=='native','exact actual same new Native job/base/handoff')
+        actual_by={r['path']:r for r in closure['complete_actual_inputs']}
+        mandatory=nativejob['declared_inputs']+[closure[k]for k in('job','Owner_request','Owner_receipt','Root_job_review',
+          'actual_execution','independent_actual_review','worker_handoff','output_manifest')]
+        need(all(actual_by.get(r['path'])==r for r in mandatory),'all actual Native evidence is retained by whole identity')
+        outputs=read(closure['output_manifest'])
+        need(outputs['schema']=='ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1'and outputs['root']=='/root'
+          and outputs['job']==closure['job']and outputs['Owner_receipt']==closure['Owner_receipt']
+          and all(Path(r['path']).is_relative_to(nativejob['output'])and actual_by.get(r['path'])==r for r in outputs['files'])
+          and handoff['native_result']in outputs['files']and closure['worker_handoff']in outputs['files'],
+          'complete closed Native artifacts, including raw mathematical witnesses, remain current inputs')
+        reader_profile=plan.add('reader_profile.json',dict(schema='F009_DIRECT_PRIVATE_TAIL_READER_PROFILE_V1',
+          execution_reader=boundary['reader_source']['program'],codec=profile['codec'],export_profile=sp['source_profile'],
+          export_method=sp['export_method_acceptance'],accessor_profile=ap,accessor_method=am,source=boundary['reader_source']))
+        reader_method=plan.add('reader_method.json',dict(root='/root',status='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_READER_METHOD_V1',
+          program=boundary['reader_source']['program'],source_profile=reader_profile,source=boundary['reader_source'],scientific_execution=False))
+        case_ref=plan.add('case.json',dict(schema='F009_ADOPTED_ANCHOR_REFERENCE_LEAF_EXPORT_V1',reader=p['retained_backend_reader'],
+          producer_case=handoff['case'],producer_request=closure['job'],head=handoff['head'],handoff=closure['worker_handoff'],
+          base_acceptance=boundary['checkpoint_acceptance'],expected=handoff['expected_proposal'],delta=handoff['delta_proposal'],
+          output=p['output'],snapshot_profile=sp['source_profile'],anchor=anchor,method_acceptance=sp['export_method_acceptance'],
+          reader_profile=reader_profile,reader_method=reader_method,accessor_method=am))
+        sourcearg=plan.add('execution_source.json',boundary['reader_source'])
+        common.update(case=case_ref,reader_arguments=['--case',case_ref['path'],'--out',p['output'],'--source',sourcearg['path']],
+                      native_closure=p['native_closure'])
+        data=merge(current_inputs,sources,closure['complete_actual_inputs'],list(plan.rows.values()),
+                   [p['catalogue'],parameters_ref,p['native_closure'],own],alias_rows,protocol_metadata_rows)
+        rules=[]
+    common['producer_reservation']=dict(schema='F009_PRELAUNCH_RESERVED_FILESYSTEM_PRODUCER_V1',output=p['output'],
+        maximum_write_objects=2048 if role=='native'else 16,maximum_path_bytes=384,worker_bytes=14*MIB,terminal_bytes=4*MIB,native_writers=rules)
+    common['declared_inputs']=merge(data,list(plan.rows.values()),sources,[p['program'],p['Owner'],p['contract'],p['library_adapter'],p['guard']])
+    need(not any(r['path']in denied for r in common['declared_inputs']),'no archived value is silently restored to current input status')
+    declared_index={r['path']:r for r in common['declared_inputs']}
+    need(all(declared_index.get(w['binary']['path'])==w['binary']for w in common['producer_reservation']['native_writers']),
+         'every Native IO writer is a whole declared physical input before job construction')
+    job=plan.add('job.json',common,8*MIB)
+    summary=plan.finish(write)
+    summary.update(schema='ROOT_F009_STANDALONE_DATA_CONSTRUCTED_PENDING_REVIEW_V1',job=job,
+      current_inputs=len(common['declared_inputs']),current_input_bytes=sum(r['bytes']for r in common['declared_inputs']),
+      science_calls=0,global_checkpoint_written=False,Root_job_release_UNACQUIRED=True)
+    return summary
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--parameters',nargs=2,required=True)
+    ap.add_argument('--write',action='store_true');a=ap.parse_args();p=Path(a.parameters[0])
+    ref=dict(path=str(p),bytes=p.stat().st_size,sha256=a.parameters[1]);parameters=read(ref,65536)
+    print(json.dumps(build(parameters,ref,a.write),sort_keys=True))
+if __name__=='__main__':main()

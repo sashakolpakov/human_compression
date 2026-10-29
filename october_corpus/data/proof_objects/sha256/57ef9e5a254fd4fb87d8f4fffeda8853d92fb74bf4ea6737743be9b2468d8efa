@@ -1,0 +1,138 @@
+"""Generic storage/value controls only; no F009 state or scientific activation.
+
+Run by Root after exact independent review. Tiny synthetic ordinary-reference
+fixtures exercise the exact new leaf block and literal retained wire/unwire.
+Physical file authentication remains an unchanged separate codec obligation.
+"""
+import argparse
+import ast
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+WIRE = dict(
+    path='/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_state_snapshot.py',
+    bytes=12183,
+    sha256='ae5c9ae625442006bd3b9b060a57fde0f85f398b3a228b41a434407e561b1ad8')
+
+
+def source(ref):
+    path = Path(ref['path'])
+    raw = path.read_bytes()
+    assert path.is_absolute() and path.resolve(strict=True) == path
+    assert len(raw) == ref['bytes'] and hashlib.sha256(raw).hexdigest() == ref['sha256']
+    assert len(raw) < 131072
+    return raw.decode()
+
+
+def main():
+    ap = argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--helper', required=True)
+    ap.add_argument('--helper-sha', required=True)
+    args = ap.parse_args()
+    path = Path(args.helper)
+    raw = path.read_bytes()
+    assert path.is_absolute() and path.resolve(strict=True) == path
+    assert len(raw) <= 16384 and hashlib.sha256(raw).hexdigest() == args.helper_sha
+    spec = importlib.util.spec_from_file_location('Root_generic_leaf_storage_control_helper', path)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    codec = source(helper.CODEC)
+    old_expand = next(n for n in ast.parse(codec).body
+                      if isinstance(n, ast.FunctionDef) and n.name == 'expand')
+    before = ast.get_source_segment(codec, old_expand)
+    after = before
+    for old, new in ((helper.PIN_BEFORE, helper.PIN_AFTER),
+                     (helper.LEAF_BEFORE, helper.LEAF_AFTER)):
+        assert after.count(old) == 1 and new not in after
+        after = after.replace(old, new, 1)
+    inverse = after
+    for old, new in reversed(((helper.PIN_BEFORE, helper.PIN_AFTER),
+                              (helper.LEAF_BEFORE, helper.LEAF_AFTER))):
+        inverse = inverse.replace(new, old, 1)
+    assert inverse == before
+
+    # Compile literal typed predicates; no original module import/main/model.
+    wire_raw = source(WIRE)
+    tree = ast.parse(wire_raw)
+    names = ('need', 'pin_shape', 'digest', 'reference', 'unwire', 'wire')
+    ns = dict(Path=Path, STATE_KEYS={
+        'target', 'binary', 'completion_binary', 'nodes', 'pending',
+        'leaves', 'sequence', 'started'})
+    bodies = '\n\n'.join(ast.get_source_segment(wire_raw, n) for n in tree.body
+                           if isinstance(n, ast.FunctionDef) and n.name in names)
+    exec(compile(bodies, WIRE['path'], 'exec', dont_inherit=True), ns)
+    # Use the exact new leaf-allocation span under a tiny explicit loop.
+    local = ('def derive(rows, pins, hashes, ROOT_EXPORT_LEAVES):\n'
+             "    old={'leaves':[]}\n"
+             '    def file_ref(i):return pins[i]\n'
+             '    for file_id,line in rows:\n'
+             + '\n'.join(line[4:] for line in helper.LEAF_AFTER.splitlines())
+             + "\n    return old['leaves']\n")
+    block = dict(need=helper.need)
+    exec(compile(local, str(path)+':exact_leaf_span_fixture', 'exec'), block)
+
+    a = dict(path='/fixture/a', bytes=10, sha256='a'*64)
+    b = dict(path='/fixture/b', bytes=20, sha256='b'*64)
+    pins = [a, b]
+    rows = [(0, 4), (0, 4), (1, 7)]
+    hashes = {(0, 4): 'c'*64, (1, 7): 'd'*64}
+
+    def original():
+        return [dict(file=dict(pins[i]), line=line, sha256=hashes[i, line])
+                for i, line in rows]
+
+    def state(leaves):
+        return dict(target=[22, 5, 4, 5], binary=a, completion_binary=b,
+                    nodes={}, pending=set(), leaves=leaves, sequence=0, started={})
+
+    def check(source_leaves):
+        actual = block['derive'](rows, pins, hashes, source_leaves)
+        old = ns['wire'](state(actual))
+        restored = ns['unwire'](old)
+        prior = state(source_leaves)
+        helper.need(restored == prior
+                    and list(restored['nodes']) == list(prior['nodes'])
+                    and list(restored['started']) == list(prior['started']),
+                    'ENTIRE actual typed/order equality after storage reuse')
+        return actual, old, restored
+
+    passed = []
+    source_leaves = original()
+    actual, old, restored = check(source_leaves)
+    assert len(actual) == 3 and all(x is y for x, y in zip(actual, source_leaves))
+    assert actual[0] is not actual[1]
+    assert old['leaves'] is actual and restored['leaves'] is actual
+    assert all(x is y for x, y in zip(restored['leaves'], source_leaves))
+    passed.append('all_occurrences_shared_only_after_fresh_entire_value_equality')
+    passed.append('literal_wire_unwire_retains_the_leaf_list_and_every_dictionary')
+    passed.append('duplicate_value_occurrences_preserved_without_deduplication')
+    passed.append('entire_original_expand_inverse_exact')
+
+    def reject(name, mutate):
+        leaves = original()
+        mutate(leaves)
+        try:
+            check(leaves)
+        except ValueError:
+            passed.append(name)
+        else:
+            raise AssertionError(name)
+
+    reject('mismatched_entire_file_pin_refused', lambda v: v[0]['file'].update(bytes=11))
+    reject('mismatched_literal_line_refused', lambda v: v[0].update(line=5))
+    reject('mismatched_literal_SHA_refused', lambda v: v[0].update(sha256='e'*64))
+    reject('mismatched_occurrence_order_refused', lambda v: v.reverse())
+    reject('missing_occurrence_refused', lambda v: v.pop())
+    reject('extra_occurrence_refused_by_full_restored_equality', lambda v: v.append(dict(v[-1])))
+    print(json.dumps(dict(schema='GENERIC_F009_EXPORT_LEAF_SHARING_CONTROLS_V1',
+                          status='PASS', controls=len(passed), passed=passed,
+                          synthetic_leaf_occurrences=3,
+                          F009_state_graph_leaf_model_or_case_calls=0,
+                          qualification='Synthetic storage/typed-value controls only; no raw-file authentication or scientific fit is claimed.'),
+                     sort_keys=True))
+
+
+if __name__ == '__main__':
+    main()

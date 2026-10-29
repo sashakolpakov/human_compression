@@ -1,0 +1,322 @@
+"""UNRUN bounded pinned-word-bank37 producer; /root/journal_peer.
+Only the search driver is new; all66f8 arithmetic, import and hint predicates
+remain literal. Strict7df is unchanged and independently verifies each hint.
+"""
+"""UNRUN original-operand SAME-END37 fixed-line certificate.
+Canonical nested-header successor by /root/journal_peer/large_end_route_audit. No project imports or old
+context-code loads. Root acceptance, fresh review/control/gate and whole
+frozen Original operand/proof pins are required before case arithmetic.
+"""
+import argparse,hashlib,json,math,os,resource,signal,stat,sys,time
+from pathlib import Path
+START=time.monotonic()
+I7=bytes(int(i==j)for i in range(7)for j in range(7))
+PRIME_THEORY_SHA='f1b6c8a69780c7b8ac88f239627a7ce6889c24203f72ddc35c86fe93e661e76b'
+END_IP_THEORY_SHA='9f52e0d341e68ff2649b2d419635e9b6fc4d1c320a3a3469dc56af97775447bc'
+MODE='ORIGINAL_SAME_END37_UNIQUE_FIXED_LINE_ESCAPE_V1'
+GRAMMAR='SAME_END_LITERAL_012_LENGTH1_TO64_V1'
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def canonical(value):
+    return json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False,ensure_ascii=True).encode('ascii')
+def decode(raw):
+    def pairs(items):
+        result={}
+        for key,value in items:
+            need(key not in result,'duplicate JSON key');result[key]=value
+        return result
+    def finite(text):
+        value=float(text);need(math.isfinite(value),'finite JSON number');return value
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=finite,
+        parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+def refcheck(ref):
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'} and type(ref['path'])is str
+         and type(ref['bytes'])is int and 0<=ref['bytes']<=2**21
+         and type(ref['sha256'])is str and len(ref['sha256'])==64
+         and set(ref['sha256'])<=set('0123456789abcdef'),'complete bounded whole-file descriptor')
+    return ref
+class SoftStop(Exception):pass
+class Budget:
+    def __init__(self):
+        self.refs={};self.raw={};self.read_bytes=0;self.products=0;self.images=0;self.scalar_units=0;self.peak=0
+    def tick(self,soft=False):
+        self.peak=max(self.peak,resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024))
+        elapsed=time.monotonic()-START
+        need(self.peak<128*2**20 and elapsed<125,'128MiB/125s hard inner envelope')
+        if soft and (self.scalar_units>=900000 or elapsed>=110):raise SoftStop('900000scalar/110s soft stop')
+    def scalar(self,units,soft=False):
+        need(type(units)is int and units>=0,'integer nonnegative work debit')
+        self.scalar_units+=units;need(self.scalar_units<=1000000,'1000000 additional scalar hard cap');self.tick(soft)
+    def read(self,ref,again=False):
+        refcheck(ref);self.tick();need(self.refs.get(ref['path'],ref)==ref,'one whole version per path')
+        if ref['path']in self.raw and not again:return self.raw[ref['path']]
+        need(self.read_bytes+ref['bytes']<=8*2**20 and (ref['path']in self.refs or len(self.refs)<96),
+             'all initial and repeated reads within8MiB/96paths')
+        p=Path(ref['path']);a=p.lstat()
+        need(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+             and a.st_nlink==1 and a.st_size==ref['bytes'],'canonical single-link bounded regular input')
+        with p.open('rb')as handle:
+            b=os.fstat(handle.fileno());raw=handle.read(ref['bytes']+1);c=os.fstat(handle.fileno())
+        signature=lambda z:(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+        need(signature(a)==signature(b)==signature(c)==signature(p.lstat()) and len(raw)==ref['bytes']
+             and hashlib.sha256(raw).hexdigest()==ref['sha256'],'stable whole input bytes and SHA')
+        self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.read_bytes+=len(raw);return raw
+    def doc(self,ref):return decode(self.read(ref))
+    def recheck(self):
+        for ref in list(self.refs.values()):self.read(ref,True)
+    def multiply(self,A,B,soft=False):
+        need(type(A)is bytes and type(B)is bytes and len(A)==len(B)==49,'whole packed7x7 operands')
+        self.products+=1;need(self.products<=400000,'400000 matrix products');self.scalar(64,soft)
+        return bytes(sum(A[7*i+k]*B[7*k+j]for k in range(7))%11 for i in range(7)for j in range(7))
+    def image(self,row,A,soft=False):
+        need(type(row)is tuple and len(row)==7 and type(A)is bytes and len(A)==49,'whole row/right action')
+        self.images+=1;need(self.images<=200000,'200000 row images');self.scalar(49,soft)
+        return tuple(sum(row[k]*A[7*k+j]for k in range(7))%11 for j in range(7))
+    def snapshot(self):
+        self.tick();return dict(physical_read_bytes=self.read_bytes,paths=len(self.refs),matrix_products=self.products,
+            row_images=self.images,additional_scalar_units=self.scalar_units,peak_RSS=self.peak,
+            seconds=time.monotonic()-START,before_output_IO=True)
+def word_header(word,power):
+    need(type(word)is str and 1<=len(word)<=64 and set(word)<=set('012'),'bounded same-end literal012 word')
+    need(type(power)is int and 1<=power<=256,'bounded positive exact-integer word power')
+def end_indices(mask):
+    need(type(mask)is int and mask in(7,14),'original rank3 end mask7or14')
+    return (0,1,2)if mask==7 else(1,2,3)
+def unpack_operand(raw):
+    need(type(raw)is bytes and len(raw)==294 and all(x<11 for x in raw),'all294 canonical GF11 operand bytes')
+    return tuple(raw[49*i:49*(i+1)]for i in range(6))
+def power(A,n,budget,soft=False):
+    need(type(n)is int and n>=0,'nonnegative exact integer exponent')
+    result=I7
+    while n:
+        if n&1:result=budget.multiply(result,A,soft)
+        n>>=1
+        if n:A=budget.multiply(A,A,soft)
+    return result
+def word_value(parts,mask,word,exponent,budget,soft=False):
+    word_header(word,exponent);indices=end_indices(mask);value=I7
+    for letter in word:value=budget.multiply(value,parts[indices[int(letter)]],soft)
+    return power(value,exponent,budget,soft)
+def fixed_vector(value):
+    need(type(value)is list and len(value)==7 and all(type(x)is int and 0<=x<11 for x in value)
+         and any(value),'canonical nonzero full seven-coordinate fixed row')
+    return tuple(value)
+def escaped_minor(row,image,minor,budget):
+    need(type(minor)is list and len(minor)==2 and all(type(x)is int for x in minor)
+         and 0<=minor[0]<minor[1]<7,'strict ordered two-coordinate minor')
+    i,j=minor;budget.scalar(4);need((row[i]*image[j]-row[j]*image[i])%11!=0,'actual nonzero line-escape minor')
+def accepted_metadata(plan,accepted,selector):
+    need(accepted['schema']=='ROOT_ACCEPTED_Q11_ORIGINAL_QUARTET_OPERAND_V1'
+         and accepted['root']==accepted['reviewer']=='/root' and accepted.get('Root_authority_granted')is True
+         and accepted['operand']==plan['operand']
+         and accepted['original_job']==plan['original_job']==[23,4]
+         and type(accepted['position'])is type(plan['position'])is int and accepted['position']==plan['position']
+         and type(accepted['representative'])is type(plan['representative'])is int and accepted['representative']==plan['representative']
+         and accepted['whole_orbit_sha256']==plan['whole_orbit_sha256']
+         and accepted['selector']==plan['selector']
+         and accepted['checks']['original_member_frame_faithful_orbit_G_A_equals_G']is True,
+         'exact Root-adopted Original quartet/member/frame/faithful/orbit/G/A=G operand premise')
+    need(type(accepted['old_proof_DAG_qualification'])is str and accepted['old_proof_DAG_qualification'],
+         'explicit opaque retained Original proof-DAG qualification')
+    for key in('export_program','export_result','export_actual_capture'):refcheck(accepted[key])
+    need(type(plan['whole_orbit_sha256'])is str and len(plan['whole_orbit_sha256'])==64
+         and set(plan['whole_orbit_sha256'])<=set('0123456789abcdef'),'complete exact original orbit digest')
+    need(selector['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'
+         and selector['root']=='/root' and selector['adopted']is True and selector['original_job']==[23,4],
+         'same actual Root-selected original job23 selector')
+    runs=selector['unresolved_position_runs'];previous=0;unpaid=[]
+    need(type(runs)is list,'whole unpaid run array')
+    for pair in runs:
+        need(type(pair)is list and len(pair)==2 and all(type(v)is int for v in pair)
+             and previous<pair[0]<=pair[1]<=selector['original_orbit_positions'],'ordered disjoint exact unpaid runs')
+        unpaid.extend(range(pair[0],pair[1]+1));previous=pair[1]
+    need(len(unpaid)==selector['unresolved_positions']
+         and hashlib.sha256(canonical(unpaid)).hexdigest()==selector['expanded_unresolved_sha256']
+         and plan['position']in unpaid,'current exact unpaid position, never historical paid replay')
+    return accepted
+def gate_header(plan,pref,own,gate,role):
+    need(gate['schema']=='ROOT_AUTHORIZED_Q11_OPERAND37_LINE_'+role+'_V1'
+         and gate['root']=='/root' and gate['adopted']is True and gate['new_case_calls_authorized']is True
+         and gate['program']==own and gate['plan']==pref and gate['operand_acceptance']==plan['operand_acceptance']
+         and gate['selector']==plan['selector'],'fresh exact Root case gate before operand arithmetic')
+def authority_metadata(plan,pref,own,gate,review,controls):
+    need(review['schema']=='ROOT_REVIEWED_Q11_OPERAND37_LINE_SOURCE_V1'
+         and review['root']==review['reviewer']=='/root' and review['status']=='SUPPORTED' and review['blockers']==[]
+         and review['program']==own and review['plan']==pref and review['operand_acceptance']==plan['operand_acceptance']
+         and review['selector']==plan['selector']
+         and review['natural_Cayley_classification_unique37_line_and_one_full_end_IP_checked']is True,
+         'fresh whole Root Source/math/Original-import review')
+    need(controls['schema']=='Q11_OPERAND37_LINE_GENERIC_CONTROLS_V1' and controls['status']=='PASS'
+         and controls['program']==plan['control_program'] and controls['proposer']==plan['proposer_program']
+         and controls['strict']==plan['strict_program'] and type(controls['original_case_calls'])is int and controls['original_case_calls']==0,
+         'actual controls of these distinct exact Sources')
+def plan_header(plan,own,role):
+    need(plan['schema']=='Q11_OPERAND37_LINE_'+role+'_PLAN_V1' and plan['program']==own
+         and plan['proof_mode']==MODE and plan['grammar']==GRAMMAR,'exact Source/role/mode/grammar plan')
+    need(own==plan['proposer_program'if role=='PROPOSER'else'strict_program'],'exact role-specific Source subject')
+    for key in('operand','operand_acceptance','selector','control_program','proposer_program','strict_program','prime_theory','end_IP_theory'):refcheck(plan[key])
+    need(plan['operand']['bytes']==294 and plan['operand_acceptance']['bytes']<=32768,'whole294-byte operand and32KiB Root receipt')
+    if role=='STRICT':
+        refcheck(plan['hint']);need(plan['hint']['bytes']<=16384 and plan['hint']in plan['inputs'],'actual whole hint in closed plan roster')
+    end_indices(plan['mask']);word_header(plan['word'],plan['power'])
+    need(plan['prime_theory']['sha256']==PRIME_THEORY_SHA and plan['end_IP_theory']['sha256']==END_IP_THEORY_SHA,
+         'fixed whole natural-module37 and one-full-end IP theorem bodies')
+    need(type(plan['inputs'])is list and len(plan['inputs'])<=96,'bounded whole physical roster')
+    for ref in plan['inputs']:refcheck(ref)
+    need(len({r['path']for r in plan['inputs']})==len(plan['inputs']),'one immutable full pin per declared input')
+def descriptor(pair):
+    p=Path(pair[0]);return dict(path=str(p),bytes=p.lstat().st_size,sha256=pair[1])
+def load_case(role):
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+         and all(key not in os.environ for key in ENV4),'assert-enabled minimal E/S/B and ENV4')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s operand route')))
+    signal.setitimer(signal.ITIMER_REAL,max(.001,125-(time.monotonic()-START)))
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--self-sha256',required=True);parser.add_argument('--plan',nargs=2,required=True)
+    parser.add_argument('--Root-gate',nargs=2,required=True);args=parser.parse_args();budget=Budget()
+    p=Path(__file__).resolve(strict=True);own=dict(path=str(p),bytes=p.lstat().st_size,sha256=args.self_sha256)
+    need(own['bytes']<=65536,'whole executed Source namespace<=65536');budget.read(own)
+    pref=descriptor(args.plan);need(pref['bytes']<=131072,'whole bounded plan');plan=budget.doc(pref);plan_header(plan,own,role)
+    gref=descriptor(args.Root_gate);need(gref['bytes']<=8192,'whole bounded Root gate');gate=budget.doc(gref)
+    gate_header(plan,pref,own,gate,role)
+    need(gate['Root_code_math_review']['bytes']<=32768 and gate['control_report']['bytes']<=16384,'whole review/control bounds')
+    review=budget.doc(gate['Root_code_math_review']);controls=budget.doc(gate['control_report'])
+    authority_metadata(plan,pref,own,gate,review,controls)
+    for ref in plan['inputs']:budget.read(ref)
+    # This is metadata/proof import. No original word/matrix action has run.
+    accepted=accepted_metadata(plan,budget.doc(plan['operand_acceptance']),budget.doc(plan['selector']))
+    budget.read(plan['prime_theory']);budget.read(plan['end_IP_theory'])
+    raw=budget.read(plan['operand']);parts=unpack_operand(raw)
+    expected={r['path']:r for r in plan['inputs']}
+    for ref in(own,pref,gref,gate['Root_code_math_review'],gate['control_report']):
+        need(expected.get(ref['path'],ref)==ref,'one closed whole input version');expected[ref['path']]=ref
+    need(budget.refs==expected,'exact entire actual input roster before case arithmetic');budget.expected_refs=expected
+    budget.scalar(1024)
+    return plan,pref,own,gref,accepted,parts,budget
+def hint_header(plan):
+    return dict(schema='Q11_ORIGINAL_END37_LINE_ESCAPE_HINT_V1',proof_mode=MODE,grammar=GRAMMAR,
+        operand=plan['operand'],operand_acceptance=plan['operand_acceptance'],selector=plan['selector'],
+        original_job=[23,4],position=plan['position'],representative=plan['representative'],
+        whole_orbit_sha256=plan['whole_orbit_sha256'],mask=plan['mask'],word=plan['word'],power=plan['power'],
+        proposer_program=plan['proposer_program'])
+def verify_hint(hint,plan,parts,budget):
+    header=hint_header(plan)
+    need(type(hint)is dict and set(hint)==set(header)|{'vector','escape_generator','minor'}
+         and canonical({key:hint[key]for key in header})==canonical(header),
+         'whole exact current Original/operand/word/mask hint header')
+    row=fixed_vector(hint['vector']);indices=end_indices(plan['mask']);label=hint['escape_generator']
+    need(type(label)is int and label in indices,'escape generator is INSIDE the SAME original end')
+    Y=word_value(parts,plan['mask'],plan['word'],plan['power'],budget)
+    need(Y!=I7 and power(Y,37,budget)==I7,'actual nonidentity exact37 same-end word')
+    need(budget.image(row,Y)==row,'all seven actual fixed-row equations')
+    escaped_minor(row,budget.image(row,parts[label]),hint['minor'],budget)
+    return dict(end_mask=plan['mask'],all_saved_fixed_equations_checked=True,same_end_escape_generator=label,
+        nonzero_minor=hint['minor'],exact37_word_checked=True,strict_RREF_or_search_calls=0)
+def emit(plan,result,budget,hint=None):
+    need(budget.refs==budget.expected_refs,'exact whole final actual input roster');budget.recheck();result['resources']=budget.snapshot()
+    output=Path(plan['output_directory'])
+    need(output.is_absolute() and '..'not in output.parts and output.parent.resolve(strict=True)==output.parent
+         and not os.path.lexists(output),'fresh canonical output directory')
+    hraw=None if hint is None else canonical(hint)+b'\n'
+    if hraw is not None:
+        need(len(hraw)<=16384,'whole small literal hint');result['hint']=dict(path=str(output/'hint.json'),bytes=len(hraw),sha256=hashlib.sha256(hraw).hexdigest())
+    else:result['hint']=None
+    raw=canonical(result)+b'\n';need(len(raw)<=32768,'whole result<=32768')
+    output.mkdir()
+    for p,body in([(output/'hint.json',hraw)]if hraw is not None else[])+[(output/'result.json',raw)]:
+        with p.open('xb')as handle:need(handle.write(body)==len(body),'complete fresh output');handle.flush();os.fsync(handle.fileno())
+    print(canonical(dict(result=dict(path=str(output/'result.json'),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),status=result['status'])).decode('ascii'))
+
+def derive_fixed_row(Y,budget):
+    # Row vY=v means transpose(Y-I)*transpose(v)=0. Seven variables only.
+    rows=[[(Y[7*i+j]-int(i==j))%11 for i in range(7)]for j in range(7)]
+    pivots=[];rank=0
+    for column in range(7):
+        budget.tick(True);pivot=next((k for k in range(rank,7)if rows[k][column]),None)
+        if pivot is None:continue
+        rows[rank],rows[pivot]=rows[pivot],rows[rank];inverse=pow(rows[rank][column],9,11)
+        budget.scalar(7,True);rows[rank]=[(x*inverse)%11 for x in rows[rank]]
+        for k in range(7):
+            if k!=rank and rows[k][column]:
+                factor=rows[k][column];budget.scalar(14,True)
+                rows[k]=[(x-factor*y)%11 for x,y in zip(rows[k],rows[rank])]
+        pivots.append(column);rank+=1
+    free=[i for i in range(7)if i not in pivots]
+    if len(free)!=1:return None
+    row=[0]*7;row[free[0]]=1
+    for k,column in enumerate(pivots):row[column]=(-rows[k][free[0]])%11
+    vector=tuple(row)
+    need(budget.image(vector,Y,True)==vector,'proposed full fixed row rechecked')
+    return vector
+def propose_hint(plan,parts,budget):
+    Y=word_value(parts,plan['mask'],plan['word'],plan['power'],budget,True)
+    if Y==I7 or power(Y,37,budget,True)!=I7:return None,'FINITE_MISS_SUPPLIED_WORD_NOT_EXACT37'
+    row=derive_fixed_row(Y,budget)
+    if row is None:return None,'FINITE_MISS_NO_UNIQUE_FIXED_ROW_PROPOSED'
+    for label in end_indices(plan['mask']):
+        image=budget.image(row,parts[label],True)
+        for i in range(7):
+            for j in range(i+1,7):
+                budget.scalar(4,True)
+                if (row[i]*image[j]-row[j]*image[i])%11:
+                    hint=dict(hint_header(plan),vector=list(row),escape_generator=label,minor=[i,j])
+                    verify_hint(hint,plan,parts,budget)
+                    return hint,'UNTRUSTED_SAME_END37_LINE_ESCAPE_HINT'
+    return None,'FINITE_MISS_SAME_END_LINE_ESCAPE_NOT_FOUND'
+SEARCH_METHOD='BOUNDED_PINNED_POSITIVE_SAME_END37_WORD_BANK_V1'
+def bank_words(plan,bank,budget):
+    refcheck(plan['word_bank'])
+    need(plan['word_bank']['bytes']<=8192 and plan['word_bank']in plan['inputs']
+         and plan['search_method']==SEARCH_METHOD,'whole closed bounded explicit word-bank role')
+    need(type(bank)is dict and bank['schema']=='Q11_POSITIVE_SAME_END37_WORD_BANK_V1'
+         and type(bank['power'])is int and bank['power']==6 and type(bank['words'])is list
+         and 1<=len(bank['words'])<=64,'one through64 explicitly pinned positive candidate words')
+    words=bank['words']
+    for word in words:word_header(word,6)
+    need(len(set(words))==len(words) and type(plan['word_bank_count'])is int
+         and plan['word_bank_count']==len(words) and plan['word']==words[0] and plan['power']==6,
+         'distinct candidate roster and exact first-word seed/power6 plan framing')
+    budget.scalar(64+sum(map(len,words)),True)
+    return words
+
+def search_candidates(plan,parts,budget,words):
+    notes=[]
+    for index,word in enumerate(words):
+        entered=False
+        try:
+            budget.tick(True);entered=True
+            hint,status=propose_hint(dict(plan,word=word,power=6),parts,budget)
+        except SoftStop as error:
+            return None,'UNPAID_WORD_BANK_SOFT_INTERRUPTION',dict(completed_trials=notes,
+                completed_word_count=len(notes),interrupted_candidate_index=index if entered else None,
+                next_candidate_index=index,unvisited_candidate_indices=list(range(index,len(words))),
+                stop=str(error),all_candidates_completed=False)
+        notes.append(dict(candidate_index=index,word=word,power=6,status=status))
+        if hint is not None:
+            return hint,'UNTRUSTED_BOUNDED_WORD_BANK_SAME_END37_LINE_ESCAPE_HINT',dict(completed_trials=notes,
+                completed_word_count=len(notes),selected_candidate_index=index,interrupted_candidate_index=None,
+                next_candidate_index=index+1,unvisited_candidate_indices=list(range(index+1,len(words))),
+                all_candidates_completed=(index+1==len(words)))
+    return None,'FINITE_MISS_EXACT_WORD_BANK_COMPLETED',dict(completed_trials=notes,completed_word_count=len(notes),
+        selected_candidate_index=None,interrupted_candidate_index=None,next_candidate_index=len(words),
+        unvisited_candidate_indices=[],all_candidates_completed=True)
+
+def main():
+    plan,pref,own,gref,accepted,parts,budget=load_case('PROPOSER')
+    raw=budget.read(plan['word_bank']);bank=decode(raw)
+    need(raw==canonical(bank)+b'\n','whole canonical positive word-bank JSON')
+    words=bank_words(plan,bank,budget)
+    hint,status,search=search_candidates(plan,parts,budget,words)
+    result=dict(schema='Q11_OPERAND37_LINE_PROPOSER_RESULT_V1',status=status,program=own,plan=pref,source_gate=gref,
+        operand=plan['operand'],operand_acceptance=plan['operand_acceptance'],selector=plan['selector'],
+        original_job=[23,4],position=plan['position'],mask=plan['mask'],proof_mode=MODE,
+        prime_theory=plan['prime_theory'],end_IP_theory=plan['end_IP_theory'],
+        search_method=SEARCH_METHOD,actual_word_bank=plan['word_bank'],word_bank_count=len(words),search=search,
+        proposed_word=None if hint is None else hint['word'],proposed_power=None if hint is None else hint['power'],
+        independent_strict_verification_owed=True,verification_authority=False,new_paid_credit=0,whole_original_credit=0,
+        finite_miss_proves_no_absence=True,
+        qualification='Bounded untrusted word-bank proposal only. Each word uses the literal old propose_hint predicate; stop at FIRST hint. Every finite miss/interruption remains unpaid. Strict7df must freshly bind actual hint.word, not plan seed word. No properness, negative or paid conclusion.')
+    emit(plan,result,budget,hint)
+
+if __name__=='__main__':main()

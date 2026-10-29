@@ -1,0 +1,213 @@
+"""UNRUN finite current-read contract for the new Root F009 caller.
+
+This contract does not replace Source-family or scientific predicates.
+It encloses their actual physical reads, authenticates complete versions
+before activation and at return, and refuses the inherited archive.
+"""
+import fcntl, hashlib, json, math, os, resource, stat, sys, types
+from pathlib import Path
+
+MIB=2**20
+S=Path('/Users/sasha/medusa/research/leemans')
+
+def need(ok,why):
+    if not ok: raise ValueError(why)
+
+def canonical(value):
+    return (json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+
+def strict(raw):
+    def pairs(rows):
+        value={}
+        for k,v in rows:
+            need(k not in value,'unique JSON keys');value[k]=v
+        return value
+    def finite(text):
+        x=float(text);need(math.isfinite(x),'finite JSON number');return x
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=finite,
+                      parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def shape(ref):
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'} and type(ref['path'])is str
+         and Path(ref['path']).is_absolute() and str(Path(ref['path']))==ref['path']
+         and '..'not in Path(ref['path']).parts and type(ref['bytes'])is int and 0<=ref['bytes']<=2**31
+         and type(ref['sha256'])is str and len(ref['sha256'])==64 and set(ref['sha256'])<=set('0123456789abcdef'),
+         'literal complete file identity')
+    return ref
+
+def merge(*groups):
+    rows={}
+    for group in groups:
+        for ref in group:
+            shape(ref);need(rows.get(ref['path'],ref)==ref,'one complete version per current path');rows[ref['path']]=ref
+    return [rows[p]for p in sorted(rows)]
+
+def no_alias(path):
+    p=Path(path)
+    for q in (p,*p.parents):
+        if os.path.lexists(q):need(not q.is_symlink(),'no undeclared path alias: '+str(q))
+
+def whole(ref,cap=None,aliases=None):
+    shape(ref);p=Path(ref['path']);alias=(aliases or {}).get(str(p))
+    if alias is None:no_alias(p)
+    else:
+        st=p.lstat();need(p.is_symlink() and os.readlink(p)==alias['link'] and
+          (st.st_dev,st.st_ino,st.st_mode,st.st_mtime_ns)==(alias['device'],alias['inode'],alias['mode'],alias['mtime_ns']),
+          'exact retained readonly alias')
+        need(str(p.resolve(strict=True))==alias['target']['path'],'exact retained resolved target');no_alias(p.resolve(strict=True))
+    a=p.stat();need(stat.S_ISREG(a.st_mode) and a.st_size==ref['bytes'],'complete ordinary file extent')
+    need(cap is None or a.st_size<=cap,'finite metadata extent before allocation')
+    h=hashlib.sha256();parts=[] if cap is not None else None;size=0
+    with p.open('rb')as f:
+        try:fcntl.fcntl(f.fileno(),48,1)
+        except OSError:pass
+        b=os.fstat(f.fileno())
+        for block in iter(lambda:f.read(MIB),b''):
+            size+=len(block);need(size<=ref['bytes'],'no growing input');h.update(block)
+            if parts is not None:parts.append(block)
+        c=os.fstat(f.fileno())
+    signature=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    need(signature(a)==signature(b)==signature(c)==signature(p.stat()) and size==ref['bytes']
+         and h.hexdigest()==ref['sha256'],'fresh whole stable authenticated file')
+    if alias is not None:
+        st=p.lstat();need((st.st_dev,st.st_ino,st.st_mode,st.st_mtime_ns)==
+          (alias['device'],alias['inode'],alias['mode'],alias['mtime_ns']) and os.readlink(p)==alias['link'],'alias unchanged during hash')
+    return b''.join(parts) if parts is not None else dict(ref)
+
+class Contract:
+    need=staticmethod(need);canonical=staticmethod(canonical)
+    def __init__(self,job,jobref,gate,gateref,program):
+        self.job=job;self.gate=gate;self.jobref=shape(jobref);self.gateref=shape(gateref)
+        need(job['schema']=='ROOT_F009_STANDALONE_JOB_V1' and job['role']in('native','reader')
+             and gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1' and gate['root']=='/root'
+             and gate['status']=='SUPPORTED' and gate['blockers']==[] and gate['job']==jobref
+             and gate['program']==job['program']==program and gate['Owner']==job['Owner']
+             and job['role']in gate['authorized_roles'],'new explicit Root caller and exact immutable job')
+        self.rows=merge(job['declared_inputs'],[jobref,gateref,program,job['Owner']])
+        need(len(self.rows)<=40000 and sum(q['bytes']for q in self.rows)<=2**31,'unchanged unique whole Root input bound')
+        self.index={q['path']:q for q in self.rows}
+        self.aliases={q['path']:q for q in job['readonly_symlinks']}
+        need(set(self.aliases)<=set(self.index) and set(self.aliases)<={'/opt/homebrew/bin/gs','/opt/homebrew/bin/pdflatex'},
+             'only explicit retained readonly runtime aliases')
+        self.denied={q['path']for q in job['qualified_archive_rows']}
+        need(not(self.denied&set(self.index)),'accepted historical values are not current executable or scientific inputs')
+        self.output=Path(job['output']);no_alias(self.output)
+        need(not os.path.lexists(self.output) and self.output.parent.is_dir(),'one fresh ordinary output directory')
+        need(not any(Path(p).is_relative_to(self.output)for p in self.index),'no input under mutable output root')
+        self.opened=set();self.modules={};self.installed=False;self.scientific_released=False
+        # Authentication is completed before any project Source activation.
+        for q in self.rows:whole(q,aliases=self.aliases)
+        self.install_audit()
+
+    def file_ref(self,ref):
+        shape(ref);need(self.index.get(ref['path'])==ref,'exact current declared role');return dict(ref)
+
+    def acquire(self,path):
+        # ABI of retained IO Budget.pin, including newly produced artifacts.
+        if type(path)is dict:
+            ref=self.file_ref(path);whole(ref,aliases=self.aliases);return dict(ref)
+        p=Path(path)
+        if str(p)in self.index:
+            ref=self.index[str(p)];whole(ref,aliases=self.aliases);return dict(ref)
+        need(p.is_relative_to(self.output) and p!=self.output,'only this job produces new artifact references')
+        no_alias(p);a=p.stat();need(stat.S_ISREG(a.st_mode) and a.st_size<=16*MIB,'bounded new artifact')
+        h=hashlib.sha256();size=0
+        with p.open('rb')as f:
+            b=os.fstat(f.fileno())
+            for block in iter(lambda:f.read(MIB),b''):h.update(block);size+=len(block)
+            c=os.fstat(f.fileno())
+        signature=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+        need(signature(a)==signature(b)==signature(c)==signature(p.stat()) and size==a.st_size,'whole stable new artifact')
+        return dict(path=str(p),bytes=size,sha256=h.hexdigest())
+
+    def document(self,ref,cap=8*MIB):
+        self.file_ref(ref);raw=whole(ref,cap,self.aliases);self.opened.add(ref['path']);return strict(raw)
+
+    def source_text(self,ref):
+        self.file_ref(ref);need(ref in self.job['source_inputs'],'exact current functional Source role')
+        return whole(ref,2*MIB,self.aliases).decode('utf-8')
+
+    def module(self,ref,name):
+        source=self.source_text(ref)
+        need(name not in self.modules and name not in sys.modules,'fresh attributed private module name')
+        module=types.ModuleType(name);module.__file__=ref['path'];module.__package__=None
+        self.modules[name]=(module,ref);sys.modules[name]=module
+        try:exec(compile(source,ref['path'],'exec',dont_inherit=True),module.__dict__)
+        except BaseException:
+            sys.modules.pop(name,None);self.modules.pop(name,None);raise
+        return module
+
+    def private_module_namespace(self,module):
+        matches=[ref for old,ref in self.modules.values()if old is module]
+        need(len(matches)==1,'owned original module, never mutate an imported public namespace')
+        name=module.__name__+'_private_'+str(len(self.modules))
+        return self.module(matches[0],name).__dict__
+
+    def require_scientific_release(self,plan,role):
+        need(plan is self.job and role==plan['role'] and role in self.gate['authorized_roles']
+             and type(plan['old_checkpoint_sequence'])is int and plan['old_checkpoint_sequence']>=0,'exact current Root role release')
+        cp=self.document(plan['checkpoint_acceptance']);sp=self.document(plan['snapshot_adoption'])
+        boundary=self.document(plan['checkpoint_boundary']);epoch=plan['old_checkpoint_sequence']
+        need(boundary['schema']=='ROOT_F009_STANDALONE_CHECKPOINT_BOUNDARY_V1'and boundary['root']=='/root'
+             and boundary['checkpoint_acceptance']==plan['checkpoint_acceptance']
+             and boundary['snapshot_adoption']==plan['snapshot_adoption']
+             and boundary['expected_checkpoint_sequence']==epoch==self.gate['expected_checkpoint_sequence']
+             and self.gate['checkpoint_boundary']==plan['checkpoint_boundary']
+             and boundary['native_source']['program']==plan['mathematical_native_library']
+             and boundary['reader_source']['program']==plan['mathematical_reader_library'],
+             'same exact authenticated current boundary, libraries and fresh Root epoch release')
+        need(cp['root']==sp['root']=='/root' and cp['adopted']is sp['adopted']is True
+             and cp['checkpoint']==sp['checkpoint'] and cp['checkpoint']['sequence']==epoch
+             and sp['checkpoint_acceptance']==plan['checkpoint_acceptance'] and cp['snapshot']==sp['snapshot'],
+             'complete actual accepted checkpoint and state artifacts, never scalar-only trust')
+        if role=='native':
+            case=self.document(plan['case'])
+            need(case['base']==cp['head'] and case['reuse']==[]
+                 and case['max_actions']==64 and case['worker_seconds']==60,'only new unpaid64 actions/60s from the authenticated accepted checkpoint')
+            need(case['backend_transition']is None,'unchanged no-backend-transition branch')
+            for ref in [case[k]for k in('base','binary','completion_binary','bridge')]+case['premises']:
+                self.file_ref(ref)
+            expected={'refine':case['binary'],'complete':case['completion_binary'],'canonical':case['bridge']}
+            writers=plan['producer_reservation']['native_writers']
+            for writer in writers:
+                need(writer['kind']in expected and writer['binary']==expected[writer['kind']],
+                     'literal case binary is the corresponding Native IO writer')
+                self.file_ref(writer['binary'])
+            if plan.get('operation')=='SOURCE_PROFILE_PREFLIGHT_ONLY':
+                need(writers==[],'source-only preflight authorizes no Native writer')
+            else:
+                need(len(writers)==3 and {w['kind']:w['binary']for w in writers}==expected,
+                     'complete exactly three Native case writer roles before state acquisition')
+        self.scientific_released=True
+
+    def finalize_actual_input_closure(self,plan):
+        need(plan is self.job and self.scientific_released,'actual released operation before final closure')
+        for q in self.rows:whole(q,aliases=self.aliases)
+        need(not(self.opened&self.denied),'no qualified archived body entered current semantics')
+
+    def install_audit(self):
+        need(not self.installed,'one current read contract')
+        def hook(event,args):
+            if event!='open':return
+            path=args[0];mode=args[1]if len(args)>1 else None;flags=args[2]if len(args)>2 else 0
+            if isinstance(path,int):
+                st=os.fstat(path)
+                if not stat.S_ISREG(st.st_mode):return
+                need(sys.platform=='darwin','regular FD identity requires the declared platform')
+                path=fcntl.fcntl(path,50,b'\0'*1024).split(b'\0',1)[0].decode()
+            if isinstance(path,bytes):path=os.fsdecode(path)
+            need(type(path)is str,'literal physical read/write path')
+            p=Path(os.path.abspath(path));key=str(p)
+            # Runtime/project bytecode cannot evade Source-byte identity.
+            if p.suffix in('.pyc','.pyo') and (p.is_relative_to(S) or p.is_relative_to(Path(self.job['program']['path']).parent)):
+                raise OSError('project bytecode is forbidden; exact declared Source is required')
+            writing=(isinstance(mode,str) and any(c in mode for c in 'wax+'))or(bool(flags&(os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND)))
+            if writing:
+                need(p!=self.output and p.is_relative_to(self.output),'physical writes only under fresh job output')
+                no_alias(p);return
+            need(key not in self.denied,'physical archived read forbidden')
+            if key in self.index:self.opened.add(key);return
+            if p.is_relative_to(self.output):no_alias(p);return
+            if key=='/dev/null':return
+            raise ValueError('undeclared physical current read: '+key)
+        sys.addaudithook(hook);self.installed=True

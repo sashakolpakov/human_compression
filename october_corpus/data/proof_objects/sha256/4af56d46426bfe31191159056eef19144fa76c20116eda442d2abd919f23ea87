@@ -1,0 +1,436 @@
+"""New lossless metadata reference edition by /root/compact_proof_author.
+Raw wire identity and full canonical logical identity are distinct.
+All original scientific predicates/caps remain; no old verdict is transferred.
+"""
+"""New interrupted-return metadata interface, authored by /root/middle_dictionary_author.
+The complete prior Source and attribution are preserved in source_inverse.json.
+No represented Source, state, graph or scientific operation is activated by this edition.
+"""
+"""Bind metadata plans only after a newly closed strict Reader has really passed.
+
+This utility reads ordinary metadata and whole immutable artifacts. It imports
+no project source, decodes no state, runs no case, and writes no live selector.
+Root separately reviews the resulting plans, preservation and checkpoint CAS.
+"""
+import argparse,hashlib,json,os,stat,sys
+from pathlib import Path
+
+MIB=2**20
+
+_F9_SOURCE_TAG = 'Root_Source_rows_reference'
+_F9_DOMAIN_TAG = 'Root_Input_rows_reference'
+_F9_CLOSURE_TAG = 'Root_Native_closure_rows_reference'
+_F9_LOGICAL_LIMIT = 8 * 2**20
+
+
+def f9_canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False) + '\n').encode('ascii')
+
+
+def f9_need(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def f9_rows(rows, limit):
+    f9_need(type(rows) is list and len(rows) <= limit, 'bounded literal row list')
+    previous = ''; total = 0
+    for row in rows:
+        f9_need(type(row) is dict and set(row) == {'path', 'bytes', 'sha256'},
+                'exact complete row fields')
+        path, size, digest = row['path'], row['bytes'], row['sha256']
+        f9_need(type(path) is str and path.startswith('/') and path > previous
+                and '\x00' not in path and all(x not in ('.', '..') for x in path.split('/'))
+                and type(size) is int and size >= 0 and type(digest) is str
+                and len(digest) == 64 and set(digest) <= set('0123456789abcdef'),
+                'ordered unique absolute paths and exact finite row types')
+        previous = path; total += size
+    f9_need(total <= 2**31, 'unchanged whole2GiB descriptor extent')
+    return rows
+
+
+def f9_image(value):
+    raw = f9_canonical(value)
+    f9_need(len(raw) <= _F9_LOGICAL_LIMIT, 'existing8MiB logical metadata role')
+    return len(raw), hashlib.sha256(raw).hexdigest()
+
+
+def f9_encode_job(job):
+    f9_need(type(job) is dict and job.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and job.get('role') in ('native', 'reader') and _F9_SOURCE_TAG not in job,
+            'one ordinary logical standalone job')
+    rows = f9_rows(job['declared_inputs'], 40000)
+    sources = f9_rows(job['source_inputs'], 1024)
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    by_path = {row['path']: i for i, row in enumerate(rows)}
+    indices = []
+    for source in sources:
+        f9_need(source['path'] in by_path and rows[by_path[source['path']]] == source,
+                'every Source role is the same exact declared row')
+        indices.append(by_path[source['path']])
+    size, digest = f9_image(job)
+    wire = dict(job); wire.pop('source_inputs')
+    wire[_F9_SOURCE_TAG] = dict(schema='F009_SOURCE_ROW_INDICES_V1', indices=indices,
+        Source_rows_sha256=hashlib.sha256(f9_canonical(sources)).hexdigest(),
+        declared_rows_sha256=hashlib.sha256(f9_canonical(rows)).hexdigest(),
+        logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_job(wire) == job, 'entire exact Source-reference inverse')
+    return wire
+
+
+def f9_expand_job(wire):
+    if type(wire) is not dict or _F9_SOURCE_TAG not in wire:
+        return wire
+    f9_need(wire.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and wire.get('role') in ('native', 'reader') and 'source_inputs' not in wire,
+            'explicit Source-reference wire, never a mixed representation')
+    tag = wire[_F9_SOURCE_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'indices', 'Source_rows_sha256',
+            'declared_rows_sha256', 'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_SOURCE_ROW_INDICES_V1', 'exact reference encoding')
+    rows = f9_rows(wire['declared_inputs'], 40000); indices = tag['indices']
+    f9_need(type(indices) is list and len(indices) <= 1024,
+            'bounded Source-index list')
+    last = -1
+    for index in indices:
+        f9_need(type(index) is int and last < index < len(rows),
+                'strictly increasing nonboolean unique in-range indices')
+        last = index
+    sources = [rows[index] for index in indices]
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    f9_need(hashlib.sha256(f9_canonical(rows)).hexdigest() == tag['declared_rows_sha256']
+            and hashlib.sha256(f9_canonical(sources)).hexdigest() == tag['Source_rows_sha256'],
+            'complete exact declared and Source table identities')
+    logical = dict(wire); logical.pop(_F9_SOURCE_TAG); logical['source_inputs'] = sources
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'entire canonical semantic image')
+    return logical
+
+
+def f9_encode_table(domain, field, tag_name, version):
+    f9_need(type(domain) is dict and tag_name not in domain,
+            'ordinary complete Root domain')
+    rows = f9_rows(domain[field], 40000)
+    prefixes = sorted({row['path'][:row['path'].rfind('/')+1] for row in rows})
+    lookup = {prefix: i for i, prefix in enumerate(prefixes)}
+    packed = []
+    for row in rows:
+        cut = row['path'].rfind('/')+1; prefix = row['path'][:cut]
+        packed.append([lookup[prefix], row['path'][cut:], row['bytes'], row['sha256']])
+    size, digest = f9_image(domain)
+    wire = dict(domain); wire.pop(field)
+    wire[tag_name] = dict(schema=version,
+        prefixes=prefixes, rows=packed, logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_table(wire, field, tag_name, version) == domain, 'entire exact row-table inverse')
+    return wire
+
+
+def f9_expand_table(wire, field, tag_name, version):
+    if type(wire) is not dict or tag_name not in wire:
+        return wire
+    f9_need(field not in wire, 'one explicit row-table representation')
+    tag = wire[tag_name]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'prefixes', 'rows',
+            'logical_bytes', 'logical_sha256'} and tag['schema'] == version,
+            'exact parent-path table encoding')
+    prefixes, packed = tag['prefixes'], tag['rows']
+    f9_need(type(prefixes) is list and len(prefixes) <= 40000
+            and all(type(p) is str and p.startswith('/') and p.endswith('/')
+                and '\x00' not in p and all(x not in ('.', '..') for x in p.split('/'))
+                for p in prefixes)
+            and prefixes == sorted(set(prefixes)), 'exact unique absolute parent prefixes')
+    f9_need(type(packed) is list and len(packed) <= 40000, 'bounded complete packed table')
+    rows = []
+    for entry in packed:
+        f9_need(type(entry) is list and len(entry) == 4, 'complete four-column row')
+        index, name, size, digest = entry
+        f9_need(type(index) is int and 0 <= index < len(prefixes)
+                and type(name) is str and name not in ('', '.', '..') and '/' not in name,
+                'nonboolean parent index and exact filename')
+        rows.append(dict(path=prefixes[index]+name, bytes=size, sha256=digest))
+    f9_rows(rows, 40000)
+    logical = dict(wire); logical.pop(tag_name); logical[field] = rows
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'whole semantic Root-domain image')
+    return logical
+
+
+def f9_encode_domain(value):
+    return f9_encode_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_expand_domain(value):
+    return f9_expand_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_encode_closure(value):
+    f9_need(type(value) is dict and value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'only the separately accepted Native closure role')
+    return f9_encode_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+
+def f9_expand_closure(value):
+    if type(value) is not dict or _F9_CLOSURE_TAG not in value:
+        return value
+    f9_need(value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'explicit accepted Native closure role')
+    return f9_expand_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def pin(p):
+    p=Path(p);a=p.lstat()
+    need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+         and a.st_nlink==1 and a.st_size<=16*MIB,'bounded ordinary immutable metadata artifact')
+    h=hashlib.sha256()
+    with p.open('rb')as f:
+        for block in iter(lambda:f.read(MIB),b''):h.update(block)
+    z=p.lstat()
+    need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==
+         (z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns),'stable entire artifact')
+    return dict(path=str(p),bytes=a.st_size,sha256=h.hexdigest())
+
+def doc(r):
+    need(r['bytes']<=2*MIB and pin(r['path'])==r,'whole bounded exact metadata')
+    def pairs(items):
+        d={}
+        for k,v in items:need(k not in d,'unique metadata keys');d[k]=v
+        return d
+    return json.loads(Path(r['path']).read_bytes(),object_pairs_hook=pairs,
+      parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def inventory(root):
+    root=Path(root);need(root.resolve(strict=True)==root and root.is_dir(),'closed canonical evidence tree')
+    rows=[]
+    for current,dirs,files in os.walk(root,followlinks=False):
+        current=Path(current);need(current.resolve(strict=True)==current,'ordinary evidence directories')
+        for name in dirs:need(not(current/name).is_symlink(),'no evidence child alias')
+        rows.extend(pin(current/name)for name in files)
+    return sorted(rows,key=lambda r:r['path'])
+
+def retain_exact_copy(mapping,row,authenticate):
+    need(type(row)is dict and set(row)=={'original','retained'}
+         and all(type(row[k])is dict and set(row[k])=={'path','bytes','sha256'}for k in('original','retained')),
+         'whole original and retained artifact descriptors')
+    original,retained=row['original'],row['retained'];key=original['path']
+    prior=mapping.get(key)
+    need(prior is None or prior['original']==original,'one exact original version; no conflicting history')
+    need(retained['bytes']==original['bytes']and retained['sha256']==original['sha256'],
+         'retained copy has exactly the original full bytes and SHA')
+    authenticate(retained)
+    if prior is None or retained['path']<prior['retained']['path']:mapping[key]=row
+
+def interrupted_provenance(job,case,old_cp_ref,old,origin):
+    """Authenticate actual failed provenance; only the separate strict Reader proves state."""
+    need(type(origin)is dict and set(origin)=={'schema','failed_actual_execution','failed_Root_job_review'}
+         and origin['schema']=='F009_INTERRUPTED_RETURN_ORIGIN_V1'
+         and 'native_closure'not in job and job['Native_closure_claimed']is False,
+         'explicit interrupted-return kind, never a successful Native closure')
+    refs=[]
+    def get(ref):
+        refs.append(ref);return doc(ref)
+    candidate_ref=job['interrupted_return_candidate'];candidate=get(candidate_ref)
+    need(candidate['schema']=='F009_INTERRUPTED_REFINE_UNTRUSTED_PROPOSAL_RETURN_V1'
+         and candidate['verification_authority']is False and candidate['no_Native_or_canonizer_launch']is True,
+         'original candidate remains untrusted even after a separately successful Reader')
+    proposal_ref=candidate['plan'];proposal=get(proposal_ref);handoff_ref=candidate['candidate_handoff'];handoff=get(handoff_ref)
+    proposer_gate=get(candidate['Root_review'])
+    need(proposal['schema']=='F009_INTERRUPTED_REFINE_UNTRUSTED_PROPOSAL_PLAN_V1'
+         and proposal['program']==candidate['program']
+         and proposer_gate['schema']=='ROOT_REVIEWED_F009_INTERRUPTED_REFINE_PROPOSER_V1'
+         and proposer_gate['root']=='/root'and proposer_gate['status']=='SUPPORTED'and proposer_gate['blockers']==[]
+         and proposer_gate['program']==candidate['program']and proposer_gate['plan']==proposal_ref
+         and proposer_gate['candidate_generation_only_authorized']is True
+         and proposer_gate['Native_or_canonizer_launch_authorized']is False,
+         'exact actual proposal-only release, with no Native or publication authority')
+    need(handoff['schema']=='UNTRUSTED_F009_INTERRUPTED_RETURN_RECOVERY_CANDIDATE_V1'
+         and handoff['Native_PASS_claimed']is False and handoff['original_Native_status']=='INCOMPLETE_TREE_RSS_CAP'
+         and handoff['new_state_or_paid_credit']==0
+         and handoff['case']==candidate['producer_case']==case['producer_case']
+         and handoff['head']==candidate['head']==case['head']
+         and handoff['request']==proposal_ref==case['producer_request']
+         and handoff['base_acceptance']==proposal['checkpoint']==case['base_acceptance']==old_cp_ref
+         and handoff['snapshot_adoption']==proposal['snapshot']==job['snapshot_adoption']
+         and handoff['expected_proposal']==candidate['expected_proposal']==case['expected']
+         and handoff['delta_proposal']==candidate['delta_proposal']==case['delta']
+         and handoff['failed_Native_job']==proposal['failed_job']
+         and handoff['failed_guard']==proposal['failed_outer_guard']
+         and handoff['failed_Owner_receipt']==proposal['failed_Owner_receipt']
+         and handoff['returned_witness']==proposal['returned_attempt'],
+         'exact untrusted candidate and complete actual Reader case joins')
+    failed=get(proposal['failed_job']);failed_case=get(failed['case'])
+    guard=get(proposal['failed_outer_guard']);owner=get(proposal['failed_Owner_receipt'])
+    attempt=get(proposal['returned_attempt']);launch=get(proposal['returned_launch'])
+    oldhead=get(proposal['failed_head']);oldfirst_ref=oldhead['tail'];first=get(oldfirst_ref);dispatch=get(first['attempt'])
+    head=get(handoff['head']);genesis=get(head['genesis']);last=get(head['tail']);freshfirst_ref=last['previous'];freshfirst=get(freshfirst_ref)
+    producer=get(handoff['case']);expected_case=dict(failed_case,output=producer['output'])
+    need(failed['role']=='native'and failed['checkpoint_acceptance']==old_cp_ref
+         and failed['snapshot_adoption']==proposal['snapshot']
+         and failed_case['base']==old['head']and failed_case['backend_transition']is None and failed_case['reuse']==[]
+         and producer==expected_case and producer['target']==[32,5,4,8]
+         and genesis=={'schema':'F009_BOUNDED_BACKEND_SEGMENT_V1','case':handoff['case']}
+         and head['schema']=='F009_BOUNDED_BACKEND_HEAD_V1'
+         and first['schema']=='F009_QUEUE_DISPATCH_V1'and first['previous']is None
+         and first['sequence']==old['checkpoint']['sequence']+1
+         and freshfirst==first and freshfirst_ref['bytes']==oldfirst_ref['bytes']
+         and freshfirst_ref['sha256']==oldfirst_ref['sha256']
+         and last['schema']=='F009_QUEUE_REPLACEMENT_V1'and last['sequence']==first['sequence']+1
+         and last['attempt']==proposal['returned_attempt'],
+         'fresh exact-case genesis and complete original dispatch followed by the checked replacement')
+    need(dispatch['kind']=='refine'and dispatch['parent']==attempt['parent']==old['next_select']['parent']
+         and attempt['schema']=='F009_QUEUE_NATIVE_RETURN_V1'
+         and attempt['status']=='RETURNED'and attempt['returncode']==0 and attempt['reaped']is True
+         and attempt['command']==dispatch['command']==launch['command']
+         and attempt['binary']==failed_case['binary']and attempt['leaves']['bytes']==0
+         and launch['schema']=='F009_NATIVE_LAUNCH_IDENTITY_V1'and launch['status']=='STARTED'
+         and launch['pid']==attempt['pid']and launch['birth']==attempt['birth']
+         and all(launch['context'][k]==attempt[k]for k in('binary','input','parent','target'))
+         and any(x['pid']==launch['worker_pid']and x['birth']==launch['worker_birth']for x in guard['identities']),
+         'the same actually returned reserved refinement and worker identity, not a replay')
+    request_ref=owner['request'];request=get(request_ref);cap=get(origin['failed_actual_execution']);gate=get(origin['failed_Root_job_review'])
+    need(guard['status']=='INCOMPLETE'and guard['stop']=='TREE_RSS_CAP'
+         and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+         and owner['status']=='PENDING_FINAL_RESOURCE_CHECK'
+         and cap['root']==cap['actor']=='/root'and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==1
+         and cap['child_argv'][cap['child_argv'].index('--')+1:]==guard['command']
+         and guard['command']==[sys.executable,'-E','-B',failed['Owner']['path'],'--request',request_ref['path']]
+         and gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'
+         and gate['root']=='/root'and gate['status']=='SUPPORTED'and gate['blockers']==[]
+         and gate['job']==proposal['failed_job']and gate['program']==failed['program']and gate['Owner']==failed['Owner']
+         and gate['authorized_roles']==['native']
+         and request['program']==failed['program']['path']and request['supervisor']==failed['Owner']['path']
+         and request['output_roots']==[failed['output']]
+         and request['argv']==[sys.executable,'-E','-B',failed['program']['path'],'--job',proposal['failed_job']['path'],proposal['failed_job']['sha256'],
+             '--root-review',origin['failed_Root_job_review']['path'],origin['failed_Root_job_review']['sha256'],'--out',failed['output']],
+         'genuine failed outside call and exact old release/request; old Owner is never retagged PASS')
+    preservation_ref=job['interrupted_Native_provenance'];preserved=get(preservation_ref)
+    need(preserved['schema']=='ROOT_PRESERVED_F009_RESOURCE_LIMITED_ATTEMPT_V1'
+         and preserved['root']=='/root'and preserved['status']=='BYTES_PRESERVED_WITHOUT_SCIENTIFIC_ADOPTION'
+         and preserved['accepted_checkpoint_unchanged']==old['checkpoint']['sequence']
+         and preserved['checkpoint_writes']==0 and preserved['observed_stop']=='TREE_RSS_CAP',
+         'actual retained failure, not an adopted Native result')
+    index={}
+    for row in preserved['files']:
+        a,b=row['original'],row['retained']
+        need(a['bytes']==b['bytes']and a['sha256']==b['sha256']and index.get(a['path'],a)==a,
+             'one whole retained original failure version')
+        index[a['path']]=a
+    required=[proposal[k]for k in('failed_job','failed_head','failed_outer_guard','failed_Owner_receipt','returned_attempt','returned_launch')]
+    required +=[failed['case'],oldfirst_ref,first['attempt'],request_ref,origin['failed_actual_execution'],origin['failed_Root_job_review']]
+    need(all(index.get(r['path'])==r for r in required),'every actual failed-call provenance body is durably retained')
+    proof=dict(schema='STRICT_READER_OVER_INTERRUPTED_RETURN_PROVENANCE_V1',candidate=candidate_ref,
+        candidate_handoff=handoff_ref,proposal_request=proposal_ref,proposal_Root_review=candidate['Root_review'],
+        original_failed_job=proposal['failed_job'],failed_actual_execution=origin['failed_actual_execution'],
+        failed_Root_job_review=origin['failed_Root_job_review'],failed_guard=proposal['failed_outer_guard'],
+        failed_Owner_receipt=proposal['failed_Owner_receipt'],returned_witness=proposal['returned_attempt'],
+        failure_preservation=preservation_ref,original_Native_status='INCOMPLETE_TREE_RSS_CAP',Native_PASS_claimed=False,
+        strict_Reader_case=job['case'],qualification='Only the separate genuine complete strict Reader proves the new state. The original Native/Owner remains failed/pending; no Native closure is asserted.')
+    return proof,refs
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--spec',nargs=2,required=True)
+    ap.add_argument('--out',required=True);ap.add_argument('--write',action='store_true');args=ap.parse_args()
+    sr=pin(args.spec[0]);need(sr['sha256']==args.spec[1],'exact Root supplied binding parameters')
+    spec=doc(sr)
+    interrupted=spec['schema']=='F009_INTERRUPTED_RETURN_CHECKPOINT_BINDING_PARAMETERS_V1'
+    if interrupted:
+        need(spec['actual_Reader_inputs_closed']is True and spec['proof_kind']=='STRICT_READER_OVER_INTERRUPTED_RETURN_V1',
+             'actual strict Reader closure required for interrupted-return plans')
+    else:
+        need(spec['schema']=='F009_CLOSED_READER_CHECKPOINT_BINDING_PARAMETERS_V1'
+             and spec['actual_Reader_inputs_closed']is True,'no pending or failed Reader can bind plans')
+    refs=spec['Reader'];job=f9_expand_job(doc(refs['job']));request=doc(refs['Owner_request'])
+    receipt=doc(refs['Owner_receipt']);outer=doc(refs['outer_guard_receipt']);result=doc(refs['result'])
+    need(receipt['status']=='PASS'and receipt['returncode']==0 and receipt['inputs_unchanged']is True
+         and receipt['owned_child_reaped']is receipt['owned_group_absent']is True
+         and receipt['request']==refs['Owner_request']and outer['status']=='PASS'
+         and outer['cleanup']['remaining']==outer['cleanup']['errors']==[]
+         and result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1',
+         'genuine closed strict Reader, not a failed acquisition or scalar forecast')
+    oldref,spref=job['checkpoint_acceptance'],job['snapshot_adoption'];old,sp=doc(oldref),doc(spref)
+    need(oldref==spec['prior_checkpoint_acceptance']and spref==spec['prior_snapshot_adoption']
+         and old['adopted']is sp['adopted']is True and sp['checkpoint_acceptance']==oldref
+         and result['base_acceptance']==oldref and result['checkpoint']==spec['candidate_checkpoint']
+         and len(result['reserved_parents'])==result['checkpoint']['reserved_debts'],
+         'exact accepted predecessor, actual candidate and retained reserved debts')
+    if interrupted:
+        proof,proof_inputs=interrupted_provenance(job,doc(job['case']),oldref,old,spec['interrupted_origin'])
+        proof['verified_Reader_result']=refs['result']
+    previous={}
+    def authenticate_retained(ref):
+        need(pin(ref['path'])==ref,'whole exact retained copy, including every alternate')
+    def keep(row):retain_exact_copy(previous,row,authenticate_retained)
+    for r in spec['previous_preservations']:
+        m=doc(r);need(m['root']=='/root'and m['no_original_or_previous_artifact_deleted_or_rewritten']is True,
+                     'actual predecessor preservation')
+        for row in m['rows']+m['reused_previous_rows']:keep(row)
+    for row in old['root_metadata_writer']['actual_to_retained_sources']:
+        keep(dict(original=row['actual'],retained=row['retained']))
+    required={}
+    def add(r):
+        k=r['path'];need(required.get(k,r)==r,'one exact new immutable version');required[k]=r
+    for r in request['inputs']+list(refs.values())+spec['method_inputs']+[sr,pin(__file__)]+(proof_inputs if interrupted else []):
+        if Path(r['path']).is_relative_to('/private/tmp'):add(r)
+    output_rows=inventory(job['output'])
+    need(len(output_rows)<=16 and sum(r['bytes']for r in output_rows)<=16*MIB,'bounded entire Reader output')
+    for r in output_rows:add(r)
+    for root in spec['closed_evidence_roots']:
+        for r in inventory(root):add(r)
+    reused=[];fresh=[]
+    for key,r in sorted(required.items()):
+        if key in previous:
+            need(previous[key]['original']==r and pin(previous[key]['retained']['path'])==previous[key]['retained'],
+                 'exact existing durable artifact, never recopied')
+            reused.append(previous[key])
+        else:
+            need(pin(key)==r,'whole newly required temporary artifact')
+            rel=Path('artifacts')/Path(key).relative_to('/private/tmp')
+            fresh.append(dict(original=r,relative=str(rel)))
+    need(len(fresh)<=4096 and sum(r['original']['bytes']for r in fresh)<=64*MIB,'finite new preservation only')
+    out=Path(args.out);need(out.is_absolute()and out.parent.resolve(strict=True)==out.parent
+         and not os.path.lexists(out),'fresh metadata binding output')
+    preserve=dict(schema='F009_CONTINUATION_IMMUTABLE_PRESERVATION_PLAN_V1',author='/root/compact_proof_author',
+      program=spec['preservation_program'],destination=spec['preservation_destination'],
+      previous_preservations=spec['previous_preservations'],accepted_checkpoint=oldref,
+      reused_previous_rows=reused,new_rows=fresh,
+      qualification='Only the genuinely closed new Reader can support a later Root checkpoint. Earlier failed attempts remain failed and preserved. Every actual pending reserved parent remains unpaid. This copy grants no selector authority and transfers no Source verdict.')
+    plan=dict(schema='ROOT_F009_STANDALONE_CHECKPOINT_PLAN_V1',author='/root/compact_proof_author',
+      program=spec['checkpoint_program'],prior_checkpoint_sequence=old['checkpoint']['sequence'],
+      prior_checkpoint_acceptance=oldref,prior_snapshot_adoption=spref,checkpoint=result['checkpoint'],Reader=refs,
+      Reader_output_inventory_sha256=hashlib.sha256(can(output_rows)).hexdigest(),
+      preservation_required_before_write=str(Path(spec['preservation_destination'])/'preservation.json'),
+      output=spec['checkpoint_output'],new_scientific_calls=0,
+      metadata_caps=dict(rss_bytes=256*MIB,wall_seconds=150,physical_input_bytes=2**31,
+         unique_current_input_files=40000,new_output_files_with_rollback_scratch=16,new_output_bytes_with_rollback_scratch=16*MIB))
+    if interrupted:
+        preserve.update(schema='F009_INTERRUPTED_RETURN_IMMUTABLE_PRESERVATION_PLAN_V1',author='/root/middle_dictionary_author',
+            interrupted_return_provenance=proof)
+        plan.update(schema='ROOT_F009_INTERRUPTED_RETURN_CHECKPOINT_PLAN_V1',author='/root/middle_dictionary_author',
+            proof_kind='STRICT_READER_OVER_INTERRUPTED_RETURN_V1',interrupted_origin=spec['interrupted_origin'],
+            interrupted_return_provenance=proof)
+    blobs={'preservation_plan.json':can(preserve),'checkpoint_plan.json':can(plan)}
+    if interrupted:need(all(len(b)<=2*MIB for b in blobs.values()),'same2MiB downstream metadata document cap')
+    pins={name:dict(path=str(out/name),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())for name,raw in blobs.items()}
+    report=dict(status='BOUND_METADATA_PLANS_ONLY',plans=pins,new_artifacts=len(fresh),new_bytes=sum(r['original']['bytes']for r in fresh),
+      reused_artifacts=len(reused),reused_bytes=sum(r['original']['bytes']for r in reused),scientific_calls=0,canonical_selector_writes=0)
+    if args.write:
+        out.mkdir()
+        for name,raw in blobs.items():
+            with(out/name).open('xb')as f:need(f.write(raw)==len(raw),'whole metadata plan');f.flush();os.fsync(f.fileno())
+        for directory in(out,out.parent):
+            fd=os.open(directory,os.O_RDONLY)
+            try:os.fsync(fd)
+            finally:os.close(fd)
+    print(json.dumps(report,sort_keys=True))
+
+if __name__=='__main__':main()

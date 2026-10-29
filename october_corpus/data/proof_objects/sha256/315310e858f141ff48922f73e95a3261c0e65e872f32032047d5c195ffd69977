@@ -1,0 +1,280 @@
+"""Author-owned stdlib metadata audit only. No represented Source is activated."""
+from pathlib import Path
+import ast
+import datetime
+import hashlib
+import json
+
+S = Path('/Users/sasha/medusa/research/leemans')
+W = Path('/Users/sasha/medusa/math_compression')
+T = Path('/private/tmp/f004_whole_intake_gap_audit')
+read_log = {}
+
+def body(p):
+    p = Path(p)
+    b = p.read_bytes()
+    r = {'path': str(p), 'bytes': len(b), 'sha256': hashlib.sha256(b).hexdigest()}
+    old = read_log.setdefault(str(p), {'reference': r, 'reads': 0})
+    assert old['reference'] == r, 'input changed during this metadata audit'
+    old['reads'] += 1
+    return b
+
+def ref(p):
+    body(p)
+    return read_log[str(Path(p))]['reference']
+
+def doc(p):
+    return json.loads(body(p))
+
+def verify(r):
+    actual = ref(r['path'])
+    assert all(actual[k] == r[k] for k in ('path', 'bytes', 'sha256')), r
+    return actual
+
+def canonical(v):
+    return json.dumps(v, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode()
+
+def runs(v):
+    out = []
+    for x in v:
+        if out and out[-1][1] + 1 == x:
+            out[-1][1] = x
+        else:
+            out.append([x, x])
+    return out
+
+def write(name, value):
+    b = (json.dumps(value, sort_keys=True, indent=2, ensure_ascii=True) + '\n').encode()
+    p = T / name
+    with p.open('xb') as f:
+        f.write(b)
+    return {'path': str(p), 'bytes': len(b), 'sha256': hashlib.sha256(b).hexdigest()}
+
+status_path = S/'maintenance/intake/current_status.json'
+current_path = S/'reboot_20261013/CURRENT.json'
+status = doc(status_path)
+current = doc(current_path)
+cat_path = W/'audit/corpus/accessible106/updates/completion-F012-L046-catalogue.json'
+catalogue = doc(cat_path)
+entry = next(x for x in catalogue['entries'] if x.get('original_id') == 'F004')
+pdf = verify(dict(entry['source_access']['usable_representations'][0], path=str(S/'sources/g2_even2026.pdf')))
+primary_text = ref(S/'sources/g2_even2026.txt')
+source_scope = ref(S/'computation/f004/source_scope_reconciliation.rst')
+tables = ref(S/'reboot_20261013/F004_recovery_work/remaining_source_tables.json')
+scope_aid_path = T/'independent_scope/scope_audit.json'
+scope_aid = doc(scope_aid_path)
+component_authorities = [dict(x, authority=verify(x['authority'])) for x in scope_aid['accepted_component_authorities']]
+completion_refs = [verify(scope_aid['refs'][k]) for k in ('completion_boundary','completion_map')]
+
+# Current Source-registered pointers, rather than similarly named historical ledgers.
+q8 = status['F004_q8_latest_ledger']
+q8_pending = doc(verify(q8['pending_file'])['path'])
+q8_registration = doc(verify(q8['typed_job_record'])['path'])
+q8_commit_path = Path(q8_registration['transaction_commit_path'])
+q8_commit = doc(q8_commit_path)
+assert q8_pending == [] and q8_commit['committed'] is True
+assert q8_commit['job_registration'] == q8['typed_job_record']
+assert q8_commit['pending'] == q8['pending_file']
+assert q8_commit['closed'] == 686 and q8_commit['pending_count'] == 0
+assert current['F004_current']['q8_remaining'] == q8['pending_file']
+
+q11 = status['root_f004_q11_ledger_current']
+q11_pending = doc(verify(q11['pending'])['path'])
+assert q11['closed'] == 75 and q11['pending_count'] == len(q11_pending) == 197
+assert current['root_f004_q11_ledger_current']['pending'] == q11['pending']
+q11_registration = verify(q11['registration'])
+q11_adoption = verify(q11['adoption'])
+q11_CAS = ref(S/'maintenance/intake/f004_q11_native_job_registration/runs/registration_adopt/output/root_selector_CAS_receipt.json')
+
+reconciliation = doc(S/'computation/f004/q11/ledger_reconciliation/audit.json')
+old_191 = doc(S/'computation/f004/q11/ledger_reconciliation/proposed_pending.json')
+rank4_old_closed = [[11,4], [12,4], [15,4], [16,4], [17,4], [19,4]]
+assert [x for x in q11_pending if x not in rank4_old_closed] == old_191
+rank4_receipts = [verify(reconciliation['job_eleven']['adoption']),
+                  verify(reconciliation['latest_five_family_completion']['adoption'])]
+five_partition = doc(verify(reconciliation['latest_five_family_completion']['partition'])['path'])
+
+rank5_path = S/'computation/f004/q11/rank5/common_line/root_adoption.json'
+rank5 = doc(rank5_path)
+rank5_closed = rank5['all_complete_rank5_jobs']
+assert sorted(rank5_closed) == sorted(x for x in q11_pending if x[1] == 5)
+assert len(rank5_closed) == 33 and rank5['remaining_unpaid_cells'] == 0
+assert rank5['all174_cells_visited_and_partitioned'] is True
+assert rank5['all87_actual_checker_calls_passed'] is True
+assert rank5['operational_selector_modified'] is False
+assert rank5['proposed_q11_coverage'] == {'closed':114,'pending':158,'rank4_pending':158,'rank5_pending':0,'total':272}
+rank5_refs = [verify(rank5[k]) for k in ('actual_proposal_manifest', 'actual_verification_manifest', 'preservation_index', 'prior_middle_word_adoption')]
+rank5_chain = [ref(S/rel) for rel in [
+    'computation/f004/q11/rank5/centralizer_bound/left_coverage_review/review.rst',
+    'computation/f004/q11/rank5/centralizer_bound/left_coverage_review/metadata_audit.json',
+    'computation/f004/q11/rank5/centralizer_bound/rank3_intersection/root_adoption.json',
+    'computation/f004/q11/rank5/right_certificates/root_adoption.json',
+    'computation/f004/q11/rank5/word_intersections/root_adoption.json']]
+
+selector_path = S/'computation/f004/q11/rank4/section_generation/method/selectors/job_0023_after_original_end37_batch_0001.json'
+job23_selector = doc(selector_path)
+job23_acceptance_path = S/'computation/f004/q11/rank4/section_generation/residuals/original_end37_IP_failure/job_0023/batch_0001/root_acceptance.json'
+job23_acceptance = doc(job23_acceptance_path)
+assert job23_acceptance['adopted'] is True
+assert job23_acceptance['original_job'] == job23_selector['original_job'] == [23,4]
+assert job23_selector['adopted'] is True and job23_selector['unresolved_positions'] == 0
+assert job23_selector['unresolved_position_runs'] == []
+baseline = job23_selector['original_paid_positions']
+paid_by_kind = job23_selector['accepted_paid_by_kind']
+paid = job23_selector['accepted_new_paid_positions']
+flat = [p for v in paid_by_kind.values() for p in v]
+assert sorted(flat) == paid and len(flat) == len(set(flat)) == 3584
+assert len(baseline) == job23_selector['original_paid_count'] == 217
+assert set(baseline).isdisjoint(paid)
+assert sorted(baseline + paid) == list(range(1,3802))
+ng = len(paid_by_kind['invariant_line_nongeneration'])
+assert ng == 43 and len(flat)-ng == 3541
+assert job23_acceptance['whole_original_credit'] == 0
+assert job23_acceptance['operational_registers_modified'] is False
+
+unregistered = sorted(rank4_old_closed + rank5_closed + [[23,4]], key=lambda x:(x[1],x[0]))
+assert len(unregistered) == len({tuple(x) for x in unregistered}) == 40
+assert set(map(tuple,unregistered)) <= set(map(tuple,q11_pending))
+open_jobs = [x for x in q11_pending if x not in unregistered]
+assert len(open_jobs) == 157 and all(x[1] == 4 for x in open_jobs)
+assert [x[0] for x in open_jobs] == [20] + list(range(24,59)) + list(range(74,195))
+
+# Count the exact retained field snapshot, apply ONLY the disjoint actual job23 closure.
+field_root_path = S/'computation/f004/q11/rank4/section_generation/residuals/field_centralizers/root_acceptance.json'
+field = doc(field_root_path)
+field_preservation = doc(verify(field['preservation'])['path'])
+field_proposal_original = field['proposal']
+matching = [x for x in field_preservation['rows'] if x['original'] == field_proposal_original]
+assert len(matching) == 1
+field_proposal_ref = verify(matching[0]['retained'])
+field_proposal = doc(field_proposal_ref['path'])
+field_rows = {tuple(x['original_job']):x for x in field_proposal['jobs']}
+assert len(field_rows) == 158 and sum(x['residual_after_proposed'] for x in field_rows.values()) == field['total_unpaid'] == 618279
+assert set(field_rows) == set(map(tuple,open_jobs + [[23,4]]))
+assert field_rows[(23,4)]['residual_after_proposed'] == 3584
+remaining_orbits = sum(field_rows[tuple(x)]['residual_after_proposed'] for x in open_jobs)
+assert remaining_orbits == 614695
+orbit_rows = []
+for job in open_jobs:
+    row = field_rows[tuple(job)]
+    entry_row = {'original_job':job, 'unpaid_orbit_positions':row['residual_after_proposed'],
+                 'exact_run_authority': field_proposal_ref,
+                 'exact_run_row_key':job, 'later_fact_absence_claim':False}
+    if 'residual_expanded_sha256' in row:
+        entry_row['expanded_unpaid_positions_sha256'] = row['residual_expanded_sha256']
+    if 'projection' in row:
+        entry_row['baseline_projection'] = row['projection']
+    if 'original_Saved_domain' in row:
+        entry_row['original_Saved_domain'] = row['original_Saved_domain']
+    orbit_rows.append(entry_row)
+
+q20_path = S/'computation/f004/q11/rank4/section_generation/method/selectors/job_0020_after_second_end_batch.json'
+q20 = doc(q20_path)
+assert q20['unresolved_positions'] == 35
+q20_positions = [x for a,b in q20['unresolved_position_runs'] for x in range(a,b+1)]
+assert len(q20_positions) == len(set(q20_positions)) == 35
+assert hashlib.sha256(canonical(q20_positions)).hexdigest() == q20['expanded_unresolved_sha256']
+
+# Static reusability audit: exact job23 guards are not silently generalized.
+export_path = Path('/private/tmp/q11_original_quartet_operand_export/export_operand.py')
+strict_path = Path('/private/tmp/q11_matrix_subgroup_closure/operand37_line_route/canonical_header_successor/verify_operand37.py')
+source_guards = {}
+for p,name in [(export_path,'operand_scope'),(strict_path,'accepted_metadata')]:
+    text = body(p).decode()
+    tree = ast.parse(text)
+    n = next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name == name)
+    source_guards[name] = ast.get_source_segment(text,n)
+    assert '[23,4]' in source_guards[name]
+theory = ref(S/'computation/f004/theory/g2_11_generation_by_prime_witnesses.tex')
+full_end = ref('/private/tmp/q11_matrix_subgroup_closure/one_full_end_IP_proof/PROOF.rst')
+next_candidates = []
+projection_root = S/'computation/f004/q11/rank4/cyclic_span/proposal/dispositions'
+for n in [24,25,26,27,32,33]:
+    p = projection_root/f'job_{n:04d}.json'
+    d = doc(p)
+    assert d['original_job'] == [n,4] and d['selected_labels'] == [1,4,2]
+    assert d['original_marking_order'] == ['a','b','c','e']
+    assert d['original_raw_catalogue_members'] == 14763 and d['unresolved_joins'] == []
+    prefix = verify(d['original_domain_whole_pins']['prefix_export'])
+    next_candidates.append({'original_job':[n,4], 'projection':ref(p),
+                            'prefix_export':prefix,'original_orbit_rows':d['original_orbit_rows'],
+                            'current_snapshot_unpaid_positions':field_rows[(n,4)]['residual_after_proposed'],
+                            'same_pair1_prefix_export_batch_as_job23':n in [24,25,26,27],
+                            'exact37_hint_or_positive_fit_claim':False})
+
+sources = {
+    'catalogue':ref(cat_path),'Original_PDF':pdf,'Original_text':primary_text,
+    'source_scope':source_scope,'source_table_comparison_only':tables,
+    'current_status_at_observation':ref(status_path),'CURRENT_at_observation':ref(current_path),
+    'q8_registered_pending':q8['pending_file'],'q8_registration':q8['typed_job_record'],
+    'q8_committed_transaction':ref(q8_commit_path),
+    'q11_registered_pending':q11['pending'],'q11_registration':q11_registration,
+    'q11_registered_adoption':q11_adoption,'q11_registered_CAS':q11_CAS,
+    'q11_reconciliation':ref(S/'computation/f004/q11/ledger_reconciliation/audit.json'),
+    'q11_old_rank4_receipts':rank4_receipts,
+    'q11_all33rank5_completion':ref(rank5_path),'q11_rank5_supporting_whole_refs':rank5_refs+rank5_chain,
+    'q11_job23_current_selector':ref(selector_path),'q11_job23_adoption':ref(job23_acceptance_path),
+    'q11_field_snapshot':ref(field_root_path),'q11_field_exact_runs_retained':field_proposal_ref,
+    'q11_job20_current_selector':ref(q20_path),'same_end37_classification':theory,
+    'one_full_end_IP_lemma':full_end,'job23_exporter':ref(export_path),'job23_strict':ref(strict_path),
+    'independent_Original_scope_and_theory_aid':ref(scope_aid_path),
+    'existing_completion_contract':completion_refs,
+}
+data = {
+    'schema':'F004_WHOLE_INTAKE_METADATA_GAP_AUDIT_V1',
+    'author':'/root/journal_peer','observed_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    'status':'RECONCILED_METADATA_WITH_BORROWED_ACCEPTED_MATHEMATICAL_PREMISES',
+    'Original':{'id':'F004','title':entry['title'],'edition':entry['edition'],
+                'principal_results':entry['principal_results_to_recover']['summary'],
+                'next_obligation':entry['next_obligation'],
+                'open_general_questions_4_1_4_2_are_outside_this_recovery':True},
+    'sources':sources,
+    'registered':{'q8':{'closed':686,'pending':0,'required':686,'whole_field_assembly_credit':0},
+                  'q11':{'closed':75,'pending':197,'required':272,'rank4_pending':164,'rank5_pending':33}},
+    'other_already_accepted_components_not_to_redo':component_authorities,
+    'q11_accepted_proof_coverage_not_operational_registration':{
+        'closed':115,'pending':157,'required':272,'rank4_closed':37,'rank4_pending':157,
+        'rank5_closed':78,'rank5_pending':0,'unregistered_closed_jobs':unregistered,
+        'unregistered_old_rank4_jobs':rank4_old_closed,'unregistered_rank5_jobs':rank5_closed,
+        'newly_closed_job23':[23,4],'job23':{'original_orbits':3801,'baseline':217,'later_IP_failure':3541,'later_nongeneration':43,'unpaid':0},
+        'open_jobs':open_jobs,'open_rank4_job_index_runs':runs([x[0] for x in open_jobs])},
+    'q11_remaining_fixed158_orbit_snapshot':{
+        'original_total':648256,'historical_field_snapshot_unpaid':618279,
+        'later_disjoint_job23_paid':3584,'unpaid_after_job23':remaining_orbits,
+        'scope':'Exact retained inspected-registry snapshot plus actual job23 disjoint append; not a global absent-artifact claim.',
+        'per_job':orbit_rows,'job20_unpaid_positions':q20_positions,
+        'job20_old_section37_misses_already_tried':q20['all_section37_positions_already_tried']},
+    'display_aliases_that_must_not_be_combined':{
+        'status_F004_latest_ledger':status['F004']['latest_ledger'],
+        'status_F004_q11_completed_scalar':status['F004'].get('q11_completed'),
+        'status_F004_q11_pending_scalar':status['F004'].get('q11_pending'),
+        'historical_q8_ledger_pending173_is_not_current':True},
+    'next_same_end37_candidates':next_candidates,
+    'reuse':{'criterion':'same natural Cayley G2(11), exact37 word in ONE original rank3 end, its unique fixed7-row, same-end generator escaping that line => that end=G => indexed IP failure',
+             'mathematical_scope':'All157 remaining admitted rank4 original jobs, conditional on the exact same model/member/faithful/frame/orbit premises; no37 existence claim.',
+             'small_operand_bytes':294,'next_bulk_priority_jobs':[[24,4],[25,4],[26,4],[27,4]],
+             'Source_ABI_blocker':'7311 operand_scope and7df accepted_metadata hardcodejob23 and its selector. A separately reviewed job-generic scope/binding successor is required before another job; strict mathematical predicate need not change.',
+             'Source_guard_whole_bodies':source_guards,
+             'no_new_theory_needed_for_same_end37_leg':True},
+    'remaining_original_obligations':[
+        'Root reconciliation/register transport for the40 already closed jobs, exact ordered197->157 difference and fresh CURRENT/current_status CAS; retain every old proof/history and unrelated fields.',
+        'Resolve614695 remaining indexed rank4 orbits relative to this retained snapshot, using existing conditional certificates first; finite misses and capped searches remain unpaid.',
+        'For surviving markings, preserve generation/IP and full member/transporter/domain joins and assemble complete rank/field inventories.',
+        'Prove/use full actual Aut(G) simultaneous marking action and labelled reversal, merge positive orbits without duplicates, and identify types/parabolics/named groups and self-duality as required by the source tables.',
+        'For q8 andq9, job-ledger completion is not final field assembly; reconcile q8 rank5 Table6 and q9 Tables7/8 with exact subgroup identities and source conventions.',
+        'Join the accepted uniform even-q construction and small-field q3,4,5,7,8,9,11 outputs to the fixed catalogue contract, then obtain a wholeOriginal review. Table2 source numbers are comparison values, never search stopping rules.'
+    ],
+    'limits':[
+        'Zero represented Source/helper/control/scientific or original matrix/word/group evaluation; noS/W/Git/gates/authority action.',
+        'Whole selected metadata bodies and listed refs were hashed; prior mathematical proofs/model/classification/runtime closures are imported with their existing qualifications, not freshly replayed.',
+        'No claim that every later artifact anywhere has been discovered; exact remaining-orbit counts are relative to the cited accepted registry snapshot and checked append.',
+        'No new Source verdict, registration, Original, conjecture, Lean or measurement credit.'
+    ],
+    'new_whole_original_credit':0,
+}
+out = write('audit.json',data)
+write('read_observations.json',{'schema':'WHOLE_METADATA_BODY_OBSERVATIONS_V1','author':'/root/journal_peer',
+    'inputs':list(read_log.values()),'physical_read_bytes':sum(x['reference']['bytes']*x['reads'] for x in read_log.values()),
+    'unique_paths':len(read_log),'represented_activations':0,'audit_output':out})
+print(json.dumps({'audit':out,'unique_paths':len(read_log),'physical_read_bytes':sum(x['reference']['bytes']*x['reads'] for x in read_log.values()),
+                  'q8_registered_pending':0,'q11_registered_pending':197,'q11_proof_pending':157,'remaining_snapshot_orbits':remaining_orbits},sort_keys=True))

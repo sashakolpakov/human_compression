@@ -1,0 +1,48 @@
+"""Own stdlib DATA retention selection/projection. No represented utility activation."""
+from pathlib import Path
+import hashlib,json,os,stat
+N=Path('/private/tmp/f009_continuation/from_11216/native_DATA');D=N/'native_execution_retention_DATA';D.mkdir(exist_ok=True)
+S=Path('/Users/sasha/medusa/research/leemans');DEST=S/'maintenance/intake/f009_census_continuation/from11216/native_execution/evidence';SOURCE=Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pin(p):
+ p=Path(p);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4*2**20
+ with p.open('rb')as h:b=os.fstat(h.fileno());raw=h.read(a.st_size+1);z=os.fstat(h.fileno())
+ signature=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+ assert signature(a)==signature(b)==signature(z)==signature(p.lstat())and len(raw)==a.st_size
+ return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def write(p,v):
+ p=Path(p);p.parent.mkdir(parents=True,exist_ok=True);assert not p.exists();p.write_bytes(can(v));return pin(p)
+def descriptor(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+borrowpaths=[S/'maintenance/intake/f009_census_continuation/from11216/native_inputs/evidence/native_launch/preservation.json',S/'maintenance/intake/f009_census_continuation/from11216/native_inputs/evidence/preflight_launch/preservation.json',S/'maintenance/intake/f009_census_continuation/from11216/native_inputs/evidence/core/preservation.json',S/'maintenance/intake/f009_census_continuation/from11099/shared_pin_checkpoint_11216/evidence/preservation.json',S/'maintenance/intake/f009_census_continuation/from11099/standalone_execution/checkpoint_11216_postregistration_evidence/preservation.json'];borrow=[pin(p)for p in borrowpaths];lookup={}
+for p in borrowpaths[:3]:
+ m=json.loads(p.read_bytes())
+ for row in m['files']:
+  a=row['original'];r=row['retained'];assert a['sha256']==r['sha256']and a['bytes']==r['bytes'];lookup[(a['path'],a['bytes'],a['sha256'])]=r
+source=pin(SOURCE);assert source['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+outputs=sorted((N/'native_output').iterdir());assert len(outputs)==253
+extras=[N/'runtime/native_actual_capture.json']+sorted((N/'runtime/native_guard').glob('*.json'))+sorted((N/'runtime/native_guard').glob('*.log'))+sorted((N/'native_execution').iterdir())+[N/'native_request.json',N/'native_Root_review.json',N/'native_job/job.json',N/'native_parameters.json',N/'prelaunch_retention_DATA/final_launch/handoff.json',N/'prelaunch_retention_DATA/final_launch/native_launch/Root_copy_actual_capture.json',N/'prelaunch_retention_DATA/final_launch/preflight_launch/Root_copy_actual_capture.json',N/'prelaunch_retention_DATA/core/Root_copy_actual_capture.json']
+extras+=sorted(p for p in (N/'reader_binding_DATA').iterdir()if p.is_file())+sorted((N/'reader_binding_DATA/AUTHOR_PROJECTION_ONLY').iterdir())
+selection=[];seen=set()
+for p in extras:
+ if str(p)not in seen:selection.append(p);seen.add(str(p))
+summary=write(D/'selection_and_qualifications.json',dict(schema='PAID_NATIVE11262_COMPLETE_TREE_RETENTION_SELECTION_DATA_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,accepted_checkpoint=11216,unpaid_proposed_checkpoint=11262,output_files=[pin(p)for p in outputs],metadata_files=[pin(p)for p in selection],borrowed_closures=borrow,qualification='All253Nativeoutputfiles and actualOwner/outerSDK runtime retainedwhole, includingfiniteworkerfailures and unpaidfrontier. PriorSource/launch/canonical11216proofbanks borrowedwhole and actualunchanged8roles reuseexactSbody aliases whenavailable. AuthorprojectionfilesareexplicitUNBOUNDData notactuale466/Rootoutputs. NoNative/Reader/science rerun or checkpointadoption.'))
+selection.append(Path(summary['path']));parts=[outputs[:135]+selection,outputs[135:]];chunks=[]
+for no,ps in enumerate(parts,1):
+ dest=DEST/('part%d'%no);td=D/('part%d'%no);td.mkdir(exist_ok=True);rows=[]
+ for p in ps:
+  a=pin(p);reuse=lookup.get((a['path'],a['bytes'],a['sha256']));r=reuse or dict(a,path=str(dest/'objects'/a['sha256']))
+  if reuse:assert pin(r['path'])==r
+  rows.append(dict(original=a,retained=r))
+ rows.sort(key=lambda row:row['original']['path']);plan=dict(schema='F009_NATIVE11262_CLOSED_EXECUTION_EVIDENCE_RETENTION_DATA_V1',destination=str(dest),files=rows,borrowed_closures=borrow,scientific_calls=0,Root_authority=False,qualification='Closedbytebodiesonly; proposal11262 unpaid; accepted11216unchanged. SeparatefreshRootclosure/strictReader/registration owed.')
+ pr=write(td/'copy_plan.json',plan);methods=[dict(original=source,retained=dict(source,path=str(dest/'method/retain_closed_files.py'))),dict(original=pr,retained=dict(pr,path=str(dest/'method/plan.json')))]
+ manifest=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrow,source_plan=pr,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+ mb=can(manifest);mr=descriptor(dest/'preservation.json',mb);projection=write(td/'projected_manifest_DATA.json',manifest)
+ inside=[x for x in rows if Path(x['retained']['path']).is_relative_to(dest)];outside=[x for x in rows if x not in inside]
+ paths={r['path']for row in rows+methods for r in row.values()}|{r['path']for r in borrow}|{mr['path']};read=2*source['bytes']+3*pr['bytes']+sum(r['bytes']for r in borrow)+4*sum(x['original']['bytes']for x in inside)+3*sum(x['original']['bytes']for x in outside)+len(mb)
+ targets={x['retained']['path']:x['retained']['bytes']for x in inside};new=sum(targets.values())+source['bytes']+pr['bytes']+len(mb);files=len(targets)+3
+ assert len(paths)<=512 and read+source['bytes']<=64*2**20 and new<=16*2**20
+ invoice=write(td/'invoice.json',dict(schema='INDEPENDENT_SOURCE_LOOP_FRESH_667_COPY_DATA_INVOICE_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,Source_derived_forecast=False,source=source,plan=pr,read_bytes_excluding_bootstrap=read,Source_bootstrap=source['bytes'],complete_reads_with_bootstrap=read+source['bytes'],paths=len(paths),new_bytes=new,new_files=files,mappings=len(rows)+2,outside_S_reuses=len(outside),inside_original_rows=len(inside),borrowed_whole_manifests=len(borrow),projected_manifest=mr,read_formula='2Source+3plan+borrowed+4insideRowBytes+3outsideReuseRowBytes+manifest; implicitPythonSourcebootstrap separate',fresh_destination_only=True,actual_copy=None,scientific_calls=0))
+ cli=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(SOURCE),'--self-sha256',source['sha256'],'--plan',pr['path'],pr['sha256'],'--destination',str(dest),'--manifest',mr['path']]
+ chunks.append(dict(plan=pr,projected_manifest=mr,projected_manifest_DATA=projection,invoice=invoice,Root_CLI=cli,actual_copy=None,forecast=dict(paths=len(paths),read_bytes_excluding_bootstrap=read,complete_read_bytes_with_bootstrap=read+source['bytes'],new_bytes=new,new_files=files,mappings=len(rows)+2)))
+hr=write(D/'handoff.json',dict(schema='PAID_NATIVE11262_CLOSED_EXECUTION_RETENTION_DATA_HANDOFF_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,Source_or_helper_activation=False,accepted_checkpoint=11216,proposed_checkpoint_unpaid=11262,complete_output_files=253,complete_output_bytes=2384871,selection=summary,borrowed_closures=borrow,program=source,chunks=chunks,Reader_preparation_DATA=pin(N/'reader_binding_DATA/handoff.json'),actual_retentions=None,checkpoint_adoption=None,qualification='Twofrozenfresh667copyplans forRootalone; exactall253Nativebytes/actualSDK/OwnerandDatareadiness preserved. ReuseswholeprelaunchSaliases and oldcanonicalCP11216manifest, nooldmasspayloadopenclaim. Sourcebootstrap4874chargedaboveRootutilityread. Accepted11216unchanged,11262awaitsstrictReader+registration.'))
+print(json.dumps(dict(handoff=hr,chunks=chunks),sort_keys=True))

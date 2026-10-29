@@ -1,0 +1,128 @@
+"""UNRUN focused ownership/migration controls, with synthetic states only.
+
+The original load/acquire/migrate bodies are compiled into fixture providers;
+no real accessor module, snapshot, raw graph or corpus case is activated.
+"""
+import argparse,ast,copy,hashlib,json,os,resource,sys,time,types
+from pathlib import Path
+START=time.monotonic()
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--helper',nargs=2,required=True)
+    ap.add_argument('--out',type=Path,required=True);a=ap.parse_args();observed=[]
+    def need(ok,why):
+        if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>128*2**20 or time.monotonic()-START>=140:raise RuntimeError('128MiB/140s generic controls')
+        if not ok:raise ValueError(why)
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize
+         and all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same cleared E-B-S control interpreter')
+    def read(r):
+        p=Path(r['path']);b=p.read_bytes();need(len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256'],'whole control Source identity')
+        observed.append(r);return b.decode()
+    hp=Path(a.helper[0]);hr=dict(path=str(hp),bytes=hp.stat().st_size,sha256=a.helper[1]);text=read(hr)
+    H=types.ModuleType('synthetic_owned_helper');H.__file__=str(hp);exec(compile(text,str(hp),'exec'),vars(H))
+    accessor_raw=read(H.ACCESSOR);backend_raw=read(H.BACKEND)
+    wire_path=Path('/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_state_snapshot.py')
+    wr=dict(path=str(wire_path),bytes=12183,sha256='ae5c9ae625442006bd3b9b060a57fde0f85f398b3a228b41a434407e561b1ad8');wire_raw=read(wr)
+    W=types.ModuleType('only_fixture_typed_wire');W.__file__=str(wire_path);exec(compile(wire_raw,str(wire_path),'exec'),vars(W))
+    def segment(raw,name,cls=None):
+        ns=ast.parse(raw).body
+        if cls is not None:ns=next(n for n in ns if isinstance(n,ast.ClassDef)and n.name==cls).body
+        return ast.get_source_segment(raw,next(n for n in ns if isinstance(n,(ast.FunctionDef,ast.ClassDef))and n.name==name))
+    load_class=segment(accessor_raw,'DirectValueLoad');acquire=segment(accessor_raw,'acquire_base','Admission')
+    migrate=segment(backend_raw,'migrate');out=[]
+    def reject(name,fn):
+        try:fn()
+        except(ValueError,AttributeError,KeyError,TypeError):out.append(dict(name=name,status='EXPECTED_REJECTION'));return
+        raise ValueError('negative ownership control accepted: '+name)
+    def fixture(changes=None,cached=False,override_check=False):
+        trace=[];counters=dict(migration_copies=0,acquisitions=0,fresh_id=None)
+        pin=lambda name:dict(path='/fixture/'+name,bytes=1,sha256='a'*64)
+        binary,completion,leafpin=pin('refine'),pin('complete'),pin('leaves')
+        cached_pins=copy.deepcopy([binary,completion,leafpin]);pins_before=copy.deepcopy(cached_pins)
+        ident='b'*64;first=dict(file=leafpin,line=0,sha256='c'*64)
+        template=dict(target=[22,5,4,5],binary=binary,completion_binary=completion,
+          nodes={ident:dict(values=[22,5,4,5,0,1,0,0,0,0,0],record=dict(file=leafpin,line=0,sha256=ident),
+          canonical=dict(key='',lab=[]),receiver=ident,children=None,creation=0)},pending={ident},leaves=[first],sequence=0,
+          started={ident:dict(kind='complete',dispatch=pin('dispatch'))})
+        before=copy.deepcopy(template);case_ref=pin('case');head_ref=pin('out/head.json');profile_ref=pin('profile')
+        case=dict(target=list(template['target']),binary=copy.deepcopy(binary),completion_binary=copy.deepcopy(completion),backend_transition=None,output='/fixture/out')
+        if changes:case.update(changes)
+        scalar=dict(sequence=0,nodes=1,pending=1,selected_raw_leaf_records=1,reserved_debts=1)
+        C=types.SimpleNamespace(need=need)
+        def fresh(**unused):
+            counters['acquisitions']+=1;trace.append('fresh_decode')
+            state=copy.deepcopy(template);state['binary']=cached_pins[0];state['completion_binary']=cached_pins[1]
+            counters['fresh_id']=id(state);return state
+        C.load=fresh
+        coalescer=types.SimpleNamespace(coalesce_file_pins=lambda state,codec:state)
+        def document(ref):return dict(runtime_sources=[dict(path='/fixture/census_queue_verify.py'),dict(path='/fixture/census_terminal_reader.py')])
+        K=types.SimpleNamespace(need=need,same=lambda x,y:x==y,document=document,
+          module=lambda *unused:coalescer,PIN_STORAGE={},acquire=lambda ref:trace.append('acquire:'+ref['path']))
+        A=types.ModuleType('synthetic_accessor');A.__file__=H.ACCESSOR['path'];A.K=K
+        def transition(state,tx):
+            trace.append('tail_mutation');state['nodes'][ident]['children']=[];state['pending'].remove(ident)
+            state['started'].pop(ident);state['leaves'].append(dict(file=cached_pins[2],line=1,sha256='d'*64));state['sequence']+=1;return state
+        V=types.SimpleNamespace(transition=transition)
+        R=types.SimpleNamespace(V=V,transition=transition)
+        B=types.ModuleType('synthetic_backend');B.__file__=H.BACKEND['path'];B.need=need;B.R=R;B.V=V
+        B.HEAD='FIXTURE_HEAD';B.GENESIS='FIXTURE_GENESIS'
+        def counted_clone(state):counters['migration_copies']+=1;return copy.deepcopy(state)
+        B.copy=types.SimpleNamespace(deepcopy=counted_clone);B.check_case=lambda value:trace.append('check_case')
+        exec(compile(migrate,H.BACKEND['path'],'exec'),vars(B))
+        gen=pin('genesis');txref=pin('tx');metadata={case_ref['path']:case,head_ref['path']:dict(schema=B.HEAD,genesis=gen,tail=txref),
+          gen['path']:dict(schema=B.GENESIS,case=case_ref),txref['path']:dict(previous=None)}
+        V.read_json=lambda ref:copy.deepcopy(metadata[ref['path']])
+        support=types.SimpleNamespace(private_transition=lambda original,*args,**kwargs:original)
+        A.parts=lambda:(support,C,None);A.load_direct=lambda *args,**kwargs:fresh(**kwargs)
+        A.Path=Path;A.types=types
+        exec(compile('class Admission:\n def check(self):\n  self.checks+=1\n  return self.case,self.base,self.gate\n',H.ACCESSOR['path'],'exec'),vars(A))
+        env=dict(vars(A));exec(compile(acquire,H.ACCESSOR['path'],'exec'),env);A.Admission.acquire_base=env['acquire_base']
+        admission=A.Admission();admission.checks=0;admission.c=C;admission.case=case;admission.base=dict(checkpoint=scalar);admission.gate=dict(status='DIRECT')
+        admission.anchor=dict(snapshot=pin('snapshot'),head=pin('head'),producer_case=case_ref,upstream_acceptance=pin('old'),source_profile=profile_ref,adoption=pin('adopt'))
+        admission.case_ref=case_ref
+        if cached:
+            class CachedAdmission(A.Admission):
+                def acquire_base(self,*unused):return template
+            bad=CachedAdmission();bad.__dict__.update(admission.__dict__);admission=bad
+        if override_check:admission.check=lambda: (case,admission.base,admission.gate)
+        ns=dict(B=B,AUTHENTICATED=admission);exec('def original_init(self): pass',ns)
+        A.segment_class=lambda *unused:types.SimpleNamespace(__init__=ns['original_init'])
+        exec(compile(load_class,H.ACCESSOR['path'],'exec'),vars(A));loader=A.DirectValueLoad(C)
+        contract=types.SimpleNamespace(source_text=lambda r:accessor_raw if r==H.ACCESSOR else backend_raw if r==H.BACKEND else (_ for _ in()).throw(ValueError('unexpected source')))
+        arguments=(pin('anchor'),case_ref,pin('old'),profile_ref,pin('method'),head_ref)
+        return types.SimpleNamespace(A=A,B=B,loader=loader,contract=contract,args=arguments,template=template,before=before,
+          counters=counters,pins=cached_pins,pins_before=pins_before,trace=trace)
+    old=fixture();old_result=old.loader.load(*old.args)
+    new=fixture();new_result=H.load_owned(new.contract,new.loader,new.A,*new.args)
+    need(old_result==new_result and list(old_result['nodes'])==list(new_result['nodes'])
+         and list(old_result['started'])==list(new_result['started']),'entire synthetic value and insertion-order equality')
+    need(old.counters['migration_copies']==1 and new.counters['migration_copies']==0
+         and id(new_result)==new.counters['fresh_id'],'one fresh owned state, no second deepcopy')
+    need(new.template==new.before and new.pins==new.pins_before and old.template==old.before,'accepted template and readonly cached pins remain unchanged')
+    need(new_result['binary']is new.pins[0]and new_result['completion_binary']is new.pins[1],'readonly pin aliases retained safely')
+    need(new.trace==old.trace,'every old synthetic acquisition/tail/head/case operation still occurs')
+    old_wire,new_wire=W.wire(old_result),W.wire(new_result)
+    need(old_wire==new_wire and W.unwire(new_wire)==new_result,'complete old typed/order inverse')
+    need(W.encode(dict(state=old_wire))==W.encode(dict(state=new_wire)),'unchanged deterministic gzip on equal complete fixture values')
+    out.append(dict(name='owned_fresh_load_value_order_alias_and_gzip',status='PASS'))
+    reject('reused_loader',lambda:H.load_owned(new.contract,new.loader,new.A,*new.args))
+    for name,changes in [('target',dict(target=[32,5,4,8])),('refinement_binary',dict(binary=dict(path='/fixture/wrong',bytes=1,sha256='a'*64))),
+      ('completion_binary',dict(completion_binary=dict(path='/fixture/wrong',bytes=1,sha256='a'*64))),('backend_transition',dict(backend_transition=dict(path='/fixture/unsupported')))]:
+        f=fixture(changes);reject('wrong_'+name,lambda f=f:H.load_owned(f.contract,f.loader,f.A,*f.args))
+    f=fixture(cached=True);reject('cached_alias_acquisition_subclass',lambda:H.load_owned(f.contract,f.loader,f.A,*f.args))
+    need(f.template==f.before and f.counters['acquisitions']==0,'cached alias rejected before acquisition/mutation')
+    f=fixture(override_check=True);reject('alternate_instance_check_provider',lambda:H.load_owned(f.contract,f.loader,f.A,*f.args))
+    f=fixture()
+    class Alternate(f.A.DirectValueLoad):pass
+    alternate=Alternate(f.loader.c);reject('alternate_loader_subclass',lambda:H.load_owned(f.contract,alternate,f.A,*f.args))
+    need(new.A.DirectValueLoad.load.__code__.co_filename==H.ACCESSOR['path']
+         and new.B.migrate.__code__.co_filename==H.BACKEND['path'],'all original providers unchanged')
+    for r in observed:
+        raw=Path(r['path']).read_bytes();need(len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256'],'all whole control Sources unchanged')
+    result=dict(schema='F009_OWNED_READER_MIGRATION_SYNTHETIC_CONTROLS_V1',status='PASS',controls=out,
+      original_corpus_or_state_cases=0,actual_Source_or_Reader_authority_issued=False,sources=observed)
+    raw=(json.dumps(result,sort_keys=True,separators=(',',':'))+'\n').encode();need(len(raw)<=16384 and not a.out.exists(),'fresh bounded control output')
+    with a.out.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())
+    print(json.dumps(dict(status='PASS',controls=len(out),out=str(a.out))))
+if __name__=='__main__':main()

@@ -1,0 +1,103 @@
+"""UNRUN Source/profile preflight only; no Native or state acquisition.
+New Root program. The retained source_binding and profile_bind are invoked,
+then stopped before priority_run, Segment instantiation or codec expansion.
+The Native denial is installed before all project Source activation.
+"""
+import argparse,hashlib,json,os,stat,sys,time,types
+from pathlib import Path
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def bootstrap(ref,cap):
+    p=Path(ref['path']);a=p.lstat()
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==ref['bytes']<=cap,'bounded ordinary bootstrap subject')
+    with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(cap+1);c=os.fstat(f.fileno())
+    sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],'whole stable bootstrap subject')
+    return raw
+
+def initial_ref(path,sha,cap):
+    p=Path(path);need(p.stat().st_size<=cap,'bounded literal bootstrap extent')
+    return dict(path=str(p),bytes=p.stat().st_size,sha256=sha)
+
+def strict(raw):
+    def pairs(items):
+        v={}
+        for k,x in items:need(k not in v,'unique bootstrap keys');v[k]=x
+        return v
+    return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def denial():
+    attempts=[]
+    def no_launch(event,args):
+        if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            attempts.append(event);raise RuntimeError('independent Root Saved caller forbids native launch')
+    sys.addaudithook(no_launch);return attempts
+
+def write(contract,path,value,cap=65536):
+    raw=contract.canonical(value);need(len(raw)<=cap,'finite own caller record')
+    with Path(path).open('xb')as f:need(f.write(raw)==len(raw),'whole own record');f.flush();os.fsync(f.fileno())
+    return contract.acquire(path)
+
+def main():
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--job',nargs=2,required=True)
+    p.add_argument('--root-review',nargs=2,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,'ordinary -E -B source preflight')
+    need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same absent four environment variables')
+    attempts=denial()
+    jobref=initial_ref(*a.job,8*2**20);job=strict(bootstrap(jobref,8*2**20))
+    gateref=initial_ref(*a.root_review,65536);gate=strict(bootstrap(gateref,65536))
+    need(job['role']=='native'and job['operation']=='SOURCE_PROFILE_PREFLIGHT_ONLY'
+         and job['output']==str(a.out),'one explicit non-scientific source-preflight job')
+    own=gate['program'];need(own['path']==str(Path(__file__).resolve()),'actual new preflight program');bootstrap(own,65536)
+    need(gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'and gate['root']=='/root'
+         and gate['status']=='SUPPORTED'and gate['blockers']==[]and gate['job']==jobref,
+         'fresh Root review of this source-only subject')
+    cref=job['contract'];craw=bootstrap(cref,65536);need(cref in gate['method_sources'],'complete authenticated contract')
+    C=types.ModuleType('Root_F009_preflight_current_contract');C.__file__=cref['path']
+    exec(compile(craw,cref['path'],'exec',dont_inherit=True),C.__dict__)
+    contract=C.Contract(job,jobref,gate,gateref,own)
+    contract.require_scientific_release(job,'native') # authenticates the same metadata premises; launches nothing.
+    route=contract.module(job['library_adapter'],'Root_F009_preflight_retained_library_route')
+    budget=route.io_budget(contract,job['IO_budget_source'],job['producer_reservation']);sys.addaudithook(budget.event)
+    need(job['producer_reservation']['native_writers']==[],'preflight IO cannot authorize any native writer')
+    module=contract.module(job['mathematical_native_library'],'Root_F009_preflight_retained_native_library')
+    def metadata_subject(ref,K):
+        need(ref==job['Root_metadata_creator'],'explicit new metadata creator')
+        value=contract.document(ref)
+        need(value['schema']=='ROOT_F009_STANDALONE_METADATA_CREATOR_V1'and value['root']=='/root'
+             and value['writer']==job['metadata_constructor']and value['old_metadata_Source_executed']is False,
+             'new metadata creator attribution')
+        return value
+    application=contract.file_ref(job['application']);case=contract.file_ref(job['case'])
+    binding=route.derive_native_binding(contract,module,job['mathematical_native_library'],metadata_subject)
+    value=binding(contract.file_ref(job['binding']),application)
+    app=module.K.document(application)
+    module.K.need(module.K.same(app['case'],module.K.pin(case['path'])),'same exact current native case')
+    old,run=module.profile_bind(application)
+    backend=run.__globals__['B']
+    need(Path(backend.__file__)==Path(module.K.Q/'census_backend_transition.py')
+         and Path(backend.R.__file__)==Path(module.K.Q/'census_terminal_reader.py'),
+         'literal original backend and terminal case checkers from actual bound runtime')
+    for original in(backend,backend.R):
+        ref=contract.file_ref(contract.index[str(Path(original.__file__))])
+        module.K.need(module.K.same(module.K.pin(ref['path']),ref),'whole original case-check Source identity')
+    current_case=module.K.document(case)
+    backend.check_case(current_case) # includes literal terminal_reader.check_case and full direct-role acquisitions.
+    need(callable(run)and not attempts,'all retained Source/profile/direct-case prerequisites closed without Native')
+    # Deliberately never invoke run, old.priority_run, Segment or state codecs.
+    # The original native case/output stays untouched and its work is unpaid.
+    a.out.mkdir()
+    artifact=write(contract,a.out/'result.json',dict(schema='ROOT_F009_SOURCE_PROFILE_PREFLIGHT_ONLY_V1',
+        root='/root',actual_caller=own,Root_review=gateref,job=jobref,origin_native_job=job['origin_native_job'],
+        retained_mathematical_library=job['mathematical_library'],native_launch_attempts=attempts,
+        source_binding_and_profile_bind_returned=True,original_backend_and_terminal_check_case_returned=True,priority_run_called=False,
+        Segment_instantiated=False,state_decoded_or_expanded=False,case_or_conjecture_credit=0,
+        scientific_release_or_checkpoint_claim=False,old_caller_executed=False,global_checkpoint_written=False))
+    budget.attest();contract.finalize_actual_input_closure(job)
+    need(not attempts,'no Native attempt during full preflight return closure')
+    print(json.dumps(dict(schema='ROOT_F009_PREFLIGHT_RETURNED_PENDING_OWNER_V1',artifact=artifact,
+      Source4_verdict=False,Native_Reader_or_state_calls=0,global_checkpoint_written=False)),flush=True)
+if __name__=='__main__':main()

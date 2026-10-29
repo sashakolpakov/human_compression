@@ -1,0 +1,42 @@
+"""Own stdlib binding DATA only; no represented Source is executed."""
+from pathlib import Path
+import copy,json,hashlib
+N=Path('/private/tmp/f009_continuation/from_11216/native_DATA');D=N/'reader_binding_DATA';O=D/'actual_e466_bound';O.mkdir(exist_ok=True)
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def pin(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def load(p):return json.loads(Path(p).read_bytes())
+def write(n,x):
+ p=O/n;assert not p.exists();p.write_bytes(can(x));return pin(p)
+def merge(rows):
+ by={}
+ for r in rows:assert by.get(r['path'],r)==r;by[r['path']]=r
+ return[by[k]for k in sorted(by)]
+def expand(x,field,tag):
+ t=x[tag];v=dict(x);v.pop(tag);v[field]=[dict(path=t['prefixes'][i]+n,bytes=b,sha256=h)for i,n,b,h in t['rows']];assert can(v).__len__()==t['logical_bytes']and hashlib.sha256(can(v)).hexdigest()==t['logical_sha256'];return v
+release=pin(N/'reader_preparation_Root_release.json');assert release['sha256']=='59af00b16ff1de6d00e05c83d950b5a76ba950b279dc6ab2c9eb2d2fd873552d'and release['bytes']<=65536
+forecast=load(N/'runtime/reader_prepare_forecast_guard/stdout.log');written=load(N/'runtime/reader_prepare_write_guard/stdout.log');assert forecast['rows']==written['rows']and forecast['output_bytes']==written['output_bytes']and forecast['written']is False and written['written']is True and len(written['rows'])==5
+for r in written['rows']:assert pin(r['path'])==r
+for stage in ['forecast','write']:
+ c=load(N/('runtime/reader_prepare_'+stage+'_actual_capture.json'));g=load(N/('runtime/reader_prepare_'+stage+'_guard/receipt.json'));assert c['actor']=='/root'and c['actual_tool']['exit_code']==0 and c['full_tool_return']['exit_code']==0 and g['status']=='PASS'and g['cleanup']['remaining']==g['cleanup']['errors']==[]
+# Independent whole semantic check: actual fiveimages differfromconditional images
+# only by replacing zero-release identity and all downstream descriptor digests.
+actual={Path(r['path']).name:load(r['path'])for r in written['rows']};before={n:load(D/'AUTHOR_PROJECTION_ONLY'/n)for n in actual};oldref=before['reader_parameters.json']['closed_native_metadata_method']['Root_release'];assert actual['reader_parameters.json']['closed_native_metadata_method']['Root_release']==release
+assert actual['native_output_rows.json']==before['native_output_rows.json']
+a=copy.deepcopy(actual['native_actual_review.json']);a['writer']['Root_release']=oldref;assert a==before['native_actual_review.json']
+am=actual['native_output_manifest.json'];bm=before['native_output_manifest.json'];assert am['writer']['Root_release']==release;aa=copy.deepcopy(am);aa['writer']['Root_release']=oldref
+for k in ['logical_bytes','logical_sha256']:aa['Root_Output_manifest_reference'][k]=bm['Root_Output_manifest_reference'][k]
+assert aa==bm
+ac=expand(actual['native_closure.json'],'complete_actual_inputs','Root_Native_closure_rows_reference');bc=expand(before['native_closure.json'],'complete_actual_inputs','Root_Native_closure_rows_reference');aa=copy.deepcopy(ac);aa['metadata_closure_method']['Root_release']=oldref;aa['independent_actual_review']=bc['independent_actual_review'];aa['output_manifest']=bc['output_manifest'];actualmap={r['path']:r for r in ac['complete_actual_inputs']};oldmap={r['path']:r for r in bc['complete_actual_inputs']};assert set(actualmap)==set(oldmap)
+allowed={release['path'],ac['independent_actual_review']['path'],ac['output_manifest']['path']};assert all(actualmap[k]==oldmap[k]for k in actualmap if k not in allowed);aa['complete_actual_inputs']=bc['complete_actual_inputs'];assert aa==bc
+parentref=pin(N/'reader_prepared/reader_parameters.json');parent=actual['reader_parameters.json'];pr=copy.deepcopy(parent);pr['closed_native_metadata_method']['Root_release']=oldref;pr['native_closure']=before['reader_parameters.json']['native_closure'];assert pr==before['reader_parameters.json']
+projected=load(D/'reader_parameters_selected_AUTHOR_PROJECTION_ONLY.json');candidate=copy.deepcopy(parent)
+for k in ['program','library_adapter','reader_successful_route_lineage']:candidate[k]=copy.deepcopy(projected[k])
+oldpaths={r['path']for r in parent['method_sources']};extras=[r for r in projected['method_sources']if r['path']not in oldpaths];assert len(extras)==6;candidate['method_sources']=copy.deepcopy(parent['method_sources'])+extras
+cat=load(parent['catalogue']['path']);sources=merge(cat['source_inputs']+candidate['method_sources']+[candidate['IO_budget_source'],candidate['retained_owner']]);oldjob=load('/private/tmp/f009_continuation/from_11099/native_DATA/reader_job_digest_ordinals/job.json');assert sources==oldjob['source_inputs']and len(sources)==1021 and sum(r['bytes']for r in sources)==60330619
+inverse=copy.deepcopy(candidate)
+for k in ['program','library_adapter','method_sources']:inverse[k]=parent[k]
+inverse.pop('reader_successful_route_lineage');assert inverse==parent
+cr=write('reader_parameters_candidate.json',candidate);ir=write('whole_actual_prepared_parameter_inverse_DATA.json',dict(schema='ACTUAL_E466_PARAMETERS_TO_REUSED_ORDINAL_SOURCE_DATA_WHOLE_INVERSE_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,parent=parentref,whole_parent=parent,selected_candidate=cr,whole_selected_candidate=candidate,exact_delta_keys=['program','library_adapter','method_sources','reader_successful_route_lineage'],appended_six_paid_Source_refs=extras,whole_inverse_passed=True,actual_five_ref_list=written['rows'],actual_preparation_release=release,actual_new_a176=None,actual_new_Reader=None,checkpoint_adoption=None,qualification='ActualRootwrittene466fiveimagesobservedwhole; candidateisT-onlyDATA, noSourceactivationorRootgates. Source1021union exactpriorsuccessful36fb/706 with allold1015+six retained; newLineagequotedexistingproof, notfutureexecution.'))
+report=write('binding_observations.json',dict(schema='ACTUAL_E466_11262_DATA_BINDING_OBSERVATION_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,actual_preparation_release=release,actual_forecast_capture=pin(N/'runtime/reader_prepare_forecast_actual_capture.json'),actual_write_capture=pin(N/'runtime/reader_prepare_write_actual_capture.json'),actual_five_images=written['rows'],actual_five_total_bytes=written['output_bytes'],whole_initial_zeroRelease_projection_semantic_inverse_passed=True,candidate=cr,whole_inverse=ir,Source_rows=1021,Source_bytes=60330619,accepted_checkpoint=11216,proposal11262_unpaid=True,activation_by_reviewer=False,actual_new_Reader=None))
+print(json.dumps(dict(candidate=cr,inverse=ir,observations=report,actual_five_bytes=written['output_bytes']),sort_keys=True))

@@ -1,0 +1,107 @@
+"""Own stdlib metadata extraction/plan authoring only. No represented evaluation."""
+import copy,gzip,hashlib,json,pathlib
+E=pathlib.Path('/private/tmp/q11_original_quartet_operand_export');D=E/'remaining36_DATA'
+S=pathlib.Path('/Users/sasha/medusa/research/leemans')
+summary_path=pathlib.Path('/private/tmp/q11_large_end_spectrum/retained_imports/instances/job_0023/first/output/summary.json')
+selector_path=S/'computation/f004/q11/rank4/section_generation/method/selectors/job_0023_after_shared_line_batch_0001.json'
+parent_path=E/'column_order_controls/position_0337/plan.json'
+def ref(p):
+ b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def save(name,x,compact=False):
+ p=D/name;assert not p.exists();p.write_text(json.dumps(x,sort_keys=True,**({'separators':(',',':')}if compact else{'indent':2}))+'\n');return ref(p)
+def canonical(x):return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+def check(r):assert ref(pathlib.Path(r['path']))==r
+sr=ref(summary_path);assert sr['bytes']==59084 and sr['sha256']=='fc185c7f3dbc35c3b96021c1b10c6c82ca23cc127a57385aa8a63320b600d8b0'
+selr=ref(selector_path);assert selr['sha256']=='8a38b9633f252444f1ecf11d65602e1fffc3efae312a923b1f4dae76c158ac35'
+sel=json.loads(selector_path.read_bytes());unpaid=[v for start,end in sel['unresolved_position_runs']for v in range(start,end+1)]
+assert len(unpaid)==sel['unresolved_positions']==38 and hashlib.sha256(canonical(unpaid)).hexdigest()==sel['expanded_unresolved_sha256']
+summary=json.loads(summary_path.read_bytes());notes=summary['exact_new_spectrum_trial_notes'];assert len(notes)==106
+by={r['position']:r for r in notes};assert len(by)==106 and set(unpaid)<=set(by)
+roster=[]
+for pos in unpaid:
+ note=by[pos];ends=note['ends'];hints=[]
+ for end in ends:
+  hint=end['prime37']if type(end)is dict and end.get('kind')=='PRIME37'else None
+  if hint is not None:assert type(hint['word'])is str and 1<=len(hint['word'])<=64 and set(hint['word'])<=set('012')and type(hint['power'])is int and 1<=hint['power']<=256
+  hints.append(copy.deepcopy(hint))
+ roster.append(dict(position=pos,representative=note['representative'],whole_orbit_sha256=note['orbit_sha'],left37=hints[0],right37=hints[1],
+  old_supplier_retained_checked=note['retained37_checked'],old_supplier_retained_valid=note['retained37_valid'],
+  legacy_complete_note=note,new_word_or_matrix_validation=False,
+  current_status='TWO_ACTUAL_STRICT_RESULTS_UNADOPTED'if pos in(337,427)else'CURRENT_UNPAID_UNPROVED'))
+left=[r['position']for r in roster if r['left37']is not None];right=[r['position']for r in roster if r['right37']is not None]
+missing=[r['position']for r in roster if r['left37']is None and r['right37']is None]
+assert len(left)==31 and not right and missing==[447,526,1378,1417,1882,1981,2986]
+remaining=[p for p in unpaid if p not in(337,427)];assert len(remaining)==36
+rosterref=save('all38_legacy37_hint_roster.json',dict(schema='Q11_CURRENT38_OLD106_SUPPLIER37_METADATA_ROSTER_V1',author='/root/journal_peer',
+ current_selector=selr,old_actual_supplier_summary=sr,all38_current_unpaid=unpaid,rows=roster,
+ coverage=dict(left37=31,right37=0,missing_old_note_positions=[],no37hint_either_end=missing,remaining36_left37_hint_count=29),
+ qualification='Exact extraction of old supplier-only metadata. No original matrix/word/order calculation or fresh37 validation. Null hint means no retained hint in this old run, never absence. Actual strict337/427 remain unadopted; current8a counts unchanged.'))
+tsv='position\trepresentative\tleft37_word\tleft37_power\tright37_word\tright37_power\n'
+for row in roster:
+ vals=[str(row['position']),str(row['representative'])]
+ for key in('left37','right37'):
+  h=row[key];vals.extend([h['word'],str(h['power'])]if h else['NONE_IN_OLD_RUN',''])
+ tsv+='\t'.join(vals)+'\n'
+(D/'all38_legacy37_hint_roster.tsv').write_text(tsv)
+parent=json.loads(parent_path.read_bytes());assert parent['program']['sha256']=='7311e57bc6690ae02a7928f8a747a7209f297a44e19f7951d4595baacfece059'
+assert parent['control_program']['sha256']=='84bfa671385479f1e2c5fb4b504b4a75238ff3677725d8a4a3a18129e32210ec'and len(parent['inputs'])==72 and parent['selector']==selr
+for r in parent['inputs']:check(r)
+control_result=ref(E/'column_order_controls/runtime/controls_result.json');assert control_result['sha256']=='2cda6e92de586f39c9671c248de7970477977c28501915c21204060250589796'
+control_capture=ref(E/'column_order_controls/runtime/controls_actual_capture.json')
+cases=[];deltas=[]
+for pos in remaining:
+ B=D/'instances'/('position_%04d'%pos);(B/'output').mkdir(parents=True,exist_ok=False)
+ x=copy.deepcopy(parent);x.update(selected_positions=[pos],operand_output=str(B/'output/operand.u8'),output=str(B/'output/result.json'),
+  status='UNRUN_UNCHANGED7311_84BF_OPERAND_EXPORT_CURRENT_REMAINING36',
+  qualification='Separate one-position operand export using exact actual7311Source/84bfcontrols and unchanged72whole inputs/context8a. No old37hint is interpreted by exporter. Two previous strict results337/427 are unadopted and excluded from this export batch only because their operands already exist. Root actual review/gate/export/operand acceptance remain owed; no IP or paid credit.')
+ logical=save(pathlib.Path('instances')/('position_%04d'%pos)/'plan.json',x,True)
+ gz=B/'plan.json.gz';gz.write_bytes(gzip.compress(canonical(x)+b'\n',mtime=0));pr=ref(gz);assert json.loads(gzip.decompress(gz.read_bytes()))==x
+ gate=dict(schema='ROOT_AUTHORIZED_Q11_ORIGINAL_QUARTET_OPERAND_EXPORT_V1',root=None,adopted=False,mode='export',operand_export_authorized=False,
+  program=x['program'],plan=pr,selector=selr,selected_positions=[pos],Root_code_math_review=None,control_report=control_result)
+ gr=save(pathlib.Path('instances')/('position_%04d'%pos)/'Root_gate_TEMPLATE_FALSE.json',gate)
+ review=dict(schema='ROOT_Q11_ORIGINAL_QUARTET_OPERAND_EXPORT_SOURCE_REVIEW_V1',root=None,status='UNREVIEWED',blockers=['Fresh Root current one-position scope review owed'],
+  program=x['program'],plan=pr,selector=selr,original_operand_member_frame_orbit_scope_checked=False)
+ rr=save(pathlib.Path('instances')/('position_%04d'%pos)/'Root_review_TEMPLATE_FALSE.json',review)
+ upper=2*(sum(r['bytes']for r in x['inputs'])+pr['bytes']+8192+32768+16384)+x['program']['bytes']+131366+10762
+ assert upper<8388608
+ cases.append(dict(position=pos,plan=pr,logical_plan=logical,Root_gate_false=gr,Root_review_false=rr,actual_export=None,actual_operand=None,actual_Root_operand_acceptance=None,
+  static_read_upper=upper,total_paths_upper=78,new_write_upper=131366,new_scalar_units=294,whole_original_context_products_upper=64,
+  actual_control_report=control_result,actual_control_capture=control_capture,
+  optional_future_untrusted37_hint=next(r['left37']for r in roster if r['position']==pos)))
+ changes={k:dict(old=parent.get(k),new=x.get(k))for k in set(parent)|set(x)if parent.get(k)!=x.get(k)}
+ restored=copy.deepcopy(x)
+ for k in changes:
+  if k in parent:restored[k]=parent[k]
+  else:restored.pop(k,None)
+ assert restored==parent
+ deltas.append(dict(position=pos,child=logical,changes=changes,whole_child_body=x,exact_restore_to_shared_parent=True))
+dataiv=save('whole_DATA_inverse.json',dict(schema='Q11_REMAINING36_OPERAND_EXPORT_WHOLE_DATA_INVERSE_V1',author='/root/journal_peer',parent=ref(parent_path),whole_parent_body=parent,rows=deltas),True)
+invoice=save('read_work_invoice.json',dict(schema='Q11_REMAINING36_UNCHANGED_OPERAND_EXPORT_INVOICE_V1',author='/root/journal_peer',program=parent['program'],control_program=parent['control_program'],
+ actual_generic_controls=control_result,actual_generic_control_capture=control_capture,whole_fixed_inputs=parent['inputs'],fixed_count=72,fixed_bytes=sum(r['bytes']for r in parent['inputs']),
+ functional_Source_bytes=59485,inactive_data_Source_roles='All old/newSources in inputroster are read aswholedata, no provider isloaded byexportmain',
+ per_call_bounds=[dict(position=r['position'],plan=r['plan'],read_upper=r['static_read_upper'],total_paths_upper=78,new_output_upper=131366,new_scalar_units=294)for r in cases],
+ formula='2*(same72fixedwholeinputs+exactnewgzipplan+Rootgate<=8192+review<=32768+controlreport<=16384)+Python Sourcebootstrap59485+intermediate retained_spectrum_imports rereads10762+raw294/result<=131072 outputrereads',
+ batch_call_count=36,batch_cumulative_read_upper=sum(r['static_read_upper']for r in cases),
+ all_limits_per_call_unchanged=dict(Source_bytes=65536,physical_read_bytes=8388608,total_paths=96,perfile_bytes=2097152,matrix_products=400000,row_images=200000,additional_scalar_hard=1000000,additional_scalar_soft=900000,inner_MiB=128,inner_seconds=125,outer_seconds=150),
+ no_batch_single_call_or_runtime_fit_claim=True,actual_Root_new36_reviews_gates_exports=None))
+calls=save('first_calls_UNRUN.json',dict(schema='Q11_REMAINING36_OPERAND_EXPORT_EXACT_FIRST_CALLS_V1',author='/root/journal_peer',
+ calls=[dict(position=r['position'],argv=['python3','-E','-S','-B',parent['program']['path'],'--self-sha256',parent['program']['sha256'],'--plan',r['plan']['path'],r['plan']['sha256'],'--Root-gate','<ACTUAL_FRESH_ROOT_GATE_PATH>','<EXACT_SHA256>'],Root_gate=None,actual_export=None)for r in cases],
+ current_selector=selr,Root_gates_in_this_package='FALSE_TEMPLATES_ONLY',new_Root_authority=False))
+proofs=[]
+K=pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/operand37_line_route/canonical_header_successor/bound_actual_operands_DATA')
+for pos in(337,427):
+ p=K/('position_%04d'%pos)/'strict_output/result.json';r=ref(p);b=json.loads(p.read_bytes())
+ assert b['status']=='VERIFIED_ORIGINAL_END_EQUALS_G_AND_IP_FAILURE'and b['position']==pos and b['new_paid_credit']==0
+ proofs.append(dict(position=pos,result=r,kind='ACTUAL_STRICT_SUCCESS_UNADOPTED',not_exported_again=True))
+obs=save('author_metadata_observations.json',dict(schema='Q11_REMAINING36_METADATA_ONLY_OBSERVATIONS_V1',author='/root/journal_peer',
+ all38_legacy_notes_found=True,old_summary=sr,current_selector=selr,legacy_left37_count=31,legacy_right37_count=0,legacy_missing37_positions=missing,
+ all72whole_fixed_input_pins_checked=True,all36logicalgzipwholeinverses_checked=True,all36falsegates_adopted_false=True,
+ already_actual_strict_unadopted=proofs,no_Source_control_word_matrix_or_case_execution=True,no_selector_or_paid_count_change=True))
+h=save('handoff.json',dict(schema='Q11_CURRENT38_ROSTER_AND_REMAINING36_OPERAND_EXPORT_DATA_HANDOFF_V1',author='/root/journal_peer',
+ status='FROZEN_METADATA_ONLY; ROOT_FRESH_SCOPE_GATES_AND36ACTUAL_EXPORTS_OWED',
+ roster=rosterref,roster_TSV=ref(D/'all38_legacy37_hint_roster.tsv'),current_selector=selr,
+ coverage=dict(current_unpaid=38,actual_strict_unadopted=2,remaining_exports=36,remaining_left37_untrusted_hints=29,remaining_no37_legacy_hint=missing),
+ parent_actual_export_plan=ref(parent_path),program=parent['program'],control_program=parent['control_program'],actual_generic_controls=control_result,
+ cases=cases,whole_DATA_inverse=dataiv,invoice=invoice,first_calls=calls,observations=obs,
+ new_Source_changes=0,Source_controls_science_calls=0,S_W_Git_or_positive_gate_writes=0,typed_IP_adopter=None))
+print(json.dumps(dict(handoff=h,roster=rosterref,invoice=invoice,inverse=dataiv,read_min=min(r['static_read_upper']for r in cases),read_max=max(r['static_read_upper']for r in cases),count=len(cases),legacy_missing=missing),sort_keys=True))

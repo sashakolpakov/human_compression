@@ -1,0 +1,41 @@
+"""UNRUN pure DATA derivative of an exact unexecuted Native job.
+Only caller/output/operation/IO permission and declared new method roles vary.
+The original case, binding, application and every scientific premise stay exact.
+"""
+import argparse,hashlib,json,os,stat
+from pathlib import Path
+def need(x,s):
+ if not x:raise ValueError(s)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pin(p):
+ p=Path(p);a=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_size<=8*2**20,'bounded ordinary metadata/Source')
+ raw=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(sig(a)==sig(z)and len(raw)==a.st_size,'whole stable metadata/Source')
+ return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def merge(*groups):
+ by={}
+ for rows in groups:
+  for q in rows:need(by.get(q['path'],q)==q,'one complete physical identity');by[q['path']]=q
+ return[by[p]for p in sorted(by)]
+def main():
+ p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--native-job',nargs=2,required=True)
+ p.add_argument('--program',nargs=2,required=True);p.add_argument('--output',type=Path,required=True)
+ p.add_argument('--job',type=Path,required=True);a=p.parse_args()
+ origin=pin(a.native_job[0]);need(origin['sha256']==a.native_job[1],'exact constructed native-job input')
+ native=json.loads(Path(origin['path']).read_bytes());program=pin(a.program[0]);need(program['sha256']==a.program[1],'exact reviewed preflight Source')
+ need(native['schema']=='ROOT_F009_STANDALONE_JOB_V1'and native['role']=='native'and native['old_checkpoint_sequence']==10626,'same unexecuted Native job')
+ own=pin(Path(__file__).resolve());job=dict(native,program=program,output=str(a.output),operation='SOURCE_PROFILE_PREFLIGHT_ONLY',origin_native_job=origin,Root_job_creator=own)
+ job['producer_reservation']=dict(native['producer_reservation'],output=str(a.output),maximum_write_objects=16,native_writers=[])
+ job['source_inputs']=merge(native['source_inputs'],[program,own])
+ job['declared_inputs']=merge(native['declared_inputs'],[program,own,origin])
+ need(len(job['source_inputs'])<=1024 and sum(q['bytes']for q in job['source_inputs'])<=128*2**20
+      and len(job['declared_inputs'])<=40000 and sum(q['bytes']for q in job['declared_inputs'])<=2**31,'unchanged Source and whole current caps')
+ changed={'program','output','operation','origin_native_job','Root_job_creator','producer_reservation','source_inputs','declared_inputs'}
+ need({k:v for k,v in job.items()if k not in changed}=={k:v for k,v in native.items()if k not in changed},'entire unchanged Native scientific envelope')
+ raw=can(job);need(len(raw)<=2*2**20 and a.job.is_absolute()and a.job.parent.resolve(strict=True)==a.job.parent and not os.path.lexists(a.job),'finite fresh standalone preflight DATA')
+ with a.job.open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive preflight job');f.flush();os.fsync(f.fileno())
+ fd=os.open(a.job.parent,os.O_RDONLY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+ print(json.dumps(dict(schema='ROOT_SOURCE_PREFLIGHT_JOB_DATA_ONLY_V1',job=pin(a.job),Native_Reader_or_state_calls=0,global_checkpoint_written=False)))
+if __name__=='__main__':main()

@@ -1,0 +1,180 @@
+"""Independent stdlib/AST/JSON inspection only. Never imports represented code."""
+import ast, hashlib, json, stat
+from pathlib import Path
+from collections import Counter
+
+D=Path('/private/tmp/q11_end37_IP_metadata_adoption/bounded_reads_successor')
+O=Path('/private/tmp/q11_end37_IP_metadata_adoption/independent_metadata_review')
+S=Path('/Users/sasha/medusa/research/leemans')
+opened={}
+def h(b):return hashlib.sha256(b).hexdigest()
+def canon(v):return (json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def descriptor(p,b):return dict(path=str(p),bytes=len(b),sha256=h(b))
+def raw(r):
+    assert type(r) is dict and set(r)=={'path','bytes','sha256'}
+    p=Path(r['path']);a=p.lstat()
+    assert p.is_absolute() and p.resolve()==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1
+    assert type(r['bytes']) is int and a.st_size==r['bytes'] and 0<=a.st_size<=4*2**20
+    with p.open('rb') as f:b=f.read(a.st_size+1)
+    assert len(b)==a.st_size and h(b)==r['sha256']
+    assert opened.get(str(p),r)==r;opened[str(p)]=r
+    return b
+def jd(r):return json.loads(raw(r))
+def local(p):
+    p=Path(p);b=p.read_bytes();return descriptor(p,b)
+def defs(b):
+    t=ast.parse(b);lines=b.decode().splitlines(keepends=True)
+    return {n.name:''.join(lines[n.lineno-1:n.end_lineno]) for n in t.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef))}
+def inverse(row):
+    a=row['whole_parent_body'];b=row['whole_child_body']
+    assert ''.join(x for op in row['whole_line_inverse'] for x in op['old'])==a
+    assert ''.join(x for op in row['whole_line_inverse'] for x in op['new'])==b
+    assert raw(row['parent'])==a.encode() and raw(row['child'])==b.encode()
+    return defs(a.encode()),defs(b.encode())
+
+ready=jd(local(D/'handoff_READY.json'));plan=jd(ready['plan']);invoice=jd(ready['invoice'])
+prog=raw(ready['program']);controls=raw(ready['controls'])
+assert (len(prog),h(prog))==(26096,'4fc9289f4d74a074329356779957f28bfb750c5276033f9b1c0b5655cc32afff')
+assert (len(controls),h(controls))==(14312,'cb6d956c2af331aa1926ed353f1e7ac82cb2ea12ab461f0af5e5af3614714e16')
+assert len(prog)+len(controls)==40408<=65536
+inv=jd(ready['Source_inverse'])
+for row in inv['rows']:
+    ad,bd=inverse(row)
+    if row['child']==ready['program']:
+        assert sorted(k for k in ad if k in bd and ad[k]==bd[k])==inv['literal_parent_implementation_definitions']
+        assert sorted(k for k in ad if k in bd and ad[k]!=bd[k])==['publish_new','whole']
+        assert sorted(set(bd)-set(ad))==['read_back','stable_signature']
+boot=jd(ready['control_bootstrap_inverse']);ca,cb=inverse(boot)
+assert boot['adopter_unchanged']==ready['program']
+assert boot['whole_parent_body'][boot['whole_parent_body'].index(' names=[]'):]==boot['whole_child_body'][boot['whole_child_body'].index(' names=[]'):]
+tree=ast.parse(controls);calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call)]
+assert not any(isinstance(n,ast.Attribute) and n.attr=='read_bytes' for n in ast.walk(tree))
+names=[n.args[0].value for n in calls if isinstance(n.func,ast.Name) and n.func.id in ('good','bad') and n.args and isinstance(n.args[0],ast.Constant)]
+astnames=[n.args[0].value for n in calls if isinstance(n.func,ast.Attribute) and isinstance(n.func.value,ast.Name) and n.func.value.id=='ast_names' and n.func.attr=='append']
+assert len(names)==36 and len(names)==len(set(names)) and len(astnames)==5
+upstream=jd(local(D.parent/'Source_inverse.json'));ua,ub=inverse(upstream)
+assert sorted(k for k in ua if k in ub and ua[k]==ub[k])==upstream['literal_same_definitions']==['can','digest','doc','runs']
+scientific_peer=jd(local('/private/tmp/q11_matrix_subgroup_closure/operand37_line_route/canonical_header_successor/journal_independent_review/independent_review.json'))
+assert scientific_peer['status']=='SUPPORTED_STATIC' and scientific_peer['blockers']==[] and scientific_peer['source_author']=='/root/journal_peer/large_end_route_audit'
+assert scientific_peer['sources']['strict']['sha256']=='7df5071eb1fe1ba049966f26225e74a055117b35d68f85143490b5a03aac5b33'
+
+# Only the exact retained aliases supply scientific/Source/runtime bytes.
+aliases={};manifests=[]
+for r in plan['retention_manifests']:
+    m=jd(r);assert Path(r['path']).is_relative_to(S)
+    assert m['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1' and m['root']=='/root' and m['scientific_calls']==0
+    for row in m['files']:
+        a,b=row['original'],row['retained'];assert (a['bytes'],a['sha256'])==(b['bytes'],b['sha256']) and Path(b['path']).is_relative_to(S)
+        aliases.setdefault((a['path'],a['bytes'],a['sha256']),[]).append(b)
+    manifests.append(m)
+fixed={}
+def kept(r):
+    if Path(r['path']).is_relative_to(S):return r
+    return min(aliases[(r['path'],r['bytes'],r['sha256'])],key=lambda v:v['path'])
+def fixedraw(r):
+    r=kept(r);fixed[r['path']]=r;return raw(r)
+def read(r):return json.loads(fixedraw(r))
+for r in plan['retention_manifests']:fixed[r['path']]=r
+prior=read(plan['previous_selector'])
+assert h(canon(prior))==plan['previous_selector']['sha256']
+assert prior['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1' and prior['root']=='/root' and prior['adopted'] is True
+assert prior['original_job']==[23,4] and prior['original_orbit_positions']==3801
+baseline=prior['original_paid_positions'];paid=prior['accepted_new_paid_positions']
+unpaid=[i for a,b in prior['unresolved_position_runs'] for i in range(a,b+1)]
+groups=prior['accepted_paid_by_kind']
+assert len(baseline)==217 and len(paid)==3546 and len(unpaid)==38
+assert sorted(baseline+paid+unpaid)==list(range(1,3802))
+assert h(canon(unpaid)[:-1])==prior['expanded_unresolved_sha256']
+assert {k:len(v) for k,v in groups.items()}=={'cyclic_nongeneration':0,'field_nongeneration':0,'invariant_line_nongeneration':43,'large_end_spectrum_IP_failure':25,'other_legacy_IP_failure':0,'section_IP_failure':224,'two_end_theorem_IP_failure':3254}
+assert sum(len(v) for v in groups.values())==len(set(i for v in groups.values() for i in v))==3546
+assert len(prior['source_adoptions'])==10 and len(prior['previous_method_attempts'])==9
+oldmiss=sorted({i for m in prior['previous_method_attempts'] for i in m['finite_miss_positions']})
+assert len(oldmiss)==265 and prior['historical_misses_current_unpaid']==sorted(set(oldmiss)&set(unpaid))
+assert plan['positive_positions']==unpaid and [x['position'] for x in plan['proof_bundles']]==unpaid
+assert len(plan['retention_manifests'])==16
+assert plan['Root_authority'] is False and plan['Root_joint_scientific_review'] is None and plan['scientific_calls']==0
+assert plan['program']==ready['program'] and plan['control_program']==ready['controls']
+strictpair=(18045,'7df5071eb1fe1ba049966f26225e74a055117b35d68f85143490b5a03aac5b33')
+families={(19548,'66f8e195af640412ae7e8a5644525b571716d80de0c991a474ce667fd9d1c2ca'):(14471,'40d73d716e3c48351498d7c94c709b3be87f5107b5e7472d70e9a916b377de2a'),(22690,'e33cc2084216a843cf3a1d67db7aafefa45689718f711a055d921d9350984919'):(19988,'b74364aad3279646ce4f83270efda6b9e18f988af53ff307449388b8867384c9')}
+def pair(r):return r['bytes'],r['sha256']
+theory=(26437,'f1b6c8a69780c7b8ac88f239627a7ce6889c24203f72ddc35c86fe93e661e76b');endip=(4302,'9f52e0d341e68ff2649b2d419635e9b6fc4d1c320a3a3469dc56af97775447bc')
+mode='ORIGINAL_SAME_END37_UNIQUE_FIXED_LINE_ESCAPE_V1'
+case_rows=[]
+for item in plan['proof_bundles']:
+    result=read(item['result']);sp=read(item['plan']);hint=read(item['hint']);accepted=read(item['operand_acceptance'])
+    assert result['schema']=='Q11_OPERAND37_LINE_STRICT_RESULT_V1' and result['status']=='VERIFIED_ORIGINAL_END_EQUALS_G_AND_IP_FAILURE'
+    assert pair(result['program'])==strictpair and result['conditional_original_end_equals_G'] is True and result['conditional_IP_failure'] is True and result['Root_typed_adoption_owed'] is True
+    assert result['proof_mode']==sp['proof_mode']==hint['proof_mode']==mode
+    assert all(type(result[k]) is int and result[k]==0 for k in ['strict_RREF_or_search_calls','proposer_imports','original_context_code_imports','new_paid_credit','whole_original_credit'])
+    for v in [result,sp,hint,accepted]:
+        assert v['original_job']==[23,4] and type(v['position']) is int and v['position']==item['position'] and v['selector']==plan['previous_selector']
+        assert type(v['representative']) is int and v['representative']==sp['representative'] and v['whole_orbit_sha256']==sp['whole_orbit_sha256']
+        assert v['operand']==sp['operand']
+    assert result['operand_acceptance']==sp['operand_acceptance']==hint['operand_acceptance']==item['operand_acceptance']
+    assert result['actual_supplied_hint']==sp['hint']==item['hint'] and result['plan']==item['plan'] and result['source_gate']==item['gate']
+    assert accepted['schema']=='ROOT_ACCEPTED_Q11_ORIGINAL_QUARTET_OPERAND_V1' and accepted['root']==accepted['reviewer']=='/root' and accepted['Root_authority_granted'] is True
+    assert accepted['checks']['original_member_frame_faithful_orbit_G_A_equals_G'] is True and accepted['old_proof_DAG_qualification']
+    assert sp['schema']=='Q11_OPERAND37_LINE_STRICT_PLAN_V1' and pair(sp['program'])==strictpair
+    assert sp['grammar']==hint['grammar']=='SAME_END_LITERAL_012_LENGTH1_TO64_V1' and pair(sp['control_program'])==families[pair(sp['proposer_program'])]
+    assert pair(sp['prime_theory'])==pair(result['prime_theory'])==theory and pair(sp['end_IP_theory'])==pair(result['end_IP_theory'])==endip
+    assert type(sp['mask']) is int and sp['mask'] in [7,14] and sp['mask']==hint['mask']==result['mask']
+    assert type(sp['word']) is str and 1<=len(sp['word'])<=64 and set(sp['word'])<=set('012') and type(sp['power']) is int and sp['power']==6
+    header=dict(schema='Q11_ORIGINAL_END37_LINE_ESCAPE_HINT_V1',proof_mode=mode,grammar=sp['grammar'],operand=sp['operand'],operand_acceptance=sp['operand_acceptance'],selector=plan['previous_selector'],original_job=[23,4],position=item['position'],representative=sp['representative'],whole_orbit_sha256=sp['whole_orbit_sha256'],mask=sp['mask'],word=sp['word'],power=sp['power'],proposer_program=sp['proposer_program'])
+    assert set(hint)==set(header)|{'vector','escape_generator','minor'} and canon({k:hint[k] for k in header})==canon(header)
+    vector=hint['vector'];label=hint['escape_generator'];minor=hint['minor']
+    assert len(vector)==7 and all(type(x) is int and 0<=x<11 for x in vector) and any(vector)
+    assert type(label) is int and label in ((0,1,2) if sp['mask']==7 else (1,2,3))
+    assert len(minor)==2 and all(type(x) is int for x in minor) and 0<=minor[0]<minor[1]<7
+    assert canon(result['checks'])==canon(dict(end_mask=sp['mask'],all_saved_fixed_equations_checked=True,same_end_escape_generator=label,nonzero_minor=minor,exact37_word_checked=True,strict_RREF_or_search_calls=0))
+    assert len(fixedraw(sp['operand']))==294
+    for r in [result['program'],sp['proposer_program'],sp['control_program'],result['prime_theory'],result['end_IP_theory']]:fixedraw(r)
+    gate=read(item['gate']);review=read(gate['Root_code_math_review']);report=read(gate['control_report'])
+    assert gate['schema']=='ROOT_AUTHORIZED_Q11_OPERAND37_LINE_STRICT_V1' and gate['root']=='/root' and gate['adopted'] is True and gate['new_case_calls_authorized'] is True
+    assert gate['program']==result['program'] and gate['plan']==item['plan'] and gate['operand_acceptance']==item['operand_acceptance'] and gate['selector']==plan['previous_selector']
+    assert review['schema']=='ROOT_REVIEWED_Q11_OPERAND37_LINE_SOURCE_V1' and review['root']==review['reviewer']=='/root' and review['status']=='SUPPORTED' and review['blockers']==[]
+    assert review['program']==result['program'] and review['plan']==item['plan'] and review['operand_acceptance']==item['operand_acceptance'] and review['selector']==plan['previous_selector']
+    assert review['natural_Cayley_classification_unique37_line_and_one_full_end_IP_checked'] is True
+    expected=(34,7) if sp['proposer_program']['bytes']==19548 else (44,11)
+    assert report['schema']=='Q11_OPERAND37_LINE_GENERIC_CONTROLS_V1' and report['status']=='PASS' and report['program']==sp['control_program'] and report['proposer']==sp['proposer_program'] and pair(report['strict'])==strictpair
+    assert report['original_case_calls']==0 and (report['pure_controls'],report['AST_controls'])==expected
+    execution=item['strict_execution'];cap=read(execution['capture']);guard=read(execution['guard']);started=read(execution['started']);stdout=json.loads(fixedraw(execution['stdout']));stderr=fixedraw(execution['stderr'])
+    assert guard['status']=='PASS' and guard['stop']=='RETURNED' and type(guard['returncode']) is int and guard['returncode']==0 and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+    assert guard['limits']['total_rss']==128*2**20 and guard['limits']['wall_seconds']==150 and guard['seconds']<150 and guard['peaks']['total_rss']<128*2**20
+    assert cap.get('root',cap.get('actor'))=='/root' and cap['actual_tool']['exit_code']==0
+    frames=cap['all_genuine_api_frames'];assert frames and frames[0]==cap['full_initial_tool_return'] and frames[-1]==cap['full_tool_return'] and frames[-1]['exit_code']==0
+    argv=guard['command'];assert started['command']==argv and argv[1:4]==['-E','-S','-B'] and argv[4]==result['program']['path']
+    assert argv[argv.index('--self-sha256')+1]==result['program']['sha256']
+    assert argv[argv.index('--plan')+1:argv.index('--plan')+3]==[item['plan']['path'],item['plan']['sha256']]
+    assert argv[argv.index('--Root-gate')+1:argv.index('--Root-gate')+3]==[item['gate']['path'],item['gate']['sha256']]
+    outer=cap['child_argv'];assert cap['issued_argv']==outer and outer[outer.index('--')+1:]==argv
+    assert stderr==b'' and stdout['status']==result['status'] and stdout['result']==item['result']
+    case_rows.append(dict(position=item['position'],mask=sp['mask'],result=item['result'],strict_execution=item['strict_execution'],Source_family=pair(sp['proposer_program']),seconds=guard['seconds'],peak=guard['peaks']['total_rss']))
+for r in prior['source_adoptions']:
+    old=read(r);assert old['root']=='/root' and old['adopted'] is True
+assert len(fixed)==466 and sum(x['bytes'] for x in fixed.values())==2834393
+assert sorted(fixed.values(),key=lambda x:x['path'])==sorted(invoice['fixed_actual_union'],key=lambda x:x['path'])
+assert invoice['fixed_actual_paths']==466 and invoice['fixed_actual_bytes']==2834393
+assert Counter(x['mask'] for x in case_rows)=={7:34,14:4}
+assert 217+3503+43+38==3801 and 3503+38==3541 and 3541+43==3584
+
+# Physical read algebra independently derived from full Source read sites.
+# Cached fixed union once + final whole-ref sweep; own implicit bootstrap once;
+# plan and joint review read+final sweep; final write rereads bounded2MiB.
+fixedbytes=sum(x['bytes'] for x in fixed.values());pb=ready['plan']['bytes'];own=ready['program']['bytes']
+prepare=2*fixedbytes+3*own+2*pb+2*32768+2097152
+publish=prepare+2*(2097152+32768+16384)
+assert prepare==invoice['prepare_complete_read_upper']==8121814
+assert publish==invoice['publish_complete_read_upper']==12414422
+assert prepare<64*2**20 and publish<64*2**20
+assert invoice['total_actual_paths_upper']==476<1024 and invoice['new_output_upper']==2097152<16*2**20
+assert all(r['bytes']<=4*2**20 for r in fixed.values())
+actual_controls={k:local(D/'runtime'/v) for k,v in dict(capture='generic_controls_actual_capture.json',guard='generic_controls_guard/receipt.json',started='generic_controls_guard/started.json',stdout='generic_controls_guard/stdout.log',stderr='generic_controls_guard/stderr.log').items()}
+ac=jd(actual_controls['capture']);ag=jd(actual_controls['guard']);astart=jd(actual_controls['started']);ar=jd(actual_controls['stdout'])
+assert ac['root']=='/root' and ac['actual_tool']['exit_code']==0 and ac['all_genuine_api_frames'][0]==ac['full_initial_tool_return'] and ac['all_genuine_api_frames'][-1]==ac['full_tool_return'] and ac['full_tool_return']['exit_code']==0
+assert ac['child_argv']==ac['issued_argv'] and ac['issued_argv'][ac['issued_argv'].index('--')+1:]==ag['command']==astart['command']
+assert ag['status']=='PASS' and ag['stop']=='RETURNED' and ag['returncode']==0 and ag['cleanup']['errors']==ag['cleanup']['remaining']==[]
+assert ar['status']=='PASS' and ar['program']==ready['program'] and ar['control_program']==ready['controls'] and ar['controls']==36 and ar['AST_controls']==5 and ar['original_case_calls']==0 and raw(actual_controls['stderr'])==b''
+assert ar['names']==names and ar['AST_names']==astnames
+observations=dict(schema='INDEPENDENT_Q11_TYPED_IP_METADATA_STATIC_OBSERVATIONS_V1',reviewer='/root/journal_peer/large_end_route_audit',status='PASS',Source=ready['program'],controls=ready['controls'],plan=ready['plan'],handoff=local(D/'handoff_READY.json'),Source_inverse=ready['Source_inverse'],control_inverse=ready['control_bootstrap_inverse'],upstream_inverse=local(D.parent/'Source_inverse.json'),scientific_Source_peer_import=local('/private/tmp/q11_matrix_subgroup_closure/operand37_line_route/canonical_header_successor/journal_independent_review/independent_review.json'),literal_parent_definitions=inv['literal_parent_implementation_definitions'],control_design_names=names,AST_design_names=astnames,Root_actual_controls=actual_controls,controls_executed_by_peer=0,all_represented_activations_by_peer=0,fixed_union=sorted(fixed.values(),key=lambda x:x['path']),fixed_paths=len(fixed),fixed_bytes=fixedbytes,cases=case_rows,counts_if_correct_Root_publication=dict(baseline=217,IP=3541,NG=43,later_paid=3584,unpaid=0),independent_read_upper=dict(prepare=prepare,publish=publish),all38_original_equations_replayed=False,old_proof_DAG_reopened=False,Root_joint_review_bound=False,Root_prepare_release_publication_performed=False,restrictions='Read exact selected Source text/AST and whole retained metadata/byte pins only. No represented Source/control/science/math/state activation or S/W/Git/gates. Scientific Source correctness remains imported from separate independent peer8e; no self-review or verdict transfer.')
+O.mkdir(parents=True,exist_ok=True);(O/'observations.json').write_bytes(canon(observations))
+print(json.dumps(dict(status='PASS',fixed_paths=len(fixed),fixed_bytes=fixedbytes,case_count=len(case_rows),Source_namespace=len(prog),controls_namespace=len(prog)+len(controls),designs=[len(names),len(astnames)],prepare_upper=prepare,publish_upper=publish,physical_files_opened_by_peer=len(opened),physical_unique_bytes_opened_by_peer=sum(x['bytes'] for x in opened.values()),observations=local(O/'observations.json')),sort_keys=True))

@@ -1,0 +1,103 @@
+"""Independent stdlib/AST/hash/DATA audit. Never activates represented Source."""
+import ast,hashlib,json,pathlib
+D=pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/operand37_line_route/canonical_header_successor')
+O=D/'journal_independent_review';seen={}
+def reference(p):
+ b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def check(r):
+ assert reference(pathlib.Path(r['path']))==r
+ seen[r['path']]=r
+def doc(p):return json.loads(p.read_bytes())
+def save(p,x):p.write_text(json.dumps(x,sort_keys=True,indent=2)+'\n');return reference(p)
+h=doc(D/'handoff.json')
+for k,v in h.items():
+ if type(v)is dict and set(v)=={'path','bytes','sha256'}:check(v)
+for r in h['sources'].values():check(r)
+raw={k:pathlib.Path(r['path']).read_text()for k,r in h['sources'].items()}
+trees={k:ast.parse(v)for k,v in raw.items()}
+def definitions(text,t):return {n.name:ast.get_source_segment(text,n)for n in t.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+defs={k:definitions(raw[k],trees[k])for k in raw}
+iv=doc(D/'Source_inverse.json')
+for k,x in iv['whole_new_sources'].items():check(x['ref']);assert x['whole_body']==raw[k]
+shared=sorted(set(defs['proposer'])&set(defs['strict'])-{'main'})
+assert shared==iv['pair_shared_literal_definitions']
+assert all(defs['proposer'][n]==defs['strict'][n]for n in shared)
+ops=iv['pair_ordered_whole_line_inverse']
+assert ''.join(s for op in ops for s in op['old'])==raw['proposer']
+assert ''.join(s for op in ops for s in op['new'])==raw['strict']
+for r in iv['pre_freeze_draft_inverses']:check(r)
+delta=doc(D/'canonical_header_delta_inverse.json');deltaobservations=[]
+check(delta['parent_frozen'])
+for row in delta['rows']:
+ check(row['parent']);check(row['successor'])
+ old=pathlib.Path(row['parent']['path']).read_text();new=pathlib.Path(row['successor']['path']).read_text()
+ assert row['whole_parent_body']==old and row['whole_successor_body']==new
+ assert ''.join(s for op in row['whole_line_inverse']for s in op['old'])==old
+ assert ''.join(s for op in row['whole_line_inverse']for s in op['new'])==new
+ od=definitions(old,ast.parse(old));nd=definitions(new,ast.parse(new))
+ changed=sorted(k for k in od if od[k]!=nd[k]);assert changed==row['changed_whole_definitions']
+ assert all(od[k]==nd[k]for k in row['literal_other_definitions'])
+ deltaobservations.append(dict(parent=row['parent'],successor=row['successor'],changed=changed,literal_other_count=len(row['literal_other_definitions'])))
+assert 'derive_fixed_row'not in defs['strict']and 'propose_hint'not in defs['strict']
+for k in('proposer','strict'):
+ forbidden=[]
+ for n in ast.walk(trees[k]):
+  if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in('exec','eval','compile','__import__'):forbidden.append(n.func.id)
+ assert not forbidden
+assert sum(r['bytes']for r in h['sources'].values())==52064
+pure=[n.args[0].value for n in ast.walk(trees['controls'])if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id=='passed'and n.args and isinstance(n.args[0],ast.Constant)]
+asts=[n.args[0].value for n in ast.walk(trees['controls'])if isinstance(n,ast.Call)and isinstance(n.func,ast.Attribute)and isinstance(n.func.value,ast.Name)and n.func.value.id=='ast_names'and n.func.attr=='append'and n.args and isinstance(n.args[0],ast.Constant)]
+assert len(pure)==len(set(pure))==34 and len(asts)==len(set(asts))==7
+ph=doc(D/'plans_handoff_UNBOUND.json');planobs=[]
+for case in ph['plans']:
+ pos=case['position']
+ for role,r in case['plans'].items():
+  check(r);x=doc(pathlib.Path(r['path']))
+  if role in('PROPOSER','STRICT'):
+   assert x['position']==pos and x['mask']==7 and x['word']=='12102'and x['power']==6
+   assert x['operand']is None and x['operand_acceptance']is None
+   if role=='STRICT':assert x['hint']is None
+   assert x['program']==h['sources']['proposer'if role=='PROPOSER'else'strict']
+   for q in x['inputs']:check(q)
+   assert sum(q['bytes']for q in x['inputs'])==158706 and len(x['inputs'])==6
+   planobs.append(dict(role=role,plan=r,position=pos,representative=x['representative'],orbit_sha=x['whole_orbit_sha256'],future_operand_acceptance=None))
+  elif role.endswith('gate_template'):
+   assert x['root']is None and x['adopted']is False and x['new_case_calls_authorized']is False
+  else:assert x['status']=='UNREVIEWED'and x['natural_Cayley_classification_unique37_line_and_one_full_end_IP_checked']is False
+ check(case['untrusted_hint_origin'])
+ domainpath=pathlib.Path('/Users/sasha/medusa/research/leemans/computation/f004/small_inventory_work/cayley_centralizer_certificate/cases/indexed_original_prefixes/branch0023_rank4/check/output/result.json')
+ domain=doc(domainpath);row=domain['orbits'][pos-1]
+ for r in planobs:
+  if r['position']==pos:assert r['representative']==row[0]and r['orbit_sha']==hashlib.sha256(json.dumps(row,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+inv=doc(D/'read_work_invoice.json')
+assert sum(r['bytes']for r in inv['whole_known_fixed_inputs'])==158706
+assert 158706+32768+294+131072+8192+32768+16384==380184
+assert inv['proposer']['physical_read_bytes_upper']==2*380184
+assert inv['strict']['physical_read_bytes_upper']==2*(380184+16384)
+assert 17*64+2*49+4+1024==2214
+assert 34*64+6*49+504+42+252+4+1024==4296
+obs=dict(schema='Q11_OPERAND37_INDEPENDENT_STATIC_SOURCE_DATA_OBSERVATIONS_V1',reviewer='/root/journal_peer',
+ subject_handoff=reference(D/'handoff.json'),subjects=h['sources'],whole_pins_checked=list(seen.values()),
+ whole_Source_pair_inverse=True,shared_literal_predicates=shared,canonical_delta_inverse=deltaobservations,
+ strict_has_no_RREF_search_or_proposer_context_import=True,whole_Source_namespace=dict(proposer=19548,strict=18045,controls=52064),
+ controls_UNRUN=dict(pure=34,AST=7,pure_names=pure,AST_names=asts),DATA=planobs,
+ math_read_scope='All selected new proposer/strict/controls Source bodies, ARGUMENT/INTERFACE; complete f1b6 natural-module/maximal/unique37line text and whole9f52 one-full-end proof; old maximal classification retained as attributed premise, not independently recomputed.',
+ mathematical_predicates_supported=['same exact accepted original quartet/natural G2(11) scope','exact37 same-end word','canonical nonzero v with all7 right fixed equations','actual generator INSIDE same end and nonzero2x2minor','one full end contains omitted original nonidentity singleton, hence IP failure'],
+ canonical_header_type_alias_repair_verified=True,
+ resource_qualification=dict(explicit_read_recheck_upper=dict(proposer=760368,strict=793136),
+  own_Python_Source_bootstrap_add=dict(proposer=19548,strict=18045),
+  total_physical_read_upper_including_bootstrap=dict(proposer=779916,strict=811181),
+  input_paths=dict(proposer=12,strict=13),total_paths_including_outputs=dict(proposer=14,strict=14),
+  no_source_change_needed_for_selected_bound_shape=True,
+  output_resources='Snapshot before output writes. Source does not reread output; Root actual output wholehash+retention still owed. No output reads invented.'),
+ represented_Source_control_case_activation=0,state_graph_decode=0,S_W_Git_gates=0,
+ no_actual_294_operand_or_positive_Root_receipt_read_or_assumed=True,
+ future_requirements=['Root ownSource/math review and actual controls','actual exporter closure+explicit Root294 acceptance','distinct bound DATA with real operand/receipt and exact complete invoice','fresh proposerRootgate','actual strict hint and separate strictRootgate','actual output hashes/runtime/retention+new typed Root adoption'],
+ no_scientific_or_Original_credit=True)
+r=save(O/'observations.json',obs)
+review=dict(schema='Q11_OPERAND37_INDEPENDENT_SOURCE_MATH_CONTROL_DATA_REVIEW_V1',reviewer='/root/journal_peer',source_author=h['author'],
+ status='SUPPORTED_STATIC',blockers=[],subject=reference(D/'handoff.json'),sources=h['sources'],observations=r,
+ supported_scope='Selected37fixedline/mover kernel and current337/427 UNBOUNDtemplates; actual full-original premise supplied only by future Root-adopted294-byte receipt. Independent Source opinion, no Root/case authority.',
+ resource_qualification=obs['resource_qualification'],controls_cases_and_Root_adoption='ALL OWED; no represented execution by reviewer',authority='NONE')
+rr=save(O/'independent_review.json',review)
+print(json.dumps(dict(review=rr,observations=r,checked_pins=len(seen),status=review['status']),sort_keys=True))

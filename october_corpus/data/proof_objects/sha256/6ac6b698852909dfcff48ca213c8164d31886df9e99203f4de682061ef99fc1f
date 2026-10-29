@@ -1,0 +1,166 @@
+"""UNRUN pure GL7/F11 and metadata controls; no Original/G2 case fixture.
+Both exact Sources are read as text and activated only on generic toy data
+when Root explicitly executes THIS controls program. Author ran AST only.
+"""
+import argparse,ast,copy,hashlib,json,os,pathlib,resource,sys,tempfile,time
+START=time.monotonic()
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def read_subject(pair):
+    p=pathlib.Path(pair[0]);raw=p.read_bytes()
+    need(p.is_absolute() and p.resolve(strict=True)==p and len(raw)<=65536
+         and hashlib.sha256(raw).hexdigest()==pair[1],'whole bounded exact synthetic subject')
+    return p,raw
+def refused(call):
+    try:call()
+    except(ValueError,KeyError,TypeError,IndexError):return
+    raise ValueError('negative generic fixture was accepted')
+def matrix(rows):return bytes(x for row in rows for x in row)
+def permutation(p):return bytes(int(p[i]==j)for i in range(7)for j in range(7))
+def toy37(ns,budget):
+    # Bounded generic ring quotients; no polynomial is assumed irreducible.
+    one=(1,0,0,0,0,0);x=(0,1,0,0,0,0)
+    for a in range(11):
+        for b in range(1,11):
+            def multiply(u,v):
+                budget.scalar(96);out=[0]*11
+                for i in range(6):
+                    for j in range(6):out[i+j]=(out[i+j]+u[i]*v[j])%11
+                for k in range(10,5,-1):
+                    c=out[k];out[k-6]=(out[k-6]-b*c)%11;out[k-5]=(out[k-5]-a*c)%11
+                return tuple(out[:6])
+            def exponent(z,n):
+                result=one
+                for bit in bin(n)[2:]:
+                    result=multiply(result,result)
+                    if bit=='1':result=multiply(result,z)
+                return result
+            z=exponent(x,47880)
+            rows=[multiply(tuple(int(i==j)for i in range(6)),z)for j in range(6)]
+            Y=matrix([(1,0,0,0,0,0,0)]+[(0,)+row for row in rows])
+            if Y!=ns['I7'] and ns['power'](Y,37,budget)==ns['I7']:return Y
+    raise ValueError('bounded generic quotient fixture supplied no directly checked37')
+def main():
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,
+         'Root must explicitly run minimal E/S/B controls')
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--proposer',nargs=2,required=True);parser.add_argument('--strict',nargs=2,required=True)
+    args=parser.parse_args();pp,praw=read_subject(args.proposer);sp,sraw=read_subject(args.strict)
+    need(len(praw)+len(sraw)+pathlib.Path(__file__).stat().st_size<=65536,'all actually activated Source text counted')
+    P={'__name__':'toy_proposer_subject','__file__':str(pp)};V={'__name__':'toy_strict_subject','__file__':str(sp)}
+    exec(compile(praw,str(pp),'exec'),P);exec(compile(sraw,str(sp),'exec'),V)
+    def reference(p,raw):return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+    pr=reference(pp,praw);sr=reference(sp,sraw)
+    names=[];ast_names=[]
+    def passed(name):
+        need(name not in names,'unique pure design name');names.append(name)
+    B=P['Budget']();I=P['I7'];S=permutation([1,0,2,3,4,5,6]);T=permutation([0,2,1,3,4,5,6])
+    need(B.multiply(I,S)==B.multiply(S,I)==S,'packed identity both sides');passed('packed_identity_both_sides')
+    need(B.multiply(S,T)!=B.multiply(T,S),'noncommuting generic permutations');passed('noncommuting_right_action')
+    row=(1,0,0,0,0,0,0)
+    need(B.image(B.image(row,S),T)==B.image(row,B.multiply(S,T)),'row right-action order');passed('row_right_action_composition_order')
+    parts=(S,T,I,I,I,I)
+    need(P['word_value'](parts,7,'01',1,B)==B.multiply(S,T),'left local word');passed('left_local_word_order')
+    need(P['word_value'](parts,14,'0',1,B)==T,'right local0 is global1');passed('right_end_local_global_label')
+    for word,power in[('',1),('3',1),('0'*65,1),(True,1),('0',True),('0',0),('0',257)]:
+        refused(lambda w=word,p=power:P['word_header'](w,p))
+    passed('literal_word_and_positive_power_type_range_refusals')
+    need(P['power'](S,0,B)==I and P['power'](S,2,B)==I,'binary power endpoints');passed('binary_power_zero_and_involution')
+    refused(lambda:P['end_indices'](True));refused(lambda:P['end_indices'](15));passed('end_mask_bool_full_mask_refusal')
+    Y=toy37(P,B);need(Y!=I and P['power'](Y,37,B)==I,'actual generic37 fixture');passed('generic_packed_exact37_fixture')
+    vector=P['derive_fixed_row'](Y,B)
+    need(vector is not None and B.image(vector,Y)==vector and vector==row,'7-variable right-fixed RREF');passed('seven_variable_right_fixed_row_proposal')
+    fake=lambda n:dict(path='/toy/'+n,bytes=1,sha256='0'*64)
+    plan=dict(operand=dict(path='/toy/operand',bytes=294,sha256='0'*64),operand_acceptance=fake('accepted'),
+        selector=fake('selector'),original_job=[23,4],position=1,representative=2,whole_orbit_sha256='1'*64,
+        mask=7,word='0',power=1,proposer_program=pr,strict_program=sr)
+    parts=(Y,S,I,I,I,I);hint,status=P['propose_hint'](plan,parts,B)
+    need(hint is not None and hint['escape_generator']==1,'same-end mover proposed');passed('same_end_mover_hint_proposed')
+    checked=V['verify_hint'](hint,plan,parts,B)
+    need(checked['strict_RREF_or_search_calls']==0,'strict supplied equations only');passed('independent_strict_fixed_equations_and_nonzero_minor')
+    scaled=copy.deepcopy(hint);scaled['vector']=[2*x%11 for x in hint['vector']]
+    V['verify_hint'](scaled,plan,parts,B);passed('identity_independent_nonzero_fixed_row_scaling')
+    for name,value in [('zero',[0]*7),('bool',[True]+[0]*6),('short',[1]),('nonfield',[11]+[0]*6),('wrong_fixed',[0,1,0,0,0,0,0])]:
+        bad=copy.deepcopy(hint);bad['vector']=value;refused(lambda bad=bad:V['verify_hint'](bad,plan,parts,B))
+    passed('all_fixed_vector_type_shape_field_and_equation_refusals')
+    for minor in([0,0],[1,0],[False,1],[0,7],[2,3]):
+        bad=copy.deepcopy(hint);bad['minor']=minor;refused(lambda bad=bad:V['verify_hint'](bad,plan,parts,B))
+    passed('full_nonzero_ordered_minor_refusals')
+    bad=copy.deepcopy(hint);bad['escape_generator']=3;refused(lambda:V['verify_hint'](bad,plan,parts,B));passed('omitted_knownG_or_other_end_mover_refusal')
+    for key,value in [('word','1'),('position',True),('selector',fake('other')),('operand',fake('other')),('power',True)]:
+        bad=copy.deepcopy(hint);bad[key]=value;refused(lambda bad=bad:V['verify_hint'](bad,plan,parts,B))
+    passed('whole_original_hint_binding_and_bool_alias_refusals')
+    all_fixed=(Y,I,I,I,I,I);none,status=P['propose_hint'](plan,all_fixed,B)
+    need(none is None and status=='FINITE_MISS_SAME_END_LINE_ESCAPE_NOT_FOUND','same-end fixed line miss remains unpaid');passed('all_same_end_generators_preserve_line_unpaid')
+    none,status=P['propose_hint'](plan,(I,)*6,B)
+    need(none is None and status=='FINITE_MISS_SUPPLIED_WORD_NOT_EXACT37','invalid37 no RREF conclusion');passed('identity_or_failed37_unpaid')
+    pref=fake('plan');accepted=dict(schema='ROOT_ACCEPTED_Q11_ORIGINAL_QUARTET_OPERAND_V1',root='/root',reviewer='/root',
+        Root_authority_granted=True,operand=plan['operand'],original_job=[23,4],position=1,representative=2,whole_orbit_sha256='1'*64,selector=plan['selector'],
+        checks=dict(original_member_frame_faithful_orbit_G_A_equals_G=True),old_proof_DAG_qualification='TOY_ONLY_NO_AUTHORITY',
+        export_program=fake('export'),export_result=fake('result'),export_actual_capture=fake('capture'))
+    selector=dict(schema='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1',root='/root',adopted=True,original_job=[23,4],
+        unresolved_position_runs=[[1,1]],original_orbit_positions=1,unresolved_positions=1,
+        expanded_unresolved_sha256=hashlib.sha256(P['canonical']([1])).hexdigest())
+    P['accepted_metadata'](plan,accepted,selector);passed('typed_opaque_Original_operand_metadata_binding')
+    for change in('root','aggregate','position','digest','selector'):
+        bad=copy.deepcopy(accepted)
+        if change=='root':bad['root']='author'
+        elif change=='aggregate':bad['checks']['original_member_frame_faithful_orbit_G_A_equals_G']=False
+        elif change=='position':bad['position']=True
+        elif change=='digest':bad['whole_orbit_sha256']='2'*64
+        else:bad['selector']=fake('other')
+        refused(lambda bad=bad:P['accepted_metadata'](plan,bad,selector))
+    passed('Root_Original_aggregate_and_exact_binding_refusals')
+    bad=copy.deepcopy(plan);bad['position']=True;refused(lambda:P['accepted_metadata'](bad,accepted,selector));passed('plan_integer_bool_alias_refusal')
+    bad=copy.deepcopy(selector);bad['unresolved_position_runs']=[];bad['unresolved_positions']=0;bad['expanded_unresolved_sha256']=hashlib.sha256(P['canonical']([])).hexdigest()
+    refused(lambda:P['accepted_metadata'](plan,accepted,bad));passed('currently_paid_position_refusal')
+    gate=dict(schema='ROOT_AUTHORIZED_Q11_OPERAND37_LINE_PROPOSER_V1',root='/root',adopted=False,new_case_calls_authorized=False,
+        program=pr,plan=pref,operand_acceptance=plan['operand_acceptance'],selector=plan['selector'])
+    before=B.products;refused(lambda:P['gate_header'](plan,pref,pr,gate,'PROPOSER'));need(B.products==before,'false gate before all arithmetic');passed('false_Root_gate_refusal_before_arithmetic')
+    with tempfile.TemporaryDirectory(prefix='q11_operand37_generic_')as temporary:
+        path=pathlib.Path(temporary).resolve()/'toy.bin';path.write_bytes(b'GENERIC_FILE_ONLY')
+        raw=path.read_bytes();rr=reference(path,raw);bb=P['Budget']();need(bb.read(rr)==raw,'whole generic physical input')
+        bb.recheck();need(bb.read_bytes==2*len(raw),'entire before/after reads billed');passed('whole_physical_read_and_reread_bill')
+        wrong=dict(rr,sha256='f'*64);refused(lambda:P['Budget']().read(wrong));passed('wrong_whole_SHA_refusal')
+        link=path.parent/'hardlink';os.link(path,link);refused(lambda:P['Budget']().read(rr));link.unlink();passed('multi_link_physical_input_refusal')
+        alias=path.parent/'alias';alias.symlink_to(path);refused(lambda:P['Budget']().read(dict(rr,path=str(alias))));passed('symlink_path_alias_refusal')
+    for ref in(dict(path='/toy',bytes=True,sha256='0'*64),dict(path='/toy',bytes=2**21+1,sha256='0'*64)):
+        refused(lambda ref=ref:P['refcheck'](ref))
+    passed('bounded_descriptor_bool_size_refusals')
+    bb=P['Budget']()
+    try:bb.scalar(900000,True)
+    except P['SoftStop']:pass
+    else:raise ValueError('soft stop not raised')
+    passed('actual_scalar_soft_stop')
+    refused(lambda:P['Budget']().scalar(1000001));passed('actual_scalar_hard_cap')
+    bb=P['Budget']();bb.products=400000;refused(lambda:bb.multiply(I,I));passed('actual_matrix_product_hard_cap')
+    bb=P['Budget']();bb.images=200000;refused(lambda:bb.image(row,I));passed('actual_row_image_hard_cap')
+    pt=ast.parse(praw);vt=ast.parse(sraw)
+    pd={n.name:n for n in pt.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))};vd={n.name:n for n in vt.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+    for name in sorted(set(pd)&set(vd)-{'main'}):need(ast.dump(pd[name],include_attributes=False)==ast.dump(vd[name],include_attributes=False),'literal shared predicate '+name)
+    ast_names.append('all_shared_definition_AST_bodies_identical')
+    need('derive_fixed_row'not in vd and 'propose_hint'not in vd,'strict Source has no RREF/search definition');ast_names.append('strict_has_no_RREF_or_search_definition')
+    need(not any(isinstance(n,(ast.Import,ast.ImportFrom))and any(x.name.startswith(('runpy','numpy','sympy'))for x in n.names)for n in ast.walk(vt)),
+         'no project/scientific helper import');ast_names.append('strict_no_project_or_scientific_helper_import')
+    calls=[(n.lineno,n.func.id)for n in ast.walk(vd['load_case'])if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)]
+    line=lambda name:min(v for v,k in calls if k==name)
+    need(line('gate_header')<line('authority_metadata')<line('accepted_metadata')<line('unpack_operand'),'authority before operand math')
+    ast_names.append('fresh_Root_gate_review_acceptance_before_operand_action')
+    need(all(isinstance(n,ast.Constant)and n.value in(0,1)for n in ast.walk(ast.parse('0+1'))if isinstance(n,ast.Constant)),'static AST check live')
+    constants={n.targets[0].id:n.value.value for n in vt.body if isinstance(n,ast.Assign)and len(n.targets)==1 and isinstance(n.targets[0],ast.Name)and isinstance(n.value,ast.Constant)}
+    need(constants['PRIME_THEORY_SHA']=='f1b6c8a69780c7b8ac88f239627a7ce6889c24203f72ddc35c86fe93e661e76b'
+         and constants['END_IP_THEORY_SHA']=='9f52e0d341e68ff2649b2d419635e9b6fc4d1c320a3a3469dc56af97775447bc','fixed whole proof imports')
+    ast_names.append('both_whole_theorem_SHA_constants_fixed')
+    need(len(praw)<65536 and len(sraw)<65536 and len(praw)+len(sraw)+pathlib.Path(__file__).stat().st_size<=65536,'all Source text extent')
+    ast_names.append('full_case_and_generic_controls_namespace_extent')
+    need(any(isinstance(n,ast.Constant)and n.value==b'\n'for n in ast.walk(vd['main'])),'canonical supplied newline')
+    ast_names.append('whole_canonical_hint_newline')
+    elapsed=time.monotonic()-START;rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    need(elapsed<125 and rss<128*2**20,'complete generic controls physical envelope')
+    report=dict(schema='Q11_OPERAND37_LINE_GENERIC_CONTROLS_V1',status='PASS',program=reference(pathlib.Path(__file__).resolve(),pathlib.Path(__file__).read_bytes()),
+        proposer=pr,strict=sr,pure_controls=len(names),pure_names=names,AST_controls=len(ast_names),AST_names=ast_names,
+        original_case_calls=0,G2_or_Original_fixture=False,Root_authority_issued=False,
+        resources=dict(seconds=elapsed,peak_RSS=rss,toy_budget_scalar_units=B.scalar_units,toy_budget_products=B.products),
+        qualification='Generic GL7/F11, exact metadata and Source-layout controls only. No Original tuple/member/frame/Root acceptance, theorem result or paid case is supplied by these fixtures.')
+    print(json.dumps(report,sort_keys=True,separators=(',',':')))
+if __name__=='__main__':main()

@@ -1,0 +1,127 @@
+"""UNRUN synthetic alias/fault controls; no original state or graph cases.
+Only named original functions are compiled into explicitly fake providers.
+No Source main, original module, Native process or saved state is activated.
+"""
+import argparse,ast,copy,hashlib,json,os,resource,sys,time,types
+from pathlib import Path
+START=time.monotonic()
+QDIR=Path('/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split')
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--helper',nargs=2,required=True);ap.add_argument('--out',type=Path,required=True);a=ap.parse_args();seen={}
+    def need(ok,why):
+        if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>128*2**20 or time.monotonic()-START>=140:raise RuntimeError('128MiB/140s synthetic controls')
+        if not ok:raise ValueError(why)
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+         and all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'same cleared EBS interpreter')
+    def source(path,sha=None):
+        p=Path(path);raw=p.read_bytes();need(len(raw)<=65536 and(sha is None or hashlib.sha256(raw).hexdigest()==sha),'whole finite control Source')
+        seen[str(p)]=raw;return raw.decode()
+    hp=Path(a.helper[0]);text=source(hp,a.helper[1]);H=types.ModuleType('synthetic_workspace_helper');H.__file__=str(hp);exec(compile(text,str(hp),'exec'),vars(H))
+    expected={'census_queue.py': {'path': '/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_queue.py', 'bytes': 10549, 'sha256': 'abaaa9736c8ebc2986c743b641ec4058642d97bf9619efb07cfa921639b8fd25'}, 'census_queue_verify.py': {'path': '/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_queue_verify.py', 'bytes': 11934, 'sha256': '739a3576e090d3ee02516c3e11ab53a96a5d169246ae90c5bde6d98be087c8b5'}, 'census_queue_runtime.py': {'path': '/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_queue_runtime.py', 'bytes': 7744, 'sha256': 'f868bb9013e19c1136d118166286bf76177bde2a9d1f22cc8736de0c50e63971'}}
+    owned=source(H.OWNED['path'],H.OWNED['sha256'])
+    qtext=source(expected['census_queue.py']['path'],expected['census_queue.py']['sha256'])
+    vtext=source(expected['census_queue_verify.py']['path'],expected['census_queue_verify.py']['sha256'])
+    mtext=source(expected['census_queue_runtime.py']['path'],expected['census_queue_runtime.py']['sha256'])
+    def named(text,name):return ast.get_source_segment(text,next(n for n in ast.parse(text).body if isinstance(n,ast.FunctionDef)and n.name==name))
+    prepare=named(qtext,'prepare');before='temporary=copy.deepcopy(state)';after='temporary=OWNED_STATE_COPY(state)'
+    need(prepare.count(before)==1,'one existing owned-state copy transformation');private_prepare=prepare.replace(before,after,1);need(private_prepare.replace(after,before,1)==prepare,'whole old prepare inverse')
+    cp={};exec(compile(named(owned,'owned_state_copy'),H.OWNED['path'],'exec'),dict(need=need,copy=copy),cp);copier=cp['owned_state_copy']
+    rows=[]
+    def fixture(fail_candidate=None):
+        pool={};trace=[];work=[];writes={};calls=[]
+        def record(values):
+            raw=(json.dumps(values)+'\n').encode();ident=hashlib.sha256(raw).hexdigest();pool[ident]=(raw,values)
+            return dict(file=dict(path='/synthetic/records',bytes=1,sha256='e'*64),line=len(pool)-1,sha256=ident)
+        values=[32,5,4,8,0,1,0,0,0,1,2];oldref=record(values);ident=oldref['sha256']
+        newvalues=list(values);newvalues[-1]=3;newref=record(newvalues)
+        aliasvalues=list(values);aliasvalues[-1]=4;aliasref=record(aliasvalues)
+        refs=[oldref,newref,aliasref];pin=dict(path='/synthetic/file',bytes=1,sha256='f'*64)
+        state=dict(target=[32,5,4,8],binary=pin,completion_binary=pin,
+          nodes={ident:dict(values=list(values),record=oldref,canonical=dict(key='old',lab=list(range(34))),receiver=ident,children=None,creation=0)},
+          pending={ident},leaves=[dict(file=pin,line=0,sha256='d'*64)]*7,started={ident:dict(kind='refine',dispatch=pin)},sequence=9)
+        baseline=copy.deepcopy(state);original_node=state['nodes'][ident];leaflist=state['leaves']
+        V=types.SimpleNamespace()
+        V.record=lambda r,target:(pool[r['sha256']][0],list(pool[r['sha256']][1]))
+        def canonical(v,k):need(k['key']in('old','new')and k['lab']==list(range(34)),'synthetic candidate shape')
+        def iso(v,w,p):need(p==list(range(32)),'synthetic supplied identity map')
+        V.isomorphism=iso
+        env=dict(need=need,record=V.record,canonical=canonical,isomorphism=iso,hashlib=hashlib)
+        exec(compile(named(vtext,'admit'),H.VPATH,'exec'),env);V.admit=env['admit']
+        V.returned=lambda original,attempt:(refs,[]);V.read_json=lambda r:dict(parent=ident)
+        V.pin=lambda p:dict(path=p.name,bytes=len(json.dumps(writes[p.name])),sha256=hashlib.sha256(json.dumps(writes[p.name]).encode()).hexdigest())
+        def candidate(*args):
+            n=len(trace);trace.append(n)
+            if fail_candidate==n:raise ValueError('synthetic proposal interruption')
+            return dict(key='new'if n==1 else'old',lab=list(range(34)))
+        class File:
+            def __init__(self,name):self.name=name
+            def read_text(self):return json.dumps(writes[self.name])
+            def exists(self):return self.name in writes
+            def __str__(self):return self.name
+        class Folder:
+            def __truediv__(self,name):return File('/synthetic/'+name)
+        folder=Folder();writes['/synthetic/head.json']=dict(tail=None)
+        def atomic(path,value,before_replace=lambda:None):before_replace();writes[path.name]=copy.deepcopy(value)
+        Q=types.SimpleNamespace(atomic=atomic)
+        penv=dict(V=V,copy=copy,OWNED_STATE_COPY=copier,candidate=candidate,json=json)
+        exec(compile(named(qtext,'proposal'),H.QPATH,'exec'),penv);penv['proposal']=penv['proposal']
+        exec(compile(private_prepare,H.OWNED['path']+'::private_queue_prepare','exec'),penv);Q.prepare=penv['prepare']
+        old_prepare=Q.prepare
+        def transition(original,tx):
+            need(tx['sequence']==original['sequence']+1,'synthetic sequence check');result=copy.deepcopy(original);result['sequence']+=1;return result
+        R=types.SimpleNamespace(transition=transition)
+        menv=dict(Q=Q,R=R,V=V,json=json,need=need)
+        exec(compile(named(mtext,'transaction'),str(QDIR/'census_queue_runtime.py'),'exec'),menv)
+        exec(compile(named(mtext,'commit'),str(QDIR/'census_queue_runtime.py'),'exec'),menv)
+        exec(compile(named(mtext,'admit_return'),H.OWNED['path']+'::private_mixed_admit_return','exec'),menv)
+        ns=dict(admit_return=menv['admit_return'],commit=menv['commit'],marker=object())
+        changed=H.private_workspace_namespace(ns)
+        return types.SimpleNamespace(state=state,baseline=baseline,node=original_node,leaflist=leaflist,ident=ident,refs=refs,
+          ns=ns,changed=changed,Q=Q,old_prepare=old_prepare,folder=folder,writes=writes,trace=trace,calls=calls,
+          case=dict(bridge=pin),attempt=pin,need=need)
+    def tx(f,new):
+        if new:fn=f.changed['admit_return'].__globals__['Q'].prepare
+        else:fn=f.Q.prepare
+        return fn(f.state,f.attempt,f.folder,'fixture',f.case,100,f.calls)
+    old=fixture();ot=tx(old,False);new=fixture();nt=tx(new,True)
+    need(ot==nt,'complete old/new transaction equality')
+    need(new.state==new.baseline and old.state==old.baseline,'old and live state unchanged by proposal work')
+    temp=H.proposal_workspace(new.state)
+    need(temp is not new.state and temp['nodes']is not new.state['nodes']and temp['pending']is not new.state['pending']
+         and temp['nodes'][new.ident]is new.node and temp['leaves']is new.leaflist
+         and temp['started']is new.state['started'],'exact allowed read-only sharing and isolated mutable containers')
+    temp['pending'].add('synthetic_new');temp['nodes']['synthetic_new']={}
+    need(new.state==new.baseline,'workspace dictionary/set updates cannot reach live state')
+    need(new.Q.prepare is new.old_prepare and new.ns['admit_return'] is not new.changed['admit_return']
+         and new.ns['commit']is new.changed['commit'],'all public/old commit providers unchanged')
+    rows.append(dict(name='whole_transaction_order_alias_and_provider_inverse',status='PASS'))
+    for where in(0,1,2):
+        for fresh in(False,True):
+            f=fixture(where)
+            try:tx(f,fresh)
+            except ValueError:pass
+            else:raise ValueError('synthetic proposal fault was not raised')
+            need(f.state==f.baseline and list(f.state['nodes'])==list(f.baseline['nodes'])and f.writes['/synthetic/head.json']['tail']is None,'proposal failure preserves complete live/anchor-like value and head')
+        rows.append(dict(name='candidate_fault_'+str(where),status='EXPECTED_REJECTION_WITH_OLD_STATE_PRESERVED'))
+    for stage in('before_transaction_write','after_transaction_fsync','before_head_replace','after_head_replace'):
+        f=fixture();transaction=tx(f,True)
+        def fault(s):
+            if s==stage:raise ValueError('synthetic commit fault '+s)
+        try:f.ns['commit'](f.state,transaction,f.folder,fault)
+        except ValueError:pass
+        else:raise ValueError('commit fault not raised')
+        need(f.state==f.baseline,'unchanged committed-transition copy contract')
+        need((f.writes['/synthetic/head.json']['tail']is not None)==(stage=='after_head_replace'),'exact original atomic head boundary')
+        rows.append(dict(name='original_atomic_'+stage,status='EXPECTED_FAULT_BOUNDARY'))
+    f=fixture();bad=dict(f.state,nodes=[])
+    try:H.proposal_workspace(bad)
+    except ValueError:rows.append(dict(name='wrong_workspace_type',status='EXPECTED_REJECTION'))
+    else:raise ValueError('wrong workspace type accepted')
+    for path,raw in seen.items():need(Path(path).read_bytes()==raw,'all control Sources unchanged')
+    value=dict(schema='F009_NATIVE_WORKSPACE_SYNTHETIC_ALIAS_FAULT_CONTROLS_V1',status='PASS',controls=rows,
+      original_state_or_graph_cases=0,Native_calls=0,Source_mains_or_original_modules_activated=0,
+      qualification='Original named functions compiled only into synthetic providers. These controls confer no Source/Native/job authority or future memory fit.')
+    raw=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();need(len(raw)<=16384 and a.out.is_absolute()and a.out.is_relative_to('/private/tmp')and not a.out.exists(),'fresh bounded temporary controls output')
+    with a.out.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())
+    print(json.dumps(dict(status='PASS',controls=len(rows),out=str(a.out))))
+if __name__=='__main__':main()

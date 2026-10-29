@@ -1,0 +1,65 @@
+"""Own stdlib/AST text author; new control Sources remain UNRUN."""
+from pathlib import Path
+import ast,copy,hashlib,json,symtable
+D=Path('/private/tmp/l026_cached_rotation_walk/bounded_paid_ledger/control_fixture_repairs');P=D.parent/'summary_lineage';W=D.parent/'root_writer/current_initial_union'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pin(p):p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p):return json.loads(Path(p).read_bytes())
+def write(n,v):p=D/n;assert not p.exists();p.write_bytes(v if isinstance(v,bytes)else can(v));return pin(p)
+oldc=(P/'controls.py').read_text();oldw=(W/'controls.py').read_text();oldcref=pin(P/'controls.py');oldwref=pin(W/'controls.py');assert oldcref['sha256']=='e2aa12bd9d2c1873d7c98d057d1e1168198d87a0aa5935070ec4670371619a43'and oldwref['sha256']=='1e76da86768c4e53e84c0f564096d25ea7e1c591c4857f95d4f6b9d57cb88b89'
+ct=ast.parse(oldc);main=next(n for n in ct.body if isinstance(n,ast.FunctionDef)and n.name=='main');nested=[n for n in main.body if isinstance(n,ast.FunctionDef)and n.name=='fixture'];assert len(nested)==1;f=nested[0]
+# Def-name plus only the two calls in the ledger stage; global toy fixture stays literal.
+lines=oldc.splitlines(True);offsets=[0]
+for line in lines:offsets.append(offsets[-1]+len(line))
+edits=[];line=lines[f.lineno-1];at=line.index('fixture');a=offsets[f.lineno-1]+at;edits.append(dict(start=a,end=a+7,before='fixture',after='ledger_fixture',kind='nested_definition'))
+for n in ast.walk(main):
+ if isinstance(n,ast.Name)and n.id=='fixture'and n.lineno>f.lineno:
+  a=offsets[n.lineno-1]+n.col_offset;b=offsets[n.end_lineno-1]+n.end_col_offset;assert oldc[a:b]=='fixture';edits.append(dict(start=a,end=b,before='fixture',after='ledger_fixture',kind='nested_ledger_call'))
+assert len(edits)==3
+c=oldc
+for e in sorted(edits,key=lambda x:x['start'],reverse=True):assert c[e['start']:e['end']]==e['before'];c=c[:e['start']]+e['after']+c[e['end']:]
+ch='"""UNRUN controls-only nested ledger-fixture rename; /root/journal_peer.\nFrozen e2aa failure preserved; scientific caller/math/caps unchanged.\n"""\n';c=ch+c
+site="for kind,i in[('NEG',1),('NEG',2),('GEN',1),('GEN',2),('GEN_IP',6),('IP',0),('IP',1),('IP',3)]:"
+fixed="for kind,i in[('NEG',1),('NEG',2),('GEN',1),('GEN',2),('GEN_IP',3),('IP',0),('IP',1),('IP',3)]:"
+assert oldw.count(site)==1;wh='"""UNRUN controls-only occupied-slot fixture correction; /root/journal_peer.\nFrozen1e76 failure preserved; original bank slot3 is code6. Writer unchanged.\n"""\n';w=wh+oldw.replace(site,fixed,1)
+assert "for kind,i in [('NEG',4),('GEN',5),('GEN_IP',6),('IP',2)]:"in w
+for s in(c,w):ast.parse(s)
+cm=next(x for x in symtable.symtable(c,'new_caller_controls','exec').get_children()if x.get_name()=='main');om=next(x for x in symtable.symtable(oldc,'old_caller_controls','exec').get_children()if x.get_name()=='main');assert cm.lookup('fixture').is_global()and not cm.lookup('fixture').is_local()and cm.lookup('ledger_fixture').is_local()and om.lookup('fixture').is_local()
+# Complete AST inverse: remove attribution, reverse exactly three renamed symbols.
+rev=c[len(ch):]
+newtree=ast.parse(rev);newmain=next(n for n in newtree.body if isinstance(n,ast.FunctionDef)and n.name=='main')
+class Restore(ast.NodeTransformer):
+ def visit_FunctionDef(self,n):
+  if n.name=='ledger_fixture':n.name='fixture'
+  self.generic_visit(n);return n
+ def visit_Name(self,n):
+  if n.id=='ledger_fixture':n.id='fixture'
+  return n
+assert ast.dump(Restore().visit(newtree),include_attributes=False)==ast.dump(ct,include_attributes=False)
+assert w[len(wh):].replace(fixed,site,1)==oldw
+cref=write('caller_controls.py',c.encode());wref=write('writer_controls.py',w.encode());assert cref['bytes']<=65536 and wref['bytes']<=32768
+inverses=write('whole_controls_inverse.json',dict(schema='WHOLE_TWO_FAILED_CONTROL_FIXTURE_SOURCE_INVERSES_V1',author='/root/journal_peer',Root_authority=False,caller=dict(parent=oldcref,child=cref,whole_parent_source=oldc,whole_child_source=c,attributed_header=ch,exact_symbol_edits=edits,global_fixture_definition_and_early_call_unchanged=True,AST_reverse_exact=True,corrected_scope='globalfixtureearlymath;ledger_fixturelocalmetadata'),writer=dict(parent=oldwref,child=wref,whole_parent_source=oldw,whole_child_source=w,attributed_header=wh,old_site=site,new_site=fixed,positive_GEN_IP_index6_unchanged=True,full_reverse_exact=True),scientific_Sources_unchanged=[pin(P/'propose.py'),pin(W/'fold_ledger.py')],new_controls_actual=None,Source_activation=False))
+# Preserve actual failures truthfully, with complete retained runtime file pins.
+failures=[]
+for kind in('caller','writer'):
+ root=P/'runtime';cap=pin(root/(kind+'_controls_actual_capture.json'));v=read(cap['path']);assert v['actual_tool']['exit_code']==v['full_tool_return']['exit_code']==1
+ files=[cap]+[pin(root/(kind+'_controls_guard')/n)for n in ['receipt.json','started.json','stdout.log','stderr.log']]
+ failures.append(dict(kind=kind,failed_Source=oldcref if kind=='caller'else oldwref,actual_capture=cap,runtime_files=files,qualification='ActualRootgenericcontrolfailureonly; science/writerunrun, noverdictretag.'))
+fr=write('historical_failed_controls_provenance.json',dict(schema='TWO_ACTUAL_FAILED_GENERIC_CONTROL_RUNS_IMMUTABLE_HISTORY_V1',failures=failures,author='/root/journal_peer',Root_authority=False,new_edition_actual=None))
+# Rebind only controls refs in DATA/quoted CLI; keep actual science/writer/initialsubject.
+replace={oldcref['path']:cref['path'],oldcref['sha256']:cref['sha256'],oldwref['path']:wref['path'],oldwref['sha256']:wref['sha256']}
+def rebind(v):
+ if isinstance(v,dict):
+  if v==oldcref:return cref
+  if v==oldwref:return wref
+  return{k:rebind(x)for k,x in v.items()}
+ if isinstance(v,list):return[rebind(x)for x in v]
+ return replace.get(v,v)if isinstance(v,str)else v
+calls=rebind(read(P/'Root_first_calls_UNRUN.json'));calls.update(author='/root/journal_peer',historical_failures=fr,qualification='Controls-onlyfreshSourceeditions; olde2aa/1e76actualfailuresretained. Sciencecallere02/writerba936/initialplan72cefunchanged. Rootaloneactualcontrols/forecast/write/gates. NoSourceactivationbyauthor.');callsref=write('Root_first_calls_UNRUN.json',calls)
+abi=rebind(read(P/'caller_role_ABI_UNBOUND.json'));abiref=write('caller_role_ABI_UNBOUND.json',abi)
+oldinvoice=read(P/'caller_static_invoice.json');invoice=rebind(copy.deepcopy(oldinvoice));delta=cref['bytes']-oldcref['bytes'];assert delta>0;invoice['prior_invoice']=pin(P/'caller_static_invoice.json');invoice['author']='/root/journal_peer';invoice['nonsearch_terms']['all_first_final_physical_bytes']+=2*delta;invoice['nonsearch_upper']+=2*delta;invoice['physical_first_final_and_Source_bootstrap_upper']+=2*delta;invoice['exact_delta']=dict(control_Source_bytes=delta,first_final_physical_and_work_delta=2*delta,compiled_science_Source_bytes=0);invoice['qualification']+=' Controls-onlyfixtureSourcebytesupdatedtwiceforfirst/finalread; science/writer/capsunchanged.';invref=write('caller_static_invoice.json',invoice)
+oldcontrolinv=read(P/'control_Source_read_invoice.json');cinv=rebind(copy.deepcopy(oldcontrolinv));cinv['author']='/root/journal_peer';cinv['Source_and_stdout_read_upper']=cref['bytes']+2*sum(r['bytes']for r in cinv['inputs'])+16384;cinv['prior_invoice']=pin(P/'control_Source_read_invoice.json');cinv['all_actual']=None;cinvref=write('caller_controls_read_invoice.json',cinv)
+scientific=pin(P/'propose.py');writer=pin(W/'fold_ledger.py');winv=write('writer_controls_read_invoice.json',dict(schema='FIXED_WRITER_CONTROL_COMPLETE_SOURCE_READ_INVOICE_V1',Root_authority=False,author='/root/journal_peer',program=wref,writer=writer,caller=scientific,Source_paths=3,complete_read_upper=wref['bytes']+2*(wref['bytes']+writer['bytes']+scientific['bytes'])+16384,formula='interpretercontrolsbootstrap+each3Sourceinitial/finalwhole+stdout16384',RSS=128*2**20,seconds=60,new_actual_controls=None,writer_Source_unchanged=True))
+assert pin(P/'controls.py')==oldcref and pin(W/'controls.py')==oldwref and pin(P/'propose.py')==scientific and pin(W/'fold_ledger.py')==writer
+handoff=write('handoff.json',dict(schema='FROZEN_UNRUN_TWO_GENERIC_CONTROL_FIXTURE_CORRECTIONS_V1',author='/root/journal_peer',Root_authority=False,parent_summary_handoff=pin(P/'handoff.json'),new_caller_controls=cref,new_writer_controls=wref,whole_controls_inverse=inverses,historical_failed_controls=fr,Root_calls=callsref,caller_role_ABI=abiref,caller_invoice=invref,caller_controls_invoice=cinvref,writer_controls_invoice=winv,unchanged_science_caller=scientific,unchanged_writer=writer,unchanged_initial_plan=pin(D.parent/'DATA/initial_fold_plan.json'),Source_namespace_unchanged=49706,all_caps_unchanged=True,actual_new_controls=None,actual_fold_or_CURRENT=None,actual_SCI=None,independent_peer=None,qualification='Exactlyonerejectedwriterfixtureselectsactualcode6slot3ratherthanunpaid0slot6; valid0to6positiveunchanged. Exactlynestedledgerfixture+2callsrenamed; globaltoyfixtureandearlycallunchanged, scopingbugremovedbyAST/symtable. TwofailedRootcontrolrunsstayfailures. NoSource/helper/control/science/SW/Git/gatesactivatedbyauthor. Rootactualnewcontrolsandreleasesstillowed.'))
+print(json.dumps(dict(handoff=handoff,caller_controls=cref,writer_controls=wref,caller_control_read=cinv['Source_and_stdout_read_upper'],caller_case_read_upper=invoice['physical_first_final_and_Source_bootstrap_upper']),sort_keys=True))

@@ -1,0 +1,60 @@
+"""Own stdlib closed postregistration DATA, never represented code activation."""
+from pathlib import Path
+import json,hashlib,copy,stat
+N=Path('/private/tmp/f009_continuation/from_11099/native_DATA');B=N/'checkpoint_binding_DATA';D=N/'postregistration_retention_DATA';D.mkdir()
+S=Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake';CP=M/'f009_census_continuation/from11099/standalone_execution/checkpoint_11216';DEST=M/'f009_census_continuation/from11099/standalone_execution/checkpoint_11216_postregistration_evidence'
+def can(o):return(json.dumps(o,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def ref(p,raw=None):
+ p=Path(p)
+ if raw is None:
+  a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1;raw=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def read(p):return json.loads(Path(p).read_bytes())
+def put(n,o):p=D/n;assert not p.exists();p.write_bytes(can(o));return ref(p)
+cp=read(CP/'root_checkpoint_acceptance.json');sp=read(CP/'root_snapshot_acceptance.json');reg=read(CP/'registration_result.json');post=read(B/'runtime/Root_registration_postcheck.json')
+assert ref(CP/'root_checkpoint_acceptance.json')['sha256']=='98e891245a206824f227e46c4a6f85b6249c16e63dc3233f6efdac58bf778de3'and ref(CP/'root_snapshot_acceptance.json')['sha256']=='c6e48babb7d77877d2d9dfdd6ce9f99053e1ecc262b9aab6ffdf45e3a01cebe5'
+assert cp['checkpoint']==sp['checkpoint']==post['checkpoint']==dict(sequence=11216,nodes=5883,pending=204,reserved_debts=0,selected_raw_leaf_records=541467)
+assert post['status']=='PASS_EXACT_THREE_VIEW_REGISTRATION'and post['all_unrelated_fields_preserved']is True and cp['source_credit']==cp['census_credit']==cp['whole_original_credit']==0
+canonical=read(CP/'reader_closure.json')['preservation'];assert ref(canonical['path'])==canonical and canonical['sha256']=='695ed9bab7fd901da5bb800be74f12ce629439c42041b970767088f1c8895da1'
+wire=read(canonical['path']);tag=wire['Root_Preservation_map_reference'];logical=copy.deepcopy(wire);del logical['Root_Preservation_map_reference']
+for name,kind,rows in tag['fields']:
+ assert kind=='pair';logical[name]=[dict(original=dict(path=tag['prefixes'][i]+s,bytes=b,sha256=h),retained=dict(path=tag['prefixes'][j]+s,bytes=b,sha256=h))for i,j,s,b,h in rows]
+assert len(can(logical))==tag['logical_bytes']and hashlib.sha256(can(logical)).hexdigest()==tag['logical_sha256']
+borrow=[canonical,read(B/'successful_Reader_retention_DATA/Root_copy_guard/stdout.log')['preservation']]
+aliases={}
+for row in logical['rows']+logical['reused_previous_rows']:aliases[(row['original']['path'],row['original']['bytes'],row['original']['sha256'])]=row['retained']
+for m in borrow[1:]:
+ assert ref(m['path'])==m
+ for row in read(m['path'])['files']:aliases[(row['original']['path'],row['original']['bytes'],row['original']['sha256'])]=row['retained']
+for row in cp['root_metadata_writer']['actual_to_retained_sources']:aliases[(row['actual']['path'],row['actual']['bytes'],row['actual']['sha256'])]=row['retained']
+selected={}
+def add(p,r=None):
+ rr=ref(p);assert r is None or rr==r;assert rr['bytes']<=4*2**20;assert selected.get(rr['path'],rr)==rr;selected[rr['path']]=rr
+for p in sorted(B.rglob('*')):
+ if p.is_file():add(p)
+for p in sorted(CP.iterdir()):
+ if p.is_file():add(p)
+assert len([p for p in CP.iterdir()if p.is_file()])==15
+for r in borrow:add(r['path'],r)
+add(Path(__file__).resolve());add(N/'author_CP11216_binding_DATA.py');add(S/'maintenance/runtime/supervise_validation.py')
+for r in post['actual_live']:add(r['path'],r)
+livecopies={}
+for name,r in zip(['CURRENT','current_status','reviewed_intake_progress'],post['actual_live']):
+ target=ref(CP/(name+'.next.json'));assert(target['bytes'],target['sha256'])==(r['bytes'],r['sha256']);livecopies[r['path']]=target
+scope=put('closed_scope_DATA.json',dict(schema='ACTUAL11216_CLOSED_POSTREGISTRATION_SCOPE_DATA_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,accepted_checkpoint=ref(CP/'root_checkpoint_acceptance.json'),snapshot_adoption=ref(CP/'root_snapshot_acceptance.json'),registration_result=ref(CP/'registration_result.json'),actual_commit_capture=ref(B/'runtime/registration_commit_actual_capture.json'),actual_postcheck_capture=ref(B/'runtime/registration_postcheck_actual_capture.json'),actual_postcheck=ref(B/'runtime/Root_registration_postcheck.json'),live_to_immutable_next_copies=[dict(original=r,retained=livecopies[r['path']])for r in post['actual_live']],canonical_preservation=canonical,all15_CP_files_whole=True,Native_Reader_paid_not_repeated=True,all204_pending_unpaid=True,debt=0,whole_original_credit=0,qualification='Whole closed metadata, bound proof/invoices/inverses, Compact independent review/full observations, Root ownreview/releases/all forecast/write/preserve/commit/postcheck captures and SDK selected. The three actuallive files reuse byteidentical immutable registered .next images; no old live version will be reopened after laterCAS. Older canonical payloadDAG remains opaque; no Source/gates/science/SW/Git activation.'))
+add(scope['path'],scope)
+rows=[]
+for path,r in sorted(selected.items()):
+ if path in livecopies:t=livecopies[path]
+ elif Path(path).is_relative_to(S):t=r
+ else:t=aliases.get((path,r['bytes'],r['sha256']))or dict(r,path=str(DEST/'objects'/r['sha256']))
+ if not Path(t['path']).is_relative_to(DEST):assert ref(t['path'])==t
+ rows.append(dict(original=r,retained=t))
+u=ref('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py');assert u['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+pr=put('copy_plan.json',dict(schema='F009_ACTUAL11216_CLOSED_POSTREGISTRATION_RETENTION_DATA_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,scientific_calls=0,destination=str(DEST),files=rows,borrowed_closures=borrow,accepted_checkpoint=ref(CP/'root_checkpoint_acceptance.json'),qualification='All closed newmetadata/independentpeer/invoice/inverse/actualRoot Source+DATAreview/release/forecast/write/preserve/commit/postcheck files plus15immutable CP files/fullcanonicalmanifest and3live exactaliases. Alreadyclosed bodies reuse exact S copies; olderDAG notrescanned. No new census/Original/Source authority or scientific replay.'))
+methods=[dict(original=u,retained=dict(u,path=str(DEST/'method/retain_closed_files.py'))),dict(original=pr,retained=dict(pr,path=str(DEST/'method/plan.json')))];m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrow,source_plan=pr,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+projection=put('projected_manifest_DATA.json',m);mr=dict(projection,path=str(DEST/'preservation.json'));inside=[r for r in rows if Path(r['retained']['path']).is_relative_to(DEST)];outside=[r for r in rows if r not in inside];paths={u['path'],pr['path'],mr['path'],*(r['path']for r in borrow),*(r['original']['path']for r in rows),*(r['retained']['path']for r in rows),*(r['retained']['path']for r in methods)};reads=2*u['bytes']+3*pr['bytes']+sum(r['bytes']for r in borrow)+4*sum(r['original']['bytes']for r in inside)+3*sum(r['original']['bytes']for r in outside)+mr['bytes'];new={r['retained']['path']:r['retained']['bytes']for r in inside+methods};new[mr['path']]=mr['bytes']
+assert len(paths)<=512 and reads+u['bytes']<64*2**20 and sum(new.values())<16*2**20,(reads,len(paths),sum(new.values()))
+invoice=put('exact_copy_invoice.json',dict(schema='ACTUAL11216_POSTREG_OWN_DATA_COPY_ARITHMETIC_V1',program=u,plan=pr,expected_manifest=mr,selected_rows=len(rows),mappings=len(rows)+2,inside_rows=len(inside),outside_S_reuses=len(outside),read_bytes_excluding_interpreter_bootstrap=reads,Source_bootstrap=u['bytes'],complete_read_upper=reads+u['bytes'],physical_paths=len(paths),new_bytes=sum(new.values()),new_files=len(new),formula='2Source+3plan+wholeborrowed+4inside-rowbytes+3outside-rowbytes+manifest; interpreterSource bootstrap additional. Unique fresh targets+Source+plan+manifest written.',Source_activation=False,actual_copy=None))
+hand=put('handoff.json',dict(schema='FROZEN_ACTUAL11216_POSTREGISTRATION_RETENTION_HANDOFF_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,program=u,plan=pr,projection=projection,expected_manifest=mr,invoice=invoice,closed_scope=scope,actual_copy=None,Root_argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',u['path'],'--self-sha256',u['sha256'],'--plan',pr['path'],pr['sha256'],'--destination',str(DEST),'--manifest',mr['path']],accepted_checkpoint=11216,qualification='Root alone reviews/activates667. Current3 exactnewversions mapped to immutablebyteidentical CP.next bodies before future changes. No represented Source/science/helper/control/gates/SW/Git activation by author.'))
+print(json.dumps(dict(handoff=hand,manifest=mr,invoice=invoice,read=reads,new=sum(new.values()),paths=len(paths)),sort_keys=True))

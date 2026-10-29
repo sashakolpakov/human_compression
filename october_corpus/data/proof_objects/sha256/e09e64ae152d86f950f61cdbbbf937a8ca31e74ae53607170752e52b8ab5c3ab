@@ -1,0 +1,407 @@
+"""UNRUN schedule-generic Fi22 block supplier. Author /root/journal_peer.
+Derived from91ec; oldSource/verdicts retain their identities. Misses unpaid.
+"""
+import time
+START=time.monotonic()
+import argparse,hashlib,json,math,os,resource,signal,stat,struct,sys
+from pathlib import Path
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+SELECTOR=dict(first_block_index=2,endpoint_position=18,local_class_position=164,middle_block_index=2,first_ambient_class_position=13,middle_ambient_class_position=13)
+
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def can(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def decode(raw):
+    def pairs(items):
+        out={}
+        for key,value in items:need(key not in out,'unique JSON keys');out[key]=value
+        return out
+    return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+class Budget:
+    def __init__(self):self.refs={};self.raw={};self.bytes=0;self.peak=0
+    def tick(self):
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+        need(rss<128*2**20 and time.monotonic()-START<140,'whole128MiB/140s original caller envelope')
+    def read(self,ref,fresh=False):
+        self.tick();need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+            and type(ref['path'])is str and type(ref['bytes'])is int and 0<=ref['bytes']<=2**21
+            and type(ref['sha256'])is str and len(ref['sha256'])==64
+            and set(ref['sha256'])<=set('0123456789abcdef'),'whole bounded physical role')
+        need(self.refs.get(ref['path'],ref)==ref,'one immutable physical version')
+        if ref['path']in self.raw and not fresh:return self.raw[ref['path']]
+        need(self.bytes+ref['bytes']<=8*2**20 and(ref['path']in self.refs or len(self.refs)<32),'whole first/final8MiB/32-path read scope')
+        p=Path(ref['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+            and a.st_nlink==1 and a.st_size==ref['bytes'],'canonical single-link physical input')
+        with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],
+             'stable entire actual physical role')
+        self.refs[ref['path']]=ref;self.raw[ref['path']]=raw;self.bytes+=len(raw);return raw
+    def doc(self,ref):return decode(self.read(ref))
+    def final(self):
+        for ref in list(self.refs.values()):self.read(ref,True)
+
+class Work:
+    def __init__(self,check,cap=10000000,seconds=20):
+        need(type(cap)is int and 0<cap<=10000000 and type(seconds)in(int,float)and 0<seconds<=20,'unchanged finite shared work cap')
+        self.units=0;self.cap=cap;self.seconds=seconds;self.start=time.monotonic();self.check=check;self.labels={}
+    def charge(self,amount,label):
+        need(type(amount)is int and amount>=0,'typed nonnegative complete work charge');self.check()
+        need(amount<=self.cap-self.units and time.monotonic()-self.start<self.seconds,'shared10M/20s point/field/framing budget')
+        self.units+=amount;self.labels[label]=self.labels.get(label,0)+amount
+
+def load_kernel(ref,budget,source_bytes):
+    raw=budget.read(ref);need(len(raw)<=16384 and len(raw)+source_bytes<=50000,'whole compiled mathematical Source namespace50k')
+    ns={'__name__':'l026_actual_supplied_cycle_kernel','__file__':ref['path']}
+    exec(compile(raw,ref['path'],'exec'),ns)
+    for name in('decode_operands','prepare_triangle','rotation_word','check_cycle','verify_pair'):
+        need(ns[name].__globals__ is ns and ns[name].__code__.co_filename==ref['path'],'genuine exact current provider namespace/filename')
+    return ns
+
+PARTITION_PREMISES_SHA='04bf1fb290089c8853c33e034c956d6df611cdbf2bd883ed8d8066f0441b7470'
+
+def imported_context(plan,budget,work):
+    need(plan['scope_digest']==SCOPE and plan['original_selector']==SELECTOR,'same currently acquired original endpoint/middle subject')
+    R=plan['roles']
+    def document(name):
+        work.charge(2*R[name]['bytes'],'complete_retained_premise_JSON_byte_admission')
+        return budget.doc(R[name])
+    a=document('operand_adoption');f=document('free_adoption')
+    need(a['schema']=='ROOT_ACCEPTED_L026_PRIME_CYCLE_OPERAND_DATA_V1'and a['root']=='/root'and a['adopted']is True
+        and f['schema']=='ROOT_L026_ACCEPTED_FREE_PRODUCT_WITNESS_PROJECTION_V1'and f['root']=='/root'and f['adopted']is True
+        and a['operand_bytes']==52658 and f['free_rows']==28908
+        and a['all28908_generation_questions_unresolved']is f['all28908_generation_questions_unresolved']is True,
+        'actual metadata operand/witness adoptions, not a transferred scientific verdict')
+    need(a['outputs']['operands.bin']==R['operands']and a['outputs']['premises.json']==R['operand_premises']
+        and a['outputs']['byte_inverse.json']==R['operand_inverse']and a['outputs']['projection.json']==R['operand_projection']
+        and f['outputs']['free_witnesses.bin']==R['witnesses']and f['outputs']['projection.json']==R['free_projection'],
+        'exact whole adopted byte/framing/premise outputs')
+    premises=document('operand_premises');inverse=document('operand_inverse');projection=document('operand_projection');free=document('free_projection')
+    need(premises['schema']=='L026_PRIME_CYCLE_OPERAND_RETAINED_PREMISES_V1'
+        and premises['exact_original_scope']==projection['scope_digest']==free['scope_digest']==SCOPE
+        and premises['path_max']==10 and premises['d_image_elementary_map_bound']==21
+        and premises['b_image_elementary_map_bound']==63 and premises['rotation_image_elementary_map_bound']==64
+        and premises['seed_equals_first_Q_vector_proved_by_same_accepted_compact_identity']is True
+        and projection['qualified_original_a_c_d0_A_and_tree']is True
+        and inverse['schema']=='L026_PRIME_CYCLE_OPERAND_EXACT_BYTE_INVERSE_V1'
+        and free['free_projected']==28908 and free['exact_literal_record_bytes']is True,
+        'actual complete operand/witness identity with retained exact inverse, scope and path bounds')
+    imports=premises['inherited_member_and_Reader_imports']
+    need(imports['original_G_normal_in_A']is True and imports['GAP_IsNormal_A_G_means_G_normal_in_A']is True
+        and imports['same_accepted_original_degree3510_action']is True
+        and imports['original_exact_orders_and_full_class_predicates_borrowed']is True
+        and premises['named_group_or_class_or_GAP_classification_reproved']is False
+        and 'GLOBAL block2 class'in premises['qualification']and 'H=B'in premises['qualification'],
+        'explicit imported known-G seed/normality/faithful Reader/class/graph/two-fibre/qualified H=B meanings')
+    theorem=document('maximal_orders');review=document('theorem_review');note=document('theorem_source_note');handoff=document('theorem_handoff')
+    work.charge(2*R['theorem_argument']['bytes'],'whole_written_theorem_byte_admission')
+    budget.read(R['theorem_argument'])
+    need(theorem['schema']=='FI22_COMPLETE_SIMPLE_MAXIMAL_ORDER_PREMISE_V1'and theorem['named_group']=='Fi22'
+        and theorem['classification_is_borrowed']is True and theorem['completeness_independently_reproved_here']is False
+        and theorem['Aut_Fi22_substitution_permitted']is False and theorem['conjugacy_classes']==14,
+        'borrowed complete simple Fi22 classification with1988 correction; not Aut substitution')
+    rows=theorem['rows'];need(type(rows)is list and len(rows)==12,'all twelve types/fourteen conjugacy classes')
+    total=0
+    for row in rows:
+        work.charge(64,'whole_imported_maximal_order_divisibility_row')
+        n,k=row['order'],row['conjugacy_classes']
+        need(type(n)is type(k)is int and n>0 and k>0 and not(n%11==n%13==0)
+            and row['divisible_by_11']==(n%11==0)and row['divisible_by_13']==(n%13==0),
+            'every imported proper maximal omits one prime')
+        total+=k
+    need(total==14 and review['schema']=='DISTINCT_FI22_PRIME_CYCLE_WRITTEN_THEOREM_REVIEW_V1'
+        and review['status']=='PASS_DISTINCT_FI22_PRIME_CYCLE_WRITTEN_THEOREM'and review['reviewer']==review['actor']=='/root'
+        and review['blockers']==[]and review['all14_maximal_classes_accounted_for']is True
+        and review['exact_G_membership_required']is True and review['Aut_G_substitution_forbidden']is True
+        and review['maximal_avoidance_and_point_cycle_proof_accepted']is True
+        and review['source_handoff']==R['theorem_handoff'],'same actual written-theorem review only, not a current checker verdict')
+    need(handoff['artifacts']['ARGUMENT.rst']==R['theorem_argument']and handoff['artifacts']['maximal_orders.json']==R['maximal_orders']
+        and handoff['artifacts']['source_note.json']==R['theorem_source_note']
+        and note['actual_input_gate_and_point_action_premises']['original_input_acceptance']==premises['original_input']
+        and note['actual_input_gate_and_point_action_premises']['point_bridge_acceptance']==premises['whole_old_proof_roles']['bridge_root'],
+        'exact same original G/Reader/bridge membership and classified theorem source lineage')
+    return dict(premises=premises,adopted_operand=a,adopted_witness=f,qualification=premises['qualification'])
+
+class SearchStop(Exception):pass
+
+class SearchWork(Work):
+    def __init__(self,check):
+        super().__init__(check);self.start=START;self.proposing=False;self.proposal_units=0;self.proposal_cap=0
+    def begin(self,cap):
+        need(type(cap)is int and 0<cap<=6000000,'finite new supplier search allowance at most6M')
+        self.proposal_units=self.units;self.proposal_cap=cap;self.proposing=True
+    def charge(self,amount,label):
+        need(type(amount)is int and amount>=0,'typed whole work charge')
+        if self.proposing:
+            rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+            if amount>self.proposal_cap-(self.units-self.proposal_units)or time.monotonic()-START>=14 or rss>=112*2**20:
+                raise SearchStop('finite6M/14s/112MiB proposal reserve reached')
+        return super().charge(amount,label)
+
+class AllOperationBudget(Budget):
+    def __init__(self):super().__init__();self.work=None
+    def read(self,ref,fresh=False):
+        need(type(ref)is dict and type(ref.get('bytes'))is int and ref['bytes']>=0,'typed byte admission before all IO')
+        if fresh or ref.get('path')not in self.raw:
+            self.work.charge(ref['bytes'],'every_actual_physical_input_byte_before_IO')
+        return super().read(ref,fresh)
+    def doc(self,ref):
+        raw=self.read(ref);self.work.charge(2*len(raw),'every_current_config_or_metadata_JSON_byte_before_decode')
+        return decode(raw)
+
+def partition_authority(plan,budget,work,imports):
+    R=plan['roles'];raw=budget.read(R['partition_premises']);work.charge(2*len(raw),'complete_block_premise_JSON')
+    p=decode(raw)
+    need(R['partition_premises']['sha256']==PARTITION_PREMISES_SHA
+        and R['partition_argument']['sha256']=='97140bd8b6ec42ae9e447d419200d5bad1b8753f849090c916961bf17ccdc096'
+        and R['maximal_orders']['sha256']=='6b754397c66265940836d3ba13f1c81c421e9245894ec75b1005be136c232eaa',
+        'exact new partition argument/premises and original complete simple maximal cover')
+    work.charge(2*R['partition_argument']['bytes'],'whole_new_partition_argument');budget.read(R['partition_argument'])
+    need(p['schema']=='L026_ORIGINAL_BLOCK_PARTITION_IMPORTED_PREMISES_V1'and p['named_group']=='Fi22'
+        and p['simple_group_order']==64561751654400 and p['point_degree']==3510
+        and p['full_Aut_order']==129123503308800 and p['G_normal_in_A_index']==2
+        and p['minimum_proper_subgroup_index']==3510 and p['classification_reproved']is False
+        and p['Aut_substitution_permitted']is False
+        and all(p[k]is True for k in('original_A_transitive_tree_imported','original_action_faithful_imported',
+            'original_a_b_c_involutions_and_G_membership_imported','original_owner_witness_and_two_fibre_imports_required')),
+        'explicit same original simpleG/fullAut/Out2/transitive-tree/faithful/member/involution import boundary')
+    table=budget.doc(R['maximal_orders']);indices=[];classes=0
+    for row in table['rows']:
+        work.charge(128,'each_complete_simple_maximal_order_index')
+        order=row['order'];need(type(order)is int and order>0 and 64561751654400%order==0,'whole maximal order divides namedG')
+        indices.append(64561751654400//order);classes+=row['conjugacy_classes']
+    need(len(indices)==12 and classes==14 and min(indices)==3510,
+        'all12types14classes give no properGsubgroup index below3510')
+    premise=imports['premises']
+    need(R['original_input']==premise['original_input']
+        and R['original_bridge_root']==premise['whole_old_proof_roles']['bridge_root']
+        and R['original_bridge_saved']==premise['whole_old_proof_roles']['bridge_carrier'],
+        'whole original Input/bridge identities, not abstract standard-generator identification')
+    for name in('original_input','original_bridge_root','original_bridge_saved'):budget.read(R[name])
+    return p
+
+def partition_shape(labels,n,work):
+    need(type(labels)is list and len(labels)==n,'complete original point-label cover')
+    counts=[]
+    for label in labels:
+        work.charge(8,'each_canonical_partition_field_and_count')
+        need(type(label)is int and 0<=label<=len(counts),'strict integer canonical block label')
+        if label==len(counts):counts.append(0)
+        counts[label]+=1
+    work.charge(4*len(counts),'all_uniform_nontrivial_block_sizes')
+    need(1<len(counts)<n and 1<counts[0]<n and all(c==counts[0]for c in counts),
+        'proper nontrivial uniform blocks, neither discrete nor indiscrete')
+    return len(counts),counts[0]
+
+def precompute_rotations(K,ctx,paths,work,active):
+    n=ctx['n'];result=[]
+    for letter in(1,2):
+        vector=[];seen=bytearray(n);work.charge(2*n,'whole_rotation_precompute_slots')
+        for point in range(n):
+            active.update(phase='rotation_precompute',rotation=letter,completed_points=point)
+            work.charge(8,'each_original_precomputed_rotation_image')
+            target=K['rotation_word'](ctx,paths,[letter],point,work)
+            need(type(target)is int and 0<=target<n and not seen[target],'all genuine original rotation images bijective')
+            seen[target]=1;vector.append(target)
+        result.append(tuple(vector))
+    return tuple(result)
+
+def validate_schedule(data,raw=None):
+    if raw is not None:need(raw==can(data),'canonical pinned schedule')
+    need(type(data)is dict and data['schema']=='L026_UNTRUSTED_BLOCK_PARTNER_SCHEDULE_V1'
+        and data['degree']==3510 and data['all_completed_misses_unpaid']is True
+        and data['partial_trial_restart_required']is True,'bounded untrusted partner schedule only')
+    start,count,priority=data['partner_window_start'],data['partner_window_count'],data['priority_partners']
+    need(type(start)is type(count)is int and 1<=start<3510 and 1<=count<=16 and start+count<=3510,
+        'literal finite systematic nonzero partner window')
+    need(type(priority)is list and len(priority)<=8 and len(set(priority))==len(priority)
+        and all(type(p)is int and 1<=p<3510 for p in priority),'strict bounded priority hints, never proof')
+    return priority+[p for p in range(start,start+count)if p not in priority]
+
+def empty_note(index,owner,row_sha):
+    return dict(free_index=index,owner=owner,witness_row_sha256=row_sha,next_trial=0,history=[],
+        block_labels=None,outcome='unfinished',active_trial=None,inherited_complete_trials=0)
+
+def closure_trial(permutations,partner,work,active):
+    n=len(permutations[0]);need(len(permutations)==2 and all(len(p)==n for p in permutations)
+        and type(partner)is int and 1<=partner<n,'one bounded seed pair and two full rotation maps')
+    work.charge(4*n+32,'fresh_union_by_size_arrays');parent=list(range(n));size=[1]*n;queue=[];cursor=0
+    def find(point):
+        work.charge(6,'find_root_start_and_return');steps=0
+        while parent[point]!=point:
+            work.charge(4,'every_union_find_parent_hop');point=parent[point];steps+=1
+            need(steps<=12,'union-by-size height at most12, no unbilled path compression')
+        return point
+    def join(x,y):
+        work.charge(12,'each_pair_merge');x=find(x);y=find(y)
+        if x==y:return
+        work.charge(16,'union_size_comparison_update_and_accepted_pair_queue')
+        if size[x]<size[y]:x,y=y,x
+        parent[y]=x;size[x]+=size[y];queue.append((x,y))
+        active.update(phase='equivalence_closure',accepted_merges=len(queue),processed_pairs=cursor,queue_length=len(queue))
+    join(0,partner)
+    while cursor<len(queue):
+        work.charge(8,'every_accepted_pair_pop_and_two_map_fields');x,y=queue[cursor];cursor+=1
+        for permutation in permutations:join(permutation[x],permutation[y])
+    labels=[];ids={};counts=[]
+    for point in range(n):
+        work.charge(10,'final_component_labels');root=find(point)
+        if root not in ids:ids[root]=len(counts);counts.append(0)
+        label=ids[root];counts[label]+=1;labels.append(label)
+    work.charge(4*len(counts),'complete_uniform_proper_partition_test')
+    proper=1<len(counts)<n and 1<counts[0]<n and all(k==counts[0]for k in counts)
+    return dict(block_labels=labels if proper else None,blocks=len(counts),block_size=counts[0]if proper else None,
+        accepted_merges=len(queue),processed_pairs=cursor)
+
+def checkpoint_notes(raw,plan,partners,indices,witnesses,work):
+    need(len(raw)<=131072,'whole bounded untrusted partition checkpoint');work.charge(2*len(raw),'all_checkpoint_semantic_bytes')
+    value=decode(raw)
+    need(raw==can(value)and value['schema']=='L026_UNTRUSTED_BLOCK_PARTITION_PROGRESS_V1'
+        and value['scope_digest']==SCOPE and value['original_selector']==SELECTOR
+        and value['operand_adoption']==plan['roles']['operand_adoption']and value['free_witness_adoption']==plan['roles']['free_adoption']
+        and value['schedule']==plan['schedule']and value['selected_free_indices']==indices,'same untrusted checkpoint physical/context/window identities')
+    notes=value['notes'];need(type(notes)is list and len(notes)<=1,'one bounded checkpoint case')
+    result={}
+    for note in notes:
+        index=note['free_index'];need(type(index)is int and index in indices and index not in result,'same unique bound original row')
+        rawrow=witnesses[16*index:16*index+16];owner=struct.unpack_from('<I',rawrow)[0];next_trial=note['next_trial']
+        need(note['owner']==owner and note['witness_row_sha256']==hashlib.sha256(rawrow).hexdigest()
+            and type(next_trial)is int and 0<=next_trial<=len(partners)
+            and type(note['history'])is list and len(note['history'])==next_trial,'whole row identity and full UNTRUSTED completed trial history')
+        for ordinal,trial in enumerate(note['history']):
+            work.charge(64,'each_untrusted_completed_partner_history_entry')
+            need(type(trial)is dict and trial['ordinal']==ordinal and trial['partner']==partners[ordinal]
+                and trial['outcome']in('partition_hint','finite_partner_miss'),'no missing/reordered untrusted completed prefix')
+        labels=note['block_labels']
+        if labels is not None:partition_shape(labels,3510,work)
+        need((note['outcome']=='partition_hint'and labels is not None and next_trial>0)
+            or(note['outcome']=='finite_pool_miss'and labels is None and next_trial==len(partners))
+            or(note['outcome']=='unfinished'and labels is None and next_trial<len(partners)),'coherent untrusted outcome and finite cursor')
+        fresh=empty_note(index,owner,note['witness_row_sha256'])
+        fresh.update(next_trial=next_trial,history=note['history'],block_labels=labels,outcome=note['outcome'],inherited_complete_trials=next_trial)
+        result[index]=fresh
+    need([n['free_index']for n in notes]==indices[:len(notes)],'same selected prefix; no old scientific scope credited')
+    return result
+
+def search_window(K,ctx,partners,indices,witnesses,work,prior=None):
+    notes=[];records=[];visited=[];misses=[];existing=prior or{};status='finite_selected_partner_window_completed';precomputed=False
+    try:
+        for index in indices:
+            work.charge(96,'whole_original_bound_owner_partner_mass_and_triangle')
+            raw=witnesses[16*index:16*index+16];owner,partner,mass,x,y,z=struct.unpack('<IIHHHH',raw)
+            need(owner<500178 and partner<500178 and mass==1024,'same actual adopted free16B row')
+            note=existing.get(index,empty_note(index,owner,hashlib.sha256(raw).hexdigest()));notes.append(note)
+            if note['outcome']=='unfinished':
+                paths=K['prepare_triangle'](ctx,(x,y,z),work);active=dict(phase='rotation_precompute')
+                note['active_trial']=active;permutations=precompute_rotations(K,ctx,paths,work,active);precomputed=True
+                for ordinal in range(note['next_trial'],len(partners)):
+                    work.charge(48,'each_partner_trial_history_and_cursor');active=dict(ordinal=ordinal,partner=partners[ordinal])
+                    note['active_trial']=active;trial=closure_trial(permutations,partners[ordinal],work,active)
+                    outcome='partition_hint'if trial['block_labels']is not None else'finite_partner_miss'
+                    note['history'].append(dict(ordinal=ordinal,partner=partners[ordinal],outcome=outcome,
+                        blocks=trial['blocks'],block_size=trial['block_size'],accepted_merges=trial['accepted_merges'],processed_pairs=trial['processed_pairs']))
+                    note['next_trial']=ordinal+1;note['active_trial']=None
+                    if trial['block_labels']is not None:
+                        note['block_labels']=trial['block_labels'];note['outcome']='partition_hint';break
+                if note['outcome']!='partition_hint':note['outcome']='finite_pool_miss'
+            if note['outcome']=='partition_hint':records.append(dict(free_index=index,owner=owner,witness_row_sha256=note['witness_row_sha256'],block_labels=note['block_labels']))
+            else:misses.append(index)
+            visited.append(index)
+    except SearchStop as error:status='soft_stop_with_exact_unvisited:'+str(error)
+    need(visited==indices[:len(visited)],'only completed prefix cases visited')
+    unvisited=indices[len(visited):]
+    need(sorted([r['free_index']for r in records]+misses+unvisited)==indices,'hints/unpaidmisses/unvisited exactly cover selected DATA')
+    return dict(records=records,visited=visited,finite_misses=misses,unvisited=unvisited,notes=notes,status=status,precomputed=precomputed)
+
+def main():
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+        and not sys.flags.optimize and all(k not in os.environ for k in ENV4),'minimal EBS/ENV4 block supplier')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('140s bounded Fi22 partition hints')))
+    signal.setitimer(signal.ITIMER_REAL,max(.001,140-(time.monotonic()-START)))
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--Root-gate',nargs=2,required=True);a=ap.parse_args()
+    budget=AllOperationBudget();work=SearchWork(budget.tick);budget.work=work;work.charge(0,'whole_supplier_scope_from_START')
+    own=dict(path=str(Path(__file__).resolve(strict=True)),bytes=Path(__file__).stat().st_size,sha256=a.self_sha256)
+    need(own['bytes']<=32768,'bounded untrusted supplier Source');budget.bytes+=own['bytes'];work.charge(own['bytes'],'current_supplier_Source_bootstrap');budget.read(own)
+    p=Path(a.plan[0]);pref=dict(path=str(p),bytes=p.stat().st_size,sha256=a.plan[1]);need(pref['bytes']<=65536,'bounded actual supplier plan');plan=budget.doc(pref)
+    g=Path(a.Root_gate[0]);gref=dict(path=str(g),bytes=g.stat().st_size,sha256=a.Root_gate[1]);need(gref['bytes']<=8192,'bounded exact Root proposal release');gate=budget.doc(gref)
+    need(plan['schema']=='L026_UNTRUSTED_BLOCK_PARTITION_SUPPLIER_PLAN_V1'and plan['program']==own
+        and plan['kernel']['sha256']=='60eedb3ce207831ec66cdcc18c689c7c5e334205772cabf888f950503cc267ee'
+        and gate['schema']=='ROOT_AUTHORIZED_L026_BLOCK_PARTITION_SUPPLIER_V1'and gate['root']=='/root'and gate['adopted']is True
+        and gate['candidate_partition_only_authorized']is True and gate['program']==own and gate['plan']==pref
+        and gate['kernel']==plan['kernel']and gate['direct_consumer']==plan['direct_consumer'], 'fresh current proposal-only authority, never a strict result')
+    need(gate['Root_code_math_review']['bytes']<=32768 and gate['control_report']['bytes']<=16384,'bounded actual new review/controls')
+    review=budget.doc(gate['Root_code_math_review']);control=budget.doc(gate['control_report'])
+    need(review['root']=='/root'and review['status']=='SUPPORTED'and review['blockers']==[]and review['program']==own
+        and review['kernel']==plan['kernel']and review['plan']==pref
+        and review['new_primitivity_index_two_and_original_involutory_G_membership_checked']is True,'whole fresh partition supplier Source/math/resource review')
+    need(control['schema']=='L026_BLOCK_PARTITION_GENERIC_CONTROLS_V1'and control['status']=='PASS'
+        and control['supplier']==own and control['program']==plan['control_program']and control['kernel']==plan['kernel']
+        and control['consumer']==plan['direct_consumer']and control['schedule']==plan['schedule']and control['original_case_calls']==0 and control['controls']>=20,
+        'actual distinct untrusted-supplier controls; strict consumer controls do not transfer')
+    for ref in plan['inputs']:budget.read(ref)
+    expected={r['path']:r for r in plan['inputs']};need(len(expected)==len(plan['inputs']),'unique fixed physical supplier scope')
+    for ref in(own,pref,gref,gate['control_report'],gate['Root_code_math_review']):
+        need(expected.get(ref['path'],ref)==ref,'one complete actual physical version');expected[ref['path']]=ref
+    need(len(expected)<=32 and own['bytes']+2*sum(r['bytes']for r in expected.values())<=8*2**20,
+        'whole first/final8MiB32 including Source bootstrap prepaid')
+    need(type(plan['window_start'])is int and 0<=plan['window_start']<28908
+        and type(plan['maximum_records'])is int and plan['maximum_records']==1
+        and type(plan['selected_free_indices'])is list and all(type(i)is int for i in plan['selected_free_indices'])
+        and plan['selected_free_indices']==list(range(plan['window_start'],min(28908,plan['window_start']+plan['maximum_records']))),
+        'same exact bounded DATA free-owner window')
+    schedule=budget.doc(plan['schedule']);work.charge(2*plan['schedule']['bytes'],'canonical_schedule_JSON')
+    partners=validate_schedule(schedule,budget.read(plan['schedule']))
+    imported=imported_context(plan,budget,work);partition_authority(plan,budget,work,imported)
+    work.charge(2*plan['kernel']['bytes'],'whole_current_mathematical_kernel_declaration')
+    K=load_kernel(plan['kernel'],budget,own['bytes']);ctx=K['decode_operands'](budget.read(plan['roles']['operands']),work)
+    witnesses=budget.read(plan['roles']['witnesses']);need(len(witnesses)==462528,'whole actual adopted free-witness payload')
+    prior=None
+    if plan['resume']is not None:prior=checkpoint_notes(budget.read(plan['resume']),plan,partners,plan['selected_free_indices'],witnesses,work)
+    need(budget.refs==expected,'exact actual pre-search physical input closure')
+    reserve=sum(r['bytes']for r in budget.refs.values())+2*3*131072+32768
+    allowance=min(6000000,10000000-work.units-reserve);need(allowance>0,'setup/final IO and outputs leave genuine finite search allowance')
+    work.begin(allowance)
+    result=search_window(K,ctx,partners,plan['selected_free_indices'],witnesses,work,prior)
+    search_used=work.units-work.proposal_units;work.proposing=False
+    work.charge(2*3*131072+32768,'all_three_untrusted_output_serialization_hash_and_bookkeeping_caps')
+    need(budget.refs==expected,'unchanged physical closure');budget.final();work.charge(0,'final_full_shared20s_guard');budget.tick()
+    carrier=dict(schema='L026_ORIGINAL_ROTATION_BLOCK_PARTITIONS_V1',scope_digest=SCOPE,original_selector=SELECTOR,
+        operand_adoption=plan['roles']['operand_adoption'],free_witness_adoption=plan['roles']['free_adoption'],records=result['records'])
+    checkpoint=dict(schema='L026_UNTRUSTED_BLOCK_PARTITION_PROGRESS_V1',program=own,scope_digest=SCOPE,original_selector=SELECTOR,
+        operand_adoption=plan['roles']['operand_adoption'],free_witness_adoption=plan['roles']['free_adoption'],schedule=plan['schedule'],
+        selected_free_indices=plan['selected_free_indices'],notes=result['notes'],previous_untrusted_checkpoint=plan['resume'],
+        verification_authority=False,partial_trace_resume_rule='Recompute original rotations afresh and restart the interrupted partner trial from empty union-find; all completed cursors/history/partitions remain untrusted.')
+    summary=dict(schema='L026_UNTRUSTED_BLOCK_PARTITION_HINTS_V1',status=result['status'],author='/root/journal_peer',program=own,
+        kernel=plan['kernel'],direct_consumer=plan['direct_consumer'],plan=pref,Root_source_gate=gref,control_report=gate['control_report'],
+        Root_code_math_review=gate['Root_code_math_review'],scope_digest=SCOPE,original_selector=SELECTOR,schedule=plan['schedule'],
+        selected_free_indices=plan['selected_free_indices'],visited_free_indices=result['visited'],proposed_partition_indices=[r['free_index']for r in result['records']],
+        finite_miss_indices_without_any_paid_credit=result['finite_misses'],exact_unvisited_indices=result['unvisited'],
+        exact_trial_notes=result['notes'],previous_untrusted_checkpoint=plan['resume'],all_inherited_hints_and_cursors_are_untrusted=True,
+        full_original_rotation_maps_precomputed=result['precomputed'],no_group_orbit_SGS_classifier_or_subgroup_identification=True,
+        verification_authority=False,nongeneration_generation_IP_or_Original_claim=False,independent_strict_consumer_and_Root_adoption_owed=True,
+        resources=dict(charged_work_units_including_all_setup=work.units,effective_search_allowance=allowance,search_units=search_used,
+            physical_bytes=budget.bytes,physical_paths=len(budget.refs),peak_RSS=budget.peak),qualification=imported['qualification']+' Untrusted partition hints only; no miss/skip proves absence or properness. Fresh full strict point/edge/member/primitivity/index2 verification and Root adoption owed.')
+    blobs={'records.json':can(carrier),'checkpoint.json':can(checkpoint),'summary.json':can(summary)}
+    need(all(len(raw)<=131072 for raw in blobs.values()),'three finite131072-byte untrusted outputs')
+    work.charge(0,'post_serialization_full_shared_guard')
+    out=Path(plan['output_directory']);need(out.is_absolute()and out.is_relative_to('/private/tmp')and '..'not in out.parts
+        and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh ordinary temporary proposal outputs')
+    out.mkdir()
+    for name,raw in blobs.items():
+        with(out/name).open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive untrusted output');f.flush();os.fsync(f.fileno())
+    fd=os.open(out,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    work.charge(0,'post_publication_full_shared_guard');budget.tick()
+    refs={name:dict(path=str(out/name),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())for name,raw in blobs.items()}
+    print(json.dumps(dict(status='UNTRUSTED_BOUNDED_ORIGINAL_BLOCK_PARTITION_HINTS_ONLY',outputs=refs,visited=len(result['visited']),
+        proposed_partitions=len(result['records']),finite_misses=len(result['finite_misses']),unvisited=len(result['unvisited']),
+        new_generation_IP_or_Original_credit=0),sort_keys=True))
+
+if __name__=='__main__':main()

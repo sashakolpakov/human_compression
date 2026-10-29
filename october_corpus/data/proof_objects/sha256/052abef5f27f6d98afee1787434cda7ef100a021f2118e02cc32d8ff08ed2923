@@ -1,0 +1,540 @@
+"""New lossless metadata reference edition by /root/compact_proof_author.
+Raw wire identity and full canonical logical identity are distinct.
+All original scientific predicates/caps remain; no old verdict is transferred.
+"""
+"""New generic Root metadata writer for a genuinely closed standalone Reader.
+
+No legacy metadata/registration operation or Source verdict is executed or
+retagged. This program reads no state codec and invokes no scientific code.
+Root must adopt this exact source/plan and the genuine closed actual evidence.
+It writes a fresh CP/SP pair and may update three live metadata selectors.
+"""
+import argparse,fcntl,hashlib,json,math,os,resource,stat,sys,time
+from pathlib import Path
+
+S=Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake'
+LIVE=(S/'reboot_20261013/CURRENT.json',M/'current_status.json',M/'reviewed_intake_progress.json')
+OWNERS=('root_execution_ownership_latest','root_current_ownership','current_execution_ownership')
+SELECTOR_FIELDS=('F009_checkpoint_current','F009_checkpoint_acceptance_current','F009_snapshot_acceptance_current',
+                 'F009_next_select_current','F009_reserved_parents_current')
+PROGRESS_FIELDS=('checkpoint','checkpoint_acceptance','snapshot_adoption','status','root_metadata_update')
+MIB=2**20;START=time.monotonic();READ_BYTES=Path(__file__).stat().st_size
+
+_F9_SOURCE_TAG = 'Root_Source_rows_reference'
+_F9_DOMAIN_TAG = 'Root_Input_rows_reference'
+_F9_CLOSURE_TAG = 'Root_Native_closure_rows_reference'
+_F9_LOGICAL_LIMIT = 8 * 2**20
+
+
+def f9_canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False) + '\n').encode('ascii')
+
+
+def f9_need(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def f9_rows(rows, limit):
+    f9_need(type(rows) is list and len(rows) <= limit, 'bounded literal row list')
+    previous = ''; total = 0
+    for row in rows:
+        f9_need(type(row) is dict and set(row) == {'path', 'bytes', 'sha256'},
+                'exact complete row fields')
+        path, size, digest = row['path'], row['bytes'], row['sha256']
+        f9_need(type(path) is str and path.startswith('/') and path > previous
+                and '\x00' not in path and all(x not in ('.', '..') for x in path.split('/'))
+                and type(size) is int and size >= 0 and type(digest) is str
+                and len(digest) == 64 and set(digest) <= set('0123456789abcdef'),
+                'ordered unique absolute paths and exact finite row types')
+        previous = path; total += size
+    f9_need(total <= 2**31, 'unchanged whole2GiB descriptor extent')
+    return rows
+
+
+def f9_image(value):
+    raw = f9_canonical(value)
+    f9_need(len(raw) <= _F9_LOGICAL_LIMIT, 'existing8MiB logical metadata role')
+    return len(raw), hashlib.sha256(raw).hexdigest()
+
+
+def f9_encode_job(job):
+    f9_need(type(job) is dict and job.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and job.get('role') in ('native', 'reader') and _F9_SOURCE_TAG not in job,
+            'one ordinary logical standalone job')
+    rows = f9_rows(job['declared_inputs'], 40000)
+    sources = f9_rows(job['source_inputs'], 1024)
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    by_path = {row['path']: i for i, row in enumerate(rows)}
+    indices = []
+    for source in sources:
+        f9_need(source['path'] in by_path and rows[by_path[source['path']]] == source,
+                'every Source role is the same exact declared row')
+        indices.append(by_path[source['path']])
+    size, digest = f9_image(job)
+    wire = dict(job); wire.pop('source_inputs')
+    wire[_F9_SOURCE_TAG] = dict(schema='F009_SOURCE_ROW_INDICES_V1', indices=indices,
+        Source_rows_sha256=hashlib.sha256(f9_canonical(sources)).hexdigest(),
+        declared_rows_sha256=hashlib.sha256(f9_canonical(rows)).hexdigest(),
+        logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_job(wire) == job, 'entire exact Source-reference inverse')
+    return wire
+
+
+def f9_expand_job(wire):
+    if type(wire) is not dict or _F9_SOURCE_TAG not in wire:
+        return wire
+    f9_need(wire.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and wire.get('role') in ('native', 'reader') and 'source_inputs' not in wire,
+            'explicit Source-reference wire, never a mixed representation')
+    tag = wire[_F9_SOURCE_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'indices', 'Source_rows_sha256',
+            'declared_rows_sha256', 'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_SOURCE_ROW_INDICES_V1', 'exact reference encoding')
+    rows = f9_rows(wire['declared_inputs'], 40000); indices = tag['indices']
+    f9_need(type(indices) is list and len(indices) <= 1024,
+            'bounded Source-index list')
+    last = -1
+    for index in indices:
+        f9_need(type(index) is int and last < index < len(rows),
+                'strictly increasing nonboolean unique in-range indices')
+        last = index
+    sources = [rows[index] for index in indices]
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    f9_need(hashlib.sha256(f9_canonical(rows)).hexdigest() == tag['declared_rows_sha256']
+            and hashlib.sha256(f9_canonical(sources)).hexdigest() == tag['Source_rows_sha256'],
+            'complete exact declared and Source table identities')
+    logical = dict(wire); logical.pop(_F9_SOURCE_TAG); logical['source_inputs'] = sources
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'entire canonical semantic image')
+    return logical
+
+
+def f9_encode_table(domain, field, tag_name, version):
+    f9_need(type(domain) is dict and tag_name not in domain,
+            'ordinary complete Root domain')
+    rows = f9_rows(domain[field], 40000)
+    prefixes = sorted({row['path'][:row['path'].rfind('/')+1] for row in rows})
+    lookup = {prefix: i for i, prefix in enumerate(prefixes)}
+    packed = []
+    for row in rows:
+        cut = row['path'].rfind('/')+1; prefix = row['path'][:cut]
+        packed.append([lookup[prefix], row['path'][cut:], row['bytes'], row['sha256']])
+    size, digest = f9_image(domain)
+    wire = dict(domain); wire.pop(field)
+    wire[tag_name] = dict(schema=version,
+        prefixes=prefixes, rows=packed, logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_table(wire, field, tag_name, version) == domain, 'entire exact row-table inverse')
+    return wire
+
+
+def f9_expand_table(wire, field, tag_name, version):
+    if type(wire) is not dict or tag_name not in wire:
+        return wire
+    f9_need(field not in wire, 'one explicit row-table representation')
+    tag = wire[tag_name]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'prefixes', 'rows',
+            'logical_bytes', 'logical_sha256'} and tag['schema'] == version,
+            'exact parent-path table encoding')
+    prefixes, packed = tag['prefixes'], tag['rows']
+    f9_need(type(prefixes) is list and len(prefixes) <= 40000
+            and all(type(p) is str and p.startswith('/') and p.endswith('/')
+                and '\x00' not in p and all(x not in ('.', '..') for x in p.split('/'))
+                for p in prefixes)
+            and prefixes == sorted(set(prefixes)), 'exact unique absolute parent prefixes')
+    f9_need(type(packed) is list and len(packed) <= 40000, 'bounded complete packed table')
+    rows = []
+    for entry in packed:
+        f9_need(type(entry) is list and len(entry) == 4, 'complete four-column row')
+        index, name, size, digest = entry
+        f9_need(type(index) is int and 0 <= index < len(prefixes)
+                and type(name) is str and name not in ('', '.', '..') and '/' not in name,
+                'nonboolean parent index and exact filename')
+        rows.append(dict(path=prefixes[index]+name, bytes=size, sha256=digest))
+    f9_rows(rows, 40000)
+    logical = dict(wire); logical.pop(tag_name); logical[field] = rows
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'whole semantic Root-domain image')
+    return logical
+
+
+def f9_encode_domain(value):
+    return f9_encode_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_expand_domain(value):
+    return f9_expand_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_encode_closure(value):
+    f9_need(type(value) is dict and value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'only the separately accepted Native closure role')
+    return f9_encode_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+
+def f9_expand_closure(value):
+    if type(value) is not dict or _F9_CLOSURE_TAG not in value:
+        return value
+    f9_need(value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'explicit accepted Native closure role')
+    return f9_expand_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def tick():
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    need(rss<=256*MIB and time.monotonic()-START<150,'unchanged metadata256MiB/150s')
+    return rss
+
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def canonical(value,pretty=False):
+    return (json.dumps(value,sort_keys=True,indent=2 if pretty else None,
+            separators=None if pretty else(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+
+def strict(raw):
+    def pairs(items):
+        result={}
+        for key,value in items:need(key not in result,'unique metadata keys');result[key]=value
+        return result
+    def floating(s):
+        value=float(s);need(math.isfinite(value),'finite metadata float');return value
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,
+       parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def whole(ref,aliases=None,body=False):
+    global READ_BYTES
+    tick();p=Path(ref['path']);a=p.lstat();alias=(aliases or{}).get(str(p))
+    need(p.is_absolute()and str(p)==str(Path(os.path.normpath(p))),'literal normalized absolute path')
+    if alias is None:
+        need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'canonical whole single-link input')
+    else:
+        need(stat.S_ISLNK(a.st_mode)and os.readlink(p)==alias['link']and str(p.resolve(strict=True))==alias['target']['path']
+             and(a.st_dev,a.st_ino,a.st_mode,a.st_mtime_ns)==(alias['device'],alias['inode'],alias['mode'],alias['mtime_ns']),
+             'exact retained readonly alias identity')
+    need(type(ref['bytes'])is int and 0<=ref['bytes']<=2**31
+         and READ_BYTES+ref['bytes']<=2**31,'unchanged2GiB complete physical input budget')
+    if body:need(ref['bytes']<=2*MIB,'bounded metadata before allocation')
+    h=hashlib.sha256();parts=[]if body else None;count=0
+    with p.open('rb')as stream:
+        b=os.fstat(stream.fileno())
+        for block in iter(lambda:stream.read(MIB),b''):
+            h.update(block);count+=len(block);need(count<=ref['bytes'],'unchanged whole input extent')
+            if parts is not None:parts.append(block)
+            tick()
+        c=os.fstat(stream.fileno())
+    need(sig(a)==sig(p.lstat())and sig(b)==sig(c)and stat.S_ISREG(b.st_mode)and b.st_nlink==1
+         and count==ref['bytes']and h.hexdigest()==ref['sha256'],'whole stable physical identity')
+    if alias is None:need(sig(a)==sig(b),'same ordinary opened file')
+    READ_BYTES+=count;return b''.join(parts)if body else dict(ref)
+
+def observed(path):
+    global READ_BYTES
+    p=Path(path);a=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+      and a.st_nlink==1 and a.st_size<=2*MIB,'bounded ordinary live selector')
+    need(READ_BYTES+a.st_size<=2**31,'same full physical read budget before live observation')
+    raw=p.read_bytes();need(sig(a)==sig(p.lstat())and len(raw)==a.st_size,'whole stable live observation')
+    READ_BYTES+=len(raw)
+    return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),raw
+
+def doc(ref):return strict(whole(ref,body=True))
+
+def merge(rows):
+    by={}
+    for r in rows:need(by.get(r['path'],r)==r,'one immutable current version');by[r['path']]=r
+    result=[by[k]for k in sorted(by)]
+    need(len(result)<=40000 and sum(r['bytes']for r in result)<=2**31,'unchanged current40000/2GiB domain')
+    need(not any(Path(r['path'])in LIVE for r in result),'mutable selectors are observations, never immutable leaves')
+    return result
+
+def inventory(root):
+    global READ_BYTES
+    root=Path(root);need(root.resolve(strict=True)==root and root.is_dir(),'canonical closed Reader output')
+    rows=[]
+    for current,dirs,files in os.walk(root,followlinks=False):
+        current=Path(current);need(current.resolve(strict=True)==current,'no output directory alias')
+        for name in dirs:need(not(current/name).is_symlink(),'no output child alias')
+        for name in files:
+            p=current/name;a=p.lstat();h=hashlib.sha256()
+            need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+                 and a.st_size<=16*MIB and READ_BYTES+a.st_size<=2**31,'whole bounded ordinary output before read')
+            with p.open('rb')as f:
+                for block in iter(lambda:f.read(MIB),b''):h.update(block)
+            READ_BYTES+=a.st_size
+            r=dict(path=str(p),bytes=a.st_size,sha256=h.hexdigest());whole(r);rows.append(r)
+    rows.sort(key=lambda r:r['path'])
+    need(len(rows)<=16 and sum(r['bytes']for r in rows)<=16*MIB,'unchanged complete Reader output capacity')
+    return rows
+
+def fsync_dir(p):
+    fd=os.open(p,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+
+def write_raw(path,raw):
+    with Path(path).open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive metadata write');f.flush();os.fsync(f.fileno())
+
+def idle(values):
+    current,status,_=values
+    need(current['current_handle']is None and all(current[k]['active_handles']==[]for k in OWNERS)
+         and status['active_scientific_handles']==[],'all four actual ownership arrays idle')
+
+def original_preconditions(values,old_cp_ref,old_sp_ref,old):
+    idle(values)
+    for v in values[:2]:
+        need(v['F009_checkpoint_current']==old['checkpoint']and v['F009_checkpoint_acceptance_current']==old_cp_ref
+             and v['F009_snapshot_acceptance_current']==old_sp_ref,'exact accepted predecessor two-selector CAS premise')
+    f=values[2]['F009']
+    need(f['checkpoint']==old['checkpoint']and f['checkpoint_acceptance']==old_cp_ref
+         and f['snapshot_adoption']==old_sp_ref,'exact accepted predecessor durable progress CAS premise')
+
+def restore_fields(after,before,fields):
+    for k in fields:
+        if k in before:after[k]=before[k]
+        else:after.pop(k,None)
+
+def run(plan,pref,release,rref,preservation_ref,commit):
+    own_ref=plan['program'];need(own_ref['path']==str(Path(__file__).resolve()),'truthful new metadata program');whole(own_ref)
+    need(plan['schema']=='ROOT_F009_STANDALONE_CHECKPOINT_PLAN_V1'
+         and release['schema']=='ROOT_REVIEWED_F009_STANDALONE_CHECKPOINT_WRITER_V1'
+         and release['root']=='/root'and release['status']=='SUPPORTED'and release['blockers']==[]
+         and release['program']==own_ref and release['plan']==pref
+         and release['actual_Reader_and_Native_closure_supported']is True
+         and(not commit or release['canonical_selector_commit_authorized']is True),
+         'fresh exact Root metadata adoption; no legacy verdict transfer')
+    preservation=doc(preservation_ref)
+    need(preservation['schema']=='ROOT_IMMUTABLE_F009_CONTINUATION_PRESERVATION_V1'
+         and preservation['root']=='/root'and preservation['no_original_or_previous_artifact_deleted_or_rewritten']is True,
+         'actual durable complete-case preservation before adoption')
+    kept={r['original']['path']:r for r in preservation['rows']}
+    kept.update({r['original']['path']:r for r in preservation['reused_previous_rows']})
+    refs=plan['Reader'];job=f9_expand_job(doc(refs['job']));request=doc(refs['Owner_request']);receipt=doc(refs['Owner_receipt'])
+    gate=doc(refs['Root_job_review']);capture=doc(refs['actual_execution']);outer=doc(refs['outer_guard_receipt'])
+    result=doc(refs['result']);returned=doc(refs['worker_return']);case=doc(job['case'])
+    old_cp_ref,old_sp_ref=job['checkpoint_acceptance'],job['snapshot_adoption'];old=doc(old_cp_ref);oldsp=doc(old_sp_ref)
+    need(old_cp_ref==plan['prior_checkpoint_acceptance']and old_sp_ref==plan['prior_snapshot_adoption']
+         and old['root']==oldsp['root']=='/root'and old['adopted']is oldsp['adopted']is True
+         and oldsp['checkpoint_acceptance']==old_cp_ref and old['checkpoint']==oldsp['checkpoint']
+         and type(plan['prior_checkpoint_sequence'])is int
+         and old['checkpoint']['sequence']==plan['prior_checkpoint_sequence'],'exact genuine accepted predecessor')
+    boundary=doc(job['checkpoint_boundary'])
+    need(boundary['schema']=='ROOT_F009_STANDALONE_CHECKPOINT_BOUNDARY_V1'
+         and boundary['checkpoint_acceptance']==old_cp_ref and boundary['snapshot_adoption']==old_sp_ref
+         and boundary['expected_checkpoint_sequence']==old['checkpoint']['sequence']
+         and gate['checkpoint_boundary']==job['checkpoint_boundary']
+         and gate['expected_checkpoint_sequence']==old['checkpoint']['sequence'],
+         'same exact predecessor boundary and fresh Reader gate epoch')
+    need(job['role']=='reader'and job['schema']=='ROOT_F009_STANDALONE_JOB_V1'
+         and receipt['status']=='PASS'and receipt['inputs_unchanged']is True and receipt['returncode']==0
+         and receipt['owned_child_reaped']is receipt['owned_group_absent']is True
+         and receipt['error']is receipt['owned_finalization_error']is receipt['final_resource_stop']is None
+         and receipt['request']==refs['Owner_request']and receipt['execution_id']==request['execution_id'],
+         'actual closed unchanged Reader Owner PASS')
+    need(request['schema']=='LOCAL_SMALL_PYTHON_CHECK_V1'and request['supervisor']==job['Owner']['path']
+         and request['program']==job['program']['path']and request['output_roots']==[job['output']]
+         and request['argv']==[sys.executable,'-E','-B',job['program']['path'],'--job',refs['job']['path'],refs['job']['sha256'],
+             '--root-review',refs['Root_job_review']['path'],refs['Root_job_review']['sha256'],'--out',job['output']],
+         'exact genuine new Reader command')
+    need(gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'and gate['root']=='/root'
+         and gate['status']=='SUPPORTED'and gate['blockers']==[]and gate['job']==refs['job']
+         and gate['program']==job['program']and gate['Owner']==job['Owner']and gate['authorized_roles']==['reader'],
+         'exact fresh Reader release and attributed storage change')
+    launched=capture['child_argv'];tool=capture['actual_tool']
+    need(capture['actor']==capture['root']=='/root'and tool['exit_code']==0 and capture['full_tool_return']['exit_code']==0
+         and capture['all_genuine_api_frames']and launched.count('--')==1
+         and launched[launched.index('--')+1:]==outer['command']
+         and outer['command']==[sys.executable,'-E','-B',job['Owner']['path'],'--request',refs['Owner_request']['path']]
+         and outer['status']=='PASS'and outer['stop']=='RETURNED'and outer['returncode']==0 and outer['error']is None
+         and outer['cleanup']['remaining']==outer['cleanup']['errors']==[],
+         'genuine exact successful outside execution and known-scope drain')
+    need(returned['schema']=='ROOT_F009_STANDALONE_READER_WORKER_RETURN_V1'and returned['root']=='/root'
+         and returned['job']==refs['job']and returned['result']==refs['result']and returned['Root_review']==refs['Root_job_review']
+         and returned['actual_caller']==job['program']and returned['mathematical_library']==job['mathematical_library']
+         and returned['native_launch_attempts']==[]and returned['global_checkpoint_written']is False,
+         'exact new caller return, not an old Reader CLI execution')
+    need(result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'and result['case']==job['case']
+         and result['execution_source']==job['library_Source']and result['native_launch_attempts']==[]
+         and type(result['private_materialization_calls'])is int and result['private_materialization_calls']==1
+         and all(type(result[k])is int and result[k]==0 for k in('top_level_load_calls','tail_load_calls'))
+         and result['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL'
+         and result['checkpoint']==case['expected']==plan['checkpoint']
+         and type(result['checkpoint']['sequence'])is int
+         and result['checkpoint']['sequence']>old['checkpoint']['sequence']
+         and result['checkpoint']['sequence']-old['checkpoint']['sequence']==result['delta']['transactions']
+         and result['delta']==case['delta']and result['head']==case['head']
+         and result['base_acceptance']==case['base_acceptance']==old_cp_ref
+         and result['snapshot_profile']==case['snapshot_profile']==oldsp['source_profile'],
+         'entire strict actual typed/order export and exact successor result/delta')
+    need(type(result['reserved_parents'])is list
+         and result['reserved_parents']==sorted(set(result['reserved_parents']))
+         and result['checkpoint']['reserved_debts']==len(result['reserved_parents'])
+         and result['checkpoint']['pending']>=result['checkpoint']['reserved_debts'],
+         'every actual pending reserved debt is retained; no debt completion inferred')
+    native=f9_expand_closure(doc(job['native_closure']));handoff=doc(native['worker_handoff'])
+    need(native['schema']=='ROOT_CLOSED_F009_STANDALONE_NATIVE_V1'and native['known_scope_drained']is True
+         and case['handoff']==native['worker_handoff']and case['producer_request']==native['job']
+         and case['producer_case']==handoff['case']and case['head']==handoff['head']
+         and case['expected']==handoff['expected_proposal']and case['delta']==handoff['delta_proposal'],
+         'same actual Native frontier independently acquired by this Reader')
+    aliases={r['path']:r for r in job['readonly_symlinks']}
+    rows=merge(request['inputs']+list(refs.values())+[job['case'],job['native_closure'],native['worker_handoff'],
+       old_cp_ref,old_sp_ref,own_ref,pref,rref,preservation_ref])
+    required=request['inputs']+list(refs.values())
+    durable=[]
+    for r in required:
+        if Path(r['path']).is_relative_to('/private/tmp'):
+            need(r['path']in kept and kept[r['path']]['original']==r,'every temporary actual input/evidence is durably mapped')
+            durable.append(kept[r['path']]['retained'])
+    for r in rows:whole(r,aliases)
+    output_rows=inventory(job['output'])
+    need(hashlib.sha256(canonical(output_rows)).hexdigest()==plan['Reader_output_inventory_sha256']
+         and refs['result']in output_rows and refs['worker_return']in output_rows and result['snapshot']in output_rows,
+         'entire exact closed Reader output including whole snapshot')
+    for r in output_rows:
+        need(r['path']in kept and kept[r['path']]['original']==r,'all actual Reader outputs durably preserved')
+        durable.append(kept[r['path']]['retained'])
+    durable=merge(durable)
+    for r in durable:whole(r)
+    rows=merge(rows+output_rows+durable)
+    out=Path(plan['output']);need(out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh immutable checkpoint destination')
+    values={};emitted={}
+    def add(name,value,cap=2*MIB):
+        raw=canonical(value);need(len(raw)<=cap,'whole finite metadata output')
+        r=dict(path=str(out/name),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest());values[str(out/name)]=raw;emitted[name]=r;return r
+    method_sources=[]
+    for name,source in(('metadata_writer.py',own_ref),('metadata_plan.json',pref),('Root_writer_release.json',rref)):
+        raw=whole(source,body=True);path=str(out/name)
+        retained=dict(path=path,bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+        values[path]=raw;emitted[name]=retained;method_sources.append(dict(actual=source,retained=retained))
+    method=dict(program=own_ref,plan=pref,Root_release=rref,metadata_only=True,
+       actual_to_retained_sources=method_sources,
+       old_metadata_Source4_or_registration_operation_executed=False)
+    domain=add('complete_root_inputs.json',f9_encode_domain(dict(inputs=rows,all_freshly_hashed=True,
+       historical_archive_rows=job['qualified_archive_rows'],archived_rows_reopened=False,
+       qualification='Finite actual Native/Reader current domain; qualified older archive retained as attributed history, not recursively reactivated.')))
+    closure=add('reader_closure.json',dict(schema='ROOT_CLOSED_F009_STANDALONE_READER_V1',root='/root',
+       known_scope_drained=True,all_inputs_freshly_hashed=True,Reader=refs,result=refs['result'],
+       output_files=output_rows,complete_root_inputs=domain,preservation=preservation_ref,writer=method,
+       original_sampled_known_scope_qualifications_retained=True,global_checkpoint_written=False))
+    cp=dict(schema='ROOT_ACCEPTED_F009_PRIVATE_STATE_CHECKPOINT_V1',status='ROOT_ACCEPTED_F009_PRIVATE_STATE_CHECKPOINT_V1',
+       root='/root',adopted=True,checkpoint=result['checkpoint'],head=result['head'],snapshot=result['snapshot'],
+       snapshot_profile=result['snapshot_profile'],result=refs['result'],case=job['case'],request=refs['job'],
+       base_acceptance=old_cp_ref,next_select=result['next_select'],reserved_parents=result['reserved_parents'],
+       pending_includes_reserved=True,delta=result['delta'],transaction_counts=result['transaction_counts'],
+       refinement_sizes=result['refinement_sizes'],snapshot_roundtrip=result['snapshot_roundtrip'],
+       reader_source=result['execution_source'],actual_Root_caller=job['program'],root_metadata_writer=method,
+       Native_closure=job['native_closure'],Reader_closure=closure,complete_root_inputs=domain,
+       historical_reference_retention_obligation=old['historical_reference_retention_obligation'],
+       ordinary_census_complete=False,all_pending_families_remain_unpaid=True,no_successor=True,
+       source_credit=0,census_credit=0,whole_original_credit=0)
+    cpref=add('root_checkpoint_acceptance.json',cp)
+    sp=dict(schema='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_SNAPSHOT_V1',status='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_SNAPSHOT_V1',
+       root='/root',adopted=True,adoption_kind='DIRECT_PRIVATE_TAIL_VERIFICATION',checkpoint_acceptance=cpref,
+       checkpoint=result['checkpoint'],snapshot=result['snapshot'],head=result['head'],producer_case=case['producer_case'],
+       upstream_acceptance=old_cp_ref,source_profile=result['snapshot_profile'],read_result=refs['result'],
+       execution_source=result['execution_source'],next_select=result['next_select'],reserved_parents=result['reserved_parents'],
+       pending_includes_reserved=True,export_method_acceptance=case['method_acceptance'],root_metadata_writer=method,
+       actual_Root_caller=job['program'],root_terminal=closure,complete_root_inputs=domain,
+       historical_reference_retention_obligation=old['historical_reference_retention_obligation'],
+       actual_tail_load_calls=0,private_materialization_calls=1,full_history_load_calls=0,
+       source_credit=0,census_credit=0,whole_original_credit=0,no_successor=True)
+    spref=add('root_snapshot_acceptance.json',sp)
+    # Lock precedes every mutable observation, and stays held through exact
+    # before/after checks and all per-file replacements or rollback.
+    with(M/'root_state.lock').open('a')as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        before=[observed(p)for p in LIVE];oldvalues=[strict(b)for _,b in before]
+        original_preconditions(oldvalues,old_cp_ref,old_sp_ref,old)
+        changed=[strict(b)for _,b in before]
+        patch=dict(F009_checkpoint_current=cp['checkpoint'],F009_checkpoint_acceptance_current=cpref,
+          F009_snapshot_acceptance_current=spref,F009_next_select_current=cp['next_select'],F009_reserved_parents_current=cp['reserved_parents'])
+        record=dict(schema='ROOT_REGISTERED_F009_STANDALONE_READER_CHECKPOINT_V1',checkpoint=cp['checkpoint'],
+          acceptance=cpref,snapshot=spref,Reader_closure=closure,root_metadata_writer=method,new_complete_originals=0)
+        for index in range(2):
+            changed[index].update(patch);changed[index].setdefault('root_intake_progress_current',{})['F009_accepted_checkpoint']=record
+        changed[2]['F009'].update(checkpoint=cp['checkpoint'],checkpoint_acceptance=cpref,snapshot_adoption=spref,
+          status=('Registered strict Reader checkpoint{sequence}; {nodes} nodes, {pending} pending, {reserved_debts} reserved, '
+                  '{selected_raw_leaf_records} selected raw leaf records; complete census and final review remain owed.').format(**cp['checkpoint']),
+          root_metadata_update=dict(writer=method,Reader_closure=closure,checkpoint_acceptance=cpref,snapshot_adoption=spref))
+        for index in range(2):
+            restored=strict(canonical(changed[index]));prior=oldvalues[index];restore_fields(restored,prior,SELECTOR_FIELDS)
+            if 'root_intake_progress_current'in prior:
+                restore_fields(restored['root_intake_progress_current'],prior['root_intake_progress_current'],('F009_accepted_checkpoint',))
+            else:restored.pop('root_intake_progress_current',None)
+            need(restored==prior,'all unrelated live selector semantic fields preserved')
+        restored=strict(canonical(changed[2]));restore_fields(restored['F009'],oldvalues[2]['F009'],PROGRESS_FIELDS)
+        need(restored==oldvalues[2],'all unrelated global and F009 progress semantic fields preserved')
+        idle(changed)
+        backups=[];afterrefs=[]
+        for name,(r,b),value in zip(('CURRENT','current_status','reviewed_intake_progress'),before,changed):
+            raw=canonical(value,pretty=True)
+            for suffix,body in(('before',b),('next',raw)):
+                path=str(out/(name+'.'+suffix+'.json'));ref=dict(path=path,bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+                values[path]=body
+                (backups if suffix=='before'else afterrefs).append(ref)
+        intent=add('commit_intent.json',dict(schema='ROOT_F009_THREE_SELECTOR_CHECKPOINT_INTENT_V1',root='/root',
+          writer=method,checkpoint_acceptance=cpref,snapshot_adoption=spref,live_paths=list(map(str,LIVE)),
+          before_observations=[r for r,_ in before],before_copies=backups,after_images=afterrefs,
+          all_unrelated_fields_preserved=True,per_file_atomic_only_not_crash_atomic_across_three_files=True))
+        need(len(values)+2<=16 and sum(map(len,values.values()))+max(len(b)for _,b in before)+131072<=16*MIB,
+             'finite16-file16MiB metadata artifacts including one rollback scratch and final result')
+        for r in rows:whole(r,aliases)
+        need([observed(p)[0]for p in LIVE]==[r for r,_ in before],'whole final three-file CAS before publication')
+        if not commit:
+            return dict(schema='ROOT_F009_STANDALONE_CHECKPOINT_FORECAST_V1',checkpoint_acceptance=cpref,snapshot_adoption=spref,
+              planned_files=len(values)+1,planned_bytes=sum(map(len,values.values()))+131072,
+              current_inputs=len(rows),current_input_bytes=sum(r['bytes']for r in rows),physical_read_bytes=READ_BYTES,
+              canonical_selector_writes=0,scientific_calls=0)
+        out.mkdir()
+        for path,raw in values.items():write_raw(path,raw)
+        fsync_dir(out);fsync_dir(out.parent)
+        for ref in emitted.values():whole(ref)
+        for ref in backups+afterrefs:whole(ref)
+        need([observed(p)[0]for p in LIVE]==[r for r,_ in before],'last exact live CAS after durable intent/images')
+        changed_paths=[]
+        try:
+            for target,ref in zip(LIVE,afterrefs):
+                changed_paths.append(target);os.replace(ref['path'],target);fsync_dir(target.parent)
+                # Retain the identical prepared image as an immutable artifact.
+                write_raw(ref['path'],values[ref['path']]);fsync_dir(out)
+            actual=[observed(p)for p in LIVE]
+            need([b for _,b in actual]==[values[r['path']]for r in afterrefs],'entire three-selector postcondition')
+            idle([strict(b)for _,b in actual])
+        except BaseException:
+            # This handles ordinary Python exceptions. A process/machine crash
+            # is not a three-file transaction: durable intent/backups permit
+            # exact inspection and recovery; never blindly rerun old premises.
+            for index,target in reversed(list(enumerate(LIVE))):
+                if target not in changed_paths:continue
+                current=observed(target)[1]
+                need(current in(before[index][1],values[afterrefs[index]['path']]),'only known old/new bytes may be rolled back')
+                if current!=before[index][1]:
+                    temp=out/('rollback_%d.json'%index);write_raw(temp,before[index][1]);os.replace(temp,target);fsync_dir(target.parent)
+            raise
+        final=add('registration_result.json',dict(schema='ROOT_F009_STANDALONE_CHECKPOINT_REGISTERED_V1',root='/root',
+          writer=method,checkpoint_acceptance=cpref,snapshot_adoption=spref,checkpoint=cp['checkpoint'],intent=intent,
+          Reader_closure=closure,all_unrelated_fields_preserved=True,three_actual_live_observations=[r for r,_ in actual],
+          per_file_atomic_only_not_three_file_crash_atomic=True,scientific_calls=0,new_complete_originals=0))
+        write_raw(final['path'],values[final['path']]);fsync_dir(out)
+        return dict(status='ROOT_REGISTERED_STANDALONE_STRICT_READER_CHECKPOINT',
+          checkpoint_acceptance=cpref,snapshot_adoption=spref,registration_result=final,checkpoint=cp['checkpoint'],
+          canonical_selector_writes=3,scientific_calls=0,new_complete_originals=0)
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--plan',nargs=2,required=True)
+    ap.add_argument('--root-release',nargs=2,required=True);ap.add_argument('--preservation',nargs=2,required=True)
+    ap.add_argument('--commit',action='store_true');args=ap.parse_args()
+    def reference(pair):
+        p=Path(pair[0]);return dict(path=str(p),bytes=p.stat().st_size,sha256=pair[1])
+    pref,rref,kref=map(reference,(args.plan,args.root_release,args.preservation))
+    print(json.dumps(run(doc(pref),pref,doc(rref),rref,kref,args.commit),sort_keys=True))
+
+if __name__=='__main__':main()

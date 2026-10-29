@@ -1,0 +1,84 @@
+"""Own stdlib metadata authoring only; no represented Source activation."""
+import ast,copy,gzip,hashlib,json,pathlib
+D=pathlib.Path('/private/tmp/q11_original_quartet_operand_export')
+P=pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/end_masks_0337_0427_DATA/position_0337_mask07/supplier_plan.json')
+parent=json.loads(P.read_bytes())
+def ref(p):
+ b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def save(p,x,compact=False):
+ p.write_text(json.dumps(x,sort_keys=True,**({'separators':(',',':')}if compact else{'indent':2}))+'\n');return ref(p)
+def canonical(x):return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+program=ref(D/'export_operand.py');controls=ref(D/'controls.py');argument=ref(D/'ARGUMENT.rst');inverse=ref(D/'source_inverse.json');view=ref(D/'NEW_Source_read_view.json')
+inputs={r['path']:r for r in parent['inputs']}
+for r in(program,controls,argument,inverse,view):inputs[r['path']]=r
+for r in inputs.values():assert ref(pathlib.Path(r['path']))==r
+rows=sorted(inputs.values(),key=lambda r:r['path'])
+plans=[];inverses=[]
+for pos in(337,427):
+ B=D/'instances'/('position_%04d'%pos)
+ x=copy.deepcopy(parent)
+ for k in('carrier_output','closure_mask','criterion_key','maximum_positions','mode','proposer_math','verifier_math','window_start'):x.pop(k,None)
+ x.update(schema='Q11_ORIGINAL_QUARTET_OPERAND_EXPORT_PLAN_V1',program=program,control_program=controls,
+  inputs=rows,math_premises=argument,selected_positions=[pos],operand_output=str(B/'output/operand.u8'),
+  output=str(B/'output/result.json'),raw_order=['a49','b49','c49','e49','known_G_generator_0_49','known_G_generator_1_49'],
+  status='UNRUN_CURRENT_ORIGINAL_OPERAND_EXPORT_ONLY',qualification='Separate new59485-byte exporter; all34 inherited original context/frame/member/frontier proof bodies literal. RootSource review/gate and new controls are owed. Actual raw294 bytes and result are uncomputed; neither gives Root acceptance or paid credit.',
+  source_inverse=inverse,source_view=view)
+ logical=save(B/'plan.json',x,True);gz=B/'plan.json.gz';gz.write_bytes(gzip.compress(canonical(x)+b'\n',mtime=0));pref=ref(gz)
+ assert json.loads(gzip.decompress(gz.read_bytes()))==x
+ review=dict(schema='ROOT_Q11_ORIGINAL_QUARTET_OPERAND_EXPORT_SOURCE_REVIEW_V1',root=None,status='TEMPLATE_UNRUN',blockers=None,
+  program=program,plan=pref,selector=x['selector'],original_operand_member_frame_orbit_scope_checked=False)
+ reviewref=save(B/'Root_review_TEMPLATE_FALSE.json',review)
+ gate=dict(schema='ROOT_AUTHORIZED_Q11_ORIGINAL_QUARTET_OPERAND_EXPORT_V1',root=None,adopted=False,mode='export',
+  operand_export_authorized=False,program=program,plan=pref,selector=x['selector'],selected_positions=[pos],Root_code_math_review=None,control_report=None)
+ gateref=save(B/'Root_gate_TEMPLATE_FALSE.json',gate)
+ acceptance=dict(schema='ROOT_ACCEPTED_Q11_ORIGINAL_QUARTET_OPERAND_V1',root=None,reviewer=None,
+  operand=None,original_job=[23,4],position=pos,representative=None,whole_orbit_sha256=None,selector=x['selector'],
+  export_program=program,export_result=None,export_actual_capture=None,export_source_gate=None,
+  checks=dict(original_member_frame_faithful_orbit_G_A_equals_G=False),
+  proof_DAG_refs=None,old_proof_DAG_qualification=None,Root_authority_granted=False)
+ acceptref=save(B/'Root_operand_acceptance_TEMPLATE_FALSE.json',acceptance)
+ actual_bytes=2*(sum(r['bytes']for r in rows)+pref['bytes']+8192+32768+16384)+program['bytes']+131366
+ count=len(rows)+4
+ assert actual_bytes<=8388608 and count+2<=96
+ plans.append(dict(position=pos,logical=logical,plan=pref,review_template=reviewref,gate_template=gateref,operand_acceptance_template=acceptref,
+  whole_unique_fixed_input_count=len(rows),whole_unique_fixed_input_bytes=sum(r['bytes']for r in rows),
+  actual_paths_upper=count+2,physical_read_upper=actual_bytes,new_write_upper=131366,
+  terminal_resources_are_after_raw_and_result_recheck=True,all_actual_exports=None))
+ changes={k:dict(old=parent.get(k),new=x.get(k))for k in set(parent)|set(x)if parent.get(k)!=x.get(k)}
+ restored=copy.deepcopy(x)
+ for k in set(parent)|set(x):
+  if k not in parent:restored.pop(k,None)
+  elif k in changes:restored[k]=parent[k]
+ assert restored==parent
+ inverses.append(dict(position=pos,parent_plan=ref(P),parent_body=parent,child=logical,child_body=x,changed_fields=changes,exact_restore_checked=True))
+save(D/'whole_DATA_inverses.json',dict(schema='Q11_OPERAND_EXPORT_WHOLE_PLAN_INVERSES_V1',author='/root/journal_peer',plans=inverses,no_represented_Source_execution=True))
+calls=dict(schema='Q11_ORIGINAL_OPERAND_EXPORT_FIRST_CALLS_UNRUN_V1',controls_argv=['python3','-E','-S','-B',controls['path'],'--self-sha256',controls['sha256'],'--exporter',program['path'],program['sha256'],'--parent','/private/tmp/q11_matrix_subgroup_closure/worker.py',ref(pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/worker.py'))['sha256'],'--inverse',inverse['path'],inverse['sha256'],'--out',str(D/'runtime/controls_result.json')],
+ export_calls=[dict(position=r['position'],argv=['python3','-E','-S','-B',program['path'],'--self-sha256',program['sha256'],'--plan',r['plan']['path'],r['plan']['sha256'],'--Root-gate','<FRESH_ACTUAL_ROOT_GATE_PATH>','<EXACT_SHA256>'],Root_gate=None,actual_result=None)for r in plans],
+ limits=dict(inner_RSS_MiB=128,inner_seconds=125,outer_RSS_MiB=128,outer_seconds=150),
+ qualification='Quoted ABI only; fresh Root ownread/independentSource peer/actual generic controls then actual scoped Root release needed. No Source/control/case activation by author.')
+save(D/'first_calls_UNRUN.json',calls)
+name_count=len([n for n in ast.walk(ast.parse((D/'controls.py').read_text()))if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in('ok','bad')and n.args and isinstance(n.args[0],ast.Constant)])
+control_read=2*(program['bytes']+ref(pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/worker.py'))['bytes']+inverse['bytes'])+2*controls['bytes']+16384
+invoice=dict(schema='Q11_ORIGINAL_OPERAND_EXPORT_COMPLETE_RESOURCE_INVOICE_V1',author='/root/journal_peer',
+ functional_Source_namespace=[program],functional_Source_bytes=program['bytes'],limit65536=True,
+ old_Source_and_control_inputs_role='wholebody data/provenance only; no provider load; all physically opened bytes counted',
+ fixed_inputs=rows,fixed_count=len(rows),fixed_bytes=sum(r['bytes']for r in rows),
+ exports=plans,formula='2*(unique fixed whole inputs + exact gzip plan + actual gate<=8192 + Rootreview<=32768 + actualcontrols<=16384)+one Python bootstrap ownSource+raw294 reread+whole result<=131072 reread',
+ new_packing_scalar_exact=294,whole_original_context_products_upper=64,
+ scalar_meter_qualification='all old original context/typedproof bodies literal; new bytes packing294 additional scalar. Matrix products and row images retain inherited guards; no new group search.',
+ caps=dict(physical_read_bytes=8388608,total_paths=96,perfile_bytes=2097152,Source_bytes=65536,matrix_products=400000,row_images=200000,additional_scalar_hard=1000000,additional_scalar_soft=900000,inner_MiB=128,inner_seconds=125,outer_seconds=150),
+ controls=dict(pure_designs=name_count,AST_designs=5,status='UNRUN',program=controls,read_upper=control_read,paths_upper=5,report_upper=16384,
+  formula='2*(exporter+parent+inverse)+2*controlSource including bootstrap+report reread'),
+ no_original_294_bytes_computed=True,no_actual_fit_or_math_outcome_claim=True)
+inv=save(D/'read_work_invoice.json',invoice)
+qa=save(D/'author_AST_hash_DATA_observations.json',dict(schema='Q11_OPERAND_EXPORT_AUTHOR_STATIC_OBSERVATIONS_V1',author='/root/journal_peer',
+ observations=['all72whole fixedbody SHA matched','both logicalgzip wholeinverses restored parent','program+controls ASTparse only','all34 old effective definitions literal and wholeSource inverseexact','soleSource59485<65536','26pure+5AST designs statically counted UNRUN'],
+ Source=program,controls=controls,new_Source_control_case_activations=0))
+h=dict(schema='Q11_ORIGINAL_QUARTET_OPERAND_EXPORT_SOURCE_DATA_HANDOFF_V1',author='/root/journal_peer',
+ status='FROZEN_UNRUN_SOURCE_CONTROLS_DATA; DISTINCT_ROOT_REVIEW_AND_ACTIVATION_OWED',program=program,controls=controls,argument=argument,inverse=inverse,read_view=view,
+ invoice=inv,first_calls=ref(D/'first_calls_UNRUN.json'),whole_DATA_inverse=ref(D/'whole_DATA_inverses.json'),author_static_observations=qa,plans=plans,
+ future_Root_acceptance_schema='ROOT_ACCEPTED_Q11_ORIGINAL_QUARTET_OPERAND_V1',future_acceptance_authority=None,
+ Source_extent=program['bytes'],literal_old_definitions=34,generic_control_designs=dict(pure=26,AST=5),all_actual_Source_controls_and_exports=None,
+ scientific_paid_or_Original_credit=0,selector_changed=False,Root_gate_authority_granted=False)
+save(D/'handoff.json',h)
+print(json.dumps(dict(handoff=ref(D/'handoff.json'),invoice=inv,plans=[dict(position=r['position'],plan=r['plan'],read=r['physical_read_upper'],paths=r['actual_paths_upper'])for r in plans]),sort_keys=True))

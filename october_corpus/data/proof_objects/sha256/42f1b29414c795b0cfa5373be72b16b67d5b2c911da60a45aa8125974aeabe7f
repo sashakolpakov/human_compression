@@ -1,0 +1,135 @@
+"""Author-owned stdlib DATA projection; never executes retention/science Sources."""
+import hashlib,json,pathlib,stat
+D=pathlib.Path('/private/tmp/q11_operand37_prelaunch_retention_DATA')
+S=pathlib.Path('/Users/sasha/medusa/research/leemans')
+DEST=S/'computation/f004/q11/rank4/original_quartet_operands/job_0023/prelaunch/evidence'
+ROOTS=[pathlib.Path('/private/tmp/q11_original_quartet_operand_export'),pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/operand37_line_route')]
+U=pathlib.Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py')
+def can(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pin(p):
+    a=p.lstat();assert stat.S_ISREG(a.st_mode)and a.st_nlink==1 and p.resolve(strict=True)==p and a.st_size<=4*2**20
+    raw=p.read_bytes();z=p.lstat()
+    signature=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+    assert signature(a)==signature(z)and len(raw)==a.st_size
+    return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def put(name,value):
+    p=D/name;assert not p.exists();p.write_bytes(can(value));return pin(p)
+utility=pin(U);assert utility['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+assert not DEST.exists()
+borrowed_paths=[S/'computation/f004/q11/rank4/section_generation/residuals/shared_line_nongeneration/job_0023/batch_0001/evidence/preservation.json',
+ S/'computation/f004/q11/rank4/section_generation/residuals/shared_line_nongeneration/job_0023/batch_0001/metadata_runtime/evidence/preservation.json',
+ S/'computation/f004/q11/rank4/section_generation/residuals/shared_subspace_search/job_0023/evidence/preservation.json']
+borrowed=[pin(p)for p in borrowed_paths]
+index={};mapping_sources={}
+for p in borrowed_paths:
+    value=json.loads(p.read_bytes())
+    assert value['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'and value['root']=='/root'and value['scientific_calls']==0
+    for row in value['files']:
+        r=row['retained'];key=(r['bytes'],r['sha256'])
+        if pathlib.Path(r['path']).is_relative_to(S):
+            index.setdefault(key,[]).append(r);mapping_sources.setdefault(r['path'],[]).append(pin(p))
+selection={}
+for root in ROOTS:
+    for p in sorted(root.rglob('*')):
+        if p.is_file():selection[str(p)]=pin(p)
+bound=pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/operand37_line_route/canonical_header_successor/bound_actual_operands_DATA/handoff.json')
+assert pin(bound)['sha256']=='78084a4f4530c44a097c3fc3b9cd587468fe10f1627d7e4d5016febb4718a392'
+roster_T={};roster_S={};roster_plans=[]
+for position in(337,427):
+    p=ROOTS[0]/'column_order_controls'/f'position_{position:04d}'/'plan.json'
+    value=json.loads(p.read_bytes());assert len(value['inputs'])==72
+    roster_plans.append(pin(p))
+    for r in value['inputs']:
+        if r['path'].startswith('/private/tmp/'):
+            assert roster_T.get(r['path'],r)==r;roster_T[r['path']]=r
+            actual=pin(pathlib.Path(r['path']));assert actual==r;selection[r['path']]=r
+        else:
+            assert pathlib.Path(r['path']).is_relative_to(S)
+            assert roster_S.get(r['path'],r)==r;roster_S[r['path']]=r
+for p in[S/'computation/f004/theory/g2_11_generation_by_prime_witnesses.tex',
+ pathlib.Path('/private/tmp/q11_matrix_subgroup_closure/one_full_end_IP_proof/PROOF.rst')]:selection[str(p)]=pin(p)
+for position in(337,427):
+    p=S/f'computation/f004/q11/rank4/original_quartet_operands/job_0023/position_{position:04d}/root_acceptance.json'
+    selection[str(p)]=pin(p)
+    receipt=json.loads(p.read_bytes())
+    assert receipt['schema']=='ROOT_ACCEPTED_Q11_ORIGINAL_QUARTET_OPERAND_V1'and receipt['root']==receipt['reviewer']=='/root'
+    assert receipt['Root_authority_granted']is True and receipt['checks']['original_member_frame_faithful_orbit_G_A_equals_G']is True
+    for key in('operand','export_program','export_result','export_actual_capture','export_source_gate'):
+        r=receipt[key];assert selection.get(r['path'],r)==r
+        assert pin(pathlib.Path(r['path']))==r;selection[r['path']]=r
+selection[str(pathlib.Path(__file__).resolve())]=pin(pathlib.Path(__file__).resolve())
+assert len(selection)==len(set(selection))
+reuse_checks={};rows=[];roles=[]
+for original in sorted(selection.values(),key=lambda r:r['path']):
+    op=pathlib.Path(original['path']);key=(original['bytes'],original['sha256'])
+    if op.is_relative_to(S):retained=original;kind='EXISTING_LITERAL_S_INPUT'
+    elif key in index:
+        candidates=sorted(index[key],key=lambda r:r['path']);retained=candidates[0]
+        actual=pin(pathlib.Path(retained['path']));assert actual==retained
+        reuse_checks[retained['path']]=dict(retained=retained,manifests=mapping_sources[retained['path']])
+        kind='EXACT_EXISTING_S_OBJECT_FROM_WHOLE_MANIFEST'
+    else:
+        retained=dict(original,path=str(DEST/'objects'/original['sha256']));kind='NEW_WHOLE_CONTENT_OBJECT'
+    rows.append(dict(original=original,retained=retained));roles.append(dict(original=original,retained=retained,role=kind))
+assert set(roster_T)<=set(selection)
+plan=dict(schema='Q11_OPERAND_EXPORT_AND_37_PRELAUNCH_CLOSED_RETENTION_DATA_V1',author='/root/journal_peer/large_end_route_audit',
+ destination=str(DEST),files=rows,borrowed_closures=borrowed,scientific_calls=0,Root_authority=False,
+ qualification='Closed whole-file byte preservation only. Retains failed c17 and corrected84bf/export7311 actual records separately;37controls/cases are unrun and no future result is guessed. Original S proof-DAG descriptors remain opaque durable provenance, not fresh oldbody read claims.')
+plan_ref=put('copy_plan.json',plan)
+methods=[dict(original=utility,retained=dict(utility,path=str(DEST/'method/retain_closed_files.py'))),
+ dict(original=plan_ref,retained=dict(plan_ref,path=str(DEST/'method/plan.json')))]
+manifest=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrowed,
+ source_plan=plan_ref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,
+ qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+projected_ref=put('projected_manifest_DATA.json',manifest)
+manifest_ref=dict(projected_ref,path=str(DEST/'preservation.json'))
+paths=set();reads=0;writes=0;emitted=set();virtual={}
+def whole(r):
+    global reads
+    paths.add(r['path']);reads+=r['bytes'];assert len(paths)<=512 and reads<=64*2**20
+def put_virtual(r):
+    global writes
+    old=virtual.get(r['path'])
+    if old is None:
+        writes+=r['bytes'];emitted.add(r['path']);virtual[r['path']]=r
+    else:assert old==r
+    whole(r)
+# Independent manual interpreter of the quoted667 byte-copy protocol, not an activation.
+whole(utility);whole(plan_ref)
+for r in borrowed:whole(r)
+for row in rows:
+    whole(row['original'])
+    if not pathlib.Path(row['retained']['path']).is_relative_to(DEST):whole(row['retained'])
+for row in rows:
+    if pathlib.Path(row['retained']['path']).is_relative_to(DEST):whole(row['original']);put_virtual(row['retained'])
+for row in rows:whole(row['retained'])
+for row in methods:put_virtual(row['retained'])
+put_virtual(manifest_ref);whole(plan_ref)
+assert writes<=16*2**20 and len(emitted)<=512
+coverage=put('selection_and_input_coverage.json',dict(schema='Q11_OPERAND37_CLOSED_SELECTION_SCOPE_AND_REUSE_JOIN_V1',
+ selected_original_rows=roles,active_exporter_plan_refs=roster_plans,active_T_roster=list(roster_T.values()),
+ all_active_T_roster_covered=True,literal_already_durable_S_roster=list(roster_S.values()),
+ S_roster_body_resweep_by_author=False,Root_bound_DATA_handoff=pin(bound),S_reuse_whole_checks=list(reuse_checks.values()),
+ required_paths_covered=dict(exporter_entire_tree=str(ROOTS[0]),operand37_parent_and_successor_entire_tree=str(ROOTS[1])),
+ qualified_opaque_provenance='All54 Original exporter S input references remain direct durable S descriptors; no3.3MiB Original Source/data proof-DAG resweep. Only requested f1b6 written proof and actual S operand receipt bodies were additionally pinned here.',
+ Source_37_actual_controls_cases=None,Root_authority=False))
+invoice=put('invoice.json',dict(schema='Q11_OPERAND37_667_AUTHOR_PROJECTION_INVOICE_V1',utility=utility,plan=plan_ref,
+ actual_utility_or_forecast_execution=False,all_scratch_read_hash_operations_only=True,
+ forecast=dict(mappings=len(manifest['files']),selected_original_rows=len(rows),actual_paths= len(paths),actual_read_bytes=reads,new_bytes=writes,new_files=len(emitted),
+  projected_preservation=manifest_ref,new_content_objects=len([p for p in emitted if '/objects/'in p])),
+ formula='Exact manual667 loops: original+retained checks; second original and immediate target check for each copy row; final retained check for every row; Source/plan method copies; manifest immediatehash; final wholeplan. Duplicated content deduplicates writes but every actual read is charged.',
+ borrowed_closures=borrowed,borrowed_old_bodies_opened=False,old_S_original_roster_opened=False,
+ caps=dict(perfile=4*2**20,new_bytes=16*2**20,read_bytes=64*2**20,actual_paths=512,MiB=256,seconds=125),
+ selected_new_object_bytes=sum(r['bytes']for r in virtual.values()if '/objects/'in r['path']),
+ no_change_to_science_native_owner_decoder_wireguard_or_Source_caps=True))
+handoff=put('handoff.json',dict(schema='Q11_OPERAND_EXPORT37_PRELAUNCH_RETENTION_DATA_HANDOFF_V1',
+ author='/root/journal_peer/large_end_route_audit',status='FROZEN_DATA_ONLY; ROOT_REVIEW_AND_ACTUAL_COPY_OWED',
+ copy_plan=plan_ref,utility_Source_interface=utility,destination=str(DEST),fresh_manifest=str(DEST/'preservation.json'),
+ projected_manifest_DATA=projected_ref,projected_preservation=manifest_ref,invoice=invoice,input_coverage=coverage,
+ exact_quoted_Root_CLI=['python3','-E','-S','-B',str(U),'--self-sha256',utility['sha256'],'--plan',plan_ref['path'],plan_ref['sha256'],'--destination',str(DEST),'--manifest',str(DEST/'preservation.json')],
+ Root_bound37_DATA=pin(bound),forecast=dict(mappings=len(manifest['files']),paths=len(paths),read_bytes=reads,new_bytes=writes,new_files=len(emitted)),
+ actual_copy=None,Root_authority=False,scientific_calls=0,case_controls_or_adoption_claims=False,
+ immutable_failure_qualification='Old exporterc17 failed controls retained asfailure, corrected84bf actualcontrols/7311 exports/Rootacceptances retained separately. No37control/case result guessed.',
+ scope='Whole new exporter+37trees including boundDATA, every activeT exporter input mapped, exactSreuses, directdurableS Original proofrefs opaque; no oldOriginal proofDAG resweep.'))
+for r in(plan_ref,projected_ref,coverage,invoice,handoff):print(json.dumps(r,sort_keys=True))
+print('manual_projection',len(manifest['files']),len(paths),reads,writes,len(emitted),len(reuse_checks))

@@ -1,0 +1,218 @@
+"""UNRUN inputs-only subset ledger ABI successor; /root/journal_peer/large_end_route_audit.
+Prior51aa remains immutable. Only walk owns named ledger roles; subset uses exact input refs.
+"""
+"""UNRUN Root-owned callback metadata candidate. Author /root/journal_peer/large_end_route_audit.
+No scientific/project imports, subprocess, controller, action, word or state decoding.
+Root alone may activate after own-reading and issuing a distinct positive policy.
+"""
+from pathlib import Path
+import argparse,hashlib,json,os,resource,stat,sys,time
+M=2**20;START=time.monotonic();READ=WRITE=0;PATHS=set();CACHE={}
+S=Path('/Users/sasha/medusa/research/leemans')
+BASE=S/'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients'
+CURRENT=BASE/'paid_status_ledger/CURRENT.json'
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+SELECTOR=dict(first_block_index=2,endpoint_position=18,local_class_position=164,middle_block_index=2,first_ambient_class_position=13,middle_ambient_class_position=13)
+EXPECTED={'subset':'1bdbd59e8d62e5b6e344bed37d05c2c43799685f49545e5894d504a7008491be','walk':'e02fcf70adfcacbc117cddfd9739d9bdb738eb70271491e3b399d47e09b7c60c','GEN':'268d1b942a7c105e266f37746d362bbffac71d812380334953f2120a94f37bd3','point_kernel':'60eedb3ce207831ec66cdcc18c689c7c5e334205772cabf888f950503cc267ee','subset_kernel':'2292c70a2a21ac1645d4679848e8ac5f9a3d9afb343cf49cb7e55b6bc8feef36','supplier':'63d337ec610b404e811aa0cf19d80fac645797f2e1b95d0321a2359d99e0231b','ledger':'ba9365c6ba568dabc825f1810b791f9b3340ded7532cb1653f90e37123855ac9','retainer':'66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'}
+def need(x,m):
+ if not x:raise ValueError(m)
+ need_limits()
+def need_limits():
+ if time.monotonic()-START>=125 or resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>=256*M:raise RuntimeError('metadata256MiB125s')
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def same(a,b):return can(a)==can(b)
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def shape(r):
+ need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str and type(r['bytes'])is int and 0<=r['bytes']<=4*M and type(r['sha256'])is str and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),'whole bounded descriptor');return r
+def raw(r,fresh=False):
+ global READ
+ shape(r);p=Path(r['path']);need(CACHE.get(str(p),(r,None))[0]==r,'one physical version per invocation')
+ if str(p)in CACHE and not fresh:return CACHE[str(p)][1]
+ a=p.lstat();sig=lambda t:(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+ need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'exact-size regular input BEFORE open')
+ PATHS.add(str(p));need(len(PATHS)<=512 and READ+r['bytes']<=64*M,'512physicalpaths64MiBread')
+ with p.open('rb')as f:b=os.fstat(f.fileno());data=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+ need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and ref(p,data)==r,'boundedFD stable wholehash')
+ READ+=len(data);CACHE[str(p)]=(r,data);return data
+def parse(b):
+ def pairs(rows):
+  d={}
+  for k,v in rows:need(k not in d,'uniqueJSONkeys');d[k]=v
+  return d
+ return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda _ :(_ for _ in()).throw(ValueError('finiteJSON')))
+def doc(r):return parse(raw(r))
+def put(p,v):
+ global WRITE
+ p=Path(p);b=can(v);need(p.is_absolute()and p.is_relative_to('/private/tmp')and '..'not in p.parts and len(b)<=4*M and WRITE+len(b)<=16*M and not os.path.lexists(p),'freshTmetadataonly')
+ p.parent.mkdir(parents=True,exist_ok=True);need(p.parent.resolve()==p.parent,'canonicalTparent')
+ PATHS.add(str(p));need(len(PATHS)<=512,'outputpaths included')
+ with p.open('xb')as f:need(f.write(b)==len(b),'wholewrite');f.flush();os.fsync(f.fileno())
+ WRITE+=len(b);r=ref(p,b);need(raw(r,True)==b,'wholeoutputfinalhash');return r
+def refs_in(v):
+ if type(v)is dict:
+  if set(v)=={'path','bytes','sha256'}:return[v]
+  return [r for x in v.values()for r in refs_in(x)]
+ if type(v)is list:return[r for x in v for r in refs_in(x)]
+ return[]
+def selected(v):need(type(v)is list and 1<=len(v)<=16 and all(type(i)is int and 80<=i<=95 for i in v)and v==sorted(set(v)),'one80..95batch');return v
+def ledger(current):
+ need(current['path']==str(CURRENT),'fixedCURRENT');cur=doc(current);receipt=doc(cur['ledger_receipt']);bank=raw(cur['status_bank'])
+ need(cur['schema']=='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1'and cur['root']=='/root'and cur['adopted']is True and cur['scope_digest']==SCOPE,'currentRoottypedselector')
+ need(receipt['schema']=='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1'and receipt['root']=='/root'and receipt['adopted']is True and receipt['Root_adoption_owed']is False and receipt['scope_digest']==SCOPE and receipt['original_selector']==SELECTOR and receipt['status_bank']==cur['status_bank'],'exactacceptedreceipt')
+ need(len(bank)==28908 and set(bank)<=set([0,1,2,6]),'wholetypedbank');c=dict(subset_NEG=bank.count(1),GEN=bank.count(2)+bank.count(6),separate_IP=bank.count(6),unpaid=bank.count(0));need(same(receipt['counts'],c),'derivedcounts')
+ need(receipt['global_NEG']==17688+c['subset_NEG']and receipt['global_NEG_mass']==6884658+1024*c['subset_NEG']and receipt['unpaid_mass']==1024*c['unpaid'],'fixednonfree+masses')
+ return cur,receipt,bank
+def policy_check(policy,config):
+ need(policy['schema']=='ROOT_OWNED_L026_ONE_BATCH_CALLBACK_POLICY_V1'and policy['root']=='/root'and policy['Root_own_read_approved']is True and policy['new_Root_decision_not_old_case_verdict_transfer']is True,'Rootalonepositivepolicy')
+ need(policy['selected_indices']==list(range(80,96))and same(policy['programs'],config['programs']),'exactonebatchknownSources')
+ for k,r in config['programs'].items():need(r['sha256']==EXPECTED[k],'unchangedSourceedition');raw(r)
+ for k in ['actual_helper_controls','independent_helper_peer','Root_helper_Source_review','helper_program','helper_control_program','workflow_program']:raw(policy[k])
+ hc=doc(policy['actual_helper_controls']);need(hc['status']=='PASS'and hc['original_case_calls']==0 and hc['subject']==policy['helper_program']and hc['program']==policy['helper_control_program'],'actualhelpercontrols exacthelper/control')
+ hr=doc(policy['Root_helper_Source_review']);need(hr['root']=='/root'and hr['status']=='SUPPORTED'and hr['blockers']==[],'freshownedhelperreview')
+ need(doc(policy['independent_helper_peer'])['blockers']==[],'independentSourcepeer')
+ need(policy['qualified_Original_imports_checked']is True and type(policy['retained_original_scope_qualification'])is str and len(policy['retained_original_scope_qualification'])>100,'explicitOriginalmodel/member/normality/action/word/fullAut/Out2/twofibre/H=Bimports')
+ for role in ['subset','walk','GEN']:
+  old=doc(policy['prior_Source_math_reviews'][role]);need(old['root']=='/root'and old['status']=='SUPPORTED'and old['blockers']==[]and old['program']==config['programs'][role],'wholepriorownedSource/mathreview; quotednotretagged')
+  report=doc(config['actual_controls'][role]);need(report['status']=='PASS'and report['original_case_calls']==0,'realoldgenericcontrols')
+  key={'subset':'worker','walk':'supplier','GEN':'consumer'}[role];need(report[key]==config['programs'][role],'controls exactsubject')
+  need(report['point_kernel'if role=='subset'else'kernel']==config['programs']['point_kernel'],'samekernel')
+ return policy
+def actual_run(run,program):
+ cap=doc(run['capture']);g=doc(run['outer']);p=doc(run['plan']);r=doc(run['result']);gate=doc(run['gate']);review=doc(run['review']);terminal=doc(run['stdout'])
+ need(cap.get('root')==cap.get('actor')=='/root'and cap['all_genuine_api_frames']and cap['all_genuine_api_frames'][0]==cap['full_initial_tool_return']and cap['all_genuine_api_frames'][-1]==cap['full_tool_return']and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==0,'Rootactualframes')
+ argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',program['path'],'--self-sha256',program['sha256'],'--plan',run['plan']['path'],run['plan']['sha256'],'--Root-gate',run['gate']['path'],run['gate']['sha256']]
+ need(g['status']=='PASS'and g['stop']=='RETURNED'and g['returncode']==0 and g['cleanup']['remaining']==g['cleanup']['errors']==[]and g['command']==argv and cap['issued_argv']==cap['child_argv']and cap['child_argv'][cap['child_argv'].index('--')+1:]==argv,'exactsuccessfulscientificclosure')
+ L=g['limits'];need(L['total_rss']==128*M and L['wall_seconds']==150 and L['admit_ram']>=4*2**30 and L['admit_disk']>=10*2**30 and L['ram_floor']>=3*2**30 and L['disk_floor']>=8*2**30,'unchanged128scienceand4GB10GBadmission3GB8GBfloors')
+ need(raw(run['stderr'])==b''and gate['program']==p['program']==r['program']==program and gate['plan']==r['plan']==run['plan']and gate['Root_code_math_review']==run['review']and gate['root']==review['root']=='/root'and gate['adopted']is True and review['status']=='SUPPORTED'and review['blockers']==[]and review['program']==program and review['plan']==run['plan'],'exactactualSource/plan/gate/review')
+ return r,p,terminal
+def retention(e,config):
+ p=doc(e['plan']);dest=Path(e['destination']);need(dest.is_relative_to(BASE/'bounded_batches/free_0080_0095')and p['destination']==str(dest)and Path(e['manifest']).is_relative_to(dest)and not os.path.lexists(e['manifest']),'freshmeaningfulSretentiondestination')
+ need(p.get('scientific_calls',0)==0 and all(p.get(k,False)is False for k in ['Root_authority','Root_authority_granted','execution_authority_granted']),'copynoauthority')
+ rows=p.get('files',p.get('copy_rows',[])+p.get('reuse_rows',[]));need(type(rows)is list and 1<=len(rows)<=512,'boundedcopyrows')
+ physical={};new={};read=0
+ for r in p.get('borrowed_closures',[]):raw(r);physical[r['path']]=r;read+=r['bytes']
+ for row in rows:
+  a,b=row['original'],row['retained'];raw(a);shape(b);need(a['bytes']==b['bytes']and a['sha256']==b['sha256']and Path(b['path']).is_relative_to(S),'wholeexactcopy/Sreuse')
+  physical[a['path']]=a;physical[b['path']]=b
+  if Path(b['path']).is_relative_to(dest):new[b['path']]=b;read+=4*a['bytes']
+  else:raw(b);read+=3*a['bytes']
+ # Include exact method and projected manifest bytes, repeated read sites and all
+ # physical output paths. No author262k reserve is used as an invented body.
+ own=config['programs']['retainer'];raw(own)
+ methods=[dict(original=own,retained=dict(own,path=str(dest/'method/retain_closed_files.py'))),dict(original=e['plan'],retained=dict(e['plan'],path=str(dest/'method/plan.json')))]
+ manifest=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=p.get('borrowed_closures',[]),source_plan=e['plan'],scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+ mr=ref(e['manifest'],can(manifest));read+=2*own['bytes']+3*e['plan']['bytes']+mr['bytes'];newbytes=sum(r['bytes']for r in new.values())+own['bytes']+e['plan']['bytes']+mr['bytes'];paths=set(physical)|{own['path'],e['plan']['path'],methods[0]['retained']['path'],methods[1]['retained']['path'],mr['path']}
+ need(read<=64*M and newbytes<=16*M and len(paths)<=512 and all(r['bytes']<=4*M for r in list(physical.values())+[mr]),'complete667caps')
+ return dict(approved=True,projected_manifest=mr,actual_read_upper=read,new_write_upper=newbytes,actual_path_upper=len(paths))
+def case(req,policy,config,out):
+ entry=req['entry'];ctx=req['ctx'];p=doc(entry['plan']);role='subset'if entry['role'].startswith('subset_')else entry['role'];need(role in ['subset','walk','GEN'],'caseABIrole')
+ need(entry['program']==config['programs'][role]and p['program']==entry['program']and p['scope_digest']==SCOPE and p['original_selector']==SELECTOR,'knownexactscientificSource/scope')
+ need(p['schema']=={'subset':'L026_ROTATION_INVARIANT_SUBSET_PLAN_V1','walk':'L026_UNTRUSTED_CACHED_ROTATION_WALK_PLAN_V1','GEN':'L026_SUPPLIED_PRIME_CYCLE_CHECK_PLAN_V1'}[role]and p['Root_authority']is False,'distinctunadoptedcaseplanABI')
+ ids=selected(entry['selected']);need(ids==p['selected_free_indices'],'exactselectedplan')
+ cur,rc,bank=ledger(ctx['current']);need(all(bank[i]==0 for i in ids),'freshunpaidonly')
+ for r in p['inputs']:raw(r)
+ report=doc(config['actual_controls'][role]);need(p['control_program']==report['program'],'exactactualcontrolSource')
+ # Subset ledger refs are INPUTS-only; walk owns three named ledger roles.
+ if role=='walk':
+  R=p['roles'];need(R['current_paid_ledger_selector']==ctx['current']and R['paid_ledger_receipt']==cur['ledger_receipt']and R['paid_status_bank']==cur['status_bank'],'exactwalknamedledgerroles')
+ if role=='subset':
+  need(all(r in p['inputs']for r in [ctx['current'],cur['ledger_receipt'],cur['status_bank']]),'threeexactsubsetINPUTSonlyledgerrefs;nonamedrolesrequired')
+ need(p['kernel'if role!='subset'else'point_kernel']==config['programs']['point_kernel'],'exactpointkernel')
+ if role=='subset':
+  need(p['mode']in ['propose','check']and entry['role']=='subset_'+p['mode']and p['maximum_subset_points']==3509 and len(ids)<=3,'subsetpropose/check;completepropercap')
+  need(p['subset_kernel']==config['programs']['subset_kernel']and p['supplier']==config['programs']['supplier'],'strict2292/propose63d3distinct')
+  if p['mode']=='check':
+   carrier=doc(p['records']);need(1<=len(carrier['records'])<=3,'boundedstrictcarrier')
+   charge=6462000+4*p['records']['bytes']+3704*len(carrier['records'])+312*sum(len(z['points'])for z in carrier['records']);need(charge<=10000000,'unchangedstrictpoint/workinvoice')
+ if role=='walk':
+  need(len(ids)==1 and p['direct_consumer']==config['programs']['GEN'],'singletonuntrustedwalk')
+  need(p['core']==report['core']and p['primitives']==report['primitives'],'unchangedwalkproviders');raw(p['core']);raw(p['primitives'])
+  # helper gen route is bound only to complete actual3509cap misses; Root rechecks
+  # that retained route/evidence before issuing its one-batch policy approval.
+  evidence=req['case_evidence'];route=doc(evidence['subset_route']);need(ids[0]in route['completed_capmiss_indices']and any(e['plan']==entry['plan']for e in route['walk_calls']),'actualcompletedcapmissrouteonly')
+  matches=[]
+  for run in route['actual_subset_runs']:
+   summary,sourceplan,terminal=actual_run(run,config['programs']['subset'])
+   cp=doc(run['checkpoint']);need(sourceplan['mode']=='propose'and terminal['outputs']['result.json']==run['result']and terminal['outputs']['checkpoint.json']==run['checkpoint'],'actualproposecheckpoint')
+   notes=[n for n in cp['notes']if n['free_index']==ids[0]]
+   if notes:
+    note=notes[0];need(ids[0]in summary['capped_orbit_prefix_misses_unpaid']and ids[0]not in summary['exact_unvisited_indices']and note['outcome']=='cap_miss'and len(note['points'])==3509 and cp['maximum_subset_points']==3509,'completedactualpropercapmiss;neverunvisited');matches.append(note)
+  need(len(matches)==1,'exactonecompletedcapmissorigin')
+ if role=='GEN':need(p['expected_positive_free_indices']==ids and len(ids)==1,'actualpairsingletonstrict')
+ prior=policy['prior_Source_math_reviews'][role]
+ review=dict(root='/root',reviewer='/root',status='SUPPORTED',blockers=[],program=entry['program'],plan=entry['plan'],qualified_prior_Source_math_review=prior,prior_review_is_opaque_qualified_Source_import_not_current_case_verdict=True,Root_callback_policy=req['policy'],current_paid_ledger_currentness_checked=True,current_paid_ledger=[ctx['current'],cur['ledger_receipt'],cur['status_bank']],selected_free_indices=ids,retained_Original_imports=policy['retained_original_scope_qualification'],new_Original_credit=0)
+ gate=dict(root='/root',adopted=True,new_case_calls_authorized=True,program=entry['program'],plan=entry['plan'],control_report=config['actual_controls'][role])
+ if role=='subset':
+  review.update(schema='ROOT_REVIEWED_L026_ROTATION_INVARIANT_SUBSET_SOURCE_V1',point_kernel=p['point_kernel'],subset_kernel=p['subset_kernel'],supplier=p['supplier'],G_transitivity_and_even_subgroup_proof_reviewed=True)
+  gate.update(schema='ROOT_AUTHORIZED_L026_ROTATION_INVARIANT_SUBSETS_V1',mode=p['mode'])
+ elif role=='walk':
+  review.update(kernel=p['kernel'],paid_ledger_currentness_checked=True)
+  gate.update(schema='ROOT_AUTHORIZED_L026_CACHED_ROTATION_WALK_SUPPLIER_V1',candidate_generation_only_authorized=True,kernel=p['kernel'],direct_consumer=p['direct_consumer'],paid_ledger={k:p['roles'][k]for k in ['current_paid_ledger_selector','paid_ledger_receipt','paid_status_bank']})
+ else:
+  review.update(schema='ROOT_REVIEWED_L026_SUPPLIED_PRIME_CYCLE_SOURCE_V1',kernel=p['kernel'],named_G_membership_bridge_action_and_two_fibre_imports_checked=True)
+  gate.update(schema='ROOT_AUTHORIZED_L026_SUPPLIED_PRIME_CYCLES_V1',kernel=p['kernel'])
+ rr=put(out/'Root_case_review.json',review);gate['Root_code_math_review']=rr;gr=put(out/'Root_case_gate.json',gate);raw(ctx['current'],True)
+ return dict(review=rr,gate=gr)
+def append(req,policy,config,out):
+ route=req['route'];ctx=req['ctx'];p=doc(route['plan']);cur,old,bank=ledger(ctx['current'])
+ need(p['mode']=='append'and p['program']==config['programs']['ledger']and p['expected_current']==ctx['current']and p['previous_receipt']==cur['ledger_receipt']and p['previous_bank']==cur['status_bank'],'exactsplitappendpredecessor')
+ need(p['scope_digest']==SCOPE and p['original_selector']==SELECTOR and 1<=len(p['proofs'])<=7 and 1<=len(p['facts'])<=16 and route['plan']['bytes']<=65536,'boundedproof/fact/wholeplan')
+ for r in p['inputs']:raw(r)
+ preservation=doc(req['CURRENT_preservation']);need(req['CURRENT_preservation']['path'].startswith(str(BASE/'bounded_batches/free_0080_0095/current_versions/'))and preservation['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'and preservation['root']=='/root','actualCURRENTclosure')
+ copyexec=req['CURRENT_preservation_execution'];cc=doc(copyexec['capture']);cg=doc(copyexec['guard']);co=doc(copyexec['stdout']);sourceplan=preservation['source_plan'];copyplan=doc(sourceplan);dest=str(Path(req['CURRENT_preservation']['path']).parent)
+ command=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',config['programs']['retainer']['path'],'--self-sha256',config['programs']['retainer']['sha256'],'--plan',sourceplan['path'],sourceplan['sha256'],'--destination',dest,'--manifest',req['CURRENT_preservation']['path']]
+ need(cc['root']==cc['actor']=='/root'and cc['actual_tool']['exit_code']==cc['full_tool_return']['exit_code']==0 and cc['all_genuine_api_frames'][0]==cc['full_initial_tool_return']and cc['all_genuine_api_frames'][-1]==cc['full_tool_return']and cc['issued_argv']==cc['child_argv']and cc['child_argv'][cc['child_argv'].index('--')+1:]==command and cg['command']==command,'genuineexactCURRENT667copy')
+ need(cg['status']=='PASS'and cg['stop']=='RETURNED'and cg['returncode']==0 and cg['cleanup']['remaining']==cg['cleanup']['errors']==[]and cg['limits']['total_rss']==256*M and cg['limits']['wall_seconds']==125 and cg['logs']['stderr']==0 and co['status']=='ROOT_CLOSED_METADATA_RETAINED'and co['preservation']==req['CURRENT_preservation']and copyplan['destination']==dest,'actualknownclosedCURRENTcopybeforeapproval')
+ hits=[r['retained']for r in preservation['files']if r['original']==ctx['current']];need(len(hits)==1 and Path(hits[0]['path']).is_relative_to(S)and raw(hits[0])==raw(ctx['current']),'wholeexactdurablebeforeimageBEFOREeachCAS')
+ rows=[]
+ for q in p['proofs']:
+  need(q['kind']in ['GEN','NEG'],'strictproofkind');objects={k:doc(q[k])for k in ['result','plan','gate','review','capture','outer','stdout']};raw(q['program']);need(raw(q['stderr'])==b'','emptystrictstderr')
+  r,sp,g,rv,cap,guard,terminal=[objects[k]for k in ['result','plan','gate','review','capture','outer','stdout']]
+  actual_run(q,q['program'])
+  need(r['program']==q['program']and r['plan']==q['plan']and g['program']==rv['program']==q['program']and g['plan']==rv['plan']==q['plan']and g['Root_code_math_review']==q['review']and g['root']==rv['root']=='/root'and g['adopted']is True and g['new_case_calls_authorized']is True and rv['status']=='SUPPORTED'and rv['blockers']==[],'actualstrictscopejoins')
+  need(r['scope_digest']==sp['scope_digest']==SCOPE and r['original_selector']==sp['original_selector']==SELECTOR,'sameoriginalstrictscope')
+  need(cap['actor']==cap['root']=='/root'and cap['all_genuine_api_frames']and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==0 and guard['status']=='PASS'and guard['stop']=='RETURNED'and guard['returncode']==0 and guard['cleanup']['remaining']==guard['cleanup']['errors']==[],'actualRootSDK/outerknownclosure')
+  argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',q['program']['path'],'--self-sha256',q['program']['sha256'],'--plan',q['plan']['path'],q['plan']['sha256'],'--Root-gate',q['gate']['path'],q['gate']['sha256']]
+  need(guard['command']==argv and cap['issued_argv']==cap['child_argv']and cap['child_argv'][cap['child_argv'].index('--')+1:]==argv,'exactactualstrictargv')
+  for k in ['program','result','plan','gate','review','capture','outer','stdout','stderr']:
+   found=[]
+   for mr in q['retentions']:
+    m=doc(mr);need(m['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'and m['root']=='/root','actualretentionmap');found.extend(row['retained']for row in m['files']if row['original']==q[k])
+   need(found,'everyactiveproofroleSretained')
+   for rr in found:need(Path(rr['path']).is_relative_to(S)and raw(rr)==raw(q[k]),'wholeexactretainedalias')
+  support=q['support'];control=doc(support['control_report']);need(control['status']=='PASS'and control['program']==support['control_program']and control['original_case_calls']==0 and g['control_report']==support['control_report'],'strictactualcorrectcontrols')
+  for r0 in support.values():
+   raw(r0);hits0=[]
+   for mr in q['retentions']:hits0.extend(z['retained']for z in doc(mr)['files']if z['original']==r0)
+   need(hits0,'allstrictsupportSretained')
+   for r1 in hits0:need(Path(r1['path']).is_relative_to(S)and raw(r1)==raw(r0),'wholeexactsupportalias')
+  if q['kind']=='GEN':
+   need(q['program']==config['programs']['GEN']and r['status']=='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'and r['supplier_or_search_calls']==0 and r['actual_direct_signed_word_and_every_closing_edge_checked']is True and r['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0,'actual268dGEN;strictIP0untouched');rr=r['verified_generation_records']
+   need(terminal['output']==q['result'],'exactGENterminalresult')
+  else:
+   need(q['program']==config['programs']['subset']and r['status']=='SUPPLIED_CHECK_COMPLETE'and r['mode']==g['mode']=='check'and r['supplier_activated']is False and r['strict_check_activates_supplier']is False and r['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0,'actual2292checkthrough1bdb;no supplier');rr=r['verified_nongeneration_records']
+   need(terminal['outputs']['result.json']==q['result']and all(x['checked_positive_rotation_edges']==2*x['points']and 0<x['points']<3510 for x in rr),'wholeproperclosingedges')
+  rows.append(rr)
+ seen=set()
+ for f in p['facts']:
+  i=f['free_index'];selected([i]);need(i not in seen and bank[i]==0 and f['kind']in ['NEG','GEN_IP']and type(f['proof'])is int and 0<=f['proof']<len(rows),'newunpaidtypedfact');seen.add(i)
+  q=p['proofs'][f['proof']];need(q['kind']==('NEG'if f['kind']=='NEG'else'GEN')and any(all(z[k]==f[k]for k in ['free_index','owner','witness_row_sha256'])for z in rows[f['proof']]),'exactactualstrictrow/category')
+ ip=any(f['kind']=='GEN_IP'for f in p['facts'])
+ if ip:
+  need(p['separate_IP']['theorem']['sha256']=='0b940e5a217a5e54e91fd13617fd822dd4daebfac6cbdacbd17e0950070c9216'and p['separate_IP']['review']['sha256']=='b7610c401be209df8425a017aa71d61846875544f67919e48269312a37139ef3'and policy['separate_existing_IP_theorem_application_approved']is True,'separateexistingIPonlyonactualGEN');raw(p['separate_IP']['theorem']);need(doc(p['separate_IP']['review'])['blockers']==[],'existingIPreview')
+ release=dict(schema='ROOT_REVIEWED_L026_BOUNDED_TYPED_PAID_LEDGER_V1',root='/root',status='SUPPORTED',blockers=[],program=p['program'],plan=route['plan'],metadata_only=True,typed_new_facts_and_strict_closure_supported=True,metadata_publication_authorized=True,separate_IP_theorem_application_supported=ip,same_original_G_member_normality_bridge_middle_involution_and_simpleG_checked=ip,Root_callback_policy=req['policy'],previous_CURRENT_durable_preservation=req['CURRENT_preservation'],previous_CURRENT_retained_alias=hits[0],previous_CURRENT_preservation_execution=copyexec,old_strict_IP0_unchanged=True,old_proof_DAG_opaque_retained=True,new_Original_credit=0)
+ raw(ctx['current'],True);return dict(release=put(out/'Root_append_release.json',release))
+def main():
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True);ap.add_argument('--request',nargs=2,required=True);ap.add_argument('--out',required=True);a=ap.parse_args()
+ own=Path(__file__).resolve();r=dict(path=str(own),bytes=own.stat().st_size,sha256=a.self_sha256);need(r['bytes']<=65536,'wholemetadataSource64k');raw(r)
+ p=Path(a.request[0]);request=doc(dict(path=str(p),bytes=p.stat().st_size,sha256=a.request[1]));config=doc(request['config']);policy=policy_check(doc(request['policy']),config);need(policy['callback_program']==r,'exactRootownedcallbackSourceedition');raw(policy['callback_JS']);out=Path(a.out);need(out.is_absolute()and out.is_relative_to('/private/tmp')and not os.path.lexists(out),'freshTcallbackoutput')
+ op=request['operation']
+ if op=='case':answer=case(request,policy,config,out)
+ elif op=='retention':answer=retention(request['entry'],config)
+ elif op=='before-cas':
+  cur=request['ctx']['current'];ledger(cur);dest=BASE/'bounded_batches/free_0080_0095/current_versions'/cur['sha256']/'evidence';target=dict(cur,path=str(dest/'objects'/cur['sha256']));plan=dict(destination=str(dest),files=[dict(original=cur,retained=target)],borrowed_closures=[],Root_authority=False,scientific_calls=0,qualification='Exact mutable CURRENT before this specific CAS, durably copied before release; no math/current adoption credit.')
+  pr=put(out/'preserve_CURRENT_plan.json',plan);answer=dict(entry=dict(plan=pr,destination=str(dest),manifest=str(dest/'preservation.json')))
+ elif op=='append':answer=append(request,policy,config,out)
+ else:raise ValueError('finitecallbackoperation')
+ answer.update(status='ROOT_CALLBACK_METADATA_CHECKED',physical_read_bytes=READ,new_bytes=WRITE,actual_paths=len(PATHS));print(json.dumps(answer,sort_keys=True))
+if __name__=='__main__':main()

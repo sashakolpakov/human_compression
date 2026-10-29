@@ -1,0 +1,78 @@
+"""Generic exact-ABI controls for the private two-integer scratch map.
+
+No codec, checkpoint, leaf file or scientific source is imported or evaluated.
+The earlier ten equal-leaf controls remain a separate unchanged control Source.
+"""
+import argparse
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+
+
+def main():
+    ap = argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--map', required=True)
+    ap.add_argument('--map-sha', required=True)
+    args = ap.parse_args()
+    p = Path(args.map)
+    raw = p.read_bytes()
+    assert p.is_absolute() and p.resolve(strict=True) == p
+    assert len(raw) <= 8192 and hashlib.sha256(raw).hexdigest() == args.map_sha
+    spec = importlib.util.spec_from_file_location('Root_generic_two_integer_location_map', p)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    cls = module.LocationDigestMap
+    actual, ordinary = cls(), {}
+    passed = []
+    keys = [(f, line) for f in (0, 7, -3) for line in (0, 1, 9, -4)]
+    alias = []
+    operations = [(key, (i, alias)) for i, key in enumerate(keys)]
+    operations += [(keys[0], alias), (keys[8], None), (keys[0], 'updated')]
+    for key, value in operations:
+        actual[key] = value
+        ordinary[key] = value
+        assert len(actual) == len(ordinary)
+        for candidate in keys:
+            assert (candidate in actual) == (candidate in ordinary)
+            if candidate in ordinary:
+                assert actual[candidate] is ordinary[candidate]
+    passed.extend(['full_get_set_contains_len_matches_dict',
+                   'interleaved_files_and_lines_preserved',
+                   'duplicates_and_overwrites_do_not_increase_len',
+                   'same_value_objects_retained_without_copying',
+                   'negative_and_zero_integer_keys_match_dict'])
+    before_files = len(actual._files)
+    for key in ((99, 0), (0, 99), (-3, -99)):
+        assert key not in actual
+        try:
+            actual[key]
+        except KeyError as exc:
+            assert exc.args == (key,)
+        else:
+            raise AssertionError('missing location must be refused')
+    assert len(actual) == len(ordinary) and len(actual._files) == before_files
+    passed.extend(['missing_file_and_line_raise_exact_keyerror',
+                   'missing_reads_do_not_create_buckets_or_counts'])
+    assert all(type(k) is int for k in actual._files)
+    assert all(type(k) is int for bucket in actual._files.values() for k in bucket)
+    assert sum(len(bucket) for bucket in actual._files.values()) == len(actual)
+    passed.extend(['no_tuple_keys_retained', 'count_equals_distinct_locations'])
+    for invalid in (0, [0, 1], (0,), (0, 1, 2), (True, 1), (0, False)):
+        try:
+            actual[invalid]
+        except TypeError:
+            pass
+        else:
+            raise AssertionError('outside exact original two-int location ABI')
+    passed.append('outside_private_key_ABI_refused')
+    print(json.dumps(dict(schema='GENERIC_F009_LOCATION_DIGEST_MAP_CONTROLS_V1',
+                          status='PASS', controls=len(passed), passed=passed,
+                          fixture_locations=len(ordinary), fixture_updates=len(operations),
+                          scientific_or_codec_or_checkpoint_activations=0,
+                          qualification='Finite synthetic scratch-map ABI controls only; no Reader, memory-fit or checkpoint acceptance.'),
+                     sort_keys=True))
+
+
+if __name__ == '__main__':
+    main()

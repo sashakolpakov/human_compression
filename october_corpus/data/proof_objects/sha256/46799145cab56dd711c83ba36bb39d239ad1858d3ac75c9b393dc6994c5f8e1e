@@ -1,0 +1,237 @@
+"""UNRUN bounded paid-ledger controls; /root/journal_peer.
+Parent26 math/control designs retained; replacement metadata API uses toy bytes only.
+"""
+import time
+START=time.monotonic()
+import argparse,ast,copy,hashlib,json,os,resource,stat,struct,sys
+from pathlib import Path
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def refused(call):
+    try:call()
+    except(ValueError,TypeError,KeyError,IndexError):return
+    raise ValueError('malformed synthetic data was accepted')
+
+def bounded():
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    need(rss<128*2**20 and time.monotonic()-START<60,'bounded generic128MiB60s controls')
+
+class Meter:
+    def __init__(self):self.units=0
+    def charge(self,n,label):
+        need(type(n)is int and n>=0 and n<=10000000-self.units,'generic shared10M units')
+        bounded();self.units+=n
+
+class DeliberateStop(Exception):pass
+
+class FailWork(Meter):
+    def __init__(self,label,ordinal):super().__init__();self.label=label;self.ordinal=ordinal;self.hits=0
+    def charge(self,n,label):
+        if label==self.label:
+            self.hits+=1
+            if self.hits==self.ordinal:raise DeliberateStop(label)
+        super().charge(n,label)
+
+def subject(pair):
+    p=Path(pair[0]);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+        and a.st_nlink==1 and a.st_size<=32768,'whole bounded ordinary Source subject')
+    raw=p.read_bytes();need(hashlib.sha256(raw).hexdigest()==pair[1],'whole exact Source hash')
+    return p,raw,dict(path=str(p),bytes=len(raw),sha256=pair[1])
+
+def fixture():
+    n=26;I=list(range(n));d=I.copy();a=I.copy()
+    for start,p in[(0,11),(11,13)]:
+        for i in range(p):d[start+i]=start+(-i)%p;a[start+i]=start+(1-i)%p
+    c=a.copy();c[24],c[25]=25,24
+    tree=b''.join(struct.pack('<HHb',i,65535 if i==0 else 0,0 if i==0 else 1)for i in range(n))
+    return b'L026CYC1'+b''.join(struct.pack('<26H',*v)for v in[d,a,c,I,I])+tree
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+    for k in('supplier','core','kernel','primitives','parent','strict'):ap.add_argument('--'+k,nargs=2,required=True)
+    a=ap.parse_args();own,ownraw,ownref=subject((str(Path(__file__).resolve(strict=True)),a.self_sha256))
+    subjects={k:subject(getattr(a,k))for k in('supplier','core','kernel','primitives','parent','strict')}
+    def audit(event,args):
+        if event.startswith(('subprocess.','os.exec','os.spawn'))or event=='os.fork':raise ValueError('no generic child/native calls')
+    sys.addaudithook(audit)
+    namespaces={}
+    for key in('core','kernel','primitives'):
+        p,raw,_=subjects[key];ns={'__name__':'cached_walk_synthetic_'+key,'__file__':str(p)}
+        exec(compile(raw,str(p),'exec'),ns);namespaces[key]=ns
+    C,K,P=(namespaces[k]for k in('core','kernel','primitives'));work=Meter();names=[]
+    def passed(name):names.append(name)
+    seed='abcdef0123456789'*4
+    schedule=dict(schema='L026_UNTRUSTED_CACHED_ROTATION_WALK_SCHEDULE_V1',seed=seed,steps_per_case=65,word_limit=64,
+        start_points=[0],trace_step_cap=13,exact_target_lengths=[11,13],misses_never_prove_absence=True)
+    C['validate_schedule'](schedule,5,work);passed('generic_schedule_accepts_bounded_SHA_stream')
+    for key,value in [('seed','x'*64),('steps_per_case',513),('steps_per_case',True),('word_limit',65),
+        ('start_points',[True]),('start_points',[0,0]),('trace_step_cap',14),('exact_target_lengths',[11.0,13]),('misses_never_prove_absence',False)]:
+        bad=copy.deepcopy(schedule);bad[key]=value;refused(lambda bad=bad:C['validate_schedule'](bad,5,work))
+    passed('generic_schedule_rejects_typed_bounds_duplicate_starts_and_criterion_changes')
+    labels=[C['sha_label'](seed,i,work)for i in range(65)]
+    expected=[(1,2,-1,-2)[hashlib.sha256(b'L026-CACHED-RS-WALK-v1\0'+bytes.fromhex(seed)+i.to_bytes(8,'big')).digest()[0]>>6]for i in range(65)]
+    need(labels==expected and set(labels)=={1,2,-1,-2},'exact high-bit SHA stream and signed alphabet')
+    passed('exact_reproducible_high_bit_SHA_stream')
+    for bad in(-1,512,True):refused(lambda bad=bad:C['sha_label'](seed,bad,work))
+    passed('SHA_stream_rejects_Boolean_negative_and_out_of_window_cursors')
+    r=[1,2,3,4,0];s=[1,0,2,4,3];maps=[r,s]
+    def inv(g):return[g.index(i)for i in range(len(g))]
+    signed={1:r,2:s,-1:inv(r),-2:inv(s)}
+    def direct(word):
+        out=[]
+        for x in range(5):
+            y=x
+            for label in word:y=signed[label][y]
+            out.append(y)
+        return out
+    need(direct([1,2])!=direct([2,1]),'noncommuting fixture distinguishes composition side')
+    for word in([1,2],[-1,2],[1,-2],[1,2,-1,-2],[1,2,-1,2,-2,-1,1,-2]):
+        current=P['identity'](5,work)
+        for j,label in enumerate(word):
+            current=P['compose'](current,signed[label],work)
+            need(list(current)==direct(word[:j+1]),'every mixed signed cached prefix matches independent point traversal')
+    passed('noncommuting_right_action_and_all_mixed_signed_prefixes')
+    for g in maps:
+        inverse=P['inverse'](g,work);need(all(inverse[g[x]]==g[inverse[x]]==x for x in range(5)),'both inverse equations')
+    passed('both_full_inverse_equations')
+    for p in(11,13):
+        permutation=[(x+1)%p for x in range(p)];hint=C['trace_cached'](permutation,[1],0,work)
+        need(hint[0]==p and hint[1]==dict(word=[1],cycle=list(range(p))),'exact distinct cycle and closing edge')
+    passed('exact11_and13_first_returns_include_closing_edges')
+    for p in(1,2,10,12,14,17,22,26):
+        need(C['trace_cached']([(x+1)%p for x in range(p)],[1],0,work)is None,'short nonprime and longer cycles remain misses')
+    passed('nonprime_open13_and_prime_multiple_cycles_are_finite_misses')
+    refused(lambda:C['trace_cached']([1,1],[1],0,work));passed('nonbijective_early_noninitial_return_rejected')
+    for word in([True],[3],[],[1]*65):refused(lambda word=word:C['trace_cached'](r,word,0,work))
+    passed('cached_trace_enforces_strict_signed_word64_ABI')
+    ctx=K['decode_operands'](fixture(),work,26,0);paths=K['prepare_triangle'](ctx,(0,1,2),work)
+    active={};rotations=C['precompute_rotations'](K,ctx,paths,work,active)
+    need(len(rotations)==2 and all(len(set(g))==26 for g in rotations),'synthetic original-kernel full rotation precomputation')
+    passed('literal_precompute_uses_only_synthetic26_point_kernel_fixture')
+    parts={}
+    for p,start in[(11,0),(13,11)]:
+        hint=C['trace_cached'](rotations[0],[1],start,work);need(hint[0]==p,'synthetic prime hint');parts['prime'+str(p)]=hint[1]
+    K['verify_pair'](ctx,(0,1,2),parts,work);passed('cached_hints_satisfy_unchanged_direct_kernel_on_synthetic_fixture')
+    bad=copy.deepcopy(parts);bad['prime11']['cycle'][1],bad['prime11']['cycle'][2]=bad['prime11']['cycle'][2],bad['prime11']['cycle'][1]
+    refused(lambda:K['verify_pair'](ctx,(0,1,2),bad,work));passed('separate_direct_kernel_rejects_false_well_formed_cached_hint')
+    bad=copy.deepcopy(parts);bad['prime11']['word']=[-1]
+    refused(lambda:K['verify_pair'](ctx,(0,1,2),bad,work));passed('direct_signed_word_check_rejects_sign_mismatch')
+    note=C['empty_note'](0,7,'1'*64,seed)
+    C['walk_row'](P,maps,note,schedule,work)
+    need(note['next_step']==65 and note['word']==[labels[64]]and note['outcome']=='finite_walk_miss'and not any(note['hints'].values()),'reset immediately after64, no paid finite misses')
+    passed('walk_carries_cached_map_and_resets_literal_word_after64')
+    restored=C['restore_note'](note,0,7,'1'*64,seed,schedule,5,work)
+    need(restored['next_step']==65 and restored['word']==note['word']and restored['inherited_steps_untrusted']==65,'completed cursor remains explicitly untrusted')
+    passed('whole_completed_resume_records_untrusted_provenance')
+    for key,value in [('next_step',True),('seed','0'*64),('owner',8),('word',[1]*65),('outcome','verified')]:
+        bad=copy.deepcopy(note);bad[key]=value
+        refused(lambda bad=bad:C['restore_note'](bad,0,7,'1'*64,seed,schedule,5,work))
+    passed('resume_rejects_wrong_seed_owner_word_cursor_and_verdict')
+    bad=copy.deepcopy(note);bad['hints']['prime11']=dict(word=[1]*65,cycle=list(range(11)))
+    refused(lambda:C['restore_note'](bad,0,7,'1'*64,seed,schedule,26,work));passed('resume_rejects_overlong_inherited_hint')
+    partial=C['empty_note'](0,7,'1'*64,seed);cut=FailWork('product_read_read_write',7)
+    try:C['walk_row'](P,maps,partial,schedule,cut)
+    except DeliberateStop:pass
+    else:raise ValueError('expected mid-product stop')
+    need(partial['next_step']==1 and partial['word']==labels[:1]and partial['active_step']['step']==1,'incomplete product cannot commit cursor or word')
+    passed('soft_stop_mid_product_commits_only_completed_prior_step')
+    resumed=C['restore_note'](partial,0,7,'1'*64,seed,schedule,5,work);C['walk_row'](P,maps,resumed,schedule,work)
+    need(resumed['next_step']==note['next_step']and resumed['word']==note['word']and resumed['hints']==note['hints'],'resume reconstructs prefix and restarts whole failed product')
+    passed('interrupted_product_resume_equals_clean_whole_run')
+    cut=FailWork('bounded_cached_cycle_lookup_range_set_and_first_return',2);partial=C['empty_note'](0,7,'1'*64,seed)
+    try:C['walk_row'](P,maps,partial,schedule,cut)
+    except DeliberateStop:pass
+    else:raise ValueError('expected mid-trace stop')
+    need(partial['next_step']==0 and partial['word']==[]and not any(partial['hints'].values()),'partial trace cannot commit word or hints')
+    passed('soft_stop_mid_trace_commits_no_partial_cycle_or_step')
+    cut=FailWork('each_original_precomputed_rotation_image',3);active={}
+    try:C['precompute_rotations'](K,ctx,paths,cut,active)
+    except DeliberateStop:pass
+    else:raise ValueError('expected precompute stop')
+    need(active['completed_points']==2,'partial precompute cursor is diagnostic only')
+    passed('soft_stop_mid_precompute_has_no_complete_map_or_hint')
+    # AST checks quote exact supplied/caller Sources; no caller or CLI is run.
+    texts={k:v[1].decode()for k,v in subjects.items()}
+    def function(text,name):
+        n=next(n for n in ast.parse(text).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))and n.name==name)
+        return ''.join(text.splitlines(True)[n.lineno-1:n.end_lineno])
+    need(function(texts['core'],'precompute_rotations')==function(texts['parent'],'precompute_rotations'),'whole parent precompute definition is literal')
+    passed('AST_literal_parent_precompute_definition')
+    need(subjects['primitives'][2]['sha256']=='9abbe8672212622c0ff6fee7b668d1fdf94cd0997ffbac2cce75f563d89ba9ed'
+        and subjects['kernel'][2]['sha256']=='60eedb3ce207831ec66cdcc18c689c7c5e334205772cabf888f950503cc267ee'
+        and subjects['strict'][2]['sha256']=='268d1b942a7c105e266f37746d362bbffac71d812380334953f2120a94f37bd3','unchanged exact primitive/kernel/strict identities')
+    passed('AST_unchanged_primitives_kernel_and_supplied_strict_Source')
+    caller=texts['supplier'];need('current_unpaid(plan,budget,work,witnesses)'in caller and 'all(mask[i]==0 for i in plan[\'selected_free_indices\'])'in caller
+        and 'independent_strict_consumer_and_Root_adoption_owed=True'in caller,'AST current unpaid ledger and no supplier authority')
+    passed('AST_current_paid_exclusion_and_separate_strict_adoption_boundary')
+    need('<=50000'in caller and '6000000'in caller and '10000000'in caller and '8*2**20'in caller and 'len(expected)<=32'in caller
+        and 'full_rotations_precomputed_in_this_call=result[\'precomputed\']'in caller,'AST retained resource/context and truthful full-precompute label')
+    passed('AST_retained_caps_and_truthful_precompute_summary')
+    # Bounded ledger API tests use only toy bytes/mock JSON. No caller or case runs.
+    fn=next(n for n in ast.parse(caller).body if isinstance(n,ast.FunctionDef)and n.name=='current_unpaid')
+    ns={'need':need,'can':lambda x:(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode(),
+        'SCOPE':'7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a',
+        'SELECTOR':dict(first_block_index=2,endpoint_position=18,local_class_position=164,middle_block_index=2,first_ambient_class_position=13,middle_ambient_class_position=13)}
+    exec(compile(ast.Module(body=[fn],type_ignores=[]),str(subjects['supplier'][0]),'exec'),ns)
+    ledger=ns['current_unpaid']
+    def ref(name,body):return dict(path='/synthetic/'+name,bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+    witness=bytes(462528);wr=ref('witness',witness);fa=ref('free',b'f');oa=ref('operand',b'o')
+    bank=bytearray(28908);bank[1]=1;bank[2]=2;bank[3]=6;bank=bytes(bank);br=ref('mask',bank)
+    rec=dict(schema='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1',root='/root',adopted=True,Root_adoption_owed=False,scope_digest=ns['SCOPE'],original_selector=ns['SELECTOR'],original_free_space=28908,witness_bank=wr,original_free_witness_adoption=fa,original_operand_adoption=oa,status_bank=br,counts=dict(subset_NEG=1,GEN=2,separate_IP=1,unpaid=28905),fixed_nonfree_NEG_count=17688,fixed_nonfree_NEG_mass=6884658,global_NEG=17689,global_NEG_mass=6885682,unpaid_mass=1024*28905)
+    rr=ref('receipt',ns['can'](rec));sel=dict(schema='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1',root='/root',adopted=True,scope_digest=ns['SCOPE'],ledger_receipt=rr,status_bank=br);sr=ref('CURRENT',ns['can'](sel))
+    roles=dict(current_paid_ledger_selector=sr,paid_ledger_receipt=rr,paid_status_bank=br,witnesses=wr,free_adoption=fa,operand_adoption=oa);plan=dict(roles=roles,selected_free_indices=[0,4])
+    def fixture():return {sr['path']:ns['can'](sel),rr['path']:ns['can'](rec),br['path']:bank}
+    class Mock:
+        def __init__(self,values):self.values=values;self.opened=[]
+        def read(self,r):self.opened.append(r['path']);return self.values[r['path']]
+        def doc(self,r):return json.loads(self.read(r))
+    ledger(plan,Mock(fixture()),Meter(),witness);passed('ledger_toy_codes0_1_2_6_and_separate_IP_count')
+    def reject(name,change,edit_plan=None):
+        values=fixture();p=copy.deepcopy(plan);change(values)
+        if edit_plan is not None:edit_plan(p)
+        refused(lambda:ledger(p,Mock(values),Meter(),witness));passed('ledger_refuses_'+name)
+    def change_rec(values,key,value):
+        d=json.loads(values[rr['path']]);d[key]=value;values[rr['path']]=ns['can'](d)
+    def change_sel(values,key,value):
+        d=json.loads(values[sr['path']]);d[key]=value;values[sr['path']]=ns['can'](d)
+    reject('short_status_bank',lambda d:d.__setitem__(br['path'],bank[:-1]))
+    reject('long_status_bank',lambda d:d.__setitem__(br['path'],bank+b'\0'))
+    for code in (3,4,5,7,255):reject('forbidden_code_'+str(code),lambda d,code=code:d.__setitem__(br['path'],bytes([code])+bank[1:]))
+    for i in (1,2,3):reject('selected_paid_code_'+str(i),lambda d:None,lambda p,i=i:p.__setitem__('selected_free_indices',[i]))
+    reject('GEN_only_implies_IP',lambda d:change_rec(d,'counts',dict(subset_NEG=1,GEN=2,separate_IP=2,unpaid=28905)))
+    reject('Boolean_count',lambda d:change_rec(d,'counts',dict(subset_NEG=True,GEN=2,separate_IP=1,unpaid=28905)))
+    reject('missing_count',lambda d:change_rec(d,'counts',dict(subset_NEG=1,GEN=2,unpaid=28905)))
+    reject('wrong_unpaid_count',lambda d:change_rec(d,'counts',dict(subset_NEG=1,GEN=2,separate_IP=1,unpaid=28906)))
+    for field in ('fixed_nonfree_NEG_count','fixed_nonfree_NEG_mass','global_NEG','global_NEG_mass','unpaid_mass'):reject('wrong_'+field,lambda d,field=field:change_rec(d,field,0))
+    reject('Boolean_nonfree',lambda d:change_rec(d,'fixed_nonfree_NEG_count',True))
+    reject('receipt_not_adopted',lambda d:change_rec(d,'adopted',False))
+    reject('receipt_Root_owed',lambda d:change_rec(d,'Root_adoption_owed',True))
+    reject('foreign_receipt_scope',lambda d:change_rec(d,'scope_digest','foreign'))
+    reject('changed_selector_tuple',lambda d:change_rec(d,'original_selector',{}))
+    reject('Boolean_space',lambda d:change_rec(d,'original_free_space',True))
+    reject('stale_witness_bank',lambda d:change_rec(d,'witness_bank',ref('wrong',b'x')))
+    reject('stale_free_adoption',lambda d:change_rec(d,'original_free_witness_adoption',oa))
+    reject('stale_operand_adoption',lambda d:change_rec(d,'original_operand_adoption',fa))
+    reject('wrong_bank_ref',lambda d:change_rec(d,'status_bank',wr))
+    reject('CURRENT_not_adopted',lambda d:change_sel(d,'adopted',False))
+    reject('foreign_CURRENT_scope',lambda d:change_sel(d,'scope_digest','foreign'))
+    reject('CURRENT_wrong_receipt',lambda d:change_sel(d,'ledger_receipt',wr))
+    reject('CURRENT_wrong_bank',lambda d:change_sel(d,'status_bank',wr))
+    reject('noncanonical_receipt',lambda d:d.__setitem__(rr['path'],d[rr['path']]+b' '))
+    reject('noncanonical_CURRENT',lambda d:d.__setitem__(sr['path'],d[sr['path']]+b' '))
+    reject('receipt_over16384_role',lambda d:None,lambda p:p['roles']['paid_ledger_receipt'].__setitem__('bytes',16385))
+    reject('CURRENT_over4096_role',lambda d:None,lambda p:p['roles']['current_paid_ledger_selector'].__setitem__('bytes',4097))
+    reject('status_role_not28908',lambda d:None,lambda p:p['roles']['paid_status_bank'].__setitem__('bytes',28907))
+    need("gate['paid_ledger']=={k:plan['roles'][k]"in caller and "review['paid_ledger_currentness_checked']is True"in caller,'fresh current Root gate and review ABI')
+    passed('AST_fresh_Root_gate_joins_three_ledger_roles_and_currentness_review')
+    for p,raw,_ in subjects.values():need(p.read_bytes()==raw,'whole final subject equality')
+    need(own.read_bytes()==ownraw,'whole final control Source equality');bounded()
+    ast_names=[n for n in names if n.startswith('AST_')]
+    print(json.dumps(dict(schema='L026_UNTRUSTED_CACHED_ROTATION_WALK_CONTROLS_V1',status='PASS',program=ownref,
+        supplier=subjects['supplier'][2],core=subjects['core'][2],primitives=subjects['primitives'][2],kernel=subjects['kernel'][2],
+        strict=subjects['strict'][2],parent=subjects['parent'][2],tests=names,controls=len(names),pure_generic_controls=len(names)-len(ast_names),
+        AST_only_controls=len(ast_names),original_case_calls=0,actual_cli_case_calls=0,work_units=work.units),sort_keys=True))
+
+if __name__=='__main__':main()

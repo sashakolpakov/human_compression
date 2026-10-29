@@ -1,0 +1,36 @@
+{
+  "added_controls": " class Stamp:\n     def __init__(self,size=4,ino=2,mode=0o100600,links=1,mtime=1):\n         self.st_dev=1;self.st_ino=ino;self.st_mode=mode;self.st_nlink=links;self.st_size=size;self.st_mtime_ns=mtime;self.st_ctime_ns=1\n def fd_fixture(first=None,opened=None,ended=None,last=None,data=b'abcd'):\n     first=first or Stamp();opened=opened or first;ended=ended or opened;last=last or first\n     state=dict(open_calls=0,read_limits=[],stats=[opened,ended],pathstats=[first,last])\n     class F:\n         def __enter__(self):return self\n         def __exit__(self,*args):return False\n         def fileno(self):return 17\n         def read(self,n):state['read_limits'].append(n);return data[:n]\n     class P:\n         def lstat(self):return state['pathstats'].pop(0)\n         def open(self,mode):need(mode=='rb','binary FD only');state['open_calls']+=1;return F()\n     class O:\n         def fstat(self,n):need(n==17,'same FD');return state['stats'].pop(0)\n     return P(),O(),state\n realos=ns['os']\n def runfd(fixture):\n     pp,oo,state=fixture;ns['os']=oo\n     try:return ns['read_back'](pp,4)\n     finally:ns['os']=realos\n fixture=fd_fixture();good('boundedFD_exact_body_and_count_plus_one',lambda:need(runfd(fixture)==b'abcd'and fixture[2]['read_limits']==[5],'bounded read limit'))\n fixture=fd_fixture(first=Stamp(size=5));bad('preopen_oversize_refused',lambda:runfd(fixture));need(fixture[2]['open_calls']==0,'no open after oversized stat')\n fixture=fd_fixture(ended=Stamp(size=5),last=Stamp(size=5),data=b'abcdeEXTRA')\n bad('duringread_growth_refused_with_bounded_allocation',lambda:runfd(fixture));need(fixture[2]['read_limits']==[5],'read never unbounded')\n fixture=fd_fixture(opened=Stamp(ino=3));bad('opened_inode_swap_refused',lambda:runfd(fixture))\n fixture=fd_fixture(last=Stamp(mtime=2));bad('final_path_identity_change_refused',lambda:runfd(fixture))\n fixture=fd_fixture(first=Stamp(links=2));bad('preopen_multilink_refused',lambda:runfd(fixture));need(fixture[2]['open_calls']==0,'no multilink read')\n",
+  "controls": {
+    "bytes": 13637,
+    "path": "/private/tmp/q11_end37_IP_metadata_adoption/bounded_reads_successor/controls.py",
+    "sha256": "698cf85d181dcc64e863269c1d046fbbd2256be3ba16645ace9560c7e9ee2eec"
+  },
+  "literal_parent_implementation_definitions": [
+    "authenticate_execution",
+    "build_partition",
+    "can",
+    "construct",
+    "decode",
+    "digest",
+    "doc",
+    "expand",
+    "ints",
+    "main",
+    "need",
+    "pair",
+    "ref",
+    "runs",
+    "shape",
+    "validate_fact",
+    "validate_prior"
+  ],
+  "new_helpers": "def stable_signature(t):\n return(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns)\ndef read_back(p,count):\n need(type(count)is int and 0<=count<=4*MIB,'bounded expected read size BEFORE open')\n a=p.lstat();need(stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==count,'ordinary exact-size file BEFORE open')\n with p.open('rb')as f:\n  b=os.fstat(f.fileno());raw=f.read(count+1);c=os.fstat(f.fileno())\n need(stable_signature(a)==stable_signature(b)==stable_signature(c)==stable_signature(p.lstat())and len(raw)==count,\n  'bounded FD bytes and every pre/open/post identity/size join')\n return raw\n",
+  "new_publish": "def publish_new(path,raw):\n global READ,WRITTEN\n need(len(raw)<=4*MIB and READ+len(raw)<=64*MIB and WRITTEN+len(raw)<=16*MIB,'whole final-hash/write limits')\n p=Path(path);need(not os.path.lexists(p),'immutable append: no overwrite');p.parent.mkdir(parents=True,exist_ok=True);need(p.parent.resolve(strict=True)==p.parent,'canonical output ancestry')\n with p.open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive metadata output');f.flush();os.fsync(f.fileno())\n fd=os.open(p.parent,os.O_RDONLY)\n try:os.fsync(fd)\n finally:os.close(fd)\n PATHS.add(str(p));need(len(PATHS)<=1024 and read_back(p,len(raw))==raw,'whole final bytes and path cap');READ+=len(raw);WRITTEN+=len(raw);return ref(p,raw)",
+  "new_whole": "def whole(r,force=False):\n global READ\n shape(r);need(REFS.get(r['path'],r)==r,'one immutable physical version');REFS[r['path']]=r\n if r['path']in RAW and not force:return RAW[r['path']]\n p=Path(r['path']);need(p.is_absolute()and p.resolve(strict=True)==p,'canonical whole metadata path')\n PATHS.add(str(p));need(len(PATHS)<=1024 and len(REFS)<=1024 and READ+r['bytes']<=64*MIB,'1024 actual metadata paths64MiB reads')\n b=read_back(p,r['bytes']);need(ref(p,b)==r,'whole stable exact metadata hash');READ+=len(b);RAW[r['path']]=b;return b\n",
+  "program": {
+    "bytes": 26096,
+    "path": "/private/tmp/q11_end37_IP_metadata_adoption/bounded_reads_successor/adopt_IP.py",
+    "sha256": "4fc9289f4d74a074329356779957f28bfb750c5276033f9b1c0b5655cc32afff"
+  },
+  "schema": "Q11_TYPED_IP_BOUNDED_FD_SOURCE_READ_VIEW_V1"
+}

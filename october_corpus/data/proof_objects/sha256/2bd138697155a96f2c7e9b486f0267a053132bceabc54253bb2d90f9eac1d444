@@ -1,0 +1,432 @@
+"""UNRUN synthetic complete-tree metadata controls; /root/prime_theory_audit.
+No scientific/project module is imported or activated by these fixtures.
+"""
+import hashlib,json
+SOURCE_ROWS_JSON='[{"bytes":24536,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/run.py","sha256":"d8e1239081311caa0bc593f761e833b2c3f9ece1342e6f979a233f01a449b4ab"},{"bytes":35405,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/make_plans.py","sha256":"453c6cdd990da7328ece7313b8a65492f4fbdc971953a8559a770e47b65baa09"},{"bytes":42881,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/register_checkpoint.py","sha256":"adf777141c6bb05bf44d5795f27e0519efea9e7d2063d6efa3b8bb4caad26c62"},{"bytes":19576,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/pack_metadata.py","sha256":"9d00f94e199c85023956b9579cc5084c25af70451b02c70d0ba5fe24f6f3680a"},{"bytes":37025,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/construct.py","sha256":"a1769b4c3b65b4bd0526f3588ae994b3aab9189186eeffcba3ebd76edef17cd9"},{"bytes":31702,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/prepare_reader.py","sha256":"e466e7e0bbcb34b05521c3012ba99dd76b00f62ffa8e4f4d6ea202d8b5934a50"},{"bytes":25628,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/current_owner.py","sha256":"08544354e5903ca53a49b639a5eb7d75036e7802c69978cf4251bde823874d81"},{"bytes":20663,"path":"/private/tmp/f009_complete_transport/complete_tree/sources/make_owner_request.py","sha256":"d689064dfb434e278f575aef143ecc0bf07bc6917291903e3dea8d9b8f164161"}]'
+
+_F9_SOURCE_TAG = 'Root_Source_rows_reference'
+_F9_DOMAIN_TAG = 'Root_Input_rows_reference'
+_F9_CLOSURE_TAG = 'Root_Native_closure_rows_reference'
+_F9_LOGICAL_LIMIT = 8 * 2**20
+
+
+def f9_canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False) + '\n').encode('ascii')
+
+
+def f9_need(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def f9_rows(rows, limit):
+    f9_need(type(rows) is list and len(rows) <= limit, 'bounded literal row list')
+    previous = ''; total = 0
+    for row in rows:
+        f9_need(type(row) is dict and set(row) == {'path', 'bytes', 'sha256'},
+                'exact complete row fields')
+        path, size, digest = row['path'], row['bytes'], row['sha256']
+        f9_need(type(path) is str and path.startswith('/') and path > previous
+                and '\x00' not in path and all(x not in ('.', '..') for x in path.split('/'))
+                and type(size) is int and size >= 0 and type(digest) is str
+                and len(digest) == 64 and set(digest) <= set('0123456789abcdef'),
+                'ordered unique absolute paths and exact finite row types')
+        previous = path; total += size
+    f9_need(total <= 2**31, 'unchanged whole2GiB descriptor extent')
+    return rows
+
+
+def f9_image(value):
+    raw = f9_canonical(value)
+    f9_need(len(raw) <= _F9_LOGICAL_LIMIT, 'existing8MiB logical metadata role')
+    return len(raw), hashlib.sha256(raw).hexdigest()
+
+
+def f9_encode_job(job):
+    f9_need(type(job) is dict and job.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and job.get('role') in ('native', 'reader') and _F9_SOURCE_TAG not in job,
+            'one ordinary logical standalone job')
+    rows = f9_rows(job['declared_inputs'], 40000)
+    sources = f9_rows(job['source_inputs'], 1024)
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    by_path = {row['path']: i for i, row in enumerate(rows)}
+    indices = []
+    for source in sources:
+        f9_need(source['path'] in by_path and rows[by_path[source['path']]] == source,
+                'every Source role is the same exact declared row')
+        indices.append(by_path[source['path']])
+    size, digest = f9_image(job)
+    wire = dict(job); wire.pop('source_inputs')
+    wire[_F9_SOURCE_TAG] = dict(schema='F009_SOURCE_ROW_INDICES_V1', indices=indices,
+        Source_rows_sha256=hashlib.sha256(f9_canonical(sources)).hexdigest(),
+        declared_rows_sha256=hashlib.sha256(f9_canonical(rows)).hexdigest(),
+        logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_job(wire) == job, 'entire exact Source-reference inverse')
+    return f9_encode_declared(wire)
+
+
+def f9_expand_job(wire):
+    wire = f9_expand_declared(wire)
+    if type(wire) is not dict or _F9_SOURCE_TAG not in wire:
+        return wire
+    f9_need(wire.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and wire.get('role') in ('native', 'reader') and 'source_inputs' not in wire,
+            'explicit Source-reference wire, never a mixed representation')
+    tag = wire[_F9_SOURCE_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'indices', 'Source_rows_sha256',
+            'declared_rows_sha256', 'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_SOURCE_ROW_INDICES_V1', 'exact reference encoding')
+    rows = f9_rows(wire['declared_inputs'], 40000); indices = tag['indices']
+    f9_need(type(indices) is list and len(indices) <= 1024,
+            'bounded Source-index list')
+    last = -1
+    for index in indices:
+        f9_need(type(index) is int and last < index < len(rows),
+                'strictly increasing nonboolean unique in-range indices')
+        last = index
+    sources = [rows[index] for index in indices]
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    f9_need(hashlib.sha256(f9_canonical(rows)).hexdigest() == tag['declared_rows_sha256']
+            and hashlib.sha256(f9_canonical(sources)).hexdigest() == tag['Source_rows_sha256'],
+            'complete exact declared and Source table identities')
+    logical = dict(wire); logical.pop(_F9_SOURCE_TAG); logical['source_inputs'] = sources
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'entire canonical semantic image')
+    return logical
+
+
+def f9_encode_table(domain, field, tag_name, version):
+    f9_need(type(domain) is dict and tag_name not in domain,
+            'ordinary complete Root domain')
+    rows = f9_rows(domain[field], 40000)
+    prefixes = sorted({row['path'][:row['path'].rfind('/')+1] for row in rows})
+    lookup = {prefix: i for i, prefix in enumerate(prefixes)}
+    packed = []
+    for row in rows:
+        cut = row['path'].rfind('/')+1; prefix = row['path'][:cut]
+        packed.append([lookup[prefix], row['path'][cut:], row['bytes'], row['sha256']])
+    size, digest = f9_image(domain)
+    wire = dict(domain); wire.pop(field)
+    wire[tag_name] = dict(schema=version,
+        prefixes=prefixes, rows=packed, logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_table(wire, field, tag_name, version) == domain, 'entire exact row-table inverse')
+    return wire
+
+
+def f9_expand_table(wire, field, tag_name, version):
+    if type(wire) is not dict or tag_name not in wire:
+        return wire
+    f9_need(field not in wire, 'one explicit row-table representation')
+    tag = wire[tag_name]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'prefixes', 'rows',
+            'logical_bytes', 'logical_sha256'} and tag['schema'] == version,
+            'exact parent-path table encoding')
+    prefixes, packed = tag['prefixes'], tag['rows']
+    f9_need(type(prefixes) is list and len(prefixes) <= 40000
+            and all(type(p) is str and p.startswith('/') and p.endswith('/')
+                and '\x00' not in p and all(x not in ('.', '..') for x in p.split('/'))
+                for p in prefixes)
+            and prefixes == sorted(set(prefixes)), 'exact unique absolute parent prefixes')
+    f9_need(type(packed) is list and len(packed) <= 40000, 'bounded complete packed table')
+    rows = []
+    for entry in packed:
+        f9_need(type(entry) is list and len(entry) == 4, 'complete four-column row')
+        index, name, size, digest = entry
+        f9_need(type(index) is int and 0 <= index < len(prefixes)
+                and type(name) is str and name not in ('', '.', '..') and '/' not in name,
+                'nonboolean parent index and exact filename')
+        rows.append(dict(path=prefixes[index]+name, bytes=size, sha256=digest))
+    f9_rows(rows, 40000)
+    logical = dict(wire); logical.pop(tag_name); logical[field] = rows
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'whole semantic Root-domain image')
+    return logical
+
+
+def f9_encode_domain(value):
+    return f9_encode_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_expand_domain(value):
+    return f9_expand_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_encode_closure(value):
+    f9_need(type(value) is dict and value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'only the separately accepted Native closure role')
+    return f9_encode_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+
+def f9_expand_closure(value):
+    if type(value) is not dict or _F9_CLOSURE_TAG not in value:
+        return value
+    f9_need(value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'explicit accepted Native closure role')
+    return f9_expand_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+_F9_DECLARED_TAG = 'Root_Declared_rows_reference'
+_F9_REQUEST_TAG = 'Root_Request_rows_reference'
+_F9_MANIFEST_TAG = 'Root_Output_manifest_reference'
+
+
+def f9_encode_declared(value):
+    return f9_encode_table(value, 'declared_inputs', _F9_DECLARED_TAG,
+                           'F009_DECLARED_ROW_TABLE_V1')
+
+
+def f9_expand_declared(value):
+    return f9_expand_table(value, 'declared_inputs', _F9_DECLARED_TAG,
+                           'F009_DECLARED_ROW_TABLE_V1')
+
+
+def f9_request_limit(value):
+    f9_need(type(value) is dict and value.get('schema') == 'LOCAL_SMALL_PYTHON_CHECK_V1'
+            and type(value.get('provenance')) is dict
+            and value['provenance'].get('role') in ('native', 'reader'),
+            'explicit ordinary Owner request and retained role')
+    return (8 if value['provenance']['role'] == 'native' else 16) * 2**20
+
+
+def f9_encode_request(value):
+    cap = f9_request_limit(value)
+    f9_need(_F9_REQUEST_TAG not in value, 'encode one complete request once')
+    rows = f9_rows(value['inputs'], 40000)
+    prefixes = sorted({r['path'][:r['path'].rfind('/')+1] for r in rows})
+    lookup = {p: i for i, p in enumerate(prefixes)}
+    packed = []
+    for row in rows:
+        cut = row['path'].rfind('/')+1
+        packed.append([lookup[row['path'][:cut]], row['path'][cut:],
+                       row['bytes'], row['sha256']])
+    raw = f9_canonical(value)
+    f9_need(len(raw) <= cap, 'unchanged logical Native8MiB/Reader16MiB request')
+    wire = dict(value); wire.pop('inputs')
+    wire[_F9_REQUEST_TAG] = dict(schema='F009_OWNER_REQUEST_ROW_TABLE_V1',
+        prefixes=prefixes, rows=packed, logical_bytes=len(raw),
+        logical_sha256=hashlib.sha256(raw).hexdigest())
+    f9_need(f9_expand_request(wire) == value, 'entire complete Owner request inverse')
+    return wire
+
+
+def f9_expand_request(wire):
+    if type(wire) is not dict or _F9_REQUEST_TAG not in wire:
+        return wire
+    cap = f9_request_limit(wire)
+    f9_need('inputs' not in wire, 'one explicit Owner request representation')
+    tag = wire[_F9_REQUEST_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'prefixes', 'rows',
+            'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_OWNER_REQUEST_ROW_TABLE_V1',
+            'exact request table encoding')
+    prefixes, packed = tag['prefixes'], tag['rows']
+    f9_need(type(prefixes) is list and len(prefixes) <= 40000
+            and prefixes == sorted(set(prefixes))
+            and all(type(p) is str and p.startswith('/') and p.endswith('/')
+                and '\x00' not in p and all(x not in ('.', '..') for x in p.split('/'))
+                for p in prefixes), 'ordered exact absolute request parent prefixes')
+    f9_need(type(packed) is list and len(packed) <= 40000,
+            'bounded complete request rows')
+    rows = []
+    for entry in packed:
+        f9_need(type(entry) is list and len(entry) == 4, 'complete four-column request row')
+        index, name, size, digest = entry
+        f9_need(type(index) is int and 0 <= index < len(prefixes)
+                and type(name) is str and name not in ('', '.', '..') and '/' not in name,
+                'nonboolean request parent index and exact filename')
+        rows.append(dict(path=prefixes[index]+name, bytes=size, sha256=digest))
+    f9_rows(rows, 40000)
+    logical = dict(wire); logical.pop(_F9_REQUEST_TAG); logical['inputs'] = rows
+    raw = f9_canonical(logical)
+    f9_need(len(raw) <= cap and type(tag['logical_bytes']) is int
+            and tag['logical_bytes'] == len(raw)
+            and tag['logical_sha256'] == hashlib.sha256(raw).hexdigest(),
+            'entire same canonical request; unchanged role-specific logical cap')
+    return logical
+
+
+def f9_output_bank(rows, directories):
+    f9_rows(rows, 2048)
+    f9_need(type(directories) is list and len(rows)+len(directories) <= 2049
+            and all(type(d) is str and d.isascii() and len(d.encode('ascii')) <= 384
+                and (d == '.' or (not d.startswith('/') and all(p not in ('', '.', '..')
+                    for p in d.split('/')))) for d in directories)
+            and directories == sorted(set(directories)) and '.' in directories,
+            'complete bounded relative directories and root; same producer object allowance')
+    f9_need(sum(r['bytes'] for r in rows) <= 16*2**20
+            and all(len(f9_canonical(r)) <= 512 and r['path'].isascii()
+                and len(r['path'].encode('ascii')) <= 384 for r in rows),
+            'same complete Native output descriptor and byte bounds')
+    return dict(schema='F009_COMPLETE_NATIVE_OUTPUT_ROWS_V1', files=rows, directories=directories)
+
+
+def f9_encode_manifest(value, bank):
+    f9_need(type(value) is dict and value.get('schema') ==
+            'ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1'
+            and _F9_MANIFEST_TAG not in value,
+            'one complete logical output manifest')
+    f9_rows([bank], 1)
+    f9_need(bank['bytes'] <= 2*2**20, 'separately bounded complete output bank')
+    f9_output_bank(value['files'], value['directories'])
+    raw = f9_canonical(value); files = f9_canonical(value['files'])
+    f9_need(len(raw) <= 2*2**20, 'finite whole logical output manifest')
+    wire = dict(value); wire.pop('files'); wire.pop('directories')
+    wire[_F9_MANIFEST_TAG] = dict(schema='F009_COMPLETE_OUTPUT_MANIFEST_BANK_V1',
+        bank=bank, files_bytes=len(files), files_sha256=hashlib.sha256(files).hexdigest(),
+        logical_bytes=len(raw), logical_sha256=hashlib.sha256(raw).hexdigest())
+    return wire
+
+
+def f9_expand_manifest(wire, read_bank):
+    if type(wire) is not dict or _F9_MANIFEST_TAG not in wire:
+        return wire
+    f9_need(wire.get('schema') == 'ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1'
+            and 'files' not in wire and 'directories' not in wire, 'one explicit output manifest representation')
+    tag = wire[_F9_MANIFEST_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'bank', 'files_bytes',
+            'files_sha256', 'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_COMPLETE_OUTPUT_MANIFEST_BANK_V1',
+            'exact full output bank import')
+    f9_rows([tag['bank']], 1)
+    f9_need(tag['bank']['bytes'] <= 2*2**20, 'same finite whole bank role')
+    # The caller must authenticate this exact whole physical bank first.
+    value = read_bank(tag['bank'])
+    f9_need(type(value) is dict and set(value) == {'schema', 'files', 'directories'}
+            and value == f9_output_bank(value['files'], value['directories']), 'complete original bank shape')
+    files = f9_canonical(value['files'])
+    f9_need(type(tag['files_bytes']) is int and tag['files_bytes'] == len(files)
+            and tag['files_sha256'] == hashlib.sha256(files).hexdigest(),
+            'every exact complete output row in original order')
+    logical = dict(wire); logical.pop(_F9_MANIFEST_TAG)
+    logical['files'] = value['files']; logical['directories'] = value['directories']
+    raw = f9_canonical(logical)
+    f9_need(len(raw) <= 2*2**20 and type(tag['logical_bytes']) is int
+            and tag['logical_bytes'] == len(raw)
+            and tag['logical_sha256'] == hashlib.sha256(raw).hexdigest(),
+            'whole original output manifest inverse, including every non-row field')
+    return logical
+
+# BEGIN_SYNTHETIC_CONTROL_BODY
+import argparse, copy, os, resource, sys, time
+from pathlib import Path
+
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--out',required=True)
+    args=ap.parse_args();start=time.monotonic();results=[]
+    f9_need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,
+            'ordinary-E-B synthetic metadata controls')
+    f9_need(all(k not in os.environ for k in ('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG',
+             'OPENSSL_CONF','OPENSSL_MODULES')), 'same four environment variables absent')
+    def passed(name):
+        peak=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+        f9_need(peak<=128*2**20 and time.monotonic()-start<125,'unchanged128MiB/125s control guard')
+        results.append(dict(name=name,status='PASS'))
+    def rejected(name,call):
+        try:call()
+        except (ValueError,KeyError,TypeError,IndexError):passed(name)
+        else:raise ValueError('expected synthetic rejection: '+name)
+    def mutate(value,change):
+        child=copy.deepcopy(value);change(child);return child
+    def row(name,size=0):return dict(path='/synthetic/F009/'+name,bytes=size,sha256='0'*64)
+    rows=[row('a'),row('b'),row('c'),row('d')]
+    job=dict(schema='ROOT_F009_STANDALONE_JOB_V1',root='/root',role='reader',
+             declared_inputs=rows,source_inputs=[rows[0],rows[2]],payload=dict(whole='unchanged'))
+    wire=f9_encode_job(job)
+    f9_need(f9_expand_job(wire)==job and f9_expand_job(copy.deepcopy(job))==job
+            and 'declared_inputs'not in wire and 'source_inputs'not in wire
+            and _F9_DECLARED_TAG in wire and _F9_SOURCE_TAG in wire,'two-layer exact complete job')
+    passed('whole_job_two_layers_and_legacy_inverse')
+    # Source-index mutation is made inside the restored intermediate image.
+    middle=f9_expand_declared(wire)
+    rejected('source_index_boolean',lambda:f9_expand_job(mutate(middle,lambda v:v[_F9_SOURCE_TAG]['indices'].__setitem__(0,True))))
+    rejected('source_table_digest',lambda:f9_expand_job(mutate(middle,lambda v:v[_F9_SOURCE_TAG].__setitem__('Source_rows_sha256','1'*64))))
+    rejected('declared_mixed_representation',lambda:f9_expand_job(dict(wire,declared_inputs=rows)))
+    rejected('declared_parent_boolean',lambda:f9_expand_job(mutate(wire,lambda v:v[_F9_DECLARED_TAG]['rows'][0].__setitem__(0,True))))
+    rejected('declared_parent_range',lambda:f9_expand_job(mutate(wire,lambda v:v[_F9_DECLARED_TAG]['rows'][0].__setitem__(0,40000))))
+    rejected('declared_row_order',lambda:f9_expand_job(mutate(wire,lambda v:v[_F9_DECLARED_TAG]['rows'].reverse())))
+    rejected('declared_full_hash',lambda:f9_expand_job(mutate(wire,lambda v:v[_F9_DECLARED_TAG].__setitem__('logical_sha256','1'*64))))
+    rejected('declared_boolean_size',lambda:f9_expand_job(mutate(wire,lambda v:v[_F9_DECLARED_TAG]['rows'][0].__setitem__(2,False))))
+    many=[row('source_%04d'%i)for i in range(1025)]
+    rejected('source_1025_cap',lambda:f9_encode_job(dict(job,declared_inputs=many,source_inputs=many)))
+    huge=[row('large_source',128*2**20+1)]
+    rejected('source_128MiB_extent',lambda:f9_encode_job(dict(job,declared_inputs=huge,source_inputs=huge)))
+    request=dict(schema='LOCAL_SMALL_PYTHON_CHECK_V1',execution_id='synthetic_only',program='/synthetic/program.py',
+        supervisor='/synthetic/Owner.py',guard='/synthetic/guard.py',argv=['synthetic'],inputs=rows,
+        readonly_symlinks=[],output_roots=['/synthetic/output'],execution='/synthetic/execution',
+        limits=dict(phase_seconds=120,family_rss_cap_bytes=512*2**20,growth_cap_bytes=16*2**20,
+                    reserve_bytes=4*2**30,sample_seconds=.1),scope='synthetic metadata only',
+        provenance=dict(role='reader',root='/root'))
+    reqwire=f9_encode_request(request)
+    f9_need(f9_expand_request(reqwire)==request and f9_expand_request(request)==request
+            and 'inputs'not in reqwire and f9_request_limit(request)==16*2**20
+            and f9_request_limit(dict(request,provenance=dict(role='native')))==8*2**20,
+            'entire request and unchanged role caps')
+    passed('whole_request_inverse_and_role_caps')
+    rejected('request_mixed_representation',lambda:f9_expand_request(dict(reqwire,inputs=rows)))
+    rejected('request_wrong_role',lambda:f9_expand_request(dict(reqwire,provenance=dict(role='other'))))
+    rejected('request_boolean_index',lambda:f9_expand_request(mutate(reqwire,lambda v:v[_F9_REQUEST_TAG]['rows'][0].__setitem__(0,False))))
+    rejected('request_duplicate_rows',lambda:f9_expand_request(mutate(reqwire,lambda v:v[_F9_REQUEST_TAG]['rows'].append(v[_F9_REQUEST_TAG]['rows'][-1]))))
+    rejected('request_metadata_change',lambda:f9_expand_request(dict(reqwire,execution_id='different')))
+    rejected('request_full_hash',lambda:f9_expand_request(mutate(reqwire,lambda v:v[_F9_REQUEST_TAG].__setitem__('logical_sha256','1'*64))))
+    rejected('request_boolean_logical_bytes',lambda:f9_expand_request(mutate(reqwire,lambda v:v[_F9_REQUEST_TAG].__setitem__('logical_bytes',True))))
+    outputs=[dict(path='/synthetic/output/'+r['path'].rsplit('/',1)[1],bytes=r['bytes'],sha256=r['sha256'])for r in rows]
+    bank=f9_output_bank(outputs,['.']);rawbank=f9_canonical(bank)
+    bankref=dict(path='/synthetic/metadata/native_output_rows.json',bytes=len(rawbank),sha256=hashlib.sha256(rawbank).hexdigest())
+    manifest=dict(schema='ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1',root='/root',job=row('job'),
+                  Owner_receipt=row('receipt'),root_path='/synthetic/output',files=outputs,
+                  directories=['.'],complete_regular_file_tree=True,writer=dict(metadata_only=True))
+    mwire=f9_encode_manifest(manifest,bankref);reads=[]
+    def physical_bank(ref,value=bank):
+        f9_need(ref==bankref,'exact declared physical bank')
+        b=f9_canonical(value)
+        f9_need(len(b)==ref['bytes']and hashlib.sha256(b).hexdigest()==ref['sha256'],
+                'fresh complete physical bytes before logical import')
+        reads.append(ref);return value
+    f9_need(f9_expand_manifest(mwire,physical_bank)==manifest and reads==[bankref]
+            and f9_expand_manifest(manifest,lambda _:(_ for _ in()).throw(ValueError('no legacy bank')))==manifest,
+            'whole manifest inverse; legacy makes no extra bank read')
+    passed('bank_manifest_full_inverse_and_exact_read')
+    rejected('manifest_mixed_representation',lambda:f9_expand_manifest(dict(mwire,files=outputs),physical_bank))
+    rejected('manifest_wrong_bank_path',lambda:f9_expand_manifest(mutate(mwire,lambda v:v[_F9_MANIFEST_TAG]['bank'].__setitem__('path','/synthetic/other.json')),physical_bank))
+    rejected('manifest_wrong_bank_hash',lambda:f9_expand_manifest(mutate(mwire,lambda v:v[_F9_MANIFEST_TAG]['bank'].__setitem__('sha256','1'*64)),physical_bank))
+    rejected('manifest_wrong_bank_size',lambda:f9_expand_manifest(mutate(mwire,lambda v:v[_F9_MANIFEST_TAG]['bank'].__setitem__('bytes',1)),physical_bank))
+    rejected('manifest_fresh_bank_bytes',lambda:f9_expand_manifest(mwire,lambda ref:physical_bank(ref,dict(bank,files=outputs[:-1]))))
+    rejected('manifest_files_digest',lambda:f9_expand_manifest(mutate(mwire,lambda v:v[_F9_MANIFEST_TAG].__setitem__('files_sha256','1'*64)),physical_bank))
+    rejected('manifest_nonrow_metadata',lambda:f9_expand_manifest(dict(mwire,root_path='/synthetic/other'),physical_bank))
+    rejected('manifest_boolean_length',lambda:f9_expand_manifest(mutate(mwire,lambda v:v[_F9_MANIFEST_TAG].__setitem__('files_bytes',True)),physical_bank))
+    alloutputs=[dict(path='/synthetic/output/file_%04d'%i,bytes=0,sha256='0'*64)for i in range(2048)]
+    f9_need(len(f9_canonical(f9_output_bank(alloutputs,['.'])))<=2049*512+192,'complete2048-row bank finite bound')
+    passed('complete_2048_rows_within_separate_bank_role')
+    rejected('output_2049_cap',lambda:f9_output_bank(alloutputs+[dict(path='/synthetic/output/file_2048',bytes=0,sha256='0'*64)],['.']))
+    rejected('output384_path_cap',lambda:f9_output_bank([dict(path='/'+'a'*384,bytes=0,sha256='0'*64)],['.']))
+    rejected('output16MiB_extent',lambda:f9_output_bank([dict(path='/synthetic/output/a',bytes=16*2**20+1,sha256='0'*64)],['.']))
+    rejected('directory_parent_escape',lambda:f9_output_bank(outputs,['.','../escape']))
+    rejected('directory_duplicate',lambda:f9_output_bank(outputs,['.','.']))
+    rejected('directory_missing_root',lambda:f9_output_bank(outputs,['child']))
+    rejected('manifest_directory_mixed_form',lambda:f9_expand_manifest(dict(mwire,directories=['.']),physical_bank))
+    # Source text equality is a read, never module activation.
+    own=Path(__file__).read_text();begin=own.index('_F9_SOURCE_TAG =');end=own.index('# BEGIN_SYNTHETIC_CONTROL_BODY')
+    exact=own[begin:end]
+    expected=json.loads(SOURCE_ROWS_JSON)
+    for source in expected:
+        raw=Path(source['path']).read_bytes()
+        f9_need(len(raw)==source['bytes']and hashlib.sha256(raw).hexdigest()==source['sha256']
+                and raw.decode('utf-8').count(exact)==1,'same literal inline codec in every fresh consumer')
+    passed('all_eight_consumers_share_identical_inline_codec')
+    result=dict(schema='F009_COMPLETE_TRANSPORT_SYNTHETIC_CONTROLS_V1',author='/root/prime_theory_audit',
+        status='PASS',all_passed=True,checks=results,checked=len(results),subjects=expected,
+        scientific_or_state_case_calls=0,project_Source_modules_activated=0,Root_release_granted=False)
+    raw=f9_canonical(result);f9_need(len(raw)<=16384,'bounded synthetic control report')
+    p=Path(args.out);f9_need(p.is_absolute()and not p.exists()and p.parent.resolve(strict=True)==p.parent,'fresh control output')
+    with p.open('xb')as f:f9_need(f.write(raw)==len(raw),'whole exclusive controls report');f.flush();os.fsync(f.fileno())
+    print(json.dumps(dict(status='PASS',checks=len(results),output=dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())),sort_keys=True))
+
+
+if __name__=='__main__':main()

@@ -1,0 +1,104 @@
+"""UNRUN Reader-only migration of a freshly acquired privately owned state.
+
+Every original acquisition, migration predicate, tail check and final export
+remains. Only the no-backend-change migration copy is removed. No state may
+be supplied by a caller, no original module is modified, and no Native route
+uses this helper. Author /root/prime_theory_audit.
+"""
+import ast,types
+from pathlib import Path
+
+ACCESSOR=dict(path='/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bound_materialized_continuation/accessor.py',
+ bytes=12139,sha256='cee36965c99eb88b9a6d690a943cda2a5d968cf93c8d4cfd4bc96bace7d473ef')
+BACKEND=dict(path='/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_backend_transition.py',
+ bytes=5058,sha256='981228cc78a2e226e5155f309e54282cd37972a1aeea817641af07d7f8d42b70')
+LOAD_BEFORE="  state=B.migrate(ns['AUTHENTICATED'].acquire_base(case_ref,case),case)"
+LOAD_AFTER="  state=ROOT_OWNED_BASE(B,ns['AUTHENTICATED'],case_ref,case)"
+COPY_BEFORE='        return copy.deepcopy(state)'
+COPY_AFTER='        return state'
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def _method_text(raw):
+    nodes=[n for n in ast.parse(raw,filename=ACCESSOR['path']).body if isinstance(n,ast.ClassDef)and n.name=='DirectValueLoad']
+    need(len(nodes)==1,'one exact original private Reader class')
+    methods=[n for n in nodes[0].body if isinstance(n,ast.FunctionDef)and n.name=='load']
+    need(len(methods)==1,'one exact original private Reader load method');return ast.get_source_segment(raw,methods[0])
+
+def _migration_text(raw):
+    nodes=[n for n in ast.parse(raw,filename=BACKEND['path']).body if isinstance(n,ast.FunctionDef)and n.name=='migrate']
+    need(len(nodes)==1,'one exact original migration function');return ast.get_source_segment(raw,nodes[0])
+
+def _private_migration(backend,raw):
+    """Internal definition builder, not an acquisition/ownership authority."""
+    original=backend.migrate
+    need(Path(backend.__file__)==Path(BACKEND['path'])and original.__globals__ is vars(backend)
+         and original.__code__.co_filename==BACKEND['path'],'same original backend/migration provider')
+    before=_migration_text(raw)
+    need(before.count(COPY_BEFORE)==1 and COPY_AFTER not in before,'one exact None-branch copy allocation')
+    after=before.replace(COPY_BEFORE,COPY_AFTER,1)
+    need(after.replace(COPY_AFTER,COPY_BEFORE,1)==before,'entire migration literal inverse')
+    namespace=dict(vars(backend));exec(compile(after,str(Path(__file__).resolve())+'::owned_None_migrate','exec',dont_inherit=True),namespace)
+    result=namespace['migrate']
+    need(result.__defaults__==original.__defaults__ and result.__closure__ is original.__closure__
+         and all(namespace[k]is v for k,v in vars(backend).items()if k!='migrate'),
+         'all original migration predicates, helpers, defaults and providers retained')
+    return result
+
+def load_owned(contract,loader,accessor,*arguments):
+    """Consume exactly the old fresh-acquisition Reader path, without a base API.
+
+    Source proof establishes that genuine Admission.acquire_base returns new
+    mutable state containers and that no later code reads that base object.
+    Read-only file-pin aliases are allowed. This function accepts metadata
+    arguments only, never a supplied state or asserted ownership flag.
+    """
+    raw=contract.source_text(ACCESSOR);backend_raw=contract.source_text(BACKEND)
+    need(isinstance(accessor,types.ModuleType)and Path(accessor.__file__)==Path(ACCESSOR['path'])
+         and type(loader)is accessor.DirectValueLoad and loader.load.__func__ is accessor.DirectValueLoad.load,
+         'only the genuine private Reader loader, no alternate/cached-state provider')
+    original=accessor.DirectValueLoad.load
+    need(original.__globals__ is vars(accessor)and original.__code__.co_filename==ACCESSOR['path']
+         and loader.c is accessor.parts()[1],'same old Reader/load namespace and codec object')
+    before=_method_text(raw)
+    need(before.count(LOAD_BEFORE)==1 and LOAD_AFTER not in before,'one complete original fresh acquire/migrate expression')
+    after=before.replace(LOAD_BEFORE,LOAD_AFTER,1)
+    need(after.replace(LOAD_AFTER,LOAD_BEFORE,1)==before,'entire original Reader load literal inverse')
+    calls=0
+    def owned_base(backend,admission,case_ref,case):
+        nonlocal calls
+        need(calls==0,'one fresh private base consumed by this invocation');calls+=1
+        need(type(admission)is accessor.Admission
+             and admission.acquire_base.__self__ is admission
+             and admission.acquire_base.__func__ is accessor.Admission.acquire_base
+             and admission.check.__self__ is admission
+             and admission.check.__func__ is accessor.Admission.check,
+             'unchanged genuine fresh-state acquisition/check methods, not a cached alias supplier')
+        # The current release already forbids a backend transition. Keep the
+        # boundary explicit; the unreviewed non-None migration branch is never
+        # entered by this storage edition.
+        need(case['backend_transition']is None,'owned Reader edition permits only unchanged backend')
+        state=admission.acquire_base(case_ref,case)
+        migrate=_private_migration(backend,backend_raw);old=backend.migrate
+        result=migrate(state,case)
+        need(result is state and backend.migrate is old,'same owned state, no original backend mutation')
+        # No state/result pointer is saved in an outer closure or namespace.
+        return result
+    namespace=dict(vars(accessor));need('ROOT_OWNED_BASE'not in namespace,'fresh invocation-local base consumer')
+    namespace['ROOT_OWNED_BASE']=owned_base
+    exec(compile(after,str(Path(__file__).resolve())+'::DirectValueLoad.load','exec',dont_inherit=True),namespace)
+    current=namespace['load']
+    need(current.__defaults__==original.__defaults__ and current.__closure__ is original.__closure__
+         and all(namespace[k]is v for k,v in vars(accessor).items()if k!='load'),
+         'all other original Reader load globals and providers retained')
+    try:
+        result=current(loader,*arguments)
+        need(calls==1 and accessor.DirectValueLoad.load is original,'one complete original load and unchanged original class')
+        return result
+    finally:
+        # Retire only invocation-local code bindings; do not create a new
+        # private-function cycle retaining the contract or any state object.
+        namespace.pop('ROOT_OWNED_BASE',None);namespace.pop('load',None)
+
+if __name__=='__main__':raise SystemExit('Definitions only; a fresh Root-reviewed Reader caller and controls are owed.')

@@ -1,0 +1,62 @@
+"""UNRUN DATA-only request creator after a standalone job is Root-reviewed.
+No scientific process or global state write is available in this program.
+"""
+import argparse,hashlib,json,os,stat,sys
+from pathlib import Path
+
+MIB=2**20
+GUARD=Path('/Users/sasha/medusa/research/leemans/computation/f004/q8_branch64_inventory01/resource_guard.py')
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def whole(ref,cap=8*MIB):
+    p=Path(ref['path']);a=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_size==ref['bytes']<=cap,'ordinary bounded request-constructor input')
+    with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(cap+1);c=os.fstat(f.fileno())
+    sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],'whole stable request-constructor input')
+    return raw
+def strict(raw):
+    def pairs(items):
+        v={}
+        for k,x in items:need(k not in v,'unique request fields');v[k]=x
+        return v
+    return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+def ref(path,sha,cap):
+    p=Path(path);need(p.stat().st_size<=cap,'finite exact CLI input');return dict(path=str(p),bytes=p.stat().st_size,sha256=sha)
+def merge(*groups):
+    by={}
+    for rows in groups:
+        for q in rows:need(by.get(q['path'],q)==q,'single current physical version');by[q['path']]=q
+    out=[by[p]for p in sorted(by)];need(len(out)<=40000 and sum(q['bytes']for q in out)<=2**31,'whole unchanged40000/2GiB domain');return out
+def main():
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--job',nargs=2,required=True)
+    p.add_argument('--root-review',nargs=2,required=True);p.add_argument('--execution',type=Path,required=True)
+    p.add_argument('--request',type=Path,required=True);p.add_argument('--execution-id',required=True);a=p.parse_args()
+    jr=ref(*a.job,8*MIB);gr=ref(*a.root_review,65536);job=strict(whole(jr));gate=strict(whole(gr,65536))
+    need(job['schema']=='ROOT_F009_STANDALONE_JOB_V1'and gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'
+         and gate['root']=='/root'and gate['status']=='SUPPORTED'and gate['blockers']==[]and gate['job']==jr
+         and gate['program']==job['program']and gate['Owner']==job['Owner']and job['role']in gate['authorized_roles'],
+         'fresh independent Root review of this exact immutable job')
+    ownraw=Path(__file__).resolve().read_bytes();own=dict(path=str(Path(__file__).resolve()),bytes=len(ownraw),sha256=hashlib.sha256(ownraw).hexdigest())
+    guard=next(q for q in job['declared_inputs']if q['path']==str(GUARD))
+    inputs=merge(job['declared_inputs'],[jr,gr,job['program'],job['Owner'],own,guard])
+    need(str(a.request)not in {q['path']for q in inputs},'request pin is bound separately and is acyclic')
+    value=dict(schema='LOCAL_SMALL_PYTHON_CHECK_V1',execution_id=a.execution_id,program=job['program']['path'],
+      supervisor=job['Owner']['path'],guard=str(GUARD),argv=[sys.executable,'-E','-B',job['program']['path'],
+        '--job',jr['path'],jr['sha256'],'--root-review',gr['path'],gr['sha256'],'--out',job['output']],
+      inputs=inputs,readonly_symlinks=job['readonly_symlinks'],output_roots=[job['output']],execution=str(a.execution),
+      limits=dict(phase_seconds=120,family_rss_cap_bytes=512*MIB,growth_cap_bytes=16*MIB,reserve_bytes=4*2**30,sample_seconds=.1),
+      scope='One new standalone Root F009 '+job['role']+' invocation; existing mathematical library retained; independent Reader precedes any global checkpoint adoption.',
+      provenance=dict(schema='ROOT_F009_STANDALONE_OWNER_PROVENANCE_V1',root='/root',role=job['role'],
+        Root_review=gr,Root_writer=job['program'],request_creator=own,mathematical_library=job['mathematical_library'],
+        old_caller_executed=False,no_cap_increase=True))
+    raw=can(value);need(len(raw)<=(8 if job['role']=='native'else 16)*MIB,'unchanged role-specific request capacity')
+    need(a.request.is_absolute()and a.request.parent.resolve(strict=True)==a.request.parent and not os.path.lexists(a.request),'fresh ordinary request')
+    with a.request.open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive request');f.flush();os.fsync(f.fileno())
+    fd=os.open(a.request.parent,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    print(json.dumps(dict(schema='ROOT_F009_STANDALONE_OWNER_REQUEST_DATA_V1',request=dict(path=str(a.request),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),
+      science_calls=0,global_checkpoint_written=False,actual_Owner_and_Root_handle_closure_owed=True)))
+if __name__=='__main__':main()

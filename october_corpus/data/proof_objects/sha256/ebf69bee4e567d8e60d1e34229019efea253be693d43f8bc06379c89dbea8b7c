@@ -1,0 +1,134 @@
+"""UNRUN new Root caller of the retained F009 mathematical libraries.
+
+One explicit Root-reviewed job, one retained Owner invocation, no global
+checkpoint update and no historical caller or Source4 execution claim.
+"""
+import argparse,hashlib,json,os,stat,sys,time,types
+from pathlib import Path
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def bootstrap(ref,cap):
+    p=Path(ref['path']);a=p.lstat()
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==ref['bytes']<=cap,'bounded ordinary bootstrap subject')
+    with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(cap+1);c=os.fstat(f.fileno())
+    sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],'whole stable bootstrap subject')
+    return raw
+
+def initial_ref(path,sha,cap):
+    p=Path(path);need(p.stat().st_size<=cap,'bounded literal bootstrap extent')
+    return dict(path=str(p),bytes=p.stat().st_size,sha256=sha)
+
+def strict(raw):
+    def pairs(items):
+        v={}
+        for k,x in items:need(k not in v,'unique bootstrap keys');v[k]=x
+        return v
+    return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def denial():
+    attempts=[]
+    def no_launch(event,args):
+        if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            attempts.append(event);raise RuntimeError('independent Root Saved caller forbids native launch')
+    sys.addaudithook(no_launch);return attempts
+
+def write(contract,path,value,cap=65536):
+    raw=contract.canonical(value);need(len(raw)<=cap,'finite own caller record')
+    with Path(path).open('xb')as f:need(f.write(raw)==len(raw),'whole own record');f.flush();os.fsync(f.fileno())
+    return contract.acquire(path)
+
+def proposals(contract,job,result):
+    """Only proposed Reader equations; its independent state proves them.
+
+    This is the same scalar/tail accounting used by the retained metadata
+    return-plan constructor. No proposal itself pays a census obligation.
+    """
+    cp=contract.document(job['checkpoint_acceptance'])['checkpoint']
+    expected=dict(sequence=result['sequence'],nodes=result['nodes'],pending=result['pending'],
+      selected_raw_leaf_records=result['selected_leaf_occurrences'],reserved_debts=result['reserved_debts'])
+    # These freshly produced metadata artifacts are bounded by the unchanged
+    # producer reservation; the Reader will independently replay every one.
+    def produced(ref):
+        need(contract.acquire(ref['path'])==ref,'exact actual produced metadata reference')
+        need(ref['bytes']<=2**20,'bounded produced transaction metadata')
+        return strict(Path(ref['path']).read_bytes())
+    head=produced(result['checkpoint']);tail=head['tail'];rows=[];seen=set()
+    while tail is not None:
+        need(tail['sha256']not in seen and len(rows)<512,'bounded acyclic complete new tail')
+        seen.add(tail['sha256']);tx=produced(tail);rows.append(tx);tail=tx['previous']
+    rows.reverse()
+    need([q['sequence']for q in rows]==list(range(cp['sequence']+1,expected['sequence']+1)),
+         'exact proposed new-tail interval from10626')
+    allowed={'F009_QUEUE_DISPATCH_V1','F009_QUEUE_REPLACEMENT_V1','F009_QUEUE_COMPLETION_V1'}
+    need(all(q['schema']in allowed for q in rows),'literal original transaction schemas')
+    completed=sum(q['schema']=='F009_QUEUE_COMPLETION_V1'for q in rows)
+    refined=sum(q['schema']=='F009_QUEUE_REPLACEMENT_V1'for q in rows)
+    admissions=sum(len(q['admissions'])for q in rows if q['schema']=='F009_QUEUE_REPLACEMENT_V1')
+    nodes=expected['nodes']-cp['nodes'];receivers=expected['pending']-cp['pending']+completed+refined
+    delta=dict(completed_families=completed,refined_families=refined,exported_descendants=admissions,
+      transactions=len(rows),selected_raw_leaf_delta=expected['selected_raw_leaf_records']-cp['selected_raw_leaf_records'],
+      new_node_records=nodes,new_pending_receivers=receivers,alias_records=nodes-receivers,
+      duplicate_admission_records=admissions-nodes)
+    need(all(type(x)is int and x>=0 for x in delta.values()),'nonnegative proposals, not an acquired state assertion')
+    return expected,delta
+
+def main():
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--job',nargs=2,required=True)
+    p.add_argument('--root-review',nargs=2,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,'ordinary exact -E -B caller')
+    need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same four environment variables absent before retained scientific activation')
+    jobref=initial_ref(*a.job,8*2**20);job=strict(bootstrap(jobref,8*2**20))
+    gateref=initial_ref(*a.root_review,65536);gate=strict(bootstrap(gateref,65536))
+    need(job['role']in('native','reader')and job['output']==str(a.out),'one explicit role/output')
+    attempts=denial()if job['role']=='reader'else None
+    own=gate['program'];need(own['path']==str(Path(__file__).resolve()),'truthful actual Root caller program');bootstrap(own,65536)
+    need(gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'and gate['root']=='/root'
+         and gate['status']=='SUPPORTED'and gate['blockers']==[]and gate['job']==jobref,
+         'fresh exact Root-reviewed standalone job')
+    cref=job['contract'];craw=bootstrap(cref,65536)
+    need(cref in gate['method_sources'],'authenticated complete current contract before activation')
+    C=types.ModuleType('Root_F009_current_read_contract');C.__file__=cref['path']
+    exec(compile(craw,cref['path'],'exec',dont_inherit=True),C.__dict__)
+    contract=C.Contract(job,jobref,gate,gateref,own)
+    route=contract.module(job['library_adapter'],'Root_F009_retained_library_route')
+    budget=route.io_budget(contract,job['IO_budget_source'],job['producer_reservation'])
+    sys.addaudithook(budget.event)
+    began=time.monotonic()
+    if job['role']=='native':
+        def metadata_subject(ref,K):
+            need(ref==job['Root_metadata_creator'],'new explicit Root metadata creator')
+            value=contract.document(ref)
+            need(value['schema']=='ROOT_F009_STANDALONE_METADATA_CREATOR_V1'and value['root']=='/root'
+                 and value['writer']==job['metadata_constructor']and value['old_metadata_Source_executed']is False,
+                 'new Root constructor attribution, no historical metadata Source verdict')
+            return value
+        result,state=route.native(contract,job,metadata_subject)
+        expected,delta=proposals(contract,job,result);del state
+        handoff=dict(schema='ROOT_F009_STANDALONE_NATIVE_WORKER_RETURN_V1',root='/root',
+          actual_caller=own,Root_review=gateref,request=jobref,case=job['case'],head=result['checkpoint'],
+          base_acceptance=job['checkpoint_acceptance'],snapshot_adoption=job['snapshot_adoption'],
+          native_result=contract.acquire(a.out/'result.json'),mathematical_library=job['mathematical_library'],
+          expected_proposal=expected,delta_proposal=delta,Owner_closure_still_required=True,
+          independent_strict_Reader_still_required=True,global_checkpoint_written=False,
+          old_caller_executed=False,new_census_credit=0)
+        artifact=write(contract,a.out/'native_handoff.json',handoff)
+    else:
+        route.reader(contract,job)
+        need(not attempts,'no Native attempt in separate strict Reader process')
+        result=contract.acquire(a.out/'result.json')
+        artifact=write(contract,a.out/'Root_Reader_return.json',dict(
+          schema='ROOT_F009_STANDALONE_READER_WORKER_RETURN_V1',root='/root',actual_caller=own,
+          mathematical_library=job['mathematical_library'],Root_review=gateref,job=jobref,result=result,
+          native_launch_attempts=attempts,Owner_closure_still_required=True,
+          independent_actual_review_still_required=True,global_checkpoint_written=False,
+          old_caller_executed=False,new_census_credit=0))
+    budget.attest();contract.finalize_actual_input_closure(job)
+    print(json.dumps(dict(schema='ROOT_F009_STANDALONE_WORKER_RETURNED_PENDING_OWNER_V1',
+      role=job['role'],artifact=artifact,seconds=time.monotonic()-began,
+      global_checkpoint_written=False,old_caller_executed=False,new_census_credit=0)),flush=True)
+
+if __name__=='__main__':main()

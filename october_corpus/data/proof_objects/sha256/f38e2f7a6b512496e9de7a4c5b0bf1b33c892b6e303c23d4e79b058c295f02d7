@@ -1,0 +1,203 @@
+"""UNRUN /root/journal_peer: Root-only bounded L026 typed ledger metadata.
+No project import, mathematical evaluation, Source/control/case activation.
+Legacy initial fold once; later Root batches contain only bounded new facts.
+"""
+import argparse,hashlib,json,os,resource,signal,stat,struct,sys,tempfile,time
+from pathlib import Path
+START=time.monotonic()
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/paid_status_ledger')
+CURRENT=BASE/'CURRENT.json'
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+SELECTOR=dict(first_block_index=2,endpoint_position=18,local_class_position=164,middle_block_index=2,first_ambient_class_position=13,middle_ambient_class_position=13)
+GEN_SOURCE='268d1b942a7c105e266f37746d362bbffac71d812380334953f2120a94f37bd3'
+NEG_SOURCE='1bdbd59e8d62e5b6e344bed37d05c2c43799685f49545e5894d504a7008491be'
+IP_THEOREM='0b940e5a217a5e54e91fd13617fd822dd4daebfac6cbdacbd17e0950070c9216'
+IP_REVIEW='b7610c401be209df8425a017aa71d61846875544f67919e48269312a37139ef3'
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+
+def need(ok,message):
+ if not ok:raise ValueError(message)
+
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def decode(raw):
+ def pairs(rows):
+  d={}
+  for k,v in rows:need(k not in d,'duplicate JSON key');d[k]=v
+  return d
+ return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in()).throw(ValueError('nonfinite JSON')))
+
+def reference(path,raw):return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+class Budget:
+ def __init__(self):self.refs={};self.raw={};self.bytes=0;self.newbytes=0;self.paths=set()
+ def tick(self):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  need(rss<256*2**20 and time.monotonic()-START<125,'metadata256MiB125s')
+ def read(self,r,fresh=False,changed_current=False):
+  self.tick();need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str and type(r['bytes'])is int and 0<=r['bytes']<=4*2**20 and type(r['sha256'])is str and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),'whole physical reference')
+  need(changed_current and r['path']==str(CURRENT)or self.refs.get(r['path'],r)==r,'immutable physical identity')
+  if not fresh and not changed_current and r['path']in self.raw:return self.raw[r['path']]
+  need(self.bytes+r['bytes']<=64*2**20 and(r['path']in self.paths or len(self.paths)<512),'metadata64MiB512paths')
+  p=Path(r['path']);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'canonical regular single-link file')
+  with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and reference(p,raw)==r,'stable whole SHA')
+  self.bytes+=len(raw);self.paths.add(str(p))
+  if not changed_current:self.refs[str(p)]=r;self.raw[str(p)]=raw
+  return raw
+ def doc(self,r):return decode(self.read(r))
+ def final(self):
+  for r in list(self.refs.values()):self.read(r,True)
+
+def scope(p):
+ need(p['scope_digest']==SCOPE and p['original_selector']==SELECTOR and p['witnesses']['bytes']==462528,'original scope/witness bank')
+
+def counts(mask):
+ need(type(mask)is bytes and len(mask)==28908,'exact28908 status bytes');c={0:0,1:0,2:0,6:0}
+ for v in mask:need(v in c,'typed status alphabet');c[v]+=1
+ return dict(subset_NEG=c[1],GEN=c[2]+c[6],separate_IP=c[6],unpaid=c[0])
+
+def identity(row,witnesses):
+ i=row['free_index'];need(type(i)is int and 0<=i<28908 and type(row['owner'])is int,'typed free/owner')
+ raw=witnesses[16*i:16*i+16]
+ need(len(raw)==16 and row['owner']==struct.unpack_from('<I',raw)[0]and row['witness_row_sha256']==hashlib.sha256(raw).hexdigest(),'whole witness identity')
+ return i
+
+def receipt_check(r,mask,p):
+ c=counts(mask);need(r['schema']=='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1'and r['root']=='/root'and r['adopted']is True and r['Root_adoption_owed']is False and r['scope_digest']==SCOPE and r['original_selector']==SELECTOR and r['witness_bank']==p['witnesses']and r['original_free_witness_adoption']==p['free_adoption']and r['original_operand_adoption']==p['operand_adoption']and type(r['original_free_space'])is int and r['original_free_space']==28908,'accepted original ledger')
+ need(type(r['counts'])is dict and set(r['counts'])==set(c)and all(type(r['counts'][k])is int and r['counts'][k]==v for k,v in c.items()),'derived strict counts')
+ for k,v in dict(fixed_nonfree_NEG_count=17688,fixed_nonfree_NEG_mass=6884658,global_NEG=17688+c['subset_NEG'],global_NEG_mass=6884658+1024*c['subset_NEG'],unpaid_mass=1024*c['unpaid']).items():need(type(r[k])is int and r[k]==v,'derived strict masses')
+ return c
+
+def initial(p,B,witnesses):
+ R=p['legacy'];need(R['GEN']['sha256']=='5a39ee468050879a5d75984d71d25a7943a6f92d7eb8b6897da916f71452f017'and R['NEG']['sha256']=='c2ffb898962af501a1f5b46e28bf75218d86d81912e344f80560b193259e0c5d','one-time actualGEN11/NEG24 initial subject')
+ g=B.doc(R['GEN']);n=B.doc(R['NEG']);part=B.doc(g['validated_partition']);np=B.doc(n['validated_partition'])
+ need(g['root']==n['root']=='/root'and g['adopted']is n['adopted']is True and g['Root_adoption_owed']is n['Root_adoption_owed']is False and g['scope_digest']==n['scope_digest']==part['scope_digest']==np['scope_digest']==SCOPE and g['latest_negative_adoption']==R['NEG'],'actual adopted legacy scope')
+ neg=part['all_prior_subset_owner_rows'];gen=part['all_prior_generation_facts']+part['exact_new_original_owner_rows'];facts={};todo=[R['GEN']];seen={};baseline=None
+ while todo:
+  ref=todo.pop();q=B.doc(ref)
+  if ref['path']in seen:need(seen[ref['path']]==ref,'one prior reference');continue
+  seen[ref['path']]=ref
+  need(q['schema']in('ROOT_ACCEPTED_L026_GENERATION_AND_SEPARATE_RANK3_IP_V1','ROOT_ACCEPTED_L026_ADDITIONAL_GENERATION_AND_SEPARATE_RANK3_IP_V1')and q['root']=='/root'and q['adopted']is True and q['scope_digest']==SCOPE and q['original_free_witness_adoption']==p['free_adoption']and q['original_operand_adoption']==p['operand_adoption']and q['strict_result_IPcredit0_fields_unchanged']is True,'same actual generation chain')
+  if ref['sha256']=='cb31555622664fff941ccc37dc7e56dd786609c8ece957867da8fd6eaedc77e8':baseline=B.doc(q['validated_partition'])
+  for row in q['generation_facts']:
+   i=identity(row,witnesses);need(can(facts.get(i,row))==can(row),'consistent generation fact');facts[i]=row
+  todo+=q.get('prior_generation_adoptions',[])
+ need(baseline is not None and can(neg)==can(baseline['all_prior_subset_owner_rows'])and can(neg)==can(np['unchanged_old_subset_rows']+np['new_NEG_rows'])and can(facts)==can({r['free_index']:r for r in gen})and len(neg)==24 and len(gen)==11,'whole old24NG/7GEN and current11GEN')
+ need(part['total_GENERATING_count']==part['total_separate_rank3_IP_count']==11 and part['unchanged_total_NEG_count']==n['total_NEG_components']==17712 and n['total_NEG_middle_mass']==6909234 and n['cumulative_subset_count']==24 and part['remaining_without_other_generation_registration']==28873 and part['remaining_middle_mass']==29565952,'legacy exact partition')
+ mask=bytearray(28908)
+ for code,rows in ((1,neg),(6,gen)):
+  for row in rows:i=identity(row,witnesses);need(mask[i]==0,'legacy categories disjoint');mask[i]=code
+ return bytes(mask),dict(kind='INITIAL_LEGACY_ADOPTED11GEN24NG',legacy=R,prior_chain=list(seen.values()),old_history_opaque_after_this_initial_fold=True)
+
+def retained(ref,manifests,B):
+ hits=[]
+ for m in manifests:
+  need(Path(m['path']).is_relative_to(BASE.parent),'retention descriptor in durable original scope');x=B.doc(m);need(x['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'and x['root']=='/root'and x['scientific_calls']==0,'actual closed retention descriptor')
+  hits += [r['retained']for r in x['files']if r['original']==ref]
+ need(hits and all(r['bytes']==ref['bytes']and r['sha256']==ref['sha256']and Path(r['path']).is_relative_to(BASE.parent)for r in hits),'exact retained proof alias')
+ for r in hits:B.read(r)
+
+def proof(q,B,p):
+ need(q['kind']in('GEN','NEG')and type(q['retentions'])is list and 1<=len(q['retentions'])<=4,'bounded proof type/retention')
+ for k in ('program','result','plan','gate','review','capture','outer'):B.read(q[k]);retained(q[k],q['retentions'],B)
+ r=B.doc(q['result']);plan=B.doc(q['plan']);gate=B.doc(q['gate']);review=B.doc(q['review']);cap=B.doc(q['capture']);out=B.doc(q['outer'])
+ need(r['program']==q['program']and r['plan']==q['plan']and r['scope_digest']==SCOPE and r['original_selector']==SELECTOR and plan['scope_digest']==SCOPE and plan['original_selector']==SELECTOR,'same strict subject')
+ need(gate['root']==review['root']=='/root'and gate['adopted']is True and gate['plan']==review['plan']==q['plan']and gate['program']==review['program']==q['program']and review['status']=='SUPPORTED'and review['blockers']==[]and gate['Root_code_math_review']==q['review']and gate['new_case_calls_authorized']is True,'actual Root scientific review/gate')
+ need(cap['actor']==cap['root']=='/root'and cap['all_genuine_api_frames']and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==0 and out['status']=='PASS'and out['stop']=='RETURNED'and out['returncode']==0 and not out['cleanup']['remaining']and not out['cleanup']['errors']and cap['child_argv'][-len(out['command']):]==out['command'],'actual closed API/outer return')
+ need(q['program']['path']in out['command']and q['plan']['path']in out['command']and q['plan']['sha256']in out['command']and q['gate']['path']in out['command']and q['gate']['sha256']in out['command'],'actual exact argv')
+ if q['kind']=='GEN':
+  need(q['program']['sha256']==GEN_SOURCE and r['schema']=='L026_DIRECT_ORIGINAL_ROTATION_CYCLES_RETURN_V1'and r['status']=='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'and r['adopted_middle_witness_premises']==p['free_adoption']and r['adopted_operand_and_membership_premises']==p['operand_adoption']and r['actual_direct_signed_word_and_every_closing_edge_checked']is True and r['same_known_G_seed_and_G_normal_in_A_membership_route_imported']is True and r['supplier_or_search_calls']==0 and r['Root_source_gate']==q['gate']and r['Root_code_math_review']==q['review']and r['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0,'unchanged strict GEN proof, IP0 unchanged')
+  rows=r['verified_generation_records']
+ else:
+  need(q['program']['sha256']==NEG_SOURCE and r['schema']=='L026_BOUNDED_ROTATION_SUBSET_RESULT_V1'and r['status']=='SUPPLIED_CHECK_COMPLETE'and r['mode']=='check'and gate['mode']=='check'and r['supplier_activated']is r['strict_check_activates_supplier']is False and r['marking_nongeneration_uses_additional_imported_original_middle_involution_and_simpleG']is True and r['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0,'unchanged strict proper-subset proof')
+  need(plan['roles']['free_adoption']==p['free_adoption']and plan['roles']['operand_adoption']==p['operand_adoption'],'same NEG member/witness premise')
+  rows=r['verified_nongeneration_records']
+  for row in rows:need(type(row['points'])is int and 0<row['points']<3510 and type(row['checked_positive_rotation_edges'])is int and row['checked_positive_rotation_edges']==2*row['points'],'actual two closing rotation edges per proper-set point')
+ need(type(rows)is list and 1<=len(rows)<=16,'bounded actual strict rows')
+ return rows
+
+def apply(previous,facts,proof_rows,witnesses):
+ counts(previous);need(type(facts)is list and 1<=len(facts)<=16,'bounded new typed facts');mask=bytearray(previous);seen=set();paid=[]
+ for f in facts:
+  need(set(f)=={'kind','free_index','owner','witness_row_sha256','proof'}and f['kind']in('NEG','GEN','GEN_IP','IP')and type(f['proof'])is int and 0<=f['proof']<len(proof_rows),'new typed fact shape')
+  i=identity(f,witnesses);need(i not in seen,'no duplicate/recredit');seen.add(i);kind=f['kind'];rows=proof_rows[f['proof']]
+  need(any(r['free_index']==i and r['owner']==f['owner']and r['witness_row_sha256']==f['witness_row_sha256']for r in rows),'actual strict row match')
+  old=mask[i]
+  if kind=='NEG':need(old==0,'newNEG only unpaid');mask[i]=1
+  elif kind=='GEN':need(old==0,'newGEN only unpaid');mask[i]=2
+  elif kind=='GEN_IP':need(old==0,'newGEN+IP only unpaid');mask[i]=6
+  else:need(old==2,'IP upgrade only actual GEN-only');mask[i]=6
+  paid.append(dict(free_index=i,before=old,after=mask[i],kind=kind,owner=f['owner'],witness_row_sha256=f['witness_row_sha256'],proof=f['proof']))
+ return bytes(mask),paid
+
+def append(p,B,witnesses,release):
+ old=B.doc(p['previous_receipt']);previous=B.read(p['previous_bank']);sel=B.doc(p['expected_current'])
+ need(B.read(p['previous_receipt'])==can(old)and B.read(p['expected_current'])==can(sel)and old['status_bank']==p['previous_bank']and sel['schema']=='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1'and sel['root']=='/root'and sel['adopted']is True and sel['scope_digest']==SCOPE and sel['ledger_receipt']==p['previous_receipt']and sel['status_bank']==p['previous_bank'],'exact current predecessor')
+ receipt_check(old,previous,p);proofs=p['proofs'];need(type(proofs)is list and 1<=len(proofs)<=16,'bounded new strict proofs')
+ rows=[proof(q,B,p)for q in proofs]
+ for f in p['facts']:need(proofs[f['proof']]['kind']==('NEG'if f['kind']=='NEG'else'GEN'),'typed proof category')
+ if any(f['kind']in('GEN_IP','IP')for f in p['facts']):
+  ip=p['separate_IP'];need(ip['theorem']['sha256']==IP_THEOREM and ip['review']['sha256']==IP_REVIEW and release['separate_IP_theorem_application_supported']is True and release['same_original_G_member_normality_bridge_middle_involution_and_simpleG_checked']is True,'separate existing rank3 IP theorem application')
+  B.read(ip['theorem']);iv=B.doc(ip['review']);need(iv['blockers']==[],'separate IP review without blockers')
+ mask,changes=apply(previous,p['facts'],rows,witnesses)
+ return mask,dict(kind='BOUNDED_NEW_ROOT_TYPED_BATCH',previous_receipt=p['previous_receipt'],previous_bank=p['previous_bank'],previous_CURRENT=p['expected_current'],facts=p['facts'],actual_strict_proofs=proofs,separate_IP=p.get('separate_IP'),exact_monotone_changes=changes,old_proof_DAG_is_opaque_retained_backlink=True)
+
+def syncdir(p):
+ fd=os.open(p,os.O_RDONLY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize and all(k not in os.environ for k in ENV4),'minimal EBS/ENV4 metadata caller')
+ signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s metadata fold')));signal.setitimer(signal.ITIMER_REAL,max(.001,125-(time.monotonic()-START)))
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True);ap.add_argument('--plan',nargs=2,required=True);ap.add_argument('--Root-release',nargs=2,required=True);ap.add_argument('--write',action='store_true');a=ap.parse_args();B=Budget()
+ own=Path(__file__).resolve(strict=True);ownref=dict(path=str(own),bytes=own.stat().st_size,sha256=a.self_sha256);need(ownref['bytes']<=32768,'whole metadata Source32k');B.bytes+=ownref['bytes'];B.read(ownref)
+ pp=Path(a.plan[0]);pr=dict(path=str(pp),bytes=pp.stat().st_size,sha256=a.plan[1]);need(pr['bytes']<=131072,'bounded metadata plan');p=B.doc(pr)
+ rp=Path(a.Root_release[0]);rr=dict(path=str(rp),bytes=rp.stat().st_size,sha256=a.Root_release[1]);need(rr['bytes']<=32768,'bounded exact Root metadata release');rel=B.doc(rr)
+ need(p['schema']=='L026_BOUNDED_TYPED_PAID_LEDGER_PLAN_V1'and p['program']==ownref and p['mode']in('initialize','append'),'current metadata Source/plan')
+ need(rel['schema']=='ROOT_REVIEWED_L026_BOUNDED_TYPED_PAID_LEDGER_V1'and rel['root']=='/root'and rel['status']=='SUPPORTED'and rel['blockers']==[]and rel['program']==ownref and rel['plan']==pr and rel['metadata_only']is True and rel['typed_new_facts_and_strict_closure_supported']is True and (not a.write or rel['metadata_publication_authorized']is True),'fresh Root exact metadata review/release')
+ scope(p)
+ for ref in p['inputs']:B.read(ref)
+ expected={r['path']:r for r in p['inputs']};need(len(expected)==len(p['inputs']),'one fixed physical input version')
+ for r in(ownref,pr,rr):need(expected.get(r['path'],r)==r,'exact bootstrap/release identity');expected[r['path']]=r
+ witness=B.read(p['witnesses']);need(len(witness)==462528,'whole accepted witness bank');B.doc(p['free_adoption']);B.doc(p['operand_adoption'])
+ if p['mode']=='initialize':need(p['expected_current']is None and not os.path.lexists(CURRENT),'initial ledger only absent CURRENT');mask,provenance=initial(p,B,witness)
+ else:need(p['expected_current']['path']==str(CURRENT),'current selector fixed path');mask,provenance=append(p,B,witness,rel)
+ c=counts(mask);epoch=p['epoch'];need(type(epoch)is str and 1<=len(epoch)<=64 and all(x in'abcdefghijklmnopqrstuvwxyz0123456789_-'for x in epoch),'bounded fresh ledger epoch')
+ dest=BASE/'epochs'/epoch;need(not os.path.lexists(dest),'fresh immutable epoch');bankref=reference(dest/'status.bin',mask)
+ method=dict(program=ownref,plan=pr,Root_release=rr,scientific_calls=0)
+ batch=None
+ if p['mode']=='append':batch=dict(schema='ROOT_ACCEPTED_L026_BOUNDED_TYPED_PROOF_BATCH_V1',root='/root',adopted=True,Root_adoption_owed=False,scope_digest=SCOPE,original_selector=SELECTOR,original_free_witness_adoption=p['free_adoption'],original_operand_adoption=p['operand_adoption'],witness_bank=p['witnesses'],new_facts=p['facts'],proofs=p['proofs'],separate_existing_rank3_IP=p.get('separate_IP'),previous_ledger=p['previous_receipt'],exact_monotone_changes=provenance['exact_monotone_changes'],writer=method,strict_IP0_unchanged=True,Original_conjecture_Lean_or_measurement_credit=0)
+ batchraw=can(batch)if batch else None;batchref=reference(dest/'batch_acceptance.json',batchraw)if batchraw else None
+ receipt=dict(schema='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1',root='/root',adopted=True,Root_adoption_owed=False,scope_digest=SCOPE,original_selector=SELECTOR,original_free_space=28908,witness_bank=p['witnesses'],original_free_witness_adoption=p['free_adoption'],original_operand_adoption=p['operand_adoption'],status_bank=bankref,counts=c,fixed_nonfree_NEG_count=17688,fixed_nonfree_NEG_mass=6884658,global_NEG=17688+c['subset_NEG'],global_NEG_mass=6884658+1024*c['subset_NEG'],unpaid_mass=1024*c['unpaid'],previous_ledger=p.get('previous_receipt'),typed_new_batch=batchref,proof_provenance=provenance if not batch else dict(kind='BOUNDED_BATCH',batch=batchref,previous_ledger=p['previous_receipt'],old_proof_DAG_opaque=True),writer=method,qualification='Same original Fi22/fullAut/Out2/Reader/member/model/action/word/graph/globalclass/twofibre/H=B and separate-IP hypotheses retained. Typed paid-status metadata only, no new mathematics or whole Original credit.')
+ receiptraw=can(receipt);receiptref=reference(dest/'receipt.json',receiptraw);selector=dict(schema='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1',root='/root',adopted=True,scope_digest=SCOPE,ledger_receipt=receiptref,status_bank=bankref);currentraw=can(selector)
+ need(len(receiptraw)<=16384 and len(currentraw)<=4096 and(batchraw is None or len(batchraw)<=131072),'bounded fixed SCI receipt/CURRENT and new batch outputs')
+ outputs={dest/'status.bin':mask,dest/'receipt.json':receiptraw}
+ if batchraw is not None:outputs[dest/'batch_acceptance.json']=batchraw
+ need(sum(map(len,outputs.values()))+len(currentraw)<=16*2**20,'metadata newwrite16MiB');need(B.refs==expected,'whole exact physical input closure')
+ read_upper=ownref['bytes']+2*sum(r['bytes']for r in expected.values())+2*sum(map(len,outputs.values()))+len(currentraw)+2*(p['expected_current']['bytes']if p['expected_current']is not None else 0)
+ path_upper=len(expected)+len(outputs)+(0 if str(CURRENT)in expected else 1)+1
+ need(read_upper<=64*2**20 and path_upper<=512,'complete metadata reads/newobjects/CAS/temp-path prepaid');B.final();B.tick()
+ projection=dict(status='BOUNDED_TYPED_LEDGER_METADATA_FORECAST_ONLY',writer=method,counts=c,new_outputs=[reference(k,v)for k,v in outputs.items()],new_CURRENT=reference(CURRENT,currentraw),physical_reads=B.bytes,actual_read_paths=len(B.paths),complete_read_upper=read_upper,complete_path_upper=path_upper,new_bytes=sum(map(len,outputs.values()))+len(currentraw),science_calls=0)
+ if not a.write:print(json.dumps(projection,sort_keys=True));return
+ ancestor=BASE.parent;need(ancestor.resolve(strict=True)==ancestor,'canonical existing ledger parent');BASE.mkdir(exist_ok=True);need(BASE.resolve(strict=True)==BASE,'canonical ledger base');(BASE/'epochs').mkdir(exist_ok=True);need((BASE/'epochs').resolve(strict=True)==BASE/'epochs','canonical epochs');dest.mkdir()
+ for path,body in outputs.items():
+  with path.open('xb')as f:need(f.write(body)==len(body),'whole fresh metadata object');f.flush();os.fsync(f.fileno())
+  B.read(reference(path,body),True)
+ syncdir(dest);syncdir(dest.parent)
+ if p['expected_current']is None:need(not os.path.lexists(CURRENT),'initial CAS absence')
+ else:B.read(p['expected_current'],True)
+ fd,tmp=tempfile.mkstemp(prefix='.ledger-',dir=BASE);tp=Path(tmp)
+ try:
+  with os.fdopen(fd,'wb')as f:need(f.write(currentraw)==len(currentraw),'whole CURRENT image');f.flush();os.fsync(f.fileno())
+  if p['expected_current']is None:need(not os.path.lexists(CURRENT),'immediate initial CAS absence')
+  else:B.read(p['expected_current'],True)
+  os.replace(tp,CURRENT);syncdir(BASE)
+ finally:
+  if tp.exists():tp.unlink()
+ for path,body in outputs.items():B.read(reference(path,body),True)
+ B.read(reference(CURRENT,currentraw),True,True);B.tick();print(json.dumps(dict(status='ROOT_PUBLISHED_BOUNDED_TYPED_LEDGER',writer=method,ledger_receipt=receiptref,status_bank=bankref,batch_acceptance=batchref,current=reference(CURRENT,currentraw),counts=c,physical_reads=B.bytes,actual_paths=len(B.paths),scientific_calls=0,Original_credit=0),sort_keys=True))
+
+if __name__=='__main__':main()

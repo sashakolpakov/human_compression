@@ -36,15 +36,14 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-The [latest intake checkpoint](research/proof_collection/updates/verified_frontiers_20261029/STATUS.rst)
-records 25 further F004 exclusions and a Fi22 block with 17,712 nongenerating
-components and seven generating markings. Their intersection property is
-established separately using the cited theorem. It also preserves F009's
-new census proposal and the verifier run that stopped at the memory limit;
-the accepted checkpoint remains 10997. All eight archive integrity checks
-passed. These finite results add no completed manuscript or compression
-measurement. The status page states the remaining work and verification
-limits.
+The [latest archived intake results](research/proof_collection/updates/curated_cp11216_job23_gen27neg68_20261029/README.rst)
+contain F009's accepted checkpoint 11,216 and all 21 required historical
+payloads, 38 further F004 exclusions in job 23, and the Fi22 ledger with
+27 generation and 68 additional nongeneration certificates. The intersection
+property for the generating markings follows separately from the cited
+theorem. The archive also preserves the later F009 proposal at 11,262 and
+its earlier failed verifier run. All seven archive integrity checks passed.
+These finite results add no completed manuscript or compression measurement.
 
 ## Common theories and applications
 

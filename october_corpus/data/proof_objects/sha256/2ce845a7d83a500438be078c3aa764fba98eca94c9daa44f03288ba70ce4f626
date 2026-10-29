@@ -1,0 +1,131 @@
+"""Own stdlib metadata/whole-pin audit; no represented Source activation."""
+from pathlib import Path
+import hashlib,json,os,stat
+D=Path('/private/tmp/f009_continuation/from_11216/native_DATA/reader_binding_DATA/actual_e466_bound')
+O=D.parent/'independent_reader_DATA_review';N=D.parents[1]
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def sha(b):return hashlib.sha256(b).hexdigest()
+def desc(p,b):return dict(path=str(p),bytes=len(b),sha256=sha(b))
+def pin(p):p=Path(p);return desc(p,p.read_bytes())
+reads={}
+def raw(r):
+ p=Path(r['path']);a=p.stat();assert a.st_size==r['bytes'];b=p.read_bytes();assert desc(p,b)==r;reads[str(p)]=r;return b
+def doc(r):return json.loads(raw(r))
+def merge(*groups):
+ by={}
+ for group in groups:
+  for r in group:
+   assert set(r)=={'path','bytes','sha256'} and type(r['bytes']) is int and r['bytes']>=0
+   assert by.get(r['path'],r)==r;by[r['path']]=r
+ return [by[k] for k in sorted(by)]
+def table(value,field,tag):
+ if tag not in value:return value
+ t=value[tag];assert field not in value
+ rows=[dict(path=t['prefixes'][k]+name,bytes=size,sha256=digest)for k,name,size,digest in t['rows']]
+ assert rows==merge(rows)
+ result={k:v for k,v in value.items()if k!=tag};result[field]=rows
+ assert len(can(result))==t['logical_bytes'] and sha(can(result))==t['logical_sha256'];return result
+def job(value):
+ value=table(value,'declared_inputs','Root_Declared_rows_reference')
+ if 'Root_Source_rows_reference' not in value:return value
+ t=value['Root_Source_rows_reference'];result={k:v for k,v in value.items()if k!='Root_Source_rows_reference'}
+ result['source_inputs']=[value['declared_inputs'][i]for i in t['indices']]
+ assert sha(can(result['source_inputs']))==t['Source_rows_sha256'] and sha(can(result['declared_inputs']))==t['declared_rows_sha256']
+ assert len(can(result))==t['logical_bytes'] and sha(can(result))==t['logical_sha256'];return result
+h=doc(pin(D/'handoff.json'));p=doc(h['actual_parameter_candidate']);iv=doc(h['whole_parameter_inverse']);projection=doc(h['a176_manual_10image_projection']);invoice=doc(h['Source_loop_invoice'])
+parent=doc(iv['parent']);assert parent==iv['whole_parent'] and p==iv['whole_selected_candidate']
+assert sorted(k for k in set(parent)|set(p) if parent.get(k)!=p.get(k))==sorted(iv['exact_delta_keys'])==sorted(['program','library_adapter','method_sources','reader_successful_route_lineage'])
+assert p['method_sources']==parent['method_sources']+iv['appended_six_paid_Source_refs']
+assert len(merge(p['method_sources']))==len(p['method_sources'])
+lineage=p['reader_successful_route_lineage'];oldparams=doc(lineage['previous_successful_parameters']);oldjob=job(doc(lineage['previous_successful_Reader_job']))
+assert p['program']==oldparams['program']==lineage['selected_caller'] and p['library_adapter']==oldparams['library_adapter']==lineage['selected_adapter']
+assert p['program']['sha256']=='36fb852ae7df01d4ddd282e9e11ca6f4f2caba7b2dd4789c4ea3c51deaebd6c2'
+assert p['library_adapter']['sha256']=='706954fd5d1ea2523936ce7ecf1b34438bd6b09b72b494d9f05eb8cfaf4744e7'
+assert all(lineage[k] is None for k in ['actual_new_Owner_request','actual_new_Reader','actual_new_Root_gate','checkpoint_adoption'])
+for r in h['actual_e466_five_images']:raw(r)
+assert sum(r['bytes']for r in h['actual_e466_five_images'])==1309870
+release=doc(h['actual_e466_release']);assert release['status']=='SUPPORTED' and release['root']=='/root' and release['metadata_only'] is True and release['Reader_case_release_authorized'] is False
+assert release['program']['sha256']=='e466e7e0bbcb34b05521c3012ba99dd76b00f62ffa8e4f4d6ea202d8b5934a50';raw(release['program'])
+for mode in ['forecast','write']:
+ cap=doc(h['actual_e466_'+mode+'_capture']);base=N/'runtime'/('reader_prepare_'+mode+'_guard');g=json.loads((base/'receipt.json').read_bytes());start=json.loads((base/'started.json').read_bytes());out=json.loads((base/'stdout.log').read_bytes())
+ assert cap.get('root',cap.get('actor'))=='/root' and cap['actual_tool']['exit_code']==0 and cap['all_genuine_api_frames'][0]==cap['full_initial_tool_return'] and cap['all_genuine_api_frames'][-1]==cap['full_tool_return'] and cap['full_tool_return']['exit_code']==0
+ assert g['status']=='PASS' and g['stop']=='RETURNED' and g['returncode']==0 and g['cleanup']['remaining']==g['cleanup']['errors']==[]
+ assert g['command']==start['command']==cap['issued_argv'][cap['issued_argv'].index('--')+1:]
+ assert release['program']['path'] in g['command'] and release['plan']['sha256'] in g['command'] and h['actual_e466_release']['sha256'] in g['command']
+ assert out['rows']==h['actual_e466_five_images'] and out['output_bytes']==1309870 and out['Source_Reader_Native_state_or_graph_calls']==0
+ assert out['written'] is (mode=='write') and (base/'stderr.log').read_bytes()==b''
+
+catalogue=doc(p['catalogue']);boundary=doc(p['boundary']);cp=doc(boundary['checkpoint_acceptance']);sp=doc(boundary['snapshot_adoption']);current=table(doc(cp['complete_root_inputs']),'inputs','Root_Input_rows_reference')
+assert cp['checkpoint']==sp['checkpoint'] and cp['checkpoint']['sequence']==boundary['expected_checkpoint_sequence']==11216
+assert cp['root']==sp['root']=='/root' and cp['adopted'] is sp['adopted'] is True
+archive=doc(catalogue['inherited_qualified_archive'])['inputs'];assert len(archive)==446 and current['historical_archive_rows']==archive
+denied={r['path']for r in archive};assert len(catalogue['inherited_original8'])==8 and all(r in archive for r in catalogue['inherited_original8'])
+current_inputs=merge(catalogue['declared_input_rows'],current['inputs'],[p['boundary'],boundary['checkpoint_acceptance'],boundary['snapshot_adoption'],cp['complete_root_inputs'],boundary['inherited_catalogue_boundary']],boundary['publication_inputs'])
+profile=doc(sp['source_profile']);rt=doc(boundary['runtime_gate']);prior=doc(sp['producer_case']);assert prior['target']==[32,5,4,8] and prior['reuse']==[] and prior['backend_transition'] is None
+assert rt['native_source']==boundary['native_source'] and rt['reader_source']==boundary['reader_source'] and rt['same_interpreter_and_original11_runtime_verified'] is True
+sources=merge(catalogue['source_inputs'],p['method_sources'],[p['IO_budget_source'],p['retained_owner']]);assert sources==oldjob['source_inputs'] and len(sources)==1021 and sum(r['bytes']for r in sources)==60330619
+constructor=projection['constructor'];raw(constructor);assert constructor['sha256']=='a1769b4c3b65b4bd0526f3588ae994b3aab9189186eeffcba3ebd76edef17cd9'
+own=next(r for r in p['method_sources']if r['path']==constructor['path']);assert own==constructor
+pref=projection['projected_selected_parameters'];assert pref['bytes']==h['actual_parameter_candidate']['bytes'] and pref['sha256']==h['actual_parameter_candidate']['sha256']
+root=Path(p['artifact_root']);images={};rows={}
+def add(name,value):
+ b=can(value);r=desc(root/name,b);images[name]=b;rows[str(root/name)]=r;return r
+creator=add('metadata_creator.json',dict(schema='ROOT_F009_STANDALONE_METADATA_CREATOR_V1',root='/root',writer=own,construction_parameters=pref,catalogue=p['catalogue'],old_metadata_Source_executed=False))
+ap=add('accessor_profile.json',dict(schema='F009_DIRECT_PRIVATE_ANCHOR_SOURCE_PROFILE_V1',anchor=p['retained_accessor'],capacity_profile=sp['source_profile'],capacity_method=sp['export_method_acceptance'],runtime_sources=profile['runtime_sources'],native_source=boundary['native_source'],reader_source=boundary['reader_source']))
+rp=add('runtime_profile.json',dict(schema='F009_CAPACITY8_ANCHOR_SEGMENT_SOURCE_PROFILE_V1',adapter=boundary['native_source']['program'],inherited_helpers=p['retained_snapshot_helper'],accessor_source_profile=ap))
+am=add('accessor_method.json',dict(root='/root',status='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_ANCHOR_METHOD_V1',source_profile=ap,native_source=boundary['native_source'],reader_source=boundary['reader_source'],runtime_profile=rp,scientific_execution=False,native_execution_release_granted=False,qualification='Root binding of genuine retained Source libraries to this DATA profile. The new caller needs its own independent job review and actual Owner admission.'))
+anchor=add('anchor.json',dict(schema='F009_EXPLICIT_ADOPTED_STATE_ANCHOR_V1',format='direct_private_reference_v1',snapshot=sp['snapshot'],head=sp['head'],producer_case=sp['producer_case'],upstream_acceptance=sp['upstream_acceptance'],source_profile=sp['source_profile'],adoption=boundary['snapshot_adoption'],method_acceptance=sp['export_method_acceptance']))
+common=dict(schema='ROOT_F009_STANDALONE_JOB_V1',root='/root',role='reader',program=p['program'],Owner=p['Owner'],contract=p['contract'],library_adapter=p['library_adapter'],metadata_constructor=own,Root_metadata_creator=creator,mathematical_library=boundary['reader_source']['program'],library_Source=boundary['reader_source'],mathematical_native_library=boundary['native_source']['program'],mathematical_reader_library=boundary['reader_source']['program'],retained_common=p['retained_common'],IO_budget_source=p['IO_budget_source'],source_inputs=sources,checkpoint_acceptance=boundary['checkpoint_acceptance'],snapshot_adoption=boundary['snapshot_adoption'],old_checkpoint_sequence=11216,checkpoint_boundary=p['boundary'],readonly_symlinks=rt['readonly_symlinks'],qualified_archive_rows=archive,output=p['output'],old_caller_executed=False,new_census_credit=0)
+aliasrows=[]
+for alias in rt['readonly_symlinks']:aliasrows.extend([dict(path=alias['path'],bytes=alias['target']['bytes'],sha256=alias['target']['sha256']),alias['target']])
+controls=doc(boundary['controls_gate']);protocol=merge([controls[k]for k in ['actual_review','actual_execution','result']])
+closure=table(doc(p['native_closure']),'complete_actual_inputs','Root_Native_closure_rows_reference');assert closure['schema']=='ROOT_CLOSED_F009_STANDALONE_NATIVE_V1' and closure['root']=='/root' and closure['known_scope_drained'] is True
+receipt=doc(closure['Owner_receipt']);handoff=doc(closure['worker_handoff']);nativejob=job(doc(closure['job']));request=table(doc(closure['Owner_request']),'inputs','Root_Request_rows_reference');nr=doc(closure['Root_job_review']);ar=doc(closure['independent_actual_review'])
+assert receipt['status']=='PASS' and receipt['inputs_unchanged'] is receipt['owned_child_reaped'] is receipt['owned_group_absent'] is True and receipt['returncode']==0
+assert receipt['request']==closure['Owner_request'] and receipt['execution_id']==request['execution_id']
+assert request['program']==nativejob['program']['path'] and request['supervisor']==nativejob['Owner']['path'] and request['output_roots']==[nativejob['output']]
+assert nr['status']==ar['status']=='SUPPORTED' and nr['blockers']==ar['blockers']==[] and nr['job']==ar['job']==closure['job']
+assert handoff['request']==closure['job'] and handoff['base_acceptance']==boundary['checkpoint_acceptance'] and handoff['snapshot_adoption']==boundary['snapshot_adoption'] and nativejob['case']==handoff['case']
+actualby={r['path']:r for r in closure['complete_actual_inputs']}
+assert all(actualby.get(r['path'])==r for r in nativejob['declared_inputs']+[closure[k]for k in ['job','Owner_request','Owner_receipt','Root_job_review','actual_execution','independent_actual_review','worker_handoff','output_manifest']])
+manifest=doc(closure['output_manifest']);tag=manifest['Root_Output_manifest_reference'];bank=doc(tag['bank']);assert actualby.get(tag['bank']['path'])==tag['bank']
+assert len(can(bank['files']))==tag['files_bytes'] and sha(can(bank['files']))==tag['files_sha256'];logical={k:v for k,v in manifest.items()if k!='Root_Output_manifest_reference'};logical.update(files=bank['files'],directories=bank['directories'])
+assert len(can(logical))==tag['logical_bytes'] and sha(can(logical))==tag['logical_sha256']
+assert len(bank['files'])==253 and all(actualby.get(r['path'])==r and Path(r['path']).is_relative_to(nativejob['output'])for r in bank['files'])
+reader_profile=add('reader_profile.json',dict(schema='F009_DIRECT_PRIVATE_TAIL_READER_PROFILE_V1',execution_reader=boundary['reader_source']['program'],codec=profile['codec'],export_profile=sp['source_profile'],export_method=sp['export_method_acceptance'],accessor_profile=ap,accessor_method=am,source=boundary['reader_source']))
+reader_method=add('reader_method.json',dict(root='/root',status='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_READER_METHOD_V1',program=boundary['reader_source']['program'],source_profile=reader_profile,source=boundary['reader_source'],scientific_execution=False))
+case=add('case.json',dict(schema='F009_ADOPTED_ANCHOR_REFERENCE_LEAF_EXPORT_V1',reader=p['retained_backend_reader'],producer_case=handoff['case'],producer_request=closure['job'],head=handoff['head'],handoff=closure['worker_handoff'],base_acceptance=boundary['checkpoint_acceptance'],expected=handoff['expected_proposal'],delta=handoff['delta_proposal'],output=p['output'],snapshot_profile=sp['source_profile'],anchor=anchor,method_acceptance=sp['export_method_acceptance'],reader_profile=reader_profile,reader_method=reader_method,accessor_method=am))
+sourcearg=add('execution_source.json',boundary['reader_source']);common.update(case=case,reader_arguments=['--case',case['path'],'--out',p['output'],'--source',sourcearg['path']],native_closure=p['native_closure'])
+data=merge(current_inputs,sources,closure['complete_actual_inputs'],list(rows.values()),[p['catalogue'],pref,p['native_closure'],own],merge(aliasrows),protocol)
+common['producer_reservation']=dict(schema='F009_PRELAUNCH_RESERVED_FILESYSTEM_PRODUCER_V1',output=p['output'],maximum_write_objects=16,maximum_path_bytes=384,worker_bytes=14*2**20,terminal_bytes=4*2**20,native_writers=[])
+common['declared_inputs']=merge(data,list(rows.values()),sources,[p['program'],p['Owner'],p['contract'],p['library_adapter'],p['guard']])
+jr=add('job.json',common);assert jr==projection['projected_raw_job'] and raw(h['manual_raw_job_projection'])==images['job.json']
+assert len(common['declared_inputs'])==11355 and sum(r['bytes']for r in common['declared_inputs'])==633708365 and all(r['path']not in denied for r in common['declared_inputs'])
+assert len(images)==10 and sum(len(b)for b in images.values())==3044970
+for name,b in images.items():
+ assert desc(root/name,b)==projection['projected_images'][name]
+ assert (D.parent/'ACTUAL_RELEASE_CONSTRUCTOR_AUTHOR_PROJECTION_ONLY'/name).read_bytes()==b
+history=doc(cp['historical_reference_retention_obligation']['inventory']);by={r['path']:r for r in common['declared_inputs']}
+assert len(history['files'])==21 and all(by.get(r['path'])==r for r in history['files'])
+assert len(common['declared_inputs'])<40000 and sum(r['bytes']for r in common['declared_inputs'])<2**31 and len(sources)<=1024 and sum(r['bytes']for r in sources)<128*2**20 and len(images['job.json'])<8*2**20
+meta_refs=projection['metadata_read_refs'];assert len(meta_refs)==23 and sum(r['bytes']for r in meta_refs)==11181051 and sum(r['bytes']for r in meta_refs)+constructor['bytes']==11218076
+assert invoice['a176_read_with_Source_bootstrap']==11218076
+
+# Stream whole declared physical bodies; only ten not-yet-written Root metadata
+# images/selected-parameter roles use explicitly identified author DATA aliases.
+substitutions={pref['path']:h['actual_parameter_candidate']['path']}
+substitutions.update({str(root/name):str(D.parent/'ACTUAL_RELEASE_CONSTRUCTOR_AUTHOR_PROJECTION_ONLY'/name)for name in images if name!='job.json'})
+total=0;counts=0
+for r in common['declared_inputs']:
+ pp=Path(substitutions.get(r['path'],r['path']));size=0;digest=hashlib.sha256()
+ with pp.open('rb')as f:
+  before=os.fstat(f.fileno());assert before.st_size==r['bytes']
+  while True:
+   chunk=f.read(262144)
+   if not chunk:break
+   size+=len(chunk);digest.update(chunk)
+  after=os.fstat(f.fileno())
+ assert before.st_size==after.st_size==size==r['bytes'] and before.st_mtime_ns==after.st_mtime_ns and digest.hexdigest()==r['sha256'],str(pp)
+ total+=size;counts+=1
+result=dict(schema='INDEPENDENT_ACTUAL_E466_TO_REUSED_ORDINAL_READER_DATA_OBSERVATIONS_V1',status='PASS',reviewer='/root/journal_peer/large_end_route_audit',subject=pin(D/'handoff.json'),candidate=h['actual_parameter_candidate'],whole_inverse=h['whole_parameter_inverse'],constructor=constructor,exact_delta_keys=iv['exact_delta_keys'],accepted_checkpoint=11216,proposed_checkpoint_unpaid=11262,Source_rows=len(sources),Source_bytes=sum(r['bytes']for r in sources),same_whole_Source_roster_as_previous_success=True,declared_rows=counts,declared_bytes=total,all_declared_bodies_wholehashed=True,explicit_unwritten_metadata_substitutions=substitutions,all21_historical_pins_current=True,all446_archive_rows_excluded=True,projected_images={name:desc(root/name,b)for name,b in images.items()},constructor_metadata_read_bytes=11181051,constructor_bootstrap=37025,constructor_total_read_bytes=11218076,no_represented_Source_or_helpers_or_controls_or_Reader_Native_state_graph_activation=True,Root_gates_requests_actual_Reader_and_registration_still_owed=True,qualification='Own stdlib Source-text/JSON and streaming whole-hash audit. Ten metadata/parameter roles remain author projection substituted explicitly; no claim actual Root a176 output or future Reader success. No state/graph/gzip decoding or scientific Source/control verdict retag.')
+O.mkdir(parents=True,exist_ok=True);(O/'observations.json').write_bytes(can(result));print(json.dumps(dict(status='PASS',observations=pin(O/'observations.json'),declared_rows=counts,declared_bytes=total,Source_rows=len(sources),Source_bytes=sum(r['bytes']for r in sources)),sort_keys=True))

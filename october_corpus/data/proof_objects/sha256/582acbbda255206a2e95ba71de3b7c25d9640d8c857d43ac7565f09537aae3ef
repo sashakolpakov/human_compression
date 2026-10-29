@@ -1,0 +1,70 @@
+"""Independent stdlib/AST/hash/formal-string audit; no represented Source activation."""
+from pathlib import Path
+import json,hashlib,ast,copy,stat
+D=Path('/private/tmp/q11_operand37_missing7_word_search');P=D/'independent_review'
+def can(o):return(json.dumps(o,sort_keys=True,separators=(',',':'),allow_nan=False,ensure_ascii=True)+'\n').encode()
+seen={}
+def ref(p):
+ p=Path(p);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1;raw=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns);r=dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest());seen[r['path']]=r;return r
+def read(p):return json.loads(Path(p).read_bytes())
+def exact(r):assert ref(r['path'])==r;return Path(r['path']).read_bytes()
+def put(n,o):p=P/n;assert not p.exists();p.write_bytes(can(o));return ref(p)
+h=read(D/'handoff.json');assert ref(D/'handoff.json')['sha256']=='c9ef01c7414ea49c71990d55cea19eaa6022d2cbab9364441a0f2c4c1d725f51'
+for key in ['Source_freeze','Source_inverse','argument','control_inverse','first_calls','generation_DATA','interface','invoice','new_Source_view','whole_DATA_inverse','word_bank']:exact(h[key])
+for r in h['sources'].values():exact(r)
+src=read(D/'Source_inverse.json');cr=exact(src['child']).decode();pr=exact(src['parent']).decode();assert cr==src['whole_child_body']and pr==src['whole_parent_body']
+assert cr.startswith(src['header']);rest=cr.removeprefix(src['header']);assert rest.count(src['added'])==rest.count(src['new_main'])==1;rest=rest.replace(src['added'],'',1).replace(src['new_main'],src['old_main'],1);assert rest==pr
+def defs(s):
+ lines=s.splitlines(keepends=True);return{n.name:''.join(lines[n.lineno-1:n.end_lineno])for n in ast.parse(s).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+olddefs,newdefs=defs(pr),defs(cr);assert all(olddefs[k]==newdefs[k]for k in src['literal_definitions'])and len(src['literal_definitions'])==24
+assert set(newdefs)-set(olddefs)=={'bank_words','search_candidates'}and [k for k in olddefs if olddefs[k]!=newdefs[k]]==['main']
+ci=read(D/'control_inverse.json');cc=exact(ci['child']).decode();pc=exact(ci['parent']).decode();assert cc==ci['whole_child_body']and pc==ci['whole_parent_body']and cc.startswith(ci['header'])and cc.count(ci['added'])==1 and cc.removeprefix(ci['header']).replace(ci['added'],'',1)==pc
+assert all(defs(pc)[k]==defs(cc)[k]for k in set(defs(pc))-{'main'})and len(set(defs(pc))-{'main'})==6
+strict=exact(h['sources']['strict']);assert hashlib.sha256(strict).hexdigest()=='7df5071eb1fe1ba049966f26225e74a055117b35d68f85143490b5a03aac5b33';ast.parse(strict)
+assert sum(r['bytes']for r in h['sources'].values())==60723 and h['namespace']==dict(cap=65536,generic_controls=60723,proposer=22690,strict=18045)
+bank=read(D/'word_bank.json');gen=read(D/'word_bank_generation_DATA.json');assert Path(D/'word_bank.json').read_bytes()==can(bank)and len(bank['words'])==len(set(bank['words']))==64 and bank['power']==6
+words=[];keys=[]
+for trace in gen['full_generation_trace']:
+ values=[];counter=0
+ while len(values)<20:
+  digest=hashlib.sha256((gen['seed']+':'+str(trace['candidate'])+':'+str(counter)).encode()).digest();counter+=1
+  for b in digest:
+   v=b>>6
+   if v!=3:values.append(v)
+   if len(values)==20:break
+ assert values==trace['high_two_bit_accepted_values']and counter==trace['SHA_blocks_consumed']
+ word=''.join(['0','2','02'][v]+'1'for v in values);words.append(word)
+ tokens=tuple(y for v in values for y in(v+1,0));reverse=tokens[::-1];key=min(q[i:]+q[:i]for q in [tokens,reverse]for i in range(len(q)));assert list(key)==trace['formal_cyclic_key'];keys.append(key)
+assert words==bank['words']==gen['words']and len(set(keys))==64 and all(1<=len(w)<=64 and set(w)<=set('012')for w in words)
+assert(min(map(len,words)),max(map(len,words)))==(42,52)and all(len(k)==40 for k in keys)
+exact(gen['old32_schedule']);old32=read(gen['old32_schedule']['path']);assert gen['old32_key_length_max']<=30
+invoice=read(D/'read_work_invoice.json');validation=64+sum(map(len,words));tight_bound=1024+validation+sum((len(w)+12)*64+994 for w in words)+(max(map(len,words))+12)*64+102;bound=1024+validation+64*((max(map(len,words))+12)*64+994)+(max(map(len,words))+12)*64+102
+assert validation==invoice['validation_scalar']==3038 and bound==invoice['selected_bank_scalar_upper']==334020
+generic=1024+4160+64*(76*64+994)+76*64+102;assert generic==invoice['generic64x64_scalar_upper']==385062 and generic<400000 and 65*76==invoice['products_upper']==4940 and 64*4+2==invoice['row_images_upper']==258
+expected=[447,526,1378,1417,1882,1981,2986];assert [c['position']for c in h['cases']]==expected
+inverse=read(D/'whole_DATA_inverse.json')
+for row in inverse['rows']:
+ assert json.loads(exact(row['child']))==row['whole_child_body'];assert json.loads(exact(row['parent_plan']))==row['whole_parent_body'];rest=copy.deepcopy(row['whole_child_body'])
+ for k,change in row['changed_fields'].items():
+  if k in row['whole_parent_body']:rest[k]=change['old']
+  else:rest.pop(k,None)
+ assert rest==row['whole_parent_body']
+cases=[]
+for case in h['cases']:
+ for k in ['Root_acceptance','Root_gate_false','Root_review_false','operand','plan','strict_template']:exact(case[k])
+ p=read(case['plan']['path']);r=read(case['Root_acceptance']['path']);s=read(case['strict_template']['path']);g=read(case['Root_gate_false']['path']);v=read(case['Root_review_false']['path'])
+ for rr in p['inputs']:exact(rr)
+ assert len(p['inputs'])==9 and sum(rr['bytes']for rr in p['inputs'])==case['whole_fixed_input_bytes']and len({rr['path']for rr in p['inputs']})==9
+ assert p['operand']==r['operand']==case['operand']and p['position']==r['position']==case['position']and p['representative']==r['representative']and p['whole_orbit_sha256']==r['whole_orbit_sha256']and p['selector']==r['selector']
+ assert r['schema']=='ROOT_ACCEPTED_Q11_ORIGINAL_QUARTET_OPERAND_V1'and r['root']==r['reviewer']=='/root'and r['Root_authority_granted']is True and r['checks']['original_member_frame_faithful_orbit_G_A_equals_G']is True
+ assert p['program']==p['proposer_program']==h['sources']['proposer']and p['strict_program']==h['sources']['strict']and p['control_program']==h['sources']['controls']and p['word_bank']==h['word_bank']and p['word']==words[0]and p['power']==6 and p['word_bank_count']==64
+ assert g['adopted']is g['new_case_calls_authorized']is False and v['status']!='SUPPORTED'and s['word']is s['hint']is None
+ readupper=2*(case['whole_fixed_input_bytes']+case['plan']['bytes']+8192+32768+16384)+22690;assert readupper==case['read_upper_with_bootstrap']and case['input_paths']==13 and case['total_paths_with_outputs']==15
+ sel=json.loads(exact(p['selector']));unpaid=[i for a,b in sel['unresolved_position_runs']for i in range(a,b+1)];assert case['position']in unpaid and len(unpaid)==38
+ cases.append(dict(position=case['position'],plan=case['plan'],input_bytes=case['whole_fixed_input_bytes'],physical_read_upper=readupper,physical_paths=15,Root_gate_false=case['Root_gate_false'],strict_binding_owed=True))
+ctrlref=ref(D/'runtime/generic_controls_guard/stdout.log');ctrl=read(ctrlref['path']);assert ctrl['status']=='PASS'and ctrl['program']==h['sources']['controls']and ctrl['proposer']==h['sources']['proposer']and ctrl['strict']==h['sources']['strict']and ctrl['pure_controls']==44 and ctrl['AST_controls']==11 and ctrl['original_case_calls']==0 and ctrl['G2_or_Original_fixture']is False
+success=ref(D/'runtime/generic_controls_actual_capture.json');successbody=read(success['path']);assert successbody['actor']==successbody['root']=='/root'and successbody['actual_tool']['exit_code']==successbody['full_tool_return']['exit_code']==0
+failure=ref(D/'runtime/controls_actual_capture.json');failed=read(failure['path']);assert failed['actual_tool']['exit_code']!=0 and 'FileNotFoundError'in failed['full_tool_return']['output']
+observations=put('observations.json',dict(schema='INDEPENDENT_WORD_BANK_STATIC_OBSERVATIONS_V1',Source_literals=src['literal_definitions'],whole_Source_parent_byte_inverse=True,controls_whole_byte_inverse=True,whole_DATA_parent_semantic_inverse_with_exact_whole_raw_parent_pins=True,own_parent_layout_QA_correction='OldUNBOUNDparentplans useprettyJSON; theirwholephysicalpins andparsedbeforeimages areexact. No canonicalparentbyteequality isclaimed.',Source_namespace=60723,all7_plans=cases,bank_metadata_only=dict(count=64,bytes=h['word_bank']['bytes'],length_min=42,length_max=52,formal_syllables=40,formal_cyclic_inverse_classes=64,fullSHA_highbit_generation_equal=True,no_Original_group_word_distinctness_or37_order_claim=True),work=dict(selected_scalar_upper=334020,tighter_perword_sum_upper=tight_bound,generic_scalar_upper=385062,products_upper=4940,row_images_upper=258,own_initial_QA_assumption_corrected='Statedselectedbound uses64timesmax52length; ownfirstassert usedtighterexactlengthsum311364. Bothsound; Source/invoiceunchanged.'),whole_refs=[seen[k]for k in sorted(seen)],control_boundaries='Old34pure+7AST remainliteral; new10pure test realbankvalidation and mockedproposal-driverprogress/stop semantics, new4AST checklayout. OldgenericGL7 equationtests remain real. There is no fullSCI/CLI/Originalintegration test and no newOriginalfixture. Strictactual-word binding remains freshRootDATA work, not a mockdriver claim.',proof='Right-row/signed-involution word mathematics unchanged inliteral24definitions. Bank changes only finitely chosenpositive words. No negative/absence/properness/IPcredit fromcomplete orinterruptedmiss. Anyhint requires independent7df withactualhint.word/power/source/control/context andfreshRootgate.',represented_activation=False))
+report=put('independent_review.json',dict(schema='INDEPENDENT_MISSING7_WORD_BANK_SOURCE_CONTROL_DATA_REVIEW_V1',reviewer='/root/journal_peer/f009_invoice',author='/root/journal_peer',status='SUPPORTED_STATIC_SOURCE_AND_DATA_ONLY',blockers=[],subject=ref(D/'handoff.json'),sources=h['sources'],observations=observations,whole24_old_definitions_literal_and_fullinverse=True,strict7df_unchanged=True,control_designs=dict(old_pure=34,old_AST=7,new_pure=10,new_AST=4,total_pure=44,total_AST=11),Root_actual_generic_controls_observed_as_DATA=ctrlref,Root_actual_generic_controls_capture=success,first_pre_source_launch_failure_kept=failure,Root_authority=False,represented_Source_helper_control_Original_case_activation=False,actual_scientific_cases=None,limitations=['This peer usedstdlib/AST/hash/formalstringDATAonly; no Source orOriginalmatrices/words were evaluated.','Rootactual44+11controlPASS is observedprovenance, never selfexecution or Originalimport authority. Thefirstoutermkdirfailure staysfailure.','Stricttemplates are UNBOUND. Actualhint.word/power mustreplace nulls in a NEW7dfplan withnewproducer/controlrefs, sameRootoperand/8a andfreshRootreview/gate; no seedword substitution.','AlloldOriginalfaithfulframe/member/G/A=G, naturalCayley classification/unique37line/onefullendIP hypotheses remain explicitborrowedpremises. No guarantee anyword37 or casecompletion, and no credit fromfinite/softmiss.']))
+print(json.dumps(dict(report=report,observations=observations,cases=7,selected_scalar=bound,generic_scalar=generic),sort_keys=True))

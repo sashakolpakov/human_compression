@@ -1,0 +1,43 @@
+"""Own stdlib prelaunch core DATA selection, no copier/represented Source activation."""
+from pathlib import Path
+import json,hashlib,copy,stat
+N=Path(__file__).resolve().parent;D=N/'prelaunch_retention_DATA/core';D.mkdir(parents=True,exist_ok=True)
+S=Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake';DEST=M/'f009_census_continuation/from11216/native_inputs/evidence/core'
+def can(o):return(json.dumps(o,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p):
+ p=Path(p);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1;raw=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns);return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def read(p):return json.loads(Path(p).read_bytes())
+def put(n,o):p=D/n;assert not p.exists();p.write_bytes(can(o));return ref(p)
+cp=read(M/'f009_census_continuation/from11099/standalone_execution/checkpoint_11216/root_checkpoint_acceptance.json');canonical=read(cp['Reader_closure']['path'])['preservation'];assert canonical['sha256']=='695ed9bab7fd901da5bb800be74f12ce629439c42041b970767088f1c8895da1'
+post=ref(M/'f009_census_continuation/from11099/standalone_execution/checkpoint_11216_postregistration_evidence/preservation.json');assert post['sha256']=='2f3fa60a8e84b35bffc766067ba956bafaaf106542fcd5015000fe51f5a15bad'
+borrow=[canonical,post];aliases={}
+wire=read(canonical['path']);tag=wire['Root_Preservation_map_reference'];logical=copy.deepcopy(wire);del logical['Root_Preservation_map_reference']
+for name,kind,rs in tag['fields']:
+ assert kind=='pair';logical[name]=[dict(original=dict(path=tag['prefixes'][i]+s,bytes=b,sha256=h),retained=dict(path=tag['prefixes'][j]+s,bytes=b,sha256=h))for i,j,s,b,h in rs]
+assert len(can(logical))==tag['logical_bytes']and hashlib.sha256(can(logical)).hexdigest()==tag['logical_sha256']
+for row in logical['rows']+logical['reused_previous_rows']+read(post['path'])['files']:aliases[(row['original']['path'],row['original']['bytes'],row['original']['sha256'])]=row['retained']
+selected={}
+def add(p):
+ r=ref(p);assert r['bytes']<=4*2**20;selected[r['path']]=r
+for p in sorted(N.iterdir()):
+ if p.is_file()and p.name!='preflight_job.json':add(p)
+for name in ['prior_author_draft','compact_independent_review']:
+ for p in sorted((N/name).rglob('*')):
+  if p.is_file()and p.name!='observations.json':add(p)
+for p in sorted((N/'runtime').rglob('*')):
+ if p.is_file()and (p.name.startswith('constructor_')or any(x.startswith('constructor_')for x in p.relative_to(N/'runtime').parts)):add(p)
+excluded=ref(N/'compact_independent_review/observations.json')
+exclusion=put('optional_trace_exclusion_and_author_failure.json',dict(schema='PRELAUNCH_CORE_OPTIONAL_VERBOSE_TRACE_CAP_EXCLUSION_V1',author='/root/journal_peer/f009_invoice',excluded=excluded,reason='8.49MiB optional repeated-label author observation trace exceeds unchanged4MiB copieronefilecap. Compact sealed4db report explicitly selects observations_compact2.63MiB preserving everywholepinrow and distinct successfulpredicate; thatwholebody and auditscripts areselected. No chunks, transforms, deletion or scientificinput omission.',failed_own_selection_author=ref(N/'prior_author_draft/core_optional_trace_assumption.py'),failure='Ownstdlib selection asserted perfile4MiB before anyplan/projection waswritten; no copier orrepresentedSourceactivated.',Root_authority=False))
+add(exclusion['path'])
+rows=[]
+for path,r in sorted(selected.items()):
+ t=aliases.get((path,r['bytes'],r['sha256']))or dict(r,path=str(DEST/'objects'/r['sha256']))
+ if not Path(t['path']).is_relative_to(DEST):assert ref(t['path'])==t
+ rows.append(dict(original=r,retained=t))
+u=ref('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py');assert u['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+plan=put('copy_plan.json',dict(schema='NEXT11216_NATIVE_PRELAUNCH_CORE_DATA_RETENTION_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,scientific_calls=0,destination=str(DEST),files=rows,borrowed_closures=borrow,qualification='Closed newNative parameters/catalogue/boundary/fullinverse/Source-role andIO proof/currentness/wholeactualNativeDATA peer+fullobservations/ownauthorfailure and allactual1dccconstructor guards+captures. PaidCP11216 canonicalandpostreg closures wholeborrowed. Actual11ctor output bodies andrawpreflight/gates/requests/preflightSDK are the separate later launch-evidence copy; no future rootcalls selected here. Authorprojection/unselectedwire bodies excluded: actual11bodies have exactwholeequality proof andwillallmaplater, no opaque scientific input omitted.'))
+methods=[dict(original=u,retained=dict(u,path=str(DEST/'method/retain_closed_files.py'))),dict(original=plan,retained=dict(plan,path=str(DEST/'method/plan.json')))];m=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=borrow,source_plan=plan,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+projection=put('projected_manifest_DATA.json',m);mr=dict(projection,path=str(DEST/'preservation.json'));inside=[r for r in rows if Path(r['retained']['path']).is_relative_to(DEST)];outside=[r for r in rows if r not in inside];paths={u['path'],plan['path'],mr['path'],*(r['path']for r in borrow),*(r['original']['path']for r in rows),*(r['retained']['path']for r in rows),*(r['retained']['path']for r in methods)};reads=2*u['bytes']+3*plan['bytes']+sum(r['bytes']for r in borrow)+4*sum(r['original']['bytes']for r in inside)+3*sum(r['original']['bytes']for r in outside)+mr['bytes'];new={r['retained']['path']:r['retained']['bytes']for r in inside+methods};new[mr['path']]=mr['bytes']
+assert len(paths)<=512 and reads+u['bytes']<64*2**20 and sum(new.values())<16*2**20,(reads,len(paths),sum(new.values()))
+hand=put('handoff.json',dict(schema='FROZEN11216_NATIVE_PRELAUNCH_CORE_RETENTION_HANDOFF_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,program=u,plan=plan,projected_manifest=mr,invoice=dict(mappings=len(rows)+2,actual_paths=len(paths),read_bytes_excluding_Source_bootstrap=reads,Source_bootstrap=u['bytes'],complete_read_upper=reads+u['bytes'],new_bytes=sum(new.values()),new_files=len(new),outside_S_reuses=len(outside)),actual_copy=None,launch_evidence_second_copy_required=True,accepted_checkpoint=11216,Root_argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',u['path'],'--self-sha256',u['sha256'],'--plan',plan['path'],plan['sha256'],'--destination',str(DEST),'--manifest',mr['path']],qualification='Coreclosed metadata only; no gate/request/preflight/Native result or Source authority. Rootonlyactual667copy. Secondboundedlaunch-evidence plan follows actualRootgate/request/preflight SDK; no Source/scienceactivation byauthor.'))
+print(json.dumps(dict(handoff=hand,manifest=mr,read=reads,new=sum(new.values()),paths=len(paths)),sort_keys=True))

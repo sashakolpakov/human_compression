@@ -1,0 +1,115 @@
+"""UNRUN pure finite matrix-group/tree controls and Source AST observations.
+Only toy permutation matrices are evaluated by a future Root control call.
+No original model, scientific case, Source loader or publication is used.
+"""
+import argparse,ast,base64,copy,hashlib,json,os,resource,signal,struct,sys,time
+from pathlib import Path
+START=time.monotonic();READ=0;NAMES=[];AST_NAMES=[]
+def need(ok,why):
+ if not ok:raise ValueError(why)
+ if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>=128*2**20 or time.monotonic()-START>=125:raise RuntimeError('same128MiB125s generic bound')
+def whole(pair,cap):
+ global READ
+ p=Path(pair[0]);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and not p.is_symlink()and a.st_size<=cap,'ordinary bounded Source')
+ b=p.read_bytes();z=p.lstat();need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+  and len(b)==a.st_size and hashlib.sha256(b).hexdigest()==pair[1],'whole stable Source')
+ READ+=len(b);need(READ<=8*2**20,'8MiB generic Source IO');return b,dict(path=str(p),bytes=len(b),sha256=pair[1])
+def ok(name,f):f();NAMES.append(name)
+def bad(name,f):
+ try:f()
+ except(ValueError,TypeError,IndexError,KeyError,struct.error):NAMES.append(name);return
+ raise AssertionError('invalid fixture accepted '+name)
+class B:
+ def __init__(self):self.scalar_operations=0;self.products=0;self.row_images=0
+ def tick(self):need(True,'generic whole wall/RSS')
+ def scalar(self,n):need(type(n)is int and n>=0,'scalar charge');self.scalar_operations+=n;need(self.scalar_operations<=1000000,'same scalar hardcap')
+ def room(self,n,i):return self.scalar_operations+n<=900000
+ def multiply(self,A,C):
+  self.products+=1;need(self.products<=400000,'same product hardcap')
+  return tuple(tuple(sum(A[i][k]*C[k][j]for k in range(7))%11 for j in range(7))for i in range(7))
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'ordinary EBS')
+ signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s controls')));signal.setitimer(signal.ITIMER_REAL,125)
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ for n in('worker','proposer','verifier','worker-inverse','kernel-inverse','parent-worker','parent-kernel'):ap.add_argument('--'+n,nargs=2,required=True)
+ ap.add_argument('--out',required=True);a=ap.parse_args()
+ ownraw,own=whole([str(Path(__file__).resolve()),a.self_sha256],24576)
+ W,w=whole(a.worker,65536);P,p=whole(a.proposer,12000);V,v=whole(a.verifier,12000)
+ WI,wi=whole(a.worker_inverse,2**21);KI,ki=whole(a.kernel_inverse,2**21);PW,pw=whole(a.parent_worker,65536);PK,pk=whole(a.parent_kernel,65536)
+ def load(raw,r):
+  ns=dict(__builtins__=__builtins__,__file__=r['path'],__name__='generic_matrix_group');exec(compile(raw,r['path'],'exec'),ns);return ns
+ proposer=load(P,p);strict=load(V,v);I=proposer['I7']
+ def permutation(swap):
+  values=list(range(7));i,j=swap;values[i],values[j]=values[j],values[i]
+  return tuple(tuple(int(values[i]==j)for j in range(7))for i in range(7))
+ x=permutation((0,1));y=permutation((1,2));out=permutation((5,6));marks=(x,y,x,y);ambient=(out,I)
+ prep=proposer['prepare'](x,y,y,ambient,B())
+ def proposal(mask=15):return proposer['find'](x,prep,B(),mask)
+ hint=proposal()['hint'];need(hint is not None,'toyS3 full group has knownGL7 escape')
+ def verify(h=hint,m=marks,am=ambient):return strict['verify'](m,am,h,B())
+ ok('toyS3_exact_full_group_with_every_tree_and_closure_edge',lambda:need(verify()['exact_group_size']==6 and verify()['all_tree_edges']==5 and verify()['all_closure_edges']==24,'complete exact S3'))
+ ok('known_ambient_nonmember_gives_only_full_group_NG',lambda:need(verify()['classification']=='FOUR_MARK_NONGENERATION'and verify()['full_case_credit']==1 and not verify()['generation_claim']and not verify()['IP_claim'],'no positive or IP recognition'))
+ end=proposal(7)['hint']
+ ok('rank3_end_table_has_no_full_case_generation_or_IP_credit',lambda:need(verify(end)['classification']=='EXACT_RANK3_PARABOLIC_ONLY_NO_FULL_CASE_CREDIT'and verify(end)['full_case_credit']==0,'proper role only'))
+ end14=proposal(14)['hint']
+ ok('other_end_uses_original_b_c_e_order',lambda:need(strict['verify'](marks,ambient,end14,B())['mask']==14,'same original mask'))
+ raw=base64.b64decode(hint[2]);rows,parents,labels=strict['unpack_group'](raw)
+ ok('complete_pack_unpack_matrix_and_parent_values',lambda:need(rows[0]==I and parents[0]==65535 and labels[0]==255 and len(set(rows))==6,'whole codec values'))
+ b=B();strict['verify'](marks,ambient,hint,b)
+ ok('strict_tree_and_all_edge_product_bill',lambda:need(b.products==29 and b.scalar_operations==1024+128*6+64*29,'all5tree+24closure products charged'))
+ b=B();proposer['find'](x,proposer['prepare'](x,y,y,ambient,b),b,15)
+ ok('supplier_every_edge_and_packing_charge',lambda:need(b.products==24 and b.scalar_operations==512+512+128*1536+64*24,'all supplier edges and reserve charged'))
+ b=B();b.scalar_operations=900000
+ ok('softstop_is_unvisited_without_cap_or_group_verdict',lambda:need(proposer['find'](x,prep,b,15)==dict(status='UNVISITED_RESOURCE_RESERVE',hint=None),'no absence from resource stop'))
+ def cap_limit():
+  try:proposer['enumerate_end']((x,y),proposer['primitives'](),proposer['Work'](B()),2)
+  except proposer['Limit']:return
+  raise AssertionError('finite prefix was treated as complete')
+ ok('finite_cap_prefix_refuses_complete_subgroup',cap_limit)
+ bad('invalid_mask_refused',lambda:proposal(3));bad('boolean_mask_refused',lambda:proposal(True))
+ bad('wrong_or_identity_ambient_escape_refused',lambda:verify([15,1,hint[2]]))
+ bad('boolean_escape_index_refused',lambda:verify([15,False,hint[2]]))
+ bad('rank3_cannot_smuggle_fullH_escape',lambda:verify([7,0,end[2]]))
+ bad('fullH_requires_explicit_escape',lambda:verify([15,None,hint[2]]))
+ bad('record_shape_refused',lambda:verify(hint[:2]))
+ bad('base64_type_refused',lambda:verify([15,0,raw]))
+ bad('nonbase64_text_refused',lambda:verify([15,0,'!']))
+ bad('noncanonical_base64_whitespace_refused',lambda:verify([15,0,hint[2]+'\n']))
+ bad('oversize_text_before_decode_refused',lambda:verify([15,0,'A'*107001]))
+ def encode(groups,ps,ls):return base64.b64encode(proposer['pack_group'](groups,ps,ls)).decode('ascii')
+ def edited(change):
+  rs=copy.deepcopy(rows);ps=list(parents);ls=list(labels);change(rs,ps,ls);return[15,0,encode(rs,ps,ls)]
+ bad('duplicate_matrix_refused',lambda:verify(edited(lambda r,p,l:r.__setitem__(1,r[0]))))
+ bad('nonidentity_root_refused',lambda:verify(edited(lambda r,p,l:r.__setitem__(slice(0,2),[r[1],r[0]]))))
+ bad('root_parent_sentinel_refused',lambda:verify(edited(lambda r,p,l:p.__setitem__(0,0))))
+ bad('root_label_sentinel_refused',lambda:verify(edited(lambda r,p,l:l.__setitem__(0,0))))
+ bad('future_parent_refused',lambda:verify(edited(lambda r,p,l:p.__setitem__(1,1))))
+ bad('out_of_alphabet_label_refused',lambda:verify(edited(lambda r,p,l:l.__setitem__(1,4))))
+ bad('wrong_full_tree_equation_refused',lambda:verify(edited(lambda r,p,l:l.__setitem__(1,1-l[1]))))
+ bad('reachable_prefix_missing_final_closure_edges_refused',lambda:verify([15,0,encode(rows[:-1],parents[:-1],labels[:-1])]))
+ bad('wrong_original_generators_refused',lambda:verify(m=(I,I,I,I)))
+ corrupt=bytearray(raw);corrupt[len(strict['MAGIC'])+2]=11
+ bad('noncanonical_binary_field_entry_refused',lambda:verify([15,0,base64.b64encode(corrupt).decode('ascii')]))
+ bad('binary_trailing_byte_refused',lambda:verify([15,0,base64.b64encode(raw+b'x').decode('ascii')]))
+ bad('binary_missing_byte_refused',lambda:verify([15,0,base64.b64encode(raw[:-1]).decode('ascii')]))
+ corrupt=bytearray(raw);corrupt[0]^=1
+ bad('wrong_component_version_magic_refused',lambda:verify([15,0,base64.b64encode(corrupt).decode('ascii')]))
+ zero=strict['MAGIC']+struct.pack('<H',0)
+ bad('empty_group_refused',lambda:verify([15,0,base64.b64encode(zero).decode('ascii')]))
+ iv=json.loads(WI);s=W.decode().removeprefix(iv['header']);need(iv['parent']==pw and iv['child']==w,'whole exact worker subjects')
+ s=s.replace(iv['added'],'',1)
+ for e in iv['changed']:s=s.replace(e['whole_child'],e['whole_parent'],1)
+ need(s==PW.decode(),'entire worker inverse');AST_NAMES.append('whole_worker_inverse')
+ kv=json.loads(KI);need(kv['parent']==pk and kv['whole_parent_source']==PK.decode()and kv['whole_supplier']==P.decode()and kv['whole_strict']==V.decode(),'whole ancestor/kernel bodies');AST_NAMES.append('whole_kernel_ancestry')
+ source=W.decode();need('maximum<=1'in source and 'row[3]==plan[\'closure_mask\']'in source and 'rank3_only_positions='in source and 'set(ng)'in source,'singleton exact mask and paidNG filtering');AST_NAMES.append('strict_scope_and_complete_current_partition')
+ need('matrix_group_scope_and_known_G_member_premises_checked'in source and 'ROOT_ACCEPTED_Q11_FINITE_MATRIX_GROUP_NONGENERATION_FACTS_V1'in source and 'original_A_equals_G'in source,'fresh mode/gate/kind and original model membership');AST_NAMES.append('new_types_and_original_imports')
+ vt=ast.parse(V);need(not any(isinstance(n,ast.Name)and n.id in('enumerate_end','find','prepare')for n in ast.walk(vt)),'strict imports no proposer or BFS');AST_NAMES.append('consumer_no_supplier_search')
+ report=dict(schema='Q11_EXACT_MATRIX_GROUP_GENERIC_CONTROLS_V1',status='PASS',program=own,worker=w,proposer_math=p,verifier_math=v,
+  controls=len(NAMES),names=NAMES,AST_observations=len(AST_NAMES),AST_names=AST_NAMES,original_case_calls=0,
+  qualification='ToyGL7 finite groups and malformed binary/metadata controls only; no originalG2 membership, group identity, complete case, actual fit or publication authority.')
+ body=(json.dumps(report,sort_keys=True,separators=(',',':'))+'\n').encode();need(len(body)<=16384,'bounded generic report')
+ outpath=Path(a.out);need(outpath.is_absolute()and outpath.is_relative_to('/private/tmp')and outpath.parent.resolve(strict=True)==outpath.parent and not outpath.exists(),'fresh canonical report')
+ with outpath.open('xb')as f:f.write(body);f.flush();os.fsync(f.fileno())
+ need(outpath.read_bytes()==body,'whole report')
+ print(json.dumps(dict(status='PASS',controls=len(NAMES),AST_observations=len(AST_NAMES),report=dict(path=str(outpath),bytes=len(body),sha256=hashlib.sha256(body).hexdigest()),Source_read_bytes=READ),sort_keys=True))
+if __name__=='__main__':main()

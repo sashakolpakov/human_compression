@@ -1,0 +1,14 @@
+def current_unpaid(plan,B,W,witnesses):
+ R=plan['roles'];sr=R['current_paid_ledger_selector'];rr=R['paid_ledger_receipt'];br=R['paid_status_bank'];msg='whole current typed paid ledger'
+ need(type(sr['bytes'])is int and 0<sr['bytes']<=4096 and type(rr['bytes'])is int and 0<rr['bytes']<=16384 and type(br['bytes'])is int and br['bytes']==28908,msg)
+ W.charge(8*28908+4*(sr['bytes']+rr['bytes']),'whole_current_paid_ledger_semantics')
+ s=B.doc(sr);r=B.doc(rr);mask=B.read(br)
+ need(B.read(sr)==can(s)and B.read(rr)==can(r)and s['schema']=='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1'and s['root']=='/root'and s['adopted']is True and s['scope_digest']==SCOPE and s['ledger_receipt']==rr and s['status_bank']==br,msg)
+ need(r['schema']=='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1'and r['root']=='/root'and r['adopted']is True and r['Root_adoption_owed']is False and r['scope_digest']==SCOPE and r['original_selector']==SELECTOR and type(r['original_free_space'])is int and r['original_free_space']==28908 and r['witness_bank']==R['witnesses']and r['original_free_witness_adoption']==R['free_adoption']and r['original_operand_adoption']==R['operand_adoption']and r['status_bank']==br and len(witnesses)==462528 and len(mask)==28908,msg)
+ counts={0:0,1:0,2:0,6:0}
+ for code in mask:
+  need(code in counts,msg);counts[code]+=1
+ expected=dict(subset_NEG=counts[1],GEN=counts[2]+counts[6],separate_IP=counts[6],unpaid=counts[0])
+ need(type(r['counts'])is dict and set(r['counts'])==set(expected)and all(type(r['counts'][k])is int and r['counts'][k]==v for k,v in expected.items()),msg)
+ values=dict(fixed_nonfree_NEG_count=17688,fixed_nonfree_NEG_mass=6884658,global_NEG=17688+counts[1],global_NEG_mass=6884658+1024*counts[1],unpaid_mass=1024*counts[0])
+ need(all(type(r[k])is int and r[k]==v for k,v in values.items())and all(mask[i]==0 for i in plan['selected_free_indices']),msg)

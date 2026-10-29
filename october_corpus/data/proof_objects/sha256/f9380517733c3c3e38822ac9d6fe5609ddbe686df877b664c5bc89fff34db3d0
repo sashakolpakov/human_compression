@@ -1,0 +1,90 @@
+"""Own stdlib text/AST hardening author; represented Sources stay unrun."""
+import pathlib,ast,hashlib,json,difflib
+D=pathlib.Path('/private/tmp/q11_end37_IP_metadata_adoption/bounded_reads_successor');P=D.parent
+old=(P/'adopt_IP.py').read_text();control=(P/'controls.py').read_text()
+header='''"""UNRUN bounded-FD metadata successor; /root/journal_peer.
+Parent2e42 retained unchanged. Typed IP/partition/runtime predicates literal.
+All input and output finalhash reads are explicitly bounded before allocation.
+"""
+'''
+oldwhole=ast.get_source_segment(old,next(n for n in ast.parse(old).body if isinstance(n,ast.FunctionDef)and n.name=='whole'))
+added='''def stable_signature(t):
+ return(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+def read_back(p,count):
+ need(type(count)is int and 0<=count<=4*MIB,'bounded expected read size BEFORE open')
+ a=p.lstat();need(stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==count,'ordinary exact-size file BEFORE open')
+ with p.open('rb')as f:
+  b=os.fstat(f.fileno());raw=f.read(count+1);c=os.fstat(f.fileno())
+ need(stable_signature(a)==stable_signature(b)==stable_signature(c)==stable_signature(p.lstat())and len(raw)==count,
+  'bounded FD bytes and every pre/open/post identity/size join')
+ return raw
+'''
+newwhole='''def whole(r,force=False):
+ global READ
+ shape(r);need(REFS.get(r['path'],r)==r,'one immutable physical version');REFS[r['path']]=r
+ if r['path']in RAW and not force:return RAW[r['path']]
+ p=Path(r['path']);need(p.is_absolute()and p.resolve(strict=True)==p,'canonical whole metadata path')
+ PATHS.add(str(p));need(len(PATHS)<=1024 and len(REFS)<=1024 and READ+r['bytes']<=64*MIB,'1024 actual metadata paths64MiB reads')
+ b=read_back(p,r['bytes']);need(ref(p,b)==r,'whole stable exact metadata hash');READ+=len(b);RAW[r['path']]=b;return b
+'''
+oldpub=ast.get_source_segment(old,next(n for n in ast.parse(old).body if isinstance(n,ast.FunctionDef)and n.name=='publish_new'))
+newpub=oldpub.replace("p.read_bytes()==raw","read_back(p,len(raw))==raw");assert oldpub!=newpub
+new=header+old.replace(oldwhole,added+newwhole.rstrip(),1).replace(oldpub,newpub,1);ast.parse(new)
+(D/'adopt_IP.py').write_text(new)
+oldAST={n.name:ast.get_source_segment(old,n)for n in ast.parse(old).body if isinstance(n,ast.FunctionDef)}
+newAST={n.name:ast.get_source_segment(new,n)for n in ast.parse(new).body if isinstance(n,ast.FunctionDef)}
+changed=sorted(k for k in oldAST if oldAST[k]!=newAST[k]);assert changed==['publish_new','whole']
+literal=sorted(k for k in oldAST if k not in changed);assert all(oldAST[k]==newAST[k]for k in literal)
+control_header='''"""UNRUN bounded-FD generic metadata controls successor; /root/journal_peer.
+Parent30pure+4AST tests preserved. New mocked-FD tests involve no Original data.
+"""
+'''
+anchor="    tree=ast.parse(raw);nodes={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}"
+assert control.count(anchor)==1
+extra='''    class Stamp:
+        def __init__(self,size=4,ino=2,mode=0o100600,links=1,mtime=1):
+            self.st_dev=1;self.st_ino=ino;self.st_mode=mode;self.st_nlink=links;self.st_size=size;self.st_mtime_ns=mtime;self.st_ctime_ns=1
+    def fd_fixture(first=None,opened=None,ended=None,last=None,data=b'abcd'):
+        first=first or Stamp();opened=opened or first;ended=ended or opened;last=last or first
+        state=dict(open_calls=0,read_limits=[],stats=[opened,ended],pathstats=[first,last])
+        class F:
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+            def fileno(self):return 17
+            def read(self,n):state['read_limits'].append(n);return data[:n]
+        class P:
+            def lstat(self):return state['pathstats'].pop(0)
+            def open(self,mode):need(mode=='rb','binary FD only');state['open_calls']+=1;return F()
+        class O:
+            def fstat(self,n):need(n==17,'same FD');return state['stats'].pop(0)
+        return P(),O(),state
+    realos=ns['os']
+    def runfd(fixture):
+        pp,oo,state=fixture;ns['os']=oo
+        try:return ns['read_back'](pp,4)
+        finally:ns['os']=realos
+    fixture=fd_fixture();good('boundedFD_exact_body_and_count_plus_one',lambda:need(runfd(fixture)==b'abcd'and fixture[2]['read_limits']==[5],'bounded read limit'))
+    fixture=fd_fixture(first=Stamp(size=5));bad('preopen_oversize_refused',lambda:runfd(fixture));need(fixture[2]['open_calls']==0,'no open after oversized stat')
+    fixture=fd_fixture(ended=Stamp(size=5),last=Stamp(size=5),data=b'abcdeEXTRA')
+    bad('duringread_growth_refused_with_bounded_allocation',lambda:runfd(fixture));need(fixture[2]['read_limits']==[5],'read never unbounded')
+    fixture=fd_fixture(opened=Stamp(ino=3));bad('opened_inode_swap_refused',lambda:runfd(fixture))
+    fixture=fd_fixture(last=Stamp(mtime=2));bad('final_path_identity_change_refused',lambda:runfd(fixture))
+    fixture=fd_fixture(first=Stamp(links=2));bad('preopen_multilink_refused',lambda:runfd(fixture));need(fixture[2]['open_calls']==0,'no multilink read')
+'''
+newcontrol=control_header+control.replace(anchor,extra+anchor,1)
+tail="    report=dict(schema='Q11_END37_IP_METADATA_GENERIC_CONTROLS_V1'"
+assert newcontrol.count(tail)==1
+newcontrol=newcontrol.replace(tail,"    need(not any(isinstance(n,ast.Attribute)and n.attr=='read_bytes'for name in('whole','publish_new','read_back')for n in ast.walk(nodes[name])),'bounded FD route only');ast_names.append('whole_and_finalhash_use_boundedFD_no_read_bytes')\n"+tail,1)
+ast.parse(newcontrol);(D/'controls.py').write_text(newcontrol)
+def ref(p):
+ b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+rows=[]
+for oldpath,newpath in((P/'adopt_IP.py',D/'adopt_IP.py'),(P/'controls.py',D/'controls.py')):
+ a=oldpath.read_text();b=newpath.read_text();al=a.splitlines(keepends=True);bl=b.splitlines(keepends=True);ops=[]
+ for tag,i,j,k,l in difflib.SequenceMatcher(None,al,bl,autojunk=False).get_opcodes():ops.append(dict(tag=tag,old=al[i:j],new=bl[k:l]))
+ assert ''.join(s for op in ops for s in op['old'])==a and ''.join(s for op in ops for s in op['new'])==b
+ rows.append(dict(parent=ref(oldpath),child=ref(newpath),whole_parent_body=a,whole_child_body=b,whole_line_inverse=ops))
+(D/'Source_inverse.json').write_text(json.dumps(dict(schema='Q11_TYPED_IP_BOUNDED_FD_WHOLE_SOURCE_INVERSES_V1',rows=rows,literal_parent_implementation_definitions=literal,changed_parent_definitions=changed,all_represented_activations=0),sort_keys=True,indent=2)+'\n')
+(D/'Source_read_view.json').write_text(json.dumps(dict(schema='Q11_TYPED_IP_BOUNDED_FD_SOURCE_READ_VIEW_V1',program=ref(D/'adopt_IP.py'),controls=ref(D/'controls.py'),new_helpers=added,new_whole=newwhole,new_publish=newpub,added_controls=extra,literal_parent_implementation_definitions=literal),sort_keys=True,indent=2)+'\n')
+assert len(new.encode())+len(newcontrol.encode())<=65536
+print(json.dumps(dict(program=ref(D/'adopt_IP.py'),controls=ref(D/'controls.py'),inverse=ref(D/'Source_inverse.json'),view=ref(D/'Source_read_view.json'),namespace=len(new.encode())+len(newcontrol.encode())),sort_keys=True))

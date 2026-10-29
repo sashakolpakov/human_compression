@@ -1,0 +1,69 @@
+"""UNRUN exact original finite-matrix subgroup carrier; no recognition."""
+import base64
+import struct
+GROUP_CAP=1536
+MAGIC=b'F004_MATRIX_SUBGROUP_TREE_V1\n'
+I7=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+def need(ok,why):
+    if not ok:raise ValueError(why)
+class Limit(Exception):pass
+class Work:
+    def __init__(self,budget):self.outer=budget
+    def check(self):self.outer.tick()
+def product(A,B,work):
+    work.outer.scalar(64)
+    return work.outer.multiply(A,B)
+def unit(n):
+    need(type(n)is int and n==7,'exact seven-dimensional unit');return I7
+def primitives():return dict(unit=unit,product=product,WorkStop=Limit)
+
+def verify_group(rows,parents,labels,generators,c,budget):
+    """Tree proves containment; every edge proves the reverse containment."""
+    need(type(rows)is list and 1<=len(rows)<=GROUP_CAP and len(rows)==len(parents)==len(labels)
+         and len(set(rows))==len(rows) and rows[0]==c['unit'](7)
+         and parents[0]==65535 and labels[0]==255,'whole distinct identity-rooted finite matrix list')
+    for index in range(1,len(rows)):
+        budget.check();parent,label=parents[index],labels[index]
+        need(type(parent)is int and 0<=parent<index and type(label)is int and 0<=label<len(generators)
+             and c['product'](rows[parent],generators[label],budget)==rows[index],
+             'EVERY saved matrix reached by an actual same-end mark and earlier parent')
+    whole=set(rows)
+    for row in rows:
+        for mark in generators:
+            budget.check();need(c['product'](row,mark,budget)in whole,'EVERY saved subgroup generator edge closes')
+    return whole
+
+def unpack_group(raw):
+    need(type(raw)is bytes and raw.startswith(MAGIC)and len(raw)>=len(MAGIC)+2,'literal small-end component magic')
+    count=struct.unpack_from('<H',raw,len(MAGIC))[0]
+    need(1<=count<=GROUP_CAP and len(raw)==len(MAGIC)+2+52*count,'exact whole binary length/count, no trailing bytes')
+    rows=[];parents=[];labels=[]
+    for index in range(count):
+        values,parent,label=struct.unpack_from('<49sHB',raw,len(MAGIC)+2+52*index)
+        need(all(x<11 for x in values),'ALL binary field entries canonical')
+        rows.append(tuple(tuple(values[7*i:7*i+7])for i in range(7)))
+        parents.append(parent);labels.append(label)
+    return rows,parents,labels
+
+def verify(marks,ambient,raw,budget):
+    need(type(marks)is tuple and len(marks)==4 and type(ambient)is tuple and len(ambient)==2,'same actual mark/knownG matrix roles')
+    for M in marks+ambient:
+        need(type(M)is tuple and len(M)==7 and all(type(r)is tuple and len(r)==7 and all(type(x)is int and 0<=x<11 for x in r)for r in M),'all canonical original field matrices')
+    need(type(raw)is list and len(raw)==3,'complete mask/outside/table record')
+    mask,outside,text=raw
+    need(type(mask)is int and mask in(7,14,15)and type(text)is str and text.isascii()and len(text)<=107000,'bounded exact mask/base64 carrier')
+    encoded=base64.b64decode(text,validate=True)
+    need(base64.b64encode(encoded).decode('ascii')==text,'canonical whole base64 with no ignored text')
+    rows,parents,labels=unpack_group(encoded)
+    budget.scalar(1024+128*len(rows))
+    generators=tuple(marks[i]for i in range(4)if mask&(1<<i))
+    group=verify_group(rows,parents,labels,generators,primitives(),Work(budget))
+    if mask==15:
+        need(type(outside)is int and 0<=outside<2 and ambient[outside]not in group,'actual known originalG generator outside the entire closedH')
+        classification='FOUR_MARK_NONGENERATION'
+    else:
+        need(outside is None,'rank3 closure alone is not fullH properness')
+        classification='EXACT_RANK3_PARABOLIC_ONLY_NO_FULL_CASE_CREDIT'
+    return dict(mask=mask,exact_group_size=len(rows),all_tree_edges=len(rows)-1,all_closure_edges=len(generators)*len(rows),
+        known_G_outside_index=outside,classification=classification,IP_claim=False,generation_claim=False,
+        full_case_credit=int(mask==15),complete_tree_and_every_generator_edge=True)

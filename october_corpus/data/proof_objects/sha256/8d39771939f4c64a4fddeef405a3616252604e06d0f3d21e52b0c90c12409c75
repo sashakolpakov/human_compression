@@ -1,0 +1,69 @@
+"""DATA-only explicit Reader adapter selection after an actual Native closure.
+Author /root/compact_proof_author. No Source or scientific function is run.
+The original522e metadata preparer and both science adapters stay unchanged.
+"""
+import argparse,hashlib,json,os,resource,stat,sys,time
+from pathlib import Path
+START=time.monotonic();TOTAL=Path(__file__).stat().st_size;ROWS={};MIB=2**20
+
+def need(ok,why):
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ if not ok:raise ValueError(why)
+ if rss>=256*MIB or time.monotonic()-START>=150:raise RuntimeError('metadata256MiB150s')
+
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+
+def read(ref):
+ global TOTAL
+ need(set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int and 0<=ref['bytes']<=8*MIB,'whole finite metadata reference')
+ p=Path(ref['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+  and a.st_nlink==1 and a.st_size==ref['bytes'],'canonical ordinary actual metadata')
+ need(ROWS.get(str(p),ref)==ref and TOTAL+ref['bytes']<=64*MIB and(len(ROWS)<128 or str(p)in ROWS),'128paths64MiB including every reread')
+ with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+ sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],'whole stable metadata bytes')
+ TOTAL+=len(raw);ROWS[str(p)]=ref;return raw
+
+def doc(ref):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique metadata keys');out[k]=v
+  return out
+ return json.loads(read(ref),object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def argref(pair):
+ p=Path(pair[0]);return dict(path=str(p),bytes=p.stat().st_size,sha256=pair[1])
+
+def main():
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--configuration',nargs=2,required=True)
+ ap.add_argument('--parameters',nargs=2,required=True);ap.add_argument('--out',required=True);ap.add_argument('--write',action='store_true')
+ a=ap.parse_args();cr,pr=argref(a.configuration),argref(a.parameters);cfg=doc(cr);p=doc(pr)
+ own=cfg['reader_target_selector'];need(own['path']==str(Path(__file__).resolve()),'truthful new DATA selector Source');read(own)
+ need(cfg['schema']=='F009_NATIVE_WORKSPACE_CYCLE_DATA_CONFIGURATION_V1'and cfg['configuration_authorizes_execution']is False,
+  'separate reviewed DATA configuration, no role authority')
+ need(p['schema']=='ROOT_F009_STANDALONE_CONSTRUCTION_PARAMETERS_V1'and p['role']=='reader'
+  and p['library_adapter']==cfg['native_library_adapter']and own in p['method_sources']
+  and cfg['reader_library_adapter']in p['method_sources'],'exact copied Native adapter and both declared Reader target/metadata selector roles')
+ closure=doc(p['native_closure']);need(closure['schema']=='ROOT_CLOSED_F009_STANDALONE_NATIVE_V1'
+  and closure['root']=='/root'and closure['known_scope_drained']is True,'actual closed Native, no prospective parameters')
+ job=doc(closure['job']);need(job['role']=='native'and job['library_adapter']==cfg['native_library_adapter']
+  and type(job['old_checkpoint_sequence'])is int and job['old_checkpoint_sequence']>10896,'same future Native edition, no10896 retry')
+ for r in(cfg['native_library_adapter'],cfg['reader_library_adapter']):read(r)
+ q=dict(p,library_adapter=cfg['reader_library_adapter']);inverse=dict(q,library_adapter=p['library_adapter'])
+ need(inverse==p and set(q)==set(p),'complete one-field Reader parameter inverse; all closure/current/model/IO/Source guards unchanged')
+ out=Path(a.out);need(out.is_absolute()and out.is_relative_to('/private/tmp')and '..'not in out.parts
+  and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh canonical temporary DATA destination')
+ raw=can(q);need(len(raw)<=65536,'same bounded construction parameters')
+ for r in list(ROWS.values()):read(r)
+ target=dict(path=str(out),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+ if a.write:
+  with out.open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive Reader DATA');f.flush();os.fsync(f.fileno())
+  fd=os.open(out.parent,os.O_RDONLY)
+  try:os.fsync(fd)
+  finally:os.close(fd)
+ print(json.dumps(dict(schema='F009_EXPLICIT_READER_TARGET_DATA_V1',written=a.write,program=own,configuration=cr,
+  original_parameters=pr,selected_parameters=target,old_adapter=p['library_adapter'],new_adapter=q['library_adapter'],
+  entire_one_field_inverse=True,scientific_calls=0,Root_role_authority_granted=False,physical_read_bytes=TOTAL,
+  qualification='New DATA caller only. Original522e honestly copied the Native adapter; this explicit selector changes its sole Reader target field before unchanged constructor. Fresh exact Reader job/Root gate/Owner/guards and complete strict Reader remain owed.'),sort_keys=True))
+
+if __name__=='__main__':main()

@@ -1,0 +1,63 @@
+"""UNRUN exact original finite-matrix subgroup carrier; no recognition."""
+import base64
+import struct
+GROUP_CAP=1536
+MAGIC=b'F004_MATRIX_SUBGROUP_TREE_V1\n'
+I7=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+def need(ok,why):
+    if not ok:raise ValueError(why)
+class Limit(Exception):pass
+class Work:
+    def __init__(self,budget):self.outer=budget
+    def check(self):self.outer.tick()
+def product(A,B,work):
+    work.outer.scalar(64)
+    return work.outer.multiply(A,B)
+def unit(n):
+    need(type(n)is int and n==7,'exact seven-dimensional unit');return I7
+def primitives():return dict(unit=unit,product=product,WorkStop=Limit)
+
+def enumerate_end(generators,c,budget,cap=GROUP_CAP):
+    """Complete actual subgroup, or a controlled unpaid cap; never a prefix."""
+    need(type(cap)is int and 1<=cap<=GROUP_CAP,'explicit whole group cap')
+    identity=c['unit'](7);rows=[identity];parents=[65535];labels=[255];by={identity:0};head=0
+    while head<len(rows):
+        budget.check()
+        for label,mark in enumerate(generators):
+            image=c['product'](rows[head],mark,budget)
+            if image not in by:
+                if len(rows)>=cap:raise c['WorkStop']('SMALL_END_ORDER_CAP_UNPAID')
+                by[image]=len(rows);rows.append(image);parents.append(head);labels.append(label)
+        head+=1
+    return rows,parents,labels
+
+def pack_group(rows,parents,labels):
+    need(1<=len(rows)<=GROUP_CAP and len(rows)==len(parents)==len(labels),'bounded complete group packing')
+    chunks=[MAGIC,struct.pack('<H',len(rows))]
+    for row,parent,label in zip(rows,parents,labels):
+        need(len(row)==7 and all(len(r)==7 and all(type(x)is int and 0<=x<11 for x in r)for r in row),
+             'ALL49 literal canonical GF11 entries, no sparse/implicit matrix')
+        chunks.append(struct.pack('<49sHB',bytes(x for r in row for x in r),parent,label))
+    raw=b''.join(chunks)
+    need(len(raw)==len(MAGIC)+2+52*len(rows) and len(raw)<=131072,'complete finite-group binary component cap128KiB')
+    return raw
+
+def prepare(a,e,b,ambient,budget):
+    budget.scalar(512)
+    return dict(a=a,e=e,b=b,ambient=ambient)
+def find(c,prepared,budget,mask):
+    need(type(mask)is int and mask in(7,14,15),'explicit original end/full mask')
+    if not budget.room(600000,0):return dict(status='UNVISITED_RESOURCE_RESERVE',hint=None)
+    budget.scalar(512+128*GROUP_CAP)
+    marks=(prepared['a'],prepared['b'],c,prepared['e'])
+    generators=tuple(marks[i]for i in range(4)if mask&(1<<i))
+    try:rows,parents,labels=enumerate_end(generators,primitives(),Work(budget))
+    except Limit:return dict(status='FINITE_MISS',hint=None,diagnostic=dict(mask=mask,cap=GROUP_CAP,outcome='CAP_MISS_UNPAID_NO_GROUP_CONCLUSION'))
+    outside=None
+    if mask==15:
+        whole=set(rows);outside=next((i for i,g in enumerate(prepared['ambient'])if g not in whole),None)
+        if outside is None:return dict(status='FINITE_MISS',hint=None,diagnostic=dict(mask=mask,closed_size=len(rows),outcome='NO_KNOWN_G_ESCAPE_NO_NG_CREDIT'))
+    raw=pack_group(rows,parents,labels)
+    text=base64.b64encode(raw).decode('ascii')
+    need(len(text)<=107000,'bounded complete table/tree text')
+    return dict(status='HINT',hint=[mask,outside,text],diagnostic=dict(mask=mask,closed_size=len(rows),outcome='UNTRUSTED_EXACT_GROUP_HINT'))

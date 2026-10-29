@@ -1,0 +1,76 @@
+"""UNRUN subset inputs-only approval-fixture successor. Prior e13b controls immutable.
+"""
+"""UNRUN generic metadata/FD and AST control designs, no Original actions/cases."""
+import argparse,ast,hashlib,json,os,pathlib,stat,tempfile
+def source(p,sha):
+ a=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ assert p.is_absolute()and p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and 0<=a.st_size<=65536
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read(a.st_size+1);e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat())and len(b)==a.st_size and hashlib.sha256(b).hexdigest()==sha
+ return b
+def main():
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--program',nargs=2,required=True);ap.add_argument('--self-sha256',required=True);a=ap.parse_args();p=pathlib.Path(a.program[0]);b=source(p,a.program[1]);own=pathlib.Path(__file__).resolve();ob=source(own,a.self_sha256);assert len(b)+len(ob)<=65536
+ ns={'__name__':'Root_callback_metadata_generic_controls','__file__':str(p)};exec(compile(b,str(p),'exec'),ns)
+ names=[]
+ def good(n,f):f();names.append(n)
+ def bad(n,f):
+  try:f()
+  except(ValueError,KeyError,TypeError,AssertionError):names.append(n);return
+  raise AssertionError('accepted invalid fixture '+n)
+ def yes(x):assert x
+ good('canonical_nested_type_identity',lambda:yes(ns['same']({'x':1},{'x':1})))
+ good('canonical_boolean_not_numeric_alias',lambda:yes(not ns['same']({'x':True},{'x':1})))
+ good('finite_sorted_one_batch_labels',lambda:yes(ns['selected']([80,85,95])==[80,85,95]))
+ for n,v in [('empty',[]),('duplicate',[80,80]),('unordered',[82,80]),('before_window',[79]),('after_window',[96]),('boolean',[True])]:bad('selection_'+n+'_refused',lambda v=v:ns['selected'](v))
+ good('bounded_descriptor',lambda:ns['shape'](dict(path='/private/tmp/toy',bytes=1,sha256='0'*64)))
+ bad('Boolean_size_refused',lambda:ns['shape'](dict(path='/private/tmp/toy',bytes=True,sha256='0'*64)))
+ bad('large_declared_size_refused',lambda:ns['shape'](dict(path='/private/tmp/toy',bytes=4194305,sha256='0'*64)))
+ bad('noncanonical_SHA_refused',lambda:ns['shape'](dict(path='/private/tmp/toy',bytes=1,sha256='A'*64)))
+ bad('duplicate_JSON_keys_refused',lambda:ns['parse'](b'{"a":1,"a":2}'))
+ bad('nonfinite_JSON_refused',lambda:ns['parse'](b'{"a":NaN}'))
+ bad('false_author_policy_refused_before_any_original_inputs',lambda:ns['policy_check'](dict(schema='ROOT_OWNED_L026_ONE_BATCH_CALLBACK_POLICY_V1',root=None,Root_own_read_approved=False),{}))
+ with tempfile.TemporaryDirectory(prefix='l026_callback_toy_',dir='/private/tmp')as td:
+  f=pathlib.Path(td)/'a';f.write_bytes(b'abcd');r=ns['ref'](f,b'abcd')
+  good('whole_tiny_physical_pin',lambda:yes(ns['raw'](r)==b'abcd'))
+  g=pathlib.Path(td)/'larger';g.write_bytes(b'01234567');bad('wrong_actual_size_refused_BEFORE_allocation',lambda:ns['raw'](dict(r,path=str(g))))
+  alias=pathlib.Path(td)/'link';alias.symlink_to(f);bad('symlink_refused',lambda:ns['raw'](dict(r,path=str(alias))))
+  z=pathlib.Path(td)/'badsha';z.write_bytes(b'abcd');bad('wrong_whole_SHA_refused',lambda:ns['raw'](dict(r,path=str(z),sha256='0'*64)))
+ # Entire subset case-approval branch runs only in a synthetic namespace:
+ # all readers, ledger and output writers are mocked. No Original input or
+ # positive Root policy, real gate/receipt/file/Source provider can be reached.
+ saved={k:ns[k]for k in ['doc','raw','ledger','put']}
+ def subset_fixture():
+  rr=lambda name:dict(path='/private/tmp/TOY_ONLY/'+name,bytes=1,sha256='a'*64)
+  current,receipt,bank=rr('CURRENT'),rr('receipt'),rr('bank')
+  programs={k:rr(k)for k in ['subset','point_kernel','subset_kernel','supplier']}
+  reportref=rr('actual_generic_report');control=rr('controlSource');planref=rr('plan')
+  plan=dict(program=programs['subset'],scope_digest=ns['SCOPE'],original_selector=ns['SELECTOR'],schema='L026_ROTATION_INVARIANT_SUBSET_PLAN_V1',Root_authority=False,
+   selected_free_indices=[80,81,82],inputs=[current,receipt,bank],control_program=control,point_kernel=programs['point_kernel'],subset_kernel=programs['subset_kernel'],supplier=programs['supplier'],mode='propose',maximum_subset_points=3509)
+  request=dict(entry=dict(role='subset_propose',program=programs['subset'],plan=planref,selected=[80,81,82]),ctx=dict(current=current),policy=rr('POLICY'))
+  cfg=dict(programs=programs,actual_controls=dict(subset=reportref));policy=dict(prior_Source_math_reviews=dict(subset=rr('qualified_old_Source_review')),retained_original_scope_qualification='TOY ONLY no mathematical premise')
+  writes=[];documents={planref['path']:plan,reportref['path']:dict(program=control)}
+  ns['doc']=lambda r:documents[r['path']];ns['raw']=lambda *args:b'toy'
+  ns['ledger']=lambda r:(dict(ledger_receipt=receipt,status_bank=bank),{},bytes(28908))
+  def mockput(path,value):
+   writes.append(value);return rr(path.name)
+  ns['put']=mockput
+  return request,policy,cfg,plan,writes
+ try:
+  req,pol,cfg,plan,writes=subset_fixture()
+  good('subset_INPUTS_only_gateapproval_without_roles',lambda:yes(ns['case'](req,pol,cfg,pathlib.Path('/private/tmp/TOY_ONLY/out'))['gate']['path'].endswith('Root_case_gate.json')and len(writes)==2 and 'roles'not in plan))
+  for index,label in enumerate(['CURRENT','receipt','bank']):
+   req,pol,cfg,plan,writes=subset_fixture();del plan['inputs'][index]
+   bad('subset_missing_input_'+label+'_refused_before_gate',lambda:req and ns['case'](req,pol,cfg,pathlib.Path('/private/tmp/TOY_ONLY/out')))
+   yes(writes==[])
+ finally:
+  ns.update(saved)
+ tree=ast.parse(b);functions={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)};checks=[]
+ def ck(n,x):assert x;checks.append(n)
+ ck('no_science_or_process_import',not any(isinstance(n,ast.Import)and any(z.name in ['subprocess','runpy','importlib']for z in n.names)for n in ast.walk(tree)))
+ ck('no_dynamic_code_evaluation_in_auditor',not any(isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in ['eval','exec','compile','__import__']for n in ast.walk(tree)))
+ ck('all_three_approval_branches_present',all(x in functions for x in ['case','retention','append','actual_run','ledger']))
+ ck('boundedFD_not_read_bytes',not any(isinstance(n,ast.Attribute)and n.attr=='read_bytes'for n in ast.walk(tree)))
+ ck('strictIP0_and_separate_existing_theorem_both_present',all(x in b.decode()for x in ['0b940e5a','new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit','previous_CURRENT_durable_preservation']))
+ ck('policy_before_dispatch',ast.unparse(functions['main']).index('policy_check')<ast.unparse(functions['main']).index("op = request['operation']"))
+ print(json.dumps(dict(schema='L026_ROOT_CALLBACK_METADATA_GENERIC_CONTROLS_V1',status='PASS',subject=dict(path=str(p),bytes=len(b),sha256=a.program[1]),program=dict(path=str(own),bytes=len(ob),sha256=a.self_sha256),pure_controls=len(names),pure_names=names,AST_controls=len(checks),AST_names=checks,original_case_calls=0,Root_gates_or_S_writes=0,namespace=len(b)+len(ob),qualification='Pure toy JSON/FD plus fully mocked subset approval; no positiveRootpolicy, actual case/gate, retainer or scientific activation.'),sort_keys=True))
+if __name__=='__main__':main()

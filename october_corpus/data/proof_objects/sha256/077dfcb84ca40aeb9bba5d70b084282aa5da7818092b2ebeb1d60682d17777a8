@@ -1,0 +1,74 @@
+"""UNRUN Native-only proposal workspace; all old mathematical bodies retained.
+The public/private imported providers are never mutated. This is not a
+general shallow state copier or authority to retry an interrupted Native job.
+Author /root/prime_theory_audit.
+"""
+import types
+from pathlib import Path
+S=Path('/Users/sasha/medusa/research/leemans')
+OWNED=dict(path=str(S/'maintenance/intake/f009_shared_leaf_continuation/owned_state.py'),bytes=9161,sha256='3fb47fef9cb947ce131830077c6e9ad2d15e82621e5b169a81892a233a134ff1')
+ENTRY={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_shared_leaf_continuation/entry.py', 'bytes': 14538, 'sha256': '208becd536cb475433dc85cd2212ff5563d516c6a826e31da8cebe6ad75f8756'}
+QPATH=str(S/'computation/f009/rooted_census_split/census_queue.py')
+VPATH=str(S/'computation/f009/rooted_census_split/census_queue_verify.py')
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def proposal_workspace(state):
+    """Only Q.prepare may use this workspace; existing node values are read-only.
+
+    proposal and admit insert new node entries and pending IDs only. Neither
+    edits an existing node, leaves, started debt, target or backend pin.
+    """
+    need(type(state)is dict and type(state.get('nodes'))is dict
+         and type(state.get('pending'))is set and type(state.get('leaves'))is list,
+         'already acquired full typed proposal state')
+    result=dict(state);result['nodes']=dict(state['nodes']);result['pending']=set(state['pending'])
+    return result
+def retarget(original,key,previous,replacement):
+    """Same code/defaults/closure; precisely one private provider changes."""
+    need(type(original)is types.FunctionType and original.__globals__.get(key)is previous,
+         'exact actual retained function/provider before private retarget')
+    before=original.__globals__;private=dict(before);private[key]=replacement
+    result=types.FunctionType(original.__code__,private,original.__name__,original.__defaults__,original.__closure__)
+    result.__kwdefaults__=original.__kwdefaults__;result.__annotations__=original.__annotations__
+    result.__qualname__=original.__qualname__;result.__dict__.update(original.__dict__)
+    inverse=dict(private);inverse[key]=previous
+    need(set(inverse)==set(before)and all(inverse[k]is v for k,v in before.items())
+         and result.__code__ is original.__code__ and result.__defaults__ is original.__defaults__
+         and result.__closure__ is original.__closure__ and original.__globals__[key]is previous,
+         'entire provider namespace inverse and all literal function code retained')
+    return result
+def private_workspace_namespace(original_namespace):
+    """Narrow one chain: loop.admit_return -> Q.prepare -> workspace copier."""
+    private=dict(original_namespace);admit=private['admit_return'];Q=admit.__globals__['Q'];prepare=Q.prepare
+    copier=prepare.__globals__['OWNED_STATE_COPY'];V=prepare.__globals__['V'];proposal=prepare.__globals__['proposal']
+    need(prepare.__code__.co_filename==OWNED['path']+'::private_queue_prepare'
+         and copier.__code__.co_filename==OWNED['path']and copier.__name__=='owned_state_copy'
+         and V.admit.__code__.co_filename==VPATH
+         and proposal.__code__.co_filename==QPATH
+         and admit.__code__.co_filename==OWNED['path']+'::private_mixed_admit_return',
+         'only the already reviewed full shared-leaf Native provider chain')
+    newQ=types.SimpleNamespace(**vars(Q))
+    newQ.prepare=retarget(prepare,'OWNED_STATE_COPY',copier,proposal_workspace)
+    new_admit=retarget(admit,'Q',Q,newQ);private['admit_return']=new_admit
+    need(set(private)==set(original_namespace)
+         and all(private[k]is v for k,v in original_namespace.items()if k!='admit_return')
+         and Q.prepare is prepare and prepare.__globals__['OWNED_STATE_COPY']is copier,
+         'only fresh loop admit provider changed; all commit/transition/reserve/final globals retained')
+    return private
+def priority_run(contract,old,admitted_run,case_path,out,selected):
+    """Future Native caller only; obtain the genuine private chain itself.
+
+    No supplied state or asserted ownership flag is accepted. The old loop
+    still acquires/creates/replays its complete state, with every old guard.
+    """
+    contract.source_text(OWNED);contract.source_text(ENTRY)
+    original=old.priority_run;provider=old.owned_namespace
+    need(str(Path(old.__file__).resolve())==ENTRY['path']
+         and original.__code__.co_filename==ENTRY['path']+'::declared_source_composition'
+         and original.__globals__['owned_namespace']is provider,'same actual accepted composed Native entry')
+    def namespaces(run,choice):
+        result=provider(run,choice)
+        return private_workspace_namespace(result)
+    current=retarget(original,'owned_namespace',provider,namespaces)
+    return current(admitted_run,case_path,out,selected)
+if __name__=='__main__':raise SystemExit('Definitions only. Fresh Root Source/controls/job/Owner authority required; no retry is authorized.')
