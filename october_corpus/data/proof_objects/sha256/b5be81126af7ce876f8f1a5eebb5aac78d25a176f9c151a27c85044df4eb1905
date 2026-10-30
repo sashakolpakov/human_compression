@@ -1,0 +1,122 @@
+"""Own text/AST-only captured scratch retirement proposal; no represented Source execution."""
+from pathlib import Path
+import ast,difflib,hashlib,json
+D=Path(__file__).resolve().parent
+OLDH=Path('/private/tmp/f009_next_reader_logical_reference_ordinals/shared_export.py')
+OLDC=Path('/private/tmp/f009_from11401_allocation_successor_UNRUN_DATA/reader_run_UNRUN.py')
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def put(n,v):
+ p=D/n;assert not p.exists();p.write_bytes(v if type(v)is bytes else can(v));return ref(p)
+h=OLDH.read_text();c=OLDC.read_text();assert ref(OLDH)['sha256'].startswith('9170c54c')and ref(OLDC)['sha256'].startswith('5cc60e7f')
+edits=[]
+def edit(label,before,after):
+ global h
+ assert h.count(before)==1 and after not in h,label
+ h=h.replace(before,after,1);edits.append(dict(label=label,before=before,after=after))
+edit('new_exact_del_hashes_callback_seam',"""HASHES_AFTER = \"    hashes=ROOT_AUTHENTICATE_EXPECTED(pins,leaves['groups'])\"
+""","""HASHES_AFTER = \"    hashes=ROOT_AUTHENTICATE_EXPECTED(pins,leaves['groups'])\"
+RELEASE_BEFORE = '    del hashes\\n'
+RELEASE_AFTER = RELEASE_BEFORE + '    ROOT_RELEASE_EXPECTED()\\n'
+""")
+edit('invocation_local_phase_slot',"""__slots__ = ('_authenticate', '_captured', 'reauthentications')""","""__slots__ = ('_authenticate', '_captured', 'reauthentications', '_released')""")
+edit('initial_live_phase',"""        self.reauthentications = 0
+""","""        self.reauthentications = 0
+        self._released = False
+""")
+edit('first_capture_phase_guard',"""        if self._captured is None:
+            self._captured = (pins, groups, expected)
+""","""        if self._captured is None:
+            need(type(self.reauthentications) is int and self.reauthentications == 0
+                 and self._released is False and expected is not None,
+                 'one first compact capture of a live expected table')
+            self._captured = (pins, groups, expected)
+""")
+edit('final_capture_checks_preserved_pin_group_phase',"""        else:
+            prior_pins, prior_groups, unused = self._captured
+            need(pins == prior_pins and groups == prior_groups,
+""","""        else:
+            need(type(self._captured) is tuple and len(self._captured) == 3
+                 and self._released is True and self.reauthentications == 1
+                 and self._captured[2] is None,
+                 'final compact follows completed inverse scratch retirement')
+            prior_pins, prior_groups, unused = self._captured
+            need(pins == prior_pins and groups == prior_groups,
+""")
+edit('one_live_inverse_authentication_phase',"""        prior_pins, prior_groups, expected = self._captured
+        need(pins == prior_pins and groups == prior_groups,
+""","""        need(type(self._captured) is tuple and len(self._captured) == 3
+             and type(self.reauthentications) is int and self.reauthentications == 0
+             and self._released is False and self._captured[2] is not None,
+             'one complete inverse authentication while the captured table is live')
+        prior_pins, prior_groups, expected = self._captured
+        need(pins == prior_pins and groups == prior_groups,
+""")
+edit('release_only_expected_slot_after_hash_use',"""    def clear(self):
+        self._captured = None
+        self._authenticate = None
+""","""    def release_expected(self):
+        need(type(self._captured) is tuple and len(self._captured) == 3
+             and type(self.reauthentications) is int and self.reauthentications == 1
+             and self._released is False and self._captured[2] is not None,
+             'retire scratch once, after one successful full inverse authentication')
+        pins, groups, expected = self._captured
+        self._captured = (pins, groups, None)
+        self._released = True
+        need(self._captured[0] is pins and self._captured[1] is groups
+             and self._captured[2] is None,
+             'retirement preserves the exact pins/groups and drops only expected')
+        # expected is a local reference only; it dies at this callback return.
+
+    def clear(self):
+        self._captured = None
+        self._authenticate = None
+        self._released = True
+""")
+before="""    for old, new in ((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+                     (HASHES_BEFORE, HASHES_AFTER)):
+"""
+after="""    for old, new in ((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+                     (HASHES_BEFORE, HASHES_AFTER), (RELEASE_BEFORE, RELEASE_AFTER)):
+"""
+edit('literal_expand_release_transform',before,after)
+edit('literal_expand_release_inverse',"""    for old, new in reversed(((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+                              (HASHES_BEFORE, HASHES_AFTER))):
+""","""    for old, new in reversed(((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+                              (HASHES_BEFORE, HASHES_AFTER), (RELEASE_BEFORE, RELEASE_AFTER))):
+""")
+edit('fresh_private_release_binding_guard',"""    need('ROOT_CAPTURE_EXPECTED' not in private and 'ROOT_AUTHENTICATE_EXPECTED' not in private,
+""","""    need('ROOT_CAPTURE_EXPECTED' not in private and 'ROOT_AUTHENTICATE_EXPECTED' not in private
+         and 'ROOT_RELEASE_EXPECTED' not in private,
+""")
+edit('bind_only_owned_retirement_callback',"""    private['ROOT_AUTHENTICATE_EXPECTED'] = retained.authenticate
+""","""    private['ROOT_AUTHENTICATE_EXPECTED'] = retained.authenticate
+    private['ROOT_RELEASE_EXPECTED'] = retained.release_expected
+""")
+edit('successful_final_retired_phase_check',"""        need(retained.reauthentications == 1,
+             'one full inverse authentication through the retained map')
+""","""        need(retained.reauthentications == 1,
+             'one full inverse authentication through the retained map')
+        need(retained._released is True and type(retained._captured) is tuple
+             and len(retained._captured) == 3 and retained._captured[2] is None,
+             'complete export retired only the first scratch map before final compact')
+""")
+edit('release_private_binding_cleanup',"""                    'ROOT_CAPTURE_EXPECTED', 'ROOT_AUTHENTICATE_EXPECTED',
+""","""                    'ROOT_CAPTURE_EXPECTED', 'ROOT_AUTHENTICATE_EXPECTED', 'ROOT_RELEASE_EXPECTED',
+""")
+ast.parse(h);back=h
+for e in reversed(edits):assert back.count(e['after'])==1;back=back.replace(e['after'],e['before'],1)
+assert back==OLDH.read_text();hr=put('export.py',h.encode())
+oldlit="{'path': '/private/tmp/f009_next_reader_logical_reference_ordinals/shared_export.py', 'bytes': 13627, 'sha256': '9170c54c55701afdabe6772651626a20dba46e54a8315465beef7dbf2e46e79d'}"
+newlit=repr(hr)
+assert c.count(oldlit)==1;nc=c.replace(oldlit,newlit,1);ast.parse(nc);assert nc.replace(newlit,oldlit,1)==c
+assert len(nc.encode())<=65536
+cr=put('reader.py',nc.encode())
+inv=put('whole_Source_inverse.json',dict(schema='F009_CAPTURED_EXPECTED_MAP_RETIREMENT_SOURCE_INVERSE_V1',author='/root/l026_next_batch',Root_authority=False,helper_before=ref(OLDH),helper_after=hr,helper_ordered_literal_edits=edits,whole_helper_before_bytes_equal=True,caller_before=ref(OLDC),caller_after=cr,caller_old_helper_literal=oldlit,caller_new_helper_literal=newlit,whole_caller_before_bytes_equal=True,caller_changed_AST='One existing descriptor-string Constant inside root_reader_pin_route; all other syntax/body nodes are exact. Descriptor-normalized entire AST and whole Source inverse exact.',actual_Source_or_profile_case_executions=0,state_graph_gzip_decodes=0,S_W_Git_mutations=0))
+hd=put('export.diff',''.join(difflib.unified_diff(OLDH.read_text().splitlines(True),h.splitlines(True),fromfile=str(OLDH),tofile=str(D/'export.py'))).encode());cd=put('reader.diff',''.join(difflib.unified_diff(c.splitlines(True),nc.splitlines(True),fromfile=str(OLDC),tofile=str(D/'reader.py'))).encode())
+proof=put('lifetime_argument.json',dict(schema='F009_FIRST_EXPECTED_MAP_RETIREMENT_LIVENESS_PROOF_V1',Root_authority=False,author='/root/l026_next_batch',scope='Only first compact expected-location scratch-map lifetime; no rawcompressed/state/leaf/provider/Owner/cap edit.',
+ source_premises=[ref(OLDH),ref(OLDC),ref('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_saved_export_memory/reference_backed_snapshot/explicit_export_join/codec.py')],
+ ownership=['Captured map is first private compact expected=ROOT_LOCATION_MAP, after its full original LF pass. _captured owns its invocation-local extra pointer.','Inverse authenticates all identical files/groups afresh through expected branch, then increments actual completed counter once. It returns same map as hashes. logical_reference_size and every derived leaf consume it; original del hashes is the last direct use.','The new callback runs immediately after that literal del hashes. It keeps exact pins/groups object identities, drops only the map tuple slot and returns no object. Its temporary expected local dies on callback return.','Final private compact constructs its separate expected map and performs the same complete physical authentication. Later capture used original map only as ignored unused slot; retained pins/groups equality stays literal. New phase/tuple-slot guards require retirement before this final capture.','ordinary codec.export contains one expand invocation; old final reauthentications==1 predicate remains literal. Every actual first/inverse/final LF pass, full typed/node/debt-order equality, compact inverse, deterministicgzip and staged-byte check remains in place.','On any failure, existing finally still clears captured map/provider and privatebindings; no partial artifact/adoption becomes success.'],
+ no_state_or_map_family_deduplication=True,no_earlier_predicate_removed=True,no_authentication_or_hash_cache=True,actual_RSS_saving_or_next_case_fit_measured=False,measurement_note='Removes simultaneous live ownership of first and final scratch maps. Python allocator/overallphase behavior means no numerical RSS saving follows without a later actual guarded case.'))
+print(json.dumps(dict(helper=hr,caller=cr,inverse=inv,helper_diff=hd,caller_diff=cd,proof=proof),indent=2))

@@ -1,0 +1,152 @@
+"""Independent ordinary JSON/hash/AST audit; no represented Source execution."""
+from pathlib import Path
+import ast, copy, hashlib, json, os, stat
+
+D=Path(__file__).resolve().parent
+P=Path('/private/tmp/q11_job24_middle7_divisible_DATA/planned_Root_append_DATA')
+PINNED={}
+READ=0
+
+def can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+def ref(p):
+    global READ
+    p=Path(p);a=p.lstat()
+    assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=2**21
+    assert READ+a.st_size+1<=16*2**20
+    with p.open('rb')as f:b=f.read(a.st_size+1)
+    z=p.lstat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+    assert len(b)==a.st_size;READ+=len(b)
+    r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());PINNED[str(p)]=r
+    return r,b
+def pinned(r):
+    actual,b=ref(r['path']);assert actual==r;return b
+def load(r):return json.loads(pinned(r))
+def local(name):r,b=ref(P/name);return r,json.loads(b)
+hr,h=local('handoff.json');assert hr['sha256']=='a1942ca15d9b2b8dbda688095ed99af45d5aaea78a29483bd91a5ee70aa0bbbc'
+pair=load(h['planned_pair']);inv=load(h['full_before_forward_inverse']);codeinv=load(h['inline_Source_inverse']);args=load(h['Root_exact_append_argv'])
+oldraw=pinned(pair['before_selector']);old=json.loads(oldraw)
+rows=[pair['planned_acceptance'],pair['planned_next_selector']]
+for x,k in zip(rows,['planned_acceptance','planned_selector']):
+    b=x['complete_UTF8'].encode('utf8');r=x['descriptor']
+    assert len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256']and json.loads(b)==x['typed_body']and r==h[k]
+ar,new=[x['typed_body']for x in rows]
+assert inv['prior_selector']==pair['before_selector']and inv['prior_typed_body']==old and inv['prior_complete_UTF8'].encode()==oldraw
+assert inv['planned_successor_selector']==rows[1]['descriptor']and inv['planned_successor_typed_body']==new and inv['planned_successor_complete_UTF8']==rows[1]['complete_UTF8']
+forward=copy.deepcopy(old);back=copy.deepcopy(new)
+assert len(inv['exact_typed_patches'])==10
+for patch in inv['exact_typed_patches']:
+    path=patch['path'];a=forward
+    for k in path[:-1]:a=a[k]
+    assert(path[-1]in a)==patch['before_exists']
+    if patch['before_exists']:assert a[path[-1]]==patch['before']
+    if patch['after_exists']:a[path[-1]]=patch['after']
+    else:a.pop(path[-1],None)
+for patch in reversed(inv['exact_typed_patches']):
+    path=patch['path'];a=back
+    for k in path[:-1]:a=a[k]
+    assert(path[-1]in a)==patch['after_exists']
+    if patch['after_exists']:assert a[path[-1]]==patch['after']
+    if patch['before_exists']:a[path[-1]]=patch['before']
+    else:a.pop(path[-1],None)
+assert forward==new and back==old and can(back)+b'\n'==oldraw
+kind='middle7_divisible_direct_IP_failure'
+changed={x['path'][0]for x in inv['exact_typed_patches']}
+assert all(new[k]==v for k,v in old.items()if k not in changed)
+assert new['source_adoptions']==old['source_adoptions']+[rows[0]['descriptor']]and len(old['source_adoptions'])==7
+assert new['previous_method_attempts'][:-1]==old['previous_method_attempts']
+assert set(new['accepted_paid_by_kind'])==set(old['accepted_paid_by_kind'])|{kind}
+assert all(new['accepted_paid_by_kind'][k]==v for k,v in old['accepted_paid_by_kind'].items())
+assert new['accepted_paid_by_kind']['shared_middle7_direct_IP_failure']==old['accepted_paid_by_kind']['shared_middle7_direct_IP_failure']
+assert len(new['accepted_paid_by_kind']['shared_middle7_direct_IP_failure'])==36
+
+result=load(ar['actual_result']);proof=load(ar['actual_proof'])
+assert result['program']==proof['program']==ar['actual_source']
+assert result['plan']==proof['plan']==ar['actual_plan']and result['source_gate']==proof['source_gate']==ar['actual_Root_Source_gate']
+assert ar['actual_positive_certificate_record_schema']==result['record_schema']==proof['record_schema']
+pos=result['verified_IP_failure_positions'];miss=result['unpaid_positions'];visited=result['visited_positions'];logical=result['logical_predicate_false_positions']
+assert all(type(x)is int for x in pos+miss+visited+logical)
+assert pos==sorted(set(pos))and miss==sorted(set(miss))and logical==sorted(set(logical))
+assert len(pos)==205 and len(miss)==1143 and len(visited)==1348 and len(logical)==1583
+assert result['target_positions']==visited and result['unvisited_positions']==[]and sorted(pos+miss)==visited
+assert ar['new_IP_failure_positions']==pos==new['accepted_paid_by_kind'][kind]
+assert ar['actual_positive_certificate_records']==[x for x in proof['records']if x[2]is True]
+assert [x[0]for x in proof['records']]==visited
+for r in proof['records']:
+    assert type(r)is list and type(r[0])is type(r[1])is int and type(r[2])is bool
+    assert len(r)==(6 if r[2]else 3)
+    if r[2]:
+        for m in r[3:]:
+            assert type(m)is list and len(m)==7 and all(type(v)is list and len(v)==7 for v in m)
+            assert all(type(x)is int and 0<=x<11 for v in m for x in v)
+oldremaining=[q for a,b in old['unresolved_position_runs']for q in range(a,b+1)]
+remaining=[q for a,b in new['unresolved_position_runs']for q in range(a,b+1)]
+assert len(oldremaining)==2931 and sorted(visited+logical)==oldremaining
+assert not set(pos)&set(old['original_paid_positions']+old['accepted_new_paid_positions'])
+assert remaining==[q for q in oldremaining if q not in set(pos)]==sorted(miss+logical)
+assert len(remaining)==2726 and new['unresolved_positions']==2726
+assert hashlib.sha256(can(remaining)).hexdigest()==new['expanded_unresolved_sha256']==ar['remaining_expanded_sha256']
+assert len(old['accepted_new_paid_positions'])==675 and new['accepted_new_paid_positions']==sorted(old['accepted_new_paid_positions']+pos)
+assert len(new['accepted_new_paid_positions'])==880 and len(new['original_paid_positions'])==173
+assert sorted(new['original_paid_positions']+new['accepted_new_paid_positions']+remaining)==list(range(1,3780))
+assert ar['logical_predicate_false_positions']==proof['logical_predicate_false_positions']==pair['logical_predicate_false_positions']==logical
+assert ar['logical_predicate_false_positions_are_not_fresh_visits']is True and ar['logical_negatives_and_fresh_misses_remain_unpaid']is True
+supports=ar['negative_fact_support'];assert supports==result['negative_fact_support']==proof['negative_fact_support']
+B=[]
+for s in supports:
+    a=load(s['Root_adoption']);m=a['finite_criterion_miss_positions_without_IP_credit']
+    assert len(m)==s['actual_miss_count']
+    selected=sorted(set(m)&set(oldremaining));assert len(selected)==s['current_miss_count']
+    if s['negative_predicate']=='A_EXACT7_FALSE':assert selected==oldremaining
+    else:B+=selected
+assert len(B)==1583 and sorted(B)==logical and len(set(B))==1583
+assert ar['prime']==7 and ar['cofactor']==19 and ar['criterion']=='DIRECT_MIDDLE_NINETEENTH_EXACT_ORDER7'
+assert ar['actual_middle_nineteenth_then_seventh_power_checks_under_root_owned_source']is True
+for k in ['fresh_literal_bc7_check_claimed','actual_literal_middle_seventh_power_checks_under_root_owned_source','fresh_literal_bc19_check_claimed','fresh_literal_bc37_check_claimed','independent_direct_word_power_row_minor_checks','word_power_row_minor_check_claimed','old_local_intersection_test_flags_retagged','independent_matrix_or_group_arithmetic_replayed_by_metadata_review','independent_direct_shared_middle_power_checks','actual_rotation_orders_checked_under_root_owned_source','actual_middle_seventh_power_checks_under_root_owned_source','actual_branch_specific_middle_power_checks_under_root_owned_source']:
+    assert ar[k]is False
+assert all(ar[k]==0 for k in ['whole_original_credit','new_job_closure_credit','conjecture_credit','Lean_credit'])
+refs={k:r for k,r in ar.items()if type(r)is dict and set(r)=={'path','bytes','sha256'}}
+for r in refs.values():pinned(r)
+sdk=load(ar['actual_genuine_Root_SDK']);guard=load(ar['actual_Root_guard'])
+psdk=load(ar['actual_Root_independent_power_check_SDK']);pguard=load(ar['actual_Root_independent_power_check_guard']);power=load(ar['actual_Root_independent_power_check_result'])
+assert sdk['root']==psdk['root']=='/root'and sdk['actual_tool']['exit_code']==psdk['actual_tool']['exit_code']==0
+assert sdk['all_genuine_api_frames']and psdk['all_genuine_api_frames']
+assert guard['status']==pguard['status']=='PASS'and guard['returncode']==pguard['returncode']==0
+assert power['positive_count']==205 and power['matrix_products']==5330 and power['fresh_visited']==1348 and power['fresh_misses']==1143 and power['historical_logical_negatives']==1583
+assert 'Original b*c'not in power['scope']or'not recomputed'in power['scope']
+for r in [ar['actual_source'],ar['actual_plan'],ar['actual_Root_Source_gate']]:assert r['path']in guard['command']and r['sha256']in guard['command']
+
+code=args['inline_Source_complete_UTF8'];argv=args['argv'];assert argv[argv.index('-c')+1]==code and len(code.encode())==8231
+assert codeinv['after_utf8']==code
+parent=load(codeinv['before_actual_SDK']);oldcode=codeinv['before_utf8'];assert oldcode in parent['issued_argv']
+v=oldcode
+for e in codeinv['ordered_edits']:
+    assert v.count(e['before'])==e.get('occurrences',1)
+    v=v.replace(e['before'],e['after'])
+assert v==code
+for e in reversed(codeinv['ordered_edits']):
+    assert v.count(e['after'])==e.get('occurrences',1)
+    v=v.replace(e['after'],e['before'])
+assert v==oldcode
+tree=ast.parse(code)
+assert not any(isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in('exec','eval','compile','__import__')for n in ast.walk(tree))
+assert not any(isinstance(n,(ast.Import,ast.ImportFrom))and any(x.name.startswith(('subprocess','runpy'))for x in n.names)for n in ast.walk(tree))
+assert args['Root_authority']is False and args['issued']is False
+read_upper=h['planned_pair']['bytes']+2*pair['before_selector']['bytes']+sum(x['descriptor']['bytes']for x in rows)
+assert read_upper==1147265==args['explicit_read_upper']and sum(x['descriptor']['bytes']for x in rows)==286642==args['new_bytes']
+out=dict(schema='F004205_DISTINCT_MIDDLE7_DIVISIBLE_APPEND_INDEPENDENT_STATIC_REVIEW_V1',reviewer='/root/status_audit',Root_authority=False,
+ status='PASS_EXACT_TYPED_PAIR_PROOF_PROVENANCE_AND_INLINE_SOURCE_AST_NO_EXECUTION',blockers=[],pins=PINNED,
+ checks=['Complete canonical pair hashes, ten-field forward/reverse inverse and original full raw selector restored.',
+ 'All seven prior adoptions, paid buckets, literal7 bucket36, histories, baseline173 and all unknown fields preserved.',
+ 'Typed proof records exactly1348 fresh visits/205 positives/1143 misses;1583 logical negatives remain unpaid and are not visits.',
+ 'Four exact negative-support adoptions give current107+730+746 disjoint B negatives and2931 A negatives; no older full proof DAG expanded.',
+ 'New distinct cofactor19/prime7 predicate and flag; all literal7/19/37 and old arithmetic flags remain false in the new adoption.',
+ 'Genuine Root finite science and separate205/5330 repeated-power SDK/guard/result joined; no matrix arithmetic replayed by this reviewer.',
+ 'Eighteen exact inline text edits reverse to the previously executed writer Source; AST contains no Source acquisition/evaluation or subprocess.',
+ 'Four exact file paths,1147265 explicit read bytes,286642 new bytes, exclusive two-file writes and immutable original selector; no two-file crash-atomic claim.'],
+ nonblocking_text_findings=['Frozen inline diagnostic labels still mention639/2967/sixadoptions or36positives/literal7; the actual numeric checks and terminal report use675/2931/seven→880/2726/205 and the distinct new criterion. Packet remains unchanged.'],
+ projected_counts=dict(baseline=173,additional=880,unresolved=2726,new=205,fresh_visits=1348,fresh_miss_unpaid=1143,logical_negative_unpaid=1583),
+ actual_S_append_or_postcheck_replayed=False,scientific_or_Source_or_helper_executions=0,state_or_gzip_decodes=0,S_W_Git_mutations=0,
+ qualification='Independent static ordinary metadata/AST review only; Root owns append release, actual append and postwrite checks. Imported named model/original b*c context and theory/classification premises remain. Whole manuscript, conjecture, Lean and compression credits are zero.',
+ physical_read_bytes=READ)
+b=(json.dumps(out,sort_keys=True,separators=(',',':'))+'\n').encode();p=D/'review.json';assert not p.exists();p.write_bytes(b)
+print(json.dumps(dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest(),status=out['status'],read_bytes=READ),sort_keys=True))

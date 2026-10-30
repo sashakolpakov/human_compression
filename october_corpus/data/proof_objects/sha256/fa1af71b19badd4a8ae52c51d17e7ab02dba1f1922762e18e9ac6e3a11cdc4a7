@@ -1,0 +1,42 @@
+"""Root-only ordinary metadata binder; no Source/science/state activation."""
+from pathlib import Path
+import argparse,copy,hashlib,json
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def pin(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(r):
+ assert pin(r['path'])==r;return json.loads(Path(r['path']).read_bytes())
+def main():
+ a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--capture',nargs=2,required=True);a.add_argument('--outer-receipt',nargs=2,required=True);q=a.parse_args()
+ N=Path('/private/tmp/f009_census_after_11462')
+ def refarg(v):
+  r=pin(v[0]);assert r['sha256']==v[1];return r
+ capture=refarg(q.capture);cap=read(capture);guardref=refarg(q.outer_receipt);guard=read(guardref)
+ assert cap['actor']==cap['root']=='/root'and cap['actual_tool']['exit_code']==0 and cap['all_genuine_api_frames']
+ assert guard['status']=='PASS'and guard['returncode']==0 and guard['stop']=='RETURNED'
+ assert cap['issued_argv']==cap['child_argv']and cap['child_argv'].count('--')==1
+ assert cap['child_argv'][cap['child_argv'].index('--')+1:]==guard['command']
+ assert '--write'in guard['command']and '/private/tmp/f009_complete_transport/complete_tree/sources/prepare_reader.py'in guard['command']
+ # Root e466 stdout is a real guard-owned file, not a projected author response.
+ stdout=guard.get('logs',{}).get('stdout')
+ if isinstance(stdout,dict):report=read(stdout)
+ else:
+  p=Path(guardref['path']).parent/'stdout.log';report=json.loads(p.read_bytes())
+ assert report['schema']=='F009_COMPLETE_CASE_READER_METADATA_PREPARED_V1'and report['written']is True and report['output_files']==5
+ rows=report['rows'];assert len(rows)==5 and len({r['path']for r in rows})==5
+ for r in rows:assert pin(r['path'])==r and Path(r['path']).parent==N/'reader_prepared'
+ closure_ref=next(r for r in rows if Path(r['path']).name=='native_closure.json');closure=read(closure_ref)
+ assert closure['schema']=='ROOT_CLOSED_F009_STANDALONE_NATIVE_V1'and closure['root']=='/root'and closure['known_scope_drained']is True
+ assert closure['job']==pin(N/'native_job/job.json')and closure['actual_execution']==pin(N/'runtime/f009_after11462_Root_actual_Native_attempt1_capture.json')
+ method=closure['metadata_closure_method'];release=read(method['Root_release']);plan=read(method['plan'])
+ assert method['program']['sha256'].startswith('e466e7e0')and release['root']=='/root'and release['status']=='SUPPORTED'and release['blockers']==[]and release['program']==method['program']and release['plan']==method['plan']
+ assert release['actual_native_execution_review_supported']is True and plan['expected_checkpoint_sequence']==11462
+ template=pin(N/'parameters/reader_parameters_UNBOUND.json');before=read(template);after=copy.deepcopy(before);after['native_closure']=closure_ref;after['closed_native_metadata_method']=method
+ restored=copy.deepcopy(after)
+ for k in('native_closure','closed_native_metadata_method'):restored[k]=before[k]
+ assert can(restored)==can(before) and after['program']['sha256'].startswith('1031ee80')and after['Owner']['sha256'].startswith('a0e39886')
+ path=N/'reader_parameters_BOUND_CLOSED_NATIVE.json';assert not path.exists();path.write_bytes(can(after))
+ inverse=N/'reader_parameters_actual_binding_inverse.json';assert not inverse.exists()
+ inverse.write_bytes(can(dict(schema='EXACT_TWO_FIELD_READER_CLOSURE_BINDING_INVERSE_V1',Root_authority=False,before=template,after=pin(path),changed_fields=['native_closure','closed_native_metadata_method'],restore_fields={k:before[k]for k in('native_closure','closed_native_metadata_method')},whole_before_equal=True,actual_e466_capture=capture,actual_guard=guardref,actual_five_rows=rows,native_closure=closure_ref,metadata_method=method,functional_roster_unchanged=True,qualification='Inherited template lineage remains literal UNBOUND-history annotation; actual closure/method runtime fields alone are bound from genuine returned rows. No Reader/science call or checkpoint adoption.')))
+ print(json.dumps(dict(parameters=pin(path),inverse=pin(inverse),actual_closure=closure_ref,Root_Reader_release_owed=True),sort_keys=True))
+if __name__=='__main__':main()

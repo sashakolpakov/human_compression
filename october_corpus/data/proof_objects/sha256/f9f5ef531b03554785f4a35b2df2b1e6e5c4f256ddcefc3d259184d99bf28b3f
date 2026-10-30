@@ -1,0 +1,37 @@
+{
+  "utc": "2026-10-30T22:30:21.612108+00:00",
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "import json,hashlib,os,time,resource,sys\nfrom pathlib import Path\nSTART=time.monotonic();READ=0;cache={}\ndef whole(r):\n global READ\n p=Path(r['path']);a=p.lstat();assert p.resolve(strict=True)==p and a.st_nlink==1 and a.st_size==r['bytes']<=4*2**20\n k=(str(p),r['sha256'])\n if k in cache:return cache[k]\n b=p.read_bytes();READ+=len(b)\n z=p.lstat();assert(a.st_dev,a.st_ino,a.st_mode,a.st_nlink,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)\n assert len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256']and READ<=64*2**20 and time.monotonic()-START<125\n assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<=256*2**20\n cache[k]=b;return b\nroot=Path('/private/tmp/f009_checkpoint11518_registration/runtime')\nlog=json.loads((root/'closed_registration_tail_guard/stdout.log').read_text());m=json.loads(whole(log['preservation']))\nh=json.loads(whole(dict(path='/private/tmp/f009_checkpoint11518_evidence/handoff.json',bytes=4034,sha256='20c5f43e1333dded427d9b3c2ed725f85193bc96e3f279ff22252344a91c8035')))\nplan=json.loads(whole(h['plan']));rows=plan.get('files')\nif rows is None:rows=plan['copy_rows']+plan['reuse_rows']\nassert len(rows)==106 and m['files'][:106]==rows and len(m['files'])==108\nfor pair in m['files']:assert whole(pair['original'])==whole(pair['retained'])\nassert m['scientific_calls']==0 and m['Source_or_verdict_transfer']is False and m['acceptance_or_checkpoint_or_operational_register_writes']==0\nassert h['borrowed_canonical_preservation']in m['borrowed_closures']\nfor r in m['borrowed_closures']:whole(r)\ncp=json.loads(whole(h['accepted_checkpoint']));sp=json.loads(whole(h['accepted_snapshot']));reg=json.loads(whole(h['registration']))\nassert cp['checkpoint']==sp['checkpoint']==reg['checkpoint']and cp['checkpoint']['sequence']==11518\nintent=json.loads(whole(reg['intent']))\nfor p,r in zip(intent['live_paths'],intent['after_images']):assert whole(dict(r,path=p))==whole(r)\nout=root/'Root_actual_closed_tail_whole_postcheck.json';assert not out.exists()\nv=dict(root='/root',status='PASS_ALL108_CLOSED_METADATA_MAPPINGS_WHOLE_CHECKED',preservation=log['preservation'],mappings=108,scientific_calls=0,checkpoint=cp['checkpoint'],all_three_live_views_match_afterimages=True,borrowed_closures=m['borrowed_closures'],physical_read_bytes=READ,distinct_whole_files=len(cache),qualification='Closed execution evidence retained and whole-checked. No census, original-manuscript, conjecture, Lean or compression credit; borrowed model and historical mathematical premises remain qualified.')\nraw=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\\n').encode()\nwith out.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())\nprint(json.dumps(dict(status=v['status'],review=dict(path=str(out),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),manifest=log['preservation'],read=READ)))\n"
+  ],
+  "identities": [
+    {
+      "pid": 99826,
+      "birth": 1793399421.610781,
+      "initial_parent": 99825,
+      "group": 99826,
+      "session": 99826,
+      "peak_rss": 0
+    }
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 268435456,
+    "wall_seconds": 125.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 15911501824,
+    "available_ram": 4545740800
+  }
+}

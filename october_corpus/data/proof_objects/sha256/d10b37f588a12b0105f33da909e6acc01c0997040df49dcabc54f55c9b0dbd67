@@ -1,0 +1,81 @@
+{
+  "status": "PASS",
+  "stop": "RETURNED",
+  "error": null,
+  "utc": "2026-10-30T21:41:01.276732+00:00",
+  "seconds": 1.1052787089720368,
+  "returncode": 0,
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "import json,hashlib,stat\nfrom pathlib import Path\nreads=0;paths=set()\ndef whole(r,body=False):\n global reads\n p=Path(r['path']);s=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size==r['bytes'];assert reads+s.st_size<2**31\n h=hashlib.sha256();parts=[]if body else None;n=0\n with p.open('rb')as f:\n  a=p.stat()\n  while b:=f.read(2**20):\n   n+=len(b);h.update(b)\n   if body:parts.append(b)\n z=p.lstat();assert(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)and n==r['bytes']and h.hexdigest()==r['sha256'];reads+=n;paths.add(str(p));return b''.join(parts)if body else None\ndef expand(v):\n if 'Root_Preservation_map_reference'not in v:return v\n tag=v['Root_Preservation_map_reference'];out={k:x for k,x in v.items()if k!='Root_Preservation_map_reference'};count=0\n for name,kind,rows in tag['fields']:\n  out[name]=[]\n  for li,ri,suffix,size,sha in rows:\n   orig=dict(path=tag['prefixes'][li]+suffix,bytes=size,sha256=sha)\n   right=tag['prefixes'][ri]+suffix\n   out[name].append(dict(original=orig,retained=dict(path=right,bytes=size,sha256=sha))if kind=='pair'else dict(original=orig,relative=right));count+=1\n raw=(json.dumps(out,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\\n').encode()\n assert count==tag['row_count']and len(raw)==tag['logical_bytes']and hashlib.sha256(raw).hexdigest()==tag['logical_sha256'];return out\nB=Path('/private/tmp/f009_checkpoint11518_registration');res=json.loads((B/'runtime/preservation_write/stdout.log').read_bytes());m=expand(json.loads(whole(res['manifest'],True)));plan=expand(json.loads(whole(dict(path=str(B/'bound_plans_actual/preservation_plan.json'),bytes=919338,sha256='261db167650fdcee5dd0e47ca534d1b6c08183f91c74fb3f7ebc1f9a4ee9b20b'),True)))\nassert len(m['rows'])==555 and len(m['reused_previous_rows'])==5418\nfor row in m['rows']:\n assert row['original']['bytes']==row['retained']['bytes']and row['original']['sha256']==row['retained']['sha256'];whole(row['original']);whole(row['retained'])\nfor row in m['reused_previous_rows']:\n assert row['original']['bytes']==row['retained']['bytes']and row['original']['sha256']==row['retained']['sha256'];whole(row['retained'])\nindex={r['original']['path']:r['original']for r in m['rows']+m['reused_previous_rows']}\nfive=json.loads(Path('/private/tmp/f009_after11462_reader_preparation/all_e466_outputs/handoff.json').read_bytes())['actual5_e466_outputs']\nassert all(index[r['path']]==r for r in five)\nh=json.loads((B/'handoff.json').read_bytes());assert plan['previous_preservations']==[h['sole_previous_preservation']]\nassert m['root']=='/root'and m['scientific_calls']==m['canonical_checkpoint_writes']==0\nprint(json.dumps(dict(status='PASS_ALL5973_RETAINED_AND555_NEW_ORIGINAL_WHOLE_IDENTITIES',preservation=res['manifest'],new=555,reused=5418,all5_current_e466_outputs_retained=True,reused_originals_not_required_after_explicit_alias_cleanup=True,physical_read_bytes=reads,unique_paths=len(paths),new_scientific_or_checkpoint_credit=0)))\n"
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 268435456,
+    "wall_seconds": 150.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 10943635456,
+    "available_ram": 4565204992
+  },
+  "peaks": {
+    "total_rss": 72007680,
+    "min_free_disk": 10943557632,
+    "min_available_ram": 4435312640,
+    "samples": 3
+  },
+  "recent_samples": [
+    {
+      "seconds": 0.002,
+      "total_rss": 28196864,
+      "free_disk": 10943619072,
+      "available_ram": 4567908352,
+      "live_processes": 1
+    },
+    {
+      "seconds": 0.516,
+      "total_rss": 71221248,
+      "free_disk": 10943561728,
+      "available_ram": 4528685056,
+      "live_processes": 1
+    },
+    {
+      "seconds": 1.031,
+      "total_rss": 72007680,
+      "free_disk": 10943557632,
+      "available_ram": 4435312640,
+      "live_processes": 1
+    }
+  ],
+  "identities": [
+    {
+      "pid": 88597,
+      "birth": 1793396460.171664,
+      "initial_parent": 88596,
+      "group": 88597,
+      "session": 88597,
+      "peak_rss": 44072960
+    }
+  ],
+  "logs": {
+    "stdout": 581,
+    "stderr": 0
+  },
+  "cleanup": {
+    "remaining": [],
+    "errors": [],
+    "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded."
+  },
+  "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants."
+}

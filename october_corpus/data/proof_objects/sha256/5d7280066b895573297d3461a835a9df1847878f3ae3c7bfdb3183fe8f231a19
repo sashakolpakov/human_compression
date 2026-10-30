@@ -1,0 +1,120 @@
+--- /private/tmp/f009_next_reader_logical_reference_ordinals/shared_export.py
++++ /private/tmp/f009_export_lifetime/export.py
+@@ -58,6 +58,8 @@
+ CAPTURE_AFTER = (CAPTURE_BEFORE + '    ROOT_CAPTURE_EXPECTED(pins,groups,expected)\n')
+ HASHES_BEFORE = "    hashes=authenticate_lines(pins,leaves['groups'])"
+ HASHES_AFTER = "    hashes=ROOT_AUTHENTICATE_EXPECTED(pins,leaves['groups'])"
++RELEASE_BEFORE = '    del hashes\n'
++RELEASE_AFTER = RELEASE_BEFORE + '    ROOT_RELEASE_EXPECTED()\n'
+ 
+ 
+ class _AuthenticatedLocations:
+@@ -68,17 +70,25 @@
+     files and exact selected LF lines against that table before returning it.
+     No caller-provided state/map or global cache enters the export API.
+     """
+-    __slots__ = ('_authenticate', '_captured', 'reauthentications')
++    __slots__ = ('_authenticate', '_captured', 'reauthentications', '_released')
+ 
+     def __init__(self):
+         self._authenticate = None
+         self._captured = None
+         self.reauthentications = 0
++        self._released = False
+ 
+     def capture(self, pins, groups, expected):
+         if self._captured is None:
++            need(type(self.reauthentications) is int and self.reauthentications == 0
++                 and self._released is False and expected is not None,
++                 'one first compact capture of a live expected table')
+             self._captured = (pins, groups, expected)
+         else:
++            need(type(self._captured) is tuple and len(self._captured) == 3
++                 and self._released is True and self.reauthentications == 1
++                 and self._captured[2] is None,
++                 'final compact follows completed inverse scratch retirement')
+             prior_pins, prior_groups, unused = self._captured
+             need(pins == prior_pins and groups == prior_groups,
+                  'same full canonical file/group values on later compact checks')
+@@ -86,6 +96,10 @@
+     def authenticate(self, pins, groups):
+         need(self._captured is not None and self._authenticate is not None,
+              'reuse only after this complete compact authentication')
++        need(type(self._captured) is tuple and len(self._captured) == 3
++             and type(self.reauthentications) is int and self.reauthentications == 0
++             and self._released is False and self._captured[2] is not None,
++             'one complete inverse authentication while the captured table is live')
+         prior_pins, prior_groups, expected = self._captured
+         need(pins == prior_pins and groups == prior_groups,
+              'entire same file identities and ordered multiplicities before reuse')
+@@ -101,9 +115,23 @@
+         self.reauthentications += 1
+         return expected
+ 
++    def release_expected(self):
++        need(type(self._captured) is tuple and len(self._captured) == 3
++             and type(self.reauthentications) is int and self.reauthentications == 1
++             and self._released is False and self._captured[2] is not None,
++             'retire scratch once, after one successful full inverse authentication')
++        pins, groups, expected = self._captured
++        self._captured = (pins, groups, None)
++        self._released = True
++        need(self._captured[0] is pins and self._captured[1] is groups
++             and self._captured[2] is None,
++             'retirement preserves the exact pins/groups and drops only expected')
++        # expected is a local reference only; it dies at this callback return.
++
+     def clear(self):
+         self._captured = None
+         self._authenticate = None
++        self._released = True
+ 
+ def export(contract, codec, state, path, **provenance):
+     """Run the same export with one invocation-local storage-sharing inverse.
+@@ -134,13 +162,13 @@
+     before = ast.get_source_segment(raw, nodes[0])
+     after = before
+     for old, new in ((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+-                     (HASHES_BEFORE, HASHES_AFTER)):
++                     (HASHES_BEFORE, HASHES_AFTER), (RELEASE_BEFORE, RELEASE_AFTER)):
+         need(after.count(old) == 1 and new not in after,
+              'one exact storage-allocation successor site')
+         after = after.replace(old, new, 1)
+     inverse = after
+     for old, new in reversed(((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+-                              (HASHES_BEFORE, HASHES_AFTER))):
++                              (HASHES_BEFORE, HASHES_AFTER), (RELEASE_BEFORE, RELEASE_AFTER))):
+         need(inverse.count(new) == 1, 'one complete reverse allocation site')
+         inverse = inverse.replace(new, old, 1)
+     need(inverse == before, 'entire literal old inverse recovered')
+@@ -154,10 +182,12 @@
+     need('ROOT_DIGEST_ORDINAL_MAP' not in private, 'fresh private digest-ordinal binding')
+     private['ROOT_DIGEST_ORDINAL_MAP'] = ordinal_module.DigestOrdinalMap
+     retained = _AuthenticatedLocations()
+-    need('ROOT_CAPTURE_EXPECTED' not in private and 'ROOT_AUTHENTICATE_EXPECTED' not in private,
++    need('ROOT_CAPTURE_EXPECTED' not in private and 'ROOT_AUTHENTICATE_EXPECTED' not in private
++         and 'ROOT_RELEASE_EXPECTED' not in private,
+          'fresh invocation-local authenticated-location bindings')
+     private['ROOT_CAPTURE_EXPECTED'] = retained.capture
+     private['ROOT_AUTHENTICATE_EXPECTED'] = retained.authenticate
++    private['ROOT_RELEASE_EXPECTED'] = retained.release_expected
+     for name, old_allocation, new_allocation in (
+             ('logical_reference_size', 'pins=[];digests=[];pin_ids={};digest_ids={}',
+              'pins=[];digests=[];pin_ids={};digest_ids=ROOT_DIGEST_ORDINAL_MAP(digests)'),
+@@ -215,12 +245,15 @@
+         result = current(state, path, **provenance)
+         need(retained.reauthentications == 1,
+              'one full inverse authentication through the retained map')
++        need(retained._released is True and type(retained._captured) is tuple
++             and len(retained._captured) == 3 and retained._captured[2] is None,
++             'complete export retired only the first scratch map before final compact')
+     finally:
+         retained.clear()
+         # Retire only invocation-local bindings. Break function/global cycles
+         # that would otherwise retain the complete acquired leaf list/map.
+         for key in ('ROOT_EXPORT_LEAVES', 'ROOT_LOCATION_MAP', 'ROOT_DIGEST_ORDINAL_MAP',
+-                    'ROOT_CAPTURE_EXPECTED', 'ROOT_AUTHENTICATE_EXPECTED',
++                    'ROOT_CAPTURE_EXPECTED', 'ROOT_AUTHENTICATE_EXPECTED', 'ROOT_RELEASE_EXPECTED',
+                     'compact', 'authenticate_lines', 'logical_size', 'logical_reference_size', 'expand'):
+             private.pop(key, None)
+         export_globals.pop('expand', None)

@@ -1,0 +1,235 @@
+"""Finite ordinary JSON preparation only; no acquired Source or helper execution."""
+from pathlib import Path
+import copy, hashlib, json, os, resource, stat, sys, time
+
+D = Path(__file__).resolve().parent
+P = D.parent
+S = Path('/Users/sasha/medusa/research/leemans')
+C = S/'maintenance/intake/f009_census_continuation/from11401/standalone_execution/checkpoint_11462'
+R = P/'runtime'
+N = Path('/private/tmp/f009_continuation/from_11401/native_DATA')
+READ = 0
+START = time.monotonic()
+
+def check(ok, why):
+    if not ok: raise ValueError(why)
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == 'darwin' else 1024)
+    if rss >= 256*2**20 or time.monotonic()-START >= 120:
+        raise ValueError('static JSON authoring 256MiB/120s')
+
+def can(v):
+    return (json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+
+def raw(p):
+    global READ
+    p=Path(p);a=p.lstat()
+    check(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+          and a.st_nlink==1 and 0<=a.st_size<=5*2**20 and READ+a.st_size+1<=32*2**20,
+          'bounded canonical ordinary metadata before read')
+    sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    with p.open('rb') as f:
+        b=os.fstat(f.fileno());v=f.read(a.st_size+1);c=os.fstat(f.fileno())
+    READ+=len(v)
+    check(sig(a)==sig(b)==sig(c)==sig(p.lstat()) and len(v)==a.st_size,'stable whole metadata')
+    return v
+
+def ref(p):
+    p=Path(p);b=raw(p)
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+def load(p):
+    return json.loads(raw(p))
+
+def put(name,v):
+    p=D/name;b=can(v)
+    check(not p.exists() and len(b)<=5*2**20,'fresh bounded private DATA output')
+    with p.open('xb') as f:check(f.write(b)==len(b),'whole DATA write')
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+def merge(*groups):
+    rows={}
+    for group in groups:
+        for r in group:
+            check(type(r)is dict and set(r)=={'path','bytes','sha256'} and type(r['bytes'])is int
+                  and r['bytes']>=0 and rows.get(r['path'],r)==r,'literal conflict-free complete row')
+            rows[r['path']]=r
+    out=[rows[p]for p in sorted(rows)]
+    check(len(out)<=40000 and sum(r['bytes']for r in out)<=2**31,'unchanged current domain bounds')
+    return out
+
+def require_ref(p,sha):
+    r=ref(p);check(r['sha256']==sha,'exact pinned parent')
+    return r
+
+np0r=require_ref(N/'native_parameters.json','cf6de10f0b00d5cf2bad88d4362cde923f145977e9f18513ec7d0b1db6760592')
+rp0r=require_ref('/private/tmp/f009_manifest_reader_constructor/reader_parameters_manifest_constructor.json','06432c56d54d77631b75582aa2ca70d830b7e41ded33cc800492157688ae43f2')
+np0=load(np0r['path']);rp0=load(rp0r['path'])
+cat0r=rp0['catalogue'];cat0=load(cat0r['path']);b0r=np0['boundary'];b0=load(b0r['path'])
+check(rp0['boundary']==b0r and cat0r['sha256']=='f0dde9edfd80c28f96bed03d9cace54156222acf6990dc19954c2f346001565a','actual all-five-e466 parent catalogue')
+cpr=require_ref(C/'root_checkpoint_acceptance.json','12090da2fa4ea3cda4552fbeb4c4a24aaac098b9b18d0307818bfe83245d5836')
+spr=require_ref(C/'root_snapshot_acceptance.json','8e8cf9f50cd53e3b2b4ec5427229d0a93115ff894e2695caed5d59708c2895c4')
+cp=load(cpr['path']);sp=load(spr['path']);reg=ref(C/'registration_result.json')
+check(cp['adopted']is sp['adopted']is True and cp['checkpoint']==sp['checkpoint']
+      and cp['checkpoint']['sequence']==11462 and sp['checkpoint_acceptance']==cpr,'actual current accepted pair')
+check(cp['next_select']==sp['next_select'] and cp['reserved_parents']==sp['reserved_parents']
+      ==['54f419e335a3382f051ffa902a0c05d3e39c91aacff0ef250fe228772fb8930a'],'same reserved debt')
+current=load(cp['complete_root_inputs']['path']);tag=current.pop('Root_Input_rows_reference')
+current['inputs']=[dict(path=tag['prefixes'][i]+s,bytes=n,sha256=h)for i,s,n,h in tag['rows']]
+check(len(can(current))==tag['logical_bytes'] and hashlib.sha256(can(current)).hexdigest()==tag['logical_sha256']
+      and len(current['inputs'])==14292 and sum(r['bytes']for r in current['inputs'])==851173577,'whole current input table inverse')
+ctor=require_ref('/private/tmp/f009_manifest_reader_constructor/construct.py','2e76fb74206f258511c9bd010d38cc9cf47d6b94a8c027e37c86d7ba35be8f2a')
+oldctor=next(r for r in np0['method_sources']if r['sha256']=='1dcc5d5d59bcd86cb419f30406ee46be6eea61c998b397f21740c5e4dd27a40c')
+nm=[ctor if r==oldctor else r for r in np0['method_sources']]
+projr=require_ref('/private/tmp/f009_export_lifetime/future_Source_roles_UNBOUND.json','709201d9f8efdfcd3d1511f7b2a7c1547dea09581c190e4d4e9857d202fd4391')
+proj=load(projr['path']);rm=proj['method_sources_after']
+check(rp0['method_sources']==proj['method_sources_before'] and rp0['program']==proj['old_caller'],'same current Reader roles')
+native=np0['program'];reader=proj['new_caller'];helper=proj['new_helper']
+check(native['sha256']=='4006d6a8c0716488659bee6a5ad79b995151b2f7a5d18e73609c13efb40afc5e','unchanged Native caller')
+def functional(p,methods):return merge(cat0['source_inputs'],methods,[p['IO_budget_source'],p['retained_owner']])
+nf0=functional(np0,np0['method_sources']);nf=functional(np0,nm)
+rf0=functional(rp0,rp0['method_sources']);rf=functional(rp0,rm)
+check(nf0==load(N/'native_job/job.json')['source_inputs'] and rf0==load(N/'reader_job/job.json')['source_inputs'],'whole actual predecessor functional tables')
+check(len(nm)==44 and len(nf)==1015 and len(rm)==53 and len(rf)==1024
+      and rf0==proj['functional_Source_before'] and rf==proj['functional_Source_after'],'exact Source rosters')
+check(merge([oldctor if r==ctor else r for r in nf])==nf0 and [oldctor if r==ctor else r for r in nm]==np0['method_sources'],'sole Native metadata-constructor role inverse')
+check(sum(r['bytes']for r in rf)==60441350,'exact new Reader Source extent')
+rosters=put('Source_role_changes.json',dict(schema='F009_CURRENT11462_EXACT_NEXT_SOURCE_ROLES_DATA_V1',author='/root/status_audit',Root_authority=False,
+ Native=dict(previous_parameters=np0r,previous_actual_job=ref(N/'native_job/job.json'),removed_metadata_constructor=oldctor,added_metadata_constructor=ctor,
+ method_count=44,functional_count=1015,functional_bytes=sum(r['bytes']for r in nf),functional_table_sha256=hashlib.sha256(can(nf)).hexdigest(),whole_role_inverse_equal=True,
+ caller=native,all_other_Native_roles_literal=True),
+ Reader=dict(projection=projr,previous_parameters=rp0r,previous_actual_job=ref(N/'reader_job/job.json'),method_count=53,functional_count=1024,functional_bytes=60441350,
+ functional_table_sha256=hashlib.sha256(can(rf)).hexdigest(),exact_two_roles_replaced=True,old_caller_and_helper_historical_DATA=[proj['old_caller'],proj['old_helper']]),
+ no_Source_verdict_or_case_transfer=True))
+
+# Only real Root control evidence is selected; no process or Source is invoked.
+rootrelease=ref(R/'Root_synthetic_controls_release.json')
+release=load(rootrelease['path']);check(release['root']=='/root' and release['synthetic_controls_authorized']is True
+       and release['original_model_or_Native_or_Reader_case_authorized']is False,'actual Root synthetic-only review')
+controls=[];controlrows=[]
+for name,count,program in [('helper_lf_phase_export',40,ref('/private/tmp/f009_export_lifetime/controls_bounded_UNRUN.py')),
+                           ('caller_literal_codec',35,reader),('caller_provider_chain',15,reader)]:
+    sdk=R/('f009_after11462_Root_actual_'+name+'_attempt1_capture.json')
+    receipt=R/name/'receipt.json';result=R/name/'stdout.log'
+    sv=load(sdk);rv=load(receipt);ov=load(result)
+    check(sv['actual_tool']['exit_code']==0 and sv['all_genuine_api_frames'] and rv['status']=='PASS'
+          and rv['returncode']==0 and ov['status']=='PASS' and ov['controls']==count
+          and ov['program']==program and ov['original_case_calls']==0,'genuine current generic control PASS')
+    controls.append(dict(name=name,controls=count,program=program,actual_SDK=ref(sdk),guard_receipt=ref(receipt),result=ref(result)))
+    controlrows += [ref(sdk)]+[ref(p)for p in sorted((R/name).iterdir())if p.is_file()]
+controlbinding=put('actual_controls.json',dict(schema='F009_CURRENT11462_THREE_ACTUAL_SYNTHETIC_CONTROLS_DATA_BINDING_V1',author='/root/status_audit',Root_authority=False,
+ Root_synthetic_control_release=rootrelease,controls=controls,original_case_authorized=False,actual_memory_saving_or_next_case_fit_established=False))
+histref=sp['historical_reference_retention_obligation']['inventory'];hist=load(histref['path'])
+check(len(hist['files'])==21,'all21 exact historical payload pins')
+oldhistmap=ref('/private/tmp/f009_continuation/from_11331/native_DATA/historical_payload_mapping.json')
+hm=load(oldhistmap['path']);check([x['original']for x in hm['files']]==hist['files']
+      and all(x['original']==x['retained_existing_S']for x in hm['files']),'same21 original/retained paths')
+nextsel=cp['next_select'];front=nextsel['record']['file'];check(ref(front['path'])==front,'whole next frontier identity')
+line=raw(front['path']).splitlines(keepends=True)[nextsel['record']['line']]
+check(nextsel['record']['line']==0 and hashlib.sha256(line).hexdigest()==nextsel['parent']==nextsel['record']['sha256'],'next reserved literal record')
+nextrecord=put('reserved_next_record.json',dict(schema='F009_ACCEPTED11462_RESERVED_FIRST_REFINEMENT_DATA_V1',author='/root/status_audit',Root_authority=False,
+ checkpoint=cpr,snapshot_adoption=spr,next_select=nextsel,reserved_parents=cp['reserved_parents'],pending_includes_reserved=True,
+ raw_file=front,zero_based_line=0,record_bytes=len(line),record_ascii=line.decode('ascii'),record_sha256=hashlib.sha256(line).hexdigest(),no_state_decode=True))
+cpfiles=[ref(p)for p in sorted(C.iterdir())if p.is_file()];check(len(cpfiles)==15,'all15 accepted checkpoint bodies')
+main=ref(C.parent.parent/'shared_pin_checkpoint_11462/evidence/preservation.json')
+tail=ref(C/'registration_evidence/preservation.json')
+check(main['sha256']=='e7886dc6cbbe7a299a960255eef258b2be98c9d989fd18e78ec1332fdd5138a1'
+      and tail['sha256']=='67a4b7c60e150950f76a78acad45b3d664219d6b6a733877200cc3b64be6dd8d','actual canonical preservation maps')
+registration_sdk=ref('/private/tmp/f009_from11401_registration_recipe_DATA/runtime/f009_11462_Root_actual_registration_commit_attempt1_capture.json')
+check(load(registration_sdk['path'])['actual_tool']['exit_code']==0,'genuine current registration SDK')
+own=ref(__file__)
+proposal=Path('/private/tmp/f009_export_lifetime')
+proposal_docs=[ref(p)for p in sorted(proposal.iterdir())if p.is_file()]
+peer=ref('/private/tmp/f009_export_lifetime_independent_review/independent_review.json')
+epoch=merge(proposal_docs,controlrows,[rootrelease,controlbinding,rosters,nextrecord,own,peer,main,tail,histref,oldhistmap,np0r,rp0r,cat0r,b0r,registration_sdk,ctor],
+ [ref(P/'control_run_interface.json'),ref(P/'next_binding_interface.json')])
+archive=load(cat0['inherited_qualified_archive']['path'])['inputs'];denied={r['path']for r in archive}
+check(len(archive)==446 and current['historical_archive_rows']==archive,'unchanged whole historical archive')
+cat=copy.deepcopy(cat0)
+cat['declared_input_rows']=merge(cat0['declared_input_rows'],current['inputs'],cpfiles,rf0,rf,nf,hist['files'],epoch)
+check(not denied&{r['path']for r in cat['declared_input_rows']},'no denied archived path revived')
+cat['role_counts']=dict(cat0['role_counts'],complete_inputs=len(cat['declared_input_rows']))
+cat['role_bytes']=dict(cat0['role_bytes'],complete_inputs=sum(r['bytes']for r in cat['declared_input_rows']))
+cat['OriginAcceptedBoundary']=dict(schema='F009_ACCEPTED11462_CATALOGUE_DATA_UNION_PROVENANCE_V1',author='/root/status_audit',Root_authority=False,
+ parent_catalogue=cat0r,parent_provenance=cat0['OriginAcceptedBoundary'],current_checkpoint=cpr,current_snapshot=spr,current_complete_inputs=cp['complete_root_inputs'],
+ canonical_preservation=main,registration_preservation=tail,current_input_rows=14292,all21_historical=histref,all5_previous_e466_outputs_retained=True,
+ Source_roster_changes=rosters,actual_controls=controlbinding,full_physical_domain_resweep_by_author=False,scientific_or_construction_helper_calls=0)
+cat['qualification']='Ordinary DATA union from accepted11462, preserving every previous field and original970 Source rows. The original extraction method/review remain historical attribution, not a rerun or new verdict. All14292 current rows,21 historical raw pins,5 previous e466 outputs and446 archive denials retained. Native only updates the metadata-constructor role1dcc to2e76; Reader separately replaces caller5cc/helper9170 by1031/c5ce. Old editions remain historical DATA. Root current-domain resweep, constructor/preflight/case release, Native, strictReader and actual memory measurements remain owed.'
+catr=put('catalogue.json',cat)
+
+b=copy.deepcopy(b0)
+provided=merge(cat['declared_input_rows'],current['inputs'],[cpr,spr,cp['complete_root_inputs'],b0['inherited_catalogue_boundary']])
+pi={r['path']:r for r in provided};fullpub=merge(b0['publication_inputs'],current['inputs'],cpfiles,rf0,rf,nf,hist['files'],epoch,[catr])
+pub=[r for r in fullpub if pi.get(r['path'])!=r];check(merge(provided,pub)==merge(provided,fullpub),'whole publication union with no duplicate list')
+b.update(author='/root/status_audit',checkpoint_acceptance=cpr,snapshot_adoption=spr,complete_root_inputs=cp['complete_root_inputs'],expected_checkpoint_sequence=11462,
+ registration=reg,registration_actual_execution=registration_sdk,publication_inputs=pub,
+ qualification='Accepted11462 with198 pending families including the reserved first refinement54f419e3 at call_0032.frontier zero-based0. All pending remain unpaid. Same original model/runtime/membership/word/debt/order proofs and64action/60s,1s completion/5s refinement caps. Actual generic controls40/35/15 pass only the new tiny Source components. Root fresh physical-domain/SourceMathCode Native and Reader case releases, actual execution and fit remain owed.')
+b['data_lineage']=dict(schema='F009_ACCEPTED11462_NEXT_BOUNDED_CENSUS_DATA_V1',author='/root/status_audit',Root_authority=False,previous_whole_boundary=b0r,
+ accepted_checkpoint=cpr,accepted_snapshot=spr,current_rows=14292,registration=reg,actual_generic_controls=controlbinding,source_role_changes=rosters,
+ prior_actual_Reader=rp0['program'],future_Native=native,future_Reader=reader,future_Reader_helper=helper,old_sources_historical_DATA=True,Source_or_verdict_transfer=False)
+br=put('boundary.json',b)
+np=copy.deepcopy(np0);np.update(artifact_root=str(P/'native_job'),output=str(P/'native_output'),boundary=br,catalogue=catr,catalogue_actual_execution=None,
+ catalogue_guard_receipt=None,reused_actual_checkpoint_registration=reg,method_sources=nm)
+np['data_lineage']=dict(schema='F009_ACCEPTED11462_NEXT_BOUNDED_NATIVE_PARAMETERS_DATA_V1',author='/root/status_audit',Root_authority=False,
+ previous_parameters=np0r,accepted_checkpoint=cpr,accepted_snapshot=spr,source_changes=rosters,actual_generic_controls=controlbinding,
+ Native_caller_and_Owner_unchanged=True,sole_metadata_constructor_role_changed=[oldctor,ctor],fresh_Root_case_release=None,scientific_calls=0)
+npr=put('native_parameters.json',np)
+rp=copy.deepcopy(rp0);rp.update(artifact_root=str(P/'reader_job'),output=str(P/'reader_output'),boundary=br,catalogue=catr,catalogue_actual_execution=None,
+ catalogue_guard_receipt=None,reused_actual_checkpoint_registration=reg,program=reader,method_sources=rm,native_closure=None,closed_native_metadata_method=None)
+rp['data_lineage']=dict(schema='F009_ACCEPTED11462_NEXT_STRICT_READER_PARAMETERS_UNBOUND_DATA_V1',author='/root/status_audit',Root_authority=False,
+ previous_parameters=rp0r,accepted_checkpoint=cpr,accepted_snapshot=spr,source_changes=rosters,actual_generic_controls=controlbinding,
+ old_own_caller_and_helper_historical_DATA=[proj['old_caller'],proj['old_helper']],selected_caller=reader,selected_helper=helper,
+ actual_Native_closure=None,closed_native_metadata_method=None,new_Root_case_release=None,scientific_calls=0,
+ qualification='UNBOUND until actual next closedNative. Only two active Reader roles change; a0e Owner/706 adapter and all other51 method rows literal. Historical lineage objects retain their exact earlier statuses and are not current execution authority.')
+rpr=put('reader_parameters_UNBOUND.json',rp)
+check(npr['bytes']<=65536 and rpr['bytes']<=65536,'same parameter read cap')
+
+def changed_fields(a,z):
+    return [k for k in sorted(set(a)|set(z))if (k in a)!=(k in z)or a.get(k)!=z.get(k)]
+pairs=[]
+for name,a,z,ar,zr in [('catalogue',cat0,cat,cat0r,catr),('boundary',b0,b,b0r,br),('Native_parameters',np0,np,np0r,npr),('Reader_UNBOUND_parameters',rp0,rp,rp0r,rpr)]:
+    ks=changed_fields(a,z);back=copy.deepcopy(z)
+    for k in ks:
+        if k in a:back[k]=a[k]
+        else:back.pop(k,None)
+    check(back==a and can(back)==raw(ar['path']),'whole typed parent bytes and every unknown field restored')
+    pairs.append(dict(name=name,before=ar,after=zr,changed_fields=ks,restore_from_pinned_before_document=True,
+                      whole_parent_bytes_equal=True,all_unknown_fields_preserved=True,
+                      changed_after_value_sha256={k:hashlib.sha256(can(z.get(k))).hexdigest()for k in ks}))
+cat_index={r['path']:r for r in cat['declared_input_rows']}
+inv=put('whole_typed_inverse.json',dict(schema='F009_CURRENT11462_EXACT_PRIVATE_DATA_TRANSFORMS_V1',author='/root/status_audit',Root_authority=False,pairs=pairs,
+ source_changes=rosters,all14292_current_rows_preserved=all(cat_index.get(r['path'])==r for r in current['inputs']),
+ all_previous1024_Reader_sources_retained_DATA=all(cat_index.get(r['path'])==r for r in rf0),historical21=histref,historical_mapping=oldhistmap,
+ all446_archived_rows_denied=True,current_checkpoint_not_retargeted=True,scientific_or_construction_helper_calls=0))
+ordered=[npr,catr,br,cpr,spr,cp['complete_root_inputs'],cat['Root_review'],cat['plan'],cat['inherited_qualified_archive'],b['inherited_catalogue_boundary'],sp['source_profile'],b['runtime_gate'],sp['producer_case'],b['controls_gate']]
+invoice=put('constructor_invoice.json',dict(schema='EXISTING_2E76_CURRENT11462_NATIVE_METADATA_DOCUMENT_INVOICE_V1',author='/root/status_audit',Root_authority=False,
+ constructor=ctor,ordered14_document_reads=ordered,declared_read_bytes=ctor['bytes']+sum(r['bytes']for r in ordered),new_bytes_cap=16*2**20,new_files_cap=24,
+ expected_Native_metadata_files=11,actual_forecast=None,actual_write=None,Source_rows=1015,Source_bytes=sum(r['bytes']for r in nf),
+ qualification='Static metadata invoice only. Actual constructor forecast/write and full image equality remain Root owned; no hypothetical output hashes or Source case authority.'))
+g=copy.deepcopy(load(N/'native_Root_review_TEMPLATE_FALSE.json'))
+g.update(root=None,Root_authority=False,status='PENDING_FRESH_ROOT_SOURCE_MATH_CODE_AND_CURRENT11462_CASE_REVIEW',authorized_roles=[],
+ blockers=['No actual current11462 constructor job or new Native exists; Root must freshly review actual output identities/current physical domain.'],
+ program=native,job=None,Owner=np['Owner'],checkpoint_boundary=br,expected_checkpoint_sequence=11462,method_sources=nm)
+gate=put('native_Root_review_TEMPLATE_FALSE.json',g)
+py='/Users/sasha/.venvs/global/bin/python'
+workflow=put('Root_workflow_UNRUN.json',dict(schema='F009_CURRENT11462_EXISTING_NATIVE_THEN_READER_UNRUN_ROUTE_V1',author='/root/status_audit',Root_authority=False,
+ constructor_forecast=[py,'-E','-B','-S',ctor['path'],'--parameters',npr['path'],npr['sha256']],constructor_write_adds=['--write'],
+ constructor_guard=dict(RSS_MiB=256,seconds=150,admit_RAM_GiB=4,admit_disk_GiB=10,new_bytes=16*2**20,new_files=24,read_bytes=ctor['bytes']+sum(r['bytes']for r in ordered)),
+ actual_Native_job=None,false_Native_gate=gate,Native_parameters=npr,Reader_parameters_UNBOUND=rpr,Source_role_changes=rosters,actual_generic_controls=controlbinding,
+ actual_constructor_images_and_current_Source_hashes_owed=True,actual_current_domain_resweep_owed=True,
+ Native_request_template=dict(program='/private/tmp/f009_complete_transport/complete_tree/sources/make_owner_request.py',
+ argv_fields=['--job','ACTUAL_JOB_PATH','ACTUAL_JOB_SHA256','--root-review',str(P/'native_Root_review.json'),'ACTUAL_ROOT_CASE_REVIEW_SHA256','--execution',str(P/'native_execution'),'--request',str(P/'native_request.json'),'--execution-id','F009_NATIVE_FROM11462']),
+ Native_Owner_after_actual_request=[py,'-E','-B',np['Owner']['path'],'--request',str(P/'native_request.json')],
+ Native_guard=dict(outer_RSS_MiB=512,outer_seconds=150,Owner_seconds=120,worker_seconds=60,max_actions=64,completion_seconds=1,refine_seconds=5,shared_serial_admission=True),
+ strict_Reader=dict(bind_only_after_actual_closed_Native=True,existing_e466_closure=True,retain_all5_generated_outputs=True,
+ bind_fields=['native_closure','closed_native_metadata_method'],constructor=ctor,Source_methods=53,Source_rows=1024,Owner=rp['Owner'],program=reader,helper=helper,
+ outer_RSS_MiB=512,outer_seconds=150,Owner_seconds=120,all21_historical_pins_required=True,no_Native_inside_Reader=True),
+ no_predicted_Native_outcome_or_new_checkpoint=True,actual_Root_gates_and_SDK_frames_owed=True))
+handoff=put('handoff.json',dict(schema='F009_CURRENT11462_NATIVE_AND_STRICT_READER_PRIVATE_PARAMETERS_READY_V1',author='/root/status_audit',Root_authority=False,
+ accepted_checkpoint=cpr,accepted_snapshot=spr,checkpoint=cp['checkpoint'],reserved_first_action=nextsel,current_rows=14292,
+ catalogue=catr,boundary=br,Native_parameters=npr,Reader_parameters_UNBOUND=rpr,whole_typed_inverse=inv,source_roster_changes=rosters,
+ actual_generic_controls=controlbinding,constructor=ctor,constructor_invoice=invoice,false_Native_gate=gate,Root_workflow=workflow,author_DATA_source=own,
+ new_declared_catalogue_rows=len(cat['declared_input_rows']),new_declared_catalogue_bytes=sum(r['bytes']for r in cat['declared_input_rows']),
+ Native_methods=44,Native_Source_rows=1015,Reader_methods=53,Reader_Source_rows=1024,scientific_or_construction_helper_calls=0,state_or_gzip_decodes=0,S_W_Git_mutations=0,
+ actual_new_job=None,actual_Native=None,actual_Reader=None,actual_saving_or_case_fit_claim=False,
+ qualification='Concrete ordinary DATA only. All previous documents and unknown fields reverse exactly. Root alone runs corrected constructor2e76, authenticates current Source/domain, releases actual cases and obtains genuine Native/Reader/registration outputs. Reader closure remains null.'))
+print(json.dumps(dict(handoff=handoff,Native_parameters=npr,Reader_UNBOUND=rpr,catalogue=catr,boundary=br,constructor_invoice=invoice,read_bytes=READ),sort_keys=True))

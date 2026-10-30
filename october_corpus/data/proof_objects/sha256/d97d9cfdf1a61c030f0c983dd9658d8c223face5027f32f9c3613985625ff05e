@@ -1,0 +1,131 @@
+"""Own static closed-file selection and ordinary JSON postwrite audit only."""
+from pathlib import Path
+import copy, hashlib, json, os, stat
+
+D=Path(__file__).resolve().parent
+V=Path('/private/tmp/q11_job24_middle7_divisible_DATA')
+P=V/'planned_Root_append_DATA'
+S=Path('/Users/sasha/medusa/research/leemans')
+B=S/'computation/f004/q11/rank4/section_generation/job_0024/middle7_divisible_batches/batch_0001'
+DEST=B/'execution_evidence'
+RET=Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py')
+CACHE={}
+READ=0
+
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('utf8')
+def body(p):
+    global READ
+    p=Path(p);a=p.lstat();sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    assert p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4*2**20
+    if str(p)in CACHE:
+        old,b=CACHE[str(p)];assert sig(a)==old;return b
+    assert READ+a.st_size+1<=16*2**20
+    with p.open('rb')as f:b=f.read(a.st_size+1)
+    assert len(b)==a.st_size and sig(a)==sig(p.lstat());READ+=len(b);CACHE[str(p)]=(sig(a),b);return b
+def ref(p):
+    p=Path(p);b=body(p);return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def pinned(r):assert ref(r['path'])==r;return body(r['path'])
+def load(p):return json.loads(body(p))
+def put(name,v):
+    p=D/name;b=can(v);assert not p.exists()and len(b)<=4*2**20
+    with p.open('xb')as f:assert f.write(b)==len(b)
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+h=load(P/'handoff.json');pair=load(h['planned_pair']['path']);before=load(pair['before_selector']['path'])
+for row in(pair['planned_acceptance'],pair['planned_next_selector']):
+    assert pinned(row['descriptor'])==row['complete_UTF8'].encode('utf8')and load(row['descriptor']['path'])==row['typed_body']
+ar=pair['planned_acceptance']['descriptor'];selector=pair['planned_next_selector']['descriptor']
+append_sdk=ref(V/'runtime/f004_div7_Root_actual205_exact_append_attempt2_capture.json')
+assert append_sdk['sha256']=='4ee2ab20124935517fdc57ccf5da20d0d28630375081b3c967148466a09888ac'
+av=load(append_sdk['path']);assert av['actual_tool']['exit_code']==0 and av['all_genuine_api_frames']and av['root']=='/root'
+guard=ref(P/'runtime/Root_append_only_commit/receipt.json');gv=load(guard['path'])
+assert gv['status']=='PASS'and gv['returncode']==0 and gv['cleanup']['remaining']==[]and gv['cleanup']['errors']==[]
+stdout=ref(P/'runtime/Root_append_only_commit/stdout.log');sv=load(stdout['path'])
+assert sv['status']=='ROOT_ONLY205_MIDDLE7_DIVISIBLE_APPENDED'and sv['acceptance']==ar and sv['selector']==selector
+assert sv['actual_visited']==1348 and sv['unpaid']==1143 and sv['logical_negative_unpaid']==1583
+oldfail=ref(V/'runtime/f004_div7_Root_actual205_exact_append_attempt1_capture.json')
+assert oldfail['sha256']=='1eebfaf36ff276816c5f1d8e6e63b0f7bb0062d2176c2636cacb27fb0f9d98a5'
+fv=load(oldfail['path']);assert fv['actual_tool']['exit_code']!=0 and fv['all_genuine_api_frames']
+rootpost=ref(V/'runtime/Root_actual205_whole_postcheck_review.json');rp=load(rootpost['path'])
+assert rootpost['sha256']=='454ec55960248af427d8483f92320133c6c320c8c183803adeb88d62a82bf591'
+assert rp['root']=='/root'and rp['acceptance']==ar and rp['selector']==selector and rp['additional_accepted']==880 and rp['unresolved']==2726
+rootpostsdk=rp['actual_postcheck_capture'];pv=load(rootpostsdk['path']);assert ref(rootpostsdk['path'])==rootpostsdk
+assert pv['root']=='/root'and pv['actual_tool']['exit_code']==0 and pv['all_genuine_api_frames']
+post=put('independent_postwrite_review.json',dict(schema='F004205_ACTUAL_APPEND_INDEPENDENT_WHOLE_METADATA_POSTREVIEW_V1',reviewer='/root/status_audit',Root_authority=False,
+ status='PASS_ACTUAL_CANONICAL_PAIR_EXACT_PLANNED_BYTES_AND_GENUINE_ROOT_POSTCHECK',acceptance=ar,selector=selector,previous_selector=pair['before_selector'],
+ planned_pair=h['planned_pair'],full_typed_inverse=h['full_before_forward_inverse'],independent_static_review=ref('/private/tmp/q11_middle7_divisible_append_audit/review.json'),
+ actual_successful_append_SDK=append_sdk,actual_append_guard=guard,actual_append_result=stdout,Root_whole_postreview=rootpost,Root_whole_postreview_SDK=rootpostsdk,
+ earlier_append_failure=oldfail,failure_qualification='Earlier append attempt failed before child because supervisor output parent was missing; exact failed SDK and later parent intent are retained. It is not a successful append or a science failure.',
+ counts=dict(baseline=173,additional_accepted=880,new=205,unresolved=2726,fresh_visited=1348,fresh_miss_unpaid=1143,logical_negative_unpaid_not_visited=1583),
+ whole_prior_selector_unchanged=ref(pair['before_selector']['path'])==pair['before_selector'],all7_previous_adoptions_and_buckets_histories_unknown_fields_literal=True,
+ matrix_group_point_state_gzip_or_Source_helper_executions=0,S_W_Git_mutations=0,whole_manuscript_conjecture_Lean_compression_credit=0,
+ qualification='Actual immutable pair bytes and real Root postwrite records checked as ordinary JSON. Mathematical and original-model premises remain those of accepted Source707 and the cited7 theorem; this reviewer performs no arithmetic or writer execution. No two-file crash-atomic claim.'))
+
+pre=ref(B/'inputs/evidence/preservation.json');assert pre['sha256']=='cfd9a073070b31f4b671d3cbd34b1db200e854bcfc325a987367fe866e6943a7'
+pm=load(pre['path']);assert len(pm['files'])==61
+reuse={}
+for x in pm['files']:
+    r=x['original'];z=x['retained'];assert r['bytes']==z['bytes']and r['sha256']==z['sha256']
+    assert r['path']not in reuse or reuse[r['path']]==z
+    reuse[r['path']]=z
+
+# This is a finite snapshot of completed Source/control/science/append records.
+# Exact Root SDK failures and immutable FALSE/UNRUN ancestors retain their status.
+selected={}
+roles={}
+def add(p,role):
+    r=ref(p);assert selected.get(r['path'],r)==r;selected[r['path']]=r
+    roles.setdefault(r['path'],[]).append(role)
+for p in sorted(V.rglob('*')):
+    if p.is_file():add(p,'Frozen cofactor19/prime7 Source, DATA, actual result/proof, Root control/science/append/postwrite record or literal earlier failed/unrun evidence; all completed at selection.')
+for p in sorted(Path('/private/tmp/q11_middle7_divisible_append_audit').iterdir()):
+    if p.is_file():add(p,'Independent append metadata/inlineAST review; no Source or arithmetic execution.')
+for p in sorted(Path('/private/tmp/q11_middle7_divisible_actual_peer').iterdir()):
+    if p.is_file():add(p,'Sealed independent actual proof/Root execution metadata join review; no arithmetic replay.')
+for p in sorted(Path('/private/tmp/q11_middle7_divisible_independent_review_DATA').iterdir()):
+    if p.is_file():add(p,'Sealed original707 Source/negative-reuse/cap static review, reused by whole prelaunch map where exact.')
+add(post['path'],'Independent actual immutable pair and genuine Root postwrite check.')
+add(pre['path'],'Whole61-map prelaunch closure; older payload DAG remains borrowed and opaque.')
+add(ar['path'],'Actual accepted205 cofactor19/prime7 immutable record; no additional retention credit.')
+add(selector['path'],'Actual880additional/2726unresolved immutable selector.')
+add(__file__,'Own finite ordinary JSON selection Source only, not a mathematical or operational authority.')
+files=[]
+for path,r in sorted(selected.items()):
+    if path in reuse:
+        z=reuse[path];assert z['bytes']==r['bytes']and z['sha256']==r['sha256']
+    elif Path(path).is_relative_to(S):z=r
+    else:z=dict(path=str(DEST/'objects'/r['sha256']),bytes=r['bytes'],sha256=r['sha256'])
+    files.append(dict(original=r,retained=z))
+plan=put('retention_plan.json',dict(Root_authority=False,scientific_calls=0,destination=str(DEST),borrowed_closures=[pre],files=files,selection_roles=roles,
+ qualification='Complete frozen cofactor19/prime7 actual Source/control/science/independent-power/205append/postwrite tail, including failed Root precheck/power/append frames and literal FALSE/UNRUN ancestry. Reuse whole61-map prelaunch mappings unchanged; no old full proof DAG replay or duplicated old payloads. New adoption880/2726 is already Root registered. Retention supplies no row/job/manuscript/conjecture/Lean/compression credit.'))
+own=ref(RET);assert own['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+methods=[dict(original=own,retained=dict(path=str(DEST/'method/retain_closed_files.py'),bytes=own['bytes'],sha256=own['sha256'])),
+ dict(original=plan,retained=dict(path=str(DEST/'method/plan.json'),bytes=plan['bytes'],sha256=plan['sha256']))]
+manifest=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=files+methods,borrowed_closures=[pre],source_plan=plan,scientific_calls=0,
+ Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,
+ qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+manifestbytes=len(can(manifest))
+copies=[x for x in files if Path(x['retained']['path']).is_relative_to(DEST)]
+reused=[x for x in files if x not in copies]
+newobjects={x['retained']['path']:x['retained']for x in copies}
+workerread=3*own['bytes']+3*plan['bytes']+pre['bytes']+4*sum(x['original']['bytes']for x in copies)+3*sum(x['original']['bytes']for x in reused)+manifestbytes
+workernew=sum(x['bytes']for x in newobjects.values())+own['bytes']+plan['bytes']+manifestbytes
+paths={str(RET),plan['path'],pre['path'],str(DEST/'method/retain_closed_files.py'),str(DEST/'method/plan.json'),str(DEST/'preservation.json')}
+for x in files:paths.update([x['original']['path'],x['retained']['path']])
+bounds=dict(read=workerread+16*2**20+128*2**10,new=workernew+2*2**20+128*2**10,paths=len(paths)+32)
+assert bounds['read']<=64*2**20 and bounds['new']<=16*2**20 and bounds['paths']<=512
+assert max([x['original']['bytes']for x in files]+[plan['bytes'],own['bytes'],manifestbytes])<=4*2**20
+invoice=put('retention_invoice.json',dict(schema='UNRUN_EXISTING667_F004205_CLOSED_TAIL_INVOICE_V1',author='/root/status_audit',Root_authority=False,
+ Source=own,plan=plan,rows=len(files),copy_rows=len(copies),reuse_rows=len(reused),unique_new_objects=len(newobjects),borrowed_closures=[pre],manifest_exact_forecast_bytes=manifestbytes,
+ worker_read_upper_including_Source_bootstrap=workerread,worker_new_upper=workernew,worker_paths=len(paths),total_with_wrapper_reserves=bounds,
+ largest_file=max(x['original']['bytes']for x in files),limits=dict(read=64*2**20,new=16*2**20,paths=512,per_file=4*2**20),
+ formula='3*Source+3*plan+borrowed_map+4*copy_row_bytes+3*reuse_row_bytes+manifest;16MiB read/2MiB new/32path wrapper reserve plus128KiB extra.',actual_copy_executions=0))
+argv=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(RET),'--self-sha256',own['sha256'],'--plan',plan['path'],plan['sha256'],
+ '--destination',str(DEST),'--manifest',str(DEST/'preservation.json')]
+handoff=put('handoff.json',dict(schema='UNRUN_F004205_ACTUAL_CLOSED_TAIL_HANDOFF_V1',author='/root/status_audit',Root_authority=False,
+ Source=own,plan=plan,invoice=invoice,destination=str(DEST),manifest=str(DEST/'preservation.json'),rows=len(files),bounds=bounds,
+ actual_acceptance=ar,actual_selector=selector,actual_prelaunch=pre,actual_Root_successful_append_SDK=append_sdk,
+ Root_actual_postcheck=rootpost,independent_append_review=ref('/private/tmp/q11_middle7_divisible_append_audit/review.json'),independent_actual_postcheck=post,
+ proposed_child_argv_UNRUN=argv,proposed_guard_directory=str(V/'runtime/closed_execution_evidence_guard'),proposed_guard_RSS_MiB=128,proposed_guard_seconds=125,
+ Source_helper_or_scientific_executions=0,S_W_Git_mutations=0,qualification='Exact existing667 byte copy only. Root owns Source review/admission/actual copy/genuine SDK/full manifest postcheck. Both earlier failed and actual successful Root records are selected unchanged. Older61-map payloads reused without expanding their historical proof DAG.'))
+print(json.dumps(dict(handoff=handoff,plan=plan,invoice=invoice,rows=len(files),copy_rows=len(copies),reuse_rows=len(reused),bounds=bounds,author_metadata_read_bytes=READ),sort_keys=True))

@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "stop": "RETURNED",
+  "error": null,
+  "utc": "2026-10-30T21:48:12.299004+00:00",
+  "seconds": 0.08171212498564273,
+  "returncode": 0,
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "import json,hashlib,copy,stat\nfrom pathlib import Path\nreads=0\ndef whole(r):\n global reads\n p=Path(r['path']);a=p.lstat();assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes']<=8*2**20\n b=p.read_bytes();z=p.lstat();reads+=len(b);assert reads<64*2**20 and(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)and hashlib.sha256(b).hexdigest()==r['sha256'];return b\ncan=lambda v:json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()\nP=Path('/private/tmp/f009_checkpoint11518_registration/runtime');actual=json.loads((P/'actual_registration_commit/stdout.log').read_bytes());forecast=json.loads((P/'registration_final_forecast/stdout.log').read_bytes());assert actual['checkpoint_acceptance']==forecast['checkpoint_acceptance']and actual['snapshot_adoption']==forecast['snapshot_adoption']\ncp=json.loads(whole(actual['checkpoint_acceptance']));sp=json.loads(whole(actual['snapshot_adoption']));reg=json.loads(whole(actual['registration_result']));intent=json.loads(whole(reg['intent']))\nassert cp['checkpoint']==sp['checkpoint']==reg['checkpoint']==dict(sequence=11518,nodes=6048,pending=203,reserved_debts=0,selected_raw_leaf_records=684526)\nassert cp['root']==sp['root']=='/root'and cp['adopted']is sp['adopted']is True and sp['checkpoint_acceptance']==actual['checkpoint_acceptance']\nold=[json.loads(whole(r))for r in intent['before_copies']];nexts=[whole(r)for r in intent['after_images']]\nkeys=['F009_checkpoint_current','F009_checkpoint_acceptance_current','F009_snapshot_acceptance_current','F009_next_select_current','F009_reserved_parents_current']\nfor k,path in enumerate(intent['live_paths']):\n p=Path(path);raw=p.read_bytes();reads+=len(raw);assert raw==nexts[k];new=json.loads(raw);back=copy.deepcopy(new)\n if k<2:\n  assert new['F009_checkpoint_current']==cp['checkpoint']and new['F009_checkpoint_acceptance_current']==actual['checkpoint_acceptance']and new['F009_snapshot_acceptance_current']==actual['snapshot_adoption']\n  for f in keys:\n   if f in old[k]:back[f]=old[k][f]\n   else:back.pop(f,None)\n  if 'root_intake_progress_current'in old[k]:\n   field='F009_accepted_checkpoint'\n   if field in old[k]['root_intake_progress_current']:back['root_intake_progress_current'][field]=old[k]['root_intake_progress_current'][field]\n   else:back['root_intake_progress_current'].pop(field,None)\n  else:back.pop('root_intake_progress_current',None)\n else:\n  assert new['F009']['checkpoint']==cp['checkpoint']and new['F009']['checkpoint_acceptance']==actual['checkpoint_acceptance']and new['F009']['snapshot_adoption']==actual['snapshot_adoption']\n  for f in ['checkpoint','checkpoint_acceptance','snapshot_adoption','status','root_metadata_update']:\n   if f in old[k]['F009']:back['F009'][f]=old[k]['F009'][f]\n   else:back['F009'].pop(f,None)\n assert can(back)==can(old[k]),'full unknown/nonF009 inverse'\nassert cp['ordinary_census_complete']is False and cp['all_pending_families_remain_unpaid']is True and cp['whole_original_credit']==0 and cp['reserved_parents']==[]\nprint(json.dumps(dict(status='PASS_ACTUAL11518_CP_SP_REGISTRATION_AND_WHOLE_THREEVIEW_FORWARD_REVERSE',checkpoint=cp['checkpoint'],checkpoint_acceptance=actual['checkpoint_acceptance'],snapshot_adoption=actual['snapshot_adoption'],registration_result=actual['registration_result'],all_unknown_F004_L026_fields_preserved=True,all_pending_unpaid=True,three_file_crash_atomic_claim=False,read_bytes=reads,new_complete_manuscripts=0)))"
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 268435456,
+    "wall_seconds": 150.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 10900373504,
+    "available_ram": 4854677504
+  },
+  "peaks": {
+    "total_rss": 28213248,
+    "min_free_disk": 10900361216,
+    "min_available_ram": 4854677504,
+    "samples": 1
+  },
+  "recent_samples": [
+    {
+      "seconds": 0.002,
+      "total_rss": 28213248,
+      "free_disk": 10900361216,
+      "available_ram": 4856217600,
+      "live_processes": 1
+    }
+  ],
+  "identities": [
+    {
+      "pid": 89689,
+      "birth": 1793396892.21749,
+      "initial_parent": 89688,
+      "group": 89689,
+      "session": 89689,
+      "peak_rss": 262144
+    }
+  ],
+  "logs": {
+    "stdout": 1242,
+    "stderr": 0
+  },
+  "cleanup": {
+    "remaining": [],
+    "errors": [],
+    "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded."
+  },
+  "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants."
+}

@@ -1,0 +1,44 @@
+--- /private/tmp/f009_export_lifetime/controls_UNRUN.py
++++ /private/tmp/f009_export_lifetime/controls_bounded_UNRUN.py
+@@ -12,10 +12,28 @@
+ def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+ def source(r,cap=65536):
+  global READ
+- p=Path(r['path']);a=p.lstat();b=p.read_bytes();z=p.lstat()
+- need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and len(b)==r['bytes']<=cap and hashlib.sha256(b).hexdigest()==r['sha256'],'whole exact bounded Source')
+- need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns),'Source stable')
+- READ+=len(b);need(READ<=2*2**20,'complete2MiB Source read scope');return b
++ need(type(r)is dict and set(r)=={'path','bytes','sha256'}
++      and type(r['path'])is str and 0<len(r['path'])<=4096
++      and type(r['bytes'])is int and type(cap)is int and 0<cap<=65536
++      and 0<=r['bytes']<=cap and type(r['sha256'])is str
++      and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),
++      'typed bounded Source descriptor before IO')
++ p=Path(r['path'])
++ need(p.is_absolute()and str(p)==r['path']and '..'not in p.parts
++      and p.resolve(strict=True)==p,'canonical Source path before IO')
++ a=p.lstat()
++ need(stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],
++      'ordinary single-link exact declared Source size before IO')
++ need(type(READ)is int and 0<=READ and READ+r['bytes']+1<=2*2**20,
++      'complete2MiB Source read admission including one overrun byte')
++ sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
++ with p.open('rb')as f:
++  b=os.fstat(f.fileno());need(sig(a)==sig(b),'same opened Source before bounded read')
++  raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
++ READ+=len(raw)
++ need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']
++      and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable exact bounded Source')
++ return raw
+ def argref(pair):
+  p=Path(pair[0]);return dict(path=str(p),bytes=p.stat().st_size,sha256=pair[1])
+ def module(r,name):
+@@ -54,7 +72,7 @@
+  head=write('head.json',can(dict(synthetic=True)));base=write('base.json',can(dict(head=head)))
+  producer=write('producer.json',can(dict(base=head,target=[32,5,4,8],binary=binref,completion_binary=compref)))
+  profile=write('profile.json',can(dict(synthetic=True)))
+- def line(f,i):return dict(file=pins[f],line=i,sha256=hashlib.sha256(bodies[f].splitlines(keepends=True)[i]).hexdigest())
++ def line(f,i):return dict(file=dict(pins[f]),line=i,sha256=hashlib.sha256(bodies[f].splitlines(keepends=True)[i]).hexdigest())
+  def state():
+   ns={}
+   for i in range(2):
