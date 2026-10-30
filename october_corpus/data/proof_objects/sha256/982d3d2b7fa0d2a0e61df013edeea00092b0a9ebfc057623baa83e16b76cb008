@@ -1,0 +1,96 @@
+"""UNRUN genuine tiny LF-authentication controls; Root owns execution/review.
+
+No original state, snapshot, graph, group, worker or native binary is read.
+These controls exercise the literal original authentication body and its
+single-allocation successor. Complete caller/provider controls remain owed.
+"""
+import argparse, ast, hashlib, json, os, resource, stat, sys, time, types
+from pathlib import Path
+
+CODEC = {'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_saved_export_memory/reference_backed_snapshot/explicit_export_join/codec.py','bytes':29537,'sha256':'d63b3417ccbfac618239b30898c1f4069a2c95b164a840a6eb4a963986f47358'}
+MAP = {'path':'/private/tmp/f009_export_location_maps/location_map.py','bytes':1518,'sha256':'4c3cdc29f64460a26ab26acba7683325b836230a741b4ecf2a368adcec8f52ba'}
+OLD = 'found={}if expected is None else None'
+NEW = 'found=ROOT_LOAD_LOCATION_MAP()if expected is None else None'
+
+def need(ok, why):
+    if not ok: raise ValueError(why)
+
+def read_source(ref):
+    p=Path(ref['path']); a=p.lstat()
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1 and a.st_size==ref['bytes'], 'ordinary exact Source extent')
+    raw=p.read_bytes(); z=p.lstat()
+    need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+         and hashlib.sha256(raw).hexdigest()==ref['sha256'], 'whole stable exact Source hash')
+    return raw
+
+def definition(raw, name):
+    text=raw.decode(); nodes=[n for n in ast.parse(text).body if isinstance(n,ast.FunctionDef) and n.name==name]
+    need(len(nodes)==1, 'one complete literal definition')
+    return ast.get_source_segment(text,nodes[0])
+
+def main():
+    began=time.monotonic()
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--out',required=True); ap.add_argument('--self-sha256',required=True); a=ap.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and sys.flags.no_site and not sys.flags.optimize, 'EBS interpreter')
+    attempts=[]
+    def deny(event,args):
+        if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            attempts.append(event); raise RuntimeError('all native/process launches denied')
+    sys.addaudithook(deny)
+    own=dict(path=str(Path(__file__).resolve()),bytes=Path(__file__).stat().st_size,sha256=a.self_sha256)
+    ownraw=read_source(own)
+    cr,mr=read_source(CODEC),read_source(MAP)
+    c=types.ModuleType('actual_original_authentication_fixture');c.__file__=CODEC['path']
+    m=types.ModuleType('actual_location_map_fixture');m.__file__=MAP['path']
+    # Source definitions only: neither module has an import-time science call.
+    exec(compile(cr,CODEC['path'],'exec',dont_inherit=True),vars(c))
+    exec(compile(mr,MAP['path'],'exec',dont_inherit=True),vars(m))
+    before=definition(cr,'authenticate_lines');need(before.count(OLD)==1 and NEW not in before,'one allocation site')
+    after=before.replace(OLD,NEW,1);need(after.replace(NEW,OLD,1)==before,'entire literal inverse')
+    private=dict(vars(c));private['ROOT_LOAD_LOCATION_MAP']=m.LocationDigestMap
+    exec(compile(after,str(Path(__file__).resolve())+'::private_auth','exec',dont_inherit=True),private)
+    new=private['authenticate_lines'];original=c.authenticate_lines
+    root=Path(a.out)
+    need(root.is_absolute() and root.parent.resolve(strict=True)==root.parent and not os.path.lexists(root), 'fresh canonical fixture root')
+    root.mkdir();passed=[]
+    def good(name,ok):need(ok,name);passed.append(name)
+    def refuse(name,fn):
+        try:fn()
+        except (ValueError,KeyError,TypeError,RuntimeError):passed.append(name);return
+        raise ValueError('accepted negative control: '+name)
+    def fixture(name,body):
+        p=root/name;p.write_bytes(body)
+        return dict(path=str(p),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+    one=fixture('one.lines',b'alpha\nbeta\ngamma\n');two=fixture('two.lines',b'delta\nepsilon\n')
+    pins=[one,two];groups=[[0,[0,2,0]],[1,[1]],[0,[1]]]
+    old=original(pins,groups);found=new(pins,groups)
+    good('all_literal_selected_hash_values_equal',all(found[k]==v for k,v in old.items()) and len(found)==len(old))
+    good('actual_location_map_no_retained_tuple_keys',type(found)is m.LocationDigestMap and all(type(k)is int for k in found._files)
+         and all(type(k)is int for bucket in found._files.values()for k in bucket))
+    good('duplicate_occurrence_and_nonconsecutive_file_groups_preserved',len(found)==4 and found[(0,0)]==old[(0,0)])
+    good('expected_branch_authenticates_and_returns_None',new(pins,groups,expected=found)is None and original(pins,groups,expected=old)is None)
+    wrong=dict(old);wrong[(0,0)]='0'*64
+    refuse('wrong_expected_selected_digest_refused',lambda:new(pins,groups,expected=wrong))
+    bad=dict(one,sha256='0'*64)
+    refuse('wrong_whole_file_hash_refused',lambda:new([bad],[[0,[0]]]))
+    tail=fixture('tail.lines',b'alpha\npartial')
+    refuse('nonLF_partial_tail_refused',lambda:new([tail],[[0,[0]]]))
+    refuse('selected_line_beyond_EOF_refused',lambda:new([one],[[0,[3]]]))
+    refuse('Boolean_line_index_refused',lambda:new([one],[[0,[True]]]))
+    refuse('negative_line_index_refused',lambda:new([one],[[0,[-1]]]))
+    refuse('Boolean_file_index_refused',lambda:new([one],[[True,[0]]]))
+    refuse('empty_index_group_refused',lambda:new([one],[[0,[]]]))
+    refuse('out_of_range_file_index_refused',lambda:new([one],[[1,[0]]]))
+    long=fixture('long.lines',b'x'*16384+b'\n')
+    refuse('overlong_line_refused',lambda:new([long],[[0,[0]]]))
+    good('original_provider_and_globals_unchanged',c.authenticate_lines is original and 'ROOT_LOAD_LOCATION_MAP'not in vars(c))
+    good('exact_private_provider_and_all_other_helpers_literal',new.__globals__ is private and all(private[k] is v for k,v in vars(c).items() if k!='authenticate_lines'))
+    good('source_identity_unchanged_at_end',read_source(CODEC)==cr and read_source(MAP)==mr and read_source(own)==ownraw)
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    need(not attempts and rss<256*2**20 and time.monotonic()-began<150,'bounded Source-only control family')
+    print(json.dumps(dict(schema='ROOT_OWED_AUTH_LOCATION_ALLOCATION_CONTROLS_V1',status='PASS',controls=len(passed),names=passed,
+        original_case_calls=0,native_launch_attempts=attempts,unchanged_typed_roundtrip_provider_controls_still_owed=True,
+        actual_next_case_RSS_or_time_fit_acquired=False,program=own,Source=[CODEC,MAP]),sort_keys=True))
+
+if __name__=='__main__':main()

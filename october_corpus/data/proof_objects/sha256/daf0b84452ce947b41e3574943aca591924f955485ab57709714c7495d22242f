@@ -1,0 +1,43 @@
+"""Own text/AST/ordinary-DATA author of one metadata constructor seam, never executed here."""
+from pathlib import Path
+import ast,copy,difflib,hashlib,json
+D=Path(__file__).resolve().parent
+A=Path('/private/tmp/f009_metadata_references/producer_support/construct.py')
+E=Path('/private/tmp/f009_complete_transport/complete_tree/sources/prepare_reader.py')
+P=Path('/private/tmp/f009_from11401_Reader_all_e466_DATA/reader_parameters_ALL_E466_DATA.json')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def put(n,v):
+ p=D/n;assert not p.exists();p.write_bytes(v if type(v)is bytes else can(v));return ref(p)
+a=A.read_text();e=E.read_text();am=ast.parse(a);em=ast.parse(e)
+def definition(t,m,name):
+ ns=[n for n in m.body if isinstance(n,ast.FunctionDef)and n.name==name];assert len(ns)==1;return ast.get_source_segment(t,ns[0])
+def constant(t,m,name):
+ ns=[n for n in m.body if isinstance(n,ast.Assign)and any(isinstance(q,ast.Name)and q.id==name for q in n.targets)];assert len(ns)==1;return ast.get_source_segment(t,ns[0])
+const=constant(e,em,'_F9_MANIFEST_TAG');bank=definition(e,em,'f9_output_bank');expand=definition(e,em,'f9_expand_manifest')
+for n in('f9_rows','f9_need','f9_canonical'):assert definition(a,am,n)==definition(e,em,n)
+block=const+'\n\n\n'+bank+'\n\n\n'+expand+'\n\n'
+seam_before="outputs=read(closure['output_manifest'])";seam_after="outputs=f9_expand_manifest(read(closure['output_manifest']),read)"
+assert a.count(seam_before)==1 and '_F9_MANIFEST_TAG'not in a
+marker='def need(ok,why):';assert a.count(marker)==1
+s=a.replace(marker,block+marker,1).replace(seam_before,seam_after,1);ast.parse(s)
+back=s.replace(block,'',1).replace(seam_after,seam_before,1);assert back==a
+sr=put('construct.py',s.encode())
+inv=put('whole_Source_inverse.json',dict(schema='F009_MANIFEST_CONSTRUCTOR_SINGLE_SEAM_EXACT_SOURCE_INVERSE_V1',author='/root/l026_next_batch',Root_authority=False,original=ref(A),donor=ref(E),successor=sr,remove_exact_added_block=block,seam_before=seam_before,seam_after=seam_after,borrowed_definition_names=['f9_output_bank','f9_expand_manifest'],borrowed_constant='_F9_MANIFEST_TAG',all_three_called_common_helpers_literal_equal=True,whole_before_Source_bytes_equal=True,all_old_AST_except_single_build_call_unchanged=True,new_trusted_scientific_predicate=False,scope='Metadata envelope decoder composed at existing outputmanifest read only. Raw manifests retain identity; indexed wire expands through unchanged whole read and complete tag/bank/full-canonical predicates. No science/result/closure/Source-case retagging.'))
+diff=put('construct.diff',''.join(difflib.unified_diff(a.splitlines(True),s.splitlines(True),fromfile=str(A),tofile=str(D/'construct.py'))).encode())
+p=json.loads(P.read_bytes());oldpr=ref(P);oldcon=ref(A);assert p['method_sources'].count(oldcon)==1
+newp=copy.deepcopy(p);newp['method_sources']=[sr if r==oldcon else r for r in p['method_sources']]
+pr=put('reader_parameters_manifest_constructor.json',newp);rest=copy.deepcopy(newp);rest['method_sources']=p['method_sources'];assert rest==p and can(rest)==P.read_bytes()
+cat=json.loads(Path(p['catalogue']['path']).read_bytes())
+def merge(*groups):
+ by={}
+ for rs in groups:
+  for r in rs:assert by.get(r['path'],r)==r;by[r['path']]=r
+ return[by[x]for x in sorted(by)]
+before=merge(cat['source_inputs'],p['method_sources'],[p['IO_budget_source'],p['retained_owner']]);after=merge(cat['source_inputs'],newp['method_sources'],[p['IO_budget_source'],p['retained_owner']])
+assert len(before)==len(after)==1024 and oldcon not in after and sr in after
+wire=json.loads(Path(p['native_closure']['path']).read_bytes());tag=wire['Root_Native_closure_rows_reference'];actual=[dict(path=tag['prefixes'][i]+name,bytes=n,sha256=h)for i,name,n,h in tag['rows']]
+assert oldcon in actual or oldcon in cat['declared_input_rows']
+rosters=put('parameters_and_Source_role_inverse.json',dict(schema='F009_MANIFEST_CONSTRUCTOR_ONLY_SOURCE_ROLE_REPLACEMENT_V1',Root_authority=False,before_parameters=oldpr,after_parameters=pr,changed_parameter_fields=['method_sources'],old_constructor=oldcon,new_constructor=sr,restore_method_sources=p['method_sources'],Source_roster_before=before,Source_roster_after=after,functional_count_before_after=1024,whole_parameter_before_bytes_equal=True,old_constructor_retained_as_DATA=True,immutable_all5_catalogue=p['catalogue'],immutable_twofield_bound_parameters=ref('/private/tmp/f009_continuation/from_11401/native_DATA/reader_parameters_BOUND_NATIVE11462.json'),program_and_Owner_unchanged=True,all_other_unknown_fields_unchanged=True))
+print(json.dumps(dict(successor=sr,inverse=inv,diff=diff,parameters=pr,rosters=rosters),indent=2))

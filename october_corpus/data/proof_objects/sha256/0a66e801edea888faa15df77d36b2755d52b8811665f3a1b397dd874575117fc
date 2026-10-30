@@ -1,0 +1,100 @@
+"""Own ordinary metadata and whole-byte audit/spec preparation. No represented Source/helper."""
+from pathlib import Path
+import copy,hashlib,json,stat
+N=Path('/private/tmp/f009_continuation/from_11401/native_DATA');O=Path('/private/tmp/f009_from11331_registration_recipe_DATA');D=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p):
+ p=Path(p);a=p.lstat();assert p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+ b=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def load(p):return json.loads(Path(p).read_bytes())
+def read(r):assert ref(r['path'])==r;return load(r['path'])
+def put(n,v):
+ p=D/n;raw=v if type(v)is bytes else can(v)
+ if p.exists():assert p.read_bytes()==raw;return ref(p)
+ p.write_bytes(raw);return ref(p)
+paths=dict(job=N/'reader_job/job.json',Owner_request=N/'reader_request.json',Owner_receipt=N/'reader_execution/receipt.json',Root_job_review=N/'reader_Root_review.json',actual_execution=N/'runtime/f009_11462_Root_actual_strict_Reader_attempt1_capture.json',outer_guard_receipt=N/'runtime/actual_strict_Reader/receipt.json',result=N/'reader_output/result.json',worker_return=N/'reader_output/Root_Reader_return.json')
+R={k:ref(v)for k,v in paths.items()};J={k:read(v)for k,v in R.items()}
+assert R['actual_execution']['sha256']=='ec99fd62bc0807ed8d632392b957b2e98adeb828ed13959c897932c45c493fbf'
+job=J['job'];receipt=J['Owner_receipt'];outer=J['outer_guard_receipt'];sdk=J['actual_execution'];result=J['result'];returned=J['worker_return'];gate=J['Root_job_review'];request=copy.deepcopy(J['Owner_request']);tag=request.pop('Root_Request_rows_reference')
+request['inputs']=[dict(path=tag['prefixes'][i]+name,bytes=n,sha256=h)for i,name,n,h in tag['rows']]
+assert len(can(request))==tag['logical_bytes']and hashlib.sha256(can(request)).hexdigest()==tag['logical_sha256']
+assert sdk['actor']==sdk['root']=='/root'and sdk['actual_tool']['exit_code']==sdk['full_tool_return']['exit_code']==0 and sdk['all_genuine_api_frames']
+assert sdk['issued_argv']==sdk['child_argv']and sdk['child_argv'].count('--')==1 and sdk['child_argv'][sdk['child_argv'].index('--')+1:]==outer['command']
+assert outer['status']=='PASS'and outer['stop']=='RETURNED'and outer['returncode']==0 and outer['error']is None and outer['cleanup']['remaining']==outer['cleanup']['errors']==[]
+assert receipt['status']=='PASS'and receipt['returncode']==0 and receipt['changed_input_count']==0 and receipt['input_count']==len(request['inputs'])==13844
+assert all(receipt[k]is True for k in('inputs_unchanged','owned_child_reaped','owned_group_absent'))and all(receipt[k]is None for k in('error','final_resource_stop','owned_finalization_error'))
+assert receipt['request']==R['Owner_request']and receipt['execution_id']==request['execution_id']
+assert request['supervisor']==job['Owner']['path']and request['program']==job['program']['path']and job['Owner']['sha256'].startswith('a0e39886')and job['program']['sha256'].startswith('5cc60e7f')
+assert outer['command']==['/Users/sasha/.venvs/global/bin/python','-E','-B',job['Owner']['path'],'--request',R['Owner_request']['path']]
+assert request['argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B',job['program']['path'],'--job',R['job']['path'],R['job']['sha256'],'--root-review',R['Root_job_review']['path'],R['Root_job_review']['sha256'],'--out',job['output']]
+assert gate['status']=='SUPPORTED'and gate['root']=='/root'and gate['blockers']==[]and gate['authorized_roles']==['reader']and gate['job']==R['job']and gate['Owner']==job['Owner']and gate['program']==job['program']
+assert returned['job']==R['job']and returned['result']==R['result']and returned['Root_review']==R['Root_job_review']and returned['actual_caller']==job['program']and returned['global_checkpoint_written']is False and returned['native_launch_attempts']==[]
+case=read(job['case']);assert result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'and result['case']==job['case']and result['base_acceptance']==job['checkpoint_acceptance']
+assert result['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL'and result['native_launch_attempts']==[]and result['private_materialization_calls']==1 and result['top_level_load_calls']==result['tail_load_calls']==0
+assert result['checkpoint']==case['expected']==dict(sequence=11462,nodes=6006,pending=198,selected_raw_leaf_records=665170,reserved_debts=1)
+assert result['delta']==case['delta']and result['head']==case['head']and len(result['reserved_parents'])==1 and result['next_select']['parent']==result['reserved_parents'][0]=='54f419e335a3382f051ffa902a0c05d3e39c91aacff0ef250fe228772fb8930a'
+assert len(job['source_inputs'])==1024 and job['metadata_constructor']['sha256'].startswith('2e76fb74')
+rows=[ref(p)for p in sorted((N/'reader_output').iterdir())if p.is_file()];assert len(rows)==4 and result['snapshot']in rows and R['result']in rows and R['worker_return']in rows
+for r in rows:assert r['bytes']<=16*2**20
+inventory=put('Reader_output_inventory_DATA.json',dict(schema='OWN_STRICT_READER11462_RAW_OUTPUT_INVENTORY_V1',files=rows,total_bytes=sum(r['bytes']for r in rows),canonical_rows_sha256=hashlib.sha256(can(rows)).hexdigest(),snapshot_gzip_decoded=False))
+peer=put('independent_actual_Reader_review.json',dict(schema='F009_STRICT_READER11462_INDEPENDENT_METADATA_REVIEW_V1',reviewer='/root/l026_next_batch',Root_authority=False,status='SUPPORTED_ACTUAL_STRICT_READER_RETURN_REGISTRATION_OWED',Reader=R,output_inventory=inventory,checkpoint=result['checkpoint'],delta=result['delta'],next_select=result['next_select'],reserved_parents=result['reserved_parents'],snapshot=result['snapshot'],snapshot_roundtrip_return=result['snapshot_roundtrip'],actual_Source=job['program'],Owner=job['Owner'],metadata_constructor=job['metadata_constructor'],functional_Source_rows=1024,declared_inputs=len(job['declared_inputs']),Owner_inputs=13844,source_or_helper_or_science_calls=0,state_graph_gzip_decodes=0,whole_input_body_resweep_performed=False,S_W_Git_mutations=0,observed_outer_peak_RSS=outer['peaks']['total_rss'],outer_RSS_cap=outer['limits']['total_rss'],observed_headroom=outer['limits']['total_rss']-outer['peaks']['total_rss'],Owner_pre_return_worker_flag_preserved=returned['Owner_closure_still_required'],checkpoint_current_still11401=True,qualification='GenuineSDK/outer/Owner/gate/request/job/result/return joins and whole4closedoutputbytes checked, gzip opaque. Actual reviewed5cc strictReader supplies fulltyped/node/debt-order proof; no mathematical replay by this audit. All198pendingincluding1reserved remain unpaid; actualfutureSourcecase fit/census/manuscript/compression/Lean claims absent. Known sampled/birth-pinned cleanup retains unseen-descendant qualifier.'))
+cpref=job['checkpoint_acceptance'];spref=job['snapshot_adoption'];cp=read(cpref);sp=read(spref);assert cp['checkpoint']['sequence']==sp['checkpoint']['sequence']==11401
+previous=ref(S/'maintenance/intake/f009_census_continuation/from11331/shared_pin_checkpoint_11401/evidence/preservation.json');assert previous['sha256']=='af4015afad649872ab2ab6641d9b0bda2a0d74cf4a4230c04a549f30050e4329'
+live=[S/'reboot_20261013/CURRENT.json',S/'maintenance/intake/current_status.json',S/'maintenance/intake/reviewed_intake_progress.json']
+cas=put('current_three_view_metadata_observation_DATA.json',dict(schema='READ_ONLY_PRE_REGISTRATION_THREE_VIEW_CONTEXT_DATA_V1',author='/root/l026_next_batch',Root_authority=False,whole_views=[ref(p)for p in live],accepted_sequence=11401,lock_held=False,authoritative_CAS=False,qualification='Read-only context only. Root8c freshlyidlelocks and rereads all3wholeviews for realforecast/commit, preservingF004/L026/unknownfields.'))
+# Current job/request rows are automatically preserved by existing8e6; outside proof is a finite supplement.
+auto={r['path']:r for r in request['inputs']+list(R.values())+rows}
+candidates={}
+def add(p):
+ p=Path(p)
+ if p.is_file():
+  r=ref(p)
+  if r['path']not in auto:candidates[r['path']]=r
+for d in ('/private/tmp/f009_manifest_reader_constructor','/private/tmp/f009_manifest_constructor_independent_review_DATA','/private/tmp/f009_from11401_Reader_all_e466_DATA','/private/tmp/f009_from11401_native_reader_preparation_DATA'):
+ for p in Path(d).iterdir():
+  if p.is_file():add(p)
+for p in (N/'Root_manifest_constructor_Source_and_control_review.json',N/'Root_fresh_selected_Reader_current_inputs_review.json',N/'Root_actual_Reader11462_review.json',D/'Reader_output_inventory_DATA.json',D/'independent_actual_Reader_review.json',D/'current_three_view_metadata_observation_DATA.json'):add(p)
+for p in (N/'runtime').iterdir():
+ if p.is_file():add(p)
+for name in('Root_actual_four_control_review.json','Root_control_Source_review.json'):
+ add(Path('/private/tmp/f009_from11401_allocation_successor_UNRUN_DATA/runtime')/name)
+closed=[str(N/'native_execution'),str(N/'runtime/actual_Native'),str(N/'reader_execution'),str(N/'runtime/actual_strict_Reader'),'/private/tmp/f009_manifest_reader_constructor/controls_actual']
+# Additional exact completed guard roots derive from genuine terminal SDKs, never growing runtime as a whole.
+for p in(N/'runtime').iterdir():
+ if not p.is_file()or p.suffix!='.json':continue
+ j=load(p)
+ if not(isinstance(j,dict)and isinstance(j.get('actual_tool'),dict)and j['actual_tool'].get('exit_code')is not None and isinstance(j.get('child_argv'),list)):continue
+ a=j['child_argv']
+ if '--output'in a:
+  root=Path(a[a.index('--output')+1]);rp=root/'receipt.json'
+  if root.is_relative_to(N/'runtime')and rp.is_file():
+   rc=load(rp)
+   if rc.get('status')in('PASS','FAIL','INCOMPLETE','REFUSED')or rc.get('stop')is not None:closed.append(str(root))
+closed=sorted(set(closed))
+five=load(N/'reader_parameters_actual_binding_inverse.json')['actual_five_rows'];assert len(five)==5 and all(auto.get(r['path'])==r for r in five)
+method=[candidates[k]for k in sorted(candidates)];assert len(method)<256 and sum(r['bytes']for r in method)<16*2**20
+mi=put('method_input_selection_DATA.json',dict(schema='FINITE_NEW_READER11462_METHOD_EVIDENCE_SELECTION_V1',method_inputs=method,method_rows=len(method),method_bytes=sum(r['bytes']for r in method),all5_e466_auto_retained=five,closed_evidence_roots=closed,automatic_current_Request_rows=len(request['inputs']),unused_author_projection_trees_excluded=True))
+old=load(O/'binding_spec_actual_Reader11401_peer_ready.json');spec=copy.deepcopy(old)
+rootreview=ref(N/'Root_actual_Reader11462_review.json');rootrv=read(rootreview);rootcapture=rootrv['actual_review_capture'];assert ref(rootcapture['path'])==rootcapture
+spec.update(author='/root/l026_next_batch',bound_by='/root/l026_next_batch',author_role='OrdinaryactualReader metadata/spec author; no Source/science activation or fresh mathematical replay.',Reader=R,Root_actual_strict_Reader_review=rootreview,Root_actual_strict_Reader_review_capture=rootcapture,actual_Reader_inputs_closed=True,actual_binding_kind='ORDINARY_SUCCESSFUL_NATIVE_AND_COMPLETE_STRICT_READER',candidate_checkpoint=result['checkpoint'],observed_Native_proposal_only=load(N/'native_output/native_handoff.json')['expected_proposal'],prior_checkpoint_acceptance=cpref,prior_snapshot_adoption=spref,previous_preservations=[previous],preservation_destination=str(S/'maintenance/intake/f009_census_continuation/from11401/shared_pin_checkpoint_11462/evidence'),checkpoint_output=str(S/'maintenance/intake/f009_census_continuation/from11401/standalone_execution/checkpoint_11462'),closed_evidence_roots=closed,pending_actual_Reader_evidence_roots=None,method_inputs=method,current_CAS_context=cas,independent_actual_Reader_peer=peer,independent_actual_Reader_peer_provenance=[inventory,mi],parent_ready_DATA_template=ref(O/'binding_spec_actual_Reader11401_peer_ready.json'),historical_payload_obligation=cp['historical_reference_retention_obligation'],historical_payload_mapping=ref('/private/tmp/f009_continuation/from_11331/native_DATA/historical_payload_mapping.json'),status='BOUND_ACTUAL_STRICT_READER11462_DATA_ROOT_PLANNER_PRESERVATION_ADOPTION_OWED')
+spec['current_Source_allocation']=dict(active_Reader_caller=job['program'],Owner=job['Owner'],active_helper=ref('/private/tmp/f009_next_reader_logical_reference_ordinals/shared_export.py'),active_metadata_constructor=job['metadata_constructor'],functional_Source_rows=1024,functional_Source_bytes=sum(r['bytes']for r in job['source_inputs']),method_sources=53,qualified_archive_rows=446,ownfunctional_constructor_row_replaced_only=True,new_Native_or_Reader_calls_by_author=0)
+spec['correction']='Dedicated exact rawReaderjob ABI<=8MiB uses owned8e6/8c; generic metadata stays2MiB. New2e76 constructor decoded actuale466 indexedmanifest with unchanged predicates after honest1dccKeyError failure. Onlyowned8e6→bb6→8c registration route selected; no generic823f/a062 Source substitution.'
+spec['qualification']='Actual5cc/a0e strictReader11462 PASS and independent ordinarymetadata/rawbyte joins; fulltyped/node/debtorder result and1reservedparent54f419 retained. Accepted11401 remains until Root bb6preservation/fresh8crelease/forecast/commit. Sole canonicalpreviousaf4015; its prioracceptedcheckpoint field remainsliteral whileCPaaa49/SP08cc77 establish11401. All5e466 outputrows and2e76/controls/inverses/catalogue/params/Rootreviews arepreservedthroughautomaticcurrentdomain or finitemethodsupplement. Knownmodel/classification/Source/runtime/control/sampledcaveats stayimported. NoSource/science rerun orCensus/manuscript/compression/Lean credit.'
+spec_ref=put('binding_spec_actual_Reader11462_peer_ready.json',spec)
+PY='/Users/sasha/.venvs/global/bin/python';planner=ref('/private/tmp/f009_reader_raw_job_binding/sources/make_plans.py');preserver=ref('/private/tmp/f009_complete_transport/preservation_maps/sources/preserve_continuation.py');writer=ref('/private/tmp/f009_reader_raw_job_binding/sources/register_checkpoint.py');out=D/'bound_plans_actual';pres=Path(spec['preservation_destination'])/'preservation.json';release=D/'runtime/Root_checkpoint_writer_release.json'
+workflow=put('Root_workflow_UNRUN.json',dict(schema='ROOT_ONLY_ACTUAL11462_PRESERVATION_AND_REGISTRATION_ROUTE_V1',Root_authority=False,spec=spec_ref,programs=dict(planner=planner,preserver=preserver,writer=writer),
+ explicit_ordinary_parent_setup=[str(D/'runtime'),str(Path(spec['preservation_destination']).parent),str(Path(spec['checkpoint_output']).parent)],required_fresh_absent=[str(out),spec['preservation_destination'],spec['checkpoint_output']],
+ planner_forecast=[PY,'-E','-B',planner['path'],'--spec',spec_ref['path'],spec_ref['sha256'],'--out',str(out)],planner_write_adds=['--write'],
+ after_actual_plans='Root compare whole2actual forecast/writeimages, actualreturnedrows/counts/newcopy<=64MiB/4096/newmap<=8192. No authorprojectedplan/outputhash.',
+ preservation_forecast=[PY,'-E','-B',preserver['path'],'--plan',str(out/'preservation_plan.json'),'ROOT_ACTUAL_PRESERVATION_PLAN_SHA256_OWED'],preservation_write_adds=['--write'],
+ after_actual_preservation='Wholeallnew/reusedmapping equations, canonicalmap/SDK/knownscopeclosure; onlyaf4015 previous. All5e466/2e76proof/Source/control/currentReaderRootcapture evidence included. No copy ofoldwhole800MBdomain.',
+ fresh_writer_release=dict(path=str(release),schema='ROOT_REVIEWED_F009_STANDALONE_CHECKPOINT_WRITER_V1',Root_authority=False,requirements=['Exact actual8cprogram/newcheckpointplan supportedbyRoot','actual_Reader_and_Native_closure_supported true onlyRoot','canonical_selector_commit_authorized onlyRootafterwholeforecastreview']),
+ registration_forecast=[PY,'-E','-B',writer['path'],'--plan',str(out/'checkpoint_plan.json'),'ROOT_ACTUAL_CHECKPOINT_PLAN_SHA256_OWED','--root-release',str(release),'ROOT_ACTUAL_WRITER_RELEASE_SHA256_OWED','--preservation',str(pres),'ROOT_ACTUAL_CANONICAL_PRESERVATION_SHA256_OWED'],registration_commit_adds=['--commit'],
+ limits='Metadata256MiB/150s; exactdedicated8MiBrawReaderjobrole; genericmetadata2MiB, Source8cwriter2GiBread/40000files/16newfiles16MiB withrollbackunchanged. Root recheckscompleteeachactualIOinvoice/admission.',
+ CAS='Root freshlyidlelockedwhole3views beforeforecast/commit, requireCP11401aaa49/SP08cc77; preserveeveryF004/L026andunknownfield. Once-onlycommit, whole3view+newCP/SP/resultpostcheck. Perfileatomic only, not3filecrashatomic. All198pendingincluding1reservedremainunpaid.',
+ final_tail='Afteractualregistration: useexisting667finiteclosedmetadataretention; preservegenuineSDKs/guards/wholebeforeimages/sourceplans/reviews andallactualfailurehistories. No newSource/science/censusclaim.',
+ actual_planner=None,actual_preservation=None,actual_registration=None))
+handoff=put('handoff.json',dict(schema='ACTUAL_READER11462_BOUND_PRESERVATION_REGISTRATION_DATA_HANDOFF_V1',author='/root/l026_next_batch',Root_authority=False,Source_helper_science_execution=0,state_graph_gzip_decodes=0,S_W_Git_mutations=0,actual_Reader=R,independent_peer=peer,whole4_output_inventory=inventory,Root_actual_review=rootreview,Root_actual_review_capture=rootcapture,candidate_checkpoint=result['checkpoint'],next_select=result['next_select'],reserved_parents=result['reserved_parents'],accepted_parent=cpref,accepted_snapshot=spref,sole_previous_preservation=previous,Source_bound_spec=spec_ref,method_input_selection=mi,Root_workflow=workflow,actual_planner=None,actual_preservation=None,actual_registration=None,qualification='Ready exact existingSourcecommands and genuineclosedReader boundmetadata; allactualRootfuture outputs/hashes/releases remainunbound. Currentacceptedcheckpoint11401 notmutated. MetadataSource8e6/bb6/8c unchanged; all5e466 and2e76/helpercontrols/Sourcepeers/gates/currentRootevidence retained. NoModel/newconjecture/manuscript/Lean/compressioncredit.'))
+print(json.dumps(dict(handoff=handoff,spec=spec_ref,peer=peer,inventory=inventory,method_rows=len(method),method_bytes=sum(r['bytes']for r in method),closed_roots=len(closed)),indent=2))

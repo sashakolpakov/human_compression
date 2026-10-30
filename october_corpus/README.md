@@ -39,22 +39,31 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-The [accepted F009 chain](research/proof_collection/updates/verified_intake_results/accepted_20261030/README.rst)
-extends through checkpoints 11,331 and 11,401, with all 21 required historical
-payloads and their relative file mappings. The
-[latest F004 certificates](research/proof_collection/updates/verified_intake_results/g2_intersection_obstructions_job24_batch2/README.rst)
-add 300 exclusions, bringing the current family's additional exclusions to
-639 and leaving 2,967 positions unresolved. The
-[latest Fi22 certificates](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_38_90/README.rst)
-bring its ledger to 38 generation and 90 additional nongeneration certificates.
-The intersection property for those 38 generating markings follows separately
-from the cited theorem. F004's q11 register remains at 115 completed jobs
-out of 272. Earlier failed and unrun records retain their original statuses.
-Both new archive integrity checks passed after installation, alongside the
-five earlier checks. These checks authenticate the archived bytes; they do
-not replay the mathematics or remove the stated dependencies on imported
-models and earlier proof data. These finite results add no completed
-manuscript or compression measurement.
+The [current accepted results](research/proof_collection/updates/verified_intake_results/accepted_intake_progress/README.rst)
+contain three further finite advances. The
+[F004 certificates](research/proof_collection/updates/verified_intake_results/g2_intersection_obstructions_job24_middle7/README.rst)
+add 36 exclusions from a shared subgroup of order 42, bringing the current
+family's additional exclusions to **675**, with **2,931 positions unresolved**.
+F004's q11 register remains at 115 completed jobs out of 272. The
+[accepted F009 checkpoint](research/proof_collection/updates/verified_intake_results/census_checkpoint_11462/README.rst)
+is **11,462**: 6,006 nodes, 198 pending families including one reserved debt,
+and 665,170 selected raw leaf records. Its actual Native run, strict Reader
+and canonical checkpoint registration passed; the census remains unfinished.
+All 21 required historical payloads retain explicit relative mappings. The
+[Fi22 ledger](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
+now records **47 generation certificates, 47 separate intersection proofs and
+90 additional exclusions**, leaving **28,771 unpaid cases**. The strict
+generation checker supplies zero intersection credit; the existing theorem
+and its separate application supply those proofs.
+
+These archives preserve actual Sources, controls, finite proofs, acceptance
+records and their qualifications. Earlier failed, refused and unrun records
+retain their original statuses. Relative archive integrity checks authenticate
+whole bytes and mappings; they do not replay the mathematics or establish
+imported model and historical proof premises. All four installed archive integrity checks passed; the
+[publication report](research/proof_collection/updates/verified_intake_results/accepted_intake_progress/publication.json)
+records their results separately from the scientific checks in the archives.
+These finite results add no completed manuscript or compression measurement.
 
 ## Common theories and applications
 

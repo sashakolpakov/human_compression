@@ -1,0 +1,65 @@
+--- /private/tmp/f009_metadata_references/producer_support/construct.py
++++ /private/tmp/f009_manifest_reader_constructor/construct.py
+@@ -180,6 +180,53 @@
+             'explicit accepted Native closure role')
+     return f9_expand_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                            'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
++
++_F9_MANIFEST_TAG = 'Root_Output_manifest_reference'
++
++
++def f9_output_bank(rows, directories):
++    f9_rows(rows, 2048)
++    f9_need(type(directories) is list and len(rows)+len(directories) <= 2049
++            and all(type(d) is str and d.isascii() and len(d.encode('ascii')) <= 384
++                and (d == '.' or (not d.startswith('/') and all(p not in ('', '.', '..')
++                    for p in d.split('/')))) for d in directories)
++            and directories == sorted(set(directories)) and '.' in directories,
++            'complete bounded relative directories and root; same producer object allowance')
++    f9_need(sum(r['bytes'] for r in rows) <= 16*2**20
++            and all(len(f9_canonical(r)) <= 512 and r['path'].isascii()
++                and len(r['path'].encode('ascii')) <= 384 for r in rows),
++            'same complete Native output descriptor and byte bounds')
++    return dict(schema='F009_COMPLETE_NATIVE_OUTPUT_ROWS_V1', files=rows, directories=directories)
++
++
++def f9_expand_manifest(wire, read_bank):
++    if type(wire) is not dict or _F9_MANIFEST_TAG not in wire:
++        return wire
++    f9_need(wire.get('schema') == 'ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1'
++            and 'files' not in wire and 'directories' not in wire, 'one explicit output manifest representation')
++    tag = wire[_F9_MANIFEST_TAG]
++    f9_need(type(tag) is dict and set(tag) == {'schema', 'bank', 'files_bytes',
++            'files_sha256', 'logical_bytes', 'logical_sha256'}
++            and tag['schema'] == 'F009_COMPLETE_OUTPUT_MANIFEST_BANK_V1',
++            'exact full output bank import')
++    f9_rows([tag['bank']], 1)
++    f9_need(tag['bank']['bytes'] <= 2*2**20, 'same finite whole bank role')
++    # The caller must authenticate this exact whole physical bank first.
++    value = read_bank(tag['bank'])
++    f9_need(type(value) is dict and set(value) == {'schema', 'files', 'directories'}
++            and value == f9_output_bank(value['files'], value['directories']), 'complete original bank shape')
++    files = f9_canonical(value['files'])
++    f9_need(type(tag['files_bytes']) is int and tag['files_bytes'] == len(files)
++            and tag['files_sha256'] == hashlib.sha256(files).hexdigest(),
++            'every exact complete output row in original order')
++    logical = dict(wire); logical.pop(_F9_MANIFEST_TAG)
++    logical['files'] = value['files']; logical['directories'] = value['directories']
++    raw = f9_canonical(logical)
++    f9_need(len(raw) <= 2*2**20 and type(tag['logical_bytes']) is int
++            and tag['logical_bytes'] == len(raw)
++            and tag['logical_sha256'] == hashlib.sha256(raw).hexdigest(),
++            'whole original output manifest inverse, including every non-row field')
++    return logical
+ 
+ def need(ok,why):
+     if not ok:raise ValueError(why)
+@@ -364,7 +411,7 @@
+         mandatory=nativejob['declared_inputs']+[closure[k]for k in('job','Owner_request','Owner_receipt','Root_job_review',
+           'actual_execution','independent_actual_review','worker_handoff','output_manifest')]
+         need(all(actual_by.get(r['path'])==r for r in mandatory),'all actual Native evidence is retained by whole identity')
+-        outputs=read(closure['output_manifest'])
++        outputs=f9_expand_manifest(read(closure['output_manifest']),read)
+         need(outputs['schema']=='ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1'and outputs['root']=='/root'
+           and outputs['job']==closure['job']and outputs['Owner_receipt']==closure['Owner_receipt']
+           and all(Path(r['path']).is_relative_to(nativejob['output'])and actual_by.get(r['path'])==r for r in outputs['files'])

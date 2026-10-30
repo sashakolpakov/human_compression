@@ -1,0 +1,81 @@
+"""UNRUN real synthetic controls; Root must own all four Sources first.
+No original operands, witness banks, group action or proof assets are read.
+"""
+import argparse,hashlib,json,os,resource,stat,sys,time
+from pathlib import Path
+START=time.monotonic();READ=0;WORK=0;seen={}
+def need(ok,msg):
+ if not ok:raise ValueError(msg)
+def charge(n,label='controls'):
+ global WORK
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ need(rss<128*2**20 and time.monotonic()-START<20,'controls128MiB20s')
+ need(type(n)is int and 0<=n<=10000000-WORK,'controls10M work');WORK+=n
+class Meter:
+ def charge(self,n,label='fixture'):charge(n,label)
+def whole(path,sha):
+ global READ
+ p=Path(path);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=65536,'ordinary Source64KiB')
+ charge(a.st_size,'before Source read');need(READ+a.st_size<=8*2**20,'controls8MiB');b=p.read_bytes();z=p.lstat()
+ need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)and hashlib.sha256(b).hexdigest()==sha,'whole stable Source');READ+=len(b)
+ r=dict(path=str(p),bytes=len(b),sha256=sha);seen[str(p)]=(r,b);return r,b
+def load(pair,tag):
+ r,b=whole(*pair);charge(2*len(b),'Source compilation bytes');ns={'__name__':tag,'__file__':r['path']};exec(compile(b,r['path'],'exec'),ns);return r,ns
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS')
+ need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'ENV4')
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ for k in('supplier','core','kernel'):ap.add_argument('--'+k,nargs=2,required=True)
+ ap.add_argument('--out',required=True);a=ap.parse_args();own,_=whole(str(Path(__file__).resolve()),a.self_sha256)
+ sr,D=load(a.supplier,'trace_control_driver');cr,C=load(a.core,'trace_control_core');kr,K=load(a.kernel,'trace_control_kernel')
+ need(sum(r['bytes']for r,b in seen.values())<=50000,'complete control namespaces50k');W=Meter();names=[];n=3510
+ charge(40*n,'synthetic fixture initialization');ident=tuple(range(n));av=list(ident);cv=list(ident);bv=list(ident)
+ for j in range(11):av[j]=(-j)%11;bv[j]=(1-j)%11
+ for j in range(13):cv[11+j]=11+(-j)%13;bv[11+j]=11+(1-j)%13
+ shift=tuple((j+1)%n for j in range(n));back=tuple((j-1)%n for j in range(n));flip=tuple((-j)%n for j in range(n))
+ ctx0=dict(n=n,root=2961,a=tuple(av),c=tuple(cv),d0=tuple(bv),ambient=(ident,ident,ident,ident),paths=((),)*n)
+ paths=[()for _ in range(n)];paths[1]=(1,);paths[2]=(-1,2);ctx1=dict(ctx0,ambient=(shift,flip,back,flip),paths=tuple(paths));maps=[]
+ for at,ctx in enumerate((ctx0,ctx1)):
+  B,Bi=C['middle_maps'](ctx,(0,1,2),{},W);paths=K['prepare_triangle'](ctx,(0,1,2),W)
+  for p in range(n):need(B[p]==K['middle_image'](ctx,paths,p,W)and Bi[p]==K['middle_image'](ctx,paths,p,W,True),'all middle/inverse point images')
+  names.append('all_middle_inverse_images_context'+str(at));maps.append((B,Bi))
+  for word in([1],[-1],[2],[-2],[1,2],[-1,2,-2],[2,-1,1,-2],[1,2,-1,2,-2,-1]):
+   for p in(0,1,5,10,11,12,17,23,24,3509):
+    charge(6*len(word)+16,'new word fixture bill');need(C['point_word'](ctx,B,Bi,word,p)==K['rotation_word'](ctx,paths,word,p,W),'old/new signed words')
+  names.append('all_signed_words_context'+str(at))
+ parts=dict(prime11=dict(word=[1],cycle=list(range(11))),prime13=dict(word=[2],cycle=[11+(-j)%13 for j in range(13)]))
+ K['verify_pair'](ctx0,(0,1,2),parts,W);names.append('known11_13_supplied_pair_old_kernel_positive');B,Bi=maps[0]
+ need(C['trace_word'](ctx0,B,Bi,[1],0,W)==(11,parts['prime11']),'known11 trace');names.append('new_known11_trace')
+ need(C['trace_word'](ctx0,B,Bi,[2],11,W)==(13,parts['prime13']),'known13 trace');names.append('new_known13_trace')
+ def reject(ctx,part,prime):
+  try:K['check_cycle'](ctx,K['prepare_triangle'](ctx,(0,1,2),W),part,prime,W)
+  except ValueError:return
+  raise ValueError('bad fixture accepted')
+ reject(ctx0,dict(word=[-1],cycle=list(range(11))),11);names.append('negative_wrong_sign')
+ reject(ctx0,dict(word=[1],cycle=[0]*11),11);names.append('negative_duplicate_cycle')
+ reject(ctx0,dict(word=[True],cycle=list(range(11))),11);names.append('negative_boolean_word')
+ charge(12*n,'synthetic12-cycle closing-edge fixture');a12=list(ident);b12=list(ident)
+ for j in range(12):a12[j]=(-j)%12;b12[j]=(1-j)%12
+ ctx12=dict(ctx0,a=tuple(a12),d0=tuple(b12));reject(ctx12,dict(word=[1],cycle=list(range(11))),11);names.append('negative_last_closing_edge_of12_cycle')
+ seed='0'*64;schedule=dict(start_points=[0],steps_per_case=256,word_limit=64,trace_step_cap=13,exact_target_lengths=[11,13],misses_never_prove_absence=True)
+ for j in range(256):need(D['sha_label'](seed,j,W)==C['sha_label'](seed,j,W),'same old SHA stream')
+ names.append('same256_old_SHA_labels');note=D['empty_note'](0,0,'0'*64,seed);C['trace_row'](ctx0,(0,1,2),note,schedule,W,{})
+ need(note['next_step']==256 and note['word']==[C['sha_label'](seed,j,W)for j in range(192,256)]and note['outcome']=='finite_walk_miss','word64 reset and incomplete pair unpaid');names.append('counter256_reset64_finite_miss_unpaid')
+ class StopMeter:
+  def __init__(self,label):self.label=label
+  def charge(self,n,label='fixture'):
+   charge(n,label)
+   if label==self.label:raise D['SearchStop']('synthetic interruption')
+ for label in('finite_middle_inverse_chunk_guard','prepaid13_direct_word_edges_and_shape','complete_trace_before_cursor_commit'):
+  note=D['empty_note'](0,0,'0'*64,seed)
+  try:C['trace_row'](ctx0,(0,1,2),note,schedule,StopMeter(label),{})
+  except D['SearchStop']:pass
+  else:raise ValueError('expected stop')
+  need(note['next_step']==0 and note['word']==[]and not any(note['hints'].values()),'no partial cursor/word/hint commit');names.append('stop_'+label)
+ for r,b in list(seen.values()):need(whole(r['path'],r['sha256'])[1]==b,'all complete Source bytes unchanged')
+ names.append('all_Source_bytes_unchanged');charge(3*16384,'report publication reserve')
+ result=dict(schema='L026_UNTRUSTED_TRACE_SUPPLIER_CONTROLS_V1',status='PASS',program=own,supplier=sr,core=cr,kernel=kr,original_case_calls=0,synthetic_degree3510_only=True,controls=names,work_units=WORK,physical_read_bytes=READ,physical_paths=len(seen),whole_Source_namespace_bytes=sum(r['bytes']for r,b in seen.values()),new_paid_credit=0,qualification='Real synthetic old/new signed-point, supplied-cycle/mutation and interruption controls. No original operands/witnesses or named-group classification action read; every original hint still needs unchanged268d/60ee.')
+ out=Path(a.out);need(out.is_absolute()and out.is_relative_to('/private/tmp')and out.parent.resolve(strict=True)==out.parent and not out.exists(),'fresh control result');b=(json.dumps(result,sort_keys=True,separators=(',',':'))+chr(10)).encode();need(len(b)<=16384,'control result16KiB')
+ with out.open('xb')as f:need(f.write(b)==len(b),'whole control result');f.flush();os.fsync(f.fileno())
+ charge(0,'final controls guard');print(json.dumps(result,sort_keys=True))
+if __name__=='__main__':main()

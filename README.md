@@ -55,7 +55,9 @@ does not imply that its entire manuscript has been formalized.
 ## Read and reproduce
 
 For the October corpus, begin with its [current reproduction instructions](october_corpus/REPRODUCING.md).
-The [latest archived intake results](october_corpus/research/proof_collection/updates/verified_intake_results/README.rst)
+The [current accepted intersection and census results](october_corpus/research/proof_collection/updates/verified_intake_results/accepted_intake_progress/README.rst)
+record the F004 exclusions, F009 checkpoint 11,462 and Fi22 certificates.
+The [earlier archived intake results](october_corpus/research/proof_collection/updates/verified_intake_results/README.rst)
 preserve the accepted census checkpoint, classification records and generation
 and exclusion certificates, with their verification scope and attribution.
 The [latest finite certificate report](october_corpus/research/proof_collection/RUN_REPORT.rst)

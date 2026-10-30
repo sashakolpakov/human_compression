@@ -1,0 +1,65 @@
+"""Own stdlib DATA-only one-row retention extension; no helper/case or scientific execution."""
+from pathlib import Path
+import ast,copy,hashlib,json
+N=Path('/private/tmp/f009_continuation/from_11401/native_DATA');D=Path(__file__).resolve().parent
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(r):
+ assert ref(r['path'])==r;return json.loads(Path(r['path']).read_bytes())
+def put(n,v):
+ p=D/n;assert not p.exists();p.write_bytes(v if type(v)is bytes else can(v));return ref(p)
+def merge(*groups):
+ by={}
+ for rs in groups:
+  for r in rs:assert by.get(r['path'],r)==r;by[r['path']]=r
+ return[by[p]for p in sorted(by)]
+before_ref=ref(N/'reader_parameters_BOUND_NATIVE11462.json');before=read(before_ref)
+binder_inverse=ref(N/'reader_parameters_actual_binding_inverse.json');bi=read(binder_inverse);assert bi['after']==before_ref and bi['changed_fields']==['native_closure','closed_native_metadata_method']
+five=bi['actual_five_rows'];assert len(five)==5 and{Path(r['path']).name for r in five}=={'native_actual_review.json','native_output_rows.json','native_output_manifest.json','native_closure.json','reader_parameters.json'}
+for r in five:assert ref(r['path'])==r and Path(r['path']).parent==N/'reader_prepared'
+closure_ref=next(r for r in five if Path(r['path']).name=='native_closure.json');fifth=next(r for r in five if Path(r['path']).name=='reader_parameters.json')
+assert closure_ref['sha256']=='1d2006dea359f3bbcb6bf451236583a7f9171f7236e9c79c45bccc6d70ec1b62'
+assert fifth['bytes']==14555 and fifth['sha256']=='b7db0975d2f1095b7f9497f0d8c7683f9c710074ebe2df8edb8c9e7205829fb7'
+assert before['native_closure']==closure_ref and before['program']['sha256']=='5cc60e7faee00c4f34e8b09ff7e6c59586a0c56f299600d02d91bd5e1fa54b18'
+assert before['Owner']['sha256']=='a0e39886cdf00e0259e0436811d40e4d9a43bf950c581683c015352c689d38e4'
+oldcatref=before['catalogue'];oldcat=read(oldcatref);cat=copy.deepcopy(oldcat)
+assert fifth not in oldcat['declared_input_rows']and fifth not in oldcat['source_inputs']
+cat['declared_input_rows']=merge(oldcat['declared_input_rows'],[fifth])
+assert len(cat['declared_input_rows'])==len(oldcat['declared_input_rows'])+1
+cat['role_counts']=dict(oldcat['role_counts'],complete_inputs=len(cat['declared_input_rows']))
+cat['role_bytes']=dict(oldcat['role_bytes'],complete_inputs=sum(r['bytes']for r in cat['declared_input_rows']))
+assert {k for k in cat if cat[k]!=oldcat[k]}=={'declared_input_rows','role_counts','role_bytes'}
+assert cat['source_inputs']==oldcat['source_inputs']
+newcatref=put('reader_catalogue_all_e466_DATA.json',cat)
+after=copy.deepcopy(before);after['catalogue']=newcatref;afterref=put('reader_parameters_ALL_E466_DATA.json',after);assert afterref['bytes']<=65536
+restcat=copy.deepcopy(cat);restcat['declared_input_rows']=[r for r in restcat['declared_input_rows']if r!=fifth];restcat['role_counts']=oldcat['role_counts'];restcat['role_bytes']=oldcat['role_bytes']
+restp=copy.deepcopy(after);restp['catalogue']=oldcatref
+assert restcat==oldcat and can(restcat)==Path(oldcatref['path']).read_bytes()
+assert restp==before and can(restp)==Path(before_ref['path']).read_bytes()
+# Expand only the ordinary closure's descriptor-table wire, never state or raw graph bytes.
+closure=read(closure_ref);expanded=copy.deepcopy(closure);tag=expanded.pop('Root_Native_closure_rows_reference')
+expanded['complete_actual_inputs']=[dict(path=tag['prefixes'][i]+name,bytes=n,sha256=h)for i,name,n,h in tag['rows']]
+assert len(can(expanded))==tag['logical_bytes']and hashlib.sha256(can(expanded)).hexdigest()==tag['logical_sha256']
+sources=merge(cat['source_inputs'],after['method_sources'],[after['IO_budget_source'],after['retained_owner']])
+rosterref=ref(N/'functional_roster_before_after_inverse.json');expected=read(rosterref)['Reader']['after'];assert sources==expected and len(sources)==1024
+before_union=merge(oldcat['declared_input_rows'],expanded['complete_actual_inputs'],[closure_ref,oldcatref,before_ref])
+after_union=merge(cat['declared_input_rows'],expanded['complete_actual_inputs'],[closure_ref,newcatref,afterref])
+missing_before=[r for r in five if r not in before_union];assert missing_before==[fifth]and all(r in after_union for r in five)
+assert before['method_sources']==after['method_sources']and before['Owner']==after['Owner']and before['program']==after['program']
+inv=put('whole_before_after_inverse.json',dict(schema='ONE_DATA_ROW_ALL5_E466_READER_RETENTION_INVERSE_V1',author='/root/l026_next_batch',Root_authority=False,
+ before_parameters=before_ref,after_parameters=afterref,parameter_changed_fields=['catalogue'],restore_parameter_catalogue=oldcatref,whole_parameter_before_bytes_equal=True,
+ before_catalogue=oldcatref,after_catalogue=newcatref,catalogue_changed_fields=['declared_input_rows','role_counts','role_bytes'],inverse_remove_exact_DATA_row=fifth,restore_catalogue_role_counts=oldcat['role_counts'],restore_catalogue_role_bytes=oldcat['role_bytes'],whole_catalogue_before_bytes_equal=True,
+ every_other_unknown_field_unchanged=True,all5_actual_e466_outputs=five,only_missing_before=fifth,all5_in_after_1dcc_DATA_union=True,full_functional1024_roster_ref=rosterref,functional_sources_before_after_exact=True,program5cc_Ownera0e_unchanged=True,
+ source970_tables_original_root_review_program_plan_provenance_unchanged=True,classification='One ordinary DATA file role added, no Source role, execution authority, closure mutation or new mathematical outcome.',
+ Source_or_case_execution=0,state_graph_gzip_decode=0,S_W_Git_mutations=0))
+con=ref('/private/tmp/f009_metadata_references/producer_support/construct.py');PY='/Users/sasha/.venvs/global/bin/python'
+wf=put('Root_constructor_workflow_UNRUN.json',dict(schema='ROOT_ONLY_1DCC_READER_ALL5_E466_DATA_WORKFLOW_V1',Root_authority=False,program=con,
+ forecast=[PY,'-E','-B','-S',con['path'],'--parameters',afterref['path'],afterref['sha256']],write_adds=['--write'],
+ preguard_parent_setup=[str(N/'runtime')],fresh_artifact_root_required=after['artifact_root'],fresh_Reader_output_required=after['output'],
+ Root_after_actual_constructor_checks=['Whole forecast/write all10Reader images and exact job identity','Actual job.Source_inputs equals exact full1024-row after roster, unchanged5cc/a0e/706/9170; no generated4006/085 params activation','All5 actuale466 rows present by exact descriptor in job.declared_inputs, including generated reader_parameters DATA','New catalogue differs only by exactone DATA row and complete-input accounting; Root whole current physical union/SourceCase release still owed','Preserve all5closure helper outputs and whole binder/thisinverse/Root actual captures through later checkpoint publication'],
+ Root_Reader_gate_and_request='Fresh exact Root SourceMathCode/current-input review for actual Reader job, then existingd689request and collecteda0eOwner512MiB/150s/120s. AcceptedCP11401 unchanged until actual strictReader and registration.',actual_constructor=None,actual_Reader=None))
+h=put('handoff.json',dict(schema='ACTUAL_ONE_ROW_READER_ALL5_E466_DATA_READY_V1',author='/root/l026_next_batch',Root_authority=False,Source_case_scientific_executions=0,state_graph_gzip_decodes=0,S_W_Git_mutations=0,
+ actual_bound_parameters=before_ref,actual_binder_inverse=binder_inverse,actual5_e466_outputs=five,selected_new_catalogue=newcatref,selected_Reader_parameters=afterref,whole_typed_inverse=inv,Root_constructor_workflow=wf,Reader_functional_sources=1024,Source_roster_unchanged=True,additional_DATA_rows=1,additional_DATA_bytes=fifth['bytes'],all5_declared_by_existing_1dcc_merge=True,
+ new_catalogue_rows=len(cat['declared_input_rows']),old_catalogue_rows=len(oldcat['declared_input_rows']),qualification='The only missing helperoutput is now an ordinary declaredDATA row. Exact1dcc constructor branch merges catalogue.declared_input_rows with closure.complete_actual_inputs plus closure and parameter refs, so all5 are covered without Source-role/cap/provider/case changes. Genuine Root constructor/SourceCase/Reader acceptance remains owed.'))
+print(json.dumps(dict(handoff=h,parameters=afterref,catalogue=newcatref,inverse=inv),indent=2))

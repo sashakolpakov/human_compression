@@ -1,0 +1,92 @@
+"""UNRUN tiny physical metadata-bank controls; Root owns execution."""
+from pathlib import Path
+import argparse,ast,copy,hashlib,json,os,resource,stat,sys,time
+START=time.monotonic();READ=0
+def need(ok,msg):
+ if not ok:raise ValueError(msg)
+def tick():
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ need(rss<128*2**20 and time.monotonic()-START<30,'metadata controls128MiB/30s')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def pinread(path,sha,cap=65536):
+ global READ
+ tick();p=Path(path);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=cap,'whole ordinary bounded Source/DATA')
+ raw=p.read_bytes();z=p.lstat();need((a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)and hashlib.sha256(raw).hexdigest()==sha,'whole stable exact identity')
+ READ+=len(raw);need(READ<=2*2**20,'complete2MiB control read cap');return dict(path=str(p),bytes=len(raw),sha256=sha),raw
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'ordinaryEBS')
+ need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'sameENV4')
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ for name in('constructor','ancestor','donor','inverse'):ap.add_argument('--'+name,nargs=2,required=True)
+ ap.add_argument('--outdir',required=True);a=ap.parse_args();own,ownraw=pinread(str(Path(__file__).resolve()),a.self_sha256)
+ refs={};raws={}
+ for name in('constructor','ancestor','donor','inverse'):refs[name],raws[name]=pinread(*getattr(a,name))
+ need(own['bytes']+refs['constructor']['bytes']<=50000,'complete compiled owncontrol+constructor namespace50k')
+ inv=json.loads(raws['inverse']);source=raws['constructor'].decode();ancestor=raws['ancestor'].decode();donor=raws['donor'].decode()
+ need(inv['successor']==refs['constructor']and inv['original']==refs['ancestor']and inv['donor']==refs['donor'],'exact whole inverse roles')
+ need(source.count(inv['remove_exact_added_block'])==1 and source.replace(inv['remove_exact_added_block'],'',1).replace(inv['seam_after'],inv['seam_before'],1)==ancestor,'whole Source inverse')
+ def definition(t,name):
+  ns=[n for n in ast.parse(t).body if isinstance(n,ast.FunctionDef)and n.name==name];need(len(ns)==1,'one literal definition');return ast.get_source_segment(t,ns[0])
+ for name in('f9_output_bank','f9_expand_manifest'):need(definition(source,name)==definition(donor,name),'exact borrowed decoder Source')
+ attempts=[]
+ def deny(event,args):
+  if event in('subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'):
+   attempts.append(event);raise ValueError('metadata controls forbid launches')
+ sys.addaudithook(deny)
+ ns={'__name__':'f009_manifest_metadata_control_subject','__file__':refs['constructor']['path']}
+ exec(compile(raws['constructor'],refs['constructor']['path'],'exec',dont_inherit=True),ns)
+ out=Path(a.outdir);need(out.is_absolute()and out.is_relative_to('/private/tmp')and out.parent.resolve(strict=True)==out.parent and not out.exists(),'fresh private control output')
+ out.mkdir();names=[];counter=0
+ def passed(name,ok=True):tick();need(ok,name);names.append(name)
+ def bankfile(value):
+  nonlocal counter
+  counter+=1;p=out/('bank_'+str(counter).zfill(2)+'.json');b=can(value);need(len(b)<=16384,'tiny physical JSON bank');p.write_bytes(b)
+  return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ rows=[dict(path=str(out/'opaque_a'),bytes=1,sha256='1'*64),dict(path=str(out/'opaque_b'),bytes=2,sha256='2'*64)]
+ bank=dict(schema='F009_COMPLETE_NATIVE_OUTPUT_ROWS_V1',files=rows,directories=['.','nested'])
+ br=bankfile(bank)
+ raw=dict(schema='ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1',root='/root',job=dict(path=str(out/'opaque_job'),bytes=0,sha256='0'*64),files=rows,directories=['.','nested'],unknown_preserved=dict(order=[2,1],typed=[True,1,None]))
+ def wire(value,bref):
+  result={k:v for k,v in value.items()if k not in('files','directories')};allraw=can(value);fs=can(value['files'])
+  result['Root_Output_manifest_reference']=dict(schema='F009_COMPLETE_OUTPUT_MANIFEST_BANK_V1',bank=bref,files_bytes=len(fs),files_sha256=hashlib.sha256(fs).hexdigest(),logical_bytes=len(allraw),logical_sha256=hashlib.sha256(allraw).hexdigest())
+  return result
+ original=copy.deepcopy(raw);w=wire(raw,br)
+ passed('raw_manifest_same_object',ns['f9_expand_manifest'](raw,ns['read'])is raw)
+ passed('wire_manifest_physical_whole_read_full_inverse',ns['f9_expand_manifest'](w,ns['read'])==original)
+ passed('wire_inputs_unmodified',raw==original and w==wire(original,br))
+ passed('unknown_fields_and_typed_order_preserved',ns['f9_expand_manifest'](w,ns['read'])['unknown_preserved']==original['unknown_preserved'])
+ def reject(name,value):
+  tick()
+  try:ns['f9_expand_manifest'](value,ns['read'])
+  except ValueError:passed(name)
+  else:raise ValueError('negative accepted: '+name)
+ def mutate_tag(key,value):
+  x=copy.deepcopy(w);x['Root_Output_manifest_reference'][key]=value;return x
+ reject('wrong_manifest_tag_schema',mutate_tag('schema','WRONG'))
+ reject('bool_logical_bytes',mutate_tag('logical_bytes',True))
+ reject('wrong_whole_logical_hash',mutate_tag('logical_sha256','0'*64))
+ reject('bool_files_bytes',mutate_tag('files_bytes',True))
+ reject('wrong_files_hash',mutate_tag('files_sha256','0'*64))
+ x=copy.deepcopy(w);x['Root_Output_manifest_reference']['unknown']=0;reject('unknown_tag_field',x)
+ x=copy.deepcopy(w);x['files']=rows;reject('mixed_raw_wire_representation',x)
+ x=copy.deepcopy(w);x['unknown_preserved']['order'].reverse();reject('unknown_field_order_change_without_new_logical_identity',x)
+ x=copy.deepcopy(w);x['new_unknown_field']=True;reject('added_unknown_field_without_new_logical_identity',x)
+ x=copy.deepcopy(w);x.pop('unknown_preserved');reject('deleted_unknown_field_without_new_logical_identity',x)
+ badref=dict(br,sha256='0'*64);reject('actual_whole_bank_hash_mismatch',mutate_tag('bank',badref))
+ reject('oversize_bank_before_read',mutate_tag('bank',dict(br,bytes=2*2**20+1)))
+ reject('bool_bank_size',mutate_tag('bank',dict(br,bytes=True)))
+ for name,edit in(
+  ('bank_wrong_schema',lambda b:b.update(schema='WRONG')),
+  ('bank_unknown_field',lambda b:b.update(extra=1)),
+  ('file_order_negative',lambda b:b['files'].reverse()),
+  ('file_duplicate_negative',lambda b:b['files'].append(copy.deepcopy(b['files'][0]))),
+  ('file_bool_bytes_negative',lambda b:b['files'][0].update(bytes=True)),
+  ('directory_order_negative',lambda b:b['directories'].reverse()),
+  ('missing_root_directory_negative',lambda b:b.update(directories=['nested']))):
+  b=copy.deepcopy(bank);edit(b);reject(name,mutate_tag('bank',bankfile(b)))
+ for r in refs.values():pinread(r['path'],r['sha256'])
+ pinread(own['path'],own['sha256']);need(not attempts,'no launch attempt')
+ result=dict(schema='F009_MANIFEST_METADATA_CONSTRUCTOR_CONTROLS_V1',status='PASS',program=own,constructor=refs['constructor'],ancestor=refs['ancestor'],donor=refs['donor'],inverse=refs['inverse'],controls=len(names),names=names,physical_read_bytes=READ,compiled_namespace_bytes=own['bytes']+refs['constructor']['bytes'],original_case_calls=0,build_calls=0,science_state_graph_gzip_operations=0,launch_attempts=attempts,Root_authority=False,qualification='Real successor module/whole physical JSON-bank tests and exact Source inverses only; full newReaderconstructor/current-Source/case checks and actualRoot releases remain separate.')
+ report=can(result);need(len(report)<=16384,'complete16KiB control report')
+ (out/'result.json').write_bytes(report);tick();print(json.dumps(result,sort_keys=True))
+if __name__=='__main__':main()

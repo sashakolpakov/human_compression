@@ -1,0 +1,138 @@
+"""Own stdlib DATA preparation, /root/l026_next_batch. No represented Source execution."""
+from pathlib import Path
+import copy,hashlib,json,stat
+D=Path(__file__).resolve().parent;N=Path('/private/tmp/f009_continuation/from_11331/native_DATA')
+A=Path('/private/tmp/f009_from11401_allocation_successor_UNRUN_DATA')
+S=Path('/Users/sasha/medusa/research/leemans');F=S/'maintenance/intake/f009_census_continuation/from11331';CP=F/'standalone_execution/checkpoint_11401'
+CON=Path('/private/tmp/f009_metadata_references/producer_support/construct.py')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def load(p):return json.loads(Path(p).read_bytes())
+def put(n,v):
+ p=D/n;assert not p.exists();p.write_bytes(v if type(v)is bytes else can(v));return ref(p)
+def merge(*groups):
+ out={}
+ for rows in groups:
+  for r in rows:
+   assert set(r)=={'path','bytes','sha256'}and type(r['bytes'])is int and r['bytes']>=0
+   assert out.get(r['path'],r)==r,('conflict',r['path']);out[r['path']]=r
+ return[out[k]for k in sorted(out)]
+def swap(rows,old,new):
+ assert rows.count(old)==1 and new not in rows
+ out=[new if r==old else r for r in rows]
+ assert [old if r==new else r for r in out]==rows
+ return out
+oldp=load(N/'native_parameters.json');oldrp=load(N/'reader_parameters_collected_owner.json')
+oldpr=ref(N/'native_parameters.json');oldrpr=ref(N/'reader_parameters_collected_owner.json')
+oldcat=load(oldp['catalogue']['path']);oldcatref=oldp['catalogue'];oldb=load(oldp['boundary']['path']);oldbr=oldp['boundary']
+assert oldrp['catalogue']==oldcatref
+cpref=ref(CP/'root_checkpoint_acceptance.json');spref=ref(CP/'root_snapshot_acceptance.json');cp=load(cpref['path']);sp=load(spref['path']);reg=ref(CP/'registration_result.json')
+assert cpref['sha256']=='aaa49c6390e94fb8cb3bef832e2393f6fb85a3c61faf96d71b1857c655836525'
+assert spref['sha256']=='08cc77beab856c4e5f7fc99dd77f5d27ee2012e46a14dc0ee8ae97c0c8d3aacc'
+assert cp['checkpoint']==sp['checkpoint']and cp['checkpoint']['sequence']==11401
+assert cp['next_select']==sp['next_select']and cp['reserved_parents']==sp['reserved_parents']==['d8bac856b41e101044f246c4c7bc9dfb1b857d28da11a100f101f9d62dbcf023']
+assert cp['next_select']['action']=='refine'and cp['next_select']['record']['line']==4
+wire=load(cp['complete_root_inputs']['path']);current=copy.deepcopy(wire);tag=current.pop('Root_Input_rows_reference')
+current['inputs']=[dict(path=tag['prefixes'][i]+name,bytes=n,sha256=h)for i,name,n,h in tag['rows']]
+assert len(can(current))==tag['logical_bytes']and hashlib.sha256(can(current)).hexdigest()==tag['logical_sha256']and len(current['inputs'])==13400
+oldnj=load(N/'native_job/job.json');oldrj=load(N/'reader_job_collected_owner/job.json');paid=oldrj['source_inputs'];assert len(paid)==1024
+native=ref(A/'native_run_UNRUN.py');reader=ref(A/'reader_run_UNRUN.py');oldnative=oldp['program'];oldreader=oldrp['program']
+assert native['sha256']=='4006d6a8c0716488659bee6a5ad79b995151b2f7a5d18e73609c13efb40afc5e'
+assert reader['sha256']=='5cc60e7faee00c4f34e8b09ff7e6c59586a0c56f299600d02d91bd5e1fa54b18'
+nm=swap(oldp['method_sources'],oldnative,native);rm=swap(oldrp['method_sources'],oldreader,reader)
+def source_set(p,methods):return merge(oldcat['source_inputs'],methods,[p['IO_budget_source'],p['retained_owner']])
+nb=source_set(oldp,oldp['method_sources']);rb=source_set(oldrp,oldrp['method_sources']);na=source_set(oldp,nm);ra=source_set(oldrp,rm)
+assert nb==oldnj['source_inputs']and rb==oldrj['source_inputs']and len(na)==1015 and len(ra)==1024
+assert merge([oldnative if x==native else x for x in na])==nb and merge([oldreader if x==reader else x for x in ra])==rb
+mapsha='4c3cdc29f64460a26ab26acba7683325b836230a741b4ecf2a368adcec8f52ba'
+assert sum(r['sha256']==mapsha for r in na)==sum(r['sha256']==mapsha for r in ra)==1
+assert oldnative not in na and oldreader not in ra and oldnative in ra and native not in ra and reader not in na
+rosters=put('functional_roster_before_after_inverse.json',dict(schema='F009_EXACT_OWN_CALLER_FUNCTIONAL_ROLE_REPLACEMENTS_V1',author='/root/l026_next_batch',Root_authority=False,
+ Native=dict(before=nb,after=na,removed=oldnative,added=native,forward_inverse_equal=True,methods_before=oldp['method_sources'],methods_after=nm),
+ Reader=dict(before=rb,after=ra,removed=oldreader,added=reader,forward_inverse_equal=True,methods_before=oldrp['method_sources'],methods_after=rm),
+ Native_own_replacement_only=True,Reader_own_replacement_only=True,
+ Reader_prior179_ancestry_remains_literal=True,new4006_Native_caller_DATA_only_to_Reader=True,new5cc_Reader_DATA_only_to_Native=True,paid4c3_once_in_both=True,
+ old_own_callers_retained_in_current_DATA=[oldnative,oldreader]))
+actual_root_review=ref(A/'runtime/Root_actual_four_control_review.json');assert actual_root_review['sha256']=='63759445115570c8e92bf2835b327006bc2bb033c8317e8af8c032aa74c71901'
+control_rows=[];controls=[]
+for name,count in [('native_literal_codec',35),('reader_literal_codec',35),('reader_provider_chain',15),('auth_location_negatives',17)]:
+ sdk=A/'runtime'/('f009_allocation_control_after_space_'+name+'_attempt1_capture.json');sdkv=load(sdk)
+ rec=A/'runtime'/name/'receipt.json';rv=load(rec);out=A/'runtime'/name/'stdout.log';ov=load(out)
+ assert sdkv['actual_tool']['exit_code']==0 and sdkv['all_genuine_api_frames']and rv['status']=='PASS'and rv['returncode']==0
+ assert ov['status']=='PASS'and ov['controls']==count and ov['original_case_calls']==0
+ wanted=native if name=='native_literal_codec'else reader if name.startswith('reader_')else ref(A/'auth_location_controls_UNRUN.py')
+ assert ov['program']==wanted
+ controls.append(dict(name=name,controls=count,actual_SDK=ref(sdk),guard_receipt=ref(rec),result=ref(out),program=wanted,original_case_calls=0))
+ control_rows.extend(ref(p)for p in(A/'runtime'/name).iterdir()if p.is_file());control_rows.append(ref(sdk))
+control_evidence=put('actual_control_binding.json',dict(schema='F009_ACTUAL_FOUR_CONTROL_BINDING_FOR_CP11401_PREPARATION_V1',author='/root/l026_next_batch',Root_authority=False,Root_actual_review=actual_root_review,controls=controls,Source_pin_review=ref(A/'runtime/Root_control_Source_review.json'),native_case_authority=False,Reader_case_authority=False,actual_fit_established=False))
+histref=cp['historical_reference_retention_obligation']['inventory'];hist=load(histref['path']);assert len(hist['files'])==21
+histmap=ref(N/'historical_payload_mapping.json');oldmap=load(histmap['path'])
+assert [x['original']for x in oldmap['files']]==hist['files']and all(x['original']==x['retained_existing_S']for x in oldmap['files'])
+front=cp['next_select']['record']['file'];assert ref(front['path'])==front
+line=Path(front['path']).read_bytes().splitlines(keepends=True)[4]
+assert hashlib.sha256(line).hexdigest()==cp['next_select']['parent']==cp['next_select']['record']['sha256']
+selected=put('accepted_next_record.json',dict(schema='F009_ACCEPTED11401_RESERVED_NEXT_RECORD_DATA_V1',author='/root/l026_next_batch',Root_authority=False,checkpoint=cpref,snapshot_adoption=spref,next_select=cp['next_select'],reserved_parents=cp['reserved_parents'],pending_includes_reserved=True,raw_file=front,zero_based_line=4,record_bytes=len(line),record_ascii=line.decode('ascii'),record_sha256=hashlib.sha256(line).hexdigest(),no_point_graph_or_state_decode=True))
+closing=ref(F/'shared_pin_checkpoint_11401/evidence/preservation.json')
+cpfiles=[ref(p)for p in sorted(CP.iterdir())if p.is_file()];assert len(cpfiles)==15
+metadata_sources=[ref('/private/tmp/f009_reader_raw_job_binding/sources/make_plans.py'),ref('/private/tmp/f009_reader_raw_job_binding/sources/register_checkpoint.py')]
+own=ref(__file__);conref=ref(CON);assert conref['sha256']=='1dcc5d5d59bcd86cb419f30406ee46be6eea61c998b397f21740c5e4dd27a40c'
+# All final Source/review documents, genuine failures and successes stay ordinary DATA.
+allocation_docs=[ref(p)for p in A.iterdir()if p.is_file()]
+allocation_docs.extend(ref(p)for p in(A/'independent_review_DATA').iterdir()if p.is_file())
+allocation_docs.extend(ref(p)for p in(A/'runtime').iterdir()if p.is_file())
+epoch=merge(allocation_docs,control_rows,[actual_root_review,control_evidence,rosters,selected,own,histref,histmap,closing,oldpr,oldrpr,oldbr,oldcatref],metadata_sources)
+cat=copy.deepcopy(oldcat);archive=load(oldcat['inherited_qualified_archive']['path'])['inputs'];denied={r['path']for r in archive};assert len(archive)==446 and current['historical_archive_rows']==archive
+cat['declared_input_rows']=merge(oldcat['declared_input_rows'],current['inputs'],cpfiles,paid,hist['files'],epoch)
+assert not denied&{r['path']for r in cat['declared_input_rows']}
+cat['role_counts']=dict(oldcat['role_counts'],complete_inputs=len(cat['declared_input_rows']))
+cat['role_bytes']=dict(oldcat['role_bytes'],complete_inputs=sum(r['bytes']for r in cat['declared_input_rows']))
+cat['OriginAcceptedBoundary']=dict(schema='F009_ORIGIN_ACCEPTED_CATALOGUE_BOUNDARY_PROVENANCE_V1',author='/root/l026_next_batch',original_catalogue=oldcatref,original_catalogue_actual_execution=oldp['catalogue_actual_execution'],original_catalogue_guard_receipt=oldp['catalogue_guard_receipt'],original_catalogue_method=oldcat['program'],original_method_plan=oldcat['plan'],original_method_Root_review=oldcat['Root_review'],original_accepted_boundary=oldb['inherited_catalogue_boundary'],current_accepted_checkpoint=cpref,current_accepted_snapshot=spref,current_complete_root_inputs=cp['complete_root_inputs'],canonical_preservation=closing,original_method_was_not_rerun=True,prior_catalogue_fields_whole_restore_required=True,new_metadata_Sources_DATA_only=metadata_sources,full_input_body_resweep_by_this_author=False,state_graph_gzip_decodes=0,scientific_calls=0,Root_authority=False)
+cat['qualification']='Pure DATA union from actual accepted11401; original catalogue method/Root_review/program/plan remain historical provenance, not a rerun or new verdict. Source970/runtime/original role tables remain literal. Only own caller functional role changes in separate Native/Reader method rosters. Old callers remain current declared historical DATA. Current13,400 adopted rows, all21 historical raw pins and446 archive denials preserved. Actual constructor/Source/current-domain/preflight/Owner/Native/Reader acceptance and fit remain Root owed.'
+catref=put('catalogue.json',cat)
+b=copy.deepcopy(oldb);fullpub=merge(oldb['publication_inputs'],current['inputs'],cpfiles,paid,hist['files'],epoch,[catref])
+provided=merge(cat['declared_input_rows'],current['inputs'],[cpref,spref,cp['complete_root_inputs'],oldb['inherited_catalogue_boundary']]);pi={r['path']:r for r in provided}
+pub=[r for r in fullpub if pi.get(r['path'])!=r];assert merge(provided,pub)==merge(provided,fullpub)
+b.update(author='/root/l026_next_batch',checkpoint_acceptance=cpref,snapshot_adoption=spref,complete_root_inputs=cp['complete_root_inputs'],expected_checkpoint_sequence=11401,registration=reg,registration_actual_execution=ref('/private/tmp/f009_from11331_registration_recipe_DATA/runtime/registration_commit_capture.json')if Path('/private/tmp/f009_from11331_registration_recipe_DATA/runtime/registration_commit_capture.json').is_file()else cp['root_metadata_writer']['Root_release'],publication_inputs=pub,
+ qualification='Accepted11401 with196 pending families including reserved refinement d8bac856... at literal Native call_0010.frontier zero-based4. All unresolved remain unpaid. New proposed64actions/60s,1s completion/5s refinement/512MiB run only. Native own caller4006 replaces179; Reader own5cc replaces7ab; existing model/runtime/control/case grammar unchanged. Generic controls35/35/15/17 passed; fresh SourceMathCode Root case releases, whole current authentication, actual Owner and separate strictReader still owed.')
+# Registration execution attribution must use genuine SDK, never substitute a release.
+candidates=list((Path('/private/tmp/f009_from11331_registration_recipe_DATA')/'runtime').glob('*registration*commit*capture.json'))
+if candidates:b['registration_actual_execution']=ref(candidates[0])
+else:raise ValueError('Need genuine actual registration SDK path before final boundary')
+b['data_lineage']=dict(schema='F009_ACCEPTED11401_OWN_CALLER_SUCCESSOR_DATA_LINEAGE_V1',author='/root/l026_next_batch',previous_whole_boundary=oldbr,accepted_checkpoint=cpref,accepted_snapshot=spref,registration=reg,current_rows_pure_inverse=True,source_roster_inverse=rosters,actual_generic_control_binding=control_evidence,prior_actual_Reader_caller=cp['actual_Root_caller'],future_Native=native,future_Reader=reader,all_previous_sources_preserved_as_DATA=True,source_verdict_transfer=False,Root_authority=False,scientific_calls=0)
+br=put('boundary.json',b)
+p=copy.deepcopy(oldp);p.update(artifact_root=str(D/'native_job'),output=str(D/'native_output'),boundary=br,catalogue=catref,catalogue_actual_execution=None,catalogue_guard_receipt=None,reused_actual_checkpoint_registration=reg,program=native,method_sources=nm)
+p['data_lineage']=dict(schema='F009_ACCEPTED11401_NEXT_BOUNDED_NATIVE_UNRUN_PARAMETERS_V1',author='/root/l026_next_batch',previous_whole_parameters=oldpr,accepted_checkpoint=cpref,accepted_snapshot=spref,roster_inverse=rosters,actual_generic_controls=control_evidence,old_own_caller_DATA=oldnative,future_Reader_DATA=reader,Source_activation=False,new_Root_case_release=None,scientific_calls=0,qualification='Only one Native functional caller row replaces179; immutable old parameter/history retained whole asDATA. Same Owner085/contract/library/model and all caps. No future Native result or hash.')
+pr=put('native_parameters.json',p);assert pr['bytes']<=65536
+rp=copy.deepcopy(oldrp);rp.update(artifact_root=str(D/'reader_job'),output=str(D/'reader_output'),boundary=br,catalogue=catref,catalogue_actual_execution=None,catalogue_guard_receipt=None,reused_actual_checkpoint_registration=reg,program=reader,method_sources=rm,native_closure=None)
+rp['data_lineage']=dict(schema='F009_ACCEPTED11401_NEXT_STRICT_READER_UNBOUND_PARAMETERS_V1',author='/root/l026_next_batch',previous_whole_parameters=oldrpr,accepted_checkpoint=cpref,accepted_snapshot=spref,roster_inverse=rosters,actual_generic_controls=control_evidence,old_own_caller_DATA=oldreader,new_Native_caller_DATA=native,actual_native_closure=None,Source_activation=False,scientific_calls=0,qualification='UNBOUND: cannot construct/run before actual new Native SDK/Owner/closed output inventory and Root outside review. Replace only7ab ownSource with5cc, keep all other52 method rows literal, including179 ancestry and9170. Existing Ownera0e/adapter706 and caps remain. Actual independent Reader gate owed.')
+rpr=put('reader_parameters_UNBOUND.json',rp);assert rpr['bytes']<=65536
+# Whole typed field transforms, preserving all unknown fields by exact parent reconstruction.
+def changes(a,z):return {k:dict(before=a.get(k),after=z.get(k),before_present=k in a,after_present=k in z)for k in sorted(set(a)|set(z))if a.get(k)!=z.get(k)or(k in a)!=(k in z)}
+pairs=[]
+for name,a,z,aref,zref in [('catalogue',oldcat,cat,oldcatref,catref),('boundary',oldb,b,oldbr,br),('Native_parameters',oldp,p,oldpr,pr),('Reader_UNBOUND_parameters',oldrp,rp,oldrpr,rpr)]:
+ ch=changes(a,z);back=copy.deepcopy(z)
+ for k,v in ch.items():
+  if v['before_present']:back[k]=v['before']
+  else:back.pop(k,None)
+ assert back==a and can(back)==Path(aref['path']).read_bytes()
+ pairs.append(dict(name=name,before=aref,after=zref,changed_fields=list(ch),inverse=dict(restore_each_changed_field_from_exact_pinned_before_document=True,unknown_fields_preserved=True,whole_canonical_before_bytes_equal=True),after_field_SHA256={k:hashlib.sha256(can(v['after'])).hexdigest()for k,v in ch.items()}))
+inverse=put('whole_typed_DATA_inverse.json',dict(schema='F009_CP11401_WHOLE_DATA_TRANSFORMS_V1',Root_authority=False,pairs=pairs,full_functional_roster_inverse=rosters,all13400_adopted_current_rows_preserved=all(r in cat['declared_input_rows']for r in current['inputs']),all1024_previous_ReaderSources_preserved_as_DATA=all(r in cat['declared_input_rows']for r in paid),historical21=hist['files'],historical_inventory=histref,historical_mapping=histmap,all446_denied_archive_rows_unchanged=True,old_own_callers_declared_DATA=[oldnative,oldreader],constructor_source_unchanged=conref,Source_activation=False))
+ordered=[pr,catref,br,cpref,spref,cp['complete_root_inputs'],cat['Root_review'],cat['plan'],cat['inherited_qualified_archive'],b['inherited_catalogue_boundary'],sp['source_profile'],b['runtime_gate'],sp['producer_case'],b['controls_gate']]
+invoice=put('constructor_invoice.json',dict(schema='EXISTING1DCC_CP11401_NATIVE_DOCUMENT_INVOICE_V1',Root_authority=False,program=conref,ordered14_document_reads=ordered,explicit_document_bytes=sum(r['bytes']for r in ordered),Source_loader_bytes=conref['bytes'],whole_read_bytes=conref['bytes']+sum(r['bytes']for r in ordered),new_bytes_cap=16*2**20,new_files_cap=24,expected_Native_metadata_files=11,actual_forecast=None,actual_write=None,qualification='Unchanged constructor ABI. Metadata only, not current scientific-body resweep. Real actual returned images/caps/hash equality and fresh case release remain Root owned.'))
+gate_template=copy.deepcopy(load(N/'native_Root_review_TEMPLATE_FALSE.json'));gate_template.update(root=None,Root_authority=False,status='PENDING_FRESH_ROOT_SOURCE_MATH_CODE_AND_CASE_REVIEW',blockers=['No actual constructor job yet; Root must freshly review and bind all actual output identities.'],authorized_roles=[],program=native,job=None,Owner=p['Owner'],checkpoint_boundary=br,expected_checkpoint_sequence=11401,method_sources=nm)
+false_gate=put('native_Root_review_TEMPLATE_FALSE.json',gate_template)
+PY='/Users/sasha/.venvs/global/bin/python';request=ref('/private/tmp/f009_complete_transport/complete_tree/sources/make_owner_request.py')
+argv=put('Root_workflow_UNRUN.json',dict(schema='CP11401_NATIVE_THEN_STRICT_READER_EXISTING_HELPER_ROUTE_V1',Root_authority=False,actual_constructor=None,actual_Native=None,actual_Reader=None,
+ setup=dict(parent_directories_to_explicitly_create_and_review=[str(D/'runtime')],requirements='Root verifies canonical ordinary private directories before creating outer guard output dirs; do not precreate native_job/native_output/reader_job/reader_output or Owner execution roots. Preserve six real admission refusals and all controls captures.'),
+ constructor_forecast=[PY,'-E','-B','-S',str(CON),'--parameters',pr['path'],pr['sha256']],constructor_write_adds=['--write'],
+ constructor_guard=dict(RSS_MiB=256,seconds=150,read_bytes=conref['bytes']+sum(r['bytes']for r in ordered),new_files=24,new_bytes=16*2**20,Root_shared_serial_admission=True,admit_RAM_GiB=4,admit_disk_GiB=10,RAM_floor_GiB=3,disk_floor_GiB=8),
+ after_actual_constructor='Root compares forecast/write entire11 images/actual returned job,1015 Source roster/1024 binding rows,13,400 current-row preservation, historical21 and archive446. Root fresh whole current input/Source union hash. Existing92a preflight-only route may be reworked; it grants no Native authority.',
+ SourceMathCode_case_release=dict(false_template=false_gate,requirements=['Actual program4006 exact bytes and actual job identity; method_sources exact44 and full1015 canonical functional roster','New Root own code/math/current physical-domain/case review; generic63759445 review is component evidence only','Adopted CPaaa49/SP08cc77, reservedfirst d8bac8 refinement/zero-based4; every old case field restored by onlybase/output/max_actions/worker_seconds/premises inverse','All Source970/runtime860/original model/membership/control/word/debt/multiplicity/typed-roundtrip/import and446archive-denial qualifiers literal','No fit/speed/memory saving or promised checkpoint; one actual guard-admitted Native then independent strictReader before any adoption']),
+ native_request=dict(program=request,argv_fields=['--job','ACTUAL_JOB_PATH','ACTUAL_JOB_SHA256','--root-review',str(D/'native_Root_review.json'),'ACTUAL_ROOT_CASE_GATE_SHA256','--execution',str(D/'native_execution'),'--request',str(D/'native_request.json'),'--execution-id','F009_NATIVE_FROM11401_ALLOCATION'],prefix=[PY,'-E','-B','-S',request['path']]),
+ native_Owner_after_actual_request=[PY,'-E','-B',p['Owner']['path'],'--request',str(D/'native_request.json')],
+ native_guard=dict(outer_RSS_MiB=512,outer_seconds=150,Owner_seconds=120,worker_seconds=60,max_actions=64,completion_seconds=1,refine_seconds=5,shared_serial_admission=True),
+ Reader_after_actual_closed_Native=dict(unbound_parameters=rpr,bind_only_after='Genuine actual Native SDK/outer/Owner/handoff, full raw closed output inventory, current Source joins and Root independent outside execution review; preserve reserved debt truth.',existing_closure_source=ref('/private/tmp/f009_complete_transport/complete_tree/sources/prepare_reader.py'),existing_constructor=conref,required_fields_to_bind=['native_closure','closed_native_metadata_method'],pipeline='Use existinge466 actual closure forecast/write. Bind exact returned closure into Reader UNBOUND params; unchanged1dcc constructor forecast/write; compare actual1024 functionalSources against full typed roster. All Native outputs and new4006 remain declaredDATA. Fresh Root SourceMathCode Reader gate/d689 request; a0e Owner and512/150 strictReader. No Native invocation insideReader; no adoption before actual typed/order full verification.'),
+ registration='Only after actual strictReader and independent outside closure review: reuse existing bound checkpoint planner/writer with fresh concrete Root release. No predicted Native outcome or output hash, no census/debt-clear or whole-paper credit.'))
+handoff=dict(schema='CP11401_ALLOCATION_NATIVE_AND_READER_PRIVATE_DATA_READY_V1',author='/root/l026_next_batch',Root_authority=False,Source_case_or_scientific_executions=0,state_graph_gzip_decodes=0,S_W_Git_mutations=0,accepted_CP=cpref,accepted_SP=spref,accepted_state=cp['checkpoint'],next_select=cp['next_select'],reserved_parents=cp['reserved_parents'],catalogue=catref,boundary=br,native_parameters=pr,reader_parameters_UNBOUND=rpr,full_typed_rosters=rosters,whole_typed_inverse=inverse,actual_controls=control_evidence,Root_actual_control_review=actual_root_review,constructor_invoice=invoice,Root_workflow=argv,false_Native_gate=false_gate,constructor=conref,author_DATA_source=own,current_adopted_rows=13400,new_declared_catalogue_rows=len(cat['declared_input_rows']),Native_functional_Source_rows=1015,Reader_functional_Source_rows=1024,all21_historical=histref,canonical_retention=closing,actual_constructor=None,actual_Native=None,actual_Reader=None,qualification='Concrete DATA only; Root alone activates unchanged constructor/helpers/Owner/cases. All prior current identities and unknown fields recover exactly; old own callers remain declaredhistoricalDATA. Generic controls passed35/35/15/17, but fresh SourceMathCode Root case release and actual fit are owed. StrictReader remains UNBOUND until genuine closed Native. No projected mathematical outcome or output hashes.')
+hr=put('handoff.json',handoff);print(json.dumps(dict(handoff=hr,native_parameters=pr,reader_UNBOUND=rpr,invoice=invoice,source_rows=[len(na),len(ra)],catalogue_rows=len(cat['declared_input_rows'])),indent=2))

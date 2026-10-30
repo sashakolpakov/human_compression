@@ -1,0 +1,107 @@
+"""Own metadata/whole-byte preparation for actual CP11401 Native closure; no represented Source."""
+from pathlib import Path
+import ast,copy,hashlib,json,os,stat
+N=Path('/private/tmp/f009_continuation/from_11401/native_DATA');D=Path(__file__).resolve().parent;OLD=Path('/private/tmp/f009_from11331_native_reader_preparation_DATA')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p):
+ p=Path(p);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1;b=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def load(p):return json.loads(Path(p).read_bytes())
+def put(n,v):
+ p=D/n;assert not p.exists();p.write_bytes(v if type(v)is bytes else can(v));return ref(p)
+e466=ref('/private/tmp/f009_complete_transport/complete_tree/sources/prepare_reader.py');con=ref('/private/tmp/f009_metadata_references/producer_support/construct.py');assert e466['sha256'].startswith('e466e7e0')and con['sha256'].startswith('1dcc5d5d')
+paths=dict(job=N/'native_job/job.json',Owner_request=N/'native_request.json',Owner_receipt=N/'native_execution/receipt.json',Root_job_review=N/'native_Root_review.json',actual_execution=N/'runtime/f009_11401_actual_Native_attempt1_capture.json',outer_guard_receipt=N/'runtime/actual_Native/receipt.json',worker_handoff=N/'native_output/native_handoff.json',native_result=N/'native_output/result.json')
+R={k:ref(p)for k,p in paths.items()};J={k:load(p)for k,p in paths.items()};assert R['actual_execution']['sha256']=='3516fa5a409f539d0a2b6fb27575cbeb91d951ed49bd23888552e6ba859b6654'
+job=J['job'];receipt=J['Owner_receipt'];sdk=J['actual_execution'];outer=J['outer_guard_receipt'];handoff=J['worker_handoff'];result=J['native_result'];gate=J['Root_job_review']
+request=J['Owner_request'];tag=request.pop('Root_Request_Input_rows_reference')if'Root_Request_Input_rows_reference'in request else None
+if tag is None:
+ tags=[k for k in request if k.endswith('reference')and isinstance(request[k],dict)and'request'in request[k].get('schema','').lower()]
+ if tags:tag=request.pop(tags[0])
+if tag is not None:
+ request['inputs']=[dict(path=tag['prefixes'][i]+name,bytes=n,sha256=h)for i,name,n,h in tag['rows']]
+ assert len(can(request))==tag['logical_bytes']and hashlib.sha256(can(request)).hexdigest()==tag['logical_sha256']
+assert 'inputs'in request
+assert sdk['actor']==sdk['root']=='/root'and sdk['actual_tool']['exit_code']==0 and sdk['all_genuine_api_frames']
+assert outer['status']=='PASS'and outer['returncode']==0 and outer['stop']=='RETURNED'and outer['error']is None and outer['cleanup']['remaining']==outer['cleanup']['errors']==[]
+assert receipt['status']=='PASS'and receipt['returncode']==0 and receipt['changed_input_count']==0 and all(receipt[k]is True for k in('inputs_unchanged','owned_child_reaped','owned_group_absent'))
+assert receipt['request']==R['Owner_request']and receipt['execution_id']==request['execution_id']and request['supervisor']==job['Owner']['path']
+assert request['argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B',job['program']['path'],'--job',R['job']['path'],R['job']['sha256'],'--root-review',R['Root_job_review']['path'],R['Root_job_review']['sha256'],'--out',job['output']]
+assert sdk['child_argv'][sdk['child_argv'].index('--')+1:]==outer['command']==['/Users/sasha/.venvs/global/bin/python','-E','-B',job['Owner']['path'],'--request',R['Owner_request']['path']]
+assert gate['status']=='SUPPORTED'and gate['job']==R['job']and gate['program']==job['program']and gate['Owner']==job['Owner']
+assert handoff['request']==R['job']and handoff['Root_review']==R['Root_job_review']and handoff['actual_caller']==job['program']and handoff['native_result']==R['native_result']
+assert result['checkpoint']==handoff['head']and result['no_successor']is True and result['new_census_credit']==0 and all(x['reaped']is True for x in result['calls'])
+expected=dict(sequence=result['sequence'],nodes=result['nodes'],pending=result['pending'],selected_raw_leaf_records=result['selected_leaf_occurrences'],reserved_debts=result['reserved_debts']);assert expected==handoff['expected_proposal']==dict(sequence=11462,nodes=6006,pending=198,selected_raw_leaf_records=665170,reserved_debts=1)
+rows=[];directories=[]
+for base,dirs,files in os.walk(N/'native_output',followlinks=False):
+ base=Path(base);assert base.resolve(strict=True)==base;directories.append(str(base.relative_to(N/'native_output')))
+ for n in dirs:assert not(base/n).is_symlink()
+ for n in files:rows.append(ref(base/n))
+rows.sort(key=lambda r:r['path']);directories.sort();assert len(rows)==343 and sum(r['bytes']for r in rows)<=16*2**20
+inventory=put('native_output_inventory_DATA.json',dict(schema='OWN_CLOSED_NATIVE11462_OUTPUT_INVENTORY_DATA_V1',root_path=str(N/'native_output'),files=rows,directories=directories,total_files=len(rows),total_bytes=sum(r['bytes']for r in rows),canonical_rows_sha256=hashlib.sha256(can(rows)).hexdigest(),raw_bytes_only=True,state_graph_gzip_decodes=0))
+review=put('actual_Native_metadata_review.json',dict(schema='F009_FROM11401_ACTUAL_NATIVE_METADATA_PEER_V1',reviewer='/root/l026_next_batch',Root_authority=False,status='SUPPORTED_AS_CLOSED_NATIVE_PROPOSAL_STRICT_READER_OWED',actual_evidence=R,full_raw_output_inventory=inventory,proposed_checkpoint=expected,delta=handoff['delta_proposal'],accepted_base=job['checkpoint_acceptance'],checkpoint_remains11401=True,owner_pre_return_flag_preserved=handoff['Owner_closure_still_required'],pre_owner_flag_note='Worker flag remains literal; actual later Owner PASS is separate evidence.',calls=len(result['calls']),actions=result['actions'],stop=result['stop'],Source_or_science_executions=0,state_graph_gzip_decodes=0,S_W_Git_mutations=0,qualification='SDK/outer/Owner/request/gate/handoff/result joins and whole343 output bodies independently checked as ordinary bytes/metadata. No full803MB input resweep or math replay. All198pending including1reserveddebt stay unpaid; sampled known-scope closure does not exclude arbitrary unseen detached descendants. No actual memory saving or census/whole-paper conclusion.'))
+oldplan=load(OLD/'reader_preparation_plan_BOUND_NATIVE11401.json');plan=copy.deepcopy(oldplan);plan.update(bound_by='/root/l026_next_batch',actual_native=R,expected_checkpoint_sequence=11401,expected_native_output_bytes=sum(r['bytes']for r in rows),expected_native_output_files=len(rows),independent_actual_Native_metadata_postcheck=review,independent_whole_output_inventory=inventory,metadata_output=str(N/'reader_prepared'),native_output=job['output'],native_output_inventory_sha256=hashlib.sha256(can(rows)).hexdigest(),native_parameters=ref(N/'native_parameters.json'),reader_artifact_root=str(N/'reader_job'),reader_output=str(N/'reader_output'),status='BOUND_ACTUAL_NATIVE11462_DATA_ROOT_PREPARATION_RELEASE_OWED',
+ qualification='Exact actual Native2b209/gatec81/request and SDK3516 propose11462 from accepted11401, reserveddebt1 remains. All343closed output bodies raw whole-hashed. Existinge466 and1dcc only; selected5cc/a0e/706/9170 Reader requires fresh Source/case gate. Actual metadata outputs/closure and strictReader proof/fit/adoption remain owed.')
+# Old request-inverse review is previous-epoch history; retain as provenance instead of current evidence.
+plan['prior_actual_request_inverse_audit']=oldplan.get('actual_request_inverse_audit');plan['actual_request_inverse_audit']=review
+pref=put('reader_preparation_plan_BOUND_NATIVE11462.json',plan)
+false=put('Root_preparation_release_TEMPLATE_FALSE.json',dict(schema='ROOT_REVIEWED_F009_COMPLETE_CASE_CLOSURE_METADATA_V1',root=None,status='PENDING_ROOT_OWN_ACTUAL_METADATA_REVIEW',blockers=['Root must review exact Source/current actual execution/closed outputs and issue this concrete metadata-only release.'],program=e466,plan=pref,actual_native_execution_review_supported=False,Root_authority=False,peer=review,independent_strict_Reader_still_required=True))
+# The binding program reads genuine Root e466 outputs only when Root invokes it.
+binder=r'''"""Root-only ordinary metadata binder; no Source/science/state activation."""
+from pathlib import Path
+import argparse,copy,hashlib,json
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def pin(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(r):
+ assert pin(r['path'])==r;return json.loads(Path(r['path']).read_bytes())
+def main():
+ a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--capture',nargs=2,required=True);a.add_argument('--outer-receipt',nargs=2,required=True);q=a.parse_args()
+ N=Path('/private/tmp/f009_continuation/from_11401/native_DATA')
+ def refarg(v):
+  r=pin(v[0]);assert r['sha256']==v[1];return r
+ capture=refarg(q.capture);cap=read(capture);guardref=refarg(q.outer_receipt);guard=read(guardref)
+ assert cap['actor']==cap['root']=='/root'and cap['actual_tool']['exit_code']==0 and cap['all_genuine_api_frames']
+ assert guard['status']=='PASS'and guard['returncode']==0 and guard['stop']=='RETURNED'
+ assert cap['issued_argv']==cap['child_argv']and cap['child_argv'].count('--')==1
+ assert cap['child_argv'][cap['child_argv'].index('--')+1:]==guard['command']
+ assert '--write'in guard['command']and '/private/tmp/f009_complete_transport/complete_tree/sources/prepare_reader.py'in guard['command']
+ # Root e466 stdout is a real guard-owned file, not a projected author response.
+ stdout=guard.get('logs',{}).get('stdout')
+ if isinstance(stdout,dict):report=read(stdout)
+ else:
+  p=Path(guardref['path']).parent/'stdout.log';report=json.loads(p.read_bytes())
+ assert report['schema']=='F009_COMPLETE_CASE_READER_METADATA_PREPARED_V1'and report['written']is True and report['output_files']==5
+ rows=report['rows'];assert len(rows)==5 and len({r['path']for r in rows})==5
+ for r in rows:assert pin(r['path'])==r and Path(r['path']).parent==N/'reader_prepared'
+ closure_ref=next(r for r in rows if Path(r['path']).name=='native_closure.json');closure=read(closure_ref)
+ assert closure['schema']=='ROOT_CLOSED_F009_STANDALONE_NATIVE_V1'and closure['root']=='/root'and closure['known_scope_drained']is True
+ assert closure['job']==pin(N/'native_job/job.json')and closure['actual_execution']==pin(N/'runtime/f009_11401_actual_Native_attempt1_capture.json')
+ method=closure['metadata_closure_method'];release=read(method['Root_release']);plan=read(method['plan'])
+ assert method['program']['sha256'].startswith('e466e7e0')and release['root']=='/root'and release['status']=='SUPPORTED'and release['blockers']==[]and release['program']==method['program']and release['plan']==method['plan']
+ assert release['actual_native_execution_review_supported']is True and plan['expected_checkpoint_sequence']==11401
+ template=pin(N/'reader_parameters_UNBOUND.json');before=read(template);after=copy.deepcopy(before);after['native_closure']=closure_ref;after['closed_native_metadata_method']=method
+ restored=copy.deepcopy(after)
+ for k in('native_closure','closed_native_metadata_method'):restored[k]=before[k]
+ assert restored==before and after['program']['sha256'].startswith('5cc60e7f')and after['Owner']['sha256'].startswith('a0e39886')
+ path=N/'reader_parameters_BOUND_NATIVE11462.json';assert not path.exists();path.write_bytes(can(after))
+ inverse=N/'reader_parameters_actual_binding_inverse.json';assert not inverse.exists()
+ inverse.write_bytes(can(dict(schema='EXACT_TWO_FIELD_READER_CLOSURE_BINDING_INVERSE_V1',Root_authority=False,before=template,after=pin(path),changed_fields=['native_closure','closed_native_metadata_method'],restore_fields={k:before[k]for k in('native_closure','closed_native_metadata_method')},whole_before_equal=True,actual_e466_capture=capture,actual_guard=guardref,actual_five_rows=rows,native_closure=closure_ref,metadata_method=method,functional_roster_unchanged=True,qualification='Inherited template lineage remains literal UNBOUND-history annotation; actual closure/method runtime fields alone are bound from genuine returned rows. No Reader/science call or checkpoint adoption.')))
+ print(json.dumps(dict(parameters=pin(path),inverse=pin(inverse),actual_closure=closure_ref,Root_Reader_release_owed=True),sort_keys=True))
+if __name__=='__main__':main()
+'''
+ast.parse(binder);binderref=put('bind_actual_e466_Reader_DATA.py',binder.encode())
+PY='/Users/sasha/.venvs/global/bin/python';releasepath=N/'reader_preparation_Root_release.json'
+reqsum=sum(r['bytes']for r in request['inputs']);docsum=sum(r['bytes']for r in R.values())
+invoice=put('bounded_metadata_invoice_DATA.json',dict(schema='E466_ACTUAL11462_METADATA_PREPARATION_INVOICE_V1',Root_authority=False,program=e466,actual_request_rows=len(request['inputs']),actual_request_bytes=reqsum,actual_output_rows=len(rows),actual_output_bytes=sum(r['bytes']for r in rows),whole_read_upper_bytes=reqsum+8*sum(r['bytes']for r in rows)+10*docsum+8*2**20,read_upper_reason='Existinge466 streams whole request inputs once, all343outputs twice, authenticates/decodes finite joined documents and final source/plan/release metadata. Conservative finite bound includes repeated document/pin reads and8MiB metadata slack; actual Root IO guard/profile remains owed.',new_files=5,new_bytes=3*2**20,per_file_max=2*2**20,Root_guard_RSS_MiB=256,Root_guard_seconds=150,no_scientific_or_codec_calls=True))
+workflow=put('Root_workflow_UNRUN.json',dict(schema='ROOT_ONLY_ACTUAL11462_E466_THEN_5CC_1DCC_READER_ROUTE_V1',Root_authority=False,
+ preguard_parent_setup=[str(N/'runtime')],fresh_outputs_required=[str(N/'reader_prepared'),str(N/'reader_job'),str(N/'reader_output'),str(N/'reader_execution')],
+ fresh_Root_preparation_release=dict(false_template=false,actual_path=str(releasepath),requirements='Exacte466/pref Source binding; genuine3516 SDK/Owner085/Root gate/whole343inventory and this peer reviewed. Actual_native_execution_review_supported true only by Root own review. AcceptedCP11401 unchanged.'),
+ closure_forecast=[PY,'-E','-B','-S',e466['path'],'--plan',pref['path'],pref['sha256'],'--root-release',str(releasepath),'ROOT_ACTUAL_PREPARATION_RELEASE_SHA256_OWED'],closure_write_adds=['--write'],
+ after_real_five_outputs='Root compares forecast/write all5physicalrows/bytes/hashes, real SDK/guard and alloutputbodies; closure actual returned descriptor alone is selected.',
+ actual_Reader_parameter_bind=[PY,'-E','-B','-S',binderref['path'],'--capture','ROOT_ACTUAL_E466_WRITE_CAPTURE_PATH','ROOT_ACTUAL_E466_WRITE_CAPTURE_SHA256','--outer-receipt','ROOT_ACTUAL_E466_WRITE_OUTER_RECEIPT_PATH','ROOT_ACTUAL_E466_WRITE_OUTER_RECEIPT_SHA256'],
+ Reader_constructor_after_actual_bind=[PY,'-E','-B','-S',con['path'],'--parameters',str(N/'reader_parameters_BOUND_NATIVE11462.json'),'ROOT_ACTUAL_BOUND_PARAMETER_SHA256_RETURNED_BY_BINDER'],Reader_constructor_write_adds=['--write'],
+ Reader_source_requirement='Select5cc/a0e frozen template. Exact1024 functional roster in prior full inverse; native4006 and all343outputs/current closure evidence areDATA. Keep existing9170/706/helper/method namespaces. All5e466outputs retained as DATA, including its unselected generated Native-inherited readerparameters.',
+ Reader_case_release='Root fresh whole current Source/input union and actual1dccimages; fresh SourceMathCode Root Reader gate/d689request; collecteda0eOwner under512MiB/150s outer/120s Owner. No Native invocation insideReader. Full typed/order roundtrip and outside actual closure review before any checkpoint adoption.',
+ binding_Source=binderref,invoice=invoice,actual_closure=None,actual_Reader=None,new_census_credit=0))
+handoff=put('handoff.json',dict(schema='ACTUAL_NATIVE11462_E466_READER_PREPARATION_PRIVATE_DATA_HANDOFF_V1',author='/root/l026_next_batch',Root_authority=False,Source_or_science_executions=0,state_graph_gzip_decodes=0,S_W_Git_mutations=0,actual_Native=R,ordinary_byte_peer=review,whole343_output_inventory=inventory,actual_proposal=expected,accepted_base=job['checkpoint_acceptance'],accepted_checkpoint_remains11401=True,plan=pref,false_Root_preparation_release=false,existing_e466=e466,existing_1dcc=con,Root_workflow=workflow,invoice=invoice,actual_Reader_parameter_binder=binderref,selected_Reader_template=ref(N/'reader_parameters_UNBOUND.json'),actual_e466_closure=None,actual_Reader=None,qualification='Finite actual metadata/byte joins and exact existing helper argv only. Root activates e466, then selects actual returned closure and binds only two fields in5cc/a0e template, then1dcc and fresh strictReader.343closedoutputs remain DATA;198pending including1reserved debt remain unpaid; no forecast mathematical result or fake Root frame/closure.'))
+print(json.dumps(dict(handoff=handoff,plan=pref,peer=review,inventory=inventory,output_files=len(rows),output_bytes=sum(r['bytes']for r in rows),read_upper=load(invoice['path'])['whole_read_upper_bytes']),indent=2))

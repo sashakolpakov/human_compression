@@ -1,0 +1,102 @@
+"""UNRUN untrusted trace supplier core; no author execution or compilation.
+No driver, IO, gates, state restoration, verifier or proof authority.
+Caller must retain10M/20s,6M/14s proposal reserve,112MiB soft/128MiB hard,
+32-path/8MiB/50k Source and output guards, and charge all IO/framing.
+Every actual hint still needs unchanged268d/60ee or1bdb/2292 verification.
+"""
+from array import array
+import hashlib
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def conjugate_map(ctx,vertex,cache,meter):
+    meter.charge(64,'untrusted_D_cache_lookup_and_shape')
+    if vertex in cache:return cache[vertex]
+    n=ctx['n'];path=ctx['paths'][vertex]
+    if array('H').itemsize!=2:raise ValueError('original two-byte compact map storage')
+    if n!=3510 or len(path)>10:raise ValueError('original bounded point/path frame')
+    meter.charge((2*len(path)+12)*n+128+8*len(path),'prepaid_G_and_D_reads_writes')
+    operations=tuple(ctx['ambient'][j-1 if j>0 else 1-j]for j in path)
+    G=array('H')
+    for p in range(n):
+        if p%256==0:meter.charge(0,'finite_G_chunk_guard')
+        q=p
+        for vector in operations:q=vector[q]
+        G.append(q)
+    D=array('H',[0])*n
+    for q in range(n):
+        if q%256==0:meter.charge(0,'finite_D_chunk_guard')
+        D[G[q]]=G[ctx['d0'][q]]
+    cache[vertex]=D;return D
+
+def middle_maps(ctx,triangle,cache,meter):
+    meter.charge(128,'triangle_shape_before_middle_work')
+    if len(triangle)!=3 or len(set(triangle))!=3:raise ValueError('original triangle')
+    D1,D2,D3=(conjugate_map(ctx,v,cache,meter)for v in triangle)
+    n=ctx['n'];meter.charge(14*n,'prepaid_middle_and_inverse_reads_writes')
+    B=array('H')
+    for p in range(n):
+        if p%256==0:meter.charge(0,'finite_middle_chunk_guard')
+        B.append(D3[D2[D1[p]]])
+    Bi=array('H',[0])*n
+    for p,q in enumerate(B):
+        if p%256==0:meter.charge(0,'finite_middle_inverse_chunk_guard')
+        Bi[q]=p
+    meter.charge(0,'middle_inverse_complete_guard')
+    return B,Bi
+
+def point_word(ctx,B,Bi,word,p):
+    # Only used inside a prepaid bounded trace. No proof status is returned.
+    a,c=ctx['a'],ctx['c']
+    for j in word:
+        if j==1:p=B[a[p]]
+        elif j==-1:p=a[Bi[p]]
+        elif j==2:p=c[B[p]]
+        elif j==-2:p=Bi[c[p]]
+        else:raise ValueError('literal signed rotation label')
+    return p
+
+def trace_word(ctx,B,Bi,word,start,meter):
+    meter.charge(80*min(len(word),64)+512,'prepaid13_direct_word_edges_and_shape')
+    if not 1<=len(word)<=64 or any(type(j)is not int or j not in(-2,-1,1,2)for j in word):
+        raise ValueError('unchanged strict word ABI')
+    cycle=[start];seen={start}
+    for _ in range(13):
+        q=point_word(ctx,B,Bi,word,cycle[-1])
+        if q==start:
+            return (len(cycle),dict(word=list(word),cycle=list(cycle)))if len(cycle)in(11,13)else None
+        if q in seen:return None
+        seen.add(q);cycle.append(q)
+    return None
+
+def sha_label(seed,counter,work):
+    need(type(seed)is str and len(seed)==64 and set(seed)<=set('0123456789abcdef')
+        and type(counter)is int and 0<=counter<512,'whole finite SHA stream coordinates')
+    work.charge(256,'seed_hex_SHA256_stream_input_digest_and_high_bit_choice')
+    raw=hashlib.sha256(b'L026-CACHED-RS-WALK-v1\0'+bytes.fromhex(seed)+counter.to_bytes(8,'big')).digest()
+    return (1,2,-1,-2)[raw[0]>>6]
+
+def trace_row(ctx,triangle,note,schedule,work,cache):
+    # Caller reuses old typed note/row validation and genuine acquisition guards.
+    work.charge(256,'exact_one_start_actual_schedule')
+    need(schedule['start_points']==[0]and schedule['steps_per_case']==256
+         and schedule['word_limit']==64 and schedule['trace_step_cap']==13
+         and schedule['exact_target_lengths']==[11,13]
+         and schedule['misses_never_prove_absence']is True,'exact acquired one-start schedule')
+    B,Bi=middle_maps(ctx,triangle,cache,work)
+    while note['next_step']<256 and not all(note['hints'].values()):
+        step=note['next_step'];work.charge(128,'old_complete_walk_step_bookkeeping')
+        note['active_step']=dict(step=step,phase='untrusted_direct_point_word_trace')
+        label=sha_label(note['seed'],step,work)
+        length=0 if len(note['word'])==64 else len(note['word'])
+        work.charge(2*length+2,'old_bounded_word_copy_append')
+        word=[]if len(note['word'])==64 else list(note['word']);word.append(label)
+        hints=dict(note['hints']);hint=trace_word(ctx,B,Bi,word,0,work)
+        work.charge(0,'complete_trace_before_cursor_commit')
+        if hint is not None:hints['prime'+str(hint[0])]=hint[1]
+        # No new cursor, word or hint is committed before the entire trace.
+        note.update(next_step=step+1,word=word,hints=hints,
+                    completed_steps_this_call=note['completed_steps_this_call']+1,active_step=None)
+    note['outcome']='pair_hint'if all(note['hints'].values())else'finite_walk_miss'
+    return note
