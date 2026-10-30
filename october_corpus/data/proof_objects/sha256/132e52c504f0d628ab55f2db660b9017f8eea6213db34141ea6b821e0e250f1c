@@ -1,0 +1,99 @@
+from pathlib import Path
+import json,hashlib,stat,copy,shlex,ast
+D=Path('/private/tmp/q11_job24_middle19_or37_compact_DATA')
+A=D/'planned_combined_Root_append_DATA'
+OUT=Path('/private/tmp/q11_job24_combined304_actual_postappend_peer_DATA')
+cache={};stamps={}
+def need(v,m):
+ if not v:raise ValueError(m)
+def can(o):return json.dumps(o,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def sig(a):return(a.st_dev,a.st_ino,a.st_mode,a.st_nlink,a.st_size,a.st_mtime_ns,a.st_ctime_ns)
+def raw(p,r=None):
+ p=Path(p);s=str(p)
+ if s not in cache:
+  a=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1 and a.st_size<=4*2**20,'bounded canonical ordinary metadata body')
+  b=p.read_bytes();need(sig(a)==sig(p.lstat()),'stable complete read');cache[s]=b;stamps[s]=sig(a)
+ b=cache[s]
+ if r is not None:need(ref(p,b)==r,'complete metadata descriptor '+s)
+ return b
+def obj(p,r=None):return json.loads(raw(p,r))
+def pin(p):return ref(Path(p),raw(p))
+h=obj(A/'handoff.json');need(pin(A/'handoff.json')['sha256']=='8320e69d19051168c79b571bedf7855e3ef5a6a132b68c9a50c393639c0a7256','frozen handoff')
+pair=obj(h['planned_pair']['path'],h['planned_pair']);inverse=obj(h['full_before_forward_inverse']['path'],h['full_before_forward_inverse'])
+oldraw=raw(pair['before_selector']['path'],pair['before_selector']);old=json.loads(oldraw)
+actual={}
+for k in ['planned_acceptance','planned_next_selector']:
+ p=pair[k];b=raw(p['descriptor']['path'],p['descriptor']);need(b==p['complete_UTF8'].encode() and json.loads(b)==p['typed_body'],'actual whole pair equals planned UTF8 and typed body');actual[k]=json.loads(b)
+a=actual['planned_acceptance'];n=actual['planned_next_selector']
+need(oldraw==inverse['prior_complete_UTF8'].encode() and old==inverse['prior_typed_body'],'inverse whole before')
+need(raw(pair['planned_next_selector']['descriptor']['path'])==inverse['planned_successor_complete_UTF8'].encode() and n==inverse['planned_successor_typed_body'],'inverse whole after')
+def apply(o,ps,reverse=False):
+ o=copy.deepcopy(o)
+ for p in reversed(ps) if reverse else ps:
+  key=p['path'][-1];parent=o
+  for step in p['path'][:-1]:parent=parent[step]
+  before='after' if reverse else 'before';after='before' if reverse else 'after'
+  need((key in parent)==p[before+'_exists'],'typed before existence')
+  if key in parent:need(parent[key]==p[before],'typed before whole value')
+  if p[after+'_exists']:parent[key]=copy.deepcopy(p[after])
+  else:del parent[key]
+ return o
+patches=inverse['exact_typed_patches']
+need(len(patches)==10 and apply(old,patches)==n and apply(n,patches,True)==old,'complete ten-change forward and reverse')
+changes=set(p['path'][0]for p in patches)
+need(all(n[k]==v for k,v in old.items()if k not in changes) and set(n)-set(old)=={'latest_middle19_or37_direct_adoption'},'all unmentioned unknown fields and old flags literal')
+kind='middle19_or37_direct_IP_failure'
+need(all(n['accepted_paid_by_kind'][k]==v for k,v in old['accepted_paid_by_kind'].items()) and set(n['accepted_paid_by_kind'])-set(old['accepted_paid_by_kind'])=={kind},'all eight old buckets preserved')
+pos=a['new_IP_failure_positions'];branches=a['verified_IP_failure_positions_by_branch']
+need(len(pos)==304 and pos==sorted(set(pos)) and set(branches)=={'19','37'} and len(branches['19'])==182 and len(branches['37'])==122 and sorted(branches['19']+branches['37'])==pos and not set(branches['19'])&set(branches['37']),'actual paid branch partition')
+need(len(old['accepted_new_paid_positions'])==35 and n['accepted_new_paid_positions']==sorted(old['accepted_new_paid_positions']+pos) and len(n['accepted_new_paid_positions'])==339 and n['accepted_paid_by_kind'][kind]==pos,'304 newly appended;339 cumulative additions')
+base=old['original_paid_positions'];before=[q for l,u in old['unresolved_position_runs']for q in range(l,u+1)];after=[q for l,u in n['unresolved_position_runs']for q in range(l,u+1)]
+need(len(base)==173 and len(before)==3571 and len(after)==n['unresolved_positions']==3267 and after==[q for q in before if q not in set(pos)] and not set(pos)&set(base+old['accepted_new_paid_positions']),'exact old unresolved difference')
+need(sorted(base+n['accepted_new_paid_positions']+after)==list(range(1,3780)) and len(set(base+n['accepted_new_paid_positions']+after))==3779 and hashlib.sha256(can(after)).hexdigest()==n['expanded_unresolved_sha256']==a['remaining_expanded_sha256'],'whole original3779 partition')
+need(n['previous_selector']==pair['before_selector'] and n['source_adoptions']==old['source_adoptions']+[pair['planned_acceptance']['descriptor']] and n['latest_middle19_or37_direct_adoption']==pair['planned_acceptance']['descriptor'],'exact adoption chain')
+need(n['previous_method_attempts'][:-1]==old['previous_method_attempts'],'all old attempt history literal')
+trial=n['previous_method_attempts'][-1];target=a['target_positions'];visited=a['visited_positions'];miss=a['finite_criterion_miss_positions_without_IP_credit'];unvisited=a['unvisited_positions']
+need(len(target)==3000 and len(visited)==1049 and len(miss)==745 and len(unvisited)==1951 and visited==target[:1049] and unvisited==target[1049:] and sorted(pos+miss)==visited and not set(pos)&set(miss),'actual visited prefix and untried suffix')
+need(set(miss+unvisited)<=set(after) and len(after)==len(miss)+len(unvisited)+571,'all misses/unvisited remain unresolved')
+need(trial['verified_IP_failure_positions']==pos and trial['verified_IP_failure_positions_by_branch']==branches and trial['target_positions']==target and trial['visited_positions']==visited and trial['unvisited_positions']==unvisited and trial['finite_criterion_miss_positions']==miss and trial['criterion']=='DIRECT_MIDDLE_19_OR37_TWO_CRITERIA' and trial['do_not_repeat_unchanged_criterion'] is True and trial['finite_criterion_misses_are_NOT_paid'] is True,'truthful actual method history')
+need(a['actual_requested_selection_was_exhausted'] is False and a['unvisited_suffix_remains_untried'] is True and a['criterion_misses_are_not_paid'] is True,'partial status literal')
+for k in ['fresh_literal_bc19_check_claimed','fresh_literal_bc37_check_claimed','word_power_row_minor_check_claimed','old_local_intersection_test_flags_retagged','independent_matrix_or_group_arithmetic_replayed_by_metadata_review']:need(a[k] is False,'no false proof transfer '+k)
+for k in ['whole_original_credit','new_job_closure_credit','conjecture_credit','Lean_credit']:need(a[k]==0,'no whole credit')
+# Scientific certificate arrays are only compared as opaque JSON values.
+result=obj(a['actual_result']['path'],a['actual_result']);proof=obj(a['actual_proof']['path'],a['actual_proof'])
+need(result['verified_IP_failure_positions']==pos and result['verified_IP_failure_positions_by_branch']==branches and result['target_positions']==target and result['visited_positions']==visited and result['unpaid_positions']==miss and result['unvisited_positions']==unvisited,'whole accepted subject matches actual result')
+records=proof['records'];need(len(records)==1049 and [r[0]for r in records]==visited,'actual proof visit identities')
+positive=[r for r in records if r[2] is True];negative=[r for r in records if r[2] is False]
+need([r[0]for r in positive]==pos and [r[0]for r in negative]==miss and positive==a['actual_positive_certificate_records'],'exact positive raw record transfer, no matrix arithmetic')
+need(all(len(r)==7 and r[3]in(19,37)for r in positive) and all(len(r)==3 for r in negative),'typed compact branch/miss records')
+need({str(p):[r[0]for r in positive if r[3]==p]for p in [19,37]}==branches,'branch labels literal')
+for k in ['actual_source','actual_plan','actual_genuine_Root_SDK','actual_Root_guard','actual_Root_Source_gate','actual_Root_code_math_review','actual_Source_static_independent_review','independent_actual_Source_and_metadata_review','actual_prelaunch_preservation','clean_canonical_completion_corollary','clean_middle37_existing_theory_map','retained_completion_theorem','retained_theorem_Root_review']:
+ rr=a[k];raw(rr['path'],rr)
+need(result['program']==a['actual_source'] and result['plan']==a['actual_plan'] and result['source_gate']==a['actual_Root_Source_gate'] and result['Root_code_math_review']==a['actual_Root_code_math_review'] and result['Root_unresolved_selector']==pair['before_selector'],'actual Source metadata binding')
+recipe=obj(h['Root_exact_append_argv']['path'],h['Root_exact_append_argv']);ast.parse(recipe['inline_Source_complete_UTF8'])
+need(recipe['inline_Source_bytes']==len(recipe['inline_Source_complete_UTF8'].encode())==7020,'exact inline Source body size')
+cap=obj(A/'runtime/Root_actual_append_capture.json');need(pin(A/'runtime/Root_actual_append_capture.json')['sha256']=='2bea991df7b85b10bdc7c7408bac971f0ce82b10be3e5dbb3b2f2bc496ec858e','Root actual SDK pin')
+gdir=A/'runtime/Root_append_only_commit';guard=obj(gdir/'receipt.json');started=obj(gdir/'started.json');out=obj(gdir/'stdout.log')
+release=obj(A/'runtime/Root_append_release.json')
+need(release['root']=='/root' and release['status']=='SUPPORTED' and release['pair']==h['planned_pair'] and release['inverse']==h['full_before_forward_inverse'],'actual distinct Root release')
+raw(release['precheck']['path'],release['precheck'])
+need(cap['actor']==cap['root']=='/root' and cap['actual_tool']['exit_code']==0 and cap['actual_tool']['synchronous'] is True and cap['full_initial_tool_return']==cap['full_tool_return']==cap['all_genuine_api_frames'][0] and len(cap['all_genuine_api_frames'])==1,'actual genuine synchronous frames')
+need(cap['issued_argv']==cap['child_argv']==shlex.split(cap['issued_command'])==shlex.split(cap['canonical_argv_command'])==shlex.split(cap['issued_tool_arguments']['cmd'])==recipe['argv'],'actual exact reviewed argv')
+need(json.loads(cap['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(gdir/'receipt.json')),'actual SDK receipt')
+argv=cap['issued_argv'];i=argv.index('--')
+need(guard['command']==started['command']==argv[i+1:] and guard['command'][guard['command'].index('-c')+1]==recipe['inline_Source_complete_UTF8'],'literal activated append Source and inputs')
+need(guard['status']=='PASS' and guard['returncode']==0 and guard['stop']=='RETURNED' and guard['error'] is None and guard['cleanup']['remaining']==[] and guard['cleanup']['errors']==[] and raw(gdir/'stderr.log')==b'','actual bounded append PASS')
+need(guard['limits']==started['limits'] and guard['admission']==started['admission'],'guard started/terminal binding')
+limits=guard['limits']
+need(limits['total_rss']==128*2**20 and limits['wall_seconds']==125 and limits['admit_ram']==3892314112 and limits['admit_disk']==10*2**30 and limits['ram_floor']==3*2**30 and limits['disk_floor']==8*2**30,'existing F004 matrix-guard policy retained')
+need(guard['peaks']['total_rss']<128*2**20 and guard['seconds']<125 and guard['admission']['available_ram']>=limits['admit_ram'] and guard['admission']['free_disk']>=limits['admit_disk'] and guard['peaks']['min_available_ram']>=limits['ram_floor'] and guard['peaks']['min_free_disk']>=limits['disk_floor'],'sampled actual fits existing guard')
+need(out['acceptance']==pair['planned_acceptance']['descriptor'] and out['selector']==pair['planned_next_selector']['descriptor'] and out['status']=='ROOT_ONLY304_COMBINED19_OR37_DIRECT_APPENDED' and out['scientific_calls']==0 and out['actual_visited']==1049 and out['unpaid']==745 and out['unvisited']==1951,'terminal append facts')
+need(out['read_bytes']==h['planned_pair']['bytes']+2*len(oldraw)+pair['planned_acceptance']['descriptor']['bytes']+pair['planned_next_selector']['descriptor']['bytes']==664603 and out['new_bytes']==211260,'complete append read/new equation')
+need(all(sig(Path(p).lstat())==s for p,s in stamps.items()),'closed artifact identities stable at final')
+report=dict(schema='F004_JOB24_COMBINED304_ACTUAL_POSTAPPEND_INDEPENDENT_METADATA_REVIEW_V1',reviewer='/root/l026_next_batch',Root_authority=False,status='SUPPORTED_EXACT_ACTUAL_PARTIAL_APPEND',blockers=[],planned_handoff=pin(A/'handoff.json'),planned_pair=h['planned_pair'],whole_forward_inverse=h['full_before_forward_inverse'],actual_acceptance=pair['planned_acceptance']['descriptor'],actual_selector=pair['planned_next_selector']['descriptor'],before_selector=pair['before_selector'],actual_Root_release=pin(A/'runtime/Root_append_release.json'),actual_SDK=pin(A/'runtime/Root_actual_append_capture.json'),actual_guard=pin(gdir/'receipt.json'),exact_typed_change_paths=[p['path']for p in patches],whole_actual_pair_raw_equals_planned=True,complete_forward_and_inverse_exact=True,all_unmentioned_unknown_fields_literal=True,all_eight_old_paid_buckets_literal=True,four_old_nonempty_bucket_counts={k:len(v)for k,v in old['accepted_paid_by_kind'].items()if v},old_paid_baseline=173,previous_additional_paid=35,new_positions_this_append=304,cumulative_additional_paid=339,residual_unresolved=3267,branch_counts={k:len(v)for k,v in branches.items()},trial_history=dict(requested=3000,visited=1049,paid=304,misses_unpaid=745,unvisited_untried=1951,outside_request_unpaid=571),exact_actual_result=a['actual_result'],exact_actual_proof=a['actual_proof'],actual_static_Source_review=a['actual_Source_static_independent_review'],actual_body_peer=a['independent_actual_Source_and_metadata_review'],append_IO=dict(read_bytes=664603,new_bytes=211260,file_paths=4),guard_policy=dict(RSS=134217728,seconds=125,admit_RAM=3892314112,admit_disk=10737418240,RAM_floor=3221225472,disk_floor=8589934592),audit_whole_files=len(cache),audit_whole_bytes=sum(map(len,cache.values())),Source_or_matrix_or_group_calls_by_reviewer=0,S_W_Git_or_state_writes=0,private_DATA_report_only=True,new_whole_job_Original_conjecture_Lean_or_compression_credit=0,qualification=['Actual Source/proof numeric matrix entries are authenticated and compared as opaque JSON values only; no matrix products, powers, orders, membership, subgroup or IP arithmetic is replayed. Scientific validity remains conditional on the exact imported Source/math/actual-body reviews and original model/classification premises.','All ten typed changes invert completely to the exact old selector. All eight old buckets, including four nonempty buckets, old attempt histories, flags and unknown fields remain literal. The 304 paid positions yield339 cumulative additions; baseline173 and residual3267 form the exact3779 partition.','Actual combined test visited1049 of3000 requested rows. Its745 criterion misses remain unpaid;1951 suffix rows remain untried and571 positions outside the request remain unresolved. No finite criterion failure is an exclusion.','The frozen planned pair/handoff false/no-commit flags are preserved as pre-append author DATA; the separate genuine Root SDK and exclusive append create the actual pair. No obsolete prediction is retagged into a Root fact.','The actual append used the existing F004 matrix guard with admission RAM3892314112 bytes, not a newly invented4GiB policy. RSS128MiB,125s,disk admission10GiB and floors3/8GiB are exact; sampling and known-process cleanup retain their stated limitations.','No F004 job, manuscript, conjecture, Lean or compression completion follows. L026128..143 remains prepared and unrun.'])
+OUT.mkdir(exist_ok=False);b=(json.dumps(report,indent=2,sort_keys=True)+'\n').encode()
+with (OUT/'independent_review.json').open('xb')as f:f.write(b)
+rp=ref(OUT/'independent_review.json',b);sb=(json.dumps(dict(schema='PRIVATE_METADATA_REVIEW_SEAL_V1',review=rp),sort_keys=True,separators=(',',':'))+'\n').encode()
+with (OUT/'seal.json').open('xb')as f:f.write(sb)
+print(json.dumps(dict(status=report['status'],review=rp,seal=ref(OUT/'seal.json',sb),audit_whole_files=len(cache),audit_whole_bytes=sum(map(len,cache.values()))),sort_keys=True))

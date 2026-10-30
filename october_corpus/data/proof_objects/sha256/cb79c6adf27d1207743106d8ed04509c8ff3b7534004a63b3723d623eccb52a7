@@ -1,0 +1,382 @@
+"""One reviewed local Python check, using the unchanged sampled family guard."""
+import sys
+sys.dont_write_bytecode = True
+import argparse
+import fcntl
+import ctypes
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import signal
+import stat
+import subprocess
+import time
+from datetime import datetime, timezone
+import psutil
+
+S = Path('/Users/sasha/medusa/research/leemans')
+SELF = Path(__file__).resolve()
+GUARD = S / 'computation/f004/q8_branch64_inventory01/resource_guard.py'
+GUARD_SHA = 'cf948aa992e5db99e28435c99debc2d4f9716a17e6076bc369516a99b74f16fe'
+GIB, MIB = 2**30, 2**20
+RECEIPT_BYTES = 16384
+READ_ROOTS = (S.parent.parent, Path('/private/tmp'), Path('/opt/homebrew'), Path('/Users/sasha/.venvs'))
+WRITE_ROOTS = (S, Path('/private/tmp'))
+INHERITED_ALIASES = {'/opt/homebrew/bin/gs', '/opt/homebrew/bin/pdflatex'}
+
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+def path_value(value, roots):
+    need(type(value) is str and len(value) < 4096, 'literal bounded path')
+    p = Path(value)
+    need(p.is_absolute() and str(p) == value and '..' not in p.parts, 'canonical absolute path')
+    need(any(p != root and p.is_relative_to(root) for root in roots), 'declared local path scope')
+    return p
+
+
+def no_symlinks(path):
+    for p in (path, *path.parents):
+        if os.path.lexists(p):
+            need(not p.is_symlink(), 'symlink forbidden: ' + str(p))
+
+
+def pin(path):
+    """Stream bytes; do not retain the input contents or a second input roster."""
+    path = Path(path)
+    h, size = hashlib.sha256(), 0
+    with path.open('rb') as source:
+        try: fcntl.fcntl(source.fileno(),48,1)
+        except OSError: pass
+        first = os.fstat(source.fileno())
+        need(stat.S_ISREG(first.st_mode), 'regular input file')
+        for chunk in iter(lambda: source.read(MIB), b''):
+            h.update(chunk)
+            size += len(chunk)
+        last = os.fstat(source.fileno())
+    now = path.stat()
+    identity = lambda st: (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns)
+    need(identity(first) == identity(last) == identity(now) and size == now.st_size, 'stable input during streaming hash')
+    return dict(path=str(path), bytes=size, sha256=h.hexdigest())
+
+
+def alias_identity(path):
+    path = Path(path)
+    need(str(path) in INHERITED_ALIASES and path.is_symlink(), 'only the two inherited read-only aliases')
+    no_symlinks(path.parent)
+    st = path.lstat()
+    target = path.resolve(strict=True)
+    need(target.is_relative_to('/opt/homebrew'), 'inherited alias stays in installed local tools')
+    no_symlinks(target)
+    return dict(path=str(path), link=os.readlink(path), device=st.st_dev, inode=st.st_ino,
+                mode=st.st_mode, mtime_ns=st.st_mtime_ns, target=pin(target))
+
+
+def resources():
+    return dict(free_disk_bytes=shutil.disk_usage(S).free,
+                available_ram_bytes=psutil.virtual_memory().available)
+
+
+def reference_reader(r, program):
+    """New native/direct-Reader Source role, all frames and full support strict."""
+    spec=importlib.util.spec_from_file_location('direct_private_owner_Source',SELF.parent/'common.py')
+    K=importlib.util.module_from_spec(spec);spec.loader.exec_module(K)
+    role=r['provenance']['source_role'];roles=r['provenance']['source']
+    need(role in('native','reader'),'explicit actual native or direct Reader Source')
+    packet,rows=K.source_family(roles,role)
+    key=r['provenance']['program_role']
+    need(key in({'entry','controls'}if role=='native'else{'reader'}), 'exact role-specific executable')
+    need(program.parent==SELF.parent and K.same(K.pin(program),packet['programs'][key]),
+         'this new executor, no inherited Source identity retag')
+    cap=8*MIB if role=='native'else 16*MIB
+    need(len((json.dumps(r,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode())<=cap,
+         'native8MiB/directReader16MiB request caps unchanged')
+    by={q['path']:q for q in r['inputs']}
+    need(all(K.same(by.get(ref['path']),ref)for ref in rows),'ALL actual functional Source/peer/ex/method/late inputs declared')
+    need(r['provenance']['no_cap_increase']is True,'old512MiB/120s owner envelope')
+    return roles
+
+
+def preflight(request):
+    request = path_value(str(request), WRITE_ROOTS)
+    no_symlinks(request)
+    need(request.is_file() and request.stat().st_size <= 16*MIB, 'fixed capacity8 ordinary local request')
+    request_pin = pin(request)
+    r = json.loads(request.read_text())
+    need(set(r) == {'schema', 'execution_id', 'program', 'supervisor', 'guard', 'argv', 'inputs',
+                    'readonly_symlinks', 'output_roots', 'execution', 'limits', 'scope', 'provenance'}, 'exact request fields')
+    need(r['schema'] == 'LOCAL_SMALL_PYTHON_CHECK_V1', 'fixed small-check request schema')
+    need(type(r['execution_id']) is str and re.fullmatch(r'[A-Za-z0-9_]{1,120}', r['execution_id']), 'bounded execution identity')
+    need(type(r['scope']) is str and len(r['scope']) <= 2048 and type(r['provenance']) is dict, 'explicit finite scope/provenance')
+    limits = r['limits']
+    need(set(limits) == {'phase_seconds', 'family_rss_cap_bytes', 'growth_cap_bytes', 'reserve_bytes', 'sample_seconds'}, 'exact guard fields')
+    need(type(limits['phase_seconds']) in (int, float) and 0 < limits['phase_seconds'] <= 120, 'at most 120 seconds')
+    need(type(limits['family_rss_cap_bytes']) is int and 0 < limits['family_rss_cap_bytes'] <= 512*MIB, 'at most 512 MiB family RSS')
+    need(type(limits['growth_cap_bytes']) is int and limits['growth_cap_bytes'] == 16*MIB, 'fixed 16 MiB including receipts')
+    need(type(limits['reserve_bytes']) is int and limits['reserve_bytes'] >= GIB, 'at least one GiB free reserve')
+    need(limits['sample_seconds'] == .1, 'unchanged 0.1-second sampling')
+    program = path_value(r['program'], (S,))
+    reference_reader(r, program)
+    need(limits == {'phase_seconds': 120, 'family_rss_cap_bytes': 512*MIB, 'growth_cap_bytes': 16*MIB, 'reserve_bytes': 4*GIB, 'sample_seconds': .1}, 'exact fixed capacity8 saved-reader profile')
+    need(Path(r['supervisor']) == SELF and Path(r['guard']) == GUARD, 'this supervisor and the fixed retained guard')
+    for p in (program, SELF, GUARD):
+        no_symlinks(p)
+        need(p.is_file(), 'ordinary executable source')
+    need(pin(GUARD)['sha256'] == GUARD_SHA, 'unchanged accepted guard bytes')
+    argv = r['argv']
+    need(type(argv) is list and 4 <= len(argv) <= 32 and all(type(x) is str and '\0' not in x and len(x) < 4096 for x in argv), 'literal bounded argv')
+    need(argv[:4] == [sys.executable, '-E', '-B', str(program)], 'only this Python with -E -B and the pinned local program')
+    need(type(r['output_roots']) is list and 1 <= len(r['output_roots']) <= 4, 'one to four declared output directories')
+    outputs = [path_value(x, WRITE_ROOTS) for x in r['output_roots']]
+    execution = path_value(r['execution'], WRITE_ROOTS)
+    roots = outputs + [execution]
+    for p in roots:
+        no_symlinks(p)
+        need(not os.path.lexists(p) and p.parent.is_dir(), 'fresh output with existing ordinary parent')
+        need(p != request, 'request is not an output')
+    need(all(not a.is_relative_to(b) and not b.is_relative_to(a) for i, a in enumerate(roots) for b in roots[i+1:]), 'outputs and execution do not overlap')
+    need(all(argv.count(str(p)) == 1 for p in outputs), 'each exact output root occurs once in argv')
+    inputs = r['inputs']
+    need(type(inputs) is list and 1 <= len(inputs) <= 40000, 'finite input roster')
+    indexed = {}
+    for row in inputs:
+        need(type(row) is dict and set(row) == {'path', 'bytes', 'sha256'}, 'exact input pin schema')
+        p = path_value(row['path'], READ_ROOTS)
+        need(type(row['bytes']) is int and row['bytes'] >= 0 and re.fullmatch('[0-9a-f]{64}', row['sha256']), 'typed input pin')
+        need(str(p) not in indexed and p != request, 'unique pins; request bound separately')
+        need(all(not p.is_relative_to(root) for root in roots), 'no input inside declared writes')
+        indexed[str(p)] = row
+    need(all(str(p) in indexed for p in (program, SELF, GUARD)), 'actual program/supervisor/guard are pinned')
+    aliases = r['readonly_symlinks']
+    need(type(aliases) is list and len({x['path'] for x in aliases}) == len(aliases), 'unique declared read-only aliases')
+    alias_map = {x['path']: x for x in aliases}
+    need(set(alias_map) <= INHERITED_ALIASES and set(alias_map) <= set(indexed), 'explicit inherited alias exceptions only')
+    for p in argv[4:]:
+        if p.startswith('/'):
+            need(p in indexed or p in r['output_roots'], 'every absolute argv data path declared')
+    for row in inputs:
+        if row['path'] in alias_map:
+            need(alias_identity(row['path']) == alias_map[row['path']], 'exact inherited alias and resolved bytes')
+        else:
+            no_symlinks(Path(row['path']))
+        need(pin(row['path']) == row, 'unchanged declared input: ' + row['path'])
+    need(pin(request) == request_pin, 'unchanged request after preflight')
+    observed = resources()
+    required = limits['reserve_bytes'] + limits['growth_cap_bytes'] + MIB
+    need(observed['available_ram_bytes'] >= GIB, 'fresh RAM at least one GiB')
+    need(observed['free_disk_bytes'] >= required, 'fresh disk reserve + complete output allowance + one MiB')
+    return r, request_pin, roots, observed, required
+
+
+def json_write(path, value, exclusive=False):
+    raw = (json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    need(len(raw) <= RECEIPT_BYTES, 'bounded small operational record')
+    with path.open('xb' if exclusive else 'wb') as f:
+        f.write(raw)
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def receipt_write(path, value, exclusive=False):
+    """Fixed-size ordinary JSON slot: the final check includes its actual bytes."""
+    raw = (json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n').encode()
+    need(len(raw) <= RECEIPT_BYTES, 'compact terminal receipt fits its allocated slot')
+    raw += b' ' * (RECEIPT_BYTES-len(raw))
+    with path.open('xb' if exclusive else 'r+b') as f:
+        f.write(raw)
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def group_members(pid):
+    """Observe only a named group; uncertain/truncated queries are errors."""
+    need(sys.platform == 'darwin' and type(pid) is int and 0 < pid < 2**31,
+         'Darwin positive process-group identity')
+    lib = ctypes.CDLL('/usr/lib/libproc.dylib', use_errno=True)
+    api = lib.proc_listpids
+    api.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p, ctypes.c_int]
+    api.restype = ctypes.c_int
+
+    def query(group):
+        buffer = (ctypes.c_int * 4096)()
+        capacity = ctypes.sizeof(buffer)
+        ctypes.set_errno(0)
+        count = api(2, group, buffer, capacity)  # PROC_PGRP_ONLY; bytes, not PID count.
+        error = ctypes.get_errno()
+        if count < 0 or error:
+            raise OSError(error or 5, 'targeted owned-group query failed')
+        need(count < capacity and count % ctypes.sizeof(ctypes.c_int) == 0,
+             'targeted group query has integral PID bytes and spare buffer room')
+        members = [int(buffer[i]) for i in range(count // ctypes.sizeof(ctypes.c_int))]
+        need(all(x > 0 for x in members) and len(set(members)) == len(members),
+             'targeted group query returned ordinary unique PIDs')
+        return members
+
+    own_group = os.getpgrp()
+    control = query(own_group)
+    need(os.getpid() in control, 'current-group positive control contains this observer')
+    return control if pid == own_group else query(pid)
+
+
+def group_exists(pid):
+    return bool(group_members(pid))
+
+
+def final_outputs(roots, require_outputs):
+    for root in roots:
+        no_symlinks(root)
+        if not root.exists():
+            need(not require_outputs, 'declared output root missing at clean return')
+            continue
+        need(root.is_dir(), 'declared outputs remain directories')
+        for directory, dirs, files in os.walk(root):
+            for name in dirs + files:
+                p = Path(directory) / name
+                st = p.lstat()
+                need(not stat.S_ISLNK(st.st_mode), 'no output symlink')
+                need(stat.S_ISDIR(st.st_mode) or (stat.S_ISREG(st.st_mode) and st.st_nlink == 1), 'only ordinary unaliased output files')
+
+
+def run(request, only_preflight=False):
+    r, request_pin, roots, observed, required = preflight(request)
+    execution = Path(r['execution'])
+    summary = dict(status='PASS_SMALL_CHECK_PREFLIGHT', request=request_pin, bindings=len(r['inputs']),
+                   command=r['argv'], resources=observed, required_free_bytes=required, limits=r['limits'])
+    if only_preflight:
+        print(json.dumps(summary))
+        return 0
+    spec = importlib.util.spec_from_file_location('unchanged_small_check_guard', GUARD)
+    G = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(G)
+    # Reobserve immediately before any output/child is created.
+    observed = resources()
+    need(observed['free_disk_bytes'] >= required and observed['available_ram_bytes'] >= GIB, 'admission still holds immediately before launch')
+    execution.mkdir()
+    started = dict(execution_id=r['execution_id'], request=request_pin,
+                   owner_pid=os.getpid(), owner_birth=psutil.Process(os.getpid()).create_time(),
+                   child_pid=None, child_birth=None, command=r['argv'],
+                   started_utc=datetime.now(timezone.utc).isoformat(), resources=observed)
+    json_write(execution/'started.json', started, exclusive=True)
+    child, metrics, error, changed = None, None, None, []
+    changed_count = 0
+    begin = time.monotonic()
+    receipt_path = execution/'receipt.json'
+    receipt = dict(status='PENDING_FINAL_RESOURCE_CHECK', request=request_pin, execution_id=r['execution_id'],
+                   input_count=len(r['inputs']), inputs_unchanged=False, owned_child_reaped=False,
+                   owned_group_absent=False, no_retry=True, no_successor=True, source_credit=0)
+    receipt_write(receipt_path, receipt, exclusive=True)
+    try:
+        with (execution/'stdout').open('xb') as so, (execution/'stderr').open('xb') as se:
+            child = subprocess.Popen(r['argv'], cwd=S, stdout=so, stderr=se, start_new_session=True)
+            started['child_pid'] = child.pid
+            try:
+                started['child_birth'] = psutil.Process(child.pid).create_time()
+            except psutil.NoSuchProcess:
+                started['child_birth_observation'] = 'already_exited_before_birth_sample'
+            json_write(execution/'started.json', started)
+            metrics = G.watch(child, roots, S, r['limits'])
+    except BaseException as exc:
+        error = dict(type=type(exc).__name__, message=str(exc)[:1024])
+    finally:
+        owned_group_absent = False
+        owned_finalization_error = None
+        try:
+            if child is not None:
+                if child.poll() is None:
+                    G.stop_group(child)
+                child.wait()
+                if group_exists(child.pid):
+                    error = error or dict(type='ResidualOwnedGroup', message='child returned with a live owned process group')
+                    G.stop_group(child)
+                    until = time.monotonic()+2
+                    while group_exists(child.pid) and time.monotonic() < until:
+                        time.sleep(.1)
+                    if group_exists(child.pid):
+                        os.killpg(child.pid, signal.SIGKILL)
+                        until = time.monotonic()+2
+                        while group_exists(child.pid) and time.monotonic() < until:
+                            time.sleep(.1)
+            owned_group_absent = child is not None and not group_exists(child.pid)
+        except BaseException as exc:
+            owned_finalization_error = dict(type=type(exc).__name__, message=str(exc)[:1024],
+                                           stage='owned_process_finalization')
+            error = error or owned_finalization_error
+        aliases = {x['path']: x for x in r['readonly_symlinks']}
+        for row in r['inputs']:
+            try:
+                if row['path'] in aliases:
+                    need(alias_identity(row['path']) == aliases[row['path']], 'inherited alias unchanged after child')
+                else:
+                    no_symlinks(Path(row['path']))
+                need(pin(row['path']) == row, 'input unchanged after child')
+            except BaseException:
+                changed_count += 1
+                if len(changed) < 16:
+                    changed.append(row['path'])
+        try:
+            need(pin(request) == request_pin, 'request unchanged after child')
+            no_symlinks(Path(request))
+        except BaseException:
+            changed_count += 1
+            changed.append(str(request))
+        receipt.update(inputs_unchanged=changed_count == 0, changed_input_count=changed_count,
+                       first_changed_inputs=changed, error=error,
+                       owned_child_reaped=child is not None and child.returncode is not None,
+                       owned_group_absent=owned_group_absent,
+                       owned_finalization_error=owned_finalization_error,
+                       returncode=None if child is None else child.returncode,
+                       metrics=None if metrics is None else {k: v for k, v in metrics.items() if k not in ('samples', 'limits')},
+                       sample_count=0 if metrics is None else len(metrics['samples']))
+        good = (error is None and changed_count == 0 and metrics is not None and metrics['terminal'] == 'RETURNED'
+                and metrics['returncode'] == 0 and receipt['owned_child_reaped'] and receipt['owned_group_absent'])
+        try:
+            need((execution/'stderr').is_file() and (execution/'stderr').stat().st_size == 0, 'empty child stderr')
+            final_outputs(roots, require_outputs=good)
+            # The official receipt stays PENDING until the last atomic commit.
+            # Count both fixed slots, including the fully written candidate.
+            receipt_write(receipt_path, receipt)
+            staged = execution/'receipt.staged.json'
+            receipt_write(staged, receipt, exclusive=True)
+            final = dict(seconds=time.monotonic()-begin, **resources(), logical_output_bytes=G.logical_bytes(roots),
+                         included_receipt_bytes=receipt_path.stat().st_size,
+                         included_staged_receipt_bytes=staged.stat().st_size)
+            receipt['final'] = final
+            reason = G.decision(final['free_disk_bytes'], final['logical_output_bytes'], 0, final['seconds'], r['limits'])
+            receipt['final_resource_stop'] = reason
+            good = good and reason is None and final['included_receipt_bytes'] == final['included_staged_receipt_bytes'] == RECEIPT_BYTES
+            receipt['status'] = 'PASS' if good else 'INCOMPLETE_SMALL_CHECK_NO_SUCCESSOR'
+            receipt['accounting'] = 'Both 16384-byte JSON slots are counted. After fsync of the staged candidate, disk/output/wall are checked again before atomic replacement. No output-file write follows PASS commitment. Guards are sampled, not an OS write sandbox.'
+            receipt_write(staged, receipt)
+            commit_reason = G.decision(shutil.disk_usage(S).free, G.logical_bytes(roots),
+                                       0, time.monotonic()-begin, r['limits'])
+            if commit_reason is not None:
+                good = False
+                receipt['status'] = 'INCOMPLETE_SMALL_CHECK_NO_SUCCESSOR'
+                receipt['commit_resource_stop'] = commit_reason
+                receipt_write(staged, receipt)
+            os.replace(staged, receipt_path)
+        except BaseException as exc:
+            good = False
+            receipt['status'] = 'INCOMPLETE_SMALL_CHECK_NO_SUCCESSOR'
+            receipt['finalization_error'] = dict(type=type(exc).__name__, message=str(exc)[:1024])
+            # A failed staged write/observation/rename leaves official PENDING.
+            # If this fallback fails too, that record is still not a success.
+            receipt_write(receipt_path, receipt)
+    print(json.dumps(dict(status=receipt['status'], request=request_pin, execution=str(execution),
+                          returncode=receipt['returncode'], final=receipt.get('final'), no_successor=True)))
+    return 0 if good else 1
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--request', type=Path, required=True)
+    parser.add_argument('--preflight', action='store_true')
+    options = parser.parse_args()
+    raise SystemExit(run(options.request, options.preflight))

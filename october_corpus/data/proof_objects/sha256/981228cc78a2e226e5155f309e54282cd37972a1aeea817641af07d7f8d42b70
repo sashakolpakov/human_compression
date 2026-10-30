@@ -1,0 +1,89 @@
+"""Explicit bounded-backend transition; old heads retain their original reader."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import copy
+import importlib.util
+import json
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('acquired_mixed_backend', HERE/'census_queue_runtime.py')
+M = importlib.util.module_from_spec(spec); spec.loader.exec_module(M)
+R=M.R; V=M.V; Q=M.Q; need=V.need
+HEAD='F009_BOUNDED_BACKEND_HEAD_V1'
+GENESIS='F009_BOUNDED_BACKEND_SEGMENT_V1'
+CASE='F009_BOUNDED_BACKEND_CASE_V1'
+TRANSITION='F009_BOUNDED_BACKEND_TRANSITION_V1'
+
+def check_case(case):
+    need(case.get('schema')==CASE and 'backend_transition' in case, 'explicit bounded-backend case')
+    projected={k:v for k,v in case.items() if k!='backend_transition'}
+    projected['schema']='F009_RETAINED_MIXED_QUEUE_V1'
+    R.check_case(projected)
+    if case['backend_transition'] is not None: V.acquire(case['backend_transition'])
+
+def migrate(state, case):
+    """Only the future binary changes; graph/debt/history state is copied exactly."""
+    need(state['target']==case['target'] and state['binary']==case['binary'], 'unchanged base target/refinement binary')
+    ref=case['backend_transition']
+    if ref is None:
+        need(state['completion_binary']==case['completion_binary'], 'unchanged bounded continuation binary')
+        return copy.deepcopy(state)
+    value=V.read_json(ref)
+    need(set(value)=={'schema','base','target','from_binary','to_binary','memo_limit','method','base_acceptance'},
+         'backend transition schema')
+    need(value['schema']==TRANSITION and value['memo_limit']==65536, 'fixed bounded memo policy')
+    need(value['base']==case['base'] and value['target']==state['target'], 'exact transition base/target')
+    need(value['from_binary']==state['completion_binary'] and value['to_binary']==case['completion_binary'] and
+         value['from_binary']!=value['to_binary'], 'exact distinct backend transition')
+    for key in ('from_binary','to_binary','method','base_acceptance'): V.acquire(value[key])
+    acceptance=V.read_json(value['base_acceptance'])
+    need(acceptance.get('head')==value['base'], 'acceptance binds exact old head')
+    method=V.read_json(value['method'])
+    need(method.get('schema')=='F009_BOUNDED_MEMO_BACKEND_V1' and method.get('memo_limit')==65536 and
+         method.get('binary')==value['to_binary'], 'method binds exact bounded backend')
+    # Admission of the method/proof remains a pinned review premise, never inferred from this label.
+    for key in ('source','entrypoint','restore','compile_record','proof'): V.acquire(method[key])
+    need(value['method'] in case['premises'] and value['base_acceptance'] in case['premises'],
+         'explicit method and old-head acceptance premises')
+    result=copy.deepcopy(state); result['completion_binary']=case['completion_binary']
+    need({k:v for k,v in result.items() if k!='completion_binary'}==
+         {k:v for k,v in state.items() if k!='completion_binary'}, 'backend change preserves entire debt state')
+    return result
+
+def load(head_ref, seen=None, expected_case=None):
+    seen=set() if seen is None else seen
+    identity=(head_ref['path'],head_ref['sha256'])
+    need(identity not in seen, 'backend checkpoint chain acyclic')
+    head=V.read_json(head_ref)
+    if head.get('schema')!=HEAD:
+        return R.load(head_ref,seen=seen,expected_case=expected_case)
+    seen=seen|{identity}
+    need(set(head)=={'schema','genesis','tail'}, 'bounded backend head schema')
+    genesis=V.read_json(head['genesis'])
+    need(set(genesis)=={'schema','case'} and genesis['schema']==GENESIS, 'bounded backend genesis schema')
+    if expected_case is not None: need(genesis['case']==expected_case, 'declared bounded backend case binding')
+    case=V.read_json(genesis['case']); check_case(case)
+    state=migrate(load(case['base'],seen),case)
+    chain=[]; tail=head['tail']; visited=set()
+    while tail is not None:
+        need(tail['sha256'] not in visited, 'bounded backend transactions acyclic')
+        visited.add(tail['sha256']);tx=V.read_json(tail);chain.append(tx);tail=tx['previous']
+    # The acquired literal transition still binds every dispatch and terminal binary.
+    for tx in reversed(chain): state=R.transition(state,tx)
+    return state
+
+def begin(case_path,out,fault=lambda stage:None):
+    case=V.read_json(V.pin(case_path));check_case(case)
+    need(str(out)==case['output'] and not out.exists(), 'fresh bounded backend segment')
+    state=migrate(load(case['base']),case)
+    out.mkdir()
+    Q.atomic(out/'genesis.json',dict(schema=GENESIS,case=V.pin(case_path)))
+    fault('after_genesis_fsync')
+    Q.atomic(out/'head.json',dict(schema=HEAD,genesis=V.pin(out/'genesis.json'),tail=None),
+             lambda:fault('before_head_replace'))
+    fault('after_head_replace')
+    need(load(V.pin(out/'head.json'),expected_case=V.pin(case_path))==state, 'literal migrated genesis')
+    return case,state

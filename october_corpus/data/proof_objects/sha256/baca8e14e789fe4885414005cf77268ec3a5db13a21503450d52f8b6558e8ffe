@@ -1,0 +1,133 @@
+"""UNRUN private append-only digest ordinal storage; /root/journal_peer.
+Bound to the exact fresh digests list in the retained logical-size counter.
+Slots contain ordinal+1; only full existing digest equality resolves a key.
+No acquired cache/state, serialization or scientific authority is provided.
+"""
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+class DigestOrdinalMap:
+    """The precise contains/set/append/get transaction of logical_size.
+
+    A pending insert is committed only after the same list has gained exactly
+    that full digest at its declared ordinal. Existing entries never change.
+    The concrete retained consumer only appends to this private list; it does
+    not expose or mutate its earlier elements while this map is live.
+    """
+    __slots__ = ('_digests', '_slots', '_count', '_pending')
+
+    def __init__(self, digests):
+        need(type(digests) is list and not digests,
+             'same fresh empty private digest list')
+        self._digests = digests
+        self._slots = self._table(8)
+        self._count = 0
+        self._pending = None
+
+    @staticmethod
+    def _table(size):
+        need(type(size) is int and size >= 8 and size & (size-1) == 0,
+             'power-of-two ordinal slot count')
+        result = memoryview(bytearray(4*size)).cast('I')
+        need(result.itemsize == 4 and len(result) == size,
+             'exact builtin four-byte unsigned slots')
+        return result
+
+    @staticmethod
+    def _key(value):
+        need(type(value) is str and len(value) == 64
+             and all(c in '0123456789abcdef' for c in value),
+             'complete canonical retained digest string')
+        return value
+
+    def _settle(self):
+        if self._pending is not None:
+            key, ordinal = self._pending
+            need(ordinal == self._count and len(self._digests) == ordinal+1
+                 and type(self._digests[ordinal]) is str
+                 and self._digests[ordinal] == key,
+                 'exact ordinal assignment then same-list digest append')
+            self._count += 1
+            self._pending = None
+        need(len(self._digests) == self._count,
+             'private list has only committed consecutive appends')
+
+    def _find(self, key):
+        mask = len(self._slots)-1
+        position = hash(key) & mask
+        for _ in range(len(self._slots)):
+            entry = self._slots[position]
+            if entry == 0:
+                return position, None
+            ordinal = entry-1
+            need(0 <= ordinal < self._count,
+                 'slot names an existing committed digest ordinal')
+            if self._digests[ordinal] == key:
+                return position, ordinal
+            position = (position+1) & mask
+        raise ValueError('ordinal table must retain an empty probe slot')
+
+    def _grow(self):
+        old = self._slots
+        fresh = self._table(2*len(old))
+        mask = len(fresh)-1
+        for entry in old:
+            if not entry:
+                continue
+            ordinal = entry-1
+            need(0 <= ordinal < self._count,
+                 'rehash only complete existing ordinals')
+            key = self._digests[ordinal]
+            position = hash(key) & mask
+            for _ in range(len(fresh)):
+                occupied = fresh[position]
+                if not occupied:
+                    fresh[position] = entry
+                    break
+                need(self._digests[occupied-1] != key,
+                     'full digest uniqueness through rehash collisions')
+                position = (position+1) & mask
+            else:
+                raise ValueError('fresh ordinal table has an empty probe slot')
+        self._slots = fresh
+
+    def __contains__(self, key):
+        self._settle()
+        key = self._key(key)
+        return self._find(key)[1] is not None
+
+    def __setitem__(self, key, ordinal):
+        self._settle()
+        key = self._key(key)
+        need(type(ordinal) is int, 'strict integer digest ordinal')
+        position, prior = self._find(key)
+        if prior is not None:
+            need(ordinal == prior, 'existing digest ordinal is immutable')
+            return
+        need(ordinal == self._count and ordinal < 2**32-1,
+             'new ordinal is exactly current list length and fits slot')
+        if 2*(self._count+1) > len(self._slots):
+            self._grow()
+            position, prior = self._find(key)
+            need(prior is None, 'same absent key after storage-only resize')
+        self._slots[position] = ordinal+1
+        self._pending = (key, ordinal)
+
+    def __getitem__(self, key):
+        self._settle()
+        key = self._key(key)
+        ordinal = self._find(key)[1]
+        if ordinal is None:
+            raise KeyError(key)
+        return ordinal
+
+    def __len__(self):
+        self._settle()
+        return self._count
+
+
+if __name__ == '__main__':
+    raise SystemExit('UNRUN private logical-counter storage; Root review/caller owed.')

@@ -1,0 +1,361 @@
+"""Bounded metadata/Source primitives for the reusable explicit new-kind path.
+
+No Subject module or payload is loaded on import. DATA and functional Source
+are separate named domains; every opened row remains a full Root obligation.
+"""
+import hashlib
+import fcntl
+import importlib.util
+import json
+import math
+import os
+from pathlib import Path
+import stat
+import shlex
+
+D=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+Q=S/'computation/f009/rooted_census_split'
+PARENT=Q/'order32_continuation/inductive_batches'
+MIB,GIB=2**20,2**30
+OPEN={};SOURCE={}
+CURRENT_METADATA_GUARD_STARTED=None
+PROGRAMS={'entry':'entry.py','reader':'reader.py','metadata':'metadata.py',
+ 'accessor':'accessor.py','constructor':'next_batch.py','owner':'owner.py',
+ 'reader_owner':'reader_owner.py','controls':'controls.py','common':'common.py'}
+PRINCIPAL={'native':'entry','reader':'reader','metadata':'metadata'}
+STATUSES={
+ 'native':('PASS_DISTINCT_F009_MATERIALIZED_CONTINUATION_NATIVE_SOURCE',
+  'COMPLETED_GENUINE_DISTINCT_F009_MATERIALIZED_CONTINUATION_NATIVE_SOURCE_REVIEW'),
+ 'reader':('PASS_DISTINCT_F009_DIRECT_PRIVATE_TAIL_READER_SOURCE',
+  'COMPLETED_GENUINE_DISTINCT_F009_DIRECT_PRIVATE_TAIL_READER_SOURCE_REVIEW'),
+ 'metadata':('PASS_DISTINCT_F009_MATERIALIZED_CONTINUATION_METADATA_SOURCE',
+  'COMPLETED_GENUINE_DISTINCT_F009_MATERIALIZED_CONTINUATION_METADATA_SOURCE_REVIEW')}
+FLAGS={
+ 'native':('explicit_new_kind_base_and_unchanged_owned_native_loop_reviewed',
+  'all_current_Source_runtime_controls_owner_and_full_domain_joins_reviewed'),
+ 'reader':('direct_private_tail_ALL_original_predicates_and_order_reviewed',
+  'strict_whole_export_and_new_result_adoption_kind_reviewed',
+  'no_prior_failed_fold_required_for_future_tails_reviewed'),
+ 'metadata':('construct_check_native_to_directSaved_and_adoption_joins_reviewed',
+  'functional_Source_stable_DATA_and_all_actual_Root_evidence_separated_reviewed')}
+RUNTIME_POLICY=dict(path=str(Q/'order32_continuation/saved_tail_binding/validation_profile/profile.json'),
+ bytes=56759,sha256='ad3e4bcbf61d57f564f94813a54e6709e87d70c1030ae298b8910707ca7490d1')
+DIRECT_RESULT='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'
+DIRECT_ADOPTION='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_SNAPSHOT_V1'
+CHECKPOINT='ROOT_ACCEPTED_F009_PRIVATE_STATE_CHECKPOINT_V1'
+ANCHOR_FORMAT='direct_private_reference_v1'
+PROFILE='F009_DIRECT_PRIVATE_ANCHOR_SOURCE_PROFILE_V1'
+METHOD='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_ANCHOR_METHOD_V1'
+SOURCE4={'program','source_packet','source_review','source_execution'}
+BORROWED_ENTRY=dict(path=str(S/'maintenance/intake/f009_shared_leaf_continuation/entry.py'),
+ bytes=14538,sha256='208becd536cb475433dc85cd2212ff5563d516c6a826e31da8cebe6ad75f8756')
+MATERIALIZER_SUPPORT=dict(path=str(S/'maintenance/intake/f009_private_tail_value_materializer/materialize_support.py'),
+ bytes=14977,sha256='80453eb8db8d3e770749a96f0affd30e87169431a3e126126c78e8b9c531b804')
+PIN_STORAGE=dict(path=str(S/'maintenance/intake/f009_saved_pin_intern/compact_accessor.py'),
+ bytes=5607,sha256='73465f8a90cf2afec74ad4b1c776de951d7fe8c6589243735f70253a3f6e8233')
+FRAME_VALIDATOR=dict(path=str(S/'maintenance/intake/l026_clang_vfs_frame_preflight_root/preflight.py'),
+ bytes=11687,sha256='1a00100c9736c9c3d1876c9a5fe65b7dd4a98cd6b26153123ad7756237a2b433')
+OUTER_LIMITS=dict(admit_disk=10*GIB,admit_ram=4*GIB,disk_floor=8*GIB,ram_floor=3*GIB,
+ total_rss=512*MIB,wall_seconds=150.0,sample_seconds=.5,log_bytes_each=262144,
+ metadata_bytes_each=131072,owned_pids=128)
+DIRECT_ACTUAL_STATUSES=('PASS_DISTINCT_F009_DIRECT_PRIVATE_TAIL_ACTUAL_REVIEW',
+ 'COMPLETED_GENUINE_DISTINCT_F009_DIRECT_PRIVATE_TAIL_ACTUAL_REVIEW')
+DIRECT_ACTUAL_FLAGS=('whole_typed_ordered_artifact_and_all_remaining_joins_verified',
+ 'actual_guard_and_known_physical_closure_verified')
+CONTROL_ACTUAL_STATUSES=('PASS_DISTINCT_F009_MATERIALIZED_CONTINUATION_STARTUP_CONTROLS_ACTUAL_REVIEW',
+ 'COMPLETED_GENUINE_DISTINCT_F009_MATERIALIZED_CONTINUATION_STARTUP_CONTROLS_ACTUAL_REVIEW')
+CONTROL_ACTUAL_FLAGS=('all_current_startup_controls_verified',
+ 'actual_guard_and_known_physical_closure_verified')
+
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+
+def canonical(value):
+ return json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode('ascii')
+
+
+def same(a,b):return canonical(a)==canonical(b)
+
+
+def shape(ref):
+ need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['path'])is str
+  and type(ref['bytes'])is int and 0<=ref['bytes']<=2*GIB
+  and type(ref['sha256'])is str and len(ref['sha256'])==64
+  and all(c in'0123456789abcdef'for c in ref['sha256']),'whole typed canonical pin')
+ p=Path(ref['path']);need(p.is_absolute()and str(p)==ref['path']and '..'not in p.parts,'canonical absolute input path')
+ return p
+
+
+def pin(path):
+ p=Path(path);a=p.stat();need(stat.S_ISREG(a.st_mode)and a.st_size<=2*GIB,'bounded complete regular input')
+ h=hashlib.sha256();n=0
+ with p.open('rb')as f:
+  try:fcntl.fcntl(f.fileno(),48,1)
+  except OSError:pass
+  b=os.fstat(f.fileno())
+  for raw in iter(lambda:f.read(MIB),b''):h.update(raw);n+=len(raw)
+  z=os.fstat(f.fileno())
+ now=p.stat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ need(sig(a)==sig(b)==sig(z)==sig(now)and n==a.st_size,'stable entire input')
+ return dict(path=str(p),bytes=n,sha256=h.hexdigest())
+
+
+def acquire(ref,source=False):
+ shape(ref);need(same(pin(ref['path']),ref),'whole exact input '+ref['path'])
+ old=OPEN.get(ref['path']);need(old is None or same(old,ref),'one exact identity per path');OPEN[ref['path']]=ref
+ if source:SOURCE[ref['path']]=ref
+ return ref
+
+
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'duplicate JSON key');out[k]=v
+  return out
+ def floating(text):
+  value=float(text);need(math.isfinite(value),'finite nonoverflowing JSON float');return value
+ return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,
+  parse_constant=lambda x:(_ for _ in()).throw(ValueError('nonfinite JSON '+x)))
+
+
+def document(ref,cap=2*MIB,source=False):
+ shape(ref);need(ref['bytes']<=cap,'explicit bounded metadata document')
+ acquire(ref,source);raw=Path(ref['path']).read_bytes();need(len(raw)==ref['bytes'],'whole metadata bytes')
+ value=decode(raw);acquire(ref,source);return value
+
+
+def merge(*tables):
+ by={}
+ for rows in tables:
+  need(type(rows)is list,'literal descriptor table')
+  for ref in rows:
+   shape(ref);old=by.get(ref['path']);need(old is None or same(old,ref),'complete identity conflict');by[ref['path']]=ref
+ out=[by[k]for k in sorted(by)]
+ need(len(out)<=40000 and sum(r['bytes']for r in out)<=2*GIB,'dynamic whole40000/2GiB BEFORE authentication/allocation')
+ return out
+
+
+def source_rows(*tables):
+ rows=merge(*tables)
+ need(len(rows)<=1024 and sum(r['bytes']for r in rows)<=128*MIB,'functional Source1024/128MiB unchanged')
+ return rows
+
+
+def stable_open_rows():
+ """Only the exact already-validated current guard-start row is ephemeral.
+
+ Every OPEN row remains an actual Root obligation. This selector is used
+ only to form prospective Reader/constructor DATA, never actual Root scope.
+ """
+ return [OPEN[k]for k in sorted(OPEN)if CURRENT_METADATA_GUARD_STARTED is None
+  or k!=CURRENT_METADATA_GUARD_STARTED['path']]
+
+
+def refs(v):
+ if type(v)is dict:
+  if set(v)=={'path','bytes','sha256'}:yield v
+  else:
+   for x in v.values():yield from refs(x)
+ elif type(v)is list:
+  for x in v:yield from refs(x)
+
+
+def module(name,ref):
+ acquire(ref,True);need(ref['bytes']<=256*1024,'whole executable Source256KiB')
+ p=shape(ref);need(p.resolve(strict=True)==p,'ordinary executable Source path')
+ spec=importlib.util.spec_from_file_location(name,p);result=importlib.util.module_from_spec(spec);spec.loader.exec_module(result)
+ acquire(ref,True);return result
+
+
+def tool(t,full=None):
+ need(type(t)is dict and set(t)=={'handle','initial_chunk','terminal_chunk','exit_code','synchronous'}
+  and type(t['exit_code'])is int and t['exit_code']==0 and type(t['synchronous'])is bool
+  and all(type(t[k])is str and t[k]for k in('initial_chunk','terminal_chunk'))
+  and((t['synchronous']and t['handle']is None and t['initial_chunk']==t['terminal_chunk'])
+      or(not t['synchronous']and type(t['handle'])is int and t['handle']>0)),'genuine successful actual tool')
+ if full is not None:need(full['chunk_id']==t['terminal_chunk']and type(full['exit_code'])is int and full['exit_code']==0,'actual full terminal return')
+
+
+def source_family(roles,role):
+ need(role in STATUSES and type(roles)is dict and set(roles)==SOURCE4,'explicit current Source role4')
+ for ref in roles.values():acquire(ref,True)
+ p,v,e=[document(roles[k],source=True)for k in('source_packet','source_review','source_execution')]
+ need(p['source_role']==role and same(p['program'],roles['program'])
+  and same(p['program'],pin(D/PROGRAMS[PRINCIPAL[role]]))
+  and same(p['programs'],{k:pin(D/f)for k,f in PROGRAMS.items()})
+  and same(v['program'],p['program'])and same(e['program'],p['program'])
+  and same(v['source_packet'],roles['source_packet'])and same(e['source_packet'],roles['source_packet'])
+  and v['status']==STATUSES[role][0]and e['status']==STATUSES[role][1]
+  and v['source_author']==p['source_author']=='/root/class2_actual_audit'
+  and v['reviewer']!=v['source_author']and v['blockers']==[]and e['actor']==v['reviewer']
+  and same(e['review'],roles['source_review'])and all(v.get(k)is e.get(k)is True for k in FLAGS[role]),
+  'genuine distinct exact current role; old Source/status never retagged')
+ for field in('programs','source_author','reviewer','source_freeze','source_inverse','source_handoff','checks','method','blockers'):
+  need(field in v and field in e and same(v[field],e[field]),'all peer/ex common Source fields '+field)
+ need(same(v['programs'],p['programs'])and same(v['source_freeze'],p['source_freeze'])
+  and same(v['source_inverse'],p['source_inverse'])and v['blockers']==[], 'whole current Source dependency joins')
+ late=pin(p['mandatory_late_author_proof']);need(same(v['late_author_preparation'],late)and same(e['late_author_preparation'],late),'both current late proofs')
+ emitted_fields={field:v[field]for field in('programs','source_author','reviewer','source_freeze',
+  'source_inverse','source_handoff','checks','method','blockers','late_author_preparation')}
+ validate_review_frames(e,v['status'],roles['program'],roles['source_packet'],FLAGS[role],
+  emitted_fields,roles['source_review'],v['checks'])
+ need(v['source_handoff']['path']==p['source_handoff'],'exact current handoff path')
+ rows=source_rows(list(roles.values()),p['required_source_inputs'],[v['source_freeze'],v['source_inverse'],v['source_handoff'],
+  v['checks'],v['method'],e['checks'],e['method'],late])
+ for ref in rows:acquire(ref,True)
+ return p,rows
+
+
+def emitted_contract(whole,status,expected,flags=(),peer_ref=None,shared_checks=None):
+ """Pure value predicate shared by Source, actual and TEST_ONLY regressions."""
+ need(type(whole)is dict and whole.get('status')==status,'whole emitted current verdict status')
+ for key,value in expected.items():
+  need(key in whole and same(whole[key],value),'whole emitted exact current '+key)
+ need(all(whole.get(key)is True for key in flags),'whole emitted literal role flags')
+ if peer_ref is not None:
+  shape(peer_ref)
+  if not same(whole.get('review'),peer_ref):
+   need(shared_checks is not None,'emission must bind exact peer or exact shared checks')
+   shape(shared_checks)
+   need(same(whole.get('checks'),shared_checks),'whole emitted current shared checked target')
+
+
+def validate_review_frames(ex,status,program,packet,flags=(),expected=None,peer_ref=None,shared_checks=None):
+ f=module('materialized_reused_pure_strict_frame_validator',FRAME_VALIDATOR)
+ facts,whole=f.validate_frames(ex['actual_tool'],ex['full_initial_tool_return'],ex['full_tool_return'],
+  ex['all_genuine_api_frames'],2*MIB)
+ need(ex['actual_tool']['exit_code']==0 and same(whole,ex['emitted_verdict']),
+  'WHOLE genuine ordered frames equal the supplied complete emission')
+ target=dict(program=program,source_packet=packet)
+ if expected is not None:target.update(expected)
+ emitted_contract(whole,status,target,flags,peer_ref,shared_checks)
+ return facts,whole
+
+
+def actual_review_pair(peer,ex,peer_ref,statuses,source,result,flags,additional=None):
+ """Bind reusable actual evidence to THIS result, Source and distinct actor."""
+ expected=dict(program=source['program'],source_packet=source['source_packet'],source=source,
+  result=result,source_author='/root/class2_actual_audit',reviewer=peer['reviewer'],blockers=[])
+ if additional is not None:expected.update(additional)
+ need(peer['reviewer']not in('/root','/root/class2_actual_audit')and ex['actor']==peer['reviewer']
+  and peer['status']==statuses[0]and ex['status']==statuses[1]and same(ex['review'],peer_ref),
+  'genuinely distinct actual peer/ex roles and exact current peer')
+ for value in(peer,ex):
+  for key,want in expected.items():need(key in value and same(value[key],want),'both actual proof leaves '+key)
+  need(all(value.get(key)is True for key in flags),'both actual proof literal role flags')
+ shared=peer.get('checks')
+ if shared is not None:shape(shared);need(same(ex.get('checks'),shared),'same actual shared checks on both proof leaves')
+ return validate_review_frames(ex,statuses[0],source['program'],source['source_packet'],
+  flags,expected,peer_ref,shared)
+
+
+def positive_control(value,closed_pairs,closed_groups):
+ need(type(value)is dict and type(value.get('pid'))is int and value['pid']>0
+  and type(value.get('group'))is int and value['group']>0
+  and type(value.get('expected_birth'))in(int,float)and math.isfinite(value['expected_birth'])and value['expected_birth']>0
+  and value.get('state')=='ALIVE'and same(value.get('current_birth'),value['expected_birth'])
+  and type(value.get('members'))is list and value['pid']in value['members']
+  and all(type(pid)is int and pid>0 for pid in value['members'])
+  and len(set(value['members']))==len(value['members'])
+  and (value['pid'],value['expected_birth'])not in closed_pairs and value['group']not in closed_groups,
+  'actual own birth/group positive control separate from the closed known scope')
+
+
+def physical_contract(value,identities,extra_groups=()):
+ """Exact complete known domain; not an absence claim about unseen children."""
+ pairs={(row['pid'],row['birth'])for row in identities};groups={row['group']for row in identities}|set(extra_groups)
+ need(bool(pairs)and bool(groups),'nonempty complete known birth/group domain')
+ observed=value.get('known_births');observed_groups=value.get('known_groups')
+ expected_pairs={(row['pid'],row['birth']):(row['pid'],row['birth'])for row in identities}
+ need(type(observed)is list and len(observed)==len(pairs)
+  and {(row.get('pid'),row.get('expected_birth'))for row in observed}==pairs
+  and all(type(row.get('pid'))is int and type(row.get('expected_birth'))in(int,float)
+   and same((row['pid'],row['expected_birth']),expected_pairs[(row['pid'],row['expected_birth'])])
+   and row.get('state')=='ABSENT'and row.get('current_birth')is None for row in observed),
+  'every and only known started/receipt birth has a negative observation')
+ need(type(observed_groups)is list and len(observed_groups)==len(groups)
+  and {row.get('group')for row in observed_groups}==groups
+  and all(type(row.get('group'))is int and row.get('members')==[]for row in observed_groups),
+  'every and only known process group is physically empty')
+ positive_control(value['own_positive'],pairs,groups)
+ return pairs,groups
+
+
+def guard_contract(cap,guard,started,whole,expected_command,owner_started=None):
+ """Pure exact outer-profile/guard/complete-known-domain value checks."""
+ need(cap.get('root')==cap.get('actor')=='/root'and cap.get('physical_scope_closed')is True,
+  'actual Root capture and physically closed known scope')
+ need(same(cap['child_argv'],expected_command)and same(guard['command'],expected_command)
+  and same(started['command'],expected_command),'same requested, issued child and started command')
+ observation=shape(cap['guard_receipt']).parent
+ issued=['/Users/sasha/.venvs/global/bin/python','-E','-B',str(S/'maintenance/runtime/supervise_validation.py'),
+  '--volume',str(S),'--output',str(observation),'--rss-cap-mib','512','--timeout','150','--',*expected_command]
+ need(same(cap['issued_argv'],issued)and same(shlex.split(cap['issued_command']),issued),
+  'exact actually issued outer512MiB/150s argv and shell command')
+ need(same(guard['limits'],OUTER_LIMITS)and same(started['limits'],OUTER_LIMITS)
+  and guard.get('status')=='PASS'and guard.get('stop')=='RETURNED'and guard.get('error')is None
+  and type(guard.get('returncode'))is int and guard['returncode']==0
+  and type(guard.get('seconds'))in(int,float)and math.isfinite(guard['seconds'])and 0<=guard['seconds']<=150
+  and same(whole,dict(status='PASS',stop='RETURNED',receipt=cap['guard_receipt']['path']))
+  and guard['cleanup'].get('remaining')==guard['cleanup'].get('errors')==[]
+  and guard['qualification']=='Sampled limits; no kernel quota or absence proof for unseen detached descendants.'
+  and guard['cleanup']['qualification']=='Known birth-pinned processes only; unseen detached descendants are not excluded.',
+  'whole emitted PASS/RETURNED/receipt and complete unchanged actual outer limits')
+ for field,floor in(('free_disk',10*GIB),('available_ram',4*GIB)):
+  need(type(guard['admission'][field])is int and guard['admission'][field]>=floor
+   and same(started['admission'][field],guard['admission'][field]),'exact outer admission resources '+field)
+ peaks=guard['peaks']
+ need(type(peaks['samples'])is int and peaks['samples']>0
+  and type(peaks['total_rss'])is int and 0<=peaks['total_rss']<=512*MIB
+  and type(peaks['min_free_disk'])is int and peaks['min_free_disk']>=8*GIB
+  and type(peaks['min_available_ram'])is int and peaks['min_available_ram']>=3*GIB,
+  'whole observed sampled peak/floor resources')
+ identities={}
+ for rows in(started['identities'],guard['identities']):
+  need(type(rows)is list and bool(rows),'both actual guard identity lists nonempty')
+  for row in rows:
+   need(type(row)is dict and type(row.get('pid'))is int and row['pid']>0
+    and type(row.get('birth'))in(int,float)and math.isfinite(row['birth'])and row['birth']>0
+    and type(row.get('group'))is int and row['group']>0
+    and type(row.get('session'))is int and row['session']>0,'whole typed guard birth/group identity')
+   key=(row['pid'],row['birth']);v=dict(pid=row['pid'],birth=row['birth'],group=row['group'],session=row['session'])
+   need(key not in identities or same(identities[key],v),'coherent whole started/receipt identity union');identities[key]=v
+ extra_groups=[]
+ if owner_started is not None:
+  owner=(owner_started['owner_pid'],owner_started['owner_birth'])
+  need(type(owner[0])is int and type(owner[1])in(int,float)and owner in identities
+   and same(owner,(identities[owner]['pid'],identities[owner]['birth'])),
+   'actual inner owner identity belongs to complete outer known domain')
+  child=owner_started['child_pid'];birth=owner_started['child_birth']
+  need(type(child)is int and child>0,'actual inner owned child identity')
+  extra_groups.append(child)
+  if birth is None:need(owner_started.get('child_birth_observation')=='already_exited_before_birth_sample',
+   'explicit unsampled child-birth limitation, not an invented identity')
+  else:need(type(birth)in(int,float)and math.isfinite(birth)and birth>0 and(child,birth)in identities
+   and same((child,birth),(identities[(child,birth)]['pid'],identities[(child,birth)]['birth'])),
+   'actual known inner child belongs to complete outer domain')
+ physical_contract(cap,list(identities.values()),extra_groups)
+ return list(identities.values()),extra_groups
+
+
+def clearance_contract(clear,cap,capture_ref,terminal,terminal_ref,identities,extra_groups,
+ guard_started,owner_ref,owner_started,request_ref):
+ need(clear.get('root')=='/root'and clear.get('all_four_arrays_observed_idle')is True
+  and clear.get('known_scope_drained')is True and same(clear['capture'],capture_ref)
+  and same(clear['actual_tool'],cap['actual_tool'])and same(clear['terminal'],terminal_ref),
+  'genuine actual-tool/capture/terminal clearance; idle is a historical observation')
+ need(terminal.get('root')=='/root'and terminal.get('known_scope_drained')is True
+  and same(terminal['actual_capture'],capture_ref)and same(terminal['actual_tool'],cap['actual_tool'])
+  and same(terminal['outer_receipt'],cap['guard_receipt'])and same(terminal['outer_started'],guard_started)
+  and same(terminal['inner_receipt'],owner_ref)and same(terminal['inner_started'],owner_started)
+  and same(terminal['request'],request_ref),'complete actual terminal closure and inner/outer roles')
+ physical_contract(clear,identities,extra_groups);physical_contract(terminal,identities,extra_groups)
+
+
+def emit(path,value,cap=2*MIB):
+ raw=canonical(value)+b'\n';need(len(raw)<=cap,'whole declared output cap before write')
+ with Path(path).open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive write');f.flush();os.fsync(f.fileno())
+ return pin(path)

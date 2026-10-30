@@ -1,0 +1,177 @@
+"""Strict explicit first-materialized or direct-private-tail base dispatch."""
+import ast
+import copy
+import importlib.util
+from pathlib import Path
+import types
+
+D=Path(__file__).resolve().parent
+spec=importlib.util.spec_from_file_location('direct_private_common',D/'common.py')
+K=importlib.util.module_from_spec(spec);spec.loader.exec_module(K)
+RUNTIME_FILES=frozenset({'census_segment_runtime.py','census_segment_replay.py','census_bounded_runtime.py',
+ 'census_native_calls.py','census_backend_transition.py','census_queue_runtime.py','census_queue.py',
+ 'census_queue_completion.py','census_terminal_reader.py','census_queue_completion_verify.py','census_queue_verify.py'})
+CODEC=dict(path=str(K.S/'maintenance/intake/f009_saved_export_memory/reference_backed_snapshot/explicit_export_join/codec.py'),
+ bytes=29537,sha256='d63b3417ccbfac618239b30898c1f4069a2c95b164a840a6eb4a963986f47358')
+_PARTS=None
+
+
+def parts():
+ global _PARTS
+ if _PARTS is None:
+  h=K.module('direct_private_prior_value_support',K.MATERIALIZER_SUPPORT)
+  c=K.module('direct_private_unchanged_export_codec',CODEC)
+  # Never derive/import a Saved run in the native process: its intentional
+  # audit hook denies subprocess launch. The codec declaration is lazy and
+  # installs no native-denial hook. Reader owns its own explicit denial.
+  _PARTS=(h,c,None)
+ return _PARTS
+
+
+def method(method_ref,profile_ref):
+ p,g=K.document(profile_ref),K.document(method_ref)
+ K.need(type(p)is dict and set(p)=={'schema','anchor','capacity_profile','capacity_method','runtime_sources',
+  'native_source','reader_source'}and p['schema']==K.PROFILE and K.same(p['anchor'],K.pin(D/'accessor.py')),
+  'new current direct-private anchor profile')
+ K.source_family(p['native_source'],'native');K.source_family(p['reader_source'],'reader')
+ K.need(g['root']=='/root'and g['status']==K.METHOD and K.same(g['source_profile'],profile_ref)
+  and K.same(g['native_source'],p['native_source'])and K.same(g['reader_source'],p['reader_source'])
+  and g['scientific_execution']is False,'explicit separately admitted current Source/method')
+ h,c,_=parts();export=c.method(p['capacity_method'],p['capacity_profile'])
+ K.need(K.same(p['runtime_sources'],export['runtime_sources'])
+  and{Path(r['path']).name for r in p['runtime_sources']}==RUNTIME_FILES
+  and all(Path(r['path']).parent==K.Q for r in p['runtime_sources']),'same exact complete original11 runtime')
+ for ref in p['runtime_sources']:K.acquire(ref,True)
+ return p
+
+
+def load_direct(snapshot,*,head,producer_case,upstream_acceptance,source_profile,adoption):
+ h,c,_=parts();g=K.document(adoption)
+ K.need(g['root']=='/root'and g['adopted']is True and g['schema']==K.DIRECT_ADOPTION
+  and g['adoption_kind']=='DIRECT_PRIVATE_TAIL_VERIFICATION','distinct new direct-tail adoption kind')
+ expected=dict(snapshot=snapshot,head=head,producer_case=producer_case,upstream_acceptance=upstream_acceptance,source_profile=source_profile)
+ K.need(all(K.same(g[k],v)for k,v in expected.items()),'complete exact artifact provenance')
+ r=K.document(g['read_result']);K.source_family(r['execution_source'],'reader')
+ K.need(r['status']==K.DIRECT_RESULT and K.same(r['execution_source'],g['execution_source'])
+  and K.same(r['snapshot'],snapshot)and K.same(r['head'],head)and K.same(r['base_acceptance'],upstream_acceptance)
+  and K.same(r['snapshot_profile'],source_profile)and r['native_launch_attempts']==[]
+  and type(r['private_materialization_calls'])is int and r['private_materialization_calls']==1
+  and all(type(r[k])is int and r[k]==0 for k in('tail_load_calls','top_level_load_calls'))
+  and r['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL',
+  'whole new independently acquired direct-tail artifact, no prerequisite old failed fold')
+ case=K.document(r['case'])
+ K.need(K.same(case['head'],head)and K.same(case['producer_case'],producer_case)
+  and K.same(case['base_acceptance'],upstream_acceptance)and K.same(case['snapshot_profile'],source_profile),
+  'same complete semantic case')
+ c.profile(source_profile)
+ for ref in expected.values():c.acquire(ref)
+ K.need(snapshot['bytes']<=c.MAX_PACKED,'unchanged packed8MiB')
+ raw=Path(snapshot['path']).read_bytes();value=c.legacy().W.decode(raw)
+ K.need(type(value)is dict and set(value)=={'schema','head','producer_case','upstream_acceptance','source_profile','state'}
+  and value['schema']==c.SCHEMA and all(K.same(value[k],expected[k])for k in('head','producer_case','upstream_acceptance','source_profile')),
+  'exact unchanged whole envelope and reference wire')
+ K.need(c.legacy().W.encode(value)==raw,'same canonical deterministic gzip')
+ envelope={k:v for k,v in value.items()if k!='state'}
+ state=c.expand(value['state'],envelope=envelope);c.logical_size(envelope,state)
+ observed=dict(sequence=state['sequence'],nodes=len(state['nodes']),pending=len(state['pending']),
+  selected_raw_leaf_records=len(state['leaves']),reserved_debts=len(state['started']))
+ K.need(K.same(observed,g['checkpoint'])and K.same(observed,r['checkpoint']),'complete artifact scalar after entire typed inverse')
+ producer,base=K.document(producer_case),K.document(upstream_acceptance)
+ K.need(K.same(producer['base'],base['head'])and K.same(state['target'],producer['target'])
+  and K.same(state['binary'],producer['binary'])and K.same(state['completion_binary'],producer['completion_binary']),
+  'same accepted original target/backend semantics')
+ for ref in(state['binary'],state['completion_binary'],snapshot):c.acquire(ref)
+ return state
+
+
+class Admission:
+ def __init__(self,anchor_ref,case_ref,base_acceptance,source_profile,method_acceptance):
+  self.h,self.c,_=parts()
+  self.anchor_ref,self.case_ref,self.base_ref,self.profile_ref,self.method_ref=copy.deepcopy(
+   (anchor_ref,case_ref,base_acceptance,source_profile,method_acceptance))
+  self.profile=method(self.method_ref,self.profile_ref);self.anchor=K.document(self.anchor_ref)
+  self.sources={Path(x['path']).name:x for x in self.profile['runtime_sources']};self.check()
+ def check(self):
+  a=self.anchor
+  K.need(K.same(K.document(self.anchor_ref),a)and K.same(method(self.method_ref,self.profile_ref),self.profile),'unchanged exact new profile/anchor')
+  K.need(type(a)is dict and set(a)=={'schema','format','snapshot','head','producer_case','upstream_acceptance','source_profile','adoption','method_acceptance'}
+   and a['schema']=='F009_EXPLICIT_ADOPTED_STATE_ANCHOR_V1'and a['format']==K.ANCHOR_FORMAT,'explicit new consumer format')
+  case,base,g=K.document(self.case_ref),K.document(self.base_ref),K.document(a['adoption'])
+  K.need(base['root']==g['root']=='/root'and base['adopted']is g['adopted']is True
+   and K.same(case['base'],a['head'])and K.same(base['head'],a['head'])
+   and K.same(g['checkpoint_acceptance'],self.base_ref)and K.same(g['checkpoint'],base['checkpoint']),
+   'same real adopted complete current base')
+  K.need((g.get('status')=='ROOT_ACCEPTED_F009_REFERENCE_LEAF_SNAPSHOT_V1'
+    and g['adoption_kind']in('SAVED_TAIL','LOSSLESS_REFERENCE_REENCODING'))
+   or(g.get('schema')==K.DIRECT_ADOPTION and g['adoption_kind']=='DIRECT_PRIVATE_TAIL_VERIFICATION'),
+   'accepted legacy reference base OR new direct complete artifact, never a status retag')
+  K.need(K.same(a['source_profile'],self.profile['capacity_profile'])and K.same(a['method_acceptance'],self.profile['capacity_method']),
+   'unchanged actual original export profile/method')
+  for ref in list(K.refs(a))+list(self.sources.values()):K.acquire(ref)
+  return case,base,g
+ def source(self,name):
+  K.need(name in self.sources,'exact original runtime Source name');K.acquire(self.sources[name],True);return Path(self.sources[name]['path'])
+ def acquire_base(self,case_pin,case):
+  actual,base,g=self.check();a=self.anchor
+  K.need(K.same(case_pin,self.case_ref)and K.same(case,actual),'same complete producer case')
+  loader=self.c.load if g.get('status')=='ROOT_ACCEPTED_F009_REFERENCE_LEAF_SNAPSHOT_V1'else load_direct
+  state=loader(a['snapshot'],head=a['head'],producer_case=a['producer_case'],upstream_acceptance=a['upstream_acceptance'],
+   source_profile=a['source_profile'],adoption=a['adoption'])
+  observed=dict(sequence=state['sequence'],nodes=len(state['nodes']),pending=len(state['pending']),
+   selected_raw_leaf_records=len(state['leaves']),reserved_debts=len(state['started']))
+  K.need(K.same(observed,base['checkpoint']),'whole strictly acquired base equals complete adopted boundary')
+  pin_storage=K.module('direct_private_value_equal_pin_storage',K.PIN_STORAGE)
+  state=pin_storage.coalesce_file_pins(state,self.c)
+  self.check();return state
+
+
+def segment_class(anchor_ref,case_ref,base_acceptance,source_profile,method_acceptance):
+ a=Admission(anchor_ref,case_ref,base_acceptance,source_profile,method_acceptance)
+ runtime=a.c.module('direct_private_original_segment_runtime',a.c.pin(a.source('census_segment_runtime.py')));original=runtime.X
+ K.need(Path(original.__file__)==a.source('census_segment_replay.py'),'whole original public Segment module')
+ pending=[runtime];seen=set();found=set()
+ while pending:
+  mod=pending.pop()
+  if id(mod)in seen:continue
+  seen.add(id(mod));file=getattr(mod,'__file__',None)
+  if file is None or Path(file).parent!=K.Q:continue
+  name=Path(file).name;K.need(name in RUNTIME_FILES and Path(file)==a.source(name),'entire exact live original closure')
+  found.add(name);pending.extend(x for x in vars(mod).values()if isinstance(x,types.ModuleType))
+ K.need(found==RUNTIME_FILES,'all11 original runtime sources')
+ text=a.source('census_segment_replay.py').read_text();nodes=[n for n in ast.parse(text).body if isinstance(n,ast.ClassDef)and n.name=='Segment']
+ K.need(len(nodes)==1,'one original Segment declaration');old=ast.get_source_segment(text,nodes[0])
+ before="B.load(self.__case['base'])";after='AUTHENTICATED.acquire_base(self.__case_pin, self.__case)'
+ K.need(old.count(before)==1 and after not in old,'one exact new base acquisition expression')
+ new=old.replace(before,after,1);K.need(new.replace(after,before,1)==old,'whole original class inverse')
+ private=dict(vars(original));private['AUTHENTICATED']=a
+ exec(compile(new,str(Path(__file__).resolve())+'::Segment','exec'),private)
+ result=private['Segment'];K.need(result.__slots__==original.Segment.__slots__,'unchanged original public class slots')
+ return result
+
+
+def load(anchor_ref,case_ref,base_acceptance,source_profile,method_acceptance,head_ref):
+ return segment_class(anchor_ref,case_ref,base_acceptance,source_profile,method_acceptance)(case_ref).load(head_ref)
+
+
+class DirectValueLoad:
+ def __init__(self,c):self.c=c;self.calls=0
+ def load(self,anchor,case_ref,base,profile_ref,method_ref,head_ref):
+  K.need(self.calls==0,'one direct private tail materialization');self.calls+=1
+  cls=segment_class(anchor,case_ref,base,profile_ref,method_ref);ns=cls.__init__.__globals__
+  B=ns['B'];R=B.R;V=R.V;case=V.read_json(case_ref);B.check_case(case)
+  state=B.migrate(ns['AUTHENTICATED'].acquire_base(case_ref,case),case)
+  head=V.read_json(head_ref)
+  K.need(Path(head_ref['path'])==Path(case['output'])/'head.json'and set(head)=={'schema','genesis','tail'}and head['schema']==B.HEAD,'same complete exact head')
+  K.need(V.read_json(head['genesis'])=={'schema':B.GENESIS,'case':case_ref},'same whole exact genesis')
+  actual=V.read_json(case_ref);B.check_case(actual);K.need(actual==case,'same case after base acquisition')
+  chain=[];tail=head['tail'];seen=set()
+  while tail is not None:
+   K.need(tail['sha256']not in seen,'same acyclic complete tail');seen.add(tail['sha256'])
+   tx=V.read_json(tail);chain.append(tx);tail=tx['previous'];K.need(len(chain)<=512,'bounded complete tail')
+  rows={Path(r['path']).name:r for r in K.document(profile_ref)['runtime_sources']}
+  h,_,_=parts();vt=h.private_transition(V.transition,rows['census_queue_verify.py'],self.c)
+  pv=types.SimpleNamespace(**vars(V));pv.transition=vt
+  transition=h.private_transition(R.transition,rows['census_terminal_reader.py'],self.c,{'V':pv})
+  for tx in reversed(chain):
+   prior=state;state=transition(state,tx);K.need(state is prior,'same uniquely owned state')
+  K.acquire(head_ref);K.acquire(case_ref);return state

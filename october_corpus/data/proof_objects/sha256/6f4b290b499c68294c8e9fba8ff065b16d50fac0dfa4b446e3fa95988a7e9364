@@ -1,0 +1,105 @@
+--- /private/tmp/l026_bounded_batch_workflow/cohort_metadata_successor/invoice_observation/Root_workflow.js
++++ /private/tmp/l026_free_0128_0143_continuation_DATA/Root_workflow.js
+@@ -1,4 +1,4 @@
+-/* Root edition: observe each exact callback resource invoice before science; all other prior workflow bytes remain literal. */
++/* Finite continuation of actual128..143: reuse three closed discoveries; only3..5 are new. Oldc958 remains immutable. */
+ async function runL026BoundedBatch(R, kit, options = {}) {
+   for (const k of ["directRun", "directCapture", "directJSON", "approveCase", "approveRetention", "approveAppend"]) {
+     if (typeof R[k] !== "function") throw new Error("Missing Root-owned callback: " + k);
+@@ -11,17 +11,21 @@
+   const supervisor = "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py";
+   const root = options.outputRoot;
+   if (typeof root !== "string" || !root.startsWith("/private/tmp/") || root.includes("..")) throw new Error("fresh explicit T root required");
++  if (root !== "/private/tmp/l026_free_0128_0143_execution") throw new Error("exact original execution root required");
++  const captureRoot = options.captureRoot;
++  if (captureRoot !== "/private/tmp/l026_free_0128_0143_continuation_execution") throw new Error("fresh exact continuation capture/log namespace required");
+   let serial = 0;
+   const next = label => {
+     if (++serial > 1024) throw new Error("finite Root API action bound exceeded");
+-    return "L026_COHORT_" + String(serial).padStart(3, "0") + "_" + label;
++    return "L026_CONTINUATION_" + String(serial).padStart(3, "0") + "_" + label;
+   };
+   const events = [];
+   async function api(argv, label, capturePath, kwargs = {}) {
+     const key = next(label);
++    const scopedCapturePath = capturePath.startsWith(root + "/") ? captureRoot + capturePath.slice(root.length) : capturePath;
+     let terminal, capture;
+     try { terminal = await R.directRun(key, argv, kwargs); }
+-    finally { capture = await R.directCapture(key, capturePath); }
++    finally { capture = await R.directCapture(key, scopedCapturePath); }
+     events.push({ key, argv, terminal, capture });
+     if (!terminal || terminal.exit_code !== 0) {
+       const e = new Error("Root call failed: " + key); e.closedEvent = events[events.length - 1]; throw e;
+@@ -46,10 +50,10 @@
+     return (await readObject(path, "hash_" + name.replaceAll("/", "_"))).ref;
+   }
+   const setup = "import pathlib,sys; p=pathlib.Path(sys.argv[1]); assert p.is_absolute() and p.is_relative_to('/private/tmp') and '..' not in p.parts and p.parent.resolve()==p.parent and not p.exists(); p.mkdir(); print('{}')";
+-  await api([py, "-E", "-B", "-S", "-c", setup, root], "fresh_root", root + "_setup_actual_capture.json");
++  await api([py, "-E", "-B", "-S", "-c", setup, captureRoot], "fresh_continuation_capture_root", captureRoot + "_setup_actual_capture.json");
+   const helperArg = [py, "-E", "-B", "-S", kit.helper.path];
+   async function guarded(child, name, rss = 128, seconds = 150) {
+-    const directory = root + "/" + name;
++    const directory = captureRoot + "/" + name;
+     const event = await api([py, "-E", "-B", supervisor, "--volume", volume, "--output", directory,
+       "--rss-cap-mib", String(rss), "--timeout", String(seconds), "--", ...child], name, root + "/" + name + "_actual_capture.json", { max_output_tokens: 4000 });
+     const outer = await readObject(directory + "/receipt.json", name + "_outer");
+@@ -57,7 +61,7 @@
+     const statCode = "import pathlib,hashlib,json,sys; p=pathlib.Path(sys.argv[1]); n=p.stat().st_size; assert n<=262144; f=p.open('rb'); b=f.read(n+1); f.close(); assert len(b)==n; print(json.dumps(dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()),sort_keys=True))";
+     const skey = next(name + "_stderr");
+     const st = await R.directRun(skey, [py, "-E", "-B", "-S", "-c", statCode, directory + "/stderr.log"], { max_output_tokens: 2000 });
+-    const sc = await R.directCapture(skey, root + "/" + skey + "_actual_capture.json");
++    const sc = await R.directCapture(skey, captureRoot + "/" + skey + "_actual_capture.json");
+     events.push({ key: skey, terminal: st, capture: sc });
+     if (!st || st.exit_code !== 0) throw new Error("stderr metadata reader failed");
+     const stderr = await R.directJSON(skey);
+@@ -74,10 +78,13 @@
+   const configuration = (await readObject(kit.config, "selected_cohort_configuration")).object;
+   if (!Number.isInteger(configuration.start) || !Number.isInteger(configuration.count) || configuration.count < 1 || configuration.count > 16 || configuration.start < 0 || configuration.start + configuration.count > 28908) throw new Error("one bounded cohort configuration");
+   const cohort = Array.from({length:configuration.count},(_,i)=>configuration.start+i);
+-  let current = (await readObject(kit.currentPath, "current_before_prepare")).ref;
+-  const batch = await metadata("prepare", "prepared", ["--current", current.path, current.sha256]);
+-  if (JSON.stringify(batch.selected_indices) !== JSON.stringify(cohort) || batch.subset_calls.length > 6) throw new Error("one-batch limit");
+-  const batchRef = (await readObject(root + "/prepared/batch.json", "batch_ref")).ref;
++  let current = (await readObject(kit.currentPath, "current_before_continuation")).ref;
++  const batchRef = {"path":"/private/tmp/l026_free_0128_0143_execution/prepared/batch.json","bytes":17739,"sha256":"46a7a062512cfbdc7781e26eda2a2f166746c172e42cb196d17518e00006f18e"};
++  const batch = (await readObject(batchRef, "actual_original_batch")).object;
++  const boundBefore = batch.ledger.current_paid_ledger_selector;
++  if (current.path !== boundBefore.path || current.bytes !== boundBefore.bytes || current.sha256 !== boundBefore.sha256 ||
++      JSON.stringify(cohort) !== JSON.stringify(Array.from({length:16},(_,i)=>128+i)) ||
++      JSON.stringify(batch.selected_indices) !== JSON.stringify(cohort) || batch.subset_calls.length !== 6) throw new Error("same actual cohort/current required; no helper prepare replay");
+   async function runCase(entry, name) {
+     current = (await readObject(kit.currentPath, name + "_fresh_CURRENT")).ref;
+     const boundCurrent = batch.ledger.current_paid_ledger_selector;
+@@ -107,8 +114,14 @@
+       result, ...(outputs && outputs["records.json"] ? { carrier: outputs["records.json"] } : {}),
+       ...(outputs && outputs["checkpoint.json"] ? { checkpoint: outputs["checkpoint.json"] } : {}) };
+   }
+-  const subsetRuns = [];
+-  for (let i = 0; i < batch.subset_calls.length; ++i) subsetRuns.push(await runCase(batch.subset_calls[i], "subset_" + i));
++  const completedSubsetRunsRef = {"path":"/private/tmp/l026_free_0128_0143_continuation_DATA/completed_subset_runs.json","bytes":9387,"sha256":"39e634ab3270ab60cab059411f29546781f849845de9fd715d29ad9f2071822d"};
++  const subsetRuns = (await readObject(completedSubsetRunsRef, "historical_closed_first3_inputs")).object;
++  if (!Array.isArray(subsetRuns) || subsetRuns.length !== 3 ||
++      subsetRuns.some((r,i)=>r.plan.path !== batch.subset_calls[i].plan.path ||
++        r.plan.bytes !== batch.subset_calls[i].plan.bytes || r.plan.sha256 !== batch.subset_calls[i].plan.sha256 ||
++        r.program.sha256 !== batch.subset_calls[i].program.sha256 || r.kind !== "NEG"))
++    throw new Error("only exact actual first3 discovery tuples may be reused");
++  for (let i = 3; i < batch.subset_calls.length; ++i) subsetRuns.push(await runCase(batch.subset_calls[i], "subset_" + i));
+   const subsetEvidence = await writeData("subset_runs.json", subsetRuns);
+   const subsetRoute = await metadata("subset-bind", "subset_bound", ["--batch", batchRef.path, batchRef.sha256, "--evidence", subsetEvidence.path, subsetEvidence.sha256]);
+   const subsetRouteRef = (await readObject(root + "/subset_bound/subset_route.json", "subset_route_ref")).ref;
+@@ -124,7 +137,7 @@
+   const strictEvidence = await writeData("strict_runs.json", strictRuns);
+   const bundle = await metadata("proof-bundle", "bundle", ["--batch", batchRef.path, batchRef.sha256, "--evidence", strictEvidence.path, strictEvidence.sha256]);
+   const bundleRef = (await readObject(root + "/bundle/proof_bundle_UNRETAINED.json", "bundle_ref")).ref;
+-  const retentionEvidence = await writeData("retention_input.json", { bundle: bundleRef, closed_runs: [...subsetRuns, ...walkRuns, ...strictRuns], extra_files: [batchRef, subsetEvidence, strictEvidence, walkEvidence, bundleRef, kit.helper, kit.config, kit.controls, kit.workflow, options.actualHelperControls, options.independentSourcePeer, options.RootSourceReview].filter(Boolean) });
++  const retentionEvidence = await writeData("retention_input.json", { bundle: bundleRef, closed_runs: [...subsetRuns, ...walkRuns, ...strictRuns], extra_files: [batchRef, subsetEvidence, strictEvidence, walkEvidence, bundleRef, kit.helper, kit.config, kit.controls, kit.workflow, options.actualHelperControls, options.independentSourcePeer, options.RootSourceReview, ...[{"path":"/private/tmp/l026_free_0128_0143_continuation_DATA/completed_subset_runs.json","bytes":9387,"sha256":"39e634ab3270ab60cab059411f29546781f849845de9fd715d29ad9f2071822d"},{"path":"/private/tmp/l026_free_0128_0143_continuation_DATA/completed_runs_and_refusal_review_DATA.json","bytes":6938,"sha256":"3748cc9d850a2451bfd7671702443d5a3a441880e9425c5188c534ca06dfc6a6"},{"path":"/private/tmp/l026_free_0128_0143_continuation_DATA/config_whole_inverse_DATA.json","bytes":24686,"sha256":"db1b52cb09b5cab8a3b29b9887856d58ac4fbc226dc24de24c3dd6ea77d9df54"},{"path":"/private/tmp/l026_free_0128_0143_DATA/runtime/Root_workflow_actual_outcome.json","bytes":26486,"sha256":"8a632339b4cc54715558b7dc9ce5707b44ea70e551d753da38da6a029d5b0f54"},{"path":"/private/tmp/l026_free_0128_0143_execution/subset_3_actual_capture.json","bytes":9622,"sha256":"dff205b8fa82e0f98740c12de1cb3bdae9a633384aca5c5ff43e1e8cbe1393ac"},{"path":"/private/tmp/l026_free_0128_0143_DATA/runtime/Root_policy.json","bytes":6528,"sha256":"116c1dc0e2805902bb9872182904407eeb60ca35b48f0c3cb4d0b843fe5e6a68"},{"path":"/private/tmp/l026_free_0128_0143_DATA/config_0128_0143.json","bytes":8504,"sha256":"8a2f5d89b0c4b01dbd1478b529d689286ceb23d5627b9f241a4d3bdf57e4ca2a"},{"path":"/private/tmp/l026_bounded_batch_workflow/cohort_metadata_successor/invoice_observation/Root_workflow.js","bytes":15453,"sha256":"c9588c8a857967e198348c2fb288ff8d93883e03826db90881dbdf1fd798898e"},{"path":"/private/tmp/l026_free_0128_0143_DATA/runtime/Root_current_cohort_Source_review.json","bytes":3181,"sha256":"0473319fae906a99d938c56b99b3a5eaf292d94894609a66696ee3d02858b24f"},{"path":"/private/tmp/l026_free_0128_0143_DATA/runtime/Root_current_Source_precheck_capture.json","bytes":131258,"sha256":"894b7fbccdc78108a6ea94996d99742d2f755fc0b88c3893eeaf69589c6fe95a"},{"path":"/private/tmp/l026_free_0128_0143_execution/prepared_guard_actual_capture.json","bytes":5900,"sha256":"d0f01fa93fa07e1516b7a6ec270db2bbdf40fd9e53c083859a0f62c93992d969"},{"path":"/private/tmp/l026_free_0128_0143_execution/prepared/snapshot.json","bytes":3471,"sha256":"7d9d09bbc41792c9845291f771fbef08ac5c6e3e88ce01055d7d53469f435d74"}]].filter(Boolean) });
+   const retainRoute = await metadata("retention", "retention", ["--batch", batchRef.path, batchRef.sha256, "--evidence", retentionEvidence.path, retentionEvidence.sha256]);
+   if (retainRoute.plans.length > 4) throw new Error("retention map bound");
+   const retained = [];
+@@ -157,5 +170,6 @@
+   if (offset !== bundle.facts.length) throw new Error("bounded append suffix remains");
+   return { status: "ROOT_BOUNDED_BATCH_FINISHED", selected: batch.selected_indices, actual_strict_facts: bundle.facts.length,
+     unfinished_or_finite_misses_unpaid: bundle.remaining_selected_unpaid, actual_CURRENT: current, science_calls: subsetRuns.length + walkRuns.length + strictRuns.length,
++    historical_subset_runs_reused: 3, actual_new_science_calls: subsetRuns.length - 3 + walkRuns.length + strictRuns.length,
+     actual_events: events.map(e => ({key:e.key,capture:e.capture,exit_code:e.terminal?.exit_code})), no_whole_Original_credit: true };
+ }

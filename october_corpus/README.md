@@ -23,6 +23,9 @@ reviewed treatments**: 93 principal-result recoveries and eight complete
 treatments following principal refutations. **F004, F009 and L026 remain.**
 The editorial has no mathematical result to recover.
 
+The [current intake status](INTAKE_STATUS.json) records the accepted case counts
+and distinguishes them from completed manuscripts and published archives.
+
 These manuscripts have 106 registered source components. L063 and L064 are
 the main article and its supplementary appendix, counted together as one
 manuscript. The accounting audit preserves both source IDs and all their
@@ -36,14 +39,22 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-The [latest archived intake results](research/proof_collection/updates/verified_intake_results/README.rst)
-contain F009's accepted checkpoint 11,262 and all 21 required historical
-payloads, F004's register of 115 completed q11 jobs out of 272, and the Fi22
-ledger with 30 generation and 72 additional nongeneration certificates.
-The intersection property for the 30 generating markings follows separately
-from the cited theorem. Earlier failed and unrun records retain their original
-statuses. The four archive integrity checks passed after installation.
-These finite results add no completed manuscript or compression measurement.
+The [accepted F009 chain](research/proof_collection/updates/verified_intake_results/accepted_20261030/README.rst)
+extends through checkpoints 11,331 and 11,401, with all 21 required historical
+payloads and their relative file mappings. The
+[latest F004 certificates](research/proof_collection/updates/verified_intake_results/g2_intersection_obstructions_job24_batch2/README.rst)
+add 300 exclusions, bringing the current family's additional exclusions to
+639 and leaving 2,967 positions unresolved. The
+[latest Fi22 certificates](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_38_90/README.rst)
+bring its ledger to 38 generation and 90 additional nongeneration certificates.
+The intersection property for those 38 generating markings follows separately
+from the cited theorem. F004's q11 register remains at 115 completed jobs
+out of 272. Earlier failed and unrun records retain their original statuses.
+Both new archive integrity checks passed after installation, alongside the
+five earlier checks. These checks authenticate the archived bytes; they do
+not replay the mathematics or remove the stated dependencies on imported
+models and earlier proof data. These finite results add no completed
+manuscript or compression measurement.
 
 ## Common theories and applications
 

@@ -1,0 +1,204 @@
+"""Explicit snapshot admission for the unchanged acquired Segment/runtime."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+
+import argparse
+import ast
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import types
+
+HERE = Path(__file__).resolve().parent
+APPLICATION = 'F009_AUTHENTICATED_SNAPSHOT_SEGMENT_APPLICATION_V1'
+PROFILE = 'F009_AUTHENTICATED_SNAPSHOT_SEGMENT_SOURCE_PROFILE_V1'
+METHOD = 'ROOT_ACCEPTED_F009_ORDERED_SNAPSHOT_EXPORT_METHOD_V1'
+RUNTIME_FILES = {
+    'census_segment_runtime.py', 'census_segment_replay.py',
+    'census_bounded_runtime.py', 'census_native_calls.py',
+    'census_backend_transition.py', 'census_queue_runtime.py',
+    'census_queue.py', 'census_queue_completion.py',
+    'census_terminal_reader.py', 'census_queue_completion_verify.py',
+    'census_queue_verify.py',
+}
+OLD_LOAD = "B.load(self.__case['base'])"
+NEW_LOAD = 'SNAPSHOT.acquire_base(self.__case_pin, self.__case)'
+
+
+def need(ok, reason):
+    if not ok:
+        raise ValueError(reason)
+
+
+def pin(path):
+    path = Path(path); h = hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda: stream.read(2**20), b''):
+            h.update(block)
+    return dict(path=str(path), bytes=path.stat().st_size, sha256=h.hexdigest())
+
+
+def acquire(ref):
+    need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}
+         and type(ref['path']) is str and Path(ref['path']).is_absolute(), 'exact absolute pin')
+    need(pin(ref['path']) == ref, 'unchanged integration input: '+ref['path'])
+
+
+def read(ref):
+    acquire(ref)
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            need(key not in result, 'duplicate integration JSON key')
+            result[key] = value
+        return result
+    def nonfinite(value):
+        raise ValueError('nonfinite integration number: '+value)
+    return json.loads(Path(ref['path']).read_bytes(), object_pairs_hook=pairs,
+                      parse_constant=nonfinite)
+
+
+def module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+class Admission:
+    """Only an exact external adoption may supply the constructor's base."""
+    __slots__ = ('__ref', '__app', '__profile', '__sources', '__codec')
+
+    def __init__(self, ref):
+        self.__ref = copy.deepcopy(ref)
+        app = read(self.__ref)
+        need(type(app) is dict and set(app) == {
+            'schema', 'case', 'base', 'snapshot', 'producer_case',
+            'upstream_acceptance', 'snapshot_adoption', 'method_acceptance',
+            'runtime_profile'}, 'external snapshot application schema')
+        need(app['schema'] == APPLICATION, 'explicit snapshot application')
+        self.__app = copy.deepcopy(app)
+        profile = read(app['runtime_profile'])
+        need(type(profile) is dict and set(profile) == {
+            'schema', 'adapter', 'codec', 'source_profile', 'runtime_sources'}
+            and profile['schema'] == PROFILE, 'complete integration source profile')
+        need(profile['adapter'] == pin(Path(__file__).resolve())
+             and profile['codec']['path'] == str(HERE/'census_state_snapshot.py'),
+             'actual adapter and codec source identities')
+        refs = profile['runtime_sources']
+        need(type(refs) is list and len(refs) == len(RUNTIME_FILES)
+             and {Path(x['path']).name for x in refs} == RUNTIME_FILES
+             and all(Path(x['path']).parent == HERE for x in refs),
+             'entire original runtime import closure')
+        self.__sources = {Path(x['path']).name: copy.deepcopy(x) for x in refs}
+        for row in [profile['adapter'], profile['codec'], profile['source_profile'], *refs]:
+            acquire(row)
+        self.__profile = copy.deepcopy(profile)
+        self.__codec = module('adopted_ordered_snapshot_codec', profile['codec']['path'])
+        original = self.__codec.profile(profile['source_profile'])
+        need(all(self.__sources[Path(x['path']).name] == x
+                 for x in original['backend_sources']), 'same acquired backend source pins')
+        method = read(app['method_acceptance'])
+        need(method.get('status') == METHOD
+             and method.get('source_profile') == profile['source_profile'],
+             'acquired export method and identical profile')
+        for key in ('case', 'base', 'snapshot', 'producer_case',
+                    'upstream_acceptance', 'snapshot_adoption'):
+            acquire(app[key])
+        case = read(app['case'])
+        need(case.get('base') == app['base'], 'current original case uses exact snapshot head')
+
+    def source(self, name):
+        need(name in self.__sources, 'declared source only')
+        ref = self.__sources[name]
+        acquire(ref)
+        return Path(ref['path'])
+
+    def acquire_base(self, case_pin, case):
+        # The unchanged constructor has already run B.check_case(case).
+        need(read(self.__ref) == self.__app, 'unchanged external application')
+        acquire(self.__app['runtime_profile'])
+        need(case_pin == self.__app['case'] and read(case_pin) == case
+             and case['base'] == self.__app['base'], 'exact original case and base join')
+        for ref in self.__sources.values():
+            acquire(ref)
+        for key in ('adapter', 'codec', 'source_profile'):
+            acquire(self.__profile[key])
+        method = read(self.__app['method_acceptance'])
+        need(method.get('status') == METHOD
+             and method.get('source_profile') == self.__profile['source_profile'],
+             'unchanged accepted snapshot method')
+        app = self.__app
+        return self.__codec.load(app['snapshot'], head=app['base'],
+            producer_case=app['producer_case'], upstream_acceptance=app['upstream_acceptance'],
+            source_profile=self.__profile['source_profile'], adoption=app['snapshot_adoption'])
+
+
+def bind(application_pin):
+    """Return the original run code with a private, explicitly admitted X."""
+    admission = Admission(application_pin)
+    runtime = module('snapshot_bound_original_segment_runtime',
+                     admission.source('census_segment_runtime.py'))
+    original = runtime.X
+    need(Path(original.__file__) == admission.source('census_segment_replay.py'),
+         'actual original Segment module')
+    # Authenticate actual recursively imported module instances as well as files.
+    pending = [runtime]; seen = set(); found = set()
+    while pending:
+        mod = pending.pop()
+        if id(mod) in seen:
+            continue
+        seen.add(id(mod))
+        filename = getattr(mod, '__file__', None)
+        if filename is None or Path(filename).parent != HERE:
+            continue
+        name = Path(filename).name
+        need(name in RUNTIME_FILES and Path(filename) == admission.source(name),
+             'actual imported runtime source')
+        found.add(name)
+        pending.extend(v for v in vars(mod).values() if isinstance(v, types.ModuleType))
+    need(found == RUNTIME_FILES, 'all runtime source instances accounted for')
+    source = admission.source('census_segment_replay.py').read_text()
+    classes = [node for node in ast.parse(source).body
+               if isinstance(node, ast.ClassDef) and node.name == 'Segment']
+    need(len(classes) == 1, 'one original Segment class')
+    node = classes[0]
+    body = ''.join(source.splitlines(keepends=True)[node.lineno-1:node.end_lineno])
+    need(body.count(OLD_LOAD) == 1 and NEW_LOAD not in body, 'one initial-load substitution')
+    derived = body.replace(OLD_LOAD, NEW_LOAD)
+    need(derived.replace(NEW_LOAD, OLD_LOAD) == body, 'whole class inverse source equality')
+    private = dict(vars(original)); private['SNAPSHOT'] = admission
+    exec(compile(derived, str(HERE/'census_snapshot_segment.py')+'::Segment', 'exec'), private)
+    segment = private['Segment']
+    need(segment.__name__ == original.Segment.__name__ == 'Segment'
+         and segment.__slots__ == original.Segment.__slots__, 'unchanged class and private-slot names')
+    # No mutation of original, runtime or their imported modules occurs.
+    globals_copy = dict(runtime.run.__globals__)
+    globals_copy['X'] = types.SimpleNamespace(Segment=segment)
+    bound = types.FunctionType(runtime.run.__code__, globals_copy, runtime.run.__name__,
+                               runtime.run.__defaults__, runtime.run.__closure__)
+    bound.__kwdefaults__ = copy.copy(runtime.run.__kwdefaults__)
+    need(bound.__code__ is runtime.run.__code__
+         and all(bound.__globals__[k] is v for k, v in runtime.run.__globals__.items() if k != 'X'),
+         'identical runtime code and all non-X live globals')
+    return bound
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--application', type=Path, required=True)
+    ap.add_argument('--case', type=Path, required=True)
+    ap.add_argument('--out', type=Path, required=True)
+    args = ap.parse_args()
+    run = bind(pin(args.application))
+    result, _ = run(args.case, args.out)
+    print(json.dumps({k: result[k] for k in ('status', 'actions', 'pending', 'reserved_debts', 'stop')}),
+          flush=True)
+
+
+if __name__ == '__main__':
+    main()
