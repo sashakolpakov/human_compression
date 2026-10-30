@@ -1,0 +1,210 @@
+"""Read-only, stdlib-only review of the Root continuation and saved proposal prefix."""
+import datetime
+import difflib
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import stat
+
+P = Path('/private/tmp/l026_free_0096_0111_resume')
+OUT = P / 'independent_review'
+PARENT = Path('/private/tmp/l026_bounded_batch_workflow/cohort_metadata_successor/invoice_observation/Root_workflow.js')
+ROLES = {}
+RAWS = {}
+CHECKS = []
+BLOCKERS = []
+START = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def read(role, path, expected=None):
+    path = Path(path)
+    need(path.is_absolute() and path.resolve(strict=True) == path, 'canonical file')
+    a = path.lstat()
+    need(stat.S_ISREG(a.st_mode) and a.st_nlink == 1 and a.st_size <= 4 * 2**20, 'bounded regular single-link file')
+    b = path.read_bytes()
+    z = path.lstat()
+    sig = lambda st: (st.st_dev, st.st_ino, st.st_mode, st.st_nlink, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+    need(sig(a) == sig(z) and len(b) == a.st_size, 'whole stable file read')
+    ref = dict(path=str(path), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+    if expected is not None:
+        need(ref == expected, 'exact descriptor: ' + role)
+    ROLES[role] = ref
+    RAWS[role] = b
+    return b
+
+
+def doc(role, path, expected=None):
+    return json.loads(read(role, path, expected))
+
+
+def check(name, ok, **details):
+    need(ok, name)
+    CHECKS.append(dict(check=name, passed=True, **details))
+
+
+def audit():
+    a = read('parent_workflow', PARENT).decode()
+    b = read('resume_workflow', P / 'Root_resume_workflow.js').decode()
+    read('prefix_validator_Source_read_only', P / 'validate_completed_prefix.py')
+    need(ROLES['parent_workflow']['sha256'] == 'c9588c8a857967e198348c2fb288ff8d93883e03826db90881dbdf1fd798898e', 'selected parent hash')
+    need(ROLES['resume_workflow']['sha256'] == 'd2221a8ec8742bc5fadbf74b607e57c69a0adf6de437137ac024d0b198b64784', 'selected successor hash')
+    al = a.splitlines(True)
+    bl = b.splitlines(True)
+    opcodes = difflib.SequenceMatcher(a=al, b=bl, autojunk=False).get_opcodes()
+    changes = [dict(operation=tag, parent_start=i + 1, parent_end=j,
+                    successor_start=k + 1, successor_end=l,
+                    parent_text=''.join(al[i:j]), successor_text=''.join(bl[k:l]))
+               for tag, i, j, k, l in opcodes if tag != 'equal']
+    need(len(changes) == 4, 'exactly four continuation edits')
+    expected_starts = [
+        ('async function runL026BoundedBatch', 'async function runL026ResumedBatch'),
+        ('  await api([py, "-E", "-B", "-S", "-c", setup, root]', '  const existingRoot = '),
+        ('  let current = (await readObject(kit.currentPath, "current_before_prepare"))', '  if (!options.completedPrefixReview)'),
+        ('  const subsetRuns = [];', '  const subsetRuns = (await readObject(prefix.completed_subset_runs,')]
+    for change, (old, new) in zip(changes, expected_starts):
+        need(change['parent_text'].startswith(old) and change['successor_text'].startswith(new), 'four stated edit sites only')
+    restored = bl[:]
+    for tag, i, j, k, l in reversed(opcodes):
+        if tag != 'equal':
+            restored[k:l] = al[i:j]
+    check('four_edits_with_whole_literal_inverse_to_selected_parent', ''.join(restored) == a,
+          differences=changes)
+    case_a = a[a.index('  async function runCase('):a.index('  const subsetRuns = [];')]
+    case_b = b[b.index('  async function runCase('):b.index('  const subsetRuns = (await readObject(prefix.completed_subset_runs,')]
+    tail_marker = '  const subsetEvidence = await writeData("subset_runs.json", subsetRuns);'
+    check('all_science_invoice_and_remaining_strict_retention_CAS_code_literal',
+          case_a == case_b and a[a.index(tail_marker):] == b[b.index(tail_marker):],
+          retained_science_case_block_bytes=len(case_a.encode()),
+          retained_tail_bytes=len(a[a.index(tail_marker):].encode()))
+    check('existing_root_reuse_keeps_exclusive_file_writes',
+          'and not p.exists(); p.mkdir();' in a
+          and 'p.resolve()==p and p.is_dir()' in b
+          and 'f=p.open(\'xb\')' in b
+          and 'CURRENT changed since exact completed prefix' in b,
+          qualification='Existing directory is reused for exactly this validated prefix. Each new file remains exclusive; existing files cause refusal.')
+    prefix = doc('validated_prefix', P / 'validated_prefix.json')
+    need(ROLES['validated_prefix']['sha256'] == 'c0b4d625563739d786ef7c921bb75623e780cf0075a2a8f922fcd3cefaf404a9', 'prefix hash')
+    records = doc('completed_subset_runs', prefix['completed_subset_runs']['path'], prefix['completed_subset_runs'])
+    batch = doc('original_batch', prefix['batch']['path'], prefix['batch'])
+    doc('current_paid_ledger_at_review', prefix['current']['path'], prefix['current'])
+    prior = doc('prior_partial_workflow_record', prefix['prior_partial_workflow_record']['path'], prefix['prior_partial_workflow_record'])
+    check('exact_six_proposals_zero_strict_zero_writes_prefix',
+          prefix['schema'] == 'ROOT_L026_COMPLETED_PREFIX_RECONSTRUCTION_V1'
+          and prefix['root'] == '/root' and prefix['status'] == 'SUPPORTED' and prefix['blockers'] == []
+          and prefix['completed_proposal_calls'] == 6 and prefix['strict_proof_calls'] == prefix['ledger_writes'] == 0
+          and len(records) == len(batch['subset_calls']) == 6
+          and batch['selected_indices'] == list(range(96, 112))
+          and batch['ledger']['current_paid_ledger_selector'] == prefix['current']
+          and prior['result'] is None and prior['callbackEvidence']['caseCount'] == 6
+          and prior['callbackEvidence']['retentionCount'] == prior['callbackEvidence']['appendCount'] == 0)
+    for index, ref in enumerate(prefix['inputs']):
+        read('prefix_input_%03d' % index, ref['path'], ref)
+    check('all_completed_prefix_input_descriptors_freshly_matched', True,
+          distinct_inputs=len(prefix['inputs']), declared_validator_physical_read_bytes=prefix['physical_read_bytes'])
+    details = []
+    for i, (record, entry) in enumerate(zip(records, batch['subset_calls'])):
+        for key in ('capture', 'outer', 'stdout', 'stderr', 'program', 'plan', 'gate', 'review', 'resource_invoice', 'result', 'carrier', 'checkpoint'):
+            read('proposal_%d_%s' % (i, key), record[key]['path'], record[key])
+        guard = json.loads(RAWS['proposal_%d_outer' % i])
+        terminal = json.loads(RAWS['proposal_%d_stdout' % i])
+        capture = json.loads(RAWS['proposal_%d_capture' % i])
+        gate = json.loads(RAWS['proposal_%d_gate' % i])
+        review = json.loads(RAWS['proposal_%d_review' % i])
+        invoice = json.loads(RAWS['proposal_%d_resource_invoice' % i])
+        plan = json.loads(RAWS['proposal_%d_plan' % i])
+        need(record['program'] == entry['program'] and record['plan'] == entry['plan'], 'exact prepared proposal source/plan')
+        need(terminal == record['terminal'] and terminal['mode'] == 'propose'
+             and terminal['verified_records'] == 0 and terminal['Root_adoption_owed'] is True,
+             'proposals remain untrusted zero strict credit')
+        need(record['kind'] == 'NEG' and gate['mode'] == plan['mode'] == 'propose', 'only proposal mode')
+        need(gate['program'] == review['program'] == invoice['program'] == entry['program']
+             and gate['plan'] == review['plan'] == invoice['plan'] == entry['plan']
+             and invoice['gate'] == record['gate'] and invoice['review'] == record['review'], 'exact original proposal binding')
+        need(guard['status'] == 'PASS' and guard['stop'] == 'RETURNED' and guard['returncode'] == 0
+             and guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+             and RAWS['proposal_%d_stderr' % i] == b'', 'proposal known guard closure')
+        issued = capture['issued_argv']
+        need(capture['root'] == capture['actor'] == '/root' and capture['child_argv'] == issued
+             and shlex.split(capture['issued_tool_arguments']['cmd']) == issued
+             and issued[issued.index('--') + 1:] == guard['command']
+             and capture['actual_tool']['exit_code'] == capture['full_tool_return']['exit_code'] == 0
+             and capture['all_genuine_api_frames'][0] == capture['full_initial_tool_return']
+             and capture['all_genuine_api_frames'][-1] == capture['full_tool_return'], 'genuine original capture links')
+        need(guard['limits']['total_rss'] == 128 * 2**20 and guard['limits']['wall_seconds'] == 150
+             and invoice['physical_paths'] <= 32
+             and invoice['physical_first_final_plus_bootstrap_bytes'] <= 8 * 2**20
+             and invoice['active_Source_namespace_bytes'] <= 50000, 'original per-case resource bounds')
+        need(terminal['outputs']['result.json'] == record['result']
+             and terminal['outputs']['records.json'] == record['carrier']
+             and terminal['outputs']['checkpoint.json'] == record['checkpoint'], 'exact original output roles')
+        details.append(dict(index=i, mode='propose', verified_records=0,
+                            untrusted_hints=terminal['untrusted_closed_hints'], capture=record['capture']))
+    check('six_genuine_completed_proposals_reconstructed_without_verdict_transfer', True, proposals=details)
+    validation_capture = doc('actual_prefix_validation_capture', P / 'prefix_validation_actual_capture.json')
+    guard = doc('actual_prefix_validation_guard', P / 'prefix_validation_guard/receipt.json')
+    stdout = doc('actual_prefix_validation_stdout', P / 'prefix_validation_guard/stdout.log')
+    read('actual_prefix_validation_stderr', P / 'prefix_validation_guard/stderr.log')
+    need(ROLES['actual_prefix_validation_capture']['sha256'] == '0d7c50c12141498aa1703282ca0406a898b11883205d2a4aef1eb1d3ee64114b', 'validation capture hash')
+    issued = validation_capture['issued_argv']
+    check('genuine_actual_prefix_metadata_validation_PASSED',
+          validation_capture['child_argv'] == issued
+          and shlex.split(validation_capture['issued_tool_arguments']['cmd']) == issued
+          and issued[issued.index('--') + 1:] == guard['command']
+          and guard['command'][-1] == str(P / 'validate_completed_prefix.py')
+          and validation_capture['full_tool_return']['exit_code'] == 0
+          and guard['status'] == 'PASS' and guard['returncode'] == 0
+          and guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+          and RAWS['actual_prefix_validation_stderr'] == b''
+          and stdout['prefix_review'] == ROLES['validated_prefix']
+          and stdout['subset_runs'] == ROLES['completed_subset_runs'],
+          qualification='Metadata reconstruction only, no mathematics rerun.')
+    check('science_calls_bounded_23_including_prior_six',
+          'subsetRoute.strict_calls.length > 16 || subsetRoute.walk_calls.length > 1' in b
+          and 'genRoute.strict_calls.length > 1' in b
+          and 'if (strictRuns.length > 16)' in b
+          and 'science_calls: subsetRuns.length + walkRuns.length + strictRuns.length' in b,
+          prior_proposal_calls=6, maximum_all_strict_calls=16, maximum_walk_calls=1, maximum_total=23)
+    read('current_paid_ledger_end_recheck', prefix['current']['path'], prefix['current'])
+    return dict(differences=4, completed_proposal_calls=6, strict_credit_transferred=0,
+                ledger_writes_by_this_review=0, maximum_total_scientific_calls=23)
+
+
+try:
+    conclusion = audit()
+except Exception as error:
+    BLOCKERS.append(dict(type=type(error).__name__, message=str(error)))
+    conclusion = None
+finish = datetime.datetime.now(datetime.timezone.utc).isoformat()
+own = Path(__file__).read_bytes()
+report = dict(schema='INDEPENDENT_L026_COMPLETED_PREFIX_CONTINUATION_REVIEW_V1',
+              reviewer='/root/status_readme_audit', status='SUPPORTED' if not BLOCKERS else 'BLOCKED',
+              blockers=BLOCKERS, conclusion=conclusion, checks=CHECKS, roles=ROLES,
+              observed_start_utc=START, observed_finish_utc=finish,
+              reviewer_program=dict(path=str(Path(__file__)), bytes=len(own), sha256=hashlib.sha256(own).hexdigest()),
+              scientific_activations=0, represented_imports_or_execution=0, S_or_W_mutations=0,
+              qualification='Review applies to this exact four-site continuation of the previously qualified parent workflow. '
+                            'All worker programs, mathematical predicates, callback invoice checks, strict proof routes, retention and paid-ledger CAS are unchanged. '
+                            'Six existing proposal outputs remain untrusted hints; independent strict checks and new Root approvals remain required before paid facts. '
+                            'Root must bind the exact prefix and this report in a fresh policy and supply a fresh callback namespace. '
+                            'This peer does not authorize scientific activation or infer whole-original completion.')
+raw = (json.dumps(report, indent=2, sort_keys=True) + '\n').encode()
+report_path = OUT / 'independent_review.json'
+with report_path.open('xb') as f:
+    f.write(raw); f.flush(); os.fsync(f.fileno())
+ref = dict(path=str(report_path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+seal = dict(schema='INDEPENDENT_L026_COMPLETED_PREFIX_CONTINUATION_REVIEW_SEAL_V1',
+            reviewer='/root/status_readme_audit', status=report['status'], blockers=BLOCKERS, report=ref,
+            reviewer_program=report['reviewer_program'], observed_finish_utc=finish)
+seal_raw = (json.dumps(seal, indent=2, sort_keys=True) + '\n').encode()
+seal_path = OUT / 'seal.json'
+with seal_path.open('xb') as f:
+    f.write(seal_raw); f.flush(); os.fsync(f.fileno())
+print(json.dumps(dict(report=ref, seal=dict(path=str(seal_path), bytes=len(seal_raw), sha256=hashlib.sha256(seal_raw).hexdigest()),
+                     status=report['status'], blockers=BLOCKERS, checks=len(CHECKS))))

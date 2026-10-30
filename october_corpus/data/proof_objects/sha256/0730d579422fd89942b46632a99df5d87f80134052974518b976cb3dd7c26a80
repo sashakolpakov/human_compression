@@ -1,0 +1,236 @@
+"""UNRUN metadata bootstrap candidate, /root/f004_register.
+Pattern: Root a77b5c8e control launcher. No adapter import/eval. Root must
+review/select this edition and issue true config under actual256MiB/125s guard.
+execv keeps the admitted PID and discards this launcher before adapter entry.
+"""
+from pathlib import Path
+import argparse
+import copy
+import fcntl
+import hashlib
+import json
+import os
+import resource
+import shlex
+import stat
+import sys
+import time
+
+ROOT='/root'
+METHOD=dict(path='/Users/sasha/medusa/research/leemans/maintenance/intake/f004_closed40_batch_registration/register_closed40.py',
+ bytes=39928,sha256='11f9bfe773e99d1e5db429b2a536d1554624b40855c18f75a889737c454621d1')
+CURRENT='/Users/sasha/medusa/research/leemans/reboot_20261013/CURRENT.json'
+STATUS='/Users/sasha/medusa/research/leemans/maintenance/intake/current_status.json'
+LIMITS=dict(source_bytes=65535,file_bytes=4194304,read_bytes=67108864,new_bytes=16777216,
+ paths=512,rss_bytes=268435456,child_timeout_seconds=125,internal_seconds=115)
+
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+
+def canonical(value):
+    return (json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+
+
+def descriptor(path,raw):
+    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+
+
+def signature(s):
+    return (s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+
+class Metadata:
+    def __init__(self):
+        self.begin=time.monotonic();self.read_bytes=0;self.new_bytes=0;self.paths=set();self.opens=[]
+    def path(self,p):
+        self.paths.add(str(p));need(len(self.paths)<=512,'complete bootstrap512-path bank')
+    def check(self):
+        need(time.monotonic()-self.begin<5 and sys.platform=='darwin'
+             and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<=268435456,
+             'bootstrap<5s/256MiB inside actual whole125s guard')
+    def read(self,row):
+        need(type(row)is dict and set(row)=={'path','bytes','sha256'}and type(row['bytes'])is int
+             and 0<=row['bytes']<=4194304,'whole bounded metadata descriptor')
+        p=Path(row['path']);self.path(p);a=p.lstat()
+        need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+             and a.st_nlink==1 and a.st_size==row['bytes'],'canonical stable metadata input')
+        with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+        need(signature(a)==signature(b)==signature(c)==signature(p.lstat())and descriptor(p,raw)==row,
+             'entire stable expected metadata bytes')
+        self.read_bytes+=len(raw);self.opens.append(row)
+        need(self.read_bytes<=67108864,'whole bootstrap64MiB bank');self.check();return raw
+    def pin(self,p):
+        p=Path(p).resolve(strict=True);a=p.lstat()
+        need(stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4194304,'bounded ordinary origin before read')
+        with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+        need(signature(a)==signature(b)==signature(c)==signature(p.lstat())and len(raw)==a.st_size,'stable full origin')
+        row=descriptor(p,raw);self.path(p);self.read_bytes+=len(raw);self.opens.append(row)
+        need(self.read_bytes<=67108864,'whole origin read bank');self.check();return row
+    def put(self,p,raw,base):
+        need(type(raw)is bytes and len(raw)<=4194304 and p.parent==base
+             and base.resolve(strict=True)==base and not os.path.lexists(p),'fresh private bootstrap metadata output')
+        self.path(p);self.new_bytes+=len(raw);need(self.new_bytes<=16777216,'whole16MiB new bank')
+        with p.open('xb')as f:
+            need(f.write(raw)==len(raw),'whole exclusive metadata write');f.flush();os.fsync(f.fileno())
+        row=descriptor(p,raw);need(self.read(row)==raw,'whole generated metadata readback');return row
+
+
+def prewarm_adapter_parser(mode,plan_path):
+    """Exact installed Source.main argument declarations; no Source execution."""
+    old=sys.argv
+    try:
+        sys.argv=[METHOD['path']]
+        parser=argparse.ArgumentParser(allow_abbrev=False)
+        parser.add_argument('--actor',required=True)
+        parser.add_argument('--mode',choices=('forecast','adopt'),required=True)
+        parser.add_argument('--self-sha256',required=True)
+        parser.add_argument('--source-bytes',required=True,type=int)
+        parser.add_argument('--plan',required=True)
+        parser.add_argument('--plan-sha256',required=True)
+        parser.add_argument('--plan-bytes',required=True,type=int)
+        parser.parse_args(['--actor',ROOT,'--mode',mode,'--self-sha256',METHOD['sha256'],
+            '--source-bytes','39928','--plan',str(plan_path),'--plan-sha256','0'*64,'--plan-bytes','1'])
+    finally:sys.argv=old
+    shlex.split("'metadata argument' --mode "+mode)
+    json.loads(canonical(dict(prewarm=True)))
+    copy.deepcopy(dict(prewarm=[1,False,'metadata']))
+    Path(METHOD['path']).resolve(strict=True).is_file()
+
+
+def main():
+    io=Metadata()
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+         and not sys.flags.optimize and sys.platform=='darwin','Root -E -B -S metadata caller')
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    for name in ('self-sha256','config','config-sha256'):ap.add_argument('--'+name,required=True)
+    for name in ('self-bytes','config-bytes'):ap.add_argument('--'+name,required=True,type=int)
+    ap.add_argument('--mode',choices=('forecast','adopt'),required=True)
+    args=ap.parse_args()
+    own=dict(path=str(Path(__file__).resolve()),bytes=args.self_bytes,sha256=args.self_sha256)
+    need(0<own['bytes']<65536,'small exact bootstrap Source')
+    io.read_bytes+=own['bytes'];io.path(own['path']);io.opens.append(own)  # Python's initial Source bootstrap.
+    io.read(own)
+    config_ref=dict(path=args.config,bytes=args.config_bytes,sha256=args.config_sha256)
+    config=json.loads(io.read(config_ref))
+    need(config.get('schema')=='ROOT_F004_CLOSED40_MAIN_BOOTSTRAP_CONFIG_V1'and config.get('root')==ROOT
+         and config.get('Root_owned_launch_approved')is True and config.get('mode')==args.mode
+         and config.get('bootstrap')==own and config.get('installed_method')==METHOD,
+         'actual Root-issued exact static configuration, never the author false template')
+    review=json.loads(io.read(config['Root_bootstrap_review']))
+    need(review.get('root')==ROOT and review.get('status')=='SUPPORTED'and review.get('blockers')==[]
+         and review.get('bootstrap')==own and review.get('installed_method')==METHOD,'Root own exact bootstrap review')
+    io.read(METHOD)  # Opaque whole Source bytes only; no import/eval/AST-code activation.
+    static=json.loads(io.read(config['Root_static_plan']))
+    need(static.get('root')==ROOT and static.get('bound_after_CP11262')is True
+         and static.get('schema')=='ROOT_F004_CLOSED40_LIVE_METADATA_CAS_PLAN_V1'
+         and static.get('method')==METHOD and static.get('limits')==LIMITS,
+         'Root static plan with method/release/imports/before/outputdir/planned states already bound')
+    release=json.loads(io.read(static['Source_release']))
+    need(release.get('root')==ROOT and release.get('released')is True and release.get('method')==METHOD,
+         'actual Root Source release; full Source independently authenticates all controls/imports')
+    bound=json.loads(io.read(config['Root_bound_states_review']))
+    need(bound.get('schema')=='ROOT_F004_CLOSED40_STATIC_BOUND_STATES_REVIEW_V1'
+         and bound.get('root')==ROOT and bound.get('status')=='SUPPORTED'and bound.get('blockers')==[]
+         and bound.get('static_plan')==config['Root_static_plan']
+         and bound.get('complete_planned_pair')==config['Root_whole_planned_pair']
+         and bound.get('planned_states')==static['planned_states']
+         and bound.get('before')==static['before']and bound.get('Source_release')==static['Source_release']
+         and bound.get('Root_closure_import')==static['Root_closure_import']
+         and bound.get('Root_q8_summary_import')==static['Root_q8_summary_import']
+         and bound.get('exact29_patch_inverse')is True and bound.get('all_unrelated_typed_values_preserved')is True
+         and static['planned_states']['CURRENT']['path']==CURRENT
+         and static['planned_states']['STATUS']['path']==STATUS,
+         'qualified prior Root whole-pair/static-plan/29-inverse proof; no fresh whole-pair read')
+    out=Path(static['output_directory'])
+    need(not os.path.lexists(out),'Source publication directory remains absent')
+    base=Path(config['runtime_directory'])
+    need(base.is_absolute()and base.is_relative_to(Path('/private/tmp'))and base.is_dir()
+         and base.resolve(strict=True)==base and base!=out and not base.is_relative_to(out),
+         'existing private runtime namespace outside fresh Source publication namespace')
+    guard_ref=io.pin(config['actual_guard_started_path']);guard=json.loads(io.read(guard_ref))
+    limits=guard['limits'];rows=[r for r in guard['identities']if r['pid']==os.getpid()]
+    need(len(rows)==1 and rows[0]['initial_parent']==os.getppid()
+         and rows[0]['group']==os.getpgrp()and rows[0]['session']==os.getsid(0)
+         and limits['total_rss']==268435456 and limits['wall_seconds']==125
+         and limits['owned_pids']==128,'actual same-PID process-bound256MiB/125s Root guard')
+    command=guard['command']
+    need(Path(command[0]).resolve()==Path(sys.executable).resolve()and command[1:4]==['-E','-B','-S']
+         and Path(command[4]).resolve()==Path(__file__).resolve()and command[5:]==sys.argv[1:],
+         'actual guard command is this exact bootstrap invocation')
+    for row in config['guard_Source_inputs']:io.read(row)
+    need(all(type(config[k])is int and config[k]>=0 for k in
+         ('guard_and_recorder_extra_read_upper','guard_Source_bootstrap_upper',
+          'guard_and_recorder_other_output_upper','guard_and_recorder_other_path_upper'))
+         and config['guard_and_recorder_extra_read_upper']>=config['guard_Source_bootstrap_upper'],
+         'explicit whole guard/bootstrap/read/output/path debits')
+    reserve=config['Root_guard_and_recorder_reserve']
+    need(type(reserve)is dict and all(type(reserve[k])is int and reserve[k]>=0
+         for k in ('bytes','paths','read_bytes','source_bootstrap_bytes'))
+         and reserve['bytes']<=2097152 and reserve['paths']<=32
+         and reserve['source_bootstrap_bytes']<=reserve['read_bytes']<=16777216,
+         'Root-bound actual guard/recorder/bootstrap reservation in shared16MiB/64MiB/512-path banks')
+    plan_path=base/('live_plan_'+args.mode+'.json')
+    prewarm_adapter_parser(args.mode,plan_path)
+    origins={}
+    for module in tuple(sys.modules.values()):
+        for field in ('__file__','__cached__'):
+            name=getattr(module,field,None)
+            if type(name)is str and Path(name).is_absolute()and Path(name).is_file():
+                row=io.pin(name);origins[row['path']]=row
+    row=io.pin(sys.executable);origins[row['path']]=row
+    origin_rows=sorted(origins.values(),key=lambda r:r['path'])
+    origin_bytes=sum(r['bytes']for r in origin_rows)
+    need(len(origin_rows)<=200 and origin_bytes<=4194304,'fresh prewarmed complete runtime origin bound')
+    started=dict(schema='ROOT_F004_CLOSED40_NORMALIZED_GUARD_STARTED_V1',actor=ROOT,pid=os.getpid(),
+        owned_processes_active=1,guard_active=True,actual_guard_started=guard_ref,actual_identity=rows[0],bootstrap=own)
+    started_raw=canonical(started);started_ref=descriptor(base/'adapter_started.json',started_raw)
+    admission=dict(schema='ROOT_F004_CLOSED40_METADATA_RUNTIME_ADMISSION_V1',root=ROOT,admitted=True,
+        method=METHOD,limits=LIMITS,rss_cap_bytes=268435456,timeout_seconds=125,runtime_started=started_ref,
+        guard_and_recorder_return_reserve=reserve,wrapper_reserve_bound_to_actual_guard=True,
+        actual_guard_started=guard_ref,Root_static_configuration=config_ref,bootstrap=own)
+    admission_raw=canonical(admission);admission_ref=descriptor(base/'adapter_runtime_admission.json',admission_raw)
+    plan=copy.deepcopy(static)
+    plan.update(runtime_started=started_ref,runtime_admission=admission_ref,runtime_inputs=origin_rows,
+        guard_and_recorder_return_reserve=reserve)
+    plan_raw=canonical(plan);plan_ref=descriptor(plan_path,plan_raw)
+    blobs=[(base/'adapter_started.json',started_raw),(base/'adapter_runtime_admission.json',admission_raw),(plan_path,plan_raw)]
+    template_ref=config.get('Root_PREPARED_template')
+    if template_ref is not None:
+        template=json.loads(io.read(template_ref));need(template.get('plan')is None,'Root PREPARED template has only unbound plan role')
+        template['plan']=plan_ref
+        prepared_raw=canonical(template)
+        expected=descriptor(out/'state_transaction_PREPARED.json',prepared_raw)
+        blobs.append((base/'PREPARED_expected_binding_DATA.json',canonical(dict(
+            schema='ROOT_EXPECTED_PREPARED_BINDING_DATA_ONLY_V1',plan=plan_ref,expected_future_PREPARED=expected,
+            actual_PREPARED_emission=False,Root_template=template_ref))))
+    generated_bytes=sum(len(b)for _,b in blobs)
+    # io already charges the origin hash pass. Reserve both conservative loader
+    # sweeps plus all bootstrap/control/Source reads and generated readbacks.
+    wrapper_read_upper=io.read_bytes+2*origin_bytes+generated_bytes+config['guard_and_recorder_extra_read_upper']
+    bootstrap_upper=2*origin_bytes+own['bytes']+config['guard_Source_bootstrap_upper']
+    shared=set(origins)|{METHOD['path'],static['Source_release']['path']}
+    extra_paths=(set(io.paths)-shared)|{str(p)for p,_ in blobs}
+    need(wrapper_read_upper<=reserve['read_bytes']and bootstrap_upper<=reserve['source_bootstrap_bytes']
+         and generated_bytes+config['guard_and_recorder_other_output_upper']<=reserve['bytes']
+         and len(extra_paths)+config['guard_and_recorder_other_path_upper']<=reserve['paths'],
+         'whole actual bootstrap/deferred-loader/guard output/read/path invoice fits Root reserve')
+    for path,raw in blobs:io.put(path,raw,base)
+    fd=os.open(base,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    need(plan['planned_states']==static['planned_states']and plan['output_directory']==static['output_directory']
+         and plan['Source_release']==static['Source_release']and plan['Root_closure_import']==static['Root_closure_import']
+         and plan['Root_q8_summary_import']==static['Root_q8_summary_import']and plan['before']==static['before'],
+         'all Root static registration/planned-state dependencies remain literal')
+    io.check()
+    for key in ('PYTHONSTARTUP','PYTHONPATH','COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES'):
+        os.environ.pop(key,None)
+    argv=[sys.executable,'-E','-B','-S',METHOD['path'],'--actor',ROOT,'--mode',args.mode,
+        '--self-sha256',METHOD['sha256'],'--source-bytes','39928','--plan',plan_ref['path'],
+        '--plan-sha256',plan_ref['sha256'],'--plan-bytes',str(plan_ref['bytes'])]
+    os.execv(sys.executable,argv)
+
+
+if __name__=='__main__':main()

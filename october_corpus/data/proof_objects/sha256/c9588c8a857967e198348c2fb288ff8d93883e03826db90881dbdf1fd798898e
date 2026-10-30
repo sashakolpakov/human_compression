@@ -1,0 +1,161 @@
+/* Root edition: observe each exact callback resource invoice before science; all other prior workflow bytes remain literal. */
+async function runL026BoundedBatch(R, kit, options = {}) {
+  for (const k of ["directRun", "directCapture", "directJSON", "approveCase", "approveRetention", "approveAppend"]) {
+    if (typeof R[k] !== "function") throw new Error("Missing Root-owned callback: " + k);
+  }
+  if (options.RootReviewed !== true || !options.actualHelperControls || !options.independentSourcePeer) {
+    throw new Error("Root whole Source/recipe review, actual helper controls and independent peer are required");
+  }
+  const py = "/Users/sasha/.venvs/global/bin/python";
+  const volume = "/Users/sasha/medusa";
+  const supervisor = "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py";
+  const root = options.outputRoot;
+  if (typeof root !== "string" || !root.startsWith("/private/tmp/") || root.includes("..")) throw new Error("fresh explicit T root required");
+  let serial = 0;
+  const next = label => {
+    if (++serial > 1024) throw new Error("finite Root API action bound exceeded");
+    return "L026_COHORT_" + String(serial).padStart(3, "0") + "_" + label;
+  };
+  const events = [];
+  async function api(argv, label, capturePath, kwargs = {}) {
+    const key = next(label);
+    let terminal, capture;
+    try { terminal = await R.directRun(key, argv, kwargs); }
+    finally { capture = await R.directCapture(key, capturePath); }
+    events.push({ key, argv, terminal, capture });
+    if (!terminal || terminal.exit_code !== 0) {
+      const e = new Error("Root call failed: " + key); e.closedEvent = events[events.length - 1]; throw e;
+    }
+    return { terminal, capture, key };
+  }
+  const reader = "import pathlib,hashlib,json,sys,stat,os; p=pathlib.Path(sys.argv[1]); a=p.lstat(); assert p.is_absolute() and p.resolve()==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1 and a.st_size<=4194304; f=p.open('rb'); before=os.fstat(f.fileno()); b=f.read(a.st_size+1); after=os.fstat(f.fileno()); f.close(); z=p.lstat(); sig=lambda t:(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns); assert sig(a)==sig(before)==sig(after)==sig(z) and len(b)==a.st_size and (a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns); r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()); assert sys.argv[2]=='-' or r['sha256']==sys.argv[2]; print(json.dumps(dict(ref=r,object=json.loads(b)),sort_keys=True,separators=(',',':'),allow_nan=False))";
+  async function readObject(pathOrRef, label) {
+    const p = typeof pathOrRef === "string" ? pathOrRef : pathOrRef.path;
+    const sha = typeof pathOrRef === "string" ? "-" : pathOrRef.sha256;
+    const event = await api([py, "-E", "-B", "-S", "-c", reader, p, sha], label, root + "/" + next("reader_capture") + ".json", { max_output_tokens: 50000 });
+    const v = await R.directJSON(event.key);
+    if (typeof pathOrRef !== "string" && JSON.stringify(v.ref) !== JSON.stringify(pathOrRef)) {
+      if (v.ref.path !== pathOrRef.path || v.ref.bytes !== pathOrRef.bytes || v.ref.sha256 !== pathOrRef.sha256) throw new Error("whole Root reader identity mismatch");
+    }
+    return v;
+  }
+  const writer = "import pathlib,sys,json,os; p=pathlib.Path(sys.argv[1]); assert len(sys.argv[2].encode())<=4194304; b=(json.dumps(json.loads(sys.argv[2]),sort_keys=True,separators=(',',':'),allow_nan=False)+'\\n').encode(); assert p.is_absolute() and p.is_relative_to('/private/tmp') and '..' not in p.parts and len(b)<=4194304 and not p.exists(); p.parent.mkdir(parents=True,exist_ok=True); assert p.parent.resolve()==p.parent; f=p.open('xb'); assert f.write(b)==len(b); f.flush(); os.fsync(f.fileno()); f.close(); print('{}')";
+  async function writeData(name, value) {
+    const path = root + "/" + name;
+    await api([py, "-E", "-B", "-S", "-c", writer, path, JSON.stringify(value)], "write_" + name.replaceAll("/", "_"), root + "/" + next("writer_capture") + ".json", { max_output_tokens: 2000 });
+    return (await readObject(path, "hash_" + name.replaceAll("/", "_"))).ref;
+  }
+  const setup = "import pathlib,sys; p=pathlib.Path(sys.argv[1]); assert p.is_absolute() and p.is_relative_to('/private/tmp') and '..' not in p.parts and p.parent.resolve()==p.parent and not p.exists(); p.mkdir(); print('{}')";
+  await api([py, "-E", "-B", "-S", "-c", setup, root], "fresh_root", root + "_setup_actual_capture.json");
+  const helperArg = [py, "-E", "-B", "-S", kit.helper.path];
+  async function guarded(child, name, rss = 128, seconds = 150) {
+    const directory = root + "/" + name;
+    const event = await api([py, "-E", "-B", supervisor, "--volume", volume, "--output", directory,
+      "--rss-cap-mib", String(rss), "--timeout", String(seconds), "--", ...child], name, root + "/" + name + "_actual_capture.json", { max_output_tokens: 4000 });
+    const outer = await readObject(directory + "/receipt.json", name + "_outer");
+    const stdout = await readObject(directory + "/stdout.log", name + "_stdout");
+    const statCode = "import pathlib,hashlib,json,sys; p=pathlib.Path(sys.argv[1]); n=p.stat().st_size; assert n<=262144; f=p.open('rb'); b=f.read(n+1); f.close(); assert len(b)==n; print(json.dumps(dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()),sort_keys=True))";
+    const skey = next(name + "_stderr");
+    const st = await R.directRun(skey, [py, "-E", "-B", "-S", "-c", statCode, directory + "/stderr.log"], { max_output_tokens: 2000 });
+    const sc = await R.directCapture(skey, root + "/" + skey + "_actual_capture.json");
+    events.push({ key: skey, terminal: st, capture: sc });
+    if (!st || st.exit_code !== 0) throw new Error("stderr metadata reader failed");
+    const stderr = await R.directJSON(skey);
+    if (outer.object.status !== "PASS" || outer.object.stop !== "RETURNED" || outer.object.returncode !== 0 ||
+        outer.object.cleanup.remaining.length || outer.object.cleanup.errors.length || stderr.bytes !== 0) throw new Error("known guard closure failed");
+    return { capture: event.capture, outer: outer.ref, stdout: stdout.ref, stderr, terminal: stdout.object };
+  }
+  async function metadata(stage, name, args) {
+    const child = [...helperArg, stage, "--self-sha256", kit.helper.sha256, "--config", kit.config.path, kit.config.sha256, ...args, "--out", root + "/" + name];
+    const run = await guarded(child, name + "_guard", 256, 125);
+    if (run.terminal.status !== "DATA_ONLY_NO_AUTHORITY") throw new Error("metadata helper returned other mode");
+    return (await readObject(run.terminal.output, name + "_output")).object;
+  }
+  const configuration = (await readObject(kit.config, "selected_cohort_configuration")).object;
+  if (!Number.isInteger(configuration.start) || !Number.isInteger(configuration.count) || configuration.count < 1 || configuration.count > 16 || configuration.start < 0 || configuration.start + configuration.count > 28908) throw new Error("one bounded cohort configuration");
+  const cohort = Array.from({length:configuration.count},(_,i)=>configuration.start+i);
+  let current = (await readObject(kit.currentPath, "current_before_prepare")).ref;
+  const batch = await metadata("prepare", "prepared", ["--current", current.path, current.sha256]);
+  if (JSON.stringify(batch.selected_indices) !== JSON.stringify(cohort) || batch.subset_calls.length > 6) throw new Error("one-batch limit");
+  const batchRef = (await readObject(root + "/prepared/batch.json", "batch_ref")).ref;
+  async function runCase(entry, name) {
+    current = (await readObject(kit.currentPath, name + "_fresh_CURRENT")).ref;
+    const boundCurrent = batch.ledger.current_paid_ledger_selector;
+    if (current.sha256 !== boundCurrent.sha256 || current.bytes !== boundCurrent.bytes || current.path !== boundCurrent.path) throw new Error("CURRENT changed during cohort; old case verdicts do not transfer");
+    const approval = await R.approveCase(entry, { batch, current, actualHelperControls: options.actualHelperControls, independentSourcePeer: options.independentSourcePeer });
+    if (!approval || !approval.gate || !approval.review || !approval.resource_invoice) throw new Error("Root case approval absent");
+    const plan = (await readObject(entry.plan, name + "_plan")).object;
+    const invoice = (await readObject(approval.resource_invoice, name + "_actual_resource_invoice")).object;
+    const exact = (a,b) => a && b && a.path === b.path && a.bytes === b.bytes && a.sha256 === b.sha256;
+    if (invoice.schema !== "L026_ACTUAL_CASE_METADATA_RESOURCE_INVOICE_V1" ||
+        !exact(invoice.program, entry.program) || !exact(invoice.plan, entry.plan) ||
+        !exact(invoice.gate, approval.gate) || !exact(invoice.review, approval.review) ||
+        !Number.isInteger(invoice.physical_paths) || invoice.physical_paths > 32 ||
+        invoice.physical_first_final_plus_bootstrap_bytes > 8 * 1048576 ||
+        invoice.active_Source_namespace_bytes > 50000 ||
+        invoice.outer.rss !== 128 * 1048576 || invoice.outer.seconds !== 150 ||
+        invoice.outer.admit_RAM !== 4 * 1073741824 || invoice.outer.admit_disk !== 10 * 1073741824 ||
+        invoice.outer.RAM_floor !== 3 * 1073741824 || invoice.outer.disk_floor !== 8 * 1073741824)
+      throw new Error("Exact actual case invoice observation failed before scientific call");
+    const child = [py, "-E", "-B", "-S", entry.program.path, "--self-sha256", entry.program.sha256,
+      "--plan", entry.plan.path, entry.plan.sha256, "--Root-gate", approval.gate.path, approval.gate.sha256];
+    const closed = await guarded(child, name, 128, 150);
+    const outputs = closed.terminal.outputs;
+    const result = outputs ? (outputs["result.json"] || outputs["summary.json"]) : closed.terminal.output;
+    if (!result) throw new Error("actual stdout has no recognized result descriptor");
+    return { ...closed, kind: entry.role === "GEN" ? "GEN" : "NEG", program: entry.program, plan: entry.plan, gate: approval.gate, review: approval.review, resource_invoice: approval.resource_invoice,
+      result, ...(outputs && outputs["records.json"] ? { carrier: outputs["records.json"] } : {}),
+      ...(outputs && outputs["checkpoint.json"] ? { checkpoint: outputs["checkpoint.json"] } : {}) };
+  }
+  const subsetRuns = [];
+  for (let i = 0; i < batch.subset_calls.length; ++i) subsetRuns.push(await runCase(batch.subset_calls[i], "subset_" + i));
+  const subsetEvidence = await writeData("subset_runs.json", subsetRuns);
+  const subsetRoute = await metadata("subset-bind", "subset_bound", ["--batch", batchRef.path, batchRef.sha256, "--evidence", subsetEvidence.path, subsetEvidence.sha256]);
+  const subsetRouteRef = (await readObject(root + "/subset_bound/subset_route.json", "subset_route_ref")).ref;
+  const strictRuns = [], walkRuns = [];
+  if (subsetRoute.strict_calls.length > 16 || subsetRoute.walk_calls.length > 1) throw new Error("finite strict/walk bound");
+  for (let i = 0; i < subsetRoute.strict_calls.length; ++i) strictRuns.push(await runCase(subsetRoute.strict_calls[i], "subset_strict_" + i));
+  for (let i = 0; i < subsetRoute.walk_calls.length; ++i) walkRuns.push(await runCase(subsetRoute.walk_calls[i], "walk_" + i));
+  const walkEvidence = await writeData("walk_runs.json", walkRuns);
+  const genRoute = await metadata("gen-bind", "gen_bound", ["--batch", batchRef.path, batchRef.sha256, "--route", subsetRouteRef.path, subsetRouteRef.sha256, "--evidence", walkEvidence.path, walkEvidence.sha256]);
+  if (genRoute.strict_calls.length > 1) throw new Error("generation strict bound");
+  for (let i = 0; i < genRoute.strict_calls.length; ++i) strictRuns.push(await runCase(genRoute.strict_calls[i], "GEN_strict_" + i));
+  if (strictRuns.length > 16) throw new Error("strict proof count exceeds selected cases");
+  const strictEvidence = await writeData("strict_runs.json", strictRuns);
+  const bundle = await metadata("proof-bundle", "bundle", ["--batch", batchRef.path, batchRef.sha256, "--evidence", strictEvidence.path, strictEvidence.sha256]);
+  const bundleRef = (await readObject(root + "/bundle/proof_bundle_UNRETAINED.json", "bundle_ref")).ref;
+  const retentionEvidence = await writeData("retention_input.json", { bundle: bundleRef, closed_runs: [...subsetRuns, ...walkRuns, ...strictRuns], extra_files: [batchRef, subsetEvidence, strictEvidence, walkEvidence, bundleRef, kit.helper, kit.config, kit.controls, kit.workflow, options.actualHelperControls, options.independentSourcePeer, options.RootSourceReview].filter(Boolean) });
+  const retainRoute = await metadata("retention", "retention", ["--batch", batchRef.path, batchRef.sha256, "--evidence", retentionEvidence.path, retentionEvidence.sha256]);
+  if (retainRoute.plans.length > 4) throw new Error("retention map bound");
+  const retained = [];
+  for (let i = 0; i < retainRoute.plans.length; ++i) {
+    const e = retainRoute.plans[i];
+    if (await R.approveRetention(e) !== true) throw new Error("Root retention review absent");
+    const child = [py, "-E", "-B", "-S", kit.retainer.path, "--self-sha256", kit.retainer.sha256, "--plan", e.plan.path, e.plan.sha256,
+      "--destination", e.destination, "--manifest", e.manifest];
+    const run = await guarded(child, "retention_" + i, 256, 125);
+    if (run.terminal.status !== "ROOT_CLOSED_METADATA_RETAINED") throw new Error("retention result absent");
+    retained.push(run.terminal.preservation);
+  }
+  const appendEvidence = await writeData("append_input.json", { bundle: bundleRef, retentions: retained });
+  let offset = 0;
+  for (let split = 0; split < 16 && offset < bundle.facts.length; ++split) {
+    current = (await readObject(kit.currentPath, "current_append_" + split)).ref;
+    const route = await metadata("append", "append_" + split, ["--batch", batchRef.path, batchRef.sha256, "--current", current.path, current.sha256,
+      "--evidence", appendEvidence.path, appendEvidence.sha256, "--offset", String(offset)]);
+    if (route.next_fact_offset <= offset || route.next_fact_offset > bundle.facts.length) throw new Error("bounded append progress invalid");
+    const approval = await R.approveAppend(route, { current, retained, bundle });
+    if (!approval || !approval.release) throw new Error("Root separate strict/SDK/retention/IP release absent");
+    const child = [py, "-E", "-B", "-S", kit.ledger.path, "--self-sha256", kit.ledger.sha256,
+      "--plan", route.plan.path, route.plan.sha256, "--Root-release", approval.release.path, approval.release.sha256];
+    const forecast = await guarded(child, "append_forecast_" + split, 256, 125);
+    if (forecast.terminal.status !== "BOUNDED_TYPED_LEDGER_METADATA_FORECAST_ONLY") throw new Error("metadata forecast absent");
+    await guarded([...child, "--write"], "append_write_" + split, 256, 125);
+    current = (await readObject(kit.currentPath, "current_after_write_" + split)).ref;
+    offset = route.next_fact_offset;
+  }
+  if (offset !== bundle.facts.length) throw new Error("bounded append suffix remains");
+  return { status: "ROOT_BOUNDED_BATCH_FINISHED", selected: batch.selected_indices, actual_strict_facts: bundle.facts.length,
+    unfinished_or_finite_misses_unpaid: bundle.remaining_selected_unpaid, actual_CURRENT: current, science_calls: subsetRuns.length + walkRuns.length + strictRuns.length,
+    actual_events: events.map(e => ({key:e.key,capture:e.capture,exit_code:e.terminal?.exit_code})), no_whole_Original_credit: true };
+}

@@ -1,0 +1,177 @@
+"""Root byte review of closed metadata; no mathematical program imports."""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import os
+import resource
+import stat
+import sys
+import time
+
+START = time.monotonic()
+READ = 0
+PATHS = set()
+ROWS = []
+
+
+def bound():
+    assert sys.platform == 'darwin' and time.monotonic() - START < 115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss <= 256 * 1048576
+    assert READ + 4194304 <= 64 * 1048576 and len(PATHS) + 16 <= 512
+
+
+def descriptor(p, body):
+    return dict(path=str(p), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+
+def whole(row):
+    global READ
+    assert set(row) == {'path', 'bytes', 'sha256'} and type(row['bytes']) is int
+    p = Path(row['path'])
+    a = p.lstat()
+    assert p.is_absolute() and p.resolve() == p and stat.S_ISREG(a.st_mode)
+    assert a.st_nlink == 1 and a.st_size == row['bytes'] <= 4194304
+    PATHS.add(str(p))
+    READ += a.st_size
+    bound()
+    with p.open('rb') as f:
+        b0 = os.fstat(f.fileno())
+        raw = f.read(a.st_size + 1)
+        b1 = os.fstat(f.fileno())
+    z = p.lstat()
+    sig = lambda x: (x.st_dev, x.st_ino, x.st_mode, x.st_nlink, x.st_size, x.st_mtime_ns, x.st_ctime_ns)
+    assert sig(a) == sig(b0) == sig(b1) == sig(z) and descriptor(p, raw) == row
+    ROWS.append(row)
+    return raw
+
+
+def doc(row):
+    return json.loads(whole(row))
+
+
+def emit(path, result):
+    raw = (json.dumps(result, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode()
+    assert len(raw) <= 65536 and path.is_relative_to('/private/tmp')
+    assert path.parent.resolve() == path.parent and not os.path.lexists(path)
+    with path.open('xb') as f:
+        assert f.write(raw) == len(raw)
+        f.flush()
+        os.fsync(f.fileno())
+    ref = descriptor(path, raw)
+    whole(ref)
+    print(json.dumps(dict(review_emission=ref, status='ROOT_METADATA_REVIEW_EMITTED'), sort_keys=True))
+
+
+ap = argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--self-sha256', required=True)
+ap.add_argument('--request', required=True)
+ap.add_argument('--request-sha256', required=True)
+ap.add_argument('--out', required=True)
+args = ap.parse_args()
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+own = Path(__file__).resolve()
+assert own.stat().st_size < 65536
+READ += own.stat().st_size
+whole(dict(path=str(own), bytes=own.stat().st_size, sha256=args.self_sha256))
+request_path = Path(args.request)
+request = doc(dict(path=str(request_path), bytes=request_path.stat().st_size,
+                   sha256=args.request_sha256))
+assert request['root'] == '/root' and request['Root_review_authorized'] is True
+assert request['scientific_replays'] == 0
+whole(request['Root_Source_review'])
+if request['mode'] == 'packet':
+    packet = doc(request['packet'])
+    rows = packet['whole_inputs']
+    assert len(rows) == packet['unique_paths'] <= 400
+    assert len({r['path'] for r in rows}) == len(rows)
+    assert sum(r['bytes'] for r in rows) == packet['whole_bytes']
+    for row in rows:
+        whole(row)
+    result = dict(schema='ROOT_F004_CLOSED40_HISTORICAL_METADATA_COMPONENT_REVIEW_V1',
+                  root='/root', accepted=True, packet=request['packet'],
+                  whole_input_paths=packet['unique_paths'], whole_input_bytes=packet['whole_bytes'],
+                  old_proof_mathematics_imported=True, scientific_replays=0,
+                  whole_Original_credit=0,
+                  qualification='Whole closed metadata bodies freshly hashed. Original scientific '
+                                'proofs, actors, software/model/classification premises and scopes '
+                                'are imported from their accepted records, not re-executed or retagged.')
+elif request['mode'] == 'controls':
+    report = doc(request['control_report'])
+    guard = doc(request['guard'])
+    terminal = doc(request['stdout'])
+    capture = doc(request['capture'])
+    template = doc(request['control_template'])
+    assert guard['status'] == 'PASS' and guard['stop'] == 'RETURNED' and guard['returncode'] == 0
+    assert guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+    assert guard['limits']['total_rss'] == 256 * 1048576 and guard['limits']['wall_seconds'] == 125
+    assert guard['logs']['stderr'] == 0
+    assert capture['actor'] == capture['root'] == '/root'
+    assert capture['actual_tool']['exit_code'] == capture['full_tool_return']['exit_code'] == 0
+    assert capture['all_genuine_api_frames'][0] == capture['full_initial_tool_return']
+    assert capture['all_genuine_api_frames'][-1] == capture['full_tool_return']
+    assert terminal['report'] == request['control_report'] and terminal['passed'] == 22
+    assert terminal['all_expected_outcomes_observed'] is True
+    assert report['actor'] == '/root' and report['Root_authority'] is False
+    assert report['adapter_Source'] == template['adapter_Source']
+    assert report['harness'] == template['harness']
+    whole(report['adapter_Source'])
+    whole(report['harness'])
+    assert report['case_results'] == [dict(name=n, status='PASS') for n in template['case_names']]
+    assert report['activated_whole_namespace_bytes'] == 65052
+    assert report['actual_adapter_entrypoint_adopt_calls'] == 0
+    assert report['S_W_Git_gate_lock_or_selector_writes'] == 0 and report['scientific_replays'] == 0
+    assert report['transaction_tests_are_explicit_memory_models'] is True
+    assert report['actual_OS_rename_fsync_or_crash_test'] is False
+    assert report['Source_code_bytes_and_function_AST_identical'] is True
+    method = request['installed_method']
+    assert method['bytes'] == report['adapter_Source']['bytes']
+    assert method['sha256'] == report['adapter_Source']['sha256']
+    assert whole(method) == whole(report['adapter_Source'])
+    result = dict(schema='ROOT_F004_CLOSED40_ACTUAL_METADATA_CONTROLS_V1', root='/root',
+                  accepted=True, method=method, control_case_names=template['case_names'],
+                  live_S_W_or_selector_writes=0, all_expected_outcomes_observed=True,
+                  actual_control_report=request['control_report'], actual_control_capture=request['capture'],
+                  actual_guard=request['guard'], actual_stdout=request['stdout'],
+                  tested_physical_Source=report['adapter_Source'], source_bytes_same_as_installed_method=True,
+                  actual_control_namespace=65052, whole_Original_credit=0, scientific_replays=0,
+                  qualification='Root acceptance of an actually passed private harness; original report '
+                                'remains unchanged and pending-Root-labelled. Method descriptor names '
+                                'the identical bytes to be independently installed and verified. '
+                                'Full run/main were not compiled; transaction tests remain memory models.')
+else:
+    raise AssertionError('unsupported metadata review mode')
+result['actual_whole_read_bytes_before_return'] = READ
+result['actual_paths_before_return'] = len(PATHS)
+# Include loader/cache/interpreter bodies and their bootstrap allowance in
+# the same caller bank. Guard/recorder returns have a separate prepaid reserve.
+runtime_paths = set()
+for module in tuple(sys.modules.values()):
+    for field in ('__file__', '__cached__'):
+        name = getattr(module, field, None)
+        if type(name) is str and Path(name).is_absolute() and Path(name).is_file():
+            p = Path(name).resolve()
+            if p != own:
+                runtime_paths.add(p)
+runtime_paths.add(Path(sys.executable).resolve())
+assert len(runtime_paths) <= 96
+runtime_rows = {}
+for p in sorted(runtime_paths):
+    a = p.lstat()
+    assert stat.S_ISREG(a.st_mode) and a.st_nlink == 1 and a.st_size <= 4194304
+    PATHS.add(str(p))
+    READ += 2 * a.st_size  # Initial loader allowance and this descriptor read.
+    bound()
+    body = p.read_bytes()
+    z = p.lstat()
+    sig = lambda t: (t.st_dev, t.st_ino, t.st_mode, t.st_nlink, t.st_size, t.st_mtime_ns, t.st_ctime_ns)
+    assert sig(a) == sig(z) and len(body) == a.st_size
+    runtime_rows[str(p)] = descriptor(p, body)
+for row in runtime_rows.values():
+    whole(row)
+result['complete_caller_read_debit_before_return'] = READ
+result['whole_caller_paths_before_return'] = len(PATHS)
+result['runtime_origin_rows'] = list(runtime_rows.values())
+result['guard_recorder_reserve'] = dict(read_bytes=4194304, new_bytes=2097152, paths=16)
+bound()
+emit(Path(args.out), result)

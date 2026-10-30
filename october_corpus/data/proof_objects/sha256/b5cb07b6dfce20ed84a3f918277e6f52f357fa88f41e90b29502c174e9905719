@@ -1,0 +1,118 @@
+"""Reconstruct six genuine completed proposal records; never run mathematics."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+
+BASE = Path('/private/tmp/l026_free_0096_0111_execution')
+DEST = Path('/private/tmp/l026_free_0096_0111_resume')
+GIB = 1073741824
+MIB = 1048576
+seen = {}
+physical = 0
+
+
+def raw(path, expected=None):
+    global physical
+    p = Path(path)
+    a = p.lstat()
+    assert p.is_absolute() and p.resolve() == p
+    assert stat.S_ISREG(a.st_mode) and a.st_nlink == 1 and a.st_size <= 4194304
+    with p.open('rb') as f:
+        b0 = os.fstat(f.fileno())
+        body = f.read(a.st_size + 1)
+        b1 = os.fstat(f.fileno())
+    z = p.lstat()
+    sig = lambda t: (t.st_dev, t.st_ino, t.st_mode, t.st_nlink, t.st_size, t.st_mtime_ns, t.st_ctime_ns)
+    assert sig(a) == sig(b0) == sig(b1) == sig(z) and len(body) == a.st_size
+    ref = dict(path=str(p), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+    if expected is not None:
+        assert ref == expected
+    physical += len(body)
+    assert physical <= 8388608
+    seen[str(p)] = ref
+    assert len(seen) <= 128
+    return body, ref
+
+
+def doc(path, expected=None):
+    body, ref = raw(path, expected)
+    return json.loads(body), ref
+
+
+def refdoc(ref):
+    return doc(ref['path'], ref)
+
+
+def write(name, obj):
+    p = DEST / name
+    assert p.parent.resolve() == p.parent and not os.path.lexists(p)
+    body = json.dumps(obj, sort_keys=True, separators=(',', ':'), allow_nan=False).encode() + b'\n'
+    assert len(body) <= 4194304
+    with p.open('xb') as f:
+        assert f.write(body) == len(body)
+        f.flush()
+        os.fsync(f.fileno())
+    return dict(path=str(p), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+
+assert DEST.resolve() == DEST and DEST.is_dir()
+batch, batch_ref = doc(BASE / 'prepared/batch.json')
+assert batch['selected_indices'] == list(range(96, 112)) and len(batch['subset_calls']) == 6
+current, current_ref = refdoc(batch['ledger']['current_paid_ledger_selector'])
+assert current_ref['sha256'] == '47eb2a7ab13a5c60e6b4c6e1c71df99c3a4dba26036a71ee4ce66755d42af15c'
+records = []
+for i, entry in enumerate(batch['subset_calls']):
+    guard, guard_ref = doc(BASE / f'subset_{i}/receipt.json')
+    stdout, stdout_ref = doc(BASE / f'subset_{i}/stdout.log')
+    err, err_ref = raw(BASE / f'subset_{i}/stderr.log')
+    capture, capture_ref = doc(BASE / f'subset_{i}_actual_capture.json')
+    assert guard['status'] == 'PASS' and guard['stop'] == 'RETURNED' and guard['returncode'] == 0
+    assert guard['cleanup']['remaining'] == [] and guard['cleanup']['errors'] == [] and err == b''
+    assert guard['limits']['total_rss'] == 128 * MIB and guard['limits']['wall_seconds'] == 150
+    child = guard['command']
+    assert child[:7] == ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', entry['program']['path'], '--self-sha256', entry['program']['sha256']]
+    assert child[7:10] == ['--plan', entry['plan']['path'], entry['plan']['sha256']]
+    assert child[10] == '--Root-gate' and len(child) == 13
+    gate, gate_ref = doc(child[11])
+    assert gate_ref['sha256'] == child[12]
+    assert gate['program'] == entry['program'] and gate['plan'] == entry['plan']
+    assert gate['root'] == '/root' and gate['adopted'] is True and gate['mode'] == 'propose'
+    review, review_ref = refdoc(gate['Root_code_math_review'])
+    assert review['status'] == 'SUPPORTED' and review['blockers'] == [] and review['root'] == '/root'
+    assert review['program'] == entry['program'] and review['plan'] == entry['plan']
+    assert review['current_paid_ledger'][0] == current_ref
+    invoice, invoice_ref = doc(Path(gate_ref['path']).parent / 'actual_case_resource_invoice_DATA.json')
+    assert invoice['program'] == entry['program'] and invoice['plan'] == entry['plan']
+    assert invoice['gate'] == gate_ref and invoice['review'] == review_ref
+    assert invoice['schema'] == 'L026_ACTUAL_CASE_METADATA_RESOURCE_INVOICE_V1'
+    assert invoice['physical_paths'] <= 32 and invoice['physical_first_final_plus_bootstrap_bytes'] <= 8 * MIB
+    assert invoice['active_Source_namespace_bytes'] <= 50000
+    assert invoice['outer'] == dict(rss=128*MIB, seconds=150, admit_RAM=4*GIB, admit_disk=10*GIB, RAM_floor=3*GIB, disk_floor=8*GIB)
+    assert capture['root'] == '/root' and capture['actor'] == '/root'
+    issued = capture['issued_argv']
+    sep = issued.index('--')
+    assert issued[sep+1:] == child and capture['child_argv'] == issued
+    assert capture['actual_tool']['exit_code'] == 0 and capture['all_genuine_api_frames']
+    assert capture['full_tool_return']['exit_code'] == 0
+    raw(entry['program']['path'], entry['program'])
+    refdoc(entry['plan'])
+    outputs = stdout['outputs']
+    assert stdout['status'] == 'BOUNDED_SELECTED_ORBIT_PREFIXES_FINISHED'
+    for ref in outputs.values():
+        raw(ref['path'], ref)
+    records.append(dict(capture=capture_ref, outer=guard_ref, stdout=stdout_ref, stderr=err_ref,
+                        terminal=stdout, kind='NEG', program=entry['program'], plan=entry['plan'],
+                        gate=gate_ref, review=review_ref, resource_invoice=invoice_ref,
+                        result=outputs['result.json'], carrier=outputs['records.json'], checkpoint=outputs['checkpoint.json']))
+assert not (BASE / 'subset_runs.json').exists()
+prior, prior_ref = doc('/private/tmp/l026_free_0096_0111_actual_workflow_record.json')
+subset_ref = write('completed_subset_runs.json', records)
+report_ref = write('validated_prefix.json', dict(schema='ROOT_L026_COMPLETED_PREFIX_RECONSTRUCTION_V1',
+    root='/root', status='SUPPORTED', blockers=[], batch=batch_ref, current=current_ref,
+    completed_subset_runs=subset_ref, prior_partial_workflow_record=prior_ref,
+    completed_proposal_calls=6, strict_proof_calls=0, ledger_writes=0,
+    physical_read_bytes=physical, inputs=list(seen.values()),
+    qualification='Metadata reconstruction of actual completed proposals only. No mathematics rerun, strict credit, paid inference, or case verdict transfer. The original wrapper stopped before issuing the first subset_runs writer because its API key contained a period.'))
+print(json.dumps(dict(subset_runs=subset_ref, prefix_review=report_ref, batch=batch_ref, current=current_ref), sort_keys=True))

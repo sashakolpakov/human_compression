@@ -1,0 +1,121 @@
+"""Read only the closed tail2 prefix; never replay Source or inspect growing suffix."""
+from pathlib import Path
+import datetime,hashlib,json,os,shlex,stat
+E=Path('/private/tmp/l026_free_0096_0111_execution')
+C=Path('/private/tmp/l026_free_0096_0111_tail_callbacks')
+O=Path('/private/tmp/l026_tail2_actual_prefix_peer_DATA')
+opened={}
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def read(p,expected=None):
+ p=Path(p);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read();e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat());r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if expected is not None:assert r==expected,(r,expected)
+ assert opened.get(str(p),r)==r;opened[str(p)]=r;return b,r
+def doc(p,expected=None):b,r=read(p,expected);return json.loads(b),r
+def rd(r):return doc(r['path'],r)[0]
+def sdk(r,code=0):
+ x=rd(r);f=x['all_genuine_api_frames'];a=x['actual_tool']
+ assert x['actor']==x['root']=='/root' and f[0]==x['full_initial_tool_return']and f[-1]==x['full_tool_return']
+ assert a['initial_chunk']==f[0]['chunk_id']and a['terminal_chunk']==f[-1]['chunk_id']
+ assert a['exit_code']==f[-1]['exit_code']==code and 'session_id'not in f[-1]
+ assert x['issued_argv']==x['child_argv']==shlex.split(x['issued_command'])==shlex.split(x['canonical_argv_command'])
+ assert x['issued_tool_arguments']['cmd']==x['issued_command']
+ if a['synchronous']:assert len(f)==1 and a['handle']is None
+ else:assert all(v.get('session_id')==a['handle']for v in f[:-1])
+ return x,''.join(v.get('output','')for v in f)
+
+errpath=Path('/private/tmp/l026_free_0096_0111_tail2_actual_error_record.json')
+error,er=doc(errpath,dict(path=str(errpath),bytes=2861,sha256='c44403cbbfca61a6381fbee4dadf91f92cad5b07e155d46ec740745123b786f8'))
+cbpath=Path('/private/tmp/l026_free_0096_0111_tail2_actual_callback_record.json')
+callback,cr=doc(cbpath,dict(path=str(cbpath),bytes=9584,sha256='d68bff7afb24c36e5d68563914c7776d76c4ff0b47fd82f09f440f0c0ee045c1'))
+assert callback['caseCount']==2 and callback['retentionCount']==callback['appendCount']==0 and callback['currentBeforeImages']==[]
+for event in callback['events']:
+ cap,emitted=sdk(event['capture'],event['exit_code']);assert cap['issued_argv']==event['argv']
+failed=error['closedEvent'];assert failed['key']==callback['events'][-1]['key']and failed['capture']==callback['events'][-1]['capture']
+fcap,ftext=sdk(failed['capture'],1);assert failed['argv']==fcap['issued_argv']and failed['terminal']==fcap['full_tool_return']
+assert '4294967296 available RAM bytes required'in ftext and 'refused before creating its output or child'in ftext
+argv=failed['argv'];refused_guard=Path(argv[argv.index('--output')+1]);child=argv[argv.index('--')+1:]
+refused_output=Path(child[child.index('--out')+1]);assert not os.path.lexists(refused_guard)and not os.path.lexists(refused_output)
+request_path=Path(child[child.index('--request')+1]);request,request_pin=doc(request_path)
+assert request_pin['sha256']==child[child.index('--request')+2]and request['entry']['role']=='subset_check'
+assert request['entry']['selected']==[99,100,101]
+
+records,closed_pin=doc(O/'closed_strict_prefix.json',dict(path=str(O/'closed_strict_prefix.json'),bytes=2321,sha256='c1dcdbea0d1ecb5de220439e4a51780dfe3f4f88d35fb049029da0f3293cad3d'))
+assert len(records)==1;record=records[0]
+for k in ['capture','outer','stdout','stderr','program','plan','gate','review','resource_invoice','result']:read(record[k]['path'],record[k])
+cap,text=sdk(record['capture']);guard=rd(record['outer']);plan=rd(record['plan']);gate=rd(record['gate']);review=rd(record['review']);invoice=rd(record['resource_invoice']);result=rd(record['result'])
+assert json.loads(text)==dict(status='PASS',stop='RETURNED',receipt=record['outer']['path'])
+assert guard['status']=='PASS'and guard['stop']=='RETURNED'and guard['returncode']==0 and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+assert cap['issued_argv'][cap['issued_argv'].index('--')+1:]==guard['command']
+assert guard['limits']['total_rss']==128*2**20 and guard['limits']['wall_seconds']==150
+assert guard['limits']['admit_ram']==4*2**30 and guard['limits']['admit_disk']==10*2**30
+assert guard['limits']['ram_floor']==3*2**30 and guard['limits']['disk_floor']==8*2**30
+assert guard['peaks']['total_rss']<128*2**20 and guard['seconds']<150
+assert json.loads(read(record['stdout']['path'])[0])==record['terminal']and read(record['stderr']['path'])[0]==b''
+assert result['status']=='SUPPLIED_CHECK_COMPLETE'and result['mode']=='check'and result['Root_adoption_owed']is True
+assert result['program']==record['program']==gate['program']==review['program']==plan['program']
+assert result['plan']==record['plan']==gate['plan']==review['plan']
+assert gate['Root_code_math_review']==record['review']and gate['root']==review['root']=='/root'and gate['adopted']is True
+assert review['status']=='SUPPORTED'and review['blockers']==[]
+assert result['supplier_activated']is result['strict_check_activates_supplier']is False
+assert result['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0
+rows=result['verified_nongeneration_records'];assert rows==[dict(checked_positive_rotation_edges=216,free_index=96,owner=121,points=108,witness_row_sha256='8a64b368c2c907e457a972d6e16e1a4962c1ce460c42491e9695719da1b29909')]
+assert result['exact_visited_indices']==[96]and result['exact_unvisited_indices']==[97,98]
+assert invoice['program']==record['program']and invoice['plan']==record['plan']and invoice['gate']==record['gate']and invoice['review']==record['review']
+assert invoice['physical_paths']==32 and invoice['physical_first_final_plus_bootstrap_bytes']==result['resources']['physical_read_bytes']<=8*2**20
+assert invoice['active_Source_namespace_bytes']==38062<=50000 and invoice['work']['upper']<=10000000
+assert result['resources']['work_units']<=invoice['work']['upper']
+# This directly named capture is derived from the immutable reviewed workflow's next() order.
+iread_path=E/'L026_RESUME_030_reader_capture.json';_,iread_pin=read(iread_path);iread,iv=sdk(iread_pin)
+observed=json.loads(iv);assert observed['ref']==record['resource_invoice']and observed['object']==invoice
+
+route,route_pin=doc(E/'subset_bound/subset_route.json')
+assert len(route['strict_calls'])==3 and len(route['walk_calls'])==1 and route['strict_calls'][0]['plan']==record['plan']
+assert route['strict_calls'][1]['plan']==request['entry']['plan']and route['ledger']['current_paid_ledger_selector']==request['ctx']['current']
+retained_path=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/bounded_batches/free_0096_0111/completed_proposals/evidence/preservation.json')
+pres,prespin=doc(retained_path,dict(path=str(retained_path),bytes=116820,sha256='63ade83828c3d8841ad4a58b41bd8c510a4a9dc886175610bab70037dcdb98d6'))
+current_capture_path=E/'L026_RESUME_038_reader_capture.json';_,current_capture_pin=read(current_capture_path)
+current_capture,current_text=sdk(current_capture_pin);current_emission=json.loads(current_text)
+assert current_emission['ref']==request['ctx']['current']
+before_current=current_emission['object'];exact_before=can(before_current)
+assert len(exact_before)==request['ctx']['current']['bytes']and hashlib.sha256(exact_before).hexdigest()==request['ctx']['current']['sha256']
+before_path=O/'tail2_closed_paid_CURRENT_before.json'
+with before_path.open('xb')as f:f.write(exact_before)
+before_pin=read(before_path)[1]
+before_receipt=rd(before_current['ledger_receipt']);bank,_=read(before_current['status_bank']['path'],before_current['status_bank'])
+counts=dict(subset_NEG=bank.count(1),GEN=bank.count(2)+bank.count(6),separate_IP=bank.count(6),unpaid=bank.count(0))
+assert len(bank)==28908 and counts==before_receipt['counts']==dict(subset_NEG=68,GEN=27,separate_IP=27,unpaid=28813)
+assert list(bank[96:112])==[0]*16
+policy=rd(request['policy']);assert request['policy']['sha256']=='62e93111258e633f7549c1b135cc9850800ec9b5bbc3ec61be69bfee9532bf5a'
+assert review['Root_callback_policy']==request['policy']
+
+report=dict(schema='INDEPENDENT_L026_TERMINAL_TAIL2_CLOSED_PREFIX_REVIEW_V1',reviewer='/root/reader_postcheck',
+ observed_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),status='SUPPORTED_ONE_CLOSED_STRICT_PREFIX_TAIL2_INCOMPLETE',blockers=[],
+ error_record=er,callback_record=cr,prior_policy=request['policy'],completed_strict_prefix=closed_pin,
+ completed_strict_record=record,authenticated_verified_rows=rows,
+ strict_result=record['result'],strict_guard=record['outer'],strict_API=record['capture'],actual_invoice_reader_capture=iread_pin,
+ strict_outer_seconds=guard['seconds'],strict_outer_sampled_peak_RSS=guard['peaks']['total_rss'],
+ refusal=dict(actual_capture=failed['capture'],request=request_pin,requested_entry=request['entry'],
+  status='ADMISSION_REFUSED_BEFORE_REQUESTED_CALLBACK_CHILD_AND_OUTPUT',required_available_RAM=4294967296,
+  actual_tool_exit_code=1,guard_output_absent_at_closed_prefix_inspection=str(refused_guard),callback_output_absent_at_closed_prefix_inspection=str(refused_output),
+  no_OOM_inference_or_relaxed_limit=True),
+ callback_counts=dict(case_approval_requests=2,retention_requests=0,append_requests=0,current_before_images=0),
+ subset_route=route_pin,remaining_as_of_tail2=dict(unissued_strict_entries=[dict(role=r['role'],selected=r['selected'],program=r['program'],plan=r['plan'])for r in route['strict_calls'][1:]],
+  unissued_walk_entries=[dict(role=r['role'],selected=r['selected'],program=r['program'],plan=r['plan'])for r in route['walk_calls']],
+  completed_capmiss_indices_still_unpaid=route['completed_capmiss_indices']),
+ preserved_six_proposals_manifest=prespin,before_tail2_paid_selector=request['ctx']['current'],
+ genuine_paid_CURRENT_reader_before_refused_case=current_capture_pin,exact_closed_selector_image=before_pin,
+ before_tail2_counts=counts,selected16_before_tail2_unpaid=True,
+ paid_credit_from_tail2=0,retention_or_ledger_append_completed_in_tail2=False,
+ later_legitimate_root_suffix_may_change_current=True,growing_suffix_inspected=False,
+ scientific_or_Source_or_control_or_codec_replays=0,S_W_Git_gate_ledger_writes=0,
+ checked_whole_raw_paths=len(opened),checked_whole_raw_bytes=sum(r['bytes']for r in opened.values()),
+ whole_checked_pins=[opened[p]for p in sorted(opened)],
+ qualification='Metadata closure opinion for the terminal tail2 prefix only. The authenticated unchanged strict result verifies free96 NG under its retained Original Fi22/model/member/action/classification scope; this peer does not recompute points or edges and supplies no paid adoption. The exported workflow-return-shaped record retains actual provenance and Root_adoption_owed=true. Tail2 stopped at the next metadata-callback admission before its requested child/output, with zero retention/appends; its unissued suffix remains unpaid as of that stop. Before-selector47eb is recovered from the genuine closed CURRENT reader JSON object only after canonical complete bytes match exact763B/47eb identity; counts join its immutable receipt/bank. It is not reasserted as current throughout Root later legitimate suffix. Source/orchestration/new policy/retention/CAS/actual ledger adoption remain Root-owned. Sampled known-owned cleanup is not global process absence.')
+path=O/'independent_review.json'
+with path.open('xb')as f:f.write(can(report))
+rp=read(path)[1];sp=O/'seal.json'
+with sp.open('xb')as f:f.write(can(dict(schema='INDEPENDENT_TERMINAL_PREFIX_REVIEW_SHA256_SEAL_V1',report=rp,completed_strict_prefix=closed_pin,blockers=[])))
+print(json.dumps(dict(report=rp,seal=read(sp)[1],completed_strict_prefix=closed_pin,status=report['status'],blockers=[])))

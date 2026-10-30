@@ -1,0 +1,99 @@
+from pathlib import Path
+import ast,base64,datetime,hashlib,json,shlex,stat
+N=Path('/private/tmp/l026_free_0096_0111_closure_DATA');O=Path('/private/tmp/l026_free96_111_retention_postcopy_peer_DATA');PINS={}
+def can(o):return(json.dumps(o,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def whole(p,r=None):
+ p=Path(p);a=p.lstat();assert stat.S_ISREG(a.st_mode)and a.st_nlink==1 and p.resolve(strict=True)==p
+ b=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_mode,a.st_nlink,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ q=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert r==q,(r,q)
+ if str(p)in PINS:assert PINS[str(p)]==q
+ PINS[str(p)]=q;return b,q
+def obj(p,r=None):
+ b,q=whole(p,r);return json.loads(b),q
+def load(r):return obj(r['path'],r)
+def read(r):return whole(r['path'],r)
+def fixed(p,size,sha):return obj(p,dict(path=str(p),bytes=size,sha256=sha))
+def capture(p):
+ c,r=obj(p);assert c['root']==c['actor']=='/root'
+ assert c['issued_argv']==c['child_argv']==shlex.split(c['issued_command'])==shlex.split(c['issued_tool_arguments']['cmd'])==shlex.split(c['canonical_argv_command'])
+ frames=c['all_genuine_api_frames'];assert len(frames)==1 and frames[0]==c['full_initial_tool_return']==c['full_tool_return']
+ f=frames[0];t=c['actual_tool'];assert t['exit_code']==f['exit_code']==0 and t['handle']is None and t['synchronous']is True
+ assert t['initial_chunk']==t['terminal_chunk']==f['chunk_id'];return c,r
+h,hr=fixed(N/'FINAL_handoff.json',15414,'6c8e76e0d01e1b3c395c6fe55f089b955f42600ebd0d73307361d12317e23903')
+assert h['Root_authority']is False and h['status']=='PREPARED_UNRUN_DATA_ONLY'and h['actual_calls']==h['actual_preservations']==[]
+source,sref=read(h['Source']);ast.parse(source);assert sref['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+root,rr=fixed(N/'Root_retention_selection_review.json',7328,'7f0eff5b4dca43d791269ec626a68834092921529f9d038e3e6f4c1dd2533c60')
+assert root['root']=='/root'and root['status']=='SUPPORTED'and root['blockers']==[]and root['retainer']==sref
+packets=h['parts'];assert len(packets)==5
+assert root['parts']==[dict(part=e['part'],plan=e['plan'],expected_manifest=e['expected_manifest_DATA'],invoice=e['invoice'])for e in packets]
+pre,pr=capture(N/'Root_whole_selection_precheck_actual_capture.json');assert pr==root['actual_whole_selection_and_S_reuse_precheck']
+preout=json.loads(pre['full_tool_return']['output']);assert preout['parts']==packets;ast.parse(pre['issued_argv'][-1])
+parts=[];allrows=[];borrowed={}
+for e in packets:
+ i=e['part'];stem=f'part{i:02d}';p,pref=load(e['plan']);dest=Path(e['destination']);inv=e['invoice'];rows=p['files']
+ assert p['destination']==str(dest)and p['scientific_calls']==0 and p['Root_authority']is False and e['Source']==sref and e['actual_copy']is None
+ assert len({r['original']['path']for r in rows})==len(rows)
+ retained_pins={}
+ for row in rows:
+  r=row['retained']
+  if r['path']in retained_pins:assert retained_pins[r['path']]==r
+  retained_pins[r['path']]=r
+ copied=[];reused=[]
+ for r in rows:
+  a,ar=read(r['original']);b,br=read(r['retained']);assert a==b and ar['bytes']==br['bytes']<=4*2**20 and ar['sha256']==br['sha256']
+  (copied if Path(br['path']).is_relative_to(dest)else reused).append(r)
+  allrows.append(dict(part=i,**r))
+ for r in p['borrowed_closures']:read(r);borrowed[r['path']]=r
+ methods=[dict(original=sref,retained=dict(path=str(dest/'method/retain_closed_files.py'),bytes=sref['bytes'],sha256=sref['sha256'])),dict(original=pref,retained=dict(path=str(dest/'method/plan.json'),bytes=pref['bytes'],sha256=pref['sha256']))]
+ expected=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=p['borrowed_closures'],source_plan=pref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+ mr=e['expected_manifest_DATA'];raw,_=read(mr);assert raw==can(expected)
+ for r in methods:
+  a,_=read(r['original']);b,_=read(r['retained']);assert a==b
+ outputpaths={r['retained']['path']for r in copied+methods}|{mr['path']};actualpaths={str(q)for q in dest.rglob('*')if q.is_file()}
+ assert outputpaths==actualpaths and all(not q.is_symlink()for q in dest.rglob('*'))
+ C=sum(r['original']['bytes']for r in copied);R=sum(r['original']['bytes']for r in reused);S=sref['bytes'];P=pref['bytes'];M=mr['bytes'];B=sum(r['bytes']for r in p['borrowed_closures'])
+ pathset={sref['path'],pref['path'],mr['path']}|{r['path']for r in p['borrowed_closures']}|{r[k]['path']for r in rows+methods for k in('original','retained')}
+ equations=dict(Source_bytes=S,plan_bytes=P,expected_manifest_bytes=M,borrowed_closure_bytes=B,new_copy_rows=len(copied),reuse_rows=len(reused),original_rows=len(rows),new_copy_payload_bytes=C,reuse_payload_bytes=R,selected_payload_bytes=C+R,exact_source_instrumented_read_bytes=4*C+3*R+2*S+3*P+B+M,physical_read_bytes_including_initial_Source_loader=4*C+3*R+3*S+3*P+B+M,new_output_bytes_including_method_plan_manifest=C+S+P+M,new_output_files_including_method_plan_manifest=len(copied)+3,actual_path_union_upper=len(pathset))
+ assert all(inv[k]==v for k,v in equations.items()),(i,equations,inv)
+ assert equations['physical_read_bytes_including_initial_Source_loader']<=64*2**20 and equations['new_output_bytes_including_method_plan_manifest']<=16*2**20 and len(pathset)<=512
+ c,cr=capture(N/'runtime'/f'{stem}_actual_capture.json');rt=N/'runtime'/stem
+ rec,rref=obj(rt/'receipt.json');started,stref=obj(rt/'started.json');stdout,stdref=obj(rt/'stdout.log');err,errref=whole(rt/'stderr.log')
+ assert rec['status']=='PASS'and rec['stop']=='RETURNED'and rec['error']is None and rec['returncode']==0 and err==b''
+ assert rec['command']==started['command']==e['child_argv_UNRUN']
+ assert c['issued_argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B','/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py','--volume','/Users/sasha/medusa','--output',str(rt),'--rss-cap-mib','256','--timeout','150','--']+e['child_argv_UNRUN']
+ assert json.loads(c['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(rt/'receipt.json'))
+ assert started['limits']==rec['limits']and started['admission']==rec['admission'];l=rec['limits'];a=rec['admission'];pk=rec['peaks']
+ assert l['total_rss']==256*2**20 and l['wall_seconds']==150 and l['admit_ram']==4*2**30 and l['admit_disk']==10*2**30 and l['ram_floor']==3*2**30 and l['disk_floor']==8*2**30
+ assert a['available_ram']>=l['admit_ram']and a['free_disk']>=l['admit_disk']and pk['total_rss']<l['total_rss']and pk['min_available_ram']>=l['ram_floor']and pk['min_free_disk']>=l['disk_floor']and rec['seconds']<125
+ assert rec['cleanup']['errors']==rec['cleanup']['remaining']==[]and rec['logs']==dict(stdout=stdref['bytes'],stderr=0)
+ assert len(rec['identities'])==len(started['identities'])==1
+ ident=rec['identities'][0];initial=started['identities'][0]
+ assert all(ident[k]==initial[k]for k in('pid','birth','initial_parent','group','session'))and ident['pid']==ident['group']==ident['session']and ident['pid']!=ident['initial_parent']
+ assert stdout==dict(status='ROOT_CLOSED_METADATA_RETAINED',preservation=mr,mappings=len(rows)+2,actual_paths=len(pathset),actual_read_bytes=equations['exact_source_instrumented_read_bytes'],new_bytes=equations['new_output_bytes_including_method_plan_manifest'],new_files=len(copied)+3,scientific_calls=0)
+ parts.append(dict(part=i,plan=pref,preservation=mr,all_selected_whole_original_retained_or_reused_identities_equal=True,exact_complete_manifest_reconstructed=True,all_new_destination_files_accounted=True,invoice_equations=equations,actual_capture=cr,guard=rref,started=stref,stdout=stdref,stderr=errref,SDK_argv_guard_plan_Source_stdout_manifest_joins=True,seconds=rec['seconds'],sampled_peak_RSS=pk['total_rss'],admission=a,cleanup=rec['cleanup'],process_identity=ident))
+assert [p['invoice_equations']['original_rows']for p in parts]==[150,150,150,99,13]
+assert sum(p['invoice_equations']['reuse_rows']for p in parts)==268 and len(allrows)==562
+selection,sr=load(h['selection']);assert selection['selected_file_count']==549
+assert [{k:v for k,v in r.items()if k!='action'}for r in selection['exact_rows']]==allrows[:549]
+assert selection['selected_payload_bytes']==sum(p['invoice_equations']['selected_payload_bytes']for p in parts[:4])==6485060
+for k in('complete_payload_creation_inverse','invoices_for_payload_parts','payload_handoff','preparation_Source','prior80_95_format'):read(h[k])
+inv,ir=load(h['complete_payload_creation_inverse']);assert inv['Root_authority']is False and inv['represented_activations']==0
+for ch in inv['changes']:
+ raw,_=read(ch['after']);assert base64.b64decode(ch['whole_after_body_base64'],validate=True)==raw
+prep=inv['preparation_Source'];raw,_=read(prep['ref']);assert base64.b64decode(prep['whole_body_base64'],validate=True)==raw;ast.parse(raw)
+snap,snapref=load(selection['accepted_CURRENT_snapshot']);assert snapref['bytes']==763 and snapref['sha256']=='6d8ff1026a9835bd6882ba27e9a4752959b747b7faa0d29aa673443ca1f60e48'
+provenance,provref=obj(N/'accepted_CURRENT_snapshot_provenance.json');assert provenance['private_snapshot']==snapref
+oldpeer,oldpeerref=load(provenance['committed_peer']);assert oldpeerref['sha256']=='44f3995da77352c99126cb270e513909e6bdbac02ad021824007774026ef7399'
+receipt,receiptref=load(snap['ledger_receipt']);bankraw,bankref=read(snap['status_bank']);assert bankref['bytes']==28908 and bankref['sha256']=='561fc1b541416dfb7ed3d16a3b8dd460219e5f722dfe4c76956860f180f9e0a5'
+assert snap['adopted']is True and snap['root']=='/root'and receiptref['sha256']=='a5452419bf472c12644614fe204c290ef9d41b60dc96b809ff8d0fef4c5fabb1'
+assert set(selection['committed_epoch_files']).issubset({r['original']['path']for r in allrows[:549]})
+assert snapref['path']in {r['original']['path']for r in allrows}
+author,authorref=fixed(N/'author_postcopy_check.json',7999,'fe42ca2d067cfbd81bab1092a876899899a24b96e62f3072e2c6213321b82716');assert author['independent_review']is False
+borrowed_list=list(borrowed.values());assert len(borrowed_list)==4
+totals=dict(payload_mapping_roles=549,preparation_mapping_roles=13,selected_mapping_roles=562,distinct_selected_original_paths=len({r['original']['path']for r in allrows}),manifest_mapping_rows=572,reused_mapping_rows=268,new_selected_copy_rows=294,selected_payload_bytes=6485060,preparation_bytes=1943397,new_output_files=sum(p['invoice_equations']['new_output_files_including_method_plan_manifest']for p in parts),new_output_bytes=sum(p['invoice_equations']['new_output_bytes_including_method_plan_manifest']for p in parts))
+assert totals['new_output_bytes']==6664271
+report=dict(schema='INDEPENDENT_L026_FREE96_111_FIVE_PART_CLOSED_METADATA_POSTCOPY_REVIEW_V1',reviewer='/root/reader_postcheck',utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),subject=hr,status='SUPPORTED_POSTCOPY_METADATA',blockers=[],Root_authority=False,Source=sref,Root_review=rr,Root_whole_selection_precheck=pr,parts=parts,totals=totals,selection=sr,complete_payload_creation_inverse=ir,complete_inverse_after_bodies_checked=len(inv['changes']),author_postcopy_QA=dict(record=authorref,authority='Author QA only, independently checked rather than adopted as peer evidence.'),accepted_CURRENT_snapshot=dict(snapshot=snapref,provenance=provref,committed_peer=oldpeerref,ledger_receipt=receiptref,status_bank=bankref,all_three_epoch_files_selected=True,qualification='Existing accepted6d8ff byte snapshot and whole epoch identities only. Mutable liveCURRENT was not reread or frozen by this audit. No bank/state semantic recomputation or paid credit is supplied.'),borrowed_manifests_whole_only=borrowed_list,old_proof_scope='The four prior maps are read/hash checked as whole metadata and exact selected reuse aliases only. No older scientific proof graph or unselected scientific payload domain is expanded; original Fi22/fullAut/Out2/model/action/word/member/H=B premises, strictGEN IP0 and separate existing IP theorem qualifications remain in force.',terminal_boundary=h['terminal_boundary'],frozen_handoff='Unchanged author PREPARED_UNRUN/null actual fields remain historical preparation; five distinct genuine Root actual captures and receipts establish completed copies.',qualifications=['All549payload+13preparation mapping roles and Source/plan copies were wholehashed original-to-retained/reused with stable regular single-link canonical reads. Five maps independently reconstructed byte-for-byte; all new destination files accounted.','Five outerguards are sampled process/resource evidence. Known birth-pinned cleanup is empty; unseen detached descendants and kernel quota absence are not asserted.','Genuine refusals/errors/partial continuation evidence remains historical with original dispositions; no paid-verdict retagging or future Source activation.','Seven existing accepted facts remain3GEN+separateIP and4NEG. The9selected misses/unvisited cases101..107,110,111 and prior case53 stay unpaid. No new Original/manuscript/conjecture/Lean credit.'],represented_Source_helpers_science_codec_activations_by_reviewer=0,S_W_Git_gates_ledger_selector_cleanup_writes_by_reviewer=0,checked_whole_paths=len(PINS),checked_whole_bytes=sum(r['bytes']for r in PINS.values()),checked_whole_pins=list(PINS.values()))
+O.mkdir(exist_ok=True);p=O/'independent_review.json';p.write_bytes(can(report));b=p.read_bytes();r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+seal=dict(schema='INDEPENDENT_REVIEW_SEAL_V1',reviewer='/root/reader_postcheck',report=r,status=report['status'],blockers=[],Root_authority=False);p=O/'seal.json';p.write_bytes(can(seal));b=p.read_bytes();s=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+print(json.dumps(dict(review_emission=dict(report=r,seal=s,status=report['status'],blockers=[]),totals=totals,checked_whole_paths=len(PINS),checked_whole_bytes=report['checked_whole_bytes']),sort_keys=True))

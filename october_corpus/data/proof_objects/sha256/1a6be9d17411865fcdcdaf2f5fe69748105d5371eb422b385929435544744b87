@@ -1,0 +1,209 @@
+"""Bind existing metadata projections to actual Root imports; no Source import."""
+from pathlib import Path
+import copy
+import hashlib
+import json
+import os
+import resource
+import sys
+import time
+
+START = time.monotonic()
+READ = 0
+NEW = 0
+PATHS = set()
+BASE = Path('/private/tmp/f004_closed40_Root_controls')
+S = Path('/Users/sasha/medusa/research/leemans')
+R = S / 'maintenance/intake/f004_closed40_batch_registration'
+V = Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v3')
+
+
+def budget():
+    assert sys.platform == 'darwin' and time.monotonic() - START < 115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss < 256 * 1048576
+    assert READ < 64 * 1048576 and NEW < 16 * 1048576 and len(PATHS) < 512
+
+
+def canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False) + '\n').encode()
+
+
+def ref(path, body):
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+
+def read(path, expected=None):
+    global READ
+    path = Path(path)
+    a = path.lstat()
+    assert path.resolve() == path and a.st_nlink == 1 and a.st_size <= 4194304
+    PATHS.add(str(path))
+    READ += a.st_size
+    budget()
+    body = path.read_bytes()
+    z = path.lstat()
+    assert (a.st_dev, a.st_ino, a.st_mode, a.st_nlink, a.st_size, a.st_mtime_ns, a.st_ctime_ns) == (
+        z.st_dev, z.st_ino, z.st_mode, z.st_nlink, z.st_size, z.st_mtime_ns, z.st_ctime_ns)
+    if expected is not None:
+        assert ref(path, body) == expected
+    return body
+
+
+def doc(path, expected=None):
+    return json.loads(read(path, expected))
+
+
+def put(path, value):
+    global NEW
+    assert (path.is_relative_to(BASE) or path.is_relative_to(R)) and not os.path.lexists(path)
+    assert path.parent.resolve() == path.parent
+    body = canonical(value)
+    assert len(body) <= 4194304
+    NEW += len(body)
+    PATHS.add(str(path))
+    budget()
+    with path.open('xb') as f:
+        assert f.write(body) == len(body)
+        f.flush()
+        os.fsync(f.fileno())
+    row = ref(path, body)
+    read(path, row)
+    return row
+
+
+def same(a, b):
+    if type(a) is not type(b):
+        return False
+    if type(a) is dict:
+        return a.keys() == b.keys() and all(same(a[k], b[k]) for k in a)
+    if type(a) is list:
+        return len(a) == len(b) and all(same(x, y) for x, y in zip(a, b))
+    return a == b
+
+
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+assert len(sys.argv) == 2
+own = Path(__file__).resolve()
+READ += own.stat().st_size
+own_body = read(own)
+assert len(own_body) < 65536 and hashlib.sha256(own_body).hexdigest() == sys.argv[1]
+cfg = doc(BASE / 'Root_static_binding_configuration.json')
+assert cfg['root'] == '/root' and cfg['Root_static_metadata_binding_approved'] is True
+assert cfg['scientific_calls_authorized'] == cfg['live_selector_writes_authorized'] == 0
+plan = doc(V / 'live_plan_FRESH_CP11262_V3B_ROOT_BINDING_OWED.json')
+before = {k: doc(row['path'], row) for k, row in plan['before'].items()}
+for row in plan['protected_progress']:
+    read(row['path'], row)
+assert before['CURRENT']['F009_checkpoint_current'] == before['STATUS']['F009_checkpoint_current'] == dict(
+    sequence=11262, nodes=5907, pending=205, reserved_debts=0, selected_raw_leaf_records=557508)
+index = doc(plan['closure_index']['path'], plan['closure_index'])
+assert len(index['rows']) == 40 and all(r['accepted_complete'] is True and type(r['unpaid']) is int and r['unpaid'] == 0 for r in index['rows'])
+reviews = {r['name']: r for r in cfg['Root_actual_metadata_reviews']}
+components = []
+for i, packet in enumerate(index['metadata_packet_refs']):
+    row = reviews['packet_' + str(i + 1)]
+    reviewed = doc(row['review']['path'], row['review'])
+    capture = doc(row['actual_execution']['path'], row['actual_execution'])
+    assert reviewed['root'] == '/root' and reviewed['accepted'] is True and reviewed['packet'] == packet
+    assert capture['review_emission'] == row['review'] and capture['terminal_observed'] is True
+    assert capture['actual_tool']['exit_code'] == 0
+    components.append(dict(packet=packet, review=row['review'], actual_execution=row['actual_execution']))
+imported = dict(schema='ROOT_ACCEPTED_F004_CLOSED40_HISTORICAL_CLOSURE_IMPORT_V1', root='/root', accepted=True,
+    closure_index=plan['closure_index'], ordered_jobs=[r['original_job'] for r in index['rows']],
+    scientific_replays=0, whole_Original_credit=0, metadata_packet_refs=index['metadata_packet_refs'],
+    actual_metadata_components=components,
+    retained_Original_imports='All original models, matrix frames, membership/action/domain and classification premises, actors and proof methods remain literal imported qualifications. No fresh arithmetic or scientific verdict.')
+import_ref = put(R / 'Root_closed_proofs_import.json', imported)
+q8 = doc(V / 'Root_q8_summary_import_UNBOUND.json')
+assert q8['root'] is None and q8['accepted'] is False
+assert same(q8['whole_registered_ledger'], before['CURRENT']['F004_q8_latest_ledger'])
+assert same(before['CURRENT']['F004_q8_latest_ledger'], before['STATUS']['F004_q8_latest_ledger'])
+commit = doc(q8['matching_old_commit']['path'], q8['matching_old_commit'])
+assert commit['root'] == '/root' and commit['committed'] is True and commit['closed'] == 686 and commit['pending_count'] == 0
+for key in ('accepted_application', 'actual_registration_capture', 'matching_guard', 'independent_exact_metadata_component'):
+    read(q8[key]['path'], q8[key])
+q8.update(root='/root', accepted=True, Root_import_by='/root')
+q8_ref = put(R / 'Root_q8_summary_import.json', q8)
+controls = reviews['controls']
+actual_controls = doc(controls['review']['path'], controls['review'])
+assert actual_controls['accepted'] is True and actual_controls['method'] == cfg['installed_method']
+checks = ['whole_new_Source', 'exact40_existing_Root_closures_and_API_joins',
+          'ordered197_to157_inverse', 'ten_aliases_and_explicit_legacy_leaves',
+          'unknown_fields_and_single_job_histories_retained', 'four_idle_arrays_stable_lock_BOTH_CAS',
+          'whole_before_planned_PREPARED_sequential_recovery', 'complete64MiB_read_16MiB_return_runtime_invoice',
+          'current_q8_summary_and_global_active_actions', 'no_new_science_or_Original_credit']
+release = dict(schema='ROOT_F004_CLOSED40_METADATA_SOURCE_RELEASE_V1', root='/root', released=True,
+    method=cfg['installed_method'], limits=plan['limits'], required_checks=checks,
+    independent_Source_review=cfg['independent_Source_review'], independent_Source_execution=cfg['independent_Source_execution'],
+    actual_controls=controls['review'], actual_controls_execution=controls['actual_execution'],
+    plan_schema=plan['schema'], Root_whole_Source_review=cfg['Root_whole_Source_review'],
+    qualification='Exact installed Source and actual passed metadata controls only. Future forecast/adoption require fresh actual runtime and both whole planned states; no scientific replay or new Original credit.')
+release_ref = put(R / 'Root_Source_release.json', release)
+out = R / 'runs/complete_closed_jobs'
+(R / 'runs').mkdir(exist_ok=True)
+assert not os.path.lexists(out)
+remaining = doc(plan['proposed_pending_DATA']['path'], plan['proposed_pending_DATA'])
+pending_ref = ref(out / 'proposed_pending.json', canonical(remaining))
+record = dict(schema='ROOT_F004_Q11_EXISTING_CLOSED40_TYPED_REGISTRATION_V1', root='/root', registrar='/root',
+    method=cfg['installed_method'], proof_kind=plan['proof_kind'], Root_closure_import=import_ref,
+    closure_index=plan['closure_index'], complete_job_records=index['rows'], old_pending=plan['old_pending'], new_pending=pending_ref,
+    ordered_removed_jobs=[r['original_job'] for r in index['rows']], added_jobs=[], required=272, closed_before=75,
+    closed_after=115, pending_before=197, pending_after=157, remaining_by_rank={'4': 157, '5': 0},
+    source_author='/root/f004_register', Source_release=release_ref, before_live_roles=plan['before'],
+    operational_commit_requires_separate_CAS_receipt=True, all_old_proof_actors_methods_scopes_preserved=True,
+    scientific_replays=0, whole_Original_manuscript_conjecture_measurement_Lean_credit=0)
+record_ref = ref(out / 'root_closed40_registration.json', canonical(record))
+symbolic = doc('/private/tmp/f004_closed40_data_peer_DATA/v3b_symbolic_complete_pair_DATA.json')
+symbols = symbolic['role_symbols']
+values = dict(Root_closure_import=import_ref, pending=pending_ref, registration=record_ref,
+              import_relative=str(Path(import_ref['path']).relative_to(S)))
+
+
+def resolve(value):
+    for key, symbol in symbols.items():
+        if same(value, symbol):
+            return copy.deepcopy(values[key])
+    if type(value) is dict:
+        return {k: resolve(v) for k, v in value.items()}
+    if type(value) is list:
+        return [resolve(v) for v in value]
+    return value
+
+
+banks = {k: resolve(symbolic[k]) for k in before}
+inverse = doc('/private/tmp/f004_closed40_data_peer_DATA/v3b_symbolic_patch_inverse_DATA.json')
+patches = resolve(inverse['patches'])
+assert sum(map(len, patches.values())) == 29
+for name in banks:
+    restored = copy.deepcopy(banks[name])
+    for patch in reversed(patches[name]):
+        p = restored
+        for key in patch['path'][:-1]:
+            p = p[key]
+        key = patch['path'][-1]
+        assert same(p[key], patch['after'])
+        if patch['before_present']:
+            p[key] = copy.deepcopy(patch['before'])
+        else:
+            del p[key]
+    assert same(restored, before[name])
+    del restored
+planned = {k: ref(Path(plan['before'][k]['path']), canonical(value)) for k, value in banks.items()}
+pair_ref = put(BASE / 'Root_bound_complete_planned_pair.json', dict(
+    schema='F004_CLOSED40_COMPLETE_PLANNED_STATE_PAIR_V1', CURRENT=banks['CURRENT'], STATUS=banks['STATUS']))
+plan.update(root='/root', bound_after_CP11262=True, method=cfg['installed_method'], Source_release=release_ref,
+    Root_closure_import=import_ref, Root_q8_summary_import=q8_ref, output_directory=str(out), planned_states=planned,
+    pending_post_CP11262_fresh_Root_rebind=False,
+    guard_and_recorder_return_reserve=dict(bytes=2097152, paths=32, read_bytes=16777216, source_bootstrap_bytes=1048576))
+plan_ref = put(BASE / 'Root_static_bound_plan_requires_actual_runtime.json', plan)
+record_image = put(BASE / 'Root_exact_future_registration_image.json', record)
+assert record_image['sha256'] == record_ref['sha256'] and record_image['bytes'] == record_ref['bytes']
+review_ref = put(BASE / 'Root_bound_states_review.json', dict(
+    schema='ROOT_F004_CLOSED40_STATIC_BOUND_STATES_REVIEW_V1', root='/root', status='SUPPORTED', blockers=[],
+    complete_planned_pair=pair_ref, planned_states=planned, static_plan=plan_ref, future_registration=record_ref,
+    pending=pending_ref, Root_closure_import=import_ref, Source_release=release_ref, Root_q8_summary_import=q8_ref,
+    before=plan['before'], exact29_patch_inverse=True, all_unrelated_typed_values_preserved=True,
+    runtime_and_forecast_and_CAS_still_owed=True, scientific_replays=0, whole_Original_credit=0))
+print(json.dumps(dict(plan=plan_ref, planned_pair=pair_ref, planned_states=planned, review=review_ref,
+                     registration=record_ref, Source_release=release_ref, Root_closure_import=import_ref,
+                     runtime_still_owed=True, live_selector_writes=0), sort_keys=True))

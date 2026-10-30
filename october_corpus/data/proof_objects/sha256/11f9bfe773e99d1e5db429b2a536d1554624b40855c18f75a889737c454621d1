@@ -1,0 +1,722 @@
+"""Unselected v3: forty old q11 closures and current summary reconciliation.
+
+Author /root/f004_register. No represented scientific imports or evaluation.
+Old 1f77/099c/46c1 Sources supply attributed stable-lock, complete inverse,
+before/planned preservation, PREPARED journal and sequential CAS conventions.
+This distinct edition needs its own Source review, actual metadata controls,
+Root closure import and release, runtime guard, and post-CP11262 fresh plan.
+The file in /private/tmp is never an installed or released entry point.
+"""
+from pathlib import Path
+import argparse
+import copy
+import fcntl
+import hashlib
+import json
+import os
+import resource
+import shlex
+import stat
+import sys
+import time
+
+AUTHOR = '/root/f004_register'
+ROOT = '/root'
+S = Path('/Users/sasha/medusa/research/leemans')
+M = S / 'maintenance/intake'
+R = M / 'f004_closed40_batch_registration'
+CURRENT = S / 'reboot_20261013/CURRENT.json'
+STATUS = M / 'current_status.json'
+LOCK = M / 'root_state.lock'
+KIND = 'IMPORT_FORTY_PREVIOUSLY_ROOT_ACCEPTED_F004_Q11_COMPLETE_JOBS'
+MIB = 2**20
+LIMITS = dict(source_bytes=65535, file_bytes=4*MIB, read_bytes=64*MIB,
+              new_bytes=16*MIB, paths=512, rss_bytes=256*MIB,
+              child_timeout_seconds=125, internal_seconds=115)
+JOBS = [[10,5],[11,4],[12,4],[15,5],[15,4],[16,4],[17,4],[18,5],
+        [19,4],[20,5],[23,4],[37,5],[47,5],[50,5],[56,5],[61,5],
+        [66,5],[72,5],[75,5],[77,5],[82,5],[94,5],[99,5],[107,5],
+        [110,5],[115,5],[117,5],[127,5],[151,5],[153,5],[154,5],
+        [157,5],[162,5],[163,5],[171,5],[173,5],[184,5],[189,5],
+        [190,5],[193,5]]
+ALIASES = dict(
+    CURRENT=[['root_f004_q11_ledger_current'], ['F004_q11_latest_ledger'],
+             ['F004_q11_current'], ['F004_status']],
+    STATUS=[['root_f004_q11_ledger_current'], ['F004','latest_ledger'],
+            ['F004','q11_completed'], ['F004','q11_pending'],
+            ['F004_q11_current'], ['F004_q11_latest_ledger']])
+LEGACY_KEYS = ['q11_actual_lower_closed', 'q11_closed', 'q11_actual_pending',
+               'q11_pending', 'q11_remaining', 'q11_current_pending_plan',
+               'q11_pending_registration', 'q11_latest_adoption',
+               'q11_authoritative_latest', 'q11_batch_registration_current']
+CHECKS = ['whole_new_Source', 'exact40_existing_Root_closures_and_API_joins',
+          'ordered197_to157_inverse', 'ten_aliases_and_explicit_legacy_leaves',
+          'unknown_fields_and_single_job_histories_retained',
+          'four_idle_arrays_stable_lock_BOTH_CAS',
+          'whole_before_planned_PREPARED_sequential_recovery',
+          'complete64MiB_read_16MiB_return_runtime_invoice',
+          'current_q8_summary_and_global_active_actions',
+          'no_new_science_or_Original_credit']
+CONTROL_CASES = ['exact40_115_157_transition','positive_Source_closure_and_runtime_gates',
+    'whole_Source_AST_function_inverse','whole_unknown_history_inverse',
+    'reject_wrong40_duplicate_missing_typed_proof','reject_wrong_pending_order',
+    'reject_job115_API_or_job23_selector','reject_wrong_Source_or_peer_or_gate_or_controls',
+    'reject_wrong_current_CP_or_Root_before_data','reject_bool_and_malformed_typed_values',
+    'reject_unknown_field_or_legacy_counter_delta','reject_all_four_active_ownership_arrays',
+    'reject_actual_IO_file_read_new_path_caps','reject_internal_RSS_and_wall_caps',
+    'reject_publication_wrapper_invoice_and_planned_pair','reject_runtime_PID_and_profile',
+    'reject_uninstalled_or_non_Root_admission_prefix','orphan_stage_model','lock_inode_model',
+    'last_CAS_mutation_model','sequential_second_rename_interruption_model',
+    'explicit_recovery_whole_before_inverse_model']
+STAGE_SUFFIX = '.f004_closed40.pending'
+OLD_STAGE_SUFFIXES = ('.pending', '.f004_rank5_pending', '.f004_endpoint_pending',
+                     '.f004_projective_pending', '.q11_mixed_job.pending',
+                     '.q11_complete_job.pending')
+
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False) + '\n').encode()
+
+
+def equal(a, b):
+    if type(a) is not type(b):
+        return False
+    if type(a) is dict:
+        return a.keys() == b.keys() and all(equal(a[k], b[k]) for k in a)
+    if type(a) is list:
+        return len(a) == len(b) and all(equal(x,y) for x,y in zip(a,b))
+    return a == b
+
+
+def strict(raw):
+    def pairs(rows):
+        out = {}
+        for key, value in rows:
+            need(key not in out, 'duplicate JSON key')
+            out[key] = value
+        return out
+    def bad(value):
+        raise ValueError('nonfinite JSON token: ' + value)
+    return json.loads(raw.decode('utf-8'), object_pairs_hook=pairs,
+                      parse_constant=bad)
+
+
+def ref(path, raw):
+    return dict(path=str(path), bytes=len(raw),
+                sha256=hashlib.sha256(raw).hexdigest())
+
+
+def valid_ref(row):
+    need(type(row) is dict and set(row) == {'path','bytes','sha256'}
+         and type(row['path']) is str and Path(row['path']).is_absolute()
+         and type(row['bytes']) is int and 0 <= row['bytes'] <= LIMITS['file_bytes']
+         and type(row['sha256']) is str and len(row['sha256']) == 64
+         and all(c in '0123456789abcdef' for c in row['sha256']),
+         'complete bounded path/bytes/sha256 descriptor')
+    return row
+
+
+def signature(s):
+    return (s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,
+            s.st_mtime_ns,s.st_ctime_ns)
+
+
+class IO:
+    """Count every explicit read/open and new byte; no hidden recheck bank."""
+    def __init__(self):
+        self.start = time.monotonic()
+        self.read_bytes = 0
+        self.new_bytes = 0
+        self.paths = set()
+        self.opens = 0
+        self.writes = 0
+        self.read_versions = {}
+
+    def budget(self):
+        need(sys.platform == 'darwin'
+             and time.monotonic()-self.start <= LIMITS['internal_seconds']
+             and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss <= LIMITS['rss_bytes'],
+             'Darwin metadata caller <=256MiB/115s; actual guard125s separately required')
+
+    def charge_path(self, path):
+        self.paths.add(str(path))
+        need(len(self.paths) <= LIMITS['paths'], 'single complete512-path bank')
+
+    def read(self, row, live=False):
+        valid_ref(row)
+        path = Path(row['path'])
+        need(path.resolve(strict=True) == path, 'no symlink or noncanonical input')
+        a = path.lstat()
+        need(stat.S_ISREG(a.st_mode) and a.st_nlink == 1
+             and a.st_size == row['bytes'], 'ordinary single-link bounded whole input')
+        self.charge_path(path)
+        need(self.read_bytes + a.st_size <= LIMITS['read_bytes'], 'single64MiB actual read bank')
+        self.read_bytes += a.st_size
+        self.opens += 1
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        try:
+            b = os.fstat(fd)
+            chunks = []
+            left = a.st_size
+            while left:
+                block = os.read(fd, min(left, 65536))
+                need(bool(block), 'no short whole input')
+                chunks.append(block)
+                left -= len(block)
+            need(os.read(fd, 1) == b'', 'no growing whole input')
+            c = os.fstat(fd)
+        finally:
+            os.close(fd)
+        raw = b''.join(chunks)
+        need(signature(a) == signature(b) == signature(c) == signature(path.lstat())
+             and equal(ref(path,raw),row), 'whole stable expected input bytes')
+        if not live:
+            prior = self.read_versions.setdefault(str(path), row)
+            need(equal(prior,row), 'one immutable version per path')
+        self.budget()
+        return raw
+
+    def doc(self, row, live=False):
+        return strict(self.read(row, live=live))
+
+    def write(self, path, raw):
+        need(type(raw) is bytes and len(raw) <= LIMITS['file_bytes']
+             and self.new_bytes + len(raw) <= LIMITS['new_bytes'],
+             'whole <=4MiB output in same complete16MiB new bank')
+        need(path.parent.resolve(strict=True) == path.parent
+             and not os.path.lexists(path), 'fresh ordinary-parent output')
+        self.charge_path(path)
+        self.new_bytes += len(raw)
+        self.writes += 1
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            done = 0
+            while done < len(raw):
+                n = os.write(fd, raw[done:])
+                need(n > 0, 'whole output write')
+                done += n
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        row = ref(path,raw)
+        self.read(row)
+        return row
+
+
+def sync(path):
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def at(value, path):
+    for key in path:
+        need(type(value) is dict and key in value, 'exact existing nested alias parent/key')
+        value = value[key]
+    return value
+
+
+def parent(value, path):
+    return at(value,path[:-1]) if len(path)>1 else value
+
+
+def idle(current, status):
+    for key in ('root_execution_ownership_latest','root_current_ownership',
+                'current_execution_ownership'):
+        need(type(current.get(key)) is dict
+             and equal(current[key].get('active_handles'),[]), 'actual CURRENT idle array: '+key)
+    need(equal(status.get('active_scientific_handles'),[]), 'actual STATUS idle array')
+
+
+def capture(io, row, actor):
+    value = io.doc(row)
+    tool = value.get('actual_tool',{})
+    need(value.get('actor') == actor and type(tool.get('exit_code')) is int
+         and tool['exit_code'] == 0
+         and type(value.get('issued_command')) is str
+         and equal(shlex.split(value['issued_command']),value.get('issued_argv'))
+         and value.get('issued_tool_arguments',{}).get('cmd') == value['issued_command']
+         and value.get('terminal_observed') is True,
+         'whole genuine terminal API record, command and actor')
+    return value
+
+
+def source_admission(io, plan, method, release_ref):
+    release = io.doc(release_ref)
+    need(release.get('schema') == 'ROOT_F004_CLOSED40_METADATA_SOURCE_RELEASE_V1'
+         and release.get('root') == ROOT and release.get('released') is True
+         and equal(release.get('method'),method) and equal(release.get('limits'),LIMITS)
+         and equal(release.get('required_checks'),CHECKS), 'own exact Root Source release')
+    peer = io.doc(release['independent_Source_review'])
+    reviewer = peer.get('reviewer')
+    need(type(reviewer) is str and reviewer not in (AUTHOR,ROOT)
+         and peer.get('schema') == 'INDEPENDENT_F004_CLOSED40_METADATA_SOURCE_REVIEW_V1'
+         and equal(peer.get('method'),method) and peer.get('verdict') == 'PASS'
+         and equal(peer.get('checks'),CHECKS) and equal(peer.get('blockers'),[]),
+         'actual distinct Source peer for this whole edition')
+    record = capture(io,release['independent_Source_execution'],reviewer)
+    need(equal(record.get('review_emission'),release['independent_Source_review']),
+         'peer execution emits the exact reviewed Source result')
+    controls = io.doc(release['actual_controls'])
+    need(controls.get('schema') == 'ROOT_F004_CLOSED40_ACTUAL_METADATA_CONTROLS_V1'
+         and controls.get('root') == ROOT and controls.get('accepted') is True
+         and equal(controls.get('method'),method)
+         and equal(controls.get('control_case_names'),CONTROL_CASES)
+         and controls.get('live_S_W_or_selector_writes') == 0
+         and controls.get('all_expected_outcomes_observed') is True,
+         'own actual finite metadata controls, no invented execution')
+    control_record = capture(io,release['actual_controls_execution'],ROOT)
+    need(equal(control_record.get('review_emission'),release['actual_controls']),
+         'actual metadata controls capture emits exact Root-accepted controls')
+    need(equal(release.get('plan_schema'),'ROOT_F004_CLOSED40_LIVE_METADATA_CAS_PLAN_V1')
+         and equal(plan.get('Source_release'),release_ref), 'this planned source ABI')
+
+
+def runtime(io, plan, method):
+    gate = io.doc(plan['runtime_admission'])
+    started = io.doc(plan['runtime_started'])
+    need(gate.get('schema') == 'ROOT_F004_CLOSED40_METADATA_RUNTIME_ADMISSION_V1'
+         and gate.get('root') == ROOT and gate.get('admitted') is True
+         and equal(gate.get('method'),method) and equal(gate.get('limits'),LIMITS)
+         and gate.get('rss_cap_bytes') == LIMITS['rss_bytes']
+         and gate.get('timeout_seconds') == LIMITS['child_timeout_seconds']
+         and equal(gate.get('guard_and_recorder_return_reserve'),plan['guard_and_recorder_return_reserve'])
+         and gate.get('wrapper_reserve_bound_to_actual_guard') is True
+         and equal(gate.get('runtime_started'),plan['runtime_started'])
+         and started.get('pid') == os.getpid()
+         and started.get('actor') == ROOT and started.get('owned_processes_active') == 1
+         and started.get('guard_active') is True,
+         'actual process-bound256MiB/125s metadata runtime admission')
+    origin_rows = plan['runtime_inputs']
+    need(type(origin_rows) is list and len(origin_rows) <= 200, 'bounded complete runtime origins')
+    origins = {r['path']:valid_ref(r) for r in origin_rows}
+    need(len(origins) == len(origin_rows), 'unique runtime file paths')
+    for module in tuple(sys.modules.values()):
+        for field in ('__file__','__cached__'):
+            name = getattr(module,field,None)
+            if type(name) is str and Path(name).is_absolute() and Path(name).is_file():
+                need(str(Path(name).resolve()) in origins or str(Path(name).resolve()) == method['path'],
+                     'every actual loaded Source/cache origin in bounded runtime invoice')
+    need(str(Path(sys.executable).resolve()) in origins, 'actual interpreter origin prepaid')
+    for row in origin_rows:
+        io.read(row)
+    return gate
+
+
+def accepted(io, plan):
+    index = io.doc(plan['closure_index'])
+    need(index.get('schema') == 'F004_CLOSED40_RESOLVED_PROOF_API_INDEX_V1'
+         and index.get('Root_authority') is False
+         and equal([r['original_job'] for r in index['rows']],JOBS)
+         and index.get('unresolved_genuine_API_links') == [], 'exact40 DATA index with resolved API metadata')
+    for row in index['rows']:
+        need(row.get('accepted_complete') is True and type(row.get('unpaid')) is int
+             and row['unpaid'] == 0 and row.get('genuine_checker_APIs'), 'all40 imported closures have genuine API joins')
+    proof_review = io.doc(plan['Root_closure_import'])
+    need(proof_review.get('schema') == 'ROOT_ACCEPTED_F004_CLOSED40_HISTORICAL_CLOSURE_IMPORT_V1'
+         and proof_review.get('root') == ROOT and proof_review.get('accepted') is True
+         and equal(proof_review.get('closure_index'),plan['closure_index'])
+         and equal(proof_review.get('ordered_jobs'),JOBS)
+         and proof_review.get('scientific_replays') == 0
+         and proof_review.get('whole_Original_credit') == 0
+         and equal(proof_review.get('metadata_packet_refs'),index['metadata_packet_refs']),
+         'actual Root import of old complete proofs, no new mathematical verdict')
+    components = proof_review['actual_metadata_components']
+    need(len(components) == len(index['metadata_packet_refs']), 'complete bounded old metadata component reviews')
+    for component, packet_ref in zip(components,index['metadata_packet_refs']):
+        packet = io.doc(packet_ref)
+        reviewed = io.doc(component['review'])
+        need(equal(component['packet'],packet_ref)
+             and reviewed.get('root') == ROOT and reviewed.get('accepted') is True
+             and equal(reviewed.get('packet'),packet_ref)
+             and reviewed.get('whole_input_paths') == packet['unique_paths']
+             and reviewed.get('whole_input_bytes') == packet['whole_bytes']
+             and reviewed.get('old_proof_mathematics_imported') is True,
+             'exact prior bounded metadata review receipt, not a new full sweep')
+        c = capture(io,component['actual_execution'],ROOT)
+        need(equal(c.get('review_emission'),component['review']), 'genuine component metadata return')
+    authorities = index['Root_authorities']
+    for row in authorities.values():
+        io.read(row)
+    # Only job23 has an explicitly adopted per-job selector in this imported index.
+    row = next(r for r in index['rows'] if r['original_job'] == [23,4])
+    selector = io.doc(row['current_per_job_selector'])
+    need(row['current_per_job_selector']['sha256'] == '2c79a9551b40789c187f1f48155f9aebb3fb1d47649b8c275ba9f3a5d27a8c03'
+         and row['Root_complete_authority']['sha256'] == '45a4cc2b8ff6058f263d36a47ffc40119bb6b4c8d54a61416bbb2fb81287ba09'
+         and selector.get('unresolved_positions') == 0
+         and selector.get('original_paid_count') == 217,
+         'job23 exact current closure selector;38IP distinct from43NG')
+    return index
+
+
+def pending(io, plan):
+    old = io.doc(plan['old_pending'])
+    new = io.doc(plan['proposed_pending_DATA'])
+    if type(old) is dict:
+        old = old['pending_jobs']
+    need(type(old) is list and type(new) is list
+         and len(old) == 197 and len(new) == 157
+         and all(type(j) is list and len(j)==2 and all(type(n) is int for n in j) for j in old+new)
+         and len(set(map(tuple,old))) == 197 and len(set(map(tuple,new))) == 157,
+         'typed unique197/157 pending lists')
+    removed = [j for j in old if j not in new]
+    need(equal(removed,JOBS) and equal([j for j in old if j not in JOBS],new)
+         and all(j[1] == 4 for j in new), 'exact ordered40 removal and157 rank4 survivor inverse')
+    need(plan['old_pending']['sha256'] == 'aec6d95b246f34da1bd5485c0b1760749dcbaaf6939c1c7f82257d29a246c09b'
+         and plan['proposed_pending_DATA']['sha256'] == 'fc837748a687852e4bd9882ac469b9b964a5015846e5f1e23680c90fb8845b44',
+         'old actual pending bytes and exact proposed1196-byte output')
+    return old,new
+
+
+def state_pair(io, before):
+    need(set(before) == {'CURRENT','STATUS'}
+         and before['CURRENT']['path'] == str(CURRENT)
+         and before['STATUS']['path'] == str(STATUS), 'exact two mutable observation roles')
+    raw = {k:io.read(r,live=True) for k,r in before.items()}
+    documents = {k:strict(v) for k,v in raw.items()}
+    idle(documents['CURRENT'],documents['STATUS'])
+    return documents,raw
+
+
+def protected(io, plan):
+    for row in plan['protected_progress']:
+        need(row['path'] not in (str(CURRENT),str(STATUS)), 'mutable states excluded from immutable progress')
+        io.read(row)
+
+
+def overview_import(io, plan, documents):
+    """Import existing registered q8 context; never recompute a q8 proof."""
+    q8=documents['CURRENT']['F004_q8_latest_ledger']
+    need(equal(q8,documents['STATUS']['F004_q8_latest_ledger']), 'whole current q8 ledger agrees')
+    imported=io.doc(plan['Root_q8_summary_import'])
+    need(imported.get('root')==ROOT and imported.get('accepted') is True
+         and imported.get('schema')=='ROOT_F004_Q8_COMPLETE_LEDGER_SUMMARY_IMPORT_V1'
+         and equal(imported.get('whole_registered_ledger'),q8), 'explicit Root q8 current summary context')
+    committed=io.doc(imported['matching_old_commit'])
+    need(committed.get('root')==ROOT and committed.get('committed') is True
+         and equal(committed.get('closed'),686) and equal(committed.get('pending_count'),0)
+         and equal(committed.get('job_registration'),q8['registration'])
+         and equal(committed.get('pending'),q8['pending_file']), 'old actual686/0 q8 commit, proof scope unchanged')
+    io.read(q8['registration'])
+    for key in ('accepted_application','actual_registration_capture','matching_guard'):
+        io.read(imported[key])
+    need(equal(io.doc(q8['pending_file']),[]), 'old exact empty q8 pending bytes')
+    context=io.doc(plan['Root_postchecked_F009_context']['Root_postreview'])
+    need(context.get('root')==ROOT and context.get('status')=='SUPPORTED'
+         and equal(context.get('blockers'),[])
+         and all(equal(documents[k]['F009_checkpoint_current'],context['checkpoint']) for k in documents),
+         'whole current accepted F009 checkpoint equals its Root postcheck')
+
+
+def change(bank, path, after, patches, allow_absent=False):
+    target = parent(bank,path)
+    key = path[-1]
+    need(type(target) is dict and (key in target or allow_absent), 'existing exact alias or declared new batch leaf')
+    patch = dict(path=path,before_present=key in target,after_present=True,
+                 before=copy.deepcopy(target.get(key)),after=copy.deepcopy(after))
+    patches.append(patch)
+    target[key] = copy.deepcopy(after)
+
+
+def inverse(before, after, patches):
+    restored = copy.deepcopy(after)
+    paths = [tuple(p['path']) for p in patches]
+    need(len(set(paths)) == len(paths), 'unique exact allowed change paths')
+    for a in paths:
+        for b in paths:
+            need(a == b or not (len(a)<len(b) and b[:len(a)] == a), 'no overlapping alias paths')
+    for patch in reversed(patches):
+        target = parent(restored,patch['path'])
+        key = patch['path'][-1]
+        need(equal(target[key],patch['after']), 'exact full planned typed patch')
+        if patch['before_present']:
+            target[key] = copy.deepcopy(patch['before'])
+        else:
+            del target[key]
+    need(equal(restored,before), 'whole exact typed inverse preserves EVERY unrelated/unknown/history value')
+
+
+def replacements(documents, pending_ref, registration_ref, import_ref):
+    banks = copy.deepcopy(documents)
+    changes = {name:[] for name in banks}
+    for name,paths in ALIASES.items():
+        for path in paths:
+            old = at(documents[name],path)
+            if path == ['F004_status']:
+                value = ('Pending whole original: q8 registered686/686; q9 accepted35/35; '
+                         'q11 registered115/272,157rank4 pending. Accepted old proof closures '
+                         'registered as metadata; full Aut/reversal quotient and final output assembly owed.')
+            elif path == ['F004','q11_completed']:
+                value = 115
+            elif path == ['F004','q11_pending']:
+                value = 157
+            else:
+                need(type(old) is dict, 'whole existing dictionary alias')
+                value = copy.deepcopy(old)
+                value.update(required=272,closed=115,registration=registration_ref,
+                             registration_scope=KIND,registered_closed_job_batch=registration_ref,
+                             retained_single_job_fields_are_historical=True,whole_original_credit=0)
+                if path[-1] == 'root_f004_q11_ledger_current':
+                    value.update(pending_count=157,pending=pending_ref,adoption=import_ref,
+                                 status='ROOT_REGISTERED_F004_Q11_EXISTING_CLOSED40_BATCH')
+                elif path[-1] == 'F004_q11_current':
+                    value.update(remaining=157,pending_ledger=pending_ref,root_adoption=import_ref,
+                                 status='ROOT_REGISTERED_F004_Q11_EXISTING_CLOSED40_BATCH')
+                else:
+                    value.update(pending=157,pending_file=pending_ref,adoption=import_ref,
+                                 rank_four_pending=157,rank_five_pending=0)
+            change(banks[name],path,value,changes[name])
+    legacy = dict(q11_actual_lower_closed=115,q11_closed=115,q11_actual_pending=157,
+                  q11_pending=157,q11_remaining=pending_ref,q11_current_pending_plan=pending_ref,
+                  q11_pending_registration=registration_ref,
+                  q11_latest_adoption=str(Path(import_ref['path']).relative_to(S)),
+                  q11_authoritative_latest=('F004_q11_latest_ledger and q11_batch_registration_current; '
+                      'q11_latest, q11_latest_completed and q11_latest_import retain historical single-job provenance.'),
+                  q11_batch_registration_current=registration_ref)
+    need(list(legacy) == LEGACY_KEYS, 'exact legacy active-leaf roster')
+    for key,value in legacy.items():
+        change(banks['CURRENT'],['F004_current',key],value,changes['CURRENT'],
+               allow_absent=key=='q11_batch_registration_current')
+    note=('F004 q8 registered686/686; q9 accepted35/35; q11 registered115/272 with157 rank4 pending. '
+          'All33 rank5 jobs are proved; follow F004_q11_latest_ledger and its pending register. '
+          'q8/q11 field assembly, Aut/duality quotient and final tables remain owed; no new Original credit.')
+    change(banks['CURRENT'],['F004_current','navigation_note'],note,changes['CURRENT'])
+    change(banks['STATUS'],['F004','q8_completed'],686,changes['STATUS'])
+    change(banks['STATUS'],['F004','next_status'],note,changes['STATUS'])
+    change(banks['STATUS'],['F004','next_scope'],
+           'Continue only current q11 latest pending register rank4 jobs; preserve accepted model/domain/classification premises. '
+           'Do not rerun any of33 proved rank5 jobs. Complete q8/q11 field assembly and Aut/duality/tables.',changes['STATUS'])
+    change(banks['STATUS'],['root_intake_batch_status'],
+           '102/105 complete; F004,F009,L026 remain. F004: use current q8/q11 ledgers; q8 field assembly and '
+           'q11 pending rank4/field assembly remain. F009: continue CURRENT.F009_checkpoint_current without '
+           'replaying known passes. L026: use current paid coverage selectors. Complete all105, then STOP before measurement/Lean.',changes['STATUS'])
+    old_actions=at(documents['STATUS'],['root_status_update_current','next_actions'])
+    need(type(old_actions) is list and all(type(x) is str for x in old_actions), 'whole prior actions list')
+    change(banks['STATUS'],['root_status_update_current','prior_next_actions_closed40_history'],
+           dict(utc=documents['STATUS']['root_status_update_current']['utc'],next_actions=old_actions),
+           changes['STATUS'],allow_absent=True)
+    actions=['F004: follow F004_q11_latest_ledger pending rank4 register and current q8 ledger; finish field assembly/Aut/duality/tables.',
+             'F009: continue CURRENT.F009_checkpoint_current; preserve accepted pending scope and do not replay known passes.',
+             'L026: continue only unpaid current paid-ledger/coverage selector scopes.',
+             'Complete all105 reviewed Originals, then STOP before measurement or Lean.']
+    change(banks['STATUS'],['root_status_update_current','next_actions'],actions,changes['STATUS'])
+    audit=at(documents['STATUS'],['root_goal_turn_audit_current'])
+    change(banks['STATUS'],['root_goal_turn_audit_current','prior_qualification_closed40_history'],
+           dict(utc=audit['utc'],qualification=audit['qualification']),changes['STATUS'],allow_absent=True)
+    change(banks['STATUS'],['root_goal_turn_audit_current','qualification'],
+           'The preceding dated proof context is retained in prior_qualification_closed40_history. Active F004/F009/L026 '
+           'work follows current accepted ledgers and checkpoint;102/105 complete. Complete all105, then STOP before measurement/Lean.',changes['STATUS'])
+    for name in banks:
+        inverse(documents[name],banks[name],changes[name])
+    idle(banks['CURRENT'],banks['STATUS'])
+    need(equal(banks['CURRENT']['F004_q11_latest_ledger'],banks['STATUS']['F004_q11_latest_ledger']),
+         'both complete new q11 ledger aliases agree')
+    return banks,changes
+
+
+def publication(io, plan, plan_ref, method, index, documents, raws, remaining):
+    out = Path(plan['output_directory'])
+    need(out.is_absolute() and out.is_relative_to(R/'runs') and not os.path.lexists(out)
+         and out.parent.resolve(strict=True) == out.parent, 'fresh exact installed transaction namespace')
+    blobs = {}
+    refs = {}
+    def add(role, name, value, raw=False):
+        body = value if raw else can(value)
+        need(len(body) <= LIMITS['file_bytes'], 'whole individual publication <=4MiB')
+        blobs[name] = body
+        refs[role] = ref(out/name,body)
+        return refs[role]
+    add('before_CURRENT','CURRENT.before.json',raws['CURRENT'],True)
+    add('before_STATUS','STATUS.before.json',raws['STATUS'],True)
+    pending_ref = add('pending','proposed_pending.json',remaining)
+    need(pending_ref['bytes'] == 1196 and pending_ref['sha256'] == plan['proposed_pending_DATA']['sha256'],
+         'exact installed pending1196/fc8377 bytes')
+    registration = dict(schema='ROOT_F004_Q11_EXISTING_CLOSED40_TYPED_REGISTRATION_V1',
+        root=ROOT,registrar=ROOT,method=method,proof_kind=KIND,
+        Root_closure_import=plan['Root_closure_import'],closure_index=plan['closure_index'],
+        complete_job_records=index['rows'],old_pending=plan['old_pending'],new_pending=pending_ref,
+        ordered_removed_jobs=JOBS,added_jobs=[],required=272,closed_before=75,closed_after=115,
+        pending_before=197,pending_after=157,remaining_by_rank={'4':157,'5':0},
+        source_author=AUTHOR,Source_release=plan['Source_release'],before_live_roles=plan['before'],
+        operational_commit_requires_separate_CAS_receipt=True,
+        all_old_proof_actors_methods_scopes_preserved=True,scientific_replays=0,
+        whole_Original_manuscript_conjecture_measurement_Lean_credit=0)
+    record_ref = add('registration','root_closed40_registration.json',registration)
+    banks,patches = replacements(documents,pending_ref,record_ref,plan['Root_closure_import'])
+    add('inverse','whole_alias_inverse.json',dict(schema='F004_CLOSED40_WHOLE_TYPED_ALIAS_INVERSE_V1',
+         before=plan['before'],patches=patches,complete_unrelated_values_preserved=True,
+         old_single_job_proof_methods_and_unknown_alias_keys_preserved=True))
+    add('planned_pair','complete_planned_state_pair.json',dict(
+        schema='F004_CLOSED40_COMPLETE_PLANNED_STATE_PAIR_V1',CURRENT=banks['CURRENT'],STATUS=banks['STATUS']))
+    state_raws = {k:can(v) for k,v in banks.items()}
+    state_refs = {k:ref(CURRENT if k=='CURRENT' else STATUS,v) for k,v in state_raws.items()}
+    need(equal(state_refs,plan['planned_states']), 'exact whole reviewed planned pair, still uncommitted')
+    add('PREPARED','state_transaction_PREPARED.json',dict(
+        schema='ROOT_F004_CLOSED40_PREPARED_SEQUENTIAL_CAS_V1',root=ROOT,phase='PREPARED',
+        method=method,plan=plan_ref,Source_release=plan['Source_release'],
+        before_live_roles=plan['before'],before_archives={k:refs['before_'+k] for k in banks},
+        complete_planned_state_pair=refs['planned_pair'],planned_states=state_refs,
+        inverse=refs['inverse'],registration=record_ref,pending=pending_ref,
+        stage_paths=[str(p.with_name(p.name+STAGE_SUFFIX)) for p in (CURRENT,STATUS)],
+        pair_crash_atomic=False,automatic_retry_cleanup_or_rollback=False,
+        interrupted_commit_requires_Root_inspection=True))
+    # Include complete future receipt reserve and wrappers BEFORE any mkdir/write.
+    overhead = plan['guard_and_recorder_return_reserve']
+    need(type(overhead) is dict and type(overhead.get('bytes')) is int
+         and 0 <= overhead['bytes'] <= 2*MIB and type(overhead.get('paths')) is int
+         and 0 <= overhead['paths'] <= 32 and type(overhead.get('read_bytes')) is int
+         and 0 <= overhead['read_bytes'] <= 16*MIB
+         and type(overhead.get('source_bootstrap_bytes')) is int
+         and 0 <= overhead['source_bootstrap_bytes'] <= overhead['read_bytes'],
+         'one actual wrapper output/read/Source-bootstrap reserve')
+    output_bytes = sum(map(len,blobs.values())) + sum(map(len,state_raws.values()))
+    # Receipt/read budget is a bound; every actual output verification is charged again by IO.
+    need(output_bytes + 65536 + overhead['bytes'] <= LIMITS['new_bytes'],
+         'entire before/planned/registration/inverse/PREPARED/stages/commit/wrappers <=16MiB')
+    need(io.read_bytes + output_bytes + 65536 + overhead['bytes'] + overhead['read_bytes']
+         + 2*sum(len(x) for x in raws.values())
+         + 3*sum(r['bytes'] for r in plan['protected_progress'])
+         + sum(len(x) for x in state_raws.values()) <= LIMITS['read_bytes'],
+         'all actual output reopens, both finalCAS, after reads and final protected checks prepaid')
+    need(len(io.paths)+len(blobs)+2+1+1+2*len(OLD_STAGE_SUFFIXES+(STAGE_SUFFIX,))
+         +overhead['paths'] <= LIMITS['paths'],
+         'single complete input/output/stage/wrapper512-path bank')
+    return out,blobs,refs,banks,state_raws,state_refs,output_bytes
+
+
+def run(args):
+    io = IO()
+    need(args.actor == ROOT and sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+         and not sys.flags.optimize and Path(__file__).resolve() == R/'register_closed40.py',
+         'Root-only installed own -E -B -S Source; unselected /private/tmp file cannot activate')
+    need(not any(os.environ.get(k) for k in ('PYTHONSTARTUP','PYTHONPATH',
+        'COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+        'injection environment cleared')
+    method = valid_ref(dict(path=str(R/'register_closed40.py'),bytes=args.source_bytes,sha256=args.self_sha256))
+    need(method['bytes'] <= LIMITS['source_bytes'], 'new functional Source <64KiB')
+    io.charge_path(method['path'])
+    io.read_bytes += method['bytes']  # Python's initial whole Source bootstrap, in addition to self-pin below.
+    io.opens += 1
+    io.read(method)
+    plan_ref = valid_ref(dict(path=args.plan,bytes=args.plan_bytes,sha256=args.plan_sha256))
+    plan = io.doc(plan_ref)
+    need(plan.get('schema') == 'ROOT_F004_CLOSED40_LIVE_METADATA_CAS_PLAN_V1'
+         and plan.get('root') == ROOT and plan.get('bound_after_CP11262') is True
+         and plan.get('proof_kind') == KIND and equal(plan.get('method'),method)
+         and equal(plan.get('limits'),LIMITS), 'fresh Root post-CP11262 exact batch plan')
+    source_admission(io,plan,method,plan['Source_release'])
+    runtime(io,plan,method)
+    index = accepted(io,plan)
+    _,remaining = pending(io,plan)
+    protected(io,plan)
+    documents,raws = state_pair(io,plan['before'])
+    overview_import(io,plan,documents)
+    need(equal(documents['CURRENT']['F004_q11_latest_ledger'],documents['STATUS']['F004_q11_latest_ledger']),
+         'coherent actual registered q11 before ledger')
+    q11 = documents['CURRENT']['F004_q11_latest_ledger']
+    need(type(q11.get('closed')) is int and q11['closed'] == 75
+         and type(q11.get('pending')) is int and q11['pending'] == 197
+         and q11.get('required') == 272 and equal(q11.get('pending_file'),plan['old_pending']),
+         'actual75/197/272 registration and exact old pending')
+    for name in documents:
+        q8 = documents[name]['F004_q8_latest_ledger']
+        need(equal(q8.get('closed'),686) and equal(q8.get('required'),686)
+             and equal(q8.get('pending'),0),
+             'actual already complete q8 preserved, no old fixed q8 boundary')
+    for name in documents:
+        archived = io.read(plan['whole_before_archives'][name])
+        need(archived == raws[name], 'exact fresh whole before archive matches live observation')
+    out,blobs,refs,banks,state_raws,state_refs,output_bytes = publication(
+        io,plan,plan_ref,method,index,documents,raws,remaining)
+    if args.mode == 'forecast':
+        observed,_ = state_pair(io,plan['before'])
+        need(equal(observed,documents), 'both unchanged complete forecast states')
+        protected(io,plan)
+        io.budget()
+        print(can(dict(status='VERIFIED_F004_CLOSED40_METADATA_FORECAST_ONLY',
+              actual_registration=False,read_bytes=io.read_bytes,unique_paths=len(io.paths),
+              complete_new_byte_bound=output_bytes+65536+plan['guard_and_recorder_return_reserve']['bytes'],
+              closed_after_IF_Root_adopts=115,pending_after_IF_Root_adopts=157,
+              scientific_replays=0,whole_Original_credit=0)).decode(),end='')
+        return
+    stages = [(path,path.with_name(path.name+STAGE_SUFFIX)) for path in (CURRENT,STATUS)]
+    orphan_paths = [p.with_name(p.name+s) for p in (CURRENT,STATUS)
+                    for s in OLD_STAGE_SUFFIXES+(STAGE_SUFFIX,)]
+    for path in orphan_paths:
+        io.charge_path(path)
+    need(all(not os.path.lexists(p) for p in orphan_paths), 'no own or known predecessor orphan stage; no cleanup')
+    lock_before = LOCK.lstat()
+    need(LOCK.resolve(strict=True) == LOCK and stat.S_ISREG(lock_before.st_mode)
+         and lock_before.st_nlink == 1, 'existing stable ordinary Root lock')
+    io.charge_path(LOCK)
+    with LOCK.open('r+') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        opened = os.fstat(lock.fileno())
+        need((opened.st_dev,opened.st_ino) == (lock_before.st_dev,lock_before.st_ino)
+             == (LOCK.lstat().st_dev,LOCK.lstat().st_ino), 'same opened stable Root lock')
+        locked,_ = state_pair(io,plan['before'])
+        need(equal(locked,documents), 'whole locked states exactly equal authenticated before')
+        protected(io,plan)
+        out.mkdir()
+        for name,body in blobs.items():
+            io.write(out/name,body)
+        sync(out)
+        sync(out.parent)
+        for (path,stage),name in zip(stages,('CURRENT','STATUS')):
+            io.write(stage,state_raws[name])
+        immediate,_ = state_pair(io,plan['before'])
+        need(equal(immediate,documents), 'fresh BOTH CAS immediately before first replace')
+        protected(io,plan)
+        io.budget()
+        need((LOCK.lstat().st_dev,LOCK.lstat().st_ino) == (opened.st_dev,opened.st_ino),
+             'stable Root lock at immediate commit')
+        for path,stage in stages:
+            os.replace(stage,path)
+            sync(path.parent)
+        after,_ = state_pair(io,state_refs)
+        need(equal(after,banks), 'whole actual committed pair equals both plans')
+        protected(io,plan)
+        receipt = dict(schema='ROOT_F004_CLOSED40_COMMITTED_SEQUENTIAL_CAS_V1',root=ROOT,
+            committed=True,method=method,plan=plan_ref,prepared=refs['PREPARED'],
+            registration=refs['registration'],pending=refs['pending'],
+            before=plan['before'],after=state_refs,ordered_removed_jobs=JOBS,
+            required=272,closed=115,pending_count=157,remaining_by_rank={'4':157,'5':0},
+            four_idle_arrays=True,whole_typed_inverse=True,pair_crash_atomic=False,
+            automatic_retry_cleanup_or_rollback=False,all_old_proof_history_retained=True,
+            q8_F009_L026_ownership_and_all_unrelated_values_preserved=True,
+            actual_read_bytes_before_receipt=io.read_bytes,actual_new_bytes_before_receipt=io.new_bytes,
+            scientific_replays=0,whole_Original_manuscript_conjecture_measurement_Lean_credit=0)
+        body = can(receipt)
+        need(len(body) <= 65536, 'complete prepaid commit receipt')
+        committed = io.write(out/'state_transaction_COMMITTED.json',body)
+        sync(out)
+        io.budget()
+    print(can(dict(status='ROOT_REGISTERED_F004_Q11_FORTY_EXISTING_CLOSURES',
+          committed=committed,registration=refs['registration'],pending=refs['pending'],
+          required=272,closed=115,pending_count=157,actual_read_bytes=io.read_bytes,
+          actual_new_bytes=io.new_bytes,unique_paths=len(io.paths),
+          scientific_replays=0,whole_Original_credit=0)).decode(),end='')
+
+
+def main():
+    ap = argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--actor',required=True)
+    ap.add_argument('--mode',choices=('forecast','adopt'),required=True)
+    ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--source-bytes',required=True,type=int)
+    ap.add_argument('--plan',required=True)
+    ap.add_argument('--plan-sha256',required=True)
+    ap.add_argument('--plan-bytes',required=True,type=int)
+    run(ap.parse_args())
+
+
+if __name__ == '__main__':
+    main()

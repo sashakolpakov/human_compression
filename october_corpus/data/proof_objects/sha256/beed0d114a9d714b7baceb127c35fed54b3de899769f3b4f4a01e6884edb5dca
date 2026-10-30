@@ -1,0 +1,149 @@
+"""Independent whole-byte/AST/JSON review. Never activate represented Source."""
+from pathlib import Path
+import ast
+import copy
+import datetime
+import hashlib
+import json
+import os
+import stat
+
+D=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v3')
+N=D/'private_controls_UNRUN/protected_helper_successor_DATA'
+O=Path('/private/tmp/f004_closed40_source_peer_DATA')
+opened={}
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def parse(b):
+ def pairs(rows):
+  v={}
+  for k,x in rows:assert k not in v;v[k]=x
+  return v
+ return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+def raw(p,expected=None):
+ p=Path(p);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.is_absolute()and p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read();e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat())
+ r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if expected is not None:assert r==expected,(r,expected)
+ assert opened.get(str(p),r)==r;opened[str(p)]=r
+ return b,r
+def doc(p,expected=None):b,r=raw(p,expected);return parse(b),r
+def rd(r):return doc(r['path'],r)[0]
+def refs(x):
+ if isinstance(x,dict):
+  if set(x)=={'path','bytes','sha256'}:return[x]
+  return[r for v in x.values()for r in refs(v)]
+ if isinstance(x,list):return[r for v in x for r in refs(v)]
+ return[]
+def literal(tree,name):
+ return ast.literal_eval(next(n.value for n in tree.body if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id==name for t in n.targets)))
+
+handoff,hp=doc(N/'handoff.json',dict(path=str(N/'handoff.json'),bytes=6723,
+ sha256='606defc4909da1cd53d0f77b24bc3729a993699f4fb1b95849f5e4db1b1eef70'))
+assert handoff['Root_authority']is False and handoff['all22_controls_UNRUN']is True
+# Fresh mutable observations are not re-certified as future CAS values.
+for key,value in handoff.items():
+ if key!='current_observations':
+  for r in refs(value):raw(r['path'],r)
+sb,source=raw(handoff['selected_adapter_Source']['path'],handoff['selected_adapter_Source'])
+hb,harness=raw(handoff['selected_harness']['path'],handoff['selected_harness'])
+assert source['bytes']==39928 and source['sha256']=='11f9bfe773e99d1e5db429b2a536d1554624b40855c18f75a889737c454621d1'
+assert harness['bytes']==32773 and harness['sha256']=='d4e87f6763bd0c1b17f0d58ee45c29f362a494e1715cf444aa1edf2b3b816bd8'
+st,ht=ast.parse(sb),ast.parse(hb)
+assert literal(st,'CONTROL_CASES')==literal(ht,'CASE_NAMES') and len(literal(st,'CONTROL_CASES'))==22
+checks=literal(st,'CHECKS');assert len(checks)==10
+calls={n.func.id for n in ast.walk(st)if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)}
+assert not calls&{'exec','eval','compile','__import__'}
+imports={x.name for n in ast.walk(st)if isinstance(n,ast.Import)for x in n.names}
+assert not imports&{'subprocess','runpy','importlib','socket','requests'}
+
+manifest=rd(handoff['private_control_read_view_manifest']);view=rd(handoff['full_UTF8_AST_read_view'])
+assert manifest['adapter_Source']==view['adapter_Source']==source
+assert manifest['harness']==view['harness']==harness
+assert view['adapter_full_UTF8'].encode()==sb and view['harness_full_UTF8'].encode()==hb
+nodes=[copy.deepcopy(n)for n in st.body if isinstance(n,(ast.Import,ast.ImportFrom,ast.Assign,ast.FunctionDef,ast.ClassDef))
+ and not(isinstance(n,ast.FunctionDef)and n.name in ('run','main'))]
+run=next(n for n in st.body if isinstance(n,ast.FunctionDef)and n.name=='run')
+prefix=copy.deepcopy(run);prefix.name='run_admission_prefix_only';prefix.body=prefix.body[:2]
+prefix_text=ast.unparse(prefix)
+assert prefix_text==view['owned_renamed_admission_prefix_UTF8']
+projection=sum(len(ast.get_source_segment(sb.decode(),n).encode())for n in nodes)+len(prefix_text.encode())
+assert projection==32279 and projection+harness['bytes']==65052<65536
+components=view['unchanged_original_AST_components'];assert len(components)==len(nodes)
+for row,node in zip(components,nodes):
+ assert row['AST']==ast.dump(node,include_attributes=True)
+ assert row['utf8']==ast.get_source_segment(sb.decode(),node)
+ assert row['start_line']==node.lineno and row['end_line']==node.end_lineno
+assert manifest['activated_projection']==view['activated_projection']
+assert manifest['activated_projection']['original_component_bytes']==projection
+assert manifest['activated_projection']['simultaneous_functional_Source_bytes']==65052
+assert manifest['case_names']==literal(st,'CONTROL_CASES')
+assert manifest['called_helpers']==literal(ht,'CALLED')
+
+inverse=rd(handoff['whole_Source_creation_inverse'])
+assert inverse['Root_authority']is inverse['Source_or_controls_activated']is False
+assert inverse['all_old_Source_files_unchanged']is True
+creation_pins=[]
+for row in inverse['creations']:
+ assert row['before_present']is False and row['before_bytes']is None and row['path']==row['after']['path']
+ b,r=raw(row['path'],row['after']);assert row['complete_after_UTF8'].encode()==b;creation_pins.append(r)
+assert source in creation_pins and harness in creation_pins
+prior_pins=[]
+for row in inverse['complete_prior_SourceTEXT']:
+ b,r=raw(row['reference']['path'],row['reference']);assert row['complete_UTF8'].encode()==b
+ ast.parse(b);prior_pins.append(r)
+for r in refs(manifest):raw(r['path'],r)
+invoice=rd(handoff['Source_and_control_whole_invoice'])
+assert invoice['adapter_Source']==source and invoice['harness']==harness
+assert invoice['activated_namespace']==manifest['activated_projection']
+for r in invoice.get('author_whole_read_rows',[]):raw(r['path'],r)
+release=rd(handoff['Root_control_release_false_template'])
+assert release['root']is None and release['released']is False and release['controls_completed']is False
+assert release['harness']==harness and release['adapter_Source']==source
+assert release['case_names']==literal(st,'CONTROL_CASES') and release['called_helpers']==literal(ht,'CALLED')
+assert release['runtime_admission']is release['independent_Source_review']is release['independent_Source_actual_execution']is None
+seeds=rd(manifest['fixed_inputs']['fixture_seeds'])
+assert seeds['schema']=='F004_CLOSED40_SYNTHETIC_CONTROL_SEEDS_NOT_AUTHORITY_V1'
+
+data=rd(handoff['prior40_independent_DATA_component'])
+q8=rd(handoff['existing_q8_metadata_component'])
+aliases=rd(handoff['expanded29_path_DATA_peer'])
+assert q8['blockers']==aliases['blockers']==[]
+assert data['unique_raw_domain']==dict(all_whole_stable_hashes_match=True,bytes=5414297,four_separate_bounds=[400,400,70,2],paths=872,scientific_payloads_opaque=True)
+# Retain the old DATA component's historical blocker; the exact v3b component resolves its alias scope.
+assert len(data['blockers'])==1
+assert handoff['full40_proof_API_index']==data['resolved40_index']
+for role,r in handoff['full_before_archives'].items():
+ b,_=raw(r['path'],r);assert handoff['current_observations'][role]['bytes']==len(b)
+ assert handoff['current_observations'][role]['sha256']==hashlib.sha256(b).hexdigest()
+planned=rd(handoff['live_plan_with_fresh_CP11262_observations_ROOT_BINDING_OWED'])
+assert planned['planned_states']==dict(CURRENT=None,STATUS=None) and planned['runtime_admission']is None
+
+# A narrow whole-byte harness inverse: only the protected-helper calls and fixture changed.
+old_harness_path=D/'private_controls_UNRUN/control_closed40.py'
+old_hb,old_harness=raw(old_harness_path,dict(path=str(old_harness_path),bytes=32531,sha256='cfb19fc74d4c714d135abba62e4a9aee524de33f4572e2dec7891f082928f5ae'))
+edits=[
+ (b"        protected_progress=[],output_directory=str(fixtureR/'runs'/'never-created-output'),",b"        protected_progress=[io.add(work/'synthetic_PROTECTED_PROGRESS.json',actual['PROGRESS'])],output_directory=str(fixtureR/'runs'/'never-created-output'),"),
+ (b"    def exact_transition():\n",b"    def exact_transition():\n        namespace['protected'](io.fork(),plan)\n"),
+ (b"        reject(lambda:namespace['state_pair'](m,before))\n    case('reject_wrong_current_CP_or_Root_before_data',wrong_current)",b"        reject(lambda:namespace['state_pair'](m,before))\n        m=io.fork();m.rows[plan['protected_progress'][0]['path']]=b'{}\\n'\n        reject(lambda:namespace['protected'](m,plan))\n    case('reject_wrong_current_CP_or_Root_before_data',wrong_current)")]
+recreated=old_hb
+for before,after in edits:assert recreated.count(before)==1;recreated=recreated.replace(before,after)
+assert recreated==hb
+
+facts=dict(schema='INDEPENDENT_F004_V3B_SOURCE_HARNESS_STATIC_FACTS_V1',reviewer='/root/reader_postcheck',
+ subject=hp,adapter_Source=source,harness=harness,manifest=handoff['private_control_read_view_manifest'],
+ complete_UTF8_AST_view=handoff['full_UTF8_AST_read_view'],whole_creation_lineage_inverse=handoff['whole_Source_creation_inverse'],
+ complete_invoice=handoff['Source_and_control_whole_invoice'],Source_checks=checks,case_names=literal(st,'CONTROL_CASES'),called_helpers=literal(ht,'CALLED'),
+ exact_unmodified_AST_components=len(nodes),activated_projection_original_bytes=32279,activated_namespace_bytes=65052,
+ physical_Source_bytes=source['bytes']+harness['bytes'],all_component_AST_text_and_spans_exact=True,
+ full_Source_and_harness_manually_read=True,held_cfb_harness=old_harness,protected_helper_three_site_inverse_exact=True,
+ creations=creation_pins,all_qualified_prior_Source_TEXT_pins=prior_pins,
+ component_pins=dict(full40=handoff['prior40_independent_DATA_component'],q8=handoff['existing_q8_metadata_component'],aliases29=handoff['expanded29_path_DATA_peer']),
+ checked_whole_paths=len(opened),checked_whole_bytes=sum(r['bytes']for r in opened.values()),checked_pins=[opened[k]for k in sorted(opened)],
+ represented_Source_control_Helper_science_activations=0,S_W_Git_gate_authority_writes=0,
+ qualification='Static complete Source/AST/JSON/whole-byte inverse and metadata-component checks only. Future exact actual plans, Source installation, Root releases, actual controls, runtime origins/wrappers, final forecasts, CAS and postchecks remain Root-owned. No scientific proof, archive or codec was decoded or replayed.')
+O.mkdir(exist_ok=True)
+path=O/'v3b_static_facts.json'
+with path.open('xb')as f:f.write(can(facts))
+print(json.dumps(dict(facts=raw(path)[1],namespace=65052,whole_paths=len(opened),status='PASS_STATIC_SOURCE_HARNESS_COMPONENTS')))

@@ -1,0 +1,277 @@
+"""Revalidate a completed peer's seals and metadata joins; never run represented code."""
+from pathlib import Path
+import datetime
+import hashlib
+import json
+import os
+import shlex
+import stat
+
+N = Path('/private/tmp/f009_continuation/from_11216/native_DATA')
+O = Path('/private/tmp/f009_collected_reader_postcheck_DATA')
+checked = {}
+
+def canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+                       allow_nan=False) + '\n').encode()
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def no_duplicates(pairs):
+    value = {}
+    for key, item in pairs:
+        assert key not in value, ('duplicate JSON key', key)
+        value[key] = item
+    return value
+
+def parse(data):
+    return json.loads(data, object_pairs_hook=no_duplicates,
+                      parse_constant=lambda text: (_ for _ in ()).throw(ValueError(text)))
+
+def sig(value):
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+            value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+def whole(path, expected=None):
+    path = Path(path)
+    before = path.lstat()
+    assert stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and path.resolve() == path
+    with path.open('rb') as stream:
+        opened = os.fstat(stream.fileno())
+        data = stream.read()
+        closed = os.fstat(stream.fileno())
+    assert sig(before) == sig(opened) == sig(closed) == sig(path.lstat())
+    pin = dict(path=str(path), bytes=len(data), sha256=digest(data))
+    if expected is not None:
+        assert pin == expected, (pin, expected)
+    assert checked.get(str(path), pin) == pin
+    checked[str(path)] = pin
+    return data, pin
+
+def document(path, expected=None):
+    data, pin = whole(path, expected)
+    return parse(data), pin
+
+def reference_document(ref):
+    return document(ref['path'], ref)[0]
+
+def scan_refs(value):
+    if isinstance(value, dict):
+        if set(value) == {'path', 'bytes', 'sha256'}:
+            whole(value['path'], value)
+        else:
+            for item in value.values():
+                scan_refs(item)
+    elif isinstance(value, list):
+        for item in value:
+            scan_refs(item)
+
+def expand_table(value, field, tag):
+    if tag not in value:
+        return value
+    table = value[tag]
+    result = {key: item for key, item in value.items() if key != tag}
+    result[field] = [dict(path=table['prefixes'][i] + suffix, bytes=size, sha256=sha)
+                     for i, suffix, size, sha in table['rows']]
+    assert result[field] == sorted(result[field], key=lambda row: row['path'])
+    assert len({row['path'] for row in result[field]}) == len(result[field])
+    assert len(canonical(result)) == table['logical_bytes']
+    assert digest(canonical(result)) == table['logical_sha256']
+    return result
+
+def sdk(ref):
+    value = reference_document(ref)
+    frames = value['all_genuine_api_frames']
+    first, last, actual = frames[0], frames[-1], value['actual_tool']
+    assert value['actor'] == value.get('root', value['actor']) == '/root'
+    assert first == value['full_initial_tool_return'] and last == value['full_tool_return']
+    assert actual['exit_code'] == last['exit_code'] == 0 and 'session_id' not in last
+    assert actual['initial_chunk'] == first['chunk_id'] and actual['terminal_chunk'] == last['chunk_id']
+    if actual['synchronous']:
+        assert first == last and actual['handle'] is None and len(frames) == 1
+    else:
+        assert first['session_id'] == actual['handle']
+        assert all(frame.get('session_id') == actual['handle'] for frame in frames[:-1])
+    assert value['issued_argv'] == value['child_argv']
+    assert value['issued_argv'] == shlex.split(value['issued_command'])
+    assert value['issued_argv'] == shlex.split(value['canonical_argv_command'])
+    assert value['issued_tool_arguments']['cmd'] == value['issued_command']
+    return value, parse(''.join(frame.get('output', '') for frame in frames))
+
+peer_path = N / 'reader_collected_owner_DATA/actual_independent_review/independent_review.json'
+peer, peer_pin = document(peer_path, dict(path=str(peer_path), bytes=5931,
+    sha256='06f1d14b52895f23f6ca4a8705b59a4351b28ed88fff13ed4228758c90876692'))
+assert peer['status'] == 'SUPPORTED_ACTUAL_READER_METADATA_CLOSURE' and peer['blockers'] == []
+scan_refs(peer)
+obs = reference_document(peer['observations'])
+assert obs['status'] == 'PASS_ACTUAL_METADATA'
+scan_refs(obs)
+for key in ['job', 'Rootgate', 'request', 'actual_RootSDK', 'Owner_receipt', 'outer_receipt',
+            'worker_return', 'result', 'snapshot', 'IO_attestation']:
+    assert peer[key] == obs[key]
+
+job = reference_document(peer['job'])
+gate = reference_document(peer['Rootgate'])
+request_raw = reference_document(peer['request'])
+request = expand_table(request_raw, 'inputs', 'Root_Request_rows_reference')
+assert gate['root'] == '/root' and gate['status'] == 'SUPPORTED' and gate['blockers'] == []
+assert gate['authorized_roles'] == ['reader'] and gate['Root_new_case_decision_not_old_verdict_transfer'] is True
+assert gate['job'] == peer['job'] and gate['program'] == job['program'] and gate['Owner'] == job['Owner']
+assert job['old_checkpoint_sequence'] == gate['expected_checkpoint_sequence'] == 11216
+scan_refs(gate)
+source = reference_document(gate['new_Owner_Source_component_review'])
+assert source['status'] == 'SUPPORTED_SOURCE_COMPONENT' and source['blockers'] == []
+assert source['program'] == job['Owner'] and source['program']['sha256'].startswith('a0e398')
+assert gate['new_Owner_Source_component_review']['sha256'] == 'e95af1117c9d26df453e17c7357ef8f2dc42deceb640a5e1c7d56813fc5ea4fc'
+data_peer = reference_document(gate['independent_current_DATA_peer'])
+assert gate['independent_current_DATA_peer']['sha256'] == 'cd44bec6effe5e8dc81bfcda69f84d5d1e508247a218882222617eb570a4bc46'
+assert data_peer['blockers'] == [] and data_peer['status'] == 'SUPPORTED_DATA_AND_ACTUAL_CONSTRUCTOR_READER_UNRUN'
+assert data_peer['actual_job'] == peer['job']
+assert job['program']['sha256'].startswith('36fb') and job['library_adapter']['sha256'].startswith('706954')
+assert len(job['source_inputs']) == 1022 and sum(row['bytes'] for row in job['source_inputs']) == 60357270
+assert len(job['declared_inputs']) == 11356 and sum(row['bytes'] for row in job['declared_inputs']) == 633735165
+declared = {row['path']: row for row in job['declared_inputs']}
+assert len(declared) == 11356 and all(declared[row['path']] == row for row in job['source_inputs'])
+assert obs['Source_rows_wholehashed'] == 1022 and obs['Source_bytes_wholehashed'] == 60357270
+assert obs['whole_declared_resweep_by_this_reviewer'] is False
+
+expected_inputs = dict(declared)
+for row in [peer['job'], peer['Rootgate'], job['Owner'], job['program'],
+            request['provenance']['request_creator'],
+            next(row for row in request['inputs'] if row['path'] == request['guard'])]:
+    assert expected_inputs.get(row['path'], row) == row
+    expected_inputs[row['path']] = row
+assert request['inputs'] == [expected_inputs[path] for path in sorted(expected_inputs)]
+assert len(request['inputs']) == 11358 and sum(row['bytes'] for row in request['inputs']) == 636777140
+assert request['program'] == job['program']['path'] and request['supervisor'] == job['Owner']['path']
+assert request['provenance']['Root_review'] == peer['Rootgate']
+assert request['provenance']['Root_writer'] == job['program']
+assert request['limits'] == dict(phase_seconds=120, family_rss_cap_bytes=512*2**20,
+    growth_cap_bytes=16*2**20, reserve_bytes=4*2**30, sample_seconds=.1)
+
+capture, emitted = sdk(peer['actual_RootSDK'])
+outer = reference_document(peer['outer_receipt'])
+outer_start, outer_start_pin = document(N / 'runtime/collected_owner_reader_guard/started.json')
+owner = reference_document(peer['Owner_receipt'])
+started, started_pin = document(N / 'reader_execution_collected_owner/started.json')
+owner_argv = ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', job['Owner']['path'], '--request', peer['request']['path']]
+assert capture['issued_argv'][capture['issued_argv'].index('--')+1:] == outer['command'] == outer_start['command'] == owner_argv
+assert emitted == dict(status='PASS', stop='RETURNED', receipt=peer['outer_receipt']['path'])
+assert outer['status'] == 'PASS' and outer['stop'] == 'RETURNED' and outer['returncode'] == 0
+assert outer['error'] is None and outer['cleanup']['remaining'] == outer['cleanup']['errors'] == []
+assert outer['limits'] == outer_start['limits'] and outer['limits']['total_rss'] == 512*2**20 and outer['limits']['wall_seconds'] == 150
+assert outer['peaks']['total_rss'] == 406568960 < 512*2**20 and outer['seconds'] == 107.80178437498398 < 150
+assert owner['status'] == 'PASS' and owner['request'] == started['request'] == peer['request']
+assert owner['execution_id'] == started['execution_id'] == request['execution_id']
+assert started['command'] == request['argv']
+assert owner['inputs_unchanged'] is owner['owned_child_reaped'] is owner['owned_group_absent'] is True
+assert owner['input_count'] == 11358 and owner['changed_input_count'] == 0 and owner['first_changed_inputs'] == []
+assert owner['error'] is owner['owned_finalization_error'] is owner['final_resource_stop'] is None
+assert owner['returncode'] == 0 and owner['metrics']['returncode'] == 0 and owner['metrics']['terminal'] == 'RETURNED'
+assert owner['metrics']['peak_sampled_family_rss_bytes'] == 384909312 < 512*2**20
+assert owner['metrics']['seconds'] < 120 and owner['final']['seconds'] < 120
+for role in ['owner', 'child']:
+    assert any(item['pid'] == started[role+'_pid'] and item['birth'] == started[role+'_birth'] for item in outer['identities'])
+assert started['child_pid'] == obs['child_pid'] == 19915 and started['owner_birth'] < started['child_birth']
+
+result = reference_document(peer['result'])
+returned = reference_document(peer['worker_return'])
+io = reference_document(peer['IO_attestation'])
+assert result['status'] == 'VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'
+assert result['worker_pid'] == started['child_pid'] and result['case'] == job['case']
+assert result['checkpoint'] == dict(sequence=11262, nodes=5907, pending=205, selected_raw_leaf_records=557508, reserved_debts=0)
+assert result['snapshot_roundtrip'] == 'ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL'
+assert result['snapshot'] == peer['snapshot'] and result['native_launch_attempts'] == [] and result['reserved_parents'] == []
+assert result['private_materialization_calls'] == 1 and result['top_level_load_calls'] == result['tail_load_calls'] == 0
+assert result['source_credit'] == result['census_credit'] == 0
+assert returned['job'] == peer['job'] and returned['Root_review'] == peer['Rootgate'] and returned['actual_caller'] == job['program']
+assert returned['result'] == peer['result'] and returned['native_launch_attempts'] == []
+assert returned['global_checkpoint_written'] is False and returned['old_caller_executed'] is False and returned['new_census_credit'] == 0
+actual_files = [whole(path)[1] for path in sorted((N/'reader_output_collected_owner').iterdir()) if path.is_file()]
+assert actual_files == obs['all4outputs'] and len(actual_files) == 4 and sum(row['bytes'] for row in actual_files) == 756433
+assert io['schema'] == 'F009_GENUINE_RESERVED_PRODUCER_ATTESTATION_V1' and io['kernel_RLIMIT_FSIZE_lowered'] is True
+assert io['maximum_write_objects'] == 16 and io['known_objects'] == len(io['all_known_paths']) == 11
+assert io['actual_file_bytes'] == peer['result']['bytes'] + peer['snapshot']['bytes'] + peer['worker_return']['bytes'] == 754898
+stdout_data, stdout_pin = whole(N/'reader_execution_collected_owner/stdout')
+stdout_rows = [parse(row) for row in stdout_data.splitlines() if row.strip()]
+assert len(stdout_rows) == 2 and stdout_rows[-1]['artifact'] == peer['worker_return']
+assert stdout_rows[-1]['global_checkpoint_written'] is False and stdout_rows[-1]['role'] == 'reader'
+for path in [N/'reader_execution_collected_owner/stderr', N/'runtime/collected_owner_reader_guard/stderr.log']:
+    assert whole(path)[0] == b''
+assert sum(row['bytes'] for row in actual_files) + started_pin['bytes'] + stdout_pin['bytes'] + 2*16384 == owner['final']['logical_output_bytes'] == 791275
+assert owner['final']['included_receipt_bytes'] == owner['final']['included_staged_receipt_bytes'] == peer['Owner_receipt']['bytes'] == 16384
+
+closure = reference_document(job['native_closure'])
+native_job = reference_document(closure['job'])
+native_request = expand_table(reference_document(closure['Owner_request']), 'inputs', 'Root_Request_rows_reference')
+native_owner = reference_document(closure['Owner_receipt'])
+handoff = reference_document(closure['worker_handoff'])
+native_result = reference_document(handoff['native_result'])
+case = reference_document(job['case'])
+assert native_job['Owner'] == gate['actual_Native_Owner'] and native_job['Owner']['sha256'].startswith('085443') and native_job['Owner'] != job['Owner']
+assert native_request['supervisor'] == native_job['Owner']['path'] and native_owner['status'] == 'PASS' and native_owner['request'] == closure['Owner_request']
+assert handoff['request'] == closure['job'] and handoff['expected_proposal'] == case['expected'] == result['checkpoint']
+assert handoff['delta_proposal'] == case['delta'] == result['delta'] and handoff['head'] == result['head']
+assert handoff['base_acceptance'] == job['checkpoint_acceptance'] == result['base_acceptance']
+assert all(native_result[key] == result['checkpoint'][key] for key in ['sequence', 'nodes', 'pending', 'reserved_debts'])
+assert native_result['selected_leaf_occurrences'] == result['checkpoint']['selected_raw_leaf_records']
+native_capture, native_emitted = sdk(gate['actual_Native_capture'])
+base = reference_document(job['checkpoint_acceptance'])
+assert base['adopted'] is True and base['checkpoint']['sequence'] == 11216
+
+preservation = reference_document(obs['actual_prelaunch_preservation'])
+mapping = {row['original']['path']: row for row in preservation['files']}
+for pin in obs['critical_exact_S_mapping_joins']:
+    row = mapping[pin['path']]
+    assert row['original'] == pin and row['retained']['bytes'] == pin['bytes'] and row['retained']['sha256'] == pin['sha256']
+    whole(row['retained']['path'], row['retained'])
+lineage = reference_document(gate['prior_failed_case_lineage'])
+for row in lineage['old_selected_retention_joins']:
+    assert row['original']['bytes'] == row['retained']['bytes'] and row['original']['sha256'] == row['retained']['sha256']
+    whole(row['original']['path'], row['original'])
+    whole(row['retained']['path'], row['retained'])
+old_failure, old_failure_pin = document(N/'runtime/ordinal_reader_guard/receipt.json')
+old_owner, old_owner_pin = document(N/'reader_execution_digest_ordinals/receipt.json')
+old_result, old_result_pin = document(N/'reader_output_digest_ordinals/result.json')
+assert old_failure['status'] == 'INCOMPLETE' and old_failure['stop'] == 'TREE_RSS_CAP'
+assert old_owner['status'] == 'PENDING_FINAL_RESOURCE_CHECK' and old_owner['owned_child_reaped'] is old_owner['owned_group_absent'] is False
+assert old_result['status'] == 'FULL_STATE_ACQUIRED_PENDING_METADATA_JOINS'
+
+report = dict(schema='INDEPENDENT_EXISTING_COLLECTED_OWNER_READER_PEER_REVALIDATION_V1',
+    reviewer='/root/reader_postcheck', utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    status='SUPPORTED_EXISTING_ACTUAL_READER_PEER_SEALS_AND_METADATA_JOINS', blockers=[],
+    completed_existing_peer=peer_pin, completed_existing_observations=peer['observations'],
+    audit_source=whole(__file__)[1], selected_pins={key: peer[key] for key in ['actual_RootSDK', 'job', 'Rootgate', 'request', 'Owner_receipt', 'outer_receipt', 'result', 'worker_return', 'snapshot', 'IO_attestation']},
+    all_four_output_pins=actual_files, Source_component=gate['new_Owner_Source_component_review'],
+    independent_DATA_component=gate['independent_current_DATA_peer'],
+    prelaunch_preservation=obs['actual_prelaunch_preservation'],
+    prior_failure_pins=[old_failure_pin,old_owner_pin,old_result_pin],
+    checked_whole_raw_paths=len(checked), checked_whole_raw_bytes=sum(row['bytes'] for row in checked.values()),
+    checked_whole_raw_pins=[checked[path] for path in sorted(checked)],
+    verified_joins=['Existing peer report, observations and audit Source sealed and whole-read',
+        'Root SDK frames, terminal PASS, exact argv and Owner request',
+        'Fresh Root reader case, e95 Source, independent cd44 DATA, old085 Native distinction',
+        'Whole raw job/request metadata and exact 11358 input row union; compact request inverse',
+        'Outer and Owner PASS, unchanged limits, birth-pinned child 19915, unchanged inputs and known-owned cleanup',
+        'All four output SHA256 values, worker return, IO bill and authenticated full typed/order roundtrip flag',
+        'Native proposal 11262 counts/delta/head/base and retained Source/critical prelaunch mappings',
+        'Prior ordinal Reader TREE_RSS_CAP and PENDING Owner remain failures'],
+    actual_metadata=dict(sequence=11262,nodes=5907,pending=205,reserved_debts=0,selected_raw_leaf_records=557508,
+        typed_roundtrip=result['snapshot_roundtrip'],outer_seconds=outer['seconds'],outer_peak_RSS=406568960,
+        inner_peak_RSS=384909312,Owner_inputs_unchanged=11358,child_pid=19915),
+    duplicate_full_audit_avoided=True, represented_execution_count=0, decompression_count=0,
+    S_W_Git_gate_authority_writes=0,new_checkpoint_or_Original_credit=0,
+    qualification='A complete existing actual peer was found first. This report freshly validates its exact seals and listed metadata/byte joins, while retaining its disclosed DATA-author role and imported independent cd44 DATA and e95 Source scopes. It does not repeat the existing 1022-Source/633MB declared-domain audit, execute represented code, decompress or independently recompute scientific state. The full typed/order equality is the authenticated actual strict Reader result. The old ordinal Reader failure remains failure. Sampled known-owned cleanup is not global process absence; no causal collection saving, unique peak phase or future fit is inferred. This report does not adopt or register checkpoint 11262; accepted-base evidence remains 11216 and any later Root adoption is separate.')
+O.mkdir(exist_ok=True)
+report_path = O/'independent_review.json'
+with report_path.open('xb') as stream:
+    stream.write(canonical(report))
+_, report_pin = whole(report_path)
+seal = dict(schema='INDEPENDENT_REVIEW_SHA256_SEAL_V1',report=report_pin,audit_source=report['audit_source'],
+            status=report['status'],blockers=[])
+seal_path = O/'seal.json'
+with seal_path.open('xb') as stream:
+    stream.write(canonical(seal))
+print(json.dumps(dict(report=report_pin,seal=whole(seal_path)[1],existing_peer=peer_pin,
+    status=report['status'],blockers=[],whole_paths=report['checked_whole_raw_paths'])))

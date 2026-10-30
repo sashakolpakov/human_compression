@@ -1,0 +1,107 @@
+"""Existing q8 Root registration metadata import; no scientific replay or Source activation."""
+from pathlib import Path
+import datetime,hashlib,json,os,shlex,stat
+O=Path('/private/tmp/f004_closed40_data_peer_DATA')
+D=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v2/fresh_post_CP11262_DATA')
+P=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_endpoint_geometry/branch68')
+opened={}
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def read(path,expected=None):
+ p=Path(path);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4*2**20
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read();e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat())
+ r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if expected is not None:assert r==expected
+ assert opened.get(str(p),r)==r;opened[str(p)]=r
+ return b,r
+def doc(path,expected=None):b,r=read(path,expected);return json.loads(b),r
+def rd(r):return doc(r['path'],r)[0]
+def capture(c,root=True):
+ assert c['actor']=='/root'if root else c['actor'].startswith('/root')
+ frames=[v.get('tool_frame',v)for v in c['all_genuine_api_frames']];a=c['actual_tool']
+ assert a['exit_code']==frames[-1]['exit_code']==0 and a['initial_chunk']==frames[0]['chunk_id']and a['terminal_chunk']==frames[-1]['chunk_id']
+ if'full_initial_tool_return'in c:assert frames[0]==c['full_initial_tool_return']
+ if'full_tool_return'in c:assert frames[-1]==c['full_tool_return']
+ if a['synchronous']:assert len(frames)==1 and a['handle']is None
+ else:assert a['handle']==frames[0]['session_id']
+ if'issued_command'in c:assert shlex.split(c['issued_command'])==c['issued_argv']
+ if'child_argv'in c:assert c['child_argv']==c['issued_argv']or('--'in c['issued_argv']and c['child_argv']==c['issued_argv'][c['issued_argv'].index('--')+1:])
+ return c['issued_argv']
+
+fresh,fr=doc(D/'handoff.json');documents={k:rd(fresh['immutable_author_whole_snapshots'][k])for k in ['CURRENT','STATUS']}
+cur=documents['CURRENT'];sta=documents['STATUS'];alias=cur['F004_q8_latest_ledger']
+assert can(alias)==can(sta['F004_q8_latest_ledger'])
+assert alias['required']==alias['closed']==686 and alias['pending']==0 and alias['rank_four_pending']==alias['rank_five_pending']==alias['rank_six_pending']==0
+assert alias['registration_requires_matching_transaction_commit']is True
+record=rd(alias['registration']);assert alias['adoption']==alias['typed_job_record']==alias['registration']
+commit,commit_pin=doc(record['transaction_commit_path'])
+assert record['schema']=='ROOT_F004_JOINT_FIXED_SET_JOB_REGISTRATION_V1'and record['root']=='/root'
+assert record['required_jobs']==record['closed_jobs_after']==686 and record['pending_jobs_after']==0 and record['closed_jobs_before']==685 and record['pending_jobs_before']==1
+assert record['only_jobs_removed']==record['original_jobs']==[[68,5]]and record['whole_original_credit']==0
+assert record['all685_previous_proofs_retained']is record['all_old_proof_keys_and_other_jobs_unchanged']is True
+assert record['registration_effective_only_with_complete_matching_sequential_CAS_commit']is True
+assert commit['schema']=='ROOT_COMMITTED_F004_JOINT_FIXED_SET_SEQUENTIAL_CAS_V1'and commit['root']=='/root'and commit['committed']is True
+assert commit['job_registration']==alias['registration']and commit['pending']==record['pending']==alias['pending_file']
+assert commit['closed']==commit['required']==686 and commit['pending_count']==0 and commit['only_jobs_removed']==[[68,5]]
+assert commit['all685_previous_proofs_retained']is commit['all_old_proof_keys_unchanged']is commit['complete_unrelated_state_inverse_verified']is True
+assert read(alias['pending_file']['path'],alias['pending_file'])[0]==b'[]\n'
+transaction=rd(commit['transaction']);prior=rd(record['prior_adoption']);prior_commit=rd(record['prior_matching_transaction_commit'])
+assert prior_commit['committed']is True and prior_commit['job_registration']==record['prior_adoption']
+assert record['prior_adoption']==alias['prior_adoption']==alias['prior_registration']and record['prior_ledger']['closed']==685 and record['prior_ledger']['pending']==1
+assert prior['closed_jobs_after']==685 and prior['pending_jobs_after']==1
+application=rd(record['accepted_application']);assert application['root']=='/root'and application['adopted']is True and application['original_jobs']==[[68,5]]
+assert application['new_counted_job_credit']==0 and application['newly_supported_job_count']==1 and application['ledger_mutated']is False
+assert application['proof_kind']==record['proof_kind']==alias['proof_kind']=='EQUAL_JOINT_FIXED_SETS_WITH_ORIGINAL_TARGET_ESCAPE'
+assert application['application']['target_group_name']=='G2_8'and application['application']['prescribed_mark_membership_in_G_assumed']is False and application['application']['H_proper_subgroup_of_G_claimed']is False
+adoptcap=rd(record['application_adoption_actual_capture']);capture(adoptcap)
+rootreview=rd(record['Source4']['review']);read(record['Source4']['execution']['path'],record['Source4']['execution']);read(record['Source4']['later']['path'],record['Source4']['later'])
+terminal,term_pin=doc(P/'job_registration/registration_observation/root_metadata_terminal.json')
+assert terminal['root']=='/root'and terminal['success']is terminal['physical_scope_closed']is True
+c=rd(terminal['capture']);argv=capture(c);g=rd(terminal['guard_receipt'])
+assert g['status']=='PASS'and g['stop']=='RETURNED'and g['returncode']==0 and g['cleanup']['remaining']==g['cleanup']['errors']==[]and g['error']is None
+assert g['command']==argv[argv.index('--')+1:]and g['limits']['total_rss']==256*2**20 and g['limits']['wall_seconds']==150
+stdout,stdoutpin=doc(P/'job_registration/registration_observation/stdout.log');stderr,stderrpin=read(P/'job_registration/registration_observation/stderr.log')
+assert stderr==b''
+assert c['guard_receipt']==terminal['guard_receipt']and c['physical_scope_closed']is True
+post=rd(fresh['Root_F009_postcheck']);assert post['status']=='SUPPORTED'and post['blockers']==[]and post['checkpoint']['sequence']==11262
+for role in ['CURRENT','STATUS']:
+ live=fresh['actual_live_observations'][role];read(live['path'],live)
+ assert documents[role]['F004_q8_latest_ledger']['registration']==commit['job_registration']
+assert cur['F004_current']['q8_closed']==cur['F004_current']['q8_actual_lower_closed']==686 and cur['F004_current']['q8_pending']==cur['F004_current']['q8_actual_pending']==0
+assert sta['F004']['q8_completed']==513 and sta['F004']['q8_total']==686
+dated=[dict(document=role,path=['F004_original_job_complete_current'],body=documents[role]['F004_original_job_complete_current'])for role in ['CURRENT','STATUS']]
+
+report=dict(schema='INDEPENDENT_F004_EXISTING_Q8_686_DISPLAY_IMPORT_COMPONENT_V1',reviewer='/root/reader_postcheck/f004_data_peer',
+ utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),status='SUPPORTED_EXISTING_Q8_REGISTRATION_METADATA_COMPONENT',blockers=[],
+ observed_context=fr,whole_current_alias_body=alias,current_aliases=['CURRENT.F004_q8_latest_ledger','STATUS.F004_q8_latest_ledger'],
+ minimal_existing_Root_authorities=dict(registration=alias['registration'],matching_committed_transaction=commit_pin,empty_pending=alias['pending_file'],
+  accepted_mathematical_application=record['accepted_application'],Root_application_adoption_actual_capture=record['application_adoption_actual_capture'],
+  Root_metadata_terminal=term_pin,genuine_registration_capture=terminal['capture'],actual_registration_guard=terminal['guard_receipt'],registration_stdout=stdoutpin),
+ prior685_qualified_components=dict(prior_registration=record['prior_adoption'],matching_prior_commit=record['prior_matching_transaction_commit'],opaque_prior_proofs_retained=True),
+ exact_metadata_joins=['Both current q8 alias bodies are typed-identical686/0,required686,allrankpending0 and point to exactc5b/empty3751.',
+  'c5b requires matching sequential-CAS commit; the exact committed Root record joinsc5b/3751,closed686,pending0,onlyjob68,5removed and all685oldproofsretained.',
+  'Historical Root metadata terminal/capture/guard have genuine stored frames, exact historicalargv, PASS/RETURNED/knowncleanup and256MiB150s profile. HistoricalSource/plan paths are retained literally.',
+  'Acceptedfc1b mathematical application is a separate adopted one-job Root component; its8bde genuine Root adoption API and unchanged Source4 evidence are wholehashed. No theorem or proof replay.',
+  'Fresh CP11262 Root postcheck and exact83d5/d069 live observations retain these q8 aliases. Old commit whole-state hashes describe its dated epoch and are not retargeted to the newer full states.'],
+ typed_display_delta=dict(document='STATUS',path=['F004','q8_completed'],before=513,after=686,
+  classification='Reconcile an unstamped stale summary to an already registered complete acceptedq8ledger; no new proof/job/census credit.',
+  required_total=686,actual_q8_pending_before_after=0,existing_q8_alias_bodies_and_proofs_must_remain_typed_literal=True,
+  qualification='This delta is DATA semantics only, not a positive Source release or a planned whole state hash. Distinctv3 Source, exact whole planned pair, typed inverse, runtime invoice and Root release remain separately owed.'),
+ retained_Original_scope_quotes=record['qualifications'],
+ explicit_membership_scope=dict(target='named originalG2_8',prescribed_mark_membership_in_G_assumed=False,H_proper_subgroup_of_G_claimed=False,
+  imported_result='H!=G via reviewed equal-common-fixed-set theorem and attested original-target-generator escape; original model/action/catalogue remain qualified acquired premises.'),
+ owed_final_scope=dict(Aut_and_reversal_equivalence=record['Aut_and_reversal_equivalence_owed'],whole_rank_output_assembly=record['whole_rank_output_assembly_owed'],whole_original_credit=0,field_census_credit=0),
+ dated_historical_records_to_preserve=dated,
+ historical_preparation_time=record['prepared_utc'],genuine_registration_terminal_time=terminal['utc'],
+ Source4_import=record['Source4'],historical_registration_method=record['registration_method'],
+ checked_whole_pins=[opened[p]for p in sorted(opened)],checked_paths=len(opened),checked_bytes=sum(r['bytes']for r in opened.values()),
+ represented_Source_controls_helpers_science_activations=0,scientific_proof_action_word_state_or_archive_decodes=0,S_W_Git_gate_or_selector_writes=0,
+ audit_Source=read(Path(__file__))[1],
+ qualification='Existing acceptedq8Root registration/application/API metadata only. This imports its complete exact authority and qualifications while keeping the previous685proofDAG and11356-input Root definition opaque. No mathematical theorem, original action, membership, group, proof or codec was recomputed. It supports only the q8display reconciliation premise for a distinct futurev3 peer;v3itself remains unread here.')
+p=O/'q8_existing_authority_component.json'
+with p.open('xb')as f:f.write(can(report))
+rp=read(p)[1];seal=dict(schema='INDEPENDENT_Q8_METADATA_COMPONENT_SHA256_SEAL_V1',report=rp,status=report['status'],blockers=[])
+sp=O/'q8_existing_authority_component.seal.json'
+with sp.open('xb')as f:f.write(can(seal))
+print(json.dumps(dict(report=rp,seal=read(sp)[1],matching_commit=commit_pin,status=report['status'],blockers=[])))

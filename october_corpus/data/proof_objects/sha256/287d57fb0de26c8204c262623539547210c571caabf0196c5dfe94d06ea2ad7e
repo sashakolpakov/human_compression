@@ -1,0 +1,115 @@
+/* UNRUN one-batch Root callback candidate. No authority exists by authoring.
+ * R must be Root's genuine directRun/directCapture/directJSON instance.
+ * policy is a distinct Root-issued positive policy after entire own review.
+ */
+function makeL026RootCallbacks(R, kit, options) {
+  for (const n of ['directRun','directCapture','directJSON']) {
+    if (typeof R[n] !== 'function') throw new Error('Root genuine API callback missing: ' + n);
+  }
+  if (!options || options.RootOwnReadApproved !== true || !options.policy || !kit.callbackProgram || !kit.config || !kit.retainer) {
+    throw new Error('Whole Root own-read and exact positive policy are required; false author policy grants nothing');
+  }
+  const py = '/Users/sasha/.venvs/global/bin/python';
+  const supervisor = '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py';
+  const base = options.callbackRoot;
+  const workflow = options.workflowOutputRoot;
+  if (![base,workflow].every(p => typeof p === 'string' && p.startsWith('/private/tmp/') && !p.split('/').includes('..')) || base === workflow) {
+    throw new Error('Distinct explicit T callback/workflow roots required');
+  }
+  let serial = 0, caseCount = 0, retentionCount = 0, appendCount = 0, initialized = false;
+  const events = [], retainedBeforeImages = new Map();
+  function key(label) {
+    if (++serial > 768) throw new Error('Bounded callback API budget exceeded');
+    return 'L026_COHORT_CALLBACK_' + String(serial).padStart(3,'0') + '_' + label;
+  }
+  async function api(argv, label, kwargs = {}) {
+    if (!initialized) {
+      const setupKey=key('fresh_callback_root');let setupTerminal,setupCapture;
+      const setup="import pathlib,sys,json; p=pathlib.Path(sys.argv[1]); assert p.is_absolute() and p.is_relative_to('/private/tmp') and '..' not in p.parts and p.parent.resolve()==p.parent and not p.exists(); p.mkdir(); [(p/n).mkdir()for n in ['requests','captures','guards','outputs']]; print('{}')";
+      const setupArgv=[py,'-E','-B','-S','-c',setup,base];
+      try { setupTerminal=await R.directRun(setupKey,setupArgv,{max_output_tokens:2000}); }
+      finally { setupCapture=await R.directCapture(setupKey,base+'_setup_actual_capture.json'); }
+      events.push({key:setupKey,argv:setupArgv,capture:setupCapture,terminal:setupTerminal});
+      if (!setupTerminal || setupTerminal.exit_code!==0) throw new Error('Fresh callback-root setup failed; genuine failure captured');
+      initialized=true;
+    }
+    const k = key(label); let terminal, capture;
+    try { terminal = await R.directRun(k, argv, kwargs); }
+    finally { capture = await R.directCapture(k, base + '/captures/' + k + '.json'); }
+    const e = {key:k,argv,capture,terminal}; events.push(e);
+    if (!terminal || terminal.exit_code !== 0) { const error = new Error('Root callback failed: ' + k); error.closedEvent=e; throw error; }
+    return e;
+  }
+  // All inline Source bytes are physically included in this JS Source bill.
+  const writer = "import pathlib,json,hashlib,os,sys; p=pathlib.Path(sys.argv[1]); assert p.is_absolute() and p.is_relative_to('/private/tmp') and '..' not in p.parts; b=json.dumps(json.loads(sys.argv[2]),sort_keys=True,separators=(',',':'),allow_nan=False).encode()+bytes([10]); assert len(b)<=65536 and not os.path.lexists(p); p.parent.mkdir(parents=True,exist_ok=True); assert p.parent.resolve()==p.parent; f=p.open('xb'); assert f.write(b)==len(b); f.flush(); os.fsync(f.fileno()); f.close(); print(json.dumps(dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()),sort_keys=True))";
+  const reader = "import pathlib,json,hashlib,os,stat,sys; p=pathlib.Path(sys.argv[1]); a=p.lstat(); sig=lambda t:(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns); assert p.resolve()==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1 and a.st_size<=4194304; f=p.open('rb'); z=os.fstat(f.fileno()); b=f.read(a.st_size+1); e=os.fstat(f.fileno()); f.close(); assert sig(a)==sig(z)==sig(e)==sig(p.lstat()) and len(b)==a.st_size; r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()); assert sys.argv[2]=='-' or r['sha256']==sys.argv[2]; print(json.dumps(dict(ref=r,object=json.loads(b)),sort_keys=True,separators=(',',':'),allow_nan=False))";
+  async function read(pathOrRef, label) {
+    const p = typeof pathOrRef === 'string' ? pathOrRef : pathOrRef.path;
+    const sha = typeof pathOrRef === 'string' ? '-' : pathOrRef.sha256;
+    const e = await api([py,'-E','-B','-S','-c',reader,p,sha], label, {max_output_tokens:50000});
+    const v = await R.directJSON(e.key);
+    if (typeof pathOrRef !== 'string' && (v.ref.path!==p || v.ref.sha256!==sha || v.ref.bytes!==pathOrRef.bytes)) throw new Error('Whole callback-reader identity mismatch');
+    return v;
+  }
+  async function writeRequest(operation, value) {
+    const name = key(operation + '_request');
+    const body = {...value, operation, config:kit.config, policy:options.policy};
+    const e = await api([py,'-E','-B','-S','-c',writer,base+'/requests/'+name+'.json',JSON.stringify(body)], operation+'_write_request', {max_output_tokens:2000});
+    return await R.directJSON(e.key);
+  }
+  async function guarded(child,label,rss=256,seconds=125) {
+    const name=key(label),dir=base+'/guards/'+name;
+    const e=await api([py,'-E','-B',supervisor,'--volume','/Users/sasha/medusa','--output',dir,'--rss-cap-mib',String(rss),'--timeout',String(seconds),'--',...child],label,{max_output_tokens:4000});
+    const guard=await read(dir+'/receipt.json',label+'_guard');
+    const stdout=await read(dir+'/stdout.log',label+'_stdout');
+    if (guard.object.status!=='PASS' || guard.object.stop!=='RETURNED' || guard.object.returncode!==0 || guard.object.cleanup.remaining.length || guard.object.cleanup.errors.length || guard.object.logs.stderr!==0 || guard.object.limits.total_rss!==rss*1048576 || guard.object.limits.wall_seconds!==seconds) throw new Error('Callback metadata guard closure/profile failed');
+    return {value:stdout.object,capture:e.capture,guard:guard.ref,stdout:stdout.ref};
+  }
+  async function audit(operation,value) {
+    const req=await writeRequest(operation,value);
+    const out=base+'/outputs/'+key(operation);
+    const result=await guarded([py,'-E','-B','-S',kit.callbackProgram.path,'--self-sha256',kit.callbackProgram.sha256,'--request',req.path,req.sha256,'--out',out],operation);
+    if (result.value.status!=='ROOT_CALLBACK_METADATA_CHECKED') throw new Error('Callback auditor returned another mode');
+    return result;
+  }
+  async function approveCase(entry,ctx) {
+    if (++caseCount>23) throw new Error('At most23 scientific calls in one bounded cohort');
+    const compact={role:entry.role,selected:entry.selected,program:entry.program,plan:entry.plan};
+    const evidence={};
+    if (entry.role==='walk') evidence.subset_route=(await read(workflow+'/subset_bound/subset_route.json','actual_subset_route')).ref;
+    if (entry.role==='GEN') evidence.gen_route=(await read(workflow+'/gen_bound/gen_route.json','actual_gen_route')).ref;
+    const result=await audit('case',{entry:compact,ctx:{current:ctx.current},case_evidence:evidence});
+    return {review:result.value.review,gate:result.value.gate,resource_invoice:result.value.resource_invoice};
+  }
+  async function approveRetention(entry) {
+    // Four science packs plus sixteen exact pre-CAS CURRENT capsules.
+    if (++retentionCount>20) throw new Error('Finite retention count exceeded');
+    const result=await audit('retention',{entry});
+    if (result.value.approved!==true) throw new Error('Exact667 retention invoice/review refused');
+    return true;
+  }
+  async function approveAppend(route,ctx) {
+    if (++appendCount>16) throw new Error('At most16 append splits');
+    const current=ctx.current;
+    // This is deliberately inside EACH approveAppend, including every split.
+    // A previous read/hash of CURRENT is not an immutable historical copy.
+    let before=retainedBeforeImages.get(current.sha256);
+    if (!before) {
+      const staged=await audit('before-cas',{ctx:{current}});
+      const entry=staged.value.entry;
+      await approveRetention(entry);
+      const copy=await guarded([py,'-E','-B','-S',kit.retainer.path,'--self-sha256',kit.retainer.sha256,'--plan',entry.plan.path,entry.plan.sha256,'--destination',entry.destination,'--manifest',entry.manifest],'preserve_CURRENT',256,125);
+      if (copy.value.status!=='ROOT_CLOSED_METADATA_RETAINED') throw new Error('Actual before-image copy missing');
+      before={manifest:copy.value.preservation,execution:{capture:copy.capture,guard:copy.guard,stdout:copy.stdout}};
+      retainedBeforeImages.set(current.sha256,before);
+    }
+    const live=await read(current,'CURRENT_after_preservation');
+    if (live.ref.sha256!==current.sha256) throw new Error('CURRENT changed before append approval');
+    const result=await audit('append',{route:{plan:route.plan},ctx:{current},CURRENT_preservation:before.manifest,CURRENT_preservation_execution:before.execution});
+    return {release:result.value.release};
+  }
+  // Root must retain this complete genuine event list and all callback Source/
+  // policy/review/copy/capture artifacts in the eventual closed batch capsule.
+  function callbackEvidence() { return {caseCount,retentionCount,appendCount,events:events.map(e=>({key:e.key,argv:e.argv,capture:e.capture,exit_code:e.terminal?.exit_code})),currentBeforeImages:[...retainedBeforeImages.values()]}; }
+  return {approveCase,approveRetention,approveAppend,callbackEvidence};
+}

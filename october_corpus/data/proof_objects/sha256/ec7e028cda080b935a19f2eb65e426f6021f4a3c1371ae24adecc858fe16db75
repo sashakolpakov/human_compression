@@ -1,0 +1,47 @@
+"""UNRUN pure metadata and AST control designs; no Source/scientific activation by author."""
+import argparse,ast,hashlib,json,os,pathlib,stat,tempfile
+
+def body(p,sha):
+ a=p.lstat();sig=lambda z:(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=65536
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read(a.st_size+1);e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat())and len(b)==a.st_size and hashlib.sha256(b).hexdigest()==sha
+ return b
+
+def main():
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--program',nargs=2,required=True);ap.add_argument('--self-sha256',required=True);a=ap.parse_args()
+ p=pathlib.Path(a.program[0]);b=body(p,a.program[1]);own=pathlib.Path(__file__).resolve();ob=body(own,a.self_sha256);assert len(b)+len(ob)<=65536
+ # Only Root running these generic controls activates this metadata Source namespace.
+ H={'__name__':'TOY_COHORT_METADATA_CONTROLS','__file__':str(p)};exec(compile(b,str(p),'exec'),H)
+ pure=[]
+ def good(name,fn):fn();pure.append(name)
+ def bad(name,fn):
+  try:fn()
+  except(ValueError,KeyError,TypeError,AssertionError):pure.append(name);return
+  raise AssertionError(name+' accepted invalid synthetic input')
+ def yes(x):assert x
+ c=dict(start=96,count=16)
+ good('generic_contiguous_cohort_96_111',lambda:yes(H['cohort'](c)==list(range(96,112))))
+ good('alternate_small_cohort_is_metadata_only',lambda:yes(H['cohort'](dict(start=200,count=3))==[200,201,202]))
+ for v in [dict(start=True,count=16),dict(start=96,count=17),dict(start=28900,count=16),dict(start=96,count=0)]:bad('invalid_cohort_'+str(v),lambda v=v:H['cohort'](v))
+ good('positive_subset_within_cohort',lambda:yes(H['selected']([96,101,111],c)==[96,101,111]))
+ for v in [[],[95],[112],[96,96],[101,96],[True]]:bad('invalid_selection_'+str(v),lambda v=v:H['selected'](v,c))
+ good('numeric_type_alias_refusal',lambda:yes(not H['same']({'x':True},{'x':1})))
+ bad('duplicate_JSON_key_refusal',lambda:H['parse'](b'{"x":1,"x":2}'))
+ bad('false_policy_refusal_before_inputs',lambda:H['policy_check'](dict(schema='ROOT_OWNED_L026_ONE_BATCH_CALLBACK_POLICY_V1',root=None,Root_own_read_approved=False),{}))
+ good('descriptor_shape',lambda:H['shape'](dict(path='/private/tmp/TOY',bytes=1,sha256='0'*64)))
+ bad('oversize_descriptor_refused',lambda:H['shape'](dict(path='/private/tmp/TOY',bytes=4194305,sha256='0'*64)))
+ with tempfile.TemporaryDirectory(prefix='l026_cohort_toy_',dir='/private/tmp')as td:
+  pth=pathlib.Path(td)/'a';pth.write_bytes(b'abcd');r=H['ref'](pth,b'abcd');good('stable_whole_toy_FD',lambda:yes(H['raw'](r)==b'abcd'))
+  other=pathlib.Path(td)/'b';other.write_bytes(b'01234567');bad('actual_size_refused_before_read',lambda:H['raw'](dict(r,path=str(other))))
+  link=pathlib.Path(td)/'link';link.symlink_to(pth);bad('symlink_refusal',lambda:H['raw'](dict(r,path=str(link))))
+ tree=ast.parse(b);text=b.decode();calls={n.func.id for n in ast.walk(tree)if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)};checks=[]
+ def ck(n,x):assert x;checks.append(n)
+ ck('no_dynamic_execution_in_auditor',not calls&{'exec','eval','compile','__import__'})
+ ck('no_scientific_or_process_import',not any(isinstance(n,ast.Import)and any(z.name in ['subprocess','runpy','importlib','socket']for z in n.names)for n in ast.walk(tree)))
+ ck('one_configured_cohort_and_positive_subset',all(t in text for t in ["ids==cohort(config)","p['expected_positive_free_indices']==positive","ids==route['completed_capmiss_indices']"]))
+ ck('actual_physical_invoices_after_whole_gate_and_review',all(t in text for t in ['science_invoice(role,p',"program['bytes']+2*sum",'physical<=8*M','namespace<=50000','upper<=10000000']))
+ ck('actual_before_CURRENT_and_strict_IP0',all(t in text for t in ['previous_CURRENT_durable_preservation','wholeexactdurablebeforeimageBEFOREeachCAS','0b940e5a','old_strict_IP0_unchanged']))
+ ck('bounded_descriptor_before_open',text.index("a.st_size==r['bytes']")<text.index("with p.open('rb')"))
+ print(json.dumps(dict(schema='L026_ROOT_CALLBACK_METADATA_GENERIC_CONTROLS_V1',status='PASS',subject=dict(path=str(p),bytes=len(b),sha256=a.program[1]),program=dict(path=str(own),bytes=len(ob),sha256=a.self_sha256),pure_controls=len(pure),pure_names=pure,AST_controls=len(checks),AST_names=checks,original_case_calls=0,Root_gates_or_S_writes=0,namespace=len(b)+len(ob),qualification='Synthetic JSON/FD and AST only. No original inputs, positive Root policy, scientific calls or genuine SDK capture claims.'),sort_keys=True))
+if __name__=='__main__':main()

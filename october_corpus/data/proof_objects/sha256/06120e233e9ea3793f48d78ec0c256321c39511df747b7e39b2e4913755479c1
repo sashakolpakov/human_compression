@@ -1,0 +1,224 @@
+"""Independent static F00440 metadata joins. No represented imports or execution."""
+from pathlib import Path
+import ast,copy,datetime,hashlib,json,os,re,shlex,stat
+D=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v2')
+T=Path('/private/tmp/f004_closed40_reconciliation_DATA')
+O=Path('/private/tmp/f004_closed40_data_peer_DATA')
+opened={};cache={}
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def pairs(xs):
+ d={}
+ for k,v in xs:assert k not in d;d[k]=v
+ return d
+def parse(b):return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda v:(_ for _ in()).throw(ValueError(v)))
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def whole(path,expected=None):
+ p=Path(path)
+ if str(p)in cache:
+  if expected is not None:assert opened[str(p)]==expected
+  return cache[str(p)],opened[str(p)]
+ a=p.lstat();assert p.is_absolute()and p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4*2**20
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read();e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat())
+ r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if expected is not None:assert r==expected,(r,expected)
+ opened[str(p)]=r;cache[str(p)]=b;assert len(opened)<=512 and sum(r['bytes']for r in opened.values())<=64*2**20
+ return b,r
+def doc(path,expected=None):b,r=whole(path,expected);return parse(b),r
+def rd(r):return doc(r['path'],r)[0]
+def refs(v):
+ if type(v)is dict:
+  if set(v)=={'path','bytes','sha256'}:return[v]
+  return[r for x in v.values()for r in refs(x)]
+ if type(v)is list:return[r for x in v for r in refs(x)]
+ return[]
+def at(x,p):
+ for k in p:x=x[k]
+ return x
+def leaves(v,p=()):
+ if type(v)is dict:
+  for k,x in v.items():yield from leaves(x,p+(k,))
+ elif type(v)is list:
+  for i,x in enumerate(v):yield from leaves(x,p+(i,))
+ else:yield p,v
+def capture(c,note=None):
+ assert type(c)is dict and type(c['actor'])is str and c['actor'].startswith('/root')
+ a=c['actual_tool'];frames=[f.get('tool_frame',f)for f in c['all_genuine_api_frames']];assert frames and a['exit_code']==0
+ assert frames[0]['chunk_id']==a['initial_chunk']and frames[-1]['chunk_id']==a['terminal_chunk']and frames[-1]['exit_code']==0
+ if 'full_initial_tool_return'in c:assert frames[0]==c['full_initial_tool_return']
+ if 'full_tool_return'in c:assert frames[-1]==c['full_tool_return']
+ if a['synchronous']:assert len(frames)==1 and a['handle']is None
+ else:assert frames[0]['session_id']==a['handle']
+ argv=c['issued_argv']
+ for key in ['issued_command','canonical_argv_command']:
+  if key in c:assert shlex.split(c[key])==argv
+ if 'child_argv'in c:assert c['child_argv']==argv
+ if 'issued_command'in c and'issued_tool_arguments'in c:assert c['issued_tool_arguments']['cmd']==c['issued_command']
+ elif 'issued_tool_arguments'in c and'cmd'in c['issued_tool_arguments']:assert shlex.split(c['issued_tool_arguments']['cmd'])==argv
+ if note:
+  if 'recorded_command'in note:assert note['recorded_command']==c['issued_command']
+  if 'recorded_argv'in note:assert note['recorded_argv']==argv
+  if 'issued_argv'in note:assert note['issued_argv']==argv
+ return dict(actor=c['actor'],argv=argv,initial=a['initial_chunk'],terminal=a['terminal_chunk'])
+
+handoff,hp=doc(D/'handoff.json',dict(path=str(D/'handoff.json'),bytes=3952,sha256='17f185b4ffa00f942cf4cf789adff8c1c456afc8e3e340b6cc86dcdc440ed33f'))
+idx=rd(handoff['resolved_full40_proof_API_index']);ir=handoff['resolved_full40_proof_API_index']
+assert idx['number']==40 and idx['rank4']==7 and idx['rank5']==33 and idx['unresolved_genuine_API_links']==[]and idx['Root_authority']is False
+source,sourcepin=whole(handoff['Source']['path'],handoff['Source']);tree=ast.parse(source);constants={}
+for n in tree.body:
+ if isinstance(n,ast.Assign)and len(n.targets)==1 and isinstance(n.targets[0],ast.Name):
+  try:constants[n.targets[0].id]=ast.literal_eval(n.value)
+  except(ValueError,TypeError):pass
+jobs=constants['JOBS'];assert len(jobs)==40 and len(set(map(tuple,jobs)))==40 and[r['original_job']for r in idx['rows']]==jobs
+assert sum(j[1]==4 for j in jobs)==7 and sum(j[1]==5 for j in jobs)==33
+packets=[];rawpins={}
+for i,pr in enumerate(idx['metadata_packet_refs'],1):
+ p,pin=doc(O/('packet_%02d.json'%i));assert p['packet']==pr and p['status']=='PASS_WHOLE_RAW_BYTES'
+ packets.append(pin)
+ for r in p['all_input_pins']:assert r['path']not in rawpins;rawpins[r['path']]=r
+assert len(rawpins)==872 and sum(r['bytes']for r in rawpins.values())==5414297
+for pr in idx['metadata_packet_refs']:rd(pr)
+authorities={k:rd(r)for k,r in idx['Root_authorities'].items()}
+authority_names={r['path']:k for k,r in idx['Root_authorities'].items()}
+for k,a in authorities.items():assert a['root']=='/root'
+assert authorities['rank5_common']['all_complete_rank5_jobs']==[j for j in jobs if j[1]==5]
+assert authorities['rank5_common']['remaining_c']==authorities['rank5_common']['remaining_unpaid_cells']==0
+assert authorities['rank5_common']['all87_actual_checker_calls_passed']is True
+assert authorities['rank4_11']['adopted']is True and authorities['rank4_11']['complete_original_orbit_coverage']is True and authorities['rank4_11']['unresolved']==0
+assert authorities['rank4_five']['adopted']is True and authorities['rank4_five']['unresolved_orbit_count']==0
+
+index_role_refs=[];per_job=[];api_checks=[];archive_api_imports=[]
+for row in idx['rows']:
+ job=row['original_job'];assert row['accepted_complete']is True and type(row['unpaid'])is int and row['unpaid']==0 and row['operational_registration']is None
+ first=row.get('Root_complete_authority',row.get('first_complete_Root_authority'));assert first==row['selected_complete_Root_authority']
+ a=authorities[authority_names[first['path']]]
+ index_role_refs.append(first)
+ if job[1]==5:
+  assert row['latest_all33_complete_Root_authority']==idx['Root_authorities']['rank5_common']
+  complete=[z for z in a.get('rows',a.get('prefix_records',[]))if z['job']==job]
+  assert len(complete)==1 and complete[0]['complete']is True
+  rootrefkeys={(r['bytes'],r['sha256'])for r in refs(a)}
+  for p in row['retained_strict_proofs']:
+   assert p['recorded']['bytes']==p['retained']['bytes']and p['recorded']['sha256']==p['retained']['sha256']
+   assert(p['recorded']['bytes'],p['recorded']['sha256'])in rootrefkeys
+   index_role_refs.append(p['retained'])
+  for p in row['retained_checker_guards']:index_role_refs.append(p.get('retained',p))
+ elif job==[11,4]:
+  assert a['original_job']==job and row['mathematical_orbit_count']==a['orbit_count']==694
+ elif job==[23,4]:
+  selector=rd(row['current_per_job_selector']);index_role_refs.append(row['current_per_job_selector'])
+  assert selector['adopted']is True and selector['root']=='/root'and selector['original_job']==job and selector['unresolved_positions']==0 and selector['original_paid_count']==217
+  assert row['original_orbits']==3801 and row['baseline']==217 and row['IP_failures']==3541 and row['nongeneration']==43
+  assert a['original_job']==job and a['adopted']is True and a['newly_settled_positions']==38 and a['nongeneration_credit']==0
+  assert row['genuine_checker_APIs']==[z['actual_strict_execution']for z in row['new38_actual_IP_facts']]and len(row['genuine_checker_APIs'])==38
+ else:
+  p=next(p for p in a['per_prefix']if p['prefix']==job[0]);assert row['verified_negative']==p['obstructed']and row['verified_positive']==p['valid']and row['mathematical_orbit_count']==p['obstructed']+p['valid']
+ if job!=[23,4]:assert row['current_per_job_selector']is None
+ for note in row['genuine_checker_APIs']:
+  if 'capture_container'in note:
+   r=note['capture_container'];container=rd(r);assert type(container)is list
+   matches=[c for c in container if c.get('issued_argv')==note['issued_argv']];assert len(matches)==1
+   info=capture(matches[0],note);index_role_refs.append(r)
+  elif 'author_metadata_extract'in note:
+   r=note['author_metadata_extract'];c=rd(r);assert r['bytes']==note['recorded_original']['bytes']and r['sha256']==note['recorded_original']['sha256']
+   assert any(z==note['recorded_original']for z in row['proof_closure']['archive_original_members'])
+   assert note['archive']==row['proof_closure']['archive']
+   info=capture(c);index_role_refs.extend([r,note['archive']]);archive_api_imports.append(dict(job=job,archive=note['archive'],member=note['member'],exact_restored_metadata=r,qualification='Already accepted archive-member identity imported; no decompression or new extraction.'))
+  else:
+   r=note.get('capture',note);c=rd(r);info=capture(c,note if 'capture'in note else None);index_role_refs.append(r)
+   if job==[23,4]:
+    g=rd(note['guard']);started=rd(note['started']);rd(note['stdout']);err,_=whole(note['stderr']['path'],note['stderr'])
+    assert g['status']=='PASS'and g['stop']=='RETURNED'and g['returncode']==0 and g['cleanup']['remaining']==g['cleanup']['errors']==[]and err==b''
+    assert c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']==started['command']
+    index_role_refs.extend([note[k]for k in ['guard','started','stdout','stderr']])
+  api_checks.append(dict(job=job,record=r,actor=info['actor'],initial=info['initial'],terminal=info['terminal'],historical_argv_whole_joined=True))
+ per_job.append(dict(original_job=job,Root_authority=first,accepted_complete=True,unpaid=0,genuine_API_entries=len(row['genuine_checker_APIs']),current_selector=row['current_per_job_selector']))
+for r in index_role_refs:assert rawpins.get(r['path'])==r,('missing selected current metadata role',r)
+assert next(r for r in idx['rows']if r['original_job']==[115,5])['genuine_checker_APIs']==rd(idx['historical_job115_API_resolution'])['genuine_checker_APIs']
+
+diff=rd(handoff['exact_old_ordered_difference']);old=rd(diff['before']);old=old['pending_jobs']if type(old)is dict else old;new=rd(diff['proposed_after'])
+assert old==diff['whole_before']and new==diff['whole_after']and len(old)==197 and len(new)==157
+assert[j for j in old if j not in new]==jobs==diff['removed_in_old_order']and[j for j in old if j not in jobs]==new
+assert all(j[1]==4 for j in new)and len(set(map(tuple,new)))==157
+ten=rd(handoff['prior_ten_alias_companion']);legacy=rd(handoff['legacy_active_alias_addendum'])
+assert ten['complete_active_alias_count']==10 and legacy['entire_changed_leaf_roster']==constants['LEGACY_KEYS']
+
+fresh,fhp=doc(D/'fresh_post_CP11262_DATA/handoff.json')
+assert fhp['bytes']==4350 and fhp['sha256']=='6dcdcc208b14c45592594eef47e02e9ca0ee246f0363b263266341a83401c0b7'
+fp=rd(fresh['plan_with_fresh_observations_REQUIRES_ROOT_BINDING']);alias=rd(fresh['active_alias_before_values'])
+post=rd(fresh['Root_F009_postcheck']);postcap=rd(fresh['actual_Root_postcheck_capture']);capture(postcap)
+assert post['root']=='/root'and post['status']=='SUPPORTED'and post['blockers']==[]and post['checkpoint']['sequence']==11262
+assert post['live_observations']==[fresh['actual_live_observations'][r]for r in ['CURRENT','STATUS','PROGRESS']]
+documents={};raws={};old_documents={};semantic_changes={}
+for role in ['CURRENT','STATUS','PROGRESS']:
+ imm=fresh['immutable_author_whole_snapshots'][role];b,_=whole(imm['path'],imm);documents[role]=parse(b);raws[role]=b
+ live=fresh['actual_live_observations'][role];lb,_=whole(live['path'],live);assert lb==b
+ if role!='PROGRESS':
+  ob=rd(fp['existing_observations_are_historical_only'][role]);old_documents[role]=ob
+  before=dict(leaves(ob));after=dict(leaves(documents[role]));changes=[list(p)for p in set(before)|set(after)if can(before.get(p))!=can(after.get(p))]
+  semantic_changes[role]=changes
+  assert all('f009'in str(p[0]).lower()or(p[:2]==['root_intake_progress_current','F009_accepted_checkpoint'])for p in changes)
+assert fp['before']=={k:fresh['actual_live_observations'][k]for k in ['CURRENT','STATUS']}
+assert fp['protected_progress']==[fresh['actual_live_observations']['PROGRESS']]
+assert fp['root']is None and fp['bound_after_CP11262']is False and fp['planned_states']==dict(CURRENT=None,STATUS=None)
+assert all(fp[k]is None for k in ['method','Source_release','Root_closure_import','runtime_admission','runtime_started','output_directory','actual_registration','actual_CAS'])
+assert at(documents['CURRENT'],['root_execution_ownership_latest','active_handles'])==at(documents['CURRENT'],['root_current_ownership','active_handles'])==at(documents['CURRENT'],['current_execution_ownership','active_handles'])==documents['STATUS']['active_scientific_handles']==[]
+for entry in alias['ten_alias_values']:assert can(at(documents[entry['document']],entry['path']))==can(entry['whole_old_value'])
+assert len(alias['ten_alias_values'])==10
+for k,v in alias['legacy_explicit_before_values'].items():assert can(documents['CURRENT']['F004_current'][k])==can(v)
+assert alias['legacy_explicit_before_values']==legacy['existing_exact_CURRENT_F004_current_leaves']
+for role in ['CURRENT','STATUS']:
+ x=documents[role]['F004_q8_latest_ledger'];assert x['closed']==686 and x['pending']==0
+ for k in documents[role]:
+  if 'f004'in k.lower()or'l026'in k.lower():assert can(documents[role][k])==can(old_documents[role][k])
+for r in fp['Root_postchecked_F009_context'].values():
+ if type(r)is dict and set(r)=={'path','bytes','sha256'}:whole(r['path'],r)
+
+surroundings={};global_summary=[]
+for role in ['CURRENT','STATUS']:
+ d=documents[role];key='F004_current'if role=='CURRENT'else'F004';surroundings[role+'.'+key]=copy.deepcopy(d[key])
+ for k,v in d.items():
+  if('f004'in k.lower()or k in ['root_intake_batch_status','root_status_update_current','root_goal_turn_audit_current'])and type(v)in [str,dict]:
+   # Preserve entire direct alias objects as data so Root can classify their surrounding scope.
+   global_summary.append(dict(document=role,path=[k],value=copy.deepcopy(v)))
+inventory=dict(schema='INDEPENDENT_F004_SURROUNDING_AND_GLOBAL_ALIAS_OBSERVATIONS_V1',subject=fresh['active_alias_before_values'],surrounding_complete_bodies=surroundings,global_summary_candidates=global_summary,
+ qualification='Observed complete candidate alias objects only. This inventory does not declare every current-sounding historical object active; Root classification is required before a global completeness claim.')
+invpath=O/'alias_scope_inventory.json'
+if invpath.exists():assert invpath.read_bytes()==can(inventory)
+else:
+ with invpath.open('xb')as f:f.write(can(inventory))
+invpin=whole(invpath)[1]
+unresolved=[
+ dict(document='CURRENT',path=['F004_current','navigation_note'],value=documents['CURRENT']['F004_current']['navigation_note'],evidence='Unstamped direct navigation leaf says Current counts and513q8/65q11, outside declared ten-plus-ten patch roster.'),
+ dict(document='STATUS',path=['F004','next_status'],value=documents['STATUS']['F004']['next_status'],evidence='Unstamped prospective status says73/272 and199 pending,166rank4/33rank5,173q8 pending; outside patch roster.'),
+ dict(document='STATUS',path=['F004','q8_completed'],value=documents['STATUS']['F004']['q8_completed'],evidence='Direct summary count513 conflicts with unchanged accepted latest q8 ledger686/0; outside q11-only patch roster.'),
+ dict(document='STATUS',path=['F004','next_scope'],value=documents['STATUS']['F004']['next_scope'],evidence='Prospective scope names pending12,15,16,17,19, all selected closed40; outside patch roster.'),
+ dict(document='STATUS',path=['root_intake_batch_status'],value=documents['STATUS']['root_intake_batch_status'],evidence='Unstamped global intake display still mentions F00416unpaid and F009CP6078; Root classification needed, broader than q11 closed40 scope.'),
+ dict(document='STATUS',path=['root_status_update_current','next_actions',1],value=documents['STATUS']['root_status_update_current']['next_actions'][1],evidence='Current next-actions list names old F0042706..2713 work; Root classification needed, broader than q11 closed40 scope.')]
+dated=[]
+for role in ['CURRENT','STATUS']:
+ x=documents[role]['F004_original_job_complete_current'];dated.append(dict(document=role,path=['F004_original_job_complete_current'],utc=x.get('utc'),remaining_q11_jobs=x.get('remaining_q11_jobs'),remaining_q8_jobs=x.get('remaining_q8_jobs'),remaining_lower_jobs=x.get('remaining_lower_jobs'),evidence='Explicit2026-10-25 utc plus exact old typed-record references support preservation as historical complete-job proof context; no new registration claim.'))
+report=dict(schema='INDEPENDENT_F004_CLOSED40_METADATA_DATA_COMPONENT_REVIEW_V1',reviewer='/root/reader_postcheck/f004_data_peer',utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+ status='SUPPORTED_DECLARED_DATA_COMPONENTS_GLOBAL_ALIAS_SCOPE_UNRESOLVED',
+ blockers=['Global active-versus-historical classification of the listed unstamped narrative/summary/next-action leaves is unresolved. This review does not certify global alias completeness.'],
+ subject=hp,selected_Source=sourcepin,resolved40_index=ir,metadata_packets=idx['metadata_packet_refs'],whole_raw_packet_checks=packets,
+ unique_raw_domain=dict(paths=872,bytes=5414297,all_whole_stable_hashes_match=True,four_separate_bounds=[400,400,70,2],scientific_payloads_opaque=True),
+ exact_job_coverage=per_job,all33_latest_union_matches=True,selected_first_completion_authorities_retained=True,
+ API_entries=len(api_checks),all_API_metadata_joins=api_checks,restored_accepted_archive_API_components=archive_api_imports,
+ Root_authorities=idx['Root_authorities'],old_math_scope='Original finite splitG2(11), same literal original members and full natural/rational Cayley model, faithful ordered frame/right-row correspondence, raw c/d domains and simultaneous transporter roles, and imported classification/conditional end/intersection premises remain attributed to their old accepted proof DAG. No mathematics, scientific proof payload, archive or codec was replayed or decoded. Job23 new38 remain IP failures; old43NG/217baseline remain distinct. Other39 have no fabricated per-job selector.',
+ ordered_difference=handoff['exact_old_ordered_difference'],proposed_counts=dict(required=272,closed=115,pending=157,rank4_pending=157,rank5_pending=0),q8_unchanged=dict(closed=686,pending=0),
+ declared_aliases=ten['complete_ten_active_alias_paths'],declared_CURRENT_F004_current_leaves=constants['LEGACY_KEYS'],
+ whole_fresh_before_snapshots=fresh['immutable_author_whole_snapshots'],live_observation_pins=fresh['actual_live_observations'],F009_Root_postcheck=fresh['Root_F009_postcheck'],fresh_plan=fresh['plan_with_fresh_observations_REQUIRES_ROOT_BINDING'],
+ F004_and_L026_entire_top_objects_equal_historical_pair=True,F009_only_semantic_delta_paths=semantic_changes,
+ all_four_arrays_idle_at_observation=True,observations_are_not_future_CAS_authority=True,
+ alias_scope_inventory=invpin,unresolved_alias_candidates=unresolved,dated_historical_aggregate_context=dated,
+ missing_future_actuals=['Actual four Root bounded metadata receipts/executions and accepted closure import','Installed exact Source/whole Source peer, genuine actual controls and release','Actual bound runtime/guard/stdOrigins/wrapper/read/path/new-byte invoice','Fresh locked BOTH CAS, whole durable before and exact acyclic planned pair','Actual forecast, release, recoverable sequential publication and whole postcheck'],
+ represented_Source_controls_helper_science_activations=0,archive_state_word_graph_codec_decodes=0,S_W_Git_lock_gate_or_selector_writes=0,new_whole_Original_or_mathematical_credit=0,
+ audit_Source=whole(Path(__file__))[1],whole_metadata_checked_paths=len(opened),whole_metadata_checked_bytes=sum(r['bytes']for r in opened.values()),whole_metadata_pins=[opened[p]for p in sorted(opened)],
+ qualification='Narrow static DATA/proof/API/alias component opinion only. Full40 accepted Root closures and genuine historical API metadata are joined as already acquired qualified components, not independent scientific recomputation. Four packets were raw-hashed separately, never collapsed into an asserted single512-path represented call. This subaudit does not activate or release the Source, certify unprovided whole planned states, or resolve global active/history semantics. Parent owns Source/control/CAS design review and Root alone owns exact future activation/publication.')
+path=O/'independent_review.json'
+with path.open('xb')as f:f.write(can(report))
+rp=whole(path)[1];seal=dict(schema='INDEPENDENT_DATA_COMPONENT_REVIEW_SHA256_SEAL_V1',report=rp,alias_scope_inventory=invpin,blockers=report['blockers'])
+spath=O/'seal.json'
+with spath.open('xb')as f:f.write(can(seal))
+print(json.dumps(dict(report=rp,seal=whole(spath)[1],alias_inventory=invpin,status=report['status'],blockers=report['blockers'],API_entries=len(api_checks))))

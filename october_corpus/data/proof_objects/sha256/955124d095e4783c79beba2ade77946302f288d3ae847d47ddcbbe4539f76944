@@ -1,0 +1,127 @@
+"""Own stdlib CP11262 binding DATA. Never activates represented Sources/codecs."""
+from pathlib import Path
+import hashlib,json,stat
+N=Path('/private/tmp/f009_continuation/from_11216/native_DATA');D=N/'checkpoint_binding_DATA'
+P=Path('/private/tmp/f009_continuation/from_11099/native_DATA/checkpoint_binding_DATA')
+S=Path('/Users/sasha/medusa/research/leemans');M=S/'maintenance/intake'
+CANON=M/'f009_census_continuation/from11099/shared_pin_checkpoint_11216/evidence/preservation.json'
+CPDIR=M/'f009_census_continuation/from11216/standalone_execution/checkpoint_11262'
+DEST=M/'f009_census_continuation/from11216/shared_pin_checkpoint_11262/evidence'
+opened={}
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def whole(p):
+ p=Path(p);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+ b=p.read_bytes();assert len(b)==a.st_size and sig(a)==sig(p.lstat());r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());assert opened.get(str(p),r)==r;opened[str(p)]=r;return r,b
+def check(r):a,b=whole(r['path']);assert a==r;return b
+def read(r):return json.loads(check(r))
+def put(n,v):
+ p=D/n;assert not p.exists();p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(v if type(v)is bytes else can(v));return whole(p)[0]
+def inventory(root):
+ root=Path(root);assert root.resolve(strict=True)==root and root.is_dir();rows=[]
+ for p in sorted(root.rglob('*')):
+  assert not p.is_symlink()
+  if p.is_file():rows.append(whole(p)[0])
+ return rows
+def refwalk(v):
+ if type(v)is dict:
+  if set(v)=={'path','bytes','sha256'}:return[v]
+  return[r for x in v.values()for r in refwalk(x)]
+ if type(v)is list:return[r for x in v for r in refwalk(x)]
+ return[]
+def preservation_inverse(v):
+ tag=v.get('Root_Preservation_map_reference')
+ if tag is None:return v
+ assert tag['version']=='F009_WHOLE_PRESERVATION_PATH_PAIRS_V1';out=dict(v);out.pop('Root_Preservation_map_reference');count=0
+ for field,kind,rows in tag['fields']:
+  assert kind=='pair';restored=[]
+  for li,ri,suffix,size,sha in rows:
+   a=dict(path=tag['prefixes'][li]+suffix,bytes=size,sha256=sha);b=dict(a,path=tag['prefixes'][ri]+suffix);restored.append(dict(original=a,retained=b));count+=1
+  out[field]=restored
+ raw=can(out);assert count==tag['row_count']and len(raw)==tag['logical_bytes']and hashlib.sha256(raw).hexdigest()==tag['logical_sha256'];return out
+def request_inverse(v):
+ tag=v['Root_Request_rows_reference'];out=dict(v);out.pop('Root_Request_rows_reference');out['inputs']=[dict(path=tag['prefixes'][i]+name,bytes=n,sha256=sha)for i,name,n,sha in tag['rows']];raw=can(out);assert len(raw)==tag['logical_bytes']and hashlib.sha256(raw).hexdigest()==tag['logical_sha256'];return out
+oldspec_ref,oldspecraw=whole(P/'binding_spec_actual_reader_11216_ready.json');oldspec=json.loads(oldspecraw)
+sources=dict(binding=whole('/private/tmp/f009_reader_raw_job_binding/sources/make_plans.py')[0],preservation=whole('/private/tmp/f009_complete_transport/preservation_maps/sources/preserve_continuation.py')[0],registration=whole('/private/tmp/f009_reader_raw_job_binding/sources/register_checkpoint.py')[0])
+assert sources['binding']['sha256'].startswith('8e6daca5')and sources['preservation']['sha256'].startswith('bb6d8e2f')and sources['registration']['sha256'].startswith('8c062f0f')
+R=dict(job=whole(N/'reader_job_collected_owner/job.json')[0],Owner_request=whole(N/'reader_request_collected_owner.json')[0],Owner_receipt=whole(N/'reader_execution_collected_owner/receipt.json')[0],Root_job_review=whole(N/'reader_Root_review_collected_owner.json')[0],actual_execution=whole(N/'runtime/collected_owner_reader_actual_capture.json')[0],outer_guard_receipt=whole(N/'runtime/collected_owner_reader_guard/receipt.json')[0],result=whole(N/'reader_output_collected_owner/result.json')[0],worker_return=whole(N/'reader_output_collected_owner/Root_Reader_return.json')[0])
+job=read(R['job']);request=request_inverse(read(R['Owner_request']));receipt=read(R['Owner_receipt']);outer=read(R['outer_guard_receipt']);result=read(R['result']);returned=read(R['worker_return']);gate=read(R['Root_job_review']);capture=read(R['actual_execution'])
+assert receipt['status']==outer['status']=='PASS'and receipt['inputs_unchanged']is receipt['owned_child_reaped']is receipt['owned_group_absent']is True and receipt['returncode']==outer['returncode']==0
+assert receipt['request']==R['Owner_request']and receipt['error']is receipt['owned_finalization_error']is receipt['final_resource_stop']is None
+assert outer['cleanup']['remaining']==outer['cleanup']['errors']==[]and capture['actual_tool']['exit_code']==0
+assert result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'and result['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL'
+assert result['checkpoint']==dict(sequence=11262,nodes=5907,pending=205,selected_raw_leaf_records=557508,reserved_debts=0)
+assert returned['job']==R['job']and returned['result']==R['result']and returned['Root_review']==R['Root_job_review']and returned['native_launch_attempts']==[]
+assert job['Owner']['sha256'].startswith('a0e39886')and job['program']['sha256'].startswith('36fb852a')and job['role']=='reader'
+assert request['supervisor']==job['Owner']['path']and request['argv'][4:]==['--job',R['job']['path'],R['job']['sha256'],'--root-review',R['Root_job_review']['path'],R['Root_job_review']['sha256'],'--out',job['output']]
+oldcp=read(job['checkpoint_acceptance']);oldsp=read(job['snapshot_adoption']);assert oldcp['checkpoint']['sequence']==11216 and oldsp['checkpoint_acceptance']==job['checkpoint_acceptance']and result['base_acceptance']==job['checkpoint_acceptance']
+canon_ref,canonraw=whole(CANON);assert canon_ref['sha256']=='695ed9bab7fd901da5bb800be74f12ce629439c42041b970767088f1c8895da1';canon=preservation_inverse(json.loads(canonraw))
+assert canon['root']=='/root'and canon['no_original_or_previous_artifact_deleted_or_rewritten']is True
+
+# Capture current context as observations, never a live idle or lock certificate.
+live=[];idle=[]
+for name,path,sha in [('CURRENT',S/'reboot_20261013/CURRENT.json','8bb8d1d3f162732f2095863444ddc070ed1cf89a8479ce8eb36795e84d2af74a'),('STATUS',M/'current_status.json','6b1a6452617587737a098d8a042fff4dadcf6d238928a5d80fde93b323db8e6d'),('PROGRESS',M/'reviewed_intake_progress.json','fde8964a')]:
+ r,b=whole(path);assert r['sha256']==sha or(name=='PROGRESS'and r['sha256'].startswith(sha));v=json.loads(b);cp=v['F009_checkpoint_current']if name!='PROGRESS'else v['F009']['checkpoint'];assert cp==oldcp['checkpoint'];snapshot=put('before/'+name+'.json',b);live.append(dict(role=name,original=r,whole_snapshot=snapshot));idle.append(dict(role=name,qualification='observed only; Rootfreshlock/CAS checks required'))
+context=put('current_context_before_DATA.json',dict(schema='UNADOPTED_CP11262_REGISTRATION_CONTEXT_DATA_V1',accepted_checkpoint=oldcp['checkpoint'],candidate_checkpoint=result['checkpoint'],whole_before=live,idle_qualification=idle,expected_old_CP=job['checkpoint_acceptance'],expected_old_SP=job['snapshot_adoption'],future_Root_release=None,actual_lock=None,actual_CAS=None,authority=False))
+
+# Finite metadata/Source history only; all declared scientific inputs remain
+# under actual request/Reader closure, and are classified below without execution.
+method={}
+def add(r):
+ assert method.get(r['path'],r)==r;check(r);method[r['path']]=r
+for r in oldspec['method_inputs']:add(r)
+for root in[Path('/private/tmp/f009_owner_prelaunch_collection'),N/'reader_collected_owner_DATA',N/'reader_collected_owner_prelaunch_retention_DATA']:
+ for p in sorted(root.rglob('*')):
+  if p.is_file()and'AUTHOR_PROJECTION_ONLY'not in p.parts and'__pycache__'not in p.parts and p.suffix not in['.pyc','.pyo']:add(whole(p)[0])
+for p in sorted((N/'runtime').rglob('*')):
+ if p.is_file()and('collected_owner'in str(p.relative_to(N/'runtime'))):add(whole(p)[0])
+for name in['reader_parameters_collected_owner.json','Root_collected_owner_Reader_DATA_review.json','Root_collected_owner_request_review.json']:add(whole(N/name)[0])
+for r in[context,*sources.values()]:add(r)
+for item in live:add(item['whole_snapshot'])
+for item in(D/'prior_author_draft').iterdir():add(whole(item)[0])
+own,_=whole(Path(__file__).resolve());add(own)
+roots=[str(N/'native_execution'),str(N/'runtime/native_guard'),str(N/'reader_execution_collected_owner'),str(N/'runtime/collected_owner_reader_guard')]
+prelaunch_manifest=S/'maintenance/intake/f009_census_continuation/from11216/shared_pin_reader/collected_owner_prelaunch_evidence/part1/preservation.json'
+assert prelaunch_manifest.exists();prelaunch_ref,_=whole(prelaunch_manifest)
+spec=dict(oldspec);spec.update(author='/root/journal_peer/f009_invoice',author_role='Actual newCP11262 DATA author; generated preserve/checkpoint plan authors remain the literal owned Source/template attribution.',bound_by='/root/journal_peer/f009_invoice',status='ACTUAL_SUCCESSFUL_COLLECTED_OWNER_READER11262_BOUND_DATA_ONLY',Reader=R,Root_release=None,candidate_checkpoint=result['checkpoint'],observed_Native_proposal_only=result['checkpoint'],prior_checkpoint_acceptance=job['checkpoint_acceptance'],prior_snapshot_adoption=job['snapshot_adoption'],checkpoint_program=sources['registration'],preservation_program=sources['preservation'],checkpoint_output=str(CPDIR),preservation_destination=str(DEST),previous_preservations=[canon_ref],method_inputs=[method[k]for k in sorted(method)],closed_evidence_roots=roots,actual_Reader_inputs_closed=True,current_Source_allocation=dict(functional_Source_rows=1022,functional_Source_bytes=60357270,all_original1005_paid_Source_rows_retained=True,all_prior1021_Source_rows_retained=True,Native_parent_binding_immutable=True,qualified_archive_rows=446,new_Native_or_Reader_calls_by_author=0),predecessor_ready_DATA_template=oldspec_ref,generic_Reader_retention_provenance_only=[dict(actual_manifest=prelaunch_ref,qualification='generic667prelaunch byteclosure only, nevercanonicalbb6dprevious_preservations')],independent_actual_Reader_peer=None,current_CAS_context=context,correction='ActualRAWjob e0d3026078B andnewa0eOwner retain genuineRootgate/request identities. Alreadyowned8e6/8cReader-only8MiB role reused; old823f/a062generic2MiBroute unselected. No Source/cap change or scientific replay.',qualification='Rootactual paidNative11262used085; collecteda0e/36fbstrictReader11262PASS nowclosed. Accepted11216remains untilRootcanonicalbb6dpreservation andexactthree-viewlockedregistration. All205pendingunpaid,debt0. Onlyactual695ecanonicalmapinprevious_preservations;44c remainsolderprovenance,generic667mapsnotgrafted. Rootclosurejudgment/independentactualpeer/release/activation/adoptionremainRoot-only.')
+sr=put('binding_spec_actual_reader_11262_ready.json',spec)
+inverse=put('whole_binding_spec_inverse.json',dict(schema='COMPLETE_CP11216_TO11262_DATA_BINDING_INVERSE_V1',parent=oldspec_ref,selected=sr,whole_parent=oldspec,whole_selected=spec,changed_top_fields=sorted(k for k in set(oldspec)|set(spec)if oldspec.get(k)!=spec.get(k)),scientific_or_Source_changes=False,whole_old_spec_restorable=True))
+
+previous={};allprior=[]
+def keep(row):
+ a,t=row['original'],row['retained'];assert a['bytes']==t['bytes']and a['sha256']==t['sha256'];allprior.append(row);old=previous.get(a['path']);assert old is None or old['original']==a
+ if old is None or t['path']<old['retained']['path']:previous[a['path']]=row
+for row in canon['rows']+canon['reused_previous_rows']:keep(row)
+for row in oldcp['root_metadata_writer']['actual_to_retained_sources']:keep(dict(original=row['actual'],retained=row['retained']))
+required={}
+def need(r):
+ if Path(r['path']).is_relative_to('/private/tmp'):assert required.get(r['path'],r)==r;required[r['path']]=r
+for r in request['inputs']+list(R.values())+spec['method_inputs']+[sr,sources['binding']]:need(r)
+outputs=inventory(job['output']);assert len(outputs)==4 and result['snapshot']in outputs
+for r in outputs:need(r)
+tree_rows=[]
+for root in roots:
+ rr=inventory(root);tree_rows+=rr
+ for r in rr:need(r)
+fresh=[];reused=[]
+for k,r in sorted(required.items()):
+ if k in previous:assert previous[k]['original']==r;reused.append(previous[k])
+ else:check(r);fresh.append(dict(original=r,relative=str(Path('artifacts')/Path(k).relative_to('/private/tmp'))))
+assert len(fresh)<=4096 and sum(r['original']['bytes']for r in fresh)<=64*2**20
+selection=put('required_preservation_rows_DATA.json',dict(schema='AUTHOR_PROJECTED_CANONICAL_REQUIRED_ROWS_ONLY_V1',all_required=[required[k]for k in sorted(required)],fresh=fresh,reused=reused,previous_manifest=canon_ref,whole_Reader_outputs=outputs,Root_actual_plans=None,qualification='Ownmetadata/path classification only, notSourceforecast. Actual8e6 mustauthenticateallpreviousretainedbodies/freshT andemitexact plans. Generic667notusedascanonicalpreviousmap.'))
+freshbytes=sum(r['original']['bytes']for r in fresh);reusebytes=sum(r['original']['bytes']for r in reused);priorbytes=sum(r['retained']['bytes']for r in allprior);treebytes=sum(r['bytes']for r in tree_rows);outputbytes=sum(r['bytes']for r in outputs)
+rolebytes=sum(R[k]['bytes']for k in ['Owner_request','Owner_receipt','outer_guard_receipt','result'])+job['checkpoint_acceptance']['bytes']+job['snapshot_adoption']['bytes']
+binding=3*sr['bytes']+2*R['job']['bytes']+2*rolebytes+2*canon_ref['bytes']+priorbytes+freshbytes+reusebytes+treebytes+outputbytes+2*sources['binding']['bytes']
+preserve_forecast=2*(2*2**20)+2*sources['preservation']['bytes']+2*canon_ref['bytes']+priorbytes+2*job['checkpoint_acceptance']['bytes']+freshbytes+reusebytes
+preserve_write=preserve_forecast+3*(freshbytes+sources['preservation']['bytes']+2*2**20)+canon_ref['bytes']
+reqbytes=sum(r['bytes']for r in request['inputs']);registration=2*(reqbytes+sum(r['bytes']for r in R.values())+3*2**20*2+65536)+3*(freshbytes+reusebytes)+4*outputbytes+64*2**20
+assert max(binding,preserve_forecast,preserve_write,registration)<2**31
+invoice=put('read_write_allocation_invoice.json',dict(schema='CP11262_OWNED_RAW_READER_BINDING_SOURCE_LOOP_INVOICE_V1',author='/root/journal_peer/f009_invoice',author_projection_only=True,Source_derived_forecast=False,programs=sources,spec=sr,canonical_previous_preservations=[canon_ref],prior_retained_rows_withduplicates=len(allprior),prior_retained_bytes_withduplicates=priorbytes,required_T_files=len(required),required_T_bytes=sum(r['bytes']for r in required.values()),fresh_files=len(fresh),fresh_bytes=freshbytes,reused_files=len(reused),reused_bytes=reusebytes,preservation_newfiles_including_method_and_manifest=len(fresh)+3,preservation_newwrite_upper=freshbytes+sources['preservation']['bytes']+2*2**20+2*2**20,whole_Reader_outputs=outputs,Reader_output_inventory_sha256=hashlib.sha256(can(outputs)).hexdigest(),current_input_rows=len(request['inputs']),current_input_bytes=reqbytes,physical_body_read_upper=dict(binding=binding,preservation_forecast=preserve_forecast,preservation_write=preserve_write,registration_forecast_or_commit_each=registration),physical_path_union_majorant=len(request['inputs'])+len(required)+len(allprior)+128,maximum_current_files=40000,maximum_physical_bytes=2**31,metadata_RSS=256*2**20,metadata_seconds=150,writer_caps=dict(new_objects_with_rollback=16,new_bytes_with_rollback=16*2**20),preservation_caps=dict(new_rows=4096,new_bytes=64*2**20,individual=16*2**20,physical_plan_and_manifest=2*2**20,logical_map=8*2**20),formula_binding='3spec+2RAWjob+2(request/receipt/outer/result/oldCP/oldSP)+2oldmanifest+allpriorretained+fresh+reused+output/evidencetrees+2plannerSource; includesinitialSourcebootstrap.',formula_preservation='2plan<=2MiB +2Source(includingbootstrap)+2oldmanifest+alloldretained+2oldCP+reused+fresh;write adds3(fresh+Source+plan<=2MiB)+oldmanifest. Manifestwritebounded2MiB.',formula_registration='2(currentrequestrows+8Readerroles+3future2MiBdocuments+64KiBrelease)+3durableTemp+4Readeroutputs+64MiBmetadata/bootstrap/live/emittedallowance; conservative duplicates.',Root_writer_release=None,actual_plans=None,actual_preservation=None,actual_commit=None,qualification='Allquantities are authorDATA bounds, notSourceforecasts ormemory/timefit. Rootactualemittedmap/plan lengths andexactrelease/idle/lock/threeCAS mandatory. NoNative/Readerreplay.'))
+falsecp=put('Root_checkpoint_acceptance_TEMPLATE_FALSE.json',dict(schema='ROOT_F009_STANDALONE_CHECKPOINT_ACCEPTANCE_V1',root=None,adopted=False,checkpoint=result['checkpoint'],snapshot=result['snapshot'],Reader=R,prior_checkpoint_acceptance=job['checkpoint_acceptance'],canonical_preservation=None,root_metadata_writer=None,new_scientific_calls=0,qualification='UNADOPTED schema aid only; actual8c outputandRootrelease/preservation/adoptionowed.'))
+falsesp=put('Root_snapshot_adoption_TEMPLATE_FALSE.json',dict(schema='ROOT_F009_STANDALONE_SNAPSHOT_ADOPTION_V1',root=None,adopted=False,checkpoint=result['checkpoint'],snapshot=result['snapshot'],checkpoint_acceptance=None,complete_root_inputs=None,root_metadata_writer=None,qualification='UNADOPTED schema aid only, not a realSnapshotadoption orRootgrant.'))
+false_release=put('Root_writer_release_TEMPLATE_FALSE.json',dict(schema='ROOT_REVIEWED_F009_STANDALONE_CHECKPOINT_WRITER_V1',root=None,status='UNREVIEWED',blockers=['RootindependentactualReaderclosure/wholeboundDATA/canonicalpreservation/exactplan/currentthreeviewCASreviewowed'],program=sources['registration'],plan=None,actual_Reader_and_Native_closure_supported=False,canonical_selector_commit_authorized=False,current_context=context))
+argv=['/Users/sasha/.venvs/global/bin/python','-E','-B',sources['binding']['path'],'--spec',sr['path'],sr['sha256'],'--out',str(D/'bound_plans_actual')]
+workflow=put('Root_workflow.json',dict(schema='ROOT_ONLY_CP11262_OWNED_METADATA_WORKFLOW_V1',Root_authority=False,first_binding_forecast_argv=argv,first_binding_write_adds=['--write'],preservation_argv_UNBOUND=['/Users/sasha/.venvs/global/bin/python','-E','-B',sources['preservation']['path'],'--plan',None,None],preservation_write_adds=['--write'],registration_argv_UNBOUND=['/Users/sasha/.venvs/global/bin/python','-E','-B',sources['registration']['path'],'--plan',None,None,'--root-release',None,None,'--preservation',str(DEST/'preservation.json'),None],registration_commit_adds=['--commit'],ordinary_S_parents_Root_must_prepare=[str(DEST.parent),str(CPDIR.parent)],future_destinations_must_be_absent=[str(DEST),str(CPDIR),str(D/'bound_plans_actual')],metadata_outer=dict(RSS_MiB=256,seconds=150),actual_metadata_calls=None,actual_preservation=None,actual_registration=None,obligations=['RootactualclosurejudgmentandindependentDATA/Readerpeer.','Rootunchanged8e6forecast/readfulltwoimages/write andwholecompare.','Rootbb6dforecast/write;actualwholecanonicalmanifestjoin.','Rootfresh8c exactrelease andreadforecasts16objects16MiB/threeCAS/idle/lockedbeforecommit.','Rootcommit+independentpostcheckallthreeviews;CP11262/205pending/debt0,scientificreplays0.']))
+qa=put('author_QA.json',dict(schema='AUTHOR_CP11262_DATA_CLOSURE_BINDING_QA_V1',whole_metadata_observations=list(opened.values()),no_state_or_graph_or_gzip_decode=True,canonical_previous_map_inverse_checked=True,actual_Reader8rolejoins_checked=True,actual_snapshot_wholehash=next(r for r in outputs if Path(r['path']).name=='state.json.gz'),all21_historical_obligation_retained=spec['historical_payload_obligation'],actual_Root_CAS=None,Source_helper_control_science_gates_S_W_Git_activated=0))
+hr=put('handoff.json',dict(schema='FROZEN_CP11262_CANONICAL_PRESERVATION_REGISTRATION_DATA_HANDOFF_V1',author='/root/journal_peer/f009_invoice',Root_authority=False,spec=sr,whole_inverse=inverse,selection=selection,invoice=invoice,workflow=workflow,current_context=context,Root_checkpoint_TEMPLATE_FALSE=falsecp,Root_snapshot_TEMPLATE_FALSE=falsesp,Root_writer_release_TEMPLATE_FALSE=false_release,Source_cohort=oldspec['metadata_Source_cohort'],actual_Source_review=oldspec['Root_new_metadata_Source_review'],independent_Source_peer=oldspec['independent_new_metadata_Source_peer'],actual43_controls=oldspec['actual_metadata_Source_controls'],actual_Reader=R,independent_actual_Reader_peer=None,accepted_checkpoint=11216,verified_unadopted_proposal=result['checkpoint'],canonical_previous_preservation=canon_ref,generic667_prelaunch_provenance_only=prelaunch_ref,author_QA=qa,actual_Root_metadata_calls=None,actual_preservation=None,actual_registration=None,qualification='Owned8e6/bb6d/8cRAWReader8MiBrole reused, noSource/capchange. CP11262notadoptedbyDATA. Actual085Nativeandnewa0eReaderpaid; no rerun. Old695canonicalonlypreviousmap,44colderprovenance,generic667nongrafted. Rootexactclosure/peer/release/copy/three-viewcommit/postcheckremainowed.'))
+print(json.dumps(dict(handoff=hr,spec=sr,fresh_files=len(fresh),fresh_bytes=freshbytes,reused_files=len(reused),reused_bytes=reusebytes,read_upper=dict(binding=binding,preserve=preserve_write,registration=registration)),sort_keys=True))

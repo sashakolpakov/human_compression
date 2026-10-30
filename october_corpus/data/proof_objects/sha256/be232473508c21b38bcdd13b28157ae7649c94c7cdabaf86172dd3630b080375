@@ -1,0 +1,67 @@
+"""Independent narrow DATA successor review; standard-library JSON, descriptors, hashes only."""
+from pathlib import Path
+import json,hashlib,os,stat
+D=Path('/private/tmp/f009_continuation/from_11216/native_DATA/checkpoint_binding_DATA');A=D/'ready_actual_peer_DATA';O=D/'independent_review'
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def doc(r):
+ p=Path(r['path']);b=p.read_bytes();assert len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256'];return json.loads(b)
+def whole(r):
+ p=Path(r['path']);a=p.lstat();assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes']<=16*2**20
+ h=hashlib.sha256();size=0
+ with p.open('rb')as f:
+  b=os.fstat(f.fileno())
+  while True:
+   x=f.read(min(2**20,r['bytes']-size+1))
+   if not x:break
+   size+=len(x);assert size<=r['bytes'];h.update(x)
+  c=os.fstat(f.fileno())
+ sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert sig(a)==sig(b)==sig(c)==sig(p.lstat())and size==r['bytes']and h.hexdigest()==r['sha256']
+ return r
+href=ref(A/'FINAL_handoff.json');h=doc(href);baseh=doc(h['prior_handoff_immutable']);old=doc(baseh['spec']);new=doc(h['spec']);iv=doc(h['whole_inverse'])
+assert iv['whole_parent']==old and iv['whole_selected']==new and iv['parent']==baseh['spec']and iv['selected']==h['spec']
+changed=[k for k in new if old.get(k)!=new[k]]
+assert set(changed)=={'status','independent_actual_Reader_peer','independent_actual_Reader_peer_provenance','method_inputs'}
+for k in new:
+ if k not in changed:assert new[k]==old[k]
+assert new['Reader']==old['Reader']and new['candidate_checkpoint']==old['candidate_checkpoint']and new['previous_preservations']==old['previous_preservations']
+oldm={r['path']:r for r in old['method_inputs']};newm={r['path']:r for r in new['method_inputs']};assert len(oldm)==len(old['method_inputs'])and len(newm)==len(new['method_inputs'])and all(newm.get(k)==r for k,r in oldm.items())
+peer=doc(new['independent_actual_Reader_peer']);assert peer['status']=='SUPPORTED_ACTUAL_READER_METADATA_CLOSURE'and peer['blockers']==[]
+assert peer['job']==new['Reader']['job']and peer['Owner_receipt']==new['Reader']['Owner_receipt']and peer['request']==new['Reader']['Owner_request']and peer['Rootgate']==new['Reader']['Root_job_review']and peer['result']==new['Reader']['result']and peer['worker_return']==new['Reader']['worker_return']and peer['actual_RootSDK']==new['Reader']['actual_execution']and peer['outer_receipt']==new['Reader']['outer_guard_receipt']
+for r in [new['independent_actual_Reader_peer'],peer['observations'],peer['audit_Source']]:assert newm.get(r['path'])==r;whole(r)
+oldsel=doc(baseh['selection']);newsel=doc(h['selection']);oldreq={r['path']:r for r in oldsel['all_required']};newreq={r['path']:r for r in newsel['all_required']}
+assert all(newreq.get(k)==r for k,r in oldreq.items());added=[r for k,r in newreq.items()if k not in oldreq]
+expected={r['path']:r for r in newm.values()if r['path']not in oldm};expected[h['spec']['path']]=h['spec']
+assert all(k in expected and expected[k]==r for k,r in newreq.items()if k not in oldreq)
+assert len(added)==6 and sum(r['bytes']for r in added)==202364
+for r in added:whole(r)
+assert newsel['reused']==oldsel['reused']and len(newsel['reused'])==3954
+oldfresh={r['original']['path']:r for r in oldsel['fresh']};newfresh={r['original']['path']:r for r in newsel['fresh']}
+assert all(newfresh.get(k)==r for k,r in oldfresh.items())and {k:r['original']for k,r in newfresh.items()if k not in oldfresh}=={r['path']:r for r in added}
+assert len(newfresh)==412 and sum(r['original']['bytes']for r in newfresh.values())==25939603
+assert len(newreq)==4366 and len(newreq)==len(newsel['fresh'])+len(newsel['reused'])
+i=doc(h['invoice']);oi=doc(baseh['invoice']);assert i['programs']==oi['programs']and i['canonical_previous_preservations']==oi['canonical_previous_preservations']
+assert i['fresh_files']==412 and i['fresh_bytes']==25939603 and i['reused_files']==3954 and i['reused_bytes']==155661656
+assert i['physical_body_read_upper']['binding']==oi['physical_body_read_upper']['binding']+3*(h['spec']['bytes']-baseh['spec']['bytes'])+202364
+assert i['physical_body_read_upper']['preservation_forecast']==oi['physical_body_read_upper']['preservation_forecast']+202364
+assert i['physical_body_read_upper']['preservation_write']==oi['physical_body_read_upper']['preservation_write']+4*202364
+assert i['physical_body_read_upper']['registration_forecast_or_commit_each']==oi['physical_body_read_upper']['registration_forecast_or_commit_each']+3*202364==1909837463<2**31
+for k in ['preservation_caps','writer_caps','maximum_current_files','maximum_physical_bytes','metadata_RSS','metadata_seconds']:assert i[k]==oi[k]
+w=doc(h['workflow']);assert w['first_binding_forecast_argv'][5:7]==[h['spec']['path'],h['spec']['sha256']]
+assert w['first_binding_forecast_argv'][-1]==str(D/'bound_plans_actual_peer_ready')and not Path(w['first_binding_forecast_argv'][-1]).exists()
+assert all(h[k]is None for k in ['actual_Root_metadata_calls','actual_preservation','actual_registration'])and new['Root_release']is None
+# All21 required historical payload descriptors and the inventory are in the same current Owner request; raw whole hashes only.
+wire=doc(new['Reader']['Owner_request']);tag=wire['Root_Request_rows_reference'];request=dict(wire);del request['Root_Request_rows_reference'];request['inputs']=[dict(path=tag['prefixes'][a]+b,bytes=c,sha256=d)for a,b,c,d in tag['rows']]
+assert len(can(request))==tag['logical_bytes']and hashlib.sha256(can(request)).hexdigest()==tag['logical_sha256'];req={r['path']:r for r in request['inputs']}
+histref=new['historical_payload_obligation']['inventory'];inventory=doc(histref);assert req.get(histref['path'])==histref and len(inventory['files'])==21
+for r in inventory['files']:assert req.get(r['path'])==r;whole(r)
+# The next CP output will inherit this exact accepted historical obligation; no publication/deletion claim is introduced.
+oldcp=doc(new['prior_checkpoint_acceptance']);assert oldcp['historical_reference_retention_obligation']['inventory']==histref
+out=dict(schema='INDEPENDENT_CP11262_ACTUAL_READER_PEER_APPEND_DATA_REVIEW_V1',reviewer='/root/journal_peer',status='SUPPORTED_DATA',blockers=[],subject_handoff=href,spec=h['spec'],full_delta_inverse=h['whole_inverse'],base_component=ref(O/'base_binding_DATA_observations.json'),actual_Reader_peer=new['independent_actual_Reader_peer'],
+ changed_fields=changed,all_old_required_descriptors_retained=True,new_fresh_descriptors=added,added_fresh_paths=6,added_fresh_bytes=202364,selected_fresh_paths=412,selected_fresh_bytes=25939603,reused_paths=3954,reused_bytes=155661656,
+ all21_current_historical_payload_pins_and_raw_hashes=True,invoice=h['invoice'],registration_read_upper=1909837463,
+ represented_Source_helper_control_Owner_Reader_Native_state_graph_gzip_or_math_calls=0,Root_authority=False,
+ limitations=['Accepted11216 remains until Root actual8e6/bb6d/8c preservation and fresh exact release/three-viewCAS.','Base4360-body review imported without repeat sweep; all6 added bodies and21 historical raw payloads freshly hashed here.','No state decode or independent mathematical reevaluation. Actual strictReader evidence is a precisely attributed imported component; no Source or DATA author opinion is retagged.'])
+p=O/'actual_peer_delta_DATA_review.json';p.write_bytes(can(out));print(json.dumps(ref(p),sort_keys=True))

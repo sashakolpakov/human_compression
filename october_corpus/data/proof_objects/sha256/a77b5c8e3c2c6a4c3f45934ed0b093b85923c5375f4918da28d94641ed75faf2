@@ -1,0 +1,115 @@
+"""Bind one Root-approved private control launch, then replace this process."""
+from pathlib import Path
+import argparse
+import ast
+import copy
+import fcntl
+import hashlib
+import json
+import os
+import resource
+import shlex
+import stat
+import sys
+import time
+import types
+
+
+def canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode()
+
+
+def read_exact(row):
+    p = Path(row['path'])
+    a = p.lstat()
+    assert p.resolve() == p and stat.S_ISREG(a.st_mode) and a.st_nlink == 1
+    assert a.st_size == row['bytes'] <= 4194304
+    raw = p.read_bytes()
+    z = p.lstat()
+    sig = lambda t: (t.st_dev, t.st_ino, t.st_mode, t.st_nlink, t.st_size, t.st_mtime_ns, t.st_ctime_ns)
+    assert sig(a) == sig(z)
+    assert len(raw) == row['bytes'] and hashlib.sha256(raw).hexdigest() == row['sha256']
+    return raw
+
+
+def exclusive(path, value):
+    raw = canonical(value)
+    assert path.is_relative_to(BASE) and path.parent.resolve() == path.parent
+    assert not os.path.lexists(path) and len(raw) <= 65536
+    with path.open('xb') as f:
+        assert f.write(raw) == len(raw)
+        f.flush()
+        os.fsync(f.fileno())
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+BASE = Path('/private/tmp/f004_closed40_Root_controls/complete_stdlib_origins')
+CONFIG = BASE / 'Root_control_configuration.json'
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+assert sys.platform == 'darwin' and not sys.flags.optimize
+configuration = json.loads(CONFIG.read_bytes())
+assert configuration['root'] == '/root' and configuration['Root_owned_control_launch_approved'] is True
+assert configuration['scientific_calls_authorized'] == 0
+source = read_exact(configuration['adapter_Source'])
+harness = read_exact(configuration['harness'])
+read_exact(configuration['Root_Source_review'])
+read_exact(configuration['independent_Source_review'])
+read_exact(configuration['independent_Source_actual_execution'])
+release = json.loads(read_exact(configuration['false_template']))
+assert release['root'] is None and release['released'] is False
+assert release['adapter_Source'] == configuration['adapter_Source']
+assert release['harness'] == configuration['harness']
+# Load the standard-library modules used by the actual argument/AST setup.
+# These operations inspect metadata; no adapter definitions are executed.
+preparser = argparse.ArgumentParser(allow_abbrev=False)
+for name in ('actor', 'self-sha256', 'self-bytes', 'release', 'release-sha256', 'release-bytes'):
+    preparser.add_argument('--' + name, required=True)
+preparser.parse_args(['--actor', '/root', '--self-sha256', 'pin', '--self-bytes', '1',
+                     '--release', 'metadata', '--release-sha256', 'pin', '--release-bytes', '1'])
+tree = ast.parse(source, filename=configuration['adapter_Source']['path'])
+prefix = copy.deepcopy(next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'run'))
+prefix.name = 'run_admission_prefix_only'
+prefix.body = prefix.body[:2]
+ast.unparse(prefix)
+for node in tree.body:
+    ast.get_source_segment(source.decode(), node)
+origins = {}
+for module in tuple(sys.modules.values()):
+    for field in ('__file__', '__cached__'):
+        name = getattr(module, field, None)
+        if type(name) is str and Path(name).is_absolute() and Path(name).is_file():
+            p = Path(name).resolve()
+            if p == Path(configuration['harness']['path']):
+                continue
+            b = p.read_bytes()
+            assert len(b) <= 4194304
+            origins[str(p)] = dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+p = Path(sys.executable).resolve()
+b = p.read_bytes()
+assert len(b) <= 4194304
+origins[str(p)] = dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+assert len(origins) <= 200
+assert sum(r['bytes'] for r in origins.values()) <= 8 * 1048576
+runtime = exclusive(BASE / 'actual_control_runtime_admission.json', dict(
+    root='/root', admitted=True, pid=os.getpid(), rss_cap_bytes=256 * 1048576,
+    timeout_seconds=125, harness=configuration['harness'], guard_active=True,
+    qualification='Root issued this exact launcher under the known 256MiB/125s supervisor. '
+                  'execv preserves this child PID and discards launcher code before harness activation.'))
+release.update(root='/root', released=True, runtime_admission=runtime,
+               independent_Source_review=configuration['independent_Source_review'],
+               independent_Source_actual_execution=configuration['independent_Source_actual_execution'],
+               runtime_inputs=list(origins.values()),
+               private_run_directory=configuration['private_run_directory'],
+               Root_Source_review=configuration['Root_Source_review'],
+               external_reserve=dict(bytes=2097152, paths=32, read_bytes=12582912,
+                                     source_bootstrap_bytes=1048576))
+release_ref = exclusive(BASE / 'Root_actual_control_release.json', release)
+for key in ('PYTHONSTARTUP', 'PYTHONPATH', 'COVERAGE_PROCESS_START',
+            'COVERAGE_PROCESS_CONFIG', 'OPENSSL_CONF', 'OPENSSL_MODULES'):
+    os.environ.pop(key, None)
+argv = [sys.executable, '-E', '-B', '-S', configuration['harness']['path'],
+        '--actor', '/root', '--self-sha256', configuration['harness']['sha256'],
+        '--self-bytes', str(configuration['harness']['bytes']),
+        '--release', release_ref['path'], '--release-sha256', release_ref['sha256'],
+        '--release-bytes', str(release_ref['bytes'])]
+os.execv(sys.executable, argv)

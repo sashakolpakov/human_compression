@@ -1,0 +1,185 @@
+"""Own stdlib/AST/DATA authoring only; no represented Source/control activation."""
+from pathlib import Path
+import ast,copy,difflib,hashlib,json,os,stat
+V=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v3')
+B=V.parent/'successor_v2'
+N=V/'private_controls_UNRUN'
+AUTHOR='/root/f004_register'
+reads={}
+opens=0
+outputs={}
+def can(x):return (json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def desc(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,expected=None):
+ global opens
+ p=Path(p);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4*2**20
+ with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+ sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==a.st_size
+ r=desc(p,raw)
+ if expected is not None:assert r==expected
+ assert str(p)not in reads or reads[str(p)]==r
+ reads[str(p)]=r;opens+=len(raw);assert opens<=64*2**20 and len(reads)<=512
+ return r,raw
+def doc(p,expected=None):
+ r,b=read(p,expected);return r,json.loads(b)
+def put(p,value):
+ raw=can(value);assert len(raw)<=4*2**20 and sum(x['bytes']for x in outputs.values())+len(raw)<=16*2**20
+ with p.open('xb')as f:assert f.write(raw)==len(raw)
+ r=desc(p,raw);outputs[str(p)]=r;return r
+author_source,_=read(Path(__file__).resolve())
+source,sraw=read(V/'register_closed40_v3b.py');harness,hraw=read(N/'control_closed40.py')
+assert source['bytes']==39928 and source['sha256']=='11f9bfe773e99d1e5db429b2a536d1554624b40855c18f75a889737c454621d1'
+assert harness['bytes']==32531 and harness['sha256']=='cfb19fc74d4c714d135abba62e4a9aee524de33f4572e2dec7891f082928f5ae'
+st=ast.parse(sraw);ht=ast.parse(hraw)
+def literals(tree):
+ out={}
+ for n in tree.body:
+  if isinstance(n,ast.Assign)and len(n.targets)==1 and isinstance(n.targets[0],ast.Name):
+   try:out[n.targets[0].id]=ast.literal_eval(n.value)
+   except(ValueError,TypeError):pass
+ return out
+sl=literals(st);hl=literals(ht);assert sl['CONTROL_CASES']==hl['CASE_NAMES']and len(hl['CASE_NAMES'])==22
+nodes=[copy.deepcopy(n)for n in st.body if isinstance(n,(ast.Import,ast.ImportFrom,ast.Assign,ast.FunctionDef,ast.ClassDef))
+ and not(isinstance(n,ast.FunctionDef)and n.name in ('run','main'))]
+run=next(n for n in st.body if isinstance(n,ast.FunctionDef)and n.name=='run')
+prefix=copy.deepcopy(run);prefix.name='run_admission_prefix_only';prefix.body=prefix.body[:2]
+segments=[dict(kind=type(n).__name__,name=getattr(n,'name',None),start_line=n.lineno,end_line=n.end_lineno,
+ utf8=ast.get_source_segment(sraw.decode(),n),AST=ast.dump(n,include_attributes=True))for n in nodes]
+extent=sum(len(x['utf8'].encode())for x in segments)+len(ast.unparse(prefix).encode())
+assert extent==32279 and extent+harness['bytes']==64810<65536
+projection=dict(original_component_bytes=extent,whole_harness_bytes=harness['bytes'],
+ simultaneous_functional_Source_bytes=extent+harness['bytes'],full_physical_Source_read_bytes=source['bytes']+harness['bytes'],
+ excluded_functions=['run','main'],excluded_main_guard=True,admission_prefix_statements=2,
+ renamed_prefix='run_admission_prefix_only',complete_selected_definitions=[n.name for n in nodes if isinstance(n,(ast.FunctionDef,ast.ClassDef))],
+ actual_transaction_run_not_compiled=True,all_transaction_tests_explicit_memory_models=True)
+full_view=put(N/'complete_Source_UTF8_and_AST_read_view.json',dict(
+ schema='F004_CLOSED40_COMPLETE_SOURCE_UTF8_AST_READ_VIEW_V1',author=AUTHOR,Root_authority=False,
+ adapter_Source=source,adapter_full_UTF8=sraw.decode(),harness=harness,harness_full_UTF8=hraw.decode(),
+ activated_projection=projection,unchanged_original_AST_components=segments,
+ owned_renamed_admission_prefix_UTF8=ast.unparse(prefix),
+ Source_or_controls_activated=False))
+old_sources=[]
+for p in [B/'register_closed40.py',V/'register_closed40.py',B/'private_controls_UNRUN/control_closed40.py',
+ Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_q11_native_job_registration/register_job.py'),
+ Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_q11_pending_ledger_root/complete_branch.py'),
+ Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_endpoint_geometry/projective_application/job_registration/register.py')]:
+ r,b=read(p);ast.parse(b);old_sources.append(dict(reference=r,complete_UTF8=b.decode(),
+ qualification='Whole old SourceTEXT only; no old function/runtime verdict or executable helper imported.'))
+inverse=put(N/'whole_Source_creation_and_lineage_inverse.json',dict(
+ schema='F004_CLOSED40_WHOLE_SOURCE_CREATION_LINEAGE_INVERSE_V1',author=AUTHOR,Root_authority=False,
+ creations=[dict(path=r['path'],before_present=False,before_bytes=None,after=r,complete_after_UTF8=b.decode(),
+ inverse='Return only this newly authored temporary Source path to absent; no S/Git action is authorized or performed.')
+ for r,b in [(source,sraw),(harness,hraw)]],
+ complete_prior_SourceTEXT=old_sources,all_old_Source_files_unchanged=True,
+ new_definitions_are_distinct_author_editions=True,Source_or_controls_activated=False,
+ qualification='Creation-only whole-byte inverses for new files. Prior complete bodies retained for review of lineage/conventions; '
+ 'no literal old-code identity or old Source verdict transfer is asserted.'))
+fresh_ref,fresh=doc(B/'fresh_post_CP11262_DATA/handoff.json')
+plan_ref,plan=doc(fresh['plan_with_fresh_observations_REQUIRES_ROOT_BINDING']['path'])
+proof_ref,proof=doc(B/'resolved_full40_proof_API_index.json')
+peer_ref,peer=doc('/private/tmp/f004_closed40_data_peer_DATA/v3b_expanded_alias_DATA_component.json')
+assert peer['method']==source and peer['blockers']==[]and peer['patch_counts']==dict(CURRENT=15,STATUS=14,total=29)
+q8_ref,q8=doc('/private/tmp/f004_closed40_data_peer_DATA/q8_existing_authority_component.json')
+assert q8_ref['sha256']=='fc2f14a910567cada1e11c4b810fbd80071d53431dd4f726100ff9ba9a2bacb3'and q8['blockers']==[]
+contract=peer['q8_Root_import_contract']['required_exact_future_Root_import']
+q8_template=dict(contract,schema='ROOT_F004_Q8_COMPLETE_LEDGER_SUMMARY_IMPORT_V1',author=AUTHOR,root=None,accepted=False,
+ independent_exact_metadata_component=q8_ref,scientific_replays=0,whole_Original_credit=0,
+ qualification='Exact old registered686/0 q8 context import for summary reconciliation only. Named/model/action/catalogue and '
+ 'original H!=G scope are retained as in the independent component; no assumed mark membership, H<G proof or arithmetic replay.')
+q8_import=put(V/'Root_q8_summary_import_UNBOUND.json',q8_template)
+plan=copy.deepcopy(plan);plan['authored_unselected_Source']=source;plan['Source_edition']='v3b'
+plan['Root_q8_summary_import']=None;plan['unselected_q8_summary_import_template']=q8_import
+plan['expanded_29_path_DATA_component']=peer_ref
+plan['guard_and_recorder_return_reserve']=dict(bytes=None,paths=None,read_bytes=None,source_bootstrap_bytes=None)
+new_plan=put(V/'live_plan_FRESH_CP11262_V3B_ROOT_BINDING_OWED.json',plan)
+fixed={tag:fresh['immutable_author_whole_snapshots'][tag]for tag in ['CURRENT','STATUS','PROGRESS']}
+fixed.update(closure_index=proof_ref,old_pending=plan['old_pending'],new_pending=plan['proposed_pending_DATA'],
+ F009_postreview=plan['Root_postchecked_F009_context']['Root_postreview'],q8_summary_import=q8_import)
+seed_ref,_=doc(N/'synthetic_fixture_seeds.json');fixed['fixture_seeds']=seed_ref
+authority={r['path']:r for r in proof['Root_authorities'].values()}
+row23=next(r for r in proof['rows']if r['original_job']==[23,4]);authority[row23['current_per_job_selector']['path']]=row23['current_per_job_selector']
+for key in ['matching_old_commit','accepted_application','actual_registration_capture','matching_guard']:
+ r=contract[key];authority[r['path']]=r
+for r in [contract['whole_registered_ledger']['registration'],contract['whole_registered_ledger']['pending_file']]:authority[r['path']]=r
+for r in fixed.values():read(r['path'],r)
+for r in authority.values():read(r['path'],r)
+for r in proof['metadata_packet_refs']:read(r['path'],r)
+read_view=put(N/'control_read_view_manifest.json',dict(
+ schema='F004_CLOSED40_PRIVATE_CONTROL_READ_VIEW_V1',author=AUTHOR,Root_authority=False,
+ adapter_Source=source,harness=harness,complete_Source_UTF8_read_view=full_view,whole_Source_inverse=inverse,
+ activated_projection=projection,fixed_inputs=fixed,old_Root_authorities_and_job23_selector=list(authority.values()),
+ extra_raw_packet_inputs=proof['metadata_packet_refs'],called_helpers=hl['CALLED'],case_names=hl['CASE_NAMES'],
+ fixture_graph_bound=len(authority)+len(fixed)+len(proof['metadata_packet_refs'])+32,
+ synthetic_root_and_API_fields_are_only_fixture_DATA=True,actual_approval_or_execution=None))
+control_release=put(N/'Root_control_release_UNBOUND.json',dict(
+ schema='ROOT_F004_CLOSED40_PRIVATE_CONTROL_RELEASE_V1',author=AUTHOR,root=None,released=False,controls_completed=False,
+ harness=harness,adapter_Source=source,limits=dict(file_bytes=4*2**20,read_bytes=64*2**20,new_bytes=16*2**20,
+ paths=512,rss_bytes=256*2**20,timeout_seconds=125,internal_seconds=115),
+ case_names=hl['CASE_NAMES'],called_helpers=hl['CALLED'],all_S_W_Git_gate_writes_forbidden=True,
+ read_view_manifest=read_view,independent_Source_review=None,independent_Source_actual_execution=None,
+ runtime_admission=None,runtime_inputs=[],external_reserve=dict(bytes=None,paths=None,read_bytes=None,source_bootstrap_bytes=None),
+ private_run_directory=None))
+(N/'synthetic_runs').mkdir()
+static=put(N/'static_UNRUN_control_roster.json',dict(
+ schema='F004_CLOSED40_UNRUN_EXECUTABLE_CONTROL_ROSTER_V1',author=AUTHOR,Root_authority=False,
+ harness=harness,adapter_Source=source,case_names=hl['CASE_NAMES'],called_helpers=hl['CALLED'],
+ executed_cases=0,Source_or_controls_activated=False,Root_release=False,
+ modeled_only_cases=['orphan_stage_model','lock_inode_model','last_CAS_mutation_model',
+ 'sequential_second_rename_interruption_model','explicit_recovery_whole_before_inverse_model'],
+ admission_case='Only exact first two Source.run statements are compiled under explicit owned prefix name. Full run/main never compile.',
+ semantic_mutation_strategy='Recompute modified fixture descriptors and iteratively rebind all acyclic parent descriptors before semantic calls. '
+ 'Only explicit last-CAS/Root-before identity tests retain stale descriptors intentionally.',
+ q8_summary_positive_and_negative_controls=True,
+ transaction_os_rename_fsync_or_crash_test=False,fixture_constants_and_memory_IO_explicit=True))
+limits=dict(Source_namespace_bytes=65535,file_bytes=4*2**20,read_bytes=64*2**20,new_bytes=16*2**20,
+ paths=512,rss_bytes=256*2**20,external_seconds=125,internal_seconds=115)
+invoice=put(V/'Source_control_whole_IO_invoice_UNBOUND.json',dict(
+ schema='F004_CLOSED40_V3B_SOURCE_CONTROL_WHOLE_IO_INVOICE_V1',author=AUTHOR,Root_authority=False,
+ adapter_Source=source,harness=harness,activated_namespace=projection,per_call_limits=limits,
+ actual_Source_and_control_activations=0,actual_controls=0,actual_Root_activation_invoice=None,
+ author_DATA_Source=author_source,author_actual_explicit_whole_open_bytes=opens,
+ author_unique_body_paths=len(reads),author_unique_body_bytes=sum(r['bytes']for r in reads.values()),
+ author_whole_read_rows=sorted(reads.values(),key=lambda r:r['path']),
+ author_tool_and_runtime_bootstrap_not_in_body_read_table=True,
+ control_fixed_metadata_unique_bytes=sum(r['bytes']for r in fixed.values())+sum(r['bytes']for r in authority.values())
+     +sum(r['bytes']for r in proof['metadata_packet_refs']),
+ control_bootstrap_formula='Harness Python initial Source bytes + explicit whole harness pin + whole adapter Source read + '
+ 'release/peer/genuine API/runtime/read-view docs + each runtime origin loader/cache bootstrap separately from whole pins + '
+ 'all fixed DATA/Rootmetadata/packet reads + old/new pending second opens + post-control whole adapter recheck + actual wrapper reserve.',
+ control_exact_known_repeated_roles=dict(harness_whole_reads=2,adapter_whole_reads=2,
+ pending_whole_body_reads_each=2,F009_postreview_whole_reads=2),
+ control_loop_scope='22 finite cases; descriptor-rebinding graph iterates at most len(mock_rows)+1; each pass visits '
+ 'only declared in-memory fixture rows. Orphan model visits two paths times7 suffixes. Actual512-path rejection seeds512 '
+ 'memory labels and touches only one paid small private fixture file. Complete Source AST inverse visits every original top definition.',
+ control_new_output_scope='Fresh private run directory and six fixture directory paths, one3-byte fixture and one full report<=65536 '
+ 'plus stdout/genuine API/guard/recorder actual outputs and their declared read/Source-bootstrap reserves. No actual state stages/renames.',
+ registration_bootstrap_formula='Python initial39928-byte Source is charged separately from explicit whole self pin. Runtime '
+ 'origins are whole pinned; all caller/guard/recorder Source/bootstrap/read roles require concrete actual wrapper read_bytes and '
+ 'source_bootstrap_bytes in the same64MiB bank. Exact actual runtime rows/reserves remain UNBOUND.',
+ registration_new_bytes_formula='Exact whole before CURRENT+STATUS archives +complete planned pair +typed40 record+pending1196 '
+ '+full29-path inverse+PREPARED +both simultaneous stages +commit<=65536 +actual wrapper reserve <=16MiB.',
+ registration_paths_formula='All direct sources/plans/imports/runtime/current-before/protected paths +Rootlock+all known stage '
+ 'orphan probes +whole outputs/stages/commit +actual wrapper paths <=512. Prior872 closure metadata paths are four '
+ 'separately accepted bounded Root components, not a hidden single-call reread.',
+ owed_actual_bindings=['Root installed method','distinct Source/control peer','Root actual control release/runtime guard/origins/wrappers',
+ 'genuine actual control return and Root acceptance','Root40closureimport','Rootq8summaryimport','exact acyclic whole planned states',
+ 'fresh locked BOTH-CAS and protected-progress checks'],
+ actual_executed_forecast=None,actual_CAS=None,Original_manuscript_measurement_Lean_credit=0))
+out=put(V/'handoff.json',dict(
+ schema='F004_CLOSED40_V3B_EXECUTABLE_UNRUN_CONTROL_AND_METADATA_HANDOFF_V1',author=AUTHOR,Root_authority=False,
+ status='FROZEN_SOURCE_EXECUTABLE_PRIVATE_CONTROLS_AND_DATA_ALL_ACTIVATION_UNRUN',
+ selected_adapter_Source=source,selected_harness=harness,full_UTF8_AST_read_view=full_view,whole_Source_creation_inverse=inverse,
+ private_control_read_view_manifest=read_view,unrun_executable_control_roster=static,Root_control_release_false_template=control_release,
+ live_plan_with_fresh_CP11262_observations_ROOT_BINDING_OWED=new_plan,q8_Root_import_false_template=q8_import,
+ expanded29_path_DATA_peer=peer_ref,whole_symbolic_pair=peer['full_symbolic_pair'],whole_symbolic_inverse=peer['complete_typed_patch_inverse'],
+ full40_proof_API_index=proof_ref,prior40_independent_DATA_component=peer['prior40_DATA_component'],
+ existing_q8_metadata_component=q8_ref,Source_and_control_whole_invoice=invoice,
+ current_observations=fresh['actual_live_observations'],full_before_archives=fresh['immutable_author_whole_snapshots'],
+ Source_independent_final_peer=None,actual_control_release=None,actual_controls=None,actual_Root_Source_release=None,
+ actual_runtime=None,actual_whole_bound_planned_states=None,actual_CAS=None,actual_registration=None,
+ proposed_only=dict(required=272,closed=115,pending=157,rank4_pending=157,rank5_pending=0,q8_registered=686),
+ actual_represented_Source_helper_control_scientific_activations=0,S_W_Git_gate_lock_or_selector_writes=0,
+ remaining=['F004','F009','L026'],intake_complete=102,intake_total=105,stop_after_all105_before_measurement_Lean=True))
+print(json.dumps(dict(handoff=out,Source=source,harness=harness,read_view=read_view,inverse=inverse,invoice=invoice,
+ activated_namespace_bytes=64810),sort_keys=True))

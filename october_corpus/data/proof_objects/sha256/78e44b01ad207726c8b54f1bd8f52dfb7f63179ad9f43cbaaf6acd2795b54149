@@ -1,0 +1,204 @@
+"""Independent metadata-only exact typed bank/CAS/provenance audit. No replay."""
+from pathlib import Path
+import datetime,hashlib,json,os,shlex,stat
+E=Path('/private/tmp/l026_free_0096_0111_execution')
+R=Path('/private/tmp/l026_free_0096_0111_resume')
+O=Path('/private/tmp/l026_free_0096_0111_committed_peer_DATA')
+opened={}
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def read(p,expected=None):
+ p=Path(p);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read();e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat());r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if expected is not None:assert r==expected,(r,expected)
+ assert opened.get(str(p),r)==r;opened[str(p)]=r;return b,r
+def doc(p,expected=None):b,r=read(p,expected);return json.loads(b),r
+def rd(r):return doc(r['path'],r)[0]
+def sdk(r):
+ x=rd(r);f=x['all_genuine_api_frames'];a=x['actual_tool']
+ assert x['actor']==x['root']=='/root'and f[0]==x['full_initial_tool_return']and f[-1]==x['full_tool_return']
+ assert a['initial_chunk']==f[0]['chunk_id']and a['terminal_chunk']==f[-1]['chunk_id']
+ assert a['exit_code']==f[-1]['exit_code']==0 and 'session_id'not in f[-1]
+ assert x['issued_argv']==x['child_argv']==shlex.split(x['issued_command'])==shlex.split(x['canonical_argv_command'])
+ assert x['issued_tool_arguments']['cmd']==x['issued_command']
+ if a['synchronous']:assert len(f)==1 and a['handle']is None
+ else:assert all(q.get('session_id')==a['handle']for q in f[:-1])
+ return x,json.loads(''.join(v.get('output','')for v in f))
+def guarded(capref,guardref,rss,seconds):
+ c,e=sdk(capref);g=rd(guardref)
+ assert e==dict(status='PASS',stop='RETURNED',receipt=guardref['path'])
+ assert g['status']=='PASS'and g['stop']=='RETURNED'and g['returncode']==0 and g['error']is None
+ assert g['cleanup']['remaining']==g['cleanup']['errors']==[]and g['logs']['stderr']==0
+ assert g['limits']['total_rss']==rss and g['limits']['wall_seconds']==seconds
+ assert g['limits']['admit_ram']==4*2**30 and g['limits']['admit_disk']==10*2**30
+ assert g['limits']['ram_floor']==3*2**30 and g['limits']['disk_floor']==8*2**30
+ assert c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']
+ assert g['peaks']['total_rss']<rss and g['seconds']<seconds
+ return c,g
+def filepin(p):return read(p)[1]
+
+postpath=R/'Root_post_append_review.json'
+post,postpin=doc(postpath,dict(path=str(postpath),bytes=1733,sha256='d9d2a2f9f18c35d9147c94c1cc11c7bcfa817a8833bce504dcbb6e1ef272730e'))
+assert post['root']=='/root'and post['status']=='SUPPORTED'and post['blockers']==[]
+cur,curpin=doc(post['new_CURRENT']['path'],post['new_CURRENT'])
+assert curpin['sha256']=='6d8ff1026a9835bd6882ba27e9a4752959b747b7faa0d29aa673443ca1f60e48'
+assert cur['root']=='/root'and cur['adopted']is True and cur['schema']=='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1'
+receipt=rd(cur['ledger_receipt']);bank,bankpin=read(cur['status_bank']['path'],cur['status_bank'])
+assert cur['ledger_receipt']==post['ledger_receipt']and cur['status_bank']==post['status_bank']
+assert receipt['root']=='/root'and receipt['adopted']is True and receipt['Root_adoption_owed']is False
+assert receipt['status_bank']==cur['status_bank']and receipt['scope_digest']==cur['scope_digest']
+batch=rd(receipt['typed_new_batch']);batchpin=receipt['typed_new_batch']
+assert receipt['typed_new_batch']==receipt['proof_provenance']['batch']and batch['root']=='/root'and batch['adopted']is True
+release,releasepin=doc(R/'actual_append_release_output/Root_append_release.json')
+assert releasepin['sha256']=='5dcc558346e4774130ffc1d4d41c1a163d723d45a9176f14ee57b99f9800a734'
+assert release['root']=='/root'and release['status']=='SUPPORTED'and release['blockers']==[]
+assert release['typed_new_facts_and_strict_closure_supported']is release['metadata_publication_authorized']is True
+assert release['old_strict_IP0_unchanged']is release['old_proof_DAG_opaque_retained']is True
+plan=rd(release['plan']);planpin=release['plan'];assert planpin['bytes']==38291 and plan['mode']=='append'
+assert plan['program']==release['program']==receipt['writer']['program']and plan['program']['sha256'].startswith('ba9365')
+assert receipt['writer']==batch['writer']and receipt['writer']['plan']==planpin and receipt['writer']['Root_release']==releasepin
+assert plan['scope_digest']==receipt['scope_digest']==batch['scope_digest']
+assert plan['original_selector']==receipt['original_selector']==batch['original_selector']
+assert batch['new_facts']==plan['facts']and batch['previous_ledger']==receipt['previous_ledger']==plan['previous_receipt']
+oldreceipt=rd(plan['previous_receipt']);oldbank,_=read(plan['previous_bank']['path'],plan['previous_bank'])
+assert len(oldbank)==len(bank)==28908 and set(oldbank)|set(bank)<=set([0,1,2,6])
+expected={96:1,97:6,98:6,99:6,100:1,108:1,109:1}
+changes=[i for i,(a,b)in enumerate(zip(oldbank,bank))if a!=b]
+assert changes==sorted(expected)==post['exact_changed_indices']
+assert all(oldbank[i]==0 and bank[i]==value for i,value in expected.items())
+predicted=bytearray(oldbank)
+for i,value in expected.items():predicted[i]=value
+assert bytes(predicted)==bank
+counts=lambda b:dict(subset_NEG=b.count(1),GEN=b.count(2)+b.count(6),separate_IP=b.count(6),unpaid=b.count(0))
+assert counts(oldbank)==oldreceipt['counts']==dict(subset_NEG=68,GEN=27,separate_IP=27,unpaid=28813)
+assert counts(bank)==receipt['counts']==post['counts']==dict(subset_NEG=72,GEN=30,separate_IP=30,unpaid=28806)
+assert bank[53]==oldbank[53]==0
+misses=[i for i in range(96,112)if bank[i]==0]
+assert misses==post['selected_misses_unpaid']==[101,102,103,104,105,106,107,110,111]
+assert receipt['global_NEG']==17688+72 and receipt['global_NEG_mass']==6884658+1024*72 and receipt['unpaid_mass']==1024*28806
+assert len(plan['facts'])==7 and len(plan['proofs'])==4
+assert [f['free_index']for f in plan['facts']]==changes
+for fact,change in zip(plan['facts'],batch['exact_monotone_changes']):
+ assert type(fact['free_index'])is int and type(fact['proof'])is int and fact['kind']in ['NEG','GEN_IP']
+ assert change==dict(fact,before=0,after=expected[fact['free_index']])
+
+# Exact actual forecast hashes are compared to every complete written file.
+runs={};caps={}
+for mode in ['forecast','write']:
+ cap=filepin(E/('append_'+mode+'_0_actual_capture.json'));guard=filepin(E/('append_'+mode+'_0/receipt.json'))
+ c,g=guarded(cap,guard,256*2**20,125)
+ stdout,stdoutpin=doc(E/('append_'+mode+'_0/stdout.log'));assert read(E/('append_'+mode+'_0/stderr.log'))[0]==b''
+ assert stdout['writer']==receipt['writer']
+ assert '--plan'in g['command']and planpin['path']in g['command']and planpin['sha256']in g['command']
+ assert releasepin['path']in g['command']and releasepin['sha256']in g['command']
+ assert ('--write'in g['command'])is(mode=='write')
+ runs[mode]=dict(capture=cap,guard=guard,stdout=stdoutpin,command=g['command'],seconds=g['seconds'],sampled_peak_RSS=g['peaks']['total_rss'])
+ caps[mode]=stdout
+forecast,written=caps['forecast'],caps['write']
+assert forecast['status']=='BOUNDED_TYPED_LEDGER_METADATA_FORECAST_ONLY'and written['status']=='ROOT_PUBLISHED_BOUNDED_TYPED_LEDGER'
+assert forecast['new_CURRENT']==written['current']==curpin
+assert forecast['new_outputs']==[written['status_bank'],written['ledger_receipt'],written['batch_acceptance']]
+for r in forecast['new_outputs']+[forecast['new_CURRENT']]:read(r['path'],r)
+assert written['status_bank']==bankpin and written['ledger_receipt']==cur['ledger_receipt']and written['batch_acceptance']==batchpin
+assert forecast['new_bytes']==sum(r['bytes']for r in forecast['new_outputs']+[curpin])==49963
+assert forecast['counts']==written['counts']==counts(bank)
+assert written['physical_reads']==forecast['complete_read_upper']==2292347
+assert written['actual_paths']<=forecast['complete_path_upper']==95
+assert forecast['science_calls']==written['scientific_calls']==written['Original_credit']==0
+forecast_review,forecast_review_pin=doc(R/'Root_append_forecast_review.json')
+assert forecast_review['root']=='/root'and forecast_review['status']=='SUPPORTED'and forecast_review['blockers']==[]
+assert forecast_review['expected_new_CURRENT_sha256']==curpin['sha256']and forecast_review['forecast_capture']==runs['forecast']['capture']
+
+# Durable CURRENT predecessor: exactly one matching original role and one whole retained alias.
+prespin=release['previous_CURRENT_durable_preservation'];pres=rd(prespin)
+assert pres['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'and pres['root']=='/root'and pres['scientific_calls']==0
+matches=[row for row in pres['files']if row['original']==plan['expected_current']]
+assert len(matches)==1
+oldalias=matches[0]['retained'];oldraw,_=read(oldalias['path'],oldalias)
+assert oldalias==release['previous_CURRENT_retained_alias']==post['previous_CURRENT_retained']
+assert oldalias['bytes']==plan['expected_current']['bytes']==763 and oldalias['sha256']==plan['expected_current']['sha256']=='47eb2a7ab13a5c60e6b4c6e1c71df99c3a4dba26036a71ee4ce66755d42af15c'
+oldcurrent=json.loads(oldraw);assert oldcurrent['ledger_receipt']==plan['previous_receipt']and oldcurrent['status_bank']==plan['previous_bank']
+assert cur['scope_digest']==oldcurrent['scope_digest']and cur['root']==oldcurrent['root']and cur['adopted']==oldcurrent['adopted']
+for row in pres['files']:
+ read(row['retained']['path'],row['retained'])
+ if row['original']!=plan['expected_current']:read(row['original']['path'],row['original'])
+copy=release['previous_CURRENT_preservation_execution'];cc,cg=guarded(copy['capture'],copy['guard'],256*2**20,125)
+copyout=rd(copy['stdout']);assert copyout['status']=='ROOT_CLOSED_METADATA_RETAINED'and copyout['preservation']==prespin
+copyplan=rd(pres['source_plan']);assert copyplan['destination']==str(Path(prespin['path']).parent)
+assert cg['command'][-1]==prespin['path']and pres['source_plan']['path']in cg['command']and pres['source_plan']['sha256']in cg['command']
+assert cg['command'][4].endswith('retain_closed_files_stable_stat.py')and '66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'in cg['command']
+
+# Root's actual metadata release was returned by the unchanged callback Source under a closed guard.
+approval_cap=filepin(R/'actual_append_release_capture.json');approval_guard=filepin(R/'actual_append_release_guard/receipt.json')
+ac,ag=guarded(approval_cap,approval_guard,256*2**20,125)
+approval_out,approval_stdout_pin=doc(R/'actual_append_release_guard/stdout.log')
+assert approval_out['release']==releasepin and approval_out['status']=='ROOT_CALLBACK_METADATA_CHECKED'
+assert '68afcce263221883a4caf498e9336cf78bb7c155caee23f84fee8d87c052d40f'in ag['command']
+
+# Finite proof-role closures and retained aliases only; no recursive scientific Source graph sweep.
+proof_summaries=[];manifests={}
+for q in plan['proofs']:
+ docs={k:rd(q[k])for k in ['result','plan','gate','review']}
+ for k in ['program','capture','outer','stdout','stderr']:read(q[k]['path'],q[k])
+ pc,pg=guarded(q['capture'],q['outer'],128*2**20,150)
+ terminal=rd(q['stdout']);assert read(q['stderr']['path'],q['stderr'])[0]==b''
+ qr,qp,qg,qv=[docs[k]for k in ['result','plan','gate','review']]
+ assert qr['program']==qp['program']==qg['program']==qv['program']==q['program']
+ assert qr['plan']==qg['plan']==qv['plan']==q['plan']and qg['Root_code_math_review']==q['review']
+ assert qg['root']==qv['root']=='/root'and qg['adopted']is True and qv['status']=='SUPPORTED'and qv['blockers']==[]
+ assert qg['control_report']==q['support']['control_report']
+ for r in q['support'].values():read(r['path'],r)
+ control=rd(q['support']['control_report']);assert control['status']=='PASS'and control['original_case_calls']==0 and control['program']==q['support']['control_program']
+ if q['kind']=='NEG':
+  assert qr['status']=='SUPPLIED_CHECK_COMPLETE'and qr['mode']=='check'and qr['supplier_activated']is qr['strict_check_activates_supplier']is False
+  assert qr['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0
+  assert terminal['outputs']['result.json']==q['result']
+  verified=qr['verified_nongeneration_records'];assert all(z['checked_positive_rotation_edges']==2*z['points']and 0<z['points']<3510 for z in verified)
+ else:
+  assert qr['status']=='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'and qr['supplier_or_search_calls']==0
+  assert qr['actual_direct_signed_word_and_every_closing_edge_checked']is True and qr['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0
+  assert terminal['output']==q['result'];verified=qr['verified_generation_records']
+  assert qr['Root_source_gate']==q['gate']and qr['Root_code_math_review']==q['review']
+ for fact in plan['facts']:
+  if plan['proofs'][fact['proof']]is q:
+   assert q['kind']==('NEG'if fact['kind']=='NEG'else'GEN')
+   assert any(all(row[k]==fact[k]for k in ['free_index','owner','witness_row_sha256'])for row in verified)
+ for mr in q['retentions']:
+  if mr['path']not in manifests:manifests[mr['path']]=rd(mr)
+  m=manifests[mr['path']];assert m['root']=='/root'and m['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'
+  for r in [q[k]for k in ['program','result','plan','gate','review','capture','outer','stdout','stderr']]+list(q['support'].values()):
+   aliases=[row['retained']for row in m['files']if row['original']==r];assert aliases
+   original=read(r['path'],r)[0]
+   for alias in aliases:assert read(alias['path'],alias)[0]==original
+ proof_summaries.append(dict(kind=q['kind'],program=q['program'],plan=q['plan'],result=q['result'],actual_capture=q['capture'],guard=q['outer'],verified_indices=[r['free_index']for r in verified],retentions=q['retentions']))
+assert plan['proofs'][0]['result']['sha256']=='685ec7360abeb61a5fccdc8887f53029d09d7d74cb276b592d1435198b4b0273'
+assert release['separate_IP_theorem_application_supported']is release['same_original_G_member_normality_bridge_middle_involution_and_simpleG_checked']is True
+assert plan['separate_IP']['theorem']['sha256']=='0b940e5a217a5e54e91fd13617fd822dd4daebfac6cbdacbd17e0950070c9216'
+assert plan['separate_IP']['review']['sha256']=='b7610c401be209df8425a017aa71d61846875544f67919e48269312a37139ef3'
+read(plan['separate_IP']['theorem']['path'],plan['separate_IP']['theorem']);assert rd(plan['separate_IP']['review'])['blockers']==[]
+assert batch['strict_IP0_unchanged']is True and batch['separate_existing_rank3_IP']==plan['separate_IP']
+assert batch['Original_conjecture_Lean_or_measurement_credit']==0 and batch['Root_adoption_owed']is False
+
+# End-of-audit whole current recheck; further updates would require a new scope.
+read(curpin['path'],curpin);read(bankpin['path'],bankpin)
+report=dict(schema='INDEPENDENT_L026_COMMITTED_0096_0111_SEVEN_FACT_METADATA_REVIEW_V1',reviewer='/root/reader_postcheck',
+ observed_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),status='SUPPORTED_COMMITTED_SEVEN_TYPED_FACTS_METADATA',blockers=[],
+ Root_postcheck=postpin,current=curpin,ledger_receipt=cur['ledger_receipt'],status_bank=bankpin,batch_acceptance=batchpin,
+ append_plan=planpin,Root_release=releasepin,actual_release_execution=dict(capture=approval_cap,guard=approval_guard,stdout=approval_stdout_pin),
+ forecast_and_write=runs,Root_forecast_review=forecast_review_pin,forecast_exactly_matches_all_four_written_objects=True,
+ exact_changed_indices=changes,typed_changes=batch['exact_monotone_changes'],all_other_28901_bank_bytes_literal=True,
+ old_counts=counts(oldbank),new_counts=counts(bank),selected_unpaid_indices=misses,earlier_case53_unpaid=True,
+ previous_CURRENT_durable_preservation=prespin,previous_CURRENT_single_exact_retained_alias=oldalias,
+ previous_CURRENT_copy_execution=copy,previous_CURRENT_whole_bytes_and_original_role_join=True,
+ finite_actual_strict_proof_closures=proof_summaries,science_capsules=[dict(path=p,bytes=len(can(m)),sha256=hashlib.sha256(can(m)).hexdigest())for p,m in manifests.items()],
+ unchanged_strict_GEN_IP_credit_zero=True,separate_existing_IP_theorem_and_Root_application_joined=True,
+ first_completed_strict96_reused_without_replay=True,scientific_replays_or_Source_control_codec_activations_by_reviewer=0,
+ S_W_Git_gate_ledger_writes_by_reviewer=0,new_Original_or_whole_census_credit_by_reviewer=0,
+ whole_checked_raw_paths=len(opened),whole_checked_raw_bytes=sum(r['bytes']for r in opened.values()),whole_checked_pins=[opened[p]for p in sorted(opened)],
+ qualification='Independent finite metadata/whole-byte audit of the Root-committed seven-row update. Exact0→1 NEG rows96,100,108,109 and0→6 GEN+separateIP rows97,98,99 reconstruct the full new28908-byte bank; every other byte remains literal. Actual metadata forecast/write, Root release and predecessor copy guards/SDK/argv/hashes and retained proof-role aliases are joined. Four authenticated strict result records supply the mathematical outcomes; no point, word, cycle, scientific Source, archive or codec was replayed. Broader Source/math/classification/member/model/fullAut/Out2/twofibre/H=B and old proof DAG components retain their original qualified scopes. The GEN verifier itself still gives IP0; separate0b940/b761 and fresh Root application supply the typed GEN_IP attribution. Selected misses and case53 remain unpaid; no whole Original completion follows. Guard cleanup covers known birth-pinned processes only, not global absence.')
+O.mkdir(exist_ok=True);rp=O/'independent_review.json'
+with rp.open('xb')as f:f.write(can(report))
+rr=read(rp)[1];sp=O/'seal.json'
+with sp.open('xb')as f:f.write(can(dict(schema='INDEPENDENT_COMMITTED_TYPED_LEDGER_REVIEW_SHA256_SEAL_V1',report=rr,current=curpin,blockers=[])))
+print(json.dumps(dict(report=rr,seal=read(sp)[1],status=report['status'],counts=counts(bank),changed=changes,blockers=[])))

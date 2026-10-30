@@ -1,0 +1,252 @@
+"""Prepare finite byte-copy selection DATA; never import or run represented Sources."""
+import base64
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+
+HERE = Path('/private/tmp/f009_cp11262_registration_retention_DATA')
+S = Path('/Users/sasha/medusa/research/leemans')
+BASE = Path('/private/tmp/f009_continuation/from_11216/native_DATA/checkpoint_binding_DATA')
+DEST = S / 'maintenance/intake/f009_census_continuation/from11216/shared_pin_checkpoint_11262/registration_metadata/evidence'
+METHOD = Path('/private/tmp/intake_artifacts/retain_closed_files_stable_stat.py')
+CREATED = []
+READ_ROLES = {}
+MIB = 2**20
+
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode()
+
+
+def ref(path, raw):
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def whole(path, expected=None):
+    path = Path(path)
+    before = path.lstat()
+    need(path.is_absolute() and path.resolve(strict=True) == path and stat.S_ISREG(before.st_mode)
+         and before.st_nlink == 1 and before.st_size <= 4 * MIB, 'ordinary bounded whole metadata file')
+    raw = path.read_bytes()
+    sig = lambda st: (st.st_dev, st.st_ino, st.st_mode, st.st_nlink, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+    need(sig(before) == sig(path.lstat()) and len(raw) == before.st_size, 'stable complete bytes')
+    result = ref(path, raw)
+    if expected is not None:
+        need(result == expected, 'exact selected descriptor')
+    READ_ROLES[str(path)] = result
+    return raw, result
+
+
+def write(name, value):
+    path = HERE / name
+    need(path.is_relative_to(HERE) and not os.path.lexists(path), 'fresh private DATA output')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    need(path.parent.resolve() == path.parent, 'canonical private output ancestry')
+    raw = can(value)
+    need(len(raw) <= 4 * MIB, 'bounded private DATA output')
+    with path.open('xb') as f:
+        need(f.write(raw) == len(raw), 'whole exclusive DATA write')
+        f.flush()
+        os.fsync(f.fileno())
+    result = ref(path, raw)
+    CREATED.append(dict(path=str(path), before=dict(exists=False),
+                        after=dict(ref=result, whole_body_base64=base64.b64encode(raw).decode())))
+    return result, raw
+
+
+def tree(root):
+    root = Path(root)
+    need(root.resolve() == root and root.is_dir(), 'canonical finite metadata directory')
+    files = sorted(path for path in root.rglob('*') if path.is_file())
+    need(len(files) <= 150 and not any(path.is_symlink() for path in root.rglob('*')), 'finite ordinary metadata tree')
+    return files
+
+
+def selected(paths, prefix, root):
+    rows = []
+    for path in paths:
+        _, pin = whole(path)
+        rows.append(dict(original=pin, local_path=str(Path(prefix) / path.relative_to(root))))
+    return rows
+
+
+need(HERE.resolve() == HERE and not DEST.exists(), 'private preparation with absent append-only S destination')
+method_raw, method_ref = whole(METHOD)
+need(method_ref['bytes'] == 4874 and method_ref['sha256'] == '66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0', 'unchanged owned667 method')
+own_raw, own_ref = whole(Path(__file__))
+borrowed_paths = [
+    S / 'maintenance/intake/f009_census_continuation/from11216/shared_pin_checkpoint_11262/evidence/preservation.json',
+    S / 'maintenance/intake/f009_census_continuation/from11216/shared_pin_reader/collected_owner_prelaunch_evidence/part1/preservation.json']
+borrowed = [whole(path)[1] for path in borrowed_paths]
+need(borrowed[0]['sha256'] == 'af39e78b868396e6c2d4cd371d9703c7518baa872f616313de74a33bf1872a99', 'canonical CP11262 preservation closure')
+checkpoint = S / 'maintenance/intake/f009_census_continuation/from11216/standalone_execution/checkpoint_11262'
+checkpoint_paths = tree(checkpoint)
+need(len(checkpoint_paths) == 16, 'exact complete closed canonical checkpoint directory')
+progress_images = {'reviewed_intake_progress.before.json', 'reviewed_intake_progress.next.json'}
+groups = [
+    selected([path for path in checkpoint_paths if path.name not in progress_images], 'checkpoint', checkpoint),
+    selected([path for path in checkpoint_paths if path.name in progress_images], 'checkpoint', checkpoint),
+    selected(tree(BASE / 'ready_actual_peer_DATA'), 'registration_binding', BASE / 'ready_actual_peer_DATA')]
+additional = [
+    ('writer_sources_and_controls', Path('/private/tmp/f009_reader_raw_job_binding')),
+    ('emitted_plans', BASE / 'bound_plans_actual_peer_ready'),
+    ('independent_postregistration_peer', Path('/private/tmp/f009_cp11262_postregistration_peer_DATA')),
+    ('independent_reader_revalidation', Path('/private/tmp/f009_collected_reader_postcheck_DATA')),
+    ('independent_binding_DATA_peer', BASE / 'independent_review')]
+for name, root in additional:
+    groups[1].extend(selected(tree(root), name, root))
+parent_names = ['FINAL_handoff.json', 'binding_spec_actual_reader_11262_ready.json',
+                'whole_binding_spec_inverse.json', 'read_write_allocation_invoice.json',
+                'Root_workflow.json', 'current_context_before_DATA.json', 'author_QA.json',
+                'author_DATA.py', 'Root_checkpoint_acceptance_TEMPLATE_FALSE_v2.json',
+                'Root_snapshot_adoption_TEMPLATE_FALSE_v2.json', 'Root_writer_release_TEMPLATE_FALSE.json']
+groups[2].extend(selected([BASE / name for name in parent_names], 'prior_binding_DATA', BASE))
+groups[2].append(dict(original=own_ref, local_path='selection_method/prepare_retention_DATA.py'))
+all_originals = [row['original']['path'] for group in groups for row in group]
+need(len(set(all_originals)) == len(all_originals), 'one exact copy selection per original path')
+
+
+def build_packet(number, rows, title):
+    destination = DEST / ('part%02d' % number)
+    need(not destination.exists(), 'fresh append-only destination part')
+    rows = [dict(original=row['original'], retained=dict(row['original'], path=str(destination / 'files' / row['local_path'])))
+            for row in rows]
+    payload_bytes = sum(row['original']['bytes'] for row in rows)
+    need(len(rows) <= 150 and payload_bytes <= 8 * MIB, '150 originals / 8MiB original payload per selection')
+    plan = dict(schema='F009_CP11262_CLOSED_REGISTRATION_METADATA_RETENTION_DATA_V1',
+                author='/root/status_readme_audit', title=title, destination=str(destination),
+                Root_authority=False, Root_authority_granted=False, execution_authority_granted=False,
+                scientific_calls=0, checkpoint_sequence=11262, files=rows, borrowed_closures=borrowed,
+                qualification='Exact closed metadata bytes only. The canonical af39 manifest and generic667 prelaunch map are borrowed whole as data with their distinct scopes; no scientific payload graph is expanded, replayed or claimed freshly hashed. Root alone may activate unchanged667 after source, selection, resource and destination review.')
+    plan_ref, plan_raw = write('plans/part%02d.json' % number, plan)
+    method_rows = [dict(original=method_ref, retained=ref(destination / 'method/retain_closed_files.py', method_raw)),
+                   dict(original=plan_ref, retained=ref(destination / 'method/plan.json', plan_raw))]
+    manifest = dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1', root='/root',
+                    files=rows + method_rows, borrowed_closures=borrowed, source_plan=plan_ref,
+                    scientific_calls=0, Source_or_verdict_transfer=False,
+                    acceptance_or_checkpoint_or_operational_register_writes=0,
+                    qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+    manifest_raw = can(manifest)
+    manifest_ref = ref(destination / 'preservation.json', manifest_raw)
+    source_bytes = method_ref['bytes']
+    plan_bytes = plan_ref['bytes']
+    manifest_bytes = len(manifest_raw)
+    input_paths = set([method_ref['path'], plan_ref['path']] + [row['path'] for row in borrowed] + [row['original']['path'] for row in rows])
+    retained_paths = set([row['retained']['path'] for row in rows + method_rows] + [manifest_ref['path']])
+    actual_path_union = len(input_paths | retained_paths)
+    # Exact667 source-level reads: own, plan, borrowed; each copied original
+    # first/final, copied output during put and final sweep; own/plan methods;
+    # manifest put; final plan read. Python's initial ownSource loader adds one
+    # extra source read beyond instrumented READ.
+    instrumented_read = 4 * payload_bytes + 2 * source_bytes + 3 * plan_bytes + sum(row['bytes'] for row in borrowed) + manifest_bytes
+    read_including_loader = instrumented_read + source_bytes
+    written = payload_bytes + source_bytes + plan_bytes + manifest_bytes
+    files_written = len(rows) + 3
+    need(actual_path_union <= 512 and read_including_loader <= 64 * MIB
+         and written <= 16 * MIB and files_written <= 512, 'unchanged667 resource caps including method/plan/manifest and Source loader')
+    argv = ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', method_ref['path'],
+            '--self-sha256', method_ref['sha256'], '--plan', plan_ref['path'], plan_ref['sha256'],
+            '--destination', str(destination), '--manifest', manifest_ref['path']]
+    return dict(part=number, title=title, Source=method_ref, plan=plan_ref,
+                manifest_expected=manifest_ref, destination=str(destination), child_argv_UNRUN=argv,
+                Root_activation=None, actual_copy=None,
+                invoice=dict(original_files=len(rows), original_payload_bytes=payload_bytes,
+                             borrowed_closure_bytes=sum(row['bytes'] for row in borrowed),
+                             plan_bytes=plan_bytes, own_Source_bytes=source_bytes,
+                             expected_manifest_bytes=manifest_bytes,
+                             input_path_count=len(input_paths), output_path_count=len(retained_paths),
+                             actual_path_union_upper=actual_path_union,
+                             exact_source_instrumented_read_bytes=instrumented_read,
+                             physical_read_bytes_including_initial_python_Source_loader=read_including_loader,
+                             new_output_bytes_including_Source_plan_manifest=written,
+                             new_output_files_including_Source_plan_manifest=files_written,
+                             whole_input_bytes=sum({ref['path']: ref['bytes'] for ref in [method_ref, plan_ref] + borrowed + [row['original'] for row in rows]}.values()),
+                             RSS_bytes=256*MIB, inner_seconds=125,
+                             outer_seconds=150, admission_RAM_bytes=4*2**30, admission_disk_bytes=10*2**30,
+                             RAM_floor_bytes=3*2**30, disk_floor_bytes=8*2**30,
+                             formula='4*copiedpayload+2*Source+3*plan+borrowed+manifest instrumented; add1*Source for initial Python loader. Newwrite=payload+Source+plan+manifest. All destinations absent at preparation; Root must recheck before activation.'))
+
+
+titles = ['Checkpoint acceptance, selector images and recoverable commit intent',
+          'Progress rollback images, emitted plans and independent/source reviews',
+          'Actual binding/preservation/registration runtime and DATA lineage']
+packets = [build_packet(i + 1, group, titles[i]) for i, group in enumerate(groups)]
+selection_ref, _ = write('selection_inventory.json', dict(
+    schema='F009_CP11262_CLOSED_METADATA_SELECTION_INVENTORY_DATA_V1', author='/root/status_readme_audit',
+    inputs=[row for _, row in sorted(READ_ROLES.items())],
+    original_file_count=len(all_originals), original_payload_bytes=sum(row['original']['bytes'] for group in groups for row in group),
+    complete_checkpoint_directory_included=[str(path) for path in checkpoint_paths],
+    copied_runtime_tree=str(BASE / 'ready_actual_peer_DATA'), borrowed_closures=borrowed,
+    Root_authority=False, represented_execution=0,
+    excluded_scope='No broad T scan, scientific native files, snapshot payloads or transitive historical input graph. Those remain under the canonical af39 closure and prior attributed maps.'))
+invoice_ref, _ = write('resource_invoices.json', dict(
+    schema='F009_CP11262_CLOSED_METADATA_RETENTION_RESOURCE_INVOICES_DATA_V1',
+    author='/root/status_readme_audit', packets=packets, selection=selection_ref,
+    each_destination_is_a_new_append_only_directory=True, actual_execution=None,
+    totals=dict(original_payload_bytes=sum(row['invoice']['original_payload_bytes'] for row in packets),
+                new_bytes=sum(row['invoice']['new_output_bytes_including_Source_plan_manifest'] for row in packets),
+                copies=len(packets)), Root_authority=False))
+handoff_ref, _ = write('payload_handoff.json', dict(
+    schema='F009_CP11262_CLOSED_METADATA_RETENTION_PAYLOAD_HANDOFF_DATA_V1',
+    author='/root/status_readme_audit', status='PREPARED_UNRUN_DATA_ONLY', Root_authority=False,
+    Source=method_ref, selection=selection_ref, invoices=invoice_ref, packets=packets,
+    actual_preservation=None, canonical_selector_writes=0, scientific_calls=0,
+    qualification='Three finite payload packets retain all exact closed post11262 registration metadata selected here, including every durable before/next image. Plans and the unchanged667 method are themselves retained by each667 copy. Independent Root review and genuine bounded activation remain required.'))
+
+# A complete finite creation inverse for this DATA packet: each record holds
+# the full emitted bytes and its known absent-before state. The record itself
+# is excluded from its own payload; the separate terminal inverse below covers
+# all later preparation outputs, with the same explicit finite self boundary.
+first_inverse_ref, _ = write('payload_creation_inverse.json', dict(
+    schema='COMPLETE_F009_CP11262_RETENTION_PAYLOAD_DATA_CREATION_INVERSE_V1',
+    author='/root/status_readme_audit', Root_authority=False,
+    preparation_Source=dict(ref=own_ref, before=dict(exists=False), whole_body_base64=base64.b64encode(own_raw).decode()),
+    changes=list(CREATED), inverse='For the private DATA outputs only: exact after-body hash match then restore absence; no S/W operation is authorized or performed.',
+    self_record_excluded=True, S_or_W_mutations=0, represented_activations=0))
+
+# Preserve the preparatory plans, exact creation inverse, inventory and invoices
+# as a fourth small packet. Its ownplan is retained automatically by667. The
+# terminal handoff/invoice are explicitly outside this finite selected closure;
+# they add no mathematical assertion and do not pretend recursive closure.
+aux_paths = [Path(__file__)] + [Path(row['path']) for row in CREATED]
+aux_rows = selected(aux_paths, 'preparation_DATA', HERE)
+provenance = build_packet(4, aux_rows, 'Finite preparation records, selection invoices and complete payload creation inverse')
+aux_invoice_ref, _ = write('provenance_resource_invoice.json', provenance)
+final_ref, _ = write('FINAL_handoff.json', dict(
+    schema='F009_CP11262_CLOSED_METADATA_RETENTION_FINAL_HANDOFF_DATA_V1',
+    author='/root/status_readme_audit', status='PREPARED_UNRUN_DATA_ONLY',
+    Root_authority=False, Root_authority_granted=False, execution_authority_granted=False,
+    Source=method_ref, preparation_Source=own_ref, selection=selection_ref,
+    payload_handoff=handoff_ref, payload_invoices=invoice_ref,
+    payload_creation_inverse=first_inverse_ref, provenance_invoice=aux_invoice_ref,
+    payload_packets=packets, preparation_record_packet=provenance,
+    destinations=[row['destination'] for row in packets + [provenance]],
+    actual_calls=[], actual_preservations=[], canonical_selector_writes=0, scientific_calls=0,
+    preparation_terminal_boundary='Part04 retains source+all3payloadplans+inventory+invoices+handoff+fullpayloadinverse. Its own plan and667Source are retained automatically. This terminal FINAL_handoff, part04invoice and terminalinverse are explicit finite bookkeeping records outside part04; Root may include them with the later genuine copy captures in a final closure if required.',
+    required_Root_checks=['Whole owned667 Source selection and unchanged pin.',
+                          'Each exact plan/source/invoice and all selected whole metadata bodies.',
+                          'No new scientific claim or selector mutation; preserved Root verdicts retain prior scope.',
+                          'Fresh destination absence/canonical ancestry and adequate RAM/disk.',
+                          'Genuine bounded667 execution, fresh manifest match and independent postcopy check.'],
+    qualification='DATA-only preparation. No represented Source was imported or executed; all selected files remain unmodified. No archive payload or original was deleted. Borrowedaf39 closure and generic667prelaunch remain separate attributed data, never a graft or transferred verdict.'))
+terminal_ref, _ = write('terminal_creation_inverse.json', dict(
+    schema='COMPLETE_F009_CP11262_RETENTION_TERMINAL_DATA_CREATION_INVERSE_V1',
+    author='/root/status_readme_audit', Root_authority=False,
+    preparation_Source=dict(ref=own_ref, before=dict(exists=False), whole_body_base64=base64.b64encode(own_raw).decode()),
+    changes=list(CREATED), self_record_excluded=True,
+    inverse='Private DATA only: exact after-body hash match then restore absence. No deletion or mutation is performed by this preparation, and no S/W mutation is authorized.',
+    S_or_W_mutations=0, represented_activations=0))
+print(json.dumps(dict(status='PREPARED_UNRUN_DATA_ONLY', handoff=final_ref,
+                      terminal_inverse=terminal_ref, payload_packets=len(packets),
+                      provenance_packets=1, selected_payload_files=len(all_originals),
+                      payload_original_bytes=sum(row['invoice']['original_payload_bytes'] for row in packets),
+                      total_write_bytes=sum(row['invoice']['new_output_bytes_including_Source_plan_manifest'] for row in packets + [provenance]),
+                      plans=[dict(plan=row['plan'], manifest_expected=row['manifest_expected'], invoice=row['invoice']) for row in packets + [provenance]]), sort_keys=True))

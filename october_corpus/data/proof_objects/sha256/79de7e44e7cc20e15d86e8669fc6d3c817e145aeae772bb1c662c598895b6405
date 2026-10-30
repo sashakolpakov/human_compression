@@ -1,0 +1,142 @@
+"""Own stdlib/AST/DATA readiness join. No represented Source/control activation."""
+from pathlib import Path
+import ast,copy,hashlib,json,os,stat
+V=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v3')
+D=V/'post_peer_readiness_DATA'
+AUTHOR='/root/f004_register'
+reads={};opens=[];writes={}
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,expected=None):
+ p=Path(p);a=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4*2**20
+ with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+ sig=lambda z:(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ assert sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==a.st_size
+ r=ref(p,raw)
+ if expected is not None:assert r==expected
+ assert str(p)not in reads or reads[str(p)]==r
+ reads[str(p)]=r;opens.append(r);assert len(reads)<=512 and sum(q['bytes']for q in opens)<=64*2**20
+ return r,raw
+def doc(p,expected=None):
+ r,b=read(p,expected);return r,json.loads(b)
+def put(name,x):
+ p=D/name;b=can(x);assert len(b)<=4*2**20 and sum(q['bytes']for q in writes.values())+len(b)<=16*2**20
+ with p.open('xb')as f:assert f.write(b)==len(b)
+ r=ref(p,b);writes[name]=r;return r
+def eq(a,b):
+ if type(a)is not type(b):return False
+ if type(a)is dict:return a.keys()==b.keys()and all(eq(a[k],b[k])for k in a)
+ if type(a)is list:return len(a)==len(b)and all(eq(x,y)for x,y in zip(a,b))
+ return a==b
+author_source,_=read(Path(__file__).resolve())
+base_ref,base=doc(V/'private_controls_UNRUN/protected_helper_successor_DATA/handoff.json')
+peer_ref,peer=doc('/private/tmp/f004_closed40_source_peer_DATA/independent_review.json')
+assert peer_ref['bytes']==31240 and peer_ref['sha256']=='ee63b529920cc0a05101363c3fe2585983e3475e6568f8067612fa3d39ac9fd2'
+assert peer['verdict']=='PASS'and peer['blockers']==[]
+api_ref,api=doc('/private/tmp/f004_closed40_source_peer_DATA/independent_review_actual_capture.json')
+assert api_ref['bytes']==4461 and api_ref['sha256']=='c2fad8bd68ac3dddab2f1494162f2319181f5f0e44efd70dd5070fb52f836944'
+assert api['actor']==peer['reviewer']and api['actual_tool']['exit_code']==0 and api['terminal_observed']is True and api['review_emission']==peer_ref
+for key in ['selected_adapter_Source','selected_harness']:
+ r=base[key];_,b=read(r['path'],r);ast.parse(b)
+source=base['selected_adapter_Source'];harness=base['selected_harness']
+assert source==peer['adapter_Source']and harness==peer['harness']
+assert source['bytes']==39928 and harness['bytes']==32773
+plan_ref,plan=doc(base['live_plan_with_fresh_CP11262_observations_ROOT_BINDING_OWED']['path'])
+assert plan['root']is None and plan['method']is None and plan['bound_after_CP11262']is False
+pair_ref,pair=doc(base['whole_symbolic_pair']['path'],base['whole_symbolic_pair'])
+inverse_ref,inverse=doc(base['whole_symbolic_inverse']['path'],base['whole_symbolic_inverse'])
+assert inverse['Source']==source and inverse['no_future_actual_descriptor_or_SHA_fabrication']is True
+before={};after={tag:pair[tag]for tag in ['CURRENT','STATUS']}
+for tag,r in base['full_before_archives'].items():
+ _,b=read(r['path'],r);before[tag]=json.loads(b)
+counts={tag:len(inverse['patches'][tag])for tag in ['CURRENT','STATUS']}
+assert counts==dict(CURRENT=15,STATUS=14)
+for tag in ['CURRENT','STATUS']:
+ restored=copy.deepcopy(after[tag]);paths=[]
+ for patch in reversed(inverse['patches'][tag]):
+  path=patch['path'];paths.append(tuple(path));node=restored
+  for key in path[:-1]:node=node[key]
+  assert eq(node[path[-1]],patch['after'])and patch['after_present']is True
+  if patch['before_present']:node[path[-1]]=copy.deepcopy(patch['before'])
+  else:del node[path[-1]]
+ assert len(set(paths))==len(paths)and eq(restored,before[tag])
+ assert eq(after[tag]['F004_q8_latest_ledger'],before[tag]['F004_q8_latest_ledger'])
+ assert eq(after[tag]['F009_checkpoint_current'],before[tag]['F009_checkpoint_current'])
+source_invoice_ref,source_invoice=doc(base['Source_and_control_whole_invoice']['path'])
+projection=source_invoice['activated_namespace'];assert projection['simultaneous_functional_Source_bytes']==65052
+fresh=[]
+for tag,r in base['current_observations'].items():
+ actual,b=read(r['path'],r);assert eq(json.loads(b),before[tag]);fresh.append(dict(role=tag,reference=actual))
+for key in ['root_execution_ownership_latest','root_current_ownership','current_execution_ownership']:
+ assert eq(before['CURRENT'][key]['active_handles'],[])
+assert eq(before['STATUS']['active_scientific_handles'],[])
+observation=put('fresh_three_view_observation_and_typed_inverse.json',dict(
+ schema='F004_V3B_POST_PEER_FRESH_THREE_VIEW_AND_INVERSE_DATA_V1',author=AUTHOR,Root_authority=False,
+ live_observations=fresh,whole_before_archives=base['full_before_archives'],
+ whole_after_role_template=pair_ref,exact_whole_29_path_typed_inverse=inverse_ref,
+ typed_inverse_rechecked=True,patch_counts=counts,all_outside_patches_typed_literal=True,
+ all_four_arrays_empty_at_observed_epoch=True,not_a_lock_or_live_idle_certificate=True,
+ exact_operational_planned_pair=None,
+ qualification='Whole after body is a complete typed DATA role template with four explicit unknown descriptor/path roles. '
+ 'It is not an operational planned pair or future SHA. Existing complete before/after/inverse artifacts are reused without duplication.'))
+debts=put('Root_activation_debits_UNPAID.json',dict(
+ schema='F004_V3B_EXPLICIT_ROOT_ACTIVATION_DEBITS_V1',author=AUTHOR,Root_authority=False,
+ selected_Source=source,selected_harness=harness,static_Source_peer=peer_ref,genuine_static_peer_capture=api_ref,
+ bounds=dict(functional_Source_bytes=65535,file_bytes=4*2**20,read_bytes=64*2**20,new_bytes=16*2**20,
+ paths=512,metadata_rss_bytes=256*2**20,child_seconds=125,internal_seconds=115),
+ static_namespace_debit=dict(exact_unmodified_AST_and_owned_prefix_bytes=32279,whole_harness_bytes=32773,
+ simultaneous_bytes=65052,remaining_to65535=483,whole_raw_adapter_read_bytes=39928),
+ bootstrap_debits=dict(adapter_initial_Source=39928,adapter_explicit_self_pin=39928,adapter_known_Source_total=79856,
+ harness_initial_Source=32773,harness_explicit_self_pin=32773,harness_known_Source_total=65546,
+ controls_adapter_whole_reads=2,controls_adapter_whole_read_bytes=79856,
+ actual_stdlib_interpreter_origin_rows=None,loader_cache_bootstrap_byte_reservation=None,
+ actual_guard_recorder_Source_bootstrap_and_read_reservation=None),
+ whole_state_bytes=dict(before_CURRENT=base['full_before_archives']['CURRENT']['bytes'],
+ before_STATUS=base['full_before_archives']['STATUS']['bytes'],protected_PROGRESS=base['full_before_archives']['PROGRESS']['bytes'],
+ complete_symbolic_after_DATA_bytes=pair_ref['bytes'],whole_typed_patch_inverse_DATA_bytes=inverse_ref['bytes'],
+ symbolic_canonical_CURRENT_body_bytes=len(can(after['CURRENT'])),symbolic_canonical_STATUS_body_bytes=len(can(after['STATUS'])),
+ symbolic_sizes_are_not_actual_future_byte_counts=True),
+ registration_total_new_formula='Raw beforeCURRENT+beforeSTATUS +actual typed40 record+pending1196 +actual full29-path inverse '
+ '+actual complete planned pair+PREPARED +both simultaneous canonical stage bodies+actual commit<=65536+actual wrappers<=16MiB.',
+ registration_total_read_formula='Initial Source39928+selfpin39928 +every actual input/Source/runtime origin/bootstrap '
+ '+all repeated current/protected opens+every full publication/stage/commit reopen+guard/recorder read/bootstrap reserve<=64MiB.',
+ path_bank_formula='All actual direct input/runtime/Source paths +existing Rootlock +whole outputs/stages/commit '
+ '+14 known orphan-stage probes +actual wrappers<=512; double-counted staged/probe paths are conservatively prepaid.',
+ actual_Root_control_release=None,actual_guard_PID_runtime_admission=None,actual_control_hash=None,
+ actual_control_return_and_genuine_API=None,actual_Root_control_acceptance=None,actual_Root_Source_release=None,
+ actual_Root_40_import=None,actual_Root_q8_summary_import=None,actual_installed_method_pin=None,
+ actual_complete_runtime_origin_and_wrapper_invoice=None,actual_executed_forecast=None,
+ actual_whole_bound_planned_states=None,actual_fresh_locked_BOTH_CAS=None,actual_registration=None,
+ old_scientific_math_proof_replay_required=False,full_prior_872_path_resweep_required_for_this_join=False,
+ qualification='All listed actual activation debits remain UNPAID/null. Source/control design and peer have been read; '
+ 'no Source/control/helper/science is activated by this DATA join. Root alone binds runtime/origins/wrappers, actual controls '
+ 'and releases before calculating the exact acyclic operational planned pair.'))
+plan=copy.deepcopy(plan);plan.update(Source_independent_final_peer=peer_ref,
+ Source_independent_actual_peer_capture=api_ref,selected_UNRUN_harness=harness,
+ author_readiness_observation=observation,Root_activation_debits_UNPAID=debts,
+ whole_typed_after_ROLE_TEMPLATE=pair_ref,whole_typed_patch_inverse_ROLE_TEMPLATE=inverse_ref,
+ actual_controls=None,actual_control_release=None,actual_runtime_origins=None,actual_runtime_wrappers=None,
+ actual_executed_forecast=None,actual_locked_CAS=None)
+ready_plan=put('live_plan_V3B_STATIC_PEER_BOUND_ROOT_ACTIVATION_OWED.json',plan)
+for tag,r in base['current_observations'].items():read(r['path'],r)
+invoice=put('own_readiness_DATA_invoice.json',dict(
+ schema='F004_V3B_POST_PEER_READINESS_OWN_DATA_INVOICE_V1',author=AUTHOR,Root_authority=False,
+ author_DATA_Source=author_source,actual_explicit_whole_open_bytes=sum(r['bytes']for r in opens),
+ actual_explicit_unique_input_paths=len(reads),actual_explicit_unique_input_bytes=sum(r['bytes']for r in reads.values()),
+ exact_explicit_open_ledger=opens,author_runtime_and_tool_bootstrap_not_claimed_in_open_ledger=True,
+ reused_whole_before_after_inverse_artifacts=True,new_large_projection_copies=0,
+ represented_Source_control_helper_scientific_activations=0,S_W_Git_gate_lock_selector_writes=0))
+result=copy.deepcopy(base)
+result.update(schema='F004_V3B_POST_PEER_STATIC_READINESS_HANDOFF_V1',
+ status='STATIC_SOURCE_PEER_PASS_COMPLETE_TYPED_ROLE_PROJECTION_ROOT_ACTIVATION_ALL_OWED',
+ prior_unchanged_handoff=base_ref,Source_independent_final_peer=peer_ref,Source_independent_genuine_actual_capture=api_ref,
+ fresh_after_peer_three_view_observation_and_inverse=observation,Root_activation_debits_UNPAID=debts,
+ live_plan_with_fresh_CP11262_observations_ROOT_BINDING_OWED=ready_plan,
+ readiness_author_DATA_invoice=invoice,actual_control_hash=None,actual_executed_forecast=None,
+ Root_source_or_controls_activated=False,exact_operational_planned_state_hashes_owed=True,
+ qualification='All before bytes and the complete29-path typed after-role template/inverse are concrete and reused. '
+ 'No actual future Root-control/release/runtime/registration descriptor or SHA is fabricated. '
+ 'Static peer PASS is not a Source activation, actual-controls PASS, Root release, forecast or CAS.')
+handoff=put('handoff.json',result)
+print(json.dumps(dict(handoff=handoff,plan=ready_plan,debits=debts,observation=observation,
+ own_whole_open_bytes=sum(r['bytes']for r in opens)),sort_keys=True))

@@ -1,0 +1,129 @@
+from pathlib import Path
+import ast, base64, datetime, hashlib, json, shlex, stat
+
+N=Path('/private/tmp/f009_cp11262_registration_retention_DATA')
+OUT=Path('/private/tmp/f009_cp11262_retention_postcopy_peer_DATA')
+PINS={}
+def can(o):return(json.dumps(o,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def whole(p,expected=None):
+ p=Path(p);a=p.lstat();assert stat.S_ISREG(a.st_mode)and a.st_nlink==1 and p.resolve(strict=True)==p
+ b=p.read_bytes();z=p.lstat();assert(a.st_dev,a.st_ino,a.st_mode,a.st_nlink,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if expected is not None:assert r==expected,(r,expected)
+ if str(p)in PINS:assert PINS[str(p)]==r
+ PINS[str(p)]=r
+ return b,r
+def obj(p,expected=None):
+ b,r=whole(p,expected);return json.loads(b),r
+def readref(r):return whole(r['path'],r)
+def loadref(r):return obj(r['path'],r)
+def fixed(p,size,sha):return obj(p,dict(path=str(p),bytes=size,sha256=sha))
+
+h,hr=fixed(N/'FINAL_handoff.json',13961,'d0f227667a081f5e68eecc8aafc94488ec7619d9080a3f3dc1cd2536ae08bd78')
+assert h['status']=='PREPARED_UNRUN_DATA_ONLY'and h['actual_calls']==[]and h['actual_preservations']==[]
+packets=h['payload_packets']+[h['preparation_record_packet']]
+assert len(packets)==4
+source,sref=readref(h['Source']);ast.parse(source)
+assert sref['sha256']=='66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+root,rr=fixed(N/'Root_retention_selection_review.json',7335,'decdee6e68cbfce6f36398b88c030f8db81a00a90dfcc59e79a5cff591a5e471')
+assert root['root']=='/root'and root['status']=='SUPPORTED'and root['blockers']==[]and root['metadata_copy_authorized']is True and root['retainer']==sref
+assert root['packets']==[{k:e[k]for k in('part','plan','destination','manifest_expected','invoice')}for e in packets]
+
+def capture(p,exitcode=0):
+ c,r=obj(p);assert c['root']==c['actor']=='/root'
+ assert c['issued_argv']==c['child_argv']==shlex.split(c['issued_command'])==shlex.split(c['issued_tool_arguments']['cmd'])==shlex.split(c['canonical_argv_command'])
+ frames=c['all_genuine_api_frames'];assert len(frames)==1 and frames[0]==c['full_initial_tool_return']==c['full_tool_return']
+ f=frames[0];t=c['actual_tool'];assert f['exit_code']==t['exit_code']==exitcode and t['handle']is None and t['synchronous']is True
+ assert f['chunk_id']==t['initial_chunk']==t['terminal_chunk']
+ return c,r
+
+pre,pr=capture(N/'Root_whole_selection_precheck_actual_capture.json')
+assert pr==root['actual_whole_payload_precheck']
+assert json.loads(pre['full_tool_return']['output'])==packets
+ast.parse(pre['issued_argv'][-1])
+failed,fr=capture(N/'runtime/part01_actual_capture.json',1)
+assert fr['sha256'].startswith('bb4bf66')
+failure_text=failed['full_tool_return']['output']
+assert 'FileNotFoundError' in failure_text and 'args.output.mkdir' in failure_text and '/runtime/part01' in failure_text
+superraw,superref=whole('/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_transient.py')
+assert superraw.index(b'args.output.mkdir(mode=0o700)')<superraw.index(b'child = subprocess.Popen(command')
+
+parts=[];selected=[];borrowed=[]
+for e in packets:
+ i=e['part'];stem=f'part{i:02d}';p,pref=loadref(e['plan']);dest=Path(e['destination']);inv=e['invoice']
+ assert p['destination']==str(dest)and p['scientific_calls']==0
+ for k in('Root_authority','Root_authority_granted','execution_authority_granted'):
+  if k in p:assert p[k]is False
+ assert e['Source']==sref and e['actual_copy']is None and e['Root_activation']is None
+ rows=p['files'];assert len(rows)==inv['original_files']
+ assert len({r['original']['path']for r in rows})==len(rows)==len({r['retained']['path']for r in rows})
+ payload=0
+ for row in rows:
+  a,b=row['original'],row['retained'];raw,_=readref(a);ret,_=readref(b)
+  assert raw==ret and a['bytes']==b['bytes']<=4*2**20 and a['sha256']==b['sha256'] and Path(b['path']).is_relative_to(dest)
+  payload+=len(raw);selected.append(row)
+ for r in p['borrowed_closures']:
+  raw,_=readref(r);assert len(raw)<=4*2**20;borrowed.append(r)
+ methods=[dict(original=sref,retained=dict(path=str(dest/'method/retain_closed_files.py'),bytes=len(source),sha256=sref['sha256'])),dict(original=pref,retained=dict(path=str(dest/'method/plan.json'),bytes=pref['bytes'],sha256=pref['sha256']))]
+ m,mref=loadref(e['manifest_expected'])
+ expected=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',files=rows+methods,borrowed_closures=p['borrowed_closures'],source_plan=pref,scientific_calls=0,Source_or_verdict_transfer=False,acceptance_or_checkpoint_or_operational_register_writes=0,qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+ actualraw,_=readref(mref);assert actualraw==can(expected)
+ for row in methods:
+  raw,_=readref(row['retained']);original,_=readref(row['original']);assert raw==original
+ expected_paths={r['retained']['path']for r in rows+methods}|{mref['path']}
+ actual_paths={str(q)for q in dest.rglob('*')if q.is_file()}
+ assert actual_paths==expected_paths and all(not q.is_symlink()for q in dest.rglob('*'))
+ B=sum(r['bytes']for r in p['borrowed_closures']);S=sref['bytes'];P=pref['bytes'];M=mref['bytes'];F=len(rows)
+ equations=dict(original_payload_bytes=payload,original_files=F,own_Source_bytes=S,plan_bytes=P,expected_manifest_bytes=M,borrowed_closure_bytes=B,exact_source_instrumented_read_bytes=4*payload+2*S+3*P+B+M,physical_read_bytes_including_initial_python_Source_loader=4*payload+3*S+3*P+B+M,new_output_bytes_including_Source_plan_manifest=payload+S+P+M,new_output_files_including_Source_plan_manifest=F+3,input_path_count=F+4,output_path_count=F+3,actual_path_union_upper=2*F+7,whole_input_bytes=payload+S+P+B)
+ assert all(inv[k]==v for k,v in equations.items())
+ assert equations['physical_read_bytes_including_initial_python_Source_loader']<64*2**20 and equations['new_output_bytes_including_Source_plan_manifest']<16*2**20 and equations['actual_path_union_upper']<=512
+ c,cr=capture(N/'runtime'/f'{stem}_ready_parent_actual_capture.json')
+ rt=N/'runtime'/stem;rec,recref=obj(rt/'receipt.json');started,startref=obj(rt/'started.json');stdout,stdref=obj(rt/'stdout.log');err,errref=whole(rt/'stderr.log')
+ assert err==b''and rec['status']=='PASS'and rec['stop']=='RETURNED'and rec['error']is None and rec['returncode']==0
+ assert rec['command']==started['command']==e['child_argv_UNRUN']
+ assert c['issued_argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B','/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py','--volume','/Users/sasha/medusa','--output',str(rt),'--rss-cap-mib','256','--timeout','150','--']+e['child_argv_UNRUN']
+ assert json.loads(c['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(rt/'receipt.json'))
+ assert rec['limits']==started['limits']and rec['admission']==started['admission']
+ limits=rec['limits'];ad=rec['admission'];peaks=rec['peaks']
+ assert limits['total_rss']==256*2**20 and limits['wall_seconds']==150 and limits['admit_disk']==10*2**30 and limits['admit_ram']==4*2**30 and limits['disk_floor']==8*2**30 and limits['ram_floor']==3*2**30
+ assert ad['free_disk']>=limits['admit_disk']and ad['available_ram']>=limits['admit_ram']and peaks['total_rss']<limits['total_rss']and peaks['min_free_disk']>=limits['disk_floor']and peaks['min_available_ram']>=limits['ram_floor']and rec['seconds']<125
+ assert rec['cleanup']['remaining']==rec['cleanup']['errors']==[]
+ assert len(rec['identities'])==len(started['identities'])==1
+ for a,b in zip(rec['identities'],started['identities']):
+  assert {k:a[k]for k in('pid','birth','initial_parent','group','session')}=={k:b[k]for k in('pid','birth','initial_parent','group','session')}
+  assert a['pid']==a['group']==a['session']and a['initial_parent']!=a['pid']
+ assert rec['logs']==dict(stdout=stdref['bytes'],stderr=0)
+ assert stdout==dict(status='ROOT_CLOSED_METADATA_RETAINED',preservation=mref,mappings=F+2,actual_paths=equations['actual_path_union_upper'],actual_read_bytes=equations['exact_source_instrumented_read_bytes'],new_bytes=equations['new_output_bytes_including_Source_plan_manifest'],new_files=F+3,scientific_calls=0)
+ parts.append(dict(part=i,plan=pref,preservation=mref,selected_originals=F,selected_payload_bytes=payload,all_original_and_retained_whole_bytes_equal=True,exact_manifest_reconstructed=True,all_actual_destination_files_accounted=True,invoice_equations=equations,actual_capture=cr,guard=recref,started=startref,stdout=stdref,stderr=errref,SDK_argv_return_receipt_joins=True,seconds=rec['seconds'],sampled_peak_RSS_bytes=peaks['total_rss'],admission=ad,cleanup=rec['cleanup'],process_identity=rec['identities'][0]))
+
+assert [p['selected_originals']for p in parts]==[14,34,59,8]
+assert len(selected)==115 and len({r['original']['path']for r in selected})==114
+assert len({r['original']['path']for r in selected[:107]})==107
+duplicate_roles={path:[i+1 for i,e in enumerate(packets)if any(r['original']['path']==path for r in json.loads(Path(e['plan']['path']).read_bytes())['files'])]for path in {r['original']['path']for r in selected}if sum(r['original']['path']==path for r in selected)>1}
+assert duplicate_roles=={str(N/'prepare_retention_DATA.py'):[3,4]}
+selection,sir=loadref(h['selection']);assert selection['original_file_count']==107
+assert sorted(selection['inputs'],key=lambda r:r['path'])==sorted([r['original']for r in selected[:107]]+[sref]+json.loads(Path(packets[0]['plan']['path']).read_bytes())['borrowed_closures'],key=lambda r:r['path'])
+assert selection['original_payload_bytes']==sum(p['selected_payload_bytes']for p in parts[:3])
+for k in('payload_handoff','payload_invoices','provenance_invoice','payload_creation_inverse','preparation_Source'):
+ readref(h[k])
+payload_inv,_=loadref(h['payload_invoices']);assert payload_inv['packets']==packets[:3]
+prov,_=loadref(h['provenance_invoice']);assert prov==packets[3]
+inverse_counts=[]
+for name in('payload_creation_inverse.json','terminal_creation_inverse.json'):
+ o,r=obj(N/name)
+ assert o['Root_authority']is False and o['represented_activations']==o['S_or_W_mutations']==0
+ for ch in o['changes']:
+  after=ch['after'];raw,_=readref(after['ref']);assert base64.b64decode(after['whole_body_base64'],validate=True)==raw
+ raw,_=readref(o['preparation_Source']['ref']);assert base64.b64decode(o['preparation_Source']['whole_body_base64'],validate=True)==raw;ast.parse(raw)
+ inverse_counts.append(dict(record=r,whole_after_bodies=len(o['changes']),preparation_Source_whole_inverse=True))
+
+unique_borrowed={r['path']:r for r in borrowed};assert len(unique_borrowed)==2
+report=dict(schema='INDEPENDENT_F009_CP11262_FOUR_PART_METADATA_RETENTION_POSTCOPY_REVIEW_V1',reviewer='/root/reader_postcheck',utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),subject=hr,status='SUPPORTED_POSTCOPY_METADATA',blockers=[],Root_authority=False,Root_retention_review=rr,Root_whole_selection_precheck=pr,Source=sref,retainer_Source_whole_read_and_AST_parsed=True,parts=parts,totals=dict(payload_originals=107,preparation_originals=8,selected_originals=115,payload_bytes=sum(p['selected_payload_bytes']for p in parts[:3]),preparation_bytes=parts[3]['selected_payload_bytes'],selected_bytes=sum(p['selected_payload_bytes']for p in parts),manifest_mapping_rows=sum(p['selected_originals']+2 for p in parts),new_files_including_methods_and_maps=sum(p['invoice_equations']['new_output_files_including_Source_plan_manifest']for p in parts),new_bytes_including_methods_and_maps=sum(p['invoice_equations']['new_output_bytes_including_Source_plan_manifest']for p in parts)),selection=sir,creation_inverses=inverse_counts,borrowed_whole_manifests=list(unique_borrowed.values()),borrowed_scope='af39 canonical manifest retains old11216 accepted-checkpoint field and its existing payload scope; f748 generic667prelaunch remains separately attributed metadata. Neither manifest is expanded into a newly hashed scientific closure or transferred verdict.',frozen_preparation_status='FINAL_handoff remains unchanged PREPARED_UNRUN_DATA_ONLY with null actual fields. Four separately recorded genuine Root actual calls supply the postcopy evidence; the author handoff is not rewritten.',first_failed_attempt=dict(actual_capture=fr,exit_code=1,reason='Missing runtime parent caused supervisor output.mkdir FileNotFoundError before childPopen; preserved as failed, not relabeled PASS.',supervisor_Source_current_whole_pin=superref),finite_preparation_boundary=h['preparation_terminal_boundary'],qualifications=['Only exact selected closed metadata bytes, Source/plan copies and four preservation maps were audited. No scientific state/graph/codec decoding, mathematical replay or large scientificgraph expansion.','Four guards are sampled process/resource evidence: known birth-pinned cleanup reports are empty; absence of unseen detached descendants and kernel quota enforcement are not claimed.','Retained Root/independent scientific and checkpoint verdicts keep their previous Source/runtime/control/model/algorithm/math scope. No selector mutation, cleanup, original deletion, source activation, new paid checkpoint or new Original credit is supplied by this copy.','The terminal bookkeeping records and new actual captures are outside the finite selected part04 preparation closure, as explicitly stated by the frozen handoff. No infinite or transitive closure is implied.'],represented_Source_science_codec_execution_by_reviewer=0,S_W_Git_gates_or_selector_writes_by_reviewer=0,checked_whole_paths=len(PINS),checked_whole_bytes=sum(r['bytes']for r in PINS.values()),checked_whole_pins=list(PINS.values()))
+report['totals']['distinct_selected_original_paths']=114
+report['totals']['selected_originals_counts_mapping_roles']=True
+report['overlapping_payload_preparation_role']=dict(paths=duplicate_roles,qualification='The author preparation Source is selected in part03 DATA lineage and again in part04 preparation. These are two explicit retained copies of one exact original;107payload roles plus8preparation roles give115mappings and114distinct selected originals.')
+OUT.mkdir(exist_ok=True)
+rp=OUT/'independent_review.json';rp.write_bytes(can(report));rb=rp.read_bytes();rref=dict(path=str(rp),bytes=len(rb),sha256=hashlib.sha256(rb).hexdigest())
+seal=dict(schema='INDEPENDENT_REVIEW_SEAL_V1',reviewer='/root/reader_postcheck',report=rref,status=report['status'],blockers=[],Root_authority=False)
+sp=OUT/'seal.json';sp.write_bytes(can(seal));sb=sp.read_bytes();sref=dict(path=str(sp),bytes=len(sb),sha256=hashlib.sha256(sb).hexdigest())
+print(json.dumps(dict(review_emission=dict(report=rref,seal=sref,status=report['status'],blockers=[]),totals=report['totals'],checked_whole_paths=len(PINS),checked_whole_bytes=report['checked_whole_bytes']),sort_keys=True))

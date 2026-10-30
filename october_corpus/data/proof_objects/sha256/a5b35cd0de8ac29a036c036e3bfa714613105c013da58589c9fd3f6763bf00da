@@ -1,0 +1,30 @@
+"""Static bounded raw-byte roster verification; does not execute represented code."""
+from pathlib import Path
+import hashlib,json,os,stat,sys
+D=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v2')
+O=Path('/private/tmp/f004_closed40_data_peer_DATA')
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def whole(r):
+ p=Path(r['path']);a=p.lstat();assert p.is_absolute()and p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes']<=4*2**20
+ h=hashlib.sha256();n=0
+ with p.open('rb')as f:
+  b=os.fstat(f.fileno())
+  for block in iter(lambda:f.read(262144),b''):h.update(block);n+=len(block)
+  c=os.fstat(f.fileno())
+ assert sig(a)==sig(b)==sig(c)==sig(p.lstat())and n==r['bytes']and h.hexdigest()==r['sha256']
+ return r
+def pin(p):
+ b=Path(p).read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+idx=json.loads((D/'resolved_full40_proof_API_index.json').read_bytes());i=int(sys.argv[1]);assert 1<=i<=4
+pr=idx['metadata_packet_refs'][i-1];whole(pr);packet=json.loads(Path(pr['path']).read_bytes());rows=packet['whole_inputs']
+assert len(rows)==packet['unique_paths']<=400 and sum(r['bytes']for r in rows)==packet['whole_bytes']
+assert len({r['path']for r in rows})==len(rows) and packet['recheck_read_upper']==2*packet['whole_bytes']
+for r in rows:whole(r)
+out=dict(schema='INDEPENDENT_F004_ONE_BOUNDED_METADATA_ROSTER_WHOLE_CHECK_V1',reviewer='/root/reader_postcheck/f004_data_peer',
+ packet=pr,packet_number=i,status='PASS_WHOLE_RAW_BYTES',blockers=[],whole_paths=len(rows),whole_bytes=sum(r['bytes']for r in rows),
+ all_input_pins=rows,Source=pin(Path(__file__)),represented_activation=0,scientific_or_archive_decodes=0,S_W_Git_gate_writes=0,
+ qualification='Fresh stable whole SHA256 checks of this bounded packet only. Compressed archives and scientific proof payloads remain opaque raw bytes. No mathematical or genuine-API authenticity conclusion follows from hashes alone; qualified old Root scopes are imported separately.')
+O.mkdir(exist_ok=True);p=O/('packet_%02d.json'%i)
+with p.open('xb')as f:f.write(can(out))
+print(json.dumps(dict(report=pin(p),whole_paths=out['whole_paths'],whole_bytes=out['whole_bytes'],status=out['status'])))

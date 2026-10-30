@@ -1,0 +1,33 @@
+import json,pathlib,hashlib,shlex
+D=pathlib.Path('/private/tmp/f004_closed40_registration_preservation_DATA')
+cache={}; read_bytes=0
+
+def raw(p):
+ global read_bytes
+ p=str(p)
+ if p not in cache:
+  b=pathlib.Path(p).read_bytes();read_bytes+=len(b);cache[p]=b
+  assert len(cache)<=512 and read_bytes<=64*1024*1024
+ return cache[p]
+def ref(p):
+ b=raw(p);return {'path':str(p),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}
+def load(p):return json.loads(raw(p))
+def pin(r):assert ref(r['path'])==r
+inv=load(D/'complete_per_call_preservation_invoices_UNRUN.json'); argv=load(D/'Root_copy_argv_TEMPLATES_UNRUN.json'); rel=load(D/'runtime/Root_copy_release.json');parts=[]
+for n in range(1,4):
+ name=f'part{n:02d}';i=inv['calls'][n-1];ex=load(D/f'{name}_manifest_EXPECTED_DATA.json');mref=i['expected_manifest'];pin(mref);m=load(mref['path']);assert m==ex['complete_expected_typed_body'];assert m['scientific_calls']==0 and m['Source_or_verdict_transfer'] is False
+ for row in m['files']:
+  pin(row['original']);pin(row['retained']);assert (row['original']['bytes'],row['original']['sha256'])==(row['retained']['bytes'],row['retained']['sha256'])
+ for r in m['borrowed_closures']:pin(r)
+ g=load(D/f'runtime/{name}/receipt.json');start=load(D/f'runtime/{name}/started.json');c=load(D/f'runtime/{name}_actual_capture.json');o=load(D/f'runtime/{name}/stdout.log')
+ expected=argv['calls'][n-1]['argv'];assert g['command']==start['command']==expected;assert c['issued_argv']==c['child_argv'];assert c['issued_argv'][c['issued_argv'].index('--')+1:]==expected;assert shlex.split(c['issued_tool_arguments']['cmd'])==c['issued_argv']
+ assert g['status']=='PASS' and g['returncode']==0 and g['stop']=='RETURNED' and g['error'] is None;assert g['cleanup']['remaining']==g['cleanup']['errors']==[];assert g['peaks']['total_rss']<=268435456 and g['seconds']<=125
+ assert c['root']==c['actor']=='/root' and c['actual_tool']['exit_code']==0;assert c['all_genuine_api_frames'][-1]==c['full_tool_return'];sdk=json.loads(c['full_tool_return']['output']);assert sdk=={'status':'PASS','stop':'RETURNED','receipt':str(D/f'runtime/{name}/receipt.json')}
+ assert o['status']=='ROOT_CLOSED_METADATA_RETAINED' and o['preservation']==mref and o['mappings']==len(m['files']) and o['scientific_calls']==0
+ for k,v in [('actual_paths',i['complete_direct_paths']),('actual_read_bytes',i['full_copier_READ_counter_upper']),('new_bytes',i['full_new_output_upper'])]:assert o[k]==v
+ assert o['new_files']==i['new_unique_objects']+3;assert i['full_paid_read_upper']<=64*1024*1024 and i['full_paid_new_upper']<=16*1024*1024 and i['full_paid_path_upper']<=512
+ assert g['logs']=={'stdout':len(raw(D/f'runtime/{name}/stdout.log')),'stderr':len(raw(D/f'runtime/{name}/stderr.log'))}
+ parts.append({'part':name,'manifest':mref,'whole_mapping_count':len(m['files']),'actual_copier':o,'guard_receipt':ref(D/f'runtime/{name}/receipt.json'),'actual_SDK':ref(D/f'runtime/{name}_actual_capture.json'),'guard_seconds':g['seconds'],'guard_peak_RSS':g['peaks']['total_rss'],'frozen_paid_read_upper':i['full_paid_read_upper'],'frozen_paid_new_upper':i['full_paid_new_upper'],'frozen_paid_path_upper':i['full_paid_path_upper']})
+post=load(D/'runtime/Root_whole_postcopy_review.json');assert post['status']=='SUPPORTED' and post['blockers']==[]
+report={'schema':'INDEPENDENT_ACTUAL_F004_REGISTRATION_METADATA_COPY_REVIEW_V1','reviewer':'/root/f004_register/bootstrap_contract_review','status':'QUALIFIED_PASS','Root_authority':False,'represented_Source_or_control_execution_by_reviewer':0,'S_W_Git_mutations_by_reviewer':0,'scientific_replay':0,'new_mathematical_or_manuscript_credit':0,'blockers':[],'parts':parts,'Root_release':ref(D/'runtime/Root_copy_release.json'),'Root_postcopy_review':ref(D/'runtime/Root_whole_postcopy_review.json'),'whole_read_invoice':{'unique_paths':len(cache),'whole_bytes':read_bytes,'path_limit':512,'read_limit':64*1024*1024,'cache_by_exact_path':True},'qualification':'Actual Root manifests equal frozen EXPECTED typed bodies; every original and retained whole body matches its exact descriptor. Genuine recorded SDK argv/return joins guard started/receipt and copier output. Copier direct counters equal frozen invoices. Actual guards sampled PASS with no known remaining processes. Wrapper reserves remain conservative prepaid bounds, not exact interpreter/guard read telemetry. Existing UNRUN plans/invoices retain their literal prospective status. No older scientific proof was replayed.'}
+p=D/'independent_actual_copy_review.json';assert not p.exists();p.write_bytes((json.dumps(report,sort_keys=True,separators=(',',':'))+'\n').encode());print(json.dumps({'report':{'path':str(p),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()},'whole_read':report['whole_read_invoice'],'parts':[(x['part'],x['whole_mapping_count']) for x in parts]}))

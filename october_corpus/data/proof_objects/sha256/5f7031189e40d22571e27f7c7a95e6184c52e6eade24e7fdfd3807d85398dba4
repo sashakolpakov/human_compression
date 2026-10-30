@@ -1,0 +1,286 @@
+"""Select closed batch96..111 bytes in the existing80..95 retention format."""
+from pathlib import Path
+import base64
+import hashlib
+import json
+import os
+import stat
+
+D = Path(__file__).resolve().parent
+T = Path('/private/tmp')
+S = Path('/Users/sasha/medusa/research/leemans')
+O = S / 'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients'
+B = O / 'bounded_batches/free_0096_0111'
+DEST = B / 'closed_execution/evidence'
+METHOD = T / 'intake_artifacts/retain_closed_files_stable_stat.py'
+MIB = 2**20
+CREATED = []
+
+
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode()
+
+
+def ref(path, raw):
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def whole(path, expected=None):
+    path = Path(path)
+    before = path.lstat()
+    assert path.is_absolute() and path.resolve(strict=True) == path
+    assert stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_size <= 4*MIB
+    raw = path.read_bytes()
+    sig = lambda st: (st.st_dev, st.st_ino, st.st_mode, st.st_nlink, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+    assert sig(before) == sig(path.lstat()) and len(raw) == before.st_size
+    pin = ref(path, raw)
+    if expected is not None:
+        assert pin == expected
+    return pin, raw
+
+
+def put(name, value):
+    path = D / name
+    assert path.is_relative_to(D) and not os.path.lexists(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    assert path.parent.resolve() == path.parent
+    raw = value if isinstance(value, bytes) else can(value)
+    assert len(raw) <= 4*MIB
+    with path.open('xb') as f:
+        assert f.write(raw) == len(raw)
+        f.flush(); os.fsync(f.fileno())
+    pin = ref(path, raw)
+    CREATED.append(dict(path=str(path), before=dict(exists=False), after=pin,
+                        whole_after_body_base64=base64.b64encode(raw).decode()))
+    return pin
+
+
+assert D.resolve() == D and not DEST.exists()
+method, method_raw = whole(METHOD)
+assert method['bytes'] == 4874 and method['sha256'] == '66779a63462b343b0cfa7e86f7534160c155028189d2bfd742893c9abaeb36f0'
+own, own_raw = whole(Path(__file__))
+prior_plan, _ = whole(O / 'bounded_batches/free_0080_0095/closed_execution/evidence/part01/method/plan.json')
+map_paths = [B / 'prelaunch/evidence/preservation.json',
+             B / 'completed_proposals/evidence/preservation.json',
+             B / 'science_evidence/part_00/preservation.json',
+             B / 'current_versions/47eb2a7ab13a5c60e6b4c6e1c71df99c3a4dba26036a71ee4ce66755d42af15c/evidence/preservation.json']
+borrowed = []
+aliases = {}
+for path in map_paths:
+    pin, raw = whole(path)
+    borrowed.append(pin)
+    manifest = json.loads(raw)
+    assert manifest['schema'] == 'ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'
+    for row in manifest['files']:
+        original, retained = row['original'], row['retained']
+        assert original['bytes'] == retained['bytes'] and original['sha256'] == retained['sha256']
+        key = (original['path'], original['bytes'], original['sha256'])
+        aliases.setdefault(key, []).append(retained)
+
+# Only these completed roots and their explicitly named standalone records are
+# selected. Borrowed manifests are read as mapping metadata; no older payload
+# tree, theorem DAG, or scientific state is recursively opened.
+roots = [
+    ('execution', T / 'l026_free_0096_0111_execution'),
+    ('initial_callbacks', T / 'l026_free_0096_0111_callbacks'),
+    ('continuation', T / 'l026_free_0096_0111_resume'),
+    ('tail_callbacks', T / 'l026_free_0096_0111_tail_callbacks'),
+    ('suffix_callbacks', T / 'l026_free_0096_0111_suffix_callbacks'),
+    ('adoption_callbacks', T / 'l026_free_0096_0111_adoption_callbacks'),
+    ('independent_prefix_review', T / 'l026_tail2_actual_prefix_peer_DATA'),
+    ('independent_committed_review', T / 'l026_free_0096_0111_committed_peer_DATA')]
+selected = []
+root_inventories = []
+for label, root in roots:
+    assert root.is_dir() and root.resolve() == root
+    paths = sorted(root.rglob('*'))
+    assert not any(path.is_symlink() for path in paths)
+    files = [path for path in paths if path.is_file()]
+    assert len(files) <= 400
+    for path in files:
+        pin, _ = whole(path)
+        selected.append(dict(original=pin, relative=str(Path(label) / path.relative_to(root))))
+    root_inventories.append(dict(path=str(root), label=label, files=[str(path) for path in files]))
+standalone = sorted(T.glob('l026_free_0096_0111*.json'))
+for path in standalone:
+    pin, _ = whole(path)
+    selected.append(dict(original=pin, relative='execution_records/' + path.name))
+
+# Freeze the actual accepted selector bytes. The mutable selector itself is
+# never a future copy input, so a later honest ledger update cannot invalidate
+# the historical6d8ff snapshot. Its identity is joined to the existing peer.
+current_pin, current_raw = whole(O / 'paid_status_ledger/CURRENT.json')
+assert current_pin['sha256'] == '6d8ff1026a9835bd6882ba27e9a4752959b747b7faa0d29aa673443ca1f60e48'
+current = json.loads(current_raw)
+peer_pin, peer_raw = whole(T / 'l026_free_0096_0111_committed_peer_DATA/independent_review.json')
+peer = json.loads(peer_raw)
+assert peer['status'] == 'SUPPORTED_COMMITTED_SEVEN_TYPED_FACTS_METADATA' and peer['blockers'] == [] and peer['current'] == current_pin
+assert peer['new_counts'] == dict(GEN=30, separate_IP=30, subset_NEG=72, unpaid=28806)
+snapshot = put('accepted_CURRENT_snapshot.json', current_raw)
+snapshot_provenance = put('accepted_CURRENT_snapshot_provenance.json', dict(
+    schema='L026_BATCH96_111_CLOSED_CURRENT_BYTE_SNAPSHOT_DATA_V1', author='/root/status_readme_audit',
+    original_observation=current_pin, private_snapshot=snapshot, committed_peer=peer_pin,
+    counts=peer['new_counts'], new_paid_indices=peer['exact_changed_indices'],
+    Root_authority=False, qualification='A byte copy of the already accepted6d8ff selector authenticated by the existing independent committed peer. No new verdict or mutable selector write. This snapshot remains a historical artifact if CURRENT later advances.'))
+for pin in [snapshot, snapshot_provenance, own]:
+    selected.append(dict(original=pin, relative='selection_method/' + Path(pin['path']).name))
+epoch = Path(current['ledger_receipt']['path']).parent
+assert epoch == O / 'paid_status_ledger/epochs/bounded_0096_0111_at_0096'
+epoch_files = sorted(path for path in epoch.iterdir() if path.is_file())
+assert {path.name for path in epoch_files} == {'batch_acceptance.json', 'receipt.json', 'status.bin'}
+for path in epoch_files:
+    pin, _ = whole(path)
+    selected.append(dict(original=pin, relative='committed_epoch/' + path.name,
+                         existing_immutable_S=pin))
+assert len({row['original']['path'] for row in selected}) == len(selected)
+
+# Exact old80..95 plan shape, with at most150 rows/8MiB selected payload. Each
+# matching S alias is freshly hashed before reuse. No old map payload is opened
+# merely because it appears in a borrowed manifest.
+parts = []
+group = []
+extent = 0
+for row in selected:
+    if group and (len(group) == 150 or extent + row['original']['bytes'] > 8*MIB):
+        parts.append(group); group = []; extent = 0
+    group.append(row); extent += row['original']['bytes']
+if group:
+    parts.append(group)
+
+specs = []
+reuse_verified = {}
+inventory_rows = []
+
+
+def make_plan(number, group):
+    destination = DEST / ('part%02d' % number)
+    assert not destination.exists()
+    rows = []
+    new_bytes = reused_bytes = 0
+    new_count = 0
+    for item in group:
+        original = item['original']
+        key = (original['path'], original['bytes'], original['sha256'])
+        choices = sorted(aliases.get(key, []), key=lambda value: value['path'])
+        retained = item.get('existing_immutable_S') or (choices[0] if choices else None)
+        if retained is not None:
+            assert Path(retained['path']).is_relative_to(S)
+            whole(retained['path'], retained)
+            reuse_verified[retained['path']] = retained
+            reused_bytes += original['bytes']
+            action = 'REUSE_EXACT_EXISTING_S_BODY'
+        else:
+            retained = dict(original, path=str(destination / 'files' / item['relative']))
+            new_bytes += original['bytes']; new_count += 1
+            action = 'COPY_TO_NEW_APPEND_ONLY_PART'
+        rows.append(dict(original=original, retained=retained))
+        inventory_rows.append(dict(original=original, retained=retained, action=action, part=number))
+    assert len(rows) <= 150 and new_bytes + reused_bytes <= 8*MIB
+    plan_value = dict(Root_authority=False, borrowed_closures=borrowed,
+                      destination=str(destination), files=rows,
+                      qualification='Actual completed batch96..111:7 newly paid facts(3GEN,4NEG), separate existing IP application for the3GEN,9 selected cases remain unpaid. Complete selected execution/callback/RootSource/policy/invoice/gate/forecast/copy/write/refusal/error bodies retained with their original qualifications. Matching existing S bodies are reused by exact whole identity. Earlier borrowed maps remain opaque beyond selected mapping joins; no scientific replay, verdict transfer or whole Original credit.',
+                      scientific_calls=0)
+    plan = put('part%02d_plan.json' % number, plan_value)
+    plan_raw = can(plan_value)
+    methods = [dict(original=method, retained=ref(destination / 'method/retain_closed_files.py', method_raw)),
+               dict(original=plan, retained=ref(destination / 'method/plan.json', plan_raw))]
+    manifest = dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1', root='/root',
+                    files=rows + methods, borrowed_closures=borrowed, source_plan=plan,
+                    scientific_calls=0, Source_or_verdict_transfer=False,
+                    acceptance_or_checkpoint_or_operational_register_writes=0,
+                    qualification='Complete selected file bodies retained. Borrowed closures authenticate whole existing manifests; their older payloads are not re-executed or claimed freshly opened here. This copy supplies no mathematical or census credit.')
+    manifest_raw = can(manifest)
+    expected_manifest = ref(destination / 'preservation.json', manifest_raw)
+    original_paths = {row['original']['path'] for row in rows}
+    retained_paths = {row['retained']['path'] for row in rows}
+    path_union = original_paths | retained_paths | {method['path'], plan['path']} | {row['path'] for row in borrowed} | {row['retained']['path'] for row in methods} | {expected_manifest['path']}
+    # READ counter:4N+3R+2Source+3plan+borrowed+manifest. The initial
+    # Python interpreter Source loader contributes one more Source body.
+    instrumented = 4*new_bytes + 3*reused_bytes + 2*method['bytes'] + 3*plan['bytes'] + sum(row['bytes'] for row in borrowed) + len(manifest_raw)
+    physical = instrumented + method['bytes']
+    written = new_bytes + method['bytes'] + plan['bytes'] + len(manifest_raw)
+    emitted = new_count + 3
+    assert len(path_union) <= 512 and physical <= 64*MIB and written <= 16*MIB and emitted <= 512
+    spec = dict(part=number, Source=method, plan=plan, destination=str(destination),
+                expected_manifest_DATA=expected_manifest, actual_copy=None,
+                child_argv_UNRUN=['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', method['path'],
+                                 '--self-sha256', method['sha256'], '--plan', plan['path'], plan['sha256'],
+                                 '--destination', str(destination), '--manifest', expected_manifest['path']],
+                invoice=dict(original_rows=len(rows), selected_payload_bytes=new_bytes + reused_bytes,
+                             new_copy_rows=new_count, new_copy_payload_bytes=new_bytes,
+                             reuse_rows=len(rows) - new_count, reuse_payload_bytes=reused_bytes,
+                             Source_bytes=method['bytes'], plan_bytes=plan['bytes'], expected_manifest_bytes=len(manifest_raw),
+                             borrowed_closure_bytes=sum(row['bytes'] for row in borrowed),
+                             actual_path_union_upper=len(path_union), exact_source_instrumented_read_bytes=instrumented,
+                             physical_read_bytes_including_initial_Source_loader=physical,
+                             new_output_bytes_including_method_plan_manifest=written,
+                             new_output_files_including_method_plan_manifest=emitted,
+                             RSS_bytes=256*MIB, inner_seconds=125, outer_seconds=150,
+                             admission_RAM_bytes=4*2**30, admission_disk_bytes=10*2**30,
+                             RAM_floor_bytes=3*2**30, disk_floor_bytes=8*2**30,
+                             Root_must_recheck_fresh_destinations_and_whole_bodies=True))
+    specs.append(spec)
+
+
+for number, group in enumerate(parts, 1):
+    make_plan(number, group)
+selection = put('selection_inventory.json', dict(
+    schema='L026_FREE96_111_CLOSED_METADATA_SELECTION_DATA_V1', author='/root/status_readme_audit',
+    borrowed_closures=borrowed, root_inventories=root_inventories,
+    standalone_records=[str(path) for path in standalone], exact_rows=inventory_rows,
+    selected_file_count=len(selected), selected_payload_bytes=sum(row['original']['bytes'] for row in selected),
+    matched_existing_S_aliases_freshly_hashed=list(reuse_verified.values()),
+    accepted_CURRENT_snapshot=snapshot, committed_epoch_files=[str(path) for path in epoch_files],
+    prior80_95_format=prior_plan, Root_authority=False, scientific_calls=0,
+    qualification='Finite closed file selection. The Root source/policy/guard/API/strict/retention/ledger/refusal records retain their exact original bodies and scope. No proposal is promoted to a proof, no failed run retagged, no scientific state replayed, and no old proof DAG recursively reopened.'))
+invoices = put('resource_invoices.json', dict(
+    schema='L026_FREE96_111_CLOSED_METADATA_RESOURCE_INVOICES_DATA_V1', author='/root/status_readme_audit',
+    Source=method, selection=selection, parts=specs, Root_authority=False, actual_copies=[],
+    exact_READ_formula='4new_payload+3reused_payload+2Source+3plan+borrowed+manifest; plus1Source for initial Python loader.',
+    exact_write_formula='new_payload+Source+plan+manifest; reused bodies are not written.'))
+payload_handoff = put('payload_handoff.json', dict(
+    schema='L026_FREE96_111_CLOSED_METADATA_PAYLOAD_HANDOFF_DATA_V1', author='/root/status_readme_audit',
+    status='PREPARED_UNRUN_DATA_ONLY', Root_authority=False, selection=selection, invoices=invoices,
+    Source=method, parts=specs, actual_calls=[], actual_preservations=[], scientific_calls=0, S_W_mutations=0))
+inverse = put('payload_creation_inverse.json', dict(
+    schema='L026_FREE96_111_RETENTION_DATA_COMPLETE_CREATION_INVERSE_V1', author='/root/status_readme_audit',
+    preparation_Source=dict(ref=own, before=dict(exists=False), whole_body_base64=base64.b64encode(own_raw).decode()),
+    changes=list(CREATED), self_record_excluded=True, Root_authority=False,
+    inverse='For these new private DATA files only: match the exact whole after body, then restore absence. This preparation performs no deletion and authorizes no S/W/ledger/gate mutation.',
+    represented_activations=0, scientific_calls=0))
+
+# A final small packet closes on this preparatory DATA. Its own plan is copied
+# by667 automatically. Later terminal handoff/QA/copy captures are an explicit
+# finite boundary and may be included in Root's subsequent actual-copy closure.
+prep_rows = [dict(original=own, relative='preparation/prepare_DATA.py')]
+for path in sorted((D / 'author_provenance').iterdir()):
+    pin, _ = whole(path)
+    prep_rows.append(dict(original=pin, relative='preparation/author_provenance/' + path.name))
+for row in CREATED:
+    prep_rows.append(dict(original=row['after'], relative='preparation/' + Path(row['path']).name))
+make_plan(len(specs) + 1, prep_rows)
+final = put('FINAL_handoff.json', dict(
+    schema='L026_FREE96_111_CLOSED_METADATA_FINAL_HANDOFF_DATA_V1', author='/root/status_readme_audit',
+    status='PREPARED_UNRUN_DATA_ONLY', Root_authority=False, execution_authority_granted=False,
+    Source=method, preparation_Source=own, prior80_95_format=prior_plan,
+    selection=selection, invoices_for_payload_parts=invoices, payload_handoff=payload_handoff,
+    complete_payload_creation_inverse=inverse, parts=specs,
+    main_payload_parts=len(parts), preparation_record_parts=1,
+    totals=dict(selected_files=len(selected), selected_payload_bytes=sum(row['original']['bytes'] for row in selected),
+                new_copy_payload_bytes=sum(row['invoice']['new_copy_payload_bytes'] for row in specs),
+                reused_rows=sum(row['invoice']['reuse_rows'] for row in specs),
+                new_output_bytes=sum(row['invoice']['new_output_bytes_including_method_plan_manifest'] for row in specs)),
+    actual_calls=[], actual_preservations=[], ledger_writes=0, scientific_calls=0, S_or_W_mutations=0,
+    terminal_boundary='The final small part retains complete main-plan/invoice/inventory/handoff/full-creation-inverse records plus the author Source and acceptedCURRENT byte snapshot. Its own plan/method are retained by667. This FINAL_handoff, terminal QA and later actual-copy captures are explicitly outside that finite selected preparation closure; no fabricated actual hashes or recursive-completeness claim.',
+    Root_remaining=['Review exact667 Source/selection/invoices and all selected/borrowed whole identities.',
+                    'Fresh canonical destination absence and RAM/disk admission.',
+                    'Actual bounded667 copy for each immutable part, genuine API captures and whole expected-manifest check.',
+                    'Independent postcopy integrity/scope check.'],
+    qualification='Complete selected batch96..111 closed execution/provenance DATA, including genuine refusals/errors and distinct prior partial continuations. Existing S copies are reused by exact freshly checked aliases. Accepted facts, original Fi22/fullAut/Out2/model/action/word/member/H=B premises, strictGEN IP0 and separate existing IP theorem keep their earlier qualifications. All9 finite misses/unvisited selected cases and previous case53 remain unpaid. This selection grants no activation or mathematical/manuscript credit.'))
+print(json.dumps(dict(handoff=final, selection=selection, creation_inverse=inverse,
+                      status='PREPARED_UNRUN_DATA_ONLY', parts=len(specs),
+                      selected_files=len(selected), selected_payload_bytes=sum(row['original']['bytes'] for row in selected),
+                      reused_rows=sum(row['invoice']['reuse_rows'] for row in specs),
+                      total_new_output_bytes=sum(row['invoice']['new_output_bytes_including_method_plan_manifest'] for row in specs),
+                      max_paths=max(row['invoice']['actual_path_union_upper'] for row in specs),
+                      max_physical_read=max(row['invoice']['physical_read_bytes_including_initial_Source_loader'] for row in specs)), sort_keys=True))

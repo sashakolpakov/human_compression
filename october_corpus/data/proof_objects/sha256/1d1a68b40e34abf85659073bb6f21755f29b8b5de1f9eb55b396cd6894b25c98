@@ -1,0 +1,67 @@
+"""Own stdlib DATA successor; never imports or executes control/adapter Source."""
+from pathlib import Path
+import ast,hashlib,json
+N=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v3/private_controls_UNRUN')
+V=N.parent
+D=N/'protected_helper_successor_DATA'
+D.mkdir()
+reads=[]
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'))+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p):
+ p=Path(p);assert p.stat().st_size<=4*2**20;b=p.read_bytes();r=ref(p,b);reads.append(r);return r,b
+def doc(p):
+ r,b=read(p);return r,json.loads(b)
+def put(n,x):
+ p=D/n;b=can(x);assert len(b)<=4*2**20
+ with p.open('xb')as f:assert f.write(b)==len(b)
+ return ref(p,b)
+author_source,_=read(Path(__file__).resolve())
+old,oldraw=read(N/'control_closed40.py');new,newraw=read(N/'control_closed40_v3b.py')
+ast.parse(oldraw);ast.parse(newraw)
+assert old['sha256']=='cfb19fc74d4c714d135abba62e4a9aee524de33f4572e2dec7891f082928f5ae'
+assert new['bytes']==32773 and new['sha256']=='d4e87f6763bd0c1b17f0d58ee45c29f362a494e1715cf444aa1edf2b3b816bd8'
+def replace(x):
+ if type(x)is dict:
+  if x==old:return new
+  return{k:replace(v)for k,v in x.items()}
+ if type(x)is list:return[replace(v)for v in x]
+ return x
+fv_ref,fv=doc(N/'complete_Source_UTF8_and_AST_read_view.json');fv=replace(fv)
+fv['harness_full_UTF8']=newraw.decode()
+for k in ['activated_projection']:
+ fv[k]['whole_harness_bytes']=new['bytes'];fv[k]['simultaneous_functional_Source_bytes']=65052
+ fv[k]['full_physical_Source_read_bytes']=39928+new['bytes']
+assert fv['adapter_Source']['sha256']=='11f9bfe773e99d1e5db429b2a536d1554624b40855c18f75a889737c454621d1'
+full=put('complete_Source_UTF8_and_AST_read_view.json',fv)
+iv_ref,iv=doc(N/'whole_Source_creation_and_lineage_inverse.json');iv=replace(iv)
+creation=iv['creations'][1];creation['path']=new['path'];creation['after']=new;creation['complete_after_UTF8']=newraw.decode()
+iv['complete_prior_SourceTEXT'].append(dict(reference=old,complete_UTF8=oldraw.decode(),
+ qualification='Frozen prior control draft unchanged; new edition adds memory-only protected helper positive/stale-byte cases.'))
+inverse=put('whole_Source_creation_and_lineage_inverse.json',iv)
+rv_ref,rv=doc(N/'control_read_view_manifest.json');rv=replace(rv)
+rv['complete_Source_UTF8_read_view']=full;rv['whole_Source_inverse']=inverse
+rv['activated_projection']=fv['activated_projection'];rv['protected_progress_fixture']='Memory-only canonicalized copy of already read fixed PROGRESS; no additional filesystem input/output.'
+readview=put('control_read_view_manifest.json',rv)
+cr_ref,cr=doc(N/'Root_control_release_UNBOUND.json');cr=replace(cr);cr['read_view_manifest']=readview
+release=put('Root_control_release_UNBOUND.json',cr)
+sr_ref,sr=doc(N/'static_UNRUN_control_roster.json');sr=replace(sr)
+sr['protected_progress_positive_and_stale_byte_identity_controls']=True
+roster=put('static_UNRUN_control_roster.json',sr)
+in_ref,inv=doc(V/'Source_control_whole_IO_invoice_UNBOUND.json');inv=replace(inv)
+inv['activated_namespace']=fv['activated_projection']
+inv['protected_helper_successor_qualification']=('Exact three-line main/control fixture change only; Source protected positively called and stale protected bytes rejected. '
+ 'Memory-only PROGRESS fixture uses already read fixed PROGRESS body; physical input read count unchanged. Full new readview/inverse retained. '
+ 'No represented Source/control activation; all22cases remain UNRUN.')
+inv['successor_author_DATA_Source']=author_source
+inv['successor_author_explicit_read_rows']=reads.copy()
+invoice=put('Source_control_whole_IO_invoice_UNBOUND.json',inv)
+h_ref,h=doc(V/'handoff.json');h=replace(h)
+h.update(full_UTF8_AST_read_view=full,whole_Source_creation_inverse=inverse,
+ private_control_read_view_manifest=readview,unrun_executable_control_roster=roster,
+ Root_control_release_false_template=release,Source_and_control_whole_invoice=invoice,
+ prior_unchanged_frozen_handoff=h_ref,selected_control_edition='protected_helper_v3b',
+ all22_controls_UNRUN=True,simultaneous_functional_Source_bytes=65052)
+result=put('handoff.json',h)
+print(json.dumps(dict(handoff=result,harness=new,read_view=readview,inverse=inverse,invoice=invoice,
+ activated_namespace_bytes=65052),sort_keys=True))

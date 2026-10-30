@@ -1,0 +1,312 @@
+"""Independent metadata-only audit; never import or run represented programs."""
+import copy
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import stat
+
+OUT = Path('/private/tmp/f009_cp11262_postregistration_peer_DATA')
+S = Path('/Users/sasha/medusa/research/leemans')
+C = S / 'maintenance/intake/f009_census_continuation/from11216/standalone_execution/checkpoint_11262'
+D = Path('/private/tmp/f009_continuation/from_11216/native_DATA/checkpoint_binding_DATA/ready_actual_peer_DATA')
+ROLES = {}
+RAW = {}
+CHECKS = []
+BLOCKERS = []
+START = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def pairs(items):
+    result = {}
+    for k, v in items:
+        need(k not in result, 'duplicate JSON key: ' + k)
+        result[k] = v
+    return result
+
+
+def decode(raw):
+    return json.loads(raw, object_pairs_hook=pairs)
+
+
+def sig(st):
+    return (st.st_dev, st.st_ino, st.st_mode, st.st_nlink, st.st_size,
+            st.st_mtime_ns, st.st_ctime_ns)
+
+
+def read(role, path, expected=None):
+    path = Path(path)
+    need(path.is_absolute() and path.resolve(strict=True) == path, 'canonical file path')
+    before = path.lstat()
+    need(stat.S_ISREG(before.st_mode), 'regular file required: ' + str(path))
+    need(before.st_size <= 4 * 2**20, 'metadata-only per-file bound')
+    raw = path.read_bytes()
+    need(sig(before) == sig(path.lstat()), 'file changed during read: ' + str(path))
+    ref = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    need(len(raw) == before.st_size, 'whole file read')
+    if expected is not None:
+        need(ref == expected, 'descriptor mismatch for ' + role)
+    ROLES[role] = ref
+    RAW[role] = raw
+    return raw
+
+
+def doc(role, path, expected=None):
+    return decode(read(role, path, expected))
+
+
+def check(label, ok, **detail):
+    need(ok, label)
+    CHECKS.append(dict(check=label, passed=True, **detail))
+
+
+def patch_diff(a, b, path=()):
+    if type(a) is dict and type(b) is dict:
+        out = []
+        for k in sorted(set(a) | set(b)):
+            if k not in a or k not in b:
+                out.append(list(path + (k,)))
+            else:
+                out.extend(patch_diff(a[k], b[k], path + (k,)))
+        return out
+    return [] if a == b and type(a) is type(b) else [list(path)]
+
+
+def restore_fields(target, previous, fields):
+    for name in fields:
+        if name in previous:
+            target[name] = copy.deepcopy(previous[name])
+        else:
+            target.pop(name, None)
+
+
+def audit():
+    post = doc('Root_postregistration_review', C / 'root_postregistration_review.json')
+    cp = doc('checkpoint_acceptance', C / 'root_checkpoint_acceptance.json', post['checkpoint_acceptance'])
+    sp = doc('snapshot_adoption', C / 'root_snapshot_acceptance.json', post['snapshot_adoption'])
+    reg = doc('registration_result', C / 'registration_result.json', post['registration_result'])
+    intent = doc('commit_intent', C / 'commit_intent.json', reg['intent'])
+    plan = doc('retained_metadata_plan', C / 'metadata_plan.json')
+    release = doc('retained_Root_release', C / 'Root_writer_release.json')
+    read('retained_writer_Source_not_executed', C / 'metadata_writer.py')
+    domain = doc('complete_root_inputs_metadata_only', C / 'complete_root_inputs.json', cp['complete_root_inputs'])
+    closure = doc('Reader_closure_metadata_only', C / 'reader_closure.json', cp['Reader_closure'])
+    expected_cp = dict(sequence=11262, nodes=5907, pending=205, reserved_debts=0,
+                       selected_raw_leaf_records=557508)
+    check('exact_new_checkpoint_and_noncompletion',
+          cp['checkpoint'] == sp['checkpoint'] == reg['checkpoint'] == plan['checkpoint'] == expected_cp
+          and cp['ordinary_census_complete'] is False
+          and cp['all_pending_families_remain_unpaid'] is True
+          and cp['whole_original_credit'] == sp['whole_original_credit'] == reg['new_complete_originals'] == 0
+          and reg['scientific_calls'] == 0,
+          checkpoint=expected_cp, new_complete_originals=0)
+    check('CP_SP_registration_intent_crosslinks',
+          sp['checkpoint_acceptance'] == reg['checkpoint_acceptance'] == intent['checkpoint_acceptance'] == ROLES['checkpoint_acceptance']
+          and reg['snapshot_adoption'] == intent['snapshot_adoption'] == ROLES['snapshot_adoption']
+          and reg['Reader_closure'] == sp['root_terminal'] == ROLES['Reader_closure_metadata_only']
+          and sp['complete_root_inputs'] == ROLES['complete_root_inputs_metadata_only']
+          and cp['root_metadata_writer'] == sp['root_metadata_writer'] == reg['writer'] == intent['writer'])
+    method = cp['root_metadata_writer']
+    retained = {row['retained']['path']: row for row in method['actual_to_retained_sources']}
+    for role, leaf in (('retained_writer_Source_not_executed', 'metadata_writer.py'),
+                       ('retained_metadata_plan', 'metadata_plan.json'),
+                       ('retained_Root_release', 'Root_writer_release.json')):
+        row = retained[str(C / leaf)]
+        need(row['retained'] == ROLES[role], 'retained exact method descriptor')
+        read('actual_method_' + leaf, row['actual']['path'], row['actual'])
+        need(RAW['actual_method_' + leaf] == RAW[role], 'retained actual method byte equality')
+    check('actual_and_retained_writer_plan_release_whole_byte_identity',
+          method['program'] == plan['program'] == ROLES['actual_method_metadata_writer.py']
+          and method['plan'] == ROLES['actual_method_metadata_plan.json']
+          and method['Root_release'] == ROLES['actual_method_Root_writer_release.json'])
+    old_cp = doc('predecessor_checkpoint', plan['prior_checkpoint_acceptance']['path'], plan['prior_checkpoint_acceptance'])
+    old_sp = doc('predecessor_snapshot', plan['prior_snapshot_adoption']['path'], plan['prior_snapshot_adoption'])
+    check('accepted_11216_predecessor_preserved_and_46_transactions',
+          old_cp['checkpoint']['sequence'] == old_sp['checkpoint']['sequence'] == plan['prior_checkpoint_sequence'] == 11216
+          and cp['base_acceptance'] == sp['upstream_acceptance'] == ROLES['predecessor_checkpoint']
+          and cp['delta']['transactions'] == expected_cp['sequence'] - 11216 == 46
+          and cp['historical_reference_retention_obligation'] == sp['historical_reference_retention_obligation'] == old_cp['historical_reference_retention_obligation'])
+    read('actual_preservation_map_metadata_only', release['actual_canonical_preservation']['path'], release['actual_canonical_preservation'])
+    for name in ('Root_canonical_preservation_review', 'Root_whole_binding_review',
+                 'qualified_metadata_Source_review', 'independent_actual_reader_revalidation',
+                 'independent_binding_DATA_peer'):
+        value = doc(name, release[name]['path'], release[name])
+        need(value.get('blockers', []) == [], name + ' blockers')
+    check('Root_release_authorizes_only_exact_bounded_metadata_registration',
+          release['status'] == 'SUPPORTED' and release['blockers'] == []
+          and release['canonical_selector_commit_authorized'] is True
+          and release['actual_Reader_and_Native_closure_supported'] is True
+          and release['whole_original_credit'] == 0 and release['root'] == '/root'
+          and release['plan'] == method['plan'] and release['program'] == method['program'])
+    cap = doc('actual_commit_capture', D / 'runtime/registration_commit_actual_capture.json', post['actual_commit_capture'])
+    guard_path = D / 'runtime/registration_commit_guard'
+    guard = doc('actual_commit_guard', guard_path / 'receipt.json')
+    stdout = doc('actual_commit_stdout', guard_path / 'stdout.log')
+    read('actual_commit_stderr', guard_path / 'stderr.log')
+    argv = cap['issued_argv']
+    check('genuine_captured_API_frames_commit_argv_and_terminal',
+          cap['root'] == cap['actor'] == '/root'
+          and cap['child_argv'] == argv
+          and shlex.split(cap['issued_tool_arguments']['cmd']) == argv
+          and cap['issued_command'] == cap['issued_tool_arguments']['cmd']
+          and argv[-1] == '--commit'
+          and cap['actual_tool']['exit_code'] == 0
+          and cap['all_genuine_api_frames'][0] == cap['full_initial_tool_return']
+          and cap['all_genuine_api_frames'][-1] == cap['full_tool_return']
+          and cap['full_initial_tool_return']['session_id'] == cap['actual_tool']['handle']
+          and cap['full_initial_tool_return']['chunk_id'] == cap['actual_tool']['initial_chunk']
+          and cap['full_tool_return']['chunk_id'] == cap['actual_tool']['terminal_chunk']
+          and cap['full_tool_return']['exit_code'] == 0,
+          provenance_scope='Review of Root-captured genuine frame record; independent peer did not issue the commit.')
+    separator = argv.index('--')
+    child = argv[separator + 1:]
+    check('guard_matches_exact_writer_plan_release_preservation_commit',
+          child == guard['command']
+          and child[:4] == [argv[0], '-E', '-B', method['program']['path']]
+          and child[4:] == ['--plan', method['plan']['path'], method['plan']['sha256'],
+                           '--root-release', method['Root_release']['path'], method['Root_release']['sha256'],
+                           '--preservation', release['actual_canonical_preservation']['path'],
+                           release['actual_canonical_preservation']['sha256'], '--commit']
+          and decode(cap['full_tool_return']['output']) == dict(status='PASS', stop='RETURNED', receipt=str(guard_path / 'receipt.json')))
+    check('guard_resource_caps_success_and_known_scope_cleanup',
+          guard['status'] == 'PASS' and guard['stop'] == 'RETURNED'
+          and guard['returncode'] == 0 and guard['error'] is None
+          and guard['cleanup']['remaining'] == guard['cleanup']['errors'] == []
+          and guard['limits']['total_rss'] == 256 * 2**20
+          and guard['limits']['wall_seconds'] == 150
+          and guard['peaks']['total_rss'] <= guard['limits']['total_rss']
+          and guard['seconds'] <= guard['limits']['wall_seconds']
+          and len(RAW['actual_commit_stderr']) == 0,
+          seconds=guard['seconds'], peak_rss=guard['peaks']['total_rss'],
+          qualification=guard['cleanup']['qualification'])
+    check('actual_stdout_matches_sealed_CP_SP_registration',
+          stdout['checkpoint_acceptance'] == ROLES['checkpoint_acceptance']
+          and stdout['snapshot_adoption'] == ROLES['snapshot_adoption']
+          and stdout['registration_result'] == ROLES['registration_result']
+          and stdout['canonical_selector_writes'] == 3
+          and stdout['scientific_calls'] == stdout['new_complete_originals'] == 0
+          and stdout['checkpoint'] == expected_cp)
+    before = []
+    after = []
+    live = []
+    fields = ('F009_checkpoint_current', 'F009_checkpoint_acceptance_current',
+              'F009_snapshot_acceptance_current', 'F009_next_select_current',
+              'F009_reserved_parents_current')
+    progress_fields = ('checkpoint', 'checkpoint_acceptance', 'snapshot_adoption', 'status', 'root_metadata_update')
+    patch = dict(F009_checkpoint_current=expected_cp,
+                 F009_checkpoint_acceptance_current=ROLES['checkpoint_acceptance'],
+                 F009_snapshot_acceptance_current=ROLES['snapshot_adoption'],
+                 F009_next_select_current=cp['next_select'], F009_reserved_parents_current=cp['reserved_parents'])
+    diff_records = []
+    for index, (name, target) in enumerate(zip(('CURRENT', 'STATUS', 'PROGRESS'), intent['live_paths'])):
+        b = doc(name + '_durable_before', intent['before_copies'][index]['path'], intent['before_copies'][index])
+        a = doc(name + '_durable_next', intent['after_images'][index]['path'], intent['after_images'][index])
+        l = doc(name + '_live_observation', target, reg['three_actual_live_observations'][index])
+        need(RAW[name + '_durable_next'] == RAW[name + '_live_observation'], name + ' exact durable-next/live equality')
+        old_observation = dict(intent['before_observations'][index], path=intent['before_copies'][index]['path'])
+        need(old_observation == ROLES[name + '_durable_before'], name + ' before descriptor')
+        check(name + '_whole_live_bytes_equal_durable_next', True,
+              live=ROLES[name + '_live_observation'], durable_next=ROLES[name + '_durable_next'])
+        restored = copy.deepcopy(a)
+        if index < 2:
+            need(all(a[k] == v for k, v in patch.items()), name + ' exact new selectors')
+            need(b['F009_checkpoint_current'] == old_cp['checkpoint'], name + ' exact old selectors')
+            need(b['F009_checkpoint_acceptance_current'] == ROLES['predecessor_checkpoint'], name + ' old CP descriptor')
+            need(b['F009_snapshot_acceptance_current'] == ROLES['predecessor_snapshot'], name + ' old SP descriptor')
+            record = a['root_intake_progress_current']['F009_accepted_checkpoint']
+            need(record['checkpoint'] == expected_cp and record['acceptance'] == ROLES['checkpoint_acceptance']
+                 and record['snapshot'] == ROLES['snapshot_adoption'] and record['new_complete_originals'] == 0,
+                 name + ' exact progress record')
+            restore_fields(restored, b, fields)
+            if 'root_intake_progress_current' in b:
+                restore_fields(restored['root_intake_progress_current'], b['root_intake_progress_current'], ('F009_accepted_checkpoint',))
+            else:
+                restored.pop('root_intake_progress_current', None)
+        else:
+            need(a['F009']['checkpoint'] == expected_cp
+                 and a['F009']['checkpoint_acceptance'] == ROLES['checkpoint_acceptance']
+                 and a['F009']['snapshot_adoption'] == ROLES['snapshot_adoption'], 'progress exact new selectors')
+            need(b['F009']['checkpoint'] == old_cp['checkpoint']
+                 and b['F009']['checkpoint_acceptance'] == ROLES['predecessor_checkpoint']
+                 and b['F009']['snapshot_adoption'] == ROLES['predecessor_snapshot'], 'progress exact old selectors')
+            restore_fields(restored['F009'], b['F009'], progress_fields)
+        need(restored == b, name + ' full allowed-field inverse')
+        differences = patch_diff(b, a)
+        diff_records.append(dict(role=name, semantic_changed_leaf_paths=differences,
+                                 full_inverse_recovers_before=True,
+                                 F004_unchanged=b.get('F004') == a.get('F004'),
+                                 L026_unchanged=b.get('L026') == a.get('L026')))
+        before.append(b)
+        after.append(a)
+        live.append(l)
+    check('whole_allowed_field_inverse_preserves_every_other_semantic_field', True,
+          views=diff_records,
+          qualification='Complete semantic equality after restoring exactly five selector fields and one nested F009 record in CURRENT/STATUS, and exactly five F009 progress fields. Includes unknown fields, F004/L026 and intake counters.')
+    owners = ('root_execution_ownership_latest', 'root_current_ownership', 'current_execution_ownership')
+    check('all_four_ownership_arrays_and_current_handle_idle_at_observation',
+          live[0]['current_handle'] is None
+          and all(live[0][k]['active_handles'] == [] for k in owners)
+          and live[1]['active_scientific_handles'] == [])
+    for index, name in enumerate(('CURRENT', 'STATUS', 'PROGRESS')):
+        original = ROLES[name + '_live_observation']
+        read(name + '_live_end_recheck', intent['live_paths'][index], original)
+    check('three_live_views_stable_through_audit_end_recheck', True)
+    check('recoverable_per_file_CAS_qualification_retained',
+          intent['per_file_atomic_only_not_crash_atomic_across_three_files'] is True
+          and reg['per_file_atomic_only_not_three_file_crash_atomic'] is True)
+    return dict(checkpoint=expected_cp, semantic_inverse=diff_records,
+                new_complete_originals=0, canonical_selector_writes_observed=3,
+                unchanged_intake_counts={k: after[2].get(k) for k in (
+                    'accessible_original_sources', 'reviewed_mathematical_originals',
+                    'mathematical_originals', 'principal_recoveries', 'complete_refutation_treatments',
+                    'remaining_originals', 'measurements_or_Lean_or_new_conjecture_search_started')})
+
+
+try:
+    result = audit()
+except Exception as error:
+    BLOCKERS.append(dict(type=type(error).__name__, message=str(error)))
+    result = None
+
+FINISH = datetime.datetime.now(datetime.timezone.utc).isoformat()
+source_raw = Path(__file__).read_bytes()
+report = dict(schema='INDEPENDENT_F009_CP11262_METADATA_POSTREGISTRATION_REVIEW_V1',
+              reviewer='/root/status_readme_audit', review_kind='metadata only',
+              observed_start_utc=START, observed_finish_utc=FINISH,
+              status='SUPPORTED' if not BLOCKERS else 'BLOCKED', blockers=BLOCKERS,
+              report_conclusion=result, checks=CHECKS, whole_file_roles=ROLES,
+              reviewer_program=dict(path=str(Path(__file__)), bytes=len(source_raw), sha256=hashlib.sha256(source_raw).hexdigest()),
+              no_represented_Source_import_or_execution=True, scientific_replays=0,
+              S_or_W_mutations=0,
+              qualification=('Independent check of retained metadata and genuine Root-captured commit evidence. '
+                             'No mathematical census replay, snapshot decode, or fresh hashing of the scientific input graph was performed. '
+                             'A whole preservation-map file was authenticated as metadata, without rehashing its payloads. '
+                             'Results apply to the three selector observations stated here; later independent ledger updates are outside this observation. '
+                             'Root release, forecast/provenance reviews and sampled cleanup retain their stated scope. '
+                             'Recoverable sequential per-file CAS is not crash atomic across three selectors.'))
+raw = (json.dumps(report, indent=2, sort_keys=True) + '\n').encode()
+path = OUT / 'independent_review.json'
+with path.open('xb') as f:
+    f.write(raw)
+    f.flush()
+    os.fsync(f.fileno())
+ref = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+seal = dict(schema='INDEPENDENT_F009_CP11262_METADATA_POSTREGISTRATION_REVIEW_SEAL_V1',
+            reviewer='/root/status_readme_audit', report=ref, status=report['status'],
+            blockers=BLOCKERS, observed_finish_utc=FINISH,
+            reviewer_program=report['reviewer_program'])
+seal_raw = (json.dumps(seal, indent=2, sort_keys=True) + '\n').encode()
+seal_path = OUT / 'seal.json'
+with seal_path.open('xb') as f:
+    f.write(seal_raw)
+    f.flush()
+    os.fsync(f.fileno())
+print(json.dumps(dict(report=ref, seal=dict(path=str(seal_path), bytes=len(seal_raw), sha256=hashlib.sha256(seal_raw).hexdigest()),
+                      status=report['status'], checks=len(CHECKS), blockers=BLOCKERS)))

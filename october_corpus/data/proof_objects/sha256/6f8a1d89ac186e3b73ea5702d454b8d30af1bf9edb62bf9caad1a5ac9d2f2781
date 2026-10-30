@@ -1,0 +1,164 @@
+"""Own static reconstruction of v3 typed metadata projection; never execute subject Source."""
+from pathlib import Path
+import ast,copy,datetime,hashlib,json,os,stat
+O=Path('/private/tmp/f004_closed40_data_peer_DATA')
+D=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v3')
+F=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v2/fresh_post_CP11262_DATA')
+opened={}
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def eq(a,b):return can(a)==can(b)
+def whole(path,expected=None):
+ p=Path(path);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=4*2**20
+ with p.open('rb')as f:z=os.fstat(f.fileno());b=f.read();e=os.fstat(f.fileno())
+ assert sig(a)==sig(z)==sig(e)==sig(p.lstat())
+ r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if expected is not None:assert r==expected
+ assert opened.get(str(p),r)==r;opened[str(p)]=r
+ return b,r
+def doc(path,expected=None):b,r=whole(path,expected);return json.loads(b),r
+def rd(r):return doc(r['path'],r)[0]
+def at(d,p):
+ for k in p:d=d[k]
+ return d
+def owner(d,p):return at(d,p[:-1])if len(p)>1 else d
+source,sp=whole(D/'register_closed40.py',dict(path=str(D/'register_closed40.py'),bytes=39894,sha256='ed532ab4e2de270815f0cfae914bf13ae9ca13d8c7b43b87b577150758edc241'))
+tree=ast.parse(source);constants={};function_nodes={n.name:n for n in tree.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+for n in tree.body:
+ if isinstance(n,ast.Assign)and len(n.targets)==1 and isinstance(n.targets[0],ast.Name):
+  try:constants[n.targets[0].id]=ast.literal_eval(n.value)
+  except(ValueError,TypeError):
+   if n.targets[0].id=='ALIASES':
+    assert isinstance(n.value,ast.Call)and isinstance(n.value.func,ast.Name)and n.value.func.id=='dict'and not n.value.args
+    constants['ALIASES']={k.arg:ast.literal_eval(k.value)for k in n.value.keywords}
+assert len(constants['JOBS'])==40 and len(constants['CHECKS'])==10 and len(constants['CONTROL_CASES'])==22
+old_source,_=whole(Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v2/register_closed40.py'))
+oldtree=ast.parse(old_source);oldfuncs={n.name:n for n in oldtree.body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+ast_delta=dict(added=sorted(set(function_nodes)-set(oldfuncs)),removed=sorted(set(oldfuncs)-set(function_nodes)),
+ changed=sorted(k for k in set(function_nodes)&set(oldfuncs)if ast.dump(function_nodes[k],include_attributes=False)!=ast.dump(oldfuncs[k],include_attributes=False)))
+fresh,fr=doc(F/'handoff.json');before={r:rd(fresh['immutable_author_whole_snapshots'][r])for r in ['CURRENT','STATUS']}
+for r in ['CURRENT','STATUS','PROGRESS']:
+ b,_=whole(fresh['actual_live_observations'][r]['path'],fresh['actual_live_observations'][r]);ib,_=whole(fresh['immutable_author_whole_snapshots'][r]['path'],fresh['immutable_author_whole_snapshots'][r]);assert b==ib
+progress=fresh['immutable_author_whole_snapshots']['PROGRESS']
+prior_data,priorpin=doc(O/'independent_review.json',dict(path=str(O/'independent_review.json'),bytes=186569,sha256='5807efc359e14189ddec12360d8ada30ee39df82a4a5e2f0f8c49129b184e202'))
+q8,q8pin=doc(O/'q8_existing_authority_component.json',dict(path=str(O/'q8_existing_authority_component.json'),bytes=27736,sha256='fc2f14a910567cada1e11c4b810fbd80071d53431dd4f726100ff9ba9a2bacb3'))
+assert q8['blockers']==[]
+snapshot_inventory,inventorypin=doc(O/'alias_scope_inventory.json',dict(path=str(O/'alias_scope_inventory.json'),bytes=290652,sha256='99d729c75200e4b807467cd84fba80a2ce7460edc5e5deeadb79b517d35a5c60'))
+
+# These tagged values are explicit symbols, not path/bytes/SHA descriptors or future authority.
+pending_ref=dict(STATIC_DATA_ROLE='FUTURE_INSTALLED_PENDING_DESCRIPTOR')
+registration_ref=dict(STATIC_DATA_ROLE='FUTURE_EXACT_REGISTRATION_DESCRIPTOR')
+import_ref=dict(STATIC_DATA_ROLE='FUTURE_ROOT_CLOSURE_IMPORT_DESCRIPTOR')
+import_relative='SYMBOLIC_ROOT_CLOSURE_IMPORT_RELATIVE_PATH'
+after=copy.deepcopy(before);patches={k:[]for k in after}
+def patch(role,path,value,allow_absent=False):
+ target=owner(after[role],path);key=path[-1];assert type(target)is dict and(key in target or allow_absent)
+ patches[role].append(dict(path=path,before_present=key in target,after_present=True,before=copy.deepcopy(target.get(key)),after=copy.deepcopy(value)))
+ target[key]=copy.deepcopy(value)
+for role,paths in constants['ALIASES'].items():
+ for path in paths:
+  old=at(before[role],path)
+  if path==['F004_status']:
+   value='Pending whole original: q8 registered686/686; q9 accepted35/35; q11 registered115/272,157rank4 pending. Accepted old proof closures registered as metadata; full Aut/reversal quotient and final output assembly owed.'
+  elif path==['F004','q11_completed']:value=115
+  elif path==['F004','q11_pending']:value=157
+  else:
+   assert type(old)is dict;value=copy.deepcopy(old)
+   value.update(required=272,closed=115,registration=registration_ref,registration_scope=constants['KIND'],registered_closed_job_batch=registration_ref,retained_single_job_fields_are_historical=True,whole_original_credit=0)
+   if path[-1]=='root_f004_q11_ledger_current':value.update(pending_count=157,pending=pending_ref,adoption=import_ref,status='ROOT_REGISTERED_F004_Q11_EXISTING_CLOSED40_BATCH')
+   elif path[-1]=='F004_q11_current':value.update(remaining=157,pending_ledger=pending_ref,root_adoption=import_ref,status='ROOT_REGISTERED_F004_Q11_EXISTING_CLOSED40_BATCH')
+   else:value.update(pending=157,pending_file=pending_ref,adoption=import_ref,rank_four_pending=157,rank_five_pending=0)
+  patch(role,path,value)
+legacy=dict(q11_actual_lower_closed=115,q11_closed=115,q11_actual_pending=157,q11_pending=157,q11_remaining=pending_ref,q11_current_pending_plan=pending_ref,q11_pending_registration=registration_ref,q11_latest_adoption=import_relative,q11_authoritative_latest='F004_q11_latest_ledger and q11_batch_registration_current; q11_latest, q11_latest_completed and q11_latest_import retain historical single-job provenance.',q11_batch_registration_current=registration_ref)
+assert list(legacy)==constants['LEGACY_KEYS']
+for key,value in legacy.items():patch('CURRENT',['F004_current',key],value,allow_absent=key=='q11_batch_registration_current')
+note='F004 q8 registered686/686; q9 accepted35/35; q11 registered115/272 with157 rank4 pending. All33 rank5 jobs are proved; follow F004_q11_latest_ledger and its pending register. q8/q11 field assembly, Aut/duality quotient and final tables remain owed; no new Original credit.'
+patch('CURRENT',['F004_current','navigation_note'],note)
+patch('STATUS',['F004','q8_completed'],686)
+patch('STATUS',['F004','next_status'],note)
+patch('STATUS',['F004','next_scope'],'Continue only current q11 latest pending register rank4 jobs; preserve accepted model/domain/classification premises. Do not rerun any of33 proved rank5 jobs. Complete q8/q11 field assembly and Aut/duality/tables.')
+patch('STATUS',['root_intake_batch_status'],'102/105 complete; F004,F009,L026 remain. F004: use current q8/q11 ledgers; q8 field assembly and q11 pending rank4/field assembly remain. F009: continue CURRENT.F009_checkpoint_current without replaying known passes. L026: use current paid coverage selectors. Complete all105, then STOP before measurement/Lean.')
+actions=copy.deepcopy(before['STATUS']['root_status_update_current']['next_actions']);assert type(actions)is list and all(type(v)is str for v in actions)
+for label,text in [('F004','F004: follow F004_q11_latest_ledger pending rank4 register and current q8 ledger; finish field assembly/Aut/duality/tables.'),('F009','F009: continue CURRENT.F009_checkpoint_current; preserve accepted pending scope and do not replay known passes.')]:
+ matches=[i for i,v in enumerate(actions)if label in v];assert len(matches)==1;actions[matches[0]]=text
+actions+=['L026: continue only unpaid current paid-ledger/coverage selector scopes.','Complete all105 reviewed Originals, then STOP before measurement or Lean.']
+patch('STATUS',['root_status_update_current','next_actions'],actions)
+audit=before['STATUS']['root_goal_turn_audit_current']
+patch('STATUS',['root_goal_turn_audit_current','prior_qualification_closed40_history'],dict(utc=audit['utc'],qualification=audit['qualification']),allow_absent=True)
+patch('STATUS',['root_goal_turn_audit_current','qualification'],'The preceding dated proof context is retained in prior_qualification_closed40_history. Active F004/F009/L026 work follows current accepted ledgers and checkpoint;102/105 complete. Complete all105, then STOP before measurement/Lean.')
+
+# Verify new whole literal strings match the static v3 function constants, not an executed subject namespace.
+literal_strings={n.value for n in ast.walk(function_nodes['replacements'])if isinstance(n,ast.Constant)and isinstance(n.value,str)}
+for role,changes in patches.items():
+ for p in changes:
+  if type(p['after'])is str and p['after']not in [import_relative]:assert p['after']in literal_strings
+assert [len(patches[k])for k in ['CURRENT','STATUS']]==[15,13]
+for role,changes in patches.items():
+ paths=[tuple(p['path'])for p in changes];assert len(paths)==len(set(paths))
+ assert all(a==b or not(len(a)<len(b)and b[:len(a)]==a)for a in paths for b in paths)
+ restore=copy.deepcopy(after[role])
+ for p in reversed(changes):
+  target=owner(restore,p['path']);key=p['path'][-1];assert eq(target[key],p['after'])
+  if p['before_present']:target[key]=copy.deepcopy(p['before'])
+  else:del target[key]
+ assert eq(restore,before[role])
+ # Removing all allowed-path subtrees on both sides proves EVERY other typed value literal.
+ stripped_before=copy.deepcopy(before[role]);stripped_after=copy.deepcopy(after[role])
+ for p in changes:
+  for obj in [stripped_before,stripped_after]:owner(obj,p['path']).pop(p['path'][-1],None)
+ assert eq(stripped_before,stripped_after)
+assert eq(after['CURRENT']['F004_q11_latest_ledger'],after['STATUS']['F004_q11_latest_ledger'])
+for role in ['CURRENT','STATUS']:
+ for key,value in before[role].items():
+  if 'l026'in key.lower()or'f009'in key.lower()or key=='root_intake_progress_current':assert eq(after[role][key],value)
+ assert eq(after[role]['F004_q8_latest_ledger'],before[role]['F004_q8_latest_ledger'])
+ assert eq(after[role]['F004_original_job_complete_current'],before[role]['F004_original_job_complete_current'])
+ assert eq(after[role]['F004_ledger_summary_alias_correction'],before[role]['F004_ledger_summary_alias_correction'])
+for key in ['q11_latest','q11_latest_completed','q11_latest_import']:
+ assert eq(after['CURRENT']['F004_current'][key],before['CURRENT']['F004_current'][key])
+assert eq(after['STATUS']['root_goal_turn_audit_current']['prior_qualification_closed40_history'],dict(utc=audit['utc'],qualification=audit['qualification']))
+for path in [['root_execution_ownership_latest','active_handles'],['root_current_ownership','active_handles'],['current_execution_ownership','active_handles']]:assert at(after['CURRENT'],path)==[]
+assert after['STATUS']['active_scientific_handles']==[]
+
+all_known_candidates=[(x['document'],x['path'])for x in prior_data['unresolved_alias_candidates']]
+coverage=[]
+for role,path in all_known_candidates:
+ matching=[p['path']for p in patches[role]if path==p['path']or(path[:len(p['path'])]==p['path'])]
+ assert matching,(role,path)
+ coverage.append(dict(document=role,prior_candidate=path,covered_by_patch=matching))
+q8_required=q8['minimal_existing_Root_authorities']
+q8_source_summary=dict(function='overview_import',line=395,checks=['Whole identical CURRENT/STATUS.F004_q8_latest_ledger','Distinct Root accepted q8summaryimport contains exact whole currentledgerbody','MatchingoldRootcommitted686/0 record joins exact currentregistration+pending refs','Whole currentregistration body and acceptedapplication/registrationcapture/guard bodies read','Exact pending [] and RootpostcheckCP11262 matches bothcurrentcheckpointobjects'],
+ required_exact_future_Root_import=dict(whole_registered_ledger=before['CURRENT']['F004_q8_latest_ledger'],matching_old_commit=q8_required['matching_committed_transaction'],accepted_application=q8_required['accepted_mathematical_application'],actual_registration_capture=q8_required['genuine_registration_capture'],matching_guard=q8_required['actual_registration_guard']),
+ scope='The Source raw-reads acceptedapplication/capture/guard as already-reviewed Root-import components. It does not independently semantically revalidate those three bodies or replay685priorproofs; Root positive import must bind these exact metadata-component identities.')
+remaining=dict(document='STATUS',path=['root_status_update_current','next_actions',0],value=actions[0],
+ evidence='Original current actions list item0 survives unchanged after uniqueF004/F009 replacements and L026/STOP appends. It is an oldS16 acquisition/audit instruction outside the declared remainingF004/F009/L026 scope. Root active/history classification remains owed.')
+whole_projection=dict(schema='INDEPENDENT_STATIC_SYMBOLIC_F004_V3_PAIR_PROJECTION_V1',Root_authority=False,
+ qualification='Own metadata reconstruction only, with explicit STATIC_DATA_ROLE symbols for unknown future descriptors and symbolic import-relative path. This is not an actual whole planned pair, forecast, actual future SHA or publication.',
+ role_symbols=dict(pending=pending_ref,registration=registration_ref,Root_closure_import=import_ref,import_relative=import_relative),CURRENT=after['CURRENT'],STATUS=after['STATUS'])
+def put(name,obj):
+ p=O/name;b=can(obj);assert len(b)<=4*2**20
+ with p.open('xb')as f:f.write(b)
+ return whole(p)[1]
+projectionpin=put('v3_symbolic_complete_pair_DATA.json',whole_projection)
+patchpin=put('v3_symbolic_patch_inverse_DATA.json',dict(schema='INDEPENDENT_F004_V3_28_TYPED_PATCH_INVERSE_DATA_V1',Source=sp,before=fresh['immutable_author_whole_snapshots'],patches=patches,all_unknown_and_unrelated_typed_values_literal=True,no_future_actual_descriptor_or_SHA_fabrication=True))
+report=dict(schema='INDEPENDENT_F004_CLOSED40_V3_EXPANDED_ALIAS_DATA_COMPONENT_V1',reviewer='/root/reader_postcheck/f004_data_peer',utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+ status='SUPPORTED_SYMBOLIC_TYPED_PROJECTION_ONE_GLOBAL_ACTION_CLASSIFICATION_OWED',blockers=['The retained S16 action0 in STATUS.root_status_update_current.next_actions needs explicit active-versus-historical classification before claiming global current-action reconciliation.'],
+ method=sp,whole_Source_read=True,Source_AST_only_parsed_not_activated=True,AST_v2_v3_function_delta=ast_delta,
+ prior40_DATA_component=priorpin,existing_q8_authority_component=q8pin,prior_alias_inventory=inventorypin,fresh_context=fr,
+ full_symbolic_pair=projectionpin,complete_typed_patch_inverse=patchpin,patch_counts=dict(CURRENT=15,STATUS=13,total=28),
+ all_known_prior_alias_candidates_covered=coverage,remaining_action_classification=remaining,
+ q8_Root_import_contract=q8_source_summary,
+ preservation=dict(full_inverse_restores_complete_before_pair=True,all_outside28paths_typed_literal=True,
+  all_actual_F009_checkpoint_acceptance_snapshot_rootprogress_objects_literal=True,all_L026objects_literal=True,
+  protected_whole_progress=progress,q8_actual686_0_ledger_and_prior_proofs_literal=True,dated_F004_completejob_and_alias_correction_records_literal=True,
+  old_singlejob_q11_latest_completed_import_literal=True,old_Rootgoalqualification_and_utc_retained_in_explicit_new_historyleaf=True,all_four_ownership_arrays_idle=True),
+ missing_actual_bindings=['No v3handoff/actualfreshplan/q8summaryimport/invoice/readview/wholeSourceinverse was present in candidate directory at this inspection; only Source and unrun controls/fixture files existed.',
+  'Root must bind exact installed Source, actualcontrols/peers/releases/runtime/wrappers/Rootq8import and Root40import before exact actualregistrationdescriptor/wholeplannedpair can be calculated.',
+  'Symbolicpair/inverse prove structuralpreservation only. Exact acyclic wholeactualplannedstates and fullruntime/newread/output/pathinvoice remain owed.'],
+ represented_Source_helpers_controls_science_activations=0,scientific_state_proof_action_codec_decodes=0,S_W_Git_gate_or_selector_writes=0,new_Original_credit=0,
+ whole_input_pins=[opened[k]for k in sorted(opened)],audit_Source=whole(Path(__file__))[1],
+ qualification='Independent whole v3Source read and own static AST/JSON/typedprojection only. The represented adapter was never imported, interpreted, compiled for execution or run. Future descriptor roles remain explicit symbols, never forgedpath/bytes/SHA authorities. Full40proof/APIand acceptedq8premises are qualified exact prior metadata imports; no scientific proof or old688? No:685proofDAG replay. Parent owns Source/CAS/control design and Root alone owns any actual release/forecast/publication.')
+report['qualification']='Independent whole v3Source read and own static AST/JSON/typedprojection only. The represented adapter was never imported, interpreted, compiled for execution or run. Future descriptor roles remain explicit symbols, never forgedpath/bytes/SHA authorities. Full40proof/APIand acceptedq8premises are qualified exact prior metadata imports; no scientific proof or prior685proofDAG replay. Parent owns Source/CAS/control design and Root alone owns any actual release/forecast/publication.'
+rp=put('v3_expanded_alias_DATA_component.json',report)
+seal=put('v3_expanded_alias_DATA_component.seal.json',dict(schema='INDEPENDENT_V3_ALIAS_DATA_COMPONENT_SHA256_SEAL_V1',report=rp,full_symbolic_pair=projectionpin,typed_inverse=patchpin,status=report['status'],blockers=report['blockers']))
+print(json.dumps(dict(report=rp,seal=seal,projection=projectionpin,patch_inverse=patchpin,status=report['status'],blockers=report['blockers'])))

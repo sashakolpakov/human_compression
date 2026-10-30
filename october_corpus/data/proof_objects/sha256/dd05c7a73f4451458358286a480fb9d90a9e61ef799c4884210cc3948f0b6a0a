@@ -1,0 +1,141 @@
+"""Own stdlib actual Reader metadata/whole-byte audit; no represented activation.
+The reviewer authored the parameter DATA. Fresh independent DATA opinion cd44
+is imported explicitly; this script audits newly actual execution evidence.
+"""
+from pathlib import Path
+import datetime,hashlib,json,os,shlex,stat
+N=Path('/private/tmp/f009_continuation/from_11216/native_DATA');D=N/'reader_collected_owner_DATA';O=D/'actual_independent_review'
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def sha(b):return hashlib.sha256(b).hexdigest()
+def ref(p):p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=sha(b))
+opened={};bytes_read=0
+def raw(r,body=True):
+ global bytes_read
+ p=Path(r['path']);a=p.lstat();assert stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes']and p.resolve()==p
+ sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+ n=0;h=hashlib.sha256();parts=[]
+ with p.open('rb')as f:
+  b=os.fstat(f.fileno())
+  for block in iter(lambda:f.read(262144),b''):
+   n+=len(block);assert n<=r['bytes'];h.update(block)
+   if body:parts.append(block)
+  c=os.fstat(f.fileno())
+ assert sig(a)==sig(b)==sig(c)==sig(p.lstat())and n==r['bytes']and h.hexdigest()==r['sha256'],str(p)
+ opened[str(p)]=r;bytes_read+=n;return b''.join(parts)if body else None
+def doc(r):return json.loads(raw(r))
+def merge(*groups):
+ by={}
+ for rows in groups:
+  for r in rows:assert by.get(r['path'],r)==r;by[r['path']]=r
+ return[by[k]for k in sorted(by)]
+def table(v,field,tag):
+ if tag not in v:return v
+ t=v[tag];out={k:x for k,x in v.items()if k!=tag};out[field]=[dict(path=t['prefixes'][i]+name,bytes=n,sha256=h)for i,name,n,h in t['rows']]
+ assert out[field]==merge(out[field])and len(can(out))==t['logical_bytes']and sha(can(out))==t['logical_sha256'];return out
+def expandjob(v):
+ v=table(v,'declared_inputs','Root_Declared_rows_reference')
+ if'Root_Source_rows_reference'not in v:return v
+ t=v['Root_Source_rows_reference'];o={k:x for k,x in v.items()if k!='Root_Source_rows_reference'};o['source_inputs']=[o['declared_inputs'][i]for i in t['indices']]
+ assert sha(can(o['source_inputs']))==t['Source_rows_sha256']and sha(can(o['declared_inputs']))==t['declared_rows_sha256']and len(can(o))==t['logical_bytes']and sha(can(o))==t['logical_sha256'];return o
+def capture(r):
+ c=doc(r);a=c['actual_tool'];frames=c['all_genuine_api_frames'];first=c['full_initial_tool_return'];last=c['full_tool_return']
+ assert c.get('root',c.get('actor'))=='/root'and c['actor']=='/root'and frames[0]==first and frames[-1]==last and a['exit_code']==last['exit_code']==0 and not last.get('session_id')
+ assert a['initial_chunk']==first['chunk_id']and a['terminal_chunk']==last['chunk_id']
+ if a['synchronous']:assert first==last and a['handle']is None and len(frames)==1
+ else:assert first['session_id']==a['handle']
+ assert c['issued_argv']==shlex.split(c['issued_command'])==shlex.split(c['canonical_argv_command'])and c['issued_tool_arguments']['cmd']==c['issued_command']
+ return c,json.loads(''.join(f.get('output','')for f in frames))
+
+jr=ref(N/'reader_job_collected_owner/job.json');job=expandjob(doc(jr));gr=ref(N/'reader_Root_review_collected_owner.json');gate=doc(gr);rr=ref(N/'reader_request_collected_owner.json');request=table(doc(rr),'inputs','Root_Request_rows_reference');pr=ref(N/'reader_parameters_collected_owner.json');params=doc(pr)
+assert jr['sha256']=='e0d5a7f4b51d1fc2a4dae0b2e4251ef452cc07e527197bde19596e9434d85da7'and pr['sha256']=='9e1c22c6c20b897517e3344b68bc3a06155d364d5c76950fa2eb8327f3a93cb3'
+projection=doc(ref(D/'manual_a176_projection.json'));assert projection['projected_raw_job']==jr and projection['projected_selected_parameters']==pr
+for name,r in projection['projected_images'].items():assert ref(r['path'])==r
+assert len(job['source_inputs'])==1022 and sum(r['bytes']for r in job['source_inputs'])==60357270
+for r in job['source_inputs']:raw(r,False)
+assert len(job['declared_inputs'])==11356 and sum(r['bytes']for r in job['declared_inputs'])==633735165
+assert job['program']==params['program']==gate['program']and job['Owner']==params['Owner']==gate['Owner']and job['library_adapter']==params['library_adapter']
+assert job['program']['sha256'].startswith('36fb')and job['Owner']['sha256'].startswith('a0e398')and job['library_adapter']['sha256'].startswith('706954')
+assert gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'and gate['root']=='/root'and gate['status']=='SUPPORTED'and gate['blockers']==[]and gate['authorized_roles']==['reader']and gate['job']==jr
+assert gate['Root_new_case_decision_not_old_verdict_transfer']is True and gate['actual_selected_parameters']==pr and gate['expected_checkpoint_sequence']==job['old_checkpoint_sequence']==11216 and gate['checkpoint_boundary']==job['checkpoint_boundary']
+datapeer=doc(gate['independent_current_DATA_peer']);assert gate['independent_current_DATA_peer']['sha256']=='cd44bec6effe5e8dc81bfcda69f84d5d1e508247a218882222617eb570a4bc46'
+for k in ['Root_whole_DATA_review','Root_whole_DATA_review_actual_capture','new_Owner_Source_component_review','new_Owner_Source_component_capture','new_Owner_Source_component_peer','new_Owner_actual_controls','unchanged_ordinal_Source_review','unchanged_ordinal_Source_peer']:raw(gate[k])
+assert request['supervisor']==job['Owner']['path']and request['program']==job['program']['path']and request['output_roots']==[job['output']]
+assert request['provenance']['Root_review']==gr and request['provenance']['Root_writer']==job['program']and request['provenance']['role']=='reader'and request['provenance']['old_caller_executed']is False
+creator=request['provenance']['request_creator'];assert creator['sha256'].startswith('d689')
+expected=merge(job['declared_inputs'],[jr,gr,job['program'],job['Owner'],creator,params['guard']]);assert request['inputs']==expected and len(expected)==11358 and sum(r['bytes']for r in expected)==636777140
+assert len(can(request))==2680350 and rr['bytes']==1239898 and rr['bytes']<2*2**20 and len(can(request))<16*2**20
+assert request['argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B',job['program']['path'],'--job',jr['path'],jr['sha256'],'--root-review',gr['path'],gr['sha256'],'--out',job['output']]
+assert request['limits']==dict(phase_seconds=120,family_rss_cap_bytes=512*2**20,growth_cap_bytes=16*2**20,reserve_bytes=4*2**30,sample_seconds=.1)
+
+sdkref=ref(N/'runtime/collected_owner_reader_actual_capture.json');assert sdkref['sha256']=='4dfdd22130c6e0c4088eef4da452251e4f8e9c9e52e4f0d65c688d2460b88ce1'
+sdk,emission=capture(sdkref);outbase=N/'runtime/collected_owner_reader_guard';outerref=ref(outbase/'receipt.json');outer=doc(outerref);outerstart=doc(ref(outbase/'started.json'))
+assert emission==dict(status='PASS',stop='RETURNED',receipt=str(outbase/'receipt.json'))
+assert outer['status']=='PASS'and outer['stop']=='RETURNED'and outer['returncode']==0 and outer['cleanup']['remaining']==outer['cleanup']['errors']==[]and outer['error']is None
+ownerargv=['/Users/sasha/.venvs/global/bin/python','-E','-B',job['Owner']['path'],'--request',rr['path']]
+assert sdk['issued_argv'][sdk['issued_argv'].index('--')+1:]==outer['command']==outerstart['command']==ownerargv
+assert outer['limits']==outerstart['limits']and outer['limits']['total_rss']==512*2**20 and outer['limits']['wall_seconds']==150.
+assert outer['peaks']['total_rss']==406568960<512*2**20 and outer['peaks']['min_available_ram']==5260902400 and outer['seconds']<150
+assert outer['admission']['free_disk']>=10*2**30 and outer['admission']['available_ram']>=4*2**30 and outer['peaks']['min_free_disk']>=8*2**30
+assert raw(ref(outbase/'stderr.log'))==b''
+ownerref=ref(N/'reader_execution_collected_owner/receipt.json');owner=doc(ownerref);ownerstartref=ref(N/'reader_execution_collected_owner/started.json');start=doc(ownerstartref)
+assert owner['status']=='PASS'and owner['request']==rr and owner['execution_id']==start['execution_id']==request['execution_id']and start['request']==rr and start['command']==request['argv']
+assert owner['inputs_unchanged']is owner['owned_child_reaped']is owner['owned_group_absent']is True and owner['changed_input_count']==0 and owner['first_changed_inputs']==[]and owner['input_count']==11358
+assert owner['returncode']==0 and owner['error']is owner['owned_finalization_error']is owner['final_resource_stop']is None and owner['no_retry']is owner['no_successor']is True
+assert owner['metrics']['returncode']==0 and owner['metrics']['terminal']=='RETURNED'and owner['metrics']['peak_sampled_family_rss_bytes']==384909312<512*2**20 and owner['metrics']['seconds']<120 and owner['final']['seconds']<120
+assert any(x['pid']==start['owner_pid']and x['birth']==start['owner_birth']for x in outer['identities'])and start['owner_birth']<start['child_birth']
+assert any(x['pid']==start['child_pid']and x['birth']==start['child_birth']for x in outer['identities'])
+assert raw(ref(N/'reader_execution_collected_owner/stderr'))==b''
+child_lines=[json.loads(line)for line in raw(ref(N/'reader_execution_collected_owner/stdout')).splitlines()if line.strip()];assert len(child_lines)==2;child_stdout=child_lines[-1];assert child_stdout['schema']=='ROOT_F009_STANDALONE_WORKER_RETURNED_PENDING_OWNER_V1'and child_stdout['role']=='reader'and child_stdout['global_checkpoint_written']is False
+
+resultref=ref(N/'reader_output_collected_owner/result.json');result=doc(resultref);wrref=ref(N/'reader_output_collected_owner/Root_Reader_return.json');worker=doc(wrref);iorefr=ref(N/'reader_output_collected_owner/io_attestation.json');io=doc(iorefr)
+assert result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'and result['worker_pid']==start['child_pid']==19915 and result['case']==job['case']
+assert result['checkpoint']==dict(sequence=11262,nodes=5907,pending=205,selected_raw_leaf_records=557508,reserved_debts=0)
+assert result['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL'and result['native_launch_attempts']==[]and result['reserved_parents']==[]
+assert result['private_materialization_calls']==1 and result['top_level_load_calls']==result['tail_load_calls']==0 and result['source_credit']==result['census_credit']==0
+assert worker['schema']=='ROOT_F009_STANDALONE_READER_WORKER_RETURN_V1'and worker['root']=='/root'and worker['actual_caller']==job['program']and worker['Root_review']==gr and worker['job']==jr and worker['result']==resultref and worker['native_launch_attempts']==[]
+assert worker['global_checkpoint_written']is False and worker['old_caller_executed']is False and worker['new_census_credit']==0 and child_stdout['artifact']==wrref
+snap=result['snapshot'];raw(snap,False);assert snap['bytes']==748058 and snap['sha256']=='994cdb90aa495d460e1a649e1b13e093cdab5ac1166cdc92a9eff349f8fc4f88'
+assert io['schema']=='F009_GENUINE_RESERVED_PRODUCER_ATTESTATION_V1'and io['maximum_write_objects']==16 and io['known_objects']==len(io['all_known_paths'])==11 and io['worker_bytes']==14*2**20 and io['kernel_RLIMIT_FSIZE_lowered']is True
+assert io['actual_file_bytes']==resultref['bytes']+snap['bytes']+wrref['bytes']==754898
+allfiles=[ref(p)for p in sorted((N/'reader_output_collected_owner').iterdir())if p.is_file()];assert len(allfiles)==4 and sum(r['bytes']for r in allfiles)==756433
+logical_output=sum(r['bytes']for r in allfiles)+ownerstartref['bytes']+ref(N/'reader_execution_collected_owner/stdout')['bytes']+2*16384
+assert logical_output==owner['final']['logical_output_bytes']==791275 and ownerref['bytes']==16384 and owner['final']['included_receipt_bytes']==owner['final']['included_staged_receipt_bytes']==16384
+assert owner['final']['free_disk_bytes']>=4*2**30 and owner['final']['logical_output_bytes']<16*2**20
+
+closure=table(doc(job['native_closure']),'complete_actual_inputs','Root_Native_closure_rows_reference');nativejob=expandjob(doc(closure['job']));native_owner=doc(closure['Owner_receipt']);native_request=table(doc(closure['Owner_request']),'inputs','Root_Request_rows_reference');nh=doc(closure['worker_handoff']);case=doc(job['case'])
+assert nativejob['Owner']==gate['actual_Native_Owner']and nativejob['Owner']['sha256'].startswith('085443')and nativejob['Owner']!=job['Owner']
+assert native_request['supervisor']==nativejob['Owner']['path']and native_owner['status']=='PASS'and native_owner['request']==closure['Owner_request']
+assert nh['request']==closure['job']and nh['base_acceptance']==job['checkpoint_acceptance']and nh['expected_proposal']==case['expected']and nh['delta_proposal']==case['delta']
+native_result=doc(nh['native_result']);assert result['checkpoint']==nh['expected_proposal']and result['delta']==nh['delta_proposal']
+assert all(result['checkpoint'][k]==native_result[k]for k in ['sequence','nodes','pending','reserved_debts'])and result['checkpoint']['selected_raw_leaf_records']==native_result['selected_leaf_occurrences']
+assert any(r==result['next_select']['record']['file']for r in closure['complete_actual_inputs']);raw(result['next_select']['record']['file'],False)
+assert result['head']==nh['head']and result['base_acceptance']==job['checkpoint_acceptance'];raw(result['head']);raw(result['base_acceptance'])
+cp=doc(job['checkpoint_acceptance']);assert cp['adopted']is True and cp['checkpoint']['sequence']==11216
+prereq=[]
+for kind in ['forecast','write']:
+ stem='collected_owner_constructor_admitted_'+kind
+ capr=ref(N/'runtime'/(stem+'_actual_capture.json'));c,e=capture(capr);b=N/'runtime'/(stem+'_guard');g=doc(ref(b/'receipt.json'));v=doc(ref(b/'stdout.log'))
+ assert e==dict(status='PASS',stop='RETURNED',receipt=str(b/'receipt.json'))and g['status']=='PASS'and g['stop']=='RETURNED'and g['returncode']==0 and g['cleanup']['remaining']==g['cleanup']['errors']==[]
+ assert c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']and pr['path']in g['command']and pr['sha256']in g['command']
+ assert v['job']==jr and sorted(v['rows'],key=lambda q:q['path'])==sorted(projection['projected_images'].values(),key=lambda q:q['path'])and v['output_files']==10 and v['written']is(kind=='write')and v['science_calls']==0
+ prereq.append(capr)
+casecap=ref(N/'runtime/collected_owner_Root_reader_case_gate_actual_capture.json');_,caseemit=capture(casecap);assert caseemit['gate']==gr and caseemit['job']==jr and caseemit['Owner']==job['Owner'];prereq.append(casecap)
+rcapr=ref(N/'runtime/collected_owner_create_request_actual_capture.json');c,e=capture(rcapr);b=N/'runtime/collected_owner_create_request_guard';g=doc(ref(b/'receipt.json'));rout=doc(ref(b/'stdout.log'))
+assert e==dict(status='PASS',stop='RETURNED',receipt=str(b/'receipt.json'))and g['status']=='PASS'and g['stop']=='RETURNED'and g['cleanup']['remaining']==g['cleanup']['errors']==[]and c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']
+assert rout['request']==rr and rout['science_calls']==0 and creator['path']in g['command']and jr['path']in g['command']and gr['sha256']in g['command'];prereq.append(rcapr)
+pcapr=ref(N/'runtime/collected_owner_prelaunch_copy_actual_capture.json');c,e=capture(pcapr);b=N/'runtime/collected_owner_prelaunch_copy_guard';g=doc(ref(b/'receipt.json'));pout=doc(ref(b/'stdout.log'))
+assert e==dict(status='PASS',stop='RETURNED',receipt=str(b/'receipt.json'))and g['status']=='PASS'and g['stop']=='RETURNED'and g['cleanup']['remaining']==g['cleanup']['errors']==[]and c['issued_argv'][c['issued_argv'].index('--')+1:]==g['command']
+preservation=pout['preservation'];assert preservation['sha256']=='f748fbfec6f28f4342d048bb2d4fb78464087964ea32d37cb3981c3c30361426'and preservation['bytes']==81781
+pres=doc(preservation);mp={v['original']['path']:v for v in pres['files']}
+critical=[jr,gr,rr,pr,job['Owner'],gate['new_Owner_Source_component_review']]
+for r in critical:
+ row=mp[r['path']];assert row['original']==r and row['retained']['bytes']==r['bytes']and row['retained']['sha256']==r['sha256'];raw(row['retained'],False)
+prereq.append(pcapr)
+confirmref=ref(N/'runtime/collected_owner_prelaunch_confirm_actual_capture.json');_,empty=capture(confirmref);assert empty=={};prereq.append(confirmref)
+admitref=ref(N/'runtime/collected_owner_actual_admission_capture.json');_,admit=capture(admitref);assert admit['all_four_arrays_idle']is admit['ENV4_absent']is True and admit['available_RAM']>=4*2**30 and admit['free_disk']>=10*2**30;prereq.append(admitref)
+for name in ['reader_output_digest_ordinals/result.json','reader_job_digest_ordinals/job.json','reader_request_digest_ordinals.json']:
+ raw(ref(N/name),False)
+oldfailure=doc(ref(N/'runtime/ordinal_reader_guard/receipt.json'));assert oldfailure['status']=='INCOMPLETE'and oldfailure['stop']=='TREE_RSS_CAP'
+native_sdk,_=capture(gate['actual_Native_capture']);assert gate['actual_Native_capture']['sha256']=='34a32de8c8d3d107af639e0ba341035a5d379485121c6ad7e5e42571f9983ea6'
+obs=dict(schema='INDEPENDENT_ACTUAL_COLLECTED_OWNER_READER11262_OBSERVATIONS_V1',reviewer='/root/journal_peer/large_end_route_audit',status='PASS_ACTUAL_METADATA',actual_RootSDK=sdkref,job=jr,Rootgate=gr,request=rr,Owner_receipt=ownerref,outer_receipt=outerref,worker_return=wrref,result=resultref,snapshot=snap,IO_attestation=iorefr,all4outputs=allfiles,actual_prerequisite_captures=prereq,actual_prelaunch_preservation=preservation,critical_exact_S_mapping_joins=critical,Source_rows_wholehashed=1022,Source_bytes_wholehashed=60357270,declared_rows_imported=11356,declared_bytes_imported=633735165,whole_declared_resweep_by_this_reviewer=False,independent_current_DATA_peer=gate['independent_current_DATA_peer'],DATA_author_role='This reviewer authoredthe9e1c parameters/manualimages. Fresh independentcd44 DATA opinion and Rootwhole633MB review are imported, not self-issued here; this report audits newlyactualexecution.',Owner_inputs_unchanged=11358,child_pid=19915,owner_pid=start['owner_pid'],outer_seconds=outer['seconds'],outer_sampled_peak=406568960,inner_sampled_peak=384909312,all_PID_Source_request_epoch_return_IO_Native_old085_joins=True,all_native_launch_attempts_empty=True,prior_failed_reader_preserved=True,proposed_sequence_unadopted=11262,accepted_base_sequence=11216,actual_audit_bytes=bytes_read,actual_audit_paths=len(opened),state_graph_gzip_decode=False,Source_or_control_or_Helper_or_Reader_or_Native_activated_by_reviewer=False,S_W_Git_gates_or_authority_mutation=False,qualification='Fresh actual metadata/wholeSource/snapshot hash audit; no new Source verdict, scientific replay or state/graph decode. Reader typed/order equivalence is the authenticated actual strict result, not recomputed here. Prior failed11262 stays failed. Sampled knownowned closure is not globalprocessabsence; no causalGC/RSSsaving/uniquephase/generalfit inferred. AcceptedglobalCP11216 until separate canonicalpreservation and registration.')
+O.mkdir(exist_ok=True);(O/'observations.json').write_bytes(can(obs));print(json.dumps(ref(O/'observations.json')))

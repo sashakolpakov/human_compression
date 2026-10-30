@@ -1,0 +1,148 @@
+"""UNRUN stable-self-read metadata/Source-layout controls, no Original SCI fixtures.
+Root alone may activate these controls. Synthetic SDK-shaped documents below
+test DATA validation only; they are explicitly not genuine API captures.
+"""
+import argparse,ast,copy,hashlib,json,os,pathlib,resource,stat,struct,sys,tempfile,time
+START=time.monotonic()
+def need(ok,why):
+ if not ok:raise ValueError(why)
+def rejects(call):
+ try:call()
+ except(ValueError,KeyError,TypeError,IndexError):return
+ raise ValueError('negative generic metadata accepted')
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'minimal EBS controls')
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--subject',nargs=2,required=True);a=ap.parse_args()
+ p=pathlib.Path(a.subject[0]);st=p.lstat();need(p.is_absolute()and p.resolve()==p and stat.S_ISREG(st.st_mode)and st.st_nlink==1 and st.st_size<=65536,'bounded exact subject stat before read')
+ with p.open('rb')as handle:
+  before=os.fstat(handle.fileno());body=handle.read(65537);after=os.fstat(handle.fileno())
+ signature=lambda z:(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ need(signature(st)==signature(before)==signature(after)==signature(p.lstat())and len(body)==st.st_size and len(body)<=65536 and hashlib.sha256(body).hexdigest()==a.subject[1],'whole bounded metadata Source subject')
+ own=pathlib.Path(__file__).resolve();ost=own.lstat();need(stat.S_ISREG(ost.st_mode)and ost.st_nlink==1 and ost.st_size<=65536,'bounded regular own Source before read')
+ with own.open('rb')as handle:
+  ob=os.fstat(handle.fileno());own_body=handle.read(ost.st_size+1);oz=os.fstat(handle.fileno())
+ need(signature(ost)==signature(ob)==signature(oz)==signature(own.lstat())and len(own_body)==ost.st_size,'stable bounded whole own Source')
+ need(len(body)+len(own_body)<=65536,'whole activated Source/control namespace')
+ H={'__name__':'toy_metadata_helper_subject','__file__':str(p)};exec(compile(body,str(p),'exec'),H)
+ names=[];static=[]
+ def passed(name):need(name not in names,'unique control name');names.append(name)
+ fake=lambda name,sha='0'*64:dict(path='/toy/'+name,bytes=1,sha256=sha)
+ old={k:fake('old_'+k)for k in('current_paid_ledger_selector','paid_ledger_receipt','paid_status_bank')}
+ new={k:fake('new_'+k)for k in old};other=fake('unrelated_input')
+ subset=dict(inputs=list(old.values())+[other],roles=dict(witnesses=fake('witnesses')))
+ q=H['rebind'](subset,old,new);need(q['roles']==subset['roles']and q['metadata_ledger_roles']==new and set(r['path']for r in q['inputs'])=={r['path']for r in new.values()}|{other['path']},'inputs-only subset ledger API');passed('subset_inputs_only_exact_three_reference_rebinding')
+ walk=dict(inputs=list(old.values())+[other],roles=dict(old,operands=other));q=H['rebind'](walk,old,new)
+ need(all(q['roles'][k]==new[k]for k in old)and q['roles']['operands']==other,'named walk roles');passed('walk_named_roles_and_inputs_rebound_together')
+ need(subset['inputs']==list(old.values())+[other],'parent template untouched');passed('whole_template_preservation')
+ bad=copy.deepcopy(subset);bad['inputs'].append(other);rejects(lambda:H['rebind'](bad,old,new));passed('duplicate_physical_input_roster_refusal')
+ bad=copy.deepcopy(subset);bad['inputs'][0]=fake('wrong');rejects(lambda:H['rebind'](bad,old,new));passed('missing_or_wrong_old_ledger_input_refusal')
+ need(not H['same']({'x':True},{'x':1})and not H['same']({'x':[1.0]},{'x':[1]}),'nested canonical type distinction');passed('canonical_nested_numeric_type_alias_refusal')
+ H['exact_partition']([80,81,82],[80,81],[80],[81],[82]);passed('completed_hint_capmiss_and_unvisited_partition')
+ for args in[([80,81],[80],[80],[80],[81]),([80,81],[80],[80],[],[]),([80],[True],[True],[],[])]:rejects(lambda args=args:H['exact_partition'](*args))
+ passed('duplicate_overlap_missing_and_bool_partition_refusals')
+ value=dict(schema='L026_SUPPLIED_ROTATION_PROPER_SUBSETS_V1',scope_digest=H['SCOPE'],original_selector=H['SELECTOR'],operand_adoption=fake('operand'),free_witness_adoption=fake('free'),records=[])
+ plan=dict(roles=dict(operand_adoption=value['operand_adoption'],free_adoption=value['free_witness_adoption']))
+ H['carrier_header'](value,plan,value['schema']);passed('whole_untrusted_carrier_context_binding')
+ bad=copy.deepcopy(value);bad['original_selector']['endpoint_position']=19;rejects(lambda:H['carrier_header'](bad,plan,value['schema']));passed('other_original_endpoint_carrier_refusal')
+ points=list(range(3509));value['records']=[dict(free_index=i,owner=100+i,witness_row_sha256='0'*64,points=points)for i in range(4)]
+ groups=H['subset_groups'](value);need([len(g)for g in groups]==[3,1],'explicit10M conservative grouping');passed('actual_carrier_length_and_point_count_strict_partition')
+ value['records']*=4;groups=H['subset_groups'](value);need(sum(len(g)for g in groups)==16 and len(groups)<=16,'bounded16record partition');passed('sixteen_record_finite_partition_bound')
+ rejected=copy.deepcopy(value);rejected['records'][0]['points']=list(range(3510));rejects(lambda:H['subset_groups'](rejected));passed('oversize_or_empty_supplied_set_shape_refusal')
+ W=bytearray(462528)
+ for i in range(28908):struct.pack_into('<IIHHHH',W,16*i,100+i,0,1024,0,0,0)
+ who=H['identity'](bytes(W),80);need(who['owner']==180 and who['free_index']==80,'toy byte-record identity');passed('whole_sixteen_byte_witness_identity_binding')
+ rejects(lambda:H['identity'](bytes(W),True));rejects(lambda:H['identity'](bytes(W),28908));passed('witness_index_bool_and_domain_refusals')
+ bad=bytearray(W);struct.pack_into('<H',bad,16*80+8,1023);rejects(lambda:H['identity'](bytes(bad),80));passed('witness_mass_refusal')
+ with tempfile.TemporaryDirectory(prefix='l026_metadata_toy_')as temp:
+  root=pathlib.Path(temp).resolve();original_doc=H['doc'];original_raw=H['raw'];original_ledger=H['ledger'];original_put=H['put']
+  def file(name,obj):
+   b=H['can'](obj);path=root/name;path.write_bytes(b);return H['ref'](path,b)
+  # Synthetic Root-shaped validation fixtures; no actual API/source authority.
+  prog=fake('program',H['SOURCE']['subset']);pr=fake('plan');gr=fake('gate');rr=fake('review');resultref=fake('result')
+  cmd=H['command'](prog,pr,gr);outref=dict(path=str(root/'guard/receipt.json'),bytes=1,sha256='0'*64)
+  stdout=dict(path=str(root/'guard/stdout.log'),bytes=1,sha256='0'*64);stderr=dict(path=str(root/'guard/stderr.log'),bytes=0,sha256=hashlib.sha256(b'').hexdigest())
+  capref=fake('capture');docs={pr['path']:dict(program=prog,scope_digest=H['SCOPE'],original_selector=H['SELECTOR']),
+   gr['path']:dict(root='/root',adopted=True,program=prog,plan=pr,Root_code_math_review=rr),
+   rr['path']:dict(root='/root',status='SUPPORTED',blockers=[],program=prog,plan=pr),
+   resultref['path']:dict(program=prog,plan=pr,scope_digest=H['SCOPE'],original_selector=H['SELECTOR']),
+   stdout['path']:dict(outputs={'result.json':resultref}),
+   capref['path']:dict(schema='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1',root='/root',actor='/root',all_genuine_api_frames=['SYNTHETIC_TEST_ONLY_NOT_API'],actual_tool=dict(exit_code=0),full_tool_return=dict(exit_code=0),issued_argv=['guard','--']+cmd,child_argv=['guard','--']+cmd),
+   outref['path']:dict(status='PASS',stop='RETURNED',returncode=0,cleanup=dict(remaining=[],errors=[]),command=cmd,
+    limits=dict(total_rss=128*2**20,wall_seconds=150,admit_ram=4*2**30,admit_disk=10*2**30,ram_floor=3*2**30,disk_floor=8*2**30),logs=dict(stdout=1,stderr=0))}
+  H['doc']=lambda r:copy.deepcopy(docs[r['path']]);H['raw']=lambda r,again=False:b'' if r==stderr else b'TOY_ONLY'
+  run=dict(plan=pr,gate=gr,review=rr,result=resultref,capture=capref,outer=outref,stdout=stdout,stderr=stderr)
+  H['closed'](run,prog);passed('synthetic_closed_argv_log_root_subject_join')
+  for field in('child_argv','issued_argv','actor','exit_code'):
+   saved=copy.deepcopy(docs[capref['path']])
+   if field in('child_argv','issued_argv'):docs[capref['path']][field]=['wrong']
+   elif field=='actor':docs[capref['path']]['actor']='author'
+   else:docs[capref['path']]['actual_tool']['exit_code']=1
+   rejects(lambda:H['closed'](run,prog));docs[capref['path']]=saved
+  passed('nonmatching_or_failed_synthetic_capture_refusals')
+  saved=copy.deepcopy(docs[outref['path']]);docs[outref['path']]['cleanup']['remaining']=[123];rejects(lambda:H['closed'](run,prog));docs[outref['path']]=saved;passed('unclosed_known_cleanup_refusal')
+  saved=copy.deepcopy(docs[outref['path']]);docs[outref['path']]['limits']['admit_ram']=3*2**30;rejects(lambda:H['closed'](run,prog));docs[outref['path']]=saved;passed('unchanged_admission_floor_refusal')
+  # Test actual packing without any project/science import or real proof assertion.
+  L={k:fake('current_'+k)for k in old};b=bytes(28908)
+  ng=dict(roles=dict(witnesses=fake('witnesses'),free_adoption=fake('free'),operand_adoption=fake('operand')))
+  template=dict(schema='L026_BOUNDED_TYPED_PAID_LEDGER_PLAN_V1',program=fake('writer',H['SOURCE']['ledger']),mode='append',scope_digest=H['SCOPE'],original_selector=H['SELECTOR'],witnesses=ng['roles']['witnesses'],free_adoption=ng['roles']['free_adoption'],operand_adoption=ng['roles']['operand_adoption'],separate_IP=None)
+  bundle=dict(proofs=[],facts=[]);maps=[]
+  for j in range(8):
+   ident=H['identity'](bytes(W),80+j);res=fake('result_%d'%j);pl=fake('plan_%d'%j)
+   q=dict(kind='NEG',program=prog,result=res,plan=pl,gate=fake('gate_%d'%j),review=fake('review_%d'%j),capture=fake('capture_%d'%j),outer=fake('outer_%d'%j),stdout=fake('stdout_%d'%j),stderr=stderr,support={},retentions=[])
+   docs[res['path']]=dict(verified_nongeneration_records=[ident]);docs[pl['path']]=dict(mode='check',subset_kernel=dict(sha256=H['SOURCE']['subset_kernel']))
+   bundle['proofs'].append(q);bundle['facts'].append(dict(ident,kind='NEG',proof=j))
+   for key in('program','result','plan','gate','review','capture','outer','stdout','stderr'):
+    ref=q[key];maps.append(dict(original=ref,retained=dict(ref,path='/durable/'+key+'_'+str(j))))
+  bref=fake('bundle');mref=fake('manifest');tng=fake('ngtemplate');tappend=fake('appendtemplate');docs.update({bref['path']:bundle,mref['path']:dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',scientific_calls=0,files=maps),tng['path']:ng,tappend['path']:template})
+  H['ledger']=lambda cr,wref:(L,b,bytes(W),{})
+  outputs={}
+  def capture_put(root,name,obj):
+   outputs[name]=copy.deepcopy(obj);return H['ref'](root/name,H['can'](obj))
+  H['put']=capture_put
+  c=dict(templates=dict(subset_supplier=tng,append=tappend),programs=dict(ledger=template['program']))
+  batch=dict(selected_indices=list(range(80,96)))
+  H['append_plan'](c,batch,L['current_paid_ledger_selector'],dict(bundle=bref,retentions=[mref]),0,root)
+  need(len(outputs['append_plan.json']['proofs'])==7 and outputs['append_route.json']['next_fact_offset']==7,'maximum7 proofs and nextoffset');passed('seven_proof_metadata_pack_and_actual_next_offset')
+  need(outputs['Root_release_TEMPLATE_FALSE.json']['metadata_publication_authorized']is False and outputs['Root_release_TEMPLATE_FALSE.json']['status']=='UNREVIEWED','no positive release');passed('append_release_remains_false')
+  need(len(H['can'](outputs['append_plan.json']))<=65536,'whole plan bound');passed('whole_actual_metadata_pack_byte_bound')
+  H['put']=original_put;H['doc']=original_doc;H['raw']=original_raw;H['ledger']=original_ledger
+  rr=file('raw.json',{'x':1});need(H['doc'](rr)=={'x':1},'generic stable full read');passed('whole_physical_metadata_hash_read')
+  # The oversized physical input MUST be refused before open/read, not merely
+  # after a failed digest. This proxy makes either premature read fail loudly.
+  original_Path=H['Path']
+  class OversizedPhysical:
+   def __init__(self,value):self.value=value
+   def __str__(self):return self.value
+   def is_absolute(self):return True
+   def resolve(self,strict=True):return self
+   def __eq__(self,other):return isinstance(other,OversizedPhysical)and self.value==other.value
+   def lstat(self):
+    class S:st_mode=33188;st_nlink=1;st_size=4194305
+    return S()
+   def open(self,*args,**kwargs):raise AssertionError('oversized physical input reached open')
+   def read_bytes(self):raise AssertionError('oversized physical input allocated before stat refusal')
+  H['Path']=OversizedPhysical
+  rejects(lambda:H['raw'](dict(path='/private/tmp/SYNTHETIC_OVERSIZE_NEVER_OPEN',bytes=1,sha256='0'*64)))
+  H['Path']=original_Path;passed('oversized_actual_physical_input_refused_before_open_or_allocation')
+  rejects(lambda:H['raw'](dict(rr,sha256='f'*64)));passed('wrong_file_SHA_refusal')
+  rejects(lambda:H['fresh']('/Users/sasha/medusa/NEVER_CREATE_L026_CONTROL'));passed('non_T_output_refusal')
+  fresh=H['fresh'](str(root/'output'));r=H['put'](fresh,'false.json',dict(Root_authority=False));need(pathlib.Path(r['path']).exists()and r['path']in H['PATHS'],'fresh own T metadata and actual path accounting')
+  rejects(lambda:H['put'](fresh,'false.json',{}));rejects(lambda:H['put'](fresh,'../escape.json',{}));passed('exclusive_nooverwrite_no_traversal_T_write')
+ text=body.decode()
+ need("name='walk_completed_capmiss_cohort'"in text and "len(runs)<=1"in text and "name='GEN_actual_hint_cohort'"in text,'one grouped walk and one GEN design');passed('grouped_walk_and_strict_generation_single_call_design')
+ tree=ast.parse(body);imports=[a.name for n in ast.walk(tree)if isinstance(n,(ast.Import,ast.ImportFrom))for a in n.names]
+ need(not set(imports)&{'subprocess','runpy','importlib','requests','socket','tools'},'no execution/network/project importer');static.append('no_science_process_tool_network_or_project_import')
+ names_in_calls={n.func.id for n in ast.walk(tree)if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)}
+ need(not names_in_calls&{'exec','eval','compile','__import__'},'no represented code activation');static.append('helper_has_no_exec_eval_compile_or_dynamic_import')
+ need('Root_release_TEMPLATE_FALSE.json'in body.decode()and'Root_gate_TEMPLATE_FALSE.json'in body.decode(),'only false authority templates');static.append('authority_templates_named_false')
+ need('1<=c[\'count\']<=16'in body.decode()and'len(calls)<=6'in body.decode()and'len(used)<=7'in body.decode()and'len(can(p))<=65536'in body.decode(),'all finite batch/append caps present');static.append('one_batch_six_subset_seven_proof_sixteen_fact_64KiB_limits')
+ need("p['subset_kernel']['sha256']==SOURCE['subset_kernel']"in body.decode()and"p['mode']==result['mode']==gate['mode']=='check'"in body.decode(),'actual strict1bdb/2292 ABI');static.append('strict_worker_mode_and_kernel_not_retagged')
+ need('raw(cr,True)'in body.decode()and"bank[i]==0"in body.decode(),'fresh paid-disjoint bytes');static.append('fresh_CURRENT_and_unpaid_status_rechecked')
+ need(len(body)+len(own_body)<=65536,'complete namespace');static.append('whole_helper_and_control_Source_extent')
+ elapsed=time.monotonic()-START;rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ need(elapsed<125 and rss<256*2**20,'256MiB125s generic metadata controls')
+ print(json.dumps(dict(schema='L026_BOUNDED_BATCH_WORKFLOW_GENERIC_CONTROLS_V1',status='PASS',program=dict(path=str(own),bytes=len(own_body),sha256=hashlib.sha256(own_body).hexdigest()),
+  subject=dict(path=str(p),bytes=len(body),sha256=hashlib.sha256(body).hexdigest()),pure_controls=len(names),pure_names=names,AST_controls=len(static),AST_names=static,
+  original_case_calls=0,scientific_Source_imports=0,genuine_API_capture_claims=False,Root_authority=False,
+  qualification='Synthetic metadata and SDK-shaped rejection fixtures only, not actual API proof or Original/G2/Fi22 arithmetic. Root executes controls separately.',resources=dict(seconds=elapsed,peak_RSS=rss)),sort_keys=True))
+if __name__=='__main__':main()

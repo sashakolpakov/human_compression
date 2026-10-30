@@ -1,0 +1,478 @@
+"""UNRUN Root-gated private v3 controls. Author /root/f004_register.
+Unmodified adapter activates only after review/release/guard; synthetic data
+is not authority. Transaction tests are explicit memory models.
+"""
+from pathlib import Path
+import argparse
+import ast
+import copy
+import fcntl
+import hashlib
+import json
+import os
+import resource
+import shlex
+import stat
+import sys
+import time
+import types
+
+AUTHOR='/root/f004_register'
+ROOT='/root'
+V=Path('/private/tmp/f004_closed40_reconciliation_DATA/batch_adapter_UNBOUND/successor_v3')
+N=V/'private_controls_UNRUN'
+SOURCE=dict(path=str(V/'register_closed40_v3b.py'),bytes=39928,
+    sha256='11f9bfe773e99d1e5db429b2a536d1554624b40855c18f75a889737c454621d1')
+LIMITS=dict(file_bytes=4*2**20,read_bytes=64*2**20,new_bytes=16*2**20,
+    paths=512,rss_bytes=256*2**20,timeout_seconds=125,internal_seconds=115)
+CALLED=['can','equal','strict','valid_ref','IO','capture','source_admission','runtime','overview_import',
+    'accepted','pending','state_pair','protected','replacements','inverse','publication','run_admission_prefix_only']
+CASE_NAMES=['exact40_115_157_transition','positive_Source_closure_and_runtime_gates',
+    'whole_Source_AST_function_inverse','whole_unknown_history_inverse',
+    'reject_wrong40_duplicate_missing_typed_proof','reject_wrong_pending_order',
+    'reject_job115_API_or_job23_selector','reject_wrong_Source_or_peer_or_gate_or_controls',
+    'reject_wrong_current_CP_or_Root_before_data','reject_bool_and_malformed_typed_values',
+    'reject_unknown_field_or_legacy_counter_delta','reject_all_four_active_ownership_arrays',
+    'reject_actual_IO_file_read_new_path_caps','reject_internal_RSS_and_wall_caps',
+    'reject_publication_wrapper_invoice_and_planned_pair',
+    'reject_runtime_PID_and_profile','reject_uninstalled_or_non_Root_admission_prefix',
+    'orphan_stage_model','lock_inode_model','last_CAS_mutation_model','sequential_second_rename_interruption_model',
+    'explicit_recovery_whole_before_inverse_model']
+
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+
+def can(x):
+    return (json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+
+def descriptor(p,b):
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+
+class HostIO:
+    """Real control reads/writes; fixture fake I/O has a separate ledger."""
+    def __init__(self):
+        self.start=time.monotonic();self.read_bytes=0;self.new_bytes=0
+        self.paths=set();self.opens=[];self.outputs=[];self.reserve=dict(bytes=0,read_bytes=0,paths=0)
+    def budget(self):
+        need(sys.platform=='darwin' and time.monotonic()-self.start<115
+            and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<=256*2**20,
+            'actual private CONTROL caller256MiB/115s under external125s guard')
+    def path(self,p):
+        self.paths.add(str(p));need(len(self.paths)+self.reserve['paths']<=512,'whole512-path control bank')
+    def read(self,r):
+        need(type(r)is dict and set(r)=={'path','bytes','sha256'}
+            and type(r['bytes'])is int and 0<=r['bytes']<=4*2**20,'bounded exact control input')
+        p=Path(r['path']);self.path(p);a=p.lstat()
+        need(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+            and a.st_nlink==1 and a.st_size==r['bytes'],'ordinary stable control input')
+        need(self.read_bytes+self.reserve['read_bytes']+a.st_size<=64*2**20,'complete control64MiB read bank')
+        with p.open('rb')as f:
+            b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+        sig=lambda z:(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+        need(sig(a)==sig(b)==sig(c)==sig(p.lstat()) and descriptor(p,raw)==r,'whole stable control bytes')
+        self.read_bytes+=len(raw);self.opens.append(r);self.budget();return raw
+    def doc(self,r):return json.loads(self.read(r))
+    def write(self,p,b):
+        need(p.is_relative_to(N) and p.parent.resolve(strict=True)==p.parent and not os.path.lexists(p),
+            'control output in its fresh private namespace only')
+        need(len(b)<=4*2**20 and self.new_bytes+self.reserve['bytes']+len(b)<=16*2**20,'whole16MiB control output bank')
+        self.path(p)
+        with p.open('xb')as f:
+            need(f.write(b)==len(b),'whole control output');f.flush();os.fsync(f.fileno())
+        self.new_bytes+=len(b);r=descriptor(p,b);self.outputs.append(r);return r
+
+
+class MockIO:
+    """Memory only: even fixture descriptors naming S never open S here."""
+    def __init__(self,source):
+        self.source=source;self.rows={};self.read_bytes=0;self.paths=set()
+        self.read_calls=[];self.budget_calls=0;self.new_bytes=0
+    def add(self,path,value,raw=False):
+        body=value if raw else self.source['can'](value)
+        row=descriptor(path,body);self.rows[str(path)]=body;return row
+    def read(self,row,live=False):
+        self.source['valid_ref'](row)
+        body=self.rows[row['path']]
+        need(self.source['equal'](descriptor(row['path'],body),row),'MOCK exact expected whole bytes')
+        self.paths.add(row['path']);self.read_calls.append(copy.deepcopy(row));self.read_bytes+=len(body)
+        return body
+    def doc(self,row,live=False):return self.source['strict'](self.read(row,live=live))
+    def budget(self):self.budget_calls+=1
+    def fork(self):
+        other=MockIO(self.source);other.rows=dict(self.rows);return other
+
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--actor',required=True)
+    ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--self-bytes',required=True,type=int)
+    ap.add_argument('--release',required=True)
+    ap.add_argument('--release-sha256',required=True)
+    ap.add_argument('--release-bytes',required=True,type=int)
+    args=ap.parse_args();host=HostIO()
+    need(args.actor==ROOT and sys.flags.ignore_environment and sys.flags.no_site
+        and sys.dont_write_bytecode and not sys.flags.optimize,'Root -E -B -S CONTROL invocation')
+    method=dict(path=str(Path(__file__).resolve()),bytes=args.self_bytes,sha256=args.self_sha256)
+    need(type(method['bytes'])is int and 0<method['bytes']<65536,'whole CONTROL Source <64KiB')
+    host.path(method['path']);host.read_bytes+=method['bytes'];host.opens.append(method)
+    host.read(method)
+    release_ref=dict(path=args.release,bytes=args.release_bytes,sha256=args.release_sha256)
+    release=host.doc(release_ref)
+    need(release.get('schema')=='ROOT_F004_CLOSED40_PRIVATE_CONTROL_RELEASE_V1'
+        and release.get('root')==ROOT and release.get('released')is True
+        and release.get('controls_completed')is False
+        and release.get('harness')==method and release.get('adapter_Source')==SOURCE
+        and release.get('limits')==LIMITS and release.get('case_names')==CASE_NAMES
+        and release.get('called_helpers')==CALLED and release.get('all_S_W_Git_gate_writes_forbidden')is True,
+        'actual distinct reviewed Root control release, never the author false template')
+    peer=host.doc(release['independent_Source_review'])
+    need(peer.get('reviewer')not in (None,AUTHOR,ROOT) and peer.get('verdict')=='PASS'
+        and peer.get('harness')==method and peer.get('adapter_Source')==SOURCE
+        and peer.get('blockers')==[],'actual independent whole Source/control peer')
+    peer_api=host.doc(release['independent_Source_actual_execution'])
+    need(peer_api.get('actor')==peer['reviewer'] and peer_api.get('terminal_observed')is True
+        and peer_api.get('actual_tool',{}).get('exit_code')==0
+        and peer_api.get('review_emission')==release['independent_Source_review'],
+        'genuine terminal independent CONTROL Source API')
+    runtime=host.doc(release['runtime_admission'])
+    need(runtime.get('root')==ROOT and runtime.get('admitted')is True
+        and runtime.get('pid')==os.getpid() and runtime.get('rss_cap_bytes')==256*2**20
+        and runtime.get('timeout_seconds')==125 and runtime.get('harness')==method
+        and runtime.get('guard_active')is True,'actual private CONTROL process guard')
+    external=release['external_reserve']
+    need(all(type(external[k])is int and external[k]>=0 for k in ('bytes','paths','read_bytes','source_bootstrap_bytes'))
+        and external['bytes']<=2*2**20 and external['paths']<=32
+        and external['source_bootstrap_bytes']<=external['read_bytes']<=16*2**20,
+        'complete actual external wrapper output/read/Source-bootstrap reserve')
+    host.reserve=external
+    raw=host.read(SOURCE)
+    tree=ast.parse(raw,filename=SOURCE['path'])
+    need(hashlib.sha256(raw).hexdigest()==SOURCE['sha256'],'whole frozen v2 byte identity')
+    functions={x.name:ast.dump(x,include_attributes=True)for x in tree.body if isinstance(x,(ast.FunctionDef,ast.ClassDef))}
+    namespace={'__name__':'f004_closed40_private_synthetic_control','__file__':SOURCE['path']}
+    root_data=host.doc(release['read_view_manifest'])
+    nodes=[copy.deepcopy(n)for n in tree.body if isinstance(n,(ast.Import,ast.ImportFrom,ast.Assign,ast.FunctionDef,ast.ClassDef))
+        and not(isinstance(n,ast.FunctionDef)and n.name in ('run','main'))]
+    original_run=next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name=='run')
+    prefix=copy.deepcopy(original_run);prefix.name='run_admission_prefix_only';prefix.body=prefix.body[:2]
+    projection_bytes=sum(len(ast.get_source_segment(raw.decode(),n).encode())for n in nodes)+len(ast.unparse(prefix).encode())
+    need(projection_bytes+method['bytes']<65536,'whole simultaneously activated AST-component+harness namespace <64KiB')
+    need(root_data['activated_projection']['original_component_bytes']==projection_bytes
+        and root_data['activated_projection']['excluded_functions']==['run','main']
+        and root_data['activated_projection']['admission_prefix_statements']==2,'exact reviewed AST projection')
+    nodes.append(prefix);projection=ast.fix_missing_locations(ast.Module(body=nodes,type_ignores=[]))
+    exec(compile(projection,SOURCE['path'],'exec'),namespace,namespace)
+    runtime_rows=release['runtime_inputs']
+    known={r['path']:r for r in runtime_rows}
+    need(len(known)==len(runtime_rows)<=200,'complete bounded actual stdlib origins')
+    for module in tuple(sys.modules.values()):
+        for field in ('__file__','__cached__'):
+            p=getattr(module,field,None)
+            if type(p)is str and Path(p).is_absolute() and Path(p).is_file():
+                name=str(Path(p).resolve())
+                need(name in known or name in (method['path'],SOURCE['path']),'actual full CONTROL runtime origin')
+    need(str(Path(sys.executable).resolve())in known,'actual control interpreter prepaid')
+    host.reserve['read_bytes']+=sum(r['bytes']for r in runtime_rows)
+    for r in runtime_rows:host.read(r)
+    work=Path(release['private_run_directory'])
+    need(work.is_absolute() and work.is_relative_to(N/'synthetic_runs')
+        and work.parent.resolve(strict=True)==work.parent and not os.path.lexists(work),
+        'fresh private fixture namespace')
+    # Directories contain no state selectors; actual fixture file bank is prepaid.
+    work.mkdir();fixtureS=work/'S';fixtureR=fixtureS/'maintenance/intake/f004_closed40_batch_registration'
+    (fixtureR/'runs').mkdir(parents=True)
+    for p in [work,fixtureS,fixtureS/'maintenance',fixtureS/'maintenance/intake',fixtureR,fixtureR/'runs']:host.path(p)
+    paths={'S':fixtureS,'R':fixtureR,'CURRENT':fixtureS/'reboot_20261013/CURRENT.json',
+           'STATUS':fixtureS/'maintenance/intake/current_status.json',
+           'LOCK':fixtureS/'maintenance/intake/root_state.lock'}
+    original_globals={k:namespace[k]for k in paths}
+    function_identity={k:id(namespace[k])for k in functions if k not in ('run','main')}
+    namespace.update(paths)
+    io=MockIO(namespace)
+    need(root_data.get('schema')=='F004_CLOSED40_PRIVATE_CONTROL_READ_VIEW_V1'
+        and root_data.get('adapter_Source')==SOURCE,'exact reviewed read-view manifest')
+    actual={}
+    for role,row in root_data['fixed_inputs'].items():actual[role]=host.doc(row)
+    seeds=actual['fixture_seeds']
+    need(seeds['schema']=='F004_CLOSED40_SYNTHETIC_CONTROL_SEEDS_NOT_AUTHORITY_V1','fixture DATA identity')
+    def seed(name,env):
+        def resolve(x):
+            if type(x)is dict:
+                if set(x)=={'$ref'}:return copy.deepcopy(env[x['$ref']])
+                return {k:resolve(v)for k,v in x.items()}
+            if type(x)is list:return [resolve(v)for v in x]
+            return x
+        return resolve(seeds[name])
+    env=dict(SOURCE=SOURCE,CHECKS=namespace['CHECKS'],CONTROL_CASES=namespace['CONTROL_CASES'],
+        ADAPTER_LIMITS=namespace['LIMITS'],KIND=namespace['KIND'],JOBS=namespace['JOBS'])
+    before_docs={'CURRENT':actual['CURRENT'],'STATUS':actual['STATUS']}
+    need(before_docs['CURRENT']['F009_checkpoint_current']==dict(sequence=11262,nodes=5907,pending=205,
+        reserved_debts=0,selected_raw_leaf_records=557508),'actual frozen CP11262 read view, no old CP')
+    before={tag:io.add(paths[tag],value)for tag,value in before_docs.items()}
+    index=actual['closure_index'];index_ref=io.add(work/'index.json',index)
+    for row in root_data['old_Root_authorities_and_job23_selector']:
+        io.rows[row['path']]=host.read(row)
+    for packet_ref in index['metadata_packet_refs']:io.rows[packet_ref['path']]=host.read(packet_ref)
+    def fixture(name,value):return io.add(fixtureR/(name+'.json'),value)
+    component_rows=[]
+    for n,packet_ref in enumerate(index['metadata_packet_refs']):
+        packet=io.doc(packet_ref)
+        review=fixture('synthetic_metadata_review_'+str(n),dict(root=ROOT,accepted=True,packet=packet_ref,
+            whole_input_paths=packet['unique_paths'],whole_input_bytes=packet['whole_bytes'],old_proof_mathematics_imported=True))
+        execution=fixture('synthetic_metadata_API_'+str(n),dict(actor=ROOT,actual_tool={'exit_code':0},
+            issued_command='synthetic-control-metadata',issued_argv=['synthetic-control-metadata'],
+            issued_tool_arguments={'cmd':'synthetic-control-metadata'},terminal_observed=True,review_emission=review))
+        component_rows.append(dict(packet=packet_ref,review=review,actual_execution=execution))
+    imported=fixture('synthetic_Root_closure_import',dict(
+        schema='ROOT_ACCEPTED_F004_CLOSED40_HISTORICAL_CLOSURE_IMPORT_V1',root=ROOT,accepted=True,
+        closure_index=index_ref,ordered_jobs=namespace['JOBS'],scientific_replays=0,whole_Original_credit=0,
+        metadata_packet_refs=index['metadata_packet_refs'],actual_metadata_components=component_rows))
+    peer_review=fixture('synthetic_Source_peer',seed('Source_peer',env));env['peer_review']=peer_review
+    def api(name,actor,emission):
+        return fixture(name,dict(actor=actor,actual_tool={'exit_code':0},issued_command='synthetic-control',
+            issued_argv=['synthetic-control'],issued_tool_arguments={'cmd':'synthetic-control'},
+            terminal_observed=True,review_emission=emission))
+    synthetic_controls=fixture('synthetic_accepted_controls',seed('controls',env));env['controls']=synthetic_controls
+    env['peer_execution']=api('synthetic_Source_peer_API','/root/SYNTHETIC_CONTROL_PEER',peer_review)
+    env['controls_execution']=api('synthetic_controls_API',ROOT,synthetic_controls)
+    source_release=fixture('synthetic_Source_release',seed('Source_release',env));env['source_release']=source_release
+    started=fixture('synthetic_guard_started',dict(pid=os.getpid(),actor=ROOT,owned_processes_active=1,guard_active=True))
+    reserve=dict(bytes=262144,paths=9,read_bytes=262144,source_bootstrap_bytes=65536)
+    env.update(started=started,reserve=reserve)
+    gate=fixture('synthetic_runtime_gate',seed('runtime_gate',env))
+    old_ref=root_data['fixed_inputs']['old_pending'];new_ref=root_data['fixed_inputs']['new_pending']
+    io.rows[old_ref['path']]=host.read(old_ref);io.rows[new_ref['path']]=host.read(new_ref)
+    plan=dict(Source_release=source_release,Root_closure_import=imported,closure_index=index_ref,
+        old_pending=old_ref,proposed_pending_DATA=new_ref,before=before,
+        whole_before_archives={k:io.add(work/(k+'.before.json'),v)for k,v in before_docs.items()},
+        protected_progress=[],output_directory=str(fixtureR/'runs'/'never-created-output'),
+        runtime_admission=gate,runtime_started=started,runtime_inputs=[],
+        guard_and_recorder_return_reserve=reserve,planned_states={})
+    q8import=copy.deepcopy(actual['q8_summary_import']);q8import.update(root=ROOT,accepted=True)
+    plan['Root_q8_summary_import']=fixture('synthetic_q8_summary_import',q8import)
+    plan['Root_postchecked_F009_context']={'Root_postreview':root_data['fixed_inputs']['F009_postreview']}
+    io.rows[root_data['fixed_inputs']['F009_postreview']['path']]=host.read(root_data['fixed_inputs']['F009_postreview'])
+    # Publication plan hash does not occur in registration bytes; use any explicit fixture plan ref.
+    plan_ref=fixture('synthetic_plan_identity',dict(synthetic=True,Root_authority=False))
+    pending_out=descriptor(Path(plan['output_directory'])/'proposed_pending.json',namespace['can'](actual['new_pending']))
+    # This exact literal is an independent DATA derivation of publication's acyclic registration.
+    env.update(imported=imported,index_ref=index_ref,rows=index['rows'],old_ref=old_ref,pending_out=pending_out,before=before)
+    record=seed('registration',env)
+    record_ref=descriptor(Path(plan['output_directory'])/'root_closed40_registration.json',namespace['can'](record))
+    planned,patches=namespace['replacements'](before_docs,pending_out,record_ref,imported)
+    plan['planned_states']={k:descriptor(paths[k],namespace['can'](v))for k,v in planned.items()}
+    results=[]
+    def case(name,fn):
+        host.budget();fn();results.append(dict(name=name,status='PASS'))
+    def reject(fn):
+        try:fn()
+        except (ValueError,TypeError,KeyError,FileNotFoundError):return
+        raise AssertionError('negative control was accepted')
+    def rebound(row,change):
+        m=io.fork();value=m.doc(row);change(value);changed={row['path']:m.add(row['path'],value)}
+        def refs(x):
+            if type(x)is dict:
+                if set(x)=={'path','bytes','sha256'}and x['path']in changed:return copy.deepcopy(changed[x['path']])
+                return {k:refs(v)for k,v in x.items()}
+            if type(x)is list:return [refs(v)for v in x]
+            return x
+        for _ in range(len(m.rows)+1):
+            count=0
+            for path,body in list(m.rows.items()):
+                try:value=namespace['strict'](body)
+                except (ValueError,UnicodeDecodeError):continue
+                updated=refs(value)
+                if not namespace['equal'](updated,value):changed[path]=m.add(path,updated);count+=1
+            if count==0:break
+        else:raise AssertionError('fixture reference graph cycle')
+        return m,refs(plan),lambda r:descriptor(r['path'],m.rows[r['path']])
+    def expect_changed_reject(row,change,call):
+        m,p,r=rebound(row,change);reject(lambda:call(m,p,r))
+    def exact_transition():
+        namespace['overview_import'](io.fork(),plan,before_docs)
+        namespace['accepted'](io.fork(),plan);old,new=namespace['pending'](io.fork(),plan)
+        need(len(old)==197 and len(new)==157 and len(namespace['JOBS'])==40,'exact40 positive')
+        need(planned['CURRENT']['F004_q11_latest_ledger']['closed']==115
+            and planned['STATUS']['F004_q11_latest_ledger']['pending']==157,'positive115/157')
+        for tag in before_docs:namespace['inverse'](before_docs[tag],planned[tag],patches[tag])
+        docs,raws=namespace['state_pair'](io.fork(),before)
+        publication=namespace['publication'](io.fork(),plan,plan_ref,SOURCE,index,docs,raws,new)
+        need(publication[2]['registration']==record_ref,'independent acyclic registration bytes')
+    case('exact40_115_157_transition',exact_transition)
+    def positive_gates():
+        namespace['source_admission'](io.fork(),plan,SOURCE,source_release)
+        # Runtime origin walk uses a labelled synthetic sys.modules view, no real file omission claim.
+        saved=namespace['sys']
+        namespace['sys']=types.SimpleNamespace(modules={},executable=SOURCE['path'])
+        p=copy.deepcopy(plan);p['runtime_inputs']=[SOURCE];m=io.fork();m.rows[SOURCE['path']]=raw
+        try:namespace['runtime'](m,p,SOURCE)
+        finally:namespace['sys']=saved
+    case('positive_Source_closure_and_runtime_gates',positive_gates)
+    def source_inverse():
+        need(ast.dump(ast.parse(raw),include_attributes=True)==ast.dump(tree,include_attributes=True),'whole AST identity')
+        for name,body in functions.items():
+            need(body==next(ast.dump(x,include_attributes=True)for x in ast.parse(raw).body
+                if isinstance(x,(ast.FunctionDef,ast.ClassDef))and x.name==name),'whole function AST inverse')
+    case('whole_Source_AST_function_inverse',source_inverse)
+    def unknown_inverse():
+        docs=copy.deepcopy(before_docs);docs['CURRENT']['F004_q11_latest_ledger']['unknown_CONTROL_only']={'x':[False,0,True,1]}
+        docs['STATUS']['F004_q11_latest_ledger']['unknown_CONTROL_only']={'x':[False,0,True,1]}
+        docs['CURRENT']['CONTROL_UNRELATED']={'opaque':['history',False,0]}
+        after,delta=namespace['replacements'](docs,pending_out,record_ref,imported)
+        need(namespace['equal'](after['CURRENT']['CONTROL_UNRELATED'],docs['CURRENT']['CONTROL_UNRELATED']),'unknown top key')
+        for tag in docs:
+            need(namespace['equal'](after[tag]['F004_q11_latest_ledger']['unknown_CONTROL_only'],
+                docs[tag]['F004_q11_latest_ledger']['unknown_CONTROL_only']),'unknown alias key')
+            namespace['inverse'](docs[tag],after[tag],delta[tag])
+    case('whole_unknown_history_inverse',unknown_inverse)
+    def wrong40():
+        for edit in [lambda x:x['rows'].pop(),lambda x:x['rows'].append(copy.deepcopy(x['rows'][0])),
+                     lambda x:x['rows'].__setitem__(1,copy.deepcopy(x['rows'][0])),
+                     lambda x:x['rows'][0].__setitem__('unpaid',False)]:
+            expect_changed_reject(index_ref,edit,lambda m,p,r:namespace['accepted'](m,p))
+    case('reject_wrong40_duplicate_missing_typed_proof',wrong40)
+    def wrong_pending():
+        for edit in [lambda x:x.__setitem__(slice(0,2),list(reversed(x[:2]))),lambda x:x.append(x[0]),lambda x:x.pop()]:
+            expect_changed_reject(new_ref,edit,lambda m,p,r:namespace['pending'](m,p))
+    case('reject_wrong_pending_order',wrong_pending)
+    def proof_links():
+        for job,key,value in [([115,5],'genuine_checker_APIs',None),([23,4],'current_per_job_selector',None)]:
+            expect_changed_reject(index_ref,lambda x:next(r for r in x['rows']if r['original_job']==job).__setitem__(key,value),
+                lambda m,p,r:namespace['accepted'](m,p))
+        expect_changed_reject(plan['Root_q8_summary_import'],lambda x:x.__setitem__('accepted',False),
+            lambda m,p,r:namespace['overview_import'](m,p,before_docs))
+    case('reject_job115_API_or_job23_selector',proof_links)
+    def gates_bad():
+        for row,edit in [(source_release,lambda x:x.__setitem__('released',False)),
+                         (peer_review,lambda x:x.__setitem__('blockers',['synthetic missing proof'])),
+                         (synthetic_controls,lambda x:x.__setitem__('all_expected_outcomes_observed',False))]:
+            expect_changed_reject(row,edit,lambda m,p,r:namespace['source_admission'](m,p,SOURCE,r(source_release)))
+        wrong=dict(SOURCE,sha256='0'*64)
+        reject(lambda:namespace['source_admission'](io.fork(),plan,wrong,source_release))
+    case('reject_wrong_Source_or_peer_or_gate_or_controls',gates_bad)
+    def wrong_current():
+        expect_changed_reject(before['CURRENT'],lambda x:x['F009_checkpoint_current'].__setitem__('sequence',11216),
+            lambda m,p,r:namespace['overview_import'](m,p,namespace['state_pair'](m,p['before'])[0]))
+        m=io.fork();m.rows[before['CURRENT']['path']]=b'{}\n'
+        reject(lambda:namespace['state_pair'](m,before))
+    case('reject_wrong_current_CP_or_Root_before_data',wrong_current)
+    def typed_bad():
+        need(not namespace['equal'](False,0)and not namespace['equal'](True,1),'typed bool/int')
+        for value in [b'{"a":1,"a":2}',b'{"x":NaN}',b'{"x":Infinity}',b'not JSON']:
+            reject(lambda:namespace['strict'](value))
+        reject(lambda:namespace['valid_ref'](dict(path=str(work/'x'),bytes=True,sha256='0'*64)))
+    case('reject_bool_and_malformed_typed_values',typed_bad)
+    def delta_bad():
+        for tag,key in [('CURRENT','CONTROL_UNKNOWN'),('STATUS','CONTROL_UNKNOWN')]:
+            bad=copy.deepcopy(planned[tag]);bad[key]=1
+            reject(lambda:namespace['inverse'](before_docs[tag],bad,patches[tag]))
+        bad=copy.deepcopy(planned['CURRENT']);bad['F004_current']['q11_closed']=75
+        reject(lambda:namespace['inverse'](before_docs['CURRENT'],bad,patches['CURRENT']))
+    case('reject_unknown_field_or_legacy_counter_delta',delta_bad)
+    def ownership_bad():
+        for key in ['root_execution_ownership_latest','root_current_ownership','current_execution_ownership']:
+            docs=copy.deepcopy(before_docs);docs['CURRENT'][key]['active_handles']=[{'pid':'SYNTHETIC'}]
+            reject(lambda:namespace['idle'](docs['CURRENT'],docs['STATUS']))
+        docs=copy.deepcopy(before_docs);docs['STATUS']['active_scientific_handles']=[{'pid':'SYNTHETIC'}]
+        reject(lambda:namespace['idle'](docs['CURRENT'],docs['STATUS']))
+    case('reject_all_four_active_ownership_arrays',ownership_bad)
+    small=host.write(work/'only_actual_small_fixture.json',b'{}\n')
+    def io_caps():
+        reject(lambda:namespace['valid_ref'](dict(path=str(work/'large'),bytes=4*2**20+1,sha256='0'*64)))
+        real=namespace['IO']();real.read_bytes=64*2**20
+        reject(lambda:real.read(small))
+        real=namespace['IO']();real.new_bytes=16*2**20
+        reject(lambda:real.write(work/'MUST_NOT_EXIST.json',b'1'))
+        real=namespace['IO']();real.paths={str(work/str(n))for n in range(512)}
+        reject(lambda:real.read(small))
+        need(not os.path.lexists(work/'MUST_NOT_EXIST.json'),'overcap rejected before output')
+    case('reject_actual_IO_file_read_new_path_caps',io_caps)
+    def resource_bad():
+        real=namespace['IO']();real.start=namespace['time'].monotonic()-116;reject(real.budget)
+        real=namespace['IO']();saved=namespace['resource']
+        namespace['resource']=types.SimpleNamespace(RUSAGE_SELF=0,getrusage=lambda _:types.SimpleNamespace(ru_maxrss=256*2**20+1))
+        try:reject(real.budget)
+        finally:namespace['resource']=saved
+    case('reject_internal_RSS_and_wall_caps',resource_bad)
+    def publication_bad():
+        docs,raws=namespace['state_pair'](io.fork(),before)
+        for change in [lambda p:p.__setitem__('guard_and_recorder_return_reserve',dict(bytes=2*2**20+1,paths=9)),
+                       lambda p:p['planned_states']['CURRENT'].__setitem__('sha256','0'*64)]:
+            p=copy.deepcopy(plan);change(p)
+            reject(lambda:namespace['publication'](io.fork(),p,plan_ref,SOURCE,index,docs,raws,actual['new_pending']))
+    case('reject_publication_wrapper_invoice_and_planned_pair',publication_bad)
+    def runtime_bad():
+        for change in [lambda x:x.__setitem__('timeout_seconds',126),lambda x:x.__setitem__('wrapper_reserve_bound_to_actual_guard',False)]:
+            expect_changed_reject(gate,change,lambda m,p,r:namespace['runtime'](m,p,SOURCE))
+        expect_changed_reject(started,lambda x:x.__setitem__('pid',os.getpid()+1),lambda m,p,r:namespace['runtime'](m,p,SOURCE))
+    case('reject_runtime_PID_and_profile',runtime_bad)
+    def entry_bad():
+        reject(lambda:namespace['run_admission_prefix_only'](types.SimpleNamespace(actor=ROOT)))
+        reject(lambda:namespace['run_admission_prefix_only'](types.SimpleNamespace(actor=AUTHOR)))
+    case('reject_uninstalled_or_non_Root_admission_prefix',entry_bad)
+    def orphan_model():
+        paths=[str(p)+suffix for p in (namespace['CURRENT'],namespace['STATUS'])
+            for suffix in namespace['OLD_STAGE_SUFFIXES']+(namespace['STAGE_SUFFIX'],)]
+        for orphan in paths:reject(lambda:namespace['need'](all(p!=orphan for p in paths),'modeled orphan refusal'))
+    case('orphan_stage_model',orphan_model)
+    def lock_model():
+        for seen,opened,last in [((1,1),(1,2),(1,2)),((1,1),(1,1),(1,2))]:
+            reject(lambda:namespace['need'](seen==opened==last,'modeled stable lock inode'))
+    case('lock_inode_model',lock_model)
+    # Explicit model of Source.run's final-CAS/two-rename order. Not an OS-rename/fsync test.
+    model={}
+    def prepare_model():
+        m=io.fork();model.clear();model.update(before=copy.deepcopy(before),before_raw={k:m.read(r)for k,r in before.items()},
+            planned_raw={k:namespace['can'](v)for k,v in planned.items()},prepared=True,renames=[],committed=False,automatic_rollback=False)
+        return m
+    def last_cas():
+        m=prepare_model();value=m.doc(before['STATUS']);value['CONTROL_RACE']=True
+        m.rows[before['STATUS']['path']]=namespace['can'](value)
+        reject(lambda:namespace['state_pair'](m,before));need(model['renames']==[]and not model['committed'],'no rename after lastCAS race')
+    case('last_CAS_mutation_model',last_cas)
+    def interruption():
+        m=prepare_model();namespace['state_pair'](m,before)
+        m.rows[before['CURRENT']['path']]=model['planned_raw']['CURRENT'];model['renames'].append('CURRENT')
+        # Injected interruption BEFORE the second memory replacement. No receipt or recovery action.
+        need(model['prepared']and model['renames']==['CURRENT']and not model['committed']and not model['automatic_rollback'],
+            'partial modeled pair retains PREPARED/before/planned, never auto-rollback')
+        need(m.rows[before['STATUS']['path']]==model['before_raw']['STATUS'],'second state remains literal before')
+        model['memory']=m
+    case('sequential_second_rename_interruption_model',interruption)
+    def recovery():
+        m=model['memory']
+        for tag in ['CURRENT','STATUS']:m.rows[before[tag]['path']]=model['before_raw'][tag]
+        restored,_=namespace['state_pair'](m,before)
+        need(namespace['equal'](restored,before_docs)and not model['committed'],
+            'explicit separate modeled Root recovery restores both whole before bytes')
+    case('explicit_recovery_whole_before_inverse_model',recovery)
+    need([r['name']for r in results]==CASE_NAMES,'complete finite control roster, no omitted cases')
+    for name,identity in function_identity.items():need(id(namespace[name])==identity,'unmodified function/class identity after controls')
+    namespace.update(original_globals)
+    need(host.read(SOURCE)==raw,'whole Source bytes still exact after controls')
+    host.budget()
+    result=dict(schema='F004_CLOSED40_ACTUAL_PRIVATE_CONTROL_RETURN_V1',actor=ROOT,author=AUTHOR,
+        Root_authority=False,Root_control_release=release_ref,harness=method,adapter_Source=SOURCE,
+        case_results=results,all_expected_outcomes_observed=True,controls_remain_pending_Root_acceptance=True,
+        actual_adapter_entrypoint_adopt_calls=0,actual_adapter_helper_calls=True,
+        activated_projection_original_bytes=projection_bytes,activated_whole_namespace_bytes=projection_bytes+method['bytes'],
+        full_run_main_not_compiled=True,admission_prefix_only=True,
+        Source_code_bytes_and_function_AST_identical=True,
+        fixture_global_path_overrides=list(paths),S_W_Git_gate_lock_or_selector_writes=0,
+        transaction_tests_are_explicit_memory_models=True,actual_OS_rename_fsync_or_crash_test=False,
+        actual_control_read_bytes=host.read_bytes,actual_control_new_bytes_before_report=host.new_bytes,
+        complete_reserved_bootstrap_and_wrapper_bank=host.reserve,
+        actual_control_paths_before_report=len(host.paths),actual_control_open_ledger=host.opens,
+        scientific_replays=0,whole_Original_credit=0)
+    body=can(result);need(len(body)<=65536,'complete private control report reserve64KiB')
+    out=work/'actual_private_controls.json';report=host.write(out,body)
+    print(can(dict(report=report,passed=len(results),all_expected_outcomes_observed=True,
+        Root_authority=False,S_W_Git_gate_lock_selector_writes=0)).decode(),end='')
+
+
+if __name__=='__main__':main()
