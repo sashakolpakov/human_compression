@@ -119,6 +119,16 @@ prove restrictions for one middle vertex and give complete conditional
 descriptions for two or three isolated middle vertices. Applying them to the
 pending families remains part of F009's unfinished treatment.
 
+The [portable bipartite enumeration](reproduction/bipartite_diameter_eight/README.rst)
+now recovers all **16,467 ordinary classes** in the bipartite branch. Fourteen
+structural forms lead to 902 profiles, 3,617 local forms and 34,786 pairs.
+The complete run checked every 32-vertex isomorphism witness and produced
+the same sorted code stream as the separately audited batch calculation.
+It passed eleven controls and finished in 26.53 seconds at about 61 MiB
+sampled peak memory. Sources, proofs, reviews and reference outputs are
+included. This completes the bipartite subproblem; the nonbipartite census
+and F009's whole treatment remain unfinished.
+
 The Fi22 ledger contains **77 generation cases, 77 separate intersection
 proofs for those same cases and 100 nongeneration cases**, leaving **28,731
 unresolved candidates** in its 28,908-row bank. The

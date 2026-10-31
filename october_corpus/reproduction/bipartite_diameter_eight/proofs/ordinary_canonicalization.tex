@@ -1,0 +1,207 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm,booktabs,hyperref}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\title{Enumeration of bipartite graphs of degree five and diameter eight}
+\author{human\_compression project}
+\date{}
+\begin{document}
+\maketitle
+
+\paragraph{Scope and attribution.}
+The original problem is the census of connected graphs of order $32$,
+degree $5$, girth $4$ and diameter $8$, considered by Cambie, Goedgebeur,
+Jooken and Van den Eede in \emph{On the order-diameter ratio of
+girth-diameter cages}, arXiv:2511.21144v3, Appendix~B, Table~6.
+The present argument concerns its bipartite part. We use the separate
+fourteen-skeleton theorem for this part: its source has SHA256
+\texttt{e9bed0654c3aad3c6d3a90ee63a3dcca6c2cf8b1a9ce01f5afb168979b301ae4}.
+Its proof and attribution are retained separately, rather than repeated
+here. The following deductions and the proposed enumeration algorithm
+require independent review. No ordinary class count, novelty claim,
+solution of an open conjecture, or Lean formalization is asserted.
+
+\paragraph{The normal form used below.}
+Let $G$ be connected, simple, bipartite and $5$-regular on $32$ vertices,
+and suppose that $a,b,c$ occur at positions $0,4,8$ on an eight-geodesic.
+Write $A=N(a)$, $B=N(b)$ and $C=N(c)$. These are disjoint five-element
+sets in one color class. Its remaining vertex is $z$. The other color
+class consists of $a,c$, two sides $L,R$, and a core $X$ containing $b$.
+Orient the endpoints so that all neighbors of $z$ outside $X$ lie in $L$.
+The normal-form theorem states that $X$ consists of a class $X_0$ of
+$t+1$ vertices with neighborhood $B$ and classes $X_i$, one for each
+port $b_i\in B$, of size $m_i$ and neighborhood
+$(B\setminus\{b_i\})\cup\{z\}$. Put $u=\sum_i m_i$ and $r=t+u$.
+Then $u>0$, $r\leq3$, and $|L|+|R|=13-r$, with each side of size five
+or six. The middle and port data have exactly the fourteen possibilities
+in the retained table.
+
+Each port meets only its assigned side, in $4-r+m_i$ vertices. There are
+$5-u$ star incidences in $L$. If $h(v)$ counts the port incidences and
+the possible star incidence of a side vertex $v$, then its five endpoint
+rows omit $v$ exactly $h(v)$ times. For a side of size five these are
+singleton omissions; for size six the omissions form a loopless
+multigraph of five edges with degree sequence $h$. This is a necessary
+and sufficient construction. Every permitted choice is connected, with
+girth four and diameter eight.
+
+\section*{Local enumeration}
+
+Encode a side vertex by its incidence mask on its $b_D$ ports, together
+with a star bit on $L$. There are at most four bits. A side table up to
+permuting its vertices is precisely a multiset of $n_D\leq6$ masks,
+with the prescribed column sums. If $c_e$ is the multiplicity of mask $e$
+and $a_j$ is a column sum, its equations are
+\[
+ \sum_e c_e=n_D,\qquad
+ \sum_e c_e\,\operatorname{bit}_j(e)=a_j,\qquad c_e\geq0.
+\]
+Every solution gives exactly such a multiset and every side table gives
+a solution. Thus recursion over these nonnegative counts is exhaustive.
+A dynamic program indexed by the next mask, the remaining number of
+vertices and the remaining column sums has at most
+\[
+ (2^d+1)(n_D+1)\prod_j(a_j+1)
+ \leq17\cdot7\cdot5^4=74\,375
+\]
+states. Its counts also provide exact ordinal intervals without
+reconstructing earlier solutions.
+
+On a side of size five no endpoint choice remains. On size six enumerate
+the nondecreasing five-tuples of the fifteen possible pairs. Their number
+is $\binom{19}{5}=11\,628$. Retain exactly the tuples with degree sequence
+$h$. Every loopless multigraph of five edges appears once, with repeated
+edges allowed and no ordering attached to the five endpoint rows.
+
+\begin{lemma}[Local identification]
+For a fixed side, order its ports by their missing multiplicities $m_i$.
+Minimize over permutations of ports with equal multiplicity. For each
+such ordering, sort side vertices by their incidence masks. For size six
+also minimize its sorted omission-pair list over permutations within
+equal-mask classes. The resulting least pair of mask list and omission
+list is a complete invariant of this local incidence object, allowing
+permutations of its side vertices, endpoint rows and ports of equal $m_i$.
+\end{lemma}
+\begin{proof}
+A port permutation transforms the mask of every side vertex. Sorting the
+new masks fixes the order of unequal masks. Any further permutation
+preserving that list is exactly a permutation within equal-mask classes.
+The unordered omission list already removes endpoint-row permutations.
+This enumerates every remaining permitted action, so isomorphic local
+objects have the same minimum. Conversely equality supplies explicit
+port, side and row bijections preserving every incidence. On size five
+the singleton omission multiset is determined by the mask population
+counts, so its separate minimization has no effect.
+\end{proof}
+
+These local bijections extend through the whole middle. A permutation of
+ports preserving $m_i$ permutes the corresponding equal-sized classes
+$X_i$, fixes $X_0$ and $z$, and preserves all central adjacencies. The
+two sides may therefore be reduced independently before joining them.
+All pairs of their local representatives, across all fourteen rows,
+cover every graph in the stated bipartite class. Ordinary duplicates
+across different roots and rows still have to be identified.
+
+\section*{Intrinsic choices of centers}
+
+\begin{lemma}\label{diametral}
+In the color class containing $a,b,c$, all pairs at distance eight run
+between the two false-twin classes of $a$ and $c$, and every such pair
+has distance eight.
+\end{lemma}
+\begin{proof}
+The normal-form distance proof gives pairwise distance two between
+distinct core vertices. Every vertex in the center color is either in
+the core, within two of some core vertex, or a false twin of an endpoint.
+Each endpoint false twin is at distance four from \emph{every} core
+vertex. Consequently a pair other than two endpoint false twins has
+distance at most six. Twins of the same endpoint have distance two.
+Twins of opposite endpoints have the same distance eight as $a,c$.
+\end{proof}
+
+\begin{proposition}\label{roots}
+The full quotient by equality of open neighborhoods has at most two
+unordered pairs at distance eight. For each such pair, at most four
+quotient vertices are at distance four from both endpoints. These give
+all choices needed for ordinary, uncolored identification.
+\end{proposition}
+\begin{proof}
+Lemma~\ref{diametral} gives one pair in the center color. If the other
+color contains a pair at distance eight, choose an eight-geodesic between
+them and apply the same normal-form theorem with these endpoints.
+Lemma~\ref{diametral} then gives one pair in that color as well. Distances
+between distinct twin classes equal distances between any of their
+vertices: quotient paths lift because class adjacency is complete, and
+graph paths project to quotient walks.
+
+For a fixed endpoint pair every core vertex is at distance four from
+both endpoints. Each side vertex is at distance two from its own
+endpoint, while an endpoint has distance zero from itself. Opposite-color
+distances are odd. Thus the simultaneous distance-four vertices are
+exactly $X$. Its twin classes are $X_0$ and the nonempty $X_i$, numbering
+at most $1+u\leq4$. Choosing another representative within a twin class
+does not matter, since swapping twins is an automorphism fixing all
+other vertices. This accounts for every possible center triple.
+\end{proof}
+
+\begin{theorem}[Ordinary canonical code]
+For each endpoint-pair and midpoint-class choice of
+Proposition~\ref{roots}, recover its normal form and orient its star side
+as $L$. Form the tuple
+\[
+ (1,q,t,u,n_L,n_R,m_L,m_R,\mathcal L,\mathcal R),
+\]
+where each missing-multiplicity list is sorted, and $\mathcal L,\mathcal R$
+are its local canonical codes. Let $C(G)$ be the least such tuple in a
+fixed total order. Then two graphs in the stated class are ordinarily
+isomorphic if and only if their codes $C(G)$ are equal.
+\end{theorem}
+\begin{proof}
+An ordinary graph isomorphism preserves full twin classes, their weights,
+distances, diametral endpoint pairs and simultaneous distance-four
+classes. It therefore maps the entire set of eligible center choices
+bijectively to that of the image graph. After choosing representatives,
+its remaining changes are precisely the local symmetries already
+minimized. It follows that the two sets of tuples, and hence their
+minima, agree. This also covers an interchange of the two colors.
+
+Conversely the tuple reconstructs the entire graph: expand $X_0$ and
+$X_i$ with their specified neighborhoods, the two sides from their mask
+lists, and the endpoint rows from their singleton or pair omissions.
+Equality of tuples therefore gives a common graph to which both inputs
+are isomorphic. The port and side permutations attaining the minimum,
+the sorted omission rows and arbitrary bijections within twin classes
+give explicit bijections on all thirty-two vertices. Composing those
+bijections gives the required ordinary isomorphism.
+\end{proof}
+
+\paragraph{Finite bounds.}
+The fourteen rows give $|H_L|+|H_R|\leq7$ for the two equal-multiplicity
+port groups: the largest individual group permutes three equal ports.
+A nonzero side mask occurs at most four times, since any of its set bits
+has column sum at most four. Zero-mask vertices have omission degree
+zero, so their permutations act trivially on the omission list. For a
+side of size six the effective equal-mask group thus has order at most
+$4!2!=48$. Together with the at most eight center choices, an elementary
+canonical-code computation uses at most $8\cdot7\cdot48=2\,688$ small
+local omission-list comparisons. This is an operation bound, not a
+benchmark or proof that a particular resource-limited job will finish.
+
+\paragraph{Certificates and remaining work.}
+The proposed implementation emits finite side-profile intervals and
+finite intervals of pairs of accepted local forms. A completed interval
+must include every unit in its declared range; a bounded interruption
+leaves the next unit explicit and uncredited. For every ordinary code it
+also supplies a permutation from the constructed thirty-two-vertex graph
+to the expansion of that code. Checking the entire adjacency relation
+verifies each claimed identification independently.
+
+Completeness still requires actual coverage of all side intervals and
+all joined local pairs, independent review of the Source and lemmas,
+and identification of the full ordinary union. A matching numerical
+count or a rolling hash alone does not establish this. The existing
+nonbipartite part of the original problem is separate. No current native
+queue record is paid by this mathematical proposal, and no computation,
+control, TeX compilation or Lean verification has been performed here.
+\end{document}

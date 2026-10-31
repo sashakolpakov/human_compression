@@ -84,7 +84,14 @@ F009 is locally accepted at checkpoint **11,662**, with one reserved debt among
 six; the full census remains unfinished. The [public checkpoint 11,584 archive](october_corpus/research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
 preserves the accepted records, selected programs and computation outputs.
 Its relative checker verifies archived byte integrity; fresh mathematical
-Reader replay from a clone remains outstanding. The Fi22 ledger has **77 generation
+Reader replay from a clone remains outstanding.
+The new [complete bipartite enumeration](october_corpus/reproduction/bipartite_diameter_eight/README.rst)
+recovers **16,467 ordinary graph classes** through fourteen structural forms.
+Its portable run checked all 34,786 pairs in 26.53 seconds, using about
+61 MiB peak memory, and matched the separately audited batch result byte for byte.
+F009's nonbipartite branch remains unfinished.
+
+The Fi22 ledger has **77 generation
 certificates, 77 separate intersection proofs for those cases and 100
 nongeneration certificates**. The earlier archive,
 [24-case replay](october_corpus/reproduction/fi22_markings/README.rst) and
