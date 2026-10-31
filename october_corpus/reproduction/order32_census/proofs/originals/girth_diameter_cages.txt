@@ -1,0 +1,1029 @@
+
+--- PDF PAGE 1 ---
+Discrete Mathematics and Theoretical Computer Science. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .vol. 28:4, SOFSEM 2026 #1 (2026)
+On the order-diameter ratio of girth-diameter
+cages
+Stijn Cambie1∗ Jan Goedgebeur1,2†
+Jorik Jooken1‡ Tibo Van den Eede1†
+1 Department of Computer Science, KU Leuven Campus Kulak-Kortrijk, Kortrijk, Belgium
+2 Department of Mathematics, Computer Science and Statistics, Ghent University, Ghent, Belgium
+revisions 27th Feb. 2026; accepted 20th June 2026.
+For integers k, g, d, a (k;g, d)-cage (or simply girth-diameter cage) is a smallest k-regular graph of girth g and
+diameter d (if it exists). The order of a (k;g, d)-cage is denoted by n(k;g, d). We determine asymptotic lower and
+upper bounds for the ratio between the order and the diameter of girth-diameter cages as the diameter goes to infinity.
+We also prove that this ratio can be computed in constant time for fixedkandg.
+We theoretically determine the exact values n(3;g, d), and count the number of corresponding girth-diameter cages,
+for g∈ {4,5}. Moreover, we design and implement an exhaustive graph generation algorithm and use it to determine
+the exact order of several open cases and obtain – often exhaustive – sets of the corresponding girth-diameter cages.
+The largest case we generated and settled with our algorithm is a(3; 7,35)-cage of order 136.
+Keywords:cage problem, degree diameter problem, extremal graphs, generation algorithm.
+1 Introduction
+In this paper, we study girth-diameter cages, a concept recently introduced by Araujo-Pardo et al. [1], which
+is closely related to the Cage Problem and also has connections to the Degree Diameter Problem. These
+are two important problems in the area of extremal graph theory. We first introduce these two problems
+before discussing girth-diameter cages.
+Given integers k≥2 , g≥3 , theCage Problemasks for the minimum order of a k-regular graph of girth
+g (denoted by n(k, g)) and the corresponding graphs (called (k, g)-cages). This problem started receiving
+a lot of attention after Sachs [16] proved that k-regular graphs with girth g (called (k, g)-graphs) exist for
+every value of k≥2 and g≥3 . The exact value of n(k, g)has only been determined for a few infinite
+families and for some specific small pairs (k, g)(mainly using clever algorithmic searches [7]), but remains
+wide open for many pairs (k, g). Apart from some exceptional cases, the best upper bounds on n(k, g)
+∗Supported by a Postdoctoral Fellowship of the Research Foundation Flanders (FWO) with grant number 1225224N.
+†Supported by Internal Funds of KU Leuven and a grant of the Research Foundation Flanders (FWO) with grant number
+G0AGX24N.
+‡Supported by a Postdoctoral Fellowship of the Research Foundation Flanders (FWO) with grant number 1222524N.
+ISSN 1365–8050 © 2026 by the author(s) Distributed under a Creative Commons Attribution 4.0 International License
+arXiv:2511.21144v3  [math.CO]  19 Aug 2026
+
+--- PDF PAGE 2 ---
+2 S. Cambie et al.
+are given by an explicit construction due to Lazebnik, Ustimenko and Woldar [11]. The state of the art as
+such tells us that M(k, g)≤n(k, g)≤C·M(k, g) 3/2 for some constant C, where M(k, g)denotes the
+well-known Moore bound (also presented later in (1)) fork-regular graphs of girthg.
+The Degree Diameter Problem asks for the order of the largest graph of given maximum degree ∆ and
+diameter d (denoted by n′(∆, d)) as well as the corresponding graphs. The Cage Problem and the Degree
+Diameter Problem are connected through the Moore bound, which simultaneously gives a lower bound for
+n(k, g)as well as an upper bound forn ′(∆, d).
+For more detailed information, we refer the interested reader to the Dynamic Cage Survey by Exoo
+and Jajcay [7] on the Cage Problem and to the excellent survey by Miller and ˇSir´aˇn [15] on the Degree
+Diameter Problem.
+A (k;g, d)-graphis a k-regular graph of girth g and diameter exactly d. Analogously to the classical
+cage problem, a smallest (k;g, d)-graph is called a (k;g, d)-cage(or simply agirth-diameter cageif the
+values of k, gand d are not specified) and its order is denoted by n(k;g, d). The authors of [ 1] mainly
+studied the case n(k; 5,4). We will be interested in the exact determination ofn(k;g, d)for certain specific
+tuples (k, g, d)as well as determining the smallest real number f(k, g)such that, as the diameter d goes to
+infinity, we have n(k;g, d)≤f(k, g)d+O k,g(1). Here, Ok,g(1) is a constant depending only on k and
+g. In cases where the exact determination of f(k, g)or n(k;g, d)is not possible, we will be interested in
+lower and upper bounds instead.
+Our main theorem can be stated as follows and is proven in Section 2.
+Theorem 1 For all integersk, g≥3 , we have M(k,g)
+g ≤f(k, g) and f(k, g)≤ n(k,g)
+g . Moreover, neither
+of the two bounds are sharp for all pairs(k, g).
+The exact value of n(k;g, d) is open for most cases except for some notable examples from the
+literature that were already known (and are implied by our result). When the girth equals 4, using
+n(k,4) =M(k,4) = 2k , Theorem 1 implies that n(k; 4, d) =k
+2 d+O k(1), which is already known by [6,
+Thm. 2] (it is stated for K3-free graphs). Also without girth condition, up to the Ok(1) term, sharpness of
+the ratio M(k,3)
+3 = k+1
+3 was already known by classical results in [6], and made precise by [10].
+Note that if a (k, g)-Moore graph exists, i.e., M(k, g) =n(k, g), then n(k;g, d)is determined up to a
+constant by Theorem 1. This is the case when g∈ {3,4}, g= 5 and k∈ {2,3,7} and possibly k= 57
+(the existence of such a Moore graph is a famous open problem [7]), and g∈ {6,8,12} for some values of
+k (e.g. when k−1 is a prime power). So the smallest cases (for k resp. g) for which the bounds are not
+asymptotically determined, are(k, g)∈ {(3,7),(4,5)}. We will study these pairs in Section 4.
+We also prove in Section 3 that for all integers k, g≥3 , determining f(k, g)is a task that requires only
+finitely many computations(i).
+Theorem 2For all integersk, g≥3, one can computef(k, g)inO k,g(1)time.
+In Section 4, we compute several previously unknown values of n(k;g, d), starting with the theoretical
+determination of n(3; 4, d)and n(3; 5, d), as well as the number of corresponding girth-diameter cages.
+Additionally, we design and implement an exhaustive generation algorithm for (k;g, d)-graphs. This
+allowed us to determine the values of n(k;g, d) for 107 new triples (k, g, d)and the corresponding
+(k;g, d)-cages (often exhaustive). The results derived from the computations are listed in Appendix B.
+Finally, in Section 5 we conclude with some further observations and open questions, in particular a
+question relating(k;g, d)-cages to the conjecture that every even girth(k, g)-cage is bipartite.
+(i) We remark that this is mainly of theoretical importance, since for many(k, g)this finite number is extremely large.
+
+--- PDF PAGE 3 ---
+On the order-diameter ratio of girth-diameter cages3
+2 Proof of Theorem 1
+In this section, we prove Theorem 1 in three parts separately. First, we prove a lower boundM ′(k;g, d)
+on n(k;g, d)in Proposition 1 which implies that M(k,g)
+g ≤f(k, g). As a side result, we also prove a
+better lower bound M ′′(k;g, d)for d≤g where g is even, i.e., g= 2t≥4 for some t, in Proposition 2.
+The proofs of these lower bounds contain the underlying ideas for the generation algorithm described in
+Subsection 4.2. Second, we prove f(k, g)≤ n(k,g)
+g in Proposition 3. Third, we prove that neither of the
+two bounds onf(k, g)are sharp for all pairs(k, g)in Proposition 4.
+Recall the Moore boundM(k, g), defined by
+n(k, g)≥M(k, g) =
+(
+1 +k Pt−1
+i=0(k−1) i forg= 2t+ 1
+2 Pt−1
+i=0(k−1) i forg= 2t. (1)
+This bound is obtained by realising that for any vertex u in a (k, g)-graph, there cannot be an edge
+between two vertices v and w if the sum of the distance between u and v and between u and w is strictly
+smaller than g−1 . Hence, locally around every vertex u in a (k, g)-graph, the graph looks like a tree
+of order M(k, g)(and we call this tree a Moore tree). We will furthermore split M(k,2t+ 1) in the
+sum of the sizes of even and odd neighbourhoods towards the center of the Moore tree; M(k,2t+ 1) =
+M0(k,2t+ 1) +M 1(k,2t+ 1), where
+M0(k,2t+ 1) = 1 +k
+⌊ t−2
+2 ⌋X
+i=0
+(k−1) 2i+1 andM 1(k,2t+ 1) =k
+⌊ t−1
+2 ⌋X
+i=0
+(k−1) 2i.
+Note that it is usually only defined for k≥2 and g≥3 , but we allow the formula to be interpreted for
+anyg >0and further defineM(k, g) = 0for everyg≤0.
+In Proposition 1, we give a lower bound for n(k;g, d), which we denote by M ′(k;g, d)in analogy to
+this. For certain values, this lower bound will turn out to be exact (see Section 4). A direct corollary of this
+theorem is thatf(k, g)≥ M(k,g)
+g .
+Proposition 1Supposek≥3, g≥3, d≥t:=⌊g/2⌋, thenn(k;g, d)≥M ′(k;g, d), where
+M ′(k;g, d) =
+
+
+
+M(k, g) +M(k,2d−2t−1)fort≤d≤2t,
+(r+ 2)M(k, g) +M(k, s)for d= 2t+ 1 +rg+swith
+r≥0, s∈ {0, . . . , g−1}
+Proof:Let G be a (k;g, d)-graph of order n=n(k;g, d) and let u, vbe two vertices for which d(u, v) =
+d=diam(G).
+We define the neighbourhoods Ni :=N i(u) ={w∈V(G)|d(u, w) =i} . It holds that |V(G)|=Pd
+i=0 |Ni|. SinceGis a(k, g)-graph, we claim that
+tX
+i=0
+|Ni| ≥M(k, g).(2)
+
+--- PDF PAGE 4 ---
+4 S. Cambie et al.
+To see this, note that if g is odd, ∪0≤i≤tNi spans a (supergraph of a) k-ary tree of order M(k, g),as one
+can see by taking a rooted tree starting from u with height t, i.e., by considering a (k, g)-Moore tree rooted
+at the vertex u. If g is even, the claim follows by considering ∪1≤i≤t−1 (Ni(u)∪N i(z))⊆ ∪0≤i≤tNi(u)
+for a neighbourzofu, i.e., by considering a(k, g)-Moore tree rooted at the edgeuz.
+We now deal with the caset≤d≤2t . Similarly, by considering a rooted subtree inv of height d−t−1 ,
+one concludes that
+d−t−1X
+i=0
+|Nd−i| ≥M(k,2(d−t)−1).
+Hence, fort≤d≤2t, we obtain|V(G)| ≥M(k, g) +M(k,2(d−t)−1).
+Henceforth, we focus on the other case. Let G′ be a (k;g, d)-graph with d= 2t+ 1 +rg+s where
+r≥0, s∈ {0, . . . , g−1}. For every 1≤j≤g and for every 0≤q≤d−j , similarly as before, we
+conclude that Pj
+i=1 |Nq+i| ≥M(k, j), by considering rooted subtree(s) from a vertex w∈N q+⌈ j
+2 ⌉ if j is
+odd, or edgexy∈N q+ j
+2
+×N q+ j
+2 +1 ifjis even. Hence, the theorem follows since
+|V(G ′)|=
+tX
+i=0
+|Ni|+
+r−1X
+l=0
+gX
+i=1
+|Nt+lg+i|+
+sX
+i=1
+|Nt+rg+i|+
+tX
+i=0
+|Nd−i|
+≥M(k, g) +rM(k, g) +M(k, s) +M(k, g)
+= (r+ 2)M(k, g) +M(k, s).
+2
+When the girthgis even, andd≤g, the above bounds can be sharpened.
+Proposition 2Supposek≥3andd≤g= 2t≥4, thenn(k;g, d)≥M ′′(k;g, d), where
+M ′′(k;g, d) =M(k, g) + 2 max{M0(k,2d−2t−1), M 1(k,2d−2t−1)}.
+Furthermore, this bound can only be attained by bipartite graphs.
+Proof:Let u, vbe vertices satisfying d(u, v) =d.Since ∪t−1
+i=0Ni(u) and ∪t−1
+i=0Ni(v) span a tree, we can
+deduce that in each case (depending on d(mod 2) and t(mod 2) ) the following neighbourhoods form an
+independent set (and so does their union, since distances between vertices of different neighbourhoods are
+at least two)
+(N1(u)∪N 3(u)∪. . .∪Nt−1(u))∪(N 1(v)∪N 3(v)∪. . .∪Nd−t−1(v)),
+(N1(u)∪N 3(u)∪. . .∪Nt−1(u))∪(N 0(v)∪N 2(v)∪. . .∪Nd−t−1(v)),
+(N0(u)∪N 2(u)∪. . .∪Nt−1(u))∪(N 0(v)∪N 2(v)∪. . .∪Nd−t−1(v)),
+(N0(u)∪N 2(u)∪. . .∪Nt−1(u))∪(N 1(v)∪N 3(v)∪. . .∪Nd−t−1(v)).
+Since the graph needs to be k-regular, its order is at least two times the independence number (and
+equality implies the bipartiteness), which is at least the sum of sizes of the corresponding neighbourhoods
+listed above. Here M(k, g) = 2Mε(k,2t−1) for ε∈ {0,1}satisfying 2∤t+ε (ε≡t−1 (mod 2) ).
+This can be concluded from the fact that if M(k, g)would be attained, the extremal graph is bipartite and
+regular, but also from direct verification where one usesk= 1 + (k−1).2
+
+--- PDF PAGE 5 ---
+On the order-diameter ratio of girth-diameter cages5
+Corollary 1Supposek≥3, g≥3, d≥t:=⌊g/2⌋, thenn(k;g, d)≥M(k;g, d), where
+M(k;g, d) =
+(
+M ′′(k;g, d)ford≤g= 2t,
+M ′(k;g, d)otherwise.
+Note here that M ′′(k;g, d)≥M ′(k;g, d)for all t≤d≤g= 2t≥4 , since M(k,2d−2t−1) =
+M0(k,2d−2t−1) +M 1(k,2d−2t−1)≤2 max{M 0(k,2d−2t−1), M 1(k,2d−2t−1)}.
+We now discuss a construction leading to an infinite family of (k, g)-graphs for which the ratio between
+the order and the diameter tends to n(k,g)
+g as the diameter of the graph tends to infinity.
+Proposition 3For all integersk, g≥3, we havef(k, g)≤ n(k,g)
+g .
+Proof:LetMbe a(k, g)-cage of ordern(k, g).
+If k is even, let M ′ be the graph obtained by removing a vertex u (disjoint from at least one shortest
+cycle of M), adding two vertices v and w and adding edges between v and 2 of the initial neighbours of u
+and edges between w and the k−2 remaining initial neighbours of u. Let r≥1 be an integer and consider
+the graph M ′
+r obtained by taking r copies of M ′ (where vertices in copy i receive the subscript i) and
+identifying vi with wi−1 for each 2≤i≤r . Note that |V(M ′
+r)|=r|V(M)|+ 1 , that M ′
+r has girth g,
+that the distance between v1 and wr is at least gr and that every vertex in M ′
+r has degree k, except for v1
+(having degree 2) and wr (having degree k−2 ). Let G′ be the graph obtained by taking a (k, g+ 2)-cage,
+removing a vertex x, removing an edge yz where y was initially a neighbour of x and adding a matching
+of size k/2 between the vertices of degree k−1 . Note that G′ has girth at least g and all vertices have
+degree k, except for y (having degree k−2 ). We can complete M ′
+r to a (k, g)-graph G′′ by identifying y
+with v1 and adding another copy of M with one edge subdivided, and identifying this additional vertex (of
+degree 2) with wr. Now G′′ is k-regular, the diameter of G′′ is at least as large as the diameter of M ′
+r, G′′
+has girthgand forrtending to infinity, the ratio of its order and diameter tends to n(k,g)
+g .
+If k is odd, let M ′ be the graph obtained by removing an edge vw (disjoint from at least one shortest
+cycle) from M. Let r≥1 be an integer and consider the graph M ′
+r obtained by taking r copies of M ′
+and adding an edge between vi and wi−1 for each 2≤i≤r . Now |V(M ′
+r)|=r|V(M)| , M ′
+r has girth
+equal to g, the distance between v1 and wr is at least gr−1 and each vertex in M ′
+r has degree k, except
+for v1 and wr, which each have degree k−1 . Let G′ be the graph obtained by taking a (k, g+ 1)-cage,
+removing a vertex x and adding a matching of size k−1
+2 between k−1 of the initial neighbours of x (so
+G′ has girth at least g and all vertices, except for an initial neighbour y of x, have degree k). Let G′′ be
+the graph obtained by taking M ′
+r, taking two copies G′
+1 and G′
+2 of G′, adding an edge between y1 and v1
+and an edge between y2 and wr. Again, G′′ is a k-regular graph with girth g for which the ratio between
+its order and diameter tends to n(k,g)
+g as r tends to infinity. An illustration of this is presented in Fig. 1.
+Here the matching of order (3−1)/2 = 1 in G′ is the dashed line, and dotted lines are used for the edge
+connectingM ′
+r andG ′, as well as the edgesv iwi−1.2
+Next, it is natural to wonder whether for all integers k, g≥3 , we have f(k, g) = M(k,g)
+g or f(k, g) =
+n(k,g)
+g . We will show that this is not the case.
+Proposition 4 Neither of the two bounds M(k,g)
+g ≤f(k, g) and f(k, g)≤ n(k,g)
+g are sharp for all pairs
+(k, g).
+
+--- PDF PAGE 6 ---
+6 S. Cambie et al.
+y1 y2v1 w3
+Figure 1:Illustration of the construction in Proposition 3 for(k, g) = (3,4)andr= 3.
+Proof:Let G be a large enough (to be determined later) (3; 7, d)-cage, let u, v∈V(G) be such that
+d(u, v) =d=diam(G) and define Ni :={w∈V(G)|d(u, w) =i} . If f(3,7) = M(3,7)
+7 = 22
+7 , then
+there exists an integer c1 such that |Ni|+|N i+1|+. . .+|Ni+6|= 22 for all i∈ {0,1, . . . , d−6}except
+for at most c1 choices of i. Therefore, we may assume that there exists some i∈ {0,1, . . . , d−13}such
+that |Ni|+|N i+1|+. . .+|Ni+6|= 22 , |Ni+1|+|N i+2|+. . .+|Ni+7|= 22 , . . ., |Ni+7|+|N i+7+1|+
+. . .+|Ni+7+6|= 22 (by choosing G large enough in terms of c1). Since the sums are all equal to 22,
+we have for every j∈ {0, . . . ,6}that |Ni+j|=|N i+j+7|, i.e. the neighbourhood sizes are repetitive. By
+the pigeonhole principle, there exists some j∈ {0, . . . ,6}such that |Ni+j| ≤3. If |Ni+j|= 1 , then
+|Ni+j+7|= 1 . Let G′ be the graph induced by Ni+j ∪. . .∪Ni+j+7. By identifying u∈N i+j with
+v∈N i+j+7, we would obtain a (3,7) -graph of order 22, which is impossible since n(3,7) = 24>22 .
+If |Ni+j|= 2 or |Ni+j|= 3 , then we checked that this substructure is again impossible, by computer
+verification (more precisely, by exhaustively generating graphs) based on this condition and the 7 next
+neighbourhoods. Details of the computer verification can be found in Appendix A. So we conclude that
+f(3,7)> 22
+7 .
+For (k, g) = (4,7),there is a graph G with girth 7, order 76, with all vertices having degree 4 except
+for 2 which have degree 2 and are distance 8 apart (see Fig. 2, it is derived from the data set from [ 9]).
+This graph is made publicly available on the House of Graphs [ 5], as the graph with HoG-id 54041(ii).
+By letting M ′ =G in the proof of Proposition 3 and using the construction described therein, we obtain
+f(4,7)≤ 75
+8 < n(4,7)
+7 = 67
+7 .2
+Together, Propositions 1 to 4 yield Theorem 1.
+3 Proof of Theorem 2
+We now define the notion of arepeatable graph(this notion is based on a similar notion as discussed in [ 4],
+but slightly adjusted to fit the precise context of the current paper). We will define this notion in such a way
+that every repeatable graph (with respect tokandg) gives rise to an upper bound onf(k, g).
+Definition 1 Let G be a graph and let N0 ⊂V(G) be a subset of vertices. For all i≥1 , define
+Ni =N i(N0) :={v∈V(G)|min u∈N0 (d(u, v)) =i}. Let d be the largest integer for which Nd is non-
+empty. For integers k and g, we call a graph G induced by consecutive neighbourhoods N0, N1, . . . , Nd a
+repeatable graph (with respect tokandg) if
+(ii) It can be downloaded fromhttps://houseofgraphs.org/graphs/54041
+
+--- PDF PAGE 7 ---
+On the order-diameter ratio of girth-diameter cages7
+Figure 2:The example showing thatf(4,7)< n(4,7)
+7 = 67
+7 .
+1.Ghas girth at leastg,
+2. every vertex inN 1 ∪. . .∪Nd−1 has degreek,
+3. the sum of the degrees of vertices inN 0 is even wheneverkis even,
+4. the sum of the degrees of vertices inN d is even wheneverkis even,
+5.d+ 1≥2gand
+6. there exists an isomorphism between the graph induced by N0 ∪. . .∪Ng−1 and the graph induced
+by Nd−g+1 ∪. . .∪Nd such that for every ℓ∈ {0,1, . . . , g−1}the isomorphism maps every vertex
+inN ℓ to a vertex inN ℓ+d−g+1.
+The graph in Fig. 3 shows an example of a graph that is repeatable with respect tok= 3andg= 4.
+Figure 3:A graph that is repeatable with respect tok= 3andg= 4(where vertices inN 0 are shown larger).
+We now show that repeatable graphs indeed give rise to an upper bound on f(k, g). Here, we will make
+use of the following two near-trivial lemmas, that can be used to extend partial constructions to desired
+ones.
+Lemma 1 Given any sequence of natural numbers such that the sum is even, there is a (not necessarily
+connected) multigraph which has these numbers as its degree sequence.
+Proof:This is trivial, since once can draw iteratively edges between any two vertices which did not attain
+the desired degree yet (even if it is the vertex itself and so a loop is created).2
+
+--- PDF PAGE 8 ---
+8 S. Cambie et al.
+Lemma 2 For every k, g≥3 , any k-regular multigraph G can be modified into a (k, g)-graph G′, by
+replacing some of its edges with a fixed graph.
+Proof:LetHbe any(k, g)-graph (one can take a(k, g)-cage), andH − beHwith one edge removed.
+Every edge ab∈E(G) (or iteratively some of its edges which belong to cycles of length smaller than g)
+can be removed, after whichaandbare connected to the degreek−1vertices of a copy ofH −.
+By construction, the resulting graph is still k-regular, and has girth at least g, since H has this property
+(note that every cycle inG ′ using initial edges has the property by definition).
+By choosing H − such that it has a cycle of length exactly g (and executing one replacement if the girth
+ofGis larger thang), we can ensure thatGhas girth exactlyg.2
+Proposition 5 For integersk and g, let G be induced by consecutive neighbourhoods N0, N1, . . . , Nd be
+a repeatable graph with respect tokandg. Thenf(k, g)≤ |N0∪...∪Nd−g|
+d+1−g .
+Proof:Let G′ be the graph obtained by taking two disjoint copies G1 and G2 of G and identifying
+the vertices in neighbourhood Nℓ+d−g+1 of G2 with the vertices in neighbourhood Nℓ of G1 for every
+ℓ∈ {0,1, . . . , g−1}(according to the isomorphism that maps the vertices in these neighbourhoods to each
+other). Now notice that by this construction G′ is again repeatable with respect to k and g. By iteratively
+applying this construction, we obtain (repeatable) graphs for which the ratio between the order and the
+diameter goes to |N0∪...∪Nd−g|
+d+1−g . Moreover, we can complete any of these graphs to (k, g)-graphs by only
+introducingO k,g(1)extra vertices using the extension lemmas 1, 2.
+We illustrate this for the extension at N0. By Lemma 1 applied to the degree sequence {k−deg(v)|
+v∈N 0} (possibly with k appended to this sequence if k is odd to correct the parity), we can add edges
+between the vertices in N0 (and one optional additional vertex if necessary) such that it becomes k-regular.
+Next, we can apply Lemma 2 on the graph induced by the new edges to satisfy the girth condition. Finally,
+one can also apply this extension toN d to obtain a(k, g)-graph.2
+We now prove Theorem 2 based on the notion of repeatable graphs.
+Proof of Theorem 2:We will show that there exists a graph induced by consecutive neighbourhoods
+N0, N1, . . . , Nd that is repeatable with respect to k and g for which f(k, g) = |N0∪...∪Nd−g|
+d+1−g and that it
+suffices to only consider Ok,g(1) different graphs to find such a graph. Hence, f(k, g)can be computed in
+Ok,g(1)time.
+Consider a (k;g, d)-cage for d sufficiently large. Since f(k, g)≤ n(k,g)
+g , at least 1/2−o(1) of all
+tuples of g consecutive neighbourhoods have a sum of sizes bounded by 2n(k, g).In the latter case,
+there are Ok,g(1) possibilities for the graph induced by these g consecutive neighbourhoods. By the
+pigeonhole principle, this means that if we consider sufficiently many (but bounded number of) consecutive
+neighbourhoods, we can find some,Na, Na+1, . . . , Nb, such that the graph induced byNa∪Na+1∪. . .∪Nb
+must be a repeatable graph. So both the diameter of this graph as well as the neighbourhood sizes of this
+graph are all bounded by Ok,g(1), which means there are only Ok,g(1) such graphs in total. We will now
+argue that at least one of thoseO k,g(1)graphs achieves the equality.
+By choosing d arbitrarily large, we can obtain arbitrarily many repeatable subgraphs. We now claim that
+it is impossible that for all of these graphs the ratio |Na∪...∪Nb−g|
+b−a+1−g exceeds f(k, g)(clearly the ratio cannot
+be smaller thanf(k, g)because of Proposition 5).
+
+--- PDF PAGE 9 ---
+On the order-diameter ratio of girth-diameter cages9
+We now define the notion of removing a repeatable graph: if G[∪b
+i=aNi] is repeatable, removing
+it implies we replace G by the graph G′ which is formed by adding edges to the disjoint union of
+G[∪a+g−2
+i=0 Ni] and G[∪d
+i=bNi] between Na+g−2 and Nb such that G′[∪a+g−2
+i=a Ni ∪N b] ∼= G[∪b
+i=b−g+1Ni]
+and the isomorphism maps the vertices of consecutive neighbourhoods to each other. Note that this yields
+again a k-regular graph of girth at least g. Fig. 4 shows an example where the repeatable graph from Fig. 3
+is removed from a larger graphG.
+Figure 4:Removing a repeatable subgraph (k= 3,g= 4,a= 1,b= 8,d= 9).
+Removing iteratively a repeatable subgraph of minimum length, if all ratios |Na∪...∪Nb−g|
+b−a+1−g would exceed
+f(k, g), one deduces a contradiction as follows. (This is similar to [ 4, page 3], with the difference that
+not every neighbourhood needs to be bounded.) Due to the finite number of combinations, the ratio
+|Na∪...∪Nb−g|
+b−a+1−g is always at least a fixed constant c > f(k, g).One can repeat the removal process until the
+diameter of the resulting graph is smaller than some fixed valuex, depending on theO k,g(1)term.
+Initially, we start with a graph of order n=f(k, g)d+O k,g(1). After removing sufficiently many
+repeatable graphs, the diameter is d′ < x and the order is n′ < f(k, g)d−c(d−d ′) +O k,g(1)≤
+f(k, g)x−(c−f(k, g))(d−x) +O k,g(1). Since d could be chosen arbitrarily large at the start, for d
+sufficiently large we haven ′ <0, which is a contradiction.2
+4 Determiningn(k;g, d)for several open cases
+In this section, we first theoretically determine the values of n(k;g, d), and count the number of girth-
+diameter cages for (k, g) = (3,4)and (k, g) = (3,5)in Section 4.1. Then, in Section 4.2, we present an
+exhaustive generation algorithm for (k;g, d)-graphs and use it to computationally determine several more
+values ofn(k;g, d)and the corresponding(k;g, d)-cages.
+4.1 Theoretical determination ofn(3;g, d)forg∈ {4,5}
+In what follows, we determine n(k;g, d)when (k, g)∈ {(3,4),(3,5)}. Hence the Ok,g(1) term for
+these values is determined exactly. The fact that this is in general a hard task, can be concluded from
+the computational results in Appendix B, e.g. observe the values for (k, g) = (3,7) when 7|d ; for
+d∈ {7,14,21}, the lower bound M(k;g, d) is sharp, but for d∈ {28,35} it is not. The data seems to
+suggest that n(k;g, d) =n(k;g, d−7) + 24 for d≥23 and all further results may be analogous to the
+cases where(k, g)∈ {(3,4),(3,5)}.
+Proposition 6 Let d= 5 + 4k+j , where 0≤j≤3 and k≥0. A (3; 4, d)-cage G has at least k bridges
+and the order ofGisn= 14 + 2j+ 6k.
+Proof:Let u and v be vertices such that d(u, v) =d. Notice that |N1(u)|=|N 1(v)|= 3 and
+|N2(u)|,|N 2(v)| ≥3(if N1(u) has exactly 3 neighbours, G being regular would imply that G=K 3,3
+
+--- PDF PAGE 10 ---
+10 S. Cambie et al.
+and d= 2 ). If G has no bridges (equivalently, no cutvertices), then |Ni(u)| ≥2for every 3≤i≤d−3 ,
+which impliesn≥14 + 2j+ 8k.IfGhas bridges, we consider the components of such a graph with the
+bridges removed. Here we distinguish the two end blocks (i.e., first and last neighbourhood) containing
+one of the two vertices u and v, and the gadgets which contain two vertices of degree two. A gadget which
+has distance i−1 between the degree two vertices and thus contributing i to the diameter, has either order
+at least 8>2i for i∈ {2,3}, or order at least 2i−2 if i≥4 . An end block containing u, where u has
+eccentricity i, contains at least 2i+ 3 vertices. The number of gadgets for which the order is less than
+twice the contributed distance, is upper bounded by k. This results in n≥2d+ 4−2k, as desired. By
+inserting gadgets K −
+3,3 (K3,3 minus one edge) to (3; 4, d)-cages for small d, it is easy to see that the bound
+is tight. 2
+With a careful analysis of components, we can also characterise the (3; 4, d)-cages, and in particular
+count them.
+Proposition 7The number of(3; 4, d)-cages ford≥9equals
+
+
+
+1ford≡1 (mod 4)
+4ford≡2 (mod 4)
+17 +
+ d
+8
+
+ford≡3 (mod 4)
+27 +d+
+ d−4
+8
+
+ford≡0 (mod 4).
+Proof:Since we study the case d≥9 , by Proposition 6, we know that every (3; 4, d)-cage has at least one
+bridge. For the end blocks, we can consider the sizes (1,|N 1(u)|,|N 2(u)|, . . . ,|Ni(u)|) (and analogous
+for v). Since the end block needs to have 2i+ 3 vertices in total and have i≤6 , taking into account the
+other conditions, there are only a few possibilities for the tuples. The following pairs consist of 1) a string
+representing a concatenation of the neighbourhood sizes and 2) the number of possibilities for the end
+block:
+(133,1),(1341,3),(1332,1),(13421,5),
+(13331,2),(134221,3),(133231,2),(133321,2).
+The gadgets are unique based on the sizes
+(1,2,2,1),(1,2,2,2,2,1)or(1,2,2,2,2,2,1)
+of the neighbourhoodsN i(w), wherewis a degree two vertex.
+For d≡1 (mod 4), the only optimal combination is when two 133s are combined with 1221s, which
+gives a unique cage.
+Ford≡2 (mod 4), we can combine one1341or1332with a133and some1221s.
+For d≡3 (mod 4) , not mentioning the 1221s, one can have the combinations 133 + 122221 + 133,
+1341 + 1341, 1341 + 1332, 1332 + 1332, 13421 + 133 and 13331 + 133. This results in
+ d
+8
+
++ 6 + 3 +
+1 + 5 + 2 = 17 +
+ d
+8
+
+possible girth-diameter cages.
+For d≡0 (mod 4), the options are 133 + 1222221 + 133, 133 + 122221 + 1332, 133 + 122221 + 1341,
+1341+13421 , 1332+13421 , 1341+13331 , 1332+13331 , 134221+133 , 133231+133 and 133321+133 .
+This results in
+ d−4
+8
+
++ (3 + 1)d−4
+8 + (1 + 3)(5 + 2) + (3 + 2 + 2) = 27 +d+
+ d−4
+8
+
+possible girth-diameter
+cages. 2
+
+--- PDF PAGE 11 ---
+On the order-diameter ratio of girth-diameter cages11
+Figure 5:Example of end block and gadget which are decoded by133and1221.
+Proposition 8 For d≥5 , n(3; 5, d) = 2d+ 10if d≡0,1 (mod 5) and n(3; 5, d) = 2d+ 8if d≡2,3,4
+(mod 5). For2≤d≤4,n(3; 5, d) = 2d+ 6.
+Proof:The proof of Proposition 1 explained Pj
+i=1 |Nq+i| ≥M(k, j), which for j= 5 and k= 3
+implies here that 5 consecutive neighbourhoods cover at least M(3,5) = 10 vertices. We also note
+that |N0|+|N 1| ≥4, |N0|+|N 1|+|N 2| ≥10, |Nd|+|N d−1|+|N d−2| ≥10, and |Ni| ≥1,
+|Ni|+|N i+1|+|N i+2| ≥4for every 0≤i≤d−2 . Finally, we know that the order of a cubic graph is
+even. This implies the lower bound for all cases.
+For 2≤d≤4 , equality is attained by e.g. the Petersen graph, Twinplex graph and Banffrican graph
+(graphs with HoG-id660,27409,50487at the House of Graphs [5]).
+For d≥5, we can paste Petersen graphs with a little modification together, to match the observed
+bounds. An example is presented in Fig. 6 for d≡3 (mod 5) (by modifying the left or right to make it
+more symmetric, one also obtains d≡2,4 (mod 5) ), where it is easy to adjust the center with one less or
+adding multiple copies ofP −
+5,2 (Petersen graph minus one edge).
+For d≡0,1 (mod 5) , we can adjust the construction as presented (in Fig. 6) with the red curvy lines
+replacing5other edges.2
+Figure 6:(3,5,13)-graph of order34, easily modified to(3,5, d)-graph for10≤d≤14.
+By a careful analysis, one can also count the number of(3; 5, d)-cages.
+Proposition 9The number of(3; 5, d)-cages ford≥6equals
+
+
+
+d−
+ d
+10
+
+ford≡1 (mod 5)
+1ford≡2 (mod 5)
+4ford≡3 (mod 5)
+10ford≡4 (mod 5)
+128 + 11.3dford≡0 (mod 10)
+138.5 + 11.3dford≡5 (mod 10).
+
+--- PDF PAGE 12 ---
+12 S. Cambie et al.
+Proof:Except for some small values of d, by the proof of Proposition 8 and the observation that no 4
+consecutive neighbourhoods can have size 2, the extremal graphs have bridges. For the components of
+such a graph with the bridges removed, we can consider the ones (end blocks) with the vertices u, vfor
+whichd(u, v) =d, and the ones (gadgets) with two vertices of degree2.
+For an end block, we start with N0 equal to u or v and consider the next neighbourhoods. Then the
+sizes (|N0(v)|,|N 1(v)|,|N 2(v)|, . . . ,|Ni(v)|) (here i is the eccentricity of v in this end block) have the
+property that |N0(v)|= 1,|N 1(v)|= 3,|N 2(v)|= 6 and |Ni(v)|= 1 . If i≥5,|N j(v)|= 2 for every
+3≤j≤i−1 different from i−2 since |Ni−2(v)|= 4 is necessary. Also i≤8 , by the observation on
+consecutive neighbourhoods of size2.
+For a gadget with degree two vertices w and x, (|N0(w)|,|N 1(w)|,|N 2(w)|, . . . ,|Ni(w)|) (here i is
+the eccentricity of w in this gadget), we have |N0(w)|= 1,|N 1(w)|= 2,|N 2(w)|= 4 and |Ni(w)|=
+1,|N i−1(w)|= 2,|N i−2(w)|= 4. Herei≤8again andi= 5is impossible.
+The only sequences that do not have an additional loss compared to the bound 2d+ 8 are (1,3,6,1) ,
+(1,3,6,2,1),(1,2,4,2,1).
+The combination of these leads tod≡2,3,4 (mod 5).
+The components with sizes (1,3,6,1) and (1,2,4,2,1) are unique. For the end block with sizes
+(1,3,6,2,1) , there are 4 possibilities. This gives 1,1·4 = 4 and
+ 4
+2
+
++ 4 = 10 possibilities resp. for
+d≡2,3,4 (mod 5).
+A gadget with sizes (1,3,6,2,2,2,4,1) can only be extended to potential extremal graphs with d≡2,3
+(mod 5), which is not extremal.
+For the other sizes, we list the number of possible components.
+Claim 1 There is only one possible component with sizes (1,3,6,2,4,2,1) , (1,2,4,2,2,4,2,1) or
+(1,2,4,2,2,2,4,2,1) . For sizes (1,2,4,4,2,1) and (1,3,6,2,2,4,2,1) there are 6 for each tuple. For
+sizes(1,3,6,4,2,1)there are60options.
+Not mentioning the filling with the unique optimal gadget (1,2,4,2,1) , we have the following options.
+For d≡0 (mod 5) with d≥10 , there are 4×60 possibilities that combine (1,3,6,4,2,1) and
+(1,3,6,2,1) . There is one option using (1,3,6,2,4,2,1) and (1,3,6,1). There are
+ d−5
+10
+
+extremal graphs
+having components (1,2,4,2,2,4,2,1) and two (1,3,6,1)s. There are 112 using two (1,3,6,2,1) s and
+a (1,2,4,2,2,4,2,1) at fixed non-central location (
+ d−5
+10
+
+choices), and 66 options if the latter is central
+(which only can happen ifd≡5 (mod 10).
+Ford≡1 (mod 5), we have again4compositions.
+There are four using(1,3,6,2,4,2,1) and (1,3,6,2,1), and six using(1,3,6,2,2,4,2,1) and (1,3,6,1) .
+There are four per location of the (1,2,4,2,2,4,2,1) gadget between end blocks (1,3,6,1) and
+(1,3,6,2,1). This implies an additional four per increase of d with 5. There is one per location of
+(1,2,4,2,2,2,4,2,1) gadget between two (1,3,6,1)s. By symmetry, the increase happens when d in-
+creases by10. 2
+4.2 Further values ofn(k;g, d)with exhaustive generation
+Using the exhaustive generation algorithm for (k;g, d)-graphs which we will describe in this section, we
+could determine the value of n(k;g, d)for 177 different triples (k, g, d)of which 107 triples are “new”
+(in the sense that they have not yet been determined in Section 4.1 of this paper or in the literature).
+We considered triples with k, g, din the following sets: k∈ {3, . . . ,7}, g∈ {4, . . . ,8,10}and d∈
+
+--- PDF PAGE 13 ---
+On the order-diameter ratio of girth-diameter cages13
+{2, . . . ,40}. For all 177 triples we determine at least one (k;g, d)-cage and we determine the exhaustive
+set for 123 triples. The (k;g, d)-cages we obtained with the algorithm can be downloaded from [ 18]
+and a selection of these cages can be found on the House of Graphs [ 5] by searching for the keyword
+“girth-diameter cages”.
+In the rest of this subsection we will describe our generation algorithm and explain the sanity checks
+that we performed to verify the correctness of our implementation.
+Our algorithm, whose pseudocode can be found in Algorithm 1 and 2, generates all (k;g, d)-graphs of
+order n. It is based on the generation algorithm for (k, g)-graphs by McKay, Myrvold and Nadon [12]
+complemented with an extra pruning rule by the same authors and Exoo [ 8]. Their algorithm receives
+as input k, gand the order n. It starts from a (k, g)-Moore tree, adds n−M(k, g) isolated vertices, and
+recursively adds edges one by one. To limit the search space, several pruning rules are applied. Additionally,
+a heuristic is applied to choose the next edge to add. In particular, the algorithm first adds the edge incident
+to the vertex x that has the fewest available incident edges that can be added without violating the degree
+or girth constraint. As mentioned in [12], this heuristic was one of the factors for the significant speedup
+compared to the previous best algorithm for(k, g)-graphs described in [3].
+Our algorithm extends theirs with new optimisations to incorporate the diameter constraint. Contrary to
+their algorithm, we start from the tree T of order M ′(k;g, d)corresponding to Proposition 1. However,
+when g= 2t and d= 2t−1 , we start from the tree of girthg−1 (instead of g) since this tree contains more
+vertices, i.e., M ′(k; 2t−1,2t−1)> M ′(k; 2t,2t−1) , and is still a subgraph of any (k; 2t,2t−1) -graph.
+After the construction of the tree, we proceed in a similar way: add isolated vertices until there are n
+vertices and recursively add edges with an analogous heuristic that also incorporates the diameter. In
+addition to the pruning rules of [8, 12], we also prune the search space by disallowing an edge that would
+decrease the distance between the two vertices u, vat distance d in T . All of this is described in more
+detailed pseudocode in Algorithm 1 and 2.
+Algorithm 1:genGirthDiamGraphs(n, k, g, d)
+1ifn < M(k;g, d)ord <⌊g/2⌋then
+// If the ordernis smaller thanM(k;g, d)or ifd <⌊g/2⌋, there are
+definitely no graphs.
+2return
+// Make tree corresponding to Proposition 1.
+3T←makeTree(n, k, g, d)
+// Addn−M(k;g, d)isolated vertices toT.
+4G start ←addIsoVertices(T, n−M(k;g, d))
+// Determine which edges can be added without exceeding the degreekand
+without violating the girthgand diameterd
+5E add ←calcValidAddableEdges(G start, k, g, d)
+// Heuristic: edges will be added incident with the vertexxthat has
+the fewest options inE add
+6x←arg min w∈V(G),deg(w)<r (|{e:e∈E add andw∈e}|)
+7recursivelyAddEdges(G start, Eadd, k, g, d, x)// See Algorithm 2
+The graph isomorphism detection is done with nauty [13] by computing and comparing the canonical
+
+--- PDF PAGE 14 ---
+14 S. Cambie et al.
+form of two graphs. Here it is important to notice that u and v are two distinguished vertices in our
+algorithm (i.e., the pruning rules related to the diameter treat u and v different from other vertices in the
+graph). Therefore, one has to only consider isomorphisms between two graphs that map these distinguished
+vertices to each other. To achieve this, we compute the canonical form of the graph G′ that is obtained
+by adding two vertices u′, v′ and two edges uu′, vv′ to the original graph G. This leads u and v to be
+of degree k+ 1 . Since no other vertex can be of degree k+ 1 , u and v will never be mapped to other
+vertices. The source code of our implementation of this algorithm can be found in the GitHub repository
+https://github.com/AGT-Kulak/girthDiamGen[18].
+Algorithm 2:recursivelyAddEdges(G, Eadd, k, g, d, x)
+//x: current vertex to add edges to
+1ifmethod was called with graph that is isomorphic withG(where the isomorphism maps the two
+distinguished vertices whose distance isdto each other)then
+2return
+3if∀v∈V(G) :deg(v) =kthen//Gis ak-regular graph.
+4ifg(G) =ganddiam(G) =dthen
+5outputG
+6return
+// Choose newx, if the current vertexxhas been completed to degreek.
+7ifdeg(x) =kthen
+8x←arg min w∈V(G),deg(w)<k (|{e:e∈E add andw∈e}|)
+// Apply pruning rule from [8] on allE add.
+9E add ←pruneValidEdgesExoo(G, Eadd)
+10if¬enoughValidEdgesLeft(G, E add)then
+11return
+// Try adding each valid edge incident tox.
+12foreachw∈ {w:xw∈E add}do
+// CopyE add inprevE add to restore it after removingxwagain.
+13prevE add ←E add
+14E(G)←E(G)∪ {xw}
+// Remove edges fromE add resulting from adding edgexw.
+15E add ←updateValidAddableEdges(G, Eadd, k, g, d)
+// Check if we can prunexw.
+16ifnone of the pruning rules can be appliedthen
+17recursivelyAddEdges(G, E add, k, g, d, x)
+18E(G)←E(G)\ {xw}
+// RestoreE add and removexwfrom it.
+19E add ←prevE add \ {xw}
+20if¬enoughValidEdgesLeft(G, E add)then
+21return
+We ran the algorithm for various small values of n, k, g, d, leading to the determination of n(k;g, d)and
+the corresponding cages. Table 1 and Tables 2 to 6 in Appendix B show the results we obtained using
+
+--- PDF PAGE 15 ---
+On the order-diameter ratio of girth-diameter cages15
+our algorithm, i.e. the values of n(k;g, d), the lower bound M(k;g, d), (a lower bound on) the number of
+pairwise non-isomorphic (k;g, d)-cages and whether all generated (k;g, d)-cages are bipartite. In case
+M(k;g, d) =n(k;g, d), both values are marked in bold. The generated (k;g, d)-cages can also be found
+ingraph6format on the GitHub repository [18].
+k g d M(k;g, d)n(k;g, d) Number of cages All bipartite
+3 6 3 14 14 1 Yes
+3 6 4 16 16 1 Yes
+3 6 5 20 20 6 Yes
+3 6 6 28 28 3016 Yes
+3 6 7 28 30 8 No
+3 6 8 29 32 7 No
+3 6 9 30 34 9 No
+3 6 10 32 36 6 No
+3 6 11 34 38 6 No
+3 6 12 38 44 13953 No
+3 6 13 42 44 1 No
+3 6 14 43 46 2 No
+3 6 15 44 48 6 No
+3 6 16 46 50 6 No
+3 6 17 48 52 6 No
+3 6 18 52 58 13987 No
+3 6 19 56 58 1 No
+3 6 20 57 60 2 No
+Table 1:Values of M(k;g, d), n(k;g, d), number of (k;g, d)-cages and bipartiteness for (3; 6, d)with d∈
+{3, . . . ,20}. In caseM(k;g, d) =n(k;g, d), both values are marked in bold.
+Lastly, we explain which extra steps we took to ensure the correctness of the implementation of our
+exhaustive generation algorithm. We used the generator GENREG [14] to generate (k, g)-graphs of order
+n (for small values of n, k, g) and split the graphs based on the diameter d, to obtain all (k;g, d)-graphs.
+More specifically, we checked for k= 3 and g∈ {3, . . . ,8}and for k∈ {4,5} and g∈ {3,4,5} for
+orders n(k, g), n(k, g) + 1, . . . , n(k, g) +C, where C was chosen such that GENREG was able to finish
+the computation within 100 CPU hours for the given k, gand n. For each n, k, g, d, we obtained exactly
+the same set of(k;g, d)-graphs with our generator asGENREG.
+Besides that, we checked that we obtained all (k, g)-cages (for small k, g) with our generator by running
+it for the corresponding diameter of these (k, g)-cages. Moreover, Araujo-Pardo et al. found (k; 5,4)-cages
+for k∈ {3,4,5,6} [1]. For each k, we obtained the same number of (k; 5,4)-cages with our algorithm
+as Araujo-Pardo et al. Finally, we also verified that the results of our generator agree with the theoretical
+results for (3;g, d)with g∈ {4,5}in Section 4.1 (both for the order and number of girth-diameter cages).
+
+--- PDF PAGE 16 ---
+16 S. Cambie et al.
+5 Further observations on(k;g, d)-cages
+5.1 Remark on(k; 3,3)
+Knor [10] considered the question of finding the minimum order of a k-regular graph of diameter d, which
+we will denote by n(k;d) . He determined n(k;d) for all k≥2 and d≥1 . He also describes k-regular
+graphs with diameter d of order n(k;d) . For k≥3 the described families have girth 3, besides for d= 3 ,
+where the family has girth 4. Hence, we know n(k; 3, d)for all d̸= 3 . In Proposition 10 we “complete”
+the determination ofn(k; 3, d)by proving the order ford= 3.
+Proposition 10For allk≥3, it holds that
+n(k; 3,3) = 2(k+ 1)
+Proof:Since the two vertices at distance3have disjoint closed neighbourhoods,n(k; 3,3)≥2(k+ 1).
+Let Kk+1,k+1 be a complete bipartite graph with bipartition classes U={u 0, u1, . . . , uk} and V=
+{v0, v1, . . . , vk}. Let M={u ivi : 0≤i≤k} be a perfect matching. Let G=K k+1,k+1 \M\
+{u1v2, u2v1} ∪ {u1u2, v1v2}. Now diam(G) =d(u 3, v3) = 3, while the girth is exactly three (u1u2v3 is
+a triangle) andGisk-regular. HenceGcertifies the equalityn(k; 3,3) = 2(k+ 1).2
+5.2 Behaviour of(k;g, d)-cages
+Despite the existence of non-bipartite (k;g, d)-cages with even g, we can observe in Table 1 and Tables 2
+to 6 (in the Appendix) that all generated even girth (k;g, d)-cages with d≤g are bipartite. In other words,
+we only found non-bipartite (k;g, d)-cages for d > g. Often this is the case exactly when G has a cutvertex
+(a regular bipartite graph cannot have a cutvertex), as is the case for the (3; 6,12)-cages, but e.g. the graph
+depicted in Fig. 7 (also added as https://houseofgraphs.org/graphs/54022 on the House
+of Graphs [5]) is a2-connected non-bipartite(4; 4,5)-cage.
+Figure 7:A2-connected non-bipartite(4; 4,5)-cage.
+Moreover, (k;g, d)-cages with d > gcan never be (k, g)-cages since Sauer proved that every(k, g)-cage
+G satisfies diam(G)≤g [17]. Hence, if it holds that every (k;g, d)-cage with g even and d≤g is
+bipartite, then this proves the longstanding conjecture that every even girth (k, g)-cage is bipartite [7, 19].
+Therefore, the following question can be of interest.
+Question 1For evengandd≤g, is every(k;g, d)-cage bipartite?
+Notice that Proposition 2 is sharp for the smallest case, g= 4 , by observing the extremal graphs Kk,k,
+Kk+1,k+1\M (a perfect matching M removed), and the graph formed from two copies of K −
+k,k (Kk,k
+minus one edge) connected with edges between the degree (k−1) -vertices. Equality in the latter case can
+
+--- PDF PAGE 17 ---
+On the order-diameter ratio of girth-diameter cages17
+only be attained by a k-regular (connected) bipartite graph of order 4k for which there are two vertices u, v
+in the same bipartition class withN(u)∩N(v) =∅.
+Also for g= 6,8 and 12 one can conclude that the answer for Question 1 is positive for d∈ {g/2, g}
+whenever a(k, g)-Moore graph exists.
+Further investigating n(k;g, d)-graphs for
+ g
+2
+
+< d≤g may lead to improvements on the gap between
+the Moore bound and the known upper bound on the order of cages. In particular, a sharp bound on
+n(k;g, g−1) might possibly be obtained by finding a good construction of a set of perfect matchings. The
+latter would already be interesting to think about forg= 10.
+Acknowledgements
+Several of the computational resources used in this work were provided by the VSC (Flemish Supercomputer
+Center), funded by the Research Foundation - Flanders (FWO) and the Flemish Government.
+References
+[1] G. Araujo-Pardo, M. Conder, N. Garc´ıa-Col´ın, G. Kiss, and D. Leemans. A note on girth-diameter
+cages.The Art of Discrete and Applied Mathematics, 8(3):Paper No. 3.06, 7, 2025.
+[2] G. Brinkmann. Fast generation of cubic graphs.Journal of Graph Theory, 23(2):139–149, 1996.
+[3] G. Brinkmann, B. D. McKay, and C. Saager. The smallest cubic graphs of girth nine.Combinatorics,
+Probability and Computing, 4:317 – 329, 1995.
+[4] S. Cambie and J. Jooken. Sharp results for the Erd˝os, Pach, Pollack and Tuza problem.arXiv preprint
+arXiv:2502.08626, 2025.
+[5] K. Coolsaet, S. D’hondt, and J. Goedgebeur. House of Graphs 2.0: A database of interest-
+ing graphs and more.Discrete Applied Mathematics, 325:97–107, 2023. See also: https:
+//houseofgraphs.org/.
+[6] P. Erd˝os, J. Pach, R. Pollack, and Z. Tuza. Radius, diameter, and minimum degree.Journal of
+Combinatorial Theory, Series B, 47(1):73–79, 1989.
+[7] G. Exoo and R. Jajcay. Dynamic cage survey.Electronic Journal of Combinatorics, DS16:48, 2013.
+[8] G. Exoo, B. D. McKay, W. Myrvold, and J. Nadon. Computational determination of (3,11) and (4,7)
+cages.Journal of Discrete Algorithms, 9(2):166–169, 2011.
+[9] L. C. Eze, R. Jajcay, T. Jajcayov´a, and D. Z´avack´a. Theoretical and computational approaches to
+determining sets of orders for(k, g)-graphs.Discrete Applied Mathematics, 380:572–587, 2026.
+[10] M. Knor. Smallest regular graphs of given degree and diameter.Discussiones Mathematicae Graph
+Theory, 34(1):187–191, 2014.
+[11] F. Lazebnik, V . A. Ustimenko, and A. J. Woldar. New upper bounds on the order of cages.Electronic
+Journal of Combinatorics, 4(2):R13, 1997.
+
+--- PDF PAGE 18 ---
+18 S. Cambie et al.
+[12] B. D. McKay, W. Myrvold, and J. Nadon. Fast backtracking principles applied to find new cages. In
+9th Annual ACM-SIAM Symposium on Discrete Algorithms, pages 188–191, 1998.
+[13] B. D. McKay and A. Piperno. Practical graph isomorphism, II.Journal of Symbolic Computation,
+60:94–112, 2014.
+[14] M. Meringer. Fast generation of regular graphs and construction of cages.Journal of Graph Theory,
+30(2):137–146, 1999.
+[15] M. Miller and J. ˇSir´aˇn. Moore graphs and beyond: A survey of the degree/diameter problem.
+Electronic Journal of Combinatorics, DS14, 2013.
+[16] H. Sachs. Regular graphs with given girth and restricted circuits.Journal of the London Mathematical
+Society, s1-38(1):423–429, 1963.
+[17] N. Sauer.Extremaleigenschaften regul ¨arer Graphen gegebener Taillenweite I & II.Sitzungsberichte
+¨Osterreich. Acad. Wiss. Math. Natur. Kl., 1967. S-B II, 176:9–25, 27-43.
+[18] T. Van den Eede. Source code of the program girthDiamGen. https://github.com/
+AGT-Kulak/girthDiamGen, 2025. GitHub repository.
+[19] P.-K. Wong. Cages—a survey.Journal of Graph Theory, 6(1):1–22, 1982.
+
+--- PDF PAGE 19 ---
+On the order-diameter ratio of girth-diameter cages19
+A Details on computer verification used in Proposition 4
+In this section we present some details of the computer verification we used in the proof of Proposition 4.
+Let G′ be the graph induced by Ni+j ∪. . .∪Ni+j+7 (as presented in the proof). We were left to prove
+that there exists no G′ such that |Ni+j|+. . .+|Ni+j+6|= 22 and |Ni+j|=|N i+j+7|=α∈ {2,3} .
+We obtained this result by making use of multigraph, an unpublished generator written by Gunnar
+Brinkmann, which is a generalisation of the generator for cubic graphs described in [ 2]. The program
+multigraph generates all connected graphs of given minimum girth and given degree sequence (i.e., the
+amount of vertices of each degree). We want to generate graphs with 22 +α vertices. All vertices have
+degree 3, except for the ones in |Ni+j| and |Ni+j+7|. The ones in Ni+j have degree 0,1 or 2, and at least
+one in Ni+j needs to have degree at least 1. The ones in Ni+j+7 have degree at most 3, and at least one in
+Ni+j+7 has degree strictly less than 3. We determined each degree sequence that satisfies the mentioned
+conditions (and such that the number of odd degree vertices is even) and were able to generate these graphs
+using multigraph. We then applied a simple filter program to the generated graphs that checks that each
+vertex of degree less than 3 has at least one vertex at distance at least 7 (which is a necessary condition).
+Since none of the generated graphs passed this filter, we can conclude that no suchG ′ exists.
+B Determined values ofn(k;g, d)with exhaustive generation
+k g d M(k;g, d)n(k;g, d) Number of cages All bipartite
+3 4 2 6 6 1 Yes
+3 4 3 8 8 1 Yes
+3 4 4 12 12 4 Yes
+3 4 5 12 14 4 No
+3 4 6 13 16 7 No
+3 4 7 14 18 20 No
+3 4 8 16 20 38 No
+3 4 9 18 20 1 No
+3 4 10 19 22 4 No
+3 4 11 20 24 18 No
+3 4 12 22 26 40 No
+3 4 13 24 26 1 No
+Table 2:Values of M(k;g, d), n(k;g, d), number of (k;g, d)-cages and bipartiteness for (3; 4, d)with d∈
+{2, . . . ,13}. In caseM(k;g, d) =n(k;g, d), both values are marked in bold.
+
+--- PDF PAGE 20 ---
+20 S. Cambie et al.
+k g d M(k;g, d)n(k;g, d) Number of cages All bipartite
+3 5 2 10 10 1
+3 5 3 11 12 2
+3 5 4 14 14 2
+3 5 5 20 20 470
+3 5 6 21 22 6
+3 5 7 22 22 1
+3 5 8 24 24 4
+3 5 9 26 26 10
+3 5 10 30 30 241
+3 5 11 31 32 10
+3 5 12 32 32 1
+3 5 13 34 34 4
+3 5 14 36 36 10
+3 5 15 40 40 308
+3 5 16 41 42 15
+3 5 17 42 42 1
+3 5 18 44 44 4
+3 5 19 46 46 10
+3 5 20 50 50 354
+3 5 21 51 52 19
+3 5 22 52 52 1
+3 5 23 54 54 4
+3 5 24 56 56 10
+3 5 25 60 60 421
+3 5 26 61 62 24
+3 5 27 62 62 1
+3 5 28 64 64 4
+3 5 29 66 66 10
+3 5 30 70 70 467
+3 5 31 71 72 28
+3 5 32 72 72 1
+3 5 33 74 74 4
+3 5 34 76 76 10
+3 5 35 80 80 534
+3 5 36 81 82 33
+3 5 37 82 82 1
+3 5 38 84 84 4
+3 5 39 86 86 10
+3 5 40 90 90 580
+3 6 3 14 14 1 Yes
+3 6 4 16 16 1 Yes
+3 6 5 20 20 6 Yes
+3 6 6 28 28 3016 Yes
+3 6 7 28 30 8 No
+3 6 8 29 32 7 No
+Table 3:Values of M(k;g, d), n(k;g, d), number of (k;g, d)-cages and bipartiteness for (3; 5, d)with d∈
+{2, . . . ,40}and(3; 6, d)withd∈ {3, . . . ,8}. In caseM(k;g, d) =n(k;g, d), both values are marked in bold.
+
+--- PDF PAGE 21 ---
+On the order-diameter ratio of girth-diameter cages21
+k g d M(k;g, d)n(k;g, d) Number of cages All bipartite
+3 6 9 30 34 9 No
+3 6 10 32 36 6 No
+3 6 11 34 38 6 No
+3 6 12 38 44 13953 No
+3 6 13 42 44 1 No
+3 6 14 43 46 2 No
+3 6 15 44 48 6 No
+3 6 16 46 50 6 No
+3 6 17 48 52 6 No
+3 6 18 52 58 13987 No
+3 6 19 56 58 1 No
+3 6 20 57 60 2 No
+3 7 4 23 24 1
+3 7 5 26 26 1
+3 7 6 32 32 19
+3 7 7 44 44 ≥1
+3 7 8 45 48 ≥1
+3 7 9 46 48 ≥1
+3 7 10 48 50 ≥1
+3 7 11 50 50 ≥1
+3 7 12 54 54 ≥1
+3 7 13 58 58 ≥1
+3 7 14 66 66 ≥1
+3 7 15 67 72 ≥1
+3 7 16 68 72 ≥1
+3 7 17 70 74 ≥1
+3 7 18 72 74 ≥1
+3 7 19 76 78 ≥1
+3 7 20 80 82 ≥1
+3 7 21 88 88 ≥1
+3 7 22 89 94 ≥1
+3 7 23 90 96 ≥1
+3 7 24 92 98 ≥1
+3 7 25 94 98 ≥1
+3 7 26 98 102 ≥1
+3 7 27 102 106 ≥1
+3 7 28 110 112 ≥1
+3 7 29 111 118 ≥1
+3 7 30 112 120 ≥1
+3 7 31 114 122 ≥1
+3 7 32 116 122 ≥1
+3 7 33 120 126 ≥1
+3 7 34 124 130 ≥1
+3 7 35 132 136 ≥1
+3 8 4 30 30 1 Yes
+Table 4:Values of M(k;g, d), n(k;g, d), number of (k;g, d)-cages and bipartiteness for (3; 6, d)with d∈
+{9, . . . ,20}, (3; 7, d)with d∈ {4, . . . ,35}and (3; 8, d)with d= 4 . In case M(k;g, d) =n(k;g, d) , both
+values are marked in bold.
+
+--- PDF PAGE 22 ---
+22 S. Cambie et al.
+k g d M(k;g, d)n(k;g, d) Number of cages All bipartite
+3 8 5 32 34 1 Yes
+3 8 6 36 36 2 Yes
+3 8 7 44 44 802 Yes
+3 8 8 60 60 ≥7170730 All found graphs are bipartite
+3 8 9 60 62 4 No
+3 8 10 61 64 1 Yes
+3 10 6 64 70 3 Yes
+3 10 7 68 72 1 Yes
+3 10 8 76 80 5 Yes
+3 10 9 92 92 ≥19495 All found graphs are bipartite
+4 4 2 8 8 1 Yes
+4 4 3 10 10 1 Yes
+4 4 4 16 16 102 Yes
+4 4 5 16 18 10 No
+4 4 6 17 20 10 No
+4 4 7 18 22 7 No
+4 4 8 21 24 6 Yes
+4 4 9 24 26 6 Yes
+4 4 10 25 28 6 Yes
+4 4 11 26 30 6 Yes
+4 5 3 18 19 1
+4 5 4 22 22 4
+4 5 5 34 34 ≥1
+4 5 6 35 37 ≥1
+4 5 7 36 38 ≥1
+4 5 8 39 39 ≥1
+4 5 9 42 45 ≥1
+4 5 10 51 51 ≥1
+4 5 11 52 55 ≥1
+4 5 12 53 57 ≥1
+4 5 13 56 58 ≥1
+4 5 14 59 62 ≥1
+4 5 15 68 68 ≥1
+4 5 16 69 73 ≥1
+4 5 17 70 76 ≥1
+4 5 18 73 77 ≥1
+4 5 19 76 81 ≥1
+4 5 20 85 85 ≥1
+4 5 21 86 91 ≥1
+4 5 22 87 95 ≥1
+4 5 23 90 96 ≥1
+4 6 3 26 26 1 Yes
+4 6 4 28 28 1 Yes
+4 6 5 34 34 146 Yes
+4 6 6 52 52 ≥396779 All found graphs are bipartite
+Table 5:Values of M(k;g, d), n(k;g, d), number of (k;g, d)-cages and bipartiteness for (3; 8, d)with d∈
+{5, . . . ,10}, (3; 10, d)with d∈ {6, . . . ,9}, (4; 4, d)with d∈ {2, . . . ,11}, (4; 5, d)with d∈ {3, . . . ,23}and
+(4; 6, d)withd∈ {3, . . . ,6}. In caseM(k;g, d) =n(k;g, d), both values are marked in bold.
+
+--- PDF PAGE 23 ---
+On the order-diameter ratio of girth-diameter cages23
+k g d M(k;g, d)n(k;g, d) Number of cages All bipartite
+4 6 7 52 54 14 Yes
+4 6 8 53 56 4 Yes
+4 6 9 54 60 272 Yes
+4 8 4 80 80 1 Yes
+5 4 2 10 10 1 Yes
+5 4 3 12 12 1 Yes
+5 4 4 20 20 176581 Yes
+5 4 5 20 22 19 Yes
+5 4 6 21 24 9 Yes
+5 4 7 22 28 537 No
+5 4 8 26 32 25408 No
+5 5 3 27 30 4
+5 5 4 32 32 7
+5 6 3 42 42 1 Yes
+5 6 4 44 46 1 Yes
+5 6 5 52 52 ≥440 All found graphs are bipartite
+6 4 2 12 12 1 Yes
+6 4 3 14 14 1 Yes
+6 4 4 24 24 ≥20343552 All found graphs are bipartite
+6 4 5 24 26 49 Yes
+6 4 6 25 28 19 Yes
+6 4 7 26 32 1184 Yes
+6 5 3 38 40 1
+6 5 4 44 44 2
+6 6 3 62 62 1 Yes
+7 4 2 14 14 1 Yes
+7 4 3 16 16 1 Yes
+7 4 4 28 28 ≥2987496 All found graphs are bipartite
+7 4 5 28 30 113 Yes
+7 5 2 50 50 1
+Table 6:Values of M(k;g, d), n(k;g, d), number of (k;g, d)-cages and bipartiteness for (4; 6, d)with d∈ {7,8,9},
+(4; 8, d)with d= 4 , (5; 4, d)with d∈ {2, . . . ,8}, (5; 5, d)with d∈ {3,4}, (5; 6, d)with d∈ {3,4,5}, (6; 4, d)
+with d∈ {2, . . . ,7}, (6; 5, d)with d∈ {3,4}, (6; 6, d)with d= 3, (7; 4, d)with d∈ {2, . . . ,5}and (7; 5, d)with
+d= 2. In caseM(k;g, d) =n(k;g, d), both values are marked in bold.

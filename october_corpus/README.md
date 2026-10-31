@@ -139,8 +139,9 @@ Three [reviewed proof notes](research/diameter_eight/README.rst) develop the
 remaining graph census through degree counts and incidence matrices. They
 prove restrictions for one middle vertex and give complete conditional
 descriptions for two or three isolated middle vertices. The subsequent
-intrinsic-centre argument and enumerations complete the nonbipartite census;
-their full portable package remains to be installed and replayed.
+intrinsic-centre argument and enumerations complete the nonbipartite census.
+The portable component packages and their complete scalar composition have
+now been installed, replayed and independently audited.
 
 The [portable bipartite enumeration](reproduction/bipartite_diameter_eight/README.rst)
 now recovers all **16,467 ordinary classes** in the bipartite branch. Fourteen
@@ -159,9 +160,19 @@ agree byte for byte. This is one subcase of the census. The remaining
 centre strata have accepted local proofs and complete enumerations, including
 the enlarged half count **H = 1,395** and counts **h₃ = 36**, **h₄ = 115**.
 Their disjoint strata give `6H + 5h₃ + 3h₄ + 46 = 8,941` nonbipartite classes.
-The 1,209 strict halves are a subset of H and earn no second count. The full
-reproduction package is being assembled. F009's separate order-80 census
-remains unfinished.
+The 1,209 strict halves are a subset of H and earn no second count.
+The [complete two-centre package](reproduction/two_centre/README.rst) passed
+32 controls and full initial and installed enumerations. The
+[ordinary centre halves](reproduction/centre_halves/README.rst) passed
+57 controls in each location, all fourteen domains and four complete unions,
+recovering **2, 5, 36 and 115** ordinary classes. All complete streams match
+the earlier accepted outputs byte for byte, and independent audits passed.
+The [complete composition](reproduction/order32_census/README.rst)
+authenticates all six streams and the common written proofs before recovering
+**25,408 = 16,467 + 8,941** classes. All 43 controls and the installed run
+passed; the independent audit also reconstructed its exact input and read
+accounting. This reproduces a known result with the same mathematical kernels.
+F009's separate order-80 census remains unfinished.
 
 The [reviewed graph proof notes](research/regular_girth_four/README.rst) give
 common minimum-order arguments for all degrees at least three and diameters

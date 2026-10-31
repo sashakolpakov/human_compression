@@ -103,6 +103,39 @@ installed runs each passed 23 controls and recovered 1,209 ordinary half
 graphs, giving 7,254 graphs in this stratum. This package uses relative
 functional inputs and does not read the reference census as a target.
 
+## The complete two-centre family
+
+The [two-centre package](reproduction/two_centre/README.rst) enumerates all
+ordinary sixteen-vertex halves for this intrinsic centre stratum. It includes
+the singleton case and permits the zero endpoint columns required by the
+other presentations. All 32 controls and the complete producer passed both
+initially and in the installed directory: **1,395 halves**, giving **8,370
+graphs** by the reviewed factor-six product. The strict 1,209-class stream is
+a subset and is not added again. The complete streams agree byte for byte.
+
+## Ordinary centre halves
+
+The [centre-half package](reproduction/centre_halves/README.rst) gives sequential
+commands for 57 controls, fourteen complete raw domains and four ordinary
+unions. Initial and installed replays recover **2, 5, 36 and 115** classes,
+with complete streams identical to the earlier accepted results. Its README
+states all resource limits and distinguishes local file receipts from the
+external evidence of execution. Generated jobs, runs and locks are ignored.
+
+## The complete order-32 count
+
+The [composition package](reproduction/order32_census/README.rst) gives commands
+for the three existing component packages, fresh binding of their six complete
+results, and the final scalar calculation. Its 43 controls and complete
+installed run passed, recovering **25,408 = 16,467 + 8,941** ordinary classes.
+Independent audit verified the complete streams, all 52 imported proof
+documents, the nine disjoint contributions and the execution records.
+
+The proof and numerical kernels are shared with the separately accepted
+calculations. The composer does not export a new stream of all 25,408 full
+graphs or supply a Lean proof of the hand arguments. Its replay record
+separates this known-result recovery from F009's unfinished order-80 census.
+
 ## Fi22 marking certificates
 
 The [portable Fi22 package](reproduction/fi22_markings/README.rst) adds 18

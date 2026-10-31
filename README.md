@@ -107,10 +107,15 @@ Its portable run checked all 34,786 pairs in 26.53 seconds, using about
 The [singleton middle calculation](october_corpus/reproduction/single_middle/README.md)
 recovers 1,209 ordinary right halves and 7,254 graphs in one nonbipartite
 stratum. Its 23 controls and complete producer passed in both the initial
-and installed directories. The remaining centre strata have a separate
-accepted local proof and enumeration; their complete reproduction package is
-being assembled. These local results and the existing portable packages have
-different reproduction scopes, recorded in the intake status.
+and installed directories. The [complete two-centre calculation](october_corpus/reproduction/two_centre/README.rst)
+recovers **1,395 halves and 8,370 graphs**, including that singleton subset.
+The [ordinary centre-half calculations](october_corpus/reproduction/centre_halves/README.rst)
+recover **2, 5, 36 and 115** classes. Both packages passed their controls,
+complete installed replays and independent audits. The
+[complete order-32 composition](october_corpus/reproduction/order32_census/README.rst)
+authenticates all six streams and recovers **25,408 classes** by the shared
+structural proof. Its 43 controls, complete run and independent audit passed.
+This reproduces the known count; the order-80 census remains unfinished.
 
 The local Fi22 ledger has **87 generation certificates, 87 separate
 intersection proofs for those cases and 106 nongeneration certificates**.

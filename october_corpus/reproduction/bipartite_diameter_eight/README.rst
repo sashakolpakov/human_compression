@@ -29,11 +29,12 @@ The supplied resource supervisor additionally uses ``psutil==7.2.2``.
 From this directory, create an isolated environment and a fresh result
 directory on the same volume::
 
-    python3 -m venv .venv
-    .venv/bin/python -m pip install -r requirements.txt
+    python3 -m venv "$HOME/.venvs/human-compression"
+    "$HOME/.venvs/human-compression/bin/python" -m pip install -r requirements.txt
     REPRO_BUNDLE="$(pwd -P)"
-    REPRO_PYTHON="$REPRO_BUNDLE/.venv/bin/python"
-    REPRO_RUN="$(mktemp -d "$REPRO_BUNDLE/../.bipartite-results.XXXXXX")"
+    REPRO_PYTHON="$HOME/.venvs/human-compression/bin/python"
+    REPRO_RUN="$REPRO_BUNDLE/runs"
+    mkdir "$REPRO_RUN"
 
 Run the small independent checks first::
 
@@ -85,6 +86,7 @@ and hash. Inputs are authenticated again after the calculation.
 
 ``PUBLICATION.json`` records attribution, scope and measured validation.
 ``evidence/`` contains the static reviews, actual run evidence and
-independent audit. This establishes the bipartite branch; F009's
-nonbipartite census remains unfinished. No new conjecture, Lean proof or
-compression measurement is claimed by this package.
+independent audit. This establishes the bipartite branch. The complete
+order-32 census also uses the other component packages and their common
+structural proof. F009's separate order-80 census remains unfinished. No new
+conjecture, Lean proof or compression measurement is claimed by this package.
