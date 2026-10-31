@@ -98,14 +98,14 @@ The [written proof](reproduction/polynomial_prefixes/theory.tex) and
 attribution and checks. The ten prefix jobs are registered; the positive
 classification and whole manuscript remain unfinished.
 
-F009 is locally accepted at checkpoint **11,584**: 6,073 nodes, 193 pending
-families including **one reserved debt**, and 718,412 selected raw leaf records.
-The continuation from 11,519 completed 25 families and refined five in 65
+F009 is locally accepted at checkpoint **11,662**: 6,112 nodes, 191 pending
+families including **one reserved debt**, and 752,337 selected raw leaf records.
+The continuation from 11,584 completed 30 families and refined six in 78
 transactions. Its strict Reader verified the complete typed state and its
 ordering; all three current records agree after registration. The census
 remains unfinished, and the next operation is refinement of the remaining debt.
 The [public F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
-now contains checkpoint **11,584**, including its accepted records, selected
+retains checkpoint **11,584**, including its accepted records, selected
 programs, computation outputs and registration evidence. Its relative checker
 verified all 675 listed files and 1,403 original mappings. It authenticates
 archived bytes; fresh mathematical Reader replay from a clone remains
