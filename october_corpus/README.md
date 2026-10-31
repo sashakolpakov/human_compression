@@ -70,15 +70,27 @@ identity, finite Levi structure and complete maximal subgroup cover. The
 and attribution. These negative certificates do not complete the positive
 classification. No job or manuscript is newly completed.
 
-The unchanged [F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
-records checkpoint **11,518**: 6,048 nodes, 203 pending families, no reserved
-debts and 684,526 selected raw leaf records. Its Native, strict Reader and
-registration passed; the census remains unfinished. A later diagnostic attempt
-stopped at the unchanged 512 MiB process-tree limit, after 27 bounded markers
-through input acquisition. It added no accepted case or checkpoint. Its outer
-supervisor recorded no remaining known birth-pinned process or cleanup error;
-this is not a claim about unseen detached descendants. All 21 historical
-payloads and five e466 preparation outputs retain explicit relative mappings.
+The [prefix centralizer package](reproduction/prefix_centralizers/README.rst)
+contains support calculations for all **157 remaining q11 prefixes**. It
+filters the complete acquired involution bank and verifies each product order.
+A single written argument excludes both parabolic types for **81 prefixes**:
+if the full centralizer has fewer than five involutions and its specified
+subgroup has order prime to five, a Levi centre of order ten cannot lie in it.
+The proof also requires the prefix order to be prime to eleven. Job 24 reuses
+an earlier restriction; the other 80 are applications relative to that record.
+The original model, complete bank, full subgroup identification and finite
+Levi structure remain explicit premises. This adds no paid quartet, completed
+job or manuscript, conjecture resolution, Lean proof or compression measurement.
+All 157 portable replays and 27 controls passed; [REPLAY.json](reproduction/prefix_centralizers/REPLAY.json) records the results and measured resource use.
+
+F009 is locally accepted at checkpoint **11,519**: 6,048 nodes, 203 pending
+families including **one reserved debt**, and 684,526 selected raw leaf records.
+The interrupted completion is retained as a reservation; its next action is
+refinement, and its partial leaves are not accepted as census output. The census
+remains unfinished. The [public F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
+still reproduces checkpoint **11,518**, which had no reserved debt. The local
+11,519 checkpoint is not yet included in that archive. All 21 historical
+payloads and five e466 preparation outputs retain their recorded mappings.
 
 The unchanged [Fi22 ledger](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
 contains **47 generation cases, 47 separate intersection proofs for those

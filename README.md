@@ -70,10 +70,16 @@ The [historical 1,089-case archive](october_corpus/research/proof_collection/upd
 preserves the other exclusions. Earlier replay editions remain in Git history,
 and every earlier case is retained in the current package. These exclusions
 do not complete the positive classification or recover the manuscript.
-F009 remains at accepted checkpoint 11,518. Its interrupted successor's inputs,
-outputs and recorded process scope have been checked; the partial census state
-has not been accepted. The Fi22 ledger concerns one of 105 selectors; the full
-class count remains unproved here.
+The [prefix centralizer calculations](october_corpus/reproduction/prefix_centralizers/README.rst)
+cover all 157 remaining q11 prefixes. One common argument excludes both
+parabolic types for 81 prefixes, under the stated model, bank and Levi premises.
+These support calculations add no completed job or manuscript.
+
+F009 is locally accepted at checkpoint 11,519, with one reserved debt among
+203 pending families. Its interrupted completion will resume by refinement.
+The public census archive remains at checkpoint 11,518; the newer checkpoint
+is not reproduced by that archive. The Fi22 ledger concerns one of 105
+selectors; the full class count remains unproved here.
 
 The [earlier archived intake results](october_corpus/research/proof_collection/updates/verified_intake_results/README.rst)
 preserve the accepted census checkpoint, classification records and generation
