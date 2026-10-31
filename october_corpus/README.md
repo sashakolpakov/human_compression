@@ -135,11 +135,19 @@ The complete run checked every 32-vertex isomorphism witness and produced
 the same sorted code stream as the separately audited batch calculation.
 It passed eleven controls and finished in 26.53 seconds at about 61 MiB
 sampled peak memory. Sources, proofs, reviews and reference outputs are
-included. This completes the bipartite subproblem; the nonbipartite census
-and F009's whole treatment remain unfinished.
+included. This completes the bipartite subproblem.
 
-The Fi22 ledger contains **77 generation cases, 77 separate intersection
-proofs for those same cases and 100 nongeneration cases**, leaving **28,731
+The [singleton middle calculation](reproduction/single_middle/README.md)
+recovers **1,209 ordinary right halves and 7,254 graphs** in one
+nonbipartite stratum. All 23 controls and the complete producer passed
+both initially and from the installed directory; the canonical streams
+agree byte for byte. This is one subcase of the census. The remaining
+centre strata have separate local proofs and completed enumerations whose
+full reproduction package is being assembled. F009's separate order-80
+census remains unfinished.
+
+The local Fi22 ledger contains **87 generation cases, 87 separate intersection
+proofs for those same cases and 106 nongeneration cases**, leaving **28,715
 unresolved candidates** in its 28,908-row bank. The
 [earlier archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
 reproduces 47 generation cases, their 47 intersection proofs and 90
@@ -152,6 +160,10 @@ The [next 16 cases](reproduction/fi22_markings/free_0184_0199/README.rst)
 add 12 generating cases with separate intersection proofs and four exclusions.
 All 25 controls and 16 new replays passed in 2.230 seconds, with a largest
 sampled process tree of 34,127,872 bytes. The earlier packages are preserved.
+The latest local batch adds ten generating cases with separate intersection
+proofs and six exclusions. Its computation and independent audit are retained;
+the standalone reproduction is being prepared. The existing repository
+packages reproduce the preceding 77/77/100 totals.
 The bank covers one of 105 endpoint/middle-class
 selectors; 41 have zero contribution and 64 lack a complete census. Finishing
 the bank would not prove the full class count or finish the manuscript.

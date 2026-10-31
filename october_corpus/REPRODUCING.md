@@ -94,6 +94,15 @@ independent companion-matrix powers, and all eight common-line systems by
 exact Gaussian elimination. The original full model and classification
 premises remain explicit imports. It does not complete F004.
 
+## The singleton middle case
+
+The [singleton middle package](reproduction/single_middle/README.md) contains
+the complete producer, proofs, reviews and resource supervisor. Its README
+gives commands from the package directory. The retained initial and
+installed runs each passed 23 controls and recovered 1,209 ordinary half
+graphs, giving 7,254 graphs in this stratum. This package uses relative
+functional inputs and does not read the reference census as a target.
+
 ## Fi22 marking certificates
 
 The [portable Fi22 package](reproduction/fi22_markings/README.rst) adds 18

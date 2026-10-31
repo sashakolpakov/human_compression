@@ -94,14 +94,20 @@ The new [complete bipartite enumeration](october_corpus/reproduction/bipartite_d
 recovers **16,467 ordinary graph classes** through fourteen structural forms.
 Its portable run checked all 34,786 pairs in 26.53 seconds, using about
 61 MiB peak memory, and matched the separately audited batch result byte for byte.
-F009's nonbipartite branch remains unfinished.
+The [singleton middle calculation](october_corpus/reproduction/single_middle/README.md)
+recovers 1,209 ordinary right halves and 7,254 graphs in one nonbipartite
+stratum. Its 23 controls and complete producer passed in both the initial
+and installed directories. The remaining centre strata have a separate
+local proof and enumeration; their complete reproduction package is being
+assembled. F009 also retains a separate order-80 census obligation.
 
-The Fi22 ledger has **77 generation
-certificates, 77 separate intersection proofs for those cases and 100
-nongeneration certificates**. The earlier archive,
+The local Fi22 ledger has **87 generation certificates, 87 separate
+intersection proofs for those cases and 106 nongeneration certificates**.
+The latest reviewed batch adds ten generating cases and six exclusions;
+its standalone reproduction is being prepared. The earlier archive,
 [24-case replay](october_corpus/reproduction/fi22_markings/README.rst) and
 [16 additional cases](october_corpus/reproduction/fi22_markings/free_0184_0199/README.rst)
-together reproduce all 77/77/100 certificates.
+together reproduce the preceding 77/77/100 certificates.
 The ledger concerns one of 105 selectors; the full class count remains unproved here.
 
 The [earlier archived intake results](october_corpus/research/proof_collection/updates/verified_intake_results/README.rst)
