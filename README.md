@@ -79,10 +79,11 @@ give ten whole-prefix exclusions by one common theorem. Their guarded replay
 passed all ten identities and exact-order checks. F004 now has **125 of 272
 q11 jobs complete, with 147 pending**; the manuscript remains unfinished.
 
-F009 is locally accepted at checkpoint 11,519, with one reserved debt among
-203 pending families. Its interrupted completion will resume by refinement.
-The public census archive remains at checkpoint 11,518; the newer checkpoint
-is not reproduced by that archive. The local Fi22 ledger now has **65 generation
+F009 is locally accepted at checkpoint **11,584**, with one reserved debt among
+193 pending families. The continuation completed 25 families and refined five;
+the full census remains unfinished. The public census archive remains at
+checkpoint 11,518 and checks archived byte integrity; it supplies no fresh
+mathematical Reader replay of the newer checkpoint. The Fi22 ledger has **65 generation
 certificates, 65 separate intersection proofs for those cases and 96
 nongeneration certificates**. The earlier archive and the new
 [24-case replay](october_corpus/reproduction/fi22_markings/README.rst)

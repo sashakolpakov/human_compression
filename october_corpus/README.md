@@ -98,14 +98,18 @@ The [written proof](reproduction/polynomial_prefixes/theory.tex) and
 attribution and checks. The ten prefix jobs are registered; the positive
 classification and whole manuscript remain unfinished.
 
-F009 is locally accepted at checkpoint **11,519**: 6,048 nodes, 203 pending
-families including **one reserved debt**, and 684,526 selected raw leaf records.
-The interrupted completion is retained as a reservation; its next action is
-refinement, and its partial leaves are not accepted as census output. The census
-remains unfinished. The [public F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
-still reproduces checkpoint **11,518**, which had no reserved debt. The local
-11,519 checkpoint is not yet included in that archive. All 21 historical
-payloads and five e466 preparation outputs retain their recorded mappings.
+F009 is locally accepted at checkpoint **11,584**: 6,073 nodes, 193 pending
+families including **one reserved debt**, and 718,412 selected raw leaf records.
+The continuation from 11,519 completed 25 families and refined five in 65
+transactions. Its strict Reader verified the complete typed state and its
+ordering; all three current records agree after registration. The census
+remains unfinished, and the next operation is refinement of the remaining debt.
+The [public F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
+still contains checkpoint **11,518**, which had no reserved debt. Its integrity
+checker authenticates archived bytes and mappings; it does not rerun the
+mathematical Reader. The newer checkpoint is not yet included in that archive.
+All 21 historical payloads and five e466 preparation outputs retain their
+recorded mappings.
 
 The Fi22 ledger contains **65 generation cases, 65 separate intersection
 proofs for those same cases and 96 nongeneration cases**, leaving **28,747
