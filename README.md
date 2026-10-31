@@ -71,15 +71,21 @@ preserves the other exclusions. Earlier replay editions remain in Git history,
 and every earlier case is retained in the current package. These exclusions
 do not complete the positive classification or recover the manuscript.
 The [prefix centralizer calculations](october_corpus/reproduction/prefix_centralizers/README.rst)
-cover all 157 remaining q11 prefixes. One common argument excludes both
+cover the 157 q11 prefixes pending before the polynomial closures below. One common argument excludes both
 parabolic types for 81 prefixes, under the stated model, bank and Levi premises.
 These support calculations add no completed job or manuscript.
+The [polynomial certificates](october_corpus/reproduction/polynomial_prefixes/README.rst)
+give ten whole-prefix exclusions by one common theorem. Their guarded replay
+passed all ten identities and exact-order checks. F004 now has **125 of 272
+q11 jobs complete, with 147 pending**; the manuscript remains unfinished.
 
 F009 is locally accepted at checkpoint 11,519, with one reserved debt among
 203 pending families. Its interrupted completion will resume by refinement.
 The public census archive remains at checkpoint 11,518; the newer checkpoint
-is not reproduced by that archive. The Fi22 ledger concerns one of 105
-selectors; the full class count remains unproved here.
+is not reproduced by that archive. The local Fi22 ledger now has **65 generation
+certificates, 65 separate intersection proofs for those cases and 96
+nongeneration certificates**. Its public archive remains at 47/47/90.
+The ledger concerns one of 105 selectors; the full class count remains unproved here.
 
 The [earlier archived intake results](october_corpus/research/proof_collection/updates/verified_intake_results/README.rst)
 preserve the accepted census checkpoint, classification records and generation

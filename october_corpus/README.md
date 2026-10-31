@@ -46,7 +46,7 @@ adds 713 intersection obstructions: 711 follow from a common centralizer and
 spectrum argument; two use separate certificates. Independent arithmetic
 checks and an audit of the ledger append passed. All seven previously unpaid
 facts about proper ends now have proofs of intersection failure.
-F004's q11 register remains 115 complete jobs out of 272.
+F004's q11 register now has **125 complete jobs out of 272**, with **147 pending**.
 
 The [portable matrix certificates](reproduction/matrix_certificates/README.rst)
 cover **2,308 accepted exclusions**: 2,035 intersection failures and all 273
@@ -68,10 +68,10 @@ imported. The common argument also imports the accepted full centralizer
 identity, finite Levi structure and complete maximal subgroup cover. The
 [written argument](reproduction/matrix_certificates/THEORY.rst) gives the proof
 and attribution. These negative certificates do not complete the positive
-classification. No job or manuscript is newly completed.
+classification. These job 24 certificates complete neither that job nor the manuscript.
 
 The [prefix centralizer package](reproduction/prefix_centralizers/README.rst)
-contains support calculations for all **157 remaining q11 prefixes**. It
+contains support calculations for the **157 q11 prefixes pending before the ten polynomial closures**. It
 filters the complete acquired involution bank and verifies each product order.
 A single written argument excludes both parabolic types for **81 prefixes**:
 if the full centralizer has fewer than five involutions and its specified
@@ -83,6 +83,21 @@ Levi structure remain explicit premises. This adds no paid quartet, completed
 job or manuscript, conjecture resolution, Lean proof or compression measurement.
 All 157 portable replays and 27 controls passed; [REPLAY.json](reproduction/prefix_centralizers/REPLAY.json) records the results and measured resource use.
 
+The [polynomial package](reproduction/polynomial_prefixes/README.rst) supplies
+ten whole-prefix closures using one common argument. Each recorded identity
+expresses the omitted involution as a polynomial in an adjacent product.
+The argument then excludes every fourth mark in those prefixes, under the
+attributed model and maximal-subgroup premises. It concludes nongeneration
+or failure of the intersection property without separating the alternatives.
+The ten local domains comprise 74,330 positions: 1,030 previously recorded
+nongenerating positions and 73,300 covered by that disjunction. This is no
+net-new global position count. The guarded replay passed 24 controls and all
+ten certificates, using 802 matrix products and 420 diagonal additions.
+The [written proof](reproduction/polynomial_prefixes/theory.tex) and
+[replay record](reproduction/polynomial_prefixes/REPLAY.json) give the scope,
+attribution and checks. The ten prefix jobs are registered; the positive
+classification and whole manuscript remain unfinished.
+
 F009 is locally accepted at checkpoint **11,519**: 6,048 nodes, 203 pending
 families including **one reserved debt**, and 684,526 selected raw leaf records.
 The interrupted completion is retained as a reservation; its next action is
@@ -92,10 +107,15 @@ still reproduces checkpoint **11,518**, which had no reserved debt. The local
 11,519 checkpoint is not yet included in that archive. All 21 historical
 payloads and five e466 preparation outputs retain their recorded mappings.
 
-The unchanged [Fi22 ledger](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
-contains **47 generation cases, 47 separate intersection proofs for those
-same cases and 90 nongeneration cases**, leaving **28,771 unpaid rows** in
-its 28,908-row bank. That bank covers one of 105 endpoint/middle-class
+The local Fi22 ledger now contains **65 generation cases, 65 separate intersection
+proofs for those same cases and 96 nongeneration cases**, leaving **28,747 unpaid
+rows** in its 28,908-row bank. The latest sixteen entries are twelve generating
+cases and four nongenerating cases; their calculations were preserved and
+registered without rerunning them. The
+[public archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
+still reproduces 47 generation cases, 47 corresponding intersection proofs and
+90 nongeneration cases. The newer 24 entries are not yet included there.
+The bank covers one of 105 endpoint/middle-class
 selectors; 41 have zero contribution and 64 lack a complete census. Finishing
 the bank would not prove the full class count or finish the manuscript.
 The generation checker supplies no intersection credit; the existing theorem
