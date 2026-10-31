@@ -75,9 +75,24 @@ This replay checks specified exclusions. The original group/model, frame,
 membership and orbit associations, the previously accepted full centralizer,
 finite Levi structure and maximal subgroup cover remain imported premises.
 It adds no Lean verification or completed manuscript. The [current intake
-ledger](INTAKE_STATUS.json) separates these 2,308 cases from the historical
-1,089 exclusions and the 209 unresolved positions. Earlier archives and their
+ledger](INTAKE_STATUS.json) separates these 2,308 cases, the 42 additional cubic
+certificates, the historical 1,089 exclusions and the 167 unresolved positions.
+Earlier archives and their
 recorded verification scopes remain unchanged.
+
+The [cubic certificate supplement](reproduction/cubic_certificates/README.rst)
+adds 42 intersection failures. Its two commands, from the repository root, are:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/cubic_certificates/controls.py --manifest-sha256 f10a3e710a523922c4a4ade238be8d9f408dff3867b0f6b60cbd917b2a0fb4fa
+python3 -E -B -S october_corpus/reproduction/cubic_certificates/verify.py --manifest-sha256 f10a3e710a523922c4a4ade238be8d9f408dff3867b0f6b60cbd917b2a0fb4fa
+```
+
+The supplement includes the original indexed catalogue and frame data. It
+checks the cubic relation by nine direct row images, the scalar order by
+independent companion-matrix powers, and all eight common-line systems by
+exact Gaussian elimination. The original full model and classification
+premises remain explicit imports. It does not complete F004.
 
 ## Fi22 marking certificates
 

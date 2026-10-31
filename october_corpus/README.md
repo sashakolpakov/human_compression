@@ -39,13 +39,13 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **3,397 additional exclusions**: **3,124 failures of the
+F004 job 24 now has **3,439 additional exclusions**: **3,166 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **209 positions remain unresolved**. The latest batch
-adds 713 intersection obstructions: 711 follow from a common centralizer and
-spectrum argument; two use separate certificates. Independent arithmetic
-checks and an audit of the ledger append passed. All seven previously unpaid
-facts about proper ends now have proofs of intersection failure.
+173 paid positions, **167 positions remain unresolved**. The latest batch
+adds 42 intersection obstructions using a cubic relation of order 133 and
+the absence of a common rational invariant line. Separate arithmetic checks
+and an independent audit of the ledger append passed. The preceding batch
+of 713 obstructions and every earlier disposition are preserved.
 F004's q11 register now has **125 complete jobs out of 272**, with **147 pending**.
 
 The [portable matrix certificates](reproduction/matrix_certificates/README.rst)
@@ -55,6 +55,15 @@ is retained unchanged. The expanded guarded replay passed in 2.915 seconds,
 using 1,391,673 charged input bytes and 145,447 matrix products; its observed
 peak memory was 62,291,968 bytes. The [earlier archive](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
 preserves the other 1,089 exclusions; it is not the current status ledger.
+
+The separate [cubic certificate package](reproduction/cubic_certificates/README.rst)
+reproduces the latest **42 intersection failures**. It checks the original
+catalogue and frame calculations, all four involutions, the string relations,
+the cubic certificate and all eight possible invariant-line sign systems.
+All 33 controls and 42 certificates passed both the initial guarded run and
+a run from the installed bundle using its included supervisor. These checks
+retain the same imported group, model, orbit and subgroup classification
+premises; they add no completed manuscript or Lean proof.
 
 The shared argument excludes both parabolics using the fixed subgroup's small
 centralizer. Eight prefix sign-system ranks exhaust its possible invariant

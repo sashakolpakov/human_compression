@@ -57,8 +57,8 @@ does not imply that its entire manuscript has been formalized.
 For the October corpus, begin with its [current reproduction instructions](october_corpus/REPRODUCING.md).
 October has **101 complete reviewed treatments out of 104 mathematical originals**.
 F004, F009 and L026 remain unfinished. The [current intake status](october_corpus/INTAKE_STATUS.json)
-records F004 job 24 at **3,397 additional exclusions**: 3,124 failures of the
-intersection property and 273 nongenerating quartets, with **209 positions
+records F004 job 24 at **3,439 additional exclusions**: 3,166 failures of the
+intersection property and 273 nongenerating quartets, with **167 positions
 unresolved**. Its original 173 paid positions are separate.
 
 The [portable matrix certificates](october_corpus/reproduction/matrix_certificates/README.rst)
@@ -66,6 +66,11 @@ cover **2,308 exclusions**: 2,035 intersection failures and all 273
 nongeneration certificates. The expanded guarded replay passed in 2.915 seconds,
 using Python's standard library, 1,391,673 charged input bytes and 145,447
 matrix products. Its observed peak memory was 62,291,968 bytes.
+The [cubic certificates](october_corpus/reproduction/cubic_certificates/README.rst)
+add **42 intersection failures**. All 33 controls and 42 certificates passed
+both the initial run and a second run from the installed relative bundle.
+The checks combine a cubic relation of order 133 with eight invariant-line
+tests; the group and subgroup classification premises are stated explicitly.
 The [historical 1,089-case archive](october_corpus/research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
 preserves the other exclusions. Earlier replay editions remain in Git history,
 and every earlier case is retained in the current package. These exclusions
