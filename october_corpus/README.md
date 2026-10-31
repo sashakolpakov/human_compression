@@ -159,6 +159,12 @@ The 1,209 strict halves are a subset of H and earn no second count. The full
 reproduction package is being assembled. F009's separate order-80 census
 remains unfinished.
 
+The [reviewed graph proof notes](research/regular_girth_four/README.rst) give
+common minimum-order arguments for all degrees at least three and diameters
+divisible by four, and classify the six quartic minimum graphs for every
+diameter in that family. Their TeX sources and independent hand reviews are
+included. They add no completed original, conjecture or compression measurement.
+
 The local Fi22 ledger contains **87 generation cases, 87 separate intersection
 proofs for those same cases and 106 nongeneration cases**, leaving **28,715
 unresolved candidates** in its 28,908-row bank. The
