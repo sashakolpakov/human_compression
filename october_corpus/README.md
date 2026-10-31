@@ -39,39 +39,38 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-The [current accepted results](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_checkpoint_11518/README.rst)
-contain two further finite advances. The
-[F004 certificates](research/proof_collection/updates/verified_intake_results/g2_intersection_obstructions_job24_middle7_divisibility/README.rst)
-add 205 obstructions using the earlier theorem for middle rotations of order seven, bringing the
-current job's additional exclusions to **880**, with **2,726 positions
-unresolved**. Of 1,348 fresh visits, 205 succeed and 1,143 sufficient-criterion
-misses remain unpaid; 1,583 inherited logical negatives are also unpaid and
-are not fresh visits. F004's q11 register remains 115 complete jobs out of 272.
-The [accepted F009 checkpoint](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
-is **11,518**: 6,048 nodes, 203 pending families, no reserved debts and
-684,526 selected raw leaf records. Its actual Native run, strict Reader
-and canonical registration passed; the census remains unfinished. All 21
-required historical payloads and all five preparation outputs have
-explicit relative mappings.
+The [current accepted results](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
+add a further 209 F004 obstructions from 1,250 actual visits: 38 in the
+order-19 branch and 171 in the order-37 branch. The
+[new F004 archive](research/proof_collection/updates/verified_intake_results/g2_intersection_obstructions_job24_middle19_or37/README.rst)
+brings job 24 to **1,089 additional obstructions**, alongside its original
+173 paid positions, with **2,517 positions unresolved**. All 1,041 fresh
+sufficient-test misses and 1,476 inherited outside-target misses stay unpaid;
+the latter are not fresh visits. The earlier 880 archive retains its bytes.
+F004's q11 register remains 115 complete jobs out of 272.
+
+The unchanged [F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
+records checkpoint **11,518**: 6,048 nodes, 203 pending families, no reserved
+debts and 684,526 selected raw leaf records. Its Native, strict Reader and
+registration passed; the census remains unfinished. All 21 historical
+payloads and five e466 preparation outputs retain explicit relative mappings.
 
 The unchanged [Fi22 ledger](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
-records **47 generation certificates, 47 separate intersection proofs and
-90 nongeneration cases**, leaving **28,771 unpaid rows** in its 28,908-row
-bank. That bank covers one of 105 endpoint/middle-class selectors; 41 have
-zero contribution and 64 lack a complete census. Completing the bank alone
-would not prove the full class count, which remains unproved here. The
-generation checker supplies zero intersection credit; the retained theorem
-and its separate application supply those proofs.
+contains **47 generation cases, 47 separate intersection proofs for those
+same cases and 90 nongeneration cases**, leaving **28,771 unpaid rows** in
+its 28,908-row bank. That bank covers one of 105 endpoint/middle-class
+selectors; 41 have zero contribution and 64 lack a complete census. Finishing
+the bank would not prove the full class count or finish the manuscript.
+The generation checker supplies no intersection credit; the existing theorem
+and separate application supply those proofs.
 
-These archives preserve programs, checks, finite proofs, acceptance
-records and their qualifications. Earlier failed, refused and unrun records
-retain their original statuses; earlier archives remain unchanged. Relative
-integrity checks authenticate whole bytes and mappings, without replaying
-the mathematics or establishing imported model and historical premises.
-The [publication report](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_checkpoint_11518/publication.json)
-records actual publication checks separately from the accepted scientific
-records. These finite results add no complete manuscript, conjecture
-resolution, Lean declaration or compression measurement.
+The [publication report](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/publication.json)
+separates actual publication checks from accepted scientific verification.
+Relative integrity checks authenticate whole archived bytes and mappings;
+they do not replay the mathematics or establish imported model, action and
+classification premises. Failed, refused and unrun records retain their
+statuses. The continuation adds no complete manuscript, conjecture resolution,
+Lean declaration or compression measurement.
 
 ## Common theories and applications
 

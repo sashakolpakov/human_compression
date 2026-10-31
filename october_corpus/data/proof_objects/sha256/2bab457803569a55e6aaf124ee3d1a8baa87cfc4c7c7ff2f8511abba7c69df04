@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "stop": "RETURNED",
+  "error": null,
+  "utc": "2026-10-30T23:00:48.531461+00:00",
+  "seconds": 0.07446516607888043,
+  "returncode": 0,
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "import json,hashlib,copy,os,time,resource,ast\nfrom pathlib import Path\nSTART=time.monotonic();READ=0;seen={}\ndef can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()\ndef rawref(r):\n global READ\n p=Path(r['path']);a=p.lstat();assert p.resolve()==p and a.st_nlink==1 and a.st_size==r['bytes']<=8*2**20\n k=(str(p),r['sha256'])\n if k in seen:return seen[k]\n raw=p.read_bytes();READ+=len(raw);z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)\n assert sig(a)==sig(z)and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256']\n assert READ<32*2**20 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<256*2**20 and time.monotonic()-START<125\n seen[k]=raw;return raw\nbase=Path('/private/tmp/q11_job24_middle19_or37_remaining_DATA');pb=base/'planned_Root_append_DATA'\nh=json.loads(rawref(dict(path=str(pb/'handoff.json'),bytes=4588,sha256='31b1750ab2f85667f966db08b078d2617f9fca5804b415b8616651916bd0a193')))\npair=json.loads(rawref(h['planned_pair']));inv=json.loads(rawref(h['full_before_forward_inverse']))\noldraw=rawref(h['current_selector']);old=json.loads(oldraw);ar=pair['planned_acceptance']['typed_body'];new=pair['planned_next_selector']['typed_body']\nassert inv['before_complete_UTF8'].encode()==oldraw and can(inv['before_typed'])==can(old)\nnewraw=inv['after_complete_UTF8'].encode();assert newraw==pair['planned_next_selector']['complete_UTF8'].encode()and hashlib.sha256(newraw).hexdigest()==h['planned_selector']['sha256']and can(inv['after_typed'])==can(new)\nassert len(inv['forward_changes'])==len(inv['inverse_changes'])==10\ndef apply(v,changes):\n v=copy.deepcopy(v)\n for c in changes:\n  k=c['key'];assert c['before_present']is(k in v)\n  if k in v:assert can(v[k])==can(c['before'])\n  if c['after_present']:v[k]=c['after']\n  else:v.pop(k,None)\n return v\nassert can(apply(old,inv['forward_changes']))==can(new)and can(apply(new,inv['inverse_changes']))==can(old)\nassert {c['key']for c in inv['forward_changes']}=={k for k in old if can(old[k])!=can(new[k])}\nfor key in ('planned_acceptance','planned_next_selector'):\n row=pair[key];raw=row['complete_UTF8'].encode();r=row['descriptor']\n assert len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256']and can(json.loads(raw))==can(row['typed_body'])and not os.path.lexists(r['path'])\nfor v in ar.values():\n if type(v)is dict and {'path','bytes','sha256'}<=set(v):rawref({k:v[k]for k in('path','bytes','sha256')})\nresult=json.loads(rawref(ar['actual_result']));proof=json.loads(rawref(ar['actual_proof']))\nassert ar['actual_positive_certificate_records']==[r for r in proof['records']if r[2]is True]\nassert ar['new_IP_failure_positions']==result['verified_IP_failure_positions']and ar['visited_positions']==result['visited_positions']and ar['finite_criterion_miss_positions_without_IP_credit']==result['unpaid_positions']and ar['unvisited_positions']==result['unvisited_positions']==[]\nassert ar['actual_result']['sha256']=='055d642c1e6efa25aeeb05f6527a70782203575b041dbcc1845f8d1e2d9d9f1c'and ar['actual_proof']['sha256']=='51c12c69d6fc0f6f2a282461e23378e077740765b69e08f4c4e2cf4d2a2a8293'\npower=json.loads(rawref(h['actual_Root_carried_power_check']));assert power['verified_carried_certificates']==209 and power['proof']==ar['actual_proof']\narg=json.loads(rawref(h['Root_exact_append_argv']));args=arg['argv'];code=args[args.index('-c')+1];sourinv=json.loads(rawref(h['inline_Source_inverse']))\nassert code==sourinv['after_complete_UTF8']and hashlib.sha256(code.encode()).hexdigest()==sourinv['after_sha256']and hashlib.sha256(sourinv['before_complete_UTF8'].encode()).hexdigest()==sourinv['before_sha256']\nbefore={n.name:ast.dump(n,include_attributes=False)for n in ast.parse(sourinv['before_complete_UTF8']).body if isinstance(n,ast.FunctionDef)};after={n.name:ast.dump(n,include_attributes=False)for n in ast.parse(code).body if isinstance(n,ast.FunctionDef)}\nassert before==after and len(before)==3 and sum(len(x.encode())for x in args[args.index('--')+1:])<16384\nassert len(new['accepted_new_paid_positions'])==1089 and new['unresolved_positions']==2517 and len(new['source_adoptions'])==9 and len(old['source_adoptions'])==8\nassert oldraw==rawref(h['current_selector'])\nv=dict(root='/root',status='PASS_ACTUAL209_PROOF_TO_PAIR_AND_FULL_TEN_FIELD_INVERSE',pair=h['planned_pair'],inverse=h['full_before_forward_inverse'],actual_proof=ar['actual_proof'],actual_result=ar['actual_result'],actual_power=h['actual_Root_carried_power_check'],actual_peer=h['actual_metadata_peer'],new_additional=1089,new_unresolved=2517,typed_changes=10,old_fields_and_histories_restored_exactly=True,inline_helpers_literal=3,read_bytes=READ,scientific_calls=0)\np=base/'runtime/Root_actual209_pair_precheck.json';assert not p.exists();raw=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\\n').encode()\nwith p.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())\nprint(json.dumps(dict(status=v['status'],review=dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),read=READ)))\n"
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 268435456,
+    "wall_seconds": 125.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 14970097664,
+    "available_ram": 5155405824
+  },
+  "peaks": {
+    "total_rss": 28196864,
+    "min_free_disk": 14970077184,
+    "min_available_ram": 5155405824,
+    "samples": 1
+  },
+  "recent_samples": [
+    {
+      "seconds": 0.002,
+      "total_rss": 28196864,
+      "free_disk": 14970077184,
+      "available_ram": 5161107456,
+      "live_processes": 1
+    }
+  ],
+  "identities": [
+    {
+      "pid": 6369,
+      "birth": 1793401248.457231,
+      "initial_parent": 6368,
+      "group": 6369,
+      "session": 6369,
+      "peak_rss": 262144
+    }
+  ],
+  "logs": {
+    "stdout": 297,
+    "stderr": 0
+  },
+  "cleanup": {
+    "remaining": [],
+    "errors": [],
+    "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded."
+  },
+  "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants."
+}

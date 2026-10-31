@@ -1,0 +1,37 @@
+{
+  "utc": "2026-10-30T22:38:54.275066+00:00",
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "import json,hashlib,os,time,resource,sys\nfrom pathlib import Path\nSTART=time.monotonic();PRODUCTS=0;READ=0\ndef tick():\n assert time.monotonic()-START<100 and PRODUCTS<=400000\n assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<128*2**20\ndef loadref(r):\n global READ\n p=Path(r['path']);a=p.lstat();assert p.resolve()==p and a.st_nlink==1 and a.st_size==r['bytes']<=4*2**20\n raw=p.read_bytes();READ+=len(raw);z=p.lstat()\n sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)\n assert sig(a)==sig(z)and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256']and READ<=8*2**20\n return json.loads(raw)\ndef ref(p):\n raw=p.read_bytes();return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())\ndef mat(v):\n assert type(v)is list and len(v)==7 and all(type(r)is list and len(r)==7 and all(type(x)is int and 0<=x<11 for x in r)for r in v)\n return tuple(tuple(r)for r in v)\nI=tuple(tuple(int(i==j)for j in range(7))for i in range(7))\ndef mul(A,B):\n global PRODUCTS\n tick();PRODUCTS+=1\n return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(7))%11 for j in range(7))for i in range(7))\ndef repeat(A,n):\n B=I\n for _ in range(n):B=mul(B,A)\n return B\nbase=Path('/private/tmp/q11_job24_middle19_or37_remaining_DATA');rref=dict(path=str(base/'output/result.json'),bytes=31290,sha256='055d642c1e6efa25aeeb05f6527a70782203575b041dbcc1845f8d1e2d9d9f1c')\nresult=loadref(rref);proof=loadref(result['proof']);plan=loadref(dict(path=str(base/'plan.json'),bytes=59753,sha256='cfbac4acb67a4459b24696e003c6630b586cc86f2a939e8ab61f3050ab10cf03'))\nassert result['status']=='COMPLETE_FIXED_SELECTION'and result['target_positions']==result['visited_positions']==plan['selected_orbit_positions']and len(result['visited_positions'])==1250 and result['unvisited_positions']==[]\nassert len(proof['records'])==1250 and[p[0]for p in proof['records']]==result['visited_positions']\nassert result['original_orbit_array_sha256']==proof['original_orbit_array_sha256']\npositive=[];miss=[];branches={19:[],37:[]}\nfor row in proof['records']:\n tick();assert type(row)is list and len(row)in(3,7)and type(row[0])is int and type(row[1])is int and type(row[2])is bool\n if not row[2]:\n  assert len(row)==3;miss.append(row[0]);continue\n assert len(row)==7 and type(row[3])is int and row[3]in(19,37)\n prime=row[3];cofactor=7 if prime==19 else 3;Y,Z,Zp=map(mat,row[4:7])\n actual=repeat(Y,cofactor);assert actual==Z and actual!=I and repeat(actual,prime)==Zp==I\n if prime==37:\n  y7=repeat(Y,7);assert not(y7!=I and repeat(y7,19)==I)\n positive.append(row[0]);branches[prime].append(row[0])\nassert positive==result['verified_IP_failure_positions']and miss==result['unpaid_positions']\nassert{str(k):v for k,v in branches.items()}==result['verified_IP_failure_positions_by_branch']\nassert len(positive)==209 and len(miss)==1041 and len(branches[19])==38 and len(branches[37])==171 and PRODUCTS==12274\ntick()\nv=dict(root='/root',status='PASS_ALL209_CARRIED_POWERS_BY_NAIVE_REPEATED_MULTIPLICATION',result=rref,proof=result['proof'],visited=1250,verified_carried_certificates=209,branch19=38,branch37=171,unpaid=1041,unvisited=0,matrix_products=PRODUCTS,field=11,shape=[7,7],actual_scope='Fresh independent naive multiplication of all carried Y/Z/Zp powers, including each37 branch19 refusal. The original same-frame bc reconstruction and named-group/model/membership/theorem premises are imported from the separately Root-reviewed actual Source; this check does not independently reconstruct them.',new_adoption_credit=0,resources=dict(seconds=time.monotonic()-START,read_bytes=READ,peak_self_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))\nout=base/'runtime/Root_actual_independent_carried_power_review.json';assert not out.exists();raw=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\\n').encode()\nassert len(raw)<=131072\nwith out.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())\nprint(json.dumps(dict(status=v['status'],verified=209,products=PRODUCTS,review=ref(out),proof=result['proof'])))\n"
+  ],
+  "identities": [
+    {
+      "pid": 1422,
+      "birth": 1793399934.273719,
+      "initial_parent": 1421,
+      "group": 1422,
+      "session": 1422,
+      "peak_rss": 0
+    }
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 134217728,
+    "wall_seconds": 125.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 16154091520,
+    "available_ram": 4788256768
+  }
+}

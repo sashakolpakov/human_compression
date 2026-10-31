@@ -1,0 +1,37 @@
+{
+  "utc": "2026-10-30T22:36:28.131750+00:00",
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "import json,hashlib,time,resource,sys,os\nfrom pathlib import Path\nSTART=time.monotonic();reads=0;seen={}\ndef whole(r):\n global reads\n p=Path(r['path']);a=p.lstat();assert p.resolve()==p and a.st_nlink==1 and a.st_size==r['bytes']<=4*2**20\n k=(str(p),r['sha256'])\n if k in seen:return seen[k]\n raw=p.read_bytes();reads+=len(raw);z=p.lstat()\n sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)\n assert sig(a)==sig(z)and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256']\n assert reads<=64*2**20 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<256*2**20 and time.monotonic()-START<125\n seen[k]=raw;return raw\nbase=Path('/private/tmp/q11_job24_middle19_or37_remaining_DATA/runtime')\nlog=json.loads((base/'prelaunch_retention_guard/stdout.log').read_text());m=json.loads(whole(log['preservation']))\nplan=json.loads(whole(dict(path=str(base/'Root_prelaunch_retention_plan.json'),bytes=41389,sha256='0f75a051cc2b1a27ce370e8e1955ed89b569db75f3e19a5b669ec4a7d8432236')))\nassert m['files'][:74]==plan['files']and len(m['files'])==76 and m['scientific_calls']==0\nfor r in m['files']:assert whole(r['original'])==whole(r['retained'])\nv=dict(root='/root',status='PASS_ALL76_PRELAUNCH_WHOLE_ALIAS_EQUATIONS',preservation=log['preservation'],whole_mappings=76,read_bytes=reads,scientific_calls=0,qualification='Current code/data/control/review bytes retained; source scientific authority and actual finite run remain separate.')\np=base/'Root_actual_prelaunch_whole_alias_review.json';assert not p.exists();raw=(json.dumps(v,sort_keys=True,separators=(',',':'))+'\\n').encode()\nwith p.open('xb')as f:f.write(raw);f.flush();os.fsync(f.fileno())\nprint(json.dumps(dict(status=v['status'],review=dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),preservation=log['preservation'])))\n"
+  ],
+  "identities": [
+    {
+      "pid": 1040,
+      "birth": 1793399788.130479,
+      "initial_parent": 1039,
+      "group": 1040,
+      "session": 1040,
+      "peak_rss": 0
+    }
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 268435456,
+    "wall_seconds": 125.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 16127057920,
+    "available_ram": 4413685760
+  }
+}
