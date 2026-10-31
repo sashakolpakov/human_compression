@@ -113,6 +113,12 @@ outstanding. The earlier checkpoint 11,518 archive is preserved.
 All 21 historical payloads and five e466 preparation outputs retain their
 recorded mappings.
 
+Three [reviewed proof notes](research/diameter_eight/README.rst) develop the
+remaining graph census through degree counts and incidence matrices. They
+prove restrictions for one middle vertex and give complete conditional
+descriptions for two or three isolated middle vertices. Applying them to the
+pending families remains part of F009's unfinished treatment.
+
 The Fi22 ledger contains **77 generation cases, 77 separate intersection
 proofs for those same cases and 100 nongeneration cases**, leaving **28,731
 unresolved candidates** in its 28,908-row bank. The
