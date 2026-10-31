@@ -1,0 +1,101 @@
+import ast,copy,hashlib,json,os,resource,stat,sys,time
+from pathlib import Path
+P=Path('/private/tmp/f009_checkpoint11584_preservation');BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from11519/reader11584_evidence')
+START=time.monotonic();READ=Path(__file__).stat().st_size;STATS={}
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def need(ok,why):
+ if not ok:raise ValueError(why)
+ need_resource()
+def need_resource():
+ assert time.monotonic()-START<125 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<256*2**20
+def descriptor(p):
+ global READ
+ p=Path(p);s=p.lstat();need(stat.S_ISREG(s.st_mode) and s.st_size<=8*2**20 and READ+s.st_size<=2**30,'bounded local metadata descriptor')
+ b=p.read_bytes();READ+=len(b);need(len(b)==s.st_size and sig(p.lstat())==sig(s),'stable local metadata')
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def whole(r,body=False):
+ global READ
+ p=Path(r['path']);s=p.lstat();need(set(r)=={'path','bytes','sha256'} and type(r['bytes'])is int and 0<=r['bytes']==s.st_size<=2**31,'exact complete reference')
+ need(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and READ+s.st_size<=2**30,'canonical file and complete1GiB read budget')
+ if body:need(s.st_size<=8*2**20,'bounded metadata allocation')
+ h=hashlib.sha256();parts=[]
+ with p.open('rb')as f:
+  need(sig(os.fstat(f.fileno()))==sig(s),'same opened file')
+  while True:
+   b=f.read(2**20)
+   if not b:break
+   READ+=len(b);h.update(b)
+   if body:parts.append(b)
+   need_resource()
+  need(sig(os.fstat(f.fileno()))==sig(s),'same final opened file')
+ need(h.hexdigest()==r['sha256'] and sig(p.lstat())==sig(s),'whole stable SHA')
+ need(STATS.get(str(p),sig(s))==sig(s),'one physical edition');STATS[str(p)]=sig(s)
+ return b''.join(parts)if body else None
+def doc(r):return json.loads(whole(r,True))
+def local_doc(p):return doc(descriptor(p))
+def actual_capture(r):
+ x=doc(r);frames=x['all_genuine_api_frames'];need(x['root']==x['actor']=='/root' and frames and frames[-1]['exit_code']==x['actual_tool']['exit_code']==0,'genuine successful Root frames')
+ need(frames[0]==x['full_initial_tool_return'] and frames[-1]==x['full_tool_return'],'same full frames')
+ result=json.loads(''.join(f['output']for f in frames));need(result['status']=='PASS' and result['stop']=='RETURNED','actual guard PASS')
+ gp=Path(result['receipt']);g=local_doc(gp)
+ need(g['status']=='PASS' and g['returncode']==0 and not g['cleanup']['remaining'] and not g['cleanup']['errors'],'actual known-scope guard closure')
+ need(x['child_argv'][x['child_argv'].index('--')+1:]==g['command'],'exact issued child command')
+ err=gp.parent/'stderr.log';need(err.stat().st_size==0,'empty actual stderr')
+ return local_doc(gp.parent/'stdout.log')
+
+handoff=doc(dict(path=str(P/'handoff.json'),bytes=4339,sha256='a4c91034af71edbb7ad245effc12715995ea3826bc395c1b48b7ef7fb6c757d6'))
+src=whole(handoff['normal_writer'],True);tree=ast.parse(src)
+ns=dict(json=json,hashlib=hashlib,_FMP_TAG='Root_Preservation_map_reference',_FMP_SCHEMAS=frozenset(('F009_CONTINUATION_IMMUTABLE_PRESERVATION_PLAN_V1','F009_INTERRUPTED_RETURN_IMMUTABLE_PRESERVATION_PLAN_V1','ROOT_IMMUTABLE_F009_CONTINUATION_PRESERVATION_V1','ROOT_IMMUTABLE_F009_COMPLETE_CASE_PRESERVATION_V1')))
+names=('fmp_need','fmp_can','fmp_ref','fmp_parts','fmp_encode','fmp_expand')
+for node in tree.body:
+ if isinstance(node,ast.FunctionDef)and node.name in names:exec(compile(ast.get_source_segment(src.decode(),node),handoff['normal_writer']['path'],'exec',dont_inherit=True),ns)
+wire=doc(handoff['complete_false_preservation']);before=ns['fmp_expand'](wire)
+need(ns['fmp_encode'](before)==wire,'entire preservation reference inverse')
+need(before['root']=='/root' and before['Root_authority']is False and before['composition_status']=='PROPOSAL_ONLY_ROOT_COPIES_CONCATS_AND_ADOPTION_OWED' and before['no_original_or_previous_artifact_deleted_or_rewritten']is True,'unadopted proposal and existing nondeletion statement')
+rows=before.get('rows',[])+before.get('reused_previous_rows',[]);need(len(rows)==6813,'all original6813 pairs')
+mapping={r['original']['path']:r for r in rows};need(len(mapping)==6813,'unique original paths')
+plan=doc(handoff['checkpoint_plan_DATA_FALSE']);refs=plan['Reader'];reqwire=doc(refs['Owner_request']);tag=reqwire['Root_Request_rows_reference']
+request={k:v for k,v in reqwire.items()if k!='Root_Request_rows_reference'};request['inputs']=[dict(path=tag['prefixes'][i]+n,bytes=s,sha256=h)for i,n,s,h in tag['rows']]
+need(len(can(request))==tag['logical_bytes'] and hashlib.sha256(can(request)).hexdigest()==tag['logical_sha256'],'whole actual request inverse')
+io=doc(handoff['complete_IO_upper']);required={}
+for r in request['inputs']+list(refs.values())+io['fixed_output_inventory']:
+ if Path(r['path']).is_relative_to('/private/tmp'):
+  need(required.get(r['path'],r)==r,'one complete original identity');required[r['path']]=r
+need(len(required)==6813 and sum(r['bytes']for r in required.values())==375595641,'exact required private domain')
+need({p:r['original']for p,r in mapping.items()}==required,'no required path omitted or reinterpreted')
+copyrefs=local_doc(P/'Root_actual_six_copy_refs.json');need(len(copyrefs['core'])==5,'five actual core packs')
+core=doc(handoff['core477_retention'])
+for expected,call in zip(core['routes'],copyrefs['core']):
+ need(expected['name']==call['name'],'actual ordered pack');out=actual_capture(call['capture'])
+ need(out['preservation']==expected['expected_manifest_NOT_ACTUAL'] and out['actual_read_bytes']==expected['counts']['read_bytes'] and out['new_bytes']==expected['counts']['new_bytes'],'exact actual pack result');whole(out['preservation'])
+tail=doc(handoff['extra73_retention']);out=actual_capture(copyrefs['closed73_tail']);need(out['preservation']==tail['expected_manifest'] and out['actual_read_bytes']==2713056,'exact closed73 tail');whole(out['preservation'])
+concats=local_doc(P/'Root_actual_four_concat_refs.json');need(len(concats['calls'])==4,'four actual concatenations')
+for call in concats['calls']:
+ out=actual_capture(call['capture']);recipe=doc(call['recipe']);need(out['status']=='PASS' and out['original']==recipe['original'] and out['retained']==recipe['expected_Root_whole_mapping_NOT_ACTUAL']['retained'],'actual whole concat mapping')
+ receipt=doc(out['receipt']);need(receipt['all_ordered_parts_original_and_retained_whole_bytes_equal']is True and receipt['opaque_bytes_only']is True,'whole opaque reconstruction')
+ need(mapping[out['original']['path']]==dict(original=out['original'],retained=out['retained']),'reconstruction joins complete map')
+jobcopy=doc(handoff['current_Readerjob_already_Rootcopied']);actual_capture(jobcopy['actual_Root_SDK']);need(mapping[jobcopy['original']['path']]==dict(original=jobcopy['original'],retained=jobcopy['retained']),'actual known job copy joins map')
+for r in before['previous_preservations']:whole(r)
+unique={}
+for row in rows:
+ need(row['original']['bytes']==row['retained']['bytes'] and row['original']['sha256']==row['retained']['sha256'],'whole original-to-retained byte identity')
+ need(Path(row['retained']['path']).is_relative_to('/Users/sasha/medusa/research/leemans'),'retained artifact in corpus workspace')
+ for r in (row['original'],row['retained']):need(unique.get(r['path'],r)==r,'unique selected file edition');unique[r['path']]=r
+for r in unique.values():whole(r)
+for p,s in STATS.items():need(sig(Path(p).lstat())==s,'all final physical stats unchanged')
+after=copy.deepcopy(before);after.update(Root_authority=True,no_original_or_previous_artifact_deleted_or_rewritten=True,composition_status='ROOT_ALL6813_REQUIRED_MAPPING_BODIES_ACTUALLY_VERIFIED',qualification='All6813 required private originals and their whole retained bodies were freshly authenticated with final stat checks. Six actual Root copy results and four actual whole reconstructions join the exact false proposal. Old maps and byte-identical aliases are retained; no mathematical, state, graph or gzip decoding or new census credit.')
+undo=copy.deepcopy(after)
+for k in ('Root_authority','no_original_or_previous_artifact_deleted_or_rewritten','composition_status','qualification'):undo[k]=before[k]
+need(undo==before,'all rows and unrelated proposal fields preserved')
+encoded=ns['fmp_encode'](after);raw=can(encoded);need(len(raw)<=2**21,'physical preservation role')
+target=BASE/'preservation.json';need(not os.path.lexists(target),'fresh actual preservation')
+with target.open('xb')as f:need(f.write(raw)==len(raw),'whole preservation write');f.flush();os.fsync(f.fileno())
+stats_hash=hashlib.sha256(can([[p,list(STATS[p])]for p in sorted(STATS)])).hexdigest()
+proof=dict(schema='ROOT_F00911584_WHOLE_PRESERVATION_POSTCHECK_V1',root='/root',status='PASS',preservation=dict(path=str(target),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),mapping_pairs=6813,required_private_bytes=375595641,unique_physical_files_hashed=len(unique),actual_read_bytes=READ,all_final_stats_checked=True,final_stat_table_sha256=stats_hash,all6_actual_copy_joins_and4_actual_whole_reconstructions_checked=True,all6813_original_and_retained_whole_SHA_verified=True,proposal_whole_inverse_preserved=True,root_state_or_graph_or_gzip_decode=False,accepted_checkpoint_unchanged=11519,checkpoint_registration_performed=False,scientific_calls=0)
+path=BASE/'Root_preservation_postcheck.json';b=can(proof)
+with path.open('xb')as f:f.write(b);f.flush();os.fsync(f.fileno())
+fd=os.open(BASE,os.O_RDONLY)
+try:os.fsync(fd)
+finally:os.close(fd)
+print(json.dumps(dict(status='ROOT_COMPLETE6813_PRESERVATION_VERIFIED',preservation=proof['preservation'],postcheck=dict(path=str(path),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()),actual_read_bytes=READ,unique_hashed=len(unique)),sort_keys=True))

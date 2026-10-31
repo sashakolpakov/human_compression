@@ -1,0 +1,74 @@
+"""Invocation-local location scratch storage; no mathematical state or wire.
+
+The four-method interface is the old LocationDigestMap interface. Integer
+locations are split into fixed-width blocks, never arrays indexed by line.
+Dense blocks retain a separate occupancy mask, so None is an ordinary value.
+"""
+
+
+class _LocationBlock:
+    __slots__ = ('values', 'occupied')
+
+    def __init__(self):
+        self.values = {}
+        self.occupied = 0
+
+
+class LocationDigestMap:
+    __slots__ = ('_files', '_count')
+
+    def __init__(self):
+        self._files = {}
+        self._count = 0
+
+    @staticmethod
+    def _parts(key):
+        if (type(key) is not tuple or len(key) != 2
+                or type(key[0]) is not int or type(key[1]) is not int):
+            raise TypeError('scratch map key must be the two actual integer location indices')
+        return key
+
+    def __getitem__(self, key):
+        file_id, line = self._parts(key)
+        files = self._files.get(file_id)
+        block = None if files is None else files.get(line >> 8)
+        slot = line & 255
+        if block is None or not block.occupied & (1 << slot):
+            raise KeyError(key)
+        return block.values[slot]
+
+    def __setitem__(self, key, value):
+        file_id, line = self._parts(key)
+        files = self._files.get(file_id)
+        if files is None:
+            files = {}
+            self._files[file_id] = files
+        block_id, slot = line >> 8, line & 255
+        block = files.get(block_id)
+        if block is None:
+            block = _LocationBlock()
+            files[block_id] = block
+        bit = 1 << slot
+        if not block.occupied & bit:
+            block.occupied |= bit
+            self._count += 1
+        values = block.values
+        values[slot] = value
+        if type(values) is dict and len(values) >= 64:
+            dense = [None] * 256
+            for index, retained in values.items():
+                dense[index] = retained
+            block.values = dense
+
+    def __contains__(self, key):
+        file_id, line = self._parts(key)
+        files = self._files.get(file_id)
+        block = None if files is None else files.get(line >> 8)
+        return block is not None and bool(block.occupied & (1 << (line & 255)))
+
+    def __len__(self):
+        return self._count
+
+
+if __name__ == '__main__':
+    raise SystemExit('Private scratch-map Source; Root owns controls and activation.')

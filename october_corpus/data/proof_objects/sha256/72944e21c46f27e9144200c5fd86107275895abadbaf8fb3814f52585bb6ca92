@@ -1,0 +1,223 @@
+"""UNRUN exact embedded-class/seam and old-map synthetic controls only."""
+import argparse
+import ast
+import types
+import hashlib
+import json
+import os
+from pathlib import Path
+import resource
+import stat
+import sys
+import time
+
+START=time.monotonic()
+READ=0
+PINS=[]
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+    peak=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+    if peak>=128*2**20 or time.monotonic()-START>=100:raise RuntimeError('128MiB100s control bound')
+
+def signature(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def source(path,sha):
+    global READ
+    p=Path(path);a=p.lstat()
+    need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+         and a.st_nlink==1 and 0<a.st_size<=65536 and READ+a.st_size<=262144,'preadmitted bounded ordinary Source')
+    with p.open('rb')as f:
+        b=os.fstat(f.fileno());raw=f.read(a.st_size+1);z=os.fstat(f.fileno())
+    need(signature(a)==signature(b)==signature(z)==signature(p.lstat())
+         and len(raw)==a.st_size and hashlib.sha256(raw).hexdigest()==sha,'stable complete Source')
+    READ+=len(raw);PINS.append(dict(path=str(p),bytes=len(raw),sha256=sha))
+    return raw
+
+def module(path,raw,label):
+    namespace=dict(__file__=path,__name__='F009_synthetic_'+label,__package__=None)
+    text=raw.decode();tree=ast.parse(text)
+    for name in ('_LocationBlock','LocationDigestMap'):
+        nodes=[n for n in tree.body if isinstance(n,ast.ClassDef)and n.name==name]
+        need(len(nodes)==(1 if name=='LocationDigestMap' or label!='old' else 0),'complete exact class-only subject')
+        for n in nodes:exec(compile(ast.get_source_segment(text,n),path+'::synthetic_class_only','exec',dont_inherit=True),namespace)
+    return namespace['LocationDigestMap']
+
+def outcome(fn):
+    try:return('returned',fn())
+    except (KeyError,TypeError)as e:return(type(e).__name__,e.args)
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--old',nargs=2,required=True)
+    ap.add_argument('--new',nargs=2,required=True)
+    ap.add_argument('--standalone',nargs=2,required=True)
+    ap.add_argument('--out',required=True)
+    a=ap.parse_args()
+    own=str(Path(__file__).resolve());source(own,a.self_sha256)
+    oldraw=source(*a.old);newraw=source(*a.new);standaloneraw=source(*a.standalone)
+    before=module(a.old[0],oldraw,'old');after=module(a.new[0],newraw,'new')
+    standalone_map=module(a.standalone[0],standaloneraw,'standalone')
+    checks=[]
+    x=before();y=after()
+    need(len(x)==len(y)==0,'empty size');checks.append('empty_size')
+    key=(0,0)
+    need(before._parts(key)is key and after._parts(key)is key,'literal original tuple returned');checks.append('parts_tuple_identity')
+    need((key in x)is(key in y)is False,'empty membership');checks.append('empty_membership')
+    need(outcome(lambda:x[key])==outcome(lambda:y[key])==('KeyError',(key,)),'identical missing error');checks.append('empty_missing_error')
+    def put(k,v):
+        x[k]=v;y[k]=v
+        need(len(x)==len(y)and(k in x)is(k in y)is True
+             and x[k]is y[k]is v,'complete count/member/identity equality')
+    values=[None,False,0,object(),[],{}]
+    for i,line in enumerate((-257,-256,-1,0,1,255,256,257,10**90,-10**90)):
+        put((0,line),values[i%len(values)])
+    checks.append('signed_boundary_and_huge_integer_keys')
+    for k in [(0,2),(0,-2),(1,0),(-1,0),(10**90,0)]:
+        need(outcome(lambda k=k:x[k])==outcome(lambda k=k:y[k])and(k in x)is(k in y),'all missing locations equal')
+    checks.append('missing_keys_preserved')
+    oldlen=len(x);token=object();put((0,0),token);need(len(x)==oldlen and y[(0,0)]is token,'overwrite identity and count');checks.append('overwrite_without_count')
+    put((0,0),None);need((0,0)in y and y[(0,0)]is None,'occupied None distinct from missing');checks.append('stored_None')
+    put((0,0),False);need((0,0)in y and y[(0,0)]is False,'occupied False distinct from missing');checks.append('stored_False')
+    mutable=[];put((13,7),mutable);mutable.append('still same object');need(y[(13,7)]is mutable and x[(13,7)]is mutable,'no value copy');checks.append('mutable_value_identity')
+    x=before();y=after();items=[object()for _ in range(256)];items[7]=None;items[19]=False
+    for i in range(63):put((9,i),items[i])
+    need(type(y._files[9][0].values)is dict and len(y)==63,'bounded sparse block');checks.append('sparse_63_slots')
+    put((9,7),None);need(len(y)==63,'overwrite does not cross occupancy threshold');checks.append('overwrite_before_transition')
+    put((9,255),items[255])
+    need(type(y._files[9][0].values)is list and len(y._files[9][0].values)==256 and len(y)==64,'bounded dense transition');checks.append('transition_64_slots')
+    need(all(y[(9,i)]is items[i]for i in range(63))and y[(9,255)]is items[255],'all values survive transition');checks.append('transition_value_identity')
+    need((9,200)not in y and outcome(lambda:y[(9,200)])==('KeyError',((9,200),)),'dense unoccupied None refuses');checks.append('dense_missing_occupancy')
+    for i in range(256):put((9,i),items[i])
+    need(len(y)==256 and y._files[9][0].occupied==(1<<256)-1,'entire full block');checks.append('dense_full_256')
+    for i in range(256):put((9,i),items[255-i])
+    need(len(y)==256,'all dense overwrites preserve size');checks.append('dense_overwrites')
+    put((9,256),None);need(y[(9,255)]is items[0]and y[(9,256)]is None,'adjacent block independent');checks.append('boundary_255_256')
+    for i in range(64):put((-3,-256+i),items[i])
+    need(type(y._files[-3][-1].values)is list,'negative block dense transition');checks.append('negative_dense_block')
+    for file_id in (-10**90,-1,0,1,10**90):put((file_id,5),file_id)
+    need(all(y[(i,5)]==i for i in(-10**90,-1,0,1,10**90)),'file namespaces independent');checks.append('arbitrary_file_integer_namespaces')
+    class IntSubclass(int):pass
+    class TupleSubclass(tuple):pass
+    bad=[None,[],[1,2],(),(1,),(1,2,3),(True,0),(0,False),(1.0,2),(1,'2'),(IntSubclass(1),2),TupleSubclass((1,2))]
+    for k in bad:
+        need(outcome(lambda k=k:x[k])==outcome(lambda k=k:y[k]),'get typing identical')
+        need(outcome(lambda k=k:k in x)==outcome(lambda k=k:k in y),'contains typing identical')
+        need(outcome(lambda k=k:x.__setitem__(k,None))==outcome(lambda k=k:y.__setitem__(k,None)),'set typing identical')
+    checks.append('all_exact_key_type_refusals')
+    x=before();y=after()
+    for i in range(521):
+        line=((i*137)%521)-260;put((i%7-3,line),items[i%256])
+    checks.append('arbitrary_insertion_order')
+    seed=173
+    for i in range(4096):
+        seed=(seed*1103515245+12345)%2**31;k=(seed%13-6,(seed//13)%2049-1024)
+        if i%3==0:put(k,values[(seed//17)%len(values)])
+        elif k in x:need(y[k]is x[k],'randomized existing value identity')
+        else:need(k not in y and outcome(lambda k=k:x[k])==outcome(lambda k=k:y[k]),'randomized missing identity')
+        need(len(x)==len(y),'exact length every mixed operation')
+    checks.append('deterministic_mixed_operations')
+    x=before();y=after()
+    for i in range(100):put((1,(1<<4096)+(i<<12)),None)
+    need(len(y._files[1])==100 and all(type(b.values)is dict and len(b.values)==1 for b in y._files[1].values()),'huge sparse lines allocate one small block each');checks.append('no_large_indexed_sparse_array')
+    for files in y._files.values():
+        for block in files.values():
+            need(0<block.occupied.bit_length()<=256,'bounded occupancy mask')
+            need(type(block.values)is dict and all(type(i)is int and 0<=i<256 for i in block.values),'bounded sparse slots')
+    checks.append('bounded_occupancy_and_slot_keys')
+    # The embedded definitions are exact acquired d734 class ASTs. Only these
+    # class definitions and the three named caller functions are activated here.
+    # No complete Native caller, project module or original payload is loaded.
+    caller_text=newraw.decode();standalone_text=standaloneraw.decode()
+    caller_ast=ast.parse(caller_text);standalone_ast=ast.parse(standalone_text)
+    def named(tree,name,kind):
+        values=[n for n in tree.body if isinstance(n,kind)and n.name==name]
+        need(len(values)==1,'one whole named synthetic-control definition')
+        return values[0]
+    for name in ('_LocationBlock','LocationDigestMap'):
+        need(ast.dump(named(caller_ast,name,ast.ClassDef),include_attributes=False)==ast.dump(named(standalone_ast,name,ast.ClassDef),include_attributes=False),'literal embedded adaptive class AST')
+    checks.append('both_embedded_class_ASTs_equal_d734')
+    expand=named(caller_ast,'root_pin_expand',ast.FunctionDef)
+    need(not any(isinstance(n,ast.Call)and isinstance(n.func,ast.Attribute)and n.func.attr=='module'for n in ast.walk(expand)),'production expand has no separate module load')
+    checks.append('production_expand_no_external_module_call')
+    factories=[n for n in ast.walk(expand)if isinstance(n,ast.Assign)and any(isinstance(v,ast.Subscript)and isinstance(v.value,ast.Name)and v.value.id=='private'and isinstance(v.slice,ast.Constant)and v.slice.value=='ROOT_LOAD_LOCATION_MAP'for v in n.targets)]
+    need(len(factories)==1 and isinstance(factories[0].value,ast.Name)and factories[0].value.id=='LocationDigestMap','one owned embedded production factory')
+    checks.append('production_factory_is_actual_embedded_class')
+    # A tiny synthetic codec has the exact old edit sites. The actual extracted
+    # root_pin_expand must use its owned class and refuse any module acquisition.
+    # The filename is a provider-identity fixture, never an acquired-code claim.
+    fixture='''def authenticate_lines(pins,groups,expected=None):
+    found={}if expected is None else None
+    if expected is None:
+        found[(0,0)]=pins
+        return found
+    need(expected[(0,0)]is pins,'fixture retained value identity')
+    return None
+
+def compact(state):
+    groups=[];expected={}
+    expected[(0,0)]=state
+    authenticate_lines(pins,groups,expected)
+    return state
+
+def expand(value,*,envelope):
+    pins=value;leaves={'groups':[]}
+    def file_ref(i):return dict(index(pins,i))
+    hashes=authenticate_lines(pins,leaves['groups'])
+    need(hashes[(0,0)]is pins,'fixture complete first authentication')
+    old=value
+    state=w.unwire(old)
+    need(compact(state)==value,'fixture full equality')
+    return state
+'''
+    constants={}
+    for n in caller_ast.body:
+        if isinstance(n,ast.Assign)and len(n.targets)==1 and isinstance(n.targets[0],ast.Name)and n.targets[0].id in ('ROOT_PIN_CODEC','ROOT_PIN_BEFORE','ROOT_PIN_AFTER'):
+            constants[n.targets[0].id]=ast.literal_eval(n.value)
+    need(set(constants)=={'ROOT_PIN_CODEC','ROOT_PIN_BEFORE','ROOT_PIN_AFTER'},'all three literal seam constants')
+    events=[];namespace=dict(ast=ast,Path=Path,need=need,root_observe=events.append,__file__=a.new[0],**constants)
+    for name in ('_LocationBlock','LocationDigestMap'):
+        n=named(caller_ast,name,ast.ClassDef)
+        exec(compile(ast.get_source_segment(caller_text,n),a.new[0]+'::synthetic_embedded_class','exec',dont_inherit=True),namespace)
+    for name in ('root_pin_text','root_pin_edit','root_pin_expand'):
+        n=named(caller_ast,name,ast.FunctionDef)
+        exec(compile(ast.get_source_segment(caller_text,n),a.new[0]+'::synthetic_embedded_seam','exec',dont_inherit=True),namespace)
+    class NoModuleContract:
+        def __init__(self):self.module_calls=0;self.source_calls=0;self.modules={}
+        def source_text(self,ref):
+            need(ref==constants['ROOT_PIN_CODEC'],'only declared synthetic codec identity')
+            self.source_calls+=1
+            return fixture
+        def module(self,*args):
+            self.module_calls+=1
+            raise AssertionError('embedded production seam must not acquire a map module')
+    contract=NoModuleContract();codec=types.ModuleType('F009_synthetic_embedded_codec')
+    codec.__file__=constants['ROOT_PIN_CODEC']['path'];token=object()
+    vars(codec).update(need=need,pins=token,w=types.SimpleNamespace(unwire=lambda value:value))
+    exec(compile(fixture,codec.__file__,'exec',dont_inherit=True),vars(codec))
+    original=(codec.expand,codec.authenticate_lines,codec.compact)
+    for _ in range(2):need(namespace['root_pin_expand'](contract,codec,token,envelope={})is token,'same actual synthetic returned value')
+    checks.append('actual_extracted_seam_repeated_value_identity')
+    need(contract.module_calls==0 and contract.modules=={} and contract.source_calls==6,'no dynamic map acquisition in either call')
+    checks.append('actual_seam_never_calls_forbidden_module_loader')
+    need(original==(codec.expand,codec.authenticate_lines,codec.compact),'all original codec providers remain unchanged')
+    checks.append('actual_seam_preserves_original_provider_identities')
+    need(events.count('lf1.begin')==events.count('lf1.end')==events.count('lf2.begin')==events.count('lf2.end')==2,'both full authentication phases run in both calls')
+    checks.append('both_authentication_phases_retained_per_call')
+    need(events.count('compact.begin')==events.count('compact.end')==2 and events.count('unwire.begin')==events.count('unwire.end')==2,'unwire and complete roundtrip retained')
+    checks.append('unwire_and_full_compact_roundtrip_retained')
+    need(namespace['LocationDigestMap']is not standalone_map,'independent owned class object, identical literal body')
+    checks.append('owned_class_does_not_depend_on_external_module_identity')
+
+    # Root reads the actual samefiles again; no cache or old control verdict.
+    original=list(PINS)
+    for r in original:source(r['path'],r['sha256'])
+    out=Path(a.out);need(out.is_absolute()and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh complete control output')
+    out.mkdir()
+    result=dict(schema='F009_INLINE_ADAPTIVE_LOCATION_MAP_CONTROLS_V1',status='PASS',checks=checks,count=len(checks),sources=original,read_bytes=READ,Original_cases=0,Native_or_Reader_calls=0,scientific_payloads_opened=0)
+    data=(json.dumps(result,sort_keys=True,separators=(',',':'))+'\n').encode();need(len(data)<=16384,'bounded control report')
+    with(out/'result.json').open('xb')as f:need(f.write(data)==len(data),'whole control result');f.flush();os.fsync(f.fileno())
+    print(json.dumps(dict(status='PASS',controls=len(checks),result=dict(path=str(out/'result.json'),bytes=len(data),sha256=hashlib.sha256(data).hexdigest())),sort_keys=True))
+
+if __name__=='__main__':main()

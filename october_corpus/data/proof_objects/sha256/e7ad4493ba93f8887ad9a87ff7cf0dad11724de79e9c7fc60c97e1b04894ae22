@@ -1,0 +1,80 @@
+"""UNRUN synthetic metadata-only controls for the new aggregate-IO policy.
+No current case, original input body, Reader, registrar run/main or CAS is called.
+"""
+from pathlib import Path
+import argparse,ast,hashlib,json,os,resource,stat,sys,tempfile,time
+READ=0
+
+def require(ok,why):
+ if not ok:raise ValueError(why)
+def source(pair):
+ global READ
+ p=Path(pair[0]);a=p.lstat();require(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=65536,'bounded exact Source')
+ require(READ+a.st_size+1<=2*2**20,'two-MiB Source read budget')
+ with p.open('rb')as f:
+  before=os.fstat(f.fileno());b=f.read(a.st_size+1);after=os.fstat(f.fileno())
+ sig=lambda z:(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ require(sig(a)==sig(before)==sig(after)==sig(p.lstat())and len(b)==a.st_size and hashlib.sha256(b).hexdigest()==pair[1],'whole stable Source')
+ READ+=len(b);return b.decode()
+def main():
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True);ap.add_argument('--subject',nargs=2,required=True);ap.add_argument('--parent',nargs=2,required=True);a=ap.parse_args()
+ require(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'minimal EBS')
+ own=Path(__file__).resolve();owntext=source([str(own),a.self_sha256]);text=source(a.subject);parent=source(a.parent)
+ require(len(owntext.encode())+len(text.encode())<=65536,'activated subject/control Source union')
+ tree=ast.parse(text);bt=ast.parse(parent)
+ for statement in ["PHYSICAL_READ_LIMIT=3*2**30","PHYSICAL_READ_POLICY='F009_METADATA_AGGREGATE_READ_3_GIB_V1'","REFERENCE_WIRE_QUOTA='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'"]:
+  expected=ast.dump(ast.parse(statement).body[0],include_attributes=False)
+  require(sum(ast.dump(n,include_attributes=False)==expected for n in tree.body)==1,'actual Source policy constant')
+ defs={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)};old={n.name:n for n in bt.body if isinstance(n,ast.FunctionDef)}
+ changed=[n for n in old if ast.dump(old[n],include_attributes=False)!=ast.dump(defs[n],include_attributes=False)]
+ require(changed==['whole','observed','reader_job_doc','inventory','run']and set(defs)-set(old)=={'registration_policies'},'only reviewed accounting/policy functions change')
+ for name in('f9_rows','fmp_ref','merge','durable_whole','tick'):
+  require(ast.dump(old[name],include_attributes=False)==ast.dump(defs[name],include_attributes=False),'domain/reuse/guard predicates unchanged')
+ require('for r in rows:whole(r,aliases,_first_pass=(first_pass_phase,first_pass_acquired))'in text
+  and 'for r in rows:whole(r,aliases)'in text,'both complete sweeps retained')
+ require(text.count('stream.read(MIB)')==parent.count('stream.read(MIB)')and text.count('f.read(MIB)')==parent.count('f.read(MIB)'),'one-MiB streaming unchanged')
+ ns=dict(Path=Path,hashlib=hashlib,json=json,os=os,stat=stat,sys=sys,time=time,resource=resource,math=__import__('math'),MIB=2**20,START=time.monotonic(),READ_BYTES=0,PHYSICAL_READ_LIMIT=3*2**30,PHYSICAL_READ_POLICY='F009_METADATA_AGGREGATE_READ_3_GIB_V1',REFERENCE_WIRE_QUOTA='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2',LIVE=(),_F9_SOURCE_TAG='Root_Source_rows_reference',_F9_DECLARED_TAG='Root_Declared_rows_reference',_F9_LOGICAL_LIMIT=8*2**20)
+ selected=['need','tick','sig','canonical','strict','whole','durable_whole','observed','reader_job_doc','inventory','merge','registration_policies','f9_need','f9_rows','f9_canonical','f9_image','f9_expand_job','f9_expand_declared','f9_expand_table']
+ for name in selected:
+  node=defs[name];exec(compile(ast.get_source_segment(text,node),a.subject[0],'exec',dont_inherit=True),ns)
+ passed=[]
+ def done(n):passed.append(n)
+ def reject(n,f):
+  try:f()
+  except(ValueError,KeyError,TypeError,IndexError):done(n);return
+  raise ValueError('negative fixture accepted:'+n)
+ def fixture(p,b):
+  p.write_bytes(b);return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ limit=3*2**30
+ with tempfile.TemporaryDirectory(prefix='f009_registration_io_',dir='/private/tmp')as td:
+  root=Path(td);r=fixture(root/'plain',b'abc\n')
+  ns['READ_BYTES']=limit-r['bytes'];require(ns['whole'](r)==r and ns['READ_BYTES']==limit,'exact aggregate boundary whole hash');done('whole_exact3GiB_boundary')
+  ns['READ_BYTES']=limit-r['bytes']+1;reject('whole_over3GiB_before_read',lambda:ns['whole'](r));require(ns['READ_BYTES']==limit-r['bytes']+1,'failed admission uncharged')
+  ns['READ_BYTES']=2**31;require(ns['whole'](r)==r,'new explicitly broader IO window');done('whole_above_old_aggregate_cap')
+  ns['READ_BYTES']=0;reject('wrong_complete_SHA',lambda:ns['whole'](dict(r,sha256='0'*64)))
+  phase=object();facts={};ns['READ_BYTES']=0;ns['whole'](r,_first_pass=(phase,facts));before=ns['READ_BYTES'];ns['durable_whole'](r,phase,facts);require(ns['READ_BYTES']==before,'same actor durable fact reuse');done('durable_reuse_unchanged')
+  reject('foreign_phase_durable_fact_refused',lambda:ns['durable_whole'](r,object(),facts))
+  ns['READ_BYTES']=limit-r['bytes'];got=ns['observed'](r['path']);require(got[0]==r and ns['READ_BYTES']==limit,'observation exact bound');done('observed_exact3GiB_boundary')
+  ns['READ_BYTES']=limit-r['bytes']+1;reject('observed_over3GiB_before_read',lambda:ns['observed'](r['path']))
+  jr=fixture(root/'job.json',ns['canonical'](dict(schema='ROOT_F009_STANDALONE_JOB_V1',role='reader')))
+  ns['READ_BYTES']=limit-jr['bytes'];require(ns['reader_job_doc'](jr)['role']=='reader'and ns['READ_BYTES']==limit,'Reader role exact bound');done('Reader_metadata_exact3GiB_boundary')
+  ns['READ_BYTES']=limit-jr['bytes']+1;reject('Reader_metadata_over3GiB',lambda:ns['reader_job_doc'](jr))
+  out=root/'output';out.mkdir();rr=fixture(out/'result.json',b'{}\n');ns['READ_BYTES']=limit-2*rr['bytes'];require(ns['inventory'](out)==[rr]and ns['READ_BYTES']==limit,'inventory and required second whole hash');done('inventory_both_reads_at3GiB_boundary')
+  ns['READ_BYTES']=limit-2*rr['bytes']+1;reject('inventory_second_hash_admission_enforced',lambda:ns['inventory'](out))
+  fake=dict(r,bytes=2**31);require(ns['f9_rows']([fake],40000)==[fake],'unique-domain exact two-GiB limit');done('descriptor_domain2GiB_unchanged')
+  reject('descriptor_domain_above2GiB_refused',lambda:ns['f9_rows']([dict(fake,bytes=2**31+1)],40000))
+  reject('merged_unique_domain_above2GiB_refused',lambda:ns['merge']([dict(fake,bytes=2**31+1)]))
+ io=ns['PHYSICAL_READ_POLICY'];wire=ns['REFERENCE_WIRE_QUOTA']
+ plan=dict(physical_read_policy=io,aggregate_physical_read_limit=limit,reference_wire_quota=wire)
+ release=dict(plan,V2_Source_support_and_actual_Reader_reviewed=True);gate=dict(reference_wire_quota=wire);returned=dict(gate)
+ p=ns['registration_policies'](plan,release,gate,returned);require(p['unique_input_domain_limit']==2**31 and p['stream_chunk_bytes']==2**20 and p['reference_wire_quota']==wire,'explicit retained policy');done('fresh_IO_and_V2_policies')
+ reject('old_IO_release_refused',lambda:ns['registration_policies'](plan,dict(release,aggregate_physical_read_limit=2**31),gate,returned))
+ reject('missing_IO_label_refused',lambda:ns['registration_policies']({},release,gate,returned))
+ reject('old_wire_gate_refused',lambda:ns['registration_policies'](plan,release,dict(gate,reference_wire_quota='OLD'),returned))
+ reject('missing_return_wire_policy_refused',lambda:ns['registration_policies'](plan,release,gate,{}))
+ reject('missing_actual_V2_review_refused',lambda:ns['registration_policies'](plan,dict(release,V2_Source_support_and_actual_Reader_reviewed=False),gate,returned))
+ calls=[n for n in ast.walk(defs['run'])if isinstance(n,ast.Call)and isinstance(n.func,ast.Attribute)and n.func.attr=='update'and n.args and isinstance(n.args[0],ast.Name)and n.args[0].id=='policies']
+ require(sorted(n.func.value.id for n in calls if isinstance(n.func.value,ast.Name))==['cp','method','sp'],'explicit method/checkpoint/snapshot policy retention');done('method_CP_SP_explicit_policy_storage')
+ require(source(a.subject)==text and source(a.parent)==parent and source([str(own),a.self_sha256])==owntext,'all complete Sources unchanged')
+ print(json.dumps(dict(schema='F009_AGGREGATE_IO_V2_SYNTHETIC_CONTROLS_V1',status='PASS',controls=len(passed),names=passed,Source_bytes=len(owntext.encode())+len(text.encode()),Source_read_bytes=READ,largest_fixture_bytes=128,synthetic_counter_positions_only=True,actual_case_or_registrar_run_or_CAS_calls=0,scope='Only tiny actual metadata SHA/stat reads and pure policy functions; no original inputs or old execution verdict.',Root_authority=False),sort_keys=True))
+if __name__=='__main__':main()

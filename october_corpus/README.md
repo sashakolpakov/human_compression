@@ -104,10 +104,12 @@ The continuation from 11,519 completed 25 families and refined five in 65
 transactions. Its strict Reader verified the complete typed state and its
 ordering; all three current records agree after registration. The census
 remains unfinished, and the next operation is refinement of the remaining debt.
-The [public F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
-still contains checkpoint **11,518**, which had no reserved debt. Its integrity
-checker authenticates archived bytes and mappings; it does not rerun the
-mathematical Reader. The newer checkpoint is not yet included in that archive.
+The [public F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
+now contains checkpoint **11,584**, including its accepted records, selected
+programs, computation outputs and registration evidence. Its relative checker
+verified all 675 listed files and 1,403 original mappings. It authenticates
+archived bytes; fresh mathematical Reader replay from a clone remains
+outstanding. The earlier checkpoint 11,518 archive is preserved.
 All 21 historical payloads and five e466 preparation outputs retain their
 recorded mappings.
 

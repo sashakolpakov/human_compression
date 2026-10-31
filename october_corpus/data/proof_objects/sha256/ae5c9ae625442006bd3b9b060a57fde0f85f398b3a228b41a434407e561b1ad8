@@ -1,0 +1,236 @@
+"""Authenticated ordered state transport; never a substitute for initial proof."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import gzip
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+
+SCHEMA = 'F009_ORDERED_ACQUIRED_STATE_V1'
+PROFILE = 'F009_ORDERED_SNAPSHOT_SOURCE_PROFILE_V1'
+ADOPTION = 'ROOT_ACCEPTED_F009_ORDERED_STATE_SNAPSHOT_V1'
+MAX_RAW = 64 * 2**20
+MAX_PACKED = 3 * 2**20
+STATE_KEYS = {'target', 'binary', 'completion_binary', 'nodes', 'pending',
+              'leaves', 'sequence', 'started'}
+BACKEND_FILES = {'census_backend_transition.py', 'census_queue_runtime.py',
+                 'census_queue.py', 'census_queue_completion.py',
+                 'census_terminal_reader.py', 'census_queue_completion_verify.py',
+                 'census_queue_verify.py'}
+
+def need(ok, reason):
+    if not ok:
+        raise ValueError(reason)
+
+def pin(path):
+    path = Path(path); h = hashlib.sha256()
+    with path.open('rb') as stream:
+        for part in iter(lambda: stream.read(2**20), b''):
+            h.update(part)
+    return dict(path=str(path), bytes=path.stat().st_size, sha256=h.hexdigest())
+
+def pin_shape(ref):
+    need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}, 'pin schema')
+    need(type(ref['path']) is str and Path(ref['path']).is_absolute()
+         and type(ref['bytes']) is int and ref['bytes'] >= 0
+         and digest(ref['sha256']), 'pin fields')
+
+def digest(value):
+    return type(value) is str and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+
+def acquire(ref):
+    pin_shape(ref); need(pin(ref['path']) == ref, 'exact pinned bytes: '+ref['path'])
+
+def pairs(items):
+    result = {}
+    for key, value in items:
+        need(key not in result, 'duplicate JSON key')
+        result[key] = value
+    return result
+
+def strict_json(raw):
+    def reject(value):
+        raise ValueError('nonfinite JSON number: '+value)
+    return json.loads(raw, object_pairs_hook=pairs, parse_constant=reject)
+
+def read(ref):
+    acquire(ref)
+    return strict_json(Path(ref['path']).read_bytes())
+
+def reference(ref):
+    need(type(ref) is dict and set(ref) == {'file', 'line', 'sha256'}, 'line reference schema')
+    pin_shape(ref['file'])
+    need(type(ref['line']) is int and ref['line'] >= 0 and digest(ref['sha256']), 'line reference fields')
+
+def wire(state):
+    """Only pending's set representation changes; node/debt order is explicit."""
+    need(type(state) is dict and set(state) == STATE_KEYS, 'complete state fields')
+    need(type(state['pending']) is set, 'pending is a set')
+    # References here are read-only; JSON serialization breaks all sharing.
+    # Avoid duplicating the potentially long list of raw leaf references.
+    value = dict(state)
+    value['nodes'] = [[key, node] for key, node in state['nodes'].items()]
+    value['started'] = [[key, debt] for key, debt in state['started'].items()]
+    value['pending'] = sorted(state['pending'])
+    decoded = unwire(value)
+    need(decoded == state and list(decoded['nodes']) == list(state['nodes'])
+         and list(decoded['started']) == list(state['started']), 'entire typed ordered roundtrip')
+    return value
+
+def unwire(value):
+    need(type(value) is dict and set(value) == STATE_KEYS, 'wire state fields')
+    need(value['target'] in ([22, 5, 4, 5], [32, 5, 4, 8])
+         and all(type(x) is int for x in value['target']), 'exact mixed target')
+    need(type(value['sequence']) is int and value['sequence'] >= 0, 'sequence integer')
+    for key in ('binary', 'completion_binary'):
+        pin_shape(value[key])
+    need(type(value['nodes']) is list and type(value['started']) is list
+         and type(value['pending']) is list and type(value['leaves']) is list, 'ordered containers')
+    nodes = {}
+    for index, item in enumerate(value['nodes']):
+        need(type(item) is list and len(item) == 2, 'node pair')
+        ident, node = item
+        need(digest(ident) and ident not in nodes and type(node) is dict, 'unique node identity')
+        need(set(node) == {'values', 'record', 'canonical', 'receiver', 'children', 'creation'}, 'complete node fields')
+        need(type(node['creation']) is int and node['creation'] == index, 'literal creation/insertion order')
+        need(type(node['values']) is list and len(node['values']) >= 11
+             and all(type(x) is int for x in node['values'])
+             and node['values'][:4] == value['target'], 'literal node values')
+        reference(node['record']); need(node['record']['sha256'] == ident, 'record/node identity')
+        key = node['canonical']
+        need(type(key) is dict and set(key) == {'key', 'lab'}
+             and type(key['key']) is str and type(key['lab']) is list
+             and all(type(x) is int for x in key['lab']), 'complete canonical proposal')
+        need(node['receiver'] == ident or node['receiver'] in nodes, 'backward alias receiver')
+        need(node['children'] is None or (type(node['children']) is list
+             and all(digest(x) for x in node['children'])), 'ordered children or unpaid')
+        nodes[ident] = node
+    pending = value['pending']
+    need(all(digest(x) for x in pending) and pending == sorted(set(pending)), 'canonical set encoding')
+    need(set(pending) == {k for k, n in nodes.items() if n['receiver'] == k and n['children'] is None}, 'all unpaid receivers retained')
+    for node in nodes.values():
+        if node['children'] is not None:
+            need(all(x in nodes for x in node['children']), 'all child identities present')
+    started = {}
+    for item in value['started']:
+        need(type(item) is list and len(item) == 2, 'debt pair')
+        ident, debt = item
+        need(ident in pending and ident not in started and type(debt) is dict
+             and set(debt) == {'kind', 'dispatch'} and debt['kind'] in ('complete', 'refine'), 'literal pending dispatch debt')
+        pin_shape(debt['dispatch']); started[ident] = debt
+    for leaf in value['leaves']:
+        reference(leaf)
+    result = dict(value)
+    result.update(nodes=nodes, started=started, pending=set(pending))
+    return result
+
+def profile(ref):
+    value = read(ref)
+    need(set(value) == {'schema', 'codec', 'exporter', 'upstream_reader', 'backend_sources'}
+         and value['schema'] == PROFILE, 'source profile schema')
+    need(value['codec']['path'] == str(Path(__file__).resolve()), 'actual codec identity')
+    need(type(value['backend_sources']) is list and value['backend_sources'], 'complete declared source closure')
+    here = Path(__file__).resolve().parent
+    need(value['exporter']['path'] == str(here/'census_saved_head_snapshot_read.py')
+         and value['upstream_reader']['path'] == str(here/'census_saved_head_alias_read.py'),
+         'exact exporting and inherited reader sources')
+    need({Path(x['path']).name for x in value['backend_sources']} == BACKEND_FILES
+         and all(Path(x['path']).parent == here for x in value['backend_sources']),
+         'entire direct backend import closure')
+    refs = [value[k] for k in ('codec', 'exporter', 'upstream_reader')] + value['backend_sources']
+    need(len({x['path'] for x in refs}) == len(refs), 'unique source profile')
+    for row in refs:
+        acquire(row)
+    return value
+
+def encode(envelope):
+    raw = (json.dumps(envelope, separators=(',', ':'), ensure_ascii=True)+'\n').encode('ascii')
+    need(len(raw) <= MAX_RAW, 'bounded uncompressed state')
+    packed = gzip.compress(raw, compresslevel=6, mtime=0)
+    need(len(packed) <= MAX_PACKED, 'bounded compressed state')
+    return packed
+
+def decode(packed):
+    need(len(packed) <= MAX_PACKED, 'bounded compressed input')
+    with gzip.GzipFile(fileobj=io.BytesIO(packed), mode='rb') as stream:
+        raw = stream.read(MAX_RAW+1)
+        need(len(raw) <= MAX_RAW and stream.read(1) == b'', 'bounded expanded input')
+    return strict_json(raw)
+
+def export(state, path, *, head, producer_case, upstream_acceptance, source_profile):
+    """Called only after the one ordinary full read and all its metadata joins."""
+    profile(source_profile)
+    for ref in (head, producer_case, upstream_acceptance):
+        acquire(ref)
+    case = read(producer_case); acceptance = read(upstream_acceptance)
+    need(case['base'] == acceptance['head'], 'exact acquired upstream head')
+    need(state['target'] == case['target'] and state['binary'] == case['binary']
+         and state['completion_binary'] == case['completion_binary'], 'current exact target/backends')
+    envelope = dict(schema=SCHEMA, head=head, producer_case=producer_case,
+                    upstream_acceptance=upstream_acceptance, source_profile=source_profile,
+                    state=wire(state))
+    packed = encode(envelope); decoded = decode(packed)
+    need(decoded == envelope, 'entire serialized envelope roundtrip')
+    restored = unwire(decoded['state'])
+    need(restored == state and list(restored['nodes']) == list(state['nodes'])
+         and list(restored['started']) == list(state['started']), 'serialized ordered state equality')
+    del restored, decoded, envelope
+    path = Path(path); staged = path.with_name(path.name+'.staged')
+    need(not path.exists() and not staged.exists(), 'fresh snapshot and stage')
+    with staged.open('xb') as stream:
+        stream.write(packed); stream.flush(); os.fsync(stream.fileno())
+    need(staged.read_bytes() == packed, 'durable staged state bytes')
+    os.replace(staged, path)
+    fd = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    for ref in (head, producer_case, upstream_acceptance):
+        acquire(ref)
+    profile(source_profile)
+    return pin(path)
+
+def load(snapshot, *, head, producer_case, upstream_acceptance, source_profile, adoption):
+    """The exact adoption pin is supplied by a separately reviewed caller."""
+    pin_shape(snapshot)
+    need(snapshot['bytes'] <= MAX_PACKED, 'bounded snapshot pin size')
+    gate = read(adoption)
+    need(gate.get('status') == ADOPTION, 'separate snapshot adoption')
+    expected = dict(snapshot=snapshot, head=head, producer_case=producer_case,
+                    upstream_acceptance=upstream_acceptance, source_profile=source_profile)
+    need(all(gate.get(k) == v for k, v in expected.items()), 'exact external adoption joins')
+    report = read(gate['read_result'])
+    need(report.get('status') == 'VERIFIED_ORIGINAL_FULL_SAVED_CHECKPOINT'
+         and report.get('top_level_load_calls') == 1
+         and report.get('native_launch_attempts') == []
+         and report.get('snapshot') == snapshot and report.get('head') == head
+         and report.get('snapshot_profile') == source_profile
+         and report.get('base_acceptance') == upstream_acceptance,
+         'actual one-full-read snapshot result')
+    read_case = read(report['case'])
+    need(read_case.get('schema') == 'F009_ONE_FULL_SAVED_HEAD_WITH_SNAPSHOT_V3'
+         and read_case.get('producer_case') == producer_case
+         and read_case.get('head') == head
+         and read_case.get('base_acceptance') == upstream_acceptance
+         and read_case.get('snapshot_profile') == source_profile,
+         'actual exporting reader case')
+    profile(source_profile)
+    for ref in expected.values():
+        acquire(ref)
+    value = decode(Path(snapshot['path']).read_bytes())
+    need(type(value) is dict and set(value) == {'schema', 'head', 'producer_case',
+         'upstream_acceptance', 'source_profile', 'state'} and value['schema'] == SCHEMA,
+         'complete snapshot envelope')
+    need(all(value[k] == expected[k] for k in ('head', 'producer_case', 'upstream_acceptance', 'source_profile')), 'snapshot provenance equality')
+    case = read(producer_case); previous = read(upstream_acceptance)
+    need(case['base'] == previous['head'], 'unchanged exact upstream acceptance')
+    state = unwire(value['state'])
+    need(state['target'] == case['target'] and state['binary'] == case['binary']
+         and state['completion_binary'] == case['completion_binary'], 'snapshot exact backend scope')
+    acquire(state['binary']); acquire(state['completion_binary'])
+    return state

@@ -1,0 +1,952 @@
+"""UNRUN allocation-only successor; all ancestral notes/attributions retained in documentary_ancestor_notes.json."""
+import argparse,hashlib,json,os,stat,sys,time,types
+from pathlib import Path
+
+_F9_SOURCE_TAG = 'Root_Source_rows_reference'
+_F9_DOMAIN_TAG = 'Root_Input_rows_reference'
+_F9_CLOSURE_TAG = 'Root_Native_closure_rows_reference'
+_F9_LOGICAL_LIMIT = 8 * 2**20
+
+
+def f9_canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False) + '\n').encode('ascii')
+
+
+def f9_need(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def f9_rows(rows, limit):
+    f9_need(type(rows) is list and len(rows) <= limit, 'bounded literal row list')
+    previous = ''; total = 0
+    for row in rows:
+        f9_need(type(row) is dict and set(row) == {'path', 'bytes', 'sha256'},
+                'exact complete row fields')
+        path, size, digest = row['path'], row['bytes'], row['sha256']
+        f9_need(type(path) is str and path.startswith('/') and path > previous
+                and '\x00' not in path and all(x not in ('.', '..') for x in path.split('/'))
+                and type(size) is int and size >= 0 and type(digest) is str
+                and len(digest) == 64 and set(digest) <= set('0123456789abcdef'),
+                'ordered unique absolute paths and exact finite row types')
+        previous = path; total += size
+    f9_need(total <= 2**31, 'unchanged whole2GiB descriptor extent')
+    return rows
+
+
+def f9_image(value):
+    raw = f9_canonical(value)
+    f9_need(len(raw) <= _F9_LOGICAL_LIMIT, 'existing8MiB logical metadata role')
+    return len(raw), hashlib.sha256(raw).hexdigest()
+
+
+def f9_encode_job(job):
+    f9_need(type(job) is dict and job.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and job.get('role') in ('native', 'reader') and _F9_SOURCE_TAG not in job,
+            'one ordinary logical standalone job')
+    rows = f9_rows(job['declared_inputs'], 40000)
+    sources = f9_rows(job['source_inputs'], 1024)
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    by_path = {row['path']: i for i, row in enumerate(rows)}
+    indices = []
+    for source in sources:
+        f9_need(source['path'] in by_path and rows[by_path[source['path']]] == source,
+                'every Source role is the same exact declared row')
+        indices.append(by_path[source['path']])
+    size, digest = f9_image(job)
+    wire = dict(job); wire.pop('source_inputs')
+    wire[_F9_SOURCE_TAG] = dict(schema='F009_SOURCE_ROW_INDICES_V1', indices=indices,
+        Source_rows_sha256=hashlib.sha256(f9_canonical(sources)).hexdigest(),
+        declared_rows_sha256=hashlib.sha256(f9_canonical(rows)).hexdigest(),
+        logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_job(wire) == job, 'entire exact Source-reference inverse')
+    return f9_encode_declared(wire)
+
+
+def f9_expand_job(wire):
+    wire = f9_expand_declared(wire)
+    if type(wire) is not dict or _F9_SOURCE_TAG not in wire:
+        return wire
+    f9_need(wire.get('schema') == 'ROOT_F009_STANDALONE_JOB_V1'
+            and wire.get('role') in ('native', 'reader') and 'source_inputs' not in wire,
+            'explicit Source-reference wire, never a mixed representation')
+    tag = wire[_F9_SOURCE_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'indices', 'Source_rows_sha256',
+            'declared_rows_sha256', 'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_SOURCE_ROW_INDICES_V1', 'exact reference encoding')
+    rows = f9_rows(wire['declared_inputs'], 40000); indices = tag['indices']
+    f9_need(type(indices) is list and len(indices) <= 1024,
+            'bounded Source-index list')
+    last = -1
+    for index in indices:
+        f9_need(type(index) is int and last < index < len(rows),
+                'strictly increasing nonboolean unique in-range indices')
+        last = index
+    sources = [rows[index] for index in indices]
+    f9_need(sum(row['bytes'] for row in sources) <= 128*2**20,
+            'unchanged128MiB functional Source extent')
+    f9_need(hashlib.sha256(f9_canonical(rows)).hexdigest() == tag['declared_rows_sha256']
+            and hashlib.sha256(f9_canonical(sources)).hexdigest() == tag['Source_rows_sha256'],
+            'complete exact declared and Source table identities')
+    logical = dict(wire); logical.pop(_F9_SOURCE_TAG); logical['source_inputs'] = sources
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'entire canonical semantic image')
+    return logical
+
+
+def f9_encode_table(domain, field, tag_name, version):
+    f9_need(type(domain) is dict and tag_name not in domain,
+            'ordinary complete Root domain')
+    rows = f9_rows(domain[field], 40000)
+    prefixes = sorted({row['path'][:row['path'].rfind('/')+1] for row in rows})
+    lookup = {prefix: i for i, prefix in enumerate(prefixes)}
+    packed = []
+    for row in rows:
+        cut = row['path'].rfind('/')+1; prefix = row['path'][:cut]
+        packed.append([lookup[prefix], row['path'][cut:], row['bytes'], row['sha256']])
+    size, digest = f9_image(domain)
+    wire = dict(domain); wire.pop(field)
+    wire[tag_name] = dict(schema=version,
+        prefixes=prefixes, rows=packed, logical_bytes=size, logical_sha256=digest)
+    f9_need(f9_expand_table(wire, field, tag_name, version) == domain, 'entire exact row-table inverse')
+    return wire
+
+
+def f9_expand_table(wire, field, tag_name, version):
+    if type(wire) is not dict or tag_name not in wire:
+        return wire
+    f9_need(field not in wire, 'one explicit row-table representation')
+    tag = wire[tag_name]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'prefixes', 'rows',
+            'logical_bytes', 'logical_sha256'} and tag['schema'] == version,
+            'exact parent-path table encoding')
+    prefixes, packed = tag['prefixes'], tag['rows']
+    f9_need(type(prefixes) is list and len(prefixes) <= 40000
+            and all(type(p) is str and p.startswith('/') and p.endswith('/')
+                and '\x00' not in p and all(x not in ('.', '..') for x in p.split('/'))
+                for p in prefixes)
+            and prefixes == sorted(set(prefixes)), 'exact unique absolute parent prefixes')
+    f9_need(type(packed) is list and len(packed) <= 40000, 'bounded complete packed table')
+    rows = []
+    for entry in packed:
+        f9_need(type(entry) is list and len(entry) == 4, 'complete four-column row')
+        index, name, size, digest = entry
+        f9_need(type(index) is int and 0 <= index < len(prefixes)
+                and type(name) is str and name not in ('', '.', '..') and '/' not in name,
+                'nonboolean parent index and exact filename')
+        rows.append(dict(path=prefixes[index]+name, bytes=size, sha256=digest))
+    f9_rows(rows, 40000)
+    logical = dict(wire); logical.pop(tag_name); logical[field] = rows
+    size, digest = f9_image(logical)
+    f9_need(type(tag['logical_bytes']) is int and tag['logical_bytes'] == size
+            and tag['logical_sha256'] == digest, 'whole semantic Root-domain image')
+    return logical
+
+
+def f9_encode_domain(value):
+    return f9_encode_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_expand_domain(value):
+    return f9_expand_table(value, 'inputs', _F9_DOMAIN_TAG, 'F009_PARENT_PATH_ROW_TABLE_V1')
+
+
+def f9_encode_closure(value):
+    f9_need(type(value) is dict and value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'only the separately accepted Native closure role')
+    return f9_encode_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+
+def f9_expand_closure(value):
+    if type(value) is not dict or _F9_CLOSURE_TAG not in value:
+        return value
+    f9_need(value.get('schema') == 'ROOT_CLOSED_F009_STANDALONE_NATIVE_V1',
+            'explicit accepted Native closure role')
+    return f9_expand_table(value, 'complete_actual_inputs', _F9_CLOSURE_TAG,
+                           'F009_NATIVE_CLOSURE_ROW_TABLE_V1')
+
+_F9_DECLARED_TAG = 'Root_Declared_rows_reference'
+_F9_REQUEST_TAG = 'Root_Request_rows_reference'
+_F9_MANIFEST_TAG = 'Root_Output_manifest_reference'
+
+
+def f9_encode_declared(value):
+    return f9_encode_table(value, 'declared_inputs', _F9_DECLARED_TAG,
+                           'F009_DECLARED_ROW_TABLE_V1')
+
+
+def f9_expand_declared(value):
+    return f9_expand_table(value, 'declared_inputs', _F9_DECLARED_TAG,
+                           'F009_DECLARED_ROW_TABLE_V1')
+
+
+def f9_request_limit(value):
+    f9_need(type(value) is dict and value.get('schema') == 'LOCAL_SMALL_PYTHON_CHECK_V1'
+            and type(value.get('provenance')) is dict
+            and value['provenance'].get('role') in ('native', 'reader'),
+            'explicit ordinary Owner request and retained role')
+    return (8 if value['provenance']['role'] == 'native' else 16) * 2**20
+
+
+def f9_encode_request(value):
+    cap = f9_request_limit(value)
+    f9_need(_F9_REQUEST_TAG not in value, 'encode one complete request once')
+    rows = f9_rows(value['inputs'], 40000)
+    prefixes = sorted({r['path'][:r['path'].rfind('/')+1] for r in rows})
+    lookup = {p: i for i, p in enumerate(prefixes)}
+    packed = []
+    for row in rows:
+        cut = row['path'].rfind('/')+1
+        packed.append([lookup[row['path'][:cut]], row['path'][cut:],
+                       row['bytes'], row['sha256']])
+    raw = f9_canonical(value)
+    f9_need(len(raw) <= cap, 'unchanged logical Native8MiB/Reader16MiB request')
+    wire = dict(value); wire.pop('inputs')
+    wire[_F9_REQUEST_TAG] = dict(schema='F009_OWNER_REQUEST_ROW_TABLE_V1',
+        prefixes=prefixes, rows=packed, logical_bytes=len(raw),
+        logical_sha256=hashlib.sha256(raw).hexdigest())
+    f9_need(f9_expand_request(wire) == value, 'entire complete Owner request inverse')
+    return wire
+
+
+def f9_expand_request(wire):
+    if type(wire) is not dict or _F9_REQUEST_TAG not in wire:
+        return wire
+    cap = f9_request_limit(wire)
+    f9_need('inputs' not in wire, 'one explicit Owner request representation')
+    tag = wire[_F9_REQUEST_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'prefixes', 'rows',
+            'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_OWNER_REQUEST_ROW_TABLE_V1',
+            'exact request table encoding')
+    prefixes, packed = tag['prefixes'], tag['rows']
+    f9_need(type(prefixes) is list and len(prefixes) <= 40000
+            and prefixes == sorted(set(prefixes))
+            and all(type(p) is str and p.startswith('/') and p.endswith('/')
+                and '\x00' not in p and all(x not in ('.', '..') for x in p.split('/'))
+                for p in prefixes), 'ordered exact absolute request parent prefixes')
+    f9_need(type(packed) is list and len(packed) <= 40000,
+            'bounded complete request rows')
+    rows = []
+    for entry in packed:
+        f9_need(type(entry) is list and len(entry) == 4, 'complete four-column request row')
+        index, name, size, digest = entry
+        f9_need(type(index) is int and 0 <= index < len(prefixes)
+                and type(name) is str and name not in ('', '.', '..') and '/' not in name,
+                'nonboolean request parent index and exact filename')
+        rows.append(dict(path=prefixes[index]+name, bytes=size, sha256=digest))
+    f9_rows(rows, 40000)
+    logical = dict(wire); logical.pop(_F9_REQUEST_TAG); logical['inputs'] = rows
+    raw = f9_canonical(logical)
+    f9_need(len(raw) <= cap and type(tag['logical_bytes']) is int
+            and tag['logical_bytes'] == len(raw)
+            and tag['logical_sha256'] == hashlib.sha256(raw).hexdigest(),
+            'entire same canonical request; unchanged role-specific logical cap')
+    return logical
+
+
+def f9_output_bank(rows, directories):
+    f9_rows(rows, 2048)
+    f9_need(type(directories) is list and len(rows)+len(directories) <= 2049
+            and all(type(d) is str and d.isascii() and len(d.encode('ascii')) <= 384
+                and (d == '.' or (not d.startswith('/') and all(p not in ('', '.', '..')
+                    for p in d.split('/')))) for d in directories)
+            and directories == sorted(set(directories)) and '.' in directories,
+            'complete bounded relative directories and root; same producer object allowance')
+    f9_need(sum(r['bytes'] for r in rows) <= 16*2**20
+            and all(len(f9_canonical(r)) <= 512 and r['path'].isascii()
+                and len(r['path'].encode('ascii')) <= 384 for r in rows),
+            'same complete Native output descriptor and byte bounds')
+    return dict(schema='F009_COMPLETE_NATIVE_OUTPUT_ROWS_V1', files=rows, directories=directories)
+
+
+def f9_encode_manifest(value, bank):
+    f9_need(type(value) is dict and value.get('schema') ==
+            'ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1'
+            and _F9_MANIFEST_TAG not in value,
+            'one complete logical output manifest')
+    f9_rows([bank], 1)
+    f9_need(bank['bytes'] <= 2*2**20, 'separately bounded complete output bank')
+    f9_output_bank(value['files'], value['directories'])
+    raw = f9_canonical(value); files = f9_canonical(value['files'])
+    f9_need(len(raw) <= 2*2**20, 'finite whole logical output manifest')
+    wire = dict(value); wire.pop('files'); wire.pop('directories')
+    wire[_F9_MANIFEST_TAG] = dict(schema='F009_COMPLETE_OUTPUT_MANIFEST_BANK_V1',
+        bank=bank, files_bytes=len(files), files_sha256=hashlib.sha256(files).hexdigest(),
+        logical_bytes=len(raw), logical_sha256=hashlib.sha256(raw).hexdigest())
+    return wire
+
+
+def f9_expand_manifest(wire, read_bank):
+    if type(wire) is not dict or _F9_MANIFEST_TAG not in wire:
+        return wire
+    f9_need(wire.get('schema') == 'ROOT_F009_STANDALONE_CLOSED_OUTPUT_MANIFEST_V1'
+            and 'files' not in wire and 'directories' not in wire, 'one explicit output manifest representation')
+    tag = wire[_F9_MANIFEST_TAG]
+    f9_need(type(tag) is dict and set(tag) == {'schema', 'bank', 'files_bytes',
+            'files_sha256', 'logical_bytes', 'logical_sha256'}
+            and tag['schema'] == 'F009_COMPLETE_OUTPUT_MANIFEST_BANK_V1',
+            'exact full output bank import')
+    f9_rows([tag['bank']], 1)
+    f9_need(tag['bank']['bytes'] <= 2*2**20, 'same finite whole bank role')
+    # The caller must authenticate this exact whole physical bank first.
+    value = read_bank(tag['bank'])
+    f9_need(type(value) is dict and set(value) == {'schema', 'files', 'directories'}
+            and value == f9_output_bank(value['files'], value['directories']), 'complete original bank shape')
+    files = f9_canonical(value['files'])
+    f9_need(type(tag['files_bytes']) is int and tag['files_bytes'] == len(files)
+            and tag['files_sha256'] == hashlib.sha256(files).hexdigest(),
+            'every exact complete output row in original order')
+    logical = dict(wire); logical.pop(_F9_MANIFEST_TAG)
+    logical['files'] = value['files']; logical['directories'] = value['directories']
+    raw = f9_canonical(logical)
+    f9_need(len(raw) <= 2*2**20 and type(tag['logical_bytes']) is int
+            and tag['logical_bytes'] == len(raw)
+            and tag['logical_sha256'] == hashlib.sha256(raw).hexdigest(),
+            'whole original output manifest inverse, including every non-row field')
+    return logical
+
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def bootstrap(ref,cap):
+    p=Path(ref['path']);a=p.lstat()
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==ref['bytes']<=cap,'bounded ordinary bootstrap subject')
+    with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(cap+1);c=os.fstat(f.fileno())
+    sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+    need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],'whole stable bootstrap subject')
+    return raw
+
+def initial_ref(path,sha,cap):
+    p=Path(path);need(p.stat().st_size<=cap,'bounded literal bootstrap extent')
+    return dict(path=str(p),bytes=p.stat().st_size,sha256=sha)
+
+def strict(raw):
+    def pairs(items):
+        v={}
+        for k,x in items:need(k not in v,'unique bootstrap keys');v[k]=x
+        return v
+    return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite JSON')))
+
+def denial():
+    attempts=[]
+    def no_launch(event,args):
+        if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            attempts.append(event);raise RuntimeError('independent Root Saved caller forbids native launch')
+    sys.addaudithook(no_launch);return attempts
+
+def write(contract,path,value,cap=65536):
+    raw=contract.canonical(value);need(len(raw)<=cap,'finite own caller record')
+    with Path(path).open('xb')as f:need(f.write(raw)==len(raw),'whole own record');f.flush();os.fsync(f.fileno())
+    return contract.acquire(path)
+
+def proposals(contract,job,result):
+    """Only proposed Reader equations; its independent state proves them.
+
+    This is the same scalar/tail accounting used by the retained metadata
+    return-plan constructor. No proposal itself pays a census obligation.
+    """
+    cp=contract.document(job['checkpoint_acceptance'])['checkpoint']
+    expected=dict(sequence=result['sequence'],nodes=result['nodes'],pending=result['pending'],
+      selected_raw_leaf_records=result['selected_leaf_occurrences'],reserved_debts=result['reserved_debts'])
+    # These freshly produced metadata artifacts are bounded by the unchanged
+    # producer reservation; the Reader will independently replay every one.
+    def produced(ref):
+        need(contract.acquire(ref['path'])==ref,'exact actual produced metadata reference')
+        need(ref['bytes']<=2**20,'bounded produced transaction metadata')
+        return strict(Path(ref['path']).read_bytes())
+    head=produced(result['checkpoint']);tail=head['tail'];rows=[];seen=set()
+    while tail is not None:
+        need(tail['sha256']not in seen and len(rows)<512,'bounded acyclic complete new tail')
+        seen.add(tail['sha256']);tx=produced(tail);rows.append(tx);tail=tx['previous']
+    rows.reverse()
+    need([q['sequence']for q in rows]==list(range(cp['sequence']+1,expected['sequence']+1)),
+         'exact proposed new-tail interval from10626')
+    allowed={'F009_QUEUE_DISPATCH_V1','F009_QUEUE_REPLACEMENT_V1','F009_QUEUE_COMPLETION_V1'}
+    need(all(q['schema']in allowed for q in rows),'literal original transaction schemas')
+    completed=sum(q['schema']=='F009_QUEUE_COMPLETION_V1'for q in rows)
+    refined=sum(q['schema']=='F009_QUEUE_REPLACEMENT_V1'for q in rows)
+    admissions=sum(len(q['admissions'])for q in rows if q['schema']=='F009_QUEUE_REPLACEMENT_V1')
+    nodes=expected['nodes']-cp['nodes'];receivers=expected['pending']-cp['pending']+completed+refined
+    delta=dict(completed_families=completed,refined_families=refined,exported_descendants=admissions,
+      transactions=len(rows),selected_raw_leaf_delta=expected['selected_raw_leaf_records']-cp['selected_raw_leaf_records'],
+      new_node_records=nodes,new_pending_receivers=receivers,alias_records=nodes-receivers,
+      duplicate_admission_records=admissions-nodes)
+    need(all(type(x)is int and x>=0 for x in delta.values()),'nonnegative proposals, not an acquired state assertion')
+    return expected,delta
+
+# New Native-only allocation seam. All references are existing paid inputs.
+ROOT_PIN_LOCATION_MAP = {'path':'/private/tmp/f009_export_location_maps/location_map.py','bytes':1518,'sha256':'4c3cdc29f64460a26ab26acba7683325b836230a741b4ecf2a368adcec8f52ba'}
+ROOT_PIN_CODEC = {'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_saved_export_memory/reference_backed_snapshot/explicit_export_join/codec.py','bytes':29537,'sha256':'d63b3417ccbfac618239b30898c1f4069a2c95b164a840a6eb4a963986f47358'}
+ROOT_PIN_ACCESSOR = {'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bound_materialized_continuation/accessor.py','bytes':12139,'sha256':'cee36965c99eb88b9a6d690a943cda2a5d968cf93c8d4cfd4bc96bace7d473ef'}
+ROOT_PIN_ADAPTER = {'path':'/private/tmp/f009_native_workspace/library_route_workspace.py','bytes':7974,'sha256':'635a7ffb92def6f554015465b5feca5ab6c1edd9393e65e63512edff42c7511a'}
+ROOT_PIN_ENTRY = {'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bound_materialized_continuation/entry.py','bytes':7900,'sha256':'e3ac3983b640ec685ab34626e7f3cbb178f4e1d9f776a522722c96b14b7c186e'}
+ROOT_PIN_BEFORE = 'def file_ref(i):return dict(index(pins,i))'
+ROOT_PIN_AFTER = 'def file_ref(i):return index(pins,i)'
+
+def root_pin_text(contract, ref, name, kind=None):
+    import ast
+    raw=contract.source_text(ref)
+    wanted=ast.FunctionDef if kind is None else kind
+    nodes=[n for n in ast.parse(raw,filename=ref['path']).body if isinstance(n,wanted)and n.name==name]
+    need(len(nodes)==1,'one exact whole retained definition for private pin storage')
+    return ast.get_source_segment(raw,nodes[0])
+
+def root_pin_edit(before, old, new):
+    need(before.count(old)==1 and new not in before,'one exact private allocation/provider site')
+    after=before.replace(old,new,1)
+    need(after.replace(new,old,1)==before,'whole retained definition inverse')
+    return after
+
+def root_pin_rebind(original, replacements):
+    """Same literal code/defaults/closure; only named private providers differ."""
+    need(type(original)is types.FunctionType,'actual retained function provider')
+    old=original.__globals__;private=dict(old)
+    need(set(replacements)<=set(old),'replace only explicitly existing provider globals')
+    private.update(replacements)
+    result=types.FunctionType(original.__code__,private,original.__name__,original.__defaults__,original.__closure__)
+    result.__kwdefaults__=original.__kwdefaults__;result.__annotations__=original.__annotations__
+    result.__qualname__=original.__qualname__;result.__dict__.update(original.__dict__)
+    need(result.__code__ is original.__code__ and result.__defaults__ is original.__defaults__
+         and result.__closure__ is original.__closure__
+         and all(private[k]is v for k,v in old.items()if k not in replacements),
+         'literal function code and every unmodified provider identity')
+    return result
+
+ROOT_CURRENT_WIRE_HELPER={'path': '/private/tmp/f009_current_wire_quota/export.py', 'bytes': 25295, 'sha256': '1a74f7769c425ce8bef0f5d5c90a04b65fe3a1860157844ee511ef5e5d828f08'}
+ROOT_WIRE_QUOTA='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'
+
+def root_wire_helper(contract):
+    return contract.module(ROOT_CURRENT_WIRE_HELPER,'Root_F009_current_wire_'+str(len(contract.modules)))
+
+def root_pin_expand(contract,codec,value,*,envelope):
+    return root_wire_helper(contract).expand_current(contract,codec,value,envelope=envelope)
+
+def root_pin_accessor(contract, accessor):
+    """Fresh private class/providers; no imported accessor binding is assigned."""
+    import ast
+    need(isinstance(accessor,types.ModuleType)and Path(accessor.__file__)==Path(ROOT_PIN_ACCESSOR['path'])
+         and accessor.load_direct.__globals__ is vars(accessor)
+         and accessor.segment_class.__globals__ is vars(accessor),
+         'actual retained accessor definitions and original module globals')
+    old_load=accessor.load_direct;old_class=accessor.Admission;old_segment=accessor.segment_class
+    before=root_pin_text(contract,ROOT_PIN_ACCESSOR,'load_direct')
+    after=root_pin_edit(before,"state=c.expand(value['state'],envelope=envelope)",
+        "state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope)")
+    namespace=dict(vars(accessor))
+    need('ROOT_PRIVATE_PIN_EXPAND'not in namespace,'fresh private decoder binding')
+    namespace['ROOT_PRIVATE_PIN_EXPAND'],namespace['ROOT_PRIVATE_LOGICAL_SIZE']=root_wire_helper(contract).load_callbacks(contract)
+    # Release only already-verified wire containers; no later expression reads them.
+    lifetime_old="state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope);c.logical_size(envelope,state)"
+    lifetime_new="state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope);del value,raw;ROOT_PRIVATE_LOGICAL_SIZE(c,envelope,state)"
+    after=root_pin_edit(after,lifetime_old,lifetime_new)
+    exec(compile(after,str(Path(__file__).resolve())+'::private_load_direct','exec',dont_inherit=True),namespace)
+    new_load=namespace['load_direct']
+    # The Admission class body is byte literal. Its load_direct global alone
+    # differs; ordinary parts/method/check and all acquisition predicates stay.
+    class_before=root_pin_text(contract,ROOT_PIN_ACCESSOR,'Admission',ast.ClassDef)
+    exec(compile(class_before,ROOT_PIN_ACCESSOR['path'],'exec',dont_inherit=True),namespace)
+    new_class=namespace['Admission']
+    # segment_class code is unchanged. Its freshly constructed Admission is
+    # the sole different provider. Its returned original-named Segment keeps
+    # the genuine runtime Source, slots, AUTHENTICATED checks and owned chain.
+    new_segment=root_pin_rebind(old_segment,{'Admission':new_class})
+    facade=types.SimpleNamespace(**vars(accessor))
+    facade.Admission=new_class;facade.load_direct=new_load;facade.segment_class=new_segment
+    need(new_class.acquire_base.__globals__ is namespace
+         and new_class.acquire_base.__globals__['load_direct']is new_load
+         and new_segment.__globals__['Admission']is new_class
+         and accessor.Admission is old_class and accessor.load_direct is old_load
+         and accessor.segment_class is old_segment,
+         'complete private provider chain and every original accessor binding untouched')
+    return facade
+
+def root_pin_profile(contract, entry, application):
+    need(Path(entry.__file__)==Path(ROOT_PIN_ENTRY['path'])
+         and entry.profile_bind.__globals__ is vars(entry)
+         and entry.profile_bind.__code__.co_filename==ROOT_PIN_ENTRY['path'],
+         'same exact retained materialized profile provider')
+    original=entry.profile_bind
+    before=root_pin_text(contract,ROOT_PIN_ENTRY,'profile_bind')
+    after=root_pin_edit(before,'CURRENT_ACCESSOR=A,','CURRENT_ACCESSOR=ROOT_PRIVATE_PIN_ACCESSOR(A),')
+    private=dict(vars(entry));need('ROOT_PRIVATE_PIN_ACCESSOR'not in private,'fresh private profile accessor')
+    private['ROOT_PRIVATE_PIN_ACCESSOR']=lambda accessor:root_pin_accessor(contract,accessor)
+    exec(compile(after,str(Path(__file__).resolve())+'::private_profile_bind','exec',dont_inherit=True),private)
+    current=private['profile_bind']
+    need(all(private[k]is v for k,v in vars(entry).items()if k!='profile_bind'),
+         'all original entry helpers and namespaces preserved')
+    try:
+        result=current(application)
+        need(entry.profile_bind is original,'original imported profile_bind never replaced')
+        return result
+    finally:private.pop('profile_bind',None);private.pop('ROOT_PRIVATE_PIN_ACCESSOR',None)
+
+def root_pin_sharing_route(contract, route, plan):
+    """Count-neutral Native caller seam; Reader and IO routes stay identical."""
+    need(plan['role']=='native'and plan['library_adapter']==ROOT_PIN_ADAPTER
+         and Path(route.__file__)==Path(ROOT_PIN_ADAPTER['path'])
+         and route.native.__globals__ is vars(route)
+         and route.native.__code__.co_filename==ROOT_PIN_ADAPTER['path'],
+         'only this exact paid Native workspace adapter and genuine Root job')
+    original=route.native
+    before=root_pin_text(contract,ROOT_PIN_ADAPTER,'native')
+    after=root_pin_edit(before,'old,run=module.profile_bind(application)',
+        'old,run=ROOT_PRIVATE_PIN_PROFILE(contract,module,application)')
+    private=dict(vars(route));need('ROOT_PRIVATE_PIN_PROFILE'not in private,'fresh Native provider namespace')
+    private['ROOT_PRIVATE_PIN_PROFILE']=root_pin_profile
+    exec(compile(after,str(Path(__file__).resolve())+'::private_native','exec',dont_inherit=True),private)
+    current=private['native'];facade=types.SimpleNamespace(**vars(route));facade.native=current
+    need(facade.reader is route.reader and facade.io_budget is route.io_budget
+         and route.native is original
+         and all(private[k]is v for k,v in vars(route).items()if k!='native'),
+         'only private Native profile provider changes; paid635a module and Reader/IO stay untouched')
+    return facade
+
+
+ROOT_PIN_WIRE = {'path': '/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_state_snapshot.py', 'bytes': 12183, 'sha256': 'ae5c9ae625442006bd3b9b060a57fde0f85f398b3a228b41a434407e561b1ad8'}
+ROOT_PIN_OWNED = {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_shared_leaf_continuation/owned_state.py', 'bytes': 9161, 'sha256': '3fb47fef9cb947ce131830077c6e9ad2d15e82621e5b169a81892a233a134ff1'}
+ROOT_PIN_BACKEND = {'path': '/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_backend_transition.py', 'bytes': 5058, 'sha256': '981228cc78a2e226e5155f309e54282cd37972a1aeea817641af07d7f8d42b70'}
+
+def root_pin_control_main():
+    """Synthetic typed-state controls only; no original case or project import."""
+    import ast,copy,tempfile
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--controls',action='store_true',required=True)
+    parser.add_argument('--self-sha256',required=True)
+    args=parser.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,
+         'ordinary exact control interpreter')
+    need(all(k not in os.environ for k in ('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same absent four environment variables')
+    attempted=[]
+    def forbid(event,arguments):
+        if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            attempted.append(event);raise ValueError('generic pin controls forbid Native launch')
+    sys.addaudithook(forbid)
+    own=initial_ref(str(Path(__file__).resolve(strict=True)),args.self_sha256,65536)
+    refs=[own,ROOT_CURRENT_WIRE_HELPER,ROOT_PIN_LOCATION_MAP,ROOT_PIN_CODEC,ROOT_PIN_ACCESSOR,ROOT_PIN_ADAPTER,ROOT_PIN_ENTRY,ROOT_PIN_WIRE,ROOT_PIN_OWNED,ROOT_PIN_BACKEND]
+    raw={r['path']:bootstrap(r,65536) for r in refs}
+    class SourceOnly:
+        def __init__(self):self.modules={}
+        def source_text(self,reference):
+            need(reference in refs,'only complete fixed generic-control Sources')
+            return raw[reference['path']].decode()
+        def module(self,reference,name):
+            need(reference in(ROOT_PIN_LOCATION_MAP,ROOT_CURRENT_WIRE_HELPER),'only exact location/quota providers')
+            need(name not in self.modules and name not in sys.modules,'genuine fresh module registry')
+            result=types.ModuleType(name);result.__file__=reference['path']
+            exec(compile(self.source_text(reference),reference['path'],'exec',dont_inherit=True),vars(result))
+            self.modules[name]=(result,reference);sys.modules[name]=result
+            return result
+    contract=SourceOnly();passed=[]
+    def done(name,condition=True):need(condition,name);passed.append(name)
+    def take(text,name,kind=ast.FunctionDef):
+        nodes=[n for n in ast.parse(text).body if isinstance(n,kind)and n.name==name]
+        need(len(nodes)==1,'one exact literal control subject');return ast.get_source_segment(text,nodes[0])
+    def literal_functions(module,text,names,filename):
+        for name in names:
+            exec(compile(take(text,name),filename,'exec',dont_inherit=True),vars(module))
+    ctext=raw[ROOT_PIN_CODEC['path']].decode();wtext=raw[ROOT_PIN_WIRE['path']].decode()
+    W=types.ModuleType('generic_literal_ordered_state');W.__file__=ROOT_PIN_WIRE['path']
+    # Actual literal typed predicates, with only independent generic need and
+    # declared constants. No loader, model, case or transition is activated.
+    state_assign=next(n for n in ast.parse(wtext).body if isinstance(n,ast.Assign)
+        and any(isinstance(t,ast.Name)and t.id=='STATE_KEYS'for t in n.targets))
+    vars(W).update(need=need,Path=Path,STATE_KEYS=ast.literal_eval(state_assign.value),MAX_RAW=64*2**20)
+    literal_functions(W,wtext,['digest','pin_shape','reference','unwire','wire'],ROOT_PIN_WIRE['path'])
+    codec=types.ModuleType('generic_literal_reference_codec');codec.__file__=ROOT_PIN_CODEC['path']
+    legacy=types.SimpleNamespace(W=W,SCHEMA='GENERIC_LEGACY_ENVELOPE',O=types.SimpleNamespace(WIRE='GENERIC_LEGACY_TABLE'))
+    vars(codec).update(need=need,Path=Path,json=json,hashlib=hashlib,os=os,stat=stat,
+        MAX_RAW=64*2**20,MAX_PACKED=8*2**20,MAX_PINS=40000,MAX_INPUT_BYTES=2**31,MAX_LINE=16384,
+        WIRE='F009_PINNED_ORDERED_LEAF_LOCATORS_V1',SCHEMA='F009_REFERENCE_BACKED_CAPACITY8_STATE_V1',
+        _OPEN={},_OLD=legacy,START=time.monotonic(),legacy=lambda:legacy)
+    literal_functions(codec,ctext,['signature','digest','pin_shape','authenticate_lines','logical_reference_size','compact','expand'],ROOT_PIN_CODEC['path'])
+    ordinary=codec.expand
+    def both_bad(value,envelope):
+        answers=[]
+        for call in (lambda:ordinary(copy.deepcopy(value),envelope=envelope),
+                     lambda:root_pin_expand(contract,codec,copy.deepcopy(value),envelope=envelope)):
+            try:call()
+            except Exception:answers.append(True)
+            else:answers.append(False)
+        return answers==[True,True]
+    with tempfile.TemporaryDirectory(prefix='f009_pin_controls_',dir='/private/tmp')as directory:
+        base=Path(directory)
+        bodies={'binary':b'x','completion':b'y','raw_a':b'a\nb\nc\nd\ne\n','raw_b':b'f\ng\n'}
+        pins={}
+        for name,body in bodies.items():
+            p=base/name;p.write_bytes(body);pins[name]=dict(path=str(p),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+        line=lambda name,i:dict(file=pins[name],line=i,sha256=hashlib.sha256(bodies[name].splitlines(keepends=True)[i]).hexdigest())
+        nodes={}
+        for i in range(2):
+            record=line('raw_a',i+3);ident=record['sha256']
+            nodes[ident]=dict(values=[32,5,4,8]+[0]*7,record=record,canonical={'key':str(i),'lab':[0]},receiver=ident,children=None,creation=i)
+        state=dict(target=[32,5,4,8],binary=pins['binary'],completion_binary=pins['completion'],nodes=nodes,
+            pending=set(nodes),leaves=[line('raw_a',0),line('raw_a',1),line('raw_a',0),line('raw_b',0),line('raw_a',2)],sequence=7,started={})
+        ids=list(nodes);state['started']={ids[1]:dict(kind='complete',dispatch=pins['binary']),ids[0]:dict(kind='refine',dispatch=pins['completion'])}
+        value=codec.compact(state)
+        envelope=dict(schema=codec.SCHEMA,head=pins['binary'],producer_case=pins['completion'],upstream_acceptance=pins['raw_a'],source_profile=pins['raw_b'])
+        expected=ordinary(copy.deepcopy(value),envelope=envelope)
+        result=root_pin_expand(contract,codec,copy.deepcopy(value),envelope=envelope)
+        done('whole_rich_typed_values_and_node_debt_order',result==expected and list(result['nodes'])==list(expected['nodes'])and list(result['started'])==list(expected['started']))
+        done('equal_duplicate_file_pins_share_storage',result['leaves'][0]['file']is result['leaves'][1]['file']is result['leaves'][2]['file'])
+        done('duplicate_occurrences_remain_distinct_leaf_dictionaries',result['leaves'][0]is not result['leaves'][2]and result['leaves'][0]==result['leaves'][2])
+        done('different_whole_file_identities_never_share',result['leaves'][0]['file']is not result['leaves'][3]['file'])
+        done('cross_node_and_leaf_pins_equal_before_sharing',next(iter(result['nodes'].values()))['record']['file']is result['leaves'][0]['file'])
+        done('original_codec_provider_and_physical_registry_unchanged',codec.expand is ordinary and codec.expand.__globals__ is vars(codec))
+        done('full_real_compact_state_roundtrip',codec.compact(result)==value and result==state)
+        done('nonempty_debt_order_retained',list(result['started'])==ids[::-1])
+        reversed_debt=copy.deepcopy(state);reversed_debt['started']=dict(reversed(list(state['started'].items())))
+        dv=codec.compact(reversed_debt);dr=root_pin_expand(contract,codec,dv,envelope=envelope)
+        done('different_debt_order_transports_exactly',list(dr['started'])==ids and list(dr['started'])!=list(result['started']))
+        reordered=copy.deepcopy(state);reordered['leaves']=list(reversed(reordered['leaves']))
+        rv=codec.compact(reordered);rr=root_pin_expand(contract,codec,rv,envelope=envelope)
+        done('every_leaf_occurrence_order_preserved',rr['leaves']==reordered['leaves']and rr['leaves']!=result['leaves'])
+        bad=copy.deepcopy(value);bad['state']['leaves']['count']+=1
+        done('wrong_count_refused_by_both',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);group=bad['state']['leaves']['groups'][0];bad['state']['leaves']['groups']=[ [group[0],group[1][:1]],[group[0],group[1][1:]] ]+bad['state']['leaves']['groups'][1:]
+        done('nonmaximal_adjacent_group_representation_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['pins'].append(dict(path=str(base/'unused'),bytes=0,sha256=hashlib.sha256(b'').hexdigest()))
+        done('unused_noncanonical_pin_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['binary']=False
+        done('noninteger_boolean_file_ref_refused_on_call',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['binary']=len(value['pins'])
+        done('out_of_range_file_ref_refused_on_call',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['pins'][0]['bytes']=False
+        done('invalid_whole_pin_type_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);slot=bad['state']['leaves']['groups'][0][0];bad['pins'][slot]['sha256']='0'*64
+        done('actual_whole_leaf_file_hash_mismatch_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);p=base/'missing_lf';p.write_bytes(b'q');slot=bad['state']['leaves']['groups'][0][0]
+        bad['pins'][slot]=dict(path=str(p),bytes=1,sha256=hashlib.sha256(b'q').hexdigest())
+        bad['state']['leaves']={'count':1,'groups':[[slot,[0]]]}
+        done('actual_missing_final_LF_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['nodes'].reverse()
+        done('wrong_node_creation_order_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['pins'].append(dict(bad['pins'][0]))
+        done('duplicate_whole_pin_identity_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['started'].append(copy.deepcopy(bad['state']['started'][0]))
+        done('duplicate_debt_identity_refused',both_bad(bad,envelope))
+        for invalid in (False,-1,99):
+            bad=copy.deepcopy(value);bad['state']['leaves']['groups'][0][1][0]=invalid
+            done('invalid_line_'+str(invalid)+'_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);slot=bad['state']['leaves']['groups'][0][0];bad['pins'][slot]['path']=str(base/'genuinely_missing_raw')
+        done('missing_actual_leaf_reference_refused',both_bad(bad,envelope))
+        bad=copy.deepcopy(value);bad['state']['nodes'].append(copy.deepcopy(bad['state']['nodes'][0]))
+        done('duplicate_node_identity_refused',both_bad(bad,envelope))
+        # Literal original migration and already-paid owned copier, exercised
+        # only on this tiny generic state. No backend transition is admitted.
+        namespace={'need':need,'copy':copy}
+        owned_text=raw[ROOT_PIN_OWNED['path']].decode();backend_text=raw[ROOT_PIN_BACKEND['path']].decode()
+        exec(compile(take(owned_text,'owned_state_copy'),ROOT_PIN_OWNED['path'],'exec',dont_inherit=True),namespace)
+        migrate=take(backend_text,'migrate')
+        migrate=root_pin_edit(migrate,'return copy.deepcopy(state)','return OWNED_STATE_COPY(state)')
+        migrate=root_pin_edit(migrate,'result=copy.deepcopy(state);','result=OWNED_STATE_COPY(state);')
+        namespace['OWNED_STATE_COPY']=namespace['owned_state_copy']
+        exec(compile(migrate,ROOT_PIN_OWNED['path']+'::private_backend_migrate','exec',dont_inherit=True),namespace)
+        case=dict(target=result['target'],binary=result['binary'],completion_binary=result['completion_binary'],backend_transition=None)
+        migrated=namespace['migrate'](result,case)
+        done('unchanged_owned_None_migration_full_values',migrated==result and migrated is not result and migrated['leaves']is not result['leaves']and migrated['leaves'][0]is result['leaves'][0])
+        first=next(iter(result['nodes']));migrated['nodes'][first]['values'][-1]=1
+        done('deep_nonleaf_isolation_with_cross_pin_alias',result['nodes'][first]['values'][-1]==0 and migrated['nodes'][first]['record']['file']is not result['nodes'][first]['record']['file'])
+        for field in ('target','binary','completion_binary'):
+            wrong=dict(case);wrong[field]=[22,5,4,5]if field=='target'else dict(path='/wrong',bytes=0,sha256='0'*64)
+            try:namespace['migrate'](result,wrong)
+            except Exception:done('None_migration_wrong_'+field+'_refused')
+            else:need(False,'unchanged None migration must refuse wrong backend context')
+    # Provider construction uses exact literal retained bodies in a synthetic
+    # module, without calling Admission, profile_bind or a real Native method.
+    A=types.ModuleType('generic_retained_accessor');A.__file__=ROOT_PIN_ACCESSOR['path']
+    at=raw[ROOT_PIN_ACCESSOR['path']].decode();literal_functions(A,at,['load_direct','segment_class'],ROOT_PIN_ACCESSOR['path'])
+    exec(compile(take(at,'Admission',ast.ClassDef),ROOT_PIN_ACCESSOR['path'],'exec',dont_inherit=True),vars(A))
+    old=(A.Admission,A.load_direct,A.segment_class);facade=root_pin_accessor(contract,A)
+    done('private_accessor_chain_constructs_without_acquisition',old==(A.Admission,A.load_direct,A.segment_class)and facade.segment_class.__globals__['Admission']is facade.Admission and facade.Admission.acquire_base.__globals__['load_direct']is facade.load_direct)
+    lb=take(at,'load_direct');le=lb.replace("state=c.expand(value['state'],envelope=envelope)","state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope)",1)
+    lr=le.replace(";c.logical_size(envelope,state)",";del value,raw;ROOT_PRIVATE_LOGICAL_SIZE(c,envelope,state)",1)
+    done('lifetime_and_quota_edit_full_inverse',lr.replace(';del value,raw;ROOT_PRIVATE_LOGICAL_SIZE(c,envelope,state)', ';c.logical_size(envelope,state)',1)==le and lr.count('del value,raw')==1)
+    route=types.ModuleType('generic_retained_adapter');route.__file__=ROOT_PIN_ADAPTER['path']
+    literal_functions(route,raw[ROOT_PIN_ADAPTER['path']].decode(),['native'],ROOT_PIN_ADAPTER['path'])
+    route.reader=lambda:None;route.io_budget=lambda:None;original=route.native
+    selected=root_pin_sharing_route(contract,route,{'role':'native','library_adapter':ROOT_PIN_ADAPTER})
+    done('private_Native_provider_keeps_reader_IO_and_original_binding',route.native is original and selected.reader is route.reader and selected.io_budget is route.io_budget)
+    et=raw[ROOT_PIN_ENTRY['path']].decode();before=take(et,'profile_bind')
+    after=root_pin_edit(before,'CURRENT_ACCESSOR=A,','CURRENT_ACCESSOR=ROOT_PRIVATE_PIN_ACCESSOR(A),')
+    done('entire_profile_provider_inverse',after.replace('CURRENT_ACCESSOR=ROOT_PRIVATE_PIN_ACCESSOR(A),','CURRENT_ACCESSOR=A,',1)==before)
+    for r in refs:bootstrap(r,65536)
+    need(not attempted,'no Native or subprocess attempt in generic controls')
+    physical=own['bytes']+2*sum(r['bytes']for r in refs)+4
+    report=dict(schema='F009_NATIVE_PIN_SHARING_GENERIC_CONTROLS_V1',status='PASS',program=own,
+       controls=len(passed),names=passed,original_case_calls=0,native_launch_attempts=attempted,
+       project_module_imports=0,synthetic_only=True,full_Source_read_upper=physical,Source_paths=len(refs),
+       actual_Native_RSS_saving_or_original_case_fit_established=False)
+    output=json.dumps(report,sort_keys=True);need(len(output.encode())<=16384,'bounded complete generic-control report')
+    print(output,flush=True)
+
+
+# New Reader-only private provider composition; Native helpers above remain literal.
+ROOT_READER_PIN_ADAPTER = {'path':'/private/tmp/f009_export_digest_reuse/library_route.py','bytes':7603,'sha256':'706954fd5d1ea2523936ce7ecf1b34438bd6b09b72b494d9f05eb8cfaf4744e7'}
+ROOT_READER_PIN_OWNED = {'path':'/private/tmp/f009_reader_owned_migration/owned_load.py','bytes':6662,'sha256':'803bba3ce894e970c5468e9fe5ba11b7b6f3a2e9fd4a7702b11612c73dec35c6'}
+ROOT_READER_PIN_EDITS = (
+    ('type(admission)is accessor.Admission', 'type(admission)is ROOT_READER_PIN_PROVIDERS.Admission'),
+    ('admission.acquire_base.__func__ is accessor.Admission.acquire_base', 'admission.acquire_base.__func__ is ROOT_READER_PIN_PROVIDERS.Admission.acquire_base'),
+    ('admission.check.__func__ is accessor.Admission.check', 'admission.check.__func__ is ROOT_READER_PIN_PROVIDERS.Admission.check'),
+    ("namespace=dict(vars(accessor));need('ROOT_OWNED_BASE'not in namespace,'fresh invocation-local base consumer')",
+     "namespace=dict(vars(accessor));namespace['segment_class']=ROOT_READER_PIN_PROVIDERS.segment_class;need('ROOT_OWNED_BASE'not in namespace,'fresh invocation-local base consumer')"),
+    ("if k!='load')", "if k not in {'load','segment_class'})"),
+)
+
+def root_reader_pin_owned_provider(contract, owned, accessor):
+    """Derive the exact owned803b load with an explicit private pin-provider chain.
+
+    The genuine original loader/module/codec checks remain. Its fresh
+    Admission is now the literal private Admission constructed by the same
+    root_pin_accessor already present above. The three exact method-identity
+    comparisons name that private class; no subclass, cached state, caller
+    supplied state or overridden admission method becomes admissible.
+    """
+    need(isinstance(owned,types.ModuleType)and Path(owned.__file__)==Path(ROOT_READER_PIN_OWNED['path'])
+         and owned.load_owned.__globals__ is vars(owned)
+         and owned.load_owned.__code__.co_filename==ROOT_READER_PIN_OWNED['path'],
+         'same genuine acquired owned803b Reader provider')
+    providers=root_pin_accessor(contract,accessor)
+    before=root_pin_text(contract,ROOT_READER_PIN_OWNED,'load_owned')
+    after=before
+    for old,new in ROOT_READER_PIN_EDITS:after=root_pin_edit(after,old,new)
+    inverse=after
+    for old,new in reversed(ROOT_READER_PIN_EDITS):inverse=inverse.replace(new,old,1)
+    need(inverse==before,'whole exact owned803b body; only five explicit private provider joins')
+    original=owned.load_owned;private=dict(vars(owned))
+    need('ROOT_READER_PIN_PROVIDERS'not in private,'fresh invocation-local Reader provider facade')
+    private['ROOT_READER_PIN_PROVIDERS']=providers
+    exec(compile(after,str(Path(__file__).resolve())+'::Reader_owned_pin_load','exec',dont_inherit=True),private)
+    current=private['load_owned']
+    need(current.__defaults__==original.__defaults__ and current.__closure__ is original.__closure__
+         and all(private[k]is v for k,v in vars(owned).items()if k!='load_owned')
+         and providers.Admission.acquire_base.__globals__['load_direct']is providers.load_direct
+         and providers.segment_class.__globals__['Admission']is providers.Admission
+         and accessor.Admission is not providers.Admission,
+         'exact private Reader provider chain and unchanged original owned/accessor namespaces')
+    return current,providers
+
+def root_reader_pin_owned_load(contract, owned, loader, accessor, *arguments):
+    """One genuine fresh Reader acquisition; only read-only equal file pins share.
+
+    owned803b retains its complete no-backend-change ownership boundary and
+    every old tail predicate. root_pin_expand still runs every shape/index,
+    whole-file/LF hash, full typed inverse and canonical compact check.
+    Distinct ordered leaf dictionaries and all occurrences are retained.
+    """
+    original=(owned.load_owned,accessor.Admission,accessor.load_direct,accessor.segment_class)
+    current,providers=root_reader_pin_owned_provider(contract,owned,accessor)
+    try:
+        result=current(contract,loader,accessor,*arguments)
+        need(original==(owned.load_owned,accessor.Admission,accessor.load_direct,accessor.segment_class)
+             and accessor.Admission is not providers.Admission,
+             'original imported providers still untouched after the entire Reader load')
+        return result
+    finally:
+        # Retire only private code/provider cycles. No accepted state, module
+        # or retained input is assigned; no state is cached by this helper.
+        current.__globals__.pop('load_owned',None)
+        current.__globals__.pop('ROOT_READER_PIN_PROVIDERS',None)
+
+def root_reader_pin_route(contract, route, plan):
+    """Only the exact706 Reader route receives this new private acquisition hook."""
+    need(plan['role']=='reader'and plan['library_adapter']==ROOT_READER_PIN_ADAPTER
+         and isinstance(route,types.ModuleType)
+         and Path(route.__file__)==Path(ROOT_READER_PIN_ADAPTER['path'])
+         and route.reader.__globals__ is vars(route)
+         and route.reader.__code__.co_filename==ROOT_READER_PIN_ADAPTER['path'],
+         'only the exact acquired706 Reader adapter and genuine Reader job')
+    original=route.reader
+    before=root_pin_text(contract,ROOT_READER_PIN_ADAPTER,'reader')
+    after=root_pin_edit(before,'owned.load_owned(contract,loader,accessor,*arguments)',
+        'ROOT_READER_PRIVATE_PIN_LOAD(contract,owned,loader,accessor,*arguments)')
+    after=root_pin_edit(after," support_ref={'path': '/private/tmp/f009_export_digest_reuse/shared_export.py', 'bytes': 11124, 'sha256': '52d214ba7f351d54531074c44aa111084300f28c80dd264f65f56e58e8212f66'}",
+        " support_ref={'path': '/private/tmp/f009_current_wire_quota/export.py', 'bytes': 25295, 'sha256': '1a74f7769c425ce8bef0f5d5c90a04b65fe3a1860157844ee511ef5e5d828f08'}")
+    private=dict(vars(route))
+    need('ROOT_READER_PRIVATE_PIN_LOAD'not in private,'fresh private Reader load callback')
+    private['ROOT_READER_PRIVATE_PIN_LOAD']=root_reader_pin_owned_load
+    exec(compile(after,str(Path(__file__).resolve())+'::Reader_pin_route','exec',dont_inherit=True),private)
+    current=private['reader'];facade=types.SimpleNamespace(**vars(route));facade.reader=current
+    need(facade.native is route.native and facade.io_budget is route.io_budget
+         and route.reader is original
+         and all(private[k]is v for k,v in vars(route).items()if k!='reader'),
+         'only private Reader acquisition callback changes; Native/IO/export and original706 stay intact')
+    return facade
+
+def root_reader_pin_control_main():
+    """Provider controls."""
+    import ast,resource
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--reader-controls',action='store_true',required=True)
+    parser.add_argument('--self-sha256',required=True);args=parser.parse_args()
+    start=time.monotonic();attempted=[];passed=[]
+    def guard(ok,why):
+        peak=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+        need(peak<128*2**20 and time.monotonic()-start<140,'128MiB/140s generic Reader controls')
+        need(ok,why)
+    guard(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize
+          and all(k not in os.environ for k in ('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+          'ordinary cleared-E-B control interpreter')
+    def deny(event,arguments):
+        if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+            attempted.append(event);raise ValueError('generic Reader controls forbid Native launch')
+    sys.addaudithook(deny)
+    own=initial_ref(str(Path(__file__).resolve(strict=True)),args.self_sha256,65536)
+    refs=[own,ROOT_CURRENT_WIRE_HELPER,ROOT_PIN_LOCATION_MAP,ROOT_PIN_ACCESSOR,ROOT_READER_PIN_OWNED,ROOT_READER_PIN_ADAPTER,ROOT_PIN_BACKEND]
+    raw={r['path']:bootstrap(r,65536).decode()for r in refs}
+    class SourceOnly:
+        def __init__(self):self.modules={}
+        def source_text(self,ref):
+            guard(ref in refs,'only exact complete generic-control Source roles');return raw[ref['path']]
+        def module(self,ref,name):
+            guard(ref in(ROOT_PIN_LOCATION_MAP,ROOT_CURRENT_WIRE_HELPER),'only exact location/quota providers')
+            guard(name not in self.modules and name not in sys.modules,'genuine fresh module registry')
+            result=types.ModuleType(name);result.__file__=ref['path']
+            exec(compile(self.source_text(ref),ref['path'],'exec',dont_inherit=True),vars(result))
+            self.modules[name]=(result,ref);sys.modules[name]=result
+            return result
+    contract=SourceOnly()
+    def take(text,name,kind=ast.FunctionDef):
+        matches=[n for n in ast.parse(text).body if isinstance(n,kind)and n.name==name]
+        guard(len(matches)==1,'one exact whole Source definition');return ast.get_source_segment(text,matches[0])
+    def definitions(module,text,names):
+        for name,kind in names:
+            exec(compile(take(text,name,kind),module.__file__,'exec',dont_inherit=True),vars(module))
+    def done(name,condition=True):guard(condition,name);passed.append(name)
+    def reject(name,call):
+        try:call()
+        except (ValueError,AttributeError,TypeError,KeyError):done(name);return
+        raise ValueError('negative Reader composition accepted: '+name)
+    A=types.ModuleType('generic_original_accessor');A.__file__=ROOT_PIN_ACCESSOR['path'];A.ast=ast;A.types=types;A.Path=Path
+    at=raw[A.__file__]
+    definitions(A,at,[('load_direct',ast.FunctionDef),('Admission',ast.ClassDef),('segment_class',ast.FunctionDef),('DirectValueLoad',ast.ClassDef)])
+    codec=object();A.parts=lambda:(None,codec,None)
+    H=types.ModuleType('generic_owned803b');H.__file__=ROOT_READER_PIN_OWNED['path'];H.ast=ast;H.types=types;H.Path=Path
+    ht=raw[H.__file__]
+    for key in ('ACCESSOR','BACKEND','LOAD_BEFORE','LOAD_AFTER','COPY_BEFORE','COPY_AFTER'):
+        node=next(n for n in ast.parse(ht).body if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id==key for t in n.targets))
+        # ACCESSOR/BACKEND are dict(...) literals; no project code is invoked.
+        if isinstance(node.value,ast.Call):value={k.arg:ast.literal_eval(k.value)for k in node.value.keywords}
+        else:value=ast.literal_eval(node.value)
+        vars(H)[key]=value
+    definitions(H,ht,[(n,ast.FunctionDef)for n in ('need','_method_text','_migration_text','_private_migration','load_owned')])
+    original=(A.load_direct,A.Admission,A.segment_class,A.DirectValueLoad.load,H.load_owned)
+    current,providers=root_reader_pin_owned_provider(contract,H,A)
+    done('private_Admission_segment_and_load_direct_chain',
+         providers.segment_class.__globals__['Admission']is providers.Admission
+         and providers.Admission.acquire_base.__globals__['load_direct']is providers.load_direct
+         and current.__globals__['ROOT_READER_PIN_PROVIDERS']is providers)
+    done('all_original_accessor_and_owned_bindings_unchanged',original==(A.load_direct,A.Admission,A.segment_class,A.DirectValueLoad.load,H.load_owned))
+    before=take(ht,'load_owned');after=before
+    for old,new in ROOT_READER_PIN_EDITS:after=root_pin_edit(after,old,new)
+    for old,new in reversed(ROOT_READER_PIN_EDITS):after=after.replace(new,old,1)
+    done('whole_five_join_owned_body_inverse',after==before)
+    done('private_class_retains_literal_check_and_acquire_code',
+         providers.Admission.check.__code__.co_code==A.Admission.check.__code__.co_code
+         and providers.Admission.acquire_base.__code__.co_code==A.Admission.acquire_base.__code__.co_code
+         and providers.segment_class.__code__ is A.segment_class.__code__)
+    for field in ('path','bytes','sha256'):
+        bad=dict(ROOT_READER_PIN_ADAPTER);bad[field]='wrong'if field!='bytes'else 0
+        route=types.ModuleType('generic_bad_route');route.__file__=ROOT_READER_PIN_ADAPTER['path']
+        reject('wrong_adapter_'+field,lambda bad=bad:root_reader_pin_route(contract,route,dict(role='reader',library_adapter=bad)))
+    R=types.ModuleType('generic_reader706');R.__file__=ROOT_READER_PIN_ADAPTER['path']
+    definitions(R,raw[R.__file__],[('reader',ast.FunctionDef)])
+    R.native=lambda:None;R.io_budget=lambda:None
+    selected=root_reader_pin_route(contract,R,dict(role='reader',library_adapter=ROOT_READER_PIN_ADAPTER))
+    done('Reader_only_facade_keeps_Native_IO_and_original_route',
+         selected.reader is not R.reader and selected.native is R.native and selected.io_budget is R.io_budget
+         and selected.reader.__globals__['ROOT_READER_PRIVATE_PIN_LOAD']is root_reader_pin_owned_load)
+    reject('Native_role_refused',lambda:root_reader_pin_route(contract,R,dict(role='native',library_adapter=ROOT_READER_PIN_ADAPTER)))
+    saved=R.__file__;R.__file__='/wrong/reader.py'
+    reject('wrong_Reader_module_origin',lambda:root_reader_pin_route(contract,R,dict(role='reader',library_adapter=ROOT_READER_PIN_ADAPTER)));R.__file__=saved
+    saved=H.__file__;H.__file__='/wrong/owned.py'
+    reject('wrong_owned_module_origin',lambda:root_reader_pin_owned_provider(contract,H,A));H.__file__=saved
+    saved=A.__file__;A.__file__='/wrong/accessor.py'
+    reject('wrong_accessor_module_origin',lambda:root_reader_pin_owned_provider(contract,H,A));A.__file__=saved
+    done('original_owned_admission_checks_are_not_removed',
+         all(text in before for text in ('type(admission)is accessor.Admission','admission.acquire_base.__func__ is accessor.Admission.acquire_base','admission.check.__func__ is accessor.Admission.check',"case['backend_transition']is None")))
+    # The following rejections happen before any synthetic acquisition. The
+    # fixture contains no real case/snapshot/head/raw file or runtime module.
+    reject('wrong_accessor_type',lambda:current(contract,object(),object()))
+    reject('wrong_loader_type',lambda:current(contract,object(),A))
+    for ref in refs:bootstrap(ref,65536)
+    guard(not attempted,'no subprocess/Native attempt')
+    report=dict(schema='F009_READER_PIN_ACQUISITION_GENERIC_PROVIDER_CONTROLS_V1',status='PASS',
+        program=own,controls=len(passed),names=passed,synthetic_only=True,original_case_calls=0,
+        project_module_imports=0,native_launch_attempts=attempted,
+        separate_literal_codec_controls_mode_required=True,complete_new_Reader_case_or_RSS_fit_established=False,
+        Source_read_upper=own['bytes']+2*sum(r['bytes']for r in refs)+4,Source_paths=len(refs))
+    output=json.dumps(report,sort_keys=True);guard(len(output.encode())<=16384,'bounded full provider-control report')
+    print(output,flush=True)
+
+
+def main():
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--job',nargs=2,required=True)
+    p.add_argument('--root-review',nargs=2,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,'ordinary exact -E -B caller')
+    need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same four environment variables absent before retained scientific activation')
+    jobref=initial_ref(*a.job,8*2**20);job=f9_expand_job(strict(bootstrap(jobref,8*2**20)))
+    gateref=initial_ref(*a.root_review,65536);gate=strict(bootstrap(gateref,65536))
+    need(job['role']in('native','reader')and job['output']==str(a.out),'one explicit role/output')
+    attempts=denial()if job['role']=='reader'else None
+    own=gate['program'];need(own['path']==str(Path(__file__).resolve()),'truthful actual Root caller program');bootstrap(own,65536)
+    need(gate['schema']=='ROOT_REVIEWED_F009_STANDALONE_JOB_V1'and gate['root']=='/root'
+         and gate['status']=='SUPPORTED'and gate['blockers']==[]and gate['job']==jobref,
+         'fresh exact Root-reviewed standalone job')
+    cref=job['contract'];craw=bootstrap(cref,65536)
+    need(cref in gate['method_sources'],'authenticated complete current contract before activation')
+    C=types.ModuleType('Root_F009_current_read_contract');C.__file__=cref['path']
+    exec(compile(craw,cref['path'],'exec',dont_inherit=True),C.__dict__)
+    need(gate.get('reference_wire_quota')==ROOT_WIRE_QUOTA,'fresh versioned current-wire quota method')
+    contract=C.Contract(job,jobref,gate,gateref,own)
+    route=contract.module(job['library_adapter'],'Root_F009_retained_library_route')
+    if job['role']=='native':route=root_pin_sharing_route(contract,route,job)
+    if job['role']=='reader':route=root_reader_pin_route(contract,route,job)
+    budget=route.io_budget(contract,job['IO_budget_source'],job['producer_reservation'])
+    sys.addaudithook(budget.event)
+    began=time.monotonic()
+    if job['role']=='native':
+        def metadata_subject(ref,K):
+            need(ref==job['Root_metadata_creator'],'new explicit Root metadata creator')
+            value=contract.document(ref)
+            need(value['schema']=='ROOT_F009_STANDALONE_METADATA_CREATOR_V1'and value['root']=='/root'
+                 and value['writer']==job['metadata_constructor']and value['old_metadata_Source_executed']is False,
+                 'new Root constructor attribution, no historical metadata Source verdict')
+            return value
+        result,state=route.native(contract,job,metadata_subject)
+        expected,delta=proposals(contract,job,result);del state
+        handoff=dict(schema='ROOT_F009_STANDALONE_NATIVE_WORKER_RETURN_V1',root='/root',
+          actual_caller=own,Root_review=gateref,request=jobref,case=job['case'],head=result['checkpoint'],
+          base_acceptance=job['checkpoint_acceptance'],snapshot_adoption=job['snapshot_adoption'],
+          native_result=contract.acquire(a.out/'result.json'),mathematical_library=job['mathematical_library'],
+          expected_proposal=expected,delta_proposal=delta,Owner_closure_still_required=True,
+          independent_strict_Reader_still_required=True,global_checkpoint_written=False,
+          old_caller_executed=False,new_census_credit=0)
+        artifact=write(contract,a.out/'native_handoff.json',handoff)
+    else:
+        route.reader(contract,job)
+        need(not attempts,'no Native attempt in separate strict Reader process')
+        result=contract.acquire(a.out/'result.json')
+        artifact=write(contract,a.out/'Root_Reader_return.json',dict(
+          schema='ROOT_F009_STANDALONE_READER_WORKER_RETURN_V1',root='/root',actual_caller=own,
+          mathematical_library=job['mathematical_library'],Root_review=gateref,job=jobref,result=result,
+          reference_wire_quota=ROOT_WIRE_QUOTA,
+          native_launch_attempts=attempts,Owner_closure_still_required=True,
+          independent_actual_review_still_required=True,global_checkpoint_written=False,
+          old_caller_executed=False,new_census_credit=0))
+    budget.attest();contract.finalize_actual_input_closure(job)
+    print(json.dumps(dict(schema='ROOT_F009_STANDALONE_WORKER_RETURNED_PENDING_OWNER_V1',
+      role=job['role'],artifact=artifact,seconds=time.monotonic()-began,
+      global_checkpoint_written=False,old_caller_executed=False,new_census_credit=0)),flush=True)
+
+if __name__=='__main__':
+    if '--controls'in sys.argv[1:]:root_pin_control_main()
+    elif '--reader-controls'in sys.argv[1:]:root_reader_pin_control_main()
+    else:main()

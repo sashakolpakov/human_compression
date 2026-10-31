@@ -1,0 +1,418 @@
+"""UNRUN V2 current reference-wire quota method.
+
+This explicitly retires the OLD SHA/triple-format-only admission restriction.
+The serialized reference envelope retains64MiB raw and8MiB packed limits.
+Every occurrence, full LF authentication, typed/order inverse, deterministic
+compression and durable staging check is retained. Actual fit is unmeasured.
+No Source/control/case activation or checkpoint credit is claimed.
+"""
+import ast
+import types
+import os
+
+ORDINAL_MAP = {'path': '/private/tmp/f009_logical_digest_ordinals/ordinal_map.py', 'bytes': 4983, 'sha256': 'baca8e14e789fe4885414005cf77268ec3a5db13a21503450d52f8b6558e8ffe'}
+
+MAP = {'path': '/private/tmp/f009_export_location_maps/location_map.py', 'bytes': 1518, 'sha256': '4c3cdc29f64460a26ab26acba7683325b836230a741b4ecf2a368adcec8f52ba'}
+from pathlib import Path
+
+CODEC = dict(
+    path='/Users/sasha/medusa/research/leemans/maintenance/intake/f009_saved_export_memory/reference_backed_snapshot/explicit_export_join/codec.py',
+    bytes=29537,
+    sha256='d63b3417ccbfac618239b30898c1f4069a2c95b164a840a6eb4a963986f47358')
+
+PIN_BEFORE = 'def file_ref(i):return dict(index(pins,i))'
+PIN_AFTER = 'def file_ref(i):return index(pins,i)'
+LEAF_BEFORE = "            old['leaves'].append(dict(file=file_ref(file_id),line=line,sha256=hashes[(file_id,line)]))"
+LEAF_AFTER = """            derived_leaf=dict(file=file_ref(file_id),line=line,sha256=hashes[(file_id,line)])
+            leaf_position=len(old['leaves'])
+            need(leaf_position<len(ROOT_EXPORT_LEAVES)
+                 and derived_leaf==ROOT_EXPORT_LEAVES[leaf_position],
+                 'entire freshly derived leaf equals this original occurrence BEFORE sharing')
+            old['leaves'].append(ROOT_EXPORT_LEAVES[leaf_position])"""
+
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+
+CAPTURE_BEFORE = '    authenticate_lines(pins,groups,expected)\n'
+CAPTURE_AFTER = (CAPTURE_BEFORE + '    ROOT_CAPTURE_EXPECTED(pins,groups,expected)\n')
+HASHES_BEFORE = "    hashes=authenticate_lines(pins,leaves['groups'])"
+HASHES_AFTER = "    hashes=ROOT_AUTHENTICATE_EXPECTED(pins,leaves['groups'])"
+RELEASE_BEFORE = '    del hashes\n'
+RELEASE_AFTER = RELEASE_BEFORE + '    ROOT_RELEASE_EXPECTED()\n'
+
+
+class _AuthenticatedLocations:
+    """Invocation-local storage, never an independent acquisition authority.
+
+    capture is installed ONLY immediately after the unchanged full compact
+    authentication. Its matching inverse reauthenticates all the same whole
+    files and exact selected LF lines against that table before returning it.
+    No caller-provided state/map or global cache enters the export API.
+    """
+    __slots__ = ('_authenticate', '_captured', 'reauthentications', '_released')
+
+    def __init__(self):
+        self._authenticate = None
+        self._captured = None
+        self.reauthentications = 0
+        self._released = False
+
+    def capture(self, pins, groups, expected):
+        if self._captured is None:
+            need(type(self.reauthentications) is int and self.reauthentications == 0
+                 and self._released is False and expected is not None,
+                 'one first compact capture of a live expected table')
+            self._captured = (pins, groups, expected)
+        else:
+            need(type(self._captured) is tuple and len(self._captured) == 3
+                 and self._released is True and self.reauthentications == 1
+                 and self._captured[2] is None,
+                 'final compact follows completed inverse scratch retirement')
+            prior_pins, prior_groups, unused = self._captured
+            need(pins == prior_pins and groups == prior_groups,
+                 'same full canonical file/group values on later compact checks')
+
+    def authenticate(self, pins, groups):
+        need(self._captured is not None and self._authenticate is not None,
+             'reuse only after this complete compact authentication')
+        need(type(self._captured) is tuple and len(self._captured) == 3
+             and type(self.reauthentications) is int and self.reauthentications == 0
+             and self._released is False and self._captured[2] is not None,
+             'one complete inverse authentication while the captured table is live')
+        prior_pins, prior_groups, expected = self._captured
+        need(pins == prior_pins and groups == prior_groups,
+             'entire same file identities and ordered multiplicities before reuse')
+        # Equality above has discharged the only use of the first compact's
+        # containers. Keep the equal inverse wire; retain the SAME digest map.
+        self._captured = (pins, groups, expected)
+        del prior_pins, prior_groups
+        # This is the SAME private original function, now its expected branch.
+        # It streams every raw file, recomputes each selected SHA and compares
+        # it to this complete map. Returning the map changes identity only.
+        need(self._authenticate(pins, groups, expected=expected) is None,
+             'complete fresh whole-file and exact LF digest authentication')
+        self.reauthentications += 1
+        return expected
+
+    def release_expected(self):
+        need(type(self._captured) is tuple and len(self._captured) == 3
+             and type(self.reauthentications) is int and self.reauthentications == 1
+             and self._released is False and self._captured[2] is not None,
+             'retire scratch once, after one successful full inverse authentication')
+        pins, groups, expected = self._captured
+        self._captured = (pins, groups, None)
+        self._released = True
+        need(self._captured[0] is pins and self._captured[1] is groups
+             and self._captured[2] is None,
+             'retirement preserves the exact pins/groups and drops only expected')
+        # expected is a local reference only; it dies at this callback return.
+
+    def clear(self):
+        self._captured = None
+        self._authenticate = None
+        self._released = True
+
+
+def root_observe(phase):
+    return None
+
+ROOT_WIRE_QUOTA='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'
+
+def root_current_wire_size(codec,envelope,value,hashes=None):
+    """Exact CURRENT reference-envelope JSON bytes, including its final LF.
+
+    Streaming visits every locator occurrence; it does not build the legacy
+    SHA/triple representation or deduplicate ordered selected occurrences.
+    All rich inverse, shape, LF authentication and canonicality checks remain
+    obligations of the original compact/expand functions around this count.
+    """
+    codec.legacy()
+    codec.need((codec.MAX_RAW,codec.MAX_PACKED)==(64*2**20,8*2**20),
+        'current-wire method retains64MiB raw and8MiB packed')
+    codec.need(type(envelope)is dict and set(envelope)=={'schema','head','producer_case','upstream_acceptance','source_profile'}
+        and envelope['schema']==codec.SCHEMA and type(value)is dict and value.get('schema')==codec.WIRE,
+        'current literal envelope and locator grammar')
+    total=1
+    for i,chunk in enumerate(codec.json.JSONEncoder(separators=(',',':'),ensure_ascii=True).iterencode(dict(envelope,state=value))):
+        total+=len(chunk.encode('ascii'))
+        codec.need(total<=codec.MAX_RAW,'exact CURRENT reference envelope64MiB including LF')
+    return total
+
+class RootLogicalSizeFact:
+    """One immediate same-process proof, published only after full expansion."""
+    __slots__=('codec','owner','token','phase','pending','fact','providers','wire_providers','constants','metric','counter')
+    def __init__(self,codec):
+        self.codec=codec;self.owner=os.getpid();self.token=object()
+        self.metric=ROOT_WIRE_QUOTA;self.counter=root_current_wire_size
+        self.phase='EXPANDING';self.pending=None;self.fact=None
+        names=('need','legacy','logical_reference_size','logical_size','expand','compact','authenticate_lines')
+        self.providers=tuple((name,getattr(codec,name))for name in names)
+        legacy=codec._OLD;codec.need(legacy is not None,'already acquired actual legacy provider')
+        self.wire_providers=(legacy,legacy.W,tuple((name,getattr(legacy.W,name))for name in
+            ('need','digest','pin_shape','reference','unwire','wire')))
+        self.constants=(codec.MAX_RAW,codec.SCHEMA,codec.WIRE,legacy.SCHEMA,legacy.O,legacy.O.WIRE,codec.MAX_PACKED)
+    def guard(self):
+        c=self.codec;c.need(self.owner==os.getpid() and self.metric==ROOT_WIRE_QUOTA
+            and self.counter is root_current_wire_size,'same actor and versioned current-wire counter')
+        c.need(all(getattr(c,name)is provider for name,provider in self.providers),
+            'every acquired original codec provider remains identical')
+        legacy,w,providers=self.wire_providers
+        c.need(c._OLD is legacy and legacy.W is w and all(getattr(w,name)is provider for name,provider in providers),
+            'every actual original typed wire provider remains identical')
+        c.need(legacy.O is self.constants[4]and self.constants==(c.MAX_RAW,c.SCHEMA,c.WIRE,legacy.SCHEMA,legacy.O,legacy.O.WIRE,c.MAX_PACKED),
+            'same complete legacy format and physical bound')
+    def discard(self):
+        self.pending=None;self.fact=None;self.phase='DISCARDED'
+    def count(self,envelope,value,hashes):
+        try:
+            self.guard();self.codec.need(self.phase=='EXPANDING'and self.pending is None and self.fact is None,
+                'one current-wire size calculation in this expansion')
+            self.phase='COUNTING'
+            root_observe('count.begin');length=self.counter(self.codec,envelope,value,hashes);root_observe('count.end')
+            self.codec.need(type(length)is int and 0<=length<=self.codec.MAX_RAW,'exact bounded integer counter result')
+            self.pending=(length,envelope);self.phase='COUNTED';return length
+        except BaseException:
+            self.discard();raise
+    def publish(self,state,envelope):
+        try:
+            self.guard();self.codec.need(self.phase=='COUNTED'and type(self.pending)is tuple
+                and len(self.pending)==2 and self.pending[1]is envelope and self.fact is None,
+                'count belongs to this exact immediately expanded envelope')
+            self.codec.need(type(state)is dict,'same full typed result after the unchanged inverse')
+            length=self.pending[0];self.pending=None
+            self.fact=(self.token,length,state,envelope);self.phase='PUBLISHED';root_observe('publish')
+        except BaseException:
+            self.discard();raise
+    def consume(self,codec,envelope,state):
+        try:
+            root_observe('consume.begin');self.guard();codec.need(codec is self.codec and self.phase=='PUBLISHED'
+                and type(self.fact)is tuple and len(self.fact)==4 and self.fact[0]is self.token
+                and type(self.fact[1])is int and self.fact[2]is state and self.fact[3]is envelope,
+                'one immediate exact codec/state/envelope/token size obligation')
+            length=self.fact[1];self.fact=None;self.phase='CONSUMING'
+            # These retain the immediate logical_size entry's legacy Source
+            # authentications. Their two acquire calls remain actual calls.
+            legacy=codec.legacy();self.guard()
+            codec.need(legacy is self.wire_providers[0]and 0<=length<=codec.MAX_RAW,
+                'same exact current-wire length and unchanged physical guard')
+            self.phase='CONSUMED';root_observe('consume.end');return length
+        except BaseException:
+            self.discard();raise
+
+def export(contract, codec, state, path, **provenance):
+    """Run the same export with one invocation-local storage-sharing inverse.
+
+    Raw authentication still computes the independent SHA of every selected
+    literal LF line. Each entire derived file/line/SHA leaf dictionary must
+    equal the corresponding original occurrence before its storage is shared.
+    The old full restored==state and explicit order tests remain unchanged.
+    Every shared occurrence has separately passed its freshly reconstructed
+    entire-value equality before any storage is reused.
+    """
+    need(contract.gate.get('reference_wire_quota')==ROOT_WIRE_QUOTA,
+         'fresh Root-adopted V2 current-wire method before export')
+    raw = contract.source_text(CODEC)
+    ordinal_module = contract.module(ORDINAL_MAP, 'Root_F009_private_digest_ordinals')
+    need(isinstance(ordinal_module.DigestOrdinalMap, type), 'exact private digest-ordinal provider')
+    map_module = contract.module(MAP, 'Root_F009_two_integer_location_storage')
+    need(isinstance(map_module.LocationDigestMap, type), 'exact private location-map provider')
+    need(Path(codec.__file__) == Path(CODEC['path'])
+         and codec.export.__globals__ is vars(codec)
+         and codec.expand.__globals__ is vars(codec)
+         and codec.export.__code__.co_filename == CODEC['path']
+         and codec.expand.__code__.co_filename == CODEC['path'],
+         'same acquired concrete original codec providers')
+    need(type(state) is dict and type(state.get('leaves')) is list,
+         'same actual ordered acquired leaf-occurrence list')
+    nodes = [n for n in ast.parse(raw, filename=CODEC['path']).body
+             if isinstance(n, ast.FunctionDef) and n.name == 'expand']
+    need(len(nodes) == 1, 'one exact retained complete inverse body')
+    before = ast.get_source_segment(raw, nodes[0])
+    after = before
+    for old, new in ((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+                     (HASHES_BEFORE, HASHES_AFTER), (RELEASE_BEFORE, RELEASE_AFTER)):
+        need(after.count(old) == 1 and new not in after,
+             'one exact storage-allocation successor site')
+        after = after.replace(old, new, 1)
+    inverse = after
+    for old, new in reversed(((PIN_BEFORE, PIN_AFTER), (LEAF_BEFORE, LEAF_AFTER),
+                              (HASHES_BEFORE, HASHES_AFTER), (RELEASE_BEFORE, RELEASE_AFTER))):
+        need(inverse.count(new) == 1, 'one complete reverse allocation site')
+        inverse = inverse.replace(new, old, 1)
+    need(inverse == before, 'entire literal old inverse recovered')
+    need('ROOT_EXPORT_LEAVES' not in vars(codec),
+         'fresh invocation-local source-leaf binding')
+    original_globals = vars(codec)
+    private = dict(original_globals)
+    private['ROOT_EXPORT_LEAVES'] = state['leaves']
+    need('ROOT_LOCATION_MAP' not in private, 'fresh private scratch-map binding')
+    private['ROOT_LOCATION_MAP'] = map_module.LocationDigestMap
+    need('ROOT_DIGEST_ORDINAL_MAP' not in private, 'fresh private digest-ordinal binding')
+    private['ROOT_DIGEST_ORDINAL_MAP'] = ordinal_module.DigestOrdinalMap
+    retained = _AuthenticatedLocations()
+    need('ROOT_CAPTURE_EXPECTED' not in private and 'ROOT_AUTHENTICATE_EXPECTED' not in private
+         and 'ROOT_RELEASE_EXPECTED' not in private,
+         'fresh invocation-local authenticated-location bindings')
+    private['ROOT_CAPTURE_EXPECTED'] = retained.capture
+    private['ROOT_AUTHENTICATE_EXPECTED'] = retained.authenticate
+    private['ROOT_RELEASE_EXPECTED'] = retained.release_expected
+    for name, old_allocation, new_allocation in (
+            ('compact', 'groups=[];expected={}', 'groups=[];expected=ROOT_LOCATION_MAP()'),
+            ('authenticate_lines', 'found={}if expected is None else None',
+             'found=ROOT_LOCATION_MAP()if expected is None else None')):
+        matches = [n for n in ast.parse(raw, filename=CODEC['path']).body
+                   if isinstance(n, ast.FunctionDef) and n.name == name]
+        need(len(matches) == 1, 'one exact original scratch-map provider')
+        provider = getattr(codec, name)
+        need(provider.__globals__ is original_globals
+             and provider.__code__.co_filename == CODEC['path'],
+             'same original mathematical scratch-map provider')
+        previous = ast.get_source_segment(raw, matches[0])
+        need(previous.count(old_allocation) == 1 and new_allocation not in previous,
+             'one exact empty scratch-dictionary allocation')
+        successor = previous.replace(old_allocation, new_allocation, 1)
+        if name == 'compact':
+            need(successor.count(CAPTURE_BEFORE) == 1 and CAPTURE_AFTER not in successor,
+                 'one capture AFTER unchanged complete first authentication')
+            successor = successor.replace(CAPTURE_BEFORE, CAPTURE_AFTER, 1)
+        recovered = successor
+        if name == 'compact':
+            recovered = recovered.replace(CAPTURE_AFTER, CAPTURE_BEFORE, 1)
+        need(recovered.replace(new_allocation, old_allocation, 1) == previous,
+             'entire original scratch-map function inverse')
+        exec(compile(successor, str(Path(__file__).resolve()), 'exec', dont_inherit=True), private)
+    private['logical_reference_size']=lambda e,v,h:root_current_wire_size(codec,e,v,h)
+    exec(compile(after, str(Path(__file__).resolve()), 'exec', dont_inherit=True), private)
+    shared = private['expand']
+    retained._authenticate = private['authenticate_lines']
+    need(retained._authenticate.__globals__ is private,
+         'same private full original authentication provider')
+    need(shared.__globals__ is private
+         and shared.__globals__['logical_reference_size'] is private['logical_reference_size']
+         and private['ROOT_EXPORT_LEAVES'] is state['leaves']
+         and all(private[key] is value for key, value in original_globals.items()
+                 if key not in {'expand', 'compact', 'authenticate_lines', 'logical_size', 'logical_reference_size'}),
+         'same original providers/guard lifetime plus exact source leaves and scratch-map storage')
+    ordinary = codec.export
+    need(ordinary.__closure__ is None and ordinary.__defaults__ is None
+         and ordinary.__kwdefaults__ is None, 'exact retained export convention')
+    export_globals = dict(ordinary.__globals__)
+    export_globals['expand'] = shared
+    export_globals['compact'] = private['compact']
+    matches=[n for n in ast.parse(raw,filename=CODEC['path']).body
+             if isinstance(n,ast.FunctionDef)and n.name=='export']
+    need(len(matches)==1,'one exact original export body')
+    original_export=ast.get_source_segment(raw,matches[0])
+    old_site='    logical_size(provenance,state)\n    envelope=dict(provenance,state=compact(state));packed=legacy().W.encode(envelope)'
+    new_site="    envelope=dict(provenance,state=compact(state))\n    ROOT_CURRENT_WIRE_SIZE(provenance,envelope['state'],None)\n    packed=legacy().W.encode(envelope)"
+    need(original_export.count(old_site)==1 and new_site not in original_export,'one explicit current-wire admission site')
+    successor=original_export.replace(old_site,new_site,1)
+    need(successor.replace(new_site,old_site,1)==original_export,'whole literal export-policy inverse')
+    export_globals['ROOT_CURRENT_WIRE_SIZE']=lambda e,v,h:root_current_wire_size(codec,e,v,h)
+    exec(compile(successor,str(Path(__file__).resolve())+'::current_wire_export','exec',dont_inherit=True),export_globals)
+    current=export_globals['export']
+    need(all(current.__globals__[key]is value for key,value in ordinary.__globals__.items()
+             if key not in {'export','expand','compact'}),
+         'all other original exporter providers and complete durable tail remain')
+    try:
+        result = current(state, path, **provenance)
+        need(retained.reauthentications == 1,
+             'one full inverse authentication through the retained map')
+        need(retained._released is True and type(retained._captured) is tuple
+             and len(retained._captured) == 3 and retained._captured[2] is None,
+             'complete export retired only the first scratch map before final compact')
+    finally:
+        retained.clear()
+        # Retire only invocation-local bindings. Break function/global cycles
+        # that would otherwise retain the complete acquired leaf list/map.
+        for key in ('ROOT_EXPORT_LEAVES', 'ROOT_LOCATION_MAP', 'ROOT_DIGEST_ORDINAL_MAP',
+                    'ROOT_CAPTURE_EXPECTED', 'ROOT_AUTHENTICATE_EXPECTED', 'ROOT_RELEASE_EXPECTED',
+                    'compact', 'authenticate_lines', 'logical_size', 'logical_reference_size', 'expand'):
+            private.pop(key, None)
+        export_globals.pop('expand', None)
+        export_globals.pop('compact', None)
+        export_globals.pop('logical_size', None)
+        export_globals.pop('ROOT_CURRENT_WIRE_SIZE',None)
+        export_globals.pop('export',None)
+    need(codec.expand is original_globals['expand'] and codec.export is ordinary
+         and codec.compact is original_globals['compact']
+         and codec.authenticate_lines is original_globals['authenticate_lines']
+         and codec.logical_size is original_globals['logical_size']
+         and codec.logical_reference_size is original_globals['logical_reference_size'],
+         'no imported original codec function replaced')
+    return result
+
+def _text(contract,ref,name):
+    raw=contract.source_text(ref)
+    rows=[n for n in ast.parse(raw,filename=ref['path']).body if isinstance(n,ast.FunctionDef)and n.name==name]
+    need(len(rows)==1,'one exact retained provider body')
+    return ast.get_source_segment(raw,rows[0])
+
+def _edit(before,old,new):
+    need(before.count(old)==1 and new not in before,'one explicit private provider site')
+    after=before.replace(old,new,1)
+    need(after.replace(new,old,1)==before,'whole literal private provider inverse')
+    return after
+
+def expand_current(contract, codec, value, *, envelope, size_fact=None):
+    """Private value-equal scratch storage."""
+    need(Path(codec.__file__)==Path(CODEC['path'])
+         and codec.expand.__globals__ is vars(codec)
+         and codec.expand.__code__.co_filename==CODEC['path'],
+         'the actual acquired original codec/provider, not a supplied decoder')
+    original=codec.expand;original_auth=codec.authenticate_lines;original_compact=codec.compact
+    before=_text(contract,CODEC,'expand')
+    after=_edit(before,PIN_BEFORE,PIN_AFTER)
+    private=dict(vars(codec))
+    mapref={'path':'/private/tmp/f009_export_location_maps/location_map.py','bytes':1518,'sha256':'4c3cdc29f64460a26ab26acba7683325b836230a741b4ecf2a368adcec8f52ba'}
+    mapping=contract.module(mapref,'Root_F009_base_location_scratch_'+str(len(contract.modules)))
+    auth_before=_text(contract,CODEC,'authenticate_lines')
+    auth_after=_edit(auth_before,'found={}if expected is None else None',
+        'found=ROOT_LOAD_LOCATION_MAP()if expected is None else None')
+    private['ROOT_LOAD_LOCATION_MAP']=mapping.LocationDigestMap
+    exec(compile(auth_after,str(Path(__file__).resolve())+'::private_location_auth','exec',dont_inherit=True),private)
+    compact_before=_text(contract,CODEC,'compact')
+    compact_after=_edit(compact_before,'groups=[];expected={}','groups=[];expected=ROOT_LOAD_LOCATION_MAP()')
+    exec(compile(compact_after,str(Path(__file__).resolve())+'::private_location_compact','exec',dont_inherit=True),private)
+    exec(compile(after,str(Path(__file__).resolve())+'::private_pin_expand','exec',dont_inherit=True),private)
+    private['logical_reference_size']=lambda e,v,h:root_current_wire_size(codec,e,v,h)
+    if size_fact is not None:
+        need(type(size_fact)is RootLogicalSizeFact and size_fact.codec is codec,'exact local current-wire fact')
+        private['logical_reference_size']=size_fact.count
+    current=private['expand']
+    need(current.__globals__ is private and all(private[k]is v for k,v in vars(codec).items()if k not in('expand','authenticate_lines','compact','logical_reference_size')),
+         'all helpers, original START, limits and physical registry remain the original objects')
+    try:
+        result=current(value,envelope=envelope)
+        need(codec.expand is original and codec.authenticate_lines is original_auth and codec.compact is original_compact,'all original codec providers unchanged')
+        return result
+    finally:
+        # expand is nonrecursive; remove only the new private self-binding.
+        private.pop('expand',None);private.pop('authenticate_lines',None);private.pop('compact',None);private.pop('ROOT_LOAD_LOCATION_MAP',None)
+        private.pop('logical_reference_size',None)
+
+def load_callbacks(contract):
+    # The slot is private to one derived accessor. No wire, raw bytes, leaf
+    # digest map or old verdict is retained. The immediate call site can only
+    # delete dead wire bindings between expansion and consumption.
+    slot=[None]
+    def expand(codec,value,*,envelope):
+        need(slot[0]is None,'no outstanding local logical-size fact')
+        fact=RootLogicalSizeFact(codec)
+        try:
+            state=expand_current(contract,codec,value,envelope=envelope,size_fact=fact)
+            fact.publish(state,envelope);slot[0]=fact;return state
+        except BaseException:
+            fact.discard();slot[0]=None;raise
+    def consume(codec,envelope,state):
+        fact=slot[0];slot[0]=None
+        need(type(fact)is RootLogicalSizeFact,'only the completed local expansion publishes a size fact')
+        return fact.consume(codec,envelope,state)
+    return expand,consume
+
+if __name__ == '__main__':
+    raise SystemExit('UNRUN helper; a fresh exact Root caller/review and guarded Owner are owed.')

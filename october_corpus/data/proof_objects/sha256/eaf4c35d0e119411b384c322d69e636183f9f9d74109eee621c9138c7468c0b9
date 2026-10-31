@@ -1,0 +1,119 @@
+"""UNRUN bounded representation-policy controls, with no census acquisition.
+
+Real small JSON envelopes check the exact streaming count. A separately
+labelled chunk fixture exercises the64MiB arithmetic boundary without a
+large state allocation. Full LF/typed/export controls are a separate route.
+"""
+import argparse,ast,hashlib,json,os,resource,stat,sys,time,types
+from pathlib import Path
+
+START=time.monotonic();READ=0
+def need(ok,why):
+    if not ok:raise ValueError(why)
+    peak=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    if peak>=128*2**20 or time.monotonic()-START>=100:raise ValueError('128MiB/100s generic quota controls')
+
+def source(pair):
+    global READ
+    path,digest=pair;p=Path(path)
+    need(type(path)is str and p.is_absolute()and str(p)==path and '..'not in p.parts
+         and type(digest)is str and len(digest)==64 and set(digest)<=set('0123456789abcdef'),
+         'typed canonical Source descriptor')
+    a=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+         and a.st_size<=65536 and READ+a.st_size+1<=2*2**20,'bounded ordinary Source before open')
+    sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    with p.open('rb')as f:
+        b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+    READ+=len(raw)
+    need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==a.st_size
+         and hashlib.sha256(raw).hexdigest()==digest,'whole stable exact Source')
+    return raw.decode('utf8')
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    for k in('self','helper','native','reader'):ap.add_argument('--'+k,nargs=2,required=True)
+    a=ap.parse_args()
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,
+         'ordinary clearedEBS controls')
+    need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),
+         'same absent four environment variables')
+    need(a.self[0]==str(Path(__file__).resolve()),'actual control Source identity')
+    text={k:source(getattr(a,k))for k in('self','helper','native','reader')}
+    attempts=[]
+    def deny(event,args):
+        if event in('subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'):
+            attempts.append(event);raise ValueError('no Native launch in generic quota controls')
+    sys.addaudithook(deny)
+    def module(k):
+        m=types.ModuleType('Root_generic_current_wire_'+k);m.__file__=getattr(a,k)[0]
+        exec(compile(text[k],m.__file__,'exec',dont_inherit=True),vars(m));return m
+    h=module('helper');n=module('native')
+    names=[]
+    def done(name,ok=True):need(ok,name);names.append(name)
+    def refuse(name,call):
+        try:call()
+        except(ValueError,TypeError,KeyError,AttributeError):done(name);return
+        raise ValueError('negative quota control admitted: '+name)
+    def take(k,name):
+        nodes=[q for q in ast.parse(text[k]).body if isinstance(q,(ast.FunctionDef,ast.ClassDef))and q.name==name]
+        need(len(nodes)==1,'one complete named Source definition')
+        return ast.dump(nodes[0],include_attributes=False)
+    done('Native_and_Reader_helper_have_identical_current_counter',take('helper','root_current_wire_size')==take('native','root_current_wire_size'))
+    done('Native_and_Reader_helper_have_identical_versioned_fact',take('helper','RootLogicalSizeFact')==take('native','RootLogicalSizeFact'))
+    done('explicit_versioned_method_identifier',h.ROOT_WIRE_QUOTA==n.ROOT_WIRE_QUOTA=='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2')
+    for k in('native','reader'):
+        node=next(q for q in ast.parse(text[k]).body if isinstance(q,ast.FunctionDef)and q.name=='main')
+        body=ast.get_source_segment(text[k],node)
+        done(k+'_requires_fresh_current_wire_gate',"gate.get('reference_wire_quota')==ROOT_WIRE_QUOTA"in body)
+        done(k+'_return_records_current_wire_policy','reference_wire_quota=ROOT_WIRE_QUOTA'in body)
+    acquired=[]
+    c=types.SimpleNamespace(need=need,json=json,MAX_RAW=64*2**20,MAX_PACKED=8*2**20,
+        SCHEMA='F009_REFERENCE_BACKED_CAPACITY8_STATE_V1',WIRE='F009_PINNED_ORDERED_LEAF_LOCATORS_V1',
+        legacy=lambda:acquired.append('actual-entry-call'))
+    pin=dict(path='/private/tmp/generic-only',bytes=0,sha256='0'*64)
+    e=dict(schema=c.SCHEMA,head=pin,producer_case=pin,upstream_acceptance=pin,source_profile=pin)
+    def value(lines):return dict(schema=c.WIRE,pins=[pin],digests=[],state=dict(leaves=dict(count=len(lines),groups=[[0,lines]])))
+    for label,v in(('empty',value([])),('one',value([0])),('duplicates',value([0,0,1,0])),('unicode',dict(value([1]),extra='\u03bb\n\\"'))):
+        exact=len((json.dumps(dict(e,state=v),separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii'))
+        done('exact_current_JSON_including_LF_'+label,h.root_current_wire_size(c,e,v)==exact==n.root_current_wire_size(c,e,v))
+    done('counter_retains_legacy_authentication_entry_calls',len(acquired)==8)
+    v=value([0,0,1,0]);short=value([0,1,0])
+    done('occurrences_not_deduplicated_in_count',h.root_current_wire_size(c,e,v)>h.root_current_wire_size(c,e,short))
+    bad=dict(e);bad['extra']=None
+    refuse('extra_envelope_field_refused',lambda:h.root_current_wire_size(c,bad,v))
+    bad=dict(e);bad['schema']='OLD'
+    refuse('wrong_envelope_schema_refused',lambda:h.root_current_wire_size(c,bad,v))
+    refuse('wrong_reference_schema_refused',lambda:h.root_current_wire_size(c,e,dict(v,schema='OLD')))
+    refuse('nonmapping_reference_refused',lambda:h.root_current_wire_size(c,e,None))
+    old=c.MAX_RAW;c.MAX_RAW+=1
+    try:refuse('raw_cap_change_refused',lambda:h.root_current_wire_size(c,e,v))
+    finally:c.MAX_RAW=old
+    old=c.MAX_PACKED;c.MAX_PACKED+=1
+    try:refuse('packed_cap_change_refused',lambda:h.root_current_wire_size(c,e,v))
+    finally:c.MAX_PACKED=old
+    # This is only a guard arithmetic seam, never a real JSON/state claim.
+    # The real JSON encoder was independently compared above; the production
+    # Source retains that encoder and all original typed/canonical checks.
+    class ChunkEncoder:
+        def __init__(self,**kw):need(kw==dict(separators=(',',':'),ensure_ascii=True),'same JSON encoder options')
+        def iterencode(self,unused):
+            chunk='x'*65536
+            for _ in range(1023):yield chunk
+            yield chunk[:-1]
+            if overflow[0]:yield 'x'
+    overflow=[False];old=c.json;c.json=types.SimpleNamespace(JSONEncoder=ChunkEncoder)
+    try:
+        done('synthetic_chunk_counter_accepts_exact64MiB_with_LF',h.root_current_wire_size(c,e,v)==64*2**20)
+        overflow[0]=True
+        refuse('synthetic_chunk_counter_refuses64MiB_plus_one',lambda:h.root_current_wire_size(c,e,v))
+    finally:c.json=old
+    for k in('self','helper','native','reader'):source(getattr(a,k))
+    need(not attempts,'no Native/child launches')
+    report=dict(schema='F009_CURRENT_REFERENCE_WIRE_QUOTA_GENERIC_CONTROLS_V2',status='PASS',controls=len(names),names=names,
+        actual_case_calls=0,actual_state_decodes=0,actual_current_case_fit_measured=False,launch_attempts=attempts,
+        full_LF_typed_export_controls_required=True,controlled_Source_read_bytes=READ,
+        Source_bootstrap_not_in_counter=True,raw_limit=64*2**20,packed_limit=8*2**20,
+        domain_change='OLD-format-only64MiB admission retired; actual CURRENT wire still capped64MiB and gzip8MiB')
+    raw=json.dumps(report,sort_keys=True);need(len(raw.encode())<16384,'bounded whole control report');print(raw,flush=True)
+
+if __name__=='__main__':main()

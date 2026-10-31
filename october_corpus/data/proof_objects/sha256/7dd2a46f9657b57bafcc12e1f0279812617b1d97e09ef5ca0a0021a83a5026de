@@ -1,0 +1,75 @@
+"""One acquired base per process-local segment; unchanged literal transitions."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+import copy
+import importlib.util
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('frozen_bounded_runtime', HERE/'census_bounded_runtime.py')
+L = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(L)
+B, V, Q, need = L.B, L.V, L.Q, L.need
+
+
+class Segment:
+    """The constructor acquires; callers cannot supply an asserted base state."""
+    __slots__ = ('__case_pin', '__case', '__anchor', '__genesis_pin')
+
+    def __init__(self, case_pin):
+        self.__case_pin = copy.deepcopy(case_pin)
+        self.__case = V.read_json(self.__case_pin)
+        B.check_case(self.__case)
+        # Exactly one full historical acquisition. migrate returns a deep copy.
+        self.__anchor = B.migrate(B.load(self.__case['base']), self.__case)
+        self.__genesis_pin = None
+
+    def case(self):
+        return copy.deepcopy(self.__case)
+
+    def initial(self):
+        return copy.deepcopy(self.__anchor)
+
+    def create(self, out, fault=lambda stage: None):
+        out = Path(out)
+        need(V.read_json(self.__case_pin) == self.__case, 'unchanged acquired segment case')
+        B.check_case(self.__case)
+        need(str(out) == self.__case['output'] and not out.exists(), 'fresh declared segment')
+        out.mkdir()
+        Q.atomic(out/'genesis.json', dict(schema=B.GENESIS, case=self.__case_pin))
+        self.__genesis_pin = V.pin(out/'genesis.json')
+        fault('after_genesis_fsync')
+        Q.atomic(out/'head.json', dict(schema=B.HEAD, genesis=self.__genesis_pin, tail=None),
+                 lambda: fault('before_head_replace'))
+        fault('after_head_replace')
+        need(self.load(V.pin(out/'head.json')) == self.__anchor, 'literal acquired-base genesis')
+        return self.initial()
+
+    def load(self, head_pin):
+        """Authenticate and reconstruct only this case's complete committed tail."""
+        out = Path(self.__case['output'])
+        need(head_pin['path'] == str(out/'head.json'), 'exact acquired segment head path')
+        head = V.read_json(head_pin)
+        need(set(head) == {'schema', 'genesis', 'tail'} and head['schema'] == B.HEAD,
+             'bounded backend head schema')
+        need(head['genesis']['path'] == str(out/'genesis.json'), 'exact segment genesis path')
+        genesis = V.read_json(head['genesis'])
+        need(genesis == dict(schema=B.GENESIS, case=self.__case_pin), 'exact acquired case/genesis binding')
+        if self.__genesis_pin is not None:
+            need(head['genesis'] == self.__genesis_pin, 'unchanged captured genesis pin')
+        need(V.read_json(self.__case_pin) == self.__case, 'unchanged acquired segment case')
+        B.check_case(self.__case)
+        chain, visited, tail = [], set(), head['tail']
+        while tail is not None:
+            need(tail['sha256'] not in visited, 'bounded backend transactions acyclic')
+            visited.add(tail['sha256'])
+            tx = V.read_json(tail)
+            chain.append(tx)
+            tail = tx['previous']
+        state = self.initial()
+        for tx in reversed(chain):
+            state = B.R.transition(state, tx)
+        self.__genesis_pin = copy.deepcopy(head['genesis'])
+        return state

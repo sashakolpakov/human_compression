@@ -1,0 +1,149 @@
+"""Private owned rich-leaf sharing; no project import or call at module load.
+
+Only an exclusively acquired loop may use this contract. Existing leaf and
+nested file-pin dictionaries are immutable through every reachable private
+operation. Every non-leaf state field remains deeply copied. Public Segment,
+transition, accessor, codec and independent Saved namespaces stay untouched.
+"""
+import ast
+import copy
+import types
+from pathlib import Path
+
+S=Path('/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split')
+SOURCES={
+    'backend':dict(path=str(S/'census_backend_transition.py'),bytes=5058,sha256='981228cc78a2e226e5155f309e54282cd37972a1aeea817641af07d7f8d42b70'),
+    'segment':dict(path=str(S/'census_segment_replay.py'),bytes=3411,sha256='7dd2a46f9657b57bafcc12e1f0279812617b1d97e09ef5ca0a0021a83a5026de'),
+    'mixed':dict(path=str(S/'census_queue_runtime.py'),bytes=7744,sha256='f868bb9013e19c1136d118166286bf76177bde2a9d1f22cc8736de0c50e63971'),
+    'terminal':dict(path=str(S/'census_terminal_reader.py'),bytes=9928,sha256='b3d428d3431a7722a466feb4ec00b066f33cd5eab12318f25d96c53d32de3f47'),
+    'verify':dict(path=str(S/'census_queue_verify.py'),bytes=11934,sha256='739a3576e090d3ee02516c3e11ab53a96a5d169246ae90c5bde6d98be087c8b5'),
+    'queue':dict(path=str(S/'census_queue.py'),bytes=10549,sha256='abaaa9736c8ebc2986c743b641ec4058642d97bf9619efb07cfa921639b8fd25'),
+    'final':dict(path=str(S/'census_capacity8_final_replay.py'),bytes=6196,sha256='692755f379a9e03c6d98d6e3d23cec9a21798e31c9ca6b1905d5476374391930')}
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def owned_state_copy(state):
+    """Deep-copy ALL nonleaf fields; copy only the immutable-leaf list.
+
+    Copying a projection, rather than memoizing the old leaf list as empty,
+    also preserves deep isolation if a nonleaf value aliases a leaf object or
+    the leaf list. No validator ever receives this projection. The original
+    input stays complete and unchanged, including all duplicate occurrences.
+    Outer, node and debt insertion order are retained.
+    """
+    need(type(state)is dict and 'leaves'in state and type(state['leaves'])is list,
+         'owned already acquired typed state and literal leaf list')
+    other=copy.deepcopy({key:value for key,value in state.items()if key!='leaves'})
+    leaves=list(state['leaves'])
+    return {key:(leaves if key=='leaves'else other[key])for key in state}
+
+def exact(text,edits):
+    before=text
+    for old,new in edits:
+        need(text.count(old)==1 and new not in text,'one declared private Source copy site')
+        text=text.replace(old,new,1)
+    inverse=text
+    for old,new in reversed(edits):
+        need(inverse.count(new)==1,'one private Source inverse site')
+        inverse=inverse.replace(new,old,1)
+    need(inverse==before,'WHOLE original private function Source recovered')
+    return text
+
+def derive(original,role,name,edits,updates,source):
+    text=source(SOURCES[role]);tree=ast.parse(text)
+    node=next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name==name)
+    body=exact(ast.get_source_segment(text,node),edits)
+    need(original.__code__.co_filename==SOURCES[role]['path'],'actual acquired original function '+role+'.'+name)
+    namespace=dict(original.__globals__);namespace.update(updates)
+    exec(compile(body,str(Path(__file__).resolve())+'::private_'+role+'_'+name,'exec',dont_inherit=True),namespace)
+    result=namespace[name]
+    need(result is not original and result.__globals__ is not original.__globals__,
+         'new private function and globals only')
+    return result
+
+def private_modules(publicB,publicM,source):
+    """Fresh namespaces and functions; never assign an old module/global.
+
+    All validator/predicate functions are the actual admitted originals and
+    receive the full unchanged state. Only copy sites and their private call
+    bindings change. Newly returned leaves are appended, never edited later.
+    """
+    publicR=publicM.R;publicV=publicR.V;publicQ=publicM.Q
+    need(publicB.M is publicM and publicM.V is publicV,'same admitted live runtime closure')
+    old=(publicB.migrate,publicM.reserve,publicM.admit_return,publicM.commit,
+         publicR.transition,publicV.transition,publicQ.prepare)
+    V=types.SimpleNamespace(**vars(publicV))
+    V.transition=derive(publicV.transition,'verify','transition',
+        (('result=copy.deepcopy(state)','result=OWNED_STATE_COPY(state)'),),
+        dict(OWNED_STATE_COPY=owned_state_copy),source)
+    R=types.SimpleNamespace(**vars(publicR));R.V=V
+    R.transition=derive(publicR.transition,'terminal','transition',
+        (('result=copy.deepcopy(state)','result=OWNED_STATE_COPY(state)'),),
+        dict(V=V,OWNED_STATE_COPY=owned_state_copy),source)
+    Q=types.SimpleNamespace(**vars(publicQ));Q.V=V
+    Q.prepare=derive(publicQ.prepare,'queue','prepare',
+        (('temporary=copy.deepcopy(state)','temporary=OWNED_STATE_COPY(state)'),),
+        dict(V=V,OWNED_STATE_COPY=owned_state_copy),source)
+    M=types.SimpleNamespace(**vars(publicM));M.R=R;M.V=V;M.Q=Q
+    common=dict(R=R,V=V,Q=Q)
+    M.commit=derive(publicM.commit,'mixed','commit',(),common,source)
+    M.reserve=derive(publicM.reserve,'mixed','reserve',(),dict(common,commit=M.commit),source)
+    M.admit_return=derive(publicM.admit_return,'mixed','admit_return',(),dict(common,commit=M.commit),source)
+    B=types.SimpleNamespace(**vars(publicB));B.M=M;B.R=R;B.V=V;B.Q=Q
+    # Two exact sites, separately named so the inverse is unambiguous.
+    B.migrate=derive(publicB.migrate,'backend','migrate',
+        (('return copy.deepcopy(state)','return OWNED_STATE_COPY(state)'),
+         ('result=copy.deepcopy(state);','result=OWNED_STATE_COPY(state);')),
+        dict(OWNED_STATE_COPY=owned_state_copy),source)
+    need(old==(publicB.migrate,publicM.reserve,publicM.admit_return,publicM.commit,
+               publicR.transition,publicV.transition,publicQ.prepare),'every public runtime function remains exact')
+    return types.SimpleNamespace(B=B,M=M,R=R,V=V,Q=Q,public=(publicB,publicM,publicR,publicV,publicQ),
+                                 original_functions=old,owned_state_copy=owned_state_copy)
+
+def private_segment(base,B,source,production=True):
+    """A NEW private class; the old original/public class is never rebound.
+
+    Production requires the actual reference accessor's authenticated fresh
+    acquisition. The false branch exists only for explicit old tiny saved
+    fixtures in controls; it does not authorize externally supplied states.
+    """
+    text=source(SOURCES['segment']);tree=ast.parse(text)
+    cls=next(n for n in tree.body if isinstance(n,ast.ClassDef)and n.name=='Segment')
+    body=ast.get_source_segment(text,cls)
+    namespace=dict(base.initial.__globals__)
+    if production:
+        need('AUTHENTICATED'in namespace and hasattr(base,'load_final'),
+             'actual admitted reference accessor and consuming final class')
+        body=exact(body,(("B.load(self.__case['base'])",'AUTHENTICATED.acquire_base(self.__case_pin, self.__case)'),))
+    body=exact(body,(("return copy.deepcopy(self.__anchor)",'return OWNED_STATE_COPY(self.__anchor)'),))
+    method=next(n for n in cls.body if isinstance(n,ast.FunctionDef)and n.name=='load')
+    old_load=''.join(text.splitlines(keepends=True)[method.lineno-1:method.end_lineno])
+    # Consume exactly as the acquired final-replay method; its three literal
+    # edits are checked against the genuine paid Source, not guessed here.
+    final_text=source(SOURCES['final']);final_tree=ast.parse(final_text)
+    edits=ast.literal_eval(next(n.value for n in final_tree.body if isinstance(n,ast.Assign)
+        and any(isinstance(t,ast.Name)and t.id=='LOAD_EDITS'for t in n.targets)))
+    final_load=exact(old_load,edits)
+    namespace.update(B=B,OWNED_STATE_COPY=owned_state_copy)
+    before=(base.__init__,base.initial,base.load,base.create,base.case)
+    exec(compile(body+'\n'+final_load,str(Path(__file__).resolve())+'::private_Segment','exec',dont_inherit=True),namespace)
+    result=namespace['Segment']
+    need(result is not base and result.__name__=='Segment'
+         and result.__slots__==('__case_pin','__case','__anchor','__genesis_pin')
+         and before==(base.__init__,base.initial,base.load,base.create,base.case),
+         'new four-slot private class and unchanged public class/methods')
+    return result
+
+def bind(admitted_run,selected,choose,source,production=True):
+    original=admitted_run.__globals__
+    original_snapshot=dict(original)
+    namespace=dict(original)
+    modules=private_modules(original['B'],original['M'],source)
+    Segment=private_segment(original['X'].Segment,modules.B,source,production)
+    namespace.update(B=modules.B,M=modules.M,Q=modules.Q,R=modules.B,
+        X=types.SimpleNamespace(Segment=Segment),reserve=modules.M.reserve,admit_return=modules.M.admit_return,
+        priority_choose=choose,ACCEPTED_SELECTION=copy.deepcopy(selected),OWNED_LEAF_CONTRACT=modules)
+    need(set(original)==set(original_snapshot)and all(original[k]is value for k,value in original_snapshot.items()),
+         'no original run namespace changed')
+    return namespace

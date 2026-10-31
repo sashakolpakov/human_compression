@@ -1,0 +1,39 @@
+{
+  "utc": "2026-10-31T09:59:10.106869+00:00",
+  "command": [
+    "/Users/sasha/.venvs/global/bin/python",
+    "-E",
+    "-B",
+    "-S",
+    "-c",
+    "import sys,os,json,stat,hashlib\nfrom pathlib import Path\nREAD=0\nLIMIT=64*2**20\ndef whole(r,body=False):\n global READ\n assert type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['bytes'])is int and 0<=r['bytes']<=4*2**20\n p=Path(r['path']);assert p.is_absolute()and str(p)==r['path']and '..'not in p.parts and p.resolve(strict=True)==p\n a=p.lstat();assert stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes']and READ+r['bytes']<=LIMIT\n sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)\n h=hashlib.sha256();parts=[]if body else None;n=0\n with p.open('rb')as f:\n  z=os.fstat(f.fileno());assert sig(a)==sig(z)\n  while True:\n   x=f.read(1048576)\n   if not x:break\n   n+=len(x);assert n<=r['bytes'];h.update(x)\n   if parts is not None:parts.append(x)\n  q=os.fstat(f.fileno())\n assert sig(a)==sig(z)==sig(q)==sig(p.lstat())and n==r['bytes']and h.hexdigest()==r['sha256']\n READ+=n\n return b''.join(parts)if body else None\np=Path(sys.argv[1]);assert p.stat().st_size<=2*2**20\nr=dict(path=str(p),bytes=p.stat().st_size,sha256=sys.argv[2]);m=json.loads(whole(r,True))\nassert m['Root_authority']is False and m['Source_or_control_activation']is False\nrows=m['files'];assert type(rows)is list and len(rows)<=512 and len({x['path']for x in rows})==len(rows)\nassert len(rows)==m['file_count']and sum(x['bytes']for x in rows)==m['file_bytes']\nfor parent in m['allowed_setup_parents']:\n q=Path(parent);assert q.is_dir()and q.resolve(strict=True)==q\nfor path in m['all_outputs_must_remain_absent']:\n q=Path(path);assert q.is_absolute()and q.is_relative_to('/private/tmp')and '..'not in q.parts and q.resolve()==q and not os.path.lexists(q)\nfor _ in range(2):\n for x in rows:whole(x)\nassert READ<=LIMIT\nprint(json.dumps(dict(schema='ROOT_F009_V2_CONTROLS_WHOLE_INPUT_PREFLIGHT_V1',status='WHOLE_FIXED_INPUTS_AND_ABSENT_NAMESPACES_CHECKED',files=len(rows),unique_bytes=m['file_bytes'],read_bytes=READ,Source_or_control_activations=0,actual_case_fit=False),sort_keys=True))\n",
+    "/private/tmp/f009_current_wire_quota/control_binding/preflight_inputs_FALSE.json",
+    "95dcf09c4c3bbeffdf30fcb7066e864096fb53471103008b4daaccc4336b9e18"
+  ],
+  "identities": [
+    {
+      "pid": 52135,
+      "birth": 1793440750.10541,
+      "initial_parent": 52134,
+      "group": 52135,
+      "session": 52135,
+      "peak_rss": 0
+    }
+  ],
+  "limits": {
+    "admit_disk": 10737418240,
+    "admit_ram": 4294967296,
+    "disk_floor": 8589934592,
+    "ram_floor": 3221225472,
+    "total_rss": 134217728,
+    "wall_seconds": 125.0,
+    "sample_seconds": 0.5,
+    "log_bytes_each": 262144,
+    "metadata_bytes_each": 131072,
+    "owned_pids": 128
+  },
+  "admission": {
+    "free_disk": 47893434368,
+    "available_ram": 4745003008
+  }
+}

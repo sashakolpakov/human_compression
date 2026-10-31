@@ -1,0 +1,74 @@
+"""UNRUN metadata-only final binding. No registrar/forecast/CAS/provider call.
+The exact frozen19790-byte DATA plan is reused as selection lineage.
+Only a separately issued Root release can authorize actual operations.
+"""
+from pathlib import Path
+import argparse,hashlib,json,os,stat,sys
+REFS={'plan': {'path': '/private/tmp/f009_checkpoint11584_preservation/checkpoint_plan_DATA_FALSE.json', 'bytes': 19790, 'sha256': 'b798927fabc578af4f4857b22d698d5015c19ba6afe8d7716307e7005f517df5'}, 'proposal': {'path': '/private/tmp/f009_checkpoint11584_preservation/preservation_PROPOSAL_FALSE.json', 'bytes': 1253991, 'sha256': 'db15542c6681332ffff32d5413403b26b8fad5fabf4a2b6acd32e187f54eb89c'}, 'preservation': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from11519/reader11584_evidence/preservation.json', 'bytes': 1254018, 'sha256': '9695c0c65bfe7a80e2b6b9f4e0f4f965eb59283f9e3f83da05cd407172d5a77e'}, 'postcheck': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from11519/reader11584_evidence/Root_preservation_postcheck.json', 'bytes': 898, 'sha256': 'c3fa066bb4744473425dd3df2cab7a8951816707562b921d78782c3ffa2c809b'}, 'IO_upper': {'path': '/private/tmp/f009_checkpoint11584_preservation/complete_registration_IO_upper_DATA.json', 'bytes': 3553, 'sha256': 'ab8d45991860190454ebaa33021ab80e2ba143dcd064ee59254d3aaffe619d12'}, 'IO_peer': {'path': '/private/tmp/f009_checkpoint11584_IO_independent_review/review.json', 'bytes': 7629, 'sha256': '54118b47faa1ee1bbf9979d10623204da078cfcc52a3e94144f958fda0701201'}, 'program': {'path': '/private/tmp/f009_v2_registration_io/register_checkpoint.py', 'bytes': 55787, 'sha256': '563fcc472585f64fbfb42327887ff59ee26880434632de9553c4a317545a84fe'}, 'Source_review': {'path': '/private/tmp/f009_v2_registration_io/Root_generic_Source_review.json', 'bytes': 1540, 'sha256': 'a12b33b59d41f81a22aee7237f9714e075708ffa8ce0d15505ed5cd104069cac'}, 'Source_peer': {'path': '/private/tmp/f009_v2_registration_io_independent_review/review.json', 'bytes': 10333, 'sha256': 'ef3f6cbfa92744ffb00585caaffedba4b9266dfbe33b59f3229e1e9c1d723324'}, 'controls_SDK': {'path': '/private/tmp/f009_v2_registration_io/Root_SDK/F009Registrar3GiB_Root_actual22_generic_controls_v1_attempt1_capture.json', 'bytes': 5043, 'sha256': '8835139b0b25179646cee0a9c7034f406c040526c62b54265928f979b21a436f'}, 'controls_result': {'path': '/private/tmp/f009_v2_registration_io/runtime/generic_controls/stdout.log', 'bytes': 1153, 'sha256': 'c1315c647c01a05b8c3a4108ef461938c2d48306c4e9795876b79e0782beac0e'}, 'preservation_SDK': {'path': '/private/tmp/f009_checkpoint11584_preservation/Root_SDK/F00911584_Root_actual_complete6813_mapping_composition_v1_attempt1_capture.json', 'bytes': 3443, 'sha256': '1aa5a9e581f3a8bbf0e0ce9003217d45e04ae9f165d4c34a1ee1b9cb3cd5f619'}}
+READ=0;STATS={};CACHE={}
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def whole(r):
+ global READ
+ assert type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['bytes'])is int and 0<=r['bytes']<=8*2**20
+ p=Path(r['path']);a=p.lstat();assert p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes']
+ if str(p)in CACHE:
+  cached=CACHE[str(p)];assert sig(a)==STATS[str(p)]and len(cached)==r['bytes']and hashlib.sha256(cached).hexdigest()==r['sha256'];return cached
+ assert READ+r['bytes']+1<=32*2**20
+ with p.open('rb')as f:
+  b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);z=os.fstat(f.fileno())
+ assert sig(a)==sig(b)==sig(z)==sig(p.lstat())and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256']
+ READ+=len(raw);STATS[str(p)]=sig(a);CACHE[str(p)]=raw;return raw
+def doc(r):return json.loads(whole(r))
+def mapping(w):
+ t=w['Root_Preservation_map_reference'];p=t['prefixes'];value=dict(w);value.pop('Root_Preservation_map_reference');count=0
+ for name,kind,rows in t['fields']:
+  assert kind=='pair';restored=[]
+  for li,ri,tail,size,sha in rows:
+   restored.append(dict(original=dict(path=p[li]+tail,bytes=size,sha256=sha),retained=dict(path=p[ri]+tail,bytes=size,sha256=sha)))
+  value[name]=restored;count+=len(restored)
+ raw=can(value);assert count==t['row_count']==6813 and len(raw)==t['logical_bytes']and hashlib.sha256(raw).hexdigest()==t['logical_sha256'];return value
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--root-release',nargs=2);ap.add_argument('--preservation-peer',nargs=2);args=ap.parse_args()
+for r in REFS.values():whole(r)
+plan=doc(REFS['plan']);proposal=mapping(doc(REFS['proposal']));actual=mapping(doc(REFS['preservation']));post=doc(REFS['postcheck'])
+assert actual['Root_authority']is True and actual['root']=='/root'and actual['schema']=='ROOT_IMMUTABLE_F009_CONTINUATION_PRESERVATION_V1'
+assert actual['rows']==proposal['rows']and actual['reused_previous_rows']==proposal['reused_previous_rows']and actual['no_original_or_previous_artifact_deleted_or_rewritten']is True
+assert post['status']=='PASS'and post['preservation']==REFS['preservation']and post['mapping_pairs']==6813
+assert post['all6813_original_and_retained_whole_SHA_verified']is post['all6_actual_copy_joins_and4_actual_whole_reconstructions_checked']is post['all_final_stats_checked']is True
+assert post['unique_physical_files_hashed']==13511 and post['required_private_bytes']==375595641 and post['checkpoint_registration_performed']is False
+assert plan['Root_authority']is False and plan['program']==REFS['program']and plan['prior_checkpoint_sequence']==11519
+assert plan['aggregate_physical_read_limit']==3*2**30 and plan['physical_read_policy']=='F009_METADATA_AGGREGATE_READ_3_GIB_V1'and plan['reference_wire_quota']=='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'
+assert plan['output']=='/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from11519/checkpoint11584'and not os.path.lexists(plan['output'])
+result=doc(plan['Reader']['result']);returned=doc(plan['Reader']['worker_return']);gate=doc(plan['Reader']['Root_job_review']);owner=doc(plan['Reader']['Owner_receipt'])
+assert result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'and result['checkpoint']==plan['checkpoint']==dict(sequence=11584,nodes=6073,pending=193,reserved_debts=1,selected_raw_leaf_records=718412)
+assert gate['reference_wire_quota']==returned['reference_wire_quota']==plan['reference_wire_quota']and gate['authorized_roles']==['reader']
+assert owner['status']=='PASS'and owner['inputs_unchanged']is True and owner['returncode']==0
+assert returned['actual_caller']['sha256']=='79f9b21109b2828be75197bdc70308c6b788f7fbf2e11157ab7137ba7f77e6cc'
+controls=doc(REFS['controls_result']);sdk=doc(REFS['controls_SDK']);review=doc(REFS['Source_review'])
+assert controls['status']=='PASS'and controls['controls']==22 and sdk['actor']==sdk['root']=='/root'and sdk['actual_tool']['exit_code']==sdk['full_tool_return']['exit_code']==0
+assert review['status']=='SUPPORTED'and review['program']==REFS['program']and review['reference_wire_quota']==plan['reference_wire_quota']and review['actual_registration_authorized']is False
+io=doc(REFS['IO_upper']);assert io['complete_commit_including_rollback_read_upper']==3003450437<3*2**30 and io['unique_final_domain_upper']==1461647477<2**31
+assert REFS['plan']['bytes']<=2**21 and REFS['preservation']['bytes']<=2**21
+iopeer=doc(REFS['IO_peer']);assert iopeer['blockers']==[]
+peer_ref=None
+if args.preservation_peer:
+ p=Path(args.preservation_peer[0]);peer_ref=dict(path=str(p),bytes=p.stat().st_size,sha256=args.preservation_peer[1]);peer=doc(peer_ref)
+ assert peer.get('blockers')==[]
+release_ref=None
+if args.root_release:
+ assert peer_ref is not None
+ p=Path(args.root_release[0]);release_ref=dict(path=str(p),bytes=p.stat().st_size,sha256=args.root_release[1]);assert release_ref['bytes']<=2**21
+ release=doc(release_ref)
+ assert release['root']=='/root'and release['schema']=='ROOT_REVIEWED_F009_STANDALONE_CHECKPOINT_WRITER_V1'and release['status']=='SUPPORTED'and release['blockers']==[]
+ assert release['program']==REFS['program']and release['plan']==REFS['plan']and release['preservation']==REFS['preservation']
+ assert release['actual_Reader_and_Native_closure_supported']is True and release['V2_Source_support_and_actual_Reader_reviewed']is True
+ assert release['reference_wire_quota']==plan['reference_wire_quota']and release['physical_read_policy']==plan['physical_read_policy']and release['aggregate_physical_read_limit']==3*2**30
+for p,s in STATS.items():assert sig(Path(p).lstat())==s
+print(json.dumps(dict(schema='F00911584_FINAL_BINDING_METADATA_DATA_V1',status='DATA_ONLY_ACTUAL_PRESERVATION_AND_PLAN_BINDING_CHECKED',Root_authority=False,
+ plan=REFS['plan'],preservation=REFS['preservation'],Root_release=release_ref,preservation_peer=peer_ref,
+ actual6813pairs_match_frozen_selection=True,all86_Readerrefs_unchanged=len(plan['Reader'])==86,
+ proposed_checkpoint=plan['checkpoint'],accepted_checkpoint_unchanged=11519,
+ aggregate_IO_upper=3003450437,unique_domain_upper=1461647477,
+ private_metadata_read_bytes=READ,metadata_paths=len(CACHE),Source_or_forecast_or_commit_or_CAS_executed=False,
+ snapshot_body_or_state_or_graph_decoded=False),sort_keys=True))

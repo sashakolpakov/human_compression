@@ -1,0 +1,63 @@
+import hashlib,json,os,stat,time
+from pathlib import Path
+P=Path('/private/tmp/f009_checkpoint11584_preservation');O=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from11519/checkpoint11584');READ=0;STATS={}
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(p,r=None):
+ global READ
+ p=Path(p);s=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and s.st_size<=8*2**20 and READ+s.st_size+1<=64*2**20
+ with p.open('rb')as f:b=f.read(s.st_size+1)
+ READ+=len(b);assert len(b)==s.st_size and sig(p.lstat())==sig(s) and(r is None or ref(p,b)==r)
+ assert STATS.get(str(p),sig(s))==sig(s);STATS[str(p)]=sig(s);return b
+def doc(r):return json.loads(raw(r['path'],r))
+def get(p):return json.loads(raw(p))
+rr=dict(path=str(O/'registration_result.json'),bytes=4085,sha256='7d49ef0488d8dc419038603dacf4d9edf1dd440c08959c00c4702a9cd3edca62')
+r=doc(rr);intent=doc(r['intent']);cp=doc(r['checkpoint_acceptance']);sp=doc(r['snapshot_adoption']);closure=doc(r['Reader_closure'])
+expected=dict(sequence=11584,nodes=6073,pending=193,reserved_debts=1,selected_raw_leaf_records=718412)
+assert r['schema']=='ROOT_F009_STANDALONE_CHECKPOINT_REGISTERED_V1' and r['checkpoint']==cp['checkpoint']==sp['checkpoint']==expected
+assert cp['adopted'] is sp['adopted'] is True and cp['root']==sp['root']=='/root' and sp['checkpoint_acceptance']==r['checkpoint_acceptance']
+assert cp['snapshot']==sp['snapshot'] and cp['snapshot']['sha256']=='6d5a965fceb2c6c3b1e253f5cf63ecdb4c0f723507a3298baa07381670c5d154'
+assert cp['next_select']==sp['next_select'] and cp['reserved_parents']==sp['reserved_parents'] and len(cp['reserved_parents'])==1
+for x in (cp,sp,cp['root_metadata_writer'],sp['root_metadata_writer']):
+ assert x['reference_wire_quota']=='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2' and x['physical_read_policy']=='F009_METADATA_AGGREGATE_READ_3_GIB_V1' and x['aggregate_physical_read_limit']==3*2**30 and x['unique_input_domain_limit']==2**31 and x['stream_chunk_bytes']==2**20
+assert cp['ordinary_census_complete'] is False and cp['all_pending_families_remain_unpaid'] is True and cp['whole_original_credit']==0
+assert closure['known_scope_drained'] is True and closure['all_inputs_freshly_hashed'] is True
+assert len(intent['live_paths'])==len(intent['before_copies'])==len(intent['after_images'])==3 and intent['all_unrelated_fields_preserved'] is True
+SELECTOR_FIELDS=('F009_checkpoint_current','F009_checkpoint_acceptance_current','F009_snapshot_acceptance_current','F009_next_select_current','F009_reserved_parents_current')
+PROGRESS_FIELDS=('checkpoint','checkpoint_acceptance','snapshot_adoption','status','root_metadata_update')
+def restore(a,b,fields):
+ for k in fields:
+  if k in b:a[k]=b[k]
+  else:a.pop(k,None)
+views=[]
+for i,(p,before_ref,after_ref,observed_ref)in enumerate(zip(intent['live_paths'],intent['before_copies'],intent['after_images'],r['three_actual_live_observations'])):
+ before_bytes=raw(before_ref['path'],before_ref);after_bytes=raw(after_ref['path'],after_ref);live_bytes=raw(p,observed_ref)
+ original_observation=intent['before_observations'][i]
+ assert live_bytes==after_bytes and original_observation['path']==p and len(before_bytes)==original_observation['bytes'] and hashlib.sha256(before_bytes).hexdigest()==original_observation['sha256']
+ before=json.loads(before_bytes);after=json.loads(after_bytes);inverse=json.loads(after_bytes)
+ if i<2:
+  assert after['F009_checkpoint_current']==expected and after['F009_checkpoint_acceptance_current']==r['checkpoint_acceptance'] and after['F009_snapshot_acceptance_current']==r['snapshot_adoption']
+  assert after['F009_next_select_current']==cp['next_select'] and after['F009_reserved_parents_current']==cp['reserved_parents']
+  restore(inverse,before,SELECTOR_FIELDS)
+  if 'root_intake_progress_current'in before:restore(inverse['root_intake_progress_current'],before['root_intake_progress_current'],('F009_accepted_checkpoint',))
+  else:inverse.pop('root_intake_progress_current',None)
+ else:
+  assert after['F009']['checkpoint']==expected and after['F009']['checkpoint_acceptance']==r['checkpoint_acceptance'] and after['F009']['snapshot_adoption']==r['snapshot_adoption']
+  restore(inverse['F009'],before['F009'],PROGRESS_FIELDS)
+ assert inverse==before
+ views.append(observed_ref)
+for item in r['writer']['actual_to_retained_sources']:assert raw(item['actual']['path'],item['actual'])==raw(item['retained']['path'],item['retained'])
+names=sorted(p.name for p in O.iterdir());assert len(names)==15 and all((O/n).is_file()for n in names)
+files=[ref(O/n,raw(O/n))for n in names]
+sdk_ref=dict(path=str(P/'Root_SDK/F00911584_Root_actual_three_view_checkpoint_registration_v1_attempt1_capture.json'),bytes=5894,sha256='c419261d329a288ff1c108d33012605601cc16d4cb030e8964d7c666b06d875f')
+sdk=doc(sdk_ref);frames=sdk['all_genuine_api_frames'];assert sdk['root']==sdk['actor']=='/root' and frames[-1]['exit_code']==sdk['actual_tool']['exit_code']==0 and frames[0]==sdk['full_initial_tool_return'] and frames[-1]==sdk['full_tool_return']
+guard=get(P/'runtime/commit/receipt.json');actual=get(P/'runtime/commit/stdout.log')
+assert guard['status']=='PASS' and guard['returncode']==0 and not guard['cleanup']['remaining'] and not guard['cleanup']['errors'] and (P/'runtime/commit/stderr.log').stat().st_size==0
+assert actual['checkpoint_acceptance']==r['checkpoint_acceptance'] and actual['snapshot_adoption']==r['snapshot_adoption'] and actual['registration_result']==rr and actual['checkpoint']==expected and actual['canonical_selector_writes']==3
+forecast=get(P/'runtime/final_forecast/stdout.log');assert forecast['checkpoint_acceptance']==actual['checkpoint_acceptance'] and forecast['snapshot_adoption']==actual['snapshot_adoption'] and forecast['planned_files']==15
+for p,s in STATS.items():assert sig(Path(p).lstat())==s
+out=dict(schema='ROOT_F00911584_WHOLE_THREE_VIEW_REGISTRATION_POSTCHECK_V1',root='/root',status='PASS',accepted_checkpoint=expected,checkpoint_acceptance=r['checkpoint_acceptance'],snapshot_adoption=r['snapshot_adoption'],registration_result=rr,actual_registration_SDK=sdk_ref,all3_live_whole_bytes_equal_afterimages=True,all_unrelated_fields_preserved_by_full_typed_inverse=True,all15_output_files_whole_hashed=files,all_three_method_sources_literal=True,final_same_release_forecast_CP_SP_equal_commit=True,three_current_views=views,explicit_V2_and_3GiB_policies_stored_in_method_CP_SP=True,per_file_atomic_only_not_three_file_crash_atomic=True,actual_metadata_read_bytes=READ,new_complete_manuscripts=0,new_conjecture_Lean_or_compression_credit=0)
+target=O/'Root_registration_postcheck.json';body=can(out)
+with target.open('xb')as f:f.write(body);f.flush();os.fsync(f.fileno())
+print(json.dumps(dict(status='ROOT_ALL_THREE_CURRENT_VIEWS_ACCEPT11584_WHOLE_POSTCHECKED',postcheck=ref(target,body),checkpoint_acceptance=r['checkpoint_acceptance'],snapshot_adoption=r['snapshot_adoption'],actual_read_bytes=READ),sort_keys=True))

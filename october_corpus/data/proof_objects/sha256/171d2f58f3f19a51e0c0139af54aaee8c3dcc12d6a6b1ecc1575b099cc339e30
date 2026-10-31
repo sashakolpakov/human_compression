@@ -1,0 +1,29 @@
+from pathlib import Path
+import hashlib,json,os,stat
+src=Path('/private/tmp/f009_reader11584_current_wire_v2/reader_job/job.json')
+base=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from11519')
+dst=base/'reader11584_evidence/large_metadata/reader_job.json'
+expected_bytes=4213239;expected_sha='8f46e6124f23cdc3d2184689de208f36fc73a0dd2bb05d0c084061c218281a65';READ=0
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def read(p):
+ global READ
+ s=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and s.st_size==expected_bytes<8*2**20 and READ+s.st_size+1<=32*2**20
+ with p.open('rb')as f:
+  assert sig(os.fstat(f.fileno()))==sig(s);b=f.read(s.st_size+1);assert sig(os.fstat(f.fileno()))==sig(s)
+ READ+=len(b);assert sig(p.lstat())==sig(s) and len(b)==expected_bytes and hashlib.sha256(b).hexdigest()==expected_sha
+ return b,s
+assert src.is_absolute() and dst.is_absolute() and dst.is_relative_to(base) and dst.resolve()==dst and not os.path.lexists(dst)
+b,before=read(src);assert base.resolve(strict=True)==base
+dst.parent.mkdir(parents=True,exist_ok=True)
+with dst.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+c,retained_stat=read(dst);assert c==b
+after,after_stat=read(src);assert after==b and sig(before)==sig(after_stat)
+for d in (dst.parent,dst.parent.parent,base):
+ fd=os.open(d,os.O_RDONLY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+ref=lambda p:dict(path=str(p),bytes=expected_bytes,sha256=expected_sha)
+r=dict(schema='ROOT_EXACT_METADATA_FILE_COPY_V1',root='/root',status='PASS',original=ref(src),retained=ref(dst),source_before_and_after_stats=list(sig(before)),retained_stats=list(sig(retained_stat)),source_and_retained_whole_SHA_and_byte_equality_checked=True,opaque_copy_only=True,mathematical_Source_or_state_or_gzip_execution=False,no_original_or_previous_artifact_deleted_or_rewritten=True,per_file_read_bound=8*2**20,total_read_bound=32*2**20,actual_read_bytes=READ,new_bytes=expected_bytes,existing667_copier_unchanged=True,actual_Root_tool_capture_supplied_by_separate_sidecar=True)
+p=src.parents[1]/'Root_exact_reader_job_copy.json';out=(json.dumps(r,sort_keys=True,separators=(',',':'))+'\n').encode()
+with p.open('xb')as f:f.write(out);f.flush();os.fsync(f.fileno())
+print(json.dumps(dict(status='ROOT_EXACT_KNOWN_READER_JOB_DURABLY_COPIED',original=ref(src),retained=ref(dst),receipt=dict(path=str(p),bytes=len(out),sha256=hashlib.sha256(out).hexdigest()),actual_read_bytes=READ),sort_keys=True))

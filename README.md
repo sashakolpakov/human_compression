@@ -81,9 +81,10 @@ q11 jobs complete, with 147 pending**; the manuscript remains unfinished.
 
 F009 is locally accepted at checkpoint **11,584**, with one reserved debt among
 193 pending families. The continuation completed 25 families and refined five;
-the full census remains unfinished. The public census archive remains at
-checkpoint 11,518 and checks archived byte integrity; it supplies no fresh
-mathematical Reader replay of the newer checkpoint. The Fi22 ledger has **65 generation
+the full census remains unfinished. The [public checkpoint 11,584 archive](october_corpus/research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
+preserves the accepted records, selected programs and computation outputs.
+Its relative checker verifies archived byte integrity; fresh mathematical
+Reader replay from a clone remains outstanding. The Fi22 ledger has **65 generation
 certificates, 65 separate intersection proofs for those cases and 96
 nongeneration certificates**. The earlier archive and the new
 [24-case replay](october_corpus/reproduction/fi22_markings/README.rst)

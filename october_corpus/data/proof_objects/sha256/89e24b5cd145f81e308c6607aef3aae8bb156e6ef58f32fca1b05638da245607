@@ -1,0 +1,102 @@
+"""Explicit 8 MiB transport edition; acquired typed state code is unchanged."""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+
+import copy
+import hashlib
+import importlib.util
+from pathlib import Path
+import types
+
+HERE = Path(__file__).resolve().parent
+SOURCE_SHA = 'b8d98e678989704a56d9ac9e123048e4ff2bda13837e42f8dbd2306c0356a58c'
+SCHEMA = 'F009_COMPACT_ORDERED_CAPACITY8_STATE_V1'
+PROFILE = 'F009_COMPACT_CAPACITY8_SOURCE_PROFILE_V1'
+METHOD = 'ROOT_ACCEPTED_F009_COMPACT_CAPACITY8_METHOD_V1'
+ADOPTION = 'ROOT_ACCEPTED_F009_COMPACT_CAPACITY8_SNAPSHOT_V1'
+RESULT = 'VERIFIED_F009_ADOPTED_ANCHOR_TAIL_CAPACITY8_V1'
+CASE = 'F009_ADOPTED_ANCHOR_TAIL_CAPACITY8_EXPORT_V1'
+MAX_RAW, MAX_PACKED = 64 * 2**20, 8 * 2**20
+
+_path = HERE/'census_compact_snapshot.py'
+if hashlib.sha256(_path.read_bytes()).hexdigest() != SOURCE_SHA:
+    raise ValueError('exact acquired compact codec')
+_spec = importlib.util.spec_from_file_location('capacity8_original_compact', _path)
+O = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(O)
+need, pin, acquire, read = O.need, O.pin, O.acquire, O.read
+compact, expand = O.compact, O.expand
+RUNTIME_FILES = frozenset(O.RUNTIME_FILES)
+
+
+def rebound(function, changes):
+    """Private globals only; original code, defaults and closure are retained."""
+    namespace = dict(function.__globals__)
+    need(set(changes) <= set(namespace), 'only existing function globals change')
+    namespace.update(changes)
+    result = types.FunctionType(function.__code__, namespace, function.__name__,
+                                function.__defaults__, function.__closure__)
+    result.__kwdefaults__ = copy.copy(function.__kwdefaults__)
+    need(result.__code__ is function.__code__
+         and all(result.__globals__[k] is v for k, v in function.__globals__.items()
+                 if k not in changes), 'identical code and all other globals')
+    return result
+
+
+# Only the bounded gzip functions need the larger packed limit. Typed wire
+# functions remain the very same objects, and the imported module stays frozen.
+need((O.W.MAX_RAW, O.W.MAX_PACKED) == (MAX_RAW, 3 * 2**20), 'old capacity unchanged')
+W = types.SimpleNamespace(**vars(O.W))
+W.MAX_PACKED = MAX_PACKED
+W.encode = rebound(O.W.encode, {'MAX_PACKED': MAX_PACKED})
+W.decode = rebound(O.W.decode, {'MAX_PACKED': MAX_PACKED})
+
+
+def profile(ref):
+    value = read(ref)
+    need(type(value) is dict and set(value) == {
+        'schema', 'codec', 'reader', 'anchor', 'inherited_profile',
+        'inherited_method', 'runtime_sources', 'capacities'}
+         and value['schema'] == PROFILE, 'exact capacity profile')
+    need(value['codec'] == pin(Path(__file__).resolve())
+         and value['reader']['path'] == str(HERE/'census_saved_tail_capacity8_read.py')
+         and value['anchor']['path'] == str(HERE/'census_snapshot_tail_anchor.py'),
+         'literal capacity source identities')
+    for key in ('codec', 'reader', 'anchor', 'inherited_profile', 'inherited_method'):
+        acquire(value[key])
+    old = O.method(value['inherited_method'], value['inherited_profile'])
+    need(old['codec'] == pin(_path) and old['anchor'] == value['anchor']
+         and old['runtime_sources'] == value['runtime_sources'],
+         'exact acquired codec, accessor and complete original runtime closure')
+    caps = value['capacities']
+    need(type(caps) is dict and set(caps) == {'packed_bytes', 'expanded_bytes'}
+         and type(caps['packed_bytes']) is int and type(caps['expanded_bytes']) is int
+         and caps == {'packed_bytes': MAX_PACKED, 'expanded_bytes': MAX_RAW},
+         'fixed explicit capacity values')
+    return value
+
+
+def method(method_ref, source_profile):
+    gate = read(method_ref)
+    need(gate.get('status') == METHOD and gate.get('source_profile') == source_profile,
+         'separately accepted capacity method')
+    return profile(source_profile)
+
+
+def anchor_parameters(anchor_ref, source_profile):
+    """This edition reads only the already adopted original compact anchor."""
+    value = profile(source_profile)
+    anchor = read(anchor_ref)
+    need(type(anchor) is dict and anchor.get('format') == 'compact_v2'
+         and anchor.get('source_profile') == value['inherited_profile']
+         and anchor.get('method_acceptance') == value['inherited_method'],
+         'unchanged old compact anchor profile and method')
+    return value['inherited_profile'], value['inherited_method']
+
+
+export = rebound(O.export, {'profile': profile, 'W': W, 'SCHEMA': SCHEMA})
+load = rebound(O.load, {'profile': profile, 'method': method, 'W': W,
+                       'MAX_PACKED': MAX_PACKED, 'SCHEMA': SCHEMA,
+                       'ADOPTION': ADOPTION, 'RESULT': RESULT, 'CASE': CASE})
+

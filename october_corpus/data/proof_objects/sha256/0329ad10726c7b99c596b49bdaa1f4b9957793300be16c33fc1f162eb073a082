@@ -1,0 +1,40 @@
+from pathlib import Path
+import hashlib,json,os,stat,time,types
+root=Path('/private/tmp/f009_reader11584_current_wire_v2');READ=0;START=time.monotonic()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,sha=None):
+ global READ
+ p=Path(p);s=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and s.st_size<=8*2**20
+ assert READ+s.st_size+1<=2**31
+ b=p.read_bytes();READ+=len(b);assert len(b)==s.st_size and (s.st_size,s.st_mtime_ns,s.st_ctime_ns)==(p.stat().st_size,p.stat().st_mtime_ns,p.stat().st_ctime_ns)
+ assert sha is None or hashlib.sha256(b).hexdigest()==sha
+ return b
+def doc(r):b=read(r['path'],r['sha256']);assert len(b)==r['bytes'];return json.loads(b)
+p=root/'reader_request.json';b=read(p,'827864f30377ce8e46259a62cace181c13f520787ad46a3067b11be51e3be94b');assert len(b)==1783530<=2**21
+wire=json.loads(b);t=wire['Root_Request_rows_reference'];d={k:v for k,v in wire.items()if k!='Root_Request_rows_reference'}
+d['inputs']=[dict(path=t['prefixes'][i]+n,bytes=z,sha256=h)for i,n,z,h in t['rows']]
+can=lambda v:(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+assert len(can(d))==t['logical_bytes'] and hashlib.sha256(can(d)).hexdigest()==t['logical_sha256']
+jr=dict(path=str(root/'reader_job/job.json'),bytes=4213239,sha256='8f46e6124f23cdc3d2184689de208f36fc73a0dd2bb05d0c084061c218281a65')
+gr=dict(path=str(root/'Reader_Root_review.json'),bytes=11184,sha256='b0920871d1706f59c51519806cff8e98ebd3cea72165904c00fe3975dda90581')
+job=doc(jr);gate=doc(gr)
+assert gate['job']==jr and gate['Reader_release'] is True and gate['reference_wire_quota']=='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'
+assert d['execution_id']=='f009_v2_11584_reader' and d['program']==job['program']['path']=='/private/tmp/f009_current_wire_quota/reader.py'
+assert d['supervisor']==job['Owner']['path']=='/private/tmp/f009_owner_prelaunch_collection/current_owner.py'
+assert d['argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B',job['program']['path'],'--job',jr['path'],jr['sha256'],'--root-review',gr['path'],gr['sha256'],'--out',job['output']]
+assert d['limits']==dict(phase_seconds=120,family_rss_cap_bytes=512*2**20,growth_cap_bytes=16*2**20,reserve_bytes=4*2**30,sample_seconds=.1)
+assert d['output_roots']==[str(root/'reader_output')] and d['execution']==str(root/'reader_execution')
+expected={r['path']:r for r in job['declared_inputs']+[jr,gr]}
+assert d['inputs']==[expected[p]for p in sorted(expected)] and len(d['inputs'])==16239 and sum(r['bytes']for r in d['inputs'])==1074683035
+assert d['readonly_symlinks']==job['readonly_symlinks']
+for name in ('reader_output','reader_execution','runtime/reader_execution_guard'):assert not os.path.lexists(root/name)
+craw=read(job['contract']['path'],job['contract']['sha256']);C=types.ModuleType('Root_request_complete_physical_input_check');C.__file__=job['contract']['path'];exec(compile(craw,C.__file__,'exec',dont_inherit=True),vars(C))
+aliases={r['path']:r for r in job['readonly_symlinks']};stats={};sig=lambda t:(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+for row in d['inputs']:
+ assert READ+row['bytes']<=2**31 and time.monotonic()-START<125
+ C.whole(row,aliases=aliases);READ+=row['bytes'];stats[row['path']]=sig(Path(row['path']).stat())
+for path,s in stats.items():assert sig(Path(path).stat())==s
+r=dict(schema='ROOT_F009_READER_V2_ACTUAL_REQUEST_PRELAUNCH_REVIEW_V1',status='SUPPORTED',root='/root',blockers=[],request=ref(p,b),job=jr,Root_case_review=gr,whole_inputs=16239,whole_input_bytes=1074683035,actual_read_bytes=READ,actual_request_logical_bytes=len(can(d)),all_whole_hashes_and_final_stats_checked=True,limits=d['limits'],Reader_release_only=True,reference_wire_quota=gate['reference_wire_quota'],actual_Reader_fit_claim=False,accepted_checkpoint_unchanged=11519,elapsed=time.monotonic()-START)
+out=root/'Root_request_prelaunch_review.json';raw=can(r)
+with out.open('xb')as f:assert f.write(raw)==len(raw);f.flush();os.fsync(f.fileno())
+print(json.dumps(dict(status='ROOT_READER_V2_REQUEST_READY',review=ref(out,raw),**{k:r[k]for k in ('request','whole_inputs','whole_input_bytes','actual_read_bytes','limits','elapsed')}),sort_keys=True))

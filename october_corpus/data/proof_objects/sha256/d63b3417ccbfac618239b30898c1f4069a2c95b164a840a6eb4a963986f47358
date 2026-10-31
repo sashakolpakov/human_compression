@@ -1,0 +1,475 @@
+"""Versioned lossless leaf locators over complete authenticated raw files.
+
+Definitions only at import. Scientific state/codec/Source dependencies are
+loaded only by an explicitly admitted future caller. No native call exists.
+"""
+import sys
+if sys.flags.optimize:raise RuntimeError('ordinary assertions required')
+sys.dont_write_bytecode=True
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import resource
+import stat
+import time
+
+S=Path('/Users/sasha/medusa/research/leemans')
+Q=S/'computation/f009/rooted_census_split'
+F=S/'maintenance/intake/f009_saved_export_memory'
+D=Path(__file__).resolve().parent
+SCHEMA='F009_REFERENCE_BACKED_CAPACITY8_STATE_V1'
+WIRE='F009_PINNED_ORDERED_LEAF_LOCATORS_V1'
+PROFILE='F009_REFERENCE_LEAF_EXPORT_SOURCE_PROFILE_V1'
+METHOD='ROOT_ACCEPTED_F009_REFERENCE_LEAF_EXPORT_METHOD_V1'
+ADOPTION='ROOT_ACCEPTED_F009_REFERENCE_LEAF_SNAPSHOT_V1'
+RESULT='VERIFIED_F009_ADOPTED_ANCHOR_REFERENCE_LEAF_TAIL_V1'
+CASE='F009_ADOPTED_ANCHOR_REFERENCE_LEAF_EXPORT_V1'
+MAX_RAW,MAX_PACKED=64*2**20,8*2**20
+MAX_INPUT_BYTES,MAX_PINS=2*2**30,40000
+MAX_LINE=16384
+START=time.monotonic()
+_OLD=None
+_OPEN={}
+OLD_CAPACITY=dict(path=str(Q/'census_compact_capacity8.py'),bytes=4770,
+ sha256='89e24b5cd145f81e308c6607aef3aae8bb156e6ef58f32fca1b05638da245607')
+OLD_EXPORT=dict(path=str(F/'reader.py'),bytes=9752,
+ sha256='eccb9d6c9efbfcb903d9839c8d9a33eb4844e5c1e0462ae134b7a9b894ea56e4')
+
+
+def need(value,reason):
+    if not value:raise ValueError(reason)
+    peak=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if sys.platform!='darwin':peak*=1024
+    if time.monotonic()-START>=120 or peak>=512*2**20:
+        raise RuntimeError('unchanged Saved120s/512MiB physical envelope')
+
+
+def signature(st):
+    return(st.st_dev,st.st_ino,st.st_mode,st.st_nlink,st.st_size,st.st_mtime_ns,st.st_ctime_ns)
+
+
+def digest(value):
+    return type(value)is str and len(value)==64 and all(x in'0123456789abcdef'for x in value)
+
+
+def pin_shape(ref):
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['path'])is str
+         and Path(ref['path']).is_absolute()and str(Path(ref['path']))==ref['path']
+         and '..'not in Path(ref['path']).parts and type(ref['bytes'])is int
+         and 0<=ref['bytes']<=MAX_INPUT_BYTES and digest(ref['sha256']),'whole canonical pin shape')
+    return ref
+
+
+def pin(path):
+    p=Path(path);a=p.lstat()
+    need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+         and a.st_nlink==1 and a.st_size<=MAX_INPUT_BYTES,'ordinary canonical complete input')
+    h=hashlib.sha256();count=0
+    with p.open('rb')as f:
+        b=os.fstat(f.fileno())
+        while True:
+            chunk=f.read(2**20)
+            if not chunk:break
+            count+=len(chunk);h.update(chunk);need(count<=MAX_INPUT_BYTES,'whole streamed file bound')
+        z=os.fstat(f.fileno())
+    need(signature(a)==signature(b)==signature(z)==signature(p.lstat())and count==a.st_size,'stable whole streamed input')
+    return dict(path=str(p),bytes=count,sha256=h.hexdigest())
+
+
+def acquire(ref):
+    pin_shape(ref);need(pin(ref['path'])==ref,'fresh exact whole bytes')
+    old=_OPEN.get(ref['path']);need(old is None or old==ref,'one complete pin identity per path')
+    _OPEN[ref['path']]=ref
+
+
+def read(ref):
+    need(pin_shape(ref)['bytes']<=2*2**20,'ordinary metadata2MiB bound')
+    acquire(ref);raw=Path(ref['path']).read_bytes()
+    need(len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],'metadata whole bytes before decode')
+    def unique(items):
+        out={}
+        for key,item in items:need(key not in out,'duplicate JSON key');out[key]=item
+        return out
+    result=json.loads(raw,object_pairs_hook=unique,
+        parse_constant=lambda x:(_ for _ in()).throw(ValueError('nonfinite JSON '+x)))
+    acquire(ref);return result
+
+
+def module(name,ref):
+    acquire(ref);need(ref['bytes']<=256*2**10,'bounded exact executable Source')
+    spec=importlib.util.spec_from_file_location(name,ref['path'])
+    result=importlib.util.module_from_spec(spec);spec.loader.exec_module(result)
+    acquire(ref);return result
+
+
+def legacy():
+    global _OLD
+    if _OLD is None:
+        capacity=module('reference_leaf_acquired_capacity8',OLD_CAPACITY)
+        reader=module('reference_leaf_acquired_export_memory',OLD_EXPORT)
+        _OLD=reader.bind_codec(capacity)
+        need((_OLD.MAX_RAW,_OLD.MAX_PACKED)==(MAX_RAW,MAX_PACKED),'unchanged8/64MiB inherited capacities')
+    acquire(OLD_CAPACITY);acquire(OLD_EXPORT)
+    return _OLD
+
+
+def source_roles(roles):
+    need(type(roles)is dict and set(roles)=={'program','source_packet','source_review','source_execution'},'exact Source4')
+    for ref in roles.values():acquire(ref)
+    packet,peer,ex=[read(roles[k])for k in('source_packet','source_review','source_execution')]
+    need(packet['program']==packet['programs']['reader']==roles['program']==pin(D/'reader.py')
+         and packet['programs']['codec']==pin(Path(__file__).resolve())
+         and packet['programs']['accessor']==pin(D/'accessor.py')
+         and peer['program']==ex['program']==roles['program']
+         and peer['source_packet']==ex['source_packet']==roles['source_packet']
+         and peer['status']=='PASS_DISTINCT_F009_REFERENCE_LEAF_CODEC_READER_SOURCE'
+         and ex['status']=='COMPLETED_GENUINE_DISTINCT_F009_REFERENCE_LEAF_CODEC_READER_SOURCE_REVIEW'
+         and peer['source_author']==packet['source_author']and peer['reviewer']!=peer['source_author']
+         and peer['blockers']==[]and ex['review']==roles['source_review']and ex['actor']==peer['reviewer'],
+         'genuine independent current codec/Reader Source, no old PASS retarget')
+    need(packet['programs']=={name:pin(D/filename)for name,filename in dict(codec='codec.py',accessor='accessor.py',
+         reader='reader.py',converter='convert.py',controls='run_controls.py',boundary='boundary.py').items()},
+         'exact complete current six-program identity map')
+    tool=ex['actual_tool'];need(type(tool)is dict and set(tool)=={'handle','initial_chunk','terminal_chunk','exit_code','synchronous'}
+         and type(tool['exit_code'])is int and tool['exit_code']==0 and type(tool['synchronous'])is bool
+         and all(type(tool[k])is str and tool[k]for k in('initial_chunk','terminal_chunk'))
+         and((tool['synchronous']and tool['handle']is None and tool['initial_chunk']==tool['terminal_chunk'])
+             or(not tool['synchronous']and type(tool['handle'])is int and tool['handle']>0)),'actual successful Source tool')
+    late=pin(packet['mandatory_late_author_proof'])
+    need(peer['late_author_preparation']==ex['late_author_preparation']==late,'mandatory current late in both proofs')
+    for ref in packet['required_source_inputs']+[peer['checks'],peer['method'],ex['checks'],ex['method'],late]:acquire(ref)
+    return packet
+
+
+def profile(ref):
+    value=read(ref)
+    need(type(value)is dict and set(value)=={'schema','codec','reader','anchor','inherited_profile','inherited_method',
+         'runtime_sources','capacities','source'}and value['schema']==PROFILE,'versioned reference-backed export profile')
+    need(value['codec']==pin(Path(__file__).resolve())and value['reader']==pin(D/'reader.py')
+         and value['anchor']==pin(D/'accessor.py'),'exact current new execution identities')
+    source_roles(value['source'])
+    for key in('codec','reader','anchor','inherited_profile','inherited_method'):acquire(value[key])
+    old=legacy().method(value['inherited_method'],value['inherited_profile'])
+    need(old['codec']==old['reader']==OLD_EXPORT and old['runtime_sources']==value['runtime_sources'],
+         'attributed unchanged export-memory lineage and complete transition runtime')
+    need(value['capacities']==dict(packed_bytes=MAX_PACKED,expanded_bytes=MAX_RAW)
+         and all(type(x)is int for x in value['capacities'].values()),'8MiB packed/64MiB logical capacity unchanged')
+    return value
+
+
+def method(method_ref,source_profile):
+    gate=read(method_ref);value=profile(source_profile)
+    need(gate['root']=='/root'and gate['status']==METHOD and gate['source_profile']==source_profile
+         and gate['source']==value['source']and gate['Reader_run']is False and gate['scientific_credit']==0,
+         'new separately accepted exact reference-codec export method')
+    controls=read(gate['controls_gate'])
+    need(controls['schema']=='ROOT_ACCEPTED_F009_REFERENCE_LEAF_CODEC_CONTROLS_V1'and controls['root']=='/root'
+         and controls['all_passed']is True and controls['controls']==16 and controls['source']==value['source'],
+         'genuine new codec controls gate required; old15 do not cover this wire')
+    result=read(controls['result'])
+    need(result['schema']=='F009_REFERENCE_LEAF_CODEC_CONTROLS_V1'and result['controls']==16
+         and result['all_passed']is True and result['source']==value['source'],
+         'exact new16 controlled transport predicates, not a general Reader/native fit claim')
+    return value
+
+
+def authenticate_lines(pins,runs,expected=None):
+    """Whole-file streaming first; no graph parsing or predicate reevaluation."""
+    wanted={};total_occurrences=0
+    for file_id,indices in runs:
+        need(type(file_id)is int and 0<=file_id<len(pins)and type(indices)is list and indices,
+             'nonempty ordered selected-index group and exact file index')
+        for index in indices:
+            need(type(index)is int and index>=0,'exact nonnegative LF-line index, not bool')
+            wanted.setdefault(file_id,set()).add(index);total_occurrences+=1
+            need(total_occurrences<=MAX_RAW//8,'old-reference-wire minimum-size bound before expansion')
+    found={}if expected is None else None
+    for file_id in sorted(wanted):
+        ref=pin_shape(pins[file_id]);p=Path(ref['path']);a=p.lstat()
+        need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+             and a.st_size==ref['bytes'],'whole ordinary pinned raw leaf source')
+        full=hashlib.sha256();size=0;seen=0;line_number=0
+        with p.open('rb')as f:
+            b=os.fstat(f.fileno())
+            while True:
+                raw=f.readline(MAX_LINE+1)
+                if not raw:break
+                need(len(raw)<=MAX_LINE and raw.endswith(b'\n'),'whole bounded original LF line; no partial tail')
+                full.update(raw);size+=len(raw)
+                if line_number in wanted[file_id]:
+                    actual=hashlib.sha256(raw).hexdigest();key=(file_id,line_number)
+                    if expected is None:found[key]=actual
+                    else:need(expected[key]==actual,'EXACT original retained leaf SHA, no CRLF normalization/rewrite')
+                    seen+=1
+                line_number+=1
+                if line_number%512==0:need(True,'streamed whole leaf source physical guard')
+            z=os.fstat(f.fileno())
+        need(signature(a)==signature(b)==signature(z)==signature(p.lstat())and size==ref['bytes']
+             and full.hexdigest()==ref['sha256']and seen==len(wanted[file_id]),
+             'complete whole-file identity and every selected line in range BEFORE state trust')
+        old=_OPEN.get(ref['path']);need(old is None or old==ref,'raw leaf source identity conflict');_OPEN[ref['path']]=ref
+    return found
+
+
+def compact(state):
+    w=legacy().W;old=w.wire(state)
+    pins=[];digests=[];pin_ids={};digest_ids={}
+    def file_id(ref):
+        w.pin_shape(ref);key=(ref['path'],ref['bytes'],ref['sha256'])
+        if key not in pin_ids:pin_ids[key]=len(pins);pins.append(dict(ref))
+        return pin_ids[key]
+    def digest_id(value):
+        need(digest(value),'literal retained node/child digest')
+        if value not in digest_ids:digest_ids[value]=len(digests);digests.append(value)
+        return digest_ids[value]
+    def reference(ref):
+        w.reference(ref);return[file_id(ref['file']),ref['line'],digest_id(ref['sha256'])]
+    result=dict(target=list(old['target']),binary=file_id(old['binary']),completion_binary=file_id(old['completion_binary']),
+        nodes=[],pending=[],leaves=None,sequence=old['sequence'],started=[])
+    for ident,node in old['nodes']:
+        ident_id=digest_id(ident);item=dict(node);item['record']=reference(node['record']);item['receiver']=digest_id(node['receiver'])
+        item['children']=None if node['children']is None else[digest_id(x)for x in node['children']]
+        result['nodes'].append([ident_id,item]);need(True,'complete ordered node transport')
+    result['pending']=[digest_id(x)for x in old['pending']]
+    groups=[];expected={}
+    for ref in old['leaves']:
+        w.reference(ref);index=file_id(ref['file']);key=(index,ref['line'])
+        need(key not in expected or expected[key]==ref['sha256'],'same raw location cannot claim conflicting leaf hashes')
+        expected[key]=ref['sha256']
+        if not groups or groups[-1][0]!=index:groups.append([index,[]])
+        groups[-1][1].append(ref['line'])
+        if len(expected)%512==0:need(True,'complete original leaf multiplicity and order')
+    result['leaves']=dict(count=len(old['leaves']),groups=groups)
+    for ident,debt in old['started']:
+        result['started'].append([digest_id(ident),dict(kind=debt['kind'],dispatch=file_id(debt['dispatch']))])
+    need(len(pins)<=MAX_PINS and sum(x['bytes']for x in pins)<=MAX_INPUT_BYTES,'full unchanged current wire-file boundary')
+    authenticate_lines(pins,groups,expected)
+    return dict(schema=WIRE,pins=pins,digests=digests,state=result)
+
+
+def logical_reference_size(envelope,value,hashes):
+    """Exact old compact-envelope bytes BEFORE allocating rich leaf objects.
+
+    Only digest/file tables and the small node/debt arrays are materialized.
+    Every old leaf triple is counted in the original encounter order.
+    """
+    inherited=legacy();packed=value['state'];pins=[];digests=[];pin_ids={};digest_ids={}
+    def file_id(i):
+        need(type(i)is int and 0<=i<len(value['pins']),'exact old-size full-file index')
+        ref=value['pins'][i];key=(ref['path'],ref['bytes'],ref['sha256'])
+        if key not in pin_ids:pin_ids[key]=len(pins);pins.append(dict(ref))
+        return pin_ids[key]
+    def digest_id(d):
+        if d not in digest_ids:digest_ids[d]=len(digests);digests.append(d)
+        return digest_ids[d]
+    def digest_ref(i):
+        need(type(i)is int and 0<=i<len(value['digests']),'exact old-size digest index')
+        return digest_id(value['digests'][i])
+    def reference(row):
+        need(type(row)is list and len(row)==3,'exact old-size reference triple')
+        return[file_id(row[0]),row[1],digest_ref(row[2])]
+    old=dict(target=packed['target'],binary=file_id(packed['binary']),completion_binary=file_id(packed['completion_binary']),
+        nodes=[],pending=[],leaves=[],sequence=packed['sequence'],started=[])
+    for ident,node in packed['nodes']:
+        ident_id=digest_ref(ident);item=dict(node);item['record']=reference(node['record']);item['receiver']=digest_ref(node['receiver'])
+        item['children']=None if node['children']is None else[digest_ref(x)for x in node['children']]
+        old['nodes'].append([ident_id,item])
+    old['pending']=[digest_ref(x)for x in packed['pending']]
+    leaf_bytes=2;count=0
+    for i,indices in packed['leaves']['groups']:
+        for line in indices:
+            triple=[file_id(i),line,digest_id(hashes[(i,line)])]
+            leaf_bytes+=len(json.dumps(triple,separators=(',',':')))+(1 if count else 0);count+=1
+            need(leaf_bytes<=MAX_RAW,'old leaf array alone exceeds64MiB before rich allocation')
+    for ident,debt in packed['started']:
+        old['started'].append([digest_ref(ident),dict(kind=debt['kind'],dispatch=file_id(debt['dispatch']))])
+    result=dict(envelope,schema=inherited.SCHEMA,state=dict(schema=inherited.O.WIRE,pins=pins,digests=digests,state=old))
+    total=1+leaf_bytes-2
+    for i,chunk in enumerate(json.JSONEncoder(separators=(',',':'),ensure_ascii=True).iterencode(result)):
+        total+=len(chunk.encode('ascii'))
+        need(total<=MAX_RAW,'exact complete old compact envelope64MiB BEFORE rich leaf allocation')
+    need(True,'old-size metadata and digest-table physical guard');return total
+
+
+def expand(value,*,envelope):
+    w=legacy().W
+    need(type(value)is dict and set(value)=={'schema','pins','digests','state'}and value['schema']==WIRE,'exact new wire grammar')
+    pins,digests,packed=value['pins'],value['digests'],value['state']
+    need(type(pins)is list and len(pins)<=MAX_PINS and type(digests)is list
+         and len(digests)<=MAX_RAW//67,'finite literal complete tables')
+    for ref in pins:pin_shape(ref)
+    need(len({(x['path'],x['bytes'],x['sha256'])for x in pins})==len(pins)
+         and sum(x['bytes']for x in pins)<=MAX_INPUT_BYTES,'complete unique full-file table')
+    need(all(digest(x)for x in digests)and len(set(digests))==len(digests),'unique exact node/child digest table')
+    need(type(packed)is dict and set(packed)==w.STATE_KEYS,'every old state field retained')
+    need(all(type(packed[k])is list for k in('nodes','pending','started')),'unchanged ordered node/pending/debt arrays')
+    need(type(envelope)is dict and set(envelope)=={'schema','head','producer_case','upstream_acceptance','source_profile'}
+         and envelope['schema']==SCHEMA,'explicit full envelope provenance required before rich-state expansion')
+    for key in('head','producer_case','upstream_acceptance','source_profile'):pin_shape(envelope[key])
+    def index(items,i):
+        need(type(i)is int and 0<=i<len(items),'exact in-range table index');return items[i]
+    def file_ref(i):return dict(index(pins,i))
+    def reference(row):
+        need(type(row)is list and len(row)==3,'unchanged node rich-reference triple')
+        ref=dict(file=file_ref(row[0]),line=row[1],sha256=index(digests,row[2]));w.reference(ref);return ref
+    leaves=packed['leaves']
+    need(type(leaves)is dict and set(leaves)=={'count','groups'}and type(leaves['count'])is int
+         and 0<=leaves['count']<=MAX_RAW//8 and type(leaves['groups'])is list,
+         'literal occurrence count and groups; no implicit huge run expansion')
+    previous=None;count=0
+    for group in leaves['groups']:
+        need(type(group)is list and len(group)==2 and type(group[0])is int and group[0]!=previous
+             and type(group[1])is list and group[1],'canonical maximal consecutive-file groups')
+        previous=group[0];count+=len(group[1]);need(count<=leaves['count'],'complete bounded occurrence count before allocation')
+    need(count==leaves['count'],'ALL original selected occurrences represented')
+    hashes=authenticate_lines(pins,leaves['groups'])
+    logical_reference_size(envelope,value,hashes)
+    old=dict(target=packed['target'],binary=file_ref(packed['binary']),completion_binary=file_ref(packed['completion_binary']),
+        nodes=[],pending=[index(digests,i)for i in packed['pending']],leaves=[],sequence=packed['sequence'],started=[])
+    for row in packed['nodes']:
+        need(type(row)is list and len(row)==2,'ordered node pair');ident,node=row
+        need(type(node)is dict and set(node)=={'values','record','canonical','receiver','children','creation'},'ALL literal node fields')
+        item=dict(node);item['record']=reference(node['record']);item['receiver']=index(digests,node['receiver'])
+        need(node['children']is None or type(node['children'])is list,'ordered children/null')
+        item['children']=None if node['children']is None else[index(digests,i)for i in node['children']]
+        old['nodes'].append([index(digests,ident),item]);need(True,'whole node expansion')
+    for file_id,indices in leaves['groups']:
+        for line in indices:
+            old['leaves'].append(dict(file=file_ref(file_id),line=line,sha256=hashes[(file_id,line)]))
+            if len(old['leaves'])%512==0:need(True,'same full typed leaf list; no deduplication')
+    del hashes
+    for row in packed['started']:
+        need(type(row)is list and len(row)==2,'ordered debt pair');ident,debt=row
+        need(type(debt)is dict and set(debt)=={'kind','dispatch'},'ALL debt fields')
+        old['started'].append([index(digests,ident),dict(kind=debt['kind'],dispatch=file_ref(debt['dispatch']))])
+    state=w.unwire(old)
+    need(compact(state)==value,'whole canonical inverse; no unused/reordered table or alternate group representation')
+    return state
+
+
+def logical_size(envelope,state):
+    """The CURRENT compact-reference-table envelope remains <=64MiB."""
+    inherited=legacy();old=inherited.W.wire(state)
+    pins=[];digests=[];pin_ids={};digest_ids={}
+    def file_id(ref):
+        key=(ref['path'],ref['bytes'],ref['sha256'])
+        if key not in pin_ids:pin_ids[key]=len(pins);pins.append(dict(ref))
+        return pin_ids[key]
+    def digest_id(value):
+        if value not in digest_ids:digest_ids[value]=len(digests);digests.append(value)
+        return digest_ids[value]
+    def reference(ref):return[file_id(ref['file']),ref['line'],digest_id(ref['sha256'])]
+    packed=dict(target=list(old['target']),binary=file_id(old['binary']),completion_binary=file_id(old['completion_binary']),
+        nodes=[],pending=[],leaves=[],sequence=old['sequence'],started=[])
+    for ident,node in old['nodes']:
+        ident_id=digest_id(ident);item=dict(node);item['record']=reference(node['record']);item['receiver']=digest_id(node['receiver'])
+        item['children']=None if node['children']is None else[digest_id(x)for x in node['children']]
+        packed['nodes'].append([ident_id,item])
+    packed['pending']=[digest_id(x)for x in old['pending']]
+    leaf_bytes=2
+    for index,ref in enumerate(old['leaves']):
+        triple=reference(ref)
+        leaf_bytes+=len(json.dumps(triple,separators=(',',':')))+(1 if index else 0)
+        if leaf_bytes>MAX_RAW:need(False,'legacy leaf array alone exceeds64MiB')
+        if index%512==0:need(True,'exact legacy triple counter, no whole triple array allocated')
+    for ident,debt in old['started']:
+        packed['started'].append([digest_id(ident),dict(kind=debt['kind'],dispatch=file_id(debt['dispatch']))])
+    value=dict(envelope,schema=inherited.SCHEMA,state=dict(schema=inherited.O.WIRE,pins=pins,digests=digests,state=packed))
+    total=1+leaf_bytes-2
+    for index,chunk in enumerate(json.JSONEncoder(separators=(',',':'),ensure_ascii=True).iterencode(value)):
+        total+=len(chunk.encode('ascii'))
+        if total>MAX_RAW:need(False,'exact logical OLD compact-reference envelope64MiB')
+        if index%1024==0:need(True,'whole logical old-wire streaming size guard')
+    del value
+    return total
+
+
+def export(state,path,*,head,producer_case,upstream_acceptance,source_profile):
+    profile(source_profile)
+    for ref in(head,producer_case,upstream_acceptance):acquire(ref)
+    case,base=read(producer_case),read(upstream_acceptance)
+    need(case['base']==base['head']and state['target']==case['target']and state['binary']==case['binary']
+         and state['completion_binary']==case['completion_binary'],'same complete exported backend and adopted upstream')
+    provenance=dict(schema=SCHEMA,head=head,producer_case=producer_case,upstream_acceptance=upstream_acceptance,source_profile=source_profile)
+    logical_size(provenance,state)
+    envelope=dict(provenance,state=compact(state));packed=legacy().W.encode(envelope)
+    decoded=legacy().W.decode(packed);need(decoded==envelope,'ENTIRE new serialized envelope roundtrip');del envelope
+    restored=expand(decoded['state'],envelope={k:v for k,v in decoded.items()if k!='state'})
+    need(restored==state and list(restored['nodes'])==list(state['nodes'])
+         and list(restored['started'])==list(state['started']),'ENTIRE old typed state, every leaf occurrence and node/debt order equal')
+    del restored
+    need(legacy().W.encode(decoded)==packed,'same deterministic gzip bytes');del decoded
+    path=Path(path);staged=path.with_name(path.name+'.staged')
+    need(path.is_absolute()and path.parent.resolve(strict=True)==path.parent
+         and not os.path.lexists(path)and not os.path.lexists(staged),'fresh ordinary output/staging paths')
+    with staged.open('xb')as f:need(f.write(packed)==len(packed),'whole output write');f.flush();os.fsync(f.fileno())
+    need(staged.read_bytes()==packed,'durable whole staged snapshot');os.replace(staged,path)
+    fd=os.open(path.parent,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    for ref in(head,producer_case,upstream_acceptance):acquire(ref)
+    profile(source_profile);return pin(path)
+
+
+def load(snapshot,*,head,producer_case,upstream_acceptance,source_profile,adoption):
+    need(pin_shape(snapshot)['bytes']<=MAX_PACKED,'unchanged packed input8MiB')
+    gate=read(adoption);expected=dict(snapshot=snapshot,head=head,producer_case=producer_case,
+        upstream_acceptance=upstream_acceptance,source_profile=source_profile)
+    need(gate['root']=='/root'and gate['status']==ADOPTION and gate['adopted']is True
+         and all(gate[k]==v for k,v in expected.items()),'exact separately Root-adopted new snapshot')
+    report=read(gate['read_result'])
+    if gate['adoption_kind']=='SAVED_TAIL':
+        case=read(report['case'])
+        need(report['status']==RESULT and report['top_level_load_calls']==0 and report['tail_load_calls']==1
+             and report['native_launch_attempts']==[]and report['snapshot']==snapshot and report['head']==head
+             and report['snapshot_profile']==source_profile and report['base_acceptance']==upstream_acceptance
+             and report['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL',
+             'genuine complete unchanged Saved tail plus new whole-state wire roundtrip')
+        need(case['schema']==CASE and case['producer_case']==producer_case and case['head']==head
+             and case['base_acceptance']==upstream_acceptance and case['snapshot_profile']==source_profile
+             and case['anchor']==report['anchor'],'exact exporting Reader case')
+        method(case['method_acceptance'],source_profile)
+    else:
+        need(gate['adoption_kind']=='LOSSLESS_REFERENCE_REENCODING'
+             and report['schema']=='F009_REFERENCE_LEAF_REENCODING_RESULT_V1'
+             and report['status']=='VERIFIED_COMPLETE_TYPED_REFERENCE_REENCODING'
+             and report['snapshot']==snapshot and report['head']==head and report['producer_case']==producer_case
+             and report['upstream_acceptance']==upstream_acceptance and report['source_profile']==source_profile
+             and report['complete_typed_ordered_roundtrip']is True
+             and report['native_calls']==report['Reader_calls']==report['graph_calls']==0,
+             'explicit conversion proof, never relabelled as a new Saved-tail run')
+        old_snapshot=read(report['old_snapshot_adoption']);old_checkpoint=read(report['accepted_checkpoint'])
+        need(old_snapshot['checkpoint_acceptance']==report['accepted_checkpoint']
+             and old_checkpoint['root']==old_snapshot['root']=='/root'
+             and old_checkpoint['adopted']is old_snapshot['adopted']is True
+             and old_checkpoint['checkpoint']==old_snapshot['checkpoint']==report['checkpoint']==gate['checkpoint']
+             and old_checkpoint['head']==old_snapshot['head']==head
+             and old_checkpoint['snapshot']==old_snapshot['snapshot']==report['old_snapshot']
+             and old_snapshot['producer_case']==producer_case and old_snapshot['upstream_acceptance']==upstream_acceptance
+             and report['old_snapshot_adoption']==gate['lossless_from_snapshot_adoption']
+             and report['accepted_checkpoint']==gate['checkpoint_acceptance'],
+             'same entire already-acquired checkpoint and exact old representation, no new math credit')
+        method(report['export_method'],source_profile)
+        p=source_roles(report['source'])
+        need(report['source']==gate['source']==profile(source_profile)['source']
+             and report['program']==p['programs']['converter'],'genuine current converter Source identity')
+    for ref in expected.values():acquire(ref)
+    packed=Path(snapshot['path']).read_bytes();need(len(packed)==snapshot['bytes'],'whole packed input')
+    value=legacy().W.decode(packed)
+    need(type(value)is dict and set(value)=={'schema','head','producer_case','upstream_acceptance','source_profile','state'}
+         and value['schema']==SCHEMA and all(value[k]==expected[k]for k in('head','producer_case','upstream_acceptance','source_profile')),
+         'whole literal new envelope and provenance')
+    need(legacy().W.encode(value)==packed,'canonical unchanged deterministic gzip')
+    state=expand(value['state'],envelope={k:v for k,v in value.items()if k!='state'})
+    logical_size({k:v for k,v in value.items()if k!='state'},state)
+    if gate['adoption_kind']=='LOSSLESS_REFERENCE_REENCODING':
+        observed=dict(sequence=state['sequence'],nodes=len(state['nodes']),pending=len(state['pending']),
+            selected_raw_leaf_records=len(state['leaves']),reserved_debts=len(state['started']))
+        need(observed==gate['checkpoint'],'no checkpoint/state count changed by representation conversion')
+    producer,base=read(producer_case),read(upstream_acceptance)
+    need(producer['base']==base['head']and state['target']==producer['target']and state['binary']==producer['binary']
+         and state['completion_binary']==producer['completion_binary'],'exact complete inherited backend scope')
+    for ref in(state['binary'],state['completion_binary']):acquire(ref)
+    acquire(snapshot);return state

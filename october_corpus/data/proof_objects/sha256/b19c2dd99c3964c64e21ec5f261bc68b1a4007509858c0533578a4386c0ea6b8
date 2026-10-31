@@ -1,0 +1,107 @@
+--- normal543d
++++ proposed_IO3GiB_and_explicitV2
+@@ -34,6 +34,9 @@
+                  'F009_next_select_current','F009_reserved_parents_current')
+ PROGRESS_FIELDS=('checkpoint','checkpoint_acceptance','snapshot_adoption','status','root_metadata_update')
+ MIB=2**20;START=time.monotonic();READ_BYTES=Path(__file__).stat().st_size
++PHYSICAL_READ_LIMIT=3*2**30
++PHYSICAL_READ_POLICY='F009_METADATA_AGGREGATE_READ_3_GIB_V1'
++REFERENCE_WIRE_QUOTA='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'
+ 
+ _F9_SOURCE_TAG = 'Root_Source_rows_reference'
+ _F9_DOMAIN_TAG = 'Root_Input_rows_reference'
+@@ -515,7 +518,7 @@
+              and(a.st_dev,a.st_ino,a.st_mode,a.st_mtime_ns)==(alias['device'],alias['inode'],alias['mode'],alias['mtime_ns']),
+              'exact retained readonly alias identity')
+     need(type(ref['bytes'])is int and 0<=ref['bytes']<=2**31
+-         and READ_BYTES+ref['bytes']<=2**31,'unchanged2GiB complete physical input budget')
++         and READ_BYTES+ref['bytes']<=PHYSICAL_READ_LIMIT,'versioned3GiB aggregate physical read budget')
+     if body:need(ref['bytes']<=2*MIB,'bounded metadata before allocation')
+     h=hashlib.sha256();parts=[]if body else None;count=0
+     with p.open('rb')as stream:
+@@ -559,7 +562,7 @@
+     global READ_BYTES
+     p=Path(path);a=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+       and a.st_nlink==1 and a.st_size<=2*MIB,'bounded ordinary live selector')
+-    need(READ_BYTES+a.st_size<=2**31,'same full physical read budget before live observation')
++    need(READ_BYTES+a.st_size<=PHYSICAL_READ_LIMIT,'versioned3GiB aggregate read budget before live observation')
+     raw=p.read_bytes();need(sig(a)==sig(p.lstat())and len(raw)==a.st_size,'whole stable live observation')
+     READ_BYTES+=len(raw)
+     return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),raw
+@@ -585,7 +588,7 @@
+          'literal normalized absolute Reader job path')
+     need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,
+          'canonical whole single-link Reader job')
+-    need(READ_BYTES+ref['bytes']<=2**31,'unchanged2GiB complete physical input budget')
++    need(READ_BYTES+ref['bytes']<=PHYSICAL_READ_LIMIT,'versioned3GiB aggregate physical read budget')
+     h=hashlib.sha256();parts=[];count=0
+     with p.open('rb')as stream:
+         b=os.fstat(stream.fileno())
+@@ -612,7 +615,7 @@
+         for name in files:
+             p=current/name;a=p.lstat();h=hashlib.sha256()
+             need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+-                 and a.st_size<=16*MIB and READ_BYTES+a.st_size<=2**31,'whole bounded ordinary output before read')
++                 and a.st_size<=16*MIB and READ_BYTES+a.st_size<=PHYSICAL_READ_LIMIT,'whole bounded output and versioned3GiB aggregate read budget')
+             with p.open('rb')as f:
+                 for block in iter(lambda:f.read(MIB),b''):h.update(block)
+             READ_BYTES+=a.st_size
+@@ -647,6 +650,18 @@
+     for k in fields:
+         if k in before:after[k]=before[k]
+         else:after.pop(k,None)
++
++def registration_policies(plan,release,gate,returned):
++    need(plan.get('physical_read_policy')==release.get('physical_read_policy')==PHYSICAL_READ_POLICY
++         and type(plan.get('aggregate_physical_read_limit'))is int
++         and plan['aggregate_physical_read_limit']==release.get('aggregate_physical_read_limit')==PHYSICAL_READ_LIMIT,
++         'fresh explicitly versioned aggregate-IO admission; no old543d fit transfer')
++    need(plan.get('reference_wire_quota')==release.get('reference_wire_quota')
++         ==gate.get('reference_wire_quota')==returned.get('reference_wire_quota')==REFERENCE_WIRE_QUOTA
++         and release.get('V2_Source_support_and_actual_Reader_reviewed')is True,
++         'actual Reader and Root gate retain explicit V2 current-wire policy')
++    return dict(physical_read_policy=PHYSICAL_READ_POLICY,aggregate_physical_read_limit=PHYSICAL_READ_LIMIT,
++                unique_input_domain_limit=2**31,stream_chunk_bytes=MIB,reference_wire_quota=REFERENCE_WIRE_QUOTA)
+ 
+ def run(plan,pref,release,rref,preservation_ref,commit):
+     own_ref=plan['program'];need(own_ref['path']==str(Path(__file__).resolve()),'truthful new metadata program');whole(own_ref)
+@@ -707,6 +722,7 @@
+          and returned['actual_caller']==job['program']and returned['mathematical_library']==job['mathematical_library']
+          and returned['native_launch_attempts']==[]and returned['global_checkpoint_written']is False,
+          'exact new caller return, not an old Reader CLI execution')
++    policies=registration_policies(plan,release,gate,returned)
+     need(result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1'and result['case']==job['case']
+          and result['execution_source']==job['library_Source']and result['native_launch_attempts']==[]
+          and type(result['private_materialization_calls'])is int and result['private_materialization_calls']==1
+@@ -767,6 +783,7 @@
+     method=dict(program=own_ref,plan=pref,Root_release=rref,metadata_only=True,
+        actual_to_retained_sources=method_sources,
+        old_metadata_Source4_or_registration_operation_executed=False)
++    method.update(policies)
+     domain=add('complete_root_inputs.json',f9_encode_domain(dict(inputs=rows,all_freshly_hashed=True,
+        historical_archive_rows=job['qualified_archive_rows'],archived_rows_reopened=False,
+        qualification='Finite actual Native/Reader current domain; qualified older archive retained as attributed history, not recursively reactivated.')))
+@@ -785,6 +802,7 @@
+        historical_reference_retention_obligation=old['historical_reference_retention_obligation'],
+        ordinary_census_complete=False,all_pending_families_remain_unpaid=True,no_successor=True,
+        source_credit=0,census_credit=0,whole_original_credit=0)
++    cp.update(policies)
+     cpref=add('root_checkpoint_acceptance.json',cp)
+     sp=dict(schema='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_SNAPSHOT_V1',status='ROOT_ACCEPTED_F009_DIRECT_PRIVATE_TAIL_SNAPSHOT_V1',
+        root='/root',adopted=True,adoption_kind='DIRECT_PRIVATE_TAIL_VERIFICATION',checkpoint_acceptance=cpref,
+@@ -796,6 +814,7 @@
+        historical_reference_retention_obligation=old['historical_reference_retention_obligation'],
+        actual_tail_load_calls=0,private_materialization_calls=1,full_history_load_calls=0,
+        source_credit=0,census_credit=0,whole_original_credit=0,no_successor=True)
++    sp.update(policies)
+     spref=add('root_snapshot_acceptance.json',sp)
+     # Lock precedes every mutable observation, and stays held through exact
+     # before/after checks and all per-file replacements or rollback.
+@@ -842,6 +861,7 @@
+             return dict(schema='ROOT_F009_STANDALONE_CHECKPOINT_FORECAST_V1',checkpoint_acceptance=cpref,snapshot_adoption=spref,
+               planned_files=len(values)+1,planned_bytes=sum(map(len,values.values()))+131072,
+               current_inputs=len(rows),current_input_bytes=sum(r['bytes']for r in rows),physical_read_bytes=READ_BYTES,
++              physical_read_policy=PHYSICAL_READ_POLICY,aggregate_physical_read_limit=PHYSICAL_READ_LIMIT,reference_wire_quota=REFERENCE_WIRE_QUOTA,
+               canonical_selector_writes=0,scientific_calls=0)
+         out.mkdir()
+         for path,raw in values.items():write_raw(path,raw)

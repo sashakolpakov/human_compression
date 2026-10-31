@@ -1,0 +1,41 @@
+import argparse,hashlib,json,os,resource,stat,sys,time
+from pathlib import Path
+START=time.monotonic();READ=Path(__file__).stat().st_size
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_census_continuation/from11519/reader11584_evidence/large_metadata')
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def tick():
+ assert time.monotonic()-START<125
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<256*2**20
+def read(r):
+ global READ
+ p=Path(r['path']);a=p.lstat();assert set(r)=={'path','bytes','sha256'} and type(r['bytes'])is int and 0<=r['bytes']==a.st_size<=8*2**20
+ assert p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode) and a.st_nlink==1 and READ+a.st_size+1<=32*2**20
+ with p.open('rb')as f:
+  assert sig(os.fstat(f.fileno()))==sig(a);b=f.read(a.st_size+1);assert sig(os.fstat(f.fileno()))==sig(a)
+ READ+=len(b);assert len(b)==r['bytes'] and hashlib.sha256(b).hexdigest()==r['sha256'] and sig(p.lstat())==sig(a);tick();return b,a
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--recipe',nargs=2,required=True);a=ap.parse_args();rp=Path(a.recipe[0])
+rr=dict(path=str(rp),bytes=rp.stat().st_size,sha256=a.recipe[1]);raw,_=read(rr);recipe=json.loads(raw)
+assert recipe['schema']=='F00911584_LARGE_METADATA_LITERAL_BYTE_RECONSTRUCTION_DATA_V1' and recipe['Root_authority']is False
+mapping=recipe['expected_Root_whole_mapping_NOT_ACTUAL'];original=recipe['original'];retained=mapping['retained'];assert mapping['original']==original
+assert original['bytes']==retained['bytes']==recipe['total_bytes'] and original['sha256']==retained['sha256']==recipe['concatenated_sha256']
+dst=Path(retained['path']);assert dst.parent==BASE and BASE.resolve(strict=True)==BASE and dst.resolve()==dst and not os.path.lexists(dst)
+before,oldstat=read(original);assert list(sig(oldstat))==recipe['original_stat7']
+parts=[];at=0;part_stats=[]
+for i,part in enumerate(recipe['ordered_parts']):
+ assert part['index']==i and part['offset']==at and part['bytes']==part['retained']['bytes']
+ b,s=read(part['retained']);assert before[at:at+len(b)]==b;at+=len(b);parts.append(b);part_stats.append((part['retained'],sig(s)))
+assert at==len(before) and b''.join(parts)==before
+with dst.open('xb')as f:
+ for b in parts:assert f.write(b)==len(b)
+ f.flush();os.fsync(f.fileno())
+kept,keptstat=read(retained);again,newstat=read(original)
+assert kept==before==again and sig(oldstat)==sig(newstat)
+for r,s in part_stats:assert sig(Path(r['path']).lstat())==s
+fd=os.open(BASE,os.O_RDONLY)
+try:os.fsync(fd)
+finally:os.close(fd)
+r=dict(schema='ROOT_ACTUAL_LARGE_METADATA_RECONSTRUCTION_V1',root='/root',status='PASS',recipe=rr,original=original,retained=retained,all_ordered_parts_original_and_retained_whole_bytes_equal=True,original_stat7_before_and_after=list(sig(oldstat)),retained_stat7=list(sig(keptstat)),ordered_part_stats=[dict(descriptor=r,stat7=list(s))for r,s in part_stats],opaque_bytes_only=True,mathematical_Source_state_graph_or_gzip_decode=False,actual_read_bytes=READ,read_cap_bytes=32*2**20,per_file_cap_bytes=8*2**20,no_original_or_previous_artifact_deleted_or_rewritten=True,new_mathematical_credit=0)
+out=BASE/(dst.name+'.copy.json');body=(json.dumps(r,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+with out.open('xb')as f:f.write(body);f.flush();os.fsync(f.fileno())
+print(json.dumps(dict(status=r['status'],original=original,retained=retained,receipt=ref(out,body),actual_read_bytes=READ),sort_keys=True))

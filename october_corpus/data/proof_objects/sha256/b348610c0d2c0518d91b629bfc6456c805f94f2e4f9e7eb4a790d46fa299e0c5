@@ -1,0 +1,298 @@
+"""UNRUN Native-only proposal workspace; all old mathematical bodies retained.
+The public/private imported providers are never mutated. This is not a
+general shallow state copier or authority to retry an interrupted Native job.
+Author /root/prime_theory_audit.
+"""
+import types
+from pathlib import Path
+S=Path('/Users/sasha/medusa/research/leemans')
+OWNED=dict(path=str(S/'maintenance/intake/f009_shared_leaf_continuation/owned_state.py'),bytes=9161,sha256='3fb47fef9cb947ce131830077c6e9ad2d15e82621e5b169a81892a233a134ff1')
+ENTRY={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_shared_leaf_continuation/entry.py', 'bytes': 14538, 'sha256': '208becd536cb475433dc85cd2212ff5563d516c6a826e31da8cebe6ad75f8756'}
+QPATH=str(S/'computation/f009/rooted_census_split/census_queue.py')
+VPATH=str(S/'computation/f009/rooted_census_split/census_queue_verify.py')
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def proposal_workspace(state):
+    """Only Q.prepare may use this workspace; existing node values are read-only.
+
+    proposal and admit insert new node entries and pending IDs only. Neither
+    edits an existing node, leaves, started debt, target or backend pin.
+    """
+    need(type(state)is dict and type(state.get('nodes'))is dict
+         and type(state.get('pending'))is set and type(state.get('leaves'))is list,
+         'already acquired full typed proposal state')
+    result=dict(state);result['nodes']=dict(state['nodes']);result['pending']=set(state['pending'])
+    return result
+def retarget(original,key,previous,replacement):
+    """Same code/defaults/closure; precisely one private provider changes."""
+    need(type(original)is types.FunctionType and original.__globals__.get(key)is previous,
+         'exact actual retained function/provider before private retarget')
+    before=original.__globals__;private=dict(before);private[key]=replacement
+    result=types.FunctionType(original.__code__,private,original.__name__,original.__defaults__,original.__closure__)
+    result.__kwdefaults__=original.__kwdefaults__;result.__annotations__=original.__annotations__
+    result.__qualname__=original.__qualname__;result.__dict__.update(original.__dict__)
+    inverse=dict(private);inverse[key]=previous
+    need(set(inverse)==set(before)and all(inverse[k]is v for k,v in before.items())
+         and result.__code__ is original.__code__ and result.__defaults__ is original.__defaults__
+         and result.__closure__ is original.__closure__ and original.__globals__[key]is previous,
+         'entire provider namespace inverse and all literal function code retained')
+    return result
+def private_workspace_namespace(original_namespace):
+    """Narrow one chain: loop.admit_return -> Q.prepare -> workspace copier."""
+    private=dict(original_namespace);admit=private['admit_return'];Q=admit.__globals__['Q'];prepare=Q.prepare
+    copier=prepare.__globals__['OWNED_STATE_COPY'];V=prepare.__globals__['V'];proposal=prepare.__globals__['proposal']
+    need(prepare.__code__.co_filename==OWNED['path']+'::private_queue_prepare'
+         and copier.__code__.co_filename==OWNED['path']and copier.__name__=='owned_state_copy'
+         and V.admit.__code__.co_filename==VPATH
+         and proposal.__code__.co_filename==QPATH
+         and admit.__code__.co_filename==OWNED['path']+'::private_mixed_admit_return',
+         'only the already reviewed full shared-leaf Native provider chain')
+    newQ=types.SimpleNamespace(**vars(Q))
+    newQ.prepare=retarget(prepare,'OWNED_STATE_COPY',copier,proposal_workspace)
+    new_admit=retarget(admit,'Q',Q,newQ);private['admit_return']=new_admit
+    need(set(private)==set(original_namespace)
+         and all(private[k]is v for k,v in original_namespace.items()if k!='admit_return')
+         and Q.prepare is prepare and prepare.__globals__['OWNED_STATE_COPY']is copier,
+         'only fresh loop admit provider changed; all commit/transition/reserve/final globals retained')
+    return private
+def priority_run(contract,old,admitted_run,case_path,out,selected):
+    """Future Native caller only; obtain the genuine private chain itself.
+
+    No supplied state or asserted ownership flag is accepted. The old loop
+    still acquires/creates/replays its complete state, with every old guard.
+    """
+    contract.source_text(OWNED);contract.source_text(ENTRY)
+    original=old.priority_run;provider=old.owned_namespace
+    need(str(Path(old.__file__).resolve())==ENTRY['path']
+         and original.__code__.co_filename==ENTRY['path']+'::declared_source_composition'
+         and original.__globals__['owned_namespace']is provider,'same actual accepted composed Native entry')
+    def namespaces(run,choice):
+        result=provider(run,choice)
+        return fresh_initial_namespace(contract,private_workspace_namespace(result))
+    current=retarget(original,'owned_namespace',provider,namespaces)
+    return current(admitted_run,case_path,out,selected)
+
+
+# Only the metadata-only production constructor is changed. No state argument
+# is exposed and no existing migrate/class/module is assigned.
+SEGMENT={'path':'/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_segment_replay.py','bytes':3411,'sha256':'7dd2a46f9657b57bafcc12e1f0279812617b1d97e09ef5ca0a0021a83a5026de'}
+BACKEND={'path':'/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_backend_transition.py','bytes':5058,'sha256':'981228cc78a2e226e5155f309e54282cd37972a1aeea817641af07d7f8d42b70'}
+ACCESSOR={'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bound_materialized_continuation/accessor.py','bytes':12139,'sha256':'cee36965c99eb88b9a6d690a943cda2a5d968cf93c8d4cfd4bc96bace7d473ef'}
+_INIT_OLD="self.__anchor = B.migrate(AUTHENTICATED.acquire_base(self.__case_pin, self.__case), self.__case)"
+_INIT_NEW="self.__anchor = ROOT_FRESH_INITIAL_BASE(self.__case_pin, self.__case)"
+
+
+def _one(text,before,after):
+    need(text.count(before)==1 and after not in text,'one exact initial-storage Source site')
+    result=text.replace(before,after,1)
+    need(result.replace(after,before,1)==text,'entire Source site inverse')
+    return result
+
+
+def _body(text,name,kind=None):
+    import ast
+    kind=ast.FunctionDef if kind is None else kind
+    rows=[n for n in ast.parse(text).body if isinstance(n,kind)and n.name==name]
+    need(len(rows)==1,'one complete actual Source definition: '+name)
+    return ast.get_source_segment(text,rows[0])
+
+
+def _code(text,filename,name,parent=None):
+    code=compile(text,filename,'exec',dont_inherit=True)
+    if parent is not None:
+        found=[c for c in code.co_consts if isinstance(c,types.CodeType)and c.co_name==parent]
+        need(len(found)==1,'one exact parent code');code=found[0]
+    found=[c for c in code.co_consts if isinstance(c,types.CodeType)and c.co_name==name]
+    need(len(found)==1,'one exact function code: '+name)
+    return found[0]
+
+
+def _owned_class_body(segment_text):
+    import ast
+    body=_body(segment_text,'Segment',ast.ClassDef)
+    body=_one(body,"B.load(self.__case['base'])",'AUTHENTICATED.acquire_base(self.__case_pin, self.__case)')
+    return _one(body,'return copy.deepcopy(self.__anchor)','return OWNED_STATE_COPY(self.__anchor)')
+
+
+def _migration_body(backend_text):
+    body=_body(backend_text,'migrate')
+    body=_one(body,'return copy.deepcopy(state)','return OWNED_STATE_COPY(state)')
+    return _one(body,'result=copy.deepcopy(state);','result=OWNED_STATE_COPY(state);')
+
+
+def _derive_none_migration(original,body):
+    before='        return OWNED_STATE_COPY(state)';after='        return state'
+    changed=_one(body,before,after)
+    namespace=dict(original.__globals__)
+    exec(compile(changed,str(Path(__file__).resolve())+'::fresh_None_migrate','exec',dont_inherit=True),namespace)
+    result=namespace['migrate']
+    need(result.__defaults__==original.__defaults__ and result.__closure__ is original.__closure__
+         and all(namespace[k]is v for k,v in original.__globals__.items()if k!='migrate'),
+         'all literal migration predicates/helpers retained; only its private return allocation changes')
+    return result
+
+
+def _constructor_factory(base,class_body,expected_case_ref,owned_base):
+    # This internal builder has unit controls; production supplies owned_base
+    # only after the complete provider checks in fresh_initial_namespace.
+    changed=_one(class_body,_INIT_OLD,_INIT_NEW)
+    namespace=dict(base.__init__.__globals__)
+    need('ROOT_FRESH_INITIAL_BASE'not in namespace,'fresh constructor callback binding')
+    previous=namespace.get('Segment');had='Segment'in namespace
+    namespace['ROOT_FRESH_INITIAL_BASE']=owned_base
+    exec(compile(changed,str(Path(__file__).resolve())+'::fresh_owned_Segment','exec',dont_inherit=True),namespace)
+    transient=namespace['Segment'];constructor=transient.__init__
+    if had:namespace['Segment']=previous
+    else:namespace.pop('Segment',None)
+    need(constructor.__closure__ is base.__init__.__closure__
+         and constructor.__defaults__==base.__init__.__defaults__,'same constructor closure/defaults')
+    calls=0
+    def create(case_ref):
+        nonlocal calls
+        need(calls==0 and type(case_ref)is dict and case_ref==expected_case_ref,
+             'one exact metadata-only original-case construction')
+        calls+=1
+        try:
+            value=object.__new__(base)
+            constructor(value,case_ref)
+            need(type(value)is base,'original actual private Segment class and slot descriptors')
+            return value
+        finally:
+            # The constructor cannot be called again. No state/anchor pointer
+            # is retained by this factory or its callback namespace.
+            namespace.pop('ROOT_FRESH_INITIAL_BASE',None)
+    return create
+
+
+def _load_body(accessor_text):
+    body=_body(accessor_text,'load_direct')
+    for before,after in (
+        ("state=c.expand(value['state'],envelope=envelope)","state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope)"),
+        ("raw=Path(snapshot['path']).read_bytes();value=c.legacy().W.decode(raw)","ROOT_OBS('decode.begin');raw=Path(snapshot['path']).read_bytes();value=c.legacy().W.decode(raw);ROOT_OBS('decode.end')"),
+        ("K.need(c.legacy().W.encode(value)==raw,","ROOT_OBS('encode.begin');K.need(c.legacy().W.encode(value)==raw,"),
+        (" envelope={"," ROOT_OBS('encode.end');envelope={"),
+        ("state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope);c.logical_size(envelope,state)","ROOT_OBS('expand.begin');state=ROOT_PRIVATE_PIN_EXPAND(c,value['state'],envelope=envelope);ROOT_OBS('expand.end');del value,raw;ROOT_PRIVATE_LOGICAL_SIZE(c,envelope,state)")):
+        body=_one(body,before,after)
+    return body
+
+
+def _admission_providers(contract,admission,accessor_text,caller_text):
+    import ast
+    cls=type(admission);body=_body(accessor_text,'Admission',ast.ClassDef)
+    for before,after in (
+        ('actual,base,g=self.check();a=self.anchor',"ROOT_OBS('acquire.begin');actual,base,g=self.check();a=self.anchor"),
+        ('self.check();return state',"self.check();ROOT_OBS('acquire.end');return state")):
+        body=_one(body,before,after)
+    methods=('__init__','check','source','acquire_base');globals_=cls.acquire_base.__globals__
+    need(cls.__name__=='Admission'and cls.__bases__==(object,), 'actual declared Admission class, no subclass')
+    need(set(vars(admission))=={'h','c','anchor_ref','case_ref','base_ref','profile_ref','method_ref','profile','anchor','sources'}
+         and admission.case_ref==contract.job['case'],'only original metadata/module Admission fields, same current case, no state cache')
+    for name in methods:
+        method=getattr(cls,name)
+        need(type(method)is types.FunctionType and method.__globals__ is globals_
+             and method.__code__==_code(body,ACCESSOR['path'],name,'Admission'),
+             'every original observed Admission method/check is literal: '+name)
+    need(admission.acquire_base.__self__ is admission
+         and admission.acquire_base.__func__ is cls.acquire_base
+         and admission.check.__func__ is cls.check,'actual bound acquisition/check providers')
+    parts=globals_['parts'];original=parts.__globals__
+    need(parts.__code__==_code(accessor_text,ACCESSOR['path'],'parts')
+         and original.get('__file__')==ACCESSOR['path'] and original.get('parts')is parts,
+         'actual original accessor parts/provider namespace')
+    exceptions={'Admission','load_direct','_PARTS'}
+    additions={'ROOT_OBS','ROOT_PRIVATE_PIN_EXPAND','ROOT_PRIVATE_LOGICAL_SIZE'}
+    need(set(globals_)==set(original)|additions
+         and all(globals_[k]is v for k,v in original.items()if k not in exceptions),
+         'all original accessor helpers, K, Path, imports and checks remain actual objects')
+    cached=original['_PARTS']
+    need(type(cached)is tuple and len(cached)==3 and admission.h is cached[0]and admission.c is cached[1],
+         'already acquired actual codec, never a supplied decoder or state cache')
+    own=contract.job['program'];observer=globals_['ROOT_OBS'];live=observer.__globals__
+    need(live.get('__file__')==own['path']and live.get('root_observe')is observer
+         and observer.__code__==_code(caller_text,own['path'],'root_observe'),
+         'actual fresh Root caller observer provider')
+    load=globals_['load_direct']
+    need(load.__globals__ is globals_ and load.__code__==_code(_load_body(accessor_text),own['path']+'::private_load_direct','load_direct'),
+         'complete actual load/decode/LF/inverse/size path, never a cached-state supplier')
+    expand=globals_['ROOT_PRIVATE_PIN_EXPAND'];consume=globals_['ROOT_PRIVATE_LOGICAL_SIZE']
+    need(expand.__globals__ is live and consume.__globals__ is live
+         and expand.__code__==_code(caller_text,own['path'],'expand','root_logical_size_callbacks')
+         and consume.__code__==_code(caller_text,own['path'],'consume','root_logical_size_callbacks'),
+         'actual one-use Root expansion/consumption callback code')
+    cells=lambda fn:dict(zip(fn.__code__.co_freevars,(c.cell_contents for c in fn.__closure__)))
+    ec,cc=cells(expand),cells(consume)
+    need(ec.get('contract')is contract and set(ec)=={'contract','slot'}and set(cc)=={'slot'}
+         and ec['slot']is cc['slot']and type(ec['slot'])is list and ec['slot']==[None],
+         'same actual read contract and empty invocation-local size slot, no cached state')
+    for name in ('root_pin_expand','root_pin_edit','root_pin_text','root_logical_size_callbacks'):
+        fn=live[name]
+        need(fn.__globals__ is live and fn.__code__==_code(caller_text,own['path'],name),
+             'actual whole Root callback helper '+name)
+    return cls,globals_
+
+
+def fresh_initial_namespace(contract,original_namespace):
+    """Only the genuine post-owned.bind constructor; never accept a state."""
+    import os
+    texts={key:contract.source_text(ref)for key,ref in
+           (('segment',SEGMENT),('backend',BACKEND),('owned',OWNED),('accessor',ACCESSOR))}
+    caller=contract.source_text(contract.job['program'])
+    need(contract.job['role']=='native','Native-only constructor storage seam')
+    capsule=original_namespace['OWNED_LEAF_CONTRACT'];B=original_namespace['B'];base=original_namespace['X'].Segment
+    need(B is capsule.B and original_namespace['M']is capsule.M and original_namespace['Q']is capsule.Q
+         and original_namespace['R']is B and original_namespace['reserve']is capsule.M.reserve,
+         'actual complete post-owned.bind private provider chain')
+    public=capsule.public[0];owned_copy=capsule.owned_state_copy
+    need(isinstance(public,types.ModuleType)and public.__file__==BACKEND['path']
+         and public.migrate.__globals__ is vars(public)
+         and public.migrate.__code__==_code(texts['backend'],BACKEND['path'],'migrate')
+         and capsule.original_functions[0]is public.migrate,
+         'actual original backend migration and its complete checks')
+    need(owned_copy.__code__==_code(texts['owned'],OWNED['path'],'owned_state_copy')
+         and owned_copy.__globals__.get('__file__')==OWNED['path'],
+         'actual reviewed immutable-leaf/deep-nonleaf copy provider')
+    migration=_migration_body(texts['backend']);old_migrate=B.migrate
+    need(old_migrate.__code__==_code(migration,OWNED['path']+'::private_backend_migrate','migrate')
+         and old_migrate.__globals__['OWNED_STATE_COPY']is owned_copy,
+         'actual exact owned None/transition migration Source')
+    mg=old_migrate.__globals__;pg=public.migrate.__globals__
+    need(set(mg)==set(pg)|{'OWNED_STATE_COPY'}and all(mg[k]is v for k,v in pg.items()if k!='migrate'),
+         'every original migration predicate/global remains actual')
+    class_body=_owned_class_body(texts['segment']);g=base.__init__.__globals__
+    need(type(base)is type and base.__name__=='Segment'and base.__bases__==(object,)
+         and base.__slots__==('__case_pin','__case','__anchor','__genesis_pin')
+         and base.__init__.__code__==_code(class_body,OWNED['path']+'::private_Segment','__init__','Segment')
+         and g['B']is B and base.initial.__globals__ is g and g['OWNED_STATE_COPY']is owned_copy,
+         'actual owned private constructor/class and unchanged public copy contract')
+    for method in ('__init__','case','initial','create','load'):
+        fn=getattr(base,method)
+        need(fn.__globals__ is g and fn.__code__==_code(class_body,OWNED['path']+'::private_Segment',method,'Segment'),
+             'every original owned Segment method remains actual: '+method)
+    admission=g['AUTHENTICATED'];admission_class,_=_admission_providers(contract,admission,texts['accessor'],caller)
+    acquired_method=admission_class.acquire_base;checked_method=admission_class.check
+    migrate=_derive_none_migration(old_migrate,migration);pid=os.getpid();calls=0
+    expected=contract.file_ref(contract.job['case'])
+    def owned_base(case_ref,case):
+        nonlocal calls
+        need(calls==0 and os.getpid()==pid and case_ref==expected,
+             'one same-actor metadata-only fresh acquisition')
+        calls+=1
+        need(case['backend_transition']is None,'fresh owned constructor rejects every backend transition')
+        need(type(admission)is admission_class
+             and admission_class.acquire_base is acquired_method and admission_class.check is checked_method
+             and admission.acquire_base.__func__ is acquired_method and admission.check.__func__ is checked_method,
+             'actual acquisition/check providers remain identical before use')
+        state=admission.acquire_base(case_ref,case)
+        result=migrate(state,case)
+        need(result is state and B.migrate is old_migrate and public.migrate is capsule.original_functions[0],
+             'consume only fresh private state; no original migrate replacement')
+        return result
+    factory=_constructor_factory(base,class_body,expected,owned_base)
+    private=dict(original_namespace);private['X']=types.SimpleNamespace(**vars(original_namespace['X']))
+    private['X'].Segment=factory
+    need(all(private[k]is v for k,v in original_namespace.items()if k!='X')
+         and original_namespace['X'].Segment is base and B.migrate is old_migrate,
+         'only the fresh loop constructor provider differs; old class/copy/migrate surfaces unchanged')
+    return private
+
+if __name__=='__main__':raise SystemExit('Definitions only. Fresh Root controls/Source and debt-correct boundary required; no retry.')

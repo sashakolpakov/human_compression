@@ -1,0 +1,108 @@
+"""UNRUN real process/ordinary-file controls; no census or Native case."""
+import argparse,ast,contextlib,hashlib,json,os,resource,stat,sys,time,types
+from pathlib import Path
+READ=0
+IN_HASH=None
+CAP=8*2**20
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def whole(q,body=False):
+    global READ,IN_HASH
+    need(type(q)is dict and set(q)=={'path','bytes','sha256'}and type(q['bytes'])is int and 0<=q['bytes']<=8*2**20,'typed extent')
+    p=Path(q['path']);a=p.lstat()
+    need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==q['bytes']and READ+a.st_size+1<=CAP,'ordinary admitted source')
+    READ+=a.st_size+1;h=hashlib.sha256();parts=[]if body else None;size=0
+    IN_HASH=str(p)
+    try:
+        with p.open('rb')as f:
+            b=os.fstat(f.fileno())
+            while True:
+                v=f.read(min(65536,q['bytes']-size+1))
+                if not v:break
+                size+=len(v);need(size<=q['bytes'],'bounded whole read');h.update(v)
+                if body:parts.append(v)
+            z=os.fstat(f.fileno())
+    finally:IN_HASH=None
+    need(sig(a)==sig(b)==sig(z)==sig(p.lstat())and size==q['bytes']and h.hexdigest()==q['sha256'],'entire stable identity')
+    return b''.join(parts)if body else None
+
+def main():
+    global READ
+    p=argparse.ArgumentParser(allow_abbrev=False)
+    for k in('self','subject','runtime'):p.add_argument('--'+k,nargs=2,required=True)
+    p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,'ordinary -E -B')
+    need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'same four absent environment variables')
+    refs={}
+    for k in('self','subject','runtime'):
+        path,digest=getattr(a,k);q=dict(path=path,bytes=Path(path).stat().st_size,sha256=digest)
+        need(q['bytes']<=(65536 if k!='runtime'else 262144),'control source cap');refs[k]=q
+    need(refs['self']['path']==str(Path(__file__).resolve()),'actual control Source');whole(refs['self'])
+    text=whole(refs['subject'],True).decode();domain=json.loads(whole(refs['runtime'],True));rows=domain['rows']
+    need(domain['schema']=='F009_DIAGNOSTIC_RUNTIME_SUBSET_V1'and type(rows)is list and len(rows)<=256,'finite exact runtime')
+    runtime={q['path']:q for q in rows};need(len(runtime)==len(rows),'unique runtime')
+    package=[q for q in rows if'/site-packages/psutil/'in q['path']]
+    need(len(package)==11,'whole declared package including native extension')
+    preauth=[q for q in rows if q in package or q['path'].endswith(('.so','.dylib'))]
+    for q in preauth:whole(q)
+    out=a.out;need(not out.exists()and out.parent.is_dir(),'fresh control-only output');out.mkdir()
+    paths={str(out/'markers.jsonl'),str(out/'result.json')};opens=[]
+    def audit(event,args):
+        global READ
+        if event in{'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:raise ValueError('no Native/process launch')
+        if event!='open'or not isinstance(args[0],(str,bytes,Path)):return
+        path=str(Path(os.fsdecode(args[0])).absolute());mode=args[1]if len(args)>1 else None;flags=args[2]if len(args)>2 else 0
+        writing=(isinstance(mode,str)and any(c in mode for c in'wax+'))or bool(flags&(os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND))
+        if path==IN_HASH:need(not writing,'hash reads only');return
+        if path in paths:
+            if not writing:
+                n=Path(path).stat().st_size;need(n<=32768 and READ+n<=CAP,'bounded control output read');READ+=n
+            return
+        need(not writing and path in runtime,'declared runtime only')
+        whole(runtime[path])
+        q=runtime[path];s=Path(path).lstat();need(stat.S_ISREG(s.st_mode)and s.st_size==q['bytes']and READ+s.st_size<=CAP,'bounded import')
+        READ+=s.st_size;opens.append(path)
+    sys.addaudithook(audit)
+    m=types.ModuleType('Root_unrun_marker_controls');m.__file__=refs['subject']['path']
+    exec(compile(text,m.__file__,'exec',dont_inherit=True),vars(m))
+    checks=0
+    def check(ok):
+        nonlocal checks
+        need(ok,'marker control');checks+=1
+    def fails(call):
+        try:call()
+        except ValueError:return True
+        return False
+    with (out/'markers.jsonl').open('x',encoding='utf-8')as f:
+        check(m.ROOT_OBSERVER is None);m.root_observe('contract.begin');check(f.tell()==0)
+        z=m.RootInitProbe(resource,f)
+        for phase in z.PHASES:z.emit(phase)
+        end=f.tell()
+        for phase in z.PHASES:z.emit(phase)
+        check(end==f.tell()and z.n==len(z.PHASES)<=32)
+        check(fails(lambda:z.emit('unknown')))
+        c=m.RootInitProbe(resource,f);c.n=32;check(fails(lambda:c.emit('contract.begin')))
+        c=m.RootInitProbe(resource,f);c.pid+=1;check(fails(lambda:c.emit('contract.begin')))
+        r=m.RootInitProbe(resource,f);r.ready();check(r.ps is not None and r.pid==os.getpid())
+        r.birth=-1;r.emit('decode.begin');r.ppid=2147483647;r.emit('decode.end')
+        m.ROOT_OBSERVER=r;m.root_observe('encode.begin');m.ROOT_OBSERVER=None
+        with contextlib.redirect_stdout(f):m.RootInitProbe(resource).emit('contract.begin')
+    raw=(out/'markers.jsonl').read_bytes();lines=raw.splitlines(keepends=True);values=[json.loads(v)for v in lines]
+    check(all(v.endswith(b'\n')and len(v)<=384 and v.isascii()for v in lines))
+    check(all(set(v)=={'schema','seq','phase','pid','ppid','t_ns','rss','maxrss','owner_rss','error'}and v['schema']=='F009_INIT_RSS_V1'for v in values))
+    check(all(v['pid']==os.getpid()and type(v['maxrss'])is int and v['maxrss']>=0 for v in values))
+    n=len(z.PHASES);check([v['seq']for v in values[:n]]==list(range(1,n+1)))
+    check(all(v['rss']is None and v['owner_rss']is None for v in values[:n]))
+    check(values[n]['rss']>0 and values[n]['owner_rss']>0 and values[n]['error']is None)
+    check(values[n+1]['owner_rss']is None and values[n+1]['error']=='parent')
+    check(values[n+2]['rss']is None and values[n+2]['owner_rss']is None and values[n+2]['error']=='process')
+    for path in sorted(set(opens)|{q['path']for q in preauth}):whole(runtime[path])
+    result=dict(schema='F009_INIT_MARKER_CONTROL_RESULT_V1',status='PASS',checks=checks,read_bytes=READ,import_opens=len(opens),records=len(lines),source=refs['subject'],new_census_credit=0)
+    (out/'result.json').write_text(json.dumps(result,sort_keys=True)+'\n');print(json.dumps(result,sort_keys=True),flush=True)
+
+if __name__=='__main__':main()
+

@@ -1,0 +1,60 @@
+from pathlib import Path
+import hashlib,json,os,psutil,stat,time,types
+root=Path('/private/tmp/f009_reader11584_current_wire_v2');START=time.monotonic();READ=0
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(p,sha=None):
+ global READ
+ p=Path(p);s=p.lstat();assert p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and s.st_size<=8*2**20 and READ+s.st_size+1<=2**31
+ b=p.read_bytes();READ+=len(b);assert len(b)==s.st_size and (s.st_size,s.st_mtime_ns,s.st_ctime_ns)==(p.stat().st_size,p.stat().st_mtime_ns,p.stat().st_ctime_ns)
+ assert sha is None or hashlib.sha256(b).hexdigest()==sha
+ return b
+def get(p):return json.loads(raw(p))
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+sdk_ref=dict(path=str(root/'Root_SDK/F009ReaderV2_Root_actual_strict_Reader11584_v1_attempt1_capture.json'),bytes=5302,sha256='9b29d6bc99cd8c4452a4d00b9916e7bbb8f30fd840818a2ed81a7aa0bf7625fb')
+sb=raw(sdk_ref['path'],sdk_ref['sha256']);assert len(sb)==sdk_ref['bytes'];sdk=json.loads(sb)
+g=get(root/'runtime/reader_execution_guard/receipt.json');op=root/'reader_execution/receipt.json';ob=raw(op);owner=json.loads(ob)
+assert g['status']=='PASS' and g['stop']=='RETURNED' and not g['cleanup']['remaining'] and not g['cleanup']['errors']
+assert owner['status']=='PASS' and owner['returncode']==0 and owner['inputs_unchanged'] is owner['owned_child_reaped'] is owner['owned_group_absent'] is True
+assert owner['no_retry'] is owner['no_successor'] is True and owner['input_count']==16239
+assert g['peaks']['total_rss']<512*2**20 and owner['metrics']['peak_sampled_family_rss_bytes']<512*2**20
+assert sdk['root']==sdk['actor']=='/root' and sdk['actual_tool']['exit_code']==0
+frames=sdk['all_genuine_api_frames'];assert frames[0]==sdk['full_initial_tool_return'] and frames[-1]==sdk['full_tool_return'] and frames[-1]['exit_code']==0
+assert json.loads(''.join(x['output'] for x in frames))==dict(status='PASS',stop='RETURNED',receipt=str(root/'runtime/reader_execution_guard/receipt.json'))
+started=get(root/'reader_execution/started.json');births=[];groups=[]
+for role in ('owner','child'):
+ pid=started[role+'_pid'];birth=started[role+'_birth']
+ try:
+  proc=psutil.Process(pid);current=proc.create_time();live=abs(current-birth)<.001 and proc.status()!=psutil.STATUS_ZOMBIE
+ except psutil.NoSuchProcess:current=None;live=False
+ assert not live;births.append(dict(role=role,pid=pid,birth=birth,current_birth=current,known_birth_live=False))
+ try:os.killpg(pid,0)
+ except ProcessLookupError:groups.append(dict(pgid=pid,absent=True))
+ else:raise ValueError('known group still present')
+wire=get(root/'reader_request.json');tag=wire['Root_Request_rows_reference'];request={k:v for k,v in wire.items()if k!='Root_Request_rows_reference'}
+request['inputs']=[dict(path=tag['prefixes'][i]+n,bytes=z,sha256=s)for i,n,z,s in tag['rows']]
+assert len(can(request))==tag['logical_bytes'] and hashlib.sha256(can(request)).hexdigest()==tag['logical_sha256']
+assert len(request['inputs'])==16239 and sum(r['bytes']for r in request['inputs'])==1074683035
+job=get(root/'reader_job/job.json');cr=job['contract'];cb=raw(cr['path'],cr['sha256']);assert ref(Path(cr['path']),cb)==cr
+C=types.ModuleType('Root_passed_Reader_metadata_authentication');C.__file__=cr['path'];exec(compile(cb,C.__file__,'exec',dont_inherit=True),vars(C))
+aliases={r['path']:r for r in job['readonly_symlinks']};stats={}
+for r in request['inputs']:
+ assert READ+r['bytes']<=2**31 and time.monotonic()-START<125
+ C.whole(r,aliases=aliases);READ+=r['bytes'];stats[r['path']]=sig(Path(r['path']).stat())
+for p,s in stats.items():assert sig(Path(p).stat())==s
+assert raw(op)==ob and raw(root/'reader_execution/stderr')==b''
+assert sorted(p.name for p in(root/'reader_output').iterdir())==['Root_Reader_return.json','io_attestation.json','result.json','state.json.gz']
+outputs=[]
+for p in sorted((root/'reader_output').iterdir()):outputs.append(ref(p,raw(p)))
+result=get(root/'reader_output/result.json');worker=get(root/'reader_output/Root_Reader_return.json')
+assert result['status']=='VERIFIED_F009_DIRECT_PRIVATE_TAIL_STATE_V1' and result['snapshot_roundtrip']=='ENTIRE_TYPED_STATE_AND_NODE_DEBT_ORDER_EQUAL'
+assert result['checkpoint']==dict(sequence=11584,nodes=6073,pending=193,reserved_debts=1,selected_raw_leaf_records=718412)
+assert result['delta']==dict(completed_families=25,refined_families=5,exported_descendants=25,transactions=65,selected_raw_leaf_delta=33886,new_node_records=25,new_pending_receivers=20,alias_records=5,duplicate_admission_records=0)
+assert result['snapshot'] in outputs and result['snapshot']['sha256']=='6d5a965fceb2c6c3b1e253f5cf63ecdb4c0f723507a3298baa07381670c5d154'
+assert worker['reference_wire_quota']=='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2' and worker['actual_caller']==job['program'] and worker['global_checkpoint_written'] is False
+assert result['census_credit']==result['source_credit']==worker['new_census_credit']==0
+assert not any('/maintenance/intake/reports/' in r['path'] or Path(r['path']).name=='CURRENT.json' for r in request['inputs'])
+value=dict(schema='ROOT_CLOSED_PASSED_READER11584_V2_SCOPE_V1',root='/root',status='ROOT_WHOLE_INPUT_OUTPUT_AND_KNOWN_SCOPE_CLOSED',actual_Reader_SDK=sdk_ref,Owner_receipt=ref(op,ob),Owner_PASS=True,known_births=births,known_groups=groups,unknown_detached_absence_claimed=False,all16239_whole_input_hashes_and_final_stats_match=True,actual_input_bytes=1074683035,actual_read_bytes=READ,outputs=outputs,root_manual_state_graph_or_gzip_decode=False,outer_sampled_peak_tree_RSS=g['peaks']['total_rss'],Owner_sampled_family_RSS=owner['metrics']['peak_sampled_family_rss_bytes'],outer512MiB_headroom_bytes=512*2**20-g['peaks']['total_rss'],reference_wire_quota=worker['reference_wire_quota'],verified_checkpoint_proposal=result['checkpoint'],verified_delta=result['delta'],accepted_checkpoint_unchanged=11519,new_census_or_whole_manuscript_or_conjecture_Lean_compression_credit=0,checkpoint_registration_still_required=True)
+p=root/'Root_passed_Reader_scope.json';b=can(value)
+with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+print(json.dumps(dict(status=value['status'],closure=ref(p,b),known_scope_drained=True,read_bytes=READ,elapsed=time.monotonic()-START,outer_sampled_peak_tree_RSS=g['peaks']['total_rss'],outer512MiB_headroom_bytes=value['outer512MiB_headroom_bytes']),sort_keys=True))

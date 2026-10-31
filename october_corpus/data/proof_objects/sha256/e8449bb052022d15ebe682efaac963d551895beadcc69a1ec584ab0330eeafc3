@@ -1,0 +1,63 @@
+from pathlib import Path
+import hashlib,json,os,stat,time,types
+
+root=Path('/private/tmp/f009_reader11584_current_wire_v2');START=time.monotonic();READ=0
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(p,sha=None):
+ global READ
+ p=Path(p);s=p.lstat();sig=lambda t:(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+ assert p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode) and s.st_nlink==1 and s.st_size<=8*2**20
+ assert READ+s.st_size+1<=2**31
+ with p.open('rb') as f:b=f.read(s.st_size+1)
+ READ+=len(b);assert len(b)==s.st_size and sig(s)==sig(p.lstat()) and(sha is None or hashlib.sha256(b).hexdigest()==sha)
+ return b
+def get(p):return json.loads(raw(p))
+def doc(r):b=raw(r['path'],r['sha256']);assert len(b)==r['bytes'];return json.loads(b)
+
+h=json.loads(raw(root/'parameters/handoff.json','df977ed38e2e5ef7f321cfb01ab0a60237bb0567c11036b3c92b8eff1f498546'))
+peer=doc(dict(path='/private/tmp/f009_reader11584_v2_independent_DATA_review/review.json',bytes=8956,sha256='137959428190f480632083b9ea429dd36693273e175256829de5e25b37960ea8'))
+assert peer['blockers']==[] and peer['parameters']==h['parameters'] and peer['catalogue']==h['catalogue']
+support=doc(h['Root_actual_V2_Source_support']);assert support['supported'] is True and support['total_generic_checks']==279
+assert support['reference_wire_quota']=='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2' and support['explicit_OLD_only_domain_restriction_retired'] is True
+metadata=get(root/'Root_actual_metadata_calls.json');assert metadata['root']=='/root' and metadata['forecast_all10_images_equal_write'] is True
+for k in ('preflight','forecast','write'):
+ sdk=doc(metadata[k]);assert sdk['root']==sdk['actor']=='/root' and sdk['actual_tool']['exit_code']==0
+ assert sdk['all_genuine_api_frames'][0]==sdk['full_initial_tool_return'] and sdk['all_genuine_api_frames'][-1]==sdk['full_tool_return']
+f=get(root/'runtime/constructor_forecast/stdout.log');w=get(root/'runtime/constructor_write/stdout.log')
+assert f['written'] is False and w['written'] is True and f['rows']==w['rows'] and f['job']==w['job']==metadata['job']
+assert f['output_files']==w['output_files']==10 and f['current_inputs']==w['current_inputs']==16237
+assert f['current_input_bytes']==w['current_input_bytes']==1070458612 and w['science_calls']==0 and w['global_checkpoint_written'] is False
+for row in w['rows']:doc(row)
+jobref=w['job'];job=doc(jobref);case=doc(job['case']);cp=doc(job['checkpoint_acceptance']);sp=doc(job['snapshot_adoption']);par=doc(h['parameters'])
+assert jobref==dict(path=str(root/'reader_job/job.json'),bytes=4213239,sha256='8f46e6124f23cdc3d2184689de208f36fc73a0dd2bb05d0c084061c218281a65')
+assert job['role']=='reader' and job['old_checkpoint_sequence']==11519 and cp['checkpoint']['sequence']==11519 and sp['checkpoint_acceptance']==job['checkpoint_acceptance']
+assert job['native_closure']==h['unchanged_e466_native_closure'] and case['expected']==h['Native11584_proposal'] and case['expected']['sequence']==11584
+assert job['program']==par['program']==h['exact_new_Reader'] and job['Owner']==par['Owner'] and len(par['method_sources'])==53
+assert job['Owner']['sha256']=='a0e39886cdf00e0259e0436811d40e4d9a43bf950c581683c015352c689d38e4'
+assert support['subjects']['reader.py']==job['program'] and support['subjects']['export.py']==h['exact_new_exporter']
+roles=doc(h['artifacts']['Reader_functional_roles_V2_projection.json'])
+assert job['source_inputs']==roles['after_sources'] and roles['method_sources']==par['method_sources']
+assert len(job['source_inputs'])==1024 and sum(r['bytes'] for r in job['source_inputs'])==60449277
+assert h['exact_new_Reader'] in job['source_inputs'] and h['exact_new_exporter'] in job['source_inputs']
+rows=job['declared_inputs'];by={r['path']:r for r in rows};assert len(rows)==len(by)==16237 and sum(r['bytes']for r in rows)==1070458612
+assert all(by.get(r['path'])==r for r in job['source_inputs']) and all(by.get(r['path'])==r for r in roles['old_sources_still_historical_DATA'])
+audit=doc(h['artifacts']['global_domain_exclusion_audit.json'])
+assert not any(Path(r['path']).name in audit['forbidden_global_basenames'] for r in rows)
+assert not any(r['path'].startswith('/Users/sasha/medusa/research/leemans/maintenance/intake/reports/') for r in rows)
+for r in rows:
+ assert not('/paid_status_ledger/' in r['path']) and not('/f004_q11_jobs/' in r['path'])
+assert job['output']==str(root/'reader_output')
+for p in ('reader_output','reader_execution','reader_request_validated.json','Reader_Root_review.json'):assert not os.path.lexists(root/p)
+craw=raw(job['contract']['path'],job['contract']['sha256']);C=types.ModuleType('Root_reader_only_metadata_authentication');C.__file__=job['contract']['path']
+exec(compile(craw,C.__file__,'exec',dont_inherit=True),vars(C))
+aliases={r['path']:r for r in job['readonly_symlinks']};stats={};sig=lambda t:(t.st_dev,t.st_ino,t.st_mode,t.st_nlink,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+for r in rows:
+ assert READ+r['bytes']<=2**31 and time.monotonic()-START<125
+ C.whole(r,aliases=aliases);READ+=r['bytes'];stats[r['path']]=sig(Path(r['path']).stat())
+for p,s in stats.items():assert sig(Path(p).stat())==s
+gate=doc(h['Reader_gate']);assert gate['Root_authority'] is False and gate['program']==job['program'] and gate['Owner']==job['Owner'] and gate['method_sources']==par['method_sources']
+assert gate['reference_wire_quota']=='F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'
+gate.update(root='/root',Root_authority=True,status='SUPPORTED',blockers=[],job=jobref,Native_release=False,Reader_release=True,authorized_roles=['reader'],expected_checkpoint_sequence=11519,checkpoint_boundary=job['checkpoint_boundary'],native_closure=h['unchanged_e466_native_closure'],whole_current_input_paths=16237,whole_current_input_bytes=1070458612,whole_current_input_hashes_and_final_stats_checked=True,Source_functional_rows=1024,Source_functional_bytes=60449277,all53_methods_preserved_except_two_reviewed_V2_replacements=True,actual_Native_PASS_proves_no_strict_Reader_result=True,actual_Reader_fit_claim=False,no_current_F004_or_L026_registry_hold=True,scope='One actual strict Reader of closed Native11584 from accepted11519, selecting BOTH new Reader79f and exporter1a74 and explicit current-wire V2 quota. Mathematical predicates, LF/typed/order/node/debt/full inverse and durable checks retained; OLD virtual-only admission retired. Actual result and compatible checkpoint registration remain owed.')
+p=root/'Reader_Root_review.json';b=(json.dumps(gate,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode();assert len(b)<=65536
+with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+print(json.dumps(dict(status='ROOT_READER11584_V2_JOB_RELEASED_FOR_ACTUAL_CHECK',job=jobref,gate=ref(p,b),inputs=16237,input_bytes=1070458612,actual_read_bytes=READ,elapsed=time.monotonic()-START,Owner=job['Owner'],program=job['program'],reference_wire_quota=gate['reference_wire_quota']),sort_keys=True))

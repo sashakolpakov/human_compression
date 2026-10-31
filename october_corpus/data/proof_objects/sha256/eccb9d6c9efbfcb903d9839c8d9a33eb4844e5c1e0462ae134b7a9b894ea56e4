@@ -1,0 +1,201 @@
+"""Explicit export-lifetime edition over the acquired capacity8 Saved reader.
+
+Source only until separately admitted. No imported scientific module is loaded
+by importing this declaration; derived_run/main perform the actual binding.
+"""
+import sys
+if sys.flags.optimize:
+    raise RuntimeError('ordinary Python required')
+sys.dont_write_bytecode = True
+
+import argparse
+import ast
+import copy
+import hashlib
+import importlib.util
+from pathlib import Path
+import types
+
+HERE = Path(__file__).resolve().parent
+Q = HERE.parents[2]/'computation/f009/rooted_census_split'
+OLD_READER = '9b0a2a6244fed38285f0729b442002d9adb3c41bb24d441a214ec64cd7a60bd7'
+OLD_CODEC = '89e24b5cd145f81e308c6607aef3aae8bb156e6ef58f32fca1b05638da245607'
+OLD_EXPORT = 'b8d98e678989704a56d9ac9e123048e4ff2bda13837e42f8dbd2306c0356a58c'
+EXPORT_PROFILE = 'F009_SAVED_EXPORT_MEMORY_SOURCE_PROFILE_V1'
+EXPORT_METHOD = 'ROOT_ACCEPTED_F009_SAVED_EXPORT_MEMORY_METHOD_V1'
+READER_PROFILE = 'F009_SAVED_EXPORT_MEMORY_READER_PROFILE_V1'
+READER_METHOD = 'ROOT_ACCEPTED_F009_SAVED_EXPORT_MEMORY_READER_METHOD_V1'
+MAX_RAW, MAX_PACKED = 64*2**20, 8*2**20
+EXPORT_EDITS = (
+    ("    need(decoded == envelope, 'entire compact envelope roundtrip')\n",
+     "    need(decoded == envelope, 'entire compact envelope roundtrip')\n    del envelope\n"),
+    ("         and list(restored['started']) == list(state['started']), 'entire typed and ordered equality')\n",
+     "         and list(restored['started']) == list(state['started']), 'entire typed and ordered equality')\n    del restored\n"),
+    ('    del restored, decoded, envelope\n', '    del decoded\n'),
+)
+
+
+def need(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def source_module(name, filename, expected):
+    path = Q/filename
+    raw = path.read_bytes()
+    need(len(raw) <= 256*2**10 and hashlib.sha256(raw).hexdigest() == expected,
+         'exact bounded inherited Source: '+filename)
+    spec = importlib.util.spec_from_file_location(name, path)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+def export_sources():
+    """A literal three-edit inverse; this function does not call the exporter."""
+    raw = (Q/'census_compact_snapshot.py').read_bytes()
+    need(hashlib.sha256(raw).hexdigest() == OLD_EXPORT, 'exact original exporter Source')
+    source = raw.decode('utf-8'); tree = ast.parse(source)
+    nodes = [x for x in tree.body if isinstance(x, ast.FunctionDef) and x.name == 'export']
+    need(len(nodes) == 1, 'one original export definition')
+    node = nodes[0]
+    old = ''.join(source.splitlines(keepends=True)[node.lineno-1:node.end_lineno])
+    new = old
+    for before, after in EXPORT_EDITS:
+        need(new.count(before) == 1, 'unique forward export lifetime span')
+        new = new.replace(before, after, 1)
+    restored = new
+    for before, after in reversed(EXPORT_EDITS):
+        need(restored.count(after) == 1, 'unique inverse export lifetime span')
+        restored = restored.replace(after, before, 1)
+    need(restored == old, 'whole export Source inverse')
+    return old, new
+
+
+def derive_export(codec, profile):
+    """Same capacity8 globals, helper objects and body except three deletions."""
+    _, source = export_sources()
+    original = codec.export
+    namespace = dict(original.__globals__)
+    need('profile' in namespace and original.__defaults__ is None
+         and original.__closure__ is None, 'acquired exporter binding shape')
+    namespace['profile'] = profile
+    exec(compile(source, str(Path(__file__).resolve())+':three_delete_export', 'exec'), namespace)
+    result = namespace['export']
+    need(all(result.__globals__[key] is value for key, value in original.__globals__.items()
+             if key not in {'export', 'profile'}), 'unchanged exporter helper globals')
+    need(result.__defaults__ == original.__defaults__
+         and result.__kwdefaults__ == original.__kwdefaults__, 'same exporter argument defaults')
+    return result
+
+
+def export_profile(ref, inherited):
+    value = inherited.read(ref)
+    need(type(value) is dict and set(value) == {
+        'schema', 'codec', 'reader', 'anchor', 'inherited_profile',
+        'inherited_method', 'runtime_sources', 'capacities'}
+        and value['schema'] == EXPORT_PROFILE, 'explicit export-memory profile')
+    current = inherited.pin(Path(__file__).resolve())
+    need(value['codec'] == value['reader'] == current,
+         'actual combined exporter and Reader Source')
+    for key in ('codec', 'reader', 'anchor', 'inherited_profile', 'inherited_method'):
+        inherited.acquire(value[key])
+    old = inherited.method(value['inherited_method'], value['inherited_profile'])
+    need(old['codec'] == inherited.pin(Q/'census_compact_capacity8.py')
+         and value['anchor'] == old['anchor']
+         and value['runtime_sources'] == old['runtime_sources'],
+         'complete inherited capacity8 export and runtime Sources')
+    caps = value['capacities']
+    need(type(caps) is dict and set(caps) == {'packed_bytes', 'expanded_bytes'}
+         and all(type(caps[k]) is int for k in caps)
+         and caps == {'packed_bytes': MAX_PACKED, 'expanded_bytes': MAX_RAW},
+         'unchanged explicit capacity8 bounds')
+    return value
+
+
+def export_method(ref, profile_ref, codec):
+    value = codec.read(ref)
+    need(value.get('status') == EXPORT_METHOD and value.get('source_profile') == profile_ref,
+         'separately accepted export-memory method')
+    return codec.profile(profile_ref)
+
+
+def bind_codec(inherited):
+    """Private facade; original modules, wire functions and capacity stay intact."""
+    need((inherited.MAX_RAW, inherited.MAX_PACKED) == (MAX_RAW, MAX_PACKED),
+         'unchanged acquired capacity8 limits')
+    value = types.SimpleNamespace(**vars(inherited))
+    value.__file__ = str(Path(__file__).resolve())
+    value.PROFILE, value.METHOD = EXPORT_PROFILE, EXPORT_METHOD
+    value.profile = lambda ref: export_profile(ref, inherited)
+    value.method = lambda ref, profile_ref: export_method(ref, profile_ref, value)
+    value.export = derive_export(inherited, value.profile)
+    value.load = inherited.rebound(inherited.load,
+        {'profile': value.profile, 'method': value.method})
+    need(value.compact is inherited.compact and value.expand is inherited.expand
+         and value.W is inherited.W and value.load.__code__ is inherited.load.__code__,
+         'unchanged typed/reference functions, bounded codec and load body')
+    return value
+
+
+def reader_profile(ref, method_ref, export_ref, accessor_method,
+                   inherited_reader, inherited_codec, accessor, codec):
+    value, gate = codec.read(ref), codec.read(method_ref)
+    need(type(value) is dict and set(value) == {
+        'schema', 'reader', 'inherited_reader', 'inherited_reader_profile',
+        'inherited_reader_method', 'codec', 'export_profile', 'accessor_profile'}
+        and value['schema'] == READER_PROFILE, 'explicit export-memory Reader profile')
+    current = codec.pin(Path(__file__).resolve())
+    need(value['reader'] == value['codec'] == current
+         and value['inherited_reader'] == codec.pin(Q/'census_saved_capacity8_base_read.py')
+         and value['export_profile'] == export_ref, 'actual Reader and export profile roles')
+    for key in ('reader', 'inherited_reader', 'inherited_reader_profile',
+                'inherited_reader_method', 'codec', 'export_profile', 'accessor_profile'):
+        codec.acquire(value[key])
+    need(gate.get('status') == READER_METHOD and gate.get('source_profile') == ref,
+         'separately accepted export-memory Reader method')
+    export = codec.profile(export_ref)
+    # The inherited accessor still consumes its already acquired OLD capacity
+    # profile. Never relabel that profile as the current export profile.
+    old_route = inherited_reader.reader_profile(
+        value['inherited_reader_profile'], value['inherited_reader_method'],
+        export['inherited_profile'], accessor_method, inherited_codec, accessor)
+    need(value['accessor_profile'] == old_route['accessor_profile'],
+         'same acquired base accessor route with distinct current export profile')
+    return value
+
+
+def derived_run():
+    inherited = source_module('export_memory_inherited_reader',
+                              'census_saved_capacity8_base_read.py', OLD_READER)
+    original = inherited.derived_run()
+    old_codec, accessor = original.__globals__['C'], original.__globals__['T']
+    need(old_codec.pin(Q/'census_compact_capacity8.py')['sha256'] == OLD_CODEC,
+         'actual inherited capacity8 codec Source')
+    codec = bind_codec(old_codec)
+    namespace = dict(original.__globals__)
+    namespace.update(C=codec, __file__=str(Path(__file__).resolve()),
+        READER_PROFILE=lambda ref, method, export, adopted:
+            reader_profile(ref, method, export, adopted,
+                           inherited, old_codec, accessor, codec))
+    result = types.FunctionType(original.__code__, namespace, original.__name__,
+                                original.__defaults__, original.__closure__)
+    result.__kwdefaults__ = copy.copy(original.__kwdefaults__)
+    need(result.__code__ is original.__code__
+         and all(result.__globals__[key] is value
+                 for key, value in original.__globals__.items()
+                 if key not in {'C', 'READER_PROFILE', '__file__'}),
+         'whole acquired Reader body and all other globals unchanged')
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--case', type=Path, required=True)
+    parser.add_argument('--out', type=Path, required=True)
+    args = parser.parse_args()
+    derived_run()(args.case, args.out)
+
+
+if __name__ == '__main__':
+    main()

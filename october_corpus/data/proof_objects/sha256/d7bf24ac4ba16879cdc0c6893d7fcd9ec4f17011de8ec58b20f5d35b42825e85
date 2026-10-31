@@ -1,0 +1,232 @@
+"""UNRUN synthetic LF/typed-export/phase controls; no original case or model.
+Root must own the helper/caller/inverse and execute these controls separately.
+"""
+from pathlib import Path
+import argparse,ast,copy,hashlib,json,os,resource,stat,sys,time,types
+START=time.monotonic();READ=0
+WIRE=dict(path='/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_state_snapshot.py',bytes=12183,sha256='ae5c9ae625442006bd3b9b060a57fde0f85f398b3a228b41a434407e561b1ad8')
+def need(ok,msg):
+ if not ok:raise ValueError(msg)
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+ if rss>=256*2**20 or time.monotonic()-START>=100:raise ValueError('synthetic controls256MiB/100s')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False)+'\n').encode('ascii')
+def source(r,cap=65536):
+ global READ
+ need(type(r)is dict and set(r)=={'path','bytes','sha256'}
+      and type(r['path'])is str and 0<len(r['path'])<=4096
+      and type(r['bytes'])is int and type(cap)is int and 0<cap<=65536
+      and 0<=r['bytes']<=cap and type(r['sha256'])is str
+      and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),
+      'typed bounded Source descriptor before IO')
+ p=Path(r['path'])
+ need(p.is_absolute()and str(p)==r['path']and '..'not in p.parts
+      and p.resolve(strict=True)==p,'canonical Source path before IO')
+ a=p.lstat()
+ need(stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],
+      'ordinary single-link exact declared Source size before IO')
+ need(type(READ)is int and 0<=READ and READ+r['bytes']+1<=2*2**20,
+      'complete2MiB Source read admission including one overrun byte')
+ sig=lambda q:(q.st_dev,q.st_ino,q.st_mode,q.st_nlink,q.st_size,q.st_mtime_ns,q.st_ctime_ns)
+ with p.open('rb')as f:
+  b=os.fstat(f.fileno());need(sig(a)==sig(b),'same opened Source before bounded read')
+  raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+ READ+=len(raw)
+ need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']
+      and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable exact bounded Source')
+ return raw
+def argref(pair):
+ p=Path(pair[0]);return dict(path=str(p),bytes=p.stat().st_size,sha256=pair[1])
+def module(r,name):
+ m=types.ModuleType(name);m.__file__=r['path'];exec(compile(source(r),r['path'],'exec',dont_inherit=True),vars(m));return m
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'ordinaryEBS')
+ need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'sameENV4')
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ for n in('helper','caller','inverse'):ap.add_argument('--'+n,nargs=2,required=True)
+ ap.add_argument('--outdir',required=True);a=ap.parse_args()
+ own=dict(path=str(Path(__file__).resolve()),bytes=Path(__file__).stat().st_size,sha256=a.self_sha256);source(own)
+ hr,cr,ir=map(argref,(a.helper,a.caller,a.inverse));hb=source(hr);cb=source(cr);inv=json.loads(source(ir));oldh=source(inv['helper_before']);oldc=source(inv['caller_before'])
+ need(inv['helper_after']==hr and inv['caller_after']==cr,'exact inverse Source roles')
+ for record in inv['sources']:
+  before=source(record['before']).decode();after=source(record['after']).decode();back=after
+  for e in reversed(record['edits']):
+   k=e['after_offset'];need(type(k)is int and 0<=k<=len(back)and back[k:k+len(e['after'])]==e['after'],'exact positional reverse Source site')
+   back=back[:k]+e['before']+back[k+len(e['after']):]
+  need(back==before,'ENTIRE literal before Source restored')
+ ast.parse(cb);helper=module(hr,'synthetic_export_lifetime_helper')
+ mapref=helper.MAP;ordinalref=helper.ORDINAL_MAP;codec_ref=helper.CODEC
+ codec_text=source(codec_ref).decode();wire_text=source(WIRE).decode();mapmod=module(mapref,'synthetic_location_map');source(ordinalref)
+ out=Path(a.outdir);need(out.is_absolute()and out.is_relative_to('/private/tmp')and out.parent.resolve(strict=True)==out.parent and not out.exists(),'fresh private controls root');out.mkdir()
+ attempts=[]
+ def deny(event,args):
+  if event in('subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'):attempts.append(event);raise ValueError('no launches')
+ sys.addaudithook(deny)
+ passed=[]
+ def done(name,ok=True):need(ok,name);passed.append(name)
+ def reject(name,call):
+  try:call()
+  except(ValueError,KeyError,TypeError):done(name);return
+  raise ValueError('negative accepted: '+name)
+ def write(name,b):
+  p=out/name;p.write_bytes(b);return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ bodies=[b'a\nb\nc\nd\ne\n',b'f\ng\n'];pins=[write('raw_a.txt',bodies[0]),write('raw_b.txt',bodies[1])]
+ binref=write('binary.txt',b'x');compref=write('completion.txt',b'y')
+ head=write('head.json',can(dict(synthetic=True)));base=write('base.json',can(dict(head=head)))
+ producer=write('producer.json',can(dict(base=head,target=[32,5,4,8],binary=binref,completion_binary=compref)))
+ profile=write('profile.json',can(dict(synthetic=True)))
+ def line(f,i):return dict(file=dict(pins[f]),line=i,sha256=hashlib.sha256(bodies[f].splitlines(keepends=True)[i]).hexdigest())
+ def state():
+  ns={}
+  for i in range(2):
+   r=line(0,i+3);ident=r['sha256'];ns[ident]=dict(values=[32,5,4,8]+[0]*7,record=r,canonical=dict(key=str(i),lab=[0]),receiver=ident,children=None,creation=i)
+  ids=list(ns)
+  return dict(target=[32,5,4,8],binary=binref,completion_binary=compref,nodes=ns,pending=set(ns),leaves=[line(0,0),line(0,1),line(0,0),line(1,0),line(0,2)],sequence=7,started={ids[1]:dict(kind='complete',dispatch=binref),ids[0]:dict(kind='refine',dispatch=compref)})
+ def codec(name):
+  w=types.ModuleType('synthetic_literal_wire_'+name);w.__file__=WIRE['path'];exec(compile(wire_text,WIRE['path'],'exec',dont_inherit=True),vars(w))
+  c=types.ModuleType('synthetic_literal_codec_'+name);c.__file__=codec_ref['path'];exec(compile(codec_text,codec_ref['path'],'exec',dont_inherit=True),vars(c))
+  w.MAX_PACKED=8*2**20
+  legacy=types.SimpleNamespace(W=w,SCHEMA='SYNTHETIC_LEGACY_ENVELOPE',O=types.SimpleNamespace(WIRE='SYNTHETIC_OLD_REFERENCE_WIRE'))
+  c._OLD=legacy;c.legacy=lambda:legacy
+  def fixture_profile(r):need(r==profile,'only synthetic profile');return dict(synthetic=True)
+  c.profile=fixture_profile
+  return c
+ class Contract:
+  def __init__(self):self.modules={};self.gate={'reference_wire_quota':'F009_CURRENT_REFERENCE_WIRE_QUOTA_V2'}
+  def source_text(self,r):need(r==codec_ref,'only literal generic codec');return codec_text
+  def module(self,r,name):
+   need(r in(mapref,ordinalref)and name not in self.modules and name not in sys.modules,'genuine fresh declared private module')
+   m=types.ModuleType(name);m.__file__=r['path'];m.__package__=None;self.modules[name]=(m,r);sys.modules[name]=m
+   try:exec(compile(source(r),r['path'],'exec',dont_inherit=True),vars(m))
+   except BaseException:sys.modules.pop(name,None);self.modules.pop(name,None);raise
+   return m
+  def close(self):
+   for name,(m,r)in self.modules.items():need(sys.modules.get(name)is m,'own fixture module only');sys.modules.pop(name)
+ def exported(label,st,call=None):
+  c=codec(label);contract=Contract();originals=(c.expand,c.compact,c.authenticate_lines,c.logical_size,c.logical_reference_size,c.export)
+  try:
+   fn=helper.export if call is None else call
+   result=fn(contract,c,st,out/(label+'.gz'),head=head,producer_case=producer,upstream_acceptance=base,source_profile=profile)
+   need(originals==(c.expand,c.compact,c.authenticate_lines,c.logical_size,c.logical_reference_size,c.export),'all original codec providers untouched')
+   return result
+  finally:contract.close()
+ initial=state();baseline_codec=codec('baseline');baseline=baseline_codec.export(initial,out/'baseline.gz',head=head,producer_case=producer,upstream_acceptance=base,source_profile=profile)
+ exact_codec=codec('counter');value=exact_codec.compact(initial);envelope=dict(schema=exact_codec.SCHEMA,head=head,producer_case=producer,upstream_acceptance=base,source_profile=profile)
+ length=helper.root_current_wire_size(exact_codec,envelope,value)
+ old_length=exact_codec.logical_size(envelope,initial)
+ done('tiny_fixture_OLD_only_restriction_is_strictly_additional',length<old_length and length<=old_length-1<old_length)
+ reject('unchanged8MiB_packed_decode_limit',lambda:exact_codec.legacy().W.decode(b'x'*(8*2**20+1)))
+ done('current_stream_count_equals_literal_serialized_bytes',length==len((json.dumps(dict(envelope,state=value),separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii')))
+ cc=Contract()
+ try:
+  inverse=helper.expand_current(cc,exact_codec,copy.deepcopy(value),envelope=envelope)
+  done('current_inverse_all_values_and_orders',inverse==initial and list(inverse['nodes'])==list(initial['nodes'])and list(inverse['started'])==list(initial['started']))
+  ex,consume=helper.load_callbacks(cc);restored=ex(exact_codec,copy.deepcopy(value),envelope=envelope)
+  done('Reader_current_fact_matches_counter',consume(exact_codec,envelope,restored)==length)
+  reject('Reader_fact_one_use_only',lambda:consume(exact_codec,envelope,restored))
+ finally:cc.close()
+ badcontract=Contract();badcontract.gate={'reference_wire_quota':'OLD_SHA_TRIPLE_V1'}
+ try:reject('old_quota_gate_refused_before_export',lambda:helper.export(badcontract,codec('wrong_method'),state(),out/'wrong_method.gz',head=head,producer_case=producer,upstream_acceptance=base,source_profile=profile))
+ finally:badcontract.close()
+
+ actual=exported('actual',initial)
+ done('real_helper_full_export_equals_literal_baseline_gzip',Path(actual['path']).read_bytes()==Path(baseline['path']).read_bytes())
+ done('source_state_every_occurrence_and_nonempty_debt_order_unchanged',initial==state()and list(initial['started'])==list(state()['started'])and initial['leaves'][0]is not initial['leaves'][2])
+ # Observational facade is separate: no imported original helper/class binding changes.
+ phases=[];ordinary_class=helper._AuthenticatedLocations;ordinary_export=helper.export
+ class Observed(ordinary_class):
+  def capture(self,p,g,e):
+   phases.append(('capture',self.reauthentications,self._released,self._captured is not None and self._captured[2]is None));return super().capture(p,g,e)
+  def release_expected(self):
+   phases.append(('release_before',self.reauthentications,self._released))
+   result=super().release_expected();phases.append(('release_after',self.reauthentications,self._released,self._captured[2]is None));return result
+  def clear(self):
+   super().clear();phases.append(('clear',self._captured is None,self._authenticate is None))
+ globals2=dict(helper.export.__globals__);globals2['_AuthenticatedLocations']=Observed;observed_export=types.FunctionType(helper.export.__code__,globals2,helper.export.__name__)
+ obs=exported('observed',state(),observed_export)
+ done('first_map_cleared_before_final_compact_capture',phases==[('capture',0,False,False),('release_before',1,False),('release_after',1,True,True),('capture',1,True,True),('clear',True,True)])
+ done('observational_facade_same_bytes_original_helper_bindings_untouched',Path(obs['path']).read_bytes()==Path(actual['path']).read_bytes()and helper._AuthenticatedLocations is ordinary_class and helper.export is ordinary_export)
+ # Real physical LF expected-branch auth with the exact existing map allocation.
+ tree=ast.parse(codec_text);bodies_src=[]
+ for name in('digest','pin_shape','signature','authenticate_lines'):
+  node=next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name==name);s=ast.get_source_segment(codec_text,node)
+  if name=='authenticate_lines':s=s.replace('found={}if expected is None else None','found=ROOT_LOCATION_MAP()if expected is None else None',1)
+  bodies_src.append(s)
+ ns=dict(Path=Path,os=os,stat=stat,hashlib=hashlib,MAX_RAW=64*2**20,MAX_INPUT_BYTES=2**31,MAX_LINE=16384,need=need,_OPEN={},ROOT_LOCATION_MAP=mapmod.LocationDigestMap)
+ exec(compile('\n\n'.join(bodies_src),codec_ref['path'],'exec',dont_inherit=True),ns);auth=ns['authenticate_lines'];groups=[[0,[0,2]],[1,[1]],[0,[0]]]
+ def expected():
+  m=mapmod.LocationDigestMap()
+  for f,ls in groups:
+   for i in ls:m[f,i]=hashlib.sha256(bodies[f].splitlines(keepends=True)[i]).hexdigest()
+  return m
+ def captured():
+  e=expected();auth(pins,groups,e);x=helper._AuthenticatedLocations();x._authenticate=auth;x.capture(pins,groups,e);return x,e
+ x=helper._AuthenticatedLocations()
+ reject('release_before_capture_refused',x.release_expected);reject('auth_before_capture_refused',lambda:x.authenticate(pins,groups))
+ x,e=captured();reject('release_before_full_reauthentication_refused',x.release_expected)
+ pp=json.loads(json.dumps(pins));gg=json.loads(json.dumps(groups));h=x.authenticate(pp,gg)
+ done('one_complete_reauth_returns_same_map',h is e and x.reauthentications==1)
+ reject('final_capture_before_retirement_refused',lambda:x.capture(pp,gg,expected()))
+ x.release_expected();done('release_preserves_exact_pins_groups_and_drops_only_slot',x._captured[0]is pp and x._captured[1]is gg and x._captured[2]is None and x._released is True)
+ reject('second_release_refused',x.release_expected);reject('auth_after_release_refused',lambda:x.authenticate(pp,gg))
+ e2=expected();auth(pp,gg,e2);x.capture(pp,gg,e2);done('final_compact_does_not_recapture_first_or_second_map',x._captured[2]is None and x.reauthentications==1)
+ x.clear();done('clear_removes_provider_and_all_capture_refs',x._captured is None and x._authenticate is None);reject('reuse_after_clear_refused',lambda:x.authenticate(pins,groups))
+ def bad_inverse(name,p,g,change=None):
+  cache,e=captured()
+  if change:change(e)
+  reject(name,lambda:cache.authenticate(p,g));need(cache.reauthentications==0,'failed auth earns no completed counter');cache.clear()
+ pbad=copy.deepcopy(pins);pbad[0]['bytes']+=1;bad_inverse('different_full_file_identity_refused',pbad,groups)
+ bad_inverse('reordered_groups_refused',pins,list(reversed(groups)))
+ gbad=copy.deepcopy(groups);gbad[0][1].append(0);bad_inverse('changed_multiplicity_refused',pins,gbad)
+ bad_inverse('wrong_digest_reaches_and_fails_fresh_LF_auth',pins,groups,lambda e:e.__setitem__((0,0),'0'*64))
+ cache,e=captured();Path(pins[0]['path']).write_bytes(b'A\nb\nc\nd\ne\n');reject('changed_actual_raw_bytes_refused',lambda:cache.authenticate(pins,groups));Path(pins[0]['path']).write_bytes(bodies[0]);cache.clear()
+ missing=write('missing_lf.txt',b'q');reject('actual_missing_final_LF_refused',lambda:auth([missing],[[0,[0]]]))
+ reject('boolean_line_refused',lambda:auth(pins,[[0,[False]]]))
+ reject('negative_line_refused',lambda:auth(pins,[[0,[-1]]]))
+ reject('line_beyond_file_refused',lambda:auth(pins,[[0,[999]]]))
+ # Old typed/order/hash rejection contracts via real whole new helper exports.
+ for name,change in(
+  ('wrong_whole_leaf_pin',lambda st:st['leaves'][0]['file'].update(bytes=999)),
+  ('wrong_literal_leaf_line',lambda st:st['leaves'][0].update(line=999)),
+  ('wrong_literal_leaf_SHA',lambda st:st['leaves'][0].update(sha256='0'*64)),
+  ('boolean_leaf_line',lambda st:st['leaves'][0].update(line=False)),
+  ('nonliteral_node_creation_order',lambda st:next(iter(st['nodes'].values())).update(creation=2)),
+  ('missing_pending_receiver',lambda st:st['pending'].pop()),
+  ('invalid_debt_kind',lambda st:next(iter(st['started'].values())).update(kind='WRONG'))):
+  st=state();change(st);reject(name,lambda st=st,name=name:exported(name,st))
+ # Different valid occurrence/debt order must survive independently, not be normalized away.
+ st=state();st['leaves'].reverse();st['started']=dict(reversed(list(st['started'].items())));reordered=exported('valid_reordered',st)
+ dec=codec('decode').legacy().W.decode(Path(reordered['path']).read_bytes());done('valid_leaf_and_debt_order_preserved',dec['state']['state']['leaves']['count']==5 and list(st['started'])!=list(initial['started']))
+ # Retain the earlier exact leaf-span typed/order rejection contracts too.
+ leaf_source=("def derive(rows,pins,hashes,ROOT_EXPORT_LEAVES):\n"
+              "    old={'leaves':[]}\n"
+              "    def file_ref(i):return pins[i]\n"
+              "    for file_id,line in rows:\n"
+              +'\n'.join(x[4:]for x in helper.LEAF_AFTER.splitlines())
+              +"\n    return old['leaves']\n")
+ leaf_ns=dict(need=need);exec(compile(leaf_source,hr['path']+'::literal_leaf_control','exec',dont_inherit=True),leaf_ns)
+ locs=[(0,0),(0,0),(1,1)];hashes={(f,i):hashlib.sha256(bodies[f].splitlines(keepends=True)[i]).hexdigest()for f,i in locs}
+ def original_leaves():return[dict(file=dict(pins[f]),line=i,sha256=hashes[f,i])for f,i in locs]
+ def derive_check(leaves):
+  got=leaf_ns['derive'](locs,pins,hashes,leaves)
+  fixture=dict(target=[32,5,4,8],binary=binref,completion_binary=compref,nodes={},pending=set(),leaves=got,sequence=0,started={})
+  w=codec('leafwire').legacy().W;restored=w.unwire(w.wire(fixture))
+  need(restored['leaves']==leaves,'entire original leaf occurrence list equality')
+  return got
+ originals=original_leaves();got=derive_check(originals)
+ done('old_literal_leaf_span_shares_only_equal_individual_occurrences',len(got)==3 and all(x is y for x,y in zip(got,originals))and got[0]is not got[1])
+ for name,change in(
+  ('old_span_wrong_full_pin',lambda v:v[0]['file'].update(bytes=999)),
+  ('old_span_wrong_line',lambda v:v[0].update(line=4)),
+  ('old_span_wrong_SHA',lambda v:v[0].update(sha256='0'*64)),
+  ('old_span_wrong_occurrence_order',lambda v:v.reverse()),
+  ('old_span_missing_occurrence',lambda v:v.pop()),
+  ('old_span_extra_occurrence',lambda v:v.append(dict(v[-1])))):
+  v=original_leaves();change(v);reject(name,lambda v=v:derive_check(v))
+ decoded_codec=codec('valid_roundtrip');v=decoded_codec.legacy().W.decode(Path(reordered['path']).read_bytes())
+ rr=decoded_codec.expand(v['state'],envelope={k:x for k,x in v.items()if k!='state'})
+ done('complete_valid_reordered_values_and_node_debt_order_roundtrip',rr==st and list(rr['nodes'])==list(st['nodes'])and list(rr['started'])==list(st['started']))
+ for r in(own,hr,cr,ir,inv['helper_before'],inv['caller_before'],codec_ref,WIRE,mapref,ordinalref):source(r)
+ need(not attempts,'no native/subprocess attempt')
+ report=dict(schema='F009_CURRENT_REFERENCE_WIRE_EXPORT_SYNTHETIC_CONTROLS_V2',status='PASS',program=own,helper=hr,caller=cr,inverse=ir,controls=len(passed),passed=passed,observed_phase_sequence=phases,physical_Source_read_bytes=READ,original_case_calls=0,actual_Reader_or_profile_calls=0,synthetic_only=True,actual_saving_or_future_fit_measured=False,original_helpers_untouched=True,launch_attempts=attempts,qualification='Tiny actualLF/gzip/typed literal functions and exact newhelper export only; no original model/state/Sourceprofile/case acquired. Fresh RootSource/case/Owner/Reader authority and actualmemorymeasurement remain separate.')
+ b=can(report);need(len(b)<=16384,'complete bounded control report');(out/'result.json').write_bytes(b);print(json.dumps(report,sort_keys=True))
+if __name__=='__main__':main()

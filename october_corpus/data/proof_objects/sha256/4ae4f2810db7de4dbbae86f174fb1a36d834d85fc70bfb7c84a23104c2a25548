@@ -1,0 +1,202 @@
+"""UNRUN generic controls: real bounded LF fixtures, no census case."""
+import argparse, ast, copy, hashlib, json, os, resource, stat, sys, tempfile, time, types
+from pathlib import Path
+
+READ_LIMIT=8*2**20
+READ_BYTES=0
+PINS={}
+LEAF_OPENS={}
+ATTEMPTS=[]
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def signature(s):
+    return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def source(ref):
+    global READ_BYTES
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int
+         and 0<=ref['bytes']<=65536 and type(ref['path'])is str and Path(ref['path']).is_absolute(),
+         'typed bounded Source before any read')
+    p=Path(ref['path']);a=p.lstat()
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1
+         and a.st_size==ref['bytes']and READ_BYTES+a.st_size<=READ_LIMIT,
+         'ordinary canonical declared extent and cumulative bound BEFORE allocation')
+    READ_BYTES+=a.st_size
+    with p.open('rb')as f:
+        b=os.fstat(f.fileno());raw=f.read(a.st_size+1);z=os.fstat(f.fileno())
+    need(signature(a)==signature(b)==signature(z)==signature(p.lstat())
+         and len(raw)==ref['bytes']and hashlib.sha256(raw).hexdigest()==ref['sha256'],
+         'stable complete bounded Source, no truncated authentication')
+    return raw.decode()
+
+def audit(event,args):
+    global READ_BYTES
+    if event in {'subprocess.Popen','os.system','os.exec','os.posix_spawn','os.fork','os.forkpty'}:
+        ATTEMPTS.append(event);raise ValueError('generic controls forbid Native launch')
+    if event!='open' or not isinstance(args[0],(str,bytes,Path)):return
+    p=str(Path(os.fsdecode(args[0])).absolute());mode=args[1]if len(args)>1 else None
+    flags=args[2]if len(args)>2 else 0
+    writing=(isinstance(mode,str)and any(c in mode for c in 'wax+'))or bool(flags&(os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND))
+    if writing:return
+    if p in PINS:
+        st=Path(p).lstat();need(stat.S_ISREG(st.st_mode)and st.st_nlink==1
+            and st.st_size<=65536 and READ_BYTES+st.st_size<=READ_LIMIT,'fixture/repeated Source preopen byte bound')
+        READ_BYTES+=st.st_size
+        if PINS[p]=='LEAF':LEAF_OPENS[p]=LEAF_OPENS.get(p,0)+1
+
+def literal(module,text,names,filename):
+    tree=ast.parse(text)
+    for name in names:
+        nodes=[n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name==name]
+        need(len(nodes)==1,'one literal generic predicate')
+        exec(compile(ast.get_source_segment(text,nodes[0]),filename,'exec',dont_inherit=True),vars(module))
+
+def main():
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--self-sha256',required=True)
+    parser.add_argument('--caller',nargs=2,required=True)
+    args=parser.parse_args()
+    need(sys.flags.ignore_environment and sys.dont_write_bytecode and not sys.flags.optimize,'exact ordinary -E -B control interpreter')
+    need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'same absent environment variables')
+    own=dict(path=str(Path(__file__).resolve()),bytes=Path(__file__).stat().st_size,sha256=args.self_sha256)
+    caller_ref=dict(path=args.caller[0],bytes=Path(args.caller[0]).stat().st_size,sha256=args.caller[1])
+    own_text=source(own);caller_text=source(caller_ref)
+    caller=types.ModuleType('Root_generic_local_size_caller');caller.__file__=caller_ref['path']
+    exec(compile(caller_text,caller_ref['path'],'exec',dont_inherit=True),vars(caller))
+    refs=[own,caller_ref,caller.ROOT_PIN_CODEC,caller.ROOT_PIN_WIRE,caller.ROOT_PIN_LOCATION_MAP]
+    raw={r['path']:source(r)for r in refs}
+    codec_text=raw[caller.ROOT_PIN_CODEC['path']];wire_text=raw[caller.ROOT_PIN_WIRE['path']]
+    codec_tree=ast.parse(codec_text)
+    for name in('OLD_CAPACITY','OLD_EXPORT'):
+        node=next(n for n in codec_tree.body if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id==name for t in n.targets))
+        # Both exact retained declarations use dict(path=str(Q/F / literal)).
+        need(isinstance(node.value,ast.Call),'literal retained legacy Source declaration')
+    old_capacity=dict(path='/Users/sasha/medusa/research/leemans/computation/f009/rooted_census_split/census_compact_capacity8.py',bytes=4770,sha256='89e24b5cd145f81e308c6607aef3aae8bb156e6ef58f32fca1b05638da245607')
+    old_export=dict(path='/Users/sasha/medusa/research/leemans/maintenance/intake/f009_saved_export_memory/reader.py',bytes=9752,sha256='eccb9d6c9efbfcb903d9839c8d9a33eb4844e5c1e0462ae134b7a9b894ea56e4')
+    for ref in(old_capacity,old_export):source(ref);refs.append(ref);PINS[ref['path']]='SOURCE'
+    W=types.ModuleType('Root_generic_literal_typed_wire');W.__file__=caller.ROOT_PIN_WIRE['path']
+    state_node=next(n for n in ast.parse(wire_text).body if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id=='STATE_KEYS'for t in n.targets))
+    vars(W).update(need=need,Path=Path,STATE_KEYS=ast.literal_eval(state_node.value),MAX_RAW=64*2**20)
+    literal(W,wire_text,['digest','pin_shape','reference','unwire','wire'],W.__file__)
+    legacy=types.SimpleNamespace(W=W,SCHEMA='GENERIC_LEGACY_ENVELOPE',O=types.SimpleNamespace(WIRE='GENERIC_LEGACY_TABLE'))
+    codec=types.ModuleType('Root_generic_actual_reference_codec');codec.__file__=caller.ROOT_PIN_CODEC['path']
+    vars(codec).update(Path=Path,json=json,hashlib=hashlib,os=os,stat=stat,resource=resource,sys=sys,time=time,
+        MAX_RAW=64*2**20,MAX_PACKED=8*2**20,MAX_PINS=40000,MAX_INPUT_BYTES=2**31,MAX_LINE=16384,
+        WIRE='F009_PINNED_ORDERED_LEAF_LOCATORS_V1',SCHEMA='F009_REFERENCE_BACKED_CAPACITY8_STATE_V1',
+        OLD_CAPACITY=old_capacity,OLD_EXPORT=old_export,_OLD=legacy,_OPEN={},START=time.monotonic())
+    literal(codec,codec_text,['need','signature','digest','pin_shape','pin','acquire','legacy','authenticate_lines','logical_reference_size','compact','expand','logical_size'],codec.__file__)
+    acquired=[];original_acquire=codec.acquire
+    def acquire(ref):
+        acquired.append(ref);return original_acquire(ref)
+    codec.acquire=acquire
+    class SourceOnly:
+        def __init__(self):self.modules={}
+        def source_text(self,reference):
+            need(reference in refs,'fixed whole Source fixture only');return raw[reference['path']]
+        def module(self,reference,name):
+            need(reference==caller.ROOT_PIN_LOCATION_MAP and name not in self.modules and name not in sys.modules,'actual fresh map module')
+            mod=types.ModuleType(name);mod.__file__=reference['path']
+            exec(compile(self.source_text(reference),reference['path'],'exec',dont_inherit=True),vars(mod))
+            self.modules[name]=(mod,reference);sys.modules[name]=mod;return mod
+    contract=SourceOnly();names=[]
+    def done(name,condition=True):need(condition,name);names.append(name)
+    def refused(name,call):
+        try:call()
+        except Exception:done(name)
+        else:need(False,'negative control admitted: '+name)
+    sys.addaudithook(audit)
+    with tempfile.TemporaryDirectory(prefix='f009_logical_size_',dir='/private/tmp')as directory:
+        base=Path(directory);bodies={'binary':b'x','completion':b'y','a':b'a\nb\nc\nd\ne\n','b':b'f\ng\n'};pins={}
+        for name,body in bodies.items():
+            p=base/name;p.write_bytes(body);pins[name]=dict(path=str(p),bytes=len(body),sha256=hashlib.sha256(body).hexdigest());PINS[str(p)]='LEAF'if name in('a','b')else'FIXTURE'
+        def line(name,index):return dict(file=dict(pins[name]),line=index,sha256=hashlib.sha256(bodies[name].splitlines(keepends=True)[index]).hexdigest())
+        nodes={}
+        for i in range(2):
+            r=line('a',i+3);ident=r['sha256'];nodes[ident]=dict(values=[32,5,4,8]+[0]*7,record=r,canonical={'key':str(i),'lab':[0]},receiver=ident,children=None,creation=i)
+        ids=list(nodes);state=dict(target=[32,5,4,8],binary=pins['binary'],completion_binary=pins['completion'],nodes=nodes,pending=set(nodes),leaves=[line('a',0),line('a',1),line('a',0),line('b',0),line('a',2)],sequence=7,
+            started={ids[1]:dict(kind='complete',dispatch=pins['binary']),ids[0]:dict(kind='refine',dispatch=pins['completion'])})
+        value=codec.compact(state);envelope=dict(schema=codec.SCHEMA,head=pins['binary'],producer_case=pins['completion'],upstream_acceptance=pins['a'],source_profile=pins['b'])
+        exact=len((json.dumps(dict(envelope,state=value),separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii'))
+        expand,consume=caller.root_logical_size_callbacks(contract)
+        refused('consume_before_completed_expansion',lambda:consume(codec,envelope,state))
+        LEAF_OPENS.clear();acquired.clear();result=expand(codec,copy.deepcopy(value),envelope=envelope)
+        done('entire_typed_values_node_and_debt_order',result==state and list(result['nodes'])==ids and list(result['started'])==ids[::-1])
+        done('all_duplicate_leaf_occurrences_preserved',result['leaves']==state['leaves']and len(result['leaves'])==5)
+        done('both_complete_LF_authentication_passes',all(LEAF_OPENS.get(pins[n]['path'])==2 for n in('a','b')))
+        opens=dict(LEAF_OPENS);acquired.clear();length=consume(codec,envelope,result)
+        done('exact_current_reference_wire_size_reused',type(length)is int and length==exact)
+        done('consume_keeps_both_actual_legacy_Source_acquisitions',acquired==[old_capacity,old_export])
+        done('consume_neither_reopens_nor_skips_initial_LF_files',LEAF_OPENS==opens)
+        refused('same_fact_cannot_be_consumed_twice',lambda:consume(codec,envelope,result))
+        def fresh():
+            e,c=caller.root_logical_size_callbacks(contract);s=e(codec,copy.deepcopy(value),envelope=envelope);return s,c
+        s,c=fresh();refused('different_state_object_refused',lambda:c(codec,envelope,copy.deepcopy(s)))
+        refused('failed_consume_discards_fact',lambda:c(codec,envelope,s))
+        s,c=fresh();refused('different_envelope_object_refused',lambda:c(codec,dict(envelope),s))
+        s,c=fresh();refused('different_codec_object_refused',lambda:c(types.SimpleNamespace(need=codec.need),envelope,s))
+        s,c=fresh();old=codec.logical_size;codec.logical_size=lambda *a:0
+        try:refused('changed_codec_provider_refused',lambda:c(codec,envelope,s))
+        finally:codec.logical_size=old
+        s,c=fresh();old=W.wire;W.wire=lambda x:x
+        try:refused('changed_typed_wire_provider_refused',lambda:c(codec,envelope,s))
+        finally:W.wire=old
+        fact=caller.RootLogicalSizeFact(codec);refused('publish_before_exact_counter_refused',lambda:fact.publish(state,envelope))
+        hashes=codec.authenticate_lines(value['pins'],value['state']['leaves']['groups'])
+        fact=caller.RootLogicalSizeFact(codec);fact.count(envelope,value,hashes)
+        refused('counter_cannot_be_reentered',lambda:fact.count(envelope,value,hashes))
+        done('reentered_counter_discards_pending',fact.pending is None and fact.fact is None)
+        fact=caller.RootLogicalSizeFact(codec);fact.count(envelope,value,hashes)
+        refused('publish_wrong_envelope_refused',lambda:fact.publish(state,dict(envelope)))
+        fact=caller.RootLogicalSizeFact(codec);fact.owner=-1
+        refused('wrong_actor_refused',lambda:fact.consume(codec,envelope,state))
+        original=caller.root_current_wire_size
+        for bad,label in((False,'bool'),(-1,'negative'),(codec.MAX_RAW+1,'oversize')):
+            caller.root_current_wire_size=lambda *a,bad=bad:bad
+            try:
+                fact=caller.RootLogicalSizeFact(codec);refused('invalid_counter_'+label,lambda:fact.count(envelope,value,{}))
+                done('invalid_counter_'+label+'_retains_no_fact',fact.pending is None and fact.fact is None)
+            finally:caller.root_current_wire_size=original
+        fact=caller.RootLogicalSizeFact(codec);fact.metric='OLD_SHA_TRIPLE_V1'
+        refused('old_metric_fact_refused',lambda:fact.count(envelope,value,{}))
+        fact=caller.RootLogicalSizeFact(codec);old_counter=caller.root_current_wire_size
+        caller.root_current_wire_size=lambda *args:0
+        try:refused('current_counter_provider_changed_refused',lambda:fact.count(envelope,value,{}))
+        finally:caller.root_current_wire_size=old_counter
+        s,c=fresh();oldcap=codec.MAX_PACKED;codec.MAX_PACKED=oldcap+1
+        try:refused('packed_limit_changed_after_count_refused',lambda:c(codec,envelope,s))
+        finally:codec.MAX_PACKED=oldcap
+        fact=caller.RootLogicalSizeFact(codec);old=codec.logical_reference_size
+        def broken(*args):raise ValueError('synthetic counter failure')
+        codec.logical_reference_size=broken
+        try:refused('provider_changed_before_count_refused',lambda:fact.count(envelope,value,{}))
+        finally:codec.logical_reference_size=old
+        # All malformed carriers pass through the actual new expansion chain.
+        for label,alter in(
+            ('wrong_count',lambda q:q['state']['leaves'].__setitem__('count',6)),
+            ('bad_line_bool',lambda q:q['state']['leaves']['groups'][0][1].__setitem__(0,False)),
+            ('bad_line_negative',lambda q:q['state']['leaves']['groups'][0][1].__setitem__(0,-1)),
+            ('bad_line_missing',lambda q:q['state']['leaves']['groups'][0][1].__setitem__(0,99)),
+            ('wrong_creation_order',lambda q:q['state']['nodes'].reverse()),
+            ('duplicate_debt',lambda q:q['state']['started'].append(copy.deepcopy(q['state']['started'][0]))),
+            ('wrong_whole_file_SHA',lambda q:q['pins'][q['state']['leaves']['groups'][0][0]].__setitem__('sha256','0'*64)),
+            ('unused_pin',lambda q:q['pins'].append(dict(path=str(base/'unused'),bytes=0,sha256=hashlib.sha256(b'').hexdigest())))):
+            e,c=caller.root_logical_size_callbacks(contract);bad=copy.deepcopy(value);alter(bad)
+            refused('new_chain_'+label,lambda:e(codec,bad,envelope=envelope))
+            refused('new_chain_'+label+'_publishes_no_fact',lambda:c(codec,envelope,state))
+        reordered=copy.deepcopy(state);reordered['leaves'].reverse();reordered['started']=dict(reversed(list(state['started'].items())))
+        rv=codec.compact(reordered);want=len((json.dumps(dict(envelope,state=rv),separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii'));e,c=caller.root_logical_size_callbacks(contract);rs=e(codec,rv,envelope=envelope)
+        done('reordered_leaves_and_debts_size_and_values_equal',c(codec,envelope,rs)==want and rs==reordered and list(rs['started'])==ids)
+        e,c=caller.root_logical_size_callbacks(contract);bad=copy.deepcopy(value);slot=bad['state']['leaves']['groups'][0][0]
+        q=base/'no_final_LF';q.write_bytes(b'q');PINS[str(q)]='LEAF';bad['pins'][slot]=dict(path=str(q),bytes=1,sha256=hashlib.sha256(b'q').hexdigest());bad['state']['leaves']={'count':1,'groups':[[slot,[0]]]}
+        refused('new_chain_missing_final_LF',lambda:e(codec,bad,envelope=envelope))
+        refused('failed_full_expansion_publishes_no_size',lambda:c(codec,envelope,state))
+    for ref in refs:source(ref)
+    need(not ATTEMPTS,'no Native or subprocess attempt')
+    print(json.dumps(dict(schema='F009_GENERIC_ONE_USE_CURRENT_REFERENCE_SIZE_CONTROLS_V2',status='PASS',program=own,caller=caller_ref,
+        controls=len(names),names=names,original_case_calls=0,Native_attempts=ATTEMPTS,project_module_imports=0,
+        actual_Source_or_case_fit_established=False,controlled_declared_read_bytes=READ_BYTES,declared_read_limit=READ_LIMIT,
+        read_scope='Fixed Source files and tiny physical fixture paths; interpreter/stdlib bootstrap is under the external Root guard.'),sort_keys=True),flush=True)
+
+if __name__=='__main__':main()
