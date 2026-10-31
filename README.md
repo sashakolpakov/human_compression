@@ -84,9 +84,14 @@ give ten whole-prefix exclusions by one common theorem. Their guarded replay
 passed all ten identities and exact-order checks. F004 now has **125 of 272
 q11 jobs complete, with 147 pending**; the manuscript remains unfinished.
 
-F009 is locally accepted at checkpoint **11,662**, with one reserved debt among
-191 pending families. The latest continuation completed 30 families and refined
-six; the full census remains unfinished. The [public checkpoint 11,584 archive](october_corpus/research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
+F009 now has **177 of 177 minimum orders and 122 of 123 exact counts recovered**.
+The reviewed structural proof and finite enumerations recover the published
+**25,408** graphs of order 32, degree 5, girth 4 and diameter 8: 16,467 bipartite
+and 8,941 nonbipartite classes. This recovers a known result. The remaining exact
+count is the five-class census at order 80, followed by the manuscript's final
+synthesis. The earlier search remains at checkpoint **11,662**, with 191 pending
+families; those families were not processed by the alternative proof.
+The [public checkpoint 11,584 archive](october_corpus/research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
 preserves the accepted records, selected programs and computation outputs.
 Its relative checker verifies archived byte integrity; fresh mathematical
 Reader replay from a clone remains outstanding.
@@ -98,8 +103,9 @@ The [singleton middle calculation](october_corpus/reproduction/single_middle/REA
 recovers 1,209 ordinary right halves and 7,254 graphs in one nonbipartite
 stratum. Its 23 controls and complete producer passed in both the initial
 and installed directories. The remaining centre strata have a separate
-local proof and enumeration; their complete reproduction package is being
-assembled. F009 also retains a separate order-80 census obligation.
+accepted local proof and enumeration; their complete reproduction package is
+being assembled. These local results and the existing portable packages have
+different reproduction scopes, recorded in the intake status.
 
 The local Fi22 ledger has **87 generation certificates, 87 separate
 intersection proofs for those cases and 106 nongeneration certificates**.

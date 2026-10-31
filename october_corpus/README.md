@@ -107,12 +107,21 @@ The [written proof](reproduction/polynomial_prefixes/theory.tex) and
 attribution and checks. The ten prefix jobs are registered; the positive
 classification and whole manuscript remain unfinished.
 
-F009 is locally accepted at checkpoint **11,662**: 6,112 nodes, 191 pending
+F009 has **177 of 177 minimum orders and 122 of 123 exact counts recovered**.
+The order-32 census for degree 5, girth 4 and diameter 8 is now accepted and
+registered: **16,467 bipartite + 8,941 nonbipartite = 25,408 ordinary classes**.
+The total agrees with the original paper; it is a recovery of a known result.
+Only the five-class census at order 80 remains among the exact table counts,
+followed by final synthesis of the manuscript. The complete portable package
+for the alternative order-32 proof is still being assembled.
+
+The earlier search remains at checkpoint **11,662**: 6,112 nodes, 191 pending
 families including **one reserved debt**, and 752,337 selected raw leaf records.
 The continuation from 11,584 completed 30 families and refined six in 78
 transactions. Its strict Reader verified the complete typed state and its
-ordering; all three current records agree after registration. The census
-remains unfinished, and the next operation is refinement of the remaining debt.
+ordering; all three search records agree after registration. The alternative
+structural proof completes the order-32 census without processing those
+remaining search families. Their records and unpaid status are preserved.
 The [public F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
 retains checkpoint **11,584**, including its accepted records, selected
 programs, computation outputs and registration evidence. Its relative checker
@@ -125,8 +134,9 @@ recorded mappings.
 Three [reviewed proof notes](research/diameter_eight/README.rst) develop the
 remaining graph census through degree counts and incidence matrices. They
 prove restrictions for one middle vertex and give complete conditional
-descriptions for two or three isolated middle vertices. Applying them to the
-pending families remains part of F009's unfinished treatment.
+descriptions for two or three isolated middle vertices. The subsequent
+intrinsic-centre argument and enumerations complete the nonbipartite census;
+their full portable package remains to be installed and replayed.
 
 The [portable bipartite enumeration](reproduction/bipartite_diameter_eight/README.rst)
 now recovers all **16,467 ordinary classes** in the bipartite branch. Fourteen
@@ -142,9 +152,12 @@ recovers **1,209 ordinary right halves and 7,254 graphs** in one
 nonbipartite stratum. All 23 controls and the complete producer passed
 both initially and from the installed directory; the canonical streams
 agree byte for byte. This is one subcase of the census. The remaining
-centre strata have separate local proofs and completed enumerations whose
-full reproduction package is being assembled. F009's separate order-80
-census remains unfinished.
+centre strata have accepted local proofs and complete enumerations, including
+the enlarged half count **H = 1,395** and counts **h₃ = 36**, **h₄ = 115**.
+Their disjoint strata give `6H + 5h₃ + 3h₄ + 46 = 8,941` nonbipartite classes.
+The 1,209 strict halves are a subset of H and earn no second count. The full
+reproduction package is being assembled. F009's separate order-80 census
+remains unfinished.
 
 The local Fi22 ledger contains **87 generation cases, 87 separate intersection
 proofs for those same cases and 106 nongeneration cases**, leaving **28,715
