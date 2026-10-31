@@ -113,16 +113,20 @@ outstanding. The earlier checkpoint 11,518 archive is preserved.
 All 21 historical payloads and five e466 preparation outputs retain their
 recorded mappings.
 
-The Fi22 ledger contains **65 generation cases, 65 separate intersection
-proofs for those same cases and 96 nongeneration cases**, leaving **28,747
+The Fi22 ledger contains **77 generation cases, 77 separate intersection
+proofs for those same cases and 100 nongeneration cases**, leaving **28,731
 unresolved candidates** in its 28,908-row bank. The
 [earlier archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
 reproduces 47 generation cases, their 47 intersection proofs and 90
 nongeneration cases. The [new portable replay](reproduction/fi22_markings/README.rst)
-reproduces the other 18 generating and six nongenerating cases, with their
+reproduces 18 generating and six nongenerating cases, with their
 written proofs and explicit imported premises. All 25 controls and 24 case
 replays passed. The case processes took 2.601 seconds in total, with a largest
 sampled process tree of 28,508,160 bytes. Python's standard library suffices.
+The [next 16 cases](reproduction/fi22_markings/free_0184_0199/README.rst)
+add 12 generating cases with separate intersection proofs and four exclusions.
+All 25 controls and 16 new replays passed in 2.230 seconds, with a largest
+sampled process tree of 34,127,872 bytes. The earlier packages are preserved.
 The bank covers one of 105 endpoint/middle-class
 selectors; 41 have zero contribution and 64 lack a complete census. Finishing
 the bank would not prove the full class count or finish the manuscript.

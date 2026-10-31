@@ -1,0 +1,4190 @@
+{
+  "GEN": 12,
+  "NEG": 4,
+  "cases": 16,
+  "controls": 25,
+  "explicit_portable128_admission_profile": {
+    "Source": "\"\"\"Root portable-certificate replay profile: exactly128MiB, at most150s.\n\nReuses the exact acquired shared-lock/sampling/cleanup supervisor.\nAdmission is3GiB floor +128MiB complete process cap +512MiB reserve.\nDisk10/8GiB, RAM floor3GiB, intervals/logs/PIDs/cleanup remain literal.\nExisting validation/search profiles and all mathematical Source stay unchanged.\nThis file is Source, not execution or mathematical authority.\n\"\"\"\n\nimport argparse\nimport hashlib\nimport math\nimport os\nfrom pathlib import Path\nimport runpy\nimport stat\nimport sys\nimport types\n\nAUTHOR = '/root'\nBASE_BYTES = 18361\nBASE_SHA = '5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42'\nPROFILE = 'PORTABLE_CERTIFICATE_REPLAY_128_MIB_150_SECONDS_V1'\n\n\ndef _require(ok, message):\n    if not ok:\n        raise ValueError(message)\n\n\ndef _base(path):\n    with path.open('rb') as stream:\n        before = os.fstat(stream.fileno())\n        _require(stat.S_ISREG(before.st_mode) and before.st_size == BASE_BYTES,\n                 'fixed ordinary base Source')\n        raw = stream.read(BASE_BYTES + 1)\n        after = os.fstat(stream.fileno())\n    fields = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns)\n    _require(fields(before) == fields(after) == fields(path.stat())\n             and len(raw) == BASE_BYTES and hashlib.sha256(raw).hexdigest() == BASE_SHA,\n             'stable acquired base Source')\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)\n    parser.add_argument('--volume', type=Path, required=True)\n    parser.add_argument('--output', type=Path, required=True)\n    parser.add_argument('--rss-cap-mib', type=int, required=True)\n    parser.add_argument('--timeout', type=float, required=True)\n    parser.add_argument('command', nargs=argparse.REMAINDER)\n    args = parser.parse_args()\n    command = args.command[1:] if args.command[:1] == ['--'] else args.command\n    _require(args.rss_cap_mib == 128, 'certificate replay profile requires exactly128MiB')\n    _require(math.isfinite(args.timeout) and 0 < args.timeout <= 150,\n             'validation profile requires a finite wall limit up to150seconds')\n    _require(command and len(command) <= 128\n             and sum(len(x.encode()) for x in command) <= 16384,\n             'bounded explicit command')\n    _require(args.volume.is_absolute() and args.output.is_absolute(), 'absolute profile paths')\n    _require(not sys.flags.optimize and sys.dont_write_bytecode,\n             'ordinary Python with bytecode writes disabled')\n    path = Path('/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_transient.py')\n    _base(path)\n    loaded = runpy.run_path(str(path), run_name='acquired_validation_profile_base')\n    entry = loaded['main']\n    scope = entry.__globals__\n    _require(scope['__file__'] == str(path) and scope['__name__'] == 'acquired_validation_profile_base',\n             'original Source path and non-main namespace')\n    _require(scope['main'] is entry and entry.__code__.co_filename == str(path),\n             'acquired entry code')\n    for value in scope.values():\n        if isinstance(value, types.FunctionType) and value.__module__ == scope['__name__']:\n            _require(value.__globals__ is scope, 'shared borrowed function globals')\n    for value in vars(scope['Family']).values():\n        if isinstance(value, types.FunctionType):\n            _require(value.__globals__ is scope, 'shared borrowed Family globals')\n    gib = 2**30\n    _require({k: scope[k] for k in (\n        'ADMIT_DISK', 'ADMIT_RAM', 'DISK_FLOOR', 'RAM_FLOOR', 'LOG_CAP',\n        'RECORD_CAP', 'PID_CAP', 'POLL_SECONDS', 'GRACE_SECONDS')} == dict(\n            ADMIT_DISK=10*gib, ADMIT_RAM=6*gib, DISK_FLOOR=8*gib, RAM_FLOOR=3*gib,\n            LOG_CAP=256*2**10, RECORD_CAP=128*2**10, PID_CAP=128,\n            POLL_SECONDS=.5, GRACE_SECONDS=3.0), 'acquired base profile')\n    _base(path)\n    # runpy returns a shallow copy; mutate the entry function's real globals.\n    # No source file, function, error message, sampling or cleanup code changes.\n    previous, old_argv = scope['ADMIT_RAM'], sys.argv\n    cap = args.rss_cap_mib * 2**20\n    required = scope['RAM_FLOOR'] + cap + 512*2**20\n    canonical = [str(path), '--volume', str(args.volume), '--output', str(args.output),\n                 '--rss-cap-mib', str(args.rss_cap_mib), '--timeout', str(args.timeout),\n                 '--', *command]\n    scope['ADMIT_RAM'], sys.argv = required, canonical\n    try:\n        return entry()\n    except RuntimeError as exc:\n        if str(exc) == '10 GiB disk / max(6 GiB, RSS cap + 3 GiB) RAM admission':\n            raise RuntimeError(\n                f'{PROFILE}:10GiB disk and {required} available RAM bytes required; '\n                'the acquired base refused before creating its output or child') from exc\n        raise\n    finally:\n        scope['ADMIT_RAM'], sys.argv = previous, old_argv\n\n\nif __name__ == '__main__':\n    raise SystemExit(main())\n",
+    "bytes": 4957,
+    "path": "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+    "qualification": "Only the4GiBminimum was removed;3GiBfloor+128MiBfullcap+512MiBreserve remains. Originalsearch/privatecensusprofiles unchanged. Six successfulcalls used oldprofile and eleven used this one.",
+    "sha256": "62055807c20af7e7ec9cde3139ec697e938c3561dd02a7ac0bdf70698e3c8cf6"
+  },
+  "max_case_or_control_work": 2728015,
+  "max_physical_read_bytes": 1187481,
+  "max_sampled_tree_RSS_bytes": 34127872,
+  "new_whole_original_conjecture_Lean_compression_credit": 0,
+  "old24_and_old47_90_unchanged": true,
+  "qualification": "Finite signed-point/word/cycle/subset mathematical replay under explicitly imported original named-group/model/Reader/member/class/fullAut/Out2/twofibre/H=B and maximal-classification premises. Generation and same-case known rank-three intersection theorem are separate. No whole-paper/globalclass-count recovery or Lean formalization is claimed.",
+  "real_prechild_refusal": {
+    "child_launched": false,
+    "path": "/private/tmp/l026_portable_0184_0199/Root_SDK/Fi22Portable16_Root_actual_case_0189_v2_capture.json",
+    "sha256": "c90ae8585627947b4d862730628220f9c33729bcf044ae13683ba135ee6d5d20"
+  },
+  "records": [
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4497604608,
+          "free_disk": 49019523072
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--controls"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449077.916448,
+            "group": 75318,
+            "initial_parent": 75317,
+            "peak_rss": 245760,
+            "pid": 75318,
+            "session": 75318
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 4294967296,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2422
+        },
+        "peaks": {
+          "min_available_ram": 4492115968,
+          "min_free_disk": 49019514880,
+          "samples": 1,
+          "total_rss": 28311552
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4492115968,
+            "free_disk": 49019514880,
+            "live_processes": 1,
+            "seconds": 0.003,
+            "total_rss": 28311552
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.04903424996882677,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:17:57.965240+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "controls": 25,
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "mode": "controls",
+        "names": [
+          "whole_generic_frame",
+          "both_closed_prime_cycles",
+          "truncated_frame",
+          "duplicate_permutation_value",
+          "noninvolutory_endpoint",
+          "malformed_tree",
+          "repeated_cycle_point",
+          "false_last_return_edge",
+          "strict_point_and_word_types",
+          "wrong_rotation_orientation",
+          "right_conjugation_noncommuting_fixture",
+          "signed_inverse_reverses_middle_factors",
+          "word_and_triangle_bounds",
+          "proper_invariant_subset",
+          "empty_subset",
+          "full_subset",
+          "Boolean_subset_point",
+          "duplicate_subset_point",
+          "unsorted_subset",
+          "out_of_range_subset",
+          "noninvariant_subset",
+          "duplicate_JSON_key",
+          "nonfinite_JSON",
+          "unverified_tree_does_not_prove_transitivity",
+          "work_admission"
+        ],
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "paths": 4,
+        "physical_read_bytes": 147293,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 429555,
+        "status": "PASS",
+        "work_labels": {
+          "actual_a_inverse_point_image": 54,
+          "actual_a_point_image": 146,
+          "actual_ambient_spanning_tree_edge_and_fields": 24,
+          "actual_c_inverse_point_image": 52,
+          "actual_c_point_image": 74,
+          "both_whole_inverse_composition_equations": 2080,
+          "bound_original_triangle_path_lookup": 78,
+          "complete_cycle_field_and_distinctness_checks": 808,
+          "complete_operand_bytes": 2786,
+          "complete_subset_shape_slots_and_distinctness": 588,
+          "complete_tree_record_and_parent_role": 684,
+          "every_supplied_subset_point_and_positive_rotation_edge": 276,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 232,
+          "one_original_ambient_map_image": 1410,
+          "one_original_d0_map_image": 1030,
+          "supplied_consecutive_and_closing_point_fields": 164,
+          "whole_distant_endpoint_commutation_four_lookups": 1300,
+          "whole_endpoint_vector_distinctness_scan": 260,
+          "whole_inverse_construction_read_and_write": 1040,
+          "whole_inverse_short_literal_path": 52,
+          "whole_literal_rotation_word_scan": 326,
+          "whole_nonidentity_involution_two_point_lookups": 2502,
+          "whole_physical_input_bytes": 124778,
+          "whole_short_tree_path_copy_and_point_slot": 208,
+          "whole_three_vertex_and_path_pair_shape": 448,
+          "whole_two_prime_part_shape": 160,
+          "whole_vector_field_range_and_unique_slot": 3232,
+          "whole_vertex_path_slot_cover": 104
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "f58663",
+          "synchronous": true,
+          "terminal_chunk": "f58663"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "f58663",
+            "exit_code": 0,
+            "original_token_count": 30,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/controls/receipt.json\"}\n",
+            "wall_time_seconds": 7.167e-06
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/controls --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --controls",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/controls",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--controls"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "f58663",
+          "exit_code": 0,
+          "original_token_count": 30,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/controls/receipt.json\"}\n",
+          "wall_time_seconds": 7.167e-06
+        },
+        "full_tool_return": {
+          "chunk_id": "f58663",
+          "exit_code": 0,
+          "original_token_count": 30,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/controls/receipt.json\"}\n",
+          "wall_time_seconds": 7.167e-06
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/controls",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--controls"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/controls' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--controls'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/controls' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--controls'",
+          "login": false,
+          "max_output_tokens": 12000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": null,
+      "label": "controls"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4426481664,
+          "free_disk": 49018572800
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "184"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449078.66667,
+            "group": 75334,
+            "initial_parent": 75333,
+            "peak_rss": 6242304,
+            "pid": 75334,
+            "session": 75334
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 4294967296,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2280
+        },
+        "peaks": {
+          "min_available_ram": 4426481664,
+          "min_free_disk": 49018568704,
+          "samples": 1,
+          "total_rss": 34127872
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4428808192,
+            "free_disk": 49018568704,
+            "live_processes": 1,
+            "seconds": 0.004,
+            "total_rss": 34127872
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.11847466696053743,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:17:58.784924+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 184,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 269,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1990667,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "553ce6a6918f2db087904e77bf52b2320ed481a4e450965910924d5cdb8dfb1f",
+        "work_labels": {
+          "actual_a_inverse_point_image": 398,
+          "actual_a_point_image": 310,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 498,
+          "actual_c_point_image": 450,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 73258,
+          "one_original_d0_map_image": 4968,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 40,
+          "whole_literal_rotation_word_scan": 1656,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "e58b34",
+          "synchronous": true,
+          "terminal_chunk": "e58b34"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "e58b34",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0184/receipt.json\"}\n",
+            "wall_time_seconds": 0.0346225
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0184 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 184",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0184",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "184"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "e58b34",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0184/receipt.json\"}\n",
+          "wall_time_seconds": 0.0346225
+        },
+        "full_tool_return": {
+          "chunk_id": "e58b34",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0184/receipt.json\"}\n",
+          "wall_time_seconds": 0.0346225
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0184",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "184"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0184' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '184'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0184' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '184'",
+          "login": false,
+          "max_output_tokens": 12000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 184,
+      "label": "case_0184"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4413472768,
+          "free_disk": 49018765312
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "185"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449079.527035,
+            "group": 75348,
+            "initial_parent": 75347,
+            "peak_rss": 245760,
+            "pid": 75348,
+            "session": 75348
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 4294967296,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2278
+        },
+        "peaks": {
+          "min_available_ram": 4413472768,
+          "min_free_disk": 49018757120,
+          "samples": 1,
+          "total_rss": 28573696
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4414930944,
+            "free_disk": 49018757120,
+            "live_processes": 1,
+            "seconds": 0.003,
+            "total_rss": 28573696
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.1094830830115825,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:17:59.636278+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 185,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 270,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1951405,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "9653d3eb35cc43a63b2799e541201eec4721bb263dfeba15fa3299496536e661",
+        "work_labels": {
+          "actual_a_inverse_point_image": 96,
+          "actual_a_point_image": 144,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 388,
+          "actual_c_point_image": 192,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 38178,
+          "one_original_d0_map_image": 2460,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 38,
+          "whole_literal_rotation_word_scan": 820,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "d206d0",
+          "synchronous": true,
+          "terminal_chunk": "d206d0"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "d206d0",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0185/receipt.json\"}\n",
+            "wall_time_seconds": 0.041905417
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0185 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 185",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0185",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "185"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "d206d0",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0185/receipt.json\"}\n",
+          "wall_time_seconds": 0.041905417
+        },
+        "full_tool_return": {
+          "chunk_id": "d206d0",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0185/receipt.json\"}\n",
+          "wall_time_seconds": 0.041905417
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0185",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "185"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0185' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '185'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0185' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '185'",
+          "login": false,
+          "max_output_tokens": 12000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 185,
+      "label": "case_0185"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4308795392,
+          "free_disk": 49019023360
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "186"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449080.301694,
+            "group": 75362,
+            "initial_parent": 75361,
+            "peak_rss": 245760,
+            "pid": 75362,
+            "session": 75362
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 4294967296,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2278
+        },
+        "peaks": {
+          "min_available_ram": 4308795392,
+          "min_free_disk": 49019019264,
+          "samples": 1,
+          "total_rss": 28213248
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4314398720,
+            "free_disk": 49019019264,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28213248
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.10953691694885492,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:18:00.411000+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 186,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 271,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1953813,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "097abdbae447937c848a8eaeed7e3aebd7b3d4a360fe95ef1f027731395d022e",
+        "work_labels": {
+          "actual_a_inverse_point_image": 88,
+          "actual_a_point_image": 394,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 162,
+          "actual_c_point_image": 232,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 40306,
+          "one_original_d0_map_image": 2628,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 38,
+          "whole_literal_rotation_word_scan": 876,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "61822b",
+          "synchronous": true,
+          "terminal_chunk": "61822b"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "61822b",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0186/receipt.json\"}\n",
+            "wall_time_seconds": 0.0293465
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0186 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 186",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0186",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "186"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "61822b",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0186/receipt.json\"}\n",
+          "wall_time_seconds": 0.0293465
+        },
+        "full_tool_return": {
+          "chunk_id": "61822b",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0186/receipt.json\"}\n",
+          "wall_time_seconds": 0.0293465
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0186",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "186"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0186' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '186'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0186' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '186'",
+          "login": false,
+          "max_output_tokens": 12000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 186,
+      "label": "case_0186"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4398497792,
+          "free_disk": 48927326208
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "187"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449154.729827,
+            "group": 75603,
+            "initial_parent": 75602,
+            "peak_rss": 245760,
+            "pid": 75603,
+            "session": 75603
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 4294967296,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2279
+        },
+        "peaks": {
+          "min_available_ram": 4398497792,
+          "min_free_disk": 48927318016,
+          "samples": 1,
+          "total_rss": 28164096
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4402593792,
+            "free_disk": 48927318016,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28164096
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.1304100409615785,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:19:14.859948+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 187,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 273,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1952687,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "982c2dd8be62ded75353dfe0b8799389a797e38fefe1f0638e0392717bdfb45e",
+        "work_labels": {
+          "actual_a_inverse_point_image": 144,
+          "actual_a_point_image": 240,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 288,
+          "actual_c_point_image": 140,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 39498,
+          "one_original_d0_map_image": 2436,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 40,
+          "whole_literal_rotation_word_scan": 812,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "6da9d1",
+          "synchronous": true,
+          "terminal_chunk": "6da9d1"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "6da9d1",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0187/receipt.json\"}\n",
+            "wall_time_seconds": 0.06102775
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0187 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 187",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0187",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "187"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "6da9d1",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0187/receipt.json\"}\n",
+          "wall_time_seconds": 0.06102775
+        },
+        "full_tool_return": {
+          "chunk_id": "6da9d1",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0187/receipt.json\"}\n",
+          "wall_time_seconds": 0.06102775
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0187",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "187"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0187' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '187'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0187' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '187'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 187,
+      "label": "case_0187"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4380229632,
+          "free_disk": 48927809536
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "188"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449155.659475,
+            "group": 75617,
+            "initial_parent": 75615,
+            "peak_rss": 245760,
+            "pid": 75617,
+            "session": 75617
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 4294967296,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2280
+        },
+        "peaks": {
+          "min_available_ram": 4380229632,
+          "min_free_disk": 48927805440,
+          "samples": 1,
+          "total_rss": 28278784
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4383571968,
+            "free_disk": 48927805440,
+            "live_processes": 1,
+            "seconds": 0.003,
+            "total_rss": 28278784
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.24296920909546316,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:19:15.901956+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 188,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 277,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 2008885,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "a57c4400d220c4cee05f9cff6c842a3af9a20573aaa98d2915068d0ea1d51ebb",
+        "work_labels": {
+          "actual_a_inverse_point_image": 498,
+          "actual_a_point_image": 646,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 712,
+          "actual_c_point_image": 406,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 88450,
+          "one_original_d0_map_image": 6786,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 36,
+          "whole_literal_rotation_word_scan": 2262,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "05e595",
+          "synchronous": true,
+          "terminal_chunk": "05e595"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "05e595",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0188/receipt.json\"}\n",
+            "wall_time_seconds": 0.221165458
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0188 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 188",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0188",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "188"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "05e595",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0188/receipt.json\"}\n",
+          "wall_time_seconds": 0.221165458
+        },
+        "full_tool_return": {
+          "chunk_id": "05e595",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0188/receipt.json\"}\n",
+          "wall_time_seconds": 0.221165458
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0188",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "188"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0188' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '188'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0188' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '188'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 188,
+      "label": "case_0188"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 5017698304,
+          "free_disk": 47872192512
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "189"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449420.514349,
+            "group": 76297,
+            "initial_parent": 76296,
+            "peak_rss": 245760,
+            "pid": 76297,
+            "session": 76297
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2280
+        },
+        "peaks": {
+          "min_available_ram": 5017698304,
+          "min_free_disk": 47872184320,
+          "samples": 1,
+          "total_rss": 28147712
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 5021483008,
+            "free_disk": 47872184320,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28147712
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.10775333410128951,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:40.621894+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 189,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 278,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 2006831,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "f7a17b8bda0ef6cbc94c91809b608409f01eec6c6fd92d60f6c2f1ae060a12fe",
+        "work_labels": {
+          "actual_a_inverse_point_image": 424,
+          "actual_a_point_image": 546,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 476,
+          "actual_c_point_image": 332,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 88806,
+          "one_original_d0_map_image": 5334,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 46,
+          "whole_literal_rotation_word_scan": 1778,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "9cfbcf",
+          "synchronous": true,
+          "terminal_chunk": "9cfbcf"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "9cfbcf",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0189/receipt.json\"}\n",
+            "wall_time_seconds": 0.017986875
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0189 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 189",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0189",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "189"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "9cfbcf",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0189/receipt.json\"}\n",
+          "wall_time_seconds": 0.017986875
+        },
+        "full_tool_return": {
+          "chunk_id": "9cfbcf",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0189/receipt.json\"}\n",
+          "wall_time_seconds": 0.017986875
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0189",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "189"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0189' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '189'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0189' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '189'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 189,
+      "label": "case_0189"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 5018009600,
+          "free_disk": 47872114688
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "190"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449421.147284,
+            "group": 76311,
+            "initial_parent": 76310,
+            "peak_rss": 245760,
+            "pid": 76311,
+            "session": 76311
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2280
+        },
+        "peaks": {
+          "min_available_ram": 5018009600,
+          "min_free_disk": 47872106496,
+          "samples": 1,
+          "total_rss": 28360704
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 5020975104,
+            "free_disk": 47872106496,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28360704
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.10880895797163248,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:41.255878+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 190,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 280,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1998471,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "f41f53bea8b41b88994e677ec19044bea8d17bbe638ff4af8d2fad4538fe65b8",
+        "work_labels": {
+          "actual_a_inverse_point_image": 502,
+          "actual_a_point_image": 720,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 332,
+          "actual_c_point_image": 454,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 79306,
+          "one_original_d0_map_image": 6024,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 36,
+          "whole_literal_rotation_word_scan": 2008,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "7ebda1",
+          "synchronous": true,
+          "terminal_chunk": "7ebda1"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "7ebda1",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0190/receipt.json\"}\n",
+            "wall_time_seconds": 0.0219445
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0190 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 190",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0190",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "190"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "7ebda1",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0190/receipt.json\"}\n",
+          "wall_time_seconds": 0.0219445
+        },
+        "full_tool_return": {
+          "chunk_id": "7ebda1",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0190/receipt.json\"}\n",
+          "wall_time_seconds": 0.0219445
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0190",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "190"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0190' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '190'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0190' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '190'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 190,
+      "label": "case_0190"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 5014454272,
+          "free_disk": 47872065536
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "191"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449421.788335,
+            "group": 76324,
+            "initial_parent": 76323,
+            "peak_rss": 245760,
+            "pid": 76324,
+            "session": 76324
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2280
+        },
+        "peaks": {
+          "min_available_ram": 5014454272,
+          "min_free_disk": 47872061440,
+          "samples": 1,
+          "total_rss": 28557312
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 5015961600,
+            "free_disk": 47872061440,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28557312
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.09565137512981892,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:41.883781+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 191,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 282,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1971443,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "2c3ae439e08d537c18b8a72fa6f1f75828a9220534ab1cd78ca79a9469d48cc0",
+        "work_labels": {
+          "actual_a_inverse_point_image": 324,
+          "actual_a_point_image": 280,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 210,
+          "actual_c_point_image": 472,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 55886,
+          "one_original_d0_map_image": 3858,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 38,
+          "whole_literal_rotation_word_scan": 1286,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "73b2b0",
+          "synchronous": true,
+          "terminal_chunk": "73b2b0"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "73b2b0",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0191/receipt.json\"}\n",
+            "wall_time_seconds": 0.005001458
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0191 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 191",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0191",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "191"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "73b2b0",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0191/receipt.json\"}\n",
+          "wall_time_seconds": 0.005001458
+        },
+        "full_tool_return": {
+          "chunk_id": "73b2b0",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0191/receipt.json\"}\n",
+          "wall_time_seconds": 0.005001458
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0191",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "191"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0191' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '191'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0191' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '191'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 191,
+      "label": "case_0191"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4979965952,
+          "free_disk": 47872012288
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "192"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449422.416587,
+            "group": 76337,
+            "initial_parent": 76336,
+            "peak_rss": 245760,
+            "pid": 76337,
+            "session": 76337
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2278
+        },
+        "peaks": {
+          "min_available_ram": 4975181824,
+          "min_free_disk": 47872000000,
+          "samples": 1,
+          "total_rss": 28065792
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4975181824,
+            "free_disk": 47872000000,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28065792
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.08525533298961818,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:42.501635+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 192,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 284,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1942335,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "db5d023831408df774ff8749564553197109af331fd9a81741f6ae77c922eb87",
+        "work_labels": {
+          "actual_a_inverse_point_image": 240,
+          "actual_a_point_image": 92,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 210,
+          "actual_c_point_image": 166,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 29674,
+          "one_original_d0_map_image": 2124,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 32,
+          "whole_literal_rotation_word_scan": 708,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "0e6583",
+          "synchronous": true,
+          "terminal_chunk": "0e6583"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "0e6583",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0192/receipt.json\"}\n",
+            "wall_time_seconds": 7.708e-06
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0192 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 192",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0192",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "192"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "0e6583",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0192/receipt.json\"}\n",
+          "wall_time_seconds": 7.708e-06
+        },
+        "full_tool_return": {
+          "chunk_id": "0e6583",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0192/receipt.json\"}\n",
+          "wall_time_seconds": 7.708e-06
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0192",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "192"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0192' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '192'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0192' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '192'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 192,
+      "label": "case_0192"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4951179264,
+          "free_disk": 47872098304
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "193"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449423.057531,
+            "group": 76351,
+            "initial_parent": 76350,
+            "peak_rss": 245760,
+            "pid": 76351,
+            "session": 76351
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2280
+        },
+        "peaks": {
+          "min_available_ram": 4950867968,
+          "min_free_disk": 47872073728,
+          "samples": 1,
+          "total_rss": 28213248
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4950867968,
+            "free_disk": 47872073728,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28213248
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.11048733280040324,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:43.167814+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 193,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 288,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 2018365,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "2d126dd882f3e2bc1bd048279918dbca263029301aef3ff148dea434c308499f",
+        "work_labels": {
+          "actual_a_inverse_point_image": 384,
+          "actual_a_point_image": 480,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 742,
+          "actual_c_point_image": 480,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 98802,
+          "one_original_d0_map_image": 6258,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 44,
+          "whole_literal_rotation_word_scan": 2086,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "4a6444",
+          "synchronous": true,
+          "terminal_chunk": "4a6444"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "4a6444",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0193/receipt.json\"}\n",
+            "wall_time_seconds": 0.02028925
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0193 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 193",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0193",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "193"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "4a6444",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0193/receipt.json\"}\n",
+          "wall_time_seconds": 0.02028925
+        },
+        "full_tool_return": {
+          "chunk_id": "4a6444",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0193/receipt.json\"}\n",
+          "wall_time_seconds": 0.02028925
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0193",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "193"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0193' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '193'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0193' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '193'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 193,
+      "label": "case_0193"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4941332480,
+          "free_disk": 47871995904
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "194"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449423.703964,
+            "group": 76364,
+            "initial_parent": 76363,
+            "peak_rss": 245760,
+            "pid": 76364,
+            "session": 76364
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2132
+        },
+        "peaks": {
+          "min_available_ram": 4941332480,
+          "min_free_disk": 47871991808,
+          "samples": 1,
+          "total_rss": 28131328
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4945494016,
+            "free_disk": 47871991808,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28131328
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.2926434171386063,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:43.996401+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "conclusion": "ROTATION_SUBGROUP_PROPER;ORIGINAL_MARKING_NONGENERATING_UNDER_IMPORTED_INVOLUTION_AND_SIMPLE_G",
+        "free_index": 194,
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "invariant_subset": {
+          "checked_positive_rotation_edges": 6318,
+          "points": 3159
+        },
+        "mode": "NEG",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 289,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 2728015,
+        "status": "PASS",
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "b9321ae2e1cc9f542bb8f3a3bbc0e6f076b1c9b8d34b846200cf63bbd0716c5b",
+        "work_labels": {
+          "actual_a_point_image": 6318,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_point_image": 6318,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_subset_shape_slots_and_distinctness": 79326,
+          "complete_tree_record_and_parent_role": 42120,
+          "every_supplied_subset_point_and_positive_rotation_edge": 75816,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 12636,
+          "one_original_ambient_map_image": 588274,
+          "one_original_d0_map_image": 37908,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 46,
+          "whole_literal_rotation_word_scan": 12636,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "45e12c",
+          "synchronous": true,
+          "terminal_chunk": "45e12c"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "45e12c",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0194/receipt.json\"}\n",
+            "wall_time_seconds": 0.202322083
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0194 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 194",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0194",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "194"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "45e12c",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0194/receipt.json\"}\n",
+          "wall_time_seconds": 0.202322083
+        },
+        "full_tool_return": {
+          "chunk_id": "45e12c",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0194/receipt.json\"}\n",
+          "wall_time_seconds": 0.202322083
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0194",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "194"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0194' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '194'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0194' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '194'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 194,
+      "label": "case_0194"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4327424000,
+          "free_disk": 47870439424
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "195"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449424.60743,
+            "group": 76378,
+            "initial_parent": 76377,
+            "peak_rss": 245760,
+            "pid": 76378,
+            "session": 76378
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2280
+        },
+        "peaks": {
+          "min_available_ram": 4326031360,
+          "min_free_disk": 47870435328,
+          "samples": 1,
+          "total_rss": 28147712
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4326031360,
+            "free_disk": 47870435328,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28147712
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.1005904171615839,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:44.707814+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 195,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 293,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1990707,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "22930caa2f7cdb7733997ffa8592db10b39d53dd627469d8b6066757c1e2f477",
+        "work_labels": {
+          "actual_a_inverse_point_image": 380,
+          "actual_a_point_image": 476,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 472,
+          "actual_c_point_image": 406,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 72910,
+          "one_original_d0_map_image": 5202,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 38,
+          "whole_literal_rotation_word_scan": 1734,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "535019",
+          "synchronous": true,
+          "terminal_chunk": "535019"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "535019",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0195/receipt.json\"}\n",
+            "wall_time_seconds": 0.011843458
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0195 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 195",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0195",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "195"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "535019",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0195/receipt.json\"}\n",
+          "wall_time_seconds": 0.011843458
+        },
+        "full_tool_return": {
+          "chunk_id": "535019",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0195/receipt.json\"}\n",
+          "wall_time_seconds": 0.011843458
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0195",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "195"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0195' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '195'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0195' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '195'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 195,
+      "label": "case_0195"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4189421568,
+          "free_disk": 47870373888
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "196"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449425.251083,
+            "group": 76392,
+            "initial_parent": 76391,
+            "peak_rss": 245760,
+            "pid": 76392,
+            "session": 76392
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2123
+        },
+        "peaks": {
+          "min_available_ram": 4189421568,
+          "min_free_disk": 47870369792,
+          "samples": 1,
+          "total_rss": 28131328
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4194402304,
+            "free_disk": 47870369792,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28131328
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.10662941704504192,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:45.357510+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "conclusion": "ROTATION_SUBGROUP_PROPER;ORIGINAL_MARKING_NONGENERATING_UNDER_IMPORTED_INVOLUTION_AND_SIMPLE_G",
+        "free_index": 196,
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "invariant_subset": {
+          "checked_positive_rotation_edges": 702,
+          "points": 351
+        },
+        "mode": "NEG",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 298,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 2000737,
+        "status": "PASS",
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "a2992879bffa69fbdd9e4933a8aa158c3858848afb0463b1608b1c08c3bd33bc",
+        "work_labels": {
+          "actual_a_point_image": 702,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_point_image": 702,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_subset_shape_slots_and_distinctness": 11934,
+          "complete_tree_record_and_parent_role": 42120,
+          "every_supplied_subset_point_and_positive_rotation_edge": 8424,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 1404,
+          "one_original_ambient_map_image": 63178,
+          "one_original_d0_map_image": 4212,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 40,
+          "whole_literal_rotation_word_scan": 1404,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "a1a708",
+          "synchronous": true,
+          "terminal_chunk": "a1a708"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "a1a708",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0196/receipt.json\"}\n",
+            "wall_time_seconds": 0.018798584
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0196 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 196",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0196",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "196"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "a1a708",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0196/receipt.json\"}\n",
+          "wall_time_seconds": 0.018798584
+        },
+        "full_tool_return": {
+          "chunk_id": "a1a708",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0196/receipt.json\"}\n",
+          "wall_time_seconds": 0.018798584
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0196",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "196"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0196' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '196'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0196' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '196'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 196,
+      "label": "case_0196"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4119232512,
+          "free_disk": 47870296064
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "197"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449425.964372,
+            "group": 76413,
+            "initial_parent": 76412,
+            "peak_rss": 311296,
+            "pid": 76413,
+            "session": 76413
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2120
+        },
+        "peaks": {
+          "min_available_ram": 4100096000,
+          "min_free_disk": 47870291968,
+          "samples": 1,
+          "total_rss": 28180480
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4100096000,
+            "free_disk": 47870291968,
+            "live_processes": 1,
+            "seconds": 0.008,
+            "total_rss": 28180480
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.09291500016115606,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:46.057087+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "conclusion": "ROTATION_SUBGROUP_PROPER;ORIGINAL_MARKING_NONGENERATING_UNDER_IMPORTED_INVOLUTION_AND_SIMPLE_G",
+        "free_index": 197,
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "invariant_subset": {
+          "checked_positive_rotation_edges": 234,
+          "points": 117
+        },
+        "mode": "NEG",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 318,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1948325,
+        "status": "PASS",
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "f34b31fa4016747dbc1d94ec131a2ac8914eb789a25ff9477139e0d48080aa16",
+        "work_labels": {
+          "actual_a_point_image": 234,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_point_image": 234,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_subset_shape_slots_and_distinctness": 6318,
+          "complete_tree_record_and_parent_role": 42120,
+          "every_supplied_subset_point_and_positive_rotation_edge": 2808,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 468,
+          "one_original_ambient_map_image": 27610,
+          "one_original_d0_map_image": 1404,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 44,
+          "whole_literal_rotation_word_scan": 468,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "c9d8fd",
+          "synchronous": true,
+          "terminal_chunk": "c9d8fd"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "c9d8fd",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0197/receipt.json\"}\n",
+            "wall_time_seconds": 0.039828292
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0197 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 197",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0197",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "197"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "c9d8fd",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0197/receipt.json\"}\n",
+          "wall_time_seconds": 0.039828292
+        },
+        "full_tool_return": {
+          "chunk_id": "c9d8fd",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0197/receipt.json\"}\n",
+          "wall_time_seconds": 0.039828292
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0197",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "197"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0197' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '197'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0197' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '197'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 197,
+      "label": "case_0197"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4508827648,
+          "free_disk": 47870255104
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "198"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449426.58969,
+            "group": 76426,
+            "initial_parent": 76425,
+            "peak_rss": 245760,
+            "pid": 76426,
+            "session": 76426
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2279
+        },
+        "peaks": {
+          "min_available_ram": 4505534464,
+          "min_free_disk": 47870251008,
+          "samples": 1,
+          "total_rss": 28475392
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4505534464,
+            "free_disk": 47870251008,
+            "live_processes": 1,
+            "seconds": 0.002,
+            "total_rss": 28475392
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.09191787499003112,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:46.681400+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "finite_prime_cycles": {
+          "closed_cycle_lengths": [
+            11,
+            13
+          ],
+          "primes": [
+            11,
+            13
+          ]
+        },
+        "free_index": 198,
+        "generation": "NAMED_ORIGINAL_SIMPLE_FI22_UNDER_IMPORTED_MODEL_AND_MAXIMAL_COVER",
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "intersection_property": "SEPARATE_RETAINED_SIMPLE_RANK3_THEOREM",
+        "mode": "GEN",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 319,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 1955547,
+        "status": "PASS",
+        "strict_point_kernel_IP_credit": 0,
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "891e61a9a198ecc3fbaf4aadadf4ff1dfb4f303013952b5bff8cfa9d4093379e",
+        "work_labels": {
+          "actual_a_inverse_point_image": 166,
+          "actual_a_point_image": 118,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_inverse_point_image": 262,
+          "actual_c_point_image": 258,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_cycle_field_and_distinctness_checks": 192,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_tree_record_and_parent_role": 42120,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 48,
+          "one_original_ambient_map_image": 42394,
+          "one_original_d0_map_image": 2412,
+          "supplied_consecutive_and_closing_point_fields": 96,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 44,
+          "whole_literal_rotation_word_scan": 804,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_two_prime_part_shape": 16,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "feae0b",
+          "synchronous": true,
+          "terminal_chunk": "feae0b"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "feae0b",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0198/receipt.json\"}\n",
+            "wall_time_seconds": 0.005485167
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0198 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 198",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0198",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "198"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "feae0b",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0198/receipt.json\"}\n",
+          "wall_time_seconds": 0.005485167
+        },
+        "full_tool_return": {
+          "chunk_id": "feae0b",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0198/receipt.json\"}\n",
+          "wall_time_seconds": 0.005485167
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0198",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "198"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0198' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '198'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0198' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '198'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 198,
+      "label": "case_0198"
+    },
+    {
+      "actual_guard": {
+        "admission": {
+          "available_ram": 4293197824,
+          "free_disk": 47869911040
+        },
+        "cleanup": {
+          "errors": [],
+          "qualification": "Known birth-pinned processes only; unseen detached descendants are not excluded.",
+          "remaining": []
+        },
+        "command": [
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "199"
+        ],
+        "error": null,
+        "identities": [
+          {
+            "birth": 1793449427.312411,
+            "group": 76439,
+            "initial_parent": 76438,
+            "peak_rss": 245760,
+            "pid": 76439,
+            "session": 76439
+          }
+        ],
+        "limits": {
+          "admit_disk": 10737418240,
+          "admit_ram": 3892314112,
+          "disk_floor": 8589934592,
+          "log_bytes_each": 262144,
+          "metadata_bytes_each": 131072,
+          "owned_pids": 128,
+          "ram_floor": 3221225472,
+          "sample_seconds": 0.5,
+          "total_rss": 134217728,
+          "wall_seconds": 150.0
+        },
+        "logs": {
+          "stderr": 0,
+          "stdout": 2132
+        },
+        "peaks": {
+          "min_available_ram": 4293197824,
+          "min_free_disk": 47869902848,
+          "samples": 1,
+          "total_rss": 28213248
+        },
+        "qualification": "Sampled limits; no kernel quota or absence proof for unseen detached descendants.",
+        "recent_samples": [
+          {
+            "available_ram": 4295458816,
+            "free_disk": 47869902848,
+            "live_processes": 1,
+            "seconds": 0.003,
+            "total_rss": 28213248
+          }
+        ],
+        "returncode": 0,
+        "seconds": 0.27747124992311,
+        "status": "PASS",
+        "stop": "RETURNED",
+        "utc": "2026-10-31T12:23:47.589658+00:00"
+      },
+      "actual_math_stdout": {
+        "Source": {
+          "bytes": 22515,
+          "path": "verify.py",
+          "sha256": "dad5ffa33292335f0030fe4dd20bc2bf7ec39f69db03f24bc67cc52abf08007d"
+        },
+        "conclusion": "ROTATION_SUBGROUP_PROPER;ORIGINAL_MARKING_NONGENERATING_UNDER_IMPORTED_INVOLUTION_AND_SIMPLE_G",
+        "free_index": 199,
+        "imported_named_group_full_Aut_Reader_member_class_two_fibre_and_H_equals_B": true,
+        "invariant_subset": {
+          "checked_positive_rotation_edges": 6318,
+          "points": 3159
+        },
+        "mode": "NEG",
+        "new_whole_Original_conjecture_Lean_or_compression_credit": 0,
+        "owner": 320,
+        "paths": 7,
+        "physical_read_bytes": 1187481,
+        "scope_digest": "7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a",
+        "shared_work_cap": 10000000,
+        "shared_work_units": 2601645,
+        "status": "PASS",
+        "transitivity": {
+          "A_transitivity_from_exact_tree": true,
+          "G_transitivity_from_imported_normal_index2_and_minimum_index3510": true
+        },
+        "witness_row_sha256": "7f39e534ea05b883ccda3e35cd135d96cadc5d5335e746875946054a6ff48b33",
+        "work_labels": {
+          "actual_a_point_image": 6318,
+          "actual_ambient_spanning_tree_edge_and_fields": 42120,
+          "actual_c_point_image": 6318,
+          "both_whole_inverse_composition_equations": 56160,
+          "bound_original_triangle_path_lookup": 6,
+          "complete_maximal_order_prime_and_minimum_index_checks": 768,
+          "complete_operand_bytes": 52658,
+          "complete_subset_shape_slots_and_distinctness": 79326,
+          "complete_tree_record_and_parent_role": 42120,
+          "every_supplied_subset_point_and_positive_rotation_edge": 75816,
+          "final_work_guard": 0,
+          "full128KiB_stdout_serialization_reserve": 262144,
+          "interpreter_Source_bootstrap": 22515,
+          "literal_rotation_start_point": 12636,
+          "one_original_ambient_map_image": 461914,
+          "one_original_d0_map_image": 37908,
+          "whole_distant_endpoint_commutation_four_lookups": 35100,
+          "whole_endpoint_vector_distinctness_scan": 7020,
+          "whole_exact_free_owner_record_and_digest": 96,
+          "whole_inverse_construction_read_and_write": 28080,
+          "whole_inverse_short_literal_path": 36,
+          "whole_literal_rotation_word_scan": 12636,
+          "whole_nonidentity_involution_two_point_lookups": 63180,
+          "whole_physical_input_bytes": 1164966,
+          "whole_short_tree_path_copy_and_point_slot": 54552,
+          "whole_three_vertex_and_path_pair_shape": 32,
+          "whole_vector_field_range_and_unique_slot": 70200,
+          "whole_vertex_path_slot_cover": 7020
+        }
+      },
+      "genuine_Root_SDK": {
+        "actor": "/root",
+        "actual_tool": {
+          "exit_code": 0,
+          "handle": null,
+          "initial_chunk": "20d56a",
+          "synchronous": true,
+          "terminal_chunk": "20d56a"
+        },
+        "all_genuine_api_frames": [
+          {
+            "chunk_id": "20d56a",
+            "exit_code": 0,
+            "original_token_count": 31,
+            "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0199/receipt.json\"}\n",
+            "wall_time_seconds": 0.206599292
+          }
+        ],
+        "canonical_argv_command": "/usr/bin/env -u COVERAGE_PROCESS_START -u COVERAGE_PROCESS_CONFIG -u OPENSSL_CONF -u OPENSSL_MODULES /Users/sasha/.venvs/global/bin/python -E -B /private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py --volume /Users/sasha/medusa --output /private/tmp/l026_portable_0184_0199/runtime/case_0199 --rss-cap-mib 128 --timeout 150 -- /Users/sasha/.venvs/global/bin/python -E -B -S /private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py --index 199",
+        "child_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0199",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "199"
+        ],
+        "full_initial_tool_return": {
+          "chunk_id": "20d56a",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0199/receipt.json\"}\n",
+          "wall_time_seconds": 0.206599292
+        },
+        "full_tool_return": {
+          "chunk_id": "20d56a",
+          "exit_code": 0,
+          "original_token_count": 31,
+          "output": "{\"status\": \"PASS\", \"stop\": \"RETURNED\", \"receipt\": \"/private/tmp/l026_portable_0184_0199/runtime/case_0199/receipt.json\"}\n",
+          "wall_time_seconds": 0.206599292
+        },
+        "issued_argv": [
+          "/usr/bin/env",
+          "-u",
+          "COVERAGE_PROCESS_START",
+          "-u",
+          "COVERAGE_PROCESS_CONFIG",
+          "-u",
+          "OPENSSL_CONF",
+          "-u",
+          "OPENSSL_MODULES",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py",
+          "--volume",
+          "/Users/sasha/medusa",
+          "--output",
+          "/private/tmp/l026_portable_0184_0199/runtime/case_0199",
+          "--rss-cap-mib",
+          "128",
+          "--timeout",
+          "150",
+          "--",
+          "/Users/sasha/.venvs/global/bin/python",
+          "-E",
+          "-B",
+          "-S",
+          "/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py",
+          "--index",
+          "199"
+        ],
+        "issued_command": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0199' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '199'",
+        "issued_tool_arguments": {
+          "cmd": "'/usr/bin/env' '-u' 'COVERAGE_PROCESS_START' '-u' 'COVERAGE_PROCESS_CONFIG' '-u' 'OPENSSL_CONF' '-u' 'OPENSSL_MODULES' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '/private/tmp/l026_portable_0184_0199/supervise_certificate_replay.py' '--volume' '/Users/sasha/medusa' '--output' '/private/tmp/l026_portable_0184_0199/runtime/case_0199' '--rss-cap-mib' '128' '--timeout' '150' '--' '/Users/sasha/.venvs/global/bin/python' '-E' '-B' '-S' '/private/tmp/l026_portable_0184_0199/stage/october_corpus/reproduction/fi22_markings/free_0184_0199/verify.py' '--index' '199'",
+          "login": false,
+          "max_output_tokens": 2000,
+          "workdir": "/Users/sasha/medusa",
+          "yield_time_ms": 1000
+        },
+        "root": "/root",
+        "schema": "ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1"
+      },
+      "index": 199,
+      "label": "case_0199"
+    }
+  ],
+  "root": "/root",
+  "schema": "ROOT_ACTUAL_PORTABLE_FI22_184_199_REPLAY_V1",
+  "status": "PASS_25_CONTROLS_AND16_FINITE_MATHEMATICAL_REPLAYS",
+  "total_guard_seconds": 2.230031876359135
+}
