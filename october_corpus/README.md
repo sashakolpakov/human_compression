@@ -39,34 +39,36 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **2,684 additional exclusions**: **2,411 failures of the
+F004 job 24 now has **3,397 additional exclusions**: **3,124 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **922 positions remain unresolved**. The latest batch
-adds 1,310 intersection obstructions after searching a pool of six words
-across the 2,232 previously unresolved cases. Nine independent arithmetic checks
-verified every proposed certificate. Seven separate conditional generation
-facts supply no intersection proof and leave those cases unresolved.
+173 paid positions, **209 positions remain unresolved**. The latest batch
+adds 713 intersection obstructions: 711 follow from a common centralizer and
+spectrum argument; two use separate certificates. Independent arithmetic
+checks and an audit of the ledger append passed. All seven previously unpaid
+facts about proper ends now have proofs of intersection failure.
 F004's q11 register remains 115 complete jobs out of 272.
 
 The [portable matrix certificates](reproduction/matrix_certificates/README.rst)
-cover **1,595 accepted exclusions**: 1,322 intersection failures and all 273
-nongeneration certificates. This successor contains every case from the
-previous 285-case replay, preserved in Git history. Its first guarded replay
-passed all 1,595 certificates in 2.43 seconds, with 1,245,951 charged input
-bytes and 102,923 matrix products. The [earlier archive](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
+cover **2,308 accepted exclusions**: 2,035 intersection failures and all 273
+nongeneration certificates. Every case from the previous 1,595-case replay
+is retained unchanged. The expanded guarded replay passed in 2.915 seconds,
+using 1,391,673 charged input bytes and 145,447 matrix products; its observed
+peak memory was 62,291,968 bytes. The [earlier archive](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
 preserves the other 1,089 exclusions; it is not the current status ledger.
 
-The new 1,310 intersection certificates check supplied fixed rows and
-nonzero minors of order six. Each determinant is evaluated as a sum of
-720 permutation products, separately from the unchanged 200,000-operation
-RREF cap; the inherited twelve cases retain their row reduction checks.
-The original group and model, frame and orbit associations, and the maximal
-subgroup result used for the intersection failures remain explicit borrowed
-premises.
+The shared argument excludes both parabolics using the fixed subgroup's small
+centralizer. Eight prefix sign-system ranks exhaust its possible invariant
+lines; each new left end moves all three. Exact product orders then exclude the
+remaining proper maximal types in 711 cases. One exceptional case uses elements
+of orders 19 and 4; another uses 8,779 distinct reachable lines. The supplied
+graph verifies every parent edge and needs no closed-orbit claim.
 
-These negative certificates remove specified candidates. They do not establish
-which remaining candidates give valid polytopes or complete the original
-positive classification. No job or manuscript is newly completed.
+The original group/model, frame, membership and orbit associations remain
+imported. The common argument also imports the accepted full centralizer
+identity, finite Levi structure and complete maximal subgroup cover. The
+[written argument](reproduction/matrix_certificates/THEORY.rst) gives the proof
+and attribution. These negative certificates do not complete the positive
+classification. No job or manuscript is newly completed.
 
 The unchanged [F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
 records checkpoint **11,518**: 6,048 nodes, 203 pending families, no reserved

@@ -45,35 +45,38 @@ the archive is not a claim that they are current entry points.
 
 ## Current matrix certificates
 
-From the repository root, replay the 1,595 supplied F004 certificates with:
+From the repository root, replay the 2,308 supplied F004 certificates with:
 
 ```sh
 python3 -E -B -S october_corpus/reproduction/matrix_certificates/verify.py
 ```
 
 The [package guide](reproduction/matrix_certificates/README.rst) and
-[written argument](reproduction/matrix_certificates/THEORY.rst) state its inputs,
+[written argument](reproduction/matrix_certificates/THEORY.rst) state the inputs,
 provenance and mathematical assumptions. The program uses Python's standard
-library, reads five pinned JSON files beside it and writes its result to
-standard output. It needs no private source tree or historical absolute paths.
-Its first guarded replay passed all 1,595 certificates: 1,322 intersection
-failures and 273 nongeneration cases. It used 1,245,951 charged input bytes
-and 102,923 matrix products, with 5,810 inherited RREF operations and
-943,200 separately counted determinant terms. The package contains all
-cases of the earlier 285-case edition preserved in Git history.
+library, reads six pinned local JSON files and writes its result to standard
+output. It needs no private source tree or historical absolute paths.
 
-The new 1,310 intersection certificates use supplied fixed rows and explicit
-minors of order six. Their 943,200 determinant terms have a separate counter;
-they do not reset or increase the inherited 200,000-operation RREF limit.
-The program retains the 2 MiB total data-read limit, 1 MiB limit per JSON
-file, 400,000 matrix-product limit and 100-second internal limit.
+The expanded guarded replay passed all 2,308 certificates: 2,035 intersection
+failures and 273 nongeneration cases. It used 1,391,673 charged input bytes,
+145,447 matrix products and 16,989 RREF field operations, including the eight
+common prefix sign systems. All 1,595 earlier cases are retained unchanged.
+The 943,200 determinant terms remain separately counted under their unchanged
+cap. The new graph certificate verifies 8,779 distinct reachable lines and
+all 8,778 parent edges.
 
-This replay checks supplied exclusions, not a complete classification.
-The original group/model correspondence, frame and orbit associations, and the
-maximal subgroup theorem used by the intersection argument remain borrowed.
+The program retains its 2 MiB total data-read limit, 1 MiB limit per JSON
+file, 400,000 matrix-product limit, 200,000 RREF-operation limit and
+100-second internal limit. No counter is reset. Its first expanded replay
+finished in 2.915 seconds, with an observed peak of 62,291,968 bytes under
+the 128 MiB outer guard.
+
+This replay checks specified exclusions. The original group/model, frame,
+membership and orbit associations, the previously accepted full centralizer,
+finite Levi structure and maximal subgroup cover remain imported premises.
 It adds no Lean verification or completed manuscript. The [current intake
-ledger](INTAKE_STATUS.json) separates these 1,595 cases from the historical
-1,089 exclusions and the 922 unresolved positions. Earlier archives and their
+ledger](INTAKE_STATUS.json) separates these 2,308 cases from the historical
+1,089 exclusions and the 209 unresolved positions. Earlier archives and their
 recorded verification scopes remain unchanged.
 
 ## Historical registration audits

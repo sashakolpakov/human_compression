@@ -1,51 +1,65 @@
-Finite matrix certificates for 1,595 original quartets
+Finite matrix certificates for 2,308 original quartets
 ======================================================
 
-This package verifies 1,322 failures of the intersection property and
+This package verifies 2,035 failures of the intersection property and
 273 nongeneration certificates from original job 24 in the acquired
 natural matrix model of G2(11). From the repository root run::
 
     python3 -E -B -S october_corpus/reproduction/matrix_certificates/verify.py
 
 Python 3.9 or later and its standard library suffice. Do not use -O.
-The program reads five supplied JSON files, checks their complete hashes,
-and writes its result to standard output. It needs no private source tree.
-Absolute paths retained inside the original data are provenance only.
+The program reads six pinned local JSON files and writes its result to
+standard output. It opens no private or historical absolute path.
 
-This edition passed its first guarded execution on 31 October 2026:
-1,595 certificates, 102,923 matrix products and 1,245,951 charged input
-bytes in 2.43 seconds. The observed process memory stayed below 60 MB.
-REPLAY.json records the code identity, actual result and execution limits.
-The earlier 285-case edition is preserved in the Git history.
+The exact 2,308-case verifier passed its first guarded replay in
+2.915 seconds. It read 1,391,673 bytes of pinned input, used 145,447
+matrix products and 16,989 RREF field operations, and checked 943,200
+determinant terms. The outer guard observed a peak of 62,291,968 bytes
+against its 128 MiB limit and returned PASS within its 125-second limit.
+REPLAY.json records the published execution and exact verifier edition.
 
-Proofs and scope
-----------------
+What is retained and what is added
+----------------------------------
 
-For every intersection obstruction, an explicit word in one actual end
-has a cofactor power of exact order 37. A generator of that same end moves
-its fixed line. The imported complete maximal subgroup classification
-then forces the end to equal G. Its intersection with the subgroup of
-the omitted nonidentity mark violates the intersection property.
+Every earlier case is retained unchanged: 1,322 intersection failures and
+273 nongeneration certificates. The successor adds 711 obstructions from
+a shared centralizer and spectrum argument, one order-19/order-4 case,
+and one order-19 case with an 8,779-line orbit certificate.
 
-The 12 inherited cases retain their recorded word matrices and an
-independently computed fixed row. For the 1,310 newly adopted cases, the
-program checks the supplied nonzero fixed row and a supplied minor of
-order six in Y-I by a 720-term Leibniz determinant. These prove rank six
-without additional row reduction. Determinant work has a separate counter;
-the 200,000-operation RREF cap is unchanged and never reset.
+For the 711 spectrum cases, the verifier reconstructs the original marks,
+checks all three supplied centralizer commutator witnesses, and verifies
+the exact adjacent product order using all proper prime-divisor tests.
+It recomputes the eight common prefix sign-system ranks once. Each new
+left end is then checked to move all three possible common prefix lines.
+The full centralizer identity, finite Levi structure and maximal subgroup
+classification remain explicit borrowed premises; they are not inferred
+from three supplied matrices or a group label.
 
-For each of the 273 nongeneration cases, all four marks preserve a line
-and a known ambient group element moves it. Their subgroup is proper.
-This argument uses no maximal subgroup classification.
+The order-19/order-4 case checks literal words in the same left end.
+For position 1556, the verifier checks a left word of order 19 and a
+middle dihedral subgroup of order 20 preserving the seed line. It then
+checks 8,779 distinct canonical lines and every one of their 8,778
+parent edges using an actual left generator. A Janko left end would allow
+at most 8,778 such images. This lower bound needs no orbit closure or
+identification of the full right unitary end.
 
-THEORY.rst gives the proofs and references. The original group and model,
-faithful frame, membership and orbit associations remain imported. This
-replay does not repeat the original point-action bridge, identify the
-named group or finish the positive classification. The seven separate
-conditional generation facts are not among these 1,595 exclusions.
+THEORY.rst gives the arguments and references. SOURCE_PROVENANCE.json
+identifies the arithmetic and actual accepted certificates.
 
-The accepted snapshot has 2,684 additional exclusions: 2,411 intersection
-failures and 273 nongeneration cases, with 922 positions unresolved. The
-earlier 1,089 exclusions remain in their historical archives; this package
-covers the other 1,595. It adds no completed manuscript, open conjecture
-result, Lean verification or compression measurement.
+Limits and interpretation
+-------------------------
+
+The 400,000 matrix-product cap, 200,000 RREF-operation cap, 2 MiB total
+JSON-read limit, 1 MiB limit per JSON file and 100-second internal limit
+are unchanged. The requested outer guard remains 128 MiB and 125 seconds.
+No counter is reset. The eight extra prefix ranks use the same RREF
+counter; determinant terms and graph row images are counted separately.
+The existing 943,200-term determinant cap is unchanged.
+
+The accepted snapshot has 3,397 additional exclusions: 3,124 intersection
+failures and 273 nongeneration cases, with 209 positions unresolved.
+The earlier 1,089 exclusions remain in historical archives; this package
+covers the other 2,308. Original group/model, faithful frame, membership,
+orbit and classification premises remain imported. These negative results
+do not complete the positive classification, a census or a manuscript.
+No new conjecture, Lean or compression measurement credit is claimed.
