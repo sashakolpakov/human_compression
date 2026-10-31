@@ -84,7 +84,9 @@ F009 is locally accepted at checkpoint 11,519, with one reserved debt among
 The public census archive remains at checkpoint 11,518; the newer checkpoint
 is not reproduced by that archive. The local Fi22 ledger now has **65 generation
 certificates, 65 separate intersection proofs for those cases and 96
-nongeneration certificates**. Its public archive remains at 47/47/90.
+nongeneration certificates**. The earlier archive and the new
+[24-case replay](october_corpus/reproduction/fi22_markings/README.rst)
+together reproduce all 65/65/96 certificates.
 The ledger concerns one of 105 selectors; the full class count remains unproved here.
 
 The [earlier archived intake results](october_corpus/research/proof_collection/updates/verified_intake_results/README.rst)

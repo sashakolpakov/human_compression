@@ -79,6 +79,26 @@ ledger](INTAKE_STATUS.json) separates these 2,308 cases from the historical
 1,089 exclusions and the 209 unresolved positions. Earlier archives and their
 recorded verification scopes remain unchanged.
 
+## Fi22 marking certificates
+
+The [portable Fi22 package](reproduction/fi22_markings/README.rst) adds 18
+generation and six nongeneration certificates to the earlier archive. From
+the repository root:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/fi22_markings/verify.py --controls
+python3 -E -B -S october_corpus/reproduction/fi22_markings/verify.py --index 160
+python3 -E -B -S october_corpus/reproduction/fi22_markings/verify.py --index 166
+```
+
+To replay the whole package, run each index from 160 through 183 in a separate
+invocation. Python's standard library and the three pinned repository proof
+objects suffice. All 25 controls and 24 case replays passed; the installed
+package also passed the controls and the two examples above. The written
+generation argument, separate intersection theorem, imported premises and
+actual replay records accompany the verifier. These certificates do not
+complete the Fi22 classification.
+
 ## Historical registration audits
 
 Some integrity checks examine Git diffs and require the corpus to occupy the
