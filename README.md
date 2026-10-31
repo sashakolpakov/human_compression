@@ -57,9 +57,14 @@ does not imply that its entire manuscript has been formalized.
 For the October corpus, begin with its [current reproduction instructions](october_corpus/REPRODUCING.md).
 October has **101 complete reviewed treatments out of 104 mathematical originals**.
 F004, F009 and L026 remain unfinished. The [current intake status](october_corpus/INTAKE_STATUS.json)
-records F004 job 24 at **3,439 additional exclusions**: 3,166 failures of the
-intersection property and 273 nongenerating quartets, with **167 positions
+records F004 job 24 at **3,441 additional exclusions**: 3,168 failures of the
+intersection property and 273 nongenerating quartets, with **165 positions
 unresolved**. Its original 173 paid positions are separate.
+
+The latest two exclusions have independent checks of a cyclic action of order
+19 and an element of order four in the same parabolic subgroup. The ledger
+append and its complete inverse passed independent review. Their standalone
+repository replay is still being prepared.
 
 The [portable matrix certificates](october_corpus/reproduction/matrix_certificates/README.rst)
 cover **2,308 exclusions**: 2,035 intersection failures and all 273

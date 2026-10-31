@@ -39,10 +39,14 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **3,439 additional exclusions**: **3,166 failures of the
+F004 job 24 now has **3,441 additional exclusions**: **3,168 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **167 positions remain unresolved**. The latest batch
-adds 42 intersection obstructions using a cubic relation of order 133 and
+173 paid positions, **165 positions remain unresolved**. The latest two cases
+use a certified cyclic action of order 19 and an element of order four in
+the same parabolic subgroup. Separate arithmetic checked the original matrices,
+companion relation, full row identities and literal word. The ledger append
+passed independent review; their standalone repository replay remains pending.
+The preceding batch added 42 intersection obstructions using a cubic relation of order 133 and
 the absence of a common rational invariant line. Separate arithmetic checks
 and an independent audit of the ledger append passed. The preceding batch
 of 713 obstructions and every earlier disposition are preserved.
