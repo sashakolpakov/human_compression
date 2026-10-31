@@ -39,20 +39,37 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-The [current accepted results](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
-add a further 209 F004 obstructions from 1,250 actual visits: 38 in the
-order-19 branch and 171 in the order-37 branch. The
-[new F004 archive](research/proof_collection/updates/verified_intake_results/g2_intersection_obstructions_job24_middle19_or37/README.rst)
-brings job 24 to **1,089 additional obstructions**, alongside its original
-173 paid positions, with **2,517 positions unresolved**. All 1,041 fresh
-sufficient-test misses and 1,476 inherited outside-target misses stay unpaid;
-the latter are not fresh visits. The earlier 880 archive retains its bytes.
-F004's q11 register remains 115 complete jobs out of 272.
+F004 job 24 now has **1,374 additional exclusions**: **1,101 failures of the
+intersection property and 273 nongenerating quartets**. Alongside the original
+173 paid positions, **2,232 positions remain unresolved**. The latest three
+scans visited the same 2,499 positions and yielded 185, 46 and 36 distinct
+nongeneration certificates, with no overlap: 267 new exclusions in total.
+These visits are not 7,497 distinct positions. F004's q11 register remains
+115 complete jobs out of 272.
+
+The [portable matrix certificates](reproduction/matrix_certificates/README.rst)
+replay **285 accepted exclusions**: 12 intersection failures and all 273
+nongeneration certificates. Their first guarded arithmetic replay passed,
+checking the original case data with Python's standard library. It used
+652,776 charged input bytes and 8,521 matrix products. The
+[earlier archive](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
+preserves the other 1,089 exclusions; it is not the current status ledger.
+The new replay covers 285 cases, not all 1,374. Group and model identifications,
+the original frame and orbit associations, and the maximal subgroup result
+used for the 12 intersection failures remain explicit borrowed premises.
+
+These negative certificates remove specified candidates. They do not establish
+which remaining candidates give valid polytopes or complete the original
+positive classification. No job or manuscript is newly completed.
 
 The unchanged [F009 archive](research/proof_collection/updates/verified_intake_results/census_checkpoint_11518/README.rst)
 records checkpoint **11,518**: 6,048 nodes, 203 pending families, no reserved
 debts and 684,526 selected raw leaf records. Its Native, strict Reader and
-registration passed; the census remains unfinished. All 21 historical
+registration passed; the census remains unfinished. A later diagnostic attempt
+stopped at the unchanged 512 MiB process-tree limit, after 27 bounded markers
+through input acquisition. It added no accepted case or checkpoint. Its outer
+supervisor recorded no remaining known birth-pinned process or cleanup error;
+this is not a claim about unseen detached descendants. All 21 historical
 payloads and five e466 preparation outputs retain explicit relative mappings.
 
 The unchanged [Fi22 ledger](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
@@ -64,13 +81,13 @@ the bank would not prove the full class count or finish the manuscript.
 The generation checker supplies no intersection credit; the existing theorem
 and separate application supply those proofs.
 
-The [publication report](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/publication.json)
-separates actual publication checks from accepted scientific verification.
-Relative integrity checks authenticate whole archived bytes and mappings;
-they do not replay the mathematics or establish imported model, action and
-classification premises. Failed, refused and unrun records retain their
-statuses. The continuation adds no complete manuscript, conjecture resolution,
-Lean declaration or compression measurement.
+The [earlier publication report](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/publication.json)
+preserves that archive's installation and integrity checks. Relative integrity
+checks authenticate archived bytes and mappings; the portable replay checks
+finite matrix equations. Neither alone establishes the imported group, model,
+orbit or classification premises. Failed, refused and unrun records retain
+their statuses. These continuations add no complete manuscript, conjecture
+resolution, Lean declaration or compression measurement.
 
 ## Common theories and applications
 

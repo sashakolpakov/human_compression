@@ -43,6 +43,30 @@ Follow the selected paper's portable reproduction instructions and exact input
 pins. Some retained historical programs use earlier paths; their existence in
 the archive is not a claim that they are current entry points.
 
+## Current matrix certificates
+
+From the repository root, replay the 285 supplied F004 certificates with:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/matrix_certificates/verify.py
+```
+
+The [package guide](reproduction/matrix_certificates/README.rst) and
+[written argument](reproduction/matrix_certificates/THEORY.rst) state its inputs,
+provenance and mathematical assumptions. The program uses Python's standard
+library, reads five pinned JSON files beside it and writes its result to
+standard output. It needs no private source tree or historical absolute paths.
+Its first guarded replay passed: 12 intersection failures and 273 nongeneration
+cases, with 652,776 charged input bytes and 8,521 matrix products.
+
+This replay checks the supplied exclusions, not a complete classification.
+The original group/model correspondence, frame and orbit associations, and the
+maximal subgroup theorem used by the intersection argument remain borrowed.
+It adds no Lean verification or completed manuscript. The [current intake
+ledger](INTAKE_STATUS.json) separates these 285 cases from the historical 1,089
+exclusions and the 2,232 unresolved positions. The earlier archives and their
+recorded verification scopes remain unchanged.
+
 ## Historical registration audits
 
 Some integrity checks examine Git diffs and require the corpus to occupy the
