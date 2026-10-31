@@ -39,24 +39,30 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **1,374 additional exclusions**: **1,101 failures of the
+F004 job 24 now has **2,684 additional exclusions**: **2,411 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **2,232 positions remain unresolved**. The latest three
-scans visited the same 2,499 positions and yielded 185, 46 and 36 distinct
-nongeneration certificates, with no overlap: 267 new exclusions in total.
-These visits are not 7,497 distinct positions. F004's q11 register remains
-115 complete jobs out of 272.
+173 paid positions, **922 positions remain unresolved**. The latest batch
+adds 1,310 intersection obstructions after searching a pool of six words
+across the 2,232 previously unresolved cases. Nine independent arithmetic checks
+verified every proposed certificate. Seven separate conditional generation
+facts supply no intersection proof and leave those cases unresolved.
+F004's q11 register remains 115 complete jobs out of 272.
 
 The [portable matrix certificates](reproduction/matrix_certificates/README.rst)
-replay **285 accepted exclusions**: 12 intersection failures and all 273
-nongeneration certificates. Their first guarded arithmetic replay passed,
-checking the original case data with Python's standard library. It used
-652,776 charged input bytes and 8,521 matrix products. The
-[earlier archive](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
+cover **1,595 accepted exclusions**: 1,322 intersection failures and all 273
+nongeneration certificates. This successor contains every case from the
+previous 285-case replay, preserved in Git history. Its first guarded replay
+passed all 1,595 certificates in 2.43 seconds, with 1,245,951 charged input
+bytes and 102,923 matrix products. The [earlier archive](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
 preserves the other 1,089 exclusions; it is not the current status ledger.
-The new replay covers 285 cases, not all 1,374. Group and model identifications,
-the original frame and orbit associations, and the maximal subgroup result
-used for the 12 intersection failures remain explicit borrowed premises.
+
+The new 1,310 intersection certificates check supplied fixed rows and
+nonzero minors of order six. Each determinant is evaluated as a sum of
+720 permutation products, separately from the unchanged 200,000-operation
+RREF cap; the inherited twelve cases retain their row reduction checks.
+The original group and model, frame and orbit associations, and the maximal
+subgroup result used for the intersection failures remain explicit borrowed
+premises.
 
 These negative certificates remove specified candidates. They do not establish
 which remaining candidates give valid polytopes or complete the original

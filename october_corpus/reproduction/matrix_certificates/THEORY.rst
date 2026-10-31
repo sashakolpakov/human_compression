@@ -85,6 +85,25 @@ properness and the intersection property. This transfers the certified
 representative disposition to its original orbit. The same vector need
 not be fixed by every transporter. No new orbit census is asserted.
 
+A supplied row and a six-minor
+-----------------------------
+
+Lemma. Let Y be a 7 by 7 matrix over F_11. If a nonzero row v satisfies
+vY=v and a 6 by 6 minor of Y-I has nonzero determinant, then Y-I has rank
+six and its left kernel is the line spanned by v.
+
+Proof. The nonzero minor gives rank at least six. The displayed nonzero
+left kernel row gives rank at most six. Equality follows, and rank-nullity
+gives a one-dimensional left kernel. QED.
+
+The new certificates specify the row and both sets of minor indices.
+The replay checks the row equation and evaluates the determinant as the
+signed sum of its 720 permutation products. This uses no row reduction.
+The determinant term count is separate from the inherited RREF operation
+counter. Together with the exact order 37 checks and the same-end mover,
+the lemma supplies precisely the fixed-line certificate used above.
+It introduces no additional classification input or novelty claim.
+
 References and borrowing
 ------------------------
 

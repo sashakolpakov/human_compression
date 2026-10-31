@@ -57,16 +57,18 @@ does not imply that its entire manuscript has been formalized.
 For the October corpus, begin with its [current reproduction instructions](october_corpus/REPRODUCING.md).
 October has **101 complete reviewed treatments out of 104 mathematical originals**.
 F004, F009 and L026 remain unfinished. The [current intake status](october_corpus/INTAKE_STATUS.json)
-records F004 job 24 at **1,374 additional exclusions**: 1,101 failures of the
-intersection property and 273 nongenerating quartets, with 2,232 positions
-unresolved. Its original 173 paid positions are separate.
+records F004 job 24 at **2,684 additional exclusions**: 2,411 failures of the
+intersection property and 273 nongenerating quartets, with **922 positions
+unresolved**. Its original 173 paid positions are separate.
 
 The [portable matrix certificates](october_corpus/reproduction/matrix_certificates/README.rst)
-replay the latest **285 exclusions**: 12 intersection failures and all 273
-nongeneration certificates. Their arithmetic replay passed using only Python's
-standard library. The [historical 1,089-case archive](october_corpus/research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
-retains the earlier evidence. These are exclusions within an unfinished
-classification; they do not complete its positive results or recover the manuscript.
+cover **1,595 exclusions**: 1,322 intersection failures and all 273
+nongeneration certificates. Its first guarded arithmetic replay passed using only Python's standard
+library, with 1,245,951 charged input bytes and 102,923 matrix products. The
+[historical 1,089-case archive](october_corpus/research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
+preserves the other exclusions. The earlier 285-case replay remains in
+Git history, with all its cases retained in this successor. These exclusions
+do not complete the positive classification or recover the manuscript.
 F009 remains at accepted checkpoint 11,518. The Fi22 ledger concerns one
 of 105 selectors; the full class count remains unproved here.
 
