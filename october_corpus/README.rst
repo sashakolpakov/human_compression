@@ -10,23 +10,30 @@ not measure historical effort, originality or the shortest possible proof.
 Current programme
 -----------------
 
-**93 accessible originals have reviewed corrected principal-result recoveries:
-53 are measured and forty (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070, L091, L054 and F012) await measurement.
-Nine further originals, F003, L029, L110, L114, L115, L036, L046, L063 and L064,
-have reviewed principal refutations;
-3 have no complete principal disposition yet. L022 is an editorial with no
-mathematical result to recover.** Thus 102 of 105 mathematical originals have reviewed principal
-dispositions: 93 recoveries and nine refutations. These are the 106 active originals. Another 55 unavailable originals
-remain archived; source retrieval and new-title intake are outside the current
-programme. The `original register <audit/corpus/latest.json>`_ and
-`L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_ give the exact
-partition. L022 has no factor or measured-original credit.
+The accessible corpus contains **105 manuscripts: 104 mathematical manuscripts
+and one editorial**. **101 of the 104 mathematical manuscripts have complete
+reviewed treatments**: 93 principal-result recoveries and eight complete
+treatments following principal refutations. **F004, F009 and L026 remain.**
+The stopping condition is completion of these three manuscripts.
 
-All nine originals with principal refutations now have complete reviewed
-treatments of their surviving source claims. Thus **102 of 105 mathematical
-originals are fully treated**: 93 ordinary recoveries and nine complete source
-treatments after refutations. **F004, F009 and L026 remain.** The stopping
-condition is completion of these three originals.
+Of the 93 recoveries,
+53 are measured and forty (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070, L091, L054 and F012) await measurement.
+The eight manuscripts treated after principal refutations are F003, L029,
+L110, L114, L115, L036, L046 and L063, including its L064 supplementary
+appendix. The `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_
+records an editorial with no mathematical result to recover, compression
+factor or measurement credit.
+
+The 105 manuscripts have **106 registered source components**: L063 and L064
+are the main article and its supplementary appendix, counted together as one
+manuscript. Their separate source IDs and all results remain registered.
+The `manuscript accounting audit <audit/corpus/proposals/manuscript-accounting/README.rst>`_
+records the correction. The `current intake status <INTAKE_STATUS.json>`_
+gives the manuscript counts; the `register of source components <audit/corpus/latest.json>`_
+retains its earlier identities while computations bound to those records
+finish. Its pointers and historical evidence remain unchanged. Another 55
+unavailable manuscripts remain archived; source retrieval and new-title
+intake are outside the current programme.
 
 The `F012 admission <data/edge_girth_regular_graphs/admission.json>`_ records
 its complete reviewed source treatment: 49 components covering 16 principal
@@ -47,7 +54,7 @@ The `nonfree O'Nan orbit certificate <research/onan/nonfree_orbits/README.rst>`_
 gives a portable conditional nongeneration check for all 1,776 nonfree rows
 in the retained endpoint index. Its standalone checker passed from an isolated
 copy; the named group, model and exact historical orbit data remain borrowed
-premises. L026 and the 102/105 completed-original count remain unchanged.
+premises. L026 remains unfinished; the reviewed-manuscript count stays 101/104.
 
 The `reproduction guide <docs/REPRODUCING.rst>`_ distinguishes integrity checks,
 mathematical replay, paper builds and Lean compilation. Sources, retained inputs,
@@ -80,6 +87,14 @@ whole-topic and fifty-three individual conditional comparisons. Read the
 and the `remaining twenty-six <audit/overview/v19/packet/conditional_2.svg>`_.
 The `current overview record <audit/overview/latest.json>`_ links the accepted
 exact fractions, input policies and independent review.
+
+That record remains the accepted measurement edition: **53 application
+comparisons and 19 whole-topic comparisons**. Its fields for active, recovered
+and pending originals retain an earlier intake snapshot; they are not the
+current manuscript census. For the current 101/104 reviewed treatments and
+the three unfinished manuscripts, use `INTAKE_STATUS.json <INTAKE_STATUS.json>`_.
+The historical census fields, catalogue pointers and measured factors are
+unchanged.
 
 Topic A now includes L003. Its three complete common papers cost 108,271
 characters; all ten application bundles cost 155,199. The whole factor is
