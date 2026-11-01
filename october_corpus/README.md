@@ -41,7 +41,13 @@ three mathematical originals.
 
 F004 job 24 now has **3,605 additional exclusions**: **3,332 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **one position remains unresolved: 2352**. The latest batch
+173 paid positions, **one position remains in the unresolved register: 2352**.
+A [new reviewed proof](reproduction/endpoint_intersections/README.rst) establishes
+that this last quartet fails the intersection property. Its portable checker
+passed all 29 component controls and the complete case in private and installed
+directories; registration of the exclusion is pending. The proof uses
+irreducibility, a subgroup-size bound and an element of order four, together
+with the published subgroup classification. The preceding batch
 adds 23 left-end exclusions using the same fixed-line argument as the preceding
 138 right-end exclusions and the earlier position 59. All 23 passed original
 reconstruction, both independent numerical consumers and the final conclusion
@@ -211,8 +217,8 @@ divisible by four, and classify the six quartic minimum graphs for every
 diameter in that family. Their TeX sources and independent hand reviews are
 included. They add no completed original, conjecture or compression measurement.
 
-The local Fi22 ledger contains **87 generation cases, 87 separate intersection
-proofs for those same cases and 106 nongeneration cases**, leaving **28,715
+The local Fi22 ledger contains **99 generation cases, 99 separate intersection
+proofs for those same cases and 110 nongeneration cases**, leaving **28,699
 unresolved candidates** in its 28,908-row bank. The
 [earlier archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
 reproduces 47 generation cases, their 47 intersection proofs and 90
@@ -225,9 +231,10 @@ The [next 16 cases](reproduction/fi22_markings/free_0184_0199/README.rst)
 add 12 generating cases with separate intersection proofs and four exclusions.
 All 25 controls and 16 new replays passed in 2.230 seconds, with a largest
 sampled process tree of 34,127,872 bytes. The earlier packages are preserved.
-The latest local batch adds ten generating cases with separate intersection
-proofs and six exclusions. Its computation and independent audit are retained;
-the standalone reproduction is being prepared. The existing repository
+Two subsequent local batches resolve another 32 candidates: 22 generating cases
+with separate intersection proofs and ten exclusions. Their computations and
+independent audits are retained in the working archive; their standalone
+reproduction packages are being prepared. The existing repository
 packages reproduce the preceding 77/77/100 totals.
 The bank covers one of 105 endpoint/middle-class
 selectors; 41 have zero contribution and 64 lack a complete census. Finishing
