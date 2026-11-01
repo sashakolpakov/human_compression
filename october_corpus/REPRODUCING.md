@@ -120,6 +120,26 @@ relations; it does not reprove the published presentation theorem or the
 association with the source's indexed case. See the package's
 [validation record](reproduction/coxeter_quotients/VALIDATION.json).
 
+## Intersections of end subgroups
+
+The [end subgroup package](reproduction/end_subgroups/README.rst) replays
+eleven registered intersection failures from F004, job 20. Run:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/end_subgroups/verify.py --controls
+python3 -E -B -S october_corpus/reproduction/end_subgroups/verify.py --all
+```
+
+All 26 controls and all eleven certificates passed in private and installed
+directories, with an independent audit of both executions and the exact
+installation. The complete replay uses 782 matrix products, four row images
+and 12,440 scalar work units. It checks the supplied prime-order words and,
+where applicable, a fixed vector and a generator moving its line. The proof
+uses the attributed group, natural module and complete maximal subgroup
+cover. These are replays of existing exclusions, not new census results.
+The package includes its TeX proof, provenance, explicit imports and
+[validation record](reproduction/end_subgroups/VALIDATION.json).
+
 ## The singleton middle case
 
 The [singleton middle package](reproduction/single_middle/README.md) contains

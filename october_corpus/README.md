@@ -39,10 +39,10 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **3,606 additional exclusions**: **3,333 failures of the
-intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **all 3,779 positions now have dispositions; none remain
-unresolved**. The [reviewed proof for the last case](reproduction/endpoint_intersections/README.rst)
+F004 job 24 is complete: **all 3,779 positions have dispositions**, comprising
+**3,333 failures of the intersection property and 446 nongenerating quartets**.
+This includes the original 173 paid positions and 3,606 additional exclusions.
+The [reviewed proof for the last case](reproduction/endpoint_intersections/README.rst)
 establishes that position 2352 fails the intersection property. Its portable
 checker passed all 29 component controls and the complete case in private and
 installed directories. The exclusion is registered and independently audited.
@@ -103,8 +103,11 @@ The last two exclusions, positions 1812 and 2015, use elements of orders
 19 and 37 in the same left end subgroup. A separate checker verified each
 conclusion after the finite search. The other 22 cases remain unresolved;
 partial prime witnesses and finite search misses are not exclusions.
-The portable public replay for the eleven intersection exclusions remains
-to be packaged. Their reviewed proofs and execution evidence are retained.
+The [portable replay for the eleven intersection exclusions](reproduction/end_subgroups/README.rst)
+passed all 26 controls and all eleven certificates in private and installed
+directories. An independent audit verified both executions and their exact
+installation. The replay applies the attributed maximal subgroup cover;
+it adds no new case or completed manuscript.
 
 The [universal presentation argument](reproduction/coxeter_quotients/README.rst)
 proves nongeneration for position 200. Its matrices satisfy a presentation
