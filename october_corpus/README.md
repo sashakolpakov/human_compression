@@ -39,13 +39,14 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **3,605 additional exclusions**: **3,332 failures of the
+F004 job 24 now has **3,606 additional exclusions**: **3,333 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **one position remains in the unresolved register: 2352**.
-A [new reviewed proof](reproduction/endpoint_intersections/README.rst) establishes
-that this last quartet fails the intersection property. Its portable checker
-passed all 29 component controls and the complete case in private and installed
-directories; registration of the exclusion is pending. The proof uses
+173 paid positions, **all 3,779 positions now have dispositions; none remain
+unresolved**. The [reviewed proof for the last case](reproduction/endpoint_intersections/README.rst)
+establishes that position 2352 fails the intersection property. Its portable
+checker passed all 29 component controls and the complete case in private and
+installed directories. The exclusion is registered and independently audited.
+Whole-job adoption remains separate. The proof uses
 irreducibility, a subgroup-size bound and an element of order four, together
 with the published subgroup classification. The preceding batch
 adds 23 left-end exclusions using the same fixed-line argument as the preceding
