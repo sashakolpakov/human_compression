@@ -75,10 +75,17 @@ This replay checks specified exclusions. The original group/model, frame,
 membership and orbit associations, the previously accepted full centralizer,
 finite Levi structure and maximal subgroup cover remain imported premises.
 It adds no Lean verification or completed manuscript. The [current intake
-ledger](INTAKE_STATUS.json) separates these 2,308 cases, the 42 additional cubic
-certificates, the historical 1,089 exclusions and the 167 unresolved positions.
+ledger](INTAKE_STATUS.json) records 3,444 additional exclusions and 162 unresolved
+positions in job 24. The linked packages cover different parts of that ledger.
 Earlier archives and their
 recorded verification scopes remain unchanged.
+
+The [fixed-line certificate](reproduction/fixed_line_orbits/README.rst) reconstructs
+original position 59 and verifies its order-19 word, complete one-dimensional
+fixed space and 9,241 distinct reachable vectors. Its guide gives all seven
+guarded commands. All 56 checks and the complete case passed from both the
+private and installed directories; its proof states the imported model and
+complete subgroup classification.
 
 The [cubic certificate supplement](reproduction/cubic_certificates/README.rst)
 adds 42 intersection failures. Its two commands, from the repository root, are:
