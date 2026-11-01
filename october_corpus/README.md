@@ -39,12 +39,15 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **3,582 additional exclusions**: **3,309 failures of the
+F004 job 24 now has **3,605 additional exclusions**: **3,332 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **24 positions remain unresolved**. The latest batch adds
-138 exclusions using the same fixed-line argument as the earlier position 59.
-All 138 passed original reconstruction, both independent numerical consumers,
-and the final conclusion in private and installed directories. The
+173 paid positions, **one position remains unresolved: 2352**. The latest batch
+adds 23 left-end exclusions using the same fixed-line argument as the preceding
+138 right-end exclusions and the earlier position 59. All 23 passed original
+reconstruction, both independent numerical consumers and the final conclusion
+in private and installed directories. Separate audits checked the ledger
+append and all 184 guarded replay stages. The preceding 138 cases and their
+1,104 successful stages remain recorded unchanged. The
 [batch proof and replay](reproduction/fixed_line_applications/README.rst)
 reuse the common theory and verifiers. Each case uses
 an element of order 19 whose fixed space has dimension one. If its end subgroup

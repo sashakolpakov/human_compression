@@ -63,9 +63,10 @@ def main():
     p.add_argument('root',type=Path);p.add_argument('out',type=Path)
     p.add_argument('start',type=int);p.add_argument('stop',type=int)
     p.add_argument('--python',default=sys.executable)
+    p.add_argument('--end',choices=('left','right'),default='right')
     a=p.parse_args();root=a.root.resolve(strict=True);common=root.parent/'fixed_line_orbits';out=a.out.absolute()
     need(root.is_dir()and common.resolve(strict=True)==common,'actual application/common roots')
-    cases=sorted(x for x in(root/'cases').iterdir()if x.is_dir()and re.fullmatch(r'position[0-9]{4}_right',x.name))
+    cases=sorted(x for x in(root/'cases').iterdir()if x.is_dir()and re.fullmatch(r'position[0-9]{4}_'+a.end,x.name))
     need(0<=a.start<a.stop<=len(cases)and a.stop-a.start<=MAX_CASES,'explicit nonempty case window of at most8')
     need(out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh batch output; preserve earlier partials')
     py=Path(a.python).absolute();need(py.is_file(),'existing literal Python interpreter path');guard=common/'runtime/supervise_validation.py'
@@ -79,7 +80,7 @@ def main():
     try:
         for directory in cases[a.start:a.stop]:
             cref,case=doc(directory/'case.json',16384)
-            need(case['schema']=='F004_FIXED_LINE_PORTABLE_CASE_V1'and case['end']=='right'and case['end_id']==directory.name,'exact selected case metadata')
+            need(case['schema']=='F004_FIXED_LINE_PORTABLE_CASE_V1'and case['end']==a.end and case['end_id']==directory.name,'exact selected case metadata')
             files={name:whole(directory/name,131072)[0]for name in ['acquisition.json','word_job.json','reachable_job.json']}
             caseout=out/directory.name;caseout.mkdir();scope_inputs=[cref]+list(files.values())
             roles=[('original',[str(root/'acquisition/acquire.py'),files['acquisition.json']['path'],files['acquisition.json']['sha256'],str(caseout/'original')]),
@@ -110,7 +111,7 @@ def main():
                     'reachable':'VERIFIED_9241_REACHABLE_AND_ORDER19_STABILIZER_ONLY'}
                 if role!='join':need(sout['status']==expected[role],'inconclusive or wrong scientific role result')
                 else:need(sout['position']==case['position']and sout['representative_J_index']==case['representative_J_index']
-                    and sout['end']=='RIGHT'and sout['conditional_conclusion']=='RIGHT_EQUALS_G2_11_AND_ORIGINAL_MARKING_FAILS_IP','complete matching final join')
+                    and sout['end']==a.end.upper()and sout['conditional_conclusion']==a.end.upper()+'_EQUALS_G2_11_AND_ORIGINAL_MARKING_FAILS_IP','complete matching final join')
                 artifacts=[whole(caseout/role/name,131072)[0]for name in(['result.json']if role=='join'else['proof.json','result.json'])]
                 records.append(dict(role=role,command=command,cwd=str(cwd),guard=gref,stdout=sref,stderr=eref,artifacts=artifacts))
                 emit(dict(event='role_complete',case=directory.name,role=role,guard=gref))
@@ -120,7 +121,7 @@ def main():
                 Root_authority=False,new_original_conjecture_Lean_measurement_credit=0))
             completed.append(completion);emit(dict(event='case_complete',case=directory.name,completion=completion))
         batch=write(out/'batch_complete.json',dict(status='PASS_SELECTED_CASE_WINDOW',start=a.start,stop=a.stop,
-            total_available_cases=len(cases),completed=completed,dispatcher_read_bytes=READ,dispatcher_metadata_bytes=metadata_extent(out),
+            total_available_cases=len(cases),selected_end=a.end,completed=completed,dispatcher_read_bytes=READ,dispatcher_metadata_bytes=metadata_extent(out),
             seconds=time.monotonic()-began,separate_scientific_role_banks=True,Root_authority=False,new_credit=0))
         emit(dict(event='batch_complete',record=batch,cases=len(completed)))
     except BaseException as exc:
