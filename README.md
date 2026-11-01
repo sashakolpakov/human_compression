@@ -54,104 +54,20 @@ does not imply that its entire manuscript has been formalized.
 
 ## Read and reproduce
 
-For the October corpus, begin with its [current reproduction instructions](october_corpus/REPRODUCING.md).
-October has **101 complete reviewed treatments out of 104 mathematical originals**.
-F004, F009 and L026 remain unfinished. The [current intake status](october_corpus/INTAKE_STATUS.json)
-records F004 job 24 at **3,441 additional exclusions**: 3,168 failures of the
-intersection property and 273 nongenerating quartets, with **165 positions
-unresolved**. Its original 173 paid positions are separate.
+The [October overview](october_corpus/README.md) records **101 complete reviewed
+treatments out of 104 mathematical originals**. F004, F009 and L026 remain.
+Its [intake status](october_corpus/INTAKE_STATUS.json) distinguishes accepted
+partial results from completed manuscripts. Measurements remain at 53
+applications across 19 topics while intake finishes.
 
-The latest two exclusions have independent checks of a cyclic action of order
-19 and an element of order four in the same parabolic subgroup. The ledger
-append and its complete inverse passed independent review. Their standalone
-repository replay is still being prepared.
+The [November directory](november_corpus/README.md) is prepared. Its researcher,
+bibliography and source editions await registration.
 
-The [portable matrix certificates](october_corpus/reproduction/matrix_certificates/README.rst)
-cover **2,308 exclusions**: 2,035 intersection failures and all 273
-nongeneration certificates. The expanded guarded replay passed in 2.915 seconds,
-using Python's standard library, 1,391,673 charged input bytes and 145,447
-matrix products. Its observed peak memory was 62,291,968 bytes.
-The [cubic certificates](october_corpus/reproduction/cubic_certificates/README.rst)
-add **42 intersection failures**. All 33 controls and 42 certificates passed
-both the initial run and a second run from the installed relative bundle.
-The checks combine a cubic relation of order 133 with eight invariant-line
-tests; the group and subgroup classification premises are stated explicitly.
-The [historical 1,089-case archive](october_corpus/research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/README.rst)
-preserves the other exclusions. Earlier replay editions remain in Git history,
-and every earlier case is retained in the current package. These exclusions
-do not complete the positive classification or recover the manuscript.
-The [prefix centralizer calculations](october_corpus/reproduction/prefix_centralizers/README.rst)
-cover the 157 q11 prefixes pending before the polynomial closures below. One common argument excludes both
-parabolic types for 81 prefixes, under the stated model, bank and Levi premises.
-These support calculations add no completed job or manuscript.
-The [polynomial certificates](october_corpus/reproduction/polynomial_prefixes/README.rst)
-give ten whole-prefix exclusions by one common theorem. Their guarded replay
-passed all ten identities and exact-order checks. F004 now has **125 of 272
-q11 jobs complete, with 147 pending**; the manuscript remains unfinished.
-
-F009 now has **177 of 177 minimum orders and 122 of 123 exact counts recovered**.
-The reviewed structural proof and finite enumerations recover the published
-**25,408** graphs of order 32, degree 5, girth 4 and diameter 8: 16,467 bipartite
-and 8,941 nonbipartite classes. This recovers a known result. The remaining exact
-count is the five-class census at order 80, followed by the manuscript's final
-synthesis. The earlier search remains at checkpoint **11,662**, with 191 pending
-families; those families were not processed by the alternative proof.
-The [public checkpoint 11,584 archive](october_corpus/research/proof_collection/updates/verified_intake_results/census_checkpoint_11584/README.rst)
-preserves the accepted records, selected programs and computation outputs.
-Its relative checker verifies archived byte integrity; fresh mathematical
-Reader replay from a clone remains outstanding.
-The new [complete bipartite enumeration](october_corpus/reproduction/bipartite_diameter_eight/README.rst)
-recovers **16,467 ordinary graph classes** through fourteen structural forms.
-Its portable run checked all 34,786 pairs in 26.53 seconds, using about
-61 MiB peak memory, and matched the separately audited batch result byte for byte.
-The [singleton middle calculation](october_corpus/reproduction/single_middle/README.md)
-recovers 1,209 ordinary right halves and 7,254 graphs in one nonbipartite
-stratum. Its 23 controls and complete producer passed in both the initial
-and installed directories. The [complete two-centre calculation](october_corpus/reproduction/two_centre/README.rst)
-recovers **1,395 halves and 8,370 graphs**, including that singleton subset.
-The [ordinary centre-half calculations](october_corpus/reproduction/centre_halves/README.rst)
-recover **2, 5, 36 and 115** classes. Both packages passed their controls,
-complete installed replays and independent audits. The
-[complete order-32 composition](october_corpus/reproduction/order32_census/README.rst)
-authenticates all six streams and recovers **25,408 classes** by the shared
-structural proof. Its 43 controls, complete run and independent audit passed.
-This reproduces the known count; the order-80 census remains unfinished.
-
-The local Fi22 ledger has **87 generation certificates, 87 separate
-intersection proofs for those cases and 106 nongeneration certificates**.
-The latest reviewed batch adds ten generating cases and six exclusions;
-its standalone reproduction is being prepared. The earlier archive,
-[24-case replay](october_corpus/reproduction/fi22_markings/README.rst) and
-[16 additional cases](october_corpus/reproduction/fi22_markings/free_0184_0199/README.rst)
-together reproduce the preceding 77/77/100 certificates.
-The ledger concerns one of 105 selectors; the full class count remains unproved here.
-
-The [earlier archived intake results](october_corpus/research/proof_collection/updates/verified_intake_results/README.rst)
-preserve the accepted census checkpoint, classification records and generation
-and exclusion certificates, with their verification scope and attribution.
-The [latest finite certificate report](october_corpus/research/proof_collection/RUN_REPORT.rst)
-records the completed relative replay, its inputs, results and remaining premises.
-The [evidence supplement](october_corpus/research/proof_collection/supplement/RUN_REPORT.rst)
-preserves additional accepted certificates and the current intake record.
-The [later certificates and finite search](october_corpus/research/proof_collection/updates/literal132_cycles/PUBLICATION.rst)
-record the next 132 adopted results, their checks and the remaining work.
-The [Fi22 exclusions](october_corpus/research/proof_collection/updates/fi22_invariant_subsets/PUBLICATION.rst)
-record twelve verified nongeneration certificates and the updated intake overview.
-The [Fi22 generation certificates](october_corpus/research/proof_collection/updates/fi22_generation_certificates/PUBLICATION.rst)
-add a further exclusion and three generating markings, with their intersection
-property derived separately from an existing theorem.
-From the repository root, check the directory migration and run the small
-mathematical suite with:
+Follow each corpus's reproduction guide and each package's stated inputs,
+commands and verification scope. October's [reproduction guide](october_corpus/REPRODUCING.md)
+links its mathematical checks and evidence. From a clean, committed checkout,
+check preservation of the directory migration with:
 
 ```sh
 python3 -E -B scripts/check_corpus_layout.py
-cd october_corpus
-python3 -E -B scripts/smoke_check.py --quick
 ```
-
-Run the layout check from a clean, committed checkout. It verifies preservation
-of the earlier Git tree. The quick suite
-checks three selected mathematical certificates. Each paper's guide states the
-additional inputs, tools and verification scope needed for its reproduction.
-Historical audits retain their original paths and can be replayed at their
-recorded commits.

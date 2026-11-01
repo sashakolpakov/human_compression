@@ -39,14 +39,25 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **3,441 additional exclusions**: **3,168 failures of the
+F004 job 24 now has **3,443 additional exclusions**: **3,170 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **165 positions remain unresolved**. The latest two cases
-use a certified cyclic action of order 19 and an element of order four in
-the same parabolic subgroup. Separate arithmetic checked the original matrices,
-companion relation, full row identities and literal word. The ledger append
-passed independent review; their standalone repository replay remains pending.
-The preceding batch added 42 intersection obstructions using a cubic relation of order 133 and
+173 paid positions, **163 positions remain unresolved**. The latest two cases
+have independently verified trees of 9,241 distinct reachable vectors. A
+subgroup of order 19 fixes the initial vector; the attributed classification
+bounds its orbit in a proper end subgroup by 9,240. The larger tree forces
+that end to be the whole group, giving an explicit failure of the intersection
+property. All 19 verifier controls, both original cases and the ledger append
+passed their checks and independent review. The
+[standalone subgroup-orbit replay](reproduction/subgroup_orbits/README.rst)
+also passed all 19 controls and both certificates in its private and installed
+directories. Its proofs and results agree byte for byte; a separate audit
+checked the execution records and the original certificate associations.
+
+The preceding two cases use a cyclic action of order 19 and an element of order
+four in the same parabolic subgroup. Their original matrices, companion relation,
+row identities and word have independent arithmetic checks; their standalone
+replay also remains pending. An earlier batch added 42 intersection obstructions
+using a cubic relation of order 133 and
 the absence of a common rational invariant line. Separate arithmetic checks
 and an independent audit of the ledger append passed. The preceding batch
 of 713 obstructions and every earlier disposition are preserved.
@@ -61,7 +72,7 @@ peak memory was 62,291,968 bytes. The [earlier archive](research/proof_collectio
 preserves the other 1,089 exclusions; it is not the current status ledger.
 
 The separate [cubic certificate package](reproduction/cubic_certificates/README.rst)
-reproduces the latest **42 intersection failures**. It checks the original
+reproduces **42 earlier intersection failures**. It checks the original
 catalogue and frame calculations, all four involutions, the string relations,
 the cubic certificate and all eight possible invariant-line sign systems.
 All 33 controls and 42 certificates passed both the initial guarded run and
@@ -117,7 +128,8 @@ registered: **16,467 bipartite + 8,941 nonbipartite = 25,408 ordinary classes**.
 The total agrees with the original paper; it is a recovery of a known result.
 Only the five-class census at order 80 remains among the exact table counts,
 followed by final synthesis of the manuscript. The complete portable package
-for the alternative order-32 proof is still being assembled.
+for the alternative order-32 proof is installed, replayed and independently
+audited; its component calculations are described below.
 
 The earlier search remains at checkpoint **11,662**: 6,112 nodes, 191 pending
 families including **one reserved debt**, and 752,337 selected raw leaf records.
