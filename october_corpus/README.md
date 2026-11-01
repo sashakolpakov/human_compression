@@ -46,8 +46,10 @@ unresolved**. The [reviewed proof for the last case](reproduction/endpoint_inter
 establishes that position 2352 fails the intersection property. Its portable
 checker passed all 29 component controls and the complete case in private and
 installed directories. The exclusion is registered and independently audited.
-Whole-job adoption remains separate. The proof uses
-irreducibility, a subgroup-size bound and an element of order four, together
+Job 24 has since been independently reviewed and registered complete:
+446 candidates fail generation and 3,333 fail the intersection property.
+The proof for the last case uses
+irreducibility, a bound on the subgroup order and an element of order four, together
 with the published subgroup classification. The preceding batch
 adds 23 left-end exclusions using the same fixed-line argument as the preceding
 138 right-end exclusions and the earlier position 59. All 23 passed original
@@ -87,7 +89,8 @@ using a cubic relation of order 133 and
 the absence of a common rational invariant line. Separate arithmetic checks
 and an independent audit of the ledger append passed. The preceding batch
 of 713 obstructions and every earlier disposition are preserved.
-F004's q11 register now has **125 complete jobs out of 272**, with **147 pending**.
+F004's q11 register now has **126 complete jobs out of 272**, with **146 pending**.
+The full classification and manuscript remain unfinished.
 
 The [portable matrix certificates](reproduction/matrix_certificates/README.rst)
 cover **2,308 accepted exclusions**: 2,035 intersection failures and all 273
