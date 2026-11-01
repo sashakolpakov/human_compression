@@ -92,11 +92,19 @@ of 713 obstructions and every earlier disposition are preserved.
 F004's q11 register now has **126 complete jobs out of 272**, with **146 pending**.
 The full classification and manuscript remain unfinished.
 
-In the separate job 20, position 259 is now registered as a generating
-quartet satisfying the intersection property. The local pending list fell
-from 35 to 34. Ten further exclusions have independently reviewed proofs
-and await registration: one nongeneration case and nine intersection
-failures. They have not been subtracted from the pending list.
+In the separate job 20, position 259 is registered as a generating quartet
+satisfying the intersection property. Twelve further exclusions are now
+registered: one nongeneration case and eleven intersection failures. The
+local pending list has fallen from 35 to **22**. Separate audits checked
+both registration steps, including their complete recovery of the earlier
+records. The q11 job totals remain 126 complete and 146 pending.
+
+The last two exclusions, positions 1812 and 2015, use elements of orders
+19 and 37 in the same left end subgroup. A separate checker verified each
+conclusion after the finite search. The other 22 cases remain unresolved;
+partial prime witnesses and finite search misses are not exclusions.
+The portable public replay for the eleven intersection exclusions remains
+to be packaged. Their reviewed proofs and execution evidence are retained.
 
 The [universal presentation argument](reproduction/coxeter_quotients/README.rst)
 proves nongeneration for position 200. Its matrices satisfy a presentation
