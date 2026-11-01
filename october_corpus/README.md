@@ -121,7 +121,8 @@ imported. The common argument also imports the accepted full centralizer
 identity, finite Levi structure and complete maximal subgroup cover. The
 [written argument](reproduction/matrix_certificates/THEORY.rst) gives the proof
 and attribution. These negative certificates do not complete the positive
-classification. These job 24 certificates complete neither that job nor the manuscript.
+classification. This package covers part of job 24; completion of the job is
+recorded above. The manuscript remains unfinished.
 
 The [prefix centralizer package](reproduction/prefix_centralizers/README.rst)
 contains support calculations for the **157 q11 prefixes pending before the ten polynomial closures**. It
