@@ -92,6 +92,19 @@ of 713 obstructions and every earlier disposition are preserved.
 F004's q11 register now has **126 complete jobs out of 272**, with **146 pending**.
 The full classification and manuscript remain unfinished.
 
+In the separate job 20, position 259 is now registered as a generating
+quartet satisfying the intersection property. The local pending list fell
+from 35 to 34. Ten further exclusions have independently reviewed proofs
+and await registration: one nongeneration case and nine intersection
+failures. They have not been subtracted from the pending list.
+
+The [universal presentation argument](reproduction/coxeter_quotients/README.rst)
+proves nongeneration for position 200. Its matrices satisfy a presentation
+whose group has order 600,415,200 by an attributed theorem of Hartley and
+Leemans. This bounds the generated subgroup below the order of G2(11).
+All 24 controls and the original case passed both private and installed
+checks. This applies an earlier theorem; it is not a new conjecture solution.
+
 The [portable matrix certificates](reproduction/matrix_certificates/README.rst)
 cover **2,308 accepted exclusions**: 2,035 intersection failures and all 273
 nongeneration certificates. Every case from the previous 1,595-case replay
@@ -248,6 +261,16 @@ selectors; 41 have zero contribution and 64 lack a complete census. Finishing
 the bank would not prove the full class count or finish the manuscript.
 The generation checker supplies no intersection credit; the existing theorem
 and separate application supply those proofs.
+
+The [normalizer equations](reproduction/fi22_normalizer_equations/README.rst)
+give a further reusable ingredient. The checker verifies five equations
+on all 3,510 points and centralization by all 36 supplied centralizer maps.
+The induced permutations of the three nonidentity elements of a Klein four
+group generate S3. Membership in the named ambient group remains an
+attributed input. The normalizer order 6,144 also requires the earlier
+identification of the entire centralizer as a group of order 1,024.
+All 22 controls and the complete equations passed in private and installed
+directories. No further bank rows have been resolved by this component yet.
 
 The [earlier publication report](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/publication.json)
 preserves that archive's installation and integrity checks. Relative integrity

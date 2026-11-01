@@ -75,8 +75,9 @@ This replay checks specified exclusions. The original group/model, frame,
 membership and orbit associations, the previously accepted full centralizer,
 finite Levi structure and maximal subgroup cover remain imported premises.
 It adds no Lean verification or completed manuscript. The [current intake
-ledger](INTAKE_STATUS.json) records 3,444 additional exclusions and 162 unresolved
-positions in job 24. The linked packages cover different parts of that ledger.
+ledger](INTAKE_STATUS.json) records all 3,779 positions in job 24 as resolved:
+446 fail generation and 3,333 fail the intersection property. The linked
+packages cover different parts of that ledger.
 Earlier archives and their
 recorded verification scopes remain unchanged.
 
@@ -100,6 +101,24 @@ checks the cubic relation by nine direct row images, the scalar order by
 independent companion-matrix powers, and all eight common-line systems by
 exact Gaussian elimination. The original full model and classification
 premises remain explicit imports. It does not complete F004.
+
+## A bound from a universal presentation
+
+The [presentation package](reproduction/coxeter_quotients/README.rst) checks
+the four original matrices for F004, job 20, position 200. Run:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/coxeter_quotients/verify.py --controls
+python3 -E -B -S october_corpus/reproduction/coxeter_quotients/verify.py
+```
+
+All 24 controls and the complete case passed in private and installed
+directories. The case uses 31 matrix products and 392 linear work units.
+The written proof applies the attributed finite order of a universal
+presentation to conclude nongeneration. The verifier checks the matrix
+relations; it does not reprove the published presentation theorem or the
+association with the source's indexed case. See the package's
+[validation record](reproduction/coxeter_quotients/VALIDATION.json).
 
 ## The singleton middle case
 
@@ -178,6 +197,29 @@ installed package also passed its controls and the two examples above.
 [VALIDATION.json](reproduction/fi22_markings/free_0200_0247/VALIDATION.json)
 records the input hashes and individual outcomes. Existing proof objects are
 shared with the earlier packages. No private working directory is required.
+
+## Fi22 normalizer equations
+
+The [normalizer package](reproduction/fi22_normalizer_equations/README.rst)
+contains the complete 3,510-point permutations and two short words. Run:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/fi22_normalizer_equations/verify.py --controls
+python3 -E -B -S october_corpus/reproduction/fi22_normalizer_equations/verify.py --check
+```
+
+All 22 controls and the complete case passed in private and installed
+directories. The checker verifies all maps are bijections, the 36
+centralizations, and the five equations stated in the supplied lemma.
+The full case used 5,363,830 work units under its shared ten-million-unit
+limit. Python's standard library suffices; no private directory is read.
+
+The S3 action uses imported membership in the ambient group. The normalizer
+order 6,144 is conditional on the earlier identification of the entire
+centralizer as a group of order 1,024. The package certifies no action on
+the candidate bank and settles no additional bank rows. The
+[validation record](reproduction/fi22_normalizer_equations/VALIDATION.json)
+separates the equations checked here from those imported premises.
 
 ## Historical registration audits
 
