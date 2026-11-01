@@ -163,6 +163,22 @@ generation argument, separate intersection theorem, imported premises and
 actual replay records accompany the verifier. These certificates do not
 complete the Fi22 classification.
 
+The [following 48 cases](reproduction/fi22_markings/free_0200_0247/README.rst)
+cover indices 200 through 247: 36 generation certificates, their separate
+intersection proofs, and twelve exclusions. Run:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/fi22_markings/free_0200_0247/verify.py --controls
+python3 -E -B -S october_corpus/reproduction/fi22_markings/free_0200_0247/verify.py --index 200
+python3 -E -B -S october_corpus/reproduction/fi22_markings/free_0200_0247/verify.py --index 203
+```
+
+All 25 controls and all 48 individual replays passed for this edition. The
+installed package also passed its controls and the two examples above.
+[VALIDATION.json](reproduction/fi22_markings/free_0200_0247/VALIDATION.json)
+records the input hashes and individual outcomes. Existing proof objects are
+shared with the earlier packages. No private working directory is required.
+
 ## Historical registration audits
 
 Some integrity checks examine Git diffs and require the corpus to occupy the

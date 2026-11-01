@@ -222,8 +222,8 @@ divisible by four, and classify the six quartic minimum graphs for every
 diameter in that family. Their TeX sources and independent hand reviews are
 included. They add no completed original, conjecture or compression measurement.
 
-The local Fi22 ledger contains **99 generation cases, 99 separate intersection
-proofs for those same cases and 110 nongeneration cases**, leaving **28,699
+The local Fi22 ledger contains **113 generation cases, 113 separate intersection
+proofs for those same cases and 112 nongeneration cases**, leaving **28,683
 unresolved candidates** in its 28,908-row bank. The
 [earlier archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
 reproduces 47 generation cases, their 47 intersection proofs and 90
@@ -236,11 +236,13 @@ The [next 16 cases](reproduction/fi22_markings/free_0184_0199/README.rst)
 add 12 generating cases with separate intersection proofs and four exclusions.
 All 25 controls and 16 new replays passed in 2.230 seconds, with a largest
 sampled process tree of 34,127,872 bytes. The earlier packages are preserved.
-Two subsequent local batches resolve another 32 candidates: 22 generating cases
-with separate intersection proofs and ten exclusions. Their computations and
-independent audits are retained in the working archive; their standalone
-reproduction packages are being prepared. The existing repository
-packages reproduce the preceding 77/77/100 totals.
+The [next 48 cases](reproduction/fi22_markings/free_0200_0247/README.rst)
+add 36 generating cases with separate intersection proofs and twelve exclusions.
+All 25 controls and all 48 case replays passed. The installed package also
+passed its controls and examples of both kinds. Its largest case read 1,204,521
+bytes and used 2,719,781 work units; the largest sampled resident-memory total
+was 28,737,536 bytes. The existing shared inputs are reused. These packages
+now reproduce the 113/113/112 totals.
 The bank covers one of 105 endpoint/middle-class
 selectors; 41 have zero contribution and 64 lack a complete census. Finishing
 the bank would not prove the full class count or finish the manuscript.
