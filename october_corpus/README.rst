@@ -258,7 +258,7 @@ checker that rebuilds the proof reader, checks all 27 saved refutations and
 verifies the included graph. The exact manifest hash is in the
 `component admission <data/girth_diameter_bounds/admission.json>`_. Old search
 caches and a SAT solver are unnecessary. This completes one previously known
-source row; F009 remains pending its two exact censuses and final synthesis.
+source row; F009 still requires the exact order-80 census and final synthesis.
 
 Reviewed recoveries awaiting measurement
 ----------------------------------------
@@ -573,9 +573,12 @@ Source algorithms, classification and software premises remain attributed.
 This adds one ordinary corrected recovery, with no compression measurement,
 new conjecture, principal refutation or Lean credit.
 
-All thirty-nine source editions, complete proof packets and distinct reviews are recorded
-in the `science register <audit/science92/v1/new_original_registration.json>`_.
-None of these thirty-nine recoveries has a compression factor. N014 is not added to C's measured
+The `science register <audit/science92/v1/new_original_registration.json>`_
+records L054's source edition, complete proof packet and distinct review, and
+points to preceding registrations. Including the separately admitted
+`F012 treatment <data/edge_girth_regular_graphs/admission.json>`_, forty
+recoveries now await compression measurements.
+N014 is not added to C's measured
 five-original boundary; L102 leaves G's measured boundary unchanged, and L024
 creates no comparison topic. The table and
 overview below remain the accepted 53-original measurement edition. Corrected
