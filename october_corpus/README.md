@@ -39,15 +39,20 @@ comparisons. These measurement counts are distinct from the intake counts.
 The stopping point for the current intake is completion of the remaining
 three mathematical originals.
 
-F004 job 24 now has **3,444 additional exclusions**: **3,171 failures of the
+F004 job 24 now has **3,582 additional exclusions**: **3,309 failures of the
 intersection property and 273 nongenerating quartets**. Alongside the original
-173 paid positions, **162 positions remain unresolved**. The newest case uses
+173 paid positions, **24 positions remain unresolved**. The latest batch adds
+138 exclusions using the same fixed-line argument as the earlier position 59.
+All 138 passed original reconstruction, both independent numerical consumers,
+and the final conclusion in private and installed directories. The
+[batch proof and replay](reproduction/fixed_line_applications/README.rst)
+reuse the common theory and verifiers. Each case uses
 an element of order 19 whose fixed space has dimension one. If its end subgroup
 preserved a rational line, that line would be the fixed line and would contain
 at most ten reachable nonzero vectors. The other proper-subgroup alternative
 allows at most 9,240. A separately verified tree of 9,241 distinct reachable
 vectors excludes both alternatives and proves failure of the intersection
-property. The [fixed-line proof and replay](reproduction/fixed_line_orbits/README.rst)
+property. The [earlier fixed-line proof and replay](reproduction/fixed_line_orbits/README.rst)
 passed all 56 checks and the complete certificate in both private and installed
 directories. Independent audits checked the ledger append and both replays.
 The named model and complete subgroup classification remain attributed inputs.
