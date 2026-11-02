@@ -93,21 +93,30 @@ F004's q11 register now has **126 complete jobs out of 272**, with **146 pending
 The full classification and manuscript remain unfinished.
 
 In the separate job 20, position 259 is registered as a generating quartet
-satisfying the intersection property. Twelve further exclusions are now
-registered: one nongeneration case and eleven intersection failures. The
-local pending list has fallen from 35 to **22**. Separate audits checked
-both registration steps, including their complete recovery of the earlier
-records. The q11 job totals remain 126 complete and 146 pending.
+satisfying the intersection property. Twenty further exclusions are
+registered: five nongeneration cases and fifteen intersection failures.
+The local pending list has fallen from 35 to **14**. Independent audits checked
+the registrations and the complete recovery of earlier records. The q11 job
+totals remain 126 complete and 146 pending.
 
 The last two exclusions, positions 1812 and 2015, use elements of orders
 19 and 37 in the same left end subgroup. A separate checker verified each
-conclusion after the finite search. The other 22 cases remain unresolved;
+conclusion after the finite search. The current fourteen cases remain unresolved;
 partial prime witnesses and finite search misses are not exclusions.
 The [portable replay for the eleven intersection exclusions](reproduction/end_subgroups/README.rst)
 passed all 26 controls and all eleven certificates in private and installed
 directories. An independent audit verified both executions and their exact
 installation. The replay applies the attributed maximal subgroup cover;
 it adds no new case or completed manuscript.
+
+The [finite orbit and stabilizer certificates](reproduction/finite_orbits_and_stabilizers/README.rst)
+verify seven end subgroups of order **175,560 = 3,080 × 57**. The four
+membership tests at positions 109, 349, 400 and 502 prove nongeneration and
+are registered. The other three positions, 877, 1033 and 1099, generate under
+the attributed maximal subgroup and natural module argument; their rank-four
+intersection properties remain pending. Both the private and repository
+packages passed 33 arithmetic controls, eight input controls and all seven
+cases. The independent audit and written proof are included.
 
 The [universal presentation argument](reproduction/coxeter_quotients/README.rst)
 proves nongeneration for position 200. Its matrices satisfy a presentation
@@ -240,14 +249,21 @@ passed; the independent audit also reconstructed its exact input and read
 accounting. This reproduces a known result with the same mathematical kernels.
 F009's separate order-80 census remains unfinished.
 
+For that census, the complete third construction level contains 506 labelled
+forests. Verified symmetries reduce them to **185 representatives**. All 32
+numerical batches, two intermediate assemblies and the final mapping passed
+independent review. The fourth level is underway. This cover uses the stated
+subgroup of symmetries; it does not assert inequivalence under every graph
+isomorphism. Its full portable replay remains to be published.
+
 The [reviewed graph proof notes](research/regular_girth_four/README.rst) give
 common minimum-order arguments for all degrees at least three and diameters
 divisible by four, and classify the six quartic minimum graphs for every
 diameter in that family. Their TeX sources and independent hand reviews are
 included. They add no completed original, conjecture or compression measurement.
 
-The local Fi22 ledger contains **113 generation cases, 113 separate intersection
-proofs for those same cases and 112 nongeneration cases**, leaving **28,683
+The local Fi22 ledger contains **129 generation cases, 129 separate intersection
+proofs for those same cases and 112 nongeneration cases**, leaving **28,667
 unresolved candidates** in its 28,908-row bank. The
 [earlier archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
 reproduces 47 generation cases, their 47 intersection proofs and 90
@@ -266,7 +282,8 @@ All 25 controls and all 48 case replays passed. The installed package also
 passed its controls and examples of both kinds. Its largest case read 1,204,521
 bytes and used 2,719,781 work units; the largest sampled resident-memory total
 was 28,737,536 bytes. The existing shared inputs are reused. These packages
-now reproduce the 113/113/112 totals.
+reproduce the earlier **113/113/112** totals. The sixteen newly registered
+normalizer transfers are not yet included in a portable public case replay.
 The bank covers one of 105 endpoint/middle-class
 selectors; 41 have zero contribution and 64 lack a complete census. Finishing
 the bank would not prove the full class count or finish the manuscript.
@@ -281,7 +298,11 @@ group generate S3. Membership in the named ambient group remains an
 attributed input. The normalizer order 6,144 also requires the earlier
 identification of the entire centralizer as a group of order 1,024.
 All 22 controls and the complete equations passed in private and installed
-directories. No further bank rows have been resolved by this component yet.
+directories. Applying the normalizer action to previously verified donors
+has produced **1,104 reviewed outcomes**: 556 generation results with separate
+intersection arguments and 548 proper-subgroup results. Sixteen are registered;
+the other 1,088 await registration. The public equation package checks the
+normalizer component; a portable replay of these transfers remains pending.
 
 The [earlier publication report](research/proof_collection/updates/verified_intake_results/accepted_intake_progress_f004_1089/publication.json)
 preserves that archive's installation and integrity checks. Relative integrity
