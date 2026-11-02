@@ -36,6 +36,9 @@ N_A(K)/C_A(K) is S3. The order 6144 follows only if the separate accepted
 premise C_A(K) = H and |H| = 1024 is also used. No centralizer or normalizer
 is freshly counted. See lemma.tex and PROVENANCE.json.
 
+Classical map operations and the scope of this application are attributed in
+`ATTRIBUTION.rst <ATTRIBUTION.rst>`_.
+
 maps.bin uses an explicit little-endian unsigned-16-bit format: eight bytes
 L026NMS1, then degree 3510 and CP-map count 36 as two uint16 values, then
 39 complete vectors in the order a, c, g, CP1, ..., CP36. words.json keeps
