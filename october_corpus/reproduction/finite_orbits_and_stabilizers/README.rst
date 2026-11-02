@@ -15,8 +15,10 @@ Positions 109, 349, 400 and 502 have positive membership tests. Their four
 marks therefore generate a proper subgroup of the imported ambient group.
 For positions 877, 1033 and 1099, the fourth mark lies outside that subgroup.
 The separate argument in PROOF.tex proves generation using an attributed
-maximal subgroup classification and the natural module. These three
-rank-four intersection properties remain unresolved.
+maximal subgroup classification and the natural module. A separate
+`word certificate <INTERSECTION_README.rst>`_ proves that position 1099
+fails the intersection property. The final rank-four applications for
+877 and 1033 remain separate from these subgroup order calculations.
 
 Reproduce the calculations
 -------------------------

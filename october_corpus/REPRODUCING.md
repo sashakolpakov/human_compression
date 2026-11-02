@@ -140,6 +140,25 @@ cover. These are replays of existing exclusions, not new census results.
 The package includes its TeX proof, provenance, explicit imports and
 [validation record](reproduction/end_subgroups/VALIDATION.json).
 
+## A word certificate for an intersection obstruction
+
+The [word certificate](reproduction/finite_orbits_and_stabilizers/INTERSECTION_README.rst)
+reproduces the registered intersection failure at F004, job 20, position 1099:
+
+```sh
+python3 -E -B -S october_corpus/reproduction/finite_orbits_and_stabilizers/verify_intersection_all.py --output /absolute/path/to/a/fresh/output
+```
+
+The command runs 24 arithmetic controls, ten input controls and the case in
+separate guarded processes. All passed in private and repository directories;
+an independent audit checked both runs. The case uses 107 matrix products.
+It evaluates a 78-letter word in the left end and a word in the right end
+squared, checks equality and excludes the result from the complete middle
+subgroup. It needs no subgroup order certificate or classification theorem.
+The original marking and faithful representation remain explicit provenance
+premises. This replays an existing exclusion and adds no completed manuscript
+or compression measurement.
+
 ## The singleton middle case
 
 The [singleton middle package](reproduction/single_middle/README.md) contains
