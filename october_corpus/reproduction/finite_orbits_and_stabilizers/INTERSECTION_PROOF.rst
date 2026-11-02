@@ -56,10 +56,11 @@ the image outside D precludes membership in its Original middle subgroup.
 This is the separate provenance premise connecting the matrix certificate
 to the named case.  Descriptive names or hashes do not authenticate it.
 
-The census/model input is borrowed from Chen's F004 manuscript,
-arXiv:2609.25004v1 (2026), as identified in the retained recovery.  The named
-faithful model, marking and enumeration provenance are imported project
-inputs.  Candidate1099 and its row identifier are from the project's retained
+The census claim is from Chen's F004 manuscript, arXiv:2609.25004v1 (2026),
+Section 4 and Table 2.  Its matrix formulas in even characteristic do not
+provide the F11 model used here.  The named faithful F11 model, marking and
+enumeration provenance are separately retained project inputs.
+Candidate1099 and its row identifier are from the project's retained
 enumeration, not a claim that the manuscript prints that quartet.  Direct
 word membership, dihedral normal forms and the intersection axiom are
 standard group theory; no historical novelty is asserted.
