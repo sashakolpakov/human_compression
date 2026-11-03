@@ -1,0 +1,65 @@
+"""Root copies already verified witness data into two bounded native inputs."""
+from pathlib import Path
+import hashlib, json, os, sys
+sys.path.insert(0, '/private/tmp/intake_metadata')
+from whole import Ledger, write
+
+L = Ledger()
+src = Path('/private/tmp/l026_subset_pair_first_jobs')
+h, hr = L.document(src / 'handoff.json')
+assert hr['sha256'] == '9636dd53c52f90403cb1f6eff7f89feaca022a65119b934eadf05830d0dbfe37'
+p, pref = L.document(h['projection']['path'], h['projection'])
+peer, peerref = L.document('/private/tmp/l026_subset_pair_input_projection_source_independent_review/reuse_integer_only.json')
+assert peerref['sha256'] == '65d3abec3228c3f231dcd7bde8aa0be54c552e91f50506767440cc22a83d66cc'
+assert peer['status'] == 'SUPPORTED_STATIC_METADATA_PROJECTION_UNRUN' and peer['blockers'] == []
+assert peer['reviewer'] not in ('/root', h['author'])
+code, coderef = L.raw(p['program']['path'], p['program'])
+assert coderef['sha256'] == '5b83d9a7e6dd5467ae76cc1fae9bef6fca3721ee9438349dc5af8dfb55790afc'
+review, rr = L.document('/private/tmp/l026_wave0280_0287_actual_independent_review/proper_reuse_integer_only.json')
+assert review['status'] == 'SUPPORTED_ACTUAL' and review['blockers'] == []
+assert review['whole_Source_and_inputs_closed'] is review['actual_guard_and_raw_frames_verified'] is True
+assert review['strict']['carrier'] == p['seed']['carrier']
+assert p['seed']['identity']['free_index'] in review['proper_indices']
+L.raw(review['strict']['proof']['path'], review['strict']['proof'])
+carrier, _ = L.raw(p['seed']['carrier']['path'], p['seed']['carrier'])
+indices, _ = L.document(p['identities']['indices']['path'], p['identities']['indices'])
+current, _ = L.document(h['current_snapshot']['CURRENT']['path'], h['current_snapshot']['CURRENT'])
+assert current['status_bank'] == h['current_snapshot']['bank'] == p['identities']['typed_status_bank']
+assert current['ledger_receipt'] == h['current_snapshot']['receipt']
+L.raw(h['current_snapshot']['receipt']['path'], h['current_snapshot']['receipt'])
+status, _ = L.raw(p['identities']['typed_status_bank']['path'], p['identities']['typed_status_bank'])
+witness, _ = L.raw(p['identities']['witness_bank']['path'], p['identities']['witness_bank'])
+ns = dict(__file__=coderef['path'], __name__='root_owned_projection')
+exec(compile(code, coderef['path'], 'exec'), ns)
+for name in p['pure_functions']:
+    assert ns[name].__globals__ is ns and ns[name].__code__.co_filename == coderef['path']
+seed = ns['seed_from_reviewed_carrier'](carrier, p['seed']['identity'], p['seed']['size'])
+identities = ns['identities_from_selected_indices'](witness, status, indices)
+assert len(seed) == p['seed']['expected_native_bytes'] == 714
+assert len(identities) <= p['output_upper']['identities'] == 196608
+L.close()
+base = Path('/private/tmp/l026_subset_pair_family_actual')
+out = base / 'projected_inputs'
+assert base.is_dir() and not out.exists()
+out.mkdir()
+refs = {}
+for name, raw in (('seed.bin', seed), ('identities.json', identities)):
+    path = out / name
+    with path.open('xb') as f:
+        assert f.write(raw) == len(raw)
+        f.flush()
+        os.fsync(f.fileno())
+    refs[name] = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+C = Ledger()
+for name, ref in refs.items():
+    C.raw(ref['path'], ref)
+C.close()
+receipt = write(base / 'Root_input_projection.json', dict(
+    schema='ROOT_L026_SUBSET_PAIR_INPUT_PROJECTION_V1', root='/root', Root_authority=True,
+    packet=hr, codec=coderef, codec_Source_peer=peerref, old_strict_actual_review=rr,
+    current_snapshot=h['current_snapshot'], seed_identity=p['seed']['identity'],
+    seed=refs['seed.bin'], identities=refs['identities.json'], selected_indices=len(indices),
+    input_first_and_closing_bytes=L.bytes, output_first_and_closing_bytes=C.bytes,
+    group_operations=0, new_predicates=0, old_science_replayed=False, canonical_writes=0,
+    separate_genuine_API_and_independent_projection_review_still_owed=True))
+print(json.dumps(dict(projection=receipt, seed=refs['seed.bin'], identities=refs['identities.json'])))

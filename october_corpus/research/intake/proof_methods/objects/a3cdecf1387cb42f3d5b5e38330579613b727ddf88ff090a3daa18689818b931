@@ -1,0 +1,53 @@
+"""Retained small F11 elimination, with explicit minor and inverse checks."""
+import runtime as rt
+import field
+
+def small_transpose(M):return [list(r)for r in zip(*M)]
+def mm(A,B,b):
+    m,k,n=len(A),len(B),len(B[0]);rt.need(k and all(len(r)==k for r in A),'small matrix dimensions')
+    b.scalar(2*m*n*k)
+    return [[sum(A[i][t]*B[t][j]for t in range(k))%11 for j in range(n)]for i in range(m)]
+def rref(M,columns,b):
+    A=[list(r)for r in M];piv=[];h=0;w=len(A[0]);ids=list(range(len(A)));chosen=[]
+    for j in range(columns):
+        b.scalar(len(A));p=next((i for i in range(h,len(A))if A[i][j]),None)
+        if p is None:continue
+        A[h],A[p]=A[p],A[h];ids[h],ids[p]=ids[p],ids[h];chosen.append(ids[h])
+        b.scalar(w);z=field.inv(A[h][j],b);A[h]=[(x*z)%11 for x in A[h]]
+        for i in range(len(A)):
+            if i==h:continue
+            b.scalar(1);z=A[i][j]
+            if z:
+                b.scalar(2*w);A[i]=[(x-z*y)%11 for x,y in zip(A[i],A[h])]
+        piv.append(j);h+=1
+        if h==len(A):break
+    return A,piv,chosen
+
+def identity(n):return [[int(i==j)for j in range(n)]for i in range(n)]
+def inverse(M,b):
+    n=len(M);rt.need(1<=n<=25 and all(len(r)==n for r in M),'small square inverse')
+    R,p,_=rref([r+e for r,e in zip(M,identity(n))],n,b)
+    if len(p)!=n:return None
+    X=[r[n:]for r in R]
+    rt.need(mm(M,X,b)==identity(n),'full small inverse product')
+    return X
+
+def minor(M,b,columns=None):
+    n=len(M[0])if columns is None else columns
+    R,cols,rows=rref(M,n,b);r=len(cols)
+    A=[[M[i][j]for j in cols]for i in rows];X=inverse(A,b)if r else []
+    rt.need(X is not None,'selected original minor is nonsingular')
+    return dict(rank=r,RREF=R,pivot_rows=rows,pivot_columns=cols,minor=A,inverse=X)
+
+def det(M,b):
+    A=[list(r)for r in M];n=len(A);v=1
+    rt.need(n==7 and all(len(r)==n for r in A),'seven-dimensional determinant')
+    for j in range(n):
+        b.scalar(n);p=next((i for i in range(j,n)if A[i][j]),None)
+        if p is None:return 0
+        if p!=j:A[j],A[p]=A[p],A[j];v=-v%11
+        b.scalar(1);v=v*A[j][j]%11;z=field.inv(A[j][j],b)
+        for i in range(j+1,n):
+            b.scalar(1);t=A[i][j]*z%11
+            if t:b.scalar(2*(n-j));A[i][j:]=[(x-t*y)%11 for x,y in zip(A[i][j:],A[j][j:])]
+    return v

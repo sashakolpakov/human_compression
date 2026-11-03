@@ -1,0 +1,62 @@
+"""Complete a certified five-dimensional image by one fixed-line projector."""
+import runtime as rt
+import field,algebra,small,alternating
+I=field.I
+ZERO=bytes(49)
+def trans(A,b):
+    b.scalar(49);return bytes(A[7*j+i]for i in range(7)for j in range(7))
+def combine(terms,b):
+    b.scalar(49*len(terms));return bytes(sum(c*A[i]for c,A in terms)%11 for i in range(49))
+def canonical(A,b):
+    b.scalar(49);rt.need(type(A)is bytes and len(A)==49 and all(x<11 for x in A),'canonical whole seven-dimensional matrix');return A
+
+def line(Q,B,N,b):
+    b.scalar(147)
+    M=[[N[7*i+j]for i in range(7)]for j in range(7)]
+    M += [[(B[7*i+j]-int(i==j))%11 for i in range(7)]for j in range(7)]
+    cert=small.minor(M,b);d=7-cert['rank']
+    proof=dict(equations=M,rank_minor=cert,dimension=d)
+    if d!=1:return None,proof
+    piv=cert['pivot_columns'];R=cert['RREF'];j=next(j for j in range(7)if j not in piv);v=[0]*7;v[j]=1
+    for i,p in enumerate(piv):b.scalar(1);v[p]=-R[i][j]%11
+    v=bytes(v);rt.need(any(v)and b.image(v,N)==bytes(7)and b.image(v,B)==v,'complete direct fixed-line equations')
+    w=b.image(v,Q);b.scalar(14);s=sum(x*y for x,y in zip(w,v))%11
+    proof.update(vector=list(v),v_times_Q=list(w),Gram=s)
+    if not s:return None,proof
+    z=field.inv(s,b);b.scalar(98);E=bytes(w[i]*z*v[j]%11 for i in range(7)for j in range(7))
+    proof['Gram_inverse']=z;proof['projector_E']=E.hex();return E,proof
+
+def calculate(Q,Qi,old_basis,PH,PR,marks,phi,old_dimension,b):
+    rt.need(type(old_dimension)is int and old_dimension==6 and len(old_basis)==6,'accepted old commutant dimension and candidate list')
+    for A in(Q,Qi,PH,PR,*old_basis):canonical(A,b)
+    rt.need(old_basis[0]==I,'same retained identity');_,B,N,BN,N2,BN2=old_basis
+    # The old product BN2 is reused; no old matrix power or product is rerun.
+    b.scalar(49);relation=BN2==bytes(-x%11 for x in N2)
+    proof=dict(old_dimension_borrowed=old_dimension,old_five_candidates_borrowed=True,
+        BN_squared_equals_minus_N_squared=relation)
+    if not relation:return 'INCONCLUSIVE_REQUIRED_BN_SQUARED_RELATION',proof
+    E,L=line(Q,B,N,b);proof['fixed_line']=L
+    if L['dimension']!=1:return 'INCONCLUSIVE_FIXED_LINE_DIMENSION',proof
+    if E is None:return 'INCONCLUSIVE_ISOTROPIC_FIXED_LINE',proof
+    checks=dict(E_squared=b.multiply(E,E)==E,
+        E_self_adjoint=b.multiply(b.multiply(Q,trans(E,b)),Qi)==E,
+        BE_equals_E=b.multiply(B,E)==E,EB_equals_E=b.multiply(E,B)==E,
+        EN_zero=b.multiply(E,N)==ZERO,NE_zero=b.multiply(N,E)==ZERO,
+        E_commutes_P_H=b.multiply(E,PH)==b.multiply(PH,E),
+        E_commutes_P_R=b.multiply(E,PR)==b.multiply(PR,E))
+    proof['projector_checks']=checks
+    if not all(checks.values()):return 'INCONCLUSIVE_PROJECTOR_RELATIONS',proof
+    basis=[I,B,N,BN,N2,E];mc=small.minor([[A[i]for A in basis]for i in range(49)],b)
+    proof['new_basis_entry_minor']=mc;proof['new_basis']=[A.hex()for A in basis]
+    if mc['rank']!=6:return 'INCONCLUSIVE_PROJECTOR_NOT_COMPLETING_BASIS',proof
+    sigma=combine(((2,E),(10,I)),b)
+    sigma_checks=dict(square=b.multiply(sigma,sigma)==I,
+        row_isometry=b.multiply(b.multiply(sigma,Q),trans(sigma,b))==Q,
+        determinant_one=small.det(algebra.rows(sigma),b)==1)
+    proof.update(sigma=sigma.hex(),sigma_checks=sigma_checks)
+    if not all(sigma_checks.values()):return 'INCONCLUSIVE_EXTRA_INVOLUTION_FRAME',proof
+    forms=alternating.certificate(phi,marks,sigma,b);proof['alternating_form']=forms
+    if not forms['all_four_marks_preserve']:return 'INCONCLUSIVE_ORIGINAL_MARK_DOES_NOT_PRESERVE_PHI',proof
+    if forms['sigma_preserves']:return 'INCONCLUSIVE_EXTRA_INVOLUTION_PRESERVES_PHI',proof
+    proof['conditional_algebra_and_third_form_hypotheses_verified']=True
+    return 'VERIFIED_FIXED_LINE_AND_THIRD_FORM_INTERSECTION_CERTIFICATE',proof

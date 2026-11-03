@@ -1,0 +1,53 @@
+"""Whole Source and Root-only job admission. No import issues Root authority."""
+import sys
+from pathlib import Path
+import runtime as rt
+BASE={'runtime.py','role.py','field.py','algebra.py','small.py','centralizer.py'}
+EXTRA={'worker.py':{'scope.py'},'controls.py':set()}
+def loaded(r,b,cap):
+    rt.ref(r);rt.need(r['bytes']<=cap,'bounded whole dependency');return rt.decode(b.read(r['path'],r,cap))
+
+def start(argv,entry,modules):
+    mp,ms,jp,js,out=rt.arguments(argv)
+    rt.need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+        and not sys.flags.optimize and all(k not in rt.os.environ for k in rt.ENV4),'same EBS/ENV4')
+    b=rt.Budget();raw=b.read(mp,cap=65536);rt.need(rt.digest(raw)==ms,'Root-selected whole manifest')
+    mf=rt.decode(raw);rt.need(set(mf)=={'schema','caps','entry','sources','external_runtime'}
+        and mf['schema']=='F004_PROJECTION_STAR_CENTRALIZER_SOURCE_V1' and mf['caps']==rt.CAPS
+        and entry in EXTRA and mf['entry']==entry,'exact closed role Source schema')
+    names=BASE|{entry}|EXTRA[entry];rt.need(len(mf['sources'])==len(names)and{x['path']for x in mf['sources']}==names,
+                             'exact complete active role Source bodies')
+    base=Path(mp).resolve().parent;total=0
+    for r in mf['sources']:
+        rt.ref(r);rt.need(Path(r['path']).name==r['path'],'same-directory Source');total+=len(b.read(base/r['path'],r))
+    used=set();external=0
+    for r in mf['external_runtime']:
+        rt.ref(r);name=Path(r['path']).name
+        rt.need(name in rt.EXTERNAL_RUNTIME and name not in used
+            and(r['bytes'],r['sha256'])==rt.EXTERNAL_RUNTIME[name],'literal inherited guards')
+        used.add(name);external+=len(b.read(r['path'],r))
+    rt.need(len(used)==2 and total+external+512<=65536,'complete Source plus512 entry reserve')
+    reserved=total+59889+512;rt.need(b.read_bytes+reserved<=8388608,'same8MiB project bootstrap')
+    b.read_bytes+=reserved;b.import_source_reserved_bytes=reserved
+    for module in modules:
+        name=module.__name__+'.py';rt.need(name in names and Path(module.__file__).resolve()==base/name,
+                                         'actual module origin')
+        for value in vars(module).values():
+            if type(value).__name__=='function'and value.__module__==module.__name__:
+                rt.need(value.__globals__ is vars(module)and Path(value.__code__.co_filename).resolve()==base/name,
+                        'actual whole function globals/filename')
+        for cls in vars(module).values():
+            if isinstance(cls,type)and cls.__module__==module.__name__:
+                for value in cls.__dict__.values():
+                    if type(value).__name__=='function':
+                        rt.need(value.__globals__ is vars(module)
+                            and Path(value.__code__.co_filename).resolve()==base/name,'actual whole helper method')
+    caller=sys._getframe(1).f_globals;rt.need(Path(caller['__file__']).resolve()==base/entry,'exact role entry')
+    for value in caller.values():
+        if type(value).__name__=='function'and value.__module__==caller['__name__']:
+            rt.need(value.__globals__ is caller and Path(value.__code__.co_filename).resolve()==base/entry,
+                    'whole actual caller definitions')
+    body=b.read(jp,cap=131072);rt.need(rt.digest(body)==js,'Root-selected whole role job')
+    return b,rt.decode(body),out,dict(Source_manifest_sha256=ms,worker_Source_bytes=total,
+        guard_Source_bytes=external,entry_reserve=512,Root_authority_created=False)
+

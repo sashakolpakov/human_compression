@@ -1,0 +1,26 @@
+"""Root-only finite common-commutant diagnostic; no orbit or group search."""
+import sys
+import runtime as rt
+import field,algebra,small,centralizer,role,scope
+
+def main():
+    b,q,out,pins=role.start(sys.argv,'worker.py',(rt,field,algebra,small,centralizer,role,scope))
+    marks,Q,AH,AR,B,U,U2=scope.original(q,b,pins)
+    g=tuple(algebra.matrix(a,b)for a in marks);Q=algebra.matrix(Q,b)
+    rt.need(B==g[1],'old reflection event zero is the same Original r1')
+    status,certificate=centralizer.calculate(Q,g,AH,AR,B,U,U2,b)
+    rt.close_inputs(b)
+    result=dict(schema='F004_PROJECTION_STAR_CENTRALIZER_RESULT_V1',case=q['case'],status=status,
+        conditional_end_intersection_certificate=status=='VERIFIED_CONDITIONAL_END_INTERSECTION_CERTIFICATE',
+        common_commutant_dimension=certificate.get('common_commutant_dimension'),
+        nilpotence_degree=certificate.get('truncated_dihedral_algebra',{}).get('nilpotence_degree'),
+        complete_H_or_R_order_or_orbit_claimed=False,IP_GEN_case_or_canonical_credit=0)
+    proof=dict(schema='F004_PROJECTION_STAR_CENTRALIZER_PROOF_V1',case=q['case'],Source=pins,
+        Root_input_import=q['Root_input_import'],current_selector=q['current_selector'],
+        old_operand_job=q['old_operand_job'],old_Root_import=q['old_Root_import'],
+        local_actual_review=q['local_actual_review'],H_tensor_actual_review=q['H_tensor_actual_review'],
+        R_tensor_actual_review=q['R_tensor_actual_review'],theory=q['theory'],certificate=certificate,
+        inputs_closed=True,counts=b.snapshot(),old_tensor_congruences_powers_dihedrals_groups_or_orbits_repeated=False,
+        one_role_acquisition_not_independent_numeric_replay=True)
+    refs=rt.emit(out,result,proof,b);print(rt.encoded(dict(status=status,outputs=refs,counts=b.snapshot())).decode(),end='')
+if __name__=='__main__':main()

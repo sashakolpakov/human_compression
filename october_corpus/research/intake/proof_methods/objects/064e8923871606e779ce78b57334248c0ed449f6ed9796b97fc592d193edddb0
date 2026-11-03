@@ -1,0 +1,121 @@
+"""Whole Source/ABI metadata closure only; never imports represented workers."""
+from pathlib import Path
+import ast,hashlib,json,os,stat,time
+B=Path('/private/tmp/l026_subset_pair_family');O=Path(__file__).resolve().parent
+C={};TOTAL=0;START=time.monotonic()
+def enc(x):return(json.dumps(x,sort_keys=True,indent=2)+'\n').encode()
+def read(p,r=None):
+ global TOTAL
+ p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ if str(p)not in C:
+  s=p.stat();assert stat.S_ISREG(s.st_mode)and s.st_size<=4*2**20
+  b=p.read_bytes();t=p.stat();assert(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)==(t.st_dev,t.st_ino,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+  TOTAL+=len(b);assert TOTAL<64*2**20 and len(C)<512
+  C[str(p)]=(dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()),b)
+ got,b=C[str(p)]
+ if r is not None:assert got==r
+ return b
+def doc(p,r=None):return json.loads(read(p,r))
+def ref(p):read(p);return C[str(Path(p))][0]
+def pinned(r):return doc(r['path'],r)
+def save(n,x):
+ p=O/n;b=enc(x)
+ with p.open('xb')as f:f.write(b);f.flush();os.fsync(f.fileno())
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+h=doc(B/'handoff.json',dict(path=str(B/'handoff.json'),bytes=2192,sha256='e2f9d71d59a84168cb729a2d7ba67126aea6b5f916a9a345b855ae85983a3911'))
+assert h['all_represented_Source_and_controls_UNRUN']is True and h['no_complete_native_D_family_assumed']is True
+assert h['Source_manifest']['sha256']=='ace2f95e173ff651c538e908d72e19b7b8df1522989ff9817ec08f32d43e596f'
+assert h['control_Source_manifest']['sha256']=='84c1ac7b3c569ec71606272d2a3e304b83ec874421fca8f14317cd0f142b5f47'
+wm=pinned(h['Source_manifest']);cm=pinned(h['control_Source_manifest']);invoice=pinned(h['invoice']);read(h['proof']['path'],h['proof']);existing=pinned(h['existing'])
+unions={};sources={}
+names={'common.py','budget.py','point_kernel.py','family.py','pair_kernel.py','bindings.py','interface.py'}
+for role,m in [('worker',wm),('controls',cm)]:
+ assert m['schema']=='L026_SUBSET_PAIR_SOURCE_V1'and m['entry']==role+'.py'and m['caps']==invoice['unchanged_caps']
+ assert {Path(r['path']).name for r in m['Source']}==names|{role+'.py','supervise_validation.py','supervise_transient.py'}
+ for r in m['Source']:
+  raw=read(r['path'],r);ast.parse(raw)
+  if Path(r['path']).name in names|{role+'.py'}:sources[Path(r['path']).name]=raw
+ total=sum(r['bytes']for r in m['Source']);union=total+512;nominal=59889+total-23167+512
+ unions[role]=dict(project=total-23167,guards=23167,reserve=512,union=union,nominal=nominal)
+assert unions['worker']['union']==h['Source_worker_guards512']==invoice['Source_worker_with_guards512']==62061
+assert unions['controls']['union']==h['Source_controls_guards512']==invoice['Source_controls_with_guards512']==56873
+assert max(v['union']for v in unions.values())<=65536
+assert unions['worker']['nominal']==invoice['worker_nominal_bootstrap']==98783
+origin=pinned(h['origins'])
+def defs(b):return {x.name:ast.get_source_segment(b.decode(),x)for x in ast.parse(b).body if isinstance(x,(ast.FunctionDef,ast.ClassDef))}
+for e in origin['entries']:
+ new=read(e['new']['path'],e['new']);assert new.decode()==e['new_utf8']
+ if e['old']is not None:
+  old=read(e['old']['path'],e['old']);assert old.decode()==e['old_utf8']
+  if e['whole_literal']:assert new==old
+  if e['name']=='point_kernel.py':
+   assert set(defs(new))=={'need','decode_operands'}and all(defs(new)[k]==defs(old)[k]for k in defs(new))
+  if e['name']=='bindings.py':assert set(defs(new))=={'binding'}and defs(new)['binding']==defs(old)['binding']
+  if e['name']=='common.py':
+   expected=old.decode().replace("NAMES={'budget.py','common.py','point_kernel.py','family.py','supplier.py','subset_kernel.py','positive.py','checks.py'}","NAMES={'budget.py','common.py','point_kernel.py','family.py','pair_kernel.py','bindings.py','interface.py'}").replace('L026_CACHED_MIDDLE_SOURCE_V1','L026_SUBSET_PAIR_SOURCE_V1').replace("peer['reviewer']not in('/root','/root/readback_review')","peer['reviewer']not in('/root','/root/artifact_audit')").replace("control['controls']==32","control['controls']==24").replace('fresh actual32 original-free controls authority','fresh actual24 original-free controls authority')
+   assert expected==new.decode()
+assert origin['whole_literal_modules']==['budget.py','family.py','pair_kernel.py']
+assert origin['literal_extracted_functions']==dict(bindings=['binding'],point_kernel=['need','decode_operands'])
+assert origin['represented_Source_and_controls_executed']is False and origin['Original_numerical_payloads_decoded']is False
+routes=pinned(h['routes']);assert routes['Root_authority']is False and routes['Root_actual_and_raw_frames']is None
+qs={}
+for role in ('pair','shard','rows','controls'):
+ qs[role]=pinned(routes['requests'][role]);gate=doc(B/(role+'_Root_gate_FALSE.json'))
+ assert qs[role]['Root_authority']is gate['Root_authority']is gate['adopted']is gate['Source_and_math_owned']is False
+ assert gate['actual_controls_review']is gate['independent_Source_review']is None
+ assert qs[role]['python_executable']is None
+ if role!='controls':
+  imp=pinned(qs[role]['Root_import']);assert imp['Root_authority']is imp['adopted']is False
+  for k,v in imp.items():
+   if k.endswith('_owned'):assert v is False
+  for k in ('mode','scope','family_key','operands','inputs','context'):assert imp[k]==qs[role][k]
+  assert len(qs[role]['context'])<=12 and sum(r['bytes']for r in qs[role]['context'])<=900000
+for n in ['pair_actual_review_ABI_FALSE.json','tag_adoption_FALSE.json','tag_adoption_review_ABI_FALSE.json','selected_D_induction_FALSE.json']:
+ v=doc(B/n)
+ if 'Root_authority'in v:assert v['Root_authority']is v['adopted']is False
+ if 'status'in v:assert v['status']=='UNRUN_FALSE_TEMPLATE'and v['reviewer']is None and v['blockers']
+fixtures=pinned(h['controls']);labels=[]
+for n in sorted(ast.walk(ast.parse(sources['controls.py'])),key=lambda x:getattr(x,'lineno',0)):
+ if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in('yes','no')and n.args and isinstance(n.args[0],ast.Constant):labels.append(n.args[0].value)
+assert len(labels)==len(set(labels))==fixtures['controls']==24 and labels==fixtures['names']
+assert fixtures['status']=='UNRUN'and fixtures['Original_inputs_loaded']is False
+# Native-format lengths and all shared first/closing/operation/publication invoices.
+assert 12+2*3509==7030 and 13+2*3509*2==14049 and 10+5*3510==17560 and 10+45*1024==46090
+assert 14+16*(2+2*3510)==112366 and invoice['maximum_native_carrier_bytes']==65536
+common=sum(invoice['worker_first_read_common_summands'].values());assert common==1227199
+assert invoice['worker_first_read_common_summands']['complete_Source']==61549
+assert invoice['operation_reserve_all_modes']==1800000 and invoice['publication_work_reserve']==3*(65536+32768)==294912
+for mode,x in invoice['modes'].items():
+ first=common+sum(x['extra_first_read_summands'].values());reads=2*first+98783
+ assert first==x['maximum_first_reads']and reads==x['maximum_first_closing_and_nominal_reads']<8388608
+ assert reads+1800000+294912==x['maximum_total_work_debit']<10000000
+ assert sum(invoice['operation_bounds'][mode].values())<1800000
+assert invoice['maximum_paths_including_outputs']==50<96 and invoice['controls_paths_upper']==17<96
+assert invoice['maximum_proof_bytes']==32768 and invoice['controls_output_upper_each']==131072
+# Reproduce Source-derived complete-frame upper (all paths<=10), without evaluating operands.
+n=3510
+decoder=(8+15*n)+5*4*n+3*6*n+2*n+10*n+2*12*n+12*n+22*n+2*n
+familyframe=decoder+3*(n-1)+(12+11*n)
+assert familyframe==invoice['operation_bounds']['pair']['literal_complete_frame']==487907
+assert 8*3509+32+5*8*3509==invoice['operation_bounds']['pair']['pair_checks']==168464
+assert 16*(2*8*3509+64)+2*(8*3509+32)==invoice['operation_bounds']['shard']['complete_subset_image_and_tag_kernel']==955536
+assert 16*4*3510==invoice['operation_bounds']['shard']['literal_sixteen_map_bijections']==224640
+assert 1024*(512+128+3*64)<=invoice['operation_bounds']['rows']['kernel_tags_and1024_literal_row_bindings']==880000
+for p,(r,b)in C.items():assert Path(p).read_bytes()==b
+assert 2*TOTAL<67108864 and len(C)+3<512
+quals=[
+ 'Artifact authors the new caller/interface and integration fixtures. Reviewer authored earlier cached IO/family components and some prior metadata reviews; unchanged old primitive bodies/authorities are imported with this lineage, not claimed independently re-proved by authorship.',
+ 'The perfect transitive named G has no nontrivial action on a one/two-member family; if its set stabilizer were all G, T would be G-invariant, contradicting proper nonempty T. Endpoint checks plus three individually stabilized factors therefore suffice for proper containment. Both fix/swap parity values are admitted; no commutativity, H10 XOR family model or elementary-abelian Original assumption is used.',
+ 'Pair acquisition decodes/checks the whole exact operand frame, derives the global d0/tree key, checks both endpoints on F and binds provenance. A proper union is unnecessary and a singleton is supported. Later consumers bind its actual proof/certificate/review rather than repeating endpoint images.',
+ 'Each shard imports one exact local actual provider triple, strict Source/proof/map identity and separate Root selected-parent induction to d0/bridge. The caller does not authenticate or recursively read that entire induction itself: Root owns the finite proof DAG externally. Local128cut/2048-map actuals never become full3510-family adoption.',
+ 'Rows require an exact Root adopted partial native tag union plus distinct metadata review. That external union must actually join every included reviewed shard and vertex; actor strings are not identity credentials. Missing/outside tags leave rows unknown; factors outside the container do not prove their product outside.',
+ 'Literal16-byte witness binding authenticates owner/partner/mass/three distinct vertices/full rowSHA; owner is never a group word. Current typed CURRENT/receipt/bank/witness and currently unpaid identities are whole closed, but no lock or transactional snapshot is claimed. Root must hold the edition during execution and recheck eligibility before later publication/marked-owner transfer.',
+ 'All Source bodies/raw inverses and extracted function bodies are pinned; literal budget/family/pure-pair modules are not executed or recontrolled here. The24 new integration designs remain UNRUN, synthetic-only; Root Source/math ownership, independent actual24, actual APIs/guards/IO/output closure and logical applications remain future duties.',
+ 'Worker62061/control56873 include both old guards plus512 and retain10M/20s cooperative work,128MiB150s,8MiB96paths,2MiB input/two128KiB output caps. Read/operation/publication preflight is program accounting, not OS instruction/fullIO/actual RSS/runtime prediction; a cap/refusal proves no mathematical absence.',
+ 'Native pair/tag/row values remain scientific certificate data; this Source review opened no Original subsets, maps, witnesses or numerical carrier values. No represented Source or controls were imported/run and no S/W/Git/canonical/progress write or science replay occurred.',
+ 'This packet emits proper-container certificate candidates only. Actual reviewed row application, inherited named inner-G/faithful model/transitivity/equivariant bridge/H/two-fibre authority and unchanged typed NEG registration remain separate. No GEN/IP/class/census/manuscript/conjecture/Lean credit is issued.'
+]
+full=save('review.json',dict(schema='L026_SUBSET_PAIR_FAMILY_SOURCE_INDEPENDENT_REVIEW_V1',status='SUPPORTED_STATIC',reviewer='/root/readback_review',blockers=[],Source_manifest=h['Source_manifest'],control_Source_manifest=h['control_Source_manifest'],program=h['program'],source_handoff=ref(B/'handoff.json'),Source_unions=unions,whole_raw_origins_and_extracted_namespaces_verified=True,conditional_pair_stabilizer_properness_and_both_parities_supported=True,no_full_D_family_adoption=True,modes=['pair','shard','rows'],UNRUN_new_interface_design_names=labels,invoice=h['invoice'],all_first_closing_pins=[r for r,b in C.values()],audit_first_closing_read_bytes=2*TOTAL,qualifications=quals))
+thin=save('reuse_integer_only.json',dict(schema='L026_SUBSET_PAIR_FAMILY_SOURCE_REUSE_V1',status='SUPPORTED_STATIC',reviewer='/root/readback_review',blockers=[],Source_manifest=h['Source_manifest'],control_Source_manifest=h['control_Source_manifest'],program=h['program'],proof_and_scope=h['proof'],Source_worker_guards512=62061,Source_controls_guards512=56873,modes=['pair','shard','rows'],whole_Source_raw_inverses_and_IO_verified=True,new_controls_count=24,new_controls_UNRUN=True,complete_native_D_family_adopted=False,full_review=full))
+hand=save('handoff.json',dict(status='SUPPORTED_STATIC',reviewer='/root/readback_review',blockers=[],reuse=thin,full_review=full,source_handoff=ref(B/'handoff.json')))
+print(json.dumps(dict(handoff=hand,reuse=thin,full_review=full,paths=len(C),read_bytes=2*TOTAL)))

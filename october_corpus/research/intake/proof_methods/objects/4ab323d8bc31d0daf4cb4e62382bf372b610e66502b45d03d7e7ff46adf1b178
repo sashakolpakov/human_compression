@@ -1,0 +1,86 @@
+"""A bounded common-commutant certificate; never assumes its dimension."""
+import runtime as rt
+import field,algebra,small
+I=field.I
+ZERO=bytes(49)
+
+def trans(A,b):
+    b.scalar(49);return bytes(A[7*j+i]for i in range(7)for j in range(7))
+def combine(terms,b):
+    b.scalar(49*len(terms));return bytes(sum(c*A[i]for c,A in terms)%11 for i in range(49))
+def canonical(A,b):
+    b.scalar(49);rt.need(type(A)is bytes and len(A)==49 and all(x<11 for x in A),'canonical whole 7 by7 matrix')
+    return A
+
+def inv7(A,b):
+    X=small.inverse(algebra.rows(A),b)
+    return None if X is None else bytes(x for r in X for x in r)
+
+def frame(Q,marks,b):
+    canonical(Q,b);rt.need(Q==trans(Q,b),'symmetric candidate form')
+    Qi=inv7(Q,b);rt.need(Qi is not None,'nonsingular candidate form')
+    rt.need(len(marks)==4,'all four Original marks')
+    determinants=[]
+    for g in marks:
+        canonical(g,b);determinants.append(small.det(algebra.rows(g),b))
+        rt.need(b.multiply(b.multiply(g,Q),trans(g,b))==Q,'full row isometry equation for every mark')
+    rt.need(determinants==[1]*4,'all four marks have determinant one')
+    return Qi,determinants
+
+def algebra_relations(Q,Qi,B,U,U2,b):
+    for A in(B,U,U2):canonical(A,b)
+    N=combine(((2,U),(4,I),(5,U2)),b)
+    # N=(U-I)-(U^2-2U+I)/2; 1/2=6 in F11.
+    N2=b.multiply(N,N);N3=b.multiply(N2,N);BN=b.multiply(B,N)
+    m=2 if N!=ZERO and N2==ZERO else(3 if N2!=ZERO and N3==ZERO else None)
+    basis=[I,B,N,BN]+([N2,b.multiply(B,N2)]if m==3 else [])
+    checks=dict(B_squared_is_identity=b.multiply(B,B)==I,
+        BN_equals_minus_NB=BN==combine(((10,b.multiply(N,B)),),b),
+        B_self_adjoint=b.multiply(b.multiply(Q,trans(B,b)),Qi)==B,
+        N_skew_adjoint=b.multiply(b.multiply(Q,trans(N,b)),Qi)==combine(((10,N),),b),
+        nilpotence_degree=m,
+        U_is_truncated_exponential=U==combine(((1,I),(1,N))+(((6,N2),)if m==3 else()),b))
+    E=[[A[i]for A in basis]for i in range(49)];ind=small.minor(E,b)
+    good=m in(2,3)and all(v is True for k,v in checks.items()if k!='nilpotence_degree')and ind['rank']==2*m
+    return dict(accepted=good,nilpotence_degree=m,checks=checks,basis=[A.hex()for A in basis],
+        N=N.hex(),N_squared=N2.hex(),N_cubed=N3.hex(),basis_entry_minor=ind)
+
+def calculate(Q,marks,AH,AR,B,U,U2,b):
+    proof=dict(stage='form_and_marks');Qi,dets=frame(Q,marks,b)
+    proof.update(Q_inverse=Qi.hex(),mark_determinants=dets)
+    for A in(AH,AR):canonical(A,b);rt.need(A==trans(A,b),'both saved tensors symmetric')
+    PH=b.multiply(Q,AH);PR=b.multiply(Q,AR)
+    proof.update(P_H=PH.hex(),P_R=PR.hex(),stage='saved_projections')
+    if b.multiply(PH,PH)!=PH or b.multiply(PR,PR)!=PR:
+        return 'INCONCLUSIVE_SAVED_TENSOR_NOT_PROJECTOR',proof
+    RR,piv,rows=small.rref(algebra.rows(PH),7,b)
+    _,prank,_=small.rref(algebra.rows(PR),7,b)
+    proof.update(projection_ranks=[len(piv),len(prank)])
+    if len(piv)!=4 or len(prank)!=3:return 'INCONCLUSIVE_PROJECTION_RANKS',proof
+    KT,kp,_=small.rref(algebra.rows(trans(PH,b)),7,b);null=[]
+    for j in range(7):
+        if j not in kp:
+            v=[0]*7;v[j]=1
+            for i,k in enumerate(kp):b.scalar(1);v[k]=-KT[i][j]%11
+            null.append(v)
+    S=bytes(x for row in([algebra.rows(PH)[i]for i in rows]+null)for x in row);Si=inv7(S,b)
+    rt.need(Si is not None,'image and row-kernel direct decomposition')
+    diag=bytes(int(i==j and i<4)for i in range(7)for j in range(7))
+    rt.need(b.multiply(b.multiply(S,PH),Si)==diag,'full four-plus-three projection diagonalization')
+    T=b.multiply(b.multiply(S,PR),Si)
+    positions=[(a,c)for a in range(7)for c in range(7)if(a<4)==(c<4)]
+    b.scalar(3*49*25)
+    M=[[(int(i==a)*T[7*c+j]-T[7*i+a]*int(c==j))%11 for a,c in positions]for i in range(7)for j in range(7)]
+    mc=small.minor(M,b);dim=25-mc['rank']
+    proof.update(stage='common_commutant',S=S.hex(),S_inverse=Si.hex(),
+        conjugated_P_R=T.hex(),block_positions=positions,commutation_matrix=M,
+        commutation_minor=mc,common_commutant_dimension=dim)
+    relation=algebra_relations(Q,Qi,B,U,U2,b);proof['truncated_dihedral_algebra']=relation
+    bases=[bytes.fromhex(x)for x in relation['basis']];commutes=[]
+    for A in bases:
+        commutes.append(b.multiply(A,PH)==b.multiply(PH,A)and b.multiply(A,PR)==b.multiply(PR,A))
+    proof['basis_commutes_with_both_projections']=commutes
+    d=2*relation['nilpotence_degree']if relation['nilpotence_degree']else None
+    good=relation['accepted']and dim==d and all(commutes)
+    proof['stage']='complete';proof['all_required_equations_verified']=good
+    return('VERIFIED_CONDITIONAL_END_INTERSECTION_CERTIFICATE'if good else 'INCONCLUSIVE_COMMUTANT_OR_RELATIONS'),proof

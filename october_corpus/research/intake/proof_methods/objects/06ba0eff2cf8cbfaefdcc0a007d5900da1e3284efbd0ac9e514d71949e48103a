@@ -1,0 +1,65 @@
+"""New integration fixtures only; no Original or previous family execution."""
+import struct
+import common as C
+import budget,point_kernel as K,family,pair_kernel as P,bindings,interface as I
+def suite(w):
+    names=[]
+    def yes(n,v):C.need(v,n);names.append(n)
+    def no(n,f):
+        try:f()
+        except (ValueError,KeyError,TypeError,struct.error):names.append(n);return
+        raise AssertionError(n)
+    n=3510;a=tuple((i+1755)%n for i in range(n));c=a;identity=tuple(range(n))
+    # These are synthetic set actions, not a Fi22 model or marking certificate.
+    pair=P.prepare_pair(list(range(1755)),a,c,n,w);raw=I.pair_bytes(pair,w)
+    yes('full_union_pair_native_roundtrip',I.pair_decode(raw,w)==pair)
+    no('truncated_pair_native_refused',lambda:I.pair_decode(raw[:-1],w))
+    bad=bytearray(raw);bad[8:10]=struct.pack('<H',3509)
+    no('wrong_pair_degree_refused',lambda:I.pair_decode(bytes(bad),w))
+    small=P.prepare_pair([0,1],a,c,n,w);smallraw=I.pair_bytes(small,w)
+    yes('proper_union_pair_native_roundtrip',I.pair_decode(smallraw,w)==small)
+    solo=P.prepare_pair([0,1],identity,identity,n,w)
+    yes('singleton_pair_native_roundtrip',I.pair_decode(I.pair_bytes(solo,w),w)==solo)
+    rows=[(i,i,a if i%2 else identity)for i in range(16)]
+    shard=P.certify_shard(small,0,rows,w);tags=shard['records'];tagraw=I.tags_bytes(tags,w)
+    yes('sixteen_fix_swap_native_tags',[r['tag']for r in I.tags_decode(tagraw,w)]==[i%2 for i in range(16)])
+    no('duplicate_native_vertex_refused',lambda:I.tags_bytes(tags+[dict(ordinal=16,vertex=0,tag=0)],w))
+    no('noncanonical_native_ordinals_refused',lambda:I.tags_bytes(tags[::-1],w))
+    no('truncated_native_tags_refused',lambda:I.tags_decode(tagraw[:-1],w))
+    final=[(i,i,identity)for i in range(3504,3510)]
+    yes('last_six_map_interval',P.certify_shard(small,3504,final,w)['end']==3510)
+    no('incomplete_sixteen_map_interval',lambda:P.certify_shard(small,0,rows[:-1],w))
+    seed=I.SEED+struct.pack('<HHHH',3510,2,0,1)
+    yes('native_seed_projection',I.seed(seed,w)==[0,1])
+    no('seed_extent_refusal',lambda:I.seed(seed+b'\0',w))
+    records=[struct.pack('<IIHHHH',i+20,i+40,1024,*t)for i,t in enumerate([(0,2,4),(0,1,2),(0,2,17)])]
+    witness=b''.join(records);ids=[dict(free_index=i,owner=i+20,witness_row_sha256=C.digest(r))for i,r in enumerate(records)]
+    result=P.certify_rows(witness,bytes(3),ids,tags,bindings.binding,w);data=I.rows_bytes(result,w)
+    yes('literal_witness_binding_and_compact_even',result['records'][0]['fix_swap_parity']==0 and len(data)==10+3*45)
+    yes('literal_witness_binding_and_compact_odd',result['records'][1]['fix_swap_parity']==1 and result['records'][1]['status']=='VERIFIED_IN_PROPER_PAIR_STABILIZER')
+    yes('missing_tag_has_no_negative_credit',result['records'][2]['status']=='INCONCLUSIVE_TAG_FAMILY'and data[10+2*45+8:10+2*45+10]==bytes([0,255]))
+    no('paid_owner_is_not_retested',lambda:P.certify_rows(witness,bytes([1,0,0]),ids,tags,bindings.binding,w))
+    badids=[dict(ids[0],owner=99)]+ids[1:]
+    no('wrong_original_owner_refused',lambda:P.certify_rows(witness,bytes(3),badids,tags,bindings.binding,w))
+    badids=[dict(ids[0],witness_row_sha256='0'*64)]+ids[1:]
+    no('wrong_whole_witness_hash_refused',lambda:P.certify_rows(witness,bytes(3),badids,tags,bindings.binding,w))
+    bad=list(identity);bad[0],bad[2]=bad[2],bad[0]
+    no('endpoint_pair_escape_refused',lambda:P.prepare_pair([0,1],a,bad,n,w))
+    class Fake:
+        refs={};raw={};bytes=0
+        class work:units=0
+    f=Fake();r=dict(path='/synthetic',bytes=10,sha256='0'*64)
+    yes('complete_first_closing_and_output_preflight',I.fit(f,[r],1800000)is None)
+    f.work.units=9000000
+    no('shared_work_bank_refuses_before_predicates',lambda:I.fit(f,[r],1800000))
+    f.work.units=0;f.bytes=8388608
+    no('whole_read_bank_refuses_before_predicates',lambda:I.fit(f,[r],1800000))
+    bad=I.TAGS+struct.pack('<HHHB',1,0,0,3)
+    no('invalid_native_tag_code_refused',lambda:I.tags_decode(bad,w))
+    C.need(len(names)==len(set(names))==24,'exact24 new interface designs');return names
+def main():
+    b,q,g,pins,out=C.start('controls.py',(C,budget,K,family,P,bindings,I));C.need(q['schema']=='L026_SUBSET_PAIR_CONTROLS_V1','new synthetic-only request')
+    names=suite(b.work);b.close();result=dict(status='PASS',controls=24,names=names,Original_inputs_loaded=False,pins=pins,physical_reads=b.bytes,point_units=b.work.units)
+    proof=dict(status='PASS',controls=24,Original_inputs_loaded=False,old_family_controls_replayed=False,synthetic_actions_not_Original_Fi22=True,pins=pins)
+    files=b.emit(out,{'result.json':C.can(result),'proof.json':C.can(proof)});print(C.can(dict(status='PASS',controls=24,outputs=files)).decode(),end='')
+if __name__=='__main__':main()

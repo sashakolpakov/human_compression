@@ -1,0 +1,211 @@
+"""Read-only existing-record audit. Does not import represented Source or run controls."""
+import ast,hashlib,json,os,shlex,stat,time,resource,sys
+from pathlib import Path
+
+OUT=Path(__file__).resolve().parent
+BASE=Path('/private/tmp/f004_projection_star_centralizer_actual')
+SRC=Path('/private/tmp/f004_projection_star_centralizer')
+RAW=Path('/private/tmp/intake_actual_transports')
+CACHE={};EVENTS=[];START=time.monotonic();READ=0
+def enc(x):return (json.dumps(x,sort_keys=True,separators=(',',':'))+'\n').encode()
+def sha(x):return hashlib.sha256(x).hexdigest()
+def descriptor(p,body):return dict(path=str(p),bytes=len(body),sha256=sha(body))
+def whole(p,expected=None):
+ global READ
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<256*2**20
+ p=Path(p);assert p.is_absolute() and not p.is_symlink()
+ p=p.resolve(strict=True);assert len(CACHE|{str(p):None})<=508
+ fd=os.open(p,os.O_RDONLY|os.O_NOFOLLOW)
+ try:
+  a=os.fstat(fd);assert stat.S_ISREG(a.st_mode) and a.st_size<=4*2**20
+  assert READ+a.st_size<=64*2**20 and time.monotonic()-START<125
+  with os.fdopen(fd,'rb',closefd=False) as f:body=f.read(a.st_size+1)
+  b=os.fstat(fd);c=p.stat()
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(a)==sig(b)==sig(c) and len(body)==a.st_size
+ finally:os.close(fd)
+ r=descriptor(p,body);READ+=len(body)
+ if expected is not None:assert r==expected,(str(p),'descriptor mismatch')
+ if str(p) in CACHE:assert CACHE[str(p)][0]==r and CACHE[str(p)][1]==body
+ CACHE[str(p)]=(r,body);EVENTS.append(r);return body
+def load(p,expected=None):return json.loads(whole(p,expected))
+def pinned(r):return load(r['path'],r)
+def ref(p):return CACHE[str(Path(p).resolve())][0]
+def save(name,data):
+ p=OUT/name;body=enc(data)
+ with p.open('xb') as f:f.write(body);f.flush();os.fsync(f.fileno())
+ return descriptor(p,body)
+
+def sdk(r,key,exitcode=0):
+ d=pinned(r);i=load(RAW/key/'issued.json')
+ assert d['actor']==d['root']==i['root']=='/root'
+ assert i['argv']==d['issued_argv']==d['child_argv']==shlex.split(d['issued_tool_arguments']['cmd'])
+ assert i['tool_arguments']==d['issued_tool_arguments']
+ frames=d['all_genuine_api_frames'];assert frames and frames[0]==d['full_initial_tool_return']and frames[-1]==d['full_tool_return']
+ assert frames[-1]['exit_code']==d['actual_tool']['exit_code']==exitcode
+ assert d['actual_tool']['initial_chunk']==frames[0]['chunk_id']and d['actual_tool']['terminal_chunk']==frames[-1]['chunk_id']
+ for j,f in enumerate(frames):assert load(RAW/key/('frame_%04d.json'%j))==f
+ if d['actual_tool']['synchronous']:assert len(frames)==1 and d['actual_tool']['handle']is None
+ else:assert all(f.get('session_id')==d['actual_tool']['handle']for f in frames[:-1])and'session_id'not in frames[-1]
+ return d,json.loads(''.join(f.get('output','')for f in frames))
+
+# Lexical extraction: opaque mathematical values are skipped, never decoded.
+SELECTED=[]
+def ws(s,i):
+ while i<len(s) and s[i] in b' \t\r\n':i+=1
+ return i
+def string_end(s,i):
+ assert s[i]==34;i+=1
+ while i<len(s):
+  if s[i]==92:i+=2
+  elif s[i]==34:return i+1
+  else:i+=1
+ raise AssertionError('unterminated JSON string')
+def skip(s,i):
+ i=ws(s,i);c=s[i]
+ if c==34:return string_end(s,i)
+ if c in (91,123):
+  stack=[93 if c==91 else 125];i+=1
+  while stack:
+   c=s[i]
+   if c==34:i=string_end(s,i);continue
+   if c in (91,123):stack.append(93 if c==91 else 125)
+   elif c in (93,125):assert stack.pop()==c
+   i+=1
+  return i
+ while i<len(s) and s[i] not in b',]} \t\r\n':i+=1
+ return i
+def segment(s,path):
+ lo=ws(s,0);hi=skip(s,lo)
+ for key in path:
+  assert s[lo]==123;i=ws(s,lo+1);found=None;seen=set()
+  while i<hi and s[i]!=125:
+   e=string_end(s,i);k=json.loads(s[i:e]);assert k not in seen;seen.add(k)
+   i=ws(s,e);assert s[i]==58;i=ws(s,i+1);end=skip(s,i)
+   if k==key:found=(i,end)
+   i=ws(s,end)
+   if s[i]==44:i=ws(s,i+1)
+   else:assert s[i]==125;break
+  assert found is not None,path
+  lo,hi=found
+ return s[lo:hi]
+def pick(s,path,label):
+ # Call sites supply scalar, reference, status, count, or boolean-only leaves.
+ SELECTED.append(dict(document=label,field='/'.join(path)))
+ return json.loads(segment(s,path))
+def picks(s,keys,label):return {k:pick(s,[k],label)for k in keys}
+
+def main():
+ whole(Path(__file__).resolve())
+ predecessor=dict(path='/private/tmp/f004_projection_star_controls24_artifact_review/audit_actual.py',bytes=12657,sha256='cf973269afe4c01334fb7645a645da55dafbe2895e77b38f1d7111639a192060')
+ whole(predecessor['path'],predecessor)
+ h=load(SRC/'handoff.json',dict(path=str(SRC/'handoff.json'),bytes=3371,sha256='cece7f55aca7660d3268653c3026b690ae31de49b4087f6c51ab2ba84daeca1d'))
+ mfref=h['files']['SOURCE_MANIFEST_worker.json'];mf=pinned(mfref)
+ assert mfref['sha256']=='c65098660c58a4fe745b9aa681dc3564b63f1d0b81b6d9876d2815f7a1daad87' and mf['entry']=='worker.py'
+ sources=[]
+ for r in mf['sources']:
+  rr=dict(r,path=str(SRC/r['path']));whole(rr['path'],rr);sources.append(rr)
+ for r in mf['external_runtime']:whole(r['path'],r)
+ assert len(sources)==8 and sum(r['bytes']for r in sources)==36452 and sum(r['bytes']for r in mf['external_runtime'])==23167
+ prepref=dict(path=str(BASE/'Root_SDK/Original_preparation_v1.json'),bytes=7616,sha256='ff7a1a585778b3e5654269df496207505293a1efa6b902b1f9adeb5783559bf3')
+ prep,po=sdk(prepref,'Root_f004_projection_star_Original_preparation_v1')
+ q=pinned(po['request']);root=pinned(po['Root_import'])
+ assert po['request']['sha256']=='a1122b67b449e9c128f826706b6e34864704956f06b9ac24affd19df496a26d2'
+ assert q['schema']=='F004_PROJECTION_STAR_CENTRALIZER_JOB_V1' and q['Root_authority']is False and q['Root_input_import']==po['Root_import']
+ assert q['case']==dict(position=2739,original_row_id='job0020:position2739:J08349',marks_sha256='80c22b9b749cda7e4f79b6956d827f753243aeffeff90f2e2492d0ffcb6ff843',model_sha256='252598fb2be23480f4e91a83a6d8e7818f203deb62892b7e42157d7f180538dc')
+ duties=next(ast.literal_eval(n.value)for n in ast.parse(CACHE[str(SRC/'scope.py')][1]).body if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id=='DUTIES'for t in n.targets))
+ assert len(duties)==10 and all(root[k]is True for k in duties)
+ assert root['schema']=='ROOT_F004_PROJECTION_STAR_CENTRALIZER_IMPORT_V1'and root['root']=='/root'and root['Root_authority']is root['adopted']is True and root['Source_manifest_sha256']==mfref['sha256']
+ for k in set(q)-{'schema','Root_authority','Root_input_import'}:assert root[k]==q[k]
+ peer=pinned(q['new_Source_peer']);controls=pinned(q['new_controls_actual_review'])
+ assert peer['status']=='SUPPORTED_STATIC'and peer['blockers']==[]and peer['reviewer']not in('/root','/root/ledger_preparation')and peer['Source_manifest']==mfref
+ assert controls['status'].startswith('SUPPORTED_ACTUAL')and controls['blockers']==[]and controls['reviewer']=='/root/artifact_audit'and controls['Source_manifest']==peer['control_Source_manifest']and controls['count']==24 and controls['Original_inputs_loaded']is False
+ assert prep['issued_argv'][-4:]==['--peer',q['new_Source_peer']['path'],'--controls-review',q['new_controls_actual_review']['path']
+ cur=pinned(q['current_selector']);assert cur['root']=='/root'and cur['adopted']is True and cur['original_job']==[20,4]
+ assert any(lo<=2739<=hi for lo,hi in cur['unresolved_position_runs'])
+ H=pinned(q['H_tensor_actual_review']);R=pinned(q['R_tensor_actual_review']);local=pinned(q['local_actual_review'])
+ for v in(H,R,local):
+  assert v['status'].startswith('SUPPORTED_ACTUAL')and v['blockers']==[]and v['case']==q['case']and v['reviewer']!='/root'and v['whole_Source_and_inputs_closed']is v['actual_guard_and_raw_frames_verified']is True
+ assert H['schema']=='F004_LEFT_SPAN_TENSOR2739_ACTUAL_REUSE_V1'and R['schema']=='F004_INVARIANT_TENSOR2739_ACTUAL_REUSE_V1'
+ assert local['schema']=='F004_BOUNDED_ADJACENT_LOCAL_IP_ACTUAL_REUSE_V1'and local['middle_order']==22 and local['all_adjacent_cycles_complete']is True
+ first=[mfref]+sources+mf['external_runtime']+[po['request'],po['Root_import'],q['new_Source_peer'],q['new_controls_actual_review'],q['current_selector'],q['H_tensor_actual_review'],H['proof'],H['result'],q['R_tensor_actual_review'],R['proof'],R['result'],q['local_actual_review'],local['result'],local['certificate'],q['old_operand_job'],q['old_Root_import'],q['theory']]
+ assert len(first)==len(set(r['path']for r in first))==28 and sum(r['bytes']for r in first)==289117
+ for r in first:whole(r['path'],r)
+ for name,v,rank,schema in [('H',H,4,'F004_LEFT_SPAN_TENSOR_INTERSECTION_PROOF_V1'),('R',R,3,'F004_INVARIANT_TENSOR_INTERSECTION_PROOF_V1')]:
+  b=CACHE[str(Path(v['proof']['path']).resolve())][1];label=name+' tensor proof'
+  assert pick(b,['schema'],label)==schema and pick(b,['case'],label)==q['case']and pick(b,['inputs_closed'],label)is True
+  for k in('old_operand_job','old_Root_import','local_actual_review'):assert pick(b,[k],label)==q[k]
+  for k in('Root_input_import','current_selector'):assert pick(b,[k],label)==v[k]
+  assert pick(b,['construction','gram_rank'],label)==rank and pick(b,['construction','branch'],label)=='nondegenerate_span'and pick(b,['tensor_signs'],label)==[1,1,1]
+  rb=CACHE[str(Path(v['result']['path']).resolve())][1]
+  assert pick(rb,['case'],name+' tensor result')==q['case']and pick(rb,['tensor_signs'],name+' tensor result')==[1,1,1]
+ assert H['all_H_tensor_congruences_verified']is True and H['tensor_preserved_by_labels']==[0,1,2]and H['root_A_H_proof_field']=='orbit/root_tensor_hex'
+ old=CACHE[str(Path(q['old_operand_job']['path']).resolve())][1]
+ for k in('position','original_row_id'):assert pick(old,[k],'old operand identity')==q['case'][k]
+ assert pick(old,['original_job'],'old operand identity')==[20,4]and pick(old,['Root_input_import'],'old operand identity')==q['old_Root_import']
+ frame=CACHE[str(Path(q['old_Root_import']['path']).resolve())][1]
+ for k in('marks_sha256','model_sha256'):assert pick(frame,[k],'old Root frame')==q['case'][k]
+ for k in('Root_authority','adopted','same_faithful_right_row_natural_F11_frame_checked','literal_original_mark_order_preserved_without_reversal','named_inner_G2_11_membership_for_all_four_marks_checked'):assert pick(frame,[k],'old Root frame')is True
+ assert pick(frame,['root'],'old Root frame')=='/root'
+ lr=CACHE[str(Path(local['result']['path']).resolve())][1]
+ for k in('Root_input_import','certificate'):assert pick(lr,[k],'local result')==local[k]
+ for k in('old_operand_job','old_Root_import'):assert pick(lr,[k],'local result')==q[k]
+ assert pick(lr,['case'],'local result')==q['case']and pick(lr,['inputs_closed'],'local result')is True
+ actual=dict(path=str(BASE/'Root_SDK/Original_v1.json'),bytes=5668,sha256='4f4e7042c36bc299057b944e9fec9a842a6d8869431e4d07668c7382b2357e5b')
+ run,returned=sdk(actual,'Root_f004_projection_star_Original_v1');argv=run['issued_argv'];assert argv==po['argv']
+ assert argv[:11]==['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES']
+ child=argv[argv.index('--')+1:]
+ assert child==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(SRC/'worker.py'),mfref['path'],mfref['sha256'],po['request']['path'],po['request']['sha256'],str(BASE/'original')]
+ assert argv[argv.index('--rss-cap-mib')+1]=='128'and argv[argv.index('--timeout')+1]=='100'
+ guard=Path(argv[argv.index('--output')+1]);assert guard==BASE/'guards/original'
+ started=load(guard/'started.json');receipt=load(guard/'receipt.json')
+ assert returned==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+ assert receipt['status']=='PASS'and receipt['returncode']==0 and receipt['stop']=='RETURNED'and receipt['error']is None
+ assert receipt['command']==started['command']==child and receipt['limits']==started['limits']and receipt['admission']==started['admission']
+ limits=receipt['limits'];assert limits['total_rss']==128*2**20 and limits['wall_seconds']==100 and limits['admit_disk']==10*2**30 and limits['admit_ram']==4*2**30
+ assert receipt['admission']['free_disk']>=limits['admit_disk']and receipt['admission']['available_ram']>=limits['admit_ram']
+ assert receipt['peaks']['total_rss']<=128*2**20 and receipt['seconds']<100 and receipt['peaks']['min_free_disk']>=8*2**30 and receipt['peaks']['min_available_ram']>=3*2**30
+ assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+ for k in('pid','birth','initial_parent','group','session'):assert started['identities'][0][k]==receipt['identities'][0][k]
+ stdout=whole(guard/'stdout.log');assert whole(guard/'stderr.log')==b''and receipt['logs']==dict(stdout=len(stdout),stderr=0)
+ printed=json.loads(stdout);assert printed['status']=='INCONCLUSIVE_COMMUTANT_OR_RELATIONS'and len(printed['outputs'])==2
+ rr,pr=printed['outputs'];assert rr['path']==str(BASE/'original/result.json')and pr['path']==str(BASE/'original/proof.json')
+ result=pinned(rr);body=whole(pr['path'],pr);label='current diagnostic proof'
+ top=picks(body,['schema','case','Source','Root_input_import','current_selector','old_operand_job','old_Root_import','local_actual_review','H_tensor_actual_review','R_tensor_actual_review','theory','inputs_closed','counts','old_tensor_congruences_powers_dihedrals_groups_or_orbits_repeated','one_role_acquisition_not_independent_numeric_replay'],label)
+ assert top['schema']=='F004_PROJECTION_STAR_CENTRALIZER_PROOF_V1'and top['case']==result['case']==q['case']
+ for k in('Root_input_import','current_selector','old_operand_job','old_Root_import','local_actual_review','H_tensor_actual_review','R_tensor_actual_review','theory'):assert top[k]==q[k]
+ assert top['inputs_closed']is top['one_role_acquisition_not_independent_numeric_replay']is True and top['old_tensor_congruences_powers_dihedrals_groups_or_orbits_repeated']is False
+ assert top['Source']==dict(Root_authority_created=False,Source_manifest_sha256=mfref['sha256'],entry_reserve=512,guard_Source_bytes=23167,worker_Source_bytes=36452)
+ assert result['schema']=='F004_PROJECTION_STAR_CENTRALIZER_RESULT_V1'and result['status']=='INCONCLUSIVE_COMMUTANT_OR_RELATIONS'and result['conditional_end_intersection_certificate']is False and result['complete_H_or_R_order_or_orbit_claimed']is False and result['IP_GEN_case_or_canonical_credit']==0
+ c=lambda *p:pick(body,['certificate',*p],label)
+ assert c('stage')=='complete'and c('common_commutant_dimension')==result['common_commutant_dimension']==6
+ assert c('commutation_minor','rank')==19
+ assert c('mark_determinants')==[1]*4 and c('projection_ranks')==[4,3]
+ assert c('truncated_dihedral_algebra','nilpotence_degree')==result['nilpotence_degree']==3
+ assert c('truncated_dihedral_algebra','basis_entry_minor','rank')==5
+ checks=c('truncated_dihedral_algebra','checks')
+ expected={'B_squared_is_identity','BN_equals_minus_NB','B_self_adjoint','N_skew_adjoint','nilpotence_degree','U_is_truncated_exponential'}
+ assert set(checks)==expected and checks['nilpotence_degree']==3 and all(v is True for k,v in checks.items()if k!='nilpotence_degree')
+ assert c('truncated_dihedral_algebra','accepted')is False and c('basis_commutes_with_both_projections')==[True]*6 and c('all_required_equations_verified')is False
+ counts=top['counts'];seq=first+first
+ assert counts['distinct_read_paths']==28 and counts['whole_read_events']==56 and counts['whole_read_sequence_sha256']==sha(enc(seq))
+ assert counts['explicit_read_bytes']==578234 and counts['import_source_reserved_bytes']==96853 and counts['read_bytes']==675087
+ assert counts['matrix_products']==50 and counts['row_images']==0 and counts['linear_units']==87553 and counts['peak_rss_bytes']<=128*2**20
+ for k in counts:assert printed['counts'][k]==counts[k] or k in('elapsed_microseconds','peak_rss_bytes')
+ for _,(r,b)in list(CACHE.items()):whole(r['path'],r)
+ assert len(CACHE)+3<=512
+ qualifications=[
+ 'Ledger authored the new diagnostic; Readback supplied its distinct static peer; Root issued and executed it. Artifact is the distinct actual reviewer. Earlier inherited arithmetic/IO preparation had mixed authorship including Artifact; the separately sealed Source peer is borrowed for those inherited bodies.',
+ 'This audit hashes every whole Source/input/output and checks the genuine Root preparation/execution API frames, exact argv, guard birth identities, sampled128MiB100s bounds and terminal known-process cleanup. The guard is sampled, not a kernel quota or universal absence proof.',
+ 'Original numerical payloads remain opaque: lexical traversal skips matrix, tensor, RREF, basis, journal and word values. Only the enumerated scalar/reference/boolean fields are decoded. No represented Source, controls, Original mathematics, rank computation or numerical replay is run by this audit.',
+ 'The actual code performs exact bounded elimination and inverse-minor checks. Its common commutant has dimension6 (25 unknowns minus rank19); the six displayed candidates span rank5. The rank3 nilpotence, all five adjoint/B-square/anticommutation/exponential checks, six commutation checks, determinant1 marks and projection ranks4/3 are retained facts of this actual role.',
+ 'The failed independence premise prevents the conditional end-intersection certificate. BN^2=-N^2 is not independently asserted or evaluated here; a future method may compare the retained values in a separately admitted role. No IP, GEN, case, order, manuscript or conjecture credit is added.',
+ 'All28 first and28 closing reads are reconstructed literally from admitted Source:578234 explicit bytes+96853 nominal bootstrap=675087. The nominal allowance is not an OS/stdlib IO measurement. This is one role acquisition with its own exact checks, not an independent numerical recheck. Existing tensor/span/dihedral/group/orbit work is borrowed, not repeated.'
+ ]
+ common=dict(schema='F004_PROJECTION_STAR_CENTRALIZER_ACTUAL_REUSE_V1',status='SUPPORTED_ACTUAL_INCONCLUSIVE_COMMUTANT_WITH_REUSABLE_PARTIAL_FACTS',reviewer='/root/artifact_audit',blockers=[],position=2739,case=q['case'],Source_manifest=mfref,request=po['request'],Root_input_import=q['Root_input_import'],current_selector=q['current_selector'],old_operand_job=q['old_operand_job'],old_Root_import=q['old_Root_import'],local_actual_review=q['local_actual_review'],H_tensor_actual_review=q['H_tensor_actual_review'],R_tensor_actual_review=q['R_tensor_actual_review'],result=rr,proof=pr,actual_SDK=actual,common_commutant_dimension=6,commutation_equation_rank=19,basis_rank=5,old_candidate_basis_rank=5,nilpotence_degree=3,mark_determinants=[1]*4,projection_ranks=[4,3],all_adjoint_and_exponential_checks_true=True,all_adjoint_BN_B2_exponential_checks_supported=True,all_six_candidates_commute_with_both_projections=True,conditional_end_intersection_certificate=False,IP_GEN_case_or_canonical_credit=0,whole_Source_and_inputs_closed=True,actual_guard_and_raw_frames_verified=True,Original_numerical_payloads_decoded_by_reviewer=False)
+ full=save('review_integer_only.json',dict(common,schema='F004_PROJECTION_STAR_CENTRALIZER_ACTUAL_INDEPENDENT_REVIEW_V1',Source_plus_guards512=60131,Source_peer=q['new_Source_peer'],controls_actual_review=q['new_controls_actual_review'],Root_preparation_SDK=prepref,actual_counts=counts,guard_sampled_peak_RSS=receipt['peaks']['total_rss'],guard_seconds=receipt['seconds'],guard_cleanup=receipt['cleanup'],scalar_checks=checks,worker_read_sequence=seq,lexical_field_allowlist=SELECTED,reviewed_first_closing_pins=[r for r,b in CACHE.values()],qualifications=qualifications))
+ thin=save('reuse_integer_only.json',dict(common,full_actual_review=full))
+ hand=save('handoff.json',dict(status=common['status'],reviewer=common['reviewer'],blockers=[],reuse=thin,full_review=full))
+ print(json.dumps(dict(handoff=hand,reuse=thin,full_review=full,metadata_paths=len(CACHE),audit_bytes_read=READ)))
+
+if __name__=='__main__':main()

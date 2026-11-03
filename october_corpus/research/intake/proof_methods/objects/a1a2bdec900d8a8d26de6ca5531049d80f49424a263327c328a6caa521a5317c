@@ -1,0 +1,175 @@
+from pathlib import Path
+
+import ast,hashlib,json,math,os,shlex,stat,copy
+
+A=Path("/private/tmp/l026_subset_pair_family_actual")
+
+P=Path("/private/tmp/l026_subset_pair_family")
+
+O=Path('/private/tmp/l026_subset_pair_controls24_actual_independent_review')
+
+CACHE={};REFS={};SIGS={};READ=0
+
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def whole(p):
+ global READ
+ p=Path(p);k=str(p)
+ if k in CACHE:return CACHE[k]
+ s=p.lstat();assert p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size<=4*2**20
+ assert len(CACHE)<512 and READ+s.st_size<=64*2**20
+ with os.fdopen(os.open(p,os.O_RDONLY|os.O_NOFOLLOW),'rb')as f:a=os.fstat(f.fileno());b=f.read(s.st_size+1);z=os.fstat(f.fileno())
+ assert sig(s)==sig(a)==sig(z)==sig(p.lstat())and len(b)==s.st_size
+ CACHE[k]=b;SIGS[k]=sig(s);REFS[k]=dict(path=k,bytes=len(b),sha256=hashlib.sha256(b).hexdigest());READ+=len(b);return b
+
+def ref(p):whole(p);return REFS[str(p)]
+
+def check(r):b=whole(r['path']);assert REFS[r['path']]==r;return b
+
+def decode(b):
+ def pairs(items):
+  d={}
+  for k,v in items:assert k not in d;d[k]=v
+  return d
+ def finite(x):v=float(x);assert math.isfinite(v);return v
+ def bad(x):raise ValueError('nonfinite')
+ return json.loads(b,object_pairs_hook=pairs,parse_float=finite,parse_constant=bad)
+
+def doc(p):return decode(whole(p))
+
+def vend(s,i):
+ depth=0;quoted=False;escaped=False
+ while i<len(s):
+  c=s[i]
+  if quoted:
+   if escaped:escaped=False
+   elif c=='\\':escaped=True
+   elif c=='"':quoted=False
+  elif c=='"':quoted=True
+  elif c in'[{':depth+=1
+  elif c in']}':
+   if depth==0:break
+   depth-=1
+  elif c==','and depth==0:break
+  i+=1
+ assert not quoted and depth==0;return i
+
+def spaces(s,i):
+ while i<len(s)and s[i]in' \r\n\t':i+=1
+ return i
+
+def spans(b):
+ s=b.decode();i=spaces(s,0);assert s[i]=='{';i=spaces(s,i+1);d={};jd=json.JSONDecoder()
+ while s[i]!='}':
+  k,j=jd.raw_decode(s,i);assert type(k)is str and k not in d;i=spaces(s,j);assert s[i]==':';i=spaces(s,i+1);j=vend(s,i);d[k]=s[i:j].rstrip().encode();i=spaces(s,j)
+  if s[i]==',':i=spaces(s,i+1)
+  else:break
+ assert s[i]=='}'and spaces(s,i+1)==len(s);return d
+
+def array(b):
+ s=b.decode();i=spaces(s,0);assert s[i]=='[';i=spaces(s,i+1);out=[]
+ while s[i]!=']':
+  j=vend(s,i);out.append(s[i:j].rstrip().encode());i=spaces(s,j)
+  if s[i]==',':i=spaces(s,i+1)
+  else:break
+ assert s[i]==']'and spaces(s,i+1)==len(s);return out
+
+def squash(b):
+ s=b.decode();out=[];quoted=False;escaped=False
+ for c in s:
+  if quoted:
+   out.append(c)
+   if escaped:escaped=False
+   elif c=='\\':escaped=True
+   elif c=='"':quoted=False
+  elif c=='"':quoted=True;out.append(c)
+  elif c not in' \r\n\t':out.append(c)
+ assert not quoted;return ''.join(out).encode()
+
+def norm(b):
+ b=b.strip()
+ if b[:1]==b'{':return b'{'+b','.join(json.dumps(k).encode()+b':'+norm(v)for k,v in sorted(spans(b).items()))+b'}'
+ if b[:1]==b'[':return b'['+b','.join(norm(v)for v in array(b))+b']'
+ return squash(b)
+
+def pick(b,keys):p=spans(b);return{k:decode(p[k])for k in keys},p
+
+def token_sha(b):return hashlib.sha256(norm(b)+b'\n').hexdigest()
+
+def sdk(path,key):
+ r=ref(path);v=doc(path);av=v['issued_argv'];frames=v['all_genuine_api_frames'];args=v['issued_tool_arguments']
+ assert v['root']==v['actor']=='/root'and av==v['child_argv']==shlex.split(v['issued_command'])==shlex.split(args['cmd'])
+ assert frames and frames[0]==v['full_initial_tool_return']and frames[-1]==v['full_tool_return']and frames[-1]['exit_code']==v['actual_tool']['exit_code']==0 and'session_id'not in frames[-1]
+ assert v['actual_tool']['initial_chunk']==frames[0]['chunk_id']and v['actual_tool']['terminal_chunk']==frames[-1]['chunk_id']
+ if v['actual_tool']['synchronous']:assert len(frames)==1 and v['actual_tool']['handle']is None
+ else:assert all(f.get('session_id')==v['actual_tool']['handle']for f in frames[:-1])
+ d=Path('/private/tmp/intake_actual_transports')/key
+ assert sorted(x.name for x in d.iterdir())==['frame_%04d.json'%i for i in range(len(frames))]+['issued.json']
+ issued=doc(d/'issued.json');assert issued['root']=='/root'and issued['argv']==av and issued['tool_arguments']==args
+ raw=[ref(d/'issued.json')]
+ for i,f in enumerate(frames):
+  path=d/('frame_%04d.json'%i);assert doc(path)==f;raw.append(ref(path))
+ stdout=''.join(f.get('output','')for f in frames);assert'Warning: truncated'not in stdout
+ return r,v,raw,stdout
+
+def put(name,value):
+ b=json.dumps(value,sort_keys=True,indent=2,allow_nan=False).encode()+b'\n';p=O/name;assert not p.exists()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+audit_source=ref(__file__);mfref=ref(P/'Source_manifest_controls.json');mf=doc(mfref['path'])
+assert mfref['sha256']=='84c1ac7b3c569ec71606272d2a3e304b83ec874421fca8f14317cd0f142b5f47'
+sources=mf['Source']
+for r in sources:check(r)
+assert len(sources)==10 and sum(r['bytes']for r in sources)==56361
+assert mf['schema']=='L026_SUBSET_PAIR_SOURCE_V1'and mf['entry']=='controls.py'and not(P/'__pycache__').exists()and not list(P.glob('*.pyc'))
+assert mf['caps']==dict(Source=65536,file=2097152,new_each=131072,outputs=2,paths=96,read=8388608,rss=134217728,seconds=150,units=10000000,work_seconds=20)
+expected={'budget.py','common.py','point_kernel.py','family.py','pair_kernel.py','bindings.py','interface.py','controls.py','supervise_validation.py','supervise_transient.py'}
+assert{Path(r['path']).name for r in sources}==expected
+assert sum(r['bytes']for r in sources if Path(r['path']).name.startswith('supervise_'))==23167
+ownerref=ref(A/'Root_Source_ownership.json');owner=doc(ownerref['path'])
+assert owner['schema']=='ROOT_L026_SUBSET_PAIR_SOURCE_OWNERSHIP_V1'and owner['root']=='/root'and owner['Root_authority']is owner['new_Original_free24_controls_authorized']is owner['whole_Source_group_action_theorem_and_IO_owned']is True and owner['control_Source_manifest']==mfref
+assert owner['Original_pair_shard_row_roles_authorized']is owner['canonical_writes_authorized']is False
+peerref=owner['Source_peer'];peer=decode(check(peerref));assert peerref['sha256']=='ebee5c453d15563f0ce2772e0b12cff1e7b2ace94d9d45fdfbcb45275f295cee'and peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root','/root/artifact_audit')and peer['control_Source_manifest']==mfref
+assert peer['Source_controls_guards512']==56873 and peer['Source_manifest']==owner['Source_manifest']
+for key in('Source_manifest','packet'):check(owner[key])
+check(peer['full_review']);check(peer['proof_and_scope'])
+osdk,ov,oraw,oout=sdk(A/'Root_SDK/Source_ownership_v1.json','Root_l026_subset_pair_Source_ownership_v1');oo=decode(oout);assert oo['Source_ownership']==ownerref
+assert ov['issued_argv'][:4]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S']and len(ov['issued_argv'])==5
+ownership_source=ref(ov['issued_argv'][-1]);ast.parse(whole(ownership_source['path']))
+actual,av,raw,out=sdk(A/'Root_SDK/controls24_v1.json','Root_l026_subset_pair_controls24_v1')
+guard=A/'guards/controls24';startedref=ref(guard/'started.json');started=doc(startedref['path']);receiptr=ref(guard/'receipt.json');receipt=doc(receiptr['path']);stdoutr=ref(guard/'stdout.log');stdout=whole(guard/'stdout.log');stderrr=ref(guard/'stderr.log');stderr=whole(guard/'stderr.log');answer=decode(stdout)
+qref=ref(A/'bindings/controls_request.json');gref=ref(A/'bindings/controls_gate.json');q=decode(check(qref));g=decode(check(gref))
+assert q==dict(schema='L026_SUBSET_PAIR_CONTROLS_V1',Root_authority=False,python_executable='/Users/sasha/.venvs/global/bin/python')
+assert g['root']=='/root'and g['Root_authority']is g['adopted']is g['Source_and_math_owned']is True and g['manifest']==g['control_Source_manifest']==mfref and g['request']==qref and g['independent_Source_review']==peerref and g['actual_controls_review']is None
+assert oo['request']==qref and oo['gate']==gref and oo['argv']==av['issued_argv']
+child=[q['python_executable'],'-E','-B','-S',str(P/'controls.py'),'--manifest',mfref['path'],str(mfref['bytes']),mfref['sha256'],'--request',qref['path'],str(qref['bytes']),qref['sha256'],'--Root-gate',gref['path'],str(gref['bytes']),gref['sha256'],'--guard',str(guard),'--out',str(A/'controls24')]
+argv=av['issued_argv'];assert argv[argv.index('--')+1:]==child==started['command']==receipt['command']and argv[argv.index('--rss-cap-mib')+1]=='128'and argv[argv.index('--timeout')+1]=='150'
+assert argv[:11]==['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES']
+limits=dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,ram_floor=3*2**30,total_rss=128*2**20,wall_seconds=150.0,sample_seconds=0.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+assert started['limits']==receipt['limits']==limits and started['admission']==receipt['admission']and started['admission']['free_disk']>=10*2**30 and started['admission']['available_ram']>=4*2**30
+assert len(started['identities'])==len(receipt['identities'])==1;si=started['identities'][0];ri=receipt['identities'][0];assert all(si[k]==ri[k]for k in('pid','birth','initial_parent','group','session'))and si['pid']==si['group']==si['session']
+assert receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['error']is None and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]and stderr==b''and receipt['logs']==dict(stdout=len(stdout),stderr=0)and receipt['seconds']<150 and receipt['peaks']['total_rss']<128*2**20
+assert decode(out)==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+assert answer['status']=='PASS'and answer['controls']==24 and len(answer['outputs'])==2
+resultref,proofref=answer['outputs'];result=decode(check(resultref));proof=decode(check(proofref));assert resultref['path']==str(A/'controls24/result.json')and proofref['path']==str(A/'controls24/proof.json')
+pins=dict(manifest=mfref,request=qref,Root_gate=gref)
+assert result['status']==proof['status']=='PASS'and result['controls']==proof['controls']==24 and result['Original_inputs_loaded']is proof['Original_inputs_loaded']is False and proof['old_family_controls_replayed']is False and proof['synthetic_actions_not_Original_Fi22']is True and result['pins']==proof['pins']==pins
+source=whole(P/'controls.py');tree=ast.parse(source);fixture=next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name=='suite');calls=sorted((n for n in ast.walk(fixture)if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in('yes','no')),key=lambda n:n.lineno)
+labels=[n.args[0].value for n in calls];assert len(labels)==len(set(labels))==24 and labels==result['names']
+first=[mfref,qref,gref]+sources+[startedref];assert len(first)==len({r['path']for r in first})==14
+explicit=2*sum(r['bytes']for r in first);nominal=59889+56361-23167+512
+assert explicit==121258 and nominal==93595 and result['physical_reads']==explicit+nominal==214853
+assert result['point_units']==382984 and result['point_units']<10000000 and all(r['bytes']<=131072 for r in answer['outputs'])and len({r['path']for r in first+answer['outputs']})==16
+# Source charges publication after the pre-publication result counter is frozen.
+post_publication_work_upper=result['point_units']+3*sum(r['bytes']for r in answer['outputs']);assert post_publication_work_upper==389563<10000000
+assert 56361+512==56873<=65536 and READ+sum(r['bytes']for r in REFS.values())<=64*2**20
+for k,r in list(REFS.items()):
+ p=Path(k);s=p.lstat();assert sig(s)==SIGS[k]
+ with os.fdopen(os.open(p,os.O_RDONLY|os.O_NOFOLLOW),'rb')as f:a=os.fstat(f.fileno());b=f.read(s.st_size+1);z=os.fstat(f.fileno())
+ assert sig(s)==sig(a)==sig(z)==sig(p.lstat())and len(b)==r['bytes']and hashlib.sha256(b).hexdigest()==r['sha256'];READ+=len(b)
+closure=put('whole_pin_closure.json',dict(refs=list(REFS.values()),paths=len(REFS),first_closing_read_bytes=READ))
+report=dict(schema='L026_SUBSET_PAIR_CONTROLS24_ACTUAL_REVIEW_V1',status='SUPPORTED_ACTUAL_SUBSET_PAIR_CONTROLS24',reviewer='/root/ledger_preparation',author='/root/artifact_audit',blockers=[],Source_manifest=mfref,Source_union_guards512=56873,Source_peer=peerref,Root_Source_ownership=ownerref,Root_ownership_actual=osdk,Root_ownership_Source=ownership_source,Root_ownership_raw=oraw,actual_SDK=actual,genuine_raw_frames=raw,guard=dict(started=startedref,receipt=receiptr,stdout=stdoutr,stderr=stderrr),result=resultref,proof=proofref,controls=24,names=labels,Original_inputs_loaded=False,whole_Source_and_inputs_closed=True,actual_guard_and_raw_frames_verified=True,whole_input_and_output_bytes_first_closing_verified=True,exact_first_and_closing_read_sequence=first+first,physical_reads_with_nominal=214853,explicit_first_closing_read_bytes=explicit,nominal_Project_and_guard_reserve=nominal,pre_publication_point_units=result['point_units'],post_publication_point_units_from_literal_Source=post_publication_work_upper,pid=si['pid'],birth=str(si['birth']),seconds=str(receipt['seconds']),sampled_peak_RSS_bytes=receipt['peaks']['total_rss'],closure=closure,audit_Source=audit_source,represented_Source_or_controls_executed_by_reviewer=False,Root_authority=False,qualifications=['Artifact authored the new subset-pair interface and Readback supplied its static peer. Root executed the actual controls; this reviewer is distinct for that execution. Older pair-container theorem and primitive lineage remain borrowed.','The24 ordered labels are complete Source fixtures: native pair/tag/row encodings, complete16/last6 map intervals, paid/owner/witness joins, incomplete tags without negative credit, endpoint escape and preflight bounds. These are synthetic actions, not an Original Fi22 calculation or canonical status.','The actual first-v1 SDK/raw/guard/Source and14first+14closing reads plus nominal bootstrap are checked. The382984 point counter is frozen before output publication; literal emit adds6579, yielding389563. No OS-wide tracing or numerical replay is claimed.','This ordinary bounded read-only metadata audit made no canonical/progress/Git writes and reserved no shared numerical guard. Later operational-tail preservation remains separate.'])
+full=put('review_integer_only.json',report);thin=put('reuse_integer_only.json',dict(schema='L026_SUBSET_PAIR_CONTROLS24_ACTUAL_REUSE_V1',status=report['status'],reviewer=report['reviewer'],blockers=[],Source_manifest=mfref,controls=24,Original_inputs_loaded=False,actual_SDK=actual,result=resultref,proof=proofref,whole_Source_and_inputs_closed=True,actual_guard_and_raw_frames_verified=True,full_actual_review=full))
+hand=put('handoff.json',dict(status=report['status'],reviewer=report['reviewer'],blockers=[],reuse=thin,review=full,whole_pin_closure=closure))
+print(json.dumps(dict(handoff=hand,reuse=thin,full_review=full,own_paths=len(REFS),own_first_closing_bytes=READ),sort_keys=True))

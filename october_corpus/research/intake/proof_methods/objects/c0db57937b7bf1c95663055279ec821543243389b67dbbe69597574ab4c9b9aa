@@ -1,0 +1,103 @@
+"""Root owns the new line projector and third-form certificate; old facts are reused."""
+from pathlib import Path
+import argparse, ast, json, hashlib
+
+p = argparse.ArgumentParser()
+p.add_argument('mode', choices=('source','original'))
+p.add_argument('--peer', required=True)
+p.add_argument('--controls-review')
+a = p.parse_args()
+helper = Path('/private/tmp/intake_metadata/whole.py')
+body = helper.read_bytes()
+assert len(body) == 3744 and hashlib.sha256(body).hexdigest() == '685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+namespace = dict(__file__=str(helper), __name__='root_fixed_line_metadata')
+exec(compile(body, str(helper), 'exec'), namespace)
+L, write = namespace['Ledger'](), namespace['write']
+src = Path('/private/tmp/f004_fixed_line_tensor_intersection')
+h, hr = L.document(src / 'handoff.json')
+assert hr['sha256'] == 'ee59769954d4e54d09242dec52716691b265b14183278a36ac543adbff00a488'
+f = h['files']
+for r in f.values():
+    L.raw(r['path'], r)
+peer, pr = L.document(a.peer)
+assert peer['status'].startswith('SUPPORTED_STATIC') and peer['blockers'] == []
+assert peer['reviewer'] not in ('/root', h['author'])
+assert peer['Source_manifest'] == f['SOURCE_MANIFEST_worker.json']
+assert peer['control_Source_manifest'] == f['SOURCE_MANIFEST_controls.json']
+for kind in ('worker','controls'):
+    mfref = f['SOURCE_MANIFEST_' + kind + '.json']
+    mf, _ = L.document(mfref['path'], mfref)
+    total = 512
+    for r in mf['sources']:
+        absolute = dict(r, path=str(src / r['path']))
+        total += len(L.raw(absolute['path'], absolute)[0])
+    for r in mf['external_runtime']:
+        total += len(L.raw(r['path'], r)[0])
+    assert total == h['Source_plus_guards512'][kind]
+L.raw(h['old_partial_actual']['path'], h['old_partial_actual'])
+L.raw(h['conditional_theory_review']['path'], h['conditional_theory_review'])
+base = Path('/private/tmp/f004_fixed_line_tensor_intersection_actual')
+routes, _ = L.document(f['ROOT_ROUTES_FALSE.json']['path'], f['ROOT_ROUTES_FALSE.json'])
+PY = '/Users/sasha/.venvs/global/bin/python'
+env = ['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES']
+def guarded(child, name):
+    return env + [PY,'-E','-B','/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py',
+                  '--volume','/Users/sasha/medusa','--output',str(base/'guards'/name),
+                  '--rss-cap-mib','128','--timeout','100','--'] + child
+if a.mode == 'source':
+    assert not a.controls_review and not base.exists()
+    L.close()
+    base.mkdir()
+    for name in ('Root_SDK','guards','bindings'):
+        (base/name).mkdir()
+    owner = write(base/'Root_Source_ownership.json', dict(
+        schema='ROOT_F004_FIXED_LINE_TENSOR_SOURCE_OWNERSHIP_V1', root='/root', Root_authority=True,
+        packet=hr, Source_manifest=f['SOURCE_MANIFEST_worker.json'],
+        control_Source_manifest=f['SOURCE_MANIFEST_controls.json'], Source_peer=pr,
+        whole_Source_theory_Phi_contract_and_invoices_owned=True,
+        old_C6_rank19_Ndegree3_star_and_D22_premises_borrowed=True,
+        new_fixed_line_projector_six_basis_and_four_mark_Phi_tests_owned=True,
+        no_old_elimination_groups_or_orbits_repeated=True,
+        Source_plus_guards512=h['Source_plus_guards512'],
+        first_and_closing_metadata_bytes=L.bytes,
+        new24_synthetic_controls_authorized=True, Original_role_authorized=False))
+    child = routes['controls']['argv_template']
+    assert child[-1] == 'FRESH_PRIVATE_OUTPUT'
+    child[-1] = str(base/'controls24')
+    print(json.dumps(dict(Source_ownership=owner,argv=guarded(child,'controls24'),actual_base=str(base))))
+else:
+    assert a.controls_review
+    owner, _ = L.document(base/'Root_Source_ownership.json')
+    assert owner['Source_peer'] == pr and owner['Source_manifest'] == f['SOURCE_MANIFEST_worker.json']
+    control, controlref = L.document(a.controls_review)
+    assert control['status'].startswith('SUPPORTED_ACTUAL') and control['blockers'] == []
+    assert control['reviewer'] not in ('/root',h['author'])
+    assert control['Source_manifest'] == f['SOURCE_MANIFEST_controls.json']
+    assert control['count'] == 24 and control['Original_inputs_loaded'] is False
+    q, _ = L.document(f['REQUEST_FALSE.json']['path'], f['REQUEST_FALSE.json'])
+    root, _ = L.document(f['ROOT_IMPORT_FALSE.json']['path'], f['ROOT_IMPORT_FALSE.json'])
+    intake, _ = L.document('/Users/sasha/medusa/research/leemans/maintenance/intake/progress/current_intake.json')
+    q['current_selector'] = intake['F004']['job20']['current_selector']
+    selector, _ = L.document(q['current_selector']['path'],q['current_selector'])
+    assert selector['unresolved_position_runs'] == [[2739,2739]]
+    assert intake['F004']['local_positions_still_requiring_mathematics_or_strict_validation'] == [2739]
+    q['new_Source_peer'] = pr
+    q['new_controls_actual_review'] = controlref
+    for key in ('old_star_actual_review','old_operand_job','old_Root_import'):
+        L.raw(q[key]['path'],q[key])
+    code, _ = L.raw(src/'scope.py')
+    duties = next(ast.literal_eval(n.value) for n in ast.parse(code).body
+                  if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='DUTIES' for t in n.targets))
+    assert len(duties) == 10
+    root.update({k:v for k,v in q.items() if k not in ('schema','Root_authority','Root_input_import')})
+    root.update(root='/root',Root_authority=True,adopted=True,
+                Source_manifest_sha256=f['SOURCE_MANIFEST_worker.json']['sha256'])
+    root.update({key:True for key in duties})
+    L.close()
+    rr = write(base/'bindings/Root_input_import.json',root)
+    q['Root_input_import'] = rr
+    qr = write(base/'bindings/request.json',q)
+    child = routes['worker']['argv_template']
+    assert child[-3:] == ['ROOT_PREPARED_REQUEST','ROOT_PREPARED_SHA','FRESH_PRIVATE_OUTPUT']
+    child[-3:] = [qr['path'],qr['sha256'],str(base/'original')]
+    print(json.dumps(dict(request=qr,Root_import=rr,argv=guarded(child,'original'),actual_base=str(base))))

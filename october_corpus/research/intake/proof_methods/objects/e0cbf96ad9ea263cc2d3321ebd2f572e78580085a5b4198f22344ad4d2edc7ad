@@ -1,0 +1,97 @@
+"""Root owns one selected induction and emits metadata-only assembly argv."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+import resource
+import signal
+import time
+
+started = time.monotonic()
+signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('115s metadata ownership')))
+signal.alarm(115)
+helper = Path('/private/tmp/intake_metadata/whole.py')
+body = helper.read_bytes()
+assert len(body) == 3744 and hashlib.sha256(body).hexdigest() == '685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+ns = dict(__file__=str(helper), __name__='root_shard_ownership_metadata')
+exec(compile(body, str(helper), 'exec'), ns)
+L, write = ns['Ledger'](), ns['write']
+
+def check():
+    assert time.monotonic() - started < 110
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss <= 268435456
+    assert len(L.pins) <= 80 and L.bytes <= 6 * 2**20
+
+def document(path, expected=None):
+    check()
+    value, r = L.document(path, expected)
+    check()
+    return value, r
+
+base = Path('/private/tmp/l026_subset_pair_family_actual')
+src = Path('/private/tmp/l026_subset_pair_shard_metadata_assembly')
+h, hr = document(src / 'handoff.json')
+assert hr['sha256'] == '4a4f71a03a6066bfa05d004e295549d99de026646227c9b8cbc30173075cf053'
+for r in h.values():
+    if type(r) is dict and set(r) == {'path', 'bytes', 'sha256'}:
+        L.raw(r['path'], r)
+peer, peerref = document('/private/tmp/l026_subset_pair_shard_metadata_assembly_source_independent_review/reuse_integer_only.json')
+assert peerref['sha256'] == '19de56492e6b8fc4bf503a83e3f20eba0b5982280e8654cc7a923a463a8521bc'
+assert peer['status'] == 'SUPPORTED_STATIC_METADATA_ONLY_SELECTED_SHARD_ASSEMBLY'
+assert peer['reviewer'] not in ('/root', h['author']) and peer['blockers'] == []
+assert peer['program'] == h['program'] and peer['plan'] == h['plan']
+plan, planref = document(h['plan']['path'], h['plan'])
+for r in plan['pins'].values():
+    L.raw(r['path'], r)
+pins = plan['pins']
+pair, pairref = document(pins['pair_actual_review']['path'], pins['pair_actual_review'])
+assert pairref['sha256'] == '7d21eb47c80c89de3cf07f1b6360ce64b627c00eafc0711914ff238810bb2980'
+assert pair['status'] == 'SUPPORTED_ACTUAL_ENDPOINT_PAIR_ONLY' and pair['blockers'] == []
+assert pair['whole_Source_and_inputs_closed'] is pair['actual_guard_and_raw_frames_verified'] is True
+prior, priorref = document(base / 'Root_pair_role_decision.json')
+assert priorref['sha256'] == '781b8f7a5b4b821f89bb813a2f9f43dae85ea8460fa2eeeafe3a7cccf70f844d'
+assert prior['root'] == '/root' and prior['Root_authority'] is prior['adopted'] is True
+original, originalref = document(pins['old_Original_family_import']['path'], pins['old_Original_family_import'])
+assert originalref['sha256'] == '63643fc915c0867edee7790b78a5ff35519442fd13bbcba0559a3ddc304ed92d'
+assert original['schema'] == 'ROOT_L026_D_FAMILY_EXACT_ORIGINAL_IMPORT_V1'
+assert original['Root_authority'] is original['adopted'] is True
+assert original['original_point_to_involution_bridge_full_equivariance_and_G_membership_owned'] is True
+assert original['same_original_d0_and_ordered_A_and_full_bridge_frame_owned'] is True
+selected, _ = document(pins['selected_induction']['path'], pins['selected_induction'])
+cut, _ = document(pins['provider_actual_review']['path'], pins['provider_actual_review'])
+assert cut['strict_every_full_map_equation_verified'] is cut['whole_Source_and_inputs_closed'] is cut['actual_guard_and_ordered_raw_frames_verified'] is True
+assert cut['blockers'] == [] and cut['reviewer'] != '/root'
+assert selected['provider']['begin'] == 0 and selected['provider']['end'] == 16
+matches = [item for item in cut['items'] if item['provider'] == selected['provider']]
+assert len(matches) == 1 and matches[0]['parent_chunks'] == selected['external_parent_chunks'] == []
+assert selected['ancestor_actual_cuts'] == [pins['provider_actual_review']]
+assert original['operands'] == selected['operands'] == cut['operands'] == pair['operands']
+assert selected['family_key'] == cut['family_key'] == pair['family_key']
+program, _ = L.raw(h['program']['path'], h['program'])
+duties = next(ast.literal_eval(node.value) for node in ast.parse(program).body
+              if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'DUTIES' for t in node.targets))
+assert len(duties) == 7 and all(prior[k] is True for k in duties)
+decision, _ = document(h['Root_decision_FALSE']['path'], h['Root_decision_FALSE'])
+assert decision['Root_authority'] is decision['adopted'] is decision['Original_selected_shard_role_authorized'] is False
+decision.update(root='/root', Root_authority=True, adopted=True,
+    Original_selected_shard_role_authorized=True, assembly_Source_peer=peerref,
+    all_selected_ancestor_equations_to_d0_and_original_bridge_owned=True,
+    prior_endpoint_and_group_action_ownership=priorref,
+    selected_induction_argument='For ordinals0..15, the independently reviewed strict whole-map equations start at the exact original d0 and use strictly earlier ordinals in this same carrier. Induction gives each exact tree conjugate; the previously accepted equivariant point-to-involution bridge gives its intended inner-G membership. No unreviewed suffix or external parent is imported.',
+    unpaid_row_qualification='This shard checks no owner row. Unpaid eligibility and current canonical pointer are separately required for every later rows role.',
+    conclusion_scope='Only16 subset-image tags from old reviewed maps; no complete native family, case, GEN, IP, conjecture or canonical credit.')
+decision.update({duty: True for duty in duties})
+assert not Path(decision['assembly_output']).exists()
+assert not Path(decision['worker_guard']).exists() and not Path(decision['worker_output']).exists()
+L.close()
+check()
+decisionref = write(base / 'Root_shard000_role_decision.json', decision)
+def triple(r):
+    return [r['path'], str(r['bytes']), r['sha256']]
+argv = ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', h['program']['path'],
+        '--plan', *triple(planref), '--decision', *triple(decisionref),
+        '--assembly-peer', *triple(peerref), '--out', decision['assembly_output']]
+signal.alarm(0)
+print(json.dumps(dict(decision=decisionref, argv=argv,
+    assembly_output=decision['assembly_output'], Source_peer=peerref,
+    metadata_only=True, numerical_worker_not_launched=True)))

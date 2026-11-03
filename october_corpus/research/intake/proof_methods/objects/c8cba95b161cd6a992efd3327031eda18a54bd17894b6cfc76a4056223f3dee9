@@ -1,0 +1,126 @@
+"""Whole Source/ABI metadata closure only; never imports represented workers."""
+from pathlib import Path
+import ast,hashlib,json,os,stat,time
+B=Path('/private/tmp/f004_projection_star_centralizer');O=Path(__file__).resolve().parent
+C={};TOTAL=0;START=time.monotonic()
+def enc(x):return(json.dumps(x,sort_keys=True,indent=2)+'\n').encode()
+def read(p,r=None):
+ global TOTAL
+ p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ if str(p)not in C:
+  s=p.stat();assert stat.S_ISREG(s.st_mode)and s.st_size<=4*2**20
+  b=p.read_bytes();t=p.stat();assert(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)==(t.st_dev,t.st_ino,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+  TOTAL+=len(b);assert TOTAL<64*2**20 and len(C)<512
+  C[str(p)]=(dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()),b)
+ got,b=C[str(p)]
+ if r is not None:assert got==r
+ return b
+def doc(p,r=None):return json.loads(read(p,r))
+def ref(p):read(p);return C[str(Path(p))][0]
+def pinned(r):return doc(r['path'],r)
+def save(n,x):
+ p=O/n;b=enc(x)
+ with p.open('xb')as f:f.write(b);f.flush();os.fsync(f.fileno())
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+h=doc(B/'handoff.json',dict(path=str(B/'handoff.json'),bytes=3371,sha256='cece7f55aca7660d3268653c3026b690ae31de49b4087f6c51ab2ba84daeca1d'))
+assert h['Root_authority']is h['execute_authorized']is h['controls24_executed']is h['represented_Source_imported_or_executed']is h['original_payloads_decoded']is False
+f=h['files'];wm=pinned(f['SOURCE_MANIFEST_worker.json']);cm=pinned(f['SOURCE_MANIFEST_controls.json']);inv=pinned(f['SOURCE_WORK_IO_INVOICE_FALSE.json'])
+assert f['SOURCE_MANIFEST_worker.json']['sha256']=='c65098660c58a4fe745b9aa681dc3564b63f1d0b81b6d9876d2815f7a1daad87'
+assert f['SOURCE_MANIFEST_controls.json']['sha256']=='2dc51ad8050d5554aa04442fbcbf32000e588add259a90e80a85a75158412df4'
+src={};unions={}
+for role,m in [('worker',wm),('controls',cm)]:
+ assert m['schema']=='F004_PROJECTION_STAR_CENTRALIZER_SOURCE_V1'and m['entry']==role+'.py'and m['caps']==inv['caps']
+ names=set();total=0
+ for r in m['sources']:
+  p=B/r['path'];read(p,dict(r,path=str(p)));src[r['path']]=C[str(p)][1];ast.parse(src[r['path']]);names.add(r['path']);total+=r['bytes']
+ assert names=={'runtime.py','role.py','field.py','algebra.py','small.py','centralizer.py',role+'.py'}|({'scope.py'}if role=='worker'else set())
+ for r in m['external_runtime']:read(r['path'],r)
+ assert sum(r['bytes']for r in m['external_runtime'])==23167
+ unions[role]=dict(project=total,guards=23167,reserve=512,Source=total+23679,nominal=total+60401)
+ assert unions[role]['Source']==h['Source_plus_guards512'][role]==inv['roles'][role]['Source_plus_guards512']<=65536
+ assert unions[role]['nominal']==inv['roles'][role]['nominal_bootstrap_reserve']
+assert unions['worker']['Source']==60131 and unions['controls']['Source']==54293
+for name,r in f.items():read(r['path'],r)
+origin=pinned(f['SOURCE_ORIGINS_FALSE.json'])
+raw=[]
+for x in origin['literal_reused_whole_files']:
+ a=read(x['old']['path'],x['old']);b=read(x['new']['path'],x['new']);assert a==b
+ raw.append(dict(kind='literal_whole',old=x['old'],new=x['new'],whole_old=a.decode(),whole_new=b.decode()))
+x=origin['role'];a=read(x['old']['path'],x['old']);b=read(x['new']['path'],x['new'])
+assert a.replace(b"'tensor.py','orbit.py'",b"'small.py','centralizer.py'").replace(b'F004_LEFT_SPAN_TENSOR_INTERSECTION_SOURCE_V1',b'F004_PROJECTION_STAR_CENTRALIZER_SOURCE_V1')==b
+raw.append(dict(kind='namespace_only',old=x['old'],new=x['new'],whole_old=a.decode(),whole_new=b.decode()))
+def defs(b):return {n.name:ast.get_source_segment(b.decode(),n)for n in ast.parse(b).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+x=origin['small_elimination'];a=read(x['old']['path'],x['old']);b=read(x['new']['path'],x['new'])
+assert all(defs(a)[k]==defs(b)[k]for k in x['literal_functions'])and x['literal_functions']==['small_transpose','mm']
+raw.append(dict(kind='two_literal_functions_and_explicit_new_elimination',old=x['old'],new=x['new'],whole_old=a.decode(),whole_new=b.decode()))
+for r in origin['new_files']:read(r['path'],r);raw.append(dict(kind='new_complete_body',new=r,whole_new=C[r['path']][1].decode()))
+oldscope=read(origin['scope_old_journal_and_frame_body']['path'],origin['scope_old_journal_and_frame_body'])
+oldkernel=read(origin['middle_word_convention']['path'],origin['middle_word_convention'])
+assert b'rotation=b.multiply(g[pair],g[pair+1])'in oldkernel and b'b.multiply(J.values[event],g[pair])'in oldkernel
+assert b"U=saved(pair['rotation_events'][1]);U2=saved(pair['rotation_events'][2]);B=saved(pair['reflection_events'][0])"in src['scope.py']
+assert b"rt.need(B==g[1]"in src['worker.py']
+imports=[pinned(r)for r in origin['imported_premises']]
+assert imports[0]['gram_rank']==4 and imports[0]['tensor_signs']==[1,1,1]and imports[0]['all_H_tensor_congruences_verified']is True
+assert imports[1]['tensor_signs']==[1,1,1]and imports[1]['middle_order']==22
+assert imports[2]['middle_order']==22 and imports[2]['all_adjacent_cycles_complete']is True
+assert all(v['case']==imports[0]['case']and v['blockers']==[]for v in imports)
+q=pinned(f['REQUEST_FALSE.json']);root=pinned(f['ROOT_IMPORT_FALSE.json']);routes=pinned(f['ROOT_ROUTES_FALSE.json'])
+assert q['Root_authority']is root['Root_authority']is root['adopted']is routes['Root_authority']is routes['execute_authorized']is False
+assert q['Root_input_import']is q['new_Source_peer']is q['new_controls_actual_review']is None
+assert root['new_Source_peer']is root['new_controls_actual_review']is None
+for k,v in root.items():
+ if k.endswith('_owned'):assert v is False
+assert root['Source_manifest_sha256']==f['SOURCE_MANIFEST_worker.json']['sha256']and root['case']==q['case']==imports[0]['case']
+for role in ['worker','controls']:
+ r=routes[role];av=r['argv_template'];assert r['manifest']==f['SOURCE_MANIFEST_'+role+'.json']
+ assert av[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(B/(role+'.py'))]
+ assert av[5:7]==[r['manifest']['path'],r['manifest']['sha256']]
+assert pinned(f['CONTROLS_REQUEST_FALSE.json'])==dict(schema='F004_PROJECTION_STAR_CENTRALIZER_CONTROLS_V1',Root_authority=False)
+labels=[]
+for n in sorted(ast.walk(ast.parse(src['controls.py'])),key=lambda n:getattr(n,'lineno',0)):
+ if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in('yes','no')and n.args and isinstance(n.args[0],ast.Constant):labels.append(n.args[0].value)
+assert len(labels)==12
+# Six names in a two-pass m2/m3 loop plus twelve literal names.
+dynamic=['complete_independent_algebra','nilpotence_degree_is_measured','both_adjoint_equations','U_is_the_retained_exponential','new_nonzero_parameter_norm_one','reflection_family_norm_one']
+alllabels=[p+'_'+x for p in ('square_zero','cube_zero')for x in dynamic]+labels
+assert len(alllabels)==len(set(alllabels))==24 and inv['controls']['count']==24 and inv['controls']['UNRUN']is True
+assert inv['controls']['positive_full_commutant_pair_fixture_available']is False
+# Source-derived arithmetic/work bounds, no matrix or represented Source evaluation.
+def rref_upper(rows,cols,width,rank):return rows*cols+rank*(width+2+(rows-1)*(1+2*width))
+def inverse_upper(n):return rref_upper(n,n,2*n,n)+2*n**3
+gaussian=rref_upper(49,25,25,25)+inverse_upper(25)
+algebra_basis=rref_upper(49,6,6,6)+inverse_upper(6)+(3*49+3*49+49+2*49+49+3*49)
+frame=(2*49)+inverse_upper(7)+8*49+4*(7*7+7+2*7+21+224)
+projection=2*rref_upper(7,7,7,7)+49+rref_upper(7,7,7,7)+12+inverse_upper(7)
+assert gaussian==156875 and algebra_basis==6025 and frame==3815 and projection==4352
+bd=inv['production']['linear_breakdown'];assert bd['full_49_by_25_RREF_and_worst_25_by_25_inverse_minor']==gaussian
+assert bd['candidate_algebra_basis_adjoint_and_nilpotence']==algebra_basis and bd['candidate_form_and_four_special_isometries']==frame and bd['projection_ranks_row_kernel_and_diagonalizer_inverse']==projection
+assert sum(bd.values())==inv['production']['linear_units_upper']==195878<200000
+assert inv['production']['matrix_products_upper']==8+4+4+10+24==50 and inv['production']['row_images']==0
+assert 3*49*25==bd['commutation_coefficients']and 22*53==bd['old_D22_opaque_field_entry_acquisition']
+scope_caps=[32768,32768,16384,262144]+2*[32768,131072,16384]+[32768,32768,84807,16384,16384,32768]
+first=f['SOURCE_MANIFEST_worker.json']['bytes']+unions['worker']['project']+23167+131072+sum(scope_caps)
+assert first==inv['roles']['worker']['first_read_upper']==1112645
+assert 2*first+unions['worker']['nominal']==inv['roles']['worker']['total_read_upper']==2322143
+cfirst=f['SOURCE_MANIFEST_controls.json']['bytes']+unions['controls']['project']+23167+f['CONTROLS_REQUEST_FALSE.json']['bytes']
+assert cfirst==inv['roles']['controls']['first_read_upper']==55320 and 2*cfirst+unions['controls']['nominal']==201655
+assert inv['roles']['worker']['input_paths_upper']==28 and inv['roles']['worker']['paths_with_two_outputs_upper']==30
+assert inv['roles']['controls']['input_paths_upper']==11 and inv['roles']['controls']['paths_with_two_outputs_upper']==13
+for p,(r,b)in C.items():assert Path(p).read_bytes()==b
+assert 2*TOTAL<67108864 and len(C)+4<512
+rawref=save('whole_Source_inverse.json',dict(schema='F004_PROJECTION_STAR_WHOLE_SOURCE_INDEPENDENT_INVERSE_V1',represented_Source_executed=False,entries=raw,old_scope=origin['scope_old_journal_and_frame_body'],whole_old_scope=oldscope.decode(),middle_word_Source=origin['middle_word_convention'],whole_middle_word_Source=oldkernel.decode()))
+quals=[
+ 'Ledger authors this new Source/theory. Reviewer authored earlier tensor and IO metadata peers and independently checked the conditional algebra lemma631fd2; old runtime/field/algebra/marking and tensor actual authorities are borrowed with this lineage. No represented Source/control was imported or executed and no Original matrix, basis, tree or journal values were opened here.',
+ 'Row orientation is correct: gQg^T=Q and g^TAg=A imply g(QA)=(QA)g; adjoint is Qx^TQ^-1. The Source freshly checks nonsingular symmetric Q, all four complete special-isometry equations/determinants, both projector identities and ranks, and full S P_H S^-1=diag(I4,0). Row image basis plus left kernel is correct under this S convention.',
+ 'The full49-by25 commutator matrix is correct. A nonsingular original(25-d) minor gives commutant dimension at most d, and an independent commuting d-element matrix list gives at least d. Complete inverse products certify these minors; guessed RREF labels or assumed dimension cannot produce the positive verdict. Both square/cube-zero branches require all formal multiplication/adjoint/nilpotence/exponential equations.',
+ 'The conditional star lemma yields44 norm-one units and22 determinant-one units in odd dimension7. B is directly joined to Originalr1; accepted middle journal Source fixes U=r1r2 and U2=U squared. New actual exponential equality and full-basis relation checks are required; no journal power/dihedral/group/tensor orbit is recomputed.',
+ 'Positive H/R tensor signs and symmetric nondegenerate saved root matrices are imported through exact actual reviews/proofs/operand/model joins; fresh eligibility may differ from their immutable historical selectors. Named innerG/frame and old local/D conclusions remain Root-owned conditional premises. A positive diagnostic still needs distinct actual review and separate logical rank4/saved-row/canonical application.',
+ 'The24 fresh artificial designs remain UNRUN. They test both positive relation algebras, inverse minors and refusal paths, plus a whole-diagnostic dimension13 inconclusive pair. No positive fullcommutant dimension4/6 projection-pair fixture is available; positive kernels and whole acceptance are supported by Source/math review, with this test limitation explicit.',
+ 'Source60131/54293 includes old guards+512. Conservative production50products/0rows/195878linear leaves4122linear headroom within unchanged200k; no49-by49 elimination or algebra-unit enumeration is introduced. Work/IO are program charges, not OS instruction counts, actual RSS/runtime predictions or complete OS/stdlib IO.',
+ 'Worker read envelope2322143 covers the fixed1563-byte manifest, maximum131072-byte request,28first+28closing paths and96853nominal. Controls201655 is conditional on the exact pinned81-byte request and1458-byte manifest; a different serialized request must be rebilled, despite equivalent JSON. Guard128MiB100s/10GiB4GiB and inherited cooperative limits are unchanged.',
+ 'All new Root gates remain FALSE/NULL; the current selector is a proposed known descriptor that Root must freshly reaffirm. No acquisition, independent numerical replay, endpoint exact order/type, IP/GEN/case/census/manuscript/conjecture/Lean or canonical credit is issued by this static seal.'
+]
+full=save('review.json',dict(schema='F004_PROJECTION_STAR_CENTRALIZER_SOURCE_INDEPENDENT_REVIEW_V1',status='SUPPORTED_STATIC',reviewer='/root/readback_review',blockers=[],source_handoff=ref(B/'handoff.json'),Source_manifest=f['SOURCE_MANIFEST_worker.json'],control_Source_manifest=f['SOURCE_MANIFEST_controls.json'],program=ref(B/'worker.py'),theory=f['theory.tex'],whole_raw_Source_inverse=rawref,Source_unions=unions,full_25_column_minor_upper_and_commuting_basis_lower_bound_verified=True,row_Q_projection_and_adjoint_orientation_verified=True,old_B_U_U2_marking_convention_verified=True,conditional_norm_one_44_determinant_one_22_lemma_supported=True,maximum_products=50,maximum_linear_units=195878,worker_read_upper=2322143,controls_pinned_request_read_upper=201655,UNRUN_fixture_names=alllabels,positive_full_commutant_pair_fixture_available=False,checked_first_closing_pins=[r for r,b in C.values()],audit_first_closing_read_bytes=2*TOTAL,qualifications=quals))
+thin=save('reuse_integer_only.json',dict(schema='F004_PROJECTION_STAR_CENTRALIZER_SOURCE_REUSE_V1',status='SUPPORTED_STATIC',reviewer='/root/readback_review',blockers=[],Source_manifest=f['SOURCE_MANIFEST_worker.json'],control_Source_manifest=f['SOURCE_MANIFEST_controls.json'],program=ref(B/'worker.py'),theory=f['theory.tex'],conditional_theorem=f['theory.tex'],whole_Source_raw_inverses_and_IO_verified=True,Source_plus_guards512=dict(worker=60131,controls=54293),new_controls_count=24,new_controls_UNRUN=True,full_review=full))
+hand=save('handoff.json',dict(status='SUPPORTED_STATIC',reviewer='/root/readback_review',blockers=[],reuse=thin,full_review=full,source_handoff=ref(B/'handoff.json')))
+print(json.dumps(dict(handoff=hand,reuse=thin,full_review=full,raw_inverse=rawref,paths=len(C),read_bytes=2*TOTAL)))

@@ -1,0 +1,53 @@
+"""Finite native formats and exact immutable-leg joins; no registration."""
+import struct
+import common as C
+import pair_kernel as P
+PAIR=b'L026PF01';TAGS=b'L026TG01';ROWS=b'L026RW01';SEED=b'L026TS01'
+def bounded(b,r,cap,document=False):
+    C.need(C.ref(r)['bytes']<=cap,'bounded whole leg before read')
+    return b.doc(r)if document else b.read(r)
+def fit(b,refs,operations):
+    allrefs=dict(b.refs)
+    for r in refs:C.ref(r);C.need(allrefs.get(r['path'],r)==r,'one exact prospective edition');allrefs[r['path']]=r
+    future=sum(r['bytes']for p,r in allrefs.items()if p not in b.raw)+sum(r['bytes']for r in allrefs.values())
+    C.need(b.bytes+future<=8388608 and len(allrefs)+2<=96,'complete first/closing IO and output paths')
+    C.need(b.work.units+future+operations+3*(65536+32768)<=10000000,'all operation/output work before predicates')
+def seed(raw,w):
+    C.need(raw[:8]==SEED and len(raw)>=12,'seed native magic')
+    n,s=struct.unpack_from('<HH',raw,8);C.need(n==3510 and 0<s<n and len(raw)==12+2*s,'exact native seed extent')
+    w.charge(len(raw),'complete native seed decode');return list(struct.unpack_from('<'+'H'*s,raw,12))
+def pair_bytes(pair,w):
+    n,sets=P.decoded_pair(pair,w);out=PAIR+struct.pack('<HHB',n,len(sets[0]),len(sets))
+    for U in sets:out+=struct.pack('<'+'H'*len(U),*U)
+    w.charge(len(out),'whole pair native encode');return out
+def pair_decode(raw,w):
+    C.need(raw[:8]==PAIR and len(raw)>=13,'pair native magic')
+    n,s,k=struct.unpack_from('<HHB',raw,8);C.need(n==3510 and 0<s<n and k in(1,2)and len(raw)==13+2*s*k,'exact pair extent')
+    w.charge(len(raw),'whole native pair decode');members=[list(struct.unpack_from('<'+'H'*s,raw,13+2*s*i))for i in range(k)]
+    pair=dict(degree=n,members=members,conclusion='PROPER_SETWISE_STABILIZER_CONDITIONAL_ON_NAMED_SIMPLE_TRANSITIVE_G',union_need_not_be_proper=True)
+    P.decoded_pair(pair,w);return pair
+def tags_bytes(rows,w):
+    C.need(type(rows)is list and len(rows)<=3510,'finite tag table');out=bytearray(TAGS+struct.pack('<H',len(rows)))
+    seen=set();vertices=set()
+    for r in rows:
+        C.need(set(r)=={'ordinal','vertex','tag'}and all(type(r[k])is int for k in r),'exact tag record')
+        i,v,t=r['ordinal'],r['vertex'],r['tag'];C.need(0<=i<3510 and 0<=v<3510 and t in(0,1,2)and i not in seen and v not in vertices,'unique valid tags');seen.add(i);vertices.add(v);out.extend(struct.pack('<HHB',i,v,t))
+    C.need([r['ordinal']for r in rows]==sorted(seen),'canonical ordinal order');w.charge(64*len(rows)+len(out),'full native tag validation/encode');return bytes(out)
+def tags_decode(raw,w):
+    C.need(raw[:8]==TAGS and len(raw)>=10,'native tag magic');count=struct.unpack_from('<H',raw,8)[0];C.need(count<=3510 and len(raw)==10+5*count,'exact tag extent')
+    rows=[dict(zip(('ordinal','vertex','tag'),struct.unpack_from('<HHB',raw,10+5*i)))for i in range(count)]
+    C.need(tags_bytes(rows,w)==raw,'whole canonical native tag table');return rows
+def rows_bytes(result,w):
+    rows=result['records'];out=bytearray(ROWS+struct.pack('<H',len(rows)))
+    for r in rows:
+        i=r['identity'];hit=r['status']=='VERIFIED_IN_PROPER_PAIR_STABILIZER';parity=r['fix_swap_parity']if hit else 255
+        C.need(type(i['witness_row_sha256'])is str and len(i['witness_row_sha256'])==64,'exact row digest');out.extend(struct.pack('<IIBBBBB32s',i['free_index'],i['owner'],int(hit),parity,*r['factor_tags'],bytes.fromhex(i['witness_row_sha256'])))
+    w.charge(64*len(rows)+len(out),'whole compact row identity/verdict publication');return bytes(out)
+def reviewed_pair(b,leg,q,pins):
+    C.need(set(leg)=={'certificate','proof','actual_review'},'exact pair leg')
+    proof=bounded(b,leg['proof'],32768,True);review=bounded(b,leg['actual_review'],32768,True)
+    C.need(proof['schema']=='L026_SUBSET_PAIR_PROOF_V1'and proof['mode']=='pair'and proof['status']=='VERIFIED_ENDPOINT_PAIR','actual base pair')
+    for k in('scope','family_key','operands'):C.need(proof[k]==q[k]and review[k]==q[k],'same pair '+k)
+    C.need(proof['pins']['manifest']==pins['manifest']and proof['certificate']==leg['certificate']and review['schema']=='L026_SUBSET_PAIR_ACTUAL_REUSE_V1'and review['mode']=='pair'and review['Source_manifest']==pins['manifest']and review['certificate']==leg['certificate']and review['proof']==leg['proof'],'exact new pair Source/result')
+    C.need(review['status'].startswith('SUPPORTED_ACTUAL')and review['reviewer']!='/root'and review['blockers']==[]and review['whole_Source_and_inputs_closed']is True and review['actual_guard_and_raw_frames_verified']is True,'independent genuine pair actual')
+    return pair_decode(bounded(b,leg['certificate'],14049),b.work)

@@ -1,0 +1,67 @@
+"""Root freezes a bounded cohort and separately owns each metadata phase."""
+from pathlib import Path
+import argparse,json,sys
+sys.path.insert(0,'/private/tmp/intake_metadata')
+from whole import Ledger,write
+P=argparse.ArgumentParser();P.add_argument('mode',choices=('init','phase'));P.add_argument('--peer');P.add_argument('--cohort');P.add_argument('--batch',type=int);P.add_argument('--phase',choices=('prepare_suppliers','assemble_strict','close_pairing'));P.add_argument('--bindings',nargs=3);a=P.parse_args()
+L=Ledger();src=Path('/private/tmp/f009_cohort_parent_batch_adapter');h,hr=L.document(src/'handoff.json')
+assert hr['sha256']=='66e50c6aa22614bc3421c8462be1e6f1845c0ab5b029f150d14e9e8ac91885e8'
+def doc(r):return L.document(r['path'],r)[0]
+if a.mode=='init':
+    assert a.peer and not a.cohort
+    peer,pr=L.document(a.peer);assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root',h['author'])and peer['program']==h['program']
+    mf=doc(h['Source_manifest']);size=512
+    for r in mf['Source']:
+        raw,_=L.raw(r['path'],r);size+=len(raw)
+    assert size==50372
+    for k in('Source_IO_invoice','protocol','raw_Source_inverse','Root_routes_FALSE','owed_registration_interface'):L.raw(h[k]['path'],h[k])
+    for k in('supplier_manifest','strict_manifest'):
+        value=doc(h[k])
+        for r in value['Source']:L.raw(r['path'],r)
+    for k in('full_supplier_static','full_supplier_actual24','strict_static','strict_actual41','roster_adoption','roster_actual_review'):L.raw(h[k]['path'],h[k])
+    for r in h['templates'].values():L.raw(r['path'],r)
+    B=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress');i,ir=L.document(B/'current_intake.json');p,prc=L.document(B/'controllers/current.json');r,rr=L.document(p['checkpoint']['path'],p['checkpoint'])
+    begin=i['F009']['R5_canonical_pairs_reviewed'];assert begin==r['counts']['R5_canonical_pairs_reviewed']and i['active_controller_checkpoint']==rr and i['L026']['paid']==1461
+    end=min(940,begin+12);assert begin<end
+    counts=[];batches=[];cursor=begin
+    while cursor<end:
+        n=min(3,end-cursor);counts.append(n);batches.append(dict(batch=len(batches),begin=cursor,end=cursor+n,source_indices=list(range(cursor,cursor+n))));cursor+=n
+    keys=set(r['cache_entries'])
+    for bank in r['cache_banks']:
+        value=doc(bank['ref']);assert not keys.intersection(value['cache_entries']);keys.update(value['cache_entries'])
+    old=Path('/private/tmp/f009_R5_canonical_parent_actual')
+    for index in range(begin,end):
+        assert 'Root_f009_R5_canonical_parent%04d_pair'%index not in keys
+        for suffix in('_supply','_check'):
+            assert not(old/('parent%04d%s'%(index,suffix))).exists()and not(old/'guards'/('parent%04d%s'%(index,suffix))).exists()
+    folder=src/'Root_cohorts'/('cohort_from%04d'%begin);assert not folder.exists()and not Path('/private/tmp/f009_R5_parent_cohorts_actual/cohort_from%04d'%begin).exists()
+    cohort=doc(h['cohort_template_FALSE']);cohort.update(Root_authority=True,program=h['program'],begin=begin,end=end,batch_counts=counts,batches=batches,source_indices=list(range(begin,end)),reviewed_prefix=begin,progress_snapshot=dict(intake=ir,controller=prc,runtime=rr))
+    L.close();folder.mkdir(parents=True);(folder/'decisions').mkdir();(folder/'bindings').mkdir();(folder/'guards').mkdir()
+    owner=write(folder/'Root_Source_ownership.json',dict(schema='ROOT_F009_COHORT_METADATA_SOURCE_OWNERSHIP_V1',root='/root',Root_authority=True,packet=hr,program=h['program'],Source_manifest=h['Source_manifest'],Source_peer=pr,whole_Source_protocol_inverse_and_invoices_owned=True,old_scientific_Source_controls_and_mathematics_owned=True,Source_union_guards512=size,previous_cache_values=len(keys),first_and_closing_bytes=L.bytes,paths=len(L.pins),no_scientific_worker_issued=True))
+    cohort.update(Root_Source_ownership=owner,Source_peer=pr,Source_handoff=hr)
+    cr=write(folder/'cohort.json',cohort);print(json.dumps(dict(cohort=cr,Source_ownership=owner,begin=begin,end=end,batches=batches,program=h['program'],packet=hr)))
+else:
+    assert a.cohort and a.batch is not None and a.phase
+    cohort,cr=L.document(a.cohort);owner=doc(cohort['Root_Source_ownership']);peer=doc(cohort['Source_peer'])
+    assert owner['Root_authority']is True and owner['program']==peer['program']==h['program']and peer['blockers']==[]
+    for r in cohort['progress_snapshot'].values():L.raw(r['path'],r)
+    batch=cohort['batches'][a.batch];assert batch['batch']==a.batch
+    base=Path('/private/tmp/f009_R5_parent_cohorts_actual')/('cohort_from%04d'%cohort['begin'])/('parents%04d_%04d'%(batch['begin'],batch['end']-1))
+    directory=Path(a.cohort).parent;binding=None;binding_value=None
+    if a.phase!='prepare_suppliers':
+        if a.bindings:
+            binding=dict(path=a.bindings[0],bytes=int(a.bindings[1]),sha256=a.bindings[2]);binding_value=doc(binding)
+        else:
+            stems=['parent%04d_supply'%i for i in batch['source_indices']]if a.phase=='assemble_strict'else['parents%04d_%04d_check'%(batch['begin'],batch['end']-1)]
+            roles=[]
+            for stem in stems:
+                sdk,sr=L.document(base/'Root_SDK'/(stem+'_v1.json'));assert sdk['root']==sdk['actor']=='/root'and sdk['actual_tool']['exit_code']==0
+                roles.append(dict(stem=stem,edition=1,actual_SDK=sr,prior_attempts=[]))
+            binding_value=dict(schema='ROOT_F009_COHORT_ROLE_ACTUAL_BINDINGS_V1',root='/root',Root_authority=True,program=h['program'],cohort=cr,batch=a.batch,phase=a.phase,roles=roles)
+        assert binding_value['cohort']==cr and binding_value['batch']==a.batch and binding_value['phase']==a.phase and binding_value['Root_authority']is True
+    decision=doc(h['Root_decision_template_FALSE']);assert decision['Root_authority']is False
+    decision.update(Root_authority=True,status='SUPPORTED',packet=hr,program=h['program'],phase=a.phase,cohort=cr,batch=a.batch,independent_Source_peer=cohort['Source_peer'],new_metadata_Source_interfaces_and_bills_owned=True,old_scientific_Source_controls_and_mathematics_owned=True,exact_fresh_cohort_and_disjoint_batch_owned=True,frozen_progress_edition_held=True,no_successful_science_repeated=True,actual_attempt_bindings_and_preentry_reconciliations_owned=True,metadata_phase_authorized=True)
+    L.close()
+    if binding_value is not None and binding is None:binding=write(directory/'bindings'/('batch%02d_%s.json'%(a.batch,a.phase)),binding_value)
+    decision['actual_bindings']=binding;dr=write(directory/'decisions'/('batch%02d_%s.json'%(a.batch,a.phase)),decision)
+    print(json.dumps(dict(decision=dr,cohort=cr,packet=hr,program=h['program'],phase=a.phase,batch=a.batch,actual_base=str(base))))

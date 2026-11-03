@@ -1,0 +1,74 @@
+"""Twenty-four artificial projection, algebra and admission fixtures; UNRUN."""
+import sys
+import runtime as rt
+import field,algebra,small,centralizer as c,role
+
+def diagonal(entries):return bytes(entries[i]if i==j else 0 for i in range(7)for j in range(7))
+def artificial(m,b):
+    N=bytearray(49);Q=bytearray(49)
+    if m==3:
+        for a in(0,3):
+            N[7*a+a+1]=N[7*(a+1)+a+2]=1
+            for i,z in enumerate((1,10,1)):Q[7*(a+i)+a+2-i]=z
+        Q[48]=1;B=diagonal([1,10,1,10,1,10,10])
+    else:
+        N[2]=N[10]=1
+        for i,j,z in((0,3,1),(1,2,10),(2,1,10),(3,0,1),(4,4,1),(5,5,1),(6,6,1)):Q[7*i+j]=z
+        B=diagonal([1,10,10,1,1,1,1])
+    Q,N=bytes(Q),bytes(N);Qi=c.inv7(Q,b);N2=b.multiply(N,N)
+    U=c.combine(((1,field.I),(1,N),(6,N2)),b)
+    U2=c.combine(((1,field.I),(2,N),(2,N2)),b)
+    return Q,Qi,B,U,U2,N,N2
+
+def fixtures(b):
+    names=[]
+    def yes(name,truth):rt.need(truth,name);names.append(name)
+    def no(name,call):
+        try:call()
+        except(ValueError,TypeError,KeyError):names.append(name);return
+        raise AssertionError(name)
+    I=field.I;frames=[]
+    for m,tag,t in((2,'square_zero',3),(3,'cube_zero',7)):
+        Q,Qi,B,U,U2,N,N2=artificial(m,b);r=c.algebra_relations(Q,Qi,B,U,U2,b);frames.append((Q,Qi,B,U,U2,N,N2,r))
+        yes(tag+'_complete_independent_algebra',r['accepted']and r['basis_entry_minor']['rank']==2*m)
+        yes(tag+'_nilpotence_degree_is_measured',r['nilpotence_degree']==m and bytes.fromhex(r['N'])==N)
+        yes(tag+'_both_adjoint_equations',r['checks']['B_self_adjoint']and r['checks']['N_skew_adjoint'])
+        yes(tag+'_U_is_the_retained_exponential',r['checks']['U_is_truncated_exponential'])
+        E=c.combine(((1,I),(t,N),(6*t*t,N2)),b)
+        star=b.multiply(b.multiply(Q,c.trans(E,b)),Qi)
+        yes(tag+'_new_nonzero_parameter_norm_one',b.multiply(star,E)==I)
+        E=b.multiply(B,E);star=b.multiply(b.multiply(Q,c.trans(E,b)),Qi)
+        yes(tag+'_reflection_family_norm_one',b.multiply(star,E)==I)
+    Q,Qi,B,U,U2,N,N2,r=frames[1]
+    yes('odd_dimensional_negative_identity_has_determinant_minus_one',small.det(algebra.rows(c.combine(((10,I),),b)),b)==10)
+    bad=c.algebra_relations(Q,Qi,B,U,I,b)
+    yes('wrong_retained_second_power_not_a_positive_certificate',not bad['accepted'])
+    basis=[bytes.fromhex(x)for x in r['basis']];basis[-1]=basis[0]
+    dep=small.minor([[A[i]for A in basis]for i in range(49)],b)
+    yes('dependent_six_element_list_fails_basis_dimension',dep['rank']<6)
+    yes('small_inverse_is_checked_by_complete_product',small.inverse([[1,1],[1,0]],b)==[[0,1],[1,10]])
+    mc=small.minor([[0,0],[0,1],[1,0]],b)
+    yes('rank_minor_tracks_original_nonconsecutive_rows',mc['rank']==2 and mc['pivot_rows']==[2,1]and mc['minor']==[[1,0],[0,1]])
+    no('singular_candidate_form_refused',lambda:c.frame(bytes(49),(I,)*4,b))
+    nonsym=bytearray(I);nonsym[1]=1
+    no('nonsymmetric_candidate_form_refused',lambda:c.frame(bytes(nonsym),(I,)*4,b))
+    no('isometric_but_negative_determinant_mark_refused',lambda:c.frame(I,(diagonal([10,1,1,1,1,1,1]),I,I,I),b))
+    no('noncanonical_matrix_entry_refused',lambda:c.canonical(bytes([11])+bytes(48),b))
+    Q,Qi,B,U,U2,N,N2,r=frames[0]
+    PH=diagonal([1,1,1,1,0,0,0]);PR=diagonal([1,1,0,0,1,0,0])
+    status,cert=c.calculate(I,(I,)*4,PH,PR,B,U,U2,b)
+    yes('larger_common_commutant_is_honestly_inconclusive',status=='INCONCLUSIVE_COMMUTANT_OR_RELATIONS'and cert['common_commutant_dimension']==13)
+    status,_=c.calculate(I,(I,)*4,diagonal([2,1,1,1,0,0,0]),PR,B,U,U2,b)
+    yes('nonprojector_saved_tensor_is_inconclusive',status=='INCONCLUSIVE_SAVED_TENSOR_NOT_PROJECTOR')
+    status,_=c.calculate(I,(I,)*4,diagonal([1,1,1,0,0,0,0]),PR,B,U,U2,b)
+    yes('wrong_projection_ranks_are_inconclusive',status=='INCONCLUSIVE_PROJECTION_RANKS')
+    rt.need(len(names)==len(set(names))==24,'24 distinct fresh fixtures');return names
+
+def main():
+    b,q,out,pins=role.start(sys.argv,'controls.py',(rt,field,algebra,small,c,role))
+    rt.need(q=={'schema':'F004_PROJECTION_STAR_CENTRALIZER_CONTROLS_V1','Root_authority':False},'Original-free artificial request')
+    names=fixtures(b);rt.close_inputs(b)
+    result=dict(schema='F004_PROJECTION_STAR_CENTRALIZER_CONTROLS_RESULT_V1',status='PASS',count=24,names=names,Original_inputs_loaded=False)
+    proof=dict(Source=pins,inputs_closed=True,counts=b.snapshot(),Original_inputs_loaded=False,previous_successful_controls_not_replayed=True)
+    refs=rt.emit(out,result,proof,b);print(rt.encoded(dict(status='PASS',count=24,outputs=refs,counts=b.snapshot())).decode(),end='')
+if __name__=='__main__':main()

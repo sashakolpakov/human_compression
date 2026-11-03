@@ -1,0 +1,98 @@
+"""New pure subset-pair certificate modes; no IO, search, authority or ledger.
+
+Caller imports exact original permutations, adopted D providers and row joins.
+All operations share its unchanged Work meter. H10 product_mask is untouched.
+"""
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def canonical(points,n,work):
+    need(type(n)is int and 2<=n<=3510 and type(points)is list and 0<len(points)<n,'nonempty proper subset')
+    work.charge(8*len(points)+32,'whole canonical set fields and index')
+    need(all(type(x)is int and 0<=x<n for x in points)and points==sorted(set(points)),'strict original point labels')
+    return tuple(points)
+
+def image(points,permutation,n,work):
+    # Bijection/membership is an imported complete original map authority.
+    need(type(permutation)in(tuple,list)and len(permutation)==n,'whole admitted map')
+    out=[]
+    for x in points:
+        work.charge(8,'exact point image bounds and canonical set construction')
+        y=permutation[x];need(type(y)is int and 0<=y<n,'actual point image');out.append(y)
+    need(len(set(out))==len(points),'injective on entire selected set')
+    return tuple(sorted(out))
+
+def prepare_pair(points,a,c,n,work):
+    """One new finite base-pair check, not replay of old rotation invariance."""
+    T=canonical(points,n,work);S=image(T,a,n,work)
+    pair=tuple(sorted(set((T,S))))
+    for endpoint in(a,c):
+        values=tuple(sorted(image(U,endpoint,n,work)for U in pair))
+        need(values==pair,'both actual endpoints preserve entire unordered pair')
+    return dict(degree=n,members=[list(U)for U in pair],
+        conclusion='PROPER_SETWISE_STABILIZER_CONDITIONAL_ON_NAMED_SIMPLE_TRANSITIVE_G',
+        union_need_not_be_proper=True)
+
+def decoded_pair(pair,work):
+    need(type(pair)is dict and set(pair)=={'degree','members','conclusion','union_need_not_be_proper'},'exact admitted pair grammar')
+    n=pair['degree'];rows=pair['members']
+    need(type(rows)is list and 1<=len(rows)<=2 and pair['union_need_not_be_proper']is True
+        and pair['conclusion']=='PROPER_SETWISE_STABILIZER_CONDITIONAL_ON_NAMED_SIMPLE_TRANSITIVE_G','admitted pair meaning')
+    values=tuple(canonical(x,n,work)for x in rows)
+    need(values==tuple(sorted(set(values)))and all(len(x)==len(values[0])for x in values),'canonical equal-size distinct pair members')
+    return n,values
+
+def certify_shard(pair,begin,records,work):
+    """Each record is (bridge ordinal, Original D vertex, whole adopted map).
+    The caller joins ALL records to one exact adopted16-map provider first.
+    """
+    n,sets=decoded_pair(pair,work)
+    need(type(begin)is int and 0<=begin<n and begin%16==0 and type(records)is list
+        and len(records)==min(16,n-begin),'complete aligned provider shard')
+    output=[];vertices=set()
+    for i,record in enumerate(records):
+        work.charge(64,'whole provider record fields and tag')
+        need(type(record)is tuple and len(record)==3,'exact supplied provider record')
+        ordinal,vertex,permutation=record
+        need(type(ordinal)is type(vertex)is int and ordinal==begin+i and 0<=vertex<n and vertex not in vertices,'actual distinct bridge-ordered D labels')
+        vertices.add(vertex)
+        images=tuple(image(U,permutation,n,work)for U in sets)
+        tag=2
+        if images==sets:tag=0
+        elif len(sets)==2 and images==(sets[1],sets[0]):tag=1
+        output.append(dict(ordinal=ordinal,vertex=vertex,tag=tag))
+    return dict(begin=begin,end=begin+len(records),records=output,
+        tag_meaning=['FIXES_ALL_MEMBERS','SWAPS_TWO_MEMBERS','OUTSIDE_THIS_PAIR_STABILIZER'],
+        Original_case_credit=0)
+
+def certify_rows(witness,status,identities,tag_rows,bind_row,work):
+    """bind_row is the exact retained checks.binding function, supplied openly.
+    Caller joins fresh typed bank, complete witness, pair and actual shard pins.
+    Missing tags are permitted; they never certify absence or generation.
+    """
+    need(type(status)is bytes and 1<=len(status)<=28908 and type(witness)is bytes
+        and len(witness)==16*len(status),'same complete current domain and literal witness format')
+    need(type(identities)is list and 1<=len(identities)<=1024 and callable(bind_row),'bounded exact row window and explicit old binder')
+    need(type(tag_rows)is list and len(tag_rows)<=3510,'bounded accepted primitive tags')
+    tags={};ordinals=set()
+    for row in tag_rows:
+        work.charge(64,'whole accepted tag identity')
+        need(type(row)is dict and set(row)=={'ordinal','vertex','tag'}and all(type(row[k])is int for k in row),'exact accepted tag record')
+        v=row['vertex'];t=row['tag']
+        need(0<=v<3510 and 0<=row['ordinal']<3510 and t in(0,1,2)and v not in tags and row['ordinal']not in ordinals,'unique actual D tags')
+        tags[v]=t;ordinals.add(row['ordinal'])
+    results=[];last=-1;owners=set()
+    for identity in identities:
+        work.charge(512,'whole exact Original row identity and family joins')
+        need(type(identity)is dict and set(identity)=={'free_index','owner','witness_row_sha256'},'same old row identity ABI')
+        i=identity['free_index'];o=identity['owner']
+        need(type(i)is type(o)is int and last<i<len(status)and 0<=o<500178 and o not in owners and status[i]==0,'distinct original currently unpaid owner rows')
+        last=i;owners.add(o)
+        triangle=bind_row(witness,identity,len(status),work)
+        need(type(triangle)in(tuple,list)and len(triangle)==3 and all(type(v)is int and 0<=v<3510 for v in triangle)and len(set(triangle))==3,'same exact original triangle product')
+        values=[tags.get(v,2)for v in triangle];hit=all(t in(0,1)for t in values)
+        parity=(values[0]^values[1]^values[2])if hit else None
+        results.append(dict(identity=identity,status='VERIFIED_IN_PROPER_PAIR_STABILIZER'if hit else'INCONCLUSIVE_TAG_FAMILY',
+            factor_tags=values,fix_swap_parity=parity,parity_is_not_an_admission_filter=True))
+    return dict(records=results,complete_requested_window=True,GEN_or_IP_or_case_credit=0,
+        Root_logical_application_actual_review_and_registration_owed=True)

@@ -1,0 +1,134 @@
+"""Read-only existing-record audit. Does not import represented Source or run controls."""
+import ast,hashlib,json,os,shlex,stat,time
+from pathlib import Path
+
+OUT=Path(__file__).resolve().parent
+BASE=Path('/private/tmp/l026_subset_pair_family_actual')
+SRC=Path('/private/tmp/l026_subset_pair_metadata_projection_assembly')
+RAW=Path('/private/tmp/intake_actual_transports')
+CACHE={};EVENTS=[];START=time.monotonic();READ=0
+def enc(x):return (json.dumps(x,sort_keys=True,separators=(',',':'))+'\n').encode()
+def sha(x):return hashlib.sha256(x).hexdigest()
+def descriptor(p,body):return dict(path=str(p),bytes=len(body),sha256=sha(body))
+def whole(p,expected=None):
+ global READ
+ p=Path(p);assert p.is_absolute() and not p.is_symlink()
+ p=p.resolve(strict=True);assert len(CACHE|{str(p):None})<=512
+ fd=os.open(p,os.O_RDONLY|os.O_NOFOLLOW)
+ try:
+  a=os.fstat(fd);assert stat.S_ISREG(a.st_mode) and a.st_size<=4*2**20
+  assert READ+a.st_size<=64*2**20 and time.monotonic()-START<100
+  with os.fdopen(fd,'rb',closefd=False) as f:body=f.read(a.st_size+1)
+  b=os.fstat(fd);c=p.stat()
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(a)==sig(b)==sig(c) and len(body)==a.st_size
+ finally:os.close(fd)
+ r=descriptor(p,body);READ+=len(body)
+ if expected is not None:assert r==expected,(str(p),'descriptor mismatch')
+ if str(p) in CACHE:assert CACHE[str(p)][0]==r and CACHE[str(p)][1]==body
+ CACHE[str(p)]=(r,body);EVENTS.append(r);return body
+def load(p,expected=None):return json.loads(whole(p,expected))
+def pinned(r):return load(r['path'],r)
+def ref(p):return CACHE[str(Path(p).resolve())][0]
+def save(name,data):
+ p=OUT/name;body=enc(data)
+ with p.open('xb') as f:f.write(body);f.flush();os.fsync(f.fileno())
+ return descriptor(p,body)
+
+import copy
+def sdk(r,key,want):
+ d=pinned(r);rd=RAW/key;i=load(rd/'issued.json');fs=d['all_genuine_api_frames']
+ assert d['actor']==d['root']==i['root']=='/root'and d['issued_argv']==d['child_argv']==i['argv']==shlex.split(d['issued_tool_arguments']['cmd'])
+ assert i['tool_arguments']==d['issued_tool_arguments']and fs[0]==d['full_initial_tool_return']and fs[-1]==d['full_tool_return']
+ assert fs[-1]['exit_code']==d['actual_tool']['exit_code']==want and d['actual_tool']['initial_chunk']==fs[0]['chunk_id']and d['actual_tool']['terminal_chunk']==fs[-1]['chunk_id']
+ for j,f in enumerate(fs):assert load(rd/('frame_%04d.json'%j))==f
+ if d['actual_tool']['synchronous']:assert len(fs)==1 and d['actual_tool']['handle']is None
+ else:assert all(f.get('session_id')==d['actual_tool']['handle']for f in fs[:-1])and'session_id'not in fs[-1]
+ return d,''.join(f.get('output','')for f in fs),[ref(rd/'issued.json')]+[ref(rd/('frame_%04d.json'%j))for j in range(len(fs))]
+
+actual=dict(path=str(BASE/'Root_SDK/pair_metadata_assembly_v1.json'),bytes=9045,sha256='14405651ddd7b2d02d34a72e0065157d85d2fdb3aab24e650bc552457f5b3551')
+d,text,rawrefs=sdk(actual,'Root_l026_subset_pair_metadata_assembly_v1',1)
+printed,offset=json.JSONDecoder().raw_decode(text);tail=text[offset:]
+assert 'time: sysctl kern.clockrate: Operation not permitted'in tail and 'real'in tail
+out=BASE/'pair_prepared01';receiptref=printed['receipt'];receipt=pinned(receiptref)
+assert receiptref==dict(path=str(out/'receipt.json'),bytes=3367,sha256='b89aa185e835dcddadde6f6c27a0b0b75fc24111e3439aaa49865240fc2664e3')
+assert printed['worker_unissued']is True and receipt['worker_still_unissued']is True and receipt['scientific_calls']==receipt['canonical_writes']==0
+assert receipt['all_fresh_metadata_files_read_back']is True and receipt['Original_values_decoded']is False and receipt['old_Source_and_controls_not_reexecuted']is True
+assert receipt['numerical_guard_or_admission_threshold_changed']is False and receipt['projection_resource_profile_kind']=='LITERAL_METADATA_ONLY'
+h=load(SRC/'handoff.json',dict(path=str(SRC/'handoff.json'),bytes=4375,sha256='3ac72ef0433f6bc536b5af0d761b4280493e0ed1b4c00ee84b4f54a59b93a91b'))
+program=whole(h['program']['path'],h['program']);ast.parse(program);plan=pinned(receipt['plan']);pins=plan['pins']
+assert receipt['plan']==h['plan']and h['program']['sha256']=='26b767a7a106ad27296d1c3f3de5717aecd2c57bc80f9afd05cb920758503749'
+peerref=dict(path='/private/tmp/l026_subset_pair_metadata_projection_assembly_source_independent_review/reuse_integer_only.json',bytes=1646,sha256='37f08dfe9e9ecf6068b0e2644f614bd351ef9d7db35035c17411603781a202ea');peer=pinned(peerref)
+assert peer['program']==h['program']and peer['plan']==h['plan']and peer['status']=='SUPPORTED_STATIC'and peer['blockers']==[]
+ownerref=dict(path=str(BASE/'Root_SDK/pair_role_ownership_v1.json'),bytes=7393,sha256='cd4601580180f3c64bd644a6ab75d153e5c2d2c559ed285657499210de828c0b')
+owner,otext,oraw=sdk(ownerref,'Root_l026_subset_pair_single_role_ownership_v1',0);owned=json.loads(otext)
+issuerref=dict(path='/private/tmp/own_l026_subset_pair_single_role.py',bytes=4195,sha256='2063400ecd49a75aa4e9c9d56b9f700f3ebe75430e57f3ead4d4e58ba2251160');issuer=whole(issuerref['path'],issuerref);ast.parse(issuer)
+assert owner['issued_argv'][:11]==['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES']
+assert owner['issued_argv'][11:]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',issuerref['path']]
+decisionref=receipt['decision'];decision=pinned(decisionref)
+assert decisionref==owned['decision']==dict(path=str(BASE/'Root_pair_role_decision.json'),bytes=4135,sha256='781b8f7a5b4b821f89bb813a2f9f43dae85ea8460fa2eeeafe3a7cccf70f844d')
+assert owned['Source_peer']==peerref and owned['metadata_only']is True and owned['mathematical_worker_not_launched']is True
+assert d['issued_argv'][:11]==owner['issued_argv'][:11]and d['issued_argv'][11:]==owned['argv']
+assert d['issued_argv'][11:13]==['/usr/bin/time','-l']
+assert decision['assembly_Source_peer']==peerref and decision['assembly_plan']==receipt['plan']and decision['projection_review']==receipt['projection_review']and decision['projection_actual']==receipt['projection_actual']
+assert decision['root']=='/root'and decision['Root_authority']is decision['adopted']is decision['Original_pair_role_authorized']is True
+assert decision['scientific_worker_issued_by_assembly']is decision['canonical_writes_authorized']is False
+node=next(n for n in ast.parse(program).body if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id=='DUTIES'for t in n.targets));duties=ast.literal_eval(node.value)
+assert len(duties)==7 and receipt['seven_duties_from_external_Root_decision']==list(duties)and all(decision[k]is True for k in duties)
+assert 'no complete-family adoption'in decision['selected_D_induction_scope']and 'no owner row'in decision['unpaid_row_scope']
+projection=pinned(receipt['projection']);projectionreview=pinned(receipt['projection_review']);pinned(receipt['projection_actual'])
+assert receipt['projection']==h['successful_projection_receipt']and receipt['projection_actual']==h['successful_projection_SDK']
+assert receipt['projection_review']['sha256']=='0c72aa27b168e7e7a7f4a3c744a54d4073cb1c4c70b1e3bba9cdfbba865b647a'
+assert projectionreview['projection']==receipt['projection']and projectionreview['actual_SDK']==receipt['projection_actual']and projectionreview['metadata_envelope_and_raw_frames_verified']is True
+assert projection['wrapper']==receipt['projection_wrapper']==h['projection_wrapper']and projection['wrapper_Source_peer']==receipt['projection_wrapper_Source_peer']==h['projection_wrapper_Source_peer']
+for r in pins.values():whole(r['path'],r)
+helper=whole(pins['whole_IO']['path'],pins['whole_IO']);assert len(helper)==3744
+q0=pinned(pins['pair_request']);i0=pinned(pins['pair_import']);g0=pinned(pins['pair_gate']);packet=pinned(pins['worker_handoff'])
+controls=pinned(pins['controls_actual_review']);oldpeer=pinned(pins['Source_peer'])
+assert controls['controls']==24 and controls['Source_manifest']==pins['controls_manifest']and controls['blockers']==[]and oldpeer['Source_manifest']==pins['worker_manifest']
+assert q0['Root_authority']is i0['Root_authority']is i0['adopted']is g0['Root_authority']is g0['adopted']is False
+assert all(i0[k]is False for k in duties)and q0['inputs']['seed']is None
+forward=q0['context']+q0['inputs']['seed_provenance']
+for r in forward:whole(r['path'],r)
+whole(projection['seed']['path'],projection['seed'])
+assert receipt['old_refused_projection_v1']==pins['refused_projection_v1']and receipt['projection_actual']!=pins['refused_projection_v1']
+qs=copy.deepcopy(q0);ii=copy.deepcopy(i0);gg=copy.deepcopy(g0)
+qs['inputs']['seed']=projection['seed'];ii['inputs']=dict(qs['inputs'])
+ii.update(root='/root',Root_authority=True,adopted=True,Root_decision=decisionref,projection=receipt['projection'],projection_actual_review=receipt['projection_review'],selected_D_induction_scope='Not used by pair mode; no selected D map or complete-family claim.',unpaid_snapshot_scope='Pair mode imports endpoint/owner meanings but tests no current row eligibility.')
+for k in duties:ii[k]=True
+ir=descriptor(out/'Root_import.json',enc(ii));qs.update(Root_import=ir,python_executable=decision['python_executable']);qr=descriptor(out/'request.json',enc(qs))
+gg.update(root='/root',Root_authority=True,adopted=True,manifest=pins['worker_manifest'],request=qr,Source_and_math_owned=True,independent_Source_review=pins['Source_peer'],control_Source_manifest=pins['controls_manifest'],actual_controls_review=pins['controls_actual_review'],Root_decision=decisionref)
+gr=descriptor(out/'Root_gate.json',enc(gg))
+tr=lambda r:[r['path'],str(r['bytes']),r['sha256']]
+argv=[decision['python_executable'],'-E','-B','-S',packet['program']['path'],'--manifest',*tr(pins['worker_manifest']),'--request',*tr(qr),'--Root-gate',*tr(gr),'--guard',decision['worker_guard'],'--out',decision['worker_output']]
+route=dict(schema='ROOT_PREPARED_L026_PAIR_ROUTE_V1',root='/root',Root_decision=decisionref,worker_argv=argv,worker_not_executed=True,external_rss_bytes=134217728,external_seconds=150,admit_ram=4294967296,admit_disk=10737418240,ram_floor=3221225472,disk_floor=8589934592,refused_projection_v1=pins['refused_projection_v1'])
+expected={'Root_import.json':enc(ii),'request.json':enc(qs),'Root_gate.json':enc(gg),'route.json':enc(route)}
+for name,body in expected.items():assert whole(receipt['outputs'][name]['path'],receipt['outputs'][name])==body
+assert receipt['outputs']['request.json']==qr==printed['request']and receipt['outputs']['Root_gate.json']==gr==printed['Root_gate']and receipt['outputs']['Root_import.json']==ir
+assert {p.name for p in out.iterdir()}==set(expected)|{'receipt.json'}
+assert qs['Root_authority']is False and ii['Root_authority']is ii['adopted']is gg['Root_authority']is gg['adopted']is True
+assert all(ii[k]is True for k in duties)and qs['Root_import']==ir and gg['request']==qr
+assert sum(map(len,expected.values()))==10360 and all(len(z)<=32768 for z in expected.values())and receiptref['bytes']<=32768
+inputs={receipt['plan']['path']:receipt['plan']}
+for r in list(pins.values())+[receipt['projection'],receipt['projection_review'],receipt['projection_actual'],decisionref,projection['seed']]+forward:
+ assert inputs.get(r['path'],r)==r;inputs[r['path']]=r
+assert len(inputs)==38 and receipt['input_first_and_closing_bytes']==2*sum(r['bytes']for r in inputs.values())==2074758
+assert receipt['helper_bootstrap_bytes']==3744 and receipt['output_first_and_closing_bytes']==2*10360==20720
+assert not os.path.lexists(BASE/'guards/pair')and not os.path.lexists(BASE/'pair')
+for _,(r,z)in list(CACHE.items()):whole(r['path'],r)
+assert len(CACHE)+3<=512
+qualifications=[
+ 'Root authored/issued the separate positive decision and executed the assembly once. Artifact authored the assembler; reviewer authored its static peer and prior projection reviews and inherited metadata IO. Exact old controls/source ownership remain immutable. No assembler, codec, worker, control or scientific predicate was rerun by reviewer.',
+ 'The genuine outer tool and /usr/bin/time observer exited1 after the complete artifact JSON was printed: time: sysctl kern.clockrate: Operation not permitted. The original SDK/raw frames and failed observation are retained verbatim. No APIexit0, child-exit0, peakRSS, external256MiB resource guard or successful time-l observation is fabricated.',
+ 'This is an independent postwrite artifact/Source/provenance review. All four generated bodies and terminal receipt are whole-hash verified and the metadataDTO afterimages rederived without executing the assembler or Original arithmetic. Root request remainsFALSE; import/gate positives derive only from the separate exact Root decision and all seven explicit ownership duties.',
+ 'All38 distinct input roles close to2074758B, with3744explicit helper bootstrap; four outputs close to20720B and receipt3367B is independently whole-closed. Forwarded operand/bridge/strict-carrier/proof bytes and projected seed stayed opaque to reviewer. No Original point/map/witness values were decoded.',
+ 'The receipt plus Source path reached after output readback supports complete metadata preparation artifacts. The115s internal alarm exists in Source, but this seal does not prove an actual RSS or successful external resource-supervisor envelope. Full mathematical pair128MiB150s10GiB4GiB guard/admissions remain unchanged and still owed at its future call.',
+ 'Pair D-parent induction/current-owner duties are explicitly not exercised here; no D map or owner row is consumed by pair preparation. There is no complete3510-family adoption, fresh owner eligibility, row/NEG/GEN/IP/class/census/manuscript/conjecture/Lean or measurement credit.',
+ 'The pair worker remains unissued at this exact boundary and its guard/output paths are absent. All writes audited here are private append-only metadata; no canonical/progress/S/W/Git write is issued by reviewer. The independent read-only audit has its own separate successful tool completion, not a replacement or retag of the failed outer observation.'
+]
+common=dict(status='SUPPORTED_ACTUAL_POSTWRITE_ARTIFACTS_WITH_OUTER_OBSERVER_FAILURE',reviewer='/root/readback_review',blockers=[],program=h['program'],plan=receipt['plan'],assembly_receipt=receiptref,receipt=receiptref,Root_decision=decisionref,request=qr,Root_gate=gr,Root_import=ir,route=receipt['outputs']['route.json'],actual_SDK=actual,projection=receipt['projection'],projection_review=receipt['projection_review'],projection_actual_SDK=receipt['projection_actual'],whole_Source_and_inputs_closed=True,all_generated_bodies_and_exact_hashes_verified=True,metadata_artifact_closure_verified=True,actual_API_verified=True,ordered_genuine_raw_frames_verified=True,outer_observer_failed=True,outer_tool_exit_code=1,actual_peak_RSS_verified=False,actual_resource_supervisor_verified=False,API_exit_zero_claimed=False,worker_still_unissued=True,numerical_guard_or_admission_threshold_changed=False,scientific_calls=0,canonical_writes=0)
+full=save('review_integer_only.json',dict(schema='L026_PAIR_METADATA_ASSEMBLY_POSTWRITE_ARTIFACT_INDEPENDENT_REVIEW_V1',**common,Source_peer=peerref,Root_ownership_actual_SDK=ownerref,Root_ownership_raw_frames=oraw,assembly_raw_frames=rawrefs,Root_issuer_Source=issuerref,input_roles=list(inputs.values()),input_first_closing_bytes=2074758,helper_bootstrap_bytes=3744,output_first_closing_bytes=20720,receipt_bytes=3367,outer_observer_error='time: sysctl kern.clockrate: Operation not permitted',reviewed_first_closing_pins=[r for r,z in CACHE.values()],qualifications=qualifications))
+thin=save('reuse_integer_only.json',dict(schema='L026_PAIR_METADATA_ASSEMBLY_POSTWRITE_ARTIFACT_REUSE_V1',**common,full_actual_review=full))
+hand=save('handoff.json',dict(status=common['status'],reviewer='/root/readback_review',blockers=[],reuse=thin,full_review=full))
+print(json.dumps(dict(handoff=hand,reuse=thin,full_review=full,paths=len(CACHE),read_bytes=READ)))
+

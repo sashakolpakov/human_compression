@@ -1,0 +1,64 @@
+"""Root binds the audited literal inputs to one future mathematical pair role."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+import signal
+import sys
+
+signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('115s metadata ownership')))
+signal.alarm(115)
+helper = Path('/private/tmp/intake_metadata/whole.py')
+body = helper.read_bytes()
+assert len(body) == 3744 and hashlib.sha256(body).hexdigest() == '685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+ns = dict(__file__=str(helper), __name__='root_role_metadata')
+exec(compile(body, str(helper), 'exec'), ns)
+L, write = ns['Ledger'](), ns['write']
+src = Path('/private/tmp/l026_subset_pair_metadata_projection_assembly')
+h, hr = L.document(src / 'handoff.json')
+assert hr['sha256'] == '3ac72ef0433f6bc536b5af0d761b4280493e0ed1b4c00ee84b4f54a59b93a91b'
+for value in h.values():
+    if type(value) is dict and set(value) == {'path', 'bytes', 'sha256'}:
+        L.raw(value['path'], value)
+peer, peerref = L.document('/private/tmp/l026_subset_pair_metadata_projection_assembly_source_independent_review/reuse_integer_only.json')
+assert peerref['sha256'] == '37f08dfe9e9ecf6068b0e2644f614bd351ef9d7db35035c17411603781a202ea'
+assert peer['status'] == 'SUPPORTED_STATIC' and peer['blockers'] == []
+assert peer['reviewer'] not in ('/root', h['author'])
+assert peer['program'] == h['program'] and peer['plan'] == h['plan']
+plan, _ = L.document(h['plan']['path'], h['plan'])
+for value in plan['pins'].values():
+    L.raw(value['path'], value)
+actual_review_path = Path('/private/tmp/l026_subset_pair_input_projection_actual_independent_review/reuse_integer_only.json')
+review, reviewref = L.document(actual_review_path)
+assert reviewref['sha256'] == '0c72aa27b168e7e7a7f4a3c744a54d4073cb1c4c70b1e3bba9cdfbba865b647a'
+assert review['status'] == 'SUPPORTED_ACTUAL_LITERAL_METADATA_INPUT_PROJECTION'
+assert review['reviewer'] != '/root' and review['blockers'] == []
+assert review['whole_Source_and_inputs_closed'] is review['metadata_envelope_and_raw_frames_verified'] is True
+assert review['numerical_guard_or_admission_threshold_changed'] is False
+projection, _ = L.document(review['projection']['path'], review['projection'])
+q, _ = L.document(plan['pins']['pair_request']['path'], plan['pins']['pair_request'])
+for value in q['context'] + q['inputs']['seed_provenance']:
+    L.raw(value['path'], value)
+source, _ = L.raw(h['program']['path'], h['program'])
+duties = next(ast.literal_eval(n.value) for n in ast.parse(source).body
+              if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'DUTIES' for t in n.targets))
+assert len(duties) == 7
+decision, _ = L.document(h['decision_FALSE']['path'], h['decision_FALSE'])
+assert decision['Root_authority'] is decision['adopted'] is decision['Original_pair_role_authorized'] is False
+decision.update(root='/root', Root_authority=True, adopted=True, Original_pair_role_authorized=True,
+                projection_review=reviewref, assembly_Source_peer=peerref,
+                selected_D_induction_scope='Pair consumes no D maps; no complete-family adoption.',
+                unpaid_row_scope='Pair consumes no owner row and establishes no new eligibility.',
+                conclusion_scope='A checked proper container only; no row, GEN, IP or conjecture credit.')
+decision.update({duty: True for duty in duties})
+L.close()
+base = Path('/private/tmp/l026_subset_pair_family_actual')
+decisionref = write(base / 'Root_pair_role_decision.json', decision)
+def triple(value):
+    return [value['path'], str(value['bytes']), value['sha256']]
+argv = ['/usr/bin/time', '-l', '/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', h['program']['path'],
+        '--plan', *triple(h['plan']), '--decision', *triple(decisionref),
+        '--projection', *triple(review['projection']), '--projection-review', *triple(reviewref),
+        '--projection-actual', *triple(review['actual_SDK']), '--out', decision['assembly_output']]
+print(json.dumps(dict(decision=decisionref, argv=argv, assembly_output=decision['assembly_output'],
+                     Source_peer=peerref, metadata_only=True, mathematical_worker_not_launched=True)))

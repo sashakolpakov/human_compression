@@ -1,0 +1,107 @@
+"""Root owns the common-commutant certificate integration and preserves old operands."""
+from pathlib import Path
+import argparse, ast, json, sys
+sys.path.insert(0, '/private/tmp/intake_metadata')
+from whole import Ledger, write
+
+p = argparse.ArgumentParser()
+p.add_argument('mode', choices=('source', 'original'))
+p.add_argument('--peer', required=True)
+p.add_argument('--controls-review')
+a = p.parse_args()
+L = Ledger()
+src = Path('/private/tmp/f004_projection_star_centralizer')
+h, hr = L.document(src / 'handoff.json')
+assert hr['sha256'] == 'cece7f55aca7660d3268653c3026b690ae31de49b4087f6c51ab2ba84daeca1d'
+files = h["files"]
+h.update(Source_manifest=files["SOURCE_MANIFEST_worker.json"],
+         control_Source_manifest=files["SOURCE_MANIFEST_controls.json"],
+         Source_union_guards512=h["Source_plus_guards512"],
+         Source_origins=files["SOURCE_ORIGINS_FALSE.json"], scope=files["PROTOCOL.rst"],
+         theory=files["theory.tex"], invoice=files["SOURCE_WORK_IO_INVOICE_FALSE.json"],
+         fixtures=files["AUTHOR_STATIC_CHECKS.json"], request_FALSE=files["REQUEST_FALSE.json"],
+         Root_import_FALSE=files["ROOT_IMPORT_FALSE.json"], routes_FALSE=files["ROOT_ROUTES_FALSE.json"])
+for value in files.values(): L.raw(value["path"], value)
+peer, pr = L.document(a.peer)
+assert peer['status'].startswith('SUPPORTED_STATIC') and peer['blockers'] == []
+assert peer['reviewer'] not in ('/root', h['author'])
+assert peer['Source_manifest'] == h['Source_manifest']
+assert peer['control_Source_manifest'] == h['control_Source_manifest']
+for key in ('Source_manifest', 'control_Source_manifest'):
+    mf, _ = L.document(h[key]['path'], h[key])
+    size = 512
+    for item in mf['sources']:
+        absolute = dict(item, path=str(src / item['path']))
+        size += len(L.raw(absolute['path'], absolute)[0])
+    for item in mf['external_runtime']:
+        size += len(L.raw(item['path'], item)[0])
+    assert size == h['Source_union_guards512']['worker' if key == 'Source_manifest' else 'controls']
+for key in ('Source_origins', 'scope', 'theory', 'invoice', 'fixtures',
+            'request_FALSE', 'Root_import_FALSE', 'routes_FALSE'):
+    L.raw(h[key]['path'], h[key])
+base = Path('/private/tmp/f004_projection_star_centralizer_actual')
+routes, _ = L.document(h['routes_FALSE']['path'], h['routes_FALSE'])
+PY = '/Users/sasha/.venvs/global/bin/python'
+env = ['/usr/bin/env', '-u', 'COVERAGE_PROCESS_CONFIG', '-u', 'COVERAGE_CONFIG',
+       '-u', 'COVERAGE_PROCESS_START', '-u', 'OPENSSL_CONF', '-u', 'OPENSSL_MODULES']
+def guarded(child, name):
+    return env + [PY, '-E', '-B', '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py',
+                  '--volume', '/Users/sasha/medusa', '--output', str(base / 'guards' / name),
+                  '--rss-cap-mib', '128', '--timeout', '100', '--'] + child
+
+if a.mode == 'source':
+    assert not a.controls_review and not base.exists()
+    L.close()
+    base.mkdir()
+    for name in ('Root_SDK', 'guards', 'bindings'):
+        (base / name).mkdir()
+    owner = write(base / 'Root_Source_ownership.json', dict(
+        schema='ROOT_F004_PROJECTION_STAR_SOURCE_OWNERSHIP_V1', root='/root', Root_authority=True,
+        packet=hr, Source_manifest=h['Source_manifest'], control_Source_manifest=h['control_Source_manifest'],
+        Source_peer=pr, whole_Source_theory_and_invoices_owned=True,
+        accepted_H_and_R_tensors_and_middle_D22_borrowed_not_repeated=True,
+        new2739_common_commutant_and_truncated_star_algebra_owned=True,
+        Source_union_guards512=h['Source_union_guards512'],
+        first_and_closing_metadata_bytes=L.bytes, fresh24_synthetic_controls_authorized=True,
+        Original_role_authorized=False))
+    child = routes['controls']['argv_template']
+    assert child[-1] == 'FRESH_PRIVATE_OUTPUT'
+    child[-1] = str(base / 'controls24')
+    print(json.dumps(dict(Source_ownership=owner, argv=guarded(child, 'controls24'), actual_base=str(base))))
+else:
+    assert a.controls_review
+    owner, ownerref = L.document(base / 'Root_Source_ownership.json')
+    assert owner['Source_peer'] == pr and owner['Source_manifest'] == h['Source_manifest']
+    control, controlref = L.document(a.controls_review)
+    assert control['status'].startswith('SUPPORTED_ACTUAL') and control['blockers'] == []
+    assert control['reviewer'] not in ('/root', h['author'])
+    assert control['Source_manifest'] == h['control_Source_manifest']
+    assert control['count'] == 24 and control['Original_inputs_loaded'] is False
+    q, _ = L.document(h['request_FALSE']['path'], h['request_FALSE'])
+    root, _ = L.document(h['Root_import_FALSE']['path'], h['Root_import_FALSE'])
+    B = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress')
+    intake, _ = L.document(B / 'current_intake.json')
+    q['current_selector'] = intake['F004']['job20']['current_selector']
+    selector, _ = L.document(q['current_selector']['path'], q['current_selector'])
+    assert selector['unresolved_position_runs'] == [[2739, 2739]]
+    assert intake['F004']['local_positions_still_requiring_mathematics_or_strict_validation'] == [2739]
+    q['new_Source_peer'] = pr
+    q['new_controls_actual_review'] = controlref
+    for key in ('old_operand_job', 'old_Root_import', 'local_actual_review', 'H_tensor_actual_review', 'R_tensor_actual_review'):
+        L.raw(q[key]['path'], q[key])
+    source, _ = L.raw(src / 'scope.py')
+    duties = next(ast.literal_eval(n.value) for n in ast.parse(source).body
+                  if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'DUTIES' for t in n.targets))
+    assert len(duties) == 10
+    root.update({k: v for k, v in q.items() if k not in ('schema', 'Root_authority', 'Root_input_import')})
+    root.update(root='/root', Root_authority=True, adopted=True,
+                Source_manifest_sha256=h['Source_manifest']['sha256'])
+    root.update({key: True for key in duties})
+    L.close()
+    rr = write(base / 'bindings' / 'Root_input_import.json', root)
+    q['Root_input_import'] = rr
+    qr = write(base / 'bindings' / 'request.json', q)
+    child = routes['worker']['argv_template']
+    assert child[-3:] == ['ROOT_PREPARED_REQUEST', 'ROOT_PREPARED_SHA', 'FRESH_PRIVATE_OUTPUT']
+    child[-3:] = [qr['path'], qr['sha256'], str(base / 'original')]
+    print(json.dumps(dict(request=qr, Root_import=rr, argv=guarded(child, 'original'), actual_base=str(base))))

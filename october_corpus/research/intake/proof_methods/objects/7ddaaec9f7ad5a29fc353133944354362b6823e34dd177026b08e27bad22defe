@@ -1,0 +1,82 @@
+"""Twenty-four fresh fixed-line/third-form designs, including full C6; UNRUN."""
+import sys
+import runtime as rt
+import field,algebra,small,centralizer as old,fixed_line as F,alternating as A,role
+
+def diag(v):return bytes(v[i]if i==j else 0 for i in range(7)for j in range(7))
+def fixture(b):
+    Q=bytearray(49);N=bytearray(49);PR=bytearray(49)
+    for i,z in enumerate((1,10,1)):
+        for a in range(2):Q[7*(2*i+a)+2*(2-i)+a]=z
+    Q[48]=1
+    for i in range(2):
+        for a in range(2):N[7*(2*i+a)+2*(i+1)+a]=1
+    for i in range(3):
+        for a in range(2):
+            for c in range(2):PR[7*(2*i+a)+2*i+c]=6
+    PR[4]=5;PR[12]=6
+    Q,N,PR=bytes(Q),bytes(N),bytes(PR);N2=b.multiply(N,N)
+    B=diag([10,10,1,1,10,10,1]);PH=diag([1,0,1,0,1,0,1]);E=diag([0,0,0,0,0,0,1])
+    U=F.combine(((1,field.I),(1,N),(6,N2)),b);U2=F.combine(((1,field.I),(2,N),(2,N2)),b)
+    U3=F.combine(((1,field.I),(3,N),(10,N2)),b)
+    marks=(b.multiply(B,U3),B,b.multiply(B,U),b.multiply(B,U2))
+    phi=[int(t in((0,2,4),(1,3,5)))for t in A.TRIPLES]
+    AH=b.multiply(Q,PH);AR=b.multiply(Q,PR)
+    return Q,B,N,N2,PH,PR,E,U,U2,marks,phi,AH,AR
+
+def fixtures(b):
+    names=[]
+    def yes(name,v):rt.need(v,name);names.append(name)
+    def no(name,call):
+        try:call()
+        except(ValueError,TypeError,KeyError):names.append(name);return
+        raise AssertionError(name)
+    Q,B,N,N2,PH,PR,E,U,U2,marks,phi,AH,AR=fixture(b)
+    status,prior=old.calculate(Q,marks,AH,AR,B,U,U2,b)
+    yes('full_two_projection_fixture_has_commutant_dimension_six',prior['common_commutant_dimension']==6 and prior['commutation_minor']['rank']==19)
+    T=prior['truncated_dihedral_algebra'];basis=[bytes.fromhex(x)for x in T['basis']]
+    yes('old_candidate_basis_has_rank_five_not_six',T['basis_entry_minor']['rank']==5 and status=='INCONCLUSIVE_COMMUTANT_OR_RELATIONS')
+    Qi=bytes.fromhex(prior['Q_inverse']);status,cert=F.calculate(Q,Qi,basis,PH,PR,marks,phi,6,b)
+    yes('full_fixed_line_third_form_fixture_is_positive',status=='VERIFIED_FIXED_LINE_AND_THIRD_FORM_INTERSECTION_CERTIFICATE')
+    L=cert['fixed_line'];yes('common_positive_fixed_line_is_unique',L['dimension']==1 and L['vector']==[0,0,0,0,0,0,1])
+    yes('nondegenerate_line_gives_the_last_coordinate_projector',L['Gram']==1 and bytes.fromhex(L['projector_E'])==E)
+    checks=cert['projector_checks'];yes('new_projector_idempotence_and_adjoint_hold',checks['E_squared']and checks['E_self_adjoint'])
+    yes('middle_involution_fixes_projector_and_radical_annihilates_it',all(checks[k]for k in('BE_equals_E','EB_equals_E','EN_zero','NE_zero'))and cert['BN_squared_equals_minus_N_squared'])
+    yes('new_projector_commutes_with_both_saved_projections',checks['E_commutes_P_H']and checks['E_commutes_P_R'])
+    yes('new_six_element_basis_is_independent',cert['new_basis_entry_minor']['rank']==6)
+    yes('extra_involution_has_special_isometry_frame',all(cert['sigma_checks'].values()))
+    forms=cert['alternating_form'];yes('all_four_synthetic_marks_preserve_the_complete_form',forms['all_four_marks_preserve']and forms['mark_equalities']==[True]*4)
+    yes('extra_involution_is_excluded_by_an_actual_coefficient',not forms['sigma_preserves']and forms['sigma_mismatch']is not None)
+    shear=bytearray(field.I);shear[3]=1;f=[int(t==(1,2,3))for t in A.TRIPLES]
+    image=A.pullback(f,bytes(shear),b);yes('row_pullback_uses_rows_not_columns',image==tuple(int(t in((0,1,2),(1,2,3)))for t in A.TRIPLES))
+    swap=bytearray(field.I);swap[0]=swap[8]=0;swap[1]=swap[7]=1;f=[int(t==(0,1,2))for t in A.TRIPLES]
+    yes('odd_permutation_changes_alternating_sign',A.pullback(f,bytes(swap),b)==tuple(10*x%11 for x in f))
+    sigma=bytes.fromhex(cert['sigma']);f=[int(t==(0,1,6))for t in A.TRIPLES]
+    yes('a_form_through_the_fixed_line_need_not_exclude_sigma',A.pullback(f,sigma,b)==tuple(f))
+    status,_=F.calculate(Q,Qi,basis,PH,PR,marks,[0]*35,6,b)
+    yes('zero_form_never_gives_an_intersection_certificate',status=='INCONCLUSIVE_EXTRA_INVOLUTION_PRESERVES_PHI')
+    bad=list(marks);bad[3]=bytes(shear);status,_=F.calculate(Q,Qi,basis,PH,PR,bad,phi,6,b)
+    yes('one_bad_original_mark_prevents_positive_form_credit',status=='INCONCLUSIVE_ORIGINAL_MARK_DOES_NOT_PRESERVE_PHI')
+    bad=basis[:];bad[5]=bytes(49);status,_=F.calculate(Q,Qi,bad,PH,PR,marks,phi,6,b)
+    yes('missing_BN_squared_relation_is_inconclusive',status=='INCONCLUSIVE_REQUIRED_BN_SQUARED_RELATION')
+    _,line=F.line(Q,F.combine(((10,field.I),),b),N,b)
+    yes('no_common_positive_fixed_line_is_inconclusive',line['dimension']==0)
+    _,line=F.line(Q,field.I,bytes(49),b)
+    yes('multiple_fixed_lines_are_not_arbitrarily_selected',line['dimension']==7)
+    value,line=F.line(bytes(49),B,N,b)
+    yes('isotropic_candidate_line_does_not_make_a_projector',value is None and line['dimension']==1 and line['Gram']==0)
+    no('short_third_form_is_refused',lambda:A.coefficients([0]*34,b))
+    no('noncanonical_third_form_coefficient_is_refused',lambda:A.coefficients([11]+[0]*34,b))
+    dependent=basis[:5]+[N2];mc=small.minor([[a[i]for a in dependent]for i in range(49)],b)
+    yes('an_old_dependent_candidate_cannot_complete_the_basis',mc['rank']==5)
+    rt.need(len(names)==len(set(names))==24,'24 distinct genuinely new fixture designs');return names
+
+def main():
+    b,q,out,pins=role.start(sys.argv,'controls.py',(rt,field,algebra,small,old,F,A,role))
+    rt.need(q=={'schema':'F004_FIXED_LINE_TENSOR_INTERSECTION_CONTROLS_V1','Root_authority':False},'new Original-free controls request')
+    names=fixtures(b);rt.close_inputs(b)
+    result=dict(schema='F004_FIXED_LINE_TENSOR_INTERSECTION_CONTROLS_RESULT_V1',status='PASS',count=24,names=names,Original_inputs_loaded=False)
+    proof=dict(Source=pins,inputs_closed=True,counts=b.snapshot(),Original_inputs_loaded=False,
+        old_successful_controls_not_replayed=True,full_positive_commutant_fixture_included=True)
+    refs=rt.emit(out,result,proof,b);print(rt.encoded(dict(status='PASS',count=24,outputs=refs,counts=b.snapshot())).decode(),end='')
+if __name__=='__main__':main()

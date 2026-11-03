@@ -1,0 +1,139 @@
+"""Root-only literal serialization under a bounded metadata process profile.
+
+This prepares data; it does not invoke the mathematical pair/shard/rows worker.
+Their existing admission thresholds and numerical guards remain unchanged.
+"""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import os
+import resource
+import signal
+import sys
+import time
+
+START = time.monotonic()
+RSS_CAP = 256 * 2**20
+SECONDS = 125
+PEAK = 0
+
+def checkpoint(_signal=None, _frame=None):
+    global PEAK
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if sys.platform != 'darwin':
+        rss *= 1024
+    PEAK = max(PEAK, rss)
+    if PEAK > RSS_CAP or time.monotonic() - START > SECONDS:
+        raise RuntimeError('bounded metadata process resource limit')
+
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+assert not sys.flags.optimize
+signal.signal(signal.SIGALRM, checkpoint)
+signal.setitimer(signal.ITIMER_REAL, 0.1, 0.1)
+checkpoint()
+parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument('--self-sha256', required=True)
+parser.add_argument('--wrapper-peer', required=True)
+parser.add_argument('--wrapper-peer-sha256', required=True)
+args = parser.parse_args()
+
+helper = Path('/private/tmp/intake_metadata/whole.py')
+helper_body = helper.read_bytes()
+assert len(helper_body) == 3744
+assert hashlib.sha256(helper_body).hexdigest() == '685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+metadata = dict(__file__=str(helper), __name__='root_pinned_metadata_helper')
+exec(compile(helper_body, str(helper), 'exec'), metadata)
+Ledger, write = metadata['Ledger'], metadata['write']
+assert Ledger.raw.__globals__ is metadata and Ledger.raw.__code__.co_filename == str(helper)
+
+L = Ledger()
+helper_raw, helper_ref = L.raw(helper)
+assert helper_raw == helper_body
+own_raw, own_ref = L.raw(Path(__file__).resolve())
+assert own_ref['sha256'] == args.self_sha256 and len(own_raw) <= 8192
+wrapper_peer, wrapper_peer_ref = L.document(args.wrapper_peer)
+assert wrapper_peer_ref['sha256'] == args.wrapper_peer_sha256
+assert wrapper_peer['status'] == 'SUPPORTED_STATIC_LITERAL_METADATA_WRAPPER'
+assert wrapper_peer['blockers'] == [] and wrapper_peer['reviewer'] != '/root'
+assert wrapper_peer['wrapper'] == own_ref and wrapper_peer['metadata_helper'] == helper_ref
+assert wrapper_peer['no_mathematical_operation_or_new_case_predicate'] is True
+
+src = Path('/private/tmp/l026_subset_pair_first_jobs')
+h, hr = L.document(src / 'handoff.json')
+assert hr['sha256'] == '9636dd53c52f90403cb1f6eff7f89feaca022a65119b934eadf05830d0dbfe37'
+p, pref = L.document(h['projection']['path'], h['projection'])
+peer, peerref = L.document('/private/tmp/l026_subset_pair_input_projection_source_independent_review/reuse_integer_only.json')
+assert peerref['sha256'] == '65d3abec3228c3f231dcd7bde8aa0be54c552e91f50506767440cc22a83d66cc'
+assert peer['status'] == 'SUPPORTED_STATIC_METADATA_PROJECTION_UNRUN' and peer['blockers'] == []
+assert peer['reviewer'] not in ('/root', h['author'])
+assert peer['program'] == p['program'] and peer['contract'] == h['projection']
+assert peer['first_job_handoff'] == hr
+code, coderef = L.raw(p['program']['path'], p['program'])
+assert coderef['sha256'] == '5b83d9a7e6dd5467ae76cc1fae9bef6fca3721ee9438349dc5af8dfb55790afc'
+review, rr = L.document(peer['seed_actual_review']['path'], peer['seed_actual_review'])
+assert review['status'] == 'SUPPORTED_ACTUAL' and review['blockers'] == []
+assert review['whole_Source_and_inputs_closed'] is review['actual_guard_and_raw_frames_verified'] is True
+assert review['strict']['carrier'] == p['seed']['carrier']
+assert p['seed']['identity']['free_index'] in review['proper_indices']
+L.raw(review['strict']['proof']['path'], review['strict']['proof'])
+carrier, _ = L.raw(p['seed']['carrier']['path'], p['seed']['carrier'])
+indices, _ = L.document(p['identities']['indices']['path'], p['identities']['indices'])
+current, _ = L.document(h['current_snapshot']['CURRENT']['path'], h['current_snapshot']['CURRENT'])
+assert current['status_bank'] == h['current_snapshot']['bank'] == p['identities']['typed_status_bank']
+assert current['ledger_receipt'] == h['current_snapshot']['receipt']
+L.raw(h['current_snapshot']['receipt']['path'], h['current_snapshot']['receipt'])
+status, _ = L.raw(p['identities']['typed_status_bank']['path'], p['identities']['typed_status_bank'])
+witness, _ = L.raw(p['identities']['witness_bank']['path'], p['identities']['witness_bank'])
+assert L.bytes <= 2 * 2**20 and len(L.pins) <= 32
+assert len(own_raw) + len(helper_raw) + len(code) + 512 <= 65536
+checkpoint()
+ns = dict(__file__=coderef['path'], __name__='root_owned_projection')
+exec(compile(code, coderef['path'], 'exec'), ns)
+for name in p['pure_functions']:
+    assert ns[name].__globals__ is ns and ns[name].__code__.co_filename == coderef['path']
+seed = ns['seed_from_reviewed_carrier'](carrier, p['seed']['identity'], p['seed']['size'])
+identities = ns['identities_from_selected_indices'](witness, status, indices)
+assert len(seed) == p['seed']['expected_native_bytes'] == 714
+assert len(identities) <= p['output_upper']['identities'] == 196608
+L.close()
+checkpoint()
+
+base = Path('/private/tmp/l026_subset_pair_family_actual')
+out = base / 'projected_inputs'
+assert base.is_dir() and base.resolve(strict=True) == base and not out.exists()
+assert not (base / 'Root_input_projection.json').exists()
+out.mkdir()
+refs = {}
+for name, raw in (('seed.bin', seed), ('identities.json', identities)):
+    path = out / name
+    with path.open('xb') as f:
+        assert f.write(raw) == len(raw)
+        f.flush()
+        os.fsync(f.fileno())
+    refs[name] = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+C = Ledger()
+for ref in refs.values():
+    C.raw(ref['path'], ref)
+C.close()
+checkpoint()
+receipt_value = dict(
+    schema='ROOT_L026_SUBSET_PAIR_INPUT_PROJECTION_V1', root='/root', Root_authority=True,
+    packet=hr, codec=coderef, codec_Source_peer=peerref, old_strict_actual_review=rr,
+    wrapper=own_ref, metadata_helper=helper_ref, wrapper_Source_peer=wrapper_peer_ref,
+    current_snapshot=h['current_snapshot'], seed_identity=p['seed']['identity'],
+    seed=refs['seed.bin'], identities=refs['identities.json'], selected_indices=len(indices),
+    input_first_and_closing_bytes=L.bytes, helper_bootstrap_bytes=len(helper_body),
+    output_first_and_closing_bytes=C.bytes,
+    resource_profile=dict(kind='LITERAL_METADATA_ONLY', rss_cap=RSS_CAP, wall_seconds=SECONDS,
+        sampled_peak_rss=PEAK, elapsed_seconds=time.monotonic()-START,
+        sampling_interval_seconds=0.1, sampled_limits_not_kernel_quotas=True),
+    Original_inputs_loaded=True, Original_use='literal_copy_and_identity_fields_only',
+    group_operations=0, new_predicates=0, old_science_replayed=False, canonical_writes=0,
+    numerical_guard_or_admission_threshold_changed=False,
+    separate_genuine_API_and_independent_projection_review_still_owed=True)
+assert len(json.dumps(receipt_value, sort_keys=True, separators=(',', ':')).encode()) + 1 <= 16384
+receipt = write(base / 'Root_input_projection.json', receipt_value)
+checkpoint()
+signal.setitimer(signal.ITIMER_REAL, 0)
+print(json.dumps(dict(projection=receipt, seed=refs['seed.bin'], identities=refs['identities.json'])))

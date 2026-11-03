@@ -1,0 +1,104 @@
+"""Copy a finite list of current proof-method artifacts; never execute them."""
+from pathlib import Path
+import hashlib, json, os, time
+
+START = time.monotonic()
+S = Path('/Users/sasha/medusa/research/leemans')
+DEST = S / 'maintenance/intake/artifacts/proof_methods'
+roots = [
+ '/private/tmp/f004_projection_star_centralizer',
+ '/private/tmp/f004_projection_star_centralizer_actual',
+ '/private/tmp/f004_projection_star_centralizer_source_independent_review',
+ '/private/tmp/f004_projection_star_controls24_artifact_review',
+ '/private/tmp/f004_projection_star2739_actual_independent_review',
+ '/private/tmp/f004_fixed_line_star_algebra_conditional_review',
+ '/private/tmp/f004_fixed_line_tensor_intersection',
+ '/private/tmp/f004_fixed_line_tensor_intersection_actual',
+ '/private/tmp/f004_fixed_line_tensor_intersection_source_independent_review',
+ '/private/tmp/l026_subset_pair_family',
+ '/private/tmp/l026_subset_pair_family_actual',
+ '/private/tmp/l026_subset_pair_family_source_independent_review',
+ '/private/tmp/l026_subset_pair_controls24_actual_independent_review',
+ '/private/tmp/l026_subset_pair_projection_wrapper_source_independent_review',
+ '/private/tmp/l026_subset_pair_input_projection_actual_independent_review',
+ '/private/tmp/l026_subset_pair_metadata_projection_assembly',
+ '/private/tmp/l026_subset_pair_metadata_projection_assembly_source_independent_review',
+ '/private/tmp/l026_subset_pair_assembly_artifacts_actual_independent_review',
+ '/private/tmp/l026_subset_pair_Original_pair_actual_independent_review',
+ '/private/tmp/l026_subset_pair_premise_alignment_independent_review',
+ '/private/tmp/l026_subset_pair_shard_metadata_assembly',
+ '/private/tmp/l026_subset_pair_shard_metadata_assembly_source_independent_review',
+ '/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts/cohort_from0330',
+]
+keys = [
+ 'Root_f004_projection_star_Source_ownership_v1', 'Root_f004_projection_star_controls24_v1',
+ 'Root_f004_projection_star_Original_preparation_v1', 'Root_f004_projection_star_Original_v1',
+ 'Root_f004_fixed_line_Source_ownership_v1',
+ 'Root_l026_subset_pair_literal_metadata_projection_v1', 'Root_l026_subset_pair_single_role_ownership_v1',
+ 'Root_l026_subset_pair_metadata_assembly_v1', 'Root_l026_subset_pair_Original_pair_v1',
+ 'Root_f009_cohort0330_freeze_v1', 'Root_f009_cohort0330_batch00_prepare_suppliers_ownership_v1',
+ 'Root_f009_cohort0330_batch00_prepare_suppliers_v1',
+ 'Root_f009_cohort0330_metadata_admission_observer_v1',
+]
+roots += ['/private/tmp/intake_actual_transports/' + key for key in keys]
+selected = set()
+for name in roots:
+    root = Path(name)
+    assert root.resolve(strict=True) == root and root.is_dir()
+    for current, directories, files in os.walk(root, followlinks=False):
+        current = Path(current)
+        depth = len(current.relative_to(root).parts)
+        assert depth <= 4
+        directories[:] = [n for n in directories if n not in ('tmp','__pycache__')]
+        for filename in files:
+            if not filename.endswith(('.pyc','.o','.olean')):
+                selected.add(current / filename)
+selected.update(Path('/private/tmp') / n for n in (
+ 'own_f004_projection_star.py', 'own_f004_fixed_line_tensor.py',
+ 'project_l026_subset_pair_inputs.py', 'project_l026_subset_pair_inputs_metadata.py',
+ 'own_l026_subset_pair_single_role.py', 'own_f009_cohort_consistent_ledger.py',
+ 'own_f009_cohort.py',
+))
+assert len(selected) <= 512
+inventory = []
+total = 0
+for p in sorted(selected):
+    assert p.resolve(strict=True) == p and p.is_file()
+    st = p.stat()
+    assert st.st_size <= 4 * 2**20
+    total += st.st_size
+    assert total <= 32 * 2**20 and time.monotonic() - START <= 110
+    body = p.read_bytes()
+    after = p.stat()
+    assert (st.st_ino,st.st_size,st.st_mtime_ns,st.st_ctime_ns) == (after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns)
+    assert len(body) == st.st_size
+    inventory.append((p,body,hashlib.sha256(body).hexdigest(),st))
+objects = DEST / 'objects'
+objects.mkdir(parents=True, exist_ok=True)
+assert objects.resolve(strict=True) == objects
+rows = []
+for p,body,sha,st in inventory:
+    out = objects / sha
+    if not out.exists():
+        with out.open('xb') as f:
+            assert f.write(body) == len(body)
+            f.flush()
+            os.fsync(f.fileno())
+    assert out.read_bytes() == body
+    current = p.stat()
+    assert (st.st_ino,st.st_size,st.st_mtime_ns,st.st_ctime_ns) == (current.st_ino,current.st_size,current.st_mtime_ns,current.st_ctime_ns)
+    assert p.read_bytes() == body
+    rows.append(dict(original_path=str(p),bytes=len(body),sha256=sha,retained_path=str(out)))
+manifest = dict(schema='FINITE_CURRENT_INTAKE_METHOD_RETENTION_V1',root='/root',files=rows,
+    file_count=len(rows),logical_bytes=total,mathematical_execution=0,Original_values_interpreted=False,
+    scope='Listed current methods, private results and genuine operation records. Registered upstream dependencies remain separate.',
+    complete_recursive_or_clean_clone_closure_claimed=False)
+raw = (json.dumps(manifest, sort_keys=True, indent=2) + '\n').encode()
+sha = hashlib.sha256(raw).hexdigest()
+out = DEST / ('manifest_' + sha + '.json')
+with out.open('xb') as f:
+    assert f.write(raw) == len(raw)
+    f.flush()
+    os.fsync(f.fileno())
+assert out.read_bytes() == raw
+print(json.dumps(dict(manifest=dict(path=str(out),bytes=len(raw),sha256=sha),files=len(rows),logical_bytes=total)))

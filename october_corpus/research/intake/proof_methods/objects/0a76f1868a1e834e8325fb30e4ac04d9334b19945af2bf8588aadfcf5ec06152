@@ -1,0 +1,107 @@
+"""Read-only existing-record audit. Does not import represented Source or run controls."""
+import ast,hashlib,json,os,shlex,stat,time
+from pathlib import Path
+
+OUT=Path(__file__).resolve().parent
+BASE=Path('/private/tmp/l026_subset_pair_family_actual')
+SRC=Path('/private/tmp/l026_subset_pair_first_jobs')
+RAW=Path('/private/tmp/intake_actual_transports')
+CACHE={};EVENTS=[];START=time.monotonic();READ=0
+def enc(x):return (json.dumps(x,sort_keys=True,separators=(',',':'))+'\n').encode()
+def sha(x):return hashlib.sha256(x).hexdigest()
+def descriptor(p,body):return dict(path=str(p),bytes=len(body),sha256=sha(body))
+def whole(p,expected=None):
+ global READ
+ p=Path(p);assert p.is_absolute() and not p.is_symlink()
+ p=p.resolve(strict=True);assert len(CACHE|{str(p):None})<=512
+ fd=os.open(p,os.O_RDONLY|os.O_NOFOLLOW)
+ try:
+  a=os.fstat(fd);assert stat.S_ISREG(a.st_mode) and a.st_size<=4*2**20
+  assert READ+a.st_size<=64*2**20 and time.monotonic()-START<100
+  with os.fdopen(fd,'rb',closefd=False) as f:body=f.read(a.st_size+1)
+  b=os.fstat(fd);c=p.stat()
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(a)==sig(b)==sig(c) and len(body)==a.st_size
+ finally:os.close(fd)
+ r=descriptor(p,body);READ+=len(body)
+ if expected is not None:assert r==expected,(str(p),'descriptor mismatch')
+ if str(p) in CACHE:assert CACHE[str(p)][0]==r and CACHE[str(p)][1]==body
+ CACHE[str(p)]=(r,body);EVENTS.append(r);return body
+def load(p,expected=None):return json.loads(whole(p,expected))
+def pinned(r):return load(r['path'],r)
+def ref(p):return CACHE[str(Path(p).resolve())][0]
+def save(name,data):
+ p=OUT/name;body=enc(data)
+ with p.open('xb') as f:f.write(body);f.flush();os.fsync(f.fileno())
+ return descriptor(p,body)
+
+sdkref=dict(path=str(BASE/'Root_SDK/input_projection_metadata_v1.json'),bytes=5329,sha256='37654b88a86fa6b1beedaf16ac60f08f780d9a36a6421ea47ba708bbbd5912ff')
+d=pinned(sdkref);rawdir=RAW/'Root_l026_subset_pair_literal_metadata_projection_v1';issued=load(rawdir/'issued.json');frames=d['all_genuine_api_frames']
+assert d['root']==d['actor']==issued['root']=='/root'and d['issued_argv']==d['child_argv']==issued['argv']==shlex.split(d['issued_tool_arguments']['cmd'])
+assert issued['tool_arguments']==d['issued_tool_arguments']and frames[0]==d['full_initial_tool_return']and frames[-1]==d['full_tool_return']
+assert frames[-1]['exit_code']==d['actual_tool']['exit_code']==0
+assert d['actual_tool']['initial_chunk']==frames[0]['chunk_id']and d['actual_tool']['terminal_chunk']==frames[-1]['chunk_id']
+rawrefs=[ref(rawdir/'issued.json')]
+for j,f in enumerate(frames):
+ p=rawdir/('frame_%04d.json'%j);assert load(p)==f;rawrefs.append(ref(p))
+if d['actual_tool']['synchronous']:assert len(frames)==1 and d['actual_tool']['handle']is None
+else:assert all(f.get('session_id')==d['actual_tool']['handle']for f in frames[:-1])and'session_id'not in frames[-1]
+output=json.loads(''.join(f.get('output','')for f in frames));projectionref=output['projection'];r=pinned(projectionref)
+assert projectionref==dict(path=str(BASE/'Root_input_projection.json'),bytes=3434,sha256='6622520b32ffe1ac538c79c3e43f4b80aefbe99e1f351aa6f2a8a8a3f7aaf9c7')
+assert r['root']=='/root'and r['Root_authority']is True and r['schema']=='ROOT_L026_SUBSET_PAIR_INPUT_PROJECTION_V1'
+assert r['seed']==output['seed']==dict(path=str(BASE/'projected_inputs/seed.bin'),bytes=714,sha256='f023bf91db673e8e3ce5420ac0e8e0b4fe234578af4a1397663b63d9f3e7c2aa')
+assert r['identities']==output['identities']==dict(path=str(BASE/'projected_inputs/identities.json'),bytes=122981,sha256='8700814bfdfb039e5c845c8f644296715b7a0abffa8607180003b17bc67a1523')
+assert r['wrapper']==dict(path='/private/tmp/project_l026_subset_pair_inputs_metadata.py',bytes=7292,sha256='0c62d11019798a3e16446b196c178b2a7beda400ee1ed5c236fa6d1c747bfd70')
+wrapper=whole(r['wrapper']['path'],r['wrapper']);ast.parse(wrapper)
+helper=whole(r['metadata_helper']['path'],r['metadata_helper']);ast.parse(helper)
+assert r['metadata_helper']['bytes']==3744 and r['metadata_helper']['sha256']=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+assert b"exec(compile(helper_body, str(helper), 'exec'), metadata)"in wrapper
+assert b"Ledger.raw.__globals__ is metadata and Ledger.raw.__code__.co_filename == str(helper)"in wrapper
+assert b'from whole import'not in wrapper
+wrapperpeer=pinned(r['wrapper_Source_peer']);assert r['wrapper_Source_peer']==dict(path='/private/tmp/l026_subset_pair_projection_wrapper_source_independent_review/reuse_integer_only.json',bytes=878,sha256='db66e58b10d0f4ca5e00b56f41ad47ba00168abd5bc58349a500a9f6d4e68098')
+assert wrapperpeer['status']=='SUPPORTED_STATIC_LITERAL_METADATA_WRAPPER'and wrapperpeer['blockers']==[]and wrapperpeer['reviewer']!='/root'
+assert wrapperpeer['wrapper']==r['wrapper']and wrapperpeer['metadata_helper']==r['metadata_helper']and wrapperpeer['no_mathematical_operation_or_new_case_predicate']is True
+argv=d['issued_argv'];assert argv[:11]==['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES']
+assert argv[11:]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',r['wrapper']['path'],'--self-sha256',r['wrapper']['sha256'],'--wrapper-peer',r['wrapper_Source_peer']['path'],'--wrapper-peer-sha256',r['wrapper_Source_peer']['sha256']]
+h=pinned(r['packet']);assert r['packet']['sha256']=='9636dd53c52f90403cb1f6eff7f89feaca022a65119b934eadf05830d0dbfe37'
+contract=pinned(h['projection']);codecpeer=pinned(r['codec_Source_peer']);codec=whole(r['codec']['path'],r['codec']);ast.parse(codec)
+assert r['codec']==contract['program']==codecpeer['program']and r['codec']['sha256']=='5b83d9a7e6dd5467ae76cc1fae9bef6fca3721ee9438349dc5af8dfb55790afc'
+assert r['codec_Source_peer']['sha256']=='65d3abec3228c3f231dcd7bde8aa0be54c552e91f50506767440cc22a83d66cc'and codecpeer['status']=='SUPPORTED_STATIC_METADATA_PROJECTION_UNRUN'and codecpeer['blockers']==[]
+assert codecpeer['contract']==h['projection']and codecpeer['first_job_handoff']==r['packet']and codecpeer['seed_actual_review']==r['old_strict_actual_review']
+old=pinned(r['old_strict_actual_review']);assert old['status']=='SUPPORTED_ACTUAL'and old['blockers']==[]and old['whole_Source_and_inputs_closed']is old['actual_guard_and_raw_frames_verified']is True
+assert old['strict']['carrier']==contract['seed']['carrier']and r['seed_identity']==contract['seed']['identity']
+assert dict(identity=r['seed_identity'],subset_size=351)in old['subset_sizes']
+assert r['current_snapshot']==h['current_snapshot']and r['selected_indices']==1024==contract['identities']['count']
+current=pinned(h['current_snapshot']['CURRENT'])
+assert current['status_bank']==h['current_snapshot']['bank']==contract['identities']['typed_status_bank']and current['ledger_receipt']==h['current_snapshot']['receipt']
+# Opaque whole identities only: never decode carrier points, witness fields, status values or projected identities.
+opaque=[old['strict']['proof'],contract['seed']['carrier'],contract['identities']['indices'],h['current_snapshot']['receipt'],contract['identities']['typed_status_bank'],contract['identities']['witness_bank'],r['seed'],r['identities']]
+for x in opaque:whole(x['path'],x)
+inputs=[r['metadata_helper'],r['wrapper'],r['wrapper_Source_peer'],r['packet'],h['projection'],r['codec_Source_peer'],r['codec'],r['old_strict_actual_review'],old['strict']['proof'],contract['seed']['carrier'],contract['identities']['indices'],h['current_snapshot']['CURRENT'],h['current_snapshot']['receipt'],contract['identities']['typed_status_bank'],contract['identities']['witness_bank']]
+assert len(inputs)==len({x['path']for x in inputs})==15 and all(x['bytes']<=2*2**20 for x in inputs)
+assert r['input_first_and_closing_bytes']==2*sum(x['bytes']for x in inputs)==1095600<=2*2**20
+assert r['helper_bootstrap_bytes']==r['metadata_helper']['bytes']==3744
+assert r['output_first_and_closing_bytes']==2*(r['seed']['bytes']+r['identities']['bytes'])==247390
+assert r['seed']['bytes']==12+2*351==714 and r['identities']['bytes']<=196608
+profile=r['resource_profile'];assert profile['kind']=='LITERAL_METADATA_ONLY'and profile['rss_cap']==256*2**20 and profile['wall_seconds']==125
+assert profile['sampled_peak_rss']<=256*2**20 and 0<=profile['elapsed_seconds']<125 and profile['sampling_interval_seconds']==0.1 and profile['sampled_limits_not_kernel_quotas']is True
+assert r['Original_inputs_loaded']is True and r['Original_use']=='literal_copy_and_identity_fields_only'and r['group_operations']==r['new_predicates']==r['canonical_writes']==0
+assert r['old_science_replayed']is r['numerical_guard_or_admission_threshold_changed']is False
+assert r['wrapper']['bytes']+r['metadata_helper']['bytes']+r['codec']['bytes']+512==14025<=65536
+for _,(pin,b)in list(CACHE.items()):whole(pin['path'],pin)
+assert len(CACHE)+3<=512
+qualifications=[
+ 'Root authored/executed the final wrapper. Ledger provided its distinct Source peer. Artifact authored the pure codec, whose earlier Source peer was this reviewer; inherited metadata IO authorship is qualified. No reviewer numerical operation, codec replay, scientific Source/control or process launcher was executed.',
+ 'Root explicitly opened Original literals and serialized the retained351 points and1024 current-unpaid owner identities. This audit whole-hashed all those inputs/outputs while parsing only ordinary metadata, Source and genuine SDK/raw frames. Carrier points, witness fields, status values, selected-index values and projected identity records were not decoded or recomputed by reviewer.',
+ 'Final7292 wrapper alone is reviewed: pinned helper body is compile/exec loaded into a dedicated namespace and Ledger.raw globals/code filename checked, so no undeclared helper pyc loading is assumed. Complete active project Source7292+3744+2477+512=14025; no mathematical worker Source is loaded.',
+ 'The15 exact inputs close to1095600B, plus3744explicit helper pre-Ledger bootstrap; output data first+closing subtotal247390B. Source/stdlib/interpreter implicit OS IO is not claimed completely measured. The independently read whole receipt/output/API closure supplies the remaining actual receipt integrity.',
+ 'actual_guard_and_raw_frames_verified refers here ONLY to the genuine Root API and the Source-backed SIGALRM/manual-checkpoint sampled256MiB125s metadata envelope. There is no numerical supervise_validation receipt, child birth/PID guard, kernel quota, universal-process absence or changed mathematical threshold. The metadata envelope flag is separately explicit.',
+ 'The strict seed source and current selection are intentionally different historical snapshots. Exact seed identity/carrier/proof/actual refs are joined without repeating old strict predicates. No new pair image, D map, tag, row containment, GEN/IP/canonical/whole-manuscript/conjecture/Lean or measurement credit follows from this serialization.',
+ 'Source FALSE/UNRUN annotations remain historical; this adds the genuine metadata preparation fact only. Mathematical pair/shard/rows roles still require their unchanged Source/controls/current Root gates and old numerical admission. No canonical/progress/Git writes occurred in this audit.'
+]
+common=dict(status='SUPPORTED_ACTUAL_LITERAL_METADATA_INPUT_PROJECTION',reviewer='/root/readback_review',blockers=[],projection=projectionref,Root_input_projection=projectionref,seed=r['seed'],identities=r['identities'],actual_SDK=sdkref,wrapper=r['wrapper'],wrapper_Source_peer=r['wrapper_Source_peer'],codec=r['codec'],codec_Source_peer=r['codec_Source_peer'],current_snapshot=r['current_snapshot'],seed_identity=r['seed_identity'],selected_indices=1024,whole_Source_and_inputs_closed=True,actual_API_verified=True,actual_guard_and_raw_frames_verified=True,metadata_envelope_and_raw_frames_verified=True,actual_guard_kind='SOURCE_SIGALRM_AND_RSS_METADATA_ENVELOPE_NO_NUMERICAL_SUPERVISOR',numerical_guard_or_admission_threshold_changed=False,Original_inputs_loaded_by_Root=True,Original_values_decoded_by_reviewer=False,group_operations_or_new_predicates_or_canonical_writes=0)
+full=save('review_integer_only.json',dict(schema='L026_SUBSET_PAIR_INPUT_PROJECTION_ACTUAL_INDEPENDENT_REVIEW_V1',**common,Root_raw_frames=rawrefs,old_strict_actual_review=r['old_strict_actual_review'],wrapper_input_first_closing_bytes=1095600,explicit_helper_bootstrap_bytes=3744,data_output_first_closing_bytes=247390,resource_profile=profile,whole_worker_input_roles=inputs,reviewed_first_closing_pins=[x for x,b in CACHE.values()],qualifications=qualifications))
+thin=save('reuse_integer_only.json',dict(schema='L026_SUBSET_PAIR_INPUT_PROJECTION_ACTUAL_REUSE_V1',**common,full_actual_review=full))
+hand=save('handoff.json',dict(status=common['status'],reviewer='/root/readback_review',blockers=[],reuse=thin,full_review=full))
+print(json.dumps(dict(handoff=hand,reuse=thin,full_review=full,paths=len(CACHE),read_bytes=READ)))
+

@@ -1,0 +1,30 @@
+"""Lexicographic alternating3form coefficients in the accepted row frame."""
+import runtime as rt
+TRIPLES=tuple((i,j,k)for i in range(7)for j in range(i+1,7)for k in range(j+1,7))
+def coefficients(raw,b):
+    b.scalar(35);rt.need(type(raw)in(list,tuple)and len(raw)==35
+        and all(type(x)is int and 0<=x<11 for x in raw),'canonical35 alternating coefficients')
+    return tuple(raw)
+def pullback(phi,g,b):
+    b.scalar(35);support=[(a,c)for a,c in zip(TRIPLES,phi)if c];out=[]
+    rt.need(type(g)is bytes and len(g)==49,'complete matrix for row pullback')
+    for i,j,k in TRIPLES:
+        total=0
+        for (a,c,d),value in support:
+            # Nine multiplications and five additions/subtractions for the
+            # determinant, then one coefficient product and one accumulation.
+            b.scalar(20)
+            x=g[7*i+a]*(g[7*j+c]*g[7*k+d]-g[7*j+d]*g[7*k+c])
+            x-=g[7*i+c]*(g[7*j+a]*g[7*k+d]-g[7*j+d]*g[7*k+a])
+            x+=g[7*i+d]*(g[7*j+a]*g[7*k+c]-g[7*j+c]*g[7*k+a])
+            total=(total+value*x)%11
+        out.append(total)
+    return tuple(out)
+def certificate(phi,marks,sigma,b):
+    phi=coefficients(phi,b);images=[pullback(phi,g,b)for g in marks]
+    extra=pullback(phi,sigma,b);checks=[x==phi for x in images]
+    mismatch=next((dict(triple=list(t),expected=x,observed=y)for t,x,y in zip(TRIPLES,phi,extra)if x!=y),None)
+    return dict(nonzero=any(phi),coefficient_order='lexicographic increasing zero-based triples',
+        nonzero_coefficients=sum(x!=0 for x in phi),all_four_marks_preserve=all(checks),
+        mark_equalities=checks,mark_pullbacks=[bytes(x).hex()for x in images],
+        sigma_preserves=extra==phi,sigma_pullback=bytes(extra).hex(),sigma_mismatch=mismatch)
