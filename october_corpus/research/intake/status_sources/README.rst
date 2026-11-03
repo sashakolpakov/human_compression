@@ -29,3 +29,8 @@ group or graph calculation, complete an unfinished manuscript, or provide
 full portable mathematical replay. The adjacent ``proof_methods`` archive
 preserves a separate finite selection of proofs and execution evidence; the
 corpus reproduction guide lists existing portable mathematical entry points.
+
+The preceding 330-parent edition is preserved in
+``history/parents0000_0329/`` with its original audit and validation. The
+current edition records 342 parents and 53,352 slots after the separately
+reviewed twelve-parent registration.

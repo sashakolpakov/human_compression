@@ -1,0 +1,122 @@
+"""Independent Source peer; run no actual auditor or scientific role."""
+from pathlib import Path
+import ast,hashlib,json,resource,signal,sys,time
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_resume')
+HERE=BASE/'actual_audit';OUT=HERE/'source_review';START=time.monotonic();READ=0;PINS={};BANK={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second Source review')))
+signal.alarm(125)
+def raw(p,r=None):
+    global READ
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+    p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p and not p.is_symlink()
+    st=p.stat();assert p.is_file()and st.st_size<=4*2**20
+    b=p.read_bytes();assert p.stat()==st;READ+=len(b);assert READ<=64*2**20
+    rr=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+    if r is not None:assert rr==r
+    PINS[str(p)]=rr;BANK[str(p)]=b;assert len(PINS)<=512
+    return b,rr
+def doc(p,r=None):
+    b,rr=raw(p,r);return json.loads(b),rr
+def get(r):return doc(r['path'],r)[0]
+def enc(x):return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode('ascii')+b'\n'
+def save(name,value):
+    b=enc(value);p=OUT/name
+    with p.open('xb')as f:f.write(b)
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+h,hr=doc(HERE/'handoff.json');cfg,cr=doc(HERE/'config.json');mf,mr=doc(HERE/'SOURCE_MANIFEST.json')
+assert(hr['bytes'],hr['sha256'])==(2639,'e8c5b47a1c95de01ca934d70d5242de3d8cb4374b0e7e358f9cbf7b198d7046b')
+assert(cr['bytes'],cr['sha256'])==(3701,'1c3429a0bbed2b93df8380b4daf39618aef42e00f562ef9ad39eb052d086ac56')
+assert(mr['bytes'],mr['sha256'])==(1214,'85617f1d16b27100579056d3219e8072a570f3b24aaf927cfedcae2730faf00a')
+assert h['program']==cfg['program']==mf['Source'][0]
+assert h['config']==cr and h['Source_manifest']==mr
+sources={Path(r['path']).name:raw(r['path'],r)[0]for r in mf['Source']}
+assert mf['Source_union_guards512']==sum(r['bytes']for r in mf['Source'])+512==65270<=65536
+program=cfg['program'];assert(program['bytes'],program['sha256'])==(37847,'5e1f6eb979aa4a3a1463a1aa594c7b9bcb8971b38d691997df45b3f8b778ee06')
+tree=ast.parse(sources['audit_actuals.py']);compile(sources['audit_actuals.py'],program['path'],'exec')
+oldtree=ast.parse(raw(HERE/'source_editions/initial/audit_actuals.py')[0])
+old={n.name:n for n in oldtree.body if isinstance(n,ast.FunctionDef)}
+functions={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+changed=[k for k in functions if k not in old or ast.dump(old[k])!=ast.dump(functions[k])]
+assert changed==['review','actual','context','bootstrap','batch_audit']
+assert [ast.dump(n)for n in oldtree.body if not isinstance(n,ast.FunctionDef)]==[ast.dump(n)for n in tree.body if not isinstance(n,ast.FunctionDef)]
+parts={k:ast.unparse(v)for k,v in functions.items()}
+assert "('/root', '/root/readback_review', REVIEWER)"in parts['review']
+assert "terminal == dict(status='PASS', stop='RETURNED', receipt=str(Path(guard) / 'receipt.json'))"in parts['actual']
+assert "ownership['whole_Source_protocol_inverse_and_invoices_owned'] is ownership['old_scientific_Source_controls_and_mathematics_owned'] is True"in parts['bootstrap']
+assert "cohort['Source_handoff'] == config['adapter_packet']"in parts['bootstrap']
+assert "context(L, strict"in parts['batch_audit']and "context(L, sa"in parts['batch_audit']
+calls=[ast.unparse(n.func)for n in ast.walk(tree)if isinstance(n,ast.Call)]
+assert calls.count('exec')==1 and not any(x.startswith(('subprocess.','os.exec','os.system','os.spawn','runpy.'))for x in calls)
+assert 'set(keys).intersection(FORBIDDEN)'in parts['selected']
+assert 'if key in FORBIDDEN:'in parts['descriptor_closure']
+for name in('protocol','contract','Root_decision_template_FALSE'):
+    if name in h:raw(h[name]['path'],h[name])
+protocol,protocolref=raw(HERE/'PROTOCOL.rst');invoice,invr=doc(HERE/'IO_INVOICE.json');plan,planref=doc(HERE/'CLI_PLAN_FALSE.json')
+assert b'current 330 through 341' in protocol or b'330' in protocol
+assert b'zero' in protocol and b'closer' in protocol
+assert h['closure_scope']==cfg['closure_scope']==invoice['closure_scope']
+assert h['old_control_manifest_bodies_reclosed']is False and h['author_inspection_limitation']['prior_generic_metadata_inspection_decoded_nested_Original_payloads']is True
+assert sources['whole.py']==raw(Path('/private/tmp/intake_metadata/whole.py'))[0]
+for key in('adapter_program','adapter_peer','resume_program','resume_peer','phase_issuer','phase_issuer_peer','closer_program','registrar_contract'):
+    raw(cfg[key]['path'],cfg[key])
+packet=get(cfg['adapter_packet'])
+for key in('supplier_manifest','strict_manifest'):
+    m=get(packet[key])
+    for r in m['Source']:raw(r['path'],r)
+    assert sum(x['bytes']for x in m['Source'])+512==m['Source_with_invocation_reserve']<=65536
+fs=get(packet['full_supplier_static']);fa=get(packet['full_supplier_actual24']);ts=get(packet['strict_static']);ta=get(packet['strict_actual41'])
+assert fs['Source_manifest']==fa['production_Source_manifest']==packet['supplier_manifest']
+assert fs['control_Source_manifest']==fa['Source_manifest']==cfg['control_manifests'][0]
+assert fs['old_strict_Source_manifest']==ts['Source_manifests']['check']==packet['strict_manifest']
+assert ts['Source_manifests']['controls']==ta['Source_manifest']==cfg['control_manifests'][1]
+assert fa['count']==24 and fa['Original_inputs_loaded']is False and ta['actual_control_count']==41
+cohort,cohortref=doc(Path('/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts/cohort_from0330/cohort.json'))
+assert cohort['begin']==cohort['reviewed_prefix']==330 and cohort['end']==342 and cohort['batch_counts']==[3]*4
+assert cohort['Source_handoff']==cfg['adapter_packet']and cohort['Source_peer']==cfg['adapter_peer']
+owner=get(cohort['Root_Source_ownership']);assert owner['program']==cfg['adapter_program']and owner['packet']==cfg['adapter_packet']and owner['Source_peer']==cfg['adapter_peer']
+assert owner['Root_authority']is owner['whole_Source_protocol_inverse_and_invoices_owned']is owner['old_scientific_Source_controls_and_mathematics_owned']is True
+for r in cohort['progress_snapshot'].values():raw(r['path'],r)
+for p,b in list(BANK.items()):assert raw(p)[0]==b
+claims=dict(complete_Source_read_and_final_semantic_delta_reviewed=True,
+ corrected_distinct_peer_terminal_receipt_ownership_and_actual_context_joins_supported=True,
+ lexical_payload_boundary_and_selected_metadata_paths_supported=True,
+ whole_current_production_Source_and_guard_pins_verified=True,
+ accepted_historical24_41_control_facts_reused_with_exact_static_joins=True,
+ historical_control_manifest_bodies_not_reclosed_or_recreated=True,
+ exact_current_cohort_owner_and_frozen_progress_pins_verified=True,
+ genuine_API_raw_guard_argument_output_and_attempt_closure_checks_supported=True,
+ explicit_supplier0_strict_index_and_opaque_per_cover_equality_supported=True,
+ actual_registrar_batch_and_aggregate_ABI_supported=True,
+ batch_then_aggregate_does_not_rerun_scientific_roles=True,
+ only_exclusive_private_full_and_thin_reviews_written=True,
+ no_canonical_or_progress_write_or_scientific_execution=True,
+ IO_source_paths_RSS_and_deadlines_supported=True)
+full=save('review.json',dict(schema='F009_NEW_ACTUAL_AUDITOR_DISTINCT_SOURCE_REVIEW_V1',
+ status='SUPPORTED_STATIC_CURRENT_COHORT_ACTUAL_AUDITOR',reviewer='/root/dependency_audit',author='/root/forest_resume',blockers=[],
+ program=program,config=cr,Source_manifest=mr,handoff=hr,protocol=protocolref,IO_invoice=invr,CLI_plan_FALSE=planref,
+ Source_union_guards512=65270,claims=claims,semantic_delta_functions=changed,
+ checked_pins=list(PINS.values()),first_and_closing_review_bytes=READ,
+ current_typed_spot_checks=dict(scientific_roles=16,whole_inputs_each=14,opaque_per_cover_equalities=12,strict_record_slot_indices_per_cover=156,
+   Original_payloads_JSON_decoded=False,qualification='Independent selected metadata and lexical-byte spot checks; not execution of the new auditor or a replacement for its genuine actual runs.'),
+ author_inspection_limitation=cfg['author_inspection_limitation'],closure_scope=cfg['closure_scope'],
+ scope='Current cohort330..341 only. Generic zero-override admission in this auditor does not certify the existing closer for later zero-override cohorts.',
+ represented_auditor_or_science_executed=False,Original_payload_arrays_decoded_by_reviewer=False,
+ Root_authority=False,new_case_manuscript_conjecture_Lean_or_measurement_credit=0))
+leaf=save('reuse_integer_only.json',dict(schema='F009_NEW_ACTUAL_AUDITOR_STATIC_REUSE_V1',
+ status='SUPPORTED_STATIC_CURRENT_COHORT_ACTUAL_AUDITOR',reviewer='/root/dependency_audit',author='/root/forest_resume',blockers=[],
+ program=program,config=cr,Source_manifest=mr,handoff=hr,full_review=full,Source_union_guards512=65270,
+ supported_current_cohort=cohortref,begin=330,end=342,Root_authority=False,
+ exact_registrar_batch_aggregate_cover_indices_and_attempt_ABI_supported=True,
+ genuine_API_to_receipt_and_raw_frame_joins_supported=True,
+ active_current_production_and_metadata_Source_closure_supported=True,
+ historical_control_facts_borrowed_not_recursively_reaudited=True,
+ Original_payloads_lexical_in_new_actual_code=True,
+ author_prior_payload_decoding_limitation_explicit=True,
+ represented_auditor_or_science_executed=False,Original_arrays_decoded_by_reviewer=False,
+ positive_Root_decision_and_genuine_guarded_batch_aggregate_runs_still_required=True,
+ canonical_registration_still_separate=True,
+ later_cohorts_or_zero_override_closer_not_admitted_by_this_review=True,
+ no_new_mathematical_manuscript_conjecture_Lean_or_measurement_credit=True))
+signal.alarm(0)
+print(json.dumps(dict(review=leaf,full=full,Source_union_guards512=65270,blockers=[])))

@@ -1,0 +1,144 @@
+"""Complete selected TREE2048 x U8 parent stabilizers; no Original inputs."""
+FOREST_FEE=65536
+IMAGE_FEE=65536
+HOST_FEE=131072
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def compose(p,q):return[q[x]for x in p]
+
+def U_generators(K,value,work):
+    work.charge(FOREST_FEE,'prepaid14vertex_centres_codes_isomorphisms_and_Ugenerators')
+    f=K['shaped'](value);vertices=set(K['U'])|{v for e in f for v in e}
+    adj={v:[]for v in vertices};parent={v:v for v in vertices}
+    def root(v):
+        while parent[v]!=v:v=parent[v]
+        return v
+    for a,b in f:
+        x,y=root(a),root(b);need(x!=y,'forest, not cyclic graph');parent[x]=y
+        adj[a].append(b);adj[b].append(a)
+    def color(v):return 0 if v in K['U']else v
+    def exchange(a,b):
+        need(len(a)==len(b)and not(set(a)&set(b)),'disjoint equal-size isomorphic branches')
+        p=list(range(80))
+        for x,y in zip(a,b):
+            need(color(x)==color(y),'all actual fixed port colours retained');p[x]=y;p[y]=x
+        return p
+    def rooted(v,up):
+        children=[]
+        for x in adj[v]:
+            if x!=up:
+                code,order,gens=rooted(x,v);children.append((code,x,order,gens))
+        children.sort(key=lambda x:(x[0],x[1]));gens=[g for x in children for g in x[3]]
+        for a,b in zip(children,children[1:]):
+            if a[0]==b[0]:gens.append(exchange(a[2],b[2]))
+        return(color(v),tuple(x[0]for x in children)),[v]+[z for x in children for z in x[2]],gens
+    components=[];seen=set()
+    for v in sorted(vertices):
+        if v in seen:continue
+        comp={v};queue=[v];seen.add(v)
+        for x in queue:
+            for y in adj[x]:
+                if y not in seen:seen.add(y);comp.add(y);queue.append(y)
+        live=set(comp);degree={x:len(adj[x])for x in comp}
+        while len(live)>2:
+            leaves=[x for x in live if degree[x]<=1];need(leaves,'finite tree centres')
+            for x in leaves:
+                live.remove(x)
+                for y in adj[x]:degree[y]-=1
+        centres=sorted(live)
+        if len(centres)==1:
+            code,order,gens=rooted(centres[0],-1);key=(1,(code,))
+        else:
+            a,b=centres;halves=[rooted(a,b),rooted(b,a)]
+            halves.sort(key=lambda x:(x[0],x[1]));gens=halves[0][2]+halves[1][2]
+            if halves[0][0]==halves[1][0]:gens.append(exchange(halves[0][1],halves[1][1]))
+            key=(2,tuple(x[0]for x in halves));order=halves[0][1]+halves[1][1]
+        components.append((key,min(comp),order,gens))
+    components.sort(key=lambda x:(x[0],x[1]));gens=[g for x in components for g in x[3]]
+    for a,b in zip(components,components[1:]):
+        if a[0]==b[0]:gens.append(exchange(a[2],b[2]))
+    need(len(gens)<=7,'proved n_U-1 bound includes isolated U')
+    for p in gens:need(all(p[v]==v for v in K['S']),'U-only fixes each actual S label')
+    return gens
+
+def image_basis(entries,C,work):
+    work.charge(IMAGE_FEE,'prepaid16image_greedy_group_closures_on6entries')
+    C=tuple(C);need(len(C)<=6 and len(set(C))==len(C),'bounded distinct support')
+    index={v:i for i,v in enumerate(C)};identity=tuple(range(len(C)));all_images=set();typed=[]
+    for signature,p in entries:
+        need(type(signature)is tuple and tuple(sorted(signature))==C and tuple(p[v]for v in C)==signature,'actual lift signature')
+        a=tuple(index[v]for v in signature);need(a not in all_images,'one complete image entry');all_images.add(a);typed.append((a,p))
+    need(1<=len(typed)<=16 and identity in all_images,'complete bounded image contains identity')
+    known={identity};basis=[];perms=[]
+    for a,p in typed:
+        if a in known:continue
+        basis.append(p);perms.append(a);need(len(basis)<=4,'proved at most four image enlargements')
+        queue=[identity];known={identity}
+        for b in queue:
+            for g in perms:
+                q=tuple(g[x]for x in b)
+                if q not in known:
+                    need(q in all_images and len(known)<16,'closure stays in complete actual image');known.add(q);queue.append(q)
+    need(known==all_images,'entire projected stabilizer generated')
+    return basis
+
+def generators(K,S,value,work):
+    work.charge(16384,'prepaid_pointwise_TREE_maps_and_full_right_action_compositions')
+    f=K['shaped'](value);occupied=tuple(sorted({v for e in f for v in e if v in K['S']}))
+    mask,p0,C,_=S['normalize'](K,occupied,work);f0=K['moved_edges'](f,p0)
+    K['orbit_witness'](f,f0,mask,list(range(8)),work)
+    elements,_=S['stabilizer_image'](K,f0,C,work)
+    work.charge(K['ACTION_FEE'],'prepaid_identity_fixedS_Ucode')
+    key0,u0=K['coloured_code_and_U_order'](f0,list(range(80)))
+    back0=S['inverse'](K['point_map'](0,u0));entries=[]
+    for signature,h in elements:
+        m,u=S['compact'](K,h,work);K['orbit_witness'](f0,K['moved_edges'](f0,h),m,u,work)
+        work.charge(K['ACTION_FEE'],'prepaid_full_fixedS_Ucode')
+        key,uh=K['coloured_code_and_U_order'](f0,h)
+        if key==key0:
+            T=h.copy()
+            for j,v in enumerate(K['U']):T[v]=72+uh[j]
+            lift=compose(T,back0);m,u=S['compact'](K,lift,work)
+            K['orbit_witness'](f0,f0,m,u,work);entries.append((signature,lift))
+    image=image_basis(entries,C,work);tree=[]
+    for bit in range(11):
+        p=K['point_map'](1<<bit,list(range(8)))
+        if all(p[v]==v for v in C):tree.append(p)
+    ugens=U_generators(K,f0,work);back=S['inverse'](p0);answer=[];compact=[]
+    for p in tree+ugens+image:
+        q=compose(compose(p0,p),back);m,u=S['compact'](K,q,work)
+        K['orbit_witness'](f,f,m,u,work);answer.append(q);compact.append(dict(action_index=m,U_permutation=u))
+    need(len(answer)<=22 and(len(f)==6 or len(image)<=3 and len(answer)<=21),'full selected-group bound22, extension21')
+    return answer,dict(pointwise_TREE_generators=len(tree),U_generators=len(ugens),image_generators=len(image),
+                       projected_order=len(entries),generators=compact,full_selected_parent_stabilizer=True)
+
+def cover(K,S,R,parent,work):
+    f,dist=R['prepare'](K,parent,work);gens,evidence=generators(K,S,f,work)
+    work.charge(HOST_FEE,'prepaid21generators156slot_BFS_and_full80_transversals')
+    by_edge={e:i for i,e in enumerate(K['HOST'])};trans={};representative={}
+    for seed in range(156):
+        if seed in trans:continue
+        trans[seed]=list(range(80));representative[seed]=seed;queue=[seed]
+        for slot in queue:
+            a,b=K['HOST'][slot]
+            for g in gens:
+                target=by_edge[tuple(sorted((g[a],g[b])))]
+                if target not in trans:
+                    trans[target]=compose(trans[slot],g);representative[target]=seed;queue.append(target)
+    need(len(trans)==len(representative)==156,'all host slots in full parent stabilizer cover')
+    rows=[];targets=set()
+    for slot in range(156):
+        row=R['disposition'](K,f,dist,slot,work)
+        if row['kind']=='ORBIT':
+            child=tuple(sorted(f+(K['HOST'][slot],)));p=S['inverse'](trans[slot]);m,u=S['compact'](K,p,work)
+            target=tuple(sorted(f+(K['HOST'][representative[slot]],)))
+            K['orbit_witness'](child,target,m,u,work)
+            row=dict(slot=slot,kind='ORBIT',target=K['lists'](target),action_index=m,U_permutation=u)
+            targets.add(target)
+        rows.append(row)
+    result=dict(schema='F009_FOREST_EXTENSION_INTERVAL_V1',parent=K['lists'](f),parent_level=len(f),
+        begin=0,end=156,records=rows,next_parent_forests=[K['lists'](x)for x in sorted(targets)],
+        all_slots_in_interval_accounted=True,whole156_parent_or_level_or_census_claimed=False)
+    return dict(schema='F009_INCREMENTAL_PARENT_COVER_BATCH_V1',covers=[result]),evidence

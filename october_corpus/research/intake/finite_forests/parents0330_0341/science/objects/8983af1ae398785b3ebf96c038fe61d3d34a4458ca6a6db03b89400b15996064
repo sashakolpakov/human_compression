@@ -1,0 +1,57 @@
+"""Literal used-function edition of old incremental.py; no author execution."""
+PREPARE_FEE=400000
+CHILD_FEE=2048
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def structural(K,f):
+    # Literal rejection precedence: this DSU contains DEFECT edges only.
+    S=K['S'];degree=[0]*80;parent=list(range(80))
+    def root(v):
+        while parent[v]!=v:v=parent[v]
+        return v
+    for u,v in f:
+        degree[u]+=1;degree[v]+=1
+        if degree[u]>(1 if u==61 else 2 if u in S else 3)or degree[v]>(1 if v==61 else 2 if v in S else 3):return 'DEGREE_BUDGET'
+        a,b=root(u),root(v)
+        if a==b:return 'FOREST_CYCLE'
+        parent[a]=b
+    for u,v in K['SEED']:degree[u]+=1;degree[v]+=1
+    if any(d>3 for d in degree):return 'DEGREE_BUDGET'
+    return 'NONE'
+
+
+def prepare(K,parent,work):
+    f=K['shaped'](parent)
+    need(len(f)<6 and K['rejection'](f,work)=='NONE','passing parent at level0through5')
+    work.charge(PREPARE_FEE,'prepaid80_full_parent_BFS_and_matrix_storage')
+    adj=[[]for _ in range(80)]
+    for u,v in K['SEED']+f:adj[u].append(v);adj[v].append(u)
+    rows=[]
+    for start in range(80):
+        d=[80]*80;d[start]=0;queue=[start];at=0
+        while at<len(queue):
+            u=queue[at];at+=1
+            for v in adj[u]:
+                if d[v]==80:d[v]=d[u]+1;queue.append(v)
+        rows.append(d)
+    return f,rows
+
+
+def graph_reason(dist,u,v):
+    if dist[u][v]<9:return 'FULL_SEED_SHORT_CYCLE'
+    if min(dist[0][62],dist[0][u]+1+dist[v][62],dist[0][v]+1+dist[u][62])<8:return 'ROOT_DISTANCE'
+    return 'NONE'
+
+
+def disposition(K,f,dist,slot,work):
+    need(type(slot)is int and 0<=slot<156,'typed entire host slot')
+    edge=K['HOST'][slot]
+    if edge in f:return dict(slot=slot,kind='EXISTING')
+    work.charge(CHILD_FEE,'prepaid_sorted_child_degree_defect_DSU_and_incremental_distances')
+    child=tuple(sorted(f+(edge,)));why=structural(K,child)
+    if why=='NONE':why=graph_reason(dist,*edge)
+    return dict(slot=slot,kind='ORBIT')if why=='NONE'else dict(slot=slot,kind='REJECT',reason=why)
+
+

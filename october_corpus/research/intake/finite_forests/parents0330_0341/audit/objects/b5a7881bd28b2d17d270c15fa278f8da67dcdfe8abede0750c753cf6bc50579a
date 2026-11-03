@@ -1,0 +1,60 @@
+--- old7119 AST-unparsed for review only
++++ new5e1f AST-unparsed for review only
+@@ -150,7 +150,7 @@
+ def review(L, ref, program=None, historical=False):
+     r = metadata(L, ref, ['status', 'reviewer', 'author', 'blockers', 'program'])
+     assert r['status'].startswith('SUPPORTED') and r['blockers'] == []
+-    assert historical or r.get('reviewer', r.get('author')) not in ('/root', '/root/readback_review')
++    assert historical or r.get('reviewer', r.get('author')) not in ('/root', '/root/readback_review', REVIEWER)
+     if program is not None:
+         assert r['status'].startswith('SUPPORTED_STATIC') and r['program'] == program
+     return r
+@@ -185,7 +185,9 @@
+     return d
+ 
+ def actual(L, sdkref, key, child, guard, science):
+-    api(L, sdkref, key, supervised(child, guard, science), True)
++    sdk = api(L, sdkref, key, supervised(child, guard, science), True)
++    terminal = json.loads(sdk['full_tool_return']['output'])
++    assert terminal == dict(status='PASS', stop='RETURNED', receipt=str(Path(guard) / 'receipt.json'))
+     started = pure(L, refat(L, Path(guard) / 'started.json'))
+     receipt = pure(L, refat(L, Path(guard) / 'receipt.json'))
+     assert started['command'] == receipt['command'] == child
+@@ -326,6 +328,9 @@
+     assert r['declared_read_bytes'] <= manifest['caps']['read_bytes'] and r['nominal_project_body_bytes'] <= 131072
+     return dict(prepared=p, result=resultref, certificate=certref, parents=requestparents, saved=q.get('saved'))
+ 
++def context(L, a, base, stem):
++    assert a['actual_context'] == [a['actual_SDK']] + [refat(L, base / 'guards' / stem / name) for name in ('receipt.json', 'stdout.log', 'stderr.log')]
++
+ def phase(L, config, cohortref, cohort, batch, name, edition, prior):
+     control = Path(cohortref['path']).parent
+     n, begin = (batch['batch'], cohort['begin'])
+@@ -394,6 +399,11 @@
+         cursor += count
+     assert cursor == end and cohort['batches'] == expected and (cohort['source_indices'] == list(range(begin, end))) and (cohort['reviewed_prefix'] == begin)
+     assert cohort['program'] == config['adapter_program']
++    assert cohort['Source_handoff'] == config['adapter_packet'] and cohort['Source_peer'] == config['adapter_peer']
++    ownership = pure(L, cohort['Root_Source_ownership'])
++    assert ownership['root'] == '/root' and ownership['Root_authority'] is True
++    assert ownership['program'] == cohort['program'] and ownership['packet'] == config['adapter_packet'] and (ownership['Source_peer'] == config['adapter_peer'])
++    assert ownership['whole_Source_protocol_inverse_and_invoices_owned'] is ownership['old_scientific_Source_controls_and_mathematics_owned'] is True
+     raw(L, config['adapter_program'])
+     packet = pure(L, config['adapter_packet'])
+     assert packet['program'] == cohort['program'] and packet['Root_authority'] is False
+@@ -485,6 +495,7 @@
+     assert assembly['schema'] == 'ROOT_F009_COHORT_BATCH_SUPPLIER_ASSEMBLY_V1' and assembly['cohort'] == cohortref and (assembly['cohort_batch'] == a.batch) and (assembly['source_indices'] == indices)
+     assert assembly['per_supplier_cover_preserved'] is True and assembly['fresh_strict_slots_owed'] == 156 * len(indices)
+     strict = pair['strict']
++    context(L, strict, base, 'parents%04d_%04d_check' % (b['begin'], b['end'] - 1))
+     assert strict['actual_edition'] == 1 and strict['prior_non_success_attempts'] == []
+     strictstem = 'parents%04d_%04d_check' % (b['begin'], b['end'] - 1)
+     tr = prepared_role(L, assembly['strict_prepared'], strict['actual_SDK'], strictstem, base, indices, cohortref, a.batch, roster, packet['strict_manifest'], tm, 'strict', cohort['begin'])
+@@ -501,6 +512,7 @@
+         supplierbody = fields['supplier']
+         sp = selected(supplierbody, ['index', 'actual', 'prepared', 'cover_index', 'canonical_cover_sha256'])
+         sa = sp['actual']
++        context(L, sa, base, 'parent%04d_supply' % index)
+         assert pb['index'] == sp['index'] == index and sp['cover_index'] == 0 and (pb['strict_cover_index'] == j)
+         assert pb['strict_certificate'] == tr['certificate'] and pb['strict_slots'] == 156 and (pb['per_cover_canonical_bytes_equal'] is True)
+         assert sa['actual_edition'] == 1 and sa['prior_non_success_attempts'] == []

@@ -1,0 +1,94 @@
+"""UNRUN meaningful original-free incremental and subgroup certificate controls."""
+import common as io
+import copy
+
+def main():
+    bank,q,manifest,pins,out=io.main_args('f009_incremental_parent_controls')
+    io.need(out.isascii()and len(out)<=1024 and all(len(r['path'])<=1024 and all(32<=ord(c)<127 and c not in('"','\\')for c in r['path'])for r in bank.refs.values()),'bounded unescaped ASCII control paths')
+    B=bank.module(q['budget'],'incremental_control_budget')
+    K=bank.module(q['kernel'],'literal_control_forest_kernel')
+    N=bank.module(q['incremental'],'incremental_control_kernel')
+    work=B['Meter'](bank.tick);work.start=bank.start;bank.work=work;work.reserve_publication(262144)
+    work.charge(131072,'prepaid_finite_control_matrix_and_set_assertions')
+    names=[]
+    def check(name,test):
+        work.charge(4096,'synthetic_dispatch');io.need(test(),name);names.append(name)
+    def refuses(name,run):
+        work.charge(4096,'synthetic_dispatch')
+        try:run()
+        except(ValueError,B['WorkStop']):names.append(name);return
+        raise ValueError('control should refuse: '+name)
+    f,d=N['prepare'](K,[],work)
+    check('all80_full_distance_rows_and_diagonal',lambda:len(d)==80 and all(len(row)==80 for row in d)and all(d[i][i]==0 for i in range(80)))
+    check('distance_symmetry_and_disconnected_sentinel',lambda:all(d[i][j]==d[j][i]for i in range(80)for j in range(80))and d[0][72]==80)
+    check('full_seed_root_distance_eight',lambda:d[0][62]==8)
+    check('existing_host_edge_and_all_U_U_slots',lambda:len(K['HOST'])==156 and K['HOST'][-1]==(78,79))
+    check('defect_DSU_does_not_include_full_seed',lambda:N['structural'](K,((46,72),(54,72)))=='NONE')
+    check('degree_precedes_later_defect_cycle',lambda:N['structural'](K,((61,72),(61,73),(72,73)))=='DEGREE_BUDGET')
+    check('defect_cycle_precedes_later_degree',lambda:N['structural'](K,((72,73),(72,74),(73,74),(73,75),(73,76)))=='FOREST_CYCLE')
+    cycle,cd=N['prepare'](K,[[46,72],[54,72]],work)
+    check('passing_parent_full_graph_has_ten_cycle',lambda:cd[46][54]==2 and d[46][54]==8)
+    # A generic path with one pendant endpoint at each root exercises the
+    # root-distance branch independently of this literal seed's structure.
+    gd=[[80]*80 for _ in range(80)];positions={0:1,62:9,10:0,11:10}
+    for a,x in positions.items():
+        for b,y in positions.items():gd[a][b]=abs(x-y)
+    check('fresh_root_shortcut_after_girth_pass',lambda:N['graph_reason'](gd,10,11)=='ROOT_DISTANCE')
+    check('root_shortcut_reverse_orientation',lambda:N['graph_reason'](gd,11,10)=='ROOT_DISTANCE')
+    check('girth_reason_precedes_root_shortcut',lambda:N['graph_reason'](gd,0,62)=='FULL_SEED_SHORT_CYCLE')
+    check('disconnected_new_edge_creates_no_cycle',lambda:N['graph_reason'](d,46,72)=='NONE')
+    # This is the only full old per-child replay bank. It never loads a census.
+    slots=[0,1,8,9,64,65,120,127,128,155]
+    for slot in slots:
+        new=N['disposition'](K,cycle,cd,slot,work);edge=K['HOST'][slot]
+        if edge in cycle:expected='EXISTING'
+        else:expected=K['rejection'](tuple(sorted(cycle+(edge,))),work)
+        got='EXISTING'if new['kind']=='EXISTING'else'NONE'if new['kind']=='ORBIT'else new['reason']
+        check('old_full_predicate_matches_slot_'+str(slot),lambda got=got,expected=expected:got==expected)
+    allrows=[N['disposition'](K,cycle,cd,slot,work)for slot in range(156)]
+    check('all156_slots_typed_and_ordered',lambda:[row['slot']for row in allrows]==list(range(156)))
+    refuses('boolean_host_slot',lambda:N['disposition'](K,f,d,True,work))
+    refuses('host_slot156',lambda:N['disposition'](K,f,d,156,work))
+    parent=[[46,72]];supplied=N['cover'](K,parent,work)
+    checked=N['cover'](K,parent,work,supplied['records'])
+    check('nontrivial_parent_full156_supplier_strict_agreement',lambda:supplied==checked)
+    check('target_union_is_fresh_exact_set',lambda:
+          supplied['next_parent_forests']==[K['lists'](x)for x in sorted({tuple(tuple(e)for e in row['target'])for row in supplied['records']if row['kind']=='ORBIT'})])
+    check('partial_stabilizer_has_nonidentity_witness',lambda:any(row['kind']=='ORBIT'and(row['action_index']!=0 or row['U_permutation']!=list(range(8)))for row in supplied['records']))
+    check('entire_156_records_including_existing',lambda:len(supplied['records'])==156 and supplied['records'][0]==dict(slot=0,kind='EXISTING'))
+    refuses('missing_slot_record',lambda:N['cover'](K,parent,work,supplied['records'][:-1]))
+    bad=copy.deepcopy(supplied['records']);bad[0]['slot']=False
+    refuses('boolean_existing_slot_not_zero',lambda:N['cover'](K,parent,work,bad))
+    bad=copy.deepcopy(supplied['records']);bad[1]['action_index']=True
+    refuses('boolean_supplied_action_not_one',lambda:N['cover'](K,parent,work,bad))
+    u=[1,2,3,4,5,6,7,0];p=K['point_map'](133,u)
+    mask,actual=N['compact'](K,p,work)
+    check('full80_compact_noninvolution_U_orientation',lambda:mask==133 and actual==u and K['point_map'](mask,actual)==p)
+    inv=N['inverse'](p);mi,ui=N['compact'](K,inv,work)
+    check('inverse_transversal_is_source_to_representative',lambda:K['point_map'](mi,ui)==inv and all(inv[p[i]]==i for i in range(80)))
+    bad=p.copy();bad[0],bad[2]=bad[2],bad[0]
+    refuses('permutation_outside_full_allowed_seed_action',lambda:N['compact'](K,bad,work))
+    refuses('duplicate_parent_roster',lambda:N['batch'](K,[parent,parent],work))
+    refuses('four_parent_batch',lambda:N['batch'](K,[[],parent,[[54,72]],[[58,72]]],work))
+    refuses('nonboolean_compression',lambda:N['cover'](K,[],work,compress=1))
+    refuses('wrong_supplied_batch_schema',lambda:N['batch'](K,[parent],work,dict(schema='WRONG',covers=[])))
+    # Max-width ASCII envelope only: these intentionally repeated rows are not
+    # a numerical graph certificate and never enter the mathematical checker.
+    row=dict(slot=155,kind='ORBIT',target=[[79,79]]*6,action_index=2047,U_permutation=list(range(8)))
+    part=dict(schema='F009_FOREST_EXTENSION_INTERVAL_V1',parent=[[79,79]]*5,parent_level=5,begin=0,end=156,
+              records=[row]*156,next_parent_forests=[[[79,79]]*6]*156,
+              all_slots_in_interval_accounted=True,whole156_parent_or_level_or_census_claimed=False)
+    envelope=dict(schema='F009_INCREMENTAL_PARENT_COVER_BATCH_V1',covers=[part]*3)
+    work.charge(3*98304,'prepaid_max_width_ASCII_fixture_encoding')
+    check('worst_width_three_parent_ASCII_envelope',lambda:len(io.canonical(row))==141 and len(io.canonical(envelope))<=98304)
+    tiny=B['Meter'](bank.tick,cap=31);tiny.charge(31)
+    refuses('hard_work_boundary',lambda:tiny.charge(1))
+    io.need(len(names)==41,'complete41 original-free control bank')
+    bank.close();work.charge(0)
+    result=dict(schema='F009_INCREMENTAL_PARENT_SYNTHETIC_CONTROLS_V1',status='ALL_SYNTHETIC_CONTROLS_PASSED',
+                count=len(names),names=names,pins=pins,coded_units=work.units,declared_read_bytes=bank.bytes,
+                whole_inputs=list(bank.refs.values()),Original_graph_or_census_loaded=False,new_case_or_paper_credit=0)
+    outputs=bank.emit(out,result,dict(names=names,count=len(names),whole_level_or_census_claimed=False))
+    answer=io.canonical(dict(status=result['status'],count=len(names),outputs=outputs,new_case_credit=0));work.final(len(answer));print(answer.decode(),end='')
+
+if __name__=='__main__':main()

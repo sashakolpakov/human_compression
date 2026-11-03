@@ -1,0 +1,68 @@
+"""Literal used functions from frozen support.py; full raw origin retained."""
+NORMALIZE_FEE=16384
+GENERATORS_FEE=16384
+IMAGE_FEE=65536
+DECODE_FEE=4096
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+
+def normalize(K,occupied,work):
+    work.charge(NORMALIZE_FEE,'prepaid31node_colored_support_code_and_full80_normalizer')
+    need(type(occupied)in(set,frozenset,list,tuple)and len(occupied)<=6 and all(type(v)is int and v in K['S']for v in occupied),'at most six distinct typed occupied S leaves')
+    A=set(occupied);need(len(A)==len(occupied),'distinct support')
+    need(K['FREE']==(1,3,4,5,7,8,9,10,11,12,13)and len(K['TREE'])==31 and K['TREE'][15:]==K['S']and K['TREE'][30]==61,'exact rooted binary31-tree and distinguished61')
+    codes=[None]*31;bits={v:i for i,v in enumerate(K['FREE'])};mask=0
+    for i in range(15,31):codes[i]=bytes((int(K['TREE'][i]in A),int(K['TREE'][i]==61)))
+    for i in range(14,-1,-1):
+        left,right=codes[2*i+1],codes[2*i+2]
+        if i in bits and left>right:mask|=1<<bits[i];left,right=right,left
+        codes[i]=b'('+left+right+b')'
+    p=K['point_map'](mask,list(range(8)));C=tuple(sorted(p[v]for v in A))
+    need(p[61]==61 and len(C)==len(A),'fixed distinguished leaf and whole support image')
+    return mask,p,C,codes[0]
+
+
+def stabilizer_image(K,f,C,work):
+    work.charge(GENERATORS_FEE,'prepaid11_full80_canonical_support_swap_generators')
+    identity=list(range(8));generators=[];seen=set()
+    for bit in range(11):
+        mask=1<<bit;p=K['point_map'](mask,identity);signature=tuple(p[v]for v in C)
+        if tuple(sorted(signature))==C and signature!=C and signature not in seen:
+            K['orbit_witness'](f,K['moved_edges'](f,p),mask,identity,work)
+            generators.append(p);seen.add(signature)
+    work.charge(IMAGE_FEE,'prepaid16times11_full80_image_BFS_and_signature_storage')
+    elements=[(C,list(range(80)))];known={C};at=0
+    while at<len(elements):
+        signature,p=elements[at];at+=1
+        for g in generators:
+            q=[g[x]for x in p];key=tuple(q[v]for v in C)
+            need(tuple(sorted(key))==C,'every composed map stabilizes canonical support')
+            if key not in known:
+                need(len(elements)<16,'proved2group induced-image bound16')
+                known.add(key);elements.append((key,q))
+    return elements,len(generators)
+
+
+def inverse(p):
+    need(type(p)is list and len(p)==80 and all(type(v)is int for v in p)and sorted(p)==list(range(80)),'full80 permutation')
+    q=[0]*80
+    for i,v in enumerate(p):q[v]=i
+    return q
+
+
+def compact(K,p,work):
+    """Recover source-coordinate swap bits, then compare ALL80 images."""
+    work.charge(DECODE_FEE,'prepaid_full80_transversal_compact_decode_and_equality')
+    inverse(p);need({p[v]for v in K['TREE']}==set(K['TREE'])and {p[v]for v in K['U']}==set(K['U']),'complete TREE and U domains')
+    index={v:j for j,v in enumerate(K['TREE'])};mask=0
+    for bit,j in enumerate(K['FREE']):
+        at=index[p[K['TREE'][j]]];left=index[p[K['TREE'][2*j+1]]]
+        need(left in(2*at+1,2*at+2),'TREE child image is a binary child')
+        if left==2*at+2:mask|=1<<bit
+    u=[p[v]-72 for v in K['U']]
+    need(K['point_map'](mask,u)==p,'entire80 image equals original mask and U8 action')
+    return mask,u
+
+
