@@ -26,6 +26,21 @@ The editorial has no mathematical result to recover.
 The [current intake status](INTAKE_STATUS.json) records the accepted case counts
 and distinguishes them from completed manuscripts and published archives.
 
+| Original | Current stage | Still required |
+|---|---|---|
+| F004 | 126 of 272 q11 jobs complete. In job 20, only position **2739** remains; 1430 is registered complete. | Settle 2739, finish the other pending jobs and assemble the classification. There are 146 pending jobs in total. |
+| F009 | Current R5 stage: **330 of 940 parents**, with **51,480** checked extension slots. | Finish this stage and the remaining order-80 census; the stage alone does not complete the manuscript. |
+| L026 | Current selector bank: **724 generation results, 744 exclusions, 721 separate intersection proofs**; **1,468 settled and 27,440 unresolved** rows. | Finish the current bank and the other selectors. **64 selectors** lack complete censuses, including the current selector. |
+
+The [saved status sources](research/intake/status_sources/README.rst) preserve
+the exact metadata editions behind these counts. Their bounded reader checks
+the bytes and pointer joins and prints the active counters. The separate
+[finite methods archive](research/intake/proof_methods/README.rst) and its
+[byte verifier](research/intake/proof_methods/verify.py) preserve selected proofs,
+partial results and execution records. These archives do not provide full
+portable mathematical replay. Finish the three remaining treatments, then
+stop and report before further compression measurement or Lean work.
+
 These manuscripts have 106 registered source components. L063 and L064 are
 the main article and its supplementary appendix, counted together as one
 manuscript. The accounting audit preserves both source IDs and all their
@@ -92,16 +107,21 @@ of 713 obstructions and every earlier disposition are preserved.
 F004's q11 register now has **126 complete jobs out of 272**, with **146 pending**.
 The full classification and manuscript remain unfinished.
 
-In the separate job 20, position 259 is registered as a generating quartet
+The following job 20 paragraphs describe an **earlier checkpoint with thirteen
+pending positions**. Those records and replay packages remain useful, but their
+pending counts are historical. The current selector has only **2739** unresolved,
+as recorded in the table above.
+
+At that earlier job 20 checkpoint, position 259 was registered as a generating quartet
 satisfying the intersection property. Twenty-one further exclusions are
 registered: five nongeneration cases and sixteen intersection failures.
-The local pending list has fallen from 35 to **13**. Independent audits checked
+The local pending list had fallen from 35 to **13**. Independent audits checked
 the registrations and the complete recovery of earlier records. The q11 job
 totals remain 126 complete and 146 pending.
 
 The preceding pair of exclusions, positions 1812 and 2015, uses elements of orders
 19 and 37 in the same left end subgroup. A separate checker verified each
-conclusion after the finite search. The thirteen remaining cases await complete
+conclusion after the finite search. Thirteen cases then awaited complete
 registered dispositions. Partial prime witnesses and finite search misses
 are not exclusions.
 The [portable replay for the eleven intersection exclusions](reproduction/end_subgroups/README.rst)
@@ -121,7 +141,8 @@ left word equals a word in the right end squared and lies outside the complete
 middle subgroup. The new replay passed 24 arithmetic controls, ten input
 controls and the case in both private and repository directories, with an
 independent audit. The case check uses 107 matrix products. The final positive
-applications for 877 and 1033 remain separate. Both the private and repository
+applications for 877 and 1033 were separate from that package and have since
+been registered. Both the private and repository
 packages passed 33 arithmetic controls, eight input controls and all seven
 cases. The independent audit and written proof are included.
 
@@ -259,7 +280,8 @@ F009's separate order-80 census remains unfinished.
 For that census, the complete third construction level contains 506 labelled
 forests. Verified symmetries reduce them to **185 representatives**. All 32
 numerical batches, two intermediate assemblies and the final mapping passed
-independent review. The fourth level is underway. This cover uses the stated
+independent review. The fourth level is now complete and the current R5 stage
+has 330 of 940 parents registered. This cover uses the stated
 subgroup of symmetries; it does not assert inequivalence under every graph
 isomorphism. Its full portable replay remains to be published.
 
@@ -269,9 +291,10 @@ divisible by four, and classify the six quartic minimum graphs for every
 diameter in that family. Their TeX sources and independent hand reviews are
 included. They add no completed original, conjecture or compression measurement.
 
-The local Fi22 ledger contains **669 generation cases, 669 separate intersection
-proofs for those same cases and 660 nongeneration cases**: **1,329 resolved
-candidates**, leaving **27,579 unresolved** in its 28,908-row bank. These local
+The local Fi22 ledger contains **724 generation cases, 744 nongeneration cases
+and 721 separate intersection proofs**: **1,468 resolved candidates**, leaving
+**27,440 unresolved** in its current 28,908-row selector bank. The intersection
+proofs are counted separately and do not add resolved rows. These local
 totals include the registered normalizer transfers described below. The
 [earlier archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)
 reproduces 47 generation cases, their 47 intersection proofs and 90
@@ -307,7 +330,7 @@ attributed input. The normalizer order 6,144 also requires the earlier
 identification of the entire centralizer as a group of order 1,024.
 All 22 controls and the complete equations passed in private and installed
 directories. Applying the normalizer action to previously verified donors
-has produced **1,104 reviewed outcomes**: 556 generation results with separate
+first produced **1,104 reviewed outcomes**: 556 generation results with separate
 intersection arguments and 548 proper-subgroup results. All 1,104 are registered
 and the registrations passed independent audit. The public equation package checks the
 normalizer component; a portable replay of these transfers remains pending.
