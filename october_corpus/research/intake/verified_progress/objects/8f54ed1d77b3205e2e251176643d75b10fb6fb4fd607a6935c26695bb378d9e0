@@ -1,0 +1,209 @@
+"""Prepare a false-authority mathematical proposal from retained metadata.
+
+No represented scientific source, original permutation, matrix, word, seed or
+witness row is evaluated. Outputs are exclusive ordinary proposal records.
+"""
+from pathlib import Path
+import hashlib
+import json
+import os
+import resource
+import signal
+import sys
+import time
+
+if sys.flags.optimize:
+    raise SystemExit('Run without -O; every metadata check is required.')
+HERE = Path(__file__).resolve().parent
+T = HERE.parent
+S = T.parents[4]
+START = time.monotonic()
+SEEN = {}
+READ = 0
+signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('125s metadata proposal')))
+signal.alarm(125)
+
+def check():
+    assert time.monotonic() - START < 120
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == 'darwin' else 1024)
+    assert rss <= 256 * 2**20 and READ <= 16 * 2**20 and len(SEEN) <= 128
+
+def desc(path, body):
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def signature(st):
+    return st.st_dev, st.st_ino, st.st_mode, st.st_size, st.st_mtime_ns, st.st_ctime_ns
+
+def whole(path, expected=None):
+    global READ
+    check()
+    path = Path(path)
+    if str(path) in SEEN:
+        body, ref, _ = SEEN[str(path)]
+        assert expected is None or ref == expected
+        return body, ref
+    a = path.lstat()
+    assert path.is_absolute() and path.resolve(strict=True) == path and path.is_file()
+    assert a.st_size <= 4 * 2**20 and READ + a.st_size <= 16 * 2**20
+    body = path.read_bytes()
+    assert len(body) == a.st_size and signature(a) == signature(path.lstat())
+    ref = desc(path, body)
+    assert expected is None or ref == expected
+    SEEN[str(path)] = body, ref, signature(a)
+    READ += len(body)
+    check()
+    return body, ref
+
+def document(path, expected=None):
+    body, ref = whole(path, expected)
+    return json.loads(body), ref
+
+def write(name, value):
+    body = (json.dumps(value, indent=2, sort_keys=True) + '\n').encode()
+    assert len(body) <= 64 * 2**10
+    path = HERE / name
+    with path.open('xb') as f:
+        assert f.write(body) == len(body)
+        f.flush()
+        os.fsync(f.fileno())
+    assert path.read_bytes() == body
+    return desc(path, body)
+
+expected_rows = [
+    dict(free_index=265, owner=474, witness_row_sha256='884cc09ae6be3a98d4f8ee11df301c6e21ef19590c1cf1a9a8db26e86acf6646'),
+    dict(free_index=270, owner=512, witness_row_sha256='3446a5734cc79fe8156499f1da96e2ca27f386a07dace73f5b81275cc477e801'),
+    dict(free_index=271, owner=514, witness_row_sha256='5d171be3dfa0491954d2b11d36e4d7f862a26f9e8bee50ac163feeb82b369c62'),
+]
+batch, batchref = document(T / 'paid_status_ledger/epochs/invariant_triangles/batch_acceptance.json')
+assert batchref['sha256'] == 'e44daa80a6cbefd67c286db1750c2af80d83761519fc18a2c238dc336884cf8f'
+assert batch['adopted'] is True and batch['Root_adoption_owed'] is False and batch['root'] == '/root'
+facts = [r for r in batch['new_facts'] if r['kind'] == 'GEN']
+assert [{k:r[k] for k in expected_rows[0]} for r in facts] == expected_rows
+assert all(r['proof'] == 0 for r in facts)
+oldproof = batch['proofs'][0]
+assert oldproof['kind'] == 'GEN'
+retref = oldproof['retentions'][1]
+ret, _ = document(retref['path'], retref)
+assert retref['sha256'] == '50336071641505050fbe2681d09b66304f38b913439478a26f61c1c7cd617623'
+assert ret['schema'] == 'ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'
+aliases = []
+def retained(original):
+    matches = [r['retained'] for r in ret['files'] if r['original'] == original]
+    assert matches and all(r['bytes'] == original['bytes'] and r['sha256'] == original['sha256'] for r in matches)
+    for r in matches:
+        whole(r['path'], r)
+    aliases.append(dict(original=original, retained=matches))
+    return json.loads(whole(matches[0]['path'], matches[0])[0])
+
+result = retained(oldproof['result'])
+actual_original = dict(path='/private/tmp/l026_window0264_0272_actual_independent_review/GEN_reuse_integer_only.json', bytes=7984, sha256='82561a7c01da5c7cb7993bc4f8a56a63e9bbff16f8e242d5a848c8ada463affe')
+actual = retained(actual_original)
+mathreview = retained(oldproof['review'])
+assert result['status'] == 'VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'
+assert result['scope_digest'] == batch['scope_digest']
+assert result['original_selector'] == batch['original_selector']
+assert result['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit'] == 0
+assert actual['status'].startswith('SUPPORTED_ACTUAL') and actual['reviewer'] != '/root' and actual['blockers'] == []
+assert actual['whole_Source_and_inputs_closed'] is actual['actual_guard_and_raw_frames_verified'] is True
+assert actual['verified_generation_records'] == result['verified_generation_records']
+assert [{k:r[k] for k in expected_rows[0]} for r in result['verified_generation_records']] == expected_rows
+assert all(r['rotation_group'] == 'NAMED_ORIGINAL_SIMPLE_FI22_BY_IMPORTED11_13_CRITERION' for r in result['verified_generation_records'])
+assert mathreview['Root_complete_Source_kernel_controls_argument_read'] is mathreview['named_G_membership_bridge_action_and_two_fibre_imports_checked'] is True
+for key in ('original_free_witness_adoption', 'original_operand_adoption'):
+    r = batch[key]
+    value, _ = document(r['path'], r)
+    assert value['adopted'] is True
+assert result['adopted_middle_witness_premises'] == batch['original_free_witness_adoption']
+assert result['adopted_operand_and_membership_premises'] == batch['original_operand_adoption']
+
+theorem_path = S / 'geometry/sporadic_polytopes/subgroup_counting/rank_three_intersections.tex'
+_, theorem = whole(theorem_path)
+assert theorem['sha256'] == '0b940e5a217a5e54e91fd13617fd822dd4daebfac6cbdacbd17e0950070c9216'
+review_path = T / 'procedural_subsets/evidence/rank_three_intersections_inputs/objects/b7610c401be209df8425a017aa71d61846875544f67919e48269312a37139ef3'
+theorem_review, tr = document(review_path)
+assert tr['sha256'] == 'b7610c401be209df8425a017aa71d61846875544f67919e48269312a37139ef3'
+assert theorem_review['existing_theorem'] == theorem and theorem_review['status'] == 'SUPPORTED' and theorem_review['blockers'] == []
+assert theorem_review['original_operand_adoption'] == batch['original_operand_adoption']
+assert theorem_review['original_middle_witness_adoption'] == batch['original_free_witness_adoption']
+premises, pref = document(theorem_review['retained_premises']['path'], theorem_review['retained_premises'])
+assert premises['inherited_member_and_Reader_imports']['original_G_normal_in_A'] is True
+assert premises['inherited_member_and_Reader_imports']['original_exact_orders_and_full_class_predicates_borrowed'] is True
+kernel_original = oldproof['support']['kernel']
+matches = [r['retained'] for r in ret['files'] if r['original'] == kernel_original]
+assert matches
+whole(matches[0]['path'], matches[0])
+aliases.append(dict(original=kernel_original, retained=matches))
+
+current, currentref = document(T / 'paid_status_ledger/CURRENT.json')
+assert currentref['sha256'] == 'cdb9a8b42fa3209717b96a0632838bda659d60a7adce0f0d5f894bd35aa020a0'
+mask, _ = whole(current['status_bank']['path'], current['status_bank'])
+receipt, receiptr = document(current['ledger_receipt']['path'], current['ledger_receipt'])
+assert receipt['counts'] == dict(GEN=724, separate_IP=721, subset_NEG=744, unpaid=27440)
+assert receipt['original_free_witness_adoption'] == batch['original_free_witness_adoption']
+assert receipt['original_operand_adoption'] == batch['original_operand_adoption']
+assert receipt['scope_digest'] == batch['scope_digest'] and receipt['original_selector'] == batch['original_selector']
+assert all(mask[row['free_index']] == 2 for row in expected_rows)
+lineage = [receiptr]
+cursor = receipt
+while Path(lineage[-1]['path']).parent.name != 'invariant_triangles':
+    assert len(lineage) < 8
+    cursor, rr = document(cursor['previous_ledger']['path'], cursor['previous_ledger'])
+    assert cursor['scope_digest'] == batch['scope_digest']
+    lineage.append(rr)
+assert cursor['typed_new_batch'] == batchref
+_, proofref = whole(HERE / 'applications.tex')
+_, author_source = whole(Path(__file__).resolve())
+
+before = READ
+for path, (body, r, sig) in SEEN.items():
+    checkpoint = Path(path)
+    fresh = checkpoint.read_bytes()
+    READ += len(fresh)
+    assert fresh == body and desc(checkpoint, fresh) == r and signature(checkpoint.lstat()) == sig
+    check()
+
+inputs = dict(schema='L026_SIMPLE_GROUP_INTERSECTION_APPLICATION_INPUTS_V1',
+    author='/root/intersection_applications', Root_authority=False,
+    whole_physical_files=[v[1] for _,v in sorted(SEEN.items())],
+    accepted_retained_aliases=aliases, canonical_receipt_lineage=lineage,
+    first_read_bytes=before, first_and_closing_read_bytes=READ, physical_paths=len(SEEN),
+    Original_permutation_matrix_word_seed_or_witness_payload_evaluation=False,
+    scientific_calls=0, canonical_or_progress_mutations=0,
+    scope='Finite metadata and Source joins; upstream imported model/class/Reader meanings are not re-established.')
+inputref = write('inputs.json', inputs)
+proposal = dict(schema='L026_SIMPLE_GROUP_INTERSECTION_APPLICATION_PROPOSAL_V1',
+    author='/root/intersection_applications', Root_authority=False, Root_application_issued=False,
+    status='PREPARED_CONDITIONAL_APPLICATIONS_AWAIT_DISTINCT_REVIEW_AND_ROOT_ISSUANCE',
+    scope_digest=batch['scope_digest'], original_selector=batch['original_selector'],
+    theorem=theorem, theorem_existing_review=tr, written_application=proofref,
+    accepted_generation_batch=batchref, accepted_generation_result=oldproof['result'],
+    accepted_generation_actual_review=actual_original,
+    original_middle_witness_adoption=batch['original_free_witness_adoption'],
+    original_operand_adoption=batch['original_operand_adoption'], retained_premises=pref,
+    current_snapshot=dict(CURRENT=currentref, bank=current['status_bank'], receipt=current['ledger_receipt']),
+    applications=[dict(identity=row, canonical_generation_fact=fact,
+        conclusion='FULL_RANK3_INTERSECTION_PROPERTY_UNDER_RETAINED_ORIGINAL_DOMAIN_PREMISES',
+        middle_involution_premise='Accepted original involution-class and exact two-fibre interpretation; no internal-partner commutation assumption.',
+        old_strict_generation_IP_credit_remains_zero=True) for row,fact in zip(expected_rows,facts)],
+    full_original_domain_hypotheses_borrowed=True,
+    finite_simple_inner_G_not_Aut=True, H_may_contain_outer_automorphisms=True,
+    prospective_changes_NOT_REGISTERED=[dict(free_index=row['free_index'], before=2, after=6) for row in expected_rows],
+    prospective_counts_NOT_CURRENT=dict(GEN=724, separate_IP=724, subset_NEG=744, paid=1468, unpaid=27440),
+    no_adjacent_order_or_coprimality_hypothesis=True,
+    no_canonical_or_progress_or_Git_mutation=True,
+    new_original_conjecture_Lean_or_compression_credit=0,
+    independent_application_review=None, inputs=inputref,
+    edition_qualification='New durable proposal; no lost temporary draft, old hash or old review is reconstructed.')
+pr = write('proposal.json', proposal)
+handoff = dict(schema='L026_SIMPLE_GROUP_INTERSECTION_APPLICATION_HANDOFF_V1',
+    author='/root/intersection_applications', Root_authority=False,
+    status='DURABLE_SOURCE_ONLY_PROPOSAL_READY_FOR_INDEPENDENT_REVIEW',
+    proof=proofref, proposal=pr, inputs=inputref, authoring_Source=author_source,
+    targets=[row['free_index'] for row in expected_rows], owners=[row['owner'] for row in expected_rows],
+    original_theorem=theorem, existing_theorem_review=tr,
+    current_canonical_IP=721, prospective_IP_NOT_ADOPTED=724,
+    new_scientific_calls=0, canonical_progress_Git_writes=0, new_manuscript_conjecture_Lean_or_measurement_credit=0,
+    qualification='All named-model/class/membership/Reader/action/graph/two-fibre/H=B meanings stay qualified borrowed premises. Distinct application review and separate Root issuance remain required.')
+hr = write('handoff.json', handoff)
+signal.alarm(0)
+print(json.dumps(dict(handoff=hr, targets=handoff['targets'], scientific_calls=0, canonical_writes=0)))

@@ -1,0 +1,86 @@
+"""Shared Root metadata IO; arithmetic belongs to separately guarded workers."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import time
+
+
+def signature(value):
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+            value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+
+class Ledger:
+    def __init__(self):
+        self.started = time.monotonic()
+        self.bytes = 0
+        self.pins = {}
+
+    def raw(self, path, expected=None):
+        path = Path(path)
+        assert path.is_absolute() and path.resolve(strict=True) == path
+        if str(path) in self.pins:
+            body, ref, old = self.pins[str(path)]
+            assert signature(path.stat()) == old
+        else:
+            with path.open('rb') as stream:
+                before = os.fstat(stream.fileno())
+                assert stat.S_ISREG(before.st_mode) and before.st_size <= 4 * 2**20
+                assert self.bytes + before.st_size <= 64 * 2**20 and len(self.pins) < 512
+                body = stream.read(before.st_size + 1)
+                after = os.fstat(stream.fileno())
+            assert signature(before) == signature(after) == signature(path.stat())
+            assert len(body) == before.st_size
+            ref = dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+            self.pins[str(path)] = (body, ref, signature(after))
+            self.bytes += len(body)
+        if expected is not None:
+            assert (ref['bytes'], ref['sha256']) == (expected['bytes'], expected['sha256'])
+        return body, ref
+
+    def document(self, path, expected=None):
+        body, ref = self.raw(path, expected)
+        return json.loads(body), ref
+
+    def close(self):
+        for name, (body, ref, old) in list(self.pins.items()):
+            path = Path(name)
+            with path.open('rb') as stream:
+                before = os.fstat(stream.fileno())
+                assert self.bytes + before.st_size <= 64 * 2**20
+                actual = stream.read(before.st_size + 1)
+                after = os.fstat(stream.fileno())
+            self.bytes += len(actual)
+            assert actual == body and signature(before) == signature(after) == signature(path.stat()) == old
+        assert time.monotonic() - self.started < 115
+
+    def actual(self, sdk_path, guard_path):
+        sdk, sdk_ref = self.document(sdk_path)
+        assert sdk['actual_tool']['exit_code'] == 0 and sdk['root'] == '/root'
+        assert sdk['all_genuine_api_frames'][-1] == sdk['full_tool_return']
+        guard = Path(guard_path)
+        receipt, receipt_ref = self.document(guard / 'receipt.json')
+        argv = sdk['issued_argv']
+        assert receipt['command'] == argv[argv.index('--') + 1:]
+        assert receipt['status'] == 'PASS' and receipt['returncode'] == 0
+        assert receipt['cleanup']['remaining'] == receipt['cleanup']['errors'] == []
+        stdout, stdout_ref = self.document(guard / 'stdout.log')
+        stderr, stderr_ref = self.raw(guard / 'stderr.log')
+        assert stderr == b''
+        outputs = {}
+        for ref in stdout['outputs']:
+            body, actual_ref = self.document(ref['path'], ref)
+            outputs[Path(ref['path']).name] = (body, actual_ref)
+        return outputs, [sdk_ref, receipt_ref, stdout_ref, stderr_ref]
+
+
+def write(path, value):
+    path = Path(path)
+    assert path.is_absolute() and path.parent.resolve(strict=True) == path.parent
+    body = (json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode()
+    assert len(body) <= 4 * 2**20
+    with path.open('xb') as stream:
+        assert stream.write(body) == len(body)
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())

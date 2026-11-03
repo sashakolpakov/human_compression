@@ -1,0 +1,24 @@
+"""One new fixed-line and third-form application; no old elimination replay."""
+import sys
+import runtime as rt
+import field,algebra,small,fixed_line,alternating,role,scope
+
+def main():
+    b,q,out,pins=role.start(sys.argv,'worker.py',(rt,field,algebra,small,fixed_line,alternating,role,scope))
+    data=scope.original(q,b,pins);g=tuple(algebra.matrix(x,b)for x in data['marks']);Q=algebra.matrix(data['Q'],b)
+    rt.need(data['old_basis'][1]==g[1],'same Original r1 and retained B')
+    status,certificate=fixed_line.calculate(Q,data['Q_inverse'],data['old_basis'],data['P_H'],data['P_R'],g,data['Phi'],data['old_dimension'],b)
+    rt.close_inputs(b);yes=status=='VERIFIED_FIXED_LINE_AND_THIRD_FORM_INTERSECTION_CERTIFICATE'
+    result=dict(schema='F004_FIXED_LINE_TENSOR_INTERSECTION_RESULT_V1',case=q['case'],status=status,
+        end_intersection_equals_middle=True if yes else None,common_commutant_dimension_borrowed=6,
+        fixed_line_dimension=certificate.get('fixed_line',{}).get('dimension'),
+        new_basis_rank=certificate.get('new_basis_entry_minor',{}).get('rank'),
+        rank4_IP_GEN_case_or_canonical_credit=0,old_RREF_group_orbit_or_tensor_congruences_replayed=False)
+    proof=dict(schema='F004_FIXED_LINE_TENSOR_INTERSECTION_PROOF_V1',case=q['case'],Source=pins,
+        Root_input_import=q['Root_input_import'],current_selector=q['current_selector'],
+        old_operand_job=q['old_operand_job'],old_Root_import=q['old_Root_import'],
+        old_star_actual_review=q['old_star_actual_review'],theory=q['theory'],certificate=certificate,
+        inputs_closed=True,counts=b.snapshot(),one_Root_role_not_independent_numeric_replay=True,
+        old_25column_elimination_group_orbit_and_tensor_congruences_repeated=False)
+    refs=rt.emit(out,result,proof,b);print(rt.encoded(dict(status=status,outputs=refs,counts=b.snapshot())).decode(),end='')
+if __name__=='__main__':main()

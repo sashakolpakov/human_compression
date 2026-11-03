@@ -1,0 +1,173 @@
+"""Audit an actual Root logical issue; no group operations or ledger writes."""
+import hashlib,json,os,resource,signal,stat,sys,time
+from pathlib import Path
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/simple_group_intersections')
+OUT=BASE/'issuance_review';START=time.monotonic();BANK={};BYTES=0;PEAK=0
+def need(ok,msg):
+    if not ok:raise ValueError(msg)
+def alarm(a,b):raise TimeoutError('125 second metadata audit')
+signal.signal(signal.SIGALRM,alarm);signal.alarm(125)
+need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS without O')
+def tick():
+    global PEAK
+    need(time.monotonic()-START<125,'125 second metadata audit')
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else1024)
+    PEAK=max(PEAK,rss);need(PEAK<=268435456,'256 MiB metadata RSS')
+def sha(b):return hashlib.sha256(b).hexdigest()
+def enc(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii')
+def pairs(items):
+    d={}
+    for k,v in items:need(k not in d,'unique JSON keys');d[k]=v
+    return d
+def parse(b):return json.loads(b,object_pairs_hook=pairs,parse_float=str)
+def read(path,expected=None):
+    global BYTES
+    tick();p=Path(path);need(p.is_absolute()and not p.is_symlink(),'absolute nonsymlink input')
+    p=p.resolve(strict=True);need(len(BANK|{str(p):None})<=512,'512 metadata paths')
+    fd=os.open(p,os.O_RDONLY|getattr(os,'O_NOFOLLOW',0))
+    try:
+        s=os.fstat(fd);need(stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size<=8388608,'bounded regular single-link input')
+        need(BYTES+s.st_size<=67108864,'64 MiB cumulative metadata reads')
+        with os.fdopen(fd,'rb',closefd=False)as f:b=f.read(s.st_size+1)
+        t=os.fstat(fd);u=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+        need(sig(s)==sig(t)==sig(u)and len(b)==s.st_size,'stable whole-file EOF read')
+    finally:os.close(fd)
+    BYTES+=len(b);r=dict(path=str(p),bytes=len(b),sha256=sha(b))
+    if expected:need((r['bytes'],r['sha256'])==(expected['bytes'],expected['sha256']),'exact descriptor '+str(p))
+    if str(p)in BANK:need(BANK[str(p)][0]==r,'stable initial and closing hash')
+    else:BANK[str(p)]=(r,b)
+    return b
+def get(path,expected=None):
+    p=str(Path(path).resolve(strict=True))
+    if p not in BANK:return read(path,expected)
+    r,b=BANK[p]
+    if expected:need((r['bytes'],r['sha256'])==(expected['bytes'],expected['sha256']),'cached exact descriptor')
+    return b
+def load(path,expected=None):return parse(get(path,expected))
+def ref(path):get(path);return BANK[str(Path(path).resolve())][0]
+def write(name,value):
+    p=OUT/name;b=enc(value);need(not p.exists(),'fresh review output')
+    with p.open('xb')as f:need(f.write(b)==len(b),'whole output');f.flush();os.fsync(f.fileno())
+    return dict(path=str(p),bytes=len(b),sha256=sha(b))
+
+adoption=load(BASE/'root_applications.json')
+need(ref(BASE/'root_applications.json')['sha256']=='0cdc604ca0b526309fa7a0d70850455da9145358db48c731b6cddd5d91b9645a','exact issued record')
+need(adoption['Root_authority']is adoption['Root_application_issued']is adoption['adopted']is True
+    and adoption['root']=='/root'and adoption['status']=='ISSUED_CONDITIONAL_LOGICAL_APPLICATIONS_REGISTRATION_PENDING','positive Root logical issue')
+source=get(adoption['program']['path'],adoption['program'])
+need(adoption['program']['bytes']==6112 and adoption['program']['sha256']=='13825a804484cf4f594b7780e9f760e9f5d74096bd4635c9db43db5495964e9b','exact issuer Source')
+issuer_peer=load(BASE/'issuer_review/reuse_integer_only.json')
+need(ref(BASE/'issuer_review/reuse_integer_only.json')['sha256']=='01fbe541fcbe1fcaab6a96640951b7e2ae982104a2deeb0c1e448c875f78bfaa','exact distinct issuer Source peer')
+need(issuer_peer['blockers']==[]and issuer_peer['status']=='SUPPORTED_STATIC_LOGICAL_APPLICATION_ISSUER'
+    and issuer_peer['reviewer']=='/root/dependency_audit'and issuer_peer['author']=='/root'
+    and issuer_peer['program']==adoption['program'],'issuer peer author/source separation')
+helper=get(issuer_peer['helper']['path'],issuer_peer['helper'])
+need(len(helper)==3744 and sha(helper)=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550','whole metadata helper')
+proposal=load(adoption['proposal']['path'],adoption['proposal'])
+review=load(adoption['independent_application_review']['path'],adoption['independent_application_review'])
+inputs=load(adoption['inputs']['path'],adoption['inputs'])
+need(review['reviewer']=='/root/mathematical_review'and review['blockers']==[]
+    and review['status']=='SUPPORTED_CONDITIONAL_APPLICATIONS_AWAIT_ROOT_ISSUANCE','prior application review remains imported')
+need(proposal['Root_authority']is proposal['Root_application_issued']is False,'proposal authority boundary')
+for key in('proposal','inputs','theorem','written_application'):
+    expected=ref(BASE/'proposal.json')if key=='proposal'else proposal[key]
+    need(adoption[key]==expected,'adoption/proposal exact '+key)
+need(adoption['independent_application_review']==ref(BASE/'review/reuse_integer_only.json'),'exact prior application review')
+need(review['proposal']==adoption['proposal']and review['theorem']==proposal['theorem']
+    and review['written_application']==proposal['written_application'],'review subject exact')
+need(review['all_original_member_Reader_action_class_witness_H_B_qualifications_preserved']is True
+    and review['no_internal_partner_commutation_inference_used']is True,'original mathematical qualifications retained')
+for r in inputs['whole_physical_files']:get(r['path'],r)
+subjects=[a['identity']for a in proposal['applications']]
+need(subjects==adoption['subjects']==review['subjects']and [r['free_index']for r in subjects]==[265,270,271]
+    and [r['owner']for r in subjects]==[474,512,514],'exact three subject/owner joins')
+need([r['witness_row_sha256']for r in subjects]==[
+ '884cc09ae6be3a98d4f8ee11df301c6e21ef19590c1cf1a9a8db26e86acf6646',
+ '3446a5734cc79fe8156499f1da96e2ca27f386a07dace73f5b81275cc477e801',
+ '5d171be3dfa0491954d2b11d36e4d7f862a26f9e8bee50ac163feeb82b369c62'],'exact witness hashes')
+need(adoption['scope_digest']==proposal['scope_digest']and adoption['original_selector']==proposal['original_selector'],'same scope and selector')
+need(adoption['current_snapshot']==proposal['current_snapshot'],'same frozen paid-status snapshot')
+snapshot=adoption['current_snapshot'];bank=get(snapshot['bank']['path'],snapshot['bank'])
+receipt=load(snapshot['receipt']['path'],snapshot['receipt']);get(snapshot['CURRENT']['path'],snapshot['CURRENT'])
+batch=load(proposal['accepted_generation_batch']['path'],proposal['accepted_generation_batch'])
+need(batch['adopted']is True and batch['scope_digest']==adoption['scope_digest'],'accepted original GEN batch')
+for a in proposal['applications']:
+    need(a['canonical_generation_fact']in batch['new_facts']and bank[a['identity']['free_index']]==2,'GEN exists; separate IP not registered')
+    need(a['old_strict_generation_IP_credit_remains_zero']is True,'old strict IP credit remains zero')
+need(receipt['counts']['separate_IP']==adoption['current_registered_separate_IP']==721
+    and adoption['prospective_separate_IP_after_registration']==724,'current/prospective distinction')
+need(adoption['final_registration_review_pending']is True and adoption['canonical_status_or_progress_mutations']==0
+    and adoption['manuscript_conjecture_Lean_or_compression_credit']==0,'no registration or broad credit')
+for key in('scientific_calls','matrix_products','permutation_images'):need(adoption[key]==0,'no science counter '+key)
+for key in('Root_read_theorem_application_review_and_retained_premises',
+ 'Root_owns_finite_nonabelian_simple_inner_Fi22_membership_and_generation_imports',
+ 'Root_owns_original_Reader_action_graph_class_two_fibre_and_H_B_qualifications',
+ 'Root_owns_involution_from_original_class_not_internal_partner_commutation',
+ 'Root_owns_nonidentity_deduction_from_generation_and_commuting_endpoints',
+ 'no_adjacent_order_or_coprimality_hypothesis','all_original_domain_qualifications_preserved'):
+    need(adoption[key]is True,'positive Root logical duty '+key)
+for r in adoption['frozen_progress_snapshot']:get(r['path'],r)
+
+# Reconstruct deduplicated Ledger inputs and its declared accounting from Source.
+issuer_paths=[adoption['program']['path'],issuer_peer['helper']['path'],adoption['proposal']['path'],
+    adoption['independent_application_review']['path'],adoption['inputs']['path']]
+issuer_paths +=[r['path']for r in inputs['whole_physical_files']]
+issuer_paths +=[r['path']for r in adoption['frozen_progress_snapshot']]
+issuer_paths=list(dict.fromkeys(issuer_paths))
+need(len(issuer_paths)==27 and sum(ref(p)['bytes']for p in issuer_paths)==4551891,'exact27 first Ledger inputs')
+need(adoption['physical_paths']==27 and adoption['source_and_metadata_first_read_bytes']==4551891
+    and adoption['first_and_closing_plus_bootstrap_bytes']==2*4551891+3744==9107526,'issued tracked IO counter')
+
+sdkpath=Path('/private/tmp/l026_three_intersections_actual/Root_SDK/issue_v1.json')
+sdk=load(sdkpath);need(ref(sdkpath)['bytes']==4302 and ref(sdkpath)['sha256']=='23e8cd8a566751f29b55938dc2375250b3f2b155014bb7c6d73aaaac2eab3640','exact actual SDK')
+rawdir=Path('/private/tmp/intake_actual_transports/Root_l026_three_simple_intersections_issue_v1')
+issued=load(rawdir/'issued.json');raw=load(rawdir/'frame_0000.json')
+need(sdk['root']==sdk['actor']=='/root'and sdk['child_argv']==sdk['issued_argv']==issued['argv'],'Root-issued exact argv')
+need(sdk['issued_tool_arguments']==issued['tool_arguments']and sdk['all_genuine_api_frames']==[raw]
+    and sdk['full_tool_return']==sdk['full_initial_tool_return']==raw,'genuine exact API frames')
+need(sdk['actual_tool']['synchronous']is True and sdk['actual_tool']['exit_code']==raw['exit_code']==0,'actual synchronous successful issue')
+need(sdk['child_argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',adoption['program']['path'],'--actor','/root'],'exact issuer invocation')
+returned=parse(raw['output']);need(returned['adoption']==ref(BASE/'root_applications.json')
+    and returned['subjects']==subjects and returned['registered_IP_unchanged']==721 and returned['scientific_calls']==0,'actual output descriptor matches issued record')
+get(Path(__file__).resolve())
+
+first=list(BANK.values())
+for r,b in first:read(r['path'],r)
+objects=OUT/'objects';objects.mkdir(exist_ok=True);retained=[];copy_bytes=0;copy_paths=set()
+for r,b in first:
+    tick();p=objects/r['sha256']
+    if not p.exists():
+        with p.open('xb')as f:need(f.write(b)==len(b),'whole opaque copy');f.flush();os.fsync(f.fileno())
+    copy_bytes+=len(b);copy_paths.add(str(p))
+    need(BYTES+copy_bytes<=67108864 and len(set(BANK)|copy_paths)<=512,'combined input/retention caps')
+    need(sha(p.read_bytes())==r['sha256'],'durable object SHA')
+    retained.append(dict(original=r,retained=dict(path=str(p),bytes=r['bytes'],sha256=r['sha256'])))
+retref=write('retained_manifest.json',dict(schema='L026_LOGICAL_ISSUANCE_ACTUAL_RETENTION_V1',entries=retained,
+    qualification='Finite issuance Source/input/API/current-and-frozen-metadata closure; own audit completion is separate tail evidence.'))
+pinsref=write('checked_pins.json',dict(schema='L026_LOGICAL_ISSUANCE_ACTUAL_PINS_V1',files=[r for r,b in first],
+    issuer_first_read_sequence=[ref(p)for p in issuer_paths],issuer_unique_paths=27,
+    issuer_tracked_first_and_closing_plus_helper_preload_bytes=9107526,
+    separate_nominal_interpreter_entry_Source_allowance=6112,
+    issuer_tracked_plus_nominal_entry_allowance_bytes=9113638,
+    audit_first_and_closing_read_bytes=BYTES,opaque_copy_verification_bytes=copy_bytes,
+    audit_combined_read_bytes=BYTES+copy_bytes,physical_input_and_copy_paths=len(set(BANK)|copy_paths),
+    sampled_peak_rss_bytes=PEAK,bounds=dict(bytes=67108864,paths=512,rss_bytes=268435456,seconds=125),
+    no_Original_arrays_or_group_words_decoded=True,no_scientific_execution_or_ledger_writes=True))
+seal=write('reuse_integer_only.json',dict(schema='L026_THREE_LOGICAL_APPLICATIONS_POST_ISSUANCE_ACTUAL_REVIEW_V1',
+    status='SUPPORTED_ACTUAL_ROOT_LOGICAL_ISSUANCE_REGISTRATION_PENDING',reviewer='/root/mathematical_review',Root_authority=False,
+    blockers=[],issued_applications=ref(BASE/'root_applications.json'),issuer_Source=adoption['program'],issuer_Source_peer=ref(BASE/'issuer_review/reuse_integer_only.json'),
+    prior_independent_application_review=adoption['independent_application_review'],actual_SDK=ref(sdkpath),raw_intent=ref(rawdir/'issued.json'),raw_frame=ref(rawdir/'frame_0000.json'),
+    exact_actual_API_and_Output_joins_verified=True,subjects=subjects,scope_digest=adoption['scope_digest'],
+    all_original_Reader_member_action_class_two_fibre_H_B_inner_G_qualifications_preserved=True,
+    middle_involution_imported_from_original_class_not_internal_partner_commutation=True,
+    middle_nonidentity_deduced_from_generation_and_commuting_endpoints=True,
+    Root_positive_logical_adoption_verified=True,scientific_calls=0,Original_arrays_or_group_words_decoded=False,
+    current_registered_IP=721,prospective_IP_after_registration=724,canonical_registration_performed=False,
+    canonical_progress_and_status_snapshots_unchanged=True,final_registration_review_pending=True,
+    no_new_group_facts_or_numerical_IP_proof=True,old_strict_numerical_IP_credit_remains_zero=True,
+    paper_conjecture_Lean_or_compression_credit=0,
+    independence_qualification='Independent of the Root issuer and issuer-Source peer. This reviewer supplied the earlier application review; it is imported here, not counted as a new mathematical proof.',
+    resource_qualification='Metadata-only issue with internal limits; no scientific supervisor or outer guard PASS is claimed. Issued IO reproduces Ledger reads plus helper preload; a separate conservative interpreter-entry Source allowance is reported.',
+    checked_pins=pinsref,retained_records=retref))
+print(enc(dict(review=seal,pins=pinsref,retention=retref,audit_read_bytes=BYTES+copy_bytes,
+    paths=len(set(BANK)|copy_paths),sampled_peak_rss_bytes=PEAK,elapsed_microseconds=int((time.monotonic()-START)*1000000))).decode(),end='')

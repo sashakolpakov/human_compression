@@ -1,0 +1,79 @@
+"""Root prepares a fresh false plan after a cohort releases its frozen snapshot."""
+import argparse,json,os,signal
+from pathlib import Path
+import metadata as M
+INTAKE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+PROGRESS=INTAKE/'progress'
+def main():
+    M.check();ap=argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--actor',required=True);ap.add_argument('--expected-prefix',type=int,required=True)
+    ap.add_argument('--Source-peer',nargs=3,required=True);ap.add_argument('--out-dir',required=True)
+    a=ap.parse_args();assert a.actor=='/root'and 342<=a.expected_prefix<=940
+    L=M.Ledger();own,ownref=L.raw(Path(__file__).resolve())
+    base,baseref=L.document(M.HERE/'plan_FALSE.json');assert base['Root_authority']is False
+    factory_mf,fmfref=L.document(M.HERE/'factory_Source_manifest.json')
+    assert factory_mf['entry']==ownref
+    for r in factory_mf['Source']+factory_mf['guards']:L.raw(r['path'],r)
+    source_total=sum(r['bytes']for r in factory_mf['Source']+factory_mf['guards'])+512
+    assert source_total==factory_mf['Source_plus_guards512']<=65536
+    bootstrap=sum(r['bytes']for r in factory_mf['Source'])+4806+3*18361+512
+    peerref=M.descriptor(a.Source_peer);peer=M.doc(L,peerref)
+    assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root','/root/mathematical_review')
+    assert peer['program']==base['program']and peer['Source_manifest']==base['Source_manifest']
+    assert peer['plan']==baseref and peer['protocol']==base['protocol']
+    assert peer['factory_program']==ownref and peer['factory_Source_manifest']==fmfref
+    M.input_set(L,[base['program'],base['Source_manifest'],base['protocol'],base['root_applications'],base['post_issuance_review']])
+    ib,ir=L.raw(PROGRESS/'current_intake.json');cb,cr=L.raw(PROGRESS/'controllers/current.json')
+    controller=json.loads(cb);rr=controller['checkpoint'];rb,_=L.raw(rr['path'],rr)
+    assert M.selected(ib,('active_controller_checkpoint',))['active_controller_checkpoint']==rr
+    f9=M.selected(M.part(ib,'F009'),('R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed'))
+    prefix=a.expected_prefix;slots=156*prefix
+    assert f9==dict(R5_canonical_pairs_reviewed=prefix,R5_prefix_strict_slots_reviewed=slots)
+    rc=M.selected(M.part(rb,'counts'),('R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed','L026_separate_IP','L026_paid'))
+    assert rc==dict(R5_canonical_pairs_reviewed=prefix,R5_prefix_strict_slots_reviewed=slots,L026_separate_IP=721,L026_paid=1468)
+    for container in(INTAKE/'f009_cohort_preparation/cohorts',Path('/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts')):
+        assert not os.path.lexists(container/('cohort_from%04d'%prefix)), 'Current-prefix cohort still freezes canonical progress.'
+    snapshot=base['current_snapshot'];M.input_set(L,list(snapshot.values()))
+    l26=M.selected(M.part(ib,'L026'),('current_typed_ledger','generation','separate_IP','paid','unpaid'))
+    assert(l26['generation'],l26['separate_IP'],l26['paid'],l26['unpaid'])==(724,721,1468,27440)
+    for key,new in(('bank',snapshot['bank']),('receipt',snapshot['receipt']),('current',snapshot['CURRENT'])):
+        assert l26['current_typed_ledger'][key]==new
+    # Proof inputs and writer Sources are immutable; only live progress changes.
+    p=dict(base);p.update(progress_snapshot=dict(intake=ir,controller=cr,runtime=rr),
+        F009_prefix_unchanged=prefix,F009_slots_unchanged=slots,
+        planning_qualification='Fresh false metadata plan from a released live checkpoint; exact-plan review and new Root decision remain required.',
+        rebase_provenance=dict(schema='ROOT_FALSE_PLAN_METADATA_REBASE_PROVENANCE_V1',root='/root',
+            factory=ownref,factory_Source_manifest=fmfref,factory_Source_peer=peerref,
+            baseline_plan=baseref,old_progress_snapshot=base['progress_snapshot'],
+            new_progress_snapshot=dict(intake=ir,controller=cr,runtime=rr),
+            no_proof_or_numerical_reexecution=True,Root_registration_authority_created=False))
+    out=Path(a.out_dir);assert out.is_absolute()and out.is_relative_to(M.HERE/'plans')
+    M.fresh(out)
+    if out.parent.exists():assert out.parent.resolve(strict=True)==out.parent
+    else:assert out.parent==M.HERE/'plans'
+    plan_body=M.can(p);planref=M.reference(out/'plan_FALSE.json',plan_body)
+    template,_=L.document(M.HERE/'Root_decision_FALSE.json')
+    assert template['Root_authority']is template['adopted']is False and template['independent_Source_peer']is None
+    template.update(plan=planref,progress_snapshot=p['progress_snapshot'])
+    planned={out/'plan_FALSE.json':plan_body,out/'Root_decision_FALSE.json':M.can(template),
+        out/'rebase_record.json':M.can(dict(schema='ROOT_FALSE_L026_IP_PLAN_REBASE_V1',root='/root',
+            Root_authority=False,plan=planref,writer=base['program'],writer_Source_manifest=base['Source_manifest'],
+            factory=ownref,factory_Source_peer=peerref,live_progress=p['progress_snapshot'],
+            protected_F009_prefix=prefix,protected_F009_slots=slots,canonical_writes=0,
+            fresh_exact_plan_review_and_new_Root_decision_still_owed=True))}
+    assert all(len(b)<=4*2**20 for b in planned.values())
+    upper=2*L.bytes+2*sum(len(b)for b in planned.values())+bootstrap
+    assert upper<=64*2**20 and len(set(L.pins)|set(map(str,planned)))<=512
+    L.close();M.check((L,),bootstrap,planned)
+    if not out.parent.exists():out.parent.mkdir()
+    out.mkdir()
+    for path,body in planned.items():M.write_body(path,body)
+    M.sync(out);M.sync(out.parent)
+    C=M.Ledger();M.verify_bodies(C,{str(path):body for path,body in planned.items()})
+    M.check((L,C),bootstrap,planned);signal.alarm(0)
+    print(json.dumps(dict(plan=planref,Root_decision_FALSE=M.reference(out/'Root_decision_FALSE.json',planned[out/'Root_decision_FALSE.json']),
+        rebase_record=M.reference(out/'rebase_record.json',planned[out/'rebase_record.json']),
+        protected_F009_prefix=prefix,protected_F009_slots=slots,writer_unchanged=base['program'],
+        writer_manifest_unchanged=base['Source_manifest'],canonical_writes=0,scientific_calls=0,
+        fresh_plan_review_pending=True,tracked_read_bytes=L.bytes+C.bytes,nominal_project_bootstrap_bytes=bootstrap)))
+if __name__=='__main__':main()

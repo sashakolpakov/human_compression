@@ -1,0 +1,371 @@
+"""Generic positive saved-row properties; no scientific imports."""
+from pathlib import Path
+import argparse,copy,hashlib,json,os,resource,sys,time
+import metadata_io as m
+import selector_projection as pr
+BASE=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+ROOT=S/'computation/f004/q11/rank4/section_generation'
+TARGET=ROOT/'residuals/rank4_markings/UNBOUND'
+NEW_SELECTOR=ROOT/'method/selectors/UNBOUND.json'
+PY='/Users/sasha/.venvs/global/bin/python'
+AUTHOR='/root/readback_review'
+START=time.monotonic();CACHE={};METADATA={};OWN_STARTED=None
+def tick():
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  m.need(rss<=256*2**20 and time.monotonic()-START<115,'256MiB115s metadata envelope')
+def body(r):
+  m.ref(r);name=r['path']
+  if name in CACHE:m.need(m.RECORDS[name]==r,'one input edition');return CACHE[name]
+  tick();raw=m.raw(r);CACHE[name]=raw;return raw
+def document(r):
+  if r['path']not in METADATA:METADATA[r['path']]=m.decode(body(r))
+  else:body(r)
+  return METADATA[r['path']]
+def pin(path):
+  r=m.pin(path);body(r);return r
+def refbody(path,raw):return dict(path=str(path),bytes=len(raw),sha256=m.digest(raw))
+def close_inputs():
+  for r in list(m.RECORDS.values()):m.raw(r)
+  tick()
+def source(args):
+  global OWN_STARTED
+  m.need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS/noO')
+  m.need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'clean project injection environment')
+  mr=pin(args.manifest[0]);m.need(mr['sha256']==args.manifest[1],'exact manifest');mf=document(mr)
+  m.need(set(mf)=={'schema','sources','guards'}and mf['schema']=='F004_POSITIVE_MARKING_METADATA_SOURCE_V1','closed Source namespace')
+  names={'adopt_positive_properties.py','selector_projection.py','metadata_io.py'}
+  m.need(len(mf['sources'])==3 and {r['path']for r in mf['sources']}==names,'complete three whole bodies')
+  total=0
+  for r in mf['sources']:
+    m.need(Path(r['path']).name==r['path'],'same-directory Source');total+=len(body(dict(r,path=str(BASE/r['path']))))
+  expected=[(4806,'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'),
+              (18361,'5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42')]
+  m.need([(r['bytes'],r['sha256'])for r in mf['guards']]==expected,'both complete literal guards')
+  for r in mf['guards']:body(r)
+  m.need(total+23167+512<=65536 and total<=50000 and total+59889+512<=131072,'whole Source and nominal startup reserve')
+  m.need(not(BASE/'__pycache__').exists()and Path(__file__).resolve()==BASE/'adopt_positive_properties.py','fresh actual entry')
+  for module,name in((m,'metadata_io.py'),(pr,'selector_projection.py')):
+    m.need(Path(module.__file__).resolve()==BASE/name,'whole helper origin')
+    for v in vars(module).values():
+      if type(v).__name__=='function'and v.__module__==module.__name__:
+        m.need(v.__globals__ is vars(module)and Path(v.__code__.co_filename).resolve()==BASE/name,'whole helper function origin')
+  stref=pin(Path(args.guard)/'started.json');OWN_STARTED=stref['path'];st=document(stref)
+  m.need(st['command']==[PY,'-E','-B','-S',str(BASE/'adopt_positive_properties.py')]+sys.argv[1:]
+      and any(x['pid']==os.getpid()for x in st['identities'])
+      and all(st['limits'][k]==v for k,v in dict(total_rss=256*2**20,wall_seconds=125.0,admit_ram=4*2**30,
+       admit_disk=10*2**30,ram_floor=3*2**30,disk_floor=8*2**30).items()),'actual direct samePID/argv256MiB125s guard')
+  return mr
+def protect(cfg):
+  refs=cfg['protected_globals'];m.need(len(refs)==2 and {r['path']for r in refs}=={
+      str(S/'reboot_20261013/CURRENT.json'),str(S/'maintenance/intake/current_status.json')},'both exact readonly globals')
+  values=[document(r)['F004_q11_latest_ledger']for r in refs]
+  m.need(m.same(values[0],values[1])and all(type(values[0][k])is int and values[0][k]==v for k,v in
+      dict(closed=126,required=272,pending=146).items()),'whole126/272/146 global ledger unchanged')
+def alias(a,r):
+  m.ref(a);m.ref(r)
+  m.need(a['bytes']==r['bytes']and a['sha256']==r['sha256']and Path(r['path']).is_relative_to(S),'whole equal retained S body')
+  return r
+def remember_alias(aliases,a,r):
+  alias(a,r);first=aliases.setdefault(a['path'],r)
+  m.need((first['bytes'],first['sha256'])==(a['bytes'],a['sha256']),'one whole original edition across banks')
+  return first
+def evidence_banks(cfg):
+  banks=cfg['retained_banks'];m.need(type(banks)is list and 1<=len(banks)<=4,'at most four preclosed finite banks')
+  aliases={};manifests=[];size=0;retained={}
+  for bank in banks:
+    mf=document(bank['manifest']);peer=document(bank['actual_review'])
+    m.need(mf['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'and mf['root']=='/root'and mf['scientific_calls']==0,'unchanged667 output schema')
+    m.need(peer['status'].startswith('SUPPORTED_ACTUAL')and peer['reviewer']!='/root'and peer['blockers']==[]
+          and peer['preservation']==bank['manifest']and peer['all_selected_original_retained_pairs_whole_equal']is True
+          and peer['actual_guard_Source_and_ordered_raw_frames_verified']is True,'independent actual closed-byte retention review')
+    m.need(type(mf['files'])is list and len(mf['files'])<=512,'finite exact mappings')
+    for row in mf['files']:
+      a=m.ref(row['original']);r=alias(a,row['retained'])
+      remember_alias(aliases,a,r)
+      if r['path']not in retained:
+        body(r);retained[r['path']]=r;size+=r['bytes']
+      else:m.need(retained[r['path']]==r,'one whole retained path edition')
+    aliases.setdefault(bank['manifest']['path'],bank['manifest']);manifests.append(bank)
+  m.need(len(retained)<=400 and size<=14*2**20,'bounded total whole retained closure, not recursive ancestry')
+  return aliases,manifests
+def predecessor(cfg):
+  p=document(cfg['predecessor_actual_review']);old=document(cfg['selector'])
+  m.need(p['status'].startswith('SUPPORTED_ACTUAL')and p['reviewer']!='/root'and p['blockers']==[]
+      and p['selector']==cfg['selector']and p['after_partition']==[173,len(old['accepted_new_paid_positions']),len(pr.expand(old))]
+      and p['whole_typed_selector_inverse_verified']is p['whole_Source_and_inputs_closed']is p['actual_guard_and_raw_frames_verified']is True,'actual current predecessor')
+  receipt=document(p['commit_receipt']);m.need(receipt['status']=='COMMITTED'and receipt['selector']==cfg['selector']
+      and receipt['Source_manifest']==p['Source_manifest']and receipt['newly_paid_positions']==p['newly_paid_positions'],'actual current receipt')
+  return p
+
+def destinations(cfg):
+  global TARGET,NEW_SELECTOR
+  e=cfg['epoch'];m.need(type(e)is str and 1<=len(e)<=64 and e[0].isalpha()and all(c in'abcdefghijklmnopqrstuvwxyz0123456789_'for c in e),'finite epoch')
+  TARGET=ROOT/'residuals/rank4_markings'/e
+  NEW_SELECTOR=ROOT/'method/selectors'/('job_0020_after_'+e+'.json')
+  m.need(cfg['destination']==dict(property_root=str(TARGET),selector=str(NEW_SELECTOR)),'exact destinations')
+
+def reviewed(v,prefix):
+  m.need(v['status'].startswith(prefix)and v['reviewer']!='/root'and v['blockers']==[],'independent supported review')
+
+def issued(a):
+  m.need(a['schema']=='ROOT_F004_WHOLE_MARKING_POSITIVE_RANK4_APPLICATION_V1'and a['root']=='/root'
+      and a['Root_authority']is a['mathematical_proof_issued']is a['generation_verified']is a['full_rank4_IP_verified']is True
+      and a['whole_saved_row_generation_and_IP_verified']is True and a['canonical_adoption_performed']is False,
+      'issued positive whole-row proof, still unregistered')
+
+
+
+
+def qualify(cfg,aliases):
+  entries=cfg['applications'];m.need(type(entries)is list and 1<=len(entries)<=16,'bounded positive applications')
+  rows=[]
+  for item in entries:
+    for k in('application','logical_review'):m.ref(item[k]);m.need(item[k]['bytes']<=131072,'finite application/review')
+    a=document(item['application']);l=document(item['logical_review']);issued(a);reviewed(l,'SUPPORTED_LOGICAL_ROOT_ISSUED')
+    m.need(l['Root_application']==item['application']and l['proof']==a['proof']
+        and l['representative_positive_rank4_supported']is l['whole_saved_row_positive_rank4_supported']is True
+        and l['full_subset_IP_criterion_and_conditional_GEN_combination_supported']is True,'exact independent positive proof')
+    keys=('position','original_row_id','marks_sha256','model_sha256','original_job','current_selector')
+    m.need(all(l[k]==a[k]for k in keys)and a['original_job']==[20,4]and a['current_selector']==cfg['selector'],'same Original/current logical subject')
+    for k in('Root_reaffirmed_in_current_session','Root_owns_all_inherited_model_membership_and_generation_premises',
+      'same_Original_order_frame_and_current_eligibility_reaffirmed','both_local_IP_and_complete_end_intersection_bound_to_same_marks_reaffirmed',
+      'classical_rank4_criterion_and_this_new_logical_application_owned','whole_saved_row_Original_conjugacy_scope_owned'):
+      m.need(a[k]is True,'issued Root proof duty '+k)
+    p=a['premise_bindings'];end=document(p['end_intersection_actual_review']);local=document(p['both_local_rank3_actual_review'])
+    for x in(end,local):
+      reviewed(x,'SUPPORTED_ACTUAL');m.need(x['whole_Source_and_inputs_closed']is x['actual_guard_and_raw_frames_verified']is True,'actual numeric provenance')
+      m.need(all(x[k]==a[k]for k in('position','original_row_id','marks_sha256','model_sha256','current_selector')),'same actual marks/frame')
+    m.need(end['end_intersection_equals_middle']is True and local['LEFT_local_IP']is local['RIGHT_local_IP']is True
+        and local['both_rank3_IP_supported_for_same_Original_marks']is True
+        and local['RIGHT_actual_review']==p['end_intersection_actual_review']
+        and local['LEFT_actual_review']==end['old_H_C_D_actual_review'],'actual end equality plus both local IP')
+    gen=document(p['generation_acceptance']);mapping=p['generation_alias_mapping'];checked=document(p['generation_retained_checked_result'])
+    m.need(gen['root']=='/root'and gen['adopted']is True and gen['original_job']==[20,4]and a['position']in gen['generation_verified_positions']
+        and mapping in gen['preserved_files']and mapping['original']==gen['independent_direct_result']==p['generation_historical_original_checked_ref']
+        and mapping['retained']==p['generation_retained_checked_result']
+        and (mapping['original']['bytes'],mapping['original']['sha256'])==(mapping['retained']['bytes'],mapping['retained']['sha256']),
+        'retained exact old GEN, no reread of missing original private path')
+    found=[r for r in checked['checked_records']if r['original_orbit_position']==a['position']]
+    m.need(checked['original_job']==[20,4]and checked['IP_claim']is False and len(found)==1
+        and all(found[0]['direct_result'][k]is True for k in('full_generation_verified','exact_actual_prime37_verified',
+          'seven_actual_cyclic_rows_rechecked','borrowed_natural_module_and_rank_one_and_maximal_overgroup_premises')),
+        'actual checked GEN kept separate from new IP application')
+    row=a['saved_original_row_metadata'];w=a['Root_saved_row_scope'];frame=document(p['prior_original_frame_import'])
+    m.need(all(frame[k]==a[k]for k in('position','original_row_id','marks_sha256','model_sha256'))
+        and frame['root']=='/root'and frame['Root_authority']is frame['adopted']is True
+        and all(frame[k]is True for k in('named_inner_G2_11_membership_for_all_four_marks_checked',
+          'original_marking_orbit_member_and_transport_join_checked','same_faithful_right_row_natural_F11_frame_checked',
+          'literal_original_mark_order_preserved_without_reversal')),'borrow exact old named model/orbit/frame')
+    m.need(all(row[k]==a[k]for k in('position','original_row_id','marks_sha256'))
+        and all(w[k]==a[k]for k in('position','original_row_id','marks_sha256','model_sha256','original_job'))
+        and w['inherited_marked_conjugation_and_whole_row_scope_reaffirmed']is True
+        and w['prior_exact_Original_frame_import']==p['prior_original_frame_import']
+        and type(row['original_orbit_member_count'])is int and row['original_orbit_member_count']>0
+        and w['original_orbit_member_count']==l['saved_orbit_member_count']==row['original_orbit_member_count']
+        and w['original_orbit_row_sha256']==l['saved_orbit_row_sha256']==row['original_orbit_row_sha256'],'whole same saved row')
+    for k in('proof','result','actual_SDK','Root_input_import','Source_manifest'):body(local[k])
+    for k in('proof','result','strict_actual_SDK','Root_input_import','Source_manifest'):body(end[k])
+    for r in end['proposal'].values():body(r) # Whole retained lift/search carriers, never decoded.
+    h=document(end['old_H_C_D_actual_review']);body(h['H_carrier'])
+    support=document(end['old_support_actual_review']);body(support['proof'])
+    for k in('classical_criterion_proof','classical_criterion_independent_peer','exact_same_subject_join'):body(p[k])
+    body(w['acquired_projection']);body(w['projection_actual_review']);body(a['proof'])
+    for k in('application','logical_review'):
+      r=item[k];m.need(r['path']in aliases and (aliases[r['path']]['bytes'],aliases[r['path']]['sha256'])==(r['bytes'],r['sha256']),
+          'durable whole-equal issued application and logical review before payment')
+    rows.append(dict(position=a['position'],original_row_id=a['original_row_id'],marks_sha256=a['marks_sha256'],model_sha256=a['model_sha256'],
+        original_job=[20,4],saved_orbit_member_count=row['original_orbit_member_count'],saved_orbit_row_sha256=row['original_orbit_row_sha256'],
+        kind='C_GROUP',generation_verified=True,full_rank4_IP_verified=True,Root_application=item['application'],
+        independent_logical_review=item['logical_review'],whole_saved_original_prefix_orbit_property_covered=True))
+  pr.positions([r['position']for r in rows]);return rows
+
+
+def orbit_scope(cfg,rows):
+  scope=document(cfg['saved_orbit_Root_import'])
+  m.need(scope['schema']=='ROOT_F004_POSITIVE_MARKING_CURRENT_SCOPE_V1'and scope['root']=='/root'
+      and scope['Root_authority']is scope['adopted']is scope['Root_reaffirmed_in_current_session']is True
+      and scope['selector']==cfg['selector']and scope['predecessor_actual_review']==cfg['predecessor_actual_review']
+      and scope['applications']==cfg['applications'],'fresh exact current eligibility and whole-row scope')
+  for k in('same_Original_saved_row_and_model_joins_owned','all_selected_positions_currently_unpaid_owned',
+      'historical_application_snapshots_preserved','whole_marked_isomorphism_GEN_and_all_IP_transfer_owned',
+      'no_new_orbit_Aut_reversal_class_claim'):
+    m.need(scope[k]is True,'Root scope '+k)
+  keys=('position','original_job','original_row_id','marks_sha256','model_sha256','saved_orbit_member_count','saved_orbit_row_sha256','kind')
+  m.need(scope['subjects']==[{k:r[k]for k in keys}for r in rows],'exact ordered whole-row subjects')
+  body(scope['borrowed_saved_row_argument']);body(scope['borrowed_saved_row_argument_independent_review'])
+  m.need(scope['oversized_original_family_borrowed_not_freshly_opened']is True,'finite closure qualification')
+  return scope
+
+
+def retained(r,aliases,late):
+  if r['path']in aliases:
+    a=aliases[r['path']]
+    if(a['bytes'],a['sha256'])==(r['bytes'],r['sha256']):return a
+  if any(m.same(v,r)for v in aliases.values()):return r
+  m.need(r['path']in CACHE,'qualified closed late input');raw=body(r)
+  target=TARGET/'evidence/objects'/r['sha256'];late[str(target)]=raw;return refbody(target,raw)
+
+def images(cfg,cr,rr,mr,scope,rows,aliases,banks):
+  before=cfg['selector'];old=document(before);late={};r=lambda x:retained(x,aliases,late)
+  adopted=[dict(x,Root_application=r(x['Root_application']),independent_logical_review=r(x['independent_logical_review']))for x in rows]
+  evidence=dict(schema='ROOT_F004_POSITIVE_MARKING_FINITE_CLOSED_EVIDENCE_V1',root='/root',borrowed_closed_banks=banks,files=[],
+      closed_bank_manifest_rows_not_recursively_expanded=True,finite_outer_creation_tail_separate=True,scientific_calls=0)
+  for x in(cr,rr,mr,cfg['saved_orbit_Root_import'],before,*cfg['protected_globals']):r(x)
+  for k in sorted(CACHE):
+    if k!=OWN_STARTED:evidence['files'].append(dict(original=m.RECORDS[k],retained=r(m.RECORDS[k])))
+  ebody=m.can(evidence);eref=refbody(TARGET/'evidence/manifest.json',ebody)
+  text=('Positive whole saved-row marking properties\n=======================================\n\n'
+      'Each exact Root application and independent logical review is retained. Named-group generation and full subset IP '
+      'transfer under the imported whole marked-isomorphism scope. Historical strict snapshots remain unchanged. '
+      'This is a finite property append, with no new orbit/Aut/reversal/class, whole job, manuscript, Lean or measurement credit.\n').encode()
+  prop=dict(schema='ROOT_F004_POSITIVE_SAVED_ROW_PROPERTIES_V1',root='/root',Root_authority=True,adopted=True,
+      selector_policy='PAY_ORIGINAL_PREFIX_ORBIT_PROPERTY',original_job=[20,4],previous_selector=before,
+      newly_paid_positions=[x['position']for x in rows],whole_saved_marked_isomorphism_transfer_reaffirmed=True,
+      settled_dispositions=adopted,accepted_saved_orbit_import=r(cfg['saved_orbit_Root_import']),
+      verified_marking_property_records=len(rows),Source_manifest=r(mr),config=r(cr),Root_release=r(rr),evidence=eref,
+      proof=refbody(TARGET/'proof.rst',text),protected_globals=cfg['protected_globals'],global_q11_closed=126,
+      global_q11_required=272,global_q11_pending=146,Aut_reversal_class_count_credit=0,no_new_orbit_computation_or_classification=True,
+      whole_job_credit=0,selector_activation_requires_completed_receipt_and_actual_review=True,new_manuscript_conjecture_Lean_measurement_credit=0)
+  authority=dict(prop,settled_dispositions=rows)
+  for _ in range(2):
+    ebody=m.can(evidence);eref=refbody(TARGET/'evidence/manifest.json',ebody);prop['evidence']=eref
+    propbody=m.can(prop);propref=refbody(TARGET/'root_acceptance.json',propbody)
+    new,inv=pr.project(old,before,propref,authority)
+    inv.update(old_selector_retained=r(before),protected_global_beforeimages=[r(x)for x in cfg['protected_globals']],new_selector_path=str(NEW_SELECTOR))
+    listed={x['original']['path']for x in evidence['files']}
+    for k in sorted(CACHE):
+      if k!=OWN_STARTED and k not in listed:evidence['files'].append(dict(original=m.RECORDS[k],retained=r(m.RECORDS[k])));listed.add(k)
+  m.need(ebody==m.can(evidence),'finite evidence fixed point')
+  bodies={str(TARGET/'root_acceptance.json'):propbody,str(TARGET/'selector_inverse.json'):m.can(inv),
+      str(NEW_SELECTOR):m.can(new),str(TARGET/'evidence/manifest.json'):ebody,str(TARGET/'proof.rst'):text}
+  return bodies,late,dict(property_record=propref,selector=refbody(NEW_SELECTOR,bodies[str(NEW_SELECTOR)]),
+      inverse=refbody(TARGET/'selector_inverse.json',bodies[str(TARGET/'selector_inverse.json')]),evidence=eref,
+      proof=refbody(TARGET/'proof.rst',text),partition=inv['after_partition'],remaining=pr.expand(new))
+
+def mkdirs(path):
+  chain=[];p=path
+  while not p.exists():chain.append(p);p=p.parent
+  m.need(p.resolve()==p and p.is_dir()and not p.is_symlink(),'canonical existing ancestor')
+  for p in reversed(chain):p.mkdir();sync(p);sync(p.parent)
+def sync(path):
+  fd=os.open(path,os.O_RDONLY|getattr(os,'O_DIRECTORY',0))
+  try:os.fsync(fd)
+  finally:os.close(fd)
+def publish(path,raw):
+  p=Path(path);m.need((p.is_relative_to(TARGET)or p==NEW_SELECTOR)and p.parent.resolve()==p.parent
+      and not os.path.lexists(p)and len(raw)<=4*2**20,'only exact fresh canonical property artifacts')
+  m.need(len(m.PATHS|{str(p)})<=500 and m.WRITE+len(raw)<=16*2**20,'same prospective output/path caps')
+  fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  try:
+    with os.fdopen(fd,'wb',closefd=False)as f:m.need(f.write(raw)==len(raw),'whole write');f.flush();os.fsync(f.fileno())
+  finally:os.close(fd)
+  sync(p.parent);m.PATHS.add(str(p));m.WRITE+=len(raw);return m.pin(p)
+def controls(mr):
+  fake=dict(path='/private/tmp/synthetic_closed_positive',bytes=1,sha256='0'*64);before=fake
+  left=list(range(201,205));take=left[:2]
+  old=dict(schema='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1',root='/root',adopted=True,original_job=[20,4],original_orbit_positions=3779,
+      original_paid_count=173,original_paid_positions=list(range(1,174)),accepted_new_paid_positions=[x for x in range(174,3780)if x not in left],
+      unresolved_position_runs=[[x,x]for x in left],unresolved_positions=4,expanded_unresolved_sha256=m.digest(pr.encoded(left)),
+      source_adoptions=[fake],old_negative_history={'kept':[False,None]},unknown={'nested':[False,None,{'keep':'all'}]})
+  rows=[dict(position=p,kind='C_GROUP',Root_application=fake,independent_logical_review=fake,generation_verified=True,
+      full_rank4_IP_verified=True,whole_saved_original_prefix_orbit_property_covered=True)for p in take]
+  a=dict(root='/root',Root_authority=True,adopted=True,selector_policy='PAY_ORIGINAL_PREFIX_ORBIT_PROPERTY',previous_selector=before,
+      newly_paid_positions=take,whole_saved_marked_isomorphism_transfer_reaffirmed=True,settled_dispositions=rows)
+  new,inv=pr.project(old,before,fake,a);names=[]
+  def yes(n,x):m.need(x,n);names.append(n)
+  def no(n,fn):
+    try:fn()
+    except ValueError:names.append(n);return
+    raise ValueError(n)
+  yes('whole_unknown_and_history_inverse',new['unknown']==old['unknown']and new['old_negative_history']==old['old_negative_history']and m.same(pr.inverse(new,inv['patches']),old))
+  yes('original173_stays_immutable_later_paid_list_advances',new['original_paid_positions']==old['original_paid_positions']and new['original_paid_count']==173 and inv['after_partition']==[173,3604,2])
+  for n,key,val in [('false_Root','Root_authority',False),('false_whole_transfer','whole_saved_marked_isomorphism_transfer_reaffirmed',False),
+      ('wrong_before','previous_selector',dict(fake,path='/private/tmp/other')),('duplicate_positions','newly_paid_positions',[201,201])]:
+    x=copy.deepcopy(a);x[key]=val;no(n,lambda:pr.project(old,before,fake,x))
+  for n,key,val in [('false_GEN','generation_verified',False),('false_rank4_IP','full_rank4_IP_verified',False),
+      ('wrong_kind','kind','NONGENERATION'),('missing_whole_row','whole_saved_original_prefix_orbit_property_covered',False)]:
+    x=copy.deepcopy(a);x['settled_dispositions'][0][key]=val;no(n,lambda:pr.project(old,before,fake,x))
+  no('already_paid_position',lambda:pr.project(new,before,fake,a))
+  x=copy.deepcopy(new);x['unresolved_positions']=4;no('changed_inverse_aftervalue',lambda:pr.inverse(x,inv['patches']))
+  no('different_alias_bytes_refused',lambda:alias(fake,dict(fake,path=str(S/'synthetic'),sha256='1'*64)))
+  aa={};one=dict(fake,path=str(S/'synthetic_a'));two=dict(fake,path=str(S/'synthetic_b'))
+  yes('whole_equal_multiple_aliases_deterministic_first',remember_alias(aa,fake,one)==one and remember_alias(aa,fake,two)==one)
+  no('changed_alias_edition',lambda:remember_alias(aa,dict(fake,sha256='1'*64),dict(two,sha256='1'*64)))
+  x=dict(a,settled_dispositions=rows[:1],newly_paid_positions=take[:1]);v,_=pr.project(old,before,fake,x)
+  yes('single_positive_row_is_supported_without_class_count',v['unresolved_positions']==3 and v['positive_rank4_marking_positions']==take[:1])
+  m.need(len(names)==16,'16 new positive metadata controls');close_inputs()
+  return dict(schema='F004_POSITIVE_MARKING_METADATA_CONTROLS_V1',status='PASS',Source_manifest=mr,count=16,names=names,
+      Original_inputs_loaded=False,canonical_or_scientific_writes=False)
+
+
+def main():
+  ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--mode',choices=['controls','forecast','apply'],required=True)
+  ap.add_argument('--manifest',nargs=2,required=True);ap.add_argument('--guard',required=True);ap.add_argument('--config',nargs=2)
+  ap.add_argument('--release',nargs=2);ap.add_argument('--out');ap.add_argument('--write-evidence',nargs=2);args=ap.parse_args();mr=source(args)
+  if args.mode=='controls':print(m.can(controls(mr)).decode(),end='');return
+  m.need(args.config and args.release,'fresh immutable Root config/release')
+  cr=pin(args.config[0]);rr=pin(args.release[0]);m.need(cr['sha256']==args.config[1]and rr['sha256']==args.release[1],'exact issued inputs')
+  cfg=document(cr);release=document(rr)
+  m.need(cfg['schema']=='F004_POSITIVE_MARKING_CONFIG_V1'and cfg['Root_authority']is cfg['Root_reaffirmed_in_current_session']is True
+      and release['schema']=='ROOT_F004_POSITIVE_MARKING_METADATA_RELEASE_V1'
+      and release['root']=='/root'and release['Root_authority']is release['adopted']is release['allow_forecast']is release['allow_apply_after_external_review']is True
+      and release['config']==cr and release['Source_manifest']==mr and release['Root_reaffirmed_in_current_session']is True,'write-capable Root release frozen before forecast')
+  sp=document(release['Source_peer']);m.need(sp['status'].startswith('SUPPORTED_STATIC')and sp['blockers']==[]and sp['reviewer']not in('/root',AUTHOR)
+      and sp['Source_manifest']==mr,'independent new Source peer')
+  co=document(release['actual_controls_review']);m.need(co['status'].startswith('SUPPORTED_ACTUAL')and co['reviewer']!='/root'and co['blockers']==[]
+      and co['Source_manifest']==mr and co['count']==16 and co['Original_inputs_loaded']is False,'fresh sameSource actual16 metadata controls')
+  destinations(cfg);protect(cfg);predecessor(cfg);aliases,banks=evidence_banks(cfg);rows=qualify(cfg,aliases);scope=orbit_scope(cfg,rows)
+  bodies,late,summary=images(cfg,cr,rr,mr,scope,rows,aliases,banks)
+  future=set(bodies)|set(late)|{str(TARGET/'adoption_committed.json')}
+  m.need(len(m.PATHS|future)<=488 and sum(map(len,bodies.values()))+sum(map(len,late.values()))+131072<=16*2**20
+      and m.READ+sum(r['bytes']for r in m.RECORDS.values())+2*(sum(map(len,bodies.values()))+sum(map(len,late.values()))+131072)<=64*2**20,
+      'complete prewrite invoice')
+  close_inputs();m.need(not os.path.lexists(TARGET)and not os.path.lexists(NEW_SELECTOR),'new exact append-only destinations absent')
+  if args.mode=='forecast':
+    m.need(args.out and Path(args.out).is_relative_to('/private/tmp')and not os.path.lexists(args.out),'fresh private forecast directory')
+    p=Path(args.out);m.need(p.parent.resolve()==p.parent,'private canonical parent');p.mkdir();sync(p.parent)
+    refs=[]
+    for name,raw in bodies.items():refs.append(dict(intended=refbody(name,raw),private=m.put(p/Path(name).name,body=raw)))
+    forecast=dict(schema='F004_POSITIVE_MARKING_WHOLE_FORECAST_V1',status='FORECAST_ONLY',Source_manifest=mr,config=cr,Root_release=rr,
+          summary=summary,whole_afterimages=refs,late_objects=[refbody(k,v)for k,v in sorted(late.items())],
+          live_protected_beforeimages=cfg['protected_globals'],canonical_mutations=False,scientific_calls=0,
+          finite_own_forecast_apply_copy_review_terminal_tail_separate=True)
+    fr=m.put(p/'forecast.json',forecast);print(m.can(dict(status='F004_POSITIVE_MARKING_PRIVATE_FORECAST',forecast=fr,summary=summary)).decode(),end='');return
+  m.need(args.write_evidence,'external review/write decision is a separate exact record')
+  er=pin(args.write_evidence[0]);m.need(er['sha256']==args.write_evidence[1],'whole write decision');ev=document(er)
+  m.need(ev['root']=='/root'and ev['Root_authority']is ev['adopted']is ev['write_authorized_after_independent_forecast_review']is True
+      and ev['Source_manifest']==mr and ev['config']==cr and ev['Root_release']==rr,'fresh exact external write decision')
+  forecast=document(ev['forecast']);review=document(ev['independent_actual_forecast_review'])
+  m.need(forecast['Source_manifest']==mr and forecast['config']==cr and forecast['Root_release']==rr and forecast['summary']==summary
+      and review['status'].startswith('SUPPORTED_ACTUAL')and review['reviewer']!='/root'and review['blockers']==[]and review['forecast']==ev['forecast'],
+      'actual unchanged-method image review')
+  for image in forecast['whole_afterimages']:
+    name=image['intended']['path'];m.need(name in bodies and image['intended']==refbody(name,bodies[name])and body(image['private'])==bodies[name],'all whole intended images equal actual forecast')
+  m.need(len(forecast['whole_afterimages'])==len(bodies),'all five private afterimages')
+  for r in(er,ev['forecast'],ev['independent_actual_forecast_review']):
+    raw=body(r);late[str(TARGET/'evidence/objects'/r['sha256'])]=raw
+  close_inputs();protect(cfg);m.need(not os.path.lexists(TARGET)and not os.path.lexists(NEW_SELECTOR),'serial exclusive prewrite recheck')
+  m.need(sum(map(len,bodies.values()))+sum(map(len,late.values()))+131072<=16*2**20
+      and len(m.PATHS|set(late)|set(bodies)|{str(TARGET/'adoption_committed.json')})<=500
+      and m.READ+sum(map(len,bodies.values()))+sum(map(len,late.values()))+131072
+       +sum(r['bytes']for r in cfg['protected_globals'])<=64*2**20,'complete late-write bank')
+  mkdirs(TARGET/'evidence/objects');mkdirs(NEW_SELECTOR.parent)
+  for name,raw in sorted(late.items()):publish(name,raw)
+  for name,raw in bodies.items():publish(name,raw)
+  commit=dict(schema='ROOT_F004_POSITIVE_MARKING_ADOPTION_COMMITTED_V1',root='/root',status='COMMITTED',**summary,
+      previous_selector=cfg['selector'],Source_manifest=mr,config=cr,Root_release=rr,external_write_decision=er,
+      external_write_decision_retained=refbody(TARGET/'evidence/objects'/er['sha256'],body(er)),
+      late_publication_inputs=[dict(original=r,retained=refbody(TARGET/'evidence/objects'/r['sha256'],body(r)))
+    for r in(er,ev['forecast'],ev['independent_actual_forecast_review'])],
+      globals_126_272_146_unchanged=cfg['protected_globals'],newly_paid_positions=[r['position']for r in rows],
+      files_and_parent_directories_fsynced=True,progress_pointer_update_pending=True,
+      no_multifile_crash_atomicity_or_locked_CAS_claim=True,
+      partial_failure_policy='Do not replay blindly. Inspect append-only outputs; activate no selector without complete audited receipt.',
+      finite_outer_copy_apply_actual_review_and_caller_terminal_tail_separate=True,whole_job_class_manuscript_Lean_measurement_credit=0)
+  receipt=publish(TARGET/'adoption_committed.json',m.can(commit))
+  for r in cfg['protected_globals']:m.raw(r)
+  protect(cfg)
+  print(m.can(dict(status='ROOT_F004_POSITIVE_MARKING_PROPERTIES_COMMITTED',receipt=receipt,summary=summary,
+      old_files_modified=False,global_registry_modified=False,independent_actual_postcheck_and_pointer_activation_owed=True)).decode(),end='')
+if __name__=='__main__':main()

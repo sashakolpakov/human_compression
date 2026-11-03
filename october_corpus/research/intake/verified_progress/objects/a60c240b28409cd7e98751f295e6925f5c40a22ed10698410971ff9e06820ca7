@@ -1,0 +1,253 @@
+"""Metadata audit and opaque retention; never import represented scientific Source."""
+import ast, hashlib, json, os, resource, signal, stat, sys, time
+from pathlib import Path
+
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection')
+ACT=Path('/private/tmp/f004_fixed_line_tensor_intersection_actual')
+OUT=BASE/'actual_review'
+CONT=BASE.parent/'artifacts/reviews/f004_fixed_line_controls'
+START=time.monotonic(); BANK={}; EVENTS=[]; TOTAL=0; PEAK=0
+CAP_BYTES=67108864; CAP_PATHS=512
+def need(ok, message):
+    if not ok: raise ValueError(message)
+def tick():
+    global PEAK
+    need(time.monotonic()-START<125,'125 second metadata audit')
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if sys.platform!='darwin': rss*=1024
+    PEAK=max(PEAK,rss);need(PEAK<=268435456,'256 MiB metadata audit')
+def alarm(_a,_b): raise TimeoutError('125 second metadata audit')
+signal.signal(signal.SIGALRM,alarm);signal.alarm(125)
+need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'-E -B -S without -O')
+def sha(b): return hashlib.sha256(b).hexdigest()
+def enc(v): return (json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii')
+def pairs(items):
+    d={}
+    for k,v in items: need(k not in d,'duplicate key');d[k]=v
+    return d
+def parse(b): return json.loads(b,object_pairs_hook=pairs,parse_float=str)
+def ref(path,body): return dict(path=str(path),bytes=len(body),sha256=sha(body))
+def read(path,expected=None):
+    global TOTAL
+    tick();p=Path(path);need(p.is_absolute() and not p.is_symlink(),'absolute nonsymlink file')
+    p=p.resolve(strict=True);need(len(BANK|{str(p):None})<=CAP_PATHS,'512 metadata paths')
+    fd=os.open(p,os.O_RDONLY|getattr(os,'O_NOFOLLOW',0))
+    try:
+        s=os.fstat(fd);need(stat.S_ISREG(s.st_mode) and s.st_nlink==1 and s.st_size<=8388608,'bounded regular single-link file')
+        need(TOTAL+s.st_size<=CAP_BYTES,'64 MiB metadata reads')
+        with os.fdopen(fd,'rb',closefd=False)as stream:b=stream.read(s.st_size+1)
+        t=os.fstat(fd);u=p.lstat()
+        sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+        need(sig(s)==sig(t)==sig(u) and len(b)==s.st_size,'stable whole read with EOF')
+    finally:os.close(fd)
+    TOTAL+=len(b);r=ref(p,b);EVENTS.append(r)
+    if expected is not None:need(r['bytes']==expected['bytes'] and r['sha256']==expected['sha256'],'whole descriptor '+str(p))
+    if str(p)in BANK:need(BANK[str(p)][0]==r,'unchanged first and closing hash')
+    else:BANK[str(p)]=(r,b)
+    return b
+def get(path,expected=None):
+    p=str(Path(path).resolve(strict=True))
+    if p not in BANK:return read(path,expected)
+    r,b=BANK[p]
+    if expected is not None:need(r['bytes']==expected['bytes'] and r['sha256']==expected['sha256'],'cached descriptor')
+    return b
+def load(path,expected=None):return parse(get(path,expected))
+def descriptor(path):b=get(path);return ref(Path(path).resolve(),b)
+def write(name,value):
+    p=OUT/name;b=enc(value);need(not p.exists(),'exclusive audit output '+name)
+    with p.open('xb')as f:need(f.write(b)==len(b),'whole output');f.flush();os.fsync(f.fileno())
+    return ref(p,b)
+
+# Lexically find object member spans; array and matrix contents remain opaque.
+# Only explicitly selected scalar/boolean fields below are JSON-decoded.
+def members(raw):
+    n=len(raw);i=0
+    def ws(i):
+        while i<n and raw[i]in b' \n\r\t':i+=1
+        return i
+    def string_end(i):
+        need(raw[i]==34,'JSON string');i+=1
+        while i<n:
+            if raw[i]==92:i+=2
+            elif raw[i]==34:return i+1
+            else:i+=1
+        raise ValueError('unterminated JSON string')
+    i=ws(i);need(raw[i]==123,'object span');i=ws(i+1);out={}
+    while raw[i]!=125:
+        j=string_end(i);k=json.loads(raw[i:j]);need(k not in out,'duplicate object key')
+        i=ws(j);need(raw[i]==58,'colon');i=ws(i+1);start=i
+        if raw[i]==34:i=string_end(i)
+        elif raw[i]in b'[{':
+            stack=[raw[i]];i+=1
+            while stack:
+                need(i<n,'container end')
+                if raw[i]==34:i=string_end(i);continue
+                if raw[i]in b'[{':stack.append(raw[i])
+                elif raw[i]in b']}':
+                    need((stack.pop(),raw[i])in((91,93),(123,125)),'balanced JSON container')
+                i+=1
+        else:
+            while i<n and raw[i]not in b',} \n\r\t':i+=1
+        out[k]=raw[start:i];i=ws(i)
+        if raw[i]==44:i=ws(i+1)
+        else:need(raw[i]==125,'object separator')
+    need(not raw[ws(i+1):],'whole object span');return out
+
+mfpath=BASE/'source/SOURCE_MANIFEST_worker.json';mf=load(mfpath)
+need(descriptor(mfpath)['sha256']=='c46aa0cede4abe23d7ec13ebdcbcfb78e5ab86eee60258704d3c56a156876cf6','selected Source edition')
+sequence=[]
+def worker_read(path,expected=None):
+    b=get(path,expected);r=ref(Path(path).resolve(),b);sequence.append(r);return b
+worker_read(mfpath)
+for r in mf['sources']:worker_read(mfpath.parent/r['path'],r)
+for r in mf['external_runtime']:worker_read(r['path'],r)
+qp=ACT/'bindings/transport_request_v2.json';q=parse(worker_read(qp))
+need(descriptor(qp)['sha256']=='5a1041e3cbce0ec62032470de20145f7ed63c6ac66686d11655c0e1790810664','selected request')
+root=parse(worker_read(q['Root_input_import']['path'],q['Root_input_import']))
+need(root['Root_authority']is root['adopted']is True and root['root']=='/root','positive Root input import')
+duties=next(ast.literal_eval(n.value)for n in ast.parse(get(BASE/'source/scope.py')).body
+    if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id=='DUTIES'for t in n.targets))
+need(len(duties)==12 and all(root[k]is True for k in duties),'twelve Root duties')
+for k in set(q)-{'schema','Root_authority','Root_input_import'}:need(root[k]==q[k],'Root request join '+k)
+need(root['Source_manifest_sha256']==descriptor(mfpath)['sha256'] and q['Root_authority']is False,'Root Source/request boundary')
+peer=parse(worker_read(q['new_Source_peer']['path'],q['new_Source_peer']))
+control=parse(worker_read(q['new_controls_actual_review']['path'],q['new_controls_actual_review']))
+need(peer['reviewer']=='/root/mathematical_review' and peer['blockers']==[],'our prior Source peer')
+need(control['reviewer']=='/root/dependency_audit' and control['author']=='/root/ledger_preparation' and control['blockers']==[],'distinct controls actual review')
+need(control['Source_manifest']==peer['control_Source_manifest'] and control['count']==24 and control['Original_inputs_loaded']is False,'unchanged artificial24 controls')
+parentref=control['integer_metadata_projection']['parent_review'];parent=load(parentref['path'],parentref)
+need(parent['outer_seconds']=='0.035705958000107785','exact old timing lexeme')
+projection=control.copy();projection.pop('integer_metadata_projection')
+need(projection==parent and control['integer_metadata_projection']['additional_Original_Source_or_control_execution']is False,'only timing type plus explicit parent provenance')
+worker_read(q['current_selector']['path'],q['current_selector'])
+old=parse(worker_read(q['old_star_actual_review']['path'],q['old_star_actual_review']))
+worker_read(old['proof']['path'],old['proof']);worker_read(old['result']['path'],old['result'])
+frame=parse(worker_read(old['Root_input_import']['path'],old['Root_input_import']))
+oldmf=parse(worker_read(old['Source_manifest']['path'],old['Source_manifest']))
+for r in oldmf['sources']:worker_read(Path(old['Source_manifest']['path']).parent/r['path'],r)
+worker_read(q['Original_transport']['path'],q['Original_transport']) # Opaque array payload.
+metadata=load(BASE/'literal_input_metadata.json')
+need(metadata['complete_record_reference']==q['Original_transport'],'literal metadata full-file join')
+need(metadata['case']==q['case']==old['case']==frame['case'],'same Original case')
+worker_read(metadata['source_subset']['path'],metadata['source_subset'])
+for r in metadata['source_original_domain_whole_pins'].values():worker_read(r['path'],r)
+r=metadata['generation_acceptance'];worker_read(r['path'],r)
+worker_read(q['theory']['path'],q['theory'])
+need(len(sequence)==39 and len({x['path']for x in sequence})==39,'39 unique initial worker paths')
+twice=sequence+sequence
+need(sum(x['bytes']for x in twice)==3444736 and sha(enc(twice))=='cbfe1e0c15e58870159f749fd4ffb0cae91ad6f90861919cd555f7a958ad2159','exact78 worker read sequence')
+
+api=load(ACT/'Root_SDK/Original_transport_v2.json')
+rawbase=Path('/private/tmp/intake_actual_transports/Root_f004_fixed_line_transport_Original_v2')
+issued=load(rawbase/'issued.json');raw=load(rawbase/'frame_0000.json')
+need(api['actor']==api['root']=='/root' and api['child_argv']==api['issued_argv']==issued['argv'],'Root actual issued argv')
+need(api['issued_tool_arguments']==issued['tool_arguments'] and api['all_genuine_api_frames']==[raw],'genuine raw frames')
+need(api['full_initial_tool_return']==api['full_tool_return']==raw and raw['exit_code']==0 and api['actual_tool']['synchronous']is True,'synchronous successful actual tool return')
+guardbase=ACT/'guards/original_transport_v2';receipt=load(guardbase/'receipt.json');started=load(guardbase/'started.json')
+split=api['child_argv'].index('--');child=api['child_argv'][split+1:]
+need(child==receipt['command']==started['command'],'child argv guard binding')
+need(child[-5:]==[str(mfpath),descriptor(mfpath)['sha256'],str(qp),descriptor(qp)['sha256'],str(ACT/'original_transport_v2')],'Source request output argv')
+need(receipt['status']=='PASS' and receipt['returncode']==0 and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[],'guard PASS clean known children')
+need(receipt['limits']['total_rss']==134217728 and receipt['limits']['wall_seconds']=='100.0','unchanged128MiB100s sampled guard')
+need(receipt['limits']==started['limits'] and receipt['logs']['stderr']==0 and get(guardbase/'stderr.log')==b'','guard stderr and limits')
+stdout=parse(get(guardbase/'stdout.log'));need(len(get(guardbase/'stdout.log'))==receipt['logs']['stdout'],'guard stdout length')
+counts=stdout['counts'];need(counts['explicit_read_bytes']==3444736 and counts['whole_read_events']==78 and counts['distinct_read_paths']==39,'recorded worker IO')
+sourcebytes=sum(r['bytes']for r in mf['sources']);guardsbytes=sum(r['bytes']for r in mf['external_runtime'])
+need(sourcebytes+guardsbytes+512==63903 and counts['import_source_reserved_bytes']==sourcebytes+59889+512==100625,'Source and bootstrap debit')
+need(counts['read_bytes']==3545361 and counts['whole_read_sequence_sha256']==sha(enc(twice)),'worker read totals')
+need((counts['matrix_products'],counts['linear_units'],counts['row_images'])==(14,33815,3),'reported operation counts only')
+for r in stdout['outputs']:get(r['path'],r)
+result=load(ACT/'original_transport_v2/result.json')
+need(result['status']==stdout['status']=='VERIFIED_FIXED_LINE_AND_THIRD_FORM_INTERSECTION_CERTIFICATE','actual mathematical status')
+need(result['case']==q['case'] and result['end_intersection_equals_middle']is True and result['fixed_line_dimension']==1 and result['new_basis_rank']==6,'typed scalar result')
+need(result['rank4_IP_GEN_case_or_canonical_credit']==0 and result['old_RREF_group_orbit_or_tensor_congruences_replayed']is False,'strict conclusion scope')
+proofraw=get(ACT/'original_transport_v2/proof.json');top=members(proofraw)
+proof={k:parse(v)for k,v in top.items()if k!='certificate'}
+need(proof['case']==q['case'] and proof['inputs_closed']is True and proof['Root_input_import']==q['Root_input_import'],'proof frame/input closure')
+need(proof['Source']['Source_manifest_sha256']==descriptor(mfpath)['sha256'] and proof['counts']['whole_read_sequence_sha256']==sha(enc(twice)),'proof Source/read closure')
+for k in ('current_selector','old_operand_job','old_Root_import','old_star_actual_review','theory'):need(proof[k]==q[k],'proof context '+k)
+cert=members(top['certificate']);fixed=members(cert['fixed_line']);minor=members(cert['new_basis_entry_minor']);forms=members(cert['alternating_form'])
+scalars=dict(fixed_line_dimension=parse(fixed['dimension']),new_basis_rank=parse(minor['rank']),
+    BN_squared_equals_minus_N_squared=parse(cert['BN_squared_equals_minus_N_squared']),
+    projector_checks=parse(cert['projector_checks']),sigma_checks=parse(cert['sigma_checks']),
+    all_four_marks_preserve=parse(forms['all_four_marks_preserve']),sigma_preserves=parse(forms['sigma_preserves']),
+    conditional_algebra_and_third_form_hypotheses_verified=parse(cert['conditional_algebra_and_third_form_hypotheses_verified']))
+need(scalars['fixed_line_dimension']==1 and scalars['new_basis_rank']==6 and scalars['BN_squared_equals_minus_N_squared']is True,'typed certificate scalar joins')
+need(all(type(v)is bool and v for v in scalars['projector_checks'].values()) and all(type(v)is bool and v for v in scalars['sigma_checks'].values()),'reported projector/sigma flag checks')
+need(scalars['all_four_marks_preserve']is True and scalars['sigma_preserves']is False and scalars['conditional_algebra_and_third_form_hypotheses_verified']is True,'reported third-form hypotheses')
+
+# Preserve all attempt histories and new actual records without executing them.
+history=[]
+for p in sorted(ACT.rglob('*')):
+    if p.is_file():get(p);history.append(str(p))
+for dirname in ('Root_f004_fixed_line_transport_Original_v1','Root_f004_fixed_line_transport_Original_v2',
+                'Root_f004_fixed_line_transport_preparation_v1','Root_f004_fixed_line_transport_preparation_v2',
+                'Root_f004_fixed_line_transport_preparation_v3','Root_f004_fixed_line_Source_ownership_v1'):
+    for p in sorted((rawbase.parent/dirname).glob('*')):
+        need(p.is_file(),'raw transport file');get(p);history.append(str(p))
+for p in (BASE/'prepare_original.py',BASE/'prepare_transport_application.py',CONT/'project_integer_metadata.py',BASE/'review/review.rst',BASE/'review/handoff.json'):
+    get(p)
+v1=load(ACT/'Root_SDK/Original_transport_v1.json');v1guard=load(ACT/'guards/original_transport/receipt.json')
+err=get(ACT/'guards/original_transport/stderr.log')
+need(v1['full_tool_return']['exit_code']==1 and v1guard['returncode']==1 and v1guard['status']=='INCOMPLETE','v1 actual failure preserved honestly')
+need(b"control=loaded(q['new_controls_actual_review']"in err and b'only integer JSON numbers'in err,'v1 metadata decode failure')
+need(get(ACT/'guards/original_transport/stdout.log')==b'' and not(ACT/'original_transport').exists(),'v1 no scientific result')
+prep2=load(ACT/'Root_SDK/transport_preparation_v2.json');prep3=load(ACT/'Root_SDK/transport_preparation_v3.json')
+need(prep2['full_tool_return']['exit_code']==1 and prep3['full_tool_return']['exit_code']==0,'failed then genuine successful preparation history')
+q1=load(ACT/'bindings/transport_request.json');r1=load(ACT/'bindings/Root_transport_input_import.json')
+for key in set(q)-{'new_controls_actual_review','Root_input_import'}:need(q[key]==q1[key],'v1/v2 request unchanged science '+key)
+for key in set(root)-{'new_controls_actual_review'}:need(root[key]==r1[key],'v1/v2 Root import unchanged science '+key)
+for r in control.values():
+    if type(r)is dict and set(r)=={'path','bytes','sha256'} and Path(r['path']).is_file():get(r['path'],r)
+
+# Stable closing reads precede opaque copying. No represented Source is imported.
+initial=list(BANK.values())
+for r,b in initial:read(r['path'],r)
+objects=OUT/'objects';objects.mkdir(exist_ok=True);retained=[];copy_reads=0;copy_paths=set()
+for r,b in initial:
+    tick();p=objects/r['sha256']
+    if not p.exists():
+        with p.open('xb')as stream:need(stream.write(b)==len(b),'whole opaque copy');stream.flush();os.fsync(stream.fileno())
+    copy_reads+=r['bytes'];copy_paths.add(str(p))
+    need(TOTAL+copy_reads<=CAP_BYTES and len(set(BANK)|copy_paths)<=CAP_PATHS,'combined original/retention IO caps')
+    need(sha(p.read_bytes())==r['sha256'],'durable opaque copy hash')
+    retained.append(dict(original=r,retained=dict(path=str(p),bytes=r['bytes'],sha256=r['sha256'])))
+retref=write('retained_manifest.json',dict(schema='F004_ORIGINAL_TRANSPORT_ACTUAL_RETENTION_V1',
+    entries=retained,opaque_numerical_payloads_not_decoded=True,
+    qualification='Finite Source/input/actual/history records; audit Source, own execution and later review are separate tail evidence.'))
+pinsref=write('checked_pins.json',dict(schema='F004_ORIGINAL_TRANSPORT_ACTUAL_AUDIT_PINS_V1',
+    files=[x[0]for x in initial],worker_first_read_sequence=sequence,worker_complete_read_sequence_sha256=sha(enc(twice)),
+    first_and_closing_metadata_read_bytes=TOTAL,opaque_copy_verification_bytes=copy_reads,
+    combined_metadata_read_bytes=TOTAL+copy_reads,physical_paths=len(set(BANK)|copy_paths),sampled_peak_rss_bytes=PEAK,
+    metadata_limits=dict(bytes=CAP_BYTES,paths=CAP_PATHS,rss=268435456,seconds=125),
+    represented_Source_executed=False,Original_arrays_decoded=False,scalar_certificate_flags=scalars))
+seal=dict(schema='F004_FIXED_LINE_TENSOR_INTERSECTION_TRANSPORT_ACTUAL_REUSE_V1',
+    status='SUPPORTED_ACTUAL_FIXED_LINE_AND_THIRD_FORM_END_INTERSECTION',reviewer='/root/mathematical_review',
+    Root_authority=False,blockers=[],case=q['case'],Source_manifest=descriptor(mfpath),
+    new_Source_peer=q['new_Source_peer'],control_Source_manifest=peer['control_Source_manifest'],
+    controls_actual_review=q['new_controls_actual_review'],request=descriptor(qp),Root_input_import=q['Root_input_import'],
+    actual_SDK=descriptor(ACT/'Root_SDK/Original_transport_v2.json'),guard_receipt=descriptor(guardbase/'receipt.json'),
+    guard_started=descriptor(guardbase/'started.json'),stdout=descriptor(guardbase/'stdout.log'),stderr=descriptor(guardbase/'stderr.log'),
+    result=descriptor(ACT/'original_transport_v2/result.json'),proof=descriptor(ACT/'original_transport_v2/proof.json'),
+    actual_guard_and_raw_frames_verified=True,whole_Source_and_inputs_closed=True,
+    first_actual_arithmetic_execution=True,failed_v1_stopped_before_Original_load_and_arithmetic=True,
+    immutable_control_parent_preserved=True,timing_successor_changes_only_outer_seconds_type_and_parent_provenance=True,
+    fixed_line_dimension=1,new_basis_rank=6,end_intersection_equals_middle=True,
+    borrowed_old_common_commutant_dimension=6,borrowed_old_complete_D22_frame_and_tensor_premises=True,
+    conditional_algebra_and_third_form_hypotheses_verified=True,
+    matrix_products=14,linear_units=33815,row_images=3,worker_paths=39,worker_read_events=78,
+    explicit_worker_read_bytes=3444736,nominal_worker_bootstrap_bytes=100625,total_worker_read_bytes=3545361,
+    worker_read_sequence_hash_verified=True,Source_plus_guards_and512_bytes=63903,
+    selected_actual_edition=2,prior_failure_actual_SDK=descriptor(ACT/'Root_SDK/Original_transport_v1.json'),
+    representation_only_fix_not_scientific_replay=True,represented_Source_or_Original_reexecuted_by_reviewer=False,
+    Original_numerical_payloads_decoded_by_reviewer=False,scalar_flags_projected_without_decoding_array_payloads=True,
+    reviewer_also_authored_prior_distinct_Source_peer=True,
+    independence_qualification='Independent of Root Original executor and arithmetic/transport authors; this reviewer also supplied the preceding Source peer. No independent numerical replay is claimed.',
+    sampled_resource_limits_not_kernel_quotas=True,canonical_or_full_rank4_IP_or_GEN_or_paper_or_conjecture_credit=0,
+    conclusion_scope='Only the same-case end intersection, conditional on the accepted historical frame, D22 and tensor premises and Root-owned theory; full rank-four IP, GEN, saved-row and canonical closure need separate logical application.',
+    checked_pins=pinsref,retained_execution_records=retref)
+sealref=write('reuse_integer_only.json',seal)
+print(enc(dict(review=sealref,checked_pins=pinsref,retention=retref,
+    first_and_closing_metadata_read_bytes=TOTAL,opaque_copy_verification_bytes=copy_reads,
+    combined_metadata_read_bytes=TOTAL+copy_reads,paths=len(set(BANK)|copy_paths),sampled_peak_rss_bytes=PEAK,
+    elapsed_microseconds=int((time.monotonic()-START)*1000000))).decode(),end='')

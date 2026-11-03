@@ -1,0 +1,276 @@
+"""Activate one independently audited logical row append; metadata only."""
+import argparse,hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+BASE=Path(__file__).resolve().parent
+sys.path.insert(0,str(BASE.parent))
+import metadata_io as m
+import metadata_fields as f
+import selector_projection as pr
+S=Path('/Users/sasha/medusa/research/leemans')
+P=S/'maintenance/intake/progress'
+STAGE=P/'stages/positive_position2739_activation'
+R=S/'computation/f004/q11/rank4/section_generation'
+DEST=R/'residuals/rank4_markings/position2739_logical'
+SELECTOR=R/'method/selectors/job_0020_after_position2739_logical.json'
+PY='/Users/sasha/.venvs/global/bin/python'
+AUTHORS=('/root/forest_resume','/root/mathematical_review')
+START=time.monotonic();CACHE={};JSON={};STARTED=None
+def check():
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+def desc(a):
+    r=dict(path=a[0],bytes=int(a[1]),sha256=a[2]);m.ref(r);return r
+def reference(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def body(r):
+    m.ref(r);check();p=r['path']
+    if p not in CACHE:CACHE[p]=m.raw(r)
+    else:assert m.RECORDS[p]==r
+    return CACHE[p]
+def pin(p):
+    r,b=m.whole(p);assert r['path']not in CACHE or CACHE[r['path']]==b
+    CACHE[r['path']]=b;return r
+def doc(r):
+    body(r)
+    if r['path']not in JSON:JSON[r['path']]=m.decode(CACHE[r['path']])
+    return JSON[r['path']]
+def close():
+    for r in list(m.RECORDS.values()):m.raw(r)
+    check()
+def same_object(a,b):
+    m.ref(a);m.ref(b);assert(a['bytes'],a['sha256'])==(b['bytes'],b['sha256'])
+    body(a)
+def review(v,prefix):
+    assert v['status'].startswith(prefix)and v['blockers']==[]and v['reviewer']not in('/root',*AUTHORS)
+def frozen(n):
+    for root in(S/'maintenance/intake/f009_cohort_preparation/cohorts',
+        Path('/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts'),Path('/private/tmp/f009_R5_parent_cohorts_actual')):
+        assert not os.path.lexists(root/('cohort_from%04d'%n)),'active current-prefix cohort'
+def source(a):
+    global STARTED
+    assert a.actor=='/root'and sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert not(BASE/'__pycache__').exists()
+    assert all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES'))
+    mr=desc(a.Source_manifest);mf=doc(mr);own=pin(Path(__file__).resolve())
+    assert mf['schema']=='F004_LOGICAL_ROW_PROGRESS_ACTIVATION_SOURCE_V1'and mf['Root_authority']is False
+    assert mf['entry']==own and len(mf['Source'])==4
+    assert {r['path']for r in mf['Source']}=={str(BASE/'activate.py'),*(str(BASE.parent/n)for n in('metadata_io.py','metadata_fields.py','selector_projection.py'))}
+    for r in mf['Source']+mf['guards']:body(r)
+    assert [(r['bytes'],r['sha256'])for r in mf['guards']]==[(4806,'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'),(18361,'5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42')]
+    assert sum(r['bytes']for r in mf['Source']+mf['guards'])+512==mf['Source_plus_guards512']<=65536
+    for module,name in((m,'metadata_io.py'),(f,'metadata_fields.py'),(pr,'selector_projection.py')):
+        assert Path(module.__file__).resolve()==BASE.parent/name
+        for fn in vars(module).values():
+            if type(fn).__name__=='function'and fn.__module__==module.__name__:
+                assert fn.__globals__ is vars(module)and Path(fn.__code__.co_filename).resolve()==BASE.parent/name
+    peerref=desc(a.Source_peer);peer=doc(peerref);review(peer,'SUPPORTED_STATIC')
+    assert peer['activation_Source_manifest']==mr and peer['activation_program']==own
+    sr=pin(Path(a.guard)/'started.json');STARTED=sr['path'];st=doc(sr)
+    assert st['command']==[PY,'-E','-B','-S',str(BASE/'activate.py')]+sys.argv[1:]
+    assert any(x['pid']==os.getpid()for x in st['identities'])
+    assert all(st['limits'][k]==v for k,v in dict(total_rss=256*2**20,wall_seconds=125.0,admit_ram=4*2**30,admit_disk=10*2**30,ram_floor=3*2**30,disk_floor=8*2**30).items())
+    return mr,mf,own,peerref
+def accepted_append(postref,seedref,writer_mf):
+    post=doc(postref);review(post,'SUPPORTED_ACTUAL')
+    assert post['schema']=='F004_LOGICAL_POSITIVE_APPEND_ACTUAL_REUSE_V1'and post['Source_manifest']==writer_mf
+    assert post['scientific_calls']==0 and post['Original_payloads_decoded']is False
+    for k in('whole_typed_selector_inverse_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified',
+        'Root_application_and_saved_row_adoption_bindings_verified'):
+        assert post[k]is True
+    assert seedref['bytes']==5638 and seedref['sha256']=='80ecb246712f99cc6a07c5efde71a71e461264f4d3a4994f4a37c1d669c8e3d5'
+    seed=doc(seedref);assert seed['schema']=='F004_LOGICAL_POSITIVE_PLAN_SEED_V1'and seed['Root_authority']is False and seed['position']==2739 and seed['original_job']==[20,4]
+    assert post['old_selector']==seed['selector']and post['selector']['path']==str(SELECTOR)
+    assert post['before_partition']==[173,3605,1]and post['after_partition']==[173,3606,0]
+    assert post['newly_paid_positions']==[2739]and post['remaining']==[]
+    for field,name in(('commit_receipt','adoption_committed.json'),('property_record','root_acceptance.json'),('selector_inverse','selector_inverse.json')):
+        assert post[field]['path']==str(DEST/name)
+    receipt=doc(post['commit_receipt']);prop=doc(post['property_record']);inv=doc(post['selector_inverse'])
+    old=doc(post['old_selector']);new=doc(post['selector'])
+    assert receipt['schema']=='ROOT_F004_POSITIVE_MARKING_ADOPTION_COMMITTED_V1'and receipt['root']=='/root'and receipt['status']=='COMMITTED'
+    assert receipt['Source_manifest']==writer_mf and receipt['selector']==post['selector']and receipt['previous_selector']==post['old_selector']
+    assert receipt['property_record']==post['property_record']and receipt['inverse']==post['selector_inverse']
+    assert receipt['partition']==[173,3606,0]and receipt['remaining']==[]and receipt['newly_paid_positions']==[2739]
+    assert receipt['files_and_parent_directories_fsynced']is receipt['progress_pointer_update_pending']is True
+    assert receipt['whole_job_class_manuscript_Lean_measurement_credit']==0
+    assert prop['schema']=='ROOT_F004_POSITIVE_SAVED_ROW_PROPERTIES_V1'and prop['root']=='/root'and prop['Root_authority']is prop['adopted']is True
+    assert prop['previous_selector']==post['old_selector']and prop['newly_paid_positions']==[2739]and prop['verified_marking_property_records']==1
+    assert prop['whole_saved_marked_isomorphism_transfer_reaffirmed']is True
+    assert prop['Source_manifest']['bytes']==writer_mf['bytes']and prop['Source_manifest']['sha256']==writer_mf['sha256']
+    assert prop['whole_job_credit']==prop['Aut_reversal_class_count_credit']==prop['new_manuscript_conjecture_Lean_measurement_credit']==0
+    assert len(prop['settled_dispositions'])==1;row=prop['settled_dispositions'][0]
+    assert row['position']==2739 and row['kind']=='C_GROUP'and row['original_job']==[20,4]and row['saved_orbit_member_count']==4
+    assert row['marks_sha256']=='80c22b9b749cda7e4f79b6956d827f753243aeffeff90f2e2492d0ffcb6ff843'
+    assert row['model_sha256']=='252598fb2be23480f4e91a83a6d8e7818f203deb62892b7e42157d7f180538dc'
+    assert row['saved_orbit_row_sha256']=='0c9b33e90274a8f9d1c83830201346a48249eab78b47de2d31cf7d22afd2b4d2'
+    assert row['generation_verified']is row['full_rank4_IP_verified']is row['whole_saved_original_prefix_orbit_property_covered']is True
+    same_object(row['Root_application'],seed['logical_case']['application'])
+    same_object(row['independent_logical_review'],seed['logical_case']['post_issuance_review'])
+    same_object(prop['accepted_saved_orbit_import'],seed['saved_orbit_Root_import'])
+    body(seed['saved_row_post_adoption_review'])
+    expected,proof=pr.project(old,post['old_selector'],post['property_record'],prop)
+    assert m.same(expected,new)and inv['patches']==proof['patches']and inv['before_partition']==[173,3605,1]and inv['after_partition']==[173,3606,0]
+    assert inv['before']==post['old_selector']and inv['property_record']==post['property_record']and inv['newly_paid_positions']==[2739]
+    assert inv['global_registry_modified']is False and inv['Aut_reversal_class_count_credit']==inv['whole_job_credit']==0
+    assert m.same(pr.inverse(new,inv['patches']),old)and pr.expand(old)==[2739]and pr.expand(new)==[]
+    return post,receipt,prop
+def current(expected):
+    ir=pin(P/'current_intake.json');cr=pin(P/'controllers/current.json')
+    checkpoint=f.selected(body(cr),['checkpoint'])['checkpoint'];body(checkpoint)
+    assert f.selected(body(ir),['active_controller_checkpoint'])['active_controller_checkpoint']==checkpoint
+    fields=f.members(body(ir));f4=f.selected(fields['F004'],['job20','registered_jobs','required_jobs','pending_jobs','local_positions_still_requiring_mathematics_or_strict_validation'])
+    f9=f.selected(fields['F009'],['R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed'])
+    n=f9['R5_canonical_pairs_reviewed'];assert type(n)is int and 0<=n<=940 and n==expected and f9['R5_prefix_strict_slots_reviewed']==156*n
+    frozen(n);globals_=[];global_values=[]
+    for p in(S/'reboot_20261013/CURRENT.json',S/'maintenance/intake/current_status.json'):
+        r=pin(p);globals_.append(r);global_values.append(f.selected(body(r),['F004_q11_latest_ledger'])['F004_q11_latest_ledger'])
+    assert global_values[0]==global_values[1]
+    counts={k:global_values[0][k]for k in('closed','required','pending')}
+    assert counts==dict(closed=f4['registered_jobs'],required=f4['required_jobs'],pending=f4['pending_jobs'])
+    runtime=f.members(body(checkpoint));banks=f.selected(body(checkpoint),['cache_banks'])['cache_banks'];keys=set(f.members(runtime['cache_entries']))
+    for bank in banks:
+        fields=f.members(body(bank['ref']));bankkeys=set(f.members(fields['cache_entries']))
+        assert bank['entries']==len(bankkeys)and bank['keys']==sorted(bankkeys)and not keys.intersection(bankkeys);keys.update(bankkeys)
+    return dict(intake=ir,controller=cr,runtime=checkpoint),globals_,counts,keys
+def patch(raw,typed=None,spans=None,added=None):
+    parts=f.members(raw);typed=typed or{};spans=spans or{};added=added or{}
+    assert set(typed)|set(spans)<=set(parts)and not set(added).intersection(parts)
+    for k,v in {**typed,**added}.items():parts[k]=m.can(v).rstrip(b'\n')
+    parts.update(spans)
+    return b'{'+b','.join(json.dumps(k).encode()+b':'+v for k,v in parts.items())+b'}\n'
+def construct(snapshot,globalrefs,counts,keys,postref,post,receipt,mr,own,peerref):
+    intake=body(snapshot['intake']);runtime=body(snapshot['runtime']);controller=body(snapshot['controller'])
+    it=f.members(intake);rt=f.members(runtime);f4=f.members(it['F004']);job=f.members(f4['job20'])
+    prior=f.selected(f4['job20'],['current_selector','partition','now_unresolved','remaining_positions'])
+    assert prior==dict(current_selector=post['old_selector'],partition=[173,3605,1],now_unresolved=1,remaining_positions=[2739])
+    assert m.decode(f4['local_positions_still_requiring_mathematics_or_strict_validation'])==[2739]
+    rc=f.selected(rt['counts'],['F004_current_job_unresolved','F004_local_cases_requiring_mathematics'])
+    assert rc['F004_current_job_unresolved']==rc['F004_local_cases_requiring_mathematics']==1
+    key='Root_f004_position2739_reviewed_positive_property_registration';assert key not in keys
+    assert not os.path.lexists(STAGE)
+    activation=dict(receipt=post['commit_receipt'],independent_actual_review=postref,selector=post['selector'],property_record=post['property_record'],
+        selector_inverse=post['selector_inverse'],previous_selector=post['old_selector'],before_partition=[173,3605,1],after_partition=[173,3606,0],
+        newly_registered_positions=[2739],remaining=[],whole_saved_row_members=4,whole_saved_rows_registered=1,Aut_reversal_class_credit=0,
+        whole_job_or_manuscript_credit=0,whole_job20_Original_domain_coverage_and_global_adoption_still_required=True)
+    entry=dict(ref=post['commit_receipt'],value=receipt,independent_actual_review=postref,independent_actual_review_pending=False,
+        completed_value_unchanged=True,canonical_registered_positions=[2739],whole_saved_row_property_count=1,
+        separate_GEN_and_full_subset_IP_accepted_under_borrowed_marked_isomorphism_scope=True,new_job_class_manuscript_conjecture_Lean_measurement_credit=0)
+    outputs={}
+    def planned(name,b):
+        p=STAGE/name;assert p.parent==STAGE and str(p)not in outputs and len(b)<=4*2**20
+        outputs[str(p)]=b;return reference(p,b)
+    ib=planned('intake_before_update.json',intake);cb=planned('controller_before_update.json',controller)
+    planned('activate.py',body(own))
+    cache=planned('execution_cache.json',m.can(dict(schema='ROOT_INTAKE_CACHE_ENTRY_BANK_V1',root='/root',completed_science_values_immutable=True,
+        topics=['F004'],cache_entries={key:entry})))
+    job_updates=dict(current_selector=post['selector'],partition=[173,3606,0],now_unresolved=0,remaining_positions=[],expected_unresolved_after_registration=0,
+        expected_unresolved_after_all_current_pending_applications=0,positive_marking_property_adoption=post['commit_receipt'],positive_marking_property_actual_review=postref)
+    newjob=patch(f4['job20'],typed=job_updates)
+    nf=patch(it['F004'],typed=dict(local_positions_still_requiring_mathematics_or_strict_validation=[],
+        next='Position2739 is registered as one positive whole saved-row property. The job20 selector has no unpaid positions; complete Original-domain coverage and separate whole-job/global adoption remain required. Reuse accepted scientific results.'),
+        spans=dict(job20=newjob),added=dict(positive2739_property_activation=activation))
+    nr_counts=patch(rt['counts'],typed=dict(F004_current_job_unresolved=0,F004_local_cases_requiring_mathematics=0))
+    banks=m.decode(rt['cache_banks']);oldbanks=list(banks);banks.append(dict(entries=1,keys=[key],ref=cache))
+    proof=dict(postwrite_review=postref,committed_receipt=post['commit_receipt'],previous_selector=post['old_selector'],selector=post['selector'],
+        Source_manifest=mr,Source_peer=peerref,new_cache_bank=cache,prior_cache_values_preserved=len(keys),new_cache_values=1,total_cache_values=len(keys)+1,
+        protected_global_registries=globalrefs,global_job_counts_unchanged=counts,all_other_topics_and_existing_values_unchanged=True,
+        scientific_calls=0,new_scientific_authority_granted=False,whole_job_or_global_manuscript_conjecture_Lean_measurement_credit=0)
+    planned('admission.json',m.can(proof))
+    nr=patch(runtime,typed=dict(cache_banks=banks,previous_checkpoint=snapshot['runtime']),spans=dict(counts=nr_counts))
+    runtime_ref=planned('runtime.json',nr)
+    ni=patch(intake,typed=dict(previous_checkpoint=ib,active_controller_checkpoint=runtime_ref),spans=dict(F004=nf))
+    intake_ref=planned('intake_after_update.json',ni)
+    nc=patch(controller,typed=dict(previous_controller=cb,checkpoint=runtime_ref))
+    controller_ref=planned('controller_after_update.json',nc)
+    ai=f.members(ni);ar=f.members(nr);af=f.members(nf);aj=f.members(newjob);ac=f.members(nr_counts);ctrl=f.members(controller)
+    assert all(ai[k]==v for k,v in it.items()if k not in('F004','previous_checkpoint','active_controller_checkpoint'))
+    assert all(ar[k]==v for k,v in rt.items()if k not in('cache_banks','counts','previous_checkpoint'))
+    assert ar['cache_entries']==rt['cache_entries']and banks[:-1]==oldbanks
+    assert all(ac[k]==v for k,v in f.members(rt['counts']).items()if k not in('F004_current_job_unresolved','F004_local_cases_requiring_mathematics'))
+    assert all(af[k]==v for k,v in f4.items()if k not in('job20','local_positions_still_requiring_mathematics_or_strict_validation','next'))
+    assert all(aj[k]==v for k,v in job.items()if k not in job_updates)
+    assert all(f.members(nc)[k]==v for k,v in ctrl.items()if k not in('previous_controller','checkpoint'))
+    return outputs,dict(intake=intake_ref,controller=controller_ref,runtime=runtime_ref,new_cache_bank=cache,prior_cache_values=len(keys),new_cache_values=1,
+        total_cache_values=len(keys)+1,partition=[173,3606,0],remaining=[],whole_saved_rows_registered=1,whole_saved_row_members=4,whole_job_or_global_credit=0)
+
+def sync(p):
+    fd=os.open(p,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+def put(p,b):
+    assert p.is_absolute()and p.parent.resolve(strict=True)==p.parent and not os.path.lexists(p)
+    assert len(b)<=4*2**20 and m.WRITE+len(b)<=16*2**20 and len(m.PATHS|{str(p)})<=500
+    with p.open('xb')as st:assert st.write(b)==len(b);st.flush();os.fsync(st.fileno())
+    m.WRITE+=len(b);m.PATHS.add(str(p));sync(p.parent);return pin(p)
+def main():
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata deadline')));signal.alarm(125)
+    a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--actor',required=True);a.add_argument('--mode',choices=['plan','apply'],required=True)
+    a.add_argument('--Source-manifest',nargs=3,required=True);a.add_argument('--Source-peer',nargs=3,required=True);a.add_argument('--guard',required=True)
+    a.add_argument('--seed',nargs=3,required=True);a.add_argument('--writer-manifest',nargs=3,required=True);a.add_argument('--postwrite-review',nargs=3,required=True)
+    a.add_argument('--expected-prefix',type=int,required=True);a.add_argument('--out');a.add_argument('--plan',nargs=3);a.add_argument('--decision',nargs=3)
+    a=a.parse_args();mr,mf,own,peerref=source(a);seedref=desc(a.seed);writer_mf=desc(a.writer_manifest);body(writer_mf)
+    assert writer_mf['sha256']=='21820d4c60bdc690d8ef2979198e01f4753a6800966e3e4c3633b11b4973ae01'
+    postref=desc(a.postwrite_review);post,receipt,prop=accepted_append(postref,seedref,writer_mf)
+    snapshot,globals_,counts,keys=current(a.expected_prefix)
+    outputs,summary=construct(snapshot,globals_,counts,keys,postref,post,receipt,mr,own,peerref)
+    plan=dict(schema='F004_LOGICAL_ROW_PROGRESS_ACTIVATION_PLAN_V1',Root_authority=False,program=own,Source_manifest=mr,Source_peer=peerref,
+        seed=seedref,writer_Source_manifest=writer_mf,postwrite_review=postref,snapshot=snapshot,expected_F009_prefix=a.expected_prefix,
+        protected_globals=globals_,global_job_counts=counts,summary=summary,afterimages=[reference(p,b)for p,b in sorted(outputs.items())],
+        whole_job_or_global_credit=0,scientific_calls=0)
+    total=sum(map(len,outputs.values()));pointer_bytes=snapshot['intake']['bytes']+snapshot['controller']['bytes']
+    read_reserve=2*total+5*pointer_bytes+3*summary['runtime']['bytes']+2*summary['new_cache_bank']['bytes']+3*sum(r['bytes']for r in globals_)+262144
+    assert m.READ+sum(r['bytes']for r in m.RECORDS.values())+read_reserve<=64*2**20
+    assert total+262144<=16*2**20 and len(m.PATHS|set(outputs)|{str(STAGE/'readback.json')})+4<=500
+    if a.mode=='plan':
+        assert a.out and not a.plan and not a.decision
+        out=Path(a.out);assert out.parent==BASE/'plans'and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out)
+        close();frozen(a.expected_prefix);out.mkdir();sync(out.parent);private=[]
+        for name,b in outputs.items():private.append(dict(intended=reference(name,b),private=put(out/Path(name).name,b)))
+        plan['private_afterimages']=private;r=put(out/'plan_FALSE.json',m.can(plan));check()
+        print(m.can(dict(schema='F004_FALSE_PROGRESS_ACTIVATION_PLAN_RETURN_V1',Root_authority=False,false_plan=r,
+            scientific_calls=0,canonical_writes=0,read_bytes=m.READ,paths=len(m.PATHS),exact_plan_review_and_Root_decision_owed=True)).decode(),end='');return
+    assert a.plan and a.decision and not a.out
+    planref=desc(a.plan);actualplan=doc(planref);copyplan=dict(actualplan);private=copyplan.pop('private_afterimages')
+    assert copyplan==plan and actualplan['Root_authority']is False and len(private)==len(outputs)
+    assert {x['intended']['path']for x in private}==set(outputs)
+    for image in private:
+        name=image['intended']['path'];assert image['intended']==reference(name,outputs[name])and body(image['private'])==outputs[name]
+    dr=desc(a.decision);decision=doc(dr)
+    assert decision['schema']=='ROOT_F004_LOGICAL_ROW_PROGRESS_ACTIVATION_DECISION_V1'and decision['root']=='/root'
+    assert decision['Root_authority']is decision['adopted']is True and decision['status']=='SUPPORTED'and decision['blockers']==[]
+    assert decision['plan']==planref and decision['program']==own and decision['Source_manifest']==mr and decision['postwrite_review']==postref
+    for k in('whole_new_activation_Source_and_protocol_owned','fresh_exact_plan_and_postwrite_actual_review_owned','borrowed_mathematical_qualifications_retained',
+        'all_prior_cache_values_and_unrelated_topics_owned','serial_sole_writer_no_locked_atomicity_claim','one_row_only_no_wholejob_or_global_credit'):
+        assert decision[k]is True
+    pv=doc(decision['independent_plan_review']);review(pv,'SUPPORTED_ACTUAL')
+    assert pv['plan']==planref and pv['program']==own and pv['Source_manifest']==mr and pv['snapshot']==snapshot
+    assert pv['whole_afterimages_and_typed_preservation_verified']is True
+    assert m.READ+sum(r['bytes']for r in m.RECORDS.values())+read_reserve<=64*2**20
+    close();frozen(a.expected_prefix)
+    for r in(*snapshot.values(),*globals_):m.raw(r)
+    frozen(a.expected_prefix);assert not os.path.lexists(STAGE);STAGE.mkdir();sync(STAGE.parent)
+    refs=[]
+    for p,b in outputs.items():refs.append(put(Path(p),b))
+    for r in refs:m.raw(r)
+    for r in(*snapshot.values(),*globals_):m.raw(r)
+    for target,r in((P/'controllers/current.json',summary['controller']),(P/'current_intake.json',summary['intake'])):
+        old=snapshot['controller'if target.name=='current.json'else'intake'];m.raw(old)
+        temporary=target.with_name('.'+target.name+'.positive_position2739_activation')
+        put(temporary,outputs[r['path']]);os.replace(temporary,target);sync(target.parent)
+    # New identities at replaced pointer paths use an independent read bank.
+    rb={}
+    for target,r in((P/'controllers/current.json',summary['controller']),(P/'current_intake.json',summary['intake'])):
+        records=m.RECORDS;m.RECORDS={}
+        try:actual,_=m.whole(target,dict(r,path=str(target)))
+        finally:m.RECORDS=records
+        rb[target.name]=actual
+    for r in globals_:m.raw(r)
+    for r in(summary['runtime'],summary['new_cache_bank']):m.raw(r)
+    check();assert m.READ<=64*2**20
+    result=dict(schema='ROOT_F004_LOGICAL_ROW_PROGRESS_ACTIVATION_READBACK_V1',root='/root',**summary,live_pointers=rb,
+        Source_manifest=mr,Source_peer=peerref,Root_decision=dr,plan=planref,postwrite_review=postref,
+        all_prior_cache_values_and_unrelated_fields_preserved=True,F009_and_L026_unchanged=True,
+        global_job_registries_and_counts_unchanged=True,scientific_calls=0,new_scientific_authority_granted=False,
+        wholejob20_coverage_and_global_adoption_still_owed=True,independent_admin_review_pending=True,
+        serial_publication_no_locked_CAS_or_multifile_crash_atomicity_claim=True,read_bytes=m.READ,paths=len(m.PATHS))
+    output=put(STAGE/'readback.json',m.can(result));signal.alarm(0)
+    print(m.can(dict(status='ROOT_F004_ONE_ROW_PROGRESS_ACTIVATED',readback=output,summary=summary)).decode(),end='')
+if __name__=='__main__':main()

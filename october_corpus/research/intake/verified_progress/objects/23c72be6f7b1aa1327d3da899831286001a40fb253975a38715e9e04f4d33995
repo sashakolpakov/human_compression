@@ -1,0 +1,160 @@
+"""Independent Source peer of one retry supplement; represented code is not run."""
+from pathlib import Path
+import ast,hashlib,json,os,resource,shlex,signal,stat,sys,time
+P=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/scientific_retries')
+HERE=P/'review';START=time.monotonic();READ=0;BANK={};PINS={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second static Source audit')))
+signal.alarm(125)
+def raw(p,r=None):
+ global READ
+ p=Path(p);name=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ assert time.monotonic()-START<115
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ if name not in BANK:
+  st=p.lstat();assert stat.S_ISREG(st.st_mode)and st.st_size<=4*2**20
+  b=p.read_bytes();en=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(st)==sig(en)and len(b)==st.st_size
+  READ+=len(b);assert READ<=64*2**20 and len(BANK)<512
+  BANK[name]=b;PINS[name]=dict(path=name,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert PINS[name]==r,(PINS[name],r)
+ return BANK[name]
+def doc(r):return json.loads(raw(r['path'],r))
+def pin(p):raw(p);return PINS[str(p)]
+def plain(p):return json.loads(raw(p))
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==b
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def astf(t):return{n.name:ast.dump(n,include_attributes=False)for n in t.body if isinstance(n,ast.FunctionDef)}
+def api(ref,key,argv,success,transport):
+ d=doc(ref);assert d['root']==d['actor']=='/root'
+ assert d['issued_argv']==d['child_argv']==argv and shlex.split(d['issued_tool_arguments']['cmd'])==argv
+ i=plain(transport/key/'issued.json');assert i['argv']==argv and i['tool_arguments']==d['issued_tool_arguments']
+ frames=d['all_genuine_api_frames'];assert frames[0]==d['full_initial_tool_return']and frames[-1]==d['full_tool_return']
+ assert(frames[-1]['exit_code']==0)is success
+ for j,f in enumerate(frames):assert plain(transport/key/('frame_%04d.json'%j))==f
+ return d
+
+h=plain(P/'handoff.json');assert(pin(P/'handoff.json')['bytes'],pin(P/'handoff.json')['sha256'])==(5842,'e35efc3bbe45e7fe4abdd41432f348915df0065afd2b24ee658069a793740790')
+request=plain(P/'review_request.json');assert(pin(P/'review_request.json')['bytes'],pin(P/'review_request.json')['sha256'])==(4524,'22a06edeca22014e0bd8d810fae6ceccbe4827db2fcfda224e0b1857ee6aaf2d')
+fields=request['required_positive_leaf_fields'];assert request['excluded_reviewers']==['/root','/root/forest_resume','/root/mathematical_review']
+assert request['programs_unrun']is request['Original_payload_decoding_forbidden']is True
+for k,r in fields.items():
+ assert h[k]==r
+ if'path'in r:raw(r['path'],r)
+ else:
+  for item in r.values():raw(item['path'],item)
+assert h['operational_Source_executions']==h['scientific_executions']==h['canonical_mutations']==0
+p=doc(h['packet']);assert h['packet']['sha256']=='e18ac61dc17460f53ac7cdba6cba8af5412c2ca7ca3f1b4ea3441071038dd0da'
+assert p['schema']=='F009_SCIENTIFIC_PREENTRY_RETRY_SUPPLEMENT_V1'and p['Root_authority']is False
+for k in('programs','entry_manifests','continuation_programs','continuation_manifests','protocol'):assert p[k]==h[k]
+config=doc(h['audit_config']);assert config['retry_packet']==h['packet']and config['programs']==h['audit_programs']and config['common']==h['audit_common']
+assert config['fixed_cohort']==p['cohort']==h['cohort']
+assert config['transport_base']==p['transport_base']
+assert len(config['borrowed_historical_descriptors'])==15 and config['cohort330_source_and_leaves_replaced']is False
+assert config['author_inspection_limitation']['prior_generic_metadata_inspection_decoded_nested_Original_payloads']is True
+budgets={};sources={};manifests={}
+for mapping,programs in [('entry_manifests','programs'),('continuation_manifests','continuation_programs'),('audit_manifests','audit_programs')]:
+ for name,mr in h[mapping].items():
+  m=doc(mr);assert m['entry']==h[programs][name]
+  assert len({r['path']for r in m['Source']+m['guards']})==len(m['Source'])+len(m['guards'])
+  total=sum(r['bytes']for r in m['Source']+m['guards'])+512
+  assert total==m['Source_plus_guards512']<=65536
+  for r in m['Source']+m['guards']:sources[r['path']]=r;raw(r['path'],r)
+  budgets[mapping+'/'+name]=total;manifests[mapping+'/'+name]=m
+assert budgets['audit_manifests/audit_batch.py']==65125 and budgets['audit_manifests/audit_cohort.py']==65215
+for name in('retry_common.py','authorize_retry.py','bind_retry.py','continuation/common.py','continuation/issue_phase.py','continuation/close_cohort.py','audit/common.py','audit/audit_batch.py','audit/audit_cohort.py'):
+ ast.parse(raw(P/name),filename=str(P/name))
+assert pin(P/'retry_common.py')['sha256']=='f3ca64eb711d505f91733f9d99c8ec5962e1b306ffb9189e0c8225dddbbcdf57'
+assert pin(P/'audit/common.py')['sha256']=='9f4af38d681b5029d80a230d494bd70b7910f5cf14c7eaa5408756297d804e97'
+for r in sources.values():
+ if Path(r['path']).name=='whole.py':assert r['bytes']==3744 and r['sha256']=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+for key in('core_protocol','continuation_protocol','protocol','failure_precheck','prepared_role','Root_absence_inspection','Root_absence_inspection_SDK','durable_prior_scientific_SDK','prior_scientific_SDK','base_preparation_packet','base_preparation_peer'):
+ raw(p[key]['path'],p[key])
+cohort=doc(p['cohort']);owner=doc(cohort['Root_Source_ownership'])
+assert cohort['begin']==342 and cohort['end']==354 and cohort['source_indices']==list(range(342,354))
+assert cohort['program']['sha256']=='d516861bff3623789ad6ef2c63f552014bb8e92ef88b7922bb06963e37430311'
+assert owner['whole_current_metadata_Source_protocol_and_disclosures_owned']is owner['old_scientific_Source_controls_and_mathematics_owned']is True
+assert owner['preparation_packet']==p['base_preparation_packet']and owner['preparation_Source_peer']==p['base_preparation_peer']
+base=doc(p['base_preparation_packet']);basepeer=doc(p['base_preparation_peer'])
+assert p['base_preparation_packet']['sha256']=='dff74cc658cfe503b0628e5aae4fb13a4dc173531c7ea5fbc8d79d26d2de53ce'
+assert basepeer['status'].startswith('SUPPORTED_STATIC')and basepeer['packet']==p['base_preparation_packet']and basepeer['blockers']==[]
+for mr in base['entry_manifests'].values():
+ m=doc(mr)
+ for r in m['Source']+m['guards']:raw(r['path'],r)
+raw(base['protocol']['path'],base['protocol'])
+for r in base['legacy_active_inputs']:raw(r['path'],r)
+for r in cohort['progress_snapshot'].values():raw(r['path'],r)
+raw(cohort['program']['path'],cohort['program']);raw(cohort['Source_peer']['path'],cohort['Source_peer'])
+for mr,expected,count in zip(p['scientific_manifests'],('c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e','ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff'),(9,8)):
+ assert mr['sha256']==expected;m=doc(mr);assert len(m['Source'])==count
+ assert sum(r['bytes']for r in m['Source'])+512==m['Source_with_invocation_reserve']<=65536
+ for r in m['Source']:raw(r['path'],r)
+prep=doc(p['prepared_role']);assert prep['manifest']==p['scientific_manifests'][0]and prep['cohort']==p['cohort']and prep['index']==346
+for k in('request','gate','Root_import'):raw(prep[k]['path'],prep[k])
+failed=doc(p['prior_scientific_SDK']);argv=failed['issued_argv'];transport=Path(p['transport_base'])
+assert p['prior_scientific_SDK']['sha256']=='2b31670fc6491eafe0ab582caf5dd574f8d47a0710db7b012f0bd8088377292e'
+assert raw(p['prior_scientific_SDK']['path'],p['prior_scientific_SDK'])==raw(p['durable_prior_scientific_SDK']['path'],p['durable_prior_scientific_SDK'])
+api(p['prior_scientific_SDK'],'Root_f009_cohort0342_parent0346_supply_v1',argv,False,transport)
+assert 'the acquired base refused before creating its output or child'in failed['full_tool_return']['output']
+assert argv[argv.index('--rss-cap-mib')+1]=='128'and argv[argv.index('--timeout')+1]=='150'
+observation=doc(p['Root_absence_inspection']);obsSDK=doc(p['Root_absence_inspection_SDK'])
+api(p['Root_absence_inspection_SDK'],'Root_f009_cohort0342_parent0346_absence_inspection_v1',obsSDK['issued_argv'],True,transport)
+assert json.loads(obsSDK['full_tool_return']['output'])==dict(inspection=p['Root_absence_inspection'],guard_exists=False,output_exists=False,scientific_calls=0)
+assert observation['failed_issued_argv']==observation['failed_child_argv']==argv
+assert observation['failed_actual_SDK']==p['durable_prior_scientific_SDK']and observation['guard_exists']is observation['output_exists']is False
+assert observation['guard_caps_unchanged']==dict(rss_cap_mib=128,timeout_seconds=150)and observation['scientific_calls']==0
+# AST comparison executes no functions and interprets no archived scientific input.
+old=ast.parse(raw(P.parent/'actual_audit/common.py'));new=ast.parse(raw(P/'audit/common.py'))
+of,nf=astf(old),astf(new)
+unchanged=['budget','descriptor','lexend','ws','spans','array','selected','raw','metadata','pure','refat','trip','limits','supervised','review','api','actual','source_manifest','opaque_normal','context']
+assert all(of[k]==nf[k]for k in unchanged)
+oldbatch=astf(ast.parse(raw(P.parent/'actual_audit/audit_batch.py')));newbatch=astf(ast.parse(raw(P/'audit/audit_batch.py')))
+assert all(oldbatch[k]==newbatch[k]for k in('covers','cover_metadata'))
+batchtree=ast.parse(raw(P/'audit/audit_batch.py'));batchfun=next(n for n in batchtree.body if isinstance(n,ast.FunctionDef)and n.name=='batch_audit')
+assigned={t.id for n in ast.walk(batchfun)if isinstance(n,ast.Assign)for t in n.targets if isinstance(t,ast.Name)}
+assert 'selected'not in assigned and 'selected_role'in assigned
+for name in('audit/audit_batch.py','audit/audit_cohort.py'):
+ assert h['audit_common']['sha256'].encode()in raw(P/name)and b'len(_body)==29297'in raw(P/name)
+for key in('Root_grant_template_FALSE','Root_audit_decision_template_FALSE'):
+ t=doc(h[key]);assert t['Root_authority']is False
+assert not Path('/private/tmp/f009_R5_parent_cohorts_actual/cohort_from0342/parents0345_0347/Root_SDK/parent0346_supply_v2.json').exists()
+raw(Path(__file__))
+for name,b in BANK.items():assert Path(name).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+pins=save(HERE/'checked_pins.json',dict(schema='F009_SCIENTIFIC_RETRY_STATIC_FINITE_PINS_V1',pins=list(PINS.values()),read_bytes_first_and_closing=READ,paths=len(PINS)))
+facts=[
+ 'The entire final core, continuation and auditor Source/manifests, shared packet/protocol, false templates and exact positive-peer field interface are read and pinned. Every namespace remains under65536 bytes including whole3744, both guards and512 reserve.',
+ 'Core f3ca64 authenticates the genuine failedv1 SDK and durable raw frames, exact prepared request/gate/import/old scientific manifests, and Root absence inspection SDK/body/printed descriptor/path/argv/caps joins. It freshly refuses existing guard/output/selectedSDK before authorization.',
+ 'authorize_retry emits only a selected-edition2 authorization and the unchanged old argv. It creates no SDK or scientific success and launches no child. bind_retry requires genuine successfulv2 SDK/raw, same argv, real PASS guard/limits/cleanup, empty stderr and opaque output byte pins before reconciliation/map publication.',
+ 'Only parent0346_supply atbatch1/index346 may selectv2 with one genuine preentry refusal. The old d516 adapter reconciliation and prior_attempts ABI is preserved. Every other science role remains first-v1; false first-v1 flags truthfully reflect the exceptional selection.',
+ 'Frozen dff preparation packet, f00peer, b53cohort, Root owner and all earlier successes remain context under their exact old identities. Fresh grant/peer separately own new core/continuation/auditor Source. No old Root schema, missing bookkeeping or successful SDK is recreated or retagged.',
+ 'Continuation issuer is restricted to the two unissuedbatch1 assemble_strict/close_pairing decisions. It binds indexed selected SDK/prior attempts and prints unchanged oldadapter256MiB125s argv. Closer reads exactly one346v2 and15other scientificv1 SDKs, admits zero metadata overrides, and marks all scientific/all roles first-v1False.',
+ 'Auditor preserves twenty predecessor helper bodies AST-identically, including genuine API/guard/raw checks, lexical spans, limits and opaque context joins; certificate-cover helpers are AST-identical. Prepared-role changes only choose346v2 while retaining the exact fourteen scientific whole-input requirements and unchanged production manifests.',
+ 'The auditor explicitly joins selected failed/raw/reconciliation/inspection/map evidence and permits new continuation Source only at the two specifiedphase positions and closer. Every other metadata issuer uses the frozen preparation Source. The new selected_role name does not shadow selected().',
+ 'Aggregate requires truthful false all-science/all-role first-v1 flags, fifteen other scientific roles terminal first-v1, exact batch-review/SDK/key lengths and covers, genuine current closer execution and genuine original init API under the durable transport directory; it never reruns init.',
+ 'Full reports identify this exact new auditor; existing registrar leaf schemas remain compatible. Active production Source and explicit current inputs are physically read; accepted24/41 controls and listed historical ancestry remain attributed imports rather than fabricated closure.',
+ 'All metadata entries are self-bounded125s/115s/256MiB,4MiB per file,64MiB reads and512paths with first/closing reads, bootstrap reserves and exclusive output checks. Serial multi-output metadata publication makes no locked crash-atomic claim.'
+]
+qualifications=[
+ 'Static Source/metadata evidence review only. No represented program or helper function is executed; no scientific predicate or Original graph/forest/matrix/permutation/transporter/certificate payload value is decoded or evaluated.',
+ 'No selectedv2 SDK or positive map exists or is invented by this Source peer. Root must issue a fresh positive grant after complete new Source/protocol ownership, then use ordinary unchanged resource admission and the exact old scientific argv. A further refusal requires separate reviewed selection; edition3 is not authorized.',
+ 'The supplemental binder map is an explicit Root-owned input to the actual auditor. Root separately records/authenticates actual core authorization/binder and continuation issuance metadata; the auditor does not manufacture or independently execute those calls.',
+ 'Genuine external Root execution/SDK provenance remains an acquired Root premise checked against saved raw API frames. CLI --actor and metadata booleans alone do not establish external authenticity.',
+ 'Historical24/41 controls, unavailable8legacy bookkeeping and enumerated unconsumed gate/import/lemma ancestry remain qualified borrowed descriptors. Full recursive mathematical/Source closure is not claimed and old control bodies are not claimed reopened.',
+ 'The Source author disclosed earlier generic inspections that decoded nested Original payloads without numerical evaluation; the no-decoding claim is scoped to this new auditor and this independent review.',
+ 'This peer authorizes no canonical registration or manuscript/conjecture/Lean/measurement credit. Current342 progress remains frozen until all actual role/audit/registration obligations complete; no successful science may be replayed.'
+]
+full=save(HERE/'review.json',dict(schema='F009_ONE_SCIENTIFIC_PREENTRY_RETRY_COMPLETE_SOURCE_PEER_V1',reviewer='/root/dependency_audit',Root_authority=False,
+ status='SUPPORTED_STATIC_WITH_EXPLICIT_SELECTED_ATTEMPT_AND_BORROWED_PREMISES',blockers=[],**fields,handoff=pin(P/'handoff.json'),review_request=pin(P/'review_request.json'),
+ checked_pins=pins,Source_bills=budgets,facts=facts,qualifications=qualifications,Original_payload_values_decoded=False,represented_code_executed=False,
+ scientific_calls=0,canonical_writes=0,new_manuscript_conjecture_Lean_measurement_credit=0))
+leaf=save(HERE/'reuse_integer_only.json',dict(schema='F009_SCIENTIFIC_PREENTRY_RETRY_COMPLETE_STATIC_REUSE_V1',reviewer='/root/dependency_audit',Root_authority=False,
+ status='SUPPORTED_STATIC_WITH_EXPLICIT_SELECTED_ATTEMPT_AND_BORROWED_PREMISES',blockers=[],**fields,review=full,checked_pins=pins,Source_bills=budgets,
+ selected_role=dict(batch=1,index=346,stem='parent0346_supply',edition=2,prior_refused_edition=1),all_other_scientific_roles_required_first_v1=True,
+ all_scientific_roles_terminal_first_v1_must_be_false=True,old_frozen_init_owner_and_preparation_unchanged=True,
+ positive_Root_grant_and_genuine_selected_execution_still_owed=True,no_successful_scientific_replay_allowed=True,
+ Original_payload_values_decoded=False,represented_code_executed=False,scientific_calls=0,canonical_writes=0,
+ qualification='Exact final shared packet/core/continuation/auditor Source peer, not actual execution or numerical replay. Root owns unchanged original scientific/control premises and separately records core/continuation execution metadata. Selected346v2 requires a new positive Root grant and genuine raw/guard evidence; all other science remainsv1. Full recursive historical closure and canonical adoption are not supplied.'))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_COMPLETE_RETRY_STATIC_SOURCE_PEER',leaf=leaf,full_review=full,read_bytes=READ,paths=len(PINS),scientific_calls=0,canonical_writes=0),sort_keys=True))

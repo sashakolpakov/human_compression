@@ -1,0 +1,47 @@
+"""Lexical navigation of metadata; unselected Original payloads stay opaque."""
+import json
+
+def ws(b,i):
+ while i<len(b)and b[i]in b' \n\r\t':i+=1
+ return i
+
+def string_end(b,i):
+ assert b[i]==34;i+=1
+ while i<len(b):
+  if b[i]==92:i+=2
+  elif b[i]==34:return i+1
+  else:i+=1
+ raise ValueError('unterminated string')
+
+def value_end(b,i):
+ if b[i]==34:return string_end(b,i)
+ if b[i]in b'[{':
+  stack=[b[i]];i+=1
+  while stack:
+   assert i<len(b)and len(stack)<=4096
+   if b[i]==34:i=string_end(b,i);continue
+   if b[i]in b'[{':stack.append(b[i])
+   elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+   i+=1
+  return i
+ while i<len(b)and b[i]not in b',]} \n\r\t':i+=1
+ return i
+
+def members(b):
+ assert len(b)<=4*2**20;i=ws(b,0);assert b[i]==123;i=ws(b,i+1);out={}
+ while b[i]!=125:
+  j=string_end(b,i);key=json.loads(b[i:j]);assert type(key)is str and key not in out
+  i=ws(b,j);assert b[i]==58;i=ws(b,i+1);j=value_end(b,i);out[key]=b[i:j];i=ws(b,j)
+  if b[i]==44:i=ws(b,i+1)
+  else:assert b[i]==125
+ assert not b[ws(b,i+1):];return out
+
+def selected(b,keys):
+ p=members(b);assert set(keys)<=set(p)
+ return{k:json.loads(p[k])for k in keys}
+
+def replace_member(b,key,value):
+ p=members(b);assert key in p
+ # Re-emit the complete outer object while every other value stays a byte span.
+ p[key]=(json.dumps(value,sort_keys=True,separators=(',',':'))).encode()
+ return b'{'+b','.join(json.dumps(k).encode()+b':'+v for k,v in p.items())+b'}\n'

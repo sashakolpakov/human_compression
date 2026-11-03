@@ -1,0 +1,103 @@
+"""Independent metadata registration audit. Original scientific values stay opaque."""
+from pathlib import Path
+import ast,hashlib,json,os,resource,shlex,signal,stat,sys,time
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');P=M/'l026_fi22_neighborhood_orbits/operations/triangle_quotients/simple_group_intersections/registration'
+HERE=P/'postwrite_review';STAGE=M/'progress/stages/l026_three_simple_group_applications';START=time.monotonic();READ=0;BANK={};PINS={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second postwrite metadata audit')))
+signal.alarm(125)
+def raw(p,r=None):
+ global READ
+ p=Path(p);name=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ if name not in BANK:
+  st=p.lstat();assert stat.S_ISREG(st.st_mode)and st.st_size<=4*2**20
+  b=p.read_bytes();en=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(st)==sig(en)and len(b)==st.st_size
+  READ+=len(b);assert READ<=64*2**20 and len(BANK)<512
+  BANK[name]=b;PINS[name]=dict(path=name,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert PINS[name]==r
+ assert time.monotonic()-START<115 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ return BANK[name]
+def doc(r):return json.loads(raw(r['path'],r))
+def plain(p):return json.loads(raw(p))
+def pin(p):raw(p);return PINS[str(p)]
+def triple(r):return[r['path'],str(r['bytes']),r['sha256']]
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==b
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+parser=M/'artifacts/publication_reviews/parents0330_0341/audit_publication.py';tree=ast.parse(raw(parser));ns={'json':json}
+exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name in{'white','endstr','end','fields','array','scalar'}],type_ignores=[]),str(parser),'exec'),ns)
+fields,array,scalar=ns['fields'],ns['array'],ns['scalar']
+def unchanged(old,new,allowed):assert set(old)==set(new)and all(old[k]==new[k]for k in old if k not in allowed)
+r=plain(STAGE/'readback.json');rr=pin(STAGE/'readback.json');p=doc(r['plan']);d=doc(r['Root_decision']);writer=r['writer'];peer=doc(writer['independent_Source_peer'])
+assert r['schema']=='ROOT_L026_THREE_LOGICAL_IP_REGISTRATION_READBACK_V1'and r['scientific_calls']==0
+assert p['program']==writer['program']and r['plan']==writer['plan']==d['plan']==peer['plan']
+assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']=='/root/dependency_audit'
+assert d['root']=='/root'and d['Root_authority']is d['adopted']is True and d['independent_Source_peer']==writer['independent_Source_peer']
+for key in('program','Source_manifest','protocol'):assert writer[key]==p[key]==peer[key]==d[key];raw(writer[key]['path'],writer[key])
+mf=doc(writer['Source_manifest'])
+for x in mf['Source']+mf['guards']:raw(x['path'],x)
+app=doc(r['logical_application']);post=doc(r['post_issuance_review']);batch=doc(r['batch_acceptance']);newreceipt=doc(r['ledger_receipt'])
+assert r['logical_application']==p['root_applications']==batch['logical_application']and r['logical_application']['sha256']=='0cdc604ca0b526309fa7a0d70850455da9145358db48c731b6cddd5d91b9645a'
+assert r['post_issuance_review']==p['post_issuance_review']==batch['post_issuance_review']and r['post_issuance_review']['sha256']=='7128a4a81192443599583484967be82d500df04dd7ac9c25acba38ca434b3dfc'
+assert batch['schema']=='ROOT_ACCEPTED_L026_REVIEWED_LOGICAL_IP_BATCH_V1'and batch['adopted']is True and batch['old_strict_scientific_IP_credit_remains_zero']is True
+expected=[dict(x,kind='IP',proof=0)for x in app['subjects']];assert batch['new_facts']==expected and app['subjects']==post['subjects']
+oldbank=raw(p['current_snapshot']['bank']['path'],p['current_snapshot']['bank']);newbank=raw(r['status_bank']['path'],r['status_bank'])
+assert len(oldbank)==len(newbank)==28908 and set(oldbank)<=set((0,1,2,6))and set(newbank)<=set((0,1,2,6))
+changed=[i for i,(a,b)in enumerate(zip(oldbank,newbank))if a!=b];assert changed==[265,270,271]and all(oldbank[i]==2 and newbank[i]==6 for i in changed)
+counts=lambda b:dict(GEN=b.count(2)+b.count(6),separate_IP=b.count(6),subset_NEG=b.count(1),unpaid=b.count(0))
+assert counts(oldbank)==dict(GEN=724,separate_IP=721,subset_NEG=744,unpaid=27440)
+assert counts(newbank)==r['counts']==newreceipt['counts']==dict(GEN=724,separate_IP=724,subset_NEG=744,unpaid=27440)
+assert newreceipt['status_bank']==r['status_bank']and newreceipt['previous_ledger']==p['current_snapshot']['receipt']and newreceipt['typed_new_batch']==r['batch_acceptance']
+oldreceipt=doc(p['current_snapshot']['receipt']);receipt_allowed={'status_bank','counts','previous_ledger','typed_new_batch','proof_provenance','writer','qualification'}
+assert all(newreceipt[k]==v for k,v in oldreceipt.items()if k not in receipt_allowed)
+oldcurrent_raw=raw(STAGE/'L026_CURRENT_before_update.json');assert hashlib.sha256(oldcurrent_raw).hexdigest()==p['current_snapshot']['CURRENT']['sha256']
+oldcurrent=json.loads(oldcurrent_raw);newcurrent=doc(r['current']);assert newcurrent['ledger_receipt']==r['ledger_receipt']and newcurrent['status_bank']==r['status_bank']
+assert all(newcurrent[k]==v for k,v in oldcurrent.items()if k not in{'ledger_receipt','status_bank'})
+ib=raw(STAGE/'intake_before_update.json');cb=raw(STAGE/'controller_before_update.json');rb=raw(r['previous_runtime']['path'],r['previous_runtime'])
+assert hashlib.sha256(ib).hexdigest()==p['progress_snapshot']['intake']['sha256']and hashlib.sha256(cb).hexdigest()==p['progress_snapshot']['controller']['sha256']
+ni=raw(r['intake']['path'],r['intake']);nc=raw(r['controller']['path'],r['controller']);nr=raw(r['runtime']['path'],r['runtime'])
+assert raw(M/'progress/current_intake.json')==ni and raw(M/'progress/controllers/current.json')==nc
+oi,nn,oc,cn,orr,rn=fields(ib),fields(ni),fields(cb),fields(nc),fields(rb),fields(nr)
+unchanged(oi,nn,{'L026','active_controller_checkpoint','previous_checkpoint'});unchanged(oc,cn,{'checkpoint','previous_controller'})
+unchanged(orr,rn,{'counts','next_L026_current_snapshot','previous_checkpoint'})
+unchanged(fields(oi['L026']),fields(nn['L026']),{'separate_IP','current_typed_ledger'})
+unchanged(fields(orr['counts']),fields(rn['counts']),{'L026_separate_IP'})
+assert scalar(fields(nn['L026']),'separate_IP')==scalar(fields(rn['counts']),'L026_separate_IP')==724
+assert oi['F009']==nn['F009']and orr['cache_entries']==rn['cache_entries']and orr['cache_banks']==rn['cache_banks']
+cache_count=len(fields(rn['cache_entries']))+sum(scalar(fields(x),'entries')for x in array(rn['cache_banks']));assert cache_count==1657
+f=fields(nn['F009']);assert scalar(f,'R5_canonical_pairs_reviewed')==354 and scalar(f,'R5_prefix_strict_slots_reviewed')==55224
+assert scalar(nn,'active_controller_checkpoint')==scalar(cn,'checkpoint')==r['runtime']
+typed=scalar(fields(nn['L026']),'current_typed_ledger');nxt=scalar(rn,'next_L026_current_snapshot')
+assert typed['bank']==nxt['bank']==r['status_bank']and typed['receipt']==nxt['receipt']==r['ledger_receipt']and typed['current']==nxt['CURRENT']==r['current']
+assert typed['postwrite_review']is nxt['postwrite_review']is None and typed['postwrite_review_pending']is nxt['postwrite_review_pending']is True
+sdkref=pin(P/'actual/Root_SDK/register_three_IP_v1.json');sdk=doc(sdkref);argv=sdk['issued_argv']
+assert(sdkref['bytes'],sdkref['sha256'])==(8190,'5a2af28df9f6543d56567ec818d6ad8dbf9586963bc329a1767165b3392ae758')
+assert sdk['root']==sdk['actor']=='/root'and argv==sdk['child_argv']==shlex.split(sdk['issued_tool_arguments']['cmd'])
+child=argv[argv.index('--')+1:];assert child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',writer['program']['path']]
+assert child[child.index('--plan')+1:child.index('--plan')+4]==triple(r['plan'])and child[child.index('--Root-decision')+1:child.index('--Root-decision')+4]==triple(r['Root_decision'])
+api=M/'f009_cohort_preparation/cohorts/cohort_from0342/api/Root_l026_three_IP_register_v1';issued=plain(api/'issued.json');assert issued['argv']==argv and issued['tool_arguments']==sdk['issued_tool_arguments']
+fs=sdk['all_genuine_api_frames'];assert fs[0]==sdk['full_initial_tool_return']and fs[-1]==sdk['full_tool_return']and fs[-1]['exit_code']==sdk['actual_tool']['exit_code']==0
+for j,v in enumerate(fs):assert plain(api/('frame_%04d.json'%j))==v
+guard=P/'guards/register_three_IP';started=plain(guard/'started.json');receipt=plain(guard/'receipt.json')
+assert started['command']==receipt['command']==child and started['limits']==receipt['limits']and receipt['status']=='PASS'and receipt['returncode']==0 and receipt['error']is None
+assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]and receipt['limits']['total_rss']==256*2**20 and receipt['limits']['wall_seconds']==125
+assert json.loads(fs[-1]['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+out=plain(guard/'stdout.log');assert raw(guard/'stderr.log')==b''and out['readback']==rr and out['counts']==counts(newbank)and out['scientific_calls']==0
+intent=plain(STAGE/'publication_intent.json');assert intent['proposed']['L026_CURRENT']==r['current']and intent['proposed']['runtime']==r['runtime']and intent['previous']['runtime']==r['previous_runtime']
+raw(Path(__file__))
+for name,b in BANK.items():assert Path(name).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+pins=save(HERE/'checked_pins.json',dict(schema='L026_THREE_IP_POSTWRITE_FINITE_PINS_V1',pins=list(PINS.values()),first_closing_bytes=READ,paths=len(PINS)))
+review=save(HERE/'reuse_integer_only.json',dict(schema='L026_THREE_LOGICAL_IP_CANONICAL_REGISTRATION_INDEPENDENT_POSTWRITE_REVIEW_V1',reviewer='/root/dependency_audit',Root_authority=False,
+ status='SUPPORTED_ACTUAL_CANONICAL_THREE_IP_REGISTRATION',blockers=[],actual_SDK=sdkref,readback=rr,Root_decision=r['Root_decision'],Source_peer=writer['independent_Source_peer'],plan=r['plan'],
+ logical_application=r['logical_application'],post_issuance_review=r['post_issuance_review'],batch=r['batch_acceptance'],current=r['current'],bank=r['status_bank'],receipt=r['ledger_receipt'],
+ intake=r['intake'],controller=r['controller'],runtime=r['runtime'],exact_changed_indices=changed,before_status=2,after_status=6,
+ before_counts=counts(oldbank),after_counts=counts(newbank),paid_unchanged=1468,F009_prefix_unchanged=354,F009_slots_unchanged=55224,
+ all1657_runtime_cache_values_and_bank_descriptors_raw_unchanged=True,F004_intake_measurements_and_all_unknown_unrelated_fields_raw_unchanged=True,
+ qualified_original_Fi22_model_GEN_Reader_class_two_fibre_H_B_premises_retained=True,old_strict_numerical_IP_credit_still_zero=True,
+ Original_scientific_payload_values_decoded=False,metadata_status_bytes_only_compared_and_counted=True,scientific_or_registrar_Source_reexecuted=False,
+ scientific_calls=0,canonical_writes=0,new_manuscript_conjecture_Lean_measurement_or_whole_original_credit=0,checked_pins=pins,
+ qualification='Independent actual metadata postwrite audit. Genuine Root SDK/raw/guard and exact reviewed Source/plan joins support only three existing GEN-row IP upgrades. The logical proofs and Original qualifications remain exact0cdc/7128 imports. All other raw progress fields/cache values are unchanged. This review creates no canonical pointer mutation; writer-emitted pending-postreview fields remain historical until separately updated. Serial multi-pointer publication is not represented as an atomic locked transaction.'))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_L026_THREE_IP_POSTWRITE_AUDIT',review=review,paths=len(PINS),read_bytes=READ,scientific_calls=0,canonical_writes=0),sort_keys=True))

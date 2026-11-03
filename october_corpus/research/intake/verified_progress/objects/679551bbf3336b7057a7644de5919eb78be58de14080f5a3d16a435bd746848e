@@ -1,0 +1,36 @@
+"""Bind the genuine successful second attempt; no scientific computation."""
+import argparse,json,hashlib
+from pathlib import Path
+import retry_common as C
+ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True)
+ap.add_argument('--Root-grant',nargs=3,required=True);ap.add_argument('--authorization',nargs=3,required=True)
+ap.add_argument('--selected-SDK',nargs=3,required=True);ap.add_argument('--reconciliation-out',required=True)
+ap.add_argument('--out',required=True);a=ap.parse_args();L,p,pr,grant,peer,total=C.start('bind_retry.py',a)
+argv=C.refusal(L,p);ar=C.desc(a.authorization);auth=C.doc(L,ar)
+assert auth['schema']=='ROOT_F009_SCIENTIFIC_PREENTRY_RETRY_AUTHORIZATION_V1'and auth['root']=='/root'and auth['Root_authority']is True
+assert auth['retry_supplement_packet']==pr and auth['retry_Source_peer']==peer and auth['Root_grant']==grant
+assert auth['cohort']==p['cohort']and auth['stem']==C.STEM and auth['selected_edition']==2 and auth['retry_argv']==argv
+assert auth['guard_and_output_absent_before_selected_attempt']is auth['selected_SDK_absent']is auth['no_successful_role_replayed']is True
+sr=C.desc(a.selected_SDK);assert sr['path']==auth['expected_selected_SDK_path']==str(C.SCIENCE/'Root_SDK'/(C.STEM+'_v2.json'))
+d=C.actual(L,sr,'Root_f009_cohort0342_parent0346_supply_v2',argv,True)
+guard=C.SCIENCE/'guards'/C.STEM;receipt=C.doc(L,C.pin(L,guard/'receipt.json'));started=C.doc(L,C.pin(L,guard/'started.json'))
+assert receipt['status']=='PASS'and receipt['returncode']==0 and receipt['command']==started['command']==argv[argv.index('--')+1:]
+assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]and receipt['limits']==started['limits']
+assert json.loads(d['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+for k,v in dict(total_rss=128*2**20,wall_seconds=150.0,admit_ram=4*2**30,admit_disk=10*2**30,ram_floor=3*2**30,disk_floor=8*2**30).items():assert receipt['limits'][k]==v
+stdout=C.doc(L,C.pin(L,guard/'stdout.log'));assert C.raw(L,C.pin(L,guard/'stderr.log'))==b''
+for r in stdout['outputs']:C.raw(L,r)
+recon=dict(schema='ROOT_F009_EXACT_ROLE_PREENTRY_RETRY_RECONCILIATION_V1',root='/root',Root_authority=True,
+ refused_actual_SDK=p['prior_scientific_SDK'],selected_actual_SDK=sr,stem=C.STEM,
+ no_scientific_child_started=True,guard_and_output_absent_before_selected_attempt=True,
+ same_exact_argv_as_selected=True,original_guard_and_scientific_caps_unchanged=True,
+ actual_absence_or_resource_inspections=[ar,p['Root_absence_inspection'],p['failure_precheck']],retry_supplement_packet=pr,retry_Source_peer=peer)
+rp=Path(a.reconciliation_out);assert rp.is_relative_to(C.HERE)and not rp.exists()and rp.parent.resolve(strict=True)==rp.parent
+rb=(json.dumps(recon,sort_keys=True,separators=(',',':'))+'\n').encode()
+rr=dict(path=str(rp),bytes=len(rb),sha256=hashlib.sha256(rb).hexdigest())
+role=dict(batch=1,stem=C.STEM,index=346,edition=2,actual_SDK=sr,prior_attempts=[dict(edition=1,actual_SDK=p['prior_scientific_SDK'],disposition='GENUINE_PREENTRY_REFUSAL',preentry_reconciliation=rr)])
+value=dict(schema='ROOT_F009_COHORT_SCIENTIFIC_ATTEMPTS_V1',root='/root',Root_authority=True,cohort=p['cohort'],
+ retry_supplement_packet=pr,retry_Source_peer=peer,Root_grant=grant,authorization=ar,selected_roles=[role],
+ all_scientific_roles_terminal_first_v1=False,all_other_roles_required_first_v1=True,
+ numerical_Source_and_caps_unchanged=True,no_successful_role_replayed=True,authorization_and_genuine_raw_frames_verified=True)
+C.emit(L,a,value,total,extra=[(rp,recon)])

@@ -1,0 +1,283 @@
+"""Independent administrative postcheck; cached scientific payloads stay opaque."""
+from pathlib import Path
+import hashlib, json, os, resource, shlex, signal, sys, time
+BASE = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+HERE = BASE / 'f009_cohort_preparation/cohorts/cohort_from0342/registration_review'
+STAGE = BASE / 'progress/stages/forest_extensions_0342_0353_cohort_shared_strict'
+START = time.monotonic()
+READ = 0
+BANK = {}
+PINS = {}
+signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('125 second admin audit')))
+signal.alarm(125)
+
+def raw(p, r=None):
+    global READ
+    p = Path(p)
+    name = str(p)
+    assert time.monotonic() - START < 115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == 'darwin' else 1024) <= 256 * 2 ** 20
+    if name in BANK:
+        b = BANK[name]
+        got = PINS[name]
+    else:
+        assert p.is_absolute() and p.resolve(strict=True) == p and (not p.is_symlink())
+        st = p.stat()
+        assert p.is_file() and st.st_size <= 4 * 2 ** 20
+        b = p.read_bytes()
+        after = p.stat()
+        signature = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+        assert signature(after) == signature(st)
+        READ += len(b)
+        assert READ <= 64 * 2 ** 20
+        got = dict(path=name, bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+        PINS[name] = got
+        BANK[name] = b
+        assert len(BANK) <= 512
+    if r is not None:
+        assert got == r, (got, r)
+    return (b, got)
+
+def doc(p, r=None):
+    b, rr = raw(p, r)
+    return (json.loads(b), rr)
+
+def get(r):
+    return doc(r['path'], r)[0]
+
+def enc(v):
+    return json.dumps(v, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode('ascii') + b'\n'
+
+def save(p, v):
+    b = enc(v)
+    with p.open('xb') as f:
+        f.write(b)
+        f.flush()
+        os.fsync(f.fileno())
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def white(b, i):
+    while i < len(b) and b[i] in b' \r\n\t':
+        i += 1
+    return i
+
+def endstr(b, i):
+    assert b[i] == 34
+    i += 1
+    while i < len(b):
+        if b[i] == 92:
+            i += 2
+        elif b[i] == 34:
+            return i + 1
+        else:
+            i += 1
+    raise ValueError('string')
+
+def end(b, i):
+    if b[i] == 34:
+        return endstr(b, i)
+    if b[i] in b'[{':
+        stack = [b[i]]
+        i += 1
+        while stack:
+            if b[i] == 34:
+                i = endstr(b, i)
+                continue
+            if b[i] in b'[{':
+                stack.append(b[i])
+            elif b[i] in b']}':
+                assert (stack.pop(), b[i]) in ((91, 93), (123, 125))
+            i += 1
+        return i
+    while i < len(b) and b[i] not in b',]} \r\n\t':
+        i += 1
+    return i
+
+def fields(b):
+    i = white(b, 0)
+    assert b[i] == 123
+    i = white(b, i + 1)
+    out = {}
+    while b[i] != 125:
+        j = endstr(b, i)
+        k = json.loads(b[i:j])
+        assert k not in out
+        i = white(b, j)
+        assert b[i] == 58
+        i = white(b, i + 1)
+        j = end(b, i)
+        out[k] = b[i:j]
+        i = white(b, j)
+        if b[i] == 44:
+            i = white(b, i + 1)
+        else:
+            assert b[i] == 125
+    assert white(b, i + 1) == len(b)
+    return out
+
+def array(b):
+    i = white(b, 0)
+    assert b[i] == 91
+    i = white(b, i + 1)
+    out = []
+    while b[i] != 93:
+        j = end(b, i)
+        out.append(b[i:j])
+        i = white(b, j)
+        if b[i] == 44:
+            i = white(b, i + 1)
+        else:
+            assert b[i] == 93
+    assert white(b, i + 1) == len(b)
+    return out
+
+def select(b, keys):
+    assert not set(keys) & {'parents', 'parent', 'records', 'covers', 'representatives', 'cache_entries', 'cache_banks'}
+    f = fields(b)
+    return {k: json.loads(f[k]) for k in keys if k in f}
+
+def unchanged(before, after, allowed):
+    assert set(before) == set(after)
+    assert all((before[k] == after[k] for k in before if k not in allowed))
+readback, rr = doc(STAGE / 'readback.json')
+assert readback['schema'] == 'ROOT_REVIEWED_COHORT_STRICT_PROGRESS_READBACK_V1'
+assert readback['reviewed_prefix'] == 354 and readback['reviewed_slots'] == 55224
+assert readback['prior_cache_values'] == 1645 and readback['total_cache_values'] == 1657 and (readback['scientific_calls'] == 0)
+decision = get(readback['Root_decision'])
+review = get(readback['actual_review'])
+assert decision['program']['sha256'] == '755a448d5e9ae87dfa362fd082d2eb25ec054f5f3294a12069a5df0328faebfd'
+assert decision['actual_review'] == readback['actual_review'] and decision['expected_prior_cache_values'] == 1645
+assert review['schema'] == 'F009_CONTIGUOUS_PARENT_COHORT_ACTUAL_REUSE_V1' and review['status'] == 'SUPPORTED_ACTUAL' and (review['blockers'] == [])
+assert review['begin'] == 342 and review['end'] == 354 and (review['strict_slots'] == 1872) and (review['target_occurrences'] == 199)
+cohort = get(readback['cohort'])
+snapshot = cohort['progress_snapshot']
+assert review['progress_snapshot'] == snapshot
+for r in (decision['program'], decision['independent_Source_peer'], decision['cohort_adapter_program'], decision['cohort_adapter_Source_peer']):
+    raw(r['path'], r)
+assert raw(STAGE / 'update.py')[0] == raw(decision['program']['path'], decision['program'])[0]
+beforeI = raw(STAGE / 'intake_before_update.json')[0]
+beforeC = raw(STAGE / 'controller_before_update.json')[0]
+beforeR = raw(STAGE / 'runtime_before_update.json')[0]
+assert hashlib.sha256(beforeI).hexdigest() == snapshot['intake']['sha256'] and len(beforeI) == snapshot['intake']['bytes']
+assert hashlib.sha256(beforeC).hexdigest() == snapshot['controller']['sha256'] and len(beforeC) == snapshot['controller']['bytes']
+assert hashlib.sha256(beforeR).hexdigest() == snapshot['runtime']['sha256'] and len(beforeR) == snapshot['runtime']['bytes']
+assert beforeR == raw(readback['old_runtime']['path'], readback['old_runtime'])[0]
+afterI = raw(readback['intake']['path'], readback['intake'])[0]
+afterC = raw(readback['controller']['path'], readback['controller'])[0]
+afterR = raw(readback['runtime']['path'], readback['runtime'])[0]
+assert raw(BASE / 'progress/current_intake.json')[0] == afterI and raw(BASE / 'progress/controllers/current.json')[0] == afterC
+oldI, newI = (fields(beforeI), fields(afterI))
+oldC, newC = (fields(beforeC), fields(afterC))
+oldR, newR = (fields(beforeR), fields(afterR))
+unchanged(oldI, newI, {'F009', 'latest_reviewed_forest_batch', 'previous_checkpoint', 'active_controller_checkpoint', 'observed_utc'})
+unchanged(oldC, newC, {'previous_controller', 'checkpoint'})
+unchanged(oldR, newR, {'cache_banks', 'next_R5', 'counts', 'latest_reviewed_forest_batch', 'previous_checkpoint', 'observed_utc'})
+assert oldR['cache_entries'] == newR['cache_entries']
+oldF, newF = (fields(oldI['F009']), fields(newI['F009']))
+fchanged = {'R5_canonical_complete_pairs', 'R5_canonical_actual_reviews', 'R5_canonical_pairs_completed', 'R5_canonical_pairs_reviewed', 'R5_canonical_next_parent', 'R5_total_distinct_canonical_parents_reviewed', 'R5_total_distinct_canonical_parents_completed', 'R5_prefix_strict_slots_reviewed', 'R5_strict_slots_reviewed', 'R5_strict_slots_completed', 'next', 'next_method_question'}
+unchanged(oldF, newF, fchanged)
+for k in ('R5_canonical_pairs_completed', 'R5_canonical_pairs_reviewed', 'R5_canonical_next_parent', 'R5_total_distinct_canonical_parents_reviewed', 'R5_total_distinct_canonical_parents_completed'):
+    assert json.loads(newF[k]) == 354
+for k in ('R5_prefix_strict_slots_reviewed', 'R5_strict_slots_reviewed', 'R5_strict_slots_completed'):
+    assert json.loads(newF[k]) == 55224
+oldcounts, newcounts = (fields(oldR['counts']), fields(newR['counts']))
+changedcounts = {'R5_canonical_pairs', 'R5_canonical_pairs_reviewed', 'R5_total_distinct_parents_reviewed', 'R5_total_distinct_parents_completed', 'R5_prefix_strict_slots_reviewed', 'R5_strict_slots_reviewed', 'R5_strict_slots_completed'}
+unchanged(oldcounts, newcounts, changedcounts)
+for k in changedcounts:
+    assert json.loads(newcounts[k]) == (55224 if 'slots' in k else 354)
+oldnext, newnext = (fields(oldR['next_R5']), fields(newR['next_R5']))
+unchanged(oldnext, newnext, {'index', 'next_action', 'completed_prefix_parents', 'reviewed_prefix_parents', 'pending_actual_review_indices', 'scientific_child_started'})
+assert json.loads(newnext['index']) == 354 and json.loads(newnext['scientific_child_started']) is False
+oldbanks = json.loads(oldR['cache_banks'])
+newbanks = json.loads(newR['cache_banks'])
+assert newbanks[:-1] == oldbanks and len(newbanks) == len(oldbanks) + 1
+prior = set(fields(oldR['cache_entries']))
+for b in oldbanks:
+    bank = fields(raw(b['ref']['path'], b['ref'])[0])
+    keys = set(fields(bank['cache_entries']))
+    assert not prior & keys and len(keys) == b['entries'] and (sorted(keys) == b['keys'])
+    prior |= keys
+assert len(prior) == 1645
+newbank = get(readback['new_cache_bank'])
+newentries = newbank['cache_entries']
+expected = ['Root_f009_R5_canonical_parent%04d_pair' % i for i in range(342, 354)]
+assert sorted(newentries) == expected and (not prior & set(expected)) and (newbanks[-1]['keys'] == expected) and (newbanks[-1]['entries'] == 12)
+assert newbanks[-1]['ref'] == readback['new_cache_bank']
+assert len(readback['new_parent_records']) == 12 and len(readback['shared_reviewed_batches']) == 4
+assert json.loads(newF['R5_canonical_complete_pairs']) == json.loads(oldF['R5_canonical_complete_pairs']) + readback['new_parent_records']
+assert json.loads(newF['R5_canonical_actual_reviews']) == json.loads(oldF['R5_canonical_actual_reviews']) + [readback['actual_review']]
+for number, sharedref in enumerate(readback['shared_reviewed_batches']):
+    shared = get(sharedref)
+    entry = review['batches'][number]
+    assert shared['schema'] == 'ROOT_F009_REVIEWED_COHORT_SHARED_STRICT_BATCH_NODE_V1'
+    assert shared['batch'] == number and shared['source_indices'] == list(range(342 + 3 * number, 345 + 3 * number))
+    assert shared['pairing'] == entry['pairing'] and shared['independent_actual_review'] == entry['actual_review'] and (shared['cohort_actual_review'] == readback['actual_review'])
+    assert shared['individual_whole_certificate_equality_claimed'] is False and shared['strict_cover_index_required_by_downstream_consumers'] is True
+    for j in range(3):
+        i = 342 + 3 * number + j
+        recordref = readback['new_parent_records'][i - 342]
+        record = get(recordref)
+        binding = shared['bindings'][j]
+        assert record['schema'] == 'ROOT_F009_REVIEWED_PARENT_FROM_COHORT_STRICT_BATCH_V1' and record['current_parent_ordinal'] == i
+        assert record['shared_reviewed_batch'] == sharedref and record['cohort_batch'] == number and (record['supplier_cover_index'] == 0) and (record['strict_cover_index'] == j)
+        assert record['strict_certificate'] == binding['strict_certificate'] == shared['strict']['certificate']
+        assert record['supplier_certificate'] == binding['supplier_certificate'] and record['strict_slots'] == 156 and (record['all156slots_strictly_checked'] is True)
+        assert record['per_cover_canonical_bytes_equal'] is True and record['individual_whole_certificate_equality_claimed'] is False
+        assert record['strict_actual_edition'] == 1 and record['supplier_actual_edition'] == (2 if i == 346 else 1)
+        assert record['whole_R5_level_or_census_adopted'] is False and record['new_manuscript_credit'] == 0
+        assert newentries[expected[i - 342]]['ref'] == recordref and newentries[expected[i - 342]]['value'] == record
+        assert newentries[expected[i - 342]]['independent_actual_review_pending'] is False
+assert sum((get(r)['target_count'] for r in readback['new_parent_records'])) == 199
+sdk, sdkref = doc(Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/cohorts/cohort_from0342/registration/Root_SDK/register_v1.json'))
+assert (sdkref['bytes'], sdkref['sha256']) == (7440, '7be9113b8c81866b33b6d03a477a02e50aacce05f5c46415bea386964468e2ac')
+argv = sdk['issued_argv']
+assert sdk['root'] == sdk['actor'] == '/root' and sdk['actual_tool']['exit_code'] == 0
+assert argv == sdk['child_argv'] == shlex.split(sdk['issued_command']) == shlex.split(sdk['issued_tool_arguments']['cmd'])
+frames = sdk['all_genuine_api_frames']
+assert frames[0] == sdk['full_initial_tool_return'] and frames[-1] == sdk['full_tool_return'] and (frames[-1]['exit_code'] == 0)
+rawdir = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/cohorts/cohort_from0342/api/Root_f009_cohort0342_register_v1')
+issued, _ = doc(rawdir / 'issued.json')
+assert issued['argv'] == argv and issued['tool_arguments'] == sdk['issued_tool_arguments']
+for n, frame in enumerate(frames):
+    assert doc(rawdir / ('frame_%04d.json' % n))[0] == frame
+guard = BASE / 'f009_cohort_preparation/cohorts/cohort_from0342/registration/guard'
+started, stref = doc(guard / 'started.json')
+receipt, reref = doc(guard / 'receipt.json')
+child = argv[argv.index('--') + 1:]
+assert started['command'] == receipt['command'] == child
+assert child[:5] == ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', decision['program']['path']]
+assert receipt['status'] == 'PASS' and receipt['stop'] == 'RETURNED' and (receipt['returncode'] == 0) and (receipt['error'] is None)
+assert receipt['cleanup']['remaining'] == receipt['cleanup']['errors'] == []
+assert receipt['limits']['total_rss'] == 256 * 2 ** 20 and receipt['limits']['wall_seconds'] == 125
+stdout, stdoutref = raw(guard / 'stdout.log')
+stderr, stderrref = raw(guard / 'stderr.log')
+assert stderr == b''
+assert json.loads(frames[-1]['output']) == dict(status='PASS', stop='RETURNED', receipt=str(guard / 'receipt.json'))
+out = json.loads(stdout)
+assert out['readback'] == rr and out['scientific_calls'] == 0
+assert out['runtime'] == readback['runtime'] and out['intake'] == readback['intake'] and (out['controller'] == readback['controller'])
+objects = HERE / 'objects'
+objects.mkdir()
+keep = [sdkref, readback['Root_decision'], stref, reref, stdoutref, stderrref] + [PINS[str(rawdir / 'issued.json')]] + [PINS[str(rawdir / ('frame_%04d.json' % i))] for i in range(len(frames))]
+retained = []
+for r in keep:
+    b = raw(r['path'], r)[0]
+    p = objects / r['sha256']
+    if not p.exists():
+        with p.open('xb') as f:
+            f.write(b)
+            f.flush()
+            os.fsync(f.fileno())
+    assert p.read_bytes() == b
+    retained.append(dict(original=r, retained=dict(path=str(p), bytes=len(b), sha256=r['sha256'])))
+retention = save(HERE / 'retained_manifest.json', dict(schema='F009_REGISTRATION_FINITE_ACTUAL_RETENTION_V1', Root_authority=False, entries=retained, complete_recursive_ancestry_claimed=False, scientific_calls=0, own_review_and_completion_separate_tail=True))
+for name, b in BANK.items():
+    p = Path(name)
+    assert p.read_bytes() == b
+    READ += len(b)
+    assert READ <= 64 * 2 ** 20
+pinsref = save(HERE / 'checked_pins.json', dict(schema='F009_REGISTRATION_ADMIN_AUDIT_PINS_V1', pins=list(PINS.values()), first_and_closing_bytes=READ))
+leaf = dict(schema='F009_COHORT_CANONICAL_REGISTRATION_INDEPENDENT_ADMIN_REVIEW_V1', reviewer='/root/dependency_audit', Root_authority=False, status='SUPPORTED_ACTUAL_ADMIN_REGISTRATION', blockers=[], actual_SDK=sdkref, readback=rr, Root_decision=readback['Root_decision'], aggregate_actual_review=readback['actual_review'], retained_execution_records=retention, checked_pins=pinsref, prior_cache_values_preserved=1645, total_cache_values=1657, new_distinct_parent_keys=12, new_shared_nodes=4, source_indices=list(range(342, 354)), strict_cover_indices_per_batch=[0, 1, 2], reviewed_prefix=354, reviewed_slots=55224, added_strict_slots=1872, target_occurrences=199, all_old_cache_values_and_bank_descriptors_unchanged=True, F004_L026_intake_measurements_and_unknown_unrelated_fields_unchanged=True, current_intake=readback['intake'], current_controller=readback['controller'], current_runtime=readback['runtime'], old_single_parent_values_not_retagged=True, legacy_cover0_collectors_still_need_separate_admission=True, whole_R5_level_or_census_or_new_manuscript_credit=0, measurements_remain_frozen=True, sampled_resource_limits_not_kernel_quotas=True, Original_payload_arrays_decoded=False, registrar_or_scientific_Source_reexecuted=False, qualification='Independent actual administrative postcheck. Earlier scientific batch/aggregate facts are reused; no scientific replay, new mathematical assertion or whole-manuscript credit is created.')
+lr = save(HERE / 'reuse_integer_only.json', leaf)
+signal.alarm(0)
+print(json.dumps(dict(review=lr, retention=retention, reviewed_prefix=354, reviewed_slots=55224, first_and_closing_bytes=READ, paths=len(PINS))))

@@ -1,0 +1,67 @@
+"""Pure typed positive marking-property projection; no IO or scientific authority."""
+import copy,hashlib,json
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def encoded(v):
+    return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()
+def ref(r):
+    need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+         and r['path'].startswith('/')and type(r['bytes'])is int and 0<=r['bytes']<=4194304
+         and type(r['sha256'])is str and len(r['sha256'])==64
+         and set(r['sha256'])<=set('0123456789abcdef'),'whole bounded input descriptor')
+    return r
+def positions(v):
+    need(type(v)is list and all(type(x)is int and 1<=x<=3779 for x in v)and v==sorted(set(v)),
+         'typed ordered unique original positions');return v
+def expand(old):
+    out=[]
+    for pair in old['unresolved_position_runs']:
+        need(type(pair)is list and len(pair)==2 and all(type(x)is int for x in pair)
+             and 1<=pair[0]<=pair[1]<=3779,'bounded current run')
+        out.extend(range(pair[0],pair[1]+1))
+    return positions(out)
+def inverse(new,patches):
+    old=copy.deepcopy(new)
+    for row in reversed(patches):
+        need(encoded(old[row['key']])==encoded(row['after']),'exact typed forward value')
+        if row['before_present']:old[row['key']]=copy.deepcopy(row['before'])
+        else:del old[row['key']]
+    return old
+def project(old,before,property_ref,authority):
+    ref(before);ref(property_ref)
+    need(old['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'and old['root']=='/root'
+         and old['adopted']is True and old['original_job']==[20,4]and old['original_orbit_positions']==3779,'same accepted selector')
+    base=positions(old['original_paid_positions']);paid=positions(old['accepted_new_paid_positions']);left=expand(old)
+    need(len(base)==old['original_paid_count']==173 and len(left)==old['unresolved_positions']
+         and sorted(base+paid+left)==list(range(1,3780))
+         and hashlib.sha256(encoded(left)).hexdigest()==old['expanded_unresolved_sha256'],'whole disjoint3779 partition')
+    need(authority['root']=='/root'and authority['Root_authority']is authority['adopted']is True
+         and authority['selector_policy']=='PAY_ORIGINAL_PREFIX_ORBIT_PROPERTY'and authority['previous_selector']==before
+         and authority['whole_saved_marked_isomorphism_transfer_reaffirmed']is True,'external whole-row authority')
+    take=positions(authority['newly_paid_positions']);need(1<=len(take)<=16 and all(p in left for p in take),'bounded unpaid batch')
+    rows=authority['settled_dispositions'];need(type(rows)is list and [r['position']for r in rows]==take,'exact ordered proof rows')
+    for row in rows:
+        need(row['kind']=='C_GROUP'and row['generation_verified']is row['full_rank4_IP_verified']is True
+             and row['whole_saved_original_prefix_orbit_property_covered']is True,'whole-row GEN and rank4IP')
+        ref(row['Root_application']);ref(row['independent_logical_review'])
+    remaining=[p for p in left if p not in take];runs=[]
+    for x in remaining:
+        if runs and runs[-1][1]+1==x:runs[-1][1]=x
+        else:runs.append([x,x])
+    need(type(old['source_adoptions'])is list,'old authority history')
+    updates=dict(previous_selector=before,accepted_new_paid_positions=sorted(paid+take),unresolved_positions=len(remaining),
+        unresolved_position_runs=runs,expanded_unresolved_sha256=hashlib.sha256(encoded(remaining)).hexdigest(),
+        current_full_span_diagnostic_positions=remaining,latest_positive_marking_property_adoption=property_ref,
+        new_positive_marking_property_positions=take,
+        positive_rank4_marking_positions=positions(sorted(set(old.get('positive_rank4_marking_positions',[]))|set(take))),
+        source_adoptions=old['source_adoptions']+[property_ref],global_job_registration_unchanged=True,new_case_or_whole_original_credit=0)
+    new=copy.deepcopy(old);patches=[]
+    for key,value in updates.items():
+        patches.append(dict(key=key,before_present=key in old,before=copy.deepcopy(old.get(key)),after=copy.deepcopy(value)))
+        new[key]=copy.deepcopy(value)
+    need(encoded(inverse(new,patches))==encoded(old),'whole unknown-field/history inverse')
+    need(sorted(new['original_paid_positions']+new['accepted_new_paid_positions']+remaining)==list(range(1,3780)),'whole3779 partition')
+    return new,dict(schema='ROOT_F004_POSITIVE_MARKING_WHOLE_TYPED_SELECTOR_INVERSE_V1',before=before,property_record=property_ref,
+        patches=patches,newly_paid_positions=take,before_partition=[173,len(paid),len(left)],after_partition=[173,len(paid)+len(take),len(remaining)],
+        global_registry_modified=False,Aut_reversal_class_count_credit=0,whole_job_credit=0)
+

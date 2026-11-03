@@ -1,0 +1,78 @@
+"""Whole metadata IO and lexical patches; cached science values remain opaque."""
+import hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent;START=time.monotonic()
+hb=(HERE/'whole.py').read_bytes()
+assert len(hb)==3744 and hashlib.sha256(hb).hexdigest()=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+ns=dict(__file__=str(HERE/'whole.py'),__name__='l026_registration_whole_metadata')
+exec(compile(hb,str(HERE/'whole.py'),'exec'),ns);Ledger=ns['Ledger']
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata deadline')))
+signal.alarm(125)
+def check(ledgers=(),extra=0,paths=()):
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+    assert sum(x.bytes for x in ledgers)+extra<=64*2**20
+    assert len(set().union(*(set(x.pins)for x in ledgers),set(map(str,paths))))<=512
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def descriptor(a):
+    r=dict(path=a[0],bytes=int(a[1]),sha256=a[2]);assert Path(r['path']).is_absolute()and 0<=r['bytes']<=4*2**20
+    assert len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef');return r
+def reference(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def doc(L,r):check((L,));return L.document(r['path'],r)[0]
+def ws(b,i):
+    while i<len(b)and b[i]in b' \n\r\t':i+=1
+    return i
+def send(b,i):
+    assert b[i]==34;i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('unterminated string')
+def vend(b,i):
+    if b[i]==34:return send(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            assert i<len(b)and len(stack)<=4096
+            if i%65536==0:check()
+            if b[i]==34:i=send(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \n\r\t':i+=1
+    return i
+def spans(b):
+    assert len(b)<=4*2**20;i=ws(b,0);assert b[i]==123;i=ws(b,i+1);out={}
+    while b[i]!=125:
+        j=send(b,i);key=json.loads(b[i:j]);assert type(key)is str and len(key)<=4096 and key not in out
+        i=ws(b,j);assert b[i]==58;i=ws(b,i+1);j=vend(b,i);out[key]=(i,j);i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:assert b[i]==125
+    assert not b[ws(b,i+1):];return out
+def part(b,key):i,j=spans(b)[key];return b[i:j]
+def selected(b,keys):m=spans(b);return{k:json.loads(b[slice(*m[k])])for k in keys}
+def patch(b,replacements):
+    m=spans(b);assert set(replacements)<=set(m);edits=sorted((m[k][0],m[k][1],v)for k,v in replacements.items())
+    chunks=[];cursor=0
+    for i,j,value in edits:assert type(value)is bytes;chunks.extend((b[cursor:i],value));cursor=j
+    chunks.append(b[cursor:]);out=b''.join(chunks);assert len(out)<=4*2**20
+    after=spans(out);assert set(after)==set(m)
+    for k in m:
+        if k not in replacements:assert b[slice(*m[k])]==out[slice(*after[k])]
+    return out
+def fresh(p):assert p.is_absolute()and not os.path.lexists(p)
+def write_body(p,b):
+    fresh(p);assert p.parent.resolve(strict=True)==p.parent and len(b)<=4*2**20
+    with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+def sync(p):
+    fd=os.open(p,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+def input_set(L,refs):
+    for r in refs:L.raw(r['path'],r)
+def verify_bodies(L,planned):
+    for p,b in planned.items():L.raw(p,reference(p,b))
+    L.close()

@@ -1,0 +1,168 @@
+"""Opaque row hash/cardinality and Source joins; no Original value evaluation."""
+import hashlib,json,os,resource,signal,stat,sys,time
+from pathlib import Path
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection')
+OUT=BASE/'saved_row';START=time.monotonic();BANK={};TOTAL=0;PEAK=0
+def need(ok,msg):
+    if not ok:raise ValueError(msg)
+def alarm(a,b):raise TimeoutError('125 second metadata audit')
+signal.signal(signal.SIGALRM,alarm);signal.alarm(125)
+need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS without O')
+def tick():
+    global PEAK
+    need(time.monotonic()-START<125,'125s metadata deadline')
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+    PEAK=max(PEAK,rss);need(PEAK<=268435456,'256MiB metadata cap')
+def sha(b):return hashlib.sha256(b).hexdigest()
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii')
+def pairs(p):
+    d={}
+    for k,v in p:need(k not in d,'unique keys');d[k]=v
+    return d
+def parse(b):return json.loads(b,object_pairs_hook=pairs,parse_float=str)
+def read(path,expected=None):
+    global TOTAL
+    tick();p=Path(path);need(p.is_absolute()and not p.is_symlink(),'absolute nonsymlink input')
+    p=p.resolve(strict=True);need(len(BANK|{str(p):None})<=512,'512 metadata paths')
+    fd=os.open(p,os.O_RDONLY|getattr(os,'O_NOFOLLOW',0))
+    try:
+        s=os.fstat(fd);need(stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size<=4194304,'4MiB regular single-link input')
+        need(TOTAL+s.st_size<=67108864,'64MiB cumulative reads')
+        with os.fdopen(fd,'rb',closefd=False)as f:b=f.read(s.st_size+1)
+        t=os.fstat(fd);u=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+        need(sig(s)==sig(t)==sig(u)and len(b)==s.st_size,'stable complete input with EOF')
+    finally:os.close(fd)
+    TOTAL+=len(b);r=dict(path=str(p),bytes=len(b),sha256=sha(b))
+    if expected:need((r['bytes'],r['sha256'])==(expected['bytes'],expected['sha256']),'whole descriptor')
+    if str(p)in BANK:need(BANK[str(p)][0]==r,'stable closing digest')
+    else:BANK[str(p)]=(r,b)
+    return b
+def get(path,expected=None):
+    p=str(Path(path).resolve(strict=True))
+    if p not in BANK:return read(path,expected)
+    r,b=BANK[p]
+    if expected:need((r['bytes'],r['sha256'])==(expected['bytes'],expected['sha256']),'cached descriptor')
+    return b
+def ref(path):get(path);return BANK[str(Path(path).resolve())][0]
+def load(path,expected=None):return parse(get(path,expected))
+def ws(b,i):
+    while i<len(b)and b[i]in b' \n\r\t':i+=1
+    return i
+def string_end(b,i):
+    need(b[i]==34,'JSON string');i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('unterminated string')
+def value_end(b,i):
+    if b[i]==34:return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            need(i<len(b)and len(stack)<=4096,'bounded container')
+            if b[i]==34:i=string_end(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':need((stack.pop(),b[i])in((91,93),(123,125)),'balanced container')
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \n\r\t':i+=1
+    return i
+def members(b):
+    i=ws(b,0);need(b[i]==123,'object');i=ws(b,i+1);out={}
+    while b[i]!=125:
+        j=string_end(b,i);k=parse(b[i:j]);need(k not in out,'unique member')
+        i=ws(b,j);need(b[i]==58,'colon');i=ws(b,i+1);j=value_end(b,i);out[k]=b[i:j];i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:need(b[i]==125,'object separator')
+    need(not b[ws(b,i+1):],'whole object');return out
+def array_spans(b):
+    i=ws(b,0);need(b[i]==91,'array');i=ws(b,i+1)
+    while b[i]!=93:
+        j=value_end(b,i);yield b[i:j];i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:need(b[i]==93,'array separator')
+    need(not b[ws(b,i+1):],'whole array')
+def project(raw,keys):
+    m=members(raw);return{k:parse(m[k])for k in keys}
+def compact(raw):
+    # Opaque token-preserving canonicalization; no numeric member is decoded.
+    out=bytearray();i=0
+    while i<len(raw):
+        if raw[i]==34:j=string_end(raw,i);out.extend(raw[i:j]);i=j
+        elif raw[i]in b' \n\r\t':i+=1
+        else:out.append(raw[i]);i+=1
+    return bytes(out)
+def row_projection(raw,position):
+    top=members(raw);target=None
+    for n,row in enumerate(array_spans(top['orbits']),1):
+        if n==position:target=row;break
+    need(target is not None,'literal original orbit position')
+    columns=list(array_spans(target));need(len(columns)==4,'accepted four-column row schema')
+    rep=parse(columns[0]);member_count=sum(1 for _ in array_spans(columns[1]));transport_count=sum(1 for _ in array_spans(columns[2]))
+    need(type(rep)is int and member_count==transport_count>0,'matching metadata cardinalities')
+    return dict(position=position,representative_J_index=rep,original_orbit_member_count=member_count,
+        matching_transporter_count=transport_count,original_orbit_row_sha256=sha(compact(target)))
+
+meta=load(BASE/'literal_input_metadata.json');case=meta['case'];need(case['position']==2739,'case position')
+domain_refs=meta['source_original_domain_whole_pins']
+rows=[]
+for role in('Saved_result','producer_result'):
+    r=domain_refs[role];raw=get(r['path'],r);row=row_projection(raw,2739);rows.append(row)
+need(rows[0]==rows[1],'same opaque original row in producer and Saved')
+row=rows[0];need(row['representative_J_index']==8349 and row['original_orbit_row_sha256']==
+    meta['source_record_identity']['original_orbit_row_sha256']=='0c9b33e90274a8f9d1c83830201346a48249eab78b47de2d31cf7d22afd2b4d2','exact original row identity')
+raw=get(domain_refs['Saved_result']['path'])
+domain=project(raw,('schema','certificate_verified','rank','field','original_job','orbit_schema','orbit_action',
+    'external_premises','faithful_frame_acceptance','prefix_export'))
+need(domain['schema']=='F004_Q11_INDEXED_CAYLEY_CENTRALIZER_DOMAIN_CERTIFICATE_V1'
+    and domain['certificate_verified']is True and domain['original_job']==[20,4]and domain['rank']==4 and domain['field']==11,'accepted original domain')
+need(domain['external_premises']['root']=='/root'and domain['external_premises']['original_A_equals_G']is True,'existing original A=G premise')
+termkeys=('schema','root','success','rank','mode','original_job','indexed_source','generic_export_source','prefix_export','result')
+for role,mode,resultrole in(('Saved_terminal','check','Saved_result'),('producer_terminal','produce','producer_result')):
+    r=domain_refs[role];terminal=project(get(r['path'],r),termkeys)
+    need(terminal['schema']=='ROOT_CLOSED_F004_Q11_INDEXED_PREFIX_V1'and terminal['root']=='/root'
+        and terminal['success']is True and terminal['rank']==4 and terminal['mode']==mode
+        and terminal['original_job']==[20,4]and terminal['result']==domain_refs[resultrole],'genuine adopted original terminal subject')
+    if role=='Saved_terminal':saved_terminal=terminal
+need(saved_terminal['prefix_export']==domain['prefix_export']==domain_refs['prefix_export'],'same labelled prefix export')
+indexed=saved_terminal['indexed_source']
+for r in indexed.values():get(r['path'],r)
+source=get(indexed['program']['path'],indexed['program']).decode()
+need(indexed['program']['sha256']=='1cebbda5fcda823b43713f03dd17893480c34d040f27501a0651ab69d8f496d3','literal indexed Source')
+for token in("def orbit_cover(","transports.setdefault(image,k)","[transports[j]for j in members]",
+              "stabilizer=[j+1", "'complete pointwise prefix stabilizer contains identity'"):
+    need(token in source,'inspected orbit/transporter Source role')
+theory=Path('/Users/sasha/medusa/research/leemans/computation/f004/theory')
+for name in('cayley_centralizer_inventory_reduction.rst','cayley_centralizer_inventory_distinct_review.rst','acquired_cayley_full_group_bridge.rst'):
+    get(theory/name)
+get(BASE/'logical_application/root_application.json');root=load(BASE/'logical_application/root_application.json')
+need(ref(BASE/'logical_application/root_application.json')['sha256']=='468442ece5749c2e7f0a939e4cd6e5003a98e320c64632564a2352737ecb35eb'
+    and root['case']==case and root['full_rank4_IP']is root['generation_already_accepted']is root['Root_authority']is root['adopted']is root['issued']is True,'issued representative proof')
+post=load(BASE/'logical_application/post_issuance_review/reuse_integer_only.json')
+need(post['blockers']==[]and post['Root_application']==ref(BASE/'logical_application/root_application.json'),'post issue representative review')
+get(root['independent_case_review']['path'],root['independent_case_review'])
+get(root['written_application']['path'],root['written_application']);get(root['accepted_generation']['path'],root['accepted_generation'])
+genpath=Path(root['accepted_generation']['path']).parent/'retained/verify.py';get(genpath)
+bank=Path('/Users/sasha/medusa/research/leemans/computation/f004/q11/rank4/section_generation/residuals/rank4_markings/registration_evidence/position1430/bank00')
+preservation=load(bank/'preservation.json');borrowed=[]
+for h in('3fa5863a94bfa715115072e27e9411f62a446717e6d1f49c53228addfb072839','3239a025e441479ef70ae7d179229560f1bd6e551797b4d73c285a4fa3bad2e0'):
+    found=[x for x in preservation['files']if x['original']['sha256']==h]
+    need(len(found)==1,'genuine historical proof alias');r=found[0]
+    get(r['retained']['path'],r['retained']);borrowed.append(r)
+get(Path(__file__).resolve())
+first=list(BANK.values())
+for r,b in first:read(r['path'],r)
+value=dict(schema='F004_POSITION2739_OPAQUE_SAVED_ROW_METADATA_V1',Root_authority=False,case=case,original_job=[20,4],
+    row=row,original_domain=domain,original_domain_pins=domain_refs,indexed_Source=indexed,
+    representative_Root_application=ref(BASE/'logical_application/root_application.json'),
+    representative_post_review=ref(BASE/'logical_application/post_issuance_review/reuse_integer_only.json'),
+    borrowed_general_argument_from_position1430=borrowed,old_position1430_scope_not_retagged=True,
+    numerical_members_and_transporter_values_decoded=False,Original_matrices_words_or_orbits_evaluated=False,
+    Source_executed=False,canonical_writes=0,blockers=[],
+    checked_inputs=[r for r,b in first],first_and_closing_read_bytes=TOTAL,sampled_peak_rss_bytes=PEAK,
+    limits=dict(seconds=125,rss_bytes=268435456,read_bytes=67108864,paths=512,file_bytes=4194304))
+out=OUT/'row_metadata.json';body=can(value)
+with out.open('xb')as f:need(f.write(body)==len(body),'whole exclusive metadata output')
+print(can(dict(metadata=dict(path=str(out),bytes=len(body),sha256=sha(body)),row=row,
+    first_and_closing_read_bytes=TOTAL,paths=len(BANK),sampled_peak_rss_bytes=PEAK)).decode(),end='')

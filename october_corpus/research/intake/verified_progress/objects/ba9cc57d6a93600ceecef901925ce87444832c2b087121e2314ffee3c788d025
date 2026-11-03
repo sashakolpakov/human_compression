@@ -1,0 +1,84 @@
+"""Close the frozen cohort with exactly parent346 selected science edition two."""
+import argparse,json
+from pathlib import Path
+import common as C
+ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True)
+ap.add_argument('--retry-packet',nargs=3,required=True);ap.add_argument('--Source-peer',nargs=3,required=True)
+ap.add_argument('--scientific-attempts',nargs=3,required=True);ap.add_argument('--cohort',nargs=3,required=True)
+ap.add_argument('--metadata-attempts',nargs=3);a=ap.parse_args()
+L,p,pr,program,peer,mf,cohort,cohortref,control,science_attempts,science_ref,selected,bootstrap,total=C.start('close_cohort.py',a)
+summary_path=control/'cohort_actual_summary.json';C.fresh(summary_path);planned=[]
+if a.metadata_attempts:
+    attempts_ref=C.desc(a.metadata_attempts);attempts=C.doc(L,attempts_ref)
+else:
+    path=control/'metadata_phase_attempts.json';C.fresh(path)
+    attempts=dict(schema='ROOT_F009_COHORT_METADATA_PHASE_ATTEMPTS_V1',root='/root',Root_authority=True,
+        cohort=cohortref,scientific_roles_changed=False,no_successful_role_replayed=True,overrides=[])
+    body=C.can(attempts);attempts_ref=C.ref(path,body);planned.append((path,body))
+assert attempts['schema']=='ROOT_F009_COHORT_METADATA_PHASE_ATTEMPTS_V1'and attempts['root']=='/root'and attempts['Root_authority']is True
+assert attempts['cohort']==cohortref and attempts['scientific_roles_changed']is False and attempts['no_successful_role_replayed']is True
+assert 0<=len(attempts['overrides'])<=12
+overrides={};prior_metadata=[]
+for override in attempts['overrides']:
+    C.check();key=(override['batch'],override['phase']);edition=override['selected_edition']
+    assert type(key[0])is int and 0<=key[0]<4 and key[1]in C.PHASES and key not in overrides
+    assert type(edition)is int and 2<=edition<=8 and len(override['prior_non_success_actual_SDK'])==edition-1
+    sr=override['selected_actual_SDK'];assert sr['path']==str(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(key[0],key[1],edition)))
+    current=C.sdk(L,sr)
+    for number,r in enumerate(override['prior_non_success_actual_SDK'],1):
+        previous=C.doc(L,r)
+        assert r['path']==str(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(key[0],key[1],number)))
+        assert previous['root']==previous['actor']=='/root'and previous['actual_tool']['exit_code']!=0
+        assert previous['full_tool_return']['exit_code']==previous['actual_tool']['exit_code']and previous['all_genuine_api_frames'][-1]==previous['full_tool_return']
+        assert previous['issued_argv']==current['issued_argv']
+        assert 'the acquired base refused before creating its output or child'in''.join(f.get('output','')for f in previous['all_genuine_api_frames'])
+        prior_metadata.append(r)
+    overrides[key]=override
+rows=[];target_total=0;selected_seen=0;other_science_v1=0
+for batch in cohort['batches']:
+    C.check();base=C.SCIENCE/('parents%04d_%04d'%(batch['begin'],batch['end']-1))
+    raw,pairref=L.raw(base/'pairing.json')
+    value=C.project(raw,('cohort','source_indices','strict_slots','cache_registration_performed','target_occurrences'))
+    assert value['cohort']==cohortref and value['source_indices']==batch['source_indices']
+    assert value['strict_slots']==156*len(batch['source_indices'])and value['cache_registration_performed']is False
+    assert type(value['target_occurrences'])is int and value['target_occurrences']>=0
+    scientific=[]
+    for stem in ['parent%04d_supply'%i for i in batch['source_indices']]+['parents%04d_%04d_check'%(batch['begin'],batch['end']-1)]:
+        if stem==C.STEM:
+            assert batch['batch']==1;sr=selected['actual_SDK'];C.sdk(L,sr);selected_seen+=1
+        else:
+            _,sr=L.raw(base/'Root_SDK'/(stem+'_v1.json'));C.sdk(L,sr);other_science_v1+=1
+        scientific.append(sr)
+    metadata=[]
+    for phase in C.PHASES:
+        override=overrides.get((batch['batch'],phase));edition=override['selected_edition']if override else 1
+        _,sr=L.raw(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(batch['batch'],phase,edition)));C.sdk(L,sr)
+        if override:assert sr==override['selected_actual_SDK']
+        metadata.append(sr)
+    target_total+=value['target_occurrences']
+    rows.append(dict(batch=batch['batch'],source_indices=batch['source_indices'],pairing=pairref,
+        scientific_actuals=scientific,metadata_actuals=metadata,strict_slots=value['strict_slots'],target_occurrences=value['target_occurrences']))
+assert selected_seen==1 and other_science_v1==15 and len(rows)==4
+manifest=C.doc(L,mf);source_refs=manifest['Source']+manifest['guards'];source_paths={r['path']for r in source_refs}
+source_first=sum(r['bytes']for r in source_refs);business_first=L.bytes-source_first
+summary=dict(schema='ROOT_F009_COMPLETED_COHORT_ACTUAL_SUMMARY_V1',root='/root',cohort=cohortref,
+    source_indices=cohort['source_indices'],batches=rows,strict_slots=1872,target_occurrences=target_total,
+    scientific_roles=16,metadata_phases=12,all_roles_terminal_first_v1=False,all_scientific_roles_terminal_first_v1=False,
+    all_other_scientific_roles_terminal_first_v1=True,scientific_attempts=science_ref,
+    selected_scientific_roles=science_attempts['selected_roles'],scientific_prior_refusals=[p['prior_scientific_SDK']],
+    metadata_phase_attempts=attempts_ref,metadata_prior_refusals=prior_metadata,
+    independent_actual_review_pending=True,cache_registration_performed=False,whole_R5_or_census_credit=False,
+    frozen_progress_snapshot=cohort['progress_snapshot'],first_closing_metadata_bytes=2*business_first,
+    metadata_paths=len(set(L.pins)-source_paths),Source_first_closing_explicit_bytes=2*source_first,
+    Source_bootstrap_helper_bytes=3744,Source_bootstrap_entry_and_common_bytes=bootstrap-3744-4806-3*18361-512,
+    Source_guard_bootstrap_and_reserve_bytes=4806+3*18361+512,Source_paths=len(source_paths),
+    combined_explicit_read_bytes=2*L.bytes+3744,combined_input_reads_and_nominal_project_bootstrap_bytes=2*L.bytes+bootstrap,
+    closer_program=program,closer_Source_peer=peer,retry_supplement_packet=pr,retry_supplement_Source_manifest=mf,
+    frozen_preparation_context=dict(packet=p['base_preparation_packet'],Source_peer=p['base_preparation_peer'],Root_Source_ownership=cohort['Root_Source_ownership']),
+    qualification='Selected parent346v2 only; all fifteen other science roles verified terminal firstv1. New continuation Source is owned by the retry supplement, while frozen preparation Source/owner remain context. No scientific Source, predicates or canonical state are executed.')
+planned.append((summary_path,C.can(summary)))
+refs,io=C.emit(L,planned,bootstrap)
+print(json.dumps(dict(summary=refs[-1],scientific_attempts=science_ref,metadata_phase_attempts=attempts_ref,
+    protected_registered_prefix_unchanged=342,strict_slots=1872,target_occurrences=target_total,
+    all_scientific_roles_terminal_first_v1=False,all_other_scientific_roles_terminal_first_v1=True,
+    independent_actual_review_pending=True,scientific_calls=0,canonical_writes=0,io=io)))

@@ -1,0 +1,94 @@
+"""Independent actual forecast metadata review; no apply or scientific execution."""
+from pathlib import Path
+import copy,hashlib,json,os,resource,shlex,signal,stat,sys,time
+P=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection/registration');HERE=P/'forecast_review'
+START=time.monotonic();READ=0;B={};R={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125second forecast review')));signal.alarm(125)
+def raw(p,r=None):
+ global READ
+ p=Path(p);k=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ if k not in B:
+  s=p.lstat();assert stat.S_ISREG(s.st_mode)and s.st_size<=4*2**20;b=p.read_bytes();z=p.lstat();sig=lambda a:(a.st_dev,a.st_ino,a.st_mode,a.st_nlink,a.st_size,a.st_mtime_ns,a.st_ctime_ns)
+  assert sig(s)==sig(z)and len(b)==s.st_size;READ+=len(b);assert READ<=64*2**20 and len(B)<512
+  B[k]=b;R[k]=dict(path=k,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert R[k]==r
+ assert time.monotonic()-START<115 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ return B[k]
+def pin(p):raw(p);return R[str(p)]
+def doc(r):return json.loads(raw(r['path'],r))
+def plain(p):return json.loads(raw(p))
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==b
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def api(name,key,success):
+ sr=pin(P/'actual/Root_SDK'/name);s=doc(sr);a=s['issued_argv'];assert s['root']==s['actor']=='/root'and a==s['child_argv']==shlex.split(s['issued_tool_arguments']['cmd'])
+ i=plain(P/'api'/key/'issued.json');assert i['argv']==a and i['tool_arguments']==s['issued_tool_arguments']
+ fs=s['all_genuine_api_frames'];assert fs[0]==s['full_initial_tool_return']and fs[-1]==s['full_tool_return']and(fs[-1]['exit_code']==0)is success
+ assert fs[-1]['exit_code']==s['actual_tool']['exit_code']
+ for j,v in enumerate(fs):assert plain(P/'api'/key/('frame_%04d.json'%j))==v
+ return sr,s
+sr,s=api('forecast_v2.json','Root_f004_logical_position2739_forecast_v2',True)
+assert(sr['bytes'],sr['sha256'])==(8546,'f1cf06782c2d65a9357cc43707258a3e2b3282de2b1dae34f4abd233c12a0952')
+fr,fail=api('forecast_v1.json','Root_f004_logical_position2739_forecast_v1',False)
+assert fr['bytes']==12814 and fr['sha256'].startswith('19699894')and fail['issued_argv']==s['issued_argv']
+assert'the acquired base refused before creating its output or child'in fail['full_tool_return']['output']
+a=s['issued_argv'];child=a[a.index('--')+1:];guard=Path(a[a.index('--output')+1]);st=plain(guard/'started.json');receipt=plain(guard/'receipt.json')
+assert st['command']==receipt['command']==child and st['limits']==receipt['limits']and receipt['status']=='PASS'and receipt['returncode']==0 and receipt['error']is None
+assert receipt['limits']['total_rss']==256*2**20 and receipt['limits']['wall_seconds']==125 and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+assert json.loads(s['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+stdout=plain(guard/'stdout.log');assert raw(guard/'stderr.log')==b''
+forecast=stdout['forecast'];assert forecast['sha256']=='ac9d37522c2c6ba315369a7e2a8bb7fb467e643068e902d4ed3e5a55641313a4'
+v=doc(forecast);cfg=doc(v['config']);release=doc(v['Root_release']);mf=doc(v['Source_manifest'])
+assert child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(P/'adopt_logical_positive.py')]
+assert child[child.index('--mode')+1]=='forecast'and child[child.index('--config')+1:child.index('--config')+3]==[v['config']['path'],v['config']['sha256']]
+assert child[child.index('--release')+1:child.index('--release')+3]==[v['Root_release']['path'],v['Root_release']['sha256']]
+assert v['schema']=='F004_POSITIVE_MARKING_WHOLE_FORECAST_V1'and v['status']=='FORECAST_ONLY'and v['canonical_mutations']is False and v['scientific_calls']==0
+assert v['summary']==stdout['summary']and v['summary']['partition']==[173,3606,0]and v['summary']['remaining']==[]
+assert release['config']==v['config']and release['Source_manifest']==v['Source_manifest']and release['Root_authority']is release['adopted']is True
+false=doc(release['false_plan']);promoted=dict(cfg,Root_authority=False,Root_reaffirmed_in_current_session=False);assert promoted==false
+sp=doc(release['Source_peer']);cp=doc(release['actual_controls_review']);pp=doc(release['plan_review'])
+assert sp['Source_manifest']==cp['Source_manifest']==pp['Source_manifest']==v['Source_manifest']and sp['status'].startswith('SUPPORTED_STATIC')and cp['status'].startswith('SUPPORTED_ACTUAL')and pp['status'].startswith('SUPPORTED_STATIC')
+assert cp['count']==16 and cp['Original_inputs_loaded']is False and pp['false_config']==release['false_plan']and pp['protected_progress_snapshot']==cfg['protected_progress_snapshot']
+for x in mf['sources']:raw(P/x['path'],dict(x,path=str(P/x['path'])))
+for x in mf['guards']:raw(x['path'],x)
+images={}
+assert len(v['whole_afterimages'])==5
+for x in v['whole_afterimages']:
+ b=raw(x['private']['path'],x['private']);assert(x['intended']['bytes'],x['intended']['sha256'])==(len(b),hashlib.sha256(b).hexdigest())
+ assert not os.path.lexists(x['intended']['path']);images[x['intended']['path']]=b
+summ=v['summary'];old=doc(cfg['selector']);new=json.loads(images[summ['selector']['path']]);inv=json.loads(images[summ['inverse']['path']]);prop=json.loads(images[summ['property_record']['path']]);evidence=json.loads(images[summ['evidence']['path']])
+back=copy.deepcopy(new)
+for patch in reversed(inv['patches']):
+ assert back[patch['key']]==patch['after']
+ if patch['before_present']:back[patch['key']]=copy.deepcopy(patch['before'])
+ else:del back[patch['key']]
+assert back==old and inv['before_partition']==[173,3605,1]and inv['after_partition']==[173,3606,0]and inv['newly_paid_positions']==[2739]
+assert new['original_paid_positions']==old['original_paid_positions']and new['accepted_new_paid_positions']==sorted(old['accepted_new_paid_positions']+[2739])
+assert new['unresolved_position_runs']==[]and new['unresolved_positions']==0 and new['source_adoptions']==old['source_adoptions']+[summ['property_record']]
+assert prop['whole_job_credit']==prop['Aut_reversal_class_count_credit']==prop['new_manuscript_conjecture_Lean_measurement_credit']==0
+assert prop['newly_paid_positions']==[2739]and prop['verified_marking_property_records']==1 and prop['global_q11_closed']==126 and prop['global_q11_pending']==146
+row=prop['settled_dispositions'][0];assert row['position']==2739 and row['saved_orbit_member_count']==4 and row['generation_verified']is row['full_rank4_IP_verified']is True
+assert row['Root_application']['sha256']==cfg['logical_case']['application']['sha256']and prop['accepted_saved_orbit_import']['sha256']==cfg['saved_orbit_Root_import']['sha256']
+late={x['path']:x for x in v['late_objects']};assert len(late)==len(v['late_objects'])
+assert len(evidence['files'])==len(late)
+for x in evidence['files']:
+ b=raw(x['original']['path'],x['original']);dest=x['retained'];assert dest==late[dest['path']]and(dest['bytes'],dest['sha256'])==(len(b),hashlib.sha256(b).hexdigest())
+ assert Path(dest['path']).name==dest['sha256']and not os.path.lexists(dest['path'])
+for x in cfg['protected_globals']+cfg['protected_operational_inputs']+list(cfg['protected_progress_snapshot'].values()):raw(x['path'],x)
+assert v['live_protected_beforeimages']==cfg['protected_globals']
+retref=pin(P/'actual/forecast_manifest.json');ret=doc(retref);assert retref['sha256']=='b9e737ae005d9a3925f29ac4beb7ae10a666524513dcde6bdeb6804a3e0f7819'and len(ret['files'])==6
+for x in ret['files']:assert raw(x['original']['path'],x['original'])==raw(x['retained']['path'],x['retained'])
+raw(Path(__file__))
+for n,b in B.items():assert Path(n).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+pins=save(HERE/'checked_pins.json',dict(schema='F004_ACTUAL_FORECAST_FINITE_PINS_V1',pins=list(R.values()),first_closing_bytes=READ,paths=len(R)))
+review=save(HERE/'reuse_integer_only.json',dict(schema='F004_LOGICAL_POSITIVE_ACTUAL_FORECAST_REVIEW_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_ACTUAL_WHOLE_PRIVATE_FORECAST',blockers=[],
+ forecast=forecast,Source_manifest=v['Source_manifest'],config=v['config'],Root_release=v['Root_release'],actual_SDK=sr,actual_guard=pin(guard/'receipt.json'),retained_forecast_files=retref,
+ summary=summ,whole_afterimages_count=5,all_whole_afterimages_and_late_object_subjects_verified=True,whole_typed_selector_inverse_verified=True,whole_saved_row_members=4,newly_paid_positions=[2739],prospective_partition=[173,3606,0],
+ global_job_counts_unchanged=dict(closed=126,pending=146,required=272),actual_guard_and_raw_frames_verified=True,canonical_protected_aliases_byte_unchanged=True,canonical_apply_performed=False,
+ prior_metadata_forecast_refusal=dict(SDK=fr,reason='Genuine resource-admission refusal before metadata child/guard/output; sameargv selectedv2 succeeds. This is not a scientific-role retry.'),
+ Original_payload_values_decoded=False,metadata_selector_inverse_only_evaluated=True,represented_registrar_or_scientific_code_executed_by_this_review=False,scientific_calls=0,canonical_writes=0,whole_job_or_global_manuscript_conjecture_Lean_measurement_credit=0,checked_pins=pins,
+ qualification='Independent genuine actual forecast/whole-byte metadata review. Five private afterimages and41 prospective evidence objects join exact current reviewed Source/config/release and qualified Root mathematical inputs; six existing forecast files are durably preserved. No apply, pointer activation, group/orbit/intersection calculation or numerical replay occurs. Fresh external Root write decision, actual append/postwrite audit and separate activation remain owed. Full recursive historical mathematical closure is not newly claimed.'))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_F004_ACTUAL_FORECAST_REVIEW',review=review,read_bytes=READ,paths=len(R),scientific_calls=0,canonical_writes=0),sort_keys=True))

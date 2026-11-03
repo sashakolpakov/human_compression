@@ -1,0 +1,41 @@
+"""Literal typed-status helpers from genuine writer73e75; no group kernel."""
+import hashlib,struct
+SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+SELECTOR=dict(first_block_index=2,endpoint_position=18,local_class_position=164,middle_block_index=2,first_ambient_class_position=13,middle_ambient_class_position=13)
+
+def need(ok,message):
+ if not ok:raise ValueError(message)
+
+def scope(p):
+ need(p['scope_digest']==SCOPE and p['original_selector']==SELECTOR and p['witnesses']['bytes']==462528,'original scope/witness bank')
+
+def counts(mask):
+ need(type(mask)is bytes and len(mask)==28908,'exact28908 status bytes');c={0:0,1:0,2:0,6:0}
+ for v in mask:need(v in c,'typed status alphabet');c[v]+=1
+ return dict(subset_NEG=c[1],GEN=c[2]+c[6],separate_IP=c[6],unpaid=c[0])
+
+def identity(row,witnesses):
+ i=row['free_index'];need(type(i)is int and 0<=i<28908 and type(row['owner'])is int,'typed free/owner')
+ raw=witnesses[16*i:16*i+16]
+ need(len(raw)==16 and row['owner']==struct.unpack_from('<I',raw)[0]and row['witness_row_sha256']==hashlib.sha256(raw).hexdigest(),'whole witness identity')
+ return i
+
+def receipt_check(r,mask,p):
+ c=counts(mask);need(r['schema']=='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1'and r['root']=='/root'and r['adopted']is True and r['Root_adoption_owed']is False and r['scope_digest']==SCOPE and r['original_selector']==SELECTOR and r['witness_bank']==p['witnesses']and r['original_free_witness_adoption']==p['free_adoption']and r['original_operand_adoption']==p['operand_adoption']and type(r['original_free_space'])is int and r['original_free_space']==28908,'accepted original ledger')
+ need(type(r['counts'])is dict and set(r['counts'])==set(c)and all(type(r['counts'][k])is int and r['counts'][k]==v for k,v in c.items()),'derived strict counts')
+ for k,v in dict(fixed_nonfree_NEG_count=17688,fixed_nonfree_NEG_mass=6884658,global_NEG=17688+c['subset_NEG'],global_NEG_mass=6884658+1024*c['subset_NEG'],unpaid_mass=1024*c['unpaid']).items():need(type(r[k])is int and r[k]==v,'derived strict masses')
+ return c
+
+def apply(previous,facts,proof_rows,witnesses):
+ counts(previous);need(type(facts)is list and 1<=len(facts)<=16,'bounded new typed facts');mask=bytearray(previous);seen=set();paid=[]
+ for f in facts:
+  need(set(f)=={'kind','free_index','owner','witness_row_sha256','proof'}and f['kind']in('NEG','GEN','GEN_IP','IP')and type(f['proof'])is int and 0<=f['proof']<len(proof_rows),'new typed fact shape')
+  i=identity(f,witnesses);need(i not in seen,'no duplicate/recredit');seen.add(i);kind=f['kind'];rows=proof_rows[f['proof']]
+  need(any(r['free_index']==i and r['owner']==f['owner']and r['witness_row_sha256']==f['witness_row_sha256']for r in rows),'actual strict row match')
+  old=mask[i]
+  if kind=='NEG':need(old==0,'newNEG only unpaid');mask[i]=1
+  elif kind=='GEN':need(old==0,'newGEN only unpaid');mask[i]=2
+  elif kind=='GEN_IP':need(old==0,'newGEN+IP only unpaid');mask[i]=6
+  else:need(old==2,'IP upgrade only actual GEN-only');mask[i]=6
+  paid.append(dict(free_index=i,before=old,after=mask[i],kind=kind,owner=f['owner'],witness_row_sha256=f['witness_row_sha256'],proof=f['proof']))
+ return bytes(mask),paid

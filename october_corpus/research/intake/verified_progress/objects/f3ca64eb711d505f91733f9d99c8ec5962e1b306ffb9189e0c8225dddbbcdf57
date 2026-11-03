@@ -1,0 +1,119 @@
+"""Finite metadata for one genuine scientific pre-entry refusal; no kernels."""
+from pathlib import Path
+import argparse,hashlib,json,os,resource,shlex,signal,sys,time
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+HERE=Path(__file__).resolve().parent
+HELPER=HERE/'whole.py';hb=HELPER.read_bytes()
+assert len(hb)==3744 and hashlib.sha256(hb).hexdigest()=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+ns=dict(__file__=str(HELPER),__name__='retry_metadata_ledger');exec(compile(hb,str(HELPER),'exec'),ns)
+Ledger,write=ns['Ledger'],ns['write'];START=time.monotonic()
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata limit')));signal.alarm(125)
+PY='/Users/sasha/.venvs/global/bin/python'
+GUARDS=[Path('/Users/sasha/medusa/research/leemans/maintenance/runtime')/n for n in ('supervise_validation.py','supervise_transient.py')]
+GUARD_SHA=['c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4','5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42']
+AUTHOR='/root/forest_resume'
+STEM='parent0346_supply'
+SCIENCE=Path('/private/tmp/f009_R5_parent_cohorts_actual/cohort_from0342/parents0345_0347')
+
+def check():
+ assert time.monotonic()-START<115
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+
+def desc(a):return dict(path=a[0],bytes=int(a[1]),sha256=a[2])
+def trip(r):return[r['path'],str(r['bytes']),r['sha256']]
+def raw(L,r):check();return L.raw(r['path'],r)[0]
+def doc(L,r):return json.loads(raw(L,r))
+def pin(L,p):return L.raw(p)[1]
+
+def actual(L,r,key,argv,success):
+ d=doc(L,r)
+ assert d['schema']=='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'and d['root']==d['actor']=='/root'
+ assert d['issued_argv']==d['child_argv']==argv and shlex.split(d['issued_tool_arguments']['cmd'])==argv
+ base=Path(L.packet['transport_base'])/key
+ issued=doc(L,pin(L,base/'issued.json'))
+ assert issued['argv']==argv and issued['tool_arguments']==d['issued_tool_arguments']and issued['root']=='/root'
+ frames=d['all_genuine_api_frames'];assert 1<=len(frames)<=32
+ assert frames[0]==d['full_initial_tool_return']and frames[-1]==d['full_tool_return']
+ assert frames[0]['chunk_id']==d['actual_tool']['initial_chunk']and frames[-1]['chunk_id']==d['actual_tool']['terminal_chunk']
+ assert frames[-1]['exit_code']==d['actual_tool']['exit_code']and (d['actual_tool']['exit_code']==0)is success
+ for i,v in enumerate(frames):assert doc(L,pin(L,base/('frame_%04d.json'%i)))==v
+ assert not(base/('frame_%04d.json'%len(frames))).exists()
+ return d
+
+def start(entry,args):
+ assert args.actor=='/root'
+ L=Ledger();p,pr=L.document(HERE/'packet.json');L.packet=p
+ assert p['schema']=='F009_SCIENTIFIC_PREENTRY_RETRY_SUPPLEMENT_V1'and p['Root_authority']is False
+ own=pin(L,HERE/entry);mfref=p['entry_manifests'][entry];mf=doc(L,mfref)
+ assert mf['entry']==own and {Path(r['path']).name for r in mf['Source']}=={entry,'retry_common.py','whole.py'}
+ for r in mf['Source']+mf['guards']:raw(L,r)
+ total=sum(r['bytes']for r in mf['Source']+mf['guards'])+512
+ assert total==mf['Source_plus_guards512']<=65536 and [r['sha256']for r in mf['guards']]==GUARD_SHA
+ grantref=desc(args.Root_grant);grant=doc(L,grantref)
+ assert grant['schema']=='ROOT_F009_SCIENTIFIC_PREENTRY_RETRY_GRANT_V1'and grant['root']=='/root'and grant['Root_authority']is True
+ assert grant['packet']==pr and grant['cohort']==p['cohort']and grant['prior_scientific_SDK']==p['prior_scientific_SDK']
+ assert grant['stem']==STEM and grant['selected_edition']==2 and grant['status']=='SUPPORTED'and grant['blockers']==[]and grant['adopted']is True
+ for k in('whole_new_metadata_Source_and_distinct_peer_owned','exact_genuine_preentry_failure_owned',
+  'no_successful_scientific_role_replay_authorized','same_exact_scientific_argv_and_numeric_limits_owned',
+  'frozen_init_owner_and_packet_unchanged_owned','only_this_selected_retry_authorized'):
+  assert grant[k]is True
+ peerref=grant['Source_peer'];peer=doc(L,peerref)
+ assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root',AUTHOR,'/root/mathematical_review')
+ assert peer['packet']==pr and peer['programs']==p['programs']and peer['entry_manifests']==p['entry_manifests']
+ assert peer['protocol']==p['protocol'];raw(L,p['protocol'])
+ cohort=doc(L,p['cohort']);assert cohort['begin']==342 and cohort['end']==354 and cohort['program']['sha256']=='d516861bff3623789ad6ef2c63f552014bb8e92ef88b7922bb06963e37430311'
+ assert cohort['preparation_provenance']['packet']==p['base_preparation_packet']
+ for r in cohort['progress_snapshot'].values():raw(L,r)
+ owner=doc(L,cohort['Root_Source_ownership']);assert owner['preparation_packet']==p['base_preparation_packet']and owner['preparation_Source_peer']==p['base_preparation_peer']
+ assert owner['whole_current_metadata_Source_protocol_and_disclosures_owned']is True
+ assert [r['sha256']for r in p['scientific_manifests']]==['c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e','ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff']
+ for mr in p['scientific_manifests']:
+  m=doc(L,mr)
+  assert mr['sha256']in('c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e','ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff')
+  for r in m['Source']:raw(L,r)
+  assert sum(r['bytes']for r in m['Source'])+512==m['Source_with_invocation_reserve']<=65536
+ return L,p,pr,grantref,peerref,total
+
+def refusal(L,p):
+ r=p['prior_scientific_SDK'];assert r['path']==str(SCIENCE/'Root_SDK'/(STEM+'_v1.json'))
+ d=doc(L,r);argv=d['issued_argv']
+ assert argv[argv.index('--rss-cap-mib')+1]=='128'and argv[argv.index('--timeout')+1]=='150'
+ assert argv[argv.index('--output')+1]==str(SCIENCE/'guards'/STEM)
+ assert argv[argv.index('--out')+1]==str(SCIENCE/STEM)
+ child=argv[argv.index('--')+1:]
+ prep=doc(L,p['prepared_role'])
+ assert prep['manifest']==p['scientific_manifests'][0]and prep['cohort']==p['cohort']and prep['index']==346
+ expected=[PY,'-E','-B','-S','/private/tmp/f009_complete_parent_stabilizer_supplier/worker.py','--actor','/root','--manifest']+trip(prep['manifest'])
+ expected+=['--request']+trip(prep['request'])+['--Root-gate']+trip(prep['gate'])+['--out',prep['out'],'--guard',prep['guard']]
+ assert child==expected
+ for key in('manifest','request','gate','Root_import'):raw(L,prep[key])
+ actual(L,r,'Root_f009_cohort0342_parent0346_supply_v1',argv,False)
+ text=''.join(v.get('output','')for v in d['all_genuine_api_frames'])
+ assert 'the acquired base refused before creating its output or child'in text
+ assert '4294967296 available RAM bytes required'in text
+ raw(L,p['failure_precheck'])
+ absence=doc(L,p['Root_absence_inspection'])
+ assert absence['schema']=='ROOT_PREENTRY_ABSENCE_INSPECTION_V1'and absence['root']=='/root'and absence['Root_authority']is True
+ assert absence['failed_issued_argv']==absence['failed_child_argv']==argv and absence['guard']==str(SCIENCE/'guards'/STEM)and absence['output']==str(SCIENCE/STEM)
+ assert absence['guard_exists']is absence['output_exists']is False and absence['no_numerical_admission_created']is True and absence['scientific_calls']==0
+ assert absence['guard_caps_unchanged']==dict(rss_cap_mib=128,timeout_seconds=150)
+ assert absence['failed_actual_SDK']==p['durable_prior_scientific_SDK'];raw(L,p['durable_prior_scientific_SDK'])
+ observed=doc(L,p['Root_absence_inspection_SDK'])
+ observation=actual(L,p['Root_absence_inspection_SDK'],'Root_f009_cohort0342_parent0346_absence_inspection_v1',observed['issued_argv'],True)
+ assert json.loads(observation['full_tool_return']['output'])==dict(inspection=p['Root_absence_inspection'],guard_exists=False,output_exists=False,scientific_calls=0)
+ return argv
+
+def emit(L,args,value,total,extra=()):
+ out=Path(args.out);assert out.is_absolute()and out.is_relative_to(HERE)and not out.exists()and out.parent.resolve(strict=True)==out.parent
+ first=L.bytes;bootstrap=sum(r['bytes']for r in doc(L,L.packet['entry_manifests'][Path(sys.argv[0]).name])['Source'])
+ assert 2*L.bytes+bootstrap+2*2**20<=64*2**20 and len(L.pins)+1+len(extra)<=512
+ assert len(extra)<=1 and all(Path(path).is_relative_to(HERE)and not Path(path).exists()and Path(path).parent.resolve(strict=True)==Path(path).parent for path,_ in extra)
+ L.close();check()
+ value.update(first_closing_metadata_bytes=L.bytes,Source_plus_guards512=total,project_Source_bootstrap_bytes=bootstrap,
+  declared_read_upper=2*first+bootstrap+2*2**20,scientific_executions=0,canonical_mutations=0)
+ outputs=[write(Path(path),v)for path,v in extra]+[write(out,value)]
+ O=Ledger()
+ for r in outputs:O.raw(r['path'],r)
+ O.close()
+ assert L.bytes+bootstrap+O.bytes<=64*2**20;check();signal.alarm(0)
+ print(json.dumps(dict(outputs=outputs,scientific_executions=0,canonical_mutations=0)))

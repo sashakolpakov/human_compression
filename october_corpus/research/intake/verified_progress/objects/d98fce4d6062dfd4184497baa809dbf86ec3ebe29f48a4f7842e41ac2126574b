@@ -1,0 +1,227 @@
+"""Independent metadata joins for three conditional rank-three applications.
+
+No Original group values, scientific programs, cycles or witnesses are evaluated.
+The mathematical argument is reviewed separately in review.rst.
+"""
+from pathlib import Path
+import hashlib
+import json
+import os
+import resource
+import signal
+import stat
+import sys
+import time
+
+if sys.flags.optimize:
+    raise RuntimeError('Run without -O or -OO.')
+START = time.monotonic()
+signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('125 second metadata review')))
+signal.alarm(125)
+BASE = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients')
+PACKET = BASE / 'simple_group_intersections'
+OUT = PACKET / 'review'
+PINS = {}
+READ = 0
+
+def pin(path, body):
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def sig(s):
+    return (s.st_dev, s.st_ino, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+
+def budget():
+    assert time.monotonic() - START < 115
+    scale = 1 if sys.platform == 'darwin' else 1024
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * scale <= 256 * 2**20
+    assert READ <= 64 * 2**20 and len(PINS) <= 512
+
+def read(path, expected=None):
+    global READ
+    budget()
+    p = Path(path)
+    if str(p) in PINS:
+        r, body, signature = PINS[str(p)]
+        assert expected is None or r == expected
+        return body
+    s = p.lstat()
+    assert p.is_absolute() and p.resolve(strict=True) == p
+    assert stat.S_ISREG(s.st_mode) and s.st_size <= 4 * 2**20
+    body = p.read_bytes()
+    assert len(body) == s.st_size and sig(p.lstat()) == sig(s)
+    r = pin(p, body)
+    assert expected is None or r == expected
+    PINS[str(p)] = (r, body, sig(s))
+    READ += len(body)
+    budget()
+    return body
+
+def doc(path, expected=None):
+    return json.loads(read(path, expected))
+
+h = doc(PACKET / 'handoff.json')
+assert pin(PACKET / 'handoff.json', read(PACKET / 'handoff.json'))['sha256'] == '731eddf4cb236068d854c30e6f7faf559ad523959a7e5b15ca7c047a58b2304e'
+assert h['Root_authority'] is False and h['new_scientific_calls'] == 0
+assert h['author'] == '/root/intersection_applications'
+q = doc(h['proposal']['path'], h['proposal'])
+inputs = doc(h['inputs']['path'], h['inputs'])
+for r in inputs['whole_physical_files']:
+    read(r['path'], r)
+read(h['proof']['path'], h['proof'])
+assert q['Root_authority'] is q['Root_application_issued'] is False
+assert q['independent_application_review'] is None
+assert q['full_original_domain_hypotheses_borrowed'] is True
+assert q['finite_simple_inner_G_not_Aut'] is q['H_may_contain_outer_automorphisms'] is True
+assert q['no_adjacent_order_or_coprimality_hypothesis'] is True
+assert q['no_canonical_or_progress_or_Git_mutation'] is True
+assert q['written_application'] == h['proof'] and q['inputs'] == h['inputs']
+assert q['theorem'] == h['original_theorem'] and q['theorem_existing_review'] == h['existing_theorem_review']
+
+snapshot = q['current_snapshot']
+current = doc(snapshot['CURRENT']['path'], snapshot['CURRENT'])
+receipt = doc(snapshot['receipt']['path'], snapshot['receipt'])
+mask = read(snapshot['bank']['path'], snapshot['bank'])
+assert current['status_bank'] == snapshot['bank'] and current['ledger_receipt'] == snapshot['receipt']
+assert len(mask) == 28908 and set(mask) <= {0, 1, 2, 6}
+assert receipt['counts'] == dict(GEN=724, subset_NEG=744, separate_IP=721, unpaid=27440)
+assert receipt['adopted'] is True and receipt['Root_adoption_owed'] is False
+assert receipt['scope_digest'] == current['scope_digest'] == q['scope_digest']
+assert receipt['original_selector'] == q['original_selector']
+assert receipt['witness_bank'] == doc(q['original_middle_witness_adoption']['path'], q['original_middle_witness_adoption'])['outputs']['free_witnesses.bin']
+assert receipt['original_free_witness_adoption'] == q['original_middle_witness_adoption']
+assert receipt['original_operand_adoption'] == q['original_operand_adoption']
+assert mask.count(1) == 744 and mask.count(2) == 3 and mask.count(6) == 721 and mask.count(0) == 27440
+
+batch = doc(q['accepted_generation_batch']['path'], q['accepted_generation_batch'])
+assert batch['root'] == '/root' and batch['adopted'] is True and batch['Root_adoption_owed'] is False
+assert batch['scope_digest'] == q['scope_digest'] and batch['original_selector'] == q['original_selector']
+assert batch['strict_IP0_unchanged'] is True and batch['separate_existing_rank3_IP'] is None
+proof0 = batch['proofs'][0]
+assert proof0['kind'] == 'GEN' and proof0['result'] == q['accepted_generation_result']
+
+# Resolve original descriptors through exact retained aliases, never the old
+# mutable temporary paths. Only these four finite roles are imported here.
+manifests = [doc(r['path'], r) for r in proof0['retentions']]
+alias_docs = {}
+for alias in inputs['accepted_retained_aliases']:
+    original = alias['original']
+    found = [r['retained'] for m in manifests for r in m['files'] if r['original'] == original]
+    assert found and set(map(lambda r: (r['path'], r['bytes'], r['sha256']), alias['retained'])) <= set(map(lambda r: (r['path'], r['bytes'], r['sha256']), found))
+    bodies = [read(r['path'], r) for r in alias['retained']]
+    assert all(b == bodies[0] for b in bodies)
+    assert len(bodies[0]) == original['bytes'] and hashlib.sha256(bodies[0]).hexdigest() == original['sha256']
+    alias_docs[original['sha256']] = bodies[0]
+gen = json.loads(alias_docs[q['accepted_generation_result']['sha256']])
+actual = json.loads(alias_docs[q['accepted_generation_actual_review']['sha256']])
+root_gen = json.loads(alias_docs[proof0['review']['sha256']])
+kernel_text = alias_docs[proof0['support']['kernel']['sha256']].decode()
+assert gen['schema'] == 'L026_DIRECT_ORIGINAL_ROTATION_CYCLES_RETURN_V1'
+assert gen['status'] == 'VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'
+assert gen['actual_direct_signed_word_and_every_closing_edge_checked'] is True
+assert gen['same_known_G_seed_and_G_normal_in_A_membership_route_imported'] is True
+assert gen['adopted_middle_witness_premises'] == q['original_middle_witness_adoption']
+assert gen['adopted_operand_and_membership_premises'] == q['original_operand_adoption']
+assert gen['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit'] == 0
+assert gen['scope_digest'] == q['scope_digest'] and gen['original_selector'] == q['original_selector']
+assert actual['status'].startswith('SUPPORTED_ACTUAL') and actual['reviewer'] != '/root'
+assert actual['blockers'] == [] and actual['whole_Source_and_inputs_closed'] is actual['actual_guard_and_raw_frames_verified'] is True
+assert actual['new_IP_or_canonical_case_credit'] == 0
+assert {k: v for k, v in actual['ledger_GEN_proof_refs'].items() if k != 'retentions'} == {k: v for k, v in proof0.items() if k != 'retentions'}
+assert root_gen['Root_authority'] is True and root_gen['status'] == 'SUPPORTED' and root_gen['blockers'] == []
+assert root_gen['named_G_membership_bridge_action_and_two_fibre_imports_checked'] is True
+assert root_gen['actual_positive_record_indices'] == [265, 270, 271]
+for fragment in ('need(moved,', 'need(a!=c,', 'need(a[c[point]]==c[a[point]],'):
+    assert fragment in kernel_text
+
+expected = [
+    dict(free_index=265, owner=474, witness_row_sha256='884cc09ae6be3a98d4f8ee11df301c6e21ef19590c1cf1a9a8db26e86acf6646'),
+    dict(free_index=270, owner=512, witness_row_sha256='3446a5734cc79fe8156499f1da96e2ca27f386a07dace73f5b81275cc477e801'),
+    dict(free_index=271, owner=514, witness_row_sha256='5d171be3dfa0491954d2b11d36e4d7f862a26f9e8bee50ac163feeb82b369c62'),
+]
+assert [x['identity'] for x in q['applications']] == expected
+for ident, app in zip(expected, q['applications']):
+    assert mask[ident['free_index']] == 2
+    assert app['canonical_generation_fact'] == dict(ident, kind='GEN', proof=0)
+    assert app['canonical_generation_fact'] in batch['new_facts']
+    for records in (gen['verified_generation_records'], actual['verified_generation_records']):
+        assert len([r for r in records if {k: r[k] for k in ident} == ident]) == 1
+    assert app['old_strict_generation_IP_credit_remains_zero'] is True
+    assert 'no internal-partner commutation assumption' in app['middle_involution_premise']
+
+lineage = inputs['canonical_receipt_lineage']
+assert lineage[0] == snapshot['receipt']
+for left, right in zip(lineage, lineage[1:]):
+    assert doc(left['path'], left)['previous_ledger'] == right
+assert batch['previous_ledger'] == doc(lineage[-1]['path'], lineage[-1])['previous_ledger']
+
+old_review = doc(q['theorem_existing_review']['path'], q['theorem_existing_review'])
+premises = doc(q['retained_premises']['path'], q['retained_premises'])
+assert old_review['status'] == 'SUPPORTED' and old_review['blockers'] == []
+assert old_review['existing_theorem'] == q['theorem']
+assert old_review['retained_premises'] == q['retained_premises']
+assert old_review['original_operand_adoption'] == q['original_operand_adoption']
+assert old_review['original_middle_witness_adoption'] == q['original_middle_witness_adoption']
+assert old_review['strict_result_IP_credit_not_retagged'] is True
+assert premises['inherited_member_and_Reader_imports']['original_G_normal_in_A'] is True
+assert premises['named_group_or_class_or_GAP_classification_reproved'] is False
+
+# Preserve the active cohort's three frozen metadata editions unchanged.
+frozen = [
+    dict(path='/Users/sasha/medusa/research/leemans/maintenance/intake/progress/current_intake.json', bytes=274476, sha256='354926b02a2347402cf9c72d7e7aebc0b27738d4165a03fd5e28823cb8c0b8c3'),
+    dict(path='/Users/sasha/medusa/research/leemans/maintenance/intake/progress/controllers/current.json', bytes=789, sha256='779d238ad12646c913f47659eee5ef207fcda47737f7423bc96fe051b179efa1'),
+    dict(path='/Users/sasha/medusa/research/leemans/maintenance/intake/progress/stages/forest_extensions_0318_0329_cohort_shared_strict/runtime.json', bytes=4009280, sha256='87ff06e7abd3849ce10da375309786cbc157f812b87fad77d4acf4b85f1a2794'),
+]
+for r in frozen:
+    read(r['path'], r)
+
+before_closing = READ
+for name, (r, body, signature) in list(PINS.items()):
+    budget()
+    p = Path(name)
+    assert sig(p.lstat()) == signature
+    again = p.read_bytes()
+    READ += len(again)
+    assert again == body and pin(p, again) == r and sig(p.lstat()) == signature
+budget()
+
+def write(name, value):
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    p = OUT / name
+    with p.open('xb') as stream:
+        stream.write(body)
+        stream.flush()
+        os.fsync(stream.fileno())
+    return pin(p, body)
+
+pins = write('checked_pins.json', dict(schema='L026_THREE_IP_REVIEW_WHOLE_PINS_V1', files=[v[0] for _, v in sorted(PINS.items())], first_read_bytes=before_closing, first_and_closing_bytes=READ, physical_paths=len(PINS)))
+seal = write('reuse_integer_only.json', dict(
+    schema='L026_SIMPLE_GROUP_INTERSECTION_APPLICATION_INDEPENDENT_REVIEW_V1',
+    reviewer='/root/mathematical_review', author=h['author'],
+    status='SUPPORTED_CONDITIONAL_APPLICATIONS_AWAIT_ROOT_ISSUANCE', blockers=[],
+    proposal=h['proposal'], written_application=h['proof'], handoff=pin(PACKET/'handoff.json', read(PACKET/'handoff.json')),
+    theorem=q['theorem'], existing_theorem_review=q['theorem_existing_review'],
+    accepted_generation_result=q['accepted_generation_result'], accepted_generation_actual_review=q['accepted_generation_actual_review'],
+    subjects=expected, whole_pins=pins,
+    full_rank_three_intersection_deduction_supported=True,
+    exact_accepted_generation_identities_supported=True,
+    finite_nonabelian_simple_inner_G_not_Aut_hypothesis_explicit=True,
+    b_involution_uses_retained_original_class_and_two_fibre_premise=True,
+    no_internal_partner_commutation_inference_used=True,
+    b_nonidentity_follows_from_generation_and_commuting_endpoints=True,
+    all_original_member_Reader_action_class_witness_H_B_qualifications_preserved=True,
+    H_may_contain_outer_automorphisms=True,
+    no_adjacent_order_or_coprimality_hypothesis=True,
+    old_strict_numerical_IP_credit_remains_zero=True,
+    first_and_closing_whole_bytes_and_signatures_stable=True,
+    frozen_current_intake_controller_runtime_unchanged=True,
+    current_registered_IP=721, prospective_IP_if_separately_adopted=724,
+    Root_application_issued=False, canonical_or_progress_Git_writes=0,
+    Original_group_or_witness_payloads_evaluated=False,
+    represented_scientific_code_or_controls_executed=False,
+    earlier_actual_execution_authority_borrowed_not_reaudited=True,
+    new_manuscript_conjecture_Lean_or_compression_credit=0,
+    first_read_bytes=before_closing, first_and_closing_bytes=READ, physical_paths=len(PINS),
+    qualification='Conditional mathematical application review of the three exact accepted generation identities. Named-model, original class/membership, Reader, action, graph, two-fibre and H=B meanings remain imported; no new model recognition or numerical replay is claimed. Separate Root issuance, logical binding and registration are still required.',
+    resource_qualification='Metadata-only SIGALRM125 and sampled RSS256MiB checks; not a numerical supervisor or scientific admission claim.'))
+signal.alarm(0)
+print(json.dumps(dict(review=seal, checked_pins=pins, metadata_read_bytes=READ, scientific_calls=0)))

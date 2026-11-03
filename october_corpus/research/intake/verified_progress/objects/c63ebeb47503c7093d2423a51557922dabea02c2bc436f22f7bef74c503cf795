@@ -1,0 +1,96 @@
+"""Static whole-Source peer; no represented controls, registrar or factory run."""
+from pathlib import Path
+import ast,hashlib,json,os,resource,signal,stat,sys,time
+P=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection/registration');HERE=P/'review'
+START=time.monotonic();READ=0;B={};REFS={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125second static Source peer')));signal.alarm(125)
+def raw(p,r=None):
+ global READ
+ p=Path(p);k=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ if k not in B:
+  s=p.lstat();assert stat.S_ISREG(s.st_mode)and s.st_size<=4*2**20;b=p.read_bytes();z=p.lstat()
+  sig=lambda a:(a.st_dev,a.st_ino,a.st_mode,a.st_nlink,a.st_size,a.st_mtime_ns,a.st_ctime_ns)
+  assert sig(s)==sig(z)and len(b)==s.st_size;READ+=len(b);assert READ<=64*2**20 and len(B)<512
+  B[k]=b;REFS[k]=dict(path=k,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert REFS[k]==r
+ assert time.monotonic()-START<115 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ return B[k]
+def pin(p):raw(p);return REFS[str(p)]
+def doc(r):return json.loads(raw(r['path'],r))
+def plain(p):return json.loads(raw(p))
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==b
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+h=plain(P/'handoff.json');assert(pin(P/'handoff.json')['bytes'],pin(P/'handoff.json')['sha256'])==(4808,'8c7df02df49486876acba700d1dd8757997a0d9e1faa09efe626f6e0ef506292')
+assert h['Source_entries_executed']is h['metadata_controls_executed']is False
+for k in('program','Source_manifest','factory_program','factory_Source_manifest','protocol','seed','false_config','false_release_template','literal_helper_provenance','IO_plan'):raw(h[k]['path'],h[k])
+mf=doc(h['Source_manifest']);assert mf['schema']=='F004_LOGICAL_POSITIVE_MARKING_METADATA_SOURCE_V1'
+for r in mf['sources']:raw(P/r['path'],dict(r,path=str(P/r['path'])))
+for r in mf['guards']:raw(r['path'],r)
+assert sum(r['bytes']for r in mf['sources']+mf['guards'])+512==64874<=65536
+fm=doc(h['factory_Source_manifest']);assert fm['entry']==h['factory_program']
+for r in fm['Source']+fm['guards']:raw(r['path'],r)
+assert sum(r['bytes']for r in fm['Source']+fm['guards'])+512==fm['Source_plus_guards512']==40815
+for n in('adopt_logical_positive.py','rebase_plan.py','metadata_io.py','selector_projection.py','metadata_fields.py'):ast.parse(raw(P/n),filename=str(P/n))
+literal=doc(h['literal_helper_provenance'])
+for old,new in(('literal_old_metadata','metadata_io'),('literal_old_selector','selector_projection')):
+ assert raw(literal[old]['path'],literal[old])==raw(literal[new]['path'],literal[new])
+assert raw(literal['previous_writer_original']['path'],literal['previous_writer_original'])==raw(literal['previous_writer_retained']['path'],literal['previous_writer_retained'])
+seed=doc(h['seed']);cfg=doc(h['false_config']);assert seed['Root_authority']is cfg['Root_authority']is cfg['Root_reaffirmed_in_current_session']is False
+assert cfg['expected_F009_prefix']==342 and cfg['predecessor_policy']=='INHERIT_ACCEPTED_CHECKPOINT_NO_REVIEW_BODY_RECONSTRUCTION'
+assert seed['historical_predecessor_review']==h['unavailable_historical_review']==cfg['historical_predecessor_review']
+assert h['unavailable_historical_review']['sha256']=='36cb53552df6151e688b17f52e16e46b761fd2504e01e89ee44fe118d6c56940'
+for k in('logical_case','saved_orbit_Root_import','saved_row_post_adoption_review','selector','predecessor_cache_bank','logical_closed_inputs'):assert seed[k]==cfg[k]
+for r in seed['logical_closed_inputs']+[seed['selector'],seed['predecessor_cache_bank']]:raw(r['path'],r)
+for r in seed['logical_case'].values():raw(r['path'],r)
+a=doc(seed['logical_case']['application']);l=doc(seed['logical_case']['logical_review']);post=doc(seed['logical_case']['post_issuance_review'])
+w=doc(seed['saved_orbit_Root_import']);wp=doc(seed['saved_row_post_adoption_review']);rp=doc(w['independent_proof_and_scope_review'])
+assert a['case']==l['case']==post['case']==wp['case']and a['original_job']==w['original_job']==rp['original_job']==[20,4]
+assert all(w[k]==a['case'][k]for k in a['case'])and w['saved_orbit_member_count']==w['matching_transporter_count']==4
+assert w['representative_Root_application']==wp['representative_Root_application']==seed['logical_case']['application']
+assert wp['Root_saved_row_scope']==seed['saved_orbit_Root_import']and wp['exact_subject_and_proof_review_Root_bindings_verified']is True
+assert a['Root_authority']is a['adopted']is True and w['Root_authority']is w['adopted']is True
+for r in h['logical_inputs'].values():raw(r['path'],r)
+for k in('written_application','abstract_theorem','abstract_theorem_review','end_intersection_actual_review','accepted_generation','input_closure'):raw(a[k]['path'],a[k])
+for k in('written_proof','proposed_scope','row_metadata'):raw(w[k]['path'],w[k])
+release=doc(h['false_release_template']);assert release['Root_authority']is release['adopted']is False
+raw(Path(__file__))
+for name,b in B.items():assert Path(name).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+pins=save(HERE/'checked_pins.json',dict(schema='F004_LOGICAL_POSITIVE_REGISTRAR_STATIC_FINITE_PINS_V1',pins=list(REFS.values()),first_closing_bytes=READ,paths=len(REFS)))
+facts=[
+ 'Complete exact08c388 registrar,4c131d factory,three helpers and both guards read. Source unions64874/40815 include512reserve and remain below65536. Literal old selector and IO bodies are byte-identical to genuine eb638/0c835; oldffabe writer is context only.',
+ 'Fresh representative468442/28140/8b08 and whole-row56f51a/3ce9/2f6ad44 subjects and exact proof/closure references join job20/2739/J8349,row0c9b,marks80c22/model252598 andfour member/transporter slots. Original model/group/GEN/D22/frame/tensor/A=G/prefix-centralizer/transporter premises remain imported.',
+ 'New qualify branch admits logical proofs explicitly, not old1430 numeric C_D data or scope. Only2739 is paid; typed selector projection preserves173old positions/history/unknown values and advances3605to3606 with0remaining. It grants zero Aut/duality/wholejob/globaljob/manuscript credit.',
+ 'Missing historical36cb actual-review body is not read or reconstructed. New predecessor policy requires accepted current checkpoint, exact1430 activation/cache-bank membership and cached receipt value, physical old receipt/previous selector/typed inverse and whole inverse restoration. Root release must own that disclosure.',
+ 'Root factory reads live checkpoint/controller/selector/globalregistries and operational inputs, rejects current-prefix control/science directories, writes only a fresh false config and does not import the registrar. No342/354 live hash or prefix is compiled into its algorithm.',
+ 'Registrar requires same-PID/argv guarded256MiB125s execution and Source ownership; only synthetic controls run without a positive config/release. Forecast/apply require distinct Source/actual16controls/fresh exact-plan peers and an exact two-flag promotion of the reviewed false config.',
+ 'Forecast publishes only five private afterimages; append requires genuine separately reviewed forecast and external Root write decision, whole afterimage equality, closed input/protected-state rechecks, exclusive append destinations and complete finite evidence copies. Receipt is last; no locked or multifile atomicity is claimed.',
+ 'Property append does not activate the selector/progress pointers. Independent actual postwrite audit and separately reviewed activation are owed. Wholejob20 coverage/global adoption is also separate. All existing current progress/globalregistries/cache/other topics remain protected.',
+ 'Synthetic16controls inspect invented metadata positions/false-null history/inverse failures, not Original scientific data. None are executed by this static peer. Resource/path/read/newbyte preflights and closing checks precede operational publication.'
+]
+qualifications=[
+ 'Static Source/seed/baseline-example review only. No represented controls/function/registrar/factory executes, and no Original matrix/group/forest/member/transporter values or numerical predicates are decoded/evaluated.',
+ 'The342 false config and old authoring freeze statements are historical Source-review data, not current executable authority. Current progress has moved through354 and L026 registration. Root must run the reviewed factory on the actual live snapshot and obtain a fresh exact-plan peer before promotion/release.',
+ 'Historical36cb remains an explicit borrowed accepted-checkpoint premise. This peer does not claim independent rereading of that missing body or reassessment of old1430 mathematics.',
+ 'Root must own full new Source/protocol, missing-body disclosure, original qualified mathematical premises and serial sole-writer duties. Genuine16metadata-controls execution/independent actual review, fresh plan, forecast/review and Root external write decision remain required.',
+ 'External Root SDK/guard provenance requires later actual reviews. Source peer metadata and caller labels do not independently establish genuine execution.',
+ 'No full recursive Original mathematical closure is claimed. Source/seed explicit finite proof and helper inputs are byte-closed; row_metadata and other scientific-containing objects remain opaque whole bytes.',
+ 'Main handoff says activation is not implemented in this package. A separate later activation Source package is outside this seal.'
+]
+full=save(HERE/'review.json',dict(schema='F004_LOGICAL_POSITIVE_REGISTRAR_AND_FACTORY_WHOLE_SOURCE_PEER_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_STATIC_WITH_EXPLICIT_HISTORICAL_PREDECESSOR_AND_FRESH_PLAN_DUTIES',blockers=[],
+ program=h['program'],Source_manifest=h['Source_manifest'],factory_program=h['factory_program'],factory_Source_manifest=h['factory_Source_manifest'],protocol=h['protocol'],seed=h['seed'],baseline_false_config=h['false_config'],handoff=pin(P/'handoff.json'),
+ facts=facts,qualifications=qualifications,checked_pins=pins,Source_plus_guards512=64874,factory_Source_plus_guards512=40815,
+ unavailable_historical_review=h['unavailable_historical_review'],historical_missing_body_read_or_recreated=False,represented_code_executed=False,Original_payload_values_decoded=False,
+ scientific_calls=0,canonical_writes=0,new_whole_job_or_original_or_manuscript_conjecture_Lean_measurement_credit=0))
+leaf=save(HERE/'reuse_integer_only.json',dict(schema='F004_LOGICAL_POSITIVE_REGISTRAR_FACTORY_STATIC_REUSE_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_STATIC_WITH_EXPLICIT_HISTORICAL_PREDECESSOR_AND_FRESH_PLAN_DUTIES',blockers=[],
+ program=h['program'],Source_manifest=h['Source_manifest'],factory_program=h['factory_program'],factory_Source_manifest=h['factory_Source_manifest'],protocol=h['protocol'],seed=h['seed'],baseline_false_config=h['false_config'],review=full,checked_pins=pins,
+ Source_plus_guards512=64874,factory_Source_plus_guards512=40815,newly_paid_position_if_separately_authorized=2739,prospective_partition=[173,3606,0],
+ baseline_config_review_only=True,fresh_factory_plan_and_distinct_exact_plan_peer_still_owed=True,actual16controls_and_distinct_actual_review_still_owed=True,
+ independent_postwrite_review_and_separate_activation_still_owed=True,whole_job20_coverage_and_global_adoption_still_owed=True,
+ historical_missing_review=h['unavailable_historical_review'],historical_body_read_or_reconstructed=False,
+ Original_payload_values_decoded=False,represented_code_executed=False,scientific_calls=0,canonical_writes=0,new_whole_job_or_original_or_manuscript_conjecture_Lean_measurement_credit=0,
+ qualification='Exact current Source/factory peer only. Missing36cb is inherited through the explicitly accepted checkpoint/cache receipt/whole inverse, not fabricated. Root must use a fresh reviewed live plan, positive source/control/release/forecast/write authorities and later actual audits. Append alone activates no pointer and gives no wholejob credit.'))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_F004_LOGICAL_POSITIVE_STATIC_SOURCE_PEER',leaf=leaf,full_review=full,paths=len(REFS),read_bytes=READ,scientific_calls=0,canonical_writes=0),sort_keys=True))

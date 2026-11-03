@@ -1,0 +1,248 @@
+"""Prepare a logical proposal from adopted records; never issue or run science."""
+import ast,hashlib,json,os,resource,signal,stat,sys,time
+from pathlib import Path
+
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection')
+OUT=BASE/'logical_application'
+GEN=Path('/Users/sasha/medusa/research/leemans/computation/f004/q11/rank4/section_generation/residuals/quartet_generation')
+BEGIN=time.monotonic();BANK={};READS=[];TOTAL=0;PEAK=0
+def need(ok,msg):
+    if not ok:raise ValueError(msg)
+def tick():
+    global PEAK
+    need(time.monotonic()-BEGIN<125,'125 second metadata deadline')
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if sys.platform!='darwin':rss*=1024
+    PEAK=max(PEAK,rss);need(PEAK<268435456,'256 MiB metadata RSS')
+def alarm(a,b):raise TimeoutError('metadata deadline')
+signal.signal(signal.SIGALRM,alarm);signal.alarm(125)
+need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS without optimization')
+def sha(b):return hashlib.sha256(b).hexdigest()
+def enc(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii')
+def pairs(p):
+    d={}
+    for k,v in p:need(k not in d,'unique keys');d[k]=v
+    return d
+def parse(b):return json.loads(b,object_pairs_hook=pairs,parse_float=str)
+def read(p,expected=None):
+    global TOTAL
+    tick();p=Path(p);need(p.is_absolute()and not p.is_symlink(),'absolute regular input')
+    p=p.resolve(strict=True);need(len(BANK|{str(p):None})<=512,'512 input paths')
+    fd=os.open(p,os.O_RDONLY|getattr(os,'O_NOFOLLOW',0))
+    try:
+        s=os.fstat(fd);need(stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size<=8388608,'bounded single-link input')
+        need(TOTAL+s.st_size<=67108864,'64 MiB cumulative metadata reads')
+        with os.fdopen(fd,'rb',closefd=False)as f:b=f.read(s.st_size+1)
+        t=os.fstat(fd);u=p.lstat()
+        sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+        need(sig(s)==sig(t)==sig(u)and len(b)==s.st_size,'stable whole read')
+    finally:os.close(fd)
+    TOTAL+=len(b);r=dict(path=str(p),bytes=len(b),sha256=sha(b));READS.append(r)
+    if expected:need(r['bytes']==expected['bytes']and r['sha256']==expected['sha256'],'whole descriptor '+str(p))
+    if str(p)in BANK:need(BANK[str(p)][0]==r,'stable closing digest')
+    else:BANK[str(p)]=(r,b)
+    return b
+def get(p,expected=None):
+    p=str(Path(p).resolve(strict=True))
+    if p not in BANK:return read(p,expected)
+    r,b=BANK[p]
+    if expected:need(r['bytes']==expected['bytes']and r['sha256']==expected['sha256'],'cached descriptor')
+    return b
+def load(p,expected=None):return parse(get(p,expected))
+def ref(p):get(p);return BANK[str(Path(p).resolve())][0]
+def write(name,v):
+    p=OUT/name;b=enc(v);need(not p.exists(),'fresh proposal output')
+    with p.open('xb')as f:need(f.write(b)==len(b),'whole output');f.flush();os.fsync(f.fileno())
+    return dict(path=str(p),bytes=len(b),sha256=sha(b))
+
+# Lexical container navigation skips all Original certificate/word/matrix values.
+def whitespace(b,i):
+    while i<len(b)and b[i]in b' \t\r\n':i+=1
+    return i
+def string_end(b,i):
+    need(b[i]==34,'string');i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('unterminated string')
+def value_end(b,i):
+    if b[i]==34:return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            need(i<len(b),'bounded container')
+            if b[i]==34:i=string_end(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':need((stack.pop(),b[i])in((91,93),(123,125)),'balanced container')
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \n\r\t':i+=1
+    return i
+def members(b):
+    i=whitespace(b,0);need(b[i]==123,'object');i=whitespace(b,i+1);d={}
+    while b[i]!=125:
+        j=string_end(b,i);k=parse(b[i:j]);need(k not in d,'unique object keys')
+        i=whitespace(b,j);need(b[i]==58,'colon');i=whitespace(b,i+1)
+        j=value_end(b,i);d[k]=b[i:j];i=whitespace(b,j)
+        if b[i]==44:i=whitespace(b,i+1)
+        else:need(b[i]==125,'object separator')
+    need(not b[whitespace(b,i+1):],'whole object');return d
+def array_spans(b):
+    i=whitespace(b,0);need(b[i]==91,'array');i=whitespace(b,i+1)
+    while b[i]!=93:
+        j=value_end(b,i);yield b[i:j];i=whitespace(b,j)
+        if b[i]==44:i=whitespace(b,i+1)
+        else:need(b[i]==93,'array separator')
+    need(not b[whitespace(b,i+1):],'whole array')
+
+metadata=load(BASE/'literal_input_metadata.json')
+case=metadata['case'];need(case==dict(position=2739,original_row_id='job0020:position2739:J08349',
+    marks_sha256='80c22b9b749cda7e4f79b6956d827f753243aeffeff90f2e2492d0ffcb6ff843',
+    model_sha256='252598fb2be23480f4e91a83a6d8e7818f203deb62892b7e42157d7f180538dc'),'exact case')
+get(metadata['complete_record_reference']['path'],metadata['complete_record_reference']) # Opaque.
+get(metadata['source_subset']['path'],metadata['source_subset']) # Opaque.
+for r in metadata['source_original_domain_whole_pins'].values():get(r['path'],r) # Opaque.
+
+abstract=load(BASE/'end_subgroups/handoff.json')
+peer=load(BASE/'end_subgroups/review/reuse_integer_only.json')
+need(peer['status']=='SUPPORTED_STATIC_ABSTRACT_THEOREM_PROOF'and peer['blockers']==[]
+    and peer['reviewer']=='/root/dependency_audit'and peer['Root_authority']is False,'distinct theorem peer')
+need(peer['handoff']==ref(BASE/'end_subgroups/handoff.json'),'theorem peer subject')
+get(peer['theorem']['path'],peer['theorem']);get(peer['scope']['path'],peer['scope'])
+need(peer['theorem']['sha256']=='e97384b13b674ef275f2178676c9bbad35b954d5f08236c2a0fc49707a9a8fec','exact abstract proof')
+
+actual=load(BASE/'actual_review/reuse_integer_only.json')
+need(ref(BASE/'actual_review/reuse_integer_only.json')['sha256']=='efdc37b68406e36e67ef5da17ce9c845212e0318288f7e699df8fae29c5aede0','exact actual audit')
+need(actual['blockers']==[]and actual['case']==case and actual['end_intersection_equals_middle']is True
+    and actual['whole_Source_and_inputs_closed']is actual['actual_guard_and_raw_frames_verified']is True,'accepted end-intersection closure')
+end_result=load(actual['result']['path'],actual['result']);get(actual['proof']['path'],actual['proof']) # Proof opaque.
+need(end_result['case']==case and end_result['status']=='VERIFIED_FIXED_LINE_AND_THIRD_FORM_INTERSECTION_CERTIFICATE'
+    and end_result['end_intersection_equals_middle']is True,'exact end result')
+root=load(actual['Root_input_import']['path'],actual['Root_input_import'])
+need(root['Root_authority']is root['adopted']is True and root['case']==case,'existing positive transport import')
+need(root['same_Original_marks_model_and_faithful_row_frame_owned']is True
+    and root['accepted_old_Source_actual_frame_and_original_G2_projection_premises_owned']is True,'existing frame and G2 transport duties')
+need(root['Original_transport']==metadata['complete_record_reference'],'literal full-file identity')
+old=load(root['old_star_actual_review']['path'],root['old_star_actual_review'])
+frame=load(old['Root_input_import']['path'],old['Root_input_import'])
+need(frame['Root_authority']is frame['adopted']is True and frame['case']==case
+    and frame['same_Original_four_marks_frame_named_G2_members_and_current_unpaid_owned']is True,'existing named G2 membership/frame import')
+need(frame['accepted_complete_middle_D22_journal_same_marks_owned']is True
+    and frame['accepted_positive_H_and_R_tensor_congruences_and_root_aliases_owned']is True,'arithmetic premises remain imported, not replaced')
+retention=load(actual['retained_execution_records']['path'],actual['retained_execution_records'])
+
+gr=metadata['generation_acceptance'];generation=load(gr['path'],gr)
+need(gr['sha256']=='9ac047f77751fdfa8153caf1820bc5249654350ed1658cee4cae05310dae5472','accepted GEN edition')
+need(generation['schema']=='ROOT_ACCEPTED_Q11_QUARTET37_GENERATION_FACTS_V1'and generation['root']=='/root'
+    and generation['adopted']is True and generation['original_job']==[20,4]
+    and case['position']in generation['generation_verified_positions']and generation['IP_claim']is False,'adopted generation subject')
+aliases={}
+for r in generation['preserved_files']:
+    get(r['retained']['path'],r['retained']);need((r['original']['bytes'],r['original']['sha256'])==
+        (r['retained']['bytes'],r['retained']['sha256']),'durable accepted generation alias')
+    aliases[r['original']['path']]=r['retained']
+def genfile(r):
+    need(r['path']in aliases,'retained GEN body');a=aliases[r['path']]
+    need((a['bytes'],a['sha256'])==(r['bytes'],r['sha256']),'GEN original/retained exact descriptor')
+    return a
+direct_ref=genfile(generation['independent_direct_result']);direct=load(direct_ref['path'],direct_ref)
+need(direct['status']=='VERIFIED_ALL_SUPPLIED_QUARTET37_GENERATION_CERTIFICATES'and direct['original_job']==[20,4]
+    and direct['verified_full_generation_positions']==generation['generation_verified_positions'],'direct result equals adopted GEN')
+positive=[r for r in direct['checked_records']if r['original_orbit_position']==2739]
+need(len(positive)==1 and positive[0]['direct_result']['full_generation_verified']is True
+    and positive[0]['direct_result']['borrowed_natural_module_and_rank_one_and_maximal_overgroup_premises']is True,'exact positive direct record')
+source_ref=genfile(direct['program']);source=get(source_ref['path'],source_ref)
+need(source_ref['bytes']==33921 and source_ref['sha256']=='9f0fa443dd62f92b432167bd9904c24a804bf3d3e50f476bc83ba448cbe2ff9f','accepted checker Source')
+tree=ast.parse(source);definitions={n.name:n for n in tree.body if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef))}
+def excerpt(name):return ast.get_source_segment(source.decode(),definitions[name])
+marks_source=excerpt('actual_marks');main_source=excerpt('main');context_source=excerpt('context')
+need("marks=(ctx['a'],ctx['b'],c,ctx['e'])"in marks_source
+    and 'len(set(marks))==4'in marks_source and 'all(g!=I7 and budget.multiply(g,g)==I7 for g in marks)'in marks_source
+    and 'for i in range(4)for j in range(i+2,4)'in marks_source,'Source supplies all four involutions and three distant relations')
+need("marks=actual_marks(p,old_records[p],ctx,budget)"in main_source
+    and "full_generation_verified=True"in main_source,'positive direct branch executed required premise checks')
+need("export['selected_labels']==[1,4,2]"in context_source
+    and "export['end_order']==[1,4,2,3]"in context_source
+    and "a,e,b=[matrix(x,7)for x in export['matrices']]"in context_source,'explicit old prefix/final ordering')
+
+proof_ref=aliases['/private/tmp/q11_rank4_quartet37/search_output/proof_0001.json']
+proof_top=members(get(proof_ref['path'],proof_ref))
+need(parse(proof_top['original_job'])==[20,4]
+    and parse(proof_top['original_domain_whole_pins'])==metadata['source_original_domain_whole_pins'],'same entire Original domain bank')
+row=None
+for raw_record in array_spans(proof_top['records']):
+    record=members(raw_record)
+    if parse(record['original_orbit_position'])==2739:
+        need(row is None,'unique record')
+        row={k:parse(record[k])for k in('original_orbit_position','representative_J_index','original_orbit_row_sha256')}
+need(row==dict(original_orbit_position=2739,representative_J_index=8349,
+    original_orbit_row_sha256='0c9b33e90274a8f9d1c83830201346a48249eab78b47de2d31cf7d22afd2b4d2'),'exact original orbit/representative metadata')
+need(row['original_orbit_row_sha256']==metadata['source_record_identity']['original_orbit_row_sha256'],'Root literal original-row join')
+theory_ref=direct['prime37_theory'];get(theory_ref['path'],theory_ref)
+projector_ref=direct['cyclic_projector_theory'];get(projector_ref['path'],projector_ref)
+get(GEN/'retained/argument.rst')
+for r in(peer['checked_pins']):
+    if Path(r['path']).is_file():get(r['path'],r)
+get(OUT/'case_application.tex');get(Path(__file__).resolve())
+
+source_facts=dict(program=source_ref,
+    context=dict(first_line=definitions['context'].lineno,last_line=definitions['context'].end_lineno,
+        imports='exact original producer/Saved domain, faithful natural module/frame and labels'),
+    actual_marks=dict(first_line=definitions['actual_marks'].lineno,last_line=definitions['actual_marks'].end_lineno,
+        checks=['same exact orbit row/representative','four distinct marks','each mark nonidentity','each mark squares to identity','every nonadjacent pair commutes'],
+        final_order='(a,b,c,e); e is the application d'),
+    main=dict(first_line=definitions['main'].lineno,last_line=definitions['main'].end_lineno,
+        positive_branch_calls_actual_marks_before_acceptance=True),
+    executed_positive_record=positive[0],independent_direct_result=direct_ref,
+    actual_numerical_checks_replayed_here=False)
+premises=[
+ dict(id='ambient',claim='same finite nonabelian simple G2(11), without covering/outer/semilinear extension',
+    kind='BORROWED_NAMED_GROUP_AND_MODEL_PREMISE',evidence=[actual['Root_input_import'],old['Root_input_import'],theory_ref],
+    attribution='Existing named G2/frame imports and retained finite-group generation theory; no new classification or model identification.'),
+ dict(id='marking_identity',claim='same ordered four marks, model, faithful right-row frame and Original row',
+    kind='ROOT_LITERAL_TRANSPORT_AND_EXACT_OPAQUE_DOMAIN_JOIN',evidence=[ref(BASE/'literal_input_metadata.json'),metadata['complete_record_reference'],proof_ref],row_metadata=row),
+ dict(id='membership',claim='all four marks belong to the named G2(11)',kind='EXISTING_POSITIVE_NAMED_GROUP_FRAME_IMPORT',
+    evidence=[old['Root_input_import'],actual['Root_input_import']],existing_field='same_Original_four_marks_frame_named_G2_members_and_current_unpaid_owned'),
+ dict(id='generation',claim='<a,b,c,d>=G2(11)',kind='ADOPTED_GENERATION_FACT',evidence=[gr,direct_ref],
+    attribution='Retained cyclic natural module/rank-one argument, literal prime-37 word and complete maximal-overgroup theorem; original classifications remain borrowed.'),
+ dict(id='involutions_and_string',claim='four distinct nonidentity involutions and [a,c]=[a,d]=[b,d]=1',
+    kind='PREVIOUSLY_EXECUTED_REQUIRED_SOURCE_CHECKS_FOR_ACCEPTED_POSITIVE',evidence=[gr,direct_ref,source_ref],Source_facts=source_facts),
+ dict(id='end_intersection',claim='<a,b,c> intersection <b,c,d>=<b,c>',kind='NEW_CLOSED_ACTUAL_CERTIFICATE',
+    evidence=[actual['result'],actual['proof'],ref(BASE/'actual_review/reuse_integer_only.json')],
+    retained_arithmetic_premises=['old common commutant dimension six','complete middle D22 journal','faithful frame','positive H and R tensor facts'],
+    no_missing_historical_body_recreated=True),
+ dict(id='abstract_theorem',claim='under preceding ambient/generation/string premises, both end IPs and full rank-four IP iff the end intersection equals the middle subgroup',
+    kind='DISTINCTLY_REVIEWED_ABSTRACT_PROOF',evidence=[peer['theorem'],ref(BASE/'end_subgroups/review/reuse_integer_only.json')])]
+
+# Close every whole input in a stable final pass; no Original values are decoded.
+first=list(BANK.values())
+for r,b in first:read(r['path'],r)
+actual_aliases={r['original']['path']:r['retained']for r in retention['entries']}
+inventory=[]
+for r,b in first:
+    a=actual_aliases.get(r['path'])
+    inventory.append(dict(original=r,durable_alias=a if a else r if r['path'].startswith('/Users/sasha/medusa/')else None))
+need(all(x['durable_alias']is not None for x in inventory),'every temporary input has a durable retention alias')
+io=write('input_closure.json',dict(schema='F004_PROPOSED_LOGICAL_CASE_INPUT_CLOSURE_V1',inputs=inventory,
+    first_and_closing_read_bytes=TOTAL,distinct_input_paths=len(BANK),read_events=len(READS),
+    read_sequence_sha256=sha(enc(READS)),sampled_peak_rss_bytes=PEAK,
+    bounds=dict(bytes=67108864,paths=512,rss_bytes=268435456,seconds=125),
+    Original_array_and_group_word_payloads_decoded=False,represented_Source_or_science_executed=False,
+    qualification='Exact pins and imports, not a fresh numerical verification of previously adopted facts; own actual completion is separate tail evidence.'))
+proposal=write('proposed_case.json',dict(schema='F004_PROPOSED_FULL_RANK4_LOGICAL_CASE_V1',author='/root/mathematical_review',
+    Root_authority=False,adopted=False,issued=False,status='PREPARED_FROM_ACCEPTED_PREMISES_REQUIRES_DISTINCT_CASE_REVIEW_AND_ROOT_LOGICAL_ISSUE',
+    case=case,original_job=[20,4],original_orbit_row=row,ambient='G2(11)',premises=premises,blockers=[],
+    derivation=['finite nonabelian simplicity implies no nontrivial solvable normal subgroup',
+    'reviewed end-subgroups theorem gives both end rank-three intersection properties',
+    'closed end-intersection equality and reviewed gluing corollary give full rank-four intersection property',
+    'imported generation and string relations give a rank-four string C-group representation'],
+    proposed_conclusion='FULL_RANK4_INTERSECTION_PROPERTY_AND_STRING_C_GROUP_FOR_THIS_EXACT_ORDERED_MARKING',
+    replaces_only='separate end rank-three IP assertion formerly associated with missing local-IP leaf33f56de6',
+    does_not_replace=['complete middle D22 journal or order','GEN or membership','faithful frame','tensor identities','new end-intersection arithmetic'],
+    borrowed_classification_model_and_generation_premises_retained=True,
+    no_old_fake_wrapper_or_missing_review_recovered=True,no_numerical_rerun=True,
+    canonical_or_scientific_new_case_or_paper_or_conjecture_or_Lean_or_measurement_credit=0,
+    canonical_writes=False,input_closure=io,application=ref(OUT/'case_application.tex')))
+print(enc(dict(proposed_case=proposal,input_closure=io,paths=len(BANK),read_bytes=TOTAL,
+    sampled_peak_rss_bytes=PEAK,elapsed_microseconds=int((time.monotonic()-BEGIN)*1000000))).decode(),end='')

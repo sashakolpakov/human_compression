@@ -1,0 +1,137 @@
+"""Distinct static Source audit. No represented entry/helper/science is executed."""
+from pathlib import Path
+import ast,hashlib,json,os,resource,signal,stat,sys,time
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/simple_group_intersections/registration')
+HERE=BASE/'review';START=time.monotonic();READ=0;BANK={};PINS={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second static review')))
+signal.alarm(125)
+def raw(p,r=None):
+ global READ
+ p=Path(p);name=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ assert time.monotonic()-START<115
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ if name not in BANK:
+  st=p.lstat();assert stat.S_ISREG(st.st_mode)and st.st_size<=4*2**20
+  b=p.read_bytes();en=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(st)==sig(en)and len(b)==st.st_size
+  READ+=len(b);assert READ<=64*2**20 and len(BANK)<512
+  BANK[name]=b;PINS[name]=dict(path=name,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert PINS[name]==r,(PINS[name],r)
+ return BANK[name]
+def doc(p,r=None):return json.loads(raw(p,r))
+def get(r):return doc(r['path'],r)
+def ref(p):raw(p);return PINS[str(p)]
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==b
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+h=doc(BASE/'handoff.json');assert(ref(BASE/'handoff.json')['bytes'],ref(BASE/'handoff.json')['sha256'])==(5165,'62cf159a305d5c296dea9659fe4b784c0b9f224d8cd8991244600d85f1573c0e')
+expected=dict(program=(17158,'30316b97c1781cf131d833dd5d3c50324fa4e33e450953d94f816182c36e9b35'),Source_manifest=(2439,'e57a2e490567a7c1d40e1e4d10578834a9adbcaa584bb0f6dde5da2b15827ea9'),
+ factory_program=(6348,'5527184151da8da51c6acd5f8e4d6e0ad5a1498aa9f414257d9b41fbfd6f9705'),factory_Source_manifest=(1706,'81e91af42c1f8fc20126b8faad55a43f41f3035bae3b9625ca13fadf442d7001'),
+ protocol=(11602,'48369441fafd7e0926f533e1ddae5f0620b54eff77f530442d7388a8e5e22cb2'),plan=(11780,'f2b2433d8946a08ac5a194e6d1112e2b582f08c0628265a1f773fbd0fb53fcfe'))
+for k,pin in expected.items():assert(h[k]['bytes'],h[k]['sha256'])==pin;raw(h[k]['path'],h[k])
+assert h['registrar_or_factory_executed']is False and h['canonical_writes']==0
+request=get(h['review_request']);assert request['baseline_review_only']is True and request['operational_entries_executed']is False
+assert {'program','Source_manifest','protocol','plan','factory_program','factory_Source_manifest'}<=set(request)
+manifests={};trees={}
+for key,entrykey,names,total in [('Source_manifest','program',{'register_ip.py','metadata.py','typed_status.py','whole.py'},51570),('factory_Source_manifest','factory_program',{'rebase_plan.py','metadata.py','whole.py'},37573)]:
+ mf=get(h[key]);assert mf['entry']==h[entrykey]
+ assert {Path(r['path']).name for r in mf['Source']}==names and len(mf['Source'])==len(names)
+ assert sum(r['bytes']for r in mf['Source']+mf['guards'])+512==mf['Source_plus_guards512']==total<=65536
+ for r in mf['Source']+mf['guards']:raw(r['path'],r)
+ assert mf['bounds']==dict(cooperative_seconds=115,file_bytes=4194304,paths=512,read_bytes=67108864,rss_bytes=268435456,seconds=125)
+ manifests[key]=mf
+for name in ('register_ip.py','rebase_plan.py','metadata.py','typed_status.py','whole.py'):
+ trees[name]=ast.parse(raw(BASE/name),filename=str(BASE/name))
+ # No represented code is compiled, imported or invoked by this audit.
+assert ref(BASE/'whole.py')['sha256']=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+old=manifests['Source_manifest']['literal_typed_helper_ancestor'];oldtree=ast.parse(raw(old['path'],old))
+functions=lambda t:{n.name:ast.dump(n,include_attributes=False)for n in t.body if isinstance(n,ast.FunctionDef)}
+tf,of=functions(trees['typed_status.py']),functions(oldtree)
+assert set(tf)=={'need','scope','counts','identity','receipt_check','apply'}and all(tf[k]==of[k]for k in tf)
+const=lambda t:{n.targets[0].id:ast.dump(n.value,include_attributes=False)for n in t.body if isinstance(n,ast.Assign)and len(n.targets)==1 and isinstance(n.targets[0],ast.Name)}
+tc,oc=const(trees['typed_status.py']),const(oldtree)
+assert tc['SCOPE']==oc['SCOPE']and tc['SELECTOR']==oc['SELECTOR']
+p=get(h['plan']);assert p['Root_authority']is p['registration_executed']is False
+for k in('program','Source_manifest','protocol'):assert p[k]==h[k]
+assert p['F009_prefix_unchanged']==342 and p['F009_slots_unchanged']==53352
+assert p['before_counts']==dict(GEN=724,separate_IP=721,subset_NEG=744,unpaid=27440)
+assert p['after_counts_PROSPECTIVE']==dict(GEN=724,separate_IP=724,subset_NEG=744,unpaid=27440)
+assert p['expected_changes']==[dict(free_index=i,before=2,after=6)for i in(265,270,271)]
+assert p['progress_snapshot']==h['initial_frozen_review_snapshot']
+ret=get(h['retained_inputs']);assert len(ret['entries'])==45 and ret['Original_cache_witness_or_group_payloads_decoded']is False
+historical={str(BASE/'register_ip.py'):(16410,'5fb4d6231ff98f84939380f82f7893375ff6eb01cea54b6f09b19c9f97f3c53e'),str(BASE/'PROTOCOL.rst'):(9335,'3f4e36d1384b87748223f89c3ff06b5e53f01852ff7af103e1f8341debfc1296')}
+for e in ret['entries']:
+ a,b=e['original'],e['retained'];assert(a['bytes'],a['sha256'])==(b['bytes'],b['sha256'])
+ retained=raw(b['path'],b)
+ if a['path']in historical and(a['bytes'],a['sha256'])==historical[a['path']]:
+  current_key='program'if Path(a['path']).name=='register_ip.py'else'protocol'
+  raw(a['path'],h[current_key])
+ else:assert raw(a['path'],a)==retained
+# Close all explicitly active proof/scope/typed metadata inputs as bytes.
+for k in('root_applications','post_issuance_review','canonical_generation_batch','free_adoption','operand_adoption','witnesses','old_manifest','old_writer'):
+ raw(p[k]['path'],p[k])
+for r in list(p['current_snapshot'].values())+list(p['progress_snapshot'].values())+p['retained_proof_context']:raw(r['path'],r)
+app=get(p['root_applications']);post=get(p['post_issuance_review']);gen=get(p['canonical_generation_batch'])
+assert p['root_applications']['sha256']=='0cdc604ca0b526309fa7a0d70850455da9145358db48c731b6cddd5d91b9645a'
+assert p['post_issuance_review']['sha256']=='7128a4a81192443599583484967be82d500df04dd7ac9c25acba38ca434b3dfc'
+assert app['schema']=='ROOT_L026_THREE_SIMPLE_GROUP_INTERSECTION_APPLICATIONS_V1'and app['root']=='/root'
+assert app['Root_authority']is app['Root_application_issued']is app['adopted']is True
+assert post['issued_applications']==p['root_applications']and post['status']=='SUPPORTED_ACTUAL_ROOT_LOGICAL_ISSUANCE_REGISTRATION_PENDING'and post['blockers']==[]
+assignment=next(n.value for n in trees['register_ip.py'].body if isinstance(n,ast.Assign)and any(isinstance(t,ast.Name)and t.id=='EXPECTED'for t in n.targets))
+subjects=[{k.arg:ast.literal_eval(k.value)for k in n.keywords}for n in assignment.elts]
+assert subjects==app['subjects']==post['subjects']
+assert app['current_snapshot']==p['current_snapshot']and app['scope_digest']==p['scope_digest']and app['original_selector']==p['original_selector']
+assert gen['adopted']is True and gen['scope_digest']==p['scope_digest']
+for r in subjects:assert dict(r,kind='GEN',proof=0)in gen['new_facts']
+assert app['scientific_calls']==app['matrix_products']==app['permutation_images']==0
+for key in('independent_application_review','theorem','written_application','inputs','proposal'):raw(app[key]['path'],app[key])
+decision=get(h['Root_decision_FALSE']);assert decision['Root_authority']is decision['adopted']is False and decision['independent_Source_peer']is None
+for k in('program','Source_manifest','protocol','plan'):assert decision[k]==h[k]
+io=get(h['IO_plan_FALSE']);assert io['executed']is False and io['execution_held_by_active_F009_cohort']is True
+assert io['Source_plus_guards512']==51570 and io['factory_Source_plus_guards512']==37573
+protocol=raw(h['protocol']['path'],h['protocol'])
+for phrase in(b'342..353 freezes',b'expected prefix 354',b'fresh review',b'not a locked atomic',b'Original premises'):
+ assert phrase in protocol
+assert (BASE.parent.parent/'paid_status_ledger/epochs/three_simple_group_applications').exists()is False
+assert (Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress/stages')/'l026_three_simple_group_applications').exists()is False
+assert (Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/cohorts')/'cohort_from0342').is_dir()
+raw(Path(__file__))
+for name,b in BANK.items():
+ assert Path(name).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+pins=save(HERE/'checked_pins.json',dict(schema='L026_LOGICAL_IP_SOURCE_PEER_FINITE_PINS_V1',pins=list(PINS.values()),first_and_closing_read_bytes=READ,paths=len(PINS)))
+facts=[
+ 'Exact final writer/factory/manifests/protocol/baseline plan read and pinned. All45 retained objects match their recorded original descriptors;43 live original aliases also agree. The other2 rows preserve the genuine initial16410/5fb4d623 writer and9335/3f4e36 protocol editions, while their live paths now hold the exact reviewed final Source. Those historical bytes are not claimed as current live aliases.',
+ 'All six typed-status helper bodies and scope/selector constants are AST-identical to genuine old73e75 writer; literal3744 whole reader matches. No represented entry/helper or typed-status/witness calculation is executed by this peer.',
+ 'Writer admits exact Root0cdc logical applications and post7128 review with complete subjects and original qualified premises; canonical GEN facts join the same subjects. Old strict numerical IP credit remains zero; no old scientific schema or Root release is retagged.',
+ 'Only existing GEN-only indices265,270,271 may change2to6; source requires all before/after counts and exact changed indices, so GEN/NEG/paid/unpaid remain unchanged.',
+ 'Lexical patcher preserves every raw JSON field outside the protocol whitelist; complete F009 intake and runtime cache_entries/cache_banks stay byte-equivalent. Active typed ledger/postwrite references are truthfully pending a fresh actual audit.',
+ 'Writer authenticates exact positive Root decision, distinct Source peer, qualified proof ownership, no-freeze and sole-writer duties; dynamic protected prefix and156prefix slots must agree between intake/runtime and the exact fresh plan.',
+ 'Current-prefix cohort directory admission is refused before work, after input closure and before active pointer publication. Baseline342 is review-only while342..353 remains active.',
+ 'False-plan factory binds this exact Source peer, requires live expected prefix/checkpoint/L026 ledger and absence of the current-prefix cohort; it leaves proof/writer Source descriptors unchanged and writes only three false metadata artifacts in a fresh plans directory.',
+ 'Rebased plan requires a new exact-plan independent peer and new positive Root decision. This baseline Source peer does not authorize future354 registration or supply that fresh plan peer.',
+ 'Immutable epoch/stage, exact beforeimages and durable intent precede collective/per-pointer CAS and serialized pointer replacements; the protocol explicitly disclaims locked atomicity and requires separately reviewed recovery after partial failure.',
+ 'Whole project Source+guards+512 is51570(writer)/37573(factory); every operational branch checks256MiB/125s with115s cooperative bound,4MiB/file,64MiB reads,512paths,16MiB new bytes and closed output/input accounting.'
+]
+qualifications=[
+ 'Static Source and exact baseline plan review only. Neither operational entry nor any represented function was executed. No actual registration, rebased plan or factory output exists from this review.',
+ 'Original witness, operand, group and cached scientific payloads were read only as opaque whole bytes and hashes. No row values, group predicates, graphs, words, permutations or matrices were decoded/evaluated.',
+ 'Root owns the finite simple innerFi22/model/membership/GEN, Reader/action/graph/class/two-fibre/H=B and all original-domain qualifications already stated by exact Root0cdc/post7128. This Source peer does not independently reprove or numerically validate them.',
+ 'True Root role and supervisor execution provenance require a later distinct actual audit; --actor and a metadata declaration alone are not an external authenticity proof.',
+ 'Full recursive upstream mathematical/Source closure is not claimed. Only the finite45 retained inputs, declared current operational Source and explicit proof/context inputs are byte-closed.',
+ 'retained_inputs retains2 historical authoring editions under their original live-path labels. Their bodies are read only at the exact retained paths; current writer/protocol Source is separately pinned by the final handoff/manifests. No old Source identity is assigned to a new body.',
+ 'No canonical mutation is allowed during the active342..353 cohort. After release, Root may issue the reviewed false-plan factory; the resulting exact new plan must be separately reviewed before registration.'
+]
+full=save(HERE/'review.json',dict(schema='L026_THREE_LOGICAL_IP_REGISTRATION_AND_FALSE_PLAN_FACTORY_SOURCE_REVIEW_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_STATIC_WITH_EXPLICIT_LIVE_PLAN_AND_FREEZE_QUALIFICATIONS',blockers=[],
+ **{k:h[k]for k in expected},handoff=ref(BASE/'handoff.json'),review_request=h['review_request'],retained_inputs=h['retained_inputs'],checked_pins=pins,
+ facts=facts,qualifications=qualifications,Original_payload_values_decoded=False,represented_code_executed=False,scientific_calls=0,canonical_writes=0,
+ baseline_review_only=True,future_exact_plan_review_owed=True,current_cohort_freeze_must_remain_unchanged=True,new_manuscript_conjecture_Lean_measurement_credit=0))
+leaf=save(HERE/'reuse_integer_only.json',dict(schema='L026_LOGICAL_IP_WRITER_AND_FACTORY_STATIC_REUSE_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_STATIC_WITH_EXPLICIT_LIVE_PLAN_AND_FREEZE_QUALIFICATIONS',blockers=[],
+ **{k:h[k]for k in expected},review=full,checked_pins=pins,Source_plus_guards512=51570,factory_Source_plus_guards512=37573,
+ baseline_review_only=True,operational_entry_or_represented_helper_executed=False,future_exact_plan_review_owed=True,
+ canonical_execution_during_active_F009_cohort_allowed=False,Original_payload_values_decoded=False,scientific_calls=0,canonical_writes=0,
+ limitations='Exact baseline342 Source/false-plan peer only. Root must wait for cohort release, issue false-plan factory and obtain a distinct exact live-plan peer/new positive Root decision. Full recursive Original proof closure and genuine actual execution are not supplied by this static review.'))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_STATIC_SOURCE_PEER',leaf=leaf,full_review=full,read_bytes=READ,paths=len(PINS),scientific_calls=0,canonical_writes=0),sort_keys=True))

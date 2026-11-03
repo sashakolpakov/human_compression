@@ -1,0 +1,194 @@
+"""Root-only administrative registration of a reviewed bounded parent cohort.
+No scientific worker; shared batch nodes retain explicit strict-cover/attempt indices.
+"""
+import argparse,copy,datetime,hashlib,json,os,pathlib,sys
+sys.path.insert(0,'/private/tmp/intake_metadata')
+from whole import Ledger
+B=pathlib.Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress')
+COHORT_CONTAINER=pathlib.Path('/private/tmp/f009_R5_parent_cohorts_actual')
+SUPPLY='c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e'
+STRICT='ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff'
+PYTHON='/Users/sasha/.venvs/global/bin/python'
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'))+'\n').encode()
+
+def vend(s,i):
+ depth=0;quoted=False;escape=False
+ while i<len(s):
+  c=s[i]
+  if quoted:
+   if escape:escape=False
+   elif c=='\\':escape=True
+   elif c=='"':quoted=False
+  elif c=='"':quoted=True
+  elif c in'[{':depth+=1
+  elif c in']}':
+   if depth==0:break
+   depth-=1
+  elif c==','and depth==0:break
+  i+=1
+ assert not quoted and depth==0;return i
+
+def ws(s,i):
+ while i<len(s) and s[i] in ' \r\n\t':i+=1
+ return i
+
+def spans(b):
+ s=b.decode();i=ws(s,0);assert s[i]=='{';i=ws(s,i+1);out={};d=json.JSONDecoder()
+ while s[i]!='}':
+  k,j=d.raw_decode(s,i);assert type(k)is str and k not in out;i=ws(s,j);assert s[i]==':';i=ws(s,i+1);j=vend(s,i);out[k]=s[i:j].rstrip().encode();i=ws(s,j)
+  if s[i]==',':i=ws(s,i+1)
+  else:break
+ assert s[i]=='}' and ws(s,i+1)==len(s);return out
+
+def array(b):
+ s=b.decode();i=ws(s,0);assert s[i]=='[';i=ws(s,i+1);out=[]
+ while s[i]!=']':
+  j=vend(s,i);out.append(s[i:j].rstrip().encode());i=ws(s,j)
+  if s[i]==',':i=ws(s,i+1)
+  else:break
+ assert s[i]==']' and ws(s,i+1)==len(s);return out
+
+def selected(b,keys):p=spans(b);return {k:json.loads(p[k]) for k in keys if k in p}
+
+def desc(a):
+ r=dict(path=a[0],bytes=int(a[1]),sha256=a[2]);assert pathlib.Path(r['path']).is_absolute()and 0<=r['bytes']<=4*2**20 and len(r['sha256'])==64;return r
+
+def reference(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+
+def write_body(path,body):
+ assert path.is_absolute()and path.parent.resolve(strict=True)==path.parent and not os.path.lexists(path)
+ with path.open('xb')as f:assert f.write(body)==len(body);f.flush();os.fsync(f.fileno())
+
+def syncdir(path):
+ fd=os.open(path,os.O_RDONLY)
+ try:os.fsync(fd)
+ finally:os.close(fd)
+
+def actual_batch(L,entry,expected,cohortref,snapshot,roster,adapter_program,cohort_begin,strict_manifest,supplier_manifest):
+    assert entry['batch']==expected['batch']and entry['begin']==expected['begin']and entry['end']==expected['end']and entry['source_indices']==expected['source_indices']
+    indices=expected['source_indices'];count=len(indices);assert entry['parent_count']==count and entry['strict_slots']==156*count
+    reviewref=entry['actual_review'];h,_=L.document(reviewref['path'],reviewref)
+    assert h['schema']=='F009_COHORT_BATCH_ACTUAL_REUSE_V1'and h['status']=='SUPPORTED_ACTUAL'and h['reviewer']not in('/root','/root/readback_review')and h['blockers']==[]
+    assert h['cohort']==cohortref and h['progress_snapshot']==snapshot and h['batch']==expected['batch']and h['source_indices']==indices and h['parent_count']==count and h['strict_slots']==156*count and h['current_roster']==roster
+    assert h['Source_manifest']==strict_manifest and h['supplier_Source_manifest']==supplier_manifest and h['Source_manifest']['sha256']==STRICT and h['supplier_Source_manifest']['sha256']==SUPPLY
+    for flag in('all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal','strict_full156_each_parent_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified','all_selected_attempts_and_prior_refusals_audited'):assert h[flag]is True
+    for flag in('individual_whole_certificate_equality_claimed','cache_registration_performed','whole_cohort_or_level_adopted','whole_R5_level_or_census_claimed'):assert h[flag]is False
+    assert 'individual_supplier_and_batch_whole_certificates_equal'not in h
+    pairing=entry['pairing'];assert h['pairing']==pairing
+    expectedpath=COHORT_CONTAINER/('cohort_from%04d'%cohort_begin)/('parents%04d_%04d'%(indices[0],indices[-1]))/'pairing.json'
+    assert pairing['path']==str(expectedpath)
+    raw,_=L.raw(pairing['path'],pairing);part=spans(raw);pair=selected(raw,('root','schema','cohort','cohort_batch','Source','frozen_progress_snapshot','source_indices','parent_count','strict_slots','target_occurrences','current_roster','strict','all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal','individual_whole_certificate_equality_claimed','cache_registration_performed','whole_level_or_census_claimed','whole_cohort_or_level_adopted'))
+    assert pair['schema']=='ROOT_F009_COHORT_SUPPLIERS_ONE_STRICT_PAIRING_V1'and pair['root']=='/root'and pair['cohort']==cohortref and pair['cohort_batch']==expected['batch']and pair['Source']==adapter_program
+    assert pair['frozen_progress_snapshot']=={k:snapshot[k]for k in('intake','controller','runtime')}and pair['source_indices']==indices and pair['parent_count']==count and pair['strict_slots']==156*count and pair['current_roster']==roster
+    assert pair['target_occurrences']==entry['target_occurrences']==h['target_occurrences']and type(pair['target_occurrences'])is int and 0<=pair['target_occurrences']<=156*count
+    assert pair['all_supplier_covers_equal_corresponding_strict_cover']is pair['assembled_and_strict_whole_certificates_equal']is True
+    assert pair['individual_whole_certificate_equality_claimed']is pair['cache_registration_performed']is pair['whole_level_or_census_claimed']is pair['whole_cohort_or_level_adopted']is False
+    strict=pair['strict'];assert h['strict_actual_SDK']==strict['actual_SDK']and h['strict_result']==strict['result']and h['strict_certificate']==strict['certificate']
+    assert type(strict['actual_edition'])is int and 1<=strict['actual_edition']<=8 and len(strict['prior_non_success_attempts'])==strict['actual_edition']-1
+    for r in[h['Source_manifest'],h['supplier_Source_manifest'],h['current_roster'],h['strict_actual_SDK'],h['strict_result'],h['strict_certificate'],h['assembled_certificate'],h['full_actual_review']]:L.raw(r['path'],r)
+    sr,_=L.document(h['strict_result']['path'],h['strict_result']);assert sr['status']=='VERIFIED_COMPLETE_INCREMENTAL_PARENT_COVERS'and sr['parent_count']==count and sr['slots_per_parent']==156 and sr['canonical_or_ledger_writes']is False
+    assert L.raw(h['strict_certificate']['path'],h['strict_certificate'])[0]==L.raw(h['assembled_certificate']['path'],h['assembled_certificate'])[0]
+    slots=array(part['bindings']);assert len(slots)==len(h['bindings'])==count;bindings=[]
+    for number,(index,blob,reviewbinding)in enumerate(zip(indices,slots,h['bindings'])):
+        fields=spans(blob);pb=selected(blob,('index','strict_cover_index','strict_certificate','per_cover_canonical_bytes_equal','strict_slots','target_occurrences'));supplier=selected(fields['supplier'],('index','actual','prepared','cover_index','canonical_cover_sha256'))
+        assert pb['index']==supplier['index']==index and pb['strict_cover_index']==number and pb['strict_slots']==156 and pb['per_cover_canonical_bytes_equal']is True and supplier['cover_index']==0 and pb['strict_certificate']==h['strict_certificate']
+        sa=supplier['actual'];assert type(sa['actual_edition'])is int and 1<=sa['actual_edition']<=8 and len(sa['prior_non_success_attempts'])==sa['actual_edition']-1
+        expectedbinding=dict(index=index,supplier_cover_index=0,strict_cover_index=number,supplier_actual_SDK=sa['actual_SDK'],supplier_certificate=sa['certificate'],strict_actual_SDK=h['strict_actual_SDK'],strict_certificate=h['strict_certificate'],strict_slots=156,target_occurrences=pb['target_occurrences'],per_cover_canonical_bytes_equal=True);assert reviewbinding==expectedbinding
+        for r in(sa['actual_SDK'],sa['result'],sa['certificate'],supplier['prepared']):L.raw(r['path'],r)
+        bindings.append(dict(expectedbinding,supplier_result=sa['result'],supplier_prepared=supplier['prepared'],supplier_actual_edition=sa['actual_edition'],supplier_prior_non_success_attempts=sa['prior_non_success_attempts'],canonical_cover_sha256=supplier['canonical_cover_sha256'],parent_payload_lexical_sha256=hashlib.sha256(fields['parent']).hexdigest()))
+    assert sum(x['target_occurrences']for x in bindings)==entry['target_occurrences']
+    return dict(batch=expected['batch'],begin=expected['begin'],end=expected['end'],source_indices=indices,parent_count=count,strict_slots=156*count,target_occurrences=entry['target_occurrences'],pairing=pairing,independent_actual_review=reviewref,strict=dict(strict,Source_manifest=h['Source_manifest'],assembled_certificate=h['assembled_certificate']),supplier_Source_manifest=h['supplier_Source_manifest'],bindings=bindings)
+
+
+def main():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert all(k not in os.environ for k in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'))
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actual-review',nargs=3,required=True);ap.add_argument('--Root-decision',nargs=3,required=True);ap.add_argument('--guard',required=True);a=ap.parse_args();L=Ledger()
+    own,ownref=L.raw(pathlib.Path(__file__).resolve());helper,helperref=L.raw('/private/tmp/intake_metadata/whole.py');assert helperref['sha256']=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+    guardrefs=[]
+    for name in('supervise_validation.py','supervise_transient.py'):guardrefs.append(L.raw(pathlib.Path('/Users/sasha/medusa/research/leemans/maintenance/runtime')/name)[1])
+    assert [r['sha256']for r in guardrefs]==['c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4','5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42']
+    source_total=len(own)+len(helper)+sum(r['bytes']for r in guardrefs)+512;assert source_total<=65536
+    dr=desc(a.Root_decision);decision,_=L.document(dr['path'],dr);reviewref=desc(a.actual_review);h,_=L.document(reviewref['path'],reviewref)
+    assert decision['schema']=='ROOT_F009_REVIEWED_COHORT_PROGRESS_DECISION_V1'and decision['root']=='/root'and decision['Root_authority']is True and decision['status']=='SUPPORTED'and decision['blockers']==[]and decision['program']==ownref and decision['actual_review']==reviewref
+    for flag in('whole_new_metadata_Source_and_protocol_owned','exact_cohort_actual_review_and_all_per_cover_identities_owned','all_prior_cache_values_and_banks_owned','ordinary_metadata_registration_authorized','serial_sole_writer_no_locked_atomicity_claim','no_new_science_or_case_credit'):assert decision[flag]is True
+    peer,_=L.document(decision['independent_Source_peer']['path'],decision['independent_Source_peer']);assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root','/root/readback_review')and peer['program']==ownref
+    assert h['schema']=='F009_CONTIGUOUS_PARENT_COHORT_ACTUAL_REUSE_V1'and h['status']=='SUPPORTED_ACTUAL'and h['reviewer']not in('/root','/root/readback_review')and h['blockers']==[]
+    cohortref=h['cohort'];cohort,_=L.document(cohortref['path'],cohortref);assert decision['cohort']==cohortref
+    assert cohort['schema']=='ROOT_F009_CONTIGUOUS_PARENT_COHORT_V1'and cohort['root']=='/root'and cohort['Root_authority']is True
+    adapter=cohort['program'];assert decision['cohort_adapter_program']==adapter
+    adapterpeer,_=L.document(decision['cohort_adapter_Source_peer']['path'],decision['cohort_adapter_Source_peer']);assert adapterpeer['status'].startswith('SUPPORTED_STATIC')and adapterpeer['blockers']==[]and adapterpeer['reviewer']not in('/root','/root/readback_review')and adapterpeer['program']==adapter
+    L.raw(adapter['path'],adapter)
+    BEGIN=cohort['begin'];sizes=cohort['batch_counts'];assert type(BEGIN)is int and 0<=BEGIN<940 and type(sizes)is list and 1<=len(sizes)<=4 and all(type(n)is int and 1<=n<=3 for n in sizes)
+    END=BEGIN+sum(sizes);assert BEGIN<END<=940 and END-BEGIN<=12 and cohort['end']==END and cohort['reviewed_prefix']==BEGIN and cohort['source_indices']==list(range(BEGIN,END))
+    expectedbatches=[];cursor=BEGIN
+    for number,n in enumerate(sizes):expectedbatches.append(dict(batch=number,begin=cursor,end=cursor+n,source_indices=list(range(cursor,cursor+n))));cursor+=n
+    assert cohort['batches']==expectedbatches and h['begin']==BEGIN and h['end']==END and h['source_indices']==list(range(BEGIN,END))and h['parent_count']==END-BEGIN and h['strict_slots']==156*(END-BEGIN)
+    snapshot=cohort['progress_snapshot'];assert set(snapshot)=={'intake','controller','runtime'}and snapshot['intake']['path']==str(B/'current_intake.json')and snapshot['controller']['path']==str(B/'controllers/current.json')and h['progress_snapshot']==snapshot and decision['progress_snapshot']==snapshot
+    for flag in('all_batch_pairings_and_per_cover_bindings_verified','frozen_progress_snapshot_authenticated','all_source_indices_exactly_once','all_selected_attempts_and_prior_refusals_audited'):assert h[flag]is True
+    assert h['cache_registration_performed']is h['whole_R5_level_or_census_claimed']is False
+    assert h['Source_manifest']['sha256']==STRICT and h['supplier_Source_manifest']['sha256']==SUPPLY
+    assert type(decision['expected_prior_cache_values'])is int and decision['expected_prior_cache_values']>=0;EXPECTED_PRIOR=decision['expected_prior_cache_values']
+    STAGE=B/'stages'/('forest_extensions_%04d_%04d_cohort_shared_strict'%(BEGIN,END-1));guard=pathlib.Path(a.guard);started,_=L.document(guard/'started.json');assert started['command']==[PYTHON,'-E','-B','-S']+sys.argv
+    expectedlimits=dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,ram_floor=3*2**30,total_rss=256*2**20,wall_seconds=125.0,sample_seconds=0.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+    assert started['limits']==expectedlimits and len(started['identities'])==1 and guard.resolve(strict=True)==guard and not guard.is_relative_to(STAGE)and not os.path.lexists(STAGE)
+    old,oi=L.document(B/'current_intake.json',snapshot['intake']);ptr,op=L.document(B/'controllers/current.json',snapshot['controller']);r,orr=L.document(ptr['checkpoint']['path'],ptr['checkpoint'])
+    assert oi==snapshot['intake']and op==snapshot['controller']and orr==snapshot['runtime']==old['active_controller_checkpoint']
+    oldcopy=copy.deepcopy(old);ptrcopy=copy.deepcopy(ptr);rcopy=copy.deepcopy(r);F=old['F009'];assert F['R5_canonical_pairs_reviewed']==r['counts']['R5_canonical_pairs_reviewed']==r['next_R5']['index']==BEGIN
+    assert F['R5_prefix_strict_slots_reviewed']==BEGIN*156 and len(F['R5_canonical_complete_pairs'])==BEGIN and F['R5_canonical_total_parents']==940 and F['R5_whole_level_complete']is False and h['current_roster']==F['R5_current_roster']
+    inline=can(r['cache_entries']);banks=can(r['cache_banks']);keys=set(r['cache_entries'])
+    for b in r['cache_banks']:
+        d,_=L.document(b['ref']['path'],b['ref']);assert not keys.intersection(d['cache_entries']);keys.update(d['cache_entries']);assert b['entries']==len(d['cache_entries'])and b['keys']==sorted(d['cache_entries'])
+    assert len(keys)==EXPECTED_PRIOR
+    for ref in[h['Source_manifest'],h['supplier_Source_manifest'],h['current_roster'],h['full_actual_review']]:L.raw(ref['path'],ref)
+    assert len(h['batches'])==len(expectedbatches);batchrecords=[]
+    for entry,expected in zip(h['batches'],expectedbatches):batchrecords.append(actual_batch(L,entry,expected,cohortref,snapshot,h['current_roster'],adapter,BEGIN,h['Source_manifest'],h['supplier_Source_manifest']))
+    allbindings=[x for batch in batchrecords for x in batch['bindings']];assert [x['index']for x in allbindings]==list(range(BEGIN,END))and sum(b['target_occurrences']for b in batchrecords)==h['target_occurrences']
+    protected={k:can(old[k])for k in old if k not in('F009','latest_reviewed_forest_batch','previous_checkpoint','active_controller_checkpoint','observed_utc')};planned={}
+    def plan(name,body):
+        path=STAGE/name;assert name==path.name and not os.path.lexists(path)and str(path)not in planned and len(body)<=4*2**20;planned[str(path)]=body;return reference(path,body)
+    ib=plan('intake_before_update.json',can(oldcopy));pb=plan('controller_before_update.json',can(ptrcopy));rb=plan('runtime_before_update.json',can(rcopy));plan('update.py',own)
+    new={};parentrefs=[];sharedrefs=[]
+    for batch in batchrecords:
+        shared=dict(batch,schema='ROOT_F009_REVIEWED_COHORT_SHARED_STRICT_BATCH_NODE_V1',root='/root',administratively_registered=True,cohort=cohortref,cohort_actual_review=reviewref,current_roster=h['current_roster'],individual_whole_certificate_equality_claimed=False,strict_cover_index_required_by_downstream_consumers=True,legacy_collectors_assuming_covers0_require_separate_adapter=True,whole_R5_level_or_census_claimed=False,scientific_calls=0,new_manuscript_or_measurement_credit=0,Root_registration_decision=dr)
+        sharedref=plan('reviewed_batch%02d.json'%batch['batch'],can(shared));sharedrefs.append(sharedref)
+        for binding in batch['bindings']:
+            index=binding['index'];value=dict(schema='ROOT_F009_REVIEWED_PARENT_FROM_COHORT_STRICT_BATCH_V1',root='/root',current_parent_ordinal=index,current_roster=h['current_roster'],incoming_level=4,outgoing_level=5,cohort=cohortref,cohort_batch=batch['batch'],shared_reviewed_batch=sharedref,pairing=batch['pairing'],independent_actual_review=batch['independent_actual_review'],cohort_actual_review=reviewref,supplier_cover_index=0,strict_cover_index=binding['strict_cover_index'],strict_certificate=batch['strict']['certificate'],strict_result=batch['strict']['result'],strict_actual_SDK=batch['strict']['actual_SDK'],strict_actual_edition=batch['strict']['actual_edition'],supplier_actual_SDK=binding['supplier_actual_SDK'],supplier_certificate=binding['supplier_certificate'],supplier_actual_edition=binding['supplier_actual_edition'],canonical_cover_sha256=binding['canonical_cover_sha256'],parent_payload_lexical_sha256=binding['parent_payload_lexical_sha256'],per_cover_canonical_bytes_equal=True,individual_whole_certificate_equality_claimed=False,strict_slots=156,target_count=binding['target_occurrences'],all156slots_strictly_checked=True,old_single_parent_pair_schema_not_reused=True,strict_cover_index_required_by_downstream_consumers=True,whole_R5_level_or_census_adopted=False,new_manuscript_credit=0)
+            assert 'supplier_and_strict_certificate_byte_equal'not in value and 'individual_supplier_and_batch_whole_certificates_equal'not in value
+            vr=plan('parent%04d_reviewed.json'%index,can(value));key='Root_f009_R5_canonical_parent%04d_pair'%index;assert key not in keys;new[key]=dict(ref=vr,value=value,independent_actual_review=batch['independent_actual_review'],independent_actual_review_pending=False);parentrefs.append(vr)
+    assert len(new)==len(parentrefs)==END-BEGIN
+    br=plan('parent_cache.json',can(dict(schema='ROOT_INTAKE_CACHE_ENTRY_BANK_V1',root='/root',completed_science_values_immutable=True,range=dict(begin=BEGIN,end=END,topic='F009_R5_current_canonical_parents'),review_handoff=reviewref,cohort=cohortref,shared_reviewed_batches=sharedrefs,cache_entries=new)))
+    r['cache_banks'].append(dict(entries=END-BEGIN,keys=sorted(new),ref=br));F['R5_canonical_complete_pairs']+=parentrefs;F['R5_canonical_actual_reviews'].append(reviewref)
+    for k in('R5_canonical_pairs_completed','R5_canonical_pairs_reviewed','R5_canonical_next_parent','R5_total_distinct_canonical_parents_reviewed','R5_total_distinct_canonical_parents_completed'):F[k]=END
+    for k in('R5_prefix_strict_slots_reviewed','R5_strict_slots_reviewed','R5_strict_slots_completed'):F[k]=156*END
+    F['next']='Continue fresh parent%d; prefix0..%d independently reviewed. New cohort parent records use shared strict batches and explicit cover indices; legacy covers[0] collectors need separately reviewed schema admission. Complete all940 and final reduction/census before whole-level credit.'%(END,END-1);F['next_method_question']=F['next']
+    r['next_R5'].update(index=END,next_action='fresh%d_prefix0_%d_reviewed'%(END,END-1),completed_prefix_parents=END,reviewed_prefix_parents=END,pending_actual_review_indices=[],scientific_child_started=False)
+    for k in('R5_canonical_pairs','R5_canonical_pairs_reviewed','R5_total_distinct_parents_reviewed','R5_total_distinct_parents_completed'):r['counts'][k]=END
+    for k in('R5_prefix_strict_slots_reviewed','R5_strict_slots_reviewed','R5_strict_slots_completed'):r['counts'][k]=156*END
+    assert can(r['cache_entries'])==inline and can(r['cache_banks'][:-1])==banks and all(can(old[k])==v for k,v in protected.items())
+    fchanged={'R5_canonical_complete_pairs','R5_canonical_actual_reviews','R5_canonical_pairs_completed','R5_canonical_pairs_reviewed','R5_canonical_next_parent','R5_total_distinct_canonical_parents_reviewed','R5_total_distinct_canonical_parents_completed','R5_prefix_strict_slots_reviewed','R5_strict_slots_reviewed','R5_strict_slots_completed','next','next_method_question'}
+    assert all(can(F[k])==can(oldcopy['F009'][k])for k in oldcopy['F009']if k not in fchanged)
+    assert all(can(r[k])==can(rcopy[k])for k in rcopy if k not in('cache_banks','next_R5','counts','latest_reviewed_forest_batch','previous_checkpoint','observed_utc'))
+    assert all(can(r['counts'][k])==can(rcopy['counts'][k])for k in rcopy['counts']if k not in('R5_canonical_pairs','R5_canonical_pairs_reviewed','R5_total_distinct_parents_reviewed','R5_total_distinct_parents_completed','R5_prefix_strict_slots_reviewed','R5_strict_slots_reviewed','R5_strict_slots_completed'))
+    assert all(can(r['next_R5'][k])==can(rcopy['next_R5'][k])for k in rcopy['next_R5']if k not in('index','next_action','completed_prefix_parents','reviewed_prefix_parents','pending_actual_review_indices','scientific_child_started'))
+    delta=dict(reviewed_range=[BEGIN,END],review=reviewref,cohort=cohortref,shared_reviewed_batches=sharedrefs,new_cache_bank=br,new_parent_records=parentrefs,prior_values_preserved=EXPECTED_PRIOR,total_cache_values=EXPECTED_PRIOR+END-BEGIN,scientific_calls=0,whole_census_credit=0,independent_admin_review_pending=True,new_cohort_shared_strict_parent_schema=True,downstream_schema_aware_cover_index_admission_still_owed=True)
+    old['latest_reviewed_forest_batch']=r['latest_reviewed_forest_batch']=delta
+    now=datetime.datetime.now(datetime.timezone.utc).isoformat();r.update(previous_checkpoint=orr,observed_utc=now);nr=plan('runtime.json',can(r));old.update(previous_checkpoint=ib,active_controller_checkpoint=nr,observed_utc=now);ptr.update(previous_controller=pb,checkpoint=nr);ni=plan('intake_after_update.json',can(old));np=plan('controller_after_update.json',can(ptr));assert all(can(ptr[k])==can(ptrcopy[k])for k in ptrcopy if k not in('previous_controller','checkpoint'))
+    input_first=L.bytes;Q=sum(map(len,planned.values()));old_pointer_bytes=oi['bytes']+op['bytes'];new_pointer_bytes=ni['bytes']+np['bytes'];readback_reserve=131072;nominal=source_total
+    declared=2*input_first+2*Q+2*old_pointer_bytes+2*new_pointer_bytes+2*readback_reserve+nominal
+    temp_controller=B/'controllers/.current.json.reviewed_cohort_strict';temp_intake=B/'.current_intake.json.reviewed_cohort_strict';assert not os.path.lexists(temp_controller)and not os.path.lexists(temp_intake)
+    allpaths=set(L.pins)|set(planned)|{str(STAGE/'readback.json'),str(temp_controller),str(temp_intake),str(B/'current_intake.json'),str(B/'controllers/current.json')};new_upper=Q+new_pointer_bytes+readback_reserve
+    assert declared<=64*2**20 and len(allpaths)<=512 and new_upper<=16*2**20 and all(len(x)<=4*2**20 for x in planned.values())
+    L.close();assert L.bytes==2*input_first and not STAGE.exists();STAGE.mkdir()
+    for path,body in planned.items():write_body(pathlib.Path(path),body)
+    syncdir(STAGE);syncdir(STAGE.parent);C=Ledger()
+    for path,body in planned.items():C.raw(path,reference(pathlib.Path(path),body))
+    C.close();assert C.bytes==2*Q;restored,_=C.document(nr['path'],nr);assert can(restored['cache_entries'])==inline and can(restored['cache_banks'][:-1])==banks
+    CAS=Ledger();CAS.raw(B/'current_intake.json',oi);CAS.raw(B/'controllers/current.json',op);CAS.close();assert CAS.bytes==2*old_pointer_bytes
+    for path,tmp,body in[(B/'controllers/current.json',temp_controller,planned[np['path']]),(B/'current_intake.json',temp_intake,planned[ni['path']])]:write_body(tmp,body);os.replace(tmp,path);syncdir(path.parent)
+    A=Ledger();A.raw(B/'current_intake.json',dict(ni,path=str(B/'current_intake.json')));A.raw(B/'controllers/current.json',dict(np,path=str(B/'controllers/current.json')));A.close();assert A.bytes==2*new_pointer_bytes
+    out=dict(schema='ROOT_REVIEWED_COHORT_STRICT_PROGRESS_READBACK_V1',root='/root',intake=ni,controller=np,runtime=nr,new_cache_bank=br,cohort=cohortref,shared_reviewed_batches=sharedrefs,new_parent_records=parentrefs,reviewed_prefix=END,reviewed_slots=156*END,total_cache_values=EXPECTED_PRIOR+END-BEGIN,prior_cache_values=EXPECTED_PRIOR,all_prior_cache_values_and_banks_preserved=True,protected_other_topics_and_measurements_unchanged=True,old_single_parent_records_not_retagged=True,individual_whole_certificate_equality_claimed=False,downstream_schema_aware_cover_index_admission_still_owed=True,scientific_calls=0,independent_admin_review_pending=True,input_first_closing_bytes=L.bytes,private_output_verification_bytes=C.bytes,prepublication_CAS_bytes=CAS.bytes,postpublication_bytes=A.bytes,readback_read_reserve=2*readback_reserve,declared_read_upper=declared,paths_upper=len(allpaths),new_bytes_upper=new_upper,Source_union_guards512=source_total,Root_decision=dr,actual_review=reviewref,old_runtime=orr)
+    outbody=can(out);assert len(outbody)<=readback_reserve;write_body(STAGE/'readback.json',outbody);syncdir(STAGE);R=Ledger();R.raw(STAGE/'readback.json',reference(STAGE/'readback.json',outbody));R.close();assert L.bytes+C.bytes+CAS.bytes+A.bytes+R.bytes+nominal<=declared
+    print(json.dumps(dict(readback=reference(STAGE/'readback.json',outbody),intake=ni,controller=np,runtime=nr,new_cache_bank=br,cohort=cohortref,shared_reviewed_batches=sharedrefs,new_parent_records=parentrefs,scientific_calls=0)))
+
+if __name__=='__main__':main()

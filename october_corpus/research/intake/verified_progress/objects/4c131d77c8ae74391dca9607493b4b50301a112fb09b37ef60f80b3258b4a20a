@@ -1,0 +1,98 @@
+"""Root-only false configuration factory; metadata and opaque commitments only."""
+import argparse,hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+import metadata_io as m
+import metadata_fields as f
+import selector_projection as pr
+BASE=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+P=S/'maintenance/intake/progress'
+START=time.monotonic()
+AUTHORS=('/root/forest_resume','/root/mathematical_review')
+def check():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+def read(path,expected=None):
+    check();r,b=m.whole(path,expected);return b,r
+def doc(r):return m.decode(read(r['path'],r)[0])
+def descriptor(a):
+    r=dict(path=a[0],bytes=int(a[1]),sha256=a[2]);m.ref(r);return r
+def closed():
+    for r in list(m.RECORDS.values()):read(r['path'],r)
+    check()
+def frozen(n):
+    roots=(S/'maintenance/intake/f009_cohort_preparation/cohorts',
+        Path('/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts'),
+        Path('/private/tmp/f009_R5_parent_cohorts_actual'))
+    assert all(not os.path.lexists(root/('cohort_from%04d'%n))for root in roots),'active current-prefix cohort'
+def main():
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s metadata deadline')));signal.alarm(125)
+    a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--actor',required=True)
+    a.add_argument('--expected-prefix',required=True,type=int);a.add_argument('--seed',nargs=3,required=True)
+    a.add_argument('--manifest',nargs=3,required=True);a.add_argument('--Source-peer',nargs=3,required=True)
+    a.add_argument('--out',required=True);a=a.parse_args();assert a.actor=='/root';check()
+    mfref=descriptor(a.manifest);mf=doc(mfref);ownraw,own=read(Path(__file__).resolve())
+    assert mf['schema']=='F004_LOGICAL_POSITIVE_PLAN_FACTORY_SOURCE_V1'and mf['Root_authority']is False
+    assert mf['entry']==own and len(mf['Source'])==4
+    assert {r['path']for r in mf['Source']}=={str(BASE/n)for n in('rebase_plan.py','metadata_io.py','metadata_fields.py','selector_projection.py')}
+    for r in mf['Source']+mf['guards']:read(r['path'],r)
+    assert sum(r['bytes']for r in mf['Source']+mf['guards'])+512==mf['Source_plus_guards512']<=65536
+    peerref=descriptor(a.Source_peer);peer=doc(peerref)
+    assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root',*AUTHORS)
+    assert peer['factory_Source_manifest']==mfref and peer['factory_program']==own
+    seedref=descriptor(a.seed);seed=doc(seedref)
+    assert seed['schema']=='F004_LOGICAL_POSITIVE_PLAN_SEED_V1'and seed['Root_authority']is False
+    assert seed['position']==2739 and seed['original_job']==[20,4]
+    rb,ir=read(P/'current_intake.json');pointer,cp=read(P/'controllers/current.json')
+    rr=f.selected(pointer,['checkpoint'])['checkpoint'];runtime,rr=read(rr['path'],rr)
+    assert f.selected(rb,['active_controller_checkpoint'])['active_controller_checkpoint']==rr
+    outer=f.members(rb);fv=f.selected(outer['F004'],['job20','registered_jobs','required_jobs','pending_jobs'])
+    job=fv['job20'];n=a.expected_prefix
+    f9=f.selected(outer['F009'],['R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed'])
+    assert type(n)is int and 0<=n<=940 and f9['R5_canonical_pairs_reviewed']==n and f9['R5_prefix_strict_slots_reviewed']==156*n
+    frozen(n)
+    assert job['current_selector']==seed['selector']and job['partition']==[173,3605,1]
+    assert job['now_unresolved']==1 and job['remaining_positions']==[2739]
+    selector=doc(seed['selector']);assert pr.expand(selector)==[2739]
+    globals_=[];values=[]
+    for path in(S/'reboot_20261013/CURRENT.json',S/'maintenance/intake/current_status.json'):
+        b,r=read(path);globals_.append(r);values.append(f.selected(b,['F004_q11_latest_ledger'])['F004_q11_latest_ledger'])
+    assert values[0]==values[1];ledger=values[0]
+    counts={k:ledger[k]for k in('closed','required','pending')}
+    assert counts==dict(closed=fv['registered_jobs'],required=fv['required_jobs'],pending=fv['pending_jobs'])
+    assert all(type(v)is int and v>=0 for v in counts.values())and counts['closed']+counts['pending']==counts['required']
+    protected=[]
+    for key in('pending_file','registration','typed_job_record'):
+        r=ledger[key];read(r['path'],r)
+        if r not in protected:protected.append(r)
+    for r in seed['logical_closed_inputs']:read(r['path'],r)
+    doc(seed['predecessor_cache_bank'])
+    epoch='position2739_logical'
+    root=S/'computation/f004/q11/rank4/section_generation'
+    destination=dict(property_root=str(root/'residuals/rank4_markings'/epoch),selector=str(root/'method/selectors'/('job_0020_after_'+epoch+'.json')))
+    assert all(not os.path.lexists(p)for p in destination.values())
+    cfg={k:seed[k]for k in('logical_case','saved_orbit_Root_import','saved_row_post_adoption_review','selector',
+        'historical_predecessor_review','predecessor_cache_bank','logical_closed_inputs')}
+    cfg.update(schema='F004_LOGICAL_POSITIVE_MARKING_CONFIG_V1',Root_authority=False,Root_reaffirmed_in_current_session=False,
+        epoch=epoch,destination=destination,retained_banks=[],protected_globals=globals_,global_job_counts=counts,
+        protected_progress_snapshot=dict(intake=ir,controller=cp,runtime=rr),expected_F009_prefix=n,
+        protected_operational_inputs=protected,predecessor_policy='INHERIT_ACCEPTED_CHECKPOINT_NO_REVIEW_BODY_RECONSTRUCTION')
+    cfgraw=m.can(cfg);out=Path(a.out)
+    assert out.is_absolute()and out.parent==BASE/'plans'and out.parent.resolve(strict=True)==out.parent
+    assert not os.path.lexists(out)and len(cfgraw)<=4*2**20
+    summary=dict(schema='F004_LOGICAL_POSITIVE_FALSE_PLAN_FACTORY_RETURN_V1',Root_authority=False,root='/root',factory=own,
+        factory_Source_manifest=mfref,Source_peer=peerref,seed=seedref,protected_progress_snapshot=cfg['protected_progress_snapshot'],
+        expected_F009_prefix=n,Root_promotion_and_new_exact_plan_review_owed=True,scientific_calls=0,canonical_writes=0,
+        whole_job_or_global_registered_job_credit=0)
+    assert 2*m.READ+2*len(cfgraw)+131072<=64*2**20 and len(m.PATHS|{str(out)})<=500
+    closed();frozen(n)
+    with out.open('xb')as stream:assert stream.write(cfgraw)==len(cfgraw);stream.flush();os.fsync(stream.fileno())
+    fd=os.open(out.parent,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    _,output=read(out);assert output['bytes']==len(cfgraw)and output['sha256']==hashlib.sha256(cfgraw).hexdigest()
+    read(P/'current_intake.json',ir);read(P/'controllers/current.json',cp);read(rr['path'],rr)
+    assert m.READ<=64*2**20;check();signal.alarm(0)
+    print(m.can(dict(summary,false_config=output,read_bytes=m.READ,paths=len(m.PATHS))).decode(),end='')
+if __name__=='__main__':main()

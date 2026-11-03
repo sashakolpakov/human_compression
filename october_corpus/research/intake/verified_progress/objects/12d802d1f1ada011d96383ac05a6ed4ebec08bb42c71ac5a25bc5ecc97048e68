@@ -1,0 +1,107 @@
+"""Prepare false metadata inputs and durable opaque evidence; never register."""
+import ast,hashlib,json,os,resource,signal,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent;BASE=HERE.parent;TRIANGLE=BASE.parent
+PROGRESS=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress')
+START=time.monotonic();signal.alarm(125);READ=0;BANK={}
+def ref(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+def read(path):
+    global READ
+    p=Path(path);assert p.is_absolute()and not p.is_symlink();raw=p.read_bytes();assert len(raw)<=4*2**20
+    READ+=len(raw);assert READ<=64*2**20 and len(BANK)<=512 and time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if os.uname().sysname=='Darwin'else 1024)<=256*2**20
+    r=ref(p,raw);BANK[str(p)]=(r,raw);return raw,r
+def doc(path):b,r=read(path);return json.loads(b),r
+def write(name,value):
+    p=HERE/name;b=(json.dumps(value,sort_keys=True,separators=(',',':'))+'\n').encode()
+    assert not p.exists()
+    with p.open('xb')as f:f.write(b)
+    return ref(p,b)
+# Only lexical metadata functions from the already reviewed cohort registrar.
+oldprogress=Path('/private/tmp/f009_cohort_progress_registration/register_cohort_UNRUN.py')
+s,_=read(oldprogress);tree=ast.parse(s);namespace={'json':json}
+for n in tree.body:
+    if isinstance(n,ast.FunctionDef)and n.name in('vend','ws','spans','selected'):
+        exec(compile(ast.Module(body=[n],type_ignores=[]),'<existing literal metadata projection>','exec'),namespace)
+raw_intake,ir=read(PROGRESS/'current_intake.json');controller,cr=doc(PROGRESS/'controllers/current.json')
+rr=controller['checkpoint'];raw_runtime,actual_rr=read(rr['path']);assert actual_rr==rr
+i=namespace['spans'](raw_intake);rt=namespace['spans'](raw_runtime)
+assert json.loads(i['active_controller_checkpoint'])==rr
+f9=namespace['selected'](i['F009'],('R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed'))
+assert f9==dict(R5_canonical_pairs_reviewed=342,R5_prefix_strict_slots_reviewed=53352)
+counts=json.loads(rt['counts']);assert counts['L026_separate_IP']==721 and counts['L026_paid']==1468
+assert counts['R5_canonical_pairs_reviewed']==342 and counts['R5_prefix_strict_slots_reviewed']==53352
+assert ir['sha256'].startswith('539aec')and cr['sha256'].startswith('bd4e7')and rr['sha256'].startswith('03f74')
+app,ar=doc(BASE/'root_applications.json');post,postref=doc(BASE/'issuance_review/reuse_integer_only.json')
+assert ar['bytes']==5178 and ar['sha256']=='0cdc604ca0b526309fa7a0d70850455da9145358db48c731b6cddd5d91b9645a'
+assert postref['bytes']==4285 and postref['sha256']=='7128a4a81192443599583484967be82d500df04dd7ac9c25acba38ca434b3dfc'
+snapshot=app['current_snapshot'];receipt,receiptr=doc(snapshot['receipt']['path']);assert receiptr==snapshot['receipt']
+for r in snapshot.values():b,actual=read(r['path']);assert actual==r
+inputs,inputsref=doc(app['inputs']['path']);context=inputs['whole_physical_files']
+for r in context:b,actual=read(r['path']);assert actual==r
+for r in(app['independent_application_review'],app['theorem'],app['written_application'],app['proposal']):
+    b,actual=read(r['path']);assert actual==r
+proposal,proposalref=doc(app['proposal']['path'])
+genref=proposal['accepted_generation_batch'];gen,actual=doc(genref['path']);assert actual==genref
+witness=receipt['witness_bank'];b,actual=read(witness['path']);assert actual==witness
+legacy=TRIANGLE/'procedural_subsets/evidence/ledger_publication/objects'
+oldmanifest=legacy/'960862097d74c731b1eb9cc9c2cf23de911258e52a7725508b3ff1016568c71f'
+oldwriter=legacy/'73e75fab70d798b46d5ca78e01ea438a8af579c691f61c5b74b2b09e7658fef7'
+oldmf,oldmfref=doc(oldmanifest);oldsrc,oldref=read(oldwriter);assert oldmf['writer']['sha256']==oldref['sha256']
+oldtree=ast.parse(oldsrc);newsrc=(HERE/'typed_status.py').read_text();newtree=ast.parse(newsrc)
+for name in('need','scope','counts','identity','receipt_check','apply'):
+    oldnode=next(n for n in oldtree.body if isinstance(n,ast.FunctionDef)and n.name==name)
+    newnode=next(n for n in newtree.body if isinstance(n,ast.FunctionDef)and n.name==name)
+    assert ast.get_source_segment(oldsrc.decode(),oldnode)==ast.get_source_segment(newsrc,newnode)
+sources=[]
+for name in('register_ip.py','metadata.py','typed_status.py','whole.py'):
+    raw,r=read(HERE/name);ast.parse(raw);sources.append(r)
+guards=[]
+for name in('supervise_validation.py','supervise_transient.py'):
+    raw,r=read(Path('/Users/sasha/medusa/research/leemans/maintenance/runtime')/name);guards.append(r)
+total=sum(r['bytes']for r in sources+guards)+512;assert total<=65536
+mf=write('Source_manifest.json',dict(schema='L026_THREE_LOGICAL_IP_REGISTRATION_SOURCE_V1',Root_authority=False,
+    entry=sources[0],Source=sources,guards=guards,Source_plus_guards512=total,
+    bounds=dict(seconds=125,cooperative_seconds=115,rss_bytes=256*2**20,read_bytes=64*2**20,paths=512,file_bytes=4*2**20),
+    literal_typed_helper_ancestor=oldref,literal_whole_sha256='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'))
+factory_sources=[]
+for name in('rebase_plan.py','metadata.py','whole.py'):
+    raw,r=read(HERE/name);ast.parse(raw);factory_sources.append(r)
+factory_total=sum(r['bytes']for r in factory_sources+guards)+512;assert factory_total<=65536
+write('factory_Source_manifest.json',dict(schema='L026_LOGICAL_IP_FALSE_PLAN_FACTORY_SOURCE_V1',Root_authority=False,
+    entry=factory_sources[0],Source=factory_sources,guards=guards,Source_plus_guards512=factory_total,
+    bounds=dict(seconds=125,cooperative_seconds=115,rss_bytes=256*2**20,read_bytes=64*2**20,paths=512,file_bytes=4*2**20)))
+protocol_raw,protocol=read(HERE/'PROTOCOL.rst')
+epoch=TRIANGLE/'paid_status_ledger/epochs/three_simple_group_applications'
+stage=PROGRESS/'stages/l026_three_simple_group_applications';assert not epoch.exists()and not stage.exists()
+plan=write('plan_FALSE.json',dict(schema='L026_THREE_LOGICAL_IP_REGISTRATION_PLAN_FALSE_V1',author='/root/mathematical_review',
+    Root_authority=False,program=sources[0],Source_manifest=mf,protocol=protocol,
+    root_applications=ar,post_issuance_review=postref,current_snapshot=snapshot,
+    progress_snapshot=dict(intake=ir,controller=cr,runtime=rr),scope_digest=app['scope_digest'],original_selector=app['original_selector'],
+    canonical_generation_batch=genref,retained_proof_context=context,witnesses=witness,
+    free_adoption=receipt['original_free_witness_adoption'],operand_adoption=receipt['original_operand_adoption'],
+    epoch=str(epoch),progress_stage=str(stage),expected_changes=proposal['prospective_changes_NOT_REGISTERED'],
+    before_counts=dict(GEN=724,separate_IP=721,subset_NEG=744,unpaid=27440),after_counts_PROSPECTIVE=dict(GEN=724,separate_IP=724,subset_NEG=744,unpaid=27440),
+    paid_unchanged=1468,F009_prefix_unchanged=342,F009_slots_unchanged=53352,registration_executed=False,
+    planning_qualification='Baseline review data on frozen342 snapshot; no execution. Rebase after cohort adoption with the unchanged reviewed writer and manifest.',
+    old_manifest=oldmfref,old_writer=oldref,old_scientific_Source_and_kernel_unchanged=True))
+decision=write('Root_decision_FALSE.json',dict(schema='ROOT_L026_THREE_LOGICAL_IP_REGISTRATION_DECISION_V1',root='/root',
+    Root_authority=False,adopted=False,status='UNISSUED_FALSE',blockers=[],program=sources[0],plan=plan,
+    Source_manifest=mf,protocol=protocol,root_applications=ar,post_issuance_review=postref,
+    current_snapshot=snapshot,progress_snapshot=dict(intake=ir,controller=cr,runtime=rr),independent_Source_peer=None,
+    whole_new_metadata_Source_and_protocol_owned=False,exact_Root_logical_applications_and_postreview_owned=False,
+    all_qualified_Original_Fi22_class_member_Reader_two_fibre_H_B_premises_retained=False,
+    only_three_existing_GEN_rows_gain_separate_IP=False,F009_registered_prefix_and_all_cache_values_protected=False,
+    no_active_F009_cohort_freeze_owned=False,
+    serial_sole_writer_no_locked_atomicity_claim=False,metadata_registration_authorized=False,no_scientific_evaluation_or_replay=False))
+(HERE/'retained/objects').mkdir(parents=True,exist_ok=True);entries=[]
+for r,raw in list(BANK.values()):
+    p=HERE/'retained/objects'/r['sha256']
+    if not p.exists():
+        with p.open('xb')as f:f.write(raw)
+    assert p.read_bytes()==raw
+    entries.append(dict(original=r,retained=dict(path=str(p),bytes=len(raw),sha256=r['sha256'])))
+retention=write('retained_inputs.json',dict(schema='L026_LOGICAL_IP_REGISTRATION_SOURCE_INPUT_RETENTION_V1',Root_authority=False,
+    entries=entries,Original_cache_witness_or_group_payloads_decoded=False,canonical_writes=0))
+print(json.dumps(dict(plan=plan,Source_manifest=mf,program=sources[0],protocol=protocol,Root_decision_FALSE=decision,
+    retained_inputs=retention,Source_plus_guards512=total,authoring_read_bytes=READ,registration_executed=False)))

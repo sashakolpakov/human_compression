@@ -1,0 +1,40 @@
+"""Preserve the accepted actual review; make its timing JSON ABI compatible."""
+from pathlib import Path
+import hashlib,json
+BASE=Path(__file__).resolve().parent
+parent=BASE/'reuse_integer_only.json';raw=parent.read_bytes()
+parent_ref=dict(path=str(parent),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+assert parent_ref['bytes']==3745 and parent_ref['sha256']=='934a518fac175288874722eb851b1d1aa1dec6108a4e60a9ccaec0f4c8861d4f'
+floats=[]
+def decimal(value):floats.append(value);return value
+def pairs(values):
+    out={}
+    for k,v in values:
+        assert k not in out;out[k]=v
+    return out
+def bad(value):raise ValueError(value)
+value=json.loads(raw,object_pairs_hook=pairs,parse_float=decimal,parse_constant=bad)
+assert floats==['0.035705958000107785'] and value['outer_seconds']==floats[0]
+assert value['count']==24 and value['Original_inputs_loaded']is False and value['blockers']==[]
+value['integer_metadata_projection']=dict(schema='F004_ACTUAL_REVIEW_INTEGER_METADATA_PROJECTION_V1',
+ parent_review=parent_ref,
+ changed_fields=[dict(JSON_pointer='/outer_seconds',old_JSON_type='number',new_JSON_type='string',
+   exact_original_decimal_lexeme=floats[0])],
+ all_other_parent_fields_and_verified_facts_unchanged=True,
+ additional_Original_Source_or_control_execution=False,
+ qualification='Timing representation only; genuine Source, actual SDK, guard, raw-frame and IO evidence remain those of the immutable parent review.')
+body=(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii')
+# Independent equivalent of runtime.decode, without importing represented Source.
+checked=json.loads(body,object_pairs_hook=pairs,parse_float=bad,parse_constant=bad)
+def integer_tree(x):
+    assert type(x)in(dict,list,str,int,bool,type(None))
+    if type(x)is dict:
+        for k,v in x.items():assert type(k)is str;integer_tree(v)
+    elif type(x)is list:
+        for v in x:integer_tree(v)
+integer_tree(checked)
+assert parent.read_bytes()==raw
+out=BASE/'reuse_integer_metadata_v2.json'
+with out.open('xb')as stream:assert stream.write(body)==len(body)
+print(json.dumps(dict(path=str(out),bytes=len(body),sha256=hashlib.sha256(body).hexdigest(),
+ parent_review=parent_ref,recursive_float_absence_verified=True,represented_Source_or_controls_executed=False)))

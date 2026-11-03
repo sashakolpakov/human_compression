@@ -30,7 +30,10 @@ full portable mathematical replay. The adjacent ``proof_methods`` archive
 preserves a separate finite selection of proofs and execution evidence; the
 corpus reproduction guide lists existing portable mathematical entry points.
 
-The preceding 330-parent edition is preserved in
-``history/parents0000_0329/`` with its original audit and validation. The
-current edition records 342 parents and 53,352 slots after the separately
-reviewed twelve-parent registration.
+The preceding editions are preserved in ``history/parents0000_0329/`` and
+``history/parents0000_0341/`` with their original audits and validation.
+The current edition records 354 parents and 55,224 slots, 724 separate
+Fi22 intersection proofs, and no unpaid positions in the job 20 selector.
+Global F004 completion remains 126 of 272 jobs. The adjacent
+``verified_progress`` archive preserves the new registration evidence and
+seven readable TeX proofs.

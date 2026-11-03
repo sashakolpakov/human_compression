@@ -1,0 +1,156 @@
+"""Independent logical application audit; Original numerical bodies stay opaque."""
+from pathlib import Path
+import ast,hashlib,json,os,resource,signal,sys,time
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection')
+HERE=BASE/'logical_application';OUT=HERE/'review';START=time.monotonic();READ=0;PINS={};BODIES={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second logical audit')))
+signal.alarm(125)
+def need(ok,msg):
+    if not ok:raise ValueError(msg)
+def raw(p,r=None):
+    global READ
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+    p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p and not p.is_symlink()
+    st=p.stat();assert p.is_file()and st.st_size<=8*2**20
+    b=p.read_bytes();assert p.stat()==st;READ+=len(b);assert READ<=64*2**20
+    rr=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+    if r is not None:assert rr==r
+    PINS[str(p)]=rr;BODIES[str(p)]=b;assert len(PINS)<=512
+    return b,rr
+def doc(p,r=None):
+    b,rr=raw(p,r);return json.loads(b),rr
+def get(r):return doc(r['path'],r)[0]
+def enc(x):return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode('ascii')+b'\n'
+# Navigate Original JSON as bytes. Only explicitly selected metadata is decoded.
+def white(b,i):
+    while i<len(b)and b[i]in b' \r\n\t':i+=1
+    return i
+def string_end(b,i):
+    assert b[i]==34;i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('unterminated string')
+def end(b,i):
+    if b[i]==34:return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            assert i<len(b)
+            if b[i]==34:i=string_end(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \r\n\t':i+=1
+    return i
+def fields(b):
+    i=white(b,0);assert b[i]==123;i=white(b,i+1);out={}
+    while b[i]!=125:
+        j=string_end(b,i);k=json.loads(b[i:j]);assert k not in out
+        i=white(b,j);assert b[i]==58;i=white(b,i+1);j=end(b,i);out[k]=b[i:j];i=white(b,j)
+        if b[i]==44:i=white(b,i+1)
+        else:assert b[i]==125
+    assert white(b,i+1)==len(b);return out
+def entries(b):
+    i=white(b,0);assert b[i]==91;i=white(b,i+1)
+    while b[i]!=93:
+        j=end(b,i);yield b[i:j];i=white(b,j)
+        if b[i]==44:i=white(b,i+1)
+        else:assert b[i]==93
+    assert white(b,i+1)==len(b)
+
+h,hr=doc(HERE/'handoff.json');p,pr=doc(HERE/'proposed_case.json');closure,clr=doc(HERE/'input_closure.json')
+assert(hr['bytes'],hr['sha256'])==(2317,'6c335026b0d61496e4fbd0e7a46020d8db1a67f74a93b3a29f0d48b5204ae20b')
+assert(pr['bytes'],pr['sha256'])==(9350,'dba4dcf51c2297fa67f9aaaa8bd447f086e3cc77ecf3161e88dc8c68e86de02a')
+assert(clr['bytes'],clr['sha256'])==(33820,'ad416f25b6cc5e4b744e7e493cc684e3eb8d91004c8289095457874e56d1984f')
+assert h['author']==p['author']=='/root/mathematical_review'and h['Root_authority']is p['Root_authority']is False
+assert p['adopted']is p['issued']is False and p['blockers']==[]
+assert h['files']['proposed_case.json']==pr and p['input_closure']==clr
+for r in h['files'].values():raw(r['path'],r)
+assert len(closure['inputs'])==65
+for item in closure['inputs']:
+    r=item['original'];b,_=raw(r['path'],r);a=item['durable_alias'];assert a is not None
+    assert(a['bytes'],a['sha256'])==(r['bytes'],r['sha256'])
+    assert raw(a['path'],a)[0]==b
+metadata,mr=doc(BASE/'literal_input_metadata.json');case=p['case'];assert case==metadata['case']==h['case']
+assert case['position']==2739 and case['original_row_id']=='job0020:position2739:J08349'
+assert metadata['source_record_identity']['original_orbit_row_sha256']==p['original_orbit_row']['original_orbit_row_sha256']
+actual,ar=doc(BASE/'actual_review/reuse_integer_only.json')
+assert ar['sha256']=='efdc37b68406e36e67ef5da17ce9c845212e0318288f7e699df8fae29c5aede0'
+assert actual['blockers']==[]and actual['case']==case and actual['end_intersection_equals_middle']is True
+assert actual['whole_Source_and_inputs_closed']is actual['actual_guard_and_raw_frames_verified']is True
+result=get(actual['result']);assert result['case']==case and result['end_intersection_equals_middle']is True
+root=get(actual['Root_input_import']);assert root['Root_authority']is root['adopted']is True and root['case']==case
+assert root['Original_transport']==metadata['complete_record_reference']
+assert root['same_Original_marks_model_and_faithful_row_frame_owned']is True
+assert root['accepted_old_Source_actual_frame_and_original_G2_projection_premises_owned']is True
+old=get(root['old_star_actual_review']);frame=get(old['Root_input_import'])
+assert frame['Root_authority']is frame['adopted']is True and frame['case']==case
+for k in('same_Original_four_marks_frame_named_G2_members_and_current_unpaid_owned',
+ 'accepted_complete_middle_D22_journal_same_marks_owned','accepted_positive_H_and_R_tensor_congruences_and_root_aliases_owned'):
+    assert frame[k]is True
+generation=get(metadata['generation_acceptance'])
+assert metadata['generation_acceptance']['sha256']=='9ac047f77751fdfa8153caf1820bc5249654350ed1658cee4cae05310dae5472'
+assert generation['root']=='/root'and generation['adopted']is True and generation['original_job']==[20,4]
+assert case['position']in generation['generation_verified_positions']and generation['IP_claim']is False
+aliases={x['original']['path']:x['retained']for x in generation['preserved_files']}
+def retained(r):
+    a=aliases[r['path']];assert(a['bytes'],a['sha256'])==(r['bytes'],r['sha256']);return a
+direct=get(retained(generation['independent_direct_result']))
+assert direct['schema']=='Q11_QUARTET37_DIRECT_GENERATION_RESULT_V1'and direct['original_job']==[20,4]
+assert direct['verified_full_generation_positions']==generation['generation_verified_positions']
+records=[x for x in direct['checked_records']if x['original_orbit_position']==2739]
+assert len(records)==1 and all(records[0]['direct_result'][k]is True for k in('full_generation_verified',
+ 'exact_actual_prime37_verified','seven_actual_cyclic_rows_rechecked','borrowed_natural_module_and_rank_one_and_maximal_overgroup_premises'))
+source_ref=retained(direct['program']);source=raw(source_ref['path'],source_ref)[0]
+assert source_ref['sha256']=='9f0fa443dd62f92b432167bd9904c24a804bf3d3e50f476bc83ba448cbe2ff9f'
+tree=ast.parse(source);functions={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+fragments={n:ast.get_source_segment(source.decode(),functions[n])for n in('context','actual_marks','main')}
+assert "a,e,b=[matrix(x,7)for x in export['matrices']]"in fragments['context']
+assert "export['end_order']==[1,4,2,3]"in fragments['context']
+for text in("marks=(ctx['a'],ctx['b'],c,ctx['e'])",'len(set(marks))==4',
+ 'all(g!=I7 and budget.multiply(g,g)==I7 for g in marks)',
+ 'for i in range(4)for j in range(i+2,4)'):
+    assert text in fragments['actual_marks']
+assert "marks=actual_marks(p,old_records[p],ctx,budget)"in fragments['main']
+assert fragments['main'].index('marks=actual_marks')<fragments['main'].index('full_generation_verified=True')
+proof_ref=aliases['/private/tmp/q11_rank4_quartet37/search_output/proof_0001.json']
+proof=fields(raw(proof_ref['path'],proof_ref)[0])
+assert json.loads(proof['original_job'])==[20,4]
+assert json.loads(proof['original_domain_whole_pins'])==metadata['source_original_domain_whole_pins']
+rows=[]
+for blob in entries(proof['records']):
+    f=fields(blob)
+    if json.loads(f['original_orbit_position'])==2739:
+        rows.append({k:json.loads(f[k])for k in('original_orbit_position','representative_J_index','original_orbit_row_sha256')})
+assert rows==[p['original_orbit_row']]
+assert rows[0]['representative_J_index']==8349 and rows[0]['original_orbit_row_sha256']=='0c9b33e90274a8f9d1c83830201346a48249eab78b47de2d31cf7d22afd2b4d2'
+theorem_peer,tr=doc(BASE/'end_subgroups/review/reuse_integer_only.json')
+assert tr['sha256']=='00e4a02dfc2d41a1051e2f9a45dc8304c28e6ff8afb294c9330787d7cf9f228b'
+assert theorem_peer['status']=='SUPPORTED_STATIC_ABSTRACT_THEOREM_PROOF'and theorem_peer['blockers']==[]
+for name,b in list(BODIES.items()):assert raw(name)[0]==b
+leaf=dict(schema='F004_EXACT_FULL_RANK4_APPLICATION_DISTINCT_REVIEW_V1',reviewer='/root/dependency_audit',
+ author=p['author'],status='SUPPORTED_CONDITIONAL_FULL_RANK4_APPLICATION_AWAIT_ROOT_LOGICAL_ISSUE',blockers=[],Root_authority=False,
+ handoff=hr,proposal=pr,input_closure=clr,application=p['application'],case=case,original_job=[20,4],
+ theorem_peer=tr,end_intersection_actual_review=ar,generation_acceptance=metadata['generation_acceptance'],
+ accepted_generation_checker=source_ref,checked_pins=list(PINS.values()),metadata_read_bytes=READ,
+ exact_original_orbit_row_representative_and_complete_domain_bank_joined=True,
+ final_mark_order_a_b_c_e_matches_current_a_b_c_d=True,
+ accepted_positive_branch_required_all_four_distinct_nonidentity_involutions_and_distant_relations=True,
+ same_literal_marks_model_faithful_frame_and_positive_named_G2_imports_retained=True,
+ accepted_generation_and_new_end_intersection_have_same_subject=True,
+ abstract_end_rank_three_and_rank_four_gluing_application_supported=True,
+ named_G2_simplicity_membership_classification_generation_D22_frame_and_tensor_premises_borrowed=True,
+ missing_historical_bodies_not_reconstructed_or_replaced=True,
+ conclusion='Under the exact retained accepted premises, this ordered marking has full rank-four IP and generates a string C-group representation of G2(11).',
+ qualification='A distinct conditional logical case review. Separate positive Root logical issuance and later unfrozen canonical registration remain required; earlier accepted numerical evidence is imported, not replayed.',
+ Root_logical_issue_or_canonical_adoption_performed=False,Original_arrays_or_word_payloads_decoded=False,
+ represented_numerical_Source_or_group_operations_executed=False,
+ new_case_manuscript_conjecture_Lean_or_compression_measurement_credit=0)
+body=enc(leaf);out=OUT/'reuse_integer_only.json'
+with out.open('xb')as f:f.write(body)
+signal.alarm(0)
+print(json.dumps(dict(path=str(out),bytes=len(body),sha256=hashlib.sha256(body).hexdigest(),status=leaf['status'],blockers=[])))

@@ -1,0 +1,68 @@
+"""UNRUN metered ordinary metadata/opaque-body IO; no scientific imports."""
+import hashlib,json,math,os,stat
+from pathlib import Path
+READ=131072 # Conservative nominal worker/guard Source-body startup reservation.
+WRITE=0
+PATH_CAP=500 # Twelve of the overall512 slots reserved for Source/guard/capture paths.
+PATHS=set()
+RECORDS={}
+M=2**20
+def need(ok,why):
+ if not ok:raise ValueError(why)
+def can(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def same(a,b):return can(a)==can(b)
+def digest(body):return hashlib.sha256(body).hexdigest()
+def ref(value):
+ need(type(value)is dict and set(value)=={'path','bytes','sha256'},'whole descriptor')
+ need(type(value['path'])is str and type(value['bytes'])is int and 0<=value['bytes']<=4*M,'descriptor extent')
+ need(type(value['sha256'])is str and len(value['sha256'])==64 and set(value['sha256'])<=set('0123456789abcdef'),'SHA256')
+ return value
+def whole(path,expected=None):
+ global READ
+ p=Path(path);s=p.lstat();key=str(p)
+ need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1,'ordinary stable file')
+ need(len(PATHS|{key})<=PATH_CAP and s.st_size<=4*M and READ+s.st_size<=64*M,'overall512paths4Mfile64Mread with reserved startup slots')
+ with p.open('rb')as f:
+  a=os.fstat(f.fileno());raw=f.read(s.st_size+1);b=os.fstat(f.fileno())
+ z=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ need(sig(s)==sig(a)==sig(b)==sig(z)and len(raw)==s.st_size,'stable complete raw body')
+ r=dict(path=key,bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+ if expected is not None:need(same(r,ref(expected)),'exact whole bytes/SHA/path')
+ if key in RECORDS:need(same(RECORDS[key],r),'one immutable version per bank')
+ PATHS.add(key);READ+=len(raw);RECORDS[key]=r
+ return r,raw
+def pin(path):return whole(path)[0]
+def raw(r):return whole(ref(r)['path'],r)[1]
+def decode(body):
+ def bad(*args):raise ValueError('invalid/nonfinite JSON')
+ def pairs(rows):
+  d={}
+  for k,v in rows:need(k not in d,'duplicate JSON key');d[k]=v
+  return d
+ def floating(s):
+  v=float(s);need(math.isfinite(v),'finite metadata float');return v
+ return json.loads(body,object_pairs_hook=pairs,parse_constant=bad,parse_float=floating)
+def doc(path):return decode(whole(path)[1])
+def docref(r):return decode(raw(r))
+def put(path,value=None,body=None):
+ global WRITE
+ p=Path(path);key=str(p);v=can(value)if body is None else body
+ need(p.is_absolute()and p.is_relative_to('/private/tmp')and '..'not in p.parts,'private metadata only')
+ need(not os.path.lexists(p)and p.parent.resolve(strict=True)==p.parent,'fresh output under existing parent')
+ need(len(PATHS|{key})<=PATH_CAP and len(v)<=4*M and WRITE+len(v)<=16*M,'prospective output bank')
+ with p.open('xb')as f:need(f.write(v)==len(v),'whole output');f.flush();os.fsync(f.fileno())
+ WRITE+=len(v);PATHS.add(key);return pin(p)
+def events(actual):
+ out=[];seen=set()
+ for event in actual['result']['actual_events']+actual['evidence']['events']+actual.get('transport_events',[])+actual['result'].get('inherited_actual_events',[]):
+  r=event.get('capture')
+  if not(type(r)is dict and set(r)=={'path','bytes','sha256'}):continue
+  ref(r);key=(r['path'],r['sha256'])
+  if key not in seen:seen.add(key);out.append(r)
+ need(len(out)<=1024,'finite actual SDK roster');return out
+def sdk(r,expected_exit=0):
+ w=docref(r);frames=w['all_genuine_api_frames']
+ need(w['root']==w['actor']=='/root'and type(frames)is list and frames,'Root genuine actual frames')
+ need(same(frames[0],w['full_initial_tool_return'])and same(frames[-1],w['full_tool_return']),'first/last actual frames')
+ need(w['actual_tool']['exit_code']==w['full_tool_return']['exit_code']==expected_exit,'actual terminal exit identity')
+ need(same(w['issued_argv'],w['child_argv']),'issued actual argv identity');return w

@@ -1,0 +1,140 @@
+"""Supplemental metadata only; the frozen preparation Sources are context."""
+import hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent;START=time.monotonic()
+hb=(HERE/'whole.py').read_bytes()
+assert len(hb)==3744 and hashlib.sha256(hb).hexdigest()=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+ns=dict(__file__=str(HERE/'whole.py'),__name__='f009_selected_attempt_continuation_metadata')
+exec(compile(hb,str(HERE/'whole.py'),'exec'),ns);Ledger=ns['Ledger']
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata deadline')));signal.alarm(125)
+PHASES=('prepare_suppliers','assemble_strict','close_pairing')
+SCIENCE=Path('/private/tmp/f009_R5_parent_cohorts_actual/cohort_from0342')
+RETRY_BASE=SCIENCE/'parents0345_0347';STEM='parent0346_supply'
+def check():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def ref(path,raw):return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def desc(v):
+    r=dict(path=v[0],bytes=int(v[1]),sha256=v[2]);assert Path(r['path']).is_absolute()and 0<=r['bytes']<=4*2**20
+    assert len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef');return r
+def triple(r):return[r['path'],str(r['bytes']),r['sha256']]
+def doc(L,r):check();return L.document(r['path'],r)[0]
+def fresh(path):assert path.is_absolute()and not os.path.lexists(path)
+def sdk(L,r):
+    v=doc(L,r);assert v['root']==v['actor']=='/root'
+    assert v['actual_tool']['exit_code']==v['full_tool_return']['exit_code']==0
+    assert v['all_genuine_api_frames'][-1]==v['full_tool_return'];return v
+def ws(b,i):
+    while i<len(b)and b[i]in b' \r\n\t':i+=1
+    return i
+def string_end(b,i):
+    assert b[i]==34;i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('unterminated string')
+def value_end(b,i):
+    if b[i]==34:return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            assert i<len(b)and len(stack)<=4096
+            if b[i]==34:i=string_end(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \n\r\t':i+=1
+    return i
+def project(b,keys):
+    i=ws(b,0);assert b[i]==123;i=ws(b,i+1);out={};seen=set()
+    while b[i]!=125:
+        j=string_end(b,i);k=json.loads(b[i:j]);assert k not in seen;seen.add(k)
+        i=ws(b,j);assert b[i]==58;i=ws(b,i+1);j=value_end(b,i)
+        if k in keys:out[k]=json.loads(b[i:j])
+        i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:assert b[i]==125
+    assert not b[ws(b,i+1):]and set(out)==set(keys);return out
+def start(entry,a):
+    assert a.actor=='/root';check();L=Ledger()
+    pr=desc(a.retry_packet);p=doc(L,pr)
+    assert p['schema']=='F009_SCIENTIFIC_PREENTRY_RETRY_SUPPLEMENT_V1'and p['Root_authority']is False
+    own,ownref=L.raw(HERE/entry);mr=p['continuation_manifests'][entry];mf=doc(L,mr)
+    assert p['continuation_programs'][entry]==ownref==mf['entry']
+    assert {Path(r['path']).name for r in mf['Source']}=={entry,'common.py','whole.py'}and len(mf['Source'])==3
+    for r in mf['Source']+mf['guards']:L.raw(r['path'],r)
+    total=sum(r['bytes']for r in mf['Source']+mf['guards'])+512
+    assert total==mf['Source_plus_guards512']<=65536
+    peerref=desc(a.Source_peer);peer=doc(L,peerref)
+    assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]
+    assert peer['reviewer']not in('/root','/root/forest_resume','/root/mathematical_review')
+    assert peer['continuation_programs']==p['continuation_programs']and peer['continuation_manifests']==p['continuation_manifests']
+    assert peer['packet']==pr and peer['protocol']==p['protocol'];L.raw(p['protocol']['path'],p['protocol'])
+    base=doc(L,p['base_preparation_packet']);basepeer=doc(L,p['base_preparation_peer'])
+    assert p['base_preparation_packet']['sha256']=='dff74cc658cfe503b0628e5aae4fb13a4dc173531c7ea5fbc8d79d26d2de53ce'
+    assert p['base_preparation_peer']['sha256']=='f00f2378d80eaa1b6a3868b770cf906a8bb7471d616bd8adddbfe23578cc59f7'
+    assert basepeer['status'].startswith('SUPPORTED_STATIC')and basepeer['blockers']==[]and basepeer['packet']==p['base_preparation_packet']
+    cohortref=desc(a.cohort);assert cohortref==p['cohort'];cohort=doc(L,cohortref)
+    assert cohort['root']=='/root'and cohort['Root_authority']is True and cohort['begin']==342 and cohort['end']==354
+    assert cohort['source_indices']==list(range(342,354))and cohort['batch_counts']==[3,3,3,3]
+    assert cohort['preparation_provenance']['packet']==p['base_preparation_packet']
+    owner=doc(L,cohort['Root_Source_ownership']);assert owner['preparation_packet']==p['base_preparation_packet']
+    assert owner['preparation_Source_peer']==p['base_preparation_peer']and owner['Root_authority']is True
+    assert owner['whole_current_metadata_Source_protocol_and_disclosures_owned']is owner['old_scientific_Source_controls_and_mathematics_owned']is True
+    assert cohort['program']==base['adapter']and cohort['Source_handoff']==base['legacy_handoff']and cohort['Source_peer']==base['adapter_peer']
+    for r in cohort['progress_snapshot'].values():L.raw(r['path'],r)
+    L.raw(cohort['program']['path'],cohort['program']);oldpeer=doc(L,cohort['Source_peer'])
+    assert oldpeer['program']==cohort['program']and oldpeer['blockers']==[]
+    ar=desc(a.scientific_attempts);attempts=doc(L,ar)
+    assert attempts['schema']=='ROOT_F009_COHORT_SCIENTIFIC_ATTEMPTS_V1'and attempts['root']=='/root'and attempts['Root_authority']is True
+    assert attempts['cohort']==cohortref and attempts['retry_supplement_packet']==pr and attempts['retry_Source_peer']==peerref
+    assert attempts['all_scientific_roles_terminal_first_v1']is False and attempts['all_other_roles_required_first_v1']is True
+    assert attempts['numerical_Source_and_caps_unchanged']is attempts['no_successful_role_replayed']is True
+    assert attempts['authorization_and_genuine_raw_frames_verified']is True
+    assert len(attempts['selected_roles'])==1;role=attempts['selected_roles'][0]
+    assert role['batch']==1 and role['index']==346 and role['stem']==STEM and role['edition']==2
+    sr=role['actual_SDK'];assert sr['path']==str(RETRY_BASE/'Root_SDK'/(STEM+'_v2.json'));selected=sdk(L,sr)
+    assert len(role['prior_attempts'])==1;prior=role['prior_attempts'][0]
+    assert prior['edition']==1 and prior['disposition']=='GENUINE_PREENTRY_REFUSAL'and prior['actual_SDK']==p['prior_scientific_SDK']
+    failed=doc(L,prior['actual_SDK']);assert failed['root']==failed['actor']=='/root'and failed['actual_tool']['exit_code']!=0
+    assert failed['full_tool_return']['exit_code']==failed['actual_tool']['exit_code']and failed['all_genuine_api_frames'][-1]==failed['full_tool_return']
+    assert selected['issued_argv']==failed['issued_argv']
+    argv=selected['issued_argv'];assert argv[argv.index('--rss-cap-mib')+1]=='128'and argv[argv.index('--timeout')+1]=='150'
+    reconciliation=doc(L,prior['preentry_reconciliation'])
+    assert reconciliation['schema']=='ROOT_F009_EXACT_ROLE_PREENTRY_RETRY_RECONCILIATION_V1'and reconciliation['root']=='/root'and reconciliation['Root_authority']is True
+    assert reconciliation['refused_actual_SDK']==prior['actual_SDK']and reconciliation['selected_actual_SDK']==sr and reconciliation['stem']==STEM
+    for flag in('no_scientific_child_started','guard_and_output_absent_before_selected_attempt','same_exact_argv_as_selected','original_guard_and_scientific_caps_unchanged'):
+        assert reconciliation[flag]is True
+    assert reconciliation['retry_supplement_packet']==pr and reconciliation['retry_Source_peer']==peerref
+    for r in reconciliation['actual_absence_or_resource_inspections']:L.raw(r['path'],r)
+    grant=doc(L,attempts['Root_grant'])
+    assert grant['schema']=='ROOT_F009_SCIENTIFIC_PREENTRY_RETRY_GRANT_V1'and grant['root']=='/root'and grant['Root_authority']is True
+    assert grant['packet']==pr and grant['Source_peer']==peerref and grant['cohort']==cohortref and grant['prior_scientific_SDK']==p['prior_scientific_SDK']
+    assert grant['stem']==STEM and grant['selected_edition']==2 and grant['status']=='SUPPORTED'and grant['blockers']==[]
+    for flag in('whole_new_metadata_Source_and_distinct_peer_owned','exact_genuine_preentry_failure_owned','no_successful_scientific_role_replay_authorized','same_exact_scientific_argv_and_numeric_limits_owned','frozen_init_owner_and_packet_unchanged_owned','only_this_selected_retry_authorized'):
+        assert grant[flag]is True
+    control=Path(cohortref['path']).parent
+    bootstrap=sum(r['bytes']for r in mf['Source'])+4806+3*18361+512
+    return L,p,pr,ownref,peerref,mr,cohort,cohortref,control,attempts,ar,role,bootstrap,total
+def emit(L,planned,bootstrap):
+    check();assert len(planned)<=3 and all(len(b)<=4*2**20 for path,b in planned)
+    assert 2*L.bytes+bootstrap+2*sum(len(b)for path,b in planned)<=64*2**20
+    assert len(set(L.pins)|{str(path)for path,b in planned})<=512
+    L.close();check();refs=[]
+    for path,body in planned:
+        fresh(path);assert path.parent.resolve(strict=True)==path.parent
+        with path.open('xb')as f:assert f.write(body)==len(body);f.flush();os.fsync(f.fileno())
+        refs.append(ref(path,body))
+    for directory in {path.parent for path,body in planned}:
+        fd=os.open(directory,os.O_RDONLY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+    C=Ledger()
+    for r in refs:C.raw(r['path'],r)
+    C.close();assert L.bytes+C.bytes+bootstrap<=64*2**20;check();signal.alarm(0)
+    return refs,dict(input_first_closing_bytes=L.bytes,output_first_closing_bytes=C.bytes,nominal_project_bootstrap_bytes=bootstrap,
+        combined_read_bytes=L.bytes+C.bytes+bootstrap,paths=len(set(L.pins)|set(C.pins)),scientific_calls=0,canonical_writes=0)

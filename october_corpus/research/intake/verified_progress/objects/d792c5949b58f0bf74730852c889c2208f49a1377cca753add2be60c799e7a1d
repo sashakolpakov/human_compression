@@ -1,0 +1,79 @@
+"""Root binds the reviewed literal transport to one fresh Original role."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+import os
+
+ROOT = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection')
+SRC = ROOT / 'source'
+BASE = Path('/private/tmp/f004_fixed_line_tensor_intersection_actual')
+def can(x):
+    return (json.dumps(x, sort_keys=True, separators=(',', ':')) + '\n').encode()
+def read(path, sha):
+    b = Path(path).read_bytes()
+    assert len(b) <= 262144 and hashlib.sha256(b).hexdigest() == sha
+    return json.loads(b)
+def reference(path):
+    b = Path(path).read_bytes()
+    return dict(path=str(path), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+def write(path, x):
+    assert not path.exists() and path.parent.resolve(strict=True) == path.parent
+    b = can(x)
+    with path.open('xb') as f:
+        f.write(b)
+        f.flush()
+        os.fsync(f.fileno())
+    assert path.read_bytes() == b
+    return reference(path)
+
+h = read(ROOT / 'handoff.json', '6e88ffc2655765af8ee42639920309437664902b3e4100792faeffd2a6aa8193')
+peer_path = ROOT / 'review/reuse_integer_only.json'
+peer = read(peer_path, 'e1066d839d3d9d17d2a17d418d27e2319d6de5ad332a8040bfebdc716f8770cf')
+assert peer['status'].startswith('SUPPORTED_STATIC') and peer['blockers'] == []
+assert peer['reviewer'] not in ('/root', h['author'])
+assert peer['Source_manifest'] == h['files']['SOURCE_MANIFEST_worker.json']
+control_path = Path(h['inherited_controls_actual_review']['path'])
+control = read(control_path, '934a518fac175288874722eb851b1d1aa1dec6108a4e60a9ccaec0f4c8861d4f')
+assert control['status'].startswith('SUPPORTED_ACTUAL') and control['blockers'] == []
+assert control['count'] == 24 and control['Original_inputs_loaded'] is False
+assert control['Source_manifest'] == peer['control_Source_manifest']
+literal_path = ROOT / 'literal_inputs.json'
+t = read(literal_path, 'cdc61d8caf99ddcf22f3f86140f30506a409a1b62fa3a0321f97d3316d6447d3')
+assert t['Root_authority'] is t['adopted'] is True
+assert hashlib.sha256(can(t['marks'])).hexdigest() == t['case']['marks_sha256']
+assert hashlib.sha256(can(t['model'])).hexdigest() == t['case']['model_sha256']
+intake = json.loads(Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress/current_intake.json').read_bytes())
+selector = intake['F004']['job20']['current_selector']
+assert selector['sha256'] == '6f87465813779f0750438970c685b3bbc789b95f1e1cb6879d94bb8079d7dc3f'
+assert read(selector['path'], selector['sha256'])['unresolved_position_runs'] == [[2739,2739]]
+q = read(SRC / 'REQUEST_FALSE.json', h['files']['REQUEST_FALSE.json']['sha256'])
+r = read(SRC / 'ROOT_IMPORT_FALSE.json', h['files']['ROOT_IMPORT_FALSE.json']['sha256'])
+assert q['case'] == t['case'] and q['Root_authority'] is False
+q.update(current_selector=selector, new_Source_peer=reference(peer_path),
+         new_controls_actual_review=reference(control_path), Original_transport=reference(literal_path))
+code = (SRC / 'scope.py').read_bytes()
+assert hashlib.sha256(code).hexdigest() == h['files']['scope.py']['sha256']
+duties = next(ast.literal_eval(n.value) for n in ast.parse(code).body
+    if isinstance(n,ast.Assign) and any(isinstance(x,ast.Name) and x.id=='DUTIES' for x in n.targets))
+assert len(duties) == 12
+r.update({k:v for k,v in q.items() if k not in ('schema','Root_authority','Root_input_import')})
+r.update(root='/root', Root_authority=True, adopted=True,
+         Source_manifest_sha256=peer['Source_manifest']['sha256'])
+r.update({name:True for name in duties})
+assert not (BASE / 'guards/original_transport').exists()
+assert not (BASE / 'original_transport').exists()
+rr = write(BASE / 'bindings/Root_transport_input_import.json', r)
+q['Root_input_import'] = rr
+qr = write(BASE / 'bindings/transport_request.json', q)
+child = ['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(SRC/'worker.py'),
+         peer['Source_manifest']['path'],peer['Source_manifest']['sha256'],qr['path'],qr['sha256'],
+         str(BASE/'original_transport')]
+argv = ['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG',
+    '-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES',
+    '/Users/sasha/.venvs/global/bin/python','-E','-B',
+    '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py',
+    '--volume','/Users/sasha/medusa','--output',str(BASE/'guards/original_transport'),
+    '--rss-cap-mib','128','--timeout','100','--',*child]
+print(json.dumps(dict(request=qr, Root_import=rr, argv=argv,
+    arithmetic_controls_replayed=False, old_successful_science_replayed=False)))

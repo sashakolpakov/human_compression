@@ -1,0 +1,131 @@
+"""Independent mathematical/scope review; no Original member values decoded."""
+from pathlib import Path
+import ast,hashlib,json,resource,signal,sys,time
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_fixed_line_intersection')
+HERE=BASE/'saved_row';OUT=HERE/'review';START=time.monotonic();READ=0;BANK={};PINS={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second scope review')))
+signal.alarm(125)
+def raw(p,r=None):
+    global READ
+    p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p and not p.is_symlink()
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+    st=p.stat();assert p.is_file()and st.st_size<=4*2**20;b=p.read_bytes();after=p.stat()
+    sig=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    assert sig(st)==sig(after);READ+=len(b);assert READ<=64*2**20
+    rr=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+    if r is not None:assert rr==r
+    BANK[str(p)]=b;PINS[str(p)]=rr;assert len(PINS)<=512
+    return b,rr
+def doc(p,r=None):
+    b,rr=raw(p,r);return json.loads(b),rr
+def get(r):return doc(r['path'],r)[0]
+def enc(x):return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode('ascii')+b'\n'
+def save(name,v):
+    b=enc(v);p=OUT/name
+    with p.open('xb')as f:f.write(b)
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def white(b,i):
+    while i<len(b)and b[i]in b' \t\r\n':i+=1
+    return i
+def endstr(b,i):
+    assert b[i]==34;i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('string')
+def end(b,i):
+    if b[i]==34:return endstr(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            if b[i]==34:i=endstr(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \t\r\n':i+=1
+    return i
+def fields(b):
+    i=white(b,0);assert b[i]==123;i=white(b,i+1);out={}
+    while b[i]!=125:
+        j=endstr(b,i);k=json.loads(b[i:j]);assert k not in out;i=white(b,j);assert b[i]==58;i=white(b,i+1)
+        j=end(b,i);out[k]=b[i:j];i=white(b,j)
+        if b[i]==44:i=white(b,i+1)
+        else:assert b[i]==125
+    assert white(b,i+1)==len(b);return out
+def entries(b):
+    i=white(b,0);assert b[i]==91;i=white(b,i+1)
+    while b[i]!=93:
+        j=end(b,i);yield b[i:j];i=white(b,j)
+        if b[i]==44:i=white(b,i+1)
+        else:assert b[i]==93
+    assert white(b,i+1)==len(b)
+def row_info(domain):
+    fs=fields(domain);row=None;total=0
+    for total,blob in enumerate(entries(fs['orbits']),1):
+        if total==2739:row=blob
+    assert total==3779 and row is not None
+    cols=list(entries(row));assert len(cols)==4
+    representative=json.loads(cols[0]);assert representative==8349
+    # The row grammar is integers and arrays only; no slot value is decoded.
+    assert set(row)<=set(b'0123456789[], \t\r\n')
+    compact=bytes(c for c in row if c not in b' \t\r\n')
+    return dict(position=2739,representative_J_index=representative,
+        original_orbit_member_count=sum(1 for _ in entries(cols[1])),
+        matching_transporter_count=sum(1 for _ in entries(cols[2])),
+        original_orbit_row_sha256=hashlib.sha256(compact).hexdigest()),fs
+h,hr=doc(HERE/'handoff.json');p,pr=doc(HERE/'proposed_scope.json');metadata,mr=doc(HERE/'row_metadata.json');closure,cr=doc(HERE/'input_closure.json')
+assert(hr['bytes'],hr['sha256'])==(2544,'754935e9927a6ccf1c21fd135be8ec9da94fcd68a61804ca803985e6ba5e146e')
+assert(pr['bytes'],pr['sha256'])==(8371,'20a71bac440b7e284f170e937d90fb0cdfb34c38302b9b32bf00235bc253730c')
+assert(mr['bytes'],mr['sha256'])==(12076,'289e9f9169ad4999d30d93a8274e3268e8d84ae5d67f72167fc36af71a8c9299')
+assert(cr['bytes'],cr['sha256'])==(7150,'371a225de1fd869257c8875b678aff8d25a3e817c095555e34d793e36a31ce83')
+assert p['Root_authority']is p['adopted']is p['issued']is False and p['blockers']==[]
+assert p['author']==h['author']=='/root/mathematical_review'
+for r in h['files'].values():raw(r['path'],r)
+for r in closure['checked_files']:raw(r['path'],r)
+rows=[];domains=[]
+for key in('Saved_result','producer_result'):
+    b,_=raw(p['original_domain_pins'][key]['path'],p['original_domain_pins'][key]);row,fs=row_info(b);rows.append(row);domains.append(fs)
+assert rows[0]==rows[1]==p['saved_original_row_metadata']==metadata['row']
+assert rows[0]['original_orbit_member_count']==rows[0]['matching_transporter_count']==4
+assert rows[0]['original_orbit_row_sha256']=='0c9b33e90274a8f9d1c83830201346a48249eab78b47de2d31cf7d22afd2b4d2'
+assert {k:v for k,v in domains[0].items()if k not in('seconds','peak_self_bytes')}=={k:v for k,v in domains[1].items()if k not in('seconds','peak_self_bytes')}
+assert json.loads(domains[0]['external_premises'])==p['existing_Original_A_equals_G_import']
+assert p['existing_Original_A_equals_G_import']['original_A_equals_G']is True
+literal,_=doc(BASE/'literal_input_metadata.json');assert p['case']==literal['case']and p['original_domain_pins']==literal['source_original_domain_whole_pins']
+root=get(p['representative_Root_application']);post=get(p['representative_post_review'])
+assert root['case']==p['case']and root['Root_authority']is root['adopted']is root['issued']is True and root['full_rank4_IP']is True
+assert post['Root_application']==p['representative_Root_application']and post['status'].startswith('SUPPORTED_MANUAL_ROOT')and post['blockers']==[]
+source_ref=p['original_orbit_semantics']['program'];source=raw(source_ref['path'],source_ref)[0].decode();tree=ast.parse(source)
+assert source_ref['sha256']=='1cebbda5fcda823b43713f03dd17893480c34d040f27501a0651ab69d8f496d3'
+functions={n.name:ast.get_source_segment(source,n)for n in tree.body if isinstance(n,ast.FunctionDef)}
+for text in('transports.setdefault(image,k)','members=sorted(transports)',
+ 'len(members)*len(fixed)==len(stabilizer)','[transports[j]for j in members]'):
+    assert text in functions['orbit_cover']
+assert 'stabilizer=[j+1 for j,(p,q0)in enumerate(pairs)if mm(operator(p,q0),standard_marks[2])==mm(standard_marks[2],operator(p,q0))]'in functions['certify']
+assert 'a,e,b=extended'in functions['certify']and 'orbits=orbit_cover(values,set(domain),pairs,stabilizer,tick)'in functions['certify']
+assert p['old_position1430_scope_excluded']['position']==1430 and p['old_position1430_scope_excluded']['retagged']is False
+assert p['old_writer_admission_claimed']is False and p['new_registration_Source_branch_required']is True
+assert p['canonical_registration_performed']is False and p['Aut_or_duality_class_count_credit']==0
+for name,b in list(BANK.items()):assert raw(name)[0]==b
+leaf=save('reuse_integer_only.json',dict(schema='F004_POSITION2739_WHOLE_SAVED_ROW_DISTINCT_PROOF_REVIEW_V1',
+ status='SUPPORTED_CONDITIONAL_WHOLE_SAVED_ROW_TRANSFER_AWAIT_ROOT_SCOPE',reviewer='/root/dependency_audit',author=p['author'],blockers=[],Root_authority=False,
+ handoff=hr,proposal=pr,written_proof=p['written_proof'],row_metadata=mr,input_closure=cr,
+ case=p['case'],original_job=[20,4],saved_original_row_metadata=rows[0],
+ representative_Root_application=p['representative_Root_application'],representative_post_review=p['representative_post_review'],
+ exact_Saved_and_producer_whole_row_hash_and_four_member_transporter_counts_verified=True,
+ all_nonobservational_Saved_producer_domain_fields_opaque_equal=True,
+ accepted_pointwise_prefix_centralizer_Source_and_right_row_action_inspected=True,
+ original_A_equals_G_named_group_faithful_frame_and_full_transporter_premises_retained=True,
+ label_preserving_conjugation_transfers_generation_string_and_all_subset_IP=True,
+ position1430_scope_not_retagged=True,
+ conclusion='Under the retained accepted model and complete S-transporter premises, every member of exactly row2739 inherits generation and full rank-four string C-group IP from the adopted representative.',
+ fresh_Root_whole_saved_row_scope_still_required=True,new_registration_Source_branch_and_postcheck_still_required=True,
+ Aut_duality_or_new_census_class_count_credit=0,canonical_adoption_or_new_manuscript_conjecture_Lean_or_measurement_credit=0,
+ Original_member_transporter_matrix_or_word_values_decoded_or_evaluated=False,scientific_Source_reexecuted=False,
+ checked_pins=list(PINS.values()),first_and_closing_review_bytes=READ,
+ qualification='Distinct conditional proof and exact-row scope review. The representative proof, named group/model/frame and previously accepted orbit/transporter computations are imports, not new numerical verification. No old1430scope or missing historical arithmetic body is recreated.'))
+signal.alarm(0)
+print(json.dumps(dict(review=leaf,blockers=[])))
