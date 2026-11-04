@@ -41,6 +41,13 @@ or treat discovery output as a verified certificate. Historical editions
 of the mutable F004 pointer have separate frozen aliases. These archives
 do not claim a portable replay on an arbitrary filesystem.
 
+The preservation audit is in ``audit``. The inherited-location supplement
+resolves nine additional historical references. Five references remain
+unlocated in the fixed baseline inventory: four older batch acceptance
+records and an intermediate administrative helper. This does not affect
+the preserved numerical frontiers of the four new checks. A complete
+reproof of the older paid state remains unclaimed.
+
 No source-PDF mirror, compilation cache or complete October working tree
 is required to continue these three manuscripts. Compression measurements
 remain frozen while census work continues.
