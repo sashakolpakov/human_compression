@@ -1,0 +1,91 @@
+"""New future-cohort metadata auditor; no scientific execution."""
+from pathlib import Path
+import hashlib
+_common=Path(__file__).resolve().with_name('common.py')
+_body=_common.read_bytes()
+assert len(_body)==29708 and hashlib.sha256(_body).hexdigest()=='29f8277a6240daf6790df05cfbafaca167fef517e204e27e5557fb0756113125'
+_scope=dict(__file__=str(_common),__name__='f009_future_actual_metadata')
+exec(compile(_body,str(_common),'exec'),_scope)
+globals().update({k:v for k,v in _scope.items() if not k.startswith('__')})
+
+def batch_audit(L,a,state):
+ config,configref,decisionref,cohort,cohortref,packet,sm,tm,roster,parents,overrides,source_total=state
+ assert a.batch is not None and 0<=a.batch < len(cohort['batches'])
+ b=cohort['batches'][a.batch]
+ indices=b['source_indices']
+ base=CONTAINER/('cohort_from%04d'%cohort['begin'])/('parents%04d_%04d'%(b['begin'],b['end']-1))
+ pairref=refat(L,base/'pairing.json')
+ pairbody=raw(L,pairref)
+ pair=selected(pairbody,['schema','root','Source','cohort','cohort_batch','source_indices','parent_count','strict_slots','target_occurrences','current_roster','frozen_progress_snapshot','strict','assembly','Root_decision','actual_attempt_bindings','all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal','individual_whole_certificate_equality_claimed','cache_registration_performed','whole_level_or_census_claimed','whole_cohort_or_level_adopted'])
+ assert pair['schema']=='ROOT_F009_COHORT_SUPPLIERS_ONE_STRICT_PAIRING_V1' and pair['root']=='/root' and pair['Source']==cohort['program']
+ assert pair['cohort']==cohortref and pair['cohort_batch']==a.batch and pair['source_indices']==indices and pair['parent_count']==len(indices)
+ assert pair['strict_slots']==156*len(indices) and pair['current_roster']==roster and pair['frozen_progress_snapshot']==cohort['progress_snapshot']
+ for key in ('all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal'):
+  assert pair[key] is True
+ for key in ('individual_whole_certificate_equality_claimed','cache_registration_performed','whole_level_or_census_claimed','whole_cohort_or_level_adopted'):
+  assert pair[key] is False
+ phase_refs=[]
+ for name in ('prepare_suppliers','assemble_strict','close_pairing'):
+  override=overrides.get((a.batch,name))
+  edition=override['selected_edition'] if override else 1
+  r=phase(L,config,cohortref,cohort,b,name,edition,override['prior_non_success_actual_SDK'] if override else [])
+  if override:
+   assert r==override['selected_actual_SDK']
+  phase_refs.append(r)
+ assembly=metadata(L,pair['assembly'],['schema','cohort','cohort_batch','source_indices','assembled_certificate','strict_prepared','Root_decision','actual_attempt_bindings','per_supplier_cover_preserved','fresh_strict_slots_owed'])
+ assert assembly['schema']=='ROOT_F009_COHORT_BATCH_SUPPLIER_ASSEMBLY_V1' and assembly['cohort']==cohortref and assembly['cohort_batch']==a.batch and assembly['source_indices']==indices
+ assert assembly['per_supplier_cover_preserved'] is True and assembly['fresh_strict_slots_owed']==156*len(indices)
+ strict=pair['strict']
+ context(L,strict,base,'parents%04d_%04d_check'%(b['begin'],b['end']-1))
+ assert strict['actual_edition']==1 and strict['prior_non_success_attempts']==[]
+ strictstem='parents%04d_%04d_check'%(b['begin'],b['end']-1)
+ tr=prepared_role(L,assembly['strict_prepared'],strict['actual_SDK'],strictstem,base,indices,cohortref,a.batch,roster,packet['strict_manifest'],tm,'strict',cohort['begin'])
+ assert tr['result']==strict['result'] and tr['certificate']==strict['certificate'] and tr['saved']==assembly['assembled_certificate']
+ assert raw(L,tr['certificate'])==raw(L,assembly['assembled_certificate'])
+ strictcovers=covers(L,tr['certificate'])
+ assert len(strictcovers)==len(indices)
+ pairbindings=array(spans(pairbody)['bindings'])
+ assert len(pairbindings)==len(indices)
+ bindings=[]
+ for j,(index,blob) in enumerate(zip(indices,pairbindings)):
+  fields=spans(blob)
+  pb=selected(blob,['index','strict_cover_index','strict_certificate','per_cover_canonical_bytes_equal','strict_slots','target_occurrences'])
+  supplierbody=fields['supplier']
+  sp=selected(supplierbody,['index','actual','prepared','cover_index','canonical_cover_sha256'])
+  sa=sp['actual']
+  context(L,sa,base,'parent%04d_supply'%index)
+  assert pb['index']==sp['index']==index and sp['cover_index']==0 and pb['strict_cover_index']==j
+  assert pb['strict_certificate']==tr['certificate'] and pb['strict_slots']==156 and pb['per_cover_canonical_bytes_equal'] is True
+  assert sa['actual_edition']==1 and sa['prior_non_success_attempts']==[]
+  sr=prepared_role(L,sp['prepared'],sa['actual_SDK'],'parent%04d_supply'%index,base,[index],cohortref,a.batch,roster,packet['supplier_manifest'],sm,'supplier',cohort['begin'])
+  assert sr['result']==sa['result'] and sr['certificate']==sa['certificate']
+  sc=covers(L,sr['certificate'])
+  assert len(sc)==1 and sc[0]==strictcovers[j]
+  assert hashlib.sha256(sc[0]+b'\n').hexdigest()==sp['canonical_cover_sha256']
+  expectedparent=opaque_normal(parents[index])
+  assert opaque_normal(fields['parent'])==opaque_normal(spans(supplierbody)['parent'])==expectedparent
+  assert opaque_normal(sr['parents'][0])==opaque_normal(tr['parents'][j])==expectedparent
+  targets=cover_metadata(strictcovers[j],parents[index])
+  assert targets==pb['target_occurrences']
+  bindings.append(dict(index=index,supplier_cover_index=0,strict_cover_index=j,supplier_actual_SDK=sa['actual_SDK'],supplier_certificate=sa['certificate'],strict_actual_SDK=strict['actual_SDK'],strict_certificate=tr['certificate'],strict_slots=156,target_occurrences=targets,per_cover_canonical_bytes_equal=True))
+ assert sum(x['target_occurrences'] for x in bindings)==pair['target_occurrences']
+ leaf=dict(schema='F009_COHORT_BATCH_ACTUAL_REUSE_V1',status='SUPPORTED_ACTUAL',reviewer=REVIEWER,blockers=[],cohort=cohortref,progress_snapshot=cohort['progress_snapshot'],current_roster=roster,batch=a.batch,source_indices=indices,parent_count=len(indices),strict_slots=156*len(indices),target_occurrences=pair['target_occurrences'],Source_manifest=packet['strict_manifest'],supplier_Source_manifest=packet['supplier_manifest'],pairing=pairref,strict_actual_SDK=strict['actual_SDK'],strict_result=tr['result'],strict_certificate=tr['certificate'],assembled_certificate=assembly['assembled_certificate'],bindings=bindings,individual_whole_certificate_equality_claimed=False,cache_registration_performed=False,whole_cohort_or_level_adopted=False,whole_R5_level_or_census_claimed=False)
+ leaf.update({flag: True for flag in BATCH_TRUE})
+ leaf['whole_Source_and_inputs_closed_scope']=config['closure_scope']
+ return leaf,dict(batch=a.batch,metadata_actuals=phase_refs,scientific_actuals=[x['supplier_actual_SDK'] for x in bindings]+[strict['actual_SDK']],pairing=pairref)
+
+
+def main():
+ p=argparse.ArgumentParser(allow_abbrev=False)
+ p.add_argument('--config',nargs=3,required=True)
+ p.add_argument('--Root-decision',nargs=3,required=True)
+ p.add_argument('--out',required=True)
+ p.add_argument('--guard',required=True)
+ p.add_argument('--batch',type=int,required=True)
+ a=p.parse_args()
+ L=Ledger()
+ state=bootstrap(L,a)
+ leaf,details=batch_audit(L,a,state)
+ finish(L,a,state,leaf,details)
+
+if __name__=='__main__':main()

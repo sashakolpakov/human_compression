@@ -1,0 +1,91 @@
+"""Author a false Source packet and retain inputs; execute no operational entry."""
+import ast,hashlib,json,os,resource,signal,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+START=time.monotonic();signal.alarm(125);TOTAL=0;FILES={}
+def read(path):
+    global TOTAL
+    p=Path(path);assert not p.is_symlink();p=p.resolve(strict=True)
+    raw=p.read_bytes();assert len(raw)<=4*2**20
+    TOTAL+=len(raw);assert TOTAL<=64*2**20 and len(FILES)<512 and time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<=256*2**20
+    r=dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest());FILES[str(p)]=(r,raw);return r,raw
+def document(path):r,b=read(path);return json.loads(b),r
+def output(path,value):
+    p=Path(path);raw=(json.dumps(value,sort_keys=True,separators=(',',':'))+'\n').encode()
+    assert not p.exists()
+    with p.open('xb')as f:f.write(raw)
+    return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def retain(r,raw):
+    p=HERE/'retained/objects'/r['sha256']
+    if not p.exists():
+        with p.open('xb')as f:f.write(raw)
+    assert p.read_bytes()==raw
+    return dict(original=r,retained=dict(path=str(p),bytes=len(raw),sha256=r['sha256']))
+(HERE/'retained/objects').mkdir(parents=True,exist_ok=True)
+handoff,hr=document('/private/tmp/f009_cohort_parent_batch_adapter/handoff.json')
+assert hr['bytes']==6419 and hr['sha256']=='66e50c6aa22614bc3421c8462be1e6f1845c0ab5b029f150d14e9e8ac91885e8'
+peer,peer_ref=document('/private/tmp/f009_cohort_parent_batch_adapter_independent_review/reuse_integer_only.json')
+assert peer_ref['sha256']=='76c6a1ca0f80edc0efde1206908d764502af41a0c66e8882fbb8f0b7fd0dd3cc'
+active=[hr,peer_ref,handoff['program']]
+for key in('supplier_manifest','strict_manifest'):
+    m,mr=document(handoff[key]['path']);assert mr==handoff[key];active.append(mr);active.extend(m['Source'])
+active.extend(handoff[k]for k in('full_supplier_static','full_supplier_actual24','strict_static','strict_actual41',
+    'roster_adoption','roster_actual_review','current_roster'))
+active.extend(handoff['templates'].values())
+helper_ref,helper=read('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_resume/whole.py')
+assert len(helper)==3744 and helper_ref['sha256']=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+active.append(dict(path='/private/tmp/intake_metadata/whole.py',bytes=3744,sha256=helper_ref['sha256']))
+guards=[]
+for name in('supervise_validation.py','supervise_transient.py'):
+    r,b=read('/Users/sasha/medusa/research/leemans/maintenance/runtime/'+name);guards.append(r);active.append(r)
+assert not(HERE/'whole.py').exists()
+with(HERE/'whole.py').open('xb')as f:f.write(helper)
+roles={};retained=[];seen=set()
+for r in active:
+    if r['path']in seen:continue
+    seen.add(r['path']);actual,raw=read(r['path']);assert actual==r
+    retained.append(retain(r,raw))
+active=[x['original']for x in retained]
+examples={}
+for key,path in dict(
+    restored_old_helper='/private/tmp/own_f009_cohort_consistent_ledger.py',
+    fixed_cohort_phase_issuer='/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_resume/issue_phase.py',
+    fixed_cohort_closer='/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_resume/close_cohort.py',
+    owned_cohort='/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts/cohort_from0330/cohort.json',
+    Source_owner='/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts/cohort_from0330/Root_Source_ownership.json',
+    phase_decision='/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts/cohort_from0330/decisions/batch00_prepare_suppliers.json').items():
+    r,raw=read(path);examples[key]=r;retained.append(retain(r,raw))
+assert examples['restored_old_helper']['bytes']==7066 and examples['restored_old_helper']['sha256']=='19d3023989d0f744b5822824a1d7d20c3dbc1ae034f1ac317660c18e858b494e'
+missing=[]
+for key in('Source_manifest','Source_IO_invoice','protocol','raw_Source_inverse','Root_routes_FALSE',
+            'owed_registration_interface','cohort_template_FALSE','Root_decision_template_FALSE'):
+    r=handoff[key];assert not Path(r['path']).exists();missing.append(dict(role=key,original=r,
+        unavailable_at_authoring=True,body_recreated=False,loaded_by_successor=False))
+inventory=output(HERE/'legacy_inputs.json',dict(schema='F009_FUTURE_COHORT_GENUINE_RETAINED_INPUTS_V1',Root_authority=False,
+    entries=retained,unavailable_bookkeeping=missing,Original_roster_and_template_payloads_decoded=False,
+    source_attribution='Old Root cohort helper, adapter by /root/readback_review, fixed-cohort issuer and closer by /root/forest_resume; new preparation entries by /root/mathematical_review.'))
+protocol_ref,raw=read(HERE/'PROTOCOL.rst')
+programs={};manifests={};checks=[]
+for entry in('init_cohort.py','issue_phase.py','close_cohort.py'):
+    sources=[]
+    for name in(entry,'common.py','whole.py'):
+        r,b=read(HERE/name);ast.parse(b);sources.append(r)
+    total=sum(r['bytes']for r in sources+guards)+512;assert total<=65536
+    programs[entry]=sources[0]
+    manifests[entry]=output(HERE/('manifest_'+entry.removesuffix('.py')+'.json'),
+        dict(schema='F009_METADATA_ENTRY_SOURCE_MANIFEST_V1',entry=sources[0],Source=sources,guards=guards,
+        invocation_reserve=512,Source_plus_guards512=total,
+        bounds=dict(seconds=125,cooperative_seconds=115,rss_bytes=256*2**20,read_bytes=64*2**20,paths=512,file_bytes=4*2**20)))
+    checks.append(dict(entry=entry,Source_plus_guards512=total,syntax_parsed_without_execution=True))
+packet=output(HERE/'packet.json',dict(schema='F009_FUTURE_COHORT_PREPARATION_SOURCE_V1',author='/root/mathematical_review',
+    Root_authority=False,status='SOURCE_ONLY_UNRUN_REQUIRES_DISTINCT_SOURCE_PEER_AND_ROOT_OWNERSHIP',
+    entry_manifests=manifests,protocol=protocol_ref,legacy_handoff=hr,adapter=handoff['program'],adapter_peer=peer_ref,
+    legacy_active_inputs=active,decision_schema_example=examples['phase_decision'],schema_examples=examples,
+    unavailable_legacy_bookkeeping=missing,retained_inputs=inventory,
+    expected_registered_prefix_minimum=342,cohort_max_parents=12,batch_max_parents=3,
+    scientific_Source_changed=False,Original_payloads_decoded=False,operational_entry_executions=0,
+    future_actual_auditor_integration='Reviewed V2-owner admission branch required before future cohort actual review/adoption; current330 auditor remains unchanged.',
+    future_cohort_or_canonical_writes=0))
+print(json.dumps(dict(packet=packet,programs=programs,manifests=manifests,retained_inputs=inventory,
+    static_checks=checks,authoring_read_bytes=TOTAL,operational_entry_executions=0)))

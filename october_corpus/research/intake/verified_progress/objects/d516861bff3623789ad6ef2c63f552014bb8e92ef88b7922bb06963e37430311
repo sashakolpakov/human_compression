@@ -1,0 +1,204 @@
+"""Unexecuted bounded cohort metadata adapter; scientific algorithms are unchanged.
+No worker is launched. Root issues each cohort/batch/phase decision separately.
+"""
+import argparse,hashlib,json,os,pathlib,sys
+sys.path.insert(0,'/private/tmp/intake_metadata')
+from whole import Ledger
+OLD=pathlib.Path('/private/tmp/f009_full_parent_actual')
+OLD_ACTUAL=pathlib.Path('/private/tmp/f009_R5_canonical_parent_actual')
+PROGRESS=pathlib.Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress/current_intake.json')
+CONTROLLER=PROGRESS.parent/'controllers/current.json'
+COHORT_CONTAINER=pathlib.Path('/private/tmp/f009_R5_parent_cohorts_actual')
+SCHEMA='F009_INCREMENTAL_PARENT_COVER_BATCH_V1'
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False)+'\n').encode()
+
+def ref(path, body):
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def descriptor(arguments):
+    return dict(path=arguments[0], bytes=int(arguments[1]), sha256=arguments[2])
+
+def require_review(L, value, expected_program):
+    review = L.document(value['path'], value)[0]
+    assert review['status'].startswith('SUPPORTED_STATIC') and review['blockers'] == []
+    assert review['reviewer'] not in ('/root', '/root/readback_review')
+    assert review['program'] == expected_program
+
+def scientific_manifest(L, value, expected_sha):
+    m = L.document(value['path'], value)[0]
+    assert value['sha256'] == expected_sha
+    for item in m['Source']:
+        L.raw(item['path'], item)
+    assert sum(x['bytes'] for x in m['Source']) == m['Source_total']
+    assert m['Source_with_invocation_reserve'] == m['Source_total']+512 <= 65536
+    for key, expected in dict(work_units=10000000, work_seconds=20, rss_bytes=134217728,
+                              read_bytes=8388608, paths=32, output_bytes=131072,
+                              output_files=2, file_bytes=2097152, caller_seconds=140).items():
+        assert m['caps'][key] == expected
+    return m
+
+def old_authorities(L, packet):
+    for key in ('full_supplier_static', 'full_supplier_actual24', 'strict_static', 'strict_actual41'):
+        value = packet[key]
+        d = L.document(value['path'], value)[0]
+        assert d['status'].startswith('SUPPORTED') and d['blockers'] == []
+    return dict((key, packet[key]) for key in
+                ('full_supplier_static', 'full_supplier_actual24', 'strict_static', 'strict_actual41'))
+
+def cover_shape(cover, parent):
+    assert cover['schema'] == 'F009_FOREST_EXTENSION_INTERVAL_V1'
+    assert cover['parent'] == parent and cover['parent_level'] == 4
+    assert cover['begin'] == 0 and cover['end'] == 156 and len(cover['records']) == 156
+    assert cover['all_slots_in_interval_accounted'] is True
+    assert cover['whole156_parent_or_level_or_census_claimed'] is False
+
+def actual_role(L,base,stem,preparation,manifest_ref,role,parent_count,binding):
+    """Explicit immutable attempt joins; independent genuine-API/guard audit remains owed."""
+    assert binding['stem']==stem and type(binding['edition'])is int and 1<=binding['edition']<=8
+    edition=binding['edition'];sdkref=binding['actual_SDK']
+    assert sdkref['path']==str(base/'Root_SDK'/(stem+'_v%d.json'%edition))
+    sdk,actualref=L.document(sdkref['path'],sdkref);assert actualref==sdkref
+    assert sdk['root']==sdk['actor']=='/root' and sdk['actual_tool']['exit_code']==0
+    history=binding['prior_attempts'];assert type(history)is list and len(history)==edition-1
+    history_refs=[]
+    for number,attempt in enumerate(history,1):
+        assert attempt['edition']==number and attempt['disposition']=='GENUINE_PREENTRY_REFUSAL'
+        prior=attempt['actual_SDK'];assert prior['path']==str(base/'Root_SDK'/(stem+'_v%d.json'%number))
+        previous,priorref=L.document(prior['path'],prior)
+        assert previous['root']==previous['actor']=='/root'and type(previous['actual_tool']['exit_code'])is int and previous['actual_tool']['exit_code']!=0
+        assert previous['issued_argv']==sdk['issued_argv']
+        assert previous['all_genuine_api_frames'][-1]==previous['full_tool_return']and previous['full_tool_return']['exit_code']==previous['actual_tool']['exit_code']
+        reconciliation_ref=attempt['preentry_reconciliation'];reconciliation,_=L.document(reconciliation_ref['path'],reconciliation_ref)
+        assert reconciliation['schema']=='ROOT_F009_EXACT_ROLE_PREENTRY_RETRY_RECONCILIATION_V1'and reconciliation['root']=='/root'and reconciliation['Root_authority']is True
+        assert reconciliation['refused_actual_SDK']==prior and reconciliation['selected_actual_SDK']==sdkref and reconciliation['stem']==stem
+        for flag in('no_scientific_child_started','guard_and_output_absent_before_selected_attempt','same_exact_argv_as_selected','original_guard_and_scientific_caps_unchanged'):
+            assert reconciliation[flag]is True
+        inspections=reconciliation['actual_absence_or_resource_inspections'];assert type(inspections)is list and 1<=len(inspections)<=4
+        for value in inspections:L.raw(value['path'],value)
+        history_refs.append(dict(edition=number,actual_SDK=prior,preentry_reconciliation=reconciliation_ref,actual_absence_or_resource_inspections=inspections))
+    guard=base/'guards'/stem;outputs,context=L.actual(sdkref['path'],guard)
+    result,result_ref=outputs['result.json'];certificate,certificate_ref=outputs['certificate.json']
+    assert result['pins']==dict(manifest=manifest_ref,request=preparation['request'],Root_gate=preparation['gate'])and result['canonical_or_ledger_writes']is False
+    if role=='supplier':
+        assert parent_count==1 and result['status']=='PROPOSED_COMPLETE_PARENT_COVER'and result['parent_count']==1 and result['slots_per_parent']==156
+        assert result['certificate_for_literal_old_strict156']is result['complete_selected_stabilizer_not_graph_isomorphism']is True and result['new_census_or_case_credit']==0
+    else:
+        assert 1<=parent_count<=3 and result['status']=='VERIFIED_COMPLETE_INCREMENTAL_PARENT_COVERS'and result['parent_count']==parent_count and result['slots_per_parent']==156
+        for flag in('strict_all_parent_distances_and_predicates_recomputed','strict_full_old_orbit_witness_for_every_ORBIT','old_full_kernel_literal'):assert result[flag]is True
+        assert result['whole_level_or_census_claimed']is False and result['new_case_paper_Lean_or_measurement_credit']==0
+    assert type(certificate)is dict and set(certificate)=={'schema','covers'}and certificate['schema']==SCHEMA
+    assert sdk['issued_argv'][sdk['issued_argv'].index('--rss-cap-mib')+1]=='128'and sdk['issued_argv'][sdk['issued_argv'].index('--timeout')+1]=='150'
+    q,_=L.document(preparation['request']['path'],preparation['request']);m,_=L.document(manifest_ref['path'],manifest_ref)
+    expected=[q['python_executable'],'-E','-B','-S',m['entry']['path'],'--actor','/root','--manifest',manifest_ref['path'],str(manifest_ref['bytes']),manifest_ref['sha256'],'--request',preparation['request']['path'],str(preparation['request']['bytes']),preparation['request']['sha256'],'--Root-gate',preparation['gate']['path'],str(preparation['gate']['bytes']),preparation['gate']['sha256'],'--out',preparation['out'],'--guard',preparation['guard']]
+    assert sdk['issued_argv'][sdk['issued_argv'].index('--')+1:]==expected and preparation['out']==str(base/stem)and preparation['guard']==str(guard)
+    return dict(actual_SDK=sdkref,actual_context=context,result=result_ref,certificate=certificate_ref,actual_edition=edition,prior_non_success_attempts=history_refs),certificate
+
+
+def main():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('phase',choices=('prepare_suppliers','assemble_strict','close_pairing'));ap.add_argument('--packet',nargs=3,required=True);ap.add_argument('--cohort',nargs=3,required=True);ap.add_argument('--batch',type=int,required=True);ap.add_argument('--Root-decision',nargs=3,required=True);a=ap.parse_args();L=Ledger()
+    packet_ref=descriptor(a.packet);packet,_=L.document(packet_ref['path'],packet_ref);own,ownref=L.raw(pathlib.Path(__file__).resolve());helper,helperref=L.raw('/private/tmp/intake_metadata/whole.py')
+    assert helperref['sha256']=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'and packet['program']==ownref and packet['Root_authority']is False
+    cohort_ref=descriptor(a.cohort);cohort,_=L.document(cohort_ref['path'],cohort_ref)
+    assert cohort['schema']=='ROOT_F009_CONTIGUOUS_PARENT_COHORT_V1'and cohort['root']=='/root'and cohort['Root_authority']is True and cohort['program']==ownref
+    start=cohort['begin'];counts=cohort['batch_counts'];assert type(start)is int and 0<=start<940 and type(counts)is list and 1<=len(counts)<=4 and all(type(n)is int and 1<=n<=3 for n in counts)
+    end=start+sum(counts);assert start<end<=940 and end-start<=12 and cohort['end']==end and cohort['source_indices']==list(range(start,end))and cohort['reviewed_prefix']==start
+    batches=[];cursor=start
+    for number,n in enumerate(counts):batches.append(dict(batch=number,begin=cursor,end=cursor+n,source_indices=list(range(cursor,cursor+n))));cursor+=n
+    assert cohort['batches']==batches and type(a.batch)is int and 0<=a.batch<len(batches)
+    batch=batches[a.batch];indices=batch['source_indices'];count=len(indices);batch_start=batch['begin'];batch_end=batch['end'];cohort_root=COHORT_CONTAINER/('cohort_from%04d'%start);base=cohort_root/('parents%04d_%04d'%(batch_start,batch_end-1));strict_stem='parents%04d_%04d_check'%(batch_start,batch_end-1)
+    dr=descriptor(a.Root_decision);decision,_=L.document(dr['path'],dr)
+    assert decision['root']=='/root'and decision['Root_authority']is True and decision['status']=='SUPPORTED'and decision['blockers']==[]and decision['packet']==packet_ref and decision['program']==ownref and decision['phase']==a.phase and decision['cohort']==cohort_ref and decision['batch']==a.batch
+    for flag in('new_metadata_Source_interfaces_and_bills_owned','old_scientific_Source_controls_and_mathematics_owned','exact_fresh_cohort_and_disjoint_batch_owned','frozen_progress_edition_held','no_successful_science_repeated','actual_attempt_bindings_and_preentry_reconciliations_owned','metadata_phase_authorized'):assert decision[flag]is True
+    require_review(L,decision['independent_Source_peer'],ownref)
+    guardrefs=[]
+    for name in('supervise_validation.py','supervise_transient.py'):guardrefs.append(L.raw(pathlib.Path('/Users/sasha/medusa/research/leemans/maintenance/runtime')/name)[1])
+    source_bytes=len(own)+len(helper)+sum(r['bytes']for r in guardrefs)+512;assert source_bytes<=65536
+    snapshot=cohort['progress_snapshot'];assert set(snapshot)=={'intake','controller','runtime'}and snapshot['intake']['path']==str(PROGRESS)and snapshot['controller']['path']==str(CONTROLLER)
+    progress,progress_ref=L.document(PROGRESS,snapshot['intake']);controller,controller_ref=L.document(CONTROLLER,snapshot['controller']);L.raw(snapshot['runtime']['path'],snapshot['runtime'])
+    assert progress_ref==snapshot['intake']and controller_ref==snapshot['controller']and controller['checkpoint']==progress['active_controller_checkpoint']==snapshot['runtime']
+    assert progress['F009']['R5_canonical_pairs_reviewed']==start and progress['F009']['R5_prefix_strict_slots_reviewed']==start*156
+    adoption,_=L.document(packet['roster_adoption']['path'],packet['roster_adoption']);rr=adoption['adopted_roster'];roster,_=L.document(rr['path'],rr);review,_=L.document(packet['roster_actual_review']['path'],packet['roster_actual_review'])
+    assert rr==packet['current_roster']==progress['F009']['R5_current_roster']and roster['schema']=='ROOT_F009_ACCEPTED_PARENT_ROSTER_V1'and roster['root']=='/root'and roster['adopted']is True and roster['level']==4 and roster['roster_size']==len(roster['representatives'])==940
+    assert review['status'].startswith('SUPPORTED_ACTUAL')and review['blockers']==[]and review['current_roster']==rr and review['Root_adoption_verified']is True
+    cohortparents=[roster['representatives'][i]for i in range(start,end)];assert len({can(p)for p in cohortparents})==end-start
+    parents=[roster['representatives'][i]for i in indices];assert len(parents)==count and len({can(p)for p in parents})==count
+    authorities=old_authorities(L,packet);sm=packet['supplier_manifest'];cm=packet['strict_manifest'];scientific_manifest(L,sm,'c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e');scientific_manifest(L,cm,'ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff')
+    anchor=cohort_root/'cohort_binding.json';anchorvalue=dict(schema='ROOT_F009_IMMUTABLE_PARENT_COHORT_BINDING_V1',root='/root',cohort=cohort_ref,program=ownref,reviewed_prefix=start,source_indices=list(range(start,end)),batch_counts=counts,batches=batches,progress_snapshot=snapshot,no_progress_registration_performed=True)
+    need_anchor=not os.path.lexists(cohort_root)
+    if need_anchor:assert a.phase=='prepare_suppliers'and a.batch==0
+    else:
+        assert cohort_root.resolve(strict=True)==cohort_root
+        anchorraw,_=L.raw(anchor);assert anchorraw==can(anchorvalue)
+    planned={}
+    def plan_path(path,value):
+        assert path==anchor or path.is_relative_to(base)
+        assert str(path)not in planned and not os.path.lexists(path);body=can(value);assert len(body)<=4*2**20;planned[str(path)]=body;return ref(path,body)
+    def plan(relative,value):return plan_path(base/relative,value)
+    def old_document(name):
+        value,r=L.document(OLD/name);assert packet['templates'][name]==r;return value
+    actual_bindings_ref=decision['actual_bindings'];rolebindings={}
+    if a.phase=='prepare_suppliers':assert actual_bindings_ref is None
+    else:
+        actual_bindings,_=L.document(actual_bindings_ref['path'],actual_bindings_ref)
+        assert actual_bindings['schema']=='ROOT_F009_COHORT_ROLE_ACTUAL_BINDINGS_V1'and actual_bindings['root']=='/root'and actual_bindings['Root_authority']is True and actual_bindings['program']==ownref and actual_bindings['cohort']==cohort_ref and actual_bindings['batch']==a.batch and actual_bindings['phase']==a.phase
+        roles=actual_bindings['roles'];expectedstems=['parent%04d_supply'%i for i in indices]if a.phase=='assemble_strict'else[strict_stem]
+        assert type(roles)is list and len(roles)==len(expectedstems)and[role['stem']for role in roles]==expectedstems;rolebindings={role['stem']:role for role in roles}
+    result=dict(root='/root',phase=a.phase,Source=ownref,Root_decision=dr,cohort=cohort_ref,cohort_batch=a.batch,cohort_begin=start,cohort_end=end,frozen_progress_snapshot=snapshot,current_roster=rr,source_indices=indices,parent_count=count,actual_attempt_bindings=actual_bindings_ref,scientific_calls=0,whole_level_or_census_claimed=False,new_manuscript_credit=0,independent_actual_review_pending=True,no_cache_or_progress_registration_performed=True)
+    if a.phase=='prepare_suppliers':
+        assert not os.path.lexists(base)
+        if need_anchor:plan_path(anchor,anchorvalue)
+        records=[]
+        for index,parent in zip(indices,parents):
+            for suffix in('_supply','_check'):
+                assert not os.path.lexists(OLD_ACTUAL/('parent%04d%s'%(index,suffix)))and not os.path.lexists(OLD_ACTUAL/'guards'/('parent%04d%s'%(index,suffix)))
+            imp=old_document('R5_parent0_Root_import.json');q=old_document('R5_parent0_supply_request.json');gate=old_document('R5_parent0_supply_Root_gate.json')
+            imp.update(current_roster=rr,current_roster_actual_review=packet['roster_actual_review'],current_parent_ordinal=index,parents=[parent],root_adoption=packet['roster_adoption'],cohort=cohort_ref,cohort_batch=a.batch)
+            stem='parent%04d_supply'%index;ir=plan('roles/'+stem+'_Root_import.json',imp);q.update(Root_import=ir,parents=[parent]);qr=plan('roles/'+stem+'_request.json',q);assert gate['manifest']==sm;gate['request']=qr;gr=plan('roles/'+stem+'_Root_gate.json',gate)
+            prepared=dict(root='/root',index=index,manifest=sm,request=qr,gate=gr,Root_import=ir,out=str(base/stem),guard=str(base/'guards'/stem),current_roster=rr,source_indices=[index],cohort=cohort_ref,cohort_batch=a.batch,scientific_calls=0);pr=plan('roles/'+stem+'_prepared.json',prepared);records.append(dict(index=index,stem=stem,prepared=pr))
+        result.update(schema='ROOT_F009_COHORT_BATCH_SUPPLIER_REQUESTS_V1',suppliers=records,scientific_roles_issued=False,old_manifests_and_controls=authorities);plan('supplier_preparation.json',result)
+    elif a.phase=='assemble_strict':
+        first,first_ref=L.document(base/'supplier_preparation.json');assert first['cohort']==cohort_ref and first['cohort_batch']==a.batch and first['current_roster']==rr and first['source_indices']==indices and len(first['suppliers'])==count
+        covers=[];components=[]
+        for entry,index,parent in zip(first['suppliers'],indices,parents):
+            assert entry['index']==index and entry['stem']=='parent%04d_supply'%index
+            preparation,_=L.document(entry['prepared']['path'],entry['prepared']);actual,certificate=actual_role(L,base,entry['stem'],preparation,sm,'supplier',1,rolebindings[entry['stem']]);assert len(certificate['covers'])==1;cover=certificate['covers'][0];cover_shape(cover,parent);covers.append(cover);components.append(dict(index=index,parent=parent,prepared=entry['prepared'],actual=actual,cover_index=0,canonical_cover_sha256=hashlib.sha256(can(cover)).hexdigest()))
+        assert len(covers)==len(components)==count;combined=dict(schema=SCHEMA,covers=covers);assert len(can(combined))<=98304;saved=plan('assembled_supplier_certificate.json',combined)
+        imp=old_document('R5_parent0_oldstrict_Root_import.json');q=old_document('R5_parent0_oldstrict_request.json');gate=old_document('R5_parent0_oldstrict_Root_gate.json')
+        imp.update(actual_parent_roster_reference=rr,actual_prior_cover_review=packet['roster_actual_review'],source_indices=indices,source_current_level=4,parents=parents,root_adoption=packet['roster_adoption'],cohort=cohort_ref,cohort_batch=a.batch,notes='One bounded cohort batch of1..3 fresh complete-stabilizer supplier covers; every156 slots per parent is freshly checked; no cohort or whole-level adoption.')
+        ir=plan('roles/'+strict_stem+'_Root_import.json',imp);q.update(Root_import=ir,parents=parents,saved=saved);qr=plan('roles/'+strict_stem+'_request.json',q);assert gate['manifest']==cm;gate.update(request=qr,source_parent_roster=rr);gr=plan('roles/'+strict_stem+'_Root_gate.json',gate)
+        prepared=dict(root='/root',manifest=cm,request=qr,gate=gr,Root_import=ir,source_indices=indices,current_roster=rr,cohort=cohort_ref,cohort_batch=a.batch,out=str(base/strict_stem),guard=str(base/'guards'/strict_stem),scientific_calls=0);pr=plan('roles/'+strict_stem+'_prepared.json',prepared)
+        result.update(schema='ROOT_F009_COHORT_BATCH_SUPPLIER_ASSEMBLY_V1',supplier_preparation=first_ref,components=components,assembled_certificate=saved,strict_prepared=pr,per_supplier_cover_preserved=True,individual_whole_certificate_equality_claimed=False,fresh_strict_slots_owed=156*count);plan('strict_preparation.json',result)
+    else:
+        assembly,assembly_ref=L.document(base/'strict_preparation.json');assert assembly['cohort']==cohort_ref and assembly['cohort_batch']==a.batch and assembly['current_roster']==rr and assembly['source_indices']==indices
+        assembled,_=L.document(assembly['assembled_certificate']['path'],assembly['assembled_certificate']);preparation,_=L.document(assembly['strict_prepared']['path'],assembly['strict_prepared']);strict,certificate=actual_role(L,base,strict_stem,preparation,cm,'strict',count,rolebindings[strict_stem]);assert can(certificate)==can(assembled)and len(certificate['covers'])==len(assembly['components'])==count
+        bindings=[]
+        for number,(component,index,parent,cover)in enumerate(zip(assembly['components'],indices,parents,certificate['covers'])):
+            assert component['index']==index and component['parent']==parent
+            old,_=L.document(component['actual']['certificate']['path'],component['actual']['certificate']);assert len(old['covers'])==1 and can(old['covers'][0])==can(cover)and hashlib.sha256(can(cover)).hexdigest()==component['canonical_cover_sha256'];cover_shape(cover,parent)
+            bindings.append(dict(index=index,parent=parent,supplier=component,strict_cover_index=number,strict_certificate=strict['certificate'],per_cover_canonical_bytes_equal=True,strict_slots=156,target_occurrences=len(cover['next_parent_forests'])))
+        result.update(schema='ROOT_F009_COHORT_SUPPLIERS_ONE_STRICT_PAIRING_V1',assembly=assembly_ref,bindings=bindings,strict=strict,strict_slots=156*count,target_occurrences=sum(x['target_occurrences']for x in bindings),assembled_and_strict_whole_certificates_equal=True,individual_whole_certificate_equality_claimed=False,all_supplier_covers_equal_corresponding_strict_cover=True,old_single_parent_pair_schema_not_reused=True,strict_cover_index_required_by_downstream_consumers=True,strict_reuse_or_registration_requires_new_independent_review=True,cache_registration_performed=False,whole_cohort_or_level_adopted=False);plan('pairing.json',result)
+    declared=L.bytes+sum(r['bytes']for _,r,_ in L.pins.values())+2*sum(map(len,planned.values()))+source_bytes;paths=set(L.pins)|set(planned)
+    assert declared<=64*2**20 and len(paths)<=512 and sum(map(len,planned.values()))+65536<=16*2**20
+    L.close()
+    if a.phase=='prepare_suppliers':
+        COHORT_CONTAINER.mkdir(exist_ok=True);assert COHORT_CONTAINER.resolve(strict=True)==COHORT_CONTAINER
+        if need_anchor:cohort_root.mkdir()
+        base.mkdir()
+        for name in('roles','guards','Root_SDK'):(base/name).mkdir()
+    output_refs=[]
+    for name,body in planned.items():
+        path=pathlib.Path(name);assert path.parent.resolve(strict=True)==path.parent
+        with path.open('xb')as stream:assert stream.write(body)==len(body);stream.flush();os.fsync(stream.fileno())
+        output_refs.append(ref(path,body))
+    for directory in {cohort_root,base,base/'roles',COHORT_CONTAINER}:
+        fd=os.open(directory,os.O_RDONLY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+    C=Ledger()
+    for value in output_refs:C.raw(value['path'],value)
+    C.close();assert L.bytes+C.bytes+source_bytes<=declared
+    print(json.dumps(dict(root='/root',phase=a.phase,cohort=cohort_ref,batch=a.batch,source_indices=indices,outputs=output_refs,first_closing_input_bytes=L.bytes,output_readback_bytes=C.bytes,nominal_Source_bytes=source_bytes,declared_read_upper=declared,paths=len(paths),Source_union_guards512=source_bytes,scientific_calls=0,canonical_changes=0,progress_registration_performed=False,independent_actual_review_pending=True)))
+
+if __name__=='__main__':main()

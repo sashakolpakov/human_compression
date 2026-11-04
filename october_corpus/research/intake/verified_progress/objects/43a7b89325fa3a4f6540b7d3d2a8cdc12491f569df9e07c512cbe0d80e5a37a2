@@ -1,0 +1,515 @@
+"""New lexical metadata auditor; no science execution."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import resource
+import shlex
+import signal
+import sys
+import time
+
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+HERE=Path(__file__).resolve().parent
+HELPER=HERE/'whole.py'
+hb=HELPER.read_bytes()
+assert len(hb)==3744 and hashlib.sha256(hb).hexdigest()=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+ns=dict(__file__=str(HELPER),__name__='f009_actual_metadata_reader')
+exec(compile(hb,str(HELPER),'exec'),ns)
+Ledger,write=ns['Ledger'],ns['write']
+START=time.monotonic()
+signal.signal(signal.SIGALRM,lambda*_: (_ for _ in ()).throw(TimeoutError('metadata 125 second limit')))
+signal.alarm(125)
+PY='/Users/sasha/.venvs/global/bin/python'
+RUNTIME=Path('/Users/sasha/medusa/research/leemans/maintenance/runtime')
+GUARDS=[RUNTIME/'supervise_validation.py',RUNTIME/'supervise_transient.py']
+GUARD_SHA=['c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4','5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42']
+RAW=Path('/private/tmp/intake_actual_transports')
+CONTAINER=Path('/private/tmp/f009_R5_parent_cohorts_actual')
+REVIEWER='/root/forest_resume'
+BATCH_TRUE=('all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal','strict_full156_each_parent_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified','all_selected_attempts_and_prior_refusals_audited')
+FORBIDDEN={'parent','parents','representatives','covers','records','next_parent_forests','stabilizer','U_permutation','seed','witness','witnesses','target','original_graph','cache_entries','cache_banks'}
+
+def budget():
+ assert time.monotonic()-START < 115
+ rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)
+ assert rss<=256*2**20
+
+def descriptor(a):
+ r=dict(path=a[0],bytes=int(a[1]),sha256=a[2])
+ assert Path(r['path']).is_absolute() and 0<=r['bytes']<=4*2**20 and len(r['sha256'])==64
+ return r
+
+def lexend(s,i):
+ stack,quoted,escape=[],False,False
+ while i < len(s):
+  c=s[i]
+  if quoted:
+   if escape:
+    escape=False
+   elif c==92:
+    escape=True
+   elif c==34:
+    quoted=False
+  elif c==34:
+   quoted=True
+  elif c in (91,123):
+   stack.append(c)
+  elif c in (93,125):
+   if not stack:
+    break
+   assert stack.pop()==(91 if c==93 else 123)
+  elif c==44 and not stack:
+   break
+  i += 1
+ assert not quoted and not stack
+ return i
+
+def ws(s,i):
+ while i < len(s) and s[i] in b' \r\n\t':
+  i += 1
+ return i
+
+def spans(b):
+ i=ws(b,0)
+ assert b[i]==123
+ i,out=ws(b,i+1),{}
+ while b[i]!=125:
+  assert b[i]==34
+  j,escape=i+1,False
+  while True:
+   assert j < len(b)
+   if not escape and b[j]==34:
+    break
+   escape=not escape if b[j]==92 else False
+   j += 1
+  key=json.loads(b[i:j+1])
+  assert type(key) is str and key not in out
+  i=ws(b,j+1)
+  assert b[i]==58
+  i=ws(b,i+1)
+  j=lexend(b,i)
+  out[key]=b[i:j].rstrip()
+  i=ws(b,j)
+  if b[i]==44:
+   i=ws(b,i+1)
+   assert b[i]!=125
+  else:
+   break
+ assert b[i]==125 and ws(b,i+1)==len(b)
+ return out
+
+def array(b):
+ i=ws(b,0)
+ assert b[i]==91
+ i,out=ws(b,i+1),[]
+ while b[i]!=93:
+  j=lexend(b,i)
+  out.append(b[i:j].rstrip())
+  i=ws(b,j)
+  if b[i]==44:
+   i=ws(b,i+1)
+   assert b[i]!=93
+  else:
+   break
+ assert b[i]==93 and ws(b,i+1)==len(b)
+ return out
+
+def selected(b,keys):
+ assert not set(keys).intersection(FORBIDDEN)
+ p=spans(b)
+ return {k: json.loads(p[k]) for k in keys if k in p}
+
+def raw(L,ref):
+ return L.raw(ref['path'],ref)[0]
+
+def metadata(L,ref,keys):
+ return selected(raw(L,ref),keys)
+
+def pure(L,ref):
+ return L.document(ref['path'],ref)[0]
+
+def refat(L,path):
+ return L.raw(path)[1]
+
+def trip(ref):
+ return [ref['path'],str(ref['bytes']),ref['sha256']]
+
+def limits(science):
+ return dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,
+    ram_floor=3*2**30,total_rss=(128 if science else 256)*2**20,
+    wall_seconds=150.0 if science else 125.0,sample_seconds=0.5,
+    log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+
+def supervised(child,guard,science):
+ env=['/usr/bin/env']
+ for name in ('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'):
+  env += ['-u',name]
+ return env+[PY,'-E','-B',str(GUARDS[0]),'--volume','/Users/sasha/medusa',
+    '--output',str(guard),'--rss-cap-mib','128' if science else '256',
+    '--timeout','150' if science else '125','--']+child
+
+def review(L,ref,program=None,historical=False):
+ r=metadata(L,ref,['status','reviewer','author','blockers','program'])
+ assert r['status'].startswith('SUPPORTED') and r['blockers']==[]
+ assert historical or r.get('reviewer',r.get('author')) not in ('/root','/root/readback_review',REVIEWER)
+ if program is not None:
+  assert r['status'].startswith('SUPPORTED_STATIC') and r['program']==program
+ return r
+
+def api(L,ref,key,argv,success):
+ budget()
+ d=pure(L,ref)
+ assert d['schema']=='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'
+ assert d['root']==d['actor']=='/root'
+ assert d['issued_argv']==d['child_argv']==argv
+ assert shlex.split(d['issued_tool_arguments']['cmd'])==argv
+ issued=pure(L,refat(L,RAW/key/'issued.json'))
+ assert issued['schema']=='ROOT_ISSUED_API_INTENT_V1' and issued['root']=='/root'
+ assert issued['argv']==argv and issued['tool_arguments']==d['issued_tool_arguments']
+ frames=d['all_genuine_api_frames']
+ assert type(frames) is list and 1<=len(frames)<=32
+ assert frames[0]==d['full_initial_tool_return'] and frames[-1]==d['full_tool_return']
+ actual=d['actual_tool']
+ assert frames[0]['chunk_id']==actual['initial_chunk'] and frames[-1]['chunk_id']==actual['terminal_chunk']
+ assert frames[-1]['exit_code']==actual['exit_code']
+ assert type(actual['exit_code']) is int and (actual['exit_code']==0) is success
+ assert actual['synchronous'] is (len(frames)==1)
+ if len(frames)==1:
+  assert actual['handle'] is None
+ else:
+  assert frames[0]['session_id']==actual['handle'] and type(actual['handle']) is int
+  assert all('exit_code' not in f for f in frames[:-1])
+ assert 'session_id' not in frames[-1]
+ for j,frame in enumerate(frames):
+  assert pure(L,refat(L,RAW/key/('frame_%04d.json'%j)))==frame
+ assert not (RAW/key/('frame_%04d.json'%len(frames))).exists()
+ return d
+
+def actual(L,sdkref,key,child,guard,science):
+ sdk=api(L,sdkref,key,supervised(child,guard,science),True)
+ terminal=json.loads(sdk['full_tool_return']['output'])
+ assert terminal==dict(status='PASS',stop='RETURNED',receipt=str(Path(guard)/'receipt.json'))
+ started=pure(L,refat(L,Path(guard)/'started.json'))
+ receipt=pure(L,refat(L,Path(guard)/'receipt.json'))
+ assert started['command']==receipt['command']==child
+ assert started['limits']==receipt['limits']==limits(science)
+ assert len(started['identities'])==1 and receipt['identities']
+ assert receipt['status']=='PASS' and receipt['stop']=='RETURNED' and receipt['returncode']==0 and receipt['error'] is None
+ assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+ assert receipt['seconds']<=limits(science)['wall_seconds']
+ assert receipt['peaks']['total_rss']<=limits(science)['total_rss']
+ assert receipt['admission']['free_disk']>=limits(science)['admit_disk'] and receipt['admission']['available_ram']>=limits(science)['admit_ram']
+ assert receipt['peaks']['min_free_disk']>=limits(science)['disk_floor'] and receipt['peaks']['min_available_ram']>=limits(science)['ram_floor']
+ stdout,outref=L.raw(Path(guard)/'stdout.log')
+ stderr,errref=L.raw(Path(guard)/'stderr.log')
+ assert stderr==b'' and receipt['logs']==dict(stdout=outref['bytes'],stderr=errref['bytes'])
+ result=json.loads(stdout)
+ outputs=result.get('outputs',[])
+ for output in outputs:
+  raw(L,output)
+ return result,outputs
+
+def source_manifest(L,ref,expected):
+ assert ref['sha256']==expected
+ m=pure(L,ref)
+ assert m['schema']=='F009_SMALL_FOREST_ORBIT_ROLE_SOURCE_V1'
+ assert len({r['path'] for r in m['Source']})==len(m['Source'])
+ for item in m['Source']:
+  raw(L,item)
+ assert sum(r['bytes'] for r in m['Source'])==m['Source_total']
+ assert m['Source_with_invocation_reserve']==m['Source_total']+512<=65536
+ assert m['entry'] in m['Source']
+ return m
+
+def opaque_normal(b):
+ out,quoted,escape=bytearray(),False,False
+ for c in b:
+  if quoted:
+   out.append(c)
+   if escape:
+    escape=False
+   elif c==92:
+    escape=True
+   elif c==34:
+    quoted=False
+  elif c==34:
+   out.append(c)
+   quoted=True
+  elif c not in b' \r\n\t':
+   out.append(c)
+ assert not quoted
+ return bytes(out)
+
+def prepared_role(L,preparedref,actualref,stem,base,indices,cohortref,batch,roster,manifestref,manifest,science_role,begin):
+ assert actualref['path']==str(base/'Root_SDK'/(stem+'_v1.json'))
+ p=pure(L,preparedref)
+ assert p['root']=='/root' and p['cohort']==cohortref and p['cohort_batch']==batch
+ assert p['source_indices']==indices and p['current_roster']==roster and p['manifest']==manifestref and p['scientific_calls']==0
+ assert p['out']==str(base/stem) and p['guard']==str(base/'guards'/stem)
+ requestbody=raw(L,p['request'])
+ q=selected(requestbody,['python_executable','Root_import','saved','Root_authority','role'])
+ assert q['python_executable']==PY and q['Root_import']==p['Root_import'] and q['Root_authority'] is False
+ requestparents=array(spans(requestbody)['parents'])
+ assert len(requestparents)==len(indices)
+ gate=pure(L,p['gate'])
+ assert gate['root']=='/root' and gate['Root_authority'] is gate['adopted'] is gate['source_and_math_owned'] is True
+ assert gate['request']==p['request'] and gate['manifest']==manifestref
+ impbody=raw(L,p['Root_import'])
+ imp=selected(impbody,['schema','root','Root_authority','adopted','cohort','cohort_batch','current_parent_ordinal','source_indices','canonical_or_ledger_writes_authorized'])
+ assert imp['root']=='/root' and imp['Root_authority'] is imp['adopted'] is True
+ assert imp['cohort']==cohortref and imp['cohort_batch']==batch and imp['canonical_or_ledger_writes_authorized'] is False
+ if science_role=='supplier':
+  assert imp['current_parent_ordinal']==indices[0]
+ else:
+  assert imp['source_indices']==indices
+ importparents=array(spans(impbody)['parents'])
+ assert [opaque_normal(v) for v in importparents]==[opaque_normal(v) for v in requestparents]
+ child=[PY,'-E','-B','-S',manifest['entry']['path'],'--actor','/root','--manifest']+trip(manifestref)
+ child += ['--request']+trip(p['request'])+['--Root-gate']+trip(p['gate'])+['--out',p['out'],'--guard',p['guard']]
+ stdout,outputs=actual(L,actualref,'Root_f009_cohort%04d_%s_v1'%(begin,stem),child,p['guard'],True)
+ assert len(outputs)==2
+ byname={Path(r['path']).name: r for r in outputs}
+ assert set(byname)=={'result.json','certificate.json'}
+ resultref,certref=byname['result.json'],byname['certificate.json']
+ r=metadata(L,resultref,['status','pins','parent_count','slots_per_parent','canonical_or_ledger_writes','whole_inputs','declared_read_bytes','nominal_project_body_bytes','certificate_for_literal_old_strict156','complete_selected_stabilizer_not_graph_isomorphism','new_census_or_case_credit','strict_all_parent_distances_and_predicates_recomputed','strict_full_old_orbit_witness_for_every_ORBIT','old_full_kernel_literal','whole_level_or_census_claimed','new_case_paper_Lean_or_measurement_credit'])
+ assert r['pins']==dict(manifest=manifestref,request=p['request'],Root_gate=p['gate'])
+ assert r['parent_count']==len(indices) and r['slots_per_parent']==156 and r['canonical_or_ledger_writes'] is False
+ if science_role=='supplier':
+  assert r['status']=='PROPOSED_COMPLETE_PARENT_COVER'
+  assert r['certificate_for_literal_old_strict156'] is r['complete_selected_stabilizer_not_graph_isomorphism'] is True and r['new_census_or_case_credit']==0
+ else:
+  assert r['status']=='VERIFIED_COMPLETE_INCREMENTAL_PARENT_COVERS'
+  assert r['strict_all_parent_distances_and_predicates_recomputed'] is r['strict_full_old_orbit_witness_for_every_ORBIT'] is r['old_full_kernel_literal'] is True
+  assert r['whole_level_or_census_claimed'] is False and r['new_case_paper_Lean_or_measurement_credit']==0
+  raw(L,q['saved'])
+ assert len({v['path'] for v in r['whole_inputs']})==len(r['whole_inputs'])<=32
+ for v in r['whole_inputs']:
+  raw(L,v)
+ required=manifest['Source']+[manifestref,p['request'],p['gate'],p['Root_import'],refat(L,Path(p['guard'])/'started.json')]
+ if science_role=='strict':
+  required.append(q['saved'])
+ assert {v['path']:v for v in required}=={v['path']:v for v in r['whole_inputs']}
+ assert r['declared_read_bytes']<=manifest['caps']['read_bytes'] and r['nominal_project_body_bytes']<=131072
+ return dict(prepared=p,result=resultref,certificate=certref,parents=requestparents,saved=q.get('saved'))
+
+def context(L,a,base,stem):
+ assert a['actual_context']==[a['actual_SDK']]+[refat(L,base/'guards'/stem/name) for name in ('receipt.json','stdout.log','stderr.log')]
+
+def phase(L,config,cohortref,cohort,batch,name,edition,prior):
+ control=Path(cohortref['path']).parent
+ n,begin=batch['batch'],cohort['begin']
+ decisionref=refat(L,control/'decisions'/('batch%02d_%s.json'%(n,name)))
+ d=pure(L,decisionref)
+ assert d['root']=='/root' and d['Root_authority'] is True and d['status']=='SUPPORTED' and d['blockers']==[]
+ assert d['packet']==config['adapter_packet'] and d['program']==cohort['program'] and d['cohort']==cohortref and d['batch']==n and d['phase']==name
+ for flag in ('new_metadata_Source_interfaces_and_bills_owned','old_scientific_Source_controls_and_mathematics_owned','exact_fresh_cohort_and_disjoint_batch_owned','frozen_progress_edition_held','no_successful_science_repeated','actual_attempt_bindings_and_preentry_reconciliations_owned','metadata_phase_authorized'):
+  assert d[flag] is True
+ review(L,d['independent_Source_peer'],cohort['program'])
+ if 'metadata_decision_issuer' in d:
+  assert d['metadata_decision_issuer']==config['phase_issuer'] and d['metadata_decision_issuer_Source_peer']==config['phase_issuer_peer']
+  if config['_owner_V2']:
+   assert d['preparation_packet']==config['preparation_packet'] and d['preparation_Source_manifest']==config['_preparation']['entry_manifests']['issue_phase.py']
+  else:
+   review(L,config['phase_issuer_peer'],config['phase_issuer'])
+  raw(L,config['phase_issuer'])
+ elif config['_owner_V2'] or not (n==0 and name=='prepare_suppliers'):
+  raise AssertionError('A new phase needs the genuine current issuer and Source peer.')
+ if name=='prepare_suppliers':
+  assert d['actual_bindings'] is None
+ else:
+  bindings=pure(L,d['actual_bindings'])
+  assert bindings['schema']=='ROOT_F009_COHORT_ROLE_ACTUAL_BINDINGS_V1' and bindings['root']=='/root' and bindings['Root_authority'] is True
+  assert bindings['program']==cohort['program'] and bindings['cohort']==cohortref and bindings['batch']==n and bindings['phase']==name
+  stems=['parent%04d_supply'%i for i in batch['source_indices']] if name=='assemble_strict' else ['parents%04d_%04d_check'%(batch['begin'],batch['end']-1)]
+  assert [r['stem'] for r in bindings['roles']]==stems
+  for role in bindings['roles']:
+   assert role['edition']==1 and role['prior_attempts']==[]
+   assert role['actual_SDK']['path']==str(CONTAINER/('cohort_from%04d'%begin)/('parents%04d_%04d'%(batch['begin'],batch['end']-1))/'Root_SDK'/(role['stem']+'_v1.json'))
+   raw(L,role['actual_SDK'])
+ child=[PY,'-E','-B','-S',cohort['program']['path'],name,'--packet']+trip(config['adapter_packet'])
+ child += ['--cohort']+trip(cohortref)+['--batch',str(n),'--Root-decision']+trip(decisionref)
+ guard=control/'guards'/('batch%02d_%s'%(n,name))
+ sdkref=refat(L,control/'Root_SDK'/('batch%02d_%s_v%d.json'%(n,name,edition)))
+ key='Root_f009_cohort%04d_batch%02d_%s_v%d'%(begin,n,name,edition)
+ actual(L,sdkref,key,child,guard,False)
+ assert len(prior)==edition-1
+ for number,refusalref in enumerate(prior,1):
+  assert refusalref['path']==str(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(n,name,number)))
+  sdk=api(L,refusalref,'Root_f009_cohort%04d_batch%02d_%s_v%d'%(begin,n,name,number),supervised(child,guard,False),False)
+  assert 'the acquired base refused before creating its output or child' in ''.join(f.get('output','') for f in sdk['all_genuine_api_frames'])
+ return sdkref
+
+def preparation(L,c):
+ p=pure(L,c['preparation_packet'])
+ assert p['schema']=='F009_FUTURE_COHORT_PREPARATION_SOURCE_V1' and p['Root_authority'] is False
+ assert p['adapter']==c['adapter_program'] and p['adapter_peer']==c['adapter_peer'] and p['legacy_handoff']==c['adapter_packet']
+ programs={}
+ for name,mr in p['entry_manifests'].items():
+  m=pure(L,mr)
+  assert m['schema']=='F009_METADATA_ENTRY_SOURCE_MANIFEST_V1'
+  assert {Path(v['path']).name for v in m['Source']}=={name,'common.py','whole.py'} and len(m['Source'])==3
+  for v in m['Source']+m['guards']:raw(L,v)
+  assert sum(v['bytes'] for v in m['Source']+m['guards'])+512==m['Source_plus_guards512']<=65536
+  assert [v['sha256'] for v in m['guards']]==GUARD_SHA and m['entry'] in m['Source']
+  programs[name]=m['entry']
+ assert set(programs)=={'init_cohort.py','issue_phase.py','close_cohort.py'}
+ raw(L,p['protocol'])
+ peer=pure(L,c['preparation_peer'])
+ assert peer['status'].startswith('SUPPORTED_STATIC') and peer['blockers']==[]
+ assert peer['reviewer'] not in ('/root',REVIEWER,p['author'])
+ assert peer['programs']==programs and peer['packet']==c['preparation_packet'] and peer['protocol']==p['protocol'] and peer['entry_manifests']==p['entry_manifests']
+ missing=p['unavailable_legacy_bookkeeping']
+ assert len(missing)==8 and all(v['loaded_by_successor'] is v['body_recreated'] is False for v in missing)
+ assert [v['original'] for v in missing]==c['unavailable_bookkeeping_descriptors']
+ for v in p['legacy_active_inputs']:raw(L,v)
+ c['_preparation'],c['_preparation_programs']=p,programs
+
+def owner_admission(L,c,o,h,hr):
+ assert o['old_scientific_Source_controls_and_mathematics_owned'] is True
+ c['_owner_V2']=o['schema']=='ROOT_F009_COHORT_METADATA_SOURCE_OWNERSHIP_V2'
+ if not c['_owner_V2']:
+  assert o['schema']=='ROOT_F009_COHORT_METADATA_SOURCE_OWNERSHIP_V1'
+  assert o['whole_Source_protocol_inverse_and_invoices_owned'] is True
+  c['phase_issuer'],c['phase_issuer_peer']=c['legacy_phase_issuer'],c['legacy_phase_peer']
+  c['closer_program']=c['legacy_closer']
+  raw(L,c['legacy_closer_peer'])
+  return
+ preparation(L,c)
+ p,programs=c['_preparation'],c['_preparation_programs']
+ assert o['preparation_packet']==c['preparation_packet'] and o['preparation_Source_peer']==c['preparation_peer']
+ assert o['preparation_program']==programs['init_cohort.py'] and o['preparation_Source_manifest']==p['entry_manifests']['init_cohort.py'] and o['protocol']==p['protocol']
+ assert o['whole_current_metadata_Source_protocol_and_disclosures_owned'] is o['missing_legacy_bookkeeping_not_recreated'] is True
+ assert o['no_scientific_worker_issued'] is o['no_canonical_writes'] is True
+ assert o['unavailable_legacy_bookkeeping']==p['unavailable_legacy_bookkeeping'] and o['expected_registered_prefix']==h['begin']
+ v=h['preparation_provenance']
+ assert v['schema']=='F009_FUTURE_COHORT_PREPARATION_PROVENANCE_V1'
+ assert v['packet']==c['preparation_packet'] and v['init_program']==programs['init_cohort.py'] and v['Source_manifest']==o['preparation_Source_manifest'] and v['Source_peer']==c['preparation_peer'] and v['protocol']==p['protocol']
+ assert v['scientific_adapter_unchanged'] is v['missing_legacy_bookkeeping_not_recreated'] is True and v['frozen_only_after_expected_prefix_registered']==h['begin']
+ assert Path(hr['path']).parent==Path(c['preparation_packet']['path']).parent/'cohorts'/('cohort_from%04d'%h['begin'])
+ c['phase_issuer'],c['phase_issuer_peer']=programs['issue_phase.py'],c['preparation_peer']
+ c['closer_program']=programs['close_cohort.py']
+
+def bootstrap(L,a):
+ ownref=refat(L,Path(sys.argv[0]).resolve())
+ commonref=refat(L,Path(__file__).resolve())
+ refs=[refat(L,HELPER)]+[refat(L,g) for g in GUARDS]
+ assert [r['sha256'] for r in refs[1:]]==GUARD_SHA
+ source_total=ownref['bytes']+commonref['bytes']+sum(r['bytes'] for r in refs)+512
+ assert source_total<=65536
+ configref,decisionref=descriptor(a.config),descriptor(a.Root_decision)
+ config,decision=pure(L,configref),pure(L,decisionref)
+ assert config['schema']=='F009_FUTURE_ACTUAL_AUDITOR_CONFIG_V1' and config['Root_authority'] is False
+ assert len(config['borrowed_historical_descriptors'])>=8
+ assert config['programs'][Path(sys.argv[0]).name]==ownref and config['common']==commonref and config['helper']==refs[0]
+ config['_program']=ownref
+ config['_bootstrap_bytes']=ownref['bytes']+commonref['bytes']+len(hb)
+ assert decision['schema']=='ROOT_F009_FUTURE_ACTUAL_AUDIT_DECISION_V1' and decision['root']=='/root' and decision['Root_authority'] is True
+ assert decision['programs']==config['programs'] and decision['common']==commonref and decision['config']==configref and decision['status']=='SUPPORTED' and decision['blockers']==[]
+ for flag in ('new_full_Source_and_lexical_interface_owned','genuine_execution_evidence_only','no_scientific_execution_authorized','no_canonical_writes_authorized','bounded_metadata_IO_owned'):
+  assert decision[flag] is True
+ peer=pure(L,decision['independent_Source_peer'])
+ assert peer['status'].startswith('SUPPORTED_STATIC') and peer['blockers']==[] and peer['reviewer'] not in ('/root','/root/readback_review',REVIEWER)
+ assert peer['programs']==config['programs'] and peer['common']==commonref and peer['config']==configref
+ cohortref=decision['cohort']
+ cohort=pure(L,cohortref)
+ assert cohort['schema']=='ROOT_F009_CONTIGUOUS_PARENT_COHORT_V1' and cohort['root']=='/root' and cohort['Root_authority'] is True
+ begin,end,counts=cohort['begin'],cohort['end'],cohort['batch_counts']
+ assert type(begin) is int and 342<=begin < end<=940 and end-begin<=12
+ assert 1<=len(counts)<=4 and all(type(n) is int and 1<=n<=3 for n in counts)
+ expected,cursor=[],begin
+ for number,count in enumerate(counts):
+  expected.append(dict(batch=number,begin=cursor,end=cursor+count,source_indices=list(range(cursor,cursor+count))))
+  cursor += count
+ assert cursor==end and cohort['batches']==expected and cohort['source_indices']==list(range(begin,end)) and cohort['reviewed_prefix']==begin
+ assert cohort['program']==config['adapter_program']
+ assert cohort['Source_handoff']==config['adapter_packet'] and cohort['Source_peer']==config['adapter_peer']
+ ownership=pure(L,cohort['Root_Source_ownership'])
+ assert ownership['root']=='/root' and ownership['Root_authority'] is True
+ assert ownership['program']==cohort['program'] and ownership['packet']==config['adapter_packet'] and ownership['Source_peer']==config['adapter_peer']
+ owner_admission(L,config,ownership,cohort,cohortref)
+ raw(L,config['adapter_program'])
+ packet=pure(L,config['adapter_packet'])
+ assert packet['program']==cohort['program'] and packet['Root_authority'] is False
+ review(L,config['adapter_peer'],cohort['program'])
+ snapshot=cohort['progress_snapshot']
+ assert set(snapshot)=={'intake','controller','runtime'}
+ for ref in snapshot.values():
+  raw(L,ref)
+ progressbody=raw(L,snapshot['intake'])
+ progress=selected(progressbody,['active_controller_checkpoint'])
+ f=selected(spans(progressbody)['F009'],['R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed','R5_current_roster','R5_canonical_total_parents','R5_whole_level_complete'])
+ ptr=pure(L,snapshot['controller'])
+ assert progress['active_controller_checkpoint']==ptr['checkpoint']==snapshot['runtime']
+ assert f['R5_canonical_pairs_reviewed']==begin and f['R5_prefix_strict_slots_reviewed']==156*begin and f['R5_canonical_total_parents']==940 and f['R5_whole_level_complete'] is False
+ rosterref=packet['current_roster']
+ assert f['R5_current_roster']==rosterref
+ rosterbody=raw(L,rosterref)
+ roster=selected(rosterbody,['schema','root','adopted','level','roster_size'])
+ assert roster==dict(schema='ROOT_F009_ACCEPTED_PARENT_ROSTER_V1',root='/root',adopted=True,level=4,roster_size=940)
+ representatives=array(spans(rosterbody)['representatives'])
+ assert len(representatives)==940
+ assert len({opaque_normal(representatives[i]) for i in range(begin,end)})==end-begin
+ for key in ('full_supplier_static','full_supplier_actual24','strict_static','strict_actual41','roster_actual_review'):
+  review(L,packet[key],historical=True)
+ adoption=metadata(L,packet['roster_adoption'],['adopted_roster'])
+ assert adoption['adopted_roster']==rosterref
+ s=source_manifest(L,packet['supplier_manifest'],'c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e')
+ t=source_manifest(L,packet['strict_manifest'],'ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff')
+ fs=metadata(L,packet['full_supplier_static'],['Source_manifest','control_Source_manifest','old_strict_Source_manifest'])
+ fa=metadata(L,packet['full_supplier_actual24'],['Source_manifest','production_Source_manifest','count','Original_inputs_loaded'])
+ ts=metadata(L,packet['strict_static'],['Source_manifests'])
+ ta=metadata(L,packet['strict_actual41'],['Source_manifest','actual_control_count'])
+ assert fs['Source_manifest']==fa['production_Source_manifest']==packet['supplier_manifest']
+ assert fs['control_Source_manifest']==fa['Source_manifest']==config['control_manifests'][0]
+ assert fs['old_strict_Source_manifest']==ts['Source_manifests']['check']==packet['strict_manifest']
+ assert ts['Source_manifests']['controls']==ta['Source_manifest']==config['control_manifests'][1]
+ assert fa['count']==24 and fa['Original_inputs_loaded'] is False and ta['actual_control_count']==41
+ attemptsref=decision['metadata_attempts']
+ attempts=pure(L,attemptsref)
+ assert attempts['schema']=='ROOT_F009_COHORT_METADATA_PHASE_ATTEMPTS_V1' and attempts['root']=='/root' and attempts['Root_authority'] is True and attempts['cohort']==cohortref
+ assert attempts['scientific_roles_changed'] is False and attempts['no_successful_role_replayed'] is True
+ if config['_owner_V2']:
+  assert attempts.get('metadata_attempt_binding_preparation_failures',[])==[]
+ else:
+  assert attempts['metadata_attempt_binding_preparation_failures']==[]
+ overrides={}
+ assert 0<=len(attempts['overrides'])<=3*len(expected)
+ for item in attempts['overrides']:
+  key=item['batch'],item['phase']
+  assert type(key[0]) is int and 0<=key[0] < len(expected) and key[1] in ('prepare_suppliers','assemble_strict','close_pairing') and key not in overrides
+  assert 2<=item['selected_edition']<=8 and len(item['prior_non_success_actual_SDK'])==item['selected_edition']-1
+  assert item['prior_refusal_before_guard_output_or_child'] is item['same_prepared_decision_and_Source'] is True
+  overrides[key]=item
+ raw(L,config['closer_program'])
+ raw(L,config['phase_issuer'])
+ if not config['_owner_V2']:
+  review(L,config['phase_issuer_peer'],config['phase_issuer'])
+ own_guard=Path(a.guard)
+ started=pure(L,refat(L,own_guard/'started.json'))
+ assert started['command']==[PY,'-E','-B','-S']+sys.argv and started['limits']==limits(False)
+ out=Path(a.out)
+ assert out.is_absolute() and out.resolve(strict=True)==out and out!=own_guard
+ assert not out.is_relative_to(Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress'))
+ return config,configref,decisionref,cohort,cohortref,packet,s,t,rosterref,representatives,overrides,source_total
+
+
+def finish(L,a,state,leaf,details):
+ budget()
+ first=L.bytes
+ inputrefs=[v[1] for _,v in sorted(L.pins.items())]
+ assert 2*first+state[0]['_bootstrap_bytes']+2*2**20<=64*2**20 and len(L.pins)+2<=512
+ L.close()
+ budget()
+ full=dict(schema='F009_FUTURE_LEXICAL_ACTUAL_AUDIT_V1',status='SUPPORTED_ACTUAL',reviewer=REVIEWER,blockers=[],program=state[0]['_program'],config=state[1],Root_decision=state[2],cohort=state[4],batch=a.batch,details=details,input_refs=inputrefs,first_closing_inputs_stable=True,first_closing_explicit_bytes=L.bytes,project_Source_bootstrap_bytes=state[0]['_bootstrap_bytes'],common=state[0]['common'],owner_V2=state[0]['_owner_V2'],Source_union_guards512=state[-1],paths=len(L.pins),declared_read_upper=2*first+state[0]['_bootstrap_bytes']+2*2**20,Original_payloads_decoded_by_this_actual=False,scientific_executions=0,canonical_writes=0,author_inspection_limitation=state[0]['author_inspection_limitation'],closure_scope=state[0]['closure_scope'],borrowed_control_facts=True,old_control_manifest_bodies_reclosed=False,borrowed_historical_descriptors=state[0]['borrowed_historical_descriptors'],old_frontend_restored=False)
+ fullref=write(Path(a.out)/'full_actual_review.json',full)
+ leaf['full_actual_review']=fullref
+ leafref=write(Path(a.out)/'reuse_integer_only.json',leaf)
+ O=Ledger()
+ O.raw(fullref['path'],fullref)
+ O.raw(leafref['path'],leafref)
+ O.close()
+ assert L.bytes+state[0]['_bootstrap_bytes']+O.bytes<=full['declared_read_upper'] and len(full['input_refs'])+2<=512
+ budget()
+ signal.alarm(0)
+ print(json.dumps(dict(outputs=[fullref,leafref],scientific_executions=0,canonical_writes=0)))

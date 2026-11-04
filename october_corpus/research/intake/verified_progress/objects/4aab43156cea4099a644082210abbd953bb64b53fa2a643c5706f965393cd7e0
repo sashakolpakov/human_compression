@@ -1,0 +1,152 @@
+"""Bounded metadata support; Original payload containers remain opaque."""
+import hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+HELPER=HERE/'whole.py'
+hb=HELPER.read_bytes()
+assert len(hb)==3744 and hashlib.sha256(hb).hexdigest()=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+ns=dict(__file__=str(HELPER),__name__='f009_future_metadata_ledger')
+exec(compile(hb,str(HELPER),'exec'),ns)
+Ledger=ns['Ledger'];START=time.monotonic()
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata deadline')))
+signal.alarm(125)
+INTAKE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+PROGRESS=INTAKE/'progress/current_intake.json';CONTROLLER=INTAKE/'progress/controllers/current.json'
+SCIENCE=Path('/private/tmp/f009_R5_parent_cohorts_actual')
+OLD_ACTUAL=Path('/private/tmp/f009_R5_canonical_parent_actual')
+PHASES=('prepare_suppliers','assemble_strict','close_pairing')
+AUTHOR='/root/mathematical_review'
+def check():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)<=256*2**20
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode('ascii')
+def descriptor(values):
+    p,n,h=values;assert Path(p).is_absolute()and 0<=int(n)<=4*2**20 and len(h)==64 and set(h)<=set('0123456789abcdef')
+    return dict(path=p,bytes=int(n),sha256=h)
+def triple(r):return[r['path'],str(r['bytes']),r['sha256']]
+def doc(L,r):check();return L.document(r['path'],r)[0]
+def file_ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def fresh(p):assert p.is_absolute()and not os.path.lexists(p)
+
+# Navigate JSON members lexically.  Unselected Original forest/cache values are
+# never passed to json.loads, eval or a scientific function.
+def ws(b,i):
+    while i<len(b)and b[i]in b' \n\r\t':i+=1
+    return i
+def string_end(b,i):
+    assert b[i]==34;i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('unterminated string')
+def value_end(b,i):
+    if b[i]==34:return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            assert i<len(b)and len(stack)<=4096
+            if b[i]==34:i=string_end(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \n\r\t':i+=1
+    return i
+def members(b):
+    assert len(b)<=4*2**20;i=ws(b,0);assert b[i]==123;i=ws(b,i+1);out={}
+    while b[i]!=125:
+        j=string_end(b,i);key=json.loads(b[i:j]);assert type(key)is str and len(key)<=4096 and key not in out
+        i=ws(b,j);assert b[i]==58;i=ws(b,i+1);j=value_end(b,i);out[key]=b[i:j];i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:assert b[i]==125
+    assert not b[ws(b,i+1):];return out
+def array_spans(b):
+    i=ws(b,0);assert b[i]==91;i=ws(b,i+1)
+    while b[i]!=93:
+        j=value_end(b,i);yield b[i:j];i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:assert b[i]==93
+    assert not b[ws(b,i+1):]
+def projection(raw,keys):
+    m=members(raw);assert set(keys)<=set(m)
+    return{k:json.loads(m[k])for k in keys}
+def runtime_view(raw):
+    m=members(raw);counts=json.loads(m['counts']);keys=set(members(m['cache_entries']))
+    banks=[]
+    for value in array_spans(m['cache_banks']):
+        r=json.loads(members(value)['ref']);assert type(r)is dict;banks.append(r)
+    assert len(banks)<=128
+    return counts,keys,banks
+
+def start(entry,peer_values):
+    check();L=Ledger();program_raw,program=L.raw(HERE/entry);L.raw(Path(__file__).resolve());L.raw(HELPER)
+    packet,packet_ref=L.document(HERE/'packet.json')
+    assert packet['schema']=='F009_FUTURE_COHORT_PREPARATION_SOURCE_V1'and packet['Root_authority']is False and packet['author']==AUTHOR
+    mfref=packet['entry_manifests'][entry];mf=doc(L,mfref)
+    assert mf['schema']=='F009_METADATA_ENTRY_SOURCE_MANIFEST_V1'and mf['entry']==program
+    assert set(Path(r['path']).name for r in mf['Source'])=={entry,'common.py','whole.py'}and len(mf['Source'])==3
+    total=512
+    for r in mf['Source']+mf['guards']:
+        raw,_=L.raw(r['path'],r);total+=len(raw)
+    assert total==mf['Source_plus_guards512']<=65536
+    protocol=doc_text(L,packet['protocol'])
+    peer_ref=descriptor(peer_values);peer=doc(L,peer_ref)
+    assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root',AUTHOR)
+    assert peer['programs'][entry]==program and peer['entry_manifests']==packet['entry_manifests']
+    assert peer['packet']==packet_ref and peer['protocol']==packet['protocol']
+    bootstrap=sum(r['bytes']for r in mf['Source'])
+    return L,packet,packet_ref,program,peer_ref,mfref,bootstrap
+def doc_text(L,r):return L.raw(r['path'],r)[0]
+def legacy(L,packet):
+    h=doc(L,packet['legacy_handoff']);adapter=packet['adapter'];oldpeer=doc(L,packet['adapter_peer'])
+    assert h['schema']=='F009_BOUNDED_PARENT_COHORT_BATCH_ADAPTER_FALSE_HANDOFF_V1'and h['Root_authority']is False
+    assert h['program']==adapter and oldpeer['program']==adapter and oldpeer['status'].startswith('SUPPORTED_STATIC')and oldpeer['blockers']==[]
+    assert oldpeer['reviewer']not in('/root',h['author'])
+    L.raw(adapter['path'],adapter)
+    assert adapter['sha256']=='d516861bff3623789ad6ef2c63f552014bb8e92ef88b7922bb06963e37430311'
+    return h
+def owned_cohort(L,packet,packet_ref,cohort_ref):
+    cohort=doc(L,cohort_ref);h=legacy(L,packet)
+    assert cohort['schema']=='ROOT_F009_CONTIGUOUS_PARENT_COHORT_V1'and cohort['root']=='/root'and cohort['Root_authority']is True
+    begin,end=cohort['begin'],cohort['end'];assert type(begin)is type(end)is int and 342<=begin<end<=940 and end-begin<=12
+    batches=[];cursor=begin
+    for number,n in enumerate(cohort['batch_counts']):
+        assert type(n)is int and 1<=n<=3;batches.append(dict(batch=number,begin=cursor,end=cursor+n,source_indices=list(range(cursor,cursor+n))));cursor+=n
+    assert 1<=len(batches)<=4 and cursor==end and cohort['batches']==batches
+    assert cohort['source_indices']==list(range(begin,end))and cohort['reviewed_prefix']==begin
+    assert cohort['program']==packet['adapter']and cohort['Source_peer']==packet['adapter_peer']and cohort['Source_handoff']==packet['legacy_handoff']
+    provenance=cohort['preparation_provenance'];assert provenance['packet']==packet_ref and provenance['protocol']==packet['protocol']
+    owner=doc(L,cohort['Root_Source_ownership'])
+    assert owner['root']=='/root'and owner['Root_authority']is True and owner['program']==packet['adapter']and owner['packet']==packet['legacy_handoff']
+    assert owner['preparation_packet']==packet_ref and owner['preparation_Source_peer']==provenance['Source_peer']
+    assert owner['whole_current_metadata_Source_protocol_and_disclosures_owned']is owner['old_scientific_Source_controls_and_mathematics_owned']is True
+    control=Path(cohort_ref['path']).parent;assert control==HERE/'cohorts'/('cohort_from%04d'%begin)
+    for r in cohort['progress_snapshot'].values():L.raw(r['path'],r)
+    return cohort,control,h
+def actual_v1(L,path):
+    sdk,sr=L.document(path);assert sdk['root']==sdk['actor']=='/root'and sdk['actual_tool']['exit_code']==0
+    assert sdk['full_tool_return']['exit_code']==0 and sdk['all_genuine_api_frames'][-1]==sdk['full_tool_return']
+    return sdk,sr
+def emit(L,planned,bootstrap,folders=()):
+    check();assert len(planned)<=8 and all(len(body)<=4*2**20 for p,body in planned)
+    assert len(set(L.pins)|{str(p)for p,b in planned})<=512
+    assert 2*L.bytes+bootstrap+2*sum(len(b)for p,b in planned)<=64*2**20
+    L.close();check()
+    for folder in folders:
+        if not folder.exists():folder.mkdir()
+        assert folder.resolve(strict=True)==folder and folder.is_dir()and not folder.is_symlink()
+    refs=[];copy_bytes=0
+    for p,b in planned:
+        fresh(p);assert p.parent.resolve(strict=True)==p.parent
+        with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+        actual=p.read_bytes();copy_bytes+=len(actual);assert actual==b;refs.append(file_ref(p,b))
+    for folder in {p.parent for p,b in planned}:
+        fd=os.open(folder,os.O_RDONLY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+    check();signal.alarm(0)
+    return refs,dict(first_and_closing_explicit_read_bytes=L.bytes,nominal_project_Source_bootstrap_bytes=bootstrap,
+        output_verification_bytes=copy_bytes,combined_read_bytes=L.bytes+bootstrap+copy_bytes,input_paths=len(L.pins),
+        scientific_calls=0,canonical_writes=0)

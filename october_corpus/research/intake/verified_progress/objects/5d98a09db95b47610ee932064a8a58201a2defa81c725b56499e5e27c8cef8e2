@@ -1,0 +1,224 @@
+"""Scoped independent metadata/opaque-byte audit of the row290 forecast.
+
+No represented writer, helper, control, Source predicate or Original operand is
+imported, called or evaluated. Typed status bytes and proof metadata are read.
+Author /root/mathematical_review; Root retains operational authority.
+"""
+import ast
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import resource
+import shlex
+import stat
+import time
+
+START = time.monotonic()
+P = Path(__file__).resolve().parents[2]
+O = Path(__file__).resolve().parent
+RAW = P / 'api'
+PRIVATE = Path('/private/tmp/l026_row0290_private_ledger_images')
+PINS = {}
+BODIES = {}
+READ = 0
+
+
+def need(v, why):
+    if not v:
+        raise ValueError(why)
+
+
+def ref(p, raw):
+    return dict(path=str(p), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def whole(p, wanted=None, fresh=False):
+    global READ
+    p = Path(p)
+    k = str(p)
+    if k in BODIES and not fresh:
+        b = BODIES[k]
+    else:
+        a = p.lstat()
+        sig = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+        need(p.is_absolute() and p.resolve(strict=True) == p and stat.S_ISREG(a.st_mode)
+             and a.st_nlink == 1 and a.st_size <= 4*2**20, 'ordinary single-link bounded input')
+        need(READ+a.st_size <= 64*2**20 and len(set(PINS) | {k}) <= 512, '64MiB512paths review')
+        with p.open('rb') as f:
+            x = os.fstat(f.fileno()); b = f.read(a.st_size+1); y = os.fstat(f.fileno())
+        need(sig(a) == sig(x) == sig(y) == sig(p.lstat()) and len(b) == a.st_size, 'same-FD stable whole input')
+        r = ref(p, b)
+        need(PINS.get(k, r) == r and BODIES.get(k, b) == b, 'first/closing byte identity')
+        PINS[k] = r; BODIES[k] = b; READ += len(b)
+    need(wanted is None or PINS[k] == wanted, 'exact descriptor')
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if os.uname().sysname == 'Darwin' else 1024)
+    need(rss <= 256*2**20 and time.monotonic()-START <= 125, 'own256MiB125s review')
+    return b
+
+
+def decode(b):
+    def pairs(rows):
+        out = {}
+        for k, v in rows:
+            need(k not in out, 'unique metadata keys'); out[k] = v
+        return out
+    def finite(s):
+        x = float(s); need(math.isfinite(x), 'finite metadata'); return x
+    def bad(_):
+        raise ValueError('nonfinite metadata')
+    return json.loads(b, object_pairs_hook=pairs, parse_constant=bad, parse_float=finite)
+
+
+def doc(r):
+    return decode(whole(r['path'], r))
+
+
+def pathref(p):
+    whole(p)
+    return PINS[str(p)]
+
+
+def put(name, value):
+    raw = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False)+'\n').encode()
+    p = O/name
+    with p.open('xb') as f:
+        need(f.write(raw) == len(raw), 'whole exclusive review output')
+    return ref(p, raw)
+
+
+def canonical(v):
+    return (json.dumps(v, sort_keys=True, separators=(',', ':'), allow_nan=False)+'\n').encode()
+
+
+def chain(sdkpath, key, rawbase=RAW):
+    sr = pathref(sdkpath); s = doc(sr); fs = s['all_genuine_api_frames']; av = s['issued_argv']
+    need(s['schema'] == 'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1' and s['root'] == s['actor'] == '/root'
+         and s['child_argv'] == av, 'actual Root SDK identity')
+    need(shlex.split(s['issued_command']) == shlex.split(s['issued_tool_arguments']['cmd'])
+         == shlex.split(s['canonical_argv_command']) == av, 'complete genuine issued command')
+    t = s['actual_tool']
+    need(fs and fs[0] == s['full_initial_tool_return'] and fs[-1] == s['full_tool_return']
+         and fs[-1]['exit_code'] == t['exit_code'] == 0 and 'session_id' not in fs[-1]
+         and len({f['chunk_id'] for f in fs}) == len(fs)
+         and t['initial_chunk'] == fs[0]['chunk_id'] and t['terminal_chunk'] == fs[-1]['chunk_id'], 'all genuine distinct ordered terminal frames')
+    if t['synchronous']:
+        need(len(fs) == 1 and t['handle'] is None, 'actual synchronous event')
+    else:
+        need(type(t['handle']) is int and all(f.get('session_id') == t['handle'] for f in fs[:-1]), 'actual asynchronous handle')
+    root = rawbase/key
+    issued = decode(whole(root/'issued.json'))
+    need(issued['root'] == '/root' and issued['argv'] == av and issued['tool_arguments'] == s['issued_tool_arguments'], 'raw issued exact SDK boundary')
+    paths = sorted(root.glob('frame_*.json'))
+    need(len(paths) == len(fs), 'all physical raw frames')
+    for i, (p, frame) in enumerate(zip(paths, fs)):
+        need(p.name == 'frame_%04d.json' % i and decode(whole(p)) == frame, 'raw frame equality')
+    return sr, s, decode(''.join(f.get('output', '') for f in fs).encode())
+
+
+contractref=pathref(O/'acceptance_contract.json');contract=doc(contractref)
+planref=contract['exact_immutable_plan'];p=doc(planref);relref=contract['exact_immutable_Root_release'];rel=doc(relref)
+forecastref=contract['existing_forecast_review'];f=doc(forecastref)
+need(f['status'].startswith('SUPPORTED_ACTUAL')and f['blockers']==[]and f['plan']==planref and f['Root_release']==relref,'exact sealed forecast scope')
+controls=doc(contract['fresh_activation_controls_review']);need(controls['status'].startswith('SUPPORTED_ACTUAL')and controls['blockers']==[]and controls['count']==32,'fresh accepted progress controls')
+source=whole(p['program']['path'],p['program']);ast.parse(source)
+need(p['program']['sha256']=='73e75fab70d798b46d5ca78e01ea438a8af579c691f61c5b74b2b09e7658fef7'and rel['program']==p['program']and rel['plan']==planref,'same immutable native writer')
+mf=doc(contract['exact_Source_manifest'])
+for r in mf['Source']:whole(r['path'],r)
+need(sum(r['bytes']for r in mf['Source'])+512==56320,'exact Source guards512')
+need(rel['root']=='/root'and rel['Root_authority']is True and rel['status']=='SUPPORTED'and rel['blockers']==[]and rel['metadata_publication_authorized']is True,'same Root release9c97')
+aliases=contract['historical_mutable_input_aliases'];need(len(aliases)==1 and aliases[0]['original']==p['expected_current'],'unique real oldCURRENT alias')
+alias=aliases[0]['retained'];before_current_raw=whole(alias['path'],alias);old_current=decode(before_current_raw)
+need(alias['bytes']==p['expected_current']['bytes']==775 and alias['sha256']==p['expected_current']['sha256']=='4eb3336abb2ec40e8aa314d2cf9db87973e8f87421e917db87dab67a2ac3904a','oldCURRENT exact bytes775/4eb')
+retention=doc(contract['historical_alias_in_genuine_Root_retention'])
+need(retention['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1'and retention['root']=='/root'and aliases[0]in retention['files'],'genuine earlier Root retention mapping')
+fixed={};resolved=[]
+for r in p['inputs']:
+ need(r['path']not in fixed,'single fixed input');fixed[r['path']]=r
+ if r==p['expected_current']:
+  need(whole(alias['path'],alias)==before_current_raw,'resolve mutable oldCURRENT only via exact retained body');resolved.append(dict(original=r,retained=alias))
+ else:whole(r['path'],r)
+need(len(fixed)==217 and sum(r['bytes']for r in fixed.values())==4096944 and resolved==aliases,'all217 fixed inputs closed with one changed physical alias')
+for r in(p['program'],planref,relref):need(fixed.get(r['path'],r)==r,'bootstrap exact');fixed[r['path']]=r
+need(len(fixed)==219,'same complete219 logical input paths')
+# New actuals live under registration/api; neither successful Source nor forecast is replayed.
+rawbase=P/'registration/api'
+decisionref=pathref(P/'registration/Root_write_decision_row0290.json');decision=doc(decisionref)
+dr,ds,do=chain(P/'Root_SDK/write_decision_v1.json','Root_l026_row0290_write_decision_v1',rawbase)
+need(dr['bytes']==15467 and dr['sha256'].startswith('60907bc9'),'genuine separate decision issuance')
+need(decision['schema']=='ROOT_L026_ROW0290_CANONICAL_WRITE_DECISION_V1'and decision['root']=='/root'and decision['Root_authority']is True,'separate Root write authority')
+need(decision['plan']==planref and decision['Root_release']==relref and decision['forecast_review']==forecastref and decision['progress_controls_review']==contract['fresh_activation_controls_review']and decision['expected_current']==p['expected_current'],'Rootdecision exact forecast/controls/method joins')
+need(decision['canonical_write_authorized']is decision['exact_private_afterimages_and_inverse_owned']is decision['sole_canonical_writer']is decision['no_active_unregistered_F009_cohort']is decision['progress_activation_separate_and_required']is True,'Root owns exact sole-writer conditional publication')
+# The captured decision call returns the exact decision; retain all fields without inventing native consumption.
+need(any(v==decisionref for v in do.values()if type(v)is dict),'genuine issued decision descriptor')
+sdkref,sdk,terminal=chain(P/'Root_SDK/ledger_write_v1.json','Root_l026_row0290_ledger_write_v1',rawbase)
+need((sdkref['bytes'],sdkref['sha256'])==(7122,'db91ccdc94275023c336d95e93692809bfe24ee1c9d46a03235f79b7a0230dd7'),'real selected --write actual')
+av=sdk['issued_argv'];child=av[av.index('--')+1:]
+expected_child=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',p['program']['path'],'--self-sha256',p['program']['sha256'],'--plan',planref['path'],planref['sha256'],'--Root-release',relref['path'],relref['sha256'],'--write']
+need(child==expected_child,'same released child plus--write only')
+guard=P/'registration/guards/write_v1'
+need(av[av.index('--output')+1]==str(guard)and av[av.index('--rss-cap-mib')+1]=='256'and av[av.index('--timeout')+1]=='125','fresh exact actual guard')
+start=decode(whole(guard/'started.json'));receipt=decode(whole(guard/'receipt.json'));outref=pathref(guard/'stdout.log');out=doc(outref)
+limits=dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,ram_floor=3*2**30,total_rss=256*2**20,wall_seconds=125.0,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+need(start['command']==receipt['command']==child and start['limits']==receipt['limits']==limits and start['admission']==receipt['admission'],'same whole guard argv/limits/admission')
+need(start['admission']['free_disk']>=limits['admit_disk']and start['admission']['available_ram']>=limits['admit_ram'],'actual original resource admission')
+need(len(start['identities'])==len(receipt['identities'])==1 and all(start['identities'][0][k]==receipt['identities'][0][k]for k in('pid','birth','group','session','initial_parent')),'single exact child birth identity')
+need(receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['error']is None and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[],'clean genuine write terminal')
+need(receipt['seconds']<125 and receipt['peaks']['total_rss']<=limits['total_rss']and receipt['peaks']['min_free_disk']>=limits['disk_floor']and receipt['peaks']['min_available_ram']>=limits['ram_floor'],'actual sampled caps')
+need(whole(guard/'stderr.log')==b''and receipt['logs']==dict(stdout=outref['bytes'],stderr=0)and terminal==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json')),'genuine stdout/raw/receipt joins')
+canon=contract['expected_afterimages'];current=doc(canon['current']);newreceipt=doc(canon['receipt']);batch=doc(canon['batch']);after=whole(canon['bank']['path'],canon['bank'])
+for name,row in f['private_afterimages'].items():
+ if name=='inverse_status.bin':continue
+ canonical_ref=row['canonical'];private=row['private'];need(whole(canonical_ref['path'],canonical_ref)==whole(private['path'],private),'four entire committed bodies equal sealed privateimages')
+need(out['status']=='ROOT_PUBLISHED_BOUNDED_TYPED_LEDGER'and out['current']==canon['current']and out['status_bank']==canon['bank']and out['ledger_receipt']==canon['receipt']and out['batch_acceptance']==canon['batch'],'all genuine committed output descriptors')
+method=dict(program=p['program'],plan=planref,Root_release=relref,scientific_calls=0)
+need(out['writer']==newreceipt['writer']==batch['writer']==method and out['scientific_calls']==out['Original_credit']==0,'same method and zero new scientific credit')
+need(current['root']=='/root'and current['adopted']is True and current['scope_digest']==p['scope_digest']and current['status_bank']==canon['bank']and current['ledger_receipt']==canon['receipt'],'whole live CURRENT semantics')
+need(newreceipt['typed_new_batch']==canon['batch']and newreceipt['status_bank']==canon['bank']and newreceipt['previous_ledger']==batch['previous_ledger']==p['previous_receipt'],'same predecessor and exact new batch')
+need(old_current['status_bank']==p['previous_bank']and old_current['ledger_receipt']==p['previous_receipt'],'whole retained oldCURRENT semantics')
+restored=dict(current);restored.update(status_bank=p['previous_bank'],ledger_receipt=p['previous_receipt']);need(canonical(restored)==before_current_raw,'whole CURRENT inverse including unknown values')
+before=whole(p['previous_bank']['path'],p['previous_bank']);need(len(before)==len(after)==28908 and set(before)|set(after)<={0,1,2,6},'whole typed metadata status alphabets')
+changes=[dict(index=i,before=a,after=b)for i,(a,b)in enumerate(zip(before,after))if a!=b]
+need(changes==[dict(index=290,before=0,after=1)],'all28908-byte delta exactly oneNEG')
+inverse=bytearray(after);inverse[290]=0;need(bytes(inverse)==before,'whole independent inverse')
+def counts(b):return dict(GEN=b.count(2)+b.count(6),separate_IP=b.count(6),subset_NEG=b.count(1),unpaid=b.count(0))
+need(counts(before)==dict(GEN=724,separate_IP=724,subset_NEG=744,unpaid=27440)and counts(after)==contract['required_counts']==out['counts']==newreceipt['counts'],'all exact counts')
+need(batch['new_facts']==p['facts']and len(p['facts'])==1 and p['facts'][0]['kind']=='NEG'and p['facts'][0]['free_index']==290 and p['facts'][0]['owner']==579,'genuine singleton factscope')
+expected_change=dict(p['facts'][0],before=0,after=1)
+need(canonical(batch['exact_monotone_changes'])==canonical([expected_change])and batch['strict_IP0_unchanged']is True and batch['Original_conjecture_Lean_or_measurement_credit']==0,'exacttyped monotonechange proof')
+need(batch['proofs']==p['proofs']and batch['original_selector']==newreceipt['original_selector']==p['original_selector'],'strict/logical/Root proof context unchanged')
+need(newreceipt['proof_provenance']==dict(kind='BOUNDED_BATCH',batch=canon['batch'],previous_ledger=p['previous_receipt'],old_proof_DAG_opaque=True),'old proofDAG remains exact attributed predecessor')
+need(newreceipt['fixed_nonfree_NEG_count']==17688 and newreceipt['fixed_nonfree_NEG_mass']==6884658 and newreceipt['global_NEG']==18433 and newreceipt['global_NEG_mass']==7647538 and newreceipt['unpaid_mass']==28097536,'all exact inherited and derived masses')
+need(out['physical_reads']==8453976 and out['actual_paths']==222,'genuine coded complete read/path bounds')
+need(f['Source_and_inputs_closed']is True and out['physical_reads']<=64*2**20 and out['actual_paths']<=512,'accepted closure and unchanged caps')
+# Only hash the global snapshot; its scientific/unknown payload values remain opaque.
+for r in decision['snapshot'].values():whole(r['path'],r)
+for r in list(PINS.values()):whole(r['path'],r,True)
+# Retain only this new finite operation tail and new outputs; history uses existing retained objects.
+tail=[r for path,r in PINS.items()if ('/registration/api/'in path or '/registration/guards/write_v1/'in path or path.endswith('/Root_SDK/ledger_write_v1.json')or path.endswith('/Root_SDK/write_decision_v1.json')or path.endswith('/Root_write_decision_row0290.json')or path in{r['path']for r in canon.values()})]
+objects=O/'evidence/objects';objects.mkdir(parents=True,exist_ok=False);rows=[];written=0
+for r in tail:
+ q=objects/r['sha256'];b=BODIES[r['path']]
+ if not q.exists():
+  with q.open('xb')as stream:need(stream.write(b)==len(b),'whole tail retention')
+  written+=len(b)
+ need(ref(q,q.read_bytes())==dict(r,path=str(q)),'whole exact retained tail')
+ rows.append(dict(original=r,retained=dict(r,path=str(q))))
+retref=put('evidence/retention.json',dict(schema='INDEPENDENT_ROW290_POSTWRITE_FINITE_TAIL_RETENTION_V1',reviewer='/root/mathematical_review',Root_authority=False,files=rows,unique_new_bytes=written,borrowed_existing_full_retention=contract['historical_alias_in_genuine_Root_retention'],borrowed_forecast_retention=f['opaque_retention'],no_recursive_history_copies=True))
+full=dict(schema='L026_ROW290_COMPLETE_POSTWRITE_ACTUAL_REVIEW_V1',status='SUPPORTED_ACTUAL_PROCEDURAL_SUBSET_LEDGER_POSTWRITE',reviewer='/root/mathematical_review',blockers=[],Root_authority=False,Original_payloads_decoded=False,
+ publication_verified=True,Root_canonical_write_issued=True,canonical=canon,counts=counts(after),registered_total=1469,new_NEG=1,new_GEN=0,new_IP=0,exact_changes=1,exact_status_changes=changes,
+ plan=planref,Root_release=relref,program=p['program'],Source_manifest=contract['exact_Source_manifest'],historical_mutable_input_aliases=aliases,actual_write_SDK=sdkref,actual_write_decision_SDK=dr,external_Root_write_decision=decisionref,forecast_review=forecastref,
+ current_progress_snapshot_still_exact=decision['snapshot'],global_activation_separate_and_required=True,scientific_calls=0,represented_Source_or_functions_or_controls_rerun=False,
+ all4_committed_bodies_equal_sealed_privateimages=True,whole28908_byte_inverse_and_all_other_status_bytes_verified=True,all217_fixed_inputs_resolved_with_only_old_CURRENT_alias=True,
+ actual_guard_and_raw_frames_verified=True,whole_Source_and_inputs_closed=True,exact_actual_read_bytes=8453976,exact_actual_paths=222,review_inputs=list(PINS.values()),own_review_method=pathref(Path(__file__).resolve()),own_physical_read_bytes=READ,evidence=retref,
+ qualifications=['This is a new actualwrite acceptance, not a retagged forecast. Root genuinely issued the separate decision and invoked the unchanged73e75 Source with the exact old immutable plan/release plus--write. I did not rerun the writer, controls or scientific predicates.',
+ 'All scientific and conditional OriginalFi22/fullAut/Out2/Reader/member/model/action/word/graph/globalclass/twofibre/H=B/transitivity premises remain as accepted in the actual strict/logical applications. Witness and other scientific files were whole-hashed only, without decoding.',
+ 'The replaced CURRENT775/4eb is used only at its exact genuine Root retained alias. Every unmodified fixed input remains exact; all four actual committed bodies match the previously sealed private bodies. Full old proof ancestry is reused, not recursively copied.',
+ 'Global progress/controller still match the separate Root write-decision snapshot and remain before NEG activation. This leaf supplies the typed new-ledger facts required by the reviewed activation, but does not execute prepare/apply or grant global/manuscript/census/Lean/conjecture/measurement credit.',
+ 'Existing sampled resource and unseen-descendant qualifications remain. Root controlled the sole-writer window; the write result does not assert simultaneous multi-file atomicity.'])
+fr=put('review.json',full)
+keys=['status','reviewer','blockers','Root_authority','Original_payloads_decoded','publication_verified','Root_canonical_write_issued','canonical','counts','registered_total','new_NEG','new_GEN','new_IP','exact_changes','exact_status_changes','plan','Root_release','program','Source_manifest','historical_mutable_input_aliases','actual_write_SDK','external_Root_write_decision','actual_guard_and_raw_frames_verified','whole_Source_and_inputs_closed']
+leaf={k:full[k]for k in keys};leaf.update(schema='L026_PROCEDURAL_SUBSET_LEDGER_POSTWRITE_ACTUAL_REUSE_V1',full_actual_review=fr,evidence=retref,global_activation_separate_and_required=True,represented_Source_or_functions_or_controls_rerun=False)
+lr=put('reuse_integer_only.json',leaf)
+print(json.dumps(dict(leaf=lr,full_review=fr,review_paths=len(PINS),read_bytes=READ,new_tail_bytes=written),sort_keys=True))

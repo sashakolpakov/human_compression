@@ -1,0 +1,38 @@
+"""Exact exterior algebra for the ABSTRACT displayed form; no input files."""
+import itertools,json,resource,signal,sys,time
+START=time.monotonic()
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s abstract check')));signal.alarm(125)
+PHI={(1,2,3):1,(1,4,5):1,(1,6,7):-1,(2,4,6):1,(2,5,7):1,(3,4,7):1,(3,5,6):-1}
+def wedge(a,b):
+    result={}
+    for x,c in a.items():
+        for y,d in b.items():
+            if set(x).intersection(y):continue
+            sign=(-1)**sum(i>j for i in x for j in y)
+            key=tuple(sorted(x+y));result[key]=result.get(key,0)+sign*c*d
+    return{k:v for k,v in result.items()if v}
+def contract(r):
+    return{tuple(x for x in key if x!=r):value*(-1)**key.index(r)for key,value in PHI.items()if r in key}
+def top(a):
+    assert set(a)<=set([(1,2,3,4,5,6,7)])
+    return a.get((1,2,3,4,5,6,7),0)
+contractions={r:contract(r)for r in range(1,8)}
+products={}
+for r in range(1,8):
+    terms=list(contractions[r].items());products[r]=[]
+    assert len(terms)==3
+    for i,j in itertools.combinations(range(3),2):
+        pair=wedge(dict([terms[i]]),dict([terms[j]]));products[r].append(top(wedge(pair,PHI)))
+    assert products[r]==[-1,-1,-1]
+gram=[[top(wedge(wedge(contractions[r],contractions[s]),PHI))for s in range(1,8)]for r in range(1,8)]
+assert gram==[[-6 if r==s else 0 for s in range(7)]for r in range(7)]
+degrees=[4,2,6,1,5,3,7]
+assert len(set(degrees))==7 and all(degrees[a-1]^degrees[b-1]^degrees[c-1]==0 for a,b,c in PHI)
+for functional in range(1,8):
+    signs=[(functional&d).bit_count()%2 for d in degrees];assert sum(signs)==4
+assert time.monotonic()-START<115
+assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<256*2**20
+print(json.dumps(dict(schema='ABSTRACT_CAYLEY_EXTERIOR_FORM_CHECK_V1',status='PASS',basis='formal covectors1through7',
+    three_pair_coefficients_per_row=products,contraction_gram_coefficients=gram,abstract_sign_grading_verified=True,
+    Original_input_files_opened=0,Original_values_evaluated=False,Source_or_actual_model_helpers_imported=False,
+    group_or_scientific_operations=0,Lean_certificate=False),sort_keys=True,separators=(',',':')))

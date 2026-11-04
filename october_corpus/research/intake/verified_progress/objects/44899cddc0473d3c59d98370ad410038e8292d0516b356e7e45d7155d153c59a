@@ -1,0 +1,129 @@
+"""Distinct Source peer of future metadata audits; execute no operational entry."""
+from pathlib import Path
+import ast,hashlib,json,resource,signal,sys,time
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/actual_audit')
+OUT=BASE/'review';START=time.monotonic();READ=0;BANK={};PINS={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second Source review')))
+signal.alarm(125)
+def raw(p,r=None):
+    global READ
+    p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p and not p.is_symlink()
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+    st=p.stat();assert p.is_file()and st.st_size<=4*2**20;b=p.read_bytes();after=p.stat()
+    sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    assert sig(st)==sig(after);READ+=len(b);assert READ<=64*2**20
+    rr=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+    if r is not None:assert rr==r
+    PINS[str(p)]=rr;BANK[str(p)]=b;assert len(PINS)<=512
+    return b,rr
+def doc(p,r=None):
+    b,rr=raw(p,r);return json.loads(b),rr
+def get(r):return doc(r['path'],r)[0]
+def enc(x):return json.dumps(x,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode('ascii')+b'\n'
+def save(name,v):
+    b=enc(v);p=OUT/name
+    with p.open('xb')as f:f.write(b)
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def functions(tree):return{n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+def syntax(node):return ast.dump(node,include_attributes=False)
+h,hr=doc(BASE/'handoff.json');cfg,cr=doc(BASE/'config.json')
+assert(hr['bytes'],hr['sha256'])==(8350,'ddce7e5ce2ed747a7d94b259c393f348f5f1e04903f2c8b7fe5e5fec85693585')
+assert(cr['bytes'],cr['sha256'])==(10795,'eb75e3371d601fddf06bcbd473864f02856d05bc2ea73acfd8f45b665dd10610')
+assert h['Root_authority']is cfg['Root_authority']is False and h['author']==cfg['author']=='/root/forest_resume'
+assert h['programs']==cfg['programs']and h['common']==cfg['common']
+source,commonref=raw(cfg['common']['path'],cfg['common']);ct=ast.parse(source);cf=functions(ct)
+assert(commonref['bytes'],commonref['sha256'])==(28809,'43a7b89325fa3a4f6540b7d3d2a8cdc12491f569df9e07c512cbe0d80e5a37a2')
+expected={'audit_batch.py':64447,'audit_cohort.py':64908};trees={};manifests={}
+for name,r in cfg['programs'].items():
+    b,_=raw(r['path'],r);trees[name]=ast.parse(b);compile(b,r['path'],'exec')
+    mf=get(h['entry_manifests'][name]);manifests[name]=mf
+    assert mf['entry']==r and len(mf['Source'])==3 and {Path(x['path']).name for x in mf['Source']}=={name,'common.py','whole.py'}
+    assert mf['Source_plus_guards512']==sum(x['bytes']for x in mf['Source']+mf['guards'])+512==expected[name]<=65536
+    for x in mf['Source']+mf['guards']:raw(x['path'],x)
+    text=b.decode();assert "28809"in text and commonref['sha256']in text
+compile(source,commonref['path'],'exec')
+raw(cfg['helper']['path'],cfg['helper']);assert cfg['helper']['sha256']=='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'
+oldsource,oldref=raw(h['old_source_baseline']['path'],h['old_source_baseline']);of=functions(ast.parse(oldsource))
+assert oldref['sha256']=='5e1f6eb979aa4a3a1463a1aa594c7b9bcb8971b38d691997df45b3f8b778ee06'
+bf=functions(trees['audit_batch.py']);gf=functions(trees['audit_cohort.py'])
+for name in('budget','descriptor','lexend','ws','spans','array','selected','raw','metadata','pure','refat','trip','limits','supervised','review','api','actual','source_manifest','opaque_normal','context'):
+    assert syntax(cf[name])==syntax(of[name]),name
+for name in('covers','cover_metadata'):assert syntax(bf[name])==syntax(of[name]),name
+oldrole=ast.parse(ast.unparse(of['prepared_role'])).body[0]
+oldrole.body=[n for n in oldrole.body if not(isinstance(n,ast.Expr)and isinstance(n.value,ast.Call)and isinstance(n.value.func,ast.Name)and n.value.func.id=='descriptor_closure')]
+assert syntax(oldrole)==syntax(cf['prepared_role'])
+newbatch=ast.parse(ast.unparse(bf['batch_audit'])).body[0]
+for n in ast.walk(newbatch):
+    if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id=='dict':
+        n.keywords=[k for k in n.keywords if k.arg!='initialization_execution_deferred_to_aggregate']
+assert syntax(newbatch)==syntax(of['batch_audit'])
+parts={k:ast.unparse(v)for k,v in cf.items()};gparts={k:ast.unparse(v)for k,v in gf.items()}
+assert "o['no_scientific_worker_issued'] is o['no_canonical_writes'] is True"in parts['owner_admission']
+assert "o['preparation_program'] == programs['init_cohort.py']"in parts['owner_admission']
+assert "h['preparation_provenance']"in parts['owner_admission']
+assert "342 <= begin < end <= 940"in parts['bootstrap']
+assert "attempts.get('metadata_attempt_binding_preparation_failures', []) == []"in parts['bootstrap']
+assert "attempts['metadata_attempt_binding_preparation_failures'] == []"in parts['bootstrap']
+assert "peer['programs'] == config['programs']"in parts['bootstrap']and "peer['common'] == commonref"in parts['bootstrap']
+assert "len(a.batch_review) == len(a.batch_SDK) == len(a.batch_key)"in gparts['main']
+assert "init_cohort_v1.json"in gparts['initialization_actual']and "Root_f009_cohort%04d_init_v1"in gparts['initialization_actual']
+assert "v['cohort'] == hr"in gparts['initialization_actual']and "v['Source_ownership'] == h['Root_Source_ownership']"in gparts['initialization_actual']
+assert "initialization_actual(L, config, cohort, cohortref)"in gparts['aggregate_audit']
+assert "api(L, sdkref, key, argv, True)"in gparts['metadata_call']and "actual(L, sdkref, key, child, guard, False)"in gparts['metadata_call']
+for tree in list(trees.values())+[ct]:
+    calls=[ast.unparse(n.func)for n in ast.walk(tree)if isinstance(n,ast.Call)]
+    assert not any(x.startswith(('subprocess.','os.system','os.exec','os.spawn','runpy.'))for x in calls)
+protocol,protocolref=raw(BASE/'PROTOCOL.rst');delta,dr=doc(BASE/'SOURCE_DELTA.json');raw(BASE/'IO_INVOICE.json');raw(BASE/'CLI_PLAN_FALSE.json');raw(BASE/'ROOT_DECISION_TEMPLATE_FALSE.json')
+assert b'init_cohort_v1.json'in protocol and b'aggregate'in protocol
+prep=get(cfg['preparation_packet']);preppeer=get(cfg['preparation_peer'])
+assert preppeer['packet']==cfg['preparation_packet']and preppeer['entry_manifests']==prep['entry_manifests']and preppeer['protocol']==prep['protocol']
+assert preppeer['status'].startswith('SUPPORTED_STATIC')and preppeer['blockers']==[]and preppeer['reviewer']=='/root/dependency_audit'
+for r in prep['entry_manifests'].values():
+    m=get(r)
+    for x in m['Source']+m['guards']:raw(x['path'],x)
+    assert sum(x['bytes']for x in m['Source']+m['guards'])+512==m['Source_plus_guards512']<=65536
+raw(prep['protocol']['path'],prep['protocol'])
+for r in prep['legacy_active_inputs']:raw(r['path'],r)
+assert len(prep['unavailable_legacy_bookkeeping'])==8 and [x['original']for x in prep['unavailable_legacy_bookkeeping']]==cfg['unavailable_bookkeeping_descriptors']
+assert h['borrowed_historical_descriptors']==cfg['borrowed_historical_descriptors']
+for p,b in list(BANK.items()):assert raw(p)[0]==b
+claims=dict(complete_common_two_entries_and_source_delta_read=True,
+ inherited_scientific_and_fourteen_input_checks_AST_unchanged=True,
+ only_two_unconsumed_historical_descriptor_walks_removed=True,
+ cover_helpers_moved_without_semantic_change=True,
+ explicit_V1_V2_owner_and_complete_preparation_Source_peer_contract_supported=True,
+ V2_owner_no_worker_no_canonical_booleans_required=True,
+ V2_only_absent_empty_failure_field_admission_supported=True,
+ exact_old_adapter_science_Source_and_borrowed_controls_retained=True,
+ V2_phase_issuer_packet_manifest_peer_joins_supported=True,
+ genuine_direct_or_guarded_init_and_closer_API_joins_supported=True,
+ init_join_deferred_to_aggregate_and_positive_owner_outputs_bound=True,
+ exact_aggregate_review_SDK_key_list_lengths_required=True,
+ explicit_cover_indices_and_old_registrar_leaf_ABI_preserved=True,
+ no_future_SDK_or_scope_or_success_fabricated=True,
+ lexical_Original_payload_boundary_and_IO_namespace_limits_supported=True)
+full=save('review.json',dict(schema='F009_FUTURE_ACTUAL_AUDITOR_DISTINCT_SOURCE_REVIEW_V1',
+ status='SUPPORTED_STATIC_FUTURE_COHORT_ACTUAL_AUDITOR',reviewer='/root/dependency_audit',author=h['author'],blockers=[],Root_authority=False,
+ programs=cfg['programs'],common=cfg['common'],config=cr,entry_manifests=h['entry_manifests'],handoff=hr,protocol=protocolref,
+ Source_plus_guards512=expected,claims=claims,source_delta=dr,checked_pins=list(PINS.values()),first_and_closing_review_bytes=READ,
+ closure_scope=cfg['closure_scope'],borrowed_historical_descriptors=cfg['borrowed_historical_descriptors'],
+ author_inspection_limitation=cfg['author_inspection_limitation'],
+ Root_positive_decision_genuine_actual_runs_and_separate_registration_still_required=True,
+ operational_or_scientific_Source_executed=False,Original_payload_arrays_decoded=False,
+ future_cohort_initialized_or_canonical_writes_or_new_mathematical_credit=0))
+leaf=save('reuse_integer_only.json',dict(schema='F009_FUTURE_ACTUAL_AUDITOR_STATIC_REUSE_V1',
+ status='SUPPORTED_STATIC_FUTURE_COHORT_ACTUAL_AUDITOR',reviewer='/root/dependency_audit',author=h['author'],blockers=[],Root_authority=False,
+ programs=cfg['programs'],common=cfg['common'],config=cr,entry_manifests=h['entry_manifests'],handoff=hr,full_review=full,
+ Source_plus_guards512=expected,V1_V2_owner_and_current_preparation_contract_supported=True,
+ genuine_V2_init_and_closer_execution_join_in_aggregate_supported=True,
+ batch_init_execution_deferred_to_aggregate_explicit=True,
+ exact14_scientific_input_and_opaque_cover_checks_preserved=True,
+ historical_control_and_unconsumed_descriptor_borrowing_explicit=True,
+ zero_override_and_V2_only_optional_empty_failure_field_supported=True,
+ old_current330_Source_and_reports_unchanged=True,Original_payload_arrays_decoded=False,
+ operational_or_scientific_Source_executed=False,future_cohort_initialized=False,
+ positive_Root_decision_then_genuine_audits_and_separate_registration_still_required=True,
+ canonical_or_manuscript_conjecture_Lean_or_compression_measurement_credit=0))
+signal.alarm(0)
+print(json.dumps(dict(review=leaf,full=full,blockers=[])))

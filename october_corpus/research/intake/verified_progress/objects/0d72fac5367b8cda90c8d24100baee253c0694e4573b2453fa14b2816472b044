@@ -1,0 +1,315 @@
+"""Scoped independent metadata/opaque-byte audit of the row290 forecast.
+
+No represented writer, helper, control, Source predicate or Original operand is
+imported, called or evaluated. Typed status bytes and proof metadata are read.
+Author /root/mathematical_review; Root retains operational authority.
+"""
+import ast
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import resource
+import shlex
+import stat
+import time
+
+START = time.monotonic()
+P = Path(__file__).resolve().parents[2]
+O = Path(__file__).resolve().parent
+RAW = P / 'api'
+PRIVATE = Path('/private/tmp/l026_row0290_private_ledger_images')
+PINS = {}
+BODIES = {}
+READ = 0
+
+
+def need(v, why):
+    if not v:
+        raise ValueError(why)
+
+
+def ref(p, raw):
+    return dict(path=str(p), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def whole(p, wanted=None, fresh=False):
+    global READ
+    p = Path(p)
+    k = str(p)
+    if k in BODIES and not fresh:
+        b = BODIES[k]
+    else:
+        a = p.lstat()
+        sig = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+        need(p.is_absolute() and p.resolve(strict=True) == p and stat.S_ISREG(a.st_mode)
+             and a.st_nlink == 1 and a.st_size <= 4*2**20, 'ordinary single-link bounded input')
+        need(READ+a.st_size <= 64*2**20 and len(set(PINS) | {k}) <= 512, '64MiB512paths review')
+        with p.open('rb') as f:
+            x = os.fstat(f.fileno()); b = f.read(a.st_size+1); y = os.fstat(f.fileno())
+        need(sig(a) == sig(x) == sig(y) == sig(p.lstat()) and len(b) == a.st_size, 'same-FD stable whole input')
+        r = ref(p, b)
+        need(PINS.get(k, r) == r and BODIES.get(k, b) == b, 'first/closing byte identity')
+        PINS[k] = r; BODIES[k] = b; READ += len(b)
+    need(wanted is None or PINS[k] == wanted, 'exact descriptor')
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if os.uname().sysname == 'Darwin' else 1024)
+    need(rss <= 256*2**20 and time.monotonic()-START <= 125, 'own256MiB125s review')
+    return b
+
+
+def decode(b):
+    def pairs(rows):
+        out = {}
+        for k, v in rows:
+            need(k not in out, 'unique metadata keys'); out[k] = v
+        return out
+    def finite(s):
+        x = float(s); need(math.isfinite(x), 'finite metadata'); return x
+    def bad(_):
+        raise ValueError('nonfinite metadata')
+    return json.loads(b, object_pairs_hook=pairs, parse_constant=bad, parse_float=finite)
+
+
+def doc(r):
+    return decode(whole(r['path'], r))
+
+
+def pathref(p):
+    whole(p)
+    return PINS[str(p)]
+
+
+def put(name, value):
+    raw = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False)+'\n').encode()
+    p = O/name
+    with p.open('xb') as f:
+        need(f.write(raw) == len(raw), 'whole exclusive review output')
+    return ref(p, raw)
+
+
+def canonical(v):
+    return (json.dumps(v, sort_keys=True, separators=(',', ':'), allow_nan=False)+'\n').encode()
+
+
+def chain(sdkpath, key, rawbase=RAW):
+    sr = pathref(sdkpath); s = doc(sr); fs = s['all_genuine_api_frames']; av = s['issued_argv']
+    need(s['schema'] == 'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1' and s['root'] == s['actor'] == '/root'
+         and s['child_argv'] == av, 'actual Root SDK identity')
+    need(shlex.split(s['issued_command']) == shlex.split(s['issued_tool_arguments']['cmd'])
+         == shlex.split(s['canonical_argv_command']) == av, 'complete genuine issued command')
+    t = s['actual_tool']
+    need(fs and fs[0] == s['full_initial_tool_return'] and fs[-1] == s['full_tool_return']
+         and fs[-1]['exit_code'] == t['exit_code'] == 0 and 'session_id' not in fs[-1]
+         and len({f['chunk_id'] for f in fs}) == len(fs)
+         and t['initial_chunk'] == fs[0]['chunk_id'] and t['terminal_chunk'] == fs[-1]['chunk_id'], 'all genuine distinct ordered terminal frames')
+    if t['synchronous']:
+        need(len(fs) == 1 and t['handle'] is None, 'actual synchronous event')
+    else:
+        need(type(t['handle']) is int and all(f.get('session_id') == t['handle'] for f in fs[:-1]), 'actual asynchronous handle')
+    root = rawbase/key
+    issued = decode(whole(root/'issued.json'))
+    need(issued['root'] == '/root' and issued['argv'] == av and issued['tool_arguments'] == s['issued_tool_arguments'], 'raw issued exact SDK boundary')
+    paths = sorted(root.glob('frame_*.json'))
+    need(len(paths) == len(fs), 'all physical raw frames')
+    for i, (p, frame) in enumerate(zip(paths, fs)):
+        need(p.name == 'frame_%04d.json' % i and decode(whole(p)) == frame, 'raw frame equality')
+    return sr, s, decode(''.join(f.get('output', '') for f in fs).encode())
+
+
+# Lexical projection only: cache/scientific values are never decoded.
+def ws(b,i):
+ while i<len(b)and b[i]in b' \n\r\t':i+=1
+ return i
+def strend(b,i):
+ need(b[i]==34,'quoted key/value');i+=1
+ while i<len(b):
+  if b[i]==92:i+=2
+  elif b[i]==34:return i+1
+  else:i+=1
+ raise ValueError('unterminated string')
+def valend(b,i):
+ if b[i]==34:return strend(b,i)
+ if b[i]in b'[{':
+  stack=[b[i]];i+=1
+  while stack:
+   need(i<len(b)and len(stack)<=4096,'bounded opaque JSON')
+   if b[i]==34:i=strend(b,i);continue
+   if b[i]in b'[{':stack.append(b[i])
+   elif b[i]in b']}':need((stack.pop(),b[i])in((91,93),(123,125)),'balanced opaque JSON')
+   i+=1
+  return i
+ while i<len(b)and b[i]not in b',]} \n\r\t':i+=1
+ return i
+def fields(b):
+ i=ws(b,0);need(b[i]==123,'metadata object');i=ws(b,i+1);d={}
+ while b[i]!=125:
+  j=strend(b,i);k=decode(b[i:j]);need(k not in d,'unique field');i=ws(b,j);need(b[i]==58,'colon');i=ws(b,i+1);j=valend(b,i);d[k]=b[i:j];i=ws(b,j)
+  if b[i]==44:i=ws(b,i+1)
+  else:need(b[i]==125,'object separator')
+ need(ws(b,i+1)==len(b),'whole lexical object');return d
+def array(b):
+ i=ws(b,0);need(b[i]==91,'metadata array');i=ws(b,i+1);out=[]
+ while b[i]!=93:
+  j=valend(b,i);out.append(b[i:j]);i=ws(b,j)
+  if b[i]==44:i=ws(b,i+1)
+  else:need(b[i]==93,'array separator')
+ need(ws(b,i+1)==len(b),'whole lexical array');return out
+def pick(b,k):return decode(fields(b)[k])
+def unchanged(a,b,allowed):
+ af,bf=fields(a),fields(b);need(set(af)-allowed==set(bf)-allowed and all(af[k]==bf[k]for k in af if k not in allowed),'all protected/unknown raw spans exact')
+ inverse=dict(bf)
+ for k in allowed:
+  if k in af:inverse[k]=af[k]
+  else:inverse.pop(k,None)
+ need(inverse==af,'complete field inverse');return sorted(k for k in set(af)|set(bf)if af.get(k)!=bf.get(k))
+
+mfref=pathref(P/'SOURCE_MANIFEST.json');mf=doc(mfref);program=mf['program'];protocol=mf['protocol']
+for r in mf['sources']:whole(r['path'],r)
+whole(protocol['path'],protocol);whole(mf['controls_Source_manifest']['path'],mf['controls_Source_manifest'])
+peerref=pathref(P/'source_review/reuse_integer_only.json');peer=doc(peerref)
+need(peer['status']=='SUPPORTED_STATIC_L026_NEG_ACTIVATION_SOURCE'and peer['blockers']==[]and peer['program']==program and peer['Source_manifest']==mfref,'exact reviewed Source')
+requestref=pathref(P/'actual/Root_preparation_request.json');request=doc(requestref)
+need(request['schema']=='ROOT_L026_NEG_ACTIVATION_PREPARATION_V1'and request['root']=='/root'and request['Root_authority']is True and request['blockers']==[],'actual positive prepare-only request')
+for k,v in dict(program=program,Source_manifest=mfref,protocol=protocol,Source_peer=peerref).items():need(request[k]==v,'exact Source request')
+controls=doc(request['controls_review']);post=doc(request['postwrite_review'])
+need(controls['status'].startswith('SUPPORTED_ACTUAL')and controls['count']==32 and controls['blockers']==[]and post['status'].startswith('SUPPORTED_ACTUAL')and post['publication_verified']is True and post['blockers']==[],'actual controls/publication prerequisites')
+planref=pathref(P/'plans/fixed_subset_row0290/plan.json');plan=doc(planref)
+need((planref['bytes'],planref['sha256'])==(23340,'5357775bccb3fd2730803c36f67bd67105757913acaf73217b76c90f8e29ac32'),'exact first prepared private plan')
+need(plan['schema']=='L026_NEG_ACTIVATION_PRIVATE_PLAN_V1'and plan['Root_request']==requestref and plan['Source_peer']==peerref and plan['program']==program and plan['Source_manifest']==mfref and plan['protocol']==protocol and plan['controls_review']==request['controls_review']and plan['postwrite_review']==request['postwrite_review'],'exact preparation ABI')
+need(plan['Root_authority']is plan['Original_payloads_decoded']is plan['canonical_mutation']is False and plan['scientific_calls']==0,'private preparation only')
+historical=[]
+for r in plan['input_refs']:
+ if r in (plan['snapshot']['intake'],plan['snapshot']['controller']):
+  which='intake_before'if r==plan['snapshot']['intake']else'controller_before';alias=plan['images'][which];whole(alias['path'],alias);historical.append(dict(original=r,retained=alias))
+ else:whole(r['path'],r)
+need(len({r['path']for r in plan['input_refs']})==len(plan['input_refs'])==61,'all61 exact actual metadata inputs')
+need(plan['snapshot']==request['snapshot'],'Root frozen triple snapshot')
+ib=whole(plan['images']['intake_before']['path'],plan['images']['intake_before']);cb=whole(plan['images']['controller_before']['path'],plan['images']['controller_before']);rb=whole(plan['snapshot']['runtime']['path'],plan['snapshot']['runtime'])
+need(pick(ib,'active_controller_checkpoint')==pick(cb,'checkpoint')==plan['snapshot']['runtime'],'current triple pointers')
+stage=Path(plan['stage']);private=Path(plan['private'])
+need(stage==P.parent/'progress/stages/l026_negative_fixed_subset_row0290'and private==P/'plans/fixed_subset_row0290'and stage.is_dir(),'actual final stage exists')
+byname={}
+for row in plan['outputs']:
+ f,r=row['final'],row['private'];name=Path(f['path']).name
+ need(Path(f['path']).parent==stage and Path(r['path'])==private/name and f['bytes']==r['bytes']and f['sha256']==r['sha256']and name not in byname,'all exact final/private image joins')
+ byname[name]=whole(f['path'],f);need(byname[name]==whole(r['path'],r),'whole actual stage file equals sealed private image')
+need(set(byname)=={'intake_before_update.json','controller_before_update.json','runtime_before_update.json','execution_cache.json','runtime.json','intake_after_update.json','controller_after_update.json','activation_source.py'},'all8 actual images')
+need(byname['intake_before_update.json']==ib and byname['controller_before_update.json']==cb and byname['runtime_before_update.json']==rb and byname['activation_source.py']==whole(program['path'],program),'whole beforeimages/source exact')
+ni,nc,nr=byname['intake_after_update.json'],byname['controller_after_update.json'],byname['runtime.json'];image=plan['images']
+changed_i=unchanged(ib,ni,{'L026','negative_progress_activation','previous_checkpoint','active_controller_checkpoint','observed_utc'})
+changed_c=unchanged(cb,nc,{'previous_controller','checkpoint'})
+changed_r=unchanged(rb,nr,{'cache_banks','counts','next_L026_current_snapshot','next_L026_method','negative_progress_activation','previous_checkpoint','observed_utc'})
+need(pick(ni,'active_controller_checkpoint')==pick(nc,'checkpoint')==image['runtime']and pick(ni,'previous_checkpoint')==image['intake_before']and pick(nc,'previous_controller')==image['controller_before']and pick(nr,'previous_checkpoint')==plan['snapshot']['runtime'],'all new pointer/backlink joins')
+need(pick(ni,'observed_utc')==pick(nr,'observed_utc'),'one retained preparation timestamp')
+lold,lnew=fields(ib)['L026'],fields(ni)['L026']
+changed_l=unchanged(lold,lnew,{'paid','generation','proper','subset_NEG','separate_IP','unpaid','bank_unresolved','current_typed_ledger','negative_progress_activation','next'})
+old,new=plan['old_counts'],plan['new_counts'];need(old==dict(GEN=724,separate_IP=724,subset_NEG=744,unpaid=27440)and new==dict(GEN=724,separate_IP=724,subset_NEG=745,unpaid=27439),'only NEG increment')
+for body,v in ((lold,old),(lnew,new)):
+ for k,x in dict(paid=v['GEN']+v['subset_NEG'],generation=v['GEN'],proper=v['subset_NEG'],subset_NEG=v['subset_NEG'],separate_IP=v['separate_IP'],unpaid=v['unpaid'],bank_unresolved=v['unpaid']).items():need(type(pick(body,k))is int and pick(body,k)==x,'exact typed L026 progress counters')
+oldcounts,newcounts=fields(rb)['counts'],fields(nr)['counts'];changed_counts=unchanged(oldcounts,newcounts,{'L026_GEN','L026_NEG','L026_paid','L026_unpaid','L026_separate_IP'})
+for body,v in ((oldcounts,old),(newcounts,new)):
+ for k,x in dict(L026_GEN=v['GEN'],L026_NEG=v['subset_NEG'],L026_paid=v['GEN']+v['subset_NEG'],L026_unpaid=v['unpaid'],L026_separate_IP=v['separate_IP']).items():need(type(pick(body,k))is int and pick(body,k)==x,'exact typed runtime counters')
+need(plan['indices']==[290]and plan['changes']==[dict(index=290,before=0,after=1)]and post['exact_status_changes']==plan['changes'],'same registered NEG fact')
+need(pick(lold,'current_typed_ledger')['current']==post['historical_mutable_input_aliases'][0]['original'],'old registered ledger beforecurrent')
+current=dict(post['canonical'],postwrite_review=request['postwrite_review'],postwrite_review_pending=False)
+need(pick(lnew,'current_typed_ledger')==pick(lnew,'negative_progress_activation')==current,'new canonical typed ledger and postcheck binding')
+need(pick(lnew,'next')==pick(nr,'next_L026_method')==request['next_text'],'exact future methodtext')
+need(pick(nr,'next_L026_current_snapshot')==dict(CURRENT=current['current'],receipt=current['receipt'],bank=current['bank'],postwrite_review=request['postwrite_review']),'new runtime snapshot')
+checkpoint=dict(postwrite_review=request['postwrite_review'],new_cache_bank=image['cache'],typed_append_plan=post['plan'],Root_release=post['Root_release'],scientific_calls=0,new_Original_conjecture_Lean_measurement_credit=0,all_prior_cache_values_and_unknown_fields_preserved=True)
+need(pick(ni,'negative_progress_activation')==pick(nr,'negative_progress_activation')==checkpoint,'exact administrative provenance and zero credit')
+# All cache values are enumerated only as opaque slices and hashes.
+rf,nrf=fields(rb),fields(nr);need(rf['cache_entries']==nrf['cache_entries'],'old inline cache raw body exact')
+keys={};inline=fields(rf['cache_entries'])
+for k,v in inline.items():keys[k]=dict(bytes=len(v),sha256=hashlib.sha256(v).hexdigest())
+oldbanks,newbanks=array(rf['cache_banks']),array(nrf['cache_banks'])
+need(newbanks[:-1]==oldbanks and len(newbanks)==len(oldbanks)+1,'all bank descriptor spans preserved plusone')
+for rawbank in oldbanks:
+ desc=decode(rawbank);body=whole(desc['ref']['path'],desc['ref']);values=fields(fields(body)['cache_entries'])
+ need(desc['entries']==len(values)and desc['keys']==sorted(values)and not set(keys)&set(values),'whole old cache bank and disjoint keys')
+ for k,v in values.items():keys[k]=dict(bytes=len(v),sha256=hashlib.sha256(v).hexdigest())
+need(len(keys)==plan['prior_cache_values']==1719 and plan['new_cache_values']==1 and plan['total_cache_values']==1720 and plan['cache_key']not in keys,'all1719 old values and one freshkey')
+value_digest=hashlib.sha256(canonical(keys)).hexdigest()
+newbank=decode(newbanks[-1]);need(newbank==dict(entries=1,keys=[plan['cache_key']],ref=image['cache']),'exact appended cache descriptor')
+cache=byname['execution_cache.json'];cf=fields(cache)
+need(set(cf)=={'schema','root','completed_science_values_immutable','topics','cache_entries'}and pick(cache,'schema')=='ROOT_INTAKE_CACHE_ENTRY_BANK_V1'and pick(cache,'root')=='/root'and pick(cache,'topics')==['L026']and pick(cache,'completed_science_values_immutable')is True,'one exact new cache bank')
+entries=fields(cf['cache_entries']);need(set(entries)=={plan['cache_key']},'one exact new cache entry');entry=entries[plan['cache_key']];ef=fields(entry)
+expected_entry=dict(ref=current['batch'],independent_actual_review=request['postwrite_review'],independent_actual_review_pending=False,completed_value_unchanged=True,canonical_registered_indices=[290],new_GEN=0,new_NEG=1,new_IP=0,typed_append_plan=post['plan'],Root_release=post['Root_release'],Original_conjecture_Lean_measurement_credit=0)
+need(set(ef)==set(expected_entry)|{'value'}and all(decode(ef[k])==v for k,v in expected_entry.items())and ef['value']==whole(current['batch']['path'],current['batch']).strip(),'newcache uses exact alreadyaccepted typedbatch bytes only')
+# Protected global semantic metadata only; all other values remain opaque.
+need(pick(ib,'intake')==pick(ni,'intake')and pick(ib,'measurements_frozen')==pick(ni,'measurements_frozen')==dict(applications=53,topics=19),'intake/measurement scope unchanged')
+need(pick(ib,'intake')['complete_reviewed_treatments']==101 and pick(ib,'intake')['mathematical_originals']==104,'known101/104 boundary')
+f9=fields(fields(ib)['F009']);need(decode(f9['R5_canonical_pairs_reviewed'])==decode(f9['R5_total_distinct_canonical_parents_reviewed'])==plan['F009_prefix']==414 and decode(f9['R5_prefix_strict_slots_reviewed'])==plan['F009_slots']==64584==156*414,'dynamic F009 prefix/slots unchanged')
+need(fields(ib)['F009']==fields(ni)['F009']and fields(ib)['F004']==fields(ni)['F004'],'whole F009 andF004 raw value preservation')
+
+planreviewref=pathref(P/'actual/plan_review/reuse_integer_only.json');planreview=doc(planreviewref)
+need(planreview['status'].startswith('SUPPORTED_ACTUAL')and planreview['blockers']==[]and planreview['plan']==planref and planreview['whole_afterimages_and_typed_preservation_verified']is planreview['actual_guard_and_raw_frames_verified']is True and planreview['Original_payloads_decoded']is False,'accepted exact private plan')
+need(value_digest==doc(planreview['full_actual_review'])['opaque_prior_cache_value_digest'],'all1719 old value hashes equal sealed review')
+# Mutable globalbeforeinputs resolve only to actual committed beforeimages.
+need(len(historical)==2 and all(x['original']['bytes']==x['retained']['bytes']and x['original']['sha256']==x['retained']['sha256']for x in historical),'exact two historical aliases')
+decisionref=pathref(P/'actual/Root_apply_decision.json');decision=doc(decisionref)
+need(decision['schema']=='ROOT_L026_NEG_ACTIVATION_APPLY_V1'and decision['root']=='/root'and decision['Root_authority']is True and decision['blockers']==[],'separate Root apply decision')
+for k,v in dict(program=program,Source_manifest=mfref,Source_peer=peerref,plan=planref,plan_review=planreviewref,Root_request=requestref,snapshot=plan['snapshot']).items():need(decision[k]==v,'Root apply exact reviewed subject')
+need(decision['canonical_publication_authorized']is decision['sole_canonical_writer']is decision['no_active_unregistered_F009_cohort']is decision['whole_private_afterimages_and_inverse_owned']is True,'Root publication ownership')
+rawbase=P/'actual/api'
+dr,ds,issued=chain(P/'actual/Root_SDK/apply_decision_v1.json','Root_l026_negative_progress_apply_decision_v1',rawbase)
+need(dr['bytes']==22030 and dr['sha256'].startswith('43a0784d')and any(v==decisionref for v in issued.values()if type(v)is dict),'genuine positive decision issuance')
+sr,sdk,terminal=chain(P/'actual/Root_SDK/apply_v1.json','Root_l026_negative_progress_apply_v1',rawbase)
+need((sr['bytes'],sr['sha256'])==(10136,'77ef4b4643e2db3d982797d5bfcbd4ce8e0cacc28f3bfa7aced5fa9b8ffdf98d'),'genuine first applyv1')
+child=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',program['path'],'--actor','/root','--mode','apply','--Root-request',requestref['path'],str(requestref['bytes']),requestref['sha256'],'--Source-peer',peerref['path'],str(peerref['bytes']),peerref['sha256'],'--plan',planref['path'],str(planref['bytes']),planref['sha256'],'--plan-review',planreviewref['path'],str(planreviewref['bytes']),planreviewref['sha256'],'--Root-decision',decisionref['path'],str(decisionref['bytes']),decisionref['sha256']]
+av=sdk['issued_argv'];guard=P/'actual/guards/apply_v1'
+need(av[av.index('--')+1:]==child and av[av.index('--output')+1]==str(guard)and av[av.index('--rss-cap-mib')+1]=='256'and av[av.index('--timeout')+1]=='125','same exact released apply argv')
+started=decode(whole(guard/'started.json'));receipt=decode(whole(guard/'receipt.json'));stdout=decode(whole(guard/'stdout.log'))
+limits=dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,ram_floor=3*2**30,total_rss=256*2**20,wall_seconds=125.0,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+need(started['command']==receipt['command']==child and started['limits']==receipt['limits']==limits and started['admission']==receipt['admission'],'exact actual supervisor limits/start')
+need(started['admission']['free_disk']>=limits['admit_disk']and started['admission']['available_ram']>=limits['admit_ram'],'genuine unchanged resource admission')
+need(len(started['identities'])==len(receipt['identities'])==1 and all(started['identities'][0][k]==receipt['identities'][0][k]for k in('pid','birth','initial_parent','group','session')),'single exact child birth')
+need(receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['error']is None and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[],'clean successful actual')
+need(receipt['seconds']<125 and receipt['peaks']['total_rss']<=limits['total_rss']and receipt['peaks']['min_free_disk']>=limits['disk_floor']and receipt['peaks']['min_available_ram']>=limits['ram_floor']and whole(guard/'stderr.log')==b'','actual sampled limits and zero stderr')
+need(receipt['logs']==dict(stdout=PINS[str(guard/'stdout.log')]['bytes'],stderr=0)and terminal==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json')),'full raw terminal/log/guard join')
+readbackref=pathref(stage/'readback.json');readback=doc(readbackref)
+need(stdout['status']=='PUBLISHED_NEG_ACTIVATION'and stdout['readback']==readbackref and stdout['scientific_calls']==0,'genuine emitted readback')
+live_i=dict(image['intake'],path=str(P.parent/'progress/current_intake.json'));live_c=dict(image['controller'],path=str(P.parent/'progress/controllers/current.json'))
+need(whole(live_i['path'],live_i)==ni and whole(live_c['path'],live_c)==nc,'actual committed globalpointers exactly private plan')
+need(stdout['intake']==readback['intake']==live_i and stdout['controller']==readback['controller']==live_c and stdout['runtime']==readback['runtime']==image['runtime'],'genuine stdout and live committed descriptors')
+need(readback['schema']=='L026_NEG_ACTIVATION_ADMIN_READBACK_V1'and readback['root']=='/root'and readback['program']==program and readback['Source_manifest']==mfref and readback['Source_peer']==peerref,'exact readback Source subject')
+for k,v in dict(Root_request=requestref,Root_decision=decisionref,plan=planref,plan_review=planreviewref).items():need(readback[k]==v,'readback exact provenance')
+need(readback['new_cache_bank']==image['cache']and readback['prior_cache_values']==1719 and readback['new_cache_values']==1 and readback['total_cache_values']==1720 and readback['registered_indices']==[290],'actual newonecache registration')
+need(readback['old_counts']==old and readback['new_counts']==new and readback['F009_prefix']==414 and readback['F009_slots']==64584,'actualglobalcounter joins')
+need(readback['all_prior_cache_values_preserved']is readback['all_unrelated_fields_preserved']is True and readback['Original_payloads_decoded']is False and readback['scientific_calls']==readback['new_manuscript_conjecture_Lean_measurement_credit']==0,'administrative scope and zero credits')
+f4=fields(fields(ni)['F004']);need(decode(f4['registered_jobs'])==127 and decode(f4['required_jobs'])==272 and decode(f4['pending_jobs'])==145,'unchanged F004127/272')
+need(pick(newcounts,'complete_manuscripts')==101 and pick(newcounts,'total_mathematical')==104 and pick(newcounts,'R5_canonical_pairs_reviewed')==414 and pick(newcounts,'R5_prefix_strict_slots_reviewed')==64584,'actualknown101/104 andF9 runtimecounts')
+Qbytes=sum(len(v)for v in byname.values());Sprepare=sum(r['bytes']for r in plan['input_refs']);Sapply=Sprepare+planref['bytes']+planreviewref['bytes']+decisionref['bytes']+Qbytes
+sum4=sum(image[k]['bytes']for k in('intake','controller','runtime','cache'));oldI=plan['snapshot']['intake']['bytes'];oldC=plan['snapshot']['controller']['bytes']
+tracked=2*Sapply+2*Qbytes+2*sum4+2*oldI+oldC;upper=2*Sapply+2*Qbytes+2*sum4+3*(oldI+oldC)+131072
+need(readback['tracked_metadata_read_bytes']==tracked==58209645 and readback['nominal_Source_bootstrap_allowance']==131072 and readback['total_declared_metadata_read_bytes']==tracked+131072==58340717,'independent exact coded read formula')
+need(readback['declared_metadata_read_upper']==upper==58642055<=64*2**20,'same bounded whole read invoice')
+for r in list(PINS.values()):whole(r['path'],r,True)
+# Retain new API/guard/decision/readback only; every stage/private/history image alreadydurable.
+tail=[r for path,r in PINS.items()if ('/actual/api/Root_l026_negative_progress_apply'in path or '/actual/guards/apply_v1/'in path or path.endswith('/Root_SDK/apply_v1.json')or path.endswith('/Root_SDK/apply_decision_v1.json')or path==decisionref['path']or path==readbackref['path'])]
+objects=O/'evidence/objects';objects.mkdir(parents=True,exist_ok=False);rows=[];written=0
+for r in tail:
+ target=objects/r['sha256'];body=BODIES[r['path']]
+ if not target.exists():
+  with target.open('xb')as f:need(f.write(body)==len(body),'whole finite actualtail')
+  written+=len(body)
+ rows.append(dict(original=r,retained=dict(r,path=str(target))))
+retref=put('evidence/retention.json',dict(schema='INDEPENDENT_NEG_ACTIVATION_ADMIN_FINITE_TAIL_V1',reviewer='/root/mathematical_review',Root_authority=False,files=rows,unique_new_bytes=written,stage_images_reused=str(stage),private_images_reused=str(private),no_recursive_or_image_copies=True))
+full=dict(schema='L026_NEG_ACTIVATION_COMPLETE_ADMINISTRATIVE_ACTUAL_REVIEW_V1',status='SUPPORTED_ACTUAL_L026_NEG_ACTIVATION_ADMINISTRATIVE_ADOPTION',reviewer='/root/mathematical_review',blockers=[],Root_authority=False,
+ program=program,Source_manifest=mfref,Source_peer=peerref,protocol=protocol,Root_request=requestref,Root_decision=decisionref,plan=planref,plan_review=planreviewref,actual_apply_SDK=sr,actual_decision_SDK=dr,actual_readback=readbackref,
+ publication_verified=True,all_recorded_SDK_raw_fullwrapper_guard_and_output_pin_joins_verified=True,whole_afterimages_and_typed_preservation_verified=True,complete_field_inverse_verified=True,
+ historical_mutable_global_input_aliases=historical,live_canonical=dict(intake=live_i,controller=live_c,runtime=image['runtime']),all8_stage_images_equal_sealed_private_bodies=True,
+ all1719_prior_cache_values_opaque_unchanged=True,opaque_prior_cache_value_digest=value_digest,prior_cache_values=1719,new_cache_values=1,total_cache_values=1720,
+ F009_prefix=414,F009_slots=64584,F004_registered_jobs=127,F004_required_jobs=272,complete_mathematical_manuscripts=101,total_mathematical_manuscripts=104,measurements=dict(applications=53,topics=19),
+ L026_counts=new,L026_paid=1469,L026_unpaid=27439,registered_indices=[290],Original_payloads_decoded=False,scientific_calls=0,represented_Source_or_functions_or_controls_rerun=False,canonical_mutation_by_reviewer=False,
+ exact_actual_tracked_read_bytes=tracked,exact_actual_total_declared_read_bytes=tracked+131072,declared_read_upper=upper,review_inputs=list(PINS.values()),own_review_method=pathref(Path(__file__).resolve()),own_physical_read_bytes=READ,evidence=retref,
+ qualifications=['Root issued the separate positive applydecision and actually ran the unchanged reviewed Source once. This independent metadata audit never reran apply, prepare, controls or scientific functions.',
+ 'All eight finalstage files equal their sealed private bytes, and live intake/controller point to the exact reviewed newruntime. Historical replaced global inputs resolve only to their exact actualstage beforeimages; no stale hash is loaded from a new livepointer.',
+ 'All1719 old cache values were inspected only as opaque spans, hashed and preserved. Exactly one Rootaccepted row290NEG batch is appended, total1720. Every unknown/protected/F004/F009/public/measurement span is preserved under the complete field inverse.',
+ 'The new ledger and globalcounts are coherent: GEN724,IP724,NEG745,paid1469,unpaid27439. This is administrative adoption of already accepted mathematics and gives no new scientific, manuscript, conjecture, Lean or compressionmeasurement credit.',
+ 'The Source discloses solewriter serialization and no simultaneous multifile transaction; sampled guard and unseen-descendant qualifications remain. Current actualsuccess is verified, without claiming crash atomicity.'])
+fr=put('review.json',full)
+leaf={k:full[k]for k in ['status','reviewer','blockers','Root_authority','program','Source_manifest','plan','plan_review','Root_request','Root_decision','actual_apply_SDK','actual_readback','publication_verified','all_recorded_SDK_raw_fullwrapper_guard_and_output_pin_joins_verified','whole_afterimages_and_typed_preservation_verified','historical_mutable_global_input_aliases','live_canonical','prior_cache_values','new_cache_values','total_cache_values','F009_prefix','F009_slots','F004_registered_jobs','F004_required_jobs','L026_counts','L026_paid','L026_unpaid','Original_payloads_decoded']}
+leaf.update(schema='L026_NEG_ACTIVATION_ADMINISTRATIVE_ACTUAL_REUSE_V1',full_actual_review=fr,evidence=retref,scientific_calls=0,canonical_mutation_by_reviewer=False,new_manuscript_conjecture_Lean_measurement_credit=0)
+lr=put('reuse_integer_only.json',leaf)
+print(json.dumps(dict(leaf=lr,full_review=fr,paths=len(PINS),read_bytes=READ,new_tail_bytes=written),sort_keys=True))

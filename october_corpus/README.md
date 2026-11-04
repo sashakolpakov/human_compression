@@ -28,26 +28,25 @@ and distinguishes them from completed manuscripts and published archives.
 
 | Original | Current stage | Still required |
 |---|---|---|
-| F004 | 126 of 272 q11 jobs complete. Job 20's selector has **zero unpaid positions**, including the registered positive row 2739. | Finish the complete original-domain and proof-family audit for job 20, its whole-job adoption, the other pending jobs and the classification. There are 146 pending jobs in total. |
-| F009 | Current R5 stage: **354 of 940 parents**, with **55,224** checked extension slots. | Finish this stage and the remaining census at order 80; the stage alone does not complete the manuscript. |
-| L026 | Current selector bank: **724 generation results, 744 exclusions, 724 separate intersection proofs**; **1,468 settled and 27,440 unresolved** rows. | Finish the current bank and the other selectors. **64 selectors** lack complete censuses, including the current selector. |
+| F004 | **127 of 272 q11 jobs complete**, including jobs 20 and 24. Job 155 has 378 settled and 429 unpaid positions in the published checkpoint. | Finish the 145 pending jobs, final classification and manuscript. |
+| F009 | Published R5 checkpoint: **414 of 940 parents**, with **64,584** checked extension slots. | Finish all 940 parents, final reduction and the remaining census at order 80. |
+| L026 | **724 generation results, 745 exclusions and 724 separate intersection proofs**; **1,469 settled and 27,439 unresolved** rows. | Finish the current bank and the other selectors; 64 selectors lack complete censuses. |
 
-The latest [reviewed progress archive](research/intake/verified_progress/README.rst)
-contains the next twelve-parent cohort, three separate intersection proofs
-for existing Fi22 generation results, and the registration of one positive
-F004 row with four members. Its seven readable TeX files explain the proofs;
-its portable byte verifier checks the finite evidence archive. The
-[preceding cohort](research/intake/finite_forests/parents0330_0341/README.rst)
-remains available.
+The [reviewed progress archive](research/intake/verified_progress/README.rst)
+now preserves 36 evidence parts and eleven readable TeX proofs. This update
+adds five reviewed forest cohorts, job 20 coverage and registration, the latest
+L026 exclusion, and the spectral method with its accepted 122-case application.
+Its [finite verifier](research/intake/verified_progress/verify.py) checks the
+archived bytes without executing mathematical programs. The
+[publication audit](research/intake/verified_progress/publication_audit.json)
+records its exact scope.
 
-The [saved status sources](research/intake/status_sources/README.rst) preserve
-the exact metadata editions behind these counts. Their bounded reader checks
-the bytes and pointer joins and prints the active counters. The separate
-[finite methods archive](research/intake/proof_methods/README.rst) and its
-[byte verifier](research/intake/proof_methods/verify.py) preserve selected proofs,
-partial results and execution records. These archives do not provide full
-portable mathematical replay. Finish the three remaining treatments, then
-stop and report before further compression measurement or Lean work.
+The [preceding status sources](research/intake/status_sources/README.rst) and
+[earlier cohort](research/intake/finite_forests/parents0330_0341/README.rst)
+remain available. These evidence archives preserve Source, witnesses and
+reviews; full portable mathematical replay remains incomplete. Finish the
+three remaining treatments, then stop and report before further compression
+measurement or Lean work.
 
 These manuscripts have 106 registered source components. L063 and L064 are
 the main article and its supplementary appendix, counted together as one

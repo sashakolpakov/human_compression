@@ -1,0 +1,466 @@
+"""Prepare finite q11 DATA; publish Root authority only under a separate release.
+
+New stdlib metadata code by /root/compact_proof_author. No represented import,
+matrix/action operation, scientific invocation, canonical selector or S write.
+The supplied Root frontier is explicit; this is not a global registry scan.
+"""
+import argparse
+import copy
+import gzip
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import resource
+import stat
+import sys
+import time
+
+START = time.monotonic()
+S = Path('/Users/sasha/medusa/research/leemans')
+R = S/'computation/f004/q11/rank4'
+SEED = dict(path='/private/tmp/q11_rank4_field_family/instances/job_0023/batch_0001/plan.json.gz',
+            bytes=4623, sha256='15cab7fbfc03c6aaadb61cb6c0466ceab192462102214a0adc4d960167ee052f')
+BASE = dict(path=str(R/'cyclic_span/dispositions/root_acceptance.json'), bytes=14200,
+            sha256='d7a6b4ac28bf6e24a431feb9a1e7d787273e2c89e516c2f0df0818fde5a95465')
+PROPOSER = '719f82e08f581e9d0ef20cb6f252c31f4d1da13315761f25b7d765f48057ca26'
+CHECKER = '9c643a3429c364d696bc9b5d0988f3d8dc13df9b5cba10383bad5468ebf340fe'
+QUALIFICATION = ('Original baseline is relative to the explicitly inspected accepted registry. '
+                 'Newly paid positions join actual independent direct checks and separate Root partial adoptions. '
+                 'No other absence claim, original-job closure or global operational-registry mutation.')
+
+
+def need(value, message):
+    if not value:
+        raise ValueError(message)
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'),
+                      ensure_ascii=True, allow_nan=False).encode('ascii')
+
+
+def digest(value):
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def decode(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            need(key not in result, 'unique JSON keys')
+            result[key] = value
+        return result
+    def floating(text):
+        value = float(text)
+        need(math.isfinite(value), 'finite historical observations')
+        return value
+    return json.loads(raw, object_pairs_hook=pairs, parse_float=floating,
+                      parse_constant=lambda x: (_ for _ in ()).throw(ValueError(x)))
+
+
+def reference(path, raw):
+    return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+class Metadata:
+    def __init__(self):
+        self.refs, self.raw, self.bytes = {}, {}, 0
+
+    def read(self, ref, fresh=False):
+        need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}
+             and type(ref['path']) is str and type(ref['bytes']) is int
+             and 0 <= ref['bytes'] <= 2**21 and type(ref['sha256']) is str
+             and len(ref['sha256']) == 64 and set(ref['sha256']) <= set('0123456789abcdef'),
+             'complete bounded metadata reference')
+        need(self.refs.get(ref['path'], ref) == ref, 'one physical identity per path')
+        if not fresh and ref['path'] in self.raw:
+            return self.raw[ref['path']]
+        need(len(self.refs) < 512 or ref['path'] in self.refs, '512 metadata input paths')
+        need(self.bytes+ref['bytes'] <= 64*2**20, '64MiB actual metadata reads')
+        rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform == 'darwin' else 1024)
+        need(rss < 128*2**20 and time.monotonic()-START < 125, '128MiB/125s metadata envelope')
+        path = Path(ref['path']); before = path.lstat()
+        need(path.is_absolute() and path.resolve(strict=True) == path
+             and stat.S_ISREG(before.st_mode) and before.st_nlink == 1
+             and before.st_size == ref['bytes'], 'ordinary canonical single-link input')
+        with path.open('rb') as handle:
+            opened = os.fstat(handle.fileno()); raw = handle.read(ref['bytes']+1)
+            closed = os.fstat(handle.fileno())
+        signature = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+        need(signature(before) == signature(opened) == signature(closed) == signature(path.lstat())
+             and reference(path, raw) == ref, 'whole stable metadata pin')
+        self.refs[ref['path']] = ref; self.raw[ref['path']] = raw; self.bytes += len(raw)
+        return raw
+
+    def file(self, path, sha):
+        path = Path(path)
+        ref = dict(path=str(path), bytes=path.stat().st_size, sha256=sha)
+        return ref, self.read(ref)
+
+    def document(self, ref):
+        return decode(self.read(ref))
+
+    def final(self):
+        for ref in list(self.refs.values()):
+            self.read(ref, True)
+
+
+def merge(rows):
+    values = {}
+    for ref in rows:
+        need(values.get(ref['path'], ref) == ref, 'one complete input version')
+        values[ref['path']] = ref
+    return [values[key] for key in sorted(values)]
+
+
+def positions(values, maximum):
+    need(type(values) is list and values == sorted(set(values))
+         and all(type(i) is int and 1 <= i <= maximum for i in values), 'sorted original positions')
+    return values
+
+
+def expand(runs, maximum):
+    result = []; last = 0
+    need(type(runs) is list, 'position runs')
+    for row in runs:
+        need(type(row) is list and len(row) == 2, 'complete run pair')
+        lo, hi = row
+        need(type(lo) is type(hi) is int and last < lo <= hi <= maximum, 'disjoint ordered bounded runs')
+        result.extend(range(lo, hi+1)); last = hi
+    return result
+
+
+def pack(values):
+    runs = []
+    for i in values:
+        if runs and runs[-1][1]+1 == i:
+            runs[-1][1] = i
+        else:
+            runs.append([i, i])
+    return runs
+
+
+def temporary(path):
+    text = str(path)
+    path = Path(text)
+    need(path.is_absolute() and path.is_relative_to('/private/tmp')
+         and str(path) == text and '..' not in path.parts,
+         'normalized new output without parent components, only under /private/tmp')
+    parent = path.parent
+    while not parent.exists():
+        parent = parent.parent
+    need(parent.resolve(strict=True) == parent, 'canonical output ancestry')
+    need(not os.path.lexists(path), 'fresh output path')
+    return path
+
+
+def put(path, raw):
+    path = temporary(path); path.parent.mkdir(parents=True, exist_ok=True)
+    need(path.parent.resolve(strict=True) == path.parent
+         and path.parent.is_relative_to('/private/tmp'), 'final canonical temporary parent')
+    with path.open('xb') as handle:
+        handle.write(raw); handle.flush(); os.fsync(handle.fileno())
+    return reference(path, raw)
+
+
+def seed_plan(meta):
+    raw = gzip.decompress(meta.read(SEED)); need(len(raw) <= 524288, 'bounded seed plan')
+    seed = decode(raw)
+    need(seed['program']['sha256'] == PROPOSER and seed['Root_projection_acceptance'] == BASE,
+         'unchanged generic proposer and exact adopted projection family')
+    for key in ('program', 'kernel', 'helpers', 'context_program', 'control_program'):
+        meta.read(seed[key])
+    return seed
+
+
+def original_domain(meta, seed, job):
+    gate = meta.document(BASE)
+    need(gate['root'] == '/root' and gate['schema'] == 'ROOT_ACCEPTED_Q11_RANK4_DISPOSITION_PROJECTIONS_V1'
+         and gate['all_same_original_domain_and_index_roles_checked'] is True
+         and len(gate['projections']) == 158, 'actual complete fixed158 projection adoption')
+    rows = [row for row in gate['projections'] if row[0] == job[0]]
+    need(len(rows) == 1 and job[1] == 4, 'one original rank4 prefix in the fixed family')
+    _, size, sha = rows[0]
+    pref = dict(path=str(Path(gate['projection_directory'])/('job_%04d.json' % job[0])), bytes=size, sha256=sha)
+    projection = meta.document(pref); manifest = meta.document(gate['source_manifest'])
+    registered = [row for row in manifest['jobs'] if row['original_job'] == job]
+    need(len(registered) == 1 and registered[0]['projection']['bytes'] == size
+         and registered[0]['projection']['sha256'] == sha and projection['original_job'] == job,
+         'same registered original projection')
+    maximum = projection['original_orbit_rows']
+    need(type(maximum) is int and 0 < maximum <= 14763, 'complete original finite position domain')
+    paid = sorted({i for fact in projection['known_paid_facts'] for i in fact['orbit_positions']})
+    positions(paid, maximum); unpaid = expand(projection['unpaid_representation']['runs'], maximum)
+    need(len(paid) == projection['known_paid_positions_count'] == registered[0]['paid_positions']
+         and len(unpaid) == projection['exact_unpaid_count_relative_to_inspected_accepted_registry']
+         and digest(unpaid) == projection['unpaid_representation']['expanded_sha256']
+         and sorted(paid+unpaid) == list(range(1, maximum+1)), 'complete baseline partition')
+    refs = projection['original_domain_whole_pins']
+    pt, st, produced, saved, export = [meta.document(refs[key]) for key in
+        ('producer_terminal', 'Saved_terminal', 'producer_result', 'Saved_result', 'prefix_export')]
+    for terminal, mode, result in ((pt, 'produce', refs['producer_result']), (st, 'check', refs['Saved_result'])):
+        need(terminal['root'] == '/root' and terminal['success'] is True and terminal['mode'] == mode
+             and terminal['rank'] == 4 and terminal['original_job'] == job
+             and terminal['result'] == result and terminal['prefix_export'] == refs['prefix_export'],
+             'same actual complete original producer/Saved domain')
+    need(st['producer_terminal'] == refs['producer_terminal'] and st['complete_fresh_same_code_Saved_comparison'] is True,
+         'whole accepted original Saved comparison')
+    for document in (produced, saved):
+        document.pop('seconds', None); document.pop('peak_self_bytes', None)
+    need(canonical(produced) == canonical(saved), 'all original nonobservational fields agree')
+    need(saved['original_job'] == export['original_job'] == job
+         and saved['prefix_export'] == refs['prefix_export'] and saved['original_prefix_index'] == projection['original_prefix_index']
+         and saved['external_premises'] == export['external_premises']
+         and saved['external_premises']['root'] == '/root' and saved['external_premises']['original_A_equals_G'] is True
+         and export['matrix_frame_result'] == seed['context']['matrix_frame_result']
+         and export['selected_labels'] == saved['selected_labels'] == [1,4,2]
+         and export['convention'] == 'RIGHT_ROW', 'original model, frame, labels and actual prefix provenance')
+    for key, source in (('indexed_source', 'indexed'), ('generic_export_source', 'generic_export')):
+        need(st[key] == seed['context']['old_sources'][source], 'same retained source identities')
+    # Metadata joins follow the retained e722 context. None of its matrix predicates
+    # is evaluated here; the unchanged worker still owes all of those predicates.
+    binding = meta.document(st['binding_terminal'])
+    model = meta.document(saved['external_premises']['model_source_join'])
+    frame = meta.document(saved['faithful_frame_acceptance'])
+    normal = meta.document(saved['normalization_result'])
+    normal_gate = meta.document(saved['normalization'])
+    need(binding.get('root') == '/root' and binding.get('success') is True
+         and model['root'] == '/root' and model['actual_raw_model_alias_checked'] is True
+         and model['faithful_frame'] == saved['faithful_frame_acceptance']
+         and frame['status'] == 'ROOT_ACCEPTED_Q11_FAITHFUL_MATRIX_FRAME'
+         and frame['result'] == seed['context']['matrix_frame_result']
+         and frame['full_generator_point_checks'] == 354312 and frame['inverse_checks'] == 6
+         and frame['inputs_unchanged'] is True, 'same accepted whole model/binder/faithful-frame joins')
+    need(normal['status'] == 'CERTIFIED_GF11_SPLIT_CAYLEY_COMPOSITION'
+         and normal['certificate_verified'] is True and normal['kappa'] == 7
+         and normal_gate['status'] == seed['context']['normalization_status'],
+         'same accepted actual Cayley normalization')
+    need(len(saved['orbits']) == maximum and digest(saved['orbits']) == projection['full_orbit_array_sha256']
+         and saved['prefix_stabilizer_indices'] == projection['prefix_stabilizer_indices'], 'complete old orbit/stabilizer table')
+    for ref in projection['prospective_context_inputs']:
+        meta.read(ref)
+    context = copy.deepcopy(seed['context']); context.update(original_job=job, projection=pref,
+        Root_projection_acceptance=BASE, unpaid_manifest=gate['source_manifest'])
+    return projection, pref, maximum, paid, context
+
+
+def current_frontier(meta, config, pref, maximum, baseline):
+    current = config.get('current_selector')
+    if current is None:
+        additional, authorities, attempts = [], [], []
+        selector = dict(schema='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1', root='/root', adopted=True,
+            Root_projection_acceptance=BASE, original_job=config['original_job'], original_orbit_positions=maximum,
+            projection=pref, original_paid_positions=baseline, original_paid_count=len(baseline),
+            qualification=QUALIFICATION)
+    else:
+        selector = meta.document(current)
+        need(selector['schema'] == 'ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'
+             and selector['root'] == '/root' and selector['adopted'] is True
+             and selector['original_job'] == config['original_job'] and selector['projection'] == pref
+             and selector['Root_projection_acceptance'] == BASE and selector['original_orbit_positions'] == maximum
+             and selector['original_paid_positions'] == baseline and selector['original_paid_count'] == len(baseline),
+             'exact same-domain Root aggregate disposition authority')
+        additional = positions(selector['accepted_new_paid_positions'], maximum)
+        unresolved = expand(selector['unresolved_position_runs'], maximum)
+        need(len(unresolved) == selector['unresolved_positions'] and digest(unresolved) == selector['expanded_unresolved_sha256']
+             and len(baseline)+len(additional)+len(unresolved) == maximum
+             and sorted(baseline+additional+unresolved) == list(range(1, maximum+1)), 'complete current original partition')
+        authorities = selector['source_adoptions']; attempts = selector.get('previous_method_attempts', [])
+        for ref in authorities:
+            authority = meta.document(ref)
+            need(authority.get('root') == '/root' and authority.get('adopted') is True,
+                 'whole actual Root disposition source; no pending proposal')
+            if 'original_job' in authority:
+                need(authority['original_job'] == config['original_job'], 'same-job disposition source')
+        selector = copy.deepcopy(selector)
+    field = config.get('field_adoption')
+    field_added = []
+    if field is not None:
+        adoption = meta.document(field)
+        need(adoption['schema'] == 'ROOT_ACCEPTED_Q11_RANK4_FIELD_CENTRALIZER_DEDUCTIONS_V1'
+             and adoption['root'] == '/root' and adoption['adopted'] is True
+             and adoption['Root_projection_acceptance'] == BASE
+             and adoption['complete_full_stabilizer_model_frame_membership_premises_retained'] is True,
+             'separate actual Root adoption of the conditional field deduction')
+        proposal = meta.document(adoption['proposal']); review = meta.document(adoption['independent_review'])
+        need(review['blockers'] == [] and review['verdict'] == 'SUPPORTED_CONDITIONAL_METADATA_DEDUCTIONS'
+             and review['proposed_partition'] == adoption['proposal'], 'exact independently reviewed field proposal')
+        row = [r for r in proposal['jobs'] if r['original_job'] == config['original_job']]
+        need(len(row) == 1, 'one original job in the adopted field partition')
+        proposed = positions(row[0]['proposed_new_positions'], maximum)
+        need(not set(proposed)&set(baseline), 'field screen never recharges baseline paid positions')
+        field_added = sorted(set(proposed)-set(additional)); additional = sorted(set(additional)|set(proposed))
+        authorities = merge(authorities+[field])
+    unresolved = sorted(set(range(1, maximum+1))-set(baseline)-set(additional))
+    need(len(baseline)+len(additional)+len(unresolved) == maximum, 'all original positions accounted once')
+    selector.update(accepted_new_paid_positions=additional, source_adoptions=authorities,
+        previous_method_attempts=attempts, unresolved_position_runs=pack(unresolved),
+        unresolved_positions=len(unresolved), expanded_unresolved_sha256=digest(unresolved))
+    if current is not None:
+        selector['previous_selector'] = current
+    return selector, unresolved, field_added
+
+
+def previous_misses(meta, selector, seed, unresolved):
+    known = []
+    for trial in selector['previous_method_attempts']:
+        need(trial['criterion'] == 'SECTION37_FIXED_DICTIONARY' and trial['kernel'] == seed['kernel']
+             and trial['helpers'] == seed['helpers'] and trial['finite_misses_are_NOT_paid'] is True
+             and trial['do_not_repeat_unchanged_search'] is True and trial['Root_adoption'] in selector['source_adoptions'],
+             'exact unchanged-method attempt authority')
+        fact = meta.document(trial['Root_adoption'])
+        need(fact['schema'] == 'ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1'
+             and fact['root'] == '/root' and fact['adopted'] is True
+             and fact['original_job'] == selector['original_job']
+             and fact['independent_direct_word_power_row_minor_checks'] is True
+             and fact['finite_miss_positions_without_IP_credit'] == trial['finite_miss_positions'],
+             'actual independently checked unchanged-method misses')
+        known += trial['finite_miss_positions']
+    known.sort()
+    need(len(known) == len(set(known)) and known == unresolved[:len(known)],
+         'unchanged proposer requires every old miss still unpaid and forming its exact prefix; use another method otherwise')
+    need(len(known) < len(unresolved), 'no fresh section37 positions remain; finite misses stay unpaid')
+    return known
+
+
+def prepare(meta, own, config_ref, config):
+    need(config['schema'] == 'Q11_GENERIC_SECTION37_DATA_REQUEST_V1'
+         and type(config['original_job']) is list and len(config['original_job']) == 2
+         and all(type(i) is int for i in config['original_job'])
+         and type(config['batch']) is int and 1 <= config['batch'] <= 65536
+         and type(config['maximum_positions']) is int and 1 <= config['maximum_positions'] <= 128,
+         'finite original-prefix/batch/position request')
+    base = temporary(config['directory']); seed = seed_plan(meta)
+    projection, pref, maximum, paid, context = original_domain(meta, seed, config['original_job'])
+    selector, unresolved, field_added = current_frontier(meta, config, pref, maximum, paid)
+    known = previous_misses(meta, selector, seed, unresolved)
+    selected = unresolved[len(known):len(known)+config['maximum_positions']]
+    selector_raw = canonical(selector)+b'\n'; selector_ref = reference(base/'selector.json', selector_raw)
+    plan = copy.deepcopy(seed); old_projection = meta.document(seed['projection'])
+    fixed = [ref for ref in seed['inputs'] if ref not in old_projection['prospective_context_inputs']
+             and ref not in (seed['projection'], seed['selector'])]
+    plan.update(author='/root/compact_proof_author', original_job=config['original_job'], projection=pref,
+        context=context, selector=selector_ref, selector_adoptions=selector['source_adoptions'],
+        selector_qualification=selector['qualification'], all_unresolved_positions=len(unresolved),
+        previous_method_miss_positions=known, selected_orbit_positions=selected,
+        maximum_positions=config['maximum_positions'], output_directory=str(base/'output'),
+        batch_policy='Exact Root frontier and original-domain DATA; unchanged generic scientific source.',
+        scope_policy='First bounded slice after the exact unchanged-method miss prefix. All paid positions skipped.')
+    plan['inputs'] = merge(fixed+projection['prospective_context_inputs']+[pref, selector_ref]+selector['source_adoptions'])
+    # Prospective selector is not physical yet. Every other project input is whole-read now.
+    for ref in plan['inputs']:
+        if ref != selector_ref:
+            meta.read(ref)
+    raw = canonical(plan)+b'\n'; need(len(raw) <= 524288, 'whole logical plan cap')
+    packed = gzip.compress(raw, mtime=0); need(len(packed) <= 65536, 'whole compressed plan cap')
+    plan_ref = reference(base/'plan.json.gz', packed)
+    fixed_refs = merge(plan['inputs']+[plan['program'], plan_ref])
+    first_final = 2*sum(ref['bytes'] for ref in fixed_refs)
+    loaders = plan['program']['bytes']+3*sum(plan[key]['bytes'] for key in ('context_program', 'helpers', 'kernel'))+12
+    dynamic = 2*(8192+16384+32768)
+    invoice = dict(schema='Q11_GENERIC_SECTION37_PROSPECTIVE_READ_INVOICE_V1', original_job=config['original_job'],
+        program=plan['program'], plan=plan_ref, fixed_inputs=fixed_refs, first_and_final_whole_bytes=first_final,
+        initial_main_and_namespace_loader_bytes=loaders, runpy_magic_header_bytes_included=12,
+        dynamic_gate_control_review_bytes=dynamic, maximum_physical_bytes=first_final+loaders+dynamic,
+        maximum_unique_files=len(fixed_refs)+3, maximum_positions=len(selected),
+        resources=plan['resources'], actual_scientific_time_and_RSS_fit='UNACQUIRED',
+        source_internal_meter_is_not_complete_loader_invoice=True)
+    need(invoice['maximum_physical_bytes'] <= 8*2**20 and invoice['maximum_unique_files'] <= 96
+         and all(ref['bytes'] <= 2**21 for ref in fixed_refs), 'unchanged complete scientific read envelope')
+    old_gate_ref, _ = meta.file(R/'section_generation/batches/job_0020/batch_0003/source_gate.json',
+        config['retained_generic_source_gate_sha256'])
+    old_gate = meta.document(old_gate_ref)
+    need(old_gate['program'] == plan['program'] and old_gate['kernel'] == plan['kernel']
+         and old_gate['helpers'] == plan['helpers'], 'retained exact generic code/math review, not old-plan authorization')
+    meta.read(old_gate['Root_code_math_review']); control = meta.document(old_gate['control_report'])
+    need(control['root'] == '/root' and control['status'] == 'PASS' and control['controls'] == 9
+         and control['kernel'] == plan['kernel'] and control['helpers'] == plan['helpers'], 'actual retained exact synthetic controls')
+    meta.final()
+    base.mkdir(parents=True, exist_ok=False)
+    need(base.resolve(strict=True) == base and base.is_relative_to('/private/tmp'), 'canonical fresh temporary directory')
+    actual_plan = put(base/'plan.json.gz', packed); need(actual_plan == plan_ref, 'same prepared plan')
+    invoice_ref = put(base/'read_invoice.json', canonical(invoice)+b'\n')
+    prepared = dict(schema='UNADOPTED_Q11_GENERIC_SECTION37_PREPARATION_V1', author='/root/compact_proof_author',
+        actual_Root_authority_granted=False, scientific_calls=0, canonical_or_S_writes=0,
+        metadata_method=own, request=config_ref, original_job=config['original_job'], batch=config['batch'],
+        previous_selector=config.get('current_selector'), field_adoption=config.get('field_adoption'),
+        baseline_paid=len(paid), accepted_new_paid=len(selector['accepted_new_paid_positions']),
+        field_added_positions=field_added, unresolved=len(unresolved), previous_misses=len(known),
+        selected_positions=selected, plan=plan_ref, read_invoice=invoice_ref,
+        proposed_selector=selector, expected_selector=selector_ref,
+        retained_generic_source_gate=old_gate_ref, retained_code_math_review=old_gate['Root_code_math_review'],
+        retained_actual_controls=old_gate['control_report'],
+        review_path=str(base/'code_review.json'), gate_path=str(base/'source_gate.json'),
+        full_metadata_input_frontier=sorted(meta.refs.values(), key=lambda ref:ref['path']),
+        explicit_frontier_digest=digest(dict(current_selector=config.get('current_selector'),
+            field_adoption=config.get('field_adoption'), original_job=config['original_job'])),
+        qualification='Prospective Root payload only. Publication requires a separate exact Root release; supplied frontier completeness is a Root responsibility. No global absence, closure or new mathematical authority.')
+    prepared_ref = put(base/'prepared.json', canonical(prepared)+b'\n')
+    print(json.dumps(dict(prepared=prepared_ref, plan=plan_ref, expected_selector=selector_ref,
+        read_invoice=invoice_ref, selected_positions=selected, maximum_physical_bytes=invoice['maximum_physical_bytes'],
+        maximum_unique_files=invoice['maximum_unique_files'], actual_Root_authority_granted=False), sort_keys=True))
+
+
+def publish(meta, own, prepared_ref, prepared, release_ref, release):
+    need(prepared['schema'] == 'UNADOPTED_Q11_GENERIC_SECTION37_PREPARATION_V1'
+         and prepared['metadata_method'] == own and prepared['actual_Root_authority_granted'] is False,
+         'same exact unadopted metadata preparation')
+    need(release['schema'] == 'ROOT_RELEASE_Q11_GENERIC_SECTION37_DATA_V1' and release['root'] == '/root'
+         and release['adopted'] is True and release['metadata_method'] == own
+         and release['prepared'] == prepared_ref and release['plan'] == prepared['plan']
+         and release['selector'] == prepared['expected_selector']
+         and release['explicit_frontier_digest'] == prepared['explicit_frontier_digest']
+         and release['complete_current_frontier_for_this_job_reviewed'] is True
+         and release['new_case_calls_authorized'] is True and release['blockers'] == [],
+         'fresh exact Root review and publication/scientific release, never self-attestation')
+    for ref in prepared['full_metadata_input_frontier']:
+        meta.read(ref)
+    plan = decode(gzip.decompress(meta.read(prepared['plan'])))
+    meta.read(prepared['read_invoice']); meta.final()
+    selector_raw = canonical(prepared['proposed_selector'])+b'\n'
+    need(reference(prepared['expected_selector']['path'], selector_raw) == prepared['expected_selector'],
+         'exact complete prepared selector image')
+    for path in (prepared['expected_selector']['path'], prepared['review_path'], prepared['gate_path']):
+        temporary(path)
+    sr = put(prepared['expected_selector']['path'], selector_raw)
+    review = dict(schema='ROOT_REVIEWED_Q11_RANK4_SECTION37_BATCH_PROPOSER_V1', root='/root',
+        status='SUPPORTED', blockers=[], program=plan['program'], kernel=plan['kernel'], helpers=plan['helpers'],
+        control_program=plan['control_program'], plan=prepared['plan'], metadata_method=own,
+        Root_metadata_release=release_ref, metadata_preparation=prepared_ref, selector=sr,
+        retained_exact_code_math_review=prepared['retained_code_math_review'], read_invoice=prepared['read_invoice'],
+        qualification='New exact plan authorization under this Root release. Old mathematical source and controls are borrowed; no old successful execution verdict is retagged. Actual producer/direct checker/adoption remain owed.')
+    rr = put(prepared['review_path'], canonical(review)+b'\n')
+    need(rr['bytes'] <= 32768, 'bounded Root review role')
+    gate = dict(schema='ROOT_AUTHORIZED_Q11_RANK4_SECTION37_BATCH_PROPOSER_V1', root='/root',
+        adopted=True, new_case_calls_authorized=True, program=plan['program'], kernel=plan['kernel'],
+        helpers=plan['helpers'], plan=prepared['plan'], Root_code_math_review=rr,
+        control_report=prepared['retained_actual_controls'], Root_metadata_release=release_ref)
+    gr = put(prepared['gate_path'], canonical(gate)+b'\n'); need(gr['bytes'] <= 8192, 'bounded Root gate role')
+    py='/Users/sasha/.venvs/global/bin/python'
+    argv=['/usr/bin/env','-u','COVERAGE_PROCESS_START','-u','COVERAGE_PROCESS_CONFIG','-u','OPENSSL_CONF',
+        '-u','OPENSSL_MODULES',py,'-E','-B',str(S/'maintenance/runtime/supervise_matrix.py'),'--volume',str(S),
+        '--output',str(Path(prepared['plan']['path']).parent/'observation'),'--rss-cap-mib','128','--timeout','125',
+        '--',py,'-E','-B','-S',plan['program']['path'],'--self-sha256',plan['program']['sha256'],
+        '--plan',prepared['plan']['path'],'--plan-sha256',prepared['plan']['sha256'],'--source-gate',gr['path'],gr['sha256']]
+    print(json.dumps(dict(selector=sr, review=rr, gate=gr, plan=prepared['plan'], scientific_argv=argv,
+        scientific_calls_executed=0, canonical_or_S_writes=0), sort_keys=True))
+
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('mode', choices=['prepare','publish']); ap.add_argument('--self-sha256',required=True)
+    ap.add_argument('--input',nargs=2,required=True); ap.add_argument('--root-release',nargs=2)
+    args=ap.parse_args(); meta=Metadata(); own,_=meta.file(Path(__file__).resolve(strict=True),args.self_sha256)
+    ref,raw=meta.file(*args.input); document=decode(raw)
+    if args.mode=='prepare':
+        need(args.root_release is None, 'prepare grants no Root authority')
+        prepare(meta,own,ref,document)
+    else:
+        need(args.root_release is not None, 'explicit Root release required')
+        rref,rraw=meta.file(*args.root_release); publish(meta,own,ref,document,rref,decode(rraw))
+
+
+if __name__=='__main__':
+    main()

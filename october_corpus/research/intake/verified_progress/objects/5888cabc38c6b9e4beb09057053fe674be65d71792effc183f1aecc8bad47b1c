@@ -1,0 +1,245 @@
+"""Prepare/publish a same-job section37 disposition after an actual strict check.
+
+Admission successor by /root/forest_resume; literal metadata base by /root/compact_proof_author. Mathematical Sources are never
+imported. Publication requires a separate exact Root release and actual durable
+copies. Prepare and the author write no S or canonical state.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import zlib
+
+HERE=Path(__file__).resolve(strict=True).parent
+LIBRARY_SHA='60c861fbfcd5715489ec5541254ea4d9f8a9773807b2a0773114d44e4577141b'
+
+
+def bootstrap():
+    path=HERE/'bind_checker.py';a=path.lstat()
+    if not(stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=65536 and path.resolve(strict=True)==path):
+        raise ValueError('ordinary bounded metadata library')
+    with path.open('rb')as f:
+        opened=os.fstat(f.fileno());raw=f.read(a.st_size+1);closed=os.fstat(f.fileno())
+    sig=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    if not(sig(a)==sig(opened)==sig(closed)==sig(path.lstat())and len(raw)==a.st_size
+           and hashlib.sha256(raw).hexdigest()==LIBRARY_SHA):
+        raise ValueError('whole stable exact metadata library before activation')
+    namespace=dict(__name__='q11_checked_metadata_library',__file__=str(path))
+    exec(compile(raw,str(path),'exec'),namespace)
+    meta=namespace['Metadata']();meta.bytes+=len(raw)
+    library=dict(path=str(path),bytes=len(raw),sha256=LIBRARY_SHA);meta.whole(library)
+    return namespace,meta,library
+
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('mode',choices=['prepare','publish'])
+    ap.add_argument('--self-sha256',required=True);ap.add_argument('--binding',nargs=2)
+    ap.add_argument('--actual-capture',nargs=2);ap.add_argument('--observation')
+    ap.add_argument('--directory');ap.add_argument('--preservation',nargs=2)
+    ap.add_argument('--adoption-path');ap.add_argument('--selector-path')
+    ap.add_argument('--prepared',nargs=2);ap.add_argument('--Root-release',nargs=2)
+    args=ap.parse_args();N,meta,library=bootstrap()
+    need=N['need'];can=N['canonical'];decode=N['decode'];digest=N['digest'];merge=N['merge'];expand=N['expand'];pack=N['pack']
+    own=meta.pin(Path(__file__).resolve(strict=True),args.self_sha256)
+    root=N['S']/'computation/f004/q11/rank4/section_generation'
+
+    def logical_plan(ref):
+        packed=meta.whole(ref);need(len(packed)<=65536,'bounded compressed plan')
+        decoder=zlib.decompressobj(31);raw=decoder.decompress(packed,524289)
+        need(len(raw)<=524288 and decoder.eof and not decoder.unconsumed_tail and not decoder.unused_data,
+             'one complete bounded gzip plan, never an unbounded metadata expansion')
+        return decode(raw)
+
+    def destination(path):
+        text=str(path);p=Path(text)
+        need(p.is_absolute()and str(p)==text and '..'not in p.parts
+             and(p.is_relative_to('/private/tmp')or p.is_relative_to(root))and not os.path.lexists(p),
+             'fresh normalized temporary or section-generation artifact, never an existing canonical register')
+        ancestor=p.parent
+        while not ancestor.exists():ancestor=ancestor.parent
+        need(ancestor.resolve(strict=True)==ancestor,'canonical existing ancestry before mkdir')
+        return p
+
+    def publish_raw(path,raw):
+        path=destination(path);path.parent.mkdir(parents=True,exist_ok=True)
+        need(path.parent.resolve(strict=True)==path.parent,'canonical final published parent')
+        with path.open('xb')as f:need(f.write(raw)==len(raw),'whole fresh publication');f.flush();os.fsync(f.fileno())
+        fd=os.open(path.parent,os.O_RDONLY)
+        try:os.fsync(fd)
+        finally:os.close(fd)
+        return N['reference'](path,raw)
+
+    if args.mode=='publish':
+        need(args.prepared is not None and args.Root_release is not None,'exact prepared adoption and separate Root release')
+        prepared_ref=meta.pin(*args.prepared);p=meta.document(prepared_ref)
+        rref=meta.pin(*args.Root_release);r=meta.document(rref)
+        need(p['schema']=='UNADOPTED_Q11_GENERIC_SAME_JOB_ADOPTION_V1'and p['metadata_method']==own
+             and p['metadata_library']==library and p['Root_authority_granted']is False,
+             'same exact unadopted metadata preparation')
+        need(r['schema']=='ROOT_RELEASE_Q11_GENERIC_SAME_JOB_ADOPTION_V1'and r['root']=='/root'
+             and r['adopted']is True and r['program']==own and r['metadata_library']==library
+             and r['prepared']==prepared_ref and r['predecessor_selector']==p['predecessor_selector']
+             and r['adoption']==p['expected_adoption']and r['selector']==p['expected_selector']
+             and r['preservation']==p['preservation']and r['all_actual_frames_typed_result_and_known_closure_reviewed']is True
+             and r['exact_current_same_job_frontier_and_durable_evidence_reviewed']is True and r['blockers']==[],
+             'fresh Root adoption authority, never a mathematical or Root verdict issued by this agent')
+        for ref in p['actual_metadata_input_frontier']:meta.whole(ref)
+        meta.final();destination(p['expected_adoption']['path']);destination(p['expected_selector']['path'])
+        araw=can(p['proposed_Root_adoption'])+b'\n';sraw=can(p['proposed_Root_selector'])+b'\n'
+        need(N['reference'](p['expected_adoption']['path'],araw)==p['expected_adoption']
+             and N['reference'](p['expected_selector']['path'],sraw)==p['expected_selector'],'exact reviewed prospective bodies')
+        ar=publish_raw(p['expected_adoption']['path'],araw);sr=publish_raw(p['expected_selector']['path'],sraw)
+        print(json.dumps(dict(status='ROOT_RELEASED_SAME_JOB_PARTIAL_ADOPTION',adoption=ar,selector=sr,
+            newly_settled_positions=len(p['proposed_Root_adoption']['new_IP_failure_positions']),
+            remaining_in_job=p['proposed_Root_selector']['unresolved_positions'],scientific_calls=0,
+            operational_registers_modified=False,whole_original_credit=0),sort_keys=True))
+        return
+
+    need(all((args.binding,args.actual_capture,args.observation,args.directory,args.adoption_path,args.selector_path))
+         and args.Root_release is None,'actual closed independent checker DATA required')
+    binding_ref=meta.pin(*args.binding);binding=meta.document(binding_ref)
+    need(binding['metadata_method']==library and binding['schema']=='UNADOPTED_Q11_GENERIC_CHECKER_BINDING_V1'
+         and binding['historical_example']is False,'current exact generic binding, no historical replay')
+    plan=logical_plan(binding['plan'])
+    need(plan['program']==N['CHECKER'],'exact new admission/literal supplied-only numerical checker')
+    N['admission_authority'](meta,plan['admission_Source_peer'],plan['admission_controls_actual_review'])
+    source=logical_plan(plan['proposer_plan'])
+    prior,unresolved,tried,_=N['compatible_selector'](meta,source,plan['field_NG_application']);typed_prior=meta.typed_prior
+    checker_gate_ref=meta.pin(binding['gate_path']);checker_gate=meta.document(checker_gate_ref)
+    need(checker_gate['root']=='/root'and checker_gate['adopted']is True
+         and checker_gate['program']==plan['program']and checker_gate['plan']==binding['plan'],
+         'actual separately released checker gate')
+    review=meta.document(checker_gate['Root_code_math_review'])
+    need(review['status']=='SUPPORTED'and review['blockers']==[]and review['plan']==binding['plan'],
+         'same actual independent checker review')
+    result_ref=meta.pin(plan['output']);result=meta.document(result_ref)
+    closure,stdout=N['closed_execution'](meta,meta.pin(*args.actual_capture),args.observation,
+        N['child_argv'](plan['program'],binding['plan'],checker_gate_ref))
+    need(stdout['output']==result_ref and stdout['status']=='VERIFIED_ALL_SECTION37_BATCH_RECORDS',
+         'actual checked stdout and complete result')
+    need(result['status']=='VERIFIED_ALL_SECTION37_BATCH_RECORDS'and result['program']==plan['program']
+         and result['plan']==binding['plan']and result['source_gate']==checker_gate_ref
+         and result['Root_code_math_review']==checker_gate['Root_code_math_review']
+         and result['original_job']==source['original_job']==binding['original_job']
+         and result['Root_unresolved_selector']==source['selector']and result['summary']==plan['summary']
+         and result['checked_chunks']==plan['proof_chunks']and result['all_summary_chunks_checked']is True
+         and result['complete_original_selector_partition_checked']is True
+         and result['original_and_adopted_new_paid_positions_not_evaluated']is True
+         and result['prior_finite_misses_skipped_but_still_unpaid']is True
+         and result['proposer_or_kernel_or_helper_imports']==result['word_search_or_row_reduction_calls']==0
+         and result['whole_original_credit']==result['conjecture_credit']==result['Lean_credit']==0,
+         'complete actual supplied-only mathematical result, retaining all no-credit qualifications')
+    producer=meta.document(binding['producer_closure']);summary=meta.document(plan['summary'])
+    failures=result['verified_IP_failure_positions'];misses=result['finite_miss_positions_without_IP_credit']
+    visited=[record['original_orbit_position']for record in result['checked_records']]
+    need(failures==sorted(set(failures))and misses==sorted(set(misses))
+         and sorted(failures+misses)==visited and len(failures)+len(misses)==len(visited)<=128
+         and visited==producer['visited']and failures==producer['proposed_IP_failures']
+         and misses==producer['finite_misses'],'only actual independently checked positives become paid')
+    for record in result['checked_records']:
+        pos=record['original_orbit_position']
+        need(record['direct_result']['quartet_IP_failure_verified']==(pos in failures),
+             'actual typed positive dispositions, not diagnostics or whole generation facts')
+    for ref in plan['proof_chunks']:meta.whole(ref)
+    remain=sorted(set(unresolved)-set(failures));maximum=prior['original_orbit_positions']
+    announced=result['remaining_if_Root_adopts_verified_failures']
+    need(expand(announced['position_runs'],maximum)==remain and announced['count']==len(remain)
+         and announced['expanded_sha256']==digest(remain)and announced['includes_all_finite_misses']is True
+         and set(misses)<=set(remain)and set(failures)<=set(unresolved),
+         'complete residual: all finite misses and every unvisited position stay unpaid')
+    additional=sorted(prior['accepted_new_paid_positions']+failures)
+    typed_after=dict(NG=typed_prior['NG'],NOT_IP=sorted(typed_prior['NOT_IP']+failures))
+    need(len(additional)==len(set(additional))and sorted(prior['original_paid_positions']+additional+remain)
+         ==list(range(1,maximum+1)),'same full original/baseline/new-paid/unresolved partition')
+    provenance=list(binding['actual_metadata_input_frontier'])
+    producer_gate=meta.document(plan['proposer_source_gate'])
+    for gate in (producer_gate,checker_gate):
+        code_review=meta.document(gate['Root_code_math_review'])
+        for key in ('metadata_method','data_qualification','metadata_preparation','Root_metadata_release'):
+            ref=code_review.get(key)
+            if type(ref)is dict and set(ref)=={'path','bytes','sha256'}:provenance.append(ref)
+        ref=gate.get('Root_metadata_release')
+        if type(ref)is dict and set(ref)=={'path','bytes','sha256'}:
+            provenance.append(ref);release=meta.document(ref)
+            for key in ('metadata_method','prepared'):
+                dep=release.get(key)
+                if type(dep)is dict and set(dep)=={'path','bytes','sha256'}:
+                    provenance.append(dep)
+                    if key=='prepared':
+                        prepared=meta.document(dep)
+                        for field in ('full_metadata_input_frontier','actual_metadata_input_frontier'):
+                            provenance.extend(prepared.get(field,[]))
+    required=merge(plan['inputs']+provenance+[library,own,binding_ref,binding['plan'],binding['producer_closure'],
+        plan['proposer_plan'],source['selector'],source['program'],result_ref,checker_gate_ref,
+        checker_gate['Root_code_math_review']]+list(closure[k]for k in ('capture','guard','stdout','stderr'))
+        +list(producer['actual'][k]for k in ('capture','guard','stdout','stderr')))
+    required=[ref for ref in required if Path(ref['path']).is_relative_to('/private/tmp')]
+    directory=N['fresh'](args.directory)
+    if args.preservation is None:
+        for ref in required:meta.whole(ref)
+        meta.final()
+        request=dict(schema='Q11_SAME_JOB_DURABLE_PRESERVATION_REQUEST_V1',author='/root/forest_resume',
+            root_authority_granted=False,original_job=source['original_job'],required_actual_refs=required,
+            preservation_schema='ROOT_PRESERVED_Q11_SECTION37_BATCH_V1',required_row_grammar=dict(original='actual complete reference',retained='whole identical bytes at a canonical single-link path inside research/leemans'),
+            no_active_path_deletion_authorized=True,scientific_calls=0,S_writes=0,
+            next='Root preserves these exact actual bytes and creates a files:[{original,retained}] index. Re-run preparation with the actual S manifest; no future preservation hash is guessed.')
+        rr=N['put'](directory/'preservation_request.json',can(request)+b'\n')
+        print(json.dumps(dict(status='DURABLE_ROOT_PRESERVATION_REQUIRED',request=rr,new_paid_credit=0),sort_keys=True));return
+    preservation_ref=meta.pin(*args.preservation)
+    need(Path(preservation_ref['path']).is_relative_to(N['S']),'actual durable preservation index inside S')
+    preservation=meta.document(preservation_ref)
+    need(preservation['schema']=='ROOT_PRESERVED_Q11_SECTION37_BATCH_V1'and preservation['root']=='/root',
+         'actual Root preservation index, not a proposed filename')
+    kept={row['original']['path']:row for row in preservation['files']}
+    need(len(kept)==len(preservation['files']),'one retained mapping per original physical path')
+    for ref in required:
+        need(ref['path']in kept and kept[ref['path']]['original']==ref,'every required actual temporary artifact retained')
+        retained=kept[ref['path']]['retained'];need(Path(retained['path']).is_relative_to(N['S'])
+            and retained['bytes']==ref['bytes']and retained['sha256']==ref['sha256'],'identical actual durable bytes')
+        meta.whole(ref);meta.whole(retained)
+    adoption=dict(schema='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1',root='/root',adopted=True,
+        original_job=source['original_job'],Root_projection_acceptance=source['Root_projection_acceptance'],
+        Root_unresolved_selector=source['selector'],summary=plan['summary'],proof_chunks=plan['proof_chunks'],
+        independent_direct_result=result_ref,actual_proposal=producer['actual']['capture'],actual_independent_check=closure['capture'],
+        source_gate=plan['proposer_source_gate'],direct_checker_gate=checker_gate_ref,
+        new_IP_failure_positions=failures,newly_settled_positions=len(failures),finite_miss_positions_without_IP_credit=misses,
+        unvisited_position_runs=result['unvisited_position_runs'],unvisited_positions_count=result['unvisited_positions_count'],
+        remaining_unresolved_positions_in_job=len(remain),independent_direct_word_power_row_minor_checks=True,
+        borrowed_complete_original_member_transport_proof=True,preservation=preservation_ref,
+        metadata_adoption_method=own,metadata_library=library,operational_selector_modified=False,
+        new_disposition_kind='NOT_IP',field_NG_application=plan['field_NG_application'],
+        predecessor_NG_positions_unchanged=typed_prior['NG'],new_quartet_nongeneration_claim=False,
+        qualification='Only actual independently checked section-IP failures are newly paid. Finite misses, unvisited positions, all original model/frame/member/transport and maximal-overgroup premises remain. No global original-job closure or baseline relabelling.',
+        whole_original_credit=0,conjecture_credit=0,Lean_credit=0,new_compression_credit=0)
+    apath=destination(args.adoption_path);spath=destination(args.selector_path)
+    aref=N['reference'](apath,can(adoption)+b'\n')
+    trial=dict(criterion='SECTION37_FIXED_DICTIONARY',source=source['program'],kernel=source['kernel'],helpers=source['helpers'],
+        Root_adoption=aref,visited_positions=visited,finite_miss_positions=misses,
+        finite_misses_are_NOT_paid=True,do_not_repeat_unchanged_search=True)
+    selector=dict(prior,accepted_new_paid_by_kind=typed_after,field_NG_application=plan['field_NG_application'],accepted_new_paid_positions=additional,unresolved_position_runs=pack(remain),
+        expanded_unresolved_sha256=digest(remain),unresolved_positions=len(remain),
+        source_adoptions=prior['source_adoptions']+[aref],previous_selector=source['selector'],
+        previous_method_attempts=prior.get('previous_method_attempts',[])+[trial])
+    all_misses=sorted(value for row in selector['previous_method_attempts']for value in row['finite_miss_positions'])
+    need(len(all_misses)==len(set(all_misses))and all_misses==remain[:len(all_misses)],
+         'all unchanged-method misses remain the exact unpaid prefix for the next frozen proposer')
+    sref=N['reference'](spath,can(selector)+b'\n');meta.final()
+    prepared=dict(schema='UNADOPTED_Q11_GENERIC_SAME_JOB_ADOPTION_V1',author='/root/forest_resume',
+        metadata_method=own,metadata_library=library,Root_authority_granted=False,
+        predecessor_selector=source['selector'],preservation=preservation_ref,expected_adoption=aref,expected_selector=sref,
+        proposed_Root_adoption=adoption,proposed_Root_selector=selector,
+        actual_metadata_input_frontier=sorted(meta.refs.values(),key=lambda ref:ref['path']))
+    pref=N['put'](directory/'prepared_adoption.json',can(prepared)+b'\n')
+    release=dict(schema='ROOT_RELEASE_Q11_GENERIC_SAME_JOB_ADOPTION_V1',root='/root',adopted=False,
+        program=own,metadata_library=library,prepared=pref,predecessor_selector=source['selector'],
+        adoption=aref,selector=sref,preservation=preservation_ref,
+        all_actual_frames_typed_result_and_known_closure_reviewed=False,
+        exact_current_same_job_frontier_and_durable_evidence_reviewed=False,blockers=['ROOT_EXACT_ADOPTION_REVIEW_OWED'])
+    rr=N['put'](directory/'Root_adoption_release_template.json',can(release)+b'\n')
+    print(json.dumps(dict(status='UNADOPTED_SAME_JOB_DATA_READY',prepared=pref,Root_release_template=rr,
+        new_IP_failure_positions=len(failures),remaining_in_job=len(remain),Root_authority_granted=False),sort_keys=True))
+
+
+if __name__=='__main__':main()

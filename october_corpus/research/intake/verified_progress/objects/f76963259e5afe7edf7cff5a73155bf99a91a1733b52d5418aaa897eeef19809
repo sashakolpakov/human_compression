@@ -1,0 +1,183 @@
+--- initial/common.py (AST review rendering)
++++ final/common.py (AST review rendering)
+@@ -2,7 +2,6 @@
+ import argparse
+ import hashlib
+ import json
+-import os
+ from pathlib import Path
+ import resource
+ import shlex
+@@ -34,9 +33,6 @@
+     assert time.monotonic() - START < 115
+     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == 'darwin' else 1024)
+     assert rss <= 256 * 2 ** 20
+-
+-def canonical(x):
+-    return (json.dumps(x, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode()
+ 
+ def descriptor(a):
+     r = dict(path=a[0], bytes=int(a[1]), sha256=a[2])
+@@ -238,25 +234,6 @@
+             out.append(c)
+     assert not quoted
+     return bytes(out)
+-
+-def covers(L, ref):
+-    body = raw(L, ref)
+-    p = spans(body)
+-    assert set(p) == {'schema', 'covers'}
+-    assert selected(body, ['schema'])['schema'] == 'F009_INCREMENTAL_PARENT_COVER_BATCH_V1'
+-    assert body == opaque_normal(body) + b'\n'
+-    return array(p['covers'])
+-
+-def cover_metadata(blob, parent):
+-    p = spans(blob)
+-    h = selected(blob, ['schema', 'parent_level', 'begin', 'end', 'all_slots_in_interval_accounted', 'whole156_parent_or_level_or_census_claimed'])
+-    assert h == dict(schema='F009_FOREST_EXTENSION_INTERVAL_V1', parent_level=4, begin=0, end=156, all_slots_in_interval_accounted=True, whole156_parent_or_level_or_census_claimed=False)
+-    assert opaque_normal(p['parent']) == opaque_normal(parent)
+-    records = array(p['records'])
+-    assert len(records) == 156
+-    for slot, record in enumerate(records):
+-        assert selected(record, ['slot'])['slot'] == slot
+-    return len(array(p['next_parent_forests']))
+ 
+ def prepared_role(L, preparedref, actualref, stem, base, indices, cohortref, batch, roster, manifestref, manifest, science_role, begin):
+     assert actualref['path'] == str(base / 'Root_SDK' / (stem + '_v1.json'))
+@@ -399,6 +376,7 @@
+     assert o['preparation_packet'] == c['preparation_packet'] and o['preparation_Source_peer'] == c['preparation_peer']
+     assert o['preparation_program'] == programs['init_cohort.py'] and o['preparation_Source_manifest'] == p['entry_manifests']['init_cohort.py'] and (o['protocol'] == p['protocol'])
+     assert o['whole_current_metadata_Source_protocol_and_disclosures_owned'] is o['missing_legacy_bookkeeping_not_recreated'] is True
++    assert o['no_scientific_worker_issued'] is o['no_canonical_writes'] is True
+     assert o['unavailable_legacy_bookkeeping'] == p['unavailable_legacy_bookkeeping'] and o['expected_registered_prefix'] == h['begin']
+     v = h['preparation_provenance']
+     assert v['schema'] == 'F009_FUTURE_COHORT_PREPARATION_PROVENANCE_V1'
+--- initial/audit_batch.py (AST review rendering)
++++ final/audit_batch.py (AST review rendering)
+@@ -3,10 +3,29 @@
+ import hashlib
+ _common = Path(__file__).resolve().with_name('common.py')
+ _body = _common.read_bytes()
+-assert len(_body) == 29708 and hashlib.sha256(_body).hexdigest() == '29f8277a6240daf6790df05cfbafaca167fef517e204e27e5557fb0756113125'
++assert len(_body) == 28809 and hashlib.sha256(_body).hexdigest() == '43a7b89325fa3a4f6540b7d3d2a8cdc12491f569df9e07c512cbe0d80e5a37a2'
+ _scope = dict(__file__=str(_common), __name__='f009_future_actual_metadata')
+ exec(compile(_body, str(_common), 'exec'), _scope)
+ globals().update({k: v for k, v in _scope.items() if not k.startswith('__')})
++
++def covers(L, ref):
++    body = raw(L, ref)
++    p = spans(body)
++    assert set(p) == {'schema', 'covers'}
++    assert selected(body, ['schema'])['schema'] == 'F009_INCREMENTAL_PARENT_COVER_BATCH_V1'
++    assert body == opaque_normal(body) + b'\n'
++    return array(p['covers'])
++
++def cover_metadata(blob, parent):
++    p = spans(blob)
++    h = selected(blob, ['schema', 'parent_level', 'begin', 'end', 'all_slots_in_interval_accounted', 'whole156_parent_or_level_or_census_claimed'])
++    assert h == dict(schema='F009_FOREST_EXTENSION_INTERVAL_V1', parent_level=4, begin=0, end=156, all_slots_in_interval_accounted=True, whole156_parent_or_level_or_census_claimed=False)
++    assert opaque_normal(p['parent']) == opaque_normal(parent)
++    records = array(p['records'])
++    assert len(records) == 156
++    for slot, record in enumerate(records):
++        assert selected(record, ['slot'])['slot'] == slot
++    return len(array(p['next_parent_forests']))
+ 
+ def batch_audit(L, a, state):
+     config, configref, decisionref, cohort, cohortref, packet, sm, tm, roster, parents, overrides, source_total = state
+@@ -72,7 +91,7 @@
+     leaf = dict(schema='F009_COHORT_BATCH_ACTUAL_REUSE_V1', status='SUPPORTED_ACTUAL', reviewer=REVIEWER, blockers=[], cohort=cohortref, progress_snapshot=cohort['progress_snapshot'], current_roster=roster, batch=a.batch, source_indices=indices, parent_count=len(indices), strict_slots=156 * len(indices), target_occurrences=pair['target_occurrences'], Source_manifest=packet['strict_manifest'], supplier_Source_manifest=packet['supplier_manifest'], pairing=pairref, strict_actual_SDK=strict['actual_SDK'], strict_result=tr['result'], strict_certificate=tr['certificate'], assembled_certificate=assembly['assembled_certificate'], bindings=bindings, individual_whole_certificate_equality_claimed=False, cache_registration_performed=False, whole_cohort_or_level_adopted=False, whole_R5_level_or_census_claimed=False)
+     leaf.update({flag: True for flag in BATCH_TRUE})
+     leaf['whole_Source_and_inputs_closed_scope'] = config['closure_scope']
+-    return (leaf, dict(batch=a.batch, metadata_actuals=phase_refs, scientific_actuals=[x['supplier_actual_SDK'] for x in bindings] + [strict['actual_SDK']], pairing=pairref))
++    return (leaf, dict(batch=a.batch, initialization_execution_deferred_to_aggregate=True, metadata_actuals=phase_refs, scientific_actuals=[x['supplier_actual_SDK'] for x in bindings] + [strict['actual_SDK']], pairing=pairref))
+ 
+ def main():
+     p = argparse.ArgumentParser(allow_abbrev=False)
+--- initial/audit_cohort.py (AST review rendering)
++++ final/audit_cohort.py (AST review rendering)
+@@ -3,15 +3,29 @@
+ import hashlib
+ _common = Path(__file__).resolve().with_name('common.py')
+ _body = _common.read_bytes()
+-assert len(_body) == 29708 and hashlib.sha256(_body).hexdigest() == '29f8277a6240daf6790df05cfbafaca167fef517e204e27e5557fb0756113125'
++assert len(_body) == 28809 and hashlib.sha256(_body).hexdigest() == '43a7b89325fa3a4f6540b7d3d2a8cdc12491f569df9e07c512cbe0d80e5a37a2'
+ _scope = dict(__file__=str(_common), __name__='f009_future_actual_metadata')
+ exec(compile(_body, str(_common), 'exec'), _scope)
+ globals().update({k: v for k, v in _scope.items() if not k.startswith('__')})
+ 
++def metadata_call(L, sdkref, key, candidates):
++    d = pure(L, sdkref)
++    argv = d['issued_argv']
++    if argv in candidates:
++        api(L, sdkref, key, argv, True)
++        printed = json.loads(d['full_tool_return']['output'])
++        mode = 'direct reviewed metadata entry'
++    else:
++        child = argv[argv.index('--') + 1:]
++        assert child in candidates
++        guard = argv[argv.index('--output') + 1]
++        printed, _ = actual(L, sdkref, key, child, guard, False)
++        mode = 'existing metadata supervisor'
++    return (printed, mode)
++
+ def closer_actual(L, c, dr, h, hr, sr, s):
+     control = Path(hr['path']).parent
+     sdkref = refat(L, control / 'Root_SDK' / 'close_summary_v1.json')
+-    d = pure(L, sdkref)
+     key = 'Root_f009_cohort%04d_close_summary_v1' % h['begin']
+     attemptsref = pure(L, dr)['metadata_attempts']
+     if c['_owner_V2']:
+@@ -26,21 +40,22 @@
+         owner = pure(L, refat(L, control / 'Root_close_Source_ownership.json'))
+         assert owner['root'] == '/root' and owner['Root_authority'] is True and (owner['program'] == c['closer_program']) and (owner['independent_Source_peer'] == c['legacy_closer_peer'])
+         candidates = [[PY, '-E', '-B', '-S', c['closer_program']['path'], hr['path'], attemptsref['path']]]
+-    argv = d['issued_argv']
+-    if argv in candidates:
+-        api(L, sdkref, key, argv, True)
+-        printed = json.loads(d['full_tool_return']['output'])
+-        mode = 'Root API execution of the reviewed self-bounded metadata entry'
+-    else:
+-        child = argv[argv.index('--') + 1:]
+-        assert child in candidates
+-        guard = argv[argv.index('--output') + 1]
+-        printed, _ = actual(L, sdkref, key, child, guard, False)
+-        mode = 'Root API execution under the existing metadata supervisor'
++    printed, mode = metadata_call(L, sdkref, key, candidates)
+     assert printed['summary'] == sr
+     if c['_owner_V2']:
+         assert printed['metadata_phase_attempts'] == attemptsref and printed['registered_prefix_unchanged'] == h['begin']
+     return dict(actual_SDK=sdkref, raw_key=key, execution_mode=mode)
++
++def initialization_actual(L, c, h, hr):
++    if not c['_owner_V2']:
++        return dict(legacy_Root_ownership_premise=True, new_init_execution_claimed=False)
++    sr = refat(L, Path(hr['path']).parent / 'Root_SDK' / 'init_cohort_v1.json')
++    key = 'Root_f009_cohort%04d_init_v1' % h['begin']
++    child = [PY, '-E', '-B', '-S', c['_preparation_programs']['init_cohort.py']['path'], '--actor', '/root', '--expected-prefix', str(h['begin']), '--Source-peer'] + trip(c['preparation_peer'])
++    v, mode = metadata_call(L, sr, key, [child])
++    assert v['cohort'] == hr and v['Source_ownership'] == h['Root_Source_ownership'] and (v['begin'] == h['begin']) and (v['end'] == h['end']) and (v['preparation_packet'] == c['preparation_packet'])
++    assert v['scientific_worker_not_launched'] is True and v['canonical_writes'] == 0
++    return dict(actual_SDK=sr, raw_key=key, execution_mode=mode)
+ 
+ def aggregate_audit(L, a, state):
+     config, configref, decisionref, cohort, cohortref, packet, sm, tm, roster, parents, overrides, source_total = state
+@@ -90,8 +105,9 @@
+         assert sb['strict_slots'] == entry['strict_slots'] and sb['target_occurrences'] == entry['target_occurrences']
+         assert sb['scientific_actuals'] == full['details']['scientific_actuals'] and sb['metadata_actuals'] == full['details']['metadata_actuals']
+     close_evidence = closer_actual(L, config, decisionref, cohort, cohortref, summaryref, summary)
++    init_evidence = initialization_actual(L, config, cohort, cohortref)
+     leaf = dict(schema='F009_CONTIGUOUS_PARENT_COHORT_ACTUAL_REUSE_V1', status='SUPPORTED_ACTUAL', reviewer=REVIEWER, blockers=[], cohort=cohortref, progress_snapshot=cohort['progress_snapshot'], current_roster=roster, begin=cohort['begin'], end=cohort['end'], source_indices=cohort['source_indices'], parent_count=cohort['end'] - cohort['begin'], strict_slots=156 * (cohort['end'] - cohort['begin']), target_occurrences=sum((e['target_occurrences'] for e in entries)), Source_manifest=packet['strict_manifest'], supplier_Source_manifest=packet['supplier_manifest'], batches=entries, all_batch_pairings_and_per_cover_bindings_verified=True, frozen_progress_snapshot_authenticated=True, all_source_indices_exactly_once=True, all_selected_attempts_and_prior_refusals_audited=True, cache_registration_performed=False, whole_R5_level_or_census_claimed=False)
+-    return (leaf, dict(close_summary=summaryref, closing_execution=close_evidence))
++    return (leaf, dict(close_summary=summaryref, closing_execution=close_evidence, initialization_execution=init_evidence))
+ 
+ def main():
+     p = argparse.ArgumentParser(allow_abbrev=False)
+@@ -104,6 +120,7 @@
+     p.add_argument('--batch-SDK', nargs=3, action='append', required=True)
+     p.add_argument('--batch-key', action='append', required=True)
+     a = p.parse_args()
++    assert len(a.batch_review) == len(a.batch_SDK) == len(a.batch_key)
+     L = Ledger()
+     state = bootstrap(L, a)
+     leaf, details = aggregate_audit(L, a, state)

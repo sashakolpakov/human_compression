@@ -1,0 +1,353 @@
+"""Finite read-only provenance review; never import represented Source."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+import shlex
+import stat
+import zlib
+
+P = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_spectral_section_search')
+A = P/'actual'
+B = Path('/private/tmp/f004_spectral_section_search/job0155_batch0002')
+OUT = A/'job0155_batch0002_review'
+pins, bodies, reads = {}, {}, 0
+
+def read(path, expected=None):
+    global reads
+    path = Path(path)
+    before = path.lstat()
+    assert path.is_absolute() and path.resolve() == path
+    assert stat.S_ISREG(before.st_mode) and before.st_nlink == 1
+    assert 0 <= before.st_size <= 4*2**20
+    raw = path.read_bytes()
+    after = path.lstat()
+    assert (before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) == (after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+    ref = dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    assert expected is None or ref == expected
+    assert pins.get(str(path), ref) == ref
+    pins[str(path)], bodies[str(path)] = ref, raw
+    reads += len(raw)
+    assert reads <= 64*2**20 and len(pins) <= 512
+    return raw, ref
+
+def document(path, expected=None):
+    raw, ref = read(path, expected)
+    return json.loads(raw), ref
+
+def space(raw, i):
+    while i < len(raw) and raw[i] in b' \r\n\t':
+        i += 1
+    return i
+
+def finish_value(raw, i):
+    stack, quoted, escape = [], False, False
+    while i < len(raw):
+        x = raw[i]
+        if quoted:
+            if escape:
+                escape = False
+            elif x == 92:
+                escape = True
+            elif x == 34:
+                quoted = False
+        elif x == 34:
+            quoted = True
+        elif x in (91, 123):
+            stack.append(x)
+        elif x in (93, 125):
+            if not stack:
+                break
+            assert stack.pop() == (91 if x == 93 else 123)
+        elif x == 44 and not stack:
+            break
+        i += 1
+    assert not stack and not quoted
+    return i
+
+def fields(raw):
+    i, result = space(raw, 0), {}
+    assert raw[i] == 123
+    i = space(raw, i+1)
+    while raw[i] != 125:
+        j = finish_value(raw, i)
+        item = raw[i:j]
+        colon = item.find(b':')
+        key = json.loads(item[:colon])
+        assert type(key) is str and key not in result
+        result[key] = item[colon+1:].strip()
+        i = space(raw, j)
+        if raw[i] == 44:
+            i = space(raw, i+1)
+        else:
+            break
+    assert raw[i] == 125 and space(raw, i+1) == len(raw)
+    return result
+
+def array(raw):
+    i, result = space(raw, 0), []
+    assert raw[i] == 91
+    i = space(raw, i+1)
+    while raw[i] != 93:
+        j = finish_value(raw, i)
+        result.append(raw[i:j].strip())
+        i = space(raw, j)
+        if raw[i] == 44:
+            i = space(raw, i+1)
+        else:
+            break
+    assert raw[i] == 93 and space(raw, i+1) == len(raw)
+    return result
+
+def selected(raw, keys):
+    prohibited = {'records', 'checked_records', 'certificate', 'matrices', 'context', 'frame_key', 'catalogue', 'orbits'}
+    assert not prohibited.intersection(keys)
+    data = fields(raw)
+    return {k: json.loads(data[k]) for k in keys if k in data}
+
+def packed_fields(path, expected=None):
+    raw, ref = read(path, expected)
+    decoder = zlib.decompressobj(16+zlib.MAX_WBITS)
+    logical = decoder.decompress(raw, 4*2**20+1)
+    assert decoder.eof and not decoder.unconsumed_tail and len(logical) <= 4*2**20
+    return logical, ref
+
+def expand(runs):
+    out, last = [], 0
+    for lo, hi in runs:
+        assert type(lo) is type(hi) is int and last < lo <= hi <= 807
+        out.extend(range(lo, hi+1))
+        last = hi
+    return out
+
+def sdk(name):
+    data, ref = document(A/'Root_SDK'/name)
+    argv = data['issued_argv']
+    assert data['schema'] == 'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'
+    assert data['root'] == data['actor'] == '/root'
+    assert argv == data['child_argv'] == shlex.split(data['issued_tool_arguments']['cmd'])
+    assert shlex.split(data['issued_command']) == shlex.split(data['canonical_argv_command']) == argv
+    key = 'Root_f004_spectral_'+name.removesuffix('.json')
+    rawdir = A/'api'/key
+    issued, _ = document(rawdir/'issued.json')
+    assert issued['root'] == '/root' and issued['argv'] == argv
+    assert issued['tool_arguments'] == data['issued_tool_arguments']
+    frames, actual = data['all_genuine_api_frames'], data['actual_tool']
+    assert frames[0] == data['full_initial_tool_return'] and frames[-1] == data['full_tool_return']
+    assert len({f['chunk_id'] for f in frames}) == len(frames)
+    assert actual['initial_chunk'] == frames[0]['chunk_id'] and actual['terminal_chunk'] == frames[-1]['chunk_id']
+    assert actual['exit_code'] == frames[-1]['exit_code'] == 0
+    assert 'session_id' not in frames[-1]
+    assert actual['synchronous'] is (len(frames) == 1)
+    if len(frames) == 1:
+        assert actual['handle'] is None
+    else:
+        assert type(actual['handle']) is int
+        for frame in frames[:-1]:
+            assert frame['session_id'] == actual['handle'] and 'exit_code' not in frame
+    for i, frame in enumerate(frames):
+        assert document(rawdir/('frame_%04d.json'%i))[0] == frame
+    assert not (rawdir/('frame_%04d.json'%len(frames))).exists()
+    if argv[:5] == ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', '-c']:
+        ast.parse(argv[5])
+    return data, ref
+
+def guarded(name):
+    data, ref = sdk(name)
+    argv = data['issued_argv']
+    assert argv[0] == '/usr/bin/env'
+    split = argv.index('--')
+    child = argv[split+1:]
+    guard = Path(argv[argv.index('--output')+1])
+    wrapper = Path(argv[14])
+    # Environment omission order is immaterial, but all five pairs are exact.
+    omitted = argv[1:11]
+    assert omitted[::2] == ['-u']*5
+    assert set(omitted[1::2]) == {'COVERAGE_PROCESS_START', 'COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'OPENSSL_CONF', 'OPENSSL_MODULES'}
+    assert argv[11:14] == ['/Users/sasha/.venvs/global/bin/python', '-E', '-B']
+    science = wrapper.name == 'supervise_matrix.py'
+    assert wrapper.name in ('supervise_matrix.py', 'supervise_validation.py')
+    assert child[:4] == ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S']
+    start, sr = document(guard/'started.json')
+    receipt, rr = document(guard/'receipt.json')
+    assert start['command'] == receipt['command'] == child
+    ram = 3*2**30+128*2**20+512*2**20 if science else 4*2**30
+    limits = dict(admit_disk=10*2**30, admit_ram=ram, disk_floor=8*2**30, ram_floor=3*2**30,
+                  total_rss=(128 if science else 256)*2**20, wall_seconds=125.0,
+                  sample_seconds=.5, log_bytes_each=262144, metadata_bytes_each=131072, owned_pids=128)
+    assert start['limits'] == receipt['limits'] == limits
+    assert start['admission'] == receipt['admission']
+    assert start['admission']['free_disk'] >= limits['admit_disk'] and start['admission']['available_ram'] >= limits['admit_ram']
+    assert receipt['status'] == 'PASS' and receipt['stop'] == 'RETURNED' and receipt['returncode'] == 0 and receipt['error'] is None
+    assert receipt['cleanup']['remaining'] == receipt['cleanup']['errors'] == []
+    assert len(start['identities']) == len(receipt['identities']) == 1
+    for k in ('pid', 'birth', 'initial_parent', 'group', 'session'):
+        assert start['identities'][0][k] == receipt['identities'][0][k]
+    assert receipt['seconds'] < 125 and receipt['peaks']['total_rss'] <= limits['total_rss']
+    assert receipt['peaks']['min_free_disk'] >= limits['disk_floor'] and receipt['peaks']['min_available_ram'] >= limits['ram_floor']
+    stdout, sout = document(guard/'stdout.log')
+    err, serr = read(guard/'stderr.log')
+    assert not err and receipt['logs'] == dict(stdout=sout['bytes'], stderr=0)
+    assert list((guard/'tmp').iterdir()) == []
+    assert json.loads(''.join(f['output'] for f in data['all_genuine_api_frames'])) == dict(status='PASS', stop='RETURNED', receipt=str(guard/'receipt.json'))
+    return dict(SDK=ref, started=sr, receipt=rr, stdout=sout, stderr=serr,
+                child=child, result=stdout, limits=limits, peaks=receipt['peaks'], seconds=receipt['seconds'])
+
+operations = {}
+for short in ('prepare_discovery', 'release_discovery', 'discovery', 'bind_checker', 'publish_checker', 'direct_check', 'adoption_request', 'adoption_prepare'):
+    operations[short] = guarded('job0155_batch0002_'+short+'_v1.json')
+for short in ('discovery_ownership', 'checker_ownership', 'preservation'):
+    data, ref = sdk('job0155_batch0002_'+short+'_v1.json')
+    operations[short] = dict(SDK=ref, printed=json.loads(data['full_tool_return']['output']))
+
+planraw, planref = packed_fields(B/'plan.json.gz', operations['prepare_discovery']['result']['plan'])
+plan = selected(planraw, ['schema', 'program', 'kernel', 'helpers', 'control_program', 'context_program', 'inputs',
+    'spectral_Source_peer', 'spectral_tables', 'acceleration_module', 'borrowed_arithmetic_controls', 'actual_control_report',
+    'selector', 'selector_adoptions', 'original_job', 'selected_orbit_positions', 'previous_method_miss_positions', 'all_unresolved_positions', 'maximum_positions', 'acceleration_base_plan'])
+assert plan['original_job'] == [155,4] and plan['maximum_positions'] == 128 and plan['all_unresolved_positions'] == 551
+assert len(plan['selected_orbit_positions']) == len(set(plan['selected_orbit_positions'])) == 128
+assert len(plan['previous_method_miss_positions']) == 5 and not set(plan['selected_orbit_positions']).intersection(plan['previous_method_miss_positions'])
+peer, peerref = document(P/'source_review/reuse_integer_only.json')
+assert peerref['sha256']=='7651fed9b249a2245b2969dc7d7baa9921489746a90f1c5bd19b2bc047af668c'
+assert peer['status']=='SUPPORTED_STATIC_Q11_SPECTRAL_PREFIX_SEARCH' and peer['blockers']==[]
+assert plan['program']==peer['discovery_program'] and plan['kernel']==peer['kernel'] and plan['helpers']==peer['helpers']
+assert plan['acceleration_module']==peer['acceleration_module'] and plan['control_program']==peer['controls_program'] and plan['spectral_Source_peer']==peerref
+for r in [peer['discovery_program'],peer['binding_program'],peer['adoption_program'],peer['acceleration_module'],peer['kernel'],peer['helpers']]:
+    read(r['path'],r)
+control, controlref = document(A/'Root_control_report.json')
+assert control['schema']=='ROOT_ACTUAL_Q11_RANK4_SECTION37_CONTROLS_V1' and control['root']=='/root' and control['status']=='PASS'
+assert control['controls']==9 and control['control_unit']=='NAMED_NEW_GROUP' and control['spectral_tables']==plan['spectral_tables']
+assert control['spectral_Source_peer']==peerref and control['acceleration_module']==plan['acceleration_module']
+actualcontrol,actualcontrolref=document(control['independent_actual_review']['path'],control['independent_actual_review'])
+assert actualcontrolref['sha256']=='72ee8637526b5486af71aec7becd9d54756284d0483fba77e2c5023657170652' and actualcontrol['blockers']==[] and actualcontrol['spectral_tables']==plan['spectral_tables']
+controlauth,controlauthref=sdk('control_report_and_base_preentry_v1.json')
+assert json.loads(controlauth['full_tool_return']['output'])['control_report']==controlref
+for short,program,pr in [('discovery',plan['program'],planref)]:
+    child=operations[short]['child']
+    assert child[4]==program['path'] and child[child.index('--self-sha256')+1]==program['sha256']
+    assert child[child.index('--plan')+1]==pr['path'] and child[child.index('--plan-sha256')+1]==pr['sha256']
+gate,gateref=document(B/'source_gate.json')
+review,reviewref=document(B/'source_review.json',gate['Root_code_math_review'])
+release,releaseref=document(A/'job0155_batch0002/Root_discovery_release.json')
+assert gate['root']=='/root' and gate['adopted'] is True and gate['new_case_calls_authorized'] is True
+assert gate['program']==plan['program'] and gate['plan']==planref and gate['control_report']==controlref
+assert review['status']=='SUPPORTED' and review['blockers']==[] and review['plan']==planref and review['program']==plan['program']
+assert gate['Root_metadata_release']==releaseref and review['Root_metadata_release']==releaseref
+assert release['adopted'] is True and release['new_case_calls_authorized'] is True and release['plan']==planref and release['blockers']==[]
+assert operations['release_discovery']['result']['scientific_argv']==json.loads(read(A/'Root_SDK/job0155_batch0002_discovery_v1.json')[0])['issued_argv']
+for r in plan['inputs']:
+    read(r['path'], r)
+summaryraw, summaryref = read(B/'output/summary.json', operations['discovery']['result']['summary'])
+summary = selected(summaryraw, ['schema','status','plan','source','kernel','helpers','original_job','target_positions','previous_method_miss_positions_not_retried','all_original_selector_positions','visited_position_runs','proposed_IP_obstruction_runs','visited_without_IP_certificate_runs','unvisited_position_runs','proof_chunks','resources','acceleration_statistics','spectral_Source_peer','spectral_tables','acceleration_module','actual_control_report','source_gate','Root_code_math_review'])
+assert summary['plan'] == planref and summary['source'] == plan['program'] and summary['kernel'] == plan['kernel'] and summary['helpers'] == plan['helpers']
+assert summary['actual_control_report']==controlref
+assert summary['target_positions'] == plan['selected_orbit_positions']
+assert summary['previous_method_miss_positions_not_retried'] == plan['previous_method_miss_positions']
+visited = expand(summary['visited_position_runs'])
+positive = expand(summary['proposed_IP_obstruction_runs'])
+misses = expand(summary['visited_without_IP_certificate_runs'])
+unvisited = expand(summary['unvisited_position_runs'])
+assert visited == plan['selected_orbit_positions'] and len(positive) == 122 and len(misses) == 6 and len(unvisited) == 423
+assert sorted(positive+misses) == visited and sorted(visited+unvisited) == summary['all_original_selector_positions']
+assert set(plan['previous_method_miss_positions']).issubset(unvisited)
+assert operations['discovery']['result']['new_paid_or_Original_credit'] == 0
+record_positions = []
+for i,r in enumerate(summary['proof_chunks'],1):
+    body,_ = read(r['path'],r)
+    data=selected(body,['schema','source','plan','chunk'])
+    assert data['schema']=='Q11_RANK4_SECTION37_PROPOSALS_V1' and data['plan']==planref and data['source']==plan['program'] and data['chunk']==i
+    for row in array(fields(body)['records']):
+        record_positions.append(selected(row,['original_orbit_position'])['original_orbit_position'])
+assert record_positions == visited
+
+checkraw, checkref = packed_fields(B/'direct_check/check_plan.json.gz', operations['bind_checker']['result']['plan'])
+check=selected(checkraw,['program','inputs','proposer_plan','proposer_program','proposer_kernel','proposer_helpers','summary','proof_chunks','original_job','admission_Source_peer','admission_controls_actual_review','field_NG_application','full_physical_read_bound_including_rechecks_and_source_loader'])
+assert check['proposer_plan']==planref and check['proposer_program']==plan['program'] and check['summary']==summaryref and check['proof_chunks']==summary['proof_chunks'] and check['original_job']==[155,4]
+assert check['program']['sha256']=='eca18992c9bf66b6ccd7215493d6406d7f29eb1e806a5353d7e51459b02430c6'
+read(check['program']['path'],check['program'])
+strictchild=operations['direct_check']['child']
+assert strictchild[4]==check['program']['path'] and strictchild[strictchild.index('--self-sha256')+1]==check['program']['sha256']
+assert strictchild[strictchild.index('--plan')+1]==checkref['path'] and strictchild[strictchild.index('--plan-sha256')+1]==checkref['sha256']
+strictgate,strictgateref=document(B/'direct_check/direct_checker_gate.json')
+strictreview,strictreviewref=document(B/'direct_check/direct_checker_review.json',strictgate['Root_code_math_review'])
+strictrelease,strictreleaseref=document(A/'job0155_batch0002/Root_checker_release.json')
+assert strictgate['root']=='/root' and strictgate['adopted'] is True and strictgate['new_case_calls_authorized'] is True
+assert strictgate['program']==check['program'] and strictgate['plan']==checkref
+assert strictreview['status']=='SUPPORTED' and strictreview['blockers']==[] and strictreview['program']==check['program'] and strictreview['plan']==checkref
+assert strictrelease['root']=='/root' and strictrelease['adopted'] is True and strictrelease['new_case_calls_authorized'] is True and strictrelease['plan']==checkref and strictrelease['blockers']==[]
+assert operations['publish_checker']['result']['scientific_argv']==json.loads(read(A/'Root_SDK/job0155_batch0002_direct_check_v1.json')[0])['issued_argv']
+for r in check['inputs']:
+    read(r['path'],r)
+checkedraw,checkedref=read(B/'direct_check/checked.json',operations['direct_check']['result']['output'])
+assert checkedref['bytes']==82604 and checkedref['sha256']=='2154f4225774a29323ea0025a92f609de17509c2a526fb9e3d2b623088fbe1e0'
+checked=selected(checkedraw,['schema','status','plan','program','summary','source_gate','Root_code_math_review','checked_chunks','verified_IP_failure_positions','finite_miss_positions_without_IP_credit','previous_method_miss_positions_not_retried','unvisited_position_runs','remaining_if_Root_adopts_verified_failures','resources','prior_adopted_NG_positions_not_evaluated','prior_adopted_NOT_IP_positions_not_evaluated','field_NG_application'])
+assert checked['status']=='VERIFIED_ALL_SECTION37_BATCH_RECORDS' and checked['plan']==checkref and checked['program']==check['program'] and checked['summary']==summaryref
+assert checked['verified_IP_failure_positions']==positive and checked['finite_miss_positions_without_IP_credit']==misses
+assert checked['previous_method_miss_positions_not_retried']==plan['previous_method_miss_positions'] and expand(checked['unvisited_position_runs'])==unvisited
+assert checked['prior_adopted_NG_positions_not_evaluated']==133 and checked['prior_adopted_NOT_IP_positions_not_evaluated']==123
+assert len(array(fields(checkedraw)['checked_records']))==128
+
+prespath=Path('/Users/sasha/medusa/research/leemans/computation/f004/q11/rank4/section_generation/batches/job_0155/batch_0002/evidence/preservation.json')
+pres,presref=document(prespath,operations['preservation']['printed']['preservation'])
+assert len(pres['files'])==pres['original_paths']==40 and pres['old_mappings_reused']==13 and pres['fresh_object_bytes']==430561
+retained={}
+for row in pres['files']:
+    old,new=row['original'],row['retained']
+    left,_=read(old['path'],old);right,_=read(new['path'],new)
+    assert left==right and Path(new['path']).is_relative_to('/Users/sasha/medusa/research/leemans')
+    retained[old['path']]=new
+for r in [planref,checkref,summaryref,checkedref,*summary['proof_chunks']]:
+    assert r['path'] in retained
+
+preparedraw,preparedref=read(B/'adoption/prepared_adoption.json',operations['adoption_prepare']['result']['prepared'])
+prepared=selected(preparedraw,['schema','Root_authority_granted','metadata_method','metadata_library','predecessor_selector','preservation','expected_adoption','expected_selector','actual_metadata_input_frontier','spectral_Source_peer'])
+assert prepared['schema']=='UNADOPTED_Q11_GENERIC_SAME_JOB_ADOPTION_V1' and prepared['Root_authority_granted'] is False and prepared['preservation']==presref
+for r in prepared['actual_metadata_input_frontier']:
+    read(r['path'],r)
+adopt=selected(fields(preparedraw)['proposed_Root_adoption'],['original_job','verified_IP_failure_positions','finite_miss_positions_without_IP_credit','independent_direct_word_power_row_minor_checks','root','adopted','program'])
+sel=selected(fields(preparedraw)['proposed_Root_selector'],['original_job','original_orbit_positions','accepted_new_paid_positions','accepted_NG_positions','accepted_NOT_IP_positions','unresolved_positions','unresolved_position_runs','previous_method_attempts'])
+assert sel['original_job']==[155,4] and sel['original_orbit_positions']==807 and sel['unresolved_positions']==429
+sf=fields(fields(preparedraw)['proposed_Root_selector'])
+af=fields(fields(preparedraw)['proposed_Root_adoption'])
+typed=json.loads(sf['accepted_new_paid_by_kind'])
+assert set(typed)=={'NG','NOT_IP'} and len(typed['NG'])==133 and len(typed['NOT_IP'])==245
+assert not set(typed['NG']).intersection(typed['NOT_IP'])
+assert sorted(typed['NG']+typed['NOT_IP'])==sel['accepted_new_paid_positions'] and len(sel['accepted_new_paid_positions'])==378
+assert sorted(sel['accepted_new_paid_positions']+expand(sel['unresolved_position_runs']))==list(range(1,808))
+assert json.loads(af['newly_settled_positions'])==122 and json.loads(af['new_IP_failure_positions'])==positive and json.loads(af['new_disposition_kind'])=='NOT_IP'
+assert json.loads(af['new_quartet_nongeneration_claim']) is False and json.loads(af['remaining_unresolved_positions_in_job'])==429
+assert json.loads(af['finite_miss_positions_without_IP_credit'])==misses
+priorraw,priorref=read(prepared['predecessor_selector']['path'],prepared['predecessor_selector'])
+pf=fields(priorraw)
+priortyped=json.loads(pf['accepted_new_paid_by_kind'])
+assert typed['NG']==priortyped['NG'] and sorted(priortyped['NOT_IP']+positive)==typed['NOT_IP']
+assert len(priortyped['NG'])==133 and len(priortyped['NOT_IP'])==123
+assert len(json.loads(pf['accepted_new_paid_positions']))==256 and json.loads(pf['unresolved_positions'])==551
+assert len(json.loads(sf['previous_method_attempts']))==len(json.loads(pf['previous_method_attempts']))+1
+oldmisses=plan['previous_method_miss_positions']
+assert len(set(oldmisses+misses))==11 and set(oldmisses+misses).issubset(expand(sel['unresolved_position_runs']))
+assert not Path(prepared['expected_adoption']['path']).exists() and not Path(prepared['expected_selector']['path']).exists()
+# Whole prospective bodies match the exact descriptors; these are metadata only.
+for key,blob in [('expected_adoption',fields(preparedraw)['proposed_Root_adoption']),('expected_selector',fields(preparedraw)['proposed_Root_selector'])]:
+    value=json.loads(blob)
+    canonical=json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode()+b'\n'
+    assert prepared[key]==dict(path=prepared[key]['path'],bytes=len(canonical),sha256=hashlib.sha256(canonical).hexdigest())
+resources=summary['resources'];strictresources=checked['resources']
+assert resources['matrix_products_all_dimensions']<=400000 and resources['physical_read_bytes']<=8*2**20 and resources['unique_input_files']<=96
+assert strictresources['matrix_products']<=400000 and strictresources['physical_input_bytes']<=8*2**20 and strictresources['unique_input_files']<=96
+assert summary['acceleration_statistics']['charged_signature_and_validation_products_upper_bound']<=8000000
+assert strictresources['physical_input_bytes']<=check['full_physical_read_bound_including_rechecks_and_source_loader']<=8*2**20
+evidence={'schema':'F004_SPECTRAL_BATCH2_FINITE_METADATA_CLOSURE_V1','reviewer':'/root/mathematical_review','Root_authority':False,
+ 'operations':operations,'Source_peer':peerref,'Root_control_report':controlref,'actual_controls_review':actualcontrolref,'discovery_release':releaseref,'checker_release':strictreleaseref,'discovery_plan':planref,'checker_plan':checkref,'summary':summaryref,'strict_result':checkedref,
+ 'prepared_adoption':preparedref,'predecessor_selector':priorref,'preservation':presref,'proof_chunks':summary['proof_chunks'],
+ 'batch':{'job':[155,4],'fresh_visited':128,'new_verified_NOT_IP':122,'new_inconclusive_misses':misses,
+ 'old_inconclusive_misses_skipped':oldmisses,'canonical_remaining_before_adoption':551,'proposed_paid_total':378,
+ 'proposed_NG':133,'proposed_NOT_IP':245,'proposed_remaining':429,'total_recorded_inconclusive_misses':11},
+ 'discovery_resources':resources,'acceleration_statistics':summary['acceleration_statistics'],'strict_resources':strictresources,
+ 'Root_preservation_mappings':40,'old_mappings_reused':13,'fresh_object_bytes':430561,
+ 'all_40_opaque_retained_objects_and_originals_verified':True,'all_API_raw_fullwrapper_guard_joins_verified':True,
+ 'Original_operands_or_record_certificates_decoded':False,'represented_functions_executed':False,
+ 'all_input_refs':sorted(pins.values(),key=lambda x:x['path']),'review_read_bytes':reads,'review_paths':len(pins)}
+e=OUT/'evidence_final.json';assert not e.exists();e.write_text(json.dumps(evidence,sort_keys=True,indent=2)+'\n')
+print(json.dumps({'evidence':dict(path=str(e),bytes=e.stat().st_size,sha256=hashlib.sha256(e.read_bytes()).hexdigest()),
+                  'review_paths':len(pins),'review_read_bytes':reads,'batch':evidence['batch']},sort_keys=True))

@@ -1,0 +1,73 @@
+"""Finite original-point certificate. No group software or conjugate table."""
+def need(ok,why):
+ if not ok:raise ValueError(why)
+def permutation(p,n,work):
+ need(len(p)==n,'whole original map degree');seen=bytearray(n)
+ for y in p:
+  work.charge(1);need(type(y)is int and 0<=y<n and not seen[y],'actual map bijection');seen[y]=1
+def actions(n,ambient,work):
+ need(type(n)is int and 1<=n<=3510 and 1<=len(ambient)<=16,'finite original degree/generator cap')
+ out=[]
+ for g in ambient:
+  permutation(g,n,work);out.append(g)
+ for g in ambient:
+  inv=[0]*n
+  for x,y in enumerate(g):work.charge(1);inv[y]=x
+  out.append(inv)
+ return out
+def original(n,ambient,centralizer,seed,ambient_order,centralizer_order,work):
+ need(type(ambient_order)is int and type(centralizer_order)is int and ambient_order>0 and centralizer_order>0
+  and ambient_order==n*centralizer_order,'exact order/index premise')
+ a=actions(n,ambient,work);permutation(seed,n,work)
+ nontrivial=False
+ for x in range(n):
+  work.charge(2);y=seed[x];nontrivial=nontrivial or y!=x;need(seed[y]==x,'original involution')
+ need(nontrivial,'nonidentity original seed')
+ need(1<=len(centralizer)<=64,'finite whole original centralizer generator cap')
+ for q in centralizer:
+  permutation(q,n,work)
+  for x in range(n):work.charge(4);need(q[seed[x]]==seed[q[x]],'literal original centralizer relation')
+ return a
+def check(n,ambient,centralizer,seed,ambient_order,centralizer_order,cert,work):
+ """ANY supplied valid tree/table; no root search, BFS or group enumeration."""
+ a=original(n,ambient,centralizer,seed,ambient_order,centralizer_order,work)
+ need(type(cert)is dict and set(cert)=={'schema','root','vertices','parents','labels','transitions'},'whole point-certificate fields')
+ need(cert['schema']=='FI22_ROOTED_ORIGINAL_POINT_ACTION_V1'and type(cert['root'])is int and 0<=cert['root']<n,'literal original point root')
+ root=cert['root']
+ for q in centralizer:work.charge(1);need(q[root]==root,'each whole-Q generator fixes supplied root')
+ vertices,parents,labels,transitions=[cert[k]for k in('vertices','parents','labels','transitions')]
+ need(all(type(v)is list and len(v)==n for v in(vertices,parents,labels,transitions)),'whole degree-sized arrays')
+ need(all(type(x)is int and 0<=x<n for x in vertices)and len(set(vertices))==n and vertices[0]==root,'each original point exactly once')
+ need(parents[0]is None and type(labels[0])is int and labels[0]==0,'canonical empty root word')
+ k=len(ambient);signed=list(range(1,k+1))+list(range(-1,-k-1,-1));positions={v:i for i,v in enumerate(signed)}
+ for i,x in enumerate(vertices):
+  if i:
+   parent,label=parents[i],labels[i]
+   need(type(parent)is int and 0<=parent<i and type(label)is int and label in positions,'strict parent-before-child original signed word')
+   work.charge(1);need(a[positions[label]][vertices[parent]]==x,'correct right-action tree edge')
+  row=transitions[i];need(type(row)is list and len(row)==2*k,'complete ordered signed generator-transition row')
+  for j,target in enumerate(row):
+   need(type(target)is int and 0<=target<n,'literal target point');work.charge(1);need(a[j][x]==target,'every original ordered generator edge')
+ work.charge(0);return cert
+def produce(n,ambient,centralizer,seed,ambient_order,centralizer_order,work):
+ a=original(n,ambient,centralizer,seed,ambient_order,centralizer_order,work)
+ root=None
+ for x in range(n):
+  work.propose();fixed=True
+  for q in centralizer:
+   work.charge(1)
+   if q[x]!=x:fixed=False;break
+  if fixed:root=x;break
+ if root is None:return None,'NO_COMMON_Q_FIXED_POINT'
+ vertices=[root];parents=[None];labels=[0];seen={root:0};transitions=[]
+ k=len(ambient);signed=list(range(1,k+1))+list(range(-1,-k-1,-1))
+ at=0
+ while at<len(vertices):
+  work.propose();x=vertices[at];row=[]
+  for j,g in enumerate(a):
+   work.charge(1);y=g[x];row.append(y)
+   if y not in seen:seen[y]=len(vertices);vertices.append(y);parents.append(at);labels.append(signed[j])
+  transitions.append(row);at+=1
+ if len(vertices)!=n:return None,'ORIGINAL_AMBIENT_ACTION_NOT_TRANSITIVE'
+ cert=dict(schema='FI22_ROOTED_ORIGINAL_POINT_ACTION_V1',root=root,vertices=vertices,parents=parents,labels=labels,transitions=transitions)
+ return check(n,ambient,centralizer,seed,ambient_order,centralizer_order,cert,work),'VERIFIED_STABILIZER_POINT_ACTION_BRIDGE'

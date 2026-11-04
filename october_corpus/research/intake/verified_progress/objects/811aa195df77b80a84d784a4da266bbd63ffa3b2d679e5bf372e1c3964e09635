@@ -1,0 +1,53 @@
+"""Untrusted fixed-subset hints using the complete ordered middle product."""
+import struct
+import common as C
+
+def subset_from_pair(raw,work):
+    C.need(type(raw)is bytes and len(raw)==715 and raw[:8]==b'L026PF01','exact singleton351 native pair')
+    n,size,members=struct.unpack_from('<HHB',raw,8)
+    C.need((n,size,members)==(3510,351,1),'one351point subset in the original degree')
+    points=list(struct.unpack_from('<'+'H'*size,raw,13))
+    C.need(points==sorted(set(points))and all(p<n for p in points),'whole sorted distinct bounded subset')
+    work.charge(len(raw)+24*len(points),'whole native subset and canonical point checks')
+    return points
+
+def candidate(K,ctx,triangle,points,identity,work):
+    C.need(type(points)is list and 0<len(points)<ctx['n']and points==sorted(set(points))
+        and all(type(p)is int and 0<=p<ctx['n']for p in points),'supplied proper sorted subset')
+    work.charge(ctx['n']+24*len(points),'whole subset membership mask')
+    seen=bytearray(ctx['n'])
+    for p in points:seen[p]=1
+    paths=K.prepare_triangle(ctx,triangle,work);checked=0;hit=True
+    for p in points:
+        work.charge(12,'complete middle-product subset edge')
+        target=K.middle_image(ctx,paths,p,work);checked+=1
+        C.need(type(target)is int and 0<=target<ctx['n'],'actual middle point image')
+        if not seen[target]:hit=False;break
+    record=dict(identity=identity,outcome='PROPER_HINT'if hit else'INCONCLUSIVE',
+        prime11=None,prime13=None,points=list(points)if hit else None)
+    return record,checked
+
+def unpaid_cases(cases,status,known_prior=()):
+    C.need(type(cases)is list and 1<=len(cases)<=8 and type(status)is bytes and len(status)==28908,'bounded exact typed window')
+    C.need(type(known_prior)in(list,tuple)and all(type(i)is int and 0<=i<28908 for i in known_prior),'explicit positively identified prior tests')
+    indices=[c['free_index']for c in cases]
+    C.need(indices==sorted(set(indices))and all(type(i)is int and 0<=i<28908 and status[i]==0 for i in indices),'only current unpaid exact row identities')
+    selected=[c for c in cases if c['free_index']not in known_prior]
+    skipped=[i for i in indices if i in known_prior]
+    return selected,skipped
+
+def propose_batch(K,ctx,points,cases,witness,bind_row,work):
+    records=[];checked=0
+    for identity in cases:
+        triangle=bind_row(witness,identity,28908,work)
+        record,count=candidate(K,ctx,triangle,points,identity,work)
+        records.append(record);checked+=count
+    return records,checked
+
+def fits(bank,refs,operations):
+    allrefs=dict(bank.refs)
+    for r in refs:
+        C.ref(r);C.need(allrefs.get(r['path'],r)==r,'one prospective descriptor edition');allrefs[r['path']]=r
+    extra=sum(r['bytes']for p,r in allrefs.items()if p not in bank.raw)+sum(r['bytes']for r in allrefs.values())
+    C.need(bank.bytes+extra<=8388608 and len(allrefs)+2<=96,'prospective whole first/closing input bank')
+    C.need(bank.work.units+extra+operations+3*(65536+131072)<=10000000,'prospective point/IO/publication work')

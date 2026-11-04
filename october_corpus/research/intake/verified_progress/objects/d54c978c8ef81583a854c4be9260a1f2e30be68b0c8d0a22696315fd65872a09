@@ -1,0 +1,108 @@
+"""Bounded execution-metadata audit only; never import/call reviewed Sources."""
+import ast,hashlib,json,math,os,shlex,stat,time
+from pathlib import Path
+B=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fixed_subset_proposer')
+O=B/'actual/controls_review'; START=time.monotonic(); RAW={}; PINS={}; READ=0
+
+def need(v,s):
+    if not v:raise ValueError(s)
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,expected=None):
+    global READ
+    p=Path(p);k=str(p)
+    if k in RAW:
+        need(expected is None or PINS[k]==expected,'same cached metadata descriptor');return RAW[k]
+    a=p.lstat();need(time.monotonic()-START<110 and len(RAW)<96 and a.st_size<=2**21 and READ+a.st_size<=4*2**20,'finite metadata reader')
+    need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'ordinary stable input')
+    b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    need(sig(a)==sig(z)and len(b)==a.st_size,'whole stable body');r=ref(p,b);need(expected is None or r==expected,'exact body '+k)
+    RAW[k]=b;PINS[k]=r;READ+=len(b);return b
+def dec(b):
+    def pairs(a):
+        d={}
+        for k,v in a:need(k not in d,'no duplicate metadata key');d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda v:(_ for _ in()).throw(ValueError(v)))
+def doc(p,expected=None):return dec(read(p,expected))
+def rr(r):read(r['path'],r);return r
+
+def api(stem,sdkname,exitcode):
+    s=doc(B/'actual/Root_SDK'/sdkname); base=B/'api'/stem;i=doc(base/'issued.json')
+    need(s['schema']=='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'and s['root']==s['actor']=='/root','genuine Root identity')
+    need(i['schema']=='ROOT_ISSUED_API_INTENT_V1'and i['root']=='/root','issued Root raw intent')
+    a=s['issued_argv'];need(a==s['child_argv']==i['argv'],'same complete issued argv')
+    need(s['issued_tool_arguments']==i['tool_arguments']and shlex.split(i['tool_arguments']['cmd'])==a,'literal issued command/argv')
+    need(s['issued_command']==i['tool_arguments']['cmd']and shlex.split(s['canonical_argv_command'])==a,'both recorded command forms')
+    frames=s['all_genuine_api_frames'];need(type(frames)is list and len(frames)==1,'one complete synchronous frame')
+    need(sorted(p.name for p in base.iterdir())==['frame_0000.json','issued.json'],'complete unique raw frame directory')
+    f=doc(base/'frame_0000.json');need(f==frames[0]==s['full_initial_tool_return']==s['full_tool_return'],'exact whole genuine return')
+    t=s['actual_tool'];need(t['synchronous']is True and t['handle']is None and t['initial_chunk']==t['terminal_chunk']==f['chunk_id']and t['exit_code']==f['exit_code']==exitcode,'terminal synchronous identity/exit')
+    return s,f
+
+sdk,frame=api('Root_l026_fixed_subset_controls_v2','controls_v2.json',0)
+need(PINS[str(B/'actual/Root_SDK/controls_v2.json')]['sha256']=='5e7c8fbf894943a38a6d2356869c8d9e8e126be8cae4c2ceb6c3c68520add9b1','named actual SDK')
+v1,failed=api('Root_l026_fixed_subset_controls_v1','controls_v1.json',1)
+need(PINS[str(B/'actual/Root_SDK/controls_v1.json')]['sha256']=='5ad2d7848ae983c8096e32222edc2603ebed047e500b9aa28101238fa0286117','named failed SDK')
+authority,aframe=api('Root_l026_fixed_subset_controls_authority_v1','controls_authority_v1.json',0)
+need(PINS[str(B/'actual/Root_SDK/controls_authority_v1.json')]['sha256']=='097d4abec2c045755f6b99c488d6b0452a10435c07ec7ce765b186bb67527ec7','genuine Source ownership issue')
+issued=dec(aframe['output']);owner=doc(B/'adoptions/controls_Source_ownership.json');gate=doc(B/'adoptions/controls_gate.json');request=doc(B/'adoptions/controls_request.json')
+for k,n in(('request','controls_request.json'),('gate','controls_gate.json'),('Source_ownership','controls_Source_ownership.json'),('Source_peer','Source_peer_controls_immutable.json')):need(issued[k]==rr(dict(PINS.get(str(B/'adoptions'/n))or ref(B/'adoptions'/n,read(B/'adoptions'/n)))),'authority output join '+k)
+cmref=gate['manifest'];wmref=request['worker_manifest'];cm=doc(cmref['path'],cmref);wm=doc(wmref['path'],wmref)
+need(cmref['sha256']=='ccfdaafcfcefed19716ee13c23cf0a720de362cb68aa75887d66d12864213ec4'and wmref['sha256']=='b3944dbead4d5f6dca8d615aee720a44a52fcc7837510240750c40a6f26cba25','current exact manifests')
+need(issued['manifest']==cmref and owner['worker_manifest']==wmref and owner['controls_manifest']==cmref,'owned namespace joins')
+need(owner['root']=='/root'and owner['Root_authority']is owner['complete_Source_and_protocol_owned']is owner['exact_runtime_limits_unchanged']is owner['new_synthetic_controls_only']is True and owner['controls']==28,'positive fresh Source controls ownership')
+need(owner['Original_execution_authorized']is owner['canonical_writes_authorized']is False,'control-only authority')
+protocol=doc(B/'source_review/reuse_integer_only.json')['protocol'];rr(protocol);need(owner['protocol']==protocol,'owned protocol')
+peer=doc(owner['Source_peer']['path'],owner['Source_peer']);need(read(owner['Source_peer']['path'])==read(B/'source_review/reuse_integer_only.json'),'immutable peer copy')
+need(peer['Source_manifest']==wmref and peer['control_Source_manifest']==cmref and peer['status']=='SUPPORTED_STATIC_L026_FIXED_SUBSET_PROPOSER_SOURCE'and peer['reviewer']=='/root/forest_resume'and peer['blockers']==[],'actual adopted Source peer')
+qualification=doc(B/'source_review/template_link_qualification.json');need(qualification['Source_manifest']==wmref and qualification['control_Source_manifest']==cmref and qualification['all_current_bootstrap_request_references_consistent']is False,'explicit example qualification')
+need('stale requestSHA'in owner['qualification']and'own specification'in owner['qualification'],'Root ownership retains review/fixture qualifications')
+need(gate['schema']=='ROOT_L026_FIXED_SUBSET_PROPOSER_GATE_V1'and gate['root']=='/root'and gate['Root_authority']is gate['adopted']is gate['Source_and_math_owned']is True,'fresh positive gate')
+need(gate['control_Source_manifest']==cmref and gate['request']==PINS[str(B/'adoptions/controls_request.json')]and gate['independent_Source_review']==owner['Source_peer'],'real gate binds real request/peer')
+need(request['schema']=='L026_FIXED_SUBSET_CONTROLS_REQUEST_V1'and request['Root_authority']is False,'actual controls request')
+for m,k,want in((cm,'controls.py',51759),(wm,'propose.py',51805)):
+    need(m['entry']==k and m['schema']=='L026_FIXED_SUBSET_PROPOSER_SOURCE_V1','exact role entry')
+    for r in m['Source']:rr(r)
+    need(sum(r['bytes']for r in m['Source'])+512==want<=65536,'closed complete Source namespace')
+
+G=B/'actual/guards/controls_v2';python=request['python_executable']
+child=[python,'-E','-B','-S',str(B/'controls.py'),'--manifest',cmref['path'],str(cmref['bytes']),cmref['sha256'],'--request',str(B/'adoptions/controls_request.json'),'363',PINS[str(B/'adoptions/controls_request.json')]['sha256'],'--Root-gate',str(B/'adoptions/controls_gate.json'),'1108',PINS[str(B/'adoptions/controls_gate.json')]['sha256'],'--guard',str(G),'--out','/private/tmp/l026_fixed_subset_proposer_controls_actual']
+expected=['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES',python,'-E','-B',str(B.parents[1]/'runtime/supervise_validation.py'),'--volume','/Users/sasha/medusa','--output',str(G),'--rss-cap-mib','128','--timeout','150','--',*child]
+# B is intake/package; its parent.parent is maintenance.
+need(sdk['issued_argv']==expected,'whole literal ENV5/PYEB/supervisor/PYEBS wrapper')
+terminal=dec(frame['output']);need(terminal==dict(status='PASS',stop='RETURNED',receipt=str(G/'receipt.json')),'API terminal points to genuine receipt')
+started=doc(G/'started.json');receipt=doc(G/'receipt.json');stdout=read(G/'stdout.log');stderr=read(G/'stderr.log')
+need(started['command']==receipt['command']==child and started['limits']==receipt['limits']and started['admission']==receipt['admission'],'guard child/limit/admission joins')
+limits=dict(admit_disk=10737418240,admit_ram=4294967296,disk_floor=8589934592,ram_floor=3221225472,total_rss=134217728,wall_seconds=150.0,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+need(started['limits']==limits,'all exact unchanged guard limits')
+need(receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['error']is None and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]and stderr==b'','terminal clean actual control role')
+need(receipt['logs']==dict(stdout=len(stdout),stderr=0)and 0<=receipt['seconds']<150,'whole logs/time')
+need(len(started['identities'])==len(receipt['identities'])==1,'one actual child identity')
+a=started['identities'][0];z=receipt['identities'][0]
+need(all(a[k]==z[k]for k in('pid','birth','initial_parent','group','session'))and a['pid']==a['group']==a['session'],'birth-pinned child/session')
+need(started['admission']['free_disk']>=limits['admit_disk']and started['admission']['available_ram']>=limits['admit_ram'],'actual admission')
+need(receipt['peaks']['total_rss']<=limits['total_rss']and receipt['peaks']['min_free_disk']>=limits['disk_floor']and receipt['peaks']['min_available_ram']>=limits['ram_floor'],'sampled resource floors')
+out=dec(stdout);need(out['status']=='PASS'and out['controls']==28 and out['Original_inputs_loaded']is False,'actual child stdout')
+need({Path(r['path']).name for r in out['outputs']}=={'certificate.json','proof.json'}and len(out['outputs'])==2,'two exact outputs')
+for r in out['outputs']:rr(r);need(r['bytes']<=131072,'whole output cap')
+output_dir=Path('/private/tmp/l026_fixed_subset_proposer_controls_actual');need(sorted(p.name for p in output_dir.iterdir())==['certificate.json','proof.json'],'exclusive two-file output directory')
+cert=doc(output_dir/'certificate.json');proof=doc(output_dir/'proof.json')
+need(all(proof[k]==v for k,v in cert.items()),'whole certificate/proof shared content')
+need(cert['schema']=='L026_FIXED_SUBSET_CONTROLS_RESULT_V1'and cert['status']=='PASS'and cert['Source_manifest']==cmref and cert['worker_manifest']==wmref and cert['controls']==28,'exact result manifest/count')
+need(cert['Original_inputs_loaded']is False and cert['scientific_calls']==cert['canonical_writes']==0 and cert['new_glue_controls_not_old32_control_replay']is cert['no_named_Fi22_or_original_bridge_claimed']is True,'Original-free toy/control-only scope')
+names=cert['names'];need(len(names)==len(set(names))==28 and all(type(s)is str for s in names),'28 distinct toy results')
+tree=ast.parse(read(B/'controls.py').decode());expected_names=[n.args[0].value for n in ast.walk(tree)if isinstance(n,ast.Call)and isinstance(n.func,ast.Name)and n.func.id in('yes','no','stopped')and n.args and isinstance(n.args[0],ast.Constant)and type(n.args[0].value)is str]
+need(len(expected_names)==len(set(expected_names))==28 and set(names)==set(expected_names),'all actual28 literal control sites, no replay of functions')
+need(proof['pins']==dict(manifest=cmref,request=PINS[str(B/'adoptions/controls_request.json')],Root_gate=PINS[str(B/'adoptions/controls_gate.json')]),'exact proof/bootstrap pins')
+worker_inputs={r['path']:r for r in cm['Source']+wm['Source']}
+for r in(cmref,wmref,PINS[str(B/'adoptions/controls_request.json')],PINS[str(B/'adoptions/controls_gate.json')],owner['Source_peer'],PINS[str(G/'started.json')]):worker_inputs[r['path']]=r
+nominal=59889+sum(r['bytes']for r in cm['Source'])-23167+512
+need(len(worker_inputs)==16 and proof['physical_reads']==2*sum(r['bytes']for r in worker_inputs.values())+nominal==225425,'independent scalar first/closing plus nominal IO accounting')
+need(proof['point_units']==237022<10000000 and proof['point_units']+3*sum(r['bytes']for r in out['outputs'])<10000000,'reported and final publication work caps')
+oldguard=B/'actual/guards/controls';need(not os.path.lexists(oldguard),'failed supervisor guard remains absent')
+normalized=[str(G)if x==str(oldguard)else x for x in v1['issued_argv']];need(normalized==sdk['issued_argv'],'only actual guard namespace differs across supervisor attempts')
+need('args.output.mkdir(mode=0o700)'in failed['output']and'FileNotFoundError'in failed['output']and str(oldguard)in failed['output'],'genuine v1 failure before Popen/child')
+need('child = subprocess.Popen'in read(B.parents[1]/'runtime/supervise_transient.py').decode(),'literal supervisor before-child Source ordering retained')
+for p,b in RAW.items():need(Path(p).read_bytes()==b,'whole closing input identity')
+summary=dict(schema='L026_FIXED_SUBSET_CONTROLS_EXECUTION_METADATA_CHECK_V1',reviewer='/root/forest_resume',Root_authority=False,status='SUPPORTED_ACTUAL_L026_FIXED_SUBSET_PROPOSER_CONTROLS',blockers=[],Source_manifest=cmref,worker_manifest=wmref,actual_SDK=PINS[str(B/'actual/Root_SDK/controls_v2.json')],prior_failed_SDK=PINS[str(B/'actual/Root_SDK/controls_v1.json')],Root_ownership_SDK=PINS[str(B/'actual/Root_SDK/controls_authority_v1.json')],Source_peer=owner['Source_peer'],Source_peer_qualification=PINS[str(B/'source_review/template_link_qualification.json')],Root_ownership=PINS[str(B/'adoptions/controls_Source_ownership.json')],request=PINS[str(B/'adoptions/controls_request.json')],Root_gate=PINS[str(B/'adoptions/controls_gate.json')],guard={n:PINS[str(G/n)]for n in('started.json','receipt.json','stdout.log','stderr.log')},certificate=PINS[str(output_dir/'certificate.json')],result=PINS[str(output_dir/'proof.json')],controls=28,names=names,Original_inputs_loaded=False,actual_guard_and_raw_frames_verified=True,whole_Source_and_inputs_closed=True,whole_Source_and_inputs_scope='Current active controls Source + actual direct metadata inputs/outputs; no recursive old actual or future Original ancestry.',first_worker_execution=True,successful_wrapper_edition=2,supervisor_v1_failed_before_child=True,Sourcepeer_and_control_specification_contribution_disclosed=True,independent_verification_of_own_control_design_claimed=False,represented_Source_or_controls_rerun=False,Original_operand_evaluation=False,canonical_writes=0,worker_reported_reads=proof['physical_reads'],worker_reported_point_units=proof['point_units'],worker_final_units_after_publication=proof['point_units']+3*sum(r['bytes']for r in out['outputs']),metadata_reader=dict(paths=len(RAW),bytes=READ,Source_only_and_scalar_actual_metadata=True),pins=list(PINS.values()))
+print(json.dumps(summary,sort_keys=True,separators=(',',':')))

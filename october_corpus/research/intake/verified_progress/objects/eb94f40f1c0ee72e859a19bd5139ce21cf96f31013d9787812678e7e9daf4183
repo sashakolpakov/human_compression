@@ -1,0 +1,622 @@
+--- /Users/sasha/medusa/research/leemans/maintenance/intake/progress/stages/reviewed_direct_and_invariant_unions/update.py
++++ /Users/sasha/medusa/research/leemans/maintenance/intake/l026_negative_progress_activation/activate.py
+@@ -1,194 +1,430 @@
+-"""Root administrative activation of seven reviewed typed facts; no scientific program runs.
+-
+-Derived from the accepted count-binding normalizer activation; Source-only successor. Source preparation grants no
+-authority and changes no state. Only a later, separately owned Root execution
+-can publish the progress pointers. The mathematical ledger is read-only here.
++"""Generic NEG-only progress activation. Original scientific payloads remain opaque.
++
++Root owns every actual invocation. Preparation writes private images only;
++publication requires an independently reviewed plan and a separate Root decision.
+ """
+-import argparse,datetime,hashlib,json,os,pathlib,signal,sys,time
++from pathlib import Path
++import argparse,datetime,hashlib,json,os,resource,signal,sys,time
+ sys.path.insert(0,'/private/tmp/intake_metadata')
+-from whole import Ledger
+-
+-B=pathlib.Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress')
+-STAGE=B/'stages/reviewed_direct_and_invariant_unions'
+-REFS={'prepared': ('/private/tmp/l026_seven_facts_ledger_actual/prepared.json', 2248, 'd9eab9529cac54b7795f87a00be988ea6451e08000d42579607736148456141d'), 'plan': ('/private/tmp/l026_seven_facts_ledger_actual/append_plan.json', 41602, 'abc490a3e31a399dbb974ff4a5812a9206e0e2566f6c99c8d04bf844cffeff40'), 'Root_release': ('/private/tmp/l026_seven_facts_ledger_actual/Root_release.json', 4239, '876c7f6662812728136ecac55b3f4f0e7b73b879882b115b5125afafdf142c4d')}
+-
+-def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'))+'\n').encode()
+-def descriptor(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+-def reference(x):return dict(path=x[0],bytes=x[1],sha256=x[2])
+-def counts(b):
+- assert len(b)==28908 and set(b)<=set((0,1,2,6))
+- return dict(GEN=b.count(2)+b.count(6),separate_IP=b.count(6),subset_NEG=b.count(1),unpaid=b.count(0))
+-
++from whole import Ledger,signature
++
++AUTHOR='/root/dependency_audit'
++BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
++PROGRESS=BASE/'progress'
++COHORTS=BASE/'f009_cohort_preparation/cohorts'
++LEDGER=BASE/'l026_fi22_neighborhood_orbits/operations/triangle_quotients/paid_status_ledger'
++SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
++WRITER='73e75fab70d798b46d5ca78e01ea438a8af579c691f61c5b74b2b09e7658fef7'
++HELPER=dict(path='/private/tmp/intake_metadata/whole.py',bytes=3744,sha256='685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550')
++START=time.monotonic()
++FORBIDDEN={'parents','parent','records','covers','cache_entries','representatives','next_parent_forests','forest','forests','matrices','permutations','transporter','transporters','witness','marks','model','seed','points'}
++
++def budget():
++    assert time.monotonic()-START<115
++    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
++
++def ref(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
++def can(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
++def descriptor(r):
++    assert type(r)is dict and set(r)=={'path','bytes','sha256'}
++    assert type(r['path'])is str and Path(r['path']).is_absolute()
++    assert type(r['bytes'])is int and 0<=r['bytes']<=4*2**20
++    assert type(r['sha256'])is str and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef')
++    return r
++
++def raw(L,r):
++    descriptor(r);body,actual=L.raw(r['path'],r);assert actual==r;budget();return body
++
++def file(L,path):
++    body,r=L.raw(Path(path));budget();return body,r
++
++def doc(L,r):return metadata(raw(L,r))
++def plain(L,path):
++    body,r=file(L,path);return metadata(body),r
++
++def object_bytes(values):
++    return b'{'+b','.join(json.dumps(k,ensure_ascii=True).encode()+b':'+values[k]for k in sorted(values))+b'}\n'
++
++def array_bytes(values):return b'['+b','.join(values)+b']'
++def enc(value):return json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
++def patch(body,updates):
++    f=fields(body);f.update({k:enc(v)for k,v in updates.items()});return object_bytes(f)
++def patch_raw(body,updates):
++    f=fields(body);f.update(updates);return object_bytes(f)
++def pick(body,key):return metadata(fields(body)[key])
++def integer(x,lo=0,hi=10**9):
++    assert type(x)is int and lo<=x<=hi;return x
++
++def changed_only(before,after,allowed):
++    a,b=fields(before),fields(after)
++    assert set(a)-allowed==set(b)-allowed
++    assert all(a[k]==b[k]for k in a if k not in allowed)
++
++def same_known_counts(body,counts):
++    f=fields(body)
++    for k,value in counts.items():assert integer(metadata(f[k]))==value
++
++def status_counts(mask):
++    assert type(mask)is bytes and len(mask)==28908 and set(mask)<=set((0,1,2,6))
++    return dict(GEN=mask.count(2)+mask.count(6),separate_IP=mask.count(6),subset_NEG=mask.count(1),unpaid=mask.count(0))
++
++def neg_delta(before,after,facts):
++    old,new=status_counts(before),status_counts(after)
++    assert type(facts)is list and 1<=len(facts)<=16
++    assert all(type(x)is dict and set(x)=={'kind','free_index','owner','witness_row_sha256','proof'}for x in facts)
++    indices=[]
++    for x in facts:
++        assert x['kind']=='NEG';i=integer(x['free_index'],0,28907);indices.append(i)
++        integer(x['owner'],0,3509);integer(x['proof'],0,15)
++        h=x['witness_row_sha256'];assert type(h)is str and len(h)==64 and set(h)<=set('0123456789abcdef')
++    assert indices==sorted(set(indices))
++    changes=[dict(index=i,before=a,after=b)for i,(a,b)in enumerate(zip(before,after))if a!=b]
++    assert changes==[dict(index=i,before=0,after=1)for i in indices]
++    assert new==dict(GEN=old['GEN'],separate_IP=old['separate_IP'],subset_NEG=old['subset_NEG']+len(indices),unpaid=old['unpaid']-len(indices))
++    return old,new,indices,changes
++
++def no_active_cohort(L,prefix):
++    p=COHORTS/('cohort_from%04d'%integer(prefix,0,940))/'cohort.json'
++    if p.exists():
++        _,r=file(L,p)
++        raise ValueError('Unregistered cohort exists at the current prefix: '+r['path'])
++
++def cache_keys(L,runtime):
++    f=fields(runtime);inline=fields(f['cache_entries']);keys=set(inline);banks=array(f['cache_banks'])
++    for entry in banks:
++        b=metadata(entry);integer(b['entries']);assert type(b['keys'])is list and all(type(k)is str for k in b['keys'])
++        body=raw(L,b['ref']);values=fields(fields(body)['cache_entries'])
++        assert b['entries']==len(values)and b['keys']==sorted(values)and not keys.intersection(values)
++        keys.update(values)
++    return keys,banks
++
++def ws(b,i):
++    while i<len(b)and b[i]in b' \r\n\t':i+=1
++    return i
++
++def end_string(b,i):
++    assert b[i]==34;i+=1
++    while i<len(b):
++        if b[i]==92:i+=2
++        elif b[i]==34:return i+1
++        else:i+=1
++    raise ValueError('unterminated string')
++
++def end_value(b,i):
++    if b[i]==34:return end_string(b,i)
++    if b[i]in b'[{':
++        stack=[b[i]];i+=1
++        while stack:
++            assert i<len(b)and len(stack)<=4096
++            if b[i]==34:i=end_string(b,i);continue
++            if b[i]in b'[{':stack.append(b[i])
++            elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
++            i+=1
++        return i
++    while i<len(b)and b[i]not in b',]} \r\n\t':i+=1
++    return i
++
++def fields(b):
++    i=ws(b,0);assert b[i]==123;i=ws(b,i+1);out={}
++    while b[i]!=125:
++        j=end_string(b,i);key=json.loads(b[i:j]);assert key not in out
++        i=ws(b,j);assert b[i]==58;i=ws(b,i+1);j=end_value(b,i);out[key]=b[i:j];i=ws(b,j)
++        if b[i]==44:i=ws(b,i+1)
++        else:assert b[i]==125
++    assert ws(b,i+1)==len(b);return out
++
++def array(b):
++    i=ws(b,0);assert b[i]==91;i=ws(b,i+1);out=[]
++    while b[i]!=93:
++        j=end_value(b,i);out.append(b[i:j]);i=ws(b,j)
++        if b[i]==44:i=ws(b,i+1)
++        else:assert b[i]==93
++    assert ws(b,i+1)==len(b);return out
++
++def metadata(b):
++    b=b.strip()
++    if b[:1]==b'{':
++        f=fields(b);assert not FORBIDDEN&set(f)
++        return{k:metadata(v)for k,v in f.items()}
++    if b[:1]==b'[':return[metadata(v)for v in array(b)]
++    return json.loads(b)
++
++def equivalent(a,b):
++    budget()
++    if a==b:return True
++    a,b=a.strip(),b.strip()
++    if a==b:return True
++    if a[:1]==b'{':
++        if b[:1]!=b'{':return False
++        af,bf=fields(a),fields(b)
++        return set(af)==set(bf)and all(equivalent(af[k],bf[k])for k in af)
++    if a[:1]==b'[':
++        if b[:1]!=b'[':return False
++        aa,ba=array(a),array(b)
++        return len(aa)==len(ba)and all(equivalent(x,y)for x,y in zip(aa,ba))
++    return False
++
++def checked_review(x):
++    assert type(x)is dict and x['status'].startswith('SUPPORTED_') and x['blockers']==[]
++    assert type(x['reviewer'])is str and x['reviewer']not in('/root',AUTHOR,'/root/readback_review')
++
++def root_record(x,schema):
++    assert x['schema']==schema and x['root']=='/root'and x['Root_authority']is True and x['blockers']==[]
++
++def opaque_actual_review(x):
++    checked_review(x);assert x['status'].startswith('SUPPORTED_ACTUAL')and x['Original_payloads_decoded']is False
++
++def fresh(path,body):
++    assert not os.path.lexists(path)and path.parent.resolve(strict=True)==path.parent
++    with path.open('xb')as stream:
++        assert stream.write(body)==len(body);stream.flush();os.fsync(stream.fileno())
++
++def cache_key(key,keys):
++    assert type(key)is str and 1<=len(key)<=160 and key not in keys;return key
++
++def fresh_match(path,wanted):
++    assert path.resolve(strict=True)==path and not path.is_symlink()
++    before=path.stat();assert before.st_nlink==1 and before.st_size<=4*2**20
++    with path.open('rb')as stream:
++        assert signature(os.fstat(stream.fileno()))==signature(before);body=stream.read(4*2**20+1);after=os.fstat(stream.fileno())
++    assert signature(before)==signature(after)==signature(path.stat())and ref(path,body)==wanted
++    return len(body)
++
++def safe_name(name):
++    assert type(name)is str and 1<=len(name)<=72 and name[0].isalpha()
++    assert set(name)<=set('abcdefghijklmnopqrstuvwxyz0123456789_-');return name
++
++def snapshot(L):
++    ib,ir=file(L,PROGRESS/'current_intake.json');cb,cr=file(L,PROGRESS/'controllers/current.json')
++    rref=pick(cb,'checkpoint');rb=raw(L,rref)
++    assert pick(ib,'active_controller_checkpoint')==rref
++    assert pick(ib,'root')==pick(cb,'root')==pick(rb,'root')=='/root'
++    return dict(intake=ir,controller=cr,runtime=rref),(ib,cb,rb)
++
++def source(L,peerref):
++    own,program=file(L,Path(__file__).resolve());mf,mfr=plain(L,Path(__file__).with_name('SOURCE_MANIFEST.json'))
++    assert mf['schema']=='L026_NEG_ACTIVATION_SOURCE_V1'and mf['program']==program
++    assert mf['sources'][0]==program and len({r['path']for r in mf['sources']})==len(mf['sources'])
++    assert HELPER in mf['sources']
++    for r in mf['sources']:raw(L,r)
++    assert mf['Source_union_guards512_bytes']==sum(r['bytes']for r in mf['sources'])+512
++    assert mf['Source_union_guards512_bytes']<=mf['Source_read_namespace_bound']<=131072
++    assert mf['controls_program']in mf['sources']
++    protocol=mf['protocol'];raw(L,protocol)
++    raw(L,mf['controls_Source_manifest'])
++    peer=doc(L,peerref);checked_review(peer)
++    assert peer['status']=='SUPPORTED_STATIC_L026_NEG_ACTIVATION_SOURCE'
++    assert peer['program']==program and peer['Source_manifest']==mfr and peer['protocol']==protocol
++    assert peer['controls_program']==mf['controls_program']and peer['controls_Source_manifest']==mf['controls_Source_manifest']
++    return program,mfr,protocol,own
++
++def admit(L,requestref,peerref):
++    program,mfr,protocol,own=source(L,peerref);request=doc(L,requestref)
++    root_record(request,'ROOT_L026_NEG_ACTIVATION_PREPARATION_V1')
++    for k,v in dict(program=program,Source_manifest=mfr,protocol=protocol,Source_peer=peerref).items():assert request[k]==v
++    for k in('whole_Source_and_protocol_read','sole_canonical_writer','no_scientific_worker_or_Original_predicate','no_active_unregistered_F009_cohort'):
++        assert request[k]is True
++    controls=doc(L,request['controls_review']);opaque_actual_review(controls)
++    assert controls['status'].startswith('SUPPORTED_ACTUAL')and controls['program']==program and controls['Source_manifest']==mfr
++    assert controls['Original_payloads_decoded']is False and controls['actual_guard_and_raw_frames_verified']is True
++    mf=doc(L,mfr);assert controls['controls_Source_manifest']==mf['controls_Source_manifest']
++    names=controls['control_names'];assert type(names)is list and all(type(k)is str for k in names)and integer(controls['count'],1,64)==len(names)==len(set(names))
++    return request,(program,mfr,protocol,own)
++
++def ledger_delta(L,request,ib,rb):
++    postref=request['postwrite_review'];post=doc(L,postref);opaque_actual_review(post)
++    assert post['status'].startswith('SUPPORTED_ACTUAL')
++    assert post['publication_verified']is post['Root_canonical_write_issued']is True
++    assert post['Original_payloads_decoded']is False
++    canon=post['canonical'];assert set(canon)=={'current','receipt','bank','batch'}
++    cur=doc(L,canon['current']);receipt=doc(L,canon['receipt']);after=raw(L,canon['bank']);batch=doc(L,canon['batch'])
++    lf=fields(fields(ib)['L026']);prior=metadata(lf['current_typed_ledger'])
++    assert canon['current']['path']==str(LEDGER/'CURRENT.json')
++    assert cur['schema']=='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1'and cur['root']=='/root'and cur['adopted']is True and cur['scope_digest']==SCOPE
++    assert cur['ledger_receipt']==canon['receipt']and cur['status_bank']==canon['bank']
++    for d in(receipt,batch):
++        assert d['root']=='/root'and d['adopted']is True and d['Root_adoption_owed']is False and d['scope_digest']==SCOPE
++    assert receipt['schema']=='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1'
++    assert batch['schema']=='ROOT_ACCEPTED_L026_BOUNDED_TYPED_PROOF_BATCH_V1'
++    assert batch['Original_conjecture_Lean_or_measurement_credit']==0 and batch['strict_IP0_unchanged']is True
++    planref,release_ref=post['plan'],post['Root_release'];pb=raw(L,planref);pf=fields(pb);release=doc(L,release_ref)
++    assert pick(pb,'mode')=='append'and pick(pb,'expected_current')==prior['current']
++    assert pick(pb,'previous_bank')==prior['bank']and pick(pb,'previous_receipt')==prior['receipt']
++    assert pick(pb,'scope_digest')==SCOPE and release['root']=='/root'
++    assert release['schema']=='ROOT_REVIEWED_L026_BOUNDED_TYPED_PAID_LEDGER_V1'and release['status']=='SUPPORTED'and release['blockers']==[]
++    assert release['plan']==planref and release['program']['sha256']==WRITER
++    assert release['metadata_only']is release['typed_new_facts_and_strict_closure_supported']is release['metadata_publication_authorized']is True
++    raw(L,release['program']);assert receipt['writer']==batch['writer']==dict(program=release['program'],plan=planref,Root_release=release_ref,scientific_calls=0)
++    assert receipt['typed_new_batch']==canon['batch']and receipt['status_bank']==canon['bank']
++    assert receipt['previous_ledger']==batch['previous_ledger']==prior['receipt']
++    aliases=post['historical_mutable_input_aliases'];assert type(aliases)is list
++    selected=[x for x in aliases if x['original']==prior['current']];assert len(selected)==1
++    alias=selected[0]['retained'];assert(alias['bytes'],alias['sha256'])==(prior['current']['bytes'],prior['current']['sha256'])
++    historical_body=raw(L,alias);historical=metadata(historical_body)
++    assert historical['status_bank']==prior['bank']and historical['ledger_receipt']==prior['receipt']
++    assert equivalent(patch(can(cur),dict(ledger_receipt=prior['receipt'],status_bank=prior['bank'])),historical_body)
++    before=raw(L,prior['bank']);old_receipt=doc(L,prior['receipt'])
++    facts=metadata(pf['facts']);old,new,indices,changes=neg_delta(before,after,facts)
++    assert set(old_receipt['counts'])==set(old)and all(integer(old_receipt['counts'][k])==v for k,v in old.items())and old_receipt['status_bank']==prior['bank']
++    assert old_receipt['scope_digest']==SCOPE and old_receipt['root']=='/root'and old_receipt['adopted']is True
++    assert set(receipt['counts'])==set(post['counts'])==set(new)
++    assert all(integer(receipt['counts'][k])==integer(post['counts'][k])==v for k,v in new.items())
++    assert post['registered_total']==new['GEN']+new['subset_NEG']
++    assert integer(post['new_NEG'],1,16)==len(indices)and type(post['new_GEN'])is int and post['new_GEN']==0 and type(post['new_IP'])is int and post['new_IP']==0
++    assert integer(post['exact_changes'],1,16)==len(indices)and post['exact_status_changes']==changes
++    assert can(batch['new_facts'])==can(facts)
++    expected=[dict(free_index=x['free_index'],before=0,after=1,kind='NEG',owner=x['owner'],witness_row_sha256=x['witness_row_sha256'],proof=x['proof'])for x in facts]
++    assert can(batch['exact_monotone_changes'])==can(expected)
++    assert receipt['original_free_space']==28908 and receipt['fixed_nonfree_NEG_count']==17688
++    assert receipt['global_NEG']==17688+new['subset_NEG']and receipt['unpaid_mass']==1024*new['unpaid']
++    for k in('original_selector','witness_bank','original_free_witness_adoption','original_operand_adoption'):
++        assert receipt[k]==batch[k]==old_receipt[k]
++    same_known_counts(fields(ib)['L026'],dict(paid=old['GEN']+old['subset_NEG'],generation=old['GEN'],proper=old['subset_NEG'],subset_NEG=old['subset_NEG'],separate_IP=old['separate_IP'],unpaid=old['unpaid'],bank_unresolved=old['unpaid']))
++    same_known_counts(fields(rb)['counts'],dict(L026_paid=old['GEN']+old['subset_NEG'],L026_GEN=old['GEN'],L026_NEG=old['subset_NEG'],L026_separate_IP=old['separate_IP'],L026_unpaid=old['unpaid']))
++    return dict(postwrite_review=postref,canonical=canon,prior=prior,old=old,new=new,indices=indices,changes=changes,plan=planref,Root_release=release_ref,batch_raw=raw(L,canon['batch']),historical_CURRENT_alias=alias)
++
++def progress_context(L,ib,cb,rb):
++    intake=pick(ib,'intake');counts=pick(rb,'counts');f9=fields(fields(ib)['F009'])
++    assert integer(intake['complete_reviewed_treatments'])==integer(counts['complete_manuscripts'])==101
++    assert integer(intake['mathematical_originals'])==integer(counts['total_mathematical'])==104
++    assert pick(ib,'measurements_frozen')==dict(applications=53,topics=19)
++    prefix=integer(metadata(f9['R5_canonical_pairs_reviewed']),0,940)
++    slots=integer(metadata(f9['R5_prefix_strict_slots_reviewed']),0,146640)
++    assert slots==156*prefix and integer(metadata(f9['R5_total_distinct_canonical_parents_reviewed']))==prefix
++    assert integer(counts['R5_canonical_pairs_reviewed'])==prefix and integer(counts['R5_prefix_strict_slots_reviewed'])==slots
++    no_active_cohort(L,prefix);keys,banks=cache_keys(L,rb)
++    return prefix,slots,keys,banks
++
++def make_images(ib,cb,rb,snap,delta,stage,key,next_text,now,own):
++    new=delta['new'];canon=delta['canonical'];prior=delta['prior']
++    out={}
++    def add(name,body):
++        assert type(body)is bytes and len(body)<=4*2**20 and '/'not in name
++        dest=stage/name;assert str(dest)not in out;out[str(dest)]=body;return ref(dest,body)
++    ibefore=add('intake_before_update.json',ib);cbefore=add('controller_before_update.json',cb);rbefore=add('runtime_before_update.json',rb)
++    entry=object_bytes(dict(ref=enc(canon['batch']),value=delta['batch_raw'].strip(),independent_actual_review=enc(delta['postwrite_review']),independent_actual_review_pending=b'false',completed_value_unchanged=b'true',canonical_registered_indices=enc(delta['indices']),new_GEN=b'0',new_NEG=enc(len(delta['indices'])),new_IP=b'0',typed_append_plan=enc(delta['plan']),Root_release=enc(delta['Root_release']),Original_conjecture_Lean_measurement_credit=b'0'))
++    cache_body=object_bytes(dict(schema=enc('ROOT_INTAKE_CACHE_ENTRY_BANK_V1'),root=enc('/root'),completed_science_values_immutable=b'true',topics=enc(['L026']),cache_entries=object_bytes({key:entry})))
++    cache=add('execution_cache.json',cache_body)
++    current=dict(canon,postwrite_review=delta['postwrite_review'],postwrite_review_pending=False)
++    lraw=fields(ib)['L026'];lnew=patch(lraw,dict(paid=new['GEN']+new['subset_NEG'],generation=new['GEN'],proper=new['subset_NEG'],subset_NEG=new['subset_NEG'],separate_IP=new['separate_IP'],unpaid=new['unpaid'],bank_unresolved=new['unpaid'],current_typed_ledger=current,negative_progress_activation=current,next=next_text))
++    changed_only(lraw,lnew,{'paid','generation','proper','subset_NEG','separate_IP','unpaid','bank_unresolved','current_typed_ledger','negative_progress_activation','next'})
++    checkpoint=dict(postwrite_review=delta['postwrite_review'],new_cache_bank=cache,typed_append_plan=delta['plan'],Root_release=delta['Root_release'],scientific_calls=0,new_Original_conjecture_Lean_measurement_credit=0,all_prior_cache_values_and_unknown_fields_preserved=True)
++    counts=patch(fields(rb)['counts'],dict(L026_GEN=new['GEN'],L026_NEG=new['subset_NEG'],L026_paid=new['GEN']+new['subset_NEG'],L026_unpaid=new['unpaid'],L026_separate_IP=new['separate_IP']))
++    banks=array(fields(rb)['cache_banks']);newbank=enc(dict(entries=1,keys=[key],ref=cache))
++    runtime=patch_raw(rb,dict(cache_banks=array_bytes(banks+[newbank]),counts=counts,next_L026_current_snapshot=enc(dict(CURRENT=canon['current'],receipt=canon['receipt'],bank=canon['bank'],postwrite_review=delta['postwrite_review'])),next_L026_method=enc(next_text),negative_progress_activation=enc(checkpoint),previous_checkpoint=enc(snap['runtime']),observed_utc=enc(now)))
++    rr=add('runtime.json',runtime)
++    intake=patch_raw(ib,dict(L026=lnew,negative_progress_activation=enc(checkpoint),previous_checkpoint=enc(ibefore),active_controller_checkpoint=enc(rr),observed_utc=enc(now)))
++    controller=patch(cb,dict(previous_controller=cbefore,checkpoint=rr))
++    ir=add('intake_after_update.json',intake);cr=add('controller_after_update.json',controller)
++    add('activation_source.py',own)
++    changed_only(ib,intake,{'L026','negative_progress_activation','previous_checkpoint','active_controller_checkpoint','observed_utc'})
++    changed_only(cb,controller,{'previous_controller','checkpoint'})
++    changed_only(rb,runtime,{'cache_banks','counts','next_L026_current_snapshot','next_L026_method','negative_progress_activation','previous_checkpoint','observed_utc'})
++    changed_only(fields(rb)['counts'],counts,{'L026_GEN','L026_NEG','L026_paid','L026_unpaid','L026_separate_IP'})
++    assert fields(rb)['cache_entries']==fields(runtime)['cache_entries']and banks==array(fields(runtime)['cache_banks'])[:-1]
++    return out,dict(intake=ir,controller=cr,runtime=rr,cache=cache,intake_before=ibefore,controller_before=cbefore,runtime_before=rbefore)
++
++def prepare(L,requestref,peerref):
++    request,src=admit(L,requestref,peerref);program,mfr,protocol,own=src
++    snap,(ib,cb,rb)=snapshot(L);assert request['snapshot']==snap
++    prefix,slots,keys,banks=progress_context(L,ib,cb,rb);delta=ledger_delta(L,request,ib,rb)
++    stage=PROGRESS/'stages'/safe_name(request['stage_name']);private=Path(__file__).resolve().parent/'plans'/safe_name(request['private_name'])
++    assert not os.path.lexists(stage)and not os.path.lexists(private)
++    key=cache_key(request['cache_key'],keys)
++    text=request['next_text'];assert type(text)is str and 1<=len(text)<=4096
++    now=datetime.datetime.now(datetime.timezone.utc).isoformat()
++    out,images=make_images(ib,cb,rb,snap,delta,stage,key,text,now,own)
++    # Source is already in Ledger: this path is a cached exact Source body, not a new uncharged input.
++    assert out[str(stage/'activation_source.py')]==own
++    output_bytes=sum(map(len,out.values()));assert output_bytes+65536<=16*2**20
++    items=[dict(final=r,private=dict(r,path=str(private/Path(path).name)))for path,body in out.items()for r in[ref(path,body)]]
++    declared_upper=2*L.bytes+2*output_bytes+262144
++    assert declared_upper<=64*2**20 and len(L.pins)+3*len(items)+32<=512
++    prepared=dict(schema='L026_NEG_ACTIVATION_PRIVATE_PLAN_V1',author=AUTHOR,Root_authority=False,program=program,Source_manifest=mfr,protocol=protocol,Source_peer=peerref,Root_request=requestref,controls_review=request['controls_review'],postwrite_review=delta['postwrite_review'],snapshot=snap,stage=str(stage),private=str(private),images=images,outputs=items,input_refs=[r for _,r,_ in L.pins.values()],cache_key=key,prior_cache_values=len(keys),new_cache_values=1,total_cache_values=len(keys)+1,F009_prefix=prefix,F009_slots=slots,old_counts=delta['old'],new_counts=delta['new'],indices=delta['indices'],changes=delta['changes'],historical_CURRENT_alias=delta['historical_CURRENT_alias'],whole_private_afterimages_and_inverse_generated=True,Original_payloads_decoded=False,scientific_calls=0,canonical_mutation=False,declared_metadata_read_upper=declared_upper,declared_path_upper=len(L.pins)+3*len(items)+32,declared_output_upper=output_bytes+65536,no_multifile_atomicity_claim=True)
++    body=can(prepared);assert len(body)<=65536
++    L.close();private.parent.mkdir(parents=True,exist_ok=True);private.mkdir()
++    for item in items:
++        rawbody=out[item['final']['path']];fresh(Path(item['private']['path']),rawbody)
++    fresh(private/'plan.json',body)
++    V=Ledger()
++    for item in items:raw(V,item['private'])
++    raw(V,ref(private/'plan.json',body));V.close()
++    nominal=131072
++    assert L.bytes+V.bytes+nominal<=declared_upper
++    print(json.dumps(dict(status='PREPARED_PRIVATE_NEG_ACTIVATION',plan=ref(private/'plan.json',body),snapshot=snap,scientific_calls=0,canonical_mutation=False,private_output_bytes=output_bytes,tracked_metadata_read_bytes=L.bytes+V.bytes,nominal_Source_bootstrap_allowance=nominal,total_declared_metadata_read_bytes=L.bytes+V.bytes+nominal),sort_keys=True))
++
++def compare_snapshot(L,wanted):
++    got,bodies=snapshot(L);assert got==wanted;return bodies
++
++def apply(L,requestref,peerref,planref,reviewref,decisionref):
++    request,src=admit(L,requestref,peerref);program,mfr,protocol,own=src
++    plan=doc(L,planref);assert plan['schema']=='L026_NEG_ACTIVATION_PRIVATE_PLAN_V1'
++    for k,v in dict(program=program,Source_manifest=mfr,protocol=protocol,Source_peer=peerref,Root_request=requestref,controls_review=request['controls_review'],postwrite_review=request['postwrite_review'],snapshot=request['snapshot']).items():assert plan[k]==v
++    assert plan['Original_payloads_decoded']is False and plan['canonical_mutation']is False and plan['scientific_calls']==0
++    review=doc(L,reviewref);opaque_actual_review(review)
++    assert review['status'].startswith('SUPPORTED_ACTUAL')and review['plan']==planref and review['program']==program and review['Source_manifest']==mfr and review['snapshot']==plan['snapshot']
++    assert review['whole_afterimages_and_typed_preservation_verified']is review['actual_guard_and_raw_frames_verified']is True
++    decision=doc(L,decisionref)
++    root_record(decision,'ROOT_L026_NEG_ACTIVATION_APPLY_V1')
++    for k,v in dict(program=program,Source_manifest=mfr,Source_peer=peerref,plan=planref,plan_review=reviewref,Root_request=requestref,snapshot=plan['snapshot']).items():assert decision[k]==v
++    assert decision['canonical_publication_authorized']is decision['sole_canonical_writer']is decision['no_active_unregistered_F009_cohort']is True
++    ib,cb,rb=compare_snapshot(L,plan['snapshot']);prefix,slots,keys,banks=progress_context(L,ib,cb,rb)
++    assert prefix==plan['F009_prefix']and slots==plan['F009_slots']and len(keys)==plan['prior_cache_values'];cache_key(plan['cache_key'],keys)
++    delta=ledger_delta(L,request,ib,rb);assert delta['old']==plan['old_counts']and delta['new']==plan['new_counts']and delta['indices']==plan['indices']
++    stage=Path(plan['stage']);private=Path(plan['private'])
++    assert stage==PROGRESS/'stages'/safe_name(request['stage_name'])and private==Path(__file__).resolve().parent/'plans'/safe_name(request['private_name'])and not os.path.lexists(stage)
++    images=plan['images'];byname={}
++    for item in plan['outputs']:
++        final,pr=item['final'],item['private'];descriptor(final);descriptor(pr)
++        assert Path(final['path']).parent==stage and Path(pr['path'])==private/Path(final['path']).name
++        assert(final['bytes'],final['sha256'])==(pr['bytes'],pr['sha256'])
++        name=Path(final['path']).name;assert name not in byname;byname[name]=raw(L,pr)
++    assert set(byname)=={'intake_before_update.json','controller_before_update.json','runtime_before_update.json','execution_cache.json','runtime.json','intake_after_update.json','controller_after_update.json','activation_source.py'}
++    assert byname['intake_before_update.json']==ib and byname['controller_before_update.json']==cb and byname['runtime_before_update.json']==rb and byname['activation_source.py']==own
++    # Rebuild the expected images with the retained preparation timestamp; no new time-dependent bytes enter publication.
++    now=pick(byname['intake_after_update.json'],'observed_utc')
++    expected,expected_images=make_images(ib,cb,rb,plan['snapshot'],delta,stage,plan['cache_key'],request['next_text'],now,own)
++    assert expected_images==images and all(expected[str(stage/k)]==v for k,v in byname.items())
++    assert len(L.pins)+3*len(byname)+32<=512
++    # Every original preparation input is still checked; mutable CURRENT is the new accepted ledger, not its old alias.
++    for r in plan['input_refs']:raw(L,r)
++    read_upper=2*L.bytes+2*sum(map(len,byname.values()))+2*sum(images[k]['bytes']for k in('intake','controller','runtime','cache'))+3*(len(ib)+len(cb))+131072
++    assert read_upper<=64*2**20
++    L.close();no_active_cohort(L,prefix)
++    stage.mkdir()
++    for name,body in byname.items():fresh(stage/name,body)
++    V=Ledger()
++    for item in plan['outputs']:raw(V,item['final'])
++    V.close()
++    # No process lock or three-file atomic transaction is claimed. Root owns the sole-writer window.
++    cas_bytes=0
++    cas_bytes+=fresh_match(PROGRESS/'current_intake.json',plan['snapshot']['intake']);cas_bytes+=fresh_match(PROGRESS/'controllers/current.json',plan['snapshot']['controller'])
++    for path,target in((PROGRESS/'controllers/current.json',images['controller']),(PROGRESS/'current_intake.json',images['intake'])):
++        if path.name=='current_intake.json':cas_bytes+=fresh_match(path,plan['snapshot']['intake'])
++        temp=path.with_name('.'+path.name+'.l026_neg_activation');fresh(temp,byname[Path(target['path']).name]);os.replace(temp,path)
++        fd=os.open(path.parent,os.O_RDONLY)
++        try:os.fsync(fd)
++        finally:os.close(fd)
++    A=Ledger();_,ai=A.raw(PROGRESS/'current_intake.json',dict(images['intake'],path=str(PROGRESS/'current_intake.json')));_,ac=A.raw(PROGRESS/'controllers/current.json',dict(images['controller'],path=str(PROGRESS/'controllers/current.json')))
++    raw(A,images['runtime']);raw(A,images['cache']);A.close()
++    total=L.bytes+V.bytes+A.bytes+cas_bytes;nominal=131072;assert total+nominal<=read_upper
++    result=dict(schema='L026_NEG_ACTIVATION_ADMIN_READBACK_V1',root='/root',program=program,Source_manifest=mfr,Source_peer=peerref,Root_request=requestref,Root_decision=decisionref,plan=planref,plan_review=reviewref,intake=ai,controller=ac,runtime=images['runtime'],new_cache_bank=images['cache'],prior_cache_values=len(keys),new_cache_values=1,total_cache_values=len(keys)+1,F009_prefix=prefix,F009_slots=slots,old_counts=delta['old'],new_counts=delta['new'],registered_indices=delta['indices'],all_prior_cache_values_preserved=True,all_unrelated_fields_preserved=True,Original_payloads_decoded=False,scientific_calls=0,new_manuscript_conjecture_Lean_measurement_credit=0,tracked_metadata_read_bytes=total,nominal_Source_bootstrap_allowance=nominal,total_declared_metadata_read_bytes=total+nominal,declared_metadata_read_upper=read_upper,independent_administrative_review_pending=True,no_multifile_atomicity_claim=True)
++    body=can(result);assert len(body)<=65536;fresh(stage/'readback.json',body)
++    print(json.dumps(dict(status='PUBLISHED_NEG_ACTIVATION',readback=ref(stage/'readback.json',body),intake=ai,controller=ac,runtime=images['runtime'],scientific_calls=0),sort_keys=True))
++
++def cli_ref(values):return descriptor(dict(path=values[0],bytes=int(values[1]),sha256=values[2]))
+ def main():
+- assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+- ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--postwrite-review',nargs=3,required=True);args=ap.parse_args()
+- postref=dict(path=args.postwrite_review[0],bytes=int(args.postwrite_review[1]),sha256=args.postwrite_review[2])
+- start=time.monotonic()
+- def expire(*_):raise TimeoutError('125-second administrative activation limit')
+- signal.signal(signal.SIGALRM,expire);signal.setitimer(signal.ITIMER_REAL,125)
+- L=Ledger();old,oldref=L.document(B/'current_intake.json');pointer,ptr=L.document(B/'controllers/current.json')
+- r,rr=L.document(pointer['checkpoint']['path'],pointer['checkpoint'])
+- assert old['active_controller_checkpoint']==rr and not os.path.lexists(STAGE)
+- oldraw=L.raw(oldref['path'],oldref)[0];ptrraw=L.raw(ptr['path'],ptr)[0]
+- original=json.loads(oldraw);original_runtime=json.loads(L.raw(rr['path'],rr)[0])
+- inline=can(r['cache_entries']);banks=can(r['cache_banks']);allkeys=set(r['cache_entries'])
+- for b in r['cache_banks']:
+-  d,_=L.document(b['ref']['path'],b['ref'])
+-  assert b['entries']==len(d['cache_entries']) and b['keys']==sorted(d['cache_entries'])
+-  assert not allkeys.intersection(d['cache_entries']);allkeys.update(d['cache_entries'])
+- cache_before=len(allkeys)
+- assert cache_before==1607,'exact reviewed progress boundary; no intervening registration'
+- assert old['intake']['complete_reviewed_treatments']==r['counts']['complete_manuscripts']==101
+- assert old['intake']['mathematical_originals']==r['counts']['total_mathematical']==104
+- assert old['measurements_frozen']==dict(applications=53,topics=19)
+- protected={k:can(old[k]) for k in ('F004','F009','intake','measurements_frozen','public')}
+- protected_counts={k:v for k,v in r['counts'].items() if not k.startswith('L026_')}
+- prefix=old['F009']['R5_canonical_pairs_reviewed'];slots=old['F009']['R5_prefix_strict_slots_reviewed']
+- assert type(prefix)is int and 0<=prefix<=940 and slots==156*prefix
+- assert prefix==old['F009']['R5_total_distinct_canonical_parents_reviewed']==r['counts']['R5_canonical_pairs_reviewed']
+- assert slots==r['counts']['R5_prefix_strict_slots_reviewed']
+- assert prefix==306 and slots==47736
+- assert old['F004']['registered_jobs']==126 and old['F004']['required_jobs']==272 and old['F004']['pending_jobs']==146
+- assert r['counts']['F004_current_job_unresolved']==2
+-
+- docs={};refs={}
+- for k,v in REFS.items():docs[k],refs[k]=L.document(v[0],reference(v))
+- post=L.document(postref['path'],postref)[0];pr=postref
+- assert post['status'].startswith('SUPPORTED_ACTUAL')and post['blockers']==[]and post['reviewer']!='/root'
+- assert post['publication_verified']is post['Root_canonical_write_issued']is True
+- c=post['canonical'];cur,cr=L.document(c['current']['path'],c['current']);receipt,rec=L.document(c['receipt']['path'],c['receipt']);mask,mr=L.raw(c['bank']['path'],c['bank']);batch,br=L.document(c['batch']['path'],c['batch'])
+- wanted=dict(GEN=724,separate_IP=721,subset_NEG=744,unpaid=27440)
+- assert cur['ledger_receipt']==rec and cur['status_bank']==mr and receipt['counts']==post['counts']==counts(mask)==wanted
+- assert post['registered_total']==1468 and (post['new_NEG'],post['new_GEN'],post['new_IP'])==(6,1,1)
+- assert type(post['exact_changes'])is int and post['exact_changes']==7
+- assert batch['Original_conjecture_Lean_or_measurement_credit']==0
+- plan=docs['plan'];prep=docs['prepared'];release=docs['Root_release']
+- assert prep['plan']==post['plan']==refs['plan']and prep['release']==post['Root_release']==refs['Root_release']
+- assert plan['Root_authority']is True and plan['mode']=='append'and plan['status']=='ROOT_OWNED_REVIEWED_SEVEN_TYPED_FACTS'
+- assert release['root']=='/root'and release['Root_authority']is release['metadata_publication_authorized']is True
+- assert release['plan']==refs['plan']and release['blockers']==[]
+- prior=old['L026']['current_typed_ledger'];before,_=L.raw(prior['bank']['path'],prior['bank'])
+- assert old['L026']['paid']==r['counts']['L026_paid']==1461 and counts(before)==dict(GEN=723,separate_IP=720,subset_NEG=738,unpaid=27447)
+- assert prior['current']['bytes']==747 and prior['current']['sha256']=='b2029ce79ee970d28e0dad0ba977f3d20157f3e9b23cd624c56c71c5c8aa5b8c'
+- assert plan['expected_current']==prior['current']and plan['previous_bank']==prior['bank']and plan['previous_receipt']==prior['receipt']
+- aliases=post['historical_mutable_input_aliases'];assert len(aliases)==1 and aliases[0]['original']==prior['current']
+- assert aliases[0]['retained']==prep['previous_CURRENT_durable_alias']==release['previous_CURRENT_retained_alias']
+- historical,aliasref=L.document(aliases[0]['retained']['path'],aliases[0]['retained'])
+- assert(aliasref['bytes'],aliasref['sha256'])==(prior['current']['bytes'],prior['current']['sha256'])and historical['status_bank']==prior['bank']and historical['ledger_receipt']==prior['receipt']
+- oldreceipt,_=L.document(prior['receipt']['path'],prior['receipt']);assert oldreceipt['counts']==counts(before)
+- expected=[dict(index=i,before=0,after=6 if i==280 else 1)for i in range(280,287)]
+- assert prep['expected_changes']==post['exact_status_changes']==expected
+- assert prep['expected_counts']==wanted and receipt['typed_new_batch']==br
+- facts=plan['facts'];assert len(facts)==7
+- assert [f['free_index']for f in facts]==list(range(280,287))
+- assert [f['kind']for f in facts]==['GEN_IP']+['NEG']*6 and [f['proof']for f in facts]==[0]+[1]*6
+- assert all(type(f['owner'])is int and 0<=f['owner']<3510 and type(f['witness_row_sha256'])is str and len(f['witness_row_sha256'])==64 for f in facts)
+- changes=[dict(index=i,before=a,after=b)for i,(a,b)in enumerate(zip(before,mask))if a!=b]
+- assert changes==expected and batch['new_facts']==facts
+- assert batch['exact_monotone_changes']==[dict(free_index=f['free_index'],before=0,after=6 if f['kind']=='GEN_IP'else 1,
+-     kind=f['kind'],owner=f['owner'],witness_row_sha256=f['witness_row_sha256'],proof=f['proof'])for f in facts]
+- assert batch['strict_IP0_unchanged']is True and batch['previous_ledger']==prior['receipt']
+- restored=dict(cur);restored.update(ledger_receipt=historical['ledger_receipt'],status_bank=historical['status_bank']);assert can(restored)==L.raw(aliasref['path'],aliasref)[0]
+- key='Root_l026_direct_and_invariant_unions_reviewed_registration';assert key not in allkeys
+- new={key:dict(ref=br,value=batch,independent_actual_review=pr,independent_actual_review_pending=False,
+-     completed_value_unchanged=True,canonical_registered_indices=list(range(280,287)),new_GEN=1,new_NEG=6,new_IP=1,
+-     typed_append_plan=refs['plan'],Root_release=refs['Root_release'],preparation=refs['prepared'],
+-     preexisting_GEN_full_b_and_invariant_union_premises_borrowed=True,new_manuscript_conjecture_Lean_measurement_credit=0)}
+-
+- own,ownref=L.raw(pathlib.Path(__file__).resolve());helper,helperref=L.raw('/private/tmp/intake_metadata/whole.py')
+- guardrefs=[]
+- for name in ('supervise_validation.py','supervise_transient.py'):
+-  _,g=L.raw(pathlib.Path('/Users/sasha/medusa/research/leemans/maintenance/runtime')/name);guardrefs.append(g)
+- Source_total=len(own)+len(helper)+sum(g['bytes'] for g in guardrefs)+512
+- assert Source_total<=65536
+- outputs={}
+- def planned(name,value,body=None):
+-  path=STAGE/name;b=can(value) if body is None else body
+-  assert path.parent==STAGE and str(path) not in outputs and len(b)<=4*2**20
+-  outputs[str(path)]=b;return descriptor(path,b)
+- ib=planned('intake_before_update.json',None,oldraw);pb=planned('controller_before_update.json',None,ptrraw)
+- sourcecopy=planned('update.py',None,own)
+- cache=planned('execution_cache.json',dict(schema='ROOT_INTAKE_CACHE_ENTRY_BANK_V1',root='/root',completed_science_values_immutable=True,topics=['L026'],cache_entries=new))
+- r['cache_banks'].append(dict(entries=1,keys=sorted(new),ref=cache))
+- assert can(r['cache_entries'])==inline and can(r['cache_banks'][:-1])==banks
+- current=dict(current=cr,receipt=rec,bank=mr,batch=br,postwrite_review=pr)
+- old['L026'].update(paid=1468,generation=724,proper=744,subset_NEG=744,separate_IP=721,unpaid=27440,bank_unresolved=27440,current_typed_ledger=current,direct_and_invariant_unions_registration=current)
+- r['next_L026_current_snapshot']=dict(CURRENT=cr,receipt=rec,bank=mr,postwrite_review=pr)
+- r['counts'].update(L026_GEN=724,L026_NEG=744,L026_paid=1468,L026_unpaid=27440,L026_separate_IP=721)
+- nexttext=('Canonical1468: GEN724, IP721, NEG744, unpaid27440. Direct280 generation and separate rank3 IP plus six invariant-union exclusions281..286 are registered. '
+-           'All full-b, inner-G, marked-row, normality/transitivity/H=B and two-fibre premises stay attributed to the existing reviewed applications.287 remains unpaid. '
+-           'Reuse every successful scientific result and old controls; continue a fresh unpaid scope without scientific replay. This checkpoint grants no scientific authority.')
+- old['L026']['next']=r['next_L026_method']=nexttext
+- checkpoint=dict(postwrite_review=pr,new_cache_bank=cache,prior_cache_values_preserved=cache_before,new_cache_values=1,total_cache_values=cache_before+1,
+-                 F009_reviewed_prefix=prefix,F009_reviewed_slots=slots,F009_state_unchanged=True,F004_state_unchanged=True,no_scientific_replay=True,
+-                 manuscripts101_104_unchanged=True,measurements53_19_unchanged=True,public_state_unchanged=True,
+-                 prior_inline_values_and_bank_descriptors_unchanged=True,new_scientific_authority_granted=False,own_operational_tail_retention_separate=True)
+- old['reviewed_direct_and_invariant_unions_checkpoint']=dict(checkpoint);r['reviewed_direct_and_invariant_unions_checkpoint']=dict(checkpoint)
+- now=datetime.datetime.now(datetime.timezone.utc).isoformat();r.update(previous_checkpoint=rr,observed_utc=now)
+- nr=planned('runtime.json',r);old.update(previous_checkpoint=ib,active_controller_checkpoint=nr,observed_utc=now)
+- pointer.update(previous_controller=pb,checkpoint=nr)
+- ni=planned('intake_after_update.json',old);np=planned('controller_after_update.json',pointer)
+- for k,v in protected.items():assert can(old[k])==v
+- assert {k:v for k,v in r['counts'].items() if not k.startswith('L026_')}==protected_counts
+- allowed_old={'L026','reviewed_direct_and_invariant_unions_checkpoint','previous_checkpoint','active_controller_checkpoint','observed_utc'}
+- assert {k:v for k,v in old.items()if k not in allowed_old}=={k:v for k,v in original.items()if k not in allowed_old}
+- allowed_runtime={'cache_banks','next_L026_current_snapshot','counts','next_L026_method','reviewed_direct_and_invariant_unions_checkpoint','previous_checkpoint','observed_utc'}
+- assert {k:v for k,v in r.items()if k not in allowed_runtime}=={k:v for k,v in original_runtime.items()if k not in allowed_runtime}
+- # Charge every planned output reread and pointer check before any mutation.
+- nominal=len(own)+len(helper)+sum(g['bytes'] for g in guardrefs)
+- cas_allowance=2*oldref['bytes']+ptr['bytes']
+- postrefs=(ni,np,nr,cache)
+- # Ledger.raw caches repeat requests: a document of an already-read output
+- # incurs no physical reread. The additional document allowance below is a
+- # conservative reserve, not a claim that those cached requests reread files.
+- input_upper=L.bytes+sum(t[1]['bytes'] for t in L.pins.values())
+- document_reserve=nr['bytes']+ni['bytes']
+- verification_upper=2*sum(map(len,outputs.values()))+document_reserve
+- declared_upper=input_upper+verification_upper+2*sum(x['bytes'] for x in postrefs)+cas_allowance+nominal
+- allpaths=set(L.pins)|set(outputs)|{str(B/'current_intake.json'),str(B/'controllers/current.json'),str(STAGE/'readback.json'),str(B/'.current_intake.json.reviewed_direct_and_invariant_unions'),str(B/'controllers/.current.json.reviewed_direct_and_invariant_unions')}
+- assert declared_upper<=64*2**20 and len(allpaths)<=512 and sum(map(len,outputs.values()))+65536<=16*2**20
+- L.close();STAGE.mkdir()
+- for name,body in outputs.items():
+-  with pathlib.Path(name).open('xb') as stream:assert stream.write(body)==len(body);stream.flush();os.fsync(stream.fileno())
+- C=Ledger()
+- for name,body in outputs.items():C.raw(name,descriptor(name,body))
+- restored_runtime,_=C.document(nr['path'],nr);restored_intake,_=C.document(ni['path'],ni)
+- assert can(restored_runtime['cache_entries'])==inline and can(restored_runtime['cache_banks'][:-1])==banks
+- for k,v in protected.items():assert can(restored_intake[k])==v
+- C.close();cas_bytes=0
+- def fresh_match(path,expected):
+-  nonlocal cas_bytes
+-  assert path.resolve(strict=True)==path and not path.is_symlink() and path.stat().st_size<=4*2**20
+-  with path.open('rb') as stream:body=stream.read(4*2**20+1)
+-  assert descriptor(path,body)==expected;cas_bytes+=len(body)
+- fresh_match(B/'current_intake.json',oldref);fresh_match(B/'controllers/current.json',ptr)
+- for path,target in ((B/'controllers/current.json',np),(B/'current_intake.json',ni)):
+-  if path.name=='current_intake.json':fresh_match(path,oldref)
+-  temporary=path.with_name('.'+path.name+'.reviewed_direct_and_invariant_unions')
+-  with temporary.open('xb') as stream:
+-   body=outputs[target['path']];assert stream.write(body)==len(body);stream.flush();os.fsync(stream.fileno())
+-  os.replace(temporary,path);fd=os.open(path.parent,os.O_RDONLY)
+-  try:os.fsync(fd)
+-  finally:os.close(fd)
+- A=Ledger();_,ai=A.document(B/'current_intake.json',dict(ni,path=str(B/'current_intake.json')))
+- _,ap=A.document(B/'controllers/current.json',dict(np,path=str(B/'controllers/current.json')))
+- for x in (nr,cache):A.raw(x['path'],x)
+- A.close();total=L.bytes+C.bytes+A.bytes+cas_bytes+nominal
+- assert total<=declared_upper and time.monotonic()-start<125
+- out=dict(schema='ROOT_REVIEWED_DIRECT_AND_INVARIANT_UNIONS_PROGRESS_READBACK_V1',root='/root',intake=ai,controller=ap,runtime=nr,new_cache_bank=cache,Source=sourcecopy,
+-          all_prior_cache_values_preserved=True,prior_cache_values=cache_before,new_cache_values=1,cache_values_total=cache_before+1,
+-          F009_reviewed_prefix=prefix,F009_reviewed_slots=slots,F009_state_unchanged=True,intake101_104_and_measurements53_19_and_public_unchanged=True,
+-          L026_paid=1468,L026_counts=wanted,L026_postwrite_review=pr,F004_canonical_unresolved=r['counts']['F004_current_job_unresolved'],
+-          F004_state_unchanged=True,
+-          scientific_calls=0,new_scientific_authority_granted=False,independent_admin_review_pending=True,own_operational_tail_retention_still_owed=True,
+-          input_first_and_closing_bytes=L.bytes,private_output_verification_bytes=C.bytes,postpublication_read_bytes=A.bytes,
+-          pointer_before_check_bytes=cas_bytes,nominal_Source_allowance=nominal,total_declared_metadata_read_bytes=total,declared_read_upper=declared_upper,
+-          cached_document_conservative_reserve=document_reserve,cached_document_requests_claimed_as_actual_rereads=False,
+-          declared_path_upper=len(allpaths),Source_union_guards512=Source_total,
+-          no_locked_concurrent_CAS_or_multifile_atomicity_claim=True)
+- body=can(out);assert len(body)<=65536
+- outpath=STAGE/'readback.json'
+- with outpath.open('xb') as stream:assert stream.write(body)==len(body);stream.flush();os.fsync(stream.fileno())
+- print(json.dumps(dict(readback=descriptor(outpath,body),intake=ai,controller=ap,runtime=nr,new_cache_bank=cache)))
++    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
++    def expire(*_):raise TimeoutError('125-second NEG activation limit')
++    signal.signal(signal.SIGALRM,expire);signal.setitimer(signal.ITIMER_REAL,125)
++    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True);ap.add_argument('--mode',choices=['prepare','apply'],required=True)
++    ap.add_argument('--Root-request',nargs=3,required=True);ap.add_argument('--Source-peer',nargs=3,required=True)
++    for name in('plan','plan-review','Root-decision'):ap.add_argument('--'+name,nargs=3)
++    a=ap.parse_args();assert a.actor=='/root';L=Ledger()
++    request,peer=cli_ref(a.Root_request),cli_ref(a.Source_peer)
++    if a.mode=='prepare':
++        assert a.plan is a.plan_review is a.Root_decision is None;prepare(L,request,peer)
++    else:
++        assert a.plan and a.plan_review and a.Root_decision;apply(L,request,peer,cli_ref(a.plan),cli_ref(a.plan_review),cli_ref(a.Root_decision))
+ 
+ if __name__=='__main__':main()

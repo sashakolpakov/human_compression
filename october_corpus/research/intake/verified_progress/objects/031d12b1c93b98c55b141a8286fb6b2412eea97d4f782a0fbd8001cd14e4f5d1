@@ -1,0 +1,202 @@
+"""Join accepted mixed dispositions; never evaluate an Original predicate."""
+import argparse,hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+HELP=S/'maintenance/intake/f004_fixed_line_intersection/registration'
+sys.path.insert(0,str(HELP))
+import metadata_io as m
+import metadata_fields as f
+START=time.monotonic();CACHE={};DOCS={}
+AUTHOR='/root/mathematical_review'
+def check():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+def descriptor(v):
+    r=dict(path=v[0],bytes=int(v[1]),sha256=v[2]);m.ref(r);return r
+def body(r):
+    m.ref(r);check()
+    if r['path']not in CACHE:CACHE[r['path']]=m.raw(r)
+    else:assert m.RECORDS[r['path']]==r
+    return CACHE[r['path']]
+def doc(r):
+    raw=body(r)
+    if r['path']not in DOCS:DOCS[r['path']]=m.decode(raw)
+    return DOCS[r['path']]
+def selected(r,keys):return f.selected(body(r),keys)
+def array(raw):
+    i=f.ws(raw,0);assert raw[i]==91;i=f.ws(raw,i+1);out=[]
+    while raw[i]!=93:
+        j=f.value_end(raw,i);out.append(raw[i:j]);i=f.ws(raw,j)
+        if raw[i]==44:i=f.ws(raw,i+1)
+        else:assert raw[i]==93
+    assert not raw[f.ws(raw,i+1):];return out
+def positions(v):
+    assert type(v)is list and v==sorted(set(v))and all(type(p)is int and 1<=p<=3779 for p in v)
+    return v
+def supported(v):
+    assert v['status'].startswith('SUPPORTED_')and v['blockers']==[]and v['reviewer']not in('/root',AUTHOR)
+def close():
+    for r in list(m.RECORDS.values()):m.raw(r)
+    check()
+def source(a):
+    assert a.actor=='/root';check();mr=descriptor(a.Source_manifest);mf=doc(mr)
+    own=next(r for r in mf['Source']if r['path']==str(HERE/'prepare_coverage.py'))
+    assert mf['schema']=='F004_MIXED_WHOLE_JOB_COVERAGE_SOURCE_V1'and mf['Root_authority']is False
+    assert len(mf['Source'])==3 and {r['path']for r in mf['Source']}=={str(HERE/'prepare_coverage.py'),str(HELP/'metadata_io.py'),str(HELP/'metadata_fields.py')}
+    assert [(r['bytes'],r['sha256'])for r in mf['guards']]==[(4806,'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'),(18361,'5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42')]
+    for r in mf['Source']+mf['guards']:body(r)
+    assert sum(r['bytes']for r in mf['Source']+mf['guards'])+512==mf['Source_plus_guards512']<=65536
+    peerref=descriptor(a.Source_peer);peer=doc(peerref);supported(peer)
+    assert peer['program']==own and peer['Source_manifest']==mr
+    for module,name in((m,'metadata_io.py'),(f,'metadata_fields.py')):
+        assert Path(module.__file__).resolve()==HELP/name
+    guard=Path(a.guard)/'started.json';rr,raw=m.whole(guard);st=m.decode(raw)
+    assert st['command']==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(HERE/'prepare_coverage.py')]+sys.argv[1:]
+    assert any(x['pid']==os.getpid()for x in st['identities'])
+    assert all(st['limits'][k]==v for k,v in dict(total_rss=256*2**20,wall_seconds=125.0,admit_ram=4*2**30,admit_disk=10*2**30,ram_floor=3*2**30,disk_floor=8*2**30).items())
+    return mr,own,peerref
+def family_rows(r):
+    fields=f.members(body(r));base=f.selected(body(r),['schema','root','adopted','original_job'])
+    assert base['root']=='/root'and base['adopted']is True and base['original_job']==[20,4]
+    schema=base['schema'];out=[]
+    def one(kind,key):out.append(dict(kind=kind,positions=positions(m.decode(fields[key])),metadata_field=key))
+    if schema=='ROOT_ACCEPTED_Q11_RANK4_CYCLIC_PILOT_V1':
+        assert m.decode(fields['original_model_and_member_transports_borrowed'])is True
+        one('NONGENERATION','nongeneration_positions')
+    elif schema=='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1':
+        assert m.decode(fields['borrowed_complete_original_member_transport_proof'])is True
+        one('IP_FAILURE','new_IP_failure_positions')
+    elif schema=='ROOT_ACCEPTED_Q11_RANK4_RESIDUAL_CYCLIC_CERTIFICATES_V1':
+        assert m.decode(fields['exact_proper_basis_generator_invariance_and_actual_ambient_mover_checked'])is True
+        one('NONGENERATION','new_nongeneration_positions')
+    elif schema in('ROOT_ACCEPTED_Q11_SHARED_MIDDLE19_EXCLUSIONS_V1','ROOT_ACCEPTED_Q11_MIDDLE_FAST_PATHS_V1','ROOT_ACCEPTED_Q11_COMPOSITE_END_EXCLUSIONS_V1'):
+        one('IP_FAILURE','verified_IP_failure_positions')
+    elif schema=='ROOT_F004_JOB20_SGS_SEVEN_APPLICATIONS_V1':
+        assert m.decode(fields['all_actual_case_and_same_original_joins_independently_reviewed'])is True
+        one('NONGENERATION','nongenerating_positions')
+        # GEN-only positions have no final disposition at this stage.
+        assert m.decode(fields['generation_positions'])==m.decode(fields['rank4_IP_pending_positions'])
+    elif schema=='ROOT_F004_INTERSECTION_WORD_APPLICATION_V1':
+        assert m.decode(fields['Root_authority'])is True and m.decode(fields['semantic_predicate'])=='NOT_IP'
+        assert m.decode(fields['matrix_and_Original_intersection_property'])is False
+        out.append(dict(kind='IP_FAILURE',positions=positions([m.decode(fields['position'])]),metadata_field='position/semantic_predicate'))
+    elif schema in('ROOT_F004_JOB20_0259_POSITIVE_MARKING_PROPERTY_V1','ROOT_F004_JOB20_TYPED_EXCLUSIONS_V1',
+        'ROOT_F004_JOB20_LEFT_END_PAIR_EXCLUSIONS_V1','ROOT_F004_JOB20_RIGHT9241_FOUR_EXCLUSIONS_V1',
+        'ROOT_F004_TWO_POSITIVE_PREFIX_ORBIT_PROPERTIES_V1','ROOT_F004_FOUR_NG_PREFIX_ORBIT_PROPERTIES_V1',
+        'ROOT_F004_RIGHT858_NG_PREFIX_ORBIT_PROPERTIES_V1','ROOT_F004_MIXED_SAVED_ROW_PROPERTIES_V1','ROOT_F004_POSITIVE_SAVED_ROW_PROPERTIES_V1'):
+        assert m.decode(fields['Root_authority'])is True
+        groups={}
+        for raw in array(fields['settled_dispositions']):
+            row=f.selected(raw,['position','kind']);kind=row['kind'];kind='NONGENERATION'if kind=='NG'else kind
+            assert kind in('NONGENERATION','IP_FAILURE','C_GROUP')
+            groups.setdefault(kind,[]).append(row['position'])
+        for kind,values in groups.items():out.append(dict(kind=kind,positions=positions(values),metadata_field='settled_dispositions'))
+    else:raise ValueError('unsupported accepted disposition schema: '+schema)
+    return base,out
+def partition(seed):
+    selector=seed['selector'];fields=f.members(body(selector));s=f.selected(body(selector),['schema','root','adopted','original_job','original_orbit_positions',
+        'original_paid_positions','accepted_new_paid_positions','unresolved_positions','unresolved_position_runs','source_adoptions','projection','Root_projection_acceptance'])
+    assert s['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'and s['root']=='/root'and s['adopted']is True
+    assert s['original_job']==[20,4]and s['original_orbit_positions']==3779 and s['unresolved_positions']==0 and s['unresolved_position_runs']==[]
+    assert len(s['source_adoptions'])==47 and s['source_adoptions']==seed['source_adoptions']
+    baseline=positions(s['original_paid_positions']);assert len(baseline)==173
+    p=f.members(body(s['projection']));known=array(p['known_paid_facts']);assert len(known)==1
+    fact=f.selected(known[0],['kind','orbit_positions','same_saved_domain','acceptance','actual_result','actual_terminal'])
+    assert fact['kind']=='ROOT_ACCEPTED_CONDITIONAL_NONGENERATION'and positions(fact['orbit_positions'])==baseline
+    assert fact['same_saved_domain']==seed['domain_pins']['Saved_result']
+    # The large inherited acceptance is a descriptor-only premise, not read.
+    assert fact['acceptance']==seed['large_family_acceptance_borrowed']and fact['acceptance']['bytes']>4*2**20
+    body(fact['actual_result']);body(fact['actual_terminal'])
+    gateway=selected(s['Root_projection_acceptance'],['schema','root','all_same_original_domain_and_index_roles_checked','accepted_conditional_family'])
+    assert gateway['schema']=='ROOT_ACCEPTED_Q11_RANK4_DISPOSITION_PROJECTIONS_V1'and gateway['root']=='/root'
+    assert gateway['all_same_original_domain_and_index_roles_checked']is True and gateway['accepted_conditional_family']==fact['acceptance']
+    used={};groups={k:[]for k in('NONGENERATION','IP_FAILURE','C_GROUP')};lineage=[]
+    def add(kind,values,r,key,schema):
+        positions(values);assert not set(values).intersection(used)
+        for p in values:used[p]=kind
+        groups[kind].extend(values);lineage.append(dict(kind=kind,positions=values,acceptance=r,metadata_field=key,accepted_schema=schema))
+    add('NONGENERATION',baseline,s['projection'],'known_paid_facts[0].orbit_positions','ADOPTED_BASELINE_PROJECTION')
+    for r in s['source_adoptions']:
+        base,rows=family_rows(r)
+        for row in rows:add(row['kind'],row['positions'],r,row['metadata_field'],base['schema'])
+    assert sorted(used)==list(range(1,3780))and sorted(set(used)-set(baseline))==positions(s['accepted_new_paid_positions'])
+    for values in groups.values():values.sort()
+    assert {k:len(v)for k,v in groups.items()}==dict(NONGENERATION=232,IP_FAILURE=3542,C_GROUP=5)
+    assert groups['C_GROUP']==[259,877,1033,1430,2739]
+    return groups,lineage
+def domains(seed):
+    for r in seed['domain_pins'].values():body(r)
+    keys=['schema','certificate_verified','original_job','field','rank','catalogue_size','prefix_export','faithful_frame_acceptance','external_premises']
+    saved=selected(seed['domain_pins']['Saved_result'],keys)
+    assert saved['schema']=='F004_Q11_INDEXED_CAYLEY_CENTRALIZER_DOMAIN_CERTIFICATE_V1'and saved['certificate_verified']is True
+    assert saved['original_job']==[20,4]and saved['field']==11 and saved['rank']==4 and saved['catalogue_size']==14763
+    assert saved['prefix_export']==seed['domain_pins']['prefix_export']and saved['faithful_frame_acceptance']==seed['faithful_frame']
+    assert saved['external_premises']['root']=='/root'and saved['external_premises']['original_A_equals_G']is True
+    assert saved['external_premises']['model_bridge_source']==seed['model_bridge']
+    for r in seed['closed_context_metadata_and_Source']:body(r)
+    return dict(saved_header=saved,original_orbit_rows=3779,raw_catalogue_members=14763,
+        large_family_descriptor=seed['large_family_acceptance_borrowed'],large_family_rehashed=False,
+        historical_complete_partition_and_member_roles_imported=True,Original_values_decoded_or_evaluated=False)
+def frozen(prefix):
+    for root in(S/'maintenance/intake/f009_cohort_preparation/cohorts',Path('/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts'),Path('/private/tmp/f009_R5_parent_cohorts_actual')):
+        assert not os.path.lexists(root/('cohort_from%04d'%prefix)),'active current-prefix cohort'
+def write(path,raw):
+    assert path.parent.resolve(strict=True)==path.parent and not os.path.lexists(path)and len(raw)<=4*2**20
+    assert m.WRITE+len(raw)<=16*2**20 and len(m.PATHS|{str(path)})<=500
+    with path.open('xb')as stream:assert stream.write(raw)==len(raw);stream.flush();os.fsync(stream.fileno())
+    fd=os.open(path.parent,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+    m.WRITE+=len(raw);r,after=m.whole(path);assert after==raw;return r
+def main():
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata deadline')));signal.alarm(125)
+    a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--actor',required=True);a.add_argument('--mode',choices=['propose','issue'],required=True)
+    a.add_argument('--Source-manifest',nargs=3,required=True);a.add_argument('--Source-peer',nargs=3,required=True);a.add_argument('--seed',nargs=3,required=True)
+    a.add_argument('--out',required=True);a.add_argument('--guard',required=True);a.add_argument('--proposal',nargs=3);a.add_argument('--Root-grant',nargs=3);a=a.parse_args()
+    mr,own,peer=source(a);sr=descriptor(a.seed);seed=doc(sr)
+    assert seed['schema']=='F004_JOB20_WHOLE_COVERAGE_SOURCE_SEED_V1'and seed['Root_authority']is False
+    groups,lineage=partition(seed);context=domains(seed)
+    proposal=dict(schema='F004_Q11_MIXED_ORIGINAL_JOB_COVERAGE_PROPOSAL_V1',root='/root',Root_authority=False,adopted=False,original_job=[20,4],field=11,rank=4,
+        total_original_orbits=3779,original_raw_members=14763,original173_positions_preserved=True,original_baseline_count=173,additional_dispositions=3606,
+        dispositions=groups,counts={k:len(v)for k,v in groups.items()},lineage=lineage,final_selector=seed['selector'],context=context,domain_pins=seed['domain_pins'],
+        original_scope_import_and_distinct_family_review_still_required=True,Source_manifest=mr,program=own,Source_peer=peer,seed=sr,
+        borrowed_model_and_complete_domain_and_case_theorems_retained=True,giant_ancestor_rehashed=False,scientific_calls=0,mathematical_replays=0,
+        whole_rank4_output_assembly_owed=True,Aut_and_reversal_equivalence_owed=True,field_census_credit=0,whole_original_credit=0,manuscript_conjecture_Lean_measurement_credit=0)
+    result=proposal
+    if a.mode=='issue':
+        assert a.proposal and a.Root_grant;pr=descriptor(a.proposal);assert doc(pr)==proposal
+        gr=descriptor(a.Root_grant);grant=doc(gr)
+        assert grant['schema']=='ROOT_F004_JOB20_MIXED_COVERAGE_ISSUE_GRANT_V1'and grant['root']=='/root'and grant['Root_authority']is grant['adopted']is True
+        assert grant['status']=='SUPPORTED'and grant['blockers']==[]and grant['proposal']==pr and grant['Source_manifest']==mr
+        scope=doc(grant['complete_Original_domain_import']);peer_scope=doc(grant['independent_family_and_domain_review']);supported(peer_scope)
+        assert scope['schema']=='ROOT_F004_JOB20_COMPLETE_ORIGINAL_DOMAIN_IMPORT_V1'and scope['root']=='/root'and scope['Root_authority']is scope['adopted']is True
+        assert scope['original_job']==[20,4]and scope['domain_pins']==seed['domain_pins']and scope['final_selector']==seed['selector']
+        assert scope['faithful_frame']==seed['faithful_frame']and scope['model_bridge']==seed['model_bridge']
+        for k in('complete3779_orbit_partition_of14763_Original_members_owned','all_label_preserving_member_transports_in_same_named_G_owned',
+            'same_faithful_model_frame_and_Original_A_equals_G_owned','all_Original_rows_are_admissible_string_marks_owned',
+            'all47_accepted_family_subjects_and_scope_joins_owned','baseline173_conditional_nongeneration_and_large_ancestor_import_owned'):
+            assert scope[k]is True
+        assert peer_scope['proposal']==pr and peer_scope['complete_Original_domain_import']==grant['complete_Original_domain_import']
+        assert peer_scope['all_Original_domain_and_positive_negative_family_joins_verified']is True and peer_scope['counts']==proposal['counts']
+        for k in('whole_current_Source_and_union_argument_owned','exact_complete_Original_domain_and_distinct_review_owned','borrowed_mathematical_premises_and_no_giant_rehash_disclosure_owned',
+            'no_new_scientific_replay_or_classification_credit','serial_sole_writer_and_fresh_prefix_freeze_owned'):
+            assert grant[k]is True
+        intake=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress/current_intake.json')
+        ir,ib=m.whole(intake);parts=f.members(ib);n=f.selected(parts['F009'],['R5_canonical_pairs_reviewed'])['R5_canonical_pairs_reviewed']
+        assert n==grant['expected_F009_prefix']and ir==grant['protected_intake'];frozen(n)
+        result=dict(proposal,schema='ROOT_F004_Q11_MIXED_ORIGINAL_JOB_PROOF_V1',Root_authority=True,adopted=True,complete_original_job=True,original_scope_import_and_distinct_family_review_still_required=False,
+            Root_issue_grant=gr,coverage_proposal=pr,complete_Original_domain_import=grant['complete_Original_domain_import'],
+            independent_complete_domain_and_family_review=grant['independent_family_and_domain_review'],
+            accepted_count=5,rejected_count=3774,NG_count=232,IP_failure_count=3542,unpaid_count=0,whole_job_ledger_registered=False)
+    else:assert not a.proposal and not a.Root_grant
+    raw=m.can(result);assert m.READ+sum(r['bytes']for r in m.RECORDS.values())+len(raw)+131072<=64*2**20
+    path=Path(a.out);assert path.parent==HERE/('adoptions'if a.mode=='issue'else'proposals')
+    close()
+    if a.mode=='issue':m.raw(ir);frozen(n)
+    out=write(path,raw);check();signal.alarm(0)
+    print(m.can(dict(status='ISSUED_MIXED_WHOLE_JOB_PROOF'if a.mode=='issue'else'FALSE_COVERAGE_PROPOSAL',output=out,
+        Root_authority=a.mode=='issue',scientific_calls=0,global_or_progress_pointer_writes=0,global_registration_and_independent_actual_review_still_owed=True,
+        read_bytes=m.READ,paths=len(m.PATHS))).decode(),end='')
+if __name__=='__main__':main()

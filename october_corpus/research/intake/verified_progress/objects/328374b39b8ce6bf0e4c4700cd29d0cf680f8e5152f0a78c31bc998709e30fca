@@ -1,0 +1,41 @@
+
+const A=Object.getPrototypeOf(async function(){}).constructor;
+const H=await new A("tools","text","store","load",load("root_full_kwargs_direct_helpers_js")+"\nreturn {directRun,directCapture,directJSON};")(tools,text,store,load);
+const PY="/Users/sasha/.venvs/global/bin/python",PREP="/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation";
+const quote=s=>"'"+String(s).replace(/'/g,"'\\''")+"'";
+const trip=r=>[r.path,String(r.bytes),r.sha256];
+const peer={path:PREP+"/review/reuse_integer_only.json",bytes:3095,sha256:"f00f2378d80eaa1b6a3868b770cf906a8bb7471d616bd8adddbfe23578cc59f7"};
+async function preserveSDK(key,sdk,target,control){
+ const code="from pathlib import Path\nimport json,hashlib,os,sys\nsrc=Path(sys.argv[1]);dst=Path(sys.argv[2]);rawbase=Path('/private/tmp/intake_actual_transports')/sys.argv[5];outbase=Path(sys.argv[6])/'api'/sys.argv[5];pairs=[(src,dst)]+[(p,outbase/p.name)for p in sorted(rawbase.iterdir())if p.is_file()]\nassert 1<=len(pairs)<=34\nfor p,q in pairs:\n b=p.read_bytes();assert len(b)<=4*2**20\n if p==src:assert len(b)==int(sys.argv[3]) and hashlib.sha256(b).hexdigest()==sys.argv[4]\n q.parent.mkdir(parents=True,exist_ok=True);assert q.parent.resolve(strict=True)==q.parent\n if q.exists():assert q.read_bytes()==b\n else:\n  with q.open('xb')as f:f.write(b);f.flush();os.fsync(f.fileno())\n assert p.read_bytes()==q.read_bytes()==b\nprint(json.dumps(dict(path=str(dst),bytes=int(sys.argv[3]),sha256=sys.argv[4],retained_raw_files=len(pairs)-1)))";
+ const r=await tools.exec_command({cmd:[PY,"-E","-B","-S","-c",code,sdk.path,target,String(sdk.bytes),sdk.sha256,key,control].map(quote).join(" "),workdir:"/Users/sasha/medusa",login:false,max_output_tokens:1000});
+ if(r.exit_code!==0)throw Error("Preservation failed "+r.output);
+ const out=JSON.parse(r.output);return {path:out.path,bytes:out.bytes,sha256:out.sha256};
+}
+async function invoke(key,argv,sdkTarget,control){
+ const r=await H.directRun(key,argv);
+ const sdk=await H.directCapture(key,"/private/tmp/f009_generic_captures/"+key+".json");
+ const durable=await preserveSDK(key,sdk,sdkTarget,control);
+ text({key,exit_code:r.exit_code,SDK:durable}); if(r.exit_code!==0)text(r);
+ if(r.exit_code!==0)throw Error("Stop; failed "+key);
+ return {result:H.directJSON(key),SDK:durable};
+}
+async function phase(init,batch,name){
+ const control=init.cohort.path.slice(0,init.cohort.path.lastIndexOf("/")),begin=init.begin;
+ const stem="batch"+String(batch).padStart(2,"0")+"_"+name;
+ const own="Root_f009_cohort"+String(begin).padStart(4,"0")+"_"+stem+"_ownership_v1";
+ const issued=await invoke(own,[PY,"-E","-B","-S",PREP+"/issue_phase.py","--actor","/root","--cohort",...trip(init.cohort),"--batch",String(batch),"--phase",name,"--Source-peer",...trip(peer)],control+"/Root_SDK/"+stem+"_ownership_v1.json",control);
+ const key="Root_f009_cohort"+String(begin).padStart(4,"0")+"_"+stem+"_v1";
+ return invoke(key,issued.result.argv,control+"/Root_SDK/"+stem+"_v1.json",control);
+}
+async function role(init,batch,stem){
+ const b=init.batches[batch],control=init.cohort.path.slice(0,init.cohort.path.lastIndexOf("/"));
+ const base="/private/tmp/f009_R5_parent_cohorts_actual/cohort_from"+String(init.begin).padStart(4,"0")+"/parents"+String(b.begin).padStart(4,"0")+"_"+String(b.end-1).padStart(4,"0");
+ const p=base+"/roles/"+stem+"_prepared.json";
+ const code="import json,pathlib,hashlib,os,sys\nq=json.loads(pathlib.Path(sys.argv[1]).read_bytes());r=q['manifest'];raw=pathlib.Path(r['path']).read_bytes();assert len(raw)==r['bytes'] and hashlib.sha256(raw).hexdigest()==r['sha256'];m=json.loads(raw);py='/Users/sasha/.venvs/global/bin/python';t=lambda r:[r['path'],str(r['bytes']),r['sha256']]\nassert not os.path.lexists(q['out']) and not os.path.lexists(q['guard'])\nprint(json.dumps(['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES',py,'-E','-B','/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py','--volume','/Users/sasha/medusa','--output',q['guard'],'--rss-cap-mib','128','--timeout','150','--',py,'-E','-B','-S',m['entry']['path'],'--actor','/root','--manifest',*t(r),'--request',*t(q['request']),'--Root-gate',*t(q['gate']),'--out',q['out'],'--guard',q['guard']]))";
+ const prepared=await tools.exec_command({cmd:[PY,"-E","-B","-S","-c",code,p].map(quote).join(" "),workdir:"/Users/sasha/medusa",login:false,max_output_tokens:6000});
+ if(prepared.exit_code!==0)throw Error("Role preparation read failed "+prepared.output);
+ const key="Root_f009_cohort"+String(init.begin).padStart(4,"0")+"_"+stem+"_v1";
+ const out=await invoke(key,JSON.parse(prepared.output),base+"/Root_SDK/"+stem+"_v1.json",control);
+ await preserveSDK(key,out.SDK,control+"/scientific_SDK/"+stem+"_v1.json",control);
+ return out;
+}

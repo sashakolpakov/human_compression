@@ -1,0 +1,92 @@
+"""Twenty-eight fresh synthetic glue controls; no Original operands are loaded."""
+import struct
+import common as C
+import budget,point_kernel as K,frame,bindings,fixed_subset as F
+
+def main():
+    b,q,g,pins,out=C.start('controls.py',(C,budget,K,frame,bindings,F))
+    C.need(q['schema']=='L026_FIXED_SUBSET_CONTROLS_REQUEST_V1','new controls request')
+    peer=b.doc(g['independent_Source_review']);mf=b.doc(q['worker_manifest'])
+    C.need(peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root','/root/mathematical_review')
+        and peer['control_Source_manifest']==pins['manifest']and peer['Source_manifest']==q['worker_manifest'],'distinct new whole Source review')
+    C.need(mf['schema']=='L026_FIXED_SUBSET_PROPOSER_SOURCE_V1'and mf['entry']=='propose.py','same reviewed production Source')
+    for r in mf['Source']:b.read(r) # Opaque production Source only; do not invoke it.
+    names=[]
+    def yes(name,value):C.need(value,name);names.append(name)
+    def no(name,fn):
+        try:fn()
+        except(ValueError,AssertionError,KeyError):names.append(name);return
+        raise ValueError(name)
+    def inverse(p):
+        out=[0]*len(p)
+        for x,y in enumerate(p):out[y]=x
+        return tuple(out)
+    d0=(2,1,0,3,5,4);A0=(1,0,3,2,4,5);A1=(0,4,3,5,1,2)
+    ctx=dict(n=6,d0=d0,ambient=(A0,A1,inverse(A0),inverse(A1)),
+        paths=((),(1,),(2,),(1,2),(-2,1),()))
+    identity=dict(free_index=0,owner=7,witness_row_sha256='0'*64)
+    record,checked=F.candidate(K,ctx,[0,1,2],[0,1],identity,b.work)
+    yes('full_ordered_product_preserves_subset',record['outcome']=='PROPER_HINT'and record['points']==[0,1]and checked==2)
+    outside=[]
+    for vertex in(0,1,2):
+        path=ctx['paths'][vertex];pair=(tuple(-j for j in reversed(path)),path)
+        outside.append({K.D_image(ctx,pair,x,b.work)for x in(0,1)}!={0,1})
+    yes('factorwise_filter_strictly_weaker',all(outside)and record['outcome']=='PROPER_HINT')
+    paths=K.prepare_triangle(ctx,[0,1,3],b.work)
+    yes('noncommutative_factor_orientation',tuple(K.middle_image(ctx,paths,x,b.work)for x in range(6))==(1,3,0,2,5,4)
+        and tuple(K.middle_image(ctx,paths,x,b.work,True)for x in range(6))==(2,0,3,1,5,4))
+    yes('reverse_factors_give_inverse',all(K.middle_image(ctx,paths,K.middle_image(ctx,paths,x,b.work),b.work,True)==x for x in range(6)))
+    p=ctx['paths'][4];pair=(tuple(-j for j in reversed(p)),p)
+    yes('signed_path_conjugation',tuple(K.D_image(ctx,pair,x,b.work)for x in range(6))==(2,5,0,3,4,1))
+    p=(1,2);pair=((-2,-1),p)
+    yes('multi_edge_inverse_order',tuple(K.D_image(ctx,pair,x,b.work)for x in range(6))==(0,2,1,3,5,4))
+    miss,count=F.candidate(K,ctx,[0,1,2],[0],identity,b.work)
+    yes('first_failed_edge_only_inconclusive',miss['outcome']=='INCONCLUSIVE'and miss['points']is None and count==1)
+    no('duplicate_subset_rejected',lambda:F.candidate(K,ctx,[0,1,2],[0,0],identity,b.work))
+    no('boolean_point_rejected',lambda:F.candidate(K,ctx,[0,1,2],[False],identity,b.work))
+    no('full_subset_rejected',lambda:F.candidate(K,ctx,[0,1,2],list(range(6)),identity,b.work))
+    no('empty_subset_rejected',lambda:F.candidate(K,ctx,[0,1,2],[],identity,b.work))
+    native=b'L026PF01'+struct.pack('<HHB',3510,351,1)+struct.pack('<'+'H'*351,*range(351))
+    yes('singleton351_native_subset',F.subset_from_pair(native,b.work)==list(range(351)))
+    bad=native[:12]+b'\x02'+native[13:]
+    no('two_member_header_rejected',lambda:F.subset_from_pair(bad,b.work))
+    witness=struct.pack('<IIHHHH',7,8,1024,0,1,2);row=dict(identity,witness_row_sha256=C.digest(witness))
+    yes('literal_old_row_binding',bindings.binding(witness,row,1,b.work)==(0,1,2))
+    no('wrong_row_digest_rejected',lambda:bindings.binding(witness,identity,1,b.work))
+    no('boolean_free_index_rejected',lambda:bindings.binding(witness,dict(row,free_index=False),1,b.work))
+    status=b'\x00\x01\x02\x00'+bytes(28904);row3=dict(row,free_index=3,owner=10)
+    no('duplicate_unpaid_identity_rejected',lambda:F.unpaid_cases([row,row],status))
+    no('same_free_index_wrong_owner_rejected',lambda:F.unpaid_cases([row,dict(row,owner=8)],status))
+    no('paid_status1_rejected',lambda:F.unpaid_cases([dict(row,free_index=1)],status))
+    no('paid_status2_rejected',lambda:F.unpaid_cases([dict(row,free_index=2)],status))
+    no('paid_status6_rejected',lambda:F.unpaid_cases([dict(row,free_index=1)],b'\x00\x06'+bytes(28906)))
+    yes('positive_unpaid_selection',F.unpaid_cases([row,row3],status)==([row,row3],[]))
+    no('wrong_owner_rejected',lambda:bindings.binding(witness,dict(row,owner=8),1,b.work))
+    bad=struct.pack('<IIHHHH',7,8,1023,0,1,2)
+    no('wrong_mass_with_valid_digest_rejected',lambda:bindings.binding(bad,dict(row,witness_row_sha256=C.digest(bad)),1,b.work))
+    bad=struct.pack('<IIHHHH',7,8,1024,0,0,2)
+    no('repeated_triangle_with_valid_digest_rejected',lambda:bindings.binding(bad,dict(row,witness_row_sha256=C.digest(bad)),1,b.work))
+    class Limited:
+        def __init__(self,real,limit):self.real=real;self.limit=limit;self.local=0
+        def charge(self,n,why=''):
+            self.real.charge(n,why)
+            if self.local+n>self.limit:raise budget.WorkStop('synthetic local stop, real charges retained')
+            self.local+=n
+    def stopped(name,fn):
+        returned=[]
+        try:returned.append(fn())
+        except budget.WorkStop:yes(name,returned==[]);return
+        raise ValueError(name)
+    stopped('midcandidate_stop_no_returned_hint',lambda:F.candidate(K,ctx,[0,1,2],[0,1],row,Limited(b.work,122)))
+    w2=witness+struct.pack('<IIHHHH',8,9,1024,0,1,2);r2=dict(free_index=1,owner=8,witness_row_sha256=C.digest(w2[16:]))
+    stopped('midbatch_stop_no_partial_return',lambda:F.propose_batch(K,ctx,[0,1],[row,r2],w2,bindings.binding,Limited(b.work,526)))
+    w4=b''.join(struct.pack('<IIHHHH',7+i,8+i,1024,0,1,2)for i in range(4));r0=dict(row,witness_row_sha256=C.digest(w4[:16]));r3=dict(row3,witness_row_sha256=C.digest(w4[48:]))
+    selected,skipped=F.unpaid_cases([r0,r3],status,[3]);records,count=F.propose_batch(K,ctx,[0,1],selected,w4,bindings.binding,b.work)
+    yes('known_identical_prior_skipped',skipped==[3]and selected==[r0]and len(records)==1 and records[0]['identity']==r0 and count==2)
+    C.need(len(names)==28,'twenty-eight new glue controls');b.close()
+    v=dict(schema='L026_FIXED_SUBSET_CONTROLS_RESULT_V1',status='PASS',Source_manifest=pins['manifest'],worker_manifest=q['worker_manifest'],
+        controls=28,names=names,Original_inputs_loaded=False,scientific_calls=0,canonical_writes=0,
+        no_named_Fi22_or_original_bridge_claimed=True,new_glue_controls_not_old32_control_replay=True)
+    files=b.emit(out,{'certificate.json':C.can(v),'proof.json':C.can(dict(v,pins=pins,point_units=b.work.units,physical_reads=b.bytes))})
+    print(C.can(dict(status='PASS',outputs=files,controls=28,Original_inputs_loaded=False)).decode(),end='')
+if __name__=='__main__':main()

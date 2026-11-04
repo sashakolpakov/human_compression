@@ -1,53 +1,78 @@
 Reviewed intake progress
 ========================
 
-This archive preserves the evidence for three accepted advances:
+This finite archive preserves the earlier eight-part checkpoint and the
+following completed local advances:
 
-* F009 parents 342 through 353: twelve parents, 1,872 checked extension
-  slots and 199 target occurrences. The registered prefix reaches 354
-  parents and 55,224 slots. The complete R5 stage requires 940 parents.
-* L026: three existing generation rows acquire separate intersection
-  proofs. The intersection count rises from 721 to 724; settled rows
-  remain 1,468, with 27,440 unresolved in the current bank.
-* F004 position 2739: one saved row with four members is registered.
-  Job 20's selector has partition 173/3606/0 and no unpaid position.
-  Complete original-domain coverage and whole-job adoption remain separate.
-  Global completion stays at 126 of 272 jobs.
+* F004 job 20: the original candidate domain is covered by an explicitly
+  qualified mixed partition. Independent review and canonical registration
+  raise global completion from 126 to 127 of 272 jobs. Candidate tuples may have
+  repeated labels; the stronger rank-four requirements belong to the five
+  positive rows. The baseline and 47 accepted lineages remain attributed.
+* F009: registered parents 354 through 413 add 60 parents and 9,360 strict
+  extension slots. The registered prefix reaches 414 parents and 64,584 slots.
+  The full R5 stage requires 940 parents. Literal interval certificates do not
+  establish action reduction, the R6 census or the final graph classification.
+* L026: the new fixed-subset proposer supplies a candidate for row 290. The
+  retained strict Saved checker verifies it, and separate logical, ledger and
+  administrative reviews support a typed negative registration. Settled rows
+  reach 1,469; separate intersection proofs remain 724. The seven inconclusive
+  pilot proposals are not paid cases. The first failed strict invocation and
+  the separately attributed singleton carrier projection remain recorded.
+* F004 spectral search: the archive includes the abstract order-signature
+  argument, its independent review, the new implementation, nine fresh control
+  groups with 280 assertions, exact generated field tables and the supplied
+  certificates verified by the unchanged direct checker. Batch 2 supplies 122
+  new NOT_IP results. Its partial adoption has been published locally; the
+  publication supplement includes the completed independent postwrite review.
+  Job 155 now has 133 NG, 245 NOT_IP and 429 unpaid positions.
+  That batch gives no complete-job or completed-original credit.
 
-Intake remains at 101 of 104 mathematical originals. These advances add no
-completed original, conjecture resolution, Lean proof or compression rate.
+Intake remains 101 of 104 mathematical originals. These advances add no
+conjecture resolution, Lean proof or measured manuscript compression ratio.
+The spectral discovery timing is an observed computation, not a manuscript
+compression measurement or a general speed guarantee.
 
-Verification
-------------
+Verification and limits
+-----------------------
 
 From the repository root::
 
     python3 -E -B -S october_corpus/research/intake/verified_progress/verify.py
 
-The verifier checks every exported object and the seven readable TeX files.
-Historical absolute paths are provenance labels. Verification uses relative
-paths, writes no build files and executes no archived program. Its limits
-are 256 MiB RSS, 125 seconds and 4 MiB per file.
+The finite verifier checks all listed object hashes and eleven readable TeX
+files. It executes no archived mathematical program, parses no certificate or
+Original operand, writes no build files, and uses only relative archive paths.
+It has 256 MiB RSS, 125-second, 128 MiB read and 4 MiB per-file limits. Its success
+establishes finite byte integrity, not mathematical replay or a proof of every
+imported premise.
 
-This is a finite evidence archive. It supplies saved certificates, the code
-and records of the selected operations, reviews, and registration images.
-It does not supply every recursively referenced historical dependency or a
-complete mathematical replay from a fresh clone. Existing portable replay
-packages are listed in the corpus reproduction guide.
+All eight earlier evidence parts and every old object are retained. New
+objects are content addressed and equal bytes are reused. Historical absolute
+paths are provenance labels, not portable runtime locations or unique edition
+identifiers; the SHA256 and byte extent identify each edition. The previous
+small index, README, verifier and theory list are retained under
+checkpoints/parents0354_jobs0126_rows1468. The object tree is shared.
 
-Proofs and attribution
-----------------------
+Evidence and attribution
+------------------------
 
-The ``theory`` directory contains the full arguments for normal solvable
-obstructions, transfer under labelled conjugation, the positive marking
-application, two arguments about alternating forms, the reused rank-three
-intersection theorem, and its three applications. Their named-group, model, class, frame,
-generation and domain imports remain explicit. The alternating-form notes
-are abstract results; their additional identification with a saved model is
-still being checked. They make no historical novelty claim.
+The evidence parts contain proof texts, complete selected Source bodies,
+independent Source/actual reviews, genuine SDK/raw transport/guard records,
+saved certificates, registration images and transaction history. Refusals and
+pre-entry failures remain visible. Successful science was not repeated to
+prepare this archive. Source authorship, independent review, mathematical
+scope ownership and Root execution are distinct roles in the records.
 
-The object archive retains the genuine refusal of parent 346's first
-invocation and its successful second invocation, as well as metadata-only
-admission refusals. Successful scientific computations were not repeated
-to prepare this archive. Source authorship, independent review and Root
-execution remain distinct in the saved records.
+The theory directory adds candidate-domain coverage, contraction of the
+Cayley form, the spectral order certificate and the row 290 application to the
+seven previously published texts. The G2 character identity and group-theoretic
+imports are attributed and conditional on the exact natural model, frame,
+membership, class, moved-line and overgroup premises. No historical priority
+claim is made. The spectral lookup constants are genuine Root control outputs;
+reviewers did not invent constants or rerun Original cases.
+
+This is a finite evidence archive, not a recursive export of every ancestor or
+a complete mathematical replay from a fresh clone. Existing portable replay
+packages remain listed in the corpus reproduction guide. No missing genuine
+SDK, authority, source body or actual control is manufactured by publication.

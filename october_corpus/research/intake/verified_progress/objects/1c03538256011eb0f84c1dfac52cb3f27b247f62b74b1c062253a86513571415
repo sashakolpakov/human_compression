@@ -1,0 +1,85 @@
+"""Synthetic administrative controls for the shared mixed-job projection."""
+import argparse,os,resource,signal,sys,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+HELP=S/'maintenance/intake/f004_fixed_line_intersection/registration'
+sys.path.insert(0,str(HELP))
+import metadata_io as m
+import metadata_fields as f
+import global_projection as g
+START=time.monotonic()
+def check():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert all(k not in os.environ for k in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'))
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+def close():
+    for r in list(m.RECORDS.values()):m.raw(r)
+    check()
+def descriptor(v):
+    r=dict(path=v[0],bytes=int(v[1]),sha256=v[2]);m.ref(r);return r
+
+def controls(mr):
+    fake=dict(path=str(S/'synthetic_metadata_reference'),bytes=1,sha256='0'*64)
+    counts=dict(closed=126,required=272,pending=146);alias=dict(required=272,closed=126,pending=146,pending_file=fake,
+        pending_count=146,remaining=146,pending_ledger=fake,unknown=dict(flag=False,nothing=None,history=[1,'one']))
+    c=dict(root_f004_q11_ledger_current=dict(alias,pending=fake),F004_q11_latest_ledger=alias,F004_q11_current=alias,F004_status='old',
+        root_execution_ownership_latest=dict(active_handles=[]),root_current_ownership=dict(active_handles=[]),current_execution_ownership=dict(active_handles=[]),
+        F004_current={k:None for k in('q11_actual_lower_closed','q11_closed','q11_actual_pending','q11_pending','q11_remaining','q11_current_pending_plan','q11_pending_registration','q11_latest_adoption','q11_authoritative_latest','q11_batch_registration_current','navigation_note')},unknown=[False,None,{'old':7}])
+    st=dict(root_f004_q11_ledger_current=dict(alias,pending=fake),F004_q11_latest_ledger=alias,F004_q11_current=alias,
+        F004=dict(latest_ledger=alias,q11_completed=126,q11_pending=146,next_status='old',other=[False,None]),active_scientific_handles=[],unknown=c['unknown'])
+    raw=dict(CURRENT=g.can(c),STATUS=g.can(st));out,inv=g.globals_project(raw,counts,fake,fake,fake);names=[]
+    def yes(name,test):assert test;names.append(name)
+    def no(name,fn):
+        try:fn()
+        except(ValueError,AssertionError,KeyError):names.append(name);return
+        raise AssertionError(name)
+    yes('global126_to127_pending146_to145',f.selected(g.at(out['CURRENT'],['F004_q11_latest_ledger']),['closed','pending'])==dict(closed=127,pending=145))
+    yes('whole_unknown_subtrees_preserved',g.at(raw['CURRENT'],['unknown'])==g.at(out['CURRENT'],['unknown'])and g.at(raw['STATUS'],['F004','other'])==g.at(out['STATUS'],['F004','other']))
+    yes('old_latest_history_raw_copy',g.at(out['CURRENT'],['F004_q11_before_job20_completion'])==g.at(raw['CURRENT'],['F004_q11_latest_ledger']))
+    yes('both_full_alias_inverses',all(v['restores_exact_beforeimage']for v in inv.values()))
+    yes('only_ordered_job20_removed',g.pending([[3,4],[20,4],[21,4]])==[[3,4],[21,4]])
+    no('missing_job20',lambda:g.pending([[3,4]]));no('duplicate_job20',lambda:g.pending([[20,4],[20,4]]))
+    no('wrong_rank_pending',lambda:g.pending([[20,4],[3,5]]))
+    no('false_boolean_identifier',lambda:g.pending([[20,4],[True,4]]))
+    no('wrong_total_counts',lambda:g.globals_project(raw,dict(closed=126,required=273,pending=146),fake,fake,fake))
+    no('boolean_counts',lambda:g.globals_project(raw,dict(closed=True,required=272,pending=271),fake,fake,fake))
+    no('active_ROOT_array',lambda:g.idle(g.setpath(raw['CURRENT'],['root_current_ownership','active_handles'],b'[1]'),raw['STATUS']))
+    no('active_STATUS_array',lambda:g.idle(raw['CURRENT'],g.setpath(raw['STATUS'],['active_scientific_handles'],b'[1]')))
+    no('existing_history_refused',lambda:g.globals_project(dict(raw,CURRENT=out['CURRENT']),counts,fake,fake,fake))
+    no('nonfinite_metadata',lambda:g.strict(b'{"x":NaN}'));no('duplicate_metadata_key',lambda:g.strict(b'{"x":1,"x":2}'))
+    assert len(names)==16
+    close();return dict(schema='F004_MIXED_GLOBAL_METADATA_CONTROLS_V1',status='PASS',Source_manifest=mr,count=16,names=names,Original_payloads_decoded=False,scientific_calls=0,canonical_writes=0)
+
+def main():
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata deadline')));signal.alarm(125)
+    a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--actor',required=True);a.add_argument('--Source-manifest',nargs=3,required=True)
+    a.add_argument('--Source-peer',nargs=3,required=True);a.add_argument('--production-manifest',nargs=3,required=True);a.add_argument('--guard',required=True);a=a.parse_args()
+    assert a.actor=='/root';check();mr=descriptor(a.Source_manifest);mf=m.docref(mr)
+    assert mf['schema']=='F004_MIXED_GLOBAL_CONTROLS_SOURCE_V1'and mf['Root_authority']is False
+    assert mf['entry']['path']==str(HERE/'check_projection.py')
+    assert m.pin(Path(__file__).resolve())==mf['entry']
+    assert len(mf['Source'])==4 and {r['path']for r in mf['Source']}=={str(HERE/'check_projection.py'),str(HERE/'global_projection.py'),str(HELP/'metadata_io.py'),str(HELP/'metadata_fields.py')}
+    for r in mf['Source']+mf['guards']:m.raw(r)
+    for module,path in((m,HELP/'metadata_io.py'),(f,HELP/'metadata_fields.py'),(g,HERE/'global_projection.py')):
+        assert Path(module.__file__).resolve()==path
+        for fn in vars(module).values():
+            if type(fn).__name__=='function'and fn.__module__==module.__name__:
+                assert fn.__globals__ is vars(module)and Path(fn.__code__.co_filename).resolve()==path
+    assert [(r['bytes'],r['sha256'])for r in mf['guards']]==[(4806,'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'),(18361,'5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42')]
+    assert sum(r['bytes']for r in mf['Source']+mf['guards'])+512==mf['Source_plus_guards512']<=65536
+    peerref=descriptor(a.Source_peer);peer=m.docref(peerref)
+    assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root','/root/mathematical_review')
+    assert peer['controls_program']==mf['entry']and peer['controls_Source_manifest']==mr
+    production=descriptor(a.production_manifest);pm=m.docref(production)
+    assert peer['global_Source_manifest']==production and pm['entry']==peer['global_program']
+    assert {r['sha256']for r in pm['Source']if r['path']!=pm['entry']['path']}=={r['sha256']for r in mf['Source']if r['path']!=mf['entry']['path']}
+    for r in pm['Source']:m.raw(r) # Opaque Source metadata; production driver is not executed here.
+    st=m.doc(Path(a.guard)/'started.json')
+    assert st['command']==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',str(HERE/'check_projection.py')]+sys.argv[1:]
+    assert any(x['pid']==os.getpid()for x in st['identities'])
+    assert all(st['limits'][k]==v for k,v in dict(total_rss=256*2**20,wall_seconds=125.0,admit_ram=4*2**30,admit_disk=10*2**30,ram_floor=3*2**30,disk_floor=8*2**30).items())
+    result=controls(production);result['controls_Source_manifest']=mr;result['controls_program']=mf['entry']
+    check();signal.alarm(0);print(g.can(result).decode(),end='')
+if __name__=='__main__':main()

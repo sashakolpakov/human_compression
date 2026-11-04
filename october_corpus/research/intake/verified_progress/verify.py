@@ -40,8 +40,8 @@ def read(relative, expected=None):
 
 
 index = json.loads(read('index.json'))
-assert index['schema'] == 'REVIEWED_INTAKE_PROGRESS_ARCHIVE_V1'
-assert len(index['parts']) == 8
+assert index['schema'] == 'REVIEWED_INTAKE_PROGRESS_ARCHIVE_V2'
+assert 8 <= len(index['parts']) <= 64
 objects = {}
 logical_files = 0
 for part in index['parts']:
@@ -63,7 +63,7 @@ assert len(objects) == index['unique_objects']
 assert sum(objects.values()) == index['unique_bytes']
 theory = json.loads(read('theory.json'))
 assert theory['schema'] == 'FINITE_REVIEWED_INTAKE_THEORY_V1'
-assert len(theory['files']) == theory['file_count'] == 7
+assert len(theory['files']) == theory['file_count'] == 11
 for entry in theory['files']:
     assert Path(entry['object']).parts[0] == 'theory'
     read(entry['object'], entry)

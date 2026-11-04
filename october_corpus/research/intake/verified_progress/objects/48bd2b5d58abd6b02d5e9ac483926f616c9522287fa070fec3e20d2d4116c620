@@ -1,0 +1,326 @@
+"""Unrun prime-field spectral tables and literal V4 prefix reuse.
+
+New Source by /root/forest_resume. No lookup constants occur in this file.
+Actual natural G2/model/involution premises require separate Root ownership.
+Positive certificates are still produced by the unchanged retained kernel.
+"""
+
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+class Work:
+    def __init__(self, budget, cap=8000000):
+        need(type(cap) is int and 1 <= cap <= 8000000, 'bounded scalar work')
+        self.budget, self.cap, self.products = budget, cap, 0
+
+    def charge(self, count):
+        need(type(count) is int and count >= 0, 'nonnegative scalar charge')
+        self.products += count
+        need(self.products <= self.cap, '8000000 scalar-product bound')
+        self.budget.tick(True)
+
+
+def prime_divisors(n):
+    need(type(n) is int and 2 <= n <= 931, 'small abstract integer')
+    result, divisor = [], 2
+    while divisor * divisor <= n:
+        if n % divisor == 0:
+            result.append(divisor)
+            while n % divisor == 0:
+                n //= divisor
+        divisor += 1
+    if n > 1:
+        result.append(n)
+    return tuple(result)
+
+
+def field(p):
+    need(type(p) is int and 2 <= p <= 31
+         and all(p % d for d in range(2, p)), 'prime field2..31 only')
+    return p
+
+
+def trim(a):
+    a = list(a)
+    while a and a[-1] == 0:
+        a.pop()
+    return tuple(a)
+
+
+def poly(a, p):
+    need(type(a) in (tuple, list) and len(a) <= 15
+         and all(type(x) is int and 0 <= x < p for x in a),
+         'canonical bounded prime-field polynomial')
+    return trim(a)
+
+
+def divmod_poly(a, b, p, work):
+    a, b = list(poly(a, p)), poly(b, p)
+    need(b, 'nonzero polynomial divisor')
+    quotient = [0] * max(0, len(a) - len(b) + 1)
+    inverse = pow(b[-1], p - 2, p)
+    work.charge(2 * (p - 2).bit_length())
+    while len(a) >= len(b):
+        shift = len(a) - len(b)
+        factor = a[-1] * inverse % p
+        work.charge(1 + len(b))
+        quotient[shift] = factor
+        for i, value in enumerate(b):
+            a[shift + i] = (a[shift + i] - factor * value) % p
+        while a and a[-1] == 0:
+            a.pop()
+    return trim(quotient), tuple(a)
+
+
+def product_mod(a, b, modulus, p, work):
+    a, b, modulus = poly(a, p), poly(b, p), poly(modulus, p)
+    need(2 <= len(modulus) <= 8 and len(a) < len(modulus)
+         and len(b) < len(modulus), 'small quotient-ring multiplication')
+    out = [0] * max(0, len(a) + len(b) - 1)
+    work.charge(len(a) * len(b))
+    for i, x in enumerate(a):
+        for j, y in enumerate(b):
+            out[i + j] = (out[i + j] + x * y) % p
+    return divmod_poly(out, modulus, p, work)[1]
+
+
+def power_x(exponent, modulus, p, work):
+    need(type(exponent) is int and 0 <= exponent <= 931, 'bounded exponent')
+    result, value = (1,), (0, 1)
+    while exponent:
+        if exponent & 1:
+            result = product_mod(result, value, modulus, p, work)
+        exponent //= 2
+        if exponent:
+            value = product_mod(value, value, modulus, p, work)
+    return result
+
+
+def gcd_poly(a, b, p, work):
+    a, b = poly(a, p), poly(b, p)
+    while b:
+        a, b = b, divmod_poly(a, b, p, work)[1]
+    if not a:
+        return ()
+    inverse = pow(a[-1], p - 2, p)
+    work.charge(2 * (p - 2).bit_length() + len(a))
+    return tuple(x * inverse % p for x in a)
+
+
+def minus_one(a, p):
+    a = list(a) if a else [0]
+    a[0] = (a[0] - 1) % p
+    return trim(a)
+
+
+def characteristic(t, e2, p):
+    need(type(t) is type(e2) is int and 0 <= t < p and 0 <= e2 < p,
+         'canonical first two coefficients')
+    f = (t * t + t - e2) % p
+    return tuple(x % p for x in (-1, t, -e2, f, -f, e2, -t, 1))
+
+
+def primitive_factor(f, p, n, work):
+    field(p)
+    need(type(n) is int and 2 <= n <= 931 and n % p != 0,
+         'bounded order prime to characteristic')
+    f = poly(f, p)
+    need(len(f) == 7 and f[-1] == 1, 'monic six-degree factor')
+    if power_x(n, f, p, work) != (1,):
+        return False
+    return all(gcd_poly(f, minus_one(power_x(n // r, f, p, work), p),
+                        p, work) == (1,) for r in prime_divisors(n))
+
+
+def primitive_table(p, n, work):
+    """At Root runtime enumerate coefficient pairs, not Original matrices."""
+    field(p)
+    need(type(n) is int and 2 <= n <= p * p - p + 1
+         and (p * p - p + 1) % n == 0, 'order divides Phi6(p)')
+    work.charge(2 * sum(i.bit_length() for i in range(1, 7)))
+    residues = [pow(p, i, n) for i in range(1, 7)]
+    need(residues[-1] == 1 and all(x != 1 for x in residues[:-1]),
+         'primitive roots have Frobenius degree six')
+    factors, result = prime_divisors(n), []
+    for t in range(p):
+        for e2 in range(p):
+            work.charge(1)
+            f, remainder = divmod_poly(characteristic(t, e2, p),
+                                       ((-1) % p, 1), p, work)
+            need(not remainder and len(f) == 7 and f[-1] == 1,
+                 'whole monic six-degree quotient')
+            if not primitive_factor(f, p, n, work):
+                continue
+            work.charge(1)
+            result.append(dict(trace=t, e2=e2,
+                               trace_square=(t * t - e2 - e2) % p,
+                               factor=list(f)))
+    phi = n
+    for r in factors:
+        phi = phi // r * (r - 1)
+    need(phi % 6 == 0 and len(result) == phi // 6,
+         'complete primitive-factor signature count')
+    need(len({tuple(r['factor']) for r in result}) == len(result),
+         'distinct complete Frobenius factors')
+    return result
+
+
+def validate_tables(document, work=None):
+    need(type(document) is dict and document.get('schema') == 'F004_Q11_G2_SPECTRAL_TABLES_V1'
+         and type(document.get('field')) is int and document['field'] == 11
+         and document.get('orders') == [37, 111]
+         and all(type(x) is int for x in document['orders'])
+         and document.get('algorithm') == 'UNIVERSAL_G2_CHARACTERISTIC_AND_PRIMITIVE_GCD_V1'
+         and type(document.get('tables')) is dict
+         and set(document['tables']) == {'37', '111'}, 'exact admitted q11 table format')
+    pairs = set()
+    for key, count in (('37', 6), ('111', 12)):
+        rows = document['tables'][key]
+        need(type(rows) is list and len(rows) == count, 'six/twelve admitted signatures')
+        keys, factors = [], set()
+        for row in rows:
+            need(type(row) is dict and set(row) == {'trace', 'e2', 'trace_square', 'factor'}
+                 and all(type(row[k]) is int and 0 <= row[k] < 11
+                         for k in ('trace', 'e2', 'trace_square')),
+                 'strict canonical coefficient types')
+            need(type(row['factor']) is list and len(row['factor']) == 7
+                 and all(type(x) is int and 0 <= x < 11 for x in row['factor'])
+                 and row['factor'][-1] == 1, 'monic canonical six-degree factor')
+            if work is not None:
+                work.charge(2)
+            coefficients = characteristic(row['trace'], row['e2'], 11)
+            quotient, running = [0] * 7, 0
+            for index in range(7, 0, -1):
+                running = (coefficients[index] + running) % 11
+                quotient[index - 1] = running
+            need(row['factor'] == quotient and (-quotient[0]) % 11 == coefficients[0],
+                 'entire factor has the advertised two coefficients')
+            need((row['trace'] ** 2 - row['e2'] - row['e2']) % 11 == row['trace_square'],
+                 'two equivalent coefficient conventions')
+            pair = (row['trace'], row['trace_square'])
+            need(pair not in pairs and tuple(row['factor']) not in factors,
+                 'disjoint unique admitted pairs and factors')
+            pairs.add(pair)
+            factors.add(tuple(row['factor']))
+            keys.append((row['trace'], row['e2']))
+        need(keys == sorted(keys), 'canonical coefficient enumeration order')
+    need(len(pairs) == 18, 'eighteen word signatures')
+    return frozenset(pairs)
+
+
+def trace_pair(matrix, work):
+    need(type(matrix) is tuple and len(matrix) == 7
+         and all(type(row) is tuple and len(row) == 7 for row in matrix)
+         and all(type(x) is int and 0 <= x < 11 for row in matrix for x in row),
+         'whole canonical q11 matrix for trace filter')
+    work.charge(28)
+    t = sum(matrix[i][i] for i in range(7)) % 11
+    u = (sum(matrix[i][i] * matrix[i][i] for i in range(7))
+         + 2 * sum(matrix[i][j] * matrix[j][i]
+                   for i in range(7) for j in range(i + 1, 7))) % 11
+    return t, u
+
+
+def elementary_pair(matrix, p, work):
+    field(p)
+    need(type(matrix) is tuple and len(matrix) == 7
+         and all(type(row) is tuple and len(row) == 7 for row in matrix)
+         and all(type(x) is int and 0 <= x < p for row in matrix for x in row),
+         'whole canonical prime-field matrix')
+    work.charge(42)
+    t = sum(matrix[i][i] for i in range(7)) % p
+    e2 = sum(matrix[i][i] * matrix[j][j] - matrix[i][j] * matrix[j][i]
+             for i in range(7) for j in range(i + 1, 7)) % p
+    return t, e2
+
+
+class Prefixes:
+    def __init__(self, marks, section, budget):
+        need(section in ((0, 1, 2), (1, 2, 3)), 'original labelled end section')
+        self.a, self.b, self.c = (marks[i] for i in section)
+        self.budget, self.blocks, self.values, self.products = budget, {}, {}, 0
+
+    def multiply(self, a, b):
+        self.products += 1
+        return self.budget.multiply(a, b)
+
+    def block(self, digit):
+        need(type(digit) is int and 1 <= digit <= 3, 'strict V4 digit')
+        if digit not in self.blocks:
+            if digit == 1:
+                self.blocks[1] = self.multiply(self.b, self.a)
+            elif digit == 2:
+                self.blocks[2] = self.multiply(self.b, self.c)
+            else:
+                need(type(digit) is int and digit == 3, 'three V4 syllables')
+                self.blocks[3] = self.multiply(self.block(1), self.c)
+        return self.blocks[digit]
+
+    def value(self, digits):
+        need(type(digits) is tuple and 1 <= len(digits) <= 4
+             and all(type(x) is int and 1 <= x <= 3 for x in digits),
+             'literal bounded syllable prefix')
+        self.budget.tick(True)
+        if digits not in self.values:
+            self.values[digits] = (self.block(digits[0]) if len(digits) == 1 else
+                                  self.multiply(self.value(digits[:-1]), self.block(digits[-1])))
+            need(len(self.values) <= 120, 'at most120 cached raw word prefixes')
+        return self.values[digits]
+
+
+class Engine:
+    def __init__(self, tables, helpers, kernel, budget, work=None):
+        self.helpers, self.kernel, self.budget = helpers, kernel, budget
+        need(work is None or (type(work) is Work and work.budget is budget),
+             'shared scalar meter belongs to the same role budget')
+        self.work = Work(budget) if work is None else work
+        before = self.work.products
+        self.pairs = validate_tables(tables, self.work)
+        self.validation_products = self.work.products - before
+        self.words = self.rejections = self.prefix_products = self.confirmations = 0
+
+    def search(self, marks, entries):
+        need(type(marks) is tuple and len(marks) == 4, 'same ordered actual quartet')
+        sections = []
+        for section in ((0, 1, 2), (1, 2, 3)):
+            prefixes, attempted, proper = Prefixes(marks, section, self.budget), [], None
+            for item in entries:
+                self.budget.tick(True)
+                attempted.append(item['raw_index'])
+                self.words += 1
+                previous = prefixes.products
+                try:
+                    value = prefixes.value(tuple(item['syllables']))
+                finally:
+                    self.prefix_products += prefixes.products - previous
+                if trace_pair(value, self.work) not in self.pairs:
+                    self.rejections += 1
+                    continue
+                self.confirmations += 1
+                fact = self.kernel['prime_word_fact'](marks, section, item, self.helpers, self.budget)
+                need(fact is not None and fact['base_word_value'] == [list(row) for row in value],
+                     'literal retained positive power/word confirmation agrees with cached word')
+                if fact['four_mark_IP_failure_proposed']:
+                    return fact, dict(completed_sections=sections, current_section=list(section),
+                                      attempted_dictionary_raw_indices=attempted,
+                                      failed_search_is_inconclusive=True)
+                proper = fact
+                break
+            sections.append(dict(section_indices=list(section),
+                                 attempted_dictionary_raw_indices=attempted,
+                                 proper_section_certificate=proper,
+                                 miss_is_not_properness_or_IP_claim=True))
+        return None, dict(completed_sections=sections, failed_search_is_inconclusive=True,
+                          no_four_mark_generation_nongeneration_or_IP_success_claim=True)
+
+    def statistics(self):
+        return dict(started_word_trials=self.words, completed_spectral_rejections=self.rejections,
+                    charged_prefix_matrix_products=self.prefix_products,
+                    started_literal_positive_confirmations=self.confirmations,
+                    charged_signature_and_validation_products_upper_bound=self.work.products,
+                    charged_table_structure_validation_products=self.validation_products,
+                    literal_kernel_and_helpers_unchanged=True,
+                    trace_match_alone_issues_no_case_certificate=True)

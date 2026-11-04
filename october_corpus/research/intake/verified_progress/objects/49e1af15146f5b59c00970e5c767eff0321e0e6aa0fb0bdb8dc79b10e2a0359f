@@ -1,0 +1,155 @@
+"""Pure mixed-job metadata projections; no file IO or scientific authority.
+The need/can/equal/strict bodies are literal functions from job24 projection88eb.
+Unknown values remain byte spans throughout the global-state projections.
+"""
+import base64,json,math
+from pathlib import Path
+import metadata_fields as f
+
+def need(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False) + '\n').encode()
+
+def equal(a, b):
+    if type(a) is not type(b):
+        return False
+    if type(a) is dict:
+        return a.keys() == b.keys() and all(equal(a[k], b[k]) for k in a)
+    if type(a) is list:
+        return len(a) == len(b) and all(equal(x,y) for x,y in zip(a,b))
+    return a == b
+
+def strict(raw):
+    def pairs(rows):
+        out = {}
+        for key, value in rows:
+            need(key not in out, 'duplicate JSON key')
+            out[key] = value
+        return out
+    def bad(value):
+        raise ValueError('nonfinite JSON token: ' + value)
+    def finite(text):
+        value=float(text);need(math.isfinite(value),'overflowing JSON number');return value
+    return json.loads(raw.decode('utf-8'),object_pairs_hook=pairs,parse_constant=bad,parse_float=finite)
+
+ALIASES=dict(CURRENT=[['root_f004_q11_ledger_current'],['F004_q11_latest_ledger'],['F004_q11_current']],
+    STATUS=[['root_f004_q11_ledger_current'],['F004','latest_ledger'],['F004_q11_current'],['F004_q11_latest_ledger']])
+KIND='ADOPT_JOB20_MIXED_ORIGINAL_CLOSURE'
+def at(raw,path):
+    for key in path:
+        parts=f.members(raw);need(key in parts,'existing administrative path');raw=parts[key]
+    return raw
+def obj(parts):return b'{'+b','.join(json.dumps(k,ensure_ascii=True).encode()+b':'+v for k,v in parts.items())+b'}'
+def setpath(raw,path,value,added=False):
+    parts=f.members(raw);key=path[0]
+    if len(path)>1:
+        need(key in parts,'existing administrative parent');parts[key]=setpath(parts[key],path[1:],value,added)
+    else:
+        need((key not in parts)if added else(key in parts),'fresh history or existing administrative leaf');parts[key]=value
+    return obj(parts)
+def patchdict(raw,values):
+    before=f.members(raw);parts=dict(before)
+    for key,value in values.items():parts[key]=can(value).rstrip(b'\n')
+    result=obj(parts);after=f.members(result)
+    need(all(after[k]==v for k,v in before.items()if k not in values),'unknown alias values remain raw-identical')
+    return result
+def preserve(before,after,changes):
+    """Verify the complete inverse using retained beforeimage shapes.
+
+    At a changed leaf verify the exact typed aftervalue; elsewhere preserve
+    the complete raw value. Recursion occurs only on administrative ancestors.
+    Returning their archived beforeimage spans reconstructs exact old shapes,
+    including unknown values and formatting, without parsing their payloads.
+    """
+    paths=[tuple(x['path'])for x in changes];need(len(set(paths))==len(paths),'unique change paths')
+    for p in paths:
+        for q in paths:need(p==q or not(len(p)<len(q)and q[:len(p)]==p),'nonoverlapping changes')
+    bypath={tuple(x['path']):x for x in changes}
+    def walk(old,new,path):
+        if path in bypath:
+            row=bypath[path];need(new==row['after'],'complete typed aftervalue')
+            need(old==row['before'],'complete stored beforevalue');return old
+        a=f.members(old);b=f.members(new);added={p[len(path)]for p in paths if len(p)==len(path)+1 and p[:len(path)]==path and bypath[p]['added']}
+        need(set(b)==set(a)|added,'only declared fresh history fields')
+        for key in b:
+            p=path+(key,)
+            if p in bypath:
+                row=bypath[p];need(b[key]==row['after'],'declared aftervalue')
+                need((key not in a)if row['added']else(key in a and a[key]==row['before']),'exact leaf old value')
+            elif any(q[:len(p)]==p for q in paths):walk(a[key],b[key],p)
+            else:need(a[key]==b[key],'every unknown/unrelated/history subtree remains raw-identical')
+        return old
+    need(walk(before,after,())==before,'whole exact archived inverse')
+    return dict(schema='F004_GLOBAL_WHOLE_RAW_VALUE_INVERSE_V1',restores_exact_beforeimage=True,
+        changes=[dict(path=x['path'],before_present=not x['added'],
+            before_base64=None if x['added']else base64.b64encode(x['before']).decode(),
+            after_base64=base64.b64encode(x['after']).decode())for x in changes],
+        unknown_values_never_decoded=True,archived_beforeimage_shapes_used=True)
+def idle(current,status):
+    for key in('root_execution_ownership_latest','root_current_ownership','current_execution_ownership'):
+        need(strict(at(current,[key,'active_handles']))==[],'all three CURRENT ownership arrays idle')
+    need(strict(at(status,['active_scientific_handles']))==[],'STATUS scientific array idle')
+def pending(old):
+    need(type(old)is list and all(type(j)is list and len(j)==2 and all(type(x)is int for x in j)for j in old),'typed pending identifiers')
+    need(len(set(map(tuple,old)))==len(old)and old.count([20,4])==1,'one unpaid original job20')
+    new=[j for j in old if j!=[20,4]]
+    need(len(new)+1==len(old)and all(j[1]==4 for j in old),'only job20/rank4 ordered removal')
+    return new
+def validate_globals(documents,counts,pending_ref):
+    for name,raw in documents.items():
+        for path in ALIASES[name]:
+            old=at(raw,path);v=f.selected(old,['required','closed'])
+            need(v==dict(required=counts['required'],closed=counts['closed'])and all(type(x)is int for x in v.values()),'all current global counts coherent')
+            if path[-1]=='root_f004_q11_ledger_current':key,refkey='pending_count','pending'
+            elif path[-1]=='F004_q11_current':key,refkey='remaining','pending_ledger'
+            else:key,refkey='pending','pending_file'
+            v=f.selected(old,[key,refkey]);need(type(v[key])is int and v[key]==counts['pending']and v[refkey]==pending_ref,'all pending aliases coherent')
+    need(at(documents['CURRENT'],['F004_q11_latest_ledger'])==at(documents['STATUS'],['F004_q11_latest_ledger']),'both current latest aliases equal')
+    for key in('q11_actual_lower_closed','q11_closed'):
+        need(strict(at(documents['CURRENT'],['F004_current',key]))==counts['closed'],'legacy closed counts coherent')
+    for key in('q11_actual_pending','q11_pending'):
+        need(strict(at(documents['CURRENT'],['F004_current',key]))==counts['pending'],'legacy pending counts coherent')
+    for key in('q11_remaining','q11_current_pending_plan'):
+        need(strict(at(documents['CURRENT'],['F004_current',key]))==pending_ref,'legacy pending references coherent')
+    for path,value in[(['F004','q11_completed'],counts['closed']),(['F004','q11_pending'],counts['pending'])]:
+        need(strict(at(documents['STATUS'],path))==value,'STATUS legacy counts coherent')
+    idle(documents['CURRENT'],documents['STATUS'])
+def globals_project(documents,counts,pending_ref,registration_ref,proof_ref):
+    before=counts['closed'];after=before+1;required=counts['required'];left=counts['pending']-1
+    need(all(type(v)is int for v in counts.values())and before+counts['pending']==required==272 and left>=0,'coherent one-job delta')
+    outputs={};inverses={}
+    note=('Original job 20 has complete coverage of 3779 orbit positions: 232 nongeneration results, 3542 intersection failures and 5 positive marking orbits. '
+        'q11 has %d/%d jobs registered; %d rank4 jobs remain pending. Other prefixes, output assembly and Aut/reversal equivalences remain required.'%(after,required,left))
+    for name,raw in documents.items():
+        changes=[];new=raw
+        def change(path,value,added=False,rawvalue=None):
+            nonlocal new
+            value=can(value).rstrip(b'\n')if rawvalue is None else rawvalue
+            old=None if added else at(raw,path);new=setpath(new,path,value,added)
+            changes.append(dict(path=path,before=old,after=value,added=added))
+        for path in ALIASES[name]:
+            old=at(raw,path);values=dict(required=required,closed=after,registration=registration_ref,registration_scope=KIND,
+                registered_closed_job_batch=registration_ref,original_job=[20,4],typed_job_record=proof_ref,
+                retained_single_job_fields_are_historical=True,whole_original_credit=0)
+            if path[-1]=='root_f004_q11_ledger_current':values.update(pending_count=left,pending=pending_ref,adoption=proof_ref,status='ROOT_REGISTERED_F004_Q11_JOB20_MIXED_CLOSURE')
+            elif path[-1]=='F004_q11_current':values.update(remaining=left,pending_ledger=pending_ref,root_adoption=proof_ref,status='ROOT_REGISTERED_F004_Q11_JOB20_MIXED_CLOSURE')
+            else:values.update(pending=left,pending_file=pending_ref,adoption=proof_ref,rank_four_pending=left,rank_five_pending=0)
+            change(path,None,rawvalue=patchdict(old,values))
+        if name=='CURRENT':
+            change(['F004_status'],note)
+            legacy=dict(q11_actual_lower_closed=after,q11_closed=after,q11_actual_pending=left,q11_pending=left,q11_remaining=pending_ref,
+                q11_current_pending_plan=pending_ref,q11_pending_registration=registration_ref,q11_latest_adoption=str(Path(proof_ref['path']).relative_to('/Users/sasha/medusa/research/leemans')),
+                q11_authoritative_latest='F004_q11_latest_ledger and q11_batch_registration_current; old per-job records remain literal history.',
+                q11_batch_registration_current=registration_ref,navigation_note=note)
+            for k,v in legacy.items():change(['F004_current',k],v)
+        else:
+            for path,v in[(['F004','q11_completed'],after),(['F004','q11_pending'],left),(['F004','next_status'],note)]:change(path,v)
+        change(['F004_q11_before_job20_completion'],None,True,at(raw,['F004_q11_latest_ledger']))
+        inverses[name]=preserve(raw,new,changes);outputs[name]=new+b'\n'
+    idle(outputs['CURRENT'],outputs['STATUS'])
+    need(at(outputs['CURRENT'],['F004_q11_latest_ledger'])==at(outputs['STATUS'],['F004_q11_latest_ledger']),'coherent latest aliases')
+    return outputs,inverses

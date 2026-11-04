@@ -1,0 +1,80 @@
+"""Summarize a terminal future cohort; zero metadata retry overrides are valid."""
+import argparse,json
+from pathlib import Path
+import common as C
+ap=argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--actor',required=True);ap.add_argument('--cohort',nargs=3,required=True)
+ap.add_argument('--attempts',nargs=3);ap.add_argument('--Source-peer',nargs=3,required=True)
+a=ap.parse_args();assert a.actor=='/root'
+L,p,pr,program,peer,mf,bootstrap=C.start('close_cohort.py',a.Source_peer)
+cohort_ref=C.descriptor(a.cohort);cohort,control,h=C.owned_cohort(L,p,pr,cohort_ref)
+summary_path=control/'cohort_actual_summary.json';C.fresh(summary_path);planned=[]
+if a.attempts:
+    attempts_ref=C.descriptor(a.attempts);attempts=C.doc(L,attempts_ref)
+else:
+    path=control/'metadata_phase_attempts.json';C.fresh(path)
+    attempts=dict(schema='ROOT_F009_COHORT_METADATA_PHASE_ATTEMPTS_V1',root='/root',Root_authority=True,
+        cohort=cohort_ref,scientific_roles_changed=False,no_successful_role_replayed=True,overrides=[])
+    body=C.can(attempts);attempts_ref=C.file_ref(path,body);planned.append((path,body))
+assert attempts['schema']=='ROOT_F009_COHORT_METADATA_PHASE_ATTEMPTS_V1'and attempts['root']=='/root'
+assert attempts['Root_authority']is True and attempts['cohort']==cohort_ref
+assert attempts['scientific_roles_changed']is False and attempts['no_successful_role_replayed']is True
+assert 0<=len(attempts['overrides'])<=3*len(cohort['batches'])
+overrides={};prior_refusals=[]
+for override in attempts['overrides']:
+    C.check();key=(override['batch'],override['phase']);edition=override['selected_edition']
+    assert type(key[0])is int and 0<=key[0]<len(cohort['batches'])and key[1]in C.PHASES and key not in overrides
+    assert type(edition)is int and 2<=edition<=8 and len(override['prior_non_success_actual_SDK'])==edition-1
+    selected=override['selected_actual_SDK'];current=C.doc(L,selected)
+    assert selected['path']==str(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(key[0],key[1],edition)))
+    assert current['root']==current['actor']=='/root'and current['actual_tool']['exit_code']==0
+    assert current['all_genuine_api_frames'][-1]==current['full_tool_return']and current['full_tool_return']['exit_code']==0
+    for number,r in enumerate(override['prior_non_success_actual_SDK'],1):
+        previous=C.doc(L,r)
+        assert r['path']==str(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(key[0],key[1],number)))
+        assert previous['root']==previous['actor']=='/root'and previous['actual_tool']['exit_code']!=0
+        assert previous['issued_argv']==current['issued_argv']and previous['all_genuine_api_frames'][-1]==previous['full_tool_return']
+        assert previous['full_tool_return']['exit_code']==previous['actual_tool']['exit_code']
+        assert 'the acquired base refused before creating its output or child'in''.join(f.get('output','')for f in previous['all_genuine_api_frames'])
+        prior_refusals.append(r)
+    overrides[key]=override
+rows=[];total=0
+for batch in cohort['batches']:
+    C.check();base=C.SCIENCE/('cohort_from%04d'%cohort['begin'])/('parents%04d_%04d'%(batch['begin'],batch['end']-1))
+    raw,pair_ref=L.raw(base/'pairing.json')
+    value=C.projection(raw,('cohort','source_indices','strict_slots','cache_registration_performed','target_occurrences'))
+    assert value['cohort']==cohort_ref and value['source_indices']==batch['source_indices']
+    assert value['strict_slots']==156*len(batch['source_indices'])and value['cache_registration_performed']is False
+    assert type(value['target_occurrences'])is int and value['target_occurrences']>=0
+    roles=[]
+    for stem in ['parent%04d_supply'%i for i in batch['source_indices']]+['parents%04d_%04d_check'%(batch['begin'],batch['end']-1)]:
+        sdk,sr=C.actual_v1(L,base/'Root_SDK'/(stem+'_v1.json'));roles.append(sr)
+    phases=[]
+    for phase in C.PHASES:
+        override=overrides.get((batch['batch'],phase));edition=override['selected_edition']if override else 1
+        sdk,sr=C.actual_v1(L,control/'Root_SDK'/('batch%02d_%s_v%d.json'%(batch['batch'],phase,edition)))
+        if override:assert sr==override['selected_actual_SDK']
+        phases.append(sr)
+    total+=value['target_occurrences']
+    rows.append(dict(batch=batch['batch'],source_indices=batch['source_indices'],pairing=pair_ref,
+        scientific_actuals=roles,metadata_actuals=phases,strict_slots=value['strict_slots'],target_occurrences=value['target_occurrences']))
+manifest=C.doc(L,mf);source_refs=manifest['Source']+manifest['guards'];source_paths={r['path']for r in source_refs}
+source_first=sum(r['bytes']for r in source_refs);business_first=L.bytes-source_first
+summary=dict(schema='ROOT_F009_COMPLETED_COHORT_ACTUAL_SUMMARY_V1',root='/root',cohort=cohort_ref,
+    source_indices=cohort['source_indices'],batches=rows,strict_slots=156*(cohort['end']-cohort['begin']),target_occurrences=total,
+    scientific_roles=sum(len(row['scientific_actuals'])for row in rows),metadata_phases=3*len(rows),
+    all_roles_terminal_first_v1=not bool(overrides),all_scientific_roles_terminal_first_v1=True,
+    metadata_phase_attempts=attempts_ref,metadata_prior_refusals=prior_refusals,independent_actual_review_pending=True,
+    cache_registration_performed=False,whole_R5_or_census_credit=False,frozen_progress_snapshot=cohort['progress_snapshot'],
+    first_closing_metadata_bytes=2*business_first,metadata_paths=len(set(L.pins)-source_paths),
+    Source_first_closing_explicit_bytes=2*source_first,Source_bootstrap_helper_bytes=3744,
+    Source_bootstrap_entry_and_common_bytes=bootstrap-3744,Source_paths=len(source_paths),
+    combined_explicit_read_bytes=2*L.bytes+3744,
+    combined_input_reads_and_nominal_project_bootstrap_bytes=2*L.bytes+bootstrap,
+    closer_program=program,closer_Source_peer=peer,preparation_packet=pr,preparation_Source_manifest=mf,
+    qualification='Typed metadata summary only. Pairing forest/certificate payloads are lexically skipped; separate actual review and later registration remain required.')
+planned.append((summary_path,C.can(summary)))
+refs,io=C.emit(L,planned,bootstrap)
+print(json.dumps(dict(summary=refs[-1],metadata_phase_attempts=attempts_ref,source_indices=cohort['source_indices'],
+    strict_slots=156*(cohort['end']-cohort['begin']),target_occurrences=total,registered_prefix_unchanged=cohort['begin'],
+    io=io,independent_actual_review_pending=True,canonical_writes=0)))

@@ -1,0 +1,134 @@
+"""Independent bounded execution metadata postcheck; no Original payload decoding."""
+from pathlib import Path
+import hashlib,json,os,resource,shlex,signal,stat,sys,time
+P=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/actual_audit')
+CONTROL=P.parent/'cohorts/cohort_from0378';HERE=CONTROL/'independent_actual_review';API=CONTROL/'api'
+START=time.monotonic();READ=0;BANK={};PINS={};CALLS=[]
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second execution metadata audit')))
+signal.alarm(125)
+def raw(p,r=None):
+ global READ
+ p=Path(p);name=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ assert time.monotonic()-START<115
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ if name not in BANK:
+  st=p.lstat();assert stat.S_ISREG(st.st_mode)and st.st_size<=4*2**20
+  b=p.read_bytes();en=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(st)==sig(en)and len(b)==st.st_size
+  READ+=len(b);assert READ<=64*2**20 and len(BANK)<512
+  BANK[name]=b;PINS[name]=dict(path=name,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert PINS[name]==r,(PINS[name],r)
+ return BANK[name]
+def doc(r):return json.loads(raw(r['path'],r))
+def plain(p):return json.loads(raw(p))
+def pin(p):raw(p);return PINS[str(p)]
+def triple(r):return[r['path'],str(r['bytes']),r['sha256']]
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==b
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def api(r,key,success=True):
+ d=doc(r);argv=d['issued_argv'];assert d['root']==d['actor']=='/root'
+ assert d['child_argv']==argv and shlex.split(d['issued_tool_arguments']['cmd'])==argv
+ issued=plain(API/key/'issued.json');assert issued['root']=='/root'and issued['argv']==argv and issued['tool_arguments']==d['issued_tool_arguments']
+ fs=d['all_genuine_api_frames'];assert 1<=len(fs)<=32 and fs[0]==d['full_initial_tool_return']and fs[-1]==d['full_tool_return']
+ assert(fs[-1]['exit_code']==0)is success and fs[-1]['exit_code']==d['actual_tool']['exit_code']
+ assert fs[0]['chunk_id']==d['actual_tool']['initial_chunk']and fs[-1]['chunk_id']==d['actual_tool']['terminal_chunk']
+ for j,f in enumerate(fs):assert plain(API/key/('frame_%04d.json'%j))==f
+ assert not(API/key/('frame_%04d.json'%len(fs))).exists()
+ CALLS.append(dict(SDK=r,raw_key=key,exit_code=fs[-1]['exit_code'],genuine_raw_frames=len(fs)))
+ return d
+def successful(r,key,science=False):
+ d=api(r,key);argv=d['issued_argv']
+ if'--'not in argv:return json.loads(d['full_tool_return']['output']),d,'direct reviewed metadata entry'
+ guard=Path(argv[argv.index('--output')+1]);child=argv[argv.index('--')+1:]
+ st=plain(guard/'started.json');receipt=plain(guard/'receipt.json')
+ assert st['command']==receipt['command']==child and receipt['status']=='PASS'and receipt['stop']=='RETURNED'
+ assert receipt['returncode']==0 and receipt['error']is None and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+ assert st['limits']==receipt['limits']
+ lim=receipt['limits'];assert lim['total_rss']==(128 if science else 256)*2**20 and lim['wall_seconds']==(150 if science else 125)
+ assert lim['admit_ram']==4*2**30 and lim['admit_disk']==10*2**30 and lim['ram_floor']==3*2**30 and lim['disk_floor']==8*2**30
+ assert receipt['seconds']<=lim['wall_seconds']and receipt['peaks']['total_rss']<=lim['total_rss']
+ assert receipt['admission']['available_ram']>=lim['admit_ram']and receipt['admission']['free_disk']>=lim['admit_disk']
+ assert receipt['peaks']['min_available_ram']>=lim['ram_floor']and receipt['peaks']['min_free_disk']>=lim['disk_floor']
+ assert json.loads(d['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+ stdout=raw(guard/'stdout.log');assert raw(guard/'stderr.log')==b''
+ out=json.loads(stdout)
+ for item in out.get('outputs',[]):raw(item['path'],item)
+ return out,d,'existing supervisor with genuine receipt'
+
+CUTS=[];CUTPINS=[]
+def endcut(name):
+ global BANK,PINS,READ
+ for n,b in BANK.items():assert Path(n).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+ info=dict(name=name,paths=len(PINS),first_closing_bytes=READ)
+ ref=save(HERE/(name+'_pins.json'),dict(schema='F009_MANUAL_AGGREGATE_FINITE_CUT_PINS_V1',pins=list(PINS.values()),**info))
+ CUTS.append(info);CUTPINS.append(ref);BANK={};PINS={};READ=0
+h=plain(P/'handoff.json');peerref=pin(P/'review/reuse_integer_only.json');peer=doc(peerref)
+assert peer['status']=='SUPPORTED_STATIC_FUTURE_COHORT_ACTUAL_AUDITOR'and peer['blockers']==[]
+for k in('programs','entry_manifests','common','config'):assert peer[k]==h[k]
+for mr in h['entry_manifests'].values():
+ m=doc(mr)
+ for r in m['Source']+m['guards']:raw(r['path'],r)
+ assert sum(r['bytes']for r in m['Source']+m['guards'])+512==m['Source_plus_guards512']<=65536
+cohortref=pin(CONTROL/'cohort.json');cohort=doc(cohortref);snapshot=cohort['progress_snapshot']
+assert cohort['schema']=='ROOT_F009_CONTIGUOUS_PARENT_COHORT_V1'and cohort['root']=='/root'and cohort['Root_authority']is True
+assert(cohort['begin'],cohort['end'],cohort['reviewed_prefix'])==(378,390,378)and cohort['batch_counts']==[3,3,3,3]and cohort['source_indices']==list(range(378,390))
+owner=doc(cohort['Root_Source_ownership']);assert owner['root']=='/root'
+for r in snapshot.values():raw(r['path'],r)
+summaryref=pin(CONTROL/'cohort_actual_summary.json');assert(summaryref['bytes'],summaryref['sha256'])==(10630,'f59b2a484c2a21a155ef7ae64cafe6c8010dff94c4766f2bbef326d4ee52a4ed');summary=doc(summaryref)
+assert summary['cohort']==cohortref and summary['frozen_progress_snapshot']==snapshot and summary['source_indices']==list(range(378,390))and summary['strict_slots']==1872 and summary['target_occurrences']==243
+assert summary['scientific_roles']==16 and summary['metadata_phases']==12 and summary['all_roles_terminal_first_v1']is summary['all_scientific_roles_terminal_first_v1']is True and summary['metadata_prior_refusals']==[]and summary['cache_registration_performed']is False
+initref=pin(CONTROL/'Root_SDK/init_cohort_v1.json');initout,initSDK,initmode=successful(initref,'Root_f009_cohort0378_init_v1')
+assert initout['cohort']==cohortref and initout['preparation_packet']==h['preparation_packet']
+closeref=pin(CONTROL/'Root_SDK/close_cohort_v1.json');assert(closeref['bytes'],closeref['sha256'])==(6772,'9c60524546347b15908ca32526db2d19d131dbeb18f7604f7a7fd047de56c2c3')
+closeout,closeSDK,closemode=successful(closeref,'Root_f009_cohort0378_close_v1')
+assert closeout['summary']==summaryref and closeSDK['issued_argv'][4]==summary['closer_program']['path']and closemode=='direct reviewed metadata entry'
+assert summary['closer_Source_peer']==cohort['preparation_provenance']['Source_peer']
+# No alias or claimed call for the unexecuted automatic aggregate's hardcoded closer name.
+assert not(CONTROL/'Root_SDK/close_summary_v1.json').exists()
+endcut('init_close_and_Source')
+batches=[];allscience=[];allmetadata=[];allindices=[];roster=None;smr=None;umr=None;borrowed=[]
+for n,expected in enumerate(cohort['batches']):
+ br=pin(CONTROL/('actual_audit/batch%02d/reuse_integer_only.json'%n));b=doc(br);bf=doc(b['full_actual_review'])
+ assert b['schema']=='F009_COHORT_BATCH_ACTUAL_REUSE_V1'and b['status']=='SUPPORTED_ACTUAL'and b['blockers']==[]and b['reviewer']not in('/root','/root/readback_review')
+ assert b['cohort']==cohortref and b['progress_snapshot']==snapshot and b['batch']==n and b['source_indices']==expected['source_indices']==list(range(378+3*n,381+3*n))and b['parent_count']==3 and b['strict_slots']==468
+ for flag in('all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal','strict_full156_each_parent_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified','all_selected_attempts_and_prior_refusals_audited'):assert b[flag]is True
+ for flag in('individual_whole_certificate_equality_claimed','cache_registration_performed','whole_cohort_or_level_adopted','whole_R5_level_or_census_claimed'):assert b[flag]is False
+ assert b['Source_manifest']['sha256']=='ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff'and b['supplier_Source_manifest']['sha256']=='c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e'
+ assert bf['program']==h['programs']['audit_batch.py']and bf['common']==h['common']and bf['config']==h['config']and bf['Original_payloads_decoded_by_this_actual']is False and bf['scientific_executions']==bf['canonical_writes']==0 and bf['first_closing_inputs_stable']is True
+ assert bf['details']['initialization_execution_deferred_to_aggregate']is True
+ if roster is None:roster,smr,umr=b['current_roster'],b['Source_manifest'],b['supplier_Source_manifest']
+ assert(b['current_roster'],b['Source_manifest'],b['supplier_Source_manifest'])==(roster,smr,umr)
+ auditSDKref=pin(CONTROL/('Root_SDK/actual_audit_batch%02d_v1.json'%n));auditout,auditSDK,_=successful(auditSDKref,'Root_f009_cohort0378_actual_audit_batch%02d_v1'%n)
+ assert auditout['outputs']==[b['full_actual_review'],br]
+ assert summary['batches'][n]['scientific_actuals']==bf['details']['scientific_actuals']and summary['batches'][n]['metadata_actuals']==bf['details']['metadata_actuals']
+ for r in bf['details']['scientific_actuals']:
+  stem=Path(r['path']).stem;assert stem.endswith('_v1');successful(r,'Root_f009_cohort0378_'+stem,True);allscience.append(r)
+ for r in bf['details']['metadata_actuals']:
+  stem=Path(r['path']).stem;assert stem.endswith('_v1');successful(r,'Root_f009_cohort0378_'+stem);allmetadata.append(r)
+ for r in bf['input_refs']:raw(r['path'],r)
+ assert raw(b['strict_certificate']['path'],b['strict_certificate'])==raw(b['assembled_certificate']['path'],b['assembled_certificate'])
+ raw(b['pairing']['path'],b['pairing']);raw(roster['path'],roster)
+ assert[binding['index']for binding in b['bindings']]==expected['source_indices']
+ assert[binding['strict_cover_index']for binding in b['bindings']]==[0,1,2]and all(type(x['strict_cover_index'])is type(x['supplier_cover_index'])is int and x['supplier_cover_index']==0 for x in b['bindings'])
+ assert all(x['per_cover_canonical_bytes_equal']is True and x['strict_slots']==156 for x in b['bindings'])and sum(x['target_occurrences']for x in b['bindings'])==b['target_occurrences']
+ for binding in b['bindings']:raw(binding['supplier_certificate']['path'],binding['supplier_certificate'])
+ assert summary['batches'][n]['pairing']==b['pairing']and summary['batches'][n]['target_occurrences']==b['target_occurrences']
+ batches.append(dict(batch=n,begin=expected['begin'],end=expected['end'],source_indices=b['source_indices'],parent_count=3,strict_slots=468,target_occurrences=b['target_occurrences'],pairing=b['pairing'],actual_review=br))
+ allindices+=b['source_indices'];borrowed.append(dict(batch=n,closure_scope=bf['closure_scope'],borrowed_control_facts=bf['borrowed_control_facts'],borrowed_historical_descriptors=bf['borrowed_historical_descriptors'],author_inspection_limitation=bf['author_inspection_limitation']))
+ endcut('batch%02d'%n)
+assert allindices==list(range(378,390))and len(set(allindices))==12 and sum(x['target_occurrences']for x in batches)==243
+assert len(allscience)==len({r['path']for r in allscience})==16 and len(allmetadata)==len({r['path']for r in allmetadata})==12
+retref=pin(P.parent.parent/'artifacts/retained/f009_individual_runs/parents0378_0389/manifest.json');ret=doc(retref)
+assert ret['file_count']==len(ret['files'])==193 and ret['scientific_calls']==0 and ret['mathematical_values_decoded']is False
+for x in ret['files']:
+ assert(x['original']['bytes'],x['original']['sha256'])==(x['retained']['bytes'],x['retained']['sha256'])
+ assert raw(x['original']['path'],x['original'])==raw(x['retained']['path'],x['retained'])
+for r in snapshot.values():raw(r['path'],r)
+raw(Path(__file__));endcut('retention_and_frozen_snapshot')
+full=save(HERE/'full_actual_review.json',dict(schema='F009_MANUAL_CONTIGUOUS_COHORT_COMPLETE_ACTUAL_REVIEW_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_ACTUAL',blockers=[],cohort=cohortref,progress_snapshot=snapshot,current_roster=roster,begin=378,end=390,parent_count=12,source_indices=list(range(378,390)),strict_slots=1872,target_occurrences=243,batches=batches,actual_batch_auditor_Source_peer=peerref,initialization=dict(actual_SDK=initref,raw_key='Root_f009_cohort0378_init_v1',mode=initmode),closing=dict(actual_SDK=closeref,raw_key='Root_f009_cohort0378_close_v1',mode=closemode),completed_summary=summaryref,all_scientific_roles_terminal_first_v1=True,all_twelve_core_metadata_phases_terminal_first_v1=True,manual_aggregate_adoption=True,automated_aggregate_executed=False,automatic_closer_name_alias_created=False,scientific_actuals=allscience,core_metadata_actuals=allmetadata,authenticated_calls=CALLS,borrowed_scopes=borrowed,retention=retref,cuts=CUTS,checked_pins=CUTPINS,Original_payloads_decoded=False,scientific_calls=0,canonical_writes=0,new_whole_manuscript_conjecture_Lean_measurement_credit=0,qualifications=['This distinct manual aggregate adopts four genuine reviewed batch leaves and authenticates their actuals plus genuine init and close. It is not an execution of the frozen automatic aggregate. The actual successful closer is Root_f009_cohort0378_close_v1 with exact SDK close_cohort_v1.json; no close_summary_v1 alias or invented SDK was made.','Every current batch input_ref is physically read and closed opaquely within a named finite cut. Current Source/SDK/guards and fourteen-input science facts remain those of genuine reviewed batch actuals. Historical24/41 controls, missing unconsumed bookkeeping/model/lemma ancestry and author inspection limitations remain explicitly borrowed as copied above; no full recursive re-audit is claimed.','All16 scientific roles and12 core metadata phases succeeded firstv1. Scientific predicates, group operations, forest/parent arrays, permutations and Original values were not decoded or executed by this reviewer. Canonical378 snapshot remains exact; registration390 and its administrative check are separate.']))
+leaf=save(HERE/'reuse_integer_only.json',dict(schema='F009_CONTIGUOUS_PARENT_COHORT_ACTUAL_REUSE_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_ACTUAL',blockers=[],cohort=cohortref,progress_snapshot=snapshot,current_roster=roster,Source_manifest=smr,supplier_Source_manifest=umr,begin=378,end=390,parent_count=12,source_indices=list(range(378,390)),strict_slots=1872,target_occurrences=243,batches=batches,full_actual_review=full,all_batch_pairings_and_per_cover_bindings_verified=True,frozen_progress_snapshot_authenticated=True,all_source_indices_exactly_once=True,all_selected_attempts_and_prior_refusals_audited=True,cache_registration_performed=False,whole_R5_level_or_census_claimed=False,manual_aggregate_adoption=True,automated_aggregate_executed=False,genuine_init_actual=initref,genuine_close_actual=closeref,genuine_close_raw_key='Root_f009_cohort0378_close_v1',completed_summary=summaryref,whole_Source_and_inputs_closed=True,whole_Source_and_inputs_closed_scope='Finite current manual review, four genuine batch actuals and their complete active input_refs; no recursive reopening of borrowed historical science/control ancestry.',Original_payloads_decoded=False,scientific_calls=0,canonical_writes=0,qualification='Registrar-compatible distinct manual aggregate only. Exact genuine init and close_cohort_v1/Root_f009_cohort0378_close_v1 are adopted without rerun,alias or retagging. Four genuine batch reviews provide all16 firstv1 science and12 core metadata phases,1872slots/243targetoccurrences for378..389. Frozen auto aggregate was not executed. Canonical registration and independent admin postcheck remain owed.'))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_MANUAL_COHORT0378_AGGREGATE',leaf=leaf,full_review=full,cuts=CUTS,scientific_calls=0,canonical_writes=0),sort_keys=True))

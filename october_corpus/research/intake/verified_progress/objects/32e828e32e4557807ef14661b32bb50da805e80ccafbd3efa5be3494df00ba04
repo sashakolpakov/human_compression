@@ -1,0 +1,95 @@
+"""Synthetic metadata controls. Fixtures are not actual Root authorities or proofs.
+
+Only production metadata validators/projectors run. No operational entry runs,
+no live progress is opened, and no Original scientific operand is loaded.
+"""
+from pathlib import Path
+import argparse,json,os,signal,sys,tempfile
+import activate as a
+
+def main():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True);ap.add_argument('--Source-peer',nargs=3,required=True);ap.add_argument('--out',required=True);args=ap.parse_args();assert args.actor=='/root'
+    def expire(*_):raise TimeoutError('125-second synthetic controls limit')
+    signal.signal(signal.SIGALRM,expire);signal.setitimer(signal.ITIMER_REAL,125)
+    L=a.Ledger();program,mfr,protocol,own=a.source(L,a.cli_ref(args.Source_peer));mf=a.doc(L,mfr)
+    assert a.file(L,Path(__file__).resolve())[1]==mf['controls_program']
+    cm=a.doc(L,mf['controls_Source_manifest']);assert cm['program']==mf['controls_program']and cm['sources']==mf['sources']and cm['protocol']==protocol
+    out=Path(args.out);assert out.is_absolute()and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out)
+    names=[];tracked=0
+    def accepted(name,fn):
+        assert name not in names;fn();names.append(name)
+    def refused(name,fn):
+        assert name not in names
+        try:fn()
+        except(AssertionError,ValueError,KeyError):names.append(name);return
+        raise AssertionError('Synthetic refusal missing: '+name)
+    def fact(i):return dict(kind='NEG',free_index=i,owner=7,witness_row_sha256='a'*64,proof=0)
+    before=bytes(28908)
+    def changed(indices,value=1):
+        b=bytearray(before)
+        for i in indices:b[i]=value
+        return bytes(b)
+    accepted('singleton_NEG',lambda:a.neg_delta(before,changed([17]),[fact(17)]))
+    accepted('sixteen_NEG',lambda:a.neg_delta(before,changed(list(range(16))),[fact(i)for i in range(16)]))
+    for name,facts in [('empty',[]),('seventeen',[fact(i)for i in range(17)]),('duplicate',[fact(17),fact(17)]),('Boolean',[fact(True)]),('negative',[fact(-1)]),('upper_bound',[fact(28908)])]:
+        refused('index_'+name,lambda facts=facts:a.neg_delta(before,changed([17]),facts))
+    for value in(1,2,6):
+        b=bytearray(before);b[17]=value
+        refused('already_paid_'+str(value),lambda b=bytes(b):a.neg_delta(b,changed([17]),[fact(17)]))
+    for value in(2,6):refused('wrong_new_status_'+str(value),lambda value=value:a.neg_delta(before,changed([17],value),[fact(17)]))
+    refused('hidden_extra_bank_change',lambda:a.neg_delta(before,changed([17,18]),[fact(17)]))
+    refused('wrong_bank_length',lambda:a.neg_delta(before[:-1],changed([17]),[fact(17)]))
+    refused('invalid_status_byte',lambda:a.status_counts(b'\x03'+before[1:]))
+    refused('cache_collision',lambda:a.cache_key('occupied',{'occupied'}))
+    accepted('fresh_cache_key',lambda:a.cache_key('fresh',{'occupied'}))
+    refused('Boolean_count',lambda:a.same_known_counts(b'{"n":true}',{'n':1}))
+    with tempfile.TemporaryDirectory(prefix='synthetic_neg_activation_',dir=out.parent)as td:
+        root=Path(td);previous=(a.PROGRESS,a.COHORTS);a.PROGRESS=root/'progress';a.COHORTS=root/'cohorts'
+        a.PROGRESS.mkdir();(a.PROGRESS/'controllers').mkdir();a.COHORTS.mkdir()
+        sentinel=b'{ "marks" : [[true, 0, {"points":[3, 1]}]], "escaped":"a\\\\b" }'
+        counts=dict(complete_manuscripts=101,total_mathematical=104,R5_canonical_pairs_reviewed=37,R5_prefix_strict_slots_reviewed=5772,L026_paid=0,L026_GEN=0,L026_NEG=0,L026_separate_IP=0,L026_unpaid=28908)
+        ib=a.object_bytes(dict(root=a.enc('/root'),intake=a.enc(dict(complete_reviewed_treatments=101,mathematical_originals=104)),measurements_frozen=a.enc(dict(applications=53,topics=19)),F009=a.enc(dict(R5_canonical_pairs_reviewed=37,R5_prefix_strict_slots_reviewed=5772,R5_total_distinct_canonical_parents_reviewed=37)),L026=a.enc(dict(paid=0,generation=0,proper=0,subset_NEG=0,separate_IP=0,unpaid=28908,bank_unresolved=28908)),F004=sentinel,unknown=sentinel))
+        rb=a.object_bytes(dict(root=a.enc('/root'),counts=a.enc(counts),cache_entries=b'{"old":'+sentinel+b'}',cache_banks=b'[]',unknown=sentinel))
+        rp=a.PROGRESS/'runtime.json';rp.write_bytes(rb);rr=a.ref(rp,rb)
+        ib=a.patch(ib,dict(active_controller_checkpoint=rr));cb=a.can(dict(root='/root',checkpoint=rr))
+        ip=a.PROGRESS/'current_intake.json';cp=a.PROGRESS/'controllers/current.json';ip.write_bytes(ib);cp.write_bytes(cb)
+        snap=dict(intake=a.ref(ip,ib),controller=a.ref(cp,cb),runtime=rr)
+        def with_ledger(fn):
+            nonlocal tracked
+            v=a.Ledger()
+            try:return fn(v)
+            finally:v.close();tracked+=v.bytes
+        try:
+            accepted('dynamic_snapshot_and_prefix',lambda:with_ledger(lambda v:(a.snapshot(v),a.progress_context(v,ib,cb,rb))))
+            bad=a.patch_raw(rb,dict(counts=a.enc(dict(counts,R5_prefix_strict_slots_reviewed=5771))))
+            refused('inconsistent_slots',lambda:with_ledger(lambda v:a.progress_context(v,ib,cb,bad)))
+            refused('stale_controller_checkpoint',lambda:with_ledger(lambda v:a.compare_snapshot(v,dict(snap,runtime=dict(rr,sha256='0'*64)))))
+            cohort=a.COHORTS/'cohort_from0037';cohort.mkdir();(cohort/'cohort.json').write_bytes(b'{"synthetic":true}')
+            refused('active_live_prefix_cohort',lambda:with_ledger(lambda v:a.no_active_cohort(v,37)))
+            (cohort/'cohort.json').unlink();cohort.rmdir()
+            historical=a.COHORTS/'cohort_from0025';historical.mkdir();(historical/'cohort.json').write_bytes(b'{"synthetic":true}')
+            accepted('prior_prefix_directory_does_not_block',lambda:with_ledger(lambda v:a.no_active_cohort(v,37)))
+            delta=dict(new=dict(GEN=0,separate_IP=0,subset_NEG=1,unpaid=28907),canonical={k:dict(path=str(root/(k+'.json')),bytes=3,sha256='b'*64)for k in('current','receipt','bank','batch')},prior={},batch_raw=b'{"synthetic":true}',postwrite_review=dict(path=str(root/'synthetic_review.json'),bytes=3,sha256='c'*64),indices=[17],plan=dict(path=str(root/'synthetic_plan.json'),bytes=3,sha256='d'*64),Root_release=dict(path=str(root/'synthetic_release.json'),bytes=3,sha256='e'*64))
+            images,refs=a.make_images(ib,cb,rb,snap,delta,root/'future_stage','fresh','Synthetic control only','2026-01-01T00:00:00Z',own)
+            ni=images[refs['intake']['path']];nr=images[refs['runtime']['path']]
+            accepted('projector_unknown_Original_like_spans',lambda:a.changed_only(ib,ni,{'L026','negative_progress_activation','previous_checkpoint','active_controller_checkpoint','observed_utc'}))
+            assert a.fields(ni)['unknown']==a.fields(nr)['unknown']==sentinel
+            assert a.fields(nr)['cache_entries']==a.fields(rb)['cache_entries']
+            names.append('projector_old_inline_cache_raw_preserved')
+            accepted('late_CAS_unchanged',lambda:a.fresh_match(ip,snap['intake']))
+            ip.write_bytes(a.patch(ib,dict(root='changed_after_plan')))
+            refused('late_CAS_mutation',lambda:a.fresh_match(ip,snap['intake']))
+            ip.write_bytes(ib)
+            cp.write_bytes(a.patch(cb,dict(root='changed_after_plan')))
+            refused('controller_CAS_mutation',lambda:a.fresh_match(cp,snap['controller']))
+            refused('unissued_review_refusal',lambda:a.checked_review(dict(status='UNISSUED',blockers=[],reviewer='/root/synthetic_peer')))
+            refused('FALSE_Root_authority',lambda:a.root_record(dict(schema='SYNTHETIC_CONTROL_ONLY',root='/root',Root_authority=False,blockers=[]),'SYNTHETIC_CONTROL_ONLY'))
+            refused('Original_payload_decode_flag',lambda:a.opaque_actual_review(dict(status='SUPPORTED_ACTUAL_SYNTHETIC_ONLY',reviewer='/root/synthetic_peer',blockers=[],Original_payloads_decoded=True)))
+        finally:a.PROGRESS,a.COHORTS=previous
+    L.close();assert len(names)==len(set(names))and len(names)<=64 and L.bytes+tracked+131072<=64*2**20
+    report=dict(schema='L026_NEG_ACTIVATION_SYNTHETIC_CONTROLS_V1',status='PASS',root='/root',program=program,Source_manifest=mfr,controls_program=mf['controls_program'],controls_Source_manifest=mf['controls_Source_manifest'],count=len(names),control_names=names,Original_inputs_loaded=False,Original_payloads_decoded=False,scientific_calls=0,canonical_mutation=False,Source_or_control_execution_by_author=False,production_functions_exercised=['neg_delta','status_counts','same_known_counts','cache_key','snapshot','progress_context','compare_snapshot','no_active_cohort','make_images','changed_only','fresh_match','root_record','opaque_actual_review'],limitations=['Full ledger postwrite admission and per-field Root authority joins are static-review and independent actual-plan-review duties, not claimed dynamically exercised by these synthetic controls.','Late CAS refusal tests exercise the production prepublication reader, not observed crash atomicity.','All fixture authorities and descriptors are synthetic and carry no reusable authority.'],tracked_first_and_closing_metadata_bytes=L.bytes+tracked,nominal_Source_and_small_CAS_read_allowance=131072,total_declared_metadata_read_upper=L.bytes+tracked+131072)
+    body=a.can(report);a.fresh(out,body)
+    print(json.dumps(dict(status='PASS',report=a.ref(out,body),count=len(names),control_names=names,Original_inputs_loaded=False,Original_payloads_decoded=False),sort_keys=True))
+
+if __name__=='__main__':main()

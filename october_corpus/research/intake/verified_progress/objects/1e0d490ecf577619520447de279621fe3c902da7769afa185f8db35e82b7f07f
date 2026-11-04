@@ -1,0 +1,74 @@
+"""Root freezes one future cohort after its expected prefix is registered."""
+import argparse,json,os
+from pathlib import Path
+import common as C
+ap=argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--actor',required=True);ap.add_argument('--expected-prefix',type=int,required=True)
+ap.add_argument('--Source-peer',nargs=3,required=True);a=ap.parse_args()
+assert a.actor=='/root'and 342<=a.expected_prefix<940
+L,p,pr,program,peer,mf,bootstrap=C.start('init_cohort.py',a.Source_peer)
+h=C.legacy(L,p)
+for r in p['legacy_active_inputs']:L.raw(r['path'],r)
+for key in('full_supplier_static','full_supplier_actual24','strict_static','strict_actual41'):
+    raw,_=L.raw(h[key]['path'],h[key]);v=C.projection(raw,('status','blockers'))
+    assert v['status'].startswith('SUPPORTED')and v['blockers']==[]
+for key,expected in(('supplier_manifest','c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e'),
+                     ('strict_manifest','ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff')):
+    m=C.doc(L,h[key]);assert h[key]['sha256']==expected
+    for r in m['Source']:L.raw(r['path'],r)
+    assert sum(r['bytes']for r in m['Source'])==m['Source_total']
+    assert m['Source_with_invocation_reserve']==m['Source_total']+512<=65536
+    for name,value in dict(work_units=10000000,work_seconds=20,rss_bytes=134217728,read_bytes=8388608,
+                           paths=32,output_bytes=131072,output_files=2,file_bytes=2097152,caller_seconds=140).items():
+        assert m['caps'][name]==value
+adoption=C.doc(L,h['roster_adoption']);review=C.doc(L,h['roster_actual_review'])
+assert adoption['adopted_roster']==h['current_roster']and review['current_roster']==h['current_roster']
+assert review['status'].startswith('SUPPORTED_ACTUAL')and review['blockers']==[]and review['Root_adoption_verified']is True
+L.raw(h['current_roster']['path'],h['current_roster']) # Opaque Original roster.
+raw,ir=L.raw(C.PROGRESS);top=C.members(raw)
+f9=C.projection(top['F009'],('R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed','R5_current_roster'))
+f26=C.projection(top['L026'],('paid',));checkpoint=json.loads(top['active_controller_checkpoint'])
+controller_raw,cr=L.raw(C.CONTROLLER);controller=C.projection(controller_raw,('checkpoint',))
+assert checkpoint==controller['checkpoint']
+runtime_raw,rr=L.raw(checkpoint['path'],checkpoint);counts,keys,banks=C.runtime_view(runtime_raw)
+begin=a.expected_prefix;assert f9['R5_canonical_pairs_reviewed']==counts['R5_canonical_pairs_reviewed']==begin
+assert f9['R5_prefix_strict_slots_reviewed']==156*begin and f9['R5_current_roster']==h['current_roster']
+canonical,_=L.document(C.INTAKE/'l026_fi22_neighborhood_orbits/operations/triangle_quotients/paid_status_ledger/CURRENT.json')
+receipt=C.doc(L,canonical['ledger_receipt']);paid=28908-receipt['counts']['unpaid']
+assert f26['paid']==counts['L026_paid']==paid
+for r in banks:
+    bank,_=L.raw(r['path'],r);more=set(C.members(C.members(bank)['cache_entries']))
+    assert not keys.intersection(more);keys.update(more)
+end=min(940,begin+12);batches=[];cursor=begin
+while cursor<end:
+    n=min(3,end-cursor);batches.append(dict(batch=len(batches),begin=cursor,end=cursor+n,source_indices=list(range(cursor,cursor+n))));cursor+=n
+assert begin<end and 1<=len(batches)<=4
+for index in range(begin,end):
+    assert 'Root_f009_R5_canonical_parent%04d_pair'%index not in keys
+    for suffix in('_supply','_check'):
+        C.fresh(C.OLD_ACTUAL/('parent%04d%s'%(index,suffix)))
+        C.fresh(C.OLD_ACTUAL/'guards'/('parent%04d%s'%(index,suffix)))
+folder=C.HERE/'cohorts'/('cohort_from%04d'%begin)
+C.fresh(folder);C.fresh(C.SCIENCE/('cohort_from%04d'%begin))
+snapshot=dict(intake=ir,controller=cr,runtime=rr)
+owner=dict(schema='ROOT_F009_COHORT_METADATA_SOURCE_OWNERSHIP_V2',root='/root',Root_authority=True,
+    packet=p['legacy_handoff'],program=p['adapter'],Source_peer=p['adapter_peer'],
+    preparation_packet=pr,preparation_program=program,preparation_Source_manifest=mf,preparation_Source_peer=peer,
+    protocol=p['protocol'],whole_current_metadata_Source_protocol_and_disclosures_owned=True,
+    old_scientific_Source_controls_and_mathematics_owned=True,missing_legacy_bookkeeping_not_recreated=True,
+    unavailable_legacy_bookkeeping=p['unavailable_legacy_bookkeeping'],previous_cache_values=len(keys),
+    expected_registered_prefix=begin,no_scientific_worker_issued=True,no_canonical_writes=True)
+owner_body=C.can(owner);owner_ref=C.file_ref(folder/'Root_Source_ownership.json',owner_body)
+cohort=dict(schema='ROOT_F009_CONTIGUOUS_PARENT_COHORT_V1',root='/root',Root_authority=True,
+    program=p['adapter'],begin=begin,end=end,batch_counts=[x['end']-x['begin']for x in batches],batches=batches,
+    source_indices=list(range(begin,end)),reviewed_prefix=begin,progress_snapshot=snapshot,
+    Root_Source_ownership=owner_ref,Source_peer=p['adapter_peer'],Source_handoff=p['legacy_handoff'],
+    preparation_provenance=dict(schema='F009_FUTURE_COHORT_PREPARATION_PROVENANCE_V1',packet=pr,
+        init_program=program,Source_manifest=mf,Source_peer=peer,protocol=p['protocol'],
+        scientific_adapter_unchanged=True,missing_legacy_bookkeeping_not_recreated=True,
+        frozen_only_after_expected_prefix_registered=begin))
+planned=[(folder/'Root_Source_ownership.json',owner_body),(folder/'cohort.json',C.can(cohort))]
+refs,io=C.emit(L,planned,bootstrap,folders=(C.HERE/'cohorts',folder,folder/'decisions',folder/'bindings',folder/'guards',folder/'Root_SDK'))
+print(json.dumps(dict(cohort=refs[1],Source_ownership=refs[0],begin=begin,end=end,batches=batches,
+    program=p['adapter'],packet=p['legacy_handoff'],preparation_packet=pr,io=io,
+    scientific_worker_not_launched=True,canonical_writes=0)))

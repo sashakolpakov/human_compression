@@ -1,0 +1,85 @@
+"""UNRUN section-37 IP-obstruction proposer, /root/middle_dictionary_author.
+Uses the retained prime37 natural-line theorem, not a new classification.
+It does not infer section irreducibility from quartet cyclicity.
+"""
+
+def power(matrix, exponent, budget):
+    need=budget.need
+    need(type(exponent)is int and exponent>=0,'exact nonnegative exponent')
+    value=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    for bit in bin(exponent)[2:]:
+        value=budget.multiply(value,value)
+        if bit=='1':value=budget.multiply(value,matrix)
+    return value
+
+
+def validate_entries(entries,helpers,budget):
+    need=budget.need;seen_index=set();seen_word=set()
+    need(type(entries)is list and 1<=len(entries)<=120,'retained bounded dictionary')
+    for item in entries:
+        budget.tick(True)
+        need(type(item)is dict and set(item)=={'raw_index','syllables','word'}
+             and type(item['raw_index'])is int and 1<=item['raw_index']<=120
+             and item['raw_index']not in seen_index and type(item['syllables'])is list
+             and 1<=len(item['syllables'])<=4 and all(type(j)is int and j in(1,2,3)for j in item['syllables'])
+             and type(item['word'])is str and 2<=len(item['word'])<=12 and set(item['word'])<=set('012')
+             and item['word']not in seen_word,'whole original bounded dictionary item')
+        need(item['word']==''.join('1'+('0','2','02')[j-1]for j in item['syllables']),
+             'literal three-section-mark V4 syllable expansion')
+        seen_index.add(item['raw_index']);seen_word.add(item['word'])
+    need(entries==helpers['new_dictionary'](),'entire exact original dictionary, no adaptive extension')
+
+
+def prime_word_fact(marks,section,item,helpers,budget):
+    need=budget.need;one=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    need(section in((0,1,2),(1,2,3)),'only actual left or right three-mark sections')
+    base=one;word=[section[int(letter)]for letter in item['word']]
+    for label in word:base=budget.multiply(base,marks[label])
+    witness=power(base,6,budget)
+    if witness==one or power(witness,37,budget)!=one:return None
+    fixed=helpers['fixed_line'](witness,budget)
+    need(any(fixed)and budget.image(fixed,witness)==fixed,'same actual nonzero right-row fixed vector')
+    movement=None
+    for label in section:
+        moved=budget.image(fixed,marks[label])
+        for r in range(7):
+            for t in range(r+1,7):
+                minor=(fixed[r]*moved[t]-fixed[t]*moved[r])%11
+                if minor:
+                    movement=dict(original_mark_index=label,minor_coordinates=[r,t],nonzero_minor=minor)
+                    break
+            if movement is not None:break
+        if movement is not None:break
+    return dict(kind='SECTION_GENERATES_AMBIENT_IP_OBSTRUCTION'if movement else'SECTION_PROPER_ORDER37_LINE',
+        section_indices=list(section),omitted_original_mark_index=3 if section==(0,1,2)else 0,
+        original_mark_word=word,local_section_word=item['word'],dictionary_origin=item,cofactor=6,prime=37,
+        base_word_value=[list(r)for r in base],prime_word_value=[list(r)for r in witness],
+        nonzero_fixed_row=list(fixed),movement=movement,
+        all_section_generators_preserve_prime_line=movement is None,
+        four_mark_IP_failure_proposed=movement is not None,
+        four_mark_nongeneration_claim=False,independent_direct_checker_owed=True)
+
+
+def search(marks,entries,helpers,budget):
+    """Return one IP obstruction or bounded search/proper-section diagnostics.
+
+    Any propagated interruption leaves the entire current case unvisited in
+    the host. Absence from this finite dictionary is never a group conclusion.
+    """
+    need=budget.need;need(type(marks)is tuple and len(marks)==4,'same actual ordered quartet')
+    sections=[]
+    for section in((0,1,2),(1,2,3)):
+        attempted=[];proper=None
+        for item in entries:
+            budget.tick(True);attempted.append(item['raw_index'])
+            fact=prime_word_fact(marks,section,item,helpers,budget)
+            if fact is None:continue
+            if fact['four_mark_IP_failure_proposed']:
+                return fact,dict(completed_sections=sections,current_section=list(section),
+                    attempted_dictionary_raw_indices=attempted,failed_search_is_inconclusive=True)
+            proper=fact
+            break
+        sections.append(dict(section_indices=list(section),attempted_dictionary_raw_indices=attempted,
+            proper_section_certificate=proper,miss_is_not_properness_or_IP_claim=True))
+    return None,dict(completed_sections=sections,failed_search_is_inconclusive=True,
+        no_four_mark_generation_nongeneration_or_IP_success_claim=True)

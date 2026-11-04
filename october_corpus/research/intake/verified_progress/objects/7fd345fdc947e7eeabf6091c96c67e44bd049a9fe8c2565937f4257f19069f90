@@ -1,0 +1,85 @@
+"""Finite independent accepted-family/domain inventory; Original values remain opaque."""
+from pathlib import Path
+import ast,hashlib,json,os,resource,signal,stat,sys,time
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');P=M/'f009_cohort_administration';HERE=Path(__file__).resolve().parent
+START=time.monotonic();READ=0;B={};R={};SIG={};signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125second scope inventory')));signal.alarm(125)
+def signature(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def raw(p,r=None):
+ global READ
+ p=Path(p);name=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ assert time.monotonic()-START<115 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ if name not in B:
+  st=p.lstat();assert stat.S_ISREG(st.st_mode)and st.st_size<=4*2**20
+  with p.open('rb')as f:a=os.fstat(f.fileno());b=f.read(st.st_size+1);z=os.fstat(f.fileno())
+  assert signature(st)==signature(a)==signature(z)==signature(p.lstat())and len(b)==st.st_size
+  READ+=len(b);assert READ<=64*2**20 and len(B)<500
+  B[name]=b;SIG[name]=signature(st);R[name]=dict(path=name,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r:assert R[name]==r
+ return B[name]
+def pin(p):raw(p);return R[str(p)]
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ if p.exists():assert p.read_bytes()==b
+ else:
+  with p.open('xb')as f:f.write(b)
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+parser=M/'artifacts/publication_reviews/parents0330_0341/audit_publication.py';tree=ast.parse(raw(parser));ns={'json':json}
+exec(compile(ast.Module(body=[n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name in{'white','endstr','end','fields','array'}],type_ignores=[]),str(parser),'exec'),ns)
+fields,array=ns['fields'],ns['array']
+def pick(b,keys):
+ f=fields(b);return{k:json.loads(f[k])for k in keys if k in f}
+def desc(v):
+ if v[:1]!=b'{':return None
+ f=fields(v)
+ return json.loads(v)if set(f)=={'path','bytes','sha256'}else None
+def descriptors(b):return{k:q for k,v in fields(b).items()if(q:=desc(v))is not None}
+def scalars(b):
+ return{k:json.loads(v)for k,v in fields(b).items()if v[:1]not in(b'{',b'[')and any(t in k.lower()for t in('schema','root','adopt','scope','borrow','premise','owned','checked','verified','qualification','original','rank','field','model','transport'))}
+def positions(v):
+ assert type(v)is list and v==sorted(set(v))and all(type(x)is int and 1<=x<=3779 for x in v);return v
+def doc(p,r=None):return json.loads(raw(p,r))
+def refdoc(r):return doc(r['path'],r)
+sdkref=pin(P/'actual/Root_SDK/parents0366_0377_v1.json');assert(sdkref['bytes'],sdkref['sha256'])==(9882,'ddc89faadb3bf569fe7ea9b775af4365df5b84c01381ef41a76f1c6d1b588bc5')
+sdk=refdoc(sdkref);a=sdk['issued_argv'];assert sdk['root']==sdk['actor']=='/root'and sdk['actual_tool']['exit_code']==0 and a==sdk['child_argv']
+api=P/'api/Root_f009_admin_checker0366_0377_v1';issued=doc(api/'issued.json');assert issued['argv']==a and issued['tool_arguments']==sdk['issued_tool_arguments']
+f=sdk['all_genuine_api_frames'];assert f[0]==sdk['full_initial_tool_return']and f[-1]==sdk['full_tool_return']and f[-1]['exit_code']==0
+for n,x in enumerate(f):assert doc(api/('frame_%04d.json'%n))==x
+assert f[0]['chunk_id']==sdk['actual_tool']['initial_chunk']and f[-1]['chunk_id']==sdk['actual_tool']['terminal_chunk']
+guard=Path(a[a.index('--output')+1]);child=a[a.index('--')+1:];st,rc=doc(guard/'started.json'),doc(guard/'receipt.json')
+assert st['command']==rc['command']==child and rc['status']=='PASS'and rc['stop']=='RETURNED'and rc['returncode']==0 and rc['error']is None and rc['cleanup']['remaining']==rc['cleanup']['errors']==[]
+assert st['limits']==rc['limits']and rc['limits']['total_rss']==256*2**20 and rc['limits']['wall_seconds']==125
+assert json.loads(f[-1]['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+out=json.loads(raw(guard/'stdout.log'));assert raw(guard/'stderr.log')==b''and out['root']=='/root'and out['scientific_calls']==out['canonical_writes']==0 and len(out['outputs'])==1
+rr=out['outputs'][0];result=refdoc(rr);assert result['schema']=='ROOT_F009_COHORT_ADMIN_POSTCHECK_RESULT_V1'and result['root']=='/root'and result['Root_authority']is True and result['status']=='PASS_ADMIN_POSTCHECK'
+assert result['source_author']=='/root/dependency_audit'and 'not a claim that Root is a distinct mathematical reviewer'in result['role_qualification']
+assert result['Source_peer']['sha256']=='0554937bb740dc8d8f4353e6894e84f57aa2c6263c754dde6557deee7d71e62b'
+peer=refdoc(result['Source_peer']);assert peer['reviewer']=='/root/forest_resume'and peer['status']=='SUPPORTED_STATIC_F009_COHORT_ADMIN_POSTCHECK_SOURCE'and peer['blockers']==[]
+assert peer['program']==result['program']and peer['Source_manifest']==result['Source_manifest']
+mf=refdoc(result['Source_manifest']);assert result['program']['sha256']=='f2b351244e5641206a0336afe6f2eee1599ea7f78fba1c613e734b2872c23d01'
+for r in mf['sources']+mf['guards']+[mf['protocol']]:raw(r['path'],r)
+assert peer['protocol']==mf['protocol']and mf['Source_plus_guards512']==50644
+request=refdoc(result['request']);decision=refdoc(result['Root_decision'])
+assert decision['root']=='/root'and decision['Root_authority']is decision['authorized']is True and decision['program']==result['program']and decision['Source_peer']==result['Source_peer']and decision['request']==result['request']
+for flag in('whole_Source_protocol_and_distinct_peer_owned','genuine_registration_evidence_only','no_canonical_writes_authorized','no_Original_scientific_decode_or_execution_authorized','serial_canonical_snapshot_owned_until_result'):assert decision[flag]is True
+assert child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',result['program']['path']]
+for flag,r in(('--manifest',result['Source_manifest']),('--Source-peer',result['Source_peer']),('--Root-decision',result['Root_decision']),('--request',result['request'])):assert child[child.index(flag)+1:child.index(flag)+4]==[r['path'],str(r['bytes']),r['sha256']]
+assert child[child.index('--actor')+1]=='/root'and child[child.index('--out')+1]==request['output']==str(Path(rr['path']).parent)
+manualref=pin(M/'f009_cohort_preparation/cohorts/cohort_from0366/registration_review/reuse_integer_only.json');assert manualref['sha256']=='a12d5ec7e7cf811d9dfd3798c697a61054a23fa984e70677027458eeb0a7a228';manual=refdoc(manualref)
+for key in('reviewed_prefix','reviewed_slots','target_occurrences','total_cache_values','new_distinct_parent_keys','new_shared_nodes'):assert result[key]==manual[key]
+assert result['prior_cache_values']==manual['prior_cache_values_preserved']==1670 and result['total_cache_values']==1682 and result['begin']==366 and result['end']==378
+for key,mkey in(('intake','current_intake'),('controller','current_controller'),('runtime','current_runtime'),('registrar_SDK','actual_SDK'),('readback','readback')):assert result[key]==manual[mkey]
+assert result['Original_payloads_decoded']is False and result['scientific_calls']==result['canonical_writes']==0
+assert result['all_old_cache_values_and_bank_descriptors_preserved']is result['all_unknown_unrelated_fields_and_other_topics_preserved']is result['selected_actual_editions_preserved']is True
+assert all(x['byte_equal']is True and x['exact_frozen_alias']is None for x in result['before_image_joins'])
+# This postcheck authenticates the new metadata execution only, reusing the independent manual audit.
+for key in('intake','controller','runtime'):raw(result[key]['path'],result[key])
+assert raw(M/'progress/current_intake.json')==raw(result['intake']['path'])and raw(M/'progress/controllers/current.json')==raw(result['controller']['path'])
+raw(Path(__file__))
+for name,b in B.items():
+ p=Path(name);assert signature(p.lstat())==SIG[name]
+ with p.open('rb')as s:q=s.read(len(b)+1)
+ assert q==b and signature(p.lstat())==SIG[name];READ+=len(q);assert READ<=64*2**20
+pins=save(HERE/'checked_pins.json',dict(schema='F009_ADMIN_CHECKER_ACTUAL_PROVENANCE_PINS_V1',pins=list(R.values()),paths=len(R),first_closing_bytes=READ))
+review=save(HERE/'reuse_integer_only.json',dict(schema='F009_ADMIN_CHECKER_ACTUAL_EXECUTION_PROVENANCE_POSTCHECK_V1',reviewer='/root/dependency_audit',reviewer_role='Source_author_and_execution_provenance_checker',Root_authority=False,status='SUPPORTED_ACTUAL_METADATA_EXECUTION_AND_PRIOR_MANUAL_AGREEMENT',blockers=[],Source_author='/root/dependency_audit',independent_Source_peer=result['Source_peer'],program=result['program'],Source_manifest=result['Source_manifest'],actual_SDK=sdkref,result=rr,Root_decision=result['Root_decision'],request=result['request'],prior_independent_manual_admin_review=manualref,complete_SDK_raw_guard_output_joins_verified=True,agreement_with_prior_independent_manual_admin_review=True,registered_prefix=378,strict_slots=58968,prior_cache_values=1670,total_cache_values=1682,new_parents=12,new_shared_nodes=4,target_occurrences=250,all_beforeimages_byte_equal_in_this_actual=True,snapshot_alias_fallback_exercised_in_this_actual=False,Root_executed_algorithm_has_distinct_Source_peer=True,second_independent_mathematical_proof_claimed=False,Original_values_decoded=False,represented_checker_or_scientific_functions_executed_by_this_postcheck=False,scientific_calls=0,canonical_writes=0,new_job_original_conjecture_Lean_measurement_credit=0,checked_pins=pins,qualification='First genuine Root execution of the independently Source-reviewed reusable metadata checker. The postchecker is its Source author and authenticates actualSDK/raw/guard/output provenance and exact agreement with the prior independent manual admina12d, rather than claiming another independent mathematical proof. Existing scientific and registration facts remain imports. All three beforeimages match exactly here, so the authenticated-alias normalization branch is Source-reviewed but not exercised by this validation. No scientific replay or canonical mutation.'))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_ADMIN_CHECKER_ACTUAL_PROVENANCE_AND_MANUAL_AGREEMENT',review=review,paths=len(R),read_bytes=READ,scientific_calls=0,canonical_writes=0),sort_keys=True))

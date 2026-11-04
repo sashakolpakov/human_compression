@@ -1,0 +1,119 @@
+"""UNRUN generic GL7(F11) arithmetic controls, no original G2 case.
+The order37 fixture is made inside bounded polynomial quotient rings and
+checked by actual matrix powers. It is not an admitted G2/string marking.
+Author /root/middle_dictionary_author.
+"""
+import argparse,hashlib,json,resource,runpy,sys,time
+from pathlib import Path
+START=time.monotonic()
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+class Halt(Exception):pass
+class Budget:
+ def __init__(self,limit=50000):self.need=need;self.products=0;self.limit=limit
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  need(rss<128*2**20 and time.monotonic()-START<100,'control128MiB/100s envelope')
+  if self.products>=self.limit:raise Halt()
+ def check(self):self.tick(True)
+ def multiply(self,A,B):
+  self.tick(True);self.products+=1;n=len(A)
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(n))%11 for j in range(n))for i in range(n))
+ def image(self,v,g):
+  self.tick(True);return tuple(sum(v[k]*g[k][j]for k in range(7))%11 for j in range(7))
+
+def load(path,sha,cap,name):
+ p=Path(path);raw=p.read_bytes();need(len(raw)<=cap and hashlib.sha256(raw).hexdigest()==sha,'exact finite new control subject')
+ return runpy.run_path(str(p),run_name=name)
+
+def quotient_fixture(kernel,budget):
+ # Only +/* in F11[X]/(X^6+aX+b). No irreducibility assertion is needed:
+ # the final literal GL7 matrices must themselves pass exact order37.
+ one=(1,0,0,0,0,0);x=(0,1,0,0,0,0)
+ for a in range(11):
+  for b in range(1,11):
+   def mul(u,v):
+    budget.tick(True);out=[0]*11
+    for i in range(6):
+     for j in range(6):out[i+j]=(out[i+j]+u[i]*v[j])%11
+    for k in range(10,5,-1):
+     c=out[k];out[k-6]=(out[k-6]-b*c)%11;out[k-5]=(out[k-5]-a*c)%11
+    return tuple(out[:6])
+   z=one
+   for bit in bin(47880)[2:]:
+    z=mul(z,z)
+    if bit=='1':z=mul(z,x)
+   M=[mul(tuple(int(i==j)for i in range(6)),z)for j in range(6)]
+   Y=((1,0,0,0,0,0,0),)+tuple((0,)+row for row in M)
+   I=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+   if Y!=I and kernel['power'](Y,37,budget)==I:return Y
+ raise ValueError('bounded arithmetic fixture construction found no exact37 matrix')
+
+def verify_fact(fact,marks,kernel,budget):
+ section=tuple(fact['section_indices']);need(section in((0,1,2),(1,2,3)),'actual allowed section')
+ word=fact['original_mark_word'];need(type(word)is list and word and all(type(j)is int and j in section for j in word),'all word letters in same section')
+ I=tuple(tuple(int(i==j)for j in range(7))for i in range(7));base=I
+ for j in word:base=budget.multiply(base,marks[j])
+ need([list(r)for r in base]==fact['base_word_value'],'whole base evaluation')
+ Y=kernel['power'](base,6,budget)
+ need(Y!=I and kernel['power'](Y,37,budget)==I and [list(r)for r in Y]==fact['prime_word_value'],'exact cofactor6/order37')
+ v=fact['nonzero_fixed_row'];need(any(v)and list(budget.image(v,Y))==v,'actual nonzero fixed row')
+ movement=fact['movement']
+ if movement is None:
+  for j in section:
+   w=budget.image(v,marks[j]);need(all((v[r]*w[t]-v[t]*w[r])%11==0 for r in range(7)for t in range(r+1,7)),'all section marks preserve line')
+ else:
+  j=movement['original_mark_index'];need(j in section,'mover belongs to same section')
+  r,t=movement['minor_coordinates'];w=budget.image(v,marks[j])
+  need(0<=r<t<7 and(v[r]*w[t]-v[t]*w[r])%11==movement['nonzero_minor']!=0,'direct moved-line minor')
+
+
+def main(a):
+ kernel=load(a.kernel,a.kernel_sha256,16384,'section37_control_kernel')
+ helpers=load(a.helpers,a.helpers_sha256,16384,'section37_control_literal_helpers')
+ budget=Budget();entries=helpers['new_dictionary']();kernel['validate_entries'](entries,helpers,budget)
+ names=['exact_retained_dictionary_and_literal_letter_map']
+ Y=quotient_fixture(kernel,budget);v=helpers['fixed_line'](Y,budget)
+ need(v==(1,0,0,0,0,0,0),'exact37 block fixture unique fixed line');names.append('generic_GL7_exact37_fixed_line')
+ I=tuple(tuple(int(i==j)for j in range(7))for i in range(7));order=[1,0,2,3,4,5,6]
+ mover=tuple(tuple(int(order[i]==j)for j in range(7))for i in range(7))
+ item=dict(raw_index=1,syllables=[1],word='10')
+ left=(I,Y,mover,I);fact=kernel['prime_word_fact'](left,(0,1,2),item,helpers,budget)
+ need(fact is not None and fact['four_mark_IP_failure_proposed']is True and fact['four_mark_nongeneration_claim']is False,'left section arithmetic obstruction')
+ verify_fact(fact,left,kernel,budget);names.append('left_section_same_word_and_mover')
+ right=(I,I,Y,mover);right_fact=kernel['prime_word_fact'](right,(1,2,3),item,helpers,budget)
+ need(right_fact['original_mark_word']==[2,1]and right_fact['movement']['original_mark_index']==3,'literal right section relabelling')
+ verify_fact(right_fact,right,kernel,budget);names.append('right_section_original_letter_map')
+ proper=kernel['prime_word_fact']((I,Y,I,I),(0,1,2),item,helpers,budget)
+ need(proper['movement']is None and proper['four_mark_IP_failure_proposed']is False,'proper section alone makes no IP decision')
+ verify_fact(proper,(I,Y,I,I),kernel,budget);names.append('proper_prime_section_is_not_IP_obstruction')
+ miss,data=kernel['search']((I,I,I,I),entries,helpers,budget)
+ need(miss is None and data['no_four_mark_generation_nongeneration_or_IP_success_claim']is True,'finite miss is inconclusive')
+ names.append('complete_identity_dictionary_miss_remains_inconclusive')
+ for edit in('fixed','minor','prime'):
+  bad=json.loads(json.dumps(fact))
+  if edit=='fixed':bad['nonzero_fixed_row']=[0]*7
+  elif edit=='minor':bad['movement']['nonzero_minor']=0
+  else:bad['prime_word_value']=[list(r)for r in I]
+  try:verify_fact(bad,left,kernel,budget)
+  except ValueError:pass
+  else:raise ValueError('altered '+edit+' accepted')
+ names.append('bad_fixed_row_minor_and_prime_image_refused')
+ bad=json.loads(json.dumps(fact));bad['original_mark_word']=[3]
+ try:verify_fact(bad,left,kernel,budget)
+ except ValueError:pass
+ else:raise ValueError('foreign-section word accepted')
+ names.append('foreign_section_word_refused')
+ try:kernel['search'](left,entries,helpers,Budget(limit=0))
+ except Halt:pass
+ else:raise ValueError('soft interruption was swallowed')
+ names.append('interruption_propagates_for_unvisited_partition')
+ need(len(names)==9,'exact nine control groups')
+ print(json.dumps(dict(status='PASSED_SYNTHETIC_SECTION37_CONTROLS',controls=9,names=names,
+  original_case_calls=0,original_model_or_group_calls=0,matrix_products=budget.products,
+  qualification='Generic GL7 arithmetic fixtures test certificate equalities and section mapping. Fixture marks are not an admitted G2 quartet or string C-marking; no group generation, IP or original case is credited.')))
+
+if __name__=='__main__':
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--kernel',required=True);ap.add_argument('--kernel-sha256',required=True)
+ ap.add_argument('--helpers',required=True);ap.add_argument('--helpers-sha256',required=True);main(ap.parse_args())

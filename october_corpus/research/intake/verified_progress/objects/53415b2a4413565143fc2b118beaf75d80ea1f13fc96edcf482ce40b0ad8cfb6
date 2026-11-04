@@ -1,0 +1,217 @@
+"""UNRUN one-prefix bounded rank-four section37 batches, /root/middle_dictionary_author.
+Original context remains in the exact accepted cyclic proposer's namespace.
+Only an exact Root-adopted unresolved selector supplies positions.
+No full-algebra certificate is required for the section37 criterion.
+No old verdict is retagged; all new outcomes need direct checking.
+"""
+import time
+START=time.monotonic()
+import argparse,gzip,hashlib,json,math,os,resource,runpy,signal,stat,sys
+from pathlib import Path
+HERE=Path('/private/tmp/q11_rank4_section37_batches')
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+I7=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+def can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+def digest(v):return hashlib.sha256(can(v)).hexdigest()
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique JSON keys');out[k]=v
+  return out
+ def floating(text):
+  value=float(text);need(math.isfinite(value),'finite JSON float');return value
+ return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+class Stop(Exception):pass
+
+class Budget:
+ def __init__(self):self.refs={};self.raw={};self.bytes=0;self.products=0;self.row_images=0;self.peak=0;self.need=need
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+  need(rss<128*2**20 and time.monotonic()-START<125,'125s/128MiB hard envelope')
+  if soft and(rss>=112*2**20 or time.monotonic()-START>=110 or self.products>=390000 or self.row_images>=200000):raise Stop('soft resource frontier')
+ def check(self):self.tick(True)
+ def read(self,r,again=False):
+  self.tick();need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+   and type(r['bytes'])is int and 0<=r['bytes']<=2**21 and type(r['sha256'])is str and len(r['sha256'])==64
+   and set(r['sha256'])<=set('0123456789abcdef'),'complete bounded file reference')
+  need(self.refs.get(r['path'],r)==r,'one complete version per path')
+  if r['path']in self.raw and not again:return self.raw[r['path']]
+  need(self.bytes+r['bytes']<=8*2**20 and(r['path']in self.refs or len(self.refs)<96),'96 files/8MiB actual reads including rechecks')
+  p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'ordinary exact input')
+  with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable input pin')
+  self.refs[r['path']]=r;self.raw[r['path']]=raw;self.bytes+=len(raw);return raw
+ def doc(self,r):return decode(self.read(r))
+ def recheck(self):
+  for r in list(self.refs.values()):self.read(r,True)
+ def multiply(self,A,B):
+  self.products+=1;need(self.products<=400000,'400000 square-matrix product cap');self.tick(True)
+  n=len(A);return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(n))%11 for j in range(n))for i in range(n))
+ def image(self,v,G):
+  self.row_images+=1;self.tick(True)
+  return tuple(sum(v[k]*G[k][j]for k in range(7))%11 for j in range(7))
+
+
+def expand_runs(runs,maximum):
+ need(type(runs)is list,'complete position runs');out=[];last=0
+ for a,b in runs:
+  need(type(a)is type(b)is int and last<a<=b<=maximum,'ordered disjoint bounded runs')
+  out.extend(range(a,b+1));last=b
+ return out
+
+def packed_runs(values):
+ out=[]
+ for x in values:
+  if out and out[-1][1]+1==x:out[-1][1]=x
+  else:out.append([x,x])
+ return out
+
+def namespace(ref,budget,name):
+ budget.read(ref,True);need(budget.bytes+ref['bytes']<=8*2**20,'prepaid full original code loader read')
+ budget.bytes+=ref['bytes'];ns=runpy.run_path(ref['path'],run_name=name);budget.read(ref,True)
+ return ns
+
+def bound_ref(path,sha,cap):
+ p=Path(path);need(p.stat().st_size<=cap,'bounded dynamic Root report')
+ return dict(path=str(p),bytes=p.stat().st_size,sha256=sha)
+
+def selected_unresolved(plan,ctx,budget):
+ selector=budget.doc(plan['selector']);job=plan['original_job'];maximum=len(ctx['orbits'])
+ need(selector['schema']=='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'and selector['root']=='/root'
+  and selector['adopted']is True and selector['original_job']==job
+  and selector['Root_projection_acceptance']==plan['Root_projection_acceptance']
+  and selector['projection']==plan['projection']and selector['original_orbit_positions']==maximum,
+  'separate Root-adopted same-job original-domain unresolved selector')
+ baseline=selector['original_paid_positions'];additional=selector['accepted_new_paid_positions']
+ need(type(baseline)is list and baseline==sorted(set(baseline))and baseline==ctx['paid']
+  and selector['original_paid_count']==len(baseline)and type(additional)is list
+  and additional==sorted(set(additional))and all(type(x)is int and 1<=x<=maximum for x in additional)
+  and not set(baseline)&set(additional),'exact original and separately accepted new paid positions')
+ unresolved=expand_runs(selector['unresolved_position_runs'],maximum)
+ need(len(unresolved)==selector['unresolved_positions']and digest(unresolved)==selector['expanded_unresolved_sha256']
+  and sorted(baseline+additional+unresolved)==list(range(1,maximum+1))
+  and len(baseline)+len(additional)+len(unresolved)==maximum,
+  'complete original partition; only adopted current residual may be evaluated')
+ need(selector['source_adoptions']==plan['selector_adoptions'],'exact separate actual disposition authorities')
+ for ref in selector['source_adoptions']:budget.read(ref)
+ need(selector['qualification']==plan['selector_qualification'],'exact retained inspected-registry qualification')
+ return unresolved,selector
+
+
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+  and all(k not in os.environ for k in ENV4),'minimal EBS and ENV4 absence')
+ signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s section37 prefix batch')))
+ signal.setitimer(signal.ITIMER_REAL,max(.001,125-(time.monotonic()-START)))
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ ap.add_argument('--plan',required=True);ap.add_argument('--plan-sha256',required=True);ap.add_argument('--source-gate',nargs=2,required=True)
+ a=ap.parse_args();budget=Budget()
+ own=bound_ref(HERE/'propose.py',a.self_sha256,49152);need(Path(__file__).resolve(strict=True)==HERE/'propose.py','same exact new proposer')
+ budget.bytes+=own['bytes'];budget.read(own);pref=bound_ref(a.plan,a.plan_sha256,65536)
+ expanded=gzip.decompress(budget.read(pref));need(len(expanded)<=524288,'bounded whole logical plan');plan=decode(expanded)
+ need(plan['schema']=='UNRUN_Q11_RANK4_SECTION37_PREFIX_BATCH_PLAN_V1'and plan['program']==own
+  and type(plan['original_job'])is list and len(plan['original_job'])==2
+  and type(plan['original_job'][0])is int and plan['original_job'][0]>0 and plan['original_job'][1]==4
+  and type(plan['maximum_positions'])is int and 1<=plan['maximum_positions']<=128,'one exact bounded original prefix only')
+ source_ref=bound_ref(*a.source_gate,8192);gate=budget.doc(source_ref)
+ need(gate['schema']=='ROOT_AUTHORIZED_Q11_RANK4_SECTION37_BATCH_PROPOSER_V1'and gate['root']=='/root'
+  and gate['adopted']is True and gate['new_case_calls_authorized']is True and gate['program']==own
+  and gate['kernel']==plan['kernel']and gate['helpers']==plan['helpers']and gate['plan']==pref,
+  'new Source authorization, not an old Source4 status')
+ evidence=(gate['control_report'],gate['Root_code_math_review'])
+ need(evidence[0]['bytes']<=16384 and evidence[1]['bytes']<=32768,'finite Source control/review roles')
+ control=budget.doc(evidence[0]);review=budget.doc(evidence[1])
+ need(control['schema']=='ROOT_ACTUAL_Q11_RANK4_SECTION37_CONTROLS_V1'and control['root']=='/root'
+  and control['status']=='PASS'and control['control_program']==plan['control_program']
+  and control['kernel']==plan['kernel']and control['helpers']==plan['helpers']and control['controls']==9
+  and control['original_case_calls']==0 and type(control['actual_capture'])is dict,
+  'genuine exact finite GL7 arithmetic controls, no original case credit')
+ need(review['schema']=='ROOT_REVIEWED_Q11_RANK4_SECTION37_BATCH_PROPOSER_V1'and review['root']=='/root'
+  and review['status']=='SUPPORTED'and review['blockers']==[]and review['program']==own
+  and review['kernel']==plan['kernel']and review['helpers']==plan['helpers']
+  and review['control_program']==plan['control_program']and review['plan']==pref,
+  'exact Root new code/math review')
+ for ref in plan['inputs']:budget.read(ref)
+ original=namespace(plan['context_program'],budget,'retained_actual_cyclic_context')
+ need(original['context'].__globals__['__file__']==plan['context_program']['path']
+  and original['context'].__code__.co_filename==plan['context_program']['path'],'original context filename/globals')
+ ctx=original['context'](plan['context'],budget)
+ all_unresolved,selector=selected_unresolved(plan,ctx,budget)
+ selected=all_unresolved[:plan['maximum_positions']]
+ need(selected==plan['selected_orbit_positions']and selected,'exact initial adopted unresolved suffix batch')
+ helpers=namespace(plan['helpers'],budget,'retained_literal_section37_helpers')
+ kernel=namespace(plan['kernel'],budget,'new_section37_kernel')
+ need(helpers['fixed_line'].__globals__['__file__']==plan['helpers']['path']
+  and kernel['search'].__globals__['__file__']==plan['kernel']['path'],'original helper and new kernel filenames/globals')
+ entries=helpers['new_dictionary']();kernel['validate_entries'](entries,helpers,budget)
+ out=Path(plan['output_directory']);need(out.is_absolute()and out.parent.resolve(strict=True)==out.parent
+  and not os.path.lexists(out),'fresh finite output namespace')
+ header=dict(schema='Q11_RANK4_SECTION37_PROPOSALS_V1',source=own,plan=pref,kernel=plan['kernel'],helpers=plan['helpers'],
+  original_job=plan['original_job'],original_marking_order=['a','b','c','e'],original_domain_whole_pins=ctx['refs'],
+  Root_projection_acceptance=plan['Root_projection_acceptance'],projection=plan['projection'],
+  original_orbit_array_sha256=ctx['projection']['full_orbit_array_sha256'],frame_key={k:ctx['domain'][k]for k in
+   ('standard_to_actual_row_map','actual_to_standard_row_map','catalogue_sha256','faithful_frame_acceptance')},
+  source_gate=source_ref,actual_control_report=evidence[0],Root_code_math_review=evidence[1],
+  prime37_theory=plan['prime37_theory'],prime37_independent_review=plan['prime37_independent_review'],
+  rank4_section_corollary=plan['rank4_section_corollary'],
+  Root_unresolved_selector=plan['selector'],selector_adoptions=plan['selector_adoptions'],
+  Root_selector_qualification=selector['qualification'],
+  inspected_registry_qualification=ctx['inspected_registry_qualification'],
+  complete_original_member_transport_proof_borrowed=True,no_new14763_transport_evaluation_claim=True,
+  outcomes_are_IP_obstructions_not_four_mark_nongeneration=True,whole_original_credit=0,conjecture_credit=0,Lean_credit=0,
+  independent_direct_checker_and_Root_adoption_owed=True)
+ out.mkdir();chunks=[];records=[];visited=[];obstructions=[];miss=[];output_bytes=0;status='bounded_selection_completed'
+ def flush():
+  nonlocal records,output_bytes
+  if not records:return
+  raw=can(dict(header,chunk=len(chunks)+1,records=records))+b'\n'
+  need(len(raw)<=131072 and output_bytes+len(raw)+131072<=16*2**20,'bounded whole proof chunk plus summary reserve')
+  path=out/('proof_%04d.json'%(len(chunks)+1))
+  with path.open('xb')as f:need(f.write(raw)==len(raw),'whole proof publication');f.flush();os.fsync(f.fileno())
+  chunks.append(dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()));output_bytes+=len(raw);records=[]
+ try:
+  for position in selected:
+   budget.tick(True);orbit=ctx['orbits'][position-1];rep=orbit[0]
+   c=original['actual_operator'](budget,ctx['IR'],ctx['R'],*original['catalogue_pair'](ctx['catalogue'][rep-1]))
+   marks=(ctx['a'],ctx['b'],c,ctx['e'])
+   need(len(set(marks))==4 and all(g!=I7 and budget.multiply(g,g)==I7 for g in marks)
+    and all(budget.multiply(marks[i],marks[j])==budget.multiply(marks[j],marks[i])for i in range(4)for j in range(i+2,4)),
+    'selected actual distinct nonidentity involutions and all string commutations')
+   fact,data=kernel['search'](marks,entries,helpers,budget)
+   record=dict(original_orbit_position=position,representative_J_index=rep,original_orbit_row_sha256=digest(orbit),
+    certificate=fact,diagnostic=data)
+   candidate=can(dict(header,chunk=len(chunks)+1,records=records+[record]))+b'\n'
+   if len(candidate)>131072:flush();candidate=can(dict(header,chunk=len(chunks)+1,records=[record]))+b'\n'
+   if len(candidate)>131072 or output_bytes+len(candidate)+131072>16*2**20:raise Stop('output reserve')
+   records.append(record);visited.append(position)
+   (miss if fact is None else obstructions).append(position)
+ except Stop as error:status='soft_stop_with_exact_unvisited_residue:'+str(error)
+ flush();unvisited=all_unresolved[len(visited):]
+ need(visited==selected[:len(visited)]and sorted(obstructions+miss+unvisited)==all_unresolved
+  and len(obstructions)+len(miss)+len(unvisited)==len(all_unresolved),'entire exact original-selector residual partition')
+ expected={r['path']:r for r in plan['inputs']}
+ for r in(own,pref,source_ref,*evidence):
+  need(expected.get(r['path'],r)==r,'one full version per input');expected[r['path']]=r
+ need(budget.refs==expected,'exact physical read closure');budget.recheck();budget.tick()
+ summary=dict(header,schema='Q11_RANK4_SECTION37_PREFIX_BATCH_SUMMARY_V1',status=status,proof_chunks=chunks,
+  all_original_selector_positions=all_unresolved,target_positions=selected,visited_position_runs=packed_runs(visited),proposed_IP_obstruction_runs=packed_runs(obstructions),
+  visited_without_IP_certificate_runs=packed_runs(miss),unvisited_position_runs=packed_runs(unvisited),
+  unvisited_includes_interrupted_current_position_and_outside_batch_selection=True,
+  original_paid_positions_not_evaluated=len(ctx['paid']),accepted_new_paid_positions_not_evaluated=len(selector['accepted_new_paid_positions']),
+  no_failed_search_properness_generation_or_IP_success_claim=True,new_paid_credit=0,
+  resources=dict(seconds=time.monotonic()-START,peak_self_rss_bytes=budget.peak,
+   matrix_products_all_dimensions=budget.products,generator_row_images=budget.row_images,
+   physical_read_bytes=budget.bytes,unique_input_files=len(budget.refs),proof_chunk_bytes=output_bytes,
+   main_source_loader_bytes_prepaid=own['bytes']))
+ raw=can(summary)+b'\n';need(len(raw)<=131072 and output_bytes+len(raw)<=16*2**20,'whole finite summary')
+ with(out/'summary.json').open('xb')as f:need(f.write(raw)==len(raw),'whole final summary');f.flush();os.fsync(f.fileno())
+ print(can(dict(status=status,summary=dict(path=str(out/'summary.json'),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),
+  visited=len(visited),proposed_IP_obstructions=len(obstructions),unvisited=len(unvisited),new_paid_or_Original_credit=0)).decode())
+
+if __name__=='__main__':main()

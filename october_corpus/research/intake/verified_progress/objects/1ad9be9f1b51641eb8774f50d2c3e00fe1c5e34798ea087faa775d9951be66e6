@@ -1,0 +1,264 @@
+"""UNRUN nine fresh spectral/prefix control groups, /root/forest_resume.
+The old nine GL arithmetic facts are borrowed separately, never replayed here.
+All fixtures are new abstract polynomials or tiny GL7 control matrices.
+"""
+import argparse,copy,hashlib,json,os,resource,signal,stat,sys,time
+from pathlib import Path
+START=time.monotonic()
+HERE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_spectral_section_search')
+ENV5=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+def need(ok,why):
+ if not ok:raise ValueError(why)
+def can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique JSON keys');out[k]=v
+  return out
+ return json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+def reference(p,raw):return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def bound(p,sha):
+ p=Path(p);return dict(path=str(p),bytes=p.stat().st_size,sha256=sha)
+class Stop(Exception):pass
+
+class Budget:
+ def __init__(self):self.refs={};self.raw={};self.bytes=0;self.products=0;self.row_images=0;self.peak=0;self.need=need
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+  need(rss<128*2**20 and time.monotonic()-START<125,'125s/128MiB hard envelope')
+  if soft and(rss>=112*2**20 or time.monotonic()-START>=110 or self.products>=390000 or self.row_images>=200000):raise Stop('soft resource frontier')
+ def check(self):self.tick(True)
+ def read(self,r,again=False):
+  self.tick();need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+   and type(r['bytes'])is int and 0<=r['bytes']<=2**21 and type(r['sha256'])is str and len(r['sha256'])==64
+   and set(r['sha256'])<=set('0123456789abcdef'),'complete bounded file reference')
+  need(self.refs.get(r['path'],r)==r,'one complete version per path')
+  if r['path']in self.raw and not again:return self.raw[r['path']]
+  need(self.bytes+r['bytes']<=8*2**20 and(r['path']in self.refs or len(self.refs)<96),'96 files/8MiB actual reads including rechecks')
+  p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'ordinary exact input')
+  with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable input pin')
+  self.refs[r['path']]=r;self.raw[r['path']]=raw;self.bytes+=len(raw);return raw
+ def doc(self,r):return decode(self.read(r))
+ def recheck(self):
+  for r in list(self.refs.values()):self.read(r,True)
+ def multiply(self,A,B):
+  self.products+=1;need(self.products+getattr(self,'oracle_products',0)<=400000,'400000 combined control matrix-product cap');self.tick(True)
+  n=len(A);return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(n))%11 for j in range(n))for i in range(n))
+ def image(self,v,G):
+  self.row_images+=1;self.tick(True)
+  return tuple(sum(v[k]*G[k][j]for k in range(7))%11 for j in range(7))
+
+
+
+def literal_product(a,b,budget):
+ budget.oracle_products=getattr(budget,'oracle_products',0)+1
+ need(budget.products+budget.oracle_products<=400000,'combined400000 control matrix products')
+ budget.tick(True)
+ return tuple(tuple(sum(a[i][k]*b[k][j]for k in range(7))%11
+                    for j in range(7))for i in range(7))
+
+
+def polynomial_product(a,b,p,work):
+ need(len(a)+len(b)<=111,'independent small control polynomial product')
+ out=[0]*(len(a)+len(b)-1);work.charge(len(a)*len(b))
+ for i,x in enumerate(a):
+  for j,y in enumerate(b):out[i+j]=(out[i+j]+x*y)%p
+ return out
+
+
+class Fixtures:
+ def __init__(self,module,budget):
+  self.m,self.b=module,budget;self.work=module['Work'](budget)
+  self.results=[];self.assertions=0;self.tables=None
+ def check(self,ok,why):
+  self.b.tick(True);need(ok,why);self.assertions+=1
+ def refuses(self,fn,why):
+  try:fn()
+  except ValueError:self.assertions+=1;return
+  raise ValueError('missing refusal: '+why)
+ def group(self,name,fn):
+  before=self.assertions;fn();self.results.append(dict(name=name,status='PASS',assertions=self.assertions-before))
+ def small_polynomials(self):
+  m,w=self.m,self.work
+  self.check(m['product_mod']((0,1),(0,1),(1,0,1),11,w)==(10,),'Xsquare moduloXsquare+1')
+  self.check(m['power_x'](4,(1,0,1),11,w)==(1,),'independent small fourth power')
+  self.check(m['divmod_poly']((1,2,1),(1,1),11,w)==((1,1),()),'whole long division')
+  self.check(m['gcd_poly']((10,0,1),(10,1),11,w)==(10,1),'monic gcd')
+  self.refuses(lambda:m['divmod_poly']((1,),(),11,w),'zero divisor')
+ def prime37_table(self):
+  rows=self.m['primitive_table'](11,37,self.work);self.t37=rows
+  self.check(len(rows)==6,'six primitive37 factors')
+  product=[1]
+  for row in rows:product=polynomial_product(product,row['factor'],11,self.work)
+  self.check(product==[1]*37,'independent wholePhi37 factor product')
+ def primitive111_table(self):
+  rows=self.m['primitive_table'](11,111,self.work);self.t111=rows
+  self.check(len(rows)==12,'twelve primitive111 factors')
+  product=[1]
+  for row in self.t37+rows:product=polynomial_product(product,row['factor'],11,self.work)
+  self.check(product==[int(i%3==0)for i in range(109)],'Phi37 timesPhi111 equalsPhi37(Xcube)')
+  self.tables=dict(schema='F004_Q11_G2_SPECTRAL_TABLES_V1',field=11,orders=[37,111],
+   tables={'37':self.t37,'111':rows},algorithm='UNIVERSAL_G2_CHARACTERISTIC_AND_PRIMITIVE_GCD_V1')
+  self.check(len(self.m['validate_tables'](self.tables,self.work))==18,'eighteen disjoint word pairs')
+ def general_prime_fields(self):
+  for p in(3,5):
+   rows=self.m['primitive_table'](p,7,self.work)
+   self.check(len(rows)==1 and rows[0]['factor']==[1]*7,'general primefield primitive7 factor')
+  self.refuses(lambda:self.m['primitive_table'](4,13,self.work),'integer mod4 is notF4')
+  self.refuses(lambda:self.m['primitive_table'](11,3,self.work),'Frobenius degree otherthan6')
+  self.refuses(lambda:self.m['primitive_table'](True,37,self.work),'boolean field')
+ def scalar_coefficients(self):
+  identity=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+  before=self.work.products
+  self.check(self.m['elementary_pair'](identity,2,self.work)==(1,1),'divisionfree characteristic2 coefficients')
+  self.check(self.work.products-before==42,'42 charged coefficient products')
+  before=self.work.products
+  t,u=self.m['trace_pair'](identity,self.work)
+  self.check((t,u)==(7,7)and self.work.products-before==28,'28 charged trace products')
+  t,e=self.m['elementary_pair'](identity,11,self.work)
+  self.work.charge(1)
+  self.check((t*t-e-e)%11==u,'equivalent oddcharacteristic conventions')
+  self.refuses(lambda:self.m['trace_pair'](tuple(tuple(True for j in range(7))for i in range(7)),self.work),'boolean entries')
+ def prefixes(self):
+  def transposition(i,j):
+   image=list(range(7));image[i],image[j]=image[j],image[i]
+   return tuple(tuple(int(image[r]==c)for c in range(7))for r in range(7))
+  self.marks=(transposition(0,1),transposition(1,2),transposition(2,3),transposition(5,6))
+  a,b,c,e=self.marks
+  self.check(literal_product(a,b,self.b)!=literal_product(b,a,self.b),'noncommuting rowaction orientation fixture')
+  self.raw=[]
+  for size in range(1,5):
+   for number in range(3**size):
+    digits=[0]*size;rest=number
+    for i in range(size-1,-1,-1):digits[i]=rest%3+1;rest//=3
+    raw_index=1+sum(3**k for k in range(1,size))+number
+    word=''.join('1'+('0','2','02')[x-1]for x in digits)
+    self.raw.append(dict(raw_index=raw_index,syllables=digits,word=word))
+  for section in((0,1,2),(1,2,3)):
+   cache=self.m['Prefixes'](self.marks,section,self.b)
+   for item in self.raw:
+    direct=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+    for letter in item['word']:direct=literal_product(direct,self.marks[section[int(letter)]],self.b)
+    self.check(cache.value(tuple(item['syllables']))==direct,'literal labelled prefix word')
+   self.check(cache.products==120 and len(cache.values)==120,'complete rawtrie120 product bound')
+  first=self.m['Prefixes'](self.marks,(0,1,2),self.b)
+  first.value((1,));self.check(first.products==1 and len(first.blocks)==1,'lazy firstword no eagertrie')
+  self.refuses(lambda:first.value((True,)),'boolean syllable')
+  self.refuses(lambda:first.value((1,)*5),'overlong prefix')
+ def table_refusals(self):
+  m=self.m;bad=copy.deepcopy(self.tables);bad['tables']['37'][0]['trace']=True
+  self.refuses(lambda:m['validate_tables'](bad,self.work),'boolean coefficient')
+  bad=copy.deepcopy(self.tables);bad['tables']['37'].pop()
+  self.refuses(lambda:m['validate_tables'](bad,self.work),'missing factor')
+  bad=copy.deepcopy(self.tables);bad['tables']['111'][0]=copy.deepcopy(bad['tables']['37'][0])
+  self.refuses(lambda:m['validate_tables'](bad,self.work),'duplicated orderpair')
+  bad=copy.deepcopy(self.tables);bad['tables']['37'][0]['factor'][0]=(bad['tables']['37'][0]['factor'][0]+1)%11
+  self.refuses(lambda:m['validate_tables'](bad,self.work),'wrong complete characteristic coefficients')
+ def lower_order_and_stop(self):
+  m,w=self.m,self.work;f=self.t37[0]['factor']
+  self.check(m['power_x'](111,f,11,w)==(1,),'lowerorder factor passes bare111 exponent')
+  self.check(not m['primitive_factor'](f,11,111,w),'primitive gcd excludesorder37 from111')
+  repeated=tuple(x%11 for x in(1,-6,15,-20,15,-6,1))
+  self.check(not m['primitive_factor'](repeated,11,37,w),'repeated factor excluded')
+  tiny=m['Work'](self.b,cap=1)
+  self.refuses(lambda:m['trace_pair'](self.marks[0],tiny),'no trace result after scalarwork stop')
+  self.work.charge(tiny.products)
+  parent=self.b
+  class FailBudget:
+   def __init__(self):self.calls=0
+   def tick(self,soft=False):parent.tick(soft)
+   def multiply(self,a,b):
+    self.calls+=1
+    if self.calls==2:raise Stop('synthetic second prefix product stop')
+    return parent.multiply(a,b)
+  failing=FailBudget();cache=m['Prefixes'](self.marks,(0,1,2),failing);returned=False
+  try:cache.value((1,2));returned=True
+  except Stop:pass
+  self.check(not returned and(1,2)not in cache.values,'stopped prefix never caches its incomplete word')
+ def search_orchestration(self):
+  m=self.m;identity=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+  calls=[]
+  def stub(marks,section,item,helpers,budget):
+   calls.append((section,item['raw_index']));value=identity
+   for letter in item['word']:value=literal_product(value,marks[section[int(letter)]],self.b)
+   return dict(base_word_value=[list(row)for row in value],
+    four_mark_IP_failure_proposed=section==(1,2,3),kind='CONTROL_FLOW_STUB_NOT_A_CERTIFICATE')
+  engine=m['Engine'](self.tables,{},dict(prime_word_fact=stub),self.b,self.work)
+  engine.pairs=frozenset((t,u)for t in range(11)for u in range(11))
+  fact,data=engine.search(self.marks,self.raw)
+  self.check(fact['four_mark_IP_failure_proposed']is True and calls==[((0,1,2),1),((1,2,3),1)],'firstproper thenfirstpositive orchestration')
+  self.check(len(data['completed_sections'])==1 and data['attempted_dictionary_raw_indices']==[1],
+   'diagnostics retainoriginal dictionary indices andsection order')
+  rejected=m['Engine'](self.tables,{},dict(prime_word_fact=lambda *args:(_ for _ in()).throw(ValueError('unexpected confirmation'))),self.b,self.work)
+  rejected.pairs=frozenset();fact,data=rejected.search(self.marks,self.raw)
+  self.check(fact is None and all(len(x['attempted_dictionary_raw_indices'])==120 for x in data['completed_sections']),
+   'trace misses remaincomplete finite inconclusive diagnostics')
+  class SyntheticStop(Exception):pass
+  def stop_stub(marks,section,item,helpers,budget):
+   if section==(0,1,2):return stub(marks,section,item,helpers,budget)
+   raise SyntheticStop('explicit stopped currentcase after properleft')
+  stopped=m['Engine'](self.tables,{},dict(prime_word_fact=stop_stub),self.b,self.work)
+  stopped.pairs=engine.pairs;returned=False
+  try:stopped.search(self.marks,self.raw);returned=True
+  except SyntheticStop:pass
+  self.check(not returned,'stopped case publishes no partial hint')
+  mismatch=m['Engine'](self.tables,{},dict(prime_word_fact=lambda *args:None),self.b,self.work)
+  mismatch.pairs=engine.pairs
+  self.refuses(lambda:mismatch.search(self.marks,self.raw),'trace match alone cannot replace literal positive confirmation')
+
+
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+  and not sys.flags.optimize and all(k not in os.environ for k in ENV5),'EBS andfive environment omissions')
+ signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s controls')))
+ signal.setitimer(signal.ITIMER_REAL,max(.001,125-(time.monotonic()-START)))
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--self-sha256',required=True)
+ ap.add_argument('--module',nargs=2,required=True);ap.add_argument('--Source-peer',nargs=2,required=True)
+ ap.add_argument('--Root-gate',nargs=2,required=True);ap.add_argument('--output',required=True)
+ args=ap.parse_args();budget=Budget();own=bound(HERE/'controls.py',args.self_sha256)
+ need(Path(__file__).resolve(strict=True)==HERE/'controls.py'and own['bytes']<=49152,'exact fresh controls entry')
+ budget.bytes+=own['bytes'];budget.read(own)
+ module=bound(*args.module);peerref=bound(*args.Source_peer);gateref=bound(*args.Root_gate)
+ need(module['bytes']<=32768 and peerref['bytes']<=32768 and gateref['bytes']<=8192,'small activeinputs')
+ peer=budget.doc(peerref);gate=budget.doc(gateref)
+ need(peer.get('status')=='SUPPORTED_STATIC_Q11_SPECTRAL_PREFIX_SEARCH'and peer.get('blockers')==[]
+  and peer.get('reviewer')not in(None,'/root','/root/forest_resume')
+  and peer.get('controls_program')==own and peer.get('acceleration_module')==module,'distinct exact newSource peer')
+ need(gate.get('schema')=='ROOT_AUTHORIZED_Q11_SPECTRAL_PREFIX_CONTROLS_V1'and gate.get('root')=='/root'
+  and gate.get('adopted')is True and gate.get('program')==own and gate.get('acceleration_module')==module
+  and gate.get('Source_peer')==peerref and gate.get('Original_case_calls_authorized')is False,
+  'fresh exact Root syntheticcontrols grant')
+ raw=budget.read(module);namespace={'__name__':'Root_spectral_controls_module','__file__':module['path']}
+ exec(compile(raw,module['path'],'exec'),namespace)
+ fixtures=Fixtures(namespace,budget)
+ for name,fn in [('small_polynomial_arithmetic',fixtures.small_polynomials),
+  ('complete_primitive37_factors',fixtures.prime37_table),('complete_primitive111_factors',fixtures.primitive111_table),
+  ('general_primefield_and_refusals',fixtures.general_prime_fields),('scalar_coefficients_all_characteristics',fixtures.scalar_coefficients),
+  ('literal_prefixes_orientation_and_lazycache',fixtures.prefixes),('typed_table_corruption_refusals',fixtures.table_refusals),
+  ('lower_order_repeated_factor_and_workstop',fixtures.lower_order_and_stop),('explicit_toy_search_orchestration',fixtures.search_orchestration)]:
+  fixtures.group(name,fn)
+ need(len(fixtures.results)==9,'nine new named controlgroups')
+ budget.recheck();budget.tick();out=Path(args.output)
+ need(out.is_absolute()and out.is_relative_to('/private/tmp')and out.parent.resolve(strict=True)==out.parent
+  and not os.path.lexists(out),'fresh private controloutput')
+ tables=can(fixtures.tables)+b'\n';tablepath=out/'tables.json';tableref=reference(tablepath,tables)
+ result=dict(schema='F004_SPECTRAL_PREFIX_CONTROL_RESULT_V1',status='PASS',program=own,
+  acceleration_module=module,Source_peer=peerref,Root_gate=gateref,controls=9,control_unit='NAMED_NEW_GROUP',
+  total_assertions=fixtures.assertions,results=fixtures.results,spectral_tables=tableref,
+  Original_inputs_loaded=False,original_case_calls=0,old_nine_arithmetic_controls_replayed=False,
+  explicit_toy_kernel_stubs_are_not_group_certificates=True,
+  charged_nonmatrix_scalar_products_upper_bound=fixtures.work.products,
+  scalar_meter_shared_across_all_nine_groups=True,
+  matrix_products_total=budget.products+getattr(budget,'oracle_products',0),
+  matrix_products_module=budget.products,matrix_products_independent_control_oracle=getattr(budget,'oracle_products',0),
+  whole_inputs=list(budget.refs.values()),seconds=time.monotonic()-START,peak_rss=budget.peak)
+ report=can(result)+b'\n';need(len(tables)+len(report)<=131072,'bounded complete output beforepublication')
+ out.mkdir()
+ for path,data in ((tablepath,tables),(out/'controls.json',report)):
+  with path.open('xb')as f:need(f.write(data)==len(data),'whole fresh controlfile');f.flush();os.fsync(f.fileno())
+ print(json.dumps(dict(tables=tableref,controls=reference(out/'controls.json',report),Original_case_calls=0),sort_keys=True))
+
+
+if __name__=='__main__':main()

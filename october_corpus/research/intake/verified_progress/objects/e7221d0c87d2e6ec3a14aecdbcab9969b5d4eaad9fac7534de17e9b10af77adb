@@ -1,0 +1,327 @@
+"""Unrun prefix pilot for cyclic-span certificates, /root/middle_dictionary_author.
+Generic coefficient/pair arithmetic is literal ancestry from Root's29909-byte
+9d97b490 checker, itself d4568 /root/f009_consumer_lineage. No old mathematical
+program is imported. Exact indexed domain and transport proofs are borrowed
+at their genuine subjects. Only currently unpaid representatives are visited.
+"""
+import time
+START=time.monotonic()
+import argparse,gzip,hashlib,json,math,os,resource,runpy,signal,stat,sys,types
+from pathlib import Path
+HERE=Path('/private/tmp/q11_rank4_cyclic_span')
+PLAN=HERE/'plan.json.gz'
+I2=((1,0),(0,1))
+I7=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+I8=tuple(tuple(int(i==j)for j in range(8))for i in range(8))
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+def can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+def digest(v):return hashlib.sha256(can(v)).hexdigest()
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique JSON keys');out[k]=v
+  return out
+ def floating(text):
+  value=float(text);need(math.isfinite(value),'finite JSON float');return value
+ return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+class Stop(Exception):pass
+
+class Budget:
+ def __init__(self):self.refs={};self.raw={};self.bytes=0;self.products=0;self.row_images=0;self.peak=0;self.need=need
+ def tick(self,soft=False):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+  need(rss<128*2**20 and time.monotonic()-START<125,'125s/128MiB hard envelope')
+  if soft and(rss>=112*2**20 or time.monotonic()-START>=110 or self.products>=390000 or self.row_images>=200000):raise Stop('soft resource frontier')
+ def read(self,r,again=False):
+  self.tick();need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+   and type(r['bytes'])is int and 0<=r['bytes']<=2**21 and type(r['sha256'])is str and len(r['sha256'])==64
+   and set(r['sha256'])<=set('0123456789abcdef'),'complete bounded file reference')
+  need(self.refs.get(r['path'],r)==r,'one complete version per path')
+  if r['path']in self.raw and not again:return self.raw[r['path']]
+  need(self.bytes+r['bytes']<=8*2**20 and(r['path']in self.refs or len(self.refs)<96),'96 files/8MiB actual reads including rechecks')
+  p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'ordinary exact input')
+  with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable input pin')
+  self.refs[r['path']]=r;self.raw[r['path']]=raw;self.bytes+=len(raw);return raw
+ def doc(self,r):return decode(self.read(r))
+ def recheck(self):
+  for r in list(self.refs.values()):self.read(r,True)
+ def multiply(self,A,B):
+  self.products+=1;need(self.products<=400000,'400000 square-matrix product cap');self.tick(True)
+  n=len(A);return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(n))%11 for j in range(n))for i in range(n))
+ def image(self,v,G):
+  self.row_images+=1;self.tick(True)
+  return tuple(sum(v[k]*G[k][j]for k in range(7))%11 for j in range(7))
+
+def matrix(raw,n):
+    need(type(raw) is list and len(raw) == n
+        and all(type(row) is list and len(row) == n for row in raw)
+        and all(type(x) is int and 0 <= x < 11 for row in raw for x in row),'Canonical field matrix')
+    return tuple(tuple(row) for row in raw)
+
+def flat(A):
+    return [x for row in A for x in row]
+
+def matrix2(v):
+    need(type(v) in (list,tuple) and len(v) == 4
+        and all(type(x) is int and 0 <= x < 11 for x in v),'Canonical 2 by 2 coefficients')
+    return (tuple(v[:2]),tuple(v[2:]))
+
+def determinant(A):
+    return (A[0][0]*A[1][1]-A[0][1]*A[1][0]) % 11
+
+def inverse2(A):
+    r = pow(determinant(A),-1,11)
+    return ((r*A[1][1] % 11,-r*A[0][1] % 11),(-r*A[1][0] % 11,r*A[0][0] % 11))
+
+def canonical_pair(P,Q):
+    values = tuple(flat(P)+flat(Q)); r = pow(next(x for x in values[:4] if x),-1,11)
+    return tuple(r*x % 11 for x in values)
+
+def catalogue_pair(row):
+    need(type(row) is list and len(row) == 7
+        and all(type(x) is int and 0 <= x < 11 for x in row),'Literal catalogue row')
+    if row[0] == 0:
+        return I2,((10,0),(0,10))
+    _,x,y,z,a,b,c = row
+    return ((x,y),(z,-x % 11)),((a,b),(c,-a % 11))
+
+def operator(check,P,Q):
+    invP = inverse2(P); rows = []
+    for j in range(8):
+        basis = tuple(tuple(int(2*r+s == j % 4) for s in range(2)) for r in range(2))
+        image = check.multiply(check.multiply(P if j < 4 else Q,basis),invP)
+        coeff = tuple(flat(image))
+        rows.append(coeff+(0,0,0,0) if j < 4 else (0,0,0,0)+coeff)
+    return tuple(rows)
+
+def actual_operator(check,IR,R,P,Q):
+    need(determinant(P) == determinant(Q) != 0,'Equal nonzero pair determinants')
+    actual = check.multiply(check.multiply(IR,operator(check,P,Q)),R)
+    need(actual[0] == (1,0,0,0,0,0,0,0)
+        and all(actual[k][0] == 0 for k in range(1,8)),'Full unital pure-space transport')
+    return tuple(tuple(actual[i][j] for j in range(1,8)) for i in range(1,8))
+
+
+def expand_runs(runs, maximum):
+ need(type(runs)is list,'literal position runs');out=[];last=0
+ for a,b in runs:
+  need(type(a)is type(b)is int and last<a<=b<=maximum,'ordered disjoint position runs')
+  out.extend(range(a,b+1));last=b
+ return out
+
+def packed_runs(values):
+ out=[]
+ for x in sorted(values):
+  if out and out[-1][1]+1==x:out[-1][1]=x
+  else:out.append([x,x])
+ return out
+
+def context(plan,budget):
+ projection=budget.doc(plan['projection']);gate=budget.doc(plan['Root_projection_acceptance'])
+ manifest=budget.doc(plan['unpaid_manifest']);job=plan['original_job']
+ need(gate['schema']=='ROOT_ACCEPTED_Q11_RANK4_DISPOSITION_PROJECTIONS_V1'and gate['root']=='/root'
+  and gate['source_manifest']==plan['unpaid_manifest']and gate['no_new_mathematical_case_evaluations']is True,
+  'separate actual Root adoption of the small metadata projection')
+ rows=[r for r in gate['projections']if r[0]==job[0]]
+ need(len(rows)==1 and rows[0][1:]==[plan['projection']['bytes'],plan['projection']['sha256']]
+  and plan['projection']['path']==str(Path(gate['projection_directory'])/('job_%04d.json'%job[0])),
+  'exact adopted same-job byte-identical projection')
+ need(gate['scope_qualification']=='Set difference against explicitly inspected accepted registry; no global absence claim.',
+  'inspected registry qualification is retained')
+ registered=[r for r in manifest['jobs']if r['original_job']==job]
+ need(len(registered)==1 and registered[0]['projection']['bytes']==plan['projection']['bytes']
+  and registered[0]['projection']['sha256']==plan['projection']['sha256'],'same global registered projection bytes')
+ refs=projection['original_domain_whole_pins']
+ pt=budget.doc(refs['producer_terminal']);st=budget.doc(refs['Saved_terminal'])
+ produced=budget.doc(refs['producer_result']);domain=budget.doc(refs['Saved_result']);export=budget.doc(refs['prefix_export'])
+ for term,mode,result in((pt,'produce',refs['producer_result']),(st,'check',refs['Saved_result'])):
+  need(term['schema']=='ROOT_CLOSED_F004_Q11_INDEXED_PREFIX_V1'and term['root']=='/root'
+   and term['success']is True and term['rank']==4 and term['mode']==mode and term['original_job']==job
+   and term['result']==result and term['prefix_export']==refs['prefix_export'],'existing genuine original indexed-domain closure')
+ need(st['producer_terminal']==refs['producer_terminal']and st['complete_fresh_same_code_Saved_comparison']is True
+  and st['Saved_ignored_observational_fields']==['seconds','peak_self_bytes'],'whole original Saved comparison')
+ for x in(produced,domain):x.pop('seconds',None);x.pop('peak_self_bytes',None)
+ need(can(produced)==can(domain),'all nonobservational original domain fields equal');del produced
+ need(domain['schema']=='F004_Q11_INDEXED_CAYLEY_CENTRALIZER_DOMAIN_CERTIFICATE_V1'
+  and domain['certificate_verified']is True and domain['rank']==4 and domain['field']==11
+  and domain['original_job']==export['original_job']==projection['original_job']==job
+  and domain['prefix_export']==refs['prefix_export']and domain['selected_labels']==export['selected_labels']==[1,4,2]
+  and export['end_order']==[1,4,2,3]and export['convention']=='RIGHT_ROW'
+  and export['matrix_frame_result']==plan['matrix_frame_result']
+  and domain['origin']==export['origin']and domain['original_prefix_index']==projection['original_prefix_index']==export['original_prefix_index']
+  and domain['original_prefix_index_proof']==projection['original_prefix_index_proof']==export['origin']['original_prefix_index_proof'],
+  'literal original prefix, labels and actual basis')
+ need(domain['external_premises']==export['external_premises']and domain['external_premises']['root']=='/root'
+  and domain['external_premises']['original_A_equals_G']is True,'original model and A=G premises')
+ for field,key in(('indexed_source','indexed'),('generic_export_source','generic_export')):
+  need(st[field]==plan['old_sources'][key],'exact old Source subjects, no PASS retag')
+  for r in st[field].values():budget.read(r)
+ binding=budget.doc(st['binding_terminal']);model=budget.doc(domain['external_premises']['model_source_join'])
+ frame=budget.doc(domain['faithful_frame_acceptance']);normal=budget.doc(domain['normalization_result'])
+ normal_acceptance=budget.doc(domain['normalization'])
+ need(binding.get('root')=='/root'and binding.get('success')is True and model['root']=='/root'
+  and model['actual_raw_model_alias_checked']is True and model['faithful_frame']==domain['faithful_frame_acceptance']
+  and frame['status']=='ROOT_ACCEPTED_Q11_FAITHFUL_MATRIX_FRAME'and frame['result']==plan['matrix_frame_result']
+  and frame['full_generator_point_checks']==354312 and frame['inverse_checks']==6 and frame['inputs_unchanged']is True,
+  'borrowed complete faithful original point-frame join')
+ need(normal['status']=='CERTIFIED_GF11_SPLIT_CAYLEY_COMPOSITION'and normal['certificate_verified']is True
+  and normal['kappa']==7 and normal_acceptance['status']==plan['normalization_status'],
+  'same acquired actual Cayley norm')
+ R=matrix(domain['standard_to_actual_row_map'],8);IR=matrix(domain['actual_to_standard_row_map'],8)
+ need(budget.multiply(R,IR)==budget.multiply(IR,R)==I8,'whole frame inverses')
+ a,e,b=[matrix(x,7)for x in export['matrices']]
+ for g,standard in zip((a,e,b),domain['standard_ordered_prefix_matrices']):
+  ext=((1,0,0,0,0,0,0,0),)+tuple((0,)+row for row in g)
+  need(budget.multiply(budget.multiply(IR,matrix(standard,8)),R)==ext,'same complete standard/actual prefix transport')
+ need(len({a,e,b})==3 and all(g!=I7 and budget.multiply(g,g)==I7 for g in(a,e,b))
+  and budget.multiply(a,e)==budget.multiply(e,a)and budget.multiply(b,e)==budget.multiply(e,b)
+  and budget.multiply(a,b)!=budget.multiply(b,a),'fixed original nonidentity involution/string relations')
+ need(domain['common_eigenspace_dimensions']==[1,2,2,2]and len(domain['frame'])==8
+  and domain['frame'][1][0]==0 and domain['frame_norms'][1]==domain['delta']in(1,2),
+  'acquired nonsingular common positive line and seed locator')
+ seed=tuple(domain['frame'][1][1:]);need(len(seed)==7 and any(seed)
+  and budget.image(seed,a)==budget.image(seed,e)==seed,'same actual seed and endpoint positive equations')
+ q=matrix(normal['quadratic_form_matrix'],8);seed8=(0,)+seed
+ need(sum(seed8[i]*q[i][j]*seed8[j]for i in range(8)for j in range(8))%11==domain['delta'],
+  'same actual canonical nonsingular seed norm')
+ saved_frame=budget.doc(plan['matrix_frame_result']);ambient=tuple(matrix(m,7)for m in saved_frame['source_matrices'])
+ need(len(ambient)==2 and saved_frame['full_generator_point_checks']==354312
+  and saved_frame['six_inverse_checks']==6,'two original known-G matrices in the acquired faithful frame')
+ catalogue=domain['catalogue'];orbits=domain['orbits'];stabilizer=domain['prefix_stabilizer_indices']
+ need(len(catalogue)==domain['catalogue_size']==14763 and digest(catalogue)==domain['catalogue_sha256']
+  and domain['catalogue_schema']=='INDEX1_IS_A0_OTHER_ROWS_ARE_DELTA_PX_PY_PZ_QX_QY_QZ_SIMULTANEOUS_SIGN_QUOTIENT'
+  and domain['selected_raw_domain_indices']==list(range(1,14764)), 'entire original raw J catalogue, never a new indexing')
+ need(len(orbits)==projection['original_orbit_rows']and digest(orbits)==projection['full_orbit_array_sha256']
+  and domain['orbit_action']==projection['orbit_action']and domain['orbit_schema']==projection['orbit_schema']
+  and stabilizer==projection['prefix_stabilizer_indices'],'whole acquired orbit/member/transporter table')
+ covered=[]
+ for rep,members,transports,fixed in orbits:
+  need(rep in members and members==sorted(set(members))and len(members)==len(transports)
+   and all(type(j)is int and j in stabilizer for j in transports)
+   and type(fixed)is int and fixed>0 and len(members)*fixed==len(stabilizer),'all matching original orbit transport roles')
+  covered.extend(members)
+ need(sorted(covered)==list(range(1,14764)),'whole disjoint14763-member original orbit partition')
+ unpaid=expand_runs(projection['unpaid_representation']['runs'],len(orbits))
+ need(digest(unpaid)==projection['unpaid_representation']['expanded_sha256']
+  and len(unpaid)==projection['exact_unpaid_count_relative_to_inspected_accepted_registry'], 'exact adopted unpaid positions')
+ paid=sorted({i for fact in projection['known_paid_facts']for i in fact['orbit_positions']})
+ need(len(paid)==projection['known_paid_positions_count']and not set(paid)&set(unpaid)
+  and sorted(paid+unpaid)==list(range(1,len(orbits)+1)), 'no paid position replayed or unpaid position omitted')
+ return dict(projection=projection,domain=domain,export=export,refs=refs,R=R,IR=IR,
+  a=a,b=b,e=e,seed=seed,ambient=ambient,catalogue=catalogue,orbits=orbits,unpaid=unpaid,paid=paid,
+  inspected_registry_qualification=gate['scope_qualification'])
+
+
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+  and all(k not in os.environ for k in ENV4),'minimal EBS and ENV4 absence')
+ signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s cyclic-span pilot')))
+ signal.setitimer(signal.ITIMER_REAL,max(.001,125-(time.monotonic()-START)))
+ parser=argparse.ArgumentParser(allow_abbrev=False)
+ parser.add_argument('--self-sha256',required=True);parser.add_argument('--plan-sha256',required=True)
+ parser.add_argument('--source-gate',nargs=2,required=True);args=parser.parse_args();budget=Budget()
+ own=dict(path=str(HERE/'propose.py'),bytes=(HERE/'propose.py').stat().st_size,sha256=args.self_sha256)
+ need(Path(__file__).resolve(strict=True)==HERE/'propose.py'and own['bytes']<=49152,'fixed whole new proposer Source')
+ # The interpreter's initial main-source read is prepaid as well.
+ budget.bytes+=own['bytes']
+ budget.read(own);pref=dict(path=str(PLAN),bytes=PLAN.stat().st_size,sha256=args.plan_sha256)
+ need(pref['bytes']<=65536,'compressed plan cap');expanded=gzip.decompress(budget.read(pref))
+ need(len(expanded)<=524288,'whole logical plan cap');plan=decode(expanded)
+ need(plan['schema']=='UNRUN_Q11_RANK4_CYCLIC_SPAN_PILOT_PLAN_V1'and plan['program']==own
+  and type(plan['original_job'])is list and len(plan['original_job'])==2 and plan['original_job'][1]==4
+  and type(plan['maximum_positions'])is int and 1<=plan['maximum_positions']<=8192,'one frozen bounded original prefix selection')
+ sg=dict(path=args.source_gate[0],bytes=Path(args.source_gate[0]).stat().st_size,sha256=args.source_gate[1])
+ need(sg['bytes']<=8192,'separate bounded future Source gate');gate=budget.doc(sg)
+ need(gate['schema']=='ROOT_AUTHORIZED_Q11_RANK4_CYCLIC_SPAN_PROPOSER_V1'and gate['root']=='/root'
+  and gate['adopted']is True and gate['program']==own and gate['kernel']==plan['kernel']
+  and gate['plan']==pref and gate['new_case_calls_authorized']is True,'new exact Source authorization, no inherited PASS')
+ evidence=(gate['control_report'],gate['Root_code_math_review'])
+ need(evidence[0]['bytes']<=16384 and evidence[1]['bytes']<=32768,'bounded actual-control and Root-review reports')
+ control=budget.doc(evidence[0]);review=budget.doc(evidence[1])
+ need(control['schema']=='ROOT_ACTUAL_Q11_RANK4_CYCLIC_CONTROLS_V1'and control['root']=='/root'
+  and control['status']=='PASS'and control['control_program']==plan['control_program']and control['kernel']==plan['kernel']
+  and control['controls']==9 and control['original_case_calls']==0 and type(control['actual_capture'])is dict
+  and set(control['actual_capture'])=={'path','bytes','sha256'},
+  'actual exact synthetic-control report, no original case credit')
+ need(review['schema']=='ROOT_REVIEWED_Q11_RANK4_CYCLIC_PROPOSER_V1'and review['root']=='/root'
+  and review['status']=='SUPPORTED'and review['blockers']==[]and review['program']==own
+  and review['kernel']==plan['kernel']and review['control_program']==plan['control_program']and review['plan']==pref,
+  'exact Root code/math review of this new subject')
+ for ref in plan['inputs']:budget.read(ref)
+ ctx=context(plan,budget);all_unpaid=ctx['unpaid'];selected=all_unpaid[:plan['maximum_positions']]
+ need(selected==plan['selected_orbit_positions']and selected,'exact initial adopted unpaid orbit positions')
+ out=Path(plan['output_directory']);need(out.is_absolute()and out.parent.resolve(strict=True)==out.parent
+  and not os.path.lexists(out),'fresh bounded pilot output directory')
+ budget.read(plan['kernel'],True);need(budget.bytes+plan['kernel']['bytes']<=8*2**20,'prepay original kernel loader read')
+ budget.bytes+=plan['kernel']['bytes'];kernel=runpy.run_path(plan['kernel']['path'],run_name='cyclic_span_original_kernel')
+ fn=kernel['spin'];need(fn.__globals__['__file__']==plan['kernel']['path']and fn.__code__.co_filename==plan['kernel']['path'],
+  'original kernel filename and private function globals')
+ budget.read(plan['kernel'],True)
+ header=dict(schema='Q11_RANK4_CYCLIC_SPAN_PROPOSALS_V1',source=own,plan=pref,kernel=plan['kernel'],
+  Root_projection_acceptance=plan['Root_projection_acceptance'],projection=plan['projection'],source_gate=sg,
+  inspected_registry_qualification=ctx['inspected_registry_qualification'],
+  actual_synthetic_control_report=evidence[0],Root_code_math_review=evidence[1],
+  original_job=plan['original_job'],original_domain_whole_pins=ctx['refs'],original_marking_order=['a','b','c','e'],
+  frame_key={k:ctx['domain'][k]for k in('standard_to_actual_row_map','actual_to_standard_row_map','catalogue_sha256','faithful_frame_acceptance')},
+  original_orbit_array_sha256=ctx['projection']['full_orbit_array_sha256'],
+  complete_original_member_transport_proof_borrowed=True,no_new14763_transport_evaluation_claim=True,
+  independent_direct_checker_and_Root_adoption_owed=True,whole_original_credit=0,conjecture_credit=0,Lean_credit=0)
+ chunks=[];records=[];positions=[];negative=[];full=[];miss=[];output_bytes=0;status='pilot_selection_completed'
+ out.mkdir()
+ def flush():
+  nonlocal records,output_bytes
+  if not records:return
+  value=dict(header,chunk=len(chunks)+1,records=records);raw=can(value)+b'\n'
+  need(len(raw)<=131072 and output_bytes+len(raw)+131072<=16*2**20,'whole exact chunk and summary reserve')
+  path=out/('proof_%04d.json'%(len(chunks)+1))
+  with path.open('xb')as f:need(f.write(raw)==len(raw),'whole exclusive proof chunk');f.flush();os.fsync(f.fileno())
+  chunks.append(dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()));output_bytes+=len(raw);records=[]
+ try:
+  for position in selected:
+   budget.tick(True);orbit=ctx['orbits'][position-1];rep=orbit[0]
+   c=actual_operator(budget,ctx['IR'],ctx['R'],*catalogue_pair(ctx['catalogue'][rep-1]));marks=(ctx['a'],ctx['b'],c,ctx['e'])
+   valid=len(set(marks))==4 and all(g!=I7 and budget.multiply(g,g)==I7 for g in marks)
+   valid=valid and all(budget.multiply(marks[i],marks[j])==budget.multiply(marks[j],marks[i])for i in range(4)for j in range(i+2,4))
+   fact,data=fn(ctx['seed'],marks,ctx['ambient'],budget)if valid else(None,dict(original_mark_guard_failed=True))
+   record=dict(original_orbit_position=position,representative_J_index=rep,original_orbit_row_sha256=digest(orbit),
+    certificate=fact,diagnostic=data)
+   candidate=can(dict(header,chunk=len(chunks)+1,records=records+[record]))+b'\n'
+   if len(candidate)>131072:
+    flush();candidate=can(dict(header,chunk=len(chunks)+1,records=[record]))+b'\n'
+   if len(candidate)>131072 or output_bytes+len(candidate)+131072>16*2**20:raise Stop('output reserve')
+   records.append(record);positions.append(position)
+   if fact is None:miss.append(position)
+   elif fact['kind']=='FULL_CYCLIC_SPAN_MATRIX_ALGEBRA_ONLY':full.append(position)
+   else:negative.append(position)
+ except Stop as error:status='soft_stop_with_exact_unvisited_residue:'+str(error)
+ flush();unvisited=all_unpaid[len(positions):]
+ need(positions==selected[:len(positions)]and sorted(negative+full+miss+unvisited)==all_unpaid
+  and len(negative)+len(full)+len(miss)+len(unvisited)==len(all_unpaid),'entire disjoint adopted unpaid-position partition')
+ expected={r['path']:r for r in plan['inputs']}
+ for r in(own,pref,sg,*evidence):need(expected.get(r['path'],r)==r,'one exact current input');expected[r['path']]=r
+ need(budget.refs==expected,'complete physical read closure');budget.recheck();budget.tick()
+ summary=dict(header,schema='Q11_RANK4_CYCLIC_SPAN_PILOT_SUMMARY_V1',status=status,proof_chunks=chunks,
+  original_orbit_rows=len(ctx['orbits']),accepted_paid_positions_not_evaluated=len(ctx['paid']),
+  adopted_unpaid_positions=len(all_unpaid),pilot_selected_positions=selected,visited_position_runs=packed_runs(positions),
+  proposed_nongeneration_runs=packed_runs(negative),full_matrix_algebra_only_runs=packed_runs(full),
+  visited_without_certificate_runs=packed_runs(miss),unvisited_position_runs=packed_runs(unvisited),
+  nongeneration_is_proposed_not_paid=True,full_span_is_not_G2_generation_or_IP=True,
+  unvisited_means_no_complete_record_including_interrupted_position=True,
+  no_cross_call_or_prefix_cache=True,resources=dict(seconds=time.monotonic()-START,peak_self_rss_bytes=budget.peak,
+   matrix_products_all_dimensions=budget.products,generator_and_mover_row_images=budget.row_images,
+   physical_read_bytes=budget.bytes,unique_input_files=len(budget.refs),proof_chunk_bytes=output_bytes,
+   main_source_loader_bytes_prepaid=own['bytes']))
+ raw=can(summary)+b'\n';need(len(raw)<=131072 and output_bytes+len(raw)<=16*2**20,'complete bounded prefix summary')
+ with(out/'summary.json').open('xb')as f:need(f.write(raw)==len(raw),'whole summary');f.flush();os.fsync(f.fileno())
+ print(can(dict(status=status,summary=dict(path=str(out/'summary.json'),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),
+  visited=len(positions),proposed_nongeneration=len(negative),full_algebra_only=len(full),unvisited=len(unvisited),
+  no_independent_or_Original_credit=True)).decode('ascii'))
+
+if __name__=='__main__':main()

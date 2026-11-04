@@ -1,0 +1,101 @@
+"""Fresh Original-free admission controls only. No GL/group/context calls."""
+import argparse,copy,hashlib,json,os,resource,signal,stat,sys,time
+from pathlib import Path
+START=time.monotonic()
+ADMISSION={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_section_certificate_admission/admission.py', 'bytes': 5436, 'sha256': '08bf1db4d1d9f4c0f926f4f8191238bc41bc2bd7d01b8488e761494978f65c3f'}
+CONTROL_COUNT=28
+
+def need(v,s):
+    if not v:raise ValueError(s)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+
+def designs(A):
+    def r(name):return dict(path='/synthetic/'+name,bytes=10,sha256='0'*64)
+    source=dict(original_job=[1,4],projection=r('projection'),Root_projection_acceptance=r('base'))
+    projection=dict(original_job=[1,4],original_orbit_rows=8,original_domain_whole_pins=dict(Saved_result=r('saved'),frame=r('frame')))
+    fact=dict(schema=A['FIELD'],root='/root',adopted=True,Root_projection_acceptance=source['Root_projection_acceptance'],
+        proposal=r('proposal'),independent_review=r('review'),complete_full_stabilizer_model_frame_membership_premises_retained=True,
+        new_census_conjecture_Lean_or_compression_credit=0)
+    app=dict(schema=A['APPLICATION'],root='/root',Root_authority=True,adopted=True,original_job=[1,4],
+        projection=source['projection'],Root_projection_acceptance=source['Root_projection_acceptance'],original_orbit_positions=8,
+        original_paid_positions=[1],original_domain_whole_pins=projection['original_domain_whole_pins'],global_field_adoption=r('global'),
+        field_proposal=fact['proposal'],field_review=fact['independent_review'],disposition='NG',IP_failure_claimed=False,
+        whole_original_credit=0,nongeneration_positions=[2,5],**{k:True for k in A['OWNED']})
+    proposal=dict(jobs=[dict(original_job=[1,4],projection=source['projection'],original_Saved_domain=r('saved'),proposed_new_positions=[2,5])])
+    review=dict(verdict='SUPPORTED_CONDITIONAL_METADATA_DEDUCTIONS',blockers=[],proposed_partition=fact['proposal'])
+    names=[]
+    def call(a=None,f=None,p=None,v=None,src=None,proj=None):
+        return A['classify'](fact if f is None else f,r('global'),source if src is None else src,8,[1],projection if proj is None else proj,
+            app if a is None else a,proposal if p is None else p,review if v is None else v)
+    def yes(n,v):need(v,n);names.append(n)
+    def no(n,fn):
+        try:fn()
+        except(ValueError,KeyError,TypeError):names.append(n);return
+        raise ValueError('admitted '+n)
+    def changed(which,key,value):
+        x=copy.deepcopy(which);x[key]=value;return x
+    yes('global_fact_through_exact_per_job_NG_application',call()==('NG',[2,5]))
+    cyclic=dict(schema='ROOT_ACCEPTED_Q11_RANK4_CYCLIC_PILOT_V1',root='/root',adopted=True,original_job=[1,4],whole_original_credit=0,all64_directly_checked=True,nongeneration_positions=[3])
+    section=dict(schema='ROOT_ACCEPTED_Q11_RANK4_SECTION_IP_OBSTRUCTIONS_V1',root='/root',adopted=True,original_job=[1,4],whole_original_credit=0,independent_direct_word_power_row_minor_checks=True,new_IP_failure_positions=[4])
+    yes('literal_legacy_cyclic_kind_NG',A['classify'](cyclic,r('cyclic'),source,8,[1],projection)==('NG',[3]))
+    yes('literal_legacy_section_kind_NOT_IP',A['classify'](section,r('section'),source,8,[1],projection)==('NOT_IP',[4]))
+    no('global_without_per_job_application',lambda:A['classify'](fact,r('global'),source,8,[1],projection))
+    no('false_Root_authority',lambda:call(a=changed(app,'Root_authority',False)))
+    no('unadopted_application',lambda:call(a=changed(app,'adopted',False)))
+    no('missing_scope_ownership',lambda:call(a=changed(app,A['OWNED'][0],False)))
+    no('cross_job_same_positions',lambda:call(a=changed(app,'original_job',[2,4])))
+    no('boolean_job_index',lambda:call(a=changed(app,'original_job',[True,4])))
+    no('wrong_projection',lambda:call(a=changed(app,'projection',r('otherprojection'))))
+    no('wrong_domain_frame_pins',lambda:call(a=changed(app,'original_domain_whole_pins',dict(Saved_result=r('other')))))
+    no('stale_original_baseline',lambda:call(a=changed(app,'original_paid_positions',[])))
+    no('wrong_global_adoption_reference',lambda:call(a=changed(app,'global_field_adoption',r('otherglobal'))))
+    no('wrong_independent_review_reference',lambda:call(a=changed(app,'field_review',r('otherreview'))))
+    no('wrong_review_status',lambda:call(v=changed(review,'verdict','PENDING')))
+    no('job_absent_in_adopted_proposal',lambda:call(p=dict(jobs=[])))
+    no('incomplete_adopted_NG_set',lambda:call(a=changed(app,'nongeneration_positions',[2])))
+    no('extra_adopted_NG_position',lambda:call(a=changed(app,'nongeneration_positions',[2,5,6])))
+    no('duplicate_position',lambda:call(a=changed(app,'nongeneration_positions',[2,2,5])))
+    no('unsorted_positions',lambda:call(a=changed(app,'nongeneration_positions',[5,2])))
+    no('boolean_position',lambda:call(a=changed(app,'nongeneration_positions',[True,5])))
+    no('out_of_original_domain_position',lambda:call(a=changed(app,'nongeneration_positions',[2,9])))
+    no('NG_coerced_to_NOT_IP',lambda:call(a=changed(app,'disposition','NOT_IP')))
+    no('NG_coerced_to_GEN',lambda:call(a=changed(app,'disposition','GEN')))
+    no('IP_claim_on_field_deduction',lambda:call(a=changed(app,'IP_failure_claimed',True)))
+    no('global_proposal_reference_changed',lambda:call(a=changed(app,'field_proposal',r('otherproposal'))))
+    no('cross_kind_duplicate_position',lambda:A['typed_union']([('NG',[2,5]),('NOT_IP',[5])],[2,5],8))
+    yes('typed_complete_disjoint_union',A['typed_union']([call(),('NOT_IP',[4])],[2,4,5],8)==dict(NG=[2,5],NOT_IP=[4]))
+    need(len(names)==CONTROL_COUNT and len(set(names))==CONTROL_COUNT,'all distinct new admission-only controls')
+    return names
+
+def main():
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS/noO')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s admission controls')));signal.alarm(125)
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--self-sha256',required=True);p.add_argument('--Root-gate',nargs=2,required=True);p.add_argument('--guard',required=True);p.add_argument('--out',required=True);a=p.parse_args()
+    seen={};bodies={};count=0
+    def read(path,sha=None):
+        nonlocal count
+        path=Path(path);st=path.lstat();need(path.resolve(strict=True)==path and stat.S_ISREG(st.st_mode)and st.st_nlink==1 and st.st_size<=2**21,'ordinary bounded control metadata')
+        need(count+st.st_size<=8*2**20 and(len(seen)<96 or str(path)in seen)and time.monotonic()-START<125,'8MiB96paths125s controls')
+        need(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<128*2**20,'128MiB controls')
+        raw=path.read_bytes();after=path.lstat();need((st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns)==(after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns),'stable control input')
+        r=ref(path,raw);need(sha is None or r['sha256']==sha,'exact whole input hash');need(seen.get(str(path),r)==r,'one input edition');seen[str(path)]=r;bodies[str(path)]=raw;count+=len(raw);return raw,r
+    ownraw,own=read(Path(__file__).resolve(strict=True),a.self_sha256);gr,gate_ref=read(a.Root_gate[0],a.Root_gate[1]);gate=json.loads(gr)
+    raw,hr=read(ADMISSION['path'],ADMISSION['sha256']);need(hr==ADMISSION,'complete helper identity')
+    peerraw,peerref=read(gate['independent_Source_peer']['path'],gate['independent_Source_peer']['sha256']);peer=json.loads(peerraw)
+    need(gate['schema']=='ROOT_Q11_FIELD_NG_ADMISSION_CONTROLS_GATE_V1'and gate['root']=='/root'and gate['Root_authority']is gate['adopted']is gate['complete_Source_and_synthetic_scope_owned']is True
+         and gate['program']==own and gate['admission_source']==ADMISSION,'fresh exact Root controls-only release')
+    need(peer['status'].startswith('SUPPORTED_STATIC')and peer['reviewer']not in('/root','/root/forest_resume')and peer['blockers']==[]and peer['admission_source']==ADMISSION and peer['controls_program']==own,'distinct Source peer')
+    st,_=read(Path(a.guard)/'started.json');started=json.loads(st)
+    need(started['command']==[sys.executable,'-E','-B','-S',str(Path(__file__).resolve())]+sys.argv[1:]and any(x['pid']==os.getpid()for x in started['identities'])and started['limits']['total_rss']==128*2**20 and started['limits']['wall_seconds']==125,'same child unchanged128MiB125s guard')
+    namespace={'__name__':'reviewed_field_admission','__file__':ADMISSION['path']};exec(compile(raw,ADMISSION['path'],'exec'),namespace)
+    names=designs(namespace)
+    for name,r in list(seen.items()):read(name,r['sha256'])
+    result=dict(schema='Q11_FIELD_NG_ADMISSION_CONTROLS_RESULT_V1',status='PASS',program=own,admission_source=ADMISSION,
+        Root_gate=gate_ref,independent_Source_peer=peerref,controls=CONTROL_COUNT,names=names,Original_inputs_loaded=False,
+        original_case_calls=0,matrix_or_group_products=0,old9_arithmetic_controls_replayed=False,physical_read_bytes=count,scientific_case_credit=0)
+    output=Path(a.out);need(output.is_absolute()and output.is_relative_to('/private/tmp')and not os.path.lexists(output)and output.parent.resolve(strict=True)==output.parent,'fresh private controls report')
+    body=can(result);need(len(body)<=131072,'bounded actual report')
+    with output.open('xb')as f:need(f.write(body)==len(body),'whole exclusive report');f.flush();os.fsync(f.fileno())
+    print(can(dict(status='PASS',output=ref(output,body),controls=CONTROL_COUNT,Original_inputs_loaded=False)).decode(),end='')
+if __name__=='__main__':main()

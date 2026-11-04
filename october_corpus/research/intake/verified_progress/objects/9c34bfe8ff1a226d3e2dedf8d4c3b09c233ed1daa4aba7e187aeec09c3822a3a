@@ -1,0 +1,328 @@
+"""Independent metadata reader for the genuine false plan; no target imports.
+
+Objects are navigated lexically. Only named administrative values, descriptors,
+and API records are decoded. Scientific subtrees remain exact opaque bytes.
+This reader does not call any registrar, projection, control, or helper function.
+"""
+import base64, hashlib, json, os, shlex, stat, time
+from pathlib import Path
+
+HERE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_job20_registration')
+S=HERE.parents[2]; M=S/'maintenance/intake'
+OUT=HERE/'plan_review'
+START=time.monotonic(); RAW={}; PINS={}; READ=0
+def need(v,why):
+    if not v: raise ValueError(why)
+def can(v): return (json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b): return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,expected=None):
+    global READ
+    p=Path(p); key=str(p)
+    if key in RAW:
+        if expected is not None: need(PINS[key]==expected,'same cached descriptor')
+        return RAW[key]
+    need(time.monotonic()-START<115,'reader deadline')
+    st=p.lstat(); need(p.is_absolute() and p.resolve(strict=True)==p and stat.S_ISREG(st.st_mode) and st.st_nlink==1,'ordinary file')
+    need(st.st_size<=4*2**20 and len(RAW)<500 and READ+st.st_size<=64*2**20,'bounded metadata bank')
+    b=p.read_bytes(); st2=p.lstat()
+    need((st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns,st.st_ctime_ns)==(st2.st_dev,st2.st_ino,st2.st_size,st2.st_mtime_ns,st2.st_ctime_ns),'stable file')
+    r=ref(p,b); need(len(b)==st.st_size,'whole file')
+    if expected is not None: need(r==expected,'exact descriptor '+key)
+    RAW[key]=b; PINS[key]=r; READ+=len(b); return b
+def rbody(r):
+    need(type(r)is dict and set(r)=={'path','bytes','sha256'} and type(r['bytes'])is int,'typed descriptor')
+    return read(r['path'],r)
+def pin(p):
+    read(p); return PINS[str(p)]
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+def val(b,*path): return dec(at(b,path))
+def select(b,keys):
+    d=obj(b); return {k:dec(d[k])for k in keys}
+def raw_preserved(old,new,typed,added=None,children=None):
+    added=added or {}; children=children or {}; a=obj(old); b=obj(new)
+    need(set(b)==set(a)|set(added),'only declared keys added')
+    need(set(typed)<=set(a) and not set(added)&set(a),'declared existing/fresh keys')
+    for k in a:
+        if k in typed: need(can(dec(b[k]))==can(typed[k]),'exact administrative aftervalue '+k)
+        elif k in children: children[k](a[k],b[k])
+        else: need(a[k]==b[k],'opaque raw preservation '+k)
+    for k,v in added.items(): need(can(dec(b[k]))==can(v),'fresh administrative aftervalue '+k)
+
+planpath=HERE/'plans/job20_completion/plan_FALSE.json'
+plan=dec(read(planpath)); pr=pin(planpath); snap=plan['snapshot']; summary=plan['summary']
+need(plan['schema']=='F004_JOB20_MIXED_GLOBAL_FALSE_PLAN_V1' and plan['Root_authority']is False,'false plan')
+need(plan['expected_F009_prefix']==378 and plan['expected_closed']==126,'exact Root checkpoint')
+need(summary['before_counts']==dict(closed=126,pending=146,required=272),'before counts')
+need(summary['after_counts']==dict(closed=127,pending=145,required=272),'after counts')
+need(summary['prior_cache_values']==1682 and summary['cache_values_total']==1683,'one cache value')
+for r in snap.values(): rbody(r)
+for r in(plan['program'],plan['Source_manifest'],plan['Source_peer'],plan['release'],plan['proof_context']): rbody(r)
+mf=dec(rbody(plan['Source_manifest'])); peer=dec(rbody(plan['Source_peer']))
+need(mf['entry']==plan['program'] and peer['global_program']==plan['program'] and peer['global_Source_manifest']==plan['Source_manifest'],'Source identity')
+need(peer['status']=='SUPPORTED_STATIC_F004_JOB20_MIXED_GLOBAL_SOURCE' and peer['reviewer']=='/root/forest_resume' and peer['blockers']==[],'genuine Source peer')
+for r in mf['Source']+mf['guards']: rbody(r)
+need(sum(r['bytes']for r in mf['Source']+mf['guards'])+512==64874<=65536,'whole production Source cap')
+release=dec(rbody(plan['release'])); ctx=dec(rbody(plan['proof_context']))
+need(release['schema']=='ROOT_F004_MIXED_GLOBAL_SOURCE_RELEASE_V1' and release['root']=='/root' and release['Root_authority']is release['adopted']is True,'Root release')
+need(release['Source_manifest']==plan['Source_manifest'] and release['Source_peer']==plan['Source_peer'] and release['proof_context']==plan['proof_context'],'release joins')
+need(release['whole_Source_and_borrowed_proof_qualifications_owned']is release['allow_false_plan_and_apply_only_after_actual_review']is True,'Root release duties')
+co=dec(rbody(release['actual_controls_review']))
+need(co['status']=='SUPPORTED_ACTUAL_F004_JOB20_GLOBAL_CONTROLS' and co['reviewer']=='/root/dependency_audit' and co['blockers']==[],'distinct actual controls')
+need(co['Source_manifest']==plan['Source_manifest'] and co['controls_Source_manifest']==peer['controls_Source_manifest'] and co['count']==16,'control joins')
+need(co['Original_payloads_decoded']is False and co['actual_guard_and_raw_frames_verified']is True,'control scope')
+need(ctx['schema']=='ROOT_F004_JOB20_GLOBAL_PROOF_CONTEXT_V1' and ctx['Root_authority']is ctx['adopted']is True and ctx['root']=='/root','Root proof context')
+proofraw=rbody(ctx['mixed_job_proof']); proof=select(proofraw,['schema','root','Root_authority','adopted','complete_original_job','original_job','counts','positive_cases_require_full_admissibility','candidate_domain_qualification','domain_pins','final_selector','coverage_proposal','complete_Original_domain_import','independent_complete_domain_and_family_review','Source_manifest','program','total_original_orbits','original_raw_members','accepted_count','rejected_count','NG_count','IP_failure_count','unpaid_count','whole_job_ledger_registered','giant_ancestor_rehashed','original_scope_import_and_distinct_family_review_still_required','borrowed_model_and_complete_domain_and_case_theorems_retained','whole_rank4_output_assembly_owed','Aut_and_reversal_equivalence_owed','field_census_credit','whole_original_credit','scientific_calls','mathematical_replays'])
+need(proof['schema']=='ROOT_F004_Q11_MIXED_ORIGINAL_JOB_PROOF_V2' and proof['root']=='/root' and proof['Root_authority']is proof['adopted']is proof['complete_original_job']is True,'issued candidate proof V2')
+need(proof['original_job']==[20,4] and proof['total_original_orbits']==3779 and proof['original_raw_members']==14763,'fixed complete domain')
+need(proof['counts']==dict(NONGENERATION=232,IP_FAILURE=3542,C_GROUP=5),'mixed counts')
+need([proof[k]for k in('accepted_count','rejected_count','NG_count','IP_failure_count','unpaid_count')]==[5,3774,232,3542,0],'complete mixed disposition')
+need(proof['positive_cases_require_full_admissibility']is True and proof['original_scope_import_and_distinct_family_review_still_required']is False,'candidate and positive scope')
+need(proof['whole_job_ledger_registered']is proof['giant_ancestor_rehashed']is False,'not previously global / ancestor borrowed')
+need(all(proof[k]is True for k in('borrowed_model_and_complete_domain_and_case_theorems_retained','whole_rank4_output_assembly_owed','Aut_and_reversal_equivalence_owed')),'borrowed qualifications retained')
+need(all(proof[k]==0 for k in('scientific_calls','mathematical_replays','field_census_credit','whole_original_credit')),'zero extra credit')
+for c,p in(('complete_Original_domain_import','complete_Original_domain_import'),('family_scope_review','independent_complete_domain_and_family_review'),('proof_builder_Source_manifest','Source_manifest'),('proof_builder_program','program')):
+    need(ctx[c]==proof[p],'context/proof join '+c)
+scope=select(rbody(ctx['complete_Original_domain_import']),['schema','root','Root_authority','adopted','original_job','final_selector','domain_pins','candidate_domain_qualification','positive_positions','complete3779_orbit_partition_of14763_Original_members_owned','all_label_preserving_member_transports_in_same_named_G_owned','same_faithful_model_frame_and_Original_A_equals_G_owned','complete_candidate_completion_domain_and_admissible_subset_owned','all_five_positive_cases_have_distinct_nonidentity_involutions_string_GEN_and_full_IP_owned','all47_accepted_family_subjects_and_scope_joins_owned','baseline173_conditional_nongeneration_and_large_ancestor_import_owned'])
+need(scope['schema']=='ROOT_F004_JOB20_COMPLETE_CANDIDATE_DOMAIN_IMPORT_V1' and scope['root']=='/root' and scope['Root_authority']is scope['adopted']is True,'exact candidate domain import')
+need(scope['original_job']==[20,4] and scope['positive_positions']==[259,877,1033,1430,2739],'five full positive cases')
+for k in('final_selector','domain_pins','candidate_domain_qualification'): need(scope[k]==proof[k],'domain join '+k)
+need(all(v is True for k,v in scope.items()if k.endswith('_owned')),'explicit borrowed domain/family ownership')
+family=select(rbody(ctx['family_scope_review']),['status','reviewer','blockers','proposal','complete_Original_domain_import','counts','all_candidate_completion_positive_requirements_and_family_joins_verified'])
+need(family['reviewer']=='/root/dependency_audit' and family['status'].startswith('SUPPORTED_') and family['blockers']==[],'distinct family review')
+need(family['proposal']==proof['coverage_proposal'] and family['complete_Original_domain_import']==ctx['complete_Original_domain_import'] and family['counts']==proof['counts'] and family['all_candidate_completion_positive_requirements_and_family_joins_verified']is True,'family scope joins')
+issue=select(rbody(ctx['complete_job_actual_review']),['schema','status','reviewer','blockers','Root_job_proof','builder_actual_SDK','Source_manifest','accepted_count','rejected_count','unpaid_count','all_candidate_completion_positive_requirements_and_family_joins_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified'])
+need(issue['schema']=='F004_MIXED_WHOLE_JOB_PROOF_ACTUAL_REUSE_V1' and issue['status'].startswith('SUPPORTED_ACTUAL') and issue['reviewer']=='/root/dependency_audit' and issue['blockers']==[],'genuine distinct proof issue review')
+need(issue['Root_job_proof']==ctx['mixed_job_proof'] and issue['builder_actual_SDK']==ctx['builder_actual_SDK'] and issue['Source_manifest']==proof['Source_manifest'],'issued proof joins')
+need([issue[k]for k in('accepted_count','rejected_count','unpaid_count')]==[5,3774,0] and all(issue[k]is True for k in('all_candidate_completion_positive_requirements_and_family_joins_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified')),'issued proof review scope')
+builder=dec(rbody(ctx['builder_actual_SDK'])); need('--mode'in builder['issued_argv'] and builder['issued_argv'][builder['issued_argv'].index('--mode')+1]=='issue','genuine issue mode')
+for k in('proof_builder_Source_manifest','proof_builder_program'): rbody(ctx[k])
+
+# Authenticate the genuine API invocation and every retained original frame.
+sdkpath=HERE/'actual/Root_SDK/plan_v1.json'; sdk=dec(read(sdkpath))
+need(pin(sdkpath)['sha256']=='925d9140c27b00de5e857c416d6bdfc71c7ca99f0f522e82a7e6d3ee995116cc','Root supplied genuine SDK')
+api=HERE/'api/Root_f004_job20_global_plan_v1'; intent=dec(read(api/'issued.json'))
+frames=[]
+for p in sorted(api.glob('frame_*.json')): frames.append(dec(read(p)))
+need(frames==sdk['all_genuine_api_frames'] and len(frames)==7,'all genuine frames')
+need(frames[0]==sdk['full_initial_tool_return'] and frames[-1]==sdk['full_tool_return'],'first/last transport')
+need(sdk['root']==sdk['actor']=='/root' and sdk['actual_tool']['exit_code']==frames[-1]['exit_code']==0,'Root successful terminal API')
+need(sdk['actual_tool']['synchronous']is False and sdk['actual_tool']['handle']==90987,'genuine asynchronous identity')
+need(all(v.get('session_id',90987)==90987 for v in frames) and len({v['chunk_id']for v in frames})==len(frames),'one unique frame chain')
+need(intent['schema']=='ROOT_ISSUED_API_INTENT_V1' and intent['root']=='/root' and intent['argv']==sdk['issued_argv']==sdk['child_argv'],'genuine issued argv')
+need(intent['tool_arguments']==sdk['issued_tool_arguments'] and shlex.split(intent['tool_arguments']['cmd'])==intent['argv'],'exact issued command')
+guard=HERE/'actual/guards/plan'; started=dec(read(guard/'started.json')); receipt=dec(read(guard/'receipt.json')); stdout=dec(read(guard/'stdout.log')); stderr=read(guard/'stderr.log')
+py='/Users/sasha/.venvs/global/bin/python'; supervisor=S/'maintenance/runtime/supervise_validation.py'
+wrapper=['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES',py,'-E','-B',str(supervisor),'--volume','/Users/sasha/medusa','--output',str(guard),'--rss-cap-mib','256','--timeout','125','--']
+need(sdk['issued_argv']==wrapper+started['command'],'complete literal validation wrapper')
+cmd=started['command']; need(cmd[:5]==[py,'-E','-B','-S',plan['program']['path']],'single literal child')
+def option(name,n=1):
+    i=cmd.index(name); return cmd[i+1:i+1+n] if n!=1 else cmd[i+1]
+need(option('--actor')=='/root' and option('--mode')=='plan' and option('--expected-prefix')=='378' and option('--expected-closed')=='126','exact Root plan invocation')
+need(option('--out')==str(planpath.parent) and option('--guard')==str(guard),'exact plan/output guard paths')
+for opt,r in(('--Source-manifest',plan['Source_manifest']),('--Source-peer',plan['Source_peer']),('--proof-context',plan['proof_context']),('--release',plan['release']),('--controls-review',release['actual_controls_review'])):
+    need(option(opt,3)==[r['path'],str(r['bytes']),r['sha256']],'CLI descriptor '+opt)
+limits=dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,ram_floor=3*2**30,total_rss=256*2**20,wall_seconds=125.0,sample_seconds=0.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+need(started['limits']==receipt['limits']==limits and receipt['command']==cmd,'unchanged complete limits')
+need(receipt['status']=='PASS' and receipt['stop']=='RETURNED' and receipt['error']is None and receipt['returncode']==0 and stderr==b'','successful actual guard')
+need(receipt['seconds']<125 and receipt['peaks']['total_rss']<=256*2**20 and len(started['identities'])==len(receipt['identities'])==1,'finite single child execution')
+for k in('pid','birth','initial_parent','group','session'): need(started['identities'][0][k]==receipt['identities'][0][k],'birth pinned identity '+k)
+need(dec(frames[-1]['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json')),'actual API to guard output')
+need(stdout==dict(status='FALSE_MIXED_GLOBAL_PLAN',Root_authority=False,plan=pr,canonical_writes=0,scientific_calls=0,actual_plan_review_and_Root_decision_owed=True),'exact false-plan stdout')
+
+# Whole private outputs are compared opaquely to every intended descriptor.
+intended={r['path']:r for r in plan['afterimages']}; need(len(intended)==14,'four beforeimages plus ten private images')
+target=HERE/'runs/job20_complete'; need(not os.path.lexists(target),'nothing published')
+before={str(target/(k.lower()+'_before.json')):snap[k]for k in('CURRENT','STATUS','intake','controller')}
+priv={v['intended']['path']:v for v in plan['private_afterimages']}; need(set(priv)==set(intended)-set(before),'complete exact private set')
+images={}
+for name,r in intended.items():
+    need(Path(name).parent==target,'one bounded intended output directory')
+    if name in before:
+        b=rbody(before[name]); need(dict(r,path=before[name]['path'])==before[name],'exact planned beforeimage')
+    else:
+        v=priv[name]; need(v['intended']==r and Path(v['private']['path']).parent==planpath.parent,'private/intended metadata')
+        b=rbody(v['private']); need(dict(r,path=v['private']['path'])==v['private'],'whole private/intended byte identity')
+    images[Path(name).name]=b
+for k in('CURRENT','STATUS','intake','controller','runtime','registration','pending','new_cache_bank'):
+    need(summary[k]==intended[summary[k]['path']],'summary image identity '+k)
+need(images['register_mixed_job.py']==rbody(plan['program']),'retained exact new Source')
+
+old={k:rbody(v)for k,v in snap.items()}; new={k:images[Path(summary[k]['path']).name]for k in('CURRENT','STATUS','intake','controller','runtime')}
+need(val(old['controller'],'checkpoint')==snap['runtime']==val(old['intake'],'active_controller_checkpoint'),'frozen pointer joins')
+need(val(old['intake'],'F009','R5_canonical_pairs_reviewed')==378 and val(old['intake'],'F009','R5_prefix_strict_slots_reviewed')==58968,'protected F009 prefix')
+for root in(M/'f009_cohort_preparation/cohorts',Path('/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts'),Path('/private/tmp/f009_R5_parent_cohorts_actual')):
+    need(not os.path.lexists(root/'cohort_from0378'),'released current-prefix freeze')
+for k in('root_execution_ownership_latest','root_current_ownership','current_execution_ownership'): need(val(old['CURRENT'],k,'active_handles')==val(new['CURRENT'],k,'active_handles')==[],'idle CURRENT '+k)
+need(val(old['STATUS'],'active_scientific_handles')==val(new['STATUS'],'active_scientific_handles')==[],'idle STATUS')
+oldpending=val(old['CURRENT'],'F004_q11_latest_ledger','pending_file'); pending=dec(rbody(oldpending)); pending=pending['pending_jobs']if type(pending)is dict else pending
+need(type(pending)is list and all(type(j)is list and len(j)==2 and all(type(x)is int for x in j)and j[1]==4 for j in pending),'strict pending identifiers')
+need(len(pending)==146 and len(set(map(tuple,pending)))==146 and pending.count([20,4])==1,'one current job20')
+np=dec(images['pending_jobs.json']); need(np==[j for j in pending if j!=[20,4]] and len(np)==145,'only ordered job20 removal')
+
+registration=dec(images['root_job20_registration.json']); rr=summary['registration']; pp=summary['pending']; proofref=ctx['mixed_job_proof']
+expected_record=dict(schema='ROOT_F004_JOB20_MIXED_GLOBAL_REGISTRATION_V1',root='/root',Root_authority=True,adopted=True,original_job=[20,4],registration_scope='ADOPT_JOB20_MIXED_ORIGINAL_CLOSURE',typed_job_record=proofref,independent_complete_job_actual_review=ctx['complete_job_actual_review'],complete_Original_domain_import=ctx['complete_Original_domain_import'],family_scope_review=ctx['family_scope_review'],proof_context=plan['proof_context'],candidate_domain_qualification=proof['candidate_domain_qualification'],positive_cases_require_full_admissibility=True,accepted_count=5,rejected_count=3774,NG_count=232,IP_failure_count=3542,unpaid_count=0,before_counts=summary['before_counts'],after_counts=summary['after_counts'],previous_pending=oldpending,pending=pp,removed_jobs=[[20,4]],previous_globals={k:snap[k]for k in('CURRENT','STATUS')},Source_manifest=plan['Source_manifest'],Source_peer=plan['Source_peer'],Root_Source_release=plan['release'],scientific_calls=0,mathematical_replays=0,old_job24_record_preserved=True,all_other_pending_jobs_retained_in_order=True,all_borrowed_proof_qualifications_retained=True,field_census_and_Aut_reversal_output_assembly_still_owed=True,whole_manuscript_conjecture_Lean_measurement_credit=0,transaction_commit_and_independent_admin_review_required=True)
+need(registration==expected_record,'complete proposed registration / borrowed qualifications')
+
+# Validate every complete global alias and its independently declared inverse.
+aliases={'CURRENT':[['root_f004_q11_ledger_current'],['F004_q11_latest_ledger'],['F004_q11_current']], 'STATUS':[['root_f004_q11_ledger_current'],['F004','latest_ledger'],['F004_q11_current'],['F004_q11_latest_ledger']]}
+note='Original job 20 has complete coverage of 3779 orbit positions: 232 nongeneration results, 3542 intersection failures and 5 positive marking orbits. q11 has 127/272 jobs registered; 145 rank4 jobs remain pending. Other prefixes, output assembly and Aut/reversal equivalences remain required.'
+inverse=dec(images['whole_alias_inverse.json']); inverse_counts={}
+for name in('CURRENT','STATUS'):
+    changes={}
+    for path in aliases[name]:
+        values=dict(required=272,closed=127,registration=rr,registration_scope='ADOPT_JOB20_MIXED_ORIGINAL_CLOSURE',registered_closed_job_batch=rr,original_job=[20,4],typed_job_record=proofref,retained_single_job_fields_are_historical=True,whole_original_credit=0)
+        if path[-1]=='root_f004_q11_ledger_current': values.update(pending_count=145,pending=pp,adoption=proofref,status='ROOT_REGISTERED_F004_Q11_JOB20_MIXED_CLOSURE')
+        elif path[-1]=='F004_q11_current': values.update(remaining=145,pending_ledger=pp,root_adoption=proofref,status='ROOT_REGISTERED_F004_Q11_JOB20_MIXED_CLOSURE')
+        else: values.update(pending=145,pending_file=pp,adoption=proofref,rank_four_pending=145,rank_five_pending=0)
+        a=obj(at(old[name],path)); b=obj(at(new[name],path))
+        need(set(b)==set(a)|set(values),'alias contains exactly old and defined new fields')
+        for k,v in values.items(): need(can(dec(b[k]))==can(v),'complete alias field '+k)
+        for k,v in a.items():
+            if k not in values: need(b[k]==v,'alias unknown raw preservation '+k)
+        changes[tuple(path)]=(False,at(old[name],path),at(new[name],path))
+    typed={}
+    if name=='CURRENT':
+        typed[('F004_status',)]=note
+        legacy=dict(q11_actual_lower_closed=127,q11_closed=127,q11_actual_pending=145,q11_pending=145,q11_remaining=pp,q11_current_pending_plan=pp,q11_pending_registration=rr,q11_latest_adoption=str(Path(proofref['path']).relative_to(S)),q11_authoritative_latest='F004_q11_latest_ledger and q11_batch_registration_current; old per-job records remain literal history.',q11_batch_registration_current=rr,navigation_note=note)
+        typed.update({('F004_current',k):v for k,v in legacy.items()})
+    else: typed={('F004','q11_completed'):127,('F004','q11_pending'):145,('F004','next_status'):note}
+    for path,v in typed.items():
+        need(can(dec(at(new[name],path)))==can(v),'exact global metadata '+str(path))
+        changes[path]=(False,at(old[name],path),at(new[name],path))
+    history=('F004_q11_before_job20_completion',); need(history[0]not in obj(old[name]),'fresh latest history alias')
+    need(at(new[name],history)==at(old[name],['F004_q11_latest_ledger']),'raw old latest retained as history')
+    changes[history]=(True,None,at(new[name],history))
+    iv=inverse[name]; need(iv['schema']=='F004_GLOBAL_WHOLE_RAW_VALUE_INVERSE_V1' and iv['restores_exact_beforeimage']is iv['unknown_values_never_decoded']is iv['archived_beforeimage_shapes_used']is True,'declared exact inverse')
+    bypath={tuple(c['path']):c for c in iv['changes']}; need(len(bypath)==len(iv['changes']) and set(bypath)==set(changes),'complete allowed inverse paths')
+    for path,(added,a,b)in changes.items():
+        c=bypath[path]; need(c['before_present']is(not added),'inverse presence')
+        need(c['before_base64']is None if added else base64.b64decode(c['before_base64'],validate=True)==a,'inverse exact old span')
+        need(base64.b64decode(c['after_base64'],validate=True)==b,'inverse exact new span')
+    def walk(a,b,path=()):
+        if path in changes: return
+        aa=obj(a); bb=obj(b); added={p[len(path)]for p,(fresh,_,_)in changes.items()if fresh and len(p)==len(path)+1 and p[:len(path)]==path}
+        need(set(bb)==set(aa)|added,'no undeclared whole-document key')
+        for k in aa:
+            p=path+(k,)
+            if p in changes: continue
+            if any(q[:len(p)]==p for q in changes): walk(aa[k],bb[k],p)
+            else: need(aa[k]==bb[k],'whole unknown/history raw subtree '+str(p))
+    walk(old[name],new[name]); inverse_counts[name]=len(changes)
+need(at(new['CURRENT'],['F004_q11_latest_ledger'])==at(new['STATUS'],['F004_q11_latest_ledger']),'both new global aliases join')
+
+# Validate the complete progress graph without decoding retained science values.
+newcounts=dict(F004_registered_jobs=127,F004_required_jobs=272,F004_pending_jobs=145)
+oldruntime=obj(old['runtime']); newruntime=obj(new['runtime'])
+oldbanks=dec(oldruntime['cache_banks']); newbanks=dec(newruntime['cache_banks'])
+cachekey='Root_f004_job20_whole_original_mixed_registration'
+need(newbanks==oldbanks+[dict(entries=1,keys=[cachekey],ref=summary['new_cache_bank'])],'literal ordered old-bank descriptor preservation and one append')
+keys=set(obj(oldruntime['cache_entries']))
+for bank in oldbanks:
+    bankraw=rbody(bank['ref']); ks=set(obj(obj(bankraw)['cache_entries']))
+    need(bank['entries']==len(ks) and bank['keys']==sorted(ks) and not keys&ks,'exact old bank key metadata'); keys.update(ks)
+need(len(keys)==1682 and cachekey not in keys,'all old cache values uniquely retained')
+def counts_check(a,b):
+    aa=obj(a); raw_preserved(a,b,{k:v for k,v in newcounts.items()if k in aa},{k:v for k,v in newcounts.items()if k not in aa})
+raw_preserved(old['runtime'],new['runtime'],dict(cache_banks=newbanks,previous_checkpoint=snap['runtime']),children={'counts':counts_check})
+need(oldruntime['cache_entries']==newruntime['cache_entries'],'old inline cache values exactly opaque')
+cache=dec(images['execution_cache.json']); need(cache['schema']=='ROOT_INTAKE_CACHE_ENTRY_BANK_V1' and cache['root']=='/root' and cache['completed_science_values_immutable']is True and set(cache['cache_entries'])=={cachekey},'one new cache bank')
+entry=cache['cache_entries'][cachekey]
+need(entry==dict(ref=rr,value=registration,completed_value_unchanged=True,independent_actual_review=ctx['complete_job_actual_review'],independent_actual_review_pending=False,independent_global_admin_review_pending=True,one_original_job_closed=[20,4],new_whole_manuscript_credit=0),'exact one added immutable cache entry')
+def jobcheck(a,b):
+    need(select(a,['current_selector','partition','now_unresolved','remaining_positions'])==dict(current_selector=proof['final_selector'],partition=[173,3606,0],now_unresolved=0,remaining_positions=[]),'paid job20 baseline')
+    raw_preserved(a,b,{},dict(whole_original_job_proof=proofref,whole_original_job_global_registration=rr,whole_original_job_closed=True))
+def f4check(a,b):
+    raw_preserved(a,b,dict(registered_jobs=127,required_jobs=272,pending_jobs=145,next='Original job 20 is registered from its complete proof covering positive and negative results. Other pending jobs, rank4 output assembly and Aut/reversal equivalences remain required.'),dict(whole_job20_global_registration=rr),{'job20':jobcheck})
+before_intake=intended[str(target/'intake_before.json')]; before_controller=intended[str(target/'controller_before.json')]
+raw_preserved(old['intake'],new['intake'],dict(previous_checkpoint=before_intake,active_controller_checkpoint=summary['runtime']),children={'F004':f4check})
+raw_preserved(old['controller'],new['controller'],dict(previous_controller=before_controller,checkpoint=summary['runtime']))
+
+# Reconstruct the Source's exact pre-output input set and prospective formulas.
+target_inputs={}
+def targetref(r): target_inputs[r['path']]=r
+for r in(plan['Source_manifest'],plan['program'],plan['Source_peer'],plan['proof_context'],plan['release'],release['actual_controls_review'],pin(guard/'started.json'),ctx['mixed_job_proof'],ctx['complete_Original_domain_import'],ctx['family_scope_review'],ctx['complete_job_actual_review'],ctx['builder_actual_SDK'],ctx['proof_builder_Source_manifest'],ctx['proof_builder_program'],oldpending): targetref(r)
+for r in mf['Source']+mf['guards']+list(snap.values())+[b['ref']for b in oldbanks]: targetref(r)
+for r in target_inputs.values(): rbody(r)
+I=sum(r['bytes']for r in target_inputs.values()); Q=sum(r['bytes']for r in intended.values()); D=sum(snap[k]['bytes']for k in('CURRENT','STATUS','intake','controller')); Dnew=sum(summary[k]['bytes']for k in('CURRENT','STATUS','intake','controller'))
+extra=Q+3*D+2*Dnew+summary['runtime']['bytes']+summary['new_cache_bank']['bytes']+262144
+planforecast=131072+2*I+extra
+privatebytes=sum(v['private']['bytes']for v in priv.values())
+apply_fixed=131072+2*(I+pr['bytes']+privatebytes)+extra
+wforecast=Q+Dnew+262144
+need(planforecast<=64*2**20 and wforecast<=16*2**20 and len(set(target_inputs)|set(intended))+10<=500,'reviewed resource formulas instantiated')
+need(apply_fixed<64*2**20,'future decision/review space remains')
+need(all(r['bytes']<=4*2**20 for r in intended.values()),'all planned output file bounds')
+
+# Reopen every admitted ordinary input at exactly the same bytes. No live write.
+for key,r in list(PINS.items()):
+    p=Path(key); b=p.read_bytes(); need(ref(p,b)==r,'closing exact byte comparison'); READ+=len(b)
+need(READ<=64*2**20,'whole reader repeated-pass bound')
+report=dict(schema='F004_JOB20_ACTUAL_FALSE_PLAN_METADATA_CHECK_V1',reviewer='/root/forest_resume',Root_authority=False,blockers=[],
+    plan=pr,Source_manifest=plan['Source_manifest'],program=plan['program'],Source_peer=plan['Source_peer'],snapshot=snap,
+    actual_SDK=pin(sdkpath),raw_issued=pin(api/'issued.json'),raw_frames=[pin(p)for p in sorted(api.glob('frame_*.json'))],
+    guard_started=pin(guard/'started.json'),guard_receipt=pin(guard/'receipt.json'),guard_stdout=pin(guard/'stdout.log'),guard_stderr=pin(guard/'stderr.log'),
+    proof_context=plan['proof_context'],Root_Source_release=plan['release'],actual_controls_review=release['actual_controls_review'],
+    before_counts=summary['before_counts'],after_counts=summary['after_counts'],prior_cache_values=1682,after_cache_values=1683,
+    inverse_changed_leaves=inverse_counts,private_afterimages=len(priv),planned_beforeimages=len(before),
+    resource_forecast=dict(target_input_paths=len(target_inputs),target_input_bytes=I,Q=Q,D=D,Dnew=Dnew,extra=extra,plan_read_forecast=planforecast,apply_read_fixed_before_future_review_decision=apply_fixed,future_review_decision_combined_byte_allowance=(64*2**20-apply_fixed)//2,write_forecast=wforecast,planned_files_max=max(r['bytes']for r in intended.values()),reader_paths=len(PINS),reader_two_pass_bytes=READ),
+    actual_guard_and_raw_frames_verified=True,whole_afterimages_inverse_and_scope_verified=True,
+    Original_payloads_decoded_or_evaluated=False,represented_Source_helpers_or_controls_executed=False,canonical_writes=0,
+    qualification='Independent execution/provenance and complete administrative afterimage/inverse review, conditional on exact Root-adopted candidate-domain and family/proof reviews. Prior authorship in an inherited metadata helper is disclosed; no mathematical independence from every inherited helper is claimed. Proposed positive registration remains private under an authority-false plan. No new scientific, job, manuscript, conjecture, Lean or census adoption occurs in this review; fresh Root decision, exact apply reconstruction/CAS and independent postwrite audit remain owed.')
+def output(name,v):
+    p=OUT/name; need(not p.exists(),'fresh review artifact'); b=can(v)
+    with p.open('xb')as f: f.write(b)
+    return ref(p,b)
+pinsref=output('checked_pins.json',dict(schema='BOUNDED_WHOLE_BYTE_CHECKED_INPUTS_V1',reviewer='/root/forest_resume',Root_authority=False,paths=sorted(PINS.values(),key=lambda r:r['path']),paths_count=len(PINS),read_bytes=READ))
+report['checked_pins']=pinsref
+full=output('full_review.json',report)
+leaf={k:report[k]for k in('schema','reviewer','Root_authority','blockers','plan','Source_manifest','program','Source_peer','snapshot','actual_SDK','raw_issued','raw_frames','guard_started','guard_receipt','guard_stdout','guard_stderr','whole_afterimages_inverse_and_scope_verified','actual_guard_and_raw_frames_verified','Original_payloads_decoded_or_evaluated','represented_Source_helpers_or_controls_executed','canonical_writes')}
+leaf.update(status='SUPPORTED_ACTUAL_F004_JOB20_MIXED_GLOBAL_FALSE_PLAN',full_review=full,checked_pins=pinsref,prior_helper_authorship_disclosed=True,whole_original_job_or_scientific_credit=0)
+lr=output('reuse_integer_only.json',leaf)
+print(json.dumps(dict(leaf=lr,full_review=full,checked_pins=pinsref,resource_forecast=report['resource_forecast']),sort_keys=True))

@@ -1,0 +1,136 @@
+"""Independent bounded execution metadata postcheck; no Original payload decoding."""
+from pathlib import Path
+import hashlib,json,os,resource,shlex,signal,stat,sys,time
+P=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/actual_audit')
+CONTROL=P.parent/'cohorts/cohort_from0366';HERE=CONTROL/'execution_review';API=CONTROL/'api'
+START=time.monotonic();READ=0;BANK={};PINS={};CALLS=[]
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second execution metadata audit')))
+signal.alarm(125)
+def raw(p,r=None):
+ global READ
+ p=Path(p);name=str(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ assert time.monotonic()-START<115
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ if name not in BANK:
+  st=p.lstat();assert stat.S_ISREG(st.st_mode)and st.st_size<=4*2**20
+  b=p.read_bytes();en=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  assert sig(st)==sig(en)and len(b)==st.st_size
+  READ+=len(b);assert READ<=64*2**20 and len(BANK)<512
+  BANK[name]=b;PINS[name]=dict(path=name,bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ if r is not None:assert PINS[name]==r,(PINS[name],r)
+ return BANK[name]
+def doc(r):return json.loads(raw(r['path'],r))
+def plain(p):return json.loads(raw(p))
+def pin(p):raw(p);return PINS[str(p)]
+def triple(r):return[r['path'],str(r['bytes']),r['sha256']]
+def save(p,v):
+ b=(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+ with p.open('xb')as f:assert f.write(b)==len(b);f.flush();os.fsync(f.fileno())
+ assert p.read_bytes()==b
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def api(r,key,success=True):
+ d=doc(r);argv=d['issued_argv'];assert d['root']==d['actor']=='/root'
+ assert d['child_argv']==argv and shlex.split(d['issued_tool_arguments']['cmd'])==argv
+ issued=plain(API/key/'issued.json');assert issued['root']=='/root'and issued['argv']==argv and issued['tool_arguments']==d['issued_tool_arguments']
+ fs=d['all_genuine_api_frames'];assert 1<=len(fs)<=32 and fs[0]==d['full_initial_tool_return']and fs[-1]==d['full_tool_return']
+ assert(fs[-1]['exit_code']==0)is success and fs[-1]['exit_code']==d['actual_tool']['exit_code']
+ assert fs[0]['chunk_id']==d['actual_tool']['initial_chunk']and fs[-1]['chunk_id']==d['actual_tool']['terminal_chunk']
+ for j,f in enumerate(fs):assert plain(API/key/('frame_%04d.json'%j))==f
+ assert not(API/key/('frame_%04d.json'%len(fs))).exists()
+ CALLS.append(dict(SDK=r,raw_key=key,exit_code=fs[-1]['exit_code'],genuine_raw_frames=len(fs)))
+ return d
+def successful(r,key,science=False):
+ d=api(r,key);argv=d['issued_argv']
+ if'--'not in argv:return json.loads(d['full_tool_return']['output']),d,'direct reviewed metadata entry'
+ guard=Path(argv[argv.index('--output')+1]);child=argv[argv.index('--')+1:]
+ st=plain(guard/'started.json');receipt=plain(guard/'receipt.json')
+ assert st['command']==receipt['command']==child and receipt['status']=='PASS'and receipt['stop']=='RETURNED'
+ assert receipt['returncode']==0 and receipt['error']is None and receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+ assert st['limits']==receipt['limits']
+ lim=receipt['limits'];assert lim['total_rss']==(128 if science else 256)*2**20 and lim['wall_seconds']==(150 if science else 125)
+ assert lim['admit_ram']==4*2**30 and lim['admit_disk']==10*2**30 and lim['ram_floor']==3*2**30 and lim['disk_floor']==8*2**30
+ assert receipt['seconds']<=lim['wall_seconds']and receipt['peaks']['total_rss']<=lim['total_rss']
+ assert receipt['admission']['available_ram']>=lim['admit_ram']and receipt['admission']['free_disk']>=lim['admit_disk']
+ assert receipt['peaks']['min_available_ram']>=lim['ram_floor']and receipt['peaks']['min_free_disk']>=lim['disk_floor']
+ assert json.loads(d['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+ stdout=raw(guard/'stdout.log');assert raw(guard/'stderr.log')==b''
+ out=json.loads(stdout)
+ for item in out.get('outputs',[]):raw(item['path'],item)
+ return out,d,'existing supervisor with genuine receipt'
+
+h=plain(P/'handoff.json');peerref=pin(P/'review/reuse_integer_only.json');peer=doc(peerref)
+assert peer['status']=='SUPPORTED_STATIC_FUTURE_COHORT_ACTUAL_AUDITOR'and peer['blockers']==[]
+for key in('programs','entry_manifests','common','config'):assert peer[key]==h[key]
+for mr in h['entry_manifests'].values():
+ m=doc(mr)
+ for r in m['Source']+m['guards']:raw(r['path'],r)
+ assert sum(r['bytes']for r in m['Source']+m['guards'])+512==m['Source_plus_guards512']<=65536
+leafref=pin(CONTROL/'actual_audit/aggregate/reuse_integer_only.json');leaf=doc(leafref);full=doc(leaf['full_actual_review']);decision=doc(full['Root_decision'])
+assert leaf['status']=='SUPPORTED_ACTUAL'and leaf['reviewer']=='/root/forest_resume'and leaf['blockers']==[]
+assert leaf['begin']==366 and leaf['end']==378 and leaf['parent_count']==12 and leaf['strict_slots']==1872 and leaf['target_occurrences']==250
+assert leaf['source_indices']==list(range(366,378))and leaf['all_source_indices_exactly_once']is True
+assert leaf['cache_registration_performed']is leaf['whole_R5_level_or_census_claimed']is False
+assert full['program']==h['programs']['audit_cohort.py']and full['common']==h['common']and full['config']==h['config']
+assert decision['independent_Source_peer']==peerref
+assert full['Original_payloads_decoded_by_this_actual']is False and full['scientific_executions']==full['canonical_writes']==0
+cohort=doc(leaf['cohort']);assert cohort['progress_snapshot']==leaf['progress_snapshot']and cohort['reviewed_prefix']==366
+owner=doc(cohort['Root_Source_ownership']);assert owner['root']=='/root'
+aggregate_out,aggregateSDK,_=successful(pin(CONTROL/'actual_audit/Root_SDK/aggregate_v1.json'),'Root_f009_cohort0366_audit_aggregate_v1')
+assert aggregate_out['outputs']==[leaf['full_actual_review'],leafref]
+all_science=[];all_metadata=[];batchrefs=[]
+for entry in leaf['batches']:
+ n=entry['batch'];br=entry['actual_review'];b=doc(br);bf=doc(b['full_actual_review']);batchrefs.append(br)
+ assert b['source_indices']==list(range(366+3*n,369+3*n))and b['strict_slots']==468
+ assert bf['program']==h['programs']['audit_batch.py']and bf['common']==h['common']and bf['config']==h['config']and bf['Root_decision']==full['Root_decision']
+ assert bf['Original_payloads_decoded_by_this_actual']is False and bf['scientific_executions']==bf['canonical_writes']==0 and bf['first_closing_inputs_stable']is True
+ edition=2 if n==0 else 1
+ out,sd,_=successful(pin(CONTROL/('actual_audit/Root_SDK/batch%02d_v%d.json'%(n,edition))),'Root_f009_cohort0366_audit_batch%02d_v%d'%(n,edition))
+ assert out['outputs']==[b['full_actual_review'],br]
+ for r in bf['details']['scientific_actuals']:
+  stem=Path(r['path']).stem;assert stem.endswith('_v1');successful(r,'Root_f009_cohort0366_'+stem,True);all_science.append(r)
+ for r in bf['details']['metadata_actuals']:
+  stem=Path(r['path']).stem;assert stem.endswith('_v1');successful(r,'Root_f009_cohort0366_'+stem);all_metadata.append(r)
+ for r in(b['pairing'],b['strict_certificate'],b['assembled_certificate']):raw(r['path'],r)
+ for binding in b['bindings']:
+  raw(binding['supplier_certificate']['path'],binding['supplier_certificate'])
+assert len(all_science)==len({r['path']for r in all_science})==16
+assert len(all_metadata)==len({r['path']for r in all_metadata})==12
+summaryref=full['details']['close_summary'];summary=doc(summaryref)
+assert summary['all_scientific_roles_terminal_first_v1']is summary['all_roles_terminal_first_v1']is True
+assert summary['strict_slots']==1872 and summary['target_occurrences']==250 and summary['cache_registration_performed']is False
+assert summary['cohort']==leaf['cohort']and summary['source_indices']==list(range(366,378))
+for k in('closing_execution','initialization_execution'):
+ e=full['details'][k];out,sd,mode=successful(e['actual_SDK'],e['raw_key']);assert mode==e['execution_mode']
+ if k=='closing_execution':assert out['summary']==summaryref
+ else:assert out['cohort']==leaf['cohort']and out['preparation_packet']==h['preparation_packet']
+for r in leaf['progress_snapshot'].values():raw(r['path'],r)
+failed_ref=pin(CONTROL/'actual_audit/Root_SDK/batch00_v1.json');failed=api(failed_ref,'Root_f009_cohort0366_audit_batch00_v1',False)
+assert failed['actual_tool']['exit_code']==1
+fa=failed['issued_argv'];failed_guard=Path(fa[fa.index('--output')+1]);fr=plain(failed_guard/'receipt.json');fs=plain(failed_guard/'started.json')
+assert fr['status']=='INCOMPLETE'and fr['stop']=='RETURNED'and fr['returncode']==1 and fr['cleanup']['remaining']==fr['cleanup']['errors']==[]
+assert fs['command']==fr['command']==fa[fa.index('--')+1:]and raw(failed_guard/'stdout.log')==b''
+ferr=raw(failed_guard/'stderr.log');assert b'FileNotFoundError'in ferr and b'out.resolve(strict=True)'in ferr and str(CONTROL/'actual_audit/batch00').encode()in ferr
+assert json.loads(failed['full_tool_return']['output'])==dict(status='INCOMPLETE',stop='RETURNED',receipt=str(failed_guard/'receipt.json'))
+successful_batch00=pin(CONTROL/'actual_audit/Root_SDK/batch00_v2.json')
+# Full retained output comparison is a separate bounded cut, not a recursive proof replay.
+raw(Path(__file__))
+for name,b in BANK.items():assert Path(name).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+cut1=dict(paths=len(PINS),first_closing_bytes=READ)
+pins1=save(HERE/'execution_checked_pins.json',dict(schema='F009_COHORT_ACTUAL_POSTCHECK_FINITE_PINS_V1',pins=list(PINS.values()),**cut1))
+BANK={};PINS={};READ=0
+retref=pin(P.parent.parent/'artifacts/retained/f009_individual_runs/parents0366_0377/manifest.json');ret=doc(retref)
+assert ret['file_count']==len(ret['files'])==193 and ret['scientific_calls']==0 and ret['mathematical_values_decoded']is False
+for x in ret['files']:
+ assert(x['original']['bytes'],x['original']['sha256'])==(x['retained']['bytes'],x['retained']['sha256'])
+ assert raw(x['original']['path'],x['original'])==raw(x['retained']['path'],x['retained'])
+for name,b in BANK.items():assert Path(name).read_bytes()==b;READ+=len(b);assert READ<=64*2**20
+cut2=dict(paths=len(PINS),first_closing_bytes=READ)
+pins2=save(HERE/'retention_checked_pins.json',dict(schema='F009_COHORT_RETENTION_OPAQUE_POSTCHECK_FINITE_PINS_V1',pins=list(PINS.values()),**cut2))
+review=save(HERE/'reuse_integer_only.json',dict(schema='F009_COHORT_ACTUAL_INDEPENDENT_EXECUTION_POSTCHECK_V1',reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_ACTUAL_EXECUTION_METADATA_CANONICAL_REGISTRATION_PENDING',blockers=[],Source_peer=peerref,cohort=leaf['cohort'],Root_Source_owner=cohort['Root_Source_ownership'],aggregate_actual_review=leafref,full_aggregate=leaf['full_actual_review'],batch_reviews=batchrefs,completed_parent_range=[366,378],parent_count=12,strict_slots=1872,target_occurrences=250,scientific_successful_roles=16,metadata_successful_phases=12,all_scientific_roles_terminal_first_v1=True,all_metadata_roles_terminal_first_v1=False,all_twelve_core_metadata_phases_terminal_first_v1=True,metadata_audit_selected_editions=[2,1,1,1],metadata_audit_initial_bootstrap_failure=dict(SDK=failed_ref,guard_receipt=pin(failed_guard/'receipt.json'),selected_success=successful_batch00,reason='Metadata audit child launched under genuine guard but failed at bootstrap out.resolve(strict=True) because its precreated output directory was absent. No audit output was written. Root created the empty metadata directory and used a freshguard for v2. This is neither a scientific refusal nor a resource-floor refusal.'),all_recorded_SDK_raw_guard_and_output_pin_joins_verified=True,Source_editions_unchanged_from_exact_positive_peer=True,prior_frozen_initialization_authenticated_not_reexecuted=True,retained193_files_byte_equal_to_originals=True,retention=retref,canonical_snapshot_unchanged=leaf['progress_snapshot'],canonical_registered_prefix=366,prospective_registered_prefix_after_separate_Root_registration=378,canonical_registration_performed=False,Original_payload_values_decoded=False,scientific_or_represented_programs_executed_by_this_review=False,scientific_calls=0,canonical_writes=0,new_manuscript_conjecture_Lean_measurement_or_whole_census_credit=0,checked_pins=[pins1,pins2],cuts=[cut1,cut2],authenticated_calls=CALLS,qualifications=[
+ 'Independent finite execution/Source/SDK/raw/guard/leaf and whole-byte output postcheck. All16 scientificSDKs,12 metadata phases,4 successfulbatchaudits,aggregate,closer and originalinit are joined. Scientific certificates/pairings stay opaque. Executed reviewed auditor supplies14-input and cover-equality checks; neither those predicates nor any science is rerun here.',
+ 'Sourceowner and preparation/auditorV2 provenance are exact current editions. Missing historical bookkeeping,scientific/control/roster/model ancestry and author inspection qualifications remain explicit borrowed premises of the Sourcepeer and actual reports; no full recursiveclosure is claimed.',
+ 'All16 scientific and12 core metadata phase successes are genuine firstv1. Auditbatch00v1 is a distinct genuine guarded metadata-child bootstrap failure with no output, followed by freshguardv2 success. It is not a scientific/resource refusal. No new successful science is replayed by this review. Direct init/closer are reviewed self-bounded metadata calls; no externalguard is invented for them.',
+ 'Frozen canonical354 snapshot remains byte-exact. A separate Root-owned registrar call and independent administrativepostcheck remain required before366 becomes canonical. No original,conjecture,Lean,census or measurement credit is added.'
+]))
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_COHORT0366_ACTUAL_POSTCHECK',review=review,cuts=[cut1,cut2],scientific_calls=0,canonical_writes=0),sort_keys=True))

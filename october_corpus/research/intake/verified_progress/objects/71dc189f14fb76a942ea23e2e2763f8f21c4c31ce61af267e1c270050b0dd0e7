@@ -1,0 +1,210 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+P=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fixed_subset_proposer');B=P/'pilot_0288_0295';O=B/'actual_review';START=time.monotonic();RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+    global READ
+    p=Path(p);k=str(p)
+    if k in RAW:need(r is None or PINS[k]==r,'one metadata edition');return RAW[k]
+    a=p.lstat();need(time.monotonic()-START<110 and len(RAW)<160 and a.st_size<=2**21 and READ+a.st_size<=16*2**20,'bounded review')
+    need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'ordinary input')
+    b=p.read_bytes();z=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    need(sig(a)==sig(z)and len(b)==a.st_size,'whole stable input');rr=ref(p,b);need(r is None or rr==r,'exact pin '+k);RAW[k]=b;PINS[k]=rr;READ+=len(b);return b
+
+def rr(r):read(r['path'],r);return r
+def doc(p,r=None):return dec(read(p,r))
+def pick(b,names):d=obj(b);return{k:dec(d[k])for k in names}
+def value(b,k):return dec(obj(b)[k])
+def pin(p):read(p);return PINS[str(p)]
+def api(stem,name,exitcode):
+    d=doc(B/'Root_SDK'/name);base=B/'api'/stem;i=doc(base/'issued.json');a=d['issued_argv']
+    need(d['schema']=='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'and d['root']==d['actor']=='/root','Root execution identity')
+    need(i['schema']=='ROOT_ISSUED_API_INTENT_V1'and i['root']=='/root'and i['argv']==a==d['child_argv'],'raw intent argv')
+    need(i['tool_arguments']==d['issued_tool_arguments']and shlex.split(i['tool_arguments']['cmd'])==a and d['issued_command']==i['tool_arguments']['cmd']and shlex.split(d['canonical_argv_command'])==a,'whole command/args identity')
+    frames=d['all_genuine_api_frames'];need(1<=len(frames)<=8,'finite complete frames')
+    need(sorted(p.name for p in base.iterdir())==['frame_%04d.json'%i for i in range(len(frames))]+['issued.json'],'complete raw frame files')
+    for j,f in enumerate(frames):need(doc(base/('frame_%04d.json'%j))==f,'whole raw API frame')
+    t=d['actual_tool'];need(d['full_initial_tool_return']==frames[0]and d['full_tool_return']==frames[-1]and t['exit_code']==frames[-1]['exit_code']==exitcode and t['initial_chunk']==frames[0]['chunk_id']and t['terminal_chunk']==frames[-1]['chunk_id'],'genuine complete terminal')
+    if len(frames)==1:need(t['synchronous']is True and t['handle']is None,'actual synchronous call')
+    return d,frames[-1]
+
+def triples(child,flag):
+    i=child.index(flag);return dict(path=child[i+1],bytes=int(child[i+2]),sha256=child[i+3])
+
+def role(stem,name,entry,exitcode,status):
+    sdk,f=api(stem,name,exitcode);a=sdk['issued_argv'];j=a.index('--');child=a[j+1:];python=child[0]
+    need(child[:4]==[python,'-E','-B','-S']and child[4]==entry,'exact numerical child')
+    guard=Path(child[child.index('--guard')+1]);out=Path(child[child.index('--out')+1])
+    prefix=['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES',python,'-E','-B',str(P.parents[1]/'runtime/supervise_validation.py'),'--volume','/Users/sasha/medusa','--output',str(guard),'--rss-cap-mib','128','--timeout','150','--']
+    need(a==prefix+child,'complete unchanged ENV5/guard wrapper')
+    mr,qr,gr=(triples(child,k)for k in('--manifest','--request','--Root-gate'));m=doc(mr['path'],mr);q=doc(qr['path'],qr);g=doc(gr['path'],gr)
+    for r in m['Source']:rr(r)
+    need(sum(r['bytes']for r in m['Source'])+512<=65536,'whole active Source/guards')
+    need(g['root']=='/root'and g['Root_authority']is g['adopted']is g['Source_and_math_owned']is True and g['manifest']==mr and g['request']==qr,'genuine gate/request/Source joins')
+    need(dec(f['output'])==dict(status=status,stop='RETURNED',receipt=str(guard/'receipt.json')),'terminal receipt subject')
+    st=doc(guard/'started.json');rc=doc(guard/'receipt.json');stdout=read(guard/'stdout.log');stderr=read(guard/'stderr.log')
+    limits=dict(admit_disk=10737418240,admit_ram=4294967296,disk_floor=8589934592,ram_floor=3221225472,total_rss=134217728,wall_seconds=150.0,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+    need(st['command']==rc['command']==child and st['limits']==rc['limits']==limits and st['admission']==rc['admission'],'same child/whole guards')
+    need(rc['status']==status and rc['stop']=='RETURNED'and rc['returncode']==exitcode and rc['cleanup']['remaining']==rc['cleanup']['errors']==[]and rc['logs']==dict(stdout=len(stdout),stderr=len(stderr)),'actual terminal/log/cleanup')
+    need(len(st['identities'])==len(rc['identities'])==1 and all(st['identities'][0][k]==rc['identities'][0][k]for k in('pid','birth','group','session','initial_parent')),'same birth identity')
+    need(st['identities'][0]['pid']==st['identities'][0]['group']==st['identities'][0]['session'],'same fresh child session')
+    need(rc['seconds']<150 and rc['peaks']['total_rss']<=134217728 and rc['peaks']['min_available_ram']>=3221225472 and rc['peaks']['min_free_disk']>=8589934592,'sampled limits intact')
+    if exitcode==0:need(stderr==b''and rc['error']is None,'clean successful role')
+    return dict(SDK=pin(B/'Root_SDK'/name),sdk=sdk,manifest=mr,m=m,request=qr,q=q,Root_gate=gr,g=g,guard=guard,out=out,receipt=pin(guard/'receipt.json'),started=pin(guard/'started.json'),stdout=stdout,stderr=stderr,rc=rc)
+
+authority,af=api('Root_l026_fixed_subset_pilot0288_authority_v1','authority_v1.json',0)
+need(pin(B/'Root_SDK/authority_v1.json')['sha256'].startswith('5803a8a1'),'original authority identity')
+auth=dec(af['output']);owner=doc(B/'inputs/Root_Source_ownership.json')
+need(owner['root']=='/root'and owner['Root_authority']is owner['adopted']is owner['complete_new_Source_and_imports_and_guards_owned']is owner['complete_old_Saved_Source_and_imports_and_guards_owned']is True,'Root full ownership')
+producer=role('Root_l026_fixed_subset_pilot0288_propose_v1','propose_v1.json',str(P/'propose.py'),0,'PASS')
+need(producer['SDK']['sha256']=='67e870d32db8d00f8c3d5e2ba0be0fd751433b92a2395b558528b0418c151d2a','actual proposer SDK')
+for k,r in(('Root_Source_ownership',pin(B/'inputs/Root_Source_ownership.json')),('request',producer['request']),('gate',producer['Root_gate']),('old_checker_header',pin(B/'inputs/old_checker_header.json'))):need(auth[k]==r,'genuine authority output '+k)
+q=producer['q'];header=q['old_checker_header'];cases=q['cases'];need([r['free_index']for r in cases]==list(range(288,296)),'exact8 pilot identities')
+need(header==doc(B/'inputs/old_checker_header.json')and header['schema']=='L026_PROCEDURAL_GEN_NEG_CARRIER_V1','original exact consumer header')
+imp=doc(q['Root_import']['path'],q['Root_import']);need(imp['root']=='/root'and imp['Root_authority']is imp['adopted']is True and imp['manifest']==producer['manifest']and all(v is True for k,v in imp.items()if k.endswith('_owned')),'new owned meanings')
+for k in('pair','old_checker_header','cases','context','known_identical_prior_rows'):need(imp[k]==q[k],'same new import '+k)
+need(q['known_identical_prior_rows']==[281]and owner['cases']==cases and owner['snapshot']==header['current_snapshot'],'bounded history/owner/snapshot')
+for r in q['context']+list(q['pair'].values())+[header[k]for k in('Source_manifest','Root_import','procedural_D_import','operands','witness_bank')]+list(header['current_snapshot'].values()):rr(r)
+for k in('independent_Source_review','actual_controls_review','control_Source_manifest'):rr(producer['g'][k])
+control=doc(producer['g']['actual_controls_review']['path']);need(control['controls']==28 and control['Source_manifest']==producer['g']['control_Source_manifest']and control['Original_inputs_loaded']is False and control['blockers']==[]and control['reviewer']=='/root/forest_resume','actual new28 admission')
+peer=doc(producer['g']['independent_Source_review']['path']);need(peer['Source_manifest']==producer['manifest']and peer['control_Source_manifest']==producer['g']['control_Source_manifest']and peer['blockers']==[],'new Source admission')
+provider=doc(header['procedural_D_import']['path']);need(provider['no_uncomputed_native_bytes_or_complete_native_cache_authority_claimed']is False,'original provider omission preserved')
+# Opaque native/operand/witness bodies: never decode values or apply a point map.
+witness=read(header['witness_bank']['path']);status=read(header['current_snapshot']['bank']['path']);need(len(witness)==462528 and len(status)==28908,'opaque body extents')
+for c in cases:
+    need(set(c)=={'free_index','owner','witness_row_sha256'}and type(c['free_index'])is int and type(c['owner'])is int,'typed case metadata')
+    need(hashlib.sha256(witness[16*c['free_index']:16*c['free_index']+16]).hexdigest()==c['witness_row_sha256'],'opaque selected16-byte row hash')
+    need(status[c['free_index']]==0,'business paid-status scalar remains unpaid')
+snap=header['current_snapshot'];cur=doc(snap['CURRENT']['path']);rec=doc(snap['receipt']['path']);need(cur['status_bank']==rec['status_bank']==snap['bank']and cur['ledger_receipt']==snap['receipt']and rec['witness_bank']==header['witness_bank'],'snapshot references')
+pairproof=pick(read(q['pair']['proof']['path']),('schema','status','mode','subset_size','members','endpoint_pair_checks','certificate','scope','family_key','operands'))
+pairreview=pick(read(q['pair']['actual_review']['path']),('schema','status','reviewer','blockers','actual_guard_and_raw_frames_verified','whole_Source_and_inputs_closed','certificate','proof','scope','family_key','operands'))
+need(pairproof['subset_size']==351 and pairproof['members']==1 and pairproof['endpoint_pair_checks']is True and pairproof['certificate']==q['pair']['certificate'],'borrowed singleton351 proof')
+need(pairreview['certificate']==q['pair']['certificate']and pairreview['proof']==q['pair']['proof']and pairreview['blockers']==[]and pairreview['actual_guard_and_raw_frames_verified']is pairreview['whole_Source_and_inputs_closed']is True,'borrowed pair actual metadata')
+for p in(pairproof,pairreview):need(p['family_key']==header['family_key']and p['operands']==header['operands']and p['scope']=={k:header['scope'][k]for k in('degree','root','rows','original_scope_digest','selector')},'same accepted pair/frame/scope')
+
+def outputs(r):
+    x=dec(r['stdout']);need(type(x['outputs'])is list and len(x['outputs'])==2,'two actual outputs')
+    for rr_ in x['outputs']:rr(rr_);need(rr_['bytes']<=131072,'output cap')
+    need(sorted(p.name for p in r['out'].iterdir())==['certificate.json','proof.json'],'exclusive output files')
+    return pin(r['out']/'certificate.json'),pin(r['out']/'proof.json')
+pc,pp=outputs(producer);need(pc['sha256']=='5505120cf74c12b8c37d13d66a82c7ab167501ab09822368d843d730a80d3aba'and pp['sha256']=='969d4b08c5e05900a337be8fb0830263391d204a30c5ec22313e6c831e168b39','original proposer outputs')
+carrier_raw=read(pc['path']);co=obj(carrier_raw);need({k:dec(v)for k,v in co.items()if k!='records'}==header,'original carrier header')
+record_raws=arr(co['records']);need(len(record_raws)==8,'all original records retained')
+records=[]
+for c,b in zip(cases,record_raws):
+    z=obj(b);v=pick(b,('identity','outcome'));need(v['identity']==c and z['prime11']==z['prime13']==b'null','ordered identity/no generation payload')
+    if v['outcome']=='INCONCLUSIVE':need(z['points']==b'null','miss has no points')
+    else:need(v['outcome']=='PROPER_HINT'and z['points'].startswith(b'['),'untrusted hint only')
+    records.append(dict(identity=c,outcome=v['outcome'],opaque_record_sha256=hashlib.sha256(b+b'\n').hexdigest(),opaque_points_sha256=hashlib.sha256(z['points']).hexdigest(),opaque_points_array_items=len(arr(z['points']))if z['points']!=b'null' else 0))
+need([r['identity']['free_index']for r in records if r['outcome']=='PROPER_HINT']==[290],'sole original hint')
+np=pick(read(pp['path']),('schema','status','pins','Root_import','pair','old_checker_header','cases','requested_cases','skipped_known_identical_prior_rows','fixed_subset_size','proposed_proper','checked_subset_edges','physical_reads','point_units','old_checker_still_required','no_GEN_IP_or_class_or_case_credit','canonical_writes'))
+need(np['pins']==dict(manifest=producer['manifest'],request=producer['request'],Root_gate=producer['Root_gate'])and np['Root_import']==q['Root_import']and np['cases']==np['requested_cases']==cases and np['pair']==q['pair']and np['old_checker_header']==header,'actual proposal proof joins')
+need(np['proposed_proper']==1 and np['fixed_subset_size']==351 and np['skipped_known_identical_prior_rows']==[]and np['old_checker_still_required']is np['no_GEN_IP_or_class_or_case_credit']is True and np['canonical_writes']==0,'proposal scope')
+# Strictv1 is retained as a failed before-predicate attempt, not a certificate.
+failed=role('Root_l026_fixed_subset_pilot0288_strict_v1','strict_v1.json','/private/tmp/l026_procedural_middle_certificates/worker.py',1,'INCOMPLETE')
+need(b'explicit procedural bridge authority'in failed['stderr']and b'worker.py", line 23'in failed['stderr']and failed['stdout']==b''and not failed['out'].exists(),'exact provider refusal before predicates/publication')
+strictauth,saf=api('Root_l026_fixed_subset_pilot0288_strict_authority_v2','strict_authority_v2.json',0)
+strict=role('Root_l026_fixed_subset_pilot0288_strict_v2','strict_v2.json','/private/tmp/l026_procedural_middle_certificates/worker.py',0,'PASS')
+need(strict['SDK']['sha256']=='6217ccd89720a67fc15c5cf38f0f07f9bb4e9e7f116afec1cafe76631a9529fc','actual strict SDK')
+sa=dec(saf['output']);need(sa['argv']==strict['sdk']['issued_argv']and sa['request']==strict['request']and sa['gate']==strict['Root_gate'],'fresh strict authority/raw argv joins')
+projection=doc(B/'inputs/candidate_projection_provenance.json');need(sa['projection']==pin(B/'inputs/candidate_projection_provenance.json'),'genuine projection issue')
+sq=strict['q'];sg=strict['g'];need(sq['mode']=='check'and sg['current_unpaid_case_import']==sq['Root_import'],'mandatory exact fresh case gate')
+si=doc(sq['Root_import']['path'],sq['Root_import']);sp=doc(sq['procedural_D_import']['path'],sq['procedural_D_import'])
+need(si['root']==sp['root']=='/root'and si['Root_authority']is si['adopted']is sp['Root_authority']is sp['adopted']is True,'fresh positive strict imports')
+need(sp['no_uncomputed_native_bytes_or_complete_native_cache_authority_claimed']is True and all(v is True for k,v in sp.items()if k.endswith('_owned'))and all(v is True for k,v in si.items()if k.endswith('_owned')),'corrected all provider and case duties')
+selected=[cases[2]];need(sq['cases']==si['cases']==selected and si['manifest']==strict['manifest']and sq['current_snapshot']==si['current_snapshot']==snap,'strict singleton/current scope')
+for k in('scope','operands','witness_bank','procedural_D_import'):need(si[k]==sq[k],'same strict Root input '+k)
+need(sq['operands']==header['operands']and sq['witness_bank']==header['witness_bank']and sq['scope']==header['scope'],'same original operand/witness/scope')
+need(sp['operands']==sq['operands']and sp['family_key']==header['family_key']and sp['complete_native_D_family_adoption']is False,'same procedural family, no native adoption')
+oldpremise=doc(sp['old_family_premise_import']['path'],sp['old_family_premise_import'])
+need(oldpremise['same_global_family_scope']==sp['global_scope']and oldpremise['root']=='/root'and oldpremise['Root_authority']is oldpremise['adopted']is True and oldpremise['operands']==sq['operands']and oldpremise['original_point_to_involution_bridge_full_equivariance_and_G_membership_owned']is oldpremise['same_original_d0_and_ordered_A_and_full_bridge_frame_owned']is True,'borrowed original bridge import')
+for r in sq['scope']['context']+sp['global_scope']['accepted_inputs']+[sp['bridge_argument'],sp['bridge_Source'],sq['operands'],sq['witness_bank']]+list(snap.values()):rr(r)
+for k in('independent_Source_review','actual_controls_review','control_Source_manifest'):rr(sg[k])
+oc=doc(sg['actual_controls_review']['path']);need(oc['controls']==32 and oc['Original_inputs_loaded']is False and oc['blockers']==[]and oc['Source_manifest']==sg['control_Source_manifest'],'borrowed unchanged old32 control fact')
+need(strict['manifest']['sha256']=='07d4654718c10795635e7dbda66555b4929285f6e699339bf60b683d353d3751','old namespace never relabelled')
+sc,sproof=outputs(strict);need(sc==projection['supplied_carrier'] or (sc['bytes']==projection['supplied_carrier']['bytes']and sc['sha256']==projection['supplied_carrier']['sha256']),'strict output whole identity')
+need(read(sc['path'])==read(sq['saved']['path'],sq['saved']),'entire corrected Saved input equals strict output')
+need(projection['source_carrier']==pc and projection['fresh_case_import']==sq['Root_import']and projection['fresh_provider']==sq['procedural_D_import']and projection['selected_record_identities']==selected and projection['header_changes']==['Root_import','procedural_D_import'],'exact disclosed projection chain')
+so=obj(read(sc['path']));strict_records=arr(so['records']);need(len(strict_records)==1 and strict_records[0]==record_raws[2]and hashlib.sha256(so['records']+b'\n').hexdigest()==projection['selected_record_canonical_sha256'],'exact opaque selected record retained')
+sh={k:dec(v)for k,v in so.items()if k!='records'};old_changed=dict(header,Root_import=sq['Root_import'],procedural_D_import=sq['procedural_D_import']);need(sh==old_changed,'only two authorized header fields differ')
+strictproof=doc(sproof['path']);need(strictproof['schema']=='L026_PROCEDURAL_GEN_NEG_PROOF_V1'and strictproof['status']=='VERIFIED_PROCEDURAL_SUPPLIED_GEN_OR_PROPER_CERTIFICATES','actual Saved proof')
+need(strictproof['pins']==dict(manifest=strict['manifest'],request=strict['request'],Root_gate=strict['Root_gate'])and strictproof['Root_import']==sq['Root_import']and strictproof['procedural_D_import']==sq['procedural_D_import']and strictproof['current_snapshot']==snap and strictproof['selected_cases']==selected,'proof exact strict joins')
+need(strictproof['verified_records']==[dict(identity=selected[0],verdict='PROPER')]and strictproof['probe']==dict(attempts=0,point_letters=0)and strictproof['native_D_carrier_bytes_trusted']==0 and strictproof['complete_native_D_family_claim']is False and strictproof['new_IP_or_Aut_reversal_or_class_or_case_credit']==0,'only actual PROPER, no discovery/native/IP claim')
+# All actual successful input/output bounds, without redoing any point predicates.
+for role_,proof_,outs in((producer,np,(pc,pp)),(strict,strictproof,(sc,sproof))):
+    need(proof_['physical_reads']<=8388608 and proof_['point_units']+3*sum(r['bytes']for r in outs)<=10000000,'actual coded read/work/output banks')
+# Match direct runtime input sets to the scalar reported first/closing ledgers.
+def worker_io(role_,extra):
+    refs_={r['path']:r for r in role_['m']['Source']}
+    for r in[role_['manifest'],role_['request'],role_['Root_gate'],role_['started'],*extra]:refs_[r['path']]=r
+    nominal=59889+sum(r['bytes']for r in role_['m']['Source'])-23167+512
+    return 2*sum(r['bytes']for r in refs_.values())+nominal,len(refs_)
+prodextra=[q['Root_import'],*q['context'],*q['pair'].values(),*[header[k]for k in('Source_manifest','Root_import','procedural_D_import','operands','witness_bank')],*snap.values(),*[producer['g'][k]for k in('independent_Source_review','actual_controls_review','control_Source_manifest')]]
+strict_extra=[sq['Root_import'],sq['procedural_D_import'],sp['old_family_premise_import'],*sq['scope']['context'],*sp['global_scope']['accepted_inputs'],sp['bridge_argument'],sp['bridge_Source'],sq['operands'],sq['witness_bank'],*snap.values(),sq['saved'],*[sg[k]for k in('independent_Source_review','actual_controls_review','control_Source_manifest')]]
+for r in prodextra+strict_extra:rr(r)
+pi,pn=worker_io(producer,prodextra);sti,sn=worker_io(strict,strict_extra);need(pi==np['physical_reads']and sti==strictproof['physical_reads'],'exact independent scalar IO ledger equality')
+# Exact ABI/proof text only, never invoke the registrar.
+abi=pin(P.parents[0]/'manuscript_scope/L026/negative_registration_route/reframed_candidate_compatibility.json')
+for path,b in list(RAW.items()):need(Path(path).read_bytes()==b,'closing exact whole input identity')
+strictabi=dict(Source_manifest=strict['manifest'],request=strict['request'],Root_gate=strict['Root_gate'],Root_import=sq['Root_import'],procedural_D_import=sq['procedural_D_import'],proof=sproof,carrier=sc,actual_SDK=strict['SDK'],current_snapshot=snap,selected_cases=selected)
+summary=dict(schema='L026_FIXED_SUBSET_PILOT_EXECUTION_METADATA_CHECK_V1',reviewer='/root/forest_resume',Root_authority=False,status='SUPPORTED_ACTUAL_L026_PROCEDURAL_SAVED_PROPER_WITH_SEPARATE_NEW_PROPOSER_PROVENANCE',blockers=[],Source_manifest=strict['manifest'],strict=strictabi,current_snapshot=snap,proper_indices=[290],GEN_indices=[],whole_Source_and_inputs_closed=True,actual_guard_and_raw_frames_verified=True,strict_carrier_byte_identity_verified=True,strict_carrier_byte_identity_scope='Corrected Root-projected Saved input equals actual strict output; not original8-record producer carrier.',no_native_D_bytes_trusted=True,canonical_registration_issued=False,new_case_or_IP_credit=0,original_proposer=dict(Source_manifest=producer['manifest'],actual_SDK=producer['SDK'],request=producer['request'],Root_gate=producer['Root_gate'],Root_import=q['Root_import'],carrier=pc,proof=pp,header=pin(B/'inputs/old_checker_header.json'),case_import=header['Root_import'],provider=header['procedural_D_import'],Root_Source_ownership=pin(B/'inputs/Root_Source_ownership.json'),provider_missing_no_uncomputed_native_claim=True,records=records,proposed_indices=[290],inconclusive_indices=[288,289,291,292,293,294,295],scientific_proof_claim=False,source_and_control_specification_contribution_disclosed=True),projection=pin(B/'inputs/candidate_projection_provenance.json'),strict_v1_before_predicate_failure=dict(actual_SDK=failed['SDK'],request=failed['request'],Root_gate=failed['Root_gate'],receipt=failed['receipt'],stderr=pin(failed['guard']/'stderr.log'),cause='Original provider no_uncomputed_native_bytes_or_complete_native_cache_authority_claimed=False; worker.pyline23 before Original predicates.'),strict_guard={n:pin(strict['guard']/n)for n in('started.json','receipt.json','stdout.log','stderr.log')},metadata_reader=dict(paths=len(RAW),bytes=READ,Original_values_decoded_or_evaluated=False,Original_operand_native_and_witness_bytes_hashed_opaquely=True,selected_status_values_are_business_metadata=True,selected_witness_rows_only16byte_hashes_no_unpack=True,points_only_opaque_JSON_tokens_no_values_decoded=True),runtime_IO=dict(proposer=dict(reported=pi,paths=pn),strict=dict(reported=sti,paths=sn)),writer_ABI=abi,pins=list(PINS.values()))
+print(json.dumps(summary,sort_keys=True,separators=(',',':')))

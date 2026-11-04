@@ -1,0 +1,126 @@
+"""Independent peer of preparation Source only; initialize or execute nothing."""
+from pathlib import Path
+import ast,hashlib,json,resource,signal,sys,time
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation')
+OUT=BASE/'review';START=time.monotonic();READ=0;PINS={};BANK={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second Source peer')))
+signal.alarm(125)
+def raw(p,r=None):
+    global READ
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+    p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p and not p.is_symlink()
+    before=p.stat();assert p.is_file()and before.st_size<=4*2**20
+    b=p.read_bytes();after=p.stat()
+    signature=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    assert signature(before)==signature(after);READ+=len(b);assert READ<=64*2**20
+    rr=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+    if r is not None:assert rr==r
+    PINS[str(p)]=rr;BANK[str(p)]=b;assert len(PINS)<=512
+    return b,rr
+def doc(p,r=None):
+    b,rr=raw(p,r);return json.loads(b),rr
+def get(r):return doc(r['path'],r)[0]
+def enc(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode('ascii')+b'\n'
+def save(name,v):
+    b=enc(v);p=OUT/name
+    with p.open('xb')as f:f.write(b)
+    return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+h,hr=doc(BASE/'handoff.json');packet,pr=doc(BASE/'packet.json');request,rqr=doc(BASE/'review_request.json')
+assert(hr['bytes'],hr['sha256'])==(3350,'8301be902235bb59bd39f4a21c3b1d77f046166056c92cad4b5a72e96be250db')
+assert(pr['bytes'],pr['sha256'])==(12000,'dff74cc658cfe503b0628e5aae4fb13a4dc173531c7ea5fbc8d79d26d2de53ce')
+assert(rqr['bytes'],rqr['sha256'])==(2676,'7faeace11de42dd7f3f63b2277dd9de4a695d25c86da2ebfb97eaa462337227f')
+assert h['author']==packet['author']==request['author']=='/root/mathematical_review'
+assert h['Root_authority']is packet['Root_authority']is request['Root_authority']is False
+assert h['packet']==request['packet']==pr and h['entry_manifests']==packet['entry_manifests']==request['entry_manifests']
+protocol=raw(h['protocol']['path'],h['protocol'])[0];raw(h['documentation']['path'],h['documentation']);raw(h['authoring_builder']['path'],h['authoring_builder'])
+expected={'init_cohort.py':42019,'issue_phase.py':40780,'close_cohort.py':42703}
+bodies={};trees={}
+for name,r in h['programs'].items():
+    b,_=raw(r['path'],r);bodies[name]=b;trees[name]=ast.parse(b);compile(b,r['path'],'exec')
+    mf=get(h['entry_manifests'][name]);assert mf['entry']==r and mf['Source_plus_guards512']==expected[name]
+    assert len(mf['Source'])==3 and {Path(v['path']).name for v in mf['Source']}=={name,'common.py','whole.py'}
+    assert len(mf['guards'])==2
+    assert sum(v['bytes']for v in mf['Source']+mf['guards'])+512==expected[name]<=65536
+    for v in mf['Source']+mf['guards']:raw(v['path'],v)
+common=raw(BASE/'common.py')[0];ct=ast.parse(common);compile(common,str(BASE/'common.py'),'exec')
+assert len(common)==8859 and raw(BASE/'whole.py')[0]==raw(Path('/private/tmp/intake_metadata/whole.py'))[0]
+functions={n.name:ast.unparse(n)for n in ct.body if isinstance(n,ast.FunctionDef)}
+assert "peer['reviewer'] not in ('/root', AUTHOR)"in functions['start']
+assert "peer['entry_manifests'] == packet['entry_manifests']"in functions['start']
+assert "peer['packet'] == packet_ref"in functions['start']and "peer['protocol'] == packet['protocol']"in functions['start']
+assert '2 * L.bytes + bootstrap + 2 * sum' in functions['emit']
+for tree in list(trees.values())+[ct]:
+    calls=[ast.unparse(n.func)for n in ast.walk(tree)if isinstance(n,ast.Call)]
+    assert not any(x.startswith(('subprocess.','os.system','os.exec','os.spawn','runpy.'))for x in calls)
+assert sum(ast.unparse(n.func)=='exec'for n in ast.walk(ct)if isinstance(n,ast.Call))==1
+init=ast.unparse(trees['init_cohort.py']);phase=ast.unparse(trees['issue_phase.py']);close=ast.unparse(trees['close_cohort.py'])
+assert "342 <= a.expected_prefix < 940"in init
+assert "f9['R5_canonical_pairs_reviewed'] == counts['R5_canonical_pairs_reviewed'] == begin"in init
+assert "checkpoint == controller['checkpoint']"in init
+assert "f26['paid'] == counts['L026_paid'] == paid"in init
+assert "keys.intersection(more)"in init and "not in keys"in init
+assert "C.fresh(folder)"in init and "C.fresh(C.SCIENCE"in init
+assert "schema='ROOT_F009_COHORT_METADATA_SOURCE_OWNERSHIP_V2'"in init
+assert "whole_current_metadata_Source_protocol_and_disclosures_owned=True"in init
+assert "metadata_decision_issuer=program"in phase and "metadata_decision_issuer_Source_peer=peer"in phase
+assert "edition=1"in phase and "prior_attempts=[]"in phase
+assert "overrides=[]"in close and "0 <= len(attempts['overrides'])"in close
+assert "all_roles_terminal_first_v1=not bool(overrides)"in close
+assert "independent_actual_review_pending=True"in close and "cache_registration_performed=False"in close
+retained=get(h['retained_inputs']);assert len(retained['entries'])==40
+assert retained['Original_roster_and_template_payloads_decoded']is False
+originals={}
+for item in retained['entries']:
+    a,r=item['original'],item['retained'];assert(a['bytes'],a['sha256'])==(r['bytes'],r['sha256'])
+    original=raw(a['path'],a)[0];saved=raw(r['path'],r)[0];assert original==saved;originals[a['path']]=a
+assert len(packet['unavailable_legacy_bookkeeping'])==8
+assert packet['unavailable_legacy_bookkeeping']==retained['unavailable_bookkeeping']
+assert all(x['body_recreated']is x['loaded_by_successor']is False for x in packet['unavailable_legacy_bookkeeping'])
+for r in packet['legacy_active_inputs']:
+    assert originals[r['path']]==r;raw(r['path'],r)
+legacy=get(packet['legacy_handoff']);oldpeer=get(packet['adapter_peer'])
+assert legacy['program']==packet['adapter']==oldpeer['program']and oldpeer['status'].startswith('SUPPORTED_STATIC')and oldpeer['blockers']==[]
+assert packet['adapter']['sha256']=='d516861bff3623789ad6ef2c63f552014bb8e92ef88b7922bb06963e37430311'
+for key in('supplier_manifest','strict_manifest'):
+    m=get(legacy[key]);assert sum(v['bytes']for v in m['Source'])+512==m['Source_with_invocation_reserve']<=65536
+    for v in m['Source']:raw(v['path'],v)
+for p,b in list(BANK.items()):assert raw(p)[0]==b
+claims=dict(complete_three_entries_common_reader_and_guard_Source_read=True,
+ strict_fresh_registered_prefix_342_or_later_and_controller_checkpoint_join_supported=True,
+ L026_paid_receipt_reconciliation_supported=True,
+ cache_payloads_opaque_keys_disjoint_and_existing_values_not_written=True,
+ fresh_disjoint_max12_four_batch_scope_supported=True,
+ distinct_whole_package_Source_peer_required_before_operational_entry=True,
+ honest_V2_current_Source_protocol_owner_no_missing_historical_bookkeeping_claim=True,
+ immutable_adapter_scientific_Source_caps_and_authorities_retained=True,
+ exact_phase_duties_first_v1_science_bindings_and_printed_argv_supported=True,
+ no_worker_launched_by_any_preparation_entry=True,
+ zero_and_positive_metadata_override_summary_logic_supported=True,
+ selected_attempts_preserved_and_no_successful_science_replayed=True,
+ lexical_projection_avoids_Original_forest_cache_pairing_payload_decoding=True,
+ bounded_initial_closing_bootstrap_output_IO_and_exclusive_writes_supported=True)
+full=save('review.json',dict(schema='F009_FUTURE_COHORT_PREPARATION_DISTINCT_SOURCE_REVIEW_V1',
+ status='SUPPORTED_STATIC_FUTURE_COHORT_PREPARATION',reviewer='/root/dependency_audit',author=h['author'],blockers=[],
+ Root_authority=False,programs=h['programs'],entry_manifests=h['entry_manifests'],packet=pr,protocol=h['protocol'],
+ handoff=hr,review_request=rqr,retained_inputs=h['retained_inputs'],Source_plus_guards512=expected,
+ claims=claims,checked_pins=list(PINS.values()),first_and_closing_review_bytes=READ,
+ exact_retained_legacy_aliases_verified=40,unavailable_unused_bookkeeping_disclosed=8,
+ qualification='Source-only preparation review. No cohort was initialized and no operational entry or science executed. A separately reviewed V2 actual-auditor branch, genuine execution evidence and separate Root registration remain required.',
+ V2_zero_override_attempt_map_omission='The new closer omits metadata_attempt_binding_preparation_failures in its generated empty map; future V2 audit admission must explicitly accept only that absence as an empty list. Current V1 audit keeps its exact field requirement.',
+ Original_payload_arrays_decoded=False,operational_or_scientific_Source_executed=False,canonical_writes=0,
+ new_manuscript_conjecture_Lean_or_compression_measurement_credit=0))
+leaf=save('reuse_integer_only.json',dict(schema='F009_FUTURE_COHORT_PREPARATION_STATIC_REUSE_V1',
+ status='SUPPORTED_STATIC_FUTURE_COHORT_PREPARATION',reviewer='/root/dependency_audit',author=h['author'],blockers=[],
+ Root_authority=False,programs=h['programs'],entry_manifests=h['entry_manifests'],packet=pr,protocol=h['protocol'],
+ handoff=hr,full_review=full,Source_plus_guards512=expected,
+ strict_registered_prefix_minimum=342,cache_key_disjointness_and_fresh_paths_supported=True,
+ honest_current_V2_Source_owner_and_missing_bookkeeping_disclosures_supported=True,
+ phase_first_v1_bindings_and_zero_override_closer_supported=True,
+ exact40_retained_legacy_aliases_verified=True,Original_payload_arrays_decoded=False,
+ no_future_cohort_initialized_or_operational_Source_executed=True,
+ canonical_or_scientific_execution_or_new_mathematical_credit=0,
+ reviewed_future_V2_actual_auditor_integration_still_required=True,
+ zero_map_optional_empty_failure_field_requires_explicit_V2_admission=True))
+signal.alarm(0)
+print(json.dumps(dict(review=leaf,full=full,blockers=[])))

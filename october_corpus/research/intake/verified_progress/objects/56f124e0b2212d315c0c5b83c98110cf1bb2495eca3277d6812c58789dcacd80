@@ -1,0 +1,58 @@
+"""Root prepares one fresh decision; prints but never launches adapter argv."""
+import argparse,json,os
+from pathlib import Path
+import common as C
+ap=argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--actor',required=True);ap.add_argument('--cohort',nargs=3,required=True)
+ap.add_argument('--batch',type=int,required=True);ap.add_argument('--phase',choices=C.PHASES,required=True)
+ap.add_argument('--Source-peer',nargs=3,required=True);a=ap.parse_args();assert a.actor=='/root'
+L,p,pr,program,peer,mf,bootstrap=C.start('issue_phase.py',a.Source_peer)
+cohort_ref=C.descriptor(a.cohort);cohort,control,h=C.owned_cohort(L,p,pr,cohort_ref)
+assert 0<=a.batch<len(cohort['batches']);batch=cohort['batches'][a.batch]
+base=C.SCIENCE/('cohort_from%04d'%cohort['begin'])/('parents%04d_%04d'%(batch['begin'],batch['end']-1))
+stem='batch%02d_%s'%(a.batch,a.phase);guard=control/'guards'/stem
+decision_path=control/'decisions'/(stem+'.json');binding_path=control/'bindings'/(stem+'.json')
+for path in(guard,decision_path,binding_path):C.fresh(path)
+roles=[]
+if a.phase=='prepare_suppliers':C.fresh(base)
+else:
+    assert base.resolve(strict=True)==base
+    previous='supplier_preparation.json'if a.phase=='assemble_strict'else'strict_preparation.json'
+    raw,_=L.raw(base/previous)
+    value=C.projection(raw,('cohort','cohort_batch','source_indices'))
+    assert value['cohort']==cohort_ref and value['cohort_batch']==a.batch and value['source_indices']==batch['source_indices']
+    C.fresh(base/('strict_preparation.json'if a.phase=='assemble_strict'else'pairing.json'))
+    stems=['parent%04d_supply'%i for i in batch['source_indices']]if a.phase=='assemble_strict'else[
+        'parents%04d_%04d_check'%(batch['begin'],batch['end']-1)]
+    for role in stems:
+        sdk,sr=C.actual_v1(L,base/'Root_SDK'/(role+'_v1.json'))
+        assert sdk['issued_argv'][sdk['issued_argv'].index('--rss-cap-mib')+1]=='128'
+        assert sdk['issued_argv'][sdk['issued_argv'].index('--timeout')+1]=='150'
+        roles.append(dict(stem=role,edition=1,actual_SDK=sr,prior_attempts=[]))
+binding_ref=None;planned=[]
+if roles:
+    binding=dict(schema='ROOT_F009_COHORT_ROLE_ACTUAL_BINDINGS_V1',root='/root',Root_authority=True,
+        program=p['adapter'],cohort=cohort_ref,batch=a.batch,phase=a.phase,roles=roles)
+    body=C.can(binding);assert len(body)<=16384;binding_ref=C.file_ref(binding_path,body);planned.append((binding_path,body))
+example=C.doc(L,p['decision_schema_example'])
+assert example['schema']=='ROOT_F009_COHORT_BATCH_PHASE_DECISION_V1'and example['root']=='/root'
+decision=dict(schema=example['schema'],root='/root',Root_authority=True,status='SUPPORTED',blockers=[],
+    packet=p['legacy_handoff'],program=p['adapter'],phase=a.phase,cohort=cohort_ref,batch=a.batch,
+    independent_Source_peer=p['adapter_peer'],actual_bindings=binding_ref,
+    new_metadata_Source_interfaces_and_bills_owned=True,old_scientific_Source_controls_and_mathematics_owned=True,
+    exact_fresh_cohort_and_disjoint_batch_owned=True,frozen_progress_edition_held=True,
+    no_successful_science_repeated=True,actual_attempt_bindings_and_preentry_reconciliations_owned=True,
+    metadata_phase_authorized=True,metadata_decision_issuer=program,metadata_decision_issuer_Source_peer=peer,
+    metadata_decision_issuer_qualification='New reviewed generic preparation Source; no historical bookkeeping reconstructed and no worker launched.',
+    preparation_packet=pr,preparation_Source_manifest=mf)
+body=C.can(decision);assert len(body)<=16384;decision_ref=C.file_ref(decision_path,body);planned.append((decision_path,body))
+refs,io=C.emit(L,planned,bootstrap)
+python='/Users/sasha/.venvs/global/bin/python'
+child=[python,'-E','-B','-S',p['adapter']['path'],a.phase,'--packet',*C.triple(p['legacy_handoff']),
+    '--cohort',*C.triple(cohort_ref),'--batch',str(a.batch),'--Root-decision',*C.triple(decision_ref)]
+argv=['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START',
+    '-u','OPENSSL_CONF','-u','OPENSSL_MODULES',python,'-E','-B',
+    '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py',
+    '--volume','/Users/sasha/medusa','--output',str(guard),'--rss-cap-mib','256','--timeout','125','--',*child]
+print(json.dumps(dict(decision=decision_ref,actual_bindings=binding_ref,cohort=cohort_ref,batch=a.batch,
+    phase=a.phase,argv=argv,preparation_packet=pr,io=io,scientific_calls=0,metadata_worker_not_launched=True,canonical_writes=0)))

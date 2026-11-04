@@ -1,0 +1,26 @@
+"""Root-only issuance of one exact opaque retention manifest. No scientific evaluation."""
+from pathlib import Path
+import argparse,hashlib,json,os,resource,signal,stat,sys,time
+START=time.monotonic();READ=0;BANK={};REFS={}
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients')
+def need(x,m):
+ if not x:raise ValueError(m)
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def raw(r):
+ global READ
+ p=Path(r['path']);need(p.is_absolute()and p.resolve(strict=True)==p,'canonical input')
+ if str(p)not in BANK:
+  s=p.lstat();need(stat.S_ISREG(s.st_mode)and s.st_nlink==1 and s.st_size<=4*2**20,'bounded ordinary input');b=p.read_bytes();need(sig(s)==sig(p.lstat()),'stable input');READ+=len(b);need(READ<=64*2**20 and len(BANK)<510 and time.monotonic()-START<115,'finite read budget');need(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20,'RSS budget');BANK[str(p)]=b;REFS[str(p)]=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+ need(REFS[str(p)]==r,'exact input pin');return BANK[str(p)]
+def main():
+ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True);ap.add_argument('--self-sha256',required=True);ap.add_argument('--request',nargs=3,required=True);a=ap.parse_args();need(a.actor=='/root','Root actor only');need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode,'EBS caller');signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s')));signal.alarm(125)
+ own=Path(__file__).resolve(strict=True);r=dict(path=str(own),bytes=own.stat().st_size,sha256=a.self_sha256);raw(r);q=dict(path=a.request[0],bytes=int(a.request[1]),sha256=a.request[2]);d=json.loads(raw(q));need(d['schema']=='L026_ROOT_OPAQUE_RETENTION_ISSUE_REQUEST_V1'and d['Root_authority']is False,'unissued data request')
+ files=d['files'];need(type(files)is list and 1<=len(files)<=220,'finite file list')
+ for e in files:
+  o,t=e['original'],e['retained'];need(Path(t['path']).is_relative_to(BASE),'legacy retained scope');need((o['bytes'],o['sha256'])==(t['bytes'],t['sha256']),'alias identity');need(raw(o)==raw(t),'whole opaque equality')
+ body=dict(schema='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1',root='/root',Root_authority=True,scientific_calls=0,Original_payloads_decoded_or_evaluated=False,files=files)
+ b=(json.dumps(body,indent=2,sort_keys=True)+'\n').encode();p=Path(d['output']);out=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());need(out==d['expected_manifest'],'exact prospective manifest');need(p.is_relative_to(BASE)and p.parent.resolve(strict=True)==p.parent and not p.exists(),'fresh canonical legacy output')
+ for name,v in BANK.items():need(Path(name).read_bytes()==v,'closing unchanged input');READ+=len(v);need(READ<=64*2**20,'closing read budget')
+ with p.open('xb')as h:h.write(b);h.flush();os.fsync(h.fileno())
+ need(p.read_bytes()==b,'whole output');signal.alarm(0);print(json.dumps(dict(status='ROOT_ISSUED_EXACT_CLOSED_METADATA_RETENTION',manifest=out,files=len(files),first_closing_bytes=READ,scientific_calls=0,Original_payloads_decoded_or_evaluated=False,canonical_writes=0),sort_keys=True))
+if __name__=='__main__':main()

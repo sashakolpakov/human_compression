@@ -1,0 +1,269 @@
+"""Root-only mixed-job global registration; Source preparation grants nothing."""
+import argparse,fcntl,hashlib,json,os,resource,signal,stat,sys,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+S=Path('/Users/sasha/medusa/research/leemans')
+M=S/'maintenance/intake';P=M/'progress';HELP=M/'f004_fixed_line_intersection/registration'
+sys.path.insert(0,str(HELP))
+import metadata_io as m
+import metadata_fields as f
+import global_projection as g
+CURRENT=S/'reboot_20261013/CURRENT.json';STATUS=M/'current_status.json'
+LOCK=M/'root_state.lock';TARGET=HERE/'runs/job20_complete'
+PY='/Users/sasha/.venvs/global/bin/python';AUTHOR='/root/mathematical_review'
+START=time.monotonic();CACHE={};DOCS={}
+def check():
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+def descriptor(v):
+    r=dict(path=v[0],bytes=int(v[1]),sha256=v[2]);m.ref(r);return r
+def reference(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def body(r):
+    m.ref(r);check()
+    if r['path']not in CACHE:CACHE[r['path']]=m.raw(r)
+    else:assert m.RECORDS[r['path']]==r
+    return CACHE[r['path']]
+def pin(p):
+    r,b=m.whole(p);assert r['path']not in CACHE or CACHE[r['path']]==b
+    CACHE[r['path']]=b;return r
+def doc(r):
+    raw=body(r)
+    if r['path']not in DOCS:DOCS[r['path']]=g.strict(raw)
+    return DOCS[r['path']]
+def select(r,keys):return f.selected(body(r),keys)
+def reviewed(v,prefix):
+    assert v['status'].startswith(prefix)and v['blockers']==[]and v['reviewer']not in('/root',AUTHOR)
+def close():
+    for r in list(m.RECORDS.values()):m.raw(r)
+    check()
+def frozen(n):
+    for root in(M/'f009_cohort_preparation/cohorts',Path('/private/tmp/f009_cohort_parent_batch_adapter/Root_cohorts'),Path('/private/tmp/f009_R5_parent_cohorts_actual')):
+        assert not os.path.lexists(root/('cohort_from%04d'%n)),'active current-prefix cohort'
+def source(a):
+    assert a.actor=='/root'and sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES'))
+    mr=descriptor(a.Source_manifest);mf=doc(mr);own=pin(Path(__file__).resolve())
+    assert mf['schema']=='F004_MIXED_JOB_GLOBAL_REGISTRATION_SOURCE_V1'and mf['Root_authority']is False
+    assert len(mf['Source'])==4 and {r['path']for r in mf['Source']}=={str(HERE/'register_mixed_job.py'),str(HERE/'global_projection.py'),str(HELP/'metadata_io.py'),str(HELP/'metadata_fields.py')}
+    assert mf['entry']==own
+    for r in mf['Source']+mf['guards']:body(r)
+    assert [(r['bytes'],r['sha256'])for r in mf['guards']]==[(4806,'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'),(18361,'5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42')]
+    assert sum(r['bytes']for r in mf['Source']+mf['guards'])+512==mf['Source_plus_guards512']<=65536
+    for module,path in((m,HELP/'metadata_io.py'),(f,HELP/'metadata_fields.py'),(g,HERE/'global_projection.py')):
+        assert Path(module.__file__).resolve()==path
+        for fn in vars(module).values():
+            if type(fn).__name__=='function'and fn.__module__==module.__name__:
+                assert fn.__globals__ is vars(module)and Path(fn.__code__.co_filename).resolve()==path
+    pr=descriptor(a.Source_peer);peer=doc(pr);reviewed(peer,'SUPPORTED_STATIC')
+    assert peer['global_program']==own and peer['global_Source_manifest']==mr
+    st=doc(pin(Path(a.guard)/'started.json'))
+    assert st['command']==[PY,'-E','-B','-S',str(HERE/'register_mixed_job.py')]+sys.argv[1:]
+    assert any(x['pid']==os.getpid()for x in st['identities'])
+    assert all(st['limits'][k]==v for k,v in dict(total_rss=256*2**20,wall_seconds=125.0,admit_ram=4*2**30,admit_disk=10*2**30,ram_floor=3*2**30,disk_floor=8*2**30).items())
+    return mr,own,pr
+def proof_context(r):
+    ctx=doc(r)
+    assert ctx['schema']=='ROOT_F004_JOB20_GLOBAL_PROOF_CONTEXT_V1'and ctx['root']=='/root'and ctx['Root_authority']is ctx['adopted']is True
+    proof=ctx['mixed_job_proof'];p=select(proof,['schema','root','Root_authority','adopted','original_job','complete_original_job','total_original_orbits',
+        'counts','candidate_domain_qualification','positive_cases_require_full_admissibility','domain_pins','original_raw_members','original_scope_import_and_distinct_family_review_still_required','accepted_count','rejected_count','NG_count','IP_failure_count','unpaid_count','final_selector','Source_manifest','program',
+        'complete_Original_domain_import','independent_complete_domain_and_family_review','coverage_proposal','whole_job_ledger_registered',
+        'borrowed_model_and_complete_domain_and_case_theorems_retained','giant_ancestor_rehashed','scientific_calls','mathematical_replays',
+        'whole_rank4_output_assembly_owed','Aut_and_reversal_equivalence_owed','field_census_credit','whole_original_credit'])
+    assert p['schema']=='ROOT_F004_Q11_MIXED_ORIGINAL_JOB_PROOF_V2'and p['root']=='/root'and p['Root_authority']is p['adopted']is p['complete_original_job']is True
+    assert p['original_job']==[20,4]and p['total_original_orbits']==3779 and p['original_raw_members']==14763
+    assert p['original_scope_import_and_distinct_family_review_still_required']is False and p['positive_cases_require_full_admissibility']is True
+    assert g.equal(p['counts'],dict(NONGENERATION=232,IP_FAILURE=3542,C_GROUP=5))
+    assert[p[k]for k in('accepted_count','rejected_count','NG_count','IP_failure_count','unpaid_count')]==[5,3774,232,3542,0]
+    assert p['whole_job_ledger_registered']is p['giant_ancestor_rehashed']is False
+    assert p['borrowed_model_and_complete_domain_and_case_theorems_retained']is p['whole_rank4_output_assembly_owed']is p['Aut_and_reversal_equivalence_owed']is True
+    assert p['scientific_calls']==p['mathematical_replays']==p['field_census_credit']==p['whole_original_credit']==0
+    assert ctx['proof_builder_Source_manifest']==p['Source_manifest']and ctx['proof_builder_program']==p['program']
+    assert ctx['complete_Original_domain_import']==p['complete_Original_domain_import']and ctx['family_scope_review']==p['independent_complete_domain_and_family_review']
+    scope=select(ctx['complete_Original_domain_import'],['schema','root','Root_authority','adopted','original_job','final_selector','domain_pins','candidate_domain_qualification','positive_positions',
+        'complete3779_orbit_partition_of14763_Original_members_owned','all_label_preserving_member_transports_in_same_named_G_owned',
+        'same_faithful_model_frame_and_Original_A_equals_G_owned','complete_candidate_completion_domain_and_admissible_subset_owned','all_five_positive_cases_have_distinct_nonidentity_involutions_string_GEN_and_full_IP_owned',
+        'all47_accepted_family_subjects_and_scope_joins_owned','baseline173_conditional_nongeneration_and_large_ancestor_import_owned'])
+    assert scope['schema']=='ROOT_F004_JOB20_COMPLETE_CANDIDATE_DOMAIN_IMPORT_V1'and scope['root']=='/root'and scope['Root_authority']is scope['adopted']is True
+    assert scope['original_job']==[20,4]and scope['final_selector']==p['final_selector']and scope['domain_pins']==p['domain_pins']
+    assert scope['candidate_domain_qualification']==p['candidate_domain_qualification']and scope['positive_positions']==[259,877,1033,1430,2739]
+    for k,v in scope.items():
+        if k.endswith('_owned'):assert v is True
+    family=select(ctx['family_scope_review'],['status','reviewer','blockers','proposal','complete_Original_domain_import','counts','all_candidate_completion_positive_requirements_and_family_joins_verified'])
+    reviewed(family,'SUPPORTED_');assert family['proposal']==p['coverage_proposal']and family['complete_Original_domain_import']==ctx['complete_Original_domain_import']
+    assert family['counts']==p['counts']and family['all_candidate_completion_positive_requirements_and_family_joins_verified']is True
+    actual=select(ctx['complete_job_actual_review'],['schema','status','reviewer','blockers','Root_job_proof','builder_actual_SDK','Source_manifest',
+        'accepted_count','rejected_count','unpaid_count','all_candidate_completion_positive_requirements_and_family_joins_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified'])
+    assert actual['schema']=='F004_MIXED_WHOLE_JOB_PROOF_ACTUAL_REUSE_V1';reviewed(actual,'SUPPORTED_ACTUAL')
+    assert actual['Root_job_proof']==proof and actual['builder_actual_SDK']==ctx['builder_actual_SDK']and actual['Source_manifest']==p['Source_manifest']
+    assert[actual[k]for k in('accepted_count','rejected_count','unpaid_count')]==[5,3774,0]
+    for k in('all_candidate_completion_positive_requirements_and_family_joins_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified'):assert actual[k]is True
+    sdk=m.sdk(ctx['builder_actual_SDK']);argv=sdk['issued_argv']
+    assert str(p['program']['path'])in argv and '--mode'in argv and argv[argv.index('--mode')+1]=='issue'
+    for key in('proof_builder_Source_manifest','proof_builder_program'):body(ctx[key])
+    return ctx,p
+def snapshot(expected_prefix,expected_closed):
+    refs=dict(CURRENT=pin(CURRENT),STATUS=pin(STATUS),intake=pin(P/'current_intake.json'),controller=pin(P/'controllers/current.json'))
+    rr=f.selected(body(refs['controller']),['checkpoint'])['checkpoint'];body(rr);refs['runtime']=rr
+    assert f.selected(body(refs['intake']),['active_controller_checkpoint'])['active_controller_checkpoint']==rr
+    top=f.members(body(refs['intake']));f4=f.selected(top['F004'],['registered_jobs','required_jobs','pending_jobs'])
+    n=f.selected(top['F009'],['R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed'])
+    assert type(expected_prefix)is int and n['R5_canonical_pairs_reviewed']==expected_prefix and n['R5_prefix_strict_slots_reviewed']==156*expected_prefix
+    frozen(expected_prefix)
+    ledger=f.selected(g.at(body(refs['CURRENT']),['F004_q11_latest_ledger']),['closed','required','pending','pending_file'])
+    counts={k:ledger[k]for k in('closed','required','pending')}
+    assert counts==dict(closed=f4['registered_jobs'],required=f4['required_jobs'],pending=f4['pending_jobs'])
+    assert type(expected_closed)is int and counts['closed']==expected_closed and counts['required']==272 and counts['pending']==272-expected_closed
+    documents={k:body(refs[k])for k in('CURRENT','STATUS')};g.validate_globals(documents,counts,ledger['pending_file'])
+    pending_old=doc(ledger['pending_file']);pending_old=pending_old['pending_jobs']if type(pending_old)is dict else pending_old
+    pending_new=g.pending(pending_old);assert len(pending_old)==counts['pending']
+    runtime=f.members(body(rr));banks=f.selected(body(rr),['cache_banks'])['cache_banks'];keys=set(f.members(runtime['cache_entries']))
+    for bank in banks:
+        raw=f.members(body(bank['ref']));ks=set(f.members(raw['cache_entries']))
+        assert bank['entries']==len(ks)and bank['keys']==sorted(ks)and not keys.intersection(ks);keys.update(ks)
+    return refs,counts,ledger['pending_file'],pending_new,keys
+def patch(raw,typed=None,spans=None,added=None):
+    parts=f.members(raw);typed=typed or{};spans=spans or{};added=added or{}
+    assert set(typed)|set(spans)<=set(parts)and not set(added).intersection(parts)
+    for k,v in{**typed,**added}.items():parts[k]=g.can(v).rstrip(b'\n')
+    parts.update(spans);return g.obj(parts)+b'\n'
+def construct(refs,counts,old_pending,new_pending,keys,context_ref,ctx,proof,mr,own,peer,release):
+    assert not os.path.lexists(TARGET);outputs={};before_names=set()
+    def plan(name,b,before=False):
+        path=TARGET/name;assert path.parent==TARGET and str(path)not in outputs and len(b)<=4*2**20
+        outputs[str(path)]=b
+        if before:before_names.add(str(path))
+        return reference(path,b)
+    before={name:plan(name.lower()+'_before.json',body(refs[name]),True)for name in('CURRENT','STATUS','intake','controller')}
+    pending_ref=plan('pending_jobs.json',g.can(new_pending));after=dict(closed=counts['closed']+1,required=272,pending=counts['pending']-1)
+    record=dict(schema='ROOT_F004_JOB20_MIXED_GLOBAL_REGISTRATION_V1',root='/root',Root_authority=True,adopted=True,original_job=[20,4],
+        registration_scope=g.KIND,typed_job_record=ctx['mixed_job_proof'],independent_complete_job_actual_review=ctx['complete_job_actual_review'],
+        complete_Original_domain_import=ctx['complete_Original_domain_import'],family_scope_review=ctx['family_scope_review'],proof_context=context_ref,
+        candidate_domain_qualification=proof['candidate_domain_qualification'],positive_cases_require_full_admissibility=True,
+        accepted_count=5,rejected_count=3774,NG_count=232,IP_failure_count=3542,unpaid_count=0,before_counts=counts,after_counts=after,
+        previous_pending=old_pending,pending=pending_ref,removed_jobs=[[20,4]],previous_globals={k:refs[k]for k in('CURRENT','STATUS')},
+        Source_manifest=mr,Source_peer=peer,Root_Source_release=release,scientific_calls=0,mathematical_replays=0,
+        old_job24_record_preserved=True,all_other_pending_jobs_retained_in_order=True,all_borrowed_proof_qualifications_retained=True,
+        field_census_and_Aut_reversal_output_assembly_still_owed=True,whole_manuscript_conjecture_Lean_measurement_credit=0,
+        transaction_commit_and_independent_admin_review_required=True)
+    registration=plan('root_job20_registration.json',g.can(record))
+    globals_,inverse=g.globals_project({k:body(refs[k])for k in('CURRENT','STATUS')},counts,pending_ref,registration,ctx['mixed_job_proof'])
+    plan('whole_alias_inverse.json',g.can(inverse));plan('register_mixed_job.py',body(own))
+    current_after=plan('CURRENT_after.json',globals_['CURRENT']);status_after=plan('STATUS_after.json',globals_['STATUS'])
+    rt=f.members(body(refs['runtime']));it=f.members(body(refs['intake']));f4=f.members(it['F004']);job=f.members(f4['job20'])
+    assert f.selected(f4['job20'],['current_selector','partition','now_unresolved','remaining_positions'])==dict(current_selector=proof['final_selector'],partition=[173,3606,0],now_unresolved=0,remaining_positions=[])
+    key='Root_f004_job20_whole_original_mixed_registration';assert key not in keys
+    entry=dict(ref=registration,value=record,completed_value_unchanged=True,independent_actual_review=ctx['complete_job_actual_review'],independent_actual_review_pending=False,
+        independent_global_admin_review_pending=True,one_original_job_closed=[20,4],new_whole_manuscript_credit=0)
+    cache=plan('execution_cache.json',g.can(dict(schema='ROOT_INTAKE_CACHE_ENTRY_BANK_V1',root='/root',completed_science_values_immutable=True,cache_entries={key:entry})))
+    banks=g.strict(rt['cache_banks']);oldbanks=list(banks);banks.append(dict(entries=1,keys=[key],ref=cache))
+    newjob=patch(f4['job20'],added=dict(whole_original_job_proof=ctx['mixed_job_proof'],whole_original_job_global_registration=registration,whole_original_job_closed=True))
+    nf=patch(it['F004'],typed=dict(registered_jobs=after['closed'],required_jobs=272,pending_jobs=after['pending'],
+        next='Original job 20 is registered from its complete proof covering positive and negative results. Other pending jobs, rank4 output assembly and Aut/reversal equivalences remain required.'),
+        spans=dict(job20=newjob),added=dict(whole_job20_global_registration=registration))
+    gc=dict(F004_registered_jobs=after['closed'],F004_required_jobs=272,F004_pending_jobs=after['pending']);oldrc=f.members(rt['counts'])
+    oldgc=dict(F004_registered_jobs=counts['closed'],F004_required_jobs=272,F004_pending_jobs=counts['pending'])
+    assert all(g.strict(oldrc[k])==oldgc[k]for k in gc if k in oldrc)
+    rc=patch(rt['counts'],typed={k:v for k,v in gc.items()if k in oldrc},added={k:v for k,v in gc.items()if k not in oldrc})
+    nr=patch(body(refs['runtime']),typed=dict(cache_banks=banks,previous_checkpoint=refs['runtime']),spans=dict(counts=rc))
+    runtime_ref=plan('runtime.json',nr)
+    ni=patch(body(refs['intake']),typed=dict(previous_checkpoint=before['intake'],active_controller_checkpoint=runtime_ref),spans=dict(F004=nf))
+    intake_ref=plan('intake_after.json',ni)
+    nc=patch(body(refs['controller']),typed=dict(previous_controller=before['controller'],checkpoint=runtime_ref));controller_ref=plan('controller_after.json',nc)
+    assert all(f.members(ni)[k]==v for k,v in it.items()if k not in('F004','previous_checkpoint','active_controller_checkpoint'))
+    assert all(f.members(nr)[k]==v for k,v in rt.items()if k not in('counts','cache_banks','previous_checkpoint'))
+    assert f.members(nr)['cache_entries']==rt['cache_entries']and banks[:-1]==oldbanks
+    assert all(f.members(nf)[k]==v for k,v in f4.items()if k not in('registered_jobs','required_jobs','pending_jobs','next','job20'))
+    assert all(f.members(newjob)[k]==v for k,v in job.items())
+    assert all(f.members(rc)[k]==v for k,v in oldrc.items()if k not in gc)
+    assert all(f.members(nc)[k]==v for k,v in f.members(body(refs['controller'])).items()if k not in('previous_controller','checkpoint'))
+    return outputs,before_names,dict(registration=registration,pending=pending_ref,CURRENT=current_after,STATUS=status_after,intake=intake_ref,controller=controller_ref,
+        runtime=runtime_ref,new_cache_bank=cache,before_counts=counts,after_counts=after,prior_cache_values=len(keys),cache_values_total=len(keys)+1)
+def sync(p):
+    fd=os.open(p,os.O_RDONLY)
+    try:os.fsync(fd)
+    finally:os.close(fd)
+def put(path,b):
+    assert path.parent.resolve(strict=True)==path.parent and not os.path.lexists(path)and len(b)<=4*2**20
+    assert m.WRITE+len(b)<=16*2**20 and len(m.PATHS|{str(path)})<=500
+    with path.open('xb')as out:assert out.write(b)==len(b);out.flush();os.fsync(out.fileno())
+    m.WRITE+=len(b);sync(path.parent);return pin(path)
+
+def main():
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second metadata deadline')));signal.alarm(125)
+    a=argparse.ArgumentParser(allow_abbrev=False);a.add_argument('--actor',required=True);a.add_argument('--mode',choices=['plan','apply'],required=True)
+    a.add_argument('--Source-manifest',nargs=3,required=True);a.add_argument('--Source-peer',nargs=3,required=True);a.add_argument('--guard',required=True)
+    a.add_argument('--proof-context',nargs=3);a.add_argument('--controls-review',nargs=3);a.add_argument('--release',nargs=3)
+    a.add_argument('--expected-prefix',type=int);a.add_argument('--expected-closed',type=int);a.add_argument('--out');a.add_argument('--plan',nargs=3);a.add_argument('--decision',nargs=3)
+    a=a.parse_args();mr,own,peer=source(a)
+    assert a.proof_context and a.controls_review and a.release and a.expected_prefix is not None and a.expected_closed is not None
+    context_ref=descriptor(a.proof_context);ctx,proof=proof_context(context_ref)
+    co=doc(descriptor(a.controls_review));reviewed(co,'SUPPORTED_ACTUAL')
+    assert co['Source_manifest']==mr and co['controls_Source_manifest']==doc(peer)['controls_Source_manifest']and co['count']==16 and co['Original_payloads_decoded']is False and co['actual_guard_and_raw_frames_verified']is True
+    release_ref=descriptor(a.release);rel=doc(release_ref)
+    assert rel['schema']=='ROOT_F004_MIXED_GLOBAL_SOURCE_RELEASE_V1'and rel['root']=='/root'and rel['Root_authority']is rel['adopted']is True
+    assert rel['Source_manifest']==mr and rel['Source_peer']==peer and rel['proof_context']==context_ref and rel['actual_controls_review']==descriptor(a.controls_review)
+    assert rel['whole_Source_and_borrowed_proof_qualifications_owned']is rel['allow_false_plan_and_apply_only_after_actual_review']is True
+    refs,counts,oldpending,newpending,keys=snapshot(a.expected_prefix,a.expected_closed)
+    outputs,before_names,summary=construct(refs,counts,oldpending,newpending,keys,context_ref,ctx,proof,mr,own,peer,release_ref)
+    plan=dict(schema='F004_JOB20_MIXED_GLOBAL_FALSE_PLAN_V1',Root_authority=False,program=own,Source_manifest=mr,Source_peer=peer,release=release_ref,
+        proof_context=context_ref,snapshot=refs,expected_F009_prefix=a.expected_prefix,expected_closed=a.expected_closed,summary=summary,
+        afterimages=[reference(p,b)for p,b in sorted(outputs.items())],field_or_manuscript_conjecture_Lean_measurement_credit=0)
+    Q=sum(map(len,outputs.values()));D=sum(refs[k]['bytes']for k in('CURRENT','STATUS','intake','controller'));extra=Q+5*D+summary['runtime']['bytes']+summary['new_cache_bank']['bytes']+262144
+    assert Q+D+262144<=16*2**20 and len(m.PATHS|set(outputs))+10<=500
+    assert m.READ+sum(r['bytes']for r in m.RECORDS.values())+extra<=64*2**20
+    if a.mode=='plan':
+        assert a.out and not a.plan and not a.decision;out=Path(a.out)
+        assert out.parent==HERE/'plans'and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out)
+        close();frozen(a.expected_prefix);out.mkdir();sync(out.parent);private=[]
+        for name,b in outputs.items():
+            if name not in before_names:private.append(dict(intended=reference(name,b),private=put(out/Path(name).name,b)))
+        plan['private_afterimages']=private;r=put(out/'plan_FALSE.json',g.can(plan));check()
+        print(g.can(dict(status='FALSE_MIXED_GLOBAL_PLAN',Root_authority=False,plan=r,canonical_writes=0,scientific_calls=0,actual_plan_review_and_Root_decision_owed=True)).decode(),end='');return
+    assert a.plan and a.decision and not a.out
+    planref=descriptor(a.plan);actualplan=doc(planref);copyplan=dict(actualplan);private=copyplan.pop('private_afterimages');assert copyplan==plan
+    assert {x['intended']['path']for x in private}==set(outputs)-before_names
+    for image in private:
+        name=image['intended']['path'];assert image['intended']==reference(name,outputs[name])and body(image['private'])==outputs[name]
+    dr=descriptor(a.decision);decision=doc(dr)
+    assert decision['schema']=='ROOT_F004_JOB20_MIXED_GLOBAL_APPLY_DECISION_V1'and decision['root']=='/root'and decision['Root_authority']is decision['adopted']is True
+    assert decision['status']=='SUPPORTED'and decision['blockers']==[]and decision['plan']==planref and decision['Source_manifest']==mr and decision['proof_context']==context_ref
+    for k in('whole_fresh_plan_proof_and_Source_owned','both_global_aliases_and_all_unrelated_values_owned','exact_ordered_one_job_pending_removal_owned',
+        'coherent_progress_and_old_cache_preservation_owned','four_idle_arrays_and_sole_writer_lock_owned','PREPARED_recovery_without_crash_atomicity_or_auto_rollback_claim'):
+        assert decision[k]is True
+    pv=doc(decision['actual_plan_review']);reviewed(pv,'SUPPORTED_ACTUAL')
+    assert pv['plan']==planref and pv['Source_manifest']==mr and pv['snapshot']==refs and pv['whole_afterimages_inverse_and_scope_verified']is True
+    assert m.READ+sum(r['bytes']for r in m.RECORDS.values())+extra<=64*2**20
+    close();frozen(a.expected_prefix)
+    fd=os.open(LOCK,os.O_RDWR|os.O_CREAT|getattr(os,'O_NOFOLLOW',0),0o600)
+    try:
+        ls=os.fstat(fd);assert stat.S_ISREG(ls.st_mode)and ls.st_nlink==1;m.PATHS.add(str(LOCK))
+        fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        for k in('CURRENT','STATUS','intake','controller'):m.raw(refs[k])
+        g.idle(body(refs['CURRENT']),body(refs['STATUS']));frozen(a.expected_prefix)
+        assert not os.path.lexists(TARGET);TARGET.mkdir();sync(TARGET.parent)
+        prepared=dict(schema='F004_MIXED_GLOBAL_TRANSACTION_PREPARED_V1',root='/root',Root_decision=dr,plan=planref,before=refs,after=summary,
+            serial_replacements_only=True,no_crash_atomicity_or_automatic_rollback_claim=True,inspect_partial_outputs_before_any_recovery=True)
+        for name,b in outputs.items():put(Path(name),b)
+        put(TARGET/'transaction_PREPARED.json',g.can(prepared))
+        for k in('CURRENT','STATUS','intake','controller'):m.raw(refs[k])
+        frozen(a.expected_prefix)
+        targets=[('CURRENT',CURRENT),('STATUS',STATUS),('controller',P/'controllers/current.json'),('intake',P/'current_intake.json')]
+        for key,target in targets:
+            m.raw(refs[key]);temporary=target.with_name('.'+target.name+'.job20_mixed_global')
+            put(temporary,outputs[summary[key]['path']]);os.replace(temporary,target);sync(target.parent)
+        observed={}
+        for key,target in targets:
+            records=m.RECORDS;m.RECORDS={}
+            try:r,_=m.whole(target,dict(summary[key],path=str(target)))
+            finally:m.RECORDS=records
+            observed[key]=r
+        for r in(summary['runtime'],summary['new_cache_bank']):m.raw(r)
+        check();assert m.READ<=64*2**20
+        commit=dict(prepared,schema='ROOT_F004_JOB20_MIXED_GLOBAL_TRANSACTION_COMMITTED_V1',status='COMMITTED',observed_live_pointers=observed,
+            global_original_jobs_closed_delta=1,only_removed_job=[20,4],new_cache_values=1,all_other_topics_and_old_values_preserved=True,
+            independent_admin_review_pending=True,scientific_calls=0,read_bytes=m.READ,paths=len(m.PATHS),Source_manifest=mr)
+        cr=put(TARGET/'transaction_COMMITTED.json',g.can(commit));signal.alarm(0)
+        print(g.can(dict(status='ROOT_MIXED_JOB20_GLOBALLY_REGISTERED',commit=cr,summary=summary,independent_admin_review_and_actual_tail_retention_owed=True)).decode(),end='')
+    finally:
+        fcntl.flock(fd,fcntl.LOCK_UN);os.close(fd)
+if __name__=='__main__':main()

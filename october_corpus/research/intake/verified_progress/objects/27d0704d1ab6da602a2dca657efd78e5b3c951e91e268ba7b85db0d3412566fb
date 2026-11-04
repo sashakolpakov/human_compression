@@ -1,0 +1,144 @@
+"""Independent metadata-only actual review; does not replay any control.
+Reviewer /root/mathematical_review. No represented Source import or execution.
+"""
+import ast
+import hashlib
+import json
+from pathlib import Path
+import shlex
+import stat
+
+P = Path(__file__).resolve().parents[2]
+O = Path(__file__).resolve().parent
+pins = {}; bodies = {}; read_bytes = 0
+
+
+def ref(p, b):
+    return dict(path=str(p), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+
+def whole(p, r=None, fresh=False):
+    global read_bytes
+    p = Path(p); k = str(p)
+    if k not in bodies or fresh:
+        s = p.lstat()
+        assert p.resolve(strict=True) == p and stat.S_ISREG(s.st_mode) and s.st_nlink == 1 and s.st_size <= 2**21
+        b = p.read_bytes(); t = p.lstat()
+        assert (s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns) == (t.st_dev,t.st_ino,t.st_size,t.st_mtime_ns,t.st_ctime_ns)
+        v = ref(p,b); assert len(b) == s.st_size and pins.get(k,v) == v and bodies.get(k,b) == b
+        pins[k] = v; bodies[k] = b; read_bytes += len(b)
+        assert len(pins) <= 128 and read_bytes <= 2**24
+    assert r is None or pins[k] == r
+    return bodies[k]
+
+
+def pin(p):
+    whole(p); return pins[str(p)]
+
+
+def doc(p, r=None):
+    def pairs(rows):
+        d = {}
+        for k,v in rows:
+            assert k not in d; d[k] = v
+        return d
+    return json.loads(whole(p,r), object_pairs_hook=pairs)
+
+
+def chain(name, key):
+    r = pin(P/'actual/Root_SDK'/name); d = doc(r['path'],r); f = d['all_genuine_api_frames']; av = d['issued_argv']
+    assert d['schema'] == 'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1' and d['root'] == d['actor'] == '/root' and d['child_argv'] == av
+    assert shlex.split(d['issued_command']) == shlex.split(d['canonical_argv_command']) == shlex.split(d['issued_tool_arguments']['cmd']) == av
+    assert f and f[0] == d['full_initial_tool_return'] and f[-1] == d['full_tool_return']
+    t = d['actual_tool']
+    assert t['synchronous'] is True and t['handle'] is None and len(f) == 1 and f[0]['chunk_id'] == t['initial_chunk'] == t['terminal_chunk']
+    assert f[0]['exit_code'] == t['exit_code'] == 0 and 'session_id' not in f[0]
+    base = P/'actual/api'/key; issued = doc(base/'issued.json')
+    assert issued['root'] == '/root' and issued['argv'] == av and issued['tool_arguments'] == d['issued_tool_arguments']
+    raw = sorted(base.glob('frame_*.json')); assert len(raw) == 1 and raw[0].name == 'frame_0000.json' and doc(raw[0]) == f[0]
+    return r,d,json.loads(f[0]['output'])
+
+
+def put(name, value):
+    p = O/name; b = (json.dumps(value,sort_keys=True,indent=2)+'\n').encode()
+    with p.open('xb') as f: assert f.write(b) == len(b)
+    return ref(p,b)
+
+
+handoff = doc(P/'handoff.json')
+program=handoff['program'];control=handoff['controls_program'];mfr=handoff['Source_manifest'];cmr=handoff['controls_Source_manifest'];protocol=handoff['protocol']
+mf=doc(mfr['path'],mfr);cm=doc(cmr['path'],cmr)
+assert mf['program']==program and mf['controls_program']==cm['program']==control and mf['sources']==cm['sources']
+assert mf['protocol']==cm['protocol']==protocol and mf['controls_Source_manifest']==cmr
+assert sum(r['bytes']for r in mf['sources'])+512==mf['Source_union_guards512_bytes']==68633
+for r in mf['sources']:whole(r['path'],r)
+whole(protocol['path'],protocol)
+peerref=pin(P/'source_review/reuse_integer_only.json');peer=doc(peerref['path'],peerref)
+assert peer['status']=='SUPPORTED_STATIC_L026_NEG_ACTIVATION_SOURCE'and peer['reviewer']=='/root/mathematical_review'and peer['blockers']==[]
+for k,r in dict(program=program,Source_manifest=mfr,controls_program=control,controls_Source_manifest=cmr,protocol=protocol).items():assert peer[k]==r
+expected=doc(P/'operation_preparation/controls/invocation_FALSE.json')
+names=expected['expected_control_names'];assert expected['controls_count_from_Source']==len(names)==len(set(names))==32
+ar,authority,ao=chain('controls_authority_v1.json','Root_l026_negative_progress_activation_controls_authority_v1')
+assert ar['bytes']==13150 and ar['sha256']=='aee1af4a7d45b91dba37e4a5e0111cb6cbdcab93ec23175e3d149a5515b0502c'
+# The authority SHA is pinned below by its genuine complete raw/SDK joins as well.
+authref=pin(P/'actual/Root_controls_authority.json');auth=doc(authref['path'],authref)
+assert ao['authority']==authref and ao['argv']==expected['argv']and ao['scientific_calls']==0
+assert auth['schema']=='ROOT_L026_NEG_ACTIVATION_CONTROLS_AUTHORITY_V1'and auth['root']=='/root'and auth['Root_authority']is True and auth['blockers']==[]
+assert auth['complete_Source_and_protocol_read']is auth['only_fresh_synthetic_controls_authorized']is auth['synthetic_scope_and_control_contributions_owned']is True
+assert auth['operational_prepare_or_apply_authorized']is False and auth['not_consumed_by_child']is True
+for k,r in dict(program=program,Source_manifest=mfr,controls_program=control,controls_Source_manifest=cmr,protocol=protocol,Source_peer=peerref).items():assert auth[k]==r
+whole(auth['planned_invocation']['path'],auth['planned_invocation'])
+sr,sdk,terminal=chain('controls_v1.json','Root_l026_negative_progress_activation_controls_v1')
+assert sr['bytes']==6073 and sr['sha256']=='db9707f974a44e101a6448335a314718c1b8c2d8ce1215230590f7b7498fdebb'
+av=sdk['issued_argv'];assert av==ao['argv']==expected['argv'];guard=P/'actual/guards/controls_v1';child=av[av.index('--')+1:]
+assert child==expected['child_argv']and av[av.index('--rss-cap-mib')+1]=='256'and av[av.index('--timeout')+1]=='125'
+assert av[:11]==['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES']
+assert '-S'not in av[:av.index('--')]and child[:4]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S']
+started=doc(guard/'started.json');receipt=doc(guard/'receipt.json');stdout=doc(guard/'stdout.log')
+limits=dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,ram_floor=3*2**30,total_rss=256*2**20,wall_seconds=125.0,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+assert started['command']==receipt['command']==child and started['limits']==receipt['limits']==limits
+assert started['admission']==receipt['admission']and receipt['admission']['free_disk']>=limits['admit_disk']and receipt['admission']['available_ram']>=limits['admit_ram']
+assert len(started['identities'])==len(receipt['identities'])==1 and all(started['identities'][0][k]==receipt['identities'][0][k]for k in ['pid','birth','initial_parent','group','session'])
+assert receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['error']is None
+assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]and receipt['seconds']<125
+assert receipt['peaks']['total_rss']<=limits['total_rss']and receipt['peaks']['min_free_disk']>=limits['disk_floor']and receipt['peaks']['min_available_ram']>=limits['ram_floor']
+assert whole(guard/'stderr.log')==b''and receipt['logs']==dict(stdout=pin(guard/'stdout.log')['bytes'],stderr=0)
+assert terminal==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+resultref=pin(Path(expected['planned_report']));result=doc(resultref['path'],resultref)
+assert resultref['bytes']==2700 and resultref['sha256']=='a4d0a067fd74cc5d5fd5b19a5ac5d7c089c2bf59274bdcc3f8237450dfcc268d'
+assert stdout==dict(status='PASS',report=resultref,count=32,control_names=names,Original_inputs_loaded=False,Original_payloads_decoded=False)
+assert result['schema']=='L026_NEG_ACTIVATION_SYNTHETIC_CONTROLS_V1'and result['status']=='PASS'and result['root']=='/root'
+for k,r in dict(program=program,Source_manifest=mfr,controls_program=control,controls_Source_manifest=cmr).items():assert result[k]==r
+assert type(result['count'])is int and result['count']==32 and result['control_names']==names
+assert result['Original_inputs_loaded']is result['Original_payloads_decoded']is result['canonical_mutation']is False and result['scientific_calls']==0
+assert result['Source_or_control_execution_by_author']is False
+assert result['nominal_Source_and_small_CAS_read_allowance']==131072
+assert result['tracked_first_and_closing_metadata_bytes']==177198 and result['total_declared_metadata_read_upper']==308270
+assert result['tracked_first_and_closing_metadata_bytes']+result['nominal_Source_and_small_CAS_read_allowance']==result['total_declared_metadata_read_upper']<=64*2**20
+for r in list(pins.values()):whole(r['path'],r,True)
+objects=O/'evidence/objects';objects.mkdir(parents=True,exist_ok=False);rows=[];written=0
+for k,r in sorted(pins.items()):
+ q=objects/r['sha256'];b=bodies[k]
+ if not q.exists():
+  with q.open('xb')as f:assert f.write(b)==len(b)
+  written+=len(b)
+ assert ref(q,q.read_bytes())==dict(r,path=str(q));rows.append(dict(original=r,retained=dict(r,path=str(q))))
+ret=put('evidence/retention.json',dict(schema='INDEPENDENT_NEG_ACTIVATION_CONTROLS_ACTUAL_RETENTION_V1',reviewer='/root/mathematical_review',Root_authority=False,files=rows,unique_new_bytes=written,Original_payloads_decoded=False))
+full=dict(schema='L026_NEG_ACTIVATION_FRESH_CONTROLS_COMPLETE_ACTUAL_REVIEW_V1',status='SUPPORTED_ACTUAL_L026_NEG_ACTIVATION_CONTROLS',reviewer='/root/mathematical_review',blockers=[],Root_authority=False,
+ program=program,controls_program=control,Source_manifest=mfr,controls_Source_manifest=cmr,protocol=protocol,Source_peer=peerref,Root_controls_authority=authref,
+ actual_authority_SDK=ar,actual_controls_SDK=sr,result=resultref,guard={n:pin(guard/n)for n in ['started.json','receipt.json','stdout.log','stderr.log']},
+ count=32,control_names=names,Original_inputs_loaded=False,Original_payloads_decoded=False,scientific_calls=0,canonical_mutation=False,
+ actual_guard_and_raw_frames_verified=True,whole_Source_and_inputs_closed=True,first_actual_attempt_v1=True,full_wrapper_and_single_child_birth_verified=True,
+ controlled_report_tracked_bytes=177198,controlled_report_nominal_bootstrap=131072,controlled_report_total_declared_bytes=308270,
+ review_inputs=list(pins.values()),own_review_method=pin(Path(__file__).resolve()),own_physical_read_bytes=read_bytes,evidence=ret,
+ contributions='Reviewer suggested synthetic metadata edge cases, reviewed complete successorSource and prepared FALSE CLI/examples. Dependency authored activation/controls; Root owned and executed them. Reviewer ran only this independent metadata/opaque-byte review, never controls or production functions.',
+ qualifications=['Actual32 toy controls exercise the real production validators/projector/snapshot/cache/CAS functions only. Full ledger postwrite-authority/alias admission is a Source and independent actual-plan duty, not claimed dynamically exercised.',
+ 'Controls report no Original inputs/decoding, no science and no canonical mutation. Their live progress paths are replaced in memory by temporary synthetic fixture paths; no actual published ledger or live progress is admitted by this role.',
+ 'The genuine report177198 tracked bytes plus131072 nominal bootstrap is308270. Temporary fixture files are intentionally ephemeral; this review authenticates their executed Source and reported telemetry rather than falsely claiming retained individual fixture-body provenance.',
+ 'The external Root authority is not a CLI gate and separately withholds operational prepare/apply. Genuine publication postcheck, fresh production request/snapshot, private image actual review, separate apply decision and administrative readback remain owed.',
+ 'Exact validation/transient Source and256MiB125s guards are unchanged. Sampling and unseen-descendant qualifications remain; no crash atomicity or new case/manuscript/Lean/conjecture/measurement claim is made.'])
+fr=put('review.json',full)
+leaf={k:full[k]for k in ['status','reviewer','blockers','Root_authority','program','controls_program','Source_manifest','controls_Source_manifest','protocol','count','control_names','Original_inputs_loaded','Original_payloads_decoded','actual_guard_and_raw_frames_verified','whole_Source_and_inputs_closed']}
+leaf.update(schema='L026_NEG_ACTIVATION_CONTROLS_ACTUAL_REUSE_V1',actual_controls_SDK=sr,result=resultref,full_actual_review=fr,evidence=ret,control_design_contribution_disclosed=True,represented_Source_or_functions_or_controls_rerun=False,operational_prepare_or_apply_issued=False)
+lr=put('reuse_integer_only.json',leaf)
+print(json.dumps(dict(leaf=lr,full_review=fr,paths=len(pins),read_bytes=read_bytes),sort_keys=True))

@@ -1,0 +1,303 @@
+"""Scoped independent metadata/opaque-byte audit of the row290 forecast.
+
+No represented writer, helper, control, Source predicate or Original operand is
+imported, called or evaluated. Typed status bytes and proof metadata are read.
+Author /root/mathematical_review; Root retains operational authority.
+"""
+import ast
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import resource
+import shlex
+import stat
+import time
+
+START = time.monotonic()
+P = Path(__file__).resolve().parents[2]
+O = Path(__file__).resolve().parent
+RAW = P / 'api'
+PRIVATE = Path('/private/tmp/l026_row0290_private_ledger_images')
+PINS = {}
+BODIES = {}
+READ = 0
+
+
+def need(v, why):
+    if not v:
+        raise ValueError(why)
+
+
+def ref(p, raw):
+    return dict(path=str(p), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def whole(p, wanted=None, fresh=False):
+    global READ
+    p = Path(p)
+    k = str(p)
+    if k in BODIES and not fresh:
+        b = BODIES[k]
+    else:
+        a = p.lstat()
+        sig = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+        need(p.is_absolute() and p.resolve(strict=True) == p and stat.S_ISREG(a.st_mode)
+             and a.st_nlink == 1 and a.st_size <= 4*2**20, 'ordinary single-link bounded input')
+        need(READ+a.st_size <= 64*2**20 and len(set(PINS) | {k}) <= 512, '64MiB512paths review')
+        with p.open('rb') as f:
+            x = os.fstat(f.fileno()); b = f.read(a.st_size+1); y = os.fstat(f.fileno())
+        need(sig(a) == sig(x) == sig(y) == sig(p.lstat()) and len(b) == a.st_size, 'same-FD stable whole input')
+        r = ref(p, b)
+        need(PINS.get(k, r) == r and BODIES.get(k, b) == b, 'first/closing byte identity')
+        PINS[k] = r; BODIES[k] = b; READ += len(b)
+    need(wanted is None or PINS[k] == wanted, 'exact descriptor')
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if os.uname().sysname == 'Darwin' else 1024)
+    need(rss <= 256*2**20 and time.monotonic()-START <= 125, 'own256MiB125s review')
+    return b
+
+
+def decode(b):
+    def pairs(rows):
+        out = {}
+        for k, v in rows:
+            need(k not in out, 'unique metadata keys'); out[k] = v
+        return out
+    def finite(s):
+        x = float(s); need(math.isfinite(x), 'finite metadata'); return x
+    def bad(_):
+        raise ValueError('nonfinite metadata')
+    return json.loads(b, object_pairs_hook=pairs, parse_constant=bad, parse_float=finite)
+
+
+def doc(r):
+    return decode(whole(r['path'], r))
+
+
+def pathref(p):
+    whole(p)
+    return PINS[str(p)]
+
+
+def put(name, value):
+    raw = (json.dumps(value, sort_keys=True, indent=2, allow_nan=False)+'\n').encode()
+    p = O/name
+    with p.open('xb') as f:
+        need(f.write(raw) == len(raw), 'whole exclusive review output')
+    return ref(p, raw)
+
+
+def canonical(v):
+    return (json.dumps(v, sort_keys=True, separators=(',', ':'), allow_nan=False)+'\n').encode()
+
+
+def chain(sdkpath, key, rawbase=RAW):
+    sr = pathref(sdkpath); s = doc(sr); fs = s['all_genuine_api_frames']; av = s['issued_argv']
+    need(s['schema'] == 'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1' and s['root'] == s['actor'] == '/root'
+         and s['child_argv'] == av, 'actual Root SDK identity')
+    need(shlex.split(s['issued_command']) == shlex.split(s['issued_tool_arguments']['cmd'])
+         == shlex.split(s['canonical_argv_command']) == av, 'complete genuine issued command')
+    t = s['actual_tool']
+    need(fs and fs[0] == s['full_initial_tool_return'] and fs[-1] == s['full_tool_return']
+         and fs[-1]['exit_code'] == t['exit_code'] == 0 and 'session_id' not in fs[-1]
+         and len({f['chunk_id'] for f in fs}) == len(fs)
+         and t['initial_chunk'] == fs[0]['chunk_id'] and t['terminal_chunk'] == fs[-1]['chunk_id'], 'all genuine distinct ordered terminal frames')
+    if t['synchronous']:
+        need(len(fs) == 1 and t['handle'] is None, 'actual synchronous event')
+    else:
+        need(type(t['handle']) is int and all(f.get('session_id') == t['handle'] for f in fs[:-1]), 'actual asynchronous handle')
+    root = rawbase/key
+    issued = decode(whole(root/'issued.json'))
+    need(issued['root'] == '/root' and issued['argv'] == av and issued['tool_arguments'] == s['issued_tool_arguments'], 'raw issued exact SDK boundary')
+    paths = sorted(root.glob('frame_*.json'))
+    need(len(paths) == len(fs), 'all physical raw frames')
+    for i, (p, frame) in enumerate(zip(paths, fs)):
+        need(p.name == 'frame_%04d.json' % i and decode(whole(p)) == frame, 'raw frame equality')
+    return sr, s, decode(''.join(f.get('output', '') for f in fs).encode())
+
+
+planref = pathref(P/'registration/append_plan_row0290_UNISSUED.json'); p = doc(planref)
+need((planref['bytes'], planref['sha256']) == (72735, 'd5d2e3d98fab16e3cbeb5fce4bf6a12d57ebd4e6c3ab1f30728db6e0b48d1abc'), 'exact final immutable plan')
+relref = pathref(P/'registration/ROOT_RELEASE_row0290.json'); rel = doc(relref)
+need((relref['bytes'], relref['sha256']) == (2748, '9c97eb583c6cefa2ce1ef1c52c701d5e42cf845a74b12b7ce0042319724b44ea'), 'same immutable forecast/write release')
+need(p['schema'] == 'L026_BOUNDED_TYPED_PAID_LEDGER_PLAN_V1' and p['mode'] == 'append'
+     and p['epoch'] == 'fixed_subset_row0290' and p['separate_IP'] is None, 'append exact singleton scope')
+need(rel['schema'] == 'ROOT_REVIEWED_L026_BOUNDED_TYPED_PAID_LEDGER_V1' and rel['root'] == '/root'
+     and rel['Root_authority'] is rel['metadata_only'] is rel['metadata_publication_authorized'] is True
+     and rel['status'] == 'SUPPORTED' and rel['blockers'] == [] and rel['plan'] == planref and rel['program'] == p['program'], 'Root-owned exact method')
+need(rel['progress_activation_not_yet_issued'] is True and rel['actual_strict_and_logical_and_Root_application_owned'] is True, 'separate progress/meaning ownership')
+source = whole(p['program']['path'], p['program']); ast.parse(source)
+need((len(source), hashlib.sha256(source).hexdigest()) == (32641, '73e75fab70d798b46d5ca78e01ea438a8af579c691f61c5b74b2b09e7658fef7'), 'literal unchanged writer')
+need(source.count(b'if not a.write:print(json.dumps(projection,sort_keys=True));return') == 1, 'readonly branch before write path')
+mf = doc(rel['Source_manifest']); peer = doc(rel['independent_Source_peer']); cv = doc(rel['actual_metadata_controls30'])
+need(mf['writer'] == peer['writer'] == p['program'] and peer['status'].startswith('SUPPORTED_STATIC')
+     and peer['blockers'] == [] and peer['reviewer'] not in ('/root', '/root/status_audit')
+     and peer['Source_manifest']['sha256'] == rel['Source_manifest']['sha256'], 'distinct exact historical Source peer')
+need(sum(r['bytes'] for r in mf['Source'])+512 == mf['whole_Source_with_guards_and512'] == 56320, 'whole writer/guards invoice')
+for r in mf['Source']:
+    whole(r['path'], r)
+need(cv['status'].startswith('SUPPORTED_ACTUAL') and cv['blockers'] == [] and cv['reviewer'] not in ('/root', '/root/status_audit')
+     and cv['count'] == cv['controls'] == 30 and cv['admission_count'] == 27 and cv['engine_count'] == 3
+     and cv['Original_inputs_loaded'] is False and cv['Source_manifest']['sha256'] == rel['Source_manifest']['sha256'], 'borrowed unchanged actual30 controls')
+for r in [cv['full_actual_review']] + cv['role_reviews']:
+    whole(r['path'], r)
+fixed = {}
+for r in p['inputs']:
+    need(r['path'] not in fixed, 'one fixed physical input edition'); fixed[r['path']] = r; whole(r['path'], r)
+need(len(fixed) == 217 and sum(r['bytes'] for r in fixed.values()) == 4096944, '217 opaque inputs exact')
+for r in (p['program'], planref, relref):
+    need(fixed.get(r['path'], r) == r, 'bootstrap exact'); fixed[r['path']] = r
+need(len(fixed) == 219, '219 complete expected paths')
+need(len(p['proofs']) == 1, 'one genuine procedural proof')
+q = p['proofs'][0]
+actual = doc(q['actual_pair_review']); logical = doc(q['logical_review']); apps = [doc(r) for r in q['applications']]
+need(q['kind'] == 'NEG' and q['method'] == 'PROCEDURAL_SUBSET_NONGENERATION' and q['selected_indices'] == [290]
+     and actual['Source_manifest'] == q['Source_manifest'] and actual['proper_indices'] == [290]
+     and logical['Root_applications'] == q['applications'] and len(apps) == 1
+     and logical['strict_actual_review'] == q['actual_pair_review'], 'exact strict/logical/issued singleton proof subjects')
+need(actual['status'].startswith('SUPPORTED_ACTUAL') and actual['blockers'] == [] and logical['status'].startswith('SUPPORTED_LOGICAL_ROOT_ISSUED')
+     and logical['blockers'] == [] and logical['reviewer'] == '/root/mathematical_review', 'separate genuine accepted proof reviews')
+snapshot = dict(CURRENT=p['expected_current'], receipt=p['previous_receipt'], bank=p['previous_bank'])
+need(actual['current_snapshot'] == logical['current_snapshot'] == apps[0]['current_snapshot'] == snapshot, 'exact current proof snapshot')
+need(apps[0]['Root_authority'] is apps[0]['mathematical_proof_issued'] is True
+     and apps[0]['canonical_registration_issued'] is False and apps[0]['subject']['identity']['free_index'] == 290
+     and apps[0]['subject']['identity']['owner'] == 579 and apps[0]['subject']['generation'] is False, 'issued conditional mathematical application')
+retention_rows = []
+for r in q['retentions']:
+    m = doc(r)
+    need(m['schema'] == 'ROOT_EXACT_CLOSED_METADATA_RETENTION_V1' and m['root'] == '/root' and m['scientific_calls'] == 0, 'genuine retained-input authority')
+    for row in m['files']:
+        need(whole(row['original']['path'], row['original']) == whole(row['retained']['path'], row['retained']), 'all exact retained aliases')
+        retention_rows.append(row)
+need(len(retention_rows) == 108, 'genuine108 closed mappings')
+sdkref, sdk, terminal = chain(P/'Root_SDK/ledger_forecast_v2.json', 'Root_l026_row0290_ledger_forecast_v2')
+need((sdkref['bytes'], sdkref['sha256']) == (7095, '5ebab212143e636710d902165f0d0f2de3a70456b45038a17b8c42bb299a11c5'), 'genuine selected forecastv2')
+av = sdk['issued_argv']; child = av[av.index('--')+1:]
+expected_child = ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', p['program']['path'], '--self-sha256', p['program']['sha256'], '--plan', planref['path'], planref['sha256'], '--Root-release', relref['path'], relref['sha256']]
+guard = P/'registration/guards/forecast_v1'
+need(child == expected_child and '--write' not in child and av[av.index('--output')+1] == str(guard)
+     and av[av.index('--rss-cap-mib')+1] == '256' and av[av.index('--timeout')+1] == '125', 'exact readonly invocation')
+need(av[:11] == ['/usr/bin/env', '-u', 'COVERAGE_PROCESS_CONFIG', '-u', 'COVERAGE_CONFIG', '-u', 'COVERAGE_PROCESS_START', '-u', 'OPENSSL_CONF', '-u', 'OPENSSL_MODULES'], 'full five-env wrapper')
+start = decode(whole(guard/'started.json')); receipt = decode(whole(guard/'receipt.json'))
+forecastref = pathref(guard/'stdout.log'); forecast = doc(forecastref)
+limits = dict(admit_disk=10*2**30, admit_ram=4*2**30, disk_floor=8*2**30, ram_floor=3*2**30, total_rss=256*2**20, wall_seconds=125.0, sample_seconds=.5, log_bytes_each=262144, metadata_bytes_each=131072, owned_pids=128)
+need(start['command'] == receipt['command'] == child and start['limits'] == receipt['limits'] == limits
+     and start['admission'] == receipt['admission'] and start['admission']['free_disk'] >= limits['admit_disk']
+     and start['admission']['available_ram'] >= limits['admit_ram'], 'same actual guard argv/limits/admission')
+need(len(start['identities']) == len(receipt['identities']) == 1 and all(start['identities'][0][k] == receipt['identities'][0][k]
+     for k in ('pid', 'birth', 'initial_parent', 'group', 'session')), 'same single child birth identity')
+need(receipt['status'] == 'PASS' and receipt['stop'] == 'RETURNED' and receipt['returncode'] == 0 and receipt['error'] is None
+     and receipt['cleanup']['remaining'] == receipt['cleanup']['errors'] == [] and receipt['seconds'] < 125
+     and receipt['peaks']['total_rss'] <= limits['total_rss'] and receipt['peaks']['min_free_disk'] >= limits['disk_floor']
+     and receipt['peaks']['min_available_ram'] >= limits['ram_floor'] and whole(guard/'stderr.log') == b''
+     and receipt['logs'] == dict(stdout=forecastref['bytes'], stderr=0)
+     and terminal == dict(status='PASS', stop='RETURNED', receipt=str(guard/'receipt.json')), 'genuine closed output and guard')
+old_current = doc(p['expected_current']); old_receipt = doc(p['previous_receipt']); before = whole(p['previous_bank']['path'], p['previous_bank'])
+need(len(before) == 28908 and set(before) <= {0, 1, 2, 6} and old_current['ledger_receipt'] == p['previous_receipt']
+     and old_current['status_bank'] == old_receipt['status_bank'] == p['previous_bank'], 'entire typed metadata bank and predecessor joins')
+def counts(b):
+    return dict(GEN=b.count(2)+b.count(6), separate_IP=b.count(6), subset_NEG=b.count(1), unpaid=b.count(0))
+need(counts(before) == old_receipt['counts'] == dict(GEN=724, separate_IP=724, subset_NEG=744, unpaid=27440), 'all before counts')
+after = whole(PRIVATE/'status.bin'); inverse = whole(PRIVATE/'inverse_status.bin')
+need(len(after) == len(inverse) == 28908 and set(after) <= {0, 1, 2, 6}, 'entire private typed bank')
+changed = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
+need(changed == [290] and before[290] == 0 and after[290] == 1 and inverse == before, 'whole inverse and exactly one0to1 NEG')
+restored = bytearray(after); restored[290] = 0
+need(bytes(restored) == before and counts(after) == dict(GEN=724, separate_IP=724, subset_NEG=745, unpaid=27439), 'independent all-byte inverse and counts')
+changes = [dict(free_index=290, before=0, after=1, kind='NEG', owner=579, witness_row_sha256='a5e7343cb4c3ca43d652371753233cd17df6b941251c8f5ec2a3791969c94ffc', proof=0)]
+need(p['facts'] == [{k: v for k, v in changes[0].items() if k not in ('before', 'after')}], 'exact singleton fact')
+method = dict(program=p['program'], plan=planref, Root_release=relref, scientific_calls=0)
+dest = Path(p['expected_current']['path']).parent/'epochs'/p['epoch']
+need(not os.path.lexists(dest), 'no canonical epoch publication yet')
+bankref = ref(dest/'status.bin', after)
+batch = dict(schema='ROOT_ACCEPTED_L026_BOUNDED_TYPED_PROOF_BATCH_V1', root='/root', adopted=True, Root_adoption_owed=False, scope_digest=p['scope_digest'], original_selector=p['original_selector'], original_free_witness_adoption=p['free_adoption'], original_operand_adoption=p['operand_adoption'], witness_bank=p['witnesses'], new_facts=p['facts'], proofs=p['proofs'], separate_existing_rank3_IP=None, previous_ledger=p['previous_receipt'], exact_monotone_changes=changes, writer=method, strict_IP0_unchanged=True, Original_conjecture_Lean_or_measurement_credit=0)
+batchraw = canonical(batch); batchref = ref(dest/'batch_acceptance.json', batchraw)
+new_receipt = dict(schema='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1', root='/root', adopted=True, Root_adoption_owed=False, scope_digest=p['scope_digest'], original_selector=p['original_selector'], original_free_space=28908, witness_bank=p['witnesses'], original_free_witness_adoption=p['free_adoption'], original_operand_adoption=p['operand_adoption'], status_bank=bankref, counts=counts(after), fixed_nonfree_NEG_count=17688, fixed_nonfree_NEG_mass=6884658, global_NEG=18433, global_NEG_mass=7647538, unpaid_mass=28097536, previous_ledger=p['previous_receipt'], typed_new_batch=batchref, proof_provenance=dict(kind='BOUNDED_BATCH', batch=batchref, previous_ledger=p['previous_receipt'], old_proof_DAG_opaque=True), writer=method, qualification='Same original Fi22/fullAut/Out2/Reader/member/model/action/word/graph/globalclass/twofibre/H=B and separate-IP hypotheses retained. Typed paid-status metadata only, no new mathematics or whole Original credit.')
+receiptraw = canonical(new_receipt); new_receiptr = ref(dest/'receipt.json', receiptraw)
+new_current = dict(old_current); new_current.update(schema='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1', root='/root', adopted=True, scope_digest=p['scope_digest'], ledger_receipt=new_receiptr, status_bank=bankref)
+currentraw = canonical(new_current); currentref = ref(p['expected_current']['path'], currentraw)
+need(whole(PRIVATE/'batch_acceptance.json') == batchraw and whole(PRIVATE/'receipt.json') == receiptraw
+     and whole(PRIVATE/'CURRENT.json') == currentraw, 'all complete private metadata bodies match independent assembly')
+outputs = [bankref, new_receiptr, batchref]
+need(forecast['status'] == 'BOUNDED_TYPED_LEDGER_METADATA_FORECAST_ONLY' and forecast['writer'] == method
+     and forecast['new_outputs'] == outputs and forecast['new_CURRENT'] == currentref and forecast['counts'] == counts(after)
+     and forecast['science_calls'] == 0 and forecast['new_bytes'] == 37842, 'all four private hashes exactly genuine forecast')
+expected_bytes = sum(r['bytes'] for r in fixed.values())
+coded = p['program']['bytes']+2*expected_bytes
+upper = coded+2*sum(r['bytes'] for r in outputs)+currentref['bytes']+2*p['expected_current']['bytes']
+need(coded == forecast['physical_reads'] == 8377495 and forecast['actual_read_paths'] == len(fixed) == 219
+     and upper == forecast['complete_read_upper'] == 8453976 and forecast['complete_path_upper'] == 223, 'exact complete coded reads/path/newbytes forecast')
+need(upper <= 64*2**20 and 223 <= 512 and currentref['bytes'] <= 4096 and new_receiptr['bytes'] <= 16384
+     and batchref['bytes'] <= 131072 and forecast['new_bytes'] <= 16*2**20, 'unchanged output/read caps')
+unknown = set(old_current)-{'schema','root','adopted','scope_digest','ledger_receipt','status_bank'}
+need(set(new_current) == set(old_current) and all(new_current[k] == old_current[k] for k in unknown), 'unknown CURRENT metadata preserved')
+inverse_ref = pathref(PRIVATE/'inverse.json'); inv = doc(inverse_ref)
+need(inv['schema'] == 'ROOT_EXACT_PRIVATE_NEG_LEDGER_IMAGES_AND_INVERSE_V1' and inv['root'] == '/root'
+     and inv['plan'] == planref and inv['Root_release'] == relref and inv['forecast'] == forecastref and inv['program'] == p['program']
+     and inv['exact_changes'] == changes and inv['before_counts'] == counts(before) and inv['after_counts'] == counts(after)
+     and inv['canonical_writes'] == inv['scientific_calls'] == 0 and inv['Source_or_group_predicates_executed'] is False, 'actual private inverse proof')
+for name, row in inv['private_images'].items():
+    whole(row['private']['path'], row['private'])
+    need(row['private']['bytes'] == row['canonical']['bytes'] and row['private']['sha256'] == row['canonical']['sha256'], 'private/canonical descriptor equality')
+assemblyref, assembly, assembled = chain(P/'Root_SDK/private_images_v1.json', 'Root_l026_row0290_private_images_v1')
+need((assemblyref['bytes'], assemblyref['sha256']) == (49115, '1564cf710874b6b89b7cd2237983da73e6f737044ad1d5b2d9513f5ffecfe271'), 'actual separately captured literal assembly')
+aa = assembly['issued_argv']; need(aa[:5] == ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', '-c']
+     and aa[-4:] == [planref['path'], relref['path'], forecastref['path'], str(PRIVATE)] and len(aa) == 10, 'complete literal assembly invocation')
+tree = ast.parse(aa[5])
+need(not any(isinstance(n, (ast.ImportFrom,)) or isinstance(n, ast.Import) and any(a.name not in ('hashlib','json','os','stat','sys') for a in n.names)
+             for n in tree.body if not (isinstance(n, ast.ImportFrom) and n.module == 'pathlib')), 'assembly uses stdlib metadata only')
+need('fold_ledger' not in aa[5] and 'exec(' not in aa[5] and 'eval(' not in aa[5], 'no writer/helper import or Source execution')
+need(assembled['status'] == 'EXACT_PRIVATE_AFTERIMAGES_AND_WHOLE_INVERSE_MATCH_GENUINE_FORECAST'
+     and assembled['proof'] == inverse_ref and assembled['private_images'] == inv['private_images']
+     and assembled['canonical_writes'] == assembled['scientific_calls'] == 0, 'genuine assembly stdout joins all actual private images')
+old_sdk = pathref(P/'Root_SDK/ledger_forecast_v1.json'); old = doc(old_sdk)
+need(old['actual_tool']['exit_code'] != 0 and old['issued_argv'] == av, 'earlier same-argv prechild refusal retained')
+oldoutput = ''.join(f.get('output', '') for f in old['all_genuine_api_frames'])
+need('admission' in oldoutput and 'before creating its output or child' in oldoutput, 'genuine prechild disk admission failure')
+# Closing reads bind the live predecessor and all opaque fixed inputs without scientific interpretation.
+for r in list(PINS.values()):
+    whole(r['path'], r, fresh=True)
+need(not os.path.lexists(dest), 'target epoch still absent after closure')
+evidence = O/'evidence'; objects = evidence/'objects'; objects.mkdir(parents=True, exist_ok=False)
+copies = []; written = 0
+for k, r in sorted(PINS.items()):
+    target = objects/r['sha256']; body = BODIES[k]
+    if not target.exists():
+        written += len(body); need(written <= 16*2**20, 'bounded opaque retention')
+        with target.open('xb') as f:
+            need(f.write(body) == len(body), 'whole retained object')
+    need(ref(target, target.read_bytes()) == dict(r, path=str(target)), 'opaque retained-byte check')
+    copies.append(dict(original=r, retained=dict(r, path=str(target))))
+retref = put('evidence/retention.json', dict(schema='INDEPENDENT_FORECAST_REVIEW_OPAQUE_EVIDENCE_RETENTION_V1', reviewer='/root/mathematical_review', Root_authority=False, files=copies, unique_new_bytes=written, Original_payloads_decoded_or_evaluated=False))
+summary = dict(schema='L026_ROW290_INDEPENDENT_FORECAST_PRIVATE_IMAGES_REVIEW_V1', reviewer='/root/mathematical_review', Root_authority=False,
+               blockers=[], program=p['program'], Source_manifest=rel['Source_manifest'], plan=planref, Root_release=relref,
+               actual_forecast_SDK=sdkref, actual_private_assembly_SDK=assemblyref, forecast=forecastref, inverse=inverse_ref,
+               expected_current=p['expected_current'], previous_receipt=p['previous_receipt'], previous_bank=p['previous_bank'],
+               new_outputs=outputs, new_CURRENT=currentref, private_images=inv['private_images'], exact_changes=changes,
+               before_counts=counts(before), after_counts=counts(after), unknown_CURRENT_fields=sorted(unknown),
+               all217_fixed_inputs_and108_retained_alias_mappings_closed=True, all4_private_bodies_exact_genuine_forecast=True,
+               all28908_bank_bytes_inverse_verified=True, all_GEN_IP_and_unselected_status_bytes_unchanged=True,
+               Source_and_full_wrapper_and_raw_and_guard_joins_verified=True, canonical_write_issued=False,
+               separate_Root_write_decision_owed=True, progress_activation_separate=True,
+               science_calls=0, Original_payloads_decoded_or_evaluated=False, represented_Source_or_function_or_control_executed=False,
+               coded_forecast_reads=coded, coded_complete_read_upper=upper, coded_complete_path_upper=223,
+               own_checked_paths=len(PINS), own_physical_read_bytes=READ, opaque_retention=retref,
+               review_method=pathref(Path(__file__).resolve()),
+               qualifications=['Earlier forecastv1 was a genuine prechild disk/RAM admission refusal; selectedv2 was the first writer execution. The same forecast_v1 guard pathname was fresh whenv2 created it.',
+                               'The Root assembly was a separate genuinely captured literal stdlib metadata computation, without importing/calling the writer. All four private bodies and the full inverse were independently compared, not inferred from forecast descriptors.',
+                               'Original Fi22/fullAut/Out2/Reader/member/model/action/word/graph/global-class/two-fibre/H=B and transitivity premises remain borrowed as in the accepted strict and logical proofs. No Original operand, scientific certificate payload or group predicate was decoded/evaluated.',
+                               'The Root release is immutable across forecast and future --write; its publication flag is prospective authority, not evidence of publication. A separate exact Root write decision and fresh actual postwrite audit remain owed, followed by separate progress activation.',
+                               'Sampled guard limits retain their unseen-descendant qualification. No new case/manuscript/census/conjecture/Lean/compression credit follows from this metadata forecast review.'])
+fullref = put('review.json', summary)
+leaf = dict(schema='L026_PROCEDURAL_SUBSET_FORECAST_PRIVATE_IMAGES_ACTUAL_REUSE_V1', status='SUPPORTED_ACTUAL_PROCEDURAL_SUBSET_LEDGER_FORECAST_AND_EXACT_PRIVATE_AFTERIMAGES', reviewer='/root/mathematical_review', blockers=[], Root_authority=False,
+            program=p['program'], Source_manifest=rel['Source_manifest'], plan=planref, Root_release=relref,
+            actual_forecast_SDK=sdkref, actual_private_image_assembly_SDK=assemblyref, full_actual_review=fullref,
+            private_afterimages=inv['private_images'], whole_inverse=inverse_ref, exact_changes=changes,
+            expected_current=p['expected_current'], counts=counts(after), new_NEG=1, new_GEN=0, new_IP=0,
+            all_four_private_afterimages_match_actual_forecast=True, whole_bank_inverse_verified=True,
+            actual_guard_and_raw_frames_verified=True, Source_and_inputs_closed=True, unknown_CURRENT_fields_preserved=True,
+            canonical_write_issued=False, separate_Root_write_decision_owed=True, Original_payloads_decoded_or_evaluated=False,
+            represented_Source_or_function_or_control_executed=False, progress_activation_separate=True, opaque_retention=retref)
+leafref = put('reuse_integer_only.json', leaf)
+print(json.dumps(dict(leaf=leafref, full_review=fullref, paths=len(PINS), read_bytes=READ, retained_unique_bytes=written), sort_keys=True))

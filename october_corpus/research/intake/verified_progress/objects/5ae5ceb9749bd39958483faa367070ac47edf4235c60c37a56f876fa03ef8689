@@ -1,0 +1,201 @@
+"""Finite publication audit. Scientific objects and cache values remain opaque."""
+from pathlib import Path
+import gzip,hashlib,json,os,resource,signal,stat,subprocess,sys,time
+W=Path('/Users/sasha/medusa/human_compression')
+S=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+P=W/'october_corpus/research/intake/finite_forests/parents0330_0341'
+T=W/'october_corpus/research/intake/status_sources'
+HERE=S/'artifacts/publication_reviews/parents0330_0341'
+HEAD='a647bc343d71f1e9407fb3a83b0127124e5bd5c5'
+START=time.monotonic();CUTS=[];READ=0;PATHS=set();PINNED={}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125 second publication audit')))
+signal.alarm(125)
+def cut(name):
+ global READ,PATHS
+ if PATHS:CUTS.append(dict(name=CUTNAME[0],paths=len(PATHS),read_bytes=READ))
+ READ=0;PATHS=set();CUTNAME[0]=name
+CUTNAME=['bootstrap']
+def digest(b):return dict(bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def raw(p,r=None):
+ global READ
+ p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ st=p.lstat();assert stat.S_ISREG(st.st_mode)and st.st_size<=4*2**20
+ b=p.read_bytes();en=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ assert sig(st)==sig(en)and len(b)==st.st_size
+ PATHS.add(str(p));READ+=len(b);assert len(PATHS)<=512 and READ<=64*2**20
+ assert time.monotonic()-START<115
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<=256*2**20
+ d=dict(path=str(p),**digest(b));assert str(p)not in PINNED or PINNED[str(p)]==d;PINNED[str(p)]=d
+ if r is not None:assert d==r,(d,r)
+ return b
+def doc(p,r=None):return json.loads(raw(p,r))
+def ref(p):return dict(path=str(p),**digest(raw(p)))
+def white(b,i):
+ while i<len(b)and b[i]in b' \r\n\t':i+=1
+ return i
+def endstr(b,i):
+ assert b[i]==34;i+=1
+ while i<len(b):
+  if b[i]==92:i+=2
+  elif b[i]==34:return i+1
+  else:i+=1
+ raise ValueError('string')
+def end(b,i):
+ if b[i]==34:return endstr(b,i)
+ if b[i]in b'[{':
+  stack=[b[i]];i+=1
+  while stack:
+   if b[i]==34:i=endstr(b,i);continue
+   if b[i]in b'[{':stack.append(b[i])
+   elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+   i+=1
+  return i
+ while i<len(b)and b[i]not in b',]} \r\n\t':i+=1
+ return i
+def fields(b):
+ i=white(b,0);assert b[i]==123;i=white(b,i+1);out={}
+ while b[i]!=125:
+  j=endstr(b,i);k=json.loads(b[i:j]);assert k not in out
+  i=white(b,j);assert b[i]==58;i=white(b,i+1);j=end(b,i);out[k]=b[i:j];i=white(b,j)
+  if b[i]==44:i=white(b,i+1)
+  else:assert b[i]==125
+ assert white(b,i+1)==len(b);return out
+def array(b):
+ i=white(b,0);assert b[i]==91;i=white(b,i+1);out=[]
+ while b[i]!=93:
+  j=end(b,i);out.append(b[i:j]);i=white(b,j)
+  if b[i]==44:i=white(b,i+1)
+  else:assert b[i]==93
+ assert white(b,i+1)==len(b);return out
+def scalar(f,k):
+ assert k not in {'parents','parent','records','covers','cache_entries','marks','model','next_parent_forests','stabilizer','witness','seed'}
+ return json.loads(f[k])
+def seal(path,value):
+ b=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode()
+ with path.open('xb')as f:f.write(b);f.flush();os.fsync(f.fileno())
+ assert path.read_bytes()==b
+ return dict(path=str(path),**digest(b))
+
+assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=W).decode().strip()==HEAD
+idx_b=raw(P/'index.json');assert digest(idx_b)==dict(bytes=1096,sha256='5f297f5104419cc3a0635fcf5155ff84ee3870c51a339ec3cbba6ac457da8801')
+idx=json.loads(idx_b);assert idx['accepted_prefix_after']==342 and idx['accepted_slots_after']==53352
+assert idx['full_recursive_dependency_closure']is idx['mathematical_replay']is False
+ALL={};PARTS={};REPORTS=[]
+for part in idx['parts']:
+ name=part['name'];cut(name+'_archive_objects')
+ mr=part['manifest'];mb=raw(P/mr['path']);assert digest(mb)=={k:mr[k]for k in('bytes','sha256')}
+ m=json.loads(mb);assert m['file_count']==len(m['files'])and not m['mathematical_replay']and not m['full_recursive_dependency_closure']
+ rows={e['original_path']:e for e in m['files']};assert len(rows)==m['file_count']
+ objects={e['sha256']:e['bytes']for e in rows.values()};assert len(objects)==m['unique_objects']and sum(objects.values())==m['unique_bytes']
+ assert {p.name for p in(P/name/'objects').iterdir()}==set(objects)
+ for sha,size in objects.items():
+  b=raw(P/name/'objects'/sha);assert digest(b)==dict(bytes=size,sha256=sha)
+ assert raw(P/mr['path'])==mb
+ cut(name+'_origin_aliases')
+ for path,e in rows.items():
+  assert e['object']=='objects/'+e['sha256']
+  raw(path,dict(path=path,bytes=e['bytes'],sha256=e['sha256']))
+  assert path not in ALL or ALL[path][1]['sha256']==e['sha256']
+  ALL[path]=(name,e)
+ PARTS[name]=rows
+ REPORTS.append(dict(part=name,listed_files=len(rows),unique_objects=len(objects),unique_bytes=sum(objects.values()),all_origin_aliases_exact=True))
+def archived(path):
+ name,e=ALL[str(path)];return P/name/e['object']
+cut('retained_scientific_records')
+pres=doc(archived(S/'f009_cohort_resume/actuals/completed_cohort/manifest.json'))
+assert pres['file_count']==len(pres['files'])==395 and pres['scientific_calls']==0
+assert not pres['complete_recursive_upstream_or_mathematical_verification_claimed']
+for e in pres['files']:
+ o,r=e['original'],e['retained'];assert o['bytes']==r['bytes']and o['sha256']==r['sha256']
+ assert ALL[o['path']][1]['sha256']==o['sha256'];raw(r['path'],r)
+cut('retained_metadata_audit_records')
+apres=doc(archived(S/'f009_cohort_resume/actual_audit/execution_evidence/manifest.json'))
+assert len(apres['files'])==83 and apres['scientific_executions']==0 and apres['Original_payloads_decoded']is False
+for e in apres['files']:
+ assert ALL[e['source_path']][1]['sha256']==e['sha256']
+ raw(e['retained_path'],dict(path=e['retained_path'],bytes=e['bytes'],sha256=e['sha256']))
+cut('retained_registration_records_and_source_joins')
+rpres=doc(archived(S/'f009_cohort_resume/registration_review/retained_manifest.json'))
+assert len(rpres['entries'])==9 and rpres['scientific_calls']==0 and not rpres['complete_recursive_ancestry_claimed']
+for e in rpres['entries']:
+ o,r=e['original'],e['retained'];assert o['bytes']==r['bytes']and o['sha256']==r['sha256']
+ assert ALL[o['path']][1]['sha256']==o['sha256'];raw(r['path'],r)
+for mf,expected in [('/private/tmp/f009_complete_parent_stabilizer_supplier/Source_manifest_supply.json','c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e'),('/private/tmp/f009_incremental_parent_cover/Source_manifest_check.json','ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff')]:
+ assert ALL[mf][1]['sha256']==expected
+ d=doc(archived(mf));src=d['Source'];assert all(g in src for g in d['guards'])
+ assert sum(x['bytes']for x in src)+512==d['Source_with_invocation_reserve']<=65536
+ for r in src:assert ALL[r['path']][1]['bytes']==r['bytes']and ALL[r['path']][1]['sha256']==r['sha256']
+exact={str(S/'f009_cohort_resume/audit_actuals.py'):'5e1f6eb979aa4a3a1463a1aa594c7b9bcb8971b38d691997df45b3f8b778ee06',str(S/'f009_cohort_resume/actual_audit/source_review/reuse_integer_only.json'):'ff97c2acf4fc2c723c893085f6173e12285af884c2e3a69924807b9265cf198f',str(S/'f009_cohort_resume/actual_audit/actual/aggregate/reuse_integer_only.json'):'e8bd04d1a6a760229412472840ad24c16657569e346152c9b19492c9f8b996d5',str(S/'f009_cohort_resume/registration_review/reuse_integer_only.json'):'83c77b593c13143654a8d6597b4eac1df464e1f22434a3fabd51156c421fa15d',str(S/'progress/stages/forest_extensions_0330_0341_cohort_shared_strict/update.py'):'755a448d5e9ae87dfa362fd082d2eb25ec054f5f3294a12069a5df0328faebfd'}
+for path,sha in exact.items():assert ALL[path][1]['sha256']==sha
+assert not any('/f009_cohort_preparation/'in p for p in ALL)
+cut('status_sources_and_lexical_scalar_joins')
+mb=raw(T/'manifest.json');assert digest(mb)==dict(bytes=3808,sha256='c68ef79d61099516b2904e24b5878b868fdd406681a2b733082959aaef8717ff')
+m=json.loads(mb);bodies={};expanded=0
+for e in m['sources']:
+ c=e['compressed'];z=raw(T/c['path']);assert digest(z)=={k:c[k]for k in('bytes','sha256')}
+ b=gzip.decompress(z);assert len(b)<=4*2**20;expanded+=len(b);assert expanded<=16*2**20
+ assert digest(b)=={k:e['original'][k]for k in('bytes','sha256')}
+ assert raw(e['original']['path'],e['original'])==b
+ bodies[e['role']]=b
+assert expanded==4366491
+i,c,r,s=(fields(bodies[k])for k in('intake','controller','runtime','job20_selector'))
+sources={e['role']:e for e in m['sources']}
+assert scalar(c,'checkpoint')==scalar(i,'active_controller_checkpoint')==sources['runtime']['original']
+job=fields(fields(i['F004'])['job20']);f=fields(i['F009']);l=fields(i['L026']);rc=fields(r['counts'])
+assert scalar(job,'current_selector')==sources['job20_selector']['original']
+assert scalar(job,'now_unresolved')==scalar(s,'unresolved_positions')==scalar(rc,'F004_current_job_unresolved')==1
+assert scalar(job,'partition')==[173,3605,1]and scalar(job,'remaining_positions')==[2739]
+assert scalar(f,'R5_canonical_pairs_reviewed')==scalar(rc,'R5_canonical_pairs_reviewed')==scalar(f,'R5_canonical_next_parent')==342
+assert scalar(f,'R5_prefix_strict_slots_reviewed')==scalar(rc,'R5_prefix_strict_slots_reviewed')==53352
+assert scalar(i,'intake')==m['expected_counts']['intake']and scalar(i,'measurements_frozen')==dict(applications=53,topics=19)
+assert scalar(l,'generation')==scalar(rc,'L026_GEN')==724 and scalar(l,'subset_NEG')==scalar(rc,'L026_NEG')==744
+assert scalar(l,'separate_IP')==scalar(rc,'L026_separate_IP')==721 and scalar(l,'paid')==1468 and scalar(l,'unpaid')==27440
+assert fields(l['current_typed_ledger'])['current']==fields(r['next_L026_current_snapshot'])['CURRENT']
+cache_count=len(fields(r['cache_entries']))
+for b in array(r['cache_banks']):cache_count+=scalar(fields(b),'entries')
+assert cache_count==m['expected_counts']['runtime_cache_values']==1645
+status_verifier=raw(T/'verify.py');assert len(status_verifier)==5050
+assert status_verifier==subprocess.check_output(['git','show',HEAD+':october_corpus/research/intake/status_sources/verify.py'],cwd=W)
+cut('preceding_edition_git_bytes')
+history=T/'history/parents0000_0329';names=['AUDIT.json','README.rst','VALIDATION.json','current_controller.json.gz','current_intake.json.gz','job20_selector.json.gz','manifest.json','runtime_checkpoint.json.gz','verify.py']
+assert {p.name for p in history.iterdir()}==set(names)
+for name in names:
+ b=raw(history/name);old=subprocess.check_output(['git','show',HEAD+':october_corpus/research/intake/status_sources/'+name],cwd=W)
+ assert b==old
+cut('public_claims_and_validation_records')
+status=fields(raw(W/'october_corpus/INTAKE_STATUS.json'))
+assert scalar(status,'complete_reviewed_mathematical_treatments')==101
+assert scalar(status,'new_complete_manuscripts')==scalar(status,'new_conjecture_resolutions_claimed_by_these_batches')==0
+assert scalar(status,'pending_manuscripts')==['F004','F009','L026']
+readme=raw(W/'october_corpus/README.md');a_readme=raw(P/'README.rst');s_readme=raw(T/'README.rst')
+assert b'342 of 940 parents'in readme and b'53,352'in readme and b'1,633'in readme
+assert b'Original paths are provenance labels'in a_readme and b'complete prior dependency closure'in a_readme
+assert b'earlier inspections by its author'in a_readme and b'attributed imports'in a_readme
+assert b'earlier prose, counters and cache records'in s_readme and b'history/parents0000_0329/'in s_readme
+validation=[]
+for p in(P/'VALIDATION.json',T/'VALIDATION.json'):
+ d=doc(p);actual=d['actual_tool_return'];assert d['root']=='/root'and actual['exit_code']==0
+ assert d['mathematical_replay_performed']is d['scientific_success_repeated_for_export']is False
+ output=json.loads(actual['output']);assert output['status'].startswith('PASS')
+ validation.append(dict(record=ref(p),command=d['command'],Root_recorded_actual_exit_code=0,independently_reexecuted=False))
+assert raw(P/'index.json')==idx_b and raw(T/'manifest.json')==mb
+cut('finished')
+common=dict(reviewer='/root/dependency_audit',Root_authority=False,status='SUPPORTED_PUBLICATION_BYTES_AND_STATUS',blockers=[],
+ scope='Finite exact-byte publication review. Original/cache/scientific payload values remain opaque; Source and descriptor metadata are read. No mathematical or scientific replay, no complete recursive dependency closure, and no claim of portable full mathematical reproduction.',
+ source_audit_program=ref(Path(__file__)),Git_baseline=HEAD,resource_scope=dict(each_cut_paths=512,each_cut_read_bytes=64*2**20,each_file_bytes=4*2**20,whole_audit_seconds=125,whole_RSS_bytes=256*2**20),
+ cuts=CUTS,Original_payloads_decoded=False,scientific_calls=0,canonical_writes=0,new_manuscript_credit=0,new_conjecture_credit=0,
+ claims_qualification='Current status reader is unchanged and may decode complete saved metadata. This independent audit did not execute it; it used lexical selected scalar fields and opaque hashes. Root byte-validation records are attributed genuine execution evidence, not independently reexecuted tool calls.',
+ Root_validation_records=validation)
+arc=dict(common,schema='FINITE_PARENT_COHORT_PUBLICATION_INDEPENDENT_AUDIT_V1',index=ref(P/'index.json'),byte_verifier=ref(P/'verify.py'),parts=REPORTS,
+ retained_records_joined=dict(scientific=395,metadata_audit=83,registration=9),all_listed_original_aliases_verified=True,
+ current_scientific_Source_manifests_closed=True,current_auditor_and_registrar_exact_reviewed_editions=True,unreviewed_future_preparation_code_included=False,
+ historical_control_facts='Accepted earlier24/41 controls remain attributed imports; full historical control Source/Original closure is not claimed.',
+ registration_review=exact[str(S/'f009_cohort_resume/registration_review/reuse_integer_only.json')],prior_cache_values_preserved_by_imported_independent_registration_review=1633)
+arc_ref=seal(P/'AUDIT.json',arc)
+sta=dict(common,schema='OCTOBER_STATUS_SOURCES_INDEPENDENT_PUBLICATION_AUDIT_V2',manifest=ref(T/'manifest.json'),reader=ref(T/'verify.py'),expanded_bytes_verified=expanded,
+ preceding_edition=dict(directory='history/parents0000_0329',file_count=9,all_bytes_equal_Git_baseline=True),
+ expected_counts=m['expected_counts'],cache_payloads_scanned_lexically_but_values_not_decoded=True,cohort_publication_audit=arc_ref,
+ historical_prose_preserved=True,measurement_frozen=True)
+sta_ref=seal(T/'AUDIT.json',sta)
+signal.alarm(0)
+print(json.dumps(dict(status='PASS_PUBLICATION_AUDIT',archive_audit=arc_ref,status_audit=sta_ref,cuts=CUTS,scientific_calls=0,Original_payloads_decoded=False),sort_keys=True))
