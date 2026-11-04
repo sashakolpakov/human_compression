@@ -1,0 +1,59 @@
+from pathlib import Path
+import urllib.request,json,hashlib,os,time,concurrent.futures
+BASE='https://raw.githubusercontent.com/sashakolpakov/human_compression/71454ae681ae8d8201b41ad3a54a4eb848c5fd90/october_corpus/research/intake/'
+S=Path('/Users/sasha/medusa/research/leemans');WORK=Path('/Users/sasha/medusa/census');MAX=16*1024**2
+
+def metadata(path):
+ with urllib.request.urlopen(BASE+path,timeout=30) as r:b=r.read(2*1024**2+1)
+ assert len(b)<=2*1024**2;return json.loads(b)
+
+def digest(path):
+ h=hashlib.sha256();n=0
+ with path.open('rb') as f:
+  while True:
+   b=f.read(65536)
+   if not b:break
+   h.update(b);n+=len(b)
+ return n,h.hexdigest()
+refs=metadata('continuation/forest_and_census/required_refs.json');gaps=metadata('continuation/forest_and_census/gaps.json');missing={o['sha256'] for o in gaps['objects']};items={}
+for g in refs['groups']:
+ for r in g['refs']:
+  key=r['path'];assert key.startswith(str(S)+'/') or key.startswith('/private/tmp/f009_') or key.startswith('/private/tmp/l026_')
+  obj=('continuation/forest_and_census/' if r['sha256'] in missing else 'verified_progress/')+'objects/'+r['sha256']
+  value=dict(path=key,bytes=r['bytes'],sha256=r['sha256'],object=obj)
+  if key in items:assert items[key]['sha256']==value['sha256'],'Conflicting current path editions'
+  items[key]=value
+prep=metadata('preparation/pending_cohort0438_publication438_provenance/manifest.json');prefix='f009_parents0438_0449/';prep_count=0
+for r in prep['logical_files']:
+ if not r['path'].startswith(prefix) or '/author_packaging_provenance/' in r['path']:continue
+ rel=r['path'][len(prefix):];assert '..' not in Path(rel).parts
+ key=str(S/'maintenance/intake/f009_bounded_io_transition/cohort_preparation/parents0438_0449'/rel)
+ value=dict(path=key,bytes=r['bytes'],sha256=r['sha256'],object='preparation/pending_cohort0438_publication438_provenance/objects/'+r['sha256'])
+ if key in items:assert items[key]['sha256']==value['sha256']
+ items[key]=value;prep_count+=1
+assert sum(r['bytes'] for r in items.values())<24*1024**2 and all(0<=r['bytes']<=MAX for r in items.values())
+
+def restore(r):
+ p=Path(r['path']);assert p.is_absolute() and '..' not in p.parts
+ if p.exists():assert not p.is_symlink() and digest(p)==(r['bytes'],r['sha256']);return 0
+ p.parent.mkdir(parents=True,exist_ok=True);assert p.parent.resolve()==p.parent
+ temporary=p.with_name(p.name+'.download');assert not temporary.exists()
+ try:
+  h=hashlib.sha256();n=0
+  with urllib.request.urlopen(BASE+r['object'],timeout=40) as response,temporary.open('xb') as out:
+   while True:
+    b=response.read(65536)
+    if not b:break
+    n+=len(b);assert n<=r['bytes'];h.update(b);out.write(b)
+  assert n==r['bytes'] and h.hexdigest()==r['sha256'];os.rename(temporary,p);return n
+ except BaseException:
+  if temporary.exists():temporary.unlink()
+  raise
+start=time.monotonic();done=0;total=0
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+ for n in pool.map(restore,items.values()):
+  done+=1;total+=n
+  if done%40==0:print(json.dumps({'restored_files':done,'total_files':len(items),'new_MiB':round(total/1024**2,2)}),flush=True)
+result={'scope':'Only current F009/L026 refs and next F009 draft; no mathematics executed','files':len(items),'draft_files':prep_count,'new_bytes':total,'elapsed_seconds':round(time.monotonic()-start,2),'items':list(items.values())}
+with (WORK/'active_files.json').open('w') as f:json.dump(result,f,indent=2);f.write('\n')
+print(json.dumps({k:v for k,v in result.items() if k!='items'}),flush=True)

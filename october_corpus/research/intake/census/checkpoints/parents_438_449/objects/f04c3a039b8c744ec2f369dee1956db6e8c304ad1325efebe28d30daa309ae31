@@ -1,0 +1,15 @@
+from pathlib import Path
+import urllib.request,json,hashlib,concurrent.futures
+base='https://raw.githubusercontent.com/sashakolpakov/human_compression/71454ae681ae8d8201b41ad3a54a4eb848c5fd90/october_corpus/research/intake/preparation/unrun_f004_schreier_and_intersection/'
+with urllib.request.urlopen(base+'manifest.json',timeout=25) as f:x=json.load(f)
+root=Path('/Users/sasha/medusa/research/leemans');refs=x['objects'];assert len(refs)==65 and sum(r['bytes'] for r in refs)==417446
+
+def restore(r):
+ p=Path(r['source']);assert (p.is_relative_to(root) or p.is_relative_to(Path('/Users/sasha/medusa/human_compression/october_corpus/reproduction/finite_orbits_and_stabilizers'))) and '..' not in p.parts
+ if p.exists():raw=p.read_bytes();assert len(raw)==r['bytes'] and hashlib.sha256(raw).hexdigest()==r['sha256'];return 0
+ with urllib.request.urlopen(base+'objects/'+r['sha256'],timeout=25) as f:raw=f.read(r['bytes']+1)
+ assert len(raw)==r['bytes'] and hashlib.sha256(raw).hexdigest()==r['sha256'];p.parent.mkdir(parents=True,exist_ok=True);assert p.parent.resolve()==p.parent
+ with p.open('xb') as f:f.write(raw)
+ return len(raw)
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:n=sum(pool.map(restore,refs))
+print(json.dumps({'method_files':len(refs),'new_bytes':n,'Original_case_data_restored':False,'math_executed':False}))

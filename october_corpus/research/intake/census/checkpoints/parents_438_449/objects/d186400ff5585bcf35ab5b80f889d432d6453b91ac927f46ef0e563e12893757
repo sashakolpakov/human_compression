@@ -1,0 +1,185 @@
+/* Root caller support. No numerical function is loaded here. The host tools
+ * supply genuine frames; this module never fabricates one. Each ASCII staging
+ * chunk is a separately inventoried image. The Python writer uses open('xb'). */
+function utf8Base64(text) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const parts = []; let piece = '', pending = 0, count = 0;
+  function byte(value) {
+    pending = (pending << 8) | value; count++;
+    if (count === 3) {
+      piece += alphabet[(pending >>> 18) & 63] + alphabet[(pending >>> 12) & 63]
+        + alphabet[(pending >>> 6) & 63] + alphabet[pending & 63];
+      pending = 0; count = 0;
+      if (piece.length >= 8192) { parts.push(piece); piece = ''; }
+    }
+  }
+  for (let i = 0; i < text.length; i++) {
+    let value = text.charCodeAt(i);
+    if (value >= 0xd800 && value <= 0xdbff) {
+      const low = text.charCodeAt(++i);
+      if (!(low >= 0xdc00 && low <= 0xdfff)) throw Error('unpaired high surrogate');
+      value = 0x10000 + ((value - 0xd800) << 10) + low - 0xdc00;
+    } else if (value >= 0xdc00 && value <= 0xdfff) throw Error('unpaired low surrogate');
+    if (value < 0x80) byte(value);
+    else if (value < 0x800) { byte(0xc0 | (value >>> 6)); byte(0x80 | (value & 63)); }
+    else if (value < 0x10000) {
+      byte(0xe0 | (value >>> 12)); byte(0x80 | ((value >>> 6) & 63)); byte(0x80 | (value & 63));
+    } else {
+      byte(0xf0 | (value >>> 18)); byte(0x80 | ((value >>> 12) & 63));
+      byte(0x80 | ((value >>> 6) & 63)); byte(0x80 | (value & 63));
+    }
+  }
+  if (count === 1) piece += alphabet[(pending >>> 2) & 63] + alphabet[(pending << 4) & 63] + '==';
+  if (count === 2) piece += alphabet[(pending >>> 10) & 63] + alphabet[(pending >>> 4) & 63]
+    + alphabet[(pending << 2) & 63] + '=';
+  parts.push(piece); return parts.join('');
+}
+
+function makeBoundedRootCalls(factory, budget, platform) {
+  const {tools, store, load} = platform, MiB = 2 ** 20;
+  const quote = value => "'" + String(value).replace(/'/g, "'\\''") + "'";
+  const rows = new Map(budget.inventory.map(row => [row.path, row]));
+  const claimedStages = new Set();
+  const initialReadReserve = budget.Root_caller_read_prepaid_bytes;
+  if (!Number.isSafeInteger(initialReadReserve) || initialReadReserve < 2*MiB
+      || initialReadReserve > 8*MiB) throw Error('explicit bounded caller bootstrap read prepayment');
+  let readBytes = initialReadReserve, writtenBytes = 0, helperNumber = 0;
+  const limits = {read:64*MiB, write:48*MiB, file:4*MiB, frames:32, stagePayload:3*MiB};
+  function need(ok, message) { if (!ok) throw Error(message); }
+  const writer = `from pathlib import Path
+import base64,hashlib,json,os,resource,stat,sys
+p=Path(sys.argv[1]);n=int(sys.argv[2]);stages=[Path(v)for v in sys.argv[3:]]
+assert 0<=n<=4194304 and 1<=len(stages)<=2
+assert p.is_absolute()and p.parent.resolve(strict=True)==p.parent and not os.path.lexists(p)
+encoded=[]
+for q in stages:
+ a=q.lstat();assert q.resolve(strict=True)==q and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size<=3145729
+ with q.open('rb')as f:
+  b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+ sig=lambda x:(x.st_dev,x.st_ino,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+ assert sig(a)==sig(b)==sig(c)==sig(q.lstat())and len(raw)==a.st_size and raw.endswith(b'\\n')
+ encoded.append(raw[:-1])
+body=base64.b64decode(b''.join(encoded),validate=True);assert len(body)==n
+body.decode('utf8')
+with p.open('xb')as f:assert f.write(body)==n;f.flush();os.fsync(f.fileno())
+with p.open('rb')as f:assert f.read(n+1)==body
+assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<134217728
+for q in stages:q.unlink()
+print(json.dumps(dict(path=str(p),bytes=n,sha256=hashlib.sha256(body).hexdigest())))`;
+  async function smallCommand(argv) {
+    const key=budget.guard+'_caller_helper_'+String(helperNumber++);
+    let result = await tools.exec_command({cmd:argv.map(quote).join(' '),
+      workdir:'/Users/sasha/medusa',login:false,yield_time_ms:1000,max_output_tokens:1000});
+    const frames=[], handle=result.session_id;let output='';
+    while(true) {
+      frames.push(result);store(key+'_frames',frames);
+      store(key+'_live_handle',result.session_id===undefined&&Number.isInteger(result.exit_code)?null:handle??null);
+      output+=result.output;need(recorder.utf8Bytes(output)<=65536,'bounded complete helper output');
+      if(result.session_id===undefined)break;
+      need(result.session_id===handle && frames.length<16,'same live helper and finite polling capacity');
+      result=await tools.write_stdin({session_id:handle,chars:'',yield_time_ms:1000,max_output_tokens:1000});
+    }
+    store(key+'_terminal',result);store(key+'_live_handle',null);
+    need(result.exit_code === 0, 'bounded caller writer failed: ' + output);
+    return output;
+  }
+  async function exclusive(path, text) {
+    const row = rows.get(path); need(row && row.existing === null, 'fresh declared final caller file');
+    const size = recorder.utf8Bytes(text);
+    need(size <= row.maximum_bytes && size <= limits.file, 'actual final UTF8 bound');
+    const encoded = utf8Base64(text), stages = [], images = [];
+    for (let offset = 0, index = 0; offset < encoded.length; offset += limits.stagePayload, index++) {
+      const name = path + '.encoding_' + index;
+      const body = encoded.slice(offset, offset + limits.stagePayload) + '\n';
+      const image = rows.get(name);
+      need(image && image.component === 'images' && image.existing === null
+        && body.length <= image.maximum_bytes && !claimedStages.has(name), 'declared ASCII encoding image');
+      stages.push(name); images.push({name,body});
+    }
+    need(stages.length >= 1 && stages.length <= 2, 'at most two bounded images per caller file');
+    const encodedBytes = images.reduce((sum, item) => sum + item.body.length, 0);
+    need(readBytes + encodedBytes + size <= limits.read
+      && writtenBytes + encodedBytes + size <= limits.write, 'whole finite caller IO before first stage write');
+    // Reserve the complete allowance before any write. Failure or cleanup
+    // never refunds a possible partial stage/final body.
+    readBytes += encodedBytes + size; writtenBytes += encodedBytes + size;
+    const preflight = `from pathlib import Path
+import os,sys
+for value in sys.argv[1:]:
+ p=Path(value);assert p.is_absolute()and '..'not in p.parts and not os.path.lexists(p)
+ q=p.parent
+ while not q.exists():q=q.parent
+ assert q.resolve(strict=True)==q
+ p.parent.mkdir(parents=True,exist_ok=True)
+ assert p.parent.resolve(strict=True)==p.parent`;
+    await smallCommand(['/Users/sasha/.venvs/global/bin/python','-E','-B','-S','-c',preflight,path,...stages]);
+    for (const image of images) {
+      claimedStages.add(image.name);
+      await tools.apply_patch('*** Begin Patch\n*** Add File: ' + image.name + '\n+'
+        + image.body.slice(0,-1) + '\n*** End Patch');
+    }
+    const answer = await smallCommand(['/Users/sasha/.venvs/global/bin/python','-E','-B','-S','-c',writer,path,String(size),...stages]);
+    const ref = JSON.parse(answer); need(ref.path === path && ref.bytes === size, 'exact final write descriptor');
+    return ref;
+  }
+  const recorder = factory(budget, {writeExclusive:exclusive});
+  for(const row of rows.values())if(row.component==='sdk'||row.component==='raw') {
+    need(row.existing===null,'all caller final destinations are fresh');
+    const upper=4*Math.ceil(row.maximum_bytes/3);
+    for(let offset=0,index=0;offset<upper;offset+=limits.stagePayload,index++) {
+      const stage=rows.get(row.path+'.encoding_'+index);
+      need(stage && stage.component==='images' && stage.existing===null
+        && stage.maximum_bytes>=Math.min(limits.stagePayload,upper-offset)+1,
+        'all raw and both SDK encoding images preflighted before any callback');
+    }
+  }
+  async function run(key, argv, rawDirectory, extra = {}) {
+    need(/^[A-Za-z0-9_.-]+$/.test(key) && !load(key+'_initial'), 'fresh genuine invocation key');
+    need(Array.isArray(argv) && argv.every(value => typeof value === 'string'), 'literal complete argv');
+    const kwargs = {cmd:argv.map(quote).join(' '),workdir:'/Users/sasha/medusa',login:false,
+      yield_time_ms:1000,max_output_tokens:4000,...extra};
+    need(kwargs.cmd === argv.map(quote).join(' '), 'argv and actual tool command agree');
+    store(key+'_argv',argv); store(key+'_actual_kwargs',kwargs);
+    await recorder.writeRaw([{path:rawDirectory+'/issued.json',value:{schema:'ROOT_ISSUED_API_INTENT_V1',
+      root:'/root',argv,tool_arguments:kwargs,actual_response_owed:true}}]);
+    let result = await tools.exec_command(kwargs), number = 0;
+    const frames = [], chunks=new Set(), handle=result.session_id; store(key+'_initial',result);
+    while (true) {
+      need(number < limits.frames, 'finite genuine frame inventory');
+      frames.push(result); store(key+'_frames',frames);
+      store(key+'_live_handle',result.session_id===undefined&&Number.isInteger(result.exit_code)?null:handle??null);
+      store(key+'_reported_handle',result.session_id??null);
+      await recorder.writeRaw([{path:rawDirectory+'/frame_'+String(number).padStart(4,'0')+'.json',value:result}]);
+      need(typeof result.chunk_id==='string' && result.chunk_id.length>0 && !chunks.has(result.chunk_id),
+        'genuine unique nonempty chunk identity');chunks.add(result.chunk_id);
+      if (result.session_id === undefined) break;
+      need(result.session_id===handle && number+1<limits.frames,'same live handle and capacity before polling');
+      result = await tools.write_stdin({session_id:handle,chars:'',yield_time_ms:10000,max_output_tokens:4000});
+      number++;
+    }
+    need(Number.isInteger(result.exit_code), 'genuine terminal exit code');
+    store(key+'_terminal',result); store(key+'_live_handle',null); return result;
+  }
+  async function capturePair(key, destinations) {
+    const frames=load(key+'_frames'), argv=load(key+'_argv'), kwargs=load(key+'_actual_kwargs');
+    need(frames?.length && argv && kwargs && frames.at(-1).session_id === undefined
+      && Number.isInteger(frames.at(-1).exit_code), 'genuine terminal frames before SDK');
+    const first=frames[0], last=frames.at(-1);
+    const sdk={schema:'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1',root:'/root',actor:'/root',
+      child_argv:argv,issued_argv:argv,issued_tool_arguments:kwargs,issued_command:kwargs.cmd,
+      canonical_argv_command:argv.map(value=>/^[A-Za-z0-9_./:-]+$/.test(value)?value:quote(value)).join(' '),
+      actual_tool:{handle:first.session_id??null,initial_chunk:first.chunk_id,terminal_chunk:last.chunk_id,
+        exit_code:last.exit_code,synchronous:first.session_id===undefined},
+      full_initial_tool_return:first,full_tool_return:last,all_genuine_api_frames:frames};
+    const refs=await recorder.writeSDKPair(sdk,destinations); store(key+'_capture_pair',refs);
+    return {refs,caller_read_upper:readBytes,caller_written_content_upper:writtenBytes};
+  }
+  async function writeSyntheticControl(path, value) {
+    need(budget.role_kind === 'controls' && budget.no_Original_authorization === true
+      && value?.schema === 'ROOT_SYNTHETIC_UTF8_WRITER_CONTROL_V1', 'explicit synthetic writer control only');
+    return recorder.writeRaw([{path,value}]);
+  }
+  return Object.freeze({run,capturePair,writeSyntheticControl,
+    accounting:()=>({caller_read_upper:readBytes,caller_written_content_upper:writtenBytes})});
+}
+if (typeof module !== 'undefined') module.exports={utf8Base64,makeBoundedRootCalls};

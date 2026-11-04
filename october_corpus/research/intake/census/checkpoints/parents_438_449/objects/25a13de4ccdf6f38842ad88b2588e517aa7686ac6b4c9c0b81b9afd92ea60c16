@@ -1,0 +1,120 @@
+"""Export only the active census working set, reusing published byte objects."""
+import hashlib
+import json
+import os
+import re
+import shutil
+import stat
+import urllib.request
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+S = Path('/Users/sasha/medusa/research/leemans')
+W = Path('/Users/sasha/medusa/human_compression')
+OUT = W / 'october_corpus/research/intake/census/checkpoints/parents_438_449'
+BASELINE = '71454ae681ae8d8201b41ad3a54a4eb848c5fd90'
+INTAKE_TREE = '8b835e4965afcf097743fd8d6ebf9f33560f89fb'
+API = 'https://api.github.com/repos/sashakolpakov/human_compression/git/trees/' + INTAKE_TREE + '?recursive=1'
+
+def ref(path):
+    h = hashlib.sha256()
+    before = path.stat()
+    assert stat.S_ISREG(before.st_mode) and not path.is_symlink() and before.st_size <= 8 * 2**20
+    count = 0
+    with path.open('rb') as stream:
+        while block := stream.read(65536):
+            count += len(block)
+            h.update(block)
+    after = path.stat()
+    assert (before.st_size, before.st_mtime_ns, before.st_ino) == (after.st_size, after.st_mtime_ns, after.st_ino)
+    assert count == before.st_size
+    return dict(path=str(path), bytes=count, sha256=h.hexdigest())
+
+with urllib.request.urlopen(urllib.request.Request(API, headers={'User-Agent': 'human-compression-census'}), timeout=30) as response:
+    body = response.read(8 * 2**20 + 1)
+assert len(body) <= 8 * 2**20
+tree = json.loads(body)
+assert tree['sha'] == INTAKE_TREE and tree['truncated'] is False
+known = {}
+for item in tree['tree']:
+    if item['type'] == 'blob' and re.search(r'/objects/[0-9a-f]{64}$', item['path']):
+        known.setdefault(Path(item['path']).name, dict(path='october_corpus/research/intake/' + item['path'], bytes=item['size']))
+
+def files(root):
+    for directory, dirs, names in os.walk(root):
+        dirs[:] = [name for name in dirs if name not in ['.git', '__pycache__']]
+        for name in names:
+            if name in ['active.lock', '.DS_Store']:
+                continue
+            path = Path(directory) / name
+            assert not name.endswith(('.pyc', '.download')) and '.encoding_' not in name
+            yield path
+
+selected = list(files(S)) + list(files(WORK))
+active = json.loads((WORK / 'active_files.json').read_bytes())
+for r in active['items']:
+    path = Path(r['path'])
+    if str(path).startswith(('/private/tmp/f009_', '/private/tmp/l026_')):
+        assert ref(path) == {k: r[k] for k in ['path', 'bytes', 'sha256']}
+        selected.append(path)
+selected += list(files(Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0438')))
+selected += list(files(Path('/private/tmp/f004_fresh_schreier_covers')))
+selected += [Path('/private/tmp/f004_schreier_controls_actual_v1_SDK.json')]
+selected += list(Path('/private/tmp/f009_generic_captures').glob('Root_f009_cohort0438_*.json'))
+for directory in Path('/private/tmp/intake_actual_transports').glob('Root_f009_cohort0438_*'):
+    selected += list(files(directory))
+selected += list(files(Path('/private/tmp/intake_actual_transports/Root_f004_schreier_controls_actual_v1')))
+for name in ['field.py', 'solve.py', 'schreier.py', 'runtime.py', 'PROOF.tex']:
+    selected.append(W / 'october_corpus/reproduction/finite_orbits_and_stabilizers' / name)
+selected = sorted(set(selected))
+assert len(selected) < 4000 and sum(p.stat().st_size for p in selected) < 80 * 2**20
+assert not OUT.exists()
+(OUT / 'objects').mkdir(parents=True)
+rows = []
+new = {}
+for path in selected:
+    r = ref(path)
+    if r['sha256'] in known:
+        old = known[r['sha256']]
+        assert old['bytes'] == r['bytes']
+        r['storage'] = dict(commit=BASELINE, path=old['path'])
+    else:
+        target = OUT / 'objects' / r['sha256']
+        if not target.exists():
+            with path.open('rb') as source, target.open('xb') as destination:
+                shutil.copyfileobj(source, destination, 65536)
+            assert ref(target)['sha256'] == r['sha256']
+            new[r['sha256']] = r['bytes']
+        r['storage'] = dict(path=str(target.relative_to(W)))
+    rows.append(r)
+
+status = dict(schema='OCTOBER_CENSUS_STATUS_V1', mathematical_manuscripts=104,
+              complete_treatments=101, remaining=['F004', 'F009', 'L026'],
+              F009=dict(registered_parent_prefix=450, total_parents=940, strict_slots=70200,
+                        newly_verified_range=[438, 450], new_strict_slots=1872,
+                        whole_manuscript_complete=False),
+              F004=dict(completed_q11_jobs=127, total_q11_jobs=272,
+                        current_job=155, settled_positions=773, total_positions=807,
+                        fresh_synthetic_controls=16, new_case_credit=0),
+              L026=dict(paid_status_rows=1471, unpaid_status_rows=27437, total_status_rows=28908,
+                        typed_generation_rows=725, typed_negative_rows=746,
+                        canonical_global_rows=1470, separate_IP_rows=724,
+                        changed_in_this_checkpoint=False,
+                        qualification='The typed status ledger and canonical global layer are distinct; their counts are not combined.'),
+              compression_measurements_changed=False,
+              qualification='Registered finite checks and implementation controls only; no new manuscript completion, conjecture solution or Lean proof.')
+manifest = dict(schema='OCTOBER_ACTIVE_CENSUS_CHECKPOINT_V1', baseline_commit=BASELINE,
+                baseline_intake_tree=INTAKE_TREE, status=status, files=rows,
+                logical_files=len(rows), logical_bytes=sum(r['bytes'] for r in rows),
+                new_objects=len(new), new_bytes=sum(new.values()),
+                restoration='Verify each byte object by its SHA256 and size before using its recorded original path. Historical frozen beforeimages and the current canonical afterimages are distinct; select the required state explicitly. Do not blindly replay canonical mutations.',
+                verification='Run the unchanged strict checkers on supplied certificates; preserve producer/verifier separation, Source manifests, resource bounds and recorded failed metadata attempts. Scientific-bearing bodies retain their original attribution.',
+                work_scope='Only F004, F009 and L026 plus their shared controller, guards and byte provenance. No full corpus, source-PDF mirror or compilation cache.')
+with (OUT / 'manifest.json').open('x') as stream:
+    json.dump(manifest, stream, sort_keys=True, indent=2)
+    stream.write('\n')
+status['checkpoint_manifest'] = str((OUT / 'manifest.json').relative_to(W))
+with (OUT.parent.parent / 'status.json').open('x') as stream:
+    json.dump(status, stream, sort_keys=True, indent=2)
+    stream.write('\n')
+print(json.dumps({k: manifest[k] for k in ['logical_files', 'logical_bytes', 'new_objects', 'new_bytes']}))

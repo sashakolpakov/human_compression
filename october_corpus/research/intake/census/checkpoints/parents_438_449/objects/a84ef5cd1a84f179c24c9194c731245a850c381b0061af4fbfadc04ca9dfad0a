@@ -1,0 +1,37 @@
+"""Retain a byte-identical genuine SDK alias and its metadata execution pointer."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+G = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/cohorts/cohort_from0438')
+parser = argparse.ArgumentParser()
+parser.add_argument('--name', required=True)
+parser.add_argument('--SDK', required=True)
+parser.add_argument('--raw', required=True)
+args = parser.parse_args()
+assert args.name.replace('_', '').isalnum()
+source = Path(args.SDK)
+body = source.read_bytes()
+assert len(body) <= 4 * 2**20
+sdk = json.loads(body)
+assert sdk['actual_tool']['exit_code'] == 0
+raw = Path(args.raw)
+issued = json.loads((raw / 'issued.json').read_bytes())
+assert issued['argv'] == sdk['issued_argv'] and issued['tool_arguments'] == sdk['issued_tool_arguments']
+for i, frame in enumerate(sdk['all_genuine_api_frames']):
+    assert json.loads((raw / ('frame_%04d.json' % i)).read_bytes()) == frame
+assert not (raw / ('frame_%04d.json' % len(sdk['all_genuine_api_frames']))).exists()
+destination = G / 'metadata/SDK' / (args.name + '_v1.json')
+destination.parent.mkdir(parents=True, exist_ok=True)
+with destination.open('xb') as stream:
+    stream.write(body)
+assert destination.read_bytes() == body
+ref = dict(path=str(destination), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+record = dict(actual_SDK=ref, edition=1, raw_directory=str(raw), prior_non_success_attempts=[])
+path = G / 'metadata/executions' / (args.name + '.json')
+path.parent.mkdir(parents=True, exist_ok=True)
+with path.open('x') as stream:
+    json.dump(record, stream, sort_keys=True, indent=2)
+    stream.write('\n')
+print(json.dumps(record))

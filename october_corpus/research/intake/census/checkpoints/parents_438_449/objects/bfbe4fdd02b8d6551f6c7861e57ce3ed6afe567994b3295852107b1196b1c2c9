@@ -1,0 +1,59 @@
+"""Issue the already reviewed synthetic controls; never launch mathematics."""
+import hashlib
+import json
+import os
+from pathlib import Path
+
+ROOT = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_schreier_covers')
+ACTIVE = ROOT / 'actual/controls'
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+
+def reference(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    assert len(body) < 32768
+    path.parent.mkdir(parents=True, exist_ok=True)
+    assert path.parent.resolve() == path.parent
+    with path.open('xb') as stream:
+        stream.write(body)
+    return reference(path)
+
+def trip(ref):
+    return [ref['path'], str(ref['bytes']), ref['sha256']]
+
+manifest_ref = reference(ROOT / 'Source_manifest.json')
+manifest = json.loads((ROOT / 'Source_manifest.json').read_bytes())
+peer_ref = reference(ROOT / 'source_review/reuse_integer_only.json')
+peer = json.loads((ROOT / 'source_review/reuse_integer_only.json').read_bytes())
+assert peer['status'] == 'SUPPORTED_STATIC_F004_SCHREIER_COVERS_SOURCE'
+assert peer['Source_manifest'] == manifest_ref and peer['blockers'] == []
+for ref in manifest['roles']['CONTROLS']['loaded_sources'] + manifest['guards'] + [manifest['proof'], manifest['protocol']]:
+    assert reference(Path(ref['path'])) == ref
+
+plan = json.loads((ROOT / 'templates/CONTROLS_PLAN_FALSE.json').read_bytes())
+assert plan['Source_manifest'] == manifest_ref and plan['Root_authority'] is False
+plan['ready_for_execution'] = True
+assert not os.path.lexists(plan['output'])
+Path(plan['output']).parent.mkdir(parents=True, exist_ok=True)
+plan_ref = write(ACTIVE / 'plan.json', plan)
+gate = json.loads((ROOT / 'templates/CONTROLS_ROOT_GATE_FALSE.json').read_bytes())
+assert gate['Source_manifest'] == manifest_ref and gate['Original_calls_authorized'] is False
+assert gate['Root_import'] is None and gate['controls_actual'] is None
+assert not os.path.lexists(gate['guard'])
+Path(gate['guard']).parent.mkdir(parents=True, exist_ok=True)
+gate.update(Root_authority=True, issued=True, whole_Source_and_bounds_owned=True,
+            Source_peer=peer_ref, plan=plan_ref)
+gate_ref = write(ACTIVE / 'Root_gate.json', gate)
+child = [PYTHON, '-E', '-B', '-S', plan['program']['path'], '--actor', '/root', '--role', 'CONTROLS',
+         '--manifest', *trip(manifest_ref), '--plan', *trip(plan_ref), '--gate', *trip(gate_ref)]
+argv = ['/usr/bin/env']
+for name in ['COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'COVERAGE_PROCESS_START', 'OPENSSL_CONF', 'OPENSSL_MODULES']:
+    argv += ['-u', name]
+argv += [PYTHON, '-E', '-B', manifest['guards'][0]['path'], '--volume', '/Users/sasha/medusa',
+         '--output', gate['guard'], '--rss-cap-mib', '128', '--timeout', '100', '--', *child]
+print(json.dumps(dict(argv=argv, plan=plan_ref, Root_gate=gate_ref,
+                      science_case_credit=0, synthetic_only=True)))

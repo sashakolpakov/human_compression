@@ -1,0 +1,87 @@
+"""Preserve registration history and issue the unchanged administrative check."""
+import hashlib
+import json
+import os
+from pathlib import Path
+
+M = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+G = M / 'f009_bounded_io_transition'
+D = M / 'f009_resource_binding_retries'
+C = G / 'cohorts/cohort_from0438'
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+def reference(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    assert len(body) < 65536
+    with path.open('xb') as stream:
+        stream.write(body)
+    return reference(path)
+
+def alias(edition, expected_exit):
+    key = 'Root_f009_cohort0438_register_actual_v%d' % edition
+    source = Path('/private/tmp/f009_generic_captures') / (key + '.json')
+    body = source.read_bytes()
+    sdk = json.loads(body)
+    assert sdk['actual_tool']['exit_code'] == expected_exit
+    raw = Path('/private/tmp/intake_actual_transports') / key
+    intent = read(raw / 'issued.json')
+    assert intent['argv'] == sdk['issued_argv'] and intent['tool_arguments'] == sdk['issued_tool_arguments']
+    for i, frame in enumerate(sdk['all_genuine_api_frames']):
+        assert read(raw / ('frame_%04d.json' % i)) == frame
+    assert not (raw / ('frame_%04d.json' % len(sdk['all_genuine_api_frames']))).exists()
+    target = C / ('metadata/SDK/register_v%d.json' % edition)
+    with target.open('xb') as stream:
+        stream.write(body)
+    return reference(target), str(raw)
+
+old, old_raw = alias(1, 1)
+selected, selected_raw = alias(2, 0)
+inspection = reference(D / 'actual/cohort0438_registration/v1_no_write_inspection.json')
+assert read(Path(inspection['path']))['all26_declared_outputs_absent'] is True
+reconciliation = dict(schema='ROOT_F009_GENERIC_METADATA_NON_SUCCESS_RECONCILIATION_V2', root='/root',
+                      Root_authority=True, prior_actual_SDK=old, selected_actual_SDK=selected,
+                      op='register.py', logical_key='register', same_logical_metadata_operation_owned=True,
+                      no_scientific_worker_or_predicate_called=True, no_completed_output_replayed=True,
+                      all_old_frames_and_partial_outputs_retained=True, inspections=[inspection],
+                      qualification='First metadata attempt refused a forbidden review key before stage construction; the second imports a typed projection of the same sealed review. No Source or mathematical change.')
+rr = write(D / 'actual/cohort0438_registration/reconciliation_v1_v2.json', reconciliation)
+execution = dict(actual_SDK=selected, edition=2, raw_directory=selected_raw,
+                 prior_non_success_attempts=[dict(edition=1, actual_SDK=old, raw_directory=old_raw, reconciliation=rr)])
+write(C / 'metadata/executions/register.json', execution)
+where = D / 'actual/cohort0438_postcheck'
+out = where / 'output'
+hr = reference(C / 'cohort.json')
+readback = reference(M / 'progress/stages/forest_extensions_0438_0449_generic_profiles/readback.json')
+registration_gate = reference(D / 'actual/cohort0438_registration/Root_gate_v2.json')
+q = dict(schema='F009_RESOURCE_BINDING_METADATA_REQUEST_V1', Root_authority=False,
+         op='check_registration.py', cohort=hr, readback=readback,
+         registration_execution=execution, registration_gate=registration_gate,
+         outputs=[dict(path=str(out / 'result.json'), maximum_bytes=262144)])
+qr = write(where / 'request.json', q)
+packet = read(D / 'packet.json')
+gate = read(G / 'cohort_preparation/parents0438_0449/batch00/Root_prepare_suppliers_gate_FALSE.json')
+gate.update(op=q['op'], Source_manifest=packet['entry_manifests'][q['op']], request=qr)
+for flag in ['Root_authority', 'adopted', 'whole_supplement_and_borrowed_Source_owned',
+             'all_original_meanings_and_new_binding_scope_owned', 'no_successful_science_replayed', 'serial_sole_writer_scope_owned']:
+    assert gate[flag] is False
+    gate[flag] = True
+assert gate['canonical_writes_authorized'] is False
+gr = write(where / 'Root_gate.json', gate)
+out.mkdir()
+def trip(ref):
+    return [ref['path'], str(ref['bytes']), ref['sha256']]
+argv = ['/usr/bin/env']
+for name in ['COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'COVERAGE_PROCESS_START', 'OPENSSL_CONF', 'OPENSSL_MODULES']:
+    argv += ['-u', name]
+argv += [PYTHON, '-E', '-B', '-S', packet['program']['path'], '--actor', '/root', '--op', q['op'],
+         '--packet', *trip(reference(D / 'packet.json')), '--request', *trip(qr), '--Root-gate', *trip(gr), '--out', str(out)]
+print(json.dumps(dict(argv=argv, registration_execution=execution, reconciliation=rr)))

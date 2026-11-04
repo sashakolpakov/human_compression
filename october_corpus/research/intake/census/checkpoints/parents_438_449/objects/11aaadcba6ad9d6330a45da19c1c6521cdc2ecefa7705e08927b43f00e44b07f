@@ -1,0 +1,418 @@
+"""UNISSUED reusable Root DATA issuer. Default refuses before IO; no worker launch.
+Root must own a fresh explicitly activated copy; no old constructor Source verdict is claimed.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import resource
+import signal
+import stat
+import sys
+import time
+
+ROOT_AUTHORITY = True
+GEN = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition')
+CORE = GEN.parent / 'resource_profiles/bounded_output'
+MEDUSA = Path('/Users/sasha/medusa')
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+MIB = 2**20
+CAPS = dict(read_bytes=16*MIB, write_bytes=MIB, paths=256, file_bytes=4*MIB, rss_bytes=256*MIB, seconds=125, Source_bytes=98304)
+STATIC_PEER = dict(path=str(GEN/'source_review/reuse_integer_only.json'), bytes=26460,
+    sha256='6a5137c897545556f5c77eab9f563d7419210cfc748b5669126a8ac88772dcf9')
+CORE_CONTROLS = dict(path=str(CORE/'actual/core_admission/actual_review/reuse_integer_only.json'), bytes=11846,
+    sha256='3342fd4dd422de28e637e07d2e93df5d93724d2c2822d018dbac725c74020042')
+GENERIC_CONTROLS = dict(path=str(GEN/'actual/metadata_controls/actual_review/reuse_integer_only.json'), bytes=14316,
+    sha256='527ce5f3734beded37477b77a386c98f7bb592e50d7bece9d0c0b381e0f8e355')
+CALLER_MANIFEST = dict(path=str(CORE/'recording/Source_manifest.json'), bytes=4121,
+    sha256='4b48551de87890b25452f70d40cda359d1193dc484fc38fa296dfd8a933819e8')
+CALLER_ACTUAL = dict(path=str(CORE/'recording/actual/review/reuse_integer_only.json'), bytes=7235,
+    sha256='c9d5a6abb31226d43e2e316c33c3352686874034acfe8277e47199e379c7ecd0')
+INTEGRATION_REVIEW = dict(path='/Users/sasha/medusa/census/reviews/f009_call_scope.json', bytes=9313,
+    sha256='d3848078cdc5080a85ca1737bbf6a5277daff9627dbf77d72b09aae47d1f7185')
+
+
+def need(ok, reason):
+    if not ok:
+        raise ValueError(reason)
+
+
+def canonical(value):
+    return (json.dumps(value, sort_keys=True, indent=2, allow_nan=False)+'\n').encode('ascii')
+
+
+def reference(path, body):
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+
+def decode(raw):
+    def pairs(items):
+        out = {}
+        for key, value in items:
+            need(key not in out, 'unique ordinary metadata key')
+            out[key] = value
+        return out
+    return json.loads(raw, object_pairs_hook=pairs,
+        parse_constant=lambda x: (_ for _ in ()).throw(ValueError(x)))
+
+
+class Reader:
+    def __init__(self):
+        self.started = time.monotonic()
+        self.bytes = 0
+        self.bodies = {}
+        self.pins = {}
+
+    def check(self):
+        need(time.monotonic()-self.started < CAPS['seconds']-5, 'metadata deadline')
+        rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        if sys.platform != 'darwin':
+            rss *= 1024
+        need(rss <= CAPS['rss_bytes'], 'cooperative metadata self-RSS bound')
+
+    def read(self, expected, fresh=False):
+        self.check()
+        p = Path(expected['path'])
+        if str(p) in self.bodies and not fresh:
+            need(self.pins[str(p)] == expected, 'one exact input edition')
+            return self.bodies[str(p)]
+        before = p.lstat()
+        need(p.is_absolute() and p.resolve(strict=True) == p
+            and stat.S_ISREG(before.st_mode) and before.st_nlink == 1,
+            'canonical regular single-link input')
+        need(type(expected['bytes']) is int and 0 <= expected['bytes'] <= CAPS['file_bytes']
+            and before.st_size == expected['bytes'], 'bounded whole input extent')
+        need(self.bytes+before.st_size <= CAPS['read_bytes']
+            and len(set(self.pins)|{str(p)}) <= CAPS['paths'], 'complete metadata read ledger')
+        sig = lambda x: (x.st_dev, x.st_ino, x.st_mode, x.st_nlink,
+                         x.st_size, x.st_mtime_ns, x.st_ctime_ns)
+        with os.fdopen(os.open(p, os.O_RDONLY|os.O_NOFOLLOW), 'rb') as f:
+            opened = os.fstat(f.fileno())
+            body = f.read(before.st_size+1)
+            closed = os.fstat(f.fileno())
+        need(sig(before) == sig(opened) == sig(closed) == sig(p.lstat())
+            and reference(p, body) == expected, 'stable full input hash')
+        self.bytes += len(body)
+        self.pins[str(p)] = expected
+        self.bodies[str(p)] = body
+        return body
+
+    def document(self, expected):
+        return decode(self.read(expected))
+
+    def close(self):
+        need(self.bytes+sum(r['bytes'] for r in self.pins.values()) <= CAPS['read_bytes'],
+             'prospective complete closing reads')
+        for r in list(self.pins.values()):
+            need(self.read(r, fresh=True) == self.bodies[r['path']], 'closing byte identity')
+
+
+def cli_ref(values):
+    return dict(path=values[0], bytes=int(values[1]), sha256=values[2])
+
+
+def check_parent(path):
+    p = Path(path)
+    need(p.is_absolute() and '..' not in p.parts and '.' not in p.parts,
+         'absolute canonical planned destination')
+    ancestor = p.parent
+    while not ancestor.exists():
+        need(not ancestor.is_symlink(), 'no dangling symbolic parent')
+        ancestor = ancestor.parent
+    need(ancestor.resolve(strict=True) == ancestor and ancestor.is_dir()
+        and ancestor.stat().st_dev == MEDUSA.stat().st_dev,
+        'canonical same-volume writer ancestry')
+
+
+def check_inventory(h):
+    rows = h['parent_union_inventory']
+    child = [rows[i] for i in h['child_inventory_row_indices']]
+    caps = dict(primary=32*MIB, guard=MIB, sdk=8*MIB,
+                raw=16*MIB, retention=64*MIB, images=32*MIB)
+    need(len(rows) == 83 and len(child) == 13, 'exact parent and child row counts')
+    seen, totals = set(), {k: 0 for k in caps}
+    for r in rows:
+        need(set(r) == {'component', 'path', 'maximum_bytes', 'existing'}
+            and r['component'] in caps and r['existing'] is None
+            and type(r['maximum_bytes']) is int
+            and 0 <= r['maximum_bytes'] <= 4*MIB
+            and r['path'] not in seen, 'typed unique fresh writer row')
+        seen.add(r['path']); totals[r['component']] += r['maximum_bytes']
+        check_parent(r['path'])
+        need(not os.path.lexists(r['path']), 'every future final and encoding path is fresh')
+    need(all(totals[k] <= caps[k] for k in caps), 'whole component subtotals')
+    need(sum(totals.values()) == h['parent_unique_content_upper']
+        and sum(totals.values())+16*MIB == h['parent_union_with_allocation'] <= 169*MIB < 256*MIB,
+        'one complete unique-path ledger and one reserve')
+    need(sum(r['maximum_bytes'] for r in child) == h['child_inventory_total_upper'],
+         'all five child outputs plus guard and two SDKs')
+    sdks = [r['path'] for r in rows if r['component'] == 'sdk']
+    need(len(sdks) == 2 and sdks == [r['path'] for r in child if r['component'] == 'sdk']
+        and sdks == h['proposed_layout']['SDK_destinations'], 'same two SDK destinations in both views')
+    need(Path(sdks[1]).name == 'init_v1.json', 'later metadata audit requires exact init SDK basename')
+    raw = [r for r in rows if r['component'] == 'raw']
+    images = [r for r in rows if r['component'] == 'images']
+    need(len(raw) == 33 and len(images) == 37, 'issued plus32 frame rows and37 encoding rows')
+    expected_images = {}
+    for r in [r for r in rows if r['component'] in ('raw', 'sdk')]:
+        upper = 4*((r['maximum_bytes']+2)//3)
+        for i, offset in enumerate(range(0, upper, 3*MIB)):
+            expected_images[r['path']+'.encoding_'+str(i)] = min(3*MIB, upper-offset)+1
+    need({r['path']: r['maximum_bytes'] for r in images} == expected_images,
+         'every final body has all exact base64 chunks including newline bytes')
+    final_bytes = sum(r['maximum_bytes'] for r in rows if r['component'] in ('raw', 'sdk'))
+    encoded_bytes = sum(expected_images.values())
+    need(final_bytes+encoded_bytes == 39452801 < 48*MIB
+        and 2*MIB+final_bytes+encoded_bytes == 41549953 < 64*MIB,
+        'complete separate caller IO with2MiB prepaid reads')
+    expected_outputs = {r['path']: r['maximum_bytes'] for r in h['expected_init_outputs']}
+    need({r['path']: r['maximum_bytes'] for r in child if r['component'] == 'primary'} == expected_outputs
+        and sum(expected_outputs.values()) == h['child_planned_content_upper'] < 16*MIB,
+        'all five exact init destinations and bounded planned bodies')
+    return rows, child, sdks
+
+
+def resolve(projection, bindings):
+    return [str(bindings[t['reference']][t['part']]) if type(t) is dict else t
+            for t in projection]
+
+
+def main():
+    if not ROOT_AUTHORITY:
+        raise PermissionError('FALSE/unissued Root DATA; own and activate a fresh copy before IO')
+    need(sys.flags.ignore_environment and sys.flags.no_site
+        and sys.dont_write_bytecode and not sys.flags.optimize, 'Python-E-B-S/no-O')
+    signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('125s metadata issuance')))
+    signal.alarm(CAPS['seconds'])
+    ap = argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--actor', required=True)
+    ap.add_argument('--handoff', nargs=3, required=True)
+    ap.add_argument('--whole-Source-owned', action='store_true', required=True)
+    ap.add_argument('--issue', action='store_true', required=True)
+    a = ap.parse_args()
+    need(a.actor == '/root' and a.issue, 'explicit Root-only metadata issuance')
+    reader = Reader()
+    need(a.whole_Source_owned, 'Root whole operation Source/data ownership')
+    INPUT_HANDOFF = cli_ref(a.handoff)
+    h = reader.document(INPUT_HANDOFF)
+    need(h['Root_authority'] is False and h['schema'] == 'FALSE_F009_GENERIC_NEXT_COHORT_PREPARATION_V1', 'unissued exact metadata handoff')
+    begin = h['begin']
+    need(type(begin) is int and 426 <= begin < 940 and h['end'] == begin+12 <= 940, 'typed twelve-parent scope')
+    ACTUAL = GEN / ('actual/cohort%04d_init' % begin)
+    INPUTS = ACTUAL / 'inputs'
+    COHORT = GEN / 'cohorts' / ('cohort_from%04d' % begin)
+    OLD_COHORT = GEN.parent / 'f009_cohort_preparation/cohorts' / ('cohort_from%04d' % begin)
+    need(h['proposed_layout']['produced_cohort_directory'] == str(COHORT), 'exact new layout')
+    ownpath = Path(__file__).resolve(); size = ownpath.stat().st_size
+    need(size+512 <= CAPS['Source_bytes'], 'finite complete Root operation Source namespace')
+    with ownpath.open('rb') as f: ownbody = f.read(size+1)
+    need(len(ownbody) == size, 'whole Root operation Source')
+    own = reference(ownpath, ownbody); reader.bytes += size+512; reader.read(own)
+    reader.read(h['Root_issuance_protocol'])
+    peer = reader.document(STATIC_PEER)
+    need(peer['status'] == 'SUPPORTED_STATIC_BOUNDED_OUTPUT_F009_SOURCE'
+        and peer['blockers'] == [], 'frozen combined Source fact')
+    core = reader.document(CORE_CONTROLS)
+    generic = reader.document(GENERIC_CONTROLS)
+    for record, status in ((core, 'SUPPORTED_ACTUAL_BOUNDED_OUTPUT_METADATA_CONTROLS'),
+                           (generic, 'SUPPORTED_ACTUAL_F009_GENERIC_METADATA_CONTROLS')):
+        need(record['status'] == status and record['blockers'] == []
+            and record['Original_inputs_loaded'] is False and record['Source_peer'] == STATIC_PEER
+            and record['reviewer'] not in (None, '/root', '/root/forest_resume')
+            and record['profile_source'] == peer['profile_source']
+            and record['policy_source'] == peer['policy_source'],
+            'exact genuine prior controls with same combined Source peer')
+    need(generic['Core_admission_controls'] == CORE_CONTROLS
+        and generic['packet'] == h['packet'], 'generic controls depend on this Core and packet')
+    caller_manifest = reader.document(CALLER_MANIFEST)
+    caller_actual = reader.document(CALLER_ACTUAL)
+    need(caller_actual['status'] == 'SUPPORTED_ACTUAL' and caller_actual['blockers'] == []
+        and caller_actual['Source_manifest'] == CALLER_MANIFEST
+        and caller_actual['Source_peer'] == STATIC_PEER, 'accepted exact caller support')
+    for r in caller_manifest['caller_namespace']['Source']:
+        reader.read(r)
+    need(sum(r['bytes'] for r in caller_manifest['caller_namespace']['Source'])+512 == 19900,
+         'complete separate caller Source invoice')
+    reader.read(INTEGRATION_REVIEW)
+    packet = reader.document(h['packet'])
+    need(peer['packet'] == h['packet'] and peer['programs'] == packet['programs']
+        and peer['entry_manifests'] == packet['entry_manifests'], 'all frozen generic entry subjects')
+    need(generic['Source_manifest'] == packet['entry_manifests']['controls.py']
+        and generic['program'] == packet['programs']['controls.py']
+        and core['Source_manifest'] == packet['Core_manifest'], 'exact Core and generic controls subjects')
+    for op, r in packet['entry_manifests'].items():
+        m = reader.document(r)
+        need(m['entry'] == packet['programs'][op]
+            and sum(x['bytes'] for x in m['Source'])+512 == m['Source_with_invocation_reserve'] <= 131072,
+            'truthful complete generic metadata Source invoice')
+        for x in m['Source']:
+            reader.read(x)
+    core_manifest = reader.document(packet['Core_manifest'])
+    for r in core_manifest['science_manifests'].values():
+        m = reader.document(r)
+        need(sum(x['bytes'] for x in m['Source'])+512 == m['Source_with_invocation_reserve'] <= 98304,
+             'truthful future scientific metadata Source invoice')
+        for x in m['Source']:
+            reader.read(x)
+    for key in ('protocol', 'read_accounting'):
+        reader.read(packet[key])
+    expected_math = dict(packet['mathematical_context'])
+    expected_math.update(expected_math.pop('templates'))
+    observed_math = {item['name']: item['ref']
+                     for item in h['current_direct_math_and_template_refs_hash_closed']}
+    need(len(h['current_direct_math_and_template_refs_hash_closed']) == len(expected_math) == 13
+        and observed_math == expected_math, 'all thirteen exact packet mathematical aliases named')
+    for item in h['current_direct_math_and_template_refs_hash_closed']:
+        reader.read(item['ref'])  # Original-containing bodies stay opaque.
+    for r in h['current_snapshot'].values():
+        reader.read(r)  # Never decode intake/runtime cache payloads.
+    need({k: r['sha256'] for k, r in h['current_snapshot'].items()} == h['current_snapshot_expected_hashes'], 'exact expected input snapshot edition')
+    for r in h['accepted_snapshot_aliases'].values(): reader.read(r)
+    need(not os.path.lexists(COHORT) and not os.path.lexists(OLD_COHORT),
+         'neither new nor old cohort directory may be precreated')
+    rows, child_rows, sdks = check_inventory(h)
+    layout = h['proposed_layout']
+    guard, out = Path(layout['guard']), Path(layout['existing_empty_output_directory'])
+    need(guard == ACTUAL/'guard' and out == ACTUAL/'outputs'
+        and not out.is_relative_to(COHORT), 'prelaunch namespace is outside the absent cohort')
+    if out.exists():
+        need(out.resolve(strict=True) == out and out.is_dir() and not list(out.iterdir()),
+             'generic Context output directory is existing canonical empty')
+    paths = [INPUTS/n for n in ('child_budget.json', 'request.json', 'Root_gate.json',
+                               'child_launch.json', 'parent_io_budget.json')]
+    receipt_path = ACTUAL/'authority_construction.json'
+    for p in paths+[receipt_path]:
+        check_parent(p)
+        need(not os.path.lexists(p), 'never overwrite a previous authority or receipt')
+
+    budget = dict(schema='ROOT_BOUNDED_OUTPUT_INVOCATION_BUDGET_V1', root='/root',
+        Root_authority=True, adopted=True,
+        profile_id='BOUNDED_OUTPUT_UNIFIED_256_MIB_DISK2_FLOOR1_V1',
+        profile_source=peer['profile_source'], policy_source=peer['policy_source'],
+        Source_peer=STATIC_PEER, admission_controls=CORE_CONTROLS,
+        role_kind='metadata', role='init.py', role_manifest=packet['entry_manifests']['init.py'],
+        role_source=packet['programs']['init.py'], caller_source=peer['bounded_recorder_source'],
+        command_projection=h['child_command_projection'], volume=str(MEDUSA), guard=str(guard),
+        reserve_bytes=256*MIB, inventory=child_rows,
+        only_declared_writers_owned=True, all_actual_Source_and_numerical_caps_owned=True)
+    documents = []
+    def planned(p, value):
+        body = canonical(value)
+        need(len(body) <= 65536, 'bounded constructed authority body')
+        r = reference(p, body); documents.append((p, body, r)); return r
+    br = planned(paths[0], budget)
+    q = dict(h['proposed_init_request_fields'], bounded_resource_budget=br)
+    qr = planned(paths[1], q)
+    gate = reader.document(h['init_Root_gate_template'])
+    gate.update(root='/root', Root_authority=True, adopted=True,
+        request=qr, bounded_resource_budget=br, metadata_controls=GENERIC_CONTROLS,
+        Source_peer=STATIC_PEER, cohort_initialization_authorized=True,
+        canonical_writes_authorized=False,
+        whole_new_Source_protocol_and_original_subjects_owned=True,
+        all_active_inputs_and_borrowed_premises_owned=True,
+        no_successful_science_replayed=True, sole_role_and_canonical_write_scope_owned=True)
+    need(gate['packet'] == h['packet'] and gate['program'] == packet['programs']['init.py']
+        and gate['Source_manifest'] == packet['entry_manifests']['init.py'], 'exact positive init gate subjects')
+    gr = planned(paths[2], gate)
+    bindings = dict(budget=br, request=qr, Root_gate=gr)
+    child = resolve(budget['command_projection'], bindings)
+    launch = dict(schema='ROOT_BOUNDED_OUTPUT_LAUNCH_AUTHORITY_V1', root='/root',
+        Root_authority=True, adopted=True, all_source_budget_and_actual_scope_owned=True,
+        budget=br, reference_bindings=bindings, command=child,
+        profile_source=budget['profile_source'], policy_source=budget['policy_source'],
+        role_manifest=budget['role_manifest'], volume=str(MEDUSA), guard=str(guard))
+    lr = planned(paths[3], launch)
+    outer = resolve(h['outer_wrapper_projection'], dict(bindings, launch=lr))
+    need(outer[-len(child):] == child and len(' '.join(outer).encode('utf8')) < 16384,
+         'full outer wrapper contains the exact same bounded child')
+    caller_source = caller_manifest['files']['caller']
+    parent = dict(budget, role='Root_genuine_metadata_caller', role_source=caller_source,
+        role_manifest=CALLER_MANIFEST, command_projection=outer, inventory=rows,
+        parent_IO_only=True, Core_launch_authority=False, bootstrap_controls_owned=False,
+        no_Original_authorization=True, Root_caller_read_prepaid_bytes=2*MIB,
+        child_budget=br, child_launch=lr, exact_outer_argv=outer,
+        caller_source_manifest=CALLER_MANIFEST, caller_actual_controls=CALLER_ACTUAL,
+        integration_Source_review=INTEGRATION_REVIEW,
+        expected_snapshot=h['current_snapshot'], same_two_SDK_destinations=sdks,
+        child_inventory_paths=[r['path'] for r in child_rows],
+        one_combined_unique_content_upper=h['parent_unique_content_upper'], one_combined_content_and_allocation_upper=h['parent_union_with_allocation'],
+        one_shared_reserve_bytes=256*MIB,
+        note='Root IO ledger only; not a Core launch authority. Its unique union includes the child subset once. The outer command uses only the separate child budget and launch.')
+    pr = planned(paths[4], parent)
+    need(q['Root_authority'] is False and q['expected_prefix'] == begin
+        and q['batch_counts'] == [3,3,3,3] and len(q['scientific_profiles']) == 16
+        and set(q['scientific_profiles'].values()) == {'bounded'}, 'exact fresh ordinary init request')
+    need(launch['reference_bindings'] == bindings and parent['child_budget'] == br
+        and parent['child_launch'] == lr and parent['exact_outer_argv'] == outer
+        and all(r in rows for r in child_rows), 'complete acyclic parent-child binding')
+    need(sum(len(body) for _, body, _ in documents) < CAPS['write_bytes']//2,
+         'all authority bodies fit before any open')
+    reader.close()
+    authority_bytes = sum(len(body) for _, body, _ in documents)
+    receipt_allowance = 131072
+    readback_allowance = authority_bytes+len(documents)+receipt_allowance+1
+    need(reader.bytes+readback_allowance <= CAPS['read_bytes'],
+         'prospective complete authority and receipt readbacks before any write')
+    need(authority_bytes+receipt_allowance <= CAPS['write_bytes'],
+         'prospective complete authority and receipt writes before any write')
+    need(not os.path.lexists(COHORT) and not os.path.lexists(OLD_COHORT), 'final cohort freshness')
+    check_inventory(h)
+    if out.exists():
+        need(out.resolve(strict=True) == out and not list(out.iterdir()), 'final empty outdir')
+    INPUTS.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
+    need(INPUTS.resolve(strict=True) == INPUTS and out.resolve(strict=True) == out,
+         'canonical actual input/output directories')
+    written = 0
+    for p, body, r in documents:
+        reader.check(); need(not os.path.lexists(p), 'exclusive authority target')
+        with p.open('xb') as f:
+            need(f.write(body) == len(body), 'whole authority write')
+            f.flush(); os.fsync(f.fileno())
+        with p.open('rb') as f:
+            need(f.read(len(body)+1) == body, 'bounded whole authority readback')
+        written += len(body)
+    result = dict(schema='ROOT_F009_GENERIC_INIT_ROOT_DATA_ISSUANCE_V1', root='/root',
+        Root_authority=True, Root_operation_Source=own, Root_whole_Source_owned=True, old_constructor_Source_verdict_claimed=False,
+        input_handoff=INPUT_HANDOFF, observed_snapshot=h['current_snapshot'],
+        all13_mathematical_aliases_verified_opaque=True,
+        combined_Source_peer=STATIC_PEER, Core_actual_controls=CORE_CONTROLS,
+        generic_actual_controls=GENERIC_CONTROLS, caller_Source_manifest=CALLER_MANIFEST,
+        caller_actual_controls=CALLER_ACTUAL,
+        child_budget=br, request=qr, Root_gate=gr, child_launch=lr, parent_io_budget=pr,
+        child_argv=child, full_outer_argv=outer,
+        raw_directory=layout['raw_directory'], genuine_key=layout['genuine_key'],
+        SDK_destinations=sdks, child_rows=13, parent_rows=83,
+        unique_content_and_allocation_upper=h['parent_union_with_allocation'], shared_reserve_bytes=256*MIB,
+        next_duties=['Distinct concrete metadata-plan/authority review before init.',
+          'Root must revalidate all three snapshot hashes and preserve the sole-writer window until cohort registration.',
+          'Actual init and every later role require their own genuine API/guard/output checks; this constructor executed none.'],
+        Original_values_decoded=False, scientific_calls=0, profile_or_control_calls=0,
+        canonical_writes=0, cohort_created=False,
+        complete_input_pins=list(reader.pins.values()), cooperative_caps=CAPS,
+        complete_read_upper=reader.bytes+readback_allowance,
+        complete_write_upper=authority_bytes+receipt_allowance,
+        receipt_read_and_write_reserve=receipt_allowance,
+        readback_EOF_probe_reserve=len(documents)+1,
+        authority_bytes_written=written,
+        external_guard_claimed=False)
+    receipt_body = canonical(result)
+    need(len(receipt_body) <= receipt_allowance and written == authority_bytes
+        and written+len(receipt_body) <= CAPS['write_bytes']
+        and reader.bytes+written+len(receipt_body) <= CAPS['read_bytes'], 'final metadata receipt and readback reserve')
+    with receipt_path.open('xb') as f:
+        need(f.write(receipt_body) == len(receipt_body), 'whole construction receipt')
+        f.flush(); os.fsync(f.fileno())
+    with receipt_path.open('rb') as f:
+        need(f.read(len(receipt_body)+1) == receipt_body, 'bounded whole receipt readback')
+    need(not os.path.lexists(COHORT), 'cohort remains absent')
+    reader.check(); signal.alarm(0)
+    print(json.dumps(dict(status='ROOT_INIT_AUTHORITIES_CREATED_NO_INIT_EXECUTED',
+        receipt=reference(receipt_path, receipt_body), child_budget=br, request=qr,
+        Root_gate=gr, child_launch=lr, parent_io_budget=pr,
+        next='Distinct concrete plan review, then Root revalidation and genuine init only.')))
+
+
+if __name__ == '__main__':
+    main()

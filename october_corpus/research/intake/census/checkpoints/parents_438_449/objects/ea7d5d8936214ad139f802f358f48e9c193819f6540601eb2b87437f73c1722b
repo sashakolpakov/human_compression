@@ -1,0 +1,88 @@
+"""Issue metadata for strict checking of completed supplier certificates."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+M = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+G = M / 'f009_bounded_io_transition'
+D = M / 'f009_resource_binding_retries'
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+BASE = '/private/tmp/f009_R5_parent_cohorts_actual'
+DUPLICATED = BASE + BASE
+
+def reference(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    assert len(body) < 65536
+    path.parent.mkdir(parents=True, exist_ok=True)
+    assert path.parent.resolve() == path.parent
+    with path.open('xb') as stream:
+        stream.write(body)
+    return reference(path)
+
+def normalized(value):
+    if isinstance(value, str):
+        return value.replace(DUPLICATED, BASE)
+    if isinstance(value, list):
+        return [normalized(x) for x in value]
+    if isinstance(value, dict):
+        return {k: normalized(v) for k, v in value.items()}
+    return value
+
+def trip(ref):
+    return [ref['path'], str(ref['bytes']), ref['sha256']]
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--batch', type=int, choices=range(4), required=True)
+batch = parser.parse_args().batch
+draft = G / ('cohort_preparation/parents0438_0449/batch%02d' % batch)
+cohort_ref = reference(G / 'cohorts/cohort_from0438/cohort.json')
+cohort = json.loads(Path(cohort_ref['path']).read_bytes())
+indices = cohort['batches'][batch]['source_indices']
+assert indices == list(range(438 + 3 * batch, 441 + 3 * batch))
+stem = 'parents%04d_%04d_check' % (indices[0], indices[-1])
+where = D / ('actual/cohort0438_batch%02d_assemble_strict' % batch)
+budget = normalized(json.loads((draft / 'strict_science_budget_FALSE.json').read_bytes()))
+assert budget['role_kind'] == 'science' and len(budget['inventory']) == 10
+for flag in ['Root_authority', 'adopted', 'all_actual_Source_and_numerical_caps_owned', 'only_declared_writers_owned']:
+    assert budget[flag] is False
+    budget[flag] = True
+for row in budget['inventory']:
+    assert row['existing'] is None and not os.path.lexists(row['path'])
+budget_ref = write(G / ('cohorts/cohort_from0438/budgets/batch%02d' % batch) / (stem + '_budget.json'), budget)
+selection = json.loads((draft / 'supplier_selection_all_v1_FALSE.json').read_bytes())
+assert selection['Root_authority'] is False and selection['roles'] == []
+selection.update(Root_authority=True, cohort=cohort_ref)
+selection_ref = write(where / 'selected_attempts.json', selection)
+request = normalized(json.loads((draft / 'assemble_strict_request_FALSE.json').read_bytes()))
+assert request['Root_authority'] is False and request['phase'] == 'assemble_strict'
+request.update(cohort=cohort_ref, selected_attempts=selection_ref, science_budgets={stem: budget_ref})
+for row in request['outputs']:
+    assert not os.path.lexists(row['path']) and DUPLICATED not in row['path']
+request_ref = write(where / 'request.json', request)
+gate = json.loads((draft / 'Root_prepare_suppliers_gate_FALSE.json').read_bytes())
+gate['request'] = request_ref
+for flag in ['Root_authority', 'adopted', 'whole_supplement_and_borrowed_Source_owned',
+             'all_original_meanings_and_new_binding_scope_owned', 'no_successful_science_replayed',
+             'serial_sole_writer_scope_owned', 'all_original_parent_action_and_mathematical_meanings_owned',
+             'fresh_scientific_import_and_gate_issuance_authorized']:
+    assert gate[flag] is False
+    gate[flag] = True
+assert gate['canonical_writes_authorized'] is False
+gate_ref = write(where / 'Root_gate.json', gate)
+out = where / 'output'
+out.mkdir()
+argv = ['/usr/bin/env']
+for name in ['COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'COVERAGE_PROCESS_START', 'OPENSSL_CONF', 'OPENSSL_MODULES']:
+    argv += ['-u', name]
+argv += [PYTHON, '-E', '-B', '-S', gate['program']['path'], '--actor', '/root', '--op', 'phase.py',
+         '--packet', *trip(gate['packet']), '--request', *trip(request_ref), '--Root-gate', *trip(gate_ref), '--out', str(out)]
+print(json.dumps(dict(argv=argv, budget=budget_ref, request=request_ref, Root_gate=gate_ref,
+                      metadata_correction='Removed duplicated absolute base in unissued strict templates only.',
+                      scientific_calls=0, canonical_writes=0)))

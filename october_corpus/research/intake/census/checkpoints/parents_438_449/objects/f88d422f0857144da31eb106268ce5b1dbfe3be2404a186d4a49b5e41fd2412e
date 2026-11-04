@@ -1,0 +1,78 @@
+"""Bind reviewed preparation outputs to the reviewed launch constructor."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+M = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+G = M / 'f009_bounded_io_transition'
+RL = M / 'f009_science_role_launches'
+REVIEWS = Path('/Users/sasha/medusa/census/reviews')
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+
+def reference(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    assert len(body) < 65536
+    path.parent.mkdir(parents=True, exist_ok=True)
+    assert path.parent.resolve() == path.parent
+    with path.open('xb') as stream:
+        stream.write(body)
+    return reference(path)
+
+def trip(ref):
+    return [ref['path'], str(ref['bytes']), ref['sha256']]
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--batch', type=int, choices=range(4), required=True)
+parser.add_argument('--kind', choices=['suppliers', 'strict'], default='suppliers')
+args = parser.parse_args()
+batch = args.batch
+kind = args.kind
+draft = G / ('cohort_preparation/parents0438_0449/batch%02d' % batch)
+cohort = G / 'cohorts/cohort_from0438/cohort.json'
+mf_ref = reference(RL / 'Source_manifest_active.json')
+mf = json.loads((RL / 'Source_manifest_active.json').read_bytes())
+peer_ref = reference(REVIEWS / 'f009_launch_constructor.json')
+peer = json.loads((REVIEWS / 'f009_launch_constructor.json').read_bytes())
+assert peer['status'] == 'SUPPORTED_STATIC_F009_SCIENCE_ROLE_LAUNCH_CONSTRUCTOR'
+assert peer['Source_manifest'] == mf_ref and peer['program'] == mf['entry'] and peer['blockers'] == []
+review_path = REVIEWS / (('f009_batch%02d_preparation_reuse.json' if kind == 'suppliers'
+                         else 'f009_batch%02d_strict_preparation_reuse.json') % batch)
+review_ref = reference(review_path)
+review = json.loads(review_path.read_bytes())
+assert review['status'] == 'SUPPORTED_ACTUAL' and review['blockers'] == []
+assert review['cohort'] == reference(cohort) and review['batch'] == batch
+indices = list(range(438 + 3 * batch, 441 + 3 * batch))
+assert review['source_indices'] == indices
+base = Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0438') / ('parents%04d_%04d' % (indices[0], indices[-1]))
+data = json.loads((draft / ('RL_%s_inputs_FALSE.json' % kind)).read_bytes())
+data.update(cohort=reference(cohort), metadata_preparation_review=review_ref,
+            preparation_record=reference(base / ('supplier_preparation.json' if kind == 'suppliers' else 'strict_preparation.json')),
+            preparation_review_scope='DISTINCT_EXECUTION_ADOPTION',
+            caller_integration_review=reference(REVIEWS / 'f009_science_call_scope.json'))
+for item in data['roles']:
+    item['prepared'] = reference(base / 'roles' / (item['stem'] + '_prepared.json'))
+    assert item['prepared'] in review['outputs']
+(base / 'guards').mkdir(exist_ok=True)
+assert (base / 'guards').resolve() == base / 'guards'
+where = RL / ('actual/cohort0438_batch%02d_%s' % (batch, kind))
+data_ref = write(where / 'inputs.json', data)
+gate = json.loads((draft / ('RL_%s_gate_FALSE.json' % kind)).read_bytes())
+gate.update(program=mf['entry'], Source_manifest=mf_ref, Source_peer=peer_ref, inputs=data_ref)
+for flag in ['Root_authority', 'adopted', 'whole_Source_protocol_callers_and_resource_subjects_owned',
+             'original_parent_model_and_preparation_meanings_owned', 'preparation_review_qualifications_owned',
+             'only_bounded_metadata_authorities_owned']:
+    assert gate[flag] is False
+    gate[flag] = True
+assert gate['canonical_writes_authorized'] is gate['scientific_calls_authorized'] is False
+gate_ref = write(where / 'Root_gate.json', gate)
+argv = [PYTHON, '-E', '-B', '-S', mf['entry']['path'], '--actor', '/root',
+        '--manifest', *trip(mf_ref), '--Source-peer', *trip(peer_ref),
+        '--inputs', *trip(data_ref), '--Root-gate', *trip(gate_ref), '--issue']
+print(json.dumps(dict(argv=argv, batch=batch, inputs=data_ref, Root_gate=gate_ref, scientific_calls=0)))

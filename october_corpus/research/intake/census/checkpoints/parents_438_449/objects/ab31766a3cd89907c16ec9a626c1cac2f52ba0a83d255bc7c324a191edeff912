@@ -1,0 +1,15 @@
+from pathlib import Path
+import urllib.request,json,hashlib,concurrent.futures
+S=Path('/Users/sasha/medusa/research/leemans');G=S/'maintenance/intake/f009_bounded_io_transition';base='https://raw.githubusercontent.com/sashakolpakov/human_compression/71454ae681ae8d8201b41ad3a54a4eb848c5fd90/october_corpus/research/intake/verified_progress/objects/'
+p=json.loads((G/'packet.json').read_text());h=json.loads((G/'cohort_preparation/parents0438_0449/handoff.json').read_text());refs=list(p['programs'].values())+list(p['modules'].values())+list(p['entry_manifests'].values())+[p['Core_manifest'],p['protocol'],p['read_accounting'],h['init_Root_gate_template']];refs += [r for r in h.values() if isinstance(r,dict) and {'path','bytes','sha256'}<=r.keys()]
+seen={r['path']:r for r in refs};wanted=[r for r in seen.values() if not Path(r['path']).exists()]
+def get(r):
+ q=Path(r['path']);assert q.is_relative_to(S) and '..' not in q.parts and r['bytes']<1024**2
+ try:
+  with urllib.request.urlopen(base+r['sha256'],timeout=20) as f:b=f.read(r['bytes']+1)
+ except Exception as e:return {'path':str(q),'error':type(e).__name__,'status':getattr(e,'code',None)}
+ assert len(b)==r['bytes'] and hashlib.sha256(b).hexdigest()==r['sha256'];q.parent.mkdir(parents=True,exist_ok=True);assert q.parent.resolve()==q.parent
+ with q.open('xb') as f:f.write(b)
+ return {'path':str(q),'restored_bytes':len(b)}
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(get,wanted))
+print(json.dumps({'required_missing_before':len(wanted),'restored':sum('restored_bytes'in r for r in results),'remaining':[r for r in results if 'error'in r]}))

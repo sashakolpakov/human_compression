@@ -60,6 +60,11 @@ Its [intake status](october_corpus/INTAKE_STATUS.json) distinguishes accepted
 partial results from completed manuscripts. Measurements remain at 53
 applications across 19 topics while intake finishes.
 
+The [latest census checkpoint](october_corpus/research/intake/census/status.json)
+records **450/940 F009 parents and 70,200 checked extension slots**. It includes
+the separate supplier and verifier runs, registration audit and required inputs.
+F004, F009 and L026 remain unfinished.
+
 The [November directory](november_corpus/README.md) is prepared. Its researcher,
 bibliography and source editions await registration.
 

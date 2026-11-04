@@ -1,0 +1,47 @@
+"""Retain the historical constructor and bind a fresh caller-scope review.
+
+Only the evidence reference and accompanying protocol sentence change.
+The numerical workers, launch checks and resource policies are unchanged.
+"""
+import ast
+import hashlib
+import json
+from pathlib import Path
+
+ROOT = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_science_role_launches')
+REVIEW = Path('/Users/sasha/medusa/census/reviews/f009_science_call_scope.json')
+
+def ref(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def put(path, body):
+    with path.open('xb') as out:
+        out.write(body)
+    return ref(path)
+
+original = (ROOT / 'construct.py').read_bytes()
+assert hashlib.sha256(original).hexdigest() == '190cda4b07e9ab2bd082e3c31ef6cb83e63f27f2f4e356374de23a37b7bcb259'
+note = json.loads(REVIEW.read_bytes())
+assert note['blockers'] == [] and note['reviewer'] != '/root'
+tree = ast.parse(original)
+assignment = next(n for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'FIXED_REFS' for t in n.targets))
+fixed = ast.literal_eval(assignment.value)
+old = repr(fixed['caller_integration_review'])
+assert original.decode().count(old) == 1
+source = original.decode().replace(old, repr(ref(REVIEW)))
+entry = put(ROOT / 'construct_active.py', source.encode())
+protocol = (ROOT / 'PROTOCOL.rst').read_text()
+sentence = 'caller manifest4b485, caller actual\nc9d5 and integration review280cf.'
+assert sentence in protocol
+protocol = protocol.replace(sentence, 'caller manifest4b485 and caller actual c9d5. A fresh independent science\ncaller-scope review is pinned in construct_active.py; the historical integration\nreview280cf is unavailable and is not reissued or claimed here.')
+protocol_ref = put(ROOT / 'PROTOCOL_active.rst', protocol.encode())
+manifest = json.loads((ROOT / 'Source_manifest.json').read_bytes())
+manifest.update(author='/root', entry=entry, protocol=protocol_ref)
+manifest['loaded_sources'][0] = entry
+manifest['Source_with_invocation_reserve'] = sum(r['bytes'] for r in manifest['loaded_sources']) + 512
+assert manifest['Source_with_invocation_reserve'] <= 65536
+manifest['ancestry'] = ref(ROOT / 'Source_manifest.json')
+manifest_ref = put(ROOT / 'Source_manifest_active.json', (json.dumps(manifest, indent=2, sort_keys=True) + '\n').encode())
+print(json.dumps(dict(entry=entry, protocol=protocol_ref, Source_manifest=manifest_ref,
+                      caller_scope=ref(REVIEW), scientific_calls=0)))

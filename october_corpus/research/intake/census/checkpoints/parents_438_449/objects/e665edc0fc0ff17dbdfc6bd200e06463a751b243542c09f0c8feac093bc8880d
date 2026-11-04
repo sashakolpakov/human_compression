@@ -1,0 +1,135 @@
+"""UNISSUED Root data assembly template; never a scientific launcher.
+
+Root must copy this immutable template, read/own it, and explicitly change
+ROOT_AUTHORITY to True in that new owned copy. The default exits before IO.
+It issues only three science budgets, one request/gate pair and a finite receipt.
+The separate reviewed phase command is printed, never executed.
+"""
+import argparse,hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+ROOT_AUTHORITY=True
+START=time.monotonic()
+LIMIT=64*2**20
+pins={};read_bytes=0
+
+def check():
+    if time.monotonic()-START>=115:raise TimeoutError('metadata deadline')
+    if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)>=256*2**20:raise MemoryError('metadata RSS')
+
+def signature(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def read(ref):
+    global read_bytes
+    path=Path(ref['path']);assert path.is_absolute()and path.resolve(strict=True)==path
+    assert type(ref['bytes'])is int and 0<=ref['bytes']<=4*2**20
+    if str(path)in pins:
+        body,old= pins[str(path)];assert signature(path.stat())==old
+    else:
+        with path.open('rb')as stream:
+            before=os.fstat(stream.fileno());assert before.st_size==ref['bytes']
+            assert 2*(read_bytes+ref['bytes'])<=LIMIT and len(pins)<512
+            body=stream.read(ref['bytes']+1);after=os.fstat(stream.fileno())
+        assert signature(before)==signature(after)==signature(path.stat())
+        assert len(body)==ref['bytes'];pins[str(path)]=(body,signature(after));read_bytes+=len(body)
+    assert hashlib.sha256(body).hexdigest()==ref['sha256'];check();return body
+
+def at(path):
+    global read_bytes
+    p=Path(path);assert p.is_absolute()and p.resolve(strict=True)==p
+    if str(p)in pins:body,old=pins[str(p)];assert signature(p.stat())==old
+    else:
+        with p.open('rb')as f:
+            before=os.fstat(f.fileno());n=before.st_size
+            assert n<=4*2**20 and 2*(read_bytes+n)<=LIMIT and len(pins)<512
+            body=f.read(n+1);after=os.fstat(f.fileno())
+        assert len(body)==n and signature(before)==signature(after)==signature(p.stat())
+        pins[str(p)]=(body,signature(after));read_bytes+=n
+    return dict(path=str(p),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+
+def doc(ref):return json.loads(read(ref)) # only known metadata-only documents
+
+def canonical(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+def ref(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+def trip(r):return[r['path'],str(r['bytes']),r['sha256']]
+
+def close_inputs():
+    global read_bytes
+    for name,(body,old)in list(pins.items()):
+        with Path(name).open('rb')as f:
+            before=os.fstat(f.fileno());assert signature(before)==old and before.st_size==len(body)
+            b=f.read(len(body)+1);after=os.fstat(f.fileno())
+        assert b==body and signature(before)==signature(after)==signature(Path(name).stat())==old
+        read_bytes+=len(b)
+    assert read_bytes<=LIMIT;check()
+
+def main():
+    if not ROOT_AUTHORITY:raise PermissionError('UNISSUED template: Root must own a fresh explicit True edition')
+    if sys.flags.optimize:raise RuntimeError('no optimized execution')
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True);ap.add_argument('--issue',action='store_true',required=True);ap.add_argument('--handoff',nargs=3,required=True);ap.add_argument('--cohort',nargs=3,required=True)
+    a=ap.parse_args();assert a.actor=='/root'and a.issue
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s metadata')));signal.alarm(125)
+    HANDOFF=dict(path=a.handoff[0],bytes=int(a.handoff[1]),sha256=a.handoff[2]);actual_cohort=dict(path=a.cohort[0],bytes=int(a.cohort[1]),sha256=a.cohort[2])
+    h=doc(HANDOFF);assert h['Root_authority']is False and h['metadata_Core_budget_required']is False
+    begin=h['begin'];batch=h['batch'];assert type(begin)is int and 426<=begin<940 and type(batch)is int and 0<=batch<=3
+    assert h['source_indices']==list(range(begin+3*batch,begin+3*batch+3))
+    assert actual_cohort['path']==h['cohort_future_path'];cohort=doc(actual_cohort)
+    assert cohort['begin']==begin and cohort['end']==begin+12 and cohort['batch_counts']==[3,3,3,3]
+    assert cohort['batches'][batch]==dict(batch=batch,begin=begin+3*batch,end=begin+3*batch+3,source_indices=h['source_indices'])
+    for r in cohort['progress_snapshot'].values():read(r) # opaque Root snapshot bytes
+    peer=doc(h['Source_peer']);controls=doc(h['metadata_controls'])
+    assert peer['status']=='SUPPORTED_STATIC_F009_RESOURCE_BINDING_SUPPLEMENT'and peer['blockers']==[]
+    assert peer['packet']==h['packet']and peer['program']==h['program']and peer['entry_manifests']['phase.py']==h['Source_manifest']
+    assert controls['status']=='SUPPORTED_ACTUAL_F009_RESOURCE_BINDING_CONTROLS'and controls['blockers']==[]
+    assert controls['packet']==h['packet']and controls['Source_peer']==h['Source_peer']and type(controls['count'])is int and controls['count']==40
+    assert controls['Original_inputs_loaded']is False
+    for r in doc(h['Source_manifest'])['Source']:read(r) # Source bytes only
+    planned=[];budget_refs={}
+    def plan(path,value):
+        body=canonical(value);assert len(body)<=4*2**20
+        planned.append((Path(path),body));return ref(path,body)
+    assert len(h['science_budgets'])==3
+    for index,row in zip(h['source_indices'],h['science_budgets']):
+        stem='parent%04d_supply'%index
+        assert row['stem']==stem and cohort['scientific_profiles'][stem]=='bounded'
+        b=doc(row['FALSE_budget']);assert b['role_kind']=='science'and b['role']=='f009_complete_parent_stabilizer_supplier'and len(b['inventory'])==10
+        assert b['role_manifest']==h['numerical_subject']['manifest']and b['Source_peer']==h['numerical_subject']['Source_peer']and b['admission_controls']==h['numerical_subject']['Core_admission_controls']
+        for key in('Root_authority','adopted','all_actual_Source_and_numerical_caps_owned','only_declared_writers_owned'):
+            assert b[key]is False;b[key]=ROOT_AUTHORITY
+        for item in b['inventory']:assert item['existing']is None and not os.path.lexists(item['path'])
+        budget_refs[stem]=plan(row['positive_budget_path'],b)
+    assert not os.path.lexists(h['fresh_scientific_base'])
+    q=doc(h['request_FALSE']);assert q['Root_authority']is False and q['op']=='phase.py'and q['phase']=='prepare_suppliers'and q['batch']==batch and q['cohort']is None
+    assert q['science_budgets']=={stem:None for stem in budget_refs}
+    q['cohort']=actual_cohort
+    q['science_budgets']=budget_refs
+    targets=h['runtime_paths'];qr=plan(targets['request'],q)
+    gate=doc(h['Root_gate_FALSE']);assert gate['Root_authority']is gate['adopted']is False
+    gate['request']=qr
+    for key in('Root_authority','adopted','whole_supplement_and_borrowed_Source_owned','all_original_meanings_and_new_binding_scope_owned','no_successful_science_replayed','serial_sole_writer_scope_owned','all_original_parent_action_and_mathematical_meanings_owned','fresh_scientific_import_and_gate_issuance_authorized'):
+        assert gate[key]is False;gate[key]=ROOT_AUTHORITY
+    assert gate['canonical_writes_authorized']is False
+    gr=plan(targets['Root_gate'],gate)
+    argv=['/usr/bin/env']
+    for key in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'):argv+=['-u',key]
+    argv+=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',h['program']['path'],'--actor','/root','--op','phase.py','--packet',*trip(h['packet']),'--request',*trip(qr),'--Root-gate',*trip(gr),'--out',targets['out']]
+    receipt=dict(schema='ROOT_F009_SUPPLEMENT_SUPPLIER_PREPARATION_INPUT_ISSUANCE_V1',root='/root',Root_authority=ROOT_AUTHORITY,handoff=HANDOFF,science_budgets=budget_refs,request=qr,Root_gate=gr,phase_argv=argv,
+        metadata_write_inventory=h['metadata_issuance_inventory'],metadata_write_upper=16*2**20,scientific_calls=0,phase_called=False,canonical_writes=0,no_completed_supplier_replayed=True,external_resource_guard_claimed=False)
+    rr=plan(targets['receipt'],receipt)
+    inv=h['metadata_issuance_inventory'];assert len(planned)==len(inv)==6 and sum(row['maximum_bytes']for row in inv)==294912
+    assert len({str(path)for path,_ in planned})==6 and len(pins)+3*len(planned)+32<=512
+    for path,body in planned:
+        assert path.is_absolute()and not os.path.lexists(path)
+        assert len(body)<=next(row['maximum_bytes']for row in inv if row['path']==str(path))
+    assert sum(len(body)for _,body in planned)<=16*2**20
+    for row in h['phase_outputs']:assert not os.path.lexists(row['path'])
+    out=Path(targets['out']);assert not out.exists()or(out.is_dir()and not any(out.iterdir()))
+    close_inputs()
+    for path,body in planned:
+        path.parent.mkdir(parents=True,exist_ok=True)
+        with path.open('xb')as stream:assert stream.write(body)==len(body)
+    out.mkdir(parents=True,exist_ok=True)
+    signal.alarm(0)
+    print(json.dumps(dict(status='ROOT_ISSUED_METADATA_ONLY',outputs=[ref(path,body)for path,body in planned],receipt=rr,science_budgets=budget_refs,phase_argv=argv,written_bytes=sum(len(body)for _,body in planned),read_bytes=read_bytes,scientific_calls=0,phase_called=False,canonical_writes=0)))
+
+if __name__=='__main__':main()
