@@ -13,6 +13,8 @@ unpaid. The original manuscript remains incomplete.
 The common intersection theorem is reused from
 ``../verified_progress/theory/rank_three_intersections.tex``. The two new
 application texts are in ``proofs``; the theorem is not repeated in them.
+The unchanged numerical worker and imported modules have explicit byte
+locations in ``dependencies/l026_procedural_source/manifest.json``.
 
 Only F004, F009 and L026 remain in the October census. The current counts
 are in ``status.json``. A settled finite entry, a completed job, and a

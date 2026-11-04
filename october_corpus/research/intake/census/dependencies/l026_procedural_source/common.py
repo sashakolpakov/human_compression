@@ -1,0 +1,90 @@
+"""Root-only bounded whole-file numerical role IO. No external program launch."""
+from pathlib import Path
+import argparse,hashlib,json,math,os,resource,signal,stat,sys,time,types
+import budget
+START=time.monotonic()
+CAPS=dict(Source=65536,read=8388608,paths=96,file=2097152,new_each=131072,outputs=2,units=10000000,work_seconds=20,rss=134217728,seconds=150)
+GUARDS={'supervise_validation.py':(4806,'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'),'supervise_transient.py':(18361,'5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42')}
+NAMES={'budget.py','common.py','point_kernel.py','family.py','supplier.py','subset_kernel.py','positive.py','checks.py'}
+def need(v,s):
+    if not v:raise ValueError(s)
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+def digest(v):return hashlib.sha256(v).hexdigest()
+def strict(raw,guard=False):
+    def pairs(rows):
+        d={}
+        for k,v in rows:need(k not in d,'duplicate key');d[k]=v
+        return d
+    def bad(_):raise ValueError('no float/nonfinite ordinary numerical JSON')
+    def finite(t):
+        v=float(t);need(math.isfinite(v),'finite guard metadata');return v
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=finite if guard else bad,parse_constant=bad)
+def ref(r):
+    need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str and type(r['bytes'])is int and 0<=r['bytes']<=2097152 and type(r['sha256'])is str and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),'bounded whole descriptor');return r
+def reference(p,b):return dict(path=str(p),bytes=len(b),sha256=digest(b))
+class Bank:
+    def __init__(self):self.work=budget.Work();self.refs={};self.raw={};self.bytes=0
+    def read(self,r,fresh=False):
+        ref(r)
+        if not fresh and r['path']in self.raw:need(self.refs[r['path']]==r,'one edition');return self.raw[r['path']]
+        p=Path(r['path']);a=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'canonical regular single-link input')
+        need(self.bytes+a.st_size<=8388608 and len(set(self.refs)|{str(p)})<=96,'whole8MiB96path ledger');self.work.charge(a.st_size,'whole file byte/hash/closing allowance')
+        fd=os.open(p,os.O_RDONLY|os.O_NOFOLLOW)
+        with os.fdopen(fd,'rb')as f:b=os.fstat(f.fileno());body=f.read(a.st_size+1);c=os.fstat(f.fileno())
+        need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and reference(p,body)==r,'stable sameFD EOF/hash');need(self.refs.get(str(p),r)==r,'same version');self.refs[str(p)]=r;self.raw[str(p)]=body;self.bytes+=len(body);return body
+    def doc(self,r):return strict(self.read(r))
+    def observed(self,p):
+        p=Path(p);a=p.lstat();need(a.st_size<=32768,'bounded generated start')
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1,'canonical start')
+        self.work.charge(a.st_size,'whole actual startup record');need(self.bytes+a.st_size<=8388608 and len(set(self.refs)|{str(p)})<=96,'observed read bank')
+        with os.fdopen(os.open(p,os.O_RDONLY|os.O_NOFOLLOW),'rb')as f:b=os.fstat(f.fileno());raw=f.read(a.st_size+1);c=os.fstat(f.fileno())
+        need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==a.st_size,'stable observed EOF');r=reference(p,raw);need(self.refs.get(str(p),r)==r,'one observed version');self.refs[str(p)]=r;self.raw[str(p)]=raw;self.bytes+=len(raw);return strict(raw,True)
+    def close(self):
+        for r in list(self.refs.values()):self.read(r,True)
+    def emit(self,out,files):
+        p=Path(out);need(len(files)==2 and p.is_absolute()and p.is_relative_to('/private/tmp')and p.parent.resolve(strict=True)==p.parent and not os.path.lexists(p),'fresh private two-file output')
+        need(all(type(v)is bytes and len(v)<=131072 for v in files.values())and len(set(self.refs)|{str(p/n)for n in files})<=96,'two128KiB output/path bound')
+        self.work.charge(3*sum(map(len,files.values())),'whole output publication/hash allowance');p.mkdir();rows=[]
+        for n,b in files.items():
+            need(n in('carrier.bin','certificate.json','proof.json','result.json'),'fixed output name')
+            with(p/n).open('xb')as f:need(f.write(b)==len(b),'whole exclusive output');f.flush();os.fsync(f.fileno())
+            rows.append(reference(p/n,b))
+        return rows
+def start(entry,modules):
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--manifest',nargs=3,required=True);p.add_argument('--request',nargs=3,required=True);p.add_argument('--Root-gate',nargs=3,required=True);p.add_argument('--guard',required=True);p.add_argument('--out',required=True);a=p.parse_args()
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize and not any(k in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'EBS/no-O/ENV5')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('140s role')));signal.alarm(140)
+    r=lambda x:dict(path=x[0],bytes=int(x[1]),sha256=x[2]);mr,qr,gr=map(r,(a.manifest,a.request,a.Root_gate))
+    for x,cap in((mr,8192),(qr,32768),(gr,8192)):ref(x);need(x['bytes']<=cap,'bounded bootstrap before first read')
+    b=Bank();m=b.doc(mr);q=b.doc(qr);g=b.doc(gr)
+    need(m['schema']=='L026_PROCEDURAL_MIDDLE_SOURCE_V1'and m['caps']==CAPS and m['entry']==entry and {Path(x['path']).name for x in m['Source']}==NAMES|{entry}|set(GUARDS),'complete Source namespace')
+    need(sum(ref(x)['bytes']for x in m['Source'])+512<=65536,'pre-read whole Source extent')
+    base=Path(__file__).resolve().parent;need(not os.path.lexists(base/'__pycache__')and not list(base.glob('*.pyc')),'clean no-cache project')
+    total=0;seen=set()
+    for x in m['Source']:
+        ref(x);need(x['path']not in seen,'unique Source');seen.add(x['path']);total+=len(b.read(x))
+        name=Path(x['path']).name
+        if name in GUARDS:need((x['bytes'],x['sha256'])==GUARDS[name],'literal guard identity')
+        else:need(Path(x['path'])==base/name,'same-directory actual module Source')
+    need(total+512<=65536,'whole loaded Source/guards/512 reserve')
+    nominal=59889+total-23167+512;b.work.charge(nominal,'nominal project bootstrap');b.bytes+=nominal
+    need(b.bytes<=8388608,'bootstrap same IO ledger')
+    for mod in modules:
+        need(Path(mod.__file__).resolve()==base/(mod.__name__+'.py'),'actual module origin')
+        for v in vars(mod).values():
+            if isinstance(v,types.FunctionType)and v.__module__==mod.__name__:need(v.__globals__ is vars(mod)and Path(v.__code__.co_filename).resolve()==base/(mod.__name__+'.py'),'whole function origin/globals')
+            if isinstance(v,type)and v.__module__==mod.__name__:
+                for f in vars(v).values():
+                    if isinstance(f,types.FunctionType):need(f.__globals__ is vars(mod)and Path(f.__code__.co_filename).resolve()==base/(mod.__name__+'.py'),'whole class origin')
+    need(Path(sys.argv[0]).resolve()==base/entry,'actual entry')
+    need(q['Root_authority']is False and g['root']=='/root'and g['Root_authority']is g['adopted']is True and g['manifest']==mr and g['request']==qr and g['Source_and_math_owned']is True,'fresh Root bound gate')
+    st=b.observed(Path(a.guard)/'started.json');need(st['command']==[q['python_executable'],'-E','-B','-S',str(base/entry)]+sys.argv[1:]and any(x['pid']==os.getpid()for x in st['identities'])and all(st['limits'][k]==v for k,v in dict(total_rss=134217728,wall_seconds=150.0,admit_ram=4294967296,admit_disk=10737418240,ram_floor=3221225472,disk_floor=8589934592).items()),'samePID/argv unchanged128MiB150s4GiB/10GiB guard')
+    return b,q,g,dict(manifest=mr,request=qr,Root_gate=gr),a.out
+def admission(b,g,pins,join=False):
+    for k in('independent_Source_review','actual_controls_review','control_Source_manifest'):need(g[k]['bytes']<=32768,'bounded actual admission record')
+    peer=b.doc(g['independent_Source_review']);control=b.doc(g['actual_controls_review']);cm=b.doc(g['control_Source_manifest'])
+    need(peer['status'].startswith('SUPPORTED')and peer['blockers']==[]and peer['reviewer']not in('/root','/root/readback_review')and peer['Source_manifest']==pins['manifest']and peer['control_Source_manifest']==g['control_Source_manifest'],'distinct exact Source peer')
+    need(cm['schema']=='L026_PROCEDURAL_MIDDLE_SOURCE_V1'and cm['entry']=='controls.py'and cm['caps']==CAPS,'exact controls namespace')
+    need(control['status'].startswith('SUPPORTED_ACTUAL')and control['blockers']==[]and control['reviewer']!='/root'and control['Source_manifest']==g['control_Source_manifest']and control['controls']==32 and control['Original_inputs_loaded']is False,'fresh actual32 original-free controls authority')
