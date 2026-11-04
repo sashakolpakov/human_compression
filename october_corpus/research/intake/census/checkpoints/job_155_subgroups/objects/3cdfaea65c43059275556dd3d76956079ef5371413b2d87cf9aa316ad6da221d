@@ -1,0 +1,90 @@
+"""UNRUN finite four-generator closure Source; no IO or authority.
+
+identity is explicit. One supplied budget provides scalar/multiply/tick and
+products/row_images/linear counters. No numerical namespace is imported.
+"""
+MAGIC=b'F004FC01'
+NMAX=32768
+MAX_BYTES=98311
+_I=(b'\1\0\0\0\0\0\0' b'\0\1\0\0\0\0\0' b'\0\0\1\0\0\0\0'
+    b'\0\0\0\1\0\0\0' b'\0\0\0\0\1\0\0' b'\0\0\0\0\0\1\0'
+    b'\0\0\0\0\0\0\1')
+
+class Inconclusive(RuntimeError):pass
+
+def need(ok,reason):
+ if not ok:raise ValueError(reason)
+
+def integer(value,low,high):
+ need(type(value)is int and low<=value<=high,'typed bounded integer')
+ return value
+
+def tree(value):
+ need(type(value)in(tuple,list),'literal word tree')
+ integer(len(value)+1,1,NMAX);out=[]
+ for i,row in enumerate(value,1):
+  need(type(row)in(tuple,list)and len(row)==2,'word parent and label')
+  p,j=row;out.append((integer(p,0,i-1),integer(j,0,3)))
+ return tuple(out)
+
+def encode(nodes):
+ """Untrusted finite metadata encoder, not a closure verdict."""
+ nodes=tree(nodes);raw=bytearray(MAGIC+(len(nodes)+1).to_bytes(2,'little'))
+ for p,j in nodes:raw.extend(p.to_bytes(2,'little')+bytes((j,)))
+ need(len(raw)<=MAX_BYTES,'whole closure carrier bound');return bytes(raw)
+
+def decode(raw,b):
+ need(type(raw)is bytes and 10<=len(raw)<=MAX_BYTES and raw[:8]==MAGIC,'whole closure header')
+ b.scalar(len(raw));n=integer(int.from_bytes(raw[8:10],'little'),1,NMAX)
+ need(len(raw)==10+3*(n-1),'exact closure extent and EOF');nodes=[]
+ for offset in range(10,len(raw),3):
+  nodes.append((int.from_bytes(raw[offset:offset+2],'little'),raw[offset+2]))
+ out=tree(nodes);b.tick();return out
+
+def meters(b):
+ values=(b.products,b.row_images,b.linear)
+ need(all(type(x)is int and x>=0 for x in values),'shared nonnegative counters')
+ return values
+
+def delta(b,before):
+ after=meters(b);need(all(y>=x for x,y in zip(before,after)),'monotone shared counters')
+ return dict(matrix_products=after[0]-before[0],row_images=after[1]-before[1],linear_units=after[2]-before[2])
+
+def generators(marks,b,identity):
+ b.scalar(196)
+ need(type(identity)is bytes and identity==_I,'explicit exact identity')
+ need(type(marks)in(tuple,list)and len(marks)==4,'four supplied matrices')
+ need(all(type(a)is bytes and len(a)==49 and all(x<11 for x in a)for a in marks),
+  'canonical full F11 matrices')
+ for a in marks:need(b.multiply(a,a)==identity,'four full involution equations')
+
+def build(marks,b,identity,cap=NMAX):
+ """Untrusted BFS. A cap/resource stop gives no order or absence verdict."""
+ integer(cap,1,NMAX);b.tick();before=meters(b);generators(marks,b,identity)
+ elements=[identity];positions={identity:0};nodes=[];i=0
+ while i<len(elements):
+  for label,g in enumerate(marks):
+   w=b.multiply(elements[i],g)
+   if w not in positions:
+    if len(elements)>=cap:
+     raise Inconclusive('finite closure cap; no order or absence conclusion')
+    positions[w]=len(elements);elements.append(w);nodes.append((i,label))
+  i+=1
+ b.scalar(10+3*len(nodes));raw=encode(nodes);b.tick()
+ return raw,dict(status='UNTRUSTED_FINITE_FOUR_GENERATOR_CLOSURE_CARRIER',
+  claimed_order=len(elements),independent_consumer_required=True,meter_deltas=delta(b,before))
+
+def check(marks,raw,b,identity):
+ """Strict finite closure of the supplied matrices; no interpretation grant."""
+ b.tick();before=meters(b);nodes=decode(raw,b);generators(marks,b,identity)
+ elements=[identity];seen={identity}
+ for p,j in nodes:
+  w=b.multiply(elements[p],marks[j])
+  need(w not in seen,'distinct whole49-byte word matrices');seen.add(w);elements.append(w)
+ for w in elements:
+  for g in marks:need(b.multiply(w,g)in seen,'complete four-generator right closure')
+ b.tick();return dict(status='VERIFIED_EXACT_FOUR_GENERATOR_CLOSURE',exact_order=len(elements),
+  word_nodes=len(elements),all_word_matrices_distinct=True,all_elements_actual_generator_words=True,
+  right_generator_products_checked=4*len(elements),complete_right_generator_closure=True,
+  scope='Supplied F11 matrices only; interpretation and adoption are external.',
+  meter_deltas=delta(b,before))

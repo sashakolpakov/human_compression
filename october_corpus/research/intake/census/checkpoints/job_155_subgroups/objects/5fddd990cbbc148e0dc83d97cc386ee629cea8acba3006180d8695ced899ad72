@@ -1,0 +1,46 @@
+"""Data-only plans for untrusted discovery; no old Source verdict is reused."""
+import hashlib
+import json
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+BASE = Path('/private/tmp/f004_R_word_proposals/job155')
+template = json.loads((WORK / 'proposals/case2_R_algebra_plan.json').read_bytes())
+selector = json.loads(Path(template['selector']['path']).read_bytes())
+domain = json.loads(Path(template['original_domain_whole_pins']['Saved_result']['path']).read_bytes())
+candidate = WORK / 'proposals/R_word_tree_candidate.json'
+
+def ref(path):
+    data = path.read_bytes()
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+commands = []
+for position in [i for lo, hi in selector['unresolved_position_runs'] for i in range(lo, hi + 1)]:
+    plan = dict(template)
+    row = domain['orbits'][position - 1]
+    raw = json.dumps(row, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode('ascii')
+    plan.update(case=dict(position=position, representative_J_index=row[0], original_orbit_row_sha256=hashlib.sha256(raw).hexdigest()),
+                selected_orbit_positions=[position], algebra_word_proposal=ref(candidate),
+                proposal_scope='Untrusted Root word and linear-span discovery only. No old Source verdict or census credit.')
+    path = WORK / ('proposals/R_words_position%04d_plan.json' % position)
+    assert not path.exists()
+    path.write_text(json.dumps(plan, sort_keys=True, indent=2) + '\n')
+    base = BASE / ('position%04d' % position)
+    base.mkdir(parents=True, exist_ok=False)
+    command = ['/usr/bin/env']
+    for key in ['COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'COVERAGE_PROCESS_START', 'OPENSSL_CONF', 'OPENSSL_MODULES']:
+        command += ['-u', key]
+    python = '/Users/sasha/.venvs/global/bin/python'
+    r = ref(path)
+    command += [python, '-E', '-B', '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py',
+                '--volume', '/Users/sasha/medusa', '--output', str(base / 'guard'),
+                '--rss-cap-mib', '128', '--timeout', '100', '--', python, '-E', '-B', '-S',
+                str(WORK / 'propose_f004_R_witness.py'), '--actor', '/root',
+                '--plan', r['path'], str(r['bytes']), r['sha256'],
+                '--guard', str(base / 'guard'), '--output', str(base / 'output')]
+    commands.append(dict(position=position, argv=command))
+assert len(commands) == 30
+out = WORK / 'proposals/R_word_proposal_commands.json'
+assert not out.exists()
+out.write_text(json.dumps(commands, sort_keys=True, indent=2) + '\n')
+print(json.dumps(dict(commands=commands, Original_scientific_operations=0)))

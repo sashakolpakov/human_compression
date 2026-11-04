@@ -1,0 +1,44 @@
+"""Bind the supplied-only checker to one completed untrusted discovery."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+H = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_schreier_covers')
+parser = argparse.ArgumentParser()
+parser.add_argument('--position', type=int, required=True)
+parser.add_argument('--side', choices=['LEFT', 'RIGHT'], required=True)
+parser.add_argument('--variant', choices=['frame_vector', 'middle_vector'], default='frame_vector')
+args = parser.parse_args()
+name = 'position%04d_%s_%s' % (args.position, args.side.lower(), args.variant)
+D = H / 'actual/job155' / name
+B = Path('/private/tmp/f004_fresh_schreier_covers/job155') / name
+
+def reference(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    with path.open('x') as stream:
+        json.dump(value, stream, sort_keys=True, indent=2)
+        stream.write('\n')
+    return reference(path)
+
+plan = json.loads((D / 'plan.json').read_bytes())
+producer = json.loads((B / 'produce/result.json').read_bytes())
+assert producer['role'] == 'PRODUCE' and producer['Original_inputs_loaded'] is True
+assert producer['subject']['case'] == plan['case'] and producer['subject']['side'] == args.side
+plan.update(schema='UNISSUED_F004_FRESH_SCHREIER_CHECK_PLAN_V1',
+            saved=reference(B / 'produce/carrier.bin'), producer_record=reference(B / 'produce/result.json'),
+            output=str(B / 'check'))
+assert producer['carrier'] == plan['saved']
+plan['inputs'] += [plan['saved'], plan['producer_record']]
+assert not os.path.lexists(plan['output'])
+pr = write(D / 'check_plan.json', plan)
+gate = json.loads((D / 'Root_gate.json').read_bytes())
+gate.update(role='CHECK', plan=pr, guard=str(B / 'check_guard'))
+assert not os.path.lexists(gate['guard'])
+gr = write(D / 'check_Root_gate.json', gate)
+print(json.dumps(dict(plan=pr, gate=gr, guard=gate['guard'], role='CHECK', case_credit=0)))

@@ -1,0 +1,118 @@
+"""Bind current Original inputs to the reviewed finite closure producer/checker."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+S = Path('/Users/sasha/medusa/research/leemans')
+M = S / 'maintenance/intake'
+H = M / 'f004_finite_closure'
+OLD = M / 'f004_schreier_covers'
+WORK = Path('/Users/sasha/medusa/census')
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+def ref(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    assert len(body) < 32768
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as stream:
+        stream.write(body)
+    return ref(path)
+
+def trip(r):
+    return [r['path'], str(r['bytes']), r['sha256']]
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--position', type=int, required=True)
+parser.add_argument('--role', choices=['PRODUCE', 'CHECK'], required=True)
+args = parser.parse_args()
+assert 1 <= args.position <= 807
+where = H / ('actual/job155/position%04d' % args.position)
+base = Path('/private/tmp/f004_finite_certificates/job155') / ('position%04d' % args.position)
+base.mkdir(parents=True, exist_ok=True)
+assert base.resolve() == base
+mf_ref = ref(H / 'Source_manifest.json')
+mf = read(H / 'Source_manifest.json')
+peer_ref = ref(WORK / 'reviews/f004_finite_closure_source.json')
+controls_ref = ref(WORK / 'reviews/f004_finite_closure_controls.json')
+controls = read(Path(controls_ref['path']))
+assert controls['status'] == 'SUPPORTED_ACTUAL_F004_FINITE_CLOSURE_CONTROLS'
+assert controls['controls'] == 22 and controls['blockers'] == []
+assert controls['Source_manifest'] == mf_ref and controls['Source_peer'] == peer_ref
+
+if args.role == 'PRODUCE':
+    template = read(OLD / 'templates/PRODUCE_PLAN_FALSE.json')
+    pointer_path = Path(template['selector']['path']).parent / 'CURRENT_job0155.json'
+    pointer = read(pointer_path)
+    assert pointer['schema'] == 'ROOT_CURRENT_F004_JOB155_SELECTOR_V1' and pointer['adopted'] is True
+    assert ref(Path(pointer['selector']['path'])) == pointer['selector']
+    current = read(Path(pointer['selector']['path']))
+    pending = [i for lo, hi in current['unresolved_position_runs'] for i in range(lo, hi + 1)]
+    assert args.position in pending and len(pending) == current['unresolved_positions']
+    domain = read(Path(template['original_domain_whole_pins']['Saved_result']['path']))
+    terminal = read(Path(template['original_domain_whole_pins']['Saved_terminal']['path']))
+    row = domain['orbits'][args.position - 1]
+    canonical = lambda x: json.dumps(x, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode('ascii')
+    plan = read(H / 'templates/PRODUCE_PLAN_FALSE.json')
+    for key in ['Root_projection_acceptance', 'matrix_frame_result', 'normalization_status', 'old_sources',
+                'original_domain_whole_pins', 'original_orbit_array_sha256', 'projection', 'unpaid_manifest']:
+        plan[key] = template[key]
+    plan.update(selector=pointer['selector'], selected_orbit_positions=[args.position],
+                case=dict(position=args.position, representative_J_index=row[0],
+                          original_orbit_row_sha256=hashlib.sha256(canonical(row)).hexdigest()),
+                model_statement='The same accepted faithful Original G2(11) natural matrix frame and complete original domain. Its known order exceeds 32768; this ambient fact is borrowed, not identified by the finite closure checker.',
+                meaning_evidence=[ref(pointer_path), ref(WORK / 'f004_original_source.rst')],
+                model_evidence=[domain['external_premises']['model_source_join'], domain['faithful_frame_acceptance'], template['matrix_frame_result']],
+                ready_for_execution=True)
+    originals = [plan['selector'], plan['projection'], plan['Root_projection_acceptance'], plan['unpaid_manifest']]
+    originals += list(plan['original_domain_whole_pins'].values())
+    for family in plan['old_sources'].values():
+        originals += list(family.values())
+    originals += [terminal['binding_terminal'], domain['external_premises']['model_source_join'],
+                  domain['faithful_frame_acceptance'], domain['normalization_result'], domain['normalization'],
+                  plan['matrix_frame_result']] + plan['meaning_evidence'] + plan['model_evidence']
+    plan['original_inputs'] = list({r['path']: r for r in originals}.values())
+    assert sum(r['bytes'] for r in plan['original_inputs']) < 3 * 2**20
+    for r in plan['original_inputs']:
+        assert ref(Path(r['path'])) == r
+    imported = read(H / 'templates/ROOT_IMPORT_FALSE.json')
+    imported['subject'] = {key: plan[key] for key in imported['subject']}
+    for key, value in list(imported.items()):
+        if value is False:
+            imported[key] = True
+    imported['history_qualification'] = 'Fresh finite four-generator closure for this case and Source. The finite local issued plans and preserved current case journals were inspected; no matching completed closure was found in that scope. No global historical absence is claimed.'
+    plan['Root_import'] = write(where / 'Root_import.json', imported)
+    plan['inputs'] = plan['original_inputs'] + [plan['Root_import']]
+else:
+    plan = read(where / 'produce_plan.json')
+    plan.update(schema='UNISSUED_F004_FINITE_CLOSURE_CHECK_PLAN_V1',
+                saved=ref(base / 'produce/carrier.bin'), producer_record=ref(base / 'produce/result.json'))
+    plan['inputs'] = plan['original_inputs'] + [plan['Root_import'], plan['saved'], plan['producer_record']]
+
+plan['output'] = str(base / args.role.lower())
+guard = base / (args.role.lower() + '_guard')
+assert not os.path.lexists(plan['output']) and not os.path.lexists(guard)
+pr = write(where / (args.role.lower() + '_plan.json'), plan)
+gate = read(H / ('templates/%s_ROOT_GATE_FALSE.json' % args.role))
+gate.update(Root_authority=True, issued=True, whole_Source_and_bounds_owned=True,
+            no_completed_success_replayed_owned=True, Source_peer=peer_ref,
+            controls_actual=controls_ref, Root_import=plan['Root_import'],
+            Original_calls_authorized=True, synthetic_only=False, plan=pr, guard=str(guard))
+gr = write(where / (args.role.lower() + '_Root_gate.json'), gate)
+argv = ['/usr/bin/env']
+for key in ['COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES']:
+    argv += ['-u', key]
+argv += [PYTHON, '-E', '-B', mf['guards'][0]['path'], '--volume', '/Users/sasha/medusa',
+         '--output', str(guard), '--rss-cap-mib', '128', '--timeout', '100', '--',
+         PYTHON, '-E', '-B', '-S', mf['roles'][args.role]['program']['path'], '--actor', '/root',
+         '--role', args.role, '--manifest', *trip(mf_ref), '--plan', *trip(pr), '--gate', *trip(gr)]
+print(json.dumps(dict(argv=argv, plan=pr, Root_gate=gr, position=args.position, role=args.role, case_credit=0)))

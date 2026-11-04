@@ -1,0 +1,178 @@
+"""UNRUN Root-only finite quartet closure roles. No default authority."""
+import argparse,hashlib,os,signal,stat,sys,time,types
+from pathlib import Path
+AUTHOR='/root/working_set_audit'
+AUTHORS=('/root','/root/readback_review',AUTHOR,'/root/working_set_audit/ip_witness_costs','/root/dependency_audit')
+PYTHON='/Users/sasha/.venvs/global/bin/python'
+START=time.monotonic()
+SOURCES={'retained_math': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_proper_subspaces/retained_math.py', 'bytes': 5500, 'sha256': 'cafd2f2be72f692183732c190419f23b8469b856307267b5f1571f99e68c8da0'}, 'cover_arithmetic': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_schreier_covers/arithmetic.py', 'bytes': 1985, 'sha256': '129b99a6fdb868c68d6d0bd20e2305662fbc90baba27ca98b4b9d815516aff8d'}, 'word_admission': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_known_proper_subgroup_words/operational/admission.py', 'bytes': 4243, 'sha256': '00362a26ce19b53f528d1d6596b472ddd052ec8ac65d87f36dbc5219cfa56674'}, 'original_context': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_proper_subspaces/original_context.py', 'bytes': 9101, 'sha256': 'b5230e7634b4a965c0b1791f14f0d217246fa67397e8a95ea90489beee76c6e6'}, 'finite_closure_kernel': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_finite_closure/kernel.py', 'bytes': 4039, 'sha256': '3cdfaea65c43059275556dd3d76956079ef5371413b2d87cf9aa316ad6da221d'}, 'finite_closure_envelope': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_finite_closure/envelope.py', 'bytes': 9754, 'sha256': 'cbea15eaaaaf037561e9688aed5477274fcc99ffdb9d55a8072ed878a696e081'}, 'finite_closure_controls': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_finite_closure/controls.py', 'bytes': 5480, 'sha256': 'e4b81a325f715988b2fe89d16a61ad7e1710ea37f85cdbdff9e50848b165fbae'}, 'finite_closure_control_adapter': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_finite_closure/control_adapter.py', 'bytes': 2047, 'sha256': '7662429fb80b92039de9597f0d70ceb9af3418425be8f142dd6b1bb39932fc1f'}, 'intersection_words_kernel': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_intersection_words/words.py', 'bytes': 5516, 'sha256': '09827b0edccf36a89c0b0f091cc5ff2be5c087f63accfa48b2512bdb2ce948fe'}, 'intersection_words_controls': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f004_intersection_words/controls.py', 'bytes': 5359, 'sha256': '2787a93ad3708245629577df79519e0909e79eb73847d991044919a89e2a92a4'}}
+GUARDS=[{'path':'/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py','bytes':4806,'sha256':'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'},
+ {'path':'/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_transient.py','bytes':18361,'sha256':'5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42'}]
+CAPS=dict(source_bytes=98304,matrix_products=400000,row_images=200000,linear_units=200000,
+ read_bytes=8388608,paths=96,file_bytes=2097152,cooperative_seconds=90,
+ cooperative_RSS_bytes=117440512,seconds=100,rss_bytes=134217728,outputs=2,output_each_bytes=131072)
+
+def need(value,why):
+ if not value:raise ValueError(why)
+
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def raw(ref,maximum):
+ need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int and 0<=ref['bytes']<=maximum,'bounded exact Source/bootstrap descriptor')
+ p=Path(ref['path']);a=p.lstat()
+ need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==ref['bytes'],'ordinary exact Source/bootstrap extent')
+ with p.open('rb')as f:b=os.fstat(f.fileno());body=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+ need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(body)==ref['bytes']and hashlib.sha256(body).hexdigest()==ref['sha256'],'stable whole Source/bootstrap')
+ return body
+
+def load(name):
+ r=SOURCES[name];need(name not in sys.modules,'fresh pinned module namespace')
+ body=raw(r,32768);m=types.ModuleType(name);m.__file__=r['path'];sys.modules[name]=m
+ exec(compile(body,r['path'],'exec'),m.__dict__);return m
+
+def distinct(review):
+ return type(review)is str and bool(review.strip())and review not in AUTHORS
+
+def small(ref,maximum,why):
+ need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}and type(ref['bytes'])is int and 0<=ref['bytes']<=maximum,why)
+
+def main():
+ need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+  and not sys.flags.optimize and sys.executable==PYTHON
+  and not any(k in os.environ for k in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES')),'ordinary exact EBS/ENV5')
+ signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('whole100s role')))
+ signal.setitimer(signal.ITIMER_REAL,max(.001,100-(time.monotonic()-START)))
+ p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--actor',required=True)
+ p.add_argument('--role',choices=('PRODUCE','CHECK','CONTROLS','CHECK_WORDS','CONTROLS_WORDS'),required=True)
+ for name in('manifest','plan','gate'):p.add_argument('--'+name,nargs=3,required=True)
+ a=p.parse_args();need(a.actor=='/root','Root-only operational entry')
+ words=a.role in('CHECK_WORDS','CONTROLS_WORDS');synthetic=a.role in('CONTROLS','CONTROLS_WORDS')
+ control_role='CONTROLS_WORDS'if words else'CONTROLS';control_count=20 if words else 22
+ kernel_name='intersection_words_kernel'if words else'finite_closure_kernel'
+ controls_name='intersection_words_controls'if words else'finite_closure_controls'
+ M=load('retained_math');B=load('cover_arithmetic');A=load('word_admission')
+ K=load(kernel_name);E=load('finite_closure_envelope')
+ b=B.Budget();tr=lambda v:dict(path=v[0],bytes=int(v[1]),sha256=v[2])
+ mr,pr,gr=[tr(getattr(a,k))for k in('manifest','plan','gate')]
+ for r,n in((mr,32768),(pr,32768),(gr,8192)):small(r,n,'small bootstrap documents')
+ mf,plan,gate=[b.doc(r)for r in(mr,pr,gr)];role=mf['roles'][a.role];program=role['program']
+ need(mf['schema']=='F004_FINITE_CLOSURE_SOURCE_V1'and mf['caps']==CAPS
+  and program['path']==str(Path(__file__).resolve())
+  and plan['schema']=='UNISSUED_F004_FINITE_CLOSURE_'+a.role+'_PLAN_V1'
+  and plan['Root_authority']is False and plan['ready_for_execution']is True
+  and plan['Source_manifest']==mr and plan['program']==program,'exact selected Source and ready unissued data')
+ names=['retained_math','cover_arithmetic','word_admission',kernel_name,'finite_closure_envelope']
+ names+=[controls_name,'finite_closure_control_adapter']if synthetic else['original_context']
+ sources=[program]+[SOURCES[n]for n in names]
+ need(role['loaded_sources']==sources and mf['guards']==GUARDS
+  and sum(r['bytes']for r in sources+GUARDS)+512==role['whole_Source_guards_plus512']<=98304,'complete role namespace with both unchanged guards')
+ for r in sources+GUARDS:b.read(r)
+ prepaid=3*sum(r['bytes']for r in sources)+GUARDS[0]['bytes']+3*GUARDS[1]['bytes']+512
+ need(prepaid==role['prepaid_loader_bytes'],'complete whole Source/bootstrap prepayment');b.bytes+=prepaid;b.tick()
+ documents=[mf[k]for k in('protocol','proof','word_proof'if words else'kernel_proof')]
+ for r in documents:b.read(r)
+ need(gate['schema']=='ROOT_F004_FINITE_CLOSURE_EXECUTION_V1'and gate['root']=='/root'
+  and gate['Root_authority']is gate['issued']is gate['whole_Source_and_bounds_owned']is gate['no_completed_success_replayed_owned']is True
+  and gate['role']==a.role and gate['Source_manifest']==mr and gate['program']==program and gate['plan']==pr,'fresh exact Root role authority')
+ small(gate['Source_peer'],32768,'bounded new Source peer before read');peer=b.doc(gate['Source_peer'])
+ need(peer['status']=='SUPPORTED_STATIC_F004_FINITE_CLOSURE_SOURCE'and peer['Source_manifest']==mr
+  and peer['program']==program and peer['protocol']==mf['protocol']and peer['proof']==mf['proof']
+  and peer['kernel_proof']==mf['kernel_proof']and peer['word_proof']==mf['word_proof']
+  and peer['blockers']==[]and distinct(peer['reviewer'])
+  and peer['control_counts']==mf['control_counts']==dict(CONTROLS=22,CONTROLS_WORDS=20)
+  and all(type(x)is int for x in peer['control_counts'].values())
+  and type(peer['underlying_arithmetic_banks'])is int and peer['underlying_arithmetic_banks']==1,'distinct complete exact new Source peer')
+ bootstrap={r['path']for r in sources+GUARDS+documents+[mr,pr,gr,gate['Source_peer']]}
+ if synthetic:
+  need(gate['synthetic_only']is True and gate['Original_calls_authorized']is False
+   and gate['Root_import']is gate['controls_actual']is None,'synthetic-only control bootstrap')
+ else:
+  small(gate['controls_actual'],32768,'bounded actual-control review before read')
+  controls=b.doc(gate['controls_actual']);bootstrap.add(gate['controls_actual']['path'])
+  need(controls['status']==('SUPPORTED_ACTUAL_F004_INTERSECTION_WORD_CONTROLS'if words else'SUPPORTED_ACTUAL_F004_FINITE_CLOSURE_CONTROLS')
+   and controls['Source_manifest']==mr and controls['Source_peer']==gate['Source_peer']
+   and controls['program']==mf['roles'][control_role]['program']and controls['blockers']==[]and distinct(controls['reviewer'])
+   and type(controls['controls'])is int and controls['controls']==control_count and controls['Original_inputs_loaded']is False
+   and type(controls['underlying_arithmetic_banks'])is int and controls['underlying_arithmetic_banks']==1
+   and controls['all_actual_toy_arithmetic_charged_to_one_owner']is True
+   and gate['Original_calls_authorized']is True and gate['synthetic_only']is False
+   and gate['Root_import']==plan['Root_import'],'fresh actual controls and exact Original release')
+ sp=Path(gate['guard'])/'started.json';ss=sp.lstat()
+ need(sp.resolve(strict=True)==sp and stat.S_ISREG(ss.st_mode)and ss.st_nlink==1
+  and ss.st_size<=131072 and b.bytes+2*ss.st_size<=8388608,'bounded actual guard start')
+ with sp.open('rb')as f:before=os.fstat(f.fileno());sb=f.read(ss.st_size+1);after=os.fstat(f.fileno())
+ need(sig(ss)==sig(before)==sig(after)==sig(sp.lstat())and len(sb)==ss.st_size,'whole observed guard start');b.bytes+=len(sb)
+ sr=dict(path=str(sp),bytes=len(sb),sha256=hashlib.sha256(sb).hexdigest());st=b.doc(sr);bootstrap.add(sr['path'])
+ need(st['command']==[PYTHON,'-E','-B','-S',str(Path(__file__).resolve()),*sys.argv[1:]]
+  and any(x['pid']==os.getpid()for x in st['identities'])
+  and all(st['limits'][k]==v for k,v in dict(total_rss=128*2**20,wall_seconds=100.0,
+   admit_disk=10*2**30,disk_floor=8*2**30,admit_ram=4*2**30,ram_floor=3*2**30).items()),'actual same PID/argv old128MiB100s guard')
+ need(type(plan['inputs'])is list and len(plan['inputs'])==len({r['path']for r in plan['inputs']})
+  and not bootstrap&{r['path']for r in plan['inputs']},'separate complete scientific inputs')
+ if synthetic:need(plan['inputs']==[],'no Original control inputs')
+ else:
+  expected=list(plan['original_inputs'])+[plan['Root_import']]
+  if a.role=='CHECK':
+   small(plan['saved'],98311,'bounded whole supplied tree');small(plan['producer_record'],131072,'bounded producer record')
+   expected+=[plan['saved'],plan['producer_record']]
+  elif words:
+   small(plan['word_file'],60586,'bounded untrusted supplied word file');expected.append(plan['word_file'])
+  need(M.can(plan['inputs'])==M.can(expected),'exact meaning-bound scientific/producer input list')
+ for r in plan['inputs']:b.read(r)
+ need(b.bytes+sum(r['bytes']for r in b.refs.values())<=8388608,'reserve complete first/closing IO before work')
+ identity=bytes(x for row in M.I7 for x in row);files={}
+ if synthetic:
+  C=load(controls_name);V=load('finite_closure_control_adapter')
+  kernel_count=15 if words else 17;kernel_status='ALL_FRESH_INTERSECTION_WORD_CONTROLS_PASS'if words else'ALL_FRESH_FINITE_CLOSURE_CONTROLS_PASS'
+  kernel_controls=V.run(C,K,B,b,identity,kernel_count,kernel_status);envelope_names=E.controls(b,A,M,words)
+  names=kernel_controls['groups']+envelope_names
+  need(len(names)==len(set(names))==control_count and kernel_controls['underlying_arithmetic_banks']==1,'exact fresh one-owner group count')
+  result=dict(status='ALL_TWENTY_FRESH_INTERSECTION_WORD_CONTROLS_PASS'if words else'ALL_TWENTY_TWO_FRESH_FINITE_CLOSURE_CONTROLS_PASS',controls=control_count,control_names=names,
+   kernel_groups=kernel_count,envelope_groups=5,kernel_owner_meter_deltas=kernel_controls['owner_meter_deltas'],
+   underlying_arithmetic_banks=1,all_actual_toy_arithmetic_charged_to_one_owner=True,
+   local_views=kernel_controls['factory_views'],Original_inputs_loaded=False,old_controls_replayed=False)
+ else:
+  E.scope(plan,b.doc(plan['Root_import']),M,a.role);current=b.doc(plan['selector']);E.selection(plan,current,A,M)
+  for r in plan['meaning_evidence']+plan['model_evidence']:b.read(r)
+  if a.role=='CHECK':need(plan['saved']['bytes']<=10+3*(plan['cap']-1),'supplied tree within exact selected cap')
+  O=load('original_context');ctx=O.context(plan,b)
+  selected,pending,history=A.select(plan,current,ctx,M.digest,M.expand_runs)
+  marks=tuple(bytes(x for row in g for x in row)for g in O.marks_for(selected[0],plan['case'],ctx,b))
+  subject=E.subject(plan);subject['Root_import']=plan['Root_import']
+  if a.role=='PRODUCE':
+   carrier,facts=K.build(marks,b,identity,cap=plan['cap']);files['carrier.bin']=carrier
+   result=dict(status='UNTRUSTED_FINITE_FOUR_MARK_CLOSURE_CARRIER',claimed=facts,independent_consumer_required=True)
+  elif a.role=='CHECK':
+   producer=b.doc(plan['producer_record'])
+   need(producer['status']=='UNTRUSTED_FINITE_FOUR_MARK_CLOSURE_CARRIER'and producer['role']=='PRODUCE'
+    and producer['Source_manifest']==mr and producer['program']==program
+    and M.can(producer['subject'])==M.can(subject)and producer['carrier']==plan['saved'],'same exact Source/case/model/cap/producer/tree')
+   facts=K.check(marks,b.read(plan['saved']),b,identity)
+   result=dict(status=E.outcome(facts,plan['cap'],plan['ambient_order_strict_lower_bound'],M),facts=facts,
+    conditional_on_exact_Root_Original_and_strict_ambient_import=True)
+  else:
+   facts=K.check(marks,b.read(plan['word_file']),b,identity)
+   status=E.word_outcome(facts,M);facts=dict(facts,witness=facts['witness'].hex())
+   result=dict(status=status,facts=facts,word_file=plan['word_file'],word_recipes_are_untrusted=True,
+    conditional_on_exact_Root_Original_import=True,ambient_order_premise_required=False)
+  result.update(subject=subject,Original_inputs_loaded=True,current_unpaid_positions=pending,historical_attempt_frontiers=history,
+   named_type_or_maximality_or_GEN_claimed=False,whole_level_or_census_claimed=False)
+ result.update(Source_manifest=mr,Source_peer=gate['Source_peer'],program=program,Root_gate=gr,plan=pr,
+  role=a.role,guard_started=sr,paid_credit=0,canonical_or_global_writes=0,old_successes_replayed=False)
+ need(set(b.refs)==bootstrap|{r['path']for r in plan['inputs']},'complete declared input frontier')
+ need(b.bytes+sum(r['bytes']for r in b.refs.values())<=8388608,'reserve closing reads');b.recheck()
+ out=Path(plan['output']);need(out.is_absolute()and out.is_relative_to('/private/tmp')and '..'not in out.parts
+  and not out.is_relative_to(Path(gate['guard']))
+  and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh private output outside guard only')
+ if 'carrier.bin'in files:result['carrier']=dict(path=str(out/'carrier.bin'),bytes=len(files['carrier.bin']),sha256=hashlib.sha256(files['carrier.bin']).hexdigest())
+ result['resources']=dict(physical_reads=b.bytes,matrix_products=b.products,row_images=b.row_images,linear_units=b.linear,
+  peak_self_RSS_bytes=b.peak,seconds=time.monotonic()-START)
+ files['result.json']=M.can(result)+b'\n';need(len(files)<=2 and all(len(body)<=131072 for body in files.values()),'two whole128KiB outputs')
+ need(len(set(b.refs)|{str(out/name)for name in files})<=96,'complete input/output path union before mkdir')
+ b.tick();out.mkdir();outputs=[]
+ for name,body in files.items():
+  with(out/name).open('xb')as f:need(f.write(body)==len(body),'whole exclusive output');f.flush();os.fsync(f.fileno())
+  outputs.append(dict(path=str(out/name),bytes=len(body),sha256=hashlib.sha256(body).hexdigest()))
+ print(M.can(dict(status=result['status'],outputs=outputs,paid_credit=0)).decode())
+
+if __name__=='__main__':main()

@@ -1,0 +1,45 @@
+"""Restore only the six small inputs required by the next L026 batch."""
+import hashlib
+import json
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+handoff = WORK / 'l026_next_step.json'
+raw = handoff.read_bytes()
+assert hashlib.sha256(raw).hexdigest() == '1a6358cefaeca784d5667d74a882aecf8105e2cf4327ba6cd1de37d6b2b1d1d1'
+rows = json.loads(raw)['missing_runtime_inputs']
+assert len(rows) == 6 and sum(r['bytes'] for r in rows) == 827786
+commit = '71454ae681ae8d8201b41ad3a54a4eb848c5fd90'
+base = 'https://raw.githubusercontent.com/sashakolpakov/human_compression/' + commit + '/october_corpus/research/intake/'
+prefixes = ['verified_progress/objects/', 'continuation/forest_and_census/objects/', 'continuation/matrix_certificates/objects/']
+receipt = []
+for row in rows:
+    target = Path(row['path'])
+    assert target.is_relative_to('/Users/sasha/medusa/research/leemans/maintenance/intake')
+    assert not target.exists() and row['bytes'] < 512 * 1024
+    data = None
+    for prefix in prefixes:
+        url = base + prefix + row['sha256']
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                candidate = response.read(row['bytes'] + 1)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                continue
+            raise
+        assert len(candidate) == row['bytes'] and hashlib.sha256(candidate).hexdigest() == row['sha256']
+        data = candidate
+        break
+    assert data is not None, row
+    target.parent.mkdir(parents=True, exist_ok=True)
+    assert target.parent.resolve() == target.parent
+    with target.open('xb') as stream:
+        stream.write(data)
+    receipt.append(dict(path=str(target), bytes=len(data), sha256=row['sha256'], immutable_source=url))
+out = WORK / 'l026_runtime_inputs_restored.json'
+assert not out.exists()
+out.write_text(json.dumps(dict(files=receipt, total_bytes=sum(r['bytes'] for r in receipt),
+                               Original_scientific_functions_executed=0), sort_keys=True, indent=2) + '\n')
+print(json.dumps(dict(restored=len(receipt), bytes=sum(r['bytes'] for r in receipt))))

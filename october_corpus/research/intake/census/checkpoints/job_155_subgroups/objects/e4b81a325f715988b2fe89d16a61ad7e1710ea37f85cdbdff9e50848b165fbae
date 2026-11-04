@@ -1,0 +1,102 @@
+"""UNRUN synthetic closure controls; no Original inputs."""
+
+def run(K,B,identity,limit_exception):
+    names=[]
+    def need(ok,why):
+        if not ok:raise AssertionError(why)
+    need(K.MAGIC==b'F004FC01' and K.NMAX==32768 and K.MAX_BYTES==98311,'codec pins')
+    def fresh():
+        meter=B()
+        need(meter.products==meter.linear==meter.row_images==0,'fresh meter')
+        return meter
+    def refused(f):
+        try:f()
+        except ValueError:return
+        raise AssertionError('expected ValueError')
+    def group(name,f):
+        value=f();names.append(name);return value
+    def each(values,f):
+        for value in values:f(value)
+    def matrix(p,flips=()):
+        return bytes((10 if i in flips else 1) if j==p[i] else 0
+                     for i in range(7) for j in range(7))
+    p=tuple(range(7));a=matrix((1,0,2,3,4,5,6));b=matrix((0,2,1,3,4,5,6))
+    z=matrix(p,(3,));marks=(z,a,b,matrix((1,0,2,3,4,5,6),(3,)))
+    diagonal=(matrix(p,(0,)),matrix(p,(1,)),matrix(p,(2,)),matrix(p,(0,1)))
+    def good(g,order):
+        producer=fresh();raw,claim=K.build(g,producer,identity)
+        need(claim['status']=='UNTRUSTED_FINITE_FOUR_GENERATOR_CLOSURE_CARRIER'
+             and claim['claimed_order']==order and claim['independent_consumer_required'] is True,
+             'claim fields')
+        consumer=fresh();result=K.check(g,raw,consumer,identity)
+        need(result['status']=='VERIFIED_EXACT_FOUR_GENERATOR_CLOSURE'
+             and result['exact_order']==order,'exact order')
+        need(producer.products==4+4*order and consumer.products==5*order+3,'products')
+        need(producer.row_images==consumer.row_images==0,'row debit')
+        delta=result['meter_deltas']
+        need(delta==dict(matrix_products=consumer.products,row_images=0,
+                         linear_units=consumer.linear),'deltas')
+        need(raw[:8]==K.MAGIC and len(raw)==10+3*(order-1)
+             and raw[8]+256*raw[9]==order,'whole codec')
+        tree=[(raw[o]+256*raw[o+1],raw[o+2]) for o in range(10,len(raw),3)]
+        need(K.encode(tree)==raw,'codec roundtrip')
+        return raw
+    raw=group('s3_times_c2',lambda:good(marks,12))
+    group('elementary_abelian_eight',lambda:good(list(diagonal),8))
+    def permissive():
+        good((identity,identity,z,z),2);good((identity,)*4,1)
+    group('identity_repeated_generators',permissive)
+    def bad(body,g=marks,unit=identity):
+        refused(lambda:K.check(g,body,fresh(),unit))
+    def patch(body,offset,value):
+        return body[:offset]+value+body[offset+len(value):]
+    group('whole_header_extent',lambda:each(
+        [b'',b'X'+raw[1:],raw[:-1],raw+b'\0',b'\0'*(K.MAX_BYTES+1)],bad))
+    group('node_count_bounds',lambda:each([b'\0\0',b'\1\x80',b'\xff\xff'],
+        lambda value:bad(patch(raw,8,value))))
+    group('strict_tree',lambda:each([(10,b'\1\0'),(12,b'\4')],
+        lambda pair:bad(patch(raw,*pair))))
+    group('boolean_tree_slots',lambda:each(
+        [[(False,0)],[(0,False)],[(0,True)],False],lambda tree:refused(lambda:K.encode(tree))))
+    group('duplicate_whole_matrices',lambda:bad(K.encode([(0,0),(1,0)])))
+    group('nonclosing_supplied_sets',lambda:each([K.encode([]),K.encode([(0,0)])],bad))
+    group('full_involutions',lambda:each(
+        [marks[:3],marks+(z,),(bytes(49),a,b,z),(bytes([11])+z[1:],a,b,z),
+         (z[:-1],a,b,z),(bytearray(z),a,b,z),
+         (z,matrix((1,2,0,3,4,5,6)),b,z)],lambda g:bad(raw,g)))
+    group('explicit_identity',lambda:each(
+        [z,bytes(49),identity[:-1],bytes([11])+identity[1:]],lambda unit:bad(raw,unit=unit)))
+    def lower_caps():
+        for cap,products in ((1,5),(2,6)):
+            meter=fresh()
+            try:K.build(marks,meter,identity,cap=cap)
+            except K.Inconclusive as exc:
+                need(str(exc)=='finite closure cap; no order or absence conclusion','cap scope')
+            else:raise AssertionError('lower cap accepted')
+            need(meter.products==products and meter.row_images==0,'cap work')
+        meter=fresh();meter.linear=200000-196
+        try:K.build(marks,meter,identity)
+        except limit_exception:pass
+        else:raise AssertionError('codec prepayment was omitted')
+        need(meter.products==52 and meter.linear==200000,'codec cap after bounded BFS')
+    group('discovery_caps',lower_caps)
+    group('strict_cap_integers',lambda:each([False,True,0,-1,K.NMAX+1],
+        lambda cap:refused(lambda:K.build(marks,fresh(),identity,cap=cap))))
+    def exhausted(role,field):
+        meter=fresh()
+        if field=='products':meter.products=400000
+        else:meter.linear=200000
+        try:
+            if role=='check':K.check(marks,raw,meter,identity)
+            else:K.build(marks,meter,identity)
+        except limit_exception:pass
+        else:raise AssertionError('meter accepted')
+        need(meter.products==(400000 if field=='products' else 0),'arithmetic at cap')
+        if field=='linear':need(meter.linear==200000,'linear debit at cap')
+    group('check_product_cap',lambda:exhausted('check','products'))
+    group('check_linear_cap',lambda:exhausted('check','linear'))
+    group('build_product_cap',lambda:exhausted('build','products'))
+    group('build_linear_cap',lambda:exhausted('build','linear'))
+    need(len(names)==len(set(names))==17,'seventeen distinct fresh groups')
+    return dict(status='ALL_FRESH_FINITE_CLOSURE_CONTROLS_PASS',groups=names,count=len(names),
+                Original_inputs_loaded=False,Root_authority=False,case_credit=0)

@@ -1,0 +1,96 @@
+"""UNRUN actual end-word algebra/order facts; no classification or authority.
+
+Production dimension is7. Dimensions1..7 permit independent synthetic tests.
+The supplied budget owns all scalar/matrix work and its clock; no resets.
+"""
+SCHEMA='F004_END_WORD_ALGEBRA_ELEMENT_ORDER_V1'
+ORDERS=(24,44)
+WORD_MAX=128
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+def integer(x,low,high):
+ need(type(x)is int and low<=x<=high,'typed bounded integer');return x
+
+def shape(dimension,identity,b):
+ d=integer(dimension,1,7);n=d*d;b.scalar(n)
+ need(type(identity)is bytes and len(identity)==n
+  and all(identity[d*i+j]==int(i==j)for i in range(d)for j in range(d)),'explicit exact identity')
+ return d,n
+
+def matrix(value,n):
+ need(type(value)is bytes and len(value)==n and all(x<11 for x in value),'canonical whole F11 matrix')
+
+def generators(g,identity,b,dimension):
+ d,n=shape(dimension,identity,b);b.scalar(3*n)
+ need(type(g)in(tuple,list)and len(g)==3,'three actual end generators')
+ for a in g:matrix(a,n);need(b.multiply(a,a)==identity,'three full involution equations')
+ return d,n
+
+def rank(rows,b,dimension):
+ """Independent flattened full matrices; every field update is prepaid."""
+ d=integer(dimension,1,7);n=d*d
+ need(type(rows)in(tuple,list)and len(rows)==n,'exactly dimension-squared word matrices')
+ b.scalar(2*n*n)
+ for row in rows:matrix(row,n)
+ stored={}
+ for raw in rows:
+  row=list(raw)
+  for p,r in sorted(stored.items()):
+   b.scalar(1);z=row[p]
+   if z:
+    b.scalar(2*(n-p))
+    for j in range(p,n):row[j]=(row[j]-z*r[j])%11
+  pivot=None
+  for j,x in enumerate(row):
+   b.scalar(1)
+   if x:pivot=j;break
+  need(pivot is not None,'dependent full word matrices')
+  z=row[pivot];b.scalar(8)
+  z2=z*z%11;z4=z2*z2%11;z8=z4*z4%11;inverse=z8*z%11
+  b.scalar(n-pivot)
+  for j in range(pivot,n):row[j]=row[j]*inverse%11
+  stored[pivot]=row
+ need(len(stored)==n,'full flattened word rank');b.tick();return n
+
+def order(matrix_value,required,b,identity,dimension=7):
+ """Exact element order24 or44 only; makes no end-membership assertion."""
+ d,n=shape(dimension,identity,b);b.scalar(n)
+ integer(required,24,44);need(required in ORDERS,'allowed exact order');matrix(matrix_value,n)
+ p2=b.multiply(matrix_value,matrix_value);p4=b.multiply(p2,p2)
+ p8=b.multiply(p4,p4)
+ if required==24:
+  half=b.multiply(p8,p4);whole=b.multiply(half,half);other=p8
+ else:
+  p16=b.multiply(p8,p8);half=b.multiply(b.multiply(p16,p4),p2)
+  whole=b.multiply(half,half);other=p4
+ need(whole==identity and half!=identity and other!=identity,'whole exact order power tests')
+ return required
+
+def check(g,certificate,b,identity,dimension=7):
+ """Actual word basis and order facts; no named-group conclusion."""
+ b.tick();before=(b.products,b.row_images,b.linear)
+ need(type(certificate)is dict and set(certificate)=={'schema','dimension','nodes','order_word','order'}
+  and certificate['schema']==SCHEMA,'exact word algebra certificate schema')
+ d=integer(certificate['dimension'],1,7);need(type(dimension)is int and d==dimension,'exact supplied dimension')
+ n=d*d;nodes=certificate['nodes'];word=certificate['order_word'];required=certificate['order']
+ need(type(nodes)is list and len(nodes)==n-1 and type(word)is list and 1<=len(word)<=WORD_MAX,'whole bounded word DAG and order word')
+ integer(required,24,44);need(required in ORDERS,'allowed exact order')
+ b.scalar(2*len(nodes)+len(word)+8)
+ for i,row in enumerate(nodes,1):
+  need(type(row)is list and len(row)==2,'parent and actual end label')
+  integer(row[0],0,i-1);integer(row[1],1,3)
+ for label in word:integer(label,1,3)
+ generators(g,identity,b,d);values=[identity]
+ for p,label in nodes:values.append(b.multiply(values[p],g[label-1]))
+ full_rank=rank(values,b,d);w=identity
+ for label in word:w=b.multiply(w,g[label-1])
+ exact=order(w,required,b,identity,d);b.tick()
+ after=(b.products,b.row_images,b.linear)
+ need(all(type(x)is int and type(y)is int and 0<=x<=y for x,y in zip(before,after)),'monotone shared counters')
+ return dict(status='VERIFIED_END_WORD_ALGEBRA_AND_ELEMENT_ORDER',dimension=d,word_nodes=n,
+  flattened_rank=full_rank,full_matrix_algebra_spanned=True,all_nodes_actual_end_words=True,
+  exact_element_order=exact,order_word=list(word),order_element=w,
+  no_classification_or_group_generation_conclusion=True,
+  meter_deltas=dict(matrix_products=after[0]-before[0],row_images=after[1]-before[1],linear_units=after[2]-before[2]))

@@ -1,0 +1,80 @@
+"""UNRUN synthetic algebra/order controls. One supplied owner, no Original data."""
+
+def run(K,owner,M,B):
+ names=[]
+ def need(ok,why):
+  if not ok:raise ValueError(why)
+ class View:
+  def __init__(self,d):self.d=d;self.products=0;self.row_images=0;self.linear=0
+  def tick(self):return owner.tick()
+  def scalar(self,n):
+   if self.linear+n>200000:raise B.Limit('local artificial linear cap')
+   owner.scalar(n);self.linear+=n
+  def multiply(self,a,c):
+   if self.products>=400000 or owner.products>=400000:raise B.Limit('prospective product cap')
+   d=self.d;self.scalar(3*d*d)
+   A=tuple(tuple(a[d*i+j]for j in range(d))for i in range(d))
+   C=tuple(tuple(c[d*i+j]for j in range(d))for i in range(d))
+   out=owner.multiply(A,C);self.products+=1
+   return bytes(x for row in out for x in row)
+ def refused(f):
+  try:f()
+  except(ValueError,TypeError,KeyError):return
+  raise ValueError('expected refusal')
+ def group(name,f):f();names.append(name)
+ I=bytes((1,0,0,1));s=bytes((0,1,1,0));t=bytes((1,0,0,10));u=bytes((1,2,0,10));g=(s,t,u)
+ c=dict(schema=K.SCHEMA,dimension=2,nodes=[[0,1],[0,2],[0,3]],order_word=[1,2,3],order=24)
+ def check(cert=c,gens=g,identity=I):return K.check(gens,cert,View(2),identity,2)
+ def positive():
+  f=check();need(f['flattened_rank']==4 and f['exact_element_order']==24
+   and f['full_matrix_algebra_spanned']is True and f['all_nodes_actual_end_words']is True,'full M2/order24')
+ group('full_M2_and_arbitrary_word24',positive)
+ group('dimension_one_rank',lambda:need(K.rank([b'\1'],View(1),1)==1,'rank one'))
+ rows=[bytes((2,3,0,0)),bytes((0,0,5,1)),bytes((0,4,0,0)),bytes((0,0,0,7))]
+ group('paid_pivot_order_and_normalization',lambda:need(K.rank(rows,View(2),2)==4,'independent reordered pivots'))
+ I4=bytes(int(i==j)for i in range(4)for j in range(4))
+ A4=bytes((0,1,0,0,10,0,0,0,0,0,1,1,0,0,0,1))
+ group('exact_order44_block',lambda:need(K.order(A4,44,View(4),I4,4)==44,'order44'))
+ def wrong24():
+  for repeat in(2,3):refused(lambda repeat=repeat:check(dict(c,order_word=[1,2,3]*repeat)))
+ group('both_order24_prime_divisors',wrong24)
+ def wrong44():
+  square=bytes((10,0,0,0,0,10,0,0,0,0,1,2,0,0,0,1))
+  eleventh=bytes((0,10,0,0,1,0,0,0,0,0,1,0,0,0,0,1))
+  for a in(square,eleventh):refused(lambda a=a:K.order(a,44,View(4),I4,4))
+ group('both_order44_prime_divisors',wrong44)
+ group('nonclosing_order_word',lambda:refused(lambda:check(dict(c,order_word=[2,3]))))
+ def schema():
+  for q in(dict(c,extra=1),dict(c,dimension=8),dict(c,nodes=[]),dict(c,nodes=c['nodes']+[[0,1]]),dict(c,order=22)):
+   refused(lambda q=q:check(q))
+ group('whole_schema_dimension_and_extent',schema)
+ def booleans():
+  for q in(dict(c,dimension=True),dict(c,order=True),dict(c,nodes=[[False,1],[0,2],[0,3]]),dict(c,nodes=[[0,True],[0,2],[0,3]]),dict(c,order_word=[True])):
+   refused(lambda q=q:check(q))
+ group('Boolean_integer_fields',booleans)
+ def references():
+  for first in([1,1],[-1,1],[0,0],[0,4]):refused(lambda first=first:check(dict(c,nodes=[first,[0,2],[0,3]])))
+ group('earlier_parent_and_actual_labels',references)
+ group('duplicate_dependent_words',lambda:refused(lambda:check(dict(c,nodes=[[0,1]]*3))))
+ group('reducible_diagonal_words',lambda:refused(lambda:check(gens=(t,I,bytes((10,0,0,10))))))
+ def bad_generators():
+  for a in(bytes(4),bytes((11,0,0,1)),s[:-1],bytearray(s),bytes((0,1,10,10))):
+   refused(lambda a=a:check(gens=(a,t,u)))
+ group('canonical_invertible_involution_domain',bad_generators)
+ group('explicit_identity',lambda:refused(lambda:check(identity=bytes(4))))
+ def words():
+  for w in([], [1]*129, ['1'], False):refused(lambda w=w:check(dict(c,order_word=w)))
+ group('whole_order_word_bounds',words)
+ def cap(field):
+  v=View(2)
+  if field=='products':v.products=400000
+  else:v.linear=200000
+  try:K.check(g,c,v,I,2)
+  except B.Limit:pass
+  else:raise ValueError('artificial cap accepted')
+  need(v.products==(400000 if field=='products'else 0),'arithmetic at exhausted cap')
+ group('prospective_product_cap',lambda:cap('products'))
+ group('prospective_linear_cap',lambda:cap('linear'))
+ need(len(names)==len(set(names))==17,'seventeen fresh kernel groups')
+ return dict(status='ALL_FRESH_END_GENERATION_CONTROLS_PASS',groups=names,count=17,
+  Original_inputs_loaded=False,underlying_arithmetic_banks=1,all_actual_toy_arithmetic_charged_to_one_owner=True)

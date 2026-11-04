@@ -1,0 +1,112 @@
+"""Issue one fresh untrusted end-cover discovery under the existing guard."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+H = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_schreier_covers')
+WORK = Path('/Users/sasha/medusa/census')
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+def reference(path):
+    b = path.read_bytes()
+    return dict(path=str(path), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    assert len(body) < 32768
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as f:
+        f.write(body)
+    return reference(path)
+
+def trip(ref):
+    return [ref['path'], str(ref['bytes']), ref['sha256']]
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--position', type=int, required=True)
+parser.add_argument('--side', choices=['LEFT', 'RIGHT'], required=True)
+parser.add_argument('--variant', choices=['frame_vector', 'middle_vector'], default='frame_vector')
+parser.add_argument('--seed', type=int, nargs=7)
+args = parser.parse_args()
+assert 1 <= args.position <= 807
+plan = read(H / 'templates/PRODUCE_PLAN_FALSE.json')
+selector_pointer = Path(plan['selector']['path']).parent / 'CURRENT_job0155.json'
+if selector_pointer.exists():
+    current_ref = read(selector_pointer)
+    assert current_ref['schema'] == 'ROOT_CURRENT_F004_JOB155_SELECTOR_V1'
+    assert current_ref['root'] == '/root' and current_ref['adopted'] is True
+    assert reference(Path(current_ref['selector']['path'])) == current_ref['selector']
+    plan['selector'] = current_ref['selector']
+    plan['meaning_evidence'].append(reference(selector_pointer))
+domain = read(Path(plan['original_domain_whole_pins']['Saved_result']['path']))
+terminal = read(Path(plan['original_domain_whole_pins']['Saved_terminal']['path']))
+current = read(Path(plan['selector']['path']))
+pending = [i for lo, hi in current['unresolved_position_runs'] for i in range(lo, hi + 1)]
+assert args.position in pending and len(pending) == current['unresolved_positions']
+row = domain['orbits'][args.position - 1]
+canonical = lambda v: json.dumps(v, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode('ascii')
+plan['case'] = dict(position=args.position, representative_J_index=row[0],
+                    original_orbit_row_sha256=hashlib.sha256(canonical(row)).hexdigest())
+plan['selected_orbit_positions'] = [args.position]
+plan['side'] = args.side
+assert domain['frame'][1][0] == 0
+plan['seed'] = args.seed if args.seed is not None else domain['frame'][1][1:]
+assert len(plan['seed']) == 7 and any(plan['seed']) and all(type(x) is int and 0 <= x < 11 for x in plan['seed'])
+assert (args.variant == 'middle_vector') == (args.seed is not None)
+name = 'position%04d_%s_%s' % (args.position, args.side.lower(), args.variant)
+where = H / 'actual/job155' / name
+base = Path('/private/tmp/f004_fresh_schreier_covers/job155') / name
+guard = base / 'produce_guard'
+plan['output'] = str(base / 'produce')
+assert not os.path.lexists(plan['output']) and not os.path.lexists(guard)
+base.mkdir(parents=True, exist_ok=True)
+
+imported = read(H / 'templates/ROOT_IMPORT_FALSE.json')
+subject_keys = list(imported['subject'])
+imported['subject'] = {k: plan[k] for k in subject_keys}
+for key, value in list(imported.items()):
+    if value is False:
+        imported[key] = True
+imported['history_qualification'] = (
+    'Fresh trial of this previously unissued Source packet, current selector and named frame vector. '
+    'The reviewed current selector, published preparation manifest and local issued plans were inspected; '
+    'no matching completed trial was found in that finite scope. No global historical absence is asserted. '
+    'The seed is untrusted discovery data, not a transferred prime-line or subgroup premise; its chosen variant is recorded in the fresh path.')
+import_ref = write(where / 'Root_import.json', imported)
+plan['Root_import'] = import_ref
+inputs = [import_ref, plan['selector'], plan['projection'], plan['Root_projection_acceptance'], plan['unpaid_manifest']]
+inputs += list(plan['original_domain_whole_pins'].values())
+for family in plan['old_sources'].values():
+    inputs += list(family.values())
+inputs += [terminal['binding_terminal'], domain['external_premises']['model_source_join'],
+           domain['faithful_frame_acceptance'], domain['normalization_result'], domain['normalization'],
+           plan['matrix_frame_result']] + plan['meaning_evidence']
+inputs = list({r['path']: r for r in inputs}.values())
+assert len(inputs) <= 40 and sum(r['bytes'] for r in inputs) < 3 * 2**20
+for r in inputs:
+    assert reference(Path(r['path'])) == r
+plan.update(inputs=inputs, ready_for_execution=True)
+plan_ref = write(where / 'plan.json', plan)
+gate = read(H / 'templates/PRODUCE_ROOT_GATE_FALSE.json')
+gate.update(Root_authority=True, issued=True, whole_Source_and_bounds_owned=True,
+            Source_peer=reference(H / 'source_review/reuse_integer_only.json'),
+            controls_actual=reference(WORK / 'reviews/f004_schreier_controls.json'),
+            Root_import=import_ref, Original_calls_authorized=True, synthetic_only=False,
+            plan=plan_ref, guard=str(guard))
+gate_ref = write(where / 'Root_gate.json', gate)
+child = [PYTHON, '-E', '-B', '-S', plan['program']['path'], '--actor', '/root', '--role', 'PRODUCE',
+         '--manifest', *trip(plan['Source_manifest']), '--plan', *trip(plan_ref), '--gate', *trip(gate_ref)]
+argv = ['/usr/bin/env']
+for key in ['COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'COVERAGE_PROCESS_START', 'OPENSSL_CONF', 'OPENSSL_MODULES']:
+    argv += ['-u', key]
+argv += [PYTHON, '-E', '-B', '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py',
+         '--volume', '/Users/sasha/medusa', '--output', str(guard), '--rss-cap-mib', '128', '--timeout', '100', '--', *child]
+print(json.dumps(dict(argv=argv, plan=plan_ref, Root_gate=gate_ref,
+                      input_files=len(inputs), scientific_input_bytes=sum(r['bytes'] for r in inputs),
+                      case=plan['case'], side=args.side, seed=plan['seed'], case_credit=0)))

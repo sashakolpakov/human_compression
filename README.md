@@ -65,6 +65,10 @@ records **450/940 F009 parents and 70,200 checked extension slots**. It includes
 the separate supplier and verifier runs, registration audit and required inputs.
 F004, F009 and L026 remain unfinished.
 
+F004's current job has **777/807 entries settled**. Four new nongeneration
+certificates are accepted; 30 further candidate certificates await review
+and strict checking.
+
 The [November directory](november_corpus/README.md) is prepared. Its researcher,
 bibliography and source editions await registration.
 

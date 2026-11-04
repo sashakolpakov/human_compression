@@ -1,0 +1,165 @@
+"""Adopt two reviewed negative cases; do not change global job counters."""
+import hashlib
+import json
+import os
+from pathlib import Path
+
+S = Path('/Users/sasha/medusa/research/leemans')
+M = S / 'maintenance/intake'
+H = M / 'f004_schreier_covers'
+WORK = Path('/Users/sasha/medusa/census')
+SELECTORS = S / 'computation/f004/q11/rank4/section_generation/method/selectors'
+DEST = S / 'computation/f004/q11/rank4/section_generation/residuals/typed_exclusions/schreier_job0155'
+
+def ref(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode('ascii')
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    body = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    assert len(body) < 65536
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as f:
+        f.write(body)
+    return ref(path)
+
+lex_path = M / 'f009_bounded_io_transition/lex.py'
+lex_body = lex_path.read_bytes()
+assert hashlib.sha256(lex_body).hexdigest() == '49d0c50e7145a0130d9318fef0907f1ba5bbfd95d09bad9ce99a034c508cb3eb'
+lex = dict(__file__=str(lex_path), __name__='retained_metadata_lexical_projection')
+exec(compile(lex_body, str(lex_path), 'exec'), lex)
+fields, array = lex['fields'], lex['array']
+join = lambda p: b'{' + b','.join(canonical(k) + b':' + v for k, v in sorted(p.items())) + b'}\n'
+
+old_path = SELECTORS / 'job_0155_after_proper_subspaces.json'
+old_ref = ref(old_path)
+assert old_ref['sha256'] == '94a76fb663e3e053ac84217e5de90b97419666abdc977c4a755a2fc41f6dbcb7'
+old_body = old_path.read_bytes()
+old = json.loads(old_body)
+pending = [i for lo, hi in old['unresolved_position_runs'] for i in range(lo, hi + 1)]
+assert len(pending) == 34 and len(old['accepted_new_paid_positions']) == 773
+assert old['original_paid_count'] == 0 and old['original_orbit_positions'] == 807
+assert len(old['accepted_new_paid_by_kind']['NG']) == 157
+assert len(old['accepted_new_paid_by_kind']['NOT_IP']) == 616
+fences = [ref(M / 'progress/current_intake.json'), ref(M / 'progress/controllers/current.json')]
+controller = read(M / 'progress/controllers/current.json')
+fences.append(controller['checkpoint'])
+for r in fences:
+    assert ref(Path(r['path'])) == r
+assert read(M / 'progress/current_intake.json')['F009']['R5_canonical_pairs_reviewed'] == 450
+assert read(M / 'progress/current_intake.json')['F004']['registered_jobs'] == 127
+
+cases = []
+for position, expected_j in [(305, 3116), (735, 8142)]:
+    assert position in pending
+    name = 'position%04d_right_frame_vector' % position
+    result_path = Path('/private/tmp/f004_fresh_schreier_covers/job155') / name / 'check/result.json'
+    result = read(result_path)
+    review_path = WORK / ('reviews/f004_job155_case%d_reuse.json' % position)
+    review = read(review_path)
+    assert review['status'] == 'SUPPORTED_ACTUAL_F004_SCHREIER_PROPER_SUBGROUP_CASE' and review['blockers'] == []
+    assert review['reviewer'] not in [None, '/root', '/root/dependency_audit']
+    assert review['checker_result'] == ref(result_path)
+    assert review['case'] == result['subject']['case'] and review['selector'] == old_ref
+    assert review['Source_manifest'] == result['Source_manifest'] and review['Source_peer'] == result['Source_peer']
+    assert review['Root_import'] == result['subject']['Root_import']
+    assert review['conditional_proper_four_mark_subgroup_supported'] is True
+    assert review['Original_G_and_lower_bound_borrowed_Root_premises'] is True
+    for value in review.values():
+        if isinstance(value, dict) and set(value) == {'path', 'bytes', 'sha256'}:
+            assert ref(Path(value['path'])) == value
+    assert result['status'] == 'VERIFIED_PROPER_FOUR_MARK_SUBGROUP'
+    assert result['subject']['case']['position'] == position
+    assert result['subject']['case']['representative_J_index'] == expected_j
+    assert result['subject']['selector'] == old_ref and result['subject']['side'] == 'RIGHT'
+    facts = result['facts']
+    assert facts['orbit_size'] == 756 and facts['stabilizer_size'] == 16
+    assert facts['exact_end_order'] == 756 * 16 == 12096 < 11**6
+    assert facts['omitted_mark_in_certified_end'] is True
+    assert facts['all_left_factor_edge_equations_verified'] is True
+    cases.append(dict(position=position, case=result['subject']['case'], disposition='NG',
+                      result=ref(result_path), independent_review=ref(review_path),
+                      Source_manifest=result['Source_manifest'], Source_peer=result['Source_peer'],
+                      exact_quartet_order=12096, logical_step='The omitted r0 belongs to the certified RIGHT end, so all four marks generate that same proper subgroup.'))
+
+application = dict(schema='ROOT_F004_SCHREIER_NONGENERATION_APPLICATION_V1', root='/root',
+                   Root_authority=True, adopted=True, original_job=[155, 4],
+                   previous_selector=old_ref, cases=cases,
+                   proof=ref(WORK / 'job155_nongeneration.tex'),
+                   accepted_positions=[305, 735], accepted_dispositions=dict(NG=[305, 735], NOT_IP=[]),
+                   borrowed_premises=['Faithful intended Original G2(11) model and same four actual members.',
+                                      'Complete accepted original orbit/member/transporter identification.',
+                                      'Ambient order greater than 11^6; this is not group recognition by the numerical kernel.'],
+                   whole_job_credit=0, whole_manuscript_conjecture_Lean_or_measurement_credit=0,
+                   qualification='New finite certificates and their logical application under explicit borrowed Original premises. No named end type, maximality, generation, or intersection-property claim.')
+application_ref = write(DEST / 'Root_logical_application.json', application)
+acceptance_ref = write(DEST / 'root_acceptance.json', dict(
+    schema='ROOT_ACCEPTED_Q11_RANK4_SCHREIER_NONGENERATION_V1', root='/root', adopted=True,
+    original_job=[155, 4], previous_selector=old_ref, logical_application=application_ref,
+    accepted_positions=[305, 735], accepted_new_paid_by_kind=dict(NG=[305, 735], NOT_IP=[]),
+    global_operational_registry_mutation=False, whole_original_job_closed=False,
+    reason='Exact finite Schreier end and verified omitted-mark containment; subgroup order below the borrowed ambient bound.'))
+
+unpaid = sorted(set(pending) - {305, 735})
+runs = []
+for i in unpaid:
+    if runs and runs[-1][1] + 1 == i:
+        runs[-1][1] = i
+    else:
+        runs.append([i, i])
+frontiers = []
+for number, row in enumerate(old.get('previous_method_attempts', [])):
+    misses = set(row['finite_miss_positions'])
+    frontiers.append(dict(history_entry=number, criterion=row['criterion'], Root_adoption=row['Root_adoption'],
+                          still_unpaid_finite_miss_positions=sorted(misses & set(unpaid)),
+                          finite_miss_positions_now_settled=sorted(misses - set(unpaid)),
+                          historical_journal_unchanged=True))
+parts = fields(old_body)
+kinds = fields(parts['accepted_new_paid_by_kind'])
+new_ng = sorted(old['accepted_new_paid_by_kind']['NG'] + [305, 735])
+new_paid = sorted(old['accepted_new_paid_positions'] + [305, 735])
+changes = dict(previous_selector=canonical(old_ref),
+               accepted_new_paid_positions=canonical(new_paid),
+               accepted_new_paid_by_kind=join(dict(NG=canonical(new_ng), NOT_IP=kinds['NOT_IP'])).strip(),
+               unresolved_position_runs=canonical(runs), unresolved_positions=canonical(len(unpaid)),
+               expanded_unresolved_sha256=canonical(hashlib.sha256(canonical(unpaid)).hexdigest()),
+               source_adoptions=b'[' + b','.join(array(parts['source_adoptions']) + [canonical(acceptance_ref)]) + b']',
+               current_method_attempt_frontiers=canonical(frontiers))
+new_body = join(dict(parts, **changes))
+new_parts = fields(new_body)
+assert all(parts[k] == new_parts[k] for k in parts if k not in changes)
+assert fields(new_parts['accepted_new_paid_by_kind'])['NOT_IP'] == kinds['NOT_IP']
+new = json.loads(new_body)
+assert len(new_paid) == 775 and len(new_ng) == 159 and len(unpaid) == 32
+assert sorted(new_paid + unpaid) == list(range(1, 808))
+new_path = SELECTORS / 'job_0155_after_schreier.json'
+assert not new_path.exists()
+with new_path.open('xb') as f:
+    f.write(new_body)
+new_ref = ref(new_path)
+for r in fences:
+    assert ref(Path(r['path'])) == r
+pointer = write(SELECTORS / 'CURRENT_job0155.json', dict(
+    schema='ROOT_CURRENT_F004_JOB155_SELECTOR_V1', root='/root', adopted=True,
+    original_job=[155, 4], selector=new_ref, typed_acceptance=acceptance_ref,
+    logical_application=application_ref, paid=775, NG=159, NOT_IP=616, unpaid=32,
+    global_job_count_unchanged=127, global_registry_changed=False))
+readback = write(DEST / 'readback.json', dict(
+    schema='ROOT_F004_SCHREIER_PARTIAL_ADOPTION_READBACK_V1', root='/root',
+    before=old_ref, after=new_ref, current_pointer=pointer, acceptance=acceptance_ref,
+    logical_application=application_ref, changed_selector_fields=sorted(changes),
+    old_journals_and_unrelated_values_raw_unchanged=True, NOT_IP_raw_unchanged=True,
+    global_fences=fences, global_registry_or_controller_writes=0,
+    before_counts=dict(paid=773, NG=157, NOT_IP=616, unpaid=34),
+    after_counts=dict(paid=775, NG=159, NOT_IP=616, unpaid=32),
+    independent_postwrite_review_pending=True, whole_job_credit=0))
+print(json.dumps(dict(status='ROOT_ADOPTED_PARTIAL_NONGENERATION', readback=readback,
+                      selector=new_ref, pointer=pointer, paid=775, unpaid=32,
+                      global_canonical_writes=0, whole_job_credit=0)))

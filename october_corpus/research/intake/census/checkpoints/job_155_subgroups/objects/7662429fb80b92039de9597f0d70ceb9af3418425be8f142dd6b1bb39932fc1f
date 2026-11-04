@@ -1,0 +1,43 @@
+"""UNRUN Source: fresh local metering views share one supplied owner bank.
+
+Local counters serve the toy controls' exact-delta and artificial-exhaustion
+fixtures. They are not fresh underlying arithmetic banks. All successful
+arithmetic is delegated to owner; no owner counter or clock is reset.
+"""
+
+def run(C,K,B,owner,identity,count=17,status='ALL_FRESH_FINITE_CLOSURE_CONTROLS_PASS'):
+    if type(count)is not int or count not in(15,17):
+        raise ValueError('typed supported control count')
+    expected=('ALL_FRESH_FINITE_CLOSURE_CONTROLS_PASS' if count==17
+              else 'ALL_FRESH_INTERSECTION_WORD_CONTROLS_PASS')
+    if type(status)is not str or status!=expected:
+        raise ValueError('exact paired control status')
+    before=(owner.products,owner.row_images,owner.linear)
+    created=[]
+    class View:
+        def __init__(self):
+            self.products=0;self.row_images=0;self.linear=0
+            created.append(None)
+        def tick(self):
+            return owner.tick()
+        def scalar(self,n):
+            if self.linear+n>200000:
+                raise B.Limit('local artificial 200000 linear-unit cap')
+            owner.scalar(n)
+            self.linear+=n
+        def multiply(self,a,b):
+            if self.products>=400000:
+                raise B.Limit('local artificial 400000 product cap')
+            value=owner.multiply(a,b)
+            self.products+=1
+            return value
+    result=C.run(K,View,identity,B.Limit)
+    if type(result['count'])is not int or result['count']!=count or result['status']!=status:
+        raise ValueError('exact control count and status')
+    result=dict(result)
+    result.update(owner_meter_deltas=dict(matrix_products=owner.products-before[0],
+        row_images=owner.row_images-before[1],linear_units=owner.linear-before[2]),
+        factory_views=len(created),underlying_arithmetic_banks=1,
+        meter_scope='ALL_POSITIVE_ARITHMETIC_IN_ONE_SUPPLIED_OWNER_BANK',
+        Original_inputs_loaded=False,Root_authority=False,case_credit=0)
+    return result

@@ -1,0 +1,61 @@
+"""Issue fresh synthetic-only data for either reviewed finite-check suite."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+H = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_finite_closure')
+WORK = Path('/Users/sasha/medusa/census')
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+
+def reference(path):
+    b = path.read_bytes()
+    return dict(path=str(path), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('x') as stream:
+        json.dump(value, stream, indent=2, sort_keys=True)
+        stream.write('\n')
+    return reference(path)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--role', choices=['CONTROLS', 'CONTROLS_WORDS'], required=True)
+role = parser.parse_args().role
+kind = 'words' if role == 'CONTROLS_WORDS' else 'closure'
+base = Path('/private/tmp/f004_finite_certificates/controls') / kind
+base.mkdir(parents=True, exist_ok=True)
+assert base.resolve() == base
+assert not (base / 'guard').exists() and not (base / 'output').exists()
+peer_ref = reference(WORK / 'reviews/f004_finite_closure_source.json')
+peer = json.loads(Path(peer_ref['path']).read_bytes())
+mf_ref = reference(H / 'Source_manifest.json')
+mf = json.loads(Path(mf_ref['path']).read_bytes())
+assert peer['Source_manifest'] == mf_ref and peer['blockers'] == []
+assert peer['status'] == 'SUPPORTED_STATIC_F004_FINITE_CLOSURE_SOURCE'
+assert peer['control_counts'][role] == (20 if kind == 'words' else 22)
+for r in mf['roles'][role]['loaded_sources'] + mf['guards']:
+    assert reference(Path(r['path'])) == r
+where = H / 'actual/controls' / kind
+plan = json.loads((H / ('templates/%s_PLAN_FALSE.json' % role)).read_bytes())
+assert plan['Root_authority'] is False and plan['Source_manifest'] == mf_ref
+plan.update(output=str(base / 'output'), ready_for_execution=True)
+pr = write(where / 'plan.json', plan)
+gate = json.loads((H / ('templates/%s_ROOT_GATE_FALSE.json' % role)).read_bytes())
+gate.update(Root_authority=True, issued=True, whole_Source_and_bounds_owned=True,
+            no_completed_success_replayed_owned=True, Source_peer=peer_ref,
+            plan=pr, guard=str(base / 'guard'))
+assert gate['Original_calls_authorized'] is False and gate['Root_import'] is None
+gr = write(where / 'Root_gate.json', gate)
+def trip(r):
+    return [r['path'], str(r['bytes']), r['sha256']]
+argv = ['/usr/bin/env']
+for key in ['COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES']:
+    argv += ['-u', key]
+argv += [PYTHON, '-E', '-B', mf['guards'][0]['path'], '--volume', '/Users/sasha/medusa',
+         '--output', gate['guard'], '--rss-cap-mib', '128', '--timeout', '100', '--',
+         PYTHON, '-E', '-B', '-S', mf['roles'][role]['program']['path'], '--actor', '/root',
+         '--role', role, '--manifest', *trip(mf_ref), '--plan', *trip(pr), '--gate', *trip(gr)]
+print(json.dumps(dict(argv=argv, plan=pr, Root_gate=gr, role=role, Original_calls_authorized=False)))

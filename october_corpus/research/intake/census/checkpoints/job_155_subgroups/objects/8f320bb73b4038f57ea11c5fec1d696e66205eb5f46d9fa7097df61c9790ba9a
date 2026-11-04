@@ -1,0 +1,141 @@
+"""Root-owned, untrusted discovery only. No peer verdict or case credit.
+
+The final word or subgroup checker must establish every paid assertion.
+Run this script only through the existing 128 MiB / 100 s validation guard.
+"""
+import argparse, hashlib, json, os, sys, time, types
+from pathlib import Path
+
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+START = time.monotonic()
+S = Path('/Users/sasha/medusa/research/leemans')
+M = S / 'maintenance/intake'
+PUBLIC = Path('/Users/sasha/medusa/human_compression/october_corpus/reproduction/finite_orbits_and_stabilizers')
+FILES = {
+    'retained_math': (M/'f004_proper_subspaces/retained_math.py', 'cafd2f2be72f692183732c190419f23b8469b856307267b5f1571f99e68c8da0'),
+    'cover_arithmetic': (M/'f004_schreier_covers/arithmetic.py', '129b99a6fdb868c68d6d0bd20e2305662fbc90baba27ca98b4b9d815516aff8d'),
+    'admission': (M/'f004_known_proper_subgroup_words/operational/admission.py', '00362a26ce19b53f528d1d6596b472ddd052ec8ac65d87f36dbc5219cfa56674'),
+    'original_context': (M/'f004_proper_subspaces/original_context.py', 'b5230e7634b4a965c0b1791f14f0d217246fa67397e8a95ea90489beee76c6e6'),
+    'field': (PUBLIC/'field.py', 'e8926daef858a41af4dc219caf9f73b5e4752eab2319e79f89929a560fae3b8b'),
+    'solve': (PUBLIC/'solve.py', '36d60803d8c1e068a69245825e58c60d9d78e2b01678f77adc9f635cc0ac6063')}
+GUARDS = [S/'maintenance/runtime/supervise_validation.py', S/'maintenance/runtime/supervise_transient.py']
+
+def reference(path):
+    body = path.read_bytes()
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def load(name):
+    path, digest = FILES[name]
+    body = path.read_bytes()
+    assert len(body) <= 16384 and hashlib.sha256(body).hexdigest() == digest
+    assert name not in sys.modules
+    module = types.ModuleType(name)
+    module.__file__ = str(path)
+    sys.modules[name] = module
+    exec(compile(body, str(path), 'exec'), module.__dict__)
+    return module
+
+assert sys.executable == PYTHON and sys.flags.ignore_environment and sys.flags.no_site
+assert sys.dont_write_bytecode and not sys.flags.optimize
+assert all(k not in os.environ for k in ['COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'])
+parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument('--actor', required=True)
+parser.add_argument('--plan', nargs=3, required=True)
+parser.add_argument('--guard', required=True)
+parser.add_argument('--output', required=True)
+args = parser.parse_args()
+assert args.actor == '/root'
+R = load('retained_math')
+B = load('cover_arithmetic')
+A = load('admission')
+O = load('original_context')
+F = load('field')
+L = load('solve')
+class DiscoveryBudget(B.Budget):
+    # Fresh Root discovery limit; no old Source verdict is borrowed for this change.
+    def scalar(self, units):
+        self.tick()
+        assert type(units) is int and units >= 0
+        if self.linear + units > 1000000:
+            raise B.Limit('Root untrusted discovery: one million linear units')
+        self.linear += units
+b = DiscoveryBudget()
+source = [reference(Path(__file__))] + [reference(p) for p, _ in FILES.values()]
+guards = [reference(p) for p in GUARDS]
+assert sum(r['bytes'] for r in source + guards) + 512 <= 65536
+for r in source + guards:
+    b.read(r)
+b.bytes += 5 * sum(r['bytes'] for r in source + guards) + 512
+b.tick()
+pr = dict(path=args.plan[0], bytes=int(args.plan[1]), sha256=args.plan[2])
+plan = b.doc(pr)
+started_ref = reference(Path(args.guard) / 'started.json')
+assert started_ref['bytes'] <= 131072
+b.bytes += started_ref['bytes']
+started = b.doc(started_ref)
+assert started['command'] == [PYTHON, '-E', '-B', '-S', str(Path(__file__).resolve()), *sys.argv[1:]]
+assert any(x['pid'] == os.getpid() for x in started['identities'])
+assert started['limits']['total_rss'] == 128 * 2**20 and started['limits']['wall_seconds'] == 100
+for r in plan['inputs']:
+    b.read(r)
+ctx = O.context(plan, b)
+selected, pending, history = A.select(plan, b.doc(plan['selector']), ctx, R.digest, R.expand_runs)
+assert len(selected) == 1
+marks = tuple(bytes(x for row in g for x in row) for g in O.marks_for(selected[0], plan['case'], ctx, b))
+word_matrices = [F.I]
+word_nodes = [None]
+echelon = {}
+trials = 0
+
+def admit(value):
+    vector = list(value)
+    for pivot, row in sorted(echelon.items()):
+        factor = vector[pivot]
+        if factor:
+            b.scalar(2 * (49 - pivot))
+            for j in range(pivot, 49):
+                vector[j] = (vector[j] - factor * row[j]) % 11
+    if not any(vector):
+        return False
+    pivot = next(j for j in range(49) if vector[j])
+    inverse = F.inv(vector[pivot], b)
+    b.scalar(49 - pivot)
+    for j in range(pivot, 49):
+        vector[j] = vector[j] * inverse % 11
+    echelon[pivot] = vector
+    return True
+
+assert admit(F.I)
+head = 0
+while head < len(word_matrices) and len(echelon) < 49:
+    parent = word_matrices[head]
+    for label in [1, 2, 3]:
+        trials += 1
+        product = b.multiply(parent, marks[label])
+        if admit(product):
+            word_matrices.append(product)
+            word_nodes.append([head, label])
+            if len(echelon) == 49:
+                break
+    head += 1
+assert time.monotonic() - START < 90
+assert b.bytes + sum(r['bytes'] for r in b.refs.values()) <= 8 * 2**20
+b.recheck()
+result = dict(status='UNTRUSTED_DISCOVERY_PROPOSALS', case=plan['case'], original_job=plan['original_job'],
+              selector=plan['selector'], proposed_R_algebra_dimension=len(echelon),
+              word_nodes=word_nodes, proposal_trials=trials,
+              Source=source, guards=guards, guard_started=started_ref, plan=pr,
+              whole_inputs=list(b.refs.values()), Original_inputs_loaded=True,
+              new_case_credit=0, canonical_writes=0, discovery_linear_unit_cap=1000000,
+              scope='Unreviewed Root proposal assembly. Linear span is not group membership. A separate checker and explicit borrowed classification are required for any group conclusion. Historical Root imports are preserved as provenance only and are not retagged for this proposal.',
+              resources=dict(matrix_products=b.products, row_images=b.row_images, linear_units=b.linear,
+                             charged_read_bytes=b.bytes, peak_self_RSS_bytes=b.peak, seconds=time.monotonic()-START))
+body = json.dumps(result, sort_keys=True, separators=(',', ':')).encode() + b'\n'
+assert len(body) <= 131072
+out = Path(args.output)
+assert out.is_relative_to('/private/tmp') and '..' not in out.parts and out.parent.resolve() == out.parent
+assert not os.path.lexists(out)
+out.mkdir()
+with (out/'result.json').open('xb') as stream:
+    stream.write(body)
+print(json.dumps(dict(status=result['status'], output=dict(path=str(out/'result.json'), bytes=len(body), sha256=hashlib.sha256(body).hexdigest()), new_case_credit=0)))

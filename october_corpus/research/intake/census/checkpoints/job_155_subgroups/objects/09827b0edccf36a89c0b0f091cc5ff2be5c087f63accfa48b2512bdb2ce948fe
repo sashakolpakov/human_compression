@@ -1,0 +1,119 @@
+"""UNRUN end-word witness Source. No IO, Original loader, or authority.
+
+check(marks, raw, budget, identity) uses one supplied shared budget. Its
+scalar/multiply/tick methods and products/row_images/linear counters are
+required. identity is explicit; no numerical namespace is imported here.
+"""
+MAGIC=b'F004IPW1'
+MAX_BYTES=60586
+NMAX=10000
+MMAX=128
+KMAX=8
+DMAX=4096
+
+def need(ok,reason):
+ if not ok:raise ValueError(reason)
+
+def integer(value,low,high):
+ need(type(value)is int and low<=value<=high,'typed bounded integer')
+ return value
+
+def sequence(value,length=None):
+ need(type(value)in(tuple,list)and(length is None or len(value)==length),'literal finite sequence')
+ return value
+
+def side(value):
+ lifts,recipes,tree,selected=sequence(value,4)
+ for rows in(lifts,recipes,tree):sequence(rows)
+ n,m,k=1+len(lifts),1+len(tree),len(recipes)
+ integer(n,1,NMAX);integer(m,1,MMAX);integer(k,0,KMAX)
+ need(k>0 or m==1,'no word tree without recipes');integer(selected,0,m-1)
+ ls=[];rs=[];ss=[]
+ for i,row in enumerate(lifts,1):
+  p,j=sequence(row,2);ls.append((integer(p,0,i-1),integer(j,0,2)))
+ for row in recipes:
+  i,j,t=sequence(row,3);rs.append((integer(i,0,n-1),integer(j,0,2),integer(t,0,n-1)))
+ for i,row in enumerate(tree,1):
+  p,e=sequence(row,2);ss.append((integer(p,0,i-1),integer(e,0,k-1)))
+ return tuple(ls),tuple(rs),tuple(ss),selected
+
+def encode(d,left,right):
+ """Untrusted finite metadata encoder; grants no membership or authority."""
+ integer(d,1,DMAX);sides=(side(left),side(right))
+ raw=bytearray(MAGIC+d.to_bytes(2,'little'))
+ for lifts,recipes,tree,selected in sides:
+  raw.extend((1+len(lifts)).to_bytes(2,'little'))
+  raw.extend(bytes((1+len(tree),len(recipes),selected)))
+ for lifts,recipes,tree,selected in sides:
+  for p,j in lifts:raw.extend(p.to_bytes(2,'little')+bytes((j,)))
+  for i,j,t in recipes:raw.extend((3*i+j).to_bytes(2,'little')+t.to_bytes(2,'little'))
+  for p,e in tree:raw.extend(bytes((p,e)))
+ need(len(raw)<=MAX_BYTES,'whole witness bound');return bytes(raw)
+
+def decode(raw,b):
+ need(type(raw)is bytes and 20<=len(raw)<=MAX_BYTES and raw[:8]==MAGIC,'whole witness header and extent')
+ b.scalar(len(raw));u=lambda i:int.from_bytes(raw[i:i+2],'little')
+ d=integer(u(8),1,DMAX);headers=[];expected=20
+ for offset in(10,15):
+  n=integer(u(offset),1,NMAX);m=integer(raw[offset+2],1,MMAX)
+  k=integer(raw[offset+3],0,KMAX);selected=integer(raw[offset+4],0,m-1)
+  need(k>0 or m==1,'no word tree without recipes')
+  expected+=3*(n-1)+4*k+2*(m-1);headers.append((n,m,k,selected))
+ need(len(raw)==expected,'exact witness EOF');offset=20;sides=[]
+ for n,m,k,selected in headers:
+  lifts=[];recipes=[];tree=[]
+  for _ in range(n-1):lifts.append((u(offset),raw[offset+2]));offset+=3
+  for _ in range(k):
+   edge,t=u(offset),u(offset+2);i,j=divmod(edge,3)
+   recipes.append((i,j,t));offset+=4
+  for _ in range(m-1):tree.append((raw[offset],raw[offset+1]));offset+=2
+  sides.append(side((lifts,recipes,tree,selected)))
+ need(offset==len(raw),'whole witness consumed');b.tick();return d,*sides
+
+def meters(b):
+ values=(b.products,b.row_images,b.linear)
+ need(all(type(x)is int and x>=0 for x in values),'shared nonnegative counters')
+ return values
+
+def evaluate(g,word,I,b):
+ lifts,recipes,tree,selected=word;T=[I];V=[I]
+ for p,j in lifts:
+  T.append(b.multiply(T[p],g[j]));V.append(b.multiply(g[j],V[p]))
+ H=[b.multiply(b.multiply(T[i],g[j]),V[t])for i,j,t in recipes]
+ S=[I]
+ for p,e in tree:S.append(b.multiply(S[p],H[e]))
+ return S[selected],dict(lift_nodes=len(T),recipe_nodes=len(H),word_nodes=len(S),selected=selected)
+
+def check(marks,raw,b,identity):
+ """Conditional intersection counterexample for four supplied involutions.
+
+No discovery carrier, orbit geometry, seed, named group, or Original meaning
+is trusted. Exceptions and resource stops produce no positive result.
+"""
+ b.tick();before=meters(b);d,left,right=decode(raw,b);b.scalar(245)
+ need(type(identity)is bytes and len(identity)==49
+  and all(identity[7*i+j]==int(i==j)for i in range(7)for j in range(7)),'explicit exact identity')
+ sequence(marks,4)
+ need(all(type(a)is bytes and len(a)==49 and all(x<11 for x in a)for a in marks),
+  'four canonical full F11 matrices')
+ need(len(set(marks))==4 and all(a!=identity for a in marks),'four distinct nonidentity matrices')
+ for a in marks:need(b.multiply(a,a)==identity,'four full involution equations')
+ w,L=evaluate(marks[:3],left,identity,b)
+ other,R=evaluate(marks[1:],right,identity,b)
+ need(type(w)is bytes and len(w)==49 and w==other,'same whole49-byte end word')
+ a=b.multiply(marks[1],marks[2]);power=identity
+ for i in range(d):
+  if i==1:power=a
+  elif i>1:power=b.multiply(power,a)
+  if i:need(power!=identity,'least positive middle order')
+  reflection=marks[1]if i==0 else b.multiply(power,marks[1])
+  need(w!=power and w!=reflection,'word lies in complete middle group')
+ closing=a if d==1 else b.multiply(power,a)
+ need(closing==identity,'middle power does not close')
+ b.tick();after=meters(b);need(all(y>=x for x,y in zip(before,after)),'monotone shared counters')
+ return dict(status='VERIFIED_IP_INTERSECTION_COUNTEREXAMPLE',witness=w,
+  left_word_nodes=L,right_word_nodes=R,middle_order=d,middle_normal_forms_checked=2*d,
+  actual_end_words_verified=True,whole_matrix_equality_verified=True,
+  complete_middle_exclusion_verified=True,
+  scope='Supplied four F11 involutions only; interpretation and adoption are external.',
+  meter_deltas=dict(matrix_products=after[0]-before[0],row_images=after[1]-before[1],linear_units=after[2]-before[2]))
