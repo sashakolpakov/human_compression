@@ -1,0 +1,110 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');G=M/'f009_bounded_io_transition';K=M/'resource_profiles/bounded_output';C=G/'cohorts/cohort_from0426';A=G/'actual/cohort0426_batch00_prepare_suppliers';S=Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0426/parents0426_0428');RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+ global READ
+ p=Path(p);key=str(p)
+ if key in RAW:need(r is None or PINS[key]==r,'one exact edition');return RAW[key]
+ before=p.lstat();need(before.st_size<=4*2**20 and READ+before.st_size<=16*2**20 and len(RAW)<160,'bounded metadata reader');b=p.read_bytes();after=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns);need(sig(before)==sig(after)and len(b)==before.st_size,'whole stable bytes');rr=ref(p,b);need(r is None or rr==r,'exact input pin');RAW[key]=b;PINS[key]=rr;READ+=len(b);return b
+
+def pin(p):read(p);return PINS[str(p)]
+def exact(r):return read(r['path'],r)
+def doc(p,r=None):return dec(read(p,r))
+def pick(b,keys):o=obj(b);return{k:dec(o[k])for k in keys}
+def can(j):return(json.dumps(j,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def triple(a,k):i=a.index(k);return dict(path=a[i+1],bytes=int(a[i+2]),sha256=a[i+3])
+def api(sdkpath,rawdir):
+ sdk=doc(sdkpath);i=doc(rawdir/'issued.json');frames=sdk['all_genuine_api_frames'];a=sdk['issued_argv'];t=sdk['actual_tool']
+ need(sdk['root']==sdk['actor']==i['root']=='/root'and a==i['argv']==sdk['child_argv'],'Root argv');need(i['tool_arguments']==sdk['issued_tool_arguments']and i['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==a,'whole raw kwargs')
+ need(len(frames)==1 and doc(rawdir/'frame_0000.json')==frames[0]==sdk['full_initial_tool_return']==sdk['full_tool_return']and t['synchronous']is True and t['handle']is None and t['exit_code']==frames[0]['exit_code']and t['initial_chunk']==t['terminal_chunk']==frames[0]['chunk_id'],'genuine synchronous exact frame')
+ return sdk,frames[0]
+
+
+import ast,symtable,difflib
+BASE=M/'f009_resource_binding_retries';RUN=BASE/'actual/cohort0426_batch00_audit';HERE=RUN/'issuer_scope_review';DATA=BASE/'data/cohort0426_batch00_audit'
+template=read(DATA/'Root_issue_audit_UNISSUED.py');old=read(RUN/'Root_issue_audit.py');new=read(RUN/'issue_batch_audit.py');nr=pin(RUN/'issue_batch_audit.py');prior=pin(DATA/'source_review/reuse_integer_only.json')
+need(prior['sha256']=='c007c1b03ca772e50a36b261789b0b8fc7fde7d08ebe2aaee1c95e762201ef34'and len(template)==8503 and len(old)==8502 and nr['bytes']==8524 and nr['sha256']=='a38652e36598b8164b08adcecb347e4a264a4e581be84bbb4dadfa9fe872cd64','exact preserved Source editions')
+need(template.replace(b'ROOT_AUTHORITY=False',b'ROOT_AUTHORITY=True',1)==old,'old activated copy differs only by Root activation')
+need(old.count(b'def main():\n')==1 and old.replace(b'def main():\n',b'def main():\n    global read_bytes\n',1)==new,'only new statement is module-bank global declaration')
+for blob in [old,new]:ast.parse(blob);compile(blob,'<static-only>','exec')
+oldtable=symtable.symtable(old.decode(),'<old>','exec');newtable=symtable.symtable(new.decode(),'<new>','exec');om=next(t for t in oldtable.get_children()if t.get_name()=='main');nm=next(t for t in newtable.get_children()if t.get_name()=='main')
+need(om.lookup('read_bytes').is_local()and nm.lookup('read_bytes').is_global()and not nm.lookup('read_bytes').is_local(),'static symbol-table cause and exact resolution')
+fix=doc(RUN/'Root_issuer_scope_fix.json');need(fix['root']=='/root'and fix['new_owned_source']==nr and fix['original_activated_source']==pin(RUN/'Root_issue_audit.py')and fix['only_added_statement']=='global read_bytes in main'and fix['prior_issue_has_written_nothing']is True,'separate Root scope ownership/failure qualification')
+failed,ff=api(BASE/'Root_SDK/batch00_audit_authorities_v1.json',BASE/'api/Root_f009_cohort0426_batch00_audit_authorities_v1');need(ff['exit_code']==1 and 'UnboundLocalError'in ff['output']and 'input_first_bytes=read_bytes'in ff['output'],'genuine prewrite scope failure')
+fixed,fr=api(BASE/'Root_SDK/batch00_audit_issuer_scope_fix_v1.json',BASE/'api/Root_f009_cohort0426_batch00_audit_issuer_scope_fix_v1');reported=dec(fr['output']);need(fr['exit_code']==0 and reported['new_owned_source']==nr and reported['correction']==pin(RUN/'Root_issuer_scope_fix.json')and reported['argv']==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',nr['path'],'--actor','/root','--issue'],'genuine Root-only Source correction, not issuer replay')
+inputs=doc(DATA/'preparation_inputs.json');need(pin(DATA/'preparation_inputs.json')['sha256']=='2d509d8cea8933a32f9750de3d433ace0dc283fd8cb079df2f1062be0e83fa8a','same exact fixed data already reviewed')
+for row in inputs['metadata_issuance_inventory']:
+ p=Path(row['path']);need(not os.path.lexists(p),'all four authority/alias files remain fresh after failed prewrite')
+ ancestor=p.parent
+ while not ancestor.exists():ancestor=ancestor.parent
+ need(ancestor.is_dir()and ancestor.resolve(strict=True)==ancestor,'fixed canonical current writer ancestry')
+need(not os.path.lexists(inputs['runtime_paths']['leaf']),'no audit leaf/result exists')
+for path,body in list(RAW.items()):need(Path(path).read_bytes()==body,'closing stable Source/metadata evidence')
+diff=''.join(difflib.unified_diff(old.decode().splitlines(True),new.decode().splitlines(True),fromfile='preserved_failed8502',tofile='Root_owned8524'))
+def save(name,value):
+ raw=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();p=HERE/name
+ with p.open('xb')as f:f.write(raw)
+ return ref(p,raw)
+evidence=save('evidence.json',dict(schema='F009_AUDIT_ISSUER_SCOPE_FIX_STATIC_EVIDENCE_V1',reviewer='/root/mathematical_review',Root_authority=False,inputs=list(PINS.values()),complete_exact_delta=diff,old_main_read_bank_local=True,new_main_read_bank_global=True,all_four_runtime_targets_absent=True,review_read_bytes=2*READ,represented_functions_executed=False,Original_values_decoded=False))
+leaf=dict(schema='F009_AUDIT_ROOT_ISSUER_SCOPE_FIX_STATIC_REUSE_V1',status='SUPPORTED_STATIC_F009_BATCH00_AUDIT_ROOT_ISSUER_SCOPE_FIX',reviewer='/root/mathematical_review',Root_authority=False,blockers=[],constructor=nr,inputs=pin(DATA/'preparation_inputs.json'),prior_template_review=prior,preserved_failed_activated_source=pin(RUN/'Root_issue_audit.py'),Root_scope_fix=pin(RUN/'Root_issuer_scope_fix.json'),Root_scope_fix_actual_SDK=pin(BASE/'Root_SDK/batch00_audit_issuer_scope_fix_v1.json'),failed_prewrite_actual_SDK=pin(BASE/'Root_SDK/batch00_audit_authorities_v1.json'),only_change_is_main_global_read_bytes=True,exact_symbol_table_fix_verified=True,all_previously_reviewed_phase_SDK_alias_Source_and_data_subjects_unchanged=True,all_four_authority_or_alias_outputs_still_absent=True,same_metadata_caps=dict(read_bytes=67108864,new_bytes=16777216,file_bytes=4194304,paths=512,rss_bytes=268435456,seconds=125),constructor_output_upper=225005,new_Source_bytes=8524,new_interpreter_and_initial_identity_read_prepaid_upper=17560,scientific_or_audit_calls_by_reviewer=0,represented_functions_executed=False,Original_values_decoded=False,canonical_W_or_Git_writes=0,finite_evidence=evidence,qualifications=['The prior c007 static review missed this Python local-scope binding. Its exact old template and failed activated copy remain immutable; this is a separate new review of Root-owned a386, not a retagged prior success.','The actual failure occurred while assembling the in-memory receipt before the publication loop; all four outputs remain absent. The correction fixes the module-wide read bank by one global declaration; all helper code, fixed inputs, q/g slots, genuine historical Source/SDK alias subjects and resource limits are otherwise byte-identical.','Root must own this exact new Source and recheck fixed target freshness/canonical parents, then invoke once and retain its actual SDK/raw/outputs for independent execution review. This seal is not issuer/audit/science actual acceptance.','The Source computes its actual readback reserve from the new Source length and all in-memory output bytes before publication; the new17560-byte loader prepayment remains within the existing64MiB budget.','All prior original science/parent/binding/history and later cohort/strict/audit/registration obligations remain conditional and separate. No Original operand or represented function was evaluated by the reviewer.'])
+print(json.dumps(save('reuse_integer_only.json',leaf),sort_keys=True));print(json.dumps(dict(evidence=evidence,paths=len(PINS),read=2*READ)))

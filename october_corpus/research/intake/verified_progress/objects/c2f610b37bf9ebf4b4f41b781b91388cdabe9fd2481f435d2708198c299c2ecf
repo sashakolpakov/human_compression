@@ -1,0 +1,205 @@
+SEED=((0,1),(0,2),(0,3),(1,4),(1,5),(2,6),(2,7),(3,8),(3,9),
+    (4,10),(4,11),(5,12),(5,13),(6,14),(6,15),(7,16),(7,17),(8,18),(8,19),
+    (9,20),(9,21),(10,22),(10,23),(11,24),(11,25),(12,26),(12,27),(13,28),(13,29),
+    (14,30),(14,31),(15,32),(15,33),(16,34),(16,35),(17,36),(17,37),(18,38),(18,39),
+    (19,40),(19,41),(20,42),(20,43),(21,44),(21,45),(22,46),(22,47),(23,48),(23,49),
+    (24,50),(24,51),(25,52),(25,53),(26,54),(26,55),(27,56),(27,57),(28,58),(28,59),
+    (29,60),(29,61),(61,71),(62,63),(62,64),(62,65),(63,66),(63,67),(64,68),(64,69),(65,70),(65,71))
+
+TREE=(1,4,5,10,11,12,13,22,23,24,25,26,27,28,29,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61)
+
+FREE=(1,3,4,5,7,8,9,10,11,12,13)
+
+ISET=frozenset((0,4,5,6,7,8,9,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,62,66,67,68,69,70,71))
+
+def action(mask):
+    """Iterative child propagation, independent of C++ recursive map_tree."""
+    out=[-1]*31;out[0]=0;bits={v:i for i,v in enumerate(FREE)}
+    for source in range(15):
+        target=out[source];swap=(mask>>bits[source])&1 if source in bits else 0
+        out[2*source+1]=2*target+1+swap;out[2*source+2]=2*target+2-swap
+    return tuple(out)
+
+
+"""Uniform forests with0..6 defect edges and all eight U labels.
+All finite fees are prepaid before the corresponding bounded operations.
+No native canonicalizer, solver, census catalogue or original graph is loaded.
+"""
+S=tuple(range(46,62));U=tuple(range(72,80))
+HOST=tuple(sorted([(s,u)for s in S for u in U]+[(u,v)for u in U for v in U if u<v]))
+PREDICATE_FEE=65536
+ACTION_FEE=8192
+WITNESS_FEE=4096
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+def shaped(value):
+    need(type(value)in(list,tuple)and len(value)<=6,'uniform zero-through-six edge forest')
+    edges=[]
+    for e in value:
+        need(type(e)in(list,tuple)and len(e)==2 and all(type(x)is int for x in e),'typed complete edge')
+        e=tuple(e);need(e in HOST,'edge lies in the156-pair original host');edges.append(e)
+    need(edges==sorted(set(edges)),'sorted distinct defect edges')
+    return tuple(edges)
+
+def lists(edges):return [list(e)for e in edges]
+
+def distance(adj,start,end,omit=None):
+    seen=[False]*80;seen[start]=True;queue=[start];dist=[0]*80;at=0
+    while at<len(queue):
+        v=queue[at];at+=1
+        if v==end:return dist[v]
+        for w in adj[v]:
+            if omit is not None and tuple(sorted((v,w)))==omit:continue
+            if not seen[w]:seen[w]=True;dist[w]=dist[v]+1;queue.append(w)
+    return 80
+
+def rejection(value,work):
+    f=shaped(value);work.charge(PREDICATE_FEE,'prepaid_full80_hereditary_predicate')
+    degree=[0]*80;parent=list(range(80))
+    def root(v):
+        while parent[v]!=v:v=parent[v]
+        return v
+    for u,v in f:
+        degree[u]+=1;degree[v]+=1
+        if degree[u]>(1 if u==61 else 2 if u in S else 3)or degree[v]>(1 if v==61 else 2 if v in S else 3):return 'DEGREE_BUDGET'
+        a,b=root(u),root(v)
+        if a==b:return 'FOREST_CYCLE'
+        parent[a]=b
+    adj=[[]for _ in range(80)]
+    for u,v in SEED+f:adj[u].append(v);adj[v].append(u)
+    if any(len(row)>3 for row in adj):return 'DEGREE_BUDGET'
+    for edge in SEED+f:
+        if distance(adj,edge[0],edge[1],edge)<9:return 'FULL_SEED_SHORT_CYCLE'
+    if distance(adj,0,62)<8:return 'ROOT_DISTANCE'
+    return 'NONE'
+
+def point_map(mask,uperm):
+    need(type(mask)is int and 0<=mask<2048,'whole2048-action index')
+    need(type(uperm)in(list,tuple)and len(uperm)==8 and all(type(x)is int for x in uperm)
+         and sorted(uperm)==list(range(8)),'entire S8 permutation, not support-three')
+    p=list(range(80));t=action(mask)
+    for j,v in enumerate(TREE):p[v]=TREE[t[j]]
+    for j,v in enumerate(U):p[v]=72+uperm[j]
+    return p
+
+def moved_edges(edges,p):return tuple(sorted(tuple(sorted((p[u],p[v])))for u,v in edges))
+
+def orbit_witness(source,target,mask,uperm,work):
+    source,target=shaped(source),shaped(target)
+    need(len(source)==len(target),'same edge level');work.charge(WITNESS_FEE,'prepaid_full_seed_and_edge_orbit_witness')
+    p=point_map(mask,uperm)
+    need(sorted(p)==list(range(80))and p[0]==0 and p[62]==62,'full original-label seed permutation')
+    need(moved_edges(SEED,p)==tuple(sorted(SEED)),'all71 seed edges preserved')
+    need({p[v]for v in ISET}==set(ISET)and {p[v]for v in S}==set(S)and {p[v]for v in U}==set(U),'all relevant domain colours preserved')
+    need(moved_edges(source,p)==target,'whole supplied forest image')
+    return True
+
+def coloured_code_and_U_order(f,p):
+    """Complete unrooted coloured-forest code, with a deterministic U witness.
+
+    S vertices have distinct actual image colours1..16. All U have colour0.
+    Root every component at every vertex (at most7), choose its least rooted
+    tree code, then sort components. Code grammar is '(' colour children ')'.
+    Equal-code ties may use original IDs: they only choose an isomorphism.
+    """
+    adj={}
+    for u,v in f:adj.setdefault(u,[]).append(v);adj.setdefault(v,[]).append(u)
+    seen=set();components=[]
+    def rooted(v,parent):
+        children=[]
+        for w in adj[v]:
+            if w==parent:continue
+            code,order=rooted(w,v);children.append((code,w,order))
+        children.sort(key=lambda x:(x[0],x[1]))
+        color=0 if v in U else 1+p[v]-46
+        code=bytes((40,color))+b''.join(x[0]for x in children)+b')'
+        order=([v]if v in U else[])+[x for child in children for x in child[2]]
+        return code,order
+    for start in sorted(adj):
+        if start in seen:continue
+        stack=[start];component=[];seen.add(start)
+        while stack:
+            v=stack.pop();component.append(v)
+            for w in adj[v]:
+                if w not in seen:seen.add(w);stack.append(w)
+        best=None
+        for root in sorted(component):
+            code,order=rooted(root,-1);candidate=(code,root,order)
+            if best is None or candidate[:2]<best[:2]:best=candidate
+        components.append(best)
+    components.sort(key=lambda x:(x[0],x[1]))
+    order=[x for component in components for x in component[2]]
+    need(len(order)==len(set(order))and set(order)=={v for v in adj if v in U},'whole nonisolated U witness order')
+    key=b'F009CORE1'+bytes((8-len(order),))+b''.join(c[0]for c in components)
+    need(len(key)<=46,'complete compact forest code')
+    order+=sorted(set(U)-set(order));rank={v:i for i,v in enumerate(order)}
+    uperm=[rank[v]for v in U]
+    return key,uperm
+
+def canonical_interval(value,begin,end,work):
+    f=shaped(value);need(rejection(f,work)=='NONE','actual hereditary passing input forest')
+    need(type(begin)is int and type(end)is int and 0<=begin<end<=2048 and end-begin<=1024,'bounded complete action interval')
+    best=None
+    for mask in range(begin,end):
+        work.charge(ACTION_FEE,'prepaid_all_component_roots_U8_canon')
+        p=point_map(mask,list(range(8)));key,uperm=coloured_code_and_U_order(f,p)
+        if best is None or key<best[0]:best=(key,mask,uperm)
+    key,mask,uperm=best;target=moved_edges(f,point_map(mask,uperm))
+    orbit_witness(f,target,mask,uperm,work)
+    return dict(schema='F009_FOREST_ACTION_INTERVAL_MINIMUM_V1',forest=lists(f),edge_level=len(f),
+        begin=begin,end=end,key_hex=key.hex(),representative=lists(target),action_index=mask,U_permutation=uperm,
+        full2048_minimum_claimed=False,ordinary_graph_class_count_claimed=False)
+
+def slot_interval(parent,begin,end,work,records=None):
+    f=shaped(parent);need(len(f)<6 and rejection(f,work)=='NONE','valid original parent at level0through5')
+    need(type(begin)is int and type(end)is int and 0<=begin<end<=156 and end-begin<=120,'bounded complete host-slot interval')
+    if records is not None:need(type(records)is list and len(records)==end-begin,'every slot exactly once')
+    result=[];targets=set()
+    for at,slot in enumerate(range(begin,end)):
+        if records is not None:need(type(records[at])is dict and type(records[at].get('slot'))is int,'typed every-slot record label')
+        edge=HOST[slot]
+        if edge in f:expected=dict(slot=slot,kind='EXISTING')
+        else:
+            child=tuple(sorted(f+(edge,)));why=rejection(child,work)
+            if why!='NONE':expected=dict(slot=slot,kind='REJECT',reason=why)
+            elif records is None:
+                expected=dict(slot=slot,kind='ORBIT',target=lists(child),action_index=0,U_permutation=list(range(8)))
+            else:
+                row=records[at]
+                need(type(row)is dict and set(row)=={'slot','kind','target','action_index','U_permutation'}and row['slot']==slot and row['kind']=='ORBIT','entire passing child witness')
+                target=shaped(row['target']);orbit_witness(child,target,row['action_index'],row['U_permutation'],work)
+                expected=row
+        if records is not None:need(records[at]==expected,'exact existing/rejected slot accounting')
+        if expected['kind']=='ORBIT':targets.add(tuple(tuple(e)for e in expected['target']))
+        result.append(expected)
+    return dict(schema='F009_FOREST_EXTENSION_INTERVAL_V1',parent=lists(f),parent_level=len(f),
+        begin=begin,end=end,records=result,next_parent_forests=[lists(x)for x in sorted(targets)],
+        all_slots_in_interval_accounted=True,whole156_parent_or_level_or_census_claimed=False)
+
+def join_action_minima(parts):
+    """Pure composition ONLY for separately authenticated interval facts.
+    This function authenticates no execution or external claimed minimum.
+    """
+    need(type(parts)is list and 1<=len(parts)<=2048,'finite interval facts')
+    p=sorted(parts,key=lambda x:x['begin']);at=0;subject=p[0]['forest']
+    for row in p:
+        need(row['schema']=='F009_FOREST_ACTION_INTERVAL_MINIMUM_V1'and row['forest']==subject
+             and type(row['begin'])is int and row['begin']==at and type(row['end'])is int and at<row['end']<=2048,'gap-free exact whole action coverage')
+        at=row['end']
+    need(at==2048,'all2048 actions covered')
+    return min(p,key=lambda x:(x['key_hex'],x['action_index']))
+
+def join_parent_intervals(parts):
+    """Pure composition of already authenticated strict slot facts, no IO."""
+    need(type(parts)is list and 1<=len(parts)<=156,'finite strict parent parts')
+    rows=sorted(parts,key=lambda x:x['begin']);parent=rows[0]['parent'];at=0;targets=set()
+    for row in rows:
+        need(row['schema']=='F009_FOREST_EXTENSION_INTERVAL_V1'and row['parent']==parent
+             and type(row['begin'])is int and row['begin']==at and type(row['end'])is int and at<row['end']<=156
+             and row['all_slots_in_interval_accounted']is True,'same parent and disjoint full slot partition')
+        at=row['end'];targets.update(tuple(tuple(e)for e in x)for x in row['next_parent_forests'])
+    need(at==156,'all156 parent slots covered')
+    return dict(parent=parent,next_parent_forests=[lists(x)for x in sorted(targets)],
+                conditional_on_authentic_completed_interval_facts=True)

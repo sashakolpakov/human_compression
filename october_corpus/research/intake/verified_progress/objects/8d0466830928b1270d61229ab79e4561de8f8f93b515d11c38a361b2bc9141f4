@@ -1,0 +1,70 @@
+"""Root-only resource-binding supplement. No process or scientific call."""
+from pathlib import Path
+import hashlib,types,json,sys
+
+if sys.flags.optimize:
+ raise RuntimeError('optimized execution is forbidden before Source loading')
+
+def bounded_body(ref):
+ p=Path(ref['path']);assert type(ref['bytes'])is int and 0<=ref['bytes']<=131072
+ assert p.stat().st_size==ref['bytes']
+ with p.open('rb')as f:body=f.read(ref['bytes']+1)
+ assert len(body)==ref['bytes']and hashlib.sha256(body).hexdigest()==ref['sha256']
+ return body
+
+def load(ref,name,bindings=None):
+ body=bounded_body(ref)
+ ns=dict(__file__=ref['path'],__name__=name);ns.update(bindings or {})
+ exec(compile(body,ref['path'],'exec'),ns);return ns
+BASE_PACKET={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/packet.json', 'bytes': 15809, 'sha256': '8e8fe796e13a726dd6d5ff7e9a5eaecb95f1d327c7610cd89193aaaf39ca0422'}
+BASE_COMMON={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/bounded_common.py', 'bytes': 19295, 'sha256': 'e97c711aec6b4e2ea07da76435d8d4374addb8fb27881fdc46e1e976bf1c64db'}
+SUPPORT={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/support.py', 'bytes': 16021, 'sha256': 'ba72bb834061c38fbc6f3823275b11a7248a093086af8cf3596b8e33d1abe78b'}
+TRANSITIONS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/transitions.py', 'bytes': 16682, 'sha256': '52350d2d11a8c893862864b9f0471b6df3dbbbb93059456db2a843177967fba2'}
+CONTROLS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/controls.py', 'bytes': 6565, 'sha256': '9d2e8ea6a42f351875e771020a56f15aee8d1d7dd0062d39989885291f282a63'}
+BASE_PEER={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/source_review/reuse_integer_only.json', 'bytes': 26460, 'sha256': '6a5137c897545556f5c77eab9f563d7419210cfc748b5669126a8ac88772dcf9'}
+CORE_CONTROLS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/actual/core_admission/actual_review/reuse_integer_only.json', 'bytes': 11846, 'sha256': '3342fd4dd422de28e637e07d2e93df5d93724d2c2822d018dbac725c74020042'}
+GENERIC_CONTROLS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/actual/metadata_controls/actual_review/reuse_integer_only.json', 'bytes': 14316, 'sha256': '527ce5f3734beded37477b77a386c98f7bb592e50d7bece9d0c0b381e0f8e355'}
+C=types.SimpleNamespace(**load(BASE_COMMON,'acquired_generic_common'))
+BASE_PACKET_VALUE=C.metadata(bounded_body(BASE_PACKET))
+S=types.SimpleNamespace(**load(SUPPORT,'resource_binding_support',dict(C=C,BASE_PACKET=BASE_PACKET,
+ BASE_PACKET_VALUE=BASE_PACKET_VALUE,BASE_PEER=BASE_PEER,CORE_CONTROLS=CORE_CONTROLS,
+ GENERIC_CONTROLS=GENERIC_CONTROLS,BASE_COHORT=C.cohort)))
+C.cohort=S.cohort
+a=S.arguments();pr=S.cli(a.packet);packet=C.metadata(S.exact(pr))
+assert packet['schema']=='F009_RESOURCE_BINDING_SUPPLEMENT_SOURCE_V1'and packet['Root_authority']is False
+assert packet['base_packet']==BASE_PACKET and packet['author']=='/root/dependency_audit'
+assert packet['support']==SUPPORT and packet['transitions']==TRANSITIONS and packet['controls']==CONTROLS
+mr=packet['entry_manifests'][a.op];manifest=C.metadata(S.exact(mr))
+assert packet['program']['path']==str(Path(__file__).resolve())
+assert packet['program']==C.ref(Path(__file__).resolve(),bounded_body(packet['program']))
+ctx=S.Context(a,pr,packet,mr,manifest)
+old=load(BASE_PACKET_VALUE['modules']['evidence'],'acquired_generic_evidence',dict(C=C))
+BASE_E=types.SimpleNamespace(**old)
+T=types.SimpleNamespace(**load(TRANSITIONS,'resource_binding_transitions',dict(C=C,BASE_E=BASE_E)))
+old['metadata_actual']=S.metadata_actual
+old['role']=T.role
+old['metadata_attempt']=S.metadata_attempt
+E=types.SimpleNamespace(**old)
+# The new helper authenticates both explicit Source subjects, not a renamed API.
+S.metadata_actual.__globals__['BASE_E']=BASE_E
+bindings=dict(C=C,E=E)
+if a.op=='prepare_retry':T.prepare(ctx)
+elif a.op=='controls':
+ controls=load(CONTROLS,'resource_binding_toy_controls',dict(C=C,T=T,S=S));controls['run'](ctx)
+else:
+ name={'phase.py':'phases','close.py':'reviews','audit_batch.py':'reviews',
+       'audit_cohort.py':'reviews','register.py':'registration','check_registration.py':'administration'}[a.op]
+ if name in('phases','registration','administration')or a.op=='audit_batch.py':
+  iv=load(BASE_PACKET_VALUE['modules']['invariants'],'acquired_generic_invariants',dict(C=C))
+  bindings['IV']=types.SimpleNamespace(**iv)
+ scopes=load(BASE_PACKET_VALUE['modules'][name],'acquired_generic_'+name,bindings)
+ if name=='phases':
+  acquired_prepare=scopes['prepare_role']
+  def prepare_role(*v,**kw):
+   target=v[0];saved=target.peer_ref;target.peer_ref=BASE_PEER
+   try:return acquired_prepare(*v,**kw)
+   finally:target.peer_ref=saved
+  scopes['prepare_role']=prepare_role
+ fn={'phase.py':'phase','close.py':'close','audit_batch.py':'batch','audit_cohort.py':'aggregate',
+     'register.py':'register','check_registration.py':'check_registration'}[a.op]
+ scopes[fn](ctx)

@@ -1,0 +1,49 @@
+from pathlib import Path
+import json,hashlib,shlex
+FG=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f004_proper_subspace_adoption')
+OUT=FG/'closed_retention/actual_review'
+D=FG/'closed_retention';PINS={};BYTES=0
+
+def pin(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(r):
+ global BYTES
+ p=Path(r['path']);a=p.stat();assert type(r['bytes'])is int and a.st_size==r['bytes']<=4*2**20
+ with p.open('rb')as f:b=f.read(r['bytes']+1)
+ z=p.stat();assert(a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ assert pin(p,b)==r;BYTES+=len(b);assert BYTES<=64*2**20
+ PINS[(str(p),r['sha256'])]=r;return b
+
+def file(p):
+ r=pin(p,p.read_bytes());return read(r),r
+
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+fraw,fr=file(D/'FORECAST_FALSE_v1.json');F=json.loads(fraw)
+praw=read(F['plan']);plan=json.loads(praw)
+sraw,sr=file(FG/'Root_SDK/job155_closed_retention_v1.json');sdk=json.loads(sraw)
+assert sr['sha256']=='897861672ddea95e33749c324d9327309ae496f90262d5c4554e4ea7a3815043'
+assert sdk['root']==sdk['actor']=='/root' and sdk['issued_argv']==sdk['child_argv']==F['expected_argv']
+for s in [sdk['issued_command'],sdk['canonical_argv_command'],sdk['issued_tool_arguments']['cmd']]:assert shlex.split(s)==F['expected_argv']
+R=FG/'api/Root_f004_proper_subspace_job155_closed_retention_v1'
+i,ir=file(R/'issued.json');intent=json.loads(i)
+assert intent['root']=='/root' and intent['argv']==F['expected_argv'] and intent['tool_arguments']==sdk['issued_tool_arguments']
+frames=[]
+for p in sorted(R.glob('frame_*.json')):
+ b,_=file(p);frames.append(json.loads(b))
+assert frames==sdk['all_genuine_api_frames'] and frames[0]==sdk['full_initial_tool_return'] and frames[-1]==sdk['full_tool_return']
+assert len({f['chunk_id']for f in frames})==len(frames)==2
+at=sdk['actual_tool'];assert at['synchronous']is False and at['exit_code']==0 and at['initial_chunk']==frames[0]['chunk_id'] and at['terminal_chunk']==frames[-1]['chunk_id']
+assert frames[0]['session_id']==at['handle'] and frames[-1]['exit_code']==0 and frames[-1].get('session_id')is None
+result=json.loads(frames[-1]['output']);assert result['status']=='ROOT_CLOSED_METADATA_RETAINED' and result['scientific_calls']==0
+for k in ['actual_paths','actual_read_bytes','new_bytes','new_files']:assert type(result[k])is int and result[k]==F['forecast'][k]
+assert result['mappings']==F['forecast']['preservation_mappings']
+mr=result['preservation'];mb=read(mr);m=json.loads(mb)
+assert mr['sha256']=='c66328cbc33a6c6125ecd9fea4a43fe7ca6a39a6db23f17bb896ad9164eb5d6a'
+assert m['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1' and m['root']=='/root' and m['source_plan']==F['plan']
+assert m['scientific_calls']==0 and m['Source_or_verdict_transfer']is False and m['acceptance_or_checkpoint_or_operational_register_writes']==0 and m['borrowed_closures']==plan['borrowed_closures']
+assert m['files'][:len(plan['files'])]==plan['files'] and len(m['files'])==188
+for row in m['files']:
+ a=read(row['original']);b=read(row['retained']);assert a==b
+actualpaths=len({r['path']for r in PINS.values()})
+v=dict(schema='F004_JOB0155_PROPER_SUBSPACE_CLOSED_RETENTION_ACTUAL_REUSE_V1',status='SUPPORTED_ACTUAL_BYTE_RETENTION',reviewer='/root/dependency_audit',Root_authority=False,blockers=[],preservation=mr,actual_SDK=sr,selection=F['plan'],forecast=fr,all188_whole_original_retained_mappings_verified=True,actual_paths=result['actual_paths'],actual_read_bytes=result['actual_read_bytes'],new_bytes=result['new_bytes'],new_files=result['new_files'],all_genuine_API_raw_argv_and_complete_output_joins_verified=True,Original_values_decoded=False,represented_functions_executed=False,scientific_calls=0,canonical_or_case_or_whole_job_or_manuscript_credit=0,independence='Reviewer authored the selection/forecast and retained the earlier GEN proof closure; this is the finite execution/whole-byte postcheck of the separately authored unchanged66779 retainer and genuine Root call, not a blind mathematical review.',qualifications=['All selected Source, inputs, science/API/Root authority/guard/output and PS24 proof/application/logical bodies remain exact after retention. The retainer result exactly matches the frozen forecast.','Retainer256MiB125s limits are cooperative Source checks; no external supervisor or independent process-monitor claim. This review performs whole-byte metadata checks only.','No scientific replay, old verdict transfer, new case/payment, full portable mathematical replay or publication/push claim.'],review_meter=dict(whole_read_bytes=BYTES,distinct_pins=len(PINS),distinct_paths=actualpaths))
+p=OUT/'reuse_integer_only.json';b=can(v);assert not p.exists();p.write_bytes(b)
+print(json.dumps(dict(review=pin(p,b),review_meter=v['review_meter']),sort_keys=True))

@@ -1,0 +1,31 @@
+"""Untrusted proper-span discovery; no GEN or previous-control verdict transfer."""
+import retained_math as M
+import original_context
+import runtime as R
+import linear as L
+
+def main():
+    b,mf,mr,plan,pr,gate,gr=R.start('SEARCH',__file__)
+    ctx,positions=R.scoped(plan,gate,b);work=L.ScalarWork(b.tick)
+    records=[];proper=[];inconclusive=[];stop=None
+    for p in positions:
+        b.tick()
+        if b.peak>=112*2**20 or M.time.monotonic()-M.START>=105 or b.products>=390000:
+            stop='resource frontier before next case';break
+        orbit=ctx['orbits'][p-1]
+        record=dict(original_orbit_position=p,representative_J_index=orbit[0],original_orbit_row_sha256=M.digest(orbit))
+        marks=R.marks(p,record,ctx,b)
+        fact,outcome=L.propose(ctx,marks,b,work)
+        record.update(certificate=fact,outcome=outcome);records.append(record)
+        (proper if fact else inconclusive).append(p)
+    visited=[r['original_orbit_position']for r in records]
+    M.need(visited==positions[:len(visited)],'complete case prefix only')
+    result=dict(schema='Q11_PROPER_SUBSPACE_SEARCH_RESULT_V1',status='RESOURCE_FRONTIER'if stop else'FINITE_SELECTION_COMPLETED',
+      program=mf['roles']['SEARCH']['program'],Source_manifest=mr,plan=pr,Root_gate=gr,original_job=plan['original_job'],
+      selector=plan['selector'],original_domain_whole_pins=ctx['refs'],target_positions=positions,
+      visited_positions=visited,proposed_proper_positions=proper,inconclusive_positions=inconclusive,
+      unvisited_positions=positions[len(visited):],records=records,stop=stop,new_linear_scalar_units=work.used,
+      ambient_irreducibility_imported=False,GEN_claim=False,IP_claim=False,paid_credit=0)
+    R.finish(result,plan,b)
+
+if __name__=='__main__':main()

@@ -1,0 +1,40 @@
+"""UNRUN ten toy designs exercising the actual supplied-word functions.
+
+This is a draft library harness, not a released executable or Root authority.
+Fixtures are synthetic F11 permutation matrices, not Original case operands.
+"""
+import retained_math as M
+import word_consumer as W
+
+def designs(budget):
+    passed=[];work=W.Work(budget.tick)
+    def check(name,value):M.need(value,'toy control failed '+name);passed.append(name)
+    def refuse(name,call):
+        try:call()
+        except (ValueError,TypeError,KeyError,IndexError):passed.append(name)
+        else:raise ValueError('toy unexpectedly accepted '+name)
+    def swap(a,b):return tuple(tuple(int(j==(b if i==a else a if i==b else i))for j in range(7))for i in range(7))
+    K=(swap(0,1),swap(1,2),swap(2,3));C=swap(0,4)
+    inverse=[list(row)for row in M.I7]
+    fourth=budget.multiply(K[0],K[2]);marks=K+(fourth,)
+    fact=dict(K_words=[[0],[1],[2],[0,2]],conjugator_word=[],conjugator_inverse=inverse)
+    check('all_four_positive_members',W.consume(marks,K,(C,M.I7),fact,budget,work)['all_four_marks_in_conjugate_K'])
+    check('right_word_orientation',W.word([0,1],K,budget,work)!=W.word([1,0],K,budget,work))
+    conjugate=tuple(budget.multiply(budget.multiply(C,g),C)for g in marks)
+    f=dict(fact,conjugator_word=[0],conjugator_inverse=[list(row)for row in C])
+    check('known_member_conjugation',W.consume(conjugate,K,(C,M.I7),f,budget,work)['all_four_marks_in_conjugate_K'])
+    bad=dict(fact,K_words=[[0],[1],[2],[1]])
+    refuse('one_wrong_word_refused',lambda:W.consume(marks,K,(C,M.I7),bad,budget,work))
+    refuse('wrong_conjugator_inverse',lambda:W.consume(conjugate,K,(C,M.I7),dict(f,conjugator_inverse=inverse),budget,work))
+    refuse('Boolean_word_letter',lambda:W.word([True],K,budget,work))
+    before=budget.products
+    refuse('overlong_word_before_multiply',lambda:W.word([0]*4097,K,budget,work))
+    M.need(budget.products==before,'overlong word did no arithmetic')
+    refuse('missing_fourth_word',lambda:W.consume(marks,K,(C,M.I7),dict(fact,K_words=[[0],[1],[2]]),budget,work))
+    stopped=W.Work(budget.tick)
+    refuse('whole_scalar_stop',lambda:stopped.charge(200001))
+    for _ in range(8):stopped.begin_case()
+    refuse('ninth_case_preflight',stopped.begin_case)
+    M.need(stopped.used==0 and len(passed)==len(set(passed))==10,'ten unique controls and no partial scalar debit')
+    return dict(controls=passed,count=10,Original_inputs_loaded=False,represented_old_controls_replayed=False,
+      new_word_scalar_units=work.used,old_K_order_verified_here=False,paid_credit=0)

@@ -1,0 +1,168 @@
+--- /Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/actual_audit/common.py
++++ /Users/sasha/medusa/research/leemans/maintenance/intake/f009_legacy_attempts/actual_audit/common.py
+@@ -17,6 +17,13 @@
+ ns=dict(__file__=str(HELPER),__name__='f009_actual_metadata_reader')
+ exec(compile(hb,str(HELPER),'exec'),ns)
+ Ledger,write=ns['Ledger'],ns['write']
++_selection_path=HERE.parent/'attempt_selection.py'
++_selection_body=_selection_path.read_bytes()
++assert len(_selection_body)==3260 and hashlib.sha256(_selection_body).hexdigest()=='7340fcda5de6264afc93e3c885d19bcb53b8d0d5e3900318d66a9a61fe69cf4d'
++_selection_scope={}
++exec(compile(_selection_body,str(_selection_path),'exec'),_selection_scope)
++selected_role=_selection_scope['selected_role']
++pairing_history=_selection_scope['pairing_history']
+ START=time.monotonic()
+ signal.signal(signal.SIGALRM,lambda*_: (_ for _ in ()).throw(TimeoutError('metadata 125 second limit')))
+ signal.alarm(125)
+@@ -26,7 +33,7 @@
+ GUARD_SHA=['c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4','5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42']
+ RAW=Path('/private/tmp/intake_actual_transports')
+ CONTAINER=Path('/private/tmp/f009_R5_parent_cohorts_actual')
+-REVIEWER='/root/forest_resume'
++REVIEWER='/root/dependency_audit'
+ BATCH_TRUE=('all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal','strict_full156_each_parent_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified','all_selected_attempts_and_prior_refusals_audited')
+ FORBIDDEN={'parent','parents','representatives','covers','records','next_parent_forests','stabilizer','U_permutation','seed','witness','witnesses','target','original_graph','cache_entries','cache_banks'}
+ 
+@@ -241,8 +248,8 @@
+  assert not quoted
+  return bytes(out)
+ 
+-def prepared_role(L,preparedref,actualref,stem,base,indices,cohortref,batch,roster,manifestref,manifest,science_role,begin):
+- assert actualref['path']==str(base/'Root_SDK'/(stem+'_v1.json'))
++def prepared_role(L,preparedref,actualref,stem,base,indices,cohortref,batch,roster,manifestref,manifest,science_role,begin,attempt):
++ assert actualref==attempt['actual_SDK'] and actualref['path']==str(base/'Root_SDK'/(stem+'_v%d.json'%attempt['edition']))
+  p=pure(L,preparedref)
+  assert p['root']=='/root' and p['cohort']==cohortref and p['cohort_batch']==batch
+  assert p['source_indices']==indices and p['current_roster']==roster and p['manifest']==manifestref and p['scientific_calls']==0
+@@ -267,7 +274,8 @@
+  assert [opaque_normal(v) for v in importparents]==[opaque_normal(v) for v in requestparents]
+  child=[PY,'-E','-B','-S',manifest['entry']['path'],'--actor','/root','--manifest']+trip(manifestref)
+  child += ['--request']+trip(p['request'])+['--Root-gate']+trip(p['gate'])+['--out',p['out'],'--guard',p['guard']]
+- stdout,outputs=actual(L,actualref,'Root_f009_cohort%04d_%s_v1'%(begin,stem),child,p['guard'],True)
++ stdout,outputs=actual(L,actualref,'Root_f009_cohort%04d_%s_v%d'%(begin,stem,attempt['edition']),child,p['guard'],True)
++ audit_scientific_prior(L,attempt,begin,stem,child,p['guard'])
+  assert len(outputs)==2
+  byname={Path(r['path']).name: r for r in outputs}
+  assert set(byname)=={'result.json','certificate.json'}
+@@ -296,6 +304,37 @@
+ def context(L,a,base,stem):
+  assert a['actual_context']==[a['actual_SDK']]+[refat(L,base/'guards'/stem/name) for name in ('receipt.json','stdout.log','stderr.log')]
+ 
++def role_selection(L,config,cohortref,cohort,stem,base):
++ r=selected_role(L,config['_supplement']['selected_scientific_attempts'],cohortref,cohort,stem,base,pure)
++ return r
++
++def audit_scientific_prior(L,attempt,begin,stem,child,guard):
++ assert type(attempt['edition'])is int and 1<=attempt['edition']<=2 and len(attempt['prior_attempts'])==attempt['edition']-1
++ for prior in attempt['prior_attempts']:
++  assert type(prior['edition'])is int and prior['edition']==1 and prior['disposition']=='GENUINE_PREENTRY_REFUSAL'
++  sdk=api(L,prior['actual_SDK'],'Root_f009_cohort%04d_%s_v1'%(begin,stem),supervised(child,guard,True),False)
++  assert 'the acquired base refused before creating its output or child'in''.join(f.get('output','')for f in sdk['all_genuine_api_frames'])
++  # Exact reconciliation flags and inspections were checked in selected_role.
++  raw(L,prior['preentry_reconciliation'])
++
++def supplement_admission(L,c,hr,h,decision):
++ r=c['supplement_packet'];p=pure(L,r)
++ assert p['schema']=='F009_LEGACY_SCIENTIFIC_ATTEMPT_SUPPLEMENT_V1' and p['Root_authority']is False and p['author']==REVIEWER
++ assert p['cohort']==hr and h['begin']==414 and h['end']==426 and p['original_preparation_packet']==c['preparation_packet']
++ assert p['programs']['audit_batch.py']==c['programs']['audit_batch.py'] and p['programs']['audit_cohort.py']==c['programs']['audit_cohort.py']
++ assert decision['selected_scientific_attempts']==p['selected_scientific_attempts'] and decision['supplement_packet']==r
++ peer=pure(L,decision['independent_Source_peer'])
++ assert peer['packet']==r and peer['protocol']==p['protocol'] and peer['entry_manifests']==p['entry_manifests']
++ assert peer['programs']==p['programs'] and peer['common']==c['common'] and peer['config']==c['_config_ref']
++ for name,mr in p['entry_manifests'].items():
++  m=pure(L,mr);assert m['entry']==p['programs'][name] and m['entry']in m['Source'] and m['Source_namespace_cap']==98304
++  for item in m['Source']+m['guards']:raw(L,item)
++  assert sum(v['bytes']for v in m['Source']+m['guards'])+512==m['Source_plus_guards512']<=98304
++ raw(L,p['protocol']);raw(L,p['attempt_selection_program'])
++ c['_supplement']=p
++ c['closer_program']=p['programs']['close_cohort.py']
++
++
+ def phase(L,config,cohortref,cohort,batch,name,edition,prior):
+  control=Path(cohortref['path']).parent
+  n,begin=batch['batch'],cohort['begin']
+@@ -313,8 +352,21 @@
+   else:
+    review(L,config['phase_issuer_peer'],config['phase_issuer'])
+   raw(L,config['phase_issuer'])
++ elif n==0 and name=='close_pairing':
++  manual=config['_supplement']['manual_phase_issuance']
++  assert manual['decision']==decisionref and manual['batch']==n and manual['phase']==name
++  sdk=pure(L,manual['actual_SDK']);argv=sdk['issued_argv']
++  assert argv[:5]==[PY,'-E','-B','-S','-c'] and len(argv)==6
++  api(L,manual['actual_SDK'],manual['raw_key'],argv,True)
++  printed=json.loads(sdk['full_tool_return']['output'])
++  assert printed['decision']==decisionref and printed['scientific_calls']==0
++  failed=pure(L,manual['failed_convenience_issuer_SDK']);failed_argv=failed['issued_argv']
++  assert failed_argv[:5]==[PY,'-E','-B','-S',manual['retained_helper']['path']]
++  raw(L,manual['retained_helper'])
++  api(L,manual['failed_convenience_issuer_SDK'],manual['failed_raw_key'],failed_argv,False)
++  assert 'ROOT_DECISION_TEMPLATE_FALSE.json'in failed['full_tool_return']['output'] and 'FileNotFoundError'in failed['full_tool_return']['output']
+  elif config['_owner_V2'] or not (n==0 and name=='prepare_suppliers'):
+-  raise AssertionError('A new phase needs the genuine current issuer and Source peer.')
++  raise AssertionError('A new phase needs the genuine current issuer or exact manual supplement issuance.')
+  if name=='prepare_suppliers':
+   assert d['actual_bindings'] is None
+  else:
+@@ -324,8 +376,9 @@
+   stems=['parent%04d_supply'%i for i in batch['source_indices']] if name=='assemble_strict' else ['parents%04d_%04d_check'%(batch['begin'],batch['end']-1)]
+   assert [r['stem'] for r in bindings['roles']]==stems
+   for role in bindings['roles']:
+-   assert role['edition']==1 and role['prior_attempts']==[]
+-   assert role['actual_SDK']['path']==str(CONTAINER/('cohort_from%04d'%begin)/('parents%04d_%04d'%(batch['begin'],batch['end']-1))/'Root_SDK'/(role['stem']+'_v1.json'))
++   base=CONTAINER/('cohort_from%04d'%begin)/('parents%04d_%04d'%(batch['begin'],batch['end']-1))
++   selected=role_selection(L,config,cohortref,cohort,role['stem'],base)
++   assert type(role['edition'])is int and role==selected
+    raw(L,role['actual_SDK'])
+  child=[PY,'-E','-B','-S',cohort['program']['path'],name,'--packet']+trip(config['adapter_packet'])
+  child += ['--cohort']+trip(cohortref)+['--batch',str(n),'--Root-decision']+trip(decisionref)
+@@ -357,7 +410,7 @@
+  raw(L,p['protocol'])
+  peer=pure(L,c['preparation_peer'])
+  assert peer['status'].startswith('SUPPORTED_STATIC') and peer['blockers']==[]
+- assert peer['reviewer'] not in ('/root',REVIEWER,p['author'])
++ assert peer['reviewer'] not in ('/root','/root/readback_review',p['author'])
+  assert peer['programs']==programs and peer['packet']==c['preparation_packet'] and peer['protocol']==p['protocol'] and peer['entry_manifests']==p['entry_manifests']
+  missing=p['unavailable_legacy_bookkeeping']
+  assert len(missing)==8 and all(v['loaded_by_successor'] is v['body_recreated'] is False for v in missing)
+@@ -393,17 +446,19 @@
+ def bootstrap(L,a):
+  ownref=refat(L,Path(sys.argv[0]).resolve())
+  commonref=refat(L,Path(__file__).resolve())
++ selectionref=refat(L,_selection_path)
+  refs=[refat(L,HELPER)]+[refat(L,g) for g in GUARDS]
+  assert [r['sha256'] for r in refs[1:]]==GUARD_SHA
+- source_total=ownref['bytes']+commonref['bytes']+sum(r['bytes'] for r in refs)+512
+- assert source_total<=65536
++ source_total=ownref['bytes']+commonref['bytes']+selectionref['bytes']+sum(r['bytes'] for r in refs)+512
++ assert source_total<=98304
+  configref,decisionref=descriptor(a.config),descriptor(a.Root_decision)
+  config,decision=pure(L,configref),pure(L,decisionref)
+  assert config['schema']=='F009_FUTURE_ACTUAL_AUDITOR_CONFIG_V1' and config['Root_authority'] is False
+  assert len(config['borrowed_historical_descriptors'])>=8
+  assert config['programs'][Path(sys.argv[0]).name]==ownref and config['common']==commonref and config['helper']==refs[0]
+  config['_program']=ownref
+- config['_bootstrap_bytes']=ownref['bytes']+commonref['bytes']+len(hb)
++ config['_config_ref']=configref
++ config['_bootstrap_bytes']=ownref['bytes']+commonref['bytes']+len(hb)+selectionref['bytes']
+  assert decision['schema']=='ROOT_F009_FUTURE_ACTUAL_AUDIT_DECISION_V1' and decision['root']=='/root' and decision['Root_authority'] is True
+  assert decision['programs']==config['programs'] and decision['common']==commonref and decision['config']==configref and decision['status']=='SUPPORTED' and decision['blockers']==[]
+  for flag in ('new_full_Source_and_lexical_interface_owned','genuine_execution_evidence_only','no_scientific_execution_authorized','no_canonical_writes_authorized','bounded_metadata_IO_owned'):
+@@ -428,6 +483,7 @@
+  assert ownership['root']=='/root' and ownership['Root_authority'] is True
+  assert ownership['program']==cohort['program'] and ownership['packet']==config['adapter_packet'] and ownership['Source_peer']==config['adapter_peer']
+  owner_admission(L,config,ownership,cohort,cohortref)
++ supplement_admission(L,config,cohortref,cohort,decision)
+  raw(L,config['adapter_program'])
+  packet=pure(L,config['adapter_packet'])
+  assert packet['program']==cohort['program'] and packet['Root_authority'] is False
+@@ -501,7 +557,7 @@
+  assert 2*first+state[0]['_bootstrap_bytes']+2*2**20<=64*2**20 and len(L.pins)+2<=512
+  L.close()
+  budget()
+- full=dict(schema='F009_FUTURE_LEXICAL_ACTUAL_AUDIT_V1',status='SUPPORTED_ACTUAL',reviewer=REVIEWER,blockers=[],program=state[0]['_program'],config=state[1],Root_decision=state[2],cohort=state[4],batch=a.batch,details=details,input_refs=inputrefs,first_closing_inputs_stable=True,first_closing_explicit_bytes=L.bytes,project_Source_bootstrap_bytes=state[0]['_bootstrap_bytes'],common=state[0]['common'],owner_V2=state[0]['_owner_V2'],Source_union_guards512=state[-1],paths=len(L.pins),declared_read_upper=2*first+state[0]['_bootstrap_bytes']+2*2**20,Original_payloads_decoded_by_this_actual=False,scientific_executions=0,canonical_writes=0,author_inspection_limitation=state[0]['author_inspection_limitation'],closure_scope=state[0]['closure_scope'],borrowed_control_facts=True,old_control_manifest_bodies_reclosed=False,borrowed_historical_descriptors=state[0]['borrowed_historical_descriptors'],old_frontend_restored=False)
++ full=dict(schema='F009_FUTURE_LEXICAL_ACTUAL_AUDIT_V1',status='SUPPORTED_ACTUAL',reviewer=REVIEWER,blockers=[],program=state[0]['_program'],config=state[1],Root_decision=state[2],cohort=state[4],batch=a.batch,details=details,input_refs=inputrefs,first_closing_inputs_stable=True,first_closing_explicit_bytes=L.bytes,project_Source_bootstrap_bytes=state[0]['_bootstrap_bytes'],common=state[0]['common'],Source_author=REVIEWER,distinct_mathematical_proof_claimed=False,supplement_packet=state[0]['supplement_packet'],selected_scientific_attempts=state[0]['_supplement']['selected_scientific_attempts'],owner_V2=state[0]['_owner_V2'],Source_union_guards512=state[-1],paths=len(L.pins),declared_read_upper=2*first+state[0]['_bootstrap_bytes']+2*2**20,Original_payloads_decoded_by_this_actual=False,scientific_executions=0,canonical_writes=0,author_inspection_limitation=state[0]['author_inspection_limitation'],closure_scope=state[0]['closure_scope'],borrowed_control_facts=True,old_control_manifest_bodies_reclosed=False,borrowed_historical_descriptors=state[0]['borrowed_historical_descriptors'],old_frontend_restored=False)
+  fullref=write(Path(a.out)/'full_actual_review.json',full)
+  leaf['full_actual_review']=fullref
+  leafref=write(Path(a.out)/'reuse_integer_only.json',leaf)

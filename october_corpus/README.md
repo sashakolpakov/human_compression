@@ -28,18 +28,24 @@ and distinguishes them from completed manuscripts and published archives.
 
 | Original | Current stage | Still required |
 |---|---|---|
-| F004 | **127 of 272 q11 jobs complete**, including jobs 20 and 24. Job 155 has 378 settled and 429 unpaid positions in the published checkpoint. | Finish the 145 pending jobs, final classification and manuscript. |
-| F009 | Published R5 checkpoint: **414 of 940 parents**, with **64,584** checked extension slots. | Finish all 940 parents, final reduction and the remaining census at order 80. |
-| L026 | **724 generation results, 745 exclusions and 724 separate intersection proofs**; **1,469 settled and 27,439 unresolved** rows. | Finish the current bank and the other selectors; 64 selectors lack complete censuses. |
+| F004 | **127 of 272 q11 jobs complete**. Job 155 has **773 of 807 cases settled**: 157 nongeneration and 616 intersection failures; 34 remain. | Finish the 145 pending jobs, final classification and manuscript. |
+| F009 | **438 of 940 parents registered**, with **68,328** checked extension slots. | Finish the 502 remaining parents, final reduction and the remaining census at order 80. |
+| L026 | **725 generation results, 746 exclusions and 724 separate intersection proofs**; **1,471 settled and 27,437 unresolved** rows. | Finish the current bank and the other selectors; 64 selectors lack complete censuses. |
 
 The [reviewed progress archive](research/intake/verified_progress/README.rst)
-now preserves 36 evidence parts and eleven readable TeX proofs. This update
-adds five reviewed forest cohorts, job 20 coverage and registration, the latest
-L026 exclusion, and the spectral method with its accepted 122-case application.
-Its [finite verifier](research/intake/verified_progress/verify.py) checks the
+preserves 50 evidence parts and eleven named TeX proofs, together with further
+proof texts in its evidence objects. It includes the registered forest cohorts
+through parent 437, the 24 new exclusions from invariant subspaces in job 155 and
+the current Fi22 ledger. The checker for supplied words passed ten synthetic controls;
+its six target cases have not yet been verified. The fresh row 304 search was
+inconclusive and receives no credit.
+
+Its [finite verifier](research/intake/verified_progress/verify.py) checks
 archived bytes without executing mathematical programs. The
 [publication audit](research/intake/verified_progress/publication_audit.json)
-records its exact scope.
+states its scope. Required Source, selected inputs, certificates and accepted
+reviews are preserved. Redundant detailed reviewer working files are listed
+separately; the archive does not export every historical ancestor.
 
 The [preceding status sources](research/intake/status_sources/README.rst) and
 [earlier cohort](research/intake/finite_forests/parents0330_0341/README.rst)
@@ -299,9 +305,9 @@ divisible by four, and classify the six quartic minimum graphs for every
 diameter in that family. Their TeX sources and independent hand reviews are
 included. They add no completed original, conjecture or compression measurement.
 
-The local Fi22 ledger contains **724 generation cases, 744 nongeneration cases
-and 724 separate intersection proofs**: **1,468 resolved candidates**, leaving
-**27,440 unresolved** in its current 28,908-row selector bank. The intersection
+The current Fi22 ledger contains **725 generation cases, 746 nongeneration cases
+and 724 separate intersection proofs**: **1,471 resolved candidates**, leaving
+**27,437 unresolved** in its current 28,908-row selector bank. The intersection
 proofs are counted separately and do not add resolved rows. These local
 totals include the registered normalizer transfers described below. The
 [earlier archive](research/proof_collection/updates/verified_intake_results/fi22_triangle_certificates_47_90/README.rst)

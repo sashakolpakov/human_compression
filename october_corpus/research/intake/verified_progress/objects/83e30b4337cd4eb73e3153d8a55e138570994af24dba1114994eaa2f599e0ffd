@@ -1,0 +1,123 @@
+"""Root-owned startup and bounded publication; no discovery is imported here."""
+import argparse, os, signal, sys
+from pathlib import Path
+import retained_math as M
+from admission import admit, same_job
+
+AUTHOR = '/root/forest_resume'
+
+
+def start(role, file):
+    M.need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+           and not sys.flags.optimize and all(k not in os.environ for k in (*M.ENV4, 'PYTHONSTARTUP')),
+           'ordinary EBS interpreter and five unset environment names')
+    signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('whole phase125s')))
+    signal.setitimer(signal.ITIMER_REAL, max(.001, 125-(M.time.monotonic()-M.START)))
+    ap = argparse.ArgumentParser(allow_abbrev=False)
+    for name in ('manifest', 'plan', 'gate'):
+        ap.add_argument('--'+name, nargs=3, required=True)
+    args = ap.parse_args()
+    ref = lambda x: dict(path=x[0], bytes=int(x[1]), sha256=x[2])
+    budget = M.Budget()
+    mr, pr, gr = [ref(getattr(args, k)) for k in ('manifest', 'plan', 'gate')]
+    M.need(mr['bytes'] <= 65536 and pr['bytes'] <= 65536 and gr['bytes'] <= 8192,
+           'bounded exact Source manifest, plan and fresh gate')
+    manifest, plan, gate = [budget.doc(r) for r in (mr, pr, gr)]
+    entry = manifest['roles'][role]
+    own = entry['program']
+    M.need(own['path'] == str(Path(file).resolve()) and manifest['schema'] == 'Q11_PROPER_SUBSPACE_SOURCE_V1'
+           and plan['schema'] == 'Q11_PROPER_SUBSPACE_'+role+'_PLAN_V1'
+           and plan['program'] == own and plan['Source_manifest'] == mr,
+           'exact new Source entry/manifest/role, never old49 execution')
+    sources = entry['loaded_sources']
+    guards = manifest['guards']
+    modules = ('retained_math', 'admission', 'linear', 'runtime')
+    if role != 'CONTROLS':
+        modules += ('original_context',)
+    paths = {str(Path(sys.modules[name].__file__).resolve()) for name in modules} | {own['path']}
+    M.need(own in sources and {r['path'] for r in sources} == paths and len(sources) == len(paths)
+           and sum(r['bytes'] for r in sources+guards)+512 <= 65536,
+           'whole actually loaded Source plus old guards and512 allowance')
+    for r in sources+guards:
+        budget.read(r)
+    # Charge project loader reads, both profile base checks and its runpy load.
+    budget.bytes += sum(r['bytes'] for r in sources)+guards[0]['bytes']+3*guards[1]['bytes']+512
+    M.need(budget.bytes <= 8*2**20, 'prepaid source/guard loader read allowance')
+    M.need(gate['schema'] == 'ROOT_AUTHORIZED_Q11_PROPER_SUBSPACE_V1'
+           and gate['root'] == '/root' and gate['Root_authority'] is gate['issued'] is True
+           and gate['role'] == role and gate['program'] == own and gate['Source_manifest'] == mr
+           and gate['plan'] == pr and gate['whole_Source_and_protocol_owned'] is True,
+           'fresh exact Root role and whole Source ownership')
+    peer = budget.doc(gate['Source_peer'])
+    M.need(peer['status'] == 'SUPPORTED_STATIC_Q11_PROPER_SUBSPACE_SOURCE'
+           and peer['Source_manifest'] == mr and peer['blockers'] == []
+           and peer['reviewer'] not in ('/root', AUTHOR), 'distinct whole new Source peer')
+    if role == 'CONTROLS':
+        M.need(gate['synthetic_only'] is True and gate['Original_calls_authorized'] is False
+               and gate['admission_controls'] is None, 'narrow fresh synthetic bootstrap')
+    else:
+        controls = budget.doc(gate['admission_controls'])
+        M.need(controls['status'] == 'SUPPORTED_ACTUAL_Q11_PROPER_SUBSPACE_CONTROLS'
+               and controls['Source_manifest'] == mr and controls['blockers'] == []
+               and controls['Source_peer'] == gate['Source_peer']
+               and controls['program'] == manifest['roles']['CONTROLS']['program']
+               and controls['reviewer'] not in ('/root', AUTHOR)
+               and controls['Original_inputs_loaded'] is False
+               and gate['Original_calls_authorized'] is True
+               and gate['current_unpaid_scope_and_no_same_method_replay_owned'] is True
+               and gate['Root_import'] == plan['Root_import'], 'fresh actual controls and Root model import')
+    for r in plan['inputs']:
+        budget.read(r)
+    return budget, manifest, mr, plan, pr, gate, gr
+
+
+def scoped(plan, gate, budget):
+    ctx = sys.modules['original_context'].context(plan, budget)
+    meta = dict(original_job=plan['original_job'], original_orbit_rows=len(ctx['orbits']),
+                baseline_paid_positions=ctx['paid'], original_domain_whole_pins=ctx['refs'],
+                original_orbit_array_sha256=ctx['projection']['full_orbit_array_sha256'])
+    selection = admit(plan, budget.doc(plan['selector']), meta,
+                      budget.doc(plan['Root_scope']), M.digest, M.expand_runs)
+    imported = budget.doc(gate['Root_import'])
+    M.need(imported['schema'] == 'ROOT_IMPORTED_Q11_PROPER_SUBSPACE_MODEL_V1'
+           and imported['root'] == '/root' and imported['Root_authority'] is imported['issued'] is True
+           and same_job(imported['original_job'], plan['original_job'])
+           and imported['original_domain_whole_pins'] == ctx['refs']
+           and imported['proper_subspace_theory'] == plan['proper_subspace_theory'],
+           'same exact acquired domain and proper-subspace proof')
+    for key in ('faithful_Original_frame_member_and_transporter_join_owned',
+                'quartet_membership_in_this_natural_G2_11_owned',
+                'same_actual_ambient_generators_are_known_original_G_members_owned',
+                'proper_subspace_and_mover_implication_owned'):
+        M.need(imported[key] is True, 'separate Root mathematical premise '+key)
+    return ctx, selection['selected']
+
+
+def marks(position, record, ctx, budget):
+    return sys.modules['original_context'].marks_for(position, record, ctx, budget)
+
+
+def finish(result, plan, budget):
+    M.need(set(budget.refs) == {r['path'] for r in plan['inputs']} | set(plan['bootstrap_paths']),
+           'whole declared first/closing input inventory, including every Source/authority')
+    M.need(budget.bytes + sum(r['bytes'] for r in budget.refs.values()) <= 8*2**20,
+           'prospective complete closing reads fit before output')
+    budget.recheck()
+    result['resources'] = dict(read_units_with_prepaid_loaders=budget.bytes,
+                               matrix_products=budget.products, row_images=budget.row_images,
+                               peak_self_RSS_bytes=budget.peak, seconds=M.time.monotonic()-M.START)
+    raw = M.can(result)+b'\n'
+    M.need(len(raw) <= 131072, 'one complete bounded result; no partial hints')
+    out = Path(plan['output'])
+    staged = Path(str(out)+'.partial')
+    M.need(out.is_absolute() and out.parent.resolve(strict=True) == out.parent
+           and not os.path.lexists(out) and not os.path.lexists(staged)
+           and str(out) not in budget.refs and str(staged) not in budget.refs, 'fresh output and stage')
+    budget.tick()
+    with staged.open('xb') as stream:
+        M.need(stream.write(raw) == len(raw), 'whole exclusive result')
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(staged, out)
+    print(M.can(dict(status=result['status'], output=dict(path=str(out), bytes=len(raw),
+                  sha256=M.hashlib.sha256(raw).hexdigest()), paid_credit=0)).decode(), end='')

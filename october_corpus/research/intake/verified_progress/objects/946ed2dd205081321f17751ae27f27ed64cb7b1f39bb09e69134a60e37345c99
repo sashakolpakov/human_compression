@@ -1,0 +1,86 @@
+--- initial/register_gen.py
++++ hash_loader/register_gen.py
+@@ -256,10 +256,12 @@
+          and peer['control_program']==mf['control_program']
+          and peer['borrowed_old26_controls']==OLD26_REFS['actual_controls']
+          and peer['borrowed_unchanged_functions']==list(BORROWED_FUNCTIONS)
++         and type(peer['reviewer']) is str and peer['reviewer']
+          and peer['reviewer'] not in('/root',SOURCE_AUTHOR) and peer['blockers']==[], 'distinct new sibling Source peer')
+     need(control['status']=='SUPPORTED_ACTUAL_L026_PROCEDURAL_GEN_SAVED_BINDING_CONTROLS'
+          and control['Source_manifest']==mr and control['Source_peer']==release['Source_peer']
+          and control['program']==mf['control_program']
++         and type(control['reviewer']) is str and control['reviewer']
+          and control['reviewer'] not in('/root',SOURCE_AUTHOR) and control['blockers']==[]
+          and type(control['controls']) is int and control['controls']==3
+          and control['Original_inputs_loaded'] is False and control['new_helper_only'] is True
+--- initial/controls.py
++++ hash_loader/controls.py
+@@ -1,7 +1,28 @@
+ """Three fresh synthetic tests of the new opaque Saved-binding helper only."""
+-import argparse, os, sys
++import argparse, hashlib, os, stat, sys, types
+ from pathlib import Path
+-import register_gen as W
++
++
++def load_writer():
++    """Compile pinned whole Source bytes; never import a cached project module."""
++    p=Path(__file__).resolve().parent/'register_gen.py'
++    expected=32143
++    a=p.lstat()
++    sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
++    if not(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==expected):
++        raise ValueError('canonical bounded exact writer Source')
++    with p.open('rb')as f:
++        opened=os.fstat(f.fileno());body=f.read(expected+1);closed=os.fstat(f.fileno())
++    if not(sig(a)==sig(opened)==sig(closed)==sig(p.lstat())and len(body)==expected
++           and hashlib.sha256(body).hexdigest()=='6812a4dd5d5b08d94a8b92bba41a3afbeb625867f835d6e1ac805bda85a71489'):
++        raise ValueError('stable complete writer Source SHA')
++    module=types.ModuleType('exact_saved_binding_writer');module.__file__=str(p)
++    exec(compile(body,str(p),'exec'),module.__dict__)
++    return module,len(body)
++
++
++if sys.flags.optimize:raise RuntimeError('optimized metadata controls forbidden')
++W,WRITER_BOOTSTRAP_READ_BYTES=load_writer()
+ 
+ 
+ def main():
+@@ -25,6 +46,7 @@
+            and peer['control_program']==mf['control_program']
+            and peer['borrowed_old26_controls']==W.OLD26_REFS['actual_controls']
+            and peer['borrowed_unchanged_functions']==list(W.BORROWED_FUNCTIONS)
++           and type(peer['reviewer']) is str and peer['reviewer']
+            and peer['reviewer'] not in('/root',W.SOURCE_AUTHOR) and peer['blockers']==[],
+            'distinct exact new Source peer; old26 retains its old subject')
+     W.need(mf['schema']=='L026_PROCEDURAL_GEN_SAVED_BINDING_SOURCE_V1'
+@@ -32,7 +54,8 @@
+            and mf['control_program']['path']==str(Path(__file__).resolve())
+            and mf['borrowed_old26']==W.OLD26_REFS,'actual loaded Source origins')
+     for r in mf['controls_loaded_sources']+mf['guards']:B.read(r)
+-    B.bytes+=sum(r['bytes']for r in mf['controls_loaded_sources'])+mf['guards'][0]['bytes']+3*mf['guards'][1]['bytes']+512
++    W.need(WRITER_BOOTSTRAP_READ_BYTES==mf['program']['bytes'],'exact compile-loader prepayment')
++    B.bytes+=WRITER_BOOTSTRAP_READ_BYTES+mf['control_program']['bytes']+mf['guards'][0]['bytes']+3*mf['guards'][1]['bytes']+512
+     W.need(B.bytes<=64*2**20 and sum(r['bytes']for r in mf['controls_loaded_sources']+mf['guards'])+512<=65536,
+            'complete unchanged read/Source bounds')
+     tests=[]
+--- initial/PROTOCOL.rst
++++ hash_loader/PROTOCOL.rst
+@@ -45,6 +45,17 @@
+ new_helper_only=true, Original_inputs_loaded=false and
+ old26_controls_replayed=false. It does not retag57b61 to cover changed code.
+ 
++Controls load the writer through a bounded, canonical, single-link whole
++Source read and its fixed SHA, then compile exactly those authenticated bytes.
++They never import a project .pyc. A non-assert optimization refusal precedes
++that loader. The exact32143-byte bootstrap read and the control entry's own
++interpreter read are explicitly prepaid, in addition to first/closing whole
++input reads; the previous total namespace/loader formula is retained with
++the actual new control body. No old Source or numerical function is changed.
++
++Both new Source and new-control joins require a named nonempty string
++reviewer distinct from Root and this new Source author.
++
+ New writer admission requires both the exact old26 leaf and the separate new3
+ leaf. It reads the exact old Source/control bodies as opaque provenance inputs;
+ those bodies are not imported or executed. Root's new release separately pins

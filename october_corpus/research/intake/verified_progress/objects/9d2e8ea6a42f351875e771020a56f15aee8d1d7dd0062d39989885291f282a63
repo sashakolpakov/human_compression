@@ -1,0 +1,71 @@
+"""Fresh toy controls of actual transition predicates, not genuine SDK tests."""
+import copy
+
+def run(ctx):
+    names=[]
+    def good(name,f):f();names.append(name)
+    def bad(name,f):
+        try:f()
+        except(AssertionError,KeyError,TypeError,ValueError):names.append(name);return
+        raise AssertionError('accepted invalid synthetic metadata: '+name)
+    old=dict(profile='bounded',launch=None,request={'path':'/oldq'},gate={'path':'/oldg'},budget={'path':'/oldb'},Root_import={'path':'/import'},source_indices=[1])
+    new=dict(old,request={'path':'/newq'},gate={'path':'/newg'},budget={'path':'/newb'})
+    good('fresh bindings retain original preparation subject',lambda:T.prepared_equal(old,new))
+    for key,value in(('Root_import',{'path':'/different'}),('source_indices',[True]),('profile','legacy'),('launch',{})):
+        bad('reject changed prepared '+key,lambda k=key,v=value:T.prepared_equal(old,dict(new,**{k:v})))
+    q=dict(parents_sha='opaque',bounded_resource_budget={'path':'/oldb'},mode='supply',Root_authority=False)
+    good('request changes only budget reference',lambda:T.document_equal(q,dict(q,bounded_resource_budget={'path':'/newb'}),'request'))
+    bad('reject Boolean integer request substitution',lambda:T.document_equal(q,dict(q,Root_authority=0),'request'))
+    b=dict(role='worker',inventory=[dict(component='sdk',path=p,existing=None,maximum_bytes=4096)for p in('/sdk_v1.json','/other_v1.json')],command_projection=['/oldq','/oldg'])
+    n=copy.deepcopy(b)
+    for row,p in zip(n['inventory'],('/sdk_v2.json','/other_v2.json')):row['path']=p
+    n['command_projection']=['/newq','/newg']
+    good('two new SDK bindings preserve old budget',lambda:T.budget_equal(b,n,['/sdk_v1.json','/other_v1.json'],['/sdk_v2.json','/other_v2.json']))
+    for key,value in(('role','different'),('command_projection',['/newq','/newg','extra'])):
+        bad('reject changed budget '+key,lambda k=key,v=value:T.budget_equal(b,dict(n,**{k:v}),['/sdk_v1.json','/other_v1.json'],['/sdk_v2.json','/other_v2.json']))
+    changed=copy.deepcopy(n);changed['inventory'][0]['maximum_bytes']+=1
+    bad('reject raised output maximum',lambda:T.budget_equal(b,changed,['/sdk_v1.json','/other_v1.json'],['/sdk_v2.json','/other_v2.json']))
+    changed=copy.deepcopy(n);changed['inventory'][0]['existing']={}
+    bad('reject overwritten SDK binding',lambda:T.budget_equal(b,changed,['/sdk_v1.json','/other_v1.json'],['/sdk_v2.json','/other_v2.json']))
+    sdk=dict(actual_tool=dict(exit_code=1),all_genuine_api_frames=[dict(output="FileNotFoundError args.output.mkdir /guard/stem")])
+    good('recognize guard setup failure',lambda:T.failed_setup(sdk,'stem','/guard/stem','/out'))
+    bad('reject successful SDK as setup failure',lambda:T.failed_setup(dict(sdk,actual_tool=dict(exit_code=0)),'stem','/guard/stem','/out'))
+    for text in('resource refused','FileNotFoundError unrelated','FileNotFoundError args.output.mkdir /wrong'):
+        bad('reject wrong failure '+text,lambda s=text:T.failed_setup(dict(sdk,all_genuine_api_frames=[dict(output=s)]),'stem','/guard/stem','/out'))
+    t=dict(schema='ROOT_F009_RESOURCE_BINDING_TRANSITION_V1',root='/root',Root_authority=True,
+        original_prepared={},effective_prepared={'path':'new'},stem='stem',cohort={'path':'cohort'},batch=0,
+        from_edition=1,selected_edition=2,disposition=T.DISPOSITION)
+    t.update({flag:True for flag in T.FLAGS})
+    check=lambda x:T.transition_shape(x,{},dict(path='new'),'stem',dict(path='cohort'),0)
+    good('typed transition shape',lambda:check(t))
+    for key,value in(('Root_authority',False),('batch',False),('from_edition',True),('selected_edition',True),('disposition','GENUINE_PREENTRY_REFUSAL')):
+        bad('reject wrong transition '+key,lambda k=key,v=value:check(dict(t,**{k:v})))
+    for flag in T.FLAGS:bad('reject missing ownership '+flag,lambda k=flag:check(dict(t,**{k:False})))
+    packet=dict(path='/packet',bytes=7,sha256='a'*64)
+    req=dict(path='/request',bytes=1,sha256='b'*64);gate=dict(path='/gate',bytes=1,sha256='c'*64)
+    args=['--actor','/root','--op','phase.py','--packet',*C.trip(packet),
+        '--request',*C.trip(req),'--Root-gate',*C.trip(gate),'--out','/out']
+    argv=S.metadata_argv('/new/run.py',args)
+    good('standalone own packet and op parser',lambda:S.standalone_call(argv,'/new/run.py',packet,'phase.py'))
+    env=['/usr/bin/env']
+    for item in S.ENV:env+=['-u',item]
+    profiled=env+[C.PYTHON,'-E','-B',C.PROFILE_REF['path'],'--','old_entry']
+    def inherited():assert S.command_kind(profiled,'/new/run.py')=='profiled'
+    good('classify inherited profiled argv separately',inherited)
+    bad('reject profiled argv as standalone',lambda:S.standalone_call(profiled,'/new/run.py',packet,'phase.py'))
+    bad('reject substituted metadata program',lambda:S.standalone_call(argv,'/wrong/run.py',packet,'phase.py'))
+    bad('reject substituted metadata packet',lambda:S.standalone_call(argv,'/new/run.py',dict(packet,sha256='d'*64),'phase.py'))
+    bad('reject substituted metadata op',lambda:S.standalone_call(argv,'/new/run.py',packet,'close.py'))
+    identity=dict(cohort=dict(path='/cohort',bytes=2,sha256='e'*64),batch=0,phase='assemble_strict')
+    q=dict(identity,schema='F009_RESOURCE_BINDING_METADATA_REQUEST_V1',Root_authority=False,op='phase.py')
+    good('same logical metadata identity',lambda:S.logical_identity(q,'phase.py',identity))
+    bad('reject Boolean batch identity substitution',lambda:S.logical_identity(dict(q,batch=False),'phase.py',identity))
+    bad('reject authority-bearing untrusted metadata request',lambda:S.logical_identity(dict(q,Root_authority=True),'phase.py',identity))
+    good('retain nonzero prior metadata attempt',lambda:S.prior_non_success(dict(actual_tool=dict(exit_code=1))))
+    bad('reject prior successful metadata attempt',lambda:S.prior_non_success(dict(actual_tool=dict(exit_code=0))))
+    bad('reject Boolean exit code',lambda:S.prior_non_success(dict(actual_tool=dict(exit_code=True))))
+    assert len(names)==len(set(names))==40
+    result=dict(schema='F009_RESOURCE_BINDING_SYNTHETIC_CONTROLS_V1',count=len(names),control_names=names,
+        all_controls_passed=True,Original_inputs_loaded=False,scientific_calls=0,
+        scope='Actual production pure predicates with synthetic dictionaries. No genuine API, filesystem absence, complete Root authority chain, numerical predicate or publication atomicity is tested.')
+    rr=ctx.put(ctx.out/'result.json',C.can(result));return ctx.emit(dict(result=rr,count=len(names),Original_inputs_loaded=False))

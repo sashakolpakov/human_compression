@@ -1,0 +1,422 @@
+"""Unrun typed write inventory and admission policy for the NEW profile.
+
+No scientific predicate is implemented here. Existing profile editions remain
+unchanged. Logical budgets are not filesystem quotas or allocation theorems.
+"""
+from pathlib import Path
+import hashlib
+import json
+import math
+import os
+import stat
+
+MIB = 2**20
+GIB = 2**30
+PROFILE_ID = 'BOUNDED_OUTPUT_UNIFIED_256_MIB_DISK2_FLOOR1_V1'
+RESERVE = 256*MIB
+CAPS = dict(primary=32*MIB, guard=MIB, sdk=8*MIB, raw=16*MIB,
+            retention=64*MIB, images=32*MIB)
+ALLOWANCE = 16*MIB
+PARTS = {'bytes', 'sha256'}
+TRUSTED_PYTHON = '/Users/sasha/.venvs/global/bin/python'
+CAS_PATHS = (
+    '/Users/sasha/medusa/research/leemans/maintenance/intake/progress/current_intake.json',
+    '/Users/sasha/medusa/research/leemans/maintenance/intake/progress/controllers/current.json')
+
+
+def need(ok, reason):
+    if not ok:
+        raise ValueError(reason)
+
+
+def integer(value, maximum, reason):
+    need(type(value) is int and 0 <= value <= maximum, reason)
+    return value
+
+
+def descriptor(ref):
+    need(type(ref) is dict and set(ref) == {'path', 'bytes', 'sha256'}, 'whole descriptor')
+    path(ref['path'])
+    integer(ref['bytes'], 4*MIB, 'bounded descriptor bytes')
+    need(type(ref['sha256']) is str and len(ref['sha256']) == 64
+         and set(ref['sha256']) <= set('0123456789abcdef'), 'lowercase SHA256')
+    return ref
+
+
+def path(text):
+    need(type(text) is str and 0 < len(text) <= 1024
+         and all(32 <= ord(c) < 127 and c not in ('"', '\\') for c in text),
+         'finite unescaped ASCII path')
+    p = Path(text)
+    need(p.is_absolute() and str(p) == text and '..' not in p.parts,
+         'normalized absolute path')
+    return p
+
+
+def canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'),
+                       ensure_ascii=True, allow_nan=False)+'\n').encode('ascii')
+
+
+def whole(ref):
+    descriptor(ref)
+    p = path(ref['path'])
+    before = p.lstat()
+    signature = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink,
+                           s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    need(p.resolve(strict=True) == p and stat.S_ISREG(before.st_mode)
+         and before.st_nlink == 1 and before.st_size == ref['bytes'],
+         'canonical single-link complete input')
+    with os.fdopen(os.open(p, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as stream:
+        opened = os.fstat(stream.fileno())
+        raw = stream.read(ref['bytes']+1)
+        closed = os.fstat(stream.fileno())
+    need(signature(before) == signature(opened) == signature(closed) == signature(p.lstat())
+         and len(raw) == ref['bytes'] and hashlib.sha256(raw).hexdigest() == ref['sha256'],
+         'stable complete input SHA and EOF')
+    return raw
+
+
+def decode(raw):
+    def pairs(items):
+        out = {}
+        for key, value in items:
+            need(key not in out, 'unique JSON keys')
+            out[key] = value
+        return out
+    def bad(_):
+        raise ValueError('nonfinite JSON')
+    def finite(text):
+        value = float(text)
+        need(math.isfinite(value), 'finite JSON float')
+        return value
+    return json.loads(raw, object_pairs_hook=pairs, parse_float=finite, parse_constant=bad)
+
+
+def document(ref):
+    return decode(whole(ref))
+
+
+def validate_inventory(budget):
+    rows = budget['inventory']
+    need(type(rows) is list and len(rows) <= 512, 'at most512 explicit write paths')
+    totals = {key: 0 for key in CAPS}
+    counts = {key: 0 for key in CAPS}
+    seen = set()
+    for row in rows:
+        need(type(row) is dict and set(row) == {'component', 'path', 'maximum_bytes', 'existing'},
+             'complete typed inventory row')
+        component = row['component']
+        need(type(component) is str and component in CAPS, 'known writer component')
+        p = path(row['path'])
+        need(p.is_relative_to(path(budget['volume'])) or p.is_relative_to('/private/tmp'),
+             'declared project-volume or private temporary writer')
+        need(str(p) not in seen, 'every destination and staging path charged exactly once')
+        seen.add(str(p))
+        maximum = integer(row['maximum_bytes'], CAPS[component], 'finite per-path bound')
+        if component in ('sdk', 'retention', 'images'):
+            need(maximum <= 4*MIB, '4MiB per SDK/copy/image path')
+        if component == 'primary':
+            need(maximum <= (131072 if budget['role_kind'] == 'science' else 4*MIB),
+                 'unchanged science output or bounded metadata body')
+        if row['existing'] is not None:
+            descriptor(row['existing'])
+            need(component in ('retention', 'images') and row['existing']['path'] == str(p)
+                 and row['existing']['bytes'] <= maximum, 'only exact equal retained targets may be reused')
+        totals[component] += maximum
+        counts[component] += 1
+        need(totals[component] <= CAPS[component], 'component subtotal bound')
+    need(counts['sdk'] == 2 and counts['retention'] <= 512
+         and counts['primary'] <= (2 if budget['role_kind'] == 'science' else 8),
+         'exact two SDK destinations and bounded primary/copy counts')
+    guard = path(budget['guard'])
+    expected = {str(guard/name): maximum for name, maximum in (
+        ('stdout.log', 262144), ('stderr.log', 262144), ('started.json', 131072),
+        ('receipt.json', 131072), ('started.json.staged', 131072), ('receipt.json.staged', 131072))}
+    actual = {row['path']: row['maximum_bytes'] for row in rows if row['component'] == 'guard'}
+    need(actual == expected, 'all six exact guard log/record/staging allowances')
+    if budget['role_kind'] == 'science':
+        projection = budget['command_projection']
+        need('--out' in projection, 'science output is explicit')
+        out = path(projection[projection.index('--out')+1])
+        primary = {row['path']: row['maximum_bytes'] for row in rows if row['component'] == 'primary'}
+        need(primary == {str(out/'result.json'): 131072, str(out/'certificate.json'): 131072},
+             'only the unchanged two128KiB scientific writers')
+    metadata_cas_declarations(budget)
+    need(sum(totals.values())+ALLOWANCE <= 169*MIB <= RESERVE, 'typed169MiB ledger inside256MiB reserve')
+    return dict(totals=totals, counts=counts, content_upper=sum(totals.values()),
+                allocation_allowance=ALLOWANCE, declared_upper=sum(totals.values())+ALLOWANCE)
+
+
+
+def metadata_cas_declarations(budget):
+    rows = budget.get('metadata_cas_targets', [])
+    need(type(rows) is list, 'typed optional metadata CAS list')
+    if not rows:
+        return []
+    need(budget['role_kind'] == 'metadata' and budget['role'] == 'register.py'
+         and len(rows) == 2, 'only the reviewed two-pointer registrar may replace metadata')
+    inventory = {row['path']: row for row in budget['inventory']}
+    targets, stages = set(), set()
+    for row in rows:
+        need(type(row) is dict and set(row) == {'path', 'existing', 'staged_path', 'maximum_bytes'},
+             'complete metadata CAS declaration')
+        target, stage = str(path(row['path'])), str(path(row['staged_path']))
+        maximum = integer(row['maximum_bytes'], 4*MIB, 'bounded new canonical metadata body')
+        old = descriptor(row['existing'])
+        need(target in CAS_PATHS and old['path'] == target and old['bytes'] <= maximum
+             and target not in targets and stage not in stages and stage not in CAS_PATHS,
+             'two fixed canonical pointers, exact old refs and distinct fresh images')
+        expected = dict(component='images', path=target, maximum_bytes=maximum, existing=old)
+        staged = dict(component='images', path=stage, maximum_bytes=maximum, existing=None)
+        need(inventory.get(target) == expected and inventory.get(stage) == staged,
+             'both canonical and stage bodies are explicitly billed to images')
+        targets.add(target); stages.add(stage)
+    need(targets == set(CAS_PATHS), 'complete fixed two-pointer set')
+    return rows
+
+
+def validate_metadata_cas(budget, peer, replacements):
+    rows = metadata_cas_declarations(budget)
+    need(rows and budget['role_source'] in peer['metadata_cas_programs'],
+         'distinct combined Source peer explicitly admits this metadata CAS program')
+    need(type(replacements) is list and len(replacements) == 2, 'both concrete replacements before any write')
+    declarations = {row['path']: row for row in rows}
+    planned, seen = [], set()
+    for item in replacements:
+        need(type(item) is dict and set(item) == {'path', 'staged_path', 'old_ref', 'new_body_bytes'},
+             'complete in-memory canonical replacement')
+        row = declarations.get(item['path'])
+        need(row is not None and item['path'] not in seen and item['staged_path'] == row['staged_path']
+             and item['old_ref'] == row['existing'] and type(item['new_body_bytes']) is bytes,
+             'actual replacement joins its exact frozen old pointer and declared stage')
+        need(len(item['new_body_bytes']) <= row['maximum_bytes'], 'actual new canonical body fits its declaration')
+        seen.add(item['path'])
+        planned.extend([('images', row['staged_path'], item['new_body_bytes']),
+                        ('images', row['path'], item['new_body_bytes'])])
+    preflight_writes(budget, planned)
+    return planned
+
+
+def validate_science_manifest(budget, manifest):
+    need(manifest['schema'] == 'F009_SMALL_FOREST_ORBIT_ROLE_SOURCE_V2'
+         and manifest['entry'] == budget['role_source'] and manifest['entry'] in manifest['Source']
+         and manifest['resource_profile'] == budget['profile_source']
+         and manifest['resource_policy'] == budget['policy_source'],
+         'the actually executed scientific Source is the selected manifest entry')
+
+
+def executed_role_projection(budget):
+    # Only this exact Core controls entry may use the trusted platform site
+    # needed by the original guard's psutil. All ordinary roles keep E-B-S.
+    flags = ['-E', '-B'] if budget['role_kind'] == 'controls' else ['-E', '-B', '-S']
+    prefix = [TRUSTED_PYTHON] + flags + [budget['role_source']['path']]
+    need(budget['command_projection'][:len(prefix)] == prefix,
+         'exact trusted interpreter, flags and actual reviewed script slot; no code-mode or unused-path bypass')
+
+
+def resolve_projection(projection, bindings):
+    need(type(projection) is list and 1 <= len(projection) <= 128, 'bounded command projection')
+    used, output = set(), []
+    for token in projection:
+        if type(token) is str:
+            need(len(token) <= 4096 and '\x00' not in token, 'literal argument')
+            output.append(token)
+        else:
+            need(type(token) is dict and set(token) == {'reference', 'part'}
+                 and token['reference'] in ('budget', 'request', 'Root_gate')
+                 and token['part'] in PARTS, 'typed dependent descriptor slot')
+            label = token['reference']
+            used.add(label)
+            if bindings is not None:
+                ref = descriptor(bindings[label])
+                output.append(str(ref[token['part']]))
+    for label in used:
+        indexes = [i for i, token in enumerate(projection)
+                   if type(token) is dict and token['reference'] == label]
+        need(len(indexes) == 2 and indexes[1] == indexes[0]+1 and indexes[0] >= 1
+             and projection[indexes[0]]['part'] == 'bytes'
+             and projection[indexes[1]]['part'] == 'sha256', 'one adjacent bytes/SHA pair per typed reference')
+        if bindings is not None:
+            need(projection[indexes[0]-1] == bindings[label]['path'],
+                 'literal argument path and referenced descriptor path are identical')
+    if bindings is not None:
+        need(set(bindings) == used | {'budget'}, 'no extra or omitted launch reference bindings')
+        need(sum(len(x.encode('utf-8')) for x in output) <= 16384, 'bounded exact command encoding')
+    return output
+
+
+def validate_authority(budget, command, volume, guard, profile_ref, policy_ref,
+                       manifest_ref=None, role=None, positive=True, bindings=None):
+    need(type(budget) is dict and budget.get('schema') == 'ROOT_BOUNDED_OUTPUT_INVOCATION_BUDGET_V1'
+         and budget.get('profile_id') == PROFILE_ID and budget.get('root') == '/root', 'new budget schema/owner')
+    need(budget.get('role_kind') in ('science', 'metadata', 'retention', 'controls'), 'fixed reviewed role kind')
+    need(type(budget.get('role')) is str and 0 < len(budget['role']) <= 128, 'named exact role')
+    need(type(budget.get('reserve_bytes')) is int and budget['reserve_bytes'] == RESERVE,
+         'fixed explicit256MiB reserve')
+    need(path(budget['volume']) == path(str(volume)) and path(budget['guard']) == path(str(guard)),
+         'exact monitored volume and fresh guard')
+    for key in ('profile_source', 'policy_source', 'Source_peer', 'role_manifest', 'role_source', 'caller_source'):
+        descriptor(budget[key])
+    need(budget['profile_source'] == profile_ref and budget['policy_source'] == policy_ref,
+         'exact new profile and policy Source identities')
+    if manifest_ref is not None:
+        need(budget['role_manifest'] == manifest_ref, 'same role Source manifest')
+    if role is not None:
+        need(budget['role'] == role, 'same role label')
+    if positive:
+        need(budget.get('Root_authority') is True and budget.get('adopted') is True
+             and budget.get('only_declared_writers_owned') is True
+             and budget.get('all_actual_Source_and_numerical_caps_owned') is True,
+             'positive Root whole Source and writer authority')
+    projected = resolve_projection(budget['command_projection'], bindings)
+    if bindings is not None:
+        need(projected == command, 'exact resolved child argv')
+    executed_role_projection(budget)
+    return validate_inventory(budget)
+
+
+def validate_launch(launch, budget, budget_ref, command, volume, guard, profile_ref, policy_ref):
+    need(type(launch) is dict and launch.get('schema') == 'ROOT_BOUNDED_OUTPUT_LAUNCH_AUTHORITY_V1'
+         and launch.get('root') == '/root' and launch.get('Root_authority') is True
+         and launch.get('adopted') is True and launch.get('all_source_budget_and_actual_scope_owned') is True,
+         'later positive Root exact-launch authority')
+    need(launch['budget'] == budget_ref and launch['command'] == command
+         and launch['profile_source'] == profile_ref and launch['policy_source'] == policy_ref
+         and launch['role_manifest'] == budget['role_manifest']
+         and launch['volume'] == str(volume) and launch['guard'] == str(guard),
+         'whole acyclic budget/request/gate/argv launch join')
+    need(type(launch['reference_bindings']) is dict
+         and launch['reference_bindings'].get('budget') == budget_ref, 'exact own budget binding')
+    validate_authority(budget, command, volume, guard, profile_ref, policy_ref,
+                       positive=True, bindings=launch['reference_bindings'])
+
+
+def validate_evidence(budget, peer, controls, profile_ref, policy_ref):
+    need(peer.get('status') == 'SUPPORTED_STATIC_BOUNDED_OUTPUT_F009_SOURCE'
+         and peer.get('reviewer') not in (None, '/root', '/root/forest_resume')
+         and peer.get('blockers') == [] and peer.get('profile_source') == profile_ref
+         and peer.get('policy_source') == policy_ref, 'distinct complete new Source peer')
+    transitions = peer.get('metadata_transition_entries')
+    names = {'init.py', 'phase.py', 'close.py', 'audit_batch.py', 'audit_cohort.py',
+             'register.py', 'check_registration.py', 'controls.py'}
+    need(type(transitions) is dict and set(transitions) == names,
+         'one complete combined core and eight-entry transition peer before bootstrap')
+    transition_root = '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/'
+    for name, binding in transitions.items():
+        need(type(binding) is dict and set(binding) == {'program', 'manifest'}, 'exact program/manifest subject pair')
+        program, manifest = descriptor(binding['program']), descriptor(binding['manifest'])
+        need(program['path'] == transition_root+name and program in peer['metadata_programs']
+             and manifest in peer['metadata_manifests'], 'all transition Source subjects occur in the combined peer')
+    if budget['role_kind'] == 'controls':
+        need(controls is None and budget.get('admission_controls') is None
+             and budget.get('bootstrap_controls_owned') is True
+             and budget.get('no_Original_authorization') is True
+             and budget['role_source'] == peer['controls_source'], 'narrow controls-only bootstrap')
+    else:
+        descriptor(budget['admission_controls'])
+        need(type(controls) is dict and controls.get('status') == 'SUPPORTED_ACTUAL_BOUNDED_OUTPUT_METADATA_CONTROLS'
+             and controls.get('reviewer') not in (None, '/root', '/root/forest_resume')
+             and controls.get('blockers') == [] and controls.get('Original_inputs_loaded') is False
+             and controls.get('profile_source') == profile_ref and controls.get('policy_source') == policy_ref
+             and controls.get('Source_peer') == budget['Source_peer'], 'genuine new metadata-admission controls seal')
+    if budget['role_kind'] == 'science':
+        need(budget['role_manifest'] in peer['new_science_manifests'], 'exact new scientific manifest subject')
+    elif budget['role_kind'] == 'metadata':
+        need(budget['role_source'] in peer['metadata_programs'], 'exact reviewed bounded metadata writer')
+    elif budget['role_kind'] == 'retention':
+        need(budget['role_source'] == peer['retention_source'], 'exact bounded retention writer')
+    if budget['role_kind'] != 'science':
+        need(budget['role_manifest'] in peer['metadata_manifests'], 'exact reviewed non-science namespace')
+    if budget.get('metadata_cas_targets'):
+        metadata_cas_declarations(budget)
+        need(budget['role_source'] in peer['metadata_cas_programs'], 'exact reviewed registrar CAS subject')
+    need(budget['caller_source'] == peer['bounded_recorder_source'],
+         'fixed reviewed role/Root recorder caller pair')
+
+
+def expected_limits(science):
+    need(type(science) is bool, 'typed science/metadata profile')
+    return dict(admit_disk=max(2*GIB, GIB+RESERVE), admit_ram=4*GIB,
+                disk_floor=GIB, ram_floor=3*GIB,
+                total_rss=(128 if science else 256)*MIB,
+                wall_seconds=150.0 if science else 125.0, sample_seconds=.5,
+                log_bytes_each=262144, metadata_bytes_each=131072, owned_pids=128)
+
+
+def marker(budget, budget_ref, launch_ref):
+    return dict(schema='BOUNDED_OUTPUT_PROFILE_MARKER_V1', profile_id=PROFILE_ID,
+                profile_source=budget['profile_source'], policy_source=budget['policy_source'],
+                budget=budget_ref, launch=launch_ref, role_manifest=budget['role_manifest'],
+                role_kind=budget['role_kind'], role=budget['role'], reserve_bytes=RESERVE)
+
+
+def preflight_targets(budget):
+    volume = path(budget['volume'])
+    need(volume.resolve(strict=True) == volume and volume.is_dir(), 'canonical existing monitored volume')
+    device = volume.stat().st_dev
+    need(not os.path.lexists(budget['guard']), 'fresh guard output directory')
+    missing_directories = set()
+    for row in budget['inventory']:
+        target = path(row['path'])
+        ancestor = target.parent
+        while not ancestor.exists():
+            need(not ancestor.is_symlink(), 'no dangling symbolic ancestry')
+            missing_directories.add(str(ancestor))
+            need(len(missing_directories) <= 1024, 'bounded new directory/index allocation allowance')
+            ancestor = ancestor.parent
+        need(ancestor.resolve(strict=True) == ancestor and ancestor.is_dir()
+             and ancestor.stat().st_dev == device, 'canonical same-volume writer destination')
+        if os.path.lexists(target):
+            need(row['existing'] is not None, 'fresh writer target or explicit exact reuse only')
+            whole(row['existing'])
+
+
+def preflight_writes(budget, planned):
+    need(type(planned) is list and len(planned) <= 512, 'finite serialized write transaction')
+    inventory = {row['path']: row for row in budget['inventory']}
+    seen, totals = set(), {key: 0 for key in CAPS}
+    for component, target, body in planned:
+        target = str(path(str(target)))
+        need(component in CAPS and type(body) is bytes and target not in seen, 'one exact byte body per destination')
+        row = inventory.get(target)
+        need(row is not None and row['component'] == component and len(body) <= row['maximum_bytes'],
+             'actual serialized bytes fit the declared writer/path bound')
+        totals[component] += len(body)
+        need(totals[component] <= CAPS[component], 'actual transaction component subtotal')
+        seen.add(target)
+    return totals
+
+
+def write_files(budget, planned):
+    preflight_writes(budget, planned)
+    canonical_cas = {row['path'] for row in metadata_cas_declarations(budget)}
+    need(all(str(target) not in canonical_cas for component, target, body in planned),
+         'canonical CAS is performed only by the separately reviewed fixed-path registrar')
+    inventory = {row['path']: row for row in budget['inventory']}
+    # Every body, path, multiplicity and existing equal target is checked before
+    # the first open. Unlisted writes remain forbidden in the admitted caller.
+    for component, target, body in planned:
+        p = path(str(target)); row = inventory[str(p)]
+        if os.path.lexists(p):
+            need(row['existing'] is not None and whole(row['existing']) == body, 'existing target is exact reusable bytes')
+        else:
+            ancestor = p.parent
+            while not ancestor.exists():
+                ancestor = ancestor.parent
+            need(ancestor.resolve(strict=True) == ancestor, 'canonical writer parent')
+    refs = []
+    for component, target, body in planned:
+        p = path(str(target))
+        if os.path.lexists(p):
+            need(inventory[str(p)]['existing'] is not None, 'no raced undeclared existing output')
+        else:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            need(p.parent.resolve(strict=True) == p.parent, 'canonical final writer parent')
+            with p.open('xb') as stream:
+                need(stream.write(body) == len(body), 'whole exclusive write')
+                stream.flush(); os.fsync(stream.fileno())
+        ref = dict(path=str(p), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+        need(whole(ref) == body, 'whole stable output readback')
+        refs.append(ref)
+    return refs

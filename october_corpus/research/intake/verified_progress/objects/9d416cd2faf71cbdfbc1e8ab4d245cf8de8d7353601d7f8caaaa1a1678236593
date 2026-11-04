@@ -1,0 +1,323 @@
+--- /private/tmp/l026_procedural_subset_typed_ledger/fold_ledger.py
++++ /Users/sasha/medusa/research/leemans/maintenance/intake/l026_procedural_generation_registration/register_gen.py
+@@ -1,4 +1,4 @@
+-"""Typed ledger; procedural NEG."""
++"""New metadata-only procedural GEN append; numerical Source07d465 unchanged."""
+ import argparse,hashlib,json,os,resource,signal,stat,struct,sys,tempfile,time
+ from pathlib import Path
+ START=time.monotonic()
+@@ -6,11 +6,10 @@
+ CURRENT=BASE/'CURRENT.json'
+ SCOPE='7795d9d9d4bbf392cb5a943053372149950eef15d4bd468a63e0cc41f5fcce3a'
+ SELECTOR=dict(first_block_index=2,endpoint_position=18,local_class_position=164,middle_block_index=2,first_ambient_class_position=13,middle_ambient_class_position=13)
+-GEN_SOURCE='268d1b942a7c105e266f37746d362bbffac71d812380334953f2120a94f37bd3'
+-NEG_SOURCE='1bdbd59e8d62e5b6e344bed37d05c2c43799685f49545e5894d504a7008491be'
+ IP_THEOREM='0b940e5a217a5e54e91fd13617fd822dd4daebfac6cbdacbd17e0950070c9216'
+ IP_REVIEW='b7610c401be209df8425a017aa71d61846875544f67919e48269312a37139ef3'
+ ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
++
+ 
+ def need(ok,message):
+  if not ok:raise ValueError(message)
+@@ -67,35 +66,6 @@
+  for k,v in dict(fixed_nonfree_NEG_count=17688,fixed_nonfree_NEG_mass=6884658,global_NEG=17688+c['subset_NEG'],global_NEG_mass=6884658+1024*c['subset_NEG'],unpaid_mass=1024*c['unpaid']).items():need(type(r[k])is int and r[k]==v,'derived strict masses')
+  return c
+ 
+-def initial(p,B,witnesses):
+- R=p['legacy'];g=B.doc(R['GEN']);n=B.doc(R['NEG']);part=B.doc(g['validated_partition']);np=B.doc(n['validated_partition'])
+- need(g['root']==n['root']=='/root'and g['adopted']is n['adopted']is True and g['Root_adoption_owed']is n['Root_adoption_owed']is False and g['scope_digest']==n['scope_digest']==part['scope_digest']==np['scope_digest']==SCOPE,'actual current legacy scope')
+- free=B.doc(p['free_adoption']);need(g['original_context_roles']['witnesses']==free['outputs']['free_witnesses.bin']==p['witnesses']and g['original_context_roles']['free_adoption']==p['free_adoption']and g['original_context_roles']['operand_adoption']==p['operand_adoption'],'same adopted witness bank and operand identity')
+- oldneg=part['all_prior_subset_owner_rows'];neg=np['unchanged_old_subset_rows']+np['new_NEG_rows'];gen=part['all_prior_generation_facts']+part['exact_new_original_owner_rows'];facts={};todo=[R['GEN']];seen={};baseline=None
+- while todo:
+-  ref=todo.pop();q=B.doc(ref)
+-  if ref['path']in seen:need(seen[ref['path']]==ref,'one prior reference');continue
+-  seen[ref['path']]=ref
+-  need(q['schema']in('ROOT_ACCEPTED_L026_GENERATION_AND_SEPARATE_RANK3_IP_V1','ROOT_ACCEPTED_L026_ADDITIONAL_GENERATION_AND_SEPARATE_RANK3_IP_V1')and q['root']=='/root'and q['adopted']is True and q['scope_digest']==SCOPE and q['original_free_witness_adoption']==p['free_adoption']and q['original_operand_adoption']==p['operand_adoption']and q['strict_result_IPcredit0_fields_unchanged']is True,'same actual generation chain')
+-  if ref['sha256']=='cb31555622664fff941ccc37dc7e56dd786609c8ece957867da8fd6eaedc77e8':baseline=B.doc(q['validated_partition'])
+-  for row in q['generation_facts']:
+-   i=identity(row,witnesses);need(can(facts.get(i,row))==can(row),'consistent generation fact');facts[i]=row
+-  todo+=q.get('prior_generation_adoptions',[])
+- ref=R['NEG'];negative_chain=[];past=set()
+- while True:
+-  need(ref['path']not in past,'acyclic negative ancestry');past.add(ref['path']);q=B.doc(ref);negative_chain.append(ref)
+-  need(q['schema']=='ROOT_ACCEPTED_L026_SECOND_WINDOW_ROTATION_SUBSET_NONGENERATION_V1'and q['root']=='/root'and q['adopted']is True and q['Root_adoption_owed']is False and q['scope_digest']==SCOPE and q['old_nonfree_count_unchanged']==17688,'current negative ancestry')
+-  if ref==g['latest_negative_adoption']:
+-   oldpart=B.doc(q['validated_partition']);need(can(oldneg)==can(oldpart['unchanged_old_subset_rows']+oldpart['new_NEG_rows']),'GEN historical NEG snapshot identity');break
+-  ref=q['prior_negative_adoption']
+- by={row['free_index']:row for row in neg};c=len(neg);G=len(gen)
+- need(baseline is not None and len(baseline['all_prior_subset_owner_rows'])==24 and all(can(by.get(row['free_index']))==can(row)for row in baseline['all_prior_subset_owner_rows']+oldneg)and can(facts)==can({row['free_index']:row for row in gen})and can(n['new_facts'])==can(np['new_NEG_rows']),'baseline24/current GEN/history retained in latest NEG union')
+- need(part['total_GENERATING_count']==part['total_separate_rank3_IP_count']==G and part['unchanged_total_NEG_count']==17688+len(oldneg)and np['baseline_nonfree']==17688 and n['total_NEG_components']==17688+c and n['total_NEG_middle_mass']==6884658+1024*c and n['cumulative_subset_count']==c and c>=24,'legacy GEN and independently current NEG totals')
+- mask=bytearray(28908)
+- for code,rows in ((1,neg),(6,gen)):
+-  for row in rows:i=identity(row,witnesses);need(mask[i]==0,'legacy categories disjoint');mask[i]=code
+- return bytes(mask),dict(kind='INITIAL_CURRENT_LEGACY_UNION',legacy=R,prior_GEN_chain=list(seen.values()),NEG_ancestry=negative_chain,GEN_partition_NEG_is_historical=True,old_history_opaque_after_this_initial_fold=True)
+-
+ def retained(ref,manifests,B):
+  hits=[]
+  for m in manifests:
+@@ -106,68 +76,161 @@
+ 
+ PROCEDURAL_SOURCE='07d4654718c10795635e7dbda66555b4929285f6e699339bf60b683d353d3751'
+ PROCEDURAL_CONTROL='634ce3c237379795d87dd5abb6335e639b547bab6403f8430c288f8356f2bec5'
+-def procedural_rows(q,a,l,apps,pr,imp,p):
+- need(q['kind']=='NEG'and q['method']=='PROCEDURAL_SUBSET_NONGENERATION','1')
+- st=a['strict'];snap=dict(CURRENT=p['expected_current'],receipt=p['previous_receipt'],bank=p['previous_bank'])
+- need(a['schema']=='L026_PROCEDURAL_MIDDLE_ACTUAL_PAIR_REUSE_V1'and a['status'].startswith('SUPPORTED_ACTUAL')and a['reviewer']!='/root'and a['blockers']==[]and a['Source_manifest']==st['Source_manifest']==q['Source_manifest']and q['Source_manifest']['sha256']==PROCEDURAL_SOURCE and a['current_snapshot']==st['current_snapshot']==snap,'2')
+- for k in('whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified','strict_carrier_byte_identity_verified','no_native_D_bytes_trusted'):need(a[k]is True,'3')
+- need(a['canonical_registration_issued']is False and a['new_case_or_IP_credit']==0,'4')
+- need(l['schema']=='L026_TWO_PROCEDURAL_NONGENERATION_LOGICAL_INDEPENDENT_REVIEW_V1'and l['status'].startswith('SUPPORTED_LOGICAL_ROOT_ISSUED')and l['reviewer']not in('/root','/root/status_audit')and l['blockers']==[]and l['strict_actual_review']==q['actual_pair_review']and l['Source_manifest']==q['Source_manifest']and l['Root_applications']==q['applications']and l['current_snapshot']==snap,'5')
+- for k in('generic_union_argument_supported','simple_G_transitivity_under_exact_borrowed_premises_supported','same_innerG_membership_required_and_explicitly_imported','H_conjugation_transfer_uses_G_normal_in_A','two_fibre_transfer_imported_not_newly_reproved','owner_ids_not_interpreted_as_H_words'):need(l[k]is True,'6')
+- need(pr['schema']=='L026_PROCEDURAL_GEN_NEG_PROOF_V1'and pr['status']=='VERIFIED_PROCEDURAL_SUPPLIED_GEN_OR_PROPER_CERTIFICATES'and pr['pins']==dict(manifest=q['Source_manifest'],request=st['request'],Root_gate=st['Root_gate'])and pr['Root_import']==st['Root_import']==l['Root_case_import']and pr['procedural_D_import']==st['procedural_D_import']==l['procedural_D_import']and pr['current_snapshot']==snap and pr['selected_cases']==st['selected_cases'],'7')
+- need(pr['complete_native_D_family_claim']is False and pr['native_D_carrier_bytes_trusted']==0 and pr['all_misses_unpaid']is True and pr['new_IP_or_Aut_reversal_or_class_or_case_credit']==0,'8')
+- need(imp['root']=='/root'and imp['Root_authority']is imp['adopted']is True and imp['cases']==st['selected_cases']and imp['current_snapshot']==snap and imp['scope']['original_scope_digest']==SCOPE and imp['scope']['selector']==SELECTOR and p['free_adoption']in imp['scope']['context']and p['operand_adoption']in imp['scope']['context'],'9')
+- selected=q['selected_indices'];need(type(selected)is list and 1<=len(selected)<=8 and all(type(i)is int and 0<=i<28908 for i in selected)and selected==sorted(set(selected))and len(apps)==len(selected)==len(l['subjects']),'10')
+- verified=pr['verified_records'];need(type(verified)is list and len(verified)==len(st['selected_cases'])<=8 and [r['identity']for r in verified]==st['selected_cases']and all(r['verdict']in('GEN','PROPER','UNPAID')for r in verified),'11')
+- need(a['proper_indices']==[r['identity']['free_index']for r in verified if r['verdict']=='PROPER'],'12')
+- rows=[]
+- for i,x,y,ar in zip(selected,apps,l['subjects'],q['applications']):
+-  matches=[r['identity']for r in verified if r['identity']['free_index']==i and r['verdict']=='PROPER'];need(len(matches)==1,'13');row=matches[0];s=x['subject'];n=s['invariant_subset_size'];u=s['marking_invariant_union_size_upper']
+-  need(x['schema']=='ROOT_L026_PROCEDURAL_INVARIANT_SET_NONGENERATION_APPLICATION_V1'and x['root']=='/root'and x['Root_authority']is x['mathematical_proof_issued']is True and x['canonical_registration_issued']is False and x['new_case_credit']==x['whole_manuscript_conjecture_Lean_measurement_credit']==0,'14')
+-  need(x['strict_actual_review']==q['actual_pair_review']and x['strict_proof']==st['proof']and x['strict_carrier']==st['carrier']and x['Root_case_import']==st['Root_import']and x['procedural_D_import']==st['procedural_D_import']and x['current_snapshot']==snap and x['proof']==l['proof'],'15')
+-  need(x['same_conditional_original_model_member_H_orbit_and_two_fibre_premises_retained']is True and x['generic_union_argument_requires_no_simplicity']is True and x['named_G_transitivity_uses_attributed_complete_maximal_table']is True,'16')
+-  need(s['identity']==row and s['generation']is False and s['proper_subgroup_of_named_simple_Fi22']is True and s['same_Original_row_and_inherited_orbit_transfer']is True and s['retained_H_orbit_and_two_fibre_scope']==imp['scope']and s['action_degree']==3510 and type(n)is int and type(u)is int and 0<n and u==2*n<3510,'17')
+-  need(y['application']==ar and y['identity']==row and y['strict_verdict']=='PROPER'and y['generation']is False and y['conditional_represented_H_orbit_two_fibre_nongeneration_supported']is True and y['subset_size']==n and y['M_invariant_union_size_upper']==u and y['action_degree']==3510,'18')
+-  rows.append(row)
+- return rows
+-
+-def procedural_proof(q,B,p):
+- need(type(q['retentions'])is list and 1<=len(q['retentions'])<=4 and type(q['applications'])is list and 1<=len(q['applications'])<=8,'19')
+- def load(r):
+-  need(r['bytes']<=65536,'20');raw=B.read(r);retained(r,q['retentions'],B);return decode(raw)
+- a=load(q['actual_pair_review']);l=load(q['logical_review']);apps=[load(r)for r in q['applications']];st=a['strict'];mf=load(q['Source_manifest']);g=load(st['Root_gate']);control=load(g['actual_controls_review']);cm=load(g['control_Source_manifest']);pr=load(st['proof']);imp=load(st['Root_import'])
+- need(mf['schema']=='L026_PROCEDURAL_MIDDLE_SOURCE_V1'and mf['entry']=='worker.py'and g['manifest']==q['Source_manifest']and g['request']==st['request']and g['current_unpaid_case_import']==st['Root_import']and g['root']=='/root'and g['Root_authority']is g['adopted']is g['Source_and_math_owned']is True,'21')
+- need(g['control_Source_manifest']['sha256']==PROCEDURAL_CONTROL and cm['entry']=='controls.py'and control['status'].startswith('SUPPORTED_ACTUAL')and control['reviewer']!='/root'and control['blockers']==[]and control['Source_manifest']==g['control_Source_manifest']and control['controls']==32 and control['Original_inputs_loaded']is False,'22')
+- for r in(st['request'],st['carrier'],st['actual_SDK'],st['procedural_D_import'],g['independent_Source_review'],a['full_actual_review'],l['proof']):B.read(r);retained(r,q['retentions'],B)
+- return procedural_rows(q,a,l,apps,pr,imp,p)
++AUTHOR='/root/forest_resume'
++WORKER_DUTIES=('accepted_procedural_D_same_original_bridge_frame_membership_owned',
++ 'actual_a_c_and_D_products_belong_to_named_original_simple_Fi22_owned',
++ 'inner_G_target_not_mere_Aut_properness_and_exact_coset_scope_owned',
++ 'complete_corrected_simple_Fi22_maximal_11_13_avoidance_theorem_owned',
++ 'faithful_original_degree3510_G_transitivity_minimal_index_and_even_subgroup_argument_owned',
++ 'same_exact_original_witness_rows_partner_triangles_current_unpaid_H_and_two_fibre_scope_owned',
++ 'generation_and_properness_only_no_IP_or_Aut_reversal_or_class_credit_owned')
++
++def generation_rows(q,a,l,apps,pr,imp,p):
++    """Admit scalar strict GEN facts only; never decode or evaluate carrier cycles."""
++    need(q['kind']=='GEN' and q['method']=='PROCEDURAL_PRIME_CYCLE_GENERATION','new explicit GEN method')
++    st=a['strict'];snap=dict(CURRENT=p['expected_current'],receipt=p['previous_receipt'],bank=p['previous_bank'])
++    need(a['schema']=='L026_PROCEDURAL_MIDDLE_ACTUAL_PAIR_REUSE_V1'
++         and a['status'].startswith('SUPPORTED_ACTUAL') and a['reviewer']!='/root' and a['blockers']==[]
++         and a['Source_manifest']==st['Source_manifest']==q['Source_manifest']
++         and q['Source_manifest']['sha256']==PROCEDURAL_SOURCE
++         and a['current_snapshot']==st['current_snapshot']==snap,'exact independently reviewed procedural subject')
++    for k in('whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified',
++             'strict_carrier_byte_identity_verified','no_native_D_bytes_trusted'):
++        need(a[k] is True,'exact actual closure '+k)
++    need(a['canonical_registration_issued'] is False and a['new_case_or_IP_credit']==0,'actual review issues no adoption')
++    need(l['schema']=='L026_PROCEDURAL_GENERATION_LOGICAL_INDEPENDENT_REVIEW_V1'
++         and l['status'].startswith('SUPPORTED_LOGICAL_ROOT_ISSUED')
++         and l['reviewer'] not in('/root',a['reviewer']) and l['blockers']==[]
++         and l['strict_actual_review']==q['actual_pair_review'] and l['Source_manifest']==q['Source_manifest']
++         and l['Root_applications']==q['applications'] and l['current_snapshot']==snap,
++         'distinct logical seal of exact issued Root applications')
++    for k in('actual11_and13_cycles_and_closing_edges_supported',
++             'complete_corrected_simple_Fi22_maximal_avoidance_supported',
++             'same_innerG_membership_required_and_explicitly_imported',
++             'H_two_fibre_generation_transfer_imported','owner_ids_not_interpreted_as_H_words'):
++        need(l[k] is True,'separate generation implication '+k)
++    need(l['IP_credit'] is False,'no automatic IP application')
++    need(pr['schema']=='L026_PROCEDURAL_GEN_NEG_PROOF_V1'
++         and pr['status']=='VERIFIED_PROCEDURAL_SUPPLIED_GEN_OR_PROPER_CERTIFICATES'
++         and pr['pins']==dict(manifest=q['Source_manifest'],request=st['request'],Root_gate=st['Root_gate'])
++         and pr['Root_import']==st['Root_import']==l['Root_case_import']
++         and pr['procedural_D_import']==st['procedural_D_import']==l['procedural_D_import']
++         and pr['current_snapshot']==snap and pr['selected_cases']==st['selected_cases'], 'same genuine strict proof')
++    need(pr['complete_native_D_family_claim'] is False and pr['native_D_carrier_bytes_trusted']==0
++         and pr['all_misses_unpaid'] is True and pr['new_IP_or_Aut_reversal_or_class_or_case_credit']==0,
++         'procedural proof, no native/IP or case retag')
++    need(imp['schema']=='ROOT_L026_PROCEDURAL_MIDDLE_EXACT_IMPORT_V1'
++         and imp['root']=='/root' and imp['Root_authority'] is imp['adopted'] is True
++         and imp['manifest']==q['Source_manifest'] and all(imp[k] is True for k in WORKER_DUTIES)
++         and imp['cases']==st['selected_cases'] and imp['current_snapshot']==snap
++         and imp['scope']['original_scope_digest']==SCOPE and imp['scope']['selector']==SELECTOR
++         and p['free_adoption'] in imp['scope']['context'] and p['operand_adoption'] in imp['scope']['context'],
++         'same imported Original witness/member/H and two-fibre scope')
++    selected=q['selected_indices']
++    need(type(selected) is list and 1<=len(selected)<=8 and selected==sorted(set(selected))
++         and all(type(i) is int and 0<=i<28908 for i in selected)
++         and len(apps)==len(selected)==len(l['subjects']),'bounded once-only GEN application list')
++    verified=pr['verified_records']
++    need(type(verified) is list and len(verified)==len(st['selected_cases'])<=8
++         and [r['identity'] for r in verified]==st['selected_cases']
++         and all(r['verdict'] in('GEN','PROPER','UNPAID') for r in verified), 'whole actual strict verdict bank')
++    need(all(set(r)=={'identity','verdict'} and set(r['identity'])=={'free_index','owner','witness_row_sha256'}
++             and type(r['identity']['free_index']) is type(r['identity']['owner']) is int
++             for r in verified),'typed actual strict identities, no bool/float aliases')
++    actual=[r['identity']['free_index'] for r in verified if r['verdict']=='GEN']
++    need(a['GEN_indices']==actual and all(type(i) is int for i in a['GEN_indices'])
++         and a['proper_indices']==[r['identity']['free_index'] for r in verified if r['verdict']=='PROPER']
++         and all(type(i) is int for i in a['proper_indices'])
++         and not set(a['GEN_indices']) & set(a['proper_indices'])
++         and set(selected)<=set(actual),'only actually strict-verified GEN may be selected')
++    rows=[]
++    for i,x,y,ar in zip(selected,apps,l['subjects'],q['applications']):
++        found=[r['identity'] for r in verified if r['identity']['free_index']==i and r['verdict']=='GEN']
++        need(len(found)==1,'exact one actual GEN identity');row=found[0];s=x['subject']
++        need(x['schema']=='ROOT_L026_PROCEDURAL_PRIME_CYCLES_GENERATION_APPLICATION_V1'
++             and x['root']=='/root' and x['Root_authority'] is x['mathematical_proof_issued'] is True
++             and x['canonical_registration_issued'] is False and x['new_case_credit']==0,
++             'new exact Root GEN proof, not an old native/direct result')
++        need(x['strict_actual_review']==q['actual_pair_review'] and x['strict_proof']==st['proof']
++             and x['strict_carrier']==st['carrier'] and x['Root_case_import']==st['Root_import']
++             and x['procedural_D_import']==st['procedural_D_import'] and x['current_snapshot']==snap
++             and x['proof']==l['proof'], 'same actual numerical proof and new Root argument')
++        need(x['same_conditional_original_model_member_H_orbit_and_two_fibre_premises_retained'] is True
++             and s['identity']==row and s['generation'] is True and s['named_group']=='Fi22'
++             and s['inner_simple_group_target'] is True
++             and s['same_Original_row_and_H_two_fibre_transfer_imported'] is True and s['IP_claim'] is False,
++             'conditional original inner-Fi22 GEN only')
++        need(y['application']==ar and y['identity']==row and y['strict_verdict']=='GEN'
++             and y['generation'] is True and y['named_group']=='Fi22'
++             and y['conditional_represented_H_orbit_two_fibre_generation_supported'] is True
++             and y['IP_claim'] is False,'distinct exact logical subject')
++        rows.append(row)
++    return rows
+ 
+ def proof(q,B,p):
+- if q.get('method')=='PROCEDURAL_SUBSET_NONGENERATION':return procedural_proof(q,B,p)
+- need(q['kind']in('GEN','NEG')and type(q['retentions'])is list and 1<=len(q['retentions'])<=4,'bounded proof type/retention')
+- for k in ('program','result','plan','gate','review','capture','outer','stdout','stderr'):B.read(q[k]);retained(q[k],q['retentions'],B)
+- r=B.doc(q['result']);plan=B.doc(q['plan']);gate=B.doc(q['gate']);review=B.doc(q['review']);cap=B.doc(q['capture']);out=B.doc(q['outer'])
+- need(r['program']==q['program']and r['plan']==q['plan']and r['scope_digest']==SCOPE and r['original_selector']==SELECTOR and plan['scope_digest']==SCOPE and plan['original_selector']==SELECTOR,'same strict subject')
+- need(gate['root']==review['root']=='/root'and gate['adopted']is True and gate['plan']==review['plan']==q['plan']and gate['program']==review['program']==q['program']and review['status']=='SUPPORTED'and review['blockers']==[]and gate['Root_code_math_review']==q['review']and gate['new_case_calls_authorized']is True,'actual Root scientific review/gate')
+- need(cap['actor']==cap['root']=='/root'and cap['all_genuine_api_frames']and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==0 and out['status']=='PASS'and out['stop']=='RETURNED'and out['returncode']==0 and not out['cleanup']['remaining']and not out['cleanup']['errors']and cap['child_argv'][-len(out['command']):]==out['command'],'actual closed API/outer return')
+- command=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',q['program']['path'],'--self-sha256',q['program']['sha256'],'--plan',q['plan']['path'],q['plan']['sha256'],'--Root-gate',q['gate']['path'],q['gate']['sha256']]
+- need(out['command']==command and q['stdout']['path']==str(Path(q['outer']['path']).parent/'stdout.log')and q['stderr']['path']==str(Path(q['outer']['path']).parent/'stderr.log')and out['logs']['stdout']==q['stdout']['bytes']and out['logs']['stderr']==q['stderr']['bytes']==0 and B.read(q['stderr'])==b'','exact EBS/selfSHA argv and physical terminal logs')
+- terminal=B.doc(q['stdout']);support=q['support'];need(gate['control_report']==support['control_report'],'same actual control report')
+- for ref in support.values():B.read(ref);retained(ref,q['retentions'],B)
+- control=B.doc(support['control_report']);need(control['status']=='PASS'and control['program']==support['control_program']and control['original_case_calls']==0,'actual unchanged generic controls')
+- if q['kind']=='GEN':
+-  need(q['program']['sha256']==GEN_SOURCE and r['schema']=='L026_DIRECT_ORIGINAL_ROTATION_CYCLES_RETURN_V1'and r['status']=='VERIFIED_SUPPLIED_ORIGINAL_FI22_GENERATION_CYCLES'and r['adopted_middle_witness_premises']==p['free_adoption']and r['adopted_operand_and_membership_premises']==p['operand_adoption']and r['actual_direct_signed_word_and_every_closing_edge_checked']is True and r['same_known_G_seed_and_G_normal_in_A_membership_route_imported']is True and r['supplier_or_search_calls']==0 and r['Root_source_gate']==q['gate']and r['Root_code_math_review']==q['review']and r['new_rank3_IP_reversal_other_endpoint_Original_conjecture_Lean_or_compression_credit']==0,'unchanged strict GEN proof, IP0 unchanged')
+-  need(set(support)=={'kernel','control_program','control_report'}and support['kernel']==plan['kernel']==gate['kernel']==review['kernel']==r['kernel']and support['kernel']['sha256']=='60eedb3ce207831ec66cdcc18c689c7c5e334205772cabf888f950503cc267ee'and support['control_program']==plan['control_program']and support['control_program']['sha256']=='b6175700f652154fd90c83074a3b0133b741d7548dba80b269c6e1c250b525ec'and control['schema']=='L026_SUPPLIED_PRIME_CYCLE_GENERIC_CONTROLS_V1'and control['consumer']==q['program']and control['kernel']==support['kernel']and control['controls']>=10,'exact unchanged GEN kernel/control ABI')
+-  need(q['result']['path']==plan['output']and terminal['output']==q['result']and terminal['status']==r['status']and r['control_report']==support['control_report'],'actual GEN output path/terminal result/control join')
+-  rows=r['verified_generation_records']
+- else:
+-  need(q['program']['sha256']==NEG_SOURCE and r['schema']=='L026_BOUNDED_ROTATION_SUBSET_RESULT_V1'and r['status']=='SUPPLIED_CHECK_COMPLETE'and r['mode']=='check'and gate['mode']=='check'and r['supplier_activated']is r['strict_check_activates_supplier']is False and r['marking_nongeneration_uses_additional_imported_original_middle_involution_and_simpleG']is True and r['generation_IP_reversal_census_Original_conjecture_Lean_or_measurement_credit']==0,'unchanged strict proper-subset proof')
+-  need(plan['roles']['free_adoption']==p['free_adoption']and plan['roles']['operand_adoption']==p['operand_adoption'],'same NEG member/witness premise')
+-  need(set(support)=={'point_kernel','subset_kernel','supplier','control_program','control_report'}and support['point_kernel']==plan['point_kernel']==control['point_kernel']and support['subset_kernel']==plan['subset_kernel']==control['subset_kernel']and support['supplier']==plan['supplier']==control['supplier']and support['control_program']==plan['control_program']and support['point_kernel']['sha256']=='60eedb3ce207831ec66cdcc18c689c7c5e334205772cabf888f950503cc267ee'and support['subset_kernel']['sha256']=='2292c70a2a21ac1645d4679848e8ac5f9a3d9afb343cf49cb7e55b6bc8feef36'and support['supplier']['sha256']=='63d337ec610b404e811aa0cf19d80fac645797f2e1b95d0321a2359d99e0231b'and support['control_program']['sha256']=='4fea286d5838612d7ccd649b72349fcf732e4d951cfa2de06eebecb705bbabc8'and control['schema']=='L026_INVARIANT_SUBSET_GENERIC_CONTROLS_V1'and control['worker']==q['program']and control['controls']>=19,'exact unchanged NEG providers/control ABI')
+-  need(q['result']['path']==str(Path(plan['output_directory'])/'result.json')and terminal['outputs']['result.json']==q['result']and terminal['status']==r['status']and terminal['mode']=='check','actual NEG output path/terminal result join')
+-  rows=r['verified_nongeneration_records']
+-  for row in rows:need(type(row['points'])is int and 0<row['points']<3510 and type(row['checked_positive_rotation_edges'])is int and row['checked_positive_rotation_edges']==2*row['points'],'actual two closing rotation edges per proper-set point')
+- need(type(rows)is list and 1<=len(rows)<=16,'bounded actual strict rows')
+- return rows
++    need(q['kind']=='GEN' and q['method']=='PROCEDURAL_PRIME_CYCLE_GENERATION'
++         and type(q['retentions']) is list and 1<=len(q['retentions'])<=4
++         and type(q['applications']) is list and 1<=len(q['applications'])<=8,'bounded new procedural GEN proof')
++    def load(r):
++        need(r['bytes']<=65536,'bounded scalar proof metadata')
++        raw=B.read(r);retained(r,q['retentions'],B);return decode(raw)
++    a=load(q['actual_pair_review']);l=load(q['logical_review']);apps=[load(r) for r in q['applications']]
++    st=a['strict'];mf=load(q['Source_manifest']);g=load(st['Root_gate']);pr=load(st['proof']);imp=load(st['Root_import'])
++    control=load(g['actual_controls_review']);cm=load(g['control_Source_manifest']);request=load(st['request'])
++    need(mf['schema']=='L026_PROCEDURAL_MIDDLE_SOURCE_V1' and mf['entry']=='worker.py'
++         and g['manifest']==q['Source_manifest'] and g['request']==st['request']
++         and g['current_unpaid_case_import']==st['Root_import'] and g['root']=='/root'
++         and g['Root_authority'] is g['adopted'] is g['Source_and_math_owned'] is True, 'same exact old scientific release')
++    need(g['control_Source_manifest']['sha256']==PROCEDURAL_CONTROL and cm['entry']=='controls.py'
++         and control['status'].startswith('SUPPORTED_ACTUAL') and control['reviewer']!='/root'
++         and control['blockers']==[] and control['Source_manifest']==g['control_Source_manifest']
++         and control['controls']==32 and control['Original_inputs_loaded'] is False,'borrow literal old32 science controls')
++    need(request['mode']=='check' and request['saved']==st['carrier'] and request['Root_import']==st['Root_import']
++         and request['procedural_D_import']==st['procedural_D_import']
++         and request['current_snapshot']==st['current_snapshot'] and request['cases']==st['selected_cases'],
++         'supplied-only Saved input with exact selected identities')
++    for r in(st['carrier'],st['actual_SDK'],st['procedural_D_import'],g['independent_Source_review'],a['full_actual_review'],l['proof']):
++        B.read(r);retained(r,q['retentions'],B)
++    return generation_rows(q,a,l,apps,pr,imp,p)
++
++def gen_apply(previous,facts,proof_rows,witnesses):
++    need(type(facts) is list and 1<=len(facts)<=8 and all(f['kind']=='GEN' for f in facts),
++         'this entry only admits unpaid0 to GEN2, never NEG or automatic IP')
++    return apply(previous,facts,proof_rows,witnesses)
++
++def new_admission(p,release,B,ownref):
++    need(p.get('separate_IP') is None and 1<=len(p['proofs'])<=8
++         and type(p['facts']) is list and 1<=len(p['facts'])<=8 and all(f['kind']=='GEN' for f in p['facts'])
++         and all(q['kind']=='GEN' and q['method']=='PROCEDURAL_PRIME_CYCLE_GENERATION' for q in p['proofs']),
++         'append-only procedural GEN scope and no IP application')
++    mr=p['Source_manifest']
++    need(mr['bytes']<=8192 and release['Source_peer']['bytes']<=32768
++         and release['metadata_controls_review']['bytes']<=32768,'bounded new metadata admission records')
++    mf=B.doc(mr);peer=B.doc(release['Source_peer']);control=B.doc(release['metadata_controls_review'])
++    need(mf['schema']=='L026_PROCEDURAL_GEN_APPEND_SOURCE_V1' and mf['program']==ownref
++         and release['Source_manifest']==mr and release['metadata_only'] is True,
++         'whole new metadata Source subject')
++    for r in mf['guards']:B.read(r)
++    loader_extra=mf['guards'][0]['bytes']+3*mf['guards'][1]['bytes']
++    B.bytes+=loader_extra
++    need(B.bytes<=64*2**20,'prepaid literal validation/shared-guard loader reads')
++    need(ownref['bytes']+sum(r['bytes'] for r in mf['guards'])+512<=65536,'whole loaded Source/old guards/512')
++    need(peer['status']=='SUPPORTED_STATIC_L026_PROCEDURAL_GEN_APPEND_SOURCE'
++         and peer['Source_manifest']==mr and peer['reviewer'] not in('/root',AUTHOR) and peer['blockers']==[],
++         'distinct new metadata Source peer')
++    need(control['status']=='SUPPORTED_ACTUAL_L026_PROCEDURAL_GEN_APPEND_CONTROLS'
++         and control['Source_manifest']==mr and control['reviewer'] not in('/root',AUTHOR)
++         and control['Source_peer']==release['Source_peer']
++         and type(control['controls']) is int and control['controls']==26
++         and control['blockers']==[] and control['Original_inputs_loaded'] is False,
++         'fresh actual metadata admission controls, not old32 numerical controls')
++    return loader_extra
++
++def current_image(old,receiptref,bankref):
++    selector=dict(old)
++    selector.update(schema='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1',root='/root',adopted=True,
++                    scope_digest=SCOPE,ledger_receipt=receiptref,status_bank=bankref)
++    return selector
+ 
+ def apply(previous,facts,proof_rows,witnesses):
+  counts(previous);need(type(facts)is list and 1<=len(facts)<=16,'bounded new typed facts');mask=bytearray(previous);seen=set();paid=[]
+@@ -192,7 +255,7 @@
+  if any(f['kind']in('GEN_IP','IP')for f in p['facts']):
+   ip=p['separate_IP'];need(ip['theorem']['sha256']==IP_THEOREM and ip['review']['sha256']==IP_REVIEW and release['separate_IP_theorem_application_supported']is True and release['same_original_G_member_normality_bridge_middle_involution_and_simpleG_checked']is True,'separate existing rank3 IP theorem application')
+   B.read(ip['theorem']);iv=B.doc(ip['review']);need(iv['blockers']==[],'separate IP review without blockers')
+- mask,changes=apply(previous,p['facts'],rows,witnesses)
++ mask,changes=gen_apply(previous,p['facts'],rows,witnesses)
+  return mask,dict(kind='BOUNDED_NEW_ROOT_TYPED_BATCH',previous_receipt=p['previous_receipt'],previous_bank=p['previous_bank'],previous_CURRENT=p['expected_current'],facts=p['facts'],actual_strict_proofs=proofs,separate_IP=p.get('separate_IP'),exact_monotone_changes=changes,old_proof_DAG_is_opaque_retained_backlink=True)
+ 
+ def syncdir(p):
+@@ -207,15 +270,14 @@
+  own=Path(__file__).resolve(strict=True);ownref=dict(path=str(own),bytes=own.stat().st_size,sha256=a.self_sha256);need(ownref['bytes']<=32768,'whole metadata Source32k');B.bytes+=ownref['bytes'];B.read(ownref)
+  pp=Path(a.plan[0]);pr=dict(path=str(pp),bytes=pp.stat().st_size,sha256=a.plan[1]);need(pr['bytes']<=131072,'bounded metadata plan');p=B.doc(pr)
+  rp=Path(a.Root_release[0]);rr=dict(path=str(rp),bytes=rp.stat().st_size,sha256=a.Root_release[1]);need(rr['bytes']<=32768,'bounded exact Root metadata release');rel=B.doc(rr)
+- need(p['schema']=='L026_BOUNDED_TYPED_PAID_LEDGER_PLAN_V1'and p['program']==ownref and p['mode']in('initialize','append'),'current metadata Source/plan')
+- need(rel['schema']=='ROOT_REVIEWED_L026_BOUNDED_TYPED_PAID_LEDGER_V1'and rel['root']=='/root'and rel['status']=='SUPPORTED'and rel['blockers']==[]and rel['program']==ownref and rel['plan']==pr and rel['metadata_only']is True and rel['typed_new_facts_and_strict_closure_supported']is True and (p['mode']!='initialize'or rel['current_legacy_adoptions_checked']is True)and (not a.write or rel['metadata_publication_authorized']is True),'fresh Root exact metadata review/release')
+- scope(p)
++ need(p['schema']=='L026_PROCEDURAL_GEN_APPEND_PLAN_V1'and p['program']==ownref and p['mode']=='append','current metadata Source/plan')
++ need(rel['schema']=='ROOT_REVIEWED_L026_PROCEDURAL_GEN_APPEND_V1'and rel['root']=='/root'and rel['status']=='SUPPORTED'and rel['blockers']==[]and rel['program']==ownref and rel['plan']==pr and rel['metadata_only']is True and rel['typed_new_facts_and_strict_closure_supported']is True and (p['mode']!='initialize'or rel['current_legacy_adoptions_checked']is True)and (not a.write or rel['metadata_publication_authorized']is True),'fresh Root exact metadata review/release')
++ scope(p);loader_extra=new_admission(p,rel,B,ownref)
+  for ref in p['inputs']:B.read(ref)
+  expected={r['path']:r for r in p['inputs']};need(len(expected)==len(p['inputs']),'one fixed physical input version')
+  for r in(ownref,pr,rr):need(expected.get(r['path'],r)==r,'exact bootstrap/release identity');expected[r['path']]=r
+  witness=B.read(p['witnesses']);need(len(witness)==462528,'whole accepted witness bank');B.doc(p['free_adoption']);B.doc(p['operand_adoption'])
+- if p['mode']=='initialize':need(p['expected_current']is None and not os.path.lexists(CURRENT),'initial ledger only absent CURRENT');mask,provenance=initial(p,B,witness)
+- else:need(p['expected_current']['path']==str(CURRENT),'current selector fixed path');mask,provenance=append(p,B,witness,rel)
++ need(p['expected_current']['path']==str(CURRENT),'current selector fixed path');mask,provenance=append(p,B,witness,rel)
+  c=counts(mask);epoch=p['epoch'];need(type(epoch)is str and 1<=len(epoch)<=64 and all(x in'abcdefghijklmnopqrstuvwxyz0123456789_-'for x in epoch),'bounded fresh ledger epoch')
+  dest=BASE/'epochs'/epoch;need(not os.path.lexists(dest),'fresh immutable epoch');bankref=reference(dest/'status.bin',mask)
+  method=dict(program=ownref,plan=pr,Root_release=rr,scientific_calls=0)
+@@ -223,12 +285,12 @@
+  if p['mode']=='append':batch=dict(schema='ROOT_ACCEPTED_L026_BOUNDED_TYPED_PROOF_BATCH_V1',root='/root',adopted=True,Root_adoption_owed=False,scope_digest=SCOPE,original_selector=SELECTOR,original_free_witness_adoption=p['free_adoption'],original_operand_adoption=p['operand_adoption'],witness_bank=p['witnesses'],new_facts=p['facts'],proofs=p['proofs'],separate_existing_rank3_IP=p.get('separate_IP'),previous_ledger=p['previous_receipt'],exact_monotone_changes=provenance['exact_monotone_changes'],writer=method,strict_IP0_unchanged=True,Original_conjecture_Lean_or_measurement_credit=0)
+  batchraw=can(batch)if batch else None;batchref=reference(dest/'batch_acceptance.json',batchraw)if batchraw else None
+  receipt=dict(schema='ROOT_ACCEPTED_L026_TYPED_PAID_STATUS_LEDGER_V1',root='/root',adopted=True,Root_adoption_owed=False,scope_digest=SCOPE,original_selector=SELECTOR,original_free_space=28908,witness_bank=p['witnesses'],original_free_witness_adoption=p['free_adoption'],original_operand_adoption=p['operand_adoption'],status_bank=bankref,counts=c,fixed_nonfree_NEG_count=17688,fixed_nonfree_NEG_mass=6884658,global_NEG=17688+c['subset_NEG'],global_NEG_mass=6884658+1024*c['subset_NEG'],unpaid_mass=1024*c['unpaid'],previous_ledger=p.get('previous_receipt'),typed_new_batch=batchref,proof_provenance=provenance if not batch else dict(kind='BOUNDED_BATCH',batch=batchref,previous_ledger=p['previous_receipt'],old_proof_DAG_opaque=True),writer=method,qualification='Same original Fi22/fullAut/Out2/Reader/member/model/action/word/graph/globalclass/twofibre/H=B and separate-IP hypotheses retained. Typed paid-status metadata only, no new mathematics or whole Original credit.')
+- receiptraw=can(receipt);receiptref=reference(dest/'receipt.json',receiptraw);selector=dict(B.doc(p['expected_current']))if p['mode']=='append'else {};selector.update(schema='ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1',root='/root',adopted=True,scope_digest=SCOPE,ledger_receipt=receiptref,status_bank=bankref);currentraw=can(selector)
++ receiptraw=can(receipt);receiptref=reference(dest/'receipt.json',receiptraw);selector=current_image(B.doc(p['expected_current']),receiptref,bankref);currentraw=can(selector)
+  need(len(receiptraw)<=16384 and len(currentraw)<=4096 and(batchraw is None or len(batchraw)<=131072),'bounded fixed SCI receipt/CURRENT and new batch outputs')
+  outputs={dest/'status.bin':mask,dest/'receipt.json':receiptraw}
+  if batchraw is not None:outputs[dest/'batch_acceptance.json']=batchraw
+  need(sum(map(len,outputs.values()))+len(currentraw)<=16*2**20,'metadata newwrite16MiB');need(B.refs==expected,'whole exact physical input closure')
+- read_upper=ownref['bytes']+2*sum(r['bytes']for r in expected.values())+2*sum(map(len,outputs.values()))+len(currentraw)+2*(p['expected_current']['bytes']if p['expected_current']is not None else 0)
++ read_upper=ownref['bytes']+loader_extra+2*sum(r['bytes']for r in expected.values())+2*sum(map(len,outputs.values()))+len(currentraw)+2*(p['expected_current']['bytes']if p['expected_current']is not None else 0)
+  path_upper=len(expected)+len(outputs)+(0 if str(CURRENT)in expected else 1)+1
+  need(read_upper<=64*2**20 and path_upper<=512,'complete metadata reads/newobjects/CAS/temp-path prepaid');B.final();B.tick()
+  projection=dict(status='BOUNDED_TYPED_LEDGER_METADATA_FORECAST_ONLY',writer=method,counts=c,new_outputs=[reference(k,v)for k,v in outputs.items()],new_CURRENT=reference(CURRENT,currentraw),physical_reads=B.bytes,actual_read_paths=len(B.paths),complete_read_upper=read_upper,complete_path_upper=path_upper,new_bytes=sum(map(len,outputs.values()))+len(currentraw),science_calls=0)

@@ -1,0 +1,250 @@
+"""Shared bounded metadata IO; mathematical and cache values remain byte spans."""
+import argparse,hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+START=time.monotonic()
+PYTHON='/Users/sasha/.venvs/global/bin/python'
+INTAKE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+PROGRESS=INTAKE/'progress'
+SCIENCE=Path('/private/tmp/f009_R5_parent_cohorts_actual')
+AUTHOR='/root/dependency_audit'
+CORE=INTAKE/'resource_profiles/bounded_output'
+POLICY_REF={'bytes': 22780, 'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/resource_policy.py', 'sha256': '70440d963df62387cd1f2d202628249bbc9e0fc95078f0e2fe58f05a2924edee'}
+PROFILE_REF={'bytes': 6023, 'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/supervise.py', 'sha256': 'a4f8393c465bd8daa581dac4b398042863b8eb43d5c111154395f543089c1c39'}
+BASE_REF={'bytes': 18361, 'path': '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_transient.py', 'sha256': '5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42'}
+RECORDER_REF={'bytes': 7836, 'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/bounded_recorders.js', 'sha256': '8215fc3ca298f2535e42d7063c1340121ccc682ee2faf05f39d92c93ae41c389'}
+LEGACY_GUARD_REF={'path': '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py', 'bytes': 4806, 'sha256': 'c3b626b86791ac355c3503a654136f49ad76abbcdfadf0455efb32dd5cca25f4'}
+HELPER_REF={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/whole.py', 'bytes': 4097, 'sha256': '1da12005bc81af4d8998d420592f2ea0d81aaee02de8be06088b9a7d4c73edf5'}
+LEX_REF={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/lex.py', 'bytes': 2383, 'sha256': '49d0c50e7145a0130d9318fef0907f1ba5bbfd95d09bad9ce99a034c508cb3eb'}
+CORE_MANIFEST={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/Source_manifest.json', 'bytes': 5707, 'sha256': 'efc7f3f9935f7949461b03498fa741ce92359e8842499470bd6a310fd675799f'}
+OLD_MANIFESTS={'check': {'bytes': 2337, 'path': '/private/tmp/f009_incremental_parent_cover/Source_manifest_check.json', 'sha256': 'ebef8223ab1c46cf1b594426d7d5114663c5f282ac5162074aadd506776a8cff'}, 'supply': {'bytes': 3129, 'path': '/private/tmp/f009_complete_parent_stabilizer_supplier/Source_manifest_supply.json', 'sha256': 'c879ba0c79bc1de278696ae1ae450d9c89941b09ef4cbbc6527f0d92f13ea83e'}}
+NEW_MANIFESTS={'supply': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/science/Source_manifest_supply_V2.json', 'bytes': 4687, 'sha256': '814ae8c2cb485adf2f108091c574ec28a835e4874f7d8c6429a365a90de1cba2'}, 'check': {'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/science/Source_manifest_check_V2.json', 'bytes': 4225, 'sha256': '1bb1fd6b6943544586918941ca965d38eea3f6285fa094096107d3f07389e80b'}}
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s metadata deadline')))
+signal.alarm(125)
+
+def module(ref,name,bindings=None):
+    body=Path(ref['path']).read_bytes()
+    assert len(body)==ref['bytes']and hashlib.sha256(body).hexdigest()==ref['sha256']
+    scope=dict(__file__=ref['path'],__name__=name)
+    scope.update(bindings or {})
+    exec(compile(body,ref['path'],'exec'),scope)
+    return scope
+
+W=module(HELPER_REF,'f009_generic_metadata_ledger')
+X=module(LEX_REF,'f009_generic_lexical_values')
+Ledger=W['Ledger']
+fields=X['fields'];array=X['array'];metadata=X['metadata'];equivalent=X['equivalent']
+P=module(POLICY_REF,'f009_generic_bounded_resource_policy')
+
+def check():
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+    assert all(k not in os.environ for k in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'))
+    assert time.monotonic()-START<115
+    assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)<256*2**20
+
+def can(value):return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+def ref(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+def descriptor(v):return P['descriptor'](v)
+def trip(v):return[v['path'],str(v['bytes']),v['sha256']]
+def cli_ref(v):return descriptor(dict(path=v[0],bytes=int(v[1]),sha256=v[2]))
+def raw(L,r):return L.raw(r['path'],r)[0]
+def doc(L,r):return metadata(raw(L,r))
+def at(L,path):return L.raw(path)[1]
+def view(body,keys):
+    parts=fields(body)
+    assert not set(keys)&X['FORBIDDEN']
+    return{k:metadata(parts[k])for k in keys}
+def join(parts):return b'{'+b','.join(can(k).strip()+b':'+v for k,v in sorted(parts.items()))+b'}\n'
+def patch(body,changes):
+    old=fields(body);old.update(changes);return join(old)
+def append(blob,items):return b'['+b','.join(array(blob)+items)+b']'
+def fresh(path):assert path.is_absolute()and not os.path.lexists(path)
+
+def apply_cas(replacements,old_bodies,whole,read_stage,replace,sync,read_after):
+    """The actual production ordering, also used by synthetic callback controls."""
+    for item in replacements:
+        assert whole(item['old_ref'])==old_bodies[item['path']]
+        assert read_stage(item['staged_path'])==item['new_body_bytes']
+    # Both complete old bodies are rechecked before the FIRST replacement.
+    for item in replacements:
+        assert whole(item['old_ref'])==old_bodies[item['path']]
+    for item in replacements:
+        replace(item['staged_path'],item['path'])
+        sync(Path(item['path']).parent)
+        assert read_after(item['path'])==item['new_body_bytes']
+
+def source_manifest(L,r,kind):
+    m=doc(L,r);assert m['entry']in m['Source']
+    for item in m['Source']:raw(L,item)
+    assert len({v['path']for v in m['Source']})==len(m['Source'])
+    assert sum(v['bytes']for v in m['Source'])+512==m['Source_with_invocation_reserve']
+    if kind=='legacy':
+        assert r in OLD_MANIFESTS.values()and m['schema']=='F009_SMALL_FOREST_ORBIT_ROLE_SOURCE_V1'
+        assert m['Source_with_invocation_reserve']<=65536
+    else:
+        assert kind=='bounded'and r in NEW_MANIFESTS.values()and m['schema']=='F009_SMALL_FOREST_ORBIT_ROLE_SOURCE_V2'
+        assert m['Source_with_invocation_reserve']<=98304 and m['resource_policy']==POLICY_REF and m['resource_profile']==PROFILE_REF
+        role='supply'if r==NEW_MANIFESTS['supply']else'check'
+        assert m['legacy_mathematical_subject']==OLD_MANIFESTS[role]and m['numerical_worker_body_literal']is True
+    expected=dict(work_units=10000000,work_seconds=20,rss_bytes=134217728,read_bytes=8388608,paths=32,output_bytes=131072,output_files=2,file_bytes=2097152,caller_seconds=140)
+    for k,v in expected.items():assert type(m['caps'][k])is int and m['caps'][k]==v
+    assert m['caps']['source_bytes']==(65536 if kind=='legacy' else 98304)
+    return m
+
+def subject(L,kind,role):
+    assert kind in('legacy','bounded')and role in('supply','check')
+    r=(OLD_MANIFESTS if kind=='legacy'else NEW_MANIFESTS)[role]
+    return r,source_manifest(L,r,kind)
+
+def scientific_role(kind,profile,request_role,budget_role):
+    """Short metadata kinds never substitute for the literal worker ROLE."""
+    roles=dict(supply='f009_complete_parent_stabilizer_supplier',check='f009_incremental_parent_cover')
+    assert kind in roles and profile in('legacy','bounded')
+    role=roles[kind]
+    assert request_role==role
+    assert budget_role==(role if profile=='bounded'else None)
+    return role
+
+def read_prepaid(source_bytes,documents,inventory):
+    """All Source loads and outer-profile reads outside the child Ledger."""
+    assert type(source_bytes)is int and 0<source_bytes<=131072
+    for item in documents:descriptor(item)
+    existing=[row['existing']for row in inventory if row['existing']is not None]
+    for item in existing:descriptor(item)
+    # Three whole namespaces dominate the interpreter/entry, explicit module
+    # loads and twice-read profile/base Sources. Outer documents and every
+    # preflight-existing target are charged once in addition to child reads.
+    return 3*source_bytes+sum(r['bytes']for r in documents+existing)
+
+def read_upper(first,planned,cas,prepaid):
+    assert all(type(n)is int and n>=0 for n in(first,planned,cas,prepaid))
+    return 2*first+2*planned+2*cas+prepaid
+
+def cohort(L,r,packet):
+    h=doc(L,r)
+    assert h['schema']=='ROOT_F009_GENERIC_PARENT_COHORT_V2'and h['root']=='/root'and h['Root_authority']is True
+    assert h['packet']==packet['self']and h['program']==packet['programs']['phase.py']
+    begin,end=h['begin'],h['end']
+    assert type(begin)is type(end)is int and 426<=begin<end<=940 and end-begin<=12
+    sizes=h['batch_counts']
+    assert 1<=len(sizes)<=4 and all(type(n)is int and 1<=n<=3 for n in sizes)
+    batches=[];cursor=begin
+    for number,n in enumerate(sizes):
+        batches.append(dict(batch=number,begin=cursor,end=cursor+n,source_indices=list(range(cursor,cursor+n))))
+        cursor+=n
+    assert cursor==end and h['batches']==batches and h['source_indices']==list(range(begin,end))and h['reviewed_prefix']==begin
+    assert Path(r['path']).parent==HERE/'cohorts'/('cohort_from%04d'%begin)
+    assert set(h['snapshot_aliases'])==set(h['progress_snapshot'])
+    for k,item in h['snapshot_aliases'].items():
+        original=h['progress_snapshot'][k]
+        assert(item['bytes'],item['sha256'])==(original['bytes'],original['sha256'])
+        raw(L,item)
+    return h
+
+def frozen(L,snapshot,prefix):
+    assert set(snapshot)=={'intake','controller','runtime'}
+    assert snapshot['intake']['path']==str(PROGRESS/'current_intake.json')and snapshot['controller']['path']==str(PROGRESS/'controllers/current.json')
+    body=raw(L,snapshot['intake']);ptr=doc(L,snapshot['controller']);raw(L,snapshot['runtime'])
+    assert ptr['checkpoint']==view(body,['active_controller_checkpoint'])['active_controller_checkpoint']==snapshot['runtime']
+    f=view(fields(body)['F009'],['R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed','R5_current_roster','R5_canonical_total_parents','R5_whole_level_complete'])
+    assert type(f['R5_canonical_pairs_reviewed'])is int and f['R5_canonical_pairs_reviewed']==prefix and f['R5_prefix_strict_slots_reviewed']==156*prefix and f['R5_canonical_total_parents']==940 and f['R5_whole_level_complete']is False
+    return f
+
+class Context:
+    def __init__(self,op,args):
+        check();assert args.actor=='/root';self.op,self.args=op,args;self.L=Ledger()
+        self.packet_ref=cli_ref(args.packet);self.packet=doc(self.L,self.packet_ref)
+        assert self.packet['schema']=='F009_GENERIC_MIXED_PROFILE_METADATA_SOURCE_V2'and self.packet['Root_authority']is False and self.packet['author']==AUTHOR
+        self.packet['self']=self.packet_ref
+        self.manifest_ref=self.packet['entry_manifests'][op];m=doc(self.L,self.manifest_ref)
+        own=at(self.L,Path(sys.argv[0]).resolve())
+        assert m['entry']==own==self.packet['programs'][op]
+        for item in m['Source']:raw(self.L,item)
+        assert sum(r['bytes']for r in m['Source'])+512==m['Source_with_invocation_reserve']<=131072
+        assert m['source_namespace']==131072 and m['metadata_caps']==dict(read_bytes=64*2**20,paths=512,file_bytes=4*2**20,rss_bytes=256*2**20,seconds=125,new_bytes=16*2**20)
+        raw(self.L,self.packet['protocol']);raw(self.L,self.packet['read_accounting']);raw(self.L,CORE_MANIFEST)
+        self.request_ref=cli_ref(args.request);self.gate_ref=cli_ref(args.Root_gate)
+        self.q=doc(self.L,self.request_ref);self.g=doc(self.L,self.gate_ref)
+        assert self.q['schema']=='F009_GENERIC_METADATA_REQUEST_V2'and self.q['Root_authority']is False and self.q['op']==op
+        assert self.g['schema']=='ROOT_F009_GENERIC_METADATA_GATE_V2'and self.g['root']=='/root'and self.g['Root_authority']is self.g['adopted']is True
+        assert self.g['op']==op and self.g['packet']==self.packet_ref and self.g['program']==own and self.g['Source_manifest']==self.manifest_ref and self.g['request']==self.request_ref
+        for flag in('whole_new_Source_protocol_and_original_subjects_owned','all_active_inputs_and_borrowed_premises_owned','no_successful_science_replayed','sole_role_and_canonical_write_scope_owned'):
+            assert self.g[flag]is True
+        self.budget_ref=self.q['bounded_resource_budget']
+        assert self.g['bounded_resource_budget']==self.budget_ref
+        self.budget=doc(self.L,self.budget_ref);self.peer_ref=self.budget['Source_peer'];self.peer=doc(self.L,self.peer_ref)
+        assert self.g['Source_peer']==self.peer_ref and self.peer['reviewer']not in('/root','/root/readback_review',AUTHOR)
+        assert self.peer['packet']==self.packet_ref and self.peer['programs']==self.packet['programs']and self.peer['entry_manifests']==self.packet['entry_manifests']
+        assert self.peer['metadata_transition_entries'][op]==dict(program=own,manifest=self.manifest_ref)
+        controls=doc(self.L,self.budget['admission_controls'])
+        P['validate_evidence'](self.budget,self.peer,controls,PROFILE_REF,POLICY_REF)
+        assert self.budget['role_kind']=='metadata'and self.budget['role']==op and self.budget['role_manifest']==self.manifest_ref and self.budget['role_source']==own
+        if op!='controls.py':
+            mc=doc(self.L,self.g['metadata_controls'])
+            assert mc['status']=='SUPPORTED_ACTUAL_F009_GENERIC_METADATA_CONTROLS'and mc['blockers']==[]and mc['Source_peer']==self.peer_ref and mc['packet']==self.packet_ref and mc['Original_inputs_loaded']is False
+            assert mc['reviewer']not in('/root','/root/readback_review',AUTHOR)
+            assert mc['Source_manifest']==self.packet['entry_manifests']['controls.py']
+        else:
+            assert self.g['metadata_controls']is None and self.g['synthetic_metadata_only_owned']is True
+        started=doc(self.L,at(self.L,Path(args.guard)/'started.json'))
+        self.launch_ref=started['bounded_output_profile']['launch'];launch=doc(self.L,self.launch_ref)
+        self.bootstrap_read_upper=read_prepaid(m['Source_with_invocation_reserve'],
+            [self.budget_ref,self.launch_ref,self.peer_ref,self.budget['admission_controls'],self.manifest_ref],self.budget['inventory'])
+        self.L.read_limit=64*2**20-self.bootstrap_read_upper
+        assert 2*self.L.bytes<=self.L.read_limit
+        command=[PYTHON,'-E','-B','-S',str(Path(sys.argv[0]).resolve())]+sys.argv[1:]
+        P['validate_launch'](launch,self.budget,self.budget_ref,command,'/Users/sasha/medusa',args.guard,PROFILE_REF,POLICY_REF)
+        assert started['command']==command and started['limits']==P['expected_limits'](False)
+        assert started['bounded_output_profile']==P['marker'](self.budget,self.budget_ref,self.launch_ref)and any(i['pid']==os.getpid()for i in started['identities'])
+        self.out=Path(args.out)
+        assert self.out.is_absolute()and self.out.resolve(strict=True)==self.out
+        assert not self.out.is_relative_to(PROGRESS)and not self.out.is_relative_to(Path(args.guard))
+        self.planned=[];self.Source_manifest=m
+    def put(self,path,body):
+        assert type(body)is bytes and len(body)<=4*2**20
+        path=Path(path);assert path.is_absolute()and not os.path.lexists(path)
+        row=next(r for r in self.budget['inventory']if r['path']==str(path))
+        assert row['component']in('primary','images')and path not in[Path(r[1])for r in self.planned]
+        self.planned.append((row['component'],str(path),body))
+        return ref(path,body)
+    def emit(self,result,canonical_replacements=None):
+        assert sum(len(r[2])for r in self.planned)<=16*2**20 and len(self.planned)<=64
+        replacements=canonical_replacements or []
+        canonical_rows=[]
+        if replacements:
+            assert self.op=='register.py'and self.g['canonical_writes_authorized']is True
+            canonical_rows=P['validate_metadata_cas'](self.budget,self.peer,replacements)
+        else:
+            assert self.g['canonical_writes_authorized']is False
+        existing={p:(component,body)for component,p,body in self.planned}
+        for component,path,body in canonical_rows:
+            if path in existing:assert existing[path]==(component,body)
+        combined=self.planned+[r for r in canonical_rows if r[1]not in existing]
+        P['preflight_writes'](self.budget,combined)
+        first=self.L.bytes
+        cas_bytes=sum(len(v['new_body_bytes'])+v['old_ref']['bytes']for v in replacements)
+        total_read_upper=read_upper(first,sum(len(v[2])for v in self.planned),cas_bytes,self.bootstrap_read_upper)
+        assert total_read_upper<=64*2**20 and len(self.L.pins)+len(self.planned)+8<=512
+        self.L.close();check();refs=P['write_files'](self.budget,self.planned)
+        if replacements:
+            # Canonical targets are not passed to write_files. Both target and
+            # staging contents were prepaid by validate_metadata_cas above.
+            def sync(path):
+                fd=os.open(path,os.O_RDONLY)
+                try:os.fsync(fd)
+                finally:os.close(fd)
+            apply_cas(replacements,{r['path']:self.L.pins[r['path']][0]for r in replacements},
+                P['whole'],lambda path:Path(path).read_bytes(),os.replace,sync,lambda path:Path(path).read_bytes())
+            temporary={item['staged_path']for item in replacements}
+            refs=[r for r in refs if r['path']not in temporary]
+            result['canonical_replacements']=[dict(path=item['path'],old_ref=item['old_ref'],after=ref(item['path'],item['new_body_bytes']))for item in replacements]
+        assert self.L.bytes==2*first
+        result.update(outputs=refs,Source_manifest=self.manifest_ref,packet=self.packet_ref,Root_gate=self.gate_ref,request=self.request_ref,Source_peer=self.peer_ref,resource_budget=self.budget_ref,launch=self.launch_ref,scientific_calls=0,canonical_writes=len(replacements),first_closing_input_bytes=self.L.bytes,bootstrap_outer_read_upper=self.bootstrap_read_upper,total_project_read_upper=total_read_upper,Source_bytes=self.Source_manifest['Source_with_invocation_reserve'])
+        signal.alarm(0);print(json.dumps(result))
+        return refs
+
+def arguments():
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--actor',required=True)
+    for name in('packet','request','Root-gate'):p.add_argument('--'+name,nargs=3,required=True)
+    p.add_argument('--guard',required=True);p.add_argument('--out',required=True)
+    return p.parse_args()

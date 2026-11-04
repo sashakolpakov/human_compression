@@ -1,0 +1,124 @@
+"""Default-False metadata issuance only; no audit/scientific command is called.
+
+Root must read/own this complete body and make a fresh explicitly activated
+copy. The original requests, actual SDKs, API keys and Source subjects remain
+unchanged. A single exact SDK-byte alias satisfies the inherited basename ABI.
+"""
+import argparse,hashlib,json,os,resource,signal,sys,time
+from pathlib import Path
+ROOT_AUTHORITY=True
+INPUTS={'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/data/cohort0426_batch00_audit/preparation_inputs.json','bytes':17838,'sha256':'2d509d8cea8933a32f9750de3d433ace0dc283fd8cb079df2f1062be0e83fa8a'}
+START=time.monotonic();LIMIT=64*2**20;pins={};read_bytes=0
+
+def check():
+    if time.monotonic()-START>=115:raise TimeoutError('bounded metadata preparation')
+    if resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)>=256*2**20:raise MemoryError('metadata RSS')
+
+def signature(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def read(r):
+    global read_bytes
+    p=Path(r['path']);assert p.is_absolute()and p.resolve(strict=True)==p
+    assert type(r['bytes'])is int and 0<=r['bytes']<=4*2**20
+    if str(p)in pins:
+        body,old=pins[str(p)];assert signature(p.stat())==old
+    else:
+        assert 2*(read_bytes+r['bytes'])+65536<=LIMIT and len(pins)<480
+        with p.open('rb')as f:
+            a=os.fstat(f.fileno());assert a.st_size==r['bytes'];body=f.read(r['bytes']+1);b=os.fstat(f.fileno())
+        assert len(body)==r['bytes']and signature(a)==signature(b)==signature(p.stat())
+        pins[str(p)]=(body,signature(b));read_bytes+=len(body)
+    assert hashlib.sha256(body).hexdigest()==r['sha256'];check();return body
+
+def doc(r):return json.loads(read(r)) # Known metadata-only documents, never a pair/certificate/model.
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def trip(r):return[r['path'],str(r['bytes']),r['sha256']]
+def closing():
+    global read_bytes
+    for name,(body,old)in list(pins.items()):
+        with Path(name).open('rb')as f:
+            a=os.fstat(f.fileno());assert signature(a)==old and a.st_size==len(body)
+            after=f.read(len(body)+1);b=os.fstat(f.fileno())
+        assert after==body and signature(a)==signature(b)==signature(Path(name).stat())==old
+        read_bytes+=len(body)
+    check()
+
+def main():
+    global read_bytes
+    if not ROOT_AUTHORITY:raise PermissionError('UNISSUED: Root must activate a fresh owned copy')
+    if sys.flags.optimize:raise RuntimeError('no optimized execution')
+    assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True);ap.add_argument('--issue',required=True,action='store_true')
+    a=ap.parse_args();assert a.actor=='/root'and a.issue
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s metadata')));signal.alarm(125)
+    own=Path(__file__).resolve();own_size=own.stat().st_size;assert own_size<=32768
+    with own.open('rb')as stream:own_body=stream.read(own_size+1)
+    assert len(own_body)==own_size
+    own_ref=ref(own,own_body);read(own_ref)
+    loader_prepaid=2*len(own_body)+512 # interpreter plus this initial identity read
+    h=doc(INPUTS);assert h['Root_authority']is False and h['batch']==0 and h['source_indices']==[426,427,428]
+    assert h['metadata_Core_budget_required']is False
+    invoice=doc(h['known_input_invoice'])
+    for r in invoice['inputs']:read(r) # Original-containing bodies remain opaque whole bytes.
+    cohort=doc(h['cohort']);assert cohort['begin']==426 and cohort['batches'][0]['source_indices']==h['source_indices']
+    peer=doc(h['Source_peer']);controls=doc(h['metadata_controls'])
+    assert peer['status']=='SUPPORTED_STATIC_F009_RESOURCE_BINDING_SUPPLEMENT'and peer['blockers']==[]
+    assert peer['packet']==h['packet']and peer['program']==h['program']and peer['entry_manifests']['audit_batch.py']==h['Source_manifest']
+    assert controls['status']=='SUPPORTED_ACTUAL_F009_RESOURCE_BINDING_CONTROLS'and controls['blockers']==[]
+    assert controls['packet']==h['packet']and controls['Source_peer']==h['Source_peer']and type(controls['count'])is int and controls['count']==40
+    assert controls['Original_inputs_loaded']is False
+    q=doc(h['request_FALSE']);g=doc(h['Root_gate_FALSE'])
+    assert q['Root_authority']is False and q['op']=='audit_batch.py'and q['cohort']==h['cohort']and q['batch']==0
+    assert set(q['phase_executions']['0'])=={'prepare_suppliers','assemble_strict','close_pairing'}
+    planned=[]
+    def plan(path,body):
+        if type(body)is not bytes:body=can(body)
+        assert len(body)<=4*2**20;planned.append((Path(path),body));return ref(path,body)
+    for item in h['phase_SDK_aliases']:
+        body=read(item['original']);assert ref(item['alias']['path'],body)==item['alias']
+        plan(item['alias']['path'],body)
+    for name,origin in h['origins'].items():
+        ex=q['phase_executions']['0'][name]
+        assert ex['edition']==1 and ex['prior_non_success_attempts']==[] and ex['Source_subject']==origin['Source_subject']
+        subject=ex['Source_subject'];oldgate=doc(origin['Root_gate'])
+        assert subject['packet']==oldgate['packet']and subject['program']==oldgate['program']
+        assert subject['Source_manifest']==oldgate['Source_manifest']and subject['Source_peer']==oldgate['Source_peer']
+    targets=h['runtime_paths'];qr=plan(targets['request'],q)
+    assert g['Root_authority']is g['adopted']is False and g['op']=='audit_batch.py'
+    g['request']=qr
+    for key in('Root_authority','adopted','whole_supplement_and_borrowed_Source_owned','all_original_meanings_and_new_binding_scope_owned','no_successful_science_replayed','serial_sole_writer_scope_owned'):
+        assert g[key]is False;g[key]=ROOT_AUTHORITY
+    assert g['canonical_writes_authorized']is False
+    gr=plan(targets['Root_gate'],g)
+    argv=['/usr/bin/env']
+    for key in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'):argv+=['-u',key]
+    argv+=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',h['program']['path'],'--actor','/root','--op','audit_batch.py','--packet',*trip(h['packet']),'--request',*trip(qr),'--Root-gate',*trip(gr),'--out',targets['out']]
+    receipt=dict(schema='ROOT_F009_BATCH00_AUDIT_INPUT_ISSUANCE_V1',root='/root',Root_authority=ROOT_AUTHORITY,inputs=INPUTS,issuer_Source=own_ref,
+      request=qr,Root_gate=gr,audit_argv=argv,phase_SDK_aliases=h['phase_SDK_aliases'],Source_subjects={k:v['Source_subject']for k,v in h['origins'].items()},
+      scientific_calls=0,audit_called=False,canonical_writes=0,external_resource_guard_claimed=False,
+      inventory=h['metadata_issuance_inventory'],input_first_bytes=read_bytes,loader_prepaid=loader_prepaid,
+      accounting='Before writes: reserve full closing reads, every output readback and32768 receipt allowance;64MiB total.')
+    rr=plan(targets['receipt'],receipt)
+    inv=h['metadata_issuance_inventory'];assert len(planned)==len(inv)==4 and len({str(p)for p,_ in planned})==4
+    for path,body in planned:
+        assert path.is_absolute()and not os.path.lexists(path)
+        assert len(body)<=next(v['maximum_bytes']for v in inv if v['path']==str(path))
+    assert not os.path.lexists(targets['leaf'])
+    out=Path(targets['out']);assert not out.exists()or(out.is_dir()and not any(out.iterdir()))
+    write=sum(len(b)for _,b in planned)
+    upper=2*read_bytes+write+loader_prepaid+32768
+    assert upper<=LIMIT and write<=16*2**20 and len(pins)+3*len(planned)+32<=512
+    closing()
+    for path,body in planned:
+        path.parent.mkdir(parents=True,exist_ok=True)
+        with path.open('xb')as f:assert f.write(body)==len(body)
+        with path.open('rb')as f:after=f.read(len(body)+1)
+        assert after==body
+        read_bytes+=len(after)
+    out.mkdir(parents=True,exist_ok=True)
+    assert read_bytes+loader_prepaid<=upper
+    signal.alarm(0)
+    print(json.dumps(dict(status='ROOT_ISSUED_METADATA_ONLY',receipt=rr,outputs=[ref(p,b)for p,b in planned],audit_argv=argv,
+      read_bytes=read_bytes,loader_prepaid=loader_prepaid,read_upper=upper,written_bytes=write,scientific_calls=0,audit_called=False,canonical_writes=0)))
+
+if __name__=='__main__':main()

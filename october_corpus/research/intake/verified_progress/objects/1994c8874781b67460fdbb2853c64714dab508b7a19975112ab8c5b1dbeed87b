@@ -1,0 +1,71 @@
+"""Fresh cyclic rows and finite genuine quartet-word proposals; no case payment."""
+import retained_math as M
+import runtime as R
+import linear as L
+import original_context
+from words import candidate_words
+
+
+class Stop(Exception):
+    pass
+
+
+def soft(budget):
+    budget.tick()
+    if budget.peak >= 112*2**20 or M.time.monotonic()-M.START >= 105 or budget.products >= 390000:
+        raise Stop('resource frontier; interrupted case remains unvisited')
+
+
+def main():
+    b, mf, mr, plan, pr, gate, gr = R.start('SEARCH', __file__)
+    ctx, positions = R.scoped(plan, gate, b)
+    work = L.ScalarWork(b.tick)
+    records, positive, misses, no_span = [], [], [], []
+    stopped = None
+    try:
+        for p in positions:
+            soft(b)
+            orbit = ctx['orbits'][p-1]
+            record = dict(original_orbit_position=p, representative_J_index=orbit[0],
+                          original_orbit_row_sha256=M.digest(orbit))
+            marks = R.marks(p, record, ctx, b)
+            proposed = L.acquire(ctx['seed'], marks, b, work)
+            record.update(cyclic=proposed['certificate'], prime37=None, attempts=0, pool_size=0)
+            if proposed['certificate'] is None:
+                record['outcome'] = 'CYCLIC_ACQUISITION_INCONCLUSIVE'
+            else:
+                L.projector(ctx['seed'], marks, ctx['form'], ctx['domain']['delta'], b, work)
+                work.charge(1274)
+                M.direct_fact(record['cyclic'], ctx, marks, b)
+                pool = candidate_words(record['cyclic'])
+                record['pool_size'] = len(pool)
+                record['outcome'] = 'FINITE_WORD_MISS_NO_DISPOSITION'
+                for word in pool:
+                    soft(b)
+                    value = M.power(M.word_value(word, marks, b), 6, b)
+                    record['attempts'] += 1
+                    if value != M.I7 and M.power(value, 37, b) == M.I7:
+                        record['prime37'] = dict(base_word=word, cofactor=6, prime=37,
+                                                 value=[list(row) for row in value])
+                        record['outcome'] = 'UNTRUSTED_GENERATION_PROPOSAL'
+                        break
+            records.append(record)
+            target = positive if record['prime37'] else (no_span if record['cyclic'] is None else misses)
+            target.append(p)
+    except Stop as error:
+        stopped = str(error)
+    visited = [r['original_orbit_position'] for r in records]
+    M.need(visited == positions[:len(visited)], 'completed-case prefix only')
+    result = dict(schema='Q11_GENERIC_QUARTET37_SEARCH_RESULT_V1',
+                  status='RESOURCE_FRONTIER' if stopped else 'FINITE_SELECTION_COMPLETED',
+                  program=mf['roles']['SEARCH']['program'], Source_manifest=mr, plan=pr, Root_gate=gr,
+                  selector=plan['selector'], original_job=plan['original_job'],
+                  original_domain_whole_pins=ctx['refs'], records=records, target_positions=positions,
+                  visited_positions=visited, proposed_GEN_positions=positive, finite_word_misses=misses,
+                  cyclic_inconclusive=no_span, unvisited_positions=positions[len(visited):], stop=stopped,
+                  new_linear_scalar_units=work.used, paid_credit=0, IP_claim=False)
+    R.finish(result, plan, b)
+
+
+if __name__ == '__main__':
+    main()

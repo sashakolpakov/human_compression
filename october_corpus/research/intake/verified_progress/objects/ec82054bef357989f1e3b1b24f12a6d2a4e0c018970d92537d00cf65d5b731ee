@@ -1,0 +1,125 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');G=M/'f009_bounded_io_transition';K=M/'resource_profiles/bounded_output';C=G/'cohorts/cohort_from0426';A=G/'actual/cohort0426_batch00_prepare_suppliers';S=Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0426/parents0426_0428');RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+ global READ
+ p=Path(p);key=str(p)
+ if key in RAW:need(r is None or PINS[key]==r,'one exact edition');return RAW[key]
+ before=p.lstat();need(before.st_size<=4*2**20 and READ+before.st_size<=16*2**20 and len(RAW)<160,'bounded metadata reader');b=p.read_bytes();after=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns);need(sig(before)==sig(after)and len(b)==before.st_size,'whole stable bytes');rr=ref(p,b);need(r is None or rr==r,'exact input pin');RAW[key]=b;PINS[key]=rr;READ+=len(b);return b
+
+def pin(p):read(p);return PINS[str(p)]
+def exact(r):return read(r['path'],r)
+def doc(p,r=None):return dec(read(p,r))
+def pick(b,keys):o=obj(b);return{k:dec(o[k])for k in keys}
+def can(j):return(json.dumps(j,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def triple(a,k):i=a.index(k);return dict(path=a[i+1],bytes=int(a[i+2]),sha256=a[i+3])
+def api(sdkpath,rawdir):
+ sdk=doc(sdkpath);i=doc(rawdir/'issued.json');frames=sdk['all_genuine_api_frames'];a=sdk['issued_argv'];t=sdk['actual_tool']
+ need(sdk['root']==sdk['actor']==i['root']=='/root'and a==i['argv']==sdk['child_argv'],'Root argv');need(i['tool_arguments']==sdk['issued_tool_arguments']and i['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==a,'whole raw kwargs')
+ need(len(frames)==1 and doc(rawdir/'frame_0000.json')==frames[0]==sdk['full_initial_tool_return']==sdk['full_tool_return']and t['synchronous']is True and t['handle']is None and t['exit_code']==frames[0]['exit_code']and t['initial_chunk']==t['terminal_chunk']==frames[0]['chunk_id'],'genuine synchronous exact frame')
+ return sdk,frames[0]
+
+
+BASE=M/'f004_proper_subspaces';HERE=BASE/'actual/controls37/actual_review';ACT=BASE/'actual/controls37';GUARD=Path('/private/tmp/q11_proper_subspaces/controls_guard')
+mf=doc(BASE/'Source_manifest.json');mr=pin(BASE/'Source_manifest.json');peerref=pin(BASE/'source_review/reuse_integer_only.json');peer=dec(exact(peerref));plan=doc(ACT/'plan.json');pr=pin(ACT/'plan.json');gate=doc(ACT/'Root_gate.json');gr=pin(ACT/'Root_gate.json');ownership=doc(ACT/'Root_Source_ownership.json')
+need(mr['sha256'].startswith('5b4ab5dc')and peerref['sha256'].startswith('726bf8da')and peer['status']=='SUPPORTED_STATIC_Q11_PROPER_SUBSPACE_SOURCE'and peer['blockers']==[]and peer['Source_manifest']==mr,'exact new independent Source subject')
+program=mf['roles']['CONTROLS']['program'];need(program['sha256']=='958e754c24786567179c1972087264783655de5a22c735c8f8075ee546d5e089'and plan['program']==gate['program']==program and plan['Source_manifest']==gate['Source_manifest']==mr,'exact control program/plan/gate')
+need(gate['schema']=='ROOT_AUTHORIZED_Q11_PROPER_SUBSPACE_V1'and gate['root']=='/root'and gate['Root_authority']is gate['issued']is gate['synthetic_only']is gate['whole_Source_and_protocol_owned']is True and gate['Original_calls_authorized']is False and gate['admission_controls']is None and gate['Source_peer']==peerref and gate['plan']==pr,'Root synthetic-only fresh37 authority')
+for name in ['controls37_authorities_v1','controls37_wrapper_correction_v1']:
+ sdk,fr=api(BASE/'Root_SDK'/(name+'.json'),BASE/'api'/('Root_f004_proper_subspace_'+name));need(fr['exit_code']==0,'genuine Root issuance/correction '+name)
+old,ofr=api(BASE/'Root_SDK/controls37_v1.json',BASE/'api/Root_f004_proper_subspace_controls37_v1');need(ofr['exit_code']==2 and '--rss-cap-mib'in ofr['output']and '--timeout'in ofr['output']and 'required'in ofr['output'],'genuine old wrapper argparse failure before child')
+sdk,frame=api(BASE/'Root_SDK/controls37_v2.json',BASE/'api/Root_f004_proper_subspace_controls37_v2');sdkref=pin(BASE/'Root_SDK/controls37_v2.json');need(sdkref['sha256']=='6d4413f73c1675a82a426bb8029997af99f8c82e6d5a09f3a3f0c8c68e94afee'and frame['exit_code']==0,'genuine first worker execution v2')
+a=sdk['issued_argv'];need(a[:15]==['/usr/bin/env','-u','COVERAGE_PROCESS_START','-u','COVERAGE_PROCESS_CONFIG','-u','PYTHONSTARTUP','-u','OPENSSL_CONF','-u','OPENSSL_MODULES','/Users/sasha/.venvs/global/bin/python','-E','-B',mf['guards'][0]['path']],'exact old guard and five unset names')
+need(a[a.index('--volume')+1]=='/Users/sasha/medusa'and a[a.index('--output')+1]==str(GUARD)and a[a.index('--rss-cap-mib')+1]=='128'and a[a.index('--timeout')+1]=='125','unchanged old matrix resource args')
+child=a[a.index('--')+1:];need(child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',program['path']],'ordinary exact reviewed control entry')
+for key,r in [('--manifest',mr),('--plan',pr),('--gate',gr)]:need(triple(child,key)==r,'actual control descriptor '+key)
+correction=doc(ACT/'Root_wrapper_correction.json');need(correction['Root_authority']is True and correction['root']=='/root'and correction['failed_pre_child_SDK']==pin(BASE/'Root_SDK/controls37_v1.json')and correction['issued_argv']==a and correction['child_or_numerical_controls_previously_executed']is False,'exact owned wrapper correction history')
+fixed=list(old['issued_argv']);i=fixed.index('--');fixed[i:i]=['--rss-cap-mib','128','--timeout','125'];need(fixed==a,'only missing required wrapper flags changed')
+need(dec(frame['output'])==dict(status='PASS',stop='RETURNED',receipt=str(GUARD/'receipt.json')),'genuine guard terminal')
+st=doc(GUARD/'started.json');rc=doc(GUARD/'receipt.json');stdout=read(GUARD/'stdout.log');stderr=read(GUARD/'stderr.log')
+limits=dict(admit_disk=10737418240,admit_ram=3892314112,disk_floor=8589934592,ram_floor=3221225472,total_rss=134217728,wall_seconds=125.,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+need(st['limits']==rc['limits']==limits and st['command']==rc['command']==child and st['admission']==rc['admission'],'exact unchanged old guard limits/command/admission')
+need(len(st['identities'])==len(rc['identities'])==1 and all(st['identities'][0][k]==rc['identities'][0][k]for k in('pid','birth','initial_parent','group','session'))and st['identities'][0]['pid']==st['identities'][0]['group']==st['identities'][0]['session'],'single birth-pinned process')
+need(rc['status']=='PASS'and rc['stop']=='RETURNED'and rc['returncode']==0 and rc['error']is None and rc['cleanup']['remaining']==rc['cleanup']['errors']==[]and stderr==b''and rc['logs']==dict(stdout=len(stdout),stderr=0),'successful cleanup/complete logs')
+need(rc['seconds']<125 and rc['peaks']['total_rss']<134217728 and rc['admission']['free_disk']>=10737418240 and rc['peaks']['min_free_disk']>=8589934592 and rc['admission']['available_ram']>=3892314112 and rc['peaks']['min_available_ram']>=3221225472,'sampled exact old resource envelope')
+returned=dec(stdout);rr=returned['output'];result=dec(exact(rr));need(rr['bytes']==2101 and rr['sha256']=='7029d2a3513e68a26777ac58360a80e47ea29f258721c7e51e66b1f892d62883'and result['schema']=='Q11_PROPER_SUBSPACE_CONTROLS_RESULT_V1'and result['status']=='ALL_SYNTHETIC_CONTROLS_PASS','whole exact new37 report')
+need(result['Source_manifest']==mr and result['program']==program and result['plan']==pr and result['Root_gate']==gr and result['Original_inputs_loaded']is False and result['old_arithmetic_controls_replayed']is False and result['paid_credit']==0,'new synthetic-only exact subject')
+expected=['dynamic_typed_unpaid_scope','wrong_job','bool_job','paid_position','duplicate_position','bool_position','empty_selection','overlapping_partition','wrong_unpaid_digest','missing_known_G_membership_ownership','unissued_Root_scope','untrusted_proper_proposal','rectangular_inverse_shape','supplied_equations_accept','no_GEN_or_IP_claim','unreduced_actual_rows','full_span_is_inconclusive','no_mover_is_inconclusive','rank_one_rectangular_inverse','zero_seed','wrong_rectangular_inverse','wrong_actual_parent_edge','wrong_actual_seed','invariance_failure','supplied_mover_really_fixes_span','bool_mover','bool_basis_row','rank_seven_refused','GEN_claim_refused','IP_claim_refused','nongeneration_claim_required','bool_inverse_entry','incomplete_inverse','non_earlier_parent','scalar_stop_before_operation','ninth_case_refused','no_partial_scalar_charge']
+need(result['controls']==expected and type(result['controls_count'])is int and result['controls_count']==len(set(expected))==37,'all37 exact unique reviewed designs')
+need(result['new_linear_scalar_units']==23243<=200000 and result['resources']['matrix_products']==93 and result['resources']['row_images']==84 and result['resources']['seconds']<125 and result['resources']['peak_self_RSS_bytes']<134217728,'bounded actual new toy-operation counters')
+inputs={r['path']:r for r in plan['inputs']};need(len(inputs)==len(plan['inputs']),'once-only input closure')
+for r in [mr,pr,gr,peerref]+mf['roles']['CONTROLS']['loaded_sources']+mf['guards']:inputs[r['path']]=r
+need(set(inputs)=={r['path']for r in plan['inputs']}|set(plan['bootstrap_paths']),'whole runtime closure')
+for r in inputs.values():exact(r)
+for r in mf['roles']['CONTROLS']['loaded_sources']+mf['guards']:need(r['path']in inputs,'complete actual Source/guard input union');exact(r)
+need(sum(r['bytes']for r in mf['roles']['CONTROLS']['loaded_sources']+mf['guards'])+512==55385,'truthful whole Source namespace')
+D=sum(r['bytes']for r in inputs.values());loader=mf['roles']['CONTROLS']['loader_read_prepaid_upper'];need(len(inputs)==18 and D==123662 and loader==92107 and 2*D+loader==339431==result['resources']['read_units_with_prepaid_loaders'],'independent exact complete first/closing/loader charge')
+need(ownership['plan']==pr and ownership['Root_gate']==gr and ownership['Source_manifest']==mr and ownership['Source_peer']==peerref and ownership['whole_loaded_Source_and_unchanged_guards_owned']is ownership['whole_argument_and_protocol_owned']is ownership['all_literal_origins_checked']is True and ownership['Original_calls_authorized']is False,'genuine Root whole Source ownership')
+for path,b in list(RAW.items()):need(Path(path).read_bytes()==b,'closing whole finite metadata evidence')
+def save(name,value):
+ raw=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();p=HERE/name
+ with p.open('xb')as f:f.write(raw)
+ return ref(p,raw)
+evidence=save('evidence.json',dict(schema='Q11_PROPER_SUBSPACE_FRESH37_ACTUAL_EVIDENCE_V1',reviewer='/root/mathematical_review',Root_authority=False,inputs=list(PINS.values()),runtime_inputs=list(inputs.values()),review_read_bytes=2*READ,result=rr,actual_SDK=sdkref,Original_values_decoded=False,represented_functions_executed=False))
+leaf=dict(schema='Q11_PROPER_SUBSPACE_CONTROLS_ACTUAL_INDEPENDENT_REUSE_V1',status='SUPPORTED_ACTUAL_Q11_PROPER_SUBSPACE_CONTROLS',reviewer='/root/mathematical_review',Root_authority=False,blockers=[],Source_manifest=mr,program=program,Source_peer=peerref,plan=pr,Root_gate=gr,actual_SDK=sdkref,authority_actual_SDK=pin(BASE/'Root_SDK/controls37_authorities_v1.json'),prior_prechild_SDK=pin(BASE/'Root_SDK/controls37_v1.json'),Root_wrapper_correction=pin(ACT/'Root_wrapper_correction.json'),wrapper_correction_actual_SDK=pin(BASE/'Root_SDK/controls37_wrapper_correction_v1.json'),result=rr,controls_count=37,controls=37,control_names=expected,Original_inputs_loaded=False,old_arithmetic_controls_replayed=False,actual_guard_and_raw_frames_verified=True,whole_Source_and_inputs_closed=True,new_linear_scalar_units=23243,matrix_products=93,row_images=84,Source_namespace_bytes=55385,runtime_input_paths=18,runtime_first_bytes=D,runtime_read_upper=339431,guard={k:pin(GUARD/k)for k in('started.json','receipt.json','stdout.log','stderr.log')},finite_evidence=evidence,scientific_or_control_replay_by_reviewer=False,canonical_writes=0,GEN_IP_case_census_manuscript_conjecture_Lean_or_compression_credit=0,qualifications=['v2 is the first actual control-worker execution. v1 stopped at the unchanged matrix-wrapper argparse requirement before guard/child because the two mandatory limit arguments were omitted. The preserved correction adds exactly128MiB/125s arguments; Source/plan/gate and limits are unchanged.','All37 fresh synthetic designs passed under exact MF5b4a/static726b, genuine Root SDK/raw/full argv, old5adf/5c7 guard, one same-birth child and complete output/cleanup/resource joins. Actual scalar23243/products93/row-images84 and339431 complete read units are metadata observations, not a replay by this reviewer.','The tests use toy F11 metadata/matrices only and exercise actual supplied subspace/invariance/mover/admission/budget helpers. No Original input was loaded and no old arithmetic/GEN/49 controls verdict was transferred. Full future Original Source/model/member/typed scope/retention/logical/case duties remain separate.','Reviewer authored the static peer and supplied abstract/control-boundary suggestions but authored no implementation/control design here and executed no represented function. No Original operand or numerical predicate was evaluated by the reviewer.','Guard peaks are sampled known-process observations, not kernel quotas or proof of absence of all detached processes. No proper Original subgroup, paid case, whole manuscript, census, conjecture, Lean or compression claim follows from this controls acceptance.'])
+print(json.dumps(save('reuse_integer_only.json',leaf),sort_keys=True));print(json.dumps(dict(evidence=evidence,paths=len(PINS),review_read_bytes=2*READ)))

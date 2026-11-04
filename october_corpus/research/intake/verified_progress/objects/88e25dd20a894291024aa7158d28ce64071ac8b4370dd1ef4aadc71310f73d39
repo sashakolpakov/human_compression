@@ -1,0 +1,79 @@
+"""Supplied equations only: no acquisition, reduction or candidate search calls."""
+import retained_math as M
+import runtime as R
+import linear as L
+import original_context
+
+
+def main():
+    b, mf, mr, plan, pr, gate, gr = R.start('DIRECT', __file__)
+    ctx, positions = R.scoped(plan, gate, b)
+    source = b.doc(plan['search_result'])
+    M.need(source['schema'] == 'Q11_GENERIC_QUARTET37_SEARCH_RESULT_V1'
+           and source['Source_manifest'] == mr and source['program'] == mf['roles']['SEARCH']['program']
+           and source['plan'] == plan['search_plan'] and source['Root_gate'] == plan['search_gate']
+           and source['selector'] == plan['selector'] and source['original_job'] == plan['original_job']
+           and source['original_domain_whole_pins'] == ctx['refs'] and source['target_positions'] == positions
+           and source['paid_credit'] == 0 and type(source['paid_credit']) is int
+           and source['IP_claim'] is False, 'same untrusted Source/plan/domain/current scope')
+    old_plan, old_gate = b.doc(plan['search_plan']), b.doc(plan['search_gate'])
+    M.need(old_plan['program'] == mf['roles']['SEARCH']['program'] and old_plan['selector'] == plan['selector']
+           and old_plan['selected_orbit_positions'] == positions and old_gate['plan'] == plan['search_plan']
+           and old_gate['Source_manifest'] == mr and old_gate['Root_authority'] is old_gate['issued'] is True,
+           'exact whole producer data; never import producer or transfer its verdict')
+    records = source['records']
+    M.need(type(records) is list and len(records) <= len(positions), 'bounded supplied record count')
+    visited, verified, misses, no_span = [], [], [], []
+    work = L.ScalarWork(b.tick)
+    keys = {'original_orbit_position', 'representative_J_index', 'original_orbit_row_sha256',
+            'cyclic', 'prime37', 'attempts', 'pool_size', 'outcome'}
+    for record in records:
+        M.need(type(record) is dict and set(record) == keys, 'whole supplied record grammar')
+        p = record['original_orbit_position']
+        M.need(type(p) is int and p == positions[len(visited)]
+               and type(record['attempts']) is type(record['pool_size']) is int
+               and 0 <= record['attempts'] <= record['pool_size'] <= 128, 'typed exact visited prefix')
+        marks = R.marks(p, record, ctx, b)
+        fact = record['cyclic']
+        if fact is None:
+            M.need(record['prime37'] is None and record['attempts'] == record['pool_size'] == 0
+                   and record['outcome'] == 'CYCLIC_ACQUISITION_INCONCLUSIVE', 'inconclusive only')
+            no_span.append(p)
+        else:
+            work.begin_case()
+            L.projector(ctx['seed'], marks, ctx['form'], ctx['domain']['delta'], b, work)
+            work.charge(1274)
+            M.direct_fact(fact, ctx, marks, b)
+            word = record['prime37']
+            if word is None:
+                M.need(record['outcome'] == 'FINITE_WORD_MISS_NO_DISPOSITION'
+                       and 1 <= record['attempts'] == record['pool_size'], 'finite miss gives no negative proof')
+                misses.append(p)
+            else:
+                M.need(type(word) is dict and set(word) == {'base_word', 'cofactor', 'prime', 'value'}
+                       and type(word['cofactor']) is type(word['prime']) is int
+                       and word['cofactor'] == 6 and word['prime'] == 37
+                       and record['outcome'] == 'UNTRUSTED_GENERATION_PROPOSAL' and record['attempts'] >= 1,
+                       'supplied genuine quartet word, never an algebra element')
+                value = M.power(M.word_value(word['base_word'], marks, b), 6, b)
+                M.need(value == M.matrix(word['value'], 7) and value != M.I7
+                       and M.power(value, 37, b) == M.I7, 'full same-quartet nonidentity and prime37 equation')
+                verified.append(p)
+        visited.append(p)
+    M.need(visited == source['visited_positions'] and verified == source['proposed_GEN_positions']
+           and misses == source['finite_word_misses'] and no_span == source['cyclic_inconclusive']
+           and source['unvisited_positions'] == positions[len(visited):]
+           and source['status'] in ('RESOURCE_FRONTIER', 'FINITE_SELECTION_COMPLETED')
+           and (source['status'] != 'FINITE_SELECTION_COMPLETED' or visited == positions),
+           'complete supplied positive/inconclusive/miss/unvisited partition')
+    result = dict(schema='Q11_GENERIC_QUARTET37_DIRECT_RESULT_V1', status='VERIFIED_SUPPLIED_EQUATIONS',
+                  program=mf['roles']['DIRECT']['program'], Source_manifest=mr, plan=pr, Root_gate=gr,
+                  original_job=plan['original_job'], selector=plan['selector'], search_result=plan['search_result'],
+                  verified_GEN_positions=verified, finite_word_misses=misses, cyclic_inconclusive=no_span,
+                  unvisited_positions=source['unvisited_positions'], new_linear_scalar_units=work.used,
+                  acquisition_or_RREF_or_candidate_search_calls=0, IP_claim=False, paid_credit=0)
+    R.finish(result, plan, b)
+
+
+if __name__ == '__main__':
+    main()

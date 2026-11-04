@@ -1,0 +1,118 @@
+"""NEW unrun bounded-output disk profile; old guard files remain unchanged.
+
+Only the declared thresholds and new metadata marker are different. The exact
+base owns the same project lock, process discovery, samples and cleanup.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import types
+
+HERE=Path(__file__).resolve(strict=True).parent
+POLICY_BYTES=22780
+POLICY_SHA='70440d963df62387cd1f2d202628249bbc9e0fc95078f0e2fe58f05a2924edee'
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_transient.py')
+BASE_BYTES=18361
+BASE_SHA='5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42'
+
+
+def need(ok,why):
+    if not ok:raise ValueError(why)
+
+
+def load_policy():
+    path=HERE/'resource_policy.py';raw=path.read_bytes()
+    need(len(raw)==POLICY_BYTES and hashlib.sha256(raw).hexdigest()==POLICY_SHA,'whole fixed new policy Source')
+    namespace={'__file__':str(path),'__name__':'bounded_output_resource_policy'}
+    exec(compile(raw,str(path),'exec'),namespace)
+    return namespace
+
+
+def base_source():
+    raw=BASE.read_bytes()
+    need(len(raw)==BASE_BYTES and hashlib.sha256(raw).hexdigest()==BASE_SHA,'unchanged acquired base guard Source')
+    return raw
+
+
+def configure(scope,budget,budget_ref,launch_ref,P):
+    """Apply the new metadata/profile contract, never rewrite the base file."""
+    gib=2**30
+    expected=dict(ADMIT_DISK=10*gib,ADMIT_RAM=6*gib,DISK_FLOOR=8*gib,RAM_FLOOR=3*gib,
+                  LOG_CAP=262144,RECORD_CAP=131072,PID_CAP=128,POLL_SECONDS=.5,GRACE_SECONDS=3.0)
+    need({key:scope[key]for key in expected}==expected,'all exact old base protections before new profile')
+    entry=scope['main'];original_namespace=entry.__globals__
+    need(scope is original_namespace and entry.__code__.co_filename==str(BASE),'original shared base globals')
+    for value in list(scope.values()):
+        if isinstance(value,types.FunctionType)and value.__module__==scope['__name__']:
+            need(value.__globals__ is scope,'all borrowed base functions share original globals')
+    for value in vars(scope['Family']).values():
+        if isinstance(value,types.FunctionType):need(value.__globals__ is scope,'all borrowed process methods share original globals')
+    science=budget['role_kind']=='science';limits=P['expected_limits'](science)
+    scope['ADMIT_DISK']=limits['admit_disk'];scope['DISK_FLOOR']=limits['disk_floor']
+    # Four GiB is the EXISTING admitted F9 validation RAM requirement. No new
+    # RAM/RSS/time/PID/log/cleanup/sampling relaxation is introduced here.
+    scope['ADMIT_RAM']=limits['admit_ram']
+    old_writer=scope['write_record'];old_require=scope['require']
+    stamp=P['marker'](budget,budget_ref,launch_ref)
+    def record(path,value):
+        if Path(path).name in('started.json','receipt.json'):
+            value=dict(value);value['bounded_output_profile']=stamp
+        return old_writer(path,value)
+    scope['write_record']=record
+    def truthful_requirement(condition,message):
+        if message=='10 GiB disk / max(6 GiB, RSS cap + 3 GiB) RAM admission':
+            message='NEW bounded profile:2 GiB disk / max(4 GiB,RSS cap+3 GiB) RAM admission'
+        return old_require(condition,message)
+    scope['require']=truthful_requirement
+    return expected,old_writer,old_require,limits
+
+
+def main():
+    need(not sys.flags.optimize and sys.dont_write_bytecode,'ordinary Python with bytecode writes disabled')
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--budget',nargs=3,required=True);parser.add_argument('--launch',nargs=3,required=True)
+    parser.add_argument('--volume',required=True);parser.add_argument('--output',required=True)
+    parser.add_argument('--rss-cap-mib',type=int,required=True);parser.add_argument('--timeout',type=float,required=True)
+    parser.add_argument('command',nargs=argparse.REMAINDER);args=parser.parse_args()
+    command=args.command[1:]if args.command[:1]==['--']else args.command
+    P=load_policy()
+    ref=lambda values:dict(path=values[0],bytes=int(values[1]),sha256=values[2])
+    budget_ref,launch_ref=ref(args.budget),ref(args.launch)
+    budget=P['document'](budget_ref);launch=P['document'](launch_ref)
+    profile_ref=budget['profile_source'];policy_ref=budget['policy_source']
+    need(profile_ref['path']==str(Path(__file__).resolve(strict=True))
+         and policy_ref==dict(path=str(HERE/'resource_policy.py'),bytes=POLICY_BYTES,sha256=POLICY_SHA),
+         'actual complete profile/policy Source subjects')
+    P['whole'](profile_ref)
+    P['validate_launch'](launch,budget,budget_ref,command,args.volume,args.output,profile_ref,policy_ref)
+    peer=P['document'](budget['Source_peer'])
+    controls=None if budget['admission_controls']is None else P['document'](budget['admission_controls'])
+    P['validate_evidence'](budget,peer,controls,profile_ref,policy_ref)
+    manifest=P['document'](budget['role_manifest'])
+    if budget['role_kind']=='science':
+        P['validate_science_manifest'](budget,manifest)
+    P['preflight_targets'](budget)
+    limits=P['expected_limits'](budget['role_kind']=='science')
+    need(args.rss_cap_mib*2**20==limits['total_rss'] and args.timeout==limits['wall_seconds'],
+         'unchanged exact scientific or metadata RSS/time')
+    raw_base=base_source()
+    scope={'__name__':'bounded_output_unchanged_base','__file__':str(BASE)}
+    exec(compile(raw_base,str(BASE),'exec'),scope)
+    entry=scope['main']
+    old,old_writer,old_require,_=configure(scope,budget,budget_ref,launch_ref,P)
+    base_source()
+    old_argv=sys.argv
+    sys.argv=[str(BASE),'--volume',args.volume,'--output',args.output,'--rss-cap-mib',str(args.rss_cap_mib),
+              '--timeout',str(args.timeout),'--']+command
+    try:
+        result=entry()
+    finally:
+        for key,value in old.items():scope[key]=value
+        scope['write_record']=old_writer;scope['require']=old_require;sys.argv=old_argv
+    return result
+
+
+if __name__=='__main__':raise SystemExit(main())

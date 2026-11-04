@@ -1,0 +1,98 @@
+--- /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py
++++ /Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_metadata.py
+@@ -1,8 +1,10 @@
+-"""Prospective profile for separately admitted tasks of at most512MiB/150s.
++"""Prospective disk profile for the separately admitted PS metadata publisher.
+ 
+-Reuse the acquired supervisor's code and shared lock.  Only this invocation's
+-ADMIT_RAM value changes.  Existing files, profiles and released cases do not.
+-This Source is not execution authority and does not impose a kernel quota.
++This new subject uses 2 GiB disk admission and a 1 GiB sampled disk floor.
++The exact acquired supervisor still owns locking, process identities, RSS,
++sampling, logs and cleanup. Its Source and every older profile stay unchanged.
++This wrapper admits only the named metadata entry at 256 MiB and 125 seconds;
++it grants no mathematical or publication authority and imposes no kernel quota.
+ """
+ 
+ import argparse
+@@ -15,10 +17,13 @@
+ import sys
+ import types
+ 
+-AUTHOR = '/root'
++AUTHOR = '/root/forest_resume'
+ BASE_BYTES = 18361
+ BASE_SHA = '5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42'
+-PROFILE = 'VALIDATION_TASK_512_MIB_150_SECONDS_V1'
++PROFILE = 'PS_METADATA_256_MIB_125_SECONDS_DISK_2_1_GIB_V1'
++PYTHON = '/Users/sasha/.venvs/global/bin/python'
++ENTRY = ('/Users/sasha/medusa/research/leemans/maintenance/intake/'
++         'f004_proper_subspace_adoption/operations/publish.py')
+ 
+ 
+ def _require(ok, message):
+@@ -48,21 +53,22 @@
+     parser.add_argument('command', nargs=argparse.REMAINDER)
+     args = parser.parse_args()
+     command = args.command[1:] if args.command[:1] == ['--'] else args.command
+-    _require(1 <= args.rss_cap_mib <= 512, 'validation profile requires1..512MiB')
+-    _require(math.isfinite(args.timeout) and 0 < args.timeout <= 150,
+-             'validation profile requires a finite wall limit up to150seconds')
+-    _require(command and len(command) <= 128
+-             and sum(len(x.encode()) for x in command) <= 16384,
++    _require(args.rss_cap_mib == 256, 'metadata profile requires exactly256MiB')
++    _require(math.isfinite(args.timeout) and args.timeout == 125,
++             'metadata profile requires exactly125seconds')
++    _require(command[:5] == [PYTHON, '-E', '-B', '-S', ENTRY],
++             'literal ordinary EBS metadata entry; no code or module mode')
++    _require(len(command) <= 128 and sum(len(x.encode()) for x in command) <= 16384,
+              'bounded explicit command')
+     _require(args.volume.is_absolute() and args.output.is_absolute(), 'absolute profile paths')
+     _require(not sys.flags.optimize and sys.dont_write_bytecode,
+              'ordinary Python with bytecode writes disabled')
+     path = Path(__file__).resolve().with_name('supervise_transient.py')
+     _base(path)
+-    loaded = runpy.run_path(str(path), run_name='acquired_validation_profile_base')
++    loaded = runpy.run_path(str(path), run_name='acquired_metadata_profile_base')
+     entry = loaded['main']
+     scope = entry.__globals__
+-    _require(scope['__file__'] == str(path) and scope['__name__'] == 'acquired_validation_profile_base',
++    _require(scope['__file__'] == str(path) and scope['__name__'] == 'acquired_metadata_profile_base',
+              'original Source path and non-main namespace')
+     _require(scope['main'] is entry and entry.__code__.co_filename == str(path),
+              'acquired entry code')
+@@ -80,25 +86,28 @@
+             LOG_CAP=256*2**10, RECORD_CAP=128*2**10, PID_CAP=128,
+             POLL_SECONDS=.5, GRACE_SECONDS=3.0), 'acquired base profile')
+     _base(path)
+-    # runpy returns a shallow copy; mutate the entry function's real globals.
+-    # No source file, function, error message, sampling or cleanup code changes.
+-    previous, old_argv = scope['ADMIT_RAM'], sys.argv
++    # Only these invocation globals change. All borrowed functions stay literal.
++    keys = ('ADMIT_DISK', 'ADMIT_RAM', 'DISK_FLOOR')
++    previous, old_argv = tuple(scope[k] for k in keys), sys.argv
+     cap = args.rss_cap_mib * 2**20
+     required = max(4*gib, scope['RAM_FLOOR'] + cap + 512*2**20)
+     canonical = [str(path), '--volume', str(args.volume), '--output', str(args.output),
+                  '--rss-cap-mib', str(args.rss_cap_mib), '--timeout', str(args.timeout),
+                  '--', *command]
+-    scope['ADMIT_RAM'], sys.argv = required, canonical
++    scope['ADMIT_DISK'], scope['ADMIT_RAM'], scope['DISK_FLOOR'] = 2*gib, required, gib
++    sys.argv = canonical
+     try:
+         return entry()
+     except RuntimeError as exc:
+         if str(exc) == '10 GiB disk / max(6 GiB, RSS cap + 3 GiB) RAM admission':
+             raise RuntimeError(
+-                f'{PROFILE}:10GiB disk and {required} available RAM bytes required; '
++                f'{PROFILE}:2GiB disk and {required} available RAM bytes required; '
+                 'the acquired base refused before creating its output or child') from exc
+         raise
+     finally:
+-        scope['ADMIT_RAM'], sys.argv = previous, old_argv
++        for key, value in zip(keys, previous):
++            scope[key] = value
++        sys.argv = old_argv
+ 
+ 
+ if __name__ == '__main__':

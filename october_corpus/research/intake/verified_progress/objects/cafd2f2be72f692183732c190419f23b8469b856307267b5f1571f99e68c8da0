@@ -1,0 +1,112 @@
+"""Literal retained small arithmetic and original certificate grammar ancestry.
+New proper-subspace checks and used-statement changes are explicit in ORIGINS.
+"""
+import time
+START=time.monotonic()
+import hashlib,json,math,os,resource,stat,sys
+from pathlib import Path
+I2=((1,0),(0,1))
+I7=tuple(tuple(int(i==j)for j in range(7))for i in range(7))
+I8=tuple(tuple(int(i==j)for j in range(8))for i in range(8))
+ENV4=('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')
+
+def need(ok,why):
+ if not ok:raise ValueError(why)
+
+def can(v):return json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True,allow_nan=False).encode('ascii')
+
+def digest(v):return hashlib.sha256(can(v)).hexdigest()
+
+def decode(raw):
+ def pairs(items):
+  out={}
+  for k,v in items:need(k not in out,'unique JSON keys');out[k]=v
+  return out
+ def floating(text):
+  value=float(text);need(math.isfinite(value),'finite JSON float');return value
+ return json.loads(raw,object_pairs_hook=pairs,parse_float=floating,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+class Budget:
+ def __init__(self):self.refs={};self.raw={};self.bytes=0;self.products=0;self.row_images=0;self.peak=0
+ def tick(self):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024);self.peak=max(self.peak,rss)
+  need(rss<128*2**20 and time.monotonic()-START<125,'hard125s128MiB verifier envelope')
+ def read(self,r,again=False):
+  self.tick();need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+   and type(r['bytes'])is int and 0<=r['bytes']<=2**21 and type(r['sha256'])is str
+   and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef'),'complete bounded input reference')
+  need(self.refs.get(r['path'],r)==r,'one immutable version per path')
+  if r['path']in self.raw and not again:return self.raw[r['path']]
+  need(self.bytes+r['bytes']<=8*2**20 and(r['path']in self.refs or len(self.refs)<96),'96 files8MiB including every real reread')
+  p=Path(r['path']);a=p.lstat();need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+   and a.st_nlink==1 and a.st_size==r['bytes'],'canonical single-link bounded input')
+  with p.open('rb')as f:b=os.fstat(f.fileno());raw=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+  sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  need(sig(a)==sig(b)==sig(c)==sig(p.lstat())and len(raw)==r['bytes']
+   and hashlib.sha256(raw).hexdigest()==r['sha256'],'whole stable physical input')
+  self.refs[r['path']]=r;self.raw[r['path']]=raw;self.bytes+=len(raw);return raw
+ def doc(self,r):return decode(self.read(r))
+ def recheck(self):
+  for r in list(self.refs.values()):self.read(r,True)
+ def multiply(self,A,B):
+  self.products+=1;self.tick();need(self.products<=400000,'400000 direct matrix products')
+  need(type(A)is tuple and type(B)is tuple and 1<=len(A)<=8 and 1<=len(B)<=8
+   and 1<=len(B[0])<=8 and all(len(row)==len(B)for row in A)
+   and all(len(row)==len(B[0])for row in B),'complete small compatible rectangular product')
+  return tuple(tuple(sum(A[i][k]*B[k][j]for k in range(len(B)))%11 for j in range(len(B[0])))for i in range(len(A)))
+ def image(self,row,mark):
+  self.row_images+=1;self.tick();need(self.row_images<=200000,'200000 direct row images')
+  return tuple(sum(row[k]*mark[k][j]for k in range(7))%11 for j in range(7))
+
+def matrix(raw,n):
+    need(type(raw) is list and len(raw) == n
+        and all(type(row) is list and len(row) == n for row in raw)
+        and all(type(x) is int and 0 <= x < 11 for row in raw for x in row),'Canonical field matrix')
+    return tuple(tuple(row) for row in raw)
+
+def flat(A):
+    return [x for row in A for x in row]
+
+def determinant(A):
+    return (A[0][0]*A[1][1]-A[0][1]*A[1][0]) % 11
+
+def inverse2(A):
+    r = pow(determinant(A),-1,11)
+    return ((r*A[1][1] % 11,-r*A[0][1] % 11),(-r*A[1][0] % 11,r*A[0][0] % 11))
+
+def catalogue_pair(row):
+    need(type(row) is list and len(row) == 7
+        and all(type(x) is int and 0 <= x < 11 for x in row),'Literal catalogue row')
+    if row[0] == 0:
+        return I2,((10,0),(0,10))
+    _,x,y,z,a,b,c = row
+    return ((x,y),(z,-x % 11)),((a,b),(c,-a % 11))
+
+def operator(check,P,Q):
+    invP = inverse2(P); rows = []
+    for j in range(8):
+        basis = tuple(tuple(int(2*r+s == j % 4) for s in range(2)) for r in range(2))
+        image = check.multiply(check.multiply(P if j < 4 else Q,basis),invP)
+        coeff = tuple(flat(image))
+        rows.append(coeff+(0,0,0,0) if j < 4 else (0,0,0,0)+coeff)
+    return tuple(rows)
+
+def actual_operator(check,IR,R,P,Q):
+    need(determinant(P) == determinant(Q) != 0,'Equal nonzero pair determinants')
+    actual = check.multiply(check.multiply(IR,operator(check,P,Q)),R)
+    need(actual[0] == (1,0,0,0,0,0,0,0)
+        and all(actual[k][0] == 0 for k in range(1,8)),'Full unital pure-space transport')
+    return tuple(tuple(actual[i][j] for j in range(1,8)) for i in range(1,8))
+
+def expand_runs(runs, maximum):
+ need(type(runs)is list,'literal position runs');out=[];last=0
+ for a,b in runs:
+  need(type(a)is type(b)is int and last<a<=b<=maximum,'ordered disjoint position runs')
+  out.extend(range(a,b+1));last=b
+ return out
+
+def rectangle(raw,rows,columns,label):
+ need(type(raw)is list and len(raw)==rows and all(type(v)is list and len(v)==columns for v in raw)
+  and all(type(x)is int and 0<=x<11 for v in raw for x in v),label)
+ return tuple(tuple(v)for v in raw)
+

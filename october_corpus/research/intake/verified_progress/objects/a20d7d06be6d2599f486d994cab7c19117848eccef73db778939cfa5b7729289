@@ -1,0 +1,174 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');G=M/'f009_bounded_io_transition';K=M/'resource_profiles/bounded_output';C=G/'cohorts/cohort_from0426';A=G/'actual/cohort0426_batch00_prepare_suppliers';S=Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0426/parents0426_0428');RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+ global READ
+ p=Path(p);key=str(p)
+ if key in RAW:need(r is None or PINS[key]==r,'one exact edition');return RAW[key]
+ before=p.lstat();need(before.st_size<=4*2**20 and READ+before.st_size<=64*2**20 and len(RAW)<500,'bounded metadata reader');b=p.read_bytes();after=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns);need(sig(before)==sig(after)and len(b)==before.st_size,'whole stable bytes');rr=ref(p,b);need(r is None or rr==r,'exact input pin');RAW[key]=b;PINS[key]=rr;READ+=len(b);return b
+
+def pin(p):read(p);return PINS[str(p)]
+def exact(r):return read(r['path'],r)
+def doc(p,r=None):return dec(read(p,r))
+def pick(b,keys):o=obj(b);return{k:dec(o[k])for k in keys}
+def can(j):return(json.dumps(j,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def triple(a,k):i=a.index(k);return dict(path=a[i+1],bytes=int(a[i+2]),sha256=a[i+3])
+def api(sdkpath,rawdir):
+ sdk=doc(sdkpath);i=doc(rawdir/'issued.json');frames=sdk['all_genuine_api_frames'];a=sdk['issued_argv'];t=sdk['actual_tool']
+ need(sdk['root']==sdk['actor']==i['root']=='/root'and a==i['argv']==sdk['child_argv'],'Root argv')
+ need(i['tool_arguments']==sdk['issued_tool_arguments']and i['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==a,'whole genuine issued kwargs')
+ need(1<=len(frames)<=32 and len({f['chunk_id']for f in frames})==len(frames),'unique bounded raw chunks')
+ for n,f in enumerate(frames):
+  need(doc(rawdir/('frame_%04d.json'%n))==f,'exact persisted genuine frame')
+  if n<len(frames)-1:need(f.get('session_id')==t['handle']and 'exit_code'not in f,'same live handle throughout')
+ need(frames[0]==sdk['full_initial_tool_return']and frames[-1]==sdk['full_tool_return']and t['exit_code']==frames[-1]['exit_code']and t['initial_chunk']==frames[0]['chunk_id']and t['terminal_chunk']==frames[-1]['chunk_id'],'full terminal history')
+ need((t['synchronous']is True and len(frames)==1 and t['handle']is None)or(t['synchronous']is False and len(frames)>1 and type(t['handle'])is int),'honest sync/async')
+ return sdk,frames[-1]
+
+
+
+PS=M/'f004_proper_subspaces';AD=M/'f004_proper_subspace_adoption';HERE=AD/'actual_review';RUN=PS/'actual/job0155'
+mf=doc(PS/'Source_manifest.json');mfr=pin(PS/'Source_manifest.json');peerref=pin(PS/'source_review/reuse_integer_only.json');controlref=pin(PS/'actual/controls37/actual_review/reuse_integer_only.json');peer=dec(exact(peerref));control=dec(exact(controlref))
+need(mfr['sha256']=='5b4ab5dc8f7cf354b2b33a6bd63caf04175f2a1fbc61864d9e33a582e821cf90'and peerref['sha256'].startswith('726bf8da')and controlref['sha256'].startswith('52418303'),'unchanged Source and actual37')
+need(peer['status']=='SUPPORTED_STATIC_Q11_PROPER_SUBSPACE_SOURCE'and control['status']=='SUPPORTED_ACTUAL_Q11_PROPER_SUBSPACE_CONTROLS'and peer['blockers']==control['blockers']==[]and control['Source_peer']==peerref and control['Source_manifest']==mfr,'exact admitted Source/control subject')
+index=doc(AD/'certificate_index.json');indexref=pin(AD/'certificate_index.json');need(indexref['sha256']=='d065183ffa96e8c160eceef29a07e53492d3118940ea5e924e90beaea0b5bd67'and index['Root_authority']is False and len(index['batches'])==3,'opaque index is a source-only locator, not actual authority')
+reports=[];recordpins=[];allpositions=[];domain=None;selectorref=None;modelref=None
+limits=dict(admit_disk=10737418240,admit_ram=3892314112,disk_floor=8589934592,ram_floor=3221225472,total_rss=134217728,wall_seconds=125.,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+for batch in index['batches']:
+ no=batch['batch'];positions=batch['target_positions'];need(type(no)is int and no in(1,2,3)and len(positions)==8 and all(type(x)is int for x in positions)and len(set(positions))==8,'typed bounded eight-case batch');allpositions+=positions;BC=RUN/('batch%02d'%no);pair={}
+ for role,label in [('SEARCH','search'),('DIRECT','direct')]:
+  planref=pin(BC/(label+'_plan.json'));gateref=pin(BC/(label+'_Root_gate.json'));plan=dec(exact(planref));gate=dec(exact(gateref))
+  need(plan['schema']=='Q11_PROPER_SUBSPACE_'+role+'_PLAN_V1'and plan['Source_manifest']==mfr and plan['program']==mf['roles'][role]['program']and plan['original_job']==[155,4]and plan['selected_orbit_positions']==positions,'exact role/Source/unpaid selection')
+  need(gate['schema']=='ROOT_AUTHORIZED_Q11_PROPER_SUBSPACE_V1'and gate['root']=='/root'and gate['role']==role and gate['plan']==planref and gate['Source_manifest']==mfr and gate['program']==plan['program']and gate['Source_peer']==peerref and gate['admission_controls']==controlref and gate['Root_import']==plan['Root_import'],'fresh exact gate')
+  for flag in('Root_authority','issued','Original_calls_authorized','whole_Source_and_protocol_owned','current_unpaid_scope_and_no_same_method_replay_owned'):need(gate[flag]is True,'Root '+flag)
+  issuerpath=PS/'Root_SDK'/('batch%02d_%s_authorities_v1.json'%(no,label));isdk,ifr=api(issuerpath,PS/'api'/('Root_f004_proper_subspace_batch%02d_%s_authorities_v1'%(no,label)));authority=dec(ifr['output'])
+  need(ifr['exit_code']==0 and authority['argv'],'genuine first Root authority issuance')
+  sdkref=batch['roles'][label]['actual_SDK'];sdk,frame=api(Path(sdkref['path']),PS/'api'/('Root_f004_proper_subspace_batch%02d_%s_v1'%(no,label)));exact(sdkref)
+  argv=sdk['issued_argv'];need(frame['exit_code']==0 and argv==authority['argv'],'genuine first-v1 scientific command')
+  expected=['/usr/bin/env']
+  for name in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','PYTHONSTARTUP','OPENSSL_CONF','OPENSSL_MODULES'):expected+=['-u',name]
+  child=argv[argv.index('--')+1:];guard=Path(argv[argv.index('--output')+1]);expected+=['/Users/sasha/.venvs/global/bin/python','-E','-B',mf['guards'][0]['path'],'--volume','/Users/sasha/medusa','--output',str(guard),'--rss-cap-mib','128','--timeout','125','--']+child
+  need(argv==expected and child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',plan['program']['path']],'whole clean EBS child and unchanged matrix wrapper')
+  for name,r in [('--manifest',mfr),('--plan',planref),('--gate',gateref)]:need(triple(child,name)==r,'exact child '+name)
+  need(dec(frame['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json')),'actual wrapper PASS')
+  st=doc(guard/'started.json');rc=doc(guard/'receipt.json');stdout=read(guard/'stdout.log');stderr=read(guard/'stderr.log')
+  need(st['command']==rc['command']==child and st['limits']==rc['limits']==limits and st['admission']==rc['admission'],'exact old guard command/admission/limits')
+  need(len(st['identities'])==len(rc['identities'])==1 and all(st['identities'][0][k]==rc['identities'][0][k]for k in('pid','birth','initial_parent','group','session'))and st['identities'][0]['pid']==st['identities'][0]['group']==st['identities'][0]['session'],'same sole birth-pinned child')
+  need(rc['status']=='PASS'and rc['stop']=='RETURNED'and rc['returncode']==0 and rc['error']is None and rc['cleanup']['remaining']==rc['cleanup']['errors']==[]and stderr==b''and rc['logs']==dict(stdout=len(stdout),stderr=0),'exact logs/terminal/cleanup')
+  need(rc['seconds']<125 and rc['peaks']['total_rss']<=134217728 and rc['admission']['free_disk']>=10737418240 and rc['peaks']['min_free_disk']>=8589934592 and rc['admission']['available_ram']>=3892314112 and rc['peaks']['min_available_ram']>=3221225472,'unchanged sampled resources')
+  out=dec(stdout);resultref=out['output'];need(resultref==batch['roles'][label]['whole_result'],'exact indexed whole carrier')
+  raw=exact(resultref);f=obj(raw);header=pick(raw,('schema','status','program','Source_manifest','plan','Root_gate','original_job','selector','paid_credit','GEN_claim','IP_claim','ambient_irreducibility_imported','new_linear_scalar_units','resources'))
+  need(header['program']==plan['program']and header['Source_manifest']==mfr and header['plan']==planref and header['Root_gate']==gateref and header['original_job']==[155,4]and header['selector']==plan['selector']and header['paid_credit']==0 and header['GEN_claim']is header['IP_claim']is header['ambient_irreducibility_imported']is False,'exact properness-only result subject')
+  resource=header['resources'];need(type(header['new_linear_scalar_units'])is int and header['new_linear_scalar_units']<=200000 and resource['matrix_products']<=400000 and resource['row_images']<=200000 and resource['read_units_with_prepaid_loaders']<=8388608 and resource['seconds']<125 and resource['peak_self_RSS_bytes']<=134217728,'finite counters')
+  if role=='SEARCH':
+   sh=pick(raw,('target_positions','visited_positions','proposed_proper_positions','inconclusive_positions','unvisited_positions','stop','original_domain_whole_pins'))
+   need(header['schema']=='Q11_PROPER_SUBSPACE_SEARCH_RESULT_V1'and header['status']=='FINITE_SELECTION_COMPLETED'and sh['target_positions']==sh['visited_positions']==sh['proposed_proper_positions']==positions and sh['inconclusive_positions']==sh['unvisited_positions']==[]and sh['stop']is None,'all eight proposals completed')
+   records=arr(f['records']);need(len(records)==8,'eight opaque record spans')
+   for position,record in zip(positions,records):
+    r=pick(record,('original_orbit_position','representative_J_index','original_orbit_row_sha256','outcome'));need(type(r['original_orbit_position'])is int and r['original_orbit_position']==position and r['outcome']=='UNTRUSTED_PROPER_SPAN_PROPOSAL','typed actual record identity')
+    fact=obj(record)['certificate'];facts=pick(fact,('dimension','kind','ambient_generator_index','moved_basis_row','nongeneration_claim','ambient_generation_claim','IP_claim'))
+    need(type(facts['dimension'])is int and facts['dimension']==4 and type(facts['ambient_generator_index'])is int and facts['ambient_generator_index']in(0,1)and type(facts['moved_basis_row'])is int and 0<=facts['moved_basis_row']<4 and facts['nongeneration_claim']is True and facts['ambient_generation_claim']is facts['IP_claim']is False,'scalar r4/mover locator/properness-only scope')
+    recordpins.append(dict(batch=no,position=position,representative_J_index=r['representative_J_index'],original_orbit_row_sha256=r['original_orbit_row_sha256'],dimension=4,ambient_generator_index=facts['ambient_generator_index'],moved_basis_row=facts['moved_basis_row'],opaque_record_sha256=hashlib.sha256(record).hexdigest(),opaque_certificate_sha256=hashlib.sha256(fact).hexdigest()))
+   if domain is None:domain=sh['original_domain_whole_pins']
+   need(domain==sh['original_domain_whole_pins'],'same acquired Original domain all batches')
+  else:
+   dh=pick(raw,('verified_proper_positions','inconclusive_positions','unvisited_positions','acquisition_or_RREF_or_mover_search_calls','search_result'))
+   need(header['schema']=='Q11_PROPER_SUBSPACE_DIRECT_RESULT_V1'and header['status']=='VERIFIED_SUPPLIED_PROPER_SPAN_CERTIFICATES'and dh['verified_proper_positions']==positions and dh['inconclusive_positions']==dh['unvisited_positions']==[]and dh['acquisition_or_RREF_or_mover_search_calls']==0,'all eight supplied-only properness verifications')
+   need(dh['search_result']==pair['SEARCH']['result']==plan['search_result']and plan['search_plan']==pair['SEARCH']['plan']and plan['search_gate']==pair['SEARCH']['Root_gate'],'exact whole producer data binding')
+  inputs={r['path']:r for r in plan['inputs']};need(len(inputs)==len(plan['inputs']),'one admitted edition per input')
+  for r in mf['roles'][role]['loaded_sources']+mf['guards']+[mfr,peerref,controlref,planref,gateref]:inputs[r['path']]=r
+  need(set(inputs)=={r['path']for r in plan['inputs']}|set(plan['bootstrap_paths']),'whole runtime first/closing Source/authority/input closure')
+  for r in inputs.values():exact(r)
+  loader=mf['roles'][role]['loader_read_prepaid_upper'];total=2*sum(r['bytes']for r in inputs.values())+loader
+  need(total==resource['read_units_with_prepaid_loaders']==plan['physical_read_invoice']['complete_physical_read_units'],'reconstructed actual physical first/closing and loader read upper')
+  im=dec(exact(gate['Root_import']));scope=dec(exact(plan['Root_scope']))
+  need(im['schema']=='ROOT_IMPORTED_Q11_PROPER_SUBSPACE_MODEL_V1'and im['root']=='/root'and im['Root_authority']is im['issued']is True and im['original_job']==[155,4]and im['original_domain_whole_pins']==domain and im['proper_subspace_theory']==plan['proper_subspace_theory'],'same original model/frame/member import/theory')
+  for flag in('faithful_Original_frame_member_and_transporter_join_owned','quartet_membership_in_this_natural_G2_11_owned','same_actual_ambient_generators_are_known_original_G_members_owned','proper_subspace_and_mover_implication_owned'):need(im[flag]is True,'essential imported '+flag)
+  need(scope['Root_authority']is scope['adopted']is True and scope['selected_orbit_positions']==positions and scope['selector']==plan['selector']and scope['original_domain_whole_pins']==domain,'exact current unpaid scope')
+  if selectorref is None:selectorref=plan['selector'];modelref=gate['Root_import']
+  need(plan['selector']==selectorref and gate['Root_import']==modelref and selectorref['sha256'].startswith('987324e2'),'same 58-unpaid predecessor selector and model')
+  pair[role]=dict(actual_SDK=sdkref,authority_actual_SDK=pin(issuerpath),program=plan['program'],Source_manifest=mfr,plan=planref,Root_gate=gateref,Root_import=gate['Root_import'],Root_scope=plan['Root_scope'],selector=selectorref,result=resultref,guard={k:pin(guard/k)for k in('started.json','receipt.json','stdout.log','stderr.log')},inputs=list(inputs.values()),actual_resources=resource,new_linear_scalar_units=header['new_linear_scalar_units'],complete_read_upper=total,actual_guard_and_raw_API_verified=True)
+ reports.append(dict(batch=no,positions=positions,search=pair['SEARCH'],direct=pair['DIRECT']))
+need(len(allpositions)==len(set(allpositions))==24 and [x['position']for x in recordpins]==allpositions,'24 unique exactly checked cases')
+for r in domain.values():exact(r)
+proof=pin(AD/'proper_subspace_application.tex');need(proof['sha256']=='43a7fedbfaccda2559d09fcb302d579c9a4ee7352c60edf8d4ef23a47c1d8604','exact complete TeX proof')
+argument=mf['proper_subspace_theory'] if 'proper_subspace_theory'in mf else pin(PS/'argument.rst');exact(argument)
+# Historical diagnostic exception is preserved as an explicit inspection record, not a fabricated SDK.
+exception=dict(schema='Q11_PROPER_SUBSPACE_REVIEW_INCIDENTAL_DECODING_EXCEPTION_V1',reviewer='/root/mathematical_review',Root_authority=False,observation_only=True,not_a_genuine_API_SDK=True,carrier=reports[0]['search']['result'],bounded_carrier_bytes=8187,scope='The first SEARCH carrier only was passed to json.loads by an own diagnostic to inspect header and record/certificate keys. Its basis/right_inverse/parent-edge arrays were incidentally decoded in memory. No operand entries were printed, evaluated, used to check predicates, or passed to any represented Source function. All subsequent carrier inspections used lexical spans and whitelisted scalar metadata.',Original_values_decoded=True,Original_matrix_predicates_evaluated=False,represented_functions_executed=False,diagnostic_source_excerpt="p=Path('/private/tmp/q11_proper_subspaces/job0155/batch01/search/result.json');j=json.loads(p.read_bytes());print('SEARCH_SCALARS',{k:v for k,v in j.items()if k!='records'});print('RECORD_KEYS',list(j['records'][0]));print('FACT_KEYS',list(j['records'][0]['certificate']))",Root_notified_before_review_seal=True)
+for path,body in list(RAW.items()):
+ with Path(path).open('rb')as f:need(f.read(len(body)+1)==body,'closing whole finite evidence')
+def save(name,value):
+ body=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();path=HERE/name
+ with path.open('xb')as f:need(f.write(body)==len(body),'complete report')
+ return ref(path,body)
+exceptionref=save('inspection_exception.json',exception)
+evidence=save('evidence.json',dict(schema='Q11_PROPER_SUBSPACE24_ACTUAL_FINITE_EVIDENCE_V1',reviewer='/root/mathematical_review',Root_authority=False,reports=reports,records=recordpins,pins=list(PINS.values()),inspection_exception=exceptionref,Original_values_decoded=True,Original_matrix_predicates_evaluated=False,represented_functions_executed=False))
+leaf=dict(schema='Q11_PROPER_SUBSPACE24_ACTUAL_PAIR_INDEPENDENT_REUSE_V1',status='SUPPORTED_ACTUAL_PROPER_SUBSPACE_EQUATIONS',reviewer='/root/mathematical_review',Root_authority=False,blockers=[],Source_manifest=mfr,Source_peer=peerref,actual_controls_review=controlref,argument=argument,proof=proof,certificate_index=indexref,original_job=[155,4],positions=allpositions,batches=reports,record_identities_dimensions_and_opaque_hashes=recordpins,Root_import=modelref,original_domain_whole_pins=domain,selector=selectorref,all24_supplied_properness_equations_supported=True,whole_source_input_command_raw_API_guard_and_output_joins_verified=True,direct_acquisition_or_RREF_or_mover_search_calls=0,ambient_irreducibility_or_classification_imported=False,Original_values_decoded=True,inspection_exception=exceptionref,Original_matrix_predicates_evaluated=False,represented_functions_or_numerical_predicates_executed=False,GEN_claim=False,IP_claim=False,case_adoption_issued=False,paid_credit=0,whole_job_or_manuscript_credit=0,finite_evidence=evidence,qualification=[
+'All three new SEARCH/DIRECT pairs authenticate genuine first-v1 SDK/raw intent/full frames, full ordinary EBS commands, exact old5adf/5c7 guard limits and sole PID/birth identities, whole logs/terminal/cleanup, unchanged Source5b4a/static726b/fresh37actual524183 and all declared complete input/output hashes. No worker or control was replayed by reviewer.',
+'All24 selected unpaid positions have complete supplied-only DIRECT proper-span verdicts with no inconclusive/unvisited suffix. The scalar certificate dimension is4 and ambient-member/row locators are typed. DIRECT reports acquisition/RREF/mover-search calls0. The Original numerical identities are accepted genuine Root computations under reviewed Source, not independently re-evaluated by this metadata review.',
+'One bounded inspection exception is explicit: an own diagnostic JSON-decoded the first8187-byte SEARCH carrier in memory while obtaining header/record keys, incidentally decoding its numerical arrays; no operand entries were printed, evaluated or passed to scientific functions. This review therefore does not assert Original_values_decoded=False. Subsequent carrier checks are opaque/lexical only; exact exception record is retained.',
+'The properness inference is elementary and conditional on the exact Root-owned Original group/frame/member/transporter and same-G ambient mover premises. AR=I gives independent rows and exact membership u=(uR)A; all four invariance equations imply H-stability; a known G member moving one row out proves H proper in G. Neither ambient irreducibility nor maximal-subgroup classification is borrowed.',
+'Current selector987324 and all historical dispositions retain their meanings. These24 equation certificates are nongeneration evidence only, with no GEN/IP, canonical payment, whole-job/manuscript, conjecture, Lean or compression credit. Exact Root application, distinct logical review, durable retention and typed adoption remain separate.',
+'Reviewer authored the imported static Source/control actual reviews and discussed original proof/control boundaries; reviewer authored none of the executed proper-subspace Source. Source authorForest and inherited invariant-space strategy/Root encoding proposal remain attributed. No discovery/strict numerical function or control was executed by reviewer.'
+])
+print(json.dumps(save('reuse_integer_only.json',leaf),sort_keys=True))

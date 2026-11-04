@@ -1,0 +1,49 @@
+let RootPrivateCaptureBytes=0;
+
+const directPy='/Users/sasha/.venvs/global/bin/python';
+const directQ=s=>"'"+String(s).replace(/'/g,"'\\''")+"'";
+async function directArtifact(path,value){
+ if(!path.startsWith('/private/tmp/')||path.split('/').includes('..'))throw Error('Private capture path required');
+ const checkCode="from pathlib import Path\nimport os,sys\np=Path(sys.argv[1]);assert p.is_absolute()and p.is_relative_to('/private/tmp')and '..'not in p.parts and not os.path.lexists(p);q=p.parent\nwhile not q.exists():q=q.parent\nassert q.resolve()==q";
+ let checked=await tools.exec_command({cmd:[directPy,'-E','-B','-S','-c',checkCode,path].map(directQ).join(' '),workdir:'/Users/sasha/medusa',login:false,yield_time_ms:1000,max_output_tokens:1000});
+ while(checked.session_id!==undefined)checked=await tools.write_stdin({session_id:checked.session_id,chars:'',yield_time_ms:1000,max_output_tokens:1000});
+ if(checked.exit_code!==0)throw Error('Capture target must be fresh: '+path+' '+checked.output);
+ const b=(JSON.stringify(value)+'\n').replace(/[\u007f-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'));
+ const captureCap=path.startsWith('/private/tmp/intake_actual_transports/')?65536:4*2**20;
+ if(b.length>captureCap||RootPrivateCaptureBytes+b.length>32*2**20)throw Error('Bounded metadata capture limit before any write');
+ RootPrivateCaptureBytes+=b.length;
+ if(b.length>8*2**20)throw Error('Capture extent');
+ await tools.apply_patch('*** Begin Patch\n*** Add File: '+path+'\n+'+b.trimEnd()+'\n*** End Patch');
+ const code="from pathlib import Path\nimport json,hashlib,sys\np=Path(sys.argv[1]);b=p.read_bytes();print(json.dumps(dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())))";
+ let r=await tools.exec_command({cmd:[directPy,'-E','-B','-S','-c',code,path].map(directQ).join(' '),workdir:'/Users/sasha/medusa',login:false,yield_time_ms:1000,max_output_tokens:1000});
+ while(r.session_id!==undefined)r=await tools.write_stdin({session_id:r.session_id,chars:'',yield_time_ms:1000,max_output_tokens:1000});
+ if(r.exit_code!==0)throw Error('Capture hash failed');
+ return JSON.parse(r.output);
+}
+async function directRun(key,argv,extra={}){
+ if(!/^[A-Za-z0-9_.-]+$/.test(key)||key==='.'||key==='..'||load(key+'_initial'))throw Error('Used or unsafe API key '+key);
+ const kwargs={cmd:argv.map(directQ).join(' '),workdir:'/Users/sasha/medusa',login:false,yield_time_ms:1000,max_output_tokens:12000,...extra};
+ store(key+'_argv',argv);store(key+'_actual_kwargs',kwargs);
+ const base='/private/tmp/intake_actual_transports/'+key;
+ await directArtifact(base+'/issued.json',{schema:'ROOT_ISSUED_API_INTENT_V1',root:'/root',argv,tool_arguments:kwargs,actual_response_owed:true});
+ let r=await tools.exec_command(kwargs);const frames=[r];store(key+'_initial',r);store(key+'_frames',frames);
+ await directArtifact(base+'/frame_0000.json',r);
+ while(r.session_id!==undefined){
+  store(key+'_live_handle',r.session_id);
+  r=await tools.write_stdin({session_id:r.session_id,chars:'',yield_time_ms:5000,max_output_tokens:12000});
+  frames.push(r);store(key+'_frames',frames);
+  await directArtifact(base+'/frame_'+String(frames.length-1).padStart(4,'0')+'.json',r);
+ }
+ store(key+'_terminal',r);store(key+'_live_handle',null);return r;
+}
+function directJSON(key){
+ const f=load(key+'_frames');if(!f?.length||f.at(-1).session_id!==undefined||!Number.isInteger(f.at(-1).exit_code))throw Error('No genuine terminal '+key);
+ return JSON.parse(f.map(x=>x.output).join(''));
+}
+async function directCapture(key,path){
+ const f=load(key+'_frames'),a=load(key+'_argv'),k=load(key+'_actual_kwargs');
+ if(!f?.length||!a||!k||f.at(-1).session_id!==undefined||!Number.isInteger(f.at(-1).exit_code))throw Error('Missing genuine frames '+key);
+ const first=f[0],last=f.at(-1);
+ const v={schema:'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1',root:'/root',actor:'/root',child_argv:a,issued_argv:a,issued_tool_arguments:k,issued_command:k.cmd,canonical_argv_command:a.map(s=>/^[A-Za-z0-9_./:-]+$/.test(s)?s:directQ(s)).join(' '),actual_tool:{handle:first.session_id??null,initial_chunk:first.chunk_id,terminal_chunk:last.chunk_id,exit_code:last.exit_code,synchronous:first.session_id===undefined},full_initial_tool_return:first,full_tool_return:last,all_genuine_api_frames:f};
+ const ref=await directArtifact(path,v);store(key+'_capture',ref);return ref;
+}

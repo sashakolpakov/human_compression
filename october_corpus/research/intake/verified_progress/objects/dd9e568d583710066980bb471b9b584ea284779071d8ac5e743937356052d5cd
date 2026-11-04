@@ -1,0 +1,158 @@
+from pathlib import Path
+import json,hashlib,os,time
+L=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/manuscript_scope/L026/generation_route/rows0297_0303');R=L/'logical_review';M=L.parents[3]
+START=time.monotonic();pins={};used=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,expected=None):
+ global used
+ p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ if str(p)in pins:b,r,old=pins[str(p)];assert p.stat().st_size==len(b)
+ else:
+  with p.open('rb')as f:
+   a=os.fstat(f.fileno());assert a.st_size<=4*2**20 and 2*(used+a.st_size)<=64*2**20 and len(pins)<512
+   b=f.read(a.st_size+1);z=os.fstat(f.fileno())
+  sig=lambda v:(v.st_dev,v.st_ino,v.st_mode,v.st_nlink,v.st_size,v.st_mtime_ns,v.st_ctime_ns)
+  assert sig(a)==sig(z)==sig(p.stat())and len(b)==a.st_size
+  r=ref(p,b);old=sig(z);pins[str(p)]=(b,r,old);used+=len(b)
+ if expected:assert r==expected
+ return b,r
+
+def ws(b,i):
+ while i<len(b)and b[i]in b' \r\n\t':i+=1
+ return i
+def es(b,i):
+ i+=1
+ while True:
+  if b[i]==92:i+=2
+  elif b[i]==34:return i+1
+  else:i+=1
+def ev(b,i):
+ i=ws(b,i)
+ if b[i]==34:return es(b,i)
+ if b[i]in(123,91):
+  stop=125 if b[i]==123 else 93;i+=1
+  while True:
+   i=ws(b,i)
+   if b[i]==stop:return i+1
+   if b[i]in(44,58):i+=1
+   else:i=ev(b,i)
+ j=i
+ while j<len(b)and b[j]not in b',}:] \r\n\t':j+=1
+ return j
+
+def fields(b):
+ i=ws(b,0);assert b[i]==123;i+=1;d={}
+ while True:
+  i=ws(b,i)
+  if b[i]==125:return d
+  z=es(b,i);k=json.loads(b[i:z]);i=ws(b,z);assert b[i]==58
+  a=ws(b,i+1);z=ev(b,a);d[k]=b[a:z];i=ws(b,z)
+  if b[i]==44:i+=1
+  else:assert b[i]==125
+
+def project(p,keys,expected=None):
+ b,r=read(p,expected);f=fields(b)
+ assert not set(keys)&{'records','prime11','prime13','word','cycle','points','operands','witness_bank','matrices','permutations','a','b','c','d0','ambient'}
+ return{k:json.loads(f[k])for k in keys},r
+
+def can(v):return(json.dumps(v,sort_keys=True,indent=2)+'\n').encode()
+def write(name,value):
+ p=R/name;assert not p.exists();b=can(value);p.write_bytes(b);return ref(p,b)
+
+abi_path=M/'l026_procedural_generation_registration/APPLICATION_ABI.json'
+abi,_=project(abi_path,['application_schema','logical_schema','application_required','logical_required','current_snapshot','original_subject'])
+a,ar=project(L/'Root_generation_application_row0298.json',list(abi['application_required'])+['schema'])
+proof,pr=read(L/'generation_row0298.tex');assert pr['bytes']==7094 and pr['sha256']=='1bf90a2bbdabe8c5c43322b579356bccda5b45c93950e609371376c13aa7ba12'
+assert ar['sha256']=='140597966cc12e278bb518011f04487b56012d64fff5d5d5ed1f261cc14257df'
+assert a['schema']==abi['application_schema']and a['proof']==pr and a['subject']['identity']==abi['original_subject']
+for key,value in abi['application_required'].items():
+ if key=='proof':continue
+ assert a[key]==value,(key,a[key],value)
+actual,actref=project(a['strict_actual_review']['path'],['status','blockers','reviewer','GEN_indices','proper_indices','current_snapshot','strict','Original_points_permutations_witness_fields_or_evaluated_words_decoded','conditional_named_inner_Fi22_generation_implication_supported','actual_guard_and_raw_frames_verified','IP_credit'],a['strict_actual_review'])
+assert actual['status']=='SUPPORTED_ACTUAL_L026_PROCEDURAL_SUPPLIED_GEN_CERTIFICATE'and actual['blockers']==[]and actual['reviewer']=='/root/forest_resume'
+assert actual['GEN_indices']==[298]and actual['proper_indices']==[]and actual['current_snapshot']==a['current_snapshot']
+assert actual['conditional_named_inner_Fi22_generation_implication_supported']is actual['actual_guard_and_raw_frames_verified']is True
+assert actual['Original_points_permutations_witness_fields_or_evaluated_words_decoded']is False and actual['IP_credit']==0
+for key in('proof','carrier','Root_import','procedural_D_import'):
+ target={'proof':'strict_proof','carrier':'strict_carrier','Root_import':'Root_case_import','procedural_D_import':'procedural_D_import'}[key]
+ assert actual['strict'][key]==a[target]
+# Scientific certificate is read only opaquely, never JSON-decoded.
+read(a['strict_carrier']['path'],a['strict_carrier'])
+sp,spr=project(a['strict_proof']['path'],['schema','status','Root_import','procedural_D_import','current_snapshot','selected_cases','verified_records','all_Original_innerG_coset_H_two_fibre_and_theorem_meanings_imported','complete_native_D_family_claim','new_IP_or_Aut_reversal_or_class_or_case_credit'],a['strict_proof'])
+assert sp['schema']=='L026_PROCEDURAL_GEN_NEG_PROOF_V1'and sp['status']=='VERIFIED_PROCEDURAL_SUPPLIED_GEN_OR_PROPER_CERTIFICATES'
+assert sp['Root_import']==a['Root_case_import']and sp['procedural_D_import']==a['procedural_D_import']and sp['current_snapshot']==a['current_snapshot']
+assert sp['all_Original_innerG_coset_H_two_fibre_and_theorem_meanings_imported']is True and sp['complete_native_D_family_claim']is False
+assert sp['new_IP_or_Aut_reversal_or_class_or_case_credit']==0
+accepted=[x for x in sp['verified_records']if x['identity']['free_index']==298]
+assert accepted==[dict(identity=abi['original_subject'],verdict='GEN')]
+assert all(x['verdict']=='UNPAID'for x in sp['verified_records']if x['identity']['free_index']!=298)
+keys=['schema','root','Root_authority','adopted','current_snapshot','procedural_D_import','cases','scope','accepted_procedural_D_same_original_bridge_frame_membership_owned','actual_a_c_and_D_products_belong_to_named_original_simple_Fi22_owned','complete_corrected_simple_Fi22_maximal_11_13_avoidance_theorem_owned','same_exact_original_witness_rows_partner_triangles_current_unpaid_H_and_two_fibre_scope_owned','inner_G_target_not_mere_Aut_properness_and_exact_coset_scope_owned']
+imp,ir=project(a['Root_case_import']['path'],keys,a['Root_case_import'])
+assert imp['root']=='/root'and imp['Root_authority']is imp['adopted']is True
+for k in keys:
+ if k.endswith('_owned'):assert imp[k]is True
+assert imp['current_snapshot']==a['current_snapshot']and abi['original_subject']in imp['cases']
+provider,provider_ref=project(a['procedural_D_import']['path'],['schema','root','Root_authority','adopted','same_original_d0_ordered_A_and_full_signed_tree_owned','accepted_equal_stabilizer_bridge_defines_all3510_equivariant_D_images_owned','known_G_seed_and_G_normal_in_A_give_all_queried_D_membership_owned','complete_native_D_family_adoption','no_uncomputed_native_bytes_or_complete_native_cache_authority_claimed','definition','bridge_argument'],a['procedural_D_import'])
+assert provider['root']=='/root'and provider['Root_authority']is provider['adopted']is True
+for k in ('same_original_d0_ordered_A_and_full_signed_tree_owned','accepted_equal_stabilizer_bridge_defines_all3510_equivariant_D_images_owned','known_G_seed_and_G_normal_in_A_give_all_queried_D_membership_owned','no_uncomputed_native_bytes_or_complete_native_cache_authority_claimed'):assert provider[k]is True
+assert provider['complete_native_D_family_adoption']is False
+for r in a['current_snapshot'].values():read(r['path'],r)
+# This is a typed ledger status byte, not an Original mathematical operand.
+bank=read(a['current_snapshot']['bank']['path'])[0];assert len(bank)==28908 and bank[298]==0
+max_ref=next(x for x in imp['scope']['context']if Path(x['path']).name=='maximal_orders.json')
+table,tref=project(max_ref['path'],['schema','named_group','conjugacy_classes','classification','classification_is_borrowed','Aut_Fi22_substitution_permitted','rows'],max_ref)
+assert table['named_group']=='Fi22'and table['conjugacy_classes']==14 and table['classification_is_borrowed']is True and table['Aut_Fi22_substitution_permitted']is False
+assert sum(row['conjugacy_classes']for row in table['rows'])==14
+assert not any(row['divisible_by_11']and row['divisible_by_13']for row in table['rows'])
+argument=next(x for x in imp['scope']['context']if Path(x['path']).name=='ARGUMENT.rst');read(argument['path'],argument)
+read(M/'manuscript_scope/L026/generation_route/GENERATION.rst')
+read(provider['bridge_argument']['path'],provider['bridge_argument'])
+manifest,smr=project('/private/tmp/l026_procedural_middle_certificates/Source_manifest_worker.json',['Source','schema'])
+for r in manifest['Source']:read(r['path'],r)
+# Authenticate issuer metadata only; Root's displayed witnesses stay text.
+sdk,sdkref=project(L/'Root_SDK/generation_application_row0298_v1.json',['schema','root','actor','actual_tool','all_genuine_api_frames','full_initial_tool_return','full_tool_return'])
+assert sdkref['sha256']=='8729fa1321f17ab841d49368308bba1097a330a8263004321f93f885f2f69c93'
+assert sdk['root']==sdk['actor']=='/root'and sdk['actual_tool']['exit_code']==0
+assert sdk['all_genuine_api_frames'][0]==sdk['full_initial_tool_return']and sdk['all_genuine_api_frames'][-1]==sdk['full_tool_return']
+# Close exact finite inputs as opaque byte bodies before issuing reviewer files.
+for name,(b,r,old)in list(pins.items()):
+ with Path(name).open('rb')as f:
+  stat=os.fstat(f.fileno());assert stat.st_size==len(b)
+  q=f.read(len(b)+1)
+ assert q==b
+ used+=len(q)
+assert used<=64*2**20 and time.monotonic()-START<125
+full=dict(schema='L026_ROW0298_LOGICAL_REVIEW_ARGUMENT_V1',reviewer='/root/dependency_audit',Root_authority=False,
+ proof=pr,Root_application=ar,strict_actual_review=actref,issuer_actual_SDK=sdkref,
+ mathematical_findings=[
+ 'The supplied action equations with pairwise-distinct p-cycle points and the closing edge make the least positive return time p. If the finite group word has order m, its action fixes the first point after m steps, hence p divides m; Lagrange gives p dividing the order of its containing subgroup. Faithfulness is not needed for this implication.',
+ 'Both supplied words belong to the same K=<ab,bc> inside the accepted named INNER Fi22. The retained corrected complete14-class table has no maximal order divisible by both11 and13. A proper K would lie in a maximal subgroup and force both divisors there. Thus K=Fi22 and <a,b,c>=Fi22.',
+ 'With right actions, inverse rotation letters are ba and cb since a,b,c are involutions. The unchanged point_kernel rotation_word implements exactly these four orientations. Its check_cycle enforces typed distinct point labels and checks every edge, including the last return. checks.kernel_verify returns GEN only after both prime checks; actual8853 supplies the numerical verdict for this exact row.',
+ 'Every queried D_v is conjugate to the accepted d0 by the signed original A action, and belongs to G because d0 is in G and G is normal in A. The exact endpoints and triple product share that model by Root imports f8e391/9a9af. This is an imported conditional model/member premise, not a new group recognition.',
+ 'For h in the full ordered-endpoint centralizer H=C_A(a,c), conjugation sends <a,b,c> to <a,b^h,c>; normality of G in Aut(G) preserves generation. The accepted two-triangle fibre gives the same middle, so partner selection leaves the subgroup unchanged. Full H/orbit/fibre identifications remain imported; owner621 is an identifier, never an H-word.',
+ 'The claim is generation only for row298 and its exact imported transfer scope. The other six strict records remain UNPAID. No IP, Aut-generation, reversal, orbit count, census, whole manuscript, conjecture, Lean or compression credit follows.'
+ ],
+ qualifications=[
+ 'Kleidman-Wilson classification/completeness and its corrigendum are borrowed through the retained accepted argument/table. The complete classification was not reproved or externally re-browsed here.',
+ 'Numerical cycle correctness is borrowed from the distinct actual strict review8853 and exact07d465 Source. The certificate was hashed opaquely; no Original numerical witness JSON, point/permutation/word evaluator, numerical kernel or represented control was executed.',
+ 'The Root TeX contains displayed words and cycle labels; they were visible as supplied proof text, not parsed into numerical witness arrays or re-evaluated. This review does not claim an additional independent numerical execution.',
+ 'All model recognition, same-inner membership, faithful-frame, full H/orbit/two-fibre and Original row interpretations remain the exact explicit Root-imported premises. Mere Aut(Fi22) membership would not suffice.',
+ 'Current typed snapshot61a092 is exact and row298 is still unpaid in that snapshot. Logical adoption is not ledger registration or global activation.',
+ 'The reviewer authored the earlier generic generation-route exposition and metadata/NEG activation work, but not this Root application/proof, actual strict review or new GEN registrar. This contribution is disclosed; the actual reviewer is Forest and the present logical reviewer is distinct.'
+ ],
+ finite_scope=dict(paths=len(pins),first_and_closing_bytes=used,input_refs=[r for b,r,s in pins.values()],no_recursive_historical_ancestry_claim=True),blockers=[])
+fr=write('full_logical_review.json',full)
+logical=dict(schema=abi['logical_schema'],status='SUPPORTED_LOGICAL_ROOT_ISSUED_PROCEDURAL_PRIME_CYCLES_GENERATION',reviewer='/root/dependency_audit',Root_authority=False,blockers=[],
+ Root_applications=[ar],proof=pr,Root_case_import=a['Root_case_import'],procedural_D_import=a['procedural_D_import'],current_snapshot=a['current_snapshot'],
+ Source_manifest=smr,strict_actual_review=actref,strict_proof=a['strict_proof'],strict_carrier=a['strict_carrier'],issuer_actual_SDK=sdkref,
+ subjects=[dict(identity=abi['original_subject'],generation=True,IP_claim=False,application=ar,conditional_represented_H_orbit_two_fibre_generation_supported=True,named_group='Fi22',strict_verdict='GEN')],
+ same_innerG_membership_required_and_explicitly_imported=True,actual11_and13_cycles_and_closing_edges_supported=True,complete_corrected_simple_Fi22_maximal_avoidance_supported=True,
+ H_two_fibre_generation_transfer_imported=True,owner_ids_not_interpreted_as_H_words=True,IP_credit=False,canonical_registration_issued=False,new_case_credit=0,
+ Original_numerical_witness_fields_decoded=False,represented_functions_or_numerical_checks_executed=False,full_logical_review=fr,
+ qualifications=full['qualifications'])
+for k,v in abi['logical_required'].items():
+ if k in ('status','reviewer','proof','Root_applications','subjects'):continue
+ assert logical[k]==v,k
+lr=write('reuse_integer_only.json',logical)
+print(json.dumps(dict(logical_review=lr,full_review=fr,paths=len(pins),first_closing_bytes=used,blockers=[])))

@@ -1,78 +1,63 @@
 Reviewed intake progress
 ========================
 
-This finite archive preserves the earlier eight-part checkpoint and the
-following completed local advances:
+This archive contains 50 finite evidence parts, 7,364 logical records and 5,776
+distinct objects. It preserves the previous 36 parts and every old public
+object. Intake remains 101 complete reviewed treatments out of 104 mathematical
+originals. F004, F009 and L026 remain; measurements stay at 53 applications across
+19 topics.
 
-* F004 job 20: the original candidate domain is covered by an explicitly
-  qualified mixed partition. Independent review and canonical registration
-  raise global completion from 126 to 127 of 272 jobs. Candidate tuples may have
-  repeated labels; the stronger rank-four requirements belong to the five
-  positive rows. The baseline and 47 accepted lineages remain attributed.
-* F009: registered parents 354 through 413 add 60 parents and 9,360 strict
-  extension slots. The registered prefix reaches 414 parents and 64,584 slots.
-  The full R5 stage requires 940 parents. Literal interval certificates do not
-  establish action reduction, the R6 census or the final graph classification.
-* L026: the new fixed-subset proposer supplies a candidate for row 290. The
-  retained strict Saved checker verifies it, and separate logical, ledger and
-  administrative reviews support a typed negative registration. Settled rows
-  reach 1,469; separate intersection proofs remain 724. The seven inconclusive
-  pilot proposals are not paid cases. The first failed strict invocation and
-  the separately attributed singleton carrier projection remain recorded.
-* F004 spectral search: the archive includes the abstract order-signature
-  argument, its independent review, the new implementation, nine fresh control
-  groups with 280 assertions, exact generated field tables and the supplied
-  certificates verified by the unchanged direct checker. Batch 2 supplies 122
-  new NOT_IP results. Its partial adoption has been published locally; the
-  publication supplement includes the completed independent postwrite review.
-  Job 155 now has 133 NG, 245 NOT_IP and 429 unpaid positions.
-  That batch gives no complete-job or completed-original credit.
-
-Intake remains 101 of 104 mathematical originals. These advances add no
-conjecture resolution, Lean proof or measured manuscript compression ratio.
-The spectral discovery timing is an observed computation, not a manuscript
-compression measurement or a general speed guarantee.
-
-Verification and limits
+Current accepted results
 -----------------------
+
+F004 has 127 of 272 q11 jobs complete. Job 155 has 773 of 807 positions settled:
+157 nongeneration results and 616 failures of the intersection property.
+The 24 newly registered nongeneration cases use one proper subspace argument.
+The checker for supplied words passed ten new synthetic controls; no target case
+is credited from that preparation. Proofs, exact inputs and registration
+reviews are listed in updates/f004_proper24_proof.json and
+updates/f004_proper24_publication.json.
+
+F009 has 438 of 940 parents registered and 68,328 extension slots checked.
+The newly published cohorts 414..425 and 426..437 add 24 parents and 3,744 slots.
+The latest cohort adds 12 parents and 1,872 slots; independent registration and
+administrative checks preserve all 1,732 earlier cache values and create 12
+new parent records and four shared records. Retained failure histories mean
+that the flags for success on the first attempt remain false. These are extension
+checks, not completion of the census or the manuscript.
+
+The current L026 bank has 725 generation results and 746 exclusions:
+1,471 settled and 27,437 unpaid rows. There are 724 separate intersection
+proofs; the new generation case receives no automatic intersection credit.
+The fresh row 304 trial was inconclusive. Across selectors 64 censuses remain
+incomplete. See updates/l026_typed1471.json and
+updates/l026_row0304_inconclusive.json.
+
+Verification and scope
+----------------------
 
 From the repository root::
 
     python3 -E -B -S october_corpus/research/intake/verified_progress/verify.py
 
-The finite verifier checks all listed object hashes and eleven readable TeX
-files. It executes no archived mathematical program, parses no certificate or
-Original operand, writes no build files, and uses only relative archive paths.
-It has 256 MiB RSS, 125-second, 128 MiB read and 4 MiB per-file limits. Its success
-establishes finite byte integrity, not mathematical replay or a proof of every
-imported premise.
+The unchanged verifier reads 134,103,490 bytes, checks every indexed object
+hash and eleven named TeX files, and writes no build products. Its limits
+remain 128 MiB read, 4 MiB per file, 256 MiB RSS and 125 seconds. Success proves
+the indexed bytes' integrity. It does not execute archived mathematics,
+establish imported model or classification premises, or complete a Lean
+formalization.
 
-All eight earlier evidence parts and every old object are retained. New
-objects are content addressed and equal bytes are reused. Historical absolute
-paths are provenance labels, not portable runtime locations or unique edition
-identifiers; the SHA256 and byte extent identify each edition. The previous
-small index, README, verifier and theory list are retained under
-checkpoints/parents0354_jobs0126_rows1468. The object tree is shared.
+The Source closure audit covers the selected manifests. Complete scientific
+Source, selected input/output bodies, written proofs, accepted full review
+leaves, genuine SDK/raw/guard records and important failure histories remain.
+All 188 protected proper subspace mappings and all 24 registration images are
+preserved. Some original paths resolve through retained aliases with identical
+bytes. Historical absolute paths are provenance labels; SHA256 and
+byte extent identify an edition.
 
-Evidence and attribution
-------------------------
-
-The evidence parts contain proof texts, complete selected Source bodies,
-independent Source/actual reviews, genuine SDK/raw transport/guard records,
-saved certificates, registration images and transaction history. Refusals and
-pre-entry failures remain visible. Successful science was not repeated to
-prepare this archive. Source authorship, independent review, mathematical
-scope ownership and Root execution are distinct roles in the records.
-
-The theory directory adds candidate-domain coverage, contraction of the
-Cayley form, the spectral order certificate and the row 290 application to the
-seven previously published texts. The G2 character identity and group-theoretic
-imports are attributed and conditional on the exact natural model, frame,
-membership, class, moved-line and overgroup premises. No historical priority
-claim is made. The spectral lookup constants are genuine Root control outputs;
-reviewers did not invent constants or rerun Original cases.
-
-This is a finite evidence archive, not a recursive export of every ancestor or
-a complete mathematical replay from a fresh clone. Existing portable replay
-packages remain listed in the corpus reproduction guide. No missing genuine
-SDK, authority, source body or actual control is manufactured by publication.
+The 83 omitted files are redundant reviewer working inventories and scripts,
+listed with reasons in OMISSIONS.json. Detailed review work is not recursively
+exported. No original local artifact or earlier public object was deleted.
+The existing portable mathematical replay packages are linked from
+../../../REPRODUCING.md. New conjecture, manuscript, Lean and compression
+credit from this publication is zero.

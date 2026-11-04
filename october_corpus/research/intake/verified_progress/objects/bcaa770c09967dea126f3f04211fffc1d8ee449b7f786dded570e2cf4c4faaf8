@@ -1,0 +1,71 @@
+"""Three fresh synthetic tests of the new opaque Saved-binding helper only."""
+import argparse, os, sys
+from pathlib import Path
+import register_gen as W
+
+
+def main():
+    W.need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+           and not sys.flags.optimize and all(k not in os.environ for k in W.ENV4),
+           'ordinary EBS/ENV4 synthetic metadata interpreter')
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--manifest',nargs=3,required=True)
+    ap.add_argument('--Root-release',nargs=3,required=True)
+    ap.add_argument('--out',required=True)
+    args=ap.parse_args();triple=lambda a:dict(path=a[0],bytes=int(a[1]),sha256=a[2]);B=W.Budget()
+    mr=triple(args.manifest);release=B.doc(triple(args.Root_release));mf=B.doc(mr)
+    W.need(release['schema']=='ROOT_L026_GEN_SAVED_BINDING_CONTROLS_RELEASE_V1'
+           and release['root']=='/root' and release['Root_authority'] is True
+           and release['Source_manifest']==mr and release['metadata_synthetic_only'] is True
+           and release['canonical_writes_authorized'] is False,
+           'new Root-owned synthetic-only release')
+    peer=B.doc(release['Source_peer'])
+    W.need(peer['status']=='SUPPORTED_STATIC_L026_PROCEDURAL_GEN_SAVED_BINDING_SOURCE'
+           and peer['Source_manifest']==mr and peer['program']==mf['program']
+           and peer['control_program']==mf['control_program']
+           and peer['borrowed_old26_controls']==W.OLD26_REFS['actual_controls']
+           and peer['borrowed_unchanged_functions']==list(W.BORROWED_FUNCTIONS)
+           and peer['reviewer'] not in('/root',W.SOURCE_AUTHOR) and peer['blockers']==[],
+           'distinct exact new Source peer; old26 retains its old subject')
+    W.need(mf['schema']=='L026_PROCEDURAL_GEN_SAVED_BINDING_SOURCE_V1'
+           and mf['program']['path']==str(Path(W.__file__).resolve())
+           and mf['control_program']['path']==str(Path(__file__).resolve())
+           and mf['borrowed_old26']==W.OLD26_REFS,'actual loaded Source origins')
+    for r in mf['controls_loaded_sources']+mf['guards']:B.read(r)
+    B.bytes+=sum(r['bytes']for r in mf['controls_loaded_sources'])+mf['guards'][0]['bytes']+3*mf['guards'][1]['bytes']+512
+    W.need(B.bytes<=64*2**20 and sum(r['bytes']for r in mf['controls_loaded_sources']+mf['guards'])+512<=65536,
+           'complete unchanged read/Source bounds')
+    tests=[]
+    # All bodies and paths below are explicit synthetic in-memory metadata.
+    body=b'synthetic opaque carrier\n'
+    left=W.reference('/private/tmp/toy_saved_binding/producer.json',body)
+    right=W.reference('/private/tmp/toy_saved_binding/strict.json',body)
+    producer=dict(carrier=left);strict=dict(carrier=right);request=dict(saved=left)
+    W.need(left['path']!=right['path'] and W.saved_carrier_binding(request,producer,strict,body,body)==(left,right),
+           'different paths with identical bytes are valid')
+    tests.append('different_paths_same_content')
+    try:W.saved_carrier_binding(dict(saved=right),producer,strict,body,body)
+    except ValueError:tests.append('wrong_producer_binding')
+    else:raise ValueError('wrong producer binding was accepted')
+    other=b'different synthetic opaque carrier\n'
+    changed=dict(carrier=W.reference(right['path'],other))
+    try:W.saved_carrier_binding(request,producer,changed,body,other)
+    except ValueError:tests.append('different_content')
+    else:raise ValueError('different content was accepted')
+    W.need(len(tests)==len(set(tests))==3,'exact three fresh binding controls')
+    result=dict(schema='L026_GEN_SAVED_BINDING_CONTROLS_V1',status='PASS',Source_manifest=mr,
+                Source_peer=release['Source_peer'],program=mf['control_program'],controls=tests,
+                controls_count=3,Original_inputs_loaded=False,new_helper_only=True,
+                old26_controls_replayed=False,old32_science_controls_replayed=False,
+                scientific_functions_executed=False,canonical_writes=0)
+    raw=W.can(result);out=Path(args.out)
+    W.need(out.is_absolute() and '..' not in out.parts and str(out)==args.out
+           and out.is_relative_to('/private/tmp') and out.parent.resolve(strict=True)==out.parent
+           and not os.path.lexists(out) and len(raw)<=131072,'fresh canonical bounded toy report')
+    B.final();B.tick()
+    with out.open('xb')as stream:W.need(stream.write(raw)==len(raw),'whole toy report')
+    print(W.can(dict(status='PASS',output=W.reference(out,raw),controls=3,canonical_writes=0,
+                    physical_reads=B.bytes)).decode(),end='')
+
+
+if __name__=='__main__':main()

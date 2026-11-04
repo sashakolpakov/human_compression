@@ -1,0 +1,59 @@
+"""Supplied-only proper-span equations; no row reduction, acquisition or mover search."""
+import os, sys
+if sys.flags.optimize:
+    raise RuntimeError('optimized interpreter is not an owned execution')
+_source_directory=os.path.dirname(os.path.realpath(__file__))
+_local_modules=('retained_math','original_context','admission','linear','runtime','discovery','direct','controls')
+_cache_names=('__pycache__',)+tuple(n+s for n in _local_modules for s in('.pyc','.pyo'))
+for _cache_name in _cache_names:
+    if os.path.lexists(os.path.join(_source_directory,_cache_name)):
+        raise RuntimeError('local bytecode cache must be absent before project imports')
+import retained_math as M
+import original_context
+import runtime as R
+import linear as L
+
+def main():
+    b,mf,mr,plan,pr,gate,gr=R.start('DIRECT',__file__)
+    ctx,positions=R.scoped(plan,gate,b);source=b.doc(plan['search_result'])
+    M.need(source['schema']=='Q11_PROPER_SUBSPACE_SEARCH_RESULT_V1'
+      and source['Source_manifest']==mr and source['program']==mf['roles']['SEARCH']['program']
+      and source['plan']==plan['search_plan']and source['Root_gate']==plan['search_gate']
+      and source['original_job']==plan['original_job']and source['selector']==plan['selector']
+      and source['original_domain_whole_pins']==ctx['refs']and source['target_positions']==positions,
+      'exact untrusted producer/frame/domain/selected data')
+    oldplan=b.doc(plan['search_plan']);oldgate=b.doc(plan['search_gate'])
+    M.need(oldplan['schema']=='Q11_PROPER_SUBSPACE_SEARCH_PLAN_V1'and oldplan['Source_manifest']==mr
+      and oldplan['program']==mf['roles']['SEARCH']['program']and oldplan['selected_orbit_positions']==positions
+      and oldplan['selector']==plan['selector']and oldgate['plan']==plan['search_plan']
+      and oldgate['schema']=='ROOT_AUTHORIZED_Q11_PROPER_SUBSPACE_V1'and oldgate['role']=='SEARCH'
+      and oldgate['root']=='/root'and oldgate['program']==mf['roles']['SEARCH']['program']
+      and oldgate['Source_manifest']==mr and oldgate['Root_authority']is oldgate['issued']is True,
+      'whole producer data, not a reused old GEN verdict')
+    records=source['records'];M.need(type(records)is list and len(records)<=len(positions),'bounded whole record bank')
+    work=L.ScalarWork(b.tick);visited=[];verified=[];inconclusive=[]
+    keys={'original_orbit_position','representative_J_index','original_orbit_row_sha256','certificate','outcome'}
+    for record in records:
+        M.need(type(record)is dict and set(record)==keys,'whole record grammar')
+        p=record['original_orbit_position'];M.need(type(p)is int and p==positions[len(visited)],'typed exact original prefix')
+        marks=R.marks(p,record,ctx,b);fact=record['certificate']
+        if fact is None:
+            M.need(record['outcome']in('FULL_SPACE_INCONCLUSIVE','NO_SUPPLIED_AMBIENT_MOVER_INCONCLUSIVE'),
+                   'miss is not a proof of either generation or properness')
+            inconclusive.append(p)
+        else:
+            M.need(record['outcome']=='UNTRUSTED_PROPER_SPAN_PROPOSAL','explicit supplied properness proposal')
+            work.begin_case();L.direct(fact,ctx,marks,b,work);verified.append(p)
+        visited.append(p)
+    M.need(visited==source['visited_positions']and verified==source['proposed_proper_positions']
+      and inconclusive==source['inconclusive_positions']and source['unvisited_positions']==positions[len(visited):]
+      and source['status']in('RESOURCE_FRONTIER','FINITE_SELECTION_COMPLETED')
+      and(source['status']!='FINITE_SELECTION_COMPLETED'or visited==positions),'complete actual result partition')
+    result=dict(schema='Q11_PROPER_SUBSPACE_DIRECT_RESULT_V1',status='VERIFIED_SUPPLIED_PROPER_SPAN_CERTIFICATES',
+      program=mf['roles']['DIRECT']['program'],Source_manifest=mr,plan=pr,Root_gate=gr,original_job=plan['original_job'],
+      selector=plan['selector'],search_result=plan['search_result'],verified_proper_positions=verified,
+      inconclusive_positions=inconclusive,unvisited_positions=source['unvisited_positions'],new_linear_scalar_units=work.used,
+      acquisition_or_RREF_or_mover_search_calls=0,ambient_irreducibility_imported=False,GEN_claim=False,IP_claim=False,paid_credit=0)
+    R.finish(result,plan,b)
+
+if __name__=='__main__':main()

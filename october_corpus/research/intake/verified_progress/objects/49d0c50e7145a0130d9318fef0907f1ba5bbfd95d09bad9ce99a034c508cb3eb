@@ -1,0 +1,71 @@
+"""Literal reviewed lexical metadata projection; scientific values stay byte spans."""
+import json,time
+BEGIN=time.monotonic()
+FORBIDDEN={"parent","parents","records","covers","cache_entries","representatives","next_parent_forests","forest","forests","matrices","permutations","transporter","transporters","witness","marks","model","seed","points"}
+def budget():assert time.monotonic()-BEGIN<115
+
+def ws(b,i):
+    while i<len(b)and b[i]in b' \r\n\t':i+=1
+    return i
+
+def end_string(b,i):
+    assert b[i]==34;i+=1
+    while i<len(b):
+        if b[i]==92:i+=2
+        elif b[i]==34:return i+1
+        else:i+=1
+    raise ValueError('unterminated string')
+
+def end_value(b,i):
+    if b[i]==34:return end_string(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]];i+=1
+        while stack:
+            assert i<len(b)and len(stack)<=4096
+            if b[i]==34:i=end_string(b,i);continue
+            if b[i]in b'[{':stack.append(b[i])
+            elif b[i]in b']}':assert(stack.pop(),b[i])in((91,93),(123,125))
+            i+=1
+        return i
+    while i<len(b)and b[i]not in b',]} \r\n\t':i+=1
+    return i
+
+def fields(b):
+    i=ws(b,0);assert b[i]==123;i=ws(b,i+1);out={}
+    while b[i]!=125:
+        j=end_string(b,i);key=json.loads(b[i:j]);assert key not in out
+        i=ws(b,j);assert b[i]==58;i=ws(b,i+1);j=end_value(b,i);out[key]=b[i:j];i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:assert b[i]==125
+    assert ws(b,i+1)==len(b);return out
+
+def array(b):
+    i=ws(b,0);assert b[i]==91;i=ws(b,i+1);out=[]
+    while b[i]!=93:
+        j=end_value(b,i);out.append(b[i:j]);i=ws(b,j)
+        if b[i]==44:i=ws(b,i+1)
+        else:assert b[i]==93
+    assert ws(b,i+1)==len(b);return out
+
+def metadata(b):
+    b=b.strip()
+    if b[:1]==b'{':
+        f=fields(b);assert not FORBIDDEN&set(f)
+        return{k:metadata(v)for k,v in f.items()}
+    if b[:1]==b'[':return[metadata(v)for v in array(b)]
+    return json.loads(b)
+
+def equivalent(a,b):
+    budget()
+    if a==b:return True
+    a,b=a.strip(),b.strip()
+    if a==b:return True
+    if a[:1]==b'{':
+        if b[:1]!=b'{':return False
+        af,bf=fields(a),fields(b)
+        return set(af)==set(bf)and all(equivalent(af[k],bf[k])for k in af)
+    if a[:1]==b'[':
+        if b[:1]!=b'[':return False
+        aa,ba=array(a),array(b)
+        return len(aa)==len(ba)and all(equivalent(x,y)for x,y in zip(aa,ba))
+    return False

@@ -1,0 +1,236 @@
+--- retained/run.py
++++ current/run.py
+@@ -18,9 +18,9 @@
+  exec(compile(body,ref['path'],'exec'),ns);return ns
+ BASE_PACKET={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/packet.json', 'bytes': 15809, 'sha256': '8e8fe796e13a726dd6d5ff7e9a5eaecb95f1d327c7610cd89193aaaf39ca0422'}
+ BASE_COMMON={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/bounded_common.py', 'bytes': 19295, 'sha256': 'e97c711aec6b4e2ea07da76435d8d4374addb8fb27881fdc46e1e976bf1c64db'}
+-SUPPORT={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/support.py', 'bytes': 11902, 'sha256': 'f9a02dac8aa1e5026b54ea701bcfa3e25022e524dd23cedfea53fa56f408eece'}
++SUPPORT={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/support.py', 'bytes': 16021, 'sha256': 'ba72bb834061c38fbc6f3823275b11a7248a093086af8cf3596b8e33d1abe78b'}
+ TRANSITIONS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/transitions.py', 'bytes': 16682, 'sha256': '52350d2d11a8c893862864b9f0471b6df3dbbbb93059456db2a843177967fba2'}
+-CONTROLS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/controls.py', 'bytes': 4470, 'sha256': 'eac09113a2309e24f5a27d100e88dd48ff918ff4511630aa6ef43c031152ef78'}
++CONTROLS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_resource_binding_retries/controls.py', 'bytes': 6565, 'sha256': '9d2e8ea6a42f351875e771020a56f15aee8d1d7dd0062d39989885291f282a63'}
+ BASE_PEER={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/source_review/reuse_integer_only.json', 'bytes': 26460, 'sha256': '6a5137c897545556f5c77eab9f563d7419210cfc748b5669126a8ac88772dcf9'}
+ CORE_CONTROLS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/actual/core_admission/actual_review/reuse_integer_only.json', 'bytes': 11846, 'sha256': '3342fd4dd422de28e637e07d2e93df5d93724d2c2822d018dbac725c74020042'}
+ GENERIC_CONTROLS={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/actual/metadata_controls/actual_review/reuse_integer_only.json', 'bytes': 14316, 'sha256': '527ce5f3734beded37477b77a386c98f7bb592e50d7bece9d0c0b381e0f8e355'}
+@@ -43,21 +43,14 @@
+ T=types.SimpleNamespace(**load(TRANSITIONS,'resource_binding_transitions',dict(C=C,BASE_E=BASE_E)))
+ old['metadata_actual']=S.metadata_actual
+ old['role']=T.role
+-acquired_metadata_attempt=BASE_E.metadata_attempt
+-def metadata_attempt(ctx,record,op,key,identity):
+- sdk=C.doc(ctx.L,record['actual_SDK'])
+- if ctx.packet['supplement']['program']['path']in sdk['issued_argv']:
+-  assert type(record['edition'])is int and record['edition']==1
+-  assert record['prior_non_success_attempts']==[]
+- return acquired_metadata_attempt(ctx,record,op,key,identity)
+-old['metadata_attempt']=metadata_attempt
++old['metadata_attempt']=S.metadata_attempt
+ E=types.SimpleNamespace(**old)
+ # The new helper authenticates both explicit Source subjects, not a renamed API.
+ S.metadata_actual.__globals__['BASE_E']=BASE_E
+ bindings=dict(C=C,E=E)
+ if a.op=='prepare_retry':T.prepare(ctx)
+ elif a.op=='controls':
+- controls=load(CONTROLS,'resource_binding_toy_controls',dict(C=C,T=T));controls['run'](ctx)
++ controls=load(CONTROLS,'resource_binding_toy_controls',dict(C=C,T=T,S=S));controls['run'](ctx)
+ else:
+  name={'phase.py':'phases','close.py':'reviews','audit_batch.py':'reviews',
+        'audit_cohort.py':'reviews','register.py':'registration','check_registration.py':'administration'}[a.op]
+--- retained/support.py
++++ current/support.py
+@@ -40,6 +40,41 @@
+     prefix=['/usr/bin/env']
+     for name in ENV:prefix+=['-u',name]
+     return prefix+[C.PYTHON,'-E','-B','-S',program]+argv
++
++def command_kind(argv,program):
++    """Distinguish our direct entry from the inherited profiled entry."""
++    direct=metadata_argv(program,[])
++    if argv[:len(direct)]==direct:return'standalone'
++    # The inherited metadata profile uses -E -B, without the child -S.
++    env=['/usr/bin/env']
++    for name in ENV:env+=['-u',name]
++    profiled=env+[C.PYTHON,'-E','-B',C.PROFILE_REF['path']]
++    if argv[:len(profiled)]==profiled and '--'in argv:return'profiled'
++    raise AssertionError('not an admitted metadata command shape')
++
++def standalone_call(argv,program,packet,op):
++    assert command_kind(argv,program)=='standalone'
++    child=argv[len(metadata_argv(program,[])):]
++    sizes={'actor':1,'op':1,'packet':3,'request':3,'Root-gate':3,'out':1}
++    parts={};cursor=0
++    while cursor<len(child):
++        key=child[cursor]
++        assert type(key)is str and key.startswith('--')and key[2:]in sizes
++        name=key[2:];assert name not in parts
++        n=sizes[name];value=child[cursor+1:cursor+1+n]
++        assert len(value)==n and all(type(v)is str for v in value)
++        parts[name]=value;cursor+=n+1
++    assert set(parts)==set(sizes)and parts['actor']==['/root']and parts['op']==[op]
++    assert C.can(cli(parts['packet']))==C.can(packet)
++    return dict(request=cli(parts['request']),gate=cli(parts['Root-gate']),out=parts['out'][0])
++
++def logical_identity(request,op,identity):
++    assert request['schema']=='F009_RESOURCE_BINDING_METADATA_REQUEST_V1'
++    assert request['Root_authority']is False and request['op']==op
++    for key,value in identity.items():assert C.can(request[key])==C.can(value)
++
++def prior_non_success(sdk):
++    assert type(sdk['actual_tool']['exit_code'])is int and sdk['actual_tool']['exit_code']!=0
+ 
+ class Context:
+     def __init__(self,a,packet_ref,packet,manifest_ref,manifest):
+@@ -78,7 +113,7 @@
+             assert controls['status']=='SUPPORTED_ACTUAL_F009_RESOURCE_BINDING_CONTROLS'and controls['blockers']==[]
+             assert controls['packet']==packet_ref and controls['Source_peer']==self.peer_ref and controls['Original_inputs_loaded']is False
+             assert controls['Source_manifest']==packet['entry_manifests']['controls']
+-            assert type(controls['count'])is int and controls['count']==28
++            assert type(controls['count'])is int and controls['count']==40
+             assert controls['reviewer']not in(None,'/root','/root/readback_review',AUTHOR)
+         self.out=Path(a.out);assert self.out.is_absolute()and self.out.resolve(strict=True)==self.out
+         assert not self.out.is_relative_to(C.PROGRESS)
+@@ -148,31 +183,64 @@
+ 
+ def metadata_actual(ctx,sdkref,rawdir,op,expected_outputs=None):
+     s=C.doc(ctx.L,sdkref);argv=s['issued_argv']
+-    if ctx.packet['supplement']['program']['path']not in argv:
++    supplement=ctx.packet.get('supplement')
++    if supplement is None or supplement['program']['path']not in argv:
+         proxy=types.SimpleNamespace(**ctx.__dict__);proxy.packet_ref=BASE_PACKET;proxy.packet=BASE_PACKET_VALUE
+         proxy.peer_ref=BASE_PEER
+         return BASE_E.metadata_actual(proxy,sdkref,rawdir,op,expected_outputs)
+     s=BASE_E.api(ctx.L,sdkref,Path(rawdir),argv,True)
+-    prefix=metadata_argv(ctx.packet['supplement']['program']['path'],[])
+-    assert argv[:len(prefix)]==prefix
+-    child=argv[len(prefix):]
+-    def one(k):
+-        assert child.count('--'+k)==1;return child[child.index('--'+k)+1]
+-    def ref(k):
+-        i=child.index('--'+k);return cli(child[i+1:i+4])
+-    assert one('actor')=='/root'and one('op')==op and ref('packet')==ctx.packet_ref
+-    q=C.doc(ctx.L,ref('request'));g=C.doc(ctx.L,ref('Root-gate'))
+-    assert q['op']==g['op']==op and g['packet']==ctx.packet_ref and g['request']==ref('request')
++    parts=standalone_call(argv,ctx.packet['supplement']['program']['path'],ctx.packet_ref,op)
++    q=C.doc(ctx.L,parts['request']);g=C.doc(ctx.L,parts['gate'])
++    assert q['op']==g['op']==op and g['packet']==ctx.packet_ref and g['request']==parts['request']
+     assert g['program']==ctx.packet['supplement']['program']and g['Source_peer']==ctx.peer_ref
+     assert g['Root_authority']is g['adopted']is True and g['Source_manifest']==ctx.packet['entry_manifests'][op]
+     output=json.loads(s['full_tool_return']['output'])
+     assert output['packet']==ctx.packet_ref and output['Source_manifest']==g['Source_manifest']
+-    assert output['Root_gate']==ref('Root-gate')and output['request']==ref('request')and output['Source_peer']==ctx.peer_ref
++    assert output['Root_gate']==parts['gate']and output['request']==parts['request']and output['Source_peer']==ctx.peer_ref
+     assert output['cooperative_metadata_only']is True and output['external_resource_guard_claimed']is False
+     assert output['scientific_calls']==0
+     if expected_outputs is not None:assert output['outputs']==expected_outputs
+     for r in output['outputs']:C.raw(ctx.L,r)
+     return output,q,g
++
++def metadata_attempt(ctx,record,op,key,identity):
++    """Actual standalone histories, with no profiler '--' assumption."""
++    s=C.doc(ctx.L,record['actual_SDK'])
++    supplement=ctx.packet.get('supplement')
++    if supplement is None or supplement['program']['path']not in s['issued_argv']:
++        proxy=types.SimpleNamespace(**ctx.__dict__);proxy.packet_ref=BASE_PACKET;proxy.packet=BASE_PACKET_VALUE
++        proxy.peer_ref=BASE_PEER
++        return BASE_E.metadata_attempt(proxy,record,op,key,identity)
++    n=record['edition'];assert type(n)is int and 1<=n<=8
++    history=record['prior_non_success_attempts']
++    assert type(history)is list and len(history)==n-1
++    assert Path(record['actual_SDK']['path']).name==key+'_v%d.json'%n
++    printed,q,g=metadata_actual(ctx,record['actual_SDK'],record['raw_directory'],op)
++    logical_identity(q,op,identity)
++    for edition,prior in enumerate(history,1):
++        assert type(prior['edition'])is int and prior['edition']==edition
++        assert Path(prior['actual_SDK']['path']).name==key+'_v%d.json'%edition
++        old=C.doc(ctx.L,prior['actual_SDK']);prior_non_success(old)
++        argv=old['issued_argv']
++        BASE_E.api(ctx.L,prior['actual_SDK'],Path(prior['raw_directory']),argv,False)
++        parts=standalone_call(argv,ctx.packet['supplement']['program']['path'],ctx.packet_ref,op)
++        oq=C.doc(ctx.L,parts['request']);og=C.doc(ctx.L,parts['gate'])
++        logical_identity(oq,op,identity)
++        assert og['schema']=='ROOT_F009_RESOURCE_BINDING_METADATA_GATE_V1'
++        assert og['root']=='/root'and og['Root_authority']is og['adopted']is True
++        assert og['packet']==ctx.packet_ref and og['op']==op and og['request']==parts['request']
++        assert og['program']==ctx.packet['supplement']['program']and og['Source_peer']==ctx.peer_ref
++        assert og['Source_manifest']==ctx.packet['entry_manifests'][op]
++        rec=C.doc(ctx.L,prior['reconciliation'])
++        assert rec['schema']=='ROOT_F009_GENERIC_METADATA_NON_SUCCESS_RECONCILIATION_V2'
++        assert rec['root']=='/root'and rec['Root_authority']is True
++        assert rec['prior_actual_SDK']==prior['actual_SDK']and rec['selected_actual_SDK']==record['actual_SDK']
++        assert rec['op']==op and rec['logical_key']==key
++        for flag in('same_logical_metadata_operation_owned','no_scientific_worker_or_predicate_called','no_completed_output_replayed','all_old_frames_and_partial_outputs_retained'):
++            assert rec[flag]is True
++        assert type(rec['inspections'])is list and 1<=len(rec['inspections'])<=4
++        for item in rec['inspections']:C.raw(ctx.L,item)
++    return printed,q,g
+ 
+ 
+ def fixed_read(path,expected):
+--- retained/controls.py
++++ current/controls.py
+@@ -41,7 +41,30 @@
+     for key,value in(('Root_authority',False),('batch',False),('from_edition',True),('selected_edition',True),('disposition','GENUINE_PREENTRY_REFUSAL')):
+         bad('reject wrong transition '+key,lambda k=key,v=value:check(dict(t,**{k:v})))
+     for flag in T.FLAGS:bad('reject missing ownership '+flag,lambda k=flag:check(dict(t,**{k:False})))
+-    assert len(names)==len(set(names))==28
++    packet=dict(path='/packet',bytes=7,sha256='a'*64)
++    req=dict(path='/request',bytes=1,sha256='b'*64);gate=dict(path='/gate',bytes=1,sha256='c'*64)
++    args=['--actor','/root','--op','phase.py','--packet',*C.trip(packet),
++        '--request',*C.trip(req),'--Root-gate',*C.trip(gate),'--out','/out']
++    argv=S.metadata_argv('/new/run.py',args)
++    good('standalone own packet and op parser',lambda:S.standalone_call(argv,'/new/run.py',packet,'phase.py'))
++    env=['/usr/bin/env']
++    for item in S.ENV:env+=['-u',item]
++    profiled=env+[C.PYTHON,'-E','-B',C.PROFILE_REF['path'],'--','old_entry']
++    def inherited():assert S.command_kind(profiled,'/new/run.py')=='profiled'
++    good('classify inherited profiled argv separately',inherited)
++    bad('reject profiled argv as standalone',lambda:S.standalone_call(profiled,'/new/run.py',packet,'phase.py'))
++    bad('reject substituted metadata program',lambda:S.standalone_call(argv,'/wrong/run.py',packet,'phase.py'))
++    bad('reject substituted metadata packet',lambda:S.standalone_call(argv,'/new/run.py',dict(packet,sha256='d'*64),'phase.py'))
++    bad('reject substituted metadata op',lambda:S.standalone_call(argv,'/new/run.py',packet,'close.py'))
++    identity=dict(cohort=dict(path='/cohort',bytes=2,sha256='e'*64),batch=0,phase='assemble_strict')
++    q=dict(identity,schema='F009_RESOURCE_BINDING_METADATA_REQUEST_V1',Root_authority=False,op='phase.py')
++    good('same logical metadata identity',lambda:S.logical_identity(q,'phase.py',identity))
++    bad('reject Boolean batch identity substitution',lambda:S.logical_identity(dict(q,batch=False),'phase.py',identity))
++    bad('reject authority-bearing untrusted metadata request',lambda:S.logical_identity(dict(q,Root_authority=True),'phase.py',identity))
++    good('retain nonzero prior metadata attempt',lambda:S.prior_non_success(dict(actual_tool=dict(exit_code=1))))
++    bad('reject prior successful metadata attempt',lambda:S.prior_non_success(dict(actual_tool=dict(exit_code=0))))
++    bad('reject Boolean exit code',lambda:S.prior_non_success(dict(actual_tool=dict(exit_code=True))))
++    assert len(names)==len(set(names))==40
+     result=dict(schema='F009_RESOURCE_BINDING_SYNTHETIC_CONTROLS_V1',count=len(names),control_names=names,
+         all_controls_passed=True,Original_inputs_loaded=False,scientific_calls=0,
+         scope='Actual production pure predicates with synthetic dictionaries. No genuine API, filesystem absence, complete Root authority chain, numerical predicate or publication atomicity is tested.')
+--- retained/PROTOCOL.rst
++++ current/PROTOCOL.rst
+@@ -55,7 +55,7 @@
+ before allocation. Optimized Python is rejected explicitly before assertions
+ or Source loading. Metadata equality uses canonical typed encodings, so Boolean
+ and integer substitutions are distinct. The fresh controls leaf must bind its
+-exact manifest and strict integer count of 28.
++exact manifest and strict integer count of 40.
+ 
+ The existing phase, closer, audit, registration and administrative algorithms
+ are invoked without mathematical changes. The new science preparation adapter
+@@ -65,12 +65,16 @@
+ retain the explicit original/effective binding record. False first-v1 summary
+ fields stay false when a setup-failure transition is present.
+ 
+-New standalone metadata calls are admitted only at edition 1 with empty prior
+-metadata history. The old genuinely profiled initialization/preparation calls
+-retain their original supported attempt histories. A failed new standalone
+-metadata call must not be retried and later called admitted by this edition;
+-an explicit separately reviewed admission is then required. This restriction
+-does not limit the independently authenticated scientific v1-to-v2 transition.
++Standalone metadata histories admit one to eight editions. Every nonzero prior
++attempt is authenticated at its own exact argv/SDK/raw frames and must name
++the same supplement program, packet, operation and logical cohort/batch/phase.
++A separate positive Root reconciliation owns the retained frames, partial
++outputs, absence of scientific calls and refusal to replay completed work.
++Successful prior attempts, different Source packets/programs and mismatched
++logical identities are rejected. There is no profiler ``--`` assumption for
++these calls. Old genuinely profiled initialization/preparation histories use
++their original adapter and remain separate from this standalone route, and
++both remain separate from the scientific resource-binding transition.
+ 
+ Registration alone may publish the two fixed intake/controller targets. It
+ reuses the existing raw-value preservation algorithm, writes all fresh stage

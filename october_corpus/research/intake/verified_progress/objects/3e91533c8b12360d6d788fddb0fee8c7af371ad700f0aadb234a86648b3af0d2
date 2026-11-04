@@ -1,0 +1,181 @@
+"""Synthetic metadata admission controls; no genuine SDK or Original fixture."""
+import argparse,ast,copy,hashlib,json,resource,signal,sys,time
+from pathlib import Path
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize
+START=time.monotonic();signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('controls125s')));signal.alarm(125)
+HERE=Path(__file__).resolve().parent;P=HERE.parent
+PYTHON='/Users/sasha/.venvs/global/bin/python'
+SOURCE_COMMON={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_legacy_attempts/actual_audit/common.py', 'bytes': 32951, 'sha256': 'bfe784318282fe58350c9de5ec75959ca5754359552e94965d938d6a241eebde'}
+SOURCE_SELECTION={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_legacy_attempts/attempt_selection.py', 'bytes': 3260, 'sha256': '7340fcda5de6264afc93e3c885d19bcb53b8d0d5e3900318d66a9a61fe69cf4d'}
+PACKET={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_legacy_attempts/packet.json', 'bytes': 4406, 'sha256': 'afd2b09fae1ce913221e024e75c64ec9df14aa32d8d0d5f468ecf5bb6de4ec68'}
+SOURCE_BATCH={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_legacy_attempts/actual_audit/audit_batch.py', 'bytes': 8661, 'sha256': 'ed448845099b28ec9b882dc5eaecc2f5c076cf371e0de043dc9fe61fc65ecf49'}
+HELPER={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_legacy_attempts/actual_audit/whole.py', 'bytes': 3744, 'sha256': '685e1a50e952069f43f8806a0991acfd5164e8c2f999372df131efc94075f550'}
+hb=Path(HELPER['path']).read_bytes();assert len(hb)==HELPER['bytes']and hashlib.sha256(hb).hexdigest()==HELPER['sha256']
+ns=dict(__file__=HELPER['path'],__name__='f009_synthetic_control_ledger');exec(compile(hb,HELPER['path'],'exec'),ns);Ledger=ns['Ledger']
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def check():
+ assert time.monotonic()-START<115
+ assert resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024)<=256*2**20
+
+def toyref(path,value):
+ b=can(value);return dict(path=str(path),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+class ToyLedger:
+ """In-memory metadata only. It never opens a fixture path or runs an API."""
+ def __init__(self):self.docs={};self.calls=[]
+ def add(self,path,value):
+  r=toyref(path,value);self.docs[str(path)]=(value,r);return r
+ def raw(self,path,expected=None):
+  v,r=self.docs[str(path)]
+  if expected is not None:assert expected==r
+  self.calls.append(('raw',str(path)));return can(v),r
+ def doc(self,r):
+  v,rr=self.docs[r['path']];assert r==rr;self.calls.append(('doc',r['path']));return copy.deepcopy(v)
+
+def fixture():
+ L=ToyLedger();base=Path('/private/tmp/f009_legacy_attempt_synthetic/cohort_from0414/parents0414_0416')
+ control=Path('/private/tmp/f009_legacy_attempt_synthetic/control/cohort_from0414')
+ prog=L.add(control/'adapter.py',{'synthetic':'adapter_descriptor_only'})
+ hr=L.add(control/'cohort.json',{'synthetic':'cohort_descriptor_only'})
+ h=dict(begin=414,end=426,program=prog)
+ previous=L.add(base/'Root_SDK/parents0414_0416_check_v1.json',{'synthetic':'preentry_descriptor_only'})
+ current=L.add(base/'Root_SDK/parents0414_0416_check_v2.json',{'synthetic':'selected_descriptor_only'})
+ inspection=L.add(control/'inspection.json',{'synthetic':True,'values':'metadata_only'})
+ recon=dict(schema='ROOT_F009_EXACT_ROLE_PREENTRY_RETRY_RECONCILIATION_V1',root='/root',Root_authority=True,stem='parents0414_0416_check',refused_actual_SDK=previous,selected_actual_SDK=current,actual_absence_or_resource_inspections=[inspection,previous])
+ flags=('no_scientific_child_started','guard_and_output_absent_before_selected_attempt','same_exact_argv_as_selected','original_guard_and_scientific_caps_unchanged')
+ recon.update({k:True for k in flags});rr=L.add(control/'reconciliation.json',recon)
+ prior=dict(edition=1,disposition='GENUINE_PREENTRY_REFUSAL',actual_SDK=previous,preentry_reconciliation=rr)
+ role=dict(stem='parents0414_0416_check',edition=2,actual_SDK=current,prior_attempts=[prior])
+ binding=dict(schema='ROOT_F009_COHORT_ROLE_ACTUAL_BINDINGS_V1',root='/root',Root_authority=True,cohort=hr,program=prog,batch=0,phase='close_pairing',roles=[role])
+ br=L.add(control/'bindings.json',binding)
+ L.add(base/'Root_SDK/parent0414_supply_v1.json',{'synthetic':'supplier_descriptor_only'})
+ packet=L.add(control/'adapter_packet.json',{'synthetic':'packet_descriptor_only'})
+ peer=L.add(control/'adapter_peer.json',dict(status='SUPPORTED_STATIC_SYNTHETIC',blockers=[],reviewer='/synthetic/peer',program=prog))
+ d=dict(root='/root',Root_authority=True,status='SUPPORTED',blockers=[],packet=packet,program=prog,cohort=hr,batch=0,phase='close_pairing',independent_Source_peer=peer,actual_bindings=br)
+ owned=('new_metadata_Source_interfaces_and_bills_owned','old_scientific_Source_controls_and_mathematics_owned','exact_fresh_cohort_and_disjoint_batch_owned','frozen_progress_edition_held','no_successful_science_repeated','actual_attempt_bindings_and_preentry_reconciliations_owned','metadata_phase_authorized')
+ d.update({k:True for k in owned});dr=L.add(control/'decisions/batch00_close_pairing.json',d)
+ helper=L.add(control/'retained_helper.py',{'synthetic':'helper_descriptor_only'})
+ manual_sdk=L.add(control/'manual_sdk.json',dict(issued_argv=[PYTHON,'-E','-B','-S','-c','synthetic metadata; never executed'],full_tool_return=dict(output=json.dumps(dict(decision=dr,scientific_calls=0))),synthetic_API_key='manual',synthetic_success=True))
+ failed_sdk=L.add(control/'failed_sdk.json',dict(issued_argv=[PYTHON,'-E','-B','-S',helper['path'],'phase'],full_tool_return=dict(output='FileNotFoundError ROOT_DECISION_TEMPLATE_FALSE.json'),synthetic_API_key='failed',synthetic_success=False))
+ metadata_sdk=L.add(control/'Root_SDK/batch00_close_pairing_v1.json',dict(synthetic_API_key='Root_f009_cohort0414_batch00_close_pairing_v1',synthetic_success=True))
+ manual=dict(batch=0,phase='close_pairing',decision=dr,actual_SDK=manual_sdk,raw_key='manual',failed_convenience_issuer_SDK=failed_sdk,failed_raw_key='failed',retained_helper=helper)
+ cfg=dict(adapter_packet=packet,_owner_V2=True,_supplement=dict(selected_scientific_attempts=br,manual_phase_issuance=manual))
+ return dict(expected_pairing_history=[dict(edition=1,actual_SDK=previous,preentry_reconciliation=rr,actual_absence_or_resource_inspections=[inspection,previous])],L=L,base=base,control=control,cohort=h,cohortref=hr,selection=br,binding=binding,recon=recon,reconref=rr,decision=d,decisionref=dr,config=cfg,manual=manual,manual_sdk=manual_sdk,failed_sdk=failed_sdk,metadata_sdk=metadata_sdk,flags=flags,owned=owned)
+
+def refresh(f):
+ # Mutations update only their original in-memory object. Descriptors remain
+ # fixture names, and the selected function reads the mutated value via doc().
+ L=f['L']
+ def replace(r,v):L.docs[r['path']]=(v,r)
+ replace(f['selection'],f['binding']);replace(f['reconref'],f['recon']);replace(f['decisionref'],f['decision'])
+
+ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True);ap.add_argument('--Source-peer',nargs=3,required=True);ap.add_argument('--out',required=True);a=ap.parse_args();assert a.actor=='/root'
+L=Ledger();own,program=L.raw(Path(__file__).resolve());mf,mr=L.document(HERE/'Source_manifest_controls.json')
+assert mf['entry']==program and mf['Source_namespace_cap']==98304
+for r in mf['Source']+mf['guards']:L.raw(r['path'],r)
+assert sum(r['bytes']for r in mf['Source']+mf['guards'])+512==mf['Source_plus_guards512']<=98304
+pr=dict(path=a.Source_peer[0],bytes=int(a.Source_peer[1]),sha256=a.Source_peer[2]);peer,_=L.document(pr['path'],pr)
+assert peer['status'].startswith('SUPPORTED_STATIC')and peer['blockers']==[]and peer['reviewer']not in('/root','/root/readback_review','/root/dependency_audit')
+assert peer['program']==program and peer['Source_manifest']==mr and peer['production_program']==SOURCE_COMMON and peer['selection_program']==SOURCE_SELECTION and peer['production_packet']==PACKET and peer['batch_program']==SOURCE_BATCH
+source,_=L.raw(SOURCE_COMMON['path'],SOURCE_COMMON);selection,_=L.raw(SOURCE_SELECTION['path'],SOURCE_SELECTION);L.raw(PACKET['path'],PACKET)
+selected_scope={};exec(compile(selection,SOURCE_SELECTION['path'],'exec'),selected_scope);selected_role=selected_scope['selected_role'];pairing_history=selected_scope['pairing_history']
+batch_source,_=L.raw(SOURCE_BATCH['path'],SOURCE_BATCH)
+batch_tree=ast.parse(batch_source)
+pair_assert=next(n for n in ast.walk(batch_tree)if isinstance(n,ast.Assert)and 'pairing_history'in ast.unparse(n)and "strict['actual_edition']"in ast.unparse(n))
+pair_code=compile(ast.fix_missing_locations(ast.Module(body=[pair_assert],type_ignores=[])),SOURCE_BATCH['path'],'exec')
+tree=ast.parse(source);phase_node=next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name=='phase')
+phase_code=compile(ast.fix_missing_locations(ast.Module(body=[phase_node],type_ignores=[])),SOURCE_COMMON['path'],'exec')
+prep_node=next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name=='preparation')
+peer_assert=next(n for n in prep_node.body if isinstance(n,ast.Assert)and "peer['reviewer']"in ast.unparse(n))
+peer_code=compile(ast.fix_missing_locations(ast.Module(body=[peer_assert],type_ignores=[])),SOURCE_COMMON['path'],'exec')
+
+def run_selection(f,supplier=False):
+ refresh(f);stem='parent0414_supply'if supplier else'parents0414_0416_check'
+ r=selected_role(f['L'],f['selection'],f['cohortref'],f['cohort'],stem,f['base'],lambda ledger,r:ledger.doc(r))
+ assert type(r['edition'])is int and r['edition']==(1 if supplier else 2)
+ return r
+
+def run_phase(f):
+ refresh(f);ledger=f['L'];calls=[]
+ def pure(ledger,r):return ledger.doc(r)
+ def raw(ledger,r):return ledger.raw(r['path'],r)[0]
+ def refat(ledger,path):return ledger.raw(path)[1]
+ def review(ledger,r,program):
+  v=pure(ledger,r);assert v['status'].startswith('SUPPORTED_STATIC')and v['blockers']==[]and v['program']==program
+ def api(ledger,r,key,argv,success):
+  v=pure(ledger,r);assert v['synthetic_API_key']==key and v['issued_argv']==argv and v['synthetic_success']is success;calls.append(('api_stub',key));return v
+ def actual(ledger,r,key,child,guard,science):
+  v=pure(ledger,r);assert v['synthetic_API_key']==key and science is False and v['synthetic_success']is True
+  assert child[:6]==[PYTHON,'-E','-B','-S',f['cohort']['program']['path'],'close_pairing']
+  assert str(guard)==str(f['control']/'guards/batch00_close_pairing');calls.append(('actual_stub',key));return {},[]
+ def role_selection(ledger,config,hr,h,stem,base):return selected_role(ledger,config['_supplement']['selected_scientific_attempts'],hr,h,stem,base,pure)
+ scope=dict(json=json,Path=Path,PY=PYTHON,CONTAINER=f['base'].parent.parent,pure=pure,raw=raw,refat=refat,review=review,api=api,actual=actual,role_selection=role_selection,trip=lambda r:[r['path'],str(r['bytes']),r['sha256']])
+ exec(phase_code,scope)
+ result=scope['phase'](ledger,f['config'],f['cohortref'],f['cohort'],dict(batch=0,begin=414,end=417,source_indices=[414,415,416]),'close_pairing',1,[])
+ assert result==f['metadata_sdk']and calls==[('api_stub','manual'),('api_stub','failed'),('actual_stub','Root_f009_cohort0414_batch00_close_pairing_v1')]
+
+def run_pairing(f):
+ refresh(f);attempt=run_selection(f)
+ scope=dict(L=f['L'],pure=lambda ledger,r:ledger.doc(r),selected_strict=attempt,pairing_history=pairing_history,strict=dict(actual_edition=2,prior_non_success_attempts=f['expected_pairing_history']))
+ exec(pair_code,scope)
+
+names=[]
+def control(name,mutate=None,phase=False,supplier=False,pairing=False):
+ check();assert name not in names;f=fixture()
+ if mutate:mutate(f)
+ if mutate:
+  try:(run_pairing(f)if pairing else run_phase(f)if phase else run_selection(f,supplier))
+  except (AssertionError,KeyError,TypeError,ValueError,IndexError):pass
+  else:raise AssertionError('refusal control unexpectedly admitted: '+name)
+ else:(run_pairing(f)if pairing else run_phase(f)if phase else run_selection(f,supplier))
+ names.append(name)
+control('positive_exact_strict_v2_selection')
+control('positive_unchanged_supplier_v1_selection',supplier=True)
+control('positive_manual_phase_issuance',phase=True)
+control('selection_Root_authority_false',lambda f:f['binding'].__setitem__('Root_authority',False))
+control('selection_wrong_cohort',lambda f:f['binding'].__setitem__('cohort',{}))
+control('selection_wrong_program',lambda f:f['binding'].__setitem__('program',{}))
+control('selection_boolean_batch',lambda f:f['binding'].__setitem__('batch',False))
+control('selection_wrong_phase',lambda f:f['binding'].__setitem__('phase','assemble_strict'))
+control('selection_wrong_role_stem',lambda f:f['binding']['roles'][0].__setitem__('stem','parent0414_supply'))
+control('selection_boolean_edition',lambda f:f['binding']['roles'][0].__setitem__('edition',True))
+control('selection_edition_one',lambda f:f['binding']['roles'][0].__setitem__('edition',1))
+control('selection_wrong_selected_path',lambda f:f['binding']['roles'][0]['actual_SDK'].__setitem__('path','/private/tmp/wrong_v2.json'))
+control('selection_missing_prior',lambda f:f['binding']['roles'][0].__setitem__('prior_attempts',[]))
+control('selection_boolean_prior_edition',lambda f:f['binding']['roles'][0]['prior_attempts'][0].__setitem__('edition',True))
+control('selection_wrong_prior_disposition',lambda f:f['binding']['roles'][0]['prior_attempts'][0].__setitem__('disposition','SUCCESS'))
+control('selection_reconciliation_not_Root_owned',lambda f:f['recon'].__setitem__('Root_authority',False))
+control('selection_reconciliation_wrong_selected',lambda f:f['recon'].__setitem__('selected_actual_SDK',{}))
+for flag in fixture()['flags']:
+ control('selection_reconciliation_false_'+flag,lambda f,flag=flag:f['recon'].__setitem__(flag,False))
+control('selection_no_inspection',lambda f:f['recon'].__setitem__('actual_absence_or_resource_inspections',[]))
+control('manual_decision_not_Root_owned',lambda f:f['decision'].__setitem__('Root_authority',False),phase=True)
+control('manual_wrong_decision_pin',lambda f:f['manual'].__setitem__('decision',{}),phase=True)
+control('manual_wrong_batch',lambda f:f['manual'].__setitem__('batch',1),phase=True)
+control('manual_wrong_phase',lambda f:f['manual'].__setitem__('phase','assemble_strict'),phase=True)
+control('manual_wrong_tool_argv',lambda f:f['L'].docs[f['manual_sdk']['path']][0].__setitem__('issued_argv',['false']),phase=True)
+control('manual_printed_decision_mismatch',lambda f:f['L'].docs[f['manual_sdk']['path']][0]['full_tool_return'].__setitem__('output',json.dumps(dict(decision={},scientific_calls=0))),phase=True)
+control('manual_claims_scientific_execution',lambda f:f['L'].docs[f['manual_sdk']['path']][0]['full_tool_return'].__setitem__('output',json.dumps(dict(decision=f['decisionref'],scientific_calls=1))),phase=True)
+control('manual_missing_historical_failure',lambda f:f['L'].docs[f['failed_sdk']['path']][0]['full_tool_return'].__setitem__('output','some other failure'),phase=True)
+control('manual_missing_frozen_ownership',lambda f:f['decision'].__setitem__('frozen_progress_edition_held',False),phase=True)
+control('positive_exact_d516_enriched_pairing_history',pairing=True)
+control('pairing_missing_inspection_reference',lambda f:f['expected_pairing_history'][0]['actual_absence_or_resource_inspections'].pop(),pairing=True)
+control('pairing_altered_inspection_reference',lambda f:f['expected_pairing_history'][0]['actual_absence_or_resource_inspections'].__setitem__(0,{}),pairing=True)
+def reviewer_control(name,reviewer,refuse=False):
+ check();assert name not in names
+ try:exec(peer_code,dict(peer=dict(reviewer=reviewer),p=dict(author='/root/mathematical_review')))
+ except AssertionError:
+  assert refuse
+ else:assert not refuse
+ names.append(name)
+reviewer_control('positive_historical_preparation_reviewer_original_subject','/root/dependency_audit')
+reviewer_control('historical_preparation_Root_reviewer_refused','/root',True)
+reviewer_control('historical_preparation_readback_reviewer_refused','/root/readback_review',True)
+reviewer_control('historical_preparation_original_author_reviewer_refused','/root/mathematical_review',True)
+check();out=Path(a.out);assert out.is_absolute()and out.resolve(strict=True)==out and out.is_relative_to(P/'actual_controls')
+path=out/'controls.json';assert not path.exists()
+result=dict(schema='F009_LEGACY_ATTEMPT_SYNTHETIC_METADATA_CONTROLS_V1',status='PASS_SYNTHETIC_METADATA_CONTROLS',count=len(names),control_names=names,program=program,Source_manifest=mr,production_program=SOURCE_COMMON,selection_program=SOURCE_SELECTION,batch_program=SOURCE_BATCH,production_packet=PACKET,Source_peer=pr,Original_inputs_loaded=False,Original_payloads_decoded=False,scientific_executions=0,canonical_writes=0,synthetic_fixtures_are_Root_authority=False,tested_scope='Exact production selected_role, pairing_history, phase, pairing-history and historical-reviewer assertion AST definitions on fresh in-memory metadata. Only new selection/manual-issuance admission branches are exercised.',untested_scope='Genuine API/raw frame authenticity, real guard/resource enforcement, full-wrapper argv, real Source ownership and filesystem atomicity use explicit synthetic stubs or remain separate genuine Root execution review duties.')
+body=can(result);assert len(body)<=4*2**20 and 2*L.bytes+len(hb)+2*len(body)<=64*2**20 and len(L.pins)+1<=512
+L.close();check()
+with path.open('xb')as f:assert f.write(body)==len(body)
+assert path.read_bytes()==body
+r=toyref(path,result);signal.alarm(0);print(json.dumps(dict(outputs=[r],count=len(names),Original_inputs_loaded=False,Original_payloads_decoded=False,scientific_executions=0,canonical_writes=0)))

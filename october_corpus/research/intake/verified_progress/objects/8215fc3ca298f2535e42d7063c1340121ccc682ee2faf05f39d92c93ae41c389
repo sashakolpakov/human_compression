@@ -1,0 +1,152 @@
+/* UNRUN Root caller library. The injected exclusive writer must write exactly
+ * the supplied UTF-8 text to that one fresh destination. Any internal staging
+ * path or additional copy belongs in the SAME immutable invocation inventory.
+ * This library never creates or authenticates a missing genuine API frame. */
+function boundedRecorders(budget, io) {
+  const MiB = 2 ** 20;
+  const caps = {primary:32*MiB, guard:MiB, sdk:8*MiB, raw:16*MiB,
+                retention:64*MiB, images:32*MiB};
+  const requireValue = (ok, message) => { if (!ok) throw new Error(message); };
+  const integer = (x, max) => Number.isSafeInteger(x) && x >= 0 && x <= max;
+  requireValue(budget && budget.schema === 'ROOT_BOUNDED_OUTPUT_INVOCATION_BUDGET_V1'
+    && budget.profile_id === 'BOUNDED_OUTPUT_UNIFIED_256_MIB_DISK2_FLOOR1_V1'
+    && budget.root === '/root' && budget.Root_authority === true && budget.adopted === true
+    && budget.reserve_bytes === 256*MiB && budget.only_declared_writers_owned === true,
+    'positive exact Root invocation budget');
+  requireValue(io && typeof io.writeExclusive === 'function', 'owned exclusive UTF-8 writer');
+  requireValue(Array.isArray(budget.inventory) && budget.inventory.length <= 512,
+    'finite whole write inventory');
+  const inventory = new Map(), totals = Object.fromEntries(Object.keys(caps).map(k=>[k,0]));
+  for (const row of budget.inventory) {
+    requireValue(row && Object.keys(row).sort().join(',') === 'component,existing,maximum_bytes,path'
+      && Object.hasOwn(caps,row.component) && typeof row.path === 'string'
+      && row.path.startsWith('/') && !row.path.includes('\0')
+      && row.path.split('/').slice(1).every(p=>p.length>0 && p!=='.' && p!=='..')
+      && [...row.path].every(c=>c.charCodeAt(0)>=32 && c.charCodeAt(0)<127 && c!=='"' && c!=='\\')
+      && !inventory.has(row.path)
+      && integer(row.maximum_bytes,caps[row.component]), 'one canonical declared writer path');
+    totals[row.component] += row.maximum_bytes;
+    requireValue(totals[row.component] <= caps[row.component], 'whole component declaration cap');
+    if (['sdk','retention','images'].includes(row.component)) {
+      requireValue(row.maximum_bytes <= 4*MiB, '4MiB SDK/copy/image body');
+    }
+    if (row.component==='primary') {
+      requireValue(row.maximum_bytes <= (budget.role_kind==='science' ? 131072 : 4*MiB),
+        'unchanged science or bounded metadata body');
+    }
+    inventory.set(row.path,row);
+  }
+  const sdkPaths = [...inventory.values()].filter(r=>r.component==='sdk').map(r=>r.path);
+  requireValue(sdkPaths.length === 2, 'exactly two preflighted SDK destinations');
+  const claimed = new Set();
+
+  function utf8Bytes(text) {
+    let count = 0;
+    for (let i=0;i<text.length;i++) {
+      const c=text.charCodeAt(i);
+      if (c<0x80) count++;
+      else if (c<0x800) count+=2;
+      else if (c>=0xd800 && c<=0xdbff) {
+        const d=text.charCodeAt(++i);
+        requireValue(d>=0xdc00 && d<=0xdfff,'final serialized JSON has no unpaired surrogate');
+        count+=4;
+      } else {
+        requireValue(c<0xdc00 || c>0xdfff,'final serialized JSON has no unpaired surrogate');
+        count+=3;
+      }
+    }
+    return count;
+  }
+
+  function serialized(value, maximum) {
+    // Reject lossy JSON coercions and executable toJSON/prototype behaviour.
+    // The early limits are necessary size bounds, not a substitute for the
+    // FINAL serialized UTF-8 check immediately below.
+    let nodes=0, units=0;
+    const active=new Set();
+    function visit(x, depth) {
+      requireValue(++nodes<=262144 && depth<=64,'finite genuine JSON shape');
+      if (x===null || typeof x==='boolean') return;
+      if (typeof x==='number') { requireValue(Number.isFinite(x),'finite JSON number'); return; }
+      if (typeof x==='string') { units+=x.length; requireValue(units<=maximum,'early necessary string bound'); return; }
+      requireValue(typeof x==='object' && !active.has(x),'ordinary acyclic JSON only');
+      const prototype=Object.getPrototypeOf(x);
+      requireValue((Array.isArray(x) && prototype===Array.prototype)
+        || (!Array.isArray(x) && (prototype===Object.prototype || prototype===null)),
+        'plain objects only');
+      requireValue(!('toJSON' in x),'no own or inherited executable JSON replacement');
+      requireValue(Object.getOwnPropertySymbols(x).length===0,'no silently omitted symbol properties');
+      active.add(x);
+      if (Array.isArray(x)) {
+        for (let i=0;i<x.length;i++) {
+          const descriptor=Object.getOwnPropertyDescriptor(x,String(i));
+          requireValue(descriptor && Object.hasOwn(descriptor,'value'),'no sparse or executable array elements');
+          visit(descriptor.value,depth+1);
+        }
+        requireValue(Object.getOwnPropertyNames(x).length===x.length+1,'no unrecorded extra array properties');
+      } else {
+        requireValue(Object.getOwnPropertyNames(x).length===Object.keys(x).length,'no omitted nonenumerable fields');
+        for (const key of Object.keys(x)) {
+          const descriptor=Object.getOwnPropertyDescriptor(x,key);
+          requireValue(descriptor && Object.hasOwn(descriptor,'value'),'no executable getters');
+          units+=key.length; requireValue(units<=maximum,'early necessary key bound');
+          visit(descriptor.value,depth+1);
+        }
+      }
+      active.delete(x);
+    }
+    visit(value,0);
+    // Well-formed JSON.stringify escapes lone UTF-16 surrogates as ASCII
+    // \uXXXX. utf8Bytes rejects a runtime that instead leaves one unescaped.
+    const text=JSON.stringify(value)+'\n';
+    const bytes=utf8Bytes(text);
+    requireValue(bytes<=maximum,'FINAL serialized UTF-8 byte limit before open');
+    return {text,bytes};
+  }
+
+  async function writeTransaction(component, objects) {
+    requireValue(Object.hasOwn(caps,component) && Array.isArray(objects) && objects.length<=512,
+      'bounded typed caller transaction');
+    const prepared=[], seen=new Set();
+    let sum=0;
+    for (const item of objects) {
+      requireValue(item && typeof item.path==='string' && !seen.has(item.path)
+        && !claimed.has(item.path),'one fresh destination per invocation');
+      const row=inventory.get(item.path);
+      requireValue(row && row.component===component && row.existing===null,
+        'this recorder writes only exact fresh declared targets');
+      const body=serialized(item.value,row.maximum_bytes);
+      sum+=body.bytes;
+      requireValue(sum<=caps[component],'aggregate actual caller bytes');
+      prepared.push({path:item.path,...body}); seen.add(item.path);
+    }
+    // All serialized bodies, paths and cumulative declared subtotals are
+    // checked before the FIRST callback can open either SDK destination.
+    for (const item of prepared) claimed.add(item.path);
+    const refs=[];
+    for (const item of prepared) {
+      const ref=await io.writeExclusive(item.path,item.text);
+      requireValue(ref && ref.path===item.path && ref.bytes===item.bytes
+        && typeof ref.sha256==='string' && /^[0-9a-f]{64}$/.test(ref.sha256),
+        'exclusive writer returned exact bounded UTF-8 descriptor');
+      refs.push(ref);
+    }
+    return refs;
+  }
+
+  return Object.freeze({
+    utf8Bytes,
+    serialized,
+    async writeSDKPair(genuineSDK, destinations) {
+      requireValue(Array.isArray(destinations) && destinations.length===2
+        && new Set(destinations).size===2
+        && destinations.every(p=>sdkPaths.includes(p)), 'both exact SDK destinations');
+      return writeTransaction('sdk',destinations.map(path=>({path,value:genuineSDK})));
+    },
+    writeRaw: objects=>writeTransaction('raw',objects),
+    writeImages: objects=>writeTransaction('images',objects),
+    writePrimaryMetadata: objects=>writeTransaction('primary',objects)
+  });
+}
+
+if (typeof module !== 'undefined') module.exports = {boundedRecorders};

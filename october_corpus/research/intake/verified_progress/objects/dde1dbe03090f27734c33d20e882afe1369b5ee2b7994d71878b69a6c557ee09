@@ -1,0 +1,20 @@
+"""Generic Root metadata entry; mathematical operands remain opaque."""
+from pathlib import Path
+import hashlib,types
+common_ref={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/common.py', 'bytes': 18741, 'sha256': 'a049b3ade32f3d4670124e75d295f82f3149da25c90abb7e365a129a425fd885'}
+b=Path(common_ref['path']).read_bytes()
+assert len(b)==common_ref['bytes']and hashlib.sha256(b).hexdigest()==common_ref['sha256']
+ns=dict(__file__=common_ref['path'],__name__='f009_generic_metadata_support')
+exec(compile(b,common_ref['path'],'exec'),ns)
+C=types.SimpleNamespace(**ns)
+a=C.arguments();ctx=C.Context('audit_batch.py',a)
+expected=['evidence', 'invariants', 'reviews']
+assert ctx.packet['entry_modules']['audit_batch.py']==expected
+scopes={};bindings=dict(C=C)
+for name in expected:
+ r=ctx.packet['modules'][name]
+ assert r in ctx.Source_manifest['Source']
+ scopes[name]=C.module(r,'f009_generic_'+name,bindings)
+ if name=='evidence':bindings['E']=types.SimpleNamespace(**scopes[name])
+ if name=='invariants':bindings['IV']=types.SimpleNamespace(**scopes[name])
+scopes['reviews']['batch'](ctx)

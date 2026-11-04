@@ -1,0 +1,129 @@
+"""Independent Source pin/AST closure, never imports represented project code."""
+from pathlib import Path
+import ast, hashlib, json
+from datetime import datetime, timezone
+
+P = Path(__file__).resolve().parent.parent
+pins = {}
+
+def pin(path):
+    p = Path(path)
+    n = p.stat().st_size
+    assert n <= 4 * 1024**2
+    with p.open('rb') as f:
+        b = f.read(n + 1)
+    assert len(b) == n
+    ref = dict(path=str(p), bytes=n, sha256=hashlib.sha256(b).hexdigest())
+    pins[str(p)] = ref
+    return b, ref
+
+def get(ref):
+    b, actual = pin(ref['path'])
+    assert actual == ref
+    return b
+
+def doc(path):
+    b, ref = pin(path)
+    return json.loads(b), ref
+
+def dump(name, value):
+    b = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    path = P / 'source_review' / name
+    with path.open('xb') as f:
+        f.write(b)
+    return dict(path=str(path), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+h, href = doc(P / 'handoff.json')
+assert href['sha256'] == 'db91d946a19c9d87d468ea208272eadfd1c17815edae825385263309834a8973'
+packet, packetref = doc(P / 'packet.json')
+assert packetref == h['packet'] and packetref['sha256'] == '592f23961803d0678aea00b2cf02108372f9acbe1fc8893ecc3f895c1b12d47c'
+base = json.loads(get(packet['base_packet']))
+get(packet['base_Source_peer'])
+get(packet['old_Core_actual_controls'])
+get(packet['old_generic_actual_controls'])
+source_map = {}
+for op, mfref in packet['entry_manifests'].items():
+    m = json.loads(get(mfref))
+    assert m['entry'] == packet['program'] and m['operation'] == op and m['external_guard_claimed'] is False
+    assert len({r['path'] for r in m['Source']}) == len(m['Source'])
+    total = sum(r['bytes'] for r in m['Source']) + 512
+    assert total == m['Source_with_invocation_reserve'] <= m['source_namespace'] == 131072
+    assert m['metadata_caps'] == dict(read_bytes=67108864, paths=512, file_bytes=4194304, rss_bytes=268435456, seconds=125, new_bytes=16777216)
+    for ref in m['Source']:
+        body = get(ref)
+        ast.parse(body)
+        source_map[ref['path']] = ref
+    source_map_for_op = {Path(r['path']).name for r in m['Source']}
+    expected = {'run.py', 'support.py', 'transitions.py', 'bounded_common.py', 'whole.py', 'lex.py', 'resource_policy.py', 'evidence.py'}
+    extra = {'controls': {'controls.py'}, 'prepare_retry': set(), 'phase.py': {'invariants.py', 'phases.py'},
+             'close.py': {'reviews.py'}, 'audit_batch.py': {'invariants.py', 'reviews.py'}, 'audit_cohort.py': {'reviews.py'},
+             'register.py': {'invariants.py', 'registration.py'}, 'check_registration.py': {'invariants.py', 'administration.py'}}[op]
+    assert source_map_for_op == expected | extra
+assert len(source_map) == 14 and sum(r['bytes'] for r in source_map.values()) == h['static_inspection']['bytes']
+acquired = json.loads(get(h['acquired_Source_preservation']))
+old_common_ref = next(row['original'] for row in acquired['rows'] if Path(row['original']['path']).name == 'common.py')
+old = {n.name:n for n in ast.parse(get(old_common_ref)).body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+new = {n.name:n for n in ast.parse(get(h['new_common'])).body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
+assert old.keys() == new.keys()
+unchanged = [name for name in old if ast.dump(old[name]) == ast.dump(new[name])]
+assert set(old) - set(unchanged) == {'module'}
+assert ast.literal_eval(next(n.value for n in ast.parse(get(h['program'])).body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'BASE_PACKET' for t in n.targets))) == packet['base_packet']
+preservations = []
+for key in ('initial_unrun_preservation', 'bounded_reads_unrun_preservation', 'acquired_Source_preservation'):
+    ref = h[key]
+    saved = json.loads(get(ref))
+    for row in saved['rows']:
+        retained = row['retained']
+        assert (retained['bytes'], retained['sha256']) == (row['original']['bytes'], row['original']['sha256'])
+        get(retained)
+        if key == 'acquired_Source_preservation':
+            assert get(row['original']) == get(retained)
+    preservations.append(dict(manifest=ref, rows=len(saved['rows']), all_retained_objects_exact=True))
+change = json.loads(get(h['successor_change']))
+for rowskey in ('complete_changes', 'metadata_history_changes'):
+    for row in change[rowskey]:
+        get(row['after']); get(row['retained_before'])
+for key in ('complete_difference', 'metadata_history_difference', 'acquired_common_difference'):
+    get(change[key])
+for ref in (h['proof'], h['protocol'], h['review_interface'], h['Source_invoices'], h['concrete_request_FALSE'], h['concrete_Root_gate_FALSE']):
+    get(ref)
+assert h['controls_count'] == 40 and h['controls_executed'] is False
+invoice = json.loads(get(h['Source_invoices']))
+assert invoice['namespaces'] == {op:json.loads(get(ref))['Source_with_invocation_reserve'] for op, ref in packet['entry_manifests'].items()}
+for q in (P / 'data').rglob('*.json'):
+    pin(q)
+evidence = dump('evidence.json', dict(schema='F009_RESOURCE_BINDING_STATIC_FINITE_EVIDENCE_V1', reviewer='/root/mathematical_review', Root_authority=False, pins=list(pins.values()), acquired_common_unchanged_definition_names=unchanged, unchanged_common_definition_exception='module loader only', prior_editions=preservations, Original_payloads_decoded=False, represented_functions_executed=False))
+full = dump('review.json', dict(
+    schema='F009_RESOURCE_BINDING_INDEPENDENT_FULL_STATIC_REVIEW_V1', reviewer='/root/mathematical_review', Root_authority=False, blockers=[],
+    handoff=href, program=h['program'], packet=packetref, protocol=h['protocol'], finite_evidence=evidence,
+    findings=[
+        'The complete initial dispatcher/support/transitions/controls/proof/protocol and borrowed operation interfaces were read, followed by the preserved bounded-reader and metadata-history deltas. Exact new and old Source subjects, all14 loaded bodies, per-operation inventories and both retained unrun editions are pinned. The bounded_common edition changes only the fixed Source loader and preserves its acquired cohort namespace; every other acquired function/class AST is unchanged.',
+        'All combined findings are addressed: bootstrap packet/self and helper Source reads check declared lengths before allocation; late CAS stage/after reads use fixed expected lengths; optimized execution fails before assertions/Source loading; equality compares canonical typed encodings; the fresh actual-controls admission requires the exact controls manifest and strict integer40.',
+        'The resource-binding proof preserves complete raw scientific request fields except the budget reference, original Root import, full numerical manifest/role/mode/parent, prepared fields outside request/gate/budget, and every resource limit. Only two fresh SDK inventory destinations and two literal command paths change. The later launch closes the new exact references without cycles. The genuine prior setup failure, old preparation/launch/parent IO and Root observations remain separate immutable inputs. Existing427/428 successes are not replayed.',
+        'The selected-science adapter authenticates both original and effective preparations and the different-argv transition before the exact old numerical role verifier is used. Actual records retain original_prepared/effective_prepared/resource_binding_transition through the borrowed closure, aggregate, registration and administrative algorithms. Original cohort/base Source ownership is authenticated against the old packet and6a peer, while new metadata operations name this supplement and its new peer. No old control verdict is relabelled.',
+        'The final standalone metadata-history adapter admits editions1..8, parses the actual trusted Python/script prefix and complete unique options without a profiler separator, joins the exact supplement packet/op and canonical logical identity, authenticates all genuine raw frames, rejects prior successes and requires exact positive Root reconciliations with retained inspections. Genuine old profiled initialization/preparation histories are delegated through an explicit old BASE_PACKET/6a proxy. Scientific retries and metadata retries remain distinct.',
+        'The40 fresh designs exercise the actual pure production transition, command, identity and prior-exit predicates. They explicitly exclude genuine SDK/filesystem/whole-authority-chain verification, Original mathematics and publication atomicity. No controls or represented functions were run by this reviewer.',
+        'This dispatcher is an explicitly new standalone cooperative metadata subject, outside old Core admission. Its namespaces105832..121976 fit131072, with256MiB/125s,64MiB reads,512 paths,4MiB files and16MiB fresh-write declarations. Input closure and prospective late-read/path reservations precede fresh writes. The two fixed canonical replacements alone are available to the separately authorized registrar, using old-beforeimage CAS/sole-writer assumptions; this is not a multi-file atomicity or external resource-guard claim.'
+    ],
+    qualifications=[
+        'Root whole-Source ownership, genuinely executed40 controls, distinct actual acceptance, fresh concrete prepare_retry scope and its independent data-plan review remain required before any new supplier attempt. The old science Core6a/3342 and old generic527c subjects remain exactly their prior evidence.',
+        'Actual numerical-role inputs, parent/stabilizer/certificate/cache payloads, group predicates and science operands remained opaque. This Source review grants no science, parent, case, census, manuscript, conjecture, Lean or compression credit.',
+        'Reviewer previously authored the imported6a static review and3342/527c actual-review leaves and reviewed the original supplier preparation/attempts. Source author is Dependency; reviewer contributed the enumerated bounded-read/history/typed-metadata concerns but authored none of this implementation. These contributions and borrowed subjects are disclosed.'
+    ],
+    all_operational_entries_and_controls_unrun_by_reviewer=True, Original_inputs_decoded=False,
+    observed_utc=datetime.now(timezone.utc).isoformat()))
+leaf = dict(
+    schema='F009_RESOURCE_BINDING_INDEPENDENT_STATIC_REUSE_V1', status='SUPPORTED_STATIC_F009_RESOURCE_BINDING_SUPPLEMENT',
+    reviewer='/root/mathematical_review', Root_authority=False, blockers=[],
+    program=h['program'], packet=packetref, entry_manifests=packet['entry_manifests'], protocol=h['protocol'],
+    base_packet=packet['base_packet'], base_Source_peer=packet['base_Source_peer'], controls_source=packet['controls'],
+    handoff=href, full_Source_review=full, finite_evidence=evidence, controls_count=40,
+    complete_Source_and_deltas_read=True, all_loaded_Source_invoiced=True,
+    old_Core_and_scientific_subjects_unchanged=True, old_verdicts_retagged=False,
+    standalone_metadata_histories_1_to_8_reviewed=True,
+    Source_namespace_bytes=invoice['namespaces'],
+    Original_payloads_decoded=False, represented_functions_or_controls_executed=False,
+    actual_control_or_scientific_adoption_issued=False, canonical_writes=0,
+    qualification='Static support for the exact new cooperative metadata Source only. Fresh actual40-controls, Root ownership, concrete transition review and later genuine execution/adoption remain owed. Original/effective science provenance and all imported mathematical premises remain distinct; no proof, parent, census or manuscript credit.',
+    contributor_disclosure='Reviewer raised read/typed-equality/history concerns and authored some imported reviews, but authored none of the supplement implementation. Full review discloses exact borrowed Source/authority scope.')
+print(json.dumps(dump('reuse_integer_only.json', leaf), sort_keys=True))

@@ -1,0 +1,144 @@
+"""Reusable closure of metadata and strict-cover evidence; no scientific replay."""
+from pathlib import Path
+import hashlib
+
+FLAGS=('all_supplier_covers_equal_corresponding_strict_cover','assembled_and_strict_whole_certificates_equal',
+    'strict_full156_each_parent_verified','whole_Source_and_inputs_closed','actual_guard_and_raw_frames_verified',
+    'all_selected_attempts_and_prior_refusals_audited')
+
+def pair(ctx,h,b):
+    base=C.SCIENCE/('generic_cohort_from%04d'%h['begin'])/('parents%04d_%04d'%(b['begin'],b['end']-1))
+    pr=C.at(ctx.L,base/'pairing.json');p=C.doc(ctx.L,pr)
+    assert p['schema']=='ROOT_F009_GENERIC_MIXED_PROFILE_PAIRING_V2'and p['Source']==ctx.packet['programs']['phase.py']
+    assert p['source_indices']==b['source_indices']and p['batch']==b['batch']and p['progress_snapshot']==h['progress_snapshot']
+    assert p['strict_slots']==156*len(b['source_indices'])and p['canonical_registration_performed']is p['whole_R5_or_census_claimed']is False
+    return pr,p
+
+def phase_calls(ctx,h,hr,b):
+    records=ctx.q['phase_executions'][str(b['batch'])]
+    assert set(records)=={'prepare_suppliers','assemble_strict','close_pairing'}
+    calls=[]
+    for name in('prepare_suppliers','assemble_strict','close_pairing'):
+        record=records[name]
+        v,q,g=E.metadata_attempt(ctx,record,'phase.py','batch%02d_%s'%(b['batch'],name),
+            dict(cohort=hr,batch=b['batch'],phase=name))
+        assert v['phase']==name and v['cohort']==hr and v['batch']==b['batch']
+        calls.append(dict(phase=name,execution=record,Root_gate=v['Root_gate']))
+    return calls
+
+def close(ctx):
+    hr=ctx.q['cohort'];h=C.cohort(ctx.L,hr,ctx.packet)
+    C.frozen(ctx.L,h['progress_snapshot'],h['begin'])
+    assert ctx.g['canonical_writes_authorized']is False
+    rows=[];all_science_v1=True;all_metadata_v1=True
+    for b in h['batches']:
+        pr,p=pair(ctx,h,b);phases=phase_calls(ctx,h,hr,b)
+        actors=[x['supplier']['actual']for x in p['bindings']]+[p['strict']]
+        assert len(actors)==len(b['source_indices'])+1
+        all_science_v1 &= all(a['actual_edition']==1 and a['prior_non_success_attempts']==[]for a in actors)
+        all_metadata_v1 &= all(x['execution']['edition']==1 for x in phases)
+        rows.append(dict(batch=b['batch'],source_indices=b['source_indices'],pairing=pr,
+            strict_slots=p['strict_slots'],target_occurrences=p['target_occurrences'],
+            scientific_actuals=[a['actual_SDK']for a in actors],metadata_executions=phases))
+    v=dict(schema='ROOT_F009_GENERIC_COHORT_SUMMARY_V2',root='/root',cohort=hr,batches=rows,
+        source_indices=h['source_indices'],strict_slots=156*(h['end']-h['begin']),
+        target_occurrences=sum(x['target_occurrences']for x in rows),
+        all_scientific_roles_first_v1=all_science_v1,all_metadata_phases_first_v1=all_metadata_v1,
+        all_roles_first_v1=all_science_v1 and all_metadata_v1,
+        all_roles_first_v1_scope='Scientific roles and the three per-batch phase calls only; initialization, closer and audits have separate explicit histories.',progress_snapshot=h['progress_snapshot'],
+        Source=ctx.packet['programs']['close.py'],Source_manifest=ctx.manifest_ref,
+        Source_peer=ctx.peer_ref,Root_gate=ctx.gate_ref,canonical_registration_performed=False)
+    rr=ctx.put(Path(hr['path']).parent/'cohort_actual_summary.json',C.can(v))
+    return ctx.emit(dict(summary=rr,cohort=hr,strict_slots=v['strict_slots'],target_occurrences=v['target_occurrences']))
+
+def batch(ctx):
+    q=ctx.q;hr=q['cohort'];h=C.cohort(ctx.L,hr,ctx.packet)
+    C.frozen(ctx.L,h['progress_snapshot'],h['begin']);n=q['batch']
+    assert type(n)is int and 0<=n<len(h['batches']);b=h['batches'][n]
+    pr,p=pair(ctx,h,b);assert p['cohort']==hr
+    phases=phase_calls(ctx,h,hr,b)
+    assembly=C.doc(ctx.L,p['assembly'])
+    strictstem='parents%04d_%04d_check'%(b['begin'],b['end']-1)
+    selection=C.doc(ctx.L,p['selected_attempts'])
+    E.selection_scope(selection,hr,n,'close_pairing',[strictstem])
+    a=E.selected_attempt(selection,strictstem,h['scientific_profiles'][strictstem])
+    strict,covers,parents=E.role(ctx,assembly['strict_prepared'],a,strictstem,b['source_indices'],hr,h,n,'check')
+    assert C.can(strict)==C.can(p['strict'])
+    assert C.raw(ctx.L,strict['certificate'])==C.raw(ctx.L,assembly['assembled_certificate'])
+    supplier_selection=C.doc(ctx.L,assembly['selected_attempts'])
+    stems=['parent%04d_supply'%i for i in b['source_indices']]
+    E.selection_scope(supplier_selection,hr,n,'assemble_strict',stems)
+    roster_body=C.raw(ctx.L,h['current_roster']);roster=C.array(C.fields(roster_body)['representatives'])
+    bindings=[]
+    assert len(p['bindings'])==len(covers)==len(parents)==len(b['source_indices'])
+    for offset,(index,binding,cover,parent)in enumerate(zip(b['source_indices'],p['bindings'],covers,parents)):
+        assert type(binding['index'])is int and binding['index']==index
+        assert type(binding['strict_cover_index'])is int and binding['strict_cover_index']==offset
+        assert type(binding['supplier_cover_index'])is int and binding['supplier_cover_index']==0
+        assert C.equivalent(parent,roster[index])
+        stem='parent%04d_supply'%index
+        sa=E.selected_attempt(supplier_selection,stem,h['scientific_profiles'][stem])
+        supplier,sc,sp=E.role(ctx,binding['supplier']['prepared'],sa,stem,[index],hr,h,n,'supply')
+        assert C.can(supplier)==C.can(binding['supplier']['actual'])and len(sc)==len(sp)==1 and sc[0]==cover and C.equivalent(sp[0],parent)
+        targets=IV.cover_shape(cover,parent)
+        assert targets==binding['target_occurrences']and binding['strict_slots']==156
+        assert hashlib.sha256(parent).hexdigest()==binding['parent_payload_lexical_sha256']
+        assert hashlib.sha256(cover+b'\n').hexdigest()==binding['supplier']['canonical_cover_sha256']
+        bindings.append(dict(index=index,supplier_cover_index=0,strict_cover_index=offset,
+            supplier_actual_SDK=supplier['actual_SDK'],supplier_certificate=supplier['certificate'],
+            supplier_profile=supplier['profile'],strict_actual_SDK=strict['actual_SDK'],
+            strict_certificate=strict['certificate'],strict_profile=strict['profile'],
+            target_occurrences=targets,strict_slots=156,per_cover_canonical_bytes_equal=True))
+    assert sum(v['target_occurrences']for v in bindings)==p['target_occurrences']
+    leaf=dict(schema='F009_GENERIC_BATCH_ACTUAL_REUSE_V2',status='SUPPORTED_ACTUAL',reviewer=C.AUTHOR,
+        review_role='Source-authored metadata check executed by Root; distinct execution adoption remains owed.',
+        blockers=[],cohort=hr,batch=n,source_indices=b['source_indices'],parent_count=len(bindings),
+        strict_slots=156*len(bindings),target_occurrences=p['target_occurrences'],pairing=pr,
+        strict=strict,bindings=bindings,progress_snapshot=h['progress_snapshot'],
+        current_roster=h['current_roster'],packet=ctx.packet_ref,program=ctx.packet['programs']['audit_batch.py'],
+        Source_peer=ctx.peer_ref,Root_gate=ctx.gate_ref,request=ctx.request_ref,
+        phase_executions=phases,Original_payloads_decoded=False,scientific_calls=0,
+        canonical_registration_performed=False,whole_R5_or_census_claimed=False)
+    leaf.update({flag:True for flag in FLAGS})
+    rr=ctx.put(ctx.out/'reuse_integer_only.json',C.can(leaf))
+    return ctx.emit(dict(review=rr,cohort=hr,batch=n))
+
+def aggregate(ctx):
+    q=ctx.q;hr=q['cohort'];h=C.cohort(ctx.L,hr,ctx.packet)
+    C.frozen(ctx.L,h['progress_snapshot'],h['begin'])
+    assert len(q['batch_reviews'])==len(q['batch_executions'])==len(h['batches'])
+    entries=[]
+    for b,r,ex in zip(h['batches'],q['batch_reviews'],q['batch_executions']):
+        leaf=C.doc(ctx.L,r)
+        assert leaf['schema']=='F009_GENERIC_BATCH_ACTUAL_REUSE_V2'and leaf['status']=='SUPPORTED_ACTUAL'and leaf['blockers']==[]
+        assert leaf['cohort']==hr and leaf['batch']==b['batch']and leaf['source_indices']==b['source_indices']and leaf['packet']==ctx.packet_ref
+        for flag in FLAGS:assert leaf[flag]is True
+        printed,request,gate=E.metadata_attempt(ctx,ex,'audit_batch.py','audit_batch%02d'%b['batch'],dict(cohort=hr,batch=b['batch']))
+        assert printed['review']==r
+        C.raw(ctx.L,leaf['pairing'])
+        entries.append(dict(batch=b['batch'],begin=b['begin'],end=b['end'],source_indices=b['source_indices'],
+            parent_count=len(b['source_indices']),strict_slots=leaf['strict_slots'],
+            target_occurrences=leaf['target_occurrences'],pairing=leaf['pairing'],actual_review=r,execution=ex))
+    initprint,iq,ig=E.metadata_attempt(ctx,q['init_execution'],'init.py','init',dict(expected_prefix=h['begin']))
+    assert initprint['cohort']==hr and iq['scientific_profiles']==h['scientific_profiles']
+    cp,cq,cg=E.metadata_attempt(ctx,q['close_execution'],'close.py','close',dict(cohort=hr))
+    summary=C.doc(ctx.L,cp['summary'])
+    assert summary['cohort']==hr and summary['source_indices']==h['source_indices']and summary['strict_slots']==156*(h['end']-h['begin'])
+    assert summary['target_occurrences']==sum(v['target_occurrences']for v in entries)
+    assert summary['canonical_registration_performed']is False
+    for sb,entry in zip(summary['batches'],entries):
+        assert sb['batch']==entry['batch']and sb['pairing']==entry['pairing']and sb['target_occurrences']==entry['target_occurrences']
+    v=dict(schema='F009_GENERIC_COHORT_ACTUAL_REUSE_V2',status='SUPPORTED_ACTUAL',reviewer=C.AUTHOR,
+        blockers=[],cohort=hr,begin=h['begin'],end=h['end'],source_indices=h['source_indices'],
+        parent_count=h['end']-h['begin'],strict_slots=156*(h['end']-h['begin']),
+        target_occurrences=sum(x['target_occurrences']for x in entries),batches=entries,
+        progress_snapshot=h['progress_snapshot'],current_roster=h['current_roster'],
+        init_execution=q['init_execution'],close_execution=q['close_execution'],summary=cp['summary'],
+        packet=ctx.packet_ref,program=ctx.packet['programs']['audit_cohort.py'],Source_peer=ctx.peer_ref,
+        Root_gate=ctx.gate_ref,all_batch_pairings_and_per_cover_bindings_verified=True,
+        frozen_progress_snapshot_authenticated=True,all_source_indices_exactly_once=True,
+        all_selected_attempts_and_prior_refusals_audited=True,Original_payloads_decoded=False,
+        scientific_calls=0,canonical_registration_performed=False,whole_R5_or_census_claimed=False,
+        qualification='Root executes independently Source-reviewed metadata code. Scientific/old24/41 facts remain attributed to exact literal-function subjects; no second independent mathematical proof or complete census is claimed.')
+    rr=ctx.put(ctx.out/'reuse_integer_only.json',C.can(v))
+    return ctx.emit(dict(review=rr,cohort=hr,begin=h['begin'],end=h['end']))

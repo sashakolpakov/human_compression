@@ -1,0 +1,196 @@
+"""Fresh synthetic controls of production metadata helpers; no Original data."""
+import copy
+from pathlib import Path
+from types import SimpleNamespace
+
+def run(ctx):
+    names=[]
+    def case(name,action,refuse=False):
+        C.check();assert name not in names
+        try:action()
+        except (AssertionError,ValueError,KeyError,TypeError,IndexError):
+            assert refuse,name
+        else:assert not refuse,name
+        names.append(name)
+    roles=dict(supply='f009_complete_parent_stabilizer_supplier',check='f009_incremental_parent_cover')
+    for kind,role in roles.items():
+        other=roles['check'if kind=='supply'else'supply']
+        for profile in('legacy','bounded'):
+            budget_role=role if profile=='bounded'else None
+            case('scientific_role_%s_%s'%(kind,profile),lambda:C.scientific_role(kind,profile,role,budget_role))
+            case('scientific_swapped_request_%s_%s'%(kind,profile),lambda:C.scientific_role(kind,profile,other,budget_role),True)
+            case('scientific_short_request_%s_%s'%(kind,profile),lambda:C.scientific_role(kind,profile,kind,budget_role),True)
+        case('scientific_short_budget_%s'%kind,lambda:C.scientific_role(kind,'bounded',role,kind),True)
+        case('scientific_unexpected_legacy_budget_%s'%kind,lambda:C.scientific_role(kind,'legacy',role,role),True)
+    def closing(changed=False):
+        body=b'bounded';calls=[]
+        before=SimpleNamespace(st_dev=1,st_ino=2,st_mode=32768,st_nlink=1,st_size=len(body),st_mtime_ns=3,st_ctime_ns=4)
+        old=C.W['signature'](before)
+        if changed:before.st_size=4*2**20+1
+        class Stream:
+            def read(self,n):calls.append(n);assert n==len(body)+1;return body
+        try:actual=C.W['closing_read'](Stream(),before,body,old,0,64*2**20)
+        except AssertionError:
+            assert changed and calls==[]
+        else:assert not changed and actual==body and calls==[len(body)+1]
+    case('closing_fixed_old_extent_positive',closing)
+    case('closing_changed_size_refuses_before_read',lambda:closing(True))
+    def io():
+        docs=[dict(path='/private/tmp/synthetic/doc',bytes=7,sha256='0'*64)]
+        rows=[dict(existing=dict(path='/private/tmp/synthetic/old',bytes=11,sha256='1'*64)),dict(existing=None)]
+        prepaid=C.read_prepaid(100,docs,rows);assert prepaid==318
+        assert C.read_upper(20,30,40,prepaid)==498
+    case('complete_bootstrap_IO_production_arithmetic',io)
+    case('bootstrap_IO_boolean_Source_refused',lambda:C.read_prepaid(True,[],[]),True)
+    case('complete_IO_boolean_debit_refused',lambda:C.read_upper(False,0,0,0),True)
+    def api_fixture():
+        argv=['/synthetic/python','-E','-B','-S','/synthetic/entry.py'];command=E.shlex.join(argv)
+        frames=[dict(chunk_id='synthetic_initial',session_id=17,output=''),dict(chunk_id='synthetic_middle',session_id=17,output=''),dict(chunk_id='synthetic_terminal',exit_code=0,output='')]
+        sdk=dict(schema='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1',root='/root',actor='/root',issued_argv=argv,child_argv=argv,
+            issued_command=command,canonical_argv_command=command,issued_tool_arguments=dict(cmd=command),
+            all_genuine_api_frames=frames,full_initial_tool_return=frames[0],full_tool_return=frames[-1],
+            actual_tool=dict(initial_chunk='synthetic_initial',terminal_chunk='synthetic_terminal',exit_code=0,synchronous=False,handle=17))
+        return sdk,argv
+    def api(change=None):
+        sdk,argv=api_fixture()
+        if change:change(sdk)
+        E.api_shape(sdk,argv,True)
+    case('synthetic_API_structural_positive',api)
+    def differently_quoted(sdk):
+        quoted=' '.join("'"+word.replace("'","'\\''")+"'"for word in sdk['issued_argv'])
+        assert quoted!=sdk['canonical_argv_command']
+        sdk['issued_command']=sdk['issued_tool_arguments']['cmd']=quoted
+    case('synthetic_API_equivalent_quoting_positive',lambda:api(differently_quoted))
+    case('API_duplicate_chunk_refused',lambda:api(lambda x:x['all_genuine_api_frames'][1].update(chunk_id='synthetic_initial')),True)
+    case('API_intermediate_session_refused',lambda:api(lambda x:x['all_genuine_api_frames'][1].update(session_id=18)),True)
+    case('API_issued_command_refused',lambda:api(lambda x:x.update(issued_command='wrong')),True)
+    case('API_canonical_command_refused',lambda:api(lambda x:x.update(canonical_argv_command='wrong')),True)
+    case('API_terminal_session_refused',lambda:api(lambda x:x['all_genuine_api_frames'][-1].update(session_id=17)),True)
+    case('API_boolean_exit_refused',lambda:api(lambda x:x['actual_tool'].update(exit_code=False)),True)
+    def guard(change=None):
+        limits=E.old_limits(True);child=['synthetic_child'];identity=dict(pid=7,birth=1.5,initial_parent=6,group=7,session=7)
+        admission=dict(free_disk=limits['admit_disk'],available_ram=limits['admit_ram'])
+        st=dict(command=child,limits=limits,identities=[identity],admission=admission)
+        rt=copy.deepcopy(st);rt.update(status='PASS',stop='RETURNED',returncode=0,error=None)
+        if change:change(st,rt)
+        E.guard_shape(st,rt,child,limits)
+    case('synthetic_guard_structural_positive',guard)
+    case('guard_extra_identity_refused',lambda:guard(lambda s,r:r['identities'].append(copy.deepcopy(r['identities'][0]))),True)
+    case('guard_identity_birth_refused',lambda:guard(lambda s,r:r['identities'][0].update(birth=2.5)),True)
+    case('guard_identity_parent_refused',lambda:guard(lambda s,r:r['identities'][0].update(initial_parent=5)),True)
+    case('guard_admission_observation_refused',lambda:guard(lambda s,r:r['admission'].update(free_disk=r['admission']['free_disk']+1)),True)
+    case('guard_boolean_identity_refused',lambda:guard(lambda s,r:r['identities'][0].update(pid=True)),True)
+    def selection():
+        return dict(schema='ROOT_F009_GENERIC_SELECTED_ATTEMPTS_V2',root='/root',Root_authority=True,
+            cohort=dict(path='/private/tmp/synthetic/cohort.json',bytes=1,sha256='0'*64),
+            batch=0,phase='close_pairing',roles=[])
+    def selected(profile='legacy',edition=None,change=None):
+        s=selection()
+        if edition is not None:
+            s['roles']=[dict(stem='parents0426_0428_check',profile=profile,edition=edition,
+                prior_non_success_attempts=[dict(synthetic=True)]*(edition-1))]
+        if change:change(s)
+        return E.selected_attempt(s,'parents0426_0428_check',profile)
+    case('empty_map_legacy_all_v1',lambda: selected('legacy'))
+    case('empty_map_bounded_all_v1',lambda: selected('bounded'))
+    case('explicit_v1_map',lambda:selected('bounded',1))
+    case('explicit_v2_map',lambda:selected('legacy',2))
+    case('selection_boolean_edition',lambda:selected('legacy',1,lambda s:s['roles'][0].update(edition=True)),True)
+    case('selection_wrong_profile',lambda:selected('legacy',2,lambda s:s['roles'][0].update(profile='bounded')),True)
+    case('selection_missing_prior',lambda:selected('bounded',2,lambda s:s['roles'][0].update(prior_non_success_attempts=[])),True)
+    case('selection_duplicate_role',lambda:selected('bounded',2,lambda s:s['roles'].append(copy.deepcopy(s['roles'][0]))),True)
+    case('selection_not_Root_owned',lambda:selected('legacy',None,lambda s:s.update(Root_authority=False)),True)
+    def scope(change=None):
+        s=selection()
+        if change:change(s)
+        E.selection_scope(s,selection()['cohort'],0,'close_pairing',['parents0426_0428_check'])
+    case('selection_scope_positive',scope)
+    case('selection_scope_boolean_batch',lambda:scope(lambda s:s.update(batch=False)),True)
+    case('selection_scope_wrong_cohort',lambda:scope(lambda s:s.update(cohort={})),True)
+    case('selection_scope_foreign_role',lambda:scope(lambda s:s['roles'].append(dict(stem='parent0999_supply'))),True)
+    # Primitive payload tokens remain opaque, including deliberately awkward
+    # nested objects, strings, whitespace and values with scientific names.
+    before=b'{"counts":{"x":1},"opaque":{"parents":[[1,2]],"escaped":"\\\\n\\\\\\\"","flag":true},"other":[1.0,null]}'
+    after=C.patch(before,dict(counts=b'{"x":2}'))
+    case('raw_unknown_values_preserved',lambda:IV.unchanged(before,after,{'counts'}))
+    case('raw_hidden_unknown_delta_refused',lambda:IV.unchanged(before,C.patch(after,dict(opaque=b'{}')),{'counts'}),True)
+    def not_equivalent(a,b):assert C.equivalent(a,b)is False
+    case('opaque_boolean_integer_not_equivalent',lambda:not_equivalent(b'true',b'1'))
+    case('opaque_number_spelling_not_equivalent',lambda:not_equivalent(b'1.0',b'1'))
+    def cover(change=None):
+        parent=b'{"synthetic_parent":"opaque"}'
+        p=dict(schema=C.can('F009_FOREST_EXTENSION_INTERVAL_V1').strip(),parent_level=b'4',begin=b'0',end=b'156',
+            all_slots_in_interval_accounted=b'true',whole156_parent_or_level_or_census_claimed=b'false',
+            parent=parent,records=b'['+b','.join(C.can(dict(slot=i)).strip()for i in range(156))+b']',next_parent_forests=b'[]')
+        if change:change(p)
+        assert IV.cover_shape(C.join(p),parent)==0
+    case('synthetic_complete156_cover_framing',cover)
+    case('synthetic_missing_slot_refused',lambda:cover(lambda p:p.update(records=b'[]')),True)
+    case('synthetic_wrong_parent_refused',lambda:cover(lambda p:p.update(parent=b'{}')),True)
+    case('synthetic_false_interval_flag_refused',lambda:cover(lambda p:p.update(all_slots_in_interval_accounted=b'false')),True)
+
+    def cas_fixture():
+        paths=[str(C.PROGRESS/'controllers/current.json'),str(C.PROGRESS/'current_intake.json')]
+        bodies=[b'{"old":"controller"}\n',b'{"old":"intake"}\n']
+        stages=[str(C.PROGRESS/'controllers/.synthetic_controller_stage'),str(C.PROGRESS/'.synthetic_intake_stage')]
+        entries=[];targets=[];replacements=[]
+        for path,old,stage in zip(paths,bodies,stages):
+            r=C.ref(path,old);new=b'{"new":"synthetic metadata"}\n';maximum=4096
+            entries +=[dict(component='images',path=path,maximum_bytes=maximum,existing=r),
+                dict(component='images',path=stage,maximum_bytes=maximum,existing=None)]
+            targets.append(dict(path=path,existing=r,staged_path=stage,maximum_bytes=maximum))
+            replacements.append(dict(path=path,staged_path=stage,old_ref=r,new_body_bytes=new))
+        guard='/private/tmp/synthetic_f009_metadata_guard'
+        for name,maximum in [('stdout.log',262144),('stderr.log',262144),('started.json',131072),
+                ('receipt.json',131072),('started.json.staged',131072),('receipt.json.staged',131072)]:
+            entries.append(dict(component='guard',path=guard+'/'+name,maximum_bytes=maximum,existing=None))
+        for name in('private_SDK.json','durable_SDK.json'):
+            entries.append(dict(component='sdk',path='/private/tmp/synthetic_f009/'+name,maximum_bytes=4*2**20,existing=None))
+        budget=dict(role_kind='metadata',role='register.py',role_source=ctx.packet['programs']['register.py'],
+            volume='/Users/sasha/medusa',guard=guard,inventory=entries,metadata_cas_targets=targets)
+        peer=dict(metadata_cas_programs=[ctx.packet['programs']['register.py']])
+        return budget,peer,replacements
+    def cas(change=None):
+        b,p,r=cas_fixture()
+        if change:change(b,p,r)
+        C.P['validate_inventory'](b)
+        rows=C.P['validate_metadata_cas'](b,p,r)
+        assert len(rows)==4
+    case('fixed_two_pointer_CAS_positive',cas)
+    case('CAS_wrong_canonical_target',lambda:cas(lambda b,p,r:b['metadata_cas_targets'][0].update(path='/private/tmp/wrong')),True)
+    case('CAS_duplicate_canonical_target',lambda:cas(lambda b,p,r:b['metadata_cas_targets'].__setitem__(1,copy.deepcopy(b['metadata_cas_targets'][0]))),True)
+    case('CAS_swapped_stages',lambda:cas(lambda b,p,r:r[0].update(staged_path=r[1]['staged_path'])),True)
+    case('CAS_reused_stage',lambda:cas(lambda b,p,r:b['metadata_cas_targets'][1].update(staged_path=b['metadata_cas_targets'][0]['staged_path'])),True)
+    case('CAS_boolean_maximum',lambda:cas(lambda b,p,r:b['metadata_cas_targets'][0].update(maximum_bytes=True)),True)
+    case('CAS_altered_old_ref',lambda:cas(lambda b,p,r:r[0].update(old_ref=dict(r[0]['old_ref'],sha256='f'*64))),True)
+    case('CAS_wrong_role',lambda:cas(lambda b,p,r:b.update(role='phase.py')),True)
+    case('CAS_missing_peer_admission',lambda:cas(lambda b,p,r:p.update(metadata_cas_programs=[])),True)
+    case('CAS_omitted_canonical_inventory',lambda:cas(lambda b,p,r:b['inventory'].pop(0)),True)
+    case('CAS_omitted_stage_inventory',lambda:cas(lambda b,p,r:b['inventory'].pop(1)),True)
+    case('CAS_double_counted_stage_inventory',lambda:cas(lambda b,p,r:b['inventory'].append(copy.deepcopy(b['inventory'][1]))),True)
+    case('CAS_duplicate_concrete_replacement',lambda:cas(lambda b,p,r:r.__setitem__(1,copy.deepcopy(r[0]))),True)
+    case('CAS_wrong_new_body_type',lambda:cas(lambda b,p,r:r[0].update(new_body_bytes='not bytes')),True)
+    def ordering(late=False):
+        b,p,rs=cas_fixture();C.P['validate_metadata_cas'](b,p,rs)
+        old={r['path']:C.can(dict(old='controller'if i==0 else'intake'))for i,r in enumerate(rs)}
+        stored=dict(old);stages={r['staged_path']:r['new_body_bytes']for r in rs};calls=[];reads=0
+        def whole(r):
+            nonlocal reads
+            reads+=1
+            if late and reads==4:stored[r['path']]=b'{"external":"changed"}'
+            return stored[r['path']]
+        def replace(stage,path):calls.append(path);stored[path]=stages.pop(stage)
+        try:C.apply_cas(rs,old,whole,lambda p:stages[p],replace,lambda p:None,lambda p:stored[p])
+        except AssertionError:
+            assert late and calls==[]
+        else:assert not late and calls==[r['path']for r in rs]
+    case('CAS_actual_production_callback_order',ordering)
+    case('CAS_late_old_body_change_before_first_replace',lambda:ordering(True))
+    assert len(names)==len(set(names))
+    result=dict(schema='F009_GENERIC_METADATA_SYNTHETIC_CONTROLS_V2',status='PASS_SYNTHETIC_METADATA_CONTROLS',
+        count=len(names),control_names=names,packet=ctx.packet_ref,Source_peer=ctx.peer_ref,
+        Original_inputs_loaded=False,Original_payloads_decoded=False,scientific_calls=0,canonical_writes=0,
+        tested_scope='Actual production scientific-role, fixed closing-read, complete-IO arithmetic, API/guard structural, attempt-map, lexical preservation, cover-framing, Core fixed-CAS validators and CAS ordering helpers on synthetic metadata/callbacks.',
+        limitations='No genuine SDK/filesystem/process enforcement is fabricated or independently tested here. Synthetic API and guard fixtures test structural joins only. Closing-read callbacks test refusal before read, not filesystem races. CAS callback refusal proves production ordering only; sole-writer and no multi-file atomicity remain explicit. Core resource/recorder controls are separate genuine prerequisite facts.')
+    rr=ctx.put(ctx.out/'controls.json',C.can(result))
+    return ctx.emit(dict(controls=rr,count=len(names),Original_inputs_loaded=False))

@@ -1,0 +1,148 @@
+"""Independent finite control-run metadata audit; imports no project Source."""
+from pathlib import Path
+import hashlib, json, shlex
+from datetime import datetime, timezone
+
+P = Path(__file__).resolve().parents[2]
+HERE = Path(__file__).resolve().parent
+pins = {}
+
+def pin(path):
+    p = Path(path)
+    n = p.stat().st_size
+    assert n <= 4 * 1024**2
+    with p.open('rb') as f:
+        b = f.read(n + 1)
+    assert len(b) == n
+    ref = dict(path=str(p), bytes=n, sha256=hashlib.sha256(b).hexdigest())
+    pins[str(p)] = ref
+    return b, ref
+
+def get(ref):
+    b, actual = pin(ref['path'])
+    assert actual == ref
+    return b
+
+def doc(path):
+    b, ref = pin(path)
+    return json.loads(b), ref
+
+def same(a, b):
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+def actual(sdkpath, rawdir):
+    s, ref = doc(sdkpath)
+    assert s['schema'] == 'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1' and s['root'] == s['actor'] == '/root'
+    same(s['issued_argv'], s['child_argv'])
+    for command in (s['issued_command'], s['canonical_argv_command'], s['issued_tool_arguments']['cmd']):
+        same(shlex.split(command), s['issued_argv'])
+    intent, _ = doc(rawdir / 'issued.json')
+    assert intent['schema'] == 'ROOT_ISSUED_API_INTENT_V1' and intent['root'] == '/root'
+    same(intent['argv'], s['issued_argv']); same(intent['tool_arguments'], s['issued_tool_arguments'])
+    fs = [doc(q)[0] for q in sorted(rawdir.glob('frame_*.json'))]
+    same(fs, s['all_genuine_api_frames'])
+    assert len(fs) == 1 and fs[0]['exit_code'] == 0
+    same(fs[0], s['full_initial_tool_return']); same(fs[-1], s['full_tool_return'])
+    a = s['actual_tool']
+    assert a['handle'] is None and a['synchronous'] is True and a['exit_code'] == 0
+    assert fs[0]['chunk_id'] == a['initial_chunk'] == a['terminal_chunk']
+    return s, ref, json.loads(fs[-1]['output'])
+
+packet, packetref = doc(P / 'packet.json')
+peer, peerref = doc(P / 'source_review/reuse_integer_only.json')
+assert packetref['sha256'] == '592f23961803d0678aea00b2cf02108372f9acbe1fc8893ecc3f895c1b12d47c'
+assert peerref['sha256'] == '911b7152d992ae897807819790f6ac6ab311bb76ced5ef8c43ceab62245cb4b8'
+assert peer['status'] == 'SUPPORTED_STATIC_F009_RESOURCE_BINDING_SUPPLEMENT' and peer['blockers'] == []
+mfref = packet['entry_manifests']['controls']
+mf = json.loads(get(mfref))
+assert mfref['sha256'] == '3891b603d54650caf60ba560b76c5d1b615c7803fb29e8f0a8577f33235852d1'
+for ref in mf['Source']:
+    get(ref)
+assert sum(r['bytes'] for r in mf['Source']) + 512 == mf['Source_with_invocation_reserve'] == 112397
+q, qr = doc(P / 'actual/controls/request.json')
+g, gr = doc(P / 'actual/controls/Root_gate.json')
+decision, decisionref = doc(P / 'actual/controls/Root_decision.json')
+assert q['schema'] == 'F009_RESOURCE_BINDING_METADATA_REQUEST_V1' and q['Root_authority'] is False and q['op'] == 'controls'
+assert g['schema'] == 'ROOT_F009_RESOURCE_BINDING_METADATA_GATE_V1' and g['root'] == '/root'
+assert g['Root_authority'] is g['adopted'] is g['synthetic_metadata_only_owned'] is True
+assert g['metadata_controls'] is None and g['canonical_writes_authorized'] is False
+assert g['packet'] == packetref and g['Source_peer'] == peerref and g['Source_manifest'] == mfref and g['request'] == qr
+assert g['program'] == packet['program']
+for key in ('whole_supplement_and_borrowed_Source_owned', 'all_original_meanings_and_new_binding_scope_owned', 'no_successful_science_replayed', 'serial_sole_writer_scope_owned'):
+    assert g[key] is True
+authority, authorityref, issued = actual(P / 'Root_SDK/controls40_authorities_v1.json', P / 'api/Root_f009_binding_controls40_authorities_v1')
+assert authorityref['sha256'] == '479b45bcfb561125e2728c44317599efcd26fddcf59fb41326d3ae056b2f1217'
+assert issued['decision'] == decisionref and issued['status'] == 'ISSUED_FRESH40_METADATA_CONTROLS_UNRUN'
+assert decision['Root_authority'] is decision['whole_new_and_borrowed_Source_owned'] is decision['synthetic_metadata_only'] is True
+assert decision['old54_72_or_scientific_controls_replayed'] is False
+assert decision['canonical_writes'] == decision['scientific_calls'] == 0 and decision['controls'] == 40
+sdk, sdkref, output = actual(P / 'Root_SDK/controls40_v1.json', P / 'api/Root_f009_binding_controls40_v1')
+assert sdkref['sha256'] == 'c84c0617eb3362a469067c92a39c1476c8197084030d53fd66caab9ab5dce053'
+same(issued['argv'], sdk['issued_argv']); same(decision['argv'], sdk['issued_argv'])
+assert decision['Root_gate'] == gr and decision['request'] == qr and decision['packet'] == packetref
+assert decision['Source_peer'] == peerref and decision['Source_manifest'] == mfref
+argv = ['/usr/bin/env']
+for key in ('COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'COVERAGE_PROCESS_START', 'OPENSSL_CONF', 'OPENSSL_MODULES'):
+    argv += ['-u', key]
+argv += ['/Users/sasha/.venvs/global/bin/python', '-E', '-B', '-S', packet['program']['path'], '--actor', '/root', '--op', 'controls']
+for key, ref in (('packet', packetref), ('request', qr), ('Root-gate', gr)):
+    argv += ['--'+key, ref['path'], str(ref['bytes']), ref['sha256']]
+argv += ['--out', str(P / 'actual/controls')]
+same(argv, sdk['issued_argv'])
+assert output['packet'] == packetref and output['base_packet'] == packet['base_packet']
+assert output['Source_peer'] == peerref and output['Source_manifest'] == mfref and output['program'] == packet['program']
+assert output['Root_gate'] == gr and output['request'] == qr
+assert output['count'] == 40 and type(output['count']) is int and output['Original_inputs_loaded'] is False
+assert output['scientific_calls'] == output['canonical_writes'] == 0
+assert output['cooperative_metadata_only'] is True and output['external_resource_guard_claimed'] is False
+resultref = output['result']
+result = json.loads(get(resultref))
+assert resultref['bytes'] == 2089 and resultref['sha256'] == 'c23bfb07d80a6f82db7e4f7e035ebfb23986971fa961c4a7ab2cc4e7a4335ceb'
+assert result['schema'] == 'F009_RESOURCE_BINDING_SYNTHETIC_CONTROLS_V1'
+assert result['all_controls_passed'] is True and result['Original_inputs_loaded'] is False and result['scientific_calls'] == 0
+names = result['control_names']
+assert type(result['count']) is int and result['count'] == len(names) == len(set(names)) == 40
+assert all(type(k) is str and k for k in names)
+same(output['outputs'], [resultref])
+assert q['outputs'] == [dict(path=resultref['path'], maximum_bytes=65536)]
+runtime_inputs = mf['Source'] + [packetref, packet['protocol'], packet['base_packet'], packet['base_Source_peer'], packet['old_Core_actual_controls'], packet['old_generic_actual_controls'], qr, gr, peerref]
+runtime_inputs = list({r['path']:r for r in runtime_inputs}.values())
+for ref in runtime_inputs:
+    get(ref)
+first = sum(r['bytes'] for r in runtime_inputs)
+assert first == 199265 and output['first_closing_input_bytes'] == 2*first == 398530
+assert output['bootstrap_outer_read_upper'] == 3*mf['Source_with_invocation_reserve'] == 337191
+assert output['total_project_read_upper'] == 2*first + 2*resultref['bytes'] + output['bootstrap_outer_read_upper'] == 739899
+frozen = [
+    dict(path=str(P.parent / 'progress/current_intake.json'), bytes=305307, sha256='3f3acefe187fac8c1992ef2e022a3f378b2fc285bdb5960cfb8998500f852cff'),
+    dict(path=str(P.parent / 'progress/controllers/current.json'), bytes=789, sha256='f7aa388f8e5e731804cd5a65e25957fd51f7f46873764fe89e58aeddcc29273d'),
+]
+for ref in frozen:
+    get(ref)
+
+def write(name, value):
+    b = (json.dumps(value, indent=2, sort_keys=True) + '\n').encode()
+    path = HERE / name
+    with path.open('xb') as f:
+        f.write(b)
+    return dict(path=str(path), bytes=len(b), sha256=hashlib.sha256(b).hexdigest())
+
+evidence = write('evidence.json', dict(schema='F009_RESOURCE_BINDING_CONTROLS_ACTUAL_FINITE_EVIDENCE_V1', reviewer='/root/mathematical_review', Root_authority=False, pins=list(pins.values()), runtime_inputs=runtime_inputs, Original_inputs_decoded=False, represented_functions_or_controls_replayed=False))
+leaf = dict(
+    schema='F009_RESOURCE_BINDING_ACTUAL_CONTROLS_INDEPENDENT_REUSE_V1', status='SUPPORTED_ACTUAL_F009_RESOURCE_BINDING_CONTROLS',
+    reviewer='/root/mathematical_review', Root_authority=False, blockers=[],
+    packet=packetref, Source_peer=peerref, Source_manifest=mfref, program=packet['program'], controls_source=packet['controls'],
+    count=40, control_names=names, Original_inputs_loaded=False, Original_payloads_decoded=False,
+    actual_SDK=sdkref, authority_actual_SDK=authorityref, Root_decision=decisionref, Root_gate=gr, request=qr, result=resultref,
+    actual_raw_frames_and_exact_command_verified=True, actual_guard_and_raw_frames_verified=False,
+    external_resource_guard_claimed=False, cooperative_metadata_only=True,
+    total_project_read_upper=739899, first_closing_input_bytes=398530, bootstrap_outer_read_upper=337191,
+    finite_evidence=evidence, frozen_progress_pointers_verified=frozen, observed_utc=datetime.now(timezone.utc).isoformat(),
+    scientific_calls=0, canonical_writes=0, scientific_parent_or_case_credit=0,
+    qualification=[
+        'The genuine first-v1 Root control invocation, separate positive authority issuance, complete exact EBS command, raw issued intent and terminal frame, Source911b/packet592f/controls manifest3891, request/gate/decision and whole output are independently joined. All40 unique reported control names match the reviewed synthetic designs and result all_controls_passed=True.',
+        'These are actual pure production predicate controls on synthetic metadata. They do not authenticate a future real SDK, prove filesystem absence, exercise the entire authority chain, execute scientific predicates or demonstrate publication atomicity. Old54/72 and scientific controls were not replayed.',
+        'This exact standalone dispatcher uses its declared cooperative resource checks and has no external guard. The18 distinct runtime inputs give199265 first-read bytes and398530 first/closing bytes; bootstrap337191 plus prospective output allowance yields739899 total read units. This is Source/accounting support, not an invented external guard or RSS sampling receipt.',
+        'The reviewer authored the imported Source peer and contributed bounded-read/history concerns, but did not author the implementation and executed neither controls nor represented functions. Original operands remained opaque. Fresh Root prepare_retry issuance, exact concrete transition review, later genuine supplier execution and independent strict/metadata adoption remain required. No supplier retry, parent, census, manuscript, conjecture, Lean or compression credit is granted.'
+    ])
+print(json.dumps(write('reuse_integer_only.json', leaf), sort_keys=True))

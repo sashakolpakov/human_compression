@@ -1,0 +1,78 @@
+"""Independent algorithmic byte checks after the separately authorized writer."""
+from pathlib import Path
+
+def check_registration(ctx):
+    q=ctx.q;r=C.doc(ctx.L,q['readback'])
+    assert r['schema']=='ROOT_F009_GENERIC_REGISTRATION_READBACK_V2'and r['root']=='/root'
+    assert r['packet']==ctx.packet_ref and r['program']==ctx.packet['programs']['register.py']
+    hr=r['cohort'];h=C.cohort(ctx.L,hr,ctx.packet);count=h['end']-h['begin']
+    assert r['prior_prefix']==h['begin']and r['reviewed_prefix']==h['end']and r['reviewed_slots']==156*h['end']
+    assert type(r['prior_cache_values'])is int and r['total_cache_values']==r['prior_cache_values']+count
+    printed,request,gate=E.metadata_attempt(ctx,q['registration_execution'],'register.py','register',dict(cohort=hr))
+    assert printed['readback']==q['readback']and printed['canonical_writes']==2 and printed['scientific_calls']==0
+    assert r['Root_gate']==C.ref(Path(q['registration_gate']['path']),C.raw(ctx.L,q['registration_gate']))
+    assert r['Root_gate']==q['registration_gate']and gate['request']==r['request']
+    before={k:C.raw(ctx.L,v)for k,v in r['before'].items()}
+    after={k:C.raw(ctx.L,v)for k,v in r['after'].items()}
+    assert set(before)==set(after)=={'intake','controller','runtime'}
+    for k,v in before.items():
+        alias=h['snapshot_aliases'][k]
+        assert v==C.raw(ctx.L,alias)
+        assert(alias['bytes'],alias['sha256'])==(h['progress_snapshot'][k]['bytes'],h['progress_snapshot'][k]['sha256'])
+    assert C.raw(ctx.L,C.at(ctx.L,C.PROGRESS/'current_intake.json'))==after['intake']
+    assert C.raw(ctx.L,C.at(ctx.L,C.PROGRESS/'controllers/current.json'))==after['controller']
+    assert C.view(after['controller'],['checkpoint'])['checkpoint']==C.view(after['intake'],['active_controller_checkpoint'])['active_controller_checkpoint']==r['after']['runtime']
+    IV.unchanged(before['intake'],after['intake'],{'F009','latest_reviewed_forest_batch','previous_checkpoint','active_controller_checkpoint'})
+    IV.unchanged(before['controller'],after['controller'],{'previous_controller','checkpoint'})
+    IV.unchanged(before['runtime'],after['runtime'],{'cache_banks','counts','next_R5','latest_reviewed_forest_batch','previous_checkpoint'})
+    bi,ai=C.fields(before['intake']),C.fields(after['intake'])
+    IV.unchanged(bi['F009'],ai['F009'],IV.FCHANGED)
+    f=C.view(ai['F009'],['R5_canonical_pairs_reviewed','R5_prefix_strict_slots_reviewed','R5_canonical_total_parents','R5_whole_level_complete'])
+    assert f==dict(R5_canonical_pairs_reviewed=h['end'],R5_prefix_strict_slots_reviewed=156*h['end'],R5_canonical_total_parents=940,R5_whole_level_complete=False)
+    bp,ap=C.fields(before['runtime']),C.fields(after['runtime'])
+    IV.unchanged(bp['counts'],ap['counts'],IV.COUNTS);IV.unchanged(bp['next_R5'],ap['next_R5'],IV.NEXT)
+    n=C.view(ap['next_R5'],['index','completed_prefix_parents','reviewed_prefix_parents','pending_actual_review_indices','scientific_child_started'])
+    assert n==dict(index=h['end'],completed_prefix_parents=h['end'],reviewed_prefix_parents=h['end'],pending_actual_review_indices=[],scientific_child_started=False)
+    assert bp['cache_entries']==ap['cache_entries']
+    keys,oldbanks=IV.cache_keys(ctx.L,before['runtime'])
+    assert len(keys)==r['prior_cache_values']
+    afterbanks=C.array(ap['cache_banks']);assert afterbanks[:-1]==oldbanks and len(afterbanks)==len(oldbanks)+1
+    new=C.metadata(afterbanks[-1]);assert new['ref']==r['new_cache_bank']and new['entries']==count
+    bank=C.fields(C.raw(ctx.L,new['ref']));entries=C.fields(bank['cache_entries'])
+    expected={'Root_f009_R5_canonical_parent%04d_pair'%i for i in h['source_indices']}
+    assert set(entries)==set(new['keys'])==expected and not keys.intersection(entries)
+    assert len(r['new_parent_records'])==count and len(r['shared_reviewed_batches'])==len(h['batches'])
+    total=0;shared_records=[]
+    for b,sr in zip(h['batches'],r['shared_reviewed_batches']):
+        shared=C.doc(ctx.L,sr)
+        assert shared['schema']=='ROOT_F009_GENERIC_REVIEWED_SHARED_BATCH_V2'and shared['cohort']==hr and shared['batch']==b['batch']and shared['source_indices']==b['source_indices']
+        pair=C.doc(ctx.L,shared['pairing'])
+        assert C.can(shared['strict'])==C.can(pair['strict'])and C.can(shared['bindings'])==C.can(pair['bindings'])
+        for offset,(index,binding)in enumerate(zip(b['source_indices'],shared['bindings'])):
+            pr=r['new_parent_records'][index-h['begin']];body=C.raw(ctx.L,pr);parent=C.metadata(body)
+            entry=C.fields(entries['Root_f009_R5_canonical_parent%04d_pair'%index])
+            assert C.metadata(entry['ref'])==pr and C.equivalent(entry['value'],body)
+            assert parent['schema']=='ROOT_F009_GENERIC_REVIEWED_PARENT_V2'and parent['current_parent_ordinal']==index
+            assert parent['cohort']==hr and parent['cohort_batch']==b['batch']and parent['shared_reviewed_batch']==sr
+            assert type(parent['strict_cover_index'])is type(binding['strict_cover_index'])is int and parent['strict_cover_index']==offset==binding['strict_cover_index']
+            assert type(parent['supplier_cover_index'])is type(binding['supplier_cover_index'])is int and parent['supplier_cover_index']==binding['supplier_cover_index']==0
+            assert C.can(parent['strict_actual'])==C.can(shared['strict'])
+            assert C.can(parent['supplier_actual'])==C.can(binding['supplier']['actual'])
+            assert parent['strict_slots']==156 and parent['all156slots_strictly_checked']is True and parent['target_count']==binding['target_occurrences']
+            assert parent['parent_payload_lexical_sha256']==binding['parent_payload_lexical_sha256']and parent['canonical_cover_sha256']==binding['supplier']['canonical_cover_sha256']
+            total+=parent['target_count']
+        shared_records.append(sr)
+    oldprefix=C.array(C.fields(bi['F009'])['R5_canonical_complete_pairs']);newprefix=C.array(C.fields(ai['F009'])['R5_canonical_complete_pairs'])
+    assert len(oldprefix)==h['begin']and len(newprefix)==h['end']and newprefix[:h['begin']]==oldprefix
+    assert[C.metadata(v)for v in newprefix[h['begin']:]]==r['new_parent_records']
+    result=dict(schema='ROOT_F009_GENERIC_ADMINISTRATIVE_RESULT_V2',root='/root',status='PASS_ADMIN_POSTCHECK',
+        Source_author=C.AUTHOR,packet=ctx.packet_ref,cohort=hr,registration_readback=q['readback'],
+        registration_execution=q['registration_execution'],registered_prefix=h['end'],reviewed_slots=156*h['end'],
+        prior_cache_values=len(keys),total_cache_values=len(keys)+count,new_parent_values=count,
+        new_shared_nodes=len(shared_records),target_occurrences=total,all_prior_cache_values_and_banks_preserved=True,
+        all_unrelated_intake_F004_L026_measurement_and_unknown_values_raw_unchanged=True,
+        complete_profile_attempt_and_cover_bindings_preserved=True,exact_frozen_beforeimages_verified=True,
+        no_independent_mathematical_proof_claimed=True,Original_payloads_decoded=False,scientific_calls=0,
+        canonical_writes=0,independent_execution_provenance_adoption_still_owed=True)
+    rr=ctx.put(ctx.out/'result.json',C.can(result))
+    return ctx.emit(dict(result=rr,registered_prefix=h['end'],cache_values=len(keys)+count))

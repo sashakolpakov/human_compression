@@ -1,0 +1,50 @@
+"""Exact legacy scientific retry selection, metadata only; no Original inputs."""
+import json
+
+def selected_role(L,selection_ref,cohort_ref,cohort,stem,base,load):
+ assert cohort['begin']==414 and cohort['end']==426
+ q=load(L,selection_ref)
+ assert q['schema']=='ROOT_F009_COHORT_ROLE_ACTUAL_BINDINGS_V1' and q['root']=='/root' and q['Root_authority'] is True
+ assert q['cohort']==cohort_ref and q['program']==cohort['program'] and type(q['batch']) is int and q['batch']==0 and q['phase']=='close_pairing'
+ assert len(q['roles'])==1
+ role=q['roles'][0]
+ assert role['stem']=='parents0414_0416_check' and type(role['edition']) is int and role['edition']==2
+ assert len(role['prior_attempts'])==1
+ prior=role['prior_attempts'][0]
+ assert type(prior['edition']) is int and prior['edition']==1 and prior['disposition']=='GENUINE_PREENTRY_REFUSAL'
+ expected_base=base.parent/'parents0414_0416'
+ assert role['actual_SDK']['path']==str(expected_base/'Root_SDK'/'parents0414_0416_check_v2.json')
+ assert prior['actual_SDK']['path']==str(expected_base/'Root_SDK'/'parents0414_0416_check_v1.json')
+ reconciliation=load(L,prior['preentry_reconciliation'])
+ assert reconciliation['schema']=='ROOT_F009_EXACT_ROLE_PREENTRY_RETRY_RECONCILIATION_V1'
+ assert reconciliation['root']=='/root' and reconciliation['Root_authority'] is True and reconciliation['stem']==role['stem']
+ assert reconciliation['refused_actual_SDK']==prior['actual_SDK'] and reconciliation['selected_actual_SDK']==role['actual_SDK']
+ for flag in ('no_scientific_child_started','guard_and_output_absent_before_selected_attempt','same_exact_argv_as_selected','original_guard_and_scientific_caps_unchanged'):
+  assert reconciliation[flag] is True
+ inspections=reconciliation['actual_absence_or_resource_inspections']
+ assert 1<=len(inspections)<=4
+ for r in inspections:L.raw(r['path'],r)
+ if stem==role['stem']:
+  return role
+ assert stem.startswith('parent') and stem.endswith(('_supply','_check'))
+ path=base/'Root_SDK'/(stem+'_v1.json')
+ _,r=L.raw(path)
+ return dict(stem=stem,edition=1,actual_SDK=r,prior_attempts=[])
+
+
+def pairing_history(L,attempt,load):
+ """Exact d516 emitted history ABI, distinct from the Root binding ABI."""
+ assert type(attempt['edition'])is int and 1<=attempt['edition']<=2
+ assert len(attempt['prior_attempts'])==attempt['edition']-1
+ result=[]
+ for p in attempt['prior_attempts']:
+  assert type(p['edition'])is int and p['edition']==1 and p['disposition']=='GENUINE_PREENTRY_REFUSAL'
+  r=load(L,p['preentry_reconciliation'])
+  assert r['root']=='/root' and r['Root_authority']is True and r['stem']==attempt['stem']
+  assert r['refused_actual_SDK']==p['actual_SDK'] and r['selected_actual_SDK']==attempt['actual_SDK']
+  for flag in ('no_scientific_child_started','guard_and_output_absent_before_selected_attempt','same_exact_argv_as_selected','original_guard_and_scientific_caps_unchanged'):
+   assert r[flag]is True
+  inspections=r['actual_absence_or_resource_inspections'];assert type(inspections)is list and 1<=len(inspections)<=4
+  for item in inspections:L.raw(item['path'],item)
+  result.append(dict(edition=p['edition'],actual_SDK=p['actual_SDK'],preentry_reconciliation=p['preentry_reconciliation'],actual_absence_or_resource_inspections=inspections))
+ return result

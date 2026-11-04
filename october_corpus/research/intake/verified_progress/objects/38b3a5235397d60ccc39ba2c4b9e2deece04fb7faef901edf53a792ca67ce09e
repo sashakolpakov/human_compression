@@ -1,0 +1,143 @@
+"""UNRUN Root-only bounded role IO; scientific modules load only after gate."""
+from pathlib import Path
+import argparse,hashlib,json,math,os,resource,signal,stat,sys,time,types
+CAPS=dict(source_bytes=98304,read_bytes=8388608,paths=32,file_bytes=2097152,
+          output_bytes=131072,output_files=2,work_units=10000000,work_seconds=20,
+          rss_bytes=134217728,caller_seconds=140)
+GUARDS={'supervise.py': (6023, 'a4f8393c465bd8daa581dac4b398042863b8eb43d5c111154395f543089c1c39'), 'supervise_transient.py': (18361, '5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42')}
+RESOURCE_POLICY={'path': '/Users/sasha/medusa/research/leemans/maintenance/intake/resource_profiles/bounded_output/resource_policy.py', 'bytes': 22780, 'sha256': '70440d963df62387cd1f2d202628249bbc9e0fc95078f0e2fe58f05a2924edee'}
+
+def need(v,s):
+    if not v:raise ValueError(s)
+def canonical(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+def strict(raw):
+    need(raw.isascii(),'whole metadata/certificates use finite ASCII JSON')
+    def pairs(items):
+        out={}
+        for k,v in items:need(k not in out,'duplicate key');out[k]=v
+        return out
+    def bad(_):raise ValueError('no nonfinite metadata values')
+    def finite(text):
+        value=float(text);need(math.isfinite(value),'finite metadata float');return value
+    return json.loads(raw,object_pairs_hook=pairs,parse_float=finite,parse_constant=bad)
+def descriptor(r):
+    need(type(r)is dict and set(r)=={'path','bytes','sha256'}and type(r['path'])is str
+         and type(r['bytes'])is int and 0<=r['bytes']<=CAPS['file_bytes']
+         and type(r['sha256'])is str and len(r['sha256'])==64
+         and all(c in'0123456789abcdef'for c in r['sha256']),'bounded whole descriptor')
+    return r
+
+class Bank:
+    def __init__(self):
+        self.start=time.monotonic();self.bytes=0;self.refs={};self.work=None
+    def tick(self):
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+        need(sys.platform in('darwin','linux')and rss<=CAPS['rss_bytes']and time.monotonic()-self.start<CAPS['caller_seconds'],'128MiB/140s caller')
+    def read(self,r):
+        descriptor(r);self.tick();p=Path(r['path']);a=p.lstat()
+        sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(p.is_absolute()and p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'canonical regular single-link input')
+        need(self.bytes+a.st_size<=CAPS['read_bytes']and len(set(self.refs)|{str(p)})<=CAPS['paths'],'whole8MiB/32path bank')
+        fd=os.open(p,os.O_RDONLY|os.O_NOFOLLOW)
+        with os.fdopen(fd,'rb')as f:s=os.fstat(f.fileno());raw=f.read(a.st_size+1);z=os.fstat(f.fileno())
+        need(sig(a)==sig(s)==sig(z)==sig(p.lstat())and len(raw)==a.st_size and hashlib.sha256(raw).hexdigest()==r['sha256'],'stable same-FD whole bytes/EOF/hash')
+        need(str(p)not in self.refs or self.refs[str(p)]==r,'one input version');self.refs[str(p)]=r;self.bytes+=len(raw);self.tick();return raw
+    def doc(self,r):return strict(self.read(r))
+    def observed_doc(self,path):
+        p=Path(path);s=p.lstat();signature=lambda z:(z.st_dev,z.st_ino,z.st_mode,z.st_nlink,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+        need(p.is_absolute()and p.resolve()==p and stat.S_ISREG(s.st_mode)and s.st_nlink==1 and 0<s.st_size<=131072,'bounded actual guard-start record')
+        need(self.bytes+s.st_size<=CAPS['read_bytes']and len(set(self.refs)|{str(p)})<=CAPS['paths'],'observed input read/path reserve')
+        with p.open('rb')as f:a=os.fstat(f.fileno());body=f.read(s.st_size+1);z=os.fstat(f.fileno())
+        need(signature(s)==signature(a)==signature(z)==signature(p.lstat())and len(body)==s.st_size,'stable actual guard-start whole record')
+        r=dict(path=str(p),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+        need(str(p)not in self.refs or self.refs[str(p)]==r,'one observed edition');self.refs[str(p)]=r;self.bytes+=len(body);self.tick();return strict(body)
+    def close(self):
+        for r in list(self.refs.values()):self.read(r)
+    def module(self,r,name):
+        need(r in self.allowed_modules and r['bytes']<=65536,'module in whole charged Source closure')
+        body=self.read(r);space=types.ModuleType(name);space.__file__=r['path']
+        exec(compile(body,r['path'],'exec',dont_inherit=True),vars(space))
+        for value in vars(space).values():
+            if isinstance(value,types.FunctionType)and value.__module__==name:
+                need(value.__globals__ is vars(space)and value.__code__.co_filename==r['path'],'whole actual module functions/globals')
+        return vars(space)
+    def emit(self,directory,result,certificate):
+        if self.work is not None:self.work.charge(0)
+        p=Path(directory);need(p.is_absolute()and p.is_relative_to('/private/tmp')and p.parent.resolve()==p.parent and not os.path.lexists(p),'fresh output directory')
+        raw=[canonical(result),canonical(certificate)]
+        if self.work is not None:self.work.spend_certificate(3*sum(map(len,raw)))
+        need(all(len(v)<=CAPS['output_bytes']for v in raw)and len(set(self.refs)|{str(p/'result.json'),str(p/'certificate.json')})<=CAPS['paths'],'two128KiB outputs in same path bank')
+        self.tick();p.mkdir();out=[]
+        for name,b in zip(('result.json','certificate.json'),raw):
+            f=p/name
+            with f.open('xb')as h:need(h.write(b)==len(b),'complete output');h.flush();os.fsync(h.fileno())
+            out.append(dict(path=str(f),bytes=len(b),sha256=hashlib.sha256(b).hexdigest()))
+        self.tick()
+        if self.work is not None:self.work.charge(0)
+        return out
+
+def bounded_started_admission(P,started,resource_budget,br,lr,launch,command,manifest_ref,role,pid,profile_ref):
+    P['validate_authority'](resource_budget,command,resource_budget['volume'],resource_budget['guard'],
+        profile_ref,RESOURCE_POLICY,manifest_ref,role,True,launch['reference_bindings'])
+    P['validate_launch'](launch,resource_budget,br,command,resource_budget['volume'],resource_budget['guard'],
+        profile_ref,RESOURCE_POLICY)
+    need(started['bounded_output_profile']==P['marker'](resource_budget,br,lr)
+         and started['command']==command and any(x['pid']==pid for x in started['identities'])
+         and started['limits']==P['expected_limits'](True),
+         'fresh samePID/argv truthful new2/1 profile; no legacy profile relabel')
+
+
+def main_args(role):
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS/no-O')
+    need(all(k not in os.environ for k in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','OPENSSL_CONF','OPENSSL_MODULES')),'ENV4 absent')
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True)
+    ap.add_argument('--manifest',nargs=3,required=True);ap.add_argument('--request',nargs=3,required=True);ap.add_argument('--Root-gate',nargs=3,required=True);ap.add_argument('--out',required=True);ap.add_argument('--guard',required=True);a=ap.parse_args()
+    need(a.actor=='/root','Root-only activation');bank=Bank()
+    def ref(v):return dict(path=v[0],bytes=int(v[1]),sha256=v[2])
+    mr,qr,gr=ref(a.manifest),ref(a.request),ref(a.Root_gate)
+    need(mr['bytes']<=65536 and qr['bytes']<=131072 and gr['bytes']<=65536,'bounded bootstrap objects')
+    need(mr['bytes']+qr['bytes']+gr['bytes']<=98304,'complete bootstrap reserve')
+    manifest=bank.doc(mr);q=bank.doc(qr);gate=bank.doc(gr)
+    need(not(Path(__file__).parent/'__pycache__').exists()and gate['clean_project_bootstrap_owned']is True,'Root-owned clean project bootstrap')
+    need(manifest['schema']=='F009_SMALL_FOREST_ORBIT_ROLE_SOURCE_V2'and manifest['caps']==CAPS,'exact new role ABI')
+    need(manifest['entry']in manifest['Source']and manifest['entry']['path']==str(Path(sys.argv[0]).resolve()),'actual complete caller Source is selected')
+    need(gate['root']=='/root'and gate['adopted']is True and gate['Root_authority']is True and gate['role']==role and gate['request']==qr and gate['manifest']==mr and gate['source_and_math_owned']is True and gate['exact_order80_seed_and_allowed_action_imports_owned']is True,'fresh exact Root authority; FALSE author records cannot run')
+    total=0
+    for r in manifest['Source']:bank.read(r);total+=r['bytes']
+    need(total<=CAPS['source_bytes']and len({r['path']for r in manifest['Source']})==len(manifest['Source']),'complete role Source union')
+    need(any(r['path']==str(Path(__file__).resolve())for r in manifest['Source']),'actual common module is charged')
+    bank.allowed_modules=manifest['Source']
+    used={}
+    for r in manifest['guards']:
+        name=Path(r['path']).name;need(name in GUARDS and (r['bytes'],r['sha256'])==GUARDS[name]and name not in used,'exact new bounded-profile and unchanged base guards');used[name]=r
+    need(set(used)==set(GUARDS)and all(r in manifest['Source']for r in used.values()),'guards included in Source union')
+    own=next(r for r in manifest['Source']if r['path']==str(Path(__file__).resolve()))
+    need(manifest['resource_policy']==RESOURCE_POLICY and RESOURCE_POLICY in manifest['Source']
+         and manifest['resource_profile']==used['supervise.py'],'whole new policy/profile Source in namespace')
+    P=bank.module(RESOURCE_POLICY,'new_bounded_output_resource_policy')
+    br=q['bounded_resource_budget'];descriptor(br)
+    need(gate['bounded_resource_budget']==br,'same positive Root budget in request and gate')
+    resource_budget=bank.doc(br)
+    need(resource_budget['role_kind']=='science','controls bootstrap never authorizes a scientific role')
+    P['validate_science_manifest'](resource_budget,manifest)
+    source_peer=bank.doc(resource_budget['Source_peer'])
+    admission_controls=bank.doc(resource_budget['admission_controls'])
+    P['validate_evidence'](resource_budget,source_peer,admission_controls,manifest['resource_profile'],RESOURCE_POLICY)
+    nominal=max(total,2*manifest['resource_profile']['bytes']+3*18361+RESOURCE_POLICY['bytes']
+                +manifest['entry']['bytes']+own['bytes']+br['bytes']+mr['bytes']
+                +resource_budget['Source_peer']['bytes']+resource_budget['admission_controls']['bytes']
+                +resource_budget['caller_source']['bytes']
+                +sum(r['existing']['bytes']for r in resource_budget['inventory']if r['existing']is not None))
+    bank.bytes+=nominal;bank.nominal_project_body_bytes=nominal
+    need(bank.bytes<=CAPS['read_bytes'],'nominal repeated guard and initial caller/common body reservation')
+    need(q['role']==role and q['Root_authority']is False,'only exact unadopted role request')
+    started=bank.observed_doc(Path(a.guard)/'started.json');limits=started['limits']
+    marker=started['bounded_output_profile'];lr=marker['launch'];descriptor(lr)
+    launch=bank.doc(lr)
+    command=[q['python_executable'],'-E','-B','-S',str(Path(sys.argv[0]).resolve())]+sys.argv[1:]
+    need(resource_budget['guard']==a.guard and resource_budget['role_source']==manifest['entry'],'same guard/entry')
+    bounded_started_admission(P,started,resource_budget,br,lr,launch,command,mr,role,os.getpid(),manifest['resource_profile'])
+    bank.bytes+=lr['bytes']
+    need(bank.bytes<=CAPS['read_bytes'],'outer launch document read also charged')
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('140s role')));signal.alarm(140)
+    return bank,q,manifest,dict(request=qr,manifest=mr,Root_gate=gr,bounded_resource_budget=br,bounded_launch=lr),a.out

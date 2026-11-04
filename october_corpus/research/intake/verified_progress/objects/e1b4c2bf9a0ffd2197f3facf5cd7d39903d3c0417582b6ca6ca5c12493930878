@@ -1,0 +1,65 @@
+--- initial/construct.py
++++ normalized_paths/construct.py
+@@ -52,6 +52,14 @@
+     assert len(child)==10 and len(rows)==len({r['path']for r in rows})==80
+     assert sum(r['maximum_bytes']for r in rows)+16*2**20==57540737
+     return rows
++
++def output_path(text,policy):
++    """Normalized target with a canonical existing directory ancestor."""
++    path=policy['path'](text)
++    ancestor=path.parent
++    while not os.path.lexists(ancestor):ancestor=ancestor.parent
++    assert ancestor.is_dir()and ancestor.resolve(strict=True)==ancestor
++    return path
+ 
+ def main():
+     if not(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode):raise RuntimeError('ordinary EBS interpreter required')
+@@ -138,7 +146,7 @@
+     plans=[];documents=[];science_targets=set()
+     def document(path,value):
+         body=canonical(value);assert len(body)<=4*2**20
+-        path=Path(path);assert path.is_absolute()and not os.path.lexists(path)
++        path=output_path(str(path),P);assert not os.path.lexists(path)
+         assert str(path)not in[p for p,_,_ in documents]
+         r=H['reference'](path,body);documents.append((str(path),body,r));return r
+     for item in roles:
+@@ -209,8 +217,9 @@
+         P['validate_inventory'](parent);P['preflight_targets'](parent)
+         pir=document(item['parent_IO_path'],parent)
+         plans.append(dict(stem=stem,role_kind=kind,source_indices=expected_indices,prepared=item['prepared'],launch=lr,parent_IO=pir,SDK_destinations=sdks,raw_directory=str(rawdir),full_outer_argv=outer,edition=edition))
+-    receipt_path=Path(d['receipt_path'])
+-    assert receipt_path.is_relative_to(HERE/'actual')and receipt_path.name=='role_launch_construction.json'
++    receipt_path=output_path(d['receipt_path'],P)
++    actual_root=output_path(str(HERE/'actual'),P)
++    assert receipt_path.is_relative_to(actual_root)and receipt_path.name=='role_launch_construction.json'
+     receipt=dict(schema='ROOT_F009_SCIENCE_ROLE_LAUNCH_CONSTRUCTION_V1',root='/root',Root_authority=True,program=mf['entry'],Source_manifest=mr,Source_peer=sr,inputs=ir,Root_gate=gr,
+         cohort=d['cohort'],batch=batch,source_indices=indices,preparation_review=d['metadata_preparation_review'],preparation_review_scope=mode,plans=plans,scientific_calls=0,canonical_writes=0,
+         one_shared_reserve_per_serial_role=256*2**20,parent_union_each=80,child_subset_each=10,logical_content_allocation_upper_each=57540737,
+@@ -220,8 +229,10 @@
+     assert len(L.pins)+3*len(documents)+32<=512
+     first=L.bytes;L.close();H['check']()
+     for path,body,r in documents:
+-        p=Path(path);assert not os.path.lexists(p)
++        p=output_path(path,P);assert not os.path.lexists(p)
+         p.parent.mkdir(parents=True,exist_ok=True)
++        assert p.parent.is_dir()and p.parent.resolve(strict=True)==p.parent
++        assert not os.path.lexists(p)
+         with p.open('xb')as f:assert f.write(body)==len(body)
+     signal.alarm(0)
+     print(json.dumps(dict(status='ROOT_ISSUED_METADATA_ONLY',outputs=[r for _,_,r in documents],receipt=rr,plans=plans,
+--- initial/PROTOCOL.rst
++++ normalized_paths/PROTOCOL.rst
+@@ -65,6 +65,12 @@
+ and closing input reads are separately metered. Every admitted input is
+ whole hashed and closed before the first output. At most seven fresh files
+ are written. Publication is exclusive per file and is not multi-file atomic.
++A target must pass the unchanged policy's normalized absolute-path parser,
++which rejects ``..`` and noncanonical spelling. Its nearest existing directory
++ancestor must resolve to itself. The final parent is checked again after
++directory creation, immediately before exclusive file creation. Receipt
++containment is checked only after this normalization; a symlink ancestor does
++not turn lexical containment into an authorization to escape the declared tree.
+ A timeout or resource exception can end without a receipt. No external guard
+ receipt, successful scientific call, strict result or whole-level credit is
+ claimed by this materializer.

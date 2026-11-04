@@ -1,0 +1,69 @@
+"""Dynamic typed unpaid-scope admission from the frozen design c160df.
+This is metadata only; mathematical equations are checked separately.
+"""
+from retained_math import need
+
+def ordered_positions(values, total, name):
+    need(type(values) is list and values == sorted(set(values))
+         and all(type(p) is int and 1 <= p <= total for p in values), name)
+    return values
+
+def same_job(value, expected):
+    return (type(value) is list and len(value) == 2
+            and all(type(x) is int for x in value) and value == expected)
+
+def admit(plan, selector, context_metadata, root_scope, digest, expand_runs):
+    """Admit at most eight typed unpaid positions after the acquired context."""
+    job = plan['original_job']
+    need(type(job) is list and len(job) == 2 and type(job[0]) is int
+         and job[0] > 0 and job[1] == 4 and type(job[1]) is int,
+         'one exact original rank-four job')
+    need(same_job(context_metadata['original_job'], job), 'same acquired original domain')
+    total = context_metadata['original_orbit_rows']
+    need(type(total) is int and 1 <= total <= 14763,
+         'actual orbit count within the acquired complete catalogue')
+    need(selector['schema'] == 'ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1'
+         and selector['root'] == '/root' and selector['adopted'] is True
+         and same_job(selector['original_job'], job),
+         'exact per-job adopted current selector')
+    need(selector['projection'] == plan['projection']
+         and selector['Root_projection_acceptance'] == plan['Root_projection_acceptance'],
+         'same already acquired projection and domain adoption')
+    baseline = ordered_positions(selector['original_paid_positions'], total, 'typed baseline positions')
+    extra = ordered_positions(selector['accepted_new_paid_positions'], total, 'typed later paid positions')
+    pending = expand_runs(selector['unresolved_position_runs'], total)
+    ordered_positions(pending, total, 'typed current unpaid positions')
+    need(baseline == context_metadata['baseline_paid_positions']
+         and type(selector['original_paid_count']) is int
+         and selector['original_paid_count'] == len(baseline)
+         and type(selector['unresolved_positions']) is int
+         and selector['unresolved_positions'] == len(pending)
+         and selector['expanded_unresolved_sha256'] == digest(pending),
+         'complete same-domain current partition counts and digest')
+    need(len(baseline)+len(extra)+len(pending) == total
+         and sorted(baseline+extra+pending) == list(range(1,total+1)),
+         'no overlap, omission, baseline replay or later paid replay')
+    selected = ordered_positions(plan['selected_orbit_positions'], total, 'selected original positions')
+    need(1 <= len(selected) <= 8 and set(selected) <= set(pending),
+         'at most eight declared current unpaid positions')
+    ordered_positions(root_scope['selected_orbit_positions'], total, 'typed Root-selected positions')
+    need(root_scope['schema'] == 'ROOT_Q11_PROPER_SUBSPACE_SCOPE_V1'
+         and root_scope['root'] == '/root'
+         and root_scope['Root_authority'] is root_scope['adopted'] is True
+         and same_job(root_scope['original_job'], job) and root_scope['selector'] == plan['selector']
+         and root_scope['selected_orbit_positions'] == selected
+         and root_scope['original_domain_whole_pins'] == context_metadata['original_domain_whole_pins']
+         and root_scope['original_orbit_array_sha256'] == context_metadata['original_orbit_array_sha256'],
+         'fresh exact Root scope, never job20 actuals relabelled')
+    for flag in ('complete_original_model_frame_member_and_transport_meanings_owned',
+                 'all_selector_adoptions_have_exact_per_job_typed_meanings_owned',
+                 'selected_case_and_seed_roles_and_fresh_criterion_owned',
+                 'same_original_ambient_known_G_members_owned',
+                 'proper_subgroup_only_no_IP_or_other_case_credit_owned'):
+        need(root_scope[flag] is True, 'explicit Root duty '+flag)
+    need(plan['subspace_input_schema'] == 'UNTRUSTED_Q11_INVARIANT_SUBSPACE_ROWS_V1'
+         and plan['require_prior_GEN_adoption'] is False,
+         'fresh untrusted carriers; every numerical equation remains owed')
+    return dict(selected=selected, current_unpaid=pending, original_orbit_rows=total,
+                metadata_admission_only=True, cyclic_or_word_equations_verified=False,
+                GEN_or_IP_or_paid_credit=0)

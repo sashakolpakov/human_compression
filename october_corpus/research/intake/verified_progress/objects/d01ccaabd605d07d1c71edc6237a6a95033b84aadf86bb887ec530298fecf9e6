@@ -1,0 +1,61 @@
+"""Whole-byte metadata IO. No Original value decoder or process launcher."""
+import hashlib,os,resource,signal,stat,sys,time
+from pathlib import Path
+
+START=time.monotonic()
+READ_LIMIT=64*2**20
+FILE_LIMIT=4*2**20
+
+def check():
+    if time.monotonic()-START>=115:raise TimeoutError('metadata deadline')
+    rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+    if rss>=256*2**20:raise MemoryError('metadata RSS')
+
+def signature(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def descriptor(r):
+    assert type(r)is dict and set(r)=={'path','bytes','sha256'}
+    assert type(r['path'])is str and Path(r['path']).is_absolute()
+    assert type(r['bytes'])is int and 0<=r['bytes']<=FILE_LIMIT
+    assert type(r['sha256'])is str and len(r['sha256'])==64 and set(r['sha256'])<=set('0123456789abcdef')
+    return r
+
+def reference(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+
+def load_source(r,name):
+    descriptor(r);p=Path(r['path']);assert p.resolve(strict=True)==p
+    with p.open('rb')as f:
+        before=os.fstat(f.fileno());assert stat.S_ISREG(before.st_mode)and before.st_size==r['bytes']
+        body=f.read(r['bytes']+1);after=os.fstat(f.fileno())
+    assert signature(before)==signature(after)==signature(p.stat())and reference(p,body)==r
+    scope=dict(__file__=r['path'],__name__=name)
+    exec(compile(body,r['path'],'exec'),scope)
+    return scope
+
+class Reader:
+    def __init__(self,bootstrap):
+        assert type(bootstrap)is int and 0<bootstrap<READ_LIMIT
+        self.bootstrap=bootstrap;self.bytes=0;self.pins={}
+    def read(self,r):
+        check();descriptor(r);p=Path(r['path']);assert p.resolve(strict=True)==p
+        if r['path']in self.pins:
+            body,known,old=self.pins[r['path']];assert known==r and signature(p.stat())==old
+        else:
+            with p.open('rb')as f:
+                before=os.fstat(f.fileno())
+                assert stat.S_ISREG(before.st_mode)and before.st_size==r['bytes']
+                assert 2*(self.bytes+r['bytes'])+self.bootstrap<=READ_LIMIT and len(self.pins)<512
+                body=f.read(r['bytes']+1);after=os.fstat(f.fileno())
+            assert signature(before)==signature(after)==signature(p.stat())and reference(p,body)==r
+            self.pins[r['path']]=(body,r,signature(after));self.bytes+=len(body)
+        return body
+    def close(self):
+        first=self.bytes
+        for path,(body,r,old)in list(self.pins.items()):
+            with Path(path).open('rb')as f:
+                before=os.fstat(f.fileno());assert signature(before)==old and before.st_size==len(body)<=FILE_LIMIT
+                actual=f.read(len(body)+1);after=os.fstat(f.fileno())
+            assert actual==body and signature(before)==signature(after)==signature(Path(path).stat())==old
+            self.bytes+=len(actual)
+        assert self.bytes==2*first and self.bytes+self.bootstrap<=READ_LIMIT
+        check()

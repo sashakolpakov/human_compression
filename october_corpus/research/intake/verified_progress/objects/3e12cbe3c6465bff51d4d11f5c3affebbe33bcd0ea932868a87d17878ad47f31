@@ -1,0 +1,124 @@
+"""Raw-value preserving registration of one independently reviewed cohort."""
+from pathlib import Path
+import hashlib
+
+def verify_aggregate(ctx,hr,h):
+    q=ctx.q;r=q['actual_review'];a=C.doc(ctx.L,r)
+    assert a['schema']=='F009_GENERIC_COHORT_ACTUAL_REUSE_V2'and a['status']=='SUPPORTED_ACTUAL'and a['blockers']==[]
+    assert a['cohort']==hr and a['packet']==ctx.packet_ref and a['begin']==h['begin']and a['end']==h['end']and a['source_indices']==h['source_indices']
+    assert a['progress_snapshot']==h['progress_snapshot']and a['strict_slots']==156*(h['end']-h['begin'])
+    for flag in('all_batch_pairings_and_per_cover_bindings_verified','frozen_progress_snapshot_authenticated','all_source_indices_exactly_once','all_selected_attempts_and_prior_refusals_audited'):
+        assert a[flag]is True
+    printed,request,gate=E.metadata_attempt(ctx,q['aggregate_execution'],'audit_cohort.py','audit_cohort',dict(cohort=hr))
+    assert printed['review']==r
+    x=C.doc(ctx.L,ctx.g['independent_execution_review'])
+    assert x['status'].startswith('SUPPORTED_ACTUAL')and x['blockers']==[]and x['reviewer']not in('/root','/root/readback_review',C.AUTHOR)
+    assert x['cohort']==hr and x['aggregate_actual_review']==r and x['actual_guard_and_raw_frames_verified']is True
+    return a
+
+def register(ctx):
+    q=ctx.q;hr=q['cohort'];h=C.cohort(ctx.L,hr,ctx.packet)
+    assert ctx.g['canonical_writes_authorized']is True and ctx.g['serial_sole_writer_no_atomicity_claim']is True
+    fv=C.frozen(ctx.L,h['progress_snapshot'],h['begin']);aggregate=verify_aggregate(ctx,hr,h)
+    before={k:C.raw(ctx.L,r)for k,r in h['progress_snapshot'].items()}
+    stage=C.PROGRESS/'stages'/('forest_extensions_%04d_%04d_generic_profiles'%(h['begin'],h['end']-1))
+    C.fresh(stage)
+    # Every beforeimage is the exact old byte body, not a JSON reserialization.
+    before_refs={k:ctx.put(stage/(k+'_before_update.json'),b)for k,b in before.items()}
+    keys,oldbanks=IV.cache_keys(ctx.L,before['runtime'])
+    assert type(q['expected_prior_cache_values'])is int and len(keys)==q['expected_prior_cache_values']
+    shared_refs=[];parent_refs=[];new_values={}
+    for b,entry in zip(h['batches'],aggregate['batches']):
+        assert entry['batch']==b['batch']and entry['source_indices']==b['source_indices']
+        leaf=C.doc(ctx.L,entry['actual_review'])
+        assert leaf['schema']=='F009_GENERIC_BATCH_ACTUAL_REUSE_V2'and leaf['status']=='SUPPORTED_ACTUAL'and leaf['blockers']==[]and leaf['cohort']==hr
+        pair=C.doc(ctx.L,entry['pairing'])
+        assert pair['schema']=='ROOT_F009_GENERIC_MIXED_PROFILE_PAIRING_V2'and pair['cohort']==hr and pair['source_indices']==b['source_indices']
+        assert C.can(pair['strict'])==C.can(leaf['strict'])
+        shared=dict(schema='ROOT_F009_GENERIC_REVIEWED_SHARED_BATCH_V2',root='/root',cohort=hr,
+            batch=b['batch'],source_indices=b['source_indices'],pairing=entry['pairing'],
+            strict=pair['strict'],bindings=pair['bindings'],strict_slots=156*len(b['source_indices']),
+            target_occurrences=pair['target_occurrences'],batch_actual_review=entry['actual_review'],
+            cohort_actual_review=q['actual_review'],registration_gate=ctx.gate_ref,
+            resource_profiles_explicit=True,whole_R5_or_census_claimed=False,scientific_calls=0)
+        sr=ctx.put(stage/('reviewed_batch%02d.json'%b['batch']),C.can(shared));shared_refs.append(sr)
+        assert len(pair['bindings'])==len(leaf['bindings'])==len(b['source_indices'])
+        for offset,(index,pb,lb)in enumerate(zip(b['source_indices'],pair['bindings'],leaf['bindings'])):
+            assert type(pb['index'])is int and pb['index']==lb['index']==index
+            assert type(pb['strict_cover_index'])is type(lb['strict_cover_index'])is int and pb['strict_cover_index']==lb['strict_cover_index']==offset
+            assert type(pb['supplier_cover_index'])is type(lb['supplier_cover_index'])is int and pb['supplier_cover_index']==lb['supplier_cover_index']==0
+            sa=pb['supplier']['actual'];st=pair['strict']
+            assert lb['strict_actual_SDK']==st['actual_SDK']and lb['supplier_actual_SDK']==sa['actual_SDK']
+            value=dict(schema='ROOT_F009_GENERIC_REVIEWED_PARENT_V2',root='/root',current_parent_ordinal=index,
+                current_roster=h['current_roster'],cohort=hr,cohort_batch=b['batch'],shared_reviewed_batch=sr,
+                pairing=entry['pairing'],batch_actual_review=entry['actual_review'],cohort_actual_review=q['actual_review'],
+                supplier_cover_index=0,strict_cover_index=offset,strict_actual=st,supplier_actual=sa,
+                strict_slots=156,target_count=pb['target_occurrences'],all156slots_strictly_checked=True,
+                canonical_cover_sha256=pb['supplier']['canonical_cover_sha256'],
+                parent_payload_lexical_sha256=pb['parent_payload_lexical_sha256'],
+                per_cover_canonical_bytes_equal=True,individual_whole_certificate_equality_claimed=False,
+                resource_profiles_explicit=True,whole_R5_or_census_adopted=False,new_manuscript_credit=0)
+            vr=ctx.put(stage/('parent%04d_reviewed.json'%index),C.can(value));parent_refs.append(vr)
+            key='Root_f009_R5_canonical_parent%04d_pair'%index
+            assert key not in keys and key not in new_values
+            new_values[key]=dict(ref=vr,value=value,independent_actual_review=entry['actual_review'],independent_actual_review_pending=False)
+    count=h['end']-h['begin']
+    assert len(new_values)==len(parent_refs)==count and len(shared_refs)==len(h['batches'])
+    bank=dict(schema='ROOT_INTAKE_CACHE_ENTRY_BANK_V1',root='/root',completed_science_values_immutable=True,
+        range=dict(begin=h['begin'],end=h['end'],topic='F009_R5_current_canonical_parents'),
+        review_handoff=q['actual_review'],cohort=hr,shared_reviewed_batches=shared_refs,cache_entries=new_values)
+    br=ctx.put(stage/'parent_cache.json',C.can(bank))
+    bank_record=dict(entries=count,keys=sorted(new_values),ref=br)
+    ri,rr=C.fields(before['intake']),C.fields(before['runtime'])
+    oldf=C.fields(ri['F009']);fupdates={}
+    for k in('R5_canonical_pairs_completed','R5_canonical_pairs_reviewed','R5_canonical_next_parent','R5_total_distinct_canonical_parents_reviewed','R5_total_distinct_canonical_parents_completed'):
+        fupdates[k]=C.can(h['end']).strip()
+    for k in('R5_prefix_strict_slots_reviewed','R5_strict_slots_reviewed','R5_strict_slots_completed'):fupdates[k]=C.can(156*h['end']).strip()
+    fupdates['R5_canonical_complete_pairs']=C.append(oldf['R5_canonical_complete_pairs'],[C.can(r).strip()for r in parent_refs])
+    fupdates['R5_canonical_actual_reviews']=C.append(oldf['R5_canonical_actual_reviews'],[C.can(q['actual_review']).strip()])
+    text='Continue fresh parent%d; generic reviewed prefix0..%d. New records explicitly bind legacy/new profiles, attempts and shared cover indices. Complete all940 and the final reduction before whole-level credit.'%(h['end'],h['end']-1)
+    fupdates['next']=fupdates['next_method_question']=C.can(text).strip()
+    newf=C.patch(ri['F009'],fupdates);IV.unchanged(ri['F009'],newf,IV.FCHANGED)
+    countparts=C.fields(rr['counts']);countupdates={}
+    for k in IV.COUNTS:countupdates[k]=C.can(156*h['end']if'slots'in k else h['end']).strip()
+    counts=C.patch(rr['counts'],countupdates);IV.unchanged(rr['counts'],counts,IV.COUNTS)
+    nxt=C.patch(rr['next_R5'],dict(index=C.can(h['end']).strip(),completed_prefix_parents=C.can(h['end']).strip(),
+        reviewed_prefix_parents=C.can(h['end']).strip(),pending_actual_review_indices=b'[]',scientific_child_started=b'false',
+        next_action=C.can('fresh%d_generic_prefix_reviewed'%h['end']).strip()))
+    IV.unchanged(rr['next_R5'],nxt,IV.NEXT)
+    delta=dict(cohort=hr,review=q['actual_review'],reviewed_range=[h['begin'],h['end']],new_cache_bank=br,
+        new_parent_records=parent_refs,shared_reviewed_batches=shared_refs,prior_values_preserved=len(keys),
+        total_cache_values=len(keys)+count,scientific_calls=0,whole_census_credit=0,
+        independent_admin_review_pending=True,generic_mixed_profile_parent_schema=True,
+        downstream_collector_schema_admission_still_owed=True)
+    runtime=C.patch(before['runtime'],dict(cache_banks=C.append(rr['cache_banks'],[C.can(bank_record).strip()]),
+        counts=counts,next_R5=nxt,latest_reviewed_forest_batch=C.can(delta).strip(),
+        previous_checkpoint=C.can(h['progress_snapshot']['runtime']).strip()))
+    IV.unchanged(before['runtime'],runtime,{'cache_banks','counts','next_R5','latest_reviewed_forest_batch','previous_checkpoint'})
+    nr=ctx.put(stage/'runtime.json',runtime)
+    intake=C.patch(before['intake'],dict(F009=newf,latest_reviewed_forest_batch=C.can(delta).strip(),
+        previous_checkpoint=C.can(before_refs['intake']).strip(),active_controller_checkpoint=C.can(nr).strip()))
+    controller=C.patch(before['controller'],dict(previous_controller=C.can(before_refs['controller']).strip(),checkpoint=C.can(nr).strip()))
+    IV.unchanged(before['intake'],intake,{'F009','latest_reviewed_forest_batch','previous_checkpoint','active_controller_checkpoint'})
+    IV.unchanged(before['controller'],controller,{'previous_controller','checkpoint'})
+    ni=ctx.put(stage/'intake_after_update.json',intake);nc=ctx.put(stage/'controller_after_update.json',controller)
+    # Two fixed, separately inventoried fresh staging bodies. Runtime itself
+    # is immutable; controller selects it, so there is no third overwrite.
+    ti=C.PROGRESS/'.current_intake.json.generic_profile_stage'
+    tc=C.PROGRESS/'controllers/.current.json.generic_profile_stage'
+    ctx.put(ti,intake);ctx.put(tc,controller)
+    replacements=[dict(path=str(C.PROGRESS/'controllers/current.json'),staged_path=str(tc),old_ref=h['progress_snapshot']['controller'],new_body_bytes=controller),
+        dict(path=str(C.PROGRESS/'current_intake.json'),staged_path=str(ti),old_ref=h['progress_snapshot']['intake'],new_body_bytes=intake)]
+    readback=dict(schema='ROOT_F009_GENERIC_REGISTRATION_READBACK_V2',root='/root',cohort=hr,
+        packet=ctx.packet_ref,program=ctx.packet['programs']['register.py'],Source_manifest=ctx.manifest_ref,
+        Source_peer=ctx.peer_ref,Root_gate=ctx.gate_ref,request=ctx.request_ref,actual_review=q['actual_review'],
+        aggregate_execution=q['aggregate_execution'],independent_execution_review=ctx.g['independent_execution_review'],
+        before=before_refs,after=dict(intake=ni,controller=nc,runtime=nr),
+        new_cache_bank=br,new_parent_records=parent_refs,shared_reviewed_batches=shared_refs,
+        prior_prefix=h['begin'],reviewed_prefix=h['end'],reviewed_slots=156*h['end'],
+        prior_cache_values=len(keys),total_cache_values=len(keys)+count,
+        strict_source_profiles_explicit=True,all_prior_values_preserved=True,unknown_values_raw_unchanged=True,
+        serial_sole_writer_not_multifile_atomic=True,scientific_calls=0,
+        independent_administrative_review_pending=True,whole_R5_or_census_credit=False)
+    rb=ctx.put(stage/'readback.json',C.can(readback))
+    return ctx.emit(dict(readback=rb,cohort=hr,registered_prefix=h['end'],strict_slots=156*h['end'],total_cache_values=len(keys)+count),replacements)

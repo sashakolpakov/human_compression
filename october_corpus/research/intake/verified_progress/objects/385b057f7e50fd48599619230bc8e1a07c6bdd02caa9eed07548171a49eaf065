@@ -1,0 +1,133 @@
+"""Default-False Root readiness reader for an already reviewed supplier plan.
+
+One Source body serves every supplied metadata input. It writes no files and
+does not invoke a worker, profile, control or caller. Root must own and activate
+one fresh copy before using it serially for the three declared parents.
+"""
+import argparse,hashlib,json,os,sys,signal,shutil,psutil
+from pathlib import Path
+ROOT_AUTHORITY=True
+READER={'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_science_role_launches/reader.py','bytes':3008,'sha256':'d01ccaabd605d07d1c71edc6237a6a95033b84aadf86bb887ec530298fecf9e6'}
+LEX={'path':'/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/lex.py','bytes':2383,'sha256':'49d0c50e7145a0130d9318fef0907f1ba5bbfd95d09bad9ce99a034c508cb3eb'}
+READ_CAP=2*2**20
+
+def canonical(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode('ascii')
+def trip(r):return[r['path'],str(r['bytes']),r['sha256']]
+def bootstrap(r):
+    p=Path(r['path']);assert p.is_absolute()and p.resolve(strict=True)==p and 0<r['bytes']<=32768
+    with p.open('rb')as f:
+        a=os.fstat(f.fileno());assert a.st_size==r['bytes'];raw=f.read(r['bytes']+1);b=os.fstat(f.fileno())
+    sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+    assert sig(a)==sig(b)==sig(p.stat())and len(raw)==r['bytes']and hashlib.sha256(raw).hexdigest()==r['sha256']
+    scope=dict(__file__=r['path'],__name__='Root_owned_bounded_prelaunch_reader')
+    exec(compile(raw,r['path'],'exec'),scope);return scope
+
+def main():
+    if not ROOT_AUTHORITY:raise PermissionError('UNISSUED: Root must activate one owned copy')
+    if sys.flags.optimize:raise RuntimeError('optimized execution forbidden')
+    assert sys.flags.ignore_environment and sys.dont_write_bytecode
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--actor',required=True);ap.add_argument('--inputs',nargs=3,required=True)
+    a=ap.parse_args();assert a.actor=='/root'
+    signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s prelaunch metadata')));signal.alarm(125)
+    H=bootstrap(READER);X=H['load_source'](LEX,'Root_owned_lexical_metadata')
+    own=Path(__file__).resolve();n=own.stat().st_size;assert n<=32768
+    with own.open('rb')as f:own_raw=f.read(n+1)
+    assert len(own_raw)==n
+    ownref=H['reference'](own,own_raw);namespace=n+READER['bytes']+LEX['bytes']+512
+    assert namespace<=65536
+    prepaid=3*namespace;L=H['Reader'](prepaid)
+    def read(r):
+        if r['path']not in L.pins:assert 2*(L.bytes+r['bytes'])+prepaid<=READ_CAP
+        return L.read(r)
+    def doc(r):return X['metadata'](read(r))
+    def view(raw,keys):
+        fields=X['fields'](raw)
+        return{k:X['metadata'](fields[k])for k in keys}
+    ir=dict(path=a.inputs[0],bytes=int(a.inputs[1]),sha256=a.inputs[2])
+    d=doc(ir);assert d['schema']=='SOURCE_ONLY_F009_SUPPLIER_PRELAUNCH_INPUT_V1'and d['Root_authority']is False
+    for r in(ownref,READER,LEX):read(r)
+    review=doc(d['concrete_review']);receipt=doc(d['construction_receipt'])
+    assert review['status']=='SUPPORTED_ACTUAL_AND_CONCRETE_SCIENCE_LAUNCH_PLANS'and review['blockers']==[]
+    assert review['construction_receipt']==d['construction_receipt']and review['Source_manifest']==receipt['Source_manifest']==d['constructor_manifest']
+    assert review['program']==receipt['program']==d['constructor_program']and review['Source_peer']==receipt['Source_peer']==d['constructor_Source_peer']
+    assert review['cohort']==receipt['cohort']==d['cohort']and type(review['batch'])is int and review['batch']==receipt['batch']==d['batch']
+    assert review['scientific_calls']==review['canonical_writes']==receipt['scientific_calls']==receipt['canonical_writes']==0
+    index=d['index'];assert type(index)is int and index in review['source_indices']
+    stem='parent%04d_supply'%index
+    rp=[x for x in review['plans']if x['stem']==stem];plans=[x for x in receipt['plans']if x['stem']==stem]
+    assert len(rp)==len(plans)==1;rp,plan=rp[0],plans[0]
+    for key in('prepared','launch','parent_IO','full_outer_argv'):assert plan[key]==rp[key]==d[key]
+    assert plan['source_indices']==rp['source_indices']==[index]and plan['role_kind']=='supply'
+    prepared=doc(plan['prepared']);parent=doc(plan['parent_IO']);launch=doc(plan['launch']);budget=doc(prepared['budget'])
+    qraw=read(prepared['request']);iraw=read(prepared['Root_import'])
+    q=view(qraw,['Root_authority','mode','saved','role','Root_import','bounded_resource_budget','python_executable'])
+    im=view(iraw,['root','Root_authority','adopted','current_parent_ordinal','current_roster','cohort','cohort_batch'])
+    qp=X['array'](X['fields'](qraw)['parents']);ip=X['array'](X['fields'](iraw)['parents'])
+    roster=X['array'](X['fields'](read(im['current_roster']))['representatives'])
+    assert len(qp)==len(ip)==1 and qp[0]==ip[0]and X['equivalent'](qp[0],roster[index])
+    assert im['root']=='/root'and im['Root_authority']is im['adopted']is True
+    assert type(im['current_parent_ordinal'])is int and im['current_parent_ordinal']==index
+    assert im['cohort']==d['cohort']and type(im['cohort_batch'])is int and im['cohort_batch']==d['batch']
+    owned=('literal72_vertex_seed_and156_host_owned','complete_tree2048_times_S8_action_proof_owned',
+      'hereditary_rejections_necessary_for_every_target_owned','full_parent_kernel_image_and_U7_proof_owned',
+      'greedy_image_basis_and_right_action_lifts_owned','no_original_five_class_census_assumed',
+      'whole_level_and_crossing_and_census_authority_separate','incremental_distance_equivalence_proof_owned')
+    assert all(view(iraw,owned)[k]is True for k in owned)
+    gate=doc(prepared['gate']);mf=doc(prepared['manifest']);cohort=doc(d['cohort'])
+    assert prepared['cohort']==d['cohort']and prepared['role']=='supply'and prepared['source_indices']==[index]and prepared['launch']is None
+    assert prepared['budget']==parent['child_budget']==launch['budget']==q['bounded_resource_budget']==gate['bounded_resource_budget']
+    assert prepared['request']==gate['request']and prepared['manifest']==gate['manifest']==budget['role_manifest']==rp['Source_manifest']
+    assert q['Root_import']==prepared['Root_import']and q['Root_authority']is False and q['mode']=='supply'and q['saved']is None
+    assert q['python_executable']=='/Users/sasha/.venvs/global/bin/python'
+    assert q['role']==gate['role']==budget['role']=='f009_complete_parent_stabilizer_supplier'and budget['role_kind']=='science'
+    assert all(gate[k]is True for k in('Root_authority','adopted','source_and_math_owned','exact_order80_seed_and_allowed_action_imports_owned','clean_project_bootstrap_owned'))
+    assert budget['Source_peer']==d['science_Source_peer']and budget['admission_controls']==d['Core_controls']
+    for r in mf['Source']:
+        read(r)
+        if r['path'].endswith('.py'):
+            source=Path(r['path']);assert not os.path.lexists(source.parent/'__pycache__')
+            assert not any(os.path.lexists(source.with_suffix(s))for s in('.pyc','.pyo'))
+    assert sum(r['bytes']for r in mf['Source'])+512==mf['Source_with_invocation_reserve']<=98304
+    assert mf['entry']==budget['role_source']and mf['resource_profile']==d['profile']and mf['resource_policy']==d['policy']
+    assert launch['reference_bindings']==dict(budget=prepared['budget'],request=prepared['request'],Root_gate=prepared['gate'])
+    child=[str(launch['reference_bindings'][v['reference']][v['part']])if type(v)is dict else v for v in budget['command_projection']]
+    assert launch['command']==child and child[:5]==[q['python_executable'],'-E','-B','-S',mf['entry']['path']]
+    assert launch['role_manifest']==prepared['manifest']and launch['guard']==budget['guard']==prepared['guard']
+    argv=plan['full_outer_argv'];assert parent['exact_outer_argv']==parent['command_projection']==argv and argv[argv.index('--')+1:]==child
+    assert argv[:14]==['/usr/bin/env','-u','COVERAGE_PROCESS_CONFIG','-u','COVERAGE_CONFIG','-u','COVERAGE_PROCESS_START','-u','OPENSSL_CONF','-u','OPENSSL_MODULES',q['python_executable'],'-E','-B']
+    assert argv[14]==d['profile']['path']
+    for key,r in(('budget',prepared['budget']),('launch',plan['launch'])):
+        i=argv.index('--'+key);assert argv[i+1:i+4]==trip(r)
+    assert argv[argv.index('--rss-cap-mib')+1]=='128'and argv[argv.index('--timeout')+1]=='150'
+    assert parent['child_launch']==plan['launch']and parent['parent_IO_only']is True and parent['Core_launch_authority']is False
+    assert parent['Root_caller_read_prepaid_bytes']==READ_CAP and parent['one_shared_reserve_bytes']==parent['reserve_bytes']==budget['reserve_bytes']==256*2**20
+    rows=parent['inventory'];by={x['path']:x for x in rows};assert len(by)==len(rows)==80
+    assert len(budget['inventory'])==10 and all(by[x['path']]==x for x in budget['inventory'])
+    assert sum(r['maximum_bytes']for r in rows)+16*2**20==parent['one_combined_content_and_allocation_upper']==57540737
+    assert {k:sum(r['component']==k for r in rows)for k in('guard','sdk','primary','raw','images')}==dict(guard=6,sdk=2,primary=2,raw=33,images=37)
+    sdk=[r['path']for r in rows if r['component']=='sdk'];assert sdk==parent['shared_SDK_destinations']==plan['SDK_destinations']==rp['same_two_SDK']
+    assert len(sdk)==2 and sdk[1]==str(Path(prepared['out']).parent/'Root_SDK'/(stem+'_v1.json'))
+    rawdir=str(Path(prepared['actual_raw_root'])/(stem+'_v1'));assert rawdir==plan['raw_directory']==d['raw_directory']
+    assert {r['path']for r in rows if r['component']=='raw'}=={rawdir+'/issued.json'}|{rawdir+'/frame_%04d.json'%i for i in range(32)}
+    for r in rows:assert r['existing']is None and not os.path.lexists(r['path'])
+    assert not os.path.lexists(prepared['out'])and not os.path.lexists(prepared['guard'])
+    guard_parent=Path(prepared['guard']).parent
+    assert guard_parent.is_dir()and guard_parent.resolve(strict=True)==guard_parent
+    for r in(budget['Source_peer'],budget['admission_controls'],parent['generic_controls'],parent['caller_actual_controls'],parent['integration_Source_review'],parent['metadata_preparation_actual']):read(r)
+    cm=doc(parent['caller_source_manifest']);assert parent['caller_source_manifest']==d['caller_manifest']
+    for r in cm['caller_namespace']['Source']:read(r)
+    assert cm['files']['caller']==d['caller']and cm['files']['recorders']==d['recorders']
+    caller=read(d['caller']).decode('utf-8');recorders=read(d['recorders']).decode('utf-8')
+    for k in('intake','controller'):read(cohort['progress_snapshot'][k])
+    L.close();assert L.bytes+prepaid<=READ_CAP
+    resources=dict(disk_free=shutil.disk_usage('/Users/sasha/medusa').free,RAM_available=psutil.virtual_memory().available)
+    assert resources['disk_free']>=2*2**30 and resources['RAM_available']>=4*2**30
+    signal.alarm(0)
+    result=dict(parent=parent,caller=caller,recorders=recorders,argv=argv,key=d['genuine_call_key'],raw_directory=rawdir,sdk=sdk,
+      read_bytes=L.bytes,prepaid=prepaid,total_read_upper=L.bytes+prepaid,resources=resources,concrete_review=d['concrete_review'],
+      Root_whole_Source_mathematical_imports_and_subject_owned=ROOT_AUTHORITY,all_cross_ledger_joins_checked=True,all_targets_fresh_at_prelaunch=True,
+      Original_parent_values_decoded=False,scientific_calls=0,canonical_writes=0,files_written=0)
+    assert len(canonical(result))<=131072
+    print(json.dumps(result))
+
+if __name__=='__main__':main()

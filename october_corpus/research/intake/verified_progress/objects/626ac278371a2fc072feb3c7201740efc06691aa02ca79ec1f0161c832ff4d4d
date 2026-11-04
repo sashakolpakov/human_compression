@@ -1,0 +1,29 @@
+--- acquired/common.py
++++ supplement/bounded_common.py
+@@ -1,7 +1,7 @@
+ """Shared bounded metadata IO; mathematical and cache values remain byte spans."""
+ import argparse,hashlib,json,os,resource,signal,sys,time
+ from pathlib import Path
+-HERE=Path(__file__).resolve().parent
++HERE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition') # acquired cohort namespace
+ START=time.monotonic()
+ PYTHON='/Users/sasha/.venvs/global/bin/python'
+ INTAKE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+@@ -23,7 +23,16 @@
+ signal.alarm(125)
+ 
+ def module(ref,name,bindings=None):
+-    body=Path(ref['path']).read_bytes()
++    path=Path(ref['path'])
++    assert type(ref['bytes'])is int and 0<=ref['bytes']<=4*2**20
++    assert path.is_absolute()and path.resolve(strict=True)==path
++    with path.open('rb')as stream:
++        before=os.fstat(stream.fileno())
++        assert before.st_size==ref['bytes']
++        body=stream.read(ref['bytes']+1)
++        after=os.fstat(stream.fileno())
++    sig=lambda v:(v.st_dev,v.st_ino,v.st_mode,v.st_nlink,v.st_size,v.st_mtime_ns,v.st_ctime_ns)
++    assert sig(before)==sig(after)==sig(path.stat())
+     assert len(body)==ref['bytes']and hashlib.sha256(body).hexdigest()==ref['sha256']
+     scope=dict(__file__=ref['path'],__name__=name)
+     scope.update(bindings or {})

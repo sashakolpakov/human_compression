@@ -1,0 +1,142 @@
+"""Independent Source/descriptor closure only; imports no reviewed program."""
+import ast
+import hashlib
+import json
+import re
+from pathlib import Path
+
+BASE = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+CORE = BASE / 'resource_profiles/bounded_output'
+GENERIC = BASE / 'f009_bounded_io_transition'
+CALLER = CORE / 'recording'
+seen = {}
+documents = {}
+
+def descriptor(path):
+    path = Path(path)
+    body = path.read_bytes()
+    assert len(body) <= 4 * 2**20
+    return dict(path=str(path), bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+
+def pin(ref):
+    assert type(ref['bytes']) is int and 0 <= ref['bytes'] <= 4 * 2**20
+    key = (ref['path'], ref['sha256'])
+    if key not in seen:
+        actual = descriptor(ref['path'])
+        assert actual == {k: ref[k] for k in ('path', 'bytes', 'sha256')}, (actual, ref)
+        seen[key] = actual
+    return Path(ref['path']).read_bytes()
+
+def refs(value):
+    if type(value) is dict:
+        if {'path','bytes','sha256'} <= value.keys():
+            yield {k:value[k] for k in ('path','bytes','sha256')}
+        else:
+            for item in value.values(): yield from refs(item)
+    elif type(value) is list:
+        for item in value: yield from refs(item)
+
+def document(path):
+    ref = descriptor(path)
+    body = pin(ref)
+    value = json.loads(body)
+    documents[str(path)] = ref
+    return value
+
+def apply_diff(old, delta):
+    """Reconstruct text using an ordinary unified diff, without executing it."""
+    old = old.decode().splitlines(keepends=True)
+    lines = delta.decode().splitlines(keepends=True)
+    assert lines[0].startswith('--- ') and lines[1].startswith('+++ ')
+    out = []; cursor = 0; i = 2
+    while i < len(lines):
+        m = re.fullmatch(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*\n?', lines[i])
+        assert m, lines[i]
+        begin = int(m[1]) - (1 if int(m[2] or '1') else 0)
+        assert begin >= cursor
+        out.extend(old[cursor:begin]); cursor = begin; i += 1
+        while i < len(lines) and not lines[i].startswith('@@ '):
+            line = lines[i]; i += 1
+            if line.startswith('\\ No newline'): continue
+            assert line[:1] in (' ', '+', '-')
+            if line[:1] in (' ', '-'):
+                assert cursor < len(old) and old[cursor] == line[1:]
+                cursor += 1
+            if line[:1] in (' ', '+'): out.append(line[1:])
+    out.extend(old[cursor:])
+    return ''.join(out).encode()
+
+def main():
+    handoffs = [document(CORE/'handoff.json'), document(GENERIC/'handoff.json')]
+    request = document(GENERIC/'review_request.json')
+    caller = document(CALLER/'Source_manifest.json')
+    for value in handoffs + [request, caller]:
+        for ref in refs(value): pin(ref)
+    packet = document(GENERIC/'packet.json')
+    for key in ('programs','modules','entry_manifests','scientific_subjects'):
+        for ref in refs(packet[key]): pin(ref)
+    pairs = request['metadata_transition_entries']
+    assert set(pairs) == set(request['programs']) == set(request['entry_manifests'])
+    assert len(pairs) == 8
+    assert request['metadata_cas_programs'] == [request['programs']['register.py']]
+    invoices = []
+    manifests = request['metadata_manifests'] + request['new_science_manifests']
+    for ref in manifests:
+        mf = json.loads(pin(ref)); source = mf['Source']
+        assert len({r['path'] for r in source}) == len(source)
+        for row in source:
+            body = pin(row)
+            if row['path'].endswith('.py'): ast.parse(body)
+        total = sum(r['bytes'] for r in source) + 512
+        assert mf['Source_with_invocation_reserve'] == total
+        cap = mf.get('source_namespace', mf.get('Source_limit', 98304))
+        assert total <= cap
+        invoices.append(dict(manifest=ref, source_with_512=total, namespace=cap))
+    for key,pair in pairs.items():
+        assert pair == dict(program=request['programs'][key], manifest=request['entry_manifests'][key])
+        mf = json.loads(pin(pair['manifest']))
+        assert mf['entry'] == pair['program']
+    for name in ('caller_namespace','codec_control_namespace','transport_control_namespace'):
+        entry=caller[name]
+        for ref in entry['Source']:pin(ref)
+        assert entry['Source_with_invocation_reserve']==sum(r['bytes']for r in entry['Source'])+512
+        assert entry['Source_with_invocation_reserve']<=entry['Source_limit']==98304
+    retained=[]
+    for path in (CORE/'source_editions/before_complete_admission_corrections/retention.json',
+                 GENERIC/'source_editions/scientific_role_admission/manifest.json',
+                 GENERIC/'source_editions/command_quoting/manifest.json',
+                 CALLER/'source_editions/before_transport_corrections/manifest.json'):
+        value=document(path)
+        for row in value['files']:
+            original=row['original']; saved=row['retained']
+            assert (original['bytes'],original['sha256'])==(saved['bytes'],saved['sha256'])
+            pin(saved)
+        retained.append(dict(manifest=documents[str(path)], rows=len(value['files'])))
+    delta=document(GENERIC/'source_provenance/SCIENTIFIC_ADMISSION_DELTA.json')
+    for row in delta['changes']:
+        old=pin(row['retained']);after=pin(row['after']);patch=pin(row['diff'])
+        assert apply_diff(old,patch)==after
+    historical=[]
+    for row in packet['borrowed_historical_descriptors']:
+        ref=row['original'];p=Path(ref['path'])
+        available=p.is_file()
+        if available:pin(ref)
+        historical.append(dict(role=row['role'],descriptor=ref,available=available,scope=row['scope']))
+    result=dict(schema='INDEPENDENT_COMBINED_SOURCE_DESCRIPTOR_CLOSURE_V1',
+        reviewer='/root/mathematical_review',Root_authority=False,
+        represented_code_controls_or_math_executed=False,Original_payloads_decoded=False,
+        exact_paths=len(seen),exact_bytes=sum(r['bytes']for r in seen.values()),
+        exact_descriptors_sha256=hashlib.sha256(json.dumps(sorted(seen.values(),
+            key=lambda r:(r['path'],r['sha256'])),sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+        documents=documents,invoices=invoices,retained=retained,
+        reconstructed_diffs=len(delta['changes']),borrowed_historical_descriptors=historical)
+    out=GENERIC/'source_review/combined_descriptor_closure.json'
+    assert not out.exists()
+    encoded=json.dumps(result,sort_keys=True,separators=(',',':'))+'\n'
+    assert len(encoded.encode())<20000
+    out.write_text(encoded)
+    print(json.dumps(dict(output=descriptor(out),exact_paths=result['exact_paths'],
+        exact_bytes=result['exact_bytes'],invoices=invoices,retained=retained,
+        historical_missing=[r['role']for r in historical if not r['available']])))
+
+if __name__=='__main__':main()

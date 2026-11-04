@@ -1,0 +1,211 @@
+"""Independent opaque-byte and metadata plan audit; no project Source imports."""
+from pathlib import Path
+import copy, hashlib, json, os, shlex
+from datetime import datetime, timezone
+
+HERE = Path(__file__).resolve().parent
+P = HERE.parents[2]
+G = P.parent / 'f009_bounded_io_transition'
+K = P.parent / 'resource_profiles/bounded_output'
+pins = {}
+
+def pin(path):
+    p = Path(path)
+    n = p.stat().st_size
+    assert n <= 4*1024**2
+    with p.open('rb') as f:
+        body = f.read(n + 1)
+    assert len(body) == n
+    ref = dict(path=str(p), bytes=n, sha256=hashlib.sha256(body).hexdigest())
+    pins[str(p)] = ref
+    return body, ref
+
+def get(ref):
+    b, actual = pin(ref['path'])
+    assert actual == ref
+    return b
+
+def doc(path):
+    b, ref = pin(path)
+    return json.loads(b), ref
+
+def same(a, b):
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+def ws(b, i):
+    while i < len(b) and b[i] in b' \t\r\n':
+        i += 1
+    return i
+
+def string_end(b, i):
+    assert b[i] == 34
+    i += 1
+    while i < len(b):
+        if b[i] == 92:
+            i += 2
+        elif b[i] == 34:
+            return i+1
+        else:
+            i += 1
+    raise ValueError('unterminated string')
+
+def value_end(b, i):
+    if b[i] == 34:
+        return string_end(b, i)
+    if b[i] in b'[{':
+        stack = [b[i]]
+        i += 1
+        while stack:
+            assert i < len(b) and len(stack) < 4096
+            if b[i] == 34:
+                i = string_end(b, i)
+                continue
+            if b[i] in b'[{':
+                stack.append(b[i])
+            elif b[i] in b']}':
+                assert (stack.pop(), b[i]) in ((91,93), (123,125))
+            i += 1
+        return i
+    start = i
+    while i < len(b) and b[i] not in b',]} \t\r\n':
+        i += 1
+    assert i > start
+    return i
+
+def fields(b):
+    """Return complete raw value spans; never decode the parents field."""
+    i = ws(b, 0)
+    assert b[i] == 123
+    i = ws(b, i+1)
+    out = {}
+    while b[i] != 125:
+        end = string_end(b, i)
+        key = json.loads(b[i:end])
+        assert key not in out
+        i = ws(b, end)
+        assert b[i] == 58
+        i = ws(b, i+1)
+        end = value_end(b, i)
+        out[key] = b[i:end]
+        i = ws(b, end)
+        if b[i] == 44:
+            i = ws(b, i+1)
+        else:
+            assert b[i] == 125
+    assert ws(b, i+1) == len(b)
+    return out
+
+def actual(sdkpath, rawdir, success=True):
+    s, ref = doc(sdkpath)
+    assert s['schema'] == 'ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1' and s['root'] == s['actor'] == '/root'
+    same(s['issued_argv'], s['child_argv'])
+    for command in (s['issued_command'], s['canonical_argv_command'], s['issued_tool_arguments']['cmd']):
+        same(shlex.split(command), s['issued_argv'])
+    intent, _ = doc(rawdir/'issued.json')
+    assert intent['schema'] == 'ROOT_ISSUED_API_INTENT_V1' and intent['root'] == '/root'
+    same(intent['argv'], s['issued_argv']); same(intent['tool_arguments'], s['issued_tool_arguments'])
+    fs = [doc(q)[0] for q in sorted(rawdir.glob('frame_*.json'))]
+    same(fs, s['all_genuine_api_frames'])
+    assert len(fs) == 1 and type(fs[0]['exit_code']) is int and (fs[0]['exit_code'] == 0) is success
+    same(fs[0], s['full_initial_tool_return']); same(fs[-1], s['full_tool_return'])
+    a = s['actual_tool']
+    assert a['handle'] is None and a['synchronous'] is True and a['exit_code'] == fs[-1]['exit_code']
+    assert fs[0]['chunk_id'] == a['initial_chunk'] == a['terminal_chunk']
+    return s, ref
+
+ASM=P/'actual/cohort0426_batch00_assemble_strict'
+assembly,assemblyref=doc(ASM/'actual_review/reuse_integer_only.json')
+sourcepeer,sourcepeerref=doc(ASM/'issuer_source_review/reuse_integer_only.json')
+assert assemblyref['sha256'].startswith('0c659d1c')and sourcepeerref['sha256'].startswith('f0c48643')
+assert assembly['status']=='SUPPORTED_ACTUAL'and assembly['scope']=='METADATA_STRICT_PREPARATION_ONLY'and not assembly['blockers']
+program=sourcepeer['program'];assert program['sha256']=='ccc12c3d6c27cbaa744a3f4331c5f6bbffef55941279bf7f620920d634951b26'
+get(program)
+sdk,sdkref=actual(P/'Root_SDK/cohort0426_batch00_strict_launch_authorities_v1.json',P/'api/Root_f009_cohort0426_batch00_strict_launch_authorities_v1')
+assert sdkref['sha256']=='4f44124c0318418fb78b54e0134ac6bf62873fe87937c04398ec0074c7c3cca5'
+output=json.loads(sdk['full_tool_return']['output'])
+receiptref=output['receipt'];receipt=json.loads(get(receiptref))
+assert receiptref['sha256']=='d628cc01bf42aa8eec98e8507e53f8168a202bd4d74032e0549283b39c39c098'
+assert {k:v for k,v in output.items()if k not in('receipt','read_bytes')}==receipt
+assert receipt['metadata_preparation_actual']==assemblyref and receipt['prepared']==assembly['strict_prepared']
+assert receipt['Root_authority']is True and receipt['scientific_or_profile_calls']==receipt['canonical_writes']==0
+p=json.loads(get(receipt['prepared']));budgetref=p['budget'];b=json.loads(get(budgetref))
+assert budgetref==assembly['strict_budget']and budgetref['sha256'].startswith('1fafdbdf')
+for k,ref in(('strict_request',p['request']),('strict_gate',p['gate']),('strict_Root_import',p['Root_import'])):assert assembly[k]==ref
+qraw=get(p['request']);qfields=fields(qraw);q={k:json.loads(qfields[k])for k in('role','mode','saved','Root_import','bounded_resource_budget','python_executable')}
+get(q['saved']);get(p['Root_import']);gate=json.loads(get(p['gate']));mf=json.loads(get(p['manifest']))
+assert q['mode']=='check'and q['role']==gate['role']==b['role']=='f009_incremental_parent_cover'
+assert p['source_indices']==[426,427,428]and p['role']=='check'and p['profile']=='bounded'and p['launch']is None
+assert p['manifest']==assembly['strict_manifest']and p['manifest']['sha256'].startswith('1bb1fd6b')
+assert q['saved']==assembly['assembled_certificate']and q['bounded_resource_budget']==gate['bounded_resource_budget']==budgetref
+assert gate['request']==p['request']and gate['manifest']==p['manifest']and gate['Root_authority']is gate['adopted']is True
+assert b['Source_peer']['sha256'].startswith('6a5137')and b['admission_controls']['sha256'].startswith('3342fd')
+for ref in mf['Source']:get(ref)
+for ref in sourcepeer['loaded_project_Source']:get(ref)
+launchref,parentref=receipt['launch'],receipt['parent_IO']
+launch,parent=json.loads(get(launchref)),json.loads(get(parentref))
+assert launchref['sha256']=='e95629c28098b8f839ca3c6b01d134ba42c03aebc14a80325d0439a6db72008a'
+assert parentref['sha256']=='a8a7b1da1a5f9aec770e396e4b9283c46af57614074d63dc7b0c37800844d9ad'
+bindings=dict(budget=budgetref,request=p['request'],Root_gate=p['gate'])
+assert launch['reference_bindings']==bindings and launch['budget']==budgetref
+child=[str(bindings[x['reference']][x['part']])if type(x)is dict else x for x in b['command_projection']]
+assert launch['command']==child
+assert child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',mf['entry']['path']]
+for key,ref in(('--manifest',p['manifest']),('--request',p['request']),('--Root-gate',p['gate'])):
+    i=child.index(key);assert child[i+1:i+4]==[ref['path'],str(ref['bytes']),ref['sha256']]
+assert launch['guard']==b['guard']==p['guard']and launch['role_manifest']==p['manifest']
+assert launch['Root_authority']is launch['adopted']is launch['all_source_budget_and_actual_scope_owned']is True
+env=['/usr/bin/env']
+for k in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'):env+=['-u',k]
+outer=env+[q['python_executable'],'-E','-B',b['profile_source']['path'],'--budget',budgetref['path'],str(budgetref['bytes']),budgetref['sha256'],'--launch',launchref['path'],str(launchref['bytes']),launchref['sha256'],'--volume','/Users/sasha/medusa','--output',p['guard'],'--rss-cap-mib','128','--timeout','150','--']+child
+assert outer==receipt['full_outer_argv']==parent['command_projection']==parent['exact_outer_argv']
+assert parent['child_budget']==budgetref and parent['child_launch']==launchref and parent['metadata_preparation_actual']==assemblyref
+assert parent['parent_IO_only']is True and parent['Core_launch_authority']is False
+assert len(b['inventory'])==10 and len(parent['inventory'])==len({r['path']for r in parent['inventory']})==80
+same(parent['inventory'][:10],b['inventory'])
+assert parent['child_inventory_paths']==[r['path']for r in b['inventory']]
+sdks=[r['path']for r in b['inventory']if r['component']=='sdk']
+assert sdks==parent['shared_SDK_destinations']==receipt['SDK_destinations']and len(sdks)==2
+rawdir=Path(receipt['raw_directory']);assert rawdir==Path(p['actual_raw_root'])/'parents0426_0428_check_v1'
+rows=copy.deepcopy(b['inventory'])+[dict(component='raw',path=str(rawdir/'issued.json'),maximum_bytes=131072,existing=None)]
+rows +=[dict(component='raw',path=str(rawdir/('frame_%04d.json'%i)),maximum_bytes=262144,existing=None)for i in range(32)]
+for row in list(rows):
+    if row['component']not in('sdk','raw'):continue
+    upper=4*((row['maximum_bytes']+2)//3)
+    for i,offset in enumerate(range(0,upper,3*1024**2)):
+        rows.append(dict(component='images',path=row['path']+'.encoding_'+str(i),maximum_bytes=min(3*1024**2,upper-offset)+1,existing=None))
+same(rows,parent['inventory'])
+assert sum(r['maximum_bytes']for r in rows)+16*1024**2==parent['one_combined_content_and_allocation_upper']==57540737
+assert parent['one_shared_reserve_bytes']==parent['reserve_bytes']==b['reserve_bytes']==268435456
+assert parent['Root_caller_read_prepaid_bytes']==2097152 and receipt['one_shared_reserve_bytes']==268435456
+for row in rows:assert row['existing']is None and not os.path.lexists(row['path'])
+assert not os.path.lexists(p['out'])and not os.path.lexists(p['guard'])and Path(p['guard']).parent.is_dir()
+for k in('profile_source','policy_source','Source_peer','admission_controls','caller_source'):get(b[k]);assert parent[k]==b[k]
+caller_mf=json.loads(get(parent['caller_source_manifest']))
+for r in caller_mf['caller_namespace']['Source']:get(r)
+for k in('caller_actual_controls','integration_Source_review','generic_controls'):get(parent[k])
+assert parent['role_source']==caller_mf['files']['caller']and parent['role_manifest']==parent['caller_source_manifest']
+assert output['read_bytes']==583558 and sum(r['bytes']for r in[launchref,parentref,receiptref])<1024**2
+frozen=[dict(path=str(P.parent/'progress/current_intake.json'),bytes=305307,sha256='3f3acefe187fac8c1992ef2e022a3f378b2fc285bdb5960cfb8998500f852cff'),dict(path=str(P.parent/'progress/controllers/current.json'),bytes=789,sha256='f7aa388f8e5e731804cd5a65e25957fd51f7f46873764fe89e58aeddcc29273d')]
+for r in frozen:get(r)
+def write(name,value):
+    body=(json.dumps(value,indent=2,sort_keys=True)+'\n').encode();path=HERE/name
+    with path.open('xb')as f:f.write(body)
+    return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+evidence=write('evidence.json',dict(schema='F009_BATCH00_STRICT_LAUNCH_FINITE_EVIDENCE_V1',reviewer='/root/mathematical_review',Root_authority=False,pins=list(pins.values()),Original_payloads_decoded=False,represented_functions_executed=False))
+leaf=dict(schema='F009_BATCH00_STRICT_LAUNCH_PLAN_INDEPENDENT_REUSE_V1',status='SUPPORTED_PLAN',reviewer='/root/mathematical_review',Root_authority=False,blockers=[],
+ issuer_program=program,issuer_Source_review=sourcepeerref,actual_issuance_SDK=sdkref,construction_receipt=receiptref,assembly_actual_review=assemblyref,
+ prepared=receipt['prepared'],budget=budgetref,request=p['request'],Root_gate=p['gate'],Root_import=p['Root_import'],manifest=p['manifest'],launch=launchref,parent_IO=parentref,
+ exact_outer_argv=outer,child_rows=10,parent_unique_rows=80,shared_SDK_destinations=sdks,one_combined_content_and_allocation_upper=57540737,one_shared_reserve_bytes=268435456,
+ Source_peer=b['Source_peer'],Core_actual=b['admission_controls'],caller_actual=parent['caller_actual_controls'],
+ genuine_API_and_issuer_scope_verified=True,unchanged_science_preparation_and_numeric_subjects=True,whole_child_parent_inventory_and_acyclicity_verified=True,
+ future_targets_absent_at_review=True,Original_payloads_decoded=False,represented_functions_executed=False,scientific_or_profile_calls=0,canonical_writes=0,parent_credit=0,
+ constructor_reported_first_closing_read_bytes=583558,frozen_progress_pointers_verified=frozen,finite_evidence=evidence,observed_utc=datetime.now(timezone.utc).isoformat(),
+ qualification=[
+ 'The genuine first-v1 Root issuer ran corrected exact programccc12 after static Source peerf0c486, with exact accepted assembly actual0c659. Full SDK/raw intent/frame, request-bound invocation, three whole output documents and unchanged strict preparation/q/g/import/budget subjects are joined. This constructor performed no profile or numerical call.',
+ 'The later launch resolves the exact symbolic request/gate/budget slots without a reference cycle and gives the complete EBS strict_worker command. It retains full ROLEf009_incremental_parent_cover, unchanged manifest1bb1/entry, science peer6a and Core3342. Parent and saved certificate bytes stayed opaque.',
+ 'Ten child targets are exact rows in the80-path parent union; the same two fresh SDK destinations are shared once. Issued/32frame raw and every encoding stage match the reviewed caller formula. The57540737 content/allocation bound fits one256MiB reserve, with separately declared2MiB caller acquisition. All future targets are absent and the shared guard parent exists at review; Root must repeat admission/freshness before the genuine strict call.',
+ 'The Source-owned cooperative issuer reports583558 first/closing read bytes and three output bodies below1MiB total. This is separate from the future parent caller and science scopes; no external issuer guard or whole-turn cap is invented. Its resulting positive documents are genuine Root authority, whereas this independent review itself issues none.',
+ 'No strict numerical result, supplier replay, accepted parent, R5 union/action quotient, ordinary graph census or whole manuscript result is claimed. Global426 pointers remain exact. Reviewer authored the preceding assembly and static issuer reviews, contributed the three disclosed Source corrections, and executed no represented functions or Original predicates.'
+ ])
+print(json.dumps(write('reuse_integer_only.json',leaf),sort_keys=True))
+

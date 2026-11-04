@@ -1,0 +1,96 @@
+"""Fresh finite-field and admission controls, entirely synthetic and UNRUN."""
+import retained_math as M
+import runtime as R
+import linear as L
+
+def main():
+    b,mf,mr,plan,pr,gate,gr=R.start('CONTROLS',__file__);passed=[]
+    def check(name,value):
+        M.need(value,'control failed: '+name);passed.append(name)
+    def refuse(name,call):
+        try:call()
+        except (ValueError,TypeError,KeyError,IndexError):passed.append(name)
+        else:raise ValueError('control unexpectedly accepted: '+name)
+    clone=lambda x:M.decode(M.can(x))
+    job=[7,4]
+    p=dict(original_job=job,projection='toyP',Root_projection_acceptance='toyA',selector='toyS',
+      selected_orbit_positions=[3],subspace_input_schema='UNTRUSTED_Q11_INVARIANT_SUBSPACE_ROWS_V1',require_prior_GEN_adoption=False)
+    s=dict(schema='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1',root='/root',adopted=True,
+      original_job=job,projection='toyP',Root_projection_acceptance='toyA',original_paid_positions=[1],
+      accepted_new_paid_positions=[2],original_paid_count=1,unresolved_position_runs=[[3,4]],
+      unresolved_positions=2,expanded_unresolved_sha256=M.digest([3,4]))
+    meta=dict(original_job=job,original_orbit_rows=4,baseline_paid_positions=[1],
+      original_domain_whole_pins='toyDomain',original_orbit_array_sha256='toyDigest')
+    scope=dict(schema='ROOT_Q11_PROPER_SUBSPACE_SCOPE_V1',root='/root',Root_authority=True,adopted=True,
+      original_job=job,selector='toyS',selected_orbit_positions=[3],original_domain_whole_pins='toyDomain',
+      original_orbit_array_sha256='toyDigest')
+    flags=('complete_original_model_frame_member_and_transport_meanings_owned',
+      'all_selector_adoptions_have_exact_per_job_typed_meanings_owned',
+      'selected_case_and_seed_roles_and_fresh_criterion_owned',
+      'same_original_ambient_known_G_members_owned','proper_subgroup_only_no_IP_or_other_case_credit_owned')
+    scope.update({k:True for k in flags})
+    admit=lambda pp=p,ss=s,rr=scope:R.admit(pp,ss,meta,rr,M.digest,M.expand_runs)
+    check('dynamic_typed_unpaid_scope',admit()['selected']==[3])
+    for name,key,value in [('wrong_job','original_job',[8,4]),('bool_job','original_job',[True,4]),
+      ('paid_position','selected_orbit_positions',[1]),('duplicate_position','selected_orbit_positions',[3,3]),
+      ('bool_position','selected_orbit_positions',[True]),('empty_selection','selected_orbit_positions',[])]:
+        q=clone(p);q[key]=value;refuse(name,lambda q=q:admit(q))
+    q=clone(s);q['accepted_new_paid_positions']=[1,2]
+    refuse('overlapping_partition',lambda:admit(ss=q))
+    q=clone(s);q['expanded_unresolved_sha256']='wrong'
+    refuse('wrong_unpaid_digest',lambda:admit(ss=q))
+    q=clone(scope);q[flags[3]]=False
+    refuse('missing_known_G_membership_ownership',lambda:admit(rr=q))
+    q=clone(scope);q['Root_authority']=False
+    refuse('unissued_Root_scope',lambda:admit(rr=q))
+    work=L.ScalarWork(b.tick);seed=(1,0,0,0,0,0,0)
+    perm=lambda f:tuple(tuple(int(j==f(i))for j in range(7))for i in range(7))
+    small=(perm(lambda i:-i%3 if i<3 else i),perm(lambda i:(1-i)%3 if i<3 else i),M.I7,M.I7)
+    mover=perm(lambda i:3 if i==0 else 0 if i==3 else i)
+    ctx=dict(seed=seed,ambient=(mover,M.I7))
+    fact,outcome=L.propose(ctx,small,b,work)
+    check('untrusted_proper_proposal',outcome=='UNTRUSTED_PROPER_SPAN_PROPOSAL'and fact['dimension']==3)
+    check('rectangular_inverse_shape',len(fact['right_inverse'])==7 and all(len(x)==3 for x in fact['right_inverse']))
+    check('supplied_equations_accept',L.direct(fact,ctx,small,b,work)['proper_subgroup_obstruction_verified'])
+    check('no_GEN_or_IP_claim',fact['nongeneration_claim']is True and fact['ambient_generation_claim']is fact['IP_claim']is False)
+    scaled=L.acquire(tuple(2*x for x in seed),small,b,work)
+    check('unreduced_actual_rows',scaled['dimension']==3 and all(2 in row for row in scaled['basis']))
+    full=(perm(lambda i:-i%7),perm(lambda i:(1-i)%7),M.I7,M.I7)
+    full_data=L.acquire(seed,full,b,work)
+    check('full_span_is_inconclusive',full_data==dict(dimension=7,basis=None,right_inverse=None,parent_edges=None))
+    missing,reason=L.propose(dict(seed=seed,ambient=(M.I7,M.I7)),small,b,work)
+    check('no_mover_is_inconclusive',missing is None and reason=='NO_SUPPLIED_AMBIENT_MOVER_INCONCLUSIVE')
+    one=L.acquire(seed,(M.I7,)*4,b,work)
+    check('rank_one_rectangular_inverse',one['dimension']==1 and one['basis']==[list(seed)])
+    refuse('zero_seed',lambda:L.acquire((0,)*7,small,b,work))
+    q=clone(fact);q['right_inverse'][0][0]=(q['right_inverse'][0][0]+1)%11
+    refuse('wrong_rectangular_inverse',lambda:L.direct(q,ctx,small,b,work))
+    q=clone(fact);q['parent_edges'][0]=[0,0]
+    refuse('wrong_actual_parent_edge',lambda:L.direct(q,ctx,small,b,work))
+    refuse('wrong_actual_seed',lambda:L.direct(fact,dict(seed=tuple(2*x for x in seed),ambient=ctx['ambient']),small,b,work))
+    refuse('invariance_failure',lambda:L.direct(fact,ctx,(mover,)+small[1:],b,work))
+    q=clone(fact);q['ambient_generator_index']=1
+    refuse('supplied_mover_really_fixes_span',lambda:L.direct(q,ctx,small,b,work))
+    for name,key,value in [('bool_mover','ambient_generator_index',True),('bool_basis_row','moved_basis_row',False),
+      ('rank_seven_refused','dimension',7),('GEN_claim_refused','ambient_generation_claim',True),
+      ('IP_claim_refused','IP_claim',True),('nongeneration_claim_required','nongeneration_claim',False)]:
+        q=clone(fact);q[key]=value;refuse(name,lambda q=q:L.direct(q,ctx,small,b,work))
+    q=clone(fact);q['right_inverse'][0][0]=True
+    refuse('bool_inverse_entry',lambda:L.direct(q,ctx,small,b,work))
+    q=clone(fact);q['right_inverse'].pop()
+    refuse('incomplete_inverse',lambda:L.direct(q,ctx,small,b,work))
+    q=clone(fact);q['parent_edges'][0]=[1,1]
+    refuse('non_earlier_parent',lambda:L.direct(q,ctx,small,b,work))
+    stopped=L.ScalarWork(b.tick)
+    refuse('scalar_stop_before_operation',lambda:stopped.charge(200001))
+    for _ in range(8):stopped.begin_case()
+    refuse('ninth_case_refused',stopped.begin_case)
+    check('no_partial_scalar_charge',stopped.used==0)
+    M.need(work.used<=200000 and len(passed)==len(set(passed))==37,'all37 fresh unique controls')
+    result=dict(schema='Q11_PROPER_SUBSPACE_CONTROLS_RESULT_V1',status='ALL_SYNTHETIC_CONTROLS_PASS',
+      program=mf['roles']['CONTROLS']['program'],Source_manifest=mr,plan=pr,Root_gate=gr,
+      controls=passed,controls_count=len(passed),new_linear_scalar_units=work.used,
+      Original_inputs_loaded=False,old_arithmetic_controls_replayed=False,paid_credit=0)
+    R.finish(result,plan,b)
+
+if __name__=='__main__':main()

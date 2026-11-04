@@ -1,0 +1,119 @@
+--- existing8056/prepare_append.py
++++ saved_binding/prepare_append.py
+@@ -1,4 +1,4 @@
+-"""UNRUN metadata constructor; default FALSE. No writer/scientific module import."""
++"""UNRUN Saved-binding metadata constructor; default FALSE; no writer import."""
+ import argparse,hashlib,json,os,resource,stat,sys,time
+ from pathlib import Path
+ START=time.monotonic()
+@@ -9,7 +9,8 @@
+ def main():
+     need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'ordinary EBS metadata constructor')
+     ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--inputs',nargs=3,required=True)
+-    ap.add_argument('--output-dir',required=True);ap.add_argument('--issue',action='store_true');ap.add_argument('--actor')
++    ap.add_argument('--output-dir',required=True);ap.add_argument('--self-sha256',required=True)
++    ap.add_argument('--issue',action='store_true');ap.add_argument('--actor')
+     ap.add_argument('--own-source-proofs-and-closed-retention',action='store_true');args=ap.parse_args()
+     issue=args.issue;need(not issue or args.actor=='/root' and args.own_source_proofs_and_closed_retention,
+                           'Root only owns exact Source/proofs/closed-retention before positive issuance')
+@@ -29,7 +30,12 @@
+         need(sig(a)==sig(z)==sig(y)==sig(p.lstat())and reference(p,raw)==r,'stable whole opaque bytes')
+         seen[r['path']]=r;cache[r['path']]=raw;read_bytes+=len(raw);return raw
+     triple=lambda x:dict(path=x[0],bytes=int(x[1]),sha256=x[2])
++    own=Path(__file__).resolve();need(own.stat().st_size<=32768,'bounded constructor Source')
++    ownref=dict(path=str(own),bytes=own.stat().st_size,sha256=args.self_sha256)
++    ownraw=whole(ownref);read_bytes+=ownref['bytes']
+     cfgref=triple(args.inputs);cfg=json.loads(whole(cfgref))
++    need(cfg['schema']=='UNISSUED_L026_SAVED_BINDING_GEN298_INPUTS_V1' and cfg['Root_authority'] is False,
++         'frozen non-authoritative concrete input selection')
+     p=json.loads(whole(cfg['prototype_plan']));release=json.loads(whole(cfg['prototype_release']))
+     retention=cfg['actual_new_retention_manifest'];need(retention is not None,'Root must actually copy/adopt closed retention first')
+     manifest=json.loads(whole(retention));old=json.loads(whole(cfg['old_retention']))
+@@ -39,43 +45,70 @@
+     need(old['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1' and old['root']=='/root' and old['scientific_calls']==0,
+          'borrowed old closed-retention manifest')
+     inputs={}
+-    for row in manifest['files']:
+-        for key in('original','retained'):
+-            r=row[key];whole(r);need(inputs.get(r['path'],r)==r,'unique complete input');inputs[r['path']]=r
+-    for r in(cfg['old_retention'],retention):inputs[r['path']]=r
+-    for r in cfg['required_proof_refs']:
++    def add(r):
++        whole(r);need(inputs.get(r['path'],r)==r,'one exact semantic input');inputs[r['path']]=r
++    def metadata(r):
++        add(r);return json.loads(whole(r))
++    mf=metadata(cfg['Source_manifest']);peer=metadata(cfg['Source_peer'])
++    control=metadata(cfg['actual_metadata_controls'])
++    need(mf['borrowed_old26']==cfg['borrowed_old26_subjects'],'literal five historical subjects')
++    for r in mf['borrowed_old26'].values():add(r)
++    for r in mf['guards']:add(r)
++    for r in (p['witnesses'],p['free_adoption'],p['operand_adoption'],p['expected_current'],
++              p['previous_receipt'],p['previous_bank'],cfg['old_retention'],retention):add(r)
++    q=p['proofs'][0];a=metadata(q['actual_pair_review']);l=metadata(q['logical_review'])
++    st=a['strict'];g=metadata(st['Root_gate'])
++    required=[q['actual_pair_review'],q['logical_review'],*q['applications'],q['Source_manifest'],
++              st['Root_gate'],st['proof'],st['Root_import'],g['actual_controls_review'],
++              g['control_Source_manifest'],st['request'],a['producer']['carrier'],st['carrier'],
++              st['actual_SDK'],st['procedural_D_import'],g['independent_Source_review'],
++              a['full_actual_review'],l['proof']]
++    need(can(required)==can(cfg['required_proof_refs']),'exact current proof handler physical refs')
++    for r in required:
++        add(r)
+         hits=[x['retained']for m in(manifest,old)for x in m['files']if x['original']==r]
+-        need(hits,'every strict/application/logical/full-review object retained')
+-        for alias in hits:whole(alias);inputs[alias['path']]=alias
++        need(hits,'every actually consumed proof object retained')
++        for alias in hits:add(alias)
++    need(whole(a['producer']['carrier'])==whole(st['carrier']),'complete opaque producer/strict identity')
++    need(can([inputs[k]for k in sorted(inputs)])==can(cfg['semantic_input_refs']),
++         'exact finite semantic closure, never a whole unused retention inventory')
+     need(p['schema']=='L026_PROCEDURAL_GEN_APPEND_PLAN_V1'and p['mode']=='append'
+          and len(p['facts'])==1 and p['facts'][0]['kind']=='GEN'and p['facts'][0]['free_index']==298
+          and p['separate_IP']is None,'only one GEN298, no IP')
++    need(cfg['expected_snapshot']==dict(CURRENT=p['expected_current'],receipt=p['previous_receipt'],bank=p['previous_bank']),
++         'same live predecessor as the issued original proof')
+     for r in cfg['expected_snapshot'].values():whole(r)
+     bank=whole(cfg['expected_snapshot']['bank']);need(len(bank)==28908 and bank[298]==0,'business unpaid byte only')
+     p['proofs'][0]['retentions']=[cfg['old_retention'],retention];p['inputs']=[inputs[k]for k in sorted(inputs)]
+     p['Root_authority']=False;p['ready_for_execution']=issue;p['actual_new_retention_manifest']=retention;p['missing']=[]
+-    mf=json.loads(whole(cfg['Source_manifest']));peer=json.loads(whole(cfg['Source_peer']));control=json.loads(whole(cfg['actual_metadata_controls']))
+-    need(mf['program']==p['program'] and peer['Source_manifest']==cfg['Source_manifest']
+-         and peer['status']=='SUPPORTED_STATIC_L026_PROCEDURAL_GEN_APPEND_SOURCE'and peer['blockers']==[]
++    need(mf['program']==p['program'] and p['Source_manifest']==cfg['Source_manifest']
++         and peer['Source_manifest']==cfg['Source_manifest'] and peer['program']==p['program']
++         and peer['status']=='SUPPORTED_STATIC_L026_PROCEDURAL_GEN_SAVED_BINDING_SOURCE'and peer['blockers']==[]
+          and control['Source_manifest']==cfg['Source_manifest']and control['Source_peer']==cfg['Source_peer']
+-         and control['status']=='SUPPORTED_ACTUAL_L026_PROCEDURAL_GEN_APPEND_CONTROLS'
+-         and control['controls']==26 and control['Original_inputs_loaded']is False and control['blockers']==[],
+-         'exact new Source peer and genuine metadata26 controls')
+-    out=Path(args.output_dir);need(out.is_absolute() and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh canonical metadata directory')
++         and control['program']==mf['control_program']
++         and control['status']=='SUPPORTED_ACTUAL_L026_PROCEDURAL_GEN_SAVED_BINDING_CONTROLS'
++         and type(control['controls'])is int and control['controls']==3
++         and control['new_helper_only']is True and control['old26_controls_replayed']is False
++         and control['Original_inputs_loaded']is False and control['blockers']==[],
++         'new sibling subject and genuinely accepted helper-only three controls')
++    out=Path(args.output_dir);need(out.is_absolute() and '..'not in out.parts and str(out)==args.output_dir
++       and str(out)==cfg['Root_output_dir'] and out.parent.resolve(strict=True)==out.parent
++       and not os.path.lexists(out),'fresh fixed canonical metadata directory')
+     pb=can(p);pr=reference(out/'append_plan.json',pb)
+     release.update(schema='ROOT_REVIEWED_L026_PROCEDURAL_GEN_APPEND_V1',root='/root',Root_authority=issue,
+        status='SUPPORTED'if issue else'UNISSUED_FALSE',program=p['program'],plan=pr,Source_manifest=cfg['Source_manifest'],
+        Source_peer=cfg['Source_peer'],metadata_controls_review=cfg['actual_metadata_controls'],metadata_only=True,
++       borrowed_metadata_controls_review=mf['borrowed_old26']['actual_controls'],
+        typed_new_facts_and_strict_closure_supported=issue,metadata_publication_authorized=issue,
+        separate_IP_theorem_application_supported=False,
+        qualification='Final immutable release must be identical for forecast/private images/inverse/write. Root withholds --write until the distinct forecast checks pass. Any release change requires a new forecast.')
+     rb=can(release);rr=reference(out/'Root_final_release.json',rb)
+     need(len(pb)<=131072 and len(rb)<=32768,'exact writer plan/release framing')
+-    total=sum(r['bytes']for r in inputs.values())+len(pb)+len(rb)
++    total=sum(r['bytes']for r in inputs.values())+p['program']['bytes']+len(pb)+len(rb)
+     guard_loader=mf['guards'][0]['bytes']+3*mf['guards'][1]['bytes']
+     upper=p['program']['bytes']+guard_loader+2*total+2*(28908+16384+131072)+4096+2*p['expected_current']['bytes']
+-    need(upper<=64*2**20 and len(inputs)+6<=512,'full writer closing/readback/CAS/path forecast before issuance')
+-    own=Path(__file__).resolve();ownraw=own.read_bytes();ownref=reference(own,ownraw);whole(ownref)
++    need(upper<=64*2**20 and len(inputs)+7<=512,'full writer closing/readback/CAS/path forecast before issuance')
++    whole(ownref)
+     decision=dict(schema='ROOT_L026_GEN298_APPEND_INPUT_CONSTRUCTION_V1',root=args.actor if issue else None,
+       Root_authority=issue,constructor_Source=ownref,inputs=cfgref,actual_retention=retention,plan=pr,Root_release=rr,
+       exact_input_paths=len(inputs),writer_complete_read_upper=upper,transition=dict(index=298,before=0,after=2),

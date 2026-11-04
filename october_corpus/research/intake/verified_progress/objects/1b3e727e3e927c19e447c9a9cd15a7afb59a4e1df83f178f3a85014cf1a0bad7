@@ -1,0 +1,250 @@
+"""Exact API, attempt and mixed resource-subject joins; no group algorithms."""
+import json,shlex,math
+from pathlib import Path
+
+def old_limits(science):
+    return dict(admit_disk=10*2**30,admit_ram=4*2**30,disk_floor=8*2**30,
+        ram_floor=3*2**30,total_rss=(128 if science else 256)*2**20,
+        wall_seconds=150.0 if science else 125.0,sample_seconds=.5,
+        log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+
+def wrapper(child,guard,kind,budget=None,launch=None):
+    env=['/usr/bin/env']
+    for name in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'):
+        env+=['-u',name]
+    if kind=='legacy':
+        return env+[C.PYTHON,'-E','-B',C.LEGACY_GUARD_REF['path'],'--volume','/Users/sasha/medusa','--output',str(guard),'--rss-cap-mib','128','--timeout','150','--']+child
+    assert kind=='bounded'and budget and launch
+    return env+[C.PYTHON,'-E','-B',C.PROFILE_REF['path'],'--budget',*C.trip(budget),'--launch',*C.trip(launch),'--volume','/Users/sasha/medusa','--output',str(guard),'--rss-cap-mib','128','--timeout','150','--']+child
+
+def api_shape(s,argv,success):
+    """Structural joins only; api separately authenticates every raw frame."""
+    assert s['schema']=='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'and s['root']==s['actor']=='/root'
+    assert s['issued_argv']==s['child_argv']==argv
+    assert all(type(command)is str and shlex.split(command)==argv
+        for command in(s['issued_command'],s['canonical_argv_command'],s['issued_tool_arguments']['cmd']))
+    frames=s['all_genuine_api_frames'];a=s['actual_tool']
+    assert type(frames)is list and 1<=len(frames)<=32 and frames[0]==s['full_initial_tool_return']and frames[-1]==s['full_tool_return']
+    chunks=[f['chunk_id']for f in frames]
+    assert all(type(c)is str and c for c in chunks)and len(set(chunks))==len(chunks)
+    assert frames[0]['chunk_id']==a['initial_chunk']and frames[-1]['chunk_id']==a['terminal_chunk']
+    assert type(a['exit_code'])is type(frames[-1]['exit_code'])is int and frames[-1]['exit_code']==a['exit_code']and(a['exit_code']==0)is success
+    assert a['synchronous']is(len(frames)==1)
+    if len(frames)==1:assert a['handle']is None
+    else:
+        assert type(a['handle'])is int
+        assert all('exit_code'not in f and type(f['session_id'])is int and f['session_id']==a['handle']for f in frames[:-1])
+    assert 'session_id'not in frames[-1]
+    return frames
+
+def guard_shape(started,receipt,child,limits):
+    """One actual child identity and identical admission observations."""
+    assert started['command']==receipt['command']==child and started['limits']==receipt['limits']==limits
+    assert len(started['identities'])==len(receipt['identities'])==1
+    first,last=started['identities'][0],receipt['identities'][0]
+    keys=('pid','birth','initial_parent','group','session')
+    assert tuple(first[k]for k in keys)==tuple(last[k]for k in keys)
+    for row in(first,last):
+        assert all(type(row[k])is int and row[k]>0 for k in('pid','initial_parent','group','session'))
+        assert type(row['birth'])in(int,float)and math.isfinite(row['birth'])and row['birth']>0
+        assert row['group']==row['session']==row['pid']
+    assert started['admission']==receipt['admission']
+    admission=started['admission']
+    assert all(type(admission[k])is int and admission[k]>=limits[n]for k,n in(('free_disk','admit_disk'),('available_ram','admit_ram')))
+    assert receipt['status']=='PASS'and receipt['stop']=='RETURNED'and type(receipt['returncode'])is int and receipt['returncode']==0 and receipt['error']is None
+
+def api(L,sdkref,rawdir,argv,success):
+    s=C.doc(L,sdkref);frames=api_shape(s,argv,success)
+    issued=C.doc(L,C.at(L,rawdir/'issued.json'))
+    assert issued['schema']=='ROOT_ISSUED_API_INTENT_V1'and issued['root']=='/root'
+    assert issued['argv']==argv and issued['tool_arguments']==s['issued_tool_arguments']
+    for i,f in enumerate(frames):
+        assert C.doc(L,C.at(L,rawdir/('frame_%04d.json'%i)))==f
+    assert not(rawdir/('frame_%04d.json'%len(frames))).exists()
+    return s
+
+def selected_attempt(selection,stem,profile):
+    assert selection['schema']=='ROOT_F009_GENERIC_SELECTED_ATTEMPTS_V2'
+    assert selection['root']=='/root'and selection['Root_authority']is True
+    overrides=selection['roles']
+    assert type(overrides)is list and len(overrides)<=16
+    assert len({r['stem']for r in overrides})==len(overrides)
+    matches=[r for r in overrides if r['stem']==stem]
+    if not matches:
+        return dict(stem=stem,profile=profile,edition=1,prior_non_success_attempts=[])
+    r=matches[0]
+    assert r['profile']==profile and type(r['edition'])is int and 1<=r['edition']<=8
+    assert len(r['prior_non_success_attempts'])==r['edition']-1
+    return r
+
+def selection_scope(selection,cohortref,batch,phase,stems):
+    assert selection['cohort']==cohortref and type(selection['batch'])is int and selection['batch']==batch and selection['phase']==phase
+    assert {r['stem']for r in selection['roles']}<=set(stems)
+
+def reconcile(L,attempt,current,argv,stem,rawroot):
+    result=[]
+    for number,p in enumerate(attempt['prior_non_success_attempts'],1):
+        assert type(p['edition'])is int and p['edition']==number and p['disposition']=='GENUINE_PREENTRY_REFUSAL'
+        previous=api(L,p['actual_SDK'],Path(p['raw_directory']),argv,False)
+        assert Path(p['raw_directory']).is_relative_to(rawroot)
+        assert 'the acquired base refused before creating its output or child'in''.join(f.get('output','')for f in previous['all_genuine_api_frames'])
+        r=C.doc(L,p['reconciliation'])
+        assert r['schema']=='ROOT_F009_EXACT_ROLE_PREENTRY_RETRY_RECONCILIATION_V1'and r['root']=='/root'and r['Root_authority']is True
+        assert r['stem']==stem and r['refused_actual_SDK']==p['actual_SDK']and r['selected_actual_SDK']==current
+        for flag in('no_scientific_child_started','guard_and_output_absent_before_selected_attempt','same_exact_argv_as_selected','original_guard_and_scientific_caps_unchanged'):
+            assert r[flag]is True
+        inspections=r['actual_absence_or_resource_inspections']
+        assert type(inspections)is list and 1<=len(inspections)<=4
+        for item in inspections:C.raw(L,item)
+        result.append(dict(edition=number,actual_SDK=p['actual_SDK'],raw_directory=p['raw_directory'],reconciliation=p['reconciliation'],actual_absence_or_resource_inspections=inspections,disposition='GENUINE_PREENTRY_REFUSAL'))
+    return result
+
+def role(ctx,prepared_ref,attempt,stem,indices,cohortref,cohort,batch,role_kind):
+    L=ctx.L;p=C.doc(L,prepared_ref);profile=attempt['profile']
+    assert p['schema']=='ROOT_F009_GENERIC_PREPARED_SCIENCE_ROLE_V2'and p['cohort']==cohortref and p['batch']==batch and p['stem']==stem
+    assert p['source_indices']==indices and p['profile']==profile and p['role']==role_kind
+    mr,m=C.subject(L,profile,role_kind);assert p['manifest']==mr
+    base=C.SCIENCE/('generic_cohort_from%04d'%cohort['begin'])/('parents%04d_%04d'%(indices[0],indices[-1]))
+    # The prepared path fixes the complete batch base even for a singleton
+    # supplier within it. It is not inferred from a supplier ordinal.
+    batchmeta=cohort['batches'][batch]
+    base=C.SCIENCE/('generic_cohort_from%04d'%cohort['begin'])/('parents%04d_%04d'%(batchmeta['begin'],batchmeta['end']-1))
+    guard=base/'guards'/stem
+    assert p['guard']==str(guard)and p['out']==str(base/stem)
+    request_body=C.raw(L,p['request'])
+    q=C.view(request_body,['Root_authority','role','Root_import','python_executable'])
+    assert q['Root_authority']is False and q['python_executable']==C.PYTHON and q['Root_import']==p['Root_import']
+    requestparents=C.array(C.fields(request_body)['parents'])
+    assert len(requestparents)==len(indices)
+    imp=C.raw(L,p['Root_import'])
+    im=C.view(imp,['root','Root_authority','adopted','cohort','cohort_batch'])
+    assert im['root']=='/root'and im['Root_authority']is im['adopted']is True and im['cohort']==cohortref and im['cohort_batch']==batch
+    importparents=C.array(C.fields(imp)['parents'])
+    assert len(importparents)==len(requestparents)and all(C.equivalent(x,y)for x,y in zip(importparents,requestparents))
+    gate=C.doc(L,p['gate'])
+    assert gate['root']=='/root'and gate['Root_authority']is gate['adopted']is gate['source_and_math_owned']is True
+    assert gate['request']==p['request']and gate['manifest']==mr
+    child=[C.PYTHON,'-E','-B','-S',m['entry']['path'],'--actor','/root','--manifest',*C.trip(mr),'--request',*C.trip(p['request']),'--Root-gate',*C.trip(p['gate']),'--out',p['out'],'--guard',p['guard']]
+    number=attempt['edition'];assert type(number)is int and 1<=number<=8
+    sdkref=C.at(L,base/'Root_SDK'/(stem+'_v%d.json'%number))
+    rawdir=Path(p['actual_raw_root'])/(stem+'_v%d'%number)
+    started=C.doc(L,C.at(L,guard/'started.json'));receipt=C.doc(L,C.at(L,guard/'receipt.json'))
+    if profile=='legacy':
+        C.scientific_role(role_kind,profile,q['role'],None)
+        assert 'bounded_output_profile'not in started and 'bounded_output_profile'not in receipt
+        assert p['budget']is None and p['launch']is None
+        limits=old_limits(True);marker=None
+    else:
+        br=C.view(request_body,['bounded_resource_budget'])['bounded_resource_budget']
+        assert br==p['budget']==gate['bounded_resource_budget']
+        b=C.doc(L,br);lr=started['bounded_output_profile']['launch']
+        # Launch is issued after the prepared request/gate; its exact identity is
+        # taken from the genuine marker, avoiding a backwards hash dependency.
+        launch=C.doc(L,lr);peer=C.doc(L,b['Source_peer']);controls=C.doc(L,b['admission_controls'])
+        assert b['role_kind']=='science'
+        C.scientific_role(role_kind,profile,q['role'],b['role'])
+        C.P['validate_evidence'](b,peer,controls,C.PROFILE_REF,C.POLICY_REF)
+        C.P['validate_launch'](launch,b,br,child,'/Users/sasha/medusa',guard,C.PROFILE_REF,C.POLICY_REF)
+        assert launch['reference_bindings']==dict(budget=br,request=p['request'],Root_gate=p['gate'])
+        limits=C.P['expected_limits'](True);marker=C.P['marker'](b,br,lr)
+        assert started['bounded_output_profile']==receipt['bounded_output_profile']==marker
+    argv=wrapper(child,guard,profile,p['budget'],marker['launch']if marker else None)
+    sdk=api(L,sdkref,rawdir,argv,True)
+    assert json.loads(sdk['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+    guard_shape(started,receipt,child,limits)
+    assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+    assert receipt['seconds']<=limits['wall_seconds']and receipt['peaks']['total_rss']<=limits['total_rss']
+    assert receipt['admission']['free_disk']>=limits['admit_disk']and receipt['admission']['available_ram']>=limits['admit_ram']
+    assert receipt['peaks']['min_free_disk']>=limits['disk_floor']and receipt['peaks']['min_available_ram']>=limits['ram_floor']
+    stdout=C.raw(L,C.at(L,guard/'stdout.log'));stderr=C.raw(L,C.at(L,guard/'stderr.log'))
+    assert stderr==b''and receipt['logs']==dict(stdout=len(stdout),stderr=0)
+    emitted=json.loads(stdout)['outputs'];assert len(emitted)==2
+    byname={Path(r['path']).name:r for r in emitted};assert set(byname)=={'result.json','certificate.json'}
+    rr,cr=byname['result.json'],byname['certificate.json']
+    result=C.view(C.raw(L,rr),['pins','status','parent_count','slots_per_parent','canonical_or_ledger_writes','whole_inputs','declared_read_bytes','nominal_project_body_bytes','certificate_for_literal_old_strict156','complete_selected_stabilizer_not_graph_isomorphism','new_census_or_case_credit']if role_kind=='supply'else['pins','status','parent_count','slots_per_parent','canonical_or_ledger_writes','whole_inputs','declared_read_bytes','nominal_project_body_bytes','strict_all_parent_distances_and_predicates_recomputed','strict_full_old_orbit_witness_for_every_ORBIT','old_full_kernel_literal','whole_level_or_census_claimed','new_case_paper_Lean_or_measurement_credit'])
+    pins=dict(manifest=mr,request=p['request'],Root_gate=p['gate'])
+    if marker:pins.update(bounded_resource_budget=p['budget'],bounded_launch=marker['launch'])
+    assert result['pins']==pins and result['parent_count']==len(indices)and result['slots_per_parent']==156 and result['canonical_or_ledger_writes']is False
+    if role_kind=='supply':
+        assert result['status']=='PROPOSED_COMPLETE_PARENT_COVER'
+        assert result['certificate_for_literal_old_strict156']is result['complete_selected_stabilizer_not_graph_isomorphism']is True and result['new_census_or_case_credit']==0
+    else:
+        assert result['status']=='VERIFIED_COMPLETE_INCREMENTAL_PARENT_COVERS'
+        assert result['strict_all_parent_distances_and_predicates_recomputed']is result['strict_full_old_orbit_witness_for_every_ORBIT']is result['old_full_kernel_literal']is True
+        assert result['whole_level_or_census_claimed']is False and result['new_case_paper_Lean_or_measurement_credit']==0
+    whole=result['whole_inputs']
+    assert len({x['path']for x in whole})==len(whole)<=32 and result['declared_read_bytes']<=m['caps']['read_bytes']
+    for item in whole:C.raw(L,item)
+    required=m['Source']+[mr,p['request'],p['gate'],p['Root_import'],C.at(L,guard/'started.json')]
+    if role_kind=='check':required.append(C.view(request_body,['saved'])['saved'])
+    if marker:required +=[C.POLICY_REF,p['budget'],b['Source_peer'],b['admission_controls'],marker['launch']]
+    assert {x['path']:x for x in required}=={x['path']:x for x in whole}
+    certificate=C.raw(L,cr);coverfields=C.fields(certificate)
+    assert set(coverfields)=={'schema','covers'}and C.view(certificate,['schema'])['schema']=='F009_INCREMENTAL_PARENT_COVER_BATCH_V1'
+    covers=C.array(coverfields['covers']);assert len(covers)==len(indices)
+    history=reconcile(L,attempt,sdkref,argv,stem,Path(p['actual_raw_root']))
+    return dict(stem=stem,profile=profile,manifest=mr,prepared=prepared_ref,actual_SDK=sdkref,raw_directory=str(rawdir),actual_edition=number,prior_non_success_attempts=history,result=rr,certificate=cr,resource_marker=marker,guard=str(guard)),covers,requestparents
+
+def metadata_actual(ctx,sdkref,rawdir,op,expected_outputs=None):
+    """Authenticate a prior generic metadata entry; no function is replayed."""
+    L=ctx.L;s=C.doc(L,sdkref);argv=s['issued_argv'];child=argv[argv.index('--')+1:]
+    assert child[:5]==[C.PYTHON,'-E','-B','-S',ctx.packet['programs'][op]['path']]
+    def option(name):
+        i=child.index('--'+name);return dict(path=child[i+1],bytes=int(child[i+2]),sha256=child[i+3])
+    assert option('packet')==ctx.packet_ref
+    request=C.doc(L,option('request'));gate=C.doc(L,option('Root-gate'))
+    assert request['op']==gate['op']==op and gate['request']==option('request')
+    guard=Path(child[child.index('--guard')+1])
+    started=C.doc(L,C.at(L,guard/'started.json'));receipt=C.doc(L,C.at(L,guard/'receipt.json'))
+    br=request['bounded_resource_budget'];b=C.doc(L,br)
+    lr=started['bounded_output_profile']['launch'];launch=C.doc(L,lr)
+    peer=C.doc(L,b['Source_peer']);controls=C.doc(L,b['admission_controls'])
+    assert b['Source_peer']==ctx.peer_ref and b['role_kind']=='metadata'and b['role']==op
+    C.P['validate_evidence'](b,peer,controls,C.PROFILE_REF,C.POLICY_REF)
+    C.P['validate_launch'](launch,b,br,child,'/Users/sasha/medusa',guard,C.PROFILE_REF,C.POLICY_REF)
+    guard_shape(started,receipt,child,C.P['expected_limits'](False))
+    marker=C.P['marker'](b,br,lr)
+    assert started['bounded_output_profile']==receipt['bounded_output_profile']==marker
+    env=['/usr/bin/env']
+    for name in('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES'):
+        env+=['-u',name]
+    expected=env+[C.PYTHON,'-E','-B',C.PROFILE_REF['path'],'--budget',*C.trip(br),'--launch',*C.trip(lr),'--volume','/Users/sasha/medusa','--output',str(guard),'--rss-cap-mib','256','--timeout','125','--']+child
+    api(L,sdkref,Path(rawdir),expected,True)
+    assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+    limits=C.P['expected_limits'](False)
+    assert receipt['seconds']<=125 and receipt['peaks']['total_rss']<=256*2**20
+    assert receipt['admission']['free_disk']>=limits['admit_disk']and receipt['admission']['available_ram']>=limits['admit_ram']
+    assert receipt['peaks']['min_free_disk']>=limits['disk_floor']and receipt['peaks']['min_available_ram']>=limits['ram_floor']
+    assert json.loads(s['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json'))
+    output=C.raw(L,C.at(L,guard/'stdout.log'));err=C.raw(L,C.at(L,guard/'stderr.log'))
+    assert err==b''and receipt['logs']==dict(stdout=len(output),stderr=0)
+    printed=json.loads(output)
+    if expected_outputs is not None:assert printed['outputs']==expected_outputs
+    for item in printed['outputs']:C.raw(L,item)
+    return printed,request,gate
+
+def metadata_attempt(ctx,record,op,logical_key,identity):
+    """Generic metadata retries are separate from same-argv science retries."""
+    n=record['edition']
+    assert type(n)is int and 1<=n<=8 and len(record['prior_non_success_attempts'])==n-1
+    assert Path(record['actual_SDK']['path']).name==logical_key+'_v%d.json'%n
+    printed,q,g=metadata_actual(ctx,record['actual_SDK'],record['raw_directory'],op)
+    for key,value in identity.items():assert q[key]==value
+    for number,prior in enumerate(record['prior_non_success_attempts'],1):
+        assert type(prior['edition'])is int and prior['edition']==number
+        assert Path(prior['actual_SDK']['path']).name==logical_key+'_v%d.json'%number
+        s=C.doc(ctx.L,prior['actual_SDK']);argv=s['issued_argv']
+        api(ctx.L,prior['actual_SDK'],Path(prior['raw_directory']),argv,False)
+        child=argv[argv.index('--')+1:]
+        assert child[:5]==[C.PYTHON,'-E','-B','-S',ctx.packet['programs'][op]['path']]
+        i=child.index('--packet')
+        assert child[i+1:i+4]==C.trip(ctx.packet_ref)
+        rec=C.doc(ctx.L,prior['reconciliation'])
+        assert rec['schema']=='ROOT_F009_GENERIC_METADATA_NON_SUCCESS_RECONCILIATION_V2'
+        assert rec['root']=='/root'and rec['Root_authority']is True
+        assert rec['prior_actual_SDK']==prior['actual_SDK']and rec['selected_actual_SDK']==record['actual_SDK']and rec['op']==op and rec['logical_key']==logical_key
+        for flag in('same_logical_metadata_operation_owned','no_scientific_worker_or_predicate_called','no_completed_output_replayed','all_old_frames_and_partial_outputs_retained'):
+            assert rec[flag]is True
+        assert type(rec['inspections'])is list and 1<=len(rec['inspections'])<=4
+        for item in rec['inspections']:C.raw(ctx.L,item)
+    return printed,q,g

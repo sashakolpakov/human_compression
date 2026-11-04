@@ -1,0 +1,123 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');G=M/'f009_bounded_io_transition';K=M/'resource_profiles/bounded_output';C=G/'cohorts/cohort_from0426';A=G/'actual/cohort0426_batch00_prepare_suppliers';S=Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0426/parents0426_0428');RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+ global READ
+ p=Path(p);key=str(p)
+ if key in RAW:need(r is None or PINS[key]==r,'one exact edition');return RAW[key]
+ before=p.lstat();need(before.st_size<=4*2**20 and READ+before.st_size<=64*2**20 and len(RAW)<500,'bounded metadata reader');b=p.read_bytes();after=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns);need(sig(before)==sig(after)and len(b)==before.st_size,'whole stable bytes');rr=ref(p,b);need(r is None or rr==r,'exact input pin');RAW[key]=b;PINS[key]=rr;READ+=len(b);return b
+
+def pin(p):read(p);return PINS[str(p)]
+def exact(r):return read(r['path'],r)
+def doc(p,r=None):return dec(read(p,r))
+def pick(b,keys):o=obj(b);return{k:dec(o[k])for k in keys}
+def can(j):return(json.dumps(j,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def triple(a,k):i=a.index(k);return dict(path=a[i+1],bytes=int(a[i+2]),sha256=a[i+3])
+def api(sdkpath,rawdir):
+ sdk=doc(sdkpath);i=doc(rawdir/'issued.json');frames=sdk['all_genuine_api_frames'];a=sdk['issued_argv'];t=sdk['actual_tool']
+ need(sdk['root']==sdk['actor']==i['root']=='/root'and a==i['argv']==sdk['child_argv'],'Root argv')
+ need(i['tool_arguments']==sdk['issued_tool_arguments']and i['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==a,'whole genuine issued kwargs')
+ need(1<=len(frames)<=32 and len({f['chunk_id']for f in frames})==len(frames),'unique bounded raw chunks')
+ for n,f in enumerate(frames):
+  need(doc(rawdir/('frame_%04d.json'%n))==f,'exact persisted genuine frame')
+  if n<len(frames)-1:need(f.get('session_id')==t['handle']and 'exit_code'not in f,'same live handle throughout')
+ need(frames[0]==sdk['full_initial_tool_return']and frames[-1]==sdk['full_tool_return']and t['exit_code']==frames[-1]['exit_code']and t['initial_chunk']==frames[0]['chunk_id']and t['terminal_chunk']==frames[-1]['chunk_id'],'full terminal history')
+ need((t['synchronous']is True and len(frames)==1 and t['handle']is None)or(t['synchronous']is False and len(frames)>1 and type(t['handle'])is int),'honest sync/async')
+ return sdk,frames[-1]
+
+
+
+
+PS=M/'f004_proper_subspaces';AD=M/'f004_proper_subspace_adoption';HERE=AD/'logical_review';ACT=AD/'actual_review'
+full=doc(ACT/'reuse_integer_only.json');fullref=pin(ACT/'reuse_integer_only.json');need(fullref['sha256']=='efb4e2449dbcca0d144476bd9ca5b531256d9dd7ec2ca353a59b7f9e191dd37e'and full['status']=='SUPPORTED_ACTUAL_PROPER_SUBSPACE_EQUATIONS'and full['blockers']==[],'exact newly closed actual provenance')
+exceptionref=full['inspection_exception'];exception=dec(exact(exceptionref));need(exception['Original_values_decoded']is True and exception['Original_matrix_predicates_evaluated']is False,'honest bounded inspection exception')
+appref=pin(AD/'Root_application.json');app=dec(exact(appref));need(appref['sha256']=='a8a310e4b1ff514595489bc9e7209d3e397f506080bde5753e98f12fd0c8815d','exact issued Root application')
+sdkpath=AD/'Root_SDK/job155_application_v1.json';sdk,frame=api(sdkpath,AD/'api/Root_f004_proper_subspace_job155_application_v1');sdkref=pin(sdkpath);need(sdkref['sha256']=='dc851e1dc0179be22f04e51dbc9d2d3724c172bc5918e37d31abaab7578c9a3d'and frame['exit_code']==0 and dec(frame['output'])==dict(application=appref,verified_nongeneration_cases=24,canonical_writes=0),'genuine Root proof issuance and no adoption')
+positions=full['positions'];subject=app['proper_scientific_subject'];proof=app['proof'];index=app['certificate_index'];predecessor=app['predecessor_selector']
+need(app['schema']=='ROOT_PROVED_Q11_PROPER_SUBSPACE_APPLICATION_V1'and app['status']=='ROOT_PROVED_ORIGINAL_CASE_NONGENERATION'and app['root']=='/root'and app['Root_authority']is True and app['original_job']==[155,4]and app['verified_nongeneration_positions']==positions and len(positions)==len(set(positions))==24,'issued exact original nongeneration subject')
+need(app['all_cases_dimension']==4 and app['ambient_dimension']==7 and app['field']==11 and app['GEN_claim']is app['IP_claim']is app['ambient_irreducibility_or_maximal_classification_used']is app['canonical_case_adoption_issued']is False and app['whole_original_or_conjecture_or_Lean_or_compression_credit']==0,'properness only, no stronger claim')
+for flag in ('same_actual_original_G_frame_member_transporter_and_mark_meanings_owned','same_two_ambient_matrices_are_known_members_of_that_G_owned','elementary_row_space_properness_implication_owned','whole_fresh_AR_invariance_and_known_G_mover_equations_actually_verified'):need(app[flag]is True,'explicit Root mathematical premise '+flag)
+need(proof==full['proof']and index==full['certificate_index']and predecessor==full['selector']and subject['Source_manifest']==full['Source_manifest']and subject['Source_peer']==full['Source_peer']and subject['actual37controls']==full['actual_controls_review']and subject['elementary_proof']==full['argument'],'exact proof/index/Source/control/theory/selector join')
+for r in [proof,index,predecessor,*subject['programs'].values()]:exact(r)
+model=dec(exact(full['Root_import']));need(model['proper_subspace_theory']==subject['elementary_proof'],'same imported elementary lemma')
+for ab,rb in zip(app['batches'],full['batches']):
+ need(ab['batch']==rb['batch']and ab['positions']==rb['positions']and ab['dimension']==4 and ab['Root_import']==full['Root_import']and ab['Root_scope']==rb['search']['Root_scope']and ab['original_domain_whole_pins']==full['original_domain_whole_pins'],'same acquired cases/model/domain/scope')
+ for role in('search','direct'):
+  need(ab['SDKs'][role]==rb[role]['actual_SDK']and ab[role+'_result']==rb[role]['result'],'application bound to actual '+role+' subjects')
+ need(ab['direct_plan']==rb['direct']['plan']and ab['direct_gate']==rb['direct']['Root_gate'],'supplied-only evidence explicit')
+need(len(app['batches'])==3,'complete application 3x8')
+# The complete TeX and Source argument were read by reviewer; this script joins their exact editions only.
+need(len(exact(proof))==4503 and proof['sha256']=='43a7fedbfaccda2559d09fcb302d579c9a4ee7352c60edf8d4ef23a47c1d8604'and index['sha256']=='d065183ffa96e8c160eceef29a07e53492d3118940ea5e924e90beaea0b5bd67','complete proof and index exact')
+for path,body in list(RAW.items()):
+ with Path(path).open('rb')as f:need(f.read(len(body)+1)==body,'closing exact proof/evidence')
+def save(directory,name,value):
+ b=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();p=directory/name
+ with p.open('xb')as f:need(f.write(b)==len(b),'whole review output')
+ return ref(p,b)
+common=dict(reviewer='/root/mathematical_review',Root_authority=False,blockers=[],Root_application=appref,Root_application_actual_SDK=sdkref,certificate_index=index,proper_scientific_subject=subject,predecessor_selector=predecessor,verified_nongeneration_positions=positions,original_job=[155,4],Source_manifest=full['Source_manifest'],Source_peer=full['Source_peer'],actual_controls_review=full['actual_controls_review'],proof=proof,argument=full['argument'],Root_import=full['Root_import'],Original_values_decoded=True,inspection_exception=exceptionref,Original_matrix_predicates_evaluated=False,represented_functions_or_numerical_predicates_executed=False,GEN_claim=False,IP_claim=False,paid_credit=0,canonical_case_adoption_issued=False,whole_job_or_manuscript_credit=0)
+actual=dict(common,schema='Q11_PROPER_SUBSPACE24_ACTUAL_PAIR_INDEPENDENT_REUSE_V1',status='SUPPORTED_ACTUAL_PROPER_SUBSPACE_EQUATIONS',full_actual_review=fullref,all24_supplied_properness_equations_supported=True,whole_source_input_command_raw_API_guard_and_output_joins_verified=True,direct_acquisition_or_RREF_or_mover_search_calls=0,ambient_irreducibility_or_classification_imported=False,qualification=['This thin application-bound actual reuse leaf retains exact whole finite actual reviewefb4 and its evidence. It authenticates six genuine SEARCH/DIRECT executions and their complete resource/Source/input/output joins; it does not rerun the Original equations.','The exact bounded inspection exception is retained: the first8187-byte SEARCH carrier was incidentally JSON-decoded once; no matrix values or predicates were evaluated. Original_values_decoded is therefore True for this entire review, with no false blanket no-decode claim.','All24 actual supplied certificates report rank4 proper-space equations with known same-G mover and zero direct acquisition/RREF/mover-search calls. Logical properness, durable retention and Root typed case adoption remain separately required. No GEN/IP/payment/manuscript credit is issued.','Reviewer authored imported static and37-control provenance reviews, not executed proper-subspace Source; authorForest/Root encoding contribution/inherited invariant-space method remain attributed.'])
+actualref=save(ACT,'reuse_integer_only_with_application.json',actual)
+logical=dict(common,schema='Q11_PROPER_SUBSPACE24_APPLICATION_LOGICAL_INDEPENDENT_REUSE_V1',status='SUPPORTED_LOGICAL_NONGENERATION',actual_review=actualref,full_actual_review=fullref,all24_proper_subgroup_implications_verified=True,Root_application_scope_and_actual_equations_joined=True,known_mover_membership_in_same_original_G_explicit=True,rectangular_right_inverse_and_invariant_row_space_lemma_verified=True,ambient_irreducibility_or_maximal_classification_used=False,proof_reasoning=['AR=I_r implies the r rows of A are linearly independent. For every row u, u is in rowspace(A) iff u=(uR)A: one direction is immediate from the displayed expression; the other uses u=cA and cARA=cA.','The four equations Ag_j=(Ag_jR)A put every basis-row image in W=rowspace(A). Invertibility of each g_j gives Wg_j=W, so the generated marked subgroup H preserves W.','The actual certificate names a matrix z already owned as a member of the same Original ambient G and a basis row a_i for which a_i z differs from (a_i zR)A. Thus a_i z lies outside W, z does not preserve W, and z cannot lie in H. Therefore H is proper in G.','The Root application binds those sufficient supplied equations, the exact24 unique job155 positions and the same Original model/frame/member/transporter imports to genuine actual DIRECT outputs. All recorded dimensions are4<7. No inference from a form or abstract group label supplies membership.'],qualification=['This is a distinct logical scope review of the complete4503-byte Root-bound TeX and imported5988-byte elementary Source argument. The linear proof is valid over any field; this application uses F11/7D and the exact accepted model/action. It claims no new classification or priority.','The same-G membership of the supplied moving matrix, quartet membership, faithful Original frame and member/transporter meanings remain explicitly Root-owned accepted premises. No ambient irreducibility or maximal-subgroup classification is needed, and none is silently imported.','Numerical AR, all four invariance equations, rooted row relations and mover inequality are borrowed from the genuine reviewed supplied-only computations. Reviewer performs no matrix/predicate evaluation or Source/control replay.','The actual review inspection exception is retained in this compact qualification: one8187-byte first SEARCH carrier was JSON-decoded incidentally in memory for header/key inspection; no operand entries printed/evaluated. This logical review does not claim Original_values_decoded=False.','NG is properness of the original marked subgroup in G. It is neither GEN nor NOT_IP; no IP/end-intersection, case-equivalence, whole-job or manuscript completion follows. Durable retention and separately issued typed canonical adoption remain future duties.','Reviewer authored the imported Source/control reviews and related prior proof discussion but none of this executed Source or the Root application. Same named reviewer has separately scoped actual and logical reviews; no identity or authority was fabricated.'])
+logicalref=save(HERE,'reuse_integer_only.json',logical)
+evidenceref=save(HERE,'evidence.json',dict(schema='Q11_PROPER_SUBSPACE24_LOGICAL_FINITE_EVIDENCE_V1',Root_authority=False,reviewer='/root/mathematical_review',pins=list(PINS.values()),actual_review=actualref,full_actual_review=fullref,logical_review=logicalref,Original_values_decoded=True,inspection_exception=exceptionref,Original_matrix_predicates_evaluated=False))
+print(json.dumps(dict(actual=actualref,logical=logicalref,evidence=evidenceref),sort_keys=True))

@@ -1,0 +1,76 @@
+--- /Users/sasha/medusa/research/leemans/maintenance/intake/manuscript_scope/F004/worker_interfaces/quartet_generation/operational/runtime.py
++++ /Users/sasha/medusa/research/leemans/maintenance/intake/f004_proper_subspaces/runtime.py
+@@ -25,13 +25,13 @@
+     manifest, plan, gate = [budget.doc(r) for r in (mr, pr, gr)]
+     entry = manifest['roles'][role]
+     own = entry['program']
+-    M.need(own['path'] == str(Path(file).resolve()) and manifest['schema'] == 'Q11_GENERIC_QUARTET37_SOURCE_V1'
+-           and plan['schema'] == 'Q11_GENERIC_QUARTET37_'+role+'_PLAN_V1'
++    M.need(own['path'] == str(Path(file).resolve()) and manifest['schema'] == 'Q11_PROPER_SUBSPACE_SOURCE_V1'
++           and plan['schema'] == 'Q11_PROPER_SUBSPACE_'+role+'_PLAN_V1'
+            and plan['program'] == own and plan['Source_manifest'] == mr,
+            'exact new Source entry/manifest/role, never old49 execution')
+     sources = entry['loaded_sources']
+     guards = manifest['guards']
+-    modules = ('retained_math', 'admission', 'linear', 'runtime')+ (('words',) if role != 'DIRECT' else ())
++    modules = ('retained_math', 'admission', 'linear', 'runtime')
+     if role != 'CONTROLS':
+         modules += ('original_context',)
+     paths = {str(Path(sys.modules[name].__file__).resolve()) for name in modules} | {own['path']}
+@@ -43,24 +43,26 @@
+     # Charge project loader reads, both profile base checks and its runpy load.
+     budget.bytes += sum(r['bytes'] for r in sources)+guards[0]['bytes']+3*guards[1]['bytes']+512
+     M.need(budget.bytes <= 8*2**20, 'prepaid source/guard loader read allowance')
+-    M.need(gate['schema'] == 'ROOT_AUTHORIZED_Q11_GENERIC_QUARTET37_V1'
++    M.need(gate['schema'] == 'ROOT_AUTHORIZED_Q11_PROPER_SUBSPACE_V1'
+            and gate['root'] == '/root' and gate['Root_authority'] is gate['issued'] is True
+            and gate['role'] == role and gate['program'] == own and gate['Source_manifest'] == mr
+            and gate['plan'] == pr and gate['whole_Source_and_protocol_owned'] is True,
+            'fresh exact Root role and whole Source ownership')
+     peer = budget.doc(gate['Source_peer'])
+-    M.need(peer['status'] == 'SUPPORTED_STATIC_Q11_GENERIC_QUARTET37_SOURCE'
++    M.need(peer['status'] == 'SUPPORTED_STATIC_Q11_PROPER_SUBSPACE_SOURCE'
+            and peer['Source_manifest'] == mr and peer['blockers'] == []
+-           and peer['reviewer'] not in ('/root', AUTHOR), 'distinct whole new Source peer')
++           and type(peer['reviewer']) is str and bool(peer['reviewer'].strip())
++           and peer['reviewer'] not in ('/root', AUTHOR), 'distinct named whole new Source peer')
+     if role == 'CONTROLS':
+         M.need(gate['synthetic_only'] is True and gate['Original_calls_authorized'] is False
+                and gate['admission_controls'] is None, 'narrow fresh synthetic bootstrap')
+     else:
+         controls = budget.doc(gate['admission_controls'])
+-        M.need(controls['status'] == 'SUPPORTED_ACTUAL_Q11_GENERIC_QUARTET37_CONTROLS'
++        M.need(controls['status'] == 'SUPPORTED_ACTUAL_Q11_PROPER_SUBSPACE_CONTROLS'
+                and controls['Source_manifest'] == mr and controls['blockers'] == []
+                and controls['Source_peer'] == gate['Source_peer']
+                and controls['program'] == manifest['roles']['CONTROLS']['program']
++               and type(controls['reviewer']) is str and bool(controls['reviewer'].strip())
+                and controls['reviewer'] not in ('/root', AUTHOR)
+                and controls['Original_inputs_loaded'] is False
+                and gate['Original_calls_authorized'] is True
+@@ -79,20 +81,17 @@
+     selection = admit(plan, budget.doc(plan['selector']), meta,
+                       budget.doc(plan['Root_scope']), M.digest, M.expand_runs)
+     imported = budget.doc(gate['Root_import'])
+-    M.need(imported['schema'] == 'ROOT_IMPORTED_Q11_GENERIC_QUARTET37_MODEL_V1'
++    M.need(imported['schema'] == 'ROOT_IMPORTED_Q11_PROPER_SUBSPACE_MODEL_V1'
+            and imported['root'] == '/root' and imported['Root_authority'] is imported['issued'] is True
+            and same_job(imported['original_job'], plan['original_job'])
+            and imported['original_domain_whole_pins'] == ctx['refs']
+-           and imported['prime37_theory'] == plan['prime37_theory']
+-           and imported['cyclic_projector_theory'] == plan['cyclic_projector_theory'],
+-           'same exact acquired domain and borrowed generation proofs')
++           and imported['proper_subspace_theory'] == plan['proper_subspace_theory'],
++           'same exact acquired domain and proper-subspace proof')
+     for key in ('faithful_Original_frame_member_and_transporter_join_owned',
+                 'quartet_membership_in_this_natural_G2_11_owned',
+-                'same_nondegenerate_symmetric_form_and_isometry_action_owned',
+-                'complete_natural_maximal_cover_and_SU3_line_stabilizer_owned'):
++                'same_actual_ambient_generators_are_known_original_G_members_owned',
++                'proper_subspace_and_mover_implication_owned'):
+         M.need(imported[key] is True, 'separate Root mathematical premise '+key)
+-    q = M.matrix(budget.doc(ctx['domain']['normalization_result'])['quadratic_form_matrix'], 8)
+-    ctx['form'] = tuple(tuple(q[i][j] for j in range(1, 8)) for i in range(1, 8))
+     return ctx, selection['selected']
+ 
+ 

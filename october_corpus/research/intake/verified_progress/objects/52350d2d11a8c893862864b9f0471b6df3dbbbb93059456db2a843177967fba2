@@ -1,0 +1,265 @@
+"""Resource-binding transitions, not a second scientific method.
+
+All equality tests concerning a parent or certificate operate on lexical byte
+spans. This module never interprets a forest, group element or witness.
+"""
+from pathlib import Path
+import copy
+
+DISPOSITION='GENUINE_GUARD_SETUP_FAILURE_BEFORE_SCIENTIFIC_CHILD'
+FLAGS=('no_scientific_child_started','guard_and_output_absent_before_selected_attempt',
+       'all_failed_SDK_and_raw_frames_retained','only_declared_resource_bindings_changed',
+       'original_parent_import_and_numerical_subject_unchanged')
+
+def equal(old,new):
+    return C.can(old)==C.can(new)
+
+def same_except(old,new,allowed):
+    assert set(old)==set(new)
+    assert all(equal(old[k],new[k])for k in old if k not in allowed)
+
+def prepared_equal(old,new):
+    assert old['profile']==new['profile']=='bounded'
+    same_except(old,new,{'request','gate','budget'})
+    assert old['launch']is new['launch']is None
+
+def document_equal(old,new,kind):
+    """The old scientific request has exactly one replaced metadata reference."""
+    allowed={'request':{'bounded_resource_budget'},
+             'gate':{'request','bounded_resource_budget'}}[kind]
+    same_except(old,new,allowed)
+
+def budget_equal(old,new,old_paths,new_paths):
+    same_except(old,new,{'inventory','command_projection'})
+    assert len(old_paths)==len(new_paths)==2 and len(set(old_paths+new_paths))==4
+    replacements=dict(zip(old_paths,new_paths))
+    assert [r['path']for r in old['inventory']if r['component']=='sdk']==old_paths
+    assert [r['path']for r in new['inventory']if r['component']=='sdk']==new_paths
+    assert all(x.count('_v1')==1 and y==x.replace('_v1','_v2')for x,y in zip(old_paths,new_paths))
+    a=copy.deepcopy(old);b=copy.deepcopy(new)
+    assert len(a['inventory'])==len(b['inventory'])<=128
+    for row in a['inventory']:
+        if row['path']in replacements:
+            assert row['component']=='sdk'and row['existing']is None
+            row['path']=replacements[row['path']]
+    assert equal(a['inventory'],b['inventory'])
+    # Descriptor-byte/hash slots stay symbolic. Literal request/gate paths
+    # change, and no other command token or slot may change.
+    assert len(a['command_projection'])==len(b['command_projection'])
+    changes=[]
+    for i,(x,y)in enumerate(zip(a['command_projection'],b['command_projection'])):
+        if not equal(x,y):changes.append((i,x,y))
+    assert len(changes)==2
+    assert all(type(x)is type(y)is str and x!=y for _,x,y in changes)
+    return changes
+
+def failed_setup(sdk,stem,guard,out):
+    """Recognize the one disclosed failure class; never call it a RAM refusal."""
+    assert sdk['actual_tool']['exit_code']!=0
+    output=''.join(f.get('output','')for f in sdk['all_genuine_api_frames'])
+    assert 'FileNotFoundError'in output and 'args.output.mkdir'in output
+    assert str(guard)in output and stem in str(guard)
+    assert 'the acquired base refused before creating its output or child'not in output
+    assert type(out)is str and out!=str(guard)
+
+def transition_shape(t,oldref,newref,stem,cohort,batch):
+    assert t['schema']=='ROOT_F009_RESOURCE_BINDING_TRANSITION_V1'
+    assert t['root']=='/root'and t['Root_authority']is True
+    assert equal(t['original_prepared'],oldref)and equal(t['effective_prepared'],newref)
+    assert t['stem']==stem and t['cohort']==cohort and type(t['batch'])is int and t['batch']==batch
+    assert t['from_edition']==1 and type(t['from_edition'])is int
+    assert t['selected_edition']==2 and type(t['selected_edition'])is int
+    assert t['disposition']==DISPOSITION
+    for flag in FLAGS:assert t[flag]is True
+
+def binding(ctx,tref,oldref,newref,stem,hr,batch):
+    L=ctx.L;t=C.doc(L,tref);transition_shape(t,oldref,newref,stem,hr,batch)
+    old=C.doc(L,oldref);new=C.doc(L,newref);prepared_equal(old,new)
+    oq=C.fields(C.raw(L,old['request']));nq=C.fields(C.raw(L,new['request']))
+    assert set(oq)==set(nq)
+    assert all(oq[k]==nq[k]for k in oq if k!='bounded_resource_budget')
+    assert C.metadata(oq['bounded_resource_budget'])==old['budget']
+    assert C.metadata(nq['bounded_resource_budget'])==new['budget']
+    og=C.doc(L,old['gate']);ng=C.doc(L,new['gate']);document_equal(og,ng,'gate')
+    assert og['request']==old['request']and ng['request']==new['request']
+    assert og['bounded_resource_budget']==old['budget']and ng['bounded_resource_budget']==new['budget']
+    ob=C.doc(L,old['budget']);nb=C.doc(L,new['budget'])
+    changes=budget_equal(ob,nb,t['old_SDK_paths'],t['selected_SDK_paths'])
+    assert [x for _,x,_ in changes]==[old['request']['path'],old['gate']['path']]
+    assert [y for _,_,y in changes]==[new['request']['path'],new['gate']['path']]
+    assert equal(old['Root_import'],new['Root_import'])
+    C.raw(L,old['Root_import'])
+    child=child_argv(ctx,old)
+    lr=t['old_launch'];launch=C.doc(L,lr)
+    peer=C.doc(L,ob['Source_peer']);controls=C.doc(L,ob['admission_controls'])
+    C.P['validate_evidence'](ob,peer,controls,C.PROFILE_REF,C.POLICY_REF)
+    C.P['validate_launch'](launch,ob,old['budget'],child,'/Users/sasha/medusa',old['guard'],C.PROFILE_REF,C.POLICY_REF)
+    argv=BASE_E.wrapper(child,old['guard'],'bounded',old['budget'],lr)
+    s=BASE_E.api(L,t['failed_actual_SDK'],Path(t['failed_raw_directory']),argv,False)
+    failed_setup(s,stem,old['guard'],old['out'])
+    assert t['failed_actual_SDK']['path']==t['old_SDK_paths'][1]
+    for path in t['old_SDK_paths']:
+        body=C.raw(L,C.at(L,Path(path)))
+        assert body==C.raw(L,t['failed_actual_SDK'])
+    inspections=t['actual_absence_or_resource_inspections']
+    assert type(inspections)is list and 1<=len(inspections)<=4
+    observations(L,inspections,t['failed_actual_SDK'],old)
+    assert t['base_packet']==ctx.base_ref and t['supplement_packet']==ctx.packet_ref
+    issue=C.doc(L,t['Root_issue_gate'])
+    assert issue['schema']=='ROOT_F009_RESOURCE_BINDING_METADATA_GATE_V1'and issue['Root_authority']is issue['adopted']is True
+    assert issue['op']=='prepare_retry'and issue['packet']==ctx.packet_ref and issue['Source_peer']==ctx.peer_ref
+    construction(L,t['construction_actual_review'],oldref,t['old_launch'],t['old_parent_IO'])
+    selected_launch=C.doc(L,t['selected_launch'])
+    newchild=child_argv(ctx,new)
+    C.P['validate_launch'](selected_launch,nb,new['budget'],newchild,'/Users/sasha/medusa',new['guard'],C.PROFILE_REF,C.POLICY_REF)
+    io=C.doc(L,t['parent_IO'])
+    assert io['child_budget']==new['budget']and io['child_launch']==t['selected_launch']
+    assert io['parent_IO_only']is True and io['Core_launch_authority']is False
+    assert equal(io['inventory'],parent_rows(nb['inventory'],Path(new['actual_raw_root'])/(stem+'_v2')))
+    assert io['exact_outer_argv']==BASE_E.wrapper(newchild,new['guard'],'bounded',new['budget'],t['selected_launch'])
+    return old,new,t
+
+def child_argv(ctx,p):
+    m=C.doc(ctx.L,p['manifest'])
+    return[C.PYTHON,'-E','-B','-S',m['entry']['path'],'--actor','/root','--manifest',*C.trip(p['manifest']),
+        '--request',*C.trip(p['request']),'--Root-gate',*C.trip(p['gate']),'--out',p['out'],'--guard',p['guard']]
+
+def effective(ctx,oldref,attempt,stem,hr,batch):
+    if 'resource_binding_transition'not in attempt:return oldref,None
+    assert attempt['profile']=='bounded'and attempt['edition']==2
+    tref=attempt['resource_binding_transition'];t=C.doc(ctx.L,tref)
+    old,new,t=binding(ctx,tref,oldref,t['effective_prepared'],stem,hr,batch)
+    assert len(attempt['prior_non_success_attempts'])==1
+    prior=attempt['prior_non_success_attempts'][0]
+    assert equal(prior,dict(edition=1,disposition=DISPOSITION,actual_SDK=t['failed_actual_SDK'],
+        raw_directory=t['failed_raw_directory'],resource_binding_transition=tref))
+    return t['effective_prepared'],t
+
+def role(ctx,oldref,attempt,stem,indices,hr,h,batch,kind):
+    newref,t=effective(ctx,oldref,attempt,stem,hr,batch)
+    if t is None:return BASE_E.role(ctx,oldref,attempt,stem,indices,hr,h,batch,kind)
+    selected=dict(attempt,prior_non_success_attempts=[])
+    # BASE_E.role calls its own reconcile global. The one scoped replacement
+    # authenticates the prior different-argv attempt through the transition.
+    old_reconcile=BASE_E.role.__globals__['reconcile']
+    def reconcile(L,a,current,argv,s,rawroot):
+        assert a is selected and s==stem and current['path']==t['selected_SDK_paths'][1]
+        assert Path(t['failed_raw_directory']).is_relative_to(rawroot)
+        return[dict(edition=1,actual_SDK=t['failed_actual_SDK'],raw_directory=t['failed_raw_directory'],
+            resource_binding_transition=attempt['resource_binding_transition'],disposition=DISPOSITION,
+            actual_absence_or_resource_inspections=t['actual_absence_or_resource_inspections'])]
+    BASE_E.role.__globals__['reconcile']=reconcile
+    try:record,covers,parents=BASE_E.role(ctx,newref,selected,stem,indices,hr,h,batch,kind)
+    finally:BASE_E.role.__globals__['reconcile']=old_reconcile
+    assert record['resource_marker']['launch']==t['selected_launch']
+    record.update(original_prepared=oldref,effective_prepared=newref,
+        resource_binding_transition=attempt['resource_binding_transition'])
+    return record,covers,parents
+
+def prepare(ctx):
+    """Issue fresh request/gate/budget/preparation/launch/IO, never a worker."""
+    q=ctx.q;oldref=q['original_prepared'];old=C.doc(ctx.L,oldref)
+    assert old['profile']=='bounded'and old['launch']is None
+    mr,_=C.subject(ctx.L,'bounded',old['role']);assert mr==old['manifest']
+    hr=old['cohort'];h=C.cohort(ctx.L,hr,ctx.packet)
+    C.frozen(ctx.L,h['progress_snapshot'],h['begin'])
+    assert ctx.g['fresh_resource_binding_issuance_authorized']is True
+    for flag in FLAGS:assert ctx.g[flag]is True
+    stem=old['stem'];assert old['batch']==q['batch']and stem==q['stem']
+    paths=q['new_paths'];assert set(paths)=={'request','gate','budget','prepared','launch','parent_IO','transition'}
+    assert len(set(paths.values()))==7 and all(Path(v).is_absolute()for v in paths.values())
+    for path in paths.values():C.fresh(Path(path))
+    budget=C.doc(ctx.L,q['new_budget_FALSE']);prior=C.doc(ctx.L,old['budget'])
+    for flag in('Root_authority','adopted','all_actual_Source_and_numerical_caps_owned'):
+        assert budget[flag]is False and prior[flag]is True
+        budget[flag]=True
+    changes=budget_equal(prior,budget,q['old_SDK_paths'],q['selected_SDK_paths'])
+    assert [x for _,x,_ in changes]==[old['request']['path'],old['gate']['path']]
+    assert [y for _,_,y in changes]==[paths['request'],paths['gate']]
+    br=ctx.put(paths['budget'],C.can(budget))
+    qr=ctx.put(paths['request'],C.patch(C.raw(ctx.L,old['request']),dict(bounded_resource_budget=C.can(br).strip())))
+    gate=C.doc(ctx.L,old['gate']);gate.update(request=qr,bounded_resource_budget=br)
+    gr=ctx.put(paths['gate'],C.can(gate))
+    p=dict(old,request=qr,gate=gr,budget=br)
+    pr=ctx.put(paths['prepared'],C.can(p));child=child_argv_from_manifest(ctx,p)
+    peer=C.doc(ctx.L,budget['Source_peer']);controls=C.doc(ctx.L,budget['admission_controls'])
+    C.P['validate_evidence'](budget,peer,controls,C.PROFILE_REF,C.POLICY_REF)
+    launch=dict(schema='ROOT_BOUNDED_OUTPUT_LAUNCH_AUTHORITY_V1',root='/root',Root_authority=True,
+        adopted=True,all_source_budget_and_actual_scope_owned=True,
+        budget=br,reference_bindings=dict(budget=br,request=qr,Root_gate=gr),command=child,
+        volume='/Users/sasha/medusa',guard=p['guard'],profile_source=C.PROFILE_REF,policy_source=C.POLICY_REF,
+        role_manifest=p['manifest'])
+    # The launch schema has no back-reference in the budget/request/gate.
+    C.P['validate_launch'](launch,budget,br,child,launch['volume'],launch['guard'],C.PROFILE_REF,C.POLICY_REF)
+    lr=ctx.put(paths['launch'],C.can(launch))
+    io=C.doc(ctx.L,q['old_parent_IO']);assert io['Core_launch_authority']is False and io['parent_IO_only']is True
+    assert io['child_budget']==old['budget']and io['child_launch']==q['old_launch']
+    outer=BASE_E.wrapper(child,p['guard'],'bounded',br,lr)
+    rawdir=Path(p['actual_raw_root'])/(stem+'_v2')
+    rows=parent_rows(budget['inventory'],rawdir)
+    io.update(command_projection=outer,inventory=rows,child_budget=br,child_launch=lr,
+        exact_outer_argv=outer,shared_SDK_destinations=q['selected_SDK_paths'],
+        child_inventory_paths=[r['path']for r in budget['inventory']])
+    C.P['validate_inventory'](io);C.P['preflight_targets'](budget);C.P['preflight_targets'](io)
+    pir=ctx.put(paths['parent_IO'],C.can(io))
+    t=dict(schema='ROOT_F009_RESOURCE_BINDING_TRANSITION_V1',root='/root',Root_authority=True,
+        cohort=hr,batch=old['batch'],stem=stem,from_edition=1,selected_edition=2,disposition=DISPOSITION,
+        original_prepared=oldref,effective_prepared=pr,old_launch=q['old_launch'],old_parent_IO=q['old_parent_IO'],
+        failed_actual_SDK=q['failed_actual_SDK'],failed_raw_directory=q['failed_raw_directory'],
+        old_SDK_paths=q['old_SDK_paths'],selected_SDK_paths=q['selected_SDK_paths'],
+        actual_absence_or_resource_inspections=q['actual_absence_or_resource_inspections'],
+        construction_actual_review=q['construction_actual_review'],base_packet=ctx.base_ref,
+        supplement_packet=ctx.packet_ref,Root_issue_gate=ctx.gate_ref,selected_launch=lr,parent_IO=pir)
+    t.update({flag:True for flag in FLAGS})
+    # Check both old and proposed complete bindings before any output exists.
+    prepared_equal(old,p)
+    oldchild=child_argv(ctx,old)
+    oldlaunch=C.doc(ctx.L,q['old_launch'])
+    C.P['validate_launch'](oldlaunch,prior,old['budget'],oldchild,'/Users/sasha/medusa',old['guard'],C.PROFILE_REF,C.POLICY_REF)
+    sdk=BASE_E.api(ctx.L,q['failed_actual_SDK'],Path(q['failed_raw_directory']),BASE_E.wrapper(oldchild,old['guard'],'bounded',old['budget'],q['old_launch']),False)
+    failed_setup(sdk,stem,old['guard'],old['out'])
+    assert not Path(old['guard']).exists()and not Path(old['out']).exists()
+    for path in q['old_SDK_paths']:assert C.raw(ctx.L,C.at(ctx.L,Path(path)))==C.raw(ctx.L,q['failed_actual_SDK'])
+    observations(ctx.L,q['actual_absence_or_resource_inspections'],q['failed_actual_SDK'],old)
+    construction(ctx.L,q['construction_actual_review'],oldref,q['old_launch'],q['old_parent_IO'])
+    tr=ctx.put(paths['transition'],C.can(t))
+    return ctx.emit(dict(transition=tr,effective_prepared=pr,launch=lr,parent_IO=pir,
+        scientific_calls=0,canonical_writes=0,selected_edition=2))
+
+def child_argv_from_manifest(ctx,p):
+    return child_argv(ctx,p)
+
+def construction(L,review,prepared,launch,parent_IO):
+    r=C.doc(L,review)
+    assert r['status']=='SUPPORTED_ACTUAL_METADATA_AND_CONCRETE_THREE_SUPPLIER_LAUNCH_PLANS'and r['blockers']==[]
+    assert r['reviewer']not in(None,'/root','/root/readback_review')
+    matched=[p for p in r['plans']if p['prepared']==prepared]
+    assert len(matched)==1 and matched[0]['launch']==launch and matched[0]['parent_IO']==parent_IO
+
+def observations(L,refs,failed,prepared):
+    assert type(refs)is list and 1<=len(refs)<=4
+    rows=[C.doc(L,r)for r in refs]
+    matches=[r for r in rows if r.get('schema')=='ROOT_F009_GUARD_SETUP_FAILURE_OBSERVATION_V1']
+    assert len(matches)==1
+    r=matches[0]
+    assert r['root']=='/root'and r['Root_authority']is True and r['failed_actual_SDK']==failed
+    assert r['exact_failed_guard']==prepared['guard']and r['exact_failed_output']==prepared['out']
+    for flag in('failure_precedes_Popen_in_pinned_base_Source','guard_absent_at_fresh_observation','worker_output_absent_at_fresh_observation','shared_guard_parent_now_exists'):
+        assert r[flag]is True
+    assert r['scientific_worker_or_predicate_calls']==r['canonical_writes']==r['mathematical_credit']==0
+    assert r['pinned_base_Source_sha256']==C.BASE_REF['sha256']
+    C.raw(L,C.BASE_REF);C.raw(L,r['genuine_original_prelaunch_SDK'])
+
+def parent_rows(child,rawdir):
+    """The retained eighty-row materializer formula, with the new raw key."""
+    rows=copy.deepcopy(child)
+    rows.append(dict(component='raw',path=str(rawdir/'issued.json'),maximum_bytes=131072,existing=None))
+    for n in range(32):rows.append(dict(component='raw',path=str(rawdir/('frame_%04d.json'%n)),maximum_bytes=262144,existing=None))
+    for r in list(rows):
+        if r['component']not in('sdk','raw'):continue
+        upper=4*((r['maximum_bytes']+2)//3)
+        for n,offset in enumerate(range(0,upper,3*2**20)):
+            rows.append(dict(component='images',path=r['path']+'.encoding_'+str(n),maximum_bytes=min(3*2**20,upper-offset)+1,existing=None))
+    assert len(rows)==len({r['path']for r in rows})==80
+    assert sum(r['maximum_bytes']for r in rows)+16*2**20==57540737
+    return rows

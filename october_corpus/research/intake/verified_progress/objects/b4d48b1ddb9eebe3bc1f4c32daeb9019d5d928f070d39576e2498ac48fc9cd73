@@ -1,0 +1,114 @@
+"""Prospective disk profile for the separately admitted PS metadata publisher.
+
+This new subject uses 2 GiB disk admission and a 1 GiB sampled disk floor.
+The exact acquired supervisor still owns locking, process identities, RSS,
+sampling, logs and cleanup. Its Source and every older profile stay unchanged.
+This wrapper admits only the named metadata entry at 256 MiB and 125 seconds;
+it grants no mathematical or publication authority and imposes no kernel quota.
+"""
+
+import argparse
+import hashlib
+import math
+import os
+from pathlib import Path
+import runpy
+import stat
+import sys
+import types
+
+AUTHOR = '/root/forest_resume'
+BASE_BYTES = 18361
+BASE_SHA = '5c7eed80537835e1a78c8489621d34741eeafc01f47fb394fec519e83f2c9b42'
+PROFILE = 'PS_METADATA_256_MIB_125_SECONDS_DISK_2_1_GIB_V1'
+PYTHON = '/Users/sasha/.venvs/global/bin/python'
+ENTRY = ('/Users/sasha/medusa/research/leemans/maintenance/intake/'
+         'f004_proper_subspace_adoption/operations/publish.py')
+
+
+def _require(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def _base(path):
+    with path.open('rb') as stream:
+        before = os.fstat(stream.fileno())
+        _require(stat.S_ISREG(before.st_mode) and before.st_size == BASE_BYTES,
+                 'fixed ordinary base Source')
+        raw = stream.read(BASE_BYTES + 1)
+        after = os.fstat(stream.fileno())
+    fields = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns)
+    _require(fields(before) == fields(after) == fields(path.stat())
+             and len(raw) == BASE_BYTES and hashlib.sha256(raw).hexdigest() == BASE_SHA,
+             'stable acquired base Source')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser.add_argument('--volume', type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--rss-cap-mib', type=int, required=True)
+    parser.add_argument('--timeout', type=float, required=True)
+    parser.add_argument('command', nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    command = args.command[1:] if args.command[:1] == ['--'] else args.command
+    _require(args.rss_cap_mib == 256, 'metadata profile requires exactly256MiB')
+    _require(math.isfinite(args.timeout) and args.timeout == 125,
+             'metadata profile requires exactly125seconds')
+    _require(command[:5] == [PYTHON, '-E', '-B', '-S', ENTRY],
+             'literal ordinary EBS metadata entry; no code or module mode')
+    _require(len(command) <= 128 and sum(len(x.encode()) for x in command) <= 16384,
+             'bounded explicit command')
+    _require(args.volume.is_absolute() and args.output.is_absolute(), 'absolute profile paths')
+    _require(not sys.flags.optimize and sys.dont_write_bytecode,
+             'ordinary Python with bytecode writes disabled')
+    path = Path(__file__).resolve().with_name('supervise_transient.py')
+    _base(path)
+    loaded = runpy.run_path(str(path), run_name='acquired_metadata_profile_base')
+    entry = loaded['main']
+    scope = entry.__globals__
+    _require(scope['__file__'] == str(path) and scope['__name__'] == 'acquired_metadata_profile_base',
+             'original Source path and non-main namespace')
+    _require(scope['main'] is entry and entry.__code__.co_filename == str(path),
+             'acquired entry code')
+    for value in scope.values():
+        if isinstance(value, types.FunctionType) and value.__module__ == scope['__name__']:
+            _require(value.__globals__ is scope, 'shared borrowed function globals')
+    for value in vars(scope['Family']).values():
+        if isinstance(value, types.FunctionType):
+            _require(value.__globals__ is scope, 'shared borrowed Family globals')
+    gib = 2**30
+    _require({k: scope[k] for k in (
+        'ADMIT_DISK', 'ADMIT_RAM', 'DISK_FLOOR', 'RAM_FLOOR', 'LOG_CAP',
+        'RECORD_CAP', 'PID_CAP', 'POLL_SECONDS', 'GRACE_SECONDS')} == dict(
+            ADMIT_DISK=10*gib, ADMIT_RAM=6*gib, DISK_FLOOR=8*gib, RAM_FLOOR=3*gib,
+            LOG_CAP=256*2**10, RECORD_CAP=128*2**10, PID_CAP=128,
+            POLL_SECONDS=.5, GRACE_SECONDS=3.0), 'acquired base profile')
+    _base(path)
+    # Only these invocation globals change. All borrowed functions stay literal.
+    keys = ('ADMIT_DISK', 'ADMIT_RAM', 'DISK_FLOOR')
+    previous, old_argv = tuple(scope[k] for k in keys), sys.argv
+    cap = args.rss_cap_mib * 2**20
+    required = max(4*gib, scope['RAM_FLOOR'] + cap + 512*2**20)
+    canonical = [str(path), '--volume', str(args.volume), '--output', str(args.output),
+                 '--rss-cap-mib', str(args.rss_cap_mib), '--timeout', str(args.timeout),
+                 '--', *command]
+    scope['ADMIT_DISK'], scope['ADMIT_RAM'], scope['DISK_FLOOR'] = 2*gib, required, gib
+    sys.argv = canonical
+    try:
+        return entry()
+    except RuntimeError as exc:
+        if str(exc) == '10 GiB disk / max(6 GiB, RSS cap + 3 GiB) RAM admission':
+            raise RuntimeError(
+                f'{PROFILE}:2GiB disk and {required} available RAM bytes required; '
+                'the acquired base refused before creating its output or child') from exc
+        raise
+    finally:
+        for key, value in zip(keys, previous):
+            scope[key] = value
+        sys.argv = old_argv
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

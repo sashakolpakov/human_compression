@@ -1,0 +1,118 @@
+"""Summarize a terminal future cohort; zero metadata retry overrides are valid."""
+import argparse,json
+from pathlib import Path
+import hashlib,sys
+_old=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_cohort_preparation/common.py')
+_body=_old.read_bytes()
+assert len(_body)==8859 and hashlib.sha256(_body).hexdigest()=='4aab43156cea4099a644082210abbd953bb64b53fa2a643c5706f965393cd7e0'
+_scope=dict(__file__=str(_old),__name__='f009_retained_metadata_support')
+exec(compile(_body,str(_old),'exec'),_scope)
+C=type('RetainedCommon',(),_scope)
+HERE=Path(__file__).resolve().parent
+_selection=HERE/'attempt_selection.py'
+_selection_body=_selection.read_bytes()
+assert len(_selection_body)==3260 and hashlib.sha256(_selection_body).hexdigest()=='7340fcda5de6264afc93e3c885d19bcb53b8d0d5e3900318d66a9a61fe69cf4d'
+_selection_scope={}
+exec(compile(_selection_body,str(_selection),'exec'),_selection_scope)
+selected_role=_selection_scope['selected_role']
+ap=argparse.ArgumentParser(allow_abbrev=False)
+ap.add_argument('--actor',required=True);ap.add_argument('--cohort',nargs=3,required=True)
+ap.add_argument('--attempts',nargs=3);ap.add_argument('--Source-peer',nargs=3,required=True)
+ap.add_argument('--supplement',nargs=3,required=True);ap.add_argument('--Root-decision',nargs=3,required=True)
+a=ap.parse_args();assert a.actor=='/root'
+C.check();L=C.Ledger();program=C.file_ref(Path(__file__).resolve(),Path(__file__).read_bytes())
+pr=C.descriptor(a.supplement);p=C.doc(L,pr)
+assert p['schema']=='F009_LEGACY_SCIENTIFIC_ATTEMPT_SUPPLEMENT_V1' and p['Root_authority'] is False
+assert p['author']=='/root/dependency_audit' and p['programs']['close_cohort.py']==program
+mf=p['entry_manifests']['close_cohort.py'];manifest=C.doc(L,mf)
+assert manifest['entry']==program and manifest['Source_namespace_cap']==98304
+for r in manifest['Source']+manifest['guards']:L.raw(r['path'],r)
+assert sum(r['bytes']for r in manifest['Source']+manifest['guards'])+512==manifest['Source_plus_guards512']<=98304
+L.raw(p['protocol']['path'],p['protocol'])
+peer=C.descriptor(a.Source_peer);v=C.doc(L,peer)
+assert v['status'].startswith('SUPPORTED_STATIC') and v['blockers']==[] and v['reviewer']not in('/root','/root/readback_review',p['author'])
+assert v['programs']==p['programs'] and v['packet']==pr and v['entry_manifests']==p['entry_manifests'] and v['protocol']==p['protocol']
+decision_ref=C.descriptor(a.Root_decision);decision=C.doc(L,decision_ref)
+assert decision['schema']=='ROOT_F009_LEGACY_ATTEMPT_CLOSER_DECISION_V1' and decision['root']=='/root' and decision['Root_authority']is True
+assert decision['status']=='SUPPORTED' and decision['blockers']==[] and decision['program']==program and decision['packet']==pr and decision['independent_Source_peer']==peer
+for flag in ('whole_Source_and_attempt_selection_owned','old_scientific_caps_and_mathematics_unchanged','metadata_summary_only_authorized','no_successful_role_replayed','no_canonical_writes_authorized'):
+ assert decision[flag]is True
+oldpacket_ref=p['original_preparation_packet'];oldpacket=C.doc(L,oldpacket_ref)
+bootstrap=sum(r['bytes']for r in manifest['Source'])
+selection_ref=p['selected_scientific_attempts']
+cohort_ref=C.descriptor(a.cohort);cohort,control,h=C.owned_cohort(L,oldpacket,oldpacket_ref,cohort_ref)
+assert cohort_ref==p['cohort'] and decision['cohort']==cohort_ref
+assert decision['selected_scientific_attempts']==selection_ref
+summary_path=control/'cohort_actual_summary.json';C.fresh(summary_path);planned=[]
+if a.attempts:
+    attempts_ref=C.descriptor(a.attempts);attempts=C.doc(L,attempts_ref)
+else:
+    path=control/'metadata_phase_attempts.json';C.fresh(path)
+    attempts=dict(schema='ROOT_F009_COHORT_METADATA_PHASE_ATTEMPTS_V1',root='/root',Root_authority=True,
+        cohort=cohort_ref,scientific_roles_changed=False,no_successful_role_replayed=True,overrides=[])
+    body=C.can(attempts);attempts_ref=C.file_ref(path,body);planned.append((path,body))
+assert attempts['schema']=='ROOT_F009_COHORT_METADATA_PHASE_ATTEMPTS_V1'and attempts['root']=='/root'
+assert attempts['Root_authority']is True and attempts['cohort']==cohort_ref
+assert attempts['scientific_roles_changed']is False and attempts['no_successful_role_replayed']is True
+assert 0<=len(attempts['overrides'])<=3*len(cohort['batches'])
+overrides={};prior_refusals=[]
+for override in attempts['overrides']:
+    C.check();key=(override['batch'],override['phase']);edition=override['selected_edition']
+    assert type(key[0])is int and 0<=key[0]<len(cohort['batches'])and key[1]in C.PHASES and key not in overrides
+    assert type(edition)is int and 2<=edition<=8 and len(override['prior_non_success_actual_SDK'])==edition-1
+    selected=override['selected_actual_SDK'];current=C.doc(L,selected)
+    assert selected['path']==str(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(key[0],key[1],edition)))
+    assert current['root']==current['actor']=='/root'and current['actual_tool']['exit_code']==0
+    assert current['all_genuine_api_frames'][-1]==current['full_tool_return']and current['full_tool_return']['exit_code']==0
+    for number,r in enumerate(override['prior_non_success_actual_SDK'],1):
+        previous=C.doc(L,r)
+        assert r['path']==str(control/'Root_SDK'/('batch%02d_%s_v%d.json'%(key[0],key[1],number)))
+        assert previous['root']==previous['actor']=='/root'and previous['actual_tool']['exit_code']!=0
+        assert previous['issued_argv']==current['issued_argv']and previous['all_genuine_api_frames'][-1]==previous['full_tool_return']
+        assert previous['full_tool_return']['exit_code']==previous['actual_tool']['exit_code']
+        assert 'the acquired base refused before creating its output or child'in''.join(f.get('output','')for f in previous['all_genuine_api_frames'])
+        prior_refusals.append(r)
+    overrides[key]=override
+rows=[];total=0
+for batch in cohort['batches']:
+    C.check();base=C.SCIENCE/('cohort_from%04d'%cohort['begin'])/('parents%04d_%04d'%(batch['begin'],batch['end']-1))
+    raw,pair_ref=L.raw(base/'pairing.json')
+    value=C.projection(raw,('cohort','source_indices','strict_slots','cache_registration_performed','target_occurrences'))
+    assert value['cohort']==cohort_ref and value['source_indices']==batch['source_indices']
+    assert value['strict_slots']==156*len(batch['source_indices'])and value['cache_registration_performed']is False
+    assert type(value['target_occurrences'])is int and value['target_occurrences']>=0
+    roles=[]
+    for stem in ['parent%04d_supply'%i for i in batch['source_indices']]+['parents%04d_%04d_check'%(batch['begin'],batch['end']-1)]:
+        selected=selected_role(L,selection_ref,cohort_ref,cohort,stem,base,C.doc)
+        sdk,sr=C.actual_v1(L,Path(selected['actual_SDK']['path']));assert sr==selected['actual_SDK'];roles.append(sr)
+    phases=[]
+    for phase in C.PHASES:
+        override=overrides.get((batch['batch'],phase));edition=override['selected_edition']if override else 1
+        sdk,sr=C.actual_v1(L,control/'Root_SDK'/('batch%02d_%s_v%d.json'%(batch['batch'],phase,edition)))
+        if override:assert sr==override['selected_actual_SDK']
+        phases.append(sr)
+    total+=value['target_occurrences']
+    rows.append(dict(batch=batch['batch'],source_indices=batch['source_indices'],pairing=pair_ref,
+        scientific_actuals=roles,metadata_actuals=phases,strict_slots=value['strict_slots'],target_occurrences=value['target_occurrences']))
+manifest=C.doc(L,mf);source_refs=manifest['Source']+manifest['guards'];source_paths={r['path']for r in source_refs}
+source_first=sum(r['bytes']for r in source_refs);business_first=L.bytes-source_first
+summary=dict(schema='ROOT_F009_COMPLETED_COHORT_ACTUAL_SUMMARY_V1',root='/root',cohort=cohort_ref,
+    source_indices=cohort['source_indices'],batches=rows,strict_slots=156*(cohort['end']-cohort['begin']),target_occurrences=total,
+    scientific_roles=sum(len(row['scientific_actuals'])for row in rows),metadata_phases=3*len(rows),
+    all_roles_terminal_first_v1=False,all_scientific_roles_terminal_first_v1=False,
+    selected_scientific_attempts=selection_ref,prior_scientific_attempt_disposition='GENUINE_PREENTRY_REFUSAL',
+    metadata_phase_attempts=attempts_ref,metadata_prior_refusals=prior_refusals,independent_actual_review_pending=True,
+    cache_registration_performed=False,whole_R5_or_census_credit=False,frozen_progress_snapshot=cohort['progress_snapshot'],
+    first_closing_metadata_bytes=2*business_first,metadata_paths=len(set(L.pins)-source_paths),
+    Source_first_closing_explicit_bytes=2*source_first,Source_bootstrap_helper_bytes=3744,
+    Source_bootstrap_entry_and_common_bytes=bootstrap-3744,Source_paths=len(source_paths),
+    combined_explicit_read_bytes=2*L.bytes+3744,
+    combined_input_reads_and_nominal_project_bootstrap_bytes=2*L.bytes+bootstrap,
+    closer_program=program,closer_Source_peer=peer,supplement_packet=pr,supplement_Source_manifest=mf,
+    preparation_packet=oldpacket_ref,preparation_Source_manifest=oldpacket['entry_manifests']['close_cohort.py'],Root_closer_decision=decision_ref,
+    qualification='Typed metadata summary only. Pairing forest/certificate payloads are lexically skipped; separate actual review and later registration remain required.')
+planned.append((summary_path,C.can(summary)))
+refs,io=C.emit(L,planned,bootstrap)
+print(json.dumps(dict(summary=refs[-1],metadata_phase_attempts=attempts_ref,source_indices=cohort['source_indices'],
+    strict_slots=156*(cohort['end']-cohort['begin']),target_occurrences=total,registered_prefix_unchanged=cohort['begin'],
+    io=io,independent_actual_review_pending=True,canonical_writes=0)))

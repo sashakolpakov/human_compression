@@ -1,0 +1,181 @@
+"""Prepare requests and join complete covers without decoding forest values."""
+from pathlib import Path
+import hashlib
+
+def roster(ctx):
+    r=ctx.packet['mathematical_context']['current_roster']
+    body=C.raw(ctx.L,r);h=C.view(body,['schema','root','adopted','level','roster_size'])
+    assert h==dict(schema='ROOT_F009_ACCEPTED_PARENT_ROSTER_V1',root='/root',adopted=True,level=4,roster_size=940)
+    rows=C.array(C.fields(body)['representatives']);assert len(rows)==940
+    return r,rows
+
+def borrowed_math(ctx):
+    p=ctx.packet['mathematical_context']
+    # Historical identities retain their original authors. A current author
+    # name is never used to reject or rebrand an unrelated historical review.
+    for key in('full_supplier_static','full_supplier_actual24','strict_static','strict_actual41','roster_actual_review'):
+        v=C.view(C.raw(ctx.L,p[key]),['status','blockers'])
+        assert v['status'].startswith('SUPPORTED')and v['blockers']==[]
+    fa=C.view(C.raw(ctx.L,p['full_supplier_actual24']),['count','Original_inputs_loaded','production_Source_manifest'])
+    ta=C.view(C.raw(ctx.L,p['strict_actual41']),['actual_control_count','Source_manifest'])
+    fs=C.view(C.raw(ctx.L,p['full_supplier_static']),['Source_manifest','control_Source_manifest','old_strict_Source_manifest'])
+    ts=C.view(C.raw(ctx.L,p['strict_static']),['Source_manifests'])
+    assert fa['count']==24 and fa['Original_inputs_loaded']is False and ta['actual_control_count']==41
+    assert fa['production_Source_manifest']==fs['Source_manifest']==C.OLD_MANIFESTS['supply']
+    assert fs['old_strict_Source_manifest']==ts['Source_manifests']['check']==C.OLD_MANIFESTS['check']
+    assert fs['control_Source_manifest']==ctx.packet['historical_control_manifests'][0]
+    assert ta['Source_manifest']==ts['Source_manifests']['controls']==ctx.packet['historical_control_manifests'][1]
+    # Missing old control-manifest bodies are historical descriptors only;
+    # their old accepted actual/static joins are not a new whole-body closure.
+
+def init(ctx):
+    q=ctx.q;begin=q['expected_prefix'];sizes=q['batch_counts']
+    assert type(begin)is int and 426<=begin<940
+    assert 1<=len(sizes)<=4 and all(type(x)is int and 1<=x<=3 for x in sizes)
+    end=begin+sum(sizes);assert end<=940
+    assert ctx.g['cohort_initialization_authorized']is True and ctx.g['canonical_writes_authorized']is False
+    control=C.HERE/'cohorts'/('cohort_from%04d'%begin);C.fresh(control)
+    oldcontrol=C.INTAKE/'f009_cohort_preparation/cohorts'/('cohort_from%04d'%begin)
+    assert not oldcontrol.exists()
+    snapshot=dict(intake=C.at(ctx.L,C.PROGRESS/'current_intake.json'),controller=C.at(ctx.L,C.PROGRESS/'controllers/current.json'))
+    ptr=C.doc(ctx.L,snapshot['controller']);snapshot['runtime']=ptr['checkpoint']
+    fv=C.frozen(ctx.L,snapshot,begin);rr,parents=roster(ctx);assert fv['R5_current_roster']==rr
+    borrowed_math(ctx)
+    batches=[];cursor=begin;stems=[]
+    for number,n in enumerate(sizes):
+        batches.append(dict(batch=number,begin=cursor,end=cursor+n,source_indices=list(range(cursor,cursor+n))))
+        stems += ['parent%04d_supply'%i for i in range(cursor,cursor+n)]
+        stems += ['parents%04d_%04d_check'%(cursor,cursor+n-1)]
+        cursor+=n
+    profiles=q['scientific_profiles']
+    assert set(profiles)==set(stems)and all(x in('legacy','bounded')for x in profiles.values())
+    # Every selected subject is fixed before a role's first attempt. Retries
+    # retain its exact full argv/subject; changing method needs an explicit
+    # separate Source-owned admission, not an edition-number substitution.
+    aliases={k:ctx.put(control/('frozen_'+k+'.json'),C.raw(ctx.L,r))for k,r in snapshot.items()}
+    h=dict(schema='ROOT_F009_GENERIC_PARENT_COHORT_V2',root='/root',Root_authority=True,
+        packet=ctx.packet_ref,program=ctx.packet['programs']['phase.py'],initializer=ctx.packet['programs']['init.py'],
+        Source_peer=ctx.peer_ref,Source_manifest=ctx.manifest_ref,Root_gate=ctx.gate_ref,
+        begin=begin,end=end,reviewed_prefix=begin,source_indices=list(range(begin,end)),
+        batch_counts=sizes,batches=batches,scientific_profiles=profiles,current_roster=rr,
+        progress_snapshot=snapshot,snapshot_aliases=aliases,old_scientific_mathematics_borrowed=True,
+        whole_level_or_census_claimed=False,canonical_writes=0)
+    hr=ctx.put(control/'cohort.json',C.can(h))
+    owner=dict(schema='ROOT_F009_GENERIC_METADATA_SOURCE_OWNERSHIP_V2',root='/root',Root_authority=True,
+        packet=ctx.packet_ref,Source_peer=ctx.peer_ref,Source_manifest=ctx.manifest_ref,
+        cohort=hr,Root_gate=ctx.gate_ref,original_mathematical_meanings_owned=True,
+        no_completed_legacy_role_replayed=True,canonical_writes=0)
+    ctx.put(control/'Root_Source_ownership.json',C.can(owner))
+    return ctx.emit(dict(cohort=hr,begin=begin,end=end,registered_prefix_unchanged=begin))
+
+def prepare_role(ctx,h,hr,batch,stem,indices,parents,saved=None):
+    q=ctx.q;kind='supply'if len(indices)==1 and stem.endswith('_supply')else'check'
+    profile=h['scientific_profiles'][stem];mr,m=C.subject(ctx.L,profile,kind)
+    base=C.SCIENCE/('generic_cohort_from%04d'%h['begin'])/('parents%04d_%04d'%(batch['begin'],batch['end']-1))
+    templates=ctx.packet['mathematical_context']['templates']
+    prefix='R5_parent0_supply'if kind=='supply'else'R5_parent0_oldstrict'
+    impname='R5_parent0_Root_import.json'if kind=='supply'else'R5_parent0_oldstrict_Root_import.json'
+    imp=C.raw(ctx.L,templates[impname]);request=C.raw(ctx.L,templates[prefix+'_request.json']);gate=C.doc(ctx.L,templates[prefix+'_Root_gate.json'])
+    assert ctx.g['fresh_scientific_import_and_gate_issuance_authorized']is True
+    assert ctx.g['all_original_parent_action_and_mathematical_meanings_owned']is True
+    changes=dict(cohort=C.can(hr).strip(),cohort_batch=C.can(batch['batch']).strip(),
+        parents=b'['+b','.join(parents)+b']',root=C.can('/root').strip(),Root_authority=b'true',adopted=b'true')
+    if kind=='supply':changes.update(current_parent_ordinal=C.can(indices[0]).strip(),current_roster=C.can(h['current_roster']).strip())
+    else:changes.update(source_indices=C.can(indices).strip(),actual_parent_roster_reference=C.can(h['current_roster']).strip())
+    ir=ctx.put(base/'roles'/(stem+'_Root_import.json'),C.patch(imp,changes))
+    rc=dict(Root_import=C.can(ir).strip(),parents=b'['+b','.join(parents)+b']')
+    if saved:rc['saved']=C.can(saved).strip()
+    budget=None
+    if profile=='bounded':
+        budget=q['science_budgets'][stem];b=C.doc(ctx.L,budget)
+        assert b['role_kind']=='science'and b['role_manifest']==mr and b['role_source']==m['entry']
+        worker_role=C.scientific_role(kind,profile,C.view(request,['role'])['role'],b['role'])
+        bp=C.doc(ctx.L,b['Source_peer']);bc=C.doc(ctx.L,b['admission_controls'])
+        C.P['validate_evidence'](b,bp,bc,C.PROFILE_REF,C.POLICY_REF)
+        assert b['Source_peer']==ctx.peer_ref and b['guard']==str(base/'guards'/stem)
+        C.P['validate_authority'](b,[], '/Users/sasha/medusa',base/'guards'/stem,C.PROFILE_REF,C.POLICY_REF,mr,worker_role,True,None)
+        rc['bounded_resource_budget']=C.can(budget).strip()
+    else:
+        C.scientific_role(kind,profile,C.view(request,['role'])['role'],None)
+    qr=ctx.put(base/'roles'/(stem+'_request.json'),C.patch(request,rc))
+    gate.update(root='/root',Root_authority=True,adopted=True,request=qr,manifest=mr,source_and_math_owned=True,clean_project_bootstrap_owned=True)
+    if profile=='bounded':gate['bounded_resource_budget']=budget
+    else:gate.pop('bounded_resource_budget',None)
+    gr=ctx.put(base/'roles'/(stem+'_Root_gate.json'),C.can(gate))
+    if profile=='bounded':
+        child=[C.PYTHON,'-E','-B','-S',m['entry']['path'],'--actor','/root','--manifest',*C.trip(mr),
+            '--request',*C.trip(qr),'--Root-gate',*C.trip(gr),'--out',str(base/stem),'--guard',str(base/'guards'/stem)]
+        C.P['validate_authority'](b,child,'/Users/sasha/medusa',base/'guards'/stem,
+            C.PROFILE_REF,C.POLICY_REF,mr,worker_role,True,dict(budget=budget,request=qr,Root_gate=gr))
+    p=dict(schema='ROOT_F009_GENERIC_PREPARED_SCIENCE_ROLE_V2',root='/root',cohort=hr,batch=batch['batch'],
+        stem=stem,role=kind,profile=profile,manifest=mr,Root_import=ir,request=qr,gate=gr,budget=budget,launch=None,
+        source_indices=indices,out=str(base/stem),guard=str(base/'guards'/stem),
+        actual_raw_root=str(Path(hr['path']).parent/'api'/('batch%02d_science'%batch['batch'])),
+        scientific_calls=0,Root_preparation_gate=ctx.gate_ref)
+    return ctx.put(base/'roles'/(stem+'_prepared.json'),C.can(p))
+
+def phase(ctx):
+    q=ctx.q;hr=q['cohort'];h=C.cohort(ctx.L,hr,ctx.packet)
+    C.frozen(ctx.L,h['progress_snapshot'],h['begin']);borrowed_math(ctx)
+    n=q['batch'];assert type(n)is int and 0<=n<len(h['batches'])
+    b=h['batches'][n];indices=b['source_indices'];rr,parents=roster(ctx);assert rr==h['current_roster']
+    parentrows=[parents[i]for i in indices]
+    assert len({hashlib.sha256(x).hexdigest()for x in parentrows})==len(parentrows)
+    name=q['phase'];assert name in('prepare_suppliers','assemble_strict','close_pairing')
+    base=C.SCIENCE/('generic_cohort_from%04d'%h['begin'])/('parents%04d_%04d'%(b['begin'],b['end']-1))
+    assert ctx.g['canonical_writes_authorized']is False
+    if name=='prepare_suppliers':
+        C.fresh(base);suppliers=[]
+        for index,parent in zip(indices,parentrows):
+            stem='parent%04d_supply'%index
+            pr=prepare_role(ctx,h,hr,b,stem,[index],[parent])
+            suppliers.append(dict(index=index,stem=stem,prepared=pr))
+        v=dict(schema='ROOT_F009_GENERIC_SUPPLIER_PREPARATION_V2',cohort=hr,batch=n,source_indices=indices,suppliers=suppliers,Root_gate=ctx.gate_ref,scientific_calls=0)
+        out=ctx.put(base/'supplier_preparation.json',C.can(v))
+    else:
+        selection=C.doc(ctx.L,q['selected_attempts'])
+        stems=['parent%04d_supply'%i for i in indices]if name=='assemble_strict'else['parents%04d_%04d_check'%(b['begin'],b['end']-1)]
+        E.selection_scope(selection,hr,n,name,stems)
+        if name=='assemble_strict':
+            prep=C.doc(ctx.L,C.at(ctx.L,base/'supplier_preparation.json'))
+            assert prep['cohort']==hr and prep['batch']==n and prep['source_indices']==indices
+            components=[];covers=[]
+            for entry,index,parent in zip(prep['suppliers'],indices,parentrows):
+                stem='parent%04d_supply'%index
+                a=E.selected_attempt(selection,stem,h['scientific_profiles'][stem])
+                actual,cc,pp=E.role(ctx,entry['prepared'],a,stem,[index],hr,h,n,'supply')
+                assert len(cc)==len(pp)==1 and C.equivalent(pp[0],parent)
+                IV.cover_shape(cc[0],parent);covers.append(cc[0])
+                components.append(dict(index=index,prepared=entry['prepared'],actual=actual,cover_index=0,canonical_cover_sha256=hashlib.sha256(cc[0]+b'\n').hexdigest()))
+            body=C.join(dict(schema=C.can('F009_INCREMENTAL_PARENT_COVER_BATCH_V1').strip(),covers=b'['+b','.join(covers)+b']'))
+            assert len(body)<=98304
+            saved=ctx.put(base/'assembled_supplier_certificate.json',body)
+            stem='parents%04d_%04d_check'%(b['begin'],b['end']-1)
+            pr=prepare_role(ctx,h,hr,b,stem,indices,parentrows,saved)
+            v=dict(schema='ROOT_F009_GENERIC_STRICT_PREPARATION_V2',cohort=hr,batch=n,source_indices=indices,components=components,assembled_certificate=saved,strict_prepared=pr,Root_gate=ctx.gate_ref,selected_attempts=q['selected_attempts'],scientific_calls=0)
+            out=ctx.put(base/'strict_preparation.json',C.can(v))
+        else:
+            ar=C.at(ctx.L,base/'strict_preparation.json');assembly=C.doc(ctx.L,ar)
+            assert assembly['cohort']==hr and assembly['batch']==n and assembly['source_indices']==indices
+            stem='parents%04d_%04d_check'%(b['begin'],b['end']-1)
+            a=E.selected_attempt(selection,stem,h['scientific_profiles'][stem])
+            actual,cc,pp=E.role(ctx,assembly['strict_prepared'],a,stem,indices,hr,h,n,'check')
+            assert C.raw(ctx.L,actual['certificate'])==C.raw(ctx.L,assembly['assembled_certificate'])
+            assert len(cc)==len(pp)==len(indices);bindings=[]
+            for offset,(index,parent,cover,component)in enumerate(zip(indices,parentrows,cc,assembly['components'])):
+                assert component['index']==index and C.equivalent(pp[offset],parent)
+                supplier_cert=C.raw(ctx.L,component['actual']['certificate'])
+                sc=C.array(C.fields(supplier_cert)['covers']);assert len(sc)==1 and sc[0]==cover
+                targets=IV.cover_shape(cover,parent)
+                assert component['canonical_cover_sha256']==hashlib.sha256(cover+b'\n').hexdigest()
+                bindings.append(dict(index=index,supplier_cover_index=0,strict_cover_index=offset,supplier=component,
+                    strict_certificate=actual['certificate'],strict_slots=156,target_occurrences=targets,
+                    parent_payload_lexical_sha256=hashlib.sha256(parent).hexdigest(),per_cover_canonical_bytes_equal=True))
+            v=dict(schema='ROOT_F009_GENERIC_MIXED_PROFILE_PAIRING_V2',root='/root',Source=ctx.packet['programs']['phase.py'],
+                cohort=hr,batch=n,source_indices=indices,progress_snapshot=h['progress_snapshot'],current_roster=rr,
+                assembly=ar,strict=actual,bindings=bindings,strict_slots=156*len(indices),
+                target_occurrences=sum(x['target_occurrences']for x in bindings),selected_attempts=q['selected_attempts'],
+                Root_gate=ctx.gate_ref,all_supplier_covers_equal_corresponding_strict_cover=True,
+                individual_whole_certificate_equality_claimed=False,canonical_registration_performed=False,whole_R5_or_census_claimed=False)
+            out=ctx.put(base/'pairing.json',C.can(v))
+    return ctx.emit(dict(phase=name,cohort=hr,batch=n,record=out,source_indices=indices,registered_prefix_unchanged=h['begin']))

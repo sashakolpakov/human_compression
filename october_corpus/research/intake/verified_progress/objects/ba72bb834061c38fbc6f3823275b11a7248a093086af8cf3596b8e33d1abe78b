@@ -1,0 +1,257 @@
+"""Explicit supplement admission and bounded cooperative metadata writes.
+
+The acquired generic modules remain their old Source subjects. Their functions
+are invoked with this separately reviewed context and the documented adapters.
+This is not an entry admitted by the old Core metadata peer.
+"""
+import argparse,hashlib,json,os,signal,sys,time,types
+from pathlib import Path
+
+BASE=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition')
+HERE=Path(__file__).resolve().parent
+AUTHOR='/root/dependency_audit'
+ENV=('COVERAGE_PROCESS_CONFIG','COVERAGE_CONFIG','COVERAGE_PROCESS_START','OPENSSL_CONF','OPENSSL_MODULES')
+
+def exact(ref):
+    assert type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+    assert type(ref['bytes'])is int and 0<=ref['bytes']<=4*2**20
+    p=Path(ref['path']);assert p.is_absolute()and p.resolve(strict=True)==p
+    assert p.stat().st_size==ref['bytes']
+    with p.open('rb')as f:body=f.read(ref['bytes']+1)
+    assert len(body)==ref['bytes']and hashlib.sha256(body).hexdigest()==ref['sha256']
+    return body
+
+def module(ref,name,bindings=None):
+    scope=dict(__file__=ref['path'],__name__=name);scope.update(bindings or {})
+    exec(compile(exact(ref),ref['path'],'exec'),scope)
+    return types.SimpleNamespace(**scope)
+
+def cli(v):return dict(path=v[0],bytes=int(v[1]),sha256=v[2])
+
+def arguments():
+    p=argparse.ArgumentParser(allow_abbrev=False)
+    p.add_argument('--actor',required=True);p.add_argument('--op',required=True,
+        choices=('prepare_retry','phase.py','close.py','audit_batch.py','audit_cohort.py','register.py','check_registration.py','controls'))
+    for key in('packet','request','Root-gate'):p.add_argument('--'+key,nargs=3,required=True)
+    p.add_argument('--out',required=True)
+    return p.parse_args()
+
+def metadata_argv(program,argv):
+    prefix=['/usr/bin/env']
+    for name in ENV:prefix+=['-u',name]
+    return prefix+[C.PYTHON,'-E','-B','-S',program]+argv
+
+def command_kind(argv,program):
+    """Distinguish our direct entry from the inherited profiled entry."""
+    direct=metadata_argv(program,[])
+    if argv[:len(direct)]==direct:return'standalone'
+    # The inherited metadata profile uses -E -B, without the child -S.
+    env=['/usr/bin/env']
+    for name in ENV:env+=['-u',name]
+    profiled=env+[C.PYTHON,'-E','-B',C.PROFILE_REF['path']]
+    if argv[:len(profiled)]==profiled and '--'in argv:return'profiled'
+    raise AssertionError('not an admitted metadata command shape')
+
+def standalone_call(argv,program,packet,op):
+    assert command_kind(argv,program)=='standalone'
+    child=argv[len(metadata_argv(program,[])):]
+    sizes={'actor':1,'op':1,'packet':3,'request':3,'Root-gate':3,'out':1}
+    parts={};cursor=0
+    while cursor<len(child):
+        key=child[cursor]
+        assert type(key)is str and key.startswith('--')and key[2:]in sizes
+        name=key[2:];assert name not in parts
+        n=sizes[name];value=child[cursor+1:cursor+1+n]
+        assert len(value)==n and all(type(v)is str for v in value)
+        parts[name]=value;cursor+=n+1
+    assert set(parts)==set(sizes)and parts['actor']==['/root']and parts['op']==[op]
+    assert C.can(cli(parts['packet']))==C.can(packet)
+    return dict(request=cli(parts['request']),gate=cli(parts['Root-gate']),out=parts['out'][0])
+
+def logical_identity(request,op,identity):
+    assert request['schema']=='F009_RESOURCE_BINDING_METADATA_REQUEST_V1'
+    assert request['Root_authority']is False and request['op']==op
+    for key,value in identity.items():assert C.can(request[key])==C.can(value)
+
+def prior_non_success(sdk):
+    assert type(sdk['actual_tool']['exit_code'])is int and sdk['actual_tool']['exit_code']!=0
+
+class Context:
+    def __init__(self,a,packet_ref,packet,manifest_ref,manifest):
+        assert a.actor=='/root';C.check()
+        self.op=a.op;self.args=a;self.L=C.Ledger();self.packet_ref=packet_ref
+        self.base_ref=packet['base_packet'];self.base=C.doc(self.L,self.base_ref)
+        assert self.base_ref==BASE_PACKET and self.base['schema']=='F009_GENERIC_MIXED_PROFILE_METADATA_SOURCE_V2'
+        C.raw(self.L,BASE_PEER);C.raw(self.L,CORE_CONTROLS);C.raw(self.L,GENERIC_CONTROLS)
+        # The composite view names NEW metadata programs but borrows precisely
+        # the old mathematical context, modules and initialization identity.
+        self.packet=dict(self.base,self=packet_ref,programs=dict(self.base['programs']),entry_manifests=packet['entry_manifests'])
+        for op in packet['operations']:self.packet['programs'][op]=packet['program']
+        self.packet['supplement']=packet
+        self.manifest_ref=manifest_ref;self.Source_manifest=manifest
+        assert manifest['operation']==a.op and manifest['entry']==packet['program']
+        assert manifest['Source_with_invocation_reserve']==sum(r['bytes']for r in manifest['Source'])+512<=131072
+        for r in manifest['Source']:C.raw(self.L,r)
+        C.raw(self.L,packet['protocol']);C.raw(self.L,packet_ref)
+        self.request_ref=cli(a.request);self.gate_ref=cli(a.Root_gate)
+        self.q=C.doc(self.L,self.request_ref);self.g=C.doc(self.L,self.gate_ref)
+        assert self.q['schema']=='F009_RESOURCE_BINDING_METADATA_REQUEST_V1'and self.q['Root_authority']is False and self.q['op']==a.op
+        g=self.g
+        assert g['schema']=='ROOT_F009_RESOURCE_BINDING_METADATA_GATE_V1'and g['root']=='/root'
+        assert g['Root_authority']is g['adopted']is True and g['op']==a.op
+        assert g['packet']==packet_ref and g['program']==packet['program']and g['Source_manifest']==manifest_ref and g['request']==self.request_ref
+        for k in('whole_supplement_and_borrowed_Source_owned','all_original_meanings_and_new_binding_scope_owned','no_successful_science_replayed','serial_sole_writer_scope_owned'):
+            assert g[k]is True
+        self.peer_ref=g['Source_peer'];peer=C.doc(self.L,self.peer_ref)
+        assert peer['status']=='SUPPORTED_STATIC_F009_RESOURCE_BINDING_SUPPLEMENT'and peer['blockers']==[]
+        assert peer['reviewer']not in(None,'/root','/root/readback_review',AUTHOR)
+        assert peer['program']==packet['program']and peer['packet']==packet_ref and peer['entry_manifests']==packet['entry_manifests']
+        self.peer=peer
+        if a.op=='controls':assert g['metadata_controls']is None and g['synthetic_metadata_only_owned']is True
+        else:
+            controls=C.doc(self.L,g['metadata_controls'])
+            assert controls['status']=='SUPPORTED_ACTUAL_F009_RESOURCE_BINDING_CONTROLS'and controls['blockers']==[]
+            assert controls['packet']==packet_ref and controls['Source_peer']==self.peer_ref and controls['Original_inputs_loaded']is False
+            assert controls['Source_manifest']==packet['entry_manifests']['controls']
+            assert type(controls['count'])is int and controls['count']==40
+            assert controls['reviewer']not in(None,'/root','/root/readback_review',AUTHOR)
+        self.out=Path(a.out);assert self.out.is_absolute()and self.out.resolve(strict=True)==self.out
+        assert not self.out.is_relative_to(C.PROGRESS)
+        self.allowed=self.q['outputs'];assert type(self.allowed)is list and len(self.allowed)<=64
+        assert len({r['path']for r in self.allowed})==len(self.allowed)
+        for r in self.allowed:
+            assert type(r['maximum_bytes'])is int and 0<r['maximum_bytes']<=4*2**20
+            assert Path(r['path']).is_absolute()
+        assert sum(r['maximum_bytes']for r in self.allowed)<=16*2**20
+        self.planned=[]
+        # Explicit whole Source module/bootstrap reads are at most three full
+        # namespaces. The child Ledger separately charges first+closing data.
+        self.bootstrap_read_upper=3*manifest['Source_with_invocation_reserve']
+        self.L.read_limit=64*2**20-self.bootstrap_read_upper
+
+    def put(self,path,body):
+        path=Path(path);assert type(body)is bytes and path.is_absolute()and not os.path.lexists(path)
+        row=next(r for r in self.allowed if r['path']==str(path))
+        assert len(body)<=row['maximum_bytes']and str(path)not in[v[0]for v in self.planned]
+        assert not path.is_relative_to(C.PROGRESS)or self.op=='register.py'
+        self.planned.append((str(path),body));return C.ref(path,body)
+
+    def emit(self,result,replacements=None):
+        replacements=replacements or []
+        assert bool(replacements)==(self.g['canonical_writes_authorized']is True)
+        assert not replacements or self.op=='register.py'
+        canonical={str(C.PROGRESS/'current_intake.json'),str(C.PROGRESS/'controllers/current.json')}
+        if replacements:
+            assert self.g['serial_sole_writer_no_atomicity_claim']is True
+            assert len(replacements)==2 and {r['path']for r in replacements}==canonical
+            assert len({r['staged_path']for r in replacements})==2
+            for r in replacements:
+                assert r['old_ref']['path']==r['path']and C.raw(self.L,r['old_ref'])==self.L.pins[r['path']][0]
+                assert next(b for p,b in self.planned if p==r['staged_path'])==r['new_body_bytes']
+        first=self.L.bytes;written=sum(len(b)for _,b in self.planned)
+        cas=sum(len(r['new_body_bytes'])+r['old_ref']['bytes']for r in replacements)
+        upper=2*first+2*written+2*cas+self.bootstrap_read_upper
+        assert upper<=64*2**20 and written<=16*2**20 and len(self.L.pins)+3*len(self.planned)+32<=512
+        self.L.close();C.check()
+        for p,b in self.planned:
+            path=Path(p);assert not os.path.lexists(path)
+            path.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
+            with path.open('xb')as f:assert f.write(b)==len(b)
+        if replacements:
+            def sync(path):
+                fd=os.open(path,os.O_RDONLY)
+                try:os.fsync(fd)
+                finally:os.close(fd)
+            C.apply_cas(replacements,{r['path']:self.L.pins[r['path']][0]for r in replacements},
+                C.P['whole'],lambda p:fixed_read(p,next(r['new_body_bytes']for r in replacements if r['staged_path']==p)),
+                os.replace,sync,lambda p:fixed_read(p,next(r['new_body_bytes']for r in replacements if r['path']==p)))
+        refs=[C.ref(p,b)for p,b in self.planned if p not in{r['staged_path']for r in replacements}]
+        result.update(outputs=refs,packet=self.packet_ref,base_packet=self.base_ref,program=self.packet['supplement']['program'],
+            Source_manifest=self.manifest_ref,Source_peer=self.peer_ref,Root_gate=self.gate_ref,request=self.request_ref,
+            scientific_calls=0,canonical_writes=len(replacements),first_closing_input_bytes=self.L.bytes,
+            bootstrap_outer_read_upper=self.bootstrap_read_upper,total_project_read_upper=upper,
+            cooperative_metadata_only=True,external_resource_guard_claimed=False)
+        signal.alarm(0);print(json.dumps(result));return refs
+
+def cohort(L,r,packet):
+    h=BASE_COHORT(L,r,dict(packet,self=BASE_PACKET,programs=BASE_PACKET_VALUE['programs']))
+    assert h['Source_peer']==BASE_PEER
+    owner=C.doc(L,C.at(L,Path(r['path']).parent/'Root_Source_ownership.json'))
+    assert owner['cohort']==r and owner['packet']==BASE_PACKET and owner['Source_peer']==BASE_PEER
+    assert owner['root']=='/root'and owner['Root_authority']is True
+    return h
+
+def metadata_actual(ctx,sdkref,rawdir,op,expected_outputs=None):
+    s=C.doc(ctx.L,sdkref);argv=s['issued_argv']
+    supplement=ctx.packet.get('supplement')
+    if supplement is None or supplement['program']['path']not in argv:
+        proxy=types.SimpleNamespace(**ctx.__dict__);proxy.packet_ref=BASE_PACKET;proxy.packet=BASE_PACKET_VALUE
+        proxy.peer_ref=BASE_PEER
+        return BASE_E.metadata_actual(proxy,sdkref,rawdir,op,expected_outputs)
+    s=BASE_E.api(ctx.L,sdkref,Path(rawdir),argv,True)
+    parts=standalone_call(argv,ctx.packet['supplement']['program']['path'],ctx.packet_ref,op)
+    q=C.doc(ctx.L,parts['request']);g=C.doc(ctx.L,parts['gate'])
+    assert q['op']==g['op']==op and g['packet']==ctx.packet_ref and g['request']==parts['request']
+    assert g['program']==ctx.packet['supplement']['program']and g['Source_peer']==ctx.peer_ref
+    assert g['Root_authority']is g['adopted']is True and g['Source_manifest']==ctx.packet['entry_manifests'][op]
+    output=json.loads(s['full_tool_return']['output'])
+    assert output['packet']==ctx.packet_ref and output['Source_manifest']==g['Source_manifest']
+    assert output['Root_gate']==parts['gate']and output['request']==parts['request']and output['Source_peer']==ctx.peer_ref
+    assert output['cooperative_metadata_only']is True and output['external_resource_guard_claimed']is False
+    assert output['scientific_calls']==0
+    if expected_outputs is not None:assert output['outputs']==expected_outputs
+    for r in output['outputs']:C.raw(ctx.L,r)
+    return output,q,g
+
+def metadata_attempt(ctx,record,op,key,identity):
+    """Actual standalone histories, with no profiler '--' assumption."""
+    s=C.doc(ctx.L,record['actual_SDK'])
+    supplement=ctx.packet.get('supplement')
+    if supplement is None or supplement['program']['path']not in s['issued_argv']:
+        proxy=types.SimpleNamespace(**ctx.__dict__);proxy.packet_ref=BASE_PACKET;proxy.packet=BASE_PACKET_VALUE
+        proxy.peer_ref=BASE_PEER
+        return BASE_E.metadata_attempt(proxy,record,op,key,identity)
+    n=record['edition'];assert type(n)is int and 1<=n<=8
+    history=record['prior_non_success_attempts']
+    assert type(history)is list and len(history)==n-1
+    assert Path(record['actual_SDK']['path']).name==key+'_v%d.json'%n
+    printed,q,g=metadata_actual(ctx,record['actual_SDK'],record['raw_directory'],op)
+    logical_identity(q,op,identity)
+    for edition,prior in enumerate(history,1):
+        assert type(prior['edition'])is int and prior['edition']==edition
+        assert Path(prior['actual_SDK']['path']).name==key+'_v%d.json'%edition
+        old=C.doc(ctx.L,prior['actual_SDK']);prior_non_success(old)
+        argv=old['issued_argv']
+        BASE_E.api(ctx.L,prior['actual_SDK'],Path(prior['raw_directory']),argv,False)
+        parts=standalone_call(argv,ctx.packet['supplement']['program']['path'],ctx.packet_ref,op)
+        oq=C.doc(ctx.L,parts['request']);og=C.doc(ctx.L,parts['gate'])
+        logical_identity(oq,op,identity)
+        assert og['schema']=='ROOT_F009_RESOURCE_BINDING_METADATA_GATE_V1'
+        assert og['root']=='/root'and og['Root_authority']is og['adopted']is True
+        assert og['packet']==ctx.packet_ref and og['op']==op and og['request']==parts['request']
+        assert og['program']==ctx.packet['supplement']['program']and og['Source_peer']==ctx.peer_ref
+        assert og['Source_manifest']==ctx.packet['entry_manifests'][op]
+        rec=C.doc(ctx.L,prior['reconciliation'])
+        assert rec['schema']=='ROOT_F009_GENERIC_METADATA_NON_SUCCESS_RECONCILIATION_V2'
+        assert rec['root']=='/root'and rec['Root_authority']is True
+        assert rec['prior_actual_SDK']==prior['actual_SDK']and rec['selected_actual_SDK']==record['actual_SDK']
+        assert rec['op']==op and rec['logical_key']==key
+        for flag in('same_logical_metadata_operation_owned','no_scientific_worker_or_predicate_called','no_completed_output_replayed','all_old_frames_and_partial_outputs_retained'):
+            assert rec[flag]is True
+        assert type(rec['inspections'])is list and 1<=len(rec['inspections'])<=4
+        for item in rec['inspections']:C.raw(ctx.L,item)
+    return printed,q,g
+
+
+def fixed_read(path,expected):
+    """Known-size CAS stage/afterimage reads; refuse growth before reading."""
+    assert type(expected)is bytes and len(expected)<=4*2**20
+    p=Path(path)
+    with p.open('rb')as f:
+        before=os.fstat(f.fileno())
+        assert before.st_size==len(expected)
+        body=f.read(len(expected)+1)
+        after=os.fstat(f.fileno())
+    signature=lambda v:(v.st_dev,v.st_ino,v.st_mode,v.st_nlink,v.st_size,v.st_mtime_ns,v.st_ctime_ns)
+    assert signature(before)==signature(after)==signature(p.stat())and body==expected
+    return body

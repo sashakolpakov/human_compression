@@ -1,0 +1,115 @@
+"""New bounded proper-span acquisition and supplied equations; entirely UNRUN."""
+import retained_math as M
+
+class ScalarWork:
+    def __init__(self,tick,limit=200000):
+        M.need(type(limit)is int and 20000<=limit<=200000,'bounded scalar bank')
+        self.tick,self.limit,self.used,self.cases=tick,limit,0,0
+    def charge(self,n):
+        M.need(type(n)is int and n>=0 and self.used+n<=self.limit,'scalar stop before operation')
+        self.tick();self.used+=n
+    def begin_case(self):
+        M.need(self.cases<8 and self.used+20000<=self.limit,'eight cases with20000 prospective reserve')
+        self.tick();self.cases+=1
+    def submul(self,a,b,c):self.charge(2);return(a-b*c)%11
+    def mul(self,a,b):self.charge(1);return a*b%11
+    def inv(self,a):
+        M.need(type(a)is int and 1<=a<11,'nonzero F11 pivot');self.charge(32);return pow(a,-1,11)
+
+def row_ok(row):
+    return type(row)is tuple and len(row)==7 and all(type(x)is int and 0<=x<11 for x in row)
+
+def acquire(seed,marks,budget,work):
+    """Keep actual word rows separate from elimination; no properness inference."""
+    work.begin_case();start=work.used
+    M.need(row_ok(seed)and any(seed)and type(marks)is tuple and len(marks)==4
+           and all(type(g)is tuple and len(g)==7 and all(row_ok(x)for x in g)for g in marks),
+           'same actual seed and four reconstructed marks')
+    rows,edges,echelon=[],[],[]
+    def add(original,edge):
+        reduced=list(original)
+        for pivot,normal in echelon:
+            coefficient=reduced[pivot]
+            if coefficient:reduced=[work.submul(x,coefficient,y)for x,y in zip(reduced,normal)]
+        pivot=next((j for j,x in enumerate(reduced)if x),None)
+        if pivot is None:return
+        inv=work.inv(reduced[pivot]);normal=tuple(work.mul(x,inv)for x in reduced)
+        echelon.append((pivot,normal));echelon.sort(key=lambda x:x[0]);rows.append(original)
+        if edge is not None:edges.append(edge)
+    add(seed,None);parent=0;images=0
+    while parent<len(rows)and len(rows)<7:
+        for label,g in enumerate(marks):
+            work.charge(98);image=budget.image(rows[parent],g);images+=1
+            M.need(row_ok(image),'canonical actual image');add(image,[parent,label])
+            if len(rows)==7:break
+        parent+=1
+    M.need(images<=28 and len(edges)==len(rows)-1,'finite rooted actual basis')
+    if len(rows)==7:
+        M.need(work.used-start<=6500,'conservative bounded full-span acquisition work')
+        return dict(dimension=7,basis=None,right_inverse=None,parent_edges=None)
+    r=len(rows);pivots=[x[0]for x in echelon]
+    augmented=[[row[j]for j in pivots]+[int(i==j)for j in range(r)]for i,row in enumerate(rows)]
+    for column in range(r):
+        pivot=next((i for i in range(column,r)if augmented[i][column]),None)
+        M.need(pivot is not None,'independent pivot-column minor')
+        augmented[column],augmented[pivot]=augmented[pivot],augmented[column]
+        inv=work.inv(augmented[column][column]);augmented[column]=[work.mul(x,inv)for x in augmented[column]]
+        for i in range(r):
+            if i!=column and augmented[i][column]:
+                a=augmented[i][column];augmented[i]=[work.submul(x,a,y)for x,y in zip(augmented[i],augmented[column])]
+    R=[[0]*r for _ in range(7)]
+    for i,column in enumerate(pivots):R[column]=augmented[i][r:]
+    A=tuple(rows);R=tuple(tuple(x)for x in R);work.charge(14*r*r)
+    M.need(budget.multiply(A,R)==tuple(tuple(int(i==j)for j in range(r))for i in range(r)),
+           'full original rectangular right inverse')
+    M.need(work.used-start<=6500,'conservative bounded acquisition work')
+    return dict(dimension=r,basis=[list(x)for x in A],right_inverse=[list(x)for x in R],parent_edges=edges)
+
+def projected(row,A,R,budget,work):
+    r=len(A);work.charge(28*r)
+    return budget.multiply(budget.multiply((row,),R),A)[0]
+
+def direct(fact,ctx,marks,budget,work):
+    """Only supplied identities. No elimination, acquisition or mover search."""
+    keys={'kind','dimension','basis','right_inverse','parent_edges','ambient_generator_index',
+          'moved_basis_row','nongeneration_claim','ambient_generation_claim','IP_claim'}
+    M.need(type(fact)is dict and set(fact)==keys and fact['kind']=='PROPER_INVARIANT_SPAN_MOVED_BY_KNOWN_G_ELEMENT'
+           and fact['nongeneration_claim']is True and fact['ambient_generation_claim']is fact['IP_claim']is False,
+           'new exact proper-span grammar, no GEN/IP claim')
+    r=fact['dimension'];M.need(type(r)is int and 1<=r<7,'nonzero proper dimension')
+    A=M.rectangle(fact['basis'],r,7,'whole actual original rows')
+    R=M.rectangle(fact['right_inverse'],7,r,'whole rectangular right inverse')
+    M.need(A[0]==ctx['seed']and any(A[0]),'same actual acquired seed')
+    work.charge(14*r*r)
+    M.need(budget.multiply(A,R)==tuple(tuple(int(i==j)for j in range(r))for i in range(r)),
+           'AR=I_r proves row independence')
+    edges=fact['parent_edges'];M.need(type(edges)is list and len(edges)==r-1,'all rooted actual edges')
+    for i,pair in enumerate(edges,1):
+        M.need(type(pair)is list and len(pair)==2 and all(type(x)is int for x in pair)
+               and 0<=pair[0]<i and 0<=pair[1]<4,'earlier parent and actual mark')
+        work.charge(98);M.need(budget.image(A[pair[0]],marks[pair[1]])==A[i],'full supplied row equation')
+    for g in marks:
+        work.charge(98*r+28*r*r)
+        image=budget.multiply(A,g);T=budget.multiply(image,R)
+        M.need(budget.multiply(T,A)==image,'all mark images lie in row span')
+    gi,ri=fact['ambient_generator_index'],fact['moved_basis_row']
+    M.need(type(gi)is int and 0<=gi<len(ctx['ambient'])==2 and type(ri)is int and 0<=ri<r,
+           'one supplied known-original-G ambient member and actual row locator')
+    work.charge(98);u=budget.image(A[ri],ctx['ambient'][gi])
+    M.need(u!=projected(u,A,R,budget,work),'known G member moves the proper H-invariant space')
+    return dict(proper_subgroup_obstruction_verified=True,dimension=r,GEN_claim=False,IP_claim=False)
+
+def propose(ctx,marks,budget,work):
+    """Untrusted discovery; full space or no mover remains inconclusive."""
+    data=acquire(ctx['seed'],marks,budget,work)
+    if data['dimension']==7:return None,'FULL_SPACE_INCONCLUSIVE'
+    r=data['dimension'];A=tuple(tuple(x)for x in data['basis']);R=tuple(tuple(x)for x in data['right_inverse'])
+    for gi,z in enumerate(ctx['ambient']):
+        for ri,row in enumerate(A):
+            work.charge(98);u=budget.image(row,z)
+            if u!=projected(u,A,R,budget,work):
+                fact=dict(data,kind='PROPER_INVARIANT_SPAN_MOVED_BY_KNOWN_G_ELEMENT',ambient_generator_index=gi,
+                          moved_basis_row=ri,nongeneration_claim=True,ambient_generation_claim=False,IP_claim=False)
+                direct(fact,ctx,marks,budget,work)
+                return fact,'UNTRUSTED_PROPER_SPAN_PROPOSAL'
+    return None,'NO_SUPPLIED_AMBIENT_MOVER_INCONCLUSIVE'

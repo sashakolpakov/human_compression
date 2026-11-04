@@ -1,0 +1,32 @@
+"""Independent opaque retention and metadata-plan audit. No writer imports/calls."""
+from pathlib import Path
+import json,hashlib,shlex
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');B=M/'manuscript_scope/L026/generation_route/row0296';R=B/'registration';V=R/'plan_review';RAW={};PINS={}
+def read(p,r=None):
+ p=Path(p);b=p.read_bytes();assert len(b)<=4*2**20;z=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());assert r is None or z==r;RAW[str(p)]=b;PINS[str(p)]=z;return b
+def doc(p,r=None):return json.loads(read(p,r))
+def pin(p):read(p);return PINS[str(p)]
+def exact(r):return read(r['path'],r)
+s=doc(B/'Root_SDK/retention_and_append_plan_v1.json');base=B/'api/Root_l026_row296_retention_and_append_plan_v1';i=doc(base/'issued.json');f=doc(base/'frame_0000.json');a=s['issued_argv']
+assert s['root']==s['actor']==i['root']=='/root' and a==i['argv']==s['child_argv'] and s['issued_tool_arguments']==i['tool_arguments'] and s['issued_command']==i['tool_arguments']['cmd'] and shlex.split(s['issued_command'])==shlex.split(s['canonical_argv_command'])==a
+assert s['all_genuine_api_frames']==[f] and f==s['full_initial_tool_return']==s['full_tool_return'] and f['exit_code']==s['actual_tool']['exit_code']==0 and s['actual_tool']['synchronous']is True and s['actual_tool']['handle']is None and s['actual_tool']['initial_chunk']==s['actual_tool']['terminal_chunk']==f['chunk_id']
+inv=doc(R/'retention_input_inventory_FALSE.json');old=doc(R/'append_plan_row0296_FALSE.json');p=doc(R/'append_plan_row0296.json');rel=doc(R/'Root_forecast_release.json');rr=p['proofs'][0]['retentions'][0];ret=doc(rr['path'],rr)
+assert rr['sha256']=='67a82695015c6bfa9d1e526cea57140ed04415b6223822a6111c457c89b4a783' and ret['schema']=='ROOT_EXACT_CLOSED_METADATA_RETENTION_V1' and ret['root']=='/root' and ret['scientific_calls']==0 and len(ret['files'])==len(inv['files'])==85
+rows={r['original']['path']:r for r in ret['files']};original={r['original']['path']:r for r in inv['files']};assert rows.keys()==original.keys()
+for path,row in rows.items():assert row['original']==original[path]['original'] and row['retained']==original[path]['proposed_retained'] and exact(row['original'])==exact(row['retained'])
+assert len({r['retained']['path']for r in rows.values()})==83 and sum({r['retained']['path']:r['retained']['bytes']for r in rows.values()}.values())==1839305
+changed={k for k in set(old)|set(p)if old.get(k)!=p.get(k)};assert changed<=set(('status','qualification','inputs','proofs','pending_retention_manifest','author','Root_authority')) and 'pending_retention_manifest'not in p and p['author']=='/root' and p['Root_authority']is True
+assert {k:v for k,v in old['proofs'][0].items()if k!='retentions'}=={k:v for k,v in p['proofs'][0].items()if k!='retentions'}
+expected={r['path']:r for r in old['inputs']};expected[rr['path']]=rr;assert len(expected)==39 and p['inputs']==sorted(expected.values(),key=lambda r:r['path'])
+for r in p['inputs']:exact(r)
+exact(p['program']);assert p['program']['sha256']=='73e75fab70d798b46d5ca78e01ea438a8af579c691f61c5b74b2b09e7658fef7' and p['mode']=='append' and p['epoch']=='invariant_set_row0296' and p['separate_IP']is None and p['facts']==old['facts']
+assert rel['root']=='/root' and rel['schema']=='ROOT_REVIEWED_L026_BOUNDED_TYPED_PAID_LEDGER_V1' and rel['status']=='SUPPORTED' and rel['blockers']==[] and rel['plan']==pin(R/'append_plan_row0296.json') and rel['program']==p['program'] and rel['metadata_only']is rel['typed_new_facts_and_strict_closure_supported']is True and rel['metadata_publication_authorized']is False
+orig={r['path']:r for r in inv['required_writer_original_refs']+[p[k]for k in('witnesses','free_adoption','operand_adoption','expected_current','previous_receipt','previous_bank')]};aliases={rows[r['path']]['retained']['path']:rows[r['path']]['retained']for r in inv['required_writer_original_refs']};assert len(orig)==22 and len(aliases)==16 and expected=={**orig,**aliases,rr['path']:rr}
+cur=doc(p['expected_current']['path'],p['expected_current']);rec=doc(p['previous_receipt']['path'],p['previous_receipt']);bank=exact(p['previous_bank']);assert cur['status_bank']==rec['status_bank']==p['previous_bank'] and cur['ledger_receipt']==p['previous_receipt'] and len(bank)==28908 and bank[296]==0 and rec['counts']==dict(subset_NEG=745,GEN=724,separate_IP=724,unpaid=27439)
+assert p['expected_conditional_aftercounts']==dict(subset_NEG=746,GEN=724,separate_IP=724,unpaid=27438,paid=1470) and not (Path(p['expected_current']['path']).parent/'epochs/invariant_set_row0296').exists()
+rt={**expected,p['program']['path']:p['program'],str(R/'append_plan_row0296.json'):pin(R/'append_plan_row0296.json'),str(R/'Root_forecast_release.json'):pin(R/'Root_forecast_release.json')};assert len(rt)==42
+bound=p['program']['bytes']+2*sum(r['bytes']for r in rt.values())+2*(28908+16384+131072)+4096+2*p['expected_current']['bytes'];assert bound<64*2**20
+terminal=json.loads(f['output'])
+for path,b in RAW.items():assert Path(path).read_bytes()==b
+E=dict(schema='L026_ROW296_CONCRETE_RETENTION_APPEND_PLAN_FINITE_CHECK_V1',reviewer='/root/mathematical_review',Root_authority=False,pins=list(PINS.values()),exact_data_changes=sorted(changed),runtime_input_refs=list(rt.values()),runtime_p_inputs=39,retention_pairs=85,objects=83,object_bytes=1839305,complete_conservative_read_upper=bound,complete_conservative_path_upper=46,Root_copy_scalar_report=terminal,Original_values_decoded_or_evaluated=False,writer_or_Sources_executed=False)
+print(json.dumps(E,sort_keys=True,indent=2))

@@ -1,0 +1,31 @@
+"""Small shared metadata invariants used by production and synthetic controls."""
+FCHANGED={'R5_canonical_complete_pairs','R5_canonical_actual_reviews','R5_canonical_pairs_completed',
+    'R5_canonical_pairs_reviewed','R5_canonical_next_parent','R5_total_distinct_canonical_parents_reviewed',
+    'R5_total_distinct_canonical_parents_completed','R5_prefix_strict_slots_reviewed',
+    'R5_strict_slots_reviewed','R5_strict_slots_completed','next','next_method_question'}
+COUNTS={'R5_canonical_pairs','R5_canonical_pairs_reviewed','R5_total_distinct_parents_reviewed',
+    'R5_total_distinct_parents_completed','R5_prefix_strict_slots_reviewed','R5_strict_slots_reviewed','R5_strict_slots_completed'}
+NEXT={'index','next_action','completed_prefix_parents','reviewed_prefix_parents','pending_actual_review_indices','scientific_child_started'}
+
+def unchanged(before,after,allowed):
+    a,b=C.fields(before),C.fields(after);assert set(a)==set(b)
+    for key in a:
+        if key not in allowed:assert a[key]==b[key],key
+
+def cache_keys(L,body):
+    parts=C.fields(body);keys=set(C.fields(parts['cache_entries']));banks=C.array(parts['cache_banks'])
+    for blob in banks:
+        b=C.metadata(blob);entries=C.fields(C.fields(C.raw(L,b['ref']))['cache_entries'])
+        assert type(b['entries'])is int and len(entries)==b['entries']and set(b['keys'])==set(entries)
+        assert not keys.intersection(entries);keys.update(entries)
+    return keys,banks
+
+def cover_shape(blob,parent):
+    f=C.fields(blob)
+    h=C.view(blob,['schema','parent_level','begin','end','all_slots_in_interval_accounted','whole156_parent_or_level_or_census_claimed'])
+    assert h==dict(schema='F009_FOREST_EXTENSION_INTERVAL_V1',parent_level=4,begin=0,end=156,all_slots_in_interval_accounted=True,whole156_parent_or_level_or_census_claimed=False)
+    assert C.equivalent(f['parent'],parent)
+    records=C.array(f['records']);assert len(records)==156
+    for slot,row in enumerate(records):
+        s=C.view(row,['slot'])['slot'];assert type(s)is int and s==slot
+    return len(C.array(f['next_parent_forests']))
