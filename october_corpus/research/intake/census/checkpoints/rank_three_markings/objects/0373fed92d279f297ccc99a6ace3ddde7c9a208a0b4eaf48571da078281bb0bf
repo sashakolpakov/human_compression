@@ -1,0 +1,86 @@
+"""Bind fresh case data to an unchanged, already reviewed numerical worker.
+
+The ownership fields record mathematical premises and bookkeeping. They
+confer no operating-system or external-service permissions.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+FALSE = WORK / 'l026_rows_305_306_false'
+ISSUED = WORK / 'l026_rows_305_306'
+BASE = Path('/private/tmp/l026_census/rows_305_306')
+
+def ref(path):
+    data = path.read_bytes()
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+def write(path, value):
+    assert not os.path.lexists(path)
+    data = (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode('ascii')
+    assert len(data) <= 32768
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as stream:
+        stream.write(data)
+    return ref(path)
+
+parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument('--mode', choices=['produce', 'check'], required=True)
+mode = parser.parse_args().mode
+review_path = WORK / 'reviews/l026_rows_305_306_preparation.json'
+review = read(review_path)
+assert review['status'] == 'SUPPORTED_L026_FRESH_CASE_PREPARATION' and review['blockers'] == []
+assert ref(review_path)['sha256'] == 'bc1079aa3049a86d9d29103273e607a6cddaa7ed2ca50bbdc92f7f5937ad6225'
+selection_path = BASE / 'selection/selection.json'
+selection = read(selection_path)
+assert ref(selection_path)['sha256'] == 'b4b4b41a4f53ebb22b482c208bb18523cae7263e4af3e6163c8706463959e1cd'
+assert [row['free_index'] for row in selection['cases']] == [305, 306]
+for r in selection['current_snapshot'].values():
+    assert ref(Path(r['path'])) == r
+request = read(FALSE / 'producer_request_FALSE.json')
+assert request['Root_authority'] is False and request['cases'] == selection['cases']
+assert request['current_snapshot'] == selection['current_snapshot']
+if mode == 'produce':
+    imported = read(FALSE / 'Root_case_import_FALSE.json')
+    assert imported['Root_authority'] is imported['adopted'] is False
+    for key in imported:
+        if key.endswith('_owned'):
+            assert imported[key] is False
+            imported[key] = True
+    imported.update(Root_authority=True, adopted=True,
+                    history_qualification='No identical completed trial for305/306 was found in the explicitly inspected finite records296..304 and the pinned checkpoint path inventory. No global absence is asserted.',
+                    qualification='Fresh application of the unchanged inner-Fi22 model, exact original procedural provider, current unpaid identities, and existing11/13 maximal-subgroup criterion. Generation or properness only; IP and ledger adoption are separate.',
+                    preparation_review=ref(review_path), identity_selection=ref(selection_path))
+    ir = write(ISSUED / 'Root_case_import.json', imported)
+else:
+    ir = ref(ISSUED / 'Root_case_import.json')
+    original = read(ISSUED / 'produce_request.json')
+    assert original['cases'] == request['cases'] and original['current_snapshot'] == request['current_snapshot']
+    carrier_path = BASE / 'produce/certificate.json'
+    carrier = read(carrier_path)
+    assert any(row['outcome'] in ['GEN_HINT', 'PROPER_HINT'] for row in carrier['records'])
+    request['saved'] = ref(carrier_path)
+request.update(Root_import=ir, mode=mode)
+qr = write(ISSUED / (mode + '_request.json'), request)
+gate = read(FALSE / 'Root_producer_gate_FALSE.json')
+for key in ['Root_authority', 'adopted', 'Source_and_math_owned', 'prior_identical_discovery_exclusion_owned']:
+    assert gate[key] is False
+    gate[key] = True
+gate.update(current_unpaid_case_import=ir, request=qr, history_review=ref(review_path),
+            qualification='User-authorized bounded census computation, unchanged reviewed Source and controls. Current row identities and mathematical import are owned separately; this record grants no system or service privileges.')
+gr = write(ISSUED / ('Root_' + mode + '_gate.json'), gate)
+argv = read(FALSE / 'CLI_FALSE.json')['outer_argv_false']
+for flag, r in [('--request', qr), ('--Root-gate', gr)]:
+    at = argv.index(flag) + 1
+    argv[at:at+3] = [r['path'], str(r['bytes']), r['sha256']]
+guard, output = BASE / (mode + '_guard'), BASE / mode
+for flag, path in [('--output', guard), ('--guard', guard), ('--out', output)]:
+    argv[argv.index(flag) + 1] = str(path)
+assert not guard.exists() and not output.exists()
+print(json.dumps(dict(argv=argv, Root_import=ir, request=qr, gate=gr, mode=mode, numerical_calls=0, new_case_credit=0)))

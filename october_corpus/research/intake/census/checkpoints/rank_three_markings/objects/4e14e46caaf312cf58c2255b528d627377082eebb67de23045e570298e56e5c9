@@ -1,0 +1,113 @@
+"""Prepare FALSE next-cohort metadata only; no issuance or Source execution.
+
+Only existing metadata is decoded. Intake/runtime and mathematical aliases
+are whole-hashed opaquely; source parents are never decoded. No --issue path.
+"""
+import argparse,hashlib,json,os,re,stat
+from pathlib import Path
+
+WORK=Path('/Users/sasha/medusa/census')
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+G=M/'f009_bounded_io_transition'
+CORE=M/'resource_profiles/bounded_output'
+
+def reference(path):
+    p=Path(path);before=p.lstat()
+    assert p.resolve(strict=True)==p and stat.S_ISREG(before.st_mode) and before.st_nlink==1 and before.st_size<=8*2**20
+    h=hashlib.sha256();count=0
+    with p.open('rb') as stream:
+        for block in iter(lambda:stream.read(65536),b''):
+            count+=len(block);h.update(block)
+    after=p.lstat()
+    assert (before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns)==(after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns)
+    assert count==before.st_size
+    return dict(path=str(p),bytes=count,sha256=h.hexdigest())
+
+def metadata(path):
+    p=Path(path);assert p.stat().st_size<=262144
+    return json.loads(p.read_bytes())
+
+def replace_paths(value,begin):
+    if isinstance(value,str):
+        return value.replace('cohort0438','cohort%04d'%begin).replace('cohort_from0438','cohort_from%04d'%begin)
+    if isinstance(value,list):return [replace_paths(x,begin) for x in value]
+    if isinstance(value,dict):return {k:replace_paths(v,begin) for k,v in value.items()}
+    return value
+
+def write(path,value):
+    body=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode()
+    assert len(body)<131072 and not os.path.lexists(path)
+    with path.open('xb') as stream:assert stream.write(body)==len(body)
+    return reference(path)
+
+def main():
+    parser=argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument('--begin',type=int,default=450)
+    parser.add_argument('--output',type=Path)
+    args=parser.parse_args();begin=args.begin;end=begin+12
+    assert 426<=begin<end<=940
+    out=args.output or WORK/('f009_cohort%04d_unissued'%begin)
+    assert out.is_absolute() and out.parent.resolve(strict=True)==WORK and not os.path.lexists(out)
+    cohort=G/'cohorts'/('cohort_from%04d'%begin)
+    old=M/'f009_cohort_preparation/cohorts'/('cohort_from%04d'%begin)
+    science=Path('/private/tmp/f009_R5_parent_cohorts_actual')/('generic_cohort_from%04d'%begin)
+    assert not any(os.path.lexists(p) for p in(cohort,old,science))
+    progress=M/'progress';controller=metadata(progress/'controllers/current.json')
+    snapshot=dict(intake=reference(progress/'current_intake.json'),controller=reference(progress/'controllers/current.json'),runtime=reference(controller['checkpoint']['path']))
+    assert snapshot['runtime']==controller['checkpoint']
+    raw=(progress/'current_intake.json').read_bytes()
+    hits=re.findall(rb'(?<!\\)"R5_canonical_pairs_reviewed"\s*:\s*(\d+)(?=\s*[,}])',raw)
+    assert len(hits)==1 and int(hits[0])==begin and reference(progress/'current_intake.json')==snapshot['intake']
+    packet=metadata(G/'packet.json');mf=metadata(G/'Source_manifest_init.json')
+    for r in mf['Source']:assert reference(r['path'])==r
+    math_refs=[]
+    for name,r in packet['mathematical_context'].items():
+        if name=='templates':
+            math_refs.extend(dict(name=k,ref=v) for k,v in r.items())
+        else:math_refs.append(dict(name=name,ref=r))
+    for item in math_refs:assert reference(item['ref']['path'])==item['ref']
+    actual=G/'actual'/('cohort%04d_init'%begin)
+    budget=replace_paths(metadata(G/'actual/cohort0438_init/inputs/child_budget.json'),begin)
+    for key in('Root_authority','adopted','only_declared_writers_owned','all_actual_Source_and_numerical_caps_owned'):budget[key]=False
+    h=metadata(G/'cohort_preparation/parents0438_0449/working_handoff.json')
+    parent=replace_paths(h['parent_union_inventory'],begin)
+    for rows in(budget['inventory'],parent):
+        for row in rows:
+            assert row['existing'] is None
+            for key,r in snapshot.items():
+                if row['path']==str(cohort/('frozen_'+key+'.json')):row['maximum_bytes']=r['bytes']
+            assert not os.path.lexists(row['path'])
+    assert len(budget['inventory'])==13 and len(parent)==len({r['path'] for r in parent})==83
+    assert {r['path'] for r in budget['inventory']}<={r['path'] for r in parent}
+    profiles={}
+    batches=[]
+    for batch in range(4):
+        lo=begin+3*batch;hi=lo+3
+        for i in range(lo,hi):profiles['parent%04d_supply'%i]='bounded'
+        profiles['parents%04d_%04d_check'%(lo,hi-1)]='bounded'
+        batches.append(dict(batch=batch,source_indices=list(range(lo,hi)),scientific_base=str(science/('parents%04d_%04d'%(lo,hi-1)))))
+    request=dict(schema='F009_GENERIC_METADATA_REQUEST_V2',Root_authority=False,op='init.py',expected_prefix=begin,
+                 batch_counts=[3,3,3,3],scientific_profiles=profiles,bounded_resource_budget=None)
+    gate=metadata(G/'templates/init_Root_gate_FALSE.json')
+    assert gate['Root_authority'] is False and gate['adopted'] is False
+    gate.update(Source_peer=reference(G/'source_review/reuse_integer_only.json'),metadata_controls=reference(G/'actual/metadata_controls/actual_review/reuse_integer_only.json'))
+    out.mkdir()
+    docs=dict(request=write(out/'init_request_FALSE.json',request),gate=write(out/'init_Root_gate_FALSE.json',gate),budget=write(out/'init_child_budget_FALSE.json',budget))
+    plan=dict(schema='UNISSUED_F009_NEXT_COHORT_PLAN_V1',status='FALSE_METADATA_ONLY_NO_ISSUANCE',Root_authority=False,begin=begin,end=end,
+              packet=reference(G/'packet.json'),init_program=packet['programs']['init.py'],init_manifest=reference(G/'Source_manifest_init.json'),init_Source_bill=mf['Source_with_invocation_reserve'],
+              current_snapshot=snapshot,direct_mathematical_template_refs=math_refs,batches=batches,documents=docs,
+              future_layout=dict(cohort=str(cohort),old_cohort_must_remain_absent=str(old),scientific_root=str(science),actual=str(actual),guard=str(actual/'guard'),output=str(actual/'outputs')),
+              parent_inventory=parent,parent_rows=83,child_rows=13,parent_content_bytes=sum(r['maximum_bytes'] for r in parent),allocation_allowance=16*2**20,
+              parent_content_allocation_bytes=sum(r['maximum_bytes'] for r in parent)+16*2**20,single_shared_invocation_reserve=256*2**20,
+              future_registration=dict(expected_prefix=end,strict_slots=156*end,new_slots=1872,new_values=12,whole_level_credit=False),
+              requirements=['Rejoin current prefix and rehash all three live snapshots immediately before Root issuance; changed F004/shared metadata needs a fresh data edition.',
+              'Issue exact positive child budget first, then ordinary false-authority request binding it, positive Root gate, later acyclic launch and separate parent IO declaration; obtain concrete plan review.',
+              'Use current caller-scope evidence. Historical integration280cf is unavailable; the old Root init issuer cannot be reused unchanged. No production Source edit is required.',
+              'Do not precreate either cohort directory or any scientific batch base. Root creates only the actual init output namespace before its genuine call.',
+              'Existing438 census helpers contain hardcoded cohort/range paths; parameterize only new Root data copies. Never repeat438 work or copy stale0427/doubled-base draft paths.',
+              'After init: supplement prepare_suppliers, actual suppliers, assemble_strict, actual strict, close_pairing per batch; then close, four audits,aggregate,distinct execution review,registration,postcheck.'],
+              scientific_calls=0,canonical_writes=0,positive_authorities_issued=False,Source_changed=False)
+    result=write(out/'PLAN.json',plan)
+    print(json.dumps(dict(plan=result,documents=docs,Root_authority=False,scientific_calls=0)))
+
+if __name__=='__main__':main()

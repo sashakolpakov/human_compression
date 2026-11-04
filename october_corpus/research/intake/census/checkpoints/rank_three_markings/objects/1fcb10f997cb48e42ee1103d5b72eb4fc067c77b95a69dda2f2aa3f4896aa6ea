@@ -1,0 +1,50 @@
+"""Restore only the small existing evidence for the row298 IP application."""
+import hashlib
+import json
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+record_path = WORK / 'l026_rank_three_ip_reuse.json'
+body = record_path.read_bytes()
+assert hashlib.sha256(body).hexdigest() == '4498ff4b4871ca8a6b2fcf5980b0194f14204eedffbbf65284306d415a464cce'
+record = json.loads(body)
+refs = record['existing_row298_generation']['other_application_and_reviews']
+refs = [{k: r[k] for k in ['path', 'bytes', 'sha256']} for r in refs]
+refs.append(record['existing_row298_generation']['strict_proof'])
+commit = '71454ae681ae8d8201b41ad3a54a4eb848c5fd90'
+base = 'https://raw.githubusercontent.com/sashakolpakov/human_compression/' + commit + '/october_corpus/research/intake/'
+prefixes = ['verified_progress/objects/', 'continuation/forest_and_census/objects/', 'continuation/matrix_certificates/objects/']
+receipts = []
+for r in refs:
+    target = Path(r['path'])
+    assert r['bytes'] < 16384
+    if target.exists():
+        data = target.read_bytes()
+        assert len(data) == r['bytes'] and hashlib.sha256(data).hexdigest() == r['sha256']
+        receipts.append(dict(reference=r, already_local=True))
+        continue
+    assert target.is_relative_to('/Users/sasha/medusa/research/leemans') or target.is_relative_to('/private/tmp/l026_procedural_rows0297_0303')
+    for prefix in prefixes:
+        url = base + prefix + r['sha256']
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                data = response.read(r['bytes'] + 1)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                continue
+            raise
+        assert len(data) == r['bytes'] and hashlib.sha256(data).hexdigest() == r['sha256']
+        target.parent.mkdir(parents=True, exist_ok=True)
+        assert target.parent.resolve() == target.parent
+        with target.open('xb') as stream:
+            stream.write(data)
+        receipts.append(dict(reference=r, immutable_source=url, already_local=False))
+        break
+    else:
+        raise RuntimeError('Exact small body not found: ' + r['sha256'])
+out = WORK / 'l026_ip_inputs_restored.json'
+assert not out.exists()
+out.write_text(json.dumps(dict(receipts=receipts, Original_functions_executed=0), sort_keys=True, indent=2) + '\n')
+print(json.dumps(dict(inputs=len(receipts), restored_bytes=sum(r['reference']['bytes'] for r in receipts if not r['already_local']))))

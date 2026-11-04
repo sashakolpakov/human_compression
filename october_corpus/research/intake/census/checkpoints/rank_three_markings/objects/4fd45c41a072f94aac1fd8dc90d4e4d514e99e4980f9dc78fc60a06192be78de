@@ -1,0 +1,128 @@
+"""Prepare data afterimages for three independently proved original cases."""
+import hashlib
+import json
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+OUT = WORK / 'l026_signed_words_adoption'
+LEDGER = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/paid_status_ledger')
+EPOCH = LEDGER / 'epochs/signed_words_rows0310_0312_0313'
+
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode('ascii')
+
+def ref(path):
+    data = path.read_bytes()
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+def exact(r):
+    data = Path(r['path']).read_bytes()
+    assert len(data) == r['bytes'] and hashlib.sha256(data).hexdigest() == r['sha256']
+    return data
+
+def put(path, data):
+    assert not path.exists()
+    with path.open('xb') as stream:
+        stream.write(data)
+    return ref(path)
+
+def projected(path, data):
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+application_ref = ref(OUT / 'Root_application.json')
+application = json.loads(exact(application_ref))
+logical_ref = ref(WORK / 'reviews/l026_signed_words_logical.json')
+logical = json.loads(exact(logical_ref))
+assert logical['status'] == 'SUPPORTED_LOGICAL_L026_SIGNED_WORDS_CASES' and logical['blockers'] == []
+assert logical['application'] == application_ref
+before = application['current_snapshot']
+pointer_raw, receipt_raw, bank = [exact(before[k]) for k in ['CURRENT', 'receipt', 'bank']]
+pointer, receipt = json.loads(pointer_raw), json.loads(receipt_raw)
+assert pointer_raw == can(pointer) and receipt_raw == can(receipt)
+assert pointer['status_bank'] == before['bank'] and pointer['ledger_receipt'] == before['receipt']
+assert len(bank) == 28908 and set(bank) <= {0, 1, 2, 6}
+counts = dict(GEN=bank.count(2)+bank.count(6), separate_IP=bank.count(6), subset_NEG=bank.count(1), unpaid=bank.count(0))
+assert counts == receipt['counts'] == dict(GEN=725, separate_IP=725, subset_NEG=746, unpaid=27437)
+assert not EPOCH.exists()
+identities = {row['identity']['free_index']: row['identity'] for row in application['cases']}
+assert sorted(identities) == [310, 312, 313] and all(bank[i] == 0 for i in identities)
+assert application['GEN_and_IP_indices'] == [310, 312] and application['proper_subgroup_indices'] == [313]
+program = ref(WORK / 'adopt_l026_cycle_cases.py')
+progress = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress')
+controller = json.loads((progress / 'controllers/current.json').read_bytes())
+fences = [ref(progress / 'current_intake.json'), ref(progress / 'controllers/current.json'), controller['checkpoint']]
+for r in fences:
+    exact(r)
+plan = dict(schema='ROOT_L026_THREE_CASE_METADATA_ADOPTION_PLAN_V1', root='/root',
+            before=before, epoch=str(EPOCH), application=application_ref,
+            independent_logical_review=logical_ref, program=program, preparer=ref(Path(__file__)),
+            global_fences=fences, expected_final=[[310, 0, 6], [312, 0, 6], [313, 0, 1]],
+            scientific_calls=0, scope='Only the three independently reviewed cases, with GEN and IP recorded as separate facts.')
+plan_ref = put(OUT / 'adoption_plan.json', can(plan))
+writer = dict(program=program, plan=plan_ref, Root_release=plan_ref, scientific_calls=0)
+facts, changes = [], []
+new = bytearray(bank)
+for index in [310, 312]:
+    gen = dict(identities[index], kind='GEN', proof=0)
+    ip = dict(identities[index], kind='IP', proof=1)
+    facts += [gen, ip]
+    changes += [dict(gen, before=0, after=2), dict(ip, before=2, after=6)]
+    new[index] = 6
+neg = dict(identities[313], kind='NEG', proof=2)
+facts.append(neg)
+changes.append(dict(neg, before=0, after=1))
+new[313] = 1
+new = bytes(new)
+assert [i for i, (a, b) in enumerate(zip(bank, new)) if a != b] == [310, 312, 313]
+inverse = bytearray(new)
+for index in identities:
+    inverse[index] = 0
+assert bytes(inverse) == bank
+new_counts = dict(GEN=new.count(2)+new.count(6), separate_IP=new.count(6), subset_NEG=new.count(1), unpaid=new.count(0))
+assert new_counts == dict(GEN=727, separate_IP=727, subset_NEG=747, unpaid=27434)
+bank_ref = projected(EPOCH / 'status.bin', new)
+proofs = []
+for kind, method, indices in [('GEN', 'PROCEDURAL_PRIME_CYCLE_GENERATION', [310, 312]),
+                              ('IP', 'EXISTING_RANK_THREE_THEOREM_APPLICATION', [310, 312]),
+                              ('NEG', 'PROCEDURAL_ROTATION_INVARIANT_SUBSET', [313])]:
+    proofs.append(dict(kind=kind, method=method, selected_indices=indices, applications=[application_ref],
+                       logical_review=logical_ref, actual_pair_review=application['actual_review'],
+                       Source_manifest=application['Source_manifest']))
+proofs[1]['theorem'] = application['intersection_theorem']
+batch = dict(schema='ROOT_ACCEPTED_L026_BOUNDED_TYPED_PROOF_BATCH_V1', root='/root', adopted=True,
+             Root_adoption_owed=False, scope_digest=receipt['scope_digest'], witness_bank=receipt['witness_bank'],
+             original_selector=receipt['original_selector'], original_free_witness_adoption=receipt['original_free_witness_adoption'],
+             original_operand_adoption=receipt['original_operand_adoption'], previous_ledger=before['receipt'],
+             new_facts=facts, exact_monotone_changes=changes, proofs=proofs,
+             separate_existing_rank3_IP=dict(selected_indices=[310, 312], theorem=application['intersection_theorem'],
+                                            application=application_ref, logical_review=logical_ref),
+             strict_IP0_unchanged=True, Original_conjecture_Lean_or_measurement_credit=0, writer=writer)
+batch_body = can(batch)
+batch_ref = projected(EPOCH / 'batch_acceptance.json', batch_body)
+new_receipt = dict(receipt, counts=new_counts, status_bank=bank_ref, previous_ledger=before['receipt'],
+                   typed_new_batch=batch_ref, writer=writer, global_NEG=receipt['global_NEG']+1,
+                   global_NEG_mass=receipt['global_NEG_mass']+1024, unpaid_mass=receipt['unpaid_mass']-3*1024,
+                   proof_provenance=dict(kind='BOUNDED_BATCH', batch=batch_ref, previous_ledger=before['receipt'], old_proof_DAG_opaque=True))
+assert new_receipt['global_NEG'] == new_receipt['fixed_nonfree_NEG_count'] + new_counts['subset_NEG']
+assert new_receipt['global_NEG_mass'] == new_receipt['fixed_nonfree_NEG_mass'] + 1024*new_counts['subset_NEG']
+assert new_receipt['unpaid_mass'] == 1024*new_counts['unpaid']
+receipt_body = can(new_receipt)
+receipt_ref = projected(EPOCH / 'receipt.json', receipt_body)
+new_pointer = dict(pointer, ledger_receipt=receipt_ref, status_bank=bank_ref)
+changed_fields = ['counts', 'status_bank', 'previous_ledger', 'typed_new_batch', 'writer', 'proof_provenance', 'global_NEG', 'global_NEG_mass', 'unpaid_mass']
+assert all(receipt[k] == new_receipt[k] for k in receipt if k not in changed_fields)
+assert all(pointer[k] == new_pointer[k] for k in pointer if k not in ['ledger_receipt', 'status_bank'])
+images = OUT / 'afterimages'
+images.mkdir()
+rows = []
+for name, destination, data in [('status.bin', EPOCH/'status.bin', new), ('batch_acceptance.json', EPOCH/'batch_acceptance.json', batch_body), ('receipt.json', EPOCH/'receipt.json', receipt_body), ('CURRENT.json', LEDGER/'CURRENT.json', can(new_pointer))]:
+    rows.append(dict(local=put(images/name, data), destination=projected(destination, data)))
+forecast = dict(schema='ROOT_L026_THREE_CASE_METADATA_FORECAST_V1', plan=plan_ref, images=rows, before=before,
+                previous_pointer_alias=put(OUT/'CURRENT_before.json', pointer_raw), changed_positions=[310, 312, 313],
+                before_counts=counts, after_counts=new_counts, receipt_changed_fields=changed_fields,
+                pointer_changed_fields=['ledger_receipt', 'status_bank'], inverse_complete=True,
+                global_fences=fences, canonical_writes=0, new_paid_rows=3, group_functions_executed=0)
+result = put(OUT/'forecast.json', can(forecast))
+for r in list(before.values()) + fences:
+    exact(r)
+print(json.dumps(dict(status='THREE_CASE_AFTERIMAGES_PREPARED_NO_CANONICAL_WRITES', forecast=result)))

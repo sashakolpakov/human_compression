@@ -1,0 +1,86 @@
+"""Install independently reviewed three-case metadata afterimages by exact hashes.
+
+This updates three rows. It invokes no old registrar or group Source.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+OUT = Path('/Users/sasha/medusa/census/l026_signed_words_adoption')
+parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument('--review', nargs=3, required=True)
+args = parser.parse_args()
+
+def ref(path):
+    data = path.read_bytes()
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+def exact(r):
+    data = Path(r['path']).read_bytes()
+    assert len(data) == r['bytes'] and hashlib.sha256(data).hexdigest() == r['sha256']
+    return data
+
+review_ref = dict(path=args.review[0], bytes=int(args.review[1]), sha256=args.review[2])
+review = json.loads(exact(review_ref))
+forecast_ref = ref(OUT / 'forecast.json')
+forecast = json.loads(exact(forecast_ref))
+plan = json.loads(exact(forecast['plan']))
+assert review['status'] == 'SUPPORTED_L026_THREE_CASE_METADATA_AFTERIMAGES' and review['blockers'] == []
+assert review['reviewer'] != '/root' and review['forecast'] == forecast_ref
+assert review['plan'] == forecast['plan'] and review['program'] == ref(Path(__file__)) == plan['program']
+assert forecast['changed_positions'] == [310, 312, 313]
+assert plan['expected_final'] == [[310, 0, 6], [312, 0, 6], [313, 0, 1]]
+for r in list(plan['before'].values()) + plan['global_fences']:
+    exact(r)
+images = {Path(row['destination']['path']).name: row for row in forecast['images']}
+assert set(images) == {'status.bin', 'batch_acceptance.json', 'receipt.json', 'CURRENT.json'}
+old = exact(plan['before']['bank'])
+new = exact(images['status.bin']['local'])
+assert len(new) == len(old) == 28908
+assert [i for i, (a, b) in enumerate(zip(old, new)) if a != b] == [310, 312, 313]
+for index, before, after in plan['expected_final']:
+    assert old[index] == before and new[index] == after
+inverse = bytearray(new)
+for index in [310, 312, 313]:
+    inverse[index] = 0
+assert bytes(inverse) == old
+for row in forecast['images']:
+    data = exact(row['local'])
+    assert len(data) == row['destination']['bytes'] and hashlib.sha256(data).hexdigest() == row['destination']['sha256']
+epoch = Path(plan['epoch'])
+assert epoch.name == 'signed_words_rows0310_0312_0313' and not epoch.exists()
+epoch.mkdir()
+for name in ['status.bin', 'batch_acceptance.json', 'receipt.json']:
+    row = images[name]
+    target = Path(row['destination']['path'])
+    assert target.parent == epoch
+    with target.open('xb') as stream:
+        stream.write(exact(row['local']))
+        stream.flush()
+        os.fsync(stream.fileno())
+    assert ref(target) == row['destination']
+current = Path(plan['before']['CURRENT']['path'])
+staged = epoch / 'CURRENT_pending.json'
+with staged.open('xb') as stream:
+    stream.write(exact(images['CURRENT.json']['local']))
+    stream.flush()
+    os.fsync(stream.fileno())
+assert ref(current) == plan['before']['CURRENT']
+for r in plan['global_fences']:
+    exact(r)
+os.replace(staged, current)
+assert ref(current) == images['CURRENT.json']['destination']
+result = dict(schema='ROOT_L026_THREE_CASE_METADATA_ADOPTION_READBACK_V1', root='/root', adopted=True,
+              plan=forecast['plan'], forecast=forecast_ref, independent_forecast_review=review_ref,
+              current_pointer=ref(current), changed_positions=[310, 312, 313], transitions=plan['expected_final'],
+              before_counts=forecast['before_counts'], after_counts=forecast['after_counts'],
+              new_paid_rows=3, new_group_computations=0, global_registry_writes=0,
+              independent_postcheck_pending=True)
+for r in plan['global_fences']:
+    exact(r)
+path = OUT / 'readback.json'
+assert not path.exists()
+path.write_text(json.dumps(result, sort_keys=True, indent=2) + '\n')
+print(json.dumps(dict(status='ADOPTED_ONLY_THREE_REVIEWED_CASES', readback=ref(path), paid=1474, GEN=727, separate_IP=727, unpaid=27434)))

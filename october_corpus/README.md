@@ -34,9 +34,9 @@ not the mathematical completion counts or measured compression rates.
 
 | Original | Current stage | Still required |
 |---|---|---|
-| F004 | **127 of 272 q11 jobs complete**. Job 155 has **773 of 807 cases settled**: 157 nongeneration and 616 intersection failures; 34 remain. | Finish the 145 pending jobs, final classification and manuscript. |
-| F009 | **438 of 940 parents registered**, with **68,328** checked extension slots. | Finish the 502 remaining parents, final reduction and the remaining census at order 80. |
-| L026 | **725 generation results, 746 exclusions and 724 separate intersection proofs**; **1,471 settled and 27,437 unresolved** rows. | Finish the current bank and the other selectors; 64 selectors lack complete censuses. |
+| F004 | **127 of 272 q11 jobs complete**. Job 155 has **777 of 807 cases settled**: 161 nongeneration and 616 intersection failures; 30 remain. | Finish the 145 pending jobs, final classification and manuscript. |
+| F009 | **450 of 940 parents registered**, with **70,200** checked extension slots. | Finish the 490 remaining parents, final reduction and the remaining census at order 80. |
+| L026 | **727 generation results, 747 exclusions and 727 separate intersection proofs**; **1,474 settled and 27,434 unresolved** rows. | Finish the current bank and the other selectors; 64 selectors lack complete censuses. |
 
 The [reviewed progress archive](research/intake/verified_progress/README.rst)
 preserves 50 evidence parts and eleven named TeX proofs, together with further

@@ -69,6 +69,10 @@ F004's current job has **777/807 entries settled**. Four new nongeneration
 certificates are accepted; 30 further candidate certificates await review
 and strict checking.
 
+L026's typed bank now has **1,474 settled rows**: 727 generation results and
+747 exclusions, with 727 separate intersection proofs for those generation
+cases. The latest checkpoint adds three settled rows and three IP proofs.
+
 The [November directory](november_corpus/README.md) is prepared. Its researcher,
 bibliography and source editions await registration.
 

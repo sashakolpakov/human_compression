@@ -1,0 +1,88 @@
+"""Root-owned bounded selection of two unpaid row identities; no group work."""
+import argparse
+import hashlib
+import json
+import os
+import resource
+import sys
+import time
+from pathlib import Path
+
+START = time.monotonic()
+parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument('--guard', required=True)
+parser.add_argument('--out', required=True)
+args = parser.parse_args()
+assert sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode
+assert not sys.flags.optimize
+refs = {}
+total = 0
+
+def ref(path):
+    data = path.read_bytes()
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+def read(r):
+    global total
+    p = Path(r['path'])
+    assert p.resolve() == p and p.is_file() and not p.is_symlink()
+    assert p.stat().st_nlink == 1 and r['bytes'] <= 512 * 1024
+    data = p.read_bytes()
+    assert len(data) == r['bytes'] and hashlib.sha256(data).hexdigest() == r['sha256']
+    assert refs.get(str(p), r) == r
+    refs[str(p)] = r
+    total += len(data)
+    assert total <= 2 * 2**20
+    assert time.monotonic() - START < 10
+    return data
+
+work = Path('/Users/sasha/medusa/census')
+handoff_ref = ref(work / 'l026_next_step.json')
+assert handoff_ref['sha256'] == '1a6358cefaeca784d5667d74a882aecf8105e2cf4327ba6cd1de37d6b2b1d1d1'
+handoff = json.loads(read(handoff_ref))
+source = [ref(Path(__file__))]
+source += [ref(Path('/Users/sasha/medusa/research/leemans/maintenance/runtime') / name)
+           for name in ['supervise_validation.py', 'supervise_transient.py']]
+for r in source:
+    read(r)
+started_path = Path(args.guard) / 'started.json'
+started = json.loads(read(ref(started_path)))
+assert started['command'] == [sys.executable, '-E', '-B', '-S', str(Path(__file__).resolve()), *sys.argv[1:]]
+assert any(row['pid'] == os.getpid() for row in started['identities'])
+assert started['limits']['total_rss'] == 128 * 2**20 and started['limits']['wall_seconds'] == 150
+snapshot = {key: handoff['current_status'][key] for key in ['CURRENT', 'bank', 'receipt']}
+for r in snapshot.values():
+    read(r)
+status = read(snapshot['bank'])
+old_request = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/manuscript_scope/L026/next_ready_after_GEN298/row0304/producer_request.json')
+request = json.loads(read(ref(old_request)))
+raw = read(request['witness_bank'])
+assert len(status) == 28908 and len(raw) == 16 * len(status)
+assert status.count(0) == 27437
+assert set(range(296, 305)) <= set(handoff['prior_trials']['do_not_replay_identical'])
+indices = [i for i in range(305, len(status)) if status[i] == 0][:2]
+assert len(indices) == 2
+cases = []
+for i in indices:
+    row = raw[16*i:16*(i+1)]
+    owner = int.from_bytes(row[:4], 'little')
+    assert 0 <= owner < 500178
+    cases.append(dict(free_index=i, owner=owner, witness_row_sha256=hashlib.sha256(row).hexdigest()))
+for r in list(refs.values()):
+    read(r)
+rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == 'darwin' else 1024)
+assert rss < 64 * 2**20
+out = Path(args.out)
+assert out.is_relative_to('/private/tmp/l026_census') and out.parent.resolve() == out.parent
+assert not os.path.lexists(out)
+out.mkdir()
+result = dict(schema='ROOT_L026_UNPAID_ROW_IDENTITY_SELECTION_V1', cases=cases,
+              current_snapshot=snapshot, witness_bank=request['witness_bank'],
+              Original_group_operations=0, triangle_fields_decoded=False,
+              source=source, complete_inputs=list(refs.values()), physical_read_bytes=total,
+              peak_RSS_bytes=rss, new_case_credit=0, canonical_writes=0,
+              qualification='Two unpaid identities only. The existing numerical worker must verify their complete Original row binding; finite prior-trial review remains separate.')
+data = (json.dumps(result, sort_keys=True, indent=2) + '\n').encode()
+assert len(data) < 32768
+(out / 'selection.json').write_bytes(data)
+print(json.dumps(dict(status='SELECTED_UNPAID_IDENTITIES_ONLY', cases=cases, output=ref(out / 'selection.json'), new_case_credit=0)))

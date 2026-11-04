@@ -1,0 +1,191 @@
+"""Prepare FALSE data templates for two Root-selected L026 rows.
+
+This module never launches a numerical worker, imports project Source,
+reads Original witnesses or status bytes, selects rows, or issues authority.
+The unchanged worker will reject its FALSE gate and FALSE case import.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+BASE = Path('/Users/sasha/medusa/research/leemans/maintenance/intake')
+OLD = BASE / 'manuscript_scope/L026/next_ready_after_GEN298/row0304'
+SOURCE = Path('/private/tmp/l026_procedural_middle_certificates')
+PINS = {
+    'request': (OLD / 'producer_request.json', 4683, '68d1d50e1b3ea11020e5a483e07d7099765c796c8cdd24786ee9ab4113b89dfa'),
+    'gate': (OLD / 'Root_producer_gate.json', 1775, 'd65a0a020ce12fcc627dc3eddbaf35fc5ca1b9a938314040e9b2474763793bcd'),
+    'import': (OLD / 'Root_case_import.json', 5172, 'caaca3e62691540a286c5245aa0930060297a5e2a9680c00128d5f60e2239fea'),
+    'SDK': (OLD / 'Root_SDK/producer_v1.json', 7492, '5fdc9cc294a617856f177f0f7e7ad57136c810bf6fc3d3f6c2cf0fee30c34488'),
+}
+DUTIES = (
+    'accepted_procedural_D_same_original_bridge_frame_membership_owned',
+    'actual_a_c_and_D_products_belong_to_named_original_simple_Fi22_owned',
+    'inner_G_target_not_mere_Aut_properness_and_exact_coset_scope_owned',
+    'complete_corrected_simple_Fi22_maximal_11_13_avoidance_theorem_owned',
+    'faithful_original_degree3510_G_transitivity_minimal_index_and_even_subgroup_argument_owned',
+    'same_exact_original_witness_rows_partner_triangles_current_unpaid_H_and_two_fibre_scope_owned',
+    'generation_and_properness_only_no_IP_or_Aut_reversal_or_class_credit_owned',
+)
+EQUAL_FIELDS = ('scope', 'operands', 'witness_bank', 'current_snapshot', 'cases', 'procedural_D_import')
+
+
+def need(value, why):
+    if not value:
+        raise ValueError(why)
+
+
+def canonical(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode('ascii')
+
+
+def descriptor(path, data):
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+
+def metadata(path, limit=32768, expected=None, allow_floats=False):
+    """Read bounded metadata only; never use for a witness or status bank."""
+    path = Path(path)
+    need(path.is_absolute() and path.resolve(strict=True) == path and not path.is_symlink(), 'canonical metadata path')
+    before = path.stat()
+    need(before.st_size <= limit, 'bounded metadata file')
+    data = path.read_bytes()
+    after = path.stat()
+    need((before.st_size, before.st_ino, before.st_mtime_ns) == (after.st_size, after.st_ino, after.st_mtime_ns), 'stable metadata')
+    r = descriptor(path, data)
+    need(expected is None or r == expected, 'exact historical metadata pin')
+    def pairs(items):
+        result = {}
+        for k, v in items:
+            need(k not in result, 'duplicate metadata key')
+            result[k] = v
+        return result
+    def forbidden(_):
+        raise ValueError('integer metadata only')
+    value = json.loads(data, object_pairs_hook=pairs,
+                       parse_float=float if allow_floats else forbidden,
+                       parse_constant=forbidden)
+    return value, r
+
+
+def pinned(name):
+    path, size, digest = PINS[name]
+    return metadata(path, expected=dict(path=str(path), bytes=size, sha256=digest),
+                    allow_floats=(name == 'SDK'))
+
+
+def put(directory, name, value):
+    path = directory / name
+    data = canonical(value)
+    need(len(data) <= 32768 and not os.path.lexists(path), 'fresh bounded metadata output')
+    with path.open('xb') as stream:
+        stream.write(data)
+    return descriptor(path, data)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser.add_argument('--cases', required=True, type=Path, help='Root-selected JSON list, or typed Root identity-selection result, with exactly two cases')
+    parser.add_argument('--out', required=True, type=Path, help='Fresh directory inside census, with existing parent')
+    parser.add_argument('--guard-output', required=True, type=Path, help='Unused absolute /private/tmp guard path')
+    parser.add_argument('--numerical-output', required=True, type=Path, help='Unused absolute /private/tmp numerical output path')
+    args = parser.parse_args()
+    need(args.out.is_absolute() and args.out.is_relative_to(WORK) and '..' not in args.out.parts
+         and args.out.parent.resolve(strict=True) == args.out.parent and not os.path.lexists(args.out), 'fresh census output directory')
+    for path in (args.guard_output, args.numerical_output):
+        need(path.is_absolute() and path.is_relative_to('/private/tmp') and '..' not in path.parts
+             and path.parent.resolve(strict=True) == path.parent and not os.path.lexists(path), 'fresh private runtime path')
+    need(args.guard_output != args.numerical_output, 'separate runtime output directories')
+    supplied, cases_ref = metadata(args.cases, limit=8192)
+    if type(supplied) is dict:
+        need(supplied.get('schema') == 'ROOT_L026_UNPAID_ROW_IDENTITY_SELECTION_V1', 'typed Root identity selection metadata')
+        cases = supplied['cases']
+    else:
+        cases = supplied
+    need(type(cases) is list and len(cases) == 2, 'exactly two Root-selected cases')
+    for case in cases:
+        need(type(case) is dict and set(case) == {'free_index', 'owner', 'witness_row_sha256'}, 'exact case descriptor fields')
+        need(type(case['free_index']) is int and 304 < case['free_index'] < 28908, 'Root-selected index after304')
+        need(type(case['owner']) is int and 0 <= case['owner'] < 500178, 'typed owner range')
+        h = case['witness_row_sha256']
+        need(type(h) is str and len(h) == 64 and set(h) <= set('0123456789abcdef'), 'whole row hash syntax')
+    need([c['free_index'] for c in cases] == sorted({c['free_index'] for c in cases}), 'strict unique increasing Root selection')
+
+    request, old_request_ref = pinned('request')
+    gate, old_gate_ref = pinned('gate')
+    imported, old_import_ref = pinned('import')
+    sdk, sdk_ref = pinned('SDK')
+    need(sdk['issued_argv'] == sdk['child_argv'], 'literal historical CLI provenance')
+    need(request['schema'] == 'L026_PROCEDURAL_MIDDLE_REQUEST_V1' and request['mode'] == 'produce'
+         and request['Root_authority'] is False and request['saved'] is None, 'old producer data shape')
+    mf, mf_ref = metadata(SOURCE / 'Source_manifest_worker.json')
+    need(mf_ref == gate['manifest'] and mf_ref['sha256'] == '07d4654718c10795635e7dbda66555b4929285f6e699339bf60b683d353d3751', 'unchanged numerical manifest')
+    peer, peer_ref = metadata(Path(gate['independent_Source_review']['path']), expected=gate['independent_Source_review'])
+    controls, controls_ref = metadata(Path(gate['actual_controls_review']['path']), expected=gate['actual_controls_review'])
+    control_mf, control_mf_ref = metadata(Path(gate['control_Source_manifest']['path']), expected=gate['control_Source_manifest'])
+    need(peer['Source_manifest'] == mf_ref and peer['status'].startswith('SUPPORTED') and peer['blockers'] == [], 'exact unchanged Source peer')
+    need(peer['control_Source_manifest'] == control_mf_ref == controls['Source_manifest'], 'same controls manifest')
+    need(controls['controls'] == 32 and controls['Original_inputs_loaded'] is False
+         and controls['status'].startswith('SUPPORTED_ACTUAL') and controls['blockers'] == [], 'existing actual32 controls')
+    need(control_mf['entry'] == 'controls.py' and mf['entry'] == 'worker.py', 'role manifests')
+
+    current_path = Path(request['current_snapshot']['CURRENT']['path'])
+    current, current_ref = metadata(current_path)
+    need(current['schema'] == 'ROOT_CURRENT_L026_TYPED_PAID_STATUS_LEDGER_V1'
+         and current['root'] == '/root' and current['adopted'] is True, 'current typed pointer')
+    receipt, receipt_ref = metadata(Path(current['ledger_receipt']['path']), expected=current['ledger_receipt'])
+    need(receipt['status_bank'] == current['status_bank'] and current['status_bank']['bytes'] == 28908
+         and receipt['scope_digest'] == current['scope_digest'] == request['scope']['original_scope_digest'], 'current metadata scope and bank binding')
+    snapshot = dict(CURRENT=current_ref, receipt=receipt_ref, bank=current['status_bank'])
+    need(sum(r['bytes'] for r in snapshot.values()) <= 65536, 'bounded whole current snapshot')
+    if type(supplied) is dict:
+        need(supplied['current_snapshot'] == snapshot and supplied['witness_bank'] == request['witness_bank'], 'Root selection same current snapshot and witness descriptor')
+    request.update(cases=cases, current_snapshot=snapshot)
+    imported.update({key: request[key] for key in EQUAL_FIELDS})
+    imported.update(Root_authority=False, adopted=False, manifest=mf_ref,
+                    history_qualification='UNISSUED: Root must check current unpaid status, the exact Original row binding, and finite prior-trial history for these supplied identities.',
+                    qualification='FALSE data template only. No case identity, ambient membership, generation, properness, IP or execution authority is issued.')
+    for key in DUTIES:
+        imported[key] = False
+    gate.update(Root_authority=False, adopted=False, Source_and_math_owned=False,
+                prior_identical_discovery_exclusion_owned=False,
+                qualification=imported['history_qualification'])
+    need(all(imported[key] == request[key] for key in EQUAL_FIELDS), 'exact request/import data equalities')
+    need(all(imported[key] is False for key in DUTIES), 'no inherited true Root duties')
+    args.out.mkdir()
+    ir = put(args.out, 'Root_case_import_FALSE.json', imported)
+    request['Root_import'] = ir
+    qr = put(args.out, 'producer_request_FALSE.json', request)
+    gate.update(current_unpaid_case_import=ir, request=qr)
+    gr = put(args.out, 'Root_producer_gate_FALSE.json', gate)
+
+    argv = list(sdk['issued_argv'])
+    for flag, r in (('--request', qr), ('--Root-gate', gr)):
+        start = argv.index(flag) + 1
+        argv[start:start + 3] = [r['path'], str(r['bytes']), r['sha256']]
+    for flag, path in (('--output', args.guard_output), ('--guard', args.guard_output), ('--out', args.numerical_output)):
+        argv[argv.index(flag) + 1] = str(path)
+    cli = put(args.out, 'CLI_FALSE.json', dict(Root_authority=False, ready_for_execution=False,
+              outer_argv_false=argv, provenance=sdk_ref,
+              qualification='New false paths in the historical argv shape. This is not an issued command or SDK. The worker rejects these false authorities.'))
+    need(metadata(current_path)[1] == current_ref, 'current pointer stable across metadata preparation')
+    report = put(args.out, 'preparation.json', dict(
+        schema='L026_TWO_CASE_FALSE_TEMPLATE_PREPARATION_V1', author='/root/ambient_criterion',
+        Root_authority=False, adopted=False, Source_functions_executed=False,
+        Original_witness_or_status_bytes_read=False, Original_case_binding_checked=False,
+        current_unpaid_status_checked=False, prior_trial_exclusion_checked=False,
+        numerical_worker_launched=False, new_case_credit=0, Root_supplied_cases=cases_ref,
+        current_snapshot=snapshot, current_counts_metadata=receipt['counts'],
+        unchanged_manifest=mf_ref, unchanged_peer=peer_ref, unchanged_actual32=controls_ref,
+        unchanged_control_manifest=control_mf_ref,
+        historical_patterns=[old_request_ref, old_gate_ref, old_import_ref, sdk_ref],
+        outputs=[ir, qr, gr, cli],
+        remaining_Root_duties=list(DUTIES),
+        qualification='Templates are data only. Root must perform the missing Original bindings, current unpaid and finite history checks, then issue fresh positive import/request/gate editions with every descriptor re-pinned. No old file was overwritten.'))
+    print(json.dumps(dict(status='FALSE_TEMPLATES_PREPARED_NOT_ISSUED', report=report)))
+
+
+if __name__ == '__main__':
+    main()

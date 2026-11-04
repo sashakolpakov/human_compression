@@ -1,6 +1,19 @@
 Census evidence
 ===============
 
+The latest checkpoint, ``rank_three_markings``, records L026 rows 310 and 312
+as generating string C-groups and excludes row 313 by a supplied proper
+invariant subset. Separate strict checks and independent execution,
+mathematical and registration reviews support these entries. It also
+supplies the omitted IP application for the already accepted row 298.
+The typed bank has 1,474 settled rows, 727 generation cases, 747 exclusions
+and 727 separate intersection proofs. Eight completed search misses remain
+unpaid. The original manuscript remains incomplete.
+
+The common intersection theorem is reused from
+``../verified_progress/theory/rank_three_intersections.tex``. The two new
+application texts are in ``proofs``; the theorem is not repeated in them.
+
 Only F004, F009 and L026 remain in the October census. The current counts
 are in ``status.json``. A settled finite entry, a completed job, and a
 completed manuscript are distinct units; the status does not add them.

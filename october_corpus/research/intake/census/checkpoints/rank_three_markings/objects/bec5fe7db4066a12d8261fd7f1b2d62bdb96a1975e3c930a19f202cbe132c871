@@ -1,0 +1,99 @@
+"""Fresh data for one case and a 64-word search using unchanged reviewed Source."""
+import argparse
+import hashlib
+import itertools
+import json
+import os
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+OLD = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/manuscript_scope/L026/next_ready_after_GEN298/row0304')
+
+def ref(path):
+    data = path.read_bytes()
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+def put(path, value):
+    assert not os.path.lexists(path)
+    body = (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode('ascii')
+    assert len(body) <= 32768
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as stream:
+        stream.write(body)
+    return ref(path)
+
+parser = argparse.ArgumentParser(allow_abbrev=False)
+parser.add_argument('--index', type=int, required=True)
+parser.add_argument('--mode', choices=['produce', 'check'], required=True)
+args = parser.parse_args()
+assert 307 <= args.index < 28908
+where = WORK / ('l026_cycle_search/row%04d' % args.index)
+base = Path('/private/tmp/l026_census/signed_words/row%04d' % args.index)
+base.mkdir(parents=True, exist_ok=True)
+request = read(OLD / 'producer_request.json')
+pointer_path = Path(request['current_snapshot']['CURRENT']['path'])
+pointer = read(pointer_path)
+snapshot = dict(CURRENT=ref(pointer_path), receipt=pointer['ledger_receipt'], bank=pointer['status_bank'])
+for r in snapshot.values():
+    assert ref(Path(r['path'])) == r
+status = Path(snapshot['bank']['path']).read_bytes()
+witness = Path(request['witness_bank']['path']).read_bytes()
+assert len(status) == 28908 and len(witness) == 462528
+assert hashlib.sha256(witness).hexdigest() == request['witness_bank']['sha256']
+assert status[args.index] == 0
+row = witness[16*args.index:16*(args.index+1)]
+case = dict(free_index=args.index, owner=int.from_bytes(row[:4], 'little'), witness_row_sha256=hashlib.sha256(row).hexdigest())
+assert 0 <= case['owner'] < 500178
+if args.mode == 'produce':
+    words = []
+    for length, wanted in [(3, 1), (4, 8), (5, 24), (6, 31)]:
+        keys = set()
+        for word in itertools.product([-2, -1, 1, 2], repeat=length):
+            if len({abs(x) for x in word}) < 2 or any(word[i] == -word[(i+1) % length] for i in range(length)):
+                continue
+            inverse = tuple(-x for x in reversed(word))
+            keys.add(min([word[i:]+word[:i] for i in range(length)] + [inverse[i:]+inverse[:i] for i in range(length)]))
+        assert len(keys) >= wanted
+        words.extend([list(w) for w in sorted(keys)[:wanted]])
+    assert len(words) == 64 and len({tuple(w) for w in words}) == 64
+    assert 96 * sum(map(len, words)) == 32736 <= 32768
+    request.update(cases=[case], current_snapshot=snapshot, search=dict(words=words, starts=[0, 1, 2, 3], negative_seed=0), mode='produce', saved=None)
+    imported = read(OLD / 'Root_case_import.json')
+    for key in ['scope', 'operands', 'witness_bank', 'current_snapshot', 'cases', 'procedural_D_import']:
+        imported[key] = request[key]
+    imported['history_qualification'] = 'New case after the finite inspected completed296..306 range. The Root-issued local signed-word requests were checked absent at this fresh path. No global historical absence is claimed; this64-word schedule is distinct from the preceding31-word schedule.'
+    imported['qualification'] = 'Same accepted inner-Fi22 membership, original family and maximal-subgroup premises. Fresh current unpaid row binding is rechecked by the unchanged numerical worker. Bookkeeping ownership is not system privilege; no IP or ledger credit is automatic.'
+    request['Root_import'] = put(where / 'Root_case_import.json', imported)
+else:
+    original = read(where / 'produce_request.json')
+    assert original['current_snapshot'] == snapshot and original['cases'] == [case]
+    request = original
+    carrier_path = base / 'produce/certificate.json'
+    carrier = read(carrier_path)
+    assert any(r['outcome'] in ['GEN_HINT', 'PROPER_HINT'] for r in carrier['records'])
+    request.update(mode='check', saved=ref(carrier_path))
+qr = put(where / (args.mode + '_request.json'), request)
+gate = read(OLD / 'Root_producer_gate.json')
+gate.update(request=qr, current_unpaid_case_import=request['Root_import'],
+            qualification='Fresh one-case data and unchanged reviewed Source/controls. The case is unpaid in the exact current bank; no identical local request exists. No IP, ledger or system-permission grant.')
+gr = put(where / ('Root_' + args.mode + '_gate.json'), gate)
+guard, output = base / (args.mode + '_guard'), base / args.mode
+assert not guard.exists() and not output.exists()
+mf = gate['manifest']
+argv = ['/usr/bin/env']
+for name in ['COVERAGE_PROCESS_CONFIG', 'COVERAGE_CONFIG', 'COVERAGE_PROCESS_START', 'OPENSSL_CONF', 'OPENSSL_MODULES']:
+    argv += ['-u', name]
+python = '/Users/sasha/.venvs/global/bin/python'
+argv += [python, '-E', '-B', '/Users/sasha/medusa/research/leemans/maintenance/runtime/supervise_validation.py',
+         '--volume', '/Users/sasha/medusa', '--output', str(guard), '--rss-cap-mib', '128', '--timeout', '150', '--',
+         python, '-E', '-B', '-S', '/private/tmp/l026_procedural_middle_certificates/worker.py',
+         '--manifest', mf['path'], str(mf['bytes']), mf['sha256'],
+         '--request', qr['path'], str(qr['bytes']), qr['sha256'],
+         '--Root-gate', gr['path'], str(gr['bytes']), gr['sha256'], '--guard', str(guard), '--out', str(output)]
+record = dict(argv=argv, case=case, Source_manifest=mf, request=qr, gate=gr, current_snapshot=snapshot,
+              mode=args.mode, data_only=True, group_computations=0, ledger_writes=0)
+put(where / (args.mode + '_command.json'), record)
+print(json.dumps(record))

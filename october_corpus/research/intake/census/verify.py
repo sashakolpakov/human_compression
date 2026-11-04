@@ -10,7 +10,7 @@ from pathlib import Path, PurePosixPath
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--manifest', type=Path, default=HERE / 'checkpoints/job_155_subgroups/manifest.json')
+parser.add_argument('--manifest', type=Path, default=HERE / 'checkpoints/rank_three_markings/manifest.json')
 parser.add_argument('--new-only', action='store_true', help='Check objects introduced by this checkpoint only.')
 parser.add_argument('--remote', action='store_true', help='Read every selected body from the immutable public commit.')
 args = parser.parse_args()

@@ -1,0 +1,53 @@
+"""Resolve the finite historical reference list without restoring its bodies."""
+import hashlib
+import json
+import urllib.request
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+ROOT = Path('/Users/sasha/medusa/human_compression')
+CENSUS = ROOT / 'october_corpus/research/intake/census'
+source = WORK / 'reviews/subgroup_publication_dependencies.json'
+raw = source.read_bytes()
+assert hashlib.sha256(raw).hexdigest() == '752418c83a22f28e00a051868a516d0ecaec41b47ec98d4b24cd03b988a9a42a'
+document = json.loads(raw)
+tree_sha = '8b835e4965afcf097743fd8d6ebf9f33560f89fb'
+commit = '71454ae681ae8d8201b41ad3a54a4eb848c5fd90'
+url = 'https://api.github.com/repos/sashakolpakov/human_compression/git/trees/' + tree_sha + '?recursive=1'
+with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'human-compression-preservation'}), timeout=30) as response:
+    body = response.read(8 * 2**20 + 1)
+assert len(body) <= 8 * 2**20
+tree = json.loads(body)
+assert tree['sha'] == tree_sha and tree['truncated'] is False
+locations = {}
+for item in tree['tree']:
+    if item['type'] == 'blob' and '/objects/' in item['path']:
+        locations.setdefault(Path(item['path']).name, item)
+rows = []
+for entry in document['references']:
+    r = entry['reference']
+    candidate = locations.get(r['sha256'])
+    if candidate is None:
+        rows.append(dict(reference=r, classification=entry['classification'], status='NOT_LOCATED_IN_FIXED_BASELINE',
+                         required_by_current_numerical_children=False,
+                         historical_paid_state_reproof_requires_resolution=(entry['classification']=='inherited_preexisting_adoption_provenance'),
+                         qualification='No separate body with this SHA256 was located in the fixed intake subtree content-object inventory. Other archives, inline historical evidence or traces have not been ruled out. Current four-case numerical frontiers are preserved; this is not a claim that the entire older paid-state proof chain has been replayed. No body or old verdict has been fabricated.'))
+        continue
+    assert candidate['size'] == r['bytes']
+    relative = 'october_corpus/research/intake/' + candidate['path']
+    immutable = 'https://raw.githubusercontent.com/sashakolpakov/human_compression/' + commit + '/' + relative
+    with urllib.request.urlopen(immutable, timeout=30) as response:
+        contents = response.read(r['bytes'] + 1)
+    assert len(contents) == r['bytes'] and hashlib.sha256(contents).hexdigest() == r['sha256']
+    rows.append(dict(reference=r, classification=entry['classification'], status='VERIFIED_PUBLISHED_INHERITED_BODY',
+                     storage=dict(commit=commit, path=relative), bytes_streamed_and_hash_verified=True,
+                     body_materialized=False))
+assert len(rows) == 14
+out = CENSUS / 'inherited_dependency_locations.json'
+assert not out.exists()
+out.write_text(json.dumps(dict(schema='OCTOBER_INHERITED_DEPENDENCY_LOCATIONS_V1', source_inventory_sha256=hashlib.sha256(raw).hexdigest(),
+                               checkpoint_sha256='91329497c996b859c7ae6df105c4661ab0db1af334cb9182c76e608ac1d83b83',
+                               fixed_baseline_tree=tree_sha, references=rows,
+                               Original_functions_executed=0, bodies_materialized=0), sort_keys=True, indent=2) + '\n')
+print(json.dumps(dict(mapped=sum(r['status']=='VERIFIED_PUBLISHED_INHERITED_BODY' for r in rows),
+                      historical_ancillary_not_located=sum(r['status']=='NOT_LOCATED_IN_FIXED_BASELINE' for r in rows))))

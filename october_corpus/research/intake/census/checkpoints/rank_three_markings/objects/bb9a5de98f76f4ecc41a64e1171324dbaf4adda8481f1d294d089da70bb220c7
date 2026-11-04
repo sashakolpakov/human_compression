@@ -1,0 +1,122 @@
+"""Prepare explicit one-row IP metadata afterimages; canonical state is read-only."""
+import hashlib
+import json
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+OUT = WORK / 'l026_row298_ip'
+LEDGER = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/paid_status_ledger')
+EPOCH = LEDGER / 'epochs/rank_three_ip_row0298'
+
+def can(value):
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False) + '\n').encode('ascii')
+
+def ref(path):
+    data = path.read_bytes()
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+def exact(r):
+    data = Path(r['path']).read_bytes()
+    assert len(data) == r['bytes'] and hashlib.sha256(data).hexdigest() == r['sha256']
+    return data
+
+def put(path, data):
+    assert not path.exists()
+    with path.open('xb') as stream:
+        stream.write(data)
+    return ref(path)
+
+def projected(path, data):
+    return dict(path=str(path), bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+application_path = OUT / 'Root_application.json'
+application_ref = ref(application_path)
+assert application_ref['sha256'] == '024e5f1430056680b4f995ae5aa476184a56df4fd294082d10e9e0c43aadc092'
+application = json.loads(exact(application_ref))
+logical_path = WORK / 'reviews/l026_row298_ip_logical.json'
+logical_ref = ref(logical_path)
+assert logical_ref['sha256'] == 'f7602d7ca2b4ab8a1e08ef1120fdc545f04d2709355e4b77a4e2785843547396'
+logical = json.loads(exact(logical_ref))
+assert logical['status'] == 'SUPPORTED_LOGICAL_L026_ROW298_IP_APPLICATION' and logical['blockers'] == []
+before = application['current_snapshot']
+pointer_raw, receipt_raw, bank = [exact(before[k]) for k in ['CURRENT', 'receipt', 'bank']]
+pointer, receipt = json.loads(pointer_raw), json.loads(receipt_raw)
+assert pointer_raw == can(pointer) and receipt_raw == can(receipt)
+assert pointer['status_bank'] == before['bank'] and pointer['ledger_receipt'] == before['receipt']
+assert len(bank) == 28908 and set(bank) <= {0, 1, 2, 6} and bank[298] == 2
+before_counts = dict(GEN=bank.count(2)+bank.count(6), separate_IP=bank.count(6), subset_NEG=bank.count(1), unpaid=bank.count(0))
+assert before_counts == receipt['counts'] == dict(GEN=725, separate_IP=724, subset_NEG=746, unpaid=27437)
+assert not EPOCH.exists()
+identity = application['identity']
+assert identity['free_index'] == 298 and identity['owner'] == 621
+gen = json.loads(exact(application['accepted_generation_batch']))
+assert gen['exact_monotone_changes'] == [dict(identity, before=0, after=2, kind='GEN', proof=0)]
+assert gen['separate_existing_rank3_IP'] is None
+assert gen['scope_digest'] == receipt['scope_digest']
+commit_program = ref(WORK / 'adopt_l026_ip298.py')
+preparer = ref(Path(__file__))
+fences_root = LEDGER.parents[2] / 'progress'
+# Shared administrative state is a fence, not a write target.
+fences_root = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/progress')
+controller = json.loads((fences_root / 'controllers/current.json').read_bytes())
+fences = [ref(fences_root / 'current_intake.json'), ref(fences_root / 'controllers/current.json'), controller['checkpoint']]
+for r in fences:
+    exact(r)
+plan = dict(schema='ROOT_L026_IP298_METADATA_ADOPTION_PLAN_V1', root='/root',
+            scope='Only existing row298 IP, no group computation or old registrar invocation.',
+            identity=identity, kind='IP', before=before, expected_old=2, expected_new=6,
+            epoch=str(EPOCH), application=application_ref, independent_logical_review=logical_ref,
+            program=commit_program, preparer=preparer, global_fences=fences,
+            old_generation_and_strict_IP0_unchanged=True, scientific_calls=0)
+plan_ref = put(OUT / 'adoption_plan.json', can(plan))
+writer = dict(program=commit_program, plan=plan_ref, Root_release=plan_ref, scientific_calls=0)
+new = bytearray(bank)
+new[298] = 6
+new = bytes(new)
+assert [i for i, (a, b) in enumerate(zip(bank, new)) if a != b] == [298]
+inverse = bytearray(new)
+inverse[298] = 2
+assert bytes(inverse) == bank
+new_bank_ref = projected(EPOCH / 'status.bin', new)
+fact = dict(identity, kind='IP', proof=0)
+batch = dict(schema='ROOT_ACCEPTED_L026_BOUNDED_TYPED_PROOF_BATCH_V1', root='/root', adopted=True,
+             Root_adoption_owed=False, scope_digest=receipt['scope_digest'],
+             witness_bank=receipt['witness_bank'], original_selector=receipt['original_selector'],
+             original_free_witness_adoption=receipt['original_free_witness_adoption'],
+             original_operand_adoption=receipt['original_operand_adoption'], previous_ledger=before['receipt'],
+             new_facts=[fact], exact_monotone_changes=[dict(fact, before=2, after=6)],
+             proofs=[dict(kind='IP', method='EXISTING_RANK_THREE_THEOREM_APPLICATION', selected_indices=[298],
+                          applications=[application_ref], logical_review=logical_ref,
+                          reused_generation_batch=application['accepted_generation_batch'], theorem=application['theorem'])],
+             separate_existing_rank3_IP=dict(application=application_ref, theorem=application['theorem'], logical_review=logical_ref),
+             strict_IP0_unchanged=True, Original_conjecture_Lean_or_measurement_credit=0, writer=writer)
+batch_raw = can(batch)
+batch_ref = projected(EPOCH / 'batch_acceptance.json', batch_raw)
+new_receipt = dict(receipt, status_bank=new_bank_ref, counts=dict(before_counts, separate_IP=725),
+                   previous_ledger=before['receipt'], typed_new_batch=batch_ref, writer=writer,
+                   proof_provenance=dict(kind='BOUNDED_BATCH', batch=batch_ref,
+                                         previous_ledger=before['receipt'], old_proof_DAG_opaque=True))
+receipt_body = can(new_receipt)
+new_receipt_ref = projected(EPOCH / 'receipt.json', receipt_body)
+new_pointer = dict(pointer, ledger_receipt=new_receipt_ref, status_bank=new_bank_ref)
+pointer_body = can(new_pointer)
+changed_receipt_keys = ['status_bank', 'counts', 'previous_ledger', 'typed_new_batch', 'writer', 'proof_provenance']
+assert all(receipt[k] == new_receipt[k] for k in receipt if k not in changed_receipt_keys)
+assert all(pointer[k] == new_pointer[k] for k in pointer if k not in ['ledger_receipt', 'status_bank'])
+images = OUT / 'afterimages'
+images.mkdir()
+rows = []
+for name, destination, data in [('status.bin', EPOCH / 'status.bin', new), ('batch_acceptance.json', EPOCH / 'batch_acceptance.json', batch_raw), ('receipt.json', EPOCH / 'receipt.json', receipt_body), ('CURRENT.json', LEDGER / 'CURRENT.json', pointer_body)]:
+    local = put(images / name, data)
+    rows.append(dict(local=local, destination=projected(destination, data)))
+old_alias = put(OUT / 'CURRENT_before.json', pointer_raw)
+forecast = dict(schema='ROOT_L026_IP298_METADATA_FORECAST_V1', plan=plan_ref, images=rows,
+                before=before, previous_pointer_alias=old_alias, changed_positions=[298],
+                before_counts=before_counts, after_counts=dict(before_counts, separate_IP=725),
+                receipt_changed_fields=changed_receipt_keys, pointer_changed_fields=['ledger_receipt', 'status_bank'],
+                inverse_complete=True, global_fences=fences, canonical_writes=0, new_paid_rows=0,
+                group_functions_executed=0, old_GEN_and_IP0_records_modified=False)
+forecast_ref = put(OUT / 'forecast.json', can(forecast))
+for r in list(before.values()) + fences:
+    exact(r)
+print(json.dumps(dict(status='IP298_AFTERIMAGES_PREPARED_NO_CANONICAL_WRITES', forecast=forecast_ref)))

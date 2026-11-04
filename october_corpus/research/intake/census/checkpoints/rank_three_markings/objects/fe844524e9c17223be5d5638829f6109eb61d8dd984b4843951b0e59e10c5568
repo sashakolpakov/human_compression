@@ -1,0 +1,154 @@
+"""Export current census artifacts without materializing the October corpus.
+
+Published byte objects are referenced at immutable commits. New byte bodies
+are copied once. Historical pointer editions retain their exact bytes.
+"""
+import hashlib
+import json
+import os
+import shutil
+import stat
+from pathlib import Path
+
+WORK = Path('/Users/sasha/medusa/census')
+S = Path('/Users/sasha/medusa/research/leemans')
+W = Path('/Users/sasha/medusa/human_compression')
+CENSUS = W / 'october_corpus/research/intake/census'
+OUT = CENSUS / 'checkpoints/rank_three_markings'
+PRIOR_COMMIT = 'c1bff4110c788feb2b843616b319869c59db802e'
+PRIOR_PATH = CENSUS / 'checkpoints/job_155_subgroups/manifest.json'
+
+def ref(path):
+    before = path.stat()
+    assert stat.S_ISREG(before.st_mode) and not path.is_symlink() and before.st_size <= 8 * 2**20
+    size = 0
+    h = hashlib.sha256()
+    with path.open('rb') as stream:
+        while block := stream.read(65536):
+            size += len(block)
+            h.update(block)
+    after = path.stat()
+    assert (before.st_size, before.st_mtime_ns, before.st_ino) == (after.st_size, after.st_mtime_ns, after.st_ino)
+    assert size == before.st_size
+    return dict(path=str(path), bytes=size, sha256=h.hexdigest())
+
+def files(root):
+    for directory, dirs, names in os.walk(root):
+        dirs[:] = [x for x in dirs if x not in ['.git', '__pycache__']]
+        for name in names:
+            if name in ['active.lock', '.DS_Store']:
+                continue
+            assert not name.endswith(('.pyc', '.download', '.olean', '.o'))
+            yield Path(directory) / name
+
+prior_ref = ref(PRIOR_PATH)
+assert prior_ref['sha256'] == '91329497c996b859c7ae6df105c4661ab0db1af334cb9182c76e608ac1d83b83'
+prior = json.loads(PRIOR_PATH.read_bytes())
+known = {}
+for r in prior['files']:
+    storage = dict(r['storage'])
+    storage.setdefault('commit', PRIOR_COMMIT)
+    known.setdefault(r['sha256'], dict(bytes=r['bytes'], storage=storage))
+restored = WORK / 'l026_runtime_inputs_restored.json'
+if restored.exists():
+    for r in json.loads(restored.read_bytes())['files']:
+        marker = '/' + '71454ae681ae8d8201b41ad3a54a4eb848c5fd90' + '/'
+        assert marker in r['immutable_source']
+        known.setdefault(r['sha256'], dict(bytes=r['bytes'], storage=dict(
+            commit='71454ae681ae8d8201b41ad3a54a4eb848c5fd90',
+            path=r['immutable_source'].split(marker, 1)[1])))
+
+for receipt_name in ['l026_ip_inputs_restored.json', 'l026_ip_hypotheses_restored.json']:
+    for row in json.loads((WORK / receipt_name).read_bytes())['receipts']:
+        if 'immutable_source' not in row:
+            continue
+        r = row['reference']
+        marker = '/71454ae681ae8d8201b41ad3a54a4eb848c5fd90/'
+        assert marker in row['immutable_source']
+        known.setdefault(r['sha256'], dict(bytes=r['bytes'], storage=dict(
+            commit='71454ae681ae8d8201b41ad3a54a4eb848c5fd90', path=row['immutable_source'].split(marker,1)[1])))
+known.setdefault('0b940e5a217a5e54e91fd13617fd822dd4daebfac6cbdacbd17e0950070c9216',
+                 dict(bytes=6627, storage=dict(commit='71454ae681ae8d8201b41ad3a54a4eb848c5fd90',
+                 path='october_corpus/research/intake/verified_progress/theory/rank_three_intersections.tex')))
+
+selected = list(files(S)) + list(files(WORK))
+# Retain the exact small outside-workspace inputs already needed by F009/L026.
+for r in prior['files']:
+    if r['path'].startswith('/private/tmp/'):
+        path = Path(r['path'])
+        if path.is_file() and ref(path) == {k: r[k] for k in ['path', 'bytes', 'sha256']}:
+            selected.append(path)
+private_roots = ['f004_fresh_schreier_covers', 'f004_finite_certificates',
+                 'f004_seed_proposals', 'f004_line_proposals', 'f004_commutant_proposals',
+                 'f004_R_algebra_proposals', 'f004_middle_order_proposals',
+                 'f004_R_word_proposals', 'f004_R_basis_proposals', 'f004_end_generation_actual',
+                 'l026_census', 'l026_procedural_rows0297_0303']
+for name in private_roots:
+    selected += list(files(Path('/private/tmp') / name))
+for pattern in ['f004_job155_*_SDK.json', 'f004_finite_controls*_SDK.json',
+                'f004_end_generation*_SDK.json', 'f004_schreier_controls_actual_v1_SDK.json']:
+    selected += list(Path('/private/tmp').glob(pattern))
+for pattern in ['Root_f004_job155_*', 'Root_f004_finite_*', 'Root_f004_end_generation_*', 'Root_l026_rows0305_0306_*', 'Root_l026_row03*_signed_words_*']:
+    for directory in Path('/private/tmp/intake_actual_transports').glob(pattern):
+        selected += list(files(directory))
+for name in ['field.py', 'solve.py', 'schreier.py', 'runtime.py', 'PROOF.tex']:
+    selected.append(W / 'october_corpus/reproduction/finite_orbits_and_stabilizers' / name)
+selected = sorted(set(selected))
+assert len(selected) < 6000 and sum(p.stat().st_size for p in selected) < 80 * 2**20
+assert not OUT.exists()
+(OUT / 'objects').mkdir(parents=True)
+rows = []
+new = {}
+for path in selected:
+    r = ref(path)
+    if r['sha256'] in known:
+        old = known[r['sha256']]
+        assert old['bytes'] == r['bytes']
+        r['storage'] = old['storage']
+    else:
+        target = OUT / 'objects' / r['sha256']
+        if not target.exists():
+            with path.open('rb') as source, target.open('xb') as destination:
+                shutil.copyfileobj(source, destination, 65536)
+            assert ref(target)['sha256'] == r['sha256']
+            new[r['sha256']] = r['bytes']
+        r['storage'] = dict(path=str(target.relative_to(W)))
+    rows.append(r)
+
+pointer = json.loads((S / 'computation/f004/q11/rank4/section_generation/method/selectors/CURRENT_job0155.json').read_bytes())
+global_state = json.loads((S / 'maintenance/intake/progress/current_intake.json').read_bytes())
+status = dict(prior['status'])
+status['F004'] = dict(completed_q11_jobs=global_state['F004']['registered_jobs'], total_q11_jobs=272,
+                      current_job=155, settled_positions=pointer['paid'], total_positions=807,
+                      negative_generation_entries=pointer['NG'], negative_intersection_entries=pointer['NOT_IP'],
+                      unpaid_positions=pointer['unpaid'], whole_manuscript_complete=False,
+                      newly_adopted_nongeneration_positions=[], changed_in_this_checkpoint=False,
+                      unverified_end_word_candidates=30,
+                      end_word_Source_independent_review_complete=False,
+                      end_word_strict_checks_executed=0,
+                      qualification='The current selector is distinct from global job registration. Only reviewed adopted entries earn credit.')
+status['F009'] = dict(status['F009'], changed_in_this_checkpoint=False)
+l026_pointer = json.loads((S / 'maintenance/intake/l026_fi22_neighborhood_orbits/operations/triangle_quotients/paid_status_ledger/CURRENT.json').read_bytes())
+l026_receipt = json.loads(Path(l026_pointer['ledger_receipt']['path']).read_bytes())
+lc = l026_receipt['counts']
+assert lc == dict(GEN=727, separate_IP=727, subset_NEG=747, unpaid=27434)
+status['L026'] = dict(status['L026'], paid_status_rows=1474, unpaid_status_rows=27434,
+                     typed_generation_rows=727, typed_negative_rows=747, separate_IP_rows=727,
+                     changed_in_this_checkpoint=True, newly_paid_rows=[310,312,313],
+                     newly_supplied_IP_rows=[298,310,312], completed_inconclusive_rows=[305,306,307,308,309,311,314,315])
+
+status['checkpoint_manifest'] = str((OUT / 'manifest.json').relative_to(W))
+manifest = dict(schema='OCTOBER_ACTIVE_CENSUS_CHECKPOINT_V2',
+                previous_checkpoint=dict(commit=PRIOR_COMMIT, path=str(PRIOR_PATH.relative_to(W)),
+                                         bytes=prior_ref['bytes'], sha256=prior_ref['sha256']),
+                status=status, files=rows, logical_files=len(rows), logical_bytes=sum(r['bytes'] for r in rows),
+                new_objects=len(new), new_bytes=sum(new.values()),
+                restoration='Verify each byte body by SHA256 and size. Restore the historical input state required by an execution explicitly; do not blindly replay canonical mutations. Frozen pointer editions have separate aliases.',
+                qualification='Certificates and Source inputs preserve reproducibility. The operational calls retain their recorded absolute paths and exact Python/runtime requirements; this is not a claim of a portable mathematical replay on an arbitrary filesystem.',
+                work_scope='Only the three unfinished census manuscripts and their shared controls. No complete corpus, source-PDF mirror or compiler cache.')
+for path, value in [(OUT / 'manifest.json', manifest), (CENSUS / 'status.json', status)]:
+    mode = 'x' if path.name == 'manifest.json' else 'w'
+    with path.open(mode) as stream:
+        json.dump(value, stream, sort_keys=True, indent=2)
+        stream.write('\n')
+print(json.dumps({k: manifest[k] for k in ['logical_files', 'logical_bytes', 'new_objects', 'new_bytes']}))
