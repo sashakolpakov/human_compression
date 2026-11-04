@@ -1,0 +1,166 @@
+--- /Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/cohort_preparation/parents0426_0437/prepare_init.py
++++ /Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition/cohort_preparation/parents0438_0449/Root_issue_init_UNISSUED.py
+@@ -1,4 +1,6 @@
+-"""Root-only metadata issuance for the exact 426..437 cohort; no worker launch."""
++"""UNISSUED reusable Root DATA issuer. Default refuses before IO; no worker launch.
++Root must own a fresh explicitly activated copy; no old constructor Source verdict is claimed.
++"""
+ import argparse
+ import hashlib
+ import json
+@@ -10,21 +12,13 @@
+ import sys
+ import time
+ 
+-HERE = Path(__file__).resolve().parent
+-GEN = HERE.parents[1]
++ROOT_AUTHORITY = False
++GEN = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition')
+ CORE = GEN.parent / 'resource_profiles/bounded_output'
+ MEDUSA = Path('/Users/sasha/medusa')
+-ACTUAL = GEN / 'actual/cohort0426_init'
+-INPUTS = ACTUAL / 'inputs'
+-COHORT = GEN / 'cohorts/cohort_from0426'
+-OLD_COHORT = GEN.parent / 'f009_cohort_preparation/cohorts/cohort_from0426'
+ PYTHON = '/Users/sasha/.venvs/global/bin/python'
+ MIB = 2**20
+-CAPS = dict(read_bytes=16*MIB, write_bytes=MIB, paths=256,
+-            file_bytes=4*MIB, rss_bytes=256*MIB, seconds=125,
+-            Source_bytes=98304)
+-INPUT_HANDOFF = dict(path=str(HERE/'handoff.json'), bytes=47373,
+-    sha256='56b55a06fd229c7c1cd637c3e63a33ec52aa157ccd1d461538d5c6944f999625')
++CAPS = dict(read_bytes=16*MIB, write_bytes=MIB, paths=256, file_bytes=4*MIB, rss_bytes=256*MIB, seconds=125, Source_bytes=98304)
+ STATIC_PEER = dict(path=str(GEN/'source_review/reuse_integer_only.json'), bytes=26460,
+     sha256='6a5137c897545556f5c77eab9f563d7419210cfc748b5669126a8ac88772dcf9')
+ CORE_CONTROLS = dict(path=str(CORE/'actual/core_admission/actual_review/reuse_integer_only.json'), bytes=11846,
+@@ -148,10 +142,10 @@
+         check_parent(r['path'])
+         need(not os.path.lexists(r['path']), 'every future final and encoding path is fresh')
+     need(all(totals[k] <= caps[k] for k in caps), 'whole component subtotals')
+-    need(sum(totals.values()) == 44955964
+-        and sum(totals.values())+16*MIB == 61733180 <= 169*MIB < 256*MIB,
++    need(sum(totals.values()) == h['parent_unique_content_upper']
++        and sum(totals.values())+16*MIB == h['parent_union_with_allocation'] <= 169*MIB < 256*MIB,
+         'one complete unique-path ledger and one reserve')
+-    need(sum(r['maximum_bytes'] for r in child) == 13891771,
++    need(sum(r['maximum_bytes'] for r in child) == h['child_inventory_total_upper'],
+          'all five child outputs plus guard and two SDKs')
+     sdks = [r['path'] for r in rows if r['component'] == 'sdk']
+     need(len(sdks) == 2 and sdks == [r['path'] for r in child if r['component'] == 'sdk']
+@@ -174,7 +168,7 @@
+         'complete separate caller IO with2MiB prepaid reads')
+     expected_outputs = {r['path']: r['maximum_bytes'] for r in h['expected_init_outputs']}
+     need({r['path']: r['maximum_bytes'] for r in child if r['component'] == 'primary'} == expected_outputs
+-        and sum(expected_outputs.values()) == 4454587 < 16*MIB,
++        and sum(expected_outputs.values()) == h['child_planned_content_upper'] < 16*MIB,
+         'all five exact init destinations and bounded planned bodies')
+     return rows, child, sdks
+ 
+@@ -185,38 +179,37 @@
+ 
+ 
+ def main():
++    if not ROOT_AUTHORITY:
++        raise PermissionError('FALSE/unissued Root DATA; own and activate a fresh copy before IO')
+     need(sys.flags.ignore_environment and sys.flags.no_site
+         and sys.dont_write_bytecode and not sys.flags.optimize, 'Python-E-B-S/no-O')
+     signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('125s metadata issuance')))
+     signal.alarm(CAPS['seconds'])
+     ap = argparse.ArgumentParser(allow_abbrev=False)
+     ap.add_argument('--actor', required=True)
+-    ap.add_argument('--manifest', nargs=3, required=True)
+-    ap.add_argument('--Source-peer', nargs=3, required=True)
++    ap.add_argument('--handoff', nargs=3, required=True)
++    ap.add_argument('--whole-Source-owned', action='store_true', required=True)
+     ap.add_argument('--issue', action='store_true', required=True)
+     a = ap.parse_args()
+     need(a.actor == '/root' and a.issue, 'explicit Root-only metadata issuance')
+     reader = Reader()
+-    mr, review_ref = cli_ref(a.manifest), cli_ref(a.Source_peer)
+-    manifest = reader.document(mr)
+-    own = manifest['entry']
+-    need(own['path'] == str(Path(__file__).resolve()) and manifest['Source'] == [own]
+-        and manifest['Source_with_invocation_reserve'] == own['bytes']+512 <= CAPS['Source_bytes']
+-        and manifest['caps'] == CAPS and manifest['input_handoff'] == INPUT_HANDOFF,
+-        'complete constructor Source and exact input edition')
+-    reader.bytes += own['bytes']+512  # Interpreter entry load and invocation allowance.
+-    reader.read(own)
+-    reader.read(manifest['protocol'])
+-    source_review = reader.document(review_ref)
+-    need(source_review['status'] == 'SUPPORTED_STATIC_F009_COHORT0426_INIT_AUTHORITY_SOURCE'
+-        and source_review['reviewer'] not in (None, '/root', '/root/forest_resume')
+-        and source_review['blockers'] == [] and source_review['program'] == own
+-        and source_review['Source_manifest'] == mr
+-        and source_review['input_handoff'] == INPUT_HANDOFF
+-        and source_review['protocol'] == manifest['protocol'], 'distinct exact construction Source peer')
++    need(a.whole_Source_owned, 'Root whole operation Source/data ownership')
++    INPUT_HANDOFF = cli_ref(a.handoff)
+     h = reader.document(INPUT_HANDOFF)
+-    need(h['Root_authority'] is False and h['proposed_layout']['produced_cohort_directory'] == str(COHORT),
+-         'Source-only handoff, never a grant')
++    need(h['Root_authority'] is False and h['schema'] == 'FALSE_F009_GENERIC_NEXT_COHORT_PREPARATION_V1', 'unissued exact metadata handoff')
++    begin = h['begin']
++    need(type(begin) is int and 426 <= begin < 940 and h['end'] == begin+12 <= 940, 'typed twelve-parent scope')
++    ACTUAL = GEN / ('actual/cohort%04d_init' % begin)
++    INPUTS = ACTUAL / 'inputs'
++    COHORT = GEN / 'cohorts' / ('cohort_from%04d' % begin)
++    OLD_COHORT = GEN.parent / 'f009_cohort_preparation/cohorts' / ('cohort_from%04d' % begin)
++    need(h['proposed_layout']['produced_cohort_directory'] == str(COHORT), 'exact new layout')
++    ownpath = Path(__file__).resolve(); size = ownpath.stat().st_size
++    need(size+512 <= CAPS['Source_bytes'], 'finite complete Root operation Source namespace')
++    with ownpath.open('rb') as f: ownbody = f.read(size+1)
++    need(len(ownbody) == size, 'whole Root operation Source')
++    own = reference(ownpath, ownbody); reader.bytes += size+512; reader.read(own)
++    reader.read(h['Root_issuance_protocol'])
+     peer = reader.document(STATIC_PEER)
+     need(peer['status'] == 'SUPPORTED_STATIC_BOUNDED_OUTPUT_F009_SOURCE'
+         and peer['blockers'] == [], 'frozen combined Source fact')
+@@ -274,12 +267,8 @@
+         reader.read(item['ref'])  # Original-containing bodies stay opaque.
+     for r in h['current_snapshot'].values():
+         reader.read(r)  # Never decode intake/runtime cache payloads.
+-    expected_snapshot = dict(
+-        intake='3f3acefe187fac8c1992ef2e022a3f378b2fc285bdb5960cfb8998500f852cff',
+-        controller='f7aa388f8e5e731804cd5a65e25957fd51f7f46873764fe89e58aeddcc29273d',
+-        runtime='df9ce74b8ccfa280223211549e842c93f2b405d3795a40fe10b50716cd55e8a2')
+-    need({k: r['sha256'] for k, r in h['current_snapshot'].items()} == expected_snapshot,
+-         'exact expected input snapshot edition')
++    need({k: r['sha256'] for k, r in h['current_snapshot'].items()} == h['current_snapshot_expected_hashes'], 'exact expected input snapshot edition')
++    for r in h['accepted_snapshot_aliases'].values(): reader.read(r)
+     need(not os.path.lexists(COHORT) and not os.path.lexists(OLD_COHORT),
+          'neither new nor old cohort directory may be precreated')
+     rows, child_rows, sdks = check_inventory(h)
+@@ -347,11 +336,11 @@
+         integration_Source_review=INTEGRATION_REVIEW,
+         expected_snapshot=h['current_snapshot'], same_two_SDK_destinations=sdks,
+         child_inventory_paths=[r['path'] for r in child_rows],
+-        one_combined_unique_content_upper=44955964, one_combined_content_and_allocation_upper=61733180,
++        one_combined_unique_content_upper=h['parent_unique_content_upper'], one_combined_content_and_allocation_upper=h['parent_union_with_allocation'],
+         one_shared_reserve_bytes=256*MIB,
+         note='Root IO ledger only; not a Core launch authority. Its unique union includes the child subset once. The outer command uses only the separate child budget and launch.')
+     pr = planned(paths[4], parent)
+-    need(q['Root_authority'] is False and q['expected_prefix'] == 426
++    need(q['Root_authority'] is False and q['expected_prefix'] == begin
+         and q['batch_counts'] == [3,3,3,3] and len(q['scientific_profiles']) == 16
+         and set(q['scientific_profiles'].values()) == {'bounded'}, 'exact fresh ordinary init request')
+     need(launch['reference_bindings'] == bindings and parent['child_budget'] == br
+@@ -384,8 +373,8 @@
+         with p.open('rb') as f:
+             need(f.read(len(body)+1) == body, 'bounded whole authority readback')
+         written += len(body)
+-    result = dict(schema='ROOT_F009_COHORT0426_INIT_AUTHORITY_CONSTRUCTION_V1', root='/root',
+-        Root_authority=True, program=own, Source_manifest=mr, construction_Source_peer=review_ref,
++    result = dict(schema='ROOT_F009_GENERIC_INIT_ROOT_DATA_ISSUANCE_V1', root='/root',
++        Root_authority=True, Root_operation_Source=own, Root_whole_Source_owned=True, old_constructor_Source_verdict_claimed=False,
+         input_handoff=INPUT_HANDOFF, observed_snapshot=h['current_snapshot'],
+         all13_mathematical_aliases_verified_opaque=True,
+         combined_Source_peer=STATIC_PEER, Core_actual_controls=CORE_CONTROLS,
+@@ -395,7 +384,7 @@
+         child_argv=child, full_outer_argv=outer,
+         raw_directory=layout['raw_directory'], genuine_key=layout['genuine_key'],
+         SDK_destinations=sdks, child_rows=13, parent_rows=83,
+-        unique_content_and_allocation_upper=61733180, shared_reserve_bytes=256*MIB,
++        unique_content_and_allocation_upper=h['parent_union_with_allocation'], shared_reserve_bytes=256*MIB,
+         next_duties=['Distinct concrete metadata-plan/authority review before init.',
+           'Root must revalidate all three snapshot hashes and preserve the sole-writer window until cohort registration.',
+           'Actual init and every later role require their own genuine API/guard/output checks; this constructor executed none.'],

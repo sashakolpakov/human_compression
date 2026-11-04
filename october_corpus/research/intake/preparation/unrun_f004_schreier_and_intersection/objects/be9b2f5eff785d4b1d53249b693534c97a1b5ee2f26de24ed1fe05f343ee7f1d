@@ -1,0 +1,49 @@
+"""Literal finite quartet-word pool from retained propose8d0ea; no group search.
+Exact used-function origins are pinned in ORIGINS.json.
+"""
+from retained_math import need
+
+def reduced(word):
+ """Only involution cancellation and acquired distant commutations."""
+ out=list(word)
+ while True:
+  changed=False
+  for i in range(len(out)):
+   for j in range(i+1,len(out)):
+    if out[j]==out[i]and all(abs(out[k]-out[i])>=2 for k in range(i+1,j)):
+     del out[j];del out[i];changed=True;break
+   if changed:break
+  if changed:continue
+  for i in range(len(out)-1):
+   if abs(out[i]-out[i+1])>=2 and out[i]>out[i+1]:
+    out[i],out[i+1]=out[i+1],out[i];changed=True;break
+  if not changed:return tuple(out)
+
+def basis_words(fact):
+ need(fact['kind']=='FULL_CYCLIC_SPAN_MATRIX_ALGEBRA_ONLY'and fact['dimension']==7,'actual full cyclic certificate')
+ words=[[]]
+ for i,pair in enumerate(fact['parent_edges'],1):
+  need(type(pair)is list and len(pair)==2 and all(type(x)is int for x in pair)
+   and 0<=pair[0]<i and 0<=pair[1]<4,'literal actual cyclic word provenance')
+  words.append(words[pair[0]]+[pair[1]])
+ need(len(words)==7 and max(map(len,words))<=6,'seven actual short quartet words')
+ return words
+
+def candidate_words(fact):
+ """Finite whole-quartet pool, derived symbolically; no group evaluation."""
+ words=basis_words(fact);coxeter=[0,1,2,3];pool=[];seen=set()
+ def add(word):
+  w=reduced(word);inverse=reduced(reversed(w));w=min(w,inverse)
+  if 1<=len(w)<=32 and set(w)=={0,1,2,3}and w not in seen and len(pool)<128:
+   seen.add(w);pool.append(list(w))
+ add(coxeter)
+ for w in words[1:]:add(coxeter+w)
+ for left in words:
+  for right in words:add(list(reversed(left))+coxeter+right)
+ for left in words:
+  for right in words:add(coxeter+left+coxeter+right)
+ for left in words:
+  for right in words:add(list(reversed(left))+right)
+ for w in words[1:]:add(list(reversed(w))+list(reversed(coxeter))+w+coxeter)
+ need(1<=len(pool)<=128 and all(len(w)<=32 and set(w)=={0,1,2,3}for w in pool),'finite whole-quartet-only pool')
+ return pool

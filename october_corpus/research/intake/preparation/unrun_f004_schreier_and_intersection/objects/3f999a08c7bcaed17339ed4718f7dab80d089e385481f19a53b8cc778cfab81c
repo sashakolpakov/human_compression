@@ -1,0 +1,86 @@
+"""Sixteen fresh UNRUN synthetic groups; no Original values or old verdicts."""
+import copy,struct
+import field as F
+
+def run(b,B,K,A,M,scope,outcome,select):
+ names=[]
+ def yes(name,ok):M.need(ok,name);names.append(name)
+ def refuse(name,*calls):
+  for call in calls:
+   try:call()
+   except(ValueError,TypeError,KeyError,IndexError,K.Inconclusive,B.Limit):pass
+   else:raise ValueError('unrefused '+name)
+  names.append(name)
+ def cap(name,call,message):
+  try:call()
+  except K.Inconclusive as error:M.need(str(error)==message,'exact intended cap stop')
+  else:raise ValueError('no intended cap stop '+name)
+  names.append(name)
+ def swap(i,j):return bytes(int(k==(j if r==i else i if r==j else r))for r in range(7)for k in range(7))
+ def change(raw,offset,value,width=1):
+  out=bytearray(raw);out[offset:offset+width]=value.to_bytes(width,'little');return bytes(out)
+ a,c2,e=swap(0,1),swap(1,2),swap(4,5)
+ c=b.multiply(swap(2,3),e);g=(a,c2,c);v=bytes([1,0,0,0,0,0,0])
+ raw,claimed,_=K.build(g,v,b);facts,_=K.check(g,raw,b,e)
+ yes('fresh_full_string48_omittedTrue',facts['orbit_size']==4 and facts['stabilizer_size']==12
+  and facts['exact_end_order']==48 and outcome(facts)=='VERIFIED_PROPER_FOUR_MARK_SUBGROUP')
+ other=swap(5,6);negative,_=K.check(g,raw,b,other)
+ yes('same_orbit_whole_matrix_omittedFalse',b.image(v,other)==v
+  and negative['omitted_mark_in_certified_end']is False and outcome(negative)=='INCONCLUSIVE_OMITTED_OUTSIDE_END')
+ outside,_=K.check(g,raw,b,swap(0,6))
+ yes('outside_orbit_omittedFalse',outside['omitted_mark_in_certified_end']is False
+  and outcome(outside)=='INCONCLUSIVE_OMITTED_OUTSIDE_END')
+ t=b.multiply(a,c2)
+ yes('noncentral_left_factor_orientation',b.multiply(t,a)==b.multiply(c2,t)and b.multiply(t,c2)!=b.multiply(c2,t))
+ _,ge,st,table,nodes=K.decode(raw,b);base=19+2*len(ge)+2*len(st)+len(table)
+ edge=next((i,j)for i,row in enumerate(nodes)for j,(_,s)in enumerate(row[2])if s)
+ refuse('altered_full_left_factor_edge',lambda:K.check(g,change(raw,base+12*edge[0]+3+3*edge[1]+2,0),b))
+ refuse('whole_header_and_extent',lambda:K.decode(b'WRONG001'+raw[8:],b),lambda:K.decode(raw+b'\0',b))
+ refuse('non_earlier_orbit_parent',lambda:K.decode(change(raw,base+12,1,2),b))
+ refuse('duplicate_full_orbit_vector',lambda:K.check(g,change(raw,base+24+2,0),b))
+ stabilizer=19+2*len(ge)
+ refuse('non_earlier_stabilizer_parent',lambda:K.decode(change(raw,stabilizer+2,1),b))
+ closure=stabilizer+2*len(st)
+ refuse('wrong_full_stabilizer_closure',lambda:K.check(g,change(raw,closure,0),b))
+ cap('orbit_cap_stop_inconclusive',lambda:K.build(g,v,b,ncap=3),'vector orbit cap; no absence or order conclusion')
+ cap('stabilizer_cap_stop_inconclusive',lambda:K.build(g,v,b,scap=11),'small stabilizer closure cap; no order or absence conclusion')
+ products,rows=b.products,b.row_images
+ b.multiply(F.I,F.I);b.multiply(M.I7,M.I7);b.image(v,F.I);b.image(tuple(v),M.I7)
+ yes('one_shared_byte_tuple_product_and_row_bank',b.products==products+2 and b.row_images==rows+2 and b.rows==b.row_images)
+ limited=B.Budget();limited.products=400000
+ image_limited=B.Budget();image_limited.row_images=200000
+ io_limited=B.Budget();io_limited.bytes=8388608
+ never=dict(path='/private/tmp/F004_CONTROL_MUST_NOT_OPEN',bytes=1,sha256='0'*64)
+ refuse('prospective_shared_limits_before_arithmetic_or_IO',lambda:limited.multiply(F.I,F.I),
+  lambda:limited.multiply(M.I7,M.I7),lambda:image_limited.image(v,F.I),
+  lambda:image_limited.image(tuple(v),M.I7),lambda:io_limited.read(never))
+ # Toy reference/status metadata only; no fake real Root grant or Original body.
+ ref=dict(path='/private/tmp/TOY_NOT_READ',bytes=1,sha256='0'*64)
+ plan=dict(Source_manifest=ref,original_job=[155,4],selected_orbit_positions=[3],case=dict(position=3,representative_J_index=1,original_orbit_row_sha256='0'*64),
+  side='LEFT',seed=list(v),projection=ref,Root_projection_acceptance=ref,original_domain_whole_pins=dict(toy=ref),
+  original_orbit_array_sha256='0'*64,matrix_frame_result=ref,unpaid_manifest=ref,old_sources={},normalization_status='toy',selector=ref,meaning_evidence=[ref])
+ current=dict(schema='ROOT_ACCEPTED_Q11_RANK4_UNRESOLVED_SELECTOR_V1',root='/root',adopted=True,original_job=[155,4],
+  original_orbit_positions=4,projection=ref,Root_projection_acceptance=ref,original_paid_positions=[1],original_paid_count=1,
+  accepted_new_paid_positions=[2],accepted_new_paid_by_kind=dict(NG=[2],NOT_IP=[]),unresolved_position_runs=[[3,4]],
+  unresolved_positions=2,expanded_unresolved_sha256=M.digest([3,4]))
+ M.need(select(plan,current,A,M)[0]==[3],'positive current scalar selection')
+ invalid=copy.deepcopy(plan);invalid['selected_orbit_positions']=[True]
+ duplicate=copy.deepcopy(plan);duplicate['selected_orbit_positions']=[3,3]
+ paid=copy.deepcopy(plan);paid['selected_orbit_positions']=[2]
+ refuse('Boolean_duplicate_and_paid_before_Original_lookup',lambda:select(invalid,current,A,M),
+  lambda:select(duplicate,current,A,M),lambda:select(paid,current,A,M))
+ subject={k:plan[k]for k in ('original_job','selected_orbit_positions','case','side','seed','projection',
+  'Root_projection_acceptance','original_domain_whole_pins','original_orbit_array_sha256',
+  'matrix_frame_result','unpaid_manifest','old_sources','normalization_status','selector','meaning_evidence')}
+ imported=dict(schema='ROOT_IMPORTED_F004_FRESH_SCHREIER_COVER_V1',root='/root',Root_authority=True,issued=True,
+  Source_manifest=ref,subject=subject,history_qualification='Toy metadata only, no real-world prior-trial assertion.')
+ duties=('same_faithful_Original_G2_11_frame_members_and_transporters_owned','all_four_reconstructed_marks_belong_to_this_same_Original_G_owned',
+  'Original_G_order_exceeds_11_power6_owned','all_current_selector_typed_adoptions_owned','fresh_seed_untrusted_no_old_K_or_prime_line_transfer_owned',
+  'same_complete_Original_domain_and_case_identity_owned','fresh_trial_not_replay_of_completed_same_case_side_seed_owned',
+  'fresh_cover_implication_only_no_maximality_GEN_or_IP_owned')
+ imported.update({k:True for k in duties});scope(plan,imported,M)
+ wrong=copy.deepcopy(imported);wrong['subject']['matrix_frame_result']=dict(ref,sha256='1'*64)
+ refuse('unissued_or_wrong_frame_import',lambda:scope(plan,dict(imported,Root_authority=False),M),lambda:scope(plan,wrong,M))
+ M.need(len(names)==len(set(names))==16,'sixteen unique fresh control groups')
+ return dict(status='ALL_SIXTEEN_FRESH_SCHREIER_CONTROLS_PASS',controls=16,control_names=names,
+  Original_inputs_loaded=False,old_controls_replayed=False,classification_or_case_credit=0)

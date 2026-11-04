@@ -1,0 +1,196 @@
+"""Install the reviewed finite archive and update its current navigation.
+Root-owned, append-only object copies; small metadata uses beforeimage checks.
+No archived mathematical program or operand is decoded or evaluated.
+"""
+from pathlib import Path
+import hashlib,json,os,resource,signal,stat,sys,time
+START=time.monotonic();READ=0;WRITTEN=0
+P=Path(sys.argv[1]);O=Path(sys.argv[2]);W=Path(sys.argv[3])
+B=W/'october_corpus/research/intake/verified_progress'
+assert P.resolve(strict=True)==P and O.resolve(strict=True)==O and W.resolve(strict=True)==W
+signal.signal(signal.SIGALRM,lambda *_:(_ for _ in()).throw(TimeoutError('125s public copy')));signal.alarm(125)
+def check():
+ assert time.monotonic()-START<115 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)<256*2**20
+ assert READ<=160*2**20 and WRITTEN<=64*2**20
+def ref(path,body):return dict(path=str(path),bytes=len(body),sha256=hashlib.sha256(body).hexdigest())
+def read(path,expected=None):
+ global READ
+ check();s=path.lstat();assert path.resolve(strict=True)==path and stat.S_ISREG(s.st_mode)and s.st_size<=4*2**20
+ body=path.read_bytes();READ+=len(body);assert len(body)==s.st_size and path.stat().st_mtime_ns==s.st_mtime_ns
+ if expected:assert ref(path,body)==expected
+ check();return body
+def fresh(path,body):
+ global WRITTEN
+ assert len(body)<=4*2**20;path.parent.mkdir(parents=True,exist_ok=True)
+ assert path.parent.resolve(strict=True)==path.parent
+ if path.exists():assert read(path)==body;return
+ check()
+ with path.open('xb')as f:assert f.write(body)==len(body);f.flush();os.fsync(f.fileno())
+ WRITTEN+=len(body);check()
+def copy_object(h,n):
+ global READ,WRITTEN
+ destination=B/'objects'/h
+ src=destination if destination.exists()else O/'objects'/h
+ s=src.lstat();assert src.resolve(strict=True)==src and stat.S_ISREG(s.st_mode)and s.st_size==n<=4*2**20
+ digest=hashlib.sha256();count=0;writer=None
+ if src!=destination:
+  destination.parent.mkdir(parents=True,exist_ok=True);writer=destination.open('xb')
+ try:
+  with src.open('rb')as f:
+   while True:
+    block=f.read(65536)
+    if not block:break
+    READ+=len(block);count+=len(block);digest.update(block)
+    if writer:assert writer.write(block)==len(block);WRITTEN+=len(block)
+    check()
+  assert count==n and digest.hexdigest()==h and src.stat().st_mtime_ns==s.st_mtime_ns
+  if writer:writer.flush();os.fsync(writer.fileno())
+ finally:
+  if writer:writer.close()
+def relative(path):
+ assert not path.is_absolute()and path.parts and '..'not in path.parts;return path
+def can(d):return(json.dumps(d,sort_keys=True,indent=2)+'\n').encode()
+review_path=P/'actual_review/reuse_integer_only.json'
+review_body=read(review_path,dict(path=str(review_path),bytes=10670,sha256='afe6a83dad306cf29710614687878f780024060959719b763362c89fbf944994'))
+review=json.loads(review_body);assert review['status']=='SUPPORTED_ACTUAL_OPAQUE_PUBLICATION_OVERLAY'and review['blockers']==[]
+handoff=json.loads(read(P/'ROOT_HANDOFF_FALSE.json',dict(path=str(P/'ROOT_HANDOFF_FALSE.json'),bytes=7779,sha256='adfd215826386e7ce1a8c60adcc3c33e1bf19d37996424d005796d86d19aa1ca')))
+old_index=read(B/'index.json',handoff['expected_public_index'])
+new_index=read(O/'index.json',dict(path=str(O/'index.json'),bytes=14589,sha256='ab35d4e8d409faa1596a45e7ad1bdf786521dc74f22f59afadbd9c6a72573397'))
+index=json.loads(new_index);assert len(index['parts'])==50 and index['unique_objects']==5776
+corpus=W/'october_corpus';before={p:read(p)for p in [B/'index.json',B/'README.rst',B/'publication_audit.json',B/'VALIDATION.json',corpus/'README.md',corpus/'INTAKE_STATUS.json']}
+status=json.loads(before[corpus/'INTAKE_STATUS.json'])
+assert status['complete_reviewed_mathematical_treatments']==101 and status['mathematical_manuscripts']==104
+status['F004']['historical_job155_before_438']=status['F004']['job155_partial_progress']
+status['F004']['job155_partial_progress']=dict(index['job155_current'],counter_source='research/intake/verified_progress/index.json',whole_job_or_manuscript_credit=0)
+status['F004']['supplied_word_preparation']=index['known_proper_word_preparation']
+f=status['F009']['order80_forest_cover']
+f.update(reviewed_registered_parents=438,strict_slots_reviewed=68328,current_stage_remaining_parents=502,scope='Parents 0..437 are independently reviewed and registered. All 940, final reduction, order 80 census and manuscript remain required.',latest_registered_cohort=dict(begin=426,end=438,archive='research/intake/verified_progress/index.json',postwrite_review_sha256='1661f9b43dac49888d5e80307be00d03d1f0d14b5c5e36c2d1a1faeecc1014e4'))
+l=status['L026'];l.update(generation_certificates=725,subset_exclusions=746,resolved_in_current_candidate_bank=1471,unresolved_in_current_candidate_bank=27437,separate_intersection_proofs_for_those_same_cases=724,generation_cases_without_separate_intersection_proof=1,current_ledger_sha256='3f594ce42937a535c33f293a98371ec9dda74df3ca2787dde3f544122a343350',accepted_scope='Current bank: 725 generation results, 746 exclusions, 724 separate intersection proofs; 1471 settled, 27437 unresolved of 28908. Across selectors 64 censuses remain incomplete. Archive integrity is verified; full portable mathematical replay and manuscript synthesis remain unfinished.',row0304=dict(outcome='INCONCLUSIVE',strict_call=False,paid_credit=0),global_intake_paid=1469,global_activation_pending=True)
+status['reviewed_archive_checkpoint']=dict(index=dict(path='research/intake/verified_progress/index.json',bytes=len(new_index),sha256=hashlib.sha256(new_index).hexdigest()),parts=50,unique_objects=5776,unique_bytes=131071142,theory_files=11,source_and_witness_integrity=True,mathematical_replay=False)
+status['current_status_sources'].update(current_manifest_sha256=hashlib.sha256(new_index).hexdigest(),actual_staging_review=dict(path='research/intake/verified_progress/publication_audit.json',bytes=len(review_body),sha256=hashlib.sha256(review_body).hexdigest()))
+status['archive_note']='Accepted evidence checkpoint: 101/104 mathematical originals; F004 127/272 jobs, job 155 has 773 settled and 34 unpaid; F009 438/940 parents and 68328 slots; L026 1471 settled, 27437 unresolved, 724 separate IP proofs. Measurements 53 applications/19 topics remain frozen. Source/witness integrity is distinct from mathematical replay.'
+status['publication']['latest_archive_mathematical_replay']=False
+status['publication']['latest_archive_independent_review_sha256']=hashlib.sha256(review_body).hexdigest()
+checkpoint=json.loads(read(O/'objects/854a2a3d8d4f2396ba2e8ff2daefc117e64641c524cd571ee8cd6f428e64ab1e'))
+status['observed_utc']=checkpoint['observed_utc']
+text=before[corpus/'README.md'].decode()
+rows={
+'| F004 |':'| F004 | **127 of 272 q11 jobs complete**. Job 155 has **773 of 807 cases settled**: 157 nongeneration and 616 intersection failures; 34 remain. | Finish the 145 pending jobs, final classification and manuscript. |',
+'| F009 |':'| F009 | **438 of 940 parents registered**, with **68,328** checked extension slots. | Finish the 502 remaining parents, final reduction and the remaining census at order 80. |',
+'| L026 |':'| L026 | **725 generation results, 746 exclusions and 724 separate intersection proofs**; **1,471 settled and 27,437 unresolved** rows. | Finish the current bank and the other selectors; 64 selectors lack complete censuses. |'}
+lines=text.splitlines()
+for prefix,replacement in rows.items():
+ assert sum(line.startswith(prefix)for line in lines)==1
+ lines=[replacement if line.startswith(prefix)else line for line in lines]
+text='\n'.join(lines)+'\n'
+start=text.index('The [reviewed progress archive]')
+end=text.index('The [preceding status sources]',start)
+text=text[:start]+'''The [reviewed progress archive](research/intake/verified_progress/README.rst)
+preserves 50 evidence parts and eleven named TeX proofs, together with further
+proof texts in its evidence objects. It includes the registered forest cohorts
+through parent 437, the 24 new exclusions from invariant subspaces in job 155 and
+the current Fi22 ledger. The checker for supplied words passed ten synthetic controls;
+its six target cases have not yet been verified. The fresh row 304 search was
+inconclusive and receives no credit.
+
+Its [finite verifier](research/intake/verified_progress/verify.py) checks
+archived bytes without executing mathematical programs. The
+[publication audit](research/intake/verified_progress/publication_audit.json)
+states its scope. Required Source, selected inputs, certificates and accepted
+reviews are preserved. Redundant detailed reviewer working files are listed
+separately; the archive does not export every historical ancestor.
+
+'''+text[end:]
+old='The local Fi22 ledger contains **724 generation cases, 744 nongeneration cases\nand 724 separate intersection proofs**: **1,468 resolved candidates**, leaving\n**27,440 unresolved**'
+new='The current Fi22 ledger contains **725 generation cases, 746 nongeneration cases\nand 724 separate intersection proofs**: **1,471 resolved candidates**, leaving\n**27,437 unresolved**'
+assert old in text;text=text.replace(old,new,1)
+guide='''Reviewed intake progress
+========================
+
+This archive contains 50 finite evidence parts, 7,364 logical records and 5,776
+distinct objects. It preserves the previous 36 parts and every old public
+object. Intake remains 101 complete reviewed treatments out of 104 mathematical
+originals. F004, F009 and L026 remain; measurements stay at 53 applications across
+19 topics.
+
+Current accepted results
+-----------------------
+
+F004 has 127 of 272 q11 jobs complete. Job 155 has 773 of 807 positions settled:
+157 nongeneration results and 616 failures of the intersection property.
+The 24 newly registered nongeneration cases use one proper subspace argument.
+The checker for supplied words passed ten new synthetic controls; no target case
+is credited from that preparation. Proofs, exact inputs and registration
+reviews are listed in updates/f004_proper24_proof.json and
+updates/f004_proper24_publication.json.
+
+F009 has 438 of 940 parents registered and 68,328 extension slots checked.
+The newly published cohorts 414..425 and 426..437 add 24 parents and 3,744 slots.
+The latest cohort adds 12 parents and 1,872 slots; independent registration and
+administrative checks preserve all 1,732 earlier cache values and create 12
+new parent records and four shared records. Retained failure histories mean
+that the flags for success on the first attempt remain false. These are extension
+checks, not completion of the census or the manuscript.
+
+The current L026 bank has 725 generation results and 746 exclusions:
+1,471 settled and 27,437 unpaid rows. There are 724 separate intersection
+proofs; the new generation case receives no automatic intersection credit.
+The fresh row 304 trial was inconclusive. Across selectors 64 censuses remain
+incomplete. See updates/l026_typed1471.json and
+updates/l026_row0304_inconclusive.json.
+
+Verification and scope
+----------------------
+
+From the repository root::
+
+    python3 -E -B -S october_corpus/research/intake/verified_progress/verify.py
+
+The unchanged verifier reads 134,103,490 bytes, checks every indexed object
+hash and eleven named TeX files, and writes no build products. Its limits
+remain 128 MiB read, 4 MiB per file, 256 MiB RSS and 125 seconds. Success proves
+the indexed bytes' integrity. It does not execute archived mathematics,
+establish imported model or classification premises, or complete a Lean
+formalization.
+
+The Source closure audit covers the selected manifests. Complete scientific
+Source, selected input/output bodies, written proofs, accepted full review
+leaves, genuine SDK/raw/guard records and important failure histories remain.
+All 188 protected proper subspace mappings and all 24 registration images are
+preserved. Some original paths resolve through retained aliases with identical
+bytes. Historical absolute paths are provenance labels; SHA256 and
+byte extent identify an edition.
+
+The 83 omitted files are redundant reviewer working inventories and scripts,
+listed with reasons in OMISSIONS.json. Detailed review work is not recursively
+exported. No original local artifact or earlier public object was deleted.
+The existing portable mathematical replay packages are linked from
+../../../REPRODUCING.md. New conjecture, manuscript, Lean and compression
+credit from this publication is zero.
+'''
+draft=P/'public_metadata';assert not draft.exists();draft.mkdir()
+for name,body in [('README.rst',guide.encode()),('CORPUS_README.md',text.encode()),('INTAKE_STATUS.json',can(status)),('publication_audit.json',review_body)]:
+ fresh(draft/name,body)
+sel=json.loads(read(P/'selection.json',handoff['selection']))
+fresh(draft/'OMISSIONS.json',can(dict(schema='FINITE_ARCHIVE_REVIEWER_WORK_OMISSIONS_V1',reason=handoff['omissions_scope'],files=sel['omitted_reviewer_working_files'],local_originals_deleted=False,old_public_objects_deleted=False)))
+# Append data objects and finite manifests. Existing objects are checked, never removed.
+objects={}
+for part in index['parts']:
+ rel=relative(Path(part['manifest']['path']));body=read(O/rel);assert len(body)==part['manifest']['bytes']and hashlib.sha256(body).hexdigest()==part['manifest']['sha256']
+ m=json.loads(body)
+ for row in m['files']:
+  assert row['object']=='objects/'+row['sha256'];assert objects.get(row['sha256'],row['bytes'])==row['bytes'];objects[row['sha256']]=row['bytes']
+ fresh(B/rel,body)
+assert len(objects)==5776 and sum(objects.values())==131071142
+for h,n in objects.items():copy_object(h,n)
+cp=B/relative(Path(index['previous_checkpoint'])).parent
+for path,body in before.items():
+ name=('CORPUS_README.md'if path==corpus/'README.md'else path.name)
+ fresh(cp/name,body)
+for p,b in before.items():assert read(p)==b
+updates={B/'README.rst':guide.encode(),B/'publication_audit.json':review_body,corpus/'README.md':text.encode(),corpus/'INTAKE_STATUS.json':can(status),B/'index.json':new_index}
+for p,b in updates.items():
+ assert read(p)==before[p];stage=Path(str(p)+'.438_publish');assert not stage.exists();fresh(stage,b);assert read(p)==before[p];os.replace(stage,p)
+fresh(B/'OMISSIONS.json',read(draft/'OMISSIONS.json'))
+signal.alarm(0)
+print(json.dumps(dict(status='PUBLIC_ARCHIVE_COPIED_AWAITING_PUBLIC_VERIFICATION',unique_objects=len(objects),unique_bytes=sum(objects.values()),new_object_content_bytes=handoff['total_new_object_content_from_public414'],parts=50,read_bytes=READ,written_bytes=WRITTEN,mathematical_replay=False,canonical_research_pointer_writes=0,old_objects_deleted=0,public_index=ref(B/'index.json',new_index)),sort_keys=True))

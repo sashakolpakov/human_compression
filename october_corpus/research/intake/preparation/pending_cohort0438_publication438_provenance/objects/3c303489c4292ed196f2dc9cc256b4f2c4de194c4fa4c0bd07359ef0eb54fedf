@@ -1,0 +1,154 @@
+from pathlib import Path
+import json,hashlib,re,copy,ast,difflib
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');G=M/'f009_bounded_io_transition';D=M/'f009_resource_binding_retries';RL=M/'f009_science_role_launches'
+B=G/'cohort_preparation/parents0438_0449';assert not B.exists();B.mkdir()
+oldB=G/'cohort_preparation/parents0426_0437';N=438
+can=lambda v:(json.dumps(v,sort_keys=True,indent=2,allow_nan=False)+'\n').encode('ascii')
+def ref(p):
+ p=Path(p);b=p.read_bytes();return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def put(p,v):
+ p=Path(p);assert not p.exists();p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(can(v));return ref(p)
+def text(p,s):
+ p=Path(p);assert not p.exists();p.parent.mkdir(parents=True,exist_ok=True);p.write_text(s);return ref(p)
+def doc(p):return json.loads(Path(p).read_text()) # known metadata-only documents
+
+def translate(v):
+ if type(v)is str:
+  v=v.replace('parents0426_0437','parents0438_0449').replace('cohort0426','cohort0438').replace('cohort_from0426','cohort_from0438')
+  v=re.sub(r'parents(04(?:2[6-9]|3[0-7]))_(04(?:2[6-9]|3[0-7]))',lambda m:'parents%04d_%04d'%(int(m[1])+12,int(m[2])+12),v)
+  v=re.sub(r'parent(04(?:2[6-9]|3[0-7]))_supply',lambda m:'parent%04d_supply'%(int(m[1])+12),v)
+  return v
+ if type(v)is list:return[translate(x)for x in v]
+ if type(v)is dict:return{translate(k):translate(x)for k,x in v.items()}
+ return v
+stage=M/'progress/stages/forest_extensions_0426_0437_generic_profiles'
+expected={'intake':(308232,'afd31a2aa493756f5cc50654db08e55ee99c075831794d4e6f6bc5fb7b47757a'),'controller':(781,'30fc6dd326938c3400251c4be569a37167536173ee24e023b8f4518a8c585333'),'runtime':(4018131,'85308b6dba554a6704610a13118aa6ae2fd0cd345a84cad2605abc59632b2f99')}
+paths={'intake':M/'progress/current_intake.json','controller':M/'progress/controllers/current.json','runtime':stage/'runtime.json'}
+snapshot={};aliases={}
+for k,p in paths.items():
+ r=ref(p);assert(r['bytes'],r['sha256'])==expected[k];snapshot[k]=r
+ a=stage/({'intake':'intake_after_update.json','controller':'controller_after_update.json','runtime':'runtime.json'}[k]);ar=ref(a);assert(ar['bytes'],ar['sha256'])==expected[k];aliases[k]=ar
+h=translate(doc(oldB/'handoff.json'))
+h['schema']='FALSE_F009_GENERIC_NEXT_COHORT_PREPARATION_V1';h['author']='/root/dependency_audit';h['status']='UNISSUED_FALSE_DATA_ONLY_NO_OPERATIONS';h['begin']=N;h['end']=450
+h['current_snapshot']=snapshot;h['accepted_snapshot_aliases']=aliases;h['current_snapshot_expected_hashes']={k:v['sha256']for k,v in snapshot.items()}
+h['current_F009_scalar_context'].update(registered_prefix=438,strict_slots=68328)
+h['current_F009_scalar_context']['cache_records']=1744
+h['proposed_init_request_fields'].update(expected_prefix=N,bounded_resource_budget=None)
+h['proposed_init_request_fields']['scientific_profiles']={**{'parent%04d_supply'%i:'bounded'for i in range(N,N+12)},**{'parents%04d_%04d_check'%(N+3*b,N+3*b+2):'bounded'for b in range(4)}}
+h['stage_batches']=[dict(batch=b,source_indices=list(range(N+3*b,N+3*b+3)),supplier_stems=['parent%04d_supply'%i for i in range(N+3*b,N+3*b+3)],strict_stem='parents%04d_%04d_check'%(N+3*b,N+3*b+2),scientific_base='/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0438/parents%04d_%04d'%(N+3*b,N+3*b+2))for b in range(4)]
+for r in h['expected_init_outputs']:
+ for k in snapshot:
+  if r['path'].endswith('frozen_'+k+'.json'):r.update(maximum_bytes=snapshot[k]['bytes'],exact_copied_input=snapshot[k])
+byout={r['path']:r['maximum_bytes']for r in h['expected_init_outputs']}
+for row in h['parent_union_inventory']:
+ if row['path']in byout:row['maximum_bytes']=byout[row['path']]
+child=[h['parent_union_inventory'][i]for i in h['child_inventory_row_indices']]
+h['child_planned_content_upper']=sum(r['maximum_bytes']for r in h['expected_init_outputs'])
+h['parent_unique_content_upper']=sum(r['maximum_bytes']for r in h['parent_union_inventory'])
+h['parent_union_with_allocation']=h['parent_unique_content_upper']+h['allocation_allowance']
+h['child_inventory_total_upper']=sum(r['maximum_bytes']for r in child)
+delta=h['child_planned_content_upper']-4454587
+h['init_child_prospective_read_invoice']['first_unique_input_upper']+=delta
+h['init_child_prospective_read_invoice']['planned_output_upper']=h['child_planned_content_upper']
+h['init_child_prospective_read_invoice']['total_project_read_upper']+=4*delta
+h['registration_scope']='Init and phases keep accepted prefix438/68328slots/cache1744 unchanged. Only successful reviewed final registration can advance to450/70200slots/cache1756 (+12parents/+1872slots/+12cachevalues), with unrelated values preserved. No whole-level/manuscript credit.'
+h['old_constructor_limitation']='The historical e14 constructor and its cohort0426 Source peer are fixed to426/old snapshot and are NOT authority for this new Root data issuer. Its bounded Reader/acyclic assembly algorithm is reused with explicit origin/diff; generic init632966/packet8e8fe/peer6a/Core3342/GEN527c are unchanged.'
+h['positive_documents_required_before_init']=[x.replace('expected426','expected438')for x in h['positive_documents_required_before_init']]
+h['proposed_layout']['authority_receipt']=str(G/'actual/cohort0438_init/authority_construction.json')
+h['next_setup_rules']=['Never precreate G/cohorts/cohort_from0438 or old f009_cohort_preparation/cohorts/cohort_from0438.','Init Context out must be canonical existing empty; guard final directory remains absent.','For every batch, prepare_suppliers needs the entire scientific base absent. Do NOT create base/guards before that phase. After successful phase, Root creates ONLY the empty common guards PARENT before RL construction/prelaunch.','Each selected SDK logical basename remains init_v1.json / batchNN_prepare_suppliers_vN.json / batchNN_assemble_strict_vN.json / batchNN_close_pairing_vN.json.','All future actual refs remain null until genuine bytes exist. Failed attempts are retained and reconciled; no completed science replay.']
+h['Root_authority']=False;h['positive_authorities_issued']=False;h['represented_functions_controls_or_science_executed']=False
+# Root-owned issuer DATA adapts the old bounded constructor; never imports/runs G/Core.
+src=(oldB/'prepare_init.py').read_text();initial=src
+src=src.replace('"""Root-only metadata issuance for the exact 426..437 cohort; no worker launch."""','"""UNISSUED reusable Root DATA issuer. Default refuses before IO; no worker launch.\nRoot must own a fresh explicitly activated copy; no old constructor Source verdict is claimed.\n"""')
+start=src.index('HERE = ');end=src.index('STATIC_PEER = ')
+src=src[:start]+"ROOT_AUTHORITY = False\nGEN = Path('/Users/sasha/medusa/research/leemans/maintenance/intake/f009_bounded_io_transition')\nCORE = GEN.parent / 'resource_profiles/bounded_output'\nMEDUSA = Path('/Users/sasha/medusa')\nPYTHON = '/Users/sasha/.venvs/global/bin/python'\nMIB = 2**20\nCAPS = dict(read_bytes=16*MIB, write_bytes=MIB, paths=256, file_bytes=4*MIB, rss_bytes=256*MIB, seconds=125, Source_bytes=98304)\n"+src[end:]
+src=src.replace("def main():\n    need(sys.flags", "def main():\n    if not ROOT_AUTHORITY:\n        raise PermissionError('FALSE/unissued Root DATA; own and activate a fresh copy before IO')\n    need(sys.flags")
+src=src.replace("    ap.add_argument('--manifest', nargs=3, required=True)\n    ap.add_argument('--Source-peer', nargs=3, required=True)","    ap.add_argument('--handoff', nargs=3, required=True)\n    ap.add_argument('--whole-Source-owned', action='store_true', required=True)")
+a=src.index('    mr, review_ref = ');z=src.index('    peer = reader.document(STATIC_PEER)',a)
+src=src[:a]+"    need(a.whole_Source_owned, 'Root whole operation Source/data ownership')\n    INPUT_HANDOFF = cli_ref(a.handoff)\n    h = reader.document(INPUT_HANDOFF)\n    need(h['Root_authority'] is False and h['schema'] == 'FALSE_F009_GENERIC_NEXT_COHORT_PREPARATION_V1', 'unissued exact metadata handoff')\n    begin = h['begin']\n    need(type(begin) is int and 426 <= begin < 940 and h['end'] == begin+12 <= 940, 'typed twelve-parent scope')\n    ACTUAL = GEN / ('actual/cohort%04d_init' % begin)\n    INPUTS = ACTUAL / 'inputs'\n    COHORT = GEN / 'cohorts' / ('cohort_from%04d' % begin)\n    OLD_COHORT = GEN.parent / 'f009_cohort_preparation/cohorts' / ('cohort_from%04d' % begin)\n    need(h['proposed_layout']['produced_cohort_directory'] == str(COHORT), 'exact new layout')\n    ownpath = Path(__file__).resolve(); size = ownpath.stat().st_size\n    need(size+512 <= CAPS['Source_bytes'], 'finite complete Root operation Source namespace')\n    with ownpath.open('rb') as f: ownbody = f.read(size+1)\n    need(len(ownbody) == size, 'whole Root operation Source')\n    own = reference(ownpath, ownbody); reader.bytes += size+512; reader.read(own)\n    reader.read(h['Root_issuance_protocol'])\n"+src[z:]
+a=src.index('    expected_snapshot = dict(');z=src.index('    need(not os.path.lexists(COHORT)',a)
+src=src[:a]+"    need({k: r['sha256'] for k, r in h['current_snapshot'].items()} == h['current_snapshot_expected_hashes'], 'exact expected input snapshot edition')\n    for r in h['accepted_snapshot_aliases'].values(): reader.read(r)\n"+src[z:]
+src=src.replace("sum(totals.values()) == 44955964", "sum(totals.values()) == h['parent_unique_content_upper']")
+src=src.replace("sum(totals.values())+16*MIB == 61733180", "sum(totals.values())+16*MIB == h['parent_union_with_allocation']")
+src=src.replace("sum(r['maximum_bytes'] for r in child) == 13891771", "sum(r['maximum_bytes'] for r in child) == h['child_inventory_total_upper']")
+src=src.replace("sum(expected_outputs.values()) == 4454587", "sum(expected_outputs.values()) == h['child_planned_content_upper']")
+src=src.replace("one_combined_unique_content_upper=44955964, one_combined_content_and_allocation_upper=61733180", "one_combined_unique_content_upper=h['parent_unique_content_upper'], one_combined_content_and_allocation_upper=h['parent_union_with_allocation']")
+src=src.replace("q['expected_prefix'] == 426", "q['expected_prefix'] == begin")
+src=src.replace("schema='ROOT_F009_COHORT0426_INIT_AUTHORITY_CONSTRUCTION_V1'", "schema='ROOT_F009_GENERIC_INIT_ROOT_DATA_ISSUANCE_V1'")
+src=src.replace("Root_authority=True, program=own, Source_manifest=mr, construction_Source_peer=review_ref,", "Root_authority=True, Root_operation_Source=own, Root_whole_Source_owned=True, old_constructor_Source_verdict_claimed=False,")
+src=src.replace("unique_content_and_allocation_upper=61733180", "unique_content_and_allocation_upper=h['parent_union_with_allocation']")
+ast.parse(src)
+assert not any(x in src for x in ['review_ref','Source_manifest=mr','COHORT0426_INIT_AUTHORITY','expected_prefix\'] == 426'])
+initissuer=text(B/'Root_issue_init_UNISSUED.py',src)
+text(B/'Root_issue_init.diff',''.join(difflib.unified_diff(initial.splitlines(True),src.splitlines(True),fromfile=str(oldB/'prepare_init.py'),tofile=str(B/'Root_issue_init_UNISSUED.py'))))
+protocol=text(B/'ROOT_DATA_PROTOCOL.rst',"""Next cohort438..449: FALSE Root data only\n=======================================\nProduction G632966/packet8e8fe/Sourcepeer6a/Core3342/GEN527c, D9\n592f/911b/40actual566e, RL190c/fb45 and all science814a/1bb1/profile70440\nare unchanged. No represented entry, import, helper, control or science has run.\n\nRoot_issue_init_UNISSUED.py reuses the exact historical bounded Reader and\nacyclic five-document algorithm, with an explicit full diff. It is a NEW Root\noperation/data template, not another e14 Source-peer subject or admitted Core\nentry. Root must read/own and activate a fresh copy (ROOT_AUTHORITY=True), retain\nthat exact Source in its genuine issuance evidence, and pass --whole-Source-owned.\nIt only writes child budget/request/gate/later launch/parent IO/receipt. It never\nlaunches init, science, controls or profiles. Root then obtains the concrete plan\nreview and uses the unchanged genuine caller/profile/init. All three live hashes\nare revalidated; accepted stage aliases are opaque beforeimages. A changed live\ncheckpoint requires a NEW data edition and new exact Root authority, no rebinding.\n\nThe cohort and old counterpart must remain absent until actual init. Each phase\nprepare_suppliers requires its whole scientific base absent. Root must create\nonly the common empty guards PARENT AFTER successful phase and before RL/prelaunch.\nNever precreate this base while issuing budgets. Every final guard directory and\nall outputs/SDK/raw paths stay fresh; successful roles must never be replayed.\n\nAll future cohort/prepared/actual refs are null, with expected paths documented\nseparately. Root fills them only from genuine complete bytes. All four batches\nare3 parents. All-first-v1 empty role selections are FALSE prototypes only; a\nreal failed attempt requires the existing truthful history/reconciliation route.\nNo canonical credit precedes distinct aggregate review and successful registration.\nThe future450/70200/cache1756 numbers are prospective only. No manuscript credit.\n""")
+h['Root_issuance_protocol']=protocol;h['Root_init_issuer_FALSE']=initissuer;h['Root_init_issuer_origin']=ref(oldB/'prepare_init.py');h['Root_init_issuer_diff']=ref(B/'Root_issue_init.diff')
+put(B/'init_request_FALSE.json',h['proposed_init_request_fields'])
+gate=doc(G/'templates/init_Root_gate_FALSE.json');put(B/'init_Root_gate_FALSE.json',gate)
+# Prepare four batches from unchanged metadata-only scalar prototypes.
+olddata=D/'data/cohort0426_batch01_prepare_suppliers';oldh=doc(olddata/'handoff.json');oldbud=doc(olddata/'parent0429_supply_science_budget_FALSE.json')
+phasegate=doc(olddata/'Root_prepare_suppliers_gate_FALSE.json');rlbase=doc(RL/'data/cohort0426_batch03_suppliers/inputs_FALSE.json');rlgate=doc(RL/'data/cohort0426_batch03_suppliers/Root_gate_FALSE.json')
+batchrecords=[]
+for batch in range(4):
+ bd=B/('batch%02d'%batch);bd.mkdir();inds=list(range(N+3*batch,N+3*batch+3));base='/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0438/parents%04d_%04d'%(inds[0],inds[-1]);oldbase='/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0426/parents0429_0431'
+ def rebase(v):
+  if type(v)is str:return v.replace(oldbase,base).replace('cohort0426','cohort0438').replace('cohort_from0426','cohort_from0438')
+  if type(v)is list:return[rebase(x)for x in v]
+  if type(v)is dict:return{k:rebase(x)for k,x in v.items()}
+  return v
+ hh=rebase(copy.deepcopy(oldh));hh.update(schema='UNISSUED_GENERIC_SUPPLIER_PREPARATION_DATA_V1',begin=N,batch=batch,source_indices=inds,cohort=None,status='FALSE_FUTURE_COHORT_ACTUAL_REQUIRED',author='/root/dependency_audit')
+ hh['cohort_future_path']=str(G/'cohorts/cohort_from0438/cohort.json');hh['fresh_scientific_base']=base
+ hh['runtime_paths']={k:v.replace('batch01','batch%02d'%batch)for k,v in hh['runtime_paths'].items()}
+ hh['science_budgets']=[];hh['phase_outputs']=[]
+ for index in inds:
+  stem='parent%04d_supply'%index;b=rebase(copy.deepcopy(oldbud));b=json.loads(json.dumps(b).replace('parent0429_supply',stem))
+  # SDK private path contains parent0429 as a stem and cohort0438 after rebasing.
+  br=put(bd/(stem+'_science_budget_FALSE.json'),b)
+  budgetpath=str(G/('cohorts/cohort_from0438/budgets/batch%02d/%s_budget.json'%(batch,stem)))
+  hh['science_budgets'].append(dict(index=index,stem=stem,FALSE_budget=br,positive_budget_path=budgetpath,role=b['role'],manifest=b['role_manifest'],inventory_rows=10,guard=b['guard'],out=base+'/'+stem,SDK_paths=[r['path']for r in b['inventory']if r['component']=='sdk']))
+  for suffix,cap in [('Root_import',32768),('request',32768),('Root_gate',16384),('prepared',16384)]:hh['phase_outputs'].append(dict(path=base+'/roles/'+stem+'_'+suffix+'.json',maximum_bytes=cap))
+ hh['phase_outputs'].append(dict(path=base+'/supplier_preparation.json',maximum_bytes=65536))
+ q=dict(schema='F009_RESOURCE_BINDING_METADATA_REQUEST_V1',Root_authority=False,op='phase.py',phase='prepare_suppliers',cohort=None,batch=batch,science_budgets={r['stem']:None for r in hh['science_budgets']},outputs=hh['phase_outputs'])
+ hh['request_FALSE']=put(bd/'prepare_suppliers_request_FALSE.json',q);hh['Root_gate_FALSE']=put(bd/'Root_prepare_suppliers_gate_FALSE.json',phasegate)
+ hh['metadata_issuance_inventory']=[dict(path=r['positive_budget_path'],maximum_bytes=32768)for r in hh['science_budgets']]+[dict(path=hh['runtime_paths'][k],maximum_bytes=65536)for k in ['request','Root_gate','receipt']]
+ hh['metadata_write_upper']=sum(x['maximum_bytes']for x in hh['metadata_issuance_inventory']);hh['metadata_issuance_inventory_total']=hh['metadata_write_upper'];hh['phase_output_upper']=sum(x['maximum_bytes']for x in hh['phase_outputs'])
+ hh['old_specific_issuer_not_used']=ref(olddata/'Root_issue_suppliers_UNISSUED.py')
+ hh['positive_authorities_issued']=False;hh['represented_Source_or_science_or_controls_executed']=False
+ # all fields which refer to this old data edition are reset below, not shallow-retagged.
+ hh.pop('Root_issuance_template',None);hh.pop('issuance_template',None);hh.pop('source_indices_and_batch_now_exact',None)
+ hh['source_indices']=inds
+ hr=put(bd/'prepare_suppliers_handoff_FALSE.json',hh)
+ rin=rebase(copy.deepcopy(rlbase));rin.update(batch=batch,cohort=None,metadata_preparation_review=None,preparation_record=None,receipt_path=str(RL/('actual/cohort0438_batch%02d_suppliers/role_launch_construction.json'%batch)),roles=[])
+ for index in inds:
+  stem='parent%04d_supply'%index
+  rin['roles'].append(dict(edition=1,launch_path=str(G/('cohorts/cohort_from0438/budgets/batch%02d/%s_launch_v1.json'%(batch,stem))),parent_IO_path=str(G/('cohorts/cohort_from0438/budgets/batch%02d/%s_parent_IO_v1.json'%(batch,stem))),prepared=None,role_kind='supply',source_indices=[index],stem=stem))
+ ri=put(bd/'RL_suppliers_inputs_FALSE.json',rin);rg=copy.deepcopy(rlgate);rg['inputs']=ri;rgr=put(bd/'RL_suppliers_gate_FALSE.json',rg)
+ # Strict budget and selection remain unissued; actual cover/result hashes are not guessed.
+ strict='parents%04d_%04d_check'%(inds[0],inds[-1]);sb=doc(D/'data/cohort0426_batch00_assemble_strict/strict_science_budget_FALSE.json')
+ def strictbase(v):
+  if type(v)is str:return v.replace('/generic_cohort_from0426/parents0426_0428',base).replace('cohort0426','cohort0438').replace('cohort_from0426','cohort_from0438').replace('parents0426_0428_check',strict)
+  if type(v)is list:return[strictbase(x)for x in v]
+  if type(v)is dict:return{k:strictbase(x)for k,x in v.items()}
+  return v
+ sr=put(bd/'strict_science_budget_FALSE.json',strictbase(sb))
+ sel=dict(schema='ROOT_F009_GENERIC_SELECTED_ATTEMPTS_V2',root='/root',Root_authority=False,cohort=None,batch=batch,phase='assemble_strict',roles=[])
+ selref=put(bd/'supplier_selection_all_v1_FALSE.json',sel)
+ aq=doc(D/'data/cohort0426_batch00_assemble_strict/assemble_strict_request_FALSE.json');aq=strictbase(aq);aq.update(cohort=None,batch=batch,selected_attempts=None,science_budgets={strict:None})
+ ar=put(bd/'assemble_strict_request_FALSE.json',aq)
+ batchrecords.append(dict(batch=batch,source_indices=inds,prepare_suppliers_handoff_FALSE=hr,RL_suppliers_inputs_FALSE=ri,RL_suppliers_gate_FALSE=rgr,strict_budget_FALSE=sr,all_v1_selection_FALSE=selref,assemble_strict_request_FALSE=ar,expected_scientific_base=base,expected_prepared_paths=[base+'/roles/parent%04d_supply_prepared.json'%i for i in inds],future_actual_refs_issued=False))
+h['batch_FALSE_data']=batchrecords
+# Default-False supplier issuer reuses old bounded metadata-only template, parameterized by handoff+actual cohort.
+sup=(olddata/'Root_issue_suppliers_UNISSUED.py').read_text();oldsrc=sup
+sup=re.sub(r"HANDOFF=\{[^\n]+\}\n",'',sup,count=1)
+sup=sup.replace("ap.add_argument('--issue',action='store_true',required=True)","ap.add_argument('--issue',action='store_true',required=True);ap.add_argument('--handoff',nargs=3,required=True);ap.add_argument('--cohort',nargs=3,required=True)")
+sup=sup.replace("    h=doc(HANDOFF);", "    HANDOFF=dict(path=a.handoff[0],bytes=int(a.handoff[1]),sha256=a.handoff[2]);actual_cohort=dict(path=a.cohort[0],bytes=int(a.cohort[1]),sha256=a.cohort[2])\n    h=doc(HANDOFF);")
+sup=sup.replace("    assert h['batch']==1 and h['source_indices']==[429,430,431]\n    cohort=doc(h['cohort']);assert cohort['batches'][1]==dict(batch=1,begin=429,end=432,source_indices=[429,430,431])", "    begin=h['begin'];batch=h['batch'];assert type(begin)is int and 426<=begin<940 and type(batch)is int and 0<=batch<=3\n    assert h['source_indices']==list(range(begin+3*batch,begin+3*batch+3))\n    assert actual_cohort['path']==h['cohort_future_path'];cohort=doc(actual_cohort)\n    assert cohort['begin']==begin and cohort['end']==begin+12 and cohort['batch_counts']==[3,3,3,3]\n    assert cohort['batches'][batch]==dict(batch=batch,begin=begin+3*batch,end=begin+3*batch+3,source_indices=h['source_indices'])")
+sup=sup.replace("q['batch']==1 and q['cohort']==h['cohort']", "q['batch']==batch and q['cohort']is None")
+sup=sup.replace("    q['science_budgets']=budget_refs", "    q['cohort']=actual_cohort\n    q['science_budgets']=budget_refs")
+ast.parse(sup);sref=text(B/'Root_issue_suppliers_UNISSUED.py',sup)
+text(B/'Root_issue_suppliers.diff',''.join(difflib.unified_diff(oldsrc.splitlines(True),sup.splitlines(True),fromfile=str(olddata/'Root_issue_suppliers_UNISSUED.py'),tofile=str(B/'Root_issue_suppliers_UNISSUED.py'))))
+h['Root_supplier_issuer_FALSE']=sref;h['Root_supplier_issuer_origin']=ref(olddata/'Root_issue_suppliers_UNISSUED.py');h['Root_supplier_issuer_diff']=ref(B/'Root_issue_suppliers.diff')
+h['root_simpler_issuer_prior_actuals']=[ref(D/'Root_SDK/batch03_supplier_preparation_authorities_v1.json'),ref(D/'Root_SDK/batch02_supplier_preparation_authorities_v1.json')]
+h['root_simpler_issuer_limitation']='The compact batch03 Root code2ffb has begin426 and batch2,3 literals. The provided bounded defaultFalse template generalizes only cohort/batch/indices inputs and fills a genuine actual cohort triple. It does not execute phase/RL/science. Root must freshly own/activate; no old actual or Source verdict transfers.'
+put(B/'handoff.json',h)
+print(json.dumps(dict(handoff=ref(B/'handoff.json'),init_issuer=initissuer,supplier_issuer=sref,begin=438,end=450,batches=[r['source_indices']for r in batchrecords],parent_rows=len(h['parent_union_inventory']),child_rows=len(child),init_primary=h['child_planned_content_upper'],init_unique=h['parent_unique_content_upper'],init_union=h['parent_union_with_allocation'],init_child_total=h['child_inventory_total_upper'],snapshot_unchanged=True,operations=0),sort_keys=True))

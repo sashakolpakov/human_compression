@@ -1,0 +1,203 @@
+"""One finite opaque copy route; Root runs this after reading its exact Source.
+
+Reuses the established content-addressed objects, part manifests and unchanged
+byte verifier. It never imports an archived program or parses an object body.
+Only a new /private/tmp overlay is writable. This is not a publication grant.
+"""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import os
+import signal
+import stat
+import sys
+import time
+
+
+assert not sys.flags.optimize, 'Assertions are required.'
+START = time.monotonic()
+READ = 0
+FILE_CAP = 4 * 2**20
+COPY_READ_CAP = 160 * 2**20  # Includes planning metadata; verifier remains128MiB.
+signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(TimeoutError('125 seconds')))
+signal.alarm(125)
+
+
+def signature(s):
+    return (s.st_dev, s.st_ino, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+
+
+def charge(n):
+    global READ
+    READ += n
+    assert READ <= COPY_READ_CAP and time.monotonic() - START < 115
+
+
+def regular(path, size=None):
+    assert path.is_absolute() and path.resolve(strict=True) == path
+    st = path.lstat()
+    assert stat.S_ISREG(st.st_mode) and 0 <= st.st_size <= FILE_CAP
+    assert size is None or st.st_size == size
+    return st
+
+
+def read_metadata(ref):
+    path = Path(ref['path'])
+    before = regular(path, ref['bytes'])
+    with path.open('rb') as stream:
+        opened = os.fstat(stream.fileno())
+        body = stream.read(before.st_size + 1)
+        finished = os.fstat(stream.fileno())
+    charge(len(body))
+    assert len(body) == ref['bytes']
+    assert signature(before) == signature(opened) == signature(finished) == signature(path.lstat())
+    assert hashlib.sha256(body).hexdigest() == ref['sha256']
+    return body
+
+
+def descriptor(path):
+    before = regular(path)
+    return dict(path=str(path), bytes=before.st_size)
+
+
+def target(relative):
+    p = Path(relative)
+    assert not p.is_absolute() and p.parts and '..' not in p.parts
+    return OUT / p
+
+
+def write_metadata(relative, body):
+    destination = target(relative)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with destination.open('xb') as stream:
+        stream.write(body)
+
+
+def copy_opaque(ref, relative):
+    source = Path(ref['path'])
+    before = regular(source, ref['bytes'])
+    destination = target(relative)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    digest = hashlib.sha256()
+    count = 0
+    with source.open('rb') as reader, destination.open('xb') as writer:
+        opened = os.fstat(reader.fileno())
+        while True:
+            block = reader.read(65536)
+            if not block:
+                break
+            count += len(block)
+            charge(len(block))
+            assert count <= ref['bytes']
+            digest.update(block)
+            writer.write(block)
+        finished = os.fstat(reader.fileno())
+    assert signature(before) == signature(opened) == signature(finished) == signature(source.lstat())
+    assert count == ref['bytes'] and digest.hexdigest() == ref['sha256']
+    assert destination.stat().st_size == count
+
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--handoff', nargs=3, metavar=('PATH', 'BYTES', 'SHA256'), required=True)
+parser.add_argument('--out', required=True)
+args = parser.parse_args()
+handoff_ref = dict(path=args.handoff[0], bytes=int(args.handoff[1]), sha256=args.handoff[2])
+handoff = json.loads(read_metadata(handoff_ref))
+assert handoff['schema'] == 'FINITE_REVIEWED_INCREMENT438_PUBLICATION_HANDOFF_V1'
+assert handoff['Root_authority'] is False and handoff['issued'] is False
+assert handoff['public_or_canonical_writes'] == 0 and handoff['mathematical_replay'] is False
+selection = json.loads(read_metadata(handoff['selection']))
+assert selection['missing'] == [] and selection['Root_authority'] is False
+assert selection['base_index'] == handoff['expected_public_index']
+BASE = Path(handoff['public_base'])
+base_body = read_metadata(selection['base_index'])
+base = json.loads(base_body)
+pred = json.loads(read_metadata(selection['staged426_index']))
+pred_candidates = json.loads(read_metadata(selection['staged426_candidates']))
+read_metadata(handoff['predecessor426_copy_route'])
+index_body = read_metadata(handoff['proposed_index'])
+index = json.loads(index_body)
+assert base['schema'] == pred['schema'] == index['schema'] == 'REVIEWED_INTAKE_PROGRESS_ARCHIVE_V2'
+assert len(base['parts']) == 36 and len(pred['parts']) == 41 and len(index['parts']) == 50
+assert pred['parts'][:36] == base['parts'] and index['parts'][:41] == pred['parts']
+assert index['mathematical_replay'] is False and index['recursive_historical_closure'] is False
+assert index['counts']['forest_parents'] == 438 and index['counts']['forest_slots'] == 68328
+assert index['counts']['fi22_paid'] == 1471 and index['job155_current']['unpaid'] == 34
+
+# These are only metadata catalogs of opaque objects, never object bodies.
+new_refs = {r['sha256']: r for r in selection['new_objects']}
+pred_refs = {r['sha256']: r for r in pred_candidates['new_objects']}
+assert len(new_refs) == selection['new_unique_objects']
+assert len(pred_refs) == len(pred_candidates['new_objects']) == 535
+new_manifests = {Path(r['path']).name: r for r in selection['new_manifest_refs']}
+assert len(new_manifests) == 9
+manifests = []
+objects = {}
+logical_files = 0
+for number, part in enumerate(index['parts']):
+    relative = part['manifest']['path']
+    if number < 36:
+        physical = BASE / relative
+    elif number < 41:
+        physical = Path(selection['staged426_index']['path']).parent / relative
+    else:
+        physical = Path(new_manifests[Path(relative).name]['path'])
+    ref = dict(path=str(physical), bytes=part['manifest']['bytes'], sha256=part['manifest']['sha256'])
+    body = read_metadata(ref)
+    manifest = json.loads(body)
+    assert manifest['schema'] == 'FINITE_REVIEWED_INTAKE_EVIDENCE_PART_V1'
+    assert manifest['name'] == part['name']
+    assert len(manifest['files']) == manifest['file_count'] <= 512
+    for row in manifest['files']:
+        h = row['sha256']
+        assert len(h) == 64 and set(h) <= set('0123456789abcdef')
+        assert row['object'] == 'objects/' + h and 0 <= row['bytes'] <= FILE_CAP
+        assert h not in objects or objects[h] == row['bytes']
+        objects[h] = row['bytes']
+    logical_files += len(manifest['files'])
+    manifests.append((relative, body))
+assert len(objects) == index['unique_objects'] and sum(objects.values()) == index['unique_bytes']
+assert set(new_refs) <= set(objects) and set(pred_refs) <= set(objects)
+for h, size in objects.items():
+    ref = new_refs.get(h) or pred_refs.get(h) or dict(path=str(BASE / 'objects' / h), bytes=size, sha256=h)
+    assert ref['bytes'] == size and ref['sha256'] == h
+    regular(Path(ref['path']), size)
+
+theory_body = read_metadata(handoff['unchanged_theory_manifest'])
+theory = json.loads(theory_body)
+assert theory['schema'] == 'FINITE_REVIEWED_INTAKE_THEORY_V1'
+assert len(theory['files']) == theory['file_count'] == 11
+verifier_body = read_metadata(handoff['unchanged_public_verifier'])
+invoice = dict(objects=sum(objects.values()), existing36_part_manifests=sum(len(b) for _, b in manifests[:36]),
+               predecessor426_five_part_manifests=sum(len(b) for _, b in manifests[36:41]),
+               new_part_manifests=sum(len(b) for _, b in manifests[41:]), index=len(index_body),
+               theory_manifest=len(theory_body), theory_files=sum(r['bytes'] for r in theory['files']))
+assert invoice == handoff['exact_verifier_read_invoice']
+assert sum(invoice.values()) == handoff['exact_verifier_explicit_READ_bytes']
+assert sum(invoice.values()) + len(verifier_body) == handoff['conservative_project_read_bytes'] <= 128 * 2**20
+
+# Mutation starts only after the complete finite catalog and invoice agree.
+OUT = Path(args.out)
+assert OUT.is_absolute() and OUT.is_relative_to(Path('/private/tmp'))
+assert OUT.parent.resolve(strict=True) == OUT.parent and not OUT.exists()
+OUT.mkdir()
+for relative, body in manifests:
+    write_metadata(relative, body)
+for h, size in sorted(objects.items()):
+    ref = new_refs.get(h) or pred_refs.get(h) or dict(path=str(BASE / 'objects' / h), bytes=size, sha256=h)
+    copy_opaque(ref, 'objects/' + h)
+for row in theory['files']:
+    assert Path(row['object']).parts[0] == 'theory'
+    copy_opaque(dict(path=str(BASE / row['object']), bytes=row['bytes'], sha256=row['sha256']), row['object'])
+write_metadata('theory.json', theory_body)
+write_metadata('verify.py', verifier_body)
+write_metadata('index.json', index_body)
+write_metadata(index['previous_checkpoint'], base_body)
+signal.alarm(0)
+print(json.dumps(dict(status='OPAQUE_OVERLAY_COPIED_NOT_VERIFIED', out=str(OUT), parts=len(manifests),
+                      logical_files=logical_files, unique_objects=len(objects), unique_bytes=sum(objects.values()),
+                      theory_files=11, verifier_explicit_READ_bytes=sum(invoice.values()),
+                      copy_READ_bytes=READ, copy_READ_cap_bytes=COPY_READ_CAP,
+                      Original_operands_decoded=False, mathematical_replay=False,
+                      archived_functions_executed=0, public_or_canonical_writes=0), sort_keys=True))

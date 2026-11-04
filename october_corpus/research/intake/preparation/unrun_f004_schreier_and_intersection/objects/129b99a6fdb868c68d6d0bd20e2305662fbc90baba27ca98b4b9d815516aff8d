@@ -1,0 +1,42 @@
+"""Shared old byte arithmetic and exact PS tuple/IO budget. UNRUN Source."""
+import time,resource,sys
+import retained_math as M
+CAPS=dict(matrix_products=400000,row_images=200000,linear_units=200000,
+          read_bytes=8388608,paths=96,source_bytes=65536,
+          rss_bytes=134217728,seconds=100,output_files=2,output_bytes_each=131072)
+class Limit(RuntimeError):pass
+need=M.need
+class ByteArithmetic:
+    def scalar(self,n):
+            self.tick();need(type(n)is int and n>=0,'nonnegative linear debit')
+            if self.linear+n>CAPS['linear_units']:raise Limit('shared 200000 linear-unit bank')
+            self.linear+=n
+    def multiply(self,a,b):
+            self.tick()
+            if self.products>=CAPS['matrix_products']:raise Limit('400000 complete matrix products')
+            self.products+=1
+            return bytes(sum(a[7*i+k]*b[7*k+j]for k in range(7))%11 for i in range(7)for j in range(7))
+    def image(self,v,a):
+            self.tick()
+            if self.rows>=CAPS['row_images']:raise Limit('200000 complete row images')
+            self.rows+=1
+            return bytes(sum(v[k]*a[7*k+j]for k in range(7))%11 for j in range(7))
+
+class Budget(M.Budget):
+ def __init__(self):
+  super().__init__();self.started=time.monotonic();self.linear=0
+ @property
+ def rows(self):return self.row_images
+ @rows.setter
+ def rows(self,value):self.row_images=value
+ def tick(self):
+  rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+  self.peak=max(self.peak,rss)
+  if rss>112*2**20 or time.monotonic()-self.started>90:raise Limit('shared90s112MiB cooperative bank')
+ def scalar(self,n):return ByteArithmetic.scalar(self,n)
+ def multiply(self,a,b):
+  if type(a)is bytes and type(b)is bytes:return ByteArithmetic.multiply(self,a,b)
+  return M.Budget.multiply(self,a,b)
+ def image(self,row,mark):
+  if type(row)is bytes and type(mark)is bytes:return ByteArithmetic.image(self,row,mark)
+  return M.Budget.image(self,row,mark)
