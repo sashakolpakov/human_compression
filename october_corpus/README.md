@@ -26,6 +26,12 @@ The editorial has no mathematical result to recover.
 The [current intake status](INTAKE_STATUS.json) records the accepted case counts
 and distinguishes them from completed manuscripts and published archives.
 
+The [continuation bundles](research/intake/continuation/README.rst) preserve the
+current inputs, certificate basis and programs needed after local offload.
+[Unpublished mathematical notes](research/intake/history/mathematical_notes/README.rst)
+are retained separately as working material. These additions change storage,
+not the mathematical completion counts or measured compression rates.
+
 | Original | Current stage | Still required |
 |---|---|---|
 | F004 | **127 of 272 q11 jobs complete**. Job 155 has **773 of 807 cases settled**: 157 nongeneration and 616 intersection failures; 34 remain. | Finish the 145 pending jobs, final classification and manuscript. |

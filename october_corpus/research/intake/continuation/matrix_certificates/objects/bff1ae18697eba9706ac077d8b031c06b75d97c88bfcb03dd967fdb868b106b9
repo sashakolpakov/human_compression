@@ -1,0 +1,99 @@
+"""UNRUN bounded metadata constructor. Default FALSE; never decode Original bodies."""
+import argparse,hashlib,json,os,resource,stat,sys,time
+from pathlib import Path
+START=time.monotonic()
+def need(ok,why):
+    if not ok:raise ValueError(why)
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def reference(p,raw):return dict(path=str(p),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+def main():
+    need(sys.flags.ignore_environment and sys.flags.no_site and sys.dont_write_bytecode and not sys.flags.optimize,'EBS/no-O metadata constructor')
+    ap=argparse.ArgumentParser(allow_abbrev=False)
+    ap.add_argument('--inputs',nargs=3,required=True);ap.add_argument('--output-dir',required=True)
+    ap.add_argument('--controls-review',nargs=3);ap.add_argument('--issue',action='store_true')
+    ap.add_argument('--actor');ap.add_argument('--own-model-scope-and-freshness',action='store_true')
+    args=ap.parse_args();issue=args.issue
+    need(not issue or args.actor=='/root' and args.own_model_scope_and_freshness and args.controls_review,
+         'Root alone positively owns all model/scope/freshness duties and actual controls')
+    refs={};read_bytes=0
+    def whole(r):
+        nonlocal read_bytes
+        need(time.monotonic()-START<125 and resource.getrusage(resource.RUSAGE_SELF).ru_maxrss<256*2**20,'metadata125s256MiB')
+        need(type(r)is dict and set(r)=={'path','bytes','sha256'} and type(r['bytes'])is int and 0<=r['bytes']<=2**21,'whole bounded descriptor')
+        p=Path(r['path']);a=p.lstat();need(p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes'],'canonical ordinary input')
+        need(read_bytes+a.st_size<=16*2**20 and len(refs)<128,'prospective metadata read/path caps')
+        raw=p.read_bytes();b=p.lstat();sig=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        need(sig(a)==sig(b) and reference(p,raw)==r and refs.get(str(p),r)==r,'stable exact opaque bytes')
+        refs[str(p)]=r;read_bytes+=len(raw);return raw
+    triple=lambda x:dict(path=x[0],bytes=int(x[1]),sha256=x[2])
+    cfgref=triple(args.inputs);cfg=json.loads(whole(cfgref))
+    for r in cfg['known_scientific_input_refs']:whole(r)
+    mf=json.loads(whole(cfg['Source_manifest']));peer=json.loads(whole(cfg['Source_peer']))
+    need(peer['status']=='SUPPORTED_STATIC_Q11_GENERIC_QUARTET37_SOURCE' and peer['Source_manifest']==cfg['Source_manifest']
+         and peer['blockers']==[] and cfg['program']==mf['roles']['SEARCH']['program'],'exact frozen scientific subjects')
+    control=None
+    if args.controls_review:
+        control=triple(args.controls_review);actual=json.loads(whole(control))
+        need(actual['status']=='SUPPORTED_ACTUAL_Q11_GENERIC_QUARTET37_CONTROLS'
+             and actual['Source_manifest']==cfg['Source_manifest'] and actual['Source_peer']==cfg['Source_peer']
+             and actual['program']==mf['roles']['CONTROLS']['program'] and actual['Original_inputs_loaded']is False
+             and actual['reviewer']not in('/root','/root/forest_resume') and actual['blockers']==[],
+             'compatible actual controls leaf, never a future hash or stdout verdict')
+    out=Path(args.output_dir)
+    need(out.is_absolute() and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh canonical metadata output only')
+    def encoded(name,value):
+        raw=can(value);return raw,reference(out/name,raw)
+    scope=dict(schema='ROOT_GENERIC_Q11_QUARTET_GENERATION_SCOPE_V1',root='/root',Root_authority=issue,adopted=issue,
+      original_job=cfg['original_job'],selector=cfg['selector'],selected_orbit_positions=cfg['selected_orbit_positions'],
+      original_domain_whole_pins=cfg['original_domain_whole_pins'],original_orbit_array_sha256=cfg['original_orbit_array_sha256'])
+    for k in('complete_original_model_frame_member_and_transport_meanings_owned',
+             'all_selector_adoptions_have_exact_per_job_typed_meanings_owned','fresh_cyclic_rows_untrusted_and_directly_rechecked_owned',
+             'same_quartet_prime37_and_projector_theory_owned','generation_only_no_IP_or_settled_case_credit_owned'):scope[k]=issue
+    sb,sr=encoded('Root_scope.json',scope)
+    model=dict(schema='ROOT_IMPORTED_Q11_GENERIC_QUARTET37_MODEL_V1',root='/root',Root_authority=issue,issued=issue,
+      original_job=cfg['original_job'],original_domain_whole_pins=cfg['original_domain_whole_pins'],
+      prime37_theory=cfg['prime37_theory'],cyclic_projector_theory=cfg['cyclic_projector_theory'])
+    for k in('faithful_Original_frame_member_and_transporter_join_owned','quartet_membership_in_this_natural_G2_11_owned',
+             'same_nondegenerate_symmetric_form_and_isometry_action_owned','complete_natural_maximal_cover_and_SU3_line_stabilizer_owned'):model[k]=issue
+    mb,mr=encoded('Root_model_import.json',model)
+    known={r['path']:r for r in cfg['known_scientific_input_refs']}
+    for r in(sr,mr,*([control]if control else [])):known[r['path']]=r
+    plan={k:cfg[k]for k in('program','Source_manifest','original_job','selector','projection','Root_projection_acceptance',
+          'selected_orbit_positions','old_sources','matrix_frame_result','normalization_status','unpaid_manifest',
+          'prime37_theory','cyclic_projector_theory','output')}
+    plan.update(schema='Q11_GENERIC_QUARTET37_SEARCH_PLAN_V1',Root_authority=False,
+      Root_scope=sr,Root_import=mr,cyclic_input_schema='UNTRUSTED_ORIGINAL_QUARTET_CYCLIC_ROWS_V1',
+      require_prior_job20_cyclic_adoption=False,inputs=[known[k]for k in sorted(known)],
+      bootstrap_paths=[str(out/'SEARCH_PLAN.json'),str(out/'Root_gate.json')])
+    pb,pr=encoded('SEARCH_PLAN.json',plan)
+    gate=dict(schema='ROOT_AUTHORIZED_Q11_GENERIC_QUARTET37_V1',root='/root',Root_authority=issue,issued=issue,role='SEARCH',
+      program=cfg['program'],Source_manifest=cfg['Source_manifest'],plan=pr,Source_peer=cfg['Source_peer'],
+      whole_Source_and_protocol_owned=issue,synthetic_only=False,Original_calls_authorized=issue,
+      admission_controls=control,Root_import=mr,current_unpaid_scope_and_no_same_method_replay_owned=issue)
+    gb,gr=encoded('Root_gate.json',gate)
+    need(len(sb)<=32768 and len(mb)<=32768 and len(pb)<=65536 and len(gb)<=8192,'scientific framing bounds')
+    allrefs=dict(known)
+    for r in(pr,gr):allrefs[r['path']]=r
+    prepaid=sum(r['bytes']for r in mf['roles']['SEARCH']['loaded_sources'])+mf['guards'][0]['bytes']+3*mf['guards'][1]['bytes']+512
+    upper=2*sum(r['bytes']for r in allrefs.values())+prepaid
+    need(upper<=8388608 and len(allrefs)<=96,'fresh complete scientific first/closing physical invoice')
+    own=Path(__file__).resolve();ownraw=own.read_bytes();ownref=reference(own,ownraw);whole(ownref)
+    decision=dict(schema='ROOT_F004_GENERIC_GEN_SEARCH_INPUT_CONSTRUCTION_V1',root=args.actor if issue else None,
+      Root_authority=issue,program=ownref,inputs=cfgref,Source_manifest=cfg['Source_manifest'],Source_peer=cfg['Source_peer'],
+      actual_controls_review=control,plan=pr,Root_gate=gr,Root_scope=sr,Root_model_import=mr,
+      scientific_input_paths=len(allrefs),scientific_read_upper=upper,selected_orbit_positions=cfg['selected_orbit_positions'],
+      Original_numerical_bodies_decoded=False,scientific_or_control_calls=0)
+    db,dr=encoded('Root_decision.json',decision)
+    names=['Root_scope.json','Root_model_import.json','SEARCH_PLAN.json','Root_gate.json','Root_decision.json']
+    bodies=[sb,mb,pb,gb,db]
+    need(sum(map(len,bodies))<=262144
+         and read_bytes+sum(r['bytes']for r in refs.values())+sum(map(len,bodies))+len(ownraw)<=16*2**20,
+         'prospective complete metadata readbacks and262144-byte write cap')
+    for r in list(refs.values()):whole(r)
+    out.mkdir()
+    for name,body in zip(names,bodies):
+        with(out/name).open('xb')as stream:need(stream.write(body)==len(body),'whole fresh metadata file')
+        whole(reference(out/name,body))
+    print(can(dict(Root_authority=issue,decision=dr,plan=pr,Root_gate=gr,scientific_read_upper=upper,scientific_calls=0)).decode(),end='')
+
+if __name__=='__main__':main()

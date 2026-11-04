@@ -1,0 +1,132 @@
+"""Independent stdlib/hash/record audit only; no represented Source activation."""
+import base64,gzip,hashlib,json,os,resource,stat,struct,sys,time
+from pathlib import Path
+D=Path('/private/tmp/l026_product_witness_projection');start=time.monotonic();readrefs={};raws={};readbytes=0
+
+def can(x):return(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def dec(b):
+ def pairs(xs):
+  d={}
+  for k,v in xs:assert k not in d;d[k]=v
+  return d
+ return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+def whole(r):
+ global readbytes
+ if r['path']in raws:assert readrefs[r['path']]==r;return raws[r['path']]
+ p=Path(r['path']);a=p.lstat();assert p.resolve()==p and stat.S_ISREG(a.st_mode)and a.st_nlink==1 and a.st_size==r['bytes']
+ assert readbytes+r['bytes']<64*2**20 and len(readrefs)<512
+ with p.open('rb')as f:b=os.fstat(f.fileno());v=f.read(r['bytes']+1);c=os.fstat(f.fileno())
+ sig=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+ assert sig(a)==sig(b)==sig(c)==sig(p.lstat()) and ref(p,v)==r
+ readrefs[r['path']]=r;raws[r['path']]=v;readbytes+=len(v);return v
+p=dec((D/'plan.json').read_bytes());bill=dec((D/'read_invoice.json').read_bytes());h=dec((D/'handoff.json').read_bytes())
+assert ref(D/'project.py')==p['program']==h['program']==bill['program']
+assert ref(D/'plan.json')==h['plan']==bill['plan']
+for r in bill['physical_inputs']:whole(r)
+assert len(readrefs)==56 and sum(r['bytes']for r in readrefs.values())*2+p['program']['bytes']==23898232==bill['complete_first_final_bytes_including_Source_bootstrap']
+def role(k):
+ m=p['roles'][k];assert m['logical']['bytes']==m['physical']['bytes']and m['logical']['sha256']==m['physical']['sha256'];return whole(m['physical'])
+def doc(k):return dec(role(k))
+partner=doc('partner_adoption');stage=doc('partner_stage');storage=doc('partner_preservation');product=doc('product_adoption');pst=doc('product_stage');negative=doc('negative_adoption');resolution=doc('resolution_adoption');rstage=doc('resolution_stage')
+for d in [partner,stage,product,pst,negative,resolution,rstage]:assert d['root']=='/root'and d['adopted']is True
+scope=p['scope_digest'];assert all(d['scope_digest']==scope for d in [partner,stage,storage,product,pst,negative,resolution,rstage])
+assert partner['stage_acceptance']==p['roles']['partner_stage']['logical']and product['stage_acceptance']==p['roles']['product_stage']['logical']and resolution['stage_acceptance']==p['roles']['resolution_stage']['logical']
+assert negative['source_product_adoption']==p['roles']['product_adoption']['logical']and negative['nongenerating_orbits']==17688 and negative['remaining_free_orbits_unresolved']==28908 and negative['all_original_premises_retained']is True
+it=doc('input_theorem');pit=doc('product_input_theorem');family=doc('family_plan')
+assert it['adopted']is True and it['root']=='/root'and it['scope_digest']==scope and it['mathematical_imports']==family['mathematical_imports']
+assert stage['program']==p['roles']['partner_worker']['logical']and stage['partner_core']==p['roles']['partner_core']['logical']and stage['family_plan']==p['roles']['family_plan']['logical']and stage['input_theorem']==p['roles']['input_theorem']['logical']
+assert stage['scientific_Root_release']==p['roles']['scientific_Root_release']['logical']and stage['named_model_Reader_action_word_graph_global_class_two_fibre_and_H_B_qualifications_retained']is True
+assert stage['canonical_records']==it['operand_roles']['roster']==p['roles']['canonical_unordered_records']['logical']
+assert pst['input_theorem']==p['roles']['product_input_theorem']['logical']and pit['mathematical_imports']==dict(unordered_partner_involution=p['roles']['resolution_adoption']['logical'],unordered_partner_witnesses_and_masses=p['roles']['partner_adoption']['logical'])
+for k,v in it['mathematical_imports'].items():assert p['roles']['import_'+k]['logical']==v;role('import_'+k)
+assert product['outputs']['selected_records']==p['roles']['selected_product_records']['logical']and product['outputs']['values']==p['roles']['product_mass_values']['logical']
+assert partner['outputs']['partner_raw_u32']==p['roles']['raw_partner_values']['logical']and partner['outputs']['unordered_mass_u16']==p['roles']['unordered_mass_values']['logical']
+assert negative['projection']['free_unresolved_records']==p['roles']['free_records']['logical']and negative['projection']['nongenerating_records']==p['roles']['negative_records']['logical']
+assert negative['projection_inverse']==p['roles']['negative_inverse']['logical']and negative['premises']==p['roles']['negative_premises']['logical'];doc('negative_inverse');doc('negative_premises')
+records=lambda name:list(struct.iter_unpack('<IH',role(name)))
+full=records('selected_product_records');free=records('free_records');excluded=records('negative_records')
+assert len(full)==46596 and len(free)==28908 and len(excluded)==17688 and sorted(free+excluded)==full
+assert all(full[i-1][0]<full[i][0]for i in range(1,len(full)))and all(m==1024 for o,m in free)and all(0<m<1024 for o,m in excluded)
+assert sum(m for o,m in full)==36486450 and sum(m for o,m in free)==29601792
+assert b''.join(struct.pack('<IH',*row)for row in sorted(free+excluded))==role('selected_product_records')
+canonical=role('canonical_unordered_records');assert len(canonical)==5*89069
+owners=[struct.unpack_from('<I',canonical,5*i)[0]for i in range(89069)];assert owners==sorted(set(owners))
+products=role('product_mass_values');rawpartner=role('raw_partner_values');mass=role('unordered_mass_values')
+assert len(products)==len(mass)==1000356 and len(rawpartner)==2000712
+for o,m in full:assert struct.unpack_from('<H',products,2*o)[0]==m
+wanted={o:i for i,(o,m)in enumerate(free)};finalids={o for o,m in full}
+witness=bytearray(16*28908);locator=bytearray(8*28908);seen=set();cursor=0;partno=1;totalmass=0;matched=0;metrics=[];bodycount=0;maxdecode=0;maxvirtual=0;allcaptured=0;parts_index=[]
+
+def loadbank(mapping):
+ global maxdecode
+ raw=whole(mapping['physical']);assert ref(mapping['logical']['path'],raw)==mapping['logical']
+ v=gzip.decompress(raw);assert len(v)<=8*2**20;maxdecode=max(maxdecode,len(v));return dec(v)
+def actual(table,pair,mode):
+ global allcaptured
+ refs=pair['actual'][mode];cap=dec(table[refs['capture']['path']][1]);guard=dec(table[refs['receipt']['path']][1]);out=dec(table[refs['stdout']['path']][1])
+ for r in [*refs['other_guard_bodies'],refs['stderr']]:assert table[r['path']][0]==r
+ rref=pair[mode]['result.json'];result=dec(table[rref['path']][1]);cmd=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',stage['program']['path'],'--mode',mode,'--plan',stage['family_plan']['path'],stage['family_plan']['sha256'],'--root-review',stage['scientific_Root_release']['path'],stage['scientific_Root_release']['sha256'],'--part',str(pair['part'])]
+ if mode=='check':cmd+=['--supplied',pair['produce']['certificate.bin']['path'],pair['produce']['certificate.bin']['sha256']]
+ cmd+=['--out',str(Path(rref['path']).parent)]
+ assert cap['root']==cap['actor']=='/root'and cap['actual_tool']['exit_code']==cap['full_tool_return']['exit_code']==0
+ assert cap['issued_argv']==cap['child_argv']and cap['issued_argv'][cap['issued_argv'].index('--')+1:]==guard['command']==cmd
+ assert guard['status']=='PASS'and guard['stop']=='RETURNED'and guard['returncode']==0 and guard['error']is None and guard['cleanup']['remaining']==guard['cleanup']['errors']==[]
+ assert result['schema']=='ROOT_L026_UNORDERED_PARTNER_WITNESS_RETURN_V1'and result['status']=='VERIFIED_WHOLE_SELECTED_ORIGINAL_PARTNER_WITNESSES'and result['actor']==result['root']=='/root'
+ assert result['program']==stage['program']and result['plan']==stage['family_plan']and result['Root_review']==stage['scientific_Root_release']and result['part']==pair['part']and result['mode']==mode
+ assert result['certificate']==pair[mode]['certificate.bin']and result['facts']==pair[mode]['facts.json']and result['original_partner_points_checked']is True and result['old_Source_verdict_transferred']is False
+ assert out['result']==rref['path']and out['status']==result['status']and out['part']==pair['part']and out['mode']==mode
+ allcaptured+=1;return result
+assert len(p['banks'])==len(storage['scientific_evidence_banks'])==8
+for bank,oldbank in zip(p['banks'],storage['scientific_evidence_banks']):
+ for key,oldkey in [('evidence','bank'),('values','value_bank'),('manifest','manifest')]:assert bank[key]['logical']==oldbank[oldkey]
+ assert oldbank['all_pair_and_guard_bodies_checked']is True and bank['part_range']==oldbank['parts']and bank['record_range']==oldbank['record_range']
+ evidence=loadbank(bank['evidence']);values=loadbank(bank['values']);manifest=dec(whole(bank['manifest']['physical']))
+ assert evidence['schema']=='L026_PARTNER_GENUINE_PAIR_BODY_SHARD_V1'and values['schema']=='L026_PARTNER_COMPLETE_VALUE_SHARD_V1'and evidence['scope_digest']==values['scope_digest']==scope
+ assert manifest['evidence']==bank['evidence']['logical']and manifest['values']==bank['values']['logical']and manifest['all_pair_bodies_preserved']is True
+ assert values['checked_results']==manifest['checked_results']and [manifest['start_part'],manifest['stop_part']]==bank['part_range']and [manifest['start'],manifest['stop']]==bank['record_range']
+ table={};vt=0
+ for document in evidence['documents']+values['documents']:
+  r=document['ref'];raw=base64.b64decode(document['raw_base64'],validate=True);assert len(raw)<=2**21 and ref(r['path'],raw)==r
+  if r['path']in table:assert table[r['path']]==(r,raw)
+  else:table[r['path']]=(r,raw);vt+=len(raw)
+ assert vt<=8*2**20;maxvirtual=max(maxvirtual,vt);bodycount+=len(table)
+ assert len(evidence['documents'])==bank['evidence_body_count']
+ for pair in evidence['pairs']:
+  assert pair['part']==partno and pair['start']==cursor and pair['stop']>cursor
+  prod,check=actual(table,pair,'produce'),actual(table,pair,'check')
+  assert prod['subject']==check['subject']and check['subject']['start']==cursor and check['subject']['stop']==pair['stop']and check['subject']['original_B_scope']==scope
+  assert check['subject']['mathematical_imports']==it['mathematical_imports']and check['subject']['original_model_Reader_action_word_graph_global_class_and_two_fibre_premises_retained']is True
+  assert pair['check']['result.json']==stage['checked_results'][partno-1]
+  checked=table[pair['check']['certificate.bin']['path']][1];supplied=table[pair['produce']['certificate.bin']['path']][1]
+  assert checked==supplied and len(checked)==16*(pair['stop']-cursor)
+  subtotal=0
+  for local,row in enumerate(struct.iter_unpack('<IIHHHH',checked)):
+   o,partner_id,umass,x,y,z=row;assert o==owners[cursor+local]and 0<=partner_id<500178 and 0<umass<=1024 and max(x,y,z)<3510
+   assert struct.unpack_from('<I',rawpartner,4*o)[0]==partner_id and struct.unpack_from('<H',mass,2*o)[0]==umass
+   subtotal+=umass
+   if o in finalids:matched+=1
+   if o in wanted:
+    i=wanted[o];assert i not in seen and umass==1024;seen.add(i)
+    literal=checked[16*local:16*(local+1)];assert struct.pack('<IIHHHH',*row)==literal
+    witness[16*i:16*(i+1)]=literal;struct.pack_into('<HHI',locator,8*i,bank['index'],partno,local)
+    assert struct.unpack_from('<HHI',locator,8*i)==(bank['index'],partno,local)
+  fraw=table[pair['check']['facts.json']['path']][1];assert fraw==table[pair['produce']['facts.json']['path']][1]
+  facts=dec(fraw);assert facts['unordered_owners']==pair['stop']-cursor and facts['unordered_triangle_mass']==subtotal
+  parts_index.append(dict(part=pair['part'],bank=bank['index'],start=cursor,stop=pair['stop'],checked_result=pair['check']['result.json'],checked_certificate=pair['check']['certificate.bin'],producer_certificate=pair['produce']['certificate.bin']))
+  cursor=pair['stop'];partno+=1;totalmass+=subtotal
+ metrics.append(dict(bank=bank['index'],parts=len(evidence['pairs']),logical_bodies=len(table),virtual_bytes=vt))
+ del table,evidence,values
+ peak=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin' else 1024);assert peak<256*2**20 and time.monotonic()-start<150
+assert cursor==89069 and partno==230 and totalmass==72972900 and matched==46596 and len(seen)==28908 and allcaptured==458
+assert len(witness)==462528 and len(locator)==231264
+for r in readrefs.values():assert ref(r['path'])==r
+index=dict(schema='L026_FREE_PRODUCT_WITNESS_CERTIFICATE_INDEX_V1',parts=parts_index,banks=p['banks'],free_record_source=p['roles']['free_records'],all_original_qualifications=p['qualified_as'])
+indexbytes=len(can(index))
+# A conservative64KiB report allowance exceeds all56 serialized input refs plus the fixed report fields/qualification.
+assert len(can(list(readrefs.values())))+8192<65536
+outputupper=len(witness)+len(locator)+indexbytes+65536
+assert outputupper<4*2**20
+observations=dict(schema='INDEPENDENT_L026_FREE_WITNESS_METADATA_OBSERVATIONS_V1',reviewer='/root/middle_dictionary_author',program=p['program'],plan=h['plan'],physical_inputs=56,first_pass_bytes=sum(r['bytes']for r in readrefs.values()),complete_candidate_read_invoice=23898232,old_actual_pairs=229,old_actual_modes_checked=458,banks=metrics,logical_body_total=bodycount,maximum_decoded_bank_bytes=maxdecode,maximum_virtual_body_bytes=maxvirtual,complete_unordered_owners=89069,unordered_mass=72972900,all_product_owners=46596,all_product_mass=36486450,old_negative_owners=17688,free_unresolved_owners=28908,free_middle_mass=29601792,full_negative_free_6B_inverse_equal=True,full_free_16B_locator_inverse_equal=True,independently_derived_byte_predictions_not_candidate_outputs=dict(witnesses=ref('NOT_A_WRITTEN_CANDIDATE_OUTPUT/free_witnesses.bin',bytes(witness)),locators=ref('NOT_A_WRITTEN_CANDIDATE_OUTPUT/free_locators.bin',bytes(locator))),certificate_index_bytes=indexbytes,all_four_outputs_upper_bytes=outputupper,all_original_premises_imported=True,candidate_oldSource_or_scientific_calls=0,S_W_writes=0)
+f=D/'independent_observations.json';f.write_bytes(can(observations));print(json.dumps(dict(observations=ref(f),input_count=len(readrefs),candidate_first_final_reads=23898232,maxdecode=maxdecode,maxvirtual=maxvirtual,logical_bodies=bodycount,paired_runs=allcaptured,expected_binary_hashes=observations['independently_derived_byte_predictions_not_candidate_outputs'])))

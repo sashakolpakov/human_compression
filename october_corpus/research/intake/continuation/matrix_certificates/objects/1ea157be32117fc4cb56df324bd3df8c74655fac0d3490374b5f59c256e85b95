@@ -1,0 +1,166 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');G=M/'f009_bounded_io_transition';K=M/'resource_profiles/bounded_output';C=G/'cohorts/cohort_from0426';A=G/'actual/cohort0426_batch00_prepare_suppliers';S=Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0426/parents0426_0428');RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+ global READ
+ p=Path(p);key=str(p)
+ if key in RAW:need(r is None or PINS[key]==r,'one exact edition');return RAW[key]
+ before=p.lstat();need(before.st_size<=4*2**20 and READ+before.st_size<=16*2**20 and len(RAW)<160,'bounded metadata reader');b=p.read_bytes();after=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns);need(sig(before)==sig(after)and len(b)==before.st_size,'whole stable bytes');rr=ref(p,b);need(r is None or rr==r,'exact input pin');RAW[key]=b;PINS[key]=rr;READ+=len(b);return b
+
+def pin(p):read(p);return PINS[str(p)]
+def exact(r):return read(r['path'],r)
+def doc(p,r=None):return dec(read(p,r))
+def pick(b,keys):o=obj(b);return{k:dec(o[k])for k in keys}
+def can(j):return(json.dumps(j,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def triple(a,k):i=a.index(k);return dict(path=a[i+1],bytes=int(a[i+2]),sha256=a[i+3])
+def api(sdkpath,rawdir):
+ sdk=doc(sdkpath);i=doc(rawdir/'issued.json');frames=sdk['all_genuine_api_frames'];a=sdk['issued_argv'];t=sdk['actual_tool']
+ need(sdk['root']==sdk['actor']==i['root']=='/root'and a==i['argv']==sdk['child_argv'],'Root argv');need(i['tool_arguments']==sdk['issued_tool_arguments']and i['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==a,'whole raw kwargs')
+ need(len(frames)==1 and doc(rawdir/'frame_0000.json')==frames[0]==sdk['full_initial_tool_return']==sdk['full_tool_return']and t['synchronous']is True and t['handle']is None and t['exit_code']==frames[0]['exit_code']and t['initial_chunk']==t['terminal_chunk']==frames[0]['chunk_id'],'genuine synchronous exact frame')
+ return sdk,frames[0]
+
+FG=M/'manuscript_scope/F004/worker_interfaces/quartet_generation/operational';RUN=FG/'actual/job0155_first8';HERE=RUN/'actual_review';DATA=Path('/private/tmp/q11_generic_quartet37/job0155_first8')
+mf=doc(FG/'Source_manifest.json');mfr=pin(FG/'Source_manifest.json');peer=doc(FG/'source_review/reuse_integer_only.json');peerref=pin(FG/'source_review/reuse_integer_only.json')
+controlref=pin(FG/'actual/controls32/actual_review/reuse_integer_only.json');control=doc(controlref['path'],controlref)
+need(mfr['sha256']=='d00478c441ccd0b56e5179b3bc8b82fe6b5e9a3b53f6e26bb2b686e14753bd1f'and peerref['sha256'].startswith('1b235eb7')and controlref['sha256'].startswith('724e8b22'),'exact unchanged new Source and fresh32 actual')
+need(peer['status']=='SUPPORTED_STATIC_Q11_GENERIC_QUARTET37_SOURCE'and peer['blockers']==[]and control['status']=='SUPPORTED_ACTUAL_Q11_GENERIC_QUARTET37_CONTROLS'and control['blockers']==[]and control['Source_peer']==peerref,'import exact Source/control review scopes')
+positions=[2,32,40,104,128,183,230,254];reports={};bodies={}
+for role,label,plandir,planfile,expected_read,expected_products,expected_rows,expected_linear,sdksha in(
+ ('SEARCH','search','inputs','SEARCH_PLAN.json',4313663,3965,178,52546,'1852b5fe82a632e97d4a54652f7979f2a6d1c9518af4d86efaa59eed14a717b4'),
+ ('DIRECT','direct','direct_inputs','DIRECT_PLAN.json',4383746,418,50,18456,'db9ce079f41b4d488229038a6101d22f24e0f9585020156c293a806703f8c42e')):
+ plan=doc(RUN/plandir/planfile);planref=pin(RUN/plandir/planfile);gate=doc(RUN/plandir/'Root_gate.json');gateref=pin(RUN/plandir/'Root_gate.json')
+ need(plan['schema']=='Q11_GENERIC_QUARTET37_'+role+'_PLAN_V1'and plan['program']==mf['roles'][role]['program']and plan['Source_manifest']==mfr and plan['original_job']==[155,4]and plan['selected_orbit_positions']==positions,'exact same-job new plan')
+ need(gate['schema']=='ROOT_AUTHORIZED_Q11_GENERIC_QUARTET37_V1'and gate['root']=='/root'and gate['Root_authority']is gate['issued']is gate['Original_calls_authorized']is gate['whole_Source_and_protocol_owned']is gate['current_unpaid_scope_and_no_same_method_replay_owned']is True and gate['synthetic_only']is False,'positive exact Root scientific role')
+ need(gate['role']==role and gate['program']==mf['roles'][role]['program']and gate['Source_manifest']==mfr and gate['Source_peer']==peerref and gate['admission_controls']==controlref and gate['plan']==planref,'exact Source/actual32/plan gate joins')
+ sdk,frame=api(RUN/'Root_SDK'/(label+'_v1.json'),RUN/'api'/('Root_f004_job0155_first8_'+label+'_v1'));sdkref=pin(RUN/'Root_SDK'/(label+'_v1.json'))
+ need(sdkref['sha256']==sdksha and frame['exit_code']==0,'genuine first scientific call')
+ argv=sdk['issued_argv'];child=argv[argv.index('--')+1:];guard=DATA/(label+'_guard')
+ need(child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',plan['program']['path']],'exact ordinary EBS entry')
+ for name,r in(('--manifest',mfr),('--plan',planref),('--gate',gateref)):
+  i=child.index(name);need(child[i+1:i+4]==[r['path'],str(r['bytes']),r['sha256']],'complete actual descriptor '+name)
+ need(dec(frame['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json')),'genuine guard PASS terminal')
+ st=doc(guard/'started.json');rc=doc(guard/'receipt.json');stdout=read(guard/'stdout.log');stderr=read(guard/'stderr.log')
+ limits=dict(admit_disk=10737418240,admit_ram=3892314112,disk_floor=8589934592,ram_floor=3221225472,total_rss=134217728,wall_seconds=125.,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+ need(st['command']==rc['command']==child and st['limits']==rc['limits']==limits and st['admission']==rc['admission'],'unchanged literal matrix profile, including exact3.625GiB RAM admission')
+ need(len(st['identities'])==len(rc['identities'])==1 and all(st['identities'][0][k]==rc['identities'][0][k]for k in('pid','birth','initial_parent','group','session'))and st['identities'][0]['pid']==st['identities'][0]['group']==st['identities'][0]['session'],'same birth-pinned child')
+ need(rc['status']=='PASS'and rc['stop']=='RETURNED'and rc['returncode']==0 and rc['error']is None and rc['cleanup']['remaining']==rc['cleanup']['errors']==[]and stderr==b''and rc['logs']==dict(stdout=len(stdout),stderr=0),'whole genuine successful guard')
+ need(rc['seconds']<125 and rc['peaks']['total_rss']<=134217728 and rc['admission']['free_disk']>=10737418240 and rc['peaks']['min_free_disk']>=8589934592 and rc['admission']['available_ram']>=3892314112 and rc['peaks']['min_available_ram']>=3221225472,'sampled unchanged resource contract')
+ actualout=dec(stdout);resultref=actualout['output'];raw=exact(resultref);fields=obj(raw)
+ header=pick(raw,('schema','status','program','Source_manifest','plan','Root_gate','original_job','selector','paid_credit','IP_claim','new_linear_scalar_units','resources'))
+ need(header['program']==plan['program']and header['Source_manifest']==mfr and header['plan']==planref and header['Root_gate']==gateref and header['original_job']==[155,4]and header['selector']==plan['selector']and header['paid_credit']==0 and header['IP_claim']is False,'exact uncredited result subject')
+ need(header['new_linear_scalar_units']==expected_linear<=200000 and header['resources']['matrix_products']==expected_products<=400000 and header['resources']['row_images']==expected_rows<=200000 and header['resources']['read_units_with_prepaid_loaders']==expected_read<=8388608 and header['resources']['seconds']<125 and header['resources']['peak_self_RSS_bytes']<134217728,'actual finite operation/linear/read/selfresource counters')
+ if role=='SEARCH':
+  sh=pick(raw,('target_positions','visited_positions','proposed_GEN_positions','finite_word_misses','cyclic_inconclusive','unvisited_positions','stop','original_domain_whole_pins'))
+  need(sh['target_positions']==sh['visited_positions']==sh['proposed_GEN_positions']==positions and sh['finite_word_misses']==sh['cyclic_inconclusive']==sh['unvisited_positions']==[]and sh['stop']is None and header['status']=='FINITE_SELECTION_COMPLETED','all8 completed new proposals without misses')
+  records=arr(fields['records']);need(len(records)==8,'eight whole opaque records')
+  recordpins=[]
+  for p,record in zip(positions,records):
+   scalar=pick(record,('original_orbit_position','representative_J_index','original_orbit_row_sha256','attempts','pool_size','outcome'))
+   need(type(scalar['original_orbit_position'])is int and scalar['original_orbit_position']==p and scalar['outcome']=='UNTRUSTED_GENERATION_PROPOSAL'and 1<=scalar['attempts']<=scalar['pool_size']<=128,'typed once-only selected record and finite pool')
+   need(obj(record)['cyclic']!=b'null'and obj(record)['prime37']!=b'null','both opaque proof carriers present')
+   recordpins.append(dict(position=p,representative_J_index=scalar['representative_J_index'],original_orbit_row_sha256=scalar['original_orbit_row_sha256'],opaque_record_sha256=hashlib.sha256(record).hexdigest(),attempts=scalar['attempts'],pool_size=scalar['pool_size']))
+  bodies['domain']=sh['original_domain_whole_pins'];bodies['records']=recordpins
+ else:
+  dh=pick(raw,('verified_GEN_positions','finite_word_misses','cyclic_inconclusive','unvisited_positions','acquisition_or_RREF_or_candidate_search_calls','search_result'))
+  need(dh['verified_GEN_positions']==positions and dh['finite_word_misses']==dh['cyclic_inconclusive']==dh['unvisited_positions']==[]and dh['acquisition_or_RREF_or_candidate_search_calls']==0 and header['status']=='VERIFIED_SUPPLIED_EQUATIONS','all8 supplied-only equation verifications')
+  need(dh['search_result']==reports['SEARCH']['result']==plan['search_result']and plan['search_plan']==reports['SEARCH']['plan']and plan['search_gate']==reports['SEARCH']['Root_gate'],'exact whole producer data, no verdict substitution')
+ inputs={r['path']:r for r in plan['inputs']};need(len(inputs)==len(plan['inputs']),'one version per declared path')
+ for r in(planref,gateref):inputs[r['path']]=r
+ need(set(inputs)=={r['path']for r in plan['inputs']}|set(plan['bootstrap_paths']),'complete declared bootstrap/physical closure')
+ for r in inputs.values():exact(r)
+ for r in mf['roles'][role]['loaded_sources']+mf['guards']:exact(r);need(r['path']in inputs,'all actually loaded Source/guard pins included')
+ loader=mf['roles'][role]['loader_read_prepaid_upper'];total=2*sum(r['bytes']for r in inputs.values())+loader
+ need(total==expected_read,'independently reconstructed complete first/closing and loader reads')
+ imported=doc(gate['Root_import']['path'],gate['Root_import']);scope=doc(plan['Root_scope']['path'],plan['Root_scope'])
+ need(imported['schema']=='ROOT_IMPORTED_Q11_GENERIC_QUARTET37_MODEL_V1'and imported['root']=='/root'and imported['Root_authority']is imported['issued']is True and imported['original_job']==[155,4]and imported['original_domain_whole_pins']==bodies['domain'],'same Root model/frame/domain meanings')
+ for flag in('faithful_Original_frame_member_and_transporter_join_owned','quartet_membership_in_this_natural_G2_11_owned','same_nondegenerate_symmetric_form_and_isometry_action_owned','complete_natural_maximal_cover_and_SU3_line_stabilizer_owned'):need(imported[flag]is True,'explicit imported premise '+flag)
+ need(imported['prime37_theory']==plan['prime37_theory']and imported['cyclic_projector_theory']==plan['cyclic_projector_theory'],'same attributed generation theorem inputs')
+ need(scope['Root_authority']is scope['adopted']is True and scope['selected_orbit_positions']==positions and scope['selector']==plan['selector']and scope['original_domain_whole_pins']==bodies['domain'],'exact same current-unpaid Root scope')
+ selector=doc(plan['selector']['path'],plan['selector']);need(selector['unresolved_positions']==58 and plan['selector']['sha256'].startswith('987324e2'),'unchanged accepted selector, no payment')
+ reports[role]=dict(actual_SDK=sdkref,raw_directory=str(RUN/'api'/('Root_f004_job0155_first8_'+label+'_v1')),program=plan['program'],Source_manifest=mfr,plan=planref,Root_gate=gateref,Root_import=gate['Root_import'],Root_scope=plan['Root_scope'],selector=plan['selector'],result=resultref,inputs=list(inputs.values()),read_upper=total,matrix_products=expected_products,row_images=expected_rows,new_linear_scalar_units=expected_linear,guard={k:pin(guard/k)for k in('started.json','receipt.json','stdout.log','stderr.log')},guard_seconds=rc['seconds'],sampled_peak_rss=rc['peaks']['total_rss'])
+for name,expectedhash,success in(('search_authorities_v1','173553',False),('search_authorities_v2','0cb06fcf',True),('direct_authorities_v1','3711ac54',True)):
+ sdk,frame=api(RUN/'Root_SDK'/(name+'.json'),RUN/'api'/('Root_f004_job0155_first8_'+name))
+ need(pin(RUN/'Root_SDK'/(name+'.json'))['sha256'].startswith(expectedhash)and(frame['exit_code']==0)is success,'genuine authority history '+name)
+ if not success:need('ValueError: stable exact opaque bytes'in frame['output']and 'cfgref=triple(args.inputs)'in frame['output'],'preserved initial metadata setup failure at configuration read')
+argumentref=mf['original_method_proof'];argument=exact(argumentref)
+for r in(plan['prime37_theory'],plan['cyclic_projector_theory']):exact(r)
+for path,body in list(RAW.items()):need(Path(path).read_bytes()==body,'closing exact whole evidence')
+def save(name,value):
+ body=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();path=HERE/name
+ with path.open('xb')as f:f.write(body)
+ return ref(path,body)
+evidence=save('evidence.json',dict(schema='Q11_GENERIC_QUARTET37_FIRST8_ACTUAL_PAIR_EVIDENCE_V1',reviewer='/root/mathematical_review',Root_authority=False,reports=reports,record_identities_and_opaque_hashes=bodies['records'],pins=list(PINS.values()),Original_matrix_basis_word_or_prime_values_decoded=False,represented_functions_executed=False))
+leaf=dict(schema='Q11_GENERIC_QUARTET37_FIRST8_ACTUAL_PAIR_INDEPENDENT_REUSE_V1',status='SUPPORTED_ACTUAL_CONDITIONAL_GEN_EQUATIONS',reviewer='/root/mathematical_review',Root_authority=False,blockers=[],
+ Source_manifest=mfr,Source_peer=peerref,actual_controls_review=controlref,argument=argumentref,original_job=[155,4],positions=positions,search=reports['SEARCH'],direct=reports['DIRECT'],
+ whole_source_input_command_raw_API_guard_and_output_joins_verified=True,all8_supplied_GEN_equations_supported=True,conditional_generation_implication_supported=True,
+ direct_acquisition_or_RREF_or_candidate_search_calls=0,Original_matrix_basis_word_or_prime_values_decoded=False,represented_functions_or_numerical_predicates_executed=False,
+ IP_claim=False,case_adoption_issued=False,paid_credit=0,whole_job_or_manuscript_credit=0,new_conjecture_Lean_or_compression_credit=0,finite_evidence=evidence,
+ qualification=[
+  'Both genuine first-science-v1 roles authenticate exact complete SDK/raw intent/frame, ordinary EBS child and unchanged5adf/5c7 matrix guard, one birth-pinned process, admission/limits/cleanup, Source d004/peer1b235/fresh32actual724e, all declared whole inputs and outputs. The earlier search_authorities_v1 digest error is retained as metadata setup failure before any scientific role; corrected authorityv2 is separate and no successful science was replayed.',
+  'The new SEARCH completed exactly the eight selected unpaid job155 positions with full cyclic/prime37 proposal records and no misses/unvisited suffix. DIRECT consumed that exact whole search result/plan/gate and reports all eight supplied equation verifications, with acquisition/RREF/candidate-search calls0. All Original matrices, basis rows, generator words and prime-word values remained opaque to this reviewer; only scalar subject/outcome/resource metadata and whole raw hashes were inspected.',
+  'The accepted source argumentf1cc combines the numerically associated endpoint rank-one projector, genuine seven-row orbit basis/right inverse/parent equations and a same-quartet nonidentity order37 witness. Its full-matrix-algebra argument yields irreducibility; the borrowed complete natural-G2(11) maximal-overgroup/line-stabilizer theorem then yields GEN. This implication remains conditional on exact Root-owned natural model/faithful frame/member/isometry/nondegenerate-form/maximal-cover and complete Original-domain/member/transporter meanings, which stay explicit and attributed.',
+  'Complete first/closing input and loader accounting reconstructs4313663 SEARCH and4383746 DIRECT read units. Actual counters are3965/418 matrix products,178/50 row images and52546/18456 new linear units. Exact old guard128MiB/125s,10GiB disk and3892314112-byte RAM admission remains unchanged; its sampled observations and worker self-RSS are different measurements, not kernel quotas.',
+  'The selector remains its accepted58-unpaid987324 body. These eight conditional GEN equation certificates prove neither end intersection nor rank-four IP, full tuple equivalence, accepted cases, a completed prefix job or the manuscript census. Root mathematical applications/adoption and the remaining IP/end/case duties are separate; this review issues no payment or conjecture/Lean/compression credit.',
+  'Reviewer authored the imported static Source/proof review and earlier related abstract proof legs and discussed control boundaries; reviewer authored none of the executed operational bodies or32-control implementation and executed no represented functions. The original theorem/classification and historical arithmetic premises are borrowed in their exact recorded scopes.'
+ ])
+print(json.dumps(save('reuse_integer_only.json',leaf),sort_keys=True))

@@ -6,6 +6,30 @@ certificates are preserved with identical Git modes and contents. Their paths
 are relative to this directory unless a record explicitly identifies a
 historical commit or a private source location.
 
+## Keeping October off the local disk
+
+An independent partial clone can retain the umbrella files and November corpus
+without downloading October's file contents:
+
+```sh
+git clone --filter=blob:none --no-checkout https://github.com/sashakolpakov/human_compression.git
+cd human_compression
+git sparse-checkout set --cone november_corpus scripts
+git checkout main
+```
+
+When space permits, `git sparse-checkout add october_corpus` restores the corpus
+from GitHub. The [continuation bundles](research/intake/continuation/README.rst)
+preserve current case inputs and certificate data; their guides explain the
+archive formats and restoration boundaries. Historical absolute paths require
+deliberate restoration and fresh runtime admission before computations resume.
+The archives add no completed cases or mathematical verification.
+
+Original paper downloads remain external dependencies. Their URLs, edition
+hashes and access qualifications are retained in the
+[source register](research/intake/maintenance/original_sources_105_manuscripts_106_components.json).
+The two recorded private-access sources require their original access arrangements.
+
 ## Current entry points
 
 Use a full-history clone. From the repository root:
