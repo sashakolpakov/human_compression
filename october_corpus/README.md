@@ -111,7 +111,7 @@ using a cubic relation of order 133 and
 the absence of a common rational invariant line. Separate arithmetic checks
 and an independent audit of the ledger append passed. The preceding batch
 of 713 obstructions and every earlier disposition are preserved.
-F004's q11 register now has **126 complete jobs out of 272**, with **146 pending**.
+F004's q11 register now has **127 complete jobs out of 272**, with **145 pending**.
 The full classification and manuscript remain unfinished.
 
 The following job 20 paragraphs describe an **earlier checkpoint with thirteen
