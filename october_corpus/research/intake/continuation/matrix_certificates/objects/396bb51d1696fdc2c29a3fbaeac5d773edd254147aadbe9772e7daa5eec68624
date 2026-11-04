@@ -1,0 +1,166 @@
+from pathlib import Path
+import json,hashlib,re,sys
+S=Path('/Users/sasha/medusa/research/leemans')
+FG=S/'maintenance/intake/manuscript_scope/F004/worker_interfaces/quartet_generation/operational'
+def ws(b,i):
+ while i<len(b) and b[i] in b' \r\n\t':i+=1
+ return i
+def stringend(b,i):
+ assert b[i]==34;i+=1
+ while i<len(b):
+  if b[i]==92:i+=2
+  elif b[i]==34:return i+1
+  else:i+=1
+ raise ValueError('string')
+def vend(b,i):
+ if b[i]==34:return stringend(b,i)
+ if b[i] in b'[{':
+  st=[b[i]];i+=1
+  while st:
+   if b[i]==34:i=stringend(b,i);continue
+   if b[i] in b'[{':st.append(b[i])
+   elif b[i] in b']}':assert (st.pop(),b[i]) in [(91,93),(123,125)]
+   i+=1
+  return i
+ while i<len(b) and b[i] not in b',]} \r\n\t':i+=1
+ return i
+def fields(b):
+ i=ws(b,0);assert b[i]==123;i=ws(b,i+1);o={}
+ while b[i]!=125:
+  j=stringend(b,i);k=json.loads(b[i:j]);assert k not in o
+  i=ws(b,j);assert b[i]==58;i=ws(b,i+1);j=vend(b,i);o[k]=b[i:j];i=ws(b,j)
+  if b[i]==44:i=ws(b,i+1)
+  else:assert b[i]==125
+ assert ws(b,i+1)==len(b);return o
+def array(b):
+ i=ws(b,0);assert b[i]==91;i=ws(b,i+1);o=[]
+ while b[i]!=93:
+  j=vend(b,i);o.append(b[i:j]);i=ws(b,j)
+  if b[i]==44:i=ws(b,i+1)
+  else:assert b[i]==93
+ assert ws(b,i+1)==len(b);return o
+FORBIDDEN={'parent','parents','records','covers','cache_entries','representatives','next_parent_forests','forest','forests','matrices','permutations','transporter','transporters','witness','witnesses','marks','model','seed','points','rows','vectors','generators','word','words','matrix','point','inverse','images','payload','certificate_payload'}
+def refs(b,trail=''):
+ b=b.strip()
+ if b[:1]==b'{':
+  f=fields(b)
+  if {'path','bytes','sha256'} <= set(f):
+   try:
+    r={k:json.loads(f[k]) for k in ['path','bytes','sha256']}
+    if isinstance(r['path'],str) and type(r['bytes']) is int and isinstance(r['sha256'],str) and re.fullmatch('[0-9a-f]{64}',r['sha256']):yield trail,r;return
+   except (ValueError,TypeError):pass
+  for k,v in f.items():
+   if k not in FORBIDDEN:yield from refs(v,trail+'/'+k)
+ elif b[:1]==b'[':
+  for i,v in enumerate(array(b)):yield from refs(v,trail+'/'+str(i))
+def ref(p,b=None):
+ p=Path(p);b=p.read_bytes() if b is None else b
+ return {'path':str(p),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}
+
+# Metadata-only review. No represented worker, group, word, or array evaluator is imported.
+import shlex
+BASE=FG/'actual/job0155_generation';OUT=BASE/'logical_review';PINNED={};READ=0
+def whole(r):
+ global READ
+ p=Path(r['path']);a=p.stat();assert type(r['bytes'])is int and 0<=r['bytes']<=4*2**20 and a.st_size==r['bytes']
+ with p.open('rb')as f:b=f.read(r['bytes']+1)
+ z=p.stat();assert (a.st_dev,a.st_ino,a.st_size,a.st_mtime_ns,a.st_ctime_ns)==(z.st_dev,z.st_ino,z.st_size,z.st_mtime_ns,z.st_ctime_ns)
+ assert ref(p,b)==r;READ+=len(b);assert READ<=64*2**20
+ PINNED[(r['path'],r['sha256'])]=r;return b
+def file(p):
+ r=ref(p);return whole(r),r
+def dec(b):return json.loads(b)
+def dfield(f,k):return dec(f[k])
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def write(p,v):
+ b=can(v);assert not p.exists();p.write_bytes(b);return ref(p,b)
+ab,appref=file(BASE/'Root_generation_application.json');A=fields(ab)
+assert appref['sha256']=='415b0c0fe721b5ec5a01e5e26bdd5565a7424b25c08369e9cf45c50ca717632b'
+assert dfield(A,'Root_authority')is True and dfield(A,'root')=='/root'
+assert dfield(A,'mathematical_proof_issued')is True and dfield(A,'canonical_registration_issued')is False
+assert type(dfield(A,'paid_case_credit'))is int and dfield(A,'paid_case_credit')==0
+for flag in ['actual_endpoint_projector_basis_parent_edges_inverse_and_same_quartet_prime37_supported','named_natural_model_membership_form_isometry_and_complete_maximal_cover_explicitly_imported','classification_and_geometric_line_stabilizer_theorems_borrowed']:assert dfield(A,flag)is True
+proof=dfield(A,'proof');tex=whole(proof).decode();assert proof['sha256']=='28729a97a07fb417e959cd734b7f8df6c8993a768387212358889bdfcc74d5d8'
+actual=dfield(A,'actual_pair_review');M=fields(whole(actual));assert actual['sha256']=='ccaa697d85f6ed7685d448b51cf294ff7dec4955e03e733221cec1b1dd39e9a7'
+assert dfield(M,'blockers')==[] and dfield(M,'status')=='SUPPORTED_ACTUAL_CONDITIONAL_GEN_EQUATIONS'
+assert dfield(M,'reviewer')=='/root/mathematical_review'
+ef=dfield(M,'finite_evidence');E=fields(whole(ef))
+assert dfield(A,'Source_manifest')==dfield(M,'Source_manifest') and dfield(A,'current_selector')==dfield(M,'current_selector')
+manifest=dfield(A,'Source_manifest');whole(manifest);assert manifest['sha256']=='d00478c441ccd0b56e5179b3bc8b82fe6b5e9a3b53f6e26bb2b686e14753bd1f'
+whole(dfield(M,'Source_peer'));whole(dfield(M,'actual_controls_review'));whole(dfield(A,'current_selector'))
+common=dfield(A,'cyclic_projector_theory');whole(common);assert common['sha256']=='50141b46dac5f85e996613d2615ce6d7ac0cc80a1d97837525ebb8a246111817'
+common_argument=ref(FG/'argument.rst');whole(common_argument);assert common_argument['sha256']=='f1cc08819feeed1a674a5f23bdb541e8feba035737c672271b2f1356d31be0e2'
+whole(dfield(A,'prime37_theory'))
+erows=[{k:dec(v)for k,v in fields(x).items()}for x in array(E['records'])]
+assert len(erows)==50
+ep={r['position']:r for r in erows if r['outcome']=='UNTRUSTED_GENERATION_PROPOSAL'}
+assert len(ep)==20 and sorted(ep)==dfield(M,'conditional_GEN_positions')
+eb={dec(fields(x)['batch']):fields(x)for x in array(E['batches'])}
+assert set(eb)==set(range(2,9))
+batches={}
+for x in array(A['batches']):
+ b=fields(x);i=dfield(b,'batch');assert type(i)is int and i not in batches;batches[i]=b
+ assert i in eb
+ for name,reportkey,rkey in [('search_plan','search','plan'),('direct_plan','direct','plan'),('search_gate','search','Root_gate'),('direct_gate','direct','Root_gate'),('discovery_carrier','search','result'),('direct_equations','direct','result')]:
+  assert dfield(b,name)==dfield(fields(eb[i][reportkey]),rkey);whole(dfield(b,name))
+assert set(batches)==set(eb)
+subjects=[];imports={};scopes={};opaque_records={}
+for raw in array(A['subjects']):
+ s=fields(raw);p=dfield(s,'original_orbit_position');r=ep[p]
+ assert type(p)is int and dfield(s,'original_job')==[155,4]
+ assert dfield(s,'generation')is True and dfield(s,'IP_claim')is False and dfield(s,'final_disposition_claim')is False
+ assert dfield(s,'named_group')=='G2(11)'
+ assert dfield(s,'representative_J_index')==r['representative_J_index'] and type(dfield(s,'representative_J_index'))is int
+ assert dfield(s,'original_orbit_row_sha256')==r['original_orbit_row_sha256']
+ batch=r['batch'];b=batches[batch]
+ assert dfield(s,'discovery_carrier')==dfield(b,'discovery_carrier') and dfield(s,'direct_equations')==dfield(b,'direct_equations')
+ report=fields(eb[batch]['search'])
+ for sn,rn in [('Root_model_import','Root_model_import'),('Root_scope','Root_scope')]:assert dfield(s,sn)==dfield(report,rn)
+ imp=dfield(s,'Root_model_import');ir=fields(whole(imp));imports[imp['sha256']]=imp
+ assert dfield(ir,'schema')=='ROOT_IMPORTED_Q11_GENERIC_QUARTET37_MODEL_V1' and dfield(ir,'root')=='/root'
+ assert dfield(ir,'original_job')==[155,4]
+ for k in ['Root_authority','issued','complete_natural_maximal_cover_and_SU3_line_stabilizer_owned','faithful_Original_frame_member_and_transporter_join_owned','quartet_membership_in_this_natural_G2_11_owned','same_nondegenerate_symmetric_form_and_isometry_action_owned']:assert dfield(ir,k)is True
+ assert dfield(ir,'cyclic_projector_theory')==common and dfield(ir,'prime37_theory')==dfield(A,'prime37_theory')
+ sc=dfield(s,'Root_scope');q=fields(whole(sc));scopes[sc['sha256']]=sc
+ assert dfield(q,'Root_authority')is True and dfield(q,'adopted')is True and p in dfield(q,'selected_orbit_positions')
+ # The complete carrier record is checked only by opaque hash. No cyclic/word payload is decoded.
+ cr=fields(whole(dfield(s,'discovery_carrier')))
+ found=[]
+ for rr in array(cr['records']):
+  rf=fields(rr)
+  if dfield(rf,'original_orbit_position')==p:found.append(rr)
+ assert len(found)==1 and hashlib.sha256(found[0]).hexdigest()==r['opaque_record_sha256']
+ opaque_records[p]=r['opaque_record_sha256']
+ subjects.append(dict(position=p,representative_J_index=r['representative_J_index'],original_orbit_row_sha256=r['original_orbit_row_sha256'],batch=batch))
+assert sorted(x['position']for x in subjects)==sorted(ep)
+# Proof table checks only Original identities; displayed witness words remain literal text.
+table=[(int(a),int(b))for a,b in re.findall(r'^([0-9]+)\s*&\s*([0-9]+)\s*&',tex,re.M)]
+assert table==[(x['position'],x['representative_J_index'])for x in subjects]
+prior=fields((FG/'actual/job0155_first8/logical_review/reuse_integer_only.json').read_bytes())
+assert not set(ep)&set(dfield(prior,'conditional_GEN_positions'))
+sdkraw,sdkref=file(BASE/'Root_SDK/generation_application_v1.json');sdk=dec(sdkraw)
+assert sdkref['sha256']=='6106d364da9c9df9b89c51f1fe3ed59bf0ee3b97954b1a68c9693003e253953d'
+argv=sdk['issued_argv'];assert argv==sdk['child_argv'] and argv[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S','-c']
+for cmd in [sdk['issued_command'],sdk['canonical_argv_command'],sdk['issued_tool_arguments']['cmd']]:assert shlex.split(cmd)==argv
+rawdir=BASE/'api/Root_f004_job0155_generation_wave_application_v1'
+issuedraw,issuedref=file(rawdir/'issued.json');issued=dec(issuedraw)
+assert issued['root']=='/root' and issued['argv']==argv and issued['tool_arguments']==sdk['issued_tool_arguments']
+framebytes,frameref=file(rawdir/'frame_0000.json');frame=dec(framebytes)
+assert sdk['all_genuine_api_frames']==[frame] and sdk['full_initial_tool_return']==frame==sdk['full_tool_return']
+assert frame['exit_code']==0 and sdk['actual_tool']==dict(handle=None,initial_chunk=frame['chunk_id'],terminal_chunk=frame['chunk_id'],exit_code=0,synchronous=True)
+out=dec(frame['output']);assert out['application']==appref and out['proof']==proof and out['generation_subjects']==20 and out['IP_credit']==out['paid_case_credit']==0
+first=READ
+for rr in list(PINNED.values()):whole(rr)
+ev=write(OUT/'evidence.json',dict(schema='F004_TWENTY_QUARTET_GENERATION_LOGICAL_METADATA_EVIDENCE_V1',reviewer='/root/dependency_audit',Root_authority=False,inputs=list(PINNED.values()),subjects=subjects,opaque_record_hashes=opaque_records,first_read_bytes=first,total_review_read_bytes=READ,Original_values_decoded=False,represented_functions_executed=False))
+full=write(OUT/'full_review.json',dict(schema='F004_TWENTY_QUARTET_GENERATION_FULL_LOGICAL_REVIEW_V1',reviewer='/root/dependency_audit',Root_authority=False,Root_application=appref,proof=proof,evidence=ev,
+ proof_findings=[
+ 'In odd characteristic, commuting involutory isometries make p=(I+a)(I+e)/4 a self-adjoint idempotent in F11[H]. The accepted full numerical projector identity and nonzero seed norm identify its image with the particular nonsingular line F11*v; an arbitrary cyclic vector would not suffice.',
+ 'The six exact earlier-parent equations put all seven basis rows wi=v*hi in the H-orbit of v. Their supplied right inverse makes them a basis. Isometry gives x*(hi^-1*p*hj)=B(x,wi)*wj/B(v,v). Nondegeneracy makes the seven covectors a dual basis up to invertible change of basis, so these49 rank-one operators span End(V). They lie in F11[H]; H is therefore irreducible. They need not be group elements or matrix units.',
+ 'The accepted same-quartet word equation Y=W^6 != I and Y^37=I supplies an element of exact prime order37 in H. Under the imported complete proper-maximal cover and the natural rational-line action of SU3(11):2, any proper37-containing H preserves a line and is reducible, contradiction. Thus H is the named original G2(11), conditional on those exact model/classification imports.',
+ 'All twenty application subjects match the independent actual record identities and opaque carrier-record hashes, their own batch Root model import/scope and actual direct result. All seven batches use the same Source/theory/current selector. Root application API/raw/argv/output pins are genuine and distinct from the scientific verification.',
+ 'The TeX identity table matches the twenty positions and catalogue representatives. Witness digits are retained as literal proof text; no carrier word, basis, point, matrix, or prime value was decoded or evaluated by this reviewer.'
+ ],borrowed_model_imports=list(imports.values()),borrowed_scope_imports=list(scopes.values()),
+ qualifications=['Named faithful natural G2(11), original frame/member/transporter meanings, common nondegenerate symmetric form/isometry and complete classification/geometric cover remain explicit Root-owned imported premises; no fresh model recognition or classification verification is claimed.','Numerical equations are borrowed from independent actual ccaa; no scientific/Source/control function was replayed. Twenty-four cyclic inconclusive and six finite-word misses give no NG/NOT_IP conclusion.','Reviewer previously audited fresh32 controls and is preparing retention DATA; reviewer neither authored the operational numerical Source nor issued Root application nor authored Mat actual ccaa.','Generation only: end/subset intersections, rank4 IP, final case disposition, payment, whole job/manuscript, conjecture, Lean and compression credit remain separate.'],blockers=[]))
+leaf=dict(schema='F004_QUARTET_GENERATION_LOGICAL_INDEPENDENT_REVIEW_V1',status='SUPPORTED_LOGICAL_CONDITIONAL_QUARTET_GENERATION_APPLICATIONS',reviewer='/root/dependency_audit',Root_authority=False,blockers=[],Root_application=appref,proof=proof,actual_pair_review=actual,Source_manifest=manifest,current_selector=dfield(A,'current_selector'),application_issuance_actual_SDK=sdkref,finite_evidence=ev,full_logical_review=full,generation_applications=20,conditional_GEN_positions=sorted(ep),all_twenty_original_subject_bindings_verified=True,all_twenty_literal_table_identity_bindings_verified=True,actual_genuine_Root_application_and_exact_subject_joins_verified=True,rank_one_projector_group_algebra_and_irreducibility_argument_verified=True,same_quartet_prime37_and_borrowed_maximal_cover_implication_verified=True,named_natural_model_membership_frame_form_isometry_and_original_orbits_borrowed_from=list(imports.values()),complete_odd_q_maximal_classification_and_rational_line_geometry_borrowed=True,full_actual_basis_parent_edges_inverse_and_matrix_equations_borrowed_from=actual,Original_matrix_basis_word_or_prime_values_decoded=False,represented_functions_or_numerical_predicates_executed=False,IP_claim=False,canonical_registration_issued=False,paid_case_credit=0,whole_job_or_manuscript_conjecture_Lean_or_compression_credit=0,qualifications=['Conditional GEN for exactly twenty additional rows; all original model/frame/member/transport/form/isometry and complete classification/geometric premises remain imported.','No witness-word/basis/matrix arithmetic or evaluation; full carrier-record hashes and actual result bindings only. The displayed witness strings are not a fresh numerical check.','No IP, final case payment, NG conclusion for misses, or whole-job/manuscript credit. Reviewer controls-audit and retention-preparation contributions are disclosed in full review.'])
+lr=write(OUT/'reuse_integer_only.json',leaf)
+print(json.dumps(dict(status=leaf['status'],leaf=lr,evidence=ev,full=full,subjects=20,blockers=[]),sort_keys=True))

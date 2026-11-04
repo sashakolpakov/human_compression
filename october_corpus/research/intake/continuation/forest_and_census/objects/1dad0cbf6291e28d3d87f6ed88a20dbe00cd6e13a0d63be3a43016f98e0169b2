@@ -1,0 +1,84 @@
+"""Independent stdlib DATA/Source-text audit; no represented module activation."""
+import ast,gzip,hashlib,json,struct
+from pathlib import Path
+D=Path('/private/tmp/l026_prime_cycle_operands')
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+def ref(p,b=None):
+ p=Path(p);b=p.read_bytes()if b is None else b;return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(r):
+ p=Path(r['path']);assert p.is_absolute()and p.resolve(strict=True)==p and p.is_file()and p.stat().st_nlink==1
+ b=p.read_bytes();assert ref(p,b)==r;return b
+def doc(r):return json.loads(read(r))
+h=json.loads((D/'handoff.json').read_bytes());p=doc(h['plan']);bill=doc(h['read_invoice']);ancestry=doc(h['source_ancestry'])
+assert p['program']==h['program']==bill['program']==ancestry['new_source']
+for r in bill['inputs']:read(r)
+assert len(bill['inputs'])==len({r['path']for r in bill['inputs']})==11
+assert 2*sum(r['bytes']for r in bill['inputs'])+p['program']['bytes']==4318708==bill['complete_first_final_with_Source_bootstrap_bytes']
+def defs(r):
+ t=read(r).decode();ls=t.splitlines(keepends=True);return {n.name:''.join(ls[n.lineno-1:n.end_lineno])for n in ast.parse(t).body if isinstance(n,(ast.FunctionDef,ast.ClassDef))}
+a,b=defs(ancestry['parent']),defs(ancestry['new_source'])
+assert len(ancestry['literal_definitions'])==7 and all(a[k]==b[k]for k in ancestry['literal_definitions'])
+R=p['roles'];H=doc(R['H_adoption']);oldplan=doc(R['H_original_plan']);pres=doc(R['H_preservation'])
+assert H['root']=='/root'and H['adopted']is True and H['scope_digest']==p['scope_digest']and(H['block'],H['endpoint'],H['local_class'])==(2,18,164)
+assert H['full_pair_centralizer_equals_existing_B']is True and H['plan']==p['old_plan_logical']and H['preservation']==R['H_preservation']
+ret={r['original']['path']:r for r in pres['rows']}
+for logical,physical in [(p['old_plan_logical'],R['H_original_plan']),(p['old_bank_logical'],R['accepted_body_bank'])]:
+ assert ret[logical['path']]==dict(original=logical,retained=physical)and logical['bytes']==physical['bytes']and logical['sha256']==physical['sha256']
+assert oldplan['bank']==p['old_bank_logical']and oldplan['accepted_roles']==p['expected_bank_roles']
+bankraw=gzip.decompress(read(R['accepted_body_bank']));assert len(bankraw)==7766814 and len(bankraw)<=8*2**20
+bank=json.loads(bankraw);assert bank['schema']=='L026_CENTRALIZER_UPPER_ACCEPTED_BODY_BANK_V1'and bank['roles']==p['expected_bank_roles']and len(bank['documents'])==19
+values={};total=0;largest=0
+for row in bank['documents']:
+ r=row['ref'];raw=row['raw_utf8'].encode();assert r['path']not in values and ref(r['path'],raw)==r and r['bytes']<=2**21
+ values[r['path']]=(r,raw);total+=len(raw);largest=max(largest,len(raw))
+B=bank['roles'];assert all(values[r['path']][0]==r for r in B.values())
+def original(k):return json.loads(values[B[k]['path']][1])
+model=original('input_root');bridge=original('bridge_root');br=original('bridge_carrier');geo=original('geometry_root');aroot=original('canonical_root');a=original('canonical_carrier');croot=original('endpoint_root');c=original('endpoint_carrier')
+assert model['root']=='/root'and model['status']=='ROOT_ACCEPTED_CONDITIONAL_FI22_NORMAL_AMBIENT_INPUTS'and model['named_Fi22_and_Out2_remain_attributed_premises']is True
+assert (model['summary']['degree'],model['summary']['group_order'],model['summary']['ambient_order'],model['summary']['involution_classes'])==(3510,64561751654400,129123503308800,3)
+assert bridge['root']==geo['root']==aroot['root']==croot['root']=='/root'and all(x['adopted']is True for x in [bridge,geo,aroot,croot])
+assert bridge['input_gate']==geo['input_gate']==croot['input_gate']==B['input_root']and bridge['saved_certificate']==B['bridge_carrier']and geo['bridge_acceptance']==B['bridge_root']and aroot['Saved_candidate']==B['canonical_carrier']and croot['Saved_candidate']==B['endpoint_carrier']
+assert br['status']=='VERIFIED'and br['point_action']['root']==2961
+for k in ['same_accepted_original_degree3510_action','original_G_normal_in_A','GAP_IsNormal_A_G_means_G_normal_in_A','original_exact_orders_and_full_class_predicates_borrowed']:assert br['premises'][k]is True
+assert a['feature']['status']==c['feature']['status']=='VERIFIED'and a['target_identity']['mode']=='CANONICAL_ORIGINAL_BLOCK2_SEED'and(c['target_identity']['block_index'],c['target_identity']['endpoint_position'],c['target_identity']['local_class_position'])==(2,18,164)
+assert [[x['point']for x in triple]for triple in a['feature']['triangle_pair']][0]==[478,682,984]
+assert [[x['point']for x in triple]for triple in c['feature']['triangle_pair']][0]==[98,3472,3473]
+assert all(x==a['target_identity']['entire_original_target']for x in a['feature']['original_products'])and all(x==c['target_identity']['entire_original_target']for x in c['feature']['original_products'])
+stage=doc(R['partner_stage']);theorem=doc(R['partner_input_theorem']);free=doc(R['free_projection_adoption']);report=doc(R['free_projection_report'])
+assert stage['root']==theorem['root']==free['root']=='/root'and stage['adopted']is theorem['adopted']is free['adopted']is True
+assert stage['input_theorem']==p['partner_input_theorem_logical']and theorem['operand_roles']['geometry']==R['geometry']and stage['scope_digest']==theorem['scope_digest']==report['scope_digest']==p['scope_digest']
+assert free['schema']=='ROOT_L026_ACCEPTED_FREE_PRODUCT_WITNESS_PROJECTION_V1'and free['free_rows']==28908 and free['all28908_generation_questions_unresolved']is True and free['outputs']['projection.json']==R['free_projection_report']
+raw=read(R['geometry']);assert len(raw)==111637 and raw[:8]==b'L026GEO1'
+A=[raw[8+i*7020:8+(i+1)*7020]for i in range(2)];d0=raw[14048:21068];ds=br['original_vector_digests']
+assert [hashlib.sha256(x).hexdigest()for x in A]==ds['ambient_generator_compact_sha256']
+assert hashlib.sha256(d0).hexdigest()==ds['seed_compact_vector_sha256']==ds['Q_generator_compact_sha256'][0]=='fbdeb0be659447b07f36f96e88ad1c2eb6ef7913c05a48199bb985d2fc1beb47'
+ends=[]
+for item in [a,c]:
+ vals=item['target_identity']['entire_original_target'];assert type(vals)is list and len(vals)==3510 and all(type(x)is int and 0<=x<3510 for x in vals)and len(set(vals))==3510
+ encoded=struct.pack('<3510H',*vals);assert hashlib.sha256(encoded).hexdigest()==item['target_identity']['original_compact_sha256'];ends.append(encoded)
+assert hashlib.sha256(ends[0]).hexdigest()=='b03836d215bff2417941f65daf2a0d058ff3970168a963958d22e59657f596de'and hashlib.sha256(ends[1]).hexdigest()=='34218e8e8e1d96431445986abf0cb2e1b6c27a1c45ddf0d28928e0acfcd1800a'
+for vector in [d0,*A]:
+ vals=struct.unpack('<3510H',vector);assert len(set(vals))==3510 and max(vals)<3510
+act=br['point_action'];tree=raw[77228:94778];depth=[];vertices=[]
+assert len(tree)==17550 and len(act['vertices'])==len(act['parents'])==len(act['labels'])==3510
+for i,(vertex,parent,label)in enumerate(struct.iter_unpack('<HHb',tree)):
+ assert vertex==act['vertices'][i]and parent==(65535 if act['parents'][i]is None else act['parents'][i])and label==act['labels'][i]
+ assert 0<=vertex<3510 and((i==0 and vertex==2961 and parent==65535 and label==0)or(i>0 and parent<i and label in [-2,-1,1,2]))
+ vertices.append(vertex);depth.append(0 if i==0 else depth[parent]+1)
+assert len(set(vertices))==3510 and max(depth)==10
+operand=b'L026CYC1'+d0+ends[0]+ends[1]+A[0]+A[1]+tree;assert len(operand)==52658
+assert operand[8:7028]==raw[14048:21068]and operand[7028:14048]==ends[0]and operand[14048:21068]==ends[1]and operand[21068:28088]==raw[8:7028]and operand[28088:35108]==raw[7028:14048]and operand[35108:]==tree
+# Exact Reader Source predicates are inspected as text only, never activated.
+reader=Path('/Users/sasha/medusa/research/leemans/geometry/sporadic_polytopes/ambient_input_returned_work_v2/reader.py');rr=ref(reader);assert rr['bytes']==13895 and rr['sha256']=='bca1fc6b46b561271351a8d569a8f7a49ab338ead9905850461645a66422c3f6'
+text=reader.read_text();tree_ast=ast.parse(text);validation=next(n for n in tree_ast.body if isinstance(n,ast.FunctionDef)and n.name=='validate_data');ls=text.splitlines(keepends=True);validation_text=''.join(ls[validation.lineno-1:validation.end_lineno])
+assert "if c['order']==2 and c['in_group']"in validation_text and "b['a']==a"in validation_text and "catalogue['blocks']==blocks"in validation_text and "catalogue['ordered_endpoints']==endpoints"in validation_text
+assert 2*10+1==21 and 3*21==63 and 63+1==64 and(11+13)*64*64==98304
+for r in bill['inputs']:read(r)
+maxref=max(len(can(r))for r in [*B.values(),*R.values()])
+inverse_upper=6*maxref+8192
+premises_upper=len(can(B))+len(can(br['premises']))+2*maxref+len(can(p['qualified_as']))+8192
+report_upper=len(can(bill['inputs']))+len(can(R))+len(can(p['qualified_as']))+8192
+output_upper=52658+inverse_upper+premises_upper+report_upper
+assert output_upper<=131072
+obs=dict(schema='INDEPENDENT_L026_PRIME_OPERAND_METADATA_OBSERVATIONS_V1',reviewer='/root/middle_dictionary_author',program=p['program'],plan=h['plan'],whole_physical_inputs=11,complete_candidate_read_bytes=4318708,complete_old_bank_documents=19,decoded_bank_bytes=len(bankraw),virtual_body_bytes=total,largest_virtual_body=largest,literal_metadata_primitives=7,whole_d0_Q0_seed_digest_equal=True,whole_original_a_c_digest_inverse_equal=True,whole_A_generator_digests_equal=True,tree_fields_equal=10530,tree_vertices=3510,tree_root=2961,maximum_tree_depth=10,operand_bytes=52658,conservative_four_output_bytes=output_upper,independently_derived_operand_sha256_not_actual_output=hashlib.sha256(operand).hexdigest(),full_byte_layout_inverse_equal=True,Reader_predicate_Source_text=rr,Reader_function='validate_data',membership_and_normality_remain_imported=True,qualified_elementary_image_bounds=dict(d=21,b=63,signed_rotation=64,two_cycles=98304),candidate_oldSource_Reader_control_state_geometry_word_group_or_scientific_activations=0,S_W_Git_writes=0)
+f=D/'independent_observations.json';f.write_bytes(can(obs));print(json.dumps(dict(observations=ref(f),predicted_operand_sha256=obs['independently_derived_operand_sha256_not_actual_output'],bytes=52658,decoded=len(bankraw),virtual_total=total,max_body=largest)))

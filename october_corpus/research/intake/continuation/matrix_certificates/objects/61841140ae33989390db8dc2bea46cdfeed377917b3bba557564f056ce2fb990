@@ -1,0 +1,110 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+
+ROOT=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/manuscript_scope/F004/worker_interfaces/quartet_generation/operational');RUN=ROOT/'actual/job0155_first8';OUT=RUN/'logical_review'
+RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+ global READ
+ p=Path(p);k=str(p)
+ if k in RAW:need(r is None or PINS[k]==r,'exact single edition');return RAW[k]
+ a=p.lstat();need(a.st_size<=4*2**20 and READ+a.st_size<16*2**20,'bounded review reader');b=p.read_bytes();z=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns);need(sig(a)==sig(z)and len(b)==a.st_size,'whole stable input');rr=ref(p,b);need(r is None or rr==r,'exact SHA/size');RAW[k]=b;PINS[k]=rr;READ+=len(b);return b
+
+def exact(r):return read(r['path'],r)
+def pin(p):read(p);return PINS[str(p)]
+def doc(p):return dec(read(p))
+def pick(b,keys):f=obj(b);return{k:dec(f[k])for k in keys}
+def can(v):return(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+app=doc(RUN/'Root_generation_application.json');ar=pin(RUN/'Root_generation_application.json')
+need(ar['bytes']==8139 and ar['sha256']=='52af67e8a659692e7fe2fe7a0deb99e995b0c363433bdd0c393fc76dc44c5ba2','exact genuine application')
+need(app['schema']=='ROOT_F004_PROJECTOR_QUARTET_GENERATION_APPLICATION_V1'and app['root']=='/root'and app['Root_authority']is app['mathematical_proof_issued']is True,'Root mathematical issuance')
+sdk=doc(RUN/'Root_SDK/generation_application_v1.json');issued=doc(RUN/'api/Root_f004_job0155_first8_generation_application_v1/issued.json');frame=doc(RUN/'api/Root_f004_job0155_first8_generation_application_v1/frame_0000.json')
+argv=sdk['issued_argv'];tool=sdk['actual_tool'];need(sdk['root']==sdk['actor']==issued['root']=='/root'and argv==sdk['child_argv']==issued['argv'],'genuine Root issuer argv')
+need(issued['tool_arguments']==sdk['issued_tool_arguments']and issued['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==argv,'full kwargs and quoting joined')
+need(sdk['all_genuine_api_frames']==[frame]and frame==sdk['full_initial_tool_return']==sdk['full_tool_return']and tool['synchronous']is True and tool['handle']is None and tool['exit_code']==frame['exit_code']==0 and tool['initial_chunk']==tool['terminal_chunk']==frame['chunk_id'],'genuine one terminal frame')
+reported=dec(frame['output']);need(reported['application']==ar and reported['proof']==app['proof']and reported['generation_subjects']==8 and reported['IP_credit']==reported['paid_case_credit']==0,'whole issued output joined')
+actual=dec(exact(app['actual_pair_review']));need(actual['status']=='SUPPORTED_ACTUAL_CONDITIONAL_GEN_EQUATIONS'and actual['blockers']==[]and actual['Source_manifest']==app['Source_manifest']and actual['all8_supplied_GEN_equations_supported']is True,'accepted distinct actual equations')
+need(actual['direct_acquisition_or_RREF_or_candidate_search_calls']==0 and actual['IP_claim']is False and actual['paid_credit']==0,'actual limited scope')
+proof=exact(app['proof']);need(len(proof)==7309 and app['proof']['sha256']=='6d03f1d96011b2fa40c06e719ea7b2352221087fb5dbc35926e08c4dc9f30168','exact full-read TeX')
+saved=exact(app['discovery_carrier']);sf=obj(saved);records=arr(sf['records']);plan=dec(exact(dec(sf['plan'])))
+direct=dec(exact(app['direct_equations']));positions=[2,32,40,104,128,183,230,254]
+need(direct['verified_GEN_positions']==positions and direct['acquisition_or_RREF_or_candidate_search_calls']==0,'all eight direct equations')
+for k,pk in [('Source_manifest','Source_manifest'),('Root_model_import','Root_import'),('Root_scope','Root_scope'),('current_selector','selector'),('prime37_theory','prime37_theory'),('cyclic_projector_theory','cyclic_projector_theory')]:need(app[k]==plan[pk],'same exact application/plan '+k);exact(app[k])
+need(app['original_domain_whole_pins']==dec(sf['original_domain_whole_pins']),'same opaque Original domain pins')
+for r in app['original_domain_whole_pins'].values():exact(r)
+im=dec(exact(app['Root_model_import']));scope=dec(exact(app['Root_scope']))
+need(im['Root_authority']is True and scope['Root_authority']is True,'positive imported model and subject scope')
+expected=[]
+words=['0123','02121323','121321012','210121323','010232121323','02121321','02121323','0121321']
+for record,word in zip(records,words):
+ r=pick(record,['original_orbit_position','representative_J_index','original_orbit_row_sha256'])
+ expected.append(dict(original_job=[155,4],named_group='G2(11)',generation=True,IP_claim=False,final_disposition_claim=False,**r))
+ wraw=obj(obj(record)['prime37'])['base_word'];literal=('['+','.join(word)+']').encode();need(wraw==literal,'literal word table binding only')
+need(len(records)==len(expected)==8 and can(app['subjects'])==can(expected)and [s['original_orbit_position']for s in expected]==positions,'all exact ordered subjects, representatives and opaque row SHAs')
+need(all(type(s['original_orbit_position'])is int and type(s['representative_J_index'])is int for s in expected),'strict subject integers')
+for flag in ('actual_endpoint_projector_basis_parent_edges_inverse_and_same_quartet_prime37_supported','named_natural_model_membership_form_isometry_and_complete_maximal_cover_explicitly_imported','classification_and_geometric_line_stabilizer_theorems_borrowed'):need(app[flag]is True,'explicit qualified premise '+flag)
+need(app['canonical_registration_issued']is False and app['paid_case_credit']==app['whole_job_or_manuscript_conjecture_Lean_or_compression_credit']==0,'no additional credit')
+for k,b in RAW.items():need(Path(k).read_bytes()==b,'closing exact review input')
+evidence=dict(schema='FINITE_OPAQUE_METADATA_AND_PROOF_INPUT_CLOSURE_V1',reviewer='/root/mathematical_review',Root_authority=False,inputs=list(PINS.values()),first_input_bytes=READ,closing_input_bytes=READ,total_input_bytes=2*READ,represented_functions_executed=False,Original_matrix_basis_word_or_prime_values_decoded=False,literal_table_bindings=8)
+epath=OUT/'evidence.json';eb=(json.dumps(evidence,sort_keys=True,indent=2)+'\n').encode();epath.write_bytes(eb)
+leaf=dict(schema='F004_QUARTET_GENERATION_LOGICAL_INDEPENDENT_REVIEW_V1',status='SUPPORTED_LOGICAL_CONDITIONAL_QUARTET_GENERATION_APPLICATIONS',reviewer='/root/mathematical_review',Root_authority=False,blockers=[],Root_application=ar,application_issuance_actual_SDK=pin(RUN/'Root_SDK/generation_application_v1.json'),proof=app['proof'],Source_manifest=app['Source_manifest'],actual_pair_review=app['actual_pair_review'],Root_model_import=app['Root_model_import'],Root_scope=app['Root_scope'],current_selector=app['current_selector'],subjects=app['subjects'],conditional_GEN_positions=positions,generation_applications=8,actual_genuine_Root_application_and_exact_subject_joins_verified=True,rank_one_projector_group_algebra_and_irreducibility_argument_verified=True,same_quartet_prime37_and_borrowed_maximal_cover_implication_verified=True,all_eight_literal_table_bindings_verified=True,full_actual_basis_parent_edges_inverse_and_matrix_equations_borrowed_from=app['actual_pair_review'],named_natural_model_membership_frame_form_isometry_and_original_orbits_borrowed_from=app['Root_model_import'],complete_odd_q_maximal_classification_and_rational_line_geometry_borrowed=True,finite_evidence=ref(epath,eb),IP_claim=False,paid_case_credit=0,canonical_registration_issued=False,whole_job_or_manuscript_conjecture_Lean_or_compression_credit=0,Original_matrix_basis_word_or_prime_values_decoded=False,represented_functions_or_numerical_predicates_executed=False,qualifications=['Conditional generation only for the eight exact accepted Original rows; all named natural model, faithful frame, membership, common nondegenerate form/isometry, orbit and complete classification/geometric premises remain attributed imports.','The full endpoint projector identity and genuine seven-row orbit basis give all49 rank-one group-algebra operators and irreducibility; the same-quartet nonidentity37 element excludes the borrowed complete proper maximal cover.','DIRECT has zero acquisition/RREF/candidate-search calls. Its plan conservatively reads two SEARCH Source bodies opaquely; this is not a claim that no discovery Source bytes were read.','Reviewer authored the earlier Source peer and supplied synthetic-control conceptual suggestions, but neither implemented the worker nor issued this Root mathematical application. No target word/array/matrix evaluation or arithmetic replay.','No intersection property, end-subgroup equality, final case disposition, selector payment, whole-job/manuscript, conjecture, Lean or measured compression conclusion is issued.'])
+lpath=OUT/'reuse_integer_only.json';lb=(json.dumps(leaf,sort_keys=True,indent=2)+'\n').encode();lpath.write_bytes(lb);print(json.dumps(dict(leaf=ref(lpath,lb),evidence=ref(epath,eb),input_bytes=2*READ,conditional_GEN_positions=positions,IP_credit=0,paid_case_credit=0)))

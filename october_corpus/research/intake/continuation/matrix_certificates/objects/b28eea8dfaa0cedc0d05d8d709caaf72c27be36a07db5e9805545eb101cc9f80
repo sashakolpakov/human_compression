@@ -1,0 +1,185 @@
+"""Finite actual metadata audit. No target imports/calls; Original operands stay opaque."""
+import json,hashlib,os,shlex,stat,time
+from pathlib import Path
+def need(v,why):
+    if not v: raise ValueError(why)
+
+def dec(b):
+    def pairs(rows):
+        d={}
+        for k,v in rows: need(k not in d,'duplicate key'); d[k]=v
+        return d
+    return json.loads(b,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in()).throw(ValueError(x)))
+
+def ws(b,i):
+    while i<len(b) and b[i]in b' \n\r\t': i+=1
+    return i
+
+def string_end(b,i):
+    need(b[i]==34,'JSON string'); i+=1
+    while i<len(b):
+        if b[i]==92: i+=2
+        elif b[i]==34: return i+1
+        else: i+=1
+    raise ValueError('unterminated string')
+
+def value_end(b,i):
+    if b[i]==34: return string_end(b,i)
+    if b[i]in b'[{':
+        stack=[b[i]]; i+=1
+        while stack:
+            need(i<len(b) and len(stack)<4096,'bounded JSON nesting')
+            if b[i]==34: i=string_end(b,i); continue
+            if b[i]in b'[{': stack.append(b[i])
+            elif b[i]in b']}': need((stack.pop(),b[i])in((91,93),(123,125)),'matched JSON')
+            i+=1
+        return i
+    j=i
+    while i<len(b) and b[i]not in b',]} \n\r\t': i+=1
+    need(i>j,'primitive token'); return i
+
+def obj(b):
+    i=ws(b,0); need(b[i]==123,'object'); i=ws(b,i+1); d={}
+    while b[i]!=125:
+        j=string_end(b,i); k=dec(b[i:j]); need(type(k)is str and k not in d,'unique string key')
+        i=ws(b,j); need(b[i]==58,'colon'); i=ws(b,i+1); j=value_end(b,i); d[k]=b[i:j]; i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==125,'object delimiter')
+    need(ws(b,i+1)==len(b),'whole object'); return d
+
+def arr(b):
+    i=ws(b,0); need(b[i]==91,'array'); i=ws(b,i+1); a=[]
+    while b[i]!=93:
+        j=value_end(b,i); a.append(b[i:j]); i=ws(b,j)
+        if b[i]==44: i=ws(b,i+1)
+        else: need(b[i]==93,'array delimiter')
+    need(ws(b,i+1)==len(b),'whole array'); return a
+
+def at(b,path):
+    for k in path: b=obj(b)[k]
+    return b
+M=Path('/Users/sasha/medusa/research/leemans/maintenance/intake');G=M/'f009_bounded_io_transition';K=M/'resource_profiles/bounded_output';C=G/'cohorts/cohort_from0426';A=G/'actual/cohort0426_batch00_prepare_suppliers';S=Path('/private/tmp/f009_R5_parent_cohorts_actual/generic_cohort_from0426/parents0426_0428');RAW={};PINS={};READ=0
+
+def ref(p,b):return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def read(p,r=None):
+ global READ
+ p=Path(p);key=str(p)
+ if key in RAW:need(r is None or PINS[key]==r,'one exact edition');return RAW[key]
+ before=p.lstat();need(before.st_size<=4*2**20 and READ+before.st_size<=64*2**20 and len(RAW)<500,'bounded metadata reader');b=p.read_bytes();after=p.lstat();sig=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns);need(sig(before)==sig(after)and len(b)==before.st_size,'whole stable bytes');rr=ref(p,b);need(r is None or rr==r,'exact input pin');RAW[key]=b;PINS[key]=rr;READ+=len(b);return b
+
+def pin(p):read(p);return PINS[str(p)]
+def exact(r):return read(r['path'],r)
+def doc(p,r=None):return dec(read(p,r))
+def pick(b,keys):o=obj(b);return{k:dec(o[k])for k in keys}
+def can(j):return(json.dumps(j,sort_keys=True,separators=(',',':'),ensure_ascii=True)+'\n').encode()
+def triple(a,k):i=a.index(k);return dict(path=a[i+1],bytes=int(a[i+2]),sha256=a[i+3])
+def api(sdkpath,rawdir):
+ sdk=doc(sdkpath);i=doc(rawdir/'issued.json');frames=sdk['all_genuine_api_frames'];a=sdk['issued_argv'];t=sdk['actual_tool']
+ need(sdk['root']==sdk['actor']==i['root']=='/root'and a==i['argv']==sdk['child_argv'],'Root argv');need(i['tool_arguments']==sdk['issued_tool_arguments']and i['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==a,'whole raw kwargs')
+ need(len(frames)==1 and doc(rawdir/'frame_0000.json')==frames[0]==sdk['full_initial_tool_return']==sdk['full_tool_return']and t['synchronous']is True and t['handle']is None and t['exit_code']==frames[0]['exit_code']and t['initial_chunk']==t['terminal_chunk']==frames[0]['chunk_id'],'genuine synchronous exact frame')
+ return sdk,frames[0]
+
+
+FG=M/'manuscript_scope/F004/worker_interfaces/quartet_generation/operational';RUN=FG/'actual/job0155_generation';HERE=RUN/'actual_review'
+
+def api(sdkpath,rawdir):
+ sdk=doc(sdkpath);i=doc(rawdir/'issued.json');frames=sdk['all_genuine_api_frames'];a=sdk['issued_argv'];t=sdk['actual_tool']
+ need(sdk['root']==sdk['actor']==i['root']=='/root'and a==i['argv']==sdk['child_argv'],'Root argv')
+ need(i['tool_arguments']==sdk['issued_tool_arguments']and i['tool_arguments']['cmd']==sdk['issued_command']and shlex.split(sdk['issued_command'])==shlex.split(sdk['canonical_argv_command'])==a,'whole genuine issued kwargs')
+ need(1<=len(frames)<=32 and len({f['chunk_id']for f in frames})==len(frames),'unique bounded raw chunks')
+ for n,f in enumerate(frames):
+  need(doc(rawdir/('frame_%04d.json'%n))==f,'exact persisted genuine frame')
+  if n<len(frames)-1:need(f.get('session_id')==t['handle']and 'exit_code'not in f,'same live handle throughout')
+ need(frames[0]==sdk['full_initial_tool_return']and frames[-1]==sdk['full_tool_return']and t['exit_code']==frames[-1]['exit_code']and t['initial_chunk']==frames[0]['chunk_id']and t['terminal_chunk']==frames[-1]['chunk_id'],'full terminal history')
+ need((t['synchronous']is True and len(frames)==1 and t['handle']is None)or(t['synchronous']is False and len(frames)>1 and type(t['handle'])is int),'honest sync/async')
+ return sdk,frames[-1]
+
+mf=doc(FG/'Source_manifest.json');mfr=pin(FG/'Source_manifest.json');peerref=pin(FG/'source_review/reuse_integer_only.json');controlref=pin(FG/'actual/controls32/actual_review/reuse_integer_only.json')
+peer=dec(exact(peerref));control=dec(exact(controlref));need(mfr['sha256']=='d00478c441ccd0b56e5179b3bc8b82fe6b5e9a3b53f6e26bb2b686e14753bd1f'and peerref['sha256'].startswith('1b235eb7')and controlref['sha256'].startswith('724e8b22'),'exact unchanged operational Source/new32 controls')
+need(peer['status']=='SUPPORTED_STATIC_Q11_GENERIC_QUARTET37_SOURCE'and peer['blockers']==[]and control['status']=='SUPPORTED_ACTUAL_Q11_GENERIC_QUARTET37_CONTROLS'and control['blockers']==[]and control['Source_peer']==peerref,'accepted imported Source/control scopes')
+obs=doc(RUN/'Root_runtime_observation.json');obsref=pin(RUN/'Root_runtime_observation.json')
+need(obsref['bytes']==90379 and obsref['sha256']=='92833775498aad9e7917b8064764283f6caf3e62610868b4586f025c1a586414'and obs['observation_only']is obs['not_a_new_API_SDK']is True and obs['root']=='/root'and obs['Source_manifest_sha256']==mfr['sha256'],'exact honest Root observation')
+writer,wframe=api(RUN/'Root_SDK/wave_observation_v1.json',RUN/'api/Root_f004_job0155_generation_wave_observation_v1');need(wframe['exit_code']==0 and dec(wframe['output'])==obsref,'genuine separate observation preservation')
+need(pin(RUN/'Root_SDK/wave_observation_v1.json')['sha256']=='cce347b20a259c7f8b4f7c67bb5108ee9c2782527eeba10d62f9ef93e9a54a3b','exact observation writer SDK')
+need(len(obs['batches'])==7 and [b['batch']for b in obs['batches']]==list(range(2,9))and len(obs['actual_calls'])==14,'finite seven batches/fourteen calls')
+callmap={x['key']:x for x in obs['actual_calls']};need(len(callmap)==14,'unique actual observation roles')
+reports=[];records_out=[];totals=dict(GEN=[],inconclusive=[],misses=[],unvisited=[]);allselected=[];selectorref=None;domain=None
+for batch in obs['batches']:
+ no=batch['batch'];BC=RUN/('batch%02d'%no);positions=batch['selected'];need(1<=len(positions)<=8 and all(type(x)is int for x in positions)and len(set(positions))==len(positions),'strict finite selected identities')
+ allselected+=positions;br=dict(batch=no,selected=positions);searchmeta=None
+ for role,label in [('SEARCH','search'),('DIRECT','direct')]:
+  authority=batch[label+'_authority'];planref=authority['plan'];gateref=authority['Root_gate'];plan=dec(exact(planref));gate=dec(exact(gateref))
+  need(plan['schema']=='Q11_GENERIC_QUARTET37_'+role+'_PLAN_V1'and plan['program']==mf['roles'][role]['program']and plan['Source_manifest']==mfr and plan['original_job']==[155,4]and plan['selected_orbit_positions']==positions,'exact same-job fresh authority')
+  need(gate['schema']=='ROOT_AUTHORIZED_Q11_GENERIC_QUARTET37_V1'and gate['root']=='/root'and gate['role']==role and gate['program']==plan['program']and gate['Source_manifest']==mfr and gate['Source_peer']==peerref and gate['admission_controls']==controlref and gate['plan']==planref,'whole Source/control/plan gate')
+  for flag in('Root_authority','issued','Original_calls_authorized','whole_Source_and_protocol_owned','current_unpaid_scope_and_no_same_method_replay_owned'):need(gate[flag]is True,'positive exact Root '+flag)
+  need(gate['synthetic_only']is False,'actual Original role')
+  issuer,ifr=api(BC/'Root_SDK'/(label+'_authorities_v1.json'),BC/'api'/('Root_f004_job0155_generation_batch%02d_%s_authorities_v1'%(no,label)))
+  need(ifr['exit_code']==0 and dec(ifr['output'])==authority,'genuine Root authority materialization exact data')
+  sdkref=batch[label+'_SDK'];sdk,frame=api(Path(sdkref['path']),BC/'api'/('Root_f004_job0155_generation_batch%02d_%s_v1'%(no,label)));exact(sdkref)
+  call=callmap['Root_f004_job0155_generation_batch%02d_%s_v1'%(no,label)]
+  need(call['issued_argv']==sdk['issued_argv']==authority['argv']and call['issued_tool_arguments']==sdk['issued_tool_arguments']and call['genuine_frames']==sdk['all_genuine_api_frames']and call['terminal']==frame and exact(call['capture'])==exact(sdkref),'actual Root observations joined to genuine SDK/whole opaque duplicate')
+  need(frame['exit_code']==0,'terminal genuine first scientific success')
+  argv=sdk['issued_argv'];child=argv[argv.index('--')+1:];guard=Path(argv[argv.index('--output')+1])
+  need(child[:5]==['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',plan['program']['path']],'actual ordinary EBS entry')
+  for flag,r in [('--manifest',mfr),('--plan',planref),('--gate',gateref)]:need(triple(child,flag)==r,'exact actual descriptor '+flag)
+  need(argv[:12]==['/usr/bin/env','-u','COVERAGE_PROCESS_START','-u','COVERAGE_PROCESS_CONFIG','-u','PYTHONSTARTUP','-u','OPENSSL_CONF','-u','OPENSSL_MODULES','/Users/sasha/.venvs/global/bin/python']and argv[12:15]==['-E','-B',mf['guards'][0]['path']],'unchanged whole wrapper and clean environment')
+  need(argv[argv.index('--volume')+1]=='/Users/sasha/medusa'and argv[argv.index('--rss-cap-mib')+1]=='128'and argv[argv.index('--timeout')+1]=='125','literal old matrix profile args')
+  need(dec(frame['output'])==dict(status='PASS',stop='RETURNED',receipt=str(guard/'receipt.json')),'genuine guard PASS')
+  st=doc(guard/'started.json');rc=doc(guard/'receipt.json');stdout=read(guard/'stdout.log');stderr=read(guard/'stderr.log')
+  limits=dict(admit_disk=10737418240,admit_ram=3892314112,disk_floor=8589934592,ram_floor=3221225472,total_rss=134217728,wall_seconds=125.,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+  need(st['command']==rc['command']==child and st['limits']==rc['limits']==limits and st['admission']==rc['admission'],'whole same old guard admission/limits')
+  need(len(st['identities'])==len(rc['identities'])==1 and all(st['identities'][0][k]==rc['identities'][0][k]for k in('pid','birth','initial_parent','group','session'))and st['identities'][0]['pid']==st['identities'][0]['group']==st['identities'][0]['session'],'single same-birth process identity')
+  need(rc['status']=='PASS'and rc['stop']=='RETURNED'and rc['returncode']==0 and rc['error']is None and rc['cleanup']['remaining']==rc['cleanup']['errors']==[]and stderr==b''and rc['logs']==dict(stdout=len(stdout),stderr=0),'complete successful guard output/cleanup')
+  need(rc['seconds']<125 and rc['peaks']['total_rss']<=134217728 and rc['admission']['free_disk']>=10737418240 and rc['peaks']['min_free_disk']>=8589934592 and rc['admission']['available_ram']>=3892314112 and rc['peaks']['min_available_ram']>=3221225472,'sampled immutable mathematical resources')
+  returned=dec(stdout);resultref=returned['output'];raw=exact(resultref);fields=obj(raw);header=pick(raw,['schema','status','program','Source_manifest','plan','Root_gate','selector','original_job','paid_credit','IP_claim','new_linear_scalar_units','resources'])
+  need(resultref['path']==authority['output']and header['program']==plan['program']and header['Source_manifest']==mfr and header['plan']==planref and header['Root_gate']==gateref and header['selector']==plan['selector']and header['original_job']==[155,4]and type(header['paid_credit'])is int and header['paid_credit']==0 and header['IP_claim']is False,'whole uncredited output subject')
+  resources=header['resources'];need(type(header['new_linear_scalar_units'])is int and 0<=header['new_linear_scalar_units']<=200000 and all(type(resources[k])is int and resources[k]>=0 for k in('matrix_products','row_images','read_units_with_prepaid_loaders','peak_self_RSS_bytes'))and resources['matrix_products']<=400000 and resources['read_units_with_prepaid_loaders']<=8*2**20 and resources['peak_self_RSS_bytes']<134217728 and resources['seconds']<125,'literal scientific counters bounded')
+  if role=='SEARCH':
+   sh=pick(raw,['target_positions','visited_positions','proposed_GEN_positions','finite_word_misses','cyclic_inconclusive','unvisited_positions','stop','original_domain_whole_pins'])
+   need(header['status']=='FINITE_SELECTION_COMPLETED'and sh['target_positions']==sh['visited_positions']==positions and sh['stop']is None and sh['unvisited_positions']==[],'all selected cases completed')
+   parts=[sh['proposed_GEN_positions'],sh['finite_word_misses'],sh['cyclic_inconclusive']];need(all(type(p)is int for x in parts for p in x)and sorted(p for x in parts for p in x)==positions and len({p for x in parts for p in x})==len(positions),'disjoint complete typed outcome partition')
+   rr=arr(fields['records']);need(len(rr)==len(positions),'whole record count')
+   for pos,r in zip(positions,rr):
+    meta=pick(r,['original_orbit_position','representative_J_index','original_orbit_row_sha256','attempts','pool_size','outcome']);rf=obj(r)
+    need(type(meta['original_orbit_position'])is int and meta['original_orbit_position']==pos and type(meta['representative_J_index'])is int and type(meta['attempts'])is type(meta['pool_size'])is int and 0<=meta['attempts']<=meta['pool_size']<=128,'literal scalar record identity/pool')
+    if pos in sh['proposed_GEN_positions']:need(meta['outcome']=='UNTRUSTED_GENERATION_PROPOSAL'and rf['cyclic']!=b'null'and rf['prime37']!=b'null'and meta['attempts']>=1,'opaque positive carrier present')
+    elif pos in sh['finite_word_misses']:need(meta['outcome']=='FINITE_WORD_MISS_NO_DISPOSITION'and rf['cyclic']!=b'null'and rf['prime37']==b'null'and meta['attempts']==meta['pool_size']>=1,'finite miss no disposition')
+    else:need(meta['outcome']=='CYCLIC_ACQUISITION_INCONCLUSIVE'and rf['cyclic']==rf['prime37']==b'null'and meta['attempts']==meta['pool_size']==0,'inconclusive no proof carrier')
+    records_out.append(dict(batch=no,position=pos,representative_J_index=meta['representative_J_index'],original_orbit_row_sha256=meta['original_orbit_row_sha256'],opaque_record_sha256=hashlib.sha256(r).hexdigest(),outcome=meta['outcome']))
+   need(batch['saved']==dict(ref=resultref,status=header['status'],proposed=sh['proposed_GEN_positions'],misses=sh['finite_word_misses'],no_span=sh['cyclic_inconclusive'],unvisited=[]),'reported observation agrees with direct scalar inspection')
+   searchmeta=dict(result=resultref,plan=planref,gate=gateref,header=sh)
+   totals['GEN']+=sh['proposed_GEN_positions'];totals['misses']+=sh['finite_word_misses'];totals['inconclusive']+=sh['cyclic_inconclusive']
+   if domain is None:domain=sh['original_domain_whole_pins']
+   need(sh['original_domain_whole_pins']==domain,'same exact Original domain across all roles')
+  else:
+   dh=pick(raw,['verified_GEN_positions','finite_word_misses','cyclic_inconclusive','unvisited_positions','acquisition_or_RREF_or_candidate_search_calls','search_result'])
+   need(header['status']=='VERIFIED_SUPPLIED_EQUATIONS'and dh['verified_GEN_positions']==searchmeta['header']['proposed_GEN_positions']and dh['finite_word_misses']==searchmeta['header']['finite_word_misses']and dh['cyclic_inconclusive']==searchmeta['header']['cyclic_inconclusive']and dh['unvisited_positions']==[]and type(dh['acquisition_or_RREF_or_candidate_search_calls'])is int and dh['acquisition_or_RREF_or_candidate_search_calls']==0,'whole supplied-only direct equation/partition verification')
+   need(dh['search_result']==plan['search_result']==searchmeta['result']and plan['search_plan']==searchmeta['plan']and plan['search_gate']==searchmeta['gate'],'same whole untrusted carrier/plan/gate')
+  inputs={r['path']:r for r in plan['inputs']};need(len(inputs)==len(plan['inputs']),'one input edition per path')
+  for r in [planref,gateref]:inputs[r['path']]=r
+  need(set(inputs)=={r['path']for r in plan['inputs']}|set(plan['bootstrap_paths']),'all declared bootstrap closure')
+  for r in inputs.values():exact(r)
+  for r in mf['roles'][role]['loaded_sources']+mf['guards']:exact(r);need(r['path']in inputs,'loaded Source/guards included')
+  expected_read=2*sum(r['bytes']for r in inputs.values())+mf['roles'][role]['loader_read_prepaid_upper']
+  need(expected_read==authority['scientific_read_upper']==resources['read_units_with_prepaid_loaders']<=8*2**20,'reconstructed complete input/loader accounting')
+  im=doc(plan['Root_import']['path'],plan['Root_import']);scope=doc(plan['Root_scope']['path'],plan['Root_scope'])
+  need(im['schema']=='ROOT_IMPORTED_Q11_GENERIC_QUARTET37_MODEL_V1'and im['root']=='/root'and im['Root_authority']is im['issued']is True and im['original_job']==[155,4]and im['original_domain_whole_pins']==domain,'same accepted imported natural model/domain')
+  for flag in ('faithful_Original_frame_member_and_transporter_join_owned','quartet_membership_in_this_natural_G2_11_owned','same_nondegenerate_symmetric_form_and_isometry_action_owned','complete_natural_maximal_cover_and_SU3_line_stabilizer_owned'):need(im[flag]is True,'retained mathematical premise '+flag)
+  need(scope['Root_authority']is scope['adopted']is True and scope['selected_orbit_positions']==positions and scope['selector']==plan['selector']and scope['original_domain_whole_pins']==domain,'same exact selected original scope')
+  if selectorref is None:selectorref=plan['selector']
+  need(plan['selector']==selectorref,'unchanged canonical selector throughout')
+  br[label]=dict(actual_SDK=sdkref,authority_actual_SDK=pin(BC/'Root_SDK'/(label+'_authorities_v1.json')),program=plan['program'],plan=planref,Root_gate=gateref,Root_model_import=plan['Root_import'],Root_scope=plan['Root_scope'],result=resultref,raw_directory=str(BC/'api'/('Root_f004_job0155_generation_batch%02d_%s_v1'%(no,label))),inputs=list(inputs.values()),guard={k:pin(guard/k)for k in('started.json','receipt.json','stdout.log','stderr.log')},resources=resources,new_linear_scalar_units=header['new_linear_scalar_units'],guard_seconds=rc['seconds'],sampled_guard_RSS=rc['peaks']['total_rss'],read_upper=expected_read)
+ br['verified_GEN_positions']=searchmeta['header']['proposed_GEN_positions'];br['cyclic_inconclusive']=searchmeta['header']['cyclic_inconclusive'];br['finite_word_misses']=searchmeta['header']['finite_word_misses'];reports.append(br)
+need(len(allselected)==len(set(allselected))==obs['fresh_selected_total']==50 and len(totals['GEN'])==20 and len(totals['inconclusive'])==24 and len(totals['misses'])==6,'fifty fresh disjoint rows and independently counted outcomes')
+first8=[2,32,40,104,128,183,230,254];selector=dec(exact(selectorref));expanded=[p for lo,hi in selector['unresolved_position_runs']for p in range(lo,hi+1)]
+need(selectorref['sha256']=='987324e292f008c307985985a8c651fb9f132eecf7a85644b0703cf13dda5c4b'and selector['unresolved_positions']==58 and sorted(allselected+first8)==expanded and not set(allselected)&set(first8),'unchanged58-unpaid selector is exactly first8 plus this50 without overlap')
+need(obs['claims']==dict(additional_proposed_then_direct_checked_GEN=20,cyclic_acquisition_inconclusive=24,finite_word_misses=6,unvisited=0,negative_dispositions=0,new_paid_cases=0,independent_wave_execution_review_issued=False),'honest observation counters')
+argumentref=mf['original_method_proof'];exact(argumentref)
+for path,body in list(RAW.items()):need(Path(path).read_bytes()==body,'closing whole finite evidence')
+def save(name,value):
+ raw=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();path=HERE/name
+ with path.open('xb')as f:f.write(raw)
+ return ref(path,raw)
+evidence=save('evidence.json',dict(schema='F004_QUARTET_GENERATION_REMAINING50_FINITE_ACTUAL_EVIDENCE_V1',reviewer='/root/mathematical_review',Root_authority=False,batches=reports,records=records_out,inputs=list(PINS.values()),input_bytes_first=READ,input_bytes_closing=READ,total_review_read=2*READ,Original_matrix_basis_word_or_prime_values_decoded=False,represented_functions_executed=False))
+leaf=dict(schema='F004_QUARTET_GENERATION_REMAINING50_ACTUAL_INDEPENDENT_REVIEW_V1',status='SUPPORTED_ACTUAL_CONDITIONAL_GEN_EQUATIONS',reviewer='/root/mathematical_review',Root_authority=False,blockers=[],Source_manifest=mfr,Source_peer=peerref,actual_controls_review=controlref,argument=argumentref,original_job=[155,4],Root_runtime_observation=obsref,observation_preservation_actual_SDK=pin(RUN/'Root_SDK/wave_observation_v1.json'),current_selector=selectorref,fresh_selected_positions=allselected,visited=50,conditional_GEN_positions=totals['GEN'],conditional_GEN_count=20,cyclic_acquisition_inconclusive=totals['inconclusive'],cyclic_acquisition_inconclusive_count=24,finite_word_misses=totals['misses'],finite_word_miss_count=6,unvisited=[],all14_first_science_v1_genuine_SDK_raw_fullwrapper_guard_Source_input_output_joins_verified=True,all20_supplied_GEN_equations_supported=True,all_direct_acquisition_or_RREF_or_candidate_search_calls=0,exact_disjoint_partition_and_original_row_bindings_verified=True,Original_matrix_basis_word_or_prime_values_decoded=False,represented_functions_or_numerical_predicates_executed=False,IP_claim=False,NEG_claim=False,case_adoption_issued=False,paid_case_credit=0,whole_job_or_manuscript_conjecture_Lean_or_compression_credit=0,finite_evidence=evidence,qualifications=['Seven serial batches02..08 executed50 new unpaid job155 rows once under unchanged d004 Source and old5adf/5c7 matrix profiles. Exact retained RootSDK/raw intents, unique chunks and same live handles, one same-birth child per guard, limits/admission/cleanup, actual outputs and complete declared Source/input/loader accounting are verified by metadata/whole hashes.','Twenty whole supplied endpoint-projector/basis/inverse/parent-edge/same-quartet-prime37 equation carriers passed DIRECT; all DIRECT acquisition/RREF/candidate-search calls are0. Two SEARCH Source bodies may be read opaquely as conservative DIRECT plan inputs without being imported or executed.','GEN follows only conditionally through the accepted f1cc projector/group-algebra argument and the exact Root-owned faithful natural G2(11) member/frame/isometry/nondegenerate-form/Original-orbit and complete maximal-cover/SU3 rational-line premises. A separate Root mathematical application/adoption remains owed for these20 rows.','Twenty-four acquisition outcomes and six finite-word misses are inconclusive, not NG/NOT_IP proofs. No actual invariant proper-span or ambient mover certificate is asserted here. No IP, full case disposition or payment follows from this audit.','The unchanged58-unpaid selector is exactly the prior separate first8 plus this disjoint50. First8 scientific calls and old dictionary misses/successes were not replayed; no canonical pointer or global snapshot was changed by the reviewer.','Root_runtime_observation is explicitly an observation with its own genuine preservation call, not a reconstructed SDK or receipt. All Original matrices, basis vectors, words and prime values stayed opaque; reviewer executed no represented worker/control/helper/numerical predicate.','Reviewer authored the imported static Source/proof peer and suggested control boundaries, but implemented none of the executed operational Source. No new old-control review, census, whole manuscript, conjecture, Lean or measured-compression credit.'])
+print(json.dumps(save('reuse_integer_only.json',leaf),sort_keys=True));print(json.dumps(dict(evidence=evidence,paths=len(PINS),read=2*READ,counts={k:len(v)for k,v in totals.items()})))

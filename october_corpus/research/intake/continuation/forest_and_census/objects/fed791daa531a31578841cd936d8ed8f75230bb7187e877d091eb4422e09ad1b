@@ -1,0 +1,200 @@
+"""UNRUN DATA extraction for original Fi22 supplied cycle operands.
+Author /root/compact_proof_author. No original Reader/module, mathematical
+Source, point image, group, word, conjugation or geometry is activated.
+Whole accepted proof bodies are values; their old paths remain logical.
+"""
+import argparse,gzip,hashlib,io,json,os,resource,stat,struct,sys,time
+from pathlib import Path
+MIB=2**20
+START=time.monotonic()
+
+def need(ok,message):
+    if not ok:raise ValueError(message)
+
+def canonical(value):
+    return(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+
+def strict(raw):
+    def pairs(values):
+        out={}
+        for k,v in values:need(k not in out,'unique metadata key');out[k]=v
+        return out
+    return json.loads(raw,object_pairs_hook=pairs,
+        parse_constant=lambda _:(_ for _ in()).throw(ValueError('finite metadata')))
+
+def signature(s):
+    return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+
+def identity(raw,ref):
+    need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+         and type(ref['bytes'])is int and len(raw)==ref['bytes']
+         and hashlib.sha256(raw).hexdigest()==ref['sha256'],'entire original body identity')
+
+class Reads:
+    def __init__(self):self.rows={};self.bytes=Path(__file__).stat().st_size
+    def whole(self,ref):
+        need(type(ref)is dict and set(ref)=={'path','bytes','sha256'}
+             and type(ref['bytes'])is int and 0<=ref['bytes']<=8*MIB,'bounded exact physical ref')
+        need(self.rows.get(ref['path'],ref)==ref,'one physical version')
+        need(self.bytes+ref['bytes']<=64*MIB and(len(self.rows)<512 or ref['path']in self.rows),
+             'whole64MiB/512-path metadata budget before IO')
+        rss=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*(1 if sys.platform=='darwin'else 1024)
+        need(rss<256*MIB and time.monotonic()-START<150,'metadata256MiB/150s guard')
+        p=Path(ref['path']);a=p.lstat()
+        need(p.is_absolute()and p.resolve(strict=True)==p and stat.S_ISREG(a.st_mode)
+             and a.st_nlink==1 and a.st_size==ref['bytes'],'ordinary immutable physical bank')
+        with p.open('rb')as f:
+            b=os.fstat(f.fileno());raw=f.read(ref['bytes']+1);c=os.fstat(f.fileno())
+        need(signature(a)==signature(b)==signature(c)==signature(p.lstat()),'stable whole physical bytes')
+        identity(raw,ref);self.bytes+=len(raw);self.rows[ref['path']]=ref;return raw
+    def role(self,mapping):
+        a,b=mapping['logical'],mapping['physical']
+        need(a['bytes']==b['bytes']and a['sha256']==b['sha256'],'exact retained original mapping')
+        return self.whole(b)
+    def document(self,mapping):return strict(self.role(mapping))
+    def final(self):
+        for q in list(self.rows.values()):self.whole(q)
+
+def compressed_document(raw):
+    with gzip.GzipFile(fileobj=io.BytesIO(raw),mode='rb')as stream:body=stream.read(8*MIB+1)
+    need(len(body)<=8*MIB,'bounded bank expansion before JSON parse')
+    return strict(body)
+
+def vector_bytes(values):
+    need(type(values)is list and len(values)==3510
+         and all(type(x)is int and 0<=x<3510 for x in values)
+         and len(set(values))==3510,'entire original typed vector fields only')
+    return struct.pack('<3510H',*values)
+
+def main():
+    ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--plan',nargs=2,required=True)
+    ap.add_argument('--write',action='store_true');args=ap.parse_args();reads=Reads()
+    path=Path(args.plan[0]);pr=dict(path=str(path),bytes=path.stat().st_size,sha256=args.plan[1])
+    plan=strict(reads.whole(pr));need(plan['schema']=='UNRELEASED_L026_PRIME_CYCLE_OPERAND_PLAN_V1'
+        and plan['author']=='/root/compact_proof_author'and plan['root_authority']is False,
+        'new unadopted DATA extraction, no Source verdict transfer')
+    need(plan['program']['path']==str(Path(__file__).resolve()),'exact new metadata Source');reads.whole(plan['program'])
+    R=plan['roles'];docs={k:strict(reads.whole(R[k]))for k in R if k not in('accepted_body_bank','geometry')}
+    H=docs['H_adoption'];P=docs['H_original_plan'];pres=docs['H_preservation']
+    need(H['root']=='/root'and H['adopted']is True
+         and H['scope_digest']==plan['scope_digest']and H['block']==2 and H['endpoint']==18 and H['local_class']==164
+         and H['full_pair_centralizer_equals_existing_B']is True
+         and H['plan']==plan['old_plan_logical']and H['preservation']==R['H_preservation'],
+         'same qualified actual pair centralizer and immutable retained plan')
+    rows={x['original']['path']:x for x in pres['rows']}
+    for logical,physical in[(plan['old_plan_logical'],R['H_original_plan']),(plan['old_bank_logical'],R['accepted_body_bank'])]:
+        need(rows[logical['path']]==dict(original=logical,retained=physical)
+             and logical['bytes']==physical['bytes']and logical['sha256']==physical['sha256'],
+             'exact old-plan/body-bank retention, no reopening historical path')
+    need(P['bank']==plan['old_bank_logical']and P['accepted_roles']==plan['expected_bank_roles'],
+         'same whole accepted original proof bank')
+    bank=compressed_document(reads.whole(R['accepted_body_bank']));need(bank['schema']=='L026_CENTRALIZER_UPPER_ACCEPTED_BODY_BANK_V1'
+        and bank['roles']==plan['expected_bank_roles']and len(bank['documents'])==19,
+        'complete unchanged19-body bank')
+    values={}
+    for row in bank['documents']:
+        r=row['ref'];raw=row['raw_utf8'].encode('utf-8');identity(raw,r)
+        need(r['path']not in values and r['bytes']<=2*MIB,'complete bounded unique logical body');values[r['path']]=(r,raw)
+    B=bank['roles']
+    need(all(values.get(r['path'],(None,None))[0]==r for r in B.values()),'same full logical proof role identities')
+    def old(name):return strict(values[B[name]['path']][1])
+    model,bridge,br,geo,canonical_root,a,endpoint,c=[old(k)for k in
+        ('input_root','bridge_root','bridge_carrier','geometry_root','canonical_root','canonical_carrier','endpoint_root','endpoint_carrier')]
+    need(model['root']=='/root'and model['status']=='ROOT_ACCEPTED_CONDITIONAL_FI22_NORMAL_AMBIENT_INPUTS'
+         and model['summary']['degree']==3510 and model['summary']['group_order']==64561751654400
+         and model['summary']['ambient_order']==129123503308800 and model['summary']['involution_classes']==3
+         and model['named_Fi22_and_Out2_remain_attributed_premises']is True,
+         'same original qualified G, full Aut and complete class input')
+    need(bridge['root']==geo['root']==canonical_root['root']==endpoint['root']=='/root'
+         and bridge['adopted']is geo['adopted']is canonical_root['adopted']is endpoint['adopted']is True
+         and bridge['input_gate']==geo['input_gate']==endpoint['input_gate']==B['input_root']
+         and bridge['saved_certificate']==B['bridge_carrier']
+         and geo['bridge_acceptance']==B['bridge_root']
+         and canonical_root['Saved_candidate']==B['canonical_carrier']
+         and endpoint['Saved_candidate']==B['endpoint_carrier'],
+         'same original Root-adopted bridge, graph and whole endpoint products')
+    need(br['status']=='VERIFIED'and br['point_action']['root']==2961
+         and br['premises']['same_accepted_original_degree3510_action']is True
+         and br['premises']['original_G_normal_in_A']is True
+         and br['premises']['GAP_IsNormal_A_G_means_G_normal_in_A']is True
+         and br['premises']['original_exact_orders_and_full_class_predicates_borrowed']is True,
+         'the original G membership/class and normality meanings remain imports')
+    need(a['feature']['status']==c['feature']['status']=='VERIFIED'
+         and a['target_identity']['mode']=='CANONICAL_ORIGINAL_BLOCK2_SEED'
+         and a['target_identity']['original_compact_sha256']=='b03836d215bff2417941f65daf2a0d058ff3970168a963958d22e59657f596de'
+         and c['target_identity']['block_index']==2 and c['target_identity']['endpoint_position']==18
+         and c['target_identity']['local_class_position']==164
+         and c['target_identity']['original_compact_sha256']=='34218e8e8e1d96431445986abf0cb2e1b6c27a1c45ddf0d28928e0acfcd1800a',
+         'the exact original canonical a and selected endpoint c, not an isomorphic model')
+    stage,theorem=docs['partner_stage'],docs['partner_input_theorem']
+    need(stage['root']==theorem['root']=='/root'and stage['adopted']is theorem['adopted']is True
+         and stage['input_theorem']==plan['partner_input_theorem_logical']
+         and theorem['operand_roles']['geometry']==R['geometry']
+         and stage['scope_digest']==theorem['scope_digest']==plan['scope_digest'],
+         'the whole actual partner stage authorizes these exact geometry bytes and two-fibre meaning')
+    free=docs['free_projection_adoption'];need(free['root']=='/root'and free['adopted']is True
+         and free['schema']=='ROOT_L026_ACCEPTED_FREE_PRODUCT_WITNESS_PROJECTION_V1'
+         and free['free_rows']==28908 and free['all28908_generation_questions_unresolved']is True
+         and free['outputs']['projection.json']==R['free_projection_report']
+         and docs['free_projection_report']['scope_digest']==plan['scope_digest'],
+         'separate actual free witness projection, generation remains unresolved')
+    raw=reads.whole(R['geometry']);need(len(raw)==111637 and raw[:8]==b'L026GEO1','whole exact retained geometry framing')
+    A=[raw[8+i*7020:8+(i+1)*7020]for i in range(2)];d0=raw[8+2*7020:8+3*7020]
+    ds=br['original_vector_digests']
+    need([hashlib.sha256(x).hexdigest()for x in A]==ds['ambient_generator_compact_sha256']
+         and hashlib.sha256(d0).hexdigest()==ds['seed_compact_vector_sha256']==ds['Q_generator_compact_sha256'][0],
+         'EXACT acquired d0 equals Q0 first vector; exact whole original A vectors, not a guessed seed')
+    endpoints=[]
+    for target in(a['target_identity'],c['target_identity']):
+        v=vector_bytes(target['entire_original_target']);need(hashlib.sha256(v).hexdigest()==target['original_compact_sha256'],
+            'complete original target field-to-compact byte inverse');endpoints.append(v)
+    for v in[d0,*A]:
+        data=list(struct.unpack('<3510H',v));need(len(set(data))==3510 and max(data)<3510,'whole compact vector type/extent only')
+    tree_at=8+11*7020;tree_raw=raw[tree_at:tree_at+5*3510];act=br['point_action'];depth=[];vertices=[]
+    need(len(act['vertices'])==len(act['parents'])==len(act['labels'])==3510,'whole acquired bridge tree')
+    for i,(vertex,parent,label)in enumerate(struct.iter_unpack('<HHb',tree_raw)):
+        need(vertex==act['vertices'][i]and parent==(65535 if act['parents'][i]is None else act['parents'][i])
+             and label==act['labels'][i],'every extracted tree field equals the SAME accepted bridge tree')
+        need(0<=vertex<3510 and((i==0 and parent==65535 and label==0 and vertex==2961)
+             or(i>0 and parent<i and label in(-2,-1,1,2))),'typed parent-tree framing, no point images')
+        depth.append(0 if i==0 else depth[parent]+1);vertices.append(vertex)
+    need(len(set(vertices))==3510 and max(depth)<=10,'complete original vertex indices and accepted path bound')
+    operand=b'L026CYC1'+d0+endpoints[0]+endpoints[1]+A[0]+A[1]+tree_raw
+    need(len(operand)==52658,'fixed whole five-vector plus3510-node carrier')
+    inverse=dict(schema='L026_PRIME_CYCLE_OPERAND_EXACT_BYTE_INVERSE_V1',geometry=R['geometry'],source_bank=R['accepted_body_bank'],
+        d0=dict(input_start=14048,bytes=7020,output_start=8,proof=B['bridge_carrier'],digest_fields=['seed_compact_vector_sha256','Q_generator_compact_sha256[0]']),
+        a=dict(output_start=7028,bytes=7020,proof=B['canonical_carrier'],JSON_field='target_identity.entire_original_target',encoding='3510 strict0-based integers encoded little-endian u16'),
+        c=dict(output_start=14048,bytes=7020,proof=B['endpoint_carrier'],JSON_field='target_identity.entire_original_target',encoding='3510 strict0-based integers encoded little-endian u16'),
+        ambient=[dict(input_start=8+i*7020,bytes=7020,output_start=21068+i*7020)for i in range(2)],
+        tree=dict(input_start=tree_at,output_start=35108,bytes=17550,record='<HHb vertex,parent,label; None parent65535',whole_fields_equal=B['bridge_carrier']),
+        point_or_word_or_geometry_or_group_evaluations=0)
+    premises=dict(schema='L026_PRIME_CYCLE_OPERAND_RETAINED_PREMISES_V1',adopted=False,root_authority=False,
+        exact_original_scope=plan['scope_digest'],whole_old_proof_roles=B,whole_physical_proof_bank=R['accepted_body_bank'],
+        original_input=B['input_root'],known_G_membership='Imported original Reader validates the block seeds as exactly all acquired in_group involution representatives; in particular d0 is in the named G. G is normal in A, not A<=G. The accepted bridge identifies x with d_x=t_x^-1*d0*t_x. Whole accepted a/c target-product equalities identify the same original marks; each product is in G. The future b is the product of the three projected partner D involutions under the retained exact two-fibre theorem. No new membership calculation is asserted.',
+        inherited_member_and_Reader_imports=br['premises'],named_group_or_class_or_GAP_classification_reproved=False,
+        path_max=10,d_image_elementary_map_bound=21,b_image_elementary_map_bound=63,rotation_image_elementary_map_bound=64,
+        seed_equals_first_Q_vector_proved_by_same_accepted_compact_identity=True,qualification=plan['qualified_as'])
+    report=dict(schema='L026_PRIME_CYCLE_OPERAND_DATA_PROJECTION_V1',adopted=False,author='/root/compact_proof_author',plan=pr,
+        physical_inputs=list(reads.rows.values()),scope_digest=plan['scope_digest'],operand_bytes=len(operand),
+        byte_layout=['8B magic L026CYC1','7020B d0','7020B a','7020B c','7020B A0','7020B A1','17550B <HHb original A tree'],
+        exact_old_input_and_body_pins=R,qualified_original_a_c_d0_A_and_tree=True,
+        Source_or_Reader_or_point_word_group_or_geometry_activations=0,new_generation_or_Original_credit=0,
+        new_exact_order_or_involution_or_action_checks=0,all_original_qualifications_retained=plan['qualified_as'])
+    blobs={'operands.bin':operand,'byte_inverse.json':canonical(inverse),'premises.json':canonical(premises),'projection.json':canonical(report)}
+    need(sum(map(len,blobs.values()))<=131072,'four finite metadata outputs within128KiB')
+    out=Path(plan['output_root']);need(out.is_absolute()and out.is_relative_to('/private/tmp')and '..'not in out.parts
+        and out.parent.resolve(strict=True)==out.parent and not os.path.lexists(out),'fresh ordinary temporary output only')
+    reads.final()
+    if args.write:
+        out.mkdir()
+        for name,body in blobs.items():
+            with(out/name).open('xb')as f:need(f.write(body)==len(body),'exclusive whole DATA output');f.flush();os.fsync(f.fileno())
+        for parent in(out,out.parent):
+            fd=os.open(parent,os.O_RDONLY)
+            try:os.fsync(fd)
+            finally:os.close(fd)
+    refs={n:dict(path=str(out/n),bytes=len(v),sha256=hashlib.sha256(v).hexdigest())for n,v in blobs.items()}
+    print(json.dumps(dict(status='EXACT_ORIGINAL_PRIME_CYCLE_OPERANDS_PROJECTED_DATA_ONLY',written=args.write,
+        outputs=refs,physical_bytes=reads.bytes,physical_paths=len(reads.rows),new_scientific_credit=0),sort_keys=True))
+
+if __name__=='__main__':main()

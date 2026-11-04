@@ -1,0 +1,153 @@
+from pathlib import Path
+import json,hashlib,os,shlex,math,time,ast
+FG=Path('/Users/sasha/medusa/research/leemans/maintenance/intake/manuscript_scope/F004/worker_interfaces/quartet_generation/operational')
+A=FG/'actual/controls32';R=A/'actual_review';G=Path('/private/tmp/q11_quartet_generation_controls_guard')
+pins={};used=0;start=time.monotonic()
+def sig(s):return(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+def read(p,expected=None):
+ global used
+ p=Path(p);assert p.is_absolute()and p.resolve(strict=True)==p
+ if str(p)in pins:b,r,s=pins[str(p)];assert sig(p.stat())==s
+ else:
+  with p.open('rb')as f:
+   before=os.fstat(f.fileno());assert before.st_size<=4*2**20 and 2*(used+before.st_size)<=64*2**20 and len(pins)<512
+   b=f.read(before.st_size+1);after=os.fstat(f.fileno())
+  assert sig(before)==sig(after)==sig(p.stat())and len(b)==before.st_size
+  r=dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest());pins[str(p)]=(b,r,sig(after));used+=len(b)
+ if expected:assert r==expected
+ return b,r
+# The documents decoded below contain Source, toy-control and actual-API
+# metadata only. No Original operand/carrier/witness input is opened.
+def doc(p,expected=None):b,r=read(p,expected);return json.loads(b),r
+def out(name,value):
+ p=R/name;assert not p.exists();b=(json.dumps(value,sort_keys=True,indent=2)+'\n').encode();p.write_bytes(b)
+ return dict(path=str(p),bytes=len(b),sha256=hashlib.sha256(b).hexdigest())
+def api(path,rawroot,argv,expected_hash=None):
+ s,sr=doc(path)
+ if expected_hash:assert sr['sha256']==expected_hash
+ assert s['schema']=='ROOT_DISTINCT_ACTUAL_METADATA_TOOL_INPUT_V1'and s['root']==s['actor']=='/root'
+ assert s['issued_argv']==s['child_argv']==argv
+ for command in(s['issued_command'],s['canonical_argv_command'],s['issued_tool_arguments']['cmd']):assert shlex.split(command)==argv
+ frames=s['all_genuine_api_frames'];tool=s['actual_tool'];assert 1<=len(frames)<=32
+ assert frames[0]==s['full_initial_tool_return']and frames[-1]==s['full_tool_return']
+ assert len(set(f['chunk_id']for f in frames))==len(frames)
+ assert tool['initial_chunk']==frames[0]['chunk_id']and tool['terminal_chunk']==frames[-1]['chunk_id']
+ assert type(tool['exit_code'])is int and tool['exit_code']==frames[-1]['exit_code']==0
+ assert tool['synchronous']is(len(frames)==1)
+ if len(frames)==1:assert tool['handle']is None
+ else:
+  assert type(tool['handle'])is int
+  for f in frames[:-1]:assert 'exit_code'not in f and f['session_id']==tool['handle']
+ issued,ir=doc(rawroot/'issued.json');assert issued['schema']=='ROOT_ISSUED_API_INTENT_V1'and issued['root']=='/root'
+ assert issued['argv']==argv and issued['tool_arguments']==s['issued_tool_arguments']
+ for i,f in enumerate(frames):assert doc(rawroot/('frame_%04d.json'%i))[0]==f
+ assert not(rawroot/('frame_%04d.json'%len(frames))).exists()
+ return s,sr
+
+mf,mr=doc(FG/'Source_manifest.json');assert mr['sha256']=='d00478c441ccd0b56e5179b3bc8b82fe6b5e9a3b53f6e26bb2b686e14753bd1f'
+peer,peerr=doc(FG/'source_review/reuse_integer_only.json');assert peerr['sha256']=='1b235eb73af23b44e7fa83b2ca3187875bb7b9ec9b63503372e781c442120b55'
+assert peer['status']=='SUPPORTED_STATIC_Q11_GENERIC_QUARTET37_SOURCE'and peer['blockers']==[]and peer['reviewer']=='/root/mathematical_review'
+assert peer['Source_manifest']==mr and mf['author']=='/root/forest_resume'
+role=mf['roles']['CONTROLS'];program=role['program']
+assert peer['programs']['CONTROLS']==program
+for r in role['loaded_sources']+mf['guards']:read(r['path'],r)
+assert sum(r['bytes']for r in role['loaded_sources']+mf['guards'])+512==role['loaded_Source_and_guards_plus512']==59347<=65536
+assert len(role['loaded_sources'])==6
+# Parse AST for inspection only; this never imports or executes the controls.
+source=read(program['path'],program)[0];ast.parse(source)
+for r in (mf['origin_invoice'],mf['original_method_proof'],mf['protocol']):read(r['path'],r)
+plan,pr=doc(A/'plan.json');gate,gr=doc(A/'Root_gate.json');issuance,issuance_ref=doc(A/'issuance.json')
+assert pr['sha256']=='de9f7538aaefbf919638115cbc02896ac8c9040d39abeea65180087e2ce13ab9'
+assert gr['sha256']=='5225a3681fa7433a9654891630110adb02c9b5cfc66fc1f273ff076d36447002'
+assert issuance_ref['sha256']=='4a3e2a45eb2c1ae9dbd71bb6d167a4aa266a3dfad50a6d093ced2dbe51504f05' or issuance_ref['sha256'].startswith('4a3e2a45')
+assert plan['schema']=='Q11_GENERIC_QUARTET37_CONTROLS_PLAN_V1'and plan['Root_authority']is False and plan['ready_for_execution']is True
+assert plan['Source_manifest']==gate['Source_manifest']==issuance['Source_manifest']==mr
+assert plan['program']==gate['program']==program
+assert gate['schema']=='ROOT_AUTHORIZED_Q11_GENERIC_QUARTET37_V1'and gate['root']=='/root'and gate['role']=='CONTROLS'
+assert gate['Root_authority']is gate['issued']is gate['synthetic_only']is gate['whole_Source_and_protocol_owned']is True
+assert gate['Root_import']is gate['admission_controls']is None and gate['Original_calls_authorized']is False
+assert gate['Source_peer']==issuance['Source_peer']==peerr
+assert issuance['root']=='/root'and issuance['Root_authority']is issuance['synthetic_only']is issuance['guard_limits_unchanged']is True
+assert issuance['Original_calls_authorized']is False and issuance['all_nine_Source_bodies_proof_protocol_and_retained_guards_owned']is True
+for r in plan['inputs']:read(r['path'],r)
+for p in plan['bootstrap_paths']:read(p)
+runtime_input_paths=set(plan['bootstrap_paths'])|{r['path']for r in plan['inputs']}
+assert len(runtime_input_paths)==19
+runtime_first=sum(pins[p][1]['bytes']for p in runtime_input_paths)
+assert runtime_first==plan['physical_read_invoice']['distinct_whole_input_bytes']==134292
+assert 2*runtime_first+role['loader_read_prepaid_upper']==plan['physical_read_invoice']['first_and_closing_read_upper']==364653
+assert plan['physical_read_invoice']==issuance['physical_read_invoice']and plan['physical_read_invoice']['all_original_inputs_excluded']is True
+assert len(plan['inputs'])==7
+argv=issuance['argv'];child=argv[argv.index('--')+1:]
+expectedchild=['/Users/sasha/.venvs/global/bin/python','-E','-B','-S',program['path'],'--manifest',mr['path'],str(mr['bytes']),mr['sha256'],'--plan',pr['path'],str(pr['bytes']),pr['sha256'],'--gate',gr['path'],str(gr['bytes']),gr['sha256']]
+assert child==expectedchild
+expectedenv=['/usr/bin/env']
+for name in('COVERAGE_PROCESS_START','COVERAGE_PROCESS_CONFIG','PYTHONSTARTUP','OPENSSL_CONF','OPENSSL_MODULES'):expectedenv+=['-u',name]
+assert argv==expectedenv+['/Users/sasha/.venvs/global/bin/python','-E','-B',mf['guards'][0]['path'],'--volume','/Users/sasha/medusa','--output',str(G),'--rss-cap-mib','128','--timeout','125','--']+child
+sdk,sdkref=api(FG/'Root_SDK/controls32_v1.json',FG/'api/Root_f004_quartet_controls32_v1',argv,'7ef41edc8e9989a4051e9164589022bb89f0b5d59d55bef890e24b1b63909dc0')
+started,startr=doc(G/'started.json');receipt,receiptr=doc(G/'receipt.json')
+limits=dict(admit_disk=10*2**30,admit_ram=3*2**30+128*2**20+512*2**20,disk_floor=8*2**30,ram_floor=3*2**30,total_rss=128*2**20,wall_seconds=125.0,sample_seconds=.5,log_bytes_each=262144,metadata_bytes_each=131072,owned_pids=128)
+assert started['command']==receipt['command']==child and started['limits']==receipt['limits']==limits
+assert started['admission']==receipt['admission']
+assert len(started['identities'])==len(receipt['identities'])==1
+first,last=started['identities'][0],receipt['identities'][0];keys=('pid','birth','initial_parent','group','session')
+assert tuple(first[k]for k in keys)==tuple(last[k]for k in keys)
+assert first['group']==first['session']==first['pid']and all(type(first[k])is int and first[k]>0 for k in('pid','initial_parent','group','session'))
+assert math.isfinite(first['birth'])and first['birth']>0
+assert receipt['status']=='PASS'and receipt['stop']=='RETURNED'and receipt['returncode']==0 and receipt['error']is None
+assert receipt['cleanup']['remaining']==receipt['cleanup']['errors']==[]
+assert receipt['seconds']<=125 and receipt['peaks']['total_rss']<=128*2**20
+assert receipt['admission']['free_disk']>=limits['admit_disk']and receipt['admission']['available_ram']>=limits['admit_ram']
+assert receipt['peaks']['min_free_disk']>=limits['disk_floor']and receipt['peaks']['min_available_ram']>=limits['ram_floor']
+assert json.loads(sdk['full_tool_return']['output'])==dict(status='PASS',stop='RETURNED',receipt=str(G/'receipt.json'))
+stdout,sor=read(G/'stdout.log');stderr,ser=read(G/'stderr.log');assert stderr==b''and receipt['logs']==dict(stdout=len(stdout),stderr=0)
+emitted=json.loads(stdout);assert emitted['status']=='ALL_SYNTHETIC_CONTROLS_PASS'and emitted['paid_credit']==0
+resultpath=Path('/private/tmp/q11_quartet_generation_controls/result.json');result,rr=doc(resultpath)
+assert emitted['output']==rr
+assert result['schema']=='Q11_GENERIC_QUARTET37_CONTROLS_RESULT_V1'and result['status']=='ALL_SYNTHETIC_CONTROLS_PASS'
+assert result['program']==program and result['Source_manifest']==mr and result['plan']==pr and result['Root_gate']==gr
+assert result['Original_inputs_loaded']is result['old_arithmetic_controls_replayed']is False and result['paid_credit']==0
+names=['dynamic_same_job_scope','wrong_job','bool_job','paid','duplicate','bool_position','empty','overlap_partition','wrong_run_digest','global_fact_without_typed_job_ownership','unissued_scope','full_actual_rows']+['right_word_lift_'+str(i)for i in range(7)]+['finite_genuine_quartet_words','distant_cancellation_only','unreduced_rows_kept','proper_rank_is_inconclusive','wrong_parent_action','wrong_inverse','zero_seed','actual_rank_one_projector','cyclic_vector_is_not_projector','wrong_seed_norm','scalar_stop_before_operation','ninth_case_preflight','no_partial_scalar_charge']
+assert result['controls']==names and len(names)==len(set(names))==result['controls_count']==32
+assert result['new_linear_scalar_units']==13600<=200000
+assert result['resources']['matrix_products']==9<=400000 and result['resources']['row_images']==88<=200000
+assert result['resources']['peak_self_RSS_bytes']<=128*2**20 and result['resources']['seconds']<=125
+assert result['resources']['read_units_with_prepaid_loaders']==364653<=8388608
+# The separate positive Root authority issuer is metadata only. Its exact
+# genuine API/intent/frames are checked at that issuer's own declared argv.
+authpath=FG/'Root_SDK/controls_authorities_v1.json';auth0,authref=doc(authpath)
+assert authref['sha256'].startswith('1139eb32')
+auth,_=api(authpath,FG/'api/Root_f004_quartet_controls_authorities_v1',auth0['issued_argv'])
+# Close the whole finite evidence before preservation/review writes.
+for p,(body,r,s)in list(pins.items()):
+ with Path(p).open('rb')as f:
+  before=os.fstat(f.fileno());assert sig(before)==s
+  b=f.read(len(body)+1);after=os.fstat(f.fileno())
+ assert b==body and sig(before)==sig(after)==sig(Path(p).stat())
+ used+=len(b)
+assert used<=64*2**20 and time.monotonic()-start<125
+# Preserve temporary outputs/guards/raw frames as exact opaque objects only.
+objects=R/'objects';objects.mkdir(exist_ok=False);retained=[]
+for p,(body,r,s)in pins.items():
+ if not p.startswith('/private/tmp/')and '/api/'not in p:continue
+ target=objects/r['sha256']
+ if not target.exists():target.write_bytes(body)
+ retained.append(dict(original=r,retained=dict(path=str(target),bytes=len(body),sha256=r['sha256'])))
+evidence=out('evidence.json',dict(schema='F004_QUARTET32_FINITE_ACTUAL_EVIDENCE_V1',Root_authority=False,inputs=[r for b,r,s in pins.values()],retained=retained,paths=len(pins),first_and_closing_bytes=used,Original_inputs_opened=False,represented_functions_executed=False))
+review=dict(schema='Q11_GENERIC_QUARTET37_CONTROLS_ACTUAL_INDEPENDENT_REUSE_V1',status='SUPPORTED_ACTUAL_Q11_GENERIC_QUARTET37_CONTROLS',reviewer='/root/dependency_audit',Root_authority=False,blockers=[],
+ Source_manifest=mr,Source_peer=peerr,program=program,count=32,controls_count=32,control_names=names,
+ Original_inputs_loaded=False,Original_operands_witnesses_or_words_decoded=False,old_arithmetic_controls_replayed=False,
+ actual_SDK=sdkref,authority_actual_SDK=authref,Root_issuance=issuance_ref,plan=pr,Root_gate=gr,result=rr,
+ guard=dict(started=startr,receipt=receiptr,stdout=sor,stderr=ser),actual_guard_and_raw_frames_verified=True,whole_Source_and_inputs_closed=True,
+ Source_namespace_bytes=59347,runtime_input_paths=19,runtime_first_input_bytes=134292,runtime_read_upper=364653,
+ matrix_products=9,row_images=88,new_linear_scalar_units=13600,external_guard_peak_RSS=receipt['peaks']['total_rss'],external_guard_seconds=receipt['seconds'],finite_evidence=evidence,
+ no_Original_or_case_or_GEN_IP_census_manuscript_conjecture_Lean_or_compression_credit=True,
+ qualifications=[
+ 'Genuine first-v1 Root tool input/intent/all frames, exact five-unset environment wrapper, physical5adf matrix profile/5c7 base,128MiB/125s limits,10GiB disk admission and8GiB floor are joined. The actual profile RAM admission is3GiB+128MiB+512MiB=3892314112 bytes, with3GiB floor; it is not mislabeled as4GiB.',
+ 'All32 unique reported names match the full reviewed toy Source designs. The Source combines dynamic job/refusal checks, synthetic7-dimensional cyclic rows and word lifts, full-matrix projector/inverse checks, inconclusive proper rank and preflight scalar stops. The controls were executed by Root, not this reviewer.',
+ 'All six loaded control Source bodies, both guard bodies, exact MF/peer/plan/gate and seven attributed method/proof/context references close the reported19-input134292-byte runtime subject. Its first/closing plus prepaid-loader envelope is364653. No Original context/operand/carrier, old49-case result or old arithmetic control was loaded or replayed.',
+ 'The reviewer is distinct from Source authorForest, static reviewerMat and Root. Earlier abstract/metadata assistance in the project is disclosed. This review authenticates actual metadata/control execution and reuses the separate Source/math review; it is not another execution, new numerical instance, group recognition or independent proof of imported classification premises.',
+ 'The external limits are sampled cooperative process-family limits, not a kernel quota or absence proof for unobserved detached processes. Exact successful Source/control facts do not authorize future Original SEARCH/DIRECT calls or case adoption; fresh Root subject/import/gate and actual reviews remain owed.'
+ ])
+lr=out('reuse_integer_only.json',review)
+print(json.dumps(dict(review=lr,evidence=evidence,paths=len(pins),read_bytes=used,retained=len(retained),blockers=[])))
