@@ -13,7 +13,7 @@ its bibliography, mathematical results, progress and reproduction instructions.
 
 | Corpus | Subject and status | Start here |
 |---|---|---|
-| **October** | Finite groups, polytopes and incidence geometry, drawn from work by Dimitri Leemans and collaborators. The existing project corpus, including its manuscripts, proofs, certificates and audits. | [Corpus overview](october_corpus/README.md) · [Detailed programme](october_corpus/README.rst) |
+| **October** | Finite groups, polytopes and incidence geometry. Intake complete: 101 mathematical manuscripts; 53 measured applications across 19 topics. | [Corpus overview](october_corpus/README.md) · [Detailed programme](october_corpus/README.rst) |
 | **November** | A separate corpus from another researcher. The directory is prepared; its researcher, bibliography and source editions have not yet been registered. | [Corpus overview](november_corpus/README.md) |
 
 Each corpus keeps its manuscripts, source register, evidence and reproduction
@@ -54,33 +54,22 @@ does not imply that its entire manuscript has been formalized.
 
 ## Read and reproduce
 
-The [October overview](october_corpus/README.md) records **101 complete reviewed
-treatments out of 104 mathematical originals**. F004, F009 and L026 remain.
-Its [intake status](october_corpus/INTAKE_STATUS.json) distinguishes accepted
-partial results from completed manuscripts. Measurements remain at 53
-applications across 19 topics while intake finishes.
+The [October corpus](october_corpus/README.md) contains **102 manuscripts**:
+101 mathematical manuscripts and one editorial. All **101 mathematical
+manuscripts have complete reviewed treatments**, comprising 93 recoveries and
+eight treatments following principal refutations. **Intake is complete.**
 
-The [latest census checkpoint](october_corpus/research/intake/census/status.json)
-records **450/940 F009 parents and 70,200 checked extension slots**. It includes
-the separate supplier and verifier runs, registration audit and required inputs.
-F004, F009 and L026 remain unfinished.
-
-F004's current job has **777/807 entries settled**. Four new nongeneration
-certificates are accepted; 30 further candidate certificates await review
-and strict checking.
-
-L026's typed bank now has **1,474 settled rows**: 727 generation results and
-747 exclusions, with 727 separate intersection proofs for those generation
-cases. The latest checkpoint adds three settled rows and three IP proofs.
+There are **53 measured applications across 19 topics**; forty completed
+recoveries await measurement. The [intake status](october_corpus/INTAKE_STATUS.json)
+and [measurement overview](october_corpus/audit/overview/README.md) record these
+separate stages.
 
 The [November directory](november_corpus/README.md) is prepared. Its researcher,
 bibliography and source editions await registration.
 
-Follow each corpus's reproduction guide and each package's stated inputs,
-commands and verification scope. October's [reproduction guide](october_corpus/REPRODUCING.md)
-links its mathematical checks and evidence. From a clean, committed checkout,
-check preservation of the directory migration with:
+Follow each corpus's reproduction guide and the selected package's exact inputs
+and verification scope. Check current October membership and statistics with:
 
 ```sh
-python3 -E -B scripts/check_corpus_layout.py
+python3 -E -B scripts/check_corpus_scope.py
 ```

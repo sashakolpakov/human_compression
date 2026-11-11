@@ -1,108 +1,24 @@
-Human Compression
-=================
+October corpus
+==============
 
-This project reconstructs the principal results of a fixed mathematical corpus
-through complete common theories and applications. Each recovery records its
-source contract, proofs, corrections, retained inputs and verification scope.
-The length comparison measures those declared written representations; it does
-not measure historical effort, originality or the shortest possible proof.
+The corpus contains **102 manuscripts: 101 mathematical manuscripts and one
+editorial**. All **101 mathematical manuscripts have complete reviewed
+treatments**: 93 principal-result recoveries and eight treatments following
+principal refutations. **Intake is complete.**
 
-Current programme
------------------
+There are **53 measured applications across 19 topics**. Forty completed
+recoveries await measurement. The editorial and refutation treatments receive
+no ordinary recovery compression factor.
 
-The accessible corpus contains **105 manuscripts: 104 mathematical manuscripts
-and one editorial**. **101 of the 104 mathematical manuscripts have complete
-reviewed treatments**: 93 principal-result recoveries and eight complete
-treatments following principal refutations. **F004, F009 and L026 remain.**
-The stopping condition is completion of these three manuscripts.
+The manuscripts have **103 source components**. L063 and its L064 supplementary
+appendix are counted as one manuscript. The `source catalogue <audit/corpus/catalogue.json>`_,
+`manuscript identities <audit/corpus/manuscripts.json>`_,
+`source register <audit/corpus/latest.json>`_ and `intake status <INTAKE_STATUS.json>`_
+record these units and the completed treatments.
 
-Of the 93 recoveries,
-53 are measured and forty (N014, L024, L102, F011, F008, L039, L013, L011, L025, L122, L015, L096, L023, L031, L017, L018, N011, F002, L071, L038, F006, F001, N012, L044, L059, L019, L042, L120, L045, L052, N010, L041, L027, L076, L100, L033, L070, L091, L054 and F012) await measurement.
-The eight manuscripts treated after principal refutations are F003, L029,
-L110, L114, L115, L036, L046 and L063, including its L064 supplementary
-appendix. The `L022 disposition <audit/corpus/editorial/L022/v1/admission.json>`_
-records an editorial with no mathematical result to recover, compression
-factor or measurement credit.
-
-The 105 manuscripts have **106 registered source components**: L063 and L064
-are the main article and its supplementary appendix, counted together as one
-manuscript. Their separate source IDs and all results remain registered.
-The `manuscript accounting audit <audit/corpus/proposals/manuscript-accounting/README.rst>`_
-records the correction. The `current intake status <INTAKE_STATUS.json>`_
-gives the manuscript counts; the `register of source components <audit/corpus/latest.json>`_
-retains its earlier identities while computations bound to those records
-finish. Its pointers and historical evidence remain unchanged. Another 55
-unavailable manuscripts remain archived; source retrieval and new-title
-intake are outside the current programme.
-
-The `F012 admission <data/edge_girth_regular_graphs/admission.json>`_ records
-its complete reviewed source treatment: 49 components covering 16 principal
-claims and 260 literal rows. Borrowed classification and software premises
-remain explicit, as do unresolved infinity assertions. F012 adds no compression
-measurement, new conjecture resolution or complete Lean formalization.
-
-The `Co2 orbit obstruction <papers/sporadic_rank3/co2_nonfree.rst>`_ gives
-an elementary centralizer argument and a portable arithmetic certificate for
-3,627 nongenerating rows among 24,690 recorded orbits. The named group,
-centralizers and completeness of the orbit data remain explicit premises;
-21,063 full-size rows remain undecided by this criterion. The
-`reproduction record <audit/sporadic_rank3/co2_nonfree/admission.json>`_
-binds the exact inputs and checker. This is partial progress on L026 and
-adds no completed original or compression measurement.
-
-The `nonfree O'Nan orbit certificate <research/onan/nonfree_orbits/README.rst>`_
-gives a portable conditional nongeneration check for all 1,776 nonfree rows
-in the retained endpoint index. Its standalone checker passed from an isolated
-copy; the named group, model and exact historical orbit data remain borrowed
-premises. L026 remains unfinished; the reviewed-manuscript count stays 101/104.
-
-The `reproduction guide <docs/REPRODUCING.rst>`_ distinguishes integrity checks,
-mathematical replay, paper builds and Lean compilation. Sources, retained inputs,
-certificates and version requirements remain explicit; scratch builds belong
-outside the checkout.
-
-The `symplectic endpoint criterion <research/groups/symplectic_flags/README.rst>`_
-gives a complete written proof and independent hand review excluding string
-generating sets of rank at least five for a specified pair in dimension six.
-Its finite application retains the original representation and endpoint
-correspondences; this publication adds no completed original, conjecture
-resolution, compression measurement or Lean verification.
-
-The `characteristic endpoint theorem <research/groups/characteristic_flags/README.rst>`_
-proves reducibility when both endpoint involutions have rank three after
-subtracting the identity, over a perfect field of characteristic two in
-dimension six. It reuses the existing fixed-vector theory. Its reviewed
-proof and projective-count lemma acquire no new endpoint family or original.
-
-The `joint fixed-set criterion <research/groups/joint_fixed_sets/README.rst>`_
-uses two descriptions of one fixed set to obstruct generation by a string
-marking. Its four-page proof has an independent review. The conditional F004
-application and certificate relation remain subject to their finite checks;
-the completed-original and measurement counts are unchanged.
-
-The `six-page overview <audit/overview/v19/packet/reader.pdf>`_ reports nineteen
-whole-topic and fifty-three individual conditional comparisons. Read the
-`whole-topic graph <audit/overview/v19/packet/whole_topics.svg>`_, the
-`first twenty-seven individual comparisons <audit/overview/v19/packet/conditional_1.svg>`_
-and the `remaining twenty-six <audit/overview/v19/packet/conditional_2.svg>`_.
-The `current overview record <audit/overview/latest.json>`_ links the accepted
-exact fractions, input policies and independent review.
-
-That record remains the accepted measurement edition: **53 application
-comparisons and 19 whole-topic comparisons**. Its fields for active, recovered
-and pending originals retain an earlier intake snapshot; they are not the
-current manuscript census. For the current 101/104 reviewed treatments and
-the three unfinished manuscripts, use `INTAKE_STATUS.json <INTAKE_STATUS.json>`_.
-The historical census fields, catalogue pointers and measured factors are
-unchanged.
-
-Topic A now includes L003. Its three complete common papers cost 108,271
-characters; all ten application bundles cost 155,199. The whole factor is
-**1.210825**, lower than the preceding nine-original factor of 1.354347.
-L121's **12.288729** conditional factor follows moving its substantial proofs
-into the fully charged common supplement. L003's complete four-paper
-application has factor **1.063284** after that acquisition. All 99 required
-program/data contents remain explicit prerequisites; no sibling proof is free.
+The `measurement overview <audit/overview/README.md>`_ lists the accepted
+comparisons. Measurement charges complete common theory and application proofs;
+source attribution, corrections and retained inputs remain explicit.
 
 Separately reviewed principal refutations
 -----------------------------------------
@@ -134,9 +50,9 @@ all 44 printed local arc values, and proofs of the stated full graph groups
 with four corrected groups. Unordered counts, empty parameter branches and
 preliminary or appendix errors have separate dispositions. Ten accepted
 proofs are reused exactly; the common theory, classical premises and new
-source joins remain explicit. This completes two originals without duplicating
-the shared manuscript or adding a recovery, principal refutation, question,
-Lean claim or compression measurement.
+source joins remain explicit. This completes one manuscript and both source
+components. It adds no recovery, principal refutation, question, Lean claim or
+compression measurement.
 
 The `complete L110 volume <papers/corrections/L110/v1/complete.pdf>`_
 treats all 63 claim rows in the fixed twenty-page article on Suzuki
@@ -247,18 +163,6 @@ and reruns two character/subgroup arithmetic programs. It does not repeat every
 historical group census. This completes L046's remaining source obligation;
 the earlier principal refutation, attribution and formalization limits are
 preserved. No new compression factor or open-conjecture result is claimed.
-
-A reproducible graph bound
--------------------------
-
-The `diameter twenty-two manuscript <papers/girth_diameter_bounds/order95.pdf>`_
-proves the minimum order 95 for quartic graphs of girth five and diameter 22.
-Its `reproduction guide <papers/girth_diameter_bounds/README.rst>`_ supplies a
-checker that rebuilds the proof reader, checks all 27 saved refutations and
-verifies the included graph. The exact manifest hash is in the
-`component admission <data/girth_diameter_bounds/admission.json>`_. Old search
-caches and a SAT solver are unnecessary. This completes one previously known
-source row; F009 still requires the exact order-80 census and final synthesis.
 
 Reviewed recoveries awaiting measurement
 ----------------------------------------
@@ -699,55 +603,14 @@ The `current protocol <audit/protocol.pdf>`_ gives the definitions and limits.
 Reading and reproduction
 ------------------------
 
-Start with the topic guide and its source map; then read the complete common
-paper and applications. Each scientific admission links the immutable author packet and distinct
-review. Measured editions additionally link the input audit and numerical review. A frozen packet may retain
-an earlier candidate label; the later admission records its accepted status.
+Start with the `reproduction guide <REPRODUCING.md>`_ and the selected topic's
+guide, source map and evidence. Each mathematical admission specifies its proofs,
+retained inputs and verification scope. Formal declarations and compiled artifacts
+have separately stated scopes.
 
-Check the published archive, bindings and configured audit replays from the
-repository root::
+From the repository root, check current corpus accounting and documentation::
 
-    python3 scripts/verify_snapshot.py
+    python3 -E -B scripts/check_corpus_scope.py
 
-Compile selected papers directly from their declared TeX inputs, with the
-compiler specified by the catalogue and a fresh output directory::
-
-    python3 scripts/build_papers.py --paper audit/protocol --output-dir /tmp/human-compression-protocol
-
-Repeat ``--paper`` for other exact catalogue IDs. The builder defaults to
-XeLaTeX and uses pdfLaTeX where a document explicitly declares it. Source PDFs
-are not redistributed; input recounts use separately supplied originals with
-exact hashes. Topic readers give their portable replay commands and dependencies.
-
-Formal statements have explicit scopes, hypotheses and axiom reports. The
-`legacy formal runner <audit/formal-project/README.rst>`_ covers its named
-components; other topic packets have separate runners. Integrity checks do not
-imply a fresh compilation of every theorem or a rerun of every finite census.
-
-Historical evidence
--------------------
-
-The `preceding README <audit/science55/v1/previous/README.rst>`_ and
-`preceding protocol <audit/science55/v1/previous/audit/protocol.pdf>`_ preserve the
-publication chronology. Their relative links were written for the repository
-root and their numerical statements belong to the editions they describe.
-The `intake record <audit/intake.json>`_,
-`original inventory <audit/corpus/v1/packet/inventory.json>`_ and
-`archived notes <audit/archive_markdown.json>`_ remain immutable evidence.
-Earlier overview editions remain under ``audit/overview/``; the current pointer
-selects v19. Previously reported one-sided software factors are historical,
-not current comparisons. Source corrections and separately reviewed question
-answers retain their own exact scope and do not acquire new credit here.
-
-F012: complete edge-girth-regular graph source treatment
--------------------------------------------------------
-
-The current reviewed F012 manuscript, its exact source concordance and
-package-relative reproduction instructions are in
-``papers/edge_girth_regular_graphs/``. The additive admission is
-``data/edge_girth_regular_graphs/admission.json``; it retains the source's
-classification/software premises and unresolved infinity assertions.
-Run ``python3 -E -B scripts/verify_snapshot.py`` for registered publication
-integrity. Scientific route commands, supported macOS ownership scope and
-selected-checkout qualifications are in the reproduction guide. No whole
-fresh-machine corpus replay or new compression measurement is claimed.
+Use fresh output directories for selected proof replays and paper builds.
+Historical snapshot checks apply to the exact editions they name.
